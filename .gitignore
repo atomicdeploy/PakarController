@@ -5,3 +5,4 @@ target/
 .vscode/.browse.c_cpp.db*
 *.tmp
 *.log
+*.lst
