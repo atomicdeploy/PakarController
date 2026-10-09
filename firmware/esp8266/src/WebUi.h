@@ -14,6 +14,7 @@ main{max-width:1180px;margin:auto;padding:24px}.top{display:flex;justify-content
 </style></head><body><main><div class="top"><div><div class="eyebrow">AtomicDeploy control surface</div><h1>PakarController</h1><div class="status" id="summary">Connecting…</div></div><button onclick="refresh()">Refresh state</button></div>
 <div class="layout"><section class="card"><div class="grid" id="grid"></div></section><aside class="controls"><section class="card"><div class="metric"><span>Mode</span><b id="mode">—</b></div><div class="metric"><span>AVR</span><b id="avr">—</b></div><div class="metric"><span>Winner</span><b id="winnerSmall">—</b></div><div class="winner" id="winner">—</div><div class="row"><button class="primary" onclick="setMode('cell')">Cell select</button><button class="primary" onclick="setMode('first-wins')">First wins</button></div><button onclick="resetGame()">Reset game</button></section>
 <section class="card"><b>Selected cell action</b><div class="row"><input id="cellId" type="number" min="1" max="80" value="1"><select id="effect"><option>fade</option><option>immediate</option><option>pulse</option></select></div><div class="row"><button onclick="setCell('white')">White</button><button onclick="setCell('red')">Red</button><button onclick="setCell('off')">Off</button></div></section>
+<section class="card"><b>Reusable strip effect</b><div class="row"><select id="pattern"><option>none</option><option>rainbow</option><option>confetti</option><option>sinelon</option><option>bpm</option><option>juggle</option><option>fire</option></select><button onclick="setPattern()">Apply</button></div></section>
 <section class="card"><b>Firmware vault</b><p class="warn">Programming automatically takes a local backup first and requires a complete 32 KiB merged AVR image.</p><input id="avrFile" type="file" accept=".bin"><button onclick="uploadAvr()">Store AVR image</button><div class="row"><button onclick="api('/api/v1/avr/backup',{method:'POST'})">Back up AVR</button><button onclick="programAvr()">Program + verify</button></div><a href="/update">ESP self-OTA</a></section></aside></div></main>
 <script>
 const grid=document.querySelector('#grid');let status={cells:[]};
@@ -24,6 +25,7 @@ async function refresh(){try{status=await api('/api/v1/status');summary.textCont
 async function setMode(v){await api('/api/v1/mode?value='+v,{method:'POST'});refresh()}
 async function resetGame(){await api('/api/v1/game/reset',{method:'POST'});refresh()}
 async function setCell(state){const id=cellId.value,e=effect.value;await api(`/api/v1/cell?id=${id}&state=${state}&effect=${e}`,{method:'POST'});refresh()}
+async function setPattern(){await api('/api/v1/effect?value='+pattern.value,{method:'POST'});refresh()}
 async function uploadAvr(){const f=avrFile.files[0];if(!f)return alert('Choose a 32 KiB .bin file');const d=new FormData();d.append('image',f);alert(await api('/api/v1/avr/image',{method:'POST',body:d}))}
 async function programAvr(){if(!confirm('Back up, erase, program and verify the AVR flash?'))return;alert(await api('/api/v1/avr/program',{method:'POST'}));refresh()}
 refresh();setInterval(refresh,1000);

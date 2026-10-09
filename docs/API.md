@@ -12,6 +12,7 @@ public installation.
 | POST | `/api/v1/cell` | form `id=1..80`, `state=white|red|off`, `effect=immediate|fade|pulse` |
 | POST | `/api/v1/game/reset` | reset the current game |
 | POST | `/api/v1/brightness` | form `value=1..255` |
+| POST | `/api/v1/effect` | form `value=none|rainbow|confetti|sinelon|bpm|juggle|fire` |
 | POST | `/api/v1/buzzer` | form `frequency=20..12000`, `duration_ms=1..5000` |
 | POST | `/api/v1/display` | form `value=-999..9999` for the AVR TM1637 |
 | POST | `/api/v1/outputs` | form `mask=0..255` for direct 74HC595 diagnostics |

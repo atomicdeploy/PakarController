@@ -7,6 +7,11 @@ first-winner arbitration, shift-register outputs, TM1637 contents, buzzer
 playback, and the current game mode. The ESP owns the LED framebuffer, cell
 geometry, effects, Wi-Fi clients, APIs, stored images, and update operations.
 
+The reusable 40LED patterns are retained on the ESP as `rainbow`, `confetti`,
+`sinelon`, `bpm`, `juggle`, and `fire`. Selecting a direct cell or winner state
+returns to authoritative logical-cell rendering; UDP streaming can replace the
+physical pixel frame without consuming AVR SRAM.
+
 Neither side invents the other's state. UART frames carry commands and
 authoritative events with bounded payloads and sequence identifiers.
 

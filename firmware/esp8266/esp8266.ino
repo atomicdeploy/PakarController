@@ -76,6 +76,7 @@ void sendStatusJson() {
   body += F(",\"winner\":"); body += winner;
   body += F(",\"selected_cell\":"); body += selectedCell;
   body += F(",\"brightness\":"); body += grid.brightness();
+  body += F(",\"effect\":\""); body += grid.patternName(); body += '"';
   body += F(",\"esp_uart_errors\":"); body += link.errors();
   body += F(",\"avr_uart_errors\":"); body += avrUartErrors;
   body += F(",\"pixels\":"); body += LedGrid::kPixels;
@@ -104,6 +105,16 @@ Effect parseEffect(const String &value) {
   if (value == F("pulse")) return kEffectPulse;
   if (value == F("immediate")) return kEffectImmediate;
   return kEffectFade;
+}
+
+LedGrid::Pattern parsePattern(const String &value) {
+  if (value == F("rainbow")) return LedGrid::kPatternRainbow;
+  if (value == F("confetti")) return LedGrid::kPatternConfetti;
+  if (value == F("sinelon")) return LedGrid::kPatternSinelon;
+  if (value == F("bpm")) return LedGrid::kPatternBpm;
+  if (value == F("juggle")) return LedGrid::kPatternJuggle;
+  if (value == F("fire")) return LedGrid::kPatternFire;
+  return LedGrid::kPatternNone;
 }
 
 void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
@@ -187,6 +198,17 @@ void registerApi() {
       return;
     }
     grid.setBrightness(value);
+    server.send(200, "application/json", "{\"updated\":true}");
+  });
+  server.on("/api/v1/effect", HTTP_POST, []() {
+    if (!authenticate()) return;
+    const String value = server.arg("value");
+    const LedGrid::Pattern pattern = parsePattern(value);
+    if (pattern == LedGrid::kPatternNone && value != F("none")) {
+      server.send(400, "text/plain", "unknown effect");
+      return;
+    }
+    grid.setPattern(pattern);
     server.send(200, "application/json", "{\"updated\":true}");
   });
   server.on("/api/v1/buzzer", HTTP_POST, []() {

@@ -24,6 +24,8 @@ struct DeviceStatus {
     winner: u8,
     selected_cell: u8,
     brightness: u8,
+    #[serde(default)]
+    effect: String,
     pixels: u16,
     #[serde(default)]
     esp_uart_errors: u16,
@@ -38,6 +40,7 @@ enum Command {
     Cell(Endpoint, u8, &'static str),
     Reset(Endpoint),
     Brightness(Endpoint, u8),
+    Effect(Endpoint, String),
 }
 
 enum Event {
@@ -76,6 +79,11 @@ fn request(client: &Client, command: Command) -> Result<Event, String> {
             let url = format!("{}/api/v1/brightness", endpoint.base.trim_end_matches('/'));
             let value = brightness.to_string();
             let request = client.post(url).form(&[("value", value.as_str())]);
+            (endpoint, request)
+        }
+        Command::Effect(endpoint, effect) => {
+            let url = format!("{}/api/v1/effect", endpoint.base.trim_end_matches('/'));
+            let request = client.post(url).form(&[("value", effect.as_str())]);
             (endpoint, request)
         }
     };
@@ -119,6 +127,7 @@ struct PakarControllerApp {
     password: String,
     status: Option<DeviceStatus>,
     brightness: u8,
+    pattern: String,
     message: String,
     command_tx: Sender<Command>,
     event_rx: Receiver<Event>,
@@ -141,6 +150,7 @@ impl PakarControllerApp {
             password: "pakarcontroller".into(),
             status: None,
             brightness: 48,
+            pattern: "none".into(),
             message: "Waiting for the controller".into(),
             command_tx,
             event_rx,
@@ -171,6 +181,11 @@ impl PakarControllerApp {
             match event {
                 Event::Status(status) => {
                     self.brightness = status.brightness;
+                    self.pattern = if status.effect.is_empty() {
+                        "none".into()
+                    } else {
+                        status.effect.clone()
+                    };
                     self.message = "Live state received".into();
                     self.status = Some(status);
                 }
@@ -215,6 +230,20 @@ impl eframe::App for PakarControllerApp {
             ui.add(egui::TextEdit::singleline(&mut self.password).password(true));
             if ui.button("Refresh").clicked() {
                 self.last_poll = Instant::now() - Duration::from_secs(2);
+            }
+        });
+        ui.horizontal(|ui| {
+            egui::ComboBox::from_label("Strip effect")
+                .selected_text(&self.pattern)
+                .show_ui(ui, |ui| {
+                    for name in [
+                        "none", "rainbow", "confetti", "sinelon", "bpm", "juggle", "fire",
+                    ] {
+                        ui.selectable_value(&mut self.pattern, name.to_owned(), name);
+                    }
+                });
+            if ui.button("Apply effect").clicked() {
+                self.send(Command::Effect(self.endpoint(), self.pattern.clone()));
             }
         });
         ui.separator();
