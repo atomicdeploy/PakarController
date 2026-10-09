@@ -14,10 +14,6 @@ class LedGrid {
   enum Pattern : uint8_t {
     kPatternNone,
     kPatternRainbow,
-    kPatternConfetti,
-    kPatternSinelon,
-    kPatternBpm,
-    kPatternJuggle,
     kPatternFire,
   };
 

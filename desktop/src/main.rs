@@ -17,6 +17,7 @@ struct Endpoint {
 
 #[derive(Debug, Clone, Deserialize)]
 struct DeviceStatus {
+    version: String,
     hostname: String,
     ip: String,
     mode: String,
@@ -236,9 +237,7 @@ impl eframe::App for PakarControllerApp {
             egui::ComboBox::from_label("Strip effect")
                 .selected_text(&self.pattern)
                 .show_ui(ui, |ui| {
-                    for name in [
-                        "none", "rainbow", "confetti", "sinelon", "bpm", "juggle", "fire",
-                    ] {
+                    for name in ["none", "rainbow", "fire"] {
                         ui.selectable_value(&mut self.pattern, name.to_owned(), name);
                     }
                 });
@@ -271,6 +270,7 @@ impl eframe::App for PakarControllerApp {
         if let Some(status) = snapshot {
             ui.horizontal_wrapped(|ui| {
                 ui.label(RichText::new(&status.hostname).strong());
+                ui.label(format!("v{}", status.version));
                 ui.label(format!(
                     "{} • {} pixels • mode {}",
                     status.ip, status.pixels, status.mode

@@ -16,7 +16,7 @@ and Pealayer work.
 
 No I2C peripheral is enabled or required.
 
-See `docs/HARDWARE.md`, `docs/ARCHITECTURE.md`, `docs/API.md`, and
+See `docs/HARDWARE.md`, `docs/ARCHITECTURE.md`, `docs/API.md`, `docs/TOOLCHAIN.md`, and
 `docs/LEGACY-CODE-AUDIT.md` before wiring or flashing.
 
 The native Windows app is in `desktop/`. It deliberately has no mpv or

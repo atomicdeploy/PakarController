@@ -6,3 +6,4 @@ target/
 *.tmp
 *.log
 *.lst
+tools/arduino-cli.exe

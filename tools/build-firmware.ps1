@@ -2,15 +2,23 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $libraries = Join-Path $projectRoot 'libraries'
 $build = Join-Path $projectRoot 'build'
+$projectCli = Join-Path $PSScriptRoot 'arduino-cli.exe'
+$cli = if (Test-Path -LiteralPath $projectCli) {
+    $projectCli
+} else {
+    (Get-Command arduino-cli -ErrorAction Stop).Source
+}
 
-& arduino-cli compile `
+& $cli compile `
+    --clean `
     --fqbn 'MiniCore:avr:328:bootloader=uart0,eeprom=keep,baudrate=115200,variant=modelP,BOD=2v7,LTO=Os_flto,clock=16MHz_external' `
     --libraries $libraries `
     --output-dir (Join-Path $build 'avr') `
     (Join-Path $projectRoot 'firmware/avr')
 if ($LASTEXITCODE -ne 0) { throw 'AVR build failed' }
 
-& arduino-cli compile `
+& $cli compile `
+    --clean `
     --fqbn 'esp8266:esp8266:nodemcuv2:eesz=4M2M' `
     --libraries $libraries `
     --output-dir (Join-Path $build 'esp8266') `

@@ -80,10 +80,6 @@ void LedGrid::setPattern(Pattern pattern) {
 const char *LedGrid::patternName() const {
   switch (pattern_) {
     case kPatternRainbow: return "rainbow";
-    case kPatternConfetti: return "confetti";
-    case kPatternSinelon: return "sinelon";
-    case kPatternBpm: return "bpm";
-    case kPatternJuggle: return "juggle";
     case kPatternFire: return "fire";
     default: return "none";
   }
@@ -131,29 +127,6 @@ void LedGrid::renderPattern() {
   switch (pattern_) {
     case kPatternRainbow:
       fill_rainbow(pixels_, kPixels, hue_, 7);
-      break;
-    case kPatternConfetti:
-      fadeToBlackBy(pixels_, kPixels, 10);
-      pixels_[random16(kPixels)] += CHSV(hue_ + random8(64), 200, 255);
-      break;
-    case kPatternSinelon:
-      fadeToBlackBy(pixels_, kPixels, 20);
-      pixels_[beatsin16(13, 0, kPixels - 1)] += CHSV(hue_, 255, 192);
-      break;
-    case kPatternBpm: {
-      const uint8_t beat = beatsin8(62, 64, 255);
-      for (uint16_t i = 0; i < kPixels; ++i) {
-        pixels_[i] = ColorFromPalette(PartyColors_p, hue_ + i * 2,
-                                      beat - hue_ + i * 10);
-      }
-      break;
-    }
-    case kPatternJuggle:
-      fadeToBlackBy(pixels_, kPixels, 20);
-      for (uint8_t dot = 0; dot < 8; ++dot) {
-        pixels_[beatsin16(dot + 7, 0, kPixels - 1)] |=
-            CHSV(dot * 32, 200, 255);
-      }
       break;
     case kPatternFire:
       for (uint16_t i = 0; i < kPixels; ++i) {

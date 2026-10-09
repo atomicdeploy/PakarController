@@ -2,6 +2,7 @@
 #include <SoftwareSerial.h>
 #include <TM1637Display.h>
 
+#include <BuildInfo.h>
 #include <Protocol.h>
 #include <SerialLink.h>
 
@@ -51,8 +52,12 @@ void sendHello(uint8_t sequence = 0) {
   const uint16_t capabilities = kCapShiftInputs | kCapShiftOutputs | kCapAdc9 |
                                 kCapTm1637 | kCapBuzzer;
   const uint8_t payload[] = {
-      1, kRoleAvr, static_cast<uint8_t>(capabilities),
+      BoardCore::BuildInfo::kProtocolVersion, kRoleAvr,
+      static_cast<uint8_t>(capabilities),
       static_cast<uint8_t>(capabilities >> 8), 80, 9,
+      BoardCore::BuildInfo::kVersionMajor,
+      BoardCore::BuildInfo::kVersionMinor,
+      BoardCore::BuildInfo::kVersionPatch,
   };
   link.send(kHelloResponse, sequence, payload, sizeof(payload));
 }

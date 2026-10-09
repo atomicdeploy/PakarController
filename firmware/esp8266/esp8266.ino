@@ -7,6 +7,7 @@
 #include <SoftwareSerial.h>
 #include <WiFiUdp.h>
 
+#include <BuildInfo.h>
 #include <Protocol.h>
 #include <SerialLink.h>
 
@@ -70,7 +71,9 @@ const char *cellName(CellState state) {
 void sendStatusJson() {
   String body;
   body.reserve(900);
-  body += F("{\"hostname\":\""); body += hostname;
+  body += F("{\"version\":\""); body += BoardCore::BuildInfo::kVersion;
+  body += F("\",\"protocol_version\":"); body += BoardCore::BuildInfo::kProtocolVersion;
+  body += F(",\"hostname\":\""); body += hostname;
   body += F("\",\"ip\":\""); body += WiFi.softAPIP().toString();
   body += F("\",\"mode\":\""); body += modeName();
   body += F("\",\"avr_online\":"); body += avrOnline ? F("true") : F("false");
@@ -110,10 +113,6 @@ Effect parseEffect(const String &value) {
 
 LedGrid::Pattern parsePattern(const String &value) {
   if (value == F("rainbow")) return LedGrid::kPatternRainbow;
-  if (value == F("confetti")) return LedGrid::kPatternConfetti;
-  if (value == F("sinelon")) return LedGrid::kPatternSinelon;
-  if (value == F("bpm")) return LedGrid::kPatternBpm;
-  if (value == F("juggle")) return LedGrid::kPatternJuggle;
   if (value == F("fire")) return LedGrid::kPatternFire;
   return LedGrid::kPatternNone;
 }
@@ -365,8 +364,9 @@ void setup() {
   registerApi();
   updater.setup(&server, "/update", kAdmin, kDevelopmentPassword);
   server.begin();
-  Serial.printf("{\"device\":\"PakarController\",\"event\":\"boot\",\"hostname\":\"%s\"}\r\n",
-                hostname.c_str());
+  Serial.printf("{\"device\":\"PakarController\",\"version\":\"%s\","
+                "\"event\":\"boot\",\"hostname\":\"%s\"}\r\n",
+                BoardCore::BuildInfo::kVersion, hostname.c_str());
   link.send(kHello, sequence++);
 }
 
@@ -385,10 +385,12 @@ void loop() {
   if (static_cast<uint32_t>(now - lastDiagnosticAt) >= 1000) {
     lastDiagnosticAt = now;
     Serial.printf(
-        "{\"device\":\"PakarController\",\"avr_online\":%s,\"mode\":\"%s\","
+        "{\"device\":\"PakarController\",\"version\":\"%s\","
+        "\"avr_online\":%s,\"mode\":\"%s\","
         "\"winner\":%u,\"effect\":\"%s\",\"esp_uart_errors\":%u,"
         "\"avr_uart_errors\":%u}\r\n",
-        avrOnline ? "true" : "false", modeName(), winner, grid.patternName(),
+        BoardCore::BuildInfo::kVersion, avrOnline ? "true" : "false",
+        modeName(), winner, grid.patternName(),
         link.errors(), avrUartErrors);
   }
   yield();
