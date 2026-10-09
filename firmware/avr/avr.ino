@@ -7,6 +7,7 @@
 #include "BootMelody.h"
 #include "BoardPins.h"
 #include "PakarBoardConfig.h"
+#include "ProgrammingLatch.h"
 #include "SevenSegments.h"
 #include "ShiftRegisters.h"
 #include "TonePlayer.h"
@@ -35,6 +36,44 @@ bool tm1637Ack = false;
 uint8_t cellActionRevision = 0;
 uint8_t resetRevision = 0;
 Effect cellActionEffect = kEffectImmediate;
+
+void playAudioCue(AudioCue cue) {
+  buzzer.stop();
+  switch (cue) {
+    case kCueWelcome:
+      playBootMelody();
+      break;
+    case kCueUpdateStart:
+      buzzer.enqueue(NOTE_G5, 90);
+      buzzer.pause(45);
+      buzzer.enqueue(NOTE_E5, 90);
+      buzzer.pause(45);
+      buzzer.enqueue(NOTE_C5, 180);
+      break;
+    case kCueUpdateSuccess:
+      buzzer.enqueue(NOTE_C5, 80);
+      buzzer.pause(35);
+      buzzer.enqueue(NOTE_E5, 90);
+      buzzer.pause(35);
+      buzzer.enqueue(NOTE_G5, 170);
+      break;
+    case kCueError:
+      buzzer.error();
+      break;
+    case kCueWinner:
+      buzzer.enqueue(NOTE_C6, 90);
+      buzzer.pause(35);
+      buzzer.enqueue(NOTE_G6, 180);
+      break;
+  }
+}
+
+void applyProgrammingSafety() {
+  shiftRegisters.allOutputsOff();
+  buzzer.stop();
+  buzzer.setMuted(true);
+  display.showText(F("Prog"));
+}
 
 bool probeTm1637() {
   pinMode(BoardPins::Tm1637Clock, OUTPUT);
@@ -104,6 +143,7 @@ void sendGameState(uint8_t sequence = 0) {
       static_cast<uint8_t>(errors), static_cast<uint8_t>(errors >> 8),
       static_cast<uint8_t>(tm1637Ack),
       cellActionRevision, static_cast<uint8_t>(cellActionEffect), resetRevision,
+      static_cast<uint8_t>(programmingLatch.active()),
   };
   link.send(kGameState, sequence, payload, sizeof(payload));
 }
@@ -122,7 +162,7 @@ void resetGame() {
     selectedState = kCellWhite;
   }
   showState();
-  playBootMelody();
+  if (!programmingLatch.active()) playBootMelody();
 }
 
 void chooseWinner(uint8_t button) {
@@ -161,6 +201,12 @@ void onInputChanged(uint8_t button, bool pressed) {
 }
 
 void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
+  if (programmingLatch.active() && frame.opcode != kHello &&
+      frame.opcode != kGetStatus && frame.opcode != kProgrammingState &&
+      frame.opcode != kPing) {
+    link.error(frame.sequence, frame.opcode, kUnsafe);
+    return;
+  }
   switch (frame.opcode) {
     case kHello:
       sendHello(frame.sequence);
@@ -216,6 +262,16 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
           static_cast<uint16_t>(frame.payload[2] | frame.payload[3] << 8));
       link.ack(frame.sequence, frame.opcode);
       break;
+    case kAudioCue:
+      if (frame.payloadLength != 1 || frame.payload[0] > kCueWinner ||
+          programmingLatch.active()) {
+        link.error(frame.sequence, frame.opcode,
+                   programmingLatch.active() ? kUnsafe : kBadPayload);
+        break;
+      }
+      playAudioCue(static_cast<AudioCue>(frame.payload[0]));
+      link.ack(frame.sequence, frame.opcode);
+      break;
     case kDisplayText:
       if (frame.payloadLength != 2) {
         link.error(frame.sequence, frame.opcode, kBadPayload);
@@ -228,6 +284,23 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       break;
     case kPing:
       link.send(kPong, frame.sequence, frame.payload, frame.payloadLength);
+      break;
+    case kProgrammingState:
+      if (frame.payloadLength != 1 || frame.payload[0] > 1) {
+        link.error(frame.sequence, frame.opcode, kBadPayload);
+        break;
+      }
+      if (!programmingLatch.set(frame.payload[0] != 0)) {
+        link.error(frame.sequence, frame.opcode, kHardwareUnavailable);
+        break;
+      }
+      if (programmingLatch.active()) {
+        applyProgrammingSafety();
+      } else {
+        buzzer.setMuted(false);
+        resetGame();
+      }
+      link.ack(frame.sequence, frame.opcode);
       break;
     default:
       link.error(frame.sequence, frame.opcode, kUnsupported);
@@ -274,14 +347,16 @@ void setup() {
   shiftRegisters.begin();
   buzzer.begin(BoardPins::Buzzer);
   display.begin(5);
-  showState();
+  programmingLatch.begin();
+  if (programmingLatch.active()) applyProgrammingSafety();
+  else showState();
   link.begin(kBaud, handleFrame);
-  playBootMelody();
+  if (!programmingLatch.active()) playBootMelody();
 }
 
 void loop() {
   const uint32_t now = millis();
   link.service();
-  serviceInputs(now);
+  if (!programmingLatch.active()) serviceInputs(now);
   buzzer.update(now);
 }

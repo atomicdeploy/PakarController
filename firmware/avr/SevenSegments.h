@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-// Compact fixed-pin TM1637 display with segment-level output caching and
-// fixed-point rendering.
+// Compact PuzzleBoard TM1637 display on A4/SDA (DIO) and A5/SCL (CLK), with
+// segment-level output caching and fixed-point rendering.
 class SevenSegments {
 public:
   void begin(uint8_t brightness = 5);

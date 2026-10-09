@@ -16,6 +16,8 @@ public installation.
 | POST | `/api/v1/buzzer` | form `frequency=20..12000`, `duration_ms=1..5000` |
 | POST | `/api/v1/display` | form `value=-999..9999` for the AVR TM1637 |
 | POST | `/api/v1/outputs` | form `mask=0..255` for direct 74HC595 diagnostics |
+| GET | `/api/v1/network` | AP/station state without returning credentials |
+| POST | `/api/v1/network` | form `station_enabled`, `ssid`, `password`; persist and apply AP+station configuration |
 | GET | `/api/v1/avr/probe` | read and validate ATmega328P signature through ISP |
 | POST | `/api/v1/avr/backup` | store flash, EEPROM, fuses, and lock byte in LittleFS |
 | GET | `/api/v1/avr/backup/flash` | download the last 32 KiB raw flash backup |
@@ -29,3 +31,8 @@ ASCII magic bytes, two reserved/version bytes, little-endian pixel offset,
 one pixel count, one flags byte, then RGB triples. Bit zero of flags commits
 the staged frame. A packet is rejected unless its exact size and pixel range
 are valid.
+
+`/api/v1/avr/program` also provides the audible start/success boundary and
+durable `Prog` safety latch. The status record exposes `programming_latch`,
+`tm1637_ack`, AP and station addresses, station association, and separate ESP
+and AVR UART error counters. Passwords are never returned.

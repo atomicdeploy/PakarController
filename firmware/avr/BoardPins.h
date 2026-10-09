@@ -13,8 +13,8 @@ constexpr uint8_t ShiftDataIn = PIN_PC0;       // A0, 74HC165 QH
 constexpr uint8_t ShiftOutputLatch = PIN_PC1;  // A1, 74HC595 RCLK
 constexpr uint8_t ShiftClock = PIN_PC2;        // A2, shared clock
 constexpr uint8_t ShiftDataOut = PIN_PC3;      // A3, 74HC595 SER
-constexpr uint8_t I2cSda = PIN_PC4;            // A4 / SDA
-constexpr uint8_t I2cScl = PIN_PC5;            // A5 / SCL
+constexpr uint8_t I2cSda = PIN_PC4;            // A4 / SDA (no I2C device fitted)
+constexpr uint8_t I2cScl = PIN_PC5;            // A5 / SCL (no I2C device fitted)
 constexpr uint8_t ShiftInputLoad = PIN_PD4;    // D4, 74HC165 /PL
 constexpr uint8_t ShiftMasterReset = PIN_PD5;  // D5, 74HC595 /SRCLR
 constexpr uint8_t ShiftClockEnable = PIN_PD7;  // D7, 74HC165 /CE
@@ -22,14 +22,19 @@ constexpr uint8_t ShiftOutputEnable = PIN_PB0; // D8, 74HC595 /OE
 
 constexpr uint8_t Buzzer = PIN_PB1;            // D9
 constexpr uint8_t OneWireData = PIN_PB2;       // D10/CS; DS18B20 bus needs a 4.7k pull-up to VCC
-constexpr uint8_t Tm1637Data = PIN_PB3;        // D11 / MOSI
+// PuzzleBoard wiring deliberately reuses the labelled SDA/SCL header for the
+// TM1637's two-wire (non-I2C) bus. Keep D11..D13 dedicated to in-system
+// programming so the display cannot load the ISP clock/data lines.
+constexpr uint8_t Tm1637Data = I2cSda;          // A4 / SDA -> DIO
 constexpr uint8_t RcTransmit = PIN_PD3;         // D3 / INT1, 433 MHz transmitter
-constexpr uint8_t Tm1637Clock = PIN_PB5;       // D13 / SCK
+constexpr uint8_t Tm1637Clock = I2cScl;         // A5 / SCL -> CLK
 constexpr uint8_t RcReceive = PIN_PD2;          // D2 / INT0, 433 MHz receiver
 
-// D12 remains available for future expansion. The addressable LED output owns
-// D6 (PD6).
-constexpr uint8_t SparePin = PIN_PB4;
+// D11..D13 remain the dedicated MOSI/MISO/SCK programming path. The
+// addressable LED output owns D6 (PD6) for comparative AVR diagnostics only.
+constexpr uint8_t IspMosi = PIN_PB3;
+constexpr uint8_t IspMiso = PIN_PB4;
+constexpr uint8_t IspClock = PIN_PB5;
 constexpr uint8_t AddressableLed = PIN_PD6;     // D6, WS2811 / WS2812B data
 
 // The first four active-low 74HC165 bits drive the menu. Inputs 4 and 5 are

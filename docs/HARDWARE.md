@@ -47,22 +47,40 @@ ATmega328P signature `1E 95 0F`.
 | D7 / PD7 | 74HC165 clock enable |
 | D8 / PB0 | 74HC595 output enable |
 | D9 / PB1 | buzzer |
-| D11 / PB3 | TM1637 DIO and ISP MOSI |
-| D13 / PB5 | TM1637 CLK and ISP SCK |
+| A4 / PC4 / SDA | TM1637 DIO (two-wire TM bus, not I2C) |
+| A5 / PC5 / SCL | TM1637 CLK (two-wire TM bus, not I2C) |
+| D11 / PB3 | dedicated ISP MOSI |
+| D12 / PB4 | dedicated ISP MISO |
+| D13 / PB5 | dedicated ISP SCK |
 | D0 / PD0 / RXD | Hardware UART RX from ESP D0/GPIO16 |
 | D1 / PD1 / TXD | Hardware UART TX to level shifter then ESP D4/GPIO2 when required |
 | ADC6 | ninth active-low/threshold button |
 
-The TM1637 shares MOSI/SCK because that is the proven ControllerBoardMini
-wiring. During ISP the AVR is held in reset; display activity is undefined but
-must not affect flash correctness. The current physical ISP read/write already
-succeeded with this board topology.
+PuzzleBoard, rather than ControllerBoardMini, is authoritative for this
+display connector: `SDA/A4 -> DIO` and `SCL/A5 -> CLK`. The labels describe the
+header positions only; TM1637 is not I2C and no I2C module is enabled. The
+independent live probe now receives a TM1637 ACK on these pins. Connect module
+GND to the shared ground and power its VCC from the same 3.3 V test rail.
 
-The imported PCController driver and an independent ACK probe both use exactly
-`DIO -> D11/PB3` and `CLK -> D13/PB5`. The current module does not acknowledge,
-so check these two wires for reversal, connect module GND to the shared ground,
-and power its VCC from the same 3.3 V rail for this test. Do not power a module
-whose DIO pull-up goes to 5 V while it is directly connected to a 3.3 V AVR.
+The ISP path remains isolated on D11-D13 and has completed an integrated
+32-KiB write plus byte verification while the full PakarController ESP
+application remained installed.
+
+## Current bench wiring chart
+
+| From | To | Purpose / state |
+|---|---|---|
+| NodeMCU D5 / GPIO14 | AVR D13 / PB5 | ISP SCK, verified |
+| NodeMCU D6 / GPIO12 | AVR D12 / PB4 | ISP MISO, verified |
+| NodeMCU D7 / GPIO13 | AVR D11 / PB3 | ISP MOSI, verified |
+| NodeMCU D1 / GPIO5 | AVR RESET | active-low/open-drain reset, verified |
+| NodeMCU D0 / GPIO16 | AVR D0 / PD0 / RXD | ESP SoftwareSerial TX to AVR hardware UART RX |
+| AVR D1 / PD1 / TXD | NodeMCU D4 / GPIO2 | AVR hardware UART TX to ESP SoftwareSerial RX |
+| NodeMCU D2 / GPIO4 | WS2811 DIN | full-brightness rainbow verified directly at 3.3 V |
+| AVR A4 / PC4 / SDA | TM1637 DIO | ACK verified |
+| AVR A5 / PC5 / SCL | TM1637 CLK | ACK verified |
+| AVR D9 / PB1 | buzzer signal | Timer1 melody output, audible |
+| all controller grounds | common ground | required reference |
 
 ## UART connection gate
 

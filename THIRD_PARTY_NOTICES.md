@@ -1,8 +1,6 @@
 # Third-party notices
 
-PakarController is original integration code informed by earlier
-AtomicDeploy projects. No pu850-esp source was copied because that repository
-does not currently carry a license file.
+PakarController is integration code built from earlier AtomicDeploy projects.
 
 - `firmware/avr/BoardPins.h`, `ShiftRegisters.*`, `SevenSegments.*`,
   `TonePlayer.*`, `pitches.h`, and `BootMelody.*` are imported from
@@ -14,6 +12,12 @@ does not currently carry a license file.
   authoritative.
 - The desktop app's native palette strategy and dependency choices are adapted
   from the MIT-licensed Pealayer project by its contributors.
+- The AP+station lifecycle, independent flash-backed network configuration,
+  build entrypoints, and CI layout are adapted from AtomicDeploy pu850-esp
+  commit `431104072952f694a35b3a83c19f13fbb098ca5b`. PU product/business logic
+  and its legacy UART payload implementation are not included. The source
+  repository has no standalone license file; this reuse is recorded explicitly
+  because both repositories are owner-directed AtomicDeploy work.
 - FastLED, Arduino ESP8266 core, MiniCore, eframe/egui, reqwest, and
   serde are build/runtime dependencies under their respective upstream terms;
   their sources are not vendored here.

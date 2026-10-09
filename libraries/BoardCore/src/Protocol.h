@@ -20,12 +20,14 @@ enum Opcode : uint8_t {
   kGetStatus = 0x02,
   kSetStreamPeriod = 0x03,
   kBuzzer = 0x10,
+  kAudioCue = 0x11,
   kDisplayText = 0x38,
   kSetMode = 0x4B,
   kCellAction = 0x4C,
   kGameReset = 0x4D,
   kOutputMask = 0x4E,
   kPing = 0x4F,
+  kProgrammingState = 0x50,
 
   kAck = 0x80,
   kHelloResponse = 0x81,
@@ -51,6 +53,14 @@ enum DeviceRole : uint8_t { kRoleAvr = 1, kRoleEsp = 2, kRoleHost = 3 };
 enum GameMode : uint8_t { kModeIdle = 0, kModeCellSelect = 1, kModeFirstWins = 2 };
 enum CellState : uint8_t { kCellWhite = 0, kCellRed = 1, kCellOff = 2 };
 enum Effect : uint8_t { kEffectImmediate = 0, kEffectFade = 1, kEffectPulse = 2 };
+
+enum AudioCue : uint8_t {
+  kCueWelcome = 0,
+  kCueUpdateStart = 1,
+  kCueUpdateSuccess = 2,
+  kCueError = 3,
+  kCueWinner = 4,
+};
 
 enum Capability : uint16_t {
   kCapShiftInputs = 1U << 0,

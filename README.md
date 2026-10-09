@@ -30,7 +30,12 @@ On the Windows hardware host with Arduino CLI, MiniCore, and FastLED installed:
 
 ```powershell
 .\tools\build-firmware.ps1
+# PU850-style repository entrypoint; also runs the protocol tests
+.\build.cmd
 ```
+
+Linux/CI uses `./build.sh`; both entrypoints produce the same two firmware
+targets and require the merged AVR+Urboot artifact to be exactly 32 KiB.
 
 The script compiles the ESP8266 image and the exact MiniCore ATmega328P target,
 then verifies that `build/avr/avr.ino.with_bootloader.bin` is a complete 32 KiB

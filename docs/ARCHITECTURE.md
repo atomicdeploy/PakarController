@@ -49,7 +49,8 @@ the final physical strip layout.
 
 ## Programming and storage modes
 
-ESP operation is mutually exclusive:
+The installed ESP image always contains every service. Runtime ownership is
+temporarily exclusive only while ISP holds the AVR in reset:
 
 1. normal UART protocol + LED/UI service;
 2. AVR ISP backup/program/verify while AVR is held in reset;
@@ -59,7 +60,15 @@ ESP operation is mutually exclusive:
 LittleFS stores a 32 KiB merged Urboot+application image, 1 KiB EEPROM image,
 fuse/lock metadata, and a previous-good backup. Programming requires a valid
 ATmega328P signature and a complete 32,768-byte raw image. It backs up first,
-does not write fuses, and verifies every flash byte.
+does not write fuses, and verifies every flash byte. Before ordinary updates,
+the ESP plays the AVR update-start cue and arms a checksum-backed EEPROM
+`Prog` latch. While latched the AVR keeps shift outputs off, ignores game
+commands and keys, mutes ordinary boot audio, and holds `Prog` on TM1637. The
+ESP clears the latch only after byte verification and recovered UART identity,
+then plays the success cue. The initial migration from the pre-latch image is
+the sole compatibility exception: it uses the legacy tone command after a full
+backup, installs the latch-capable image, and proves arm/clear before reporting
+success.
 
 ## Network surfaces
 
@@ -67,6 +76,9 @@ does not write fuses, and verifies every flash byte.
 - REST status, mode, cell, game reset, AVR backup/program, and artifact routes;
 - HTTP self-OTA for ESP firmware;
 - bounded UDP LED-frame chunks for live Wi-Fi rendering;
+- simultaneous AP+station operation derived from the useful PU850 network
+  policy: the recovery AP remains available even when station association
+  fails; checksum-backed LittleFS settings never block boot;
 - mDNS identity and SoftAP fallback.
 - one JSON health record per second on the NodeMCU hardware USB UART. The
   NodeMCU uses SoftwareSerial for the board link while the AVR uses UART0.
@@ -82,5 +94,6 @@ Diagnostics report raw UART byte/frame counters, TM1637 acknowledgement, and
 GPIO2 idle level so electrical failures are distinguishable from protocol
 errors.
 
-State-changing endpoints require authentication. First-boot development
+USB console station provisioning uses `@SSID<TAB>PASSWORD<ENTER>` and never
+echoes the password. State-changing endpoints require authentication. First-boot development
 credentials are temporary and must be replaced before installation.

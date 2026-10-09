@@ -28,27 +28,27 @@ inline void busDelay() {
 }
 
 inline void clockLow() {
-#if defined(__AVR__) && defined(PORTB) && defined(DDB5)
-  PORTB &= static_cast<uint8_t>(~_BV(PORTB5));
-  DDRB |= _BV(DDB5);
+#if defined(__AVR__) && defined(PORTC) && defined(DDC5)
+  PORTC &= static_cast<uint8_t>(~_BV(PORTC5));
+  DDRC |= _BV(DDC5);
 #else
   digitalWrite(BoardPins::Tm1637Clock, LOW);
 #endif
 }
 
 inline void clockHigh() {
-#if defined(__AVR__) && defined(PORTB) && defined(DDB5)
-  PORTB |= _BV(PORTB5);
-  DDRB |= _BV(DDB5);
+#if defined(__AVR__) && defined(PORTC) && defined(DDC5)
+  PORTC |= _BV(PORTC5);
+  DDRC |= _BV(DDC5);
 #else
   digitalWrite(BoardPins::Tm1637Clock, HIGH);
 #endif
 }
 
 inline void dataLow() {
-#if defined(__AVR__) && defined(PORTB) && defined(DDB3)
-  PORTB &= static_cast<uint8_t>(~_BV(PORTB3));
-  DDRB |= _BV(DDB3);
+#if defined(__AVR__) && defined(PORTC) && defined(DDC4)
+  PORTC &= static_cast<uint8_t>(~_BV(PORTC4));
+  DDRC |= _BV(DDC4);
 #else
   pinMode(BoardPins::Tm1637Data, OUTPUT);
   digitalWrite(BoardPins::Tm1637Data, LOW);
@@ -56,9 +56,9 @@ inline void dataLow() {
 }
 
 inline void dataHigh() {
-#if defined(__AVR__) && defined(PORTB) && defined(DDB3)
-  PORTB |= _BV(PORTB3);
-  DDRB |= _BV(DDB3);
+#if defined(__AVR__) && defined(PORTC) && defined(DDC4)
+  PORTC |= _BV(PORTC4);
+  DDRC |= _BV(DDC4);
 #else
   pinMode(BoardPins::Tm1637Data, OUTPUT);
   digitalWrite(BoardPins::Tm1637Data, HIGH);
@@ -66,9 +66,9 @@ inline void dataHigh() {
 }
 
 inline void releaseData() {
-#if defined(__AVR__) && defined(PORTB) && defined(DDB3)
-  PORTB &= static_cast<uint8_t>(~_BV(PORTB3));
-  DDRB &= static_cast<uint8_t>(~_BV(DDB3));
+#if defined(__AVR__) && defined(PORTC) && defined(DDC4)
+  PORTC &= static_cast<uint8_t>(~_BV(PORTC4));
+  DDRC &= static_cast<uint8_t>(~_BV(DDC4));
 #else
   pinMode(BoardPins::Tm1637Data, INPUT);
   digitalWrite(BoardPins::Tm1637Data, LOW);

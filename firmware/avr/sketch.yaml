@@ -1,0 +1,9 @@
+profiles:
+  atmega328p:
+    notes: PakarController AVR with Urboot
+    fqbn: MiniCore:avr:328:bootloader=uart0,eeprom=keep,baudrate=115200,variant=modelP,BOD=2v7,LTO=Os_flto,clock=16MHz_external
+    platforms:
+      - platform: MiniCore:avr (3.1.3)
+        platform_index_url: https://mcudude.github.io/MiniCore/package_MCUdude_MiniCore_index.json
+    libraries:
+      - dir: ../../libraries/BoardCore

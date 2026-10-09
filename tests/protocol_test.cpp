@@ -7,6 +7,12 @@
 using namespace BoardCore::Protocol;
 
 int main() {
+  static_assert(kAudioCue == 0x11, "audio cue opcode changed");
+  static_assert(kProgrammingState == 0x50,
+                "programming latch opcode changed");
+  static_assert(kCueUpdateStart != kCueUpdateSuccess,
+                "update cues must be distinguishable");
+
   Frame original = {};
   original.opcode = kCellAction;
   original.sequence = 0;

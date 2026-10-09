@@ -22,6 +22,20 @@ struct DeviceStatus {
     ip: String,
     mode: String,
     avr_online: bool,
+    #[serde(default)]
+    ap_started: bool,
+    #[serde(default)]
+    ap_ip: String,
+    #[serde(default)]
+    station_connected: bool,
+    #[serde(default)]
+    station_ip: String,
+    #[serde(default)]
+    station_rssi: i16,
+    #[serde(default)]
+    tm1637_ack: bool,
+    #[serde(default)]
+    programming_latch: bool,
     winner: u8,
     selected_cell: u8,
     brightness: u8,
@@ -291,9 +305,39 @@ impl eframe::App for PakarControllerApp {
                         "AVR offline"
                     },
                 );
+                ui.colored_label(
+                    if status.tm1637_ack {
+                        Color32::LIGHT_GREEN
+                    } else {
+                        Color32::LIGHT_RED
+                    },
+                    if status.tm1637_ack {
+                        "TM1637 ready"
+                    } else {
+                        "TM1637 not responding"
+                    },
+                );
+                if status.programming_latch {
+                    ui.colored_label(Color32::GOLD, "AVR update latch active");
+                }
                 if status.winner != 0 {
                     ui.colored_label(Color32::GOLD, format!("Winner: {}", status.winner));
                 }
+            });
+            ui.horizontal_wrapped(|ui| {
+                ui.label(if status.ap_started {
+                    format!("Recovery AP {}", status.ap_ip)
+                } else {
+                    "Recovery AP stopped".to_owned()
+                });
+                ui.label(if status.station_connected {
+                    format!(
+                        "Station {} ({} dBm)",
+                        status.station_ip, status.station_rssi
+                    )
+                } else {
+                    "Station disconnected".to_owned()
+                });
             });
             ui.label(format!("Selected cell: {}", status.selected_cell));
             ui.add_space(8.0);

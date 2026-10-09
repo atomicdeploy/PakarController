@@ -5,6 +5,7 @@
 #include <ESP8266mDNS.h>
 #include <LittleFS.h>
 #include <SoftwareSerial.h>
+#include <Updater.h>
 #include <WiFiUdp.h>
 
 #include <BuildInfo.h>
@@ -13,6 +14,7 @@
 
 #include "src/AvrIsp.h"
 #include "src/LedGrid.h"
+#include "src/NetworkConfig.h"
 #include "src/WebUi.h"
 
 using namespace BoardCore::Protocol;
@@ -25,6 +27,16 @@ constexpr char kAdmin[] = "admin";
 constexpr char kDevelopmentPassword[] = "pakarcontroller";
 constexpr char kAvrImagePath[] = "/avr/staged.bin";
 constexpr char kBackupDirectory[] = "/avr/backup";
+constexpr char kLedPreferencesPath[] = "/led.cfg";
+
+struct LedPreferences {
+  uint8_t magic0;
+  uint8_t magic1;
+  uint8_t schema;
+  uint8_t pattern;
+  uint8_t brightness;
+  uint8_t check;
+};
 
 ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer updater;
@@ -53,6 +65,55 @@ bool gameStateInitialized = false;
 bool streamFrameReady = false;
 uint8_t lastCellActionRevision = 0;
 uint8_t lastResetRevision = 0;
+bool programmingLatched = false;
+bool awaitedReplySeen = false;
+bool awaitedReplyOk = false;
+uint8_t awaitedSequence = 0;
+uint8_t awaitedOpcode = 0;
+String consoleLine;
+bool consoleLineMode = false;
+bool networkApplyPending = false;
+uint32_t networkApplyAt = 0;
+
+uint8_t ledPreferencesCheck(const LedPreferences &value) {
+  return static_cast<uint8_t>(value.magic0 ^ value.magic1 ^ value.schema ^
+                              value.pattern ^ value.brightness ^ 0xA5U);
+}
+
+void saveLedPreferences() {
+  LedPreferences value = {0x50, 0x4C, 1, static_cast<uint8_t>(grid.pattern()),
+                          grid.brightness(), 0};
+  value.check = ledPreferencesCheck(value);
+  File file = LittleFS.open(kLedPreferencesPath, "w");
+  if (file) {
+    file.write(reinterpret_cast<const uint8_t *>(&value), sizeof(value));
+    file.close();
+  }
+}
+
+void loadLedPreferences() {
+  File file = LittleFS.open(kLedPreferencesPath, "r");
+  if (!file) return;
+  LedPreferences value{};
+  const bool complete = file.read(reinterpret_cast<uint8_t *>(&value),
+                                  sizeof(value)) == sizeof(value);
+  file.close();
+  if (!complete || value.magic0 != 0x50 || value.magic1 != 0x4C ||
+      value.schema != 1 || value.pattern > LedGrid::kPatternFire ||
+      value.brightness == 0 || value.check != ledPreferencesCheck(value)) {
+    return;
+  }
+  grid.setBrightness(value.brightness);
+  grid.setPattern(static_cast<LedGrid::Pattern>(value.pattern));
+}
+
+void applyNetworkConfig() {
+  MDNS.close();
+  apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
+  MDNS.begin(hostname.c_str());
+  MDNS.addService("http", "tcp", 80);
+  MDNS.addService("pakarcontroller", "udp", kStreamPort);
+}
 
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
                const uint8_t *payload = nullptr, uint8_t payloadLength = 0) {
@@ -63,6 +124,74 @@ bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
     ledResumeAt = millis() + 12U;
   }
   return sent;
+}
+
+void serviceAvrFor(uint32_t durationMs) {
+  const uint32_t startedAt = millis();
+  do {
+    link.service();
+    delay(1);
+    yield();
+  } while (static_cast<uint32_t>(millis() - startedAt) < durationMs);
+}
+
+bool requestAndWaitForAck(uint8_t opcode, const uint8_t *payload = nullptr,
+                          uint8_t payloadLength = 0,
+                          uint16_t timeoutMs = 750) {
+  awaitedSequence = sequence++;
+  awaitedOpcode = opcode;
+  awaitedReplySeen = false;
+  awaitedReplyOk = false;
+  if (!sendToAvr(opcode, awaitedSequence, payload, payloadLength)) return false;
+  const uint32_t startedAt = millis();
+  while (!awaitedReplySeen &&
+         static_cast<uint32_t>(millis() - startedAt) < timeoutMs) {
+    link.service();
+    delay(1);
+    yield();
+  }
+  return awaitedReplySeen && awaitedReplyOk;
+}
+
+bool waitForAvr(uint16_t timeoutMs = 2500) {
+  avrOnline = false;
+  const uint32_t startedAt = millis();
+  uint32_t lastHello = 0;
+  while (!avrOnline && static_cast<uint32_t>(millis() - startedAt) < timeoutMs) {
+    const uint32_t now = millis();
+    if (lastHello == 0 || static_cast<uint32_t>(now - lastHello) >= 250U) {
+      lastHello = now;
+      sendToAvr(kHello, sequence++);
+    }
+    link.service();
+    delay(1);
+    yield();
+  }
+  return avrOnline;
+}
+
+bool playUpdateStartCue() {
+  const uint8_t cue[] = {kCueUpdateStart};
+  if (requestAndWaitForAck(kAudioCue, cue, sizeof(cue))) {
+    serviceAvrFor(520);
+    return true;
+  }
+  const uint8_t legacyCue[] = {0x10, 0x03, 0x2C, 0x01};  // 784 Hz, 300 ms
+  const bool ok = requestAndWaitForAck(kBuzzer, legacyCue, sizeof(legacyCue));
+  if (ok) serviceAvrFor(350);
+  return ok;
+}
+
+void playUpdateSuccessCue() {
+  const uint8_t cue[] = {kCueUpdateSuccess};
+  if (requestAndWaitForAck(kAudioCue, cue, sizeof(cue))) {
+    serviceAvrFor(350);
+    return;
+  }
+  const uint8_t legacyCue[] = {0x20, 0x06, 0xDC, 0x00};  // 1568 Hz, 220 ms
+  if (requestAndWaitForAck(kBuzzer, legacyCue, sizeof(legacyCue))) {
+    serviceAvrFor(250);
+  }
 }
 
 bool authenticate() {
@@ -97,6 +226,12 @@ void sendStatusJson() {
   body += F("\",\"mode\":\""); body += modeName();
   body += F("\",\"avr_online\":"); body += avrOnline ? F("true") : F("false");
   body += F(",\"ap_started\":"); body += apStarted ? F("true") : F("false");
+  body += F(",\"ap_ip\":\""); body += WiFi.softAPIP().toString(); body += '"';
+  body += F(",\"station_enabled\":"); body += networkConfig.stationEnabled() ? F("true") : F("false");
+  body += F(",\"station_connected\":"); body += networkConfig.stationConnected() ? F("true") : F("false");
+  body += F(",\"station_ssid\":\""); body += networkConfig.stationSsid(); body += '"';
+  body += F(",\"station_ip\":\""); body += WiFi.localIP().toString(); body += '"';
+  body += F(",\"station_rssi\":"); body += networkConfig.stationConnected() ? WiFi.RSSI() : 0;
   body += F(",\"winner\":"); body += winner;
   body += F(",\"selected_cell\":"); body += selectedCell;
   body += F(",\"brightness\":"); body += grid.brightness();
@@ -104,6 +239,7 @@ void sendStatusJson() {
   body += F(",\"esp_uart_errors\":"); body += link.errors();
   body += F(",\"avr_uart_errors\":"); body += avrUartErrors;
   body += F(",\"tm1637_ack\":"); body += tm1637Ack ? F("true") : F("false");
+  body += F(",\"programming_latch\":"); body += programmingLatched ? F("true") : F("false");
   body += F(",\"uart_bytes_received\":"); body += link.bytesReceived();
   body += F(",\"uart_frames_received\":"); body += link.framesReceived();
   body += F(",\"pixels\":"); body += LedGrid::kPixels;
@@ -143,6 +279,12 @@ LedGrid::Pattern parsePattern(const String &value) {
 void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
   avrOnline = true;
   lastAvrFrameAt = millis();
+  if ((frame.opcode == kAck || frame.opcode == kErrorResponse) &&
+      frame.sequence == awaitedSequence && frame.payloadLength >= 2 &&
+      frame.payload[0] == awaitedOpcode) {
+    awaitedReplySeen = true;
+    awaitedReplyOk = frame.opcode == kAck && frame.payload[1] == kNoError;
+  }
   if (frame.opcode == kHelloResponse) {
     sendToAvr(kGetStatus, sequence++);
   } else if (frame.opcode == kGameState && frame.payloadLength >= 4) {
@@ -176,6 +318,9 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       lastResetRevision = currentResetRevision;
       gameStateInitialized = true;
     }
+    if (frame.payloadLength >= 14) {
+      programmingLatched = frame.payload[13] != 0;
+    }
     if (mode == kModeFirstWins && winner != 0 && winner != previousWinner) {
       grid.showWinner(winner);
     }
@@ -206,6 +351,7 @@ void registerApi() {
     mode = requested;
     winner = 0;
     grid.resetWhite();
+    saveLedPreferences();
     const uint8_t payload[] = {static_cast<uint8_t>(mode)};
     sendToAvr(kSetMode, sequence++, payload, sizeof(payload));
     server.send(202, "application/json", "{\"accepted\":true}");
@@ -220,6 +366,7 @@ void registerApi() {
     const CellState state = parseCellState(server.arg("state"));
     const Effect effect = parseEffect(server.arg("effect"));
     grid.setCell(id, state, effect);
+    saveLedPreferences();
     selectedCell = id;
     selectedState = state;
     const uint8_t payload[] = {static_cast<uint8_t>(id), static_cast<uint8_t>(state),
@@ -231,6 +378,7 @@ void registerApi() {
     if (!authenticate()) return;
     winner = 0;
     grid.resetWhite();
+    saveLedPreferences();
     sendToAvr(kGameReset, sequence++);
     server.send(202, "application/json", "{\"accepted\":true}");
   });
@@ -242,6 +390,7 @@ void registerApi() {
       return;
     }
     grid.setBrightness(value);
+    saveLedPreferences();
     server.send(200, "application/json", "{\"updated\":true}");
   });
   server.on("/api/v1/effect", HTTP_POST, []() {
@@ -253,6 +402,7 @@ void registerApi() {
       return;
     }
     grid.setPattern(pattern);
+    saveLedPreferences();
     server.send(200, "application/json", "{\"updated\":true}");
   });
   server.on("/api/v1/buzzer", HTTP_POST, []() {
@@ -295,6 +445,33 @@ void registerApi() {
     sendToAvr(kOutputMask, sequence++, payload, sizeof(payload));
     server.send(202, "application/json", "{\"accepted\":true}");
   });
+  server.on("/api/v1/network", HTTP_GET, []() {
+    if (!authenticate()) return;
+    String body = F("{\"station_enabled\":");
+    body += networkConfig.stationEnabled() ? F("true") : F("false");
+    body += F(",\"station_connected\":");
+    body += networkConfig.stationConnected() ? F("true") : F("false");
+    body += F(",\"station_ssid\":\""); body += networkConfig.stationSsid();
+    body += F("\",\"station_ip\":\""); body += WiFi.localIP().toString();
+    body += F("\",\"ap_ip\":\""); body += WiFi.softAPIP().toString();
+    body += F("\"}");
+    server.send(200, "application/json", body);
+  });
+  server.on("/api/v1/network", HTTP_POST, []() {
+    if (!authenticate()) return;
+    const bool enabled = server.arg("station_enabled") != F("false") &&
+                         server.arg("station_enabled") != F("0");
+    if (!networkConfig.setStation(server.arg("ssid"), server.arg("password"),
+                                  enabled) || !networkConfig.save()) {
+      server.send(400, "text/plain", networkConfig.lastError());
+      return;
+    }
+    server.send(202, "application/json", "{\"accepted\":true}");
+    // Flush the response through the old interface before changing station
+    // association. The recovery AP remains active throughout the reconfigure.
+    networkApplyAt = millis() + 250U;
+    networkApplyPending = true;
+  });
 
   server.on("/api/v1/avr/probe", HTTP_GET, []() {
     if (!authenticate()) return;
@@ -336,14 +513,56 @@ void registerApi() {
       server.send(400, "text/plain", "store one complete 32768-byte AVR image first");
       return;
     }
+    const LedGrid::Pattern patternBeforeUpdate = grid.pattern();
     if (!avrIsp.backup(LittleFS, kBackupDirectory)) {
       image.close();
       server.send(500, "text/plain", String("backup failed: ") + avrIsp.lastError());
       return;
     }
+    if (!waitForAvr()) {
+      image.close();
+      server.send(500, "text/plain", "backup succeeded but AVR UART did not return");
+      return;
+    }
+    // One-time migration accepts the original tone opcode; current images use
+    // the richer cue command. Both paths finish before ISP reset asserts.
+    if (!playUpdateStartCue()) {
+      image.close();
+      server.send(500, "text/plain", "AVR rejected both update cue formats");
+      return;
+    }
+    const uint8_t armed[] = {1};
+    const bool latchArmed =
+        requestAndWaitForAck(kProgrammingState, armed, sizeof(armed));
+    // The first migration image has no latch opcode. A complete ISP backup is
+    // already durable, so allow that one transition; every resulting and
+    // subsequent PakarController AVR image must prove the latch below.
+    programmingLatched = latchArmed;
     const bool ok = avrIsp.programFlash(image);
     image.close();
     if (!ok) { server.send(500, "text/plain", avrIsp.lastError()); return; }
+    if (!waitForAvr()) {
+      server.send(500, "text/plain",
+                  "flash verified but the AVR did not return; Prog remains latched");
+      return;
+    }
+    if (!latchArmed &&
+        !requestAndWaitForAck(kProgrammingState, armed, sizeof(armed))) {
+      server.send(500, "text/plain",
+                  "flash verified but the new AVR Prog latch did not verify");
+      return;
+    }
+    programmingLatched = true;
+    const uint8_t released[] = {0};
+    if (!requestAndWaitForAck(kProgrammingState, released, sizeof(released))) {
+      server.send(500, "text/plain",
+                  "flash verified but Prog could not be cleared");
+      return;
+    }
+    programmingLatched = false;
+    playUpdateSuccessCue();
+    grid.setPattern(patternBeforeUpdate);
+    saveLedPreferences();
     server.send(200, "application/json", "{\"programmed\":true,\"verified\":true}");
   });
 
@@ -390,6 +609,29 @@ void serviceStream() {
 void serviceConsole() {
   while (Serial.available() != 0) {
     const char command = static_cast<char>(Serial.read());
+    if (consoleLineMode) {
+      if (command == '\r') continue;
+      if (command != '\n' && consoleLine.length() < 110) {
+        consoleLine += command;
+        continue;
+      }
+      consoleLineMode = false;
+      const int separator = consoleLine.indexOf('\t');
+      const String ssid = separator < 0 ? consoleLine : consoleLine.substring(0, separator);
+      const String password = separator < 0 ? String() : consoleLine.substring(separator + 1);
+      const bool ok = networkConfig.setStation(ssid, password, true) &&
+                      networkConfig.save();
+      consoleLine = String();
+      if (ok) applyNetworkConfig();
+      Serial.printf("{\"diagnostic\":\"station_provision\",\"ok\":%s}\r\n",
+                    ok ? "true" : "false");
+      continue;
+    }
+    if (command == '@') {
+      consoleLine = String();
+      consoleLineMode = true;
+      continue;
+    }
     if (command == 'P') {
       uint8_t signature[3] = {};
       const bool ok = avrIsp.probe(signature);
@@ -406,6 +648,11 @@ void serviceConsole() {
       const uint8_t payload[] = {0xE8, 0x03, 0x96, 0x00};
       sendToAvr(kBuzzer, sequence++, payload, sizeof(payload));
       Serial.println(F("{\"diagnostic\":\"buzzer_1000hz_150ms\",\"sent\":true}"));
+    } else if (command == 'U') {
+      const uint8_t payload[] = {kCueUpdateStart};
+      const bool ok = requestAndWaitForAck(kAudioCue, payload, sizeof(payload));
+      Serial.printf("{\"diagnostic\":\"update_cue\",\"ok\":%s}\r\n",
+                    ok ? "true" : "false");
     } else if (command == 'D') {
       const int16_t value = 1234;
       const uint8_t payload[] = {static_cast<uint8_t>(value),
@@ -469,21 +716,31 @@ void serviceConsole() {
 void setup() {
   pinMode(D1, INPUT);
   LittleFS.begin();
+  networkConfig.begin(LittleFS);
   grid.begin();
+  loadLedPreferences();
   Serial.begin(115200);
   avrSerial.begin(kBaud);
   link.begin(kBaud, onAvrFrame);
 
   hostname = String(F("pakarcontroller-")) + String(ESP.getChipId(), HEX);
-  WiFi.persistent(false);
-  WiFi.mode(WIFI_AP);
-  apStarted = WiFi.softAP(hostname.c_str(), kDevelopmentPassword);
+  apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
   MDNS.begin(hostname.c_str());
   MDNS.addService("http", "tcp", 80);
   MDNS.addService("pakarcontroller", "udp", kStreamPort);
   stream.begin(kStreamPort);
 
   registerApi();
+  Update.onStart([]() {
+    playUpdateStartCue();
+  });
+  Update.onEnd([]() {
+    playUpdateSuccessCue();
+  });
+  Update.onError([](uint8_t) {
+    const uint8_t cue[] = {kCueError};
+    requestAndWaitForAck(kAudioCue, cue, sizeof(cue));
+  });
   updater.setup(&server, "/update", kAdmin, kDevelopmentPassword);
   server.begin();
   Serial.printf("{\"device\":\"PakarController\",\"version\":\"%s\","
@@ -507,6 +764,11 @@ void loop() {
   }
   serviceConsole();
   server.handleClient();
+  if (networkApplyPending &&
+      static_cast<int32_t>(millis() - networkApplyAt) >= 0) {
+    networkApplyPending = false;
+    applyNetworkConfig();
+  }
   MDNS.update();
   serviceStream();
   const uint32_t afterServices = millis();
@@ -528,12 +790,15 @@ void loop() {
         "{\"device\":\"PakarController\",\"version\":\"%s\","
         "\"avr_online\":%s,\"mode\":\"%s\","
         "\"winner\":%u,\"effect\":\"%s\",\"ap_started\":%s,"
+        "\"station_connected\":%s,\"station_ip\":\"%s\","
         "\"uart_rx_level\":%u,\"uart_bytes_received\":%lu,"
         "\"uart_frames_received\":%lu,\"uart_bytes_transmitted\":%lu,"
         "\"uart_frames_transmitted\":%lu,\"esp_uart_errors\":%u,"
         "\"avr_uart_errors\":%u,\"tm1637_ack\":%s}\r\n",
         BoardCore::BuildInfo::kVersion, avrOnline ? "true" : "false",
         modeName(), winner, grid.patternName(), apStarted ? "true" : "false",
+        networkConfig.stationConnected() ? "true" : "false",
+        WiFi.localIP().toString().c_str(),
         digitalRead(D4), static_cast<unsigned long>(link.bytesReceived()),
         static_cast<unsigned long>(link.framesReceived()),
         static_cast<unsigned long>(link.bytesTransmitted()),
