@@ -25,10 +25,16 @@ class SerialLink {
     uint16_t pending = serial_.available();
     while (pending-- != 0) {
       const uint8_t value = static_cast<uint8_t>(serial_.read());
+#if defined(ESP8266)
+      ++bytesReceived_;
+#endif
       if (value == 0) {
         if (!dropping_ && receiveLength_ != 0) {
           Protocol::Frame frame = {};
           if (Protocol::decode(receive_, receiveLength_, frame)) {
+#if defined(ESP8266)
+            ++framesReceived_;
+#endif
             if (handler_ != nullptr) handler_(frame, context_);
           } else if (errors_ != UINT16_MAX) {
             ++errors_;
@@ -59,7 +65,12 @@ class SerialLink {
     if (payloadLength != 0) memcpy(frame.payload, payload, payloadLength);
     uint8_t encoded[Protocol::kMaximumEncoded];
     const uint8_t length = Protocol::encode(frame, encoded, sizeof(encoded));
-    return length != 0 && serial_.write(encoded, length) == length;
+    if (length == 0 || serial_.write(encoded, length) != length) return false;
+#if defined(ESP8266)
+    bytesTransmitted_ += length;
+    ++framesTransmitted_;
+#endif
+    return true;
   }
 
   bool ack(uint8_t sequence, uint8_t requestOpcode) {
@@ -73,6 +84,12 @@ class SerialLink {
   }
 
   uint16_t errors() const { return errors_; }
+#if defined(ESP8266)
+  uint32_t bytesReceived() const { return bytesReceived_; }
+  uint32_t bytesTransmitted() const { return bytesTransmitted_; }
+  uint32_t framesReceived() const { return framesReceived_; }
+  uint32_t framesTransmitted() const { return framesTransmitted_; }
+#endif
 
  private:
   Stream &serial_;
@@ -83,6 +100,12 @@ class SerialLink {
   uint8_t receiveLength_ = 0;
   bool dropping_ = false;
   uint16_t errors_ = 0;
+#if defined(ESP8266)
+  uint32_t bytesReceived_ = 0;
+  uint32_t bytesTransmitted_ = 0;
+  uint32_t framesReceived_ = 0;
+  uint32_t framesTransmitted_ = 0;
+#endif
 };
 
 }  // namespace BoardCore

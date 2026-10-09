@@ -29,10 +29,11 @@ checked file selects `PROGRAM_MAZE`.
 
 | Repository | Inspected commit | Reuse decision |
 |---|---|---|
-| `atomicdeploy/PCController` | `2a0e971e2bdaf186b4e841c64a53b516509beb37` | wire envelope, CRC/COBS, shift I/O, key timing, TM1637, tones, Urboot, update safety, host/API and simulator patterns |
+| `atomicdeploy/PCController` | `2a0e971e2bdaf186b4e841c64a53b516509beb37` | imported BoardPins, ShiftRegisters, SevenSegments, TonePlayer, pitches, and BootMelody; retained wire envelope, CRC/COBS, Urboot, update safety, host/API and simulator patterns |
 | `atomicdeploy/pu850-esp` | `431104072952f694a35b3a83c19f13fbb098ca5b` | Wi-Fi/AP, HTTP/WebSocket, OTA, discovery, LittleFS, firmware-transfer and tooling architecture; product UART/business tables excluded |
 | `ToghrolTP/pealayer` local canonical | `005d6596e1c10b7251e652232e01f1763a1784a9` | eframe/egui application structure, themes, controller client and factual-state UI conventions; mpv/media engine excluded |
 
-PCController and Pealayer were left unchanged. Game-specific code is isolated
-in this repository while numeric framing remains compatible with the shared
-PCController protocol family.
+The PCController and Pealayer source repositories were left unchanged.
+Hardware modules are copied into PakarController under PCController's MIT
+option, while game-specific integration stays isolated here and numeric framing
+remains compatible with the shared PCController protocol family.

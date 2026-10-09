@@ -14,7 +14,12 @@ logical-cell rendering; UDP streaming can replace the physical pixel frame
 without consuming AVR SRAM.
 
 Neither side invents the other's state. UART frames carry commands and
-authoritative events with bounded payloads and sequence identifiers.
+authoritative state with bounded payloads and sequence identifiers. Because a
+480-pixel WS2811 frame masks ESP8266 interrupts for about 14.4 ms, the AVR does
+not transmit unsolicited frames. The ESP polls AVR state at 10 Hz and holds LED
+rendering for 12 ms after each request, long enough to receive the complete
+38400-baud response. Physical key decisions therefore remain on the AVR while
+the current SoftwareSerial wiring stays reliable under animation load.
 
 ## Modes
 
@@ -63,8 +68,19 @@ does not write fuses, and verifies every flash byte.
 - HTTP self-OTA for ESP firmware;
 - bounded UDP LED-frame chunks for live Wi-Fi rendering;
 - mDNS identity and SoftAP fallback.
-- one JSON health record per second on the NodeMCU hardware USB UART, leaving
-  application traffic on the dedicated SoftwareSerial pins.
+- one JSON health record per second on the NodeMCU hardware USB UART. The
+  NodeMCU uses SoftwareSerial for the board link while the AVR uses UART0.
+
+The USB diagnostic console accepts single uppercase commands while bringing up
+hardware: `P` probes the AVR signature through ISP, `H` sends UART hello, `B`
+requests a short buzzer tone, `D` displays 1234, `O` enables output 1, and `R`
+resets the game. `L` starts the ESP rainbow at the configured brightness, `N`
+stops it, and `W` resets the AVR and samples the AVR TXD/D1 to ESP D4 receive
+wire for 1.5 seconds. The temporary AVR D6 renderer is deliberately absent:
+there is one effects engine and framebuffer, on the ESP.
+Diagnostics report raw UART byte/frame counters, TM1637 acknowledgement, and
+GPIO2 idle level so electrical failures are distinguishable from protocol
+errors.
 
 State-changing endpoints require authentication. First-boot development
 credentials are temporary and must be replaced before installation.

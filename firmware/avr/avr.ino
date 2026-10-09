@@ -1,12 +1,13 @@
 #include <Arduino.h>
-#include <SoftwareSerial.h>
-#include <TM1637Display.h>
 
 #include <BuildInfo.h>
 #include <Protocol.h>
 #include <SerialLink.h>
 
+#include "BootMelody.h"
 #include "BoardPins.h"
+#include "PakarBoardConfig.h"
+#include "SevenSegments.h"
 #include "ShiftRegisters.h"
 #include "TonePlayer.h"
 
@@ -17,11 +18,8 @@ namespace {
 constexpr uint32_t kBaud = 38400;
 constexpr uint16_t kDebounceMs = 25;
 constexpr uint16_t kShiftPeriodMs = 5;
-constexpr uint16_t kHeartbeatMs = 1000;
 
-SoftwareSerial espSerial(BoardPins::EspSerialRx, BoardPins::EspSerialTx);
-BoardCore::SerialLink link(static_cast<Stream &>(espSerial));
-TM1637Display display(BoardPins::Tm1637Clock, BoardPins::Tm1637Data);
+BoardCore::SerialLink link(Serial);
 
 GameMode mode = kModeCellSelect;
 CellState selectedState = kCellWhite;
@@ -33,19 +31,54 @@ bool stableInput9 = false;
 bool candidateInput9 = false;
 uint32_t candidateChangedAt[9] = {};
 uint32_t lastShiftAt = 0;
-uint32_t lastHeartbeatAt = 0;
-uint8_t eventSequence = 0;
+bool tm1637Ack = false;
+uint8_t cellActionRevision = 0;
+uint8_t resetRevision = 0;
+Effect cellActionEffect = kEffectImmediate;
+
+bool probeTm1637() {
+  pinMode(BoardPins::Tm1637Clock, OUTPUT);
+  pinMode(BoardPins::Tm1637Data, OUTPUT);
+  digitalWrite(BoardPins::Tm1637Clock, HIGH);
+  digitalWrite(BoardPins::Tm1637Data, HIGH);
+  delayMicroseconds(3);
+  digitalWrite(BoardPins::Tm1637Data, LOW);
+  delayMicroseconds(3);
+
+  uint8_t value = 0x8D;  // Display on, brightness 5.
+  for (uint8_t bit = 0; bit < 8; ++bit) {
+    digitalWrite(BoardPins::Tm1637Clock, LOW);
+    digitalWrite(BoardPins::Tm1637Data, value & 0x01U ? HIGH : LOW);
+    delayMicroseconds(3);
+    digitalWrite(BoardPins::Tm1637Clock, HIGH);
+    delayMicroseconds(3);
+    value >>= 1;
+  }
+  digitalWrite(BoardPins::Tm1637Clock, LOW);
+  pinMode(BoardPins::Tm1637Data, INPUT_PULLUP);
+  delayMicroseconds(3);
+  digitalWrite(BoardPins::Tm1637Clock, HIGH);
+  delayMicroseconds(3);
+  const bool acknowledged = digitalRead(BoardPins::Tm1637Data) == LOW;
+  digitalWrite(BoardPins::Tm1637Clock, LOW);
+  pinMode(BoardPins::Tm1637Data, OUTPUT);
+  digitalWrite(BoardPins::Tm1637Data, LOW);
+  delayMicroseconds(3);
+  digitalWrite(BoardPins::Tm1637Clock, HIGH);
+  delayMicroseconds(3);
+  digitalWrite(BoardPins::Tm1637Data, HIGH);
+  return acknowledged;
+}
 
 void showState() {
   if (mode == kModeFirstWins && winner != 0) {
-    display.clear();
-    display.showNumberDec(winner, false, 1, 3);
+    display.showInteger(winner);
   } else if (mode == kModeCellSelect) {
-    display.showNumberDec(selectedCell, true, 4, 0);
+    display.showInteger(selectedCell);
   } else {
-    const uint8_t dashes[] = {SEG_G, SEG_G, SEG_G, SEG_G};
-    display.setSegments(dashes);
+    display.showUnavailable();
   }
+  tm1637Ack = probeTm1637();
 }
 
 void sendHello(uint8_t sequence = 0) {
@@ -69,17 +102,19 @@ void sendGameState(uint8_t sequence = 0) {
       static_cast<uint8_t>(selectedState), stableInputs,
       static_cast<uint8_t>(stableInput9), shiftRegisters.activeOutputs(),
       static_cast<uint8_t>(errors), static_cast<uint8_t>(errors >> 8),
+      static_cast<uint8_t>(tm1637Ack),
+      cellActionRevision, static_cast<uint8_t>(cellActionEffect), resetRevision,
   };
   link.send(kGameState, sequence, payload, sizeof(payload));
 }
 
-void sendCellEvent(Effect effect) {
-  const uint8_t payload[] = {selectedCell, static_cast<uint8_t>(selectedState),
-                             static_cast<uint8_t>(effect)};
-  link.send(kCellEvent, eventSequence++, payload, sizeof(payload));
+void recordCellAction(Effect effect) {
+  cellActionEffect = effect;
+  ++cellActionRevision;
 }
 
 void resetGame() {
+  ++resetRevision;
   winner = 0;
   shiftRegisters.allOutputsOff();
   if (mode == kModeCellSelect) {
@@ -87,7 +122,7 @@ void resetGame() {
     selectedState = kCellWhite;
   }
   showState();
-  tones.welcome();
+  playBootMelody();
 }
 
 void chooseWinner(uint8_t button) {
@@ -95,30 +130,31 @@ void chooseWinner(uint8_t button) {
   winner = button;
   shiftRegisters.setActiveOutputs(button <= 8 ? _BV(button - 1) : 0);
   showState();
-  tones.winner(button);
-  sendGameState(eventSequence++);
+  buzzer.stop();
+  const uint16_t base = static_cast<uint16_t>(440 + button * 35);
+  buzzer.enqueue(base, 90);
+  buzzer.pause(50);
+  buzzer.enqueue(base + 220, 110);
+  buzzer.pause(50);
+  buzzer.enqueue(base + 440, 260);
 }
 
 void handleCellKey(uint8_t button) {
   switch (button) {
     case 1: selectedCell = selectedCell <= 1 ? 80 : selectedCell - 1; break;
     case 2: selectedCell = selectedCell >= 80 ? 1 : selectedCell + 1; break;
-    case 3: selectedState = kCellRed; sendCellEvent(kEffectFade); break;
-    case 4: selectedState = kCellOff; sendCellEvent(kEffectFade); break;
-    case 5: selectedState = kCellWhite; sendCellEvent(kEffectFade); break;
+    case 3: selectedState = kCellRed; recordCellAction(kEffectFade); break;
+    case 4: selectedState = kCellOff; recordCellAction(kEffectFade); break;
+    case 5: selectedState = kCellWhite; recordCellAction(kEffectFade); break;
     case 6: selectedCell = selectedCell <= 10 ? 1 : selectedCell - 10; break;
     case 7: selectedCell = selectedCell >= 71 ? 80 : selectedCell + 10; break;
-    case 8: sendCellEvent(kEffectPulse); break;
-    case 9: resetGame(); sendCellEvent(kEffectImmediate); break;
+    case 8: recordCellAction(kEffectPulse); break;
+    case 9: resetGame(); break;
   }
   showState();
-  sendGameState(eventSequence++);
 }
 
 void onInputChanged(uint8_t button, bool pressed) {
-  const uint8_t payload[] = {button, static_cast<uint8_t>(pressed),
-                             static_cast<uint8_t>(mode)};
-  link.send(kInputEvent, eventSequence++, payload, sizeof(payload));
   if (!pressed) return;
   if (mode == kModeFirstWins) chooseWinner(button);
   else if (mode == kModeCellSelect) handleCellKey(button);
@@ -140,24 +176,26 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       mode = static_cast<GameMode>(frame.payload[0]);
       resetGame();
       link.ack(frame.sequence, frame.opcode);
-      sendGameState(eventSequence++);
       break;
     case kCellAction:
-      if (frame.payloadLength < 2 || frame.payload[0] < 1 ||
-          frame.payload[0] > 80 || frame.payload[1] > kCellOff) {
+      if (frame.payloadLength < 2 || frame.payloadLength > 3 ||
+          frame.payload[0] < 1 || frame.payload[0] > 80 ||
+          frame.payload[1] > kCellOff ||
+          (frame.payloadLength == 3 && frame.payload[2] > kEffectPulse)) {
         link.error(frame.sequence, frame.opcode, kBadPayload);
         break;
       }
       selectedCell = frame.payload[0];
       selectedState = static_cast<CellState>(frame.payload[1]);
+      recordCellAction(frame.payloadLength == 3
+                           ? static_cast<Effect>(frame.payload[2])
+                           : kEffectFade);
       showState();
       link.ack(frame.sequence, frame.opcode);
-      sendGameState(eventSequence++);
       break;
     case kGameReset:
       resetGame();
       link.ack(frame.sequence, frame.opcode);
-      sendGameState(eventSequence++);
       break;
     case kOutputMask:
       if (frame.payloadLength != 1) {
@@ -172,9 +210,10 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
         link.error(frame.sequence, frame.opcode, kBadPayload);
         break;
       }
-      tones.clear();
-      tones.add(static_cast<uint16_t>(frame.payload[0] | frame.payload[1] << 8),
-                static_cast<uint16_t>(frame.payload[2] | frame.payload[3] << 8));
+      buzzer.stop();
+      buzzer.enqueue(
+          static_cast<uint16_t>(frame.payload[0] | frame.payload[1] << 8),
+          static_cast<uint16_t>(frame.payload[2] | frame.payload[3] << 8));
       link.ack(frame.sequence, frame.opcode);
       break;
     case kDisplayText:
@@ -182,9 +221,9 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
         link.error(frame.sequence, frame.opcode, kBadPayload);
         break;
       }
-      display.showNumberDec(static_cast<int16_t>(frame.payload[0] |
-                                                 frame.payload[1] << 8),
-                            false, 4, 0);
+      display.showInteger(static_cast<int16_t>(frame.payload[0] |
+                                               frame.payload[1] << 8));
+      tm1637Ack = probeTm1637();
       link.ack(frame.sequence, frame.opcode);
       break;
     case kPing:
@@ -201,8 +240,8 @@ void serviceInputs(uint32_t now) {
   lastShiftAt = now;
   shiftRegisters.service();
   const uint8_t raw = shiftRegisters.activeInputs();
-  const bool raw9 = analogRead(BoardPins::NinthButtonAdc) <
-                    BoardPins::NinthButtonThreshold;
+  const bool raw9 = analogRead(PakarBoardConfig::NinthButtonAdc) <
+                    PakarBoardConfig::NinthButtonThreshold;
 
   for (uint8_t bit = 0; bit < 8; ++bit) {
     const bool value = (raw & _BV(bit)) != 0;
@@ -233,24 +272,16 @@ void serviceInputs(uint32_t now) {
 
 void setup() {
   shiftRegisters.begin();
-  tones.begin(BoardPins::Buzzer);
-  display.setBrightness(5, true);
+  buzzer.begin(BoardPins::Buzzer);
+  display.begin(5);
   showState();
-  Serial.begin(115200);
-  espSerial.begin(kBaud);
   link.begin(kBaud, handleFrame);
-  delay(20);
-  sendHello();
-  tones.welcome();
+  playBootMelody();
 }
 
 void loop() {
   const uint32_t now = millis();
   link.service();
   serviceInputs(now);
-  tones.service(now);
-  if (static_cast<uint32_t>(now - lastHeartbeatAt) >= kHeartbeatMs) {
-    lastHeartbeatAt = now;
-    sendGameState(eventSequence++);
-  }
+  buzzer.update(now);
 }

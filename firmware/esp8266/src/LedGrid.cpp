@@ -123,7 +123,7 @@ void LedGrid::service(uint32_t now) {
 }
 
 void LedGrid::renderPattern() {
-  ++hue_;
+  hue_ = static_cast<uint8_t>(hue_ + 3U);
   switch (pattern_) {
     case kPatternRainbow:
       fill_rainbow(pixels_, kPixels, hue_, 7);
@@ -164,7 +164,6 @@ bool LedGrid::stagePixels(uint16_t offset, const uint8_t *rgb, uint8_t count) {
   for (uint8_t i = 0; i < count; ++i) {
     pixels_[offset + i] = CRGB(rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]);
   }
-  dirty_ = true;
   return true;
 }
 

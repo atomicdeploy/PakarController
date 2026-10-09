@@ -47,7 +47,7 @@ class LedGrid {
   CRGB target_[kCells];
   uint8_t heat_[kPixels] = {};
   uint8_t states_[kCells] = {};
-  uint8_t brightness_ = 48;
+  uint8_t brightness_ = 255;
   uint32_t lastFrameAt_ = 0;
   uint8_t hue_ = 0;
   Pattern pattern_ = kPatternNone;

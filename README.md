@@ -8,15 +8,16 @@ and Pealayer work.
   ADC6 button, TM1637 display, buzzer, melodies, and winner arbitration.
 - The ESP8266 owns the MT16703/WS2811-compatible LED field, Wi-Fi/API/UI,
   streaming, self-OTA, AVR ISP recovery, and LittleFS firmware backups.
-- Both use the PCController COBS + CRC-8/ATM UART envelope over a dedicated
-  38400-baud SoftwareSerial link. Each board's hardware UART remains available
-  for USB diagnostics and bootloader recovery.
+- Both use the PCController COBS + CRC-8/ATM UART envelope at 38400 baud. The
+  AVR uses its hardware UART; the ESP uses SoftwareSerial so its USB UART
+  remains available for diagnostics.
 - The Windows controller uses Pealayer's eframe/egui design approach without
   linking or loading mpv.
 
 No I2C peripheral is enabled or required.
 
-See `docs/HARDWARE.md`, `docs/ARCHITECTURE.md`, `docs/API.md`, `docs/TOOLCHAIN.md`, and
+See `docs/HARDWARE.md`, `docs/HARDWARE-VERIFICATION.md`,
+`docs/ARCHITECTURE.md`, `docs/API.md`, `docs/TOOLCHAIN.md`, and
 `docs/LEGACY-CODE-AUDIT.md` before wiring or flashing.
 
 The native Windows app is in `desktop/`. It deliberately has no mpv or
@@ -25,8 +26,7 @@ visual styling are derived from Pealayer's MIT-licensed desktop foundation.
 
 ## Build
 
-On the Windows hardware host with Arduino CLI, MiniCore, FastLED, and TM1637
-installed:
+On the Windows hardware host with Arduino CLI, MiniCore, and FastLED installed:
 
 ```powershell
 .\tools\build-firmware.ps1

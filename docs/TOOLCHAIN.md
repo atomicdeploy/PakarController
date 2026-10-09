@@ -2,7 +2,7 @@
 
 Both supported Windows build hosts should update their package indexes and use
 the latest compatible releases of Arduino CLI, MiniCore, the ESP8266 core,
-FastLED, and TM1637. Versions are observed in verification output rather than
+and FastLED. Versions are observed in verification output rather than
 hard-coded as build policy.
 
 On a host carrying the project-local `tools/arduino-cli.exe`, that binary takes
