@@ -62,6 +62,8 @@ does not write fuses, and verifies every flash byte.
 - HTTP self-OTA for ESP firmware;
 - bounded UDP LED-frame chunks for live Wi-Fi rendering;
 - mDNS identity and SoftAP fallback.
+- one JSON health record per second on the NodeMCU hardware USB UART, leaving
+  application traffic on the dedicated SoftwareSerial pins.
 
 State-changing endpoints require authentication. First-boot development
 credentials are temporary and must be replaced before installation.

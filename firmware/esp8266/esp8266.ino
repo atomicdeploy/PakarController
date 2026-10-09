@@ -42,6 +42,7 @@ uint8_t selectedState = kCellWhite;
 uint8_t sequence = 1;
 uint32_t lastAvrFrameAt = 0;
 uint32_t lastHelloAt = 0;
+uint32_t lastDiagnosticAt = 0;
 uint16_t avrUartErrors = 0;
 
 bool authenticate() {
@@ -364,6 +365,8 @@ void setup() {
   registerApi();
   updater.setup(&server, "/update", kAdmin, kDevelopmentPassword);
   server.begin();
+  Serial.printf("{\"device\":\"PakarController\",\"event\":\"boot\",\"hostname\":\"%s\"}\r\n",
+                hostname.c_str());
   link.send(kHello, sequence++);
 }
 
@@ -378,6 +381,15 @@ void loop() {
   if (!avrOnline && static_cast<uint32_t>(now - lastHelloAt) > 1000) {
     lastHelloAt = now;
     link.send(kHello, sequence++);
+  }
+  if (static_cast<uint32_t>(now - lastDiagnosticAt) >= 1000) {
+    lastDiagnosticAt = now;
+    Serial.printf(
+        "{\"device\":\"PakarController\",\"avr_online\":%s,\"mode\":\"%s\","
+        "\"winner\":%u,\"effect\":\"%s\",\"esp_uart_errors\":%u,"
+        "\"avr_uart_errors\":%u}\r\n",
+        avrOnline ? "true" : "false", modeName(), winner, grid.patternName(),
+        link.errors(), avrUartErrors);
   }
   yield();
 }
