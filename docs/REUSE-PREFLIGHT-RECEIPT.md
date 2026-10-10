@@ -355,3 +355,14 @@ normalized that fixture through the actual paint adapter before asserting order
 preserves canonical selection. Existing donor anchors were rereviewed in the
 focused diff; only affected target/proof hashes were updated. No extra completed
 donor-file reviews or whole-project parity claim.
+
+Publication follow-up: the first push failed its TLS handshake through the
+configured localhost:10808 proxy. Verified read-only HTTPS through the user's
+localhost:8118 endpoint, then succeeded with a per-command Git proxy override;
+no persistent Git setting changed. A subsequent network-cloud lookup detected
+concurrent Pealayer tracked-inventory drift after the earlier passing checks.
+No donor content/source hashes were overwritten or rebound and no further build
+was attempted. The next donor consultation must refresh tracked inventory first;
+earlier test/comparison counts are checkpoint evidence, not a fresh claim about
+the concurrently changed donor. Recovery and source publication are recorded
+in issues #8/#3 and PR #1. Feature source is f5940fd; runtime acceptance stays open.
