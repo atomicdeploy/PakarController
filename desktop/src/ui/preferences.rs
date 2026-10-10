@@ -67,7 +67,13 @@ struct Outcome {
 }
 fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
     crate::config::set_live(&draft.config);
-    ui.set_layout(super::i18n::vertical_layout(crate::config::resolved_rtl(&draft.config)));
+    ui.with_layout(
+        super::i18n::vertical_layout(crate::config::resolved_rtl(&draft.config)),
+        |ui| editor_contents(draft, ui),
+    )
+    .inner
+}
+fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
     let mut outcome = Outcome::default();
     ui.horizontal(|ui| {
         ui.label(icons::MAGNIFYING_GLASS);

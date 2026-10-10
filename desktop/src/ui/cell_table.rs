@@ -151,6 +151,20 @@ impl Default for TableState {
         }
     }
 }
+impl TableState {
+    /// Revoke unsent work and old readback ownership on peer/capability loss.
+    /// Sent writes are never retried or represented as rolled back.
+    pub(super) fn stop_pending_edits(&mut self) {
+        let pending = !self.queue.is_empty() || self.verification_started.is_some();
+        self.queue.clear();
+        self.awaiting.clear();
+        self.verification_started = None;
+        self.peer = None;
+        if pending {
+            self.result = "Stopped: peer or capabilities changed. Previously sent edits may have applied; inspect device state.".into();
+        }
+    }
+}
 pub fn compact_menu(ui: &mut egui::Ui) {
     // Pealayer scopes compact spacing locally, never changing application geometry.
     ui.spacing_mut().item_spacing = egui::vec2(6.0, 2.0);
@@ -509,8 +523,7 @@ impl PakarControllerApp {
     }
     pub fn process_cell_queue(&mut self, ctx: &egui::Context) {
         if !self.has_table() {
-            self.table.queue.clear(); self.table.awaiting.clear();
-            self.table.verification_started = None;
+            self.table.stop_pending_edits();
             return;
         }
         if (!self.table.queue.is_empty() || self.table.verification_started.is_some())
@@ -1077,6 +1090,41 @@ impl PakarControllerApp {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn context_revocation_drops_unsent_and_readback_work_without_claiming_rollback() {
+        for verifying in [false, true] {
+            let mut table = TableState::default();
+            table.selection.click(3, false, false);
+            table.dispatched = 1;
+            table.queued = 2;
+            table.awaiting = vec![(3, State::Red)];
+            table.peer = Some((
+                crate::Transport::WiFi,
+                crate::Endpoint { base: "http://fixture.invalid".into(), user: String::new(), password: String::new() },
+                String::new(),
+            ));
+            if verifying {
+                table.verification_started = Some(Instant::now());
+            } else {
+                table.queue.push_back((4, State::Red, "fade".into()));
+            }
+            table.stop_pending_edits();
+            assert!(table.queue.is_empty());
+            assert!(table.awaiting.is_empty());
+            assert!(table.verification_started.is_none());
+            assert!(table.peer.is_none());
+            assert_eq!(table.dispatched, 1, "sent writes are not undone");
+            assert_eq!(table.selection.cells(), [3], "revocation is not a selection mutation");
+            assert!(table.result.contains("Previously sent edits may have applied"));
+            let result = table.result.clone();
+            table.stop_pending_edits();
+            assert_eq!(table.result, result, "idle frames retain the warning");
+        }
+        let shell = include_str!("shell.rs");
+        assert!(!shell.contains("self.table.queue"));
+        assert!(!shell.contains("self.table.awaiting"));
+        assert!(!shell.contains("self.table.verification_started"));
+    }
     #[test]
     fn reorder_is_mode_guarded_identity_preserving_and_matches_web_contract() {
         let contract: serde_json::Value =

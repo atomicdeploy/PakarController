@@ -291,7 +291,7 @@ impl PakarControllerApp {
             self.identity_saved = self.device_name.clone().zip(self.board_display_name.clone());
             self.configuration_loaded = false;
             self.context_panels = available.clone();
-            self.table.queue.clear(); self.table.awaiting.clear(); self.table.verification_started = None;
+            self.table.stop_pending_edits();
             self.table.selection.ids.clear(); self.cell_search.clear();
             self.table.pixel_sample = None; self.mappings.clear();
             self.last_mapping_poll = Instant::now() - Duration::from_secs(16);
@@ -313,7 +313,7 @@ impl PakarControllerApp {
             self.context_panels = available;
         }
         if !self.has_table() {
-            self.table.queue.clear(); self.table.verification_started = None;
+            self.table.stop_pending_edits();
             self.table.manager_open = false; self.table.editing_order = false;
             self.show_mapping = false; self.confirm_reset = false;
         }
@@ -336,7 +336,11 @@ impl PakarControllerApp {
         ctx.send_viewport_cmd(egui::ViewportCommand::Title(title));
     }
     pub fn draw_shell(&mut self, ui: &mut egui::Ui) {
-        ui.set_layout(super::i18n::vertical_layout(super::i18n::rtl()));
+        ui.with_layout(super::i18n::vertical_layout(super::i18n::rtl()), |ui| {
+            self.draw_shell_contents(ui);
+        });
+    }
+    fn draw_shell_contents(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         while let Ok(command) = self.control.rx.try_recv() {
             self.dispatch(command, &ctx);

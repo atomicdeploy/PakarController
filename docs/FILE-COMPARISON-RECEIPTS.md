@@ -1,5 +1,34 @@
 # PakarController comparison receipts
 
+## Native compile and Linux donor-gate repair checkpoint
+
+The terminal 527d8e9 Build run 38090009184 reproduces 11 egui/private-field
+compile failures plus Join-Path resolving an absent C: drive on Ubuntu. These
+are patched in source, not reported as green native or firmware execution.
+Actual Pealayer menu.rs (806 lines, SHA256
+18e255a5ccc65dfa0588eac10283c7c1f5fe33ea63bb3e07bd599e30a0cf19c3),
+branding.rs (432 lines, SHA256
+be44ca91dfb08ce78fb377ccfcc4676676c05e6b36ed319c497365788ab264fe)
+and scripts/libmpv-windows.ps1 were fully reread; no donor edits. Actual scoped
+layout mechanism is retained, rather than unsupported Ui::set_layout. Native
+artwork paint tests now inspect all ImageDelta values, and muted menu atoms use
+the context's active-theme style. Encapsulated table revocation clears unsent
+work and stale readback ownership, retains sent counts and warns of uncertain
+applied writes; a new native test covers send/verification phases and idempotence.
+
+Actual preflight tests pass for missing PS-drive snapshot gates and strict live
+rejection, without suppressing real hash/inventory/read errors. Complete local
+source-quality suite passes. Native Test Plan passes, but actual Test is refused
+by the existing 8 GiB cache guard before compilation. That refusal was respected.
+No native test execution/package/runtime/physical acceptance is inferred from
+source quality. No unrelated firmware/APK build or package copy was performed.
+ASUS localhost:1022 remains connection-refused. Ubuntu firmware and native
+compile/paint acceptance await a new pipeline; no CI wait loop or automatic flash.
+
+Selective 15 target/proof-reference rebinding preserves the same source hashes,
+anchors, remaining actions and counts: 75/4237 comparisons, 4162 pending,
+46 known gaps; Rayan remains 11/2349. No whole-project superiority claim.
+
 ## RayanLamp localization source adaptation
 
 Two additional exact files read to EOF: webui/src/i18n.tsx SHA256

@@ -1,5 +1,39 @@
 # Donor-first preflight receipt
 
+## Native API and cross-platform gate recovery
+
+Terminal Build run 38090009184 at source 527d8e9 repeats the exact 11 native
+compile errors and Linux Join-Path error from the prior run. Lint, complete
+source quality and Android succeed; separate CodeQL 38090009284 succeeds.
+Read the failing jobs rather than waiting or interpreting a timeout as failure.
+Consulted build-storage and exact Pealayer menu/branding/preferences audit rows.
+Fully reread libmpv-windows.ps1, menu.rs and branding.rs; their live original-byte
+hashes match the recorded comparisons. Preferences audit remains pending: its
+partially inspected donor is NOT newly certified. The actual fully read donor
+menu's scoped with_layout idiom and locked egui 0.36.2 Ui/Context/TexturesDelta
+implementation informed the API adaptation; no dependency upgrade or metric
+change was introduced.
+
+consult-reuse now probes literal donor roots before Join-Path or traversal.
+Absent Windows PS drives on Linux become explicitly live-unavailable, while
+snapshot/target/hash/anchor gates and RequireLive rejection remain intact.
+No catch-all suppression or fake live source claim. Added missing-drive tests
+for both reviewed build and Rayan Web slices; the actual preflight test passes.
+Desktop texture tests flatten the real multi-delta map; menu tests select the
+active theme's style; shell and Preferences use scoped child layouts. Table
+queue ownership stays private behind stop_pending_edits, which revokes old
+unsent/readback work without retrying or claiming sent writes were undone.
+Added a native revocation regression; it has not executed locally.
+
+Complete local no-compile quality suite and Test build Plan pass. Actual Test
+wrapper refuses the existing >8 GiB canonical cache before cargo starts. No
+budget bypass, second cache, donor build, deletion, dependency churn, firmware
+or APK rebuild. ASUS SSH localhost:1022 freshly refuses connections. Native
+compilation/paint tests, Ubuntu builds, runtime screenshots and physical
+deployment remain pending new CI/host acceptance. Only 15 references to the six
+actually changed target/test files were rebound; no new donor certificate,
+blanket source hash refresh or inventory-count change.
+
 ## RayanLamp locale continuation
 
 Reverified Build RayanLamp Go app (019f8cfc-271a-72e1-8747-e3eb883de5ec);

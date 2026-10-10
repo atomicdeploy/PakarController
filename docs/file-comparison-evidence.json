@@ -395,7 +395,7 @@
         },
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "a0b8c1a2ba2857733245c7e76c0f2d1be3ff857a3691df95440913e5639908e6",
+          "sha256": "545ba8ac309c796b1bd1dfd70eb7ca085f422e03b92fa4a5628906e723d49d1f",
           "anchor": "AppLanguage::Persian"
         },
         {
@@ -1028,7 +1028,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "61deb06fb3209fe62743ee11fc824bb301a7fb52356fc17a8a86d361160de47e",
+          "sha256": "412b52fc56b9958c091a0e445544ecee6a36abe63f68c915bba7f4659966e75e",
           "anchor": "fn synchronize_context("
         },
         {
@@ -1112,7 +1112,7 @@
       "targets": [
         {
           "path": "desktop/src/branding.rs",
-          "sha256": "28849fc17b8082114c0bc3d9c38baf0aef64b929c7c721aa19bdc048b25905e7",
+          "sha256": "c9f9d6c0269af0e1356e59428e2a7a4f1bf532737a8d2e214ea0530f485a0d3c",
           "anchor": "pub fn icon_data_from_bytes"
         },
         {
@@ -1127,7 +1127,7 @@
         },
         {
           "path": "desktop/src/branding.rs",
-          "sha256": "28849fc17b8082114c0bc3d9c38baf0aef64b929c7c721aa19bdc048b25905e7",
+          "sha256": "c9f9d6c0269af0e1356e59428e2a7a4f1bf532737a8d2e214ea0530f485a0d3c",
           "anchor": "pub fn sync_peer"
         },
         {
@@ -1366,12 +1366,12 @@
       "targets": [
         {
           "path": "desktop/src/ui/menu.rs",
-          "sha256": "199cebacdf180d88cb724d458ee096ffd29555ec1a16df9d47c28799a5c46cff",
+          "sha256": "ec5be094ec81858516c879fb5ea3e42f97490a65a24f8ed9d74f00aa2374bb3f",
           "anchor": "pub fn top_menu_button<R>("
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "61deb06fb3209fe62743ee11fc824bb301a7fb52356fc17a8a86d361160de47e",
+          "sha256": "412b52fc56b9958c091a0e445544ecee6a36abe63f68c915bba7f4659966e75e",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -1429,12 +1429,12 @@
       "proof": [
         {
           "path": "desktop/src/ui/menu.rs",
-          "sha256": "199cebacdf180d88cb724d458ee096ffd29555ec1a16df9d47c28799a5c46cff",
+          "sha256": "ec5be094ec81858516c879fb5ea3e42f97490a65a24f8ed9d74f00aa2374bb3f",
           "anchor": "fn shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes()"
         },
         {
           "path": "desktop/src/ui/menu.rs",
-          "sha256": "199cebacdf180d88cb724d458ee096ffd29555ec1a16df9d47c28799a5c46cff",
+          "sha256": "ec5be094ec81858516c879fb5ea3e42f97490a65a24f8ed9d74f00aa2374bb3f",
           "anchor": "fn sibling_hover_switches_only_an_already_open_menu_and_clears_closed_state()"
         },
         {
@@ -1468,7 +1468,7 @@
       "proof": [
         {
           "path": "tests/reuse_preflight_test.ps1",
-          "sha256": "55d7393fc5b98f24052ed33b63832493e7d43d96a1a8a096c9842d1f02bb0177",
+          "sha256": "842c7d0149c2717f7378116063712f4b719941152d89bd43cdc31e60b148437d",
           "anchor": "Actual imported short-lived process stdout"
         }
       ],
@@ -1529,7 +1529,7 @@
       "proof": [
         {
           "path": "tests/reuse_preflight_test.ps1",
-          "sha256": "55d7393fc5b98f24052ed33b63832493e7d43d96a1a8a096c9842d1f02bb0177",
+          "sha256": "842c7d0149c2717f7378116063712f4b719941152d89bd43cdc31e60b148437d",
           "anchor": "Actual donor relative cache resolution"
         },
         {
@@ -1831,7 +1831,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "61deb06fb3209fe62743ee11fc824bb301a7fb52356fc17a8a86d361160de47e",
+          "sha256": "412b52fc56b9958c091a0e445544ecee6a36abe63f68c915bba7f4659966e75e",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -2249,7 +2249,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "61deb06fb3209fe62743ee11fc824bb301a7fb52356fc17a8a86d361160de47e",
+          "sha256": "412b52fc56b9958c091a0e445544ecee6a36abe63f68c915bba7f4659966e75e",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -3182,7 +3182,7 @@
         },
         {
           "path": "tests/reuse_preflight_test.ps1",
-          "sha256": "55d7393fc5b98f24052ed33b63832493e7d43d96a1a8a096c9842d1f02bb0177",
+          "sha256": "842c7d0149c2717f7378116063712f4b719941152d89bd43cdc31e60b148437d",
           "anchor": "Mobile plan retains reviewed gates"
         }
       ],
@@ -3296,7 +3296,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "031e1161d656673af02349c80e3c615a7a9ccd280258d428cccd69439b78bb1b",
+          "sha256": "f1f54c749f8078443a3189c92cef8e6aaa19e39ab04e4a99a1aec4794cca5900",
           "anchor": "fn manager_selector("
         },
         {
@@ -3329,7 +3329,7 @@
       "proof": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "031e1161d656673af02349c80e3c615a7a9ccd280258d428cccd69439b78bb1b",
+          "sha256": "f1f54c749f8078443a3189c92cef8e6aaa19e39ab04e4a99a1aec4794cca5900",
           "anchor": "fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width()"
         },
         {

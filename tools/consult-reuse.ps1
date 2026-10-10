@@ -37,15 +37,24 @@ foreach($taskReview in $taskEvidence.files){
     $taskReviewed[$taskKey]=$taskReview
 }
 $taskTargetRoot=[IO.Path]::GetFullPath($TargetRoot).TrimEnd('\','/')
+# Snapshot gates also run on Linux runners without the donor's Windows drive.
+# Probe the literal root before Join-Path: Join-Path resolves PS drives and
+# throws on C: even though Test-Path correctly reports an unavailable root.
+# Do not suppress hash/read/inventory errors for roots that actually exist.
+$taskAvailableRoots=@{}
 foreach($taskOrigin in $taskRoute.origins){
-    if($taskOrigin -eq 'RayanLamp' -and $DonorRoots.ContainsKey($taskOrigin) -and (Test-Path -LiteralPath $DonorRoots[$taskOrigin])){
+    $taskAvailableRoots[$taskOrigin]=$DonorRoots.ContainsKey($taskOrigin) -and
+        (Test-Path -LiteralPath $DonorRoots[$taskOrigin] -PathType Container)
+}
+foreach($taskOrigin in $taskRoute.origins){
+    if($taskOrigin -eq 'RayanLamp' -and $taskAvailableRoots[$taskOrigin]){
         $taskLivePaths=@(Get-RayanLampFiles $DonorRoots[$taskOrigin])
         $taskSnapshot=@($taskLedger | Where-Object origin -eq $taskOrigin).path
         if(@(Compare-Object $taskSnapshot $taskLivePaths).Count){
             throw 'Filesystem donor inventory drift: RayanLamp; refresh source paths before consultation.'
         }
     }
-    if($DonorRoots.ContainsKey($taskOrigin) -and (Test-Path -LiteralPath (Join-Path $DonorRoots[$taskOrigin] '.git'))){
+    if($taskAvailableRoots[$taskOrigin] -and (Test-Path -LiteralPath (Join-Path $DonorRoots[$taskOrigin] '.git'))){
         $taskTracked=@(& git -C $DonorRoots[$taskOrigin] ls-files)
         if($LASTEXITCODE -ne 0){throw 'Cannot verify live donor inventory'}
         $taskSnapshot=@($taskLedger | Where-Object origin -eq $taskOrigin).path
@@ -63,7 +72,7 @@ $taskRows=@(foreach($taskRow in $taskSelected){
     })
     $taskCurrentReview=$taskReview -and $taskReview.sha256 -eq $taskRow.sha256 -and $taskRow.availability -eq 'present'
     $taskLive='unavailable'
-    if($DonorRoots.ContainsKey($taskRow.origin) -and (Test-Path -LiteralPath $DonorRoots[$taskRow.origin])){
+    if($taskAvailableRoots[$taskRow.origin]){
         $taskSourceRoot=[IO.Path]::GetFullPath($DonorRoots[$taskRow.origin]).TrimEnd('\','/')
         $taskSource=[IO.Path]::GetFullPath((Join-Path $taskSourceRoot $taskRow.path))
         if(-not $taskSource.StartsWith($taskSourceRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Escaping donor path'}

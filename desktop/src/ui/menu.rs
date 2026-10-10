@@ -48,8 +48,9 @@ mod tests {
             } else {
                 egui::Visuals::light()
             });
-            let weak = ctx.style().visuals.weak_text_color();
-            let primary = ctx.style().visuals.text_color();
+            let style = ctx.style_of(ctx.theme());
+            let weak = style.visuals.weak_text_color();
+            let primary = style.visuals.text_color();
             assert_ne!(weak, primary);
             let rows = [
                 ("Device settings…", "Ctrl+Shift+,"),

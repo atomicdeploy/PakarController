@@ -29,6 +29,16 @@ Assert-Reuse ($taskOmissions.Rows[0].Omissions.Count -gt 0 -and $taskOmissions.R
 Assert-Rejected {& $taskConsult -Concern donor-audit -SourcePath 'scripts/*.ps1' -DonorRoots @{}} 'No inventoried donors'
 Assert-Rejected {& $taskConsult -Concern preferences -Gate -DonorRoots @{}} 'No reviewed gate'
 Assert-Rejected {& $taskConsult -Concern build-storage -RequireLive -DonorRoots @{}} 'unavailable or stale'
+# A CI runner has neither C: nor the canonical donor checkout. A missing PS
+# drive must label live bytes unavailable, not throw from Join-Path or pretend
+# the donor was live-verified. Existing snapshot/target gates still apply.
+$taskAbsentDriveRoots=@{Pealayer='PakarAbsentDonorDrive:\source';RayanLamp='PakarAbsentDonorDrive:\lamp'}
+Assert-Reuse (-not (Get-PSDrive -Name PakarAbsentDonorDrive -ErrorAction SilentlyContinue)) 'Negative fixture drive must not exist'
+$taskAbsentGate=& $taskConsult -Concern build-storage -Gate -DonorRoots $taskAbsentDriveRoots
+Assert-Reuse ($taskAbsentGate.GateChecked -and @($taskAbsentGate.Rows | Where-Object Live -ne unavailable).Count -eq 0) 'Unavailable drive retains snapshot gate without live claims'
+Assert-Rejected {& $taskConsult -Concern build-storage -Gate -RequireLive -DonorRoots $taskAbsentDriveRoots} 'unavailable or stale'
+$taskAbsentLamp=& $taskConsult -Concern web-presentation -Gate -DonorRoots $taskAbsentDriveRoots
+Assert-Reuse ($taskAbsentLamp.GateChecked -and @($taskAbsentLamp.Rows | Where-Object Live -ne unavailable).Count -eq 0) 'Rayan inventory traversal also skips unavailable drives'
 foreach($taskConcern in @('build-storage','capture')){
     $taskGate=& $taskConsult -Concern $taskConcern -Gate -DonorRoots @{}
     Assert-Reuse $taskGate.GateChecked "Cached reviewed-slice gate: $taskConcern"

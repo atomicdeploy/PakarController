@@ -182,8 +182,9 @@ mod tests {
                 output
                     .textures_delta
                     .set
-                    .iter()
-                    .any(|(_, delta)| delta.image.size() == [64, 64])
+                    .values()
+                    .flatten()
+                    .any(|delta| delta.image.size() == [64, 64])
             );
             let output = ctx.run_ui(egui::RawInput::default(), |ui| {
                 logo(ui, 18.0);
@@ -193,8 +194,9 @@ mod tests {
                 !output
                     .textures_delta
                     .set
-                    .iter()
-                    .any(|(_, delta)| delta.image.size() == [64, 64]),
+                    .values()
+                    .flatten()
+                    .any(|delta| delta.image.size() == [64, 64]),
                 "do not decode/upload on every frame"
             );
         }
