@@ -1139,7 +1139,7 @@ impl PakarControllerApp {
             eprintln!("{error}");
             config::AppConfig::default()
         });
-        ui::i18n::configure_ui_fonts(&context.egui_ctx, config.language.is_rtl());
+        // apply resolves system/override locale and owns the initial font install.
         config::apply(&context.egui_ctx, &config);
         let dock = ui::layout::restore(&config.dock_layout);
         let screenshot_harness = std::env::var_os("PAKAR_SCREENSHOT_PATH").is_some()

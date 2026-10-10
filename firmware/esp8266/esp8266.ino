@@ -37,6 +37,7 @@
 #include "src/BusyLine.h"
 #include "src/TelnetShell.h"
 #include "src/WebUi.h"
+#include "src/FontAssets.h"
 
 using namespace BoardCore::Protocol;
 
@@ -1782,6 +1783,17 @@ void registerAsyncOta() {
 }
 
 void registerApi() {
+  server.native().on("/assets/fonts/Vazirmatn-OFL.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send_P(200,"text/plain; charset=utf-8",kVazirmatnLicense);
+  });
+  // Immutable public UI asset. Async response reads PROGMEM, not a heap copy.
+  server.native().on("/assets/fonts/Vazirmatn-Regular.ttf", HTTP_GET, [](AsyncWebServerRequest *request) {
+    auto *response = request->beginResponse_P(200, "font/ttf", kVazirmatnGzip, sizeof(kVazirmatnGzip));
+    response->addHeader("Content-Encoding", "gzip");
+    response->addHeader("Cache-Control", "public,max-age=86400");
+    response->addHeader("X-Content-Type-Options", "nosniff");
+    request->send(response);
+  });
   server.on("/", HTTP_GET, []() {
     server.send_P(200, "text/html; charset=utf-8", kWebUi);
   });

@@ -1,7 +1,7 @@
 //! Adapted from Pealayer's PreferencesDraft and rail/body/footer editor.
 use crate::{
     PakarControllerApp,
-    config::{AppConfig, AppLanguage, AppTheme, ColorPalette},
+    config::{AppConfig, AppDirection, AppLanguage, AppTheme, ColorPalette},
     ui::{dialog, icons},
 };
 use eframe::egui;
@@ -66,40 +66,43 @@ struct Outcome {
     test_notification: bool,
 }
 fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
+    crate::config::set_live(&draft.config);
+    ui.set_layout(super::i18n::vertical_layout(crate::config::resolved_rtl(&draft.config)));
     let mut outcome = Outcome::default();
     ui.horizontal(|ui| {
         ui.label(icons::MAGNIFYING_GLASS);
         ui.add_sized(
             [ui.available_width(), 28.0],
-            dialog::singleline_text_edit(&mut draft.search).hint_text("Search preferences"),
+            dialog::singleline_text_edit(&mut draft.search).hint_text(crate::ui::i18n::text("Search preferences")),
         );
     });
     ui.add_space(8.0);
     let body_height = (ui.available_height() - 48.0).max(260.0);
-    ui.allocate_ui_with_layout(egui::vec2(ui.available_width(),body_height),egui::Layout::left_to_right(egui::Align::Min),|ui|{
-        ui.allocate_ui_with_layout(egui::vec2(142.0,body_height),egui::Layout::top_down(egui::Align::Min),|ui|{
+    ui.allocate_ui_with_layout(egui::vec2(ui.available_width(),body_height),super::i18n::layout(crate::config::resolved_rtl(&draft.config),egui::Align::Min),|ui|{
+        ui.allocate_ui_with_layout(egui::vec2(142.0,body_height),super::i18n::vertical_layout(crate::config::resolved_rtl(&draft.config)),|ui|{
             for (tab,icon,title) in [(0,icons::PALETTE,"Appearance"),(1,icons::APP_WINDOW,"Application"),(2,icons::PLUG,"Connection"),(3,icons::TABS,"Workspace"),(4,icons::INFO,"Notifications")] {
-                if dialog::navigation_button(ui,draft.tab==tab,icon,title,138.0).clicked(){draft.tab=tab;}
+                if dialog::navigation_button(ui,draft.tab==tab,icon,&super::i18n::text(title),138.0).clicked(){draft.tab=tab;}
             }
         });
         ui.separator();
-        ui.allocate_ui_with_layout(egui::vec2(ui.available_width(),body_height),egui::Layout::top_down(egui::Align::Min),|ui|{
+        ui.allocate_ui_with_layout(egui::vec2(ui.available_width(),body_height),super::i18n::vertical_layout(crate::config::resolved_rtl(&draft.config)),|ui|{
             dialog::scroll_column(ui,"preferences-body",Some(body_height),|ui|{
                 if draft.tab==0||!draft.search.is_empty(){
                     dialog::section(ui,icons::PALETTE,"Appearance",|ui|{
-                        if draft.matches("Theme system light dark"){dialog::setting_row(ui,icons::SUN,"Theme",None,|ui|{egui::ComboBox::from_id_salt("theme").selected_text(format!("{:?}",draft.config.theme)).show_ui(ui,|ui|{for t in [AppTheme::System,AppTheme::Light,AppTheme::Dark]{ui.selectable_value(&mut draft.config.theme,t,format!("{t:?}"));}});});}
-                        if draft.matches("Palette Studio native"){dialog::setting_row(ui,icons::PALETTE,"Palette",None,|ui|{egui::ComboBox::from_id_salt("palette").selected_text(format!("{:?}",draft.config.color_palette)).show_ui(ui,|ui|{for p in [ColorPalette::Studio,ColorPalette::Native]{ui.selectable_value(&mut draft.config.color_palette,p,format!("{p:?}"));}});});}
+                        if draft.matches("Theme system light dark"){dialog::setting_row(ui,icons::SUN,"Theme",None,|ui|{egui::ComboBox::from_id_salt("theme").selected_text(super::i18n::text(&format!("{:?}",draft.config.theme))).show_ui(ui,|ui|{for t in [AppTheme::System,AppTheme::Light,AppTheme::Dark]{ui.selectable_value(&mut draft.config.theme,t,super::i18n::text(&format!("{t:?}")));}});});}
+                        if draft.matches("Palette Studio native"){dialog::setting_row(ui,icons::PALETTE,"Palette",None,|ui|{egui::ComboBox::from_id_salt("palette").selected_text(super::i18n::text(&format!("{:?}",draft.config.color_palette))).show_ui(ui,|ui|{for p in [ColorPalette::Studio,ColorPalette::Native]{ui.selectable_value(&mut draft.config.color_palette,p,super::i18n::text(&format!("{p:?}")));}});});}
                         if draft.matches("Accent color"){dialog::setting_row(ui,icons::DIAMOND,"Accent color",None,|ui|{super::color_picker::color_field(ui,&mut draft.config.accent,[56,210,122],130.0);});}
                         if draft.matches("UI scale size"){dialog::setting_row(ui,icons::MAGNIFYING_GLASS,"UI scale",None,|ui|{ui.add(egui::Slider::new(&mut draft.config.ui_scale,0.75..=2.0).step_by(0.05));});}
-                        if draft.matches("Language Persian English"){dialog::setting_row(ui,icons::GLOBE,"Language",None,|ui|{egui::ComboBox::from_id_salt("language").selected_text(format!("{:?}",draft.config.language)).show_ui(ui,|ui|{ui.selectable_value(&mut draft.config.language,AppLanguage::English,"English");ui.selectable_value(&mut draft.config.language,AppLanguage::Persian,"فارسی");});});}
+                        if draft.matches("Language System Persian English"){dialog::setting_row(ui,icons::GLOBE,"Language",None,|ui|{egui::ComboBox::from_id_salt("language").selected_text(super::i18n::text(&format!("{:?}",draft.config.language))).show_ui(ui,|ui|{ui.selectable_value(&mut draft.config.language,AppLanguage::System,super::i18n::text("System language"));ui.selectable_value(&mut draft.config.language,AppLanguage::English,"English");ui.selectable_value(&mut draft.config.language,AppLanguage::Persian,"فارسی");});});}
+                        if draft.matches("Direction automatic RTL LTR"){dialog::setting_row(ui,icons::GLOBE,"Direction",None,|ui|{egui::ComboBox::from_id_salt("direction").selected_text(match draft.config.direction{AppDirection::Auto=>super::i18n::text("Automatic"),AppDirection::Ltr=>super::i18n::text("Left to right"),AppDirection::Rtl=>super::i18n::text("Right to left")}).show_ui(ui,|ui|{for(d,label)in[(AppDirection::Auto,"Automatic"),(AppDirection::Ltr,"Left to right"),(AppDirection::Rtl,"Right to left")]{ui.selectable_value(&mut draft.config.direction,d,super::i18n::text(label));}});});}
                     });ui.add_space(8.0);
                 }
                 if draft.tab==1||!draft.search.is_empty(){
                     dialog::section(ui,icons::APP_WINDOW,"Application",|ui|{
-                        if draft.matches("Single instance startup"){ui.checkbox(&mut draft.config.single_instance,"Single instance").on_hover_text("Additional launches activate this window. Changing this setting applies on the next launch.");}
-                        if draft.matches("Close tray"){ui.checkbox(&mut draft.config.close_to_tray,"Close to system tray");}
-                        if draft.matches("Always on top"){ui.checkbox(&mut draft.config.always_on_top,"Always on top");}
-                        if draft.matches("Native dialog preferences"){ui.checkbox(&mut draft.config.native_dialogs,"Open Preferences in a native window");}
+                        if draft.matches("Single instance startup"){ui.checkbox(&mut draft.config.single_instance, crate::ui::i18n::text("Single instance")).on_hover_text(crate::ui::i18n::text("Additional launches activate this window. Changing this setting applies on the next launch."));}
+                        if draft.matches("Close tray"){ui.checkbox(&mut draft.config.close_to_tray, crate::ui::i18n::text("Close to system tray"));}
+                        if draft.matches("Always on top"){ui.checkbox(&mut draft.config.always_on_top, crate::ui::i18n::text("Always on top"));}
+                        if draft.matches("Native dialog preferences"){ui.checkbox(&mut draft.config.native_dialogs, crate::ui::i18n::text("Open Preferences in a native window"));}
                     });ui.add_space(8.0);
                 }
                 if draft.tab==2||!draft.search.is_empty(){
@@ -112,7 +115,7 @@ fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
                 if draft.tab==4||!draft.search.is_empty(){
                     dialog::section(ui,icons::INFO,"Notifications",|ui|{
                         use crate::platform::notifications::Policy;
-                        if draft.matches("In-app toast notification banner"){ui.checkbox(&mut draft.config.notifications.in_app,"In-app toast banners");}
+                        if draft.matches("In-app toast notification banner"){ui.checkbox(&mut draft.config.notifications.in_app, crate::ui::i18n::text("In-app toast banners"));}
                         if draft.matches("Windows system notification important all off"){dialog::setting_row(ui,icons::APP_WINDOW,"Windows notifications",None,|ui|{
                             egui::ComboBox::from_id_salt("notification-policy").selected_text(format!("{:?}",draft.config.notifications.system)).show_ui(ui,|ui|{
                                 ui.selectable_value(&mut draft.config.notifications.system,Policy::Off,"Off");
@@ -120,20 +123,20 @@ fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
                                 ui.selectable_value(&mut draft.config.notifications.system,Policy::All,"All — includes routine command messages");
                             });
                         });}
-                        if draft.matches("Notification sound silent"){ui.checkbox(&mut draft.config.notifications.sound,"Allow Windows notification sound");}
-                        ui.label("Windows controls banner visibility and duration. Quiet-time settings are respected. System messages contain no raw API responses, credentials or device URLs.");
-                        if ui.add_enabled(draft.config.notifications.system!=Policy::Off,egui::Button::new("Send test notification")).clicked(){outcome.test_notification=true;}
-                        ui.label(egui::RichText::new("Test uses saved notification preferences; save changes first. Delivery diagnostics are also available via --app-status.").small().weak());
+                        if draft.matches("Notification sound silent"){ui.checkbox(&mut draft.config.notifications.sound, crate::ui::i18n::text("Allow Windows notification sound"));}
+                        ui.label(crate::ui::i18n::text("Windows controls banner visibility and duration. Quiet-time settings are respected. System messages contain no raw API responses, credentials or device URLs."));
+                        if ui.add_enabled(draft.config.notifications.system!=Policy::Off,egui::Button::new(crate::ui::i18n::text("Send test notification"))).clicked(){outcome.test_notification=true;}
+                        ui.label(egui::RichText::new(crate::ui::i18n::text("Test uses saved notification preferences; save changes first. Delivery diagnostics are also available via --app-status.")).small().weak());
                     });ui.add_space(8.0);
                 }
                 if draft.tab==3||!draft.search.is_empty(){dialog::section(ui,icons::TABS,"Workspace",|ui|{
-                    ui.checkbox(&mut draft.config.additive_cell_selection,"Toggle multiple cells and rows without Ctrl").on_hover_text("When off, Ctrl+click toggles items. Shift extends a range; dragging always replaces unless Ctrl/Shift is held.");
-                    ui.checkbox(&mut draft.config.animate_cells,"Animate cell state transitions").on_hover_text("Disable for reduced motion. Cell geometry never changes.");
-                    ui.checkbox(&mut draft.config.show_cell_indicators,"Show cell LED-state indicators").on_hover_text("Optional corner dots for white/red/off state. Hidden by default.");
+                    ui.checkbox(&mut draft.config.additive_cell_selection, crate::ui::i18n::text("Toggle multiple cells and rows without Ctrl")).on_hover_text(crate::ui::i18n::text("When off, Ctrl+click toggles items. Shift extends a range; dragging always replaces unless Ctrl/Shift is held."));
+                    ui.checkbox(&mut draft.config.animate_cells, crate::ui::i18n::text("Animate cell state transitions")).on_hover_text(crate::ui::i18n::text("Disable for reduced motion. Cell geometry never changes."));
+                    ui.checkbox(&mut draft.config.show_cell_indicators, crate::ui::i18n::text("Show cell LED-state indicators")).on_hover_text(crate::ui::i18n::text("Optional corner dots for white/red/off state. Hidden by default."));
                     egui::ComboBox::from_id_salt("preferences-cell-shape").selected_text(draft.config.cell_shape.label()).show_ui(ui,|ui|{for shape in [super::cell_pixels::Shape::Rounded,super::cell_pixels::Shape::Circle,super::cell_pixels::Shape::Hexagon]{ui.selectable_value(&mut draft.config.cell_shape,shape,shape.label());}});
-                    ui.checkbox(&mut draft.config.pixel_diagnostics,"Show physical pixel indices (top first, CCW)").on_hover_text("Applies to circle/hexagon cells. Zero-based 0–479; values are sampled from device RGB before brightness/correction.");
+                    ui.checkbox(&mut draft.config.pixel_diagnostics, crate::ui::i18n::text("Show physical pixel indices (top first, CCW)")).on_hover_text(crate::ui::i18n::text("Applies to circle/hexagon cells. Zero-based 0–479; values are sampled from device RGB before brightness/correction."));
                     ui.label(format!("{} saved workspaces",draft.config.workspace_profiles.len()));
-                    ui.label("Drag panel tabs to rearrange or detach them. Workspace profiles save the current layout.");
+                    ui.label(crate::ui::i18n::text("Drag panel tabs to rearrange or detach them. Workspace profiles save the current layout."));
                     if ui.button(format!("{}  Export preferences…",icons::FLOPPY_DISK)).clicked(){
                         if let Some(path)=rfd::FileDialog::new().set_file_name("PakarController-preferences.json").add_filter("JSON",&["json"]).save_file(){match serde_json::to_vec_pretty(&draft.config).map_err(|e|e.to_string()).and_then(|v|std::fs::write(path,v).map_err(|e|e.to_string())){Ok(())=>draft.status="Exported preferences".into(),Err(e)=>draft.status=e}}
                     }
@@ -147,13 +150,13 @@ fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
     ui.separator();
     dialog::action_bar(
         ui,
-        false,
+        crate::config::resolved_rtl(&draft.config),
         |ui| {
             ui.label(
                 egui::RichText::new(if draft.is_dirty() {
-                    "Unsaved changes"
+                    super::i18n::text("Unsaved changes")
                 } else {
-                    &draft.status
+                    draft.status.clone()
                 })
                 .small()
                 .weak(),
@@ -171,10 +174,10 @@ fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
     if draft.confirm_close {
         egui::Modal::new(egui::Id::new("preferences-discard-confirmation")).show(ui.ctx(), |ui| {
             ui.set_width(360.0);
-            ui.heading("Discard preference changes?");
-            ui.label("Your saved preferences will be restored.");
+            ui.heading(crate::ui::i18n::text("Discard preference changes?"));
+            ui.label(crate::ui::i18n::text("Your saved preferences will be restored."));
             ui.add_space(12.0);
-            dialog::action_row(ui, false, |ui| {
+            dialog::action_row(ui, crate::config::resolved_rtl(&draft.config), |ui| {
                 if dialog::primary_action_button(ui, icons::TRASH, "Discard").clicked() {
                     outcome.discard = true;
                 }
@@ -207,7 +210,7 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
         ctx.show_viewport_immediate(
             egui::ViewportId::from_hash_of("pakar-preferences"),
             egui::ViewportBuilder::default()
-                .with_title("Preferences — PakarController")
+                .with_title(format!("{} — PakarController",super::i18n::text("Preferences")))
                 .with_inner_size([780.0, 590.0])
                 .with_min_inner_size([520.0, 420.0]),
             |child, _| {
@@ -233,7 +236,7 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
             egui::vec2(520.0, 420.0),
             egui::vec2(1000.0, 780.0),
         );
-        egui::Window::new(format!("{} Preferences", icons::GEAR))
+        egui::Window::new(format!("{} {}", icons::GEAR, super::i18n::text("Preferences")))
             .id(egui::Id::new("pakar-preferences"))
             .open(&mut open)
             .default_rect(g.default_rect)

@@ -288,3 +288,33 @@ as `docs/screenshots/context-{controller,unacknowledged,table}.jpg`.
 No board commands, firmware/EEPROM writes or native desktop screenshots occurred.
 Owned temporary tabs and identity-verified fixture processes were closed/stopped.
 SSH localhost:1022 refused; ledboard.local port 80 unreachable. CI not waited on.
+# Persian source and Web rendering checkpoint
+
+Owning issues #4 (locale/settings), #3 (donor inventory), #9 (native storage).
+Three actual complete-read Pealayer files certified: src/ui/i18n.rs,
+web_ui/src/i18n.ts, tests/i18n_surface_audit_test.rs. Configuration function
+excerpts are explicitly NOT certified as a whole source file. Inventory now has
+1888 paths, 61 complete comparisons, 1827 pending and 39 compared gap files.
+The Pealayer subset has 509 paths, 36 compared and 473 pending. No full-import or
+whole-repository superiority claim; concrete omission reasons remain per file.
+
+Local `node tools/ci-checks.mjs quality` passed all children, including actual Web
+module tests, font/generator checks, locale/RTL/application-copy ownership,
+settings ACK/readback/secret/conflict guards, donor hashes/anchors, route mapping,
+access/authentication, appearance, table, identity and repository contracts.
+Those tests are source/DOM/HTTP-double evidence, not native renderer or hardware.
+
+Actual embedded Web read-only fixture capture was inspected with lang=fa,
+dir=rtl, Vazirmatn loaded, no horizontal overflow; joined Persian settings hints,
+navigation, placeholders and status are visible. Retained refined screenshot:
+outputs/PakarController/localization/persian-settings-refined.jpg (local output).
+
+Native wrapper Test refused its unchanged oversized-cache guard before Cargo.
+Native glyph/shaping/registry-retention/locale tests are added but NOT executed;
+old running app is preserved. No obsolete-artifact cleanup approval received.
+ESP busy-wire candidate build passed: RAM 56620/80192, IRAM 63055/65536,
+IROM 844784/1048576. Image SHA-256:
+2676c89f113a846112f61e3febdbbacce97cd2107789067c18cf8e070d5afd5e.
+Not deployed. AVR unchanged; Flutter SDK absent on PATH, no APK build. SSH 1022
+refused and ledboard.local unresolved. CI was not waited on. Full donor mappings
+and pending dynamic/native/mobile translation acceptance: PERSIAN-PARITY.md.

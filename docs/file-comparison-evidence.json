@@ -4,6 +4,173 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
     {
+      "origin": "Pealayer",
+      "path": "src/ui/i18n.rs",
+      "sha256": "811f1e08e7126932772c49da8aa9669ce8f47d4e2208c1ef6cde435dde20bdf4",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual donor platform/UI face loading, Vazirmatn and Phosphor registration, application dictionary, identity-preserving visual_text, script detection, input alignment and horizontal/vertical direction helpers retained and wired into real native controls.",
+        "Monospace Persian fallback and preference-driven priority refresh added without discarding later widget font registrations. Actual donor contextual glyph test adapted to both families; saved Unicode and peer identifiers never manually reversed."
+      ],
+      "targets": [
+        {
+          "path": "desktop/src/ui/i18n.rs",
+          "sha256": "c58317a6398ba71708ce71fccef2bc16e142cd21edd0b26baff6fae907ef79aa",
+          "anchor": "pub(crate) fn configure_ui_fonts"
+        },
+        {
+          "path": "desktop/src/ui/dialog.rs",
+          "sha256": "b3786964dd0c375f0f73325a4046b3fc0e3967ace4e7e0c4f66b6f52d66eda47",
+          "anchor": "pub fn singleline_text_edit"
+        },
+        {
+          "path": "desktop/src/ui/preferences.rs",
+          "sha256": "a0b8c1a2ba2857733245c7e76c0f2d1be3ff857a3691df95440913e5639908e6",
+          "anchor": "AppLanguage::Persian"
+        },
+        {
+          "path": "docs/PERSIAN-PARITY.md",
+          "sha256": "9e5e153c3872e2347365af8d60762ed971fb41f77210d1a6d6ff2306400e3864",
+          "anchor": "## Exact source-to-target mapping"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Media playback, cue/timeline reveal and keyframe-specific dictionary keys",
+          "disposition": "not-applicable",
+          "reason": "They describe explicitly excluded media business; no corresponding controller surface exists. No generic UI/tooling capability is excluded on that basis."
+        },
+        {
+          "code": "Manage folders, Manage folder, New folder, Expand folders, Collapse folders, Move to folder, Delete folder, Confirm delete, Channels will be moved to Ungrouped, pending folder change and attached-board folder configuration copy",
+          "disposition": "pending",
+          "reason": "Generic grouping behavior is useful but not yet integrated with actual board cell/group contracts. No fake folder actions or completion claim; retain on issue #4 for real grouping and localized acceptance."
+        },
+        {
+          "code": "Separate ttf_parser coverage assertions and exhaustive native surface translations",
+          "disposition": "pending",
+          "reason": "Avoid introducing a duplicate font parser dependency: actual renderer glyph/contextual tests are adapted instead, but unexecuted native tests and additional Unicode/surface acceptance remain gaps. Full device-settings bodies and status/transport copy still need audit."
+        }
+      ],
+      "remaining": [
+        "Run native glyph/font-retention/locale tests after approved obsolete-debug cleanup; inspect actual Persian native inputs/menus/dialogs and replacement app. Complete all application-copy surfaces and generic folder/group behavior."
+      ],
+      "proof": [
+        {
+          "path": "desktop/src/ui/i18n.rs",
+          "sha256": "c58317a6398ba71708ce71fccef2bc16e142cd21edd0b26baff6fae907ef79aa",
+          "anchor": "fn contextual_persian_in_labels_and_monospace_inputs"
+        },
+        {
+          "path": "desktop/src/ui/i18n.rs",
+          "sha256": "c58317a6398ba71708ce71fccef2bc16e142cd21edd0b26baff6fae907ef79aa",
+          "anchor": "fn changing_language_preserves_widget_fonts"
+        },
+        {
+          "path": "tests/localization_test.mjs",
+          "sha256": "25a158d69ac28e9ad3d121a4b95d677d0babdda9477d65910924c6e8f477a49c",
+          "anchor": "Peer text identical to a dictionary key"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "web_ui/src/i18n.ts",
+      "sha256": "331b0ef10c89f4e695101cb332e62607e15ce37bd0543104453060c0e45a66e6",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual donor fa-dictionary fallback semantics reused for application copy, rather than translating arbitrary runtime data. Applicable native dictionary subset generates into the canonical Web module and actual firmware HTML.",
+        "Added system/explicit language and Auto/LTR/RTL preferences, owned-template text/placeholder/accessibility snapshots, per-browser low-write persistence, shared font route and immutable peer-name boundary."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/localization.js",
+          "sha256": "b9f1e85ab0f466c981a3a5cccc68cf8b34a602034a67f34e1ef961d7152ce5a7",
+          "anchor": "function uiTr(text)"
+        },
+        {
+          "path": "tools/generate-font-assets.mjs",
+          "sha256": "a707826ccb6f9bafd17dd19e9eb1c55d3c1c88a98b103bbd435c15b088b9a6a2",
+          "anchor": "const dictionary={}"
+        },
+        {
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
+          "anchor": "// BEGIN SHARED LOCALIZATION"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Media-library, player, playback, cue/timeline and libmpv-specific Web dictionary/surfaces",
+          "disposition": "not-applicable",
+          "reason": "Those surfaces belong to excluded media business and would add unrelated controls, not controller capabilities."
+        },
+        {
+          "code": "Remaining generic Web copy and native/Web/mobile preference synchronization",
+          "disposition": "pending",
+          "reason": "The actual controller subset is integrated, not the entire donor Web feature set. Dynamic errors/confirmations/status/menu attributes and narrow/mobile runtime acceptance remain; browser locale is not silently written to another client or firmware."
+        }
+      ],
+      "remaining": [
+        "Finish all dynamic application-copy surfaces and controller-safe shared preference contracts; execute live-device and mobile-width/Android locale tests."
+      ],
+      "proof": [
+        {
+          "path": "tests/localization_test.mjs",
+          "sha256": "25a158d69ac28e9ad3d121a4b95d677d0babdda9477d65910924c6e8f477a49c",
+          "anchor": "No identical storage writes"
+        },
+        {
+          "path": "tests/localization_test.mjs",
+          "sha256": "25a158d69ac28e9ad3d121a4b95d677d0babdda9477d65910924c6e8f477a49c",
+          "anchor": "assert.equal(attrs.placeholder"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "tests/i18n_surface_audit_test.rs",
+      "sha256": "504768bc9cf2fda32a8dab8b0f50d573c74e45001734f45c7ff3120f36333f63",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual donor known-raw-caption prohibition and required localized-boundary audit pattern adapted to real shell menu captions, not renamed timeline/media files. Added peer text exclusion and reversible placeholder/language tests."
+      ],
+      "targets": [
+        {
+          "path": "tests/localization_test.mjs",
+          "sha256": "25a158d69ac28e9ad3d121a4b95d677d0babdda9477d65910924c6e8f477a49c",
+          "anchor": "Adapt Pealayer tests/i18n_surface_audit_test.rs"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Literal media cue/keyframe/player forbidden-string fixtures",
+          "disposition": "not-applicable",
+          "reason": "Pakar has no those media surfaces; substituting their filenames would manufacture coverage. Controller-specific boundaries and font assets are tested instead."
+        },
+        {
+          "code": "Complete native/Web raw-caption audit coverage",
+          "disposition": "pending",
+          "reason": "The current test protects selected imported boundaries; it is not exhaustive. Remaining native settings, transport/status and dynamic Web copy are explicitly pending, and native Cargo tests are blocked by cache budget."
+        }
+      ],
+      "remaining": [
+        "Expand ownership audit as each real controller surface is translated; execute actual native renderer tests and acceptance instead of treating source guards as runtime proof."
+      ],
+      "proof": [
+        {
+          "path": "tests/localization_test.mjs",
+          "sha256": "25a158d69ac28e9ad3d121a4b95d677d0babdda9477d65910924c6e8f477a49c",
+          "anchor": "for(const key of"
+        }
+      ],
+      "improvement": ""
+    },
+    {
       "path": "README.md",
       "verdict": "scoped-improvement",
       "targets": [
@@ -57,7 +224,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "1a416366464cb2bd123ea4555d554903bb17a0394792145d92fe3795712c3f00",
+          "sha256": "80fa23d80d58f60a2af9d9ced71a3b24335f3926c3d8ac0fddb2dabf40541ddb",
           "anchor": "export function runChecks"
         },
         {
@@ -218,7 +385,7 @@
       "targets": [
         {
           "path": "assets/web/device-settings.js",
-          "sha256": "b1604f68471e50f0c77e5459293355cbdc02c77d0aeb1cc7341ea6d80839b78c",
+          "sha256": "ffbe4354eba7347ecd0a80618c9c92b72578e2a67b3e7c5097ce41333f75a2d8",
           "anchor": "function panelToggle("
         },
         {
@@ -250,7 +417,7 @@
       "proof": [
         {
           "path": "tests/interface_settings_test.mjs",
-          "sha256": "210abb620113ed519eaba2a64ee558367170f24586eb3ff7768002870904d180",
+          "sha256": "81e86f64b3a7a6953687e44e0554eb3480153c9a4c0845cbff1e8a417327d63c",
           "anchor": "Capability loss must override stored panel visibility"
         }
       ],
@@ -349,7 +516,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
+          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
           "anchor": "function peerAvailability("
         }
       ],
@@ -455,7 +622,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "6976fba6f5d822325c02c8fe67130ce0215fee2e20bae99cbabe88fac4cf2f2e",
+          "sha256": "61deb06fb3209fe62743ee11fc824bb301a7fb52356fc17a8a86d361160de47e",
           "anchor": "fn synchronize_context("
         },
         {
@@ -610,7 +777,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
+          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -620,12 +787,12 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
+          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
           "anchor": "function renderApplicationIdentity"
         },
         {
           "path": "assets/web/device-settings.js",
-          "sha256": "b1604f68471e50f0c77e5459293355cbdc02c77d0aeb1cc7341ea6d80839b78c",
+          "sha256": "ffbe4354eba7347ecd0a80618c9c92b72578e2a67b3e7c5097ce41333f75a2d8",
           "anchor": "function settingsCanClose()"
         },
         {
@@ -662,7 +829,7 @@
         },
         {
           "path": "tests/interface_settings_test.mjs",
-          "sha256": "210abb620113ed519eaba2a64ee558367170f24586eb3ff7768002870904d180",
+          "sha256": "81e86f64b3a7a6953687e44e0554eb3480153c9a4c0845cbff1e8a417327d63c",
           "anchor": "Failed saves preserve the draft"
         }
       ],
@@ -685,7 +852,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
+          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -787,8 +954,8 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "6976fba6f5d822325c02c8fe67130ce0215fee2e20bae99cbabe88fac4cf2f2e",
-          "anchor": "menu::top_menu_button(ui, \"File\".into()"
+          "sha256": "61deb06fb3209fe62743ee11fc824bb301a7fb52356fc17a8a86d361160de47e",
+          "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
@@ -968,7 +1135,7 @@
       "targets": [
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "4fda713667e29e55b5c8c58c12cd6bbb8a770d06958173d27fdbe4163bde6861",
+          "sha256": "48fc7a68747bc747a4b9b0a4ae675097329e20a99ab12f4581b170d8cd2f74d3",
           "anchor": "Get-PakarCargoTargetDirectory"
         }
       ],
@@ -1247,7 +1414,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "6976fba6f5d822325c02c8fe67130ce0215fee2e20bae99cbabe88fac4cf2f2e",
+          "sha256": "61deb06fb3209fe62743ee11fc824bb301a7fb52356fc17a8a86d361160de47e",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -1665,7 +1832,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "6976fba6f5d822325c02c8fe67130ce0215fee2e20bae99cbabe88fac4cf2f2e",
+          "sha256": "61deb06fb3209fe62743ee11fc824bb301a7fb52356fc17a8a86d361160de47e",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -2231,7 +2398,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "aa2c32244220e9fc7acdee9eda0a75bead514c2988191569e5eedf53b45f18aa"
+          "sha256": "70e5ee73c384801511ce9b75ac25ffbde60c1ff1e9be45f4dafd225d1e10df5d"
         }
       ],
       "proof": [
@@ -2298,7 +2465,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "aa2c32244220e9fc7acdee9eda0a75bead514c2988191569e5eedf53b45f18aa"
+          "sha256": "70e5ee73c384801511ce9b75ac25ffbde60c1ff1e9be45f4dafd225d1e10df5d"
         }
       ],
       "proof": [
@@ -2365,7 +2532,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "aa2c32244220e9fc7acdee9eda0a75bead514c2988191569e5eedf53b45f18aa"
+          "sha256": "70e5ee73c384801511ce9b75ac25ffbde60c1ff1e9be45f4dafd225d1e10df5d"
         }
       ],
       "proof": [
@@ -2417,7 +2584,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "aa2c32244220e9fc7acdee9eda0a75bead514c2988191569e5eedf53b45f18aa"
+          "sha256": "70e5ee73c384801511ce9b75ac25ffbde60c1ff1e9be45f4dafd225d1e10df5d"
         }
       ],
       "proof": [
@@ -2616,7 +2783,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
+          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -2706,7 +2873,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
+          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
           "anchor": "/* Fixed manager slots:"
         }
       ],

@@ -104,7 +104,7 @@ mod table_geometry_tests {
                 );
                 ui.put(last_cell, egui::Label::new("80"));
                 finish_table_area(ui, area);
-                let footer = ui.label("Cell selected").rect;
+                let footer = ui.label(crate::ui::i18n::text("Cell selected")).rect;
                 assert!(
                     footer.top() >= area.bottom() + 8.0,
                     "Footer overlaps staggered grid at pitch {pitch}: {area:?} {footer:?}"
@@ -336,6 +336,7 @@ impl PakarControllerApp {
         ctx.send_viewport_cmd(egui::ViewportCommand::Title(title));
     }
     pub fn draw_shell(&mut self, ui: &mut egui::Ui) {
+        ui.set_layout(super::i18n::vertical_layout(super::i18n::rtl()));
         let ctx = ui.ctx().clone();
         while let Ok(command) = self.control.rx.try_recv() {
             self.dispatch(command, &ctx);
@@ -441,9 +442,9 @@ impl PakarControllerApp {
         }
         egui::Panel::top("pakar-menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
-                menu::top_menu_button(ui, "File".into(), |ui| {
+                menu::top_menu_button(ui, crate::ui::i18n::text("File"), |ui| {
                     if ui
-                        .add(egui::Button::new(format!("{}  Device settings…", icons::CIRCUITRY))
+                        .add(egui::Button::new(format!("{}  {}", icons::CIRCUITRY, crate::ui::i18n::text("Device settings…")))
                             .shortcut_text("Ctrl+Shift+,"))
                         .clicked()
                     {
@@ -452,7 +453,7 @@ impl PakarControllerApp {
                         ui.close();
                     }
                     if ui
-                        .add(egui::Button::new(format!("{}  Connect…", icons::PLUG))
+                        .add(egui::Button::new(format!("{}  {}", icons::PLUG, crate::ui::i18n::text("Connect…")))
                             .shortcut_text("Ctrl+K"))
                         .clicked()
                     {
@@ -460,7 +461,7 @@ impl PakarControllerApp {
                         ui.close();
                     }
                     if self.has_table() && ui
-                        .add(egui::Button::new(format!("{}  Cell mapping…", icons::GRID_FOUR))
+                        .add(egui::Button::new(format!("{}  {}", icons::GRID_FOUR, crate::ui::i18n::text("Cell mapping…")))
                             .shortcut_text("Ctrl+M"))
                         .clicked() && self.has_table()
                     {
@@ -469,7 +470,7 @@ impl PakarControllerApp {
                     }
                     ui.separator();
                     if ui
-                        .add(egui::Button::new(format!("{}  Preferences…", icons::GEAR))
+                        .add(egui::Button::new(format!("{}  {}", icons::GEAR, crate::ui::i18n::text("Preferences…")))
                             .shortcut_text("Ctrl+,"))
                         .clicked()
                     {
@@ -477,13 +478,13 @@ impl PakarControllerApp {
                         ui.close();
                     }
                     ui.separator();
-                    if ui.button(format!("{}  Quit", icons::POWER)).clicked() {
+                    if ui.button(format!("{}  {}", icons::POWER, crate::ui::i18n::text("Quit"))).clicked() {
                         self.dispatch(Command::Quit, &ctx);
                     }
                 });
-                menu::top_menu_button(ui, "Workspace".into(), |ui| {
+                menu::top_menu_button(ui, crate::ui::i18n::text("Workspace"), |ui| {
                     if ui
-                        .add(egui::Button::new(format!("{}  Toggle fullscreen", icons::APP_WINDOW))
+                        .add(egui::Button::new(format!("{}  {}", icons::APP_WINDOW, crate::ui::i18n::text("Toggle fullscreen")))
                             .shortcut_text("F11"))
                         .clicked()
                     {
@@ -491,12 +492,12 @@ impl PakarControllerApp {
                         ui.close();
                     }
                     ui.separator();
-                    icons::submenu(ui, format!("{}  Panels", icons::TABS), |ui| {
+                    icons::submenu(ui, format!("{}  {}", icons::TABS, crate::ui::i18n::text("Panels")), |ui| {
                         layout::draw_workspace_tab_menu(self, ui)
                     });
                     ui.separator();
                     if ui
-                        .button(format!("{}  Manage workspaces…", icons::TABS))
+                        .button(format!("{}  {}", icons::TABS, crate::ui::i18n::text("Manage workspaces…")))
                         .clicked()
                     {
                         self.show_workspaces = true;
@@ -513,9 +514,9 @@ impl PakarControllerApp {
                         ui.close();
                     }
                 });
-                menu::top_menu_button(ui, "Device".into(), |ui| {
+                menu::top_menu_button(ui, crate::ui::i18n::text("Device"), |ui| {
                     if ui
-                        .add(egui::Button::new(format!("{}  Refresh", icons::ARROW_CLOCKWISE))
+                        .add(egui::Button::new(format!("{}  {}", icons::ARROW_CLOCKWISE, crate::ui::i18n::text("Refresh")))
                             .shortcut_text("F5"))
                         .clicked()
                     {
@@ -523,7 +524,7 @@ impl PakarControllerApp {
                         ui.close();
                     }
                     if self.has_feature("network") && ui
-                        .button(format!("{}  Network & cloud", icons::GLOBE))
+                        .button(format!("{}  {}", icons::GLOBE, crate::ui::i18n::text("Network & cloud")))
                         .clicked()
                     {
                         self.reveal_panels.push(Panel::Network);
@@ -543,8 +544,8 @@ impl PakarControllerApp {
                         ui.close();
                     }
                 });
-                menu::top_menu_button(ui, "Help".into(), |ui| {
-                    if ui.button(format!("{}  Save workspace screenshot…", icons::DOWNLOAD_SIMPLE)).clicked() {
+                menu::top_menu_button(ui, crate::ui::i18n::text("Help"), |ui| {
+                    if ui.button(format!("{}  {}", icons::DOWNLOAD_SIMPLE, crate::ui::i18n::text("Save workspace screenshot…"))).clicked() {
                         ui.close();
                         if let Some(path) = rfd::FileDialog::new().add_filter("PNG image", &["png"]).set_file_name("PakarController.png").save_file() {
                             if let Err(error)=self.capture.request(path.to_string_lossy().into()) {self.message=error;}
@@ -561,14 +562,14 @@ impl PakarControllerApp {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui
                         .button(icons::GEAR)
-                        .on_hover_text("Preferences (Ctrl+,)")
+                        .on_hover_text(crate::ui::i18n::text("Preferences (Ctrl+,)"))
                         .clicked()
                     {
                         self.open_preferences();
                     }
                     if ui
                         .button(icons::PLUG)
-                        .on_hover_text("Connect (Ctrl+K)")
+                        .on_hover_text(crate::ui::i18n::text("Connect (Ctrl+K)"))
                         .clicked()
                     {
                         self.show_connection = true;
@@ -635,21 +636,21 @@ impl PakarControllerApp {
                             .map(|ports| ports.into_iter().map(|port| port.port_name).collect())
                             .map_err(|error| error.to_string()), &mut connection_actions);
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button(format!("{}  Workspaces", icons::TABS)).clicked() {
+                        if ui.button(format!("{}  {}", icons::TABS, crate::ui::i18n::text("Workspaces"))).clicked() {
                             self.show_workspaces = true;
                         }
-                        ui.menu_button(format!("{}  Panels", icons::TABS), |ui| {
+                        ui.menu_button(format!("{}  {}", icons::TABS, crate::ui::i18n::text("Panels")), |ui| {
                             layout::draw_workspace_tab_menu(self, ui)
                         });
                         if self.has_table() && ui
-                            .button(format!("{}  Mapping", icons::GRID_FOUR))
+                            .button(format!("{}  {}", icons::GRID_FOUR, crate::ui::i18n::text("Mapping")))
                             .clicked() && self.has_table()
                         {
                             self.show_mapping = true;
                         }
                         if ui
                             .button(icons::ARROW_CLOCKWISE)
-                            .on_hover_text("Refresh")
+                            .on_hover_text(crate::ui::i18n::text("Refresh"))
                             .clicked()
                         {
                             self.refresh();
@@ -702,7 +703,7 @@ impl PakarControllerApp {
                 if self.dock.iter_all_tabs().count() == 0 {
                     ui.centered_and_justified(|ui| {
                         if ui
-                            .button(format!("{}  Restore workspace", icons::TABS))
+                            .button(format!("{}  {}", icons::TABS, crate::ui::i18n::text("Restore workspace")))
                             .clicked()
                         {
                             self.dock = egui_dock::DockState::new(Panel::ALL.into_iter().filter(|p| p.available(self.peer_context())).collect());
@@ -752,7 +753,7 @@ impl PakarControllerApp {
                         .open_memory(open.then_some(egui::SetOpenCommand::Bool(true)))
                         .show(|ui| {
                             ui::cell_table::compact_menu(ui);
-                            ui.strong("Panels");
+                            ui.strong(crate::ui::i18n::text("Panels"));
                             ui.separator();
                             layout::draw_workspace_tab_menu(self, ui);
                         });
@@ -788,7 +789,7 @@ impl PakarControllerApp {
         self.sync_cell_selection_search();
         let snapshot = self.live_status().cloned();
         ui.horizontal(|ui| {
-            ui.heading("Pakar table");
+            ui.heading(crate::ui::i18n::text("Pakar table"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if let Some(s) = &snapshot {
                     ui.label(
@@ -804,9 +805,9 @@ impl PakarControllerApp {
                 [ui.available_width().min(270.0), 28.0],
                 dialog::singleline_text_edit(&mut self.cell_search)
                     .id(egui::Id::new("table-cell-search"))
-                    .hint_text("Find cell: 12, 3–8  ·  Ctrl+F")
+                    .hint_text(crate::ui::i18n::text("Find cell: 12, 3–8  ·  Ctrl+F"))
                     .char_limit(256),
-            ).on_hover_text("Exact logical cell IDs, lists and ranges. Search does not change LEDs. Enter/F3: next; Shift+F3: previous; Escape: clear.");
+            ).on_hover_text(crate::ui::i18n::text("Exact logical cell IDs, lists and ranges. Search does not change LEDs. Enter/F3: next; Shift+F3: previous; Escape: clear."));
             if self.focus_cell_search {
                 search.request_focus();
                 self.focus_cell_search = false;
@@ -820,16 +821,16 @@ impl PakarControllerApp {
                 self.cell_search = ui::cell_search::format_selection(&self.table.selection.ids);
             }
             let previous = ui.add_enabled(!self.table.selection.ids.is_empty(), egui::Button::new(icons::CARET_LEFT))
-                .on_hover_text("Previous selected cell (Shift+F3)").clicked();
+                .on_hover_text(crate::ui::i18n::text("Previous selected cell (Shift+F3)")).clicked();
             let next = ui.add_enabled(!self.table.selection.ids.is_empty(), egui::Button::new(icons::CARET_RIGHT))
-                .on_hover_text("Next selected cell (Enter / F3)").clicked()
+                .on_hover_text(crate::ui::i18n::text("Next selected cell (Enter / F3)")).clicked()
                 || (search.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)));
             if (previous || next) && let Some(id) = self.table.selection.navigate(self.selected_cell, previous) {
                 self.selected_cell = id;
                 if search.lost_focus() { search.request_focus(); }
             }
             if ui.add_enabled(!self.cell_search.is_empty(), egui::Button::new(icons::X))
-                .on_hover_text("Clear cell selection").clicked() {
+                .on_hover_text(crate::ui::i18n::text("Clear cell selection")).clicked() {
                 self.cell_search.clear();
                 self.apply_cell_search_selection();
             }
@@ -877,7 +878,7 @@ impl PakarControllerApp {
                 .weak(),
             );
             if snapshot.is_none() {
-                if ui.button(format!("{}  Connect…", icons::PLUG)).clicked() {
+                if ui.button(format!("{}  {}", icons::PLUG, crate::ui::i18n::text("Connect…"))).clicked() {
                     self.show_connection = true;
                 }
             }
@@ -925,7 +926,7 @@ impl PakarControllerApp {
                     }
                 }
                 if ui
-                    .button(format!("{}  Reset game…", icons::ARROW_COUNTER_CLOCKWISE))
+                    .button(format!("{}  {}", icons::ARROW_COUNTER_CLOCKWISE, crate::ui::i18n::text("Reset game…")))
                     .clicked()
                 {
                     self.confirm_reset = true;
@@ -971,7 +972,7 @@ impl PakarControllerApp {
                         });
                 });
                 if ui
-                    .button(format!("{}  Edit identity…", icons::PENCIL_SIMPLE))
+                    .button(format!("{}  {}", icons::PENCIL_SIMPLE, crate::ui::i18n::text("Edit identity…")))
                     .clicked()
                 {
                     self.select_mapping(self.selected_cell);
@@ -1053,7 +1054,7 @@ impl PakarControllerApp {
                         s.tm1637_ack,
                     );
                 } else {
-                    ui.label("Segment readback unavailable");
+                    ui.label(crate::ui::i18n::text("Segment readback unavailable"));
                 }
                 badge(
                     ui,
@@ -1065,11 +1066,11 @@ impl PakarControllerApp {
                     s.tm1637_ack,
                 );
             } else {
-                ui.label(egui::RichText::new("Display state unavailable").weak());
+                ui.label(egui::RichText::new(crate::ui::i18n::text("Display state unavailable")).weak());
             }
             ui.horizontal(|ui| {
                 ui.add(egui::DragValue::new(&mut self.display_value).range(-999..=9999));
-                if ui.button("Show number").clicked() {
+                if ui.button(crate::ui::i18n::text("Show number")).clicked() {
                     self.action(
                         "/api/v1/display",
                         vec![("value".into(), self.display_value.to_string())],
@@ -1087,19 +1088,19 @@ impl PakarControllerApp {
                 [ui.available_width(), 28.0],
                 dialog::singleline_text_edit(&mut self.display_text)
                     .char_limit(40)
-                    .hint_text("Front-panel text"),
+                    .hint_text(crate::ui::i18n::text("Front-panel text")),
             );
             ui.horizontal_wrapped(|ui| {
-                ui.label("Step");
+                ui.label(crate::ui::i18n::text("Step"));
                 ui.add(
                     egui::DragValue::new(&mut self.config.display.speed_ms)
                         .range(80..=5000)
                         .suffix(" ms"),
                 );
-                ui.checkbox(&mut self.config.display.force_scroll, "Scroll short text");
+                ui.checkbox(&mut self.config.display.force_scroll, crate::ui::i18n::text("Scroll short text"));
             });
             ui.horizontal_wrapped(|ui| {
-                ui.label("Repeat");
+                ui.label(crate::ui::i18n::text("Repeat"));
                 egui::ComboBox::from_id_salt("display-repeat")
                     .selected_text(self.config.display.repeat.label())
                     .show_ui(ui, |ui| {
@@ -1116,7 +1117,7 @@ impl PakarControllerApp {
                         }
                     });
                 if self.config.display.repeat == crate::display::Repeat::Interval {
-                    ui.label("Pause");
+                    ui.label(crate::ui::i18n::text("Pause"));
                     ui.add(
                         egui::DragValue::new(&mut self.config.display.interval_seconds)
                             .range(1..=255)
@@ -1127,7 +1128,7 @@ impl PakarControllerApp {
                     && !self.config.display.force_scroll
                     && self.config.display.repeat != crate::display::Repeat::Loop
                 {
-                    ui.label("Hold");
+                    ui.label(crate::ui::i18n::text("Hold"));
                     ui.add(
                         egui::DragValue::new(&mut self.config.display.hold_ms)
                             .range(0..=60000)
@@ -1143,7 +1144,7 @@ impl PakarControllerApp {
                 if ui
                     .add_enabled(
                         snapshot.is_some() && payload.is_ok() && !self.display_text.is_empty(),
-                        egui::Button::new(format!("{}  Present", icons::PLAY)),
+                        egui::Button::new(format!("{}  {}", icons::PLAY, crate::ui::i18n::text("Present"))),
                     )
                     .clicked()
                 {
@@ -1156,7 +1157,7 @@ impl PakarControllerApp {
                     self.save_workspace();
                 }
                 if snapshot.as_ref().is_some_and(|s| s.tm1637_host_active)
-                    && ui.button("Stop text").clicked()
+                    && ui.button(crate::ui::i18n::text("Stop text")).clicked()
                 {
                     self.action(
                         "/api/v1/display",
@@ -1212,7 +1213,7 @@ impl PakarControllerApp {
                 if ui
                     .add_enabled(
                         snapshot.is_some(),
-                        egui::Button::new(format!("{}  Play tone", icons::PLAY)),
+                        egui::Button::new(format!("{}  {}", icons::PLAY, crate::ui::i18n::text("Play tone"))),
                     )
                     .clicked()
                 {
@@ -1233,7 +1234,7 @@ impl PakarControllerApp {
     }
     pub(super) fn draw_hardware(&mut self, ui: &mut egui::Ui) {
         let Some(s) = self.live_status().cloned() else {
-            ui.label("Hardware state unavailable");
+            ui.label(crate::ui::i18n::text("Hardware state unavailable"));
             return;
         };
         let avr_acknowledged = ["display", "text", "buzzer", "inputs", "outputs", "settings"]
@@ -1307,15 +1308,15 @@ impl PakarControllerApp {
             if let Some(app) = self.peer_context().and_then(|p|p.application()) {
                 ui.label(egui::RichText::new(&app.name).strong());
                 ui.label(egui::RichText::new(format!("{} · {}",app.title,app.id)).small().weak());
-                ui.label(egui::RichText::new("Application branding is reported by the running firmware; renaming this board does not change its software identity.").small().weak());
+                ui.label(egui::RichText::new(crate::ui::i18n::text("Application branding is reported by the running firmware; renaming this board does not change its software identity.")).small().weak());
             }
             if self.command_route()==Some(Transport::Serial) && self.peer_context().is_none_or(|c|c.hostname.is_empty()) {
-                ui.label("Reading this USB board’s identity…"); return;
+                ui.label(crate::ui::i18n::text("Reading this USB board’s identity…")); return;
             }
             if let Some(name) = &mut self.device_name {
                 if let Some(label) = &mut self.board_display_name { field(ui, icons::CIRCUITRY, "Board display name", label, false); }
                 field(ui, icons::GLOBE, "Hostname", name, false);
-                ui.label(egui::RichText::new("The display name is separate from the DNS hostname. Saved across OTA. Only a hostname change restarts Wi-Fi/AP; credentials stay unchanged.").small().weak());
+                ui.label(egui::RichText::new(crate::ui::i18n::text("The display name is separate from the DNS hostname. Saved across OTA. Only a hostname change restarts Wi-Fi/AP; credentials stay unchanged.")).small().weak());
                 let label = self.board_display_name.clone();
                 if ui.add_enabled_ui(!self.identity_pending, |ui| dialog::primary_action_button(ui, icons::CHECK, "Save board identity")).inner.clicked() {
                     match crate::identity::normalize_name(name).and_then(|n| if label.as_ref().is_some_and(|s| !crate::identity::valid_display_name(s)) { Err("Board name must be 1..63 UTF-8 bytes without controls or edge spaces".into()) } else { Ok(n) }) {
@@ -1336,7 +1337,7 @@ impl PakarControllerApp {
                 }
                 if let Some((host,label))=&self.identity_saved {
                     if self.device_name.as_ref()!=Some(host) || self.board_display_name.as_ref()!=Some(label) {
-                        ui.label(egui::RichText::new("Unsaved board identity changes").small().weak());
+                        ui.label(egui::RichText::new(crate::ui::i18n::text("Unsaved board identity changes")).small().weak());
                         if dialog::action_button(ui,icons::X,"Discard name edits").clicked() {
                             self.device_name=Some(host.clone());self.board_display_name=Some(label.clone());
                         }
@@ -1388,7 +1389,7 @@ impl PakarControllerApp {
                     &mut self.access_confirm,
                     true,
                 );
-                ui.label(egui::RichText::new("Uses your current connection password. Saved on the ESP across OTA; signs out every client. Wi-Fi credentials are unchanged. HTTP is not encrypted.").small().weak());
+                ui.label(egui::RichText::new(crate::ui::i18n::text("Uses your current connection password. Saved on the ESP across OTA; signs out every client. Wi-Fi credentials are unchanged. HTTP is not encrypted.")).small().weak());
                 if dialog::primary_action_button(ui, icons::CHECK, "Save device credentials")
                     .clicked()
                 {
@@ -1415,13 +1416,13 @@ impl PakarControllerApp {
                     }
                 }
             } else {
-                ui.label("Credential settings have not been advertised by the device. Connect to the updated firmware to configure them.");
+                ui.label(crate::ui::i18n::text("Credential settings have not been advertised by the device. Connect to the updated firmware to configure them."));
             }
         });
     }
     fn draw_network(&mut self, ui: &mut egui::Ui) {
         dialog::section(ui, icons::GEAR, "Device configuration", |ui| {
-            ui.label("Manage the controller's saved settings, network services and front panel.");
+            ui.label(crate::ui::i18n::text("Manage the controller's saved settings, network services and front panel."));
             if dialog::primary_action_button(ui, icons::GEAR, "Device settings…").clicked() {
                 self.device_settings.open = true;
                 self.configuration_loaded = false;
@@ -1446,7 +1447,7 @@ impl PakarControllerApp {
     }
     fn draw_streaming(&mut self, ui: &mut egui::Ui) {
         ui.horizontal_wrapped(|ui| {
-            ui.label("Target rate");
+            ui.label(crate::ui::i18n::text("Target rate"));
             if ui
                 .add(
                     egui::DragValue::new(&mut self.config.stream_fps)
@@ -1511,7 +1512,7 @@ impl PakarControllerApp {
                         }
                     )),
                 )
-                .on_hover_text("Requires a complete validated cell map from this board")
+                .on_hover_text(crate::ui::i18n::text("Requires a complete validated cell map from this board"))
                 .clicked()
             {
                 self.sampling = !self.sampling;
@@ -1527,7 +1528,7 @@ impl PakarControllerApp {
             ui.label(egui::RichText::new(format!("{} events", self.event_log.len())).weak());
             if ui
                 .button(icons::TRASH)
-                .on_hover_text("Clear events")
+                .on_hover_text(crate::ui::i18n::text("Clear events"))
                 .clicked()
             {
                 self.event_log.clear();
@@ -1555,8 +1556,8 @@ impl PakarControllerApp {
         if self.confirm_reset {
             let response = egui::Modal::new(egui::Id::new("reset-game")).show(ctx, |ui| {
                 ui.set_width(360.0);
-                ui.heading("Reset the current game?");
-                ui.label("The winner and current game state will be cleared.");
+                ui.heading(crate::ui::i18n::text("Reset the current game?"));
+                ui.label(crate::ui::i18n::text("The winner and current game state will be cleared."));
                 ui.add_space(12.0);
                 dialog::action_row(ui, false, |ui| {
                     if dialog::primary_action_button(ui, icons::ARROW_COUNTER_CLOCKWISE, "Reset")
@@ -1577,7 +1578,7 @@ impl PakarControllerApp {
         if self.show_connection {
             let response = egui::Modal::new(egui::Id::new("connection-dialog")).show(ctx, |ui| {
                 ui.set_width(480.0);
-                ui.heading(format!("{}  Connect to controller", icons::PLUG));
+                ui.heading(format!("{}  {}", icons::PLUG, crate::ui::i18n::text("Connect to controller")));
                 ui.add_space(12.0);
                 dialog::section(ui, icons::GLOBE, "Wi-Fi", |ui| {
                     field(ui, icons::GLOBE, "Endpoint", &mut self.base, false);
@@ -1654,7 +1655,7 @@ impl PakarControllerApp {
                 egui::vec2(520.0, 380.0),
                 egui::vec2(950.0, 750.0),
             );
-            egui::Window::new(format!("{}  Cell mapping", icons::GRID_FOUR))
+            egui::Window::new(format!("{}  {}", icons::GRID_FOUR, crate::ui::i18n::text("Cell mapping")))
                 .id(egui::Id::new("cell-mapping"))
                 .open(&mut open)
                 .default_rect(g.default_rect)
@@ -1665,16 +1666,16 @@ impl PakarControllerApp {
                 .frame(dialog::opaque_window_frame_from_context(ctx))
                 .show(ctx, |ui| {
                     ui.horizontal(|ui| {
-                        ui.label("Logical");
+                        ui.label(crate::ui::i18n::text("Logical"));
                         let changed = ui
                             .add(egui::DragValue::new(&mut self.mapping_logical).range(1..=80))
                             .changed();
                         if changed {
                             self.select_mapping(self.mapping_logical);
                         }
-                        ui.label("Physical");
+                        ui.label(crate::ui::i18n::text("Physical"));
                         ui.add(egui::DragValue::new(&mut self.mapping_physical).range(1..=80));
-                        ui.label("Name");
+                        ui.label(crate::ui::i18n::text("Name"));
                         ui.add_sized(
                             [ui.available_width().min(180.0), 28.0],
                             dialog::singleline_text_edit(&mut self.mapping_name).char_limit(15),
@@ -1691,9 +1692,9 @@ impl PakarControllerApp {
                                 .striped(true)
                                 .spacing([24.0, 6.0])
                                 .show(ui, |ui| {
-                                    ui.strong("Logical cell");
-                                    ui.strong("Physical cell");
-                                    ui.strong("Name");
+                                    ui.strong(crate::ui::i18n::text("Logical cell"));
+                                    ui.strong(crate::ui::i18n::text("Physical cell"));
+                                    ui.strong(crate::ui::i18n::text("Name"));
                                     ui.end_row();
                                     for m in self.mappings.clone() {
                                         if ui
@@ -1717,7 +1718,7 @@ impl PakarControllerApp {
                         if ui
                             .add_enabled(
                                 !self.mappings.is_empty(),
-                                egui::Button::new(format!("{}  Save mapping", icons::CHECK))
+                                egui::Button::new(format!("{}  {}", icons::CHECK, crate::ui::i18n::text("Save mapping")))
                                     .min_size(egui::vec2(104.0, 28.0)),
                             )
                             .clicked()
@@ -1750,7 +1751,7 @@ impl PakarControllerApp {
             let name = app.as_ref().map(|a|a.name.as_str()).unwrap_or("PakarController");
             egui::Window::new(format!("{}  About {name}",icons::INFO)).id(egui::Id::new("about-pakar")).open(&mut open).default_size([520.0,300.0]).collapsible(false).frame(dialog::opaque_window_frame_from_context(ctx)).show(ctx,|ui|{
                 ui.horizontal(|ui|{crate::branding::peer_logo(ui,48.0,app.as_ref());ui.vertical(|ui|{ui.heading(name);if let Some(app)=&app {ui.label(&app.title);ui.label(egui::RichText::new(&app.id).weak());}ui.label(format!("PakarController client {}",env!("CARGO_PKG_VERSION")));});});ui.add_space(16.0);
-                dialog::section(ui,icons::APP_WINDOW,"Application foundation",|ui|{ui.label("Built from Pealayer’s desktop workspace, dialog controls, icon and color pickers, themes, fonts, notifications, and native instance ownership.");ui.label("MIT License · Pealayer © 2026 ToghrolTP");ui.hyperlink_to("Pealayer source","https://github.com/ToghrolTP/pealayer");});ui.add_space(12.0);
+                dialog::section(ui,icons::APP_WINDOW,"Application foundation",|ui|{ui.label(crate::ui::i18n::text("Built from Pealayer’s desktop workspace, dialog controls, icon and color pickers, themes, fonts, notifications, and native instance ownership."));ui.label(crate::ui::i18n::text("MIT License · Pealayer © 2026 ToghrolTP"));ui.hyperlink_to("Pealayer source","https://github.com/ToghrolTP/pealayer");});ui.add_space(12.0);
                 dialog::action_row(ui,false,|ui|{if dialog::action_button(ui,icons::X,"Close").clicked(){self.show_about=false;}});
             });
             if !open {
@@ -1767,7 +1768,7 @@ impl PakarControllerApp {
             egui::vec2(520.0, 320.0),
             egui::vec2(1000.0, 700.0),
         );
-        egui::Window::new(format!("{}  Workspaces", icons::TABS))
+        egui::Window::new(format!("{}  {}", icons::TABS, crate::ui::i18n::text("Workspaces")))
             .id(egui::Id::new("workspace-profiles"))
             .open(&mut open)
             .default_rect(g.default_rect)
@@ -1781,7 +1782,7 @@ impl PakarControllerApp {
                     ui.add_sized(
                         [ui.available_width() - 240.0, 28.0],
                         dialog::singleline_text_edit(&mut self.workspace_name)
-                            .hint_text("Workspace name"),
+                            .hint_text(crate::ui::i18n::text("Workspace name")),
                     );
                     icons::searchable_workspace_icon_picker(
                         ui,
@@ -1791,7 +1792,7 @@ impl PakarControllerApp {
                         "Search icons",
                         "Workspace icons",
                         "No matching icons",
-                        config::AppLanguage::English,
+                        config::resolved_language(&self.config),
                     );
                     if dialog::primary_action_button(ui, icons::PLUS, "Save new").clicked()
                         && !self.workspace_name.trim().is_empty()
@@ -1856,7 +1857,7 @@ impl PakarControllerApp {
                                         }
                                         if ui
                                             .button(icons::FLOPPY_DISK)
-                                            .on_hover_text("Replace with current layout")
+                                            .on_hover_text(crate::ui::i18n::text("Replace with current layout"))
                                             .clicked()
                                         {
                                             if let Ok(layout) = layout::serialize(&self.dock) {
@@ -1870,7 +1871,7 @@ impl PakarControllerApp {
                                         }
                                         if ui
                                             .button(icons::TRASH)
-                                            .on_hover_text("Delete workspace")
+                                            .on_hover_text(crate::ui::i18n::text("Delete workspace"))
                                             .clicked()
                                         {
                                             self.config.workspace_profiles.remove(&id);

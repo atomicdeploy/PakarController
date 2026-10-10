@@ -12,7 +12,8 @@ class WebAccess {
   WebAccess() : middleware_([this](AsyncWebServerRequest *request, ArMiddlewareNext next) {
     const String path = request->url();
     const bool publicRead = request->method() == HTTP_GET &&
-        (path == F("/") || path == F("/api/v1/auth/info") || path == F("/description.xml"));
+        (path == F("/") || path == F("/api/v1/auth/info") || path == F("/description.xml") ||
+         path == F("/assets/fonts/Vazirmatn-Regular.ttf") || path == F("/assets/fonts/Vazirmatn-OFL.txt"));
     const bool login = path == F("/login") && request->method() == HTTP_POST;
     if (publicRead || login) { next(); return; }
     if (!accessConfig.ready()) { request->send(503, "text/plain", accessConfig.error()); return; }

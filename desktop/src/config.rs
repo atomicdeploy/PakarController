@@ -17,8 +17,90 @@ pub enum AppTheme {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AppLanguage {
     #[default]
+    #[serde(alias = "system")]
+    System,
+    #[serde(alias = "en")]
     English,
+    #[serde(alias = "fa")]
     Persian,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AppDirection {
+    #[default]
+    Auto,
+    Ltr,
+    Rtl,
+}
+
+// Adapted from actual Pealayer config::parse_language_tag/resolve_language/
+// resolve_rtl. Keep old serialized English/Persian preferences compatible.
+pub fn parse_language_tag(value: &str) -> Option<AppLanguage> {
+    let normalized = value.trim().replace('_', "-").to_ascii_lowercase();
+    match normalized.as_str() {
+        "system" | "auto" => Some(AppLanguage::System),
+        "en" | "english" => Some(AppLanguage::English),
+        "fa" | "fa-ir" | "persian" | "farsi" => Some(AppLanguage::Persian),
+        _ if normalized.starts_with("fa-") => Some(AppLanguage::Persian),
+        _ if normalized.starts_with("en-") => Some(AppLanguage::English),
+        _ => None,
+    }
+}
+fn system_language() -> AppLanguage {
+    for key in ["LC_ALL", "LC_MESSAGES", "LANG"] {
+        if let Ok(value) = std::env::var(key) {
+            if let Some(language) = parse_language_tag(&value) {
+                if language != AppLanguage::System {
+                    return language;
+                }
+            }
+        }
+    }
+    #[cfg(windows)]
+    {
+        // Use the existing Windows binding instead of adding a registry crate.
+        let mut name = [0u16; 85];
+        let count = unsafe { windows::Win32::Globalization::GetUserDefaultLocaleName(&mut name) };
+        if count > 1 {
+            if let Some(language) =
+                parse_language_tag(&String::from_utf16_lossy(&name[..count as usize - 1]))
+            {
+                if language != AppLanguage::System {
+                    return language;
+                }
+            }
+        }
+    }
+    AppLanguage::English
+}
+pub fn resolved_language(config: &AppConfig) -> AppLanguage {
+    let preference = std::env::var("APP_LOCALE")
+        .ok()
+        .and_then(|value| parse_language_tag(&value))
+        .unwrap_or(config.language);
+    if preference == AppLanguage::System {
+        system_language()
+    } else {
+        preference
+    }
+}
+pub fn resolved_rtl(config: &AppConfig) -> bool {
+    let direction = match std::env::var("APP_DIRECTION")
+        .unwrap_or_default()
+        .trim()
+        .to_ascii_lowercase()
+        .as_str()
+    {
+        "ltr" => AppDirection::Ltr,
+        "rtl" => AppDirection::Rtl,
+        "auto" => AppDirection::Auto,
+        _ => config.direction,
+    };
+    match direction {
+        AppDirection::Auto => resolved_language(config).is_rtl(),
+        AppDirection::Ltr => false,
+        AppDirection::Rtl => true,
+    }
 }
 impl AppLanguage {
     pub fn is_rtl(self) -> bool {
@@ -63,6 +145,7 @@ pub struct AppConfig {
     pub color_palette: ColorPalette,
     pub accent: String,
     pub language: AppLanguage,
+    pub direction: AppDirection,
     pub ui_scale: f32,
     pub single_instance: bool,
     pub close_to_tray: bool,
@@ -91,7 +174,8 @@ impl Default for AppConfig {
             theme: AppTheme::System,
             color_palette: ColorPalette::Studio,
             accent: "#38D27A".into(),
-            language: AppLanguage::English,
+            language: AppLanguage::System,
+            direction: AppDirection::Auto,
             ui_scale: 1.0,
             single_instance: true,
             close_to_tray: false,
@@ -177,6 +261,7 @@ pub fn set_live(config: &AppConfig) {
 }
 
 pub fn apply(ctx: &eframe::egui::Context, config: &AppConfig) {
+    crate::ui::i18n::configure_ui_fonts(ctx, resolved_language(config).is_rtl());
     use eframe::egui::{Color32, Stroke, Theme, ThemePreference};
     ctx.set_theme(match config.theme {
         AppTheme::System => ThemePreference::System,
@@ -228,4 +313,28 @@ pub fn apply(ctx: &eframe::egui::Context, config: &AppConfig) {
             eframe::egui::WindowLevel::Normal
         },
     ));
+}
+
+#[cfg(test)]
+mod locale_tests {
+    use super::*;
+    #[test]
+    fn locale_tags_and_saved_preferences_remain_compatible() {
+        for tag in ["fa", "fa_IR", "fa-AF", "Persian", "Farsi"] {
+            assert_eq!(parse_language_tag(tag), Some(AppLanguage::Persian));
+        }
+        assert_eq!(
+            parse_language_tag("en_US.UTF-8"),
+            Some(AppLanguage::English)
+        );
+        assert_eq!(parse_language_tag("auto"), Some(AppLanguage::System));
+        assert_eq!(parse_language_tag("zz"), None);
+        let old: AppConfig = serde_json::from_str(r#"{"language":"Persian"}"#).unwrap();
+        assert_eq!(old.language, AppLanguage::Persian);
+        assert_eq!(old.direction, AppDirection::Auto);
+        let roundtrip: AppConfig =
+            serde_json::from_slice(&serde_json::to_vec(&old).unwrap()).unwrap();
+        assert_eq!(roundtrip.language, old.language);
+        assert_eq!(roundtrip.direction, old.direction);
+    }
 }

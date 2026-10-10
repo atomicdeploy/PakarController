@@ -33,6 +33,7 @@ const pixelFixture=process.argv.includes('--pixels');
 if(pixelFixture){values['/api/v1/cells/mapping'].physical[0]=80;values['/api/v1/cells/mapping'].physical[79]=1;}
 const server=http.createServer(async(req,res)=>{
   res.setHeader('Cache-Control','no-store');
+  if(req.method==='GET'&&req.url==='/assets/fonts/Vazirmatn-Regular.ttf'){res.writeHead(200,{'Content-Type':'font/ttf'});res.end(await readFile(new URL('../assets/fonts/Vazirmatn-Regular.ttf',import.meta.url)));return;}
   if(req.method!=='GET'){res.writeHead(405,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Read-only SIMULATED fixture; no device mutation'}));return;}
   if(req.url==='/'){const source=await readFile(webSourceUrl,'utf8');res.writeHead(200,{'Content-Type':'text/html;charset=utf-8'});res.end(source.match(/R"HTML\(([\s\S]*)\)HTML";/)[1]);return;}
   const url=new URL(req.url,'http://localhost'),value=values[url.pathname];

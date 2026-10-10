@@ -16,7 +16,8 @@ const CONTROL_TEXT_SIZE: f32 = 13.0;
 /// Single-line input text stays centered when its row supplies extra height.
 /// Multiline/wrapped editors intentionally keep TextEdit's top alignment.
 pub fn singleline_text_edit(text: &mut dyn egui::TextBuffer) -> egui::TextEdit<'_> {
-    egui::TextEdit::singleline(text).vertical_align(egui::Align::Center)
+    let align = crate::ui::i18n::input_alignment(crate::ui::i18n::rtl(), text.as_str());
+    egui::TextEdit::singleline(text).horizontal_align(align).vertical_align(egui::Align::Center)
 }
 
 /// Workspace overlays paint immediately above their panel, never above dialogs.
@@ -152,7 +153,7 @@ fn action_button_with_kind(
     // their geometry. Equal widths keep paired actions such as Open / Cancel
     // visually balanced in every dialog host.
     let minimum_width = ACTION_BUTTON_WIDTH;
-    let mut text = egui::RichText::new(format!("{icon}  {label}")).size(CONTROL_TEXT_SIZE);
+    let mut text = egui::RichText::new(format!("{icon}  {}", crate::ui::i18n::text(label))).size(CONTROL_TEXT_SIZE);
     let mut button = egui::Button::new(text.clone())
         .min_size(egui::vec2(minimum_width, ACTION_HEIGHT))
         .corner_radius(CONTROL_CORNER_RADIUS);
@@ -236,7 +237,8 @@ fn navigation_control(
             egui::StrokeKind::Inside,
         );
 
-        let icon_x = rect.left() + 17.0;
+        let rtl = crate::ui::i18n::rtl();
+        let icon_x = if rtl { rect.right() - 17.0 } else { rect.left() + 17.0 };
         painter.text(
             egui::pos2(icon_x, rect.center().y),
             egui::Align2::CENTER_CENTER,
@@ -248,7 +250,7 @@ fn navigation_control(
                 visuals.fg_stroke.color
             },
         );
-        let text_x = rect.left() + 33.0;
+        let text_x = if rtl { rect.right() - 33.0 } else { rect.left() + 33.0 };
         let title_y = if metadata.is_some() {
             rect.center().y - 7.0
         } else {
@@ -256,8 +258,8 @@ fn navigation_control(
         };
         painter.text(
             egui::pos2(text_x, title_y),
-            egui::Align2::LEFT_CENTER,
-            label,
+            if rtl { egui::Align2::RIGHT_CENTER } else { egui::Align2::LEFT_CENTER },
+            crate::ui::i18n::text(label),
             egui::FontId::proportional(CONTROL_TEXT_SIZE),
             if selected {
                 ui.visuals().widgets.hovered.fg_stroke.color
@@ -268,7 +270,7 @@ fn navigation_control(
         if let Some(metadata) = metadata {
             painter.text(
                 egui::pos2(text_x, rect.center().y + 9.0),
-                egui::Align2::LEFT_CENTER,
+                if rtl { egui::Align2::RIGHT_CENTER } else { egui::Align2::LEFT_CENTER },
                 metadata,
                 egui::FontId::proportional(10.5),
                 ui.visuals().weak_text_color(),
@@ -339,7 +341,7 @@ pub fn section(ui: &mut egui::Ui, icon: &str, title: &str, body: impl FnOnce(&mu
             ui.set_min_width(ui.available_width());
             ui.vertical(|ui| {
                 ui.label(
-                    egui::RichText::new(format!("{icon}  {title}"))
+                    egui::RichText::new(format!("{icon}  {}", crate::ui::i18n::text(title)))
                         .strong()
                         .color(ui.visuals().widgets.hovered.fg_stroke.color),
                 );
@@ -375,10 +377,10 @@ pub fn setting_row(
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 ui.label(egui::RichText::new(icon).color(ui.visuals().selection.bg_fill));
-                ui.label(egui::RichText::new(label).strong());
+                ui.label(egui::RichText::new(crate::ui::i18n::text(label)).strong());
             });
             if let Some(description) = description {
-                ui.label(egui::RichText::new(description).small().weak());
+                ui.label(egui::RichText::new(crate::ui::i18n::text(description)).small().weak());
             }
             ui.add_space(3.0);
             body(ui);
@@ -392,10 +394,10 @@ pub fn setting_row(
                 |ui| {
                     ui.horizontal(|ui| {
                         ui.label(egui::RichText::new(icon).color(ui.visuals().selection.bg_fill));
-                        ui.label(egui::RichText::new(label).strong());
+                        ui.label(egui::RichText::new(crate::ui::i18n::text(label)).strong());
                     });
                     if let Some(description) = description {
-                        ui.label(egui::RichText::new(description).small().weak());
+                        ui.label(egui::RichText::new(crate::ui::i18n::text(description)).small().weak());
                     }
                 },
             );

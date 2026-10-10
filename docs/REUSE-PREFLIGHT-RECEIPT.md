@@ -1,5 +1,46 @@
 # Donor-first preflight receipt
 
+## Persian regression recovery
+
+Consulted localization, preferences, build-storage and exact donor-audit entries.
+Read the complete actual Pealayer src/ui/i18n.rs, web_ui/src/i18n.ts,
+tests/i18n_surface_audit_test.rs and src/ui/mod.rs; configuration and Preferences
+reads were selected functions/excerpts, NOT whole-file certificates. Refreshed
+only the changed Pealayer inventory, leaving every donor read-only. Three new
+complete-read certificates bind real targets/tests and concrete pending omissions.
+
+Actual donor font/dictionary/shaping/alignment/layout and audit patterns were
+adapted to native, Web and Android shared bytes. Added a localization reviewed-
+slice build gate, without pretending it certifies unfinished UI/mobile surfaces.
+Read actual egui/Elegance APIs: Elegance adds fonts, but host set_fonts resets
+the registry. Language refresh now preserves registered widget fonts; initial
+install occurs once through resolved config. Tests cover both native families
+and font retention in code, but native execution remains blocked by storage.
+
+Native wrapper refused the existing 13.49 GiB cache against its unchanged 8 GiB
+budget. No clean, alternate cache, dependency churn or guard bypass followed.
+Read donor storage/low-write mappings; requested obsolete-debug-only cleanup
+while preserving release/running app/settings/rollback. No approval or cleanup
+is claimed. Existing production app remains unchanged.
+
+Read-only actual Web fixture rendered Persian Vazirmatn and RTL. First screenshot
+exposed still-English hints/placeholders; added canonical dictionary entries,
+owned attributes and dynamic settings copy, then inspected the refined capture.
+Peer names/hostnames remained untouched. Browser font-loaded check passed and
+no horizontal overflow was observed. This is simulated Web, not physical proof.
+
+The new test DOM mock initially had a missing closing brace; fixed the test
+syntax without changing production behavior. A comparison patch accidentally
+appended literal plus characters to three JSON separators; generation failed,
+separators corrected and all comparison checks passed. Existing route hashes
+and menu anchors were explicitly re-reviewed/rebound after localization insertions;
+source certificates and omission semantics were not replaced. Separate reordered
+PU target/hash fields required exact-field patching, not broad source acceptance.
+
+Local quality suite and affected ESP busy-wire build passed. No CI wait, native
+replacement, AVR build, Android package or hardware flash occurred. Full mapping,
+candidate hash, source/runtime boundaries and remaining actions: PERSIAN-PARITY.md.
+
 ## Web device-settings and interface-contract continuation
 
 Issue #4 owns the requested Web/native parity. Consulted ui-shell/preferences,

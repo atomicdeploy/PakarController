@@ -32,6 +32,7 @@ class PakarControllerApp extends StatelessWidget {
     debugShowCheckedModeBanner: false,
     themeMode: ThemeMode.dark,
     darkTheme: ThemeData(
+      fontFamily: 'Vazirmatn',
       colorScheme: studioDark,
       scaffoldBackgroundColor: const Color(0xff080a0e),
       cardTheme: const CardThemeData(

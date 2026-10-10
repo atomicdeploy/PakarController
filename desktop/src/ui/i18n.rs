@@ -4,8 +4,21 @@ use eframe::egui;
 use std::sync::Arc;
 
 pub(crate) fn configure_ui_fonts(context: &egui::Context, prefer_vazirmatn: bool) {
-    let mut fonts = egui::FontDefinitions::default();
-    egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
+    let key = egui::Id::new("pakar-font-language");
+    let previous = context.data(|data| data.get_temp::<bool>(key));
+    if previous == Some(prefer_vazirmatn) {
+        return;
+    }
+    // Initial install runs before the first frame. Later preference changes
+    // keep fonts registered by widgets (notably Elegance's symbols). Starting
+    // from defaults again would silently discard those families and glyphs.
+    let mut fonts = if previous.is_some() {
+        context.fonts(|fonts| fonts.definitions().clone())
+    } else {
+        let mut fonts = egui::FontDefinitions::default();
+        egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
+        fonts
+    };
 
     // Prefer the platform UI face. Vazirmatn remains immediately behind it so
     // Persian and Arabic text has a bundled, release-safe fallback. For a
@@ -41,6 +54,7 @@ pub(crate) fn configure_ui_fonts(context: &egui::Context, prefer_vazirmatn: bool
         .families
         .get_mut(&egui::FontFamily::Proportional)
         .expect("egui provides a proportional font family");
+    proportional.retain(|name| name != "pealayer-vazirmatn" && name != "pealayer-system-ui");
     if prefer_vazirmatn {
         proportional.insert(0, "pealayer-vazirmatn".to_owned());
         if has_system_font {
@@ -53,16 +67,235 @@ pub(crate) fn configure_ui_fonts(context: &egui::Context, prefer_vazirmatn: bool
         proportional.insert(0, "pealayer-vazirmatn".to_owned());
     }
 
+    // TextEdit and technical values use Monospace by default. The donor only
+    // installed Proportional: retain Latin monospace but cover Persian there too.
+    let monospace = fonts
+        .families
+        .get_mut(&egui::FontFamily::Monospace)
+        .unwrap();
+    if !monospace.iter().any(|name| name == "pealayer-vazirmatn") {
+        monospace.push("pealayer-vazirmatn".to_owned());
+    }
     context.set_fonts(fonts);
+    context.data_mut(|data| data.insert_temp(key, prefer_vazirmatn));
 }
 
 /// Translate application-owned copy. Values learned from media metadata or
 /// PCController are deliberately never passed through this table.
-pub fn tr(language: AppLanguage, english: &'static str) -> String {
+pub fn tr(language: AppLanguage, english: &str) -> String {
     if language != AppLanguage::Persian {
         return english.to_owned();
     }
     let translated = match english {
+        "LEDs & cells" => "LEDها و خانه‌ها",
+        "AVR & inputs" => "AVR و ورودی‌ها",
+        "Firmware & storage" => "میان‌افزار و ذخیره‌سازی",
+        "Search settings…" => "جست‌وجوی تنظیمات…",
+        "Close device settings" => "بستن تنظیمات دستگاه",
+        "Device settings pages" => "صفحه‌های تنظیمات دستگاه",
+        "Discard & reload…" => "لغو تغییرات و خواندن دوباره…",
+        "Read the device to load settings" => "برای بارگذاری تنظیمات، دستگاه را بخوانید",
+        "Only fresh, acknowledged device capabilities are shown. Application preferences are separate from board configuration." => {
+            "فقط قابلیت‌های تازه و تأییدشدهٔ دستگاه نمایش داده می‌شوند. تنظیمات برنامه از پیکربندی برد جدا هستند."
+        }
+        "Firmware build information · read-only" => "اطلاعات ساخت میان‌افزار · فقط خواندنی",
+        "UART flow-control mode, pin ownership and hardware layout are build flags, not runtime switches. Rebuild and safely update firmware to change them." => {
+            "حالت کنترل جریان UART، تخصیص پایه‌ها و چیدمان سخت‌افزار گزینه‌های زمان ساخت هستند. برای تغییر آن‌ها، میان‌افزار را دوباره بسازید و به‌صورت ایمن به‌روز کنید."
+        }
+        "No observed build information" => "اطلاعات ساخت دریافت نشده است",
+        "Build information not reported by this peer" => {
+            "این دستگاه اطلاعات ساخت را گزارش نکرده است"
+        }
+        "Use the same live workspace controls; settings does not duplicate device editors." => {
+            "از کنترل‌های زندهٔ فضای کاری استفاده کنید؛ ویرایشگرهای دستگاه در تنظیمات تکرار نمی‌شوند."
+        }
+        "Table & mapping" => "میز و نگاشت",
+        "Text presentation" => "نمایش متن",
+        "Buzzer & melodies" => "بیزر و ملودی‌ها",
+        "Waiting for acknowledgment and saved-settings readback…" => {
+            "در انتظار تأیید و بازخوانی تنظیمات ذخیره‌شده…"
+        }
+        "Settings changed on another client. Your edits are preserved; discard and reload before saving." => {
+            "تنظیمات در کلاینت دیگری تغییر کرده‌اند. ویرایش‌های شما حفظ شده‌اند؛ پیش از ذخیره، تغییرات را لغو کنید و دوباره بخوانید."
+        }
+        "Unsaved device edits" => "ویرایش‌های ذخیره‌نشدهٔ دستگاه",
+        "Observed device settings; no pending edits" => {
+            "تنظیمات دستگاه دریافت شده‌اند؛ ویرایش ذخیره‌نشده‌ای نیست"
+        }
+        "Reconnect to read device settings" => "برای خواندن تنظیمات دستگاه دوباره متصل شوید",
+        "Station SSID" => "نام شبکهٔ ایستگاه",
+        "Station password · re-enter on save" => "گذرواژهٔ ایستگاه · هنگام ذخیره دوباره وارد کنید",
+        "Open station network · no password" => "شبکهٔ باز ایستگاه · بدون گذرواژه",
+        "Station enabled" => "ایستگاه فعال",
+        "Recovery AP enabled" => "نقطهٔ دسترسی بازیابی فعال",
+        "Scanned networks" => "شبکه‌های یافت‌شده",
+        "The station password is write-only. Re-enter it to save Wi-Fi changes, or explicitly select an open network. Keep at least one network path enabled." => {
+            "گذرواژهٔ ایستگاه فقط نوشتنی است. برای ذخیرهٔ تغییرات وای‌فای، آن را دوباره وارد کنید یا شبکهٔ باز را انتخاب کنید. دست‌کم یک مسیر شبکه را فعال نگه دارید."
+        }
+        "Enable MQTT" => "فعال‌کردن MQTT",
+        "Broker hostname" => "نام میزبان بروکر",
+        "Base topic" => "موضوع پایه",
+        "Password handling" => "مدیریت گذرواژه",
+        "Replacement password" => "گذرواژهٔ جایگزین",
+        "Enable outbound WebSocket" => "فعال‌کردن وب‌سوکت خروجی",
+        "Server hostname" => "نام میزبان سرور",
+        "Path" => "مسیر",
+        "Token handling" => "مدیریت توکن",
+        "Replacement token" => "توکن جایگزین",
+        "Telemetry interval · seconds" => "فاصلهٔ دورسنجی · ثانیه",
+        "Keep stored password" => "حفظ گذرواژهٔ ذخیره‌شده",
+        "Leave password unset" => "گذرواژه تعیین نشود",
+        "Keep stored token" => "حفظ توکن ذخیره‌شده",
+        "Leave token unset" => "توکن تعیین نشود",
+        "Wait for the current operation to finish" => "منتظر پایان عملیات جاری بمانید",
+        "Saved public settings verified by device readback. Secret values remain write-only." => {
+            "تنظیمات عمومی با بازخوانی دستگاه تأیید شدند. مقادیر محرمانه فقط نوشتنی می‌مانند."
+        }
+        "No acknowledged workspace panels" => "پنل تأییدشده‌ای برای فضای کاری نیست",
+        "Reset panel layout" => "بازنشانی چیدمان پنل‌ها",
+        "Show" => "نمایش",
+        "System" => "سیستم",
+        "Dark" => "تیره",
+        "Light" => "روشن",
+        "Appearance…" => "ظاهر…",
+        "Apply appearance" => "اعمال ظاهر",
+        "Apply" => "اعمال",
+        "Sign out" => "خروج از حساب",
+        "Select all" => "انتخاب همه",
+        "Manage cells…" => "مدیریت خانه‌ها…",
+        "Toggle without Ctrl" => "انتخاب چندتایی بدون Ctrl",
+        "Animate cells" => "پویانمایی خانه‌ها",
+        "LED-state indicators" => "نشانگرهای وضعیت LED",
+        "Edit order" => "ویرایش ترتیب",
+        "Reset order" => "بازنشانی ترتیب",
+        "Cell shape" => "شکل خانه",
+        "Rounded" => "گوشه‌های گرد",
+        "Circle · six pixels" => "دایره · شش پیکسل",
+        "Hexagon · six pixels" => "شش‌ضلعی · شش پیکسل",
+        "Physical pixel indices" => "شمارهٔ پیکسل‌های فیزیکی",
+        "Board modes" => "حالت‌های برد",
+        "Live device" => "دستگاه زنده",
+        "Clients" => "کلاینت‌ها",
+        "Station" => "ایستگاه",
+        "Recovery AP" => "نقطهٔ دسترسی بازیابی",
+        "Cloud WebSocket" => "وب‌سوکت ابری",
+        "Cell identity" => "هویت خانه",
+        "Cell action" => "عملیات خانه",
+        "Addressable LEDs" => "LEDهای آدرس‌پذیر",
+        "Save logical / physical mapping" => "ذخیرهٔ نگاشت منطقی و فیزیکی",
+        "Stream rainbow" => "ارسال جریان رنگین‌کمان",
+        "Reset game…" => "بازنشانی بازی…",
+        "Transition" => "گذار",
+        "Edit identity…" => "ویرایش هویت…",
+        "Strip effect" => "جلوهٔ نوار نور",
+        "Snake direction" => "جهت مار",
+        "Live display" => "نمایشگر زنده",
+        "Segment readback unavailable" => "بازخوانی نمایشگر در دسترس نیست",
+        "Display state unavailable" => "وضعیت نمایشگر در دسترس نیست",
+        "Show number" => "نمایش عدد",
+        "Text" => "متن",
+        "Front-panel text" => "متن پنل جلویی",
+        "Scroll short text" => "پیمایش متن کوتاه",
+        "Repeat" => "تکرار",
+        "Present" | "Present text" => "نمایش متن",
+        "Stop text" => "توقف متن",
+        "Melodies" => "ملودی‌ها",
+        "Hardware state unavailable" => "وضعیت سخت‌افزار در دسترس نیست",
+        "Controllers" => "کنترل‌گرها",
+        "Inputs" => "ورودی‌ها",
+        "Shift-register outputs" => "خروجی‌های شیفت‌رجیستر",
+        "Board identity" => "هویت برد",
+        "Save board identity" => "ذخیرهٔ هویت برد",
+        "Unsaved board identity changes" => "تغییرات هویت برد ذخیره نشده‌اند",
+        "Discard name edits" => "دور انداختن تغییرات نام",
+        "Device access" => "دسترسی به دستگاه",
+        "Save device credentials" => "ذخیرهٔ اطلاعات ورود دستگاه",
+        "Device configuration" => "پیکربندی دستگاه",
+        "Live services" => "سرویس‌های زنده",
+        "Target rate" => "نرخ هدف",
+        "Clear events" => "پاک‌کردن رویدادها",
+        "Error" => "خطا",
+        "Reset the current game?" => "بازی کنونی بازنشانی شود؟",
+        "The winner and current game state will be cleared." => {
+            "برنده و وضعیت کنونی بازی پاک می‌شوند."
+        }
+        "Connect to controller" => "اتصال به کنترل‌گر",
+        "Wi-Fi" => "وای‌فای",
+        "USB serial" => "سریال USB",
+        "Port" => "درگاه",
+        "Commands" => "فرمان‌ها",
+        "Mapping" => "نگاشت",
+        "Restore workspace" => "بازیابی فضای کاری",
+        "Pakar table" => "میز پاکار",
+        "Logical" | "Logical cell" => "خانهٔ منطقی",
+        "Physical" | "Physical cell" => "خانهٔ فیزیکی",
+        "Save mapping" => "ذخیرهٔ نگاشت",
+        "Save new" => "ذخیرهٔ جدید",
+        "Replace with current layout" => "جایگزینی با چیدمان کنونی",
+        "Clear cell selection" => "پاک‌کردن انتخاب خانه‌ها",
+        "Previous selected cell (Shift+F3)" => "خانهٔ انتخاب‌شدهٔ قبلی (Shift+F3)",
+        "Next selected cell (Enter / F3)" => "خانهٔ انتخاب‌شدهٔ بعدی (Enter / F3)",
+        "Find cell: 12, 3–8  ·  Ctrl+F" => "یافتن خانه: 12, 3–8  ·  Ctrl+F",
+        "Find cells: 12, 3–8" => "یافتن خانه‌ها: 12, 3–8",
+        "Search device settings" => "جست‌وجوی تنظیمات دستگاه",
+        "Toggle multiple cells and rows without Ctrl" => "انتخاب چند خانه و ردیف بدون Ctrl",
+        "Animate cell state transitions" => "پویانمایی گذار وضعیت خانه‌ها",
+        "Show cell LED-state indicators" => "نمایش نشانگر وضعیت LED خانه‌ها",
+        "Show physical pixel indices (top first, CCW)" => {
+            "نمایش شمارهٔ پیکسل‌های فیزیکی (از بالا، پادساعت‌گرد)"
+        }
+        "Disable for reduced motion. Cell geometry never changes." => {
+            "برای کاهش حرکت غیرفعال کنید. هندسهٔ خانه‌ها هرگز تغییر نمی‌کند."
+        }
+        "Optional corner dots for white/red/off state. Hidden by default." => {
+            "نقطه‌های گوشه برای وضعیت سفید، قرمز و خاموش؛ در حالت پیش‌فرض پنهان‌اند."
+        }
+        "Drag panel tabs to rearrange or detach them. Workspace profiles save the current layout." => {
+            "زبانه‌های پنل را برای مرتب‌سازی یا جداکردن بکشید. نمایهٔ فضای کاری چیدمان کنونی را ذخیره می‌کند."
+        }
+        "Application" => "برنامه",
+        "Device" => "دستگاه",
+        "Device settings…" | "Device settings" => "تنظیمات دستگاه",
+        "Connect…" => "اتصال…",
+        "Cell mapping…" | "Cell mapping" => "نگاشت خانه‌ها",
+        "Preferences…" => "تنظیمات…",
+        "Table" => "میز",
+        "Effect controls" => "کنترل جلوه‌ها",
+        "Hardware monitor" => "پایش سخت‌افزار",
+        "Network & cloud" => "شبکه و ابر",
+        "Events" => "رویدادها",
+        "Notifications" => "اعلان‌ها",
+        "Theme" => "پوسته",
+        "Palette" => "پالت رنگ",
+        "UI scale" => "مقیاس رابط",
+        "Search preferences" => "جست‌وجوی تنظیمات",
+        "Search settings" => "جست‌وجوی تنظیمات",
+        "Device endpoint" => "نشانی دستگاه",
+        "Connection defaults" => "پیش‌فرض‌های اتصال",
+        "Username" => "نام کاربری",
+        "Password" => "گذرواژه",
+        "USB serial port" => "درگاه سریال USB",
+        "Single instance" => "فقط یک نمونهٔ برنامه",
+        "Close to system tray" => "بستن به سینی سیستم",
+        "Always on top" => "همیشه روی پنجره‌ها",
+        "Open Preferences in a native window" => "بازکردن تنظیمات در پنجرهٔ بومی",
+        "In-app toast banners" => "اعلان‌های داخل برنامه",
+        "Windows notifications" => "اعلان‌های ویندوز",
+        "Allow Windows notification sound" => "پخش صدای اعلان ویندوز",
+        "Send test notification" => "ارسال اعلان آزمایشی",
+        "Toggle fullscreen" => "تغییر حالت تمام‌صفحه",
+        "Manage workspaces…" => "مدیریت فضاهای کاری…",
+        "Reset workspace layout" => "بازنشانی چیدمان فضای کاری",
+        "Save workspace screenshot…" => "ذخیرهٔ تصویر فضای کاری…",
+        "Refresh" => "تازه‌سازی",
+        "Find cell" => "یافتن خانه",
+        "Manage cells" => "مدیریت خانه‌ها",
+        "Cell number" => "شمارهٔ خانه",
+        "Selected cells" => "خانه‌های انتخاب‌شده",
+        "Device offline" => "دستگاه آفلاین",
+        "Discard preference changes?" => "تغییرات تنظیمات دور انداخته شوند؟",
+        "Your saved preferences will be restored." => "تنظیمات ذخیره‌شده بازیابی می‌شوند.",
+        "Keep editing" => "ادامهٔ ویرایش",
         "Application icons" => "نمادهای برنامه",
         "Application icon" => "نماد برنامه",
         "Current" => "کنونی",
@@ -1132,4 +1365,112 @@ pub fn vertical_layout(rtl: bool) -> egui::Layout {
     } else {
         egui::Align::Min
     })
+}
+
+/// Application copy only; protocol IDs, hostnames and peer names stay logical.
+pub fn text(english: &str) -> String {
+    tr(
+        crate::config::resolved_language(&crate::config::live()),
+        english,
+    )
+}
+
+pub fn rtl() -> bool {
+    crate::config::resolved_rtl(&crate::config::live())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn logical_unicode_and_application_copy() {
+        assert_eq!(tr(AppLanguage::Persian, "Connect"), "اتصال");
+        assert_eq!(tr(AppLanguage::English, "Connect"), "Connect");
+        assert_eq!(tr(AppLanguage::Persian, "رلهٔ اصلی ۱۲۳"), "رلهٔ اصلی ۱۲۳");
+        assert_eq!(visual_text(AppLanguage::English, "سلام دنیا"), "سلام دنیا");
+        assert_eq!(input_alignment(false, "رلهٔ اصلی"), egui::Align::Max);
+        assert_eq!(input_alignment(false, "ledboard.local"), egui::Align::Min);
+    }
+    #[test]
+    fn changing_language_preserves_widget_fonts_and_monospace_fallback() {
+        let context = egui::Context::default();
+        configure_ui_fonts(&context, false);
+        let _ = context.run_ui(Default::default(), |_| {});
+        elegance::Theme::current(&context).install(&context);
+        let _ = context.run_ui(Default::default(), |_| {});
+        configure_ui_fonts(&context, true);
+        let _ = context.run_ui(Default::default(), |ui| {
+            ui.fonts(|fonts| {
+                let defs = fonts.definitions();
+                assert!(defs.font_data.contains_key("elegance-symbols"));
+                assert_eq!(
+                    defs.families[&egui::FontFamily::Proportional][0],
+                    "pealayer-vazirmatn"
+                );
+                assert_eq!(
+                    defs.families[&egui::FontFamily::Monospace]
+                        .iter()
+                        .filter(|name| *name == "pealayer-vazirmatn")
+                        .count(),
+                    1
+                );
+            });
+        });
+        configure_ui_fonts(&context, false);
+        let _ = context.run_ui(Default::default(), |ui| {
+            ui.fonts(|fonts| {
+                assert!(
+                    fonts
+                        .definitions()
+                        .font_data
+                        .contains_key("elegance-symbols")
+                )
+            });
+        });
+    }
+    // Actual Pealayer contextual-shaping test, expanded to the missing family.
+    #[test]
+    fn contextual_persian_in_labels_and_monospace_inputs() {
+        for family in [egui::FontFamily::Proportional, egui::FontFamily::Monospace] {
+            let context = egui::Context::default();
+            configure_ui_fonts(&context, true);
+            let mut joined = Vec::new();
+            let mut isolated = None;
+            let mut output = context.run_ui(Default::default(), |ui| {
+                let font = egui::FontId::new(16.0, family.clone());
+                ui.fonts_mut(|fonts| {
+                    for glyph in "سلام دنیا پ چ ژ گ ی ک ۱۲۳"
+                        .chars()
+                        .filter(|c| !c.is_whitespace())
+                    {
+                        assert!(
+                            fonts.has_glyph(&font, glyph),
+                            "Missing Persian glyph {glyph:?} in {family:?}"
+                        );
+                    }
+                });
+                joined = ui
+                    .painter()
+                    .layout_no_wrap("بب".into(), font.clone(), egui::Color32::WHITE)
+                    .rows[0]
+                    .glyphs
+                    .iter()
+                    .map(|glyph| glyph.uv_rect)
+                    .collect();
+                isolated = Some(
+                    ui.painter()
+                        .layout_no_wrap("ب".into(), font, egui::Color32::WHITE)
+                        .rows[0]
+                        .glyphs[0]
+                        .uv_rect,
+                );
+            });
+            output.textures_delta.clear();
+            assert!(joined.len() >= 2);
+            assert!(
+                joined.iter().any(|glyph| Some(*glyph) != isolated),
+                "Persian must join contextually in {family:?}"
+            );
+        }
+    }
 }

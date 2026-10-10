@@ -4,6 +4,8 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 export const phases={
   "quality": [
+    ["node", "tools/generate-font-assets.mjs", "--check"],
+    ["node", "tests/localization_test.mjs"],
     [
       "node",
       "tests/web_display_test.mjs"

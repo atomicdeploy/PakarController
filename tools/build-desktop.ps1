@@ -9,6 +9,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $taskReuse = & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate
+$taskLocaleReuse = & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern localization -Gate
 & node (Join-Path $PSScriptRoot 'generate-interface-contract.mjs') --check | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw 'Shared interface catalog is stale.' }
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))

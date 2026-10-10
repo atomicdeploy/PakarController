@@ -39,8 +39,8 @@
       "target": "firmware/esp8266/src/WebUi.h",
       "anchor": "Verified remote update",
       "reason": "Commented donor HTML placeholder replaced by real firmware settings; no second OTA engine.",
-      "target_sha256_utf8_lf": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
-      "target_line": 84
+      "target_sha256_utf8_lf": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
+      "target_line": 87
     },
     {
       "source": "LocalLib/AsyncOTA.cpp",
@@ -51,8 +51,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.native().on(\"/update\"",
       "reason": "Integrated guarded existing authenticated upload kept alongside pinned remote download. U_FS replacement disabled to preserve credentials and recovery backups.",
-      "target_sha256_utf8_lf": "aa2c32244220e9fc7acdee9eda0a75bead514c2988191569e5eedf53b45f18aa",
-      "target_line": 1716
+      "target_sha256_utf8_lf": "70e5ee73c384801511ce9b75ac25ffbde60c1ff1e9be45f4dafd225d1e10df5d",
+      "target_line": 1717
     },
     {
       "source": "LocalLib/AsyncWebServer.h",
@@ -63,8 +63,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "if(parsed[\"type\"]==\"telemetry\")",
       "reason": "Authenticated multiple-client WebSocket retains board state and adds read-only full telemetry and pinned remote-job commands.",
-      "target_sha256_utf8_lf": "aa2c32244220e9fc7acdee9eda0a75bead514c2988191569e5eedf53b45f18aa",
-      "target_line": 1172
+      "target_sha256_utf8_lf": "70e5ee73c384801511ce9b75ac25ffbde60c1ff1e9be45f4dafd225d1e10df5d",
+      "target_line": 1173
     },
     {
       "source": "LocalLib/Authentication.cpp",
@@ -111,8 +111,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.on(\"/description.xml\"",
       "reason": "SSDP root-device XML, actual product and hostname without nonexistent weighing/UPnP services.",
-      "target_sha256_utf8_lf": "aa2c32244220e9fc7acdee9eda0a75bead514c2988191569e5eedf53b45f18aa",
-      "target_line": 1919
+      "target_sha256_utf8_lf": "70e5ee73c384801511ce9b75ac25ffbde60c1ff1e9be45f4dafd225d1e10df5d",
+      "target_line": 1931
     },
     {
       "source": "pu850-esp.ino",
@@ -435,8 +435,8 @@
       "target": "firmware/esp8266/src/WebAccess.h",
       "anchor": "server.on(\"/login\"",
       "reason": "Commented donor stub replaced by existing authenticated expiring cookie/session login with same-origin validation.",
-      "target_sha256_utf8_lf": "fcf5c11b005925fadb05cc355c227cbc875ddc21e74949a5657dc42ff5ecda40",
-      "target_line": 76
+      "target_sha256_utf8_lf": "664284aba34a633bbe8dc071c4dbfe0566a7009374b48a567f7d19ae7c6db269",
+      "target_line": 77
     },
     {
       "source": "pu850-esp.ino",
@@ -579,8 +579,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.native().on(\"/update/info\"",
       "reason": "Version/profile and both-board remote maintenance URLs; no misleading build-host/time identity.",
-      "target_sha256_utf8_lf": "aa2c32244220e9fc7acdee9eda0a75bead514c2988191569e5eedf53b45f18aa",
-      "target_line": 1704
+      "target_sha256_utf8_lf": "70e5ee73c384801511ce9b75ac25ffbde60c1ff1e9be45f4dafd225d1e10df5d",
+      "target_line": 1705
     },
     {
       "source": "pu850-esp.ino",
@@ -591,8 +591,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.on(\"/info\"",
       "reason": "Authenticated full structured ESP/AVR/client/network/clock/cloud telemetry; optional format=text.",
-      "target_sha256_utf8_lf": "aa2c32244220e9fc7acdee9eda0a75bead514c2988191569e5eedf53b45f18aa",
-      "target_line": 1705
+      "target_sha256_utf8_lf": "70e5ee73c384801511ce9b75ac25ffbde60c1ff1e9be45f4dafd225d1e10df5d",
+      "target_line": 1706
     },
     {
       "source": "pu850-esp.ino",
@@ -603,8 +603,8 @@
       "target": "firmware/esp8266/src/WebUi.h",
       "anchor": "Verified remote update",
       "reason": "Real control workspace rather than donor static placeholder; access gate and actual peer state retained.",
-      "target_sha256_utf8_lf": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
-      "target_line": 84
+      "target_sha256_utf8_lf": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
+      "target_line": 87
     }
   ]
 }

@@ -62,11 +62,15 @@ flutter:
   uses-material-design: true
   assets:
     - assets/fonts/Phosphor-LICENSE.txt
+    - assets/fonts/Vazirmatn-OFL.txt
 
   # Phosphor's regular font is vendored so the app keeps the same icon
   # language as Pealayer without depending on a package that subclasses
   # Flutter's now-final IconData class.
   fonts:
+    - family: Vazirmatn
+      fonts:
+        - asset: assets/fonts/Vazirmatn-Regular.ttf
     - family: Phosphor
       fonts:
         - asset: assets/fonts/Phosphor.ttf

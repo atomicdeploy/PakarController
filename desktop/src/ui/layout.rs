@@ -189,7 +189,7 @@ impl TabViewer for PakarTabViewer<'_> {
         egui::Id::new(*tab)
     }
     fn title(&mut self, tab: &mut Panel) -> egui::WidgetText {
-        format!("{}  {}", tab.icon(), tab.name()).into()
+        format!("{}  {}", tab.icon(), super::i18n::text(tab.name())).into()
     }
     fn ui(&mut self, ui: &mut egui::Ui, tab: &mut Panel) {
         egui::Frame::new().inner_margin(12).show(ui, |ui| {
@@ -210,7 +210,7 @@ impl TabViewer for PakarTabViewer<'_> {
     }
     fn context_menu(&mut self, ui: &mut egui::Ui, tab: &mut Panel, _: egui_dock::NodePath) {
         super::cell_table::compact_menu(ui);
-        ui.strong(tab.name());
+        ui.strong(super::i18n::text(tab.name()));
         ui.separator();
         if ui
             .button(format!("{}  Preferences…", super::icons::GEAR))

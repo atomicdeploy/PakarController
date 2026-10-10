@@ -19,6 +19,7 @@ let saved={network:{...network},cloud:{...cloud}},calls=[],behavior='success';
 const context=vm.createContext({DEVICE_SETTINGS:catalog,TextEncoder,URLSearchParams,console,localStorage:{getItem(){return null}},document:{querySelector:s=>nodes[s.slice(1)]},currentPeer:()=>({known:true,has:f=>f==='network'}),confirm:()=>true,
  api:async(path,options={})=>{calls.push({path,options});const group=path.split('/').at(-1);if(options.method==='POST'){assert(nodes.mqttHost.disabled,'Inputs must freeze during a write');if(behavior==='uncertain')throw Error('timeout');if(behavior==='negative')return{updated:false};const next={...saved[group]};for(const[k,type]of Object.entries(catalog[group])){if(k.endsWith('_set'))continue;const formKey=k==='station_ssid'?'ssid':k;if(options.body.has(formKey)){const value=options.body.get(formKey);next[k]=type==='boolean'?value==='true':type==='port'||type==='interval'?Number(value):value}}for(const[k,p]of [['mqtt_password','mqtt_password_set'],['websocket_token','websocket_token_set']])if(options.body.has(k))next[p]=!!options.body.get(k);if(behavior!=='mismatch')saved[group]=next;return group==='network'?{accepted:true}:{updated:true}}return {...saved[group]};}
 });
+vm.runInContext(read('assets/web/localization.js'),context);
 vm.runInContext(source,context);const run=s=>vm.runInContext(s,context);context.initialCloud=cloud;context.initialNetwork=network;
 run("settingsObserve('network',initialNetwork);settingsObserve('cloud',initialCloud)");
 assert.throws(()=>run("settingsSnapshot('cloud',{})"),/Missing/);
