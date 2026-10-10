@@ -5,6 +5,87 @@
   "files": [
     {
       "origin": "Pealayer",
+      "path": "src/ui/menu.rs",
+      "sha256": "83aa188b01de2e8eea1206c25b793e47ccaffa2eb3a40ab1617168c912d082af",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual top_menu_button body imported with only application state ID/public visibility adaptation; all four production menu headings use active-menu sibling hover switching.",
+        "Actual Button::shortcut_text idiom replaces space-padded primary labels in all six shortcut rows; separate right-aligned muted atoms are supplied by the same egui 0.36.2 dependency. Existing dispatch/Phosphor submenu retained; user-requested height policy unchanged."
+      ],
+      "targets": [
+        {
+          "path": "desktop/src/ui/menu.rs",
+          "sha256": "199cebacdf180d88cb724d458ee096ffd29555ec1a16df9d47c28799a5c46cff",
+          "anchor": "pub fn top_menu_button<R>("
+        },
+        {
+          "path": "desktop/src/ui/shell.rs",
+          "sha256": "064f14a4483119264505c886fb6aea99929d2c0fdd0bd5f484f5b535389aba4c",
+          "anchor": "menu::top_menu_button(ui, \"File\".into()"
+        },
+        {
+          "path": "docs/NATIVE-MENU-COMPARISON.md",
+          "sha256": "a86271d68a6553075026ad4e1ffef59c44f87074401b7c2936d9cd539d032fb9",
+          "anchor": "## Exact donor menu mapping and remaining decisions"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "TrackMenuState, track_menu_state, format_track_label; video/recent/close/media info/folder/timeline and Audio/Subtitles/Chapters blocks; track_menu_is_contextual_to_media_and_discovered_tracks and test_format_track_label_variations",
+          "disposition": "not-applicable",
+          "reason": "These require media tracks, chapters, video/timeline state or a media undo stack expressly excluded from Pakar. Their disabled Undo/Redo placeholders are not functional controller actions. Generic config-folder/device information actions remain pending separately."
+        },
+        {
+          "code": "draw persisted application_shortcuts and Edit configuration action",
+          "disposition": "pending",
+          "reason": "Current fixed accelerators match dispatch but are not the donor's validated persisted rebinding model. Restore parser/dependencies/non-media tests and controller action ownership; shortcut color/alignment does not certify rebinding."
+        },
+        {
+          "code": "draw ordered_workspace_profiles/active selection/reset save acknowledgment",
+          "disposition": "pending",
+          "reason": "Manager exists but inline ordered active-profile selection/state and immediate reset persistence are not restored. Requires profile identity/persistence acceptance rather than labels alone."
+        },
+        {
+          "code": "draw Help Language/Direction/Keyboard Shortcuts menus",
+          "disposition": "pending",
+          "reason": "Existing English/Persian preference lacks complete System language and Auto/LTR/RTL/configurable bindings contracts. Nonfunctional entries must not be shown as completed features."
+        },
+        {
+          "code": "estop_button, draw_estop_release_dialog and draw shared-latch readiness/hide cluster",
+          "disposition": "pending",
+          "reason": "Generic vector control, authoritative readiness, release confirmation/cancel/skip preference and synchronized remote release remain useful safety imports. Remove only media pause; adapt actual hardware latch contracts and tests."
+        },
+        {
+          "code": "draw connection requested/connecting/connected status/manual discovery and remote connection/browser/download actions",
+          "disposition": "pending",
+          "reason": "Pakar has connection/typed actions and firmware tools, but full donor lifecycle/readiness/authenticated endpoint adaptation is not compared or accepted. Media remote browser cannot be blindly substituted for firmware management."
+        }
+      ],
+      "remaining": [
+        "Restore remaining useful generic menu contracts above against actual dependencies; see exact function-level mapping in NATIVE-MENU-COMPARISON.md. Native CI paint/pointer tests and running-app visual acceptance are separate from source guards."
+      ],
+      "proof": [
+        {
+          "path": "desktop/src/ui/menu.rs",
+          "sha256": "199cebacdf180d88cb724d458ee096ffd29555ec1a16df9d47c28799a5c46cff",
+          "anchor": "fn shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes()"
+        },
+        {
+          "path": "desktop/src/ui/menu.rs",
+          "sha256": "199cebacdf180d88cb724d458ee096ffd29555ec1a16df9d47c28799a5c46cff",
+          "anchor": "fn sibling_hover_switches_only_an_already_open_menu_and_clears_closed_state()"
+        },
+        {
+          "path": "tests/native_menu_test.mjs",
+          "sha256": "80ac61041de322c2c0e2c0fad379a74e6e89d02724f1b80f2d9fa6200c7ef937",
+          "anchor": "actual donor helper must match after application ID/visibility/whitespace adaptation"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
       "path": "scripts/package-probe-windows.ps1",
       "sha256": "f4516884990ad76c020fbc6534d902c4949abae0b48da8ea40c008afa44dfd4f",
       "source_read": "complete",
@@ -389,7 +470,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "358db44d79cdd8e2a31c320944ca454650b2741484c01515ae9a67c1bc986886",
+        "sha256": "064f14a4483119264505c886fb6aea99929d2c0fdd0bd5f484f5b535389aba4c",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -807,7 +888,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "358db44d79cdd8e2a31c320944ca454650b2741484c01515ae9a67c1bc986886",
+        "sha256": "064f14a4483119264505c886fb6aea99929d2c0fdd0bd5f484f5b535389aba4c",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],

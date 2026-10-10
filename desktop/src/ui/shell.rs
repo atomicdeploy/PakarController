@@ -2,7 +2,7 @@
 //! Menu -> typed action -> app dispatcher is shared with native launch/IPC/tray.
 use crate::{
     ui::{
-        dialog, icons,
+        dialog, icons, menu,
         layout::{self, Panel},
     },
     *,
@@ -366,12 +366,10 @@ impl PakarControllerApp {
         }
         egui::Panel::top("pakar-menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
-                ui.menu_button("File", |ui| {
+                menu::top_menu_button(ui, "File".into(), |ui| {
                     if ui
-                        .button(format!(
-                            "{}  Device settings…   Ctrl+Shift+,",
-                            icons::CIRCUITRY
-                        ))
+                        .add(egui::Button::new(format!("{}  Device settings…", icons::CIRCUITRY))
+                            .shortcut_text("Ctrl+Shift+,"))
                         .clicked()
                     {
                         self.device_settings.open = true;
@@ -379,14 +377,16 @@ impl PakarControllerApp {
                         ui.close();
                     }
                     if ui
-                        .button(format!("{}  Connect…       Ctrl+K", icons::PLUG))
+                        .add(egui::Button::new(format!("{}  Connect…", icons::PLUG))
+                            .shortcut_text("Ctrl+K"))
                         .clicked()
                     {
                         self.show_connection = true;
                         ui.close();
                     }
                     if ui
-                        .button(format!("{}  Cell mapping…  Ctrl+M", icons::GRID_FOUR))
+                        .add(egui::Button::new(format!("{}  Cell mapping…", icons::GRID_FOUR))
+                            .shortcut_text("Ctrl+M"))
                         .clicked()
                     {
                         self.show_mapping = true;
@@ -394,7 +394,8 @@ impl PakarControllerApp {
                     }
                     ui.separator();
                     if ui
-                        .button(format!("{}  Preferences…   Ctrl+,", icons::GEAR))
+                        .add(egui::Button::new(format!("{}  Preferences…", icons::GEAR))
+                            .shortcut_text("Ctrl+,"))
                         .clicked()
                     {
                         self.open_preferences();
@@ -405,9 +406,10 @@ impl PakarControllerApp {
                         self.dispatch(Command::Quit, &ctx);
                     }
                 });
-                ui.menu_button("Workspace", |ui| {
+                menu::top_menu_button(ui, "Workspace".into(), |ui| {
                     if ui
-                        .button(format!("{}  Toggle fullscreen   F11", icons::APP_WINDOW))
+                        .add(egui::Button::new(format!("{}  Toggle fullscreen", icons::APP_WINDOW))
+                            .shortcut_text("F11"))
                         .clicked()
                     {
                         self.dispatch(Command::Fullscreen, &ctx);
@@ -436,9 +438,10 @@ impl PakarControllerApp {
                         ui.close();
                     }
                 });
-                ui.menu_button("Device", |ui| {
+                menu::top_menu_button(ui, "Device".into(), |ui| {
                     if ui
-                        .button(format!("{}  Refresh         F5", icons::ARROW_CLOCKWISE))
+                        .add(egui::Button::new(format!("{}  Refresh", icons::ARROW_CLOCKWISE))
+                            .shortcut_text("F5"))
                         .clicked()
                     {
                         self.refresh();
@@ -465,7 +468,7 @@ impl PakarControllerApp {
                         ui.close();
                     }
                 });
-                ui.menu_button("Help", |ui| {
+                menu::top_menu_button(ui, "Help".into(), |ui| {
                     if ui.button(format!("{}  Save workspace screenshot…", icons::DOWNLOAD_SIMPLE)).clicked() {
                         ui.close();
                         if let Some(path) = rfd::FileDialog::new().add_filter("PNG image", &["png"]).set_file_name("PakarController.png").save_file() {

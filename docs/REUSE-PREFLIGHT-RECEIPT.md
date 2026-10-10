@@ -156,3 +156,37 @@ both firmware variants/protocol tests and Android preview. They do not certify
 the new appearance/storage checkpoint. Current CI is tracked on the existing PR.
 No native/Android/donor build, firmware flash, app replacement or cleanup was
 performed for these imports; only the affected ESP compile was requested.
+
+## Native menu regression: actual source comparison and guarded recovery
+
+Read full Pealayer src/ui/menu.rs and src/ui/mod.rs at 3d5f7ae. Read egui
+0.36.2 shortcut atoms/menu_style/Spacing dependency code; both apps share that
+version. Actual top_menu_button helper imported with only state ID/visibility
+changes. All six current Pakar accelerators now use the donor shortcut_text
+idiom, not spaces in primary labels. Four root headings use active-menu hover
+switching. Three native regression tests cover actual painted right edges/weak
+colors, popup switching/closure/context isolation and production call sites.
+
+Height diagnosis is documented separately: Pakar minimum 28 / vertical spacing
+6 / font cap 13 versus Pealayer default minimum 18 / spacing 3 / font cap 12.
+Popup padding is overridden by egui, not the explanation for that difference.
+No documented requirement justified the divergence. Height/font/spacing/zoom
+remain unchanged as the user requested; no claim of corrected menu heights.
+
+Donor advanced during this pass to clean 8d9bc1d86988987354e373a049ef953f9cf3034d.
+Menu/mod source hashes remain unchanged. Selectively refreshed the same
+inventory to 496 Pealayer paths; its two new verification/doc paths are pending.
+App.tsx changed since its earlier read and is correctly stale-review, not carried
+forward as current certification. Current complete comparison count is 43 of
+1871; 1828 pending and 24 reviewed parity gaps remain visible. Complete file
+reading is not complete import acceptance: the new menu row is parity-gap,
+with concrete generic omissions/next tests in NATIVE-MENU-COMPARISON.md.
+
+Executed native_menu_test.mjs source guard: normalized imported helper body
+matches donor exactly; four production root headings and six shortcut atoms;
+unchanged height policy. Rustfmt parse/check and comparison Check passed.
+Attempted the mandatory native Test wrapper: donor/build gate and crate guard
+passed, then the canonical-cache budget guard refused compilation (>8 GiB).
+No bypass, new cache, deletion reroute, donor build, or package copy attempted.
+Native paint/pointer tests must execute on CI; source guards are not native
+visual/runtime screenshots. The running app was not replaced in this pass.
