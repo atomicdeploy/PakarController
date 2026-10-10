@@ -4,9 +4,59 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
     {
+      "origin": "PCController",
+      "path": "Tools/Controller/web/src/card-layout-controls.tsx",
+      "sha256": "de67f2ac9dd8037e354b98227616ed8c207379dbc8205692587bc07a6392be83",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual CardLayoutEditor hidden-card show/reset and CardLayoutFrame hidden/collapsed actions adapted to the embedded workspace Panels dropdown and panel headers. Persisted preferences skip identical writes; lost capability overrides visibility."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/device-settings.js",
+          "sha256": "b1604f68471e50f0c77e5459293355cbdc02c77d0aeb1cc7341ea6d80839b78c",
+          "anchor": "function panelToggle("
+        },
+        {
+          "path": "docs/INTERFACE-CONTRACT.md",
+          "sha256": "bd8de673cab2e9d0c9d8948bedb0637dce7e8da10911f9a481bea0171f52ce47",
+          "anchor": "## Known useful parity gaps, not accepted exclusions"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "editing/onToggleEditing and pointer-capture onReorderStart/Move/End/onLostPointerCapture; order/CSSProperties; keyboardReorderOffset dependency",
+          "disposition": "pending",
+          "reason": "Show/hide/collapse/reset does not restore panel-order editing. Read actual pointer-reorder.ts completely; its stable-target and RTL keyboard helper need compatible per-container order, focus, persistence and stationary-pointer tests. Existing cell-order editing is a separate contract."
+        },
+        {
+          "code": "CardLayoutCopy localization and Lucide Check/ChevronDown/Eye/EyeOff/GripVertical/RotateCcw toolbar glyphs",
+          "disposition": "pending",
+          "reason": "Standalone embedded controls preserve labels and actions but not the entire localized vector-icon toolbar. Bind the established controller icon catalog and localization rather than loading the React/Lucide runtime or claiming glyph parity."
+        },
+        {
+          "code": "React generic component props and ReactPointerEvent/CSSProperties wrappers",
+          "disposition": "replaced",
+          "reason": "The ESP serves a standalone embedded document, not the donor React runtime. Existing live DOM cards retain their handlers when settings cards are reparented; no duplicate React state is introduced."
+        }
+      ],
+      "remaining": [
+        "Restore edit-mode panel ordering, actual icon/localization contract and pointer/keyboard tests; source/HTTP doubles and simulated browser proof are not physical acceptance."
+      ],
+      "proof": [
+        {
+          "path": "tests/interface_settings_test.mjs",
+          "sha256": "210abb620113ed519eaba2a64ee558367170f24586eb3ff7768002870904d180",
+          "anchor": "Capability loss must override stored panel visibility"
+        }
+      ],
+      "improvement": ""
+    },
+    {
       "origin": "Pealayer",
       "path": "src/ui/status_bar.rs",
-      "sha256": "99003b3a1c672b8e849ee587ed2144838e3eba99cf02af43e1056d5d24f5767d",
+      "sha256": "7004bd7e936875b4d5328f10f482aa492827117251fce69e8ebb34561ff90663",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -49,10 +99,16 @@
           "code": "Pealayer hardcoded connection dot RGB",
           "disposition": "replaced",
           "reason": "Pakar transport controls use its existing shared palette green/current text roles; menu state stays readable in both themes without tinting unrelated hardware controls."
+        },
+        {
+          "code": "UI render-rate toggle/context policy and latest dropdown-backed FPS menu; authoritative physical RGB without double dimming",
+          "disposition": "pending",
+          "reason": "Live donor tracked bytes were reread completely. They now depend on another task's uncommitted src/ui/dropdown.rs, outside the tracked inventory. Pakar retains prior imported mechanisms, but does not claim that new dependency, consumer migration or runtime tests. Preserve donor work and import after exact tracked provenance and native acceptance."
         }
       ],
       "remaining": [
-        "Run native popup/pointer tests, deploy and capture actual controls; restore useful generic status lifetime/readiness/localization contracts in issues #3/#10."
+        "Run native popup/pointer tests, deploy and capture actual controls; restore useful generic status lifetime/readiness/localization contracts in issues #3/#10.",
+        "Latest donor checkout is dirty; reviewed original-byte hash binds observed tracked source only. Audit/import the new dropdown dependency and consumers without overwriting its owner."
       ],
       "proof": [
         {
@@ -90,7 +146,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "bc6feb1604e4f02c76a597e45064f2f839582e3d1415e93a520017d0b8defa1d",
+          "sha256": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
           "anchor": "function peerAvailability("
         }
       ],
@@ -181,11 +237,11 @@
     {
       "origin": "Pealayer",
       "path": "src/ui/board_info.rs",
-      "sha256": "135e259e7c4b36fede394943b754e9c438a19e9d8f41ea76fd065c57cfa596f1",
+      "sha256": "c252864d80912a03bca718b0a13d721fda2e8f7378c033f44619590a82380fd2",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Read all 1279 lines through EOF. Actual overview/capability_list/front_panel rule uses authoritative peer fields; adapted into Manifest, contextual dock/menu/settings and independent peripheral cards.",
+        "Reread all 1280 current lines through EOF. Prior authoritative overview/capability/front-panel adaptation remains; new dropdown dependency is explicitly pending.",
         "Numeric display controls are independent of Text; peer title follows acknowledged name and lost capabilities cancel Table work."
       ],
       "targets": [
@@ -201,7 +257,7 @@
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
-          "sha256": "a8b45ca98bc9621867eed7084cd7a51523c9353a9e767e81ef24a1e26bbd9340",
+          "sha256": "109f5c93bfd2b6c35ad8b160bc2adc6a785c4bd098a61074a61d1988931451b5",
           "anchor": "pub(crate) fn available("
         },
         {
@@ -240,10 +296,16 @@
           "code": "seven_segment_preview, section/row drawing",
           "disposition": "replaced",
           "reason": "Existing Pakar seven_segment/dialog primitives own preview and geometry. A duplicate renderer would fork styling; fresh peer gates wrap the current owners. Native paint acceptance remains pending."
+        },
+        {
+          "code": "DropdownUiExt / dropdown::ComboBox board enum selector integration",
+          "disposition": "pending",
+          "reason": "Live donor tracked bytes were reread completely. They now depend on another task's uncommitted src/ui/dropdown.rs, outside the tracked inventory. Pakar retains prior imported mechanisms, but does not claim that new dependency, consumer migration or runtime tests. Preserve donor work and import after exact tracked provenance and native acceptance."
         }
       ],
       "remaining": [
-        "Typed PCController adapter, donor tests and native runtime proof remain #10/#3/#6. No whole-file equivalence or application superiority claimed."
+        "Typed PCController adapter, donor tests and native runtime proof remain #10/#3/#6. No whole-file equivalence or application superiority claimed.",
+        "Latest donor checkout is dirty; reviewed original-byte hash binds observed tracked source only. Audit/import the new dropdown dependency and consumers without overwriting its owner."
       ],
       "proof": [
         {
@@ -334,7 +396,8 @@
       "verdict": "parity-gap",
       "preserved": [
         "Actual resolved-artwork img/alt binding adapted to standalone header/login, replacing diamond and font fallback.",
-        "Firmware name/title/artwork binding replaces fixed header branding; stale/disconnected peer resets title/header/favicon/touch artwork and validates bounded inline PNG."
+        "Firmware name/title/artwork binding replaces fixed header branding; stale/disconnected peer resets title/header/favicon/touch artwork and validates bounded inline PNG.",
+        "Actual retained Modal/draft lifecycle adapted to grouped device settings; separate same-instance WebSocket actions preserve HTTP refresh and reject obsolete socket callbacks. Native Draft/SecretEdit/Write validation/readback semantics are reused."
       ],
       "targets": [
         {
@@ -344,7 +407,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "bc6feb1604e4f02c76a597e45064f2f839582e3d1415e93a520017d0b8defa1d",
+          "sha256": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -354,15 +417,25 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "bc6feb1604e4f02c76a597e45064f2f839582e3d1415e93a520017d0b8defa1d",
+          "sha256": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
           "anchor": "function renderApplicationIdentity"
+        },
+        {
+          "path": "assets/web/device-settings.js",
+          "sha256": "b1604f68471e50f0c77e5459293355cbdc02c77d0aeb1cc7341ea6d80839b78c",
+          "anchor": "function settingsCanClose()"
+        },
+        {
+          "path": "docs/INTERFACE-CONTRACT.md",
+          "sha256": "bd8de673cab2e9d0c9d8948bedb0637dce7e8da10911f9a481bea0171f52ce47",
+          "anchor": "## One catalog, distinct transport and platform adapters"
         }
       ],
       "omissions": [
         {
-          "code": "Header collapse/navigation; connectionOpen/draftTarget modal; connected/ws/http status and localization",
+          "code": "Header collapse; arbitrary remote connectionTarget/draftTarget endpoint modal; localization/RTL",
           "disposition": "pending",
-          "reason": "Artwork matching does not import functional shell state/command contracts; these remain useful generic work."
+          "reason": "The new grouped device-settings modal and same-instance WebSocket dropdown are not arbitrary remote endpoint selection or localized navigation. Standalone-device origin/auth and preferences adapters still need porting and tests."
         },
         {
           "code": "capability-aware Dropdown install/update/share/fullscreen/notifications/haptics/audio/wake-lock cluster",
@@ -371,7 +444,7 @@
         }
       ],
       "remaining": [
-        "Complete named generic omissions with preference/endpoint/runtime tests; source checks are not deployed acceptance. See BRANDING-PARITY.md."
+        "Complete generic omissions and missing editors named in INTERFACE-CONTRACT.md; native/mobile/deployed acceptance remains open."
       ],
       "proof": [
         {
@@ -383,6 +456,11 @@
           "path": "tests/web_identity_test.mjs",
           "sha256": "99621b44a961771053066590ce43759c24bdd2c0993de0d7c36ae615a2c5a2ad",
           "anchor": "Actual Web application identity"
+        },
+        {
+          "path": "tests/interface_settings_test.mjs",
+          "sha256": "210abb620113ed519eaba2a64ee558367170f24586eb3ff7768002870904d180",
+          "anchor": "Failed saves preserve the draft"
         }
       ],
       "improvement": ""
@@ -404,7 +482,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "bc6feb1604e4f02c76a597e45064f2f839582e3d1415e93a520017d0b8defa1d",
+          "sha256": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -490,7 +568,7 @@
     {
       "origin": "Pealayer",
       "path": "src/ui/menu.rs",
-      "sha256": "83aa188b01de2e8eea1206c25b793e47ccaffa2eb3a40ab1617168c912d082af",
+      "sha256": "18e255a5ccc65dfa0588eac10283c7c1f5fe33ea63bb3e07bd599e30a0cf19c3",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -550,10 +628,16 @@
           "code": "draw connection requested/connecting/connected status/manual discovery and remote connection/browser/download actions",
           "disposition": "pending",
           "reason": "Pakar has connection/typed actions and firmware tools, but full donor lifecycle/readiness/authenticated endpoint adaptation is not compared or accepted. Media remote browser cannot be blindly substituted for firmware management."
+        },
+        {
+          "code": "DropdownUiExt selected workspace/language/direction entries and new unified dropdown lifecycle",
+          "disposition": "pending",
+          "reason": "Live donor tracked bytes were reread completely. They now depend on another task's uncommitted src/ui/dropdown.rs, outside the tracked inventory. Pakar retains prior imported mechanisms, but does not claim that new dependency, consumer migration or runtime tests. Preserve donor work and import after exact tracked provenance and native acceptance."
         }
       ],
       "remaining": [
-        "Restore remaining useful generic menu contracts above against actual dependencies; see exact function-level mapping in NATIVE-MENU-COMPARISON.md. Native CI paint/pointer tests and running-app visual acceptance are separate from source guards."
+        "Restore remaining useful generic menu contracts above against actual dependencies; see exact function-level mapping in NATIVE-MENU-COMPARISON.md. Native CI paint/pointer tests and running-app visual acceptance are separate from source guards.",
+        "Latest donor checkout is dirty; reviewed original-byte hash binds observed tracked source only. Audit/import the new dropdown dependency and consumers without overwriting its owner."
       ],
       "proof": [
         {
@@ -681,7 +765,7 @@
       "targets": [
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "a19f70ece48ba03f3c2dc7accfa4a4bb179b0c36f84e59aaaed386af7b5db734",
+          "sha256": "4fda713667e29e55b5c8c58c12cd6bbb8a770d06958173d27fdbe4163bde6861",
           "anchor": "Get-PakarCargoTargetDirectory"
         }
       ],
@@ -1363,9 +1447,9 @@
     {
       "origin": "Pealayer",
       "path": "src/ui/icons.rs",
-      "sha256": "7a4716d266bccf5a7625ec3ad9b581a16d2d56f0c68dbd0db476edb63f5ae605",
+      "sha256": "ab479e5d4a665e082d0efb613bd56e99dd8c7322499d0230bd811a165d577a7c",
       "source_read": "complete",
-      "verdict": "equivalent-behavior",
+      "verdict": "parity-gap",
       "preserved": [
         "Production Phosphor vocabulary, stable names/kind fallback, searchable list/grid picker, UTF-8-safe match highlighting, bounded popups, disclosure/submenu helpers.",
         "Actual donor regression tests restored: eleven tests, including interactive egui-frame search/select/reopen, both themes and popup width."
@@ -1387,10 +1471,16 @@
           "code": "every_native_icon_editor_uses_the_shared_searchable_picker donor-only editor path list",
           "disposition": "replaced",
           "reason": "That assertion references Pealayer media/4D editor files not present in this product. Replaced only its call-site assertion with Pakar's actual workspace editor; the other ten tests were imported. This does not excuse missing generic editor features elsewhere."
+        },
+        {
+          "code": "DropdownUiExt, dropdown_choice, register_choice and dropdown::ComboBox in searchable icon pickers",
+          "disposition": "pending",
+          "reason": "Live donor tracked bytes were reread completely. They now depend on another task's uncommitted src/ui/dropdown.rs, outside the tracked inventory. Pakar retains prior imported mechanisms, but does not claim that new dependency, consumer migration or runtime tests. Preserve donor work and import after exact tracked provenance and native acceptance."
         }
       ],
       "remaining": [
-        "Imported compact/control picker helpers are not all used by current panels; UI-wide application/action parity needs separate file reviews."
+        "Imported compact/control picker helpers are not all used by current panels; UI-wide application/action parity needs separate file reviews.",
+        "Latest donor checkout is dirty; reviewed original-byte hash binds observed tracked source only. Audit/import the new dropdown dependency and consumers without overwriting its owner."
       ],
       "proof": [
         {
@@ -2323,7 +2413,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "bc6feb1604e4f02c76a597e45064f2f839582e3d1415e93a520017d0b8defa1d",
+          "sha256": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -2413,7 +2503,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "bc6feb1604e4f02c76a597e45064f2f839582e3d1415e93a520017d0b8defa1d",
+          "sha256": "193fcc5f8a113d7bb670984b3ff0c7e3fdf60b080975cb07e4b3bc3e03ec9c3e",
           "anchor": "/* Fixed manager slots:"
         }
       ],

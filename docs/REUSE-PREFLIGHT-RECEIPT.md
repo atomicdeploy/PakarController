@@ -1,5 +1,66 @@
 # Donor-first preflight receipt
 
+## Web device-settings and interface-contract continuation
+
+Issue #4 owns the requested Web/native parity. Consulted ui-shell/preferences,
+exact donor-audit HeaderBar/card-layout-controls/pointer-reorder and build-storage
+run-windows rows, and read those actual sources completely. Native Network/Cloud
+Draft/SecretEdit/Write semantics are adapted, not a replacement defaults form.
+Shared generated Rust/Web/Dart page/field catalogs and build checks now reject
+catalog drift. INTERFACE-CONTRACT.md names still-unported editors/platform work;
+page catalog synchronization is not full mobile or whole-product parity.
+
+Computer-use skill selected the actual embedded Web, read-only simulated fixture.
+Verified capability-gated pages, MQTT/WebSocket split, unsaved draft navigation
+and responsive geometry. The first narrow screenshot exposed intrinsic nav/grid
+overflow; inspected the actual shrinkable controller CSS and corrected min-width
+and mobile minmax grid. Retest reports equal dialog client/scroll width. Secret
+rows follow observed presence and hide outside Replace. Screenshots are small
+outputs, not copies of build packages. No physical writes or secrets were sent.
+
+Unexpected diagnostics: guessed PU route-evidence and mobile settings-file paths
+did not exist; inspected actual file inventories and used PU850-ROUTE-PARITY.json
+and mobile main.dart instead. A CSS anchor patch failed atomically; reread the
+exact line before applying. Local browser binding name was absent after context
+refresh; reused selected browser ID 2 and the owned tab, not another browser.
+The initial required-field/access DOM double lacked getElementById; the helper
+uses documented querySelector fallback. Exact target hashes changed as expected;
+rebound only after reviewing preserved handlers and new module code. No donor
+checkout, global credentials, private preferences or build cache was overwritten.
+
+Acceptance: actual settings module/HTTP doubles, Web access/context/table/cells,
+appearance (10 tests), identity, remote, display, remote tools, all 50 PU route
+registrations, branding, native-menu and transport source guards passed. Shared
+generator --check, ledger integrity, file-comparison, reuse-preflight/storage
+tests and Rust edition-2024 source parsing passed. ESP busy-wire warm build
+passed: RAM 56460/80192, IRAM 63055/65536, flash 756732/1048576. AVR unchanged;
+no AVR/APK or donor build. Native Test refused at the existing 8 GiB cache guard
+before Cargo; native execution and replacement are not claimed. Flutter/Dart
+were not on PATH; added mobile catalog tests remain unexecuted locally.
+Fresh ASUS SSH localhost:1022 is refused; ledboard.local:80 cannot resolve.
+No fallback to production Cafe, firmware flash or physical acceptance claimed.
+
+Pealayer inventory refresh detected changed board_info/status_bar/menu/icons.
+Reread all four fully. Another task has dirty tracked consumers and an untracked
+src/ui/dropdown.rs dependency: do not overwrite/import its moving work as a
+finished donor release. Named pending dependency/consumer migration is recorded
+in the same comparisons; icons verdict downgraded to parity-gap. Icons changed
+again during review, so captured its original bytes/hash once, read the entire
+captured text, and bound that exact snapshot in inventory/comparison. No later
+live revision is implied. Exact dropdown lookup cannot reach the untracked file;
+that is pending provenance/review, not an exclusion. Actual card-layout-controls
+source comparison added; pointer-reorder was read fully but its unported panel
+ordering remains pending. Current comparison totals: 1885 / 53 reviewed / 1832
+pending / 35 gaps, not complete superiority.
+
+Comparison patch diagnostics: fixed indentation/comma preservation and absolute
+target paths after atomic failed hunks. Hash-only patch initially matched no rows
+due indentation; inspected actual JSON before rebinding eight changed targets.
+The source-comparison gate correctly rejected moving donor hashes; complete
+rereads and named omissions replaced stale equivalence, not blind hash updates.
+Browser viewport override was reset and owned simulated tab/fixture closed.
+Final inspected Wi-Fi image is outputs/PakarController/web-parity/settings-wifi.png.
+
 ## Front-panel WebSocket/USB dropdown continuation
 
 Issue #10 owns this transport-context change. Read AGENTS/preflight and issue

@@ -1,5 +1,32 @@
 # PakarController comparison receipts
 
+## Web settings and synchronized catalog checkpoint
+
+INTERFACE-CONTRACT.md defines the single generated Rust/Web/Dart page and field
+catalog, build-only classification, implemented Web adapters and explicit gaps.
+Actual module/HTTP-double tests cover required fields, dirty/conflict/secret
+semantics, positive ACK/readback, no write replay, late-read revocation and
+capability-overriding panel preferences. All existing Web access/context/table/
+appearance/identity/remote/display, branding, PU route and transport source guards
+passed, as did comparison/preflight/storage checks and Rust source parsing.
+ESP busy-wire build passed with 756732 flash bytes. Native Test stopped at its
+canonical cache guard before Cargo; mobile tests are added, not locally run.
+
+Computer-use inspected actual embedded HTML through the mutation-disabled,
+visibly simulated fixture: search/navigation, MQTT draft preservation, labeled
+Wi-Fi/secret rows, independent WebSocket/HTTP controls and responsive geometry.
+Saved/inspected screenshots remain user-facing outputs; docs/screenshots/
+web-device-settings.png is the small final Wi-Fi proof. No production/native
+replacement, device setting write, firmware flash or physical observation.
+ASUS SSH refused; ledboard.local did not resolve. CI is not waited on.
+
+Latest donor changes are hash-bound dirty-source snapshots, not finished remote
+releases. Reread board_info/status_bar/menu/icons fully; their new untracked
+dropdown dependency and consumers remain named gaps. Actual PCController card
+visibility/collapse/reset actions are adapted; panel ordering/icon/localization
+work remains pending. Existing authoritative ledger reports 1885 paths, 53
+complete-read comparisons, 1832 pending and 35 known gaps.
+
 ## Application identity checkpoint
 
 BOARD-APPLICATION-IDENTITY.md records exact owning fields, old-client-compatible

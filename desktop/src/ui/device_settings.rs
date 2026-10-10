@@ -6,73 +6,9 @@ use crate::{
 };
 use eframe::egui;
 
-const PAGES: [(&str, &str, &str); 10] = [
-    (
-        "Overview",
-        icons::CIRCUITRY,
-        "device version identity status hardware NTP time discovery",
-    ),
-    (
-        "Board identity",
-        icons::GLOBE,
-        "identity hostname rename board name application title icon mDNS AP",
-    ),
-    (
-        "Wi-Fi",
-        icons::WIFI_HIGH,
-        "network station access point recovery SSID password scan",
-    ),
-    (
-        "MQTT",
-        icons::BROADCAST,
-        "cloud broker port topic username password TLS telemetry",
-    ),
-    (
-        "WebSocket",
-        icons::LINK,
-        "cloud websocket host port path token TLS telemetry",
-    ),
-    (
-        "Device access",
-        icons::LOCK,
-        "login authentication username password credentials security",
-    ),
-    (
-        "LEDs & cells",
-        icons::GRID_FOUR,
-        "table LED brightness effects mapping names logical physical modes games",
-    ),
-    (
-        "Front panel",
-        icons::GAUGE,
-        "TM1637 display scrolling marquee once interval melodies buzzer audio",
-    ),
-    (
-        "AVR & inputs",
-        icons::CPU,
-        "ATmega328P shift registers outputs ADC6 ninth input UART ISP busy",
-    ),
-    (
-        "Firmware & storage",
-        icons::FLOPPY_DISK,
-        "OTA firmware flash EEPROM backup ISP update",
-    ),
-];
+include!("settings_catalog.rs");
 pub fn page_index(name: &str) -> Option<usize> {
-    [
-        "overview",
-        "identity",
-        "wifi",
-        "mqtt",
-        "websocket",
-        "access",
-        "leds",
-        "front-panel",
-        "avr",
-        "firmware",
-    ]
-    .iter()
-    .position(|page| page.eq_ignore_ascii_case(name))
+    PAGE_IDS.iter().position(|page| page.eq_ignore_ascii_case(name))
 }
 fn matches(page: usize, search: &str) -> bool {
     let query = search.trim().to_lowercase();
@@ -82,16 +18,8 @@ fn matches(page: usize, search: &str) -> bool {
             .contains(&query)
 }
 pub(crate) fn available(app: &PakarControllerApp, page: usize) -> bool {
-    match page {
-        0 => true,
-        1 => app.has_feature("identity"),
-        2..=5 => app.has_feature("network"),
-        6 => app.has_table(),
-        7 => app.has_feature("display") || app.has_feature("text") || app.has_feature("buzzer"),
-        8 => app.has_feature("inputs") || app.has_feature("outputs") || app.has_feature("settings"),
-        9 => app.has_feature("isp") || app.has_feature("ota"),
-        _ => false,
-    }
+    PAGE_FEATURES.get(page).is_some_and(|features| features.is_empty() ||
+        features.iter().any(|feature| if *feature == "table" { app.has_table() } else { app.has_feature(feature) }))
 }
 fn field(ui: &mut egui::Ui, icon: &str, label: &str, value: &mut String, secret: bool) {
     dialog::setting_row(ui, icon, label, None, |ui| {

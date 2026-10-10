@@ -74,6 +74,8 @@ jobs:
           node tests/screenshot_harness_test.mjs
           node tests/native_menu_test.mjs
           node tests/connection_controls_test.mjs
+          node tools/generate-interface-contract.mjs --check
+          node tests/interface_settings_test.mjs
           node tools/generate-branding.mjs --check
           node tests/branding_test.mjs
           node tests/web_access_test.mjs
@@ -111,6 +113,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Check shared interface contract
+        run: node tools/generate-interface-contract.mjs --check
       - uses: subosito/flutter-action@v2
         with:
           channel: stable

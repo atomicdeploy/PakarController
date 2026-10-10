@@ -9,6 +9,8 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $taskReuse = & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate
+& node (Join-Path $PSScriptRoot 'generate-interface-contract.mjs') --check | ForEach-Object { Write-Host $_ }
+if ($LASTEXITCODE -ne 0) { throw 'Shared interface catalog is stale.' }
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 & node (Join-Path $PSScriptRoot 'check-crate-boundary.mjs') | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw 'Donor crate/resource guard failed before native build.' }

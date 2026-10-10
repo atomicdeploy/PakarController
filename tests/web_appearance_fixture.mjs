@@ -14,7 +14,8 @@ const values={
   '/api/v1/status':status,
   '/api/v1/cells/mapping':{physical:Array.from({length:80},(_,i)=>i+1),names:Array(80).fill('')},
   '/api/v1/device/name':{hostname:'simulated-web-fixture'},
-  '/api/v1/cloud':{mqtt_enabled:false,mqtt_tls:true,mqtt_host:'',mqtt_port:8883,mqtt_user:'',mqtt_base_topic:'',websocket_enabled:false,websocket_tls:true,websocket_host:'',websocket_port:443,websocket_path:'/',telemetry_seconds:30},
+  '/api/v1/network':{station_enabled:false,ap_enabled:true,station_ssid:'Fixture only'},
+  '/api/v1/cloud':{mqtt_enabled:false,mqtt_tls:true,mqtt_host:'mqtt.digitalogic.ir',mqtt_port:8883,mqtt_user:'fixture',mqtt_base_topic:'fixture',mqtt_password_set:false,websocket_enabled:false,websocket_tls:true,websocket_host:'',websocket_port:443,websocket_path:'/',websocket_token_set:false,telemetry_seconds:30},
   '/api/v1/firmware/remote':{schema:1,job_id:0,boot_id:'SIMULATED',targets:3,manifest_sha256:'',phase:'idle',busy:false,cancellable:false},
 };
 const contextProfile=process.argv.includes('--controller')?'controller':process.argv.includes('--unacknowledged')?'unknown':'table';

@@ -1,6 +1,29 @@
+import 'settings_catalog.dart';
+
 class DeviceStatus {
   DeviceStatus(this.json);
   final Map<String, dynamic> json;
+
+  /// Shared catalog, filtered by this peer's explicit ACKs. The caller still
+  /// owns freshness; this DTO never infers capabilities from pin/pixel counts.
+  List<Map<String, dynamic>> get deviceSettingsPages {
+    final c = json['capabilities'];
+    final features = c is Map && c['schema'] == 1 && c['acknowledged_features'] is List
+        ? (c['acknowledged_features'] as List).whereType<String>().toSet()
+        : <String>{};
+    final table = c is Map && c['board_kind'] == 'table' && c['table'] is Map &&
+        c['table']['columns'] == 10 && c['table']['rows'] == 8 && c['table']['pixels_per_cell'] == 6;
+    return (deviceSettingsCatalog['pages'] as List)
+        .cast<Map<String, dynamic>>()
+        .where((page) => (page['features'] as List).isEmpty ||
+            (page['features'] as List).any((feature) => features.contains(feature) && (feature != 'table' || table)))
+        .toList(growable: false);
+  }
+
+  Map<String, dynamic> get observedBuildInformation => {
+    for (final key in ['version', 'link_mode', 'pixels', 'avr_clock_hz'])
+      if (json.containsKey(key)) key: json[key],
+  };
 
   String get hostname => json['hostname'] as String? ?? '';
   String get mode => json['mode'] as String? ?? '';

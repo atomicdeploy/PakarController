@@ -32,6 +32,7 @@ fi
 
 if [[ "$target" != "avr" ]]; then
 node "$root/tools/generate-web-appearance.mjs" --check
+node "$root/tools/generate-interface-contract.mjs" --check
 mkdir -p "$build/esp8266$suffix"
 arduino-cli compile "${clean_args[@]}" \
   --fqbn 'esp8266:esp8266:nodemcuv2:eesz=4M2M' \
