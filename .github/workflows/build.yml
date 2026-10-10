@@ -70,6 +70,7 @@ jobs:
           node tests/web_appearance_test.mjs
           node tests/web_cell_table_test.mjs
           node tests/web_context_test.mjs
+          node tests/web_identity_test.mjs
           node tests/screenshot_harness_test.mjs
           node tests/native_menu_test.mjs
           node tools/generate-branding.mjs --check

@@ -13,9 +13,9 @@ const PAGES: [(&str, &str, &str); 10] = [
         "device version identity status hardware NTP time discovery",
     ),
     (
-        "Device name",
+        "Board identity",
         icons::GLOBE,
-        "identity hostname rename mDNS AP",
+        "identity hostname rename board name application title icon mDNS AP",
     ),
     (
         "Wi-Fi",
@@ -84,7 +84,8 @@ fn matches(page: usize, search: &str) -> bool {
 pub(crate) fn available(app: &PakarControllerApp, page: usize) -> bool {
     match page {
         0 => true,
-        1..=5 => app.has_feature("network"),
+        1 => app.has_feature("identity"),
+        2..=5 => app.has_feature("network"),
         6 => app.has_table(),
         7 => app.has_feature("display") || app.has_feature("text") || app.has_feature("buzzer"),
         8 => app.has_feature("inputs") || app.has_feature("outputs") || app.has_feature("settings"),
@@ -691,7 +692,7 @@ fn page(
                     if dialog::action_button(ui, icons::GEAR, "Preferences…").clicked() && return_to_workspace(draft,ui) { app.open_preferences(); }
                 });
             }
-            1 => { ui.add_enabled_ui(ready, |ui| { app.draw_device_identity(ui); }); }
+            1 => { ui.add_enabled_ui((ready || app.command_route()==Some(Transport::Serial)) && !app.identity_pending, |ui| { app.draw_device_identity(ui); }); }
             2 => network_page(app, draft, ui, ready),
             3 | 4 => cloud_page(draft, ui, ready, index == 4),
             5 => { ui.add_enabled_ui(ready, |ui| { app.draw_device_access(ui); }); }

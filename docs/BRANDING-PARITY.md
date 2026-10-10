@@ -44,9 +44,13 @@ their actual Phosphor vocabulary; they are not application-logo variants.
   still useful generic configuration work. Their filesystem paths and media
   playback state cannot be copied blindly to a standalone ESP. They remain
   pending with a shared board/client transport and bounded storage contract.
-- `sync_native_window_icon`, source metadata signature/revision caching and
-  multi-viewport/tray update tests remain pending for runtime icon changes.
-  This immutable-master fix does not claim to implement the icon editor.
+- `sync_native_window_icon` and source-signature caching are now adapted to
+  firmware application metadata in `branding::sync_peer`. Connected name/title,
+  icon, header/About texture and tray update in memory; stale/disconnected peers
+  reset to host branding. Web header/favicon/touch use the same bounded PNG.
+  Native execution is still blocked by the canonical cache guard; the icon
+  editor, playback resolver/presets and installed/pinned resource rewrites are
+  not claimed. See BOARD-APPLICATION-IDENTITY.md for exact contracts/proof.
 - Header collapse/connection modal/capability-aware action cluster, localization,
   and WebPlatform install/update/share/notifications/haptics/audio/wake-lock/
   badge lifecycle remain pending full imports; reading those files or using

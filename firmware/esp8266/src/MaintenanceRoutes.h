@@ -48,6 +48,9 @@ String buildTelemetryJson() {
   const uint32_t now=millis();
   d[F("schema")]=1;d[F("type")]=F("telemetry");d[F("product")]=F("PakarController");
   d[F("hostname")]=hostname;d[F("fqdn")]=hostname+".local";d[F("boot_id")]=pcBootId;
+  d[F("display_name")]=deviceIdentity.displayName();
+  auto application=d[F("application")].to<JsonObject>();
+  application[F("id")]=APP_ID;application[F("name")]=APP_NAME;application[F("title")]=APP_TITLE;
   d[F("version")]=BoardCore::BuildInfo::kVersion;d[F("protocol")]=BoardCore::BuildInfo::kProtocolVersion;
   auto e=d[F("esp")].to<JsonObject>();
   e[F("model")]=F("nodemcuv2");e[F("chip_id")]=ESP.getChipId();e[F("flash_chip_id")]=ESP.getFlashChipId();

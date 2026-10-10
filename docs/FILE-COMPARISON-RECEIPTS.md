@@ -1,5 +1,17 @@
 # PakarController comparison receipts
 
+## Application identity checkpoint
+
+BOARD-APPLICATION-IDENTITY.md records exact owning fields, old-client-compatible
+HTTP/USB commands, source imports and immutable host identities. Actual Web
+identity/access/context/branding/display/cells/remote/menu checks and production
+host protocol suite pass, including paired identity migration/failed commits and
+all three APP macro test profiles. Source parsing is not Rust compilation:
+native Test was refused at the 13.49 GiB cache guard and production is unchanged.
+CLI/USB/native unit and physical acceptance remain open in #10. Read-only
+simulated browser proof is docs/screenshots/identity-settings.png, inspected;
+no physical name/firmware/EEPROM write is claimed. CI is not waited on.
+
 These are source-comparison and test-execution receipts, not a production
 release certificate. Application/firmware source version remains 0.2.5.
 File-by-file continuation/checklist is [issue #3](https://github.com/atomicdeploy/PakarController/issues/3);

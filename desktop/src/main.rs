@@ -157,7 +157,7 @@ enum HttpCommand {
     Configuration(Endpoint, &'static str),
     Post(Endpoint, &'static str, Vec<(String, String)>),
     AccessChange(Endpoint, Endpoint),
-    NameChange(Endpoint, String),
+    NameChange(Endpoint, String, Option<String>),
     Settings(Endpoint, device_settings::Write),
     Maintenance(Endpoint, u64, maintenance::Operation),
 }
@@ -190,7 +190,7 @@ impl HttpCommand {
             Self::AccessChange(endpoint, next) => {
                 Self::AccessChange(replace(endpoint), replace(next))
             }
-            Self::NameChange(endpoint, name) => Self::NameChange(replace(endpoint), name.clone()),
+            Self::NameChange(endpoint, name, label) => Self::NameChange(replace(endpoint), name.clone(), label.clone()),
             Self::Settings(endpoint, write) => Self::Settings(replace(endpoint), write.clone()),
             Self::Maintenance(endpoint, id, operation) => {
                 Self::Maintenance(replace(endpoint), *id, operation.clone())
@@ -223,6 +223,7 @@ enum WsCommand {
 enum SerialCommand {
     Port(String),
     Send(String, u8, Vec<u8>),
+    Identity(String, String, String),
 }
 enum Event {
     ForEndpoint(Endpoint, Box<Event>),
@@ -232,7 +233,9 @@ enum Event {
     Configuration(&'static str, serde_json::Value),
     Accepted(String),
     CredentialsUpdated(Endpoint),
-    NameUpdated(Endpoint),
+    NameUpdated(Endpoint, bool),
+    SerialIdentity(String, serde_json::Value),
+    SerialIdentitySaved(String, Result<(), String>),
     Failed(String),
     OperationFailed(String),
     SettingsFinished(
@@ -286,15 +289,18 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
         })();
         return Ok(Event::SettingsFinished(write.id, write.group, result));
     }
-    if let HttpCommand::NameChange(endpoint, input) = &command {
+    if let HttpCommand::NameChange(endpoint, input, label) = &command {
         let name = identity::normalize_name(input)?;
+        if label.as_ref().is_some_and(|s| !identity::valid_display_name(s)) { return Err("Invalid board display name".into()); }
+        let mut form = vec![("hostname", name.as_str())];
+        if let Some(label) = label { form.push(("display_name", label.as_str())); }
         let response = client
             .post(format!(
                 "{}/api/v1/device/name",
                 endpoint.base.trim_end_matches('/')
             ))
             .basic_auth(&endpoint.user, Some(&endpoint.password))
-            .form(&[("hostname", &name)])
+            .form(&form)
             .send()
             .map_err(|e| e.to_string())?;
         if !response.status().is_success() {
@@ -308,6 +314,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
         if value.get("accepted").and_then(|v| v.as_bool()) != Some(true)
             || value.get("persisted").and_then(|v| v.as_bool()) != Some(true)
             || value.get("hostname").and_then(|v| v.as_str()) != Some(name.as_str())
+            || label.as_ref().is_some_and(|s| value["display_name"].as_str() != Some(s.as_str()))
         {
             return Err(
                 "Device did not confirm the saved name; no retry or endpoint switch was attempted"
@@ -316,7 +323,14 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
         }
         let mut next = endpoint.clone();
         next.base = format!("http://{name}.local");
-        return Ok(Event::NameUpdated(next));
+        let pending = value["apply_pending"].as_bool().unwrap_or(true);
+        if !pending {
+            let readback: serde_json::Value = client.get(format!("{}/api/v1/device/name",endpoint.base.trim_end_matches('/')))
+                .basic_auth(&endpoint.user, Some(&endpoint.password)).send().map_err(|_| "Identity saved but readback unavailable; refresh before retrying")?
+                .error_for_status().map_err(|e|e.to_string())?.json().map_err(|e|e.to_string())?;
+            if readback["hostname"] != value["hostname"] || readback["display_name"] != value["display_name"] { return Err("Identity saved but readback mismatch; no retry attempted".into()); }
+        }
+        return Ok(Event::NameUpdated(next, pending));
     }
     if let HttpCommand::AccessChange(endpoint, next) = &command {
         let response = client
@@ -814,6 +828,9 @@ fn wire_frame(opcode: u8, sequence: u8, payload: &[u8]) -> Vec<u8> {
     cobs_encode(&raw)
 }
 fn decode_frame(encoded: &[u8]) -> Option<(u8, Vec<u8>)> {
+    decode_envelope(encoded).map(|(op,_,payload)|(op,payload))
+}
+fn decode_envelope(encoded: &[u8]) -> Option<(u8, u8, Vec<u8>)> {
     let raw = cobs_decode(encoded)?;
     if raw.len() < 6
         || raw[0] != 0xa5
@@ -823,7 +840,7 @@ fn decode_frame(encoded: &[u8]) -> Option<(u8, Vec<u8>)> {
     {
         return None;
     }
-    Some((raw[2], raw[5..raw.len() - 1].to_vec()))
+    Some((raw[2], raw[3], raw[5..raw.len() - 1].to_vec()))
 }
 fn serial_status(payload: &[u8]) -> Option<DeviceStatus> {
     if payload.len() < 19 {
@@ -884,6 +901,7 @@ fn serial_status(payload: &[u8]) -> Option<DeviceStatus> {
 fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, context: egui::Context) {
     let mut port_name = String::new();
     let mut sequence = 1_u8;
+    let mut nonce = 0_u8;
     loop {
         if port_name.is_empty() {
             match commands.recv() {
@@ -892,79 +910,132 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
                 Err(_) => return,
             }
         }
-        if port_name.is_empty() {
-            continue;
-        }
-        let opened = serialport::new(&port_name, 115_200)
-            .timeout(Duration::from_millis(60))
-            .open();
-        let Ok(mut port) = opened else {
-            let _ = events.send(Event::Serial(port_name.clone(), false, None));
+        if port_name.is_empty() { continue; }
+        let Ok(mut port) = serialport::new(&port_name,115_200).timeout(Duration::from_millis(60)).open() else {
+            let _ = events.send(Event::Serial(port_name.clone(),false,None));
             thread::sleep(Duration::from_secs(1));
-            while let Ok(c) = commands.try_recv() {
-                if let SerialCommand::Port(p) = c {
-                    port_name = p
-                }
-            }
+            while let Ok(c) = commands.try_recv() { if let SerialCommand::Port(p)=c {port_name=p} }
             continue;
         };
         let connected_port = port_name.clone();
-        let _ = events.send(Event::Serial(connected_port.clone(), true, None));
+        let _ = events.send(Event::Serial(connected_port.clone(),true,None));
         context.request_repaint();
-        let mut encoded = Vec::new();
-        let mut last_poll = Instant::now() - Duration::from_secs(1);
+        let mut encoded=Vec::new();
+        let mut last_poll=Instant::now()-Duration::from_secs(1);
+        let mut last_identity=Instant::now()-Duration::from_secs(20);
+        let mut stamp=None;
+        let mut identity: Option<serde_json::Value>=None;
+        let mut read: Option<identity::UsbRead>=None;
+        let mut read_wait: Option<(u8,Instant)>=None;
+        let mut packets=std::collections::VecDeque::new();
+        let mut write_wait: Option<(u8,Instant)>=None;
+        let mut expected: Option<(String,String)>=None;
         'connected: loop {
-            while let Ok(command) = commands.try_recv() {
-                match command {
-                    SerialCommand::Port(p) if p != port_name => {
-                        port_name = p;
-                        break 'connected;
+            while let Ok(c)=commands.try_recv() {
+                match c {
+                    SerialCommand::Port(p)=>{port_name=p;break 'connected}
+                    SerialCommand::Send(target,op,payload) if target==connected_port=>{
+                        let _=port.write_all(&wire_frame(op,sequence,&payload));sequence=sequence.wrapping_add(1);
                     }
-                    SerialCommand::Port(_) => {}
-                    SerialCommand::Send(target, op, payload) if target == connected_port => {
-                        let _ = port.write_all(&wire_frame(op, sequence, &payload));
-                        sequence = sequence.wrapping_add(1);
-                    }
-                    SerialCommand::Send(..) => {} // Never deliver queued work to a different port.
-                }
-            }
-            if last_poll.elapsed() >= Duration::from_millis(750) {
-                let _ = port.write_all(&wire_frame(OP_GET_STATUS, sequence, &[]));
-                sequence = sequence.wrapping_add(1);
-                last_poll = Instant::now();
-            }
-            let mut bytes = [0_u8; 128];
-            match port.read(&mut bytes) {
-                Ok(n) => {
-                    for byte in &bytes[..n] {
-                        if *byte == 0 {
-                            if let Some((op, payload)) = decode_frame(&encoded) {
-                                if op == OP_STATUS {
-                                    let _ = events.send(Event::Serial(
-                                        connected_port.clone(),
-                                        true,
-                                        serial_status(&payload),
-                                    ));
-                                    context.request_repaint();
-                                }
-                            }
-                            encoded.clear();
-                        } else if encoded.len() < 80 {
-                            encoded.push(*byte)
+                    SerialCommand::Identity(target,host,label) if target==connected_port=>{
+                        if expected.is_some() {
+                            let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err("An identity write is already pending".into())));
                         } else {
-                            encoded.clear()
+                            match identity::usb_write(&host,&label) {
+                                Ok(next)=>{packets=next;expected=Some((identity::normalize_name(&host).unwrap(),label));read=None;read_wait=None;}
+                                Err(error)=>{let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err(error)));}
+                            }
                         }
                     }
+                    _=>{}
                 }
-                Err(e) if matches!(e.kind(), ErrorKind::TimedOut | ErrorKind::WouldBlock) => {}
-                Err(_) => break,
+            }
+            if write_wait.is_some_and(|(_,at)|at.elapsed()>Duration::from_secs(2)) ||
+                read_wait.is_some_and(|(_,at)|at.elapsed()>Duration::from_secs(2)) ||
+                (read.is_some() && last_identity.elapsed()>Duration::from_secs(8)) {
+                packets.clear();write_wait=None;read_wait=None;read=None;identity=None;
+                if expected.take().is_some() {
+                    let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err("Identity response timed out. Refresh before retrying; no mutation was replayed.".into())));
+                }
+                last_identity=Instant::now(); // Bounded backoff for a read-only refresh.
+            }
+            if write_wait.is_none() {
+                if let Some(payload)=packets.pop_front() {
+                    if port.write_all(&wire_frame(0x55,sequence,&payload)).is_err(){break}
+                    write_wait=Some((sequence,Instant::now()));sequence=sequence.wrapping_add(1);
+                } else if let Some(reader)=&read {
+                    if read_wait.is_none() {
+                        if port.write_all(&wire_frame(0x59,sequence,&reader.request())).is_err(){break}
+                        read_wait=Some((sequence,Instant::now()));sequence=sequence.wrapping_add(1);
+                    }
+                }
+            }
+            if last_poll.elapsed()>=Duration::from_millis(750) {
+                let _=port.write_all(&wire_frame(OP_GET_STATUS,sequence,&[]));sequence=sequence.wrapping_add(1);last_poll=Instant::now();
+            }
+            let mut bytes=[0_u8;128];
+            match port.read(&mut bytes) {
+                Ok(n)=>for byte in &bytes[..n] {
+                    if *byte==0 {
+                        if let Some((op,response_sequence,payload))=decode_envelope(&encoded) {
+                            if op==OP_STATUS {
+                                if payload.len()>=38 && payload[31]&(1<<5)!=0 && packets.is_empty() && write_wait.is_none()
+                                    && read.is_none() && (stamp!=Some(payload[37]) || last_identity.elapsed()>Duration::from_secs(10)) {
+                                    if stamp!=Some(payload[37]) { identity=None; }
+                                    stamp=Some(payload[37]);nonce=nonce.wrapping_add(1);
+                                    read=Some(identity::UsbRead{nonce,..Default::default()});last_identity=Instant::now();
+                                }
+                                if let Some(mut status)=serial_status(&payload) {
+                                    if let (Some(value),Some(c))=(&identity,&mut status.capabilities) {
+                                        c.name=value["display_name"].as_str().unwrap_or_default().into();
+                                        c.hostname=value["hostname"].as_str().unwrap_or_default().into();
+                                        c.application=serde_json::from_value(value["application"].clone()).ok();
+                                        status.hostname=c.hostname.clone();
+                                    }
+                                    let _=events.send(Event::Serial(connected_port.clone(),true,Some(status)));
+                                }
+                            } else if op==0xb2 && read_wait.is_some_and(|(s,_)|s==response_sequence) {
+                                read_wait=None;
+                                let result=read.as_mut().unwrap().accept(&payload);
+                                match result {
+                                    Ok(Some(value))=>{
+                                        read=None;
+                                        if let Some((host,label))=expected.take() {
+                                            let valid=value["hostname"].as_str()==Some(host.as_str())&&value["display_name"].as_str()==Some(label.as_str());
+                                            let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),if valid {Ok(())} else {Err("Identity ACK received but readback differs; no replay attempted".into())}));
+                                        }
+                                        let _=events.send(Event::SerialIdentity(connected_port.clone(),value.clone()));
+                                        identity=Some(value);
+                                    }
+                                    Ok(None)=>{}
+                                    Err(error)=>{
+                                        read=None;identity=None;
+                                        if expected.take().is_some(){let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err(error)));}
+                                    }
+                                }
+                            } else if write_wait.is_some_and(|(s,_)|s==response_sequence) && (op==0x80 || op==0x82) && payload.first()==Some(&0x55) {
+                                write_wait=None;
+                                if op==0x82 {
+                                    packets.clear();expected=None;
+                                    let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err(format!("Board rejected identity write ({:?}); no replay attempted",payload.get(1)))));
+                                } else if packets.is_empty() {
+                                    identity=None;nonce=nonce.wrapping_add(1);
+                                    read=Some(identity::UsbRead{nonce,..Default::default()});last_identity=Instant::now();
+                                }
+                            }
+                            context.request_repaint();
+                        }
+                        encoded.clear();
+                    } else if encoded.len()<80 {encoded.push(*byte)} else {encoded.clear()}
+                },
+                Err(e) if matches!(e.kind(),ErrorKind::TimedOut|ErrorKind::WouldBlock)=>{}
+                Err(_)=>break,
             }
         }
-        let _ = events.send(Event::Serial(connected_port, false, None));
-        context.request_repaint();
+        if expected.is_some(){let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err("USB disconnected during identity write; reconnect and read before retrying".into())));}
+        let _=events.send(Event::Serial(connected_port,false,None));context.request_repaint();
     }
 }
-
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Transport {
     WiFi,
@@ -1039,6 +1110,9 @@ struct PakarControllerApp {
     buzzer_duration: u16,
     output_mask: u8,
     device_name: Option<String>,
+    board_display_name: Option<String>,
+    identity_pending: bool,
+    identity_saved: Option<(String, String)>,
     message: String,
     http_tx: Sender<HttpCommand>,
     ws_tx: Sender<WsCommand>,
@@ -1163,6 +1237,9 @@ impl PakarControllerApp {
             buzzer_duration: 100,
             output_mask: 0,
             device_name: None,
+            board_display_name: None,
+            identity_pending: false,
+            identity_saved: None,
             message: "Connecting to PakarController".into(),
             http_tx,
             ws_tx,
@@ -1277,6 +1354,9 @@ impl PakarControllerApp {
             self.mappings.clear();
             self.access_info = None;
             self.device_name = None;
+            self.board_display_name = None;
+            self.identity_pending = false;
+            self.identity_saved = None;
             let _ = self.ws_tx.send(WsCommand::Connect(endpoint.clone()));
             let _ = self.ws_tx.send(WsCommand::Stream(false));
             let _ = self.ws_tx.send(WsCommand::Sample(false));
@@ -1285,6 +1365,7 @@ impl PakarControllerApp {
             self.configuration_loaded = false;
         }
         if self.last_serial_port != self.serial_port {
+            self.identity_pending = false;
             self.connection_notice.reset();
             self.serial_status = None;
             self.last_serial_status_at = None;
@@ -1367,7 +1448,11 @@ impl PakarControllerApp {
                         .into();
                     self.access_info = Some(value);
                 }
-                Event::Configuration(path, value) => self.receive_configuration(path, value),
+                Event::Configuration(path, value) => {
+                    if path != "/api/v1/device/name" || self.command_route() != Some(Transport::Serial) {
+                        self.receive_configuration(path, value);
+                    }
+                }
                 Event::MaintenanceFinished(id, result) => {
                     if self.device_settings.maintenance_pending == Some(id) {
                         let severity = maintenance::result_severity(&result);
@@ -1411,18 +1496,36 @@ impl PakarControllerApp {
                     self.last_ws_endpoint = None;
                     self.notify("Credentials saved", "All device sessions were signed out. This client will reconnect with the new credentials.", messaging::Severity::Success);
                 }
-                Event::NameUpdated(endpoint) => {
+                Event::NameUpdated(endpoint, pending) => {
+                    self.identity_pending = false;
+                    self.identity_saved = None;
                     self.base = endpoint.base;
                     self.config.endpoint = self.base.clone();
                     self.configuration_loaded = false;
                     self.last_ws_endpoint = None;
-                    self.notify("Device name saved", &format!("Reconnect at {} after Wi-Fi reassociates. DNS caches may need time to expire.", self.base), messaging::Severity::Success);
+                    self.notify("Board identity saved", &if pending {format!("Reconnect at {} after Wi-Fi reassociates. DNS caches may need time to expire.", self.base)} else {"Board name verified. Wi-Fi was not restarted.".into()}, messaging::Severity::Success);
+                }
+                Event::SerialIdentity(port, value) => {
+                    if port == self.serial_port && self.command_route() == Some(Transport::Serial) {
+                        self.receive_configuration("/api/v1/device/name",value);
+                    }
+                }
+                Event::SerialIdentitySaved(port, result) => {
+                    if port == self.serial_port {
+                        self.identity_pending = false;
+                        if result.is_ok() { self.identity_saved = None; }
+                        match result {
+                            Ok(()) => self.notify("Board identity saved", "USB ACK and identity readback verified.", messaging::Severity::Success),
+                            Err(error) => self.notify("Board identity unverified", &error, messaging::Severity::Warning),
+                        }
+                    }
                 }
                 Event::Accepted(m) => {
                     self.record_event("Command", &m);
                     self.notify("Command accepted", &m, messaging::Severity::Success);
                 }
                 Event::OperationFailed(error) => {
+                    self.identity_pending = false;
                     self.record_event("Operation failed", &error);
                     self.notify_id(
                         "pakar.operation-failed",
@@ -1469,8 +1572,8 @@ impl PakarControllerApp {
         }
         let tip = match self.live_status() {
             Some(s) => format!(
-                "PakarController — {} — AVR {}",
-                s.hostname,
+                "{} — AVR {}",
+                s.capabilities.as_ref().map(|c|c.title()).unwrap_or_else(||"PakarController".into()),
                 if s.avr_online { "online" } else { "offline" }
             ),
             None => "PakarController — device offline".into(),
@@ -1694,7 +1797,7 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
         );
         return Ok(());
     }
-    if words == ["device", "name"] {
+    if words == ["device", "name"] || words == ["device", "identity"] {
         if let Event::Configuration(_, value) = http_request(
             client,
             HttpCommand::Configuration(endpoint.clone(), "/api/v1/device/name"),
@@ -1706,15 +1809,33 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
         }
         return Ok(());
     }
+    if let ["device", "label", rest @ ..] = words {
+        let label = rest.join(" ");
+        if !identity::valid_display_name(&label) { return Err("Board name must be 1..63 UTF-8 bytes without controls or edge spaces".into()); }
+        let Event::Configuration(_, value) = http_request(client,HttpCommand::Configuration(endpoint.clone(),"/api/v1/device/name"))? else { return Err("Identity unavailable".into()) };
+        let host = value["hostname"].as_str().ok_or("Hostname unavailable")?;
+        let _ = http_request(client,HttpCommand::NameChange(endpoint.clone(),host.into(),Some(label)))?;
+        println!("Board display name saved and verified; Wi-Fi was not restarted.");
+        return Ok(());
+    }
+    if let ["device", "configure", host, rest @ ..] = words {
+        let label = rest.join(" ");
+        if !identity::valid_display_name(&label) { return Err("Invalid board display name".into()); }
+        if let Event::NameUpdated(next,pending) = http_request(client,HttpCommand::NameChange(endpoint.clone(),(*host).into(),Some(label)))? {
+            println!("Board identity saved. Endpoint: {}. Network apply pending: {pending}",next.base);
+        }
+        return Ok(());
+    }
     if let ["device", "rename", name] = words {
-        if let Event::NameUpdated(next) = http_request(
+        if let Event::NameUpdated(next, pending) = http_request(
             client,
-            HttpCommand::NameChange(endpoint.clone(), (*name).into()),
+            HttpCommand::NameChange(endpoint.clone(), (*name).into(), None),
         )? {
             println!(
                 "Device confirmed persistent name saved. Reconnect at {} after Wi-Fi reassociates. Set PAKAR_ENDPOINT to this URL for subsequent CLI calls.",
                 next.base
             );
+            if !pending { println!("No Wi-Fi restart was required."); }
         }
         return Ok(());
     }
@@ -1797,7 +1918,7 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
             ["snake", value] => ("/api/v1/snake/direction", vec![("value", value)]),
             ["reset"] => ("/api/v1/game/reset", vec![]),
             _ => return Err(
-                "commands: device name, device rename NAME[.local], auth info, auth change USER, status, mode, cell, brightness, effect, display, audio, snake, reset"
+                "commands: device identity, device rename HOST[.local], device label DISPLAY NAME, device configure HOST DISPLAY NAME, auth info, auth change USER, status, mode, cell, brightness, effect, display, audio, snake, reset"
                     .into(),
             ),
         };

@@ -16,16 +16,16 @@ enum Feature : uint16_t {
   Streaming = 1U << 3, Table = 1U << 4, Display = 1U << 5,
   Text = 1U << 6, Buzzer = 1U << 7, Inputs = 1U << 8,
   Outputs = 1U << 9, Settings = 1U << 10, Isp = 1U << 11,
-  Ota = 1U << 12
+  Ota = 1U << 12, Identity = 1U << 13
 };
 inline const char *name(uint8_t bit) {
   static const char *const names[] = {"network", "telemetry", "leds", "streaming",
-    "table", "display", "text", "buzzer", "inputs", "outputs", "settings", "isp", "ota"};
-  return bit < 13 ? names[bit] : nullptr;
+    "table", "display", "text", "buzzer", "inputs", "outputs", "settings", "isp", "ota", "identity"};
+  return bit < 14 ? names[bit] : nullptr;
 }
 inline uint16_t features(bool helloFresh, uint16_t avrCaps, bool displayAck,
                          bool statusFresh, bool pcSupported) {
-  uint16_t result = Network | Telemetry | Leds | Streaming | Isp | Ota;
+  uint16_t result = Network | Telemetry | Leds | Streaming | Isp | Ota | Identity;
   if (PAKAR_TABLE_ENABLED) result |= Table;
   if (!helloFresh) return result;
   if (avrCaps & Protocol::kCapBuzzer) result |= Buzzer;

@@ -53,6 +53,13 @@ if ($LASTEXITCODE -ne 0) { throw 'Tone player compilation failed' }
 & $toneBinary
 if ($LASTEXITCODE -ne 0) { throw 'Tone player tests failed' }
 $identityBinary = Join-Path $outputDirectory 'device_identity_test.exe'
+foreach ($identityFlags in @('-DPAKAR_TABLE_ENABLED=1','-DPAKAR_TABLE_ENABLED=0','-DPAKAR_IDENTITY_CUSTOM=1')) {
+    $applicationBinary = Join-Path $outputDirectory 'application_identity_test.exe'
+    & g++ -std=c++17 -Wall -Wextra -Werror $identityFlags -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'libraries/BoardCore/src') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/application_identity_test.cpp') -o $applicationBinary
+    if ($LASTEXITCODE -ne 0) { throw 'Application identity profile compilation failed' }
+    & $applicationBinary
+    if ($LASTEXITCODE -ne 0) { throw 'Application identity profile tests failed' }
+}
 & g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'libraries/BoardCore/src') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/device_identity_test.cpp') (Join-Path $projectRoot 'firmware/esp8266/src/DeviceIdentity.cpp') -o $identityBinary
 if ($LASTEXITCODE -ne 0) { throw 'Identity test compilation failed' }
 & $identityBinary

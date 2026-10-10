@@ -33,6 +33,7 @@
 #include "src/LedGrid.h"
 #include "src/NetworkConfig.h"
 #include "src/DeviceIdentity.h"
+#include "src/ApplicationIdentity.h"
 #include "src/BusyLine.h"
 #include "src/TelnetShell.h"
 #include "src/WebUi.h"
@@ -153,6 +154,7 @@ String stagedStationPassword;
 String stagedAccessUser;
 String stagedAccessPassword;
 String stagedDeviceName;
+String stagedDisplayName;
 uint8_t snakeBody[LedGrid::kCells] = {};
 uint8_t snakeLength = 0;
 uint8_t snakeFood = 0;
@@ -176,6 +178,10 @@ CellMappingRecord cellMapping{};
 void saveLedPreferences();
 void loadCellMapping();
 bool scheduleDeviceRename(const String &name);
+bool scheduleDeviceIdentity(const String &name, const String &displayName);
+uint32_t identityRevision();
+String applicationIdentityJson();
+void appendJsonEscaped(String &body, const char *text);
 String deviceNameJson(bool accepted = false);
 bool saveCellMapping();
 String buildStatusJson();
@@ -258,7 +264,7 @@ void sendHostStatus(uint8_t requestSequence) {
       // Schema-1 context: old prefixes retained; old peers cannot imply a profile.
       1, static_cast<uint8_t>(available), static_cast<uint8_t>(available >> 8),
       BoardCore::Context::modes(available), static_cast<uint8_t>(PAKAR_TABLE_ENABLED),
-      10, 8, 6, 0,
+      10, 8, 6, static_cast<uint8_t>(identityRevision()),
   };
   hostLink.send(kStatusResponse, requestSequence, payload, sizeof(payload));
 }
@@ -269,10 +275,26 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
     hostLink.send(kErrorResponse, frame.sequence, error, sizeof(error)); return;
   }
   static BoardCore::PcContractAssembly usbPcAssembly;
-  if ((remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner) && frame.opcode != kGetStatus && frame.opcode != kHello && frame.opcode != kPing) {
+  if ((remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner) && frame.opcode != kGetStatus && frame.opcode != kGetIdentity && frame.opcode != kHello && frame.opcode != kPing) {
     hostLink.error(frame.sequence, frame.opcode, kBusy); return;
   }
   switch (frame.opcode) {
+    case kGetIdentity: {
+      if (frame.payloadLength != 3) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
+      String json = F("{\"schema\":1,\"revision\":"); json += identityRevision();
+      json += F(",\"hostname\":\""); json += deviceIdentity.hostname();
+      json += F("\",\"display_name\":\""); appendJsonEscaped(json, deviceIdentity.displayName());
+      json += F("\",\"application\":"); json += applicationIdentityJson(); json += '}';
+      const uint16_t offset = frame.payload[1] | static_cast<uint16_t>(frame.payload[2]) << 8;
+      if (json.length() > 8192 || offset >= json.length()) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
+      const uint32_t revision = identityRevision();
+      uint8_t response[48] = {frame.payload[0], static_cast<uint8_t>(revision), static_cast<uint8_t>(revision >> 8),
+        static_cast<uint8_t>(revision >> 16), static_cast<uint8_t>(revision >> 24),
+        static_cast<uint8_t>(json.length()), static_cast<uint8_t>(json.length() >> 8), frame.payload[1], frame.payload[2]};
+      const uint8_t count = min(static_cast<size_t>(39), json.length() - offset);
+      memcpy(response + 9, json.c_str() + offset, count);
+      hostLink.send(kIdentityResponse, frame.sequence, response, count + 9); break;
+    }
     case kPcContractChunk:
       if (usbPcAssembly.accept(frame.sequence, frame.payload, frame.payloadLength, millis())) {
         const uint8_t *request = usbPcAssembly.data();
@@ -295,15 +317,17 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       break;
     case kDeviceName: {
       if (programmingLatched || networkApplyPending) { hostLink.error(frame.sequence, frame.opcode, kBusy); break; }
-      if (frame.payloadLength == 1 && frame.payload[0] == 0) stagedDeviceName = String();
-      else if (frame.payloadLength >= 2 && frame.payload[0] == 1) {
-        if (stagedDeviceName.length() + frame.payloadLength - 1 > 69) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
+      if (frame.payloadLength == 1 && frame.payload[0] == 0) { stagedDeviceName = String(); stagedDisplayName = String(); }
+      else if (frame.payloadLength >= 2 && (frame.payload[0] == 1 || frame.payload[0] == 3)) {
+        String &target = frame.payload[0] == 1 ? stagedDeviceName : stagedDisplayName;
+        if (target.length() + frame.payloadLength - 1 > (frame.payload[0] == 1 ? 69U : 63U)) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
         for (uint8_t i = 1; i < frame.payloadLength; ++i) {
-          if (!frame.payload[i]) { stagedDeviceName = String(); hostLink.error(frame.sequence, frame.opcode, kBadPayload); return; }
-          stagedDeviceName += static_cast<char>(frame.payload[i]);
+          if (!frame.payload[i]) { stagedDeviceName = String(); stagedDisplayName = String(); hostLink.error(frame.sequence, frame.opcode, kBadPayload); return; }
+          target += static_cast<char>(frame.payload[i]);
         }
       } else if (frame.payloadLength == 1 && frame.payload[0] == 2) {
-        const bool ok = scheduleDeviceRename(stagedDeviceName); stagedDeviceName = String();
+        const bool ok = scheduleDeviceIdentity(stagedDeviceName, stagedDisplayName.length() ? stagedDisplayName : String(deviceIdentity.displayName()));
+        stagedDeviceName = String(); stagedDisplayName = String();
         if (!ok) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
       } else { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
       hostLink.ack(frame.sequence, frame.opcode); break;
@@ -597,6 +621,8 @@ void startDiscovery() {
   if (mdnsStarted) {
     MDNS.addService("http", "tcp", 80);
     MDNS.addServiceTxt("http", "tcp", "path", "/");
+    MDNS.addServiceTxt("http", "tcp", "app", APP_NAME);
+    MDNS.addServiceTxt("http", "tcp", "app_id", APP_ID);
     MDNS.addServiceTxt("http", "tcp", "version",
                        BoardCore::BuildInfo::kVersion);
     MDNS.addService("pakarcontroller", "tcp", 80);
@@ -608,10 +634,10 @@ void startDiscovery() {
 
   SSDP.setSchemaURL("description.xml");
   SSDP.setHTTPPort(80);
-  SSDP.setName(hostname);
+  SSDP.setName(deviceIdentity.displayName());
   SSDP.setSerialNumber(ESP.getChipId());
   SSDP.setURL("/");
-  SSDP.setModelName("PakarController ESP8266 + ATmega328P");
+  SSDP.setModelName(APP_NAME);
   SSDP.setModelNumber(BoardCore::BuildInfo::kVersion);
   SSDP.setManufacturer("AtomicDeploy");
   char uuid[37];
@@ -646,20 +672,47 @@ void applyNetworkConfig() {
 }
 
 bool scheduleDeviceRename(const String &name) {
-  if (!deviceIdentity.rename(name)) return false;
-  networkApplyAt = millis() + 1000U; networkApplyPending = true;
+  return scheduleDeviceIdentity(name, deviceIdentity.displayName());
+}
+bool scheduleDeviceIdentity(const String &name, const String &displayName) {
+  const String previousLabel = deviceIdentity.displayName();
+  if (!deviceIdentity.configure(name, displayName)) return false;
+  if (hostname != deviceIdentity.hostname()) {
+    networkApplyAt = millis() + 1000U; networkApplyPending = true;
+  } else if (previousLabel != deviceIdentity.displayName()) startDiscovery();
   return true;
 }
 
+String applicationIdentityJson() {
+  String body = F("{\"id\":\""); appendJsonEscaped(body, APP_ID);
+  body += F("\",\"name\":\""); appendJsonEscaped(body, APP_NAME);
+  body += F("\",\"title\":\""); appendJsonEscaped(body, APP_TITLE);
+  body += F("\",\"icon_png_base64\":\""); body += FPSTR(APP_ICON_PNG_BASE64); body += F("\"}");
+  return body;
+}
+uint32_t identityRevision() {
+  // Change detector, not an authenticity claim. Metadata has no credentials.
+  uint32_t hash = 2166136261UL;
+  for (const char *value : {deviceIdentity.hostname(), deviceIdentity.displayName(), APP_ID, APP_NAME, APP_TITLE}) {
+    for (; *value; ++value) hash = (hash ^ static_cast<uint8_t>(*value)) * 16777619UL;
+    hash = (hash ^ 0U) * 16777619UL;
+  }
+  const size_t length = strlen_P(APP_ICON_PNG_BASE64);
+  for (size_t i = 0; i < length; ++i) hash = (hash ^ pgm_read_byte(APP_ICON_PNG_BASE64 + i)) * 16777619UL;
+  return hash;
+}
 String deviceNameJson(bool accepted) {
   String body = F("{\"hostname\":\""); body += deviceIdentity.hostname();
   body += F("\",\"fqdn\":\""); body += deviceIdentity.hostname();
   body += F(".local\",\"canonical_url\":\"http://"); body += deviceIdentity.hostname();
   body += F(".local\",\"active_hostname\":\""); body += hostname;
   body += F("\",\"persisted\":"); body += deviceIdentity.ready() ? F("true") : F("false");
+  body += F(",\"schema\":1,\"display_name\":\""); appendJsonEscaped(body, deviceIdentity.displayName());
+  body += F("\",\"revision\":"); body += identityRevision();
+  body += F(",\"application\":"); body += applicationIdentityJson();
   body += F(",\"accepted\":"); body += accepted ? F("true") : F("false");
   body += F(",\"apply_pending\":"); body += networkApplyPending ? F("true") : F("false");
-  body += F(",\"apply_after_ms\":"); body += accepted ? 1000 : 0;
+  body += F(",\"apply_after_ms\":"); body += networkApplyPending ? 1000 : 0;
   body += F(",\"error\":\""); appendJsonEscaped(body, deviceIdentity.error().c_str()); body += F("\"}");
   return body;
 }
@@ -1051,11 +1104,13 @@ String buildStatusJson() {
   else body += F("null");
   body += F(",\"capabilities\":{\"schema\":1,\"board_kind\":\"");
   body += PAKAR_TABLE_ENABLED ? F("table") : F("controller");
-  body += F("\",\"name\":\""); appendJsonEscaped(body, hostname.c_str());
-  body += F("\",\"acknowledged_features\":[");
+  body += F("\",\"name\":\""); appendJsonEscaped(body, deviceIdentity.displayName());
+  body += F("\",\"hostname\":\""); body += deviceIdentity.hostname();
+  body += F("\",\"application\":"); body += applicationIdentityJson();
+  body += F(",\"acknowledged_features\":[");
   const uint16_t available = currentFeatures();
   bool separator = false;
-  for (uint8_t bit = 0; bit < 13; ++bit) if (available & (1U << bit)) {
+  for (uint8_t bit = 0; bit < 14; ++bit) if (available & (1U << bit)) {
     if (separator) body += ',';
     body += '"'; body += BoardCore::Context::name(bit); body += '"'; separator = true;
   }
@@ -1628,7 +1683,10 @@ void registerAsyncOta() {
     return webAccess.allowed(request) && WebAccess::sameOrigin(request);
   });
   auto info = [](AsyncWebServerRequest *request) {
-    String body = F("{\"product\":\"PakarController\",\"product_id\":\"PakarController\",\"name\":\"PakarController\",\"model\":\"ESP8266 + ATmega328P\",\"version\":\"");
+    String body = F("{\"product\":\"PakarController\",\"product_id\":\"PakarController\",\"name\":\"");
+    appendJsonEscaped(body, APP_NAME);
+    body += F("\",\"application\":"); body += applicationIdentityJson();
+    body += F(",\"model\":\"ESP8266 + ATmega328P\",\"version\":\"");
     body += BoardCore::BuildInfo::kVersion;
     body += F("\",\"sketch_size\":"); body += ESP.getSketchSize();
     body += F(",\"size\":"); body += ESP.getSketchSize();
@@ -1648,7 +1706,7 @@ void registerAsyncOta() {
     if(!authenticate()) return;
     const String json=buildTelemetryJson();
     if(server.arg("format")=="text") {
-      server.send(200,"text/plain",String("PakarController ")+BoardCore::BuildInfo::kVersion+
+      server.send(200,"text/plain",String(APP_NAME)+" "+BoardCore::BuildInfo::kVersion+
         "\nhostname: "+hostname+".local\n"+json+"\n");
     } else {
       auto *response=server.request()->beginResponse(200,"application/json",json);
@@ -1860,8 +1918,10 @@ void registerApi() {
   });
   server.on("/description.xml", HTTP_GET, []() {
     String xml = F("<?xml version=\"1.0\"?><root xmlns=\"urn:schemas-upnp-org:device-1-0\"><specVersion><major>1</major><minor>0</minor></specVersion><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>");
-    xml += hostname;
-    xml += F("</friendlyName><manufacturer>AtomicDeploy</manufacturer><modelName>PakarController</modelName><UDN>uuid:");
+    auto escaped = [](const char *input) { String s(input); s.replace("&","&amp;");s.replace("<","&lt;");s.replace(">","&gt;");s.replace("\"","&quot;");s.replace("'","&apos;");return s; };
+    xml += escaped(deviceIdentity.displayName());
+    xml += F("</friendlyName><manufacturer>AtomicDeploy</manufacturer><modelName>"); xml += escaped(APP_NAME);
+    xml += F("</modelName><UDN>uuid:");
     char uuid[37]; snprintf(uuid, sizeof(uuid), "38323636-4558-4dda-9188-cda0e6%06x", ESP.getChipId()); xml += uuid;
     xml += F("</UDN><presentationURL>http://"); xml += hostname;
     xml += F(".local/</presentationURL></device></root>");
@@ -2077,7 +2137,11 @@ void registerApi() {
     if (input.length() != strlen(input.c_str()) || !BoardCore::Identity::normalizeName(input.c_str(), normalized)) {
       server.send(400, "application/json", "{\"error\":\"invalid_hostname\"}"); return;
     }
-    if (!scheduleDeviceRename(normalized)) {
+    const String label = server.hasArg("display_name") ? server.arg("display_name") : String(deviceIdentity.displayName());
+    if (label.length() != strlen(label.c_str()) || !BoardCore::Identity::validDisplayName(label.c_str())) {
+      server.send(400, "application/json", "{\"error\":\"invalid_display_name\"}"); return;
+    }
+    if (!scheduleDeviceIdentity(normalized, label)) {
       server.send(503, "application/json", deviceNameJson()); return;
     }
     server.send(202, "application/json", deviceNameJson(true));
@@ -2325,7 +2389,7 @@ void executeTelnetCommand(String line) {
         F("brightness <1..255> | effect <none|rainbow|fire> | "
           "display <-999..9999> | display stop | audio <cue> | reset | quit"));
     telnetClient.println(F("display text <once|loop|interval> <speed_ms> <hold_ms> <pause_seconds> <scroll 0|1> <TEXT>"));
-    telnetClient.println(F("device name | device rename <NAME[.local]>"));
+    telnetClient.println(F("device identity | device rename <HOST[.local]> | device label <DISPLAY NAME>"));
     telnetPrompt();
     return;
   }
@@ -2334,7 +2398,13 @@ void executeTelnetCommand(String line) {
     telnetPrompt();
     return;
   }
-  if (line == F("device name")) { telnetClient.println(deviceNameJson()); telnetPrompt(); return; }
+  if (line == F("device name") || line == F("device identity")) { telnetClient.println(deviceNameJson()); telnetPrompt(); return; }
+  if (line.startsWith(F("device label "))) {
+    if (networkApplyPending || programmingLatched || remoteFirmware.busy()) telnetClient.println(F("ERR device busy"));
+    else if (scheduleDeviceIdentity(deviceIdentity.hostname(), line.substring(13))) telnetClient.println(deviceNameJson(true));
+    else telnetClient.println(deviceIdentity.error());
+    telnetPrompt(); return;
+  }
   if(line=="info" || line=="telemetry" || line.startsWith("firmware ")) {
     String result;handleMaintenanceShell(line,result);telnetClient.println(result);telnetPrompt();return;
   }

@@ -22,6 +22,10 @@ c++ -std=c++17 -Wall -Wextra -Werror -DF_CPU=16000000UL -I "$root/libraries/Boar
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
   "$root/tests/device_identity_test.cpp" "$root/firmware/esp8266/src/DeviceIdentity.cpp" -o "$root/build/device-identity-test"
 "$root/build/device-identity-test"
+for identity_flags in -DPAKAR_TABLE_ENABLED=1 -DPAKAR_TABLE_ENABLED=0 -DPAKAR_IDENTITY_CUSTOM=1; do
+  c++ -std=c++17 -Wall -Wextra -Werror "$identity_flags" -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" "$root/tests/application_identity_test.cpp" -o "$root/build/application-identity-test"
+  "$root/build/application-identity-test"
+done
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" \
   "$root/tests/access_policy_test.cpp" -o "$root/build/access-policy-test"
 "$root/build/access-policy-test"

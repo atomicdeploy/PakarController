@@ -12,7 +12,9 @@ let now=1000,stops=0,closed=0,cancelledOrders=0;
 const document={title:'PakarController',createElement:element,querySelector:s=>metrics[s.slice(1)]??null,querySelectorAll:s=>s==='[data-capability]'?cards:[]};
 const context=vm.createContext({Date:{now:()=>now},state:{cells:[]},document,boardModes,snakeControls,contextMessage,
   cellManager:{open:false,close(){closed++;this.open=false}},cellBatchCancelled:false,
+  TextEncoder,DataView,Uint8Array,atob,
   stopStream(){stops++},closeCellMenu(){},setEditingOrder(v){if(!v)cancelledOrders++}});
+vm.runInContext(source.split('// BEGIN APPLICATION IDENTITY')[1].split('// END APPLICATION IDENTITY')[0],context);
 vm.runInContext(contextCode,context);
 const run=s=>vm.runInContext(s,context);
 const set=s=>{context.state=s;run('contextReceivedAt=Date.now();renderContext()')};

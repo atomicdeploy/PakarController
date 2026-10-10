@@ -8,6 +8,8 @@ pub struct Manifest {
     pub schema: u8,
     pub board_kind: String,
     pub name: String,
+    pub hostname: String,
+    pub application: Option<crate::identity::Application>,
     pub acknowledged_features: Vec<String>,
     pub modes: Vec<Mode>,
     pub table: Option<Table>,
@@ -28,6 +30,13 @@ pub struct Table {
     pub pixels_per_cell: u8,
 }
 impl Manifest {
+    pub fn application(&self) -> Option<&crate::identity::Application> {
+        if self.schema == 1 {
+            self.application.as_ref().filter(|a| a.valid())
+        } else {
+            None
+        }
+    }
     pub fn has(&self, feature: &str) -> bool {
         self.schema == 1 && self.acknowledged_features.iter().any(|v| v == feature)
     }
@@ -60,7 +69,15 @@ impl Manifest {
         } else {
             self.name.trim()
         };
-        format!("PakarController · {label}")
+        let title = self
+            .application()
+            .map(|a| a.title.as_str())
+            .unwrap_or("PakarController");
+        if self.hostname.is_empty() {
+            format!("{title} · {label}")
+        } else {
+            format!("{title} · {label} · {}.local", self.hostname)
+        }
     }
     pub fn allows(&self, path: &str, form: &[(String, String)]) -> bool {
         let feature = match path {
@@ -110,6 +127,7 @@ impl Manifest {
             "settings",
             "isp",
             "ota",
+            "identity",
         ];
         let mut value = Self {
             schema: 1,

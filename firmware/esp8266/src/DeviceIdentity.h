@@ -15,7 +15,9 @@ class DeviceIdentity {
  public:
   bool begin(fs::FS &filesystem, bool mounted = true);
   bool rename(const String &name);
+  bool configure(const String &hostname, const String &displayName);
   const char *hostname() const { return record_.hostname; }
+  const char *displayName() const { return record_.displayName; }
   bool ready() const { return ready_; }
   const String &error() const { return error_; }
  private:
@@ -23,6 +25,7 @@ class DeviceIdentity {
     uint32_t magic;
     uint8_t schema;
     char hostname[64];
+    char displayName[64];
     uint32_t checksum;
   } __attribute__((packed)) record_{};
   static uint32_t checksum(const Record &record);

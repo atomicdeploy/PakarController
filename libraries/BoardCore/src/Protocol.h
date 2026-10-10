@@ -36,6 +36,8 @@ enum Opcode : uint8_t {
   kPcContract = 0x56, // [PCController opcode, payload]; isolated from legacy 0x11 audio.
   kPcContractChunk = 0x57, // Full 48-byte donor request, bounded two-frame assembly.
   kGetTelemetry = 0x58, // Read-only; does not renew PCController's host/control lease.
+  kGetIdentity = 0x59, // ESP USB: [nonce, offset16], bounded read-only identity chunks.
+  kIdentityResponse = 0xB2, // [nonce, revision32, total16, offset16, <=39 JSON bytes].
   kTelemetryResponse = 0xB1, // Schema 1, 46 bytes; actual AVR observations.
   kPcContractResponse = 0xB0, // [PCController response opcode, payload].
 

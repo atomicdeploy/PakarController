@@ -121,12 +121,17 @@ impl PakarControllerApp {
             return;
         }
         if path == "/api/v1/device/name" {
+            let dirty = self.identity_saved.as_ref().is_some_and(|(host,label)|
+                self.device_name.as_ref()!=Some(host) || self.board_display_name.as_ref()!=Some(label));
+            if dirty { return; } // Periodic readback must not erase a name draft.
             if let Some(name) = value["hostname"]
                 .as_str()
                 .filter(|name| crate::identity::normalize_name(name).is_ok())
             {
                 self.device_name = Some(name.into());
             }
+            self.board_display_name = value["display_name"].as_str().filter(|v|crate::identity::valid_display_name(v)).map(str::to_owned);
+            self.identity_saved = self.device_name.clone().zip(self.board_display_name.clone());
         }
     }
     pub fn open_preferences(&mut self) {
@@ -281,6 +286,10 @@ impl PakarControllerApp {
                 .unwrap_or_else(|| if key.is_some() { layout::restore(&self.config.dock_layout) }
                     else { egui_dock::DockState::new(vec![Panel::Events]) });
             self.active_context = key;
+            self.device_name = self.peer_context().and_then(|c|crate::identity::normalize_name(&c.hostname).ok());
+            self.board_display_name = self.peer_context().filter(|c|crate::identity::valid_display_name(&c.name)).map(|c|c.name.clone());
+            self.identity_saved = self.device_name.clone().zip(self.board_display_name.clone());
+            self.configuration_loaded = false;
             self.context_panels = available.clone();
             self.table.queue.clear(); self.table.awaiting.clear(); self.table.verification_started = None;
             self.table.selection.ids.clear(); self.cell_search.clear();
@@ -318,6 +327,12 @@ impl PakarControllerApp {
         let title = self.live_status().map(|s| s.capabilities.as_ref().map(|c| c.title())
             .unwrap_or_else(|| "PakarController · Discovering capabilities".into()))
             .unwrap_or_else(|| "PakarController · No board connected".into());
+        let app_name = self.peer_context().and_then(|p|p.application()).map(|a|a.name.clone()).unwrap_or_else(||"PakarController".into());
+        if let Some(icon) = crate::branding::sync_peer(ctx, self.peer_context()) {
+            if let Some(tray) = &self.tray {
+                if let Err(error) = tray.set_application(&app_name, &icon) { self.record_event("Application artwork", &error); }
+            }
+        }
         ctx.send_viewport_cmd(egui::ViewportCommand::Title(title));
     }
     pub fn draw_shell(&mut self, ui: &mut egui::Ui) {
@@ -415,7 +430,7 @@ impl PakarControllerApp {
         let snapshot = self.live_status().cloned();
         let fullscreen = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
         if let Ok(mut value) = self.control.snapshot.lock() {
-            *value = serde_json::json!({"application":"PakarController","version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":ui::cell_search::format_selection(&self.table.selection.ids),"cell_search_draft":self.cell_search,"selected_cells":self.table.selection.cells(),"highlighted_cells":self.table.selection.cells(),"search_matches":self.table.selection.cells(),"selected_cell":self.selected_cell});
+            *value = serde_json::json!({"application":self.peer_context().and_then(|p|p.application()).map(|a|a.name.as_str()).unwrap_or("PakarController"),"client_application":"PakarController","app_title":self.peer_context().map(|p|p.title()),"version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":ui::cell_search::format_selection(&self.table.selection.ids),"cell_search_draft":self.cell_search,"selected_cells":self.table.selection.cells(),"highlighted_cells":self.table.selection.cells(),"search_matches":self.table.selection.cells(),"selected_cell":self.selected_cell});
             value["device_settings"] = serde_json::json!({"open": self.device_settings.open, "page": self.device_settings.page, "network_loaded": self.device_settings.network.is_some(), "cloud_loaded": self.device_settings.cloud.is_some(), "write_pending": self.device_settings.pending.is_some(), "maintenance_pending": self.device_settings.maintenance_pending.is_some()});
             value["peer_capabilities"] = serde_json::json!(self.peer_context());
             value["cell_management"] = serde_json::json!({"open":self.table.manager_open,"selection":self.table.selection.ids,"additive_selection":self.config.additive_cell_selection,"animations":self.config.animate_cells,"indicators":self.config.show_cell_indicators});
@@ -536,7 +551,7 @@ impl PakarControllerApp {
                         }
                     }
                     if ui
-                        .button(format!("{}  About PakarController…", icons::INFO))
+                        .button(format!("{}  About {}…", icons::INFO,self.peer_context().and_then(|p|p.application()).map(|a|a.name.as_str()).unwrap_or("PakarController")))
                         .clicked()
                     {
                         self.show_about = true;
@@ -559,7 +574,7 @@ impl PakarControllerApp {
                         self.show_connection = true;
                     }
                     ui.label(egui::RichText::new(self.peer_context().map(|c| c.title()).unwrap_or_else(|| "PakarController".into())).strong());
-                    crate::branding::logo(ui, 18.0);
+                    crate::branding::peer_logo(ui, 18.0, self.peer_context().and_then(|p|p.application()));
                 });
             });
         });
@@ -1261,22 +1276,43 @@ impl PakarControllerApp {
         }); }
     }
     pub(super) fn draw_device_identity(&mut self, ui: &mut egui::Ui) {
-        dialog::section(ui, icons::GLOBE, "Device name", |ui| {
+        dialog::section(ui, icons::GLOBE, "Board identity", |ui| {
+            if let Some(app) = self.peer_context().and_then(|p|p.application()) {
+                ui.label(egui::RichText::new(&app.name).strong());
+                ui.label(egui::RichText::new(format!("{} · {}",app.title,app.id)).small().weak());
+                ui.label(egui::RichText::new("Application branding is reported by the running firmware; renaming this board does not change its software identity.").small().weak());
+            }
+            if self.command_route()==Some(Transport::Serial) && self.peer_context().is_none_or(|c|c.hostname.is_empty()) {
+                ui.label("Reading this USB board’s identity…"); return;
+            }
             if let Some(name) = &mut self.device_name {
+                if let Some(label) = &mut self.board_display_name { field(ui, icons::CIRCUITRY, "Board display name", label, false); }
                 field(ui, icons::GLOBE, "Hostname", name, false);
-                ui.label(egui::RichText::new("Use a label or .local name. Saved across OTA; AP name and cloud identity follow it. Wi-Fi/login passwords stay unchanged. The connection briefly drops.").small().weak());
-                if dialog::primary_action_button(ui, icons::CHECK, "Save device name").clicked() {
-                    match crate::identity::normalize_name(name) {
+                ui.label(egui::RichText::new("The display name is separate from the DNS hostname. Saved across OTA. Only a hostname change restarts Wi-Fi/AP; credentials stay unchanged.").small().weak());
+                let label = self.board_display_name.clone();
+                if ui.add_enabled_ui(!self.identity_pending, |ui| dialog::primary_action_button(ui, icons::CHECK, "Save board identity")).inner.clicked() {
+                    match crate::identity::normalize_name(name).and_then(|n| if label.as_ref().is_some_and(|s| !crate::identity::valid_display_name(s)) { Err("Board name must be 1..63 UTF-8 bytes without controls or edge spaces".into()) } else { Ok(n) }) {
                         Ok(name) => {
-                            let _ = self
-                                .http_tx
-                                .send(crate::HttpCommand::NameChange(self.endpoint(), name));
+                            self.identity_pending = true;
+                            if self.command_route() == Some(Transport::Serial) {
+                                let _ = self.serial_tx.send(crate::SerialCommand::Identity(self.serial_port.clone(),name,label.unwrap_or_default()));
+                            } else {
+                                let _ = self.http_tx.send(crate::HttpCommand::NameChange(self.endpoint(), name, label));
+                            }
                         }
                         Err(error) => self.notify(
                             "Invalid device name",
                             &error,
                             crate::messaging::Severity::Warning,
                         ),
+                    }
+                }
+                if let Some((host,label))=&self.identity_saved {
+                    if self.device_name.as_ref()!=Some(host) || self.board_display_name.as_ref()!=Some(label) {
+                        ui.label(egui::RichText::new("Unsaved board identity changes").small().weak());
+                        if dialog::action_button(ui,icons::X,"Discard name edits").clicked() {
+                            self.device_name=Some(host.clone());self.board_display_name=Some(label.clone());
+                        }
                     }
                 }
             } else {
@@ -1680,8 +1716,10 @@ impl PakarControllerApp {
         }
         if self.show_about {
             let mut open = true;
-            egui::Window::new(format!("{}  About PakarController",icons::INFO)).id(egui::Id::new("about-pakar")).open(&mut open).default_size([520.0,300.0]).collapsible(false).frame(dialog::opaque_window_frame_from_context(ctx)).show(ctx,|ui|{
-                ui.horizontal(|ui|{crate::branding::logo(ui,48.0);ui.vertical(|ui|{ui.heading("PakarController");ui.label(format!("Version {}",env!("CARGO_PKG_VERSION")));ui.label("ESP + AVR control workstation");});});ui.add_space(16.0);
+            let app = self.peer_context().and_then(|p|p.application()).cloned();
+            let name = app.as_ref().map(|a|a.name.as_str()).unwrap_or("PakarController");
+            egui::Window::new(format!("{}  About {name}",icons::INFO)).id(egui::Id::new("about-pakar")).open(&mut open).default_size([520.0,300.0]).collapsible(false).frame(dialog::opaque_window_frame_from_context(ctx)).show(ctx,|ui|{
+                ui.horizontal(|ui|{crate::branding::peer_logo(ui,48.0,app.as_ref());ui.vertical(|ui|{ui.heading(name);if let Some(app)=&app {ui.label(&app.title);ui.label(egui::RichText::new(&app.id).weak());}ui.label(format!("PakarController client {}",env!("CARGO_PKG_VERSION")));});});ui.add_space(16.0);
                 dialog::section(ui,icons::APP_WINDOW,"Application foundation",|ui|{ui.label("Built from Pealayer’s desktop workspace, dialog controls, icon and color pickers, themes, fonts, notifications, and native instance ownership.");ui.label("MIT License · Pealayer © 2026 ToghrolTP");ui.hyperlink_to("Pealayer source","https://github.com/ToghrolTP/pealayer");});ui.add_space(12.0);
                 dialog::action_row(ui,false,|ui|{if dialog::action_button(ui,icons::X,"Close").clicked(){self.show_about=false;}});
             });

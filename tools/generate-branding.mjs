@@ -31,3 +31,11 @@ if (web !== original) {
   await writeFile(url, web);
   console.log('Updated shared Web branding only.');
 } else console.log('Shared Web branding is current; no file writes.');
+const applicationHeader = new URL('../firmware/esp8266/src/ApplicationArtwork.h', import.meta.url);
+const artwork = `// Generated from the same cross-surface master; do not edit by hand.\n#pragma once\n#include <Arduino.h>\nstatic const char kApplicationIconPngBase64[] PROGMEM = "${asset}";\n`;
+let prior;
+try { prior = await readFile(applicationHeader, 'utf8'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+if (prior !== artwork) {
+  assert(!process.argv.includes('--check'), 'Firmware application artwork is stale; regenerate shared branding');
+  await writeFile(applicationHeader, artwork);
+}

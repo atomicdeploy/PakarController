@@ -23,6 +23,7 @@ pub struct TrayController {
     #[cfg(windows)]
     notification_hook: super::windows_notifications::Hook,
     _icon: TrayIcon,
+    show_item: IconMenuItem,
     device_settings_id: MenuId,
     show_id: MenuId,
     preferences_id: MenuId,
@@ -68,6 +69,7 @@ impl TrayController {
             _icon: tray,
             device_settings_id: device_settings.id().clone(),
             show_id: show.id().clone(),
+            show_item: show,
             preferences_id: preferences.id().clone(),
             workspaces_id: workspaces.id().clone(),
             refresh_id: refresh.id().clone(),
@@ -114,6 +116,12 @@ impl TrayController {
     }
     pub fn set_tooltip(&self, text: &str) -> Result<(), String> {
         self._icon.set_tooltip(Some(text)).map_err(|e| e.to_string())
+    }
+    pub fn set_application(&self, name: &str, icon: &eframe::egui::IconData) -> Result<(), String> {
+        self.show_item.set_text(format!("Show {name}"));
+        let image = image::RgbaImage::from_raw(icon.width, icon.height, icon.rgba.clone()).ok_or("Invalid icon extent")?;
+        let image = image::imageops::resize(&image, 32, 32, image::imageops::FilterType::Lanczos3);
+        self._icon.set_icon(Some(Icon::from_rgba(image.into_raw(), 32, 32).map_err(|e| e.to_string())?)).map_err(|e| e.to_string())
     }
     pub fn notify(&self, request: &crate::messaging::ToastRequest, sound: bool) -> Result<(), String> {
         #[cfg(windows)]

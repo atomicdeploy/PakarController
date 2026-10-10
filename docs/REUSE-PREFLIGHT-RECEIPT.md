@@ -1,5 +1,48 @@
 # Donor-first preflight receipt
 
+## Board/application identity continuation
+
+Issue #10 owns this identity request. Read AGENTS/preflight and issues #4/#10;
+consulted ui-shell, preferences, application-identity and exact donor-audit
+branding/config/Commands rows. Pealayer src/branding.rs and HeaderBar.tsx were
+completely read; actual runtime cached icon/multi-viewport/tray and name/artwork
+binding are adapted. config.rs resolver and PU Commands.cpp are screened
+slices, still pending entire-file review; no whole-repository parity claim.
+Pealayer was refreshed to the current tracked 505 paths (all origins 1884).
+
+Current acceptance: actual embedded Web identity/context/access/branding,
+display/cells/remote/menu tests and production DeviceIdentity host tests pass.
+New C++ tests compile actual APP macros for Table, non-Table and custom app.
+Rust source parses as edition 2024; unit tests/USB write ACK/readback/CLI/native
+tray remain unexecuted because donor-gated build Test refuses 13.49 GiB canonical
+cache against 8 GiB policy. Read actual donor scripts/storage-hygiene.ps1 and
+Pakar storage report after this block; no prune, policy bypass, duplicate Cargo
+cache, SDK removal, native build/stage or running-app replacement occurred.
+Existing production PID 62448 was freshly observed, not attributed this source.
+
+Unexpected operation recovery: first ESP compile required an explicit declaration
+of existing appendJsonEscaped for the new USB handler; inspected actual helper
+and added its matching prototype, no alternate encoder. Web fixtures initially
+lacked the new identity renderer/metadata; extended actual application tests,
+not product fallback. Ledger-bound route test correctly rejected changed Web
+bytes; explicitly rereviewed the affected name/application/discovery/info slice
+and rebound exact anchors/hashes. Rejected patch hunks had no partial writes;
+corrected from exact source. Invalid rg glob/guessed cli/stub/workflow/muda paths
+were resolved from inventories; no skipped functionality was justified by them.
+
+Computer-use skill selected read-only browser verification of the actual embedded
+Web served by a visibly SIMULATED controller fixture. Verified Pakar Keys header,
+Keypad controller title, application descriptor, separately populated full-width
+board-name/hostname fields and real artwork. Saved/inspected no-overwrite images;
+identity-settings.png is final alignment, identity-controller.png preserves the
+prior narrower fields. The owned tab was closed; fixture PID identity was verified
+before cleanup. No physical/API mutations or login secrets were sent.
+ASUS SSH localhost:1022 still refuses connection; ledboard.local port 80 is
+unreachable. A read-only check of the remembered alternate SSH port returned
+cafe-pc, not the requested ASUS board host, so it was not used to build/deploy.
+Native/physical acceptance
+checkboxes remain open; CI is asynchronous and is not waited on.
+
 Tracking: issues #3 (all donor comparisons), #9 (storage tooling), #8 (capture).
 
 Pealayer inventory refreshed file by file from clean canonical source

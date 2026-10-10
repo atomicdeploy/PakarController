@@ -1,6 +1,63 @@
 //! Actual Pealayer image decoder adapted to Pakar's single cross-surface master.
 pub use crate::brand_image::icon_bytes;
 use eframe::egui;
+use std::hash::{Hash, Hasher};
+
+// Adapted from Pealayer's sync_native_window_icon and icon_source_signature:
+// peer-owned application metadata replaces playback/config; no disk cache.
+pub fn sync_peer(
+    ctx: &egui::Context,
+    peer: Option<&crate::capabilities::Manifest>,
+) -> Option<egui::IconData> {
+    let app = peer.and_then(|p| p.application());
+    let mut hash = std::collections::hash_map::DefaultHasher::new();
+    app.hash(&mut hash);
+    let signature = hash.finish();
+    let changed = ctx.data_mut(|data| {
+        let id = egui::Id::new("pakar-peer-window-icon");
+        if data.get_temp::<u64>(id) == Some(signature) {
+            false
+        } else {
+            data.insert_temp(id, signature);
+            true
+        }
+    });
+    if !changed {
+        return None;
+    }
+    let icon = app
+        .and_then(|a| a.icon_bytes())
+        .and_then(|b| icon_data_from_bytes(&b))
+        .unwrap_or_else(window_icon);
+    let texture = ctx.load_texture(
+        "Connected application artwork",
+        egui::ColorImage::from_rgba_unmultiplied(
+            [icon.width as usize, icon.height as usize],
+            &icon.rgba,
+        ),
+        egui::TextureOptions::LINEAR,
+    );
+    ctx.data_mut(|data| data.insert_temp(egui::Id::new("pakar-peer-brand-texture"), texture));
+    let shared = std::sync::Arc::new(icon.clone());
+    for viewport in ctx.input(|input| input.raw.viewports.keys().copied().collect::<Vec<_>>()) {
+        ctx.send_viewport_cmd_to(viewport, egui::ViewportCommand::Icon(Some(shared.clone())));
+    }
+    Some(icon)
+}
+pub fn peer_logo(ui: &mut egui::Ui, size: f32, app: Option<&crate::identity::Application>) {
+    let texture = ui.ctx().data_mut(|data| {
+        data.get_temp::<egui::TextureHandle>(egui::Id::new("pakar-peer-brand-texture"))
+    });
+    if let Some(texture) = texture {
+        ui.add(egui::Image::new(&texture).fit_to_exact_size(egui::vec2(size, size)))
+            .on_hover_text(format!(
+                "{} application logo",
+                app.map(|a| a.name.as_str()).unwrap_or("PakarController")
+            ));
+    } else {
+        logo(ui, size);
+    }
+}
 
 // Imported unchanged from Pealayer src/branding.rs.
 pub fn icon_data_from_bytes(bytes: &[u8]) -> Option<egui::IconData> {
@@ -43,6 +100,28 @@ pub fn logo(ui: &mut egui::Ui, size: f32) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn peer_icon_lifecycle_reuses_refresh_and_revokes_on_disconnect() {
+        let ctx=egui::Context::default();
+        let mut peer=crate::capabilities::Manifest{schema:1,application:Some(crate::identity::Application{
+            id:"table.app".into(),name:"Pakar Table".into(),title:"Table controller".into(),
+            icon_png_base64:include_str!("../../assets/branding/app-icon.png.base64").trim().into()}),..Default::default()};
+        let mut changes=0;
+        let mut output=ctx.run_ui(egui::RawInput::default(),|_|{
+            changes+=usize::from(sync_peer(&ctx,Some(&peer)).is_some());
+            assert!(sync_peer(&ctx,Some(&peer)).is_none());
+        });
+        assert_eq!(changes,1);
+        assert!(output.viewport_output.values().any(|v|v.commands.iter().any(|c|matches!(c,egui::ViewportCommand::Icon(Some(_))))));
+        output.textures_delta.clear();
+        peer.application.as_mut().unwrap().name="Pakar Keys".into();
+        let mut output=ctx.run_ui(egui::RawInput::default(),|_|{
+            assert!(sync_peer(&ctx,Some(&peer)).is_some());
+            assert!(sync_peer(&ctx,None).is_some());
+            assert!(sync_peer(&ctx,None).is_none());
+        });
+        output.textures_delta.clear();
+    }
 
     #[test]
     fn bundled_artwork_decodes_without_files_or_theme_specific_replacements() {

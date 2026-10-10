@@ -18,8 +18,12 @@ const values={
   '/api/v1/firmware/remote':{schema:1,job_id:0,boot_id:'SIMULATED',targets:3,manifest_sha256:'',phase:'idle',busy:false,cancellable:false},
 };
 const contextProfile=process.argv.includes('--controller')?'controller':process.argv.includes('--unacknowledged')?'unknown':'table';
+const icon=(await readFile(new URL('../assets/branding/app-icon.png.base64',import.meta.url),'utf8')).trim();
+const application={id:'simulated.'+contextProfile,name:contextProfile==='table'?'Pakar Table':'Pakar Keys',title:contextProfile==='table'?'Table controller':'Keypad controller',icon_png_base64:icon};
+values['/api/v1/device/name']={hostname:'simulated-web-fixture',display_name:'SIMULATED '+contextProfile.toUpperCase()+' — NOT A BOARD',application,persisted:true,schema:1};
 if(contextProfile!=='unknown')status.capabilities={schema:1,name:'SIMULATED '+contextProfile.toUpperCase()+' — NOT A BOARD',board_kind:contextProfile,
-  acknowledged_features:contextProfile==='table'?['network','telemetry','table','leds','streaming']:['network','telemetry','buzzer'],
+  hostname:'simulated-web-fixture',application,
+  acknowledged_features:contextProfile==='table'?['network','telemetry','identity','table','leds','streaming']:['network','telemetry','identity','buzzer'],
   ...(contextProfile==='table'?{table:{columns:10,rows:8,pixels_per_cell:6},modes:[{id:'cell',code:1,label:'Cell selection',kind:'presentation'},{id:'snake',code:3,label:'Snake',kind:'presentation'}]}:{})};
 if(contextProfile==='controller'){status.avr_online=true;status.audio_cues=['welcome'];}
 // Extend the existing no-write visual harness, rather than a second package or

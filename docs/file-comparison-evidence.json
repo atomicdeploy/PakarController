@@ -16,17 +16,17 @@
       "targets": [
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "96a8e3f599938beed5473e4d184bdfc5cd7a02b16e19313d8bbb51ac6f2f5667",
+          "sha256": "8686e5df23a2a048c353bdc8a632de646674741586263217c1e40abb068298ec",
           "anchor": "pub fn has("
         },
         {
           "path": "libraries/BoardCore/src/DeviceContext.h",
-          "sha256": "bb6b24154650b6e6d0e930eb813ef657419360da0d1c6b5e0acaf8368bb08b4e",
+          "sha256": "ce571a112f7d06dc25cdf7f35a383ba4f23c3ca4337ac1bb9968ef17dec72689",
           "anchor": "inline uint16_t features("
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "46a795fa2da585b4f4039163a8fe6e4e3514bd245551ee63d495d4dde897e233",
+          "sha256": "bc6feb1604e4f02c76a597e45064f2f839582e3d1415e93a520017d0b8defa1d",
           "anchor": "function peerAvailability("
         }
       ],
@@ -48,7 +48,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "4d23df01d3abbbfc3abef0f68d08f33c817e5be1379a3f03f828b7a2b2087d4d",
+          "sha256": "fefae5fe0fd4aaf5d0961fb24695b979ca80e6efd07d3d87ea6b6e0e3ea6ed13",
           "anchor": "No inferred board kind or controls"
         },
         {
@@ -71,7 +71,7 @@
       "targets": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "4d23df01d3abbbfc3abef0f68d08f33c817e5be1379a3f03f828b7a2b2087d4d",
+          "sha256": "fefae5fe0fd4aaf5d0961fb24695b979ca80e6efd07d3d87ea6b6e0e3ea6ed13",
           "anchor": "const manifest="
         },
         {
@@ -81,7 +81,7 @@
         },
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "96a8e3f599938beed5473e4d184bdfc5cd7a02b16e19313d8bbb51ac6f2f5667",
+          "sha256": "8686e5df23a2a048c353bdc8a632de646674741586263217c1e40abb068298ec",
           "anchor": "fn serial_manifest_is_individual_and_table_modes_are_profile_scoped"
         }
       ],
@@ -103,7 +103,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "4d23df01d3abbbfc3abef0f68d08f33c817e5be1379a3f03f828b7a2b2087d4d",
+          "sha256": "fefae5fe0fd4aaf5d0961fb24695b979ca80e6efd07d3d87ea6b6e0e3ea6ed13",
           "anchor": "Unsupported geometry is not forced"
         },
         {
@@ -127,17 +127,17 @@
       "targets": [
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "96a8e3f599938beed5473e4d184bdfc5cd7a02b16e19313d8bbb51ac6f2f5667",
+          "sha256": "8686e5df23a2a048c353bdc8a632de646674741586263217c1e40abb068298ec",
           "anchor": "pub struct Manifest"
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "1a4370934792e0117f6d532b97d05416a1e75490d6d99ed1c98f08c60b985b47",
+          "sha256": "9b4ef141a5aac40c7245a246321a28c834ebae82f20941b415b919173dc78092",
           "anchor": "fn synchronize_context("
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
-          "sha256": "9b10a96b77d8f7a234ab8c33906026ccb9811b281179e205703c2da08d5d6873",
+          "sha256": "a8b45ca98bc9621867eed7084cd7a51523c9353a9e767e81ef24a1e26bbd9340",
           "anchor": "pub(crate) fn available("
         },
         {
@@ -184,12 +184,12 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "4d23df01d3abbbfc3abef0f68d08f33c817e5be1379a3f03f828b7a2b2087d4d",
+          "sha256": "fefae5fe0fd4aaf5d0961fb24695b979ca80e6efd07d3d87ea6b6e0e3ea6ed13",
           "anchor": "Native wiring is source-checked only"
         },
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "96a8e3f599938beed5473e4d184bdfc5cd7a02b16e19313d8bbb51ac6f2f5667",
+          "sha256": "8686e5df23a2a048c353bdc8a632de646674741586263217c1e40abb068298ec",
           "anchor": "fn no_profile_or_individual_ack_means_no_controls"
         }
       ],
@@ -203,12 +203,13 @@
       "verdict": "parity-gap",
       "preserved": [
         "Actual icon_data_from_bytes imported unchanged; one embedded PNG supplies native/Web artwork without disk caches.",
-        "Actual native_icon_bytes seven-frame ICO encoding/master preservation/Lanczos3 resampling and shell derivative test adapted to shared supplied bytes and PNG-only decoder."
+        "Actual native_icon_bytes seven-frame ICO encoding/master preservation/Lanczos3 resampling and shell derivative test adapted to shared supplied bytes and PNG-only decoder.",
+        "Actual sync_native_window_icon source-signature cache, multi-viewport icon publication and tray refresh lifecycle adapted to fresh selected-peer Application metadata; no per-frame decode or disk cache."
       ],
       "targets": [
         {
           "path": "desktop/src/branding.rs",
-          "sha256": "5345ed3c89c2537d500d48dfad08b03622fca915e9032c972e451105b3d34222",
+          "sha256": "28849fc17b8082114c0bc3d9c38baf0aef64b929c7c721aa19bdc048b25905e7",
           "anchor": "pub fn icon_data_from_bytes"
         },
         {
@@ -218,8 +219,13 @@
         },
         {
           "path": "docs/BRANDING-PARITY.md",
-          "sha256": "d28d6a4d1785f8e40efc0879410a22f2ae16da04d11047d06b285e6f84a38217",
+          "sha256": "b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7",
           "anchor": "## Explicit unfinished useful code and reasons"
+        },
+        {
+          "path": "desktop/src/branding.rs",
+          "sha256": "28849fc17b8082114c0bc3d9c38baf0aef64b929c7c721aa19bdc048b25905e7",
+          "anchor": "pub fn sync_peer"
         }
       ],
       "omissions": [
@@ -230,8 +236,8 @@
         },
         {
           "code": "sync_native_window_icon, icon_source_signature/revision metadata/multi-viewport/tray sync and tests",
-          "disposition": "pending",
-          "reason": "Immutable master matching is not runtime editing; generic revision/update lifecycle remains open."
+          "disposition": "replaced",
+          "reason": "sync_peer now adapts the cache/multi-viewport lifecycle to peer Application metadata, shared header/About and tray artwork/Show label. Native runtime acceptance is still blocked by the cache guard; full icon preferences/tests remain open."
         },
         {
           "code": "PlaybackIconState/from_player/playback_state_is_unambiguous",
@@ -245,8 +251,13 @@
       "proof": [
         {
           "path": "tests/branding_test.mjs",
-          "sha256": "d8d36cdff3859e563f1b9ba57edaa6dc15c0c3c506b776bfdae70afa0936a4af",
+          "sha256": "91f8491b1cd941c2af78f621ab69658397d372959fb3c25a9dce913f62405bc9",
           "anchor": "actual Pealayer icon_data_from_bytes import"
+        },
+        {
+          "path": "tests/web_identity_test.mjs",
+          "sha256": "99621b44a961771053066590ce43759c24bdd2c0993de0d7c36ae615a2c5a2ad",
+          "anchor": "Actual Web application identity"
         }
       ],
       "improvement": ""
@@ -258,23 +269,29 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual resolved-artwork img/alt binding adapted to standalone header/login, replacing diamond and font fallback."
+        "Actual resolved-artwork img/alt binding adapted to standalone header/login, replacing diamond and font fallback.",
+        "Firmware name/title/artwork binding replaces fixed header branding; stale/disconnected peer resets title/header/favicon/touch artwork and validates bounded inline PNG."
       ],
       "targets": [
         {
           "path": "tools/generate-branding.mjs",
-          "sha256": "bba69ae8ad9252920fb8a61e0a577b7dbe8fbf10cbbe28581bd51c9af99ef745",
+          "sha256": "a515e79397a85a6211ac0251f7bb5d6e90eda237979e4d40740622167fe0e2db",
           "anchor": "Pakar embeds it for the standalone ESP surface"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "46a795fa2da585b4f4039163a8fe6e4e3514bd245551ee63d495d4dde897e233",
+          "sha256": "bc6feb1604e4f02c76a597e45064f2f839582e3d1415e93a520017d0b8defa1d",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
           "path": "docs/BRANDING-PARITY.md",
-          "sha256": "d28d6a4d1785f8e40efc0879410a22f2ae16da04d11047d06b285e6f84a38217",
+          "sha256": "b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7",
           "anchor": "## Explicit unfinished useful code and reasons"
+        },
+        {
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "bc6feb1604e4f02c76a597e45064f2f839582e3d1415e93a520017d0b8defa1d",
+          "anchor": "function renderApplicationIdentity"
         }
       ],
       "omissions": [
@@ -295,8 +312,13 @@
       "proof": [
         {
           "path": "tests/branding_test.mjs",
-          "sha256": "d8d36cdff3859e563f1b9ba57edaa6dc15c0c3c506b776bfdae70afa0936a4af",
+          "sha256": "91f8491b1cd941c2af78f621ab69658397d372959fb3c25a9dce913f62405bc9",
           "anchor": "actual Pealayer icon_data_from_bytes import"
+        },
+        {
+          "path": "tests/web_identity_test.mjs",
+          "sha256": "99621b44a961771053066590ce43759c24bdd2c0993de0d7c36ae615a2c5a2ad",
+          "anchor": "Actual Web application identity"
         }
       ],
       "improvement": ""
@@ -313,17 +335,17 @@
       "targets": [
         {
           "path": "tools/generate-branding.mjs",
-          "sha256": "bba69ae8ad9252920fb8a61e0a577b7dbe8fbf10cbbe28581bd51c9af99ef745",
+          "sha256": "a515e79397a85a6211ac0251f7bb5d6e90eda237979e4d40740622167fe0e2db",
           "anchor": "'FAVICON':"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "46a795fa2da585b4f4039163a8fe6e4e3514bd245551ee63d495d4dde897e233",
+          "sha256": "bc6feb1604e4f02c76a597e45064f2f839582e3d1415e93a520017d0b8defa1d",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
           "path": "docs/BRANDING-PARITY.md",
-          "sha256": "d28d6a4d1785f8e40efc0879410a22f2ae16da04d11047d06b285e6f84a38217",
+          "sha256": "b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7",
           "anchor": "## Explicit unfinished useful code and reasons"
         }
       ],
@@ -350,7 +372,7 @@
       "proof": [
         {
           "path": "tests/branding_test.mjs",
-          "sha256": "d8d36cdff3859e563f1b9ba57edaa6dc15c0c3c506b776bfdae70afa0936a4af",
+          "sha256": "91f8491b1cd941c2af78f621ab69658397d372959fb3c25a9dce913f62405bc9",
           "anchor": "actual Pealayer icon_data_from_bytes import"
         }
       ],
@@ -373,7 +395,7 @@
         },
         {
           "path": "docs/BRANDING-PARITY.md",
-          "sha256": "d28d6a4d1785f8e40efc0879410a22f2ae16da04d11047d06b285e6f84a38217",
+          "sha256": "b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7",
           "anchor": "## Explicit unfinished useful code and reasons"
         }
       ],
@@ -395,7 +417,7 @@
       "proof": [
         {
           "path": "tests/branding_test.mjs",
-          "sha256": "d8d36cdff3859e563f1b9ba57edaa6dc15c0c3c506b776bfdae70afa0936a4af",
+          "sha256": "91f8491b1cd941c2af78f621ab69658397d372959fb3c25a9dce913f62405bc9",
           "anchor": "actual Pealayer icon_data_from_bytes import"
         }
       ],
@@ -419,7 +441,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "1a4370934792e0117f6d532b97d05416a1e75490d6d99ed1c98f08c60b985b47",
+          "sha256": "9b4ef141a5aac40c7245a246321a28c834ebae82f20941b415b919173dc78092",
           "anchor": "menu::top_menu_button(ui, \"File\".into()"
         },
         {
@@ -868,7 +890,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "1a4370934792e0117f6d532b97d05416a1e75490d6d99ed1c98f08c60b985b47",
+          "sha256": "9b4ef141a5aac40c7245a246321a28c834ebae82f20941b415b919173dc78092",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -1286,7 +1308,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "1a4370934792e0117f6d532b97d05416a1e75490d6d99ed1c98f08c60b985b47",
+          "sha256": "9b4ef141a5aac40c7245a246321a28c834ebae82f20941b415b919173dc78092",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -1846,7 +1868,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "36a4f859191af7c862bfbbfaa006ad41d23e226138f8ab0b2cb892b93433a9db"
+          "sha256": "aa2c32244220e9fc7acdee9eda0a75bead514c2988191569e5eedf53b45f18aa"
         }
       ],
       "proof": [
@@ -1913,7 +1935,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "36a4f859191af7c862bfbbfaa006ad41d23e226138f8ab0b2cb892b93433a9db"
+          "sha256": "aa2c32244220e9fc7acdee9eda0a75bead514c2988191569e5eedf53b45f18aa"
         }
       ],
       "proof": [
@@ -1980,7 +2002,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "36a4f859191af7c862bfbbfaa006ad41d23e226138f8ab0b2cb892b93433a9db"
+          "sha256": "aa2c32244220e9fc7acdee9eda0a75bead514c2988191569e5eedf53b45f18aa"
         }
       ],
       "proof": [
@@ -2032,7 +2054,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "36a4f859191af7c862bfbbfaa006ad41d23e226138f8ab0b2cb892b93433a9db"
+          "sha256": "aa2c32244220e9fc7acdee9eda0a75bead514c2988191569e5eedf53b45f18aa"
         }
       ],
       "proof": [
@@ -2231,7 +2253,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "46a795fa2da585b4f4039163a8fe6e4e3514bd245551ee63d495d4dde897e233",
+          "sha256": "bc6feb1604e4f02c76a597e45064f2f839582e3d1415e93a520017d0b8defa1d",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -2321,7 +2343,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "46a795fa2da585b4f4039163a8fe6e4e3514bd245551ee63d495d4dde897e233",
+          "sha256": "bc6feb1604e4f02c76a597e45064f2f839582e3d1415e93a520017d0b8defa1d",
           "anchor": "/* Fixed manager slots:"
         }
       ],
