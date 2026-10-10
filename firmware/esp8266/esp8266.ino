@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include <ESP8266HTTPUpdateServer.h>
+#include <ESP8266SSDP.h>
+#include <ESP8266NetBIOS.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
@@ -38,9 +40,11 @@ constexpr uint16_t kStreamPort = 7890;
 constexpr uint8_t kBusyPin = D3;  // GPIO0 -> AVR D10/PB2, HIGH blocks AVR TX.
 constexpr char kAdmin[] = "admin";
 constexpr char kDevelopmentPassword[] = "pakarcontroller";
+constexpr char kHostname[] = "pakarcontroller";
 constexpr char kAvrImagePath[] = "/avr/staged.bin";
 constexpr char kBackupDirectory[] = "/avr/backup";
 constexpr char kLedPreferencesPath[] = "/led.cfg";
+constexpr char kCellMappingPath[] = "/cells.map";
 
 struct LedPreferences {
   uint8_t magic0;
@@ -49,6 +53,15 @@ struct LedPreferences {
   uint8_t pattern;
   uint8_t brightness;
   uint8_t check;
+};
+
+struct CellMappingRecord {
+  uint8_t magic0;
+  uint8_t magic1;
+  uint8_t schema;
+  uint8_t physical[LedGrid::kCells];
+  char names[LedGrid::kCells][16];
+  uint16_t check;
 };
 
 ESP8266WebServer server(80);
@@ -78,8 +91,12 @@ uint32_t lastDiagnosticAt = 0;
 uint32_t ledResumeAt = 0;
 uint16_t avrUartErrors = 0;
 bool tm1637Ack = false;
+uint8_t tm1637Segments[4] = {};
+uint8_t tm1637Brightness = 0;
+bool tm1637HostActive = false;
 bool gameStateInitialized = false;
 bool streamFrameReady = false;
+bool startupCuePlayed = false;
 uint8_t lastCellActionRevision = 0;
 uint8_t lastResetRevision = 0;
 bool programmingLatched = false;
@@ -96,6 +113,10 @@ bool networkApplyPending = false;
 uint32_t networkApplyAt = 0;
 uint32_t lastWebSocketBroadcastAt = 0;
 bool ntpConfigured = false;
+bool mdnsStarted = false;
+bool ssdpStarted = false;
+bool netbiosStarted = false;
+IPAddress discoveryAddress;
 String stagedStationSsid;
 String stagedStationPassword;
 uint8_t snakeBody[LedGrid::kCells] = {};
@@ -106,14 +127,18 @@ uint32_t lastSnakeAt = 0;
 bool snakeAlive = false;
 bool telnetAuthenticated = false;
 String telnetLine;
+CellMappingRecord cellMapping{};
 
 void saveLedPreferences();
+void loadCellMapping();
+bool saveCellMapping();
 String buildStatusJson();
 bool handleCloudCommand(const String &message, String &result);
 void startSnake();
 bool setSnakeDirection(uint8_t direction);
 void serviceSnake(uint32_t now);
 void serviceTelnet();
+void serviceDiscovery();
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
                const uint8_t *payload = nullptr, uint8_t payloadLength = 0);
 
@@ -283,6 +308,84 @@ uint8_t ledPreferencesCheck(const LedPreferences &value) {
                               value.pattern ^ value.brightness ^ 0xA5U);
 }
 
+uint16_t cellMappingCheck(const CellMappingRecord &value) {
+  const uint8_t *bytes = reinterpret_cast<const uint8_t *>(&value);
+  const size_t length = offsetof(CellMappingRecord, check);
+  uint16_t hash = 0x4B50U;
+  for (size_t i = 0; i < length; ++i) {
+    hash = static_cast<uint16_t>((hash << 5) | (hash >> 11));
+    hash ^= bytes[i];
+  }
+  return hash;
+}
+
+uint8_t defaultPhysicalCell(uint8_t logicalCell) {
+  const uint8_t index = logicalCell - 1;
+  const uint8_t row = index / 10;
+  const uint8_t fromLeft = index % 10;
+  const uint8_t fromRight = 9 - fromLeft;
+  return static_cast<uint8_t>(fromRight * 8 +
+                              ((fromRight & 1U) == 0 ? 8 - row : row + 1));
+}
+
+void resetCellMapping() {
+  memset(&cellMapping, 0, sizeof(cellMapping));
+  cellMapping.magic0 = 0x50;
+  cellMapping.magic1 = 0x4D;
+  cellMapping.schema = 1;
+  for (uint8_t logical = 1; logical <= LedGrid::kCells; ++logical) {
+    cellMapping.physical[logical - 1] = defaultPhysicalCell(logical);
+  }
+  cellMapping.check = cellMappingCheck(cellMapping);
+}
+
+bool mappingIsValid(const CellMappingRecord &value) {
+  if (value.magic0 != 0x50 || value.magic1 != 0x4D || value.schema != 1 ||
+      value.check != cellMappingCheck(value)) return false;
+  bool seen[LedGrid::kCells] = {};
+  for (uint8_t i = 0; i < LedGrid::kCells; ++i) {
+    const uint8_t physical = value.physical[i];
+    if (physical < 1 || physical > LedGrid::kCells || seen[physical - 1]) {
+      return false;
+    }
+    seen[physical - 1] = true;
+  }
+  return true;
+}
+
+void loadCellMapping() {
+  resetCellMapping();
+  File file = LittleFS.open(kCellMappingPath, "r");
+  if (file) {
+    CellMappingRecord stored{};
+    const bool complete =
+        file.read(reinterpret_cast<uint8_t *>(&stored), sizeof(stored)) ==
+        sizeof(stored);
+    file.close();
+    if (complete && mappingIsValid(stored)) cellMapping = stored;
+  }
+  grid.setPhysicalMapping(cellMapping.physical, LedGrid::kCells);
+}
+
+bool saveCellMapping() {
+  cellMapping.check = cellMappingCheck(cellMapping);
+  File file = LittleFS.open(kCellMappingPath, "w");
+  if (!file) return false;
+  const bool complete =
+      file.write(reinterpret_cast<const uint8_t *>(&cellMapping),
+                 sizeof(cellMapping)) == sizeof(cellMapping);
+  file.close();
+  return complete;
+}
+
+void appendJsonEscaped(String &body, const char *value) {
+  while (value != nullptr && *value != '\0') {
+    if (*value == '\\' || *value == '"') body += '\\';
+    const uint8_t byte = static_cast<uint8_t>(*value++);
+    if (byte >= 0x20U) body += static_cast<char>(byte);
+  }
+}
+
 void saveLedPreferences() {
   LedPreferences value = {0x50, 0x4C, 1, static_cast<uint8_t>(grid.pattern()),
                           grid.brightness(), 0};
@@ -310,13 +413,60 @@ void loadLedPreferences() {
   grid.setPattern(static_cast<LedGrid::Pattern>(value.pattern));
 }
 
-void applyNetworkConfig() {
+void stopDiscovery() {
   MDNS.close();
+  SSDP.end();
+  NBNS.end();
+  mdnsStarted = false;
+  ssdpStarted = false;
+  netbiosStarted = false;
+  discoveryAddress = IPAddress();
+}
+
+void startDiscovery() {
+  stopDiscovery();
+  if (!networkConfig.stationConnected()) return;
+
+  discoveryAddress = WiFi.localIP();
+  mdnsStarted = MDNS.begin(hostname.c_str());
+  if (mdnsStarted) {
+    MDNS.addService("http", "tcp", 80);
+    MDNS.addServiceTxt("http", "tcp", "path", "/");
+    MDNS.addServiceTxt("http", "tcp", "version",
+                       BoardCore::BuildInfo::kVersion);
+    MDNS.addService("pakarcontroller", "tcp", 80);
+    MDNS.addServiceTxt("pakarcontroller", "tcp", "api", "/api/v1/status");
+    MDNS.addServiceTxt("pakarcontroller", "tcp", "websocket", "/ws");
+    MDNS.addService("pakar-stream", "udp", kStreamPort);
+    MDNS.addService("telnet", "tcp", 23);
+  }
+
+  SSDP.setSchemaURL("description.xml");
+  SSDP.setHTTPPort(80);
+  SSDP.setName("PakarController");
+  SSDP.setSerialNumber(ESP.getChipId());
+  SSDP.setURL("/");
+  SSDP.setModelName("PakarController ESP8266 + ATmega328P");
+  SSDP.setModelNumber(BoardCore::BuildInfo::kVersion);
+  SSDP.setManufacturer("AtomicDeploy");
+  ssdpStarted = SSDP.begin();
+  netbiosStarted = NBNS.begin(hostname.c_str());
+}
+
+void serviceDiscovery() {
+  const bool connected = networkConfig.stationConnected();
+  const IPAddress address = connected ? WiFi.localIP() : IPAddress();
+  if ((connected && (!mdnsStarted || address != discoveryAddress)) ||
+      (!connected && (mdnsStarted || ssdpStarted))) {
+    startDiscovery();
+  }
+  if (mdnsStarted) MDNS.update();
+}
+
+void applyNetworkConfig() {
+  stopDiscovery();
   apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
-  MDNS.begin(hostname.c_str());
-  MDNS.addService("http", "tcp", 80);
-  MDNS.addService("pakarcontroller", "udp", kStreamPort);
-  MDNS.addService("telnet", "tcp", 23);
+  ntpConfigured = false;
 }
 
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
@@ -516,7 +666,9 @@ const char *cellName(CellState state) {
 
 String buildStatusJson() {
   String body;
-  body.reserve(1200);
+  // Reserve the complete document before TLS/WebSocket activity fragments the
+  // ESP8266 heap. Arduino String otherwise fails mid-JSON without an error.
+  body.reserve(2600);
   body += F("{\"version\":\""); body += BoardCore::BuildInfo::kVersion;
   body += F("\",\"protocol_version\":"); body += BoardCore::BuildInfo::kProtocolVersion;
   body += F(",\"hostname\":\""); body += hostname;
@@ -531,6 +683,11 @@ String buildStatusJson() {
   body += F(",\"station_ssid\":\""); body += networkConfig.stationSsid(); body += '"';
   body += F(",\"station_ip\":\""); body += WiFi.localIP().toString(); body += '"';
   body += F(",\"station_rssi\":"); body += networkConfig.stationConnected() ? WiFi.RSSI() : 0;
+  body += F(",\"mdns_started\":"); body += mdnsStarted ? F("true") : F("false");
+  body += F(",\"ssdp_started\":"); body += ssdpStarted ? F("true") : F("false");
+  body += F(",\"netbios_started\":"); body += netbiosStarted ? F("true") : F("false");
+  body += F(",\"canonical_url\":\"http://"); body += hostname; body += F("\"");
+  body += F(",\"mdns_url\":\"http://"); body += hostname; body += F(".local\"");
   body += F(",\"winner\":"); body += winner;
   body += F(",\"selected_cell\":"); body += selectedCell;
   body += F(",\"snake_alive\":"); body += snakeAlive ? F("true") : F("false");
@@ -540,6 +697,14 @@ String buildStatusJson() {
   body += F(",\"esp_uart_errors\":"); body += link.errors();
   body += F(",\"avr_uart_errors\":"); body += avrUartErrors;
   body += F(",\"tm1637_ack\":"); body += tm1637Ack ? F("true") : F("false");
+  body += F(",\"tm1637_segments\":[");
+  for (uint8_t i = 0; i < 4; ++i) {
+    if (i != 0) body += ',';
+    body += tm1637Segments[i];
+  }
+  body += F("]");
+  body += F(",\"tm1637_brightness\":"); body += tm1637Brightness;
+  body += F(",\"tm1637_host_active\":"); body += tm1637HostActive ? F("true") : F("false");
   body += F(",\"programming_latch\":"); body += programmingLatched ? F("true") : F("false");
   body += F(",\"link_mode\":\"");
   body += PAKAR_USE_BUSY_WIRE ? F("busy-wire") : F("polling");
@@ -922,6 +1087,11 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     if (frame.payloadLength >= 14) {
       programmingLatched = frame.payload[13] != 0;
     }
+    if (frame.payloadLength >= 20) {
+      memcpy(tm1637Segments, frame.payload + 14, sizeof(tm1637Segments));
+      tm1637Brightness = frame.payload[18];
+      tm1637HostActive = frame.payload[19] != 0;
+    }
     if (mode == kModeFirstWins && winner != 0 && winner != previousWinner) {
       grid.showWinner(winner);
     }
@@ -941,6 +1111,64 @@ void registerApi() {
   server.on("/api/v1/status", HTTP_GET, []() {
     if (!authenticate()) return;
     sendStatusJson();
+  });
+  server.on("/api/v1/cells/mapping", HTTP_GET, []() {
+    if (!authenticate()) return;
+    String body;
+    body.reserve(1300);
+    body += F("{\"logical_order\":\"row-major\",\"odd_column_offset\":0.5,\"physical\":[");
+    for (uint8_t logical = 1; logical <= LedGrid::kCells; ++logical) {
+      if (logical != 1) body += ',';
+      body += cellMapping.physical[logical - 1];
+    }
+    body += F("],\"names\":[");
+    for (uint8_t logical = 1; logical <= LedGrid::kCells; ++logical) {
+      if (logical != 1) body += ',';
+      body += '"';
+      if (cellMapping.names[logical - 1][0] == '\0') body += logical;
+      else appendJsonEscaped(body, cellMapping.names[logical - 1]);
+      body += '"';
+    }
+    body += F("]}");
+    server.send(200, "application/json", body);
+  });
+  server.on("/api/v1/cells/mapping", HTTP_POST, []() {
+    if (!authenticate()) return;
+    const int logical = server.arg("logical_id").toInt();
+    const int physical = server.arg("physical_cell").toInt();
+    if (logical < 1 || logical > LedGrid::kCells ||
+        physical < 1 || physical > LedGrid::kCells) {
+      server.send(400, "text/plain", "logical_id and physical_cell must be 1..80");
+      return;
+    }
+    String name = server.arg("name");
+    name.trim();
+    if (name.length() > 15) {
+      server.send(400, "text/plain", "name must be at most 15 UTF-8 bytes");
+      return;
+    }
+    const uint8_t logicalIndex = static_cast<uint8_t>(logical - 1);
+    const uint8_t oldPhysical = cellMapping.physical[logicalIndex];
+    for (uint8_t i = 0; i < LedGrid::kCells; ++i) {
+      if (cellMapping.physical[i] == physical) {
+        cellMapping.physical[i] = oldPhysical;
+        break;
+      }
+    }
+    cellMapping.physical[logicalIndex] = static_cast<uint8_t>(physical);
+    memset(cellMapping.names[logicalIndex], 0,
+           sizeof(cellMapping.names[logicalIndex]));
+    name.toCharArray(cellMapping.names[logicalIndex],
+                     sizeof(cellMapping.names[logicalIndex]));
+    if (!saveCellMapping()) {
+      server.send(500, "text/plain", "cell mapping persistence failed");
+      return;
+    }
+    grid.setPhysicalMapping(cellMapping.physical, LedGrid::kCells);
+    server.send(200, "application/json", "{\"updated\":true}");
+  });
+  server.on("/description.xml", HTTP_GET, []() {
+    SSDP.schema(server.client());
   });
   server.on("/api/v1/time", HTTP_GET, []() {
     if (!authenticate()) return;
@@ -1081,6 +1309,49 @@ void registerApi() {
   });
   server.on("/api/v1/display", HTTP_POST, []() {
     if (!authenticate()) return;
+    if (server.hasArg("text")) {
+      const String text = server.arg("text");
+      const int speed = server.hasArg("speed_ms")
+                            ? server.arg("speed_ms").toInt()
+                            : 260;
+      const int hold = server.hasArg("hold_ms")
+                           ? server.arg("hold_ms").toInt()
+                           : 1500;
+      const String repeat = server.arg("repeat");
+      const uint8_t repeatMode =
+          repeat == F("loop") ? 1 : repeat == F("interval") ? 2 : 0;
+      const bool forceScroll = server.arg("force_scroll") == F("true") ||
+                               server.arg("force_scroll") == F("1");
+      const int interval = server.hasArg("interval_seconds")
+                               ? server.arg("interval_seconds").toInt()
+                               : 5;
+      if (text.length() > 40 || speed < 80 || speed > 5000 ||
+          hold < 0 || hold > 60000 || interval < 1 || interval > 255) {
+        server.send(400, "text/plain", "invalid display text scheduling values");
+        return;
+      }
+      for (size_t i = 0; i < text.length(); ++i) {
+        if (static_cast<uint8_t>(text[i]) < 0x20U ||
+            static_cast<uint8_t>(text[i]) > 0x7EU) {
+          server.send(400, "text/plain", "display text must be printable ASCII");
+          return;
+        }
+      }
+      uint8_t payload[48] = {};
+      payload[0] = 5;  // PCController scheduled-segment target.
+      payload[1] = static_cast<uint8_t>(speed);
+      payload[2] = static_cast<uint8_t>(speed >> 8);
+      payload[3] = static_cast<uint8_t>(text.length());
+      payload[4] = static_cast<uint8_t>(repeatMode | (forceScroll ? 0x80U : 0));
+      payload[5] = static_cast<uint8_t>(hold);
+      payload[6] = static_cast<uint8_t>(hold >> 8);
+      payload[7] = static_cast<uint8_t>(interval);
+      memcpy(payload + 8, text.c_str(), text.length());
+      sendToAvr(kDisplayText, sequence++, payload,
+                static_cast<uint8_t>(8 + text.length()));
+      server.send(202, "application/json", "{\"accepted\":true}");
+      return;
+    }
     const int value = server.arg("value").toInt();
     if (value < -999 || value > 9999) {
       server.send(400, "text/plain", "display value must be -999..9999");
@@ -1584,17 +1855,16 @@ void setup() {
   cloudConfig.begin(LittleFS);
   grid.begin();
   loadLedPreferences();
+  loadCellMapping();
   hostLink.begin(115200, onHostFrame);
   avrSerial.begin(kBaud);
   link.begin(kBaud, onAvrFrame);
 
-  hostname = String(F("pakarcontroller-")) + String(ESP.getChipId(), HEX);
+  // This is deliberately stable. Chip identity belongs in discovery metadata,
+  // not in the human-facing host or recovery AP name.
+  hostname = kHostname;
   apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
   cloudServices.begin(hostname, handleCloudCommand, buildStatusJson);
-  MDNS.begin(hostname.c_str());
-  MDNS.addService("http", "tcp", 80);
-  MDNS.addService("pakarcontroller", "udp", kStreamPort);
-  MDNS.addService("telnet", "tcp", 23);
   stream.begin(kStreamPort);
   telnetServer.begin();
   telnetServer.setNoDelay(true);
@@ -1614,6 +1884,7 @@ void setup() {
   });
   updater.setup(&server, "/update", kAdmin, kDevelopmentPassword);
   server.begin();
+  serviceDiscovery();
   sendToAvr(kHello, sequence++);
 #if PAKAR_USE_BUSY_WIRE
   setAvrTransmitBlocked(false);
@@ -1626,8 +1897,16 @@ void loop() {
   hostLink.service();
   // Render before issuing UART requests. The AVR is request/response only, so
   // its reply arrives while FastLED is not masking ESP8266 interrupts.
-  if (static_cast<int32_t>(now - ledResumeAt) >= 0) {
+  const bool ledFrameDue =
+      static_cast<int32_t>(now - ledResumeAt) >= 0 &&
+      ((streamFrameReady && grid.readyToShow(now)) || grid.needsRender(now));
+  if (ledFrameDue) {
     setAvrTransmitBlocked(true);
+    // The busy edge prevents a new unsolicited AVR frame, but one may have
+    // passed the AVR's LOW check just before this edge and still be draining
+    // from its hardware UART. Consume that bounded frame before FastLED masks
+    // ESP8266 interrupts for the 480-pixel transfer.
+    serviceAvrFor(8U);
     if (streamFrameReady) {
       grid.showStaged();
       streamFrameReady = false;
@@ -1644,7 +1923,7 @@ void loop() {
     networkApplyPending = false;
     applyNetworkConfig();
   }
-  MDNS.update();
+  serviceDiscovery();
   configureNtp();
   // TLS reconnects can take seconds on the ESP8266. Keep them out of the
   // timing-critical ISP recovery path while the AVR's Prog latch is armed.
@@ -1662,6 +1941,10 @@ void loop() {
   if (!avrOnline && static_cast<uint32_t>(now - lastHelloAt) > 1000) {
     lastHelloAt = now;
     sendToAvr(kHello, sequence++);
+  }
+  if (avrOnline && !startupCuePlayed) {
+    startupCuePlayed = true;
+    playUpdateSuccessCue();
   }
   if (!PAKAR_USE_BUSY_WIRE && avrOnline &&
       static_cast<uint32_t>(now - lastStatusPollAt) >= 100U) {

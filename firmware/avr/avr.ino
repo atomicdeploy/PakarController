@@ -6,6 +6,7 @@
 
 #include "BootMelody.h"
 #include "BoardPins.h"
+#include "FrontPanel.h"
 #include "PakarBoardConfig.h"
 #include "ProgrammingLatch.h"
 #include "SevenSegments.h"
@@ -45,7 +46,6 @@ uint8_t cellActionRevision = 0;
 uint8_t resetRevision = 0;
 Effect cellActionEffect = kEffectImmediate;
 bool stateDirty = true;
-uint32_t lastStatePushAt = 0;
 
 void playAudioCue(AudioCue cue) {
   buzzer.stop();
@@ -161,13 +161,9 @@ bool probeTm1637() {
 
 void showState() {
   if (mode == kModeFirstWins && winner != 0) {
-    display.showInteger(winner);
+    frontPanel.showTransientNumber(winner, millis(), 3000);
   } else if (mode == kModeCellSelect) {
-    display.showInteger(selectedCell);
-  } else if (mode == kModeSnake) {
-    display.showText(F("SnAk"));
-  } else {
-    display.showUnavailable();
+    frontPanel.showTransientNumber(selectedCell, millis());
   }
   tm1637Ack = probeTm1637();
 }
@@ -188,6 +184,7 @@ void sendHello(uint8_t sequence = 0) {
 
 void sendGameState(uint8_t sequence = 0) {
   const uint16_t errors = link.errors();
+  const uint8_t *segments = display.rawSegments();
   const uint8_t payload[] = {
       static_cast<uint8_t>(mode), winner, selectedCell,
       static_cast<uint8_t>(selectedState), stableInputs,
@@ -196,6 +193,8 @@ void sendGameState(uint8_t sequence = 0) {
       static_cast<uint8_t>(tm1637Ack),
       cellActionRevision, static_cast<uint8_t>(cellActionEffect), resetRevision,
       static_cast<uint8_t>(programmingLatch.active()),
+      segments[0], segments[1], segments[2], segments[3],
+      display.brightness(), static_cast<uint8_t>(frontPanel.hostActive()),
   };
   link.send(kGameState, sequence, payload, sizeof(payload));
 }
@@ -341,12 +340,11 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       link.ack(frame.sequence, frame.opcode);
       break;
     case kDisplayText:
-      if (frame.payloadLength != 2) {
+      if (!frontPanel.acceptDisplayPayload(frame.payload, frame.payloadLength,
+                                           millis())) {
         link.error(frame.sequence, frame.opcode, kBadPayload);
         break;
       }
-      display.showInteger(static_cast<int16_t>(frame.payload[0] |
-                                               frame.payload[1] << 8));
       tm1637Ack = probeTm1637();
       markStateDirty();
       link.ack(frame.sequence, frame.opcode);
@@ -420,9 +418,10 @@ void setup() {
   shiftRegisters.begin();
   buzzer.begin(BoardPins::Buzzer);
   display.begin(5);
+  frontPanel.begin(millis());
   programmingLatch.begin();
   if (programmingLatch.active()) applyProgrammingSafety();
-  else showState();
+  else tm1637Ack = probeTm1637();
   link.begin(kBaud, handleFrame);
   if (!programmingLatch.active()) playBootMelody();
 }
@@ -432,14 +431,15 @@ void loop() {
   link.service();
   if (!programmingLatch.active()) serviceInputs(now);
   buzzer.update(now);
+  frontPanel.service(now, mode, selectedCell, winner,
+                     programmingLatch.active());
 #if PAKAR_USE_BUSY_WIRE
-  // In busy-wire builds the AVR owns change notification. A periodic snapshot
-  // is also pushed so reconnecting clients converge without ESP polling.
-  if ((stateDirty || static_cast<uint32_t>(now - lastStatePushAt) >= 1000U) &&
-      espReadyForUnsolicitedFrame()) {
+  // Busy-wire builds are event-driven. Reconnect convergence comes from the
+  // ESP's HELLO -> GET_STATUS exchange, so periodic unsolicited frames only
+  // waste UART bandwidth and increase the chance of colliding with FastLED.
+  if (stateDirty && espReadyForUnsolicitedFrame()) {
     sendGameState();
     stateDirty = false;
-    lastStatePushAt = now;
   }
 #endif
 }
