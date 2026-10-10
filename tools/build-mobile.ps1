@@ -6,7 +6,7 @@ param(
     [ValidateRange(1,1024)][int]$MaximumCacheGiB=4,
     [switch]$Restore,
     [string]$CapturePath,
-    [ValidateSet('Table','SettingsTablet','SettingsPhone')][string]$CaptureView='Table',
+    [ValidateSet('Table','SettingsTablet','SettingsPhone','FirmwareTablet','FirmwarePhone')][string]$CaptureView='Table',
     [switch]$Plan
 )
 $ErrorActionPreference='Stop'
@@ -14,6 +14,7 @@ $taskRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $taskMobile=Join-Path $taskRoot 'mobile'
 $taskContext=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern device-context -Gate
 $taskSettings=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-settings -Gate
+$taskFirmware=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-firmware -Gate
 $taskStorage=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate
 foreach($taskGenerator in @('generate-font-assets.mjs','generate-interface-contract.mjs','generate-branding.mjs')){
     $taskGeneratorOutput=& node (Join-Path $PSScriptRoot $taskGenerator) --check 2>&1
@@ -34,7 +35,7 @@ if($Plan){return [pscustomobject]@{
     Executable=$FlutterPath;WorkingDirectory=$taskMobile;Commands=$taskCommands;
     Cache=(Join-Path $taskMobile 'build');CacheBudgetGiB=$MaximumCacheGiB;
     MinimumFreeGiB=$MinimumFreeGiB;ContextGate=$taskContext.GateChecked;
-    StorageGate=$taskStorage.GateChecked;SettingsGate=$taskSettings.GateChecked;CaptureView=$CaptureView;Signing='Existing debug identity: preview, not production'
+    StorageGate=$taskStorage.GateChecked;SettingsGate=$taskSettings.GateChecked;FirmwareGate=$taskFirmware.GateChecked;CaptureView=$CaptureView;Signing='Existing debug identity: preview, not production'
 }}
 . (Join-Path $PSScriptRoot 'storage-hygiene.ps1') -FunctionsOnly
 $taskCache=Get-DirectorySummary (Join-Path $taskMobile 'build')

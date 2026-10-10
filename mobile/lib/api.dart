@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/io.dart';
@@ -99,6 +100,120 @@ class PakarApi {
   }
 
   Future<Map<String, dynamic>> getJson(String path) => _get(path);
+
+  /// Bounded single-dispatch maintenance transport. Even ISP probe uses this
+  /// path: its GET resets AVR, so it must not be retried through discovery.
+  Future<Uint8List> maintenanceBytes(
+    String path, {
+    bool post = false,
+    bool mayMutate = false,
+    Map<String, String> form = const {},
+    Uint8List? upload,
+    String? uploadField,
+    int maximum = 8192,
+    Duration timeout = const Duration(seconds: 180),
+    required bool Function() authorize,
+  }) async {
+    final revision = connectionRevision;
+    if (_verifiedEndpoint != baseUrl) await status();
+    if (revision != connectionRevision || !authorize()) {
+      throw const StaleConnection();
+    }
+    final uri = _uri(transportUrl, path);
+    final http.BaseRequest request;
+    if (upload != null) {
+      if (!post || !{'image', 'firmware'}.contains(uploadField)) {
+        throw const FormatException('Invalid firmware upload contract');
+      }
+      request = http.MultipartRequest('POST', uri)
+        ..files.add(
+          http.MultipartFile.fromBytes(
+            uploadField!,
+            upload,
+            filename: uploadField == 'image' ? 'avr.bin' : 'esp8266.bin',
+          ),
+        );
+    } else {
+      request = http.Request(post ? 'POST' : 'GET', uri)..bodyFields = form;
+    }
+    request.headers.addAll(_headers);
+    request.followRedirects = false; // No credential forwarding or POST replay.
+    final mutation = post || mayMutate;
+    final elapsed = Stopwatch()..start();
+    try {
+      final response = await _client.send(request).timeout(timeout);
+      if (revision != connectionRevision) {
+        await response.stream.listen((_) {}).cancel();
+        throw const StaleConnection();
+      }
+      if (response.statusCode ~/ 100 != 2 ||
+          (response.contentLength ?? 0) > maximum) {
+        await response.stream.listen((_) {}).cancel();
+        throw const FormatException(
+          'Maintenance rejected or response exceeds its limit; nothing replayed',
+        );
+      }
+      final bytes = BytesBuilder(copy: false);
+      final reader = StreamIterator(response.stream);
+      try {
+        while (true) {
+          final remaining = timeout - elapsed.elapsed;
+          if (remaining <= Duration.zero) {
+            throw TimeoutException('Maintenance deadline');
+          }
+          if (!await reader.moveNext().timeout(remaining)) break;
+          if (revision != connectionRevision) throw const StaleConnection();
+          final chunk = reader.current;
+          if (bytes.length + chunk.length > maximum) {
+            throw const FormatException(
+              'Maintenance response exceeds its limit; nothing replayed',
+            );
+          }
+          bytes.add(chunk);
+        }
+      } finally {
+        await reader.cancel();
+      }
+      if (revision != connectionRevision) throw const StaleConnection();
+      return bytes.takeBytes();
+    } on StaleConnection {
+      rethrow;
+    } on FormatException {
+      rethrow;
+    } on Exception {
+      if (mutation) throw const OperationUncertain();
+      throw const FormatException(
+        'Maintenance read failed; no operation was replayed',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> maintenanceJson(
+    String path, {
+    bool post = false,
+    bool mayMutate = false,
+    Map<String, String> form = const {},
+    Uint8List? upload,
+    String? uploadField,
+    required bool Function() authorize,
+  }) async {
+    final bytes = await maintenanceBytes(
+      path,
+      post: post,
+      mayMutate: mayMutate,
+      form: form,
+      upload: upload,
+      uploadField: uploadField,
+      authorize: authorize,
+    );
+    final value = jsonDecode(utf8.decode(bytes));
+    if (value is! Map<String, dynamic>) {
+      throw const FormatException(
+        'Malformed maintenance acknowledgment; inspect before any new request',
+      );
+    }
+    return value;
+  }
 
   /// Single dispatch, form BODY (never secret-bearing URL parameters), and
   /// caller-owned capability check after any awaited identity verification.

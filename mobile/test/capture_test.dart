@@ -8,9 +8,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pakarcontroller/main.dart';
 import 'package:pakarcontroller/models.dart';
 import 'package:pakarcontroller/device_settings_page.dart';
+import 'package:pakarcontroller/firmware_page.dart';
 
 import 'peer_fixture.dart';
 import 'device_settings_page_test.dart' show SettingsApi;
+import 'firmware_page_test.dart' show FirmwareApi;
 
 void main() {
   final path = Platform.environment['PAKAR_MOBILE_CAPTURE_PATH'];
@@ -19,10 +21,19 @@ void main() {
     'Explicit simulated renderer capture, no production IPC or device writes',
     (tester) async {
       if (path == null) return;
-      expect(['Table', 'SettingsTablet', 'SettingsPhone'], contains(view));
-      final settings = view != 'Table', phone = view == 'SettingsPhone';
+      expect([
+        'Table',
+        'SettingsTablet',
+        'SettingsPhone',
+        'FirmwareTablet',
+        'FirmwarePhone',
+      ], contains(view));
+      final firmware = view.startsWith('Firmware');
+      final settings = view != 'Table', phone = view.endsWith('Phone');
       final api = SettingsApi();
+      final firmwareApi = FirmwareApi();
       addTearDown(api.close);
+      addTearDown(firmwareApi.close);
       final output = File(path);
       expect(output.isAbsolute, true);
       expect(
@@ -65,7 +76,16 @@ void main() {
               appBar: AppBar(
                 title: const Text('PakarController · Simulated fixture'),
               ),
-              body: settings
+              body: firmware
+                  ? SingleChildScrollView(
+                      child: FirmwarePage(
+                        api: firmwareApi,
+                        authorized: (feature) =>
+                            ['isp', 'ota'].contains(feature),
+                        busyChanged: (_) {},
+                      ),
+                    )
+                  : settings
                   ? DeviceSettingsPage(
                       api: api,
                       status: peerFixture(),
@@ -84,13 +104,13 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      if (settings) {
+      if (settings && !firmware) {
         await tester.tap(
           phone
               ? find.widgetWithText(ChoiceChip, 'MQTT')
               : find.widgetWithText(ListTile, 'MQTT'),
         );
-      } else {
+      } else if (!firmware) {
         await tester.enterText(find.byType(TextField).first, '1–3, 12, 80');
       }
       await tester.pumpAndSettle();
@@ -99,6 +119,11 @@ void main() {
         api.writes,
         0,
         reason: 'Capture must never issue a device mutation',
+      );
+      expect(
+        firmwareApi.mutations,
+        0,
+        reason: 'Firmware capture must never issue a device mutation',
       );
       final render =
           boundary.currentContext!.findRenderObject() as RenderRepaintBoundary;

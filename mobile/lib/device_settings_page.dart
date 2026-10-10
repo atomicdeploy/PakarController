@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'api.dart';
 import 'cell_search.dart';
 import 'device_settings.dart';
+import 'firmware_page.dart';
 import 'icons.dart';
 import 'models.dart';
 import 'peer_context.dart';
@@ -48,6 +48,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   List<String> ssids = [];
   String page = 'overview', search = '', info = '';
   bool working = false;
+  bool maintenanceActive = false;
   Timer? refresh;
   int operation = 0;
   @override
@@ -65,6 +66,14 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   @override
   void didUpdateWidget(covariant DeviceSettingsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (maintenanceActive &&
+        !widget.status.deviceSettingsPages.any(
+          (entry) => entry['id'] == 'firmware',
+        )) {
+      // Revocation destroys the maintenance view/owner. Do not strand unrelated
+      // settings behind its confirmation lock; no firmware action is resumed.
+      working = maintenanceActive = false;
+    }
     if (!widget.authorized('network') && oldWidget.status.peer.has('network')) {
       session.invalidate();
       access = null;
@@ -714,25 +723,18 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
         label: const Text('Open live controls'),
       ),
     ]),
-    'firmware' => card('Firmware and storage', [
-      for (final key in [
-        'programming_latched',
-        'isp_ready',
-        'filesystem_free_bytes',
-      ])
-        if (widget.status.json.containsKey(key))
-          Text('$key: ${widget.status.json[key]}'),
-      const Text(
-        'Mobile firmware pickers and remote-job controls are not yet implemented. Use the acknowledged device Web UI for existing verified maintenance controls.',
-      ),
-      const SizedBox(height: 12),
-      OutlinedButton.icon(
-        onPressed: () =>
-            Clipboard.setData(ClipboardData(text: widget.api.baseUrl)),
-        icon: const Icon(PakarIcons.link),
-        label: const Text('Copy device Web UI address'),
-      ),
-    ]),
+    'firmware' => FirmwarePage(
+      api: widget.api,
+      authorized: widget.authorized,
+      busyChanged: (value) {
+        if (mounted) {
+          setState(() {
+            working = value;
+            maintenanceActive = value;
+          });
+        }
+      },
+    ),
     _ => card('Observed device', [
       Text(widget.status.peer.name),
       Text('${widget.status.hostname}.local'),
@@ -795,7 +797,8 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
             ],
           ),
         ),
-        if (working || session.pending) const LinearProgressIndicator(),
+        if ((working && !maintenanceActive) || session.pending)
+          const LinearProgressIndicator(),
         Expanded(
           child: LayoutBuilder(
             builder: (context, bounds) {
@@ -823,8 +826,11 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
                             ),
                             label: Text(p['label'] as String),
                             selected: page == p['id'],
-                            onSelected: (_) =>
-                                setState(() => page = p['id'] as String),
+                            showCheckmark: false,
+                            onSelected: working || session.pending
+                                ? null
+                                : (_) =>
+                                      setState(() => page = p['id'] as String),
                           ),
                       ],
                     )
@@ -838,7 +844,9 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        onTap: () => setState(() => page = p['id'] as String),
+                        onTap: working || session.pending
+                            ? null
+                            : () => setState(() => page = p['id'] as String),
                       ),
                 ],
               );

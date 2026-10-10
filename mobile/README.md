@@ -58,13 +58,15 @@ identity and access editors with explicit confirmation, positive ACK and public
 readback. Phone wrapping navigation and tablet rail share the real catalog.
 See docs/MOBILE-SETTINGS.md for the actual Pealayer PreferencesTab mapping,
 46 passing Flutter tests, inspected captures and concrete remaining omissions.
-Mobile firmware pickers/jobs, complete localization/appearance and Android-back
-draft protection remain unfinished, not hidden behind ineffective controls.
+Mobile firmware now has pinned remote jobs, explicit apply/cancel, ISP/full
+backups, document import/export and ESP OTA. See docs/MOBILE-FIRMWARE.md for
+actual donor mappings, safety boundaries and remaining physical acceptance.
+Complete localization/appearance and Android-back draft protection remain open.
 
 ```powershell
 ./tools/build-mobile.ps1 -Mode Test -CaptureView SettingsTablet -CapturePath C:\absolute\outputs\PakarController\mobile\new-settings.png
 ```
 
 Capture paths must be new files within this task's outputs/PakarController.
-SettingsPhone and Table are also supported; captures assert zero mutations and
+SettingsPhone, FirmwareTablet, FirmwarePhone and Table are also supported; captures assert zero mutations and
 do not control an installed phone or the production Windows desktop.

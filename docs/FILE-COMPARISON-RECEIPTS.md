@@ -401,3 +401,51 @@ also pass with zero specialist routes and absent optional advantage text;
 full generation/read-only Check verified after structural report refresh.
 Native compilation/runtime, physical devices, full mobile preferences/firmware/
 locale and all remaining donor files stay unchecked. See MOBILE-SETTINGS.md.
+
+# Mobile maintenance / actual donor picker contracts
+
+Owning #7/#4/#3/#2. Consulted updates-telemetry (138 files/134 pending/3 gaps),
+including exact code/remaining actions; both new donor-audit exact-file rows were
+audit-only, pending. Fully read ServerFilePicker.tsx and preferenceFiles.ts with
+their original-byte hashes, plus actual canonical native maintenance and device
+JSON/upload contracts. Added mobile-firmware specialist routing and required
+gate, not a second ledger or invented certificate. 4237 paths/70 reads/4167
+pending/44 known gaps. RayanLamp remains six compared files, not all imported.
+
+All 73 Flutter tests and clean analyzer passed through build-mobile.ps1. Covers
+exact job identity/state, no redirected/replayed writes, bounded total deadline,
+stale capability/owner/dispose, full binary/backup bounds, secret-body handling,
+cancelled picker, one-use export tokens and explicit uncertainty inspection.
+Actual phone/tablet renderer captures loaded all three fonts, asserted zero
+mutations and were inspected. Their repository copies match original bytes:
+
+- firmware-tablet.png SHA256 1739dc9b8e1e36425f35c98c1c37ef8aa8507d09d72b0a70ba5fff5dae1629bc.
+- firmware-phone.png SHA256 1ee4d0f6b7e4c6c5af055530381d82fda121c56cf3c402de1fa2857c221e143a.
+
+Warm APK build compiled actual Kotlin SAF integration. Preview SHA256
+16d5c7d421d60cbc737dbd947cee56fb9219c8e1181ef47447934f1934c09432,
+53971590 bytes. Source version 0.2.7; template debug identity, not production.
+Staged once using existing gates/content equality/file identity/pending copy.
+Prior 8b014927... settings APK retained as PakarController-settings-preview.apk;
+older PakarController-preview-previous.apk also retained. No cleanup or silent
+overwrite of published rollback. Canonical mobile cache 1.029 GiB, 4303 files. No duplicate SDK/cache,
+donor build, desktop replacement, physical flash, EEPROM write or CI wait.
+
+Source quality suite passed all child commands before publication. No hardware
+or native/runtime acceptance inferred. Fresh ASUS SSH localhost:1022 refused;
+Android providers/rotation/process death, TLS/board/power-loss, full mobile
+locale/preferences and complete donor inventory remain open. MOBILE-FIRMWARE.md
+records manual shared-staging and unpinned-OTA limits rather than hiding them.
+
+Final extra regression verifies the integrated settings parent releases the lock
+when Firmware ACK loss destroys the view, without accepting its late probe ACK.
+The first fixture used a guessed section label; read the actual shared catalog
+and corrected it to Firmware & storage. All 73 tests then passed. One further
+warm build (36.9 seconds) was necessary for the actual parent fix, not a clean or
+flag change. Initial unpublished maintenance candidate e24065... was replaced
+only after exact owner/pending/previous-published-rollback checks, without adding
+another archived whole package. File.Replace(null backup) failed harmlessly on
+PowerShell null-string binding; source/old/pending hashes remained intact.
+Reconsulted build-storage, reread actual stage-desktop.ps1 and used its verified
+pending-copy/Move-Item pattern with the preserved published rollback. No recopy,
+cleanup workaround or running-process replacement.

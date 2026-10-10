@@ -86,6 +86,7 @@ $taskMobilePlan=& (Join-Path $taskRoot 'tools/build-mobile.ps1') -Mode Test -Pla
 Assert-Reuse ($taskMobilePlan.WorkingDirectory -eq (Join-Path $taskRoot 'mobile')) 'Mobile tests run in mobile, not repository root'
 Assert-Reuse ($taskMobilePlan.ContextGate -and $taskMobilePlan.StorageGate) 'Mobile plan retains reviewed gates'
 Assert-Reuse $taskMobilePlan.SettingsGate 'Mobile settings requires the actual complete-read PreferencesTab mapping'
+Assert-Reuse $taskMobilePlan.FirmwareGate 'Mobile firmware requires actual complete-read picker and extension helpers'
 Assert-Reuse ($taskMobilePlan.CaptureView -eq 'Table') 'Mobile capture defaults to the reviewed table fixture'
 $taskSettingsPlan=& (Join-Path $taskRoot 'tools/build-mobile.ps1') -Mode Test -Plan -CaptureView SettingsPhone
 Assert-Reuse ($taskSettingsPlan.CaptureView -eq 'SettingsPhone') 'Mobile renderer scenario is explicit; no overwritten evidence or production UI'

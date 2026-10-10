@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,27 @@ import 'package:pakarcontroller/models.dart';
 
 import 'peer_fixture.dart';
 import 'settings_fixture.dart';
+import 'firmware_test.dart' show firmwareJob;
+
+class SettingsFirmwareApi extends SettingsApi {
+  int probes = 0;
+  final probeReply = Completer<Map<String, dynamic>>();
+  @override
+  Future<Map<String, dynamic>> maintenanceJson(
+    String path, {
+    bool post = false,
+    bool mayMutate = false,
+    Map<String, String> form = const {},
+    Uint8List? upload,
+    String? uploadField,
+    required bool Function() authorize,
+  }) async {
+    if (!authorize()) throw const StaleConnection();
+    if (path == '/api/v1/firmware/remote') return firmwareJob();
+    ++probes;
+    return probeReply.future;
+  }
+}
 
 class SettingsApi extends PakarApi {
   Map<String, dynamic> cloud = Map.of(simulatedCloud);
@@ -81,6 +103,45 @@ Widget fixture(
 );
 
 void main() {
+  testWidgets(
+    'Firmware ACK revocation releases only the destroyed view lock; late probe does not resume',
+    (tester) async {
+      tester.view.physicalSize = const Size(1200, 1800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final api = SettingsFirmwareApi();
+      await tester.pumpWidget(
+        fixture(api, peerFixture(features: ['network', 'identity', 'isp'])),
+      );
+      await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(ListTile, 'Firmware & storage'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Probe ISP'));
+      await tester.tap(find.text('Probe ISP'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(api.probes, 1);
+      await tester.pumpWidget(
+        fixture(api, peerFixture(features: ['network', 'identity'])),
+      );
+      await tester.pumpAndSettle();
+        expect(find.text('Firmware & storage'), findsNothing);
+      expect(
+        tester.widget<ListTile>(find.widgetWithText(ListTile, 'Wi-Fi')).onTap,
+        isNotNull,
+      );
+      api.probeReply.complete({'signature': '1E950F'});
+      await tester.pumpAndSettle();
+      expect(api.probes, 1);
+      expect(find.textContaining('ISP signature confirmed'), findsNothing);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      await api.close();
+    },
+  );
   testWidgets(
     'Searchable catalog and real fields adapt to phone and tablet, no overflow',
     (tester) async {

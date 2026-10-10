@@ -783,3 +783,41 @@ outputs/PakarController/mobile/PakarController-preview-previous.apk, not deleted
 Mobile cache 1.021 to 1.027 GiB. No SDK/download/dependency upgrade, duplicate
 cache, unrelated native/firmware build, physical flash, running-app replacement
 or CI wait. Full omissions/acceptance and screenshots: MOBILE-SETTINGS.md.
+
+## Mobile firmware / picker continuation
+
+Reconsulted updates-telemetry and exact exhaustive picker/helper rows. Fully read
+Pealayer ServerFilePicker.tsx and preferenceFiles.ts, native Pakar maintenance,
+actual ESP routes/upload/RemoteFirmware JSON and Android MainActivity/manifest.
+Added specialist mobile-firmware routing and gate after the audit-only rows were
+identified. Actual .bin suffix logic is imported; SAF user-granted navigation
+replaces an unavailable ESP server-filesystem contract, not arbitrary path entry.
+Concrete remaining provider/localization/generic-consumer behavior stays pending.
+
+Recovery: first analyzer rejected redundant imports/non-null assertion, then an
+added callback brace; fixed code without disabling lint. Runtime widget test
+found a genuine stale authorization closure: FirmwareController now reads the
+current widget callback after capability updates. A perpetual confirmation-time
+indicator also prevented settle: separate confirmation lock and actual operation
+state instead of weakening the assertion. All 72 tests then passed cleanly.
+Hash rebinding patch initially emitted out-of-order hunks and failed atomically;
+inspected exact references and applied source-ordered reviewed-line updates, not
+a blind all-target recertification. Incorrect relative lookup paths were resolved
+with the actual root/inventory; no missing tool/platform conclusion was drawn.
+
+Tablet/phone renderer images inspected; actual Kotlin bridge compiled in the warm
+APK build. All gates and source-quality children pass. New documents are selected
+by SAF with no broad storage permission; exports validate full backup size and
+consume a one-use created-URI token. These are mock/code/package proofs, not
+physical provider/board/TLS/EEPROM/Urboot/power-loss acceptance. Exact hashes and
+recoverable package rotation are in FILE-COMPARISON-RECEIPTS.md. No CI wait or
+hardware write, donor mutation, production app replacement or cleanup bypass.
+
+Final integrated parent regression required a real lock-release fix after ACK
+revocation; 73 tests now pass. The fixture's guessed Firmware label was corrected
+from the shared generated catalog. A final warm APK build replaces only this
+turn's unpublished intermediate after exact owner/pending/rollback verification.
+File.Replace null-backup binding failed before mutation; inspected all hashes,
+reconsulted build-storage, reread actual stage-desktop.ps1 and used its established
+verified pending-copy/Move-Item pattern. Old published settings and earlier
+rollback APKs are retained, no redundant intermediate archive or new copy made.

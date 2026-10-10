@@ -80,11 +80,11 @@ Phone PNG SHA256: 3459f61adb2e23e6df15912fec9c6c52b0f7a4300b8b5a9d639496bf09f1a2
 ## Useful omitted code remains pending
 
 - Pealayer AccentColorPicker/live appearance, rich multi-select, replacement-list
-  add/delete, numeric steps/defaults, collapsible groups, ServerFilePicker and
+  add/delete, numeric steps/defaults, collapsible groups, full ServerFilePicker consumers and
   dynamic option refresh; their media consumers are not controller business,
   but their generic mechanisms remain useful unfinished imports.
 - Full mobile localized labels/direction, themes/preferences, Android-back/quit
-  unsaved-draft protection, real firmware backup/update/pickers/jobs and all
+  unsaved-draft protection and all
   applicable connection/discovery actions.
 - Physical phone/tablet saves/readback, actual MQTT/WebSocket/cloud connectivity,
   hostname/credential reconnection and board deployment, production signing.
@@ -97,3 +97,8 @@ The old desktop app is preserved. No new native compilation, physical flash,
 EEPROM write or CI wait was performed. Last actual reachability check remains
 SSH localhost:1022 refused and ledboard.local resolution timed out; these settings
 screens and simulated tests do not establish live hardware behavior.
+
+Follow-on: actual mobile firmware/backup/job controls and Android document picking
+are implemented, with two more complete-read Pealayer comparisons and 73 passing
+Flutter tests. See MOBILE-FIRMWARE.md. Current inventory is 4237/70/4167/44;
+the earlier counts above describe the settings checkpoint, not current totals.

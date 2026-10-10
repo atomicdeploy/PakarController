@@ -2,6 +2,7 @@
   "schema": 1,
   "authority": "docs/file-comparison-evidence.json",
   "concerns": [
+    {"id":"mobile-firmware","origins":["Pealayer"],"path_pattern":"web_ui/src/(components/ServerFilePicker.tsx|preferenceFiles.ts)","required_reviews":["Pealayer|web_ui/src/components/ServerFilePicker.tsx","Pealayer|web_ui/src/preferenceFiles.ts"],"issue":7},
     {"id":"mobile-settings","origins":["Pealayer"],"path_pattern":"web_ui/src/components/PreferencesTab.tsx","required_reviews":["Pealayer|web_ui/src/components/PreferencesTab.tsx"],"issue":4},
     {"id":"rayanlamp-reuse","origins":["RayanLamp"],"path_pattern":".*","required_reviews":[],"issue":3},
     {"id":"localization","origins":["Pealayer"],"path_pattern":"(i18n|src/config.rs|src/ui/mod.rs|fonts|styles.css|preferences)","required_reviews":["Pealayer|src/ui/i18n.rs","Pealayer|web_ui/src/i18n.ts","Pealayer|tests/i18n_surface_audit_test.rs"],"issue":4},
