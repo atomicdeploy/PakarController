@@ -24,6 +24,13 @@ generator, with equality tests preventing a separate drifting firmware copy.
 The same authoritative legacy-source-ledger.csv and file-comparison evidence
 track this donor; no second decision spreadsheet is introduced.
 
+The imported decimal map also normalizes actual mobile port/telemetry inputs,
+tested with mixed Persian/Arabic-Indic digits through explicit save/readback.
+This extends the already fully read digits.go reuse, not an additional donor
+certificate. The RayanLamp settings view remains pending full comparison;
+mobile settings currently adapts the fully read Pealayer PreferencesTab and
+canonical Pakar device contracts instead. See MOBILE-SETTINGS.md.
+
 ## Inventory boundary
 
 The pruned filesystem inventory includes first-party source, tools, tests,

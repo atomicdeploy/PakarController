@@ -372,3 +372,32 @@ No native-cache cleanup/bypass, running desktop replacement or hardware flash.
 Hardware access is still unavailable (SSH refused, hostname resolution timed out).
 CI not waited on. Native, physical, mobile locale/settings and full donor parity
 remain open; no product-wide completion or superior-repository certificate.
+
+# Mobile device editors and actual PreferencesTab mapping
+
+Owning issues #4/#3/#2. Fully read actual Pealayer PreferencesTab.tsx, 593 lines,
+original-byte SHA256 bada7d4b1cdd332fc51bcbc00ac59544c860f7012eca7d425e477ef932170c27.
+One new parity-gap comparison: contract-driven navigation/groups/typed controls
+adapted to Flutter with real Pakar save/readback ownership. Concrete remaining
+appearance, generic controls, localization, file-picking and dynamic-option code
+is not declared unnecessary. Total 4237/68/4169/43; RayanLamp still six reads.
+
+Analyzer clean; all 46 Flutter tests passed through build-mobile.ps1, including
+phone/tablet layout, conflict/no-replay/secret semantics and delayed credential/
+rename replies after view closure with same/different connection owners. Actual
+simulated renderer captures load all three fonts and assert zero mutations:
+
+- Tablet SHA256 b25da59a2cec4dcb7320eaff0353764d1ac6762dad99cef64e87bc6fb0d0253d.
+- Phone SHA256 3459f61adb2e23e6df15912fec9c6c52b0f7a4300b8b5a9d639496bf09f1a233.
+
+Both images inspected; original captures preserved; repository copies verified.
+Warm preview APK SHA256 8b01492724b48daf0d42ed3666f82144c6e7d6aa55d26614eabd25502f00f596.
+Debug identity signing, not production; 0.2.7 source versions remain consistent.
+One stable preview destination, prior APK retained by recoverable rename. No new
+SDK/cache/clean or native/firmware build; mobile cache 1.027 GiB.
+
+Source quality suite passed all children. New strict-mode comparison fixtures
+also pass with zero specialist routes and absent optional advantage text;
+full generation/read-only Check verified after structural report refresh.
+Native compilation/runtime, physical devices, full mobile preferences/firmware/
+locale and all remaining donor files stay unchecked. See MOBILE-SETTINGS.md.

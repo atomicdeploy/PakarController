@@ -5,6 +5,37 @@
   "files": [
     {
       "origin": "Pealayer",
+      "path": "web_ui/src/components/PreferencesTab.tsx",
+      "sha256": "bada7d4b1cdd332fc51bcbc00ac59544c860f7012eca7d425e477ef932170c27",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual contract-driven sections/selected-section navigation, grouped labeled typed controls, contextual options, retained draft on section changes, descriptions, load/save status and reload adapted to Flutter DeviceSettingsPage using the existing shared Pakar catalog. Tablet uses a searchable navigation rail; phone uses wrapping section chips. Actual Phosphor repertoire supplies verified icon codepoints.",
+        "Actual valueAtPath/updatePaths structured settings ownership adapted to separate public drafts and secret actions. DeviceSettingsSession uses the fully read canonical Pakar native/Web validation, observe/conflict and positive acknowledgment/exact public readback workflow rather than generic optimistic UI success. In-memory secrets never enter saved client preferences; one POST body per explicit operation, no mutation replay."
+      ],
+      "targets": [
+        {"path":"mobile/lib/device_settings_page.dart","sha256":"68f63663b23d8a33167a8e92715779933aad7f5721e0ba8f139f3b232713ad79","anchor":"class DeviceSettingsPage"},
+        {"path":"mobile/lib/device_settings.dart","sha256":"44ff1181b9a8a7e47e14e91a1af650d7ccb3041da971a67178e34b2fe608be0d","anchor":"class DeviceSettingsSession"}
+      ],
+      "omissions": [
+        {"code":"updatePaths optimistic autosave to /api/config and playback.preference_set","disposition":"replaced","reason":"These are Pealayer state/RPC contracts, not Pakar persisted board endpoints. Password replacement and network restart require explicit confirmation, positive accepted/updated ACK and exact public readback. No optimistic physical save success or automatic write replay."},
+        {"code":"Ant Design components and ServerFilePicker transport","disposition":"replaced","reason":"Android Flutter cannot import TSX/Ant Design components directly. Actual section/group/control logic is adapted to Material controls with the shared Studio palette, Vazirmatn and verified Phosphor glyphs. Mobile firmware file picking itself remains pending, not represented by the address-copy action."},
+        {"code":"AccentColorPicker, color swatches, appearance live preview, NumericValueControl steps/defaults, multi_select rich options, replacement_list add/delete, Collapsible groups, ServerFilePicker and refreshAudioOutputs two-stage option refresh","disposition":"pending","reason":"Device Wi-Fi/cloud/identity/access editors are implemented, not the entire application preference framework. Generic appearance, collection editors, defaults/step controls, reusable file picking and dynamic options remain useful and require actual client/device capability contracts and tests before importing their controls."},
+        {"code":"tr(locale, ...) complete control/description localization","disposition":"pending","reason":"Vazirmatn is loaded and the actual RayanLamp digit map normalizes numeric fields, but the new settings copy is English. Full mobile locale/direction must be audited and rendered before claiming Persian preference parity."},
+        {"code":"timelineWheelPreferences merge, playback audio-output RPC and media-extension preference consumers","disposition":"not-applicable","reason":"Timeline/cue/media playback business was explicitly excluded from Pakar. Their generic dynamic-option and file-picker mechanisms remain pending above; they are not excluded as media business."}
+      ],
+      "remaining": [
+        "Complete mobile firmware/update/backup workflows, connection/discovery controls, unsaved Android-back/quit protection, client appearance/localization, generic typed preference controls and applicable donor dependencies. Verify physical phone/tablet configuration readback and hostname/credential handoffs; current API lacks transactional compare-and-set and encrypted HTTP transport."
+      ],
+      "proof": [
+        {"path":"mobile/test/device_settings_test.dart","sha256":"69d953899f8e2bf1c617811933bbc03393590b5a794882e8e4ea3b6fcf7f08bb","anchor":"Settings write $behavior: one POST"},
+        {"path":"mobile/test/device_settings_page_test.dart","sha256":"4069a2bbc4f76e4ff4731d7b9128b17ae445872279a9981c621dddf088fa52f5","anchor":"Acknowledged $route handoff after old view closes"},
+        {"path":"mobile/test/capture_test.dart","sha256":"dd3c702cf71d83632e0ea13e8851a274c98044e96dc284b6c13d646379648cd8","anchor":"Capture must never issue a device mutation"}
+      ],
+      "improvement":""
+    },
+    {
+      "origin": "Pealayer",
       "path": "src/ui/i18n.rs",
       "sha256": "811f1e08e7126932772c49da8aa9669ce8f47d4e2208c1ef6cde435dde20bdf4",
       "source_read": "complete",
@@ -517,7 +548,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "f97edb24c0c2ce319383abc67cf9211ba09b0f30e8b6221748e4d39ec29c0180",
+          "sha256": "771361f85f85fade6d4fdd7e9532752249d4724482782bfd7b7ef1913a58b5b8",
           "anchor": "Future<bool> _command"
         },
         {
@@ -559,7 +590,7 @@
         },
         {
           "path": "mobile/test/widget_test.dart",
-          "sha256": "fb35f6d734fcb063817fd955b9406114d8d25366569ed5fd61bb9fa534d3efcf",
+          "sha256": "1701769d2026ac4bbdedca44ed111b195b9ae5d7d02ba29fd7e8b2cc8d68d3e1",
           "anchor": "Peer ACK loss removes table and independent cards"
         },
         {
@@ -598,7 +629,7 @@
         },
         {
           "path": "mobile/test/widget_test.dart",
-          "sha256": "fb35f6d734fcb063817fd955b9406114d8d25366569ed5fd61bb9fa534d3efcf",
+          "sha256": "1701769d2026ac4bbdedca44ed111b195b9ae5d7d02ba29fd7e8b2cc8d68d3e1",
           "anchor": "Unknown schema has no Table"
         },
         {
@@ -763,7 +794,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "f97edb24c0c2ce319383abc67cf9211ba09b0f30e8b6221748e4d39ec29c0180",
+          "sha256": "771361f85f85fade6d4fdd7e9532752249d4724482782bfd7b7ef1913a58b5b8",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -1099,7 +1130,7 @@
       "proof": [
         {
           "path": "tests/reuse_preflight_test.ps1",
-          "sha256": "77b4cad209613e4d6f9cd19001652ce71278d5e6e9fbe693613322ef0c8badd3",
+          "sha256": "3d3f0bdef82cf139623d8d58629d56c1f4c08355b874535f1e1dd176fb7bb7c7",
           "anchor": "Actual imported short-lived process stdout"
         }
       ],
@@ -1160,7 +1191,7 @@
       "proof": [
         {
           "path": "tests/reuse_preflight_test.ps1",
-          "sha256": "77b4cad209613e4d6f9cd19001652ce71278d5e6e9fbe693613322ef0c8badd3",
+          "sha256": "3d3f0bdef82cf139623d8d58629d56c1f4c08355b874535f1e1dd176fb7bb7c7",
           "anchor": "Actual donor relative cache resolution"
         },
         {
@@ -2776,7 +2807,7 @@
         },
         {
           "path": "tools/build-mobile.ps1",
-          "sha256": "bd8d7db2cf821a1ccb5ca654b483bdd2dfa51b806956b0ea36af05bc3c099513",
+          "sha256": "2034c231e31202d696880f98447116de537092aa02b04c94d33f519543923467",
           "anchor": "$taskCache=Get-DirectorySummary"
         }
       ],
@@ -2813,7 +2844,7 @@
         },
         {
           "path": "tests/reuse_preflight_test.ps1",
-          "sha256": "77b4cad209613e4d6f9cd19001652ce71278d5e6e9fbe693613322ef0c8badd3",
+          "sha256": "3d3f0bdef82cf139623d8d58629d56c1f4c08355b874535f1e1dd176fb7bb7c7",
           "anchor": "Mobile plan retains reviewed gates"
         }
       ],
@@ -2979,7 +3010,7 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual Persian/Arabic-Indic-to-ASCII maps adapted into Rust, JavaScript and Dart and invoked by native/Web/mobile cell search. Canonical IDs/ranges stay ASCII; peer names and protocol identifiers are not globally transformed."
+        "Actual Persian/Arabic-Indic-to-ASCII maps adapted into Rust, JavaScript and Dart and invoked by native/Web/mobile cell search and actual mobile port/telemetry fields. Canonical IDs/ranges stay ASCII; peer names, secrets and protocol identifiers are not globally transformed."
       ],
       "targets": [
         {
@@ -3001,6 +3032,11 @@
           "path": "mobile/lib/cell_search.dart",
           "sha256": "470ed85cf8b5ed034f63bc4bc84b415fd8d943803880e142e62396826f4481fe",
           "anchor": "String latinDigits"
+        },
+        {
+          "path": "mobile/lib/device_settings_page.dart",
+          "sha256": "68f63663b23d8a33167a8e92715779933aad7f5721e0ba8f139f3b232713ad79",
+          "anchor": "int.tryParse(latinDigits(value))"
         }
       ],
       "omissions": [
@@ -3023,6 +3059,11 @@
           "path": "mobile/test/cell_search_test.dart",
           "sha256": "1fce7766710c10169453820ae4a6d39ba8625149ea0181989fccc6689b109bce",
           "anchor": "RayanLamp numeric normalization"
+        },
+        {
+          "path": "mobile/test/device_settings_page_test.dart",
+          "sha256": "4069a2bbc4f76e4ff4731d7b9128b17ae445872279a9981c621dddf088fa52f5",
+          "anchor": "expect(api.cloud['mqtt_port'], 8883)"
         }
       ],
       "improvement": ""

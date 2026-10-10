@@ -85,5 +85,9 @@ Assert-Reuse ($taskStrictLookup.OpenActions -gt 0) 'StrictMode-safe donor lookup
 $taskMobilePlan=& (Join-Path $taskRoot 'tools/build-mobile.ps1') -Mode Test -Plan
 Assert-Reuse ($taskMobilePlan.WorkingDirectory -eq (Join-Path $taskRoot 'mobile')) 'Mobile tests run in mobile, not repository root'
 Assert-Reuse ($taskMobilePlan.ContextGate -and $taskMobilePlan.StorageGate) 'Mobile plan retains reviewed gates'
+Assert-Reuse $taskMobilePlan.SettingsGate 'Mobile settings requires the actual complete-read PreferencesTab mapping'
+Assert-Reuse ($taskMobilePlan.CaptureView -eq 'Table') 'Mobile capture defaults to the reviewed table fixture'
+$taskSettingsPlan=& (Join-Path $taskRoot 'tools/build-mobile.ps1') -Mode Test -Plan -CaptureView SettingsPhone
+Assert-Reuse ($taskSettingsPlan.CaptureView -eq 'SettingsPhone') 'Mobile renderer scenario is explicit; no overwritten evidence or production UI'
 Assert-Reuse (($taskMobilePlan.Commands | ForEach-Object {$_ -join ' '}) -contains 'test --no-pub') 'Warm resolved mobile tests; no dependency upgrade'
 Write-Host 'Reuse routing, cached gates, stale/incomplete/escaping rejection, donor cache resolver and actual imported process probe tests passed; no compiler/build/package copy.'

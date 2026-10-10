@@ -45,6 +45,19 @@ Save-Manifest (Fresh-Manifest)
 $result = @(Import-Csv -LiteralPath $output)
 $beforeCheck = (Get-Item -LiteralPath $output).LastWriteTimeUtc
 & (Join-Path $root 'tools/generate-file-comparison.ps1') @options -Check | Out-Null
+# Imported donor host/storage helpers enable StrictMode. An audit-only source
+# has zero specialist routes, not an object with a missing issue property.
+& {
+    Set-StrictMode -Version Latest
+    & (Join-Path $root 'tools/generate-file-comparison.ps1') @options -Check | Out-Null
+}
+$withoutOptionalAdvantage = Fresh-Manifest
+$withoutOptionalAdvantage.files[0].PSObject.Properties.Remove('improvement')
+Save-Manifest $withoutOptionalAdvantage
+& {
+    Set-StrictMode -Version Latest
+    & (Join-Path $root 'tools/generate-file-comparison.ps1') @options -Check | Out-Null
+}
 if ((Get-Item -LiteralPath $output).LastWriteTimeUtc -ne $beforeCheck) { throw 'Read-only check wrote the ledger' }
 $checkBlocked = $false
 [IO.File]::WriteAllText($output, 'stale-report-fixture')

@@ -87,7 +87,7 @@ $rows = foreach ($source in (Import-Csv -LiteralPath $LedgerPath)) {
     [pscustomobject][ordered]@{
         origin=$source.origin; path=$source.path; revision=$source.revision; source_sha256=$source.sha256
         concerns=$(if ($routes.Count) { $routes.id -join ' | ' } else { 'donor-audit: specialist routing pending' })
-        tracking_issues=(@(3) + @($routes.issue) | Sort-Object -Unique | ForEach-Object { "https://github.com/atomicdeploy/PakarController/issues/$_" }) -join ' | '
+        tracking_issues=(@(3) + @($routes | ForEach-Object {$_.issue}) | Sort-Object -Unique | ForEach-Object { "https://github.com/atomicdeploy/PakarController/issues/$_" }) -join ' | '
         comparison= $(if ($entry) { $entry.verdict } else { 'pending-comparison' })
         source_read=$(if ($entry) { 'complete' } else { 'not-certified-by-this-comparison' })
         target_mapping=$(if ($entry) { ($entry.targets | ForEach-Object { Format-Reference $_ }) -join ' | ' } else { '' })
@@ -95,7 +95,7 @@ $rows = foreach ($source in (Import-Csv -LiteralPath $LedgerPath)) {
         omitted_code=$(if ($entry) { ($entry.omissions | ForEach-Object { "$($_.code) [$($_.disposition)]" }) -join ' | ' } else { 'Not yet determined; not an accepted exclusion' })
         omission_reason=$(if ($entry) { ($entry.omissions | ForEach-Object { "$($_.code): $($_.reason)" }) -join ' | ' } else { "No approved reason to leave this file out. $($source.review_status) is not behavior-comparison proof." })
         proof_mapping=$(if ($entry) { ($entry.proof | ForEach-Object { Format-Reference $_ }) -join ' | ' } else { '' })
-        improvement=$(if ($entry) { $entry.improvement } else { '' })
+        improvement=$(if ($entry -and $entry.PSObject.Properties['improvement']) { $entry.improvement } else { '' })
         remaining=$(if ($entry) { $entry.remaining -join ' | ' } else { 'Read and compare this exact donor; map every applicable behavior and justify each omission.' })
         runtime_acceptance='Not established by source/hash/test-code comparison; see issue #2'
     }
@@ -143,7 +143,7 @@ if ($ReportPath) {
         foreach ($omission in $entry.omissions) { $report.Add("- Omitted/replaced code: ``$($omission.code)``. Disposition: **$($omission.disposition)**. Reason: $($omission.reason)") }
         if (-not $entry.omissions.Count) { $report.Add('- No production-code omission claimed for this reviewed file.') }
         foreach ($proof in $entry.proof) { $report.Add('- Test-code evidence: `' + (Format-Reference $proof) + '`.') }
-        if ($entry.improvement) { $report.Add('- Scoped advantage: ' + $entry.improvement) }
+        if ($row.improvement) { $report.Add('- Scoped advantage: ' + $row.improvement) }
         foreach ($remaining in $entry.remaining) { $report.Add('- Remaining: ' + $remaining) }
     }
     $report.Add('')

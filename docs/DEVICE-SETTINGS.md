@@ -1,5 +1,11 @@
 # PakarController device settings
 
+Mobile continuation: actual Wi-Fi/cloud/identity/access editors now share the
+same contracts, with retained drafts, single-dispatch ACK/readback, context loss
+and explicit reconnection. See MOBILE-SETTINGS.md for source mapping, 46 tests,
+phone/tablet captures and unfinished mobile firmware/appearance/localization.
+Historical native build/GUI evidence below remains scoped to its checkpoint.
+
 Open **File → Device settings**, press **Ctrl+Shift+,**, or run:
 
 ```powershell

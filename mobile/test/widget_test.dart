@@ -9,6 +9,7 @@ import 'package:pakarcontroller/main.dart';
 import 'package:pakarcontroller/models.dart';
 
 import 'peer_fixture.dart';
+import 'settings_fixture.dart';
 
 class TestApi extends PakarApi {
   TestApi({DeviceStatus? snapshot}) : snapshot = snapshot ?? peerFixture();
@@ -18,6 +19,22 @@ class TestApi extends PakarApi {
   Future<DeviceStatus> status() async => snapshot;
   @override
   Future<CellMap> mapping() async => CellMap.defaults();
+  @override
+  Future<Map<String, dynamic>> getJson(String path) async => switch (path) {
+    '/api/v1/network' => Map.of(simulatedNetwork),
+    '/api/v1/cloud' => Map.of(simulatedCloud),
+    '/api/v1/device/name' => {
+      'schema': 1,
+      'hostname': snapshot.hostname,
+      'display_name': snapshot.peer.name,
+    },
+    '/api/v1/auth/info' => {
+      'ready': true,
+      'default_credentials': false,
+      'username': 'fixture',
+    },
+    _ => {},
+  };
   @override
   Stream<DeviceStatus> liveStatus() => updates.stream;
   @override

@@ -17,8 +17,8 @@ context acceptance on #10, platform delivery on #2 and donor imports on #3.
 | Pealayer scripts/storage-hygiene.ps1 via the existing imported helper | build-mobile.ps1 reuses Get-DirectorySummary, canonical mobile/build, existing SDK, preflight gates, resolved locked dependencies, cache/free-space guards and no clean. |
 
 Only complete donor reads are extended in the authoritative
-file-comparison-evidence.json. The existing 4,237-row inventory still has 67
-complete-read comparisons, 4,170 pending and 42 known compared gaps. RayanLamp
+file-comparison-evidence.json. The existing 4,237-row inventory now has 68
+complete-read comparisons, 4,169 pending and 43 known compared gaps. RayanLamp
 has six complete comparisons out of 2,349 paths. No unread file is excluded or
 represented as fully imported.
 
@@ -40,14 +40,16 @@ physical identity. Invalid segment bytes yield unavailable display state.
 
 ## Verification and remaining work
 
-- [x] Analyzer: no issues; 29 Flutter tests pass through the guarded wrapper.
+- [x] Analyzer: no issues; 46 Flutter tests pass through the guarded wrapper.
 - [x] Actual loaded-font Flutter renderer capture inspected: all 80 cells,
   half-row staggering, alternating dark cell surfaces, unified outline, hidden
   indicators and exact Find selection. Explicit simulated peer, no device writes.
 - [x] Warm APK preview built using the existing Flutter 3.47.3/Dart 3.13.3 SDK.
 - [ ] Physical phone/tablet and real peer round-trips; production signing.
-- [ ] Complete mobile localization/direction, client themes/preferences and all
-  shared settings catalog editor/readback surfaces; no English-only parity claim.
+- [x] Actual Wi-Fi/cloud/identity/access editors and saved-readback workflow;
+  inspected phone/tablet renderer captures. See MOBILE-SETTINGS.md.
+- [ ] Complete mobile localization/direction, client themes/preferences, firmware
+  and remaining settings workflows; no English-only or whole-app parity claim.
 - [ ] Mobile circle/six-pixel visualization, diagnostic indices, edit-only reorder,
   marquee selection, keyboard/context menus and professionally retained mapping
   drafts/readback. Native/Web implementations are not falsely certified as Dart.

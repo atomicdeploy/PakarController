@@ -13,6 +13,7 @@ import 'connection_preferences.dart';
 import 'cell_search.dart';
 import 'peer_context.dart';
 import 'application_artwork.dart';
+import 'device_settings_page.dart';
 
 final bundledApplicationArtwork = base64Decode(applicationArtworkBase64);
 
@@ -215,6 +216,53 @@ class _ControlShellState extends State<ControlShell> {
     if (mounted) await _connectLive();
   }
 
+  Future<void> _adoptConnection(
+    int owner,
+    String endpoint,
+    String user,
+    String password,
+  ) async {
+    if (!mounted || owner != api.connectionRevision) {
+      throw const StaleConnection();
+    }
+    final changedLogin = user != api.user || password != api.password;
+    // A acknowledged identity/credential operation may close the old socket
+    // before its HTTP ACK arrives. Connection revision, not that dead socket,
+    // owns this explicit handoff. Never apply it to a replacement connection.
+    api.baseUrl = endpoint;
+    api.user = user;
+    api.password = password;
+    final adopted = api.connectionRevision;
+    _revoke('Following acknowledged device configuration');
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      if (!mounted || adopted != api.connectionRevision) {
+        throw const StaleConnection();
+      }
+      await ConnectionPreferences(preferences).save(endpoint, user, password);
+      if (!mounted || adopted != api.connectionRevision) {
+        throw const StaleConnection();
+      }
+      if (changedLogin) {
+        final actual = await api.getJson('/api/v1/auth');
+        if (actual['username'] != user || actual['password_set'] != true) {
+          throw const FormatException(
+            'Credentials acknowledged but authenticated readback differs',
+          );
+        }
+      }
+      await _reconnect();
+    } catch (error) {
+      if (mounted && adopted == api.connectionRevision) {
+        setState(
+          () => message =
+              '$error No write was replayed. Connection values remain in this session.',
+        );
+      }
+      rethrow;
+    }
+  }
+
   Future<void> command(
     String path, [
     Map<String, String> values = const {},
@@ -277,6 +325,7 @@ class _ControlShellState extends State<ControlShell> {
       if (peer.frontPanel) ('front-panel', 'Front panel', PakarIcons.gauge),
       if (peer.has('telemetry') || peer.has('network'))
         ('hardware', 'Hardware', PakarIcons.circuitry),
+      if (peer.known) ('device-settings', 'Device settings', PakarIcons.gear),
       ('connection', 'Connection', PakarIcons.gear),
     ];
     final active = pages.indexWhere((item) => item.$1 == page);
@@ -306,6 +355,19 @@ class _ControlShellState extends State<ControlShell> {
               command: scoped,
             ),
             'hardware' => HardwarePage(status: status),
+            'device-settings' => DeviceSettingsPage(
+              key: ValueKey('device-settings:$owner:${hostname ?? ''}'),
+              api: api,
+              status: status!,
+              authorized: (feature) =>
+                  mounted &&
+                  owner == api.connectionRevision &&
+                  status?.hostname == hostname &&
+                  status?.peer.has(feature) == true,
+              navigate: (target) => setState(() => page = target),
+              adoptConnection: (endpoint, user, password) =>
+                  _adoptConnection(owner, endpoint, user, password),
+            ),
             'connection' => SettingsPage(
               key: const ValueKey('connection-preferences'),
               api: api,

@@ -52,3 +52,19 @@ packages. It does not install an SDK, upgrade dependencies or clean caches.
 Only acknowledged capabilities are displayed; stale/changed connections revoke
 controls and pending replies. Device application title and bounded inline artwork
 override the shared desktop/Web PNG fallback. See docs/MOBILE-CONTEXT.md.
+
+Device settings now include actual Wi-Fi, MQTT, outbound WebSocket, full board
+identity and access editors with explicit confirmation, positive ACK and public
+readback. Phone wrapping navigation and tablet rail share the real catalog.
+See docs/MOBILE-SETTINGS.md for the actual Pealayer PreferencesTab mapping,
+46 passing Flutter tests, inspected captures and concrete remaining omissions.
+Mobile firmware pickers/jobs, complete localization/appearance and Android-back
+draft protection remain unfinished, not hidden behind ineffective controls.
+
+```powershell
+./tools/build-mobile.ps1 -Mode Test -CaptureView SettingsTablet -CapturePath C:\absolute\outputs\PakarController\mobile\new-settings.png
+```
+
+Capture paths must be new files within this task's outputs/PakarController.
+SettingsPhone and Table are also supported; captures assert zero mutations and
+do not control an installed phone or the production Windows desktop.

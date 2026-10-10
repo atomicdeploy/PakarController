@@ -98,6 +98,40 @@ class PakarApi {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> getJson(String path) => _get(path);
+
+  /// Single dispatch, form BODY (never secret-bearing URL parameters), and
+  /// caller-owned capability check after any awaited identity verification.
+  Future<Map<String, dynamic>> postJson(
+    String path,
+    Map<String, String> values, {
+    bool Function()? authorize,
+  }) async {
+    final revision = connectionRevision;
+    if (_verifiedEndpoint != baseUrl) await status();
+    if (revision != connectionRevision || authorize?.call() == false) {
+      throw const StaleConnection();
+    }
+    late final http.Response response;
+    try {
+      response = await _client
+          .post(_uri(transportUrl, path), headers: _headers, body: values)
+          .timeout(const Duration(seconds: 12));
+    } on Exception {
+      throw const OperationUncertain();
+    }
+    if (revision != connectionRevision) throw const StaleConnection();
+    if (response.statusCode ~/ 100 != 2) {
+      // Never echo a possibly secret-bearing server error or request value.
+      throw FormatException(
+        'Device write rejected (HTTP ${response.statusCode}); not retried',
+      );
+    }
+    final result = jsonDecode(response.body);
+    if (result is! Map<String, dynamic>) throw const OperationUncertain();
+    return result;
+  }
+
   Future<void> post(
     String path, [
     Map<String, String> values = const {},

@@ -735,3 +735,51 @@ flash. Source master version remains 0.2.7. SSH localhost:1022 refused and
 ledboard.local resolution timed out; old native app is preserved. CI not waited on.
 MOBILE-CONTEXT.md and issues #2/#3/#10 retain physical/signing/localization/settings
 and remaining donor-import gaps. Inventory is still 4237/67/4170/42, not full parity.
+
+## Actual mobile device settings continuation
+
+Consulted preferences, exact Pealayer PreferencesTab donor-audit, RayanLamp
+settings/digits audit, device-context, build-storage and capture. Read all 593
+PreferencesTab lines through EOF plus canonical native/Web settings, shared
+catalog, firmware identity/auth routes and AccessPolicy. RayanLamp's 1827-line
+settings.tsx remains pending; it was not certified by lookup or historical claims.
+Re-read actual digits.go and invoked its imported map only for numeric fields.
+
+Implemented mobile Wi-Fi, MQTT, outbound WebSocket, full board identity and
+access editors, explicit positive ACK/public readback, secret modes, request
+epochs, context revocation and acknowledged auth/rename handoff. Added one
+complete-read parity-gap comparison, concrete useful omissions and a mandatory
+mobile-settings build gate. No generic Pealayer preference mechanism is excluded
+as media business. Updated the same ledger/report and issues #3/#4; counts now
+4237 paths, 68 complete, 4169 pending, 43 known gaps. RayanLamp remains six reads.
+
+Analyzer clean; 46 Flutter tests pass. Actual loaded-font simulated phone/tablet
+captures inspected, zero device writes. First captures exposed a missing standard
+MaterialIcons font in the harness; loaded the already bundled font and supplied
+actual verified Phosphor caret glyphs. Preserved initial files, captured separate
+corrected evidence and verified small repository copies by exact byte hashes.
+
+Recoveries: an omitted test brace failed lint before tests; an import patch without
+an anchor landed after declarations and was fixed before testing. Phone dropdown
+overflow was a real defect: made it expanded with ellipsis and verified both
+widths, without weakening overflow assertions. Delayed-response test callback
+setup required an event-loop flush before indexing its pending replies. Guessed
+numeric-helper paths failed; inventoried mobile sources and exact donor rows to
+find cell_search.dart/internal/i18n/digits.go, not another replacement helper.
+
+Staging succeeded with existing content-equality/file-identity helpers, required
+gates, one verified pending copy and recoverable rename of the old preview.
+The following comparison generation under imported helper StrictMode exposed
+empty specialist route `.issue` access and optional missing `.improvement`.
+Consulted build-storage, read the actual generator/test in full, adapted pipeline
+enumeration/optional-property handling, added strict-mode fixtures and verified
+both full generation and read-only check after report regeneration. No source
+guard was disabled, no unread comparison promoted, no blind retry/cleanup bypass.
+
+Warm APK SHA256 8b01492724b48daf0d42ed3666f82144c6e7d6aa55d26614eabd25502f00f596;
+version 0.2.7, existing debug signing template, preview only. Prior preview hash
+4aabc188bdab5f984b064e17ec417f85e467436d8e08d0eb94eaf984fbbeb1b4 is retained at
+outputs/PakarController/mobile/PakarController-preview-previous.apk, not deleted.
+Mobile cache 1.021 to 1.027 GiB. No SDK/download/dependency upgrade, duplicate
+cache, unrelated native/firmware build, physical flash, running-app replacement
+or CI wait. Full omissions/acceptance and screenshots: MOBILE-SETTINGS.md.
