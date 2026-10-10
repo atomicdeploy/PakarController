@@ -345,3 +345,30 @@ IROM 844784/1048576. Image SHA-256:
 Not deployed. AVR unchanged; Flutter SDK absent on PATH, no APK build. SSH 1022
 refused and ledboard.local unresolved. CI was not waited on. Full donor mappings
 and pending dynamic/native/mobile translation acceptance: PERSIAN-PARITY.md.
+
+# RayanLamp / acknowledged mobile preview checkpoint
+
+Extended actual RayanLamp digit maps into Dart; no unlicensed YekanBakh asset.
+PCController's ready/advertised contract and Pealayer's actual branding fallback
+semantics now also govern mobile. Existing six RayanLamp complete-read files remain
+six, not a claim that all 2349 paths are imported. Overall inventory: 4237 paths,
+67 complete-read comparisons, 4170 pending, 42 known gaps. Full omissions remain
+in the authoritative evidence JSON and issue #3; mobile pending surfaces are in
+MOBILE-CONTEXT.md.
+
+Flutter analyzer has no issues and 29 tests passed through build-mobile.ps1.
+Actual simulated renderer capture with loaded Vazirmatn/Phosphor inspected at
+outputs/PakarController/mobile/table-selection-complete.png. Image SHA256:
+60e2077ed3a842b966b5e73a7ba3d13c5f35e9cba4d455ade360b19af2e7b148.
+All 80 cells/stagger/dark alternation/amber selection/hidden indicators are visible.
+First clipped capture was preserved, not overwritten. This is not a phone device.
+
+Existing installed SDK was found from mobile README, correcting the earlier PATH
+limitation without another download. Preview APK built in the warm canonical cache
+and copied once to outputs/PakarController/mobile/PakarController-preview.apk.
+SHA256: 4aabc188bdab5f984b064e17ec417f85e467436d8e08d0eb94eaf984fbbeb1b4.
+Version 0.2.7; debug-template signing, NOT production. Mobile cache 1.021 GiB.
+No native-cache cleanup/bypass, running desktop replacement or hardware flash.
+Hardware access is still unavailable (SSH refused, hostname resolution timed out).
+CI not waited on. Native, physical, mobile locale/settings and full donor parity
+remain open; no product-wide completion or superior-repository certificate.

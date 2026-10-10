@@ -19,7 +19,7 @@ Assert-Rejected {& $taskConsult -Concern invented -DonorRoots @{}} 'Unknown'
 $taskAll=& $taskConsult -Concern donor-audit -DonorRoots @{}
 Assert-Reuse ($taskAll.Matched -eq $taskAll.Inventoried) 'Exhaustive route must include every source, asset, script, test and absent blob'
 Assert-Reuse ($taskAll.AuditOnly -gt 0) 'Specialist routing gaps must remain visible'
-Assert-Reuse (@($taskAll.Rows | Where-Object {$_.Remaining.Count -eq 0 -and $_.Comparison -eq 'pending-comparison'}).Count -eq 0) 'Every unread file needs an action'
+Assert-Reuse (@($taskAll.Rows | Where-Object {@($_.Remaining).Count -eq 0 -and $_.Comparison -eq 'pending-comparison'}).Count -eq 0) 'Every unread file needs an action'
 $taskPealayer=& $taskConsult -Concern donor-audit -Origin Pealayer -DonorRoots @{}
 Assert-Reuse ($taskPealayer.Matched -eq @($taskInventory | Where-Object origin -eq Pealayer).Count -and $taskPealayer.Matched -gt 0) 'All Pealayer paths are reachable, not just keyword matches'
 $taskExact=& $taskConsult -Concern donor-audit -Origin Pealayer -SourcePath scripts/package-probe-windows.ps1 -DonorRoots @{}
@@ -77,4 +77,13 @@ $taskProbe=Invoke-PackageProbe $env:COMSPEC '/d /c echo Pakar-probe' $taskRoot
 Assert-Reuse ($taskProbe.Trim() -eq 'Pakar-probe') 'Actual imported short-lived process stdout'
 Assert-Rejected {Invoke-PackageProbe $env:COMSPEC '/d /c exit 7' $taskRoot} 'failed \(7\)'
 Assert-Rejected {Assert-PakarPackageSourceStable $taskRoot ('0'*40)} 'source commit changed'
+# Imported storage summary sets StrictMode in callers: single remaining actions
+# must be treated as arrays, not scalar strings with a nonexistent Count.
+. (Join-Path $taskRoot 'tools/storage-hygiene.ps1') -FunctionsOnly
+$taskStrictLookup=& $taskConsult -Concern device-context -DonorRoots @{}
+Assert-Reuse ($taskStrictLookup.OpenActions -gt 0) 'StrictMode-safe donor lookup after imported storage summary'
+$taskMobilePlan=& (Join-Path $taskRoot 'tools/build-mobile.ps1') -Mode Test -Plan
+Assert-Reuse ($taskMobilePlan.WorkingDirectory -eq (Join-Path $taskRoot 'mobile')) 'Mobile tests run in mobile, not repository root'
+Assert-Reuse ($taskMobilePlan.ContextGate -and $taskMobilePlan.StorageGate) 'Mobile plan retains reviewed gates'
+Assert-Reuse (($taskMobilePlan.Commands | ForEach-Object {$_ -join ' '}) -contains 'test --no-pub') 'Warm resolved mobile tests; no dependency upgrade'
 Write-Host 'Reuse routing, cached gates, stale/incomplete/escaping rejection, donor cache resolver and actual imported process probe tests passed; no compiler/build/package copy.'

@@ -692,3 +692,46 @@ guard bypass resulted from these diagnostic errors.
 Current inventory: 1884 paths; 51 complete-read comparisons, 1833 pending and
 32 known gap files. See DEVICE-CONTEXT.md and issue #10 for unchecked native,
 generic-adapter and physical acceptance. Screenshots are simulated Web proof only.
+
+## Mobile context and RayanLamp continuation
+
+Rechecked the actual Build RayanLamp Go app task read-only; it was not resumed
+or messaged. Read current mobile sources, PCController peripheral availability
+implementation/tests and Pealayer branding.rs through EOF; consulted device-context,
+ui-shell and build-storage. Re-read actual RayanLamp digits.go before Dart reuse.
+Extended only those reviewed comparison entries and affected exact proof hashes.
+No new blanket certificate or unread-source exclusion.
+
+The mobile README identified the existing C:\development\flutter SDK. PATH
+absence did not justify installing/extracting another copy. Added the mandatory
+mobile wrapper with existing source/storage gates, resolved packages, canonical
+cache budgets and no clean. Analyzer passes and 29 tests execute, including
+individual ACK loss, cross-profile identity, queued stale writes, digits/ranges,
+shared selection, partial bulk failure and phone/tablet layout. Actual loaded-font
+Flutter capture was inspected; complete capture preserves all 80 cells.
+
+Recovery evidence: an initial root-scoped Flutter test found no test directory;
+the wrapper now owns mobile cwd and has a regression assertion. New hostile-value
+fixture initially inferred Map<String,int> and rejected the test's double before
+the parser; changed the fixture to dynamic without weakening parser validation.
+Analyzer lint failures stopped before packaging and were corrected; one patch
+placed a typedef in the wrong context, caught by parsing and fixed before tests.
+Two interaction assertions lacked the actual viewport/stream-settle state; fixed
+test setup, not application ACK policy. First capture clipped its last row; kept
+it intact and captured a separate full-height image, then inspected both.
+
+Imported storage summary enables StrictMode in callers. Both the lookup and its
+test needed explicit @(...Remaining).Count for scalar pipeline results. A Plan
+assertion also exposed generator stdout leaking into the result pipeline: wrapper
+now emits diagnostics to the host and preserves the one structured Plan result.
+Regressions cover these cases; no guard was disabled or bypassed. Evidence patch
+generation initially lacked per-line addition markers and was rejected atomically;
+corrected from exact anchors, preserving all existing omission decisions.
+
+Warm Android preview build passed; cache grew from 0.971 to 1.021 GiB. Existing
+Flutter 3.47.3/Dart 3.13.3 and debug signing template, no dependency upgrade,
+SDK download/extraction, extra cache, unrelated firmware/native build or physical
+flash. Source master version remains 0.2.7. SSH localhost:1022 refused and
+ledboard.local resolution timed out; old native app is preserved. CI not waited on.
+MOBILE-CONTEXT.md and issues #2/#3/#10 retain physical/signing/localization/settings
+and remaining donor-import gaps. Inventory is still 4237/67/4170/42, not full parity.

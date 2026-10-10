@@ -259,9 +259,12 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `a5d7366279057e0868478846c6bbe92eda4209a6bdbcbc16e1c149e57dfe035e`.
 
 - Target: `tests/web_context_test.mjs:22 [UTF8-LF sha256=fefae5fe0fd4aaf5d0961fb24695b979ca80e6efd07d3d87ea6b6e0e3ea6ed13; anchor=const manifest=]`.
+- Target: `mobile/test/peer_context_test.dart:12 [UTF8-LF sha256=b29ce5cc725192d9ed743ebfb6cf2ced530794d1ae7fb9e26e061c39526e837e; anchor=No peer ACK cannot be inferred]`.
+- Target: `mobile/test/widget_test.dart:95 [UTF8-LF sha256=fb35f6d734fcb063817fd955b9406114d8d25366569ed5fd61bb9fa534d3efcf; anchor=Unknown schema has no Table]`.
 - Target: `tests/device_context_test.cpp:4 [UTF8-LF sha256=aea06975d4e027b0804c0a78c0385aefe1b7766418cd7835f22e80ea361bc650; anchor=int main(]`.
 - Target: `desktop/src/capabilities.rs:202 [UTF8-LF sha256=8686e5df23a2a048c353bdc8a632de646674741586263217c1e40abb068298ec; anchor=fn serial_manifest_is_individual_and_table_modes_are_profile_scoped]`.
 - Retained: Actual disconnected, missing status and capability-free cases adapted into shipped-Web tests. Independent peripheral ACKs, expiry, cross-kind and malformed geometry/schema cases added. C++ tests execute actual HELLO/display-ACK policy.
+- Retained: Equivalent Flutter fixture cases execute actual capability parsing, unsupported schema/geometry, display measured ACK, per-feature cards, identity change and phone/tablet navigation; API fixtures reject pending reads/queued writes after owner or credential changes.
 - Omitted/replaced code: `Vitest/liveSnapshot/emptySnapshot fixture ownership`. Disposition: **replaced**. Reason: Node VM executes embedded Web code, C++ executes firmware policy, and Rust has USB adapter tests. React/Vitest would target a nonexistent React owner in this embedded surface.
 - Omitted/replaced code: `Valid/invalid INA219, temperature, PWM, LCD, Bluetooth, relay/RF/statusLED fixture cases`. Disposition: **pending**. Reason: Restore exact bounded-invalid-value cases with the genuine PCController adapter; those peripherals are currently absent, not replaced by synthetic zero fixtures.
 - Test-code evidence: `tests/web_context_test.mjs:48 [UTF8-LF sha256=fefae5fe0fd4aaf5d0961fb24695b979ca80e6efd07d3d87ea6b6e0e3ea6ed13; anchor=Unsupported geometry is not forced]`.
@@ -273,13 +276,19 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `fcf2e397564c843711fd64db2bd2d820552180ac4f5abdf0d44ccbbb86be7a84`.
 
 - Target: `desktop/src/capabilities.rs:40 [UTF8-LF sha256=8686e5df23a2a048c353bdc8a632de646674741586263217c1e40abb068298ec; anchor=pub fn has(]`.
+- Target: `mobile/lib/peer_context.dart:35 [UTF8-LF sha256=d15536d7b1c4315b737004e9e90cc6757f972353431dbad09151255d7c41cf77; anchor=static PeerContext fromStatus]`.
+- Target: `mobile/lib/main.dart:226 [UTF8-LF sha256=f97edb24c0c2ce319383abc67cf9211ba09b0f30e8b6221748e4d39ec29c0180; anchor=Future<bool> _command]`.
 - Target: `libraries/BoardCore/src/DeviceContext.h:26 [UTF8-LF sha256=ce571a112f7d06dc25cdf7f35a383ba4f23c3ca4337ac1bb9968ef17dec72689; anchor=inline uint16_t features(]`.
 - Target: `firmware/esp8266/src/WebUi.h:319 [UTF8-LF sha256=0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622; anchor=function peerAvailability(]`.
 - Retained: Actual connected AND have_status AND advertised-capability conjunction adapted to selected-peer fresh manifests. No feature inference from hostname, pixel count, catalog, defaults or online alone.
 - Retained: TM1637 additionally requires fresh measured ACK; Text and Buzzer have independent HELLO support. Native/Web hide unrelated controls and gate domain commands.
+- Retained: Flutter now adapts the same ready AND advertised schema-1 conjunction, table geometry and individual ACK policy; selected owner revisions reject old replies and retained dialogs. Unknown/stale peers have only client connection/overview navigation.
 - Omitted/replaced code: `Snapshot/status/hello fields and compact status flag fallback`. Disposition: **replaced**. Reason: Pakar JSON and append-only USB share a schema-1 normalized manifest. AVR HELLO and display-status ACK are aggregated on ESP; copying PCController bit values would alias different protocols.
 - Omitted/replaced code: `bounded, ina219, pwm, temperatureLED, temperatureBTAudio, lcd, bluetoothAudio, relays, rf, statusLED and invalid measurement fields`. Disposition: **pending**. Reason: Those drivers are absent on the current pair. A real PCController adapter must preserve their detection, bounds and invalid-value distinctions later. No fabricated controls are displayed.
 - Test-code evidence: `tests/web_context_test.mjs:24 [UTF8-LF sha256=fefae5fe0fd4aaf5d0961fb24695b979ca80e6efd07d3d87ea6b6e0e3ea6ed13; anchor=No inferred board kind or controls]`.
+- Test-code evidence: `mobile/test/peer_context_test.dart:28 [UTF8-LF sha256=b29ce5cc725192d9ed743ebfb6cf2ced530794d1ae7fb9e26e061c39526e837e; anchor=Independent ACKs and measured display gate]`.
+- Test-code evidence: `mobile/test/widget_test.dart:244 [UTF8-LF sha256=fb35f6d734fcb063817fd955b9406114d8d25366569ed5fd61bb9fa534d3efcf; anchor=Peer ACK loss removes table and independent cards]`.
+- Test-code evidence: `mobile/test/api_test.dart:11 [UTF8-LF sha256=75829eb3b8dd744b2d87025db824b291bdc86e074baff8c28a597d425ed4a823; anchor=Changed endpoint discards an in-flight status]`.
 - Test-code evidence: `tests/device_context_test.cpp:4 [UTF8-LF sha256=aea06975d4e027b0804c0a78c0385aefe1b7766418cd7835f22e80ea361bc650; anchor=int main(]`.
 - Remaining: Native execution and generic PCController profile/discovery adapter remain #10/#6 work; source/C++/Web proof is not native or physical acceptance.
 
@@ -338,7 +347,7 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 - Retained: Application PE/window/tray master derivatives are separated from actual semantic quick-action resource generation; master/helper changes trigger rebuild.
 - Omitted/replaced code: `emit_build_metadata; APPLICATION_BRAND JSON/APP_* precedence/filename validation; version/InternalName/OriginalFilename/copyright/provenance fields`. Disposition: **pending**. Reason: Fixed current identity exists; validated external branding and full generic metadata/provenance remain useful imports.
 - Omitted/replaced code: `macOS brew/mpv probing and rpath flags`. Disposition: **not-applicable**. Reason: Pakar is explicitly mpv-free; media linker dependencies violate that scope.
-- Test-code evidence: `tests/branding_test.mjs:12 [UTF8-LF sha256=91f8491b1cd941c2af78f621ab69658397d372959fb3c25a9dce913f62405bc9; anchor=actual Pealayer icon_data_from_bytes import]`.
+- Test-code evidence: `tests/branding_test.mjs:12 [UTF8-LF sha256=c956b89b2363c8770bc345f7132822c383a8329b76375556caf71da48d39fe24; anchor=actual Pealayer icon_data_from_bytes import]`.
 - Remaining: Complete named generic omissions with preference/endpoint/runtime tests; source checks are not deployed acceptance. See BRANDING-PARITY.md.
 
 ### Pealayer: `docs/releases/next.md`
@@ -410,7 +419,7 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 - Omitted/replaced code: `Program-root shared target default across separate source worktrees`. Disposition: **pending**. Reason: Pakar keeps its existing single canonical desktop/target cache without moving or duplicating it. A future managed-worktree build needs a shared Pakar-owned cache; copying Pealayer's owner path would corrupt ownership.
 - Omitted/replaced code: `New Get-PealayerCargoTargetDirectory rejection of all source-checkout cache paths`. Disposition: **pending**. Reason: Pakar's existing sole desktop/target is inside the checkout. Applying this rejection now would strand the warm cache or force a duplicate cold build. An owned same-volume relocation and wrapper/config migration are required first; the oversized-cache guard remains active and blocked cleanup is not bypassed.
 - Omitted/replaced code: `Copy-PealayerFileLowWrite delete-destination-first copy and PreferHardLink`. Disposition: **replaced**. Reason: Pakar retains its checksum-verified pending-copy then rename. The prior candidate is preserved until verification; a mutable executable is not hardlinked to compiler output. mpv immutable-runtime aliases are explicitly excluded, not a reason to omit generic content comparison.
-- Test-code evidence: `tests/reuse_preflight_test.ps1:73 [UTF8-LF sha256=30a46f7b0625b26115363c9241a4a56020159d8b2e29485459c3a2b034a92ed8; anchor=Actual donor relative cache resolution]`.
+- Test-code evidence: `tests/reuse_preflight_test.ps1:73 [UTF8-LF sha256=77b4cad209613e4d6f9cd19001652ce71278d5e6e9fbe693613322ef0c8badd3; anchor=Actual donor relative cache resolution]`.
 - Test-code evidence: `tests/storage_hygiene_test.ps1:15 [UTF8-LF sha256=f8a5d8bfe1728d2643820229ce2c5310148e1e93dc2a727a714fe82c6e5a0f82; anchor=Actual imported equal-content helper]`.
 - Remaining: Adapt generic saved host provenance/config ownership checks without mpv, and keep one owned cache if worktrees are later authorized.
 
@@ -421,7 +430,7 @@ Verdict: **equivalent-file**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fb
 - Target: `tools/package-probe-windows.ps1:1 [UTF8-LF sha256=f4516884990ad76c020fbc6534d902c4949abae0b48da8ea40c008afa44dfd4f; anchor=function Invoke-PackageProbe]`.
 - Retained: Byte-identical actual donor process-handle probe: no-shell hidden process, async redirected stdout, 30-second wait, explicit exit code, output return and Dispose. Optional staging probe calls this helper.
 - No production-code omission claimed for this reviewed file.
-- Test-code evidence: `tests/reuse_preflight_test.ps1:77 [UTF8-LF sha256=30a46f7b0625b26115363c9241a4a56020159d8b2e29485459c3a2b034a92ed8; anchor=Actual imported short-lived process stdout]`.
+- Test-code evidence: `tests/reuse_preflight_test.ps1:77 [UTF8-LF sha256=77b4cad209613e4d6f9cd19001652ce71278d5e6e9fbe693613322ef0c8badd3; anchor=Actual imported short-lived process stdout]`.
 - Remaining: Donor timeout throws without terminating its child. Full GUI/runtime package smoke remains separate from CLI identity.
 
 ### Pealayer: `scripts/package-windows.ps1`
@@ -457,12 +466,15 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `52f93bf96867b286d7d1c22f36c08603558e10dc6e9c14433e0a9ea9bb5f4f42`.
 
 - Target: `tools/storage-hygiene.ps1:10 [UTF8-LF sha256=bcb4b2b588ccf22a169e050602ac4a5a66d39ab446dd20c212744dbe27378d9a; anchor=function Get-DirectorySummary]`.
+- Target: `tools/build-mobile.ps1:38 [UTF8-LF sha256=bd8d7db2cf821a1ccb5ca654b483bdd2dfa51b806956b0ea36af05bc3c099513; anchor=$taskCache=Get-DirectorySummary]`.
 - Retained: Actual Get-DirectorySummary imported into tools/storage-hygiene.ps1 with Pakar canonical cache, board cache, mobile build and stable staging paths. Read-only by default and warns at the existing 8 GiB budget; logical sizes explicitly distinguished from disk allocation or wear.
+- Retained: build-mobile.ps1 now calls the actual imported summary for its sole mobile/build cache and verifies free space before compilation. Existing SDK path comes from mobile README; no auto-install, dependency upgrade, cache relocation or clean.
 - Omitted/replaced code: `PruneRepositoryTarget exact-child/git-ignore/allowed-child/running-process checks and recursive deletion`. Disposition: **pending**. Reason: Blocked earlier cleanup cannot be rerouted through a new helper. The current cache is still canonical, not an obsolete donor target. Preserve evidence/active owners and resolve the original cleanup/migration boundary first; no destructive entrypoint imported in this pass.
 - Omitted/replaced code: `Pealayer target/shared-cache/staging paths and 48 GiB warning`. Disposition: **replaced**. Reason: Pakar uses its actual existing sole cache, Arduino and Flutter products and stable outputs staging, with the established 8 GiB warning. Importing another project's directories would misstate ownership.
 - Omitted/replaced code: `Silently ignored recursive read errors and empty Measure-Object Sum`. Disposition: **replaced**. Reason: Unmeasured paths must fail visibly rather than understate storage. Empty directories use zero bytes instead of a missing StrictMode Sum property.
 - Test-code evidence: `tests/storage_hygiene_test.ps1:10 [UTF8-LF sha256=f8a5d8bfe1728d2643820229ce2c5310148e1e93dc2a727a714fe82c6e5a0f82; anchor=Actual imported recursive summary]`.
 - Test-code evidence: `tests/storage_hygiene_test.ps1:21 [UTF8-LF sha256=f8a5d8bfe1728d2643820229ce2c5310148e1e93dc2a727a714fe82c6e5a0f82; anchor=Read-only import must never become]`.
+- Test-code evidence: `tests/reuse_preflight_test.ps1:87 [UTF8-LF sha256=77b4cad209613e4d6f9cd19001652ce71278d5e6e9fbe693613322ef0c8badd3; anchor=Mobile plan retains reviewed gates]`.
 - Remaining: Resolve owned canonical-cache migration/blocked cleanup without deleting evidence or another process's artifacts; then implement and test any separately authorized cleanup contract.
 
 ### Pealayer: `scripts/update-screenshots-windows.ps1`
@@ -499,13 +511,16 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 - Target: `desktop/src/brand_image.rs:25 [UTF8-LF sha256=ab71607dcde16d7af14b0a292982f902186dacf6b5b78b3f4c983e37464428e9; anchor=pub fn native_icon_bytes]`.
 - Target: `docs/BRANDING-PARITY.md:40 [UTF8-LF sha256=b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7; anchor=## Explicit unfinished useful code and reasons]`.
 - Target: `desktop/src/branding.rs:8 [UTF8-LF sha256=28849fc17b8082114c0bc3d9c38baf0aef64b929c7c721aa19bdc048b25905e7; anchor=pub fn sync_peer]`.
+- Target: `mobile/lib/main.dart:318 [UTF8-LF sha256=f97edb24c0c2ce319383abc67cf9211ba09b0f30e8b6221748e4d39ec29c0180; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
+- Target: `mobile/lib/application_artwork.dart:2 [UTF8-LF sha256=a1ee8fc15b0aa9111a5c416fcf74b3d05093b22e47b76d7744837f175f7b5ef4; anchor=const applicationArtworkBase64]`.
 - Retained: Actual icon_data_from_bytes imported unchanged; one embedded PNG supplies native/Web artwork without disk caches.
 - Retained: Actual native_icon_bytes seven-frame ICO encoding/master preservation/Lanczos3 resampling and shell derivative test adapted to shared supplied bytes and PNG-only decoder.
 - Retained: Actual sync_native_window_icon source-signature cache, multi-viewport icon publication and tray refresh lifecycle adapted to fresh selected-peer Application metadata; no per-frame decode or disk cache.
+- Retained: Flutter now shares the exact embedded native/Web PNG fallback instead of a different Phosphor glyph, with bounded peer-application title and inline PNG overrides and default-artwork decode fallback. Android launcher equivalent and runtime icon preferences remain pending.
 - Omitted/replaced code: `resolved_icon_path/state_env/non_empty_path, builtin presets, icon_bytes precedence/fallback and override/preset tests`. Disposition: **pending**. Reason: Useful runtime preferences need a bounded shared board/client transport; local filesystem media-state paths cannot be copied blindly to ESP.
 - Omitted/replaced code: `sync_native_window_icon, icon_source_signature/revision metadata/multi-viewport/tray sync and tests`. Disposition: **replaced**. Reason: sync_peer now adapts the cache/multi-viewport lifecycle to peer Application metadata, shared header/About and tray artwork/Show label. Native runtime acceptance is still blocked by the cache guard; full icon preferences/tests remain open.
 - Omitted/replaced code: `PlaybackIconState/from_player/playback_state_is_unambiguous`. Disposition: **not-applicable**. Reason: Video state business expressly removed; hardware state icons require a separate validated state contract.
-- Test-code evidence: `tests/branding_test.mjs:12 [UTF8-LF sha256=91f8491b1cd941c2af78f621ab69658397d372959fb3c25a9dce913f62405bc9; anchor=actual Pealayer icon_data_from_bytes import]`.
+- Test-code evidence: `tests/branding_test.mjs:12 [UTF8-LF sha256=c956b89b2363c8770bc345f7132822c383a8329b76375556caf71da48d39fe24; anchor=actual Pealayer icon_data_from_bytes import]`.
 - Test-code evidence: `tests/web_identity_test.mjs:40 [UTF8-LF sha256=99621b44a961771053066590ce43759c24bdd2c0993de0d7c36ae615a2c5a2ad; anchor=Actual Web application identity]`.
 - Remaining: Complete named generic omissions with preference/endpoint/runtime tests; source checks are not deployed acceptance. See BRANDING-PARITY.md.
 
@@ -723,7 +738,7 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 
 Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `df84386e53d729eabddf9476026a9f96afe130dd3429612f4c73509d1757d16b`.
 
-- Target: `tools/generate-branding.mjs:3 [UTF8-LF sha256=a515e79397a85a6211ac0251f7bb5d6e90eda237979e4d40740622167fe0e2db; anchor=Pakar embeds it for the standalone ESP surface]`.
+- Target: `tools/generate-branding.mjs:3 [UTF8-LF sha256=0e17da9eec334751e80fba97da219d0cfb69f2bf896f67b2e4d3a70a63e54ec2; anchor=Pakar embeds it for the standalone ESP surface]`.
 - Target: `firmware/esp8266/src/WebUi.h:69 [UTF8-LF sha256=0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622; anchor=<!-- BEGIN SHARED BRAND HEADER -->]`.
 - Target: `docs/BRANDING-PARITY.md:40 [UTF8-LF sha256=b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7; anchor=## Explicit unfinished useful code and reasons]`.
 - Target: `firmware/esp8266/src/WebUi.h:362 [UTF8-LF sha256=0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622; anchor=function renderApplicationIdentity]`.
@@ -734,7 +749,7 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 - Retained: Actual retained Modal/draft lifecycle adapted to grouped device settings; separate same-instance WebSocket actions preserve HTTP refresh and reject obsolete socket callbacks. Native Draft/SecretEdit/Write validation/readback semantics are reused.
 - Omitted/replaced code: `Header collapse; arbitrary remote connectionTarget/draftTarget endpoint modal; localization/RTL`. Disposition: **pending**. Reason: The new grouped device-settings modal and same-instance WebSocket dropdown are not arbitrary remote endpoint selection or localized navigation. Standalone-device origin/auth and preferences adapters still need porting and tests.
 - Omitted/replaced code: `capability-aware Dropdown install/update/share/fullscreen/notifications/haptics/audio/wake-lock cluster`. Disposition: **pending**. Reason: Requires actual WebPlatform integration and ownership/permission tests; not excluded media business.
-- Test-code evidence: `tests/branding_test.mjs:12 [UTF8-LF sha256=91f8491b1cd941c2af78f621ab69658397d372959fb3c25a9dce913f62405bc9; anchor=actual Pealayer icon_data_from_bytes import]`.
+- Test-code evidence: `tests/branding_test.mjs:12 [UTF8-LF sha256=c956b89b2363c8770bc345f7132822c383a8329b76375556caf71da48d39fe24; anchor=actual Pealayer icon_data_from_bytes import]`.
 - Test-code evidence: `tests/web_identity_test.mjs:40 [UTF8-LF sha256=99621b44a961771053066590ce43759c24bdd2c0993de0d7c36ae615a2c5a2ad; anchor=Actual Web application identity]`.
 - Test-code evidence: `tests/interface_settings_test.mjs:31 [UTF8-LF sha256=e2588bf230a64a1260bba5acd7ad3d2f26c8f16361e07185a1059cd210ef122e; anchor=Failed saves preserve the draft]`.
 - Remaining: Complete generic omissions and missing editors named in INTERFACE-CONTRACT.md; native/mobile/deployed acceptance remains open.
@@ -758,14 +773,14 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 
 Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `23e8fd2a8f17d296f14b81d6618cbd166129e116e36515444239edac15f89554`.
 
-- Target: `tools/generate-branding.mjs:17 [UTF8-LF sha256=a515e79397a85a6211ac0251f7bb5d6e90eda237979e4d40740622167fe0e2db; anchor='FAVICON':]`.
+- Target: `tools/generate-branding.mjs:17 [UTF8-LF sha256=0e17da9eec334751e80fba97da219d0cfb69f2bf896f67b2e4d3a70a63e54ec2; anchor='FAVICON':]`.
 - Target: `firmware/esp8266/src/WebUi.h:7 [UTF8-LF sha256=0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622; anchor=<!-- BEGIN SHARED BRAND FAVICON -->]`.
 - Target: `docs/BRANDING-PARITY.md:40 [UTF8-LF sha256=b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7; anchor=## Explicit unfinished useful code and reasons]`.
 - Retained: Same resolved artwork binds favicon/touch/header before login; ESP embeds data instead of requesting a protected host filesystem icon.
 - Omitted/replaced code: `storedBoolean/supportsStandaloneMode/useWebPlatform capabilities/events; install/share/toggleFullscreen/enableNotifications/applyUpdate; settings setters/signalInteraction`. Disposition: **pending**. Reason: Generic browser capabilities/lifecycle/preferences need controller-specific integration and tests; static branding does not certify them.
 - Omitted/replaced code: `registerPealayerServiceWorker/update/controllerchange, wake-lock cancellation/visibility and offline badge`. Disposition: **pending**. Reason: PWA manifest/high-resolution artwork/cache ownership and streaming-specific wake-lock state remain open.
 - Omitted/replaced code: `mediaTitle/current_video state icon resolution, MediaSession video metadata/play/pause/seek/chapter handlers`. Disposition: **not-applicable**. Reason: Video title/track/session business is excluded; generic browser capabilities are still pending.
-- Test-code evidence: `tests/branding_test.mjs:12 [UTF8-LF sha256=91f8491b1cd941c2af78f621ab69658397d372959fb3c25a9dce913f62405bc9; anchor=actual Pealayer icon_data_from_bytes import]`.
+- Test-code evidence: `tests/branding_test.mjs:12 [UTF8-LF sha256=c956b89b2363c8770bc345f7132822c383a8329b76375556caf71da48d39fe24; anchor=actual Pealayer icon_data_from_bytes import]`.
 - Remaining: Complete named generic omissions with preference/endpoint/runtime tests; source checks are not deployed acceptance. See BRANDING-PARITY.md.
 
 ### PU850-ESP: `LocalLib/Shell.cpp`
@@ -841,9 +856,11 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 - Target: `desktop/src/ui/digits.rs:3 [UTF8-LF sha256=5a93b2fe85c492c9cd393e96dce442f82b7f4936c08c3f81ec92e723a8df9929; anchor=pub fn latin]`.
 - Target: `desktop/src/ui/cell_search.rs:47 [UTF8-LF sha256=735f49c2159d9eeb61f08a24e41bace6242115a722ad58abcd9463ec54a3413e; anchor=super::digits::latin(query)]`.
 - Target: `assets/web/rayanlamp.js:4 [UTF8-LF sha256=73144dfaf4a3e02fff90e25d3d53bb48029bb2dd802bf5051bf4f2bc67124491; anchor=function latinDigits]`.
-- Retained: Actual Persian/Arabic-Indic-to-ASCII maps adapted into Rust and JavaScript and invoked by native/Web cell search. Canonical IDs/ranges stay ASCII; peer names and protocol identifiers are not globally transformed.
+- Target: `mobile/lib/cell_search.dart:5 [UTF8-LF sha256=470ed85cf8b5ed034f63bc4bc84b415fd8d943803880e142e62396826f4481fe; anchor=String latinDigits]`.
+- Retained: Actual Persian/Arabic-Indic-to-ASCII maps adapted into Rust, JavaScript and Dart and invoked by native/Web/mobile cell search. Canonical IDs/ranges stay ASCII; peer names and protocol identifiers are not globally transformed.
 - Omitted/replaced code: `ShapePersianDigits visual decimal shaping`. Disposition: **pending**. Reason: Search needs ASCII normalization now. Apply visual shaping only to audited application-owned numeric labels, not arbitrary peer text or wire IDs. Display consumers remain pending.
 - Test-code evidence: `tests/rayanlamp_reuse_test.mjs:28 [UTF8-LF sha256=8b10200e63b30f5b73c36986971c52438fa0f21858c6da74110d868149a30a5d; anchor=latinDigits('۰۱۲۳۴۵۶۷۸۹]`.
+- Test-code evidence: `mobile/test/cell_search_test.dart:15 [UTF8-LF sha256=1fce7766710c10169453820ae4a6d39ba8625149ea0181989fccc6689b109bce; anchor=RayanLamp numeric normalization]`.
 - Remaining: Finish owned numeric display shaping and execute guarded native digit/search tests.
 
 ### RayanLamp: `LICENSE`

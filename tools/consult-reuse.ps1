@@ -112,6 +112,6 @@ if($Gate){
     Pending=@($taskRows | Where-Object Comparison -eq 'pending-comparison').Count;
     Stale=@($taskRows | Where-Object Comparison -eq 'stale-comparison').Count;
     AuditOnly=@($taskRows | Where-Object {-not $_.SpecialistConcerns.Count}).Count;
-    OpenActions=@($taskRows | Where-Object {$_.Remaining.Count -gt 0}).Count;
+    OpenActions=@($taskRows | Where-Object {@($_.Remaining).Count -gt 0}).Count;
     Gaps=@($taskRows | Where-Object Comparison -eq 'parity-gap').Count;
     Rows=$taskRows}

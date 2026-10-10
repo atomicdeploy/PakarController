@@ -39,3 +39,12 @@ if (prior !== artwork) {
   assert(!process.argv.includes('--check'), 'Firmware application artwork is stale; regenerate shared branding');
   await writeFile(applicationHeader, artwork);
 }
+// Flutter header uses the identical PNG master, not a substitute icon glyph.
+const mobileArtwork = new URL('../mobile/lib/application_artwork.dart', import.meta.url);
+const dart = '// Generated from assets/branding/app-icon.png.base64; same native/Web master.\nconst applicationArtworkBase64 = '+JSON.stringify(asset)+';\n';
+let mobilePrior;
+try { mobilePrior = await readFile(mobileArtwork, 'utf8'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+if (mobilePrior !== dart) {
+  assert(!process.argv.includes('--check'), 'Mobile application artwork is stale; regenerate shared branding');
+  await writeFile(mobileArtwork, dart);
+}

@@ -7,11 +7,23 @@ void main() {
     expect(unknown.deviceSettingsPages.map((p) => p['id']), ['overview']);
     expect(unknown.observedBuildInformation.containsKey('link_mode'), false);
     final peer = DeviceStatus({
+      'hostname': 'ledboard',
       'link_mode': 'busy-wire',
-      'capabilities': {'schema': 1, 'board_kind': 'controller', 'acknowledged_features': ['network', 'buzzer']},
+      'capabilities': {
+        'schema': 1,
+        'hostname': 'ledboard',
+        'board_kind': 'controller',
+        'acknowledged_features': ['network', 'buzzer'],
+      },
     });
-    expect(peer.deviceSettingsPages.map((p) => p['id']),
-        ['overview', 'wifi', 'mqtt', 'websocket', 'access', 'front-panel']);
+    expect(peer.deviceSettingsPages.map((p) => p['id']), [
+      'overview',
+      'wifi',
+      'mqtt',
+      'websocket',
+      'access',
+      'front-panel',
+    ]);
     expect(peer.observedBuildInformation['link_mode'], 'busy-wire');
     expect(peer.deviceSettingsPages.any((p) => p['id'] == 'leds'), false);
   });

@@ -501,13 +501,24 @@
       "verdict": "parity-gap",
       "preserved": [
         "Actual connected AND have_status AND advertised-capability conjunction adapted to selected-peer fresh manifests. No feature inference from hostname, pixel count, catalog, defaults or online alone.",
-        "TM1637 additionally requires fresh measured ACK; Text and Buzzer have independent HELLO support. Native/Web hide unrelated controls and gate domain commands."
+        "TM1637 additionally requires fresh measured ACK; Text and Buzzer have independent HELLO support. Native/Web hide unrelated controls and gate domain commands.",
+        "Flutter now adapts the same ready AND advertised schema-1 conjunction, table geometry and individual ACK policy; selected owner revisions reject old replies and retained dialogs. Unknown/stale peers have only client connection/overview navigation."
       ],
       "targets": [
         {
           "path": "desktop/src/capabilities.rs",
           "sha256": "8686e5df23a2a048c353bdc8a632de646674741586263217c1e40abb068298ec",
           "anchor": "pub fn has("
+        },
+        {
+          "path": "mobile/lib/peer_context.dart",
+          "sha256": "d15536d7b1c4315b737004e9e90cc6757f972353431dbad09151255d7c41cf77",
+          "anchor": "static PeerContext fromStatus"
+        },
+        {
+          "path": "mobile/lib/main.dart",
+          "sha256": "f97edb24c0c2ce319383abc67cf9211ba09b0f30e8b6221748e4d39ec29c0180",
+          "anchor": "Future<bool> _command"
         },
         {
           "path": "libraries/BoardCore/src/DeviceContext.h",
@@ -542,6 +553,21 @@
           "anchor": "No inferred board kind or controls"
         },
         {
+          "path": "mobile/test/peer_context_test.dart",
+          "sha256": "b29ce5cc725192d9ed743ebfb6cf2ced530794d1ae7fb9e26e061c39526e837e",
+          "anchor": "Independent ACKs and measured display gate"
+        },
+        {
+          "path": "mobile/test/widget_test.dart",
+          "sha256": "fb35f6d734fcb063817fd955b9406114d8d25366569ed5fd61bb9fa534d3efcf",
+          "anchor": "Peer ACK loss removes table and independent cards"
+        },
+        {
+          "path": "mobile/test/api_test.dart",
+          "sha256": "75829eb3b8dd744b2d87025db824b291bdc86e074baff8c28a597d425ed4a823",
+          "anchor": "Changed endpoint discards an in-flight status"
+        },
+        {
           "path": "tests/device_context_test.cpp",
           "sha256": "aea06975d4e027b0804c0a78c0385aefe1b7766418cd7835f22e80ea361bc650",
           "anchor": "int main("
@@ -556,13 +582,24 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual disconnected, missing status and capability-free cases adapted into shipped-Web tests. Independent peripheral ACKs, expiry, cross-kind and malformed geometry/schema cases added. C++ tests execute actual HELLO/display-ACK policy."
+        "Actual disconnected, missing status and capability-free cases adapted into shipped-Web tests. Independent peripheral ACKs, expiry, cross-kind and malformed geometry/schema cases added. C++ tests execute actual HELLO/display-ACK policy.",
+        "Equivalent Flutter fixture cases execute actual capability parsing, unsupported schema/geometry, display measured ACK, per-feature cards, identity change and phone/tablet navigation; API fixtures reject pending reads/queued writes after owner or credential changes."
       ],
       "targets": [
         {
           "path": "tests/web_context_test.mjs",
           "sha256": "fefae5fe0fd4aaf5d0961fb24695b979ca80e6efd07d3d87ea6b6e0e3ea6ed13",
           "anchor": "const manifest="
+        },
+        {
+          "path": "mobile/test/peer_context_test.dart",
+          "sha256": "b29ce5cc725192d9ed743ebfb6cf2ced530794d1ae7fb9e26e061c39526e837e",
+          "anchor": "No peer ACK cannot be inferred"
+        },
+        {
+          "path": "mobile/test/widget_test.dart",
+          "sha256": "fb35f6d734fcb063817fd955b9406114d8d25366569ed5fd61bb9fa534d3efcf",
+          "anchor": "Unknown schema has no Table"
         },
         {
           "path": "tests/device_context_test.cpp",
@@ -700,7 +737,8 @@
       "preserved": [
         "Actual icon_data_from_bytes imported unchanged; one embedded PNG supplies native/Web artwork without disk caches.",
         "Actual native_icon_bytes seven-frame ICO encoding/master preservation/Lanczos3 resampling and shell derivative test adapted to shared supplied bytes and PNG-only decoder.",
-        "Actual sync_native_window_icon source-signature cache, multi-viewport icon publication and tray refresh lifecycle adapted to fresh selected-peer Application metadata; no per-frame decode or disk cache."
+        "Actual sync_native_window_icon source-signature cache, multi-viewport icon publication and tray refresh lifecycle adapted to fresh selected-peer Application metadata; no per-frame decode or disk cache.",
+        "Flutter now shares the exact embedded native/Web PNG fallback instead of a different Phosphor glyph, with bounded peer-application title and inline PNG overrides and default-artwork decode fallback. Android launcher equivalent and runtime icon preferences remain pending."
       ],
       "targets": [
         {
@@ -722,6 +760,16 @@
           "path": "desktop/src/branding.rs",
           "sha256": "28849fc17b8082114c0bc3d9c38baf0aef64b929c7c721aa19bdc048b25905e7",
           "anchor": "pub fn sync_peer"
+        },
+        {
+          "path": "mobile/lib/main.dart",
+          "sha256": "f97edb24c0c2ce319383abc67cf9211ba09b0f30e8b6221748e4d39ec29c0180",
+          "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
+        },
+        {
+          "path": "mobile/lib/application_artwork.dart",
+          "sha256": "a1ee8fc15b0aa9111a5c416fcf74b3d05093b22e47b76d7744837f175f7b5ef4",
+          "anchor": "const applicationArtworkBase64"
         }
       ],
       "omissions": [
@@ -747,7 +795,7 @@
       "proof": [
         {
           "path": "tests/branding_test.mjs",
-          "sha256": "91f8491b1cd941c2af78f621ab69658397d372959fb3c25a9dce913f62405bc9",
+          "sha256": "c956b89b2363c8770bc345f7132822c383a8329b76375556caf71da48d39fe24",
           "anchor": "actual Pealayer icon_data_from_bytes import"
         },
         {
@@ -772,7 +820,7 @@
       "targets": [
         {
           "path": "tools/generate-branding.mjs",
-          "sha256": "a515e79397a85a6211ac0251f7bb5d6e90eda237979e4d40740622167fe0e2db",
+          "sha256": "0e17da9eec334751e80fba97da219d0cfb69f2bf896f67b2e4d3a70a63e54ec2",
           "anchor": "Pakar embeds it for the standalone ESP surface"
         },
         {
@@ -819,7 +867,7 @@
       "proof": [
         {
           "path": "tests/branding_test.mjs",
-          "sha256": "91f8491b1cd941c2af78f621ab69658397d372959fb3c25a9dce913f62405bc9",
+          "sha256": "c956b89b2363c8770bc345f7132822c383a8329b76375556caf71da48d39fe24",
           "anchor": "actual Pealayer icon_data_from_bytes import"
         },
         {
@@ -847,7 +895,7 @@
       "targets": [
         {
           "path": "tools/generate-branding.mjs",
-          "sha256": "a515e79397a85a6211ac0251f7bb5d6e90eda237979e4d40740622167fe0e2db",
+          "sha256": "0e17da9eec334751e80fba97da219d0cfb69f2bf896f67b2e4d3a70a63e54ec2",
           "anchor": "'FAVICON':"
         },
         {
@@ -884,7 +932,7 @@
       "proof": [
         {
           "path": "tests/branding_test.mjs",
-          "sha256": "91f8491b1cd941c2af78f621ab69658397d372959fb3c25a9dce913f62405bc9",
+          "sha256": "c956b89b2363c8770bc345f7132822c383a8329b76375556caf71da48d39fe24",
           "anchor": "actual Pealayer icon_data_from_bytes import"
         }
       ],
@@ -929,7 +977,7 @@
       "proof": [
         {
           "path": "tests/branding_test.mjs",
-          "sha256": "91f8491b1cd941c2af78f621ab69658397d372959fb3c25a9dce913f62405bc9",
+          "sha256": "c956b89b2363c8770bc345f7132822c383a8329b76375556caf71da48d39fe24",
           "anchor": "actual Pealayer icon_data_from_bytes import"
         }
       ],
@@ -1051,7 +1099,7 @@
       "proof": [
         {
           "path": "tests/reuse_preflight_test.ps1",
-          "sha256": "30a46f7b0625b26115363c9241a4a56020159d8b2e29485459c3a2b034a92ed8",
+          "sha256": "77b4cad209613e4d6f9cd19001652ce71278d5e6e9fbe693613322ef0c8badd3",
           "anchor": "Actual imported short-lived process stdout"
         }
       ],
@@ -1112,7 +1160,7 @@
       "proof": [
         {
           "path": "tests/reuse_preflight_test.ps1",
-          "sha256": "30a46f7b0625b26115363c9241a4a56020159d8b2e29485459c3a2b034a92ed8",
+          "sha256": "77b4cad209613e4d6f9cd19001652ce71278d5e6e9fbe693613322ef0c8badd3",
           "anchor": "Actual donor relative cache resolution"
         },
         {
@@ -2717,13 +2765,19 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual Get-DirectorySummary imported into tools/storage-hygiene.ps1 with Pakar canonical cache, board cache, mobile build and stable staging paths. Read-only by default and warns at the existing 8 GiB budget; logical sizes explicitly distinguished from disk allocation or wear."
+        "Actual Get-DirectorySummary imported into tools/storage-hygiene.ps1 with Pakar canonical cache, board cache, mobile build and stable staging paths. Read-only by default and warns at the existing 8 GiB budget; logical sizes explicitly distinguished from disk allocation or wear.",
+        "build-mobile.ps1 now calls the actual imported summary for its sole mobile/build cache and verifies free space before compilation. Existing SDK path comes from mobile README; no auto-install, dependency upgrade, cache relocation or clean."
       ],
       "targets": [
         {
           "path": "tools/storage-hygiene.ps1",
           "sha256": "bcb4b2b588ccf22a169e050602ac4a5a66d39ab446dd20c212744dbe27378d9a",
           "anchor": "function Get-DirectorySummary"
+        },
+        {
+          "path": "tools/build-mobile.ps1",
+          "sha256": "bd8d7db2cf821a1ccb5ca654b483bdd2dfa51b806956b0ea36af05bc3c099513",
+          "anchor": "$taskCache=Get-DirectorySummary"
         }
       ],
       "omissions": [
@@ -2756,6 +2810,11 @@
           "path": "tests/storage_hygiene_test.ps1",
           "sha256": "f8a5d8bfe1728d2643820229ce2c5310148e1e93dc2a727a714fe82c6e5a0f82",
           "anchor": "Read-only import must never become"
+        },
+        {
+          "path": "tests/reuse_preflight_test.ps1",
+          "sha256": "77b4cad209613e4d6f9cd19001652ce71278d5e6e9fbe693613322ef0c8badd3",
+          "anchor": "Mobile plan retains reviewed gates"
         }
       ],
       "improvement": ""
@@ -2920,7 +2979,7 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual Persian/Arabic-Indic-to-ASCII maps adapted into Rust and JavaScript and invoked by native/Web cell search. Canonical IDs/ranges stay ASCII; peer names and protocol identifiers are not globally transformed."
+        "Actual Persian/Arabic-Indic-to-ASCII maps adapted into Rust, JavaScript and Dart and invoked by native/Web/mobile cell search. Canonical IDs/ranges stay ASCII; peer names and protocol identifiers are not globally transformed."
       ],
       "targets": [
         {
@@ -2937,6 +2996,11 @@
           "path": "assets/web/rayanlamp.js",
           "sha256": "73144dfaf4a3e02fff90e25d3d53bb48029bb2dd802bf5051bf4f2bc67124491",
           "anchor": "function latinDigits"
+        },
+        {
+          "path": "mobile/lib/cell_search.dart",
+          "sha256": "470ed85cf8b5ed034f63bc4bc84b415fd8d943803880e142e62396826f4481fe",
+          "anchor": "String latinDigits"
         }
       ],
       "omissions": [
@@ -2954,6 +3018,11 @@
           "path": "tests/rayanlamp_reuse_test.mjs",
           "sha256": "8b10200e63b30f5b73c36986971c52438fa0f21858c6da74110d868149a30a5d",
           "anchor": "latinDigits('۰۱۲۳۴۵۶۷۸۹"
+        },
+        {
+          "path": "mobile/test/cell_search_test.dart",
+          "sha256": "1fce7766710c10169453820ae4a6d39ba8625149ea0181989fccc6689b109bce",
+          "anchor": "RayanLamp numeric normalization"
         }
       ],
       "improvement": ""

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +8,52 @@ import 'package:http/testing.dart';
 import 'package:pakarcontroller/api.dart';
 
 void main() {
+  test('Changed endpoint discards an in-flight status and never dispatches its queued POST', () async {
+    final pending = Completer<http.Response>();
+    var posts = 0;
+    final api = PakarApi(
+      client: MockClient((request) async {
+        if (request.method == 'POST') {
+          posts++;
+          return http.Response('{}', 200);
+        }
+        return pending.future;
+      }),
+    );
+    final write = api.post('/api/v1/game/reset');
+    final check = expectLater(write, throwsA(isA<StaleConnection>()));
+    api.baseUrl = 'http://other.local';
+    pending.complete(http.Response('{"hostname":"ledboard"}', 200));
+    await check;
+    expect(posts, 0);
+    await api.close();
+  });
+  test('Changing credentials revokes same-host cached identity without logging secrets', () async {
+    var reads = 0, posts = 0;
+    final pending = Completer<http.Response>();
+    final api = PakarApi(
+      client: MockClient((request) async {
+        if (request.method == 'POST') {
+          posts++;
+          return http.Response('{}', 200);
+        }
+        reads++;
+        return reads == 1
+            ? http.Response('{"hostname":"ledboard"}', 200)
+            : pending.future;
+      }),
+    );
+    await api.status();
+    api.password = 'replacement';
+    final write = api.post('/api/v1/game/reset');
+    final check = expectLater(write, throwsA(isA<StaleConnection>()));
+    api.password = 'second replacement';
+    pending.complete(http.Response('{"hostname":"ledboard"}', 200));
+    await check;
+    expect(reads, 2);
+    expect(posts, 0);
+    await api.close();
+  });
   test('Endpoint rejects credentials/path injection', () {
     expect(
       PakarApi.normalizeEndpoint(' ledboard.local '),

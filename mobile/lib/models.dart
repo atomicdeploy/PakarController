@@ -1,22 +1,21 @@
 import 'settings_catalog.dart';
+import 'peer_context.dart';
 
 class DeviceStatus {
   DeviceStatus(this.json);
   final Map<String, dynamic> json;
+  late final peer = PeerContext.fromStatus(json);
 
   /// Shared catalog, filtered by this peer's explicit ACKs. The caller still
   /// owns freshness; this DTO never infers capabilities from pin/pixel counts.
   List<Map<String, dynamic>> get deviceSettingsPages {
-    final c = json['capabilities'];
-    final features = c is Map && c['schema'] == 1 && c['acknowledged_features'] is List
-        ? (c['acknowledged_features'] as List).whereType<String>().toSet()
-        : <String>{};
-    final table = c is Map && c['board_kind'] == 'table' && c['table'] is Map &&
-        c['table']['columns'] == 10 && c['table']['rows'] == 8 && c['table']['pixels_per_cell'] == 6;
     return (deviceSettingsCatalog['pages'] as List)
         .cast<Map<String, dynamic>>()
-        .where((page) => (page['features'] as List).isEmpty ||
-            (page['features'] as List).any((feature) => features.contains(feature) && (feature != 'table' || table)))
+        .where(
+          (page) =>
+              (page['features'] as List).isEmpty ||
+              (page['features'] as List).any((feature) => peer.has(feature)),
+        )
         .toList(growable: false);
   }
 
@@ -32,7 +31,7 @@ class DeviceStatus {
   bool get avrOnline => json['avr_online'] == true;
   List<String> get audioCues {
     final reported = json['audio_cues'];
-    if (!avrOnline || reported is! List) return const [];
+    if (!peer.has('buzzer') || !avrOnline || reported is! List) return const [];
     return reported
         .whereType<String>()
         .where(audioCueNames.contains)
@@ -54,9 +53,16 @@ class DeviceStatus {
   List<String> get cells => (json['cells'] as List? ?? const [])
       .map((value) => value.toString())
       .toList(growable: false);
-  List<int> get segments => (json['tm1637_segments'] as List? ?? const [])
-      .map((value) => value as int)
-      .toList(growable: false);
+  List<int> get segments {
+    final values = json['tm1637_segments'];
+    if (values is! List ||
+        values.length != 4 ||
+        values.any((v) => v is! int || v < 0 || v > 255)) {
+      return const [];
+    }
+    return values.cast<int>();
+  }
+
   int get segmentBrightness => json['tm1637_brightness'] as int? ?? 0;
 }
 
@@ -82,14 +88,30 @@ class CellMap {
   final List<int> physical;
   final List<String> names;
 
-  factory CellMap.fromJson(Map<String, dynamic> json) => CellMap(
-    physical: (json['physical'] as List? ?? const [])
-        .map((value) => value as int)
-        .toList(growable: false),
-    names: (json['names'] as List? ?? const [])
-        .map((value) => value.toString())
-        .toList(growable: false),
-  );
+  bool get valid =>
+      physical.length == 80 &&
+      names.length == 80 &&
+      physical.toSet().length == 80 &&
+      physical.every((v) => v >= 1 && v <= 80) &&
+      names.every((v) => validText(v, 15));
+
+  factory CellMap.fromJson(Map<String, dynamic> json) {
+    final physical = json['physical'], names = json['names'];
+    if (physical is! List ||
+        names is! List ||
+        physical.any((v) => v is! int) ||
+        names.any((v) => v is! String)) {
+      throw const FormatException('Physical cell mapping unavailable');
+    }
+    final map = CellMap(
+      physical: physical.cast<int>(),
+      names: names.cast<String>(),
+    );
+    if (!map.valid) {
+      throw const FormatException('Invalid physical cell mapping');
+    }
+    return map;
+  }
 
   factory CellMap.defaults() => CellMap(
     physical: List.generate(80, (index) => index + 1),

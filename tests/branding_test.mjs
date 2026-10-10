@@ -46,6 +46,8 @@ assert(native.includes('.with_icon(branding::window_icon())'));
 assert.equal((shell.match(/crate::branding::peer_logo\(/g)||[]).length, 2);
 assert(shell.includes('crate::branding::sync_peer'));
 assert(read('firmware/esp8266/src/ApplicationArtwork.h').includes(master));
+assert(read('mobile/lib/application_artwork.dart').includes(JSON.stringify(master)));
+assert(read('mobile/lib/main.dart').includes('peer.application?.icon ?? bundledApplicationArtwork'));
 assert(read('desktop/src/platform/windows_tray.rs').includes('/pakar-icon-32.rgba'));
 assert(read('desktop/src/brand_image.rs').includes('assets/branding/app-icon.png.base64'));
 for (const name of ['bundled_artwork_decodes_without_files_or_theme_specific_replacements',

@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pakarcontroller/models.dart';
 
+import 'peer_fixture.dart';
+
 void main() {
   test('Only known actual AVR-advertised cues are available', () {
     expect(DeviceStatus({}).audioCues, isEmpty);
@@ -15,13 +17,18 @@ void main() {
     );
     expect(
       DeviceStatus({
+        ...peerFixture(features: ['buzzer']).json,
         'avr_online': true,
         'audio_cues': ['welcome-40led', 'bad', 7, 'welcome-40led'],
       }).audioCues,
       ['welcome-40led'],
     );
     expect(
-      DeviceStatus({'avr_online': true, 'audio_cues': audioCueNames}).audioCues,
+      DeviceStatus({
+        ...peerFixture(features: ['buzzer']).json,
+        'avr_online': true,
+        'audio_cues': audioCueNames,
+      }).audioCues,
       audioCueNames,
     );
   });

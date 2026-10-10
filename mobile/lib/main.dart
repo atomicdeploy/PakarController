@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
@@ -10,6 +11,10 @@ import 'api.dart';
 import 'models.dart';
 import 'connection_preferences.dart';
 import 'cell_search.dart';
+import 'peer_context.dart';
+import 'application_artwork.dart';
+
+final bundledApplicationArtwork = base64Decode(applicationArtworkBase64);
 
 void main() => runApp(const PakarControllerApp());
 
@@ -56,6 +61,10 @@ typedef Command = Future<void> Function(
   String path, [
   Map<String, String> values,
 ]);
+typedef VerifiedCommand = Future<bool> Function(
+  String path,
+  Map<String, String> values,
+);
 
 class ControlShell extends StatefulWidget {
   const ControlShell({super.key, this.api});
@@ -67,12 +76,14 @@ class ControlShell extends StatefulWidget {
 class _ControlShellState extends State<ControlShell> {
   late final api = widget.api ?? PakarApi();
   DeviceStatus? status;
-  CellMap mapping = CellMap.defaults();
+  CellMap mapping = CellMap(physical: const [], names: const []);
   StreamSubscription<DeviceStatus>? live;
   Timer? fallback;
   Timer? liveRetry;
-  bool refreshing = false;
-  int page = 0;
+  Timer? expiry;
+  int? refreshingRevision;
+  int observation = 0;
+  String page = 'overview';
   String message = 'Connecting to ledboard.local';
 
   @override
@@ -102,21 +113,25 @@ class _ControlShellState extends State<ControlShell> {
 
   Future<void> _connectLive() async {
     if (!mounted) return;
+    final owner = api.connectionRevision;
     liveRetry?.cancel();
     await live?.cancel();
-    if (!mounted) return;
+    if (!mounted || owner != api.connectionRevision) return;
     live = api.liveStatus().listen(
-      (value) => mounted ? setState(() => status = value) : null,
+      (value) {
+        if (mounted && owner == api.connectionRevision) _observe(value);
+      },
       onError: (Object _) {
-        if (mounted) {
-          setState(() {
-            status = null;
-            message = 'WebSocket disconnected';
-          });
-        }
+        if (!mounted || owner != api.connectionRevision) return;
+        _revoke('WebSocket disconnected');
         _retryLive();
       },
-      onDone: _retryLive,
+      onDone: () {
+        if (owner == api.connectionRevision) {
+          _revoke('WebSocket disconnected');
+          _retryLive();
+        }
+      },
     );
   }
 
@@ -127,37 +142,110 @@ class _ControlShellState extends State<ControlShell> {
   }
 
   Future<void> _refresh({bool silent = false}) async {
-    if (!mounted || refreshing) return;
-    refreshing = true;
+    final owner = api.connectionRevision, started = observation;
+    if (!mounted || refreshingRevision == owner) return;
+    refreshingRevision = owner;
     try {
-      final values = await Future.wait([api.status(), api.mapping()]);
-      if (!mounted) return;
+      final value = await api.status();
+      if (!mounted ||
+          owner != api.connectionRevision ||
+          started != observation) {
+        return;
+      }
+      _observe(value);
+      final accepted = observation;
+      if (value.peer.table) {
+        try {
+          final next = await api.mapping();
+          if (mounted &&
+              owner == api.connectionRevision &&
+              accepted == observation) {
+            setState(() => mapping = next);
+          }
+        } on Exception {
+          /* Fresh status remains usable; no fabricated map. */
+        }
+      }
+      if (!mounted || owner != api.connectionRevision) return;
       setState(() {
-        status = values[0] as DeviceStatus;
-        mapping = values[1] as CellMap;
         if (!silent) message = 'Live device synchronized';
       });
     } catch (error) {
-      if (mounted) {
-        setState(() {
-          status = null;
-          message = error.toString();
-        });
+      if (mounted &&
+          owner == api.connectionRevision &&
+          started == observation) {
+        _revoke(error.toString());
       }
     } finally {
-      refreshing = false;
+      if (refreshingRevision == owner) refreshingRevision = null;
     }
+  }
+
+  void _observe(DeviceStatus value) {
+    final changed = status?.hostname != value.hostname;
+    expiry?.cancel();
+    ++observation;
+    setState(() {
+      status = value;
+      if (changed || !value.peer.table) {
+        mapping = CellMap(physical: const [], names: const []);
+      }
+    });
+    expiry = Timer(const Duration(seconds: 6), () {
+      if (mounted) _revoke('Device state expired');
+    });
+  }
+
+  void _revoke(String reason) {
+    expiry?.cancel();
+    ++observation;
+    if (!mounted) return;
+    setState(() {
+      status = null;
+      mapping = CellMap(physical: const [], names: const []);
+      message = reason;
+    });
+  }
+
+  Future<void> _reconnect() async {
+    _revoke('Connecting to ${api.baseUrl}');
+    liveRetry?.cancel();
+    await live?.cancel();
+    await _refresh();
+    if (mounted) await _connectLive();
   }
 
   Future<void> command(
     String path, [
     Map<String, String> values = const {},
   ]) async {
+    final owner = api.connectionRevision, peer = status?.hostname;
+    await _command(owner, peer, path, values);
+  }
+
+  Future<bool> _command(
+    int owner,
+    String? peer,
+    String path,
+    Map<String, String> values,
+  ) async {
     try {
+      if (owner != api.connectionRevision ||
+          peer != status?.hostname ||
+          status?.peer.allows(path, values) != true) {
+        throw const FormatException(
+          'This peer has not freshly acknowledged this capability',
+        );
+      }
       await api.post(path, values);
+      if (!mounted || owner != api.connectionRevision) return false;
       await _refresh();
+      return true;
     } catch (error) {
-      if (mounted) setState(() => message = error.toString());
+      if (mounted && owner == api.connectionRevision) {
+        setState(() => message = error.toString());
+      }
+      return false;
     }
   }
 
@@ -166,106 +254,178 @@ class _ControlShellState extends State<ControlShell> {
     live?.cancel();
     fallback?.cancel();
     liveRetry?.cancel();
+    expiry?.cancel();
     api.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final wide = MediaQuery.sizeOf(context).width >= 840;
-    final destinations = [
-      const NavigationDestination(
-        icon: Icon(PakarIcons.gridFour),
-        label: 'Table',
-      ),
-      const NavigationDestination(
-        icon: Icon(PakarIcons.gauge),
-        label: 'Front panel',
-      ),
-      const NavigationDestination(
-        icon: Icon(PakarIcons.circuitry),
-        label: 'Hardware',
-      ),
-      const NavigationDestination(
-        icon: Icon(PakarIcons.gear),
-        label: 'Settings',
-      ),
+    final peer = status?.peer ?? PeerContext.unknown;
+    final owner = api.connectionRevision, hostname = status?.hostname;
+    // Retained dialogs hold this owner: they cannot write to a replacement peer.
+    Future<void> scoped(
+      String path, [
+      Map<String, String> values = const {},
+    ]) async {
+      await _command(owner, hostname, path, values);
+    }
+
+    final pages = <(String, String, IconData)>[
+      ('overview', 'Overview', PakarIcons.broadcast),
+      if (peer.table) ('table', 'Table', PakarIcons.gridFour),
+      if (peer.frontPanel) ('front-panel', 'Front panel', PakarIcons.gauge),
+      if (peer.has('telemetry') || peer.has('network'))
+        ('hardware', 'Hardware', PakarIcons.circuitry),
+      ('connection', 'Connection', PakarIcons.gear),
     ];
-    final body = switch (page) {
-      0 => TablePage(status: status, mapping: mapping, command: command),
-      1 => FrontPanelPage(status: status, command: command),
-      2 => HardwarePage(status: status),
-      _ => SettingsPage(
-        api: api,
-        reconnect: () async {
-          await _refresh();
-          _connectLive();
-        },
-      ),
-    };
-    return Scaffold(
-      appBar: AppBar(
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'PakarController',
-              style: TextStyle(fontWeight: FontWeight.w700),
+    final active = pages.indexWhere((item) => item.$1 == page);
+    final index = active < 0 ? 0 : active;
+    final wide = MediaQuery.sizeOf(context).width >= 840;
+    final destinations = pages
+        .map(
+          (item) => NavigationDestination(icon: Icon(item.$3), label: item.$2),
+        )
+        .toList();
+    final body = IndexedStack(
+      index: index,
+      children: [
+        for (final item in pages)
+          switch (item.$1) {
+            'table' => TablePage(
+              key: ValueKey('table:$owner:${hostname ?? ''}'),
+              status: status,
+              mapping: mapping,
+              command: scoped,
+              verifiedCommand: (path, values) =>
+                  _command(owner, hostname, path, values),
             ),
-            Text(
-              'AtomicDeploy control surface',
-              style: TextStyle(fontSize: 11, color: Color(0xff909baa)),
+            'front-panel' => FrontPanelPage(
+              key: ValueKey('front:$owner:${hostname ?? ''}'),
+              status: status,
+              command: scoped,
+            ),
+            'hardware' => HardwarePage(status: status),
+            'connection' => SettingsPage(
+              key: const ValueKey('connection-preferences'),
+              api: api,
+              reconnect: _reconnect,
+            ),
+            _ => BoardOverview(status: status),
+          },
+      ],
+    );
+    final artwork = peer.application?.icon ?? bundledApplicationArtwork;
+    return Title(
+      title: peer.title,
+      color: studioDark.surface,
+      child: Scaffold(
+        appBar: AppBar(
+          leading: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Image.memory(
+              artwork,
+              errorBuilder: (_, _, _) =>
+                  Image.memory(bundledApplicationArtwork),
+            ),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                peer.application?.title ?? 'PakarController',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              Text(
+                peer.known
+                    ? '${peer.name} · ${peer.hostname}.local'
+                    : 'No acknowledged board',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11, color: Color(0xff909baa)),
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              onPressed: _refresh,
+              tooltip: 'Refresh device state',
+              icon: const Icon(PakarIcons.arrowClockwise),
             ),
           ],
         ),
-        actions: [
-          StatusPill(
-            ok: status?.avrOnline == true,
-            label: status == null
-                ? 'State unavailable'
-                : status?.avrOnline == true
-                ? 'AVR online'
-                : 'AVR offline',
-          ),
-          IconButton(
-            onPressed: _refresh,
-            icon: const Icon(PakarIcons.arrowClockwise),
+        body: Row(
+          children: [
+            if (wide)
+              NavigationRail(
+                selectedIndex: index,
+                onDestinationSelected: (value) =>
+                    setState(() => page = pages[value].$1),
+                labelType: NavigationRailLabelType.all,
+                destinations: destinations
+                    .map(
+                      (item) => NavigationRailDestination(
+                        icon: item.icon,
+                        label: Text(item.label),
+                      ),
+                    )
+                    .toList(),
+              ),
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(child: body),
+                  StatusBar(status: status, message: message),
+                ],
+              ),
+            ),
+          ],
+        ),
+        bottomNavigationBar: wide
+            ? null
+            : NavigationBar(
+                selectedIndex: index,
+                onDestinationSelected: (value) =>
+                    setState(() => page = pages[value].$1),
+                destinations: destinations,
+              ),
+      ),
+    );
+  }
+}
+
+class BoardOverview extends StatelessWidget {
+  const BoardOverview({super.key, required this.status});
+  final DeviceStatus? status;
+  @override
+  Widget build(BuildContext context) {
+    final peer = status?.peer ?? PeerContext.unknown;
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        Text(
+          peer.known ? peer.name : 'Connect to a board',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          peer.known ? '${peer.hostname}.local' : 'Use Connection to choose the hostname and credentials. Controls appear only after individual capability acknowledgment.',
+        ),
+        if (peer.known) ...[
+          const SizedBox(height: 20),
+          const Text('Acknowledged capabilities'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final feature in peer.features) Chip(label: Text(feature)),
+            ],
           ),
         ],
-      ),
-      body: Row(
-        children: [
-          if (wide)
-            NavigationRail(
-              selectedIndex: page,
-              onDestinationSelected: (value) => setState(() => page = value),
-              labelType: NavigationRailLabelType.all,
-              destinations: destinations
-                  .map(
-                    (item) => NavigationRailDestination(
-                      icon: item.icon,
-                      label: Text(item.label),
-                    ),
-                  )
-                  .toList(),
-            ),
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(child: body),
-                StatusBar(status: status, message: message),
-              ],
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: wide
-          ? null
-          : NavigationBar(
-              selectedIndex: page,
-              onDestinationSelected: (value) => setState(() => page = value),
-              destinations: destinations,
-            ),
+      ],
     );
   }
 }
@@ -276,10 +436,12 @@ class TablePage extends StatefulWidget {
     required this.status,
     required this.mapping,
     required this.command,
+    this.verifiedCommand,
   });
   final DeviceStatus? status;
   final CellMap mapping;
   final Command command;
+  final VerifiedCommand? verifiedCommand;
 
   @override
   State<TablePage> createState() => _TablePageState();
@@ -289,131 +451,219 @@ class _TablePageState extends State<TablePage> {
   DeviceStatus? get status => widget.status;
   CellMap get mapping => widget.mapping;
   Command get command => widget.command;
-  Set<int> searchMatches = {};
+  final query = TextEditingController();
+  Set<int> selection = {};
   String? searchError;
+  bool multiple = true, showIndicators = false, applying = false;
+  String? batchMessage;
 
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      Row(
-        children: [
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  void dispose() {
+    query.dispose();
+    super.dispose();
+  }
+
+  void select(int id) => setState(() {
+    if (multiple) {
+      if (!selection.remove(id)) selection.add(id);
+    } else {
+      selection = {id};
+    }
+    query.text = formatCellSelection(selection);
+    searchError = null;
+  });
+
+  Future<void> applySelection(String state) async {
+    final send = widget.verifiedCommand;
+    if (send == null || applying || selection.isEmpty) return;
+    final ids = selection.toList()..sort();
+    setState(() {
+      applying = true;
+      batchMessage = null;
+    });
+    var completed = 0;
+    for (final id in ids) {
+      if (!mounted ||
+          !await send('/api/v1/cell', {
+            'id': '$id',
+            'state': state,
+            'effect': 'fade',
+          })) {
+        break;
+      }
+      ++completed;
+    }
+    if (mounted) {
+      setState(() {
+        applying = false;
+        batchMessage = completed == ids.length
+            ? '$completed commands acknowledged; inspect live cells for output.'
+            : 'Stopped after $completed/${ids.length}. Failed or uncertain commands were not retried.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => status?.peer.table != true
+      ? const Center(child: Text('No acknowledged table'))
+      : ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Row(
               children: [
-                Text(
-                  '80-cell table',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '80-cell table',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        'Logical row-major identity · odd columns offset by half a cell',
+                      ),
+                    ],
+                  ),
                 ),
-                Text(
-                  'Logical row-major identity · odd columns offset by half a cell',
+                FilledButton.icon(
+                  onPressed:
+                      status?.peer.modes.any(
+                            (mode) => mode.id == 'first-wins',
+                          ) !=
+                          true
+                      ? null
+                      : () => command('/api/v1/game/reset'),
+                  icon: const Icon(PakarIcons.arrowCounterClockwise),
+                  label: const Text('Reset'),
                 ),
               ],
             ),
-          ),
-          FilledButton.icon(
-            onPressed: status == null
-                ? null
-                : () => command('/api/v1/game/reset'),
-            icon: const Icon(PakarIcons.arrowCounterClockwise),
-            label: const Text('Reset'),
-          ),
-        ],
-      ),
-      const SizedBox(height: 12),
-      TextField(
-        decoration: InputDecoration(
-          labelText: 'Find logical cell',
-          hintText: '12, 3–8',
-          errorText: searchError,
-        ),
-        onChanged: (text) => setState(() {
-          try {
-            searchMatches = parseCellSearch(text);
-            searchError = null;
-          } on FormatException catch (error) {
-            searchMatches = {};
-            searchError = error.message;
-          }
-        }),
-      ),
-      const SizedBox(height: 12),
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: AspectRatio(
-            aspectRatio: 10 / 8.6,
-            child: LayoutBuilder(
-              builder: (context, bounds) {
-                final pitchX = bounds.maxWidth / 10;
-                final pitchY = bounds.maxHeight / 8.5;
-                return Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Row(
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final mode in status!.peer.modes)
+                  ChoiceChip(
+                    label: Text(mode.label),
+                    selected: status!.mode == mode.id,
+                    onSelected: (_) =>
+                        command('/api/v1/mode', {'value': mode.id}),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: query,
+              decoration: InputDecoration(
+                labelText: 'Find logical cell',
+                hintText: '12, 3–8',
+                errorText: searchError,
+              ),
+              onChanged: (text) => setState(() {
+                try {
+                  selection = parseCellSearch(text);
+                  searchError = null;
+                } on FormatException catch (error) {
+                  searchError = error.message;
+                }
+              }),
+              onSubmitted: (_) {
+                if (searchError == null) {
+                  setState(() => query.text = formatCellSelection(selection));
+                }
+              },
+            ),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                FilterChip(
+                  label: const Text('Multiple selection'),
+                  selected: multiple,
+                  onSelected: (value) => setState(() => multiple = value),
+                ),
+                FilterChip(
+                  label: const Text('LED indicators'),
+                  selected: showIndicators,
+                  onSelected: (value) => setState(() => showIndicators = value),
+                ),
+                TextButton(
+                  onPressed: applying
+                      ? null
+                      : () => setState(() {
+                          selection = {};
+                          query.clear();
+                          searchError = null;
+                        }),
+                  child: const Text('Clear selection'),
+                ),
+                for (final value in ['white', 'red', 'off'])
+                  FilledButton.tonal(
+                    onPressed:
+                        selection.isEmpty ||
+                            applying ||
+                            widget.verifiedCommand == null
+                        ? null
+                        : () => applySelection(value),
+                    child: Text('Set $value'),
+                  ),
+              ],
+            ),
+            if (batchMessage != null) Text(batchMessage!),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: AspectRatio(
+                  aspectRatio: 10 / 8.6,
+                  child: LayoutBuilder(
+                    builder: (context, bounds) {
+                      final pitchX = bounds.maxWidth / 10;
+                      final pitchY = bounds.maxHeight / 8.5;
+                      return Stack(
                         children: [
-                          for (var column = 0; column < 10; ++column)
-                            Expanded(
-                              child: ColoredBox(
-                                color: column.isEven
-                                    ? const Color(0xff0d1016)
-                                    : const Color(0xff181e28),
+                          for (var id = 1; id <= 80; id++)
+                            Positioned(
+                              left: ((id - 1) % 10) * pitchX + 2,
+                              top:
+                                  ((id - 1) ~/ 10) * pitchY +
+                                  (((id - 1) % 10).isEven ? pitchY * .5 : 0) +
+                                  2,
+                              width: pitchX - 4,
+                              height: pitchY - 4,
+                              child: CellButton(
+                                key: ValueKey('cell-$id'),
+                                id: id,
+                                highlighted: selection.contains(id),
+                                showIndicator: showIndicators,
+                                name:
+                                    mapping.names.elementAtOrNull(id - 1) ??
+                                    '$id',
+                                physical:
+                                    mapping.physical.elementAtOrNull(id - 1) ??
+                                    0,
+                                state:
+                                    status?.cells.elementAtOrNull(id - 1) ??
+                                    'unknown',
+                                onPressed: applying ? null : () => select(id),
+                                onLongPress: !mapping.valid
+                                    ? null
+                                    : () => _editMapping(context, id),
                               ),
                             ),
                         ],
-                      ),
-                    ),
-                    for (var id = 1; id <= 80; id++)
-                      Positioned(
-                        left: ((id - 1) % 10) * pitchX + 2,
-                        top:
-                            ((id - 1) ~/ 10) * pitchY +
-                            (((id - 1) % 10).isEven ? pitchY * .5 : 0) +
-                            2,
-                        width: pitchX - 4,
-                        height: pitchY - 4,
-                        child: CellButton(
-                          id: id,
-                          highlighted: searchMatches.contains(id),
-                          name: mapping.names.elementAtOrNull(id - 1) ?? '$id',
-                          physical:
-                              mapping.physical.elementAtOrNull(id - 1) ?? id,
-                          state:
-                              status?.cells.elementAtOrNull(id - 1) ??
-                              'unknown',
-                          onPressed:
-                              status?.cells.elementAtOrNull(id - 1) == null
-                              ? null
-                              : () async {
-                                  final current =
-                                      status?.cells.elementAtOrNull(id - 1) ??
-                                      'off';
-                                  final next = current == 'white'
-                                      ? 'red'
-                                      : current == 'red'
-                                      ? 'off'
-                                      : 'white';
-                                  await command('/api/v1/cell', {
-                                    'id': '$id',
-                                    'state': next,
-                                    'effect': 'fade',
-                                  });
-                                },
-                          onLongPress: status == null
-                              ? null
-                              : () => _editMapping(context, id),
-                        ),
-                      ),
-                  ],
-                );
-              },
+                      );
+                    },
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
-    ],
-  );
+          ],
+        );
 
   Future<void> _editMapping(BuildContext context, int id) async {
     final physical = TextEditingController(
@@ -467,7 +717,7 @@ class _TablePageState extends State<TablePage> {
   }
 }
 
-class CellButton extends StatelessWidget {
+class CellButton extends StatefulWidget {
   const CellButton({
     super.key,
     required this.id,
@@ -477,6 +727,7 @@ class CellButton extends StatelessWidget {
     required this.onPressed,
     required this.onLongPress,
     this.highlighted = false,
+    this.showIndicator = false,
   });
   final int id;
   final int physical;
@@ -485,41 +736,80 @@ class CellButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final VoidCallback? onLongPress;
   final bool highlighted;
+  final bool showIndicator;
+
+  @override
+  State<CellButton> createState() => _CellButtonState();
+}
+
+class _CellButtonState extends State<CellButton> {
+  bool hovered = false, focused = false;
 
   @override
   Widget build(BuildContext context) {
-    final background = state == 'white'
-        ? const Color(0xffeef2f7)
-        : state == 'red'
-        ? const Color(0xffff5c68)
-        : const Color(0xff0d1016);
-    final foreground = state == 'white'
-        ? const Color(0xff17202b)
-        : const Color(0xffeef2f7);
+    // Adapt cell_surface's tint-free inside outline, independent of LED state.
+    final background = hovered && !widget.highlighted
+        ? const Color(0xff222b38)
+        : ((widget.id - 1) % 10).isEven
+        ? const Color(0xff121820)
+        : const Color(0xff1b2330);
+    final outline = widget.highlighted
+        ? const Color(0xffffc75b)
+        : focused
+        ? studioDark.primary
+        : hovered
+        ? const Color(0xff66758c)
+        : studioDark.outline;
     return Tooltip(
-      message: 'Logical $id · physical $physical · $state',
-      child: Material(
-        color: background,
-        shape: RoundedRectangleBorder(
+      message:
+          'Logical ${widget.id} · physical ${widget.physical > 0 ? widget.physical : 'unknown'} · ${widget.state}',
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        decoration: BoxDecoration(
+          color: background,
           borderRadius: BorderRadius.circular(9),
-          side: BorderSide(
-            color: highlighted ? const Color(0xff68a7ff) : Colors.transparent,
-            width: 2,
-          ),
+          border: Border.all(color: outline, width: 2),
         ),
-        child: InkWell(
-          onTap: onPressed,
-          onLongPress: onLongPress,
-          borderRadius: BorderRadius.circular(9),
-          child: Center(
-            child: FittedBox(
-              child: Text(
-                name,
-                style: TextStyle(
-                  color: foreground,
-                  fontWeight: FontWeight.w700,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.onPressed,
+            onLongPress: widget.onLongPress,
+            onHover: (value) => setState(() => hovered = value),
+            onFocusChange: (value) => setState(() => focused = value),
+            overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+            borderRadius: BorderRadius.circular(9),
+            child: Stack(
+              children: [
+                Center(
+                  child: FittedBox(
+                    child: Text(
+                      widget.name,
+                      style: TextStyle(
+                        color: studioDark.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                if (widget.showIndicator)
+                  Positioned(
+                    right: 4,
+                    bottom: 4,
+                    child: Container(
+                      width: 5,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: widget.state == 'white'
+                            ? Colors.white
+                            : widget.state == 'red'
+                            ? studioDark.error
+                            : studioDark.outline,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -561,105 +851,97 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
         style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
       ),
       const SizedBox(height: 12),
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              if (widget.status == null || widget.status!.segments.length != 4)
-                const Text('Display state unavailable')
-              else
-                SevenSegmentPreview(
-                  segments: widget.status?.segments ?? const [],
-                  brightness: widget.status?.segmentBrightness ?? 0,
-                  active: widget.status?.tmReady == true,
-                ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: text,
-                maxLength: 40,
-                decoration: const InputDecoration(labelText: 'Marquee text'),
-              ),
-              DropdownButtonFormField<String>(
-                initialValue: repeat,
-                decoration: const InputDecoration(labelText: 'Repeat'),
-                items: const [
-                  DropdownMenuItem(value: 'once', child: Text('Once')),
-                  DropdownMenuItem(value: 'loop', child: Text('Loop')),
-                  DropdownMenuItem(
-                    value: 'interval',
-                    child: Text('Interval (5 seconds)'),
-                  ),
-                ],
-                onChanged: (value) => setState(() => repeat = value ?? 'once'),
-              ),
-              CheckboxListTile(
-                title: const Text('Scroll short text'),
-                value: forceScroll,
-                onChanged: (value) =>
-                    setState(() => forceScroll = value ?? false),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: Slider(
-                      value: speed,
-                      min: 80,
-                      max: 1000,
-                      divisions: 46,
-                      label: '${speed.round()} ms',
-                      onChanged: (value) => setState(() => speed = value),
-                    ),
-                  ),
-                  FilledButton.icon(
-                    onPressed: widget.status == null
-                        ? null
-                        : () => widget.command('/api/v1/display', {
-                            'text': text.text,
-                            'speed_ms': '${speed.round()}',
-                            'hold_ms': '1500',
-                            'repeat': repeat,
-                            'force_scroll': '$forceScroll',
-                            'interval_seconds': '5',
-                          }),
-                    icon: const Icon(PakarIcons.play),
-                    label: const Text('Present'),
-                  ),
-                ],
-              ),
-            ],
+      if (widget.status?.peer.has('display') == true)
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: widget.status!.segments.length == 4
+                ? SevenSegmentPreview(
+                    segments: widget.status!.segments,
+                    brightness: widget.status!.segmentBrightness,
+                    active: true,
+                  )
+                : const Text('Display state unavailable'),
           ),
         ),
-      ),
-      const SizedBox(height: 12),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          for (final mode in ['idle', 'cell', 'first-wins', 'snake'])
-            ChoiceChip(
-              label: Text(mode),
-              selected: widget.status?.mode == mode,
-              onSelected: widget.status == null
-                  ? null
-                  : (_) => widget.command('/api/v1/mode', {'value': mode}),
+      if (widget.status?.peer.has('text') == true)
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                TextField(
+                  controller: text,
+                  maxLength: 40,
+                  decoration: const InputDecoration(labelText: 'Marquee text'),
+                ),
+                DropdownButtonFormField<String>(
+                  initialValue: repeat,
+                  decoration: const InputDecoration(labelText: 'Repeat'),
+                  items: const [
+                    DropdownMenuItem(value: 'once', child: Text('Once')),
+                    DropdownMenuItem(value: 'loop', child: Text('Loop')),
+                    DropdownMenuItem(
+                      value: 'interval',
+                      child: Text('Interval (5 seconds)'),
+                    ),
+                  ],
+                  onChanged: (value) =>
+                      setState(() => repeat = value ?? 'once'),
+                ),
+                CheckboxListTile(
+                  title: const Text('Scroll short text'),
+                  value: forceScroll,
+                  onChanged: (value) =>
+                      setState(() => forceScroll = value ?? false),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Slider(
+                        value: speed,
+                        min: 80,
+                        max: 1000,
+                        divisions: 46,
+                        label: '${speed.round()} ms',
+                        onChanged: (value) => setState(() => speed = value),
+                      ),
+                    ),
+                    FilledButton.icon(
+                      onPressed: widget.status == null
+                          ? null
+                          : () => widget.command('/api/v1/display', {
+                              'text': text.text,
+                              'speed_ms': '${speed.round()}',
+                              'hold_ms': '1500',
+                              'repeat': repeat,
+                              'force_scroll': '$forceScroll',
+                              'interval_seconds': '5',
+                            }),
+                      icon: const Icon(PakarIcons.play),
+                      label: const Text('Present'),
+                    ),
+                  ],
+                ),
+              ],
             ),
-        ],
-      ),
+          ),
+        ),
       const SizedBox(height: 12),
-      Wrap(
-        spacing: 8,
-        children: [
-          for (final cue in widget.status?.audioCues ?? const <String>[])
-            ActionChip(
-              avatar: const Icon(PakarIcons.musicNote),
-              label: Text(cue),
-              onPressed: widget.status == null
-                  ? null
-                  : () => widget.command('/api/v1/audio', {'cue': cue}),
-            ),
-        ],
-      ),
+      if (widget.status?.peer.has('buzzer') == true)
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final cue in widget.status?.audioCues ?? const <String>[])
+              ActionChip(
+                avatar: const Icon(PakarIcons.musicNote),
+                label: Text(cue),
+                onPressed: widget.status == null
+                    ? null
+                    : () => widget.command('/api/v1/audio', {'cue': cue}),
+              ),
+          ],
+        ),
     ],
   );
 }
@@ -754,27 +1036,37 @@ class HardwarePage extends StatelessWidget {
         ? '0x${(status!.json[key] as int).toRadixString(16).padLeft(2, '0')}'
         : 'Unavailable';
     final values = [
-      ('AVR', fact('avr_online', 'Online', 'Offline'), PakarIcons.cpu),
-      ('TM1637', fact('tm1637_ack', 'Ready', 'No ACK'), PakarIcons.gauge),
-      (
-        'mDNS',
-        fact('mdns_started', 'Started', 'Stopped'),
-        PakarIcons.broadcast,
-      ),
-      ('SSDP', fact('ssdp_started', 'Started', 'Stopped'), PakarIcons.radio),
-      (
-        'MQTT',
-        fact('mqtt_connected', 'Connected', 'Offline'),
-        PakarIcons.cloud,
-      ),
-      (
-        'NTP',
-        fact('ntp_synced', 'Synchronized', 'Not synchronized'),
-        PakarIcons.clock,
-      ),
-      ('Inputs', mask('active_inputs'), PakarIcons.keyboard),
-      ('Outputs', mask('active_outputs'), PakarIcons.lightning),
+      if (status?.peer.known == true &&
+          status?.json.containsKey('avr_online') == true)
+        ('AVR', fact('avr_online', 'Online', 'Offline'), PakarIcons.cpu),
+      if (status?.peer.has('display') == true)
+        ('TM1637', fact('tm1637_ack', 'Ready', 'No ACK'), PakarIcons.gauge),
+      if (status?.peer.has('network') == true) ...[
+        (
+          'mDNS',
+          fact('mdns_started', 'Started', 'Stopped'),
+          PakarIcons.broadcast,
+        ),
+        ('SSDP', fact('ssdp_started', 'Started', 'Stopped'), PakarIcons.radio),
+        (
+          'MQTT',
+          fact('mqtt_connected', 'Connected', 'Offline'),
+          PakarIcons.cloud,
+        ),
+        (
+          'NTP',
+          fact('ntp_synced', 'Synchronized', 'Not synchronized'),
+          PakarIcons.clock,
+        ),
+      ],
+      if (status?.peer.has('inputs') == true)
+        ('Inputs', mask('active_inputs'), PakarIcons.keyboard),
+      if (status?.peer.has('outputs') == true)
+        ('Outputs', mask('active_outputs'), PakarIcons.lightning),
     ];
+    if (values.isEmpty) {
+      return const Center(child: Text('No acknowledged hardware measurements'));
+    }
     return GridView.extent(
       padding: const EdgeInsets.all(16),
       maxCrossAxisExtent: 280,
@@ -950,7 +1242,7 @@ class StatusBar extends StatelessWidget {
     child: Row(
       children: [
         Icon(
-          status?.tmReady == true ? PakarIcons.check : PakarIcons.warning,
+          status?.peer.known == true ? PakarIcons.check : PakarIcons.warning,
           size: 16,
         ),
         const SizedBox(width: 8),

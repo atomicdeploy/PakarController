@@ -10,16 +10,47 @@ import 'models.dart';
 
 class PakarApi {
   PakarApi({
-    this.baseUrl = 'http://ledboard.local',
-    this.user = 'admin',
-    this.password = 'pakarcontroller',
+    String baseUrl = 'http://ledboard.local',
+    String user = 'admin',
+    String password = 'pakarcontroller',
     http.Client? client,
     this.discovery,
-  }) : _client = client ?? http.Client();
+  }) : _client = client ?? http.Client(),
+       _baseUrl = normalizeEndpoint(baseUrl),
+       // Preserve public argument names; private setters own revisions.
+       // ignore: prefer_initializing_formals
+       _user = user,
+       // ignore: prefer_initializing_formals
+       _password = password;
 
-  String baseUrl;
-  String user;
-  String password;
+  String _baseUrl, _user, _password;
+  int _connectionRevision = 0;
+  int get connectionRevision => _connectionRevision;
+  String get baseUrl => _baseUrl;
+  set baseUrl(String value) {
+    final normalized = normalizeEndpoint(value);
+    if (_baseUrl != normalized) {
+      _baseUrl = normalized;
+      resetTransport();
+    }
+  }
+
+  String get user => _user;
+  set user(String value) {
+    if (_user != value) {
+      _user = value;
+      resetTransport();
+    }
+  }
+
+  String get password => _password;
+  set password(String value) {
+    if (_password != value) {
+      _password = value;
+      resetTransport();
+    }
+  }
+
   final http.Client _client;
   final Future<Set<String>> Function()? discovery;
   WebSocketChannel? _channel;
@@ -56,11 +87,13 @@ class PakarApi {
           .replace(queryParameters: query);
 
   Future<Map<String, dynamic>> _get(String path) async {
+    final revision = connectionRevision, headers = _headers;
     final response = await _withDiscovery(
       (base) => _client
-          .get(_uri(base, path), headers: _headers)
+          .get(_uri(base, path), headers: headers)
           .timeout(const Duration(seconds: 6)),
     );
+    if (revision != connectionRevision) throw const StaleConnection();
     if (response.statusCode ~/ 100 != 2) throw Exception(response.body);
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -69,9 +102,11 @@ class PakarApi {
     String path, [
     Map<String, String> values = const {},
   ]) async {
+    final revision = connectionRevision;
     // Resolve/verify through a read first; a POST must never be automatically
     // replayed after a timeout or disconnect (the board may have applied it).
     if (_verifiedEndpoint != baseUrl) await status();
+    if (revision != connectionRevision) throw const StaleConnection();
     late final http.Response response;
     try {
       response = await _client
@@ -80,6 +115,7 @@ class PakarApi {
     } on Exception {
       throw const OperationUncertain();
     }
+    if (revision != connectionRevision) throw const StaleConnection();
     if (response.statusCode ~/ 100 != 2) throw Exception(response.body);
   }
 
@@ -99,37 +135,60 @@ class PakarApi {
       CellMap.fromJson(await _get('/api/v1/cells/mapping'));
 
   Stream<DeviceStatus> liveStatus() async* {
+    final revision = connectionRevision;
     if (_verifiedEndpoint != baseUrl) await status();
+    if (revision != connectionRevision) throw const StaleConnection();
     await _channel?.sink.close();
+    if (revision != connectionRevision) throw const StaleConnection();
     final source = Uri.parse(transportUrl);
     final uri = source.replace(
       scheme: source.scheme == 'https' ? 'wss' : 'ws',
       path: '/ws',
       query: null,
     );
-    _channel = IOWebSocketChannel.connect(
+    final active = IOWebSocketChannel.connect(
       uri,
       headers: _headers,
       pingInterval: const Duration(seconds: 20),
     );
-    await _channel!.ready;
-    _channel!.sink.add('{"type":"status"}');
-    await for (final message in _channel!.stream) {
+    _channel = active;
+    await active.ready;
+    if (revision != connectionRevision) {
+      await active.sink.close();
+      return;
+    }
+    active.sink.add('{"type":"status"}');
+    await for (final message in active.stream) {
+      if (revision != connectionRevision) return;
       if (message is! String) continue;
       final value = jsonDecode(message);
       if (value is Map<String, dynamic> && value.containsKey('hostname')) {
+        final expected = _localLabel();
+        if (expected != null && value['hostname'] != expected) {
+          throw const StaleConnection();
+        }
         yield DeviceStatus(value);
       }
     }
   }
 
   Future<void> close() async {
-    await _channel?.sink.close();
+    ++_connectionRevision;
+    final active = _channel;
+    _channel = null;
+    _verifiedEndpoint = _transportOwner = _discoveredBaseUrl = null;
+    await active?.sink.close();
     _client.close();
   }
 
   void resetTransport() {
+    ++_connectionRevision;
     _discoveredBaseUrl = _transportOwner = _verifiedEndpoint = null;
+    final active = _channel;
+    _channel = null;
+    if (active != null) {
+      unawaited(active.sink.close().then<void>((_) {}, onError: (Object _) {}));
+    }
   }
 
   String? _localLabel() {
@@ -144,15 +203,18 @@ class PakarApi {
   Future<http.Response> _withDiscovery(
     Future<http.Response> Function(String base) request,
   ) async {
+    final revision = connectionRevision, headers = _headers;
     try {
       return await request(transportUrl);
     } on Exception {
+      if (revision != connectionRevision) throw const StaleConnection();
       if (_localLabel() == null) rethrow;
     }
 
     _discoveredBaseUrl = null;
     _transportOwner = baseUrl;
     for (final candidate in await (discovery?.call() ?? _discoverSsdp())) {
+      if (revision != connectionRevision) throw const StaleConnection();
       final origin = Uri.tryParse(candidate);
       if (origin == null ||
           !['http', 'https'].contains(origin.scheme) ||
@@ -161,15 +223,17 @@ class PakarApi {
       }
       try {
         final probe = await _client
-            .get(_uri(candidate, '/api/v1/status'), headers: _headers)
+            .get(_uri(candidate, '/api/v1/status'), headers: headers)
             .timeout(const Duration(seconds: 2));
         if (probe.statusCode ~/ 100 != 2) continue;
+        if (revision != connectionRevision) throw const StaleConnection();
         final json = jsonDecode(probe.body);
         if (json is! Map<String, dynamic> ||
             json['hostname'] != _localLabel()) {
           continue;
         }
       } on Object {
+        if (revision != connectionRevision) throw const StaleConnection();
         continue;
       }
       _discoveredBaseUrl = candidate;
@@ -227,6 +291,13 @@ class PakarApi {
     socket.close();
     return results;
   }
+}
+
+class StaleConnection implements Exception {
+  const StaleConnection();
+  @override
+  String toString() =>
+      'Connection changed; obsolete board replies and unsent commands were discarded.';
 }
 
 class OperationUncertain implements Exception {

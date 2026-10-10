@@ -13,7 +13,11 @@ transport fallback when the Android resolver cannot resolve mDNS.
 The Phosphor font is vendored in `assets/fonts/Phosphor.ttf`. Only used glyphs
 are retained in release builds. The visual colors follow Pealayer's Studio
 palette roles. Logical-ID search supports exact numbers and ranges with
-highlighting; odd/even column backgrounds alternate and odd columns use +0.5.
+one shared selection; alternating colors are on cells, not column backgrounds,
+and odd columns use +0.5. Finding or tapping selects without physical writes;
+explicit bulk output stops at the first failed/uncertain command. Indicators
+are optional and initially hidden. Neutral animated inside outlines do not
+change cell geometry or conflict with selection.
 Unknown board state is not displayed as zero or a confirmed off cell.
 
 Passwords use `flutter_secure_storage` 11.2.0 (Android platform encrypted
@@ -28,10 +32,8 @@ reports an unknown outcome and is never replayed by discovery. Marquee text
 defaults to Once without forced scrolling; Loop and Interval are explicit.
 
 ```powershell
-C:\development\flutter\bin\flutter.bat analyze
-$env:NO_PROXY='localhost,127.0.0.1,::1'
-C:\development\flutter\bin\flutter.bat test
-C:\development\flutter\bin\flutter.bat build apk --release
+./tools/build-mobile.ps1 -Mode Test
+./tools/build-mobile.ps1 -Mode ApkPreview
 ```
 
 The release APK is written to
@@ -42,4 +44,11 @@ is a **preview**, not a production-signed Android release. A durable signing
 key, physical phone/tablet verification, full preference/menu parity and
 actual board round-trips remain open in GitHub master issue #2. No keystore or
 device credentials are committed. Flutter/Dart versions used for this
-checkpoint are 3.47.3/3.13.3; all product surfaces advertise version 0.2.4.
+checkpoint are 3.47.3/3.13.3; all product surfaces advertise version 0.2.7.
+
+The wrapper runs from the repository root using the existing documented SDK,
+canonical mobile/build cache, reviewed context/storage gates and locked resolved
+packages. It does not install an SDK, upgrade dependencies or clean caches.
+Only acknowledged capabilities are displayed; stale/changed connections revoke
+controls and pending replies. Device application title and bounded inline artwork
+override the shared desktop/Web PNG fallback. See docs/MOBILE-CONTEXT.md.
