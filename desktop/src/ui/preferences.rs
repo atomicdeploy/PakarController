@@ -1,0 +1,251 @@
+//! Adapted from Pealayer's PreferencesDraft and rail/body/footer editor.
+use crate::{
+    PakarControllerApp,
+    config::{AppConfig, AppLanguage, AppTheme, ColorPalette},
+    ui::{dialog, icons},
+};
+use eframe::egui;
+
+#[derive(Clone)]
+pub struct PreferencesDraft {
+    pub config: AppConfig,
+    saved_config: AppConfig,
+    previewed_config: AppConfig,
+    tab: usize,
+    search: String,
+    status: String,
+    confirm_close: bool,
+}
+impl PreferencesDraft {
+    pub fn new(config: AppConfig) -> Self {
+        Self {
+            saved_config: config.clone(),
+            previewed_config: config.clone(),
+            config,
+            tab: 0,
+            search: String::new(),
+            status: String::new(),
+            confirm_close: false,
+        }
+    }
+    fn is_dirty(&self) -> bool {
+        self.config != self.saved_config
+    }
+    fn take_preview_update(&mut self) -> Option<AppConfig> {
+        if self.config == self.previewed_config {
+            return None;
+        }
+        self.previewed_config = self.config.clone();
+        Some(self.config.clone())
+    }
+    fn matches(&self, text: &str) -> bool {
+        self.search.is_empty() || text.to_lowercase().contains(&self.search.to_lowercase())
+    }
+}
+#[derive(Default)]
+struct Outcome {
+    save: bool,
+    close: bool,
+    discard: bool,
+}
+fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
+    let mut outcome = Outcome::default();
+    ui.horizontal(|ui| {
+        ui.label(icons::MAGNIFYING_GLASS);
+        ui.add_sized(
+            [ui.available_width(), 28.0],
+            dialog::singleline_text_edit(&mut draft.search).hint_text("Search preferences"),
+        );
+    });
+    ui.add_space(8.0);
+    let body_height = (ui.available_height() - 48.0).max(260.0);
+    ui.allocate_ui_with_layout(egui::vec2(ui.available_width(),body_height),egui::Layout::left_to_right(egui::Align::Min),|ui|{
+        ui.allocate_ui_with_layout(egui::vec2(142.0,body_height),egui::Layout::top_down(egui::Align::Min),|ui|{
+            for (tab,icon,title) in [(0,icons::PALETTE,"Appearance"),(1,icons::APP_WINDOW,"Application"),(2,icons::PLUG,"Connection"),(3,icons::TABS,"Workspace")] {
+                if dialog::navigation_button(ui,draft.tab==tab,icon,title,138.0).clicked(){draft.tab=tab;}
+            }
+        });
+        ui.separator();
+        ui.allocate_ui_with_layout(egui::vec2(ui.available_width(),body_height),egui::Layout::top_down(egui::Align::Min),|ui|{
+            dialog::scroll_column(ui,"preferences-body",Some(body_height),|ui|{
+                if draft.tab==0||!draft.search.is_empty(){
+                    dialog::section(ui,icons::PALETTE,"Appearance",|ui|{
+                        if draft.matches("Theme system light dark"){dialog::setting_row(ui,icons::SUN,"Theme",None,|ui|{egui::ComboBox::from_id_salt("theme").selected_text(format!("{:?}",draft.config.theme)).show_ui(ui,|ui|{for t in [AppTheme::System,AppTheme::Light,AppTheme::Dark]{ui.selectable_value(&mut draft.config.theme,t,format!("{t:?}"));}});});}
+                        if draft.matches("Palette Studio native"){dialog::setting_row(ui,icons::PALETTE,"Palette",None,|ui|{egui::ComboBox::from_id_salt("palette").selected_text(format!("{:?}",draft.config.color_palette)).show_ui(ui,|ui|{for p in [ColorPalette::Studio,ColorPalette::Native]{ui.selectable_value(&mut draft.config.color_palette,p,format!("{p:?}"));}});});}
+                        if draft.matches("Accent color"){dialog::setting_row(ui,icons::DIAMOND,"Accent color",None,|ui|{super::color_picker::color_field(ui,&mut draft.config.accent,[56,210,122],130.0);});}
+                        if draft.matches("UI scale size"){dialog::setting_row(ui,icons::MAGNIFYING_GLASS,"UI scale",None,|ui|{ui.add(egui::Slider::new(&mut draft.config.ui_scale,0.75..=2.0).step_by(0.05));});}
+                        if draft.matches("Language Persian English"){dialog::setting_row(ui,icons::GLOBE,"Language",None,|ui|{egui::ComboBox::from_id_salt("language").selected_text(format!("{:?}",draft.config.language)).show_ui(ui,|ui|{ui.selectable_value(&mut draft.config.language,AppLanguage::English,"English");ui.selectable_value(&mut draft.config.language,AppLanguage::Persian,"فارسی");});});}
+                    });ui.add_space(8.0);
+                }
+                if draft.tab==1||!draft.search.is_empty(){
+                    dialog::section(ui,icons::APP_WINDOW,"Application",|ui|{
+                        if draft.matches("Single instance startup"){ui.checkbox(&mut draft.config.single_instance,"Single instance").on_hover_text("Additional launches activate this window. Changing this setting applies on the next launch.");}
+                        if draft.matches("Close tray"){ui.checkbox(&mut draft.config.close_to_tray,"Close to system tray");}
+                        if draft.matches("Always on top"){ui.checkbox(&mut draft.config.always_on_top,"Always on top");}
+                        if draft.matches("Native dialog preferences"){ui.checkbox(&mut draft.config.native_dialogs,"Open Preferences in a native window");}
+                    });ui.add_space(8.0);
+                }
+                if draft.tab==2||!draft.search.is_empty(){
+                    dialog::section(ui,icons::PLUG,"Connection defaults",|ui|{
+                        if draft.matches("Endpoint hostname URL"){dialog::setting_row(ui,icons::GLOBE,"Device endpoint",None,|ui|{ui.add_sized([ui.available_width(),28.0],dialog::singleline_text_edit(&mut draft.config.endpoint));});}
+                        if draft.matches("Username user"){dialog::setting_row(ui,icons::LOCK,"Username",None,|ui|{ui.add_sized([ui.available_width(),28.0],dialog::singleline_text_edit(&mut draft.config.user));});}
+                        if draft.matches("USB serial port COM"){dialog::setting_row(ui,icons::PLUG,"USB serial port",None,|ui|{ui.add_sized([ui.available_width(),28.0],dialog::singleline_text_edit(&mut draft.config.serial_port));});}
+                    });ui.add_space(8.0);
+                }
+                if draft.tab==3||!draft.search.is_empty(){dialog::section(ui,icons::TABS,"Workspace",|ui|{
+                    ui.label(format!("{} saved workspaces",draft.config.workspace_profiles.len()));
+                    ui.label("Drag panel tabs to rearrange or detach them. Workspace profiles save the current layout.");
+                    if ui.button(format!("{}  Export preferences…",icons::FLOPPY_DISK)).clicked(){
+                        if let Some(path)=rfd::FileDialog::new().set_file_name("PakarController-preferences.json").add_filter("JSON",&["json"]).save_file(){match serde_json::to_vec_pretty(&draft.config).map_err(|e|e.to_string()).and_then(|v|std::fs::write(path,v).map_err(|e|e.to_string())){Ok(())=>draft.status="Exported preferences".into(),Err(e)=>draft.status=e}}
+                    }
+                    if ui.button(format!("{}  Import preferences…",icons::FOLDER_OPEN)).clicked(){
+                        if let Some(path)=rfd::FileDialog::new().add_filter("JSON",&["json"]).pick_file(){match std::fs::read(path).map_err(|e|e.to_string()).and_then(|v|serde_json::from_slice::<AppConfig>(&v).map_err(|e|e.to_string())){Ok(v)=>draft.config=v,Err(e)=>draft.status=e}}
+                    }
+                });}
+            });
+        });
+    });
+    ui.separator();
+    dialog::action_bar(
+        ui,
+        false,
+        |ui| {
+            ui.label(
+                egui::RichText::new(if draft.is_dirty() {
+                    "Unsaved changes"
+                } else {
+                    &draft.status
+                })
+                .small()
+                .weak(),
+            );
+        },
+        |ui| {
+            if dialog::primary_action_button(ui, icons::CHECK, "Save").clicked() {
+                outcome.save = true;
+            }
+            if dialog::action_button(ui, icons::X, "Cancel").clicked() {
+                outcome.close = true;
+            }
+        },
+    );
+    if draft.confirm_close {
+        egui::Modal::new(egui::Id::new("preferences-discard-confirmation")).show(ui.ctx(), |ui| {
+            ui.set_width(360.0);
+            ui.heading("Discard preference changes?");
+            ui.label("Your saved preferences will be restored.");
+            ui.add_space(12.0);
+            dialog::action_row(ui, false, |ui| {
+                if dialog::primary_action_button(ui, icons::TRASH, "Discard").clicked() {
+                    outcome.discard = true;
+                }
+                if dialog::action_button(ui, icons::X, "Keep editing").clicked() {
+                    draft.confirm_close = false;
+                }
+            });
+        });
+    }
+    outcome
+}
+pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
+    let Some(mut draft) = app.preferences.take() else {
+        return;
+    };
+    let mut open = true;
+    let native = app.config.native_dialogs && !ctx.embed_viewports();
+    let mut outcome = Outcome::default();
+    if native {
+        ctx.show_viewport_immediate(
+            egui::ViewportId::from_hash_of("pakar-preferences"),
+            egui::ViewportBuilder::default()
+                .with_title("Preferences — PakarController")
+                .with_inner_size([780.0, 590.0])
+                .with_min_inner_size([520.0, 420.0]),
+            |child, _| {
+                crate::config::apply(child, &draft.config);
+                if child.input(|i| i.viewport().close_requested()) {
+                    open = false;
+                }
+                egui::CentralPanel::default().show(child, |ui| {
+                    egui::Frame::new().inner_margin(12).show(ui, |ui| {
+                        outcome = editor(&mut draft, ui);
+                    });
+                });
+                if dialog::escape_pressed(child) {
+                    outcome.close = true;
+                }
+            },
+        );
+    } else {
+        let g = dialog::bounded_geometry(
+            ctx.content_rect(),
+            20.0,
+            egui::vec2(780.0, 590.0),
+            egui::vec2(520.0, 420.0),
+            egui::vec2(1000.0, 780.0),
+        );
+        egui::Window::new(format!("{} Preferences", icons::GEAR))
+            .id(egui::Id::new("pakar-preferences"))
+            .open(&mut open)
+            .default_rect(g.default_rect)
+            .min_size(g.min_size)
+            .max_size(g.max_size)
+            .constrain_to(g.bounds)
+            .frame(dialog::opaque_window_frame_from_context(ctx))
+            .collapsible(false)
+            .show(ctx, |ui| {
+                outcome = editor(&mut draft, ui);
+            });
+        if dialog::escape_pressed(ctx) {
+            outcome.close = true;
+        }
+    }
+    if outcome.save {
+        // Layout belongs to the workspace and can change while Preferences is open.
+        draft.config.dock_layout = super::layout::serialize(&app.dock).unwrap_or_default();
+        match draft.config.save() {
+            Ok(()) => {
+                app.config = draft.config.clone();
+                app.palette = app.config.color_palette;
+                app.base = app.config.endpoint.clone();
+                app.user = app.config.user.clone();
+                app.serial_port = app.config.serial_port.clone();
+                crate::config::apply(ctx, &app.config);
+                app.notify(
+                    "Preferences saved",
+                    "Application preferences were saved",
+                    crate::messaging::Severity::Success,
+                );
+                return;
+            }
+            Err(e) => draft.status = e,
+        }
+    }
+    if outcome.discard || ((!open || outcome.close) && !draft.is_dirty()) {
+        crate::config::apply(ctx, &app.config);
+        return;
+    }
+    if !open || outcome.close {
+        draft.confirm_close = true;
+    }
+    if let Some(preview) = draft.take_preview_update() {
+        crate::config::apply(ctx, &preview);
+        app.palette = preview.color_palette;
+    }
+    app.preferences = Some(draft);
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn draft_preview_and_cancel_preserve_saved_preferences() {
+        let saved = AppConfig::default();
+        let mut d = PreferencesDraft::new(saved.clone());
+        assert!(!d.is_dirty());
+        d.config.close_to_tray = true;
+        assert!(d.is_dirty());
+        assert!(d.take_preview_update().is_some());
+        assert!(d.take_preview_update().is_none());
+        assert_eq!(d.saved_config, saved);
+    }
+}

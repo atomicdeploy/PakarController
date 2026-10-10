@@ -1,0 +1,52 @@
+origin,path,review_status,reuse_target,notes
+Pealayer,assets/themes/palettes.json,adapted,assets/themes/palettes.json,Imported byte for byte as the native and Web palette authority
+Pealayer,src/ui/palette.rs,adapted,desktop/src/ui/palette.rs,Adapted role lookup and egui Visuals application
+Pealayer,src/ui/icons.rs,adapted,desktop/src/ui/icons.rs,Imported the Phosphor vector vocabulary and font-backed rule
+Pealayer,src/ui/toasts.rs,adapted,desktop/src/ui/toasts.rs,Imported root viewport overlay connected to the imported MessageHub
+Pealayer,src/ui/status_bar.rs,reviewed,desktop/src/main.rs,Connection dot hardware facts and configurable status composition
+Pealayer,src/ui/hardware_control.rs,reviewed,desktop/src/main.rs,Channel manager rename live action and metadata patterns
+Pealayer,src/ui/preferences.rs,adapted,desktop/src/ui/preferences.rs,Adapted PreferencesDraft saved preview and discard lifecycle plus rail body footer editor
+Pealayer,src/preferences_contract.rs,reviewed,desktop/src/preferences.rs,Single ordered preference contract planned for native and Web
+Pealayer,src/config.rs,adapted,desktop/src/config.rs,Imported numeric step types and adapted themes isolated persistence and workspace profile state
+Pealayer,src/platform/windows.rs,adapted,desktop/src/platform/instance.rs + windows_jump_list.rs,Imported mutex ownership named pipe lifecycle and Jump List task publisher
+Pealayer,web_ui/src/components/SevenSegmentDisplay.tsx,adapted,desktop/src/ui/seven_segment.rs,Exact seven segment geometry and intensity behavior adapted to egui
+Pealayer,web_ui/src/components/ApplicationStatusBar.tsx,reviewed,firmware/esp8266/src/WebUi.h,Live state status composition selected for Web redesign
+Pealayer,web_ui/src/components/HeaderBar.tsx,reviewed,firmware/esp8266/src/WebUi.h,Header action and device identity composition selected for Web redesign
+Pealayer,web_ui/src/components/HardwareTab.tsx,reviewed,firmware/esp8266/src/WebUi.h,Advertised hardware presentation selected for Web redesign
+Pealayer,web_ui/src/components/PreferencesTab.tsx,reviewed,firmware/esp8266/src/WebUi.h,Preferences grouping selected for Web redesign
+Pealayer,web_ui/src/appearance.ts,reviewed,firmware/esp8266/src/WebUi.h,Native Web palette parity contract selected for Web redesign
+Pealayer,web_ui/src/styles.css,reviewed,firmware/esp8266/src/WebUi.h,Surface typography spacing and responsive tokens selected for Web redesign
+PCController,Tools/Controller/internal/native/commands.go,adapted,firmware/esp8266/esp8266.ino,DisplayText and ScheduledSegment payload contract imported
+PCController,Tools/Controller/web/src/seven-segment-preview.tsx,adapted,desktop/src/ui/seven_segment.rs,Validated live raw segment preview merged with Pealayer geometry
+PCController,Tools/Controller/web/src/telemetry-chart.tsx,reviewed,desktop/src/ui/hardware_monitor.rs,Hardware monitor chart behavior selected for adaptation
+PCController,Tools/Controller/web/src/update-operation-panel.tsx,reviewed,desktop/src/main.rs,Programming progress and failure presentation selected for adaptation
+PCController,Tools/Controller/web/src/app-preferences-dialog.tsx,reviewed,desktop/src/preferences.rs,Preferences dialog hierarchy selected for adaptation
+PCController,Tools/Controller/web/src/app.tsx,reviewed,desktop/src/main.rs,Contextual application shell and live state routing
+PCController,Tools/Controller/web/src/components.tsx,reviewed,firmware/esp8266/src/WebUi.h,Reusable hardware components selected for Web redesign
+PCController,Tools/Controller/web/src/views.tsx,reviewed,firmware/esp8266/src/WebUi.h,Contextual board and front panel views selected for Web redesign
+PCController,Tools/Controller/web/src/styles.css,reviewed,firmware/esp8266/src/WebUi.h,Front panel and hardware monitor presentation selected for Web redesign
+PCController,Tools/Controller/internal/tui/frontpanel.go,reviewed,desktop/src/main.rs,Front panel facts and menu layout selected for TUI expansion
+PCController,Tools/Controller/internal/tui/display_editor.go,reviewed,desktop/src/main.rs,Marquee timing repeat and scheduling controls selected for TUI expansion
+PCController,Project/ProtocolContract.h,reviewed,libraries/BoardCore/src/Protocol.h,Opcode and capability compatibility checked
+PCController,Project/Runtime/ControllerContext.inc.h,adapted,firmware/avr/FrontPanel.h,Bounded display presentation state imported
+PCController,Project/Runtime/FrontPanelRuntime.inc.h,adapted,firmware/avr/FrontPanel.cpp,Marquee ownership and terminal blank frame lifecycle imported
+PCController,Project/Runtime/ProtocolRuntime.inc.h,adapted,firmware/avr/avr.ino,DISPLAY_TEXT validation and scheduling semantics imported
+ControllerBoardMini/Puzzles,Puzzles.ino,adapted,firmware/avr/FrontPanel.cpp,Exact twelve step 75 ms TM1637 perimeter animation imported
+ControllerBoardMini/Puzzles,LocalLib/SevenSegments.cpp,reviewed,firmware/avr/SevenSegments.cpp,TM1637 transport and character encoder lineage verified
+ControllerBoardMini/Puzzles,LocalLib/SevenSegments.h,reviewed,firmware/avr/SevenSegments.h,TM1637 API lineage verified
+Pealayer,src/application_shortcuts.rs,reviewed,desktop/src/main.rs,Typed non-repeating action dispatch and text-edit focus policy selected for controller shortcuts
+Pealayer,src/platform/windows_quick_actions.rs,adapted,desktop/src/platform/windows_quick_actions.rs,Imported stable resource ID contract with controller-specific launch commands
+PCController,Tools/Controller/internal/discovery/discovery.go,adapted,desktop/src/platform/discovery.rs,SSDP probe response parsing and authenticated fallback routing adapted
+Pealayer,src/ui/dialog.rs,adapted,desktop/src/ui/dialog.rs,Imported geometry opaque frames action navigation numeric and scrolling controls
+Pealayer,src/ui/color_picker.rs,adapted,desktop/src/ui/color_picker.rs,Imported semantic swatch and HEX field picker
+Pealayer,src/ui/elegance_theme.rs,adapted,desktop/src/ui/elegance_theme.rs,Imported host style preserving Elegance theme adapter
+Pealayer,src/ui/i18n.rs,adapted,desktop/src/ui/i18n.rs,Imported native font setup bundled Persian fallback and translation utilities
+Pealayer,src/messaging.rs,adapted,desktop/src/messaging.rs,Imported bounded MessageHub stable IDs expiry dismissal and validation
+Pealayer,src/ui/layout.rs,adapted,desktop/src/ui/layout.rs,Adapted DockArea TabViewer initialization and imported finite rectangle sanitization
+Pealayer,src/ui/workspace_profiles.rs,adapted,desktop/src/ui/shell.rs,Adapted profile manager row actions saved layouts rename restore and overwrite
+Pealayer,src/platform/interop.rs,adapted,desktop/src/platform/instance.rs,Imported native pipe request response loop and typed local dispatcher
+Pealayer,src/platform/windows_shell_icons.rs,adapted,desktop/src/platform/windows_shell_icons.rs,Imported exact Phosphor rasterizer and seven resolution ICO generator
+Pealayer,build.rs,adapted,desktop/build.rs,Adapted executable resource compiler and stable native task icon embedding
+Pealayer,assets/themes/ui-colors.json,adapted,assets/themes/ui-colors.json,Imported exact semantic color swatches
+Pealayer,assets/fonts/Vazirmatn-Regular.ttf,adapted,assets/fonts/Vazirmatn-Regular.ttf,Imported bundled font fallback
+Pealayer,LICENSE,adapted,desktop/licenses/Pealayer-MIT.txt,Preserved upstream license attribution
