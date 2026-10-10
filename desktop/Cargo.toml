@@ -32,6 +32,17 @@ winres = "0.1.12"
 ab_glyph = "0.2"
 egui-phosphor = { version = "0.14.0", default-features = false, features = ["regular"] }
 
+# Full dependency PDBs made routine tests consume >10 GiB on Windows.
+# Keep debug assertions and incremental reuse, but opt into symbols only when
+# actively debugging (CARGO_PROFILE_DEV_DEBUG=2 / CARGO_PROFILE_TEST_DEBUG=2).
+[profile.dev]
+debug = 0
+incremental = true
+
+[profile.test]
+debug = 0
+incremental = true
+
 [profile.release]
 strip = "symbols"
 lto = "thin"

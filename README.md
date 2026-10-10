@@ -68,9 +68,19 @@ application plus Urboot image suitable for the ESP ISP programmer. Run
 Build the Windows application with:
 
 ```powershell
-cargo test --manifest-path .\desktop\Cargo.toml
-cargo build --release --manifest-path .\desktop\Cargo.toml
+.\tools\build-desktop.ps1                 # Check, no executable link
+.\tools\build-desktop.ps1 -Mode Test      # Changed native behavior
+.\tools\build-desktop.ps1 -Mode Release   # Only when an app update is needed
 ```
+
+Build storage policy: [docs/BUILD-STORAGE.md](docs/BUILD-STORAGE.md). Native
+debug/test symbols are disabled by default, with incremental reuse retained.
+Build scripts refuse low free space or an oversized canonical Cargo cache.
+Firmware compilation is incremental; use `-Target avr` or `-Target esp8266` for
+an isolated board change and `-Clean` only when diagnosing a stale cache.
+Linux supports `./build.sh busy-wire esp8266` (optional third argument `--clean`).
+Use one stable staging directory and `tools/stage-desktop.ps1`; identical builds
+skip copying. Fixtures can run directly from the canonical built executable.
 
 The same executable provides scriptable CLI and interactive TUI surfaces. Set
 `PAKAR_ENDPOINT`, and optionally `PAKAR_USER` / `PAKAR_PASSWORD`, then use:
