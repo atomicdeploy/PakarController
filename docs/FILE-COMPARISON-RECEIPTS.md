@@ -1,5 +1,36 @@
 # PakarController comparison receipts
 
+## Repository infrastructure checkpoint
+
+Issue #11 compares the actual full Pealayer README, CI/CD, CodeQL, Dependabot
+and next-release notes. Exact retained behavior, targets/hashes, omissions and
+remaining package/platform gaps are in the existing canonical ledger, not a
+separate replacement inventory. New repository-governance routing makes them
+discoverable before future repository tasks. Fully reread the changed donor
+icons file; shared-dropdown dependencies remain an explicit UI parity gap.
+
+Actionlint, Node syntax checks, governance/release-identity/matched-manifest
+tests and the entire no-compile quality runner passed locally. Actual packaging
+with tiny generated image fixtures passed all three ZIP integrity checks,
+13-asset checksum verification, raw board-pair URL/hash matching, source manifest
+and overwrite rejection. Dummy PE/APK/firmware bytes are not installable hardware.
+The stale focused Protocol.h target certificate was reread against the exact
+PCController 20c6115b donor source; only later identity/display capability additions
+changed. Its tunnel/envelope/CRC bounds remain unchanged; 23 mapping checks pass.
+
+GitHub owner-scoped API readback verifies About/topics, Discussions, merge/cleanup
+and signoff settings, 17 relevant custom labels, read-only workflow defaults,
+private vulnerability reporting and Dependabot security fixes. Original labels,
+rulesets and secret scanning remain intact. One TLS timeout was resolved through
+the user-provided local HTTPS proxy; rerun consulted live labels before writes.
+
+No native/firmware/Android rebuild or deployment was made for repository edits.
+The complete expanded CI/CD is published on PR #1; safe default-branch presentation,
+CodeQL and governance are published independently. New CI/publisher execution,
+native package/runtime and physical/full-product acceptance remain open. CI is
+not waited on, failed checks are not described as passing, and no release/tag is
+created to decorate a badge.
+
 ## Web settings and synchronized catalog checkpoint
 
 INTERFACE-CONTRACT.md defines the single generated Rust/Web/Dart page and field

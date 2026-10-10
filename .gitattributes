@@ -1,0 +1,8 @@
+* text=auto eol=lf
+*.png binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.bin binary
+*.apk binary
+*.zip binary

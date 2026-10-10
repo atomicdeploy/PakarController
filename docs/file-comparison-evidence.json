@@ -4,6 +4,209 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
     {
+      "path": "README.md",
+      "verdict": "scoped-improvement",
+      "targets": [
+        {
+          "path": "README.md",
+          "sha256": "badf979fd797d25a90ca6538ba49339d27a3af0cf6cb929ae588f9ad1ea13c4e",
+          "anchor": "Connected boards. One contextual control workspace."
+        },
+        {
+          "path": "tools/generate-readme-artwork.mjs",
+          "sha256": "a167da336c6133ff59afcbbf22bb947b8a0e66e658773ca051f7d5ff8e4b97d4",
+          "anchor": "README uses the same bytes"
+        }
+      ],
+      "preserved": [
+        "Pealayer's actual centered logo/title/tagline, badge row, visual preview, section navigation, architecture, build, docs, contribution and license structure adapted to Pakar."
+      ],
+      "omissions": [
+        {
+          "code": "Media engine, NLE cue/timeline walkthroughs, playback APIs/shortcuts and libmpv installation sections",
+          "disposition": "not-applicable",
+          "reason": "These describe Pealayer media business/runtime rather than Pakar board control. README links actual controller APIs, wiring and release/acceptance instead; no mpv is linked."
+        },
+        {
+          "code": "Donor platform and latest-release badges, cinema-grade completion language and media screenshots",
+          "disposition": "replaced",
+          "reason": "Unsupported OS/release claims and unrelated images would misrepresent this repo. Use the shared application logo and real embedded Web screenshot labeled simulated, explicit PR/source and physical acceptance boundaries."
+        }
+      ],
+      "remaining": [],
+      "improvement": "Canonical cross-interface icon bytes and explicit proof/acceptance boundaries prevent a polished landing page from claiming an unaccepted release.",
+      "origin": "Pealayer",
+      "sha256": "4e78a6c486bfc7d78adc6d34552bddfd67c89997edb8d2bae0b46e70c705dcb6",
+      "source_read": "complete",
+      "proof": [
+        {
+          "path": "tests/repository_governance_test.mjs",
+          "sha256": "c758bc9f48a363b61e7798be987673ecb06c2460a7bbdf19717e471a2a2334c1",
+          "anchor": "console.log('Repository governance"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/ci-cd.yml",
+      "verdict": "parity-gap",
+      "targets": [
+        {
+          "path": ".github/workflows/build.yml",
+          "sha256": "017b19795896c9157fed8961e0b67457e1c6522654eb8398eac7b5f0d1e388f5",
+          "anchor": "name: \"🚀 Build · Test · Release\""
+        },
+        {
+          "path": "tools/ci-checks.mjs",
+          "sha256": "1a416366464cb2bd123ea4555d554903bb17a0394792145d92fe3795712c3f00",
+          "anchor": "export function runChecks"
+        },
+        {
+          "path": "tools/prepare-release.mjs",
+          "sha256": "96c3a9f5fbc5dfd055a1b139b09271d92d19beaf9cc1cda3c83a88f266ee177e",
+          "anchor": "export function firmwareManifest"
+        }
+      ],
+      "preserved": [
+        "Actual donor branch/PR/tag/dispatch/merge-group triggers, concurrency policy, pinned actions without checkout credentials, health-before-build jobs, timeouts, Rust cache reuse, locked tests/builds, packaging, curated notes, manifest/checksums/provenance and aggregate results adapted to current Windows/ESP/AVR/Android targets.",
+        "Release content is gated on all builds, created as an immutable draft prerelease, with two correctly matched board pairs and raw HTTPS update manifests. Untrusted PRs do not execute publishing code with a write token."
+      ],
+      "omissions": [
+        {
+          "code": "LIBMPV_WINDOWS_RELEASES_API_URL, MPV_DLL_PATH, Windows GNU libmpv linking, Linux/macOS mpv dependencies and standalone pealayer-downloader",
+          "disposition": "not-applicable",
+          "reason": "Pakar deliberately excludes the media runtime and standalone media utility. Copying this setup would introduce forbidden mpv and unrelated package dependencies."
+        },
+        {
+          "code": "macOS Intel/Apple silicon and Linux native platform matrix/packages",
+          "disposition": "pending",
+          "reason": "Current accepted native target is Windows; firmware and Android use Linux runners. Additional native targets need actual platform build/runtime tests rather than claiming donor's unrelated acceptance."
+        },
+        {
+          "code": "UPX checksum-locked packing and packed native package smoke/resource checks",
+          "disposition": "pending",
+          "reason": "Existing Windows wrappers preserve donor resource/donor/cache gates and CLI runtime tests, but Pakar has no accepted compressed native package probe. Do not call a source or CLI test full packed GUI runtime acceptance."
+        },
+        {
+          "code": "branch-tag and archive suffix creation, softprops update-existing release",
+          "disposition": "replaced",
+          "reason": "User requests stable names without random/time suffixes. Version releases keep stable package names; release enumeration must succeed and an existing release is not overwritten."
+        }
+      ],
+      "remaining": [
+        "Restore useful additional native targets and optional accepted compressed package/runtime verification; first execution of the new CI/publisher and physical acceptance remain separate."
+      ],
+      "improvement": "",
+      "origin": "Pealayer",
+      "sha256": "4efb85988474d177a90ea1e31320e64bab1b027c42c3c5ba842fed9781b4eb5b",
+      "source_read": "complete",
+      "proof": [
+        {
+          "path": "tests/repository_governance_test.mjs",
+          "sha256": "c758bc9f48a363b61e7798be987673ecb06c2460a7bbdf19717e471a2a2334c1",
+          "anchor": "console.log('Repository governance"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/codeql.yml",
+      "verdict": "equivalent-behavior",
+      "targets": [
+        {
+          "path": ".github/workflows/codeql.yml",
+          "sha256": "f5d8d998dba7c035ed67184dd3d4a45db41cf54828683648096eb0ed096fe653",
+          "anchor": "name: \"🛡️ Security · CodeQL\""
+        }
+      ],
+      "preserved": [
+        "Actual donor Actions and JavaScript matrix, no-build security-extended queries, pinned checkout/CodeQL actions, no persisted checkout credentials, PR/main/schedule/dispatch/merge-group triggers, cancellation, timeouts and fail-closed aggregate summary."
+      ],
+      "omissions": [
+        {
+          "code": "Pealayer React/Vite names, packages:read permission and branded prose",
+          "disposition": "replaced",
+          "reason": "Pakar analyzes embedded Web/scripts and Actions, not Pealayer React. Package read permission is unnecessary for these none-build scans; Rust/C++ coverage is explicitly not invented."
+        }
+      ],
+      "remaining": [],
+      "improvement": "",
+      "origin": "Pealayer",
+      "sha256": "fc3c298cf966d77f50b575614b4c26f24f1606459f07749a46880cd482f1cb53",
+      "source_read": "complete",
+      "proof": [
+        {
+          "path": "tests/repository_governance_test.mjs",
+          "sha256": "c758bc9f48a363b61e7798be987673ecb06c2460a7bbdf19717e471a2a2334c1",
+          "anchor": "console.log('Repository governance"
+        }
+      ]
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "verdict": "scoped-improvement",
+      "targets": [
+        {
+          "path": ".github/dependabot.yml",
+          "sha256": "136887ba77b56544d0bcd367a31d2daaa7637ecdb8b997d63df6cb552d6f08e8",
+          "anchor": "version: 2"
+        }
+      ],
+      "preserved": [
+        "Actual donor weekly grouped github-actions and Cargo updates, with Cargo path adapted to the existing desktop workspace."
+      ],
+      "omissions": [
+        {
+          "code": "npm updates at /web_ui",
+          "disposition": "not-applicable",
+          "reason": "Pakar has no /web_ui/package.json or Vite runtime. Embedded Web/tests use Node built-ins; Flutter's actual /mobile Pub dependency contract is covered instead."
+        }
+      ],
+      "remaining": [],
+      "improvement": "Adds grouped Pub updates for the actual Android client and label routing while retaining weekly grouped Actions/Cargo updates.",
+      "origin": "Pealayer",
+      "sha256": "fa4791635251ad7d5be26ce70d71a8e59aa7b814a4f09f2b5b749d8a49908225",
+      "source_read": "complete",
+      "proof": [
+        {
+          "path": "tests/repository_governance_test.mjs",
+          "sha256": "c758bc9f48a363b61e7798be987673ecb06c2460a7bbdf19717e471a2a2334c1",
+          "anchor": "console.log('Repository governance"
+        }
+      ]
+    },
+    {
+      "path": "docs/releases/next.md",
+      "verdict": "equivalent-behavior",
+      "targets": [
+        {
+          "path": "docs/releases/next.md",
+          "sha256": "cecaadeb61a7daaec709130503f49a0bb98cde4408af69bc6abe5837b7756fcd",
+          "anchor": "# PakarController development packages"
+        }
+      ],
+      "preserved": [
+        "Actual donor curated preview notes explicitly distinguish a development milestone from stable-release, physical and platform acceptance."
+      ],
+      "omissions": [
+        {
+          "code": "Pealayer media/audio/timeline milestone inventory and archived media screenshot evolution links",
+          "disposition": "replaced",
+          "reason": "These are donor-specific release facts, not transferable Pakar features. Record actual controller/interface packages and link Pakar issue #2 instead."
+        }
+      ],
+      "remaining": [],
+      "improvement": "",
+      "origin": "Pealayer",
+      "sha256": "71f81fa503d0494a85dd700e16cabdb23e1a6dcd6abbb0abc1af47000584b3f7",
+      "source_read": "complete",
+      "proof": [
+        {
+          "path": "tests/repository_governance_test.mjs",
+          "sha256": "c758bc9f48a363b61e7798be987673ecb06c2460a7bbdf19717e471a2a2334c1",
+          "anchor": "console.log('Repository governance"
+        }
+      ]
+    },
+    {
       "origin": "PCController",
       "path": "Tools/Controller/web/src/card-layout-controls.tsx",
       "sha256": "de67f2ac9dd8037e354b98227616ed8c207379dbc8205692587bc07a6392be83",
@@ -1447,7 +1650,7 @@
     {
       "origin": "Pealayer",
       "path": "src/ui/icons.rs",
-      "sha256": "ab479e5d4a665e082d0efb613bd56e99dd8c7322499d0230bd811a165d577a7c",
+      "sha256": "fba85edd503798868acc5527600b2ee52326339816c5b73e9926d1d7b0929384",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [

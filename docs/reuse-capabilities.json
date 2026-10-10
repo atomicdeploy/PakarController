@@ -2,6 +2,7 @@
   "schema": 1,
   "authority": "docs/file-comparison-evidence.json",
   "concerns": [
+    {"id":"repository-governance","origins":["Pealayer"],"path_pattern":"(^README.md$|^\\.github/|^docs/releases/)","required_reviews":["Pealayer|README.md","Pealayer|.github/workflows/ci-cd.yml","Pealayer|.github/workflows/codeql.yml","Pealayer|.github/dependabot.yml"],"issue":11},
     {"id":"application-identity","origins":["Pealayer","PU850-ESP"],"path_pattern":"(src/branding.rs|src/config.rs|HeaderBar|webPlatform|LocalLib/Commands.cpp|LocalLib/SSDP.cpp)","required_reviews":["Pealayer|src/branding.rs","Pealayer|web_ui/src/components/HeaderBar.tsx"],"issue":10},
     {"id":"device-context","origins":["PCController","Pealayer"],"path_pattern":"(peripheral-availability|src/ui/board_info.rs|src/ui/status_bar.rs|HardwareTab|hardware_control|four_d/controller)","required_reviews":["PCController|Tools/Controller/web/src/peripheral-availability.ts","PCController|Tools/Controller/web/src/peripheral-availability.test.ts","Pealayer|src/ui/board_info.rs"],"issue":10},
     {"id":"donor-audit","origins":["Pealayer","PCController","PU850-ESP","ControllerBoardMini/Puzzles","ControllerBoardMini","PuzzleBoard"],"path_pattern":".*","required_reviews":[],"issue":3},

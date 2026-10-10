@@ -4,7 +4,23 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+    labels: [dependencies, github_actions]
   - package-ecosystem: cargo
     directory: /desktop
     schedule:
       interval: weekly
+    groups:
+      cargo-dependencies:
+        patterns: ["*"]
+    labels: [dependencies, rust]
+  - package-ecosystem: pub
+    directory: /mobile
+    schedule:
+      interval: weekly
+    groups:
+      mobile-dependencies:
+        patterns: ["*"]
+    labels: [dependencies, "domain: mobile"]

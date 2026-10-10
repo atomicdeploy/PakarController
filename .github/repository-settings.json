@@ -1,0 +1,18 @@
+{
+  "repository":"atomicdeploy/PakarController",
+  "settings":{
+    "description":"Contextual ESP + AVR controller · Windows egui, embedded Web, CLI/TUI and Android preview · ISP, OTA, LED cells and board contracts",
+    "homepage":"https://github.com/atomicdeploy/PakarController#overview",
+    "has_issues":true,
+    "has_projects":true,
+    "has_wiki":true,
+    "has_discussions":true,
+    "allow_squash_merge":true,
+    "allow_merge_commit":true,
+    "allow_rebase_merge":false,
+    "delete_branch_on_merge":true,
+    "web_commit_signoff_required":true
+  },
+  "topics":["esp8266","atmega328p","egui","ota","led-controller","firmware","flutter","hardware-control"],
+  "workflow_permissions":{"default_workflow_permissions":"read","can_approve_pull_request_reviews":false}
+}

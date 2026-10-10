@@ -1,19 +1,69 @@
-name: Build
+name: "🚀 Build · Test · Release"
+run-name: "🚀 PakarController · ${{ github.ref_name }} · ${{ github.event_name }}"
 
 on:
   push:
+    branches: ["**"]
+    tags: ["v*"]
   pull_request:
+  merge_group:
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: Build an owner-reviewed draft prerelease
+        type: boolean
+        default: false
+
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
 
 permissions:
   contents: read
 
 jobs:
-  firmware:
-    runs-on: ubuntu-latest
+  lint:
+    name: "🛡️ Workflow syntax"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-      - uses: arduino/setup-arduino-cli@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          cache: false
+          go-version: '1.25.x'
+      - run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+      - run: git diff --check HEAD^ HEAD
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+      - run: node tests/release_package_test.mjs
+  quality:
+    name: "🧭 Contracts · Repository health"
+    needs: lint
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+      - run: node tools/ci-checks.mjs quality
+  firmware:
+    name: "🔧 ESP + AVR · Both UART variants"
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: arduino/setup-arduino-cli@81d310742121c928ea9c8bbd407b4217b432ae02 # v2
       - name: Install locked board platforms and libraries
         run: |
           retry() {
@@ -44,9 +94,10 @@ jobs:
           ./build.sh busy-wire
           ./tools/test-protocol.sh
           bash tools/test-pc-flags.sh
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: PakarController-firmware
+          retention-days: 7
           if-no-files-found: error
           path: |
             build/avr/avr.ino.with_bootloader.bin
@@ -59,63 +110,45 @@ jobs:
             build/SHA256SUMS-busy-wire
 
   windows-desktop:
-    runs-on: windows-latest
+    name: "🪟 Windows · Test · Package"
+    needs: quality
+    runs-on: windows-2025
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: desktop -> target
       - name: Test and build the mpv-free Windows client
-        run: |
-          node tests/web_display_test.mjs
-          node tools/generate-web-appearance.mjs --check
-          node tests/web_appearance_test.mjs
-          node tests/web_cell_table_test.mjs
-          node tests/web_context_test.mjs
-          node tests/web_identity_test.mjs
-          node tests/screenshot_harness_test.mjs
-          node tests/native_menu_test.mjs
-          node tests/connection_controls_test.mjs
-          node tools/generate-interface-contract.mjs --check
-          node tests/interface_settings_test.mjs
-          node tools/generate-branding.mjs --check
-          node tests/branding_test.mjs
-          node tests/web_access_test.mjs
-          node tests/web_remote_test.mjs
-          node tests/remote_tools_test.mjs
-          node tests/pu_routes_test.mjs
-          node tests/boot_audio_test.mjs
-          pwsh -File tools/check-reuse-ledger.ps1
-          pwsh -File tests/reuse_ledger_test.ps1
-          pwsh -File tools/generate-file-comparison.ps1 -Check
-          pwsh -File tests/file_comparison_test.ps1
-          pwsh -File tools/verify-versions.ps1
-          pwsh -File tests/reuse_preflight_test.ps1
-          pwsh -File tests/build_storage_test.ps1
-          pwsh -File tests/storage_hygiene_test.ps1
-          node tools/check-crate-boundary.mjs
-          node tests/crate_boundary_test.mjs
-          pwsh -File tools/build-desktop.ps1 -Mode Test
-          pwsh -File tools/build-desktop.ps1 -Mode Release
-          node tests/device_cli_test.mjs
-          node tests/pc_contract_cli_test.mjs
-          node tests/remote_cli_test.mjs
-          node tests/pc_contract_mapping_test.mjs
-      - uses: actions/upload-artifact@v7
+        run: node tools/ci-checks.mjs desktop
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: PakarController-Windows
+          retention-days: 7
           if-no-files-found: error
           path: desktop/target/release/pakarcontroller.exe
 
   android-preview:
-    runs-on: ubuntu-latest
+    name: "🤖 Android · Preview"
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: '17'
       - name: Check shared interface contract
         run: node tools/generate-interface-contract.mjs --check
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: stable
           flutter-version: '3.47.3'
@@ -130,8 +163,97 @@ jobs:
       - name: Build preview APK (not production signing)
         working-directory: mobile
         run: flutter build apk --release
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: PakarController-Android-preview
+          retention-days: 7
           if-no-files-found: error
           path: mobile/build/app/outputs/flutter-apk/app-release.apk
+
+  release:
+    name: "✨ Draft release · Attested packages"
+    needs: [lint, quality, firmware, windows-desktop, android-preview]
+    if: github.repository == 'atomicdeploy/PakarController' && (startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish_release))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      attestations: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: PakarController-firmware
+          path: release-incoming/firmware
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: PakarController-Windows
+          path: release-incoming/windows
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: PakarController-Android-preview
+          path: release-incoming/android
+      - name: Package matched board pairs and source provenance
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          GH_TOKEN: ${{ github.token }}
+          REF_NAME: ${{ github.ref_name }}
+          SOURCE_SHA: ${{ github.sha }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          if [[ "$REF_TYPE" == tag ]]; then tag="$REF_NAME"; else
+            version=$(node --input-type=module -e 'import {readFileSync} from "node:fs"; console.log(/kVersion\[\]\s*=\s*"(\d+\.\d+\.\d+)"/.exec(readFileSync("libraries/BoardCore/src/BuildInfo.h","utf8"))[1])')
+            tag="v$version-preview"
+          fi
+          existing=$(gh api --paginate "repos/$REPOSITORY/releases" --jq '.[].tag_name')
+          if printf '%s\n' "$existing" | grep -Fqx "$tag"; then
+            echo 'Existing releases are immutable; select a new reviewed version.' >&2; exit 1
+          fi
+          echo "RELEASE_TAG=$tag" >> "$GITHUB_ENV"
+          node tools/prepare-release.mjs release-incoming release-assets "$tag" "$SOURCE_SHA" "$REPOSITORY" "$RUN_URL"
+          (cd release-assets && sha256sum --check SHA256SUMS.txt)
+        # Abort on failed release enumeration, rather than treating it as absence.
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
+        with:
+          subject-path: release-assets/*.*
+      - name: Create draft prerelease; never flash hardware
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$RELEASE_TAG" release-assets/*.* --title "PakarController $RELEASE_TAG" --notes-file release-assets/RELEASE-NOTES.md --target "$GITHUB_SHA" --draft --prerelease
+
+  complete:
+    name: "🚦 PakarController · Complete"
+    if: always()
+    needs: [lint, quality, firmware, windows-desktop, android-preview, release]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - env:
+          LINT: ${{ needs.lint.result }}
+          QUALITY: ${{ needs.quality.result }}
+          FIRMWARE: ${{ needs.firmware.result }}
+          WINDOWS: ${{ needs.windows-desktop.result }}
+          ANDROID: ${{ needs.android-preview.result }}
+          RELEASE: ${{ needs.release.result }}
+        run: |
+          {
+            echo '# PakarController build verification'; echo
+            echo '| Stage | Result |'; echo '|---|---|'
+            echo "| Workflow syntax | $LINT |"
+            echo "| Interface / donor contracts | $QUALITY |"
+            echo "| ESP + AVR, both link modes | $FIRMWARE |"
+            echo "| Windows | $WINDOWS |"
+            echo "| Android preview | $ANDROID |"
+            echo "| Draft release | $RELEASE |"
+            echo; echo '> CI does not prove physical operation or deployment.'
+          } >> "$GITHUB_STEP_SUMMARY"
+          [[ "$LINT" == success && "$QUALITY" == success && "$FIRMWARE" == success && "$WINDOWS" == success && "$ANDROID" == success ]]
+          [[ "$RELEASE" == success || "$RELEASE" == skipped ]]
