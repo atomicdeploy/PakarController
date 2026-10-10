@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Production delivery checklist
+    url: https://github.com/atomicdeploy/PakarController/issues/2
+    about: Check existing acceptance before creating duplicate work.
+  - name: Private security reporting
+    url: https://github.com/atomicdeploy/PakarController/security/advisories/new
+    about: Do not publish vulnerabilities or credentials in public issues.

@@ -1,0 +1,22 @@
+name: Feature or parity gap
+description: Track a missing contract, donor feature or interface capability.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: scope
+    attributes:
+      label: Required capability and applicable boards/interfaces
+    validations:
+      required: true
+  - type: textarea
+    id: donor
+    attributes:
+      label: Actual donor files and behavior
+      description: Exact Pealayer/PCController/PU850 files; do not substitute a keyword audit for source review.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance checklist and proof
+      description: Include source, UI, transport, physical and deployment acceptance separately.
+    validations:
+      required: true
