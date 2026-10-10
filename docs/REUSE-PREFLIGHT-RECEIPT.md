@@ -283,3 +283,38 @@ no partial edits were assumed. Split into verified ordered patches. No blind
 compiler retry: native Test passed donor/crate gates and again refused the
 existing canonical >8 GiB cache. Actual source/Node checks are distinct from
 pending Rust execution, native captures, app replacement and board deployment.
+
+## Manage cells hover geometry
+
+Consulted ui-shell and exhaustive exact dialog.rs donor mapping, then read all
+952 live donor lines through EOF (snapshot hash matches). Adapted actual
+navigation_control fixed-slot/clipped-text/inside-stroke mechanics to the cell,
+row and state selectors. Palette/selection/animation still use the table's one
+cell_surface; there is no separate tinted selection engine. Other generic dialog
+helpers and actual donor numeric/host/geometry tests remain named pending items
+in the same comparison manifest, not exclusions or a whole-file parity claim.
+
+Traced the regression through locked egui 0.36.2 Button::selectable / atom_ui:
+the inactive unselected Frame omits its stroke, while hover supplies a styled
+Frame; AtomLayout sizes and positions contents using Frame::total_margin, which
+includes stroke width. That is layout-changing chrome, not just an optical
+outline. The manager now allocates constant 32/96/104 x 28 rectangles and paints
+strokes inside them, with centered text independent of the stroke. Row headers
+remain top-aligned when cell slots wrap. Web fixes the border-box slot and puts
+focus chrome inside; selected focus cannot add a competing outline.
+
+Added an actual native painter/input regression across narrow/wide widths,
+animation on/off and idle/hover/press/focus/selection. Native Test passed donor
+and crate gates but refused the existing canonical >8 GiB cache before compiling.
+No cleanup reroute, direct compiler, new cache, app replacement or board flash.
+Rustfmt parses/formats the patch; native execution and captures are pending.
+Shipped Web selection/manager DOM-double tests and geometry source guards,
+all ten appearance tests, access/display/branding/menu/generation checks and
+reuse/comparison adversarial checks pass. These are not browser pixel evidence.
+
+A first Web patch assumed a standalone closing style tag and was rejected
+without edits; inspected the actual embedded boundary before applying. A display
+test filename was wrong; rg inventory identified web_display_test.mjs, which
+passed. Donor read/comparison is 48 complete files of 1874; 1826 are pending.
+Useful generic functionality remains open and no project-wide superiority is
+claimed. The existing issue #8 owns runtime acceptance; CI is not waited on.

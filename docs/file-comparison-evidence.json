@@ -76,7 +76,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "2b13783f18325f416962ba2b196b78e5cad6287a61931d397fa1defe3fdc2164",
+          "sha256": "0aae32cf18f5e66b8724017128e6416cf08299e619c0bcb96f98a12be8137032",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -126,7 +126,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "2b13783f18325f416962ba2b196b78e5cad6287a61931d397fa1defe3fdc2164",
+          "sha256": "0aae32cf18f5e66b8724017128e6416cf08299e619c0bcb96f98a12be8137032",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -2039,7 +2039,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "2b13783f18325f416962ba2b196b78e5cad6287a61931d397fa1defe3fdc2164",
+          "sha256": "0aae32cf18f5e66b8724017128e6416cf08299e619c0bcb96f98a12be8137032",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -2108,6 +2108,62 @@
           "path": "tests/web_appearance_test.mjs",
           "sha256": "e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c",
           "anchor": "live host theme events leave System preference unchanged"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "src/ui/dialog.rs",
+      "sha256": "4ffdd81afbaa2f918cb572f11d1ec978b279ca0e263f9bfad83e99a59bc27781",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Read all 952 donor lines through EOF. navigation_control's fixed allocation, clipped centered text and inside-stroke painting are adapted to manager_selector. Compact cell/row/state slots use the existing shared neutral animated cell_surface; state-dependent Button Frames cannot resize their text/content geometry. Selected widget metadata is retained explicitly."
+      ],
+      "targets": [
+        {
+          "path": "desktop/src/ui/cell_table.rs",
+          "sha256": "a9e1a17360fc9ac21bb1ca72d1063b2f28d86d59cc423d345aca8396ab8ea142",
+          "anchor": "fn manager_selector("
+        },
+        {
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "0aae32cf18f5e66b8724017128e6416cf08299e619c0bcb96f98a12be8137032",
+          "anchor": "/* Fixed manager slots:"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "navigation_control's 80px minimum, left-aligned icon/title/metadata slots and selected bg_fill tint",
+          "disposition": "replaced",
+          "reason": "A compact cell needs a centered number in 32x28; row/action slots are 96/104x28. The user requires neutral shared selection, not a tinted navigation side rail. Fixed text positions and inside strokes are preserved; existing side-rail helper remains unchanged."
+        },
+        {
+          "code": "singleline_text_edit/workspace_overlay_layer/preferred_host/centered_default_rect/bounded_geometry/opaque frame/action buttons/action rows/navigation detail/section/compact_row/setting_row/scroll_column/fit_scroll and their donor tests",
+          "disposition": "pending",
+          "reason": "Existing imported dialog helpers are present, but this scoped geometry fix does not certify each call site or host/resize/action/localization test. Useful generic code is not excluded; full consumer and test reconciliation remains issue #3 work."
+        },
+        {
+          "code": "numeric_stepper/numeric_adjustment/adjust_numeric/numeric_slider_wheel/parse_numeric_paste/receive_numeric_paste/numeric_context_menu and seven pointer/paste/wheel tests",
+          "disposition": "pending",
+          "reason": "Helpers already exist in the imported module; bounded input geometry, paste ownership, wheel tail suppression and context behavior need their actual donor runtime tests restored and controller settings coverage. Hover selector acceptance is not numeric-control parity."
+        }
+      ],
+      "remaining": [
+        "Execute the added actual native painter test at narrow/wide widths with animation on/off, then capture/deploy through guarded workflows. Native Test is currently blocked by the canonical >8 GiB cache; Web checks are source/DOM-double evidence, not browser pixels or physical deployment.",
+        "Complete the named generic dialog call-site/test reconciliation in issue #3; no whole-file behavioral equivalence or whole-project superiority claim."
+      ],
+      "proof": [
+        {
+          "path": "desktop/src/ui/cell_table.rs",
+          "sha256": "a9e1a17360fc9ac21bb1ca72d1063b2f28d86d59cc423d345aca8396ab8ea142",
+          "anchor": "fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width()"
+        },
+        {
+          "path": "tests/web_cell_table_test.mjs",
+          "sha256": "1444aa58f8b8455d42c952cf6dbc7faf5e836c84c1fc746790a0b9a4391c53e9",
+          "anchor": "Manager must not allocate state-dependent selectable Frames"
         }
       ],
       "improvement": ""

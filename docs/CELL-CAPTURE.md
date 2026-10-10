@@ -128,3 +128,26 @@ That screenshot is explicitly a simulated peer, not live-board acceptance.
 The two shell.rs donor contracts (F11 and icon picker) were rechecked in the
 focused diff; only the band painter changed. Their target hashes/line anchors
 were regenerated. Ledger scope remains 33 reviewed files and 1835 pending.
+
+## Manage cells: stable hover/focus geometry
+
+The native manager no longer uses stock selectable Frames for cell/row/state
+selectors. In locked egui 0.36.2, inactive unselected buttons drop their Frame
+stroke, while hovered buttons restore it; Frame total margins include stroke
+width and can move the content. Pealayer dialog.rs navigation_control's actual
+fixed-allocation/inside-stroke approach is adapted into manager_selector using
+the existing shared neutral cell_surface. Slots stay 32/96/104 x 28 points;
+text stays centered, and wrapped row headings remain top-aligned. Hover, press,
+focus and selected animations cannot change allocation or wrap positions.
+
+Web manager cells use fixed border-box dimensions, constant 2px borders and
+inset focus outlines. Shared selected amber emphasis stays neutral on hover,
+press and focus; reduced-motion and the animation preference are respected.
+
+The added native painter/input test compares hit rectangles, text positions and
+inside strokes at 240/650-point widths with animation on/off. It has not executed:
+the guarded native Test build stops at the existing canonical >8 GiB cache.
+Web shipped-script DOM-double tests and CSS geometry guards pass, alongside
+appearance/access/display/menu/branding checks. No new running binary, screenshot
+of this fix or physical firmware deployment is claimed. See issue #8 and the
+hash-bound dialog.rs entry for exact donor/target/test mapping and pending work.

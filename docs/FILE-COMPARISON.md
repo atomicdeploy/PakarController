@@ -4,7 +4,7 @@ Whole-repository superiority is **not established**. This report exposes retaine
 
 Routing: 1330 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
 
-Inventory: 1874 files; 47 complete source-file comparisons; 1827 pending comparisons; 28 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
+Inventory: 1874 files; 48 complete source-file comparisons; 1826 pending comparisons; 29 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
 Every inventoried path, source revision/hash, target/proof file and line, omitted code, disposition and concrete reason is in `file-comparison.csv`. Hash-bound manual decisions are in `file-comparison-evidence.json`. Donor SHA-256 values bind original bytes; target/proof SHA-256 values bind UTF-8 without BOM with LF newlines. Anchors are recomputed into exact line numbers. Test-code presence is not test execution; execution receipts are in `FILE-COMPARISON-RECEIPTS.md`.
 
@@ -15,7 +15,7 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 | ControllerBoardMini | 19 | 0 | 19 | 0 |
 | ControllerBoardMini/Puzzles | 18 | 12 | 6 | 9 |
 | PCController | 1207 | 6 | 1201 | 0 |
-| Pealayer | 499 | 25 | 474 | 15 |
+| Pealayer | 499 | 26 | 473 | 16 |
 | PU850-ESP | 109 | 4 | 105 | 4 |
 | PuzzleBoard | 22 | 0 | 22 | 0 |
 
@@ -436,6 +436,21 @@ Verdict: **equivalent-file**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c82
 - No production-code omission claimed for this reviewed file.
 - Remaining: User-configurable icon packs and runtime state-icon transitions are a separate unresolved integration; retaining the generator does not implement that editor.
 
+### Pealayer: `src/ui/dialog.rs`
+
+Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. Original-byte SHA-256: `4ffdd81afbaa2f918cb572f11d1ec978b279ca0e263f9bfad83e99a59bc27781`.
+
+- Target: `desktop/src/ui/cell_table.rs:299 [UTF8-LF sha256=a9e1a17360fc9ac21bb1ca72d1063b2f28d86d59cc423d345aca8396ab8ea142; anchor=fn manager_selector(]`.
+- Target: `firmware/esp8266/src/WebUi.h:44 [UTF8-LF sha256=0aae32cf18f5e66b8724017128e6416cf08299e619c0bcb96f98a12be8137032; anchor=/* Fixed manager slots:]`.
+- Retained: Read all 952 donor lines through EOF. navigation_control's fixed allocation, clipped centered text and inside-stroke painting are adapted to manager_selector. Compact cell/row/state slots use the existing shared neutral animated cell_surface; state-dependent Button Frames cannot resize their text/content geometry. Selected widget metadata is retained explicitly.
+- Omitted/replaced code: `navigation_control's 80px minimum, left-aligned icon/title/metadata slots and selected bg_fill tint`. Disposition: **replaced**. Reason: A compact cell needs a centered number in 32x28; row/action slots are 96/104x28. The user requires neutral shared selection, not a tinted navigation side rail. Fixed text positions and inside strokes are preserved; existing side-rail helper remains unchanged.
+- Omitted/replaced code: `singleline_text_edit/workspace_overlay_layer/preferred_host/centered_default_rect/bounded_geometry/opaque frame/action buttons/action rows/navigation detail/section/compact_row/setting_row/scroll_column/fit_scroll and their donor tests`. Disposition: **pending**. Reason: Existing imported dialog helpers are present, but this scoped geometry fix does not certify each call site or host/resize/action/localization test. Useful generic code is not excluded; full consumer and test reconciliation remains issue #3 work.
+- Omitted/replaced code: `numeric_stepper/numeric_adjustment/adjust_numeric/numeric_slider_wheel/parse_numeric_paste/receive_numeric_paste/numeric_context_menu and seven pointer/paste/wheel tests`. Disposition: **pending**. Reason: Helpers already exist in the imported module; bounded input geometry, paste ownership, wheel tail suppression and context behavior need their actual donor runtime tests restored and controller settings coverage. Hover selector acceptance is not numeric-control parity.
+- Test-code evidence: `desktop/src/ui/cell_table.rs:819 [UTF8-LF sha256=a9e1a17360fc9ac21bb1ca72d1063b2f28d86d59cc423d345aca8396ab8ea142; anchor=fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width()]`.
+- Test-code evidence: `tests/web_cell_table_test.mjs:11 [UTF8-LF sha256=1444aa58f8b8455d42c952cf6dbc7faf5e836c84c1fc746790a0b9a4391c53e9; anchor=Manager must not allocate state-dependent selectable Frames]`.
+- Remaining: Execute the added actual native painter test at narrow/wide widths with animation on/off, then capture/deploy through guarded workflows. Native Test is currently blocked by the canonical >8 GiB cache; Web checks are source/DOM-double evidence, not browser pixels or physical deployment.
+- Remaining: Complete the named generic dialog call-site/test reconciliation in issue #3; no whole-file behavioral equivalence or whole-project superiority claim.
+
 ### Pealayer: `src/ui/icons.rs`
 
 Verdict: **equivalent-behavior**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. Original-byte SHA-256: `7a4716d266bccf5a7625ec3ad9b581a16d2d56f0c68dbd0db476edb63f5ae605`.
@@ -518,7 +533,7 @@ Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. O
 
 - Target: `assets/themes/appearance.js:4 [UTF8-LF sha256=62a7ebba994ad44f4e2d647bb97684aac9b563104f3f707b43573289e514ecdd; anchor=export function mergeAppearance]`.
 - Target: `tools/generate-web-appearance.mjs:27 [UTF8-LF sha256=16789897f672dad4c853e7d25e4f27a3b54663b67b6b875c904e93704faea339; anchor=replaceBlock('// BEGIN SHARED APPEARANCE']`.
-- Target: `firmware/esp8266/src/WebUi.h:73 [UTF8-LF sha256=2b13783f18325f416962ba2b196b78e5cad6287a61931d397fa1defe3fdc2164; anchor=// BEGIN SHARED APPEARANCE]`.
+- Target: `firmware/esp8266/src/WebUi.h:80 [UTF8-LF sha256=0aae32cf18f5e66b8724017128e6416cf08299e619c0bcb96f98a12be8137032; anchor=// BEGIN SHARED APPEARANCE]`.
 - Retained: All five actual donor functions retained: mergeAppearance, resolvedAccent, resolvedAppearanceTheme, accentForeground and paletteName. TypeScript annotations removed for standalone embedded JavaScript; field names, host/offline resolution, exact accent constants, custom validation and luminance threshold remain unchanged.
 - Retained: Generated into the shipped WebUi.h with the shared palette asset; --check rejects stale embedding. Browser preferences dialog validates theme/palette/accent, protects drafts, handles storage failure and cross-tab/System events without device writes or repetitive identical storage writes.
 - Omitted/replaced code: `AppearanceState TypeScript interface and generic T return annotation`. Disposition: **replaced**. Reason: ESP serves standalone JavaScript, not a TypeScript/React build. Actual function bodies are retained; browser-facing enum/color validation rejects untrusted stored values. No preference or resolution field is dropped.
@@ -532,7 +547,7 @@ Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. O
 Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. Original-byte SHA-256: `df84386e53d729eabddf9476026a9f96afe130dd3429612f4c73509d1757d16b`.
 
 - Target: `tools/generate-branding.mjs:3 [UTF8-LF sha256=bba69ae8ad9252920fb8a61e0a577b7dbe8fbf10cbbe28581bd51c9af99ef745; anchor=Pakar embeds it for the standalone ESP surface]`.
-- Target: `firmware/esp8266/src/WebUi.h:49 [UTF8-LF sha256=2b13783f18325f416962ba2b196b78e5cad6287a61931d397fa1defe3fdc2164; anchor=<!-- BEGIN SHARED BRAND HEADER -->]`.
+- Target: `firmware/esp8266/src/WebUi.h:56 [UTF8-LF sha256=0aae32cf18f5e66b8724017128e6416cf08299e619c0bcb96f98a12be8137032; anchor=<!-- BEGIN SHARED BRAND HEADER -->]`.
 - Target: `docs/BRANDING-PARITY.md:40 [UTF8-LF sha256=d28d6a4d1785f8e40efc0879410a22f2ae16da04d11047d06b285e6f84a38217; anchor=## Explicit unfinished useful code and reasons]`.
 - Retained: Actual resolved-artwork img/alt binding adapted to standalone header/login, replacing diamond and font fallback.
 - Omitted/replaced code: `Header collapse/navigation; connectionOpen/draftTarget modal; connected/ws/http status and localization`. Disposition: **pending**. Reason: Artwork matching does not import functional shell state/command contracts; these remain useful generic work.
@@ -545,7 +560,7 @@ Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. O
 Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. Original-byte SHA-256: `23e8fd2a8f17d296f14b81d6618cbd166129e116e36515444239edac15f89554`.
 
 - Target: `tools/generate-branding.mjs:17 [UTF8-LF sha256=bba69ae8ad9252920fb8a61e0a577b7dbe8fbf10cbbe28581bd51c9af99ef745; anchor='FAVICON':]`.
-- Target: `firmware/esp8266/src/WebUi.h:7 [UTF8-LF sha256=2b13783f18325f416962ba2b196b78e5cad6287a61931d397fa1defe3fdc2164; anchor=<!-- BEGIN SHARED BRAND FAVICON -->]`.
+- Target: `firmware/esp8266/src/WebUi.h:7 [UTF8-LF sha256=0aae32cf18f5e66b8724017128e6416cf08299e619c0bcb96f98a12be8137032; anchor=<!-- BEGIN SHARED BRAND FAVICON -->]`.
 - Target: `docs/BRANDING-PARITY.md:40 [UTF8-LF sha256=d28d6a4d1785f8e40efc0879410a22f2ae16da04d11047d06b285e6f84a38217; anchor=## Explicit unfinished useful code and reasons]`.
 - Retained: Same resolved artwork binds favicon/touch/header before login; ESP embeds data instead of requesting a protected host filesystem icon.
 - Omitted/replaced code: `storedBoolean/supportsStandaloneMode/useWebPlatform capabilities/events; install/share/toggleFullscreen/enableNotifications/applyUpdate; settings setters/signalInteraction`. Disposition: **pending**. Reason: Generic browser capabilities/lifecycle/preferences need controller-specific integration and tests; static branding does not certify them.

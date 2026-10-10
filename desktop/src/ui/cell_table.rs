@@ -293,6 +293,34 @@ fn cell_surface(
     );
     response
 }
+/// Adapt Pealayer dialog::navigation_control's allocation/inside-stroke contract
+/// to compact selectors. Use the table's single neutral selection surface, not
+/// Button::selectable's state-dependent Frame margins. Text never follows stroke.
+fn manager_selector(
+    ui: &mut egui::Ui,
+    label: &str,
+    selected: bool,
+    logical_id: u8,
+    width: f32,
+    animate: bool,
+) -> egui::Response {
+    let (id, rect) = ui.allocate_space(egui::vec2(width, dialog::ACTION_HEIGHT));
+    let response = cell_surface(ui, rect, id, logical_id, None, selected, animate);
+    response.widget_info(|| {
+        egui::WidgetInfo::selected(egui::WidgetType::Button, ui.is_enabled(), selected, label)
+    });
+    if ui.is_rect_visible(rect) {
+        ui.painter().with_clip_rect(rect).text(
+            rect.center(),
+            egui::Align2::CENTER_CENTER,
+            label,
+            egui::FontId::proportional(13.0),
+            ui.visuals().text_color(),
+        );
+    }
+    response
+}
+
 fn pointer_or_accessibility_click(response: &egui::Response) -> bool {
     // egui synthesizes clicked() for Space/Enter. Our explicit key handler owns
     // those, otherwise additive selection would toggle twice in one frame.
@@ -755,16 +783,16 @@ impl PakarControllerApp {
             dialog::scroll_column(ui,"cell-management-rows",Some((ctx.content_rect().height()-340.0).clamp(120.0,360.0)),|ui| {
                 for row in 0..8u8 {
                     let start=row*10+1;
-                    ui.horizontal(|ui| {
+                    ui.horizontal_top(|ui| {
                         let all=(start..start+10).all(|id|self.table.selection.ids.contains(&id));
-                        let row_response=ui.selectable_label(all,format!("{} Row {}",icons::LIST,row+1));
+                        let row_response=manager_selector(ui,&format!("{} Row {}",icons::LIST,row+1),all,start,96.0,self.config.animate_cells);
                         if row_response.clicked(){let m=ui.input(|i|i.modifiers);self.table.selection.group(start..start+10,m.command||self.config.additive_cell_selection);}
-                        ui.horizontal_wrapped(|ui|{for id in start..start+10 {let response=ui.selectable_label(self.table.selection.ids.contains(&id),format!("{id:02}"));if response.clicked(){let m=ui.input(|i|i.modifiers);self.table.selection.click(id,m.command||self.config.additive_cell_selection,m.shift);self.selected_cell=id;}response.on_hover_text(self.mappings.iter().find(|m|m.logical_id==id).map(|m|format!("{} · physical {} · {}",m.name,m.physical_cell,snapshot.as_ref().and_then(|s|s.cells.get(id as usize-1)).map(String::as_str).unwrap_or("unavailable"))).unwrap_or_else(||format!("Cell {id} · mapping unavailable")));}});
+                        ui.horizontal_wrapped(|ui|{for id in start..start+10 {let response=manager_selector(ui,&format!("{id:02}"),self.table.selection.ids.contains(&id),id,32.0,self.config.animate_cells);if response.clicked(){let m=ui.input(|i|i.modifiers);self.table.selection.click(id,m.command||self.config.additive_cell_selection,m.shift);self.selected_cell=id;}response.on_hover_text(self.mappings.iter().find(|m|m.logical_id==id).map(|m|format!("{} · physical {} · {}",m.name,m.physical_cell,snapshot.as_ref().and_then(|s|s.cells.get(id as usize-1)).map(String::as_str).unwrap_or("unavailable"))).unwrap_or_else(||format!("Cell {id} · mapping unavailable")));}});
                     });
                 }
             });
             dialog::section(ui,icons::LIGHTBULB,"Selected cell action",|ui| {
-                ui.horizontal_wrapped(|ui|{for state in [State::White,State::Red,State::Off]{ui.selectable_value(&mut self.table.manager_state,state,format!("{} {}",state.icon(),state.name()));}});
+                ui.horizontal_wrapped(|ui|{for state in [State::White,State::Red,State::Off]{if manager_selector(ui,&format!("{} {}",state.icon(),state.name()),self.table.manager_state==state,1,104.0,self.config.animate_cells).clicked(){self.table.manager_state=state;}}});
                 ui.horizontal(|ui|{ui.label("Transition");egui::ComboBox::from_id_salt("bulk-effect").selected_text(&self.cell_effect).show_ui(ui,|ui|{for effect in ["immediate","fade","pulse"]{ui.selectable_value(&mut self.cell_effect,effect.into(),effect);}});});
                 ui.label(egui::RichText::new("Edits are paced and verified from device readback. They are not an atomic transaction.").small().weak());
             });
@@ -787,6 +815,98 @@ impl PakarControllerApp {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width() {
+        for width in [240.0, 650.0] {
+            for animate in [false, true] {
+                let ctx = egui::Context::default();
+                let mut render = |events, selected| {
+                    let mut slots = Vec::new();
+                    let mut first_id = egui::Id::NULL;
+                    let mut hovered = false;
+                    let mut output = ctx.run_ui(
+                        egui::RawInput {
+                            screen_rect: Some(Rect::from_min_size(
+                                Pos2::ZERO,
+                                egui::vec2(width, 400.0),
+                            )),
+                            events,
+                            ..Default::default()
+                        },
+                        |ui| {
+                            ui.set_width(width);
+                            ui.horizontal_wrapped(|ui| {
+                                for id in 1..=12 {
+                                    let response = manager_selector(
+                                        ui,
+                                        &format!("{id:02}"),
+                                        selected,
+                                        id,
+                                        32.0,
+                                        animate,
+                                    );
+                                    slots.push(response.rect);
+                                    if id == 1 {
+                                        first_id = response.id;
+                                        hovered = response.hovered();
+                                    }
+                                }
+                            });
+                        },
+                    );
+                    output.textures_delta.clear();
+                    let text_positions: Vec<_> = output
+                        .shapes
+                        .iter()
+                        .filter_map(|s| match &s.shape {
+                            egui::Shape::Text(t) => Some(t.pos),
+                            egui::Shape::Rect(r) => {
+                                assert_eq!(r.stroke_kind, egui::StrokeKind::Inside);
+                                assert!(slots.iter().any(|slot| slot.contains_rect(r.rect)));
+                                None
+                            }
+                            _ => None,
+                        })
+                        .collect();
+                    assert_eq!(text_positions.len(), 12);
+                    for slot in &slots {
+                        assert_eq!(slot.size(), egui::vec2(32.0, dialog::ACTION_HEIGHT));
+                    }
+                    (slots, text_positions, first_id, hovered)
+                };
+                let baseline = render(vec![], false);
+                let point = baseline.0[0].center();
+                for (selected, events) in [
+                    (false, vec![egui::Event::PointerMoved(point)]),
+                    (
+                        false,
+                        vec![egui::Event::PointerButton {
+                            pos: point,
+                            button: egui::PointerButton::Primary,
+                            pressed: true,
+                            modifiers: Modifiers::NONE,
+                        }],
+                    ),
+                    (
+                        true,
+                        vec![egui::Event::PointerButton {
+                            pos: point,
+                            button: egui::PointerButton::Primary,
+                            pressed: false,
+                            modifiers: Modifiers::NONE,
+                        }],
+                    ),
+                    (true, vec![]),
+                ] {
+                    ctx.memory_mut(|m| m.request_focus(baseline.2));
+                    let actual = render(events, selected);
+                    assert_eq!(actual.0, baseline.0, "Slot/wrap changed with interaction");
+                    assert_eq!(actual.1, baseline.1, "Text moved with interaction");
+                }
+                assert!(render(vec![egui::Event::PointerMoved(point)], false).3);
+            }
+        }
+    }
     #[test]
     fn alternating_surfaces_are_painted_on_cells_not_background_bands() {
         for palette in [

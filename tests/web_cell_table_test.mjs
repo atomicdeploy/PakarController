@@ -7,6 +7,20 @@ const nativeShell=readFileSync(new URL('../desktop/src/ui/shell.rs',import.meta.
 assert(nativeTable.includes('let emphasized = selected;'));
 assert(!nativeTable.includes('matched: bool'));
 assert(!nativeTable.includes('matches.contains'));
+const managerCode=nativeTable.slice(nativeTable.indexOf('pub fn draw_cell_manager'));
+assert(!managerCode.includes('ui.selectable_label('),'Manager must not allocate state-dependent selectable Frames');
+assert(managerCode.includes('ui.horizontal_top('),'Wrapped rows keep their header at the top');
+assert(managerCode.includes('manager_selector(ui,'));
+assert(nativeTable.includes('ui.allocate_space(egui::vec2(width, dialog::ACTION_HEIGHT))'));
+assert(nativeTable.includes('ui.painter().with_clip_rect(rect).text('));
+const managerSlot=source.match(/\.manager-row button\{box-sizing:[^}]+\}/)[0];
+for(const rule of ['box-sizing:border-box','flex:0 0 32px','width:32px','height:28px','padding:0','border:2px solid'])assert(managerSlot.includes(rule),rule);
+assert(source.includes('.manager-row button:focus-visible{outline:1px solid var(--blue);outline-offset:-5px}'));
+assert(source.includes('.manager-row button[aria-pressed=true]:focus-visible{outline-color:transparent;border-color:var(--amber);background:var(--surface-2)}'));
+// Every state override keeps slot metrics intact; only paint can change.
+for(const rule of source.matchAll(/([^{}]*\.manager-row button[^{}]*:[^{}]*)\{([^}]+)\}/g)){
+  assert(!/(?:^|;)(?:width|height|padding|margin|border-width|transform|font-size):/.test(rule[2]),rule[0]);
+}
 assert(!nativeShell.includes('navigate(&matches'));
 for(const alias of ['selected_cells','highlighted_cells','search_matches'])assert(nativeShell.includes(`"${alias}":self.table.selection.cells()`));
 assert(!nativeTable.includes('blend(base_fill, v.error_fg_color'));
