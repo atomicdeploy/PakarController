@@ -4,6 +4,77 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
     {
+      "origin": "Pealayer",
+      "path": "src/ui/toasts.rs",
+      "sha256": "a6501d2c0f859e186cac659a37d256f26f8896e98644e9cfc8ac880da5460e54",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": ["Actual donor root-only overlay: four newest messages, severity icons and semantic palette roles, bounded width, scrollable text, title, dismiss and deadline-driven repaint."],
+      "targets": [{"path":"desktop/src/ui/toasts.rs","sha256":"8772d049fab0fba597bd7f4ba4403c7d7bd122f6027442e25f32da11d8f058f6","anchor":"pub fn draw(ctx:"}],
+      "omissions": [{"code":"interop::get_live_config() accessor","disposition":"replaced","reason":"Pakar owns the same live palette through config::live(). The OS-native notification route is separate; adding an explicit in-app enable preference does not remove the donor overlay when enabled."}],
+      "remaining": ["This native overlay mapping is not shared Web/TUI message-delivery parity."],
+      "proof": [],
+      "improvement":""
+    },
+    {
+      "origin":"Pealayer",
+      "path":"src/platform/windows_shell_icons.rs",
+      "sha256":"e1d8793f8f1697f2030bc407f51e48cab4063964c051f2e21d1f60ae3349732a",
+      "source_read":"complete",
+      "verdict":"equivalent-file",
+      "preserved":["Byte-identical actual Phosphor rasterizer, centered glyph coverage, all seven ICO resolutions, bottom-up BGRA, DWORD-aligned AND masks and explicit directory offsets. Pakar build.rs uses it for PE, tray and action assets."],
+      "targets":[{"path":"desktop/src/platform/windows_shell_icons.rs","sha256":"e1d8793f8f1697f2030bc407f51e48cab4063964c051f2e21d1f60ae3349732a","anchor":"pub fn shell_icon_ico"}],
+      "omissions":[],"remaining":["User-configurable icon packs and runtime state-icon transitions are a separate unresolved integration; retaining the generator does not implement that editor."],
+      "proof":[],"improvement":""
+    },
+    {
+      "origin":"Pealayer",
+      "path":"src/platform/windows_quick_actions.rs",
+      "sha256":"35f6de708a0e402f6958a4d8feeead5037b42174286050ddc98c494d4173e4cb",
+      "source_read":"complete",
+      "verdict":"equivalent-behavior",
+      "preserved":["Actual typed action/resource catalog, equality traits, explicit negative resource-index selection, Preferences, Exit and generic Toggle fullscreen. Controller actions share the launch/IPC dispatcher and resource compiler."],
+      "targets":[{"path":"desktop/src/platform/windows_quick_actions.rs","sha256":"cefe74617d723f5dd9ef987613cbcfd593e196f7a0bbfd704d65b0759034f2cd","anchor":"pub const WINDOWS_QUICK_ACTIONS"}],
+      "omissions":[{"code":"Play / Pause, Previous chapter, Next chapter, Mute / Unmute media quick actions","disposition":"not-applicable","reason":"Pakar intentionally has no mpv playback, chapters or media volume. These would call removed media business methods. Connect, device settings, refresh, workspaces and About are real controller navigation actions instead; generic fullscreen is retained, not misclassified as media-only."}],
+      "remaining":["Visible Windows Jump List clicks remain a manual acceptance gate; typed launch forwarding and resource uniqueness are tested."],
+      "proof":[{"path":"desktop/src/platform/windows_quick_actions.rs","sha256":"cefe74617d723f5dd9ef987613cbcfd593e196f7a0bbfd704d65b0759034f2cd","anchor":"fn controller_shell_actions_have_unique_native_resource_ids"}],
+      "improvement":""
+    },
+    {
+      "origin":"Pealayer",
+      "path":"src/application_shortcuts.rs",
+      "sha256":"1f173bef8acc2904eac5b0a91407aa4f7629ce65c88ea3a8ac78f8c13321d203",
+      "source_read":"complete",
+      "verdict":"parity-gap",
+      "preserved":["Default Preferences Ctrl+, and device configuration Ctrl+Shift+, navigation exist; F11 fullscreen is restored with the shared typed dispatcher. These are not equivalent to the donor persisted rebinding model."],
+      "targets":[{"path":"desktop/src/ui/shell.rs","sha256":"9f9b8afe14bfe43373bbbf02c19d236340a26d769c674de346324efbeeabb9fd","anchor":"egui::Key::F11"}],
+      "omissions":[
+        {"code":"ApplicationShortcuts persisted fields, parse_shortcut, entries, validate, action_for_event and their non-media tests","disposition":"pending","reason":"The foundation hardcoded its accelerators and omitted the reusable binding model. No accepted reason justifies leaving rebinding out. The actual donor depends on KeyChord and hardware_shortcuts match/key-code helpers, which must be ported and tested with controller-specific typed actions rather than guessed labels."},
+        {"code":"take_frame_step_shortcut and frame-step tests","disposition":"not-applicable","reason":"These consume Ctrl+Left/Right for media frame stepping and timeline transport. Those business domains were explicitly removed; Pakar must not hijack ordinary text word navigation for nonexistent video frames."},
+        {"code":"containing_media_folder and local-media path tests","disposition":"not-applicable","reason":"This resolves media files/streams, not board identities or firmware files. Firmware selection already uses explicit native file dialogs; introducing a nonexistent media folder action would be misleading."},
+        {"code":"media_information and media_folder accelerators","disposition":"pending","reason":"The media operations cannot be retained as-is, but their reusable information/folder-navigation affordances need explicit hardware-monitor and application-folder action decisions. They are not silently treated as completed controller mappings."}
+      ],
+      "remaining":["Restore validated persistent rebinding, exact-modifier matching, repeat/release rejection and text-edit protection; separately reconcile global/hardware shortcut ownership."],
+      "proof":[],"improvement":""
+    },
+    {
+      "origin":"Pealayer",
+      "path":"tests/windows_shell_suite_test.rs",
+      "sha256":"d8696d8b591ca8ae4c77c78a07d19f6aca103e29906f267f19ac8ba1aa5d6e01",
+      "source_read":"complete",
+      "verdict":"parity-gap",
+      "preserved":["Actual Preferences action/resource catalog is validated; invalid HWND registration rejects rather than claiming success; owner exclusion is tested. Live notification acceptance and shown-callback evidence are recorded independently."],
+      "targets":[{"path":"desktop/src/platform/windows_notifications.rs","sha256":"4603df421e6361701f4d092e0f966abdd39a0fb91f968a098fd5552b67c6c00a","anchor":"assert!(Hook::new(42).is_err())"}],
+      "omissions":[
+        {"code":"Playback-duration error/paused percentages and Play/Pause thumbnail/tray labels","disposition":"not-applicable","reason":"The tests model removed video playback, not device transfer progress. Pakar uses indeterminate taskbar activity only for a real pending settings/maintenance request; inventing a media percentage would publish false progress."},
+        {"code":"PealayerApp::default and media playback_time/duration/is_paused assignments","disposition":"replaced","reason":"Pakar is an executable-only mpv-free controller; creating the donor media engine is inappropriate. Actual controller IPC/live smoke and direct invalid-HWND tests exercise its own lifetime instead."},
+        {"code":"ensure_shell_initialized retry and repeated shell-lifecycle acceptance","disposition":"pending","reason":"Tray creation failures are visible and close-to-tray cannot hide an app without a tray, but complete root-taskbar initialization/retry and Explorer restart acceptance are not covered by the current tests."}
+      ],
+      "remaining":["Add root-taskbar lifecycle/reinitialization and hidden-window/tray/notification-click acceptance without fabricating successful HWND installation."],
+      "proof":[{"path":"desktop/src/platform/windows_notifications.rs","sha256":"4603df421e6361701f4d092e0f966abdd39a0fb91f968a098fd5552b67c6c00a","anchor":"fn utf16_limits_preserve_complete_surrogates_and_termination"}],
+      "improvement":""
+    },
+    {
       "origin": "PCController",
       "path": "LocalLib/TonePlayer.h",
       "sha256": "edb2f40cfdfb37d1c08867c121c617beb8f9f53ad2583855ae2218a07eb9fd89",
@@ -339,7 +410,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "6b12b86ed6bc21be53ba20b6f8eba4386a6d224b8102f7aa69e3ab2c6ac470ef",
+          "sha256": "9f9b8afe14bfe43373bbbf02c19d236340a26d769c674de346324efbeeabb9fd",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],

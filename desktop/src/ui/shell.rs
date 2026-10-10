@@ -11,7 +11,15 @@ use eframe::egui;
 use platform::instance::Command;
 
 pub fn launch_command(args: &[String]) -> Command {
-    if let Some(at) = args.iter().position(|v| v == "--settings-page") {
+    if args.iter().any(|v| v == "--notification-test") {
+        Command::NotificationTest
+    } else if let Some(at) = args.iter().position(|v| v == "--preferences-page") {
+        Command::PreferencesPage { page: args.get(at + 1).cloned().unwrap_or_default() }
+    } else if args.iter().any(|v| v == "--refresh") {
+        Command::Refresh
+    } else if args.iter().any(|v| v == "--fullscreen") {
+        Command::Fullscreen
+    } else if let Some(at) = args.iter().position(|v| v == "--settings-page") {
         Command::DeviceSettingsPage {
             page: args.get(at + 1).cloned().unwrap_or_default(),
         }
@@ -141,6 +149,18 @@ impl PakarControllerApp {
                 return;
             }
             Command::Preferences => self.open_preferences(),
+            Command::PreferencesPage { page } => {
+                if let Some(index) = ui::preferences::page_index(&page) {
+                    self.open_preferences();
+                    if let Some(draft) = &mut self.preferences { draft.select_page(index); }
+                } else { self.message = "Unknown preferences page".into(); }
+            }
+            Command::Refresh => self.refresh(),
+            Command::Fullscreen => {
+                let fullscreen = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
+                ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fullscreen));
+            }
+            Command::NotificationTest => self.notification_test(),
             Command::Connect => self.show_connection = true,
             Command::About => self.show_about = true,
             Command::Workspaces => self.show_workspaces = true,
@@ -167,16 +187,22 @@ impl PakarControllerApp {
         ctx.request_repaint();
     }
     pub fn notify(&self, title: &str, message: &str, severity: messaging::Severity) {
-        let _ = messaging::publish(
-            messaging::ToastRequest {
-                id: Some("pakar.command".into()),
+        self.notify_id("pakar.command", title, message, severity);
+    }
+    pub fn notify_id(&self, id: &str, title: &str, message: &str, severity: messaging::Severity) {
+        let request = messaging::ToastRequest {
+                id: Some(id.into()),
                 title: title.into(),
                 message: message.chars().take(2048).collect(),
                 severity,
                 timeout_ms: 5000,
-            },
-            "desktop",
-        );
+            };
+        if messaging::publish(request.clone(), "desktop").is_ok() {
+            self.notifications.borrow_mut().enqueue(request);
+        }
+    }
+    pub fn notification_test(&self) {
+        self.notify_id("pakar.notification-test", "Notification test", "This is an in-app toast and a native Windows notification request. OS visibility is reported separately in Preferences and --app-status.", messaging::Severity::Info);
     }
     pub fn record_event(&mut self, kind: &str, message: &str) {
         self.event_log
@@ -195,7 +221,7 @@ impl PakarControllerApp {
             }
         }
     }
-    pub(super) fn live_status(&self) -> Option<&DeviceStatus> {
+    pub(crate) fn live_status(&self) -> Option<&DeviceStatus> {
         match self.command_route() {
             Some(Transport::WiFi) => self.status.as_ref(),
             Some(Transport::Serial) => self.serial_status.as_ref(),
@@ -212,12 +238,13 @@ impl PakarControllerApp {
         while let Ok(command) = self.control.rx.try_recv() {
             self.dispatch(command, &ctx);
         }
-        if let Some(action) = self.tray.as_ref().and_then(|tray| tray.poll()) {
+        if let Some(action) = self.tray.as_mut().and_then(|tray| tray.poll()) {
             match action {
                 platform::windows_tray::TrayAction::Show => self.dispatch(Command::Show, &ctx),
                 platform::windows_tray::TrayAction::Preferences => {
                     self.dispatch(Command::Preferences, &ctx)
                 }
+                platform::windows_tray::TrayAction::DeviceSettings => self.dispatch(Command::DeviceSettings, &ctx),
                 platform::windows_tray::TrayAction::Workspaces => {
                     self.dispatch(Command::Workspaces, &ctx)
                 }
@@ -227,6 +254,7 @@ impl PakarControllerApp {
         }
         if !self.exiting
             && self.config.close_to_tray
+            && self.tray.is_some()
             && ctx.input(|i| i.viewport().close_requested())
         {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
@@ -253,6 +281,9 @@ impl PakarControllerApp {
         if ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::F5)) {
             self.refresh();
         }
+        if ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::F11)) {
+            self.dispatch(Command::Fullscreen, &ctx);
+        }
         if self.preferences.is_none()
             && !self.device_settings.open
             && !self.show_connection
@@ -276,11 +307,22 @@ impl PakarControllerApp {
             }
         }
         self.poll();
+        self.deliver_notifications();
+        #[cfg(windows)]
+        if let Some(desktop) = &mut self.windows_desktop {
+            let errors = desktop.sync(ui.visuals().dark_mode, self.config.color_palette,
+                self.device_settings.pending.is_some() || self.device_settings.maintenance_pending.is_some());
+            for error in errors { self.record_event("Windows desktop", &error); }
+        }
         ctx.request_repaint_after(Duration::from_millis(250));
         let snapshot = self.live_status().cloned();
+        let fullscreen = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
         if let Ok(mut value) = self.control.snapshot.lock() {
             *value = serde_json::json!({"application":"PakarController","version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":self.cell_search,"search_matches":ui::cell_search::parse(&self.cell_search).unwrap_or_default(),"selected_cell":self.selected_cell});
             value["device_settings"] = serde_json::json!({"open": self.device_settings.open, "page": self.device_settings.page, "network_loaded": self.device_settings.network.is_some(), "cloud_loaded": self.device_settings.cloud.is_some(), "write_pending": self.device_settings.pending.is_some(), "maintenance_pending": self.device_settings.maintenance_pending.is_some()});
+            value["notifications"] = self.notification_snapshot();
+            value["tray_available"] = serde_json::json!(self.tray.is_some());
+            value["fullscreen"] = serde_json::json!(fullscreen);
         }
         egui::Panel::top("pakar-menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
@@ -324,6 +366,11 @@ impl PakarControllerApp {
                     }
                 });
                 ui.menu_button("Workspace", |ui| {
+                    if ui.button(format!("{}  Toggle fullscreen   F11", icons::APP_WINDOW)).clicked() {
+                        self.dispatch(Command::Fullscreen, &ctx);
+                        ui.close();
+                    }
+                    ui.separator();
                     ui.strong("Panels");
                     layout::draw_workspace_tab_menu(self, ui);
                     ui.separator();

@@ -16,6 +16,10 @@ fn main() {
         )
         .unwrap();
     }
+    for action in windows_quick_actions::WINDOWS_QUICK_ACTIONS {
+        std::fs::write(out.join(format!("quick-action-{}.rgba", action.icon_resource_id)),
+            windows_shell_icons::shell_icon_rgba(action.icon_glyph, 16)).unwrap();
+    }
     #[cfg(windows)]
     {
         let mut resources = winres::WindowsResource::new();

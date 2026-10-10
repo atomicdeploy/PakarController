@@ -20,7 +20,7 @@ fn build_windows_jump_list(include_quick_actions: bool) -> Result<(), String> {
     use windows::Win32::Foundation::PROPERTYKEY;
     use windows::Win32::System::Com::StructuredStorage::PROPVARIANT;
     use windows::Win32::System::Com::{
-        CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED, CoCreateInstance, CoInitializeEx,
+        CLSCTX_INPROC_SERVER, CoCreateInstance,
     };
     use windows::Win32::UI::Shell::Common::{IObjectArray, IObjectCollection};
     use windows::Win32::UI::Shell::PropertiesSystem::IPropertyStore;
@@ -42,7 +42,7 @@ fn build_windows_jump_list(include_quick_actions: bool) -> Result<(), String> {
     };
 
     unsafe {
-        let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
+        let _apartment = super::windows_desktop::Apartment::new()?;
         let destination_list: ICustomDestinationList =
             CoCreateInstance(&DestinationList, None, CLSCTX_INPROC_SERVER)
                 .map_err(|error| format!("create Windows Jump List: {error}"))?;

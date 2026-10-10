@@ -20,10 +20,11 @@ base64 = "0.22.1"
 serialport = "4.8.1"
 tungstenite = { version = "0.28.0", default-features = false, features = ["handshake"] }
 xcap = "0.9.8"
-tray-icon = "0.26.1"
+tray-icon = "=0.26.1"
 
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.62", features = ["Win32_Foundation", "Win32_Security", "Win32_System_Threading", "Win32_System_RemoteDesktop", "Win32_System_Pipes", "Win32_System_IO", "Win32_Storage_FileSystem", "Win32_UI_Shell", "Win32_UI_Shell_Common", "Win32_UI_Shell_PropertiesSystem", "Win32_System_Com", "Win32_System_Com_StructuredStorage", "Win32_System_Variant"] }
+raw-window-handle = "0.6.2"
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_Graphics_Dwm", "Win32_UI_WindowsAndMessaging", "Win32_Security", "Win32_System_Threading", "Win32_System_RemoteDesktop", "Win32_System_Pipes", "Win32_System_IO", "Win32_Storage_FileSystem", "Win32_UI_Shell", "Win32_UI_Shell_Common", "Win32_UI_Shell_PropertiesSystem", "Win32_System_Com", "Win32_System_Com_StructuredStorage", "Win32_System_Variant"] }
 
 [build-dependencies]
 winres = "0.1.12"

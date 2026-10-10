@@ -1,5 +1,11 @@
 # PakarController desktop foundation
 
+Current Windows system-notification restoration, exact donor mappings and
+remaining useful desktop gaps are in [WINDOWS-DESKTOP-AUDIT.md](WINDOWS-DESKTOP-AUDIT.md).
+The original foundation imported in-app toasts, not Windows banners. Native
+notifications and their failure/result/connection callers are now implemented;
+this does not establish complete Pealayer parity.
+
 PakarController now runs a Pealayer-derived desktop shell. The former single
 page and tab strip were replaced with a persistent `egui_dock` workspace.
 The native program remains independent of mpv, media playback, timeline and
@@ -15,13 +21,13 @@ cue logic.
 | `src/ui/elegance_theme.rs` | `desktop/src/ui/elegance_theme.rs` | Production theme adapter imported with the configuration type mapped to Pakar. Section cards follow the active palette without replacing egui's style. |
 | `src/ui/i18n.rs` | `desktop/src/ui/i18n.rs` | Production native font selection, Phosphor registration, bundled Persian fallback and translation helpers imported. Pakar-specific captions still need a full translation pass. |
 | `src/messaging.rs` | `desktop/src/messaging.rs` | MessageHub imported with upstream tests: bounded notifications, stable IDs, expiration, dismissal and validation. |
-| `src/ui/toasts.rs` | `desktop/src/ui/toasts.rs` | Root overlay imported; only configuration access is adapted. Device commands publish into this hub. |
+| `src/ui/toasts.rs` | `desktop/src/ui/toasts.rs` | Actual root overlay imported; configuration access adapted and an explicit in-app enable preference added. Device commands publish into this hub. |
 | `src/ui/layout.rs`, `src/app.rs` | `desktop/src/ui/layout.rs`, `desktop/src/ui/shell.rs` | DockArea/TabViewer composition, finite rectangle sanitization, panel reveal, tab context menus and empty workspace recovery adapted to controller panels. |
 | `src/ui/preferences.rs` | `desktop/src/ui/preferences.rs` | Draft/saved/preview lifecycle adapted: native or embedded host, search, category rail, body, footer, Save, Cancel and discard confirmation. Controls use the imported dialog primitives. |
 | `src/ui/workspace_profiles.rs` | `desktop/src/ui/shell.rs` | Profile manager actions adapted: save, rename, restore, overwrite and delete; layouts use stable IDs and the imported icon picker. |
 | `src/platform/windows.rs`, `src/platform/interop.rs`, `src/startup.rs` | `desktop/src/platform/instance.rs` | Windows named mutex and named-pipe request/response loop adapted. Launch races are serialized; subsequent launches forward typed commands to the owner. Requests reject unknown fields, invalid panels and remote/session-mismatched clients. |
 | `src/platform/windows.rs` | `desktop/src/platform/windows_jump_list.rs` | Jump List publisher imported, with Pakar's AppUserModelID and controller actions. Media recents category is excluded. |
-| `src/platform/windows_quick_actions.rs` | `desktop/src/platform/windows_quick_actions.rs` | Native task/resource-ID contract adapted to Connect, Preferences, Workspaces, About and Quit. |
+| `src/platform/windows_quick_actions.rs` | `desktop/src/platform/windows_quick_actions.rs` | Actual native task/resource-ID contract adapted to eight typed actions, including device settings, refresh and generic fullscreen. |
 | `src/platform/windows_shell_icons.rs`, `build.rs` | `desktop/src/platform/windows_shell_icons.rs`, `desktop/build.rs` | Exact Phosphor glyph rasterizer and multi-resolution ICO generator imported. Used for PE resources, task icons, window icon and tray. |
 | `assets/themes/palettes.json`, `ui-colors.json`, `assets/fonts/Vazirmatn-Regular.ttf`, `LICENSE` | Matching assets and `desktop/licenses/Pealayer-MIT.txt` | Original assets and license preserved. |
 

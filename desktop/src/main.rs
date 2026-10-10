@@ -223,6 +223,7 @@ enum Event {
     CredentialsUpdated(Endpoint),
     NameUpdated(Endpoint),
     Failed(String),
+    OperationFailed(String),
     SettingsFinished(
         u64,
         device_settings::Group,
@@ -460,7 +461,8 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
                 }
             }
         }
-        let event = result.unwrap_or_else(Event::Failed);
+        let operation = matches!(command, HttpCommand::Post(..) | HttpCommand::AccessChange(..) | HttpCommand::NameChange(..));
+        let event = result.unwrap_or_else(|e| if operation { Event::OperationFailed(e) } else { Event::Failed(e) });
         if events
             .send(for_endpoint(command.endpoint(), event))
             .is_err()
@@ -969,6 +971,11 @@ struct PakarControllerApp {
     last_serial_status_at: Option<Instant>,
     configuration_loaded: bool,
     tray: Option<platform::windows_tray::TrayController>,
+    notifications: std::cell::RefCell<platform::notifications::Delivery>,
+    connection_notice: platform::notifications::ConnectionNotice,
+    tray_tooltip: String,
+    #[cfg(windows)]
+    windows_desktop: Option<platform::windows_desktop::Desktop>,
     base: String,
     user: String,
     password: String,
@@ -1043,6 +1050,13 @@ impl PakarControllerApp {
             .name("pakar-serial".into())
             .spawn(move || serial_worker(serial_rx, event_tx, ctx))
             .unwrap();
+        let tray = platform::windows_tray::TrayController::new();
+        let mut event_log = Vec::new();
+        if let Err(error) = &tray { event_log.push(("Windows tray unavailable".into(), error.clone())); }
+        #[cfg(windows)]
+        let windows_desktop = platform::windows_desktop::Desktop::new(context);
+        #[cfg(windows)]
+        if let Err(error) = &windows_desktop { event_log.push(("Windows desktop unavailable".into(), error.clone())); }
         Self {
             control: platform::instance::start(context.egui_ctx.clone()),
             dock,
@@ -1061,11 +1075,16 @@ impl PakarControllerApp {
             cell_search: String::new(),
             focus_cell_search: false,
             cell_effect: "fade".into(),
-            event_log: Vec::new(),
+            event_log,
             last_status_at: None,
             last_serial_status_at: None,
             configuration_loaded: false,
-            tray: platform::windows_tray::TrayController::new().ok(),
+            tray: tray.ok(),
+            notifications: Default::default(),
+            connection_notice: Default::default(),
+            tray_tooltip: String::new(),
+            #[cfg(windows)]
+            windows_desktop: windows_desktop.ok(),
             base: std::env::var("PAKAR_ENDPOINT").unwrap_or_else(|_| config.endpoint.clone()),
             user: std::env::var("PAKAR_USER").unwrap_or_else(|_| config.user.clone()),
             password: std::env::var("PAKAR_PASSWORD").unwrap_or_else(|_| "pakarcontroller".into()),
@@ -1180,6 +1199,7 @@ impl PakarControllerApp {
     fn poll(&mut self) {
         let endpoint = self.endpoint();
         if self.last_ws_endpoint.as_ref() != Some(&endpoint) {
+            self.connection_notice.reset();
             self.device_settings.invalidate_peer();
             self.status = None;
             self.last_status_at = None;
@@ -1198,6 +1218,7 @@ impl PakarControllerApp {
             self.configuration_loaded = false;
         }
         if self.last_serial_port != self.serial_port {
+            self.connection_notice.reset();
             self.serial_status = None;
             self.last_serial_status_at = None;
             self.serial_live = false;
@@ -1267,15 +1288,20 @@ impl PakarControllerApp {
                 Event::Configuration(path, value) => self.receive_configuration(path, value),
                 Event::MaintenanceFinished(id, result) => {
                     if self.device_settings.maintenance_pending == Some(id) {
+                        let severity = if result.is_ok() { messaging::Severity::Success } else { messaging::Severity::Error };
                         self.device_settings.maintenance_pending = None;
                         self.device_settings.message = result.unwrap_or_else(|e| e);
                         self.record_event("Maintenance", &self.device_settings.message.clone());
+                        self.notify_id("pakar.maintenance", "Maintenance result", &self.device_settings.message, severity);
                         self.configuration_loaded = false;
                     }
                 }
                 Event::SettingsFinished(id, group, result) => {
+                    if self.device_settings.pending != Some((id, group)) { continue; }
+                    let severity = if result.is_ok() { messaging::Severity::Success } else { messaging::Severity::Error };
                     self.device_settings.finish(id, group, result);
                     self.record_event("Settings", &self.device_settings.message.clone());
+                    self.notify_id("pakar.settings", "Device settings result", &self.device_settings.message, severity);
                 }
                 Event::CredentialsUpdated(endpoint) => {
                     self.user = endpoint.user;
@@ -1297,6 +1323,11 @@ impl PakarControllerApp {
                 Event::Accepted(m) => {
                     self.record_event("Command", &m);
                     self.notify("Command accepted", &m, messaging::Severity::Success);
+                }
+                Event::OperationFailed(error) => {
+                    self.record_event("Operation failed", &error);
+                    self.notify_id("pakar.operation-failed", "Operation failed", &error, messaging::Severity::Error);
+                    self.message = error;
                 }
                 Event::Failed(e) => {
                     if self.device_settings.scan_pending {
@@ -1328,6 +1359,35 @@ impl PakarControllerApp {
                 }
             }
         }
+        let state = self.live_status().map(|s| s.avr_online);
+        if let Some((message, severity)) = self.connection_notice.observe(state) {
+            self.record_event("Connection", message);
+            self.notify_id("pakar.connection", "Connection changed", message, severity);
+        }
+        let tip = match self.live_status() {
+            Some(s) => format!("PakarController — {} — AVR {}", s.hostname, if s.avr_online { "online" } else { "offline" }),
+            None => "PakarController — device offline".into(),
+        };
+        if tip != self.tray_tooltip {
+            if let Some(tray) = &self.tray {
+                if let Err(error) = tray.set_tooltip(&tip) { self.record_event("Windows tray", &error); }
+            }
+            self.tray_tooltip = tip;
+        }
+    }
+    fn deliver_notifications(&mut self) {
+        loop {
+            let request = self.notifications.borrow_mut().next(&self.config.notifications, messaging::now_ms());
+            let Some(request) = request else { break; };
+            let result = self.tray.as_ref().ok_or_else(|| "Native notification unavailable: tray registration failed".into())
+                .and_then(|tray| tray.notify(&request, self.config.notifications.sound));
+            if let Err(error) = &result { self.record_event("Windows notification", error); }
+            self.notifications.borrow_mut().result(result);
+        }
+    }
+    fn notification_snapshot(&self) -> serde_json::Value {
+        let delivery = self.notifications.borrow();
+        serde_json::json!({"backend":"Windows Shell", "policy":self.config.notifications.system, "sound":self.config.notifications.sound, "in_app":self.config.notifications.in_app, "accepted":delivery.accepted, "suppressed":delivery.suppressed, "failed":delivery.failed, "last_result":delivery.last_result, "shell_events":self.tray.as_ref().map(|tray| tray.notification_snapshot())})
     }
     fn cell_color(s: &str) -> Color32 {
         match s {

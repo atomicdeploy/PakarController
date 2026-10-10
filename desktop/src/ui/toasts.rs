@@ -2,6 +2,7 @@ use eframe::egui;
 
 /// Root-viewport overlay: dialogs must not independently replay messages.
 pub fn draw(ctx: &egui::Context) {
+    if !crate::config::live().notifications.in_app { return; }
     let state = crate::messaging::snapshot();
     if state.toasts.is_empty() {
         return;

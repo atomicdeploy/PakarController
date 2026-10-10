@@ -88,3 +88,23 @@ in runs [38031399766](https://github.com/atomicdeploy/PakarController/actions/ru
 and [38031396790](https://github.com/atomicdeploy/PakarController/actions/runs/38031396790).
 Those runs predate these restored tests/audit checks and do not certify this
 checkpoint. New CI status is recorded in the GitHub tracking issue.
+
+## Native Windows restoration checkpoint
+
+The comparison now includes 31 hash-bound full-file reviews (1837 pending,
+18 known parity-gap files). Newly read files are the actual toast renderer,
+Windows quick-action catalog, identical shell-icon generator, application
+shortcut model/tests and Windows shell suite. Generic rebinding/lifecycle gaps
+were exposed, not relabeled business exclusions. The established workspace
+picker call-site was re-reviewed after shell changes; its actual picker and
+tests remain unchanged.
+
+Executed: 70 Rust tests; locked release build; comparison generation and
+adversarial comparison/ledger tests; Web display/access and boot routing tests;
+authenticated CLI fixture; all component source versions 0.2.5.
+Local real-profile Windows runtime emitted a positive Shell shown callback;
+fullscreen toggled and restored through IPC in the same owner. No board writes
+occurred; ASUS SSH refuses connection and ledboard.local remains offline.
+Full native/runtime evidence and concrete remaining source mappings are in
+`WINDOWS-DESKTOP-AUDIT.md`. Exact-commit CI is tracked in issue #5; source/local
+tests are not automatically a passed GitHub build or complete production release.

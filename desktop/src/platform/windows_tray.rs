@@ -5,20 +5,25 @@
 
 use tray_icon::{
     Icon, MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent,
-    menu::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem},
+    menu::{Menu, MenuEvent, MenuId, IconMenuItem, PredefinedMenuItem},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TrayAction {
     Show,
     Preferences,
+    DeviceSettings,
     Workspaces,
     Refresh,
     Exit,
 }
 
 pub struct TrayController {
+    // Declared before the HWND owner so the subclass is removed first.
+    #[cfg(windows)]
+    notification_hook: super::windows_notifications::Hook,
     _icon: TrayIcon,
+    device_settings_id: MenuId,
     show_id: MenuId,
     preferences_id: MenuId,
     workspaces_id: MenuId,
@@ -29,15 +34,17 @@ pub struct TrayController {
 impl TrayController {
     pub fn new() -> Result<Self, String> {
         let menu = Menu::new();
-        let show = MenuItem::new("Show PakarController", true, None);
-        let preferences = MenuItem::new("Preferences", true, None);
-        let workspaces = MenuItem::new("Workspaces", true, None);
-        let refresh = MenuItem::new("Refresh device state", true, None);
+        let show = icon_item("Show PakarController", include_bytes!(concat!(env!("OUT_DIR"), "/quick-action-106.rgba")))?;
+        let preferences = icon_item("Preferences", include_bytes!(concat!(env!("OUT_DIR"), "/quick-action-102.rgba")))?;
+        let device_settings = icon_item("Device settings", include_bytes!(concat!(env!("OUT_DIR"), "/quick-action-106.rgba")))?;
+        let workspaces = icon_item("Workspaces", include_bytes!(concat!(env!("OUT_DIR"), "/quick-action-103.rgba")))?;
+        let refresh = icon_item("Refresh device state", include_bytes!(concat!(env!("OUT_DIR"), "/quick-action-107.rgba")))?;
         let separator = PredefinedMenuItem::separator();
-        let exit = MenuItem::new("Exit", true, None);
+        let exit = icon_item("Exit", include_bytes!(concat!(env!("OUT_DIR"), "/quick-action-105.rgba")))?;
         menu.append_items(&[
             &show,
             &preferences,
+            &device_settings,
             &workspaces,
             &refresh,
             &separator,
@@ -56,7 +63,10 @@ impl TrayController {
             .map_err(|error| error.to_string())?;
 
         Ok(Self {
+            #[cfg(windows)]
+            notification_hook: super::windows_notifications::Hook::new(tray.window_handle() as isize)?,
             _icon: tray,
+            device_settings_id: device_settings.id().clone(),
             show_id: show.id().clone(),
             preferences_id: preferences.id().clone(),
             workspaces_id: workspaces.id().clone(),
@@ -65,7 +75,9 @@ impl TrayController {
         })
     }
 
-    pub fn poll(&self) -> Option<TrayAction> {
+    pub fn poll(&mut self) -> Option<TrayAction> {
+        #[cfg(windows)]
+        if self.notification_hook.take_click() { return Some(TrayAction::Show); }
         while let Ok(event) = MenuEvent::receiver().try_recv() {
             if event.id == self.show_id {
                 return Some(TrayAction::Show);
@@ -73,6 +85,7 @@ impl TrayController {
             if event.id == self.preferences_id {
                 return Some(TrayAction::Preferences);
             }
+            if event.id == self.device_settings_id { return Some(TrayAction::DeviceSettings); }
             if event.id == self.workspaces_id {
                 return Some(TrayAction::Workspaces);
             }
@@ -99,6 +112,28 @@ impl TrayController {
         }
         None
     }
+    pub fn set_tooltip(&self, text: &str) -> Result<(), String> {
+        self._icon.set_tooltip(Some(text)).map_err(|e| e.to_string())
+    }
+    pub fn notify(&self, request: &crate::messaging::ToastRequest, sound: bool) -> Result<(), String> {
+        #[cfg(windows)]
+        {
+            let (title, message) = super::notifications::private_text(request);
+            self.notification_hook.show(title, message, &request.severity, sound)
+        }
+        #[cfg(not(windows))]
+        { let _ = (request, sound); Err("System notifications are implemented on Windows only".into()) }
+    }
+    pub fn notification_snapshot(&self) -> serde_json::Value {
+        #[cfg(windows)]
+        { self.notification_hook.snapshot() }
+        #[cfg(not(windows))]
+        { serde_json::json!({"supported":false}) }
+    }
+}
+fn icon_item(label: &str, rgba: &[u8]) -> Result<IconMenuItem, String> {
+    let icon = tray_icon::menu::Icon::from_rgba(rgba.to_vec(), 16, 16).map_err(|e| e.to_string())?;
+    Ok(IconMenuItem::new(label, true, Some(icon), None))
 }
 
 fn controller_icon() -> Vec<u8> {

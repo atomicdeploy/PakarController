@@ -5,6 +5,8 @@ use crate::{
     ui::{dialog, icons},
 };
 use eframe::egui;
+pub const PAGES: [&str; 5] = ["appearance", "application", "connection", "workspace", "notifications"];
+pub fn page_index(name: &str) -> Option<usize> { PAGES.iter().position(|page| *page == name) }
 
 #[derive(Clone)]
 pub struct PreferencesDraft {
@@ -17,6 +19,9 @@ pub struct PreferencesDraft {
     confirm_close: bool,
 }
 impl PreferencesDraft {
+    pub fn select_page(&mut self, index: usize) {
+        if index < PAGES.len() { self.tab = index; self.search.clear(); }
+    }
     pub fn new(config: AppConfig) -> Self {
         Self {
             saved_config: config.clone(),
@@ -47,6 +52,7 @@ struct Outcome {
     save: bool,
     close: bool,
     discard: bool,
+    test_notification: bool,
 }
 fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
     let mut outcome = Outcome::default();
@@ -61,7 +67,7 @@ fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
     let body_height = (ui.available_height() - 48.0).max(260.0);
     ui.allocate_ui_with_layout(egui::vec2(ui.available_width(),body_height),egui::Layout::left_to_right(egui::Align::Min),|ui|{
         ui.allocate_ui_with_layout(egui::vec2(142.0,body_height),egui::Layout::top_down(egui::Align::Min),|ui|{
-            for (tab,icon,title) in [(0,icons::PALETTE,"Appearance"),(1,icons::APP_WINDOW,"Application"),(2,icons::PLUG,"Connection"),(3,icons::TABS,"Workspace")] {
+            for (tab,icon,title) in [(0,icons::PALETTE,"Appearance"),(1,icons::APP_WINDOW,"Application"),(2,icons::PLUG,"Connection"),(3,icons::TABS,"Workspace"),(4,icons::INFO,"Notifications")] {
                 if dialog::navigation_button(ui,draft.tab==tab,icon,title,138.0).clicked(){draft.tab=tab;}
             }
         });
@@ -90,6 +96,23 @@ fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
                         if draft.matches("Endpoint hostname URL"){dialog::setting_row(ui,icons::GLOBE,"Device endpoint",None,|ui|{ui.add_sized([ui.available_width(),28.0],dialog::singleline_text_edit(&mut draft.config.endpoint));});}
                         if draft.matches("Username user"){dialog::setting_row(ui,icons::LOCK,"Username",None,|ui|{ui.add_sized([ui.available_width(),28.0],dialog::singleline_text_edit(&mut draft.config.user));});}
                         if draft.matches("USB serial port COM"){dialog::setting_row(ui,icons::PLUG,"USB serial port",None,|ui|{ui.add_sized([ui.available_width(),28.0],dialog::singleline_text_edit(&mut draft.config.serial_port));});}
+                    });ui.add_space(8.0);
+                }
+                if draft.tab==4||!draft.search.is_empty(){
+                    dialog::section(ui,icons::INFO,"Notifications",|ui|{
+                        use crate::platform::notifications::Policy;
+                        if draft.matches("In-app toast notification banner"){ui.checkbox(&mut draft.config.notifications.in_app,"In-app toast banners");}
+                        if draft.matches("Windows system notification important all off"){dialog::setting_row(ui,icons::APP_WINDOW,"Windows notifications",None,|ui|{
+                            egui::ComboBox::from_id_salt("notification-policy").selected_text(format!("{:?}",draft.config.notifications.system)).show_ui(ui,|ui|{
+                                ui.selectable_value(&mut draft.config.notifications.system,Policy::Off,"Off");
+                                ui.selectable_value(&mut draft.config.notifications.system,Policy::Important,"Important — failures, connection, settings, maintenance");
+                                ui.selectable_value(&mut draft.config.notifications.system,Policy::All,"All — includes routine command messages");
+                            });
+                        });}
+                        if draft.matches("Notification sound silent"){ui.checkbox(&mut draft.config.notifications.sound,"Allow Windows notification sound");}
+                        ui.label("Windows controls banner visibility and duration. Quiet-time settings are respected. System messages contain no raw API responses, credentials or device URLs.");
+                        if ui.add_enabled(draft.config.notifications.system!=Policy::Off,egui::Button::new("Send test notification")).clicked(){outcome.test_notification=true;}
+                        ui.label(egui::RichText::new("Test uses saved notification preferences; save changes first. Delivery diagnostics are also available via --app-status.").small().weak());
                     });ui.add_space(8.0);
                 }
                 if draft.tab==3||!draft.search.is_empty(){dialog::section(ui,icons::TABS,"Workspace",|ui|{
@@ -151,6 +174,10 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
     let Some(mut draft) = app.preferences.take() else {
         return;
     };
+    if draft.tab == 4 {
+        let status = app.notification_snapshot();
+        draft.status = format!("OS accepted: {} · shown: {} · failed: {} · suppressed: {}", status["accepted"],status["shell_events"]["shown"],status["failed"],status["suppressed"]);
+    }
     let mut open = true;
     let native = app.config.native_dialogs && !ctx.embed_viewports();
     let mut outcome = Outcome::default();
@@ -200,6 +227,7 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
             outcome.close = true;
         }
     }
+    if outcome.test_notification { app.notification_test(); }
     if outcome.save {
         // Layout belongs to the workspace and can change while Preferences is open.
         draft.config.dock_layout = super::layout::serialize(&app.dock).unwrap_or_default();
@@ -247,5 +275,16 @@ mod tests {
         assert!(d.take_preview_update().is_some());
         assert!(d.take_preview_update().is_none());
         assert_eq!(d.saved_config, saved);
+    }
+    #[test]
+    fn notification_deep_link_is_exact_and_preserves_dirty_draft() {
+        let mut d = PreferencesDraft::new(AppConfig::default());
+        d.config.notifications.system = crate::platform::notifications::Policy::Off;
+        d.select_page(page_index("notifications").unwrap());
+        assert_eq!(d.tab, 4);
+        assert!(d.is_dirty());
+        assert!(page_index("notification").is_none());
+        d.select_page(50);
+        assert_eq!(d.tab, 4);
     }
 }

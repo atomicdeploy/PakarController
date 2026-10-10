@@ -18,12 +18,16 @@ pub enum Command {
     Show,
     Connect,
     Preferences,
+    PreferencesPage { page: String },
+    Refresh,
+    Fullscreen,
     About,
     Workspaces,
     Panel { name: String },
     FindCell { query: String },
     Quit,
     Status,
+    NotificationTest,
 }
 fn parse_command(bytes: &[u8]) -> Result<Command, String> {
     let value: serde_json::Value = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
@@ -32,6 +36,7 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
         Some("panel") => &["command", "name"][..],
         Some("find_cell") => &["command", "query"][..],
         Some("device_settings_page") => &["command", "page"][..],
+        Some("preferences_page") => &["command", "page"][..],
         _ => &["command"][..],
     };
     if object.keys().any(|key| !allowed.contains(&key.as_str())) {
@@ -45,6 +50,9 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
         if crate::ui::device_settings::page_index(page).is_none() {
             return Err("Unknown device settings page".into());
         }
+    }
+    if let Command::PreferencesPage { page } = &command {
+        if crate::ui::preferences::page_index(page).is_none() { return Err("Unknown preferences page".into()); }
     }
     Ok(command)
 }
@@ -228,6 +236,14 @@ mod tests {
         assert!(parse_command(br#"{"command":"find_cell","query":"1, 20-28"}"#).is_ok());
         assert!(parse_command(br#"{"command":"find_cell","query":"81"}"#).is_err());
         assert!(parse_command(br#"{"command":"find_cell","query":"1","inject":"x"}"#).is_err());
+        assert!(parse_command(br#"{"command":"notification_test"}"#).is_ok());
+        assert!(parse_command(br#"{"command":"notification_test","message":"injected"}"#).is_err());
+        assert!(parse_command(br#"{"command":"preferences_page","page":"notifications"}"#).is_ok());
+        assert!(parse_command(br#"{"command":"preferences_page","page":"unknown"}"#).is_err());
+        for action in crate::platform::windows_quick_actions::WINDOWS_QUICK_ACTIONS {
+            let command = crate::ui::shell::launch_command(&[action.arguments.into()]);
+            assert!(parse_command(&serde_json::to_vec(&command).unwrap()).is_ok());
+        }
     }
     #[cfg(windows)]
     #[test]

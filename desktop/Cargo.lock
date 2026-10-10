@@ -3443,6 +3443,7 @@ dependencies = [
  "egui-elegance",
  "egui-phosphor",
  "egui_dock",
+ "raw-window-handle",
  "reqwest",
  "rfd",
  "serde",
