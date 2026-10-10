@@ -10,6 +10,13 @@ actions, and events vocabulary, and never silently drops an unselected file.
 `reuse-decisions.csv` records the manually adapted/reviewed subset over that
 complete screening ledger.
 
+The claims below are historical integration pointers, not file-completeness
+certification. The stricter `FILE-COMPARISON.md`, `file-comparison.csv` and
+`file-comparison-evidence.json` take precedence where current comparisons
+identify missing behavior. In particular the embedded Web palette is not yet
+shared, the generic PU shell registry is missing, and TM1637 ACK/reconnect
+recovery from current PCController has not been imported.
+
 The implemented Pealayer-derived desktop foundation, exact imported modules,
 native single-instance contract and remaining parity are documented in
 `PEALAYER-DESKTOP-FOUNDATION.md`.
@@ -31,7 +38,7 @@ native single-instance contract and remaining parity are documented in
 | Preferences | `Pealayer/src/preferences_contract.rs`, `src/ui/preferences.rs` | `desktop/src/ui/preferences.rs`, `desktop/src/config.rs` | Native or embedded searchable category rail, draft preview, Save/Cancel/discard, JSON import/export; the native/Web shared contract remains open. |
 | Windows tray | `Pealayer/src/platform/windows.rs`, `src/platform/windows_quick_actions.rs` | `desktop/src/platform/windows_tray.rs` | Real native tray with a stable GUID and Phosphor icon; restore, Preferences, Workspaces, Refresh and Quit use the shared dispatcher. |
 | Single instance and shell tasks | Pealayer native mutex/IPC and Windows Jump List publisher | `desktop/src/platform/instance.rs`, `windows_jump_list.rs`, `windows_quick_actions.rs` | Session-scoped GUI owner, typed second-launch forwarding, local request validation and native task-specific icons. |
-| Hostname discovery fallback | `PCController/Tools/Controller/internal/discovery/discovery.go` | `desktop/src/platform/discovery.rs`, `mobile/lib/api.dart` | Desktop defaults to `pakarcontroller`; SSDP origins are transport-only and accepted only after an authenticated status response identifies `pakarcontroller`. |
+| Hostname discovery fallback | `PCController/Tools/Controller/internal/discovery/discovery.go` | `desktop/src/platform/discovery.rs`, `mobile/lib/api.dart` | Current native saved endpoint is `http://ledboard.local`; discovery candidates still require peer identity validation. Source parsing is not proof of current LAN advertisement or resolution. |
 
 ## Deliberate exclusions
 

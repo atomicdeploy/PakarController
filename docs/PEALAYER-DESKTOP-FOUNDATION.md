@@ -28,6 +28,11 @@ cue logic.
 The source hash and revision inventory is `legacy-source-ledger.csv`. Manual
 decisions are `reuse-decisions.csv`. A screened file means it was inventoried,
 hashed and searched; it does not mean every function was manually integrated.
+Current hash-bound comparative findings take precedence over these integration
+pointers: see `FILE-COMPARISON.md`. Pealayer's actual eleven icon/picker tests
+are now present and pass; one donor-only editor call-site test is adapted to
+Pakar's workspace editor. Generic dialog/editor and Web-preference omissions
+still need their own complete reviews; they are not blanket exclusions.
 
 ## Running application
 
@@ -58,7 +63,7 @@ arguments are `--preferences`, `--workspaces`, `--connect-dialog`, `--about`,
 
 ## Verification and remaining parity
 
-Twenty-one Rust tests cover protocol encoding, packet bounds, discovery parsing,
+Forty-two Rust tests cover protocol encoding, packet bounds, discovery parsing,
 notification lifecycle, palette completeness, draft preview isolation, dock
 serialization/reveal, command validation, Windows owner exclusion and exact
 cell search parsing/bounds/navigation, display defaults and command validation,

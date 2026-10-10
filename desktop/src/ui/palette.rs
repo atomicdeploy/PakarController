@@ -1,4 +1,5 @@
-//! Adapted directly from Pealayer's shared native/Web palette contract.
+//! Native palette adapter using Pealayer's actual catalog and role mapping.
+//! Pakar's embedded Web UI does not yet consume this shared catalog.
 use std::{collections::BTreeMap, sync::OnceLock};
 
 type PaletteCatalog = BTreeMap<String, BTreeMap<String, BTreeMap<String, String>>>;
@@ -68,9 +69,51 @@ mod tests {
 
     #[test]
     fn imported_palettes_have_every_required_role() {
+        let roles = [
+            "canvas",
+            "surface-0",
+            "surface-1",
+            "surface-2",
+            "surface-3",
+            "line",
+            "line-strong",
+            "text",
+            "muted",
+            "subtle",
+            "green",
+            "blue",
+            "red",
+            "amber",
+        ];
         for palette in [Palette::Studio, Palette::Native] {
             for dark in [true, false] {
                 assert_eq!(colors(palette, dark).len(), 14);
+                for role in roles {
+                    assert!(crate::config::parse_rgb_hex(&colors(palette, dark)[role]).is_some());
+                }
+            }
+        }
+        assert_eq!(colors(Palette::Studio, true)["surface-1"], "#11161e");
+        assert_eq!(colors(Palette::Studio, false)["surface-0"], "#f8fafc");
+    }
+
+    #[test]
+    fn donor_surface_text_roles_and_geometry_are_preserved_in_both_themes() {
+        for palette in [Palette::Studio, Palette::Native] {
+            for dark in [false, true] {
+                let mut visuals = if dark {
+                    eframe::egui::Visuals::dark()
+                } else {
+                    eframe::egui::Visuals::light()
+                };
+                let radius = visuals.window_corner_radius;
+                apply(&mut visuals, palette);
+                assert_eq!(visuals.window_fill, color(palette, dark, "surface-1"));
+                assert_eq!(
+                    visuals.widgets.inactive.fg_stroke.color,
+                    color(palette, dark, "text")
+                );
+                assert_eq!(visuals.window_corner_radius, radius);
             }
         }
     }

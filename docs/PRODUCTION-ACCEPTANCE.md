@@ -60,6 +60,11 @@ No Wi-Fi password or other deployment secret belongs in GitHub.
 - [x] Native sampler uses only a complete validated board-advertised physical
   map and the odd-column half-stagger; missing/duplicate maps disable it.
   Remapped cells and bounds pass tests; live and monitor/region gates stay open.
+- [x] Comparative report accounts for all 1,868 donor paths and binds 26 manual
+  comparisons to exact source/target hashes, line anchors and omission reasons.
+  Sixteen compared files still have gaps and 1,842 are pending; the new strict
+  comparison gate correctly rejects completion. Eleven real Pealayer icon tests
+  were restored, and 42 native tests pass. This is not donor completeness.
 
 ## Donor completeness and provenance
 

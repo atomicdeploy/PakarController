@@ -656,3 +656,440 @@ pub fn submenu(
 }
 
 pub use egui_phosphor::regular::{BUG, DOWNLOAD_SIMPLE, MOON, SUN, TERMINAL_WINDOW, WIFI_HIGH};
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn control_icon_presets_are_searchable_by_stable_name() {
+        assert_eq!(named_control_icon("sparkle"), Some(SPARKLE));
+        assert_eq!(named_control_icon("  LAMP "), Some(LAMP));
+        assert_eq!(control_icon_name("seat"), Some("Seat"));
+        assert_eq!(named_control_icon("not-a-preset"), None);
+        assert!(icon_preset_matches("lightbulb", "Light bulb", "bulb"));
+        assert!(icon_preset_matches("lightbulb", "Light bulb", "LIGHT"));
+        assert!(!icon_preset_matches("seat", "Seat", "lamp"));
+        assert!(icon_preset_matches("timeline", "Timeline", "time"));
+    }
+
+    #[test]
+    fn grid_tiles_render_two_small_lines_with_borders_and_combobox_width_is_not_capped() {
+        use eframe::egui;
+        assert_eq!(icon_combobox_popup_width(480.0, 1000.0), 480.0);
+        assert_eq!(icon_popup_width(480.0, 1000.0), 320.0);
+        assert_eq!(icon_combobox_popup_width(800.0, 600.0), 576.0);
+        for dark in [false, true] {
+            let ctx = egui::Context::default();
+            ctx.set_visuals(if dark {
+                egui::Visuals::dark()
+            } else {
+                egui::Visuals::light()
+            });
+            ctx.data_mut(|data| data.insert_persisted(egui::Id::new(ICON_PICKER_GRID_ID), true));
+            let mut value = "sparkle".to_owned();
+            let mut search = String::new();
+            let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+                ui.set_width(320.0);
+                searchable_icon_picker_contents(
+                    ui,
+                    &mut value,
+                    &mut search,
+                    egui::Id::new("grid-test"),
+                    false,
+                    IconPickerConfig {
+                        language: crate::config::AppLanguage::English,
+                        presets: CONTROL_ICON_PRESETS,
+                        fallback_glyph: SPARKLE,
+                        fallback_name: "Sparkle",
+                        width: 320.0,
+                        show_selected_name: true,
+                        search_hint: "Search icons...",
+                        presets_label: "Presets",
+                        no_matches_label: "No matching icons",
+                        clear_label: None,
+                    },
+                );
+            });
+            output.textures_delta.clear();
+            let tile = output
+                .shapes
+                .iter()
+                .find_map(|shape| match &shape.shape {
+                    egui::epaint::Shape::Text(text)
+                        if text.galley.job.text == format!("{LAMP}\nLamp") =>
+                    {
+                        Some(text)
+                    }
+                    _ => None,
+                })
+                .expect("tile has separate icon and caption lines");
+            assert_eq!(tile.galley.rows.len(), 2);
+            assert_eq!(tile.galley.job.sections[0].format.font_id.size, 18.0);
+            assert_eq!(
+                tile.galley.job.sections.last().unwrap().format.font_id.size,
+                11.0
+            );
+            let tile_rect = output
+                .shapes
+                .iter()
+                .find_map(|shape| match &shape.shape {
+                    egui::epaint::Shape::Rect(rect)
+                        if (rect.rect.height() - 54.0).abs() < 0.1
+                            && rect.stroke.width > 0.0
+                            && rect.rect.contains(tile.pos) =>
+                    {
+                        Some(rect.rect)
+                    }
+                    _ => None,
+                })
+                .expect("enclosing button rect for tile");
+            let text_center_x = tile.pos.x + tile.galley.rect.center().x;
+            assert!(
+                (text_center_x - tile_rect.center().x).abs() < 1.0,
+                "icon tile text must be horizontally centered in button tile (text_center_x={}, tile_center_x={})",
+                text_center_x,
+                tile_rect.center().x
+            );
+            assert!(output.shapes.iter().any(|shape| matches!(&shape.shape,
+                egui::epaint::Shape::Rect(rect) if (rect.rect.height() - 54.0).abs() < 0.1 && rect.stroke.width > 0.0)));
+        }
+    }
+
+    #[test]
+    fn control_icon_uses_kind_fallback_for_unknown_saved_names() {
+        assert_eq!(control("relay", "custom-future-icon"), PLUG);
+        assert_eq!(control("mosfet", ""), LIGHTBULB);
+    }
+
+    #[test]
+    fn workspace_icons_share_stable_names_across_surfaces() {
+        assert_eq!(workspace_icon("timeline"), WAVEFORM);
+        assert_eq!(workspace_icon_name("monitor"), "Monitor");
+        assert_eq!(workspace_icon("unknown"), APP_WINDOW);
+    }
+
+    #[test]
+    fn icon_popup_width_is_bounded_even_for_a_wide_parent() {
+        assert_eq!(icon_popup_width(260.0, 1920.0), 280.0);
+        assert_eq!(icon_popup_width(1200.0, 1920.0), 320.0);
+        assert_eq!(icon_popup_width(320.0, 260.0), 236.0);
+    }
+
+    #[test]
+    fn match_highlights_are_case_insensitive_and_use_valid_utf8_boundaries() {
+        assert_eq!(icon_match_ranges("Lamp", "  AM "), vec![1..3]);
+        assert_eq!(icon_match_ranges("Lamp lamp", "lamp"), vec![0..4, 5..9]);
+        assert_eq!(icon_match_ranges("İcon", "i"), vec![0..2]);
+        assert_eq!(icon_match_ranges("Light bulb", "lightbulb"), vec![0..10]);
+        assert_eq!(icon_match_ranges("چراغ", "راغ"), vec![2..8]);
+        assert!(icon_match_ranges("Lamp", "").is_empty());
+        assert!(icon_match_ranges("Lamp", "seat").is_empty());
+    }
+
+    #[test]
+    fn matching_text_is_styled_in_both_views_and_themes() {
+        use eframe::egui;
+        for dark in [false, true] {
+            let context = egui::Context::default();
+            context.set_visuals(if dark {
+                egui::Visuals::dark()
+            } else {
+                egui::Visuals::light()
+            });
+            let mut output = context.run_ui(egui::RawInput::default(), |ui| {
+                for grid in [false, true] {
+                    let job = icon_result_text(ui, LAMP, "Lamp", "am", grid);
+                    let matches: Vec<_> = job
+                        .sections
+                        .iter()
+                        .filter(|section| section.format.background != egui::Color32::TRANSPARENT)
+                        .collect();
+                    assert_eq!(matches.len(), 1);
+                    assert_eq!(
+                        &job.text[matches[0].byte_range.start.0..matches[0].byte_range.end.0],
+                        "am"
+                    );
+                    assert!(matches[0].format.underline.width > 0.0);
+                    assert_eq!(
+                        job.text,
+                        format!("{LAMP}{}Lamp", if grid { "\n" } else { "  " })
+                    );
+                }
+            });
+            output.textures_delta.clear();
+        }
+    }
+
+    #[test]
+    fn pakar_workspace_editor_uses_the_actual_shared_searchable_picker() {
+        let shell = include_str!("shell.rs");
+        assert!(shell.contains("icons::searchable_workspace_icon_picker"));
+        assert!(!shell.contains("text_edit_singleline(&mut self.workspace_icon)"));
+    }
+
+    fn picker_frame(
+        context: &eframe::egui::Context,
+        value: &mut String,
+        compact: bool,
+        events: Vec<eframe::egui::Event>,
+    ) -> (
+        eframe::egui::FullOutput,
+        eframe::egui::Rect,
+        eframe::egui::Id,
+    ) {
+        use eframe::egui;
+        let mut button_rect = egui::Rect::NOTHING;
+        let mut picker_id = egui::Id::NULL;
+        let mut output = context.run_ui(
+            egui::RawInput {
+                screen_rect: Some(egui::Rect::from_min_size(
+                    egui::Pos2::ZERO,
+                    egui::vec2(800.0, 700.0),
+                )),
+                events,
+                ..Default::default()
+            },
+            |ui| {
+                button_rect = ui
+                    .horizontal(|ui| {
+                        picker_id = if compact {
+                            ui.make_persistent_id("test-icon-picker")
+                        } else {
+                            ui.make_persistent_id(egui::IdSalt::new("test-icon-picker"))
+                        };
+                        let config = IconPickerConfig {
+                            language: crate::config::AppLanguage::English,
+                            presets: CONTROL_ICON_PRESETS,
+                            fallback_glyph: PLUG,
+                            fallback_name: "Use channel default",
+                            width: 260.0,
+                            show_selected_name: true,
+                            search_hint: "Search icons...",
+                            presets_label: "Presets",
+                            no_matches_label: "No matching icons",
+                            clear_label: Some("Use channel default"),
+                        };
+                        if compact {
+                            searchable_icon_button(
+                                ui,
+                                "test-icon-picker",
+                                value,
+                                18.0,
+                                "Choose icon",
+                                config,
+                            );
+                        } else {
+                            searchable_icon_picker(ui, "test-icon-picker", value, config);
+                        }
+                        ui.min_rect()
+                    })
+                    .inner;
+            },
+        );
+        output.textures_delta.clear();
+        (output, button_rect, picker_id)
+    }
+
+    fn painted_text_rect(
+        output: &eframe::egui::FullOutput,
+        expected: &str,
+    ) -> Option<eframe::egui::Rect> {
+        fn find(shape: &eframe::egui::epaint::Shape, expected: &str) -> Option<eframe::egui::Rect> {
+            match shape {
+                eframe::egui::epaint::Shape::Text(text) if text.galley.job.text == expected => {
+                    Some(text.galley.rect.translate(text.pos.to_vec2()))
+                }
+                eframe::egui::epaint::Shape::Vec(shapes) => {
+                    shapes.iter().find_map(|shape| find(shape, expected))
+                }
+                _ => None,
+            }
+        }
+        output
+            .shapes
+            .iter()
+            .find_map(|shape| find(&shape.shape, expected))
+    }
+
+    fn click_picker(
+        context: &eframe::egui::Context,
+        value: &mut String,
+        compact: bool,
+        position: eframe::egui::Pos2,
+    ) -> (
+        eframe::egui::FullOutput,
+        eframe::egui::Rect,
+        eframe::egui::Id,
+    ) {
+        use eframe::egui;
+        picker_frame(
+            context,
+            value,
+            compact,
+            vec![
+                egui::Event::PointerMoved(position),
+                egui::Event::PointerButton {
+                    pos: position,
+                    button: egui::PointerButton::Primary,
+                    pressed: true,
+                    modifiers: egui::Modifiers::NONE,
+                },
+            ],
+        );
+        picker_frame(
+            context,
+            value,
+            compact,
+            vec![egui::Event::PointerButton {
+                pos: position,
+                button: egui::PointerButton::Primary,
+                pressed: false,
+                modifiers: egui::Modifiers::NONE,
+            }],
+        )
+    }
+
+    #[test]
+    fn icon_picker_search_click_filter_select_and_reopen_work_in_both_forms() {
+        use eframe::egui;
+        for compact in [false, true] {
+            let context = egui::Context::default();
+            let mut value = "sparkle".to_string();
+            let (_, button, _) = picker_frame(&context, &mut value, compact, Vec::new());
+            click_picker(&context, &mut value, compact, button.center());
+            let (output, _, picker_id) = picker_frame(&context, &mut value, compact, Vec::new());
+            let popup_id = picker_id.with("popup");
+            assert!(egui::Popup::is_id_open(&context, popup_id));
+            assert!(
+                context.egui_wants_keyboard_input(),
+                "search must receive focus"
+            );
+
+            let search = painted_text_rect(&output, "Search icons...")
+                .expect("search is the first popup section");
+            click_picker(&context, &mut value, compact, search.center());
+            assert!(
+                egui::Popup::is_id_open(&context, popup_id),
+                "clicking the search field must not dismiss the picker"
+            );
+            let (output, _, _) = picker_frame(
+                &context,
+                &mut value,
+                compact,
+                vec![egui::Event::Text("la".to_string())],
+            );
+            assert!(painted_text_rect(&output, &format!("{LAMP}  Lamp")).is_some());
+            picker_frame(&context, &mut value, compact, Vec::new());
+            let (output, _, _) = picker_frame(
+                &context,
+                &mut value,
+                compact,
+                vec![egui::Event::Text("mp".to_string())],
+            );
+            let lamp = painted_text_rect(&output, &format!("{LAMP}  Lamp"))
+                .expect("search must show the matching preset");
+            assert!(painted_text_rect(&output, &format!("{SEAT}  Seat")).is_none());
+            click_picker(&context, &mut value, compact, lamp.center());
+            assert_eq!(value, "lamp");
+            assert!(!egui::Popup::is_id_open(&context, popup_id));
+
+            let (_, button, _) = picker_frame(&context, &mut value, compact, Vec::new());
+            click_picker(&context, &mut value, compact, button.center());
+            let (output, _, _) = picker_frame(&context, &mut value, compact, Vec::new());
+            assert!(painted_text_rect(&output, "Search icons...").is_some());
+            assert!(painted_text_rect(&output, &format!("{SEAT}  Seat")).is_some());
+
+            let (output, _, _) = picker_frame(
+                &context,
+                &mut value,
+                compact,
+                vec![egui::Event::Text("unmatched-search".to_string())],
+            );
+            assert!(painted_text_rect(&output, "No matching icons").is_some());
+            let default = painted_text_rect(&output, &format!("{PLUG}  Use channel default"))
+                .expect("channel default remains available when searching");
+            click_picker(&context, &mut value, compact, default.center());
+            assert!(value.is_empty());
+            assert!(!egui::Popup::is_id_open(&context, popup_id));
+        }
+    }
+
+    #[test]
+    fn picker_grid_switch_stays_open_filters_selects_and_is_remembered() {
+        use eframe::egui;
+        for compact in [false, true] {
+            let context = egui::Context::default();
+            let mut value = "sparkle".to_string();
+            let (_, button, _) = picker_frame(&context, &mut value, compact, Vec::new());
+            click_picker(&context, &mut value, compact, button.center());
+            let (output, _, picker_id) = picker_frame(&context, &mut value, compact, Vec::new());
+            let grid_button =
+                painted_text_rect(&output, GRID_FOUR).expect("grid switch after search");
+            let list_button = painted_text_rect(&output, LIST).expect("list switch after search");
+            let search = painted_text_rect(&output, "Search icons...").unwrap();
+            assert!(search.right() < list_button.left());
+            assert!(list_button.right() < grid_button.left());
+            assert!((search.center().y - grid_button.center().y).abs() < 4.0);
+            click_picker(&context, &mut value, compact, grid_button.center());
+            assert!(egui::Popup::is_id_open(&context, picker_id.with("popup")));
+            assert!(
+                context
+                    .data_mut(|data| data.get_persisted::<bool>(egui::Id::new(ICON_PICKER_GRID_ID)))
+                    .unwrap()
+            );
+            let (output, _, _) = picker_frame(
+                &context,
+                &mut value,
+                compact,
+                vec![egui::Event::Text("lamp".to_string())],
+            );
+            let lamp =
+                painted_text_rect(&output, &format!("{LAMP}\nLamp")).expect("filtered grid tile");
+            assert!(painted_text_rect(&output, &format!("{SEAT}\nSeat")).is_none());
+            click_picker(&context, &mut value, compact, lamp.center());
+            assert_eq!(value, "lamp");
+            assert!(!egui::Popup::is_id_open(&context, picker_id.with("popup")));
+            let (_, button, _) = picker_frame(&context, &mut value, compact, Vec::new());
+            click_picker(&context, &mut value, compact, button.center());
+            let (output, _, _) = picker_frame(&context, &mut value, compact, Vec::new());
+            assert!(painted_text_rect(&output, &format!("{SEAT}\nSeat")).is_some());
+            let list_button = painted_text_rect(&output, LIST).unwrap();
+            click_picker(&context, &mut value, compact, list_button.center());
+            let (output, _, _) = picker_frame(&context, &mut value, compact, Vec::new());
+            assert!(painted_text_rect(&output, &format!("{SEAT}  Seat")).is_some());
+        }
+    }
+
+    #[test]
+    fn compact_popup_never_inherits_parent_width_or_grows_across_frames() {
+        use eframe::egui;
+        for dark in [false, true] {
+            let context = egui::Context::default();
+            context.set_visuals(if dark {
+                egui::Visuals::dark()
+            } else {
+                egui::Visuals::light()
+            });
+            let mut value = "sparkle".to_string();
+            let (_, button, _) = picker_frame(&context, &mut value, true, Vec::new());
+            click_picker(&context, &mut value, true, button.center());
+            for grid in [false, true] {
+                context.data_mut(|data| {
+                    data.insert_persisted(egui::Id::new(ICON_PICKER_GRID_ID), grid)
+                });
+                for _ in 0..20 {
+                    let (_, _, picker_id) = picker_frame(&context, &mut value, true, Vec::new());
+                    let popup = context
+                        .memory(|memory| memory.area_rect(picker_id.with("popup")))
+                        .expect("open picker area");
+                    assert!(
+                        popup.width() <= 320.0,
+                        "popup grew to {} pixels in grid={grid}",
+                        popup.width()
+                    );
+                }
+            }
+        }
+    }
+}
