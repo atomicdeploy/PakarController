@@ -55,6 +55,42 @@ fn field(ui: &mut egui::Ui, icon: &str, label: &str, value: &mut String, passwor
         );
     });
 }
+
+fn finish_table_area(ui: &mut egui::Ui, area: egui::Rect) {
+    // Absolute ui.put calls move the cursor to the last (unshifted) cell.
+    // Restore the complete 8.5-row extent before placing the footer.
+    ui.advance_cursor_after_rect(area);
+    ui.add_space(8.0);
+}
+
+#[cfg(test)]
+mod table_geometry_tests {
+    use super::*;
+    #[test]
+    fn footer_stays_below_every_half_staggered_row_after_absolute_widgets() {
+        for pitch in [30.0, 60.0, 94.0] {
+            let ctx = egui::Context::default();
+            let _ = ctx.run_ui(egui::RawInput::default(), |ui| {
+                let height = pitch * 0.72;
+                let (area, _) = ui.allocate_exact_size(
+                    egui::vec2(pitch * 10.0, height * 8.5),
+                    egui::Sense::hover(),
+                );
+                let last_cell = egui::Rect::from_min_size(
+                    area.min + egui::vec2(pitch * 9.0, height * 7.0),
+                    egui::vec2(pitch - 7.0, height - 7.0),
+                );
+                ui.put(last_cell, egui::Label::new("80"));
+                finish_table_area(ui, area);
+                let footer = ui.label("Cell selected").rect;
+                assert!(
+                    footer.top() >= area.bottom() + 8.0,
+                    "Footer overlaps staggered grid at pitch {pitch}: {area:?} {footer:?}"
+                );
+            });
+        }
+    }
+}
 impl PakarControllerApp {
     pub fn receive_configuration(&mut self, path: &str, value: serde_json::Value) {
         let flag = |key: &str| value.get(key).and_then(|v| v.as_bool());
@@ -666,7 +702,7 @@ impl PakarControllerApp {
                 });
             }
         }
-        ui.add_space(8.0);
+        finish_table_area(ui, area);
         ui.horizontal(|ui| {
             ui.label(egui::RichText::new(format!("Cell {} selected", self.selected_cell)).weak());
             if snapshot.is_none() {
@@ -1115,7 +1151,11 @@ impl PakarControllerApp {
                     }
                 }
             } else {
-                ui.label("Device naming has not been advertised by the connected firmware.");
+                ui.label(if self.live_status().is_none() {
+                    "Device offline. Connect to view its name."
+                } else {
+                    "Device name unavailable."
+                });
             }
         });
         ui.add_space(10.0);
@@ -1276,6 +1316,31 @@ impl PakarControllerApp {
         }
     }
     fn draw_streaming(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal_wrapped(|ui| {
+            ui.label("Target rate");
+            if ui
+                .add(
+                    egui::DragValue::new(&mut self.config.stream_fps)
+                        .range(0..=streaming::MAX_FPS)
+                        .suffix(" FPS"),
+                )
+                .changed()
+            {
+                let _ = self.ws_tx.send(WsCommand::Rate(self.config.stream_fps));
+            }
+            ui.weak("0 = uncapped; shared by rainbow and screen sampler");
+        });
+        if let Some((fps, at)) = self
+            .stream_sent_fps
+            .filter(|(_, at)| at.elapsed() < Duration::from_secs(3))
+        {
+            let _ = at;
+            ui.label(format!(
+                "Sent: {fps:.1} frames/s • complete WebSocket writes, not measured LED refresh"
+            ));
+        } else {
+            ui.weak("Sent rate unavailable. Connect before starting a stream.");
+        }
         ui.horizontal_wrapped(|ui| {
             badge(ui, "WebSocket", self.websocket_live);
             if ui

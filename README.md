@@ -35,6 +35,9 @@ The native Windows app is in `desktop/`. It deliberately has no mpv or
 visual styling are derived from Pealayer's MIT-licensed desktop foundation.
 It can stream a generated rainbow or sample the primary screen into the 10 by
 8 staggered table through the authenticated WebSocket.
+The Streaming panel exposes a shared target rate (60 FPS by default; 0 is
+uncapped) and measured completed host frame writes. This is not measured LED
+refresh. Monitor/region selection and live frame-rate acceptance remain open.
 
 ## Build
 

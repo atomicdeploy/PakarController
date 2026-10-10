@@ -104,7 +104,6 @@ uint8_t tm1637Brightness = 0;
 bool tm1637HostActive = false;
 bool gameStateInitialized = false;
 bool streamFrameReady = false;
-bool startupCuePlayed = false;
 uint8_t lastCellActionRevision = 0;
 uint8_t lastResetRevision = 0;
 bool programmingLatched = false;
@@ -2349,10 +2348,8 @@ void loop() {
     lastHelloAt = now;
     sendToAvr(kHello, sequence++);
   }
-  if (avrOnline && !startupCuePlayed) {
-    startupCuePlayed = true;
-    playUpdateSuccessCue();
-  }
+  // AVR owns its welcome melody. A first HELLO is not a completed update:
+  // sending the success cue here could replace the still-playing welcome.
   if (!PAKAR_USE_BUSY_WIRE && avrOnline &&
       static_cast<uint32_t>(now - lastStatusPollAt) >= 100U) {
     lastStatusPollAt = now;

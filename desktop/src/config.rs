@@ -57,6 +57,7 @@ pub struct WorkspaceProfile {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AppConfig {
+    pub stream_fps: u16,
     pub display: crate::display::Settings,
     pub theme: AppTheme,
     pub color_palette: ColorPalette,
@@ -77,6 +78,7 @@ pub struct AppConfig {
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
+            stream_fps: crate::streaming::DEFAULT_FPS,
             display: crate::display::Settings::default(),
             theme: AppTheme::System,
             color_palette: ColorPalette::Studio,
@@ -117,6 +119,7 @@ impl AppConfig {
     }
     pub fn save(&self) -> Result<(), String> {
         if !self.ui_scale.is_finite()
+            || self.stream_fps > crate::streaming::MAX_FPS
             || !(0.75..=2.0).contains(&self.ui_scale)
             || parse_rgb_hex(&self.accent).is_none()
         {

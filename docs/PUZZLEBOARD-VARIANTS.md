@@ -65,3 +65,22 @@ The root multiplex loop's digit-index increment can address element four of a
 four-element array. That bug is not imported. Commented confetti/sinelon/BPM/
 juggle examples are excluded by the user's explicit requirement. Rainbow and
 the current ESP effect engine still require live streaming/frame-rate testing.
+
+## XS/7Seg_Remote.ino
+
+The complete 4,317-byte source has a hash-bound manual review, not an automatic
+TM1637 import. Its single 74HC595 digit uses data 7, MR 8, clock 9, latch 12
+and OE 11. The digit bits rotate one position before output; zero is blank.
+The startup self-test runs two 1..9 sweeps, followed by a 500 ms final pause.
+RCSwitch listens on interrupt 0 despite an inconsistent INT1 comment. Eight
+low-byte codes (40, 36, 44, 34, 42, 38, 46, 33) map to actions 1..8; action 8
+toggles between zero and the previous action. The remote identifier is ignored.
+
+- [ ] Decide whether an optional RF receiver is in the current hardware scope;
+  none is peer-advertised. Do not blindly claim absent hardware or reuse its pins.
+- [ ] Retain an optional non-blocking digit self-test if useful for TM1637;
+  its old two-sweep startup is not the current welcome presentation.
+- [ ] If RF is retained, preserve the full unsigned receive value, validate
+  remote identity, debounce without the blocking 200 ms loop delay, and test it.
+
+These reviewed-open decisions are deliberately not marked integrated.

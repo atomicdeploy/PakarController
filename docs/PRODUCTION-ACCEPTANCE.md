@@ -49,6 +49,14 @@ No Wi-Fi password or other deployment secret belongs in GitHub.
   no dual application and no replay on uncertain failure. Serial status expires.
 - [x] Broker TLS and anonymous rejection verified; exact ledboard topic ACL added
   without resetting credentials or unrelated tenant rules. ESP cloud gate open.
+- [x] Native streaming target is configurable (60 FPS default, 0 uncapped) for
+  rainbow and sampling; hidden 25/8 FPS delays removed. Sent rate is explicitly
+  host-write evidence, not LED refresh. Pacing and table-footer tests pass.
+- [x] Native network observations carry endpoint/credential identity; serial
+  observations and queued writes carry port identity. Late other-peer events
+  are rejected, and destination changes clear old displayed state.
+- [x] Normal ESP/AVR handshake no longer queues a false update-success cue over
+  the AVR welcome. Actual OTA/ISP cues remain; source regression passes.
 
 ## Donor completeness and provenance
 
@@ -72,6 +80,9 @@ No Wi-Fi password or other deployment secret belongs in GitHub.
 
 ## Electrical, timing and integrated firmware
 
+- [ ] Measure actual AVR VCC and crystal/clock/fuses against its exact part's
+  datasheet speed grade. User-reported 3.3 V plus the current 16 MHz build profile
+  needs confirmation; do not alter fuses or raise supply blindly with ESP wired.
 - [ ] Confirm busy-wire pull-ups and boot-safe GPIO0 behavior on actual hardware;
   retain configurable polling mode and select default using measured loss/latency.
 - [ ] Verify AVR hardware UART and ESP SoftwareSerial bidirectionally with CRC,
@@ -104,6 +115,8 @@ No Wi-Fi password or other deployment secret belongs in GitHub.
   consistent table mapping on all requested surfaces.
 - [ ] Complete real screen sampler: monitor/region selection, geometry mapping,
   controls and measured Wi-Fi streaming; no mpv dependency.
+- [ ] Validate configurable/uncapped streaming with backpressure and measured
+  rendered LED throughput; compare host sent rate to actual board frame commits.
 - [ ] Verify Wi-Fi/WebSocket/UDP streaming framing, bounds, frame commit and
   disconnect recovery; define the AVR strip decision without duplicating engines.
 - [ ] Verify multi-client control and simultaneous Wi-Fi plus USB host transport

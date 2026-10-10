@@ -12,6 +12,7 @@ mod display;
 mod identity;
 mod messaging;
 mod platform;
+mod streaming;
 mod ui;
 
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
@@ -193,14 +194,17 @@ struct CellMappingResponse {
 }
 enum WsCommand {
     Connect(Endpoint),
+    Rate(u16),
     Stream(bool),
     Sample(bool),
 }
 enum SerialCommand {
     Port(String),
-    Send(u8, Vec<u8>),
+    Send(String, u8, Vec<u8>),
 }
 enum Event {
+    ForEndpoint(Endpoint, Box<Event>),
+    StreamStats(f64),
     Status(DeviceStatus),
     Mapping(Vec<CellMapping>),
     Configuration(&'static str, serde_json::Value),
@@ -209,7 +213,20 @@ enum Event {
     NameUpdated(Endpoint),
     Failed(String),
     WebSocket(bool),
-    Serial(bool, Option<DeviceStatus>),
+    Serial(String, bool, Option<DeviceStatus>),
+}
+
+fn for_endpoint(endpoint: &Endpoint, event: Event) -> Event {
+    Event::ForEndpoint(endpoint.clone(), Box::new(event))
+}
+
+fn current_event(event: Event, endpoint: &Endpoint, serial_port: &str) -> Option<Event> {
+    match event {
+        Event::ForEndpoint(origin, inner) if origin == *endpoint => Some(*inner),
+        Event::ForEndpoint(..) => None,
+        Event::Serial(ref port, ..) if port != serial_port => None,
+        other => Some(other),
+    }
 }
 
 fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> {
@@ -398,7 +415,10 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
             }
         }
         let event = result.unwrap_or_else(Event::Failed);
-        if events.send(event).is_err() {
+        if events
+            .send(for_endpoint(command.endpoint(), event))
+            .is_err()
+        {
             break;
         }
         context.request_repaint();
@@ -496,10 +516,12 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
     let mut endpoint: Option<Endpoint> = None;
     let mut streaming = false;
     let mut sampling = false;
+    let mut fps = streaming::DEFAULT_FPS;
     loop {
         if endpoint.is_none() {
             match commands.recv() {
                 Ok(WsCommand::Connect(e)) => endpoint = Some(e),
+                Ok(WsCommand::Rate(value)) => fps = value.min(streaming::MAX_FPS),
                 Ok(WsCommand::Stream(v)) => streaming = v,
                 Ok(WsCommand::Sample(v)) => sampling = v,
                 Err(_) => return,
@@ -508,6 +530,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
         while let Ok(command) = commands.try_recv() {
             match command {
                 WsCommand::Connect(e) => endpoint = Some(e),
+                WsCommand::Rate(value) => fps = value.min(streaming::MAX_FPS),
                 WsCommand::Stream(v) => streaming = v,
                 WsCommand::Sample(v) => sampling = v,
             }
@@ -536,10 +559,12 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                     .set_read_timeout(Some(Duration::from_millis(40)))
                     .map_err(|e| e.to_string())?;
             }
-            let _ = events.send(Event::WebSocket(true));
+            let _ = events.send(for_endpoint(&current, Event::WebSocket(true)));
             context.request_repaint();
             let mut hue = 0_u16;
             let mut last_stream = Instant::now() - Duration::from_millis(50);
+            let mut stats_at = Instant::now();
+            let mut sent_frames = 0_u32;
             loop {
                 match commands.try_recv() {
                     Ok(WsCommand::Connect(new_endpoint)) if new_endpoint != current => {
@@ -547,6 +572,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                         break;
                     }
                     Ok(WsCommand::Connect(_)) => {}
+                    Ok(WsCommand::Rate(value)) => fps = value.min(streaming::MAX_FPS),
                     Ok(WsCommand::Stream(value)) => {
                         streaming = value;
                         if value {
@@ -562,7 +588,8 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                     Err(TryRecvError::Disconnected) => return Ok(()),
                     Err(TryRecvError::Empty) => {}
                 }
-                if streaming && last_stream.elapsed() >= Duration::from_millis(40) {
+                if streaming && last_stream.elapsed() >= streaming::interval(fps) {
+                    let frame_at = Instant::now();
                     socket
                         .send(Message::Binary(rainbow_packet(0, 240, false, hue).into()))
                         .map_err(|e| e.to_string())?;
@@ -570,9 +597,11 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                         .send(Message::Binary(rainbow_packet(240, 240, true, hue).into()))
                         .map_err(|e| e.to_string())?;
                     hue = (hue + 4) % 360;
-                    last_stream = Instant::now();
+                    last_stream = frame_at;
+                    sent_frames += 1;
                 }
-                if sampling && last_stream.elapsed() >= Duration::from_millis(120) {
+                if sampling && last_stream.elapsed() >= streaming::interval(fps) {
+                    let frame_at = Instant::now();
                     let (first, second) = sampled_screen_packets()?;
                     socket
                         .send(Message::Binary(first.into()))
@@ -580,12 +609,29 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                     socket
                         .send(Message::Binary(second.into()))
                         .map_err(|e| e.to_string())?;
-                    last_stream = Instant::now();
+                    last_stream = frame_at;
+                    sent_frames += 1;
+                }
+                if stats_at.elapsed() >= Duration::from_secs(1) {
+                    let measured = f64::from(sent_frames) / stats_at.elapsed().as_secs_f64();
+                    let _ = events.send(for_endpoint(&current, Event::StreamStats(measured)));
+                    sent_frames = 0;
+                    stats_at = Instant::now();
+                    context.request_repaint();
+                }
+                if let tungstenite::stream::MaybeTlsStream::Plain(stream) = socket.get_mut() {
+                    stream
+                        .set_read_timeout(Some(streaming::read_budget(
+                            streaming || sampling,
+                            fps,
+                            last_stream.elapsed(),
+                        )))
+                        .map_err(|e| e.to_string())?;
                 }
                 match socket.read() {
                     Ok(Message::Text(text)) => {
                         if let Ok(status) = serde_json::from_str::<DeviceStatus>(&text) {
-                            let _ = events.send(Event::Status(status));
+                            let _ = events.send(for_endpoint(&current, Event::Status(status)));
                             context.request_repaint();
                         }
                     }
@@ -598,10 +644,13 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
             }
             Ok(())
         })();
-        let _ = events.send(Event::WebSocket(false));
+        let _ = events.send(for_endpoint(&current, Event::WebSocket(false)));
         context.request_repaint();
         if let Err(error) = result {
-            let _ = events.send(Event::Failed(format!("WebSocket: {error}")));
+            let _ = events.send(for_endpoint(
+                &current,
+                Event::Failed(format!("WebSocket: {error}")),
+            ));
         }
         thread::sleep(Duration::from_millis(600));
     }
@@ -756,7 +805,7 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
             .timeout(Duration::from_millis(60))
             .open();
         let Ok(mut port) = opened else {
-            let _ = events.send(Event::Serial(false, None));
+            let _ = events.send(Event::Serial(port_name.clone(), false, None));
             thread::sleep(Duration::from_secs(1));
             while let Ok(c) = commands.try_recv() {
                 if let SerialCommand::Port(p) = c {
@@ -765,7 +814,8 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
             }
             continue;
         };
-        let _ = events.send(Event::Serial(true, None));
+        let connected_port = port_name.clone();
+        let _ = events.send(Event::Serial(connected_port.clone(), true, None));
         context.request_repaint();
         let mut encoded = Vec::new();
         let mut last_poll = Instant::now() - Duration::from_secs(1);
@@ -777,10 +827,11 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
                         break 'connected;
                     }
                     SerialCommand::Port(_) => {}
-                    SerialCommand::Send(op, payload) => {
+                    SerialCommand::Send(target, op, payload) if target == connected_port => {
                         let _ = port.write_all(&wire_frame(op, sequence, &payload));
                         sequence = sequence.wrapping_add(1);
                     }
+                    SerialCommand::Send(..) => {} // Never deliver queued work to a different port.
                 }
             }
             if last_poll.elapsed() >= Duration::from_millis(750) {
@@ -795,8 +846,11 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
                         if *byte == 0 {
                             if let Some((op, payload)) = decode_frame(&encoded) {
                                 if op == OP_STATUS {
-                                    let _ =
-                                        events.send(Event::Serial(true, serial_status(&payload)));
+                                    let _ = events.send(Event::Serial(
+                                        connected_port.clone(),
+                                        true,
+                                        serial_status(&payload),
+                                    ));
                                     context.request_repaint();
                                 }
                             }
@@ -812,7 +866,7 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
                 Err(_) => break,
             }
         }
-        let _ = events.send(Event::Serial(false, None));
+        let _ = events.send(Event::Serial(connected_port, false, None));
         context.request_repaint();
     }
 }
@@ -907,6 +961,7 @@ struct PakarControllerApp {
     serial_live: bool,
     streaming: bool,
     sampling: bool,
+    stream_sent_fps: Option<(f64, Instant)>,
     palette: ui::palette::Palette,
     mappings: Vec<CellMapping>,
     mapping_logical: u8,
@@ -1021,6 +1076,7 @@ impl PakarControllerApp {
             serial_live: false,
             streaming: false,
             sampling: false,
+            stream_sent_fps: None,
             palette: ui::palette::Palette::Studio,
             mappings: Vec::new(),
             mapping_logical: 1,
@@ -1046,7 +1102,9 @@ impl PakarControllerApp {
     }
     fn serial(&self, op: u8, payload: Vec<u8>) {
         if self.transport != Transport::WiFi {
-            let _ = self.serial_tx.send(SerialCommand::Send(op, payload));
+            let _ = self
+                .serial_tx
+                .send(SerialCommand::Send(self.serial_port.clone(), op, payload));
         }
     }
     fn action(
@@ -1070,10 +1128,12 @@ impl PakarControllerApp {
         command_route(
             self.transport,
             self.status.is_some()
+                && self.last_ws_endpoint.as_ref() == Some(&self.endpoint())
                 && self
                     .last_status_at
                     .is_some_and(|at| at.elapsed() < Duration::from_secs(8)),
             self.serial_live
+                && self.last_serial_port == self.serial_port
                 && self.serial_status.is_some()
                 && self
                     .last_serial_status_at
@@ -1166,13 +1226,26 @@ impl PakarControllerApp {
     fn poll(&mut self) {
         let endpoint = self.endpoint();
         if self.last_ws_endpoint.as_ref() != Some(&endpoint) {
+            self.status = None;
+            self.last_status_at = None;
+            self.websocket_live = false;
+            self.stream_sent_fps = None;
+            self.streaming = false;
+            self.sampling = false;
+            self.mappings.clear();
             self.access_info = None;
             self.device_name = None;
             let _ = self.ws_tx.send(WsCommand::Connect(endpoint.clone()));
+            let _ = self.ws_tx.send(WsCommand::Stream(false));
+            let _ = self.ws_tx.send(WsCommand::Sample(false));
+            let _ = self.ws_tx.send(WsCommand::Rate(self.config.stream_fps));
             self.last_ws_endpoint = Some(endpoint);
             self.configuration_loaded = false;
         }
         if self.last_serial_port != self.serial_port {
+            self.serial_status = None;
+            self.last_serial_status_at = None;
+            self.serial_live = false;
             let _ = self
                 .serial_tx
                 .send(SerialCommand::Port(self.serial_port.clone()));
@@ -1205,7 +1278,12 @@ impl PakarControllerApp {
             let _ = self.http_tx.send(HttpCommand::Mapping(self.endpoint()));
         }
         while let Ok(event) = self.event_rx.try_recv() {
+            let Some(event) = current_event(event, &self.endpoint(), &self.serial_port) else {
+                continue;
+            };
             match event {
+                Event::ForEndpoint(..) => {} // Worker envelopes are unwrapped once.
+                Event::StreamStats(value) => self.stream_sent_fps = Some((value, Instant::now())),
                 Event::Status(s) => {
                     if !s.hostname.is_empty() {
                         self.brightness = s.brightness;
@@ -1253,8 +1331,13 @@ impl PakarControllerApp {
                     }
                     self.message = e;
                 }
-                Event::WebSocket(v) => self.websocket_live = v,
-                Event::Serial(v, s) => {
+                Event::WebSocket(v) => {
+                    self.websocket_live = v;
+                    if !v {
+                        self.stream_sent_fps = None;
+                    }
+                }
+                Event::Serial(_, v, s) => {
                     self.serial_live = v;
                     if !v {
                         self.serial_status = None;
@@ -1652,6 +1735,58 @@ fn main() -> eframe::Result {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn late_observations_are_bound_to_their_requested_peer() {
+        let current = super::Endpoint {
+            base: "http://ledboard.local".into(),
+            user: "test".into(),
+            password: "old".into(),
+        };
+        let mut other = current.clone();
+        other.base = "http://other.local".into();
+        assert!(
+            super::current_event(
+                super::for_endpoint(&other, super::Event::Status(super::DeviceStatus::default())),
+                &current,
+                "COM9"
+            )
+            .is_none()
+        );
+        other = current.clone();
+        other.password = "new".into();
+        assert!(
+            super::current_event(
+                super::for_endpoint(&other, super::Event::WebSocket(false)),
+                &current,
+                "COM9"
+            )
+            .is_none()
+        );
+        assert!(
+            super::current_event(
+                super::for_endpoint(&current, super::Event::WebSocket(true)),
+                &current,
+                "COM9"
+            )
+            .is_some()
+        );
+        assert!(
+            super::current_event(
+                super::Event::Serial("COM8".into(), true, None),
+                &current,
+                "COM9"
+            )
+            .is_none()
+        );
+        assert!(
+            super::current_event(
+                super::Event::Serial("COM9".into(), true, None),
+                &current,
+                "COM9"
+            )
+            .is_some()
+        );
+    }
     use super::*;
     #[test]
     fn dual_transport_selects_one_route_without_replay() {

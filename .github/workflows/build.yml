@@ -63,6 +63,7 @@ jobs:
         run: |
           node tests/web_display_test.mjs
           node tests/web_access_test.mjs
+          node tests/boot_audio_test.mjs
           pwsh -File tools/check-reuse-ledger.ps1
           pwsh -File tests/reuse_ledger_test.ps1
           pwsh -File tools/verify-versions.ps1
