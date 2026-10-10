@@ -41,16 +41,18 @@ bool LedGrid::setCell(uint8_t cell, BoardCore::Protocol::CellState state,
   return true;
 }
 
-void LedGrid::resetWhite() {
+void LedGrid::fill(BoardCore::Protocol::CellState state) {
   pattern_ = kPatternNone;
   for (uint8_t i = 0; i < kCells; ++i) {
-    states_[i] = BoardCore::Protocol::kCellWhite;
-    target_[i] = CRGB::White;
-    current_[i] = CRGB::White;
+    states_[i] = state;
+    target_[i] = colorFor(state);
+    current_[i] = target_[i];
     renderCell(i);
   }
   dirty_ = true;
 }
+
+void LedGrid::resetWhite() { fill(BoardCore::Protocol::kCellWhite); }
 
 void LedGrid::showWinner(uint8_t winner) {
   if (winner < 1 || winner > 9) return;

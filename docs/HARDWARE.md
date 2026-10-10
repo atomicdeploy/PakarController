@@ -11,6 +11,7 @@
 | SoftwareSerial ESP TX | D0 | 16 | D0 / PD0 hardware RXD |
 | SoftwareSerial ESP RX | D4 | 2 | D1 / PD1 hardware TXD through 5 V to 3.3 V translation when required |
 | LED data | D2 | 4 | MT16703/WS2811 DIN; direct 3.3 V logic is the verified test wiring |
+| optional ESP busy | D3 | 0 | D10 / PB2; HIGH blocks AVR transmission, LOW permits it |
 | reference | GND | - | GND and LED signal ground |
 
 The ISP wiring and direct active-low reset path have physically read the
@@ -28,6 +29,9 @@ ATmega328P signature `1E 95 0F`.
   flashing; the AVR uses UART0 for reliable non-blocking communication.
 - GPIO2/D4 is a boot strap. Add a 10 kOhm pull-up to 3.3 V and ensure AVR TXD
   is idle/high (or disconnected) whenever the ESP resets.
+- GPIO0/D3 is also a boot strap. The optional busy wire therefore uses a 10
+  kOhm pull-up to 3.3 V. Its boot-high state is intentionally safe: it keeps
+  the AVR quiet until the ESP application releases the line LOW.
 - Never connect the 24 V LED supply to either MCU. Use a buck supply for the
   controller and a common signal ground.
 - The current strip accepts the ESP's 3.3 V data directly. A short series
@@ -49,6 +53,7 @@ ATmega328P signature `1E 95 0F`.
 | D9 / PB1 | buzzer |
 | A4 / PC4 / SDA | TM1637 DIO (two-wire TM bus, not I2C) |
 | A5 / PC5 / SCL | TM1637 CLK (two-wire TM bus, not I2C) |
+| D10 / PB2 | optional ESP-busy input; replaces the unused historical 1-Wire pin |
 | D11 / PB3 | dedicated ISP MOSI |
 | D12 / PB4 | dedicated ISP MISO |
 | D13 / PB5 | dedicated ISP SCK |
@@ -77,6 +82,7 @@ application remained installed.
 | NodeMCU D0 / GPIO16 | AVR D0 / PD0 / RXD | ESP SoftwareSerial TX to AVR hardware UART RX |
 | AVR D1 / PD1 / TXD | NodeMCU D4 / GPIO2 | AVR hardware UART TX to ESP SoftwareSerial RX |
 | NodeMCU D2 / GPIO4 | WS2811 DIN | full-brightness rainbow verified directly at 3.3 V |
+| NodeMCU D3 / GPIO0 | AVR D10 / PB2 | optional busy wire; add 10 kOhm D3-to-3.3 V pull-up |
 | AVR A4 / PC4 / SDA | TM1637 DIO | ACK verified |
 | AVR A5 / PC5 / SCL | TM1637 CLK | ACK verified |
 | AVR D9 / PB1 | buzzer signal | Timer1 melody output, audible |
@@ -95,3 +101,8 @@ powered above 3.3 V. Then:
 5. Leave D5/D6/D7/D1 connected for recovery ISP.
 6. Power up, then verify `HELLO`, CRC error counters, bidirectional ping, reset,
    and a physical key event before enabling automatic updates.
+
+The polling build ignores D3 and D10. The busy-wire build must be installed on
+both controllers only after the wire and pull-up are fitted. In that build the
+AVR pushes changed state plus a one-second heartbeat only while D3 is LOW; the
+ESP raises D3 around timing-sensitive LED output.

@@ -9,10 +9,15 @@ and Pealayer work.
 - The ESP8266 owns the MT16703/WS2811-compatible LED field, Wi-Fi/API/UI,
   streaming, self-OTA, AVR ISP recovery, and LittleFS firmware backups.
 - Both use the PCController COBS + CRC-8/ATM UART envelope at 38400 baud. The
-  AVR uses its hardware UART; the ESP uses SoftwareSerial so its USB UART
-  remains available for diagnostics.
+  AVR uses its hardware UART; the ESP uses SoftwareSerial, while its USB UART
+  is a second framed 115200-baud PC transport.
 - The Windows controller uses Pealayer's eframe/egui design approach without
   linking or loading mpv.
+- Optional outbound cloud links provide TLS MQTT telemetry/commands and a
+  configurable WebSocket client. MQTT and WebSocket secrets are write-only and
+  stored in checksum-backed LittleFS configuration.
+- The PU850-derived network toolbox also includes mDNS discovery and a
+  password-authenticated Telnet command shell without taking over either UART.
 
 No I2C peripheral is enabled or required.
 
@@ -23,19 +28,24 @@ See `docs/HARDWARE.md`, `docs/HARDWARE-VERIFICATION.md`,
 The native Windows app is in `desktop/`. It deliberately has no mpv or
 `libmpv2` dependency. Its eframe, reqwest, serde versions and system-aware
 visual styling are derived from Pealayer's MIT-licensed desktop foundation.
+It can stream a generated rainbow or sample the primary screen into the 10 by
+8 staggered table through the authenticated WebSocket.
 
 ## Build
 
-On the Windows hardware host with Arduino CLI, MiniCore, and FastLED installed:
+On the Windows hardware host with Arduino CLI and the locked libraries
+installed (FastLED 3.10.6, WebSockets 2.7.2, PubSubClient 2.8.0):
 
 ```powershell
-.\tools\build-firmware.ps1
+.\tools\build-firmware.ps1 -LinkMode polling
+.\tools\build-firmware.ps1 -LinkMode busy-wire
 # PU850-style repository entrypoint; also runs the protocol tests
 .\build.cmd
 ```
 
-Linux/CI uses `./build.sh`; both entrypoints produce the same two firmware
-targets and require the merged AVR+Urboot artifact to be exactly 32 KiB.
+Linux/CI uses `./build.sh polling` and `./build.sh busy-wire`. CI builds both
+variants; the deployed pair must use the same link mode. Every merged
+AVR+Urboot artifact must be exactly 32 KiB.
 
 The script compiles the ESP8266 image and the exact MiniCore ATmega328P target,
 then verifies that `build/avr/avr.ino.with_bootloader.bin` is a complete 32 KiB
@@ -48,3 +58,16 @@ Build the Windows application with:
 cargo test --manifest-path .\desktop\Cargo.toml
 cargo build --release --manifest-path .\desktop\Cargo.toml
 ```
+
+The same executable provides scriptable CLI and interactive TUI surfaces. Set
+`PAKAR_ENDPOINT`, and optionally `PAKAR_USER` / `PAKAR_PASSWORD`, then use:
+
+```powershell
+PakarController.exe --status
+PakarController.exe --command cell 17 red fade
+PakarController.exe --command mode snake
+PakarController.exe --tui
+```
+
+The text table uses the same serpentine numbering and one-row offset for odd
+physical columns as the Web and graphical front panels.

@@ -14,6 +14,14 @@
 
 using namespace BoardCore::Protocol;
 
+#ifndef PAKAR_USE_BUSY_WIRE
+#define PAKAR_USE_BUSY_WIRE 1
+#endif
+
+#if PAKAR_USE_BUSY_WIRE != 0 && PAKAR_USE_BUSY_WIRE != 1
+#error "PAKAR_USE_BUSY_WIRE must be 0 or 1"
+#endif
+
 namespace {
 
 constexpr uint32_t kBaud = 38400;
@@ -36,6 +44,8 @@ bool tm1637Ack = false;
 uint8_t cellActionRevision = 0;
 uint8_t resetRevision = 0;
 Effect cellActionEffect = kEffectImmediate;
+bool stateDirty = true;
+uint32_t lastStatePushAt = 0;
 
 void playAudioCue(AudioCue cue) {
   buzzer.stop();
@@ -64,6 +74,46 @@ void playAudioCue(AudioCue cue) {
       buzzer.enqueue(NOTE_C6, 90);
       buzzer.pause(35);
       buzzer.enqueue(NOTE_G6, 180);
+      break;
+    case kCueFinish:
+      buzzer.enqueue(NOTE_E5, 100);
+      buzzer.enqueue(NOTE_G5, 100);
+      buzzer.enqueue(NOTE_A5, 250);
+      break;
+    case kCueLost:
+      buzzer.enqueue(NOTE_G4, 100);
+      buzzer.enqueue(NOTE_E4, 100);
+      buzzer.enqueue(NOTE_C4, 100);
+      buzzer.enqueue(NOTE_G3, 100);
+      break;
+    case kCueIncorrect:
+      for (uint8_t index = 0; index < 3; ++index) {
+        buzzer.enqueue(2000, 100);
+        buzzer.pause(100);
+      }
+      break;
+    case kCueRapidError:
+      for (uint8_t index = 0; index < 5; ++index) {
+        buzzer.enqueue(2000, 10);
+        buzzer.pause(10);
+      }
+      break;
+    case kCueFault:
+      buzzer.enqueue(1000, 250);
+      buzzer.enqueue(500, 500);
+      buzzer.pause(5000);
+      break;
+    case kCueIncrease:
+      buzzer.enqueue(2000, 100);
+      buzzer.pause(50);
+      buzzer.enqueue(2500, 100);
+      buzzer.pause(50);
+      break;
+    case kCueDecrease:
+      buzzer.enqueue(1500, 100);
+      buzzer.pause(50);
+      buzzer.enqueue(1000, 100);
+      buzzer.pause(50);
       break;
   }
 }
@@ -114,6 +164,8 @@ void showState() {
     display.showInteger(winner);
   } else if (mode == kModeCellSelect) {
     display.showInteger(selectedCell);
+  } else if (mode == kModeSnake) {
+    display.showText(F("SnAk"));
   } else {
     display.showUnavailable();
   }
@@ -148,6 +200,16 @@ void sendGameState(uint8_t sequence = 0) {
   link.send(kGameState, sequence, payload, sizeof(payload));
 }
 
+bool espReadyForUnsolicitedFrame() {
+#if PAKAR_USE_BUSY_WIRE
+  return digitalRead(BoardPins::EspBusy) == LOW;
+#else
+  return false;
+#endif
+}
+
+void markStateDirty() { stateDirty = true; }
+
 void recordCellAction(Effect effect) {
   cellActionEffect = effect;
   ++cellActionRevision;
@@ -163,6 +225,7 @@ void resetGame() {
   }
   showState();
   if (!programmingLatch.active()) playBootMelody();
+  markStateDirty();
 }
 
 void chooseWinner(uint8_t button) {
@@ -177,6 +240,7 @@ void chooseWinner(uint8_t button) {
   buzzer.enqueue(base + 220, 110);
   buzzer.pause(50);
   buzzer.enqueue(base + 440, 260);
+  markStateDirty();
 }
 
 void handleCellKey(uint8_t button) {
@@ -192,9 +256,11 @@ void handleCellKey(uint8_t button) {
     case 9: resetGame(); break;
   }
   showState();
+  markStateDirty();
 }
 
 void onInputChanged(uint8_t button, bool pressed) {
+  markStateDirty();
   if (!pressed) return;
   if (mode == kModeFirstWins) chooseWinner(button);
   else if (mode == kModeCellSelect) handleCellKey(button);
@@ -215,7 +281,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       sendGameState(frame.sequence);
       break;
     case kSetMode:
-      if (frame.payloadLength != 1 || frame.payload[0] > kModeFirstWins) {
+      if (frame.payloadLength != 1 || frame.payload[0] > kModeSnake) {
         link.error(frame.sequence, frame.opcode, kBadPayload);
         break;
       }
@@ -237,6 +303,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
                            ? static_cast<Effect>(frame.payload[2])
                            : kEffectFade);
       showState();
+      markStateDirty();
       link.ack(frame.sequence, frame.opcode);
       break;
     case kGameReset:
@@ -249,6 +316,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
         break;
       }
       shiftRegisters.setActiveOutputs(frame.payload[0]);
+      markStateDirty();
       link.ack(frame.sequence, frame.opcode);
       break;
     case kBuzzer:
@@ -263,7 +331,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       link.ack(frame.sequence, frame.opcode);
       break;
     case kAudioCue:
-      if (frame.payloadLength != 1 || frame.payload[0] > kCueWinner ||
+      if (frame.payloadLength != 1 || frame.payload[0] > kCueDecrease ||
           programmingLatch.active()) {
         link.error(frame.sequence, frame.opcode,
                    programmingLatch.active() ? kUnsafe : kBadPayload);
@@ -280,6 +348,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       display.showInteger(static_cast<int16_t>(frame.payload[0] |
                                                frame.payload[1] << 8));
       tm1637Ack = probeTm1637();
+      markStateDirty();
       link.ack(frame.sequence, frame.opcode);
       break;
     case kPing:
@@ -301,6 +370,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
         resetGame();
       }
       link.ack(frame.sequence, frame.opcode);
+      markStateDirty();
       break;
     default:
       link.error(frame.sequence, frame.opcode, kUnsupported);
@@ -344,6 +414,9 @@ void serviceInputs(uint32_t now) {
 }  // namespace
 
 void setup() {
+#if PAKAR_USE_BUSY_WIRE
+  pinMode(BoardPins::EspBusy, INPUT_PULLUP);
+#endif
   shiftRegisters.begin();
   buzzer.begin(BoardPins::Buzzer);
   display.begin(5);
@@ -359,4 +432,14 @@ void loop() {
   link.service();
   if (!programmingLatch.active()) serviceInputs(now);
   buzzer.update(now);
+#if PAKAR_USE_BUSY_WIRE
+  // In busy-wire builds the AVR owns change notification. A periodic snapshot
+  // is also pushed so reconnecting clients converge without ESP polling.
+  if ((stateDirty || static_cast<uint32_t>(now - lastStatePushAt) >= 1000U) &&
+      espReadyForUnsolicitedFrame()) {
+    sendGameState();
+    stateDirty = false;
+    lastStatePushAt = now;
+  }
+#endif
 }

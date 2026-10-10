@@ -37,3 +37,11 @@ The PCController and Pealayer source repositories were left unchanged.
 Hardware modules are copied into PakarController under PCController's MIT
 option, while game-specific integration stays isolated here and numeric framing
 remains compatible with the shared PCController protocol family.
+
+The final integration also carries forward PuzzleBoard's edge-based debounce,
+task servicing, cached TM1637 updates, nonblocking melody queue, explicit mode
+transitions, and shift-register ownership. PCController contributes its
+framed multi-transport host contract, peer capability advertisement, EEPROM
+safety latch, Urboot image workflow, and factual front-panel state rules.
+Historical I2C, DS18B20, RF, product tables, and unrelated demo effects remain
+excluded because the present hardware does not provide them.

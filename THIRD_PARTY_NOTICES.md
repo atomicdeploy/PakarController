@@ -18,9 +18,12 @@ PakarController is integration code built from earlier AtomicDeploy projects.
   and its legacy UART payload implementation are not included. The source
   repository has no standalone license file; this reuse is recorded explicitly
   because both repositories are owner-directed AtomicDeploy work.
-- FastLED, Arduino ESP8266 core, MiniCore, eframe/egui, reqwest, and
-  serde are build/runtime dependencies under their respective upstream terms;
-  their sources are not vendored here.
+- FastLED, Arduino ESP8266 core, MiniCore, WebSockets 2.7.2 by Markus Sattler,
+  PubSubClient 2.8.0 by Nick O'Leary, xcap 0.9.8, eframe/egui, reqwest, and serde are
+  build/runtime dependencies under their
+  respective upstream terms; their sources are not vendored here. WebSockets
+  is used under LGPL-2.1-or-later for the authenticated same-origin ESP8266
+  event endpoint.
 
 Historical PuzzleBoard, 40LED, and Puzzles behavior was audited and selected
 game behavior was reimplemented behind the bounded PakarController protocol.

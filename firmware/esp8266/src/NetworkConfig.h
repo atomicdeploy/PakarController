@@ -12,8 +12,10 @@ class NetworkConfigStore {
   bool begin(fs::FS &filesystem);
   bool configure(const char *hostname, const char *apPassword);
   bool setStation(const String &ssid, const String &password, bool enabled);
+  bool setAccessPointEnabled(bool enabled);
   bool save();
 
+  bool accessPointEnabled() const { return record_.accessPointEnabled != 0; }
   bool stationEnabled() const { return record_.stationEnabled != 0; }
   bool stationConnected() const { return WiFi.status() == WL_CONNECTED; }
   const char *stationSsid() const { return record_.stationSsid; }
@@ -24,6 +26,7 @@ class NetworkConfigStore {
     uint32_t magic;
     uint8_t schema;
     uint8_t stationEnabled;
+    uint8_t accessPointEnabled;
     char stationSsid[33];
     char stationPassword[64];
     uint32_t checksum;

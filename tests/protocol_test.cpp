@@ -10,6 +10,13 @@ int main() {
   static_assert(kAudioCue == 0x11, "audio cue opcode changed");
   static_assert(kProgrammingState == 0x50,
                 "programming latch opcode changed");
+  static_assert(kSetBrightness == 0x51 && kSetLedPattern == 0x52,
+                "host LED control opcodes changed");
+  static_assert(kNetworkConfig == 0x53,
+                "USB network recovery opcode changed");
+  static_assert((kCapWebSocket | kCapNtp | kCapBusyWire | kCapHostSerial) ==
+                    0x3C00,
+                "ESP transport capability layout changed");
   static_assert(kCueUpdateStart != kCueUpdateSuccess,
                 "update cues must be distinguishable");
 

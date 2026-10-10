@@ -8,16 +8,23 @@ public installation.
 | Method | Route | Purpose |
 |---|---|---|
 | GET | `/api/v1/status` | peer-advertised AVR, mode, winner, cell, brightness, and LED state |
-| POST | `/api/v1/mode` | form `value=cell` or `value=first-wins` |
+| GET | `/api/v1/time` | NTP synchronization state and UTC epoch |
+| GET | `/api/v1/wifi/scan` | visible SSIDs, RSSI, and encryption flag |
+| POST | `/api/v1/mode` | form `value=idle`, `cell`, `first-wins`, or `snake` |
 | POST | `/api/v1/cell` | form `id=1..80`, `state=white|red|off`, `effect=immediate|fade|pulse` |
 | POST | `/api/v1/game/reset` | reset the current game |
+| POST | `/api/v1/snake/direction` | form `value=up|right|down|left`; opposite turns are rejected |
 | POST | `/api/v1/brightness` | form `value=1..255` |
 | POST | `/api/v1/effect` | form `value=none|rainbow|fire` |
 | POST | `/api/v1/buzzer` | form `frequency=20..12000`, `duration_ms=1..5000` |
+| POST | `/api/v1/audio` | form `cue=welcome|finish|lost|incorrect|rapid-error|fault|increase|decrease|update-start|update-success|winner|error` |
 | POST | `/api/v1/display` | form `value=-999..9999` for the AVR TM1637 |
 | POST | `/api/v1/outputs` | form `mask=0..255` for direct 74HC595 diagnostics |
 | GET | `/api/v1/network` | AP/station state without returning credentials |
-| POST | `/api/v1/network` | form `station_enabled`, `ssid`, `password`; persist and apply AP+station configuration |
+| POST | `/api/v1/network` | form `station_enabled`, `ap_enabled`, `ssid`, `password`; persist and apply AP+station configuration |
+| GET | `/api/v1/cloud` | redacted MQTT and outbound-WebSocket configuration plus live connection state |
+| POST | `/api/v1/cloud` | persist and apply MQTT/WebSocket endpoints, TLS flags, credentials/tokens, base topic, and telemetry interval |
+| POST | `/api/v1/cloud/reconnect` | disconnect and reapply both outbound cloud clients |
 | GET | `/api/v1/avr/probe` | read and validate ATmega328P signature through ISP |
 | POST | `/api/v1/avr/backup` | store flash, EEPROM, fuses, and lock byte in LittleFS |
 | GET | `/api/v1/avr/backup/flash` | download the last 32 KiB raw flash backup |
@@ -32,7 +39,40 @@ one pixel count, one flags byte, then RGB triples. Bit zero of flags commits
 the staged frame. A packet is rejected unless its exact size and pixel range
 are valid.
 
+`/ws` is the authenticated same-origin WebSocket. It pushes the complete JSON
+status record to every connected client, accepts `{"type":"status"}` and
+`{"type":"ping"}`, and accepts the same bounded binary `PKR1` chunks as UDP.
+This is the supported browser and desktop streaming path; multiple read/control
+clients may remain connected concurrently.
+
+The outbound MQTT client uses MQTT 3.1.1 and validates TLS with ISRG Root X1.
+It publishes retained `<base>/<hostname>/status` and
+`<base>/<hostname>/availability`, publishes command acknowledgements to
+`event`, and subscribes to `command`. The outbound WebSocket client supports
+configurable host, port, path, TLS, and bearer token; it sends the same status
+JSON and accepts the same JSON command objects as MQTT. Supported commands are
+`status`, `mode`, `cell`, `brightness`, `effect`, `outputs`,
+`display`, `buzzer`, `audio`, `snake-direction`, and `reset`. Secret values are write-only through
+the API; blank omitted password/token fields preserve the stored value.
+
+The password-authenticated Telnet shell on TCP 23 exposes `status`, `mode`,
+`cell`, `brightness`, `effect`, `display`, `audio`, and `reset`. It uses the
+same validation and state transitions as cloud JSON commands. The password is
+the HTTP development password; the service is advertised through mDNS as
+`_telnet._tcp`. USB serial remains a framed machine interface rather than a
+text shell, so Telnet cannot interfere with the simultaneous desktop link.
+
+The NodeMCU USB UART is a simultaneous 115200-baud PC endpoint using the same
+COBS, CRC-8/ATM, sequence, opcode, and bounded-payload envelope as the board
+link. It exposes hello/status, modes, cell actions, reset, brightness, effect,
+shift outputs, buzzer, audio cues, and TM1637 display commands. The HTTP status
+record includes separate USB byte, frame, and error counters.
+
 `/api/v1/avr/program` also provides the audible start/success boundary and
-durable `Prog` safety latch. The status record exposes `programming_latch`,
-`tm1637_ack`, AP and station addresses, station association, and separate ESP
-and AVR UART error counters. Passwords are never returned.
+durable `Prog` safety latch. Repeating the request while the latch is armed
+resumes programming without replacing the preserved previous-good backup;
+cloud reconnect work remains paused until verification clears the latch. The
+status record exposes `programming_latch`,
+`tm1637_ack`, AP and station addresses, station association, NTP state,
+WebSocket/Telnet client state, link mode, and separate ESP, AVR, and USB UART counters.
+Passwords are never returned.

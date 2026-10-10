@@ -21,7 +21,10 @@ constexpr uint8_t ShiftClockEnable = PIN_PD7;  // D7, 74HC165 /CE
 constexpr uint8_t ShiftOutputEnable = PIN_PB0; // D8, 74HC595 /OE
 
 constexpr uint8_t Buzzer = PIN_PB1;            // D9
-constexpr uint8_t OneWireData = PIN_PB2;       // D10/CS; DS18B20 bus needs a 4.7k pull-up to VCC
+// Optional flow-control input. HIGH means the ESP is timing-critical and the
+// AVR must defer unsolicited UART frames. D10 is free because PakarController
+// has no 1-Wire hardware fitted.
+constexpr uint8_t EspBusy = PIN_PB2;            // D10 <- NodeMCU D3/GPIO0
 // PuzzleBoard wiring deliberately reuses the labelled SDA/SCL header for the
 // TM1637's two-wire (non-I2C) bus. Keep D11..D13 dedicated to in-system
 // programming so the display cannot load the ISP clock/data lines.

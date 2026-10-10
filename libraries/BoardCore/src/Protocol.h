@@ -28,6 +28,9 @@ enum Opcode : uint8_t {
   kOutputMask = 0x4E,
   kPing = 0x4F,
   kProgrammingState = 0x50,
+  kSetBrightness = 0x51,
+  kSetLedPattern = 0x52,
+  kNetworkConfig = 0x53,
 
   kAck = 0x80,
   kHelloResponse = 0x81,
@@ -50,7 +53,12 @@ enum Error : uint8_t {
 };
 
 enum DeviceRole : uint8_t { kRoleAvr = 1, kRoleEsp = 2, kRoleHost = 3 };
-enum GameMode : uint8_t { kModeIdle = 0, kModeCellSelect = 1, kModeFirstWins = 2 };
+enum GameMode : uint8_t {
+  kModeIdle = 0,
+  kModeCellSelect = 1,
+  kModeFirstWins = 2,
+  kModeSnake = 3,
+};
 enum CellState : uint8_t { kCellWhite = 0, kCellRed = 1, kCellOff = 2 };
 enum Effect : uint8_t { kEffectImmediate = 0, kEffectFade = 1, kEffectPulse = 2 };
 
@@ -60,6 +68,13 @@ enum AudioCue : uint8_t {
   kCueUpdateSuccess = 2,
   kCueError = 3,
   kCueWinner = 4,
+  kCueFinish = 5,
+  kCueLost = 6,
+  kCueIncorrect = 7,
+  kCueRapidError = 8,
+  kCueFault = 9,
+  kCueIncrease = 10,
+  kCueDecrease = 11,
 };
 
 enum Capability : uint16_t {
@@ -73,6 +88,10 @@ enum Capability : uint16_t {
   kCapOta = 1U << 7,
   kCapLittleFs = 1U << 8,
   kCapApi = 1U << 9,
+  kCapWebSocket = 1U << 10,
+  kCapNtp = 1U << 11,
+  kCapBusyWire = 1U << 12,
+  kCapHostSerial = 1U << 13,
 };
 
 struct Frame {

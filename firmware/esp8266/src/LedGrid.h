@@ -25,6 +25,7 @@ class LedGrid {
   void service(uint32_t now);
   bool setCell(uint8_t cell, BoardCore::Protocol::CellState state,
                BoardCore::Protocol::Effect effect);
+  void fill(BoardCore::Protocol::CellState state);
   void resetWhite();
   void showWinner(uint8_t winner);
   void setPattern(Pattern pattern);

@@ -23,10 +23,13 @@ jobs:
           arduino-cli core install esp8266:esp8266@3.1.2
           arduino-cli core install MiniCore:avr@3.1.3
           arduino-cli lib install FastLED@3.10.6
+          arduino-cli lib install WebSockets@2.7.2
+          arduino-cli lib install PubSubClient@2.8.0
       - name: Build both boards and test the shared protocol
         run: |
           chmod +x build.sh tools/test-protocol.sh
-          ./build.sh
+          ./build.sh polling
+          ./build.sh busy-wire
           ./tools/test-protocol.sh
       - uses: actions/upload-artifact@v7
         with:
@@ -37,6 +40,10 @@ jobs:
             build/avr/avr.ino.hex
             build/esp8266/esp8266.ino.bin
             build/SHA256SUMS
+            build/avr-busy-wire/avr.ino.with_bootloader.bin
+            build/avr-busy-wire/avr.ino.hex
+            build/esp8266-busy-wire/esp8266.ino.bin
+            build/SHA256SUMS-busy-wire
 
   windows-desktop:
     runs-on: windows-latest

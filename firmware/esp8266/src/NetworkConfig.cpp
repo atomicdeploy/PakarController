@@ -6,25 +6,39 @@
 namespace {
 constexpr char kPath[] = "/network.bin";
 constexpr uint32_t kMagic = 0x504B4E54UL;  // PKNT
-constexpr uint8_t kSchema = 1;
+constexpr uint8_t kSchema = 2;
+
+struct LegacyRecord {
+  uint32_t magic;
+  uint8_t schema;
+  uint8_t stationEnabled;
+  char stationSsid[33];
+  char stationPassword[64];
+  uint32_t checksum;
+} __attribute__((packed));
+
+uint32_t checksumBytes(const uint8_t *bytes, size_t length) {
+  uint32_t value = 2166136261UL;
+  for (size_t index = 0; index < length; ++index) {
+    value ^= bytes[index];
+    value *= 16777619UL;
+  }
+  return value;
+}
 }
 
 NetworkConfigStore networkConfig;
 
 uint32_t NetworkConfigStore::checksum(const Record &record) {
   const uint8_t *bytes = reinterpret_cast<const uint8_t *>(&record);
-  uint32_t value = 2166136261UL;
-  for (size_t index = 0; index < offsetof(Record, checksum); ++index) {
-    value ^= bytes[index];
-    value *= 16777619UL;
-  }
-  return value;
+  return checksumBytes(bytes, offsetof(Record, checksum));
 }
 
 void NetworkConfigStore::defaults() {
   memset(&record_, 0, sizeof(record_));
   record_.magic = kMagic;
   record_.schema = kSchema;
+  record_.accessPointEnabled = 1;
   record_.checksum = checksum(record_);
 }
 
@@ -33,6 +47,29 @@ bool NetworkConfigStore::begin(fs::FS &filesystem) {
   defaults();
   File file = filesystem.open(kPath, "r");
   if (!file) return true;
+  if (file.size() == sizeof(LegacyRecord)) {
+    LegacyRecord legacy{};
+    const bool complete = file.read(reinterpret_cast<uint8_t *>(&legacy),
+                                    sizeof(legacy)) == sizeof(legacy);
+    file.close();
+    const bool valid =
+        complete && legacy.magic == kMagic && legacy.schema == 1 &&
+        legacy.stationSsid[sizeof(legacy.stationSsid) - 1] == '\0' &&
+        legacy.stationPassword[sizeof(legacy.stationPassword) - 1] == '\0' &&
+        legacy.checksum == checksumBytes(
+                               reinterpret_cast<const uint8_t *>(&legacy),
+                               offsetof(LegacyRecord, checksum));
+    if (!valid) {
+      error_ = F("legacy network settings checksum is invalid; AP-only defaults loaded");
+      return false;
+    }
+    record_.stationEnabled = legacy.stationEnabled;
+    memcpy(record_.stationSsid, legacy.stationSsid, sizeof(record_.stationSsid));
+    memcpy(record_.stationPassword, legacy.stationPassword,
+           sizeof(record_.stationPassword));
+    record_.checksum = checksum(record_);
+    return save();
+  }
   Record stored{};
   const bool complete = file.read(reinterpret_cast<uint8_t *>(&stored),
                                   sizeof(stored)) == sizeof(stored);
@@ -65,6 +102,17 @@ bool NetworkConfigStore::setStation(const String &ssid, const String &password,
   return true;
 }
 
+bool NetworkConfigStore::setAccessPointEnabled(bool enabled) {
+  if (!enabled && !stationEnabled()) {
+    error_ = F("AP and station cannot both be disabled");
+    return false;
+  }
+  record_.accessPointEnabled = enabled ? 1 : 0;
+  record_.checksum = checksum(record_);
+  error_ = String();
+  return true;
+}
+
 bool NetworkConfigStore::save() {
   if (filesystem_ == nullptr) {
     error_ = F("LittleFS is not mounted");
@@ -90,9 +138,11 @@ bool NetworkConfigStore::configure(const char *hostname,
   WiFi.disconnect(true);
   WiFi.softAPdisconnect(true);
   delay(10);
-  WiFi.mode(stationEnabled() ? WIFI_AP_STA : WIFI_AP);
+  const bool apEnabled = accessPointEnabled();
+  WiFi.mode(apEnabled ? (stationEnabled() ? WIFI_AP_STA : WIFI_AP) : WIFI_STA);
   WiFi.hostname(hostname);
-  const bool ap = WiFi.softAP(hostname, apPassword);
+  bool ap = false;
+  if (apEnabled) ap = WiFi.softAP(hostname, apPassword);
   if (stationEnabled()) {
     WiFi.begin(record_.stationSsid, record_.stationPassword);
     WiFi.setAutoReconnect(true);
