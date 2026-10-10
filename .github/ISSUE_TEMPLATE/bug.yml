@@ -1,0 +1,22 @@
+name: Bug or regression
+description: Report observed behavior with device and client evidence.
+labels: [bug, "acceptance needed"]
+body:
+  - type: textarea
+    id: versions
+    attributes:
+      label: Device, client and transport
+      description: Board model, firmware/client commit or version, hostname, transport and acknowledged capabilities. No credentials.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction and expected vs actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: proof
+    attributes:
+      label: Evidence and scope
+      description: Logs/screenshots; distinguish source test, simulated fixture and physical hardware.

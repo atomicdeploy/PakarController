@@ -1,0 +1,14 @@
+changelog:
+  exclude:
+    labels: [duplicate, wontfix]
+  categories:
+    - title: Firmware and board contracts
+      labels: ["domain: firmware", "domain: profiles"]
+    - title: Desktop, Web and Android
+      labels: ["domain: desktop", "domain: webui", "domain: mobile"]
+    - title: Network and integration
+      labels: ["domain: integration", "domain: networking"]
+    - title: Build, security and dependencies
+      labels: ["domain: repository", dependencies, github_actions, security]
+    - title: Other changes
+      labels: ["*"]

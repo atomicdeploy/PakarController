@@ -1,0 +1,19 @@
+[
+  {"name":"acceptance needed","color":"D4A017","description":"Implemented work still needs interactive or physical verification"},
+  {"name":"dependencies","color":"0366D6","description":"Locked dependency and toolchain updates"},
+  {"name":"github_actions","color":"000000","description":"GitHub Actions workflow changes"},
+  {"name":"rust","color":"000000","description":"Rust native application and shared contracts"},
+  {"name":"release","color":"16A34A","description":"Version notes, packaging, milestone checks and publication"},
+  {"name":"security","color":"B91C1C","description":"Security policy, hardening and non-sensitive public remediation"},
+  {"name":"domain: integration","color":"2563EB","description":"Cross-host transports and shared board/client contracts"},
+  {"name":"domain: lighting","color":"F59E0B","description":"WS2811 strips, pixels, cell mapping and effects"},
+  {"name":"domain: performance","color":"EAB308","description":"CPU, rendering, memory, storage and responsiveness"},
+  {"name":"domain: profiles","color":"0EA5E9","description":"Board identity, wiring roles and acknowledged capabilities"},
+  {"name":"domain: tui","color":"10B981","description":"Terminal controls, keyboard behavior and rendering"},
+  {"name":"domain: webui","color":"14B8A6","description":"Embedded browser UI, accessibility and live synchronization"},
+  {"name":"domain: desktop","color":"8B5CF6","description":"Windows workspace, native integration and desktop UX"},
+  {"name":"domain: mobile","color":"34D399","description":"Android tablet/mobile preview and interface parity"},
+  {"name":"domain: firmware","color":"EA580C","description":"ESP/AVR drivers, protocol, ISP and OTA"},
+  {"name":"domain: networking","color":"0284C7","description":"Wi-Fi, AP, discovery, cloud and authentication"},
+  {"name":"domain: repository","color":"64748B","description":"Repository settings, CI/CD, documentation and donor evidence"}
+]
