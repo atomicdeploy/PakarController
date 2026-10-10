@@ -25,6 +25,10 @@ unverified after interruption. Donor source and task state were not changed.
 | webui/src/i18n.test.tsx | tests/rayanlamp_locale_test.mjs: seven shipped-code tests adapt normalization/detection, translation/digits and system languagechange; add cleanup/ownership, restricted storage, preserved protocol/secret values and reversible dynamic labels. Rendered BidiLtr remains pending, not falsely certified. |
 | webui/src/browser-console.ts | assets/web/browser-console.js and actual HTTP/WebSocket adapters: real styled operational trace, allowlisted recursive sanitization, code-only Error projection and dedupe. Uses the shared Pealayer palette, not lamp colors. Adds bounded lifetime, camelCase/prototype/format protection and stale-socket guards; never logs raw response/body/header/frame or persists trace data. |
 | webui/src/browser-console.test.ts | tests/browser_console_test.mjs: all actual donor scenarios plus current palette, bounds/cycles, host failure, HTTP acceptance/readback distinction, no replay, quiet polls/telemetry and newest WebSocket ownership. Node VM replaces Vitest without a donor build. |
+| webui/src/components/toasts.tsx | assets/web/toasts.js and actual Web report/identity consumers: polite live region, keyed status rows, tone icons, title/message, localized keyboard dismiss. DOM replaces Preact; no extra framework. Root is outside authenticated workspace, so signed-out reports remain visible. |
+| webui/src/toast-layout.test.ts | tests/toasts_test.mjs imports actual declarationsFor and both center-axis assertions against shipped CSS, plus executable queue/DOM ownership tests. |
+| webui/src/store.ts | Fully read; actual ToastMessage serial IDs, four-item showToast queue, 4500 ms expiry and ID-specific dismiss filter adapted into toasts.js. Added timer eviction, teardown, text/duration bounds and independent focus/hover holds. Other state/config/persistence contracts remain a parity gap, not imported wholesale. |
+| webui/src/components/icon.tsx | Fully read; exact check/warning/info/close SVG geometry and 24x24/currentColor/1.75 stroke/round-line/aria-hidden contract adapted into toast consumers. Other generic icon paths and labeled reusable icon API remain pending; no change to shared application branding. |
 
 Canonical browser code is embedded by the existing deterministic font/Web
 generator, with equality tests preventing a separate drifting firmware copy.
@@ -40,13 +44,15 @@ does not override an English primary preference. These replacements are exact
 ledger decisions, not omissions hidden behind a visual resemblance.
 
 The canonical generator embeds browser-appearance.js without a duplicate color
-engine. web-presentation is a nine-file reviewed-slice gate (seven Rayan files,
+engine. web-presentation requires thirteen reviewed files (eleven Rayan files,
 two previously read Pealayer files), invoked before ESP builds and source quality.
+The routed donor app.css remains pending: only toast/accessibility/viewport slices
+were read and adapted into assets/web/toasts.css, not certified as a full CSS import.
 The Bash ESP entrypoint requires PowerShell 7 for the same donor gate and now
 checks fonts/branding as the Windows entrypoint does. No extra SDK is installed.
 
-Coverage: RayanLamp 2349 inventoried, **13** completed comparisons, **2336** pending.
-Whole donor inventory 4237, 77 completed, 4160 pending, 46 known-gap files. The
+Coverage: RayanLamp 2349 inventoried, **17** completed comparisons, **2332** pending.
+Whole donor inventory 4237, 81 completed, 4156 pending, 48 known-gap files. The
 656-line i18n source and 71-line tests were fully read and hash-verified. Full
 settings, Persian calendar/protocol isolation, remaining dynamic copy and
 native/Web/mobile preference synchronization remain unfinished.
@@ -72,10 +78,18 @@ modifications. This is an inventory, not 100% import or full production parity.
 
 ## Next-file worklist; not accepted omissions
 
-- webui/src/components/toasts.tsx and toast-layout.test.ts were read, but remain
-  pending full dependency/call-site integration. Store, Icon, dismissal/focus and
-  responsive placement must be ported and tested together, not represented by a
-  console import or a screenshot of a similar-looking notification.
+- Toast component, layout test and actual store/Icon subcontracts now execute
+  through the shipped Web report path. Full app.css review, real responsive pixels,
+  open-modal/top-layer behavior and native/Web/mobile notification synchronization
+  remain pending. This is not Windows OS-toast restoration or full store/Icon parity.
+- store.ts generic bootstrap/revision/configuration drafts, remote ownership,
+  failure reconciliation and client lifecycle remain pending their actual API and
+  contracts dependencies. Its optimistic pending-patch retry is not copied: Pakar
+  must never automatically replay uncertain device writes. Lamplight state/labels
+  are not applicable, but generic availability/diagnostics remain useful.
+- icon.tsx other generic symbols and labeled reusable icon API need actual
+  consumers; lamp artwork is business-specific. Existing Pealayer/Phosphor app
+  identity is unchanged, not replaced by a RayanLamp application icon.
 - internal/design/tokens.go and tokens.json were read as browser-trace color
   dependencies; they are not newly certified. The shared Pealayer catalog remains
   the current color authority. Any additional useful token roles need explicit
@@ -99,6 +113,18 @@ modifications. This is an inventory, not 100% import or full production parity.
   or import lamp business endpoints/APNG renderer without a controller use.
 
 ## Acceptance
+
+Toast acceptance: full source-quality suite and ESP busy-wire compile pass.
+The actual embedded UI was inspected in the labeled, read-only fixture at logical
+1280x720 and 390x844: no horizontal overflow, center-aligned status/copy, bounded
+rows and keyboard Escape with next-dismiss focus restoration. These are real
+browser pixels with simulated notifications, not board/native/OS-toast proof.
+Viewport reset and owned tab/process closed. Full store/Icon/CSS and open-modal,
+shared native/mobile delivery remain pending.
+
+![Actual wide browser notification fixture](screenshots/rayan-toasts-wide.jpg)
+
+![Actual narrow browser notification fixture](screenshots/rayan-toasts-narrow.jpg)
 
 Node adaptation and shared localization tests are executable independently of
 native cache storage. Native digit tests require the mandatory desktop wrapper;

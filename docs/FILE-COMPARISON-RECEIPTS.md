@@ -1,5 +1,26 @@
 # PakarController comparison receipts
 
+## Rayan toast queue and exact dependency subcontracts
+
+Actual complete reads: toasts.tsx, toast-layout.test.ts, store.ts, icon.tsx. Exact
+showToast/dismissToast, ToastRegion and four Icon consumers map into shipped
+toasts.js/report; store/Icon are parity gaps, not wholesale imports. app.css was
+read in relevant slices only and remains pending. Actual donor center-axis test
+and added executable ownership/focus/hover/teardown/safe-DOM tests pass; no physical
+or screenshot inference. Four new normalized target/proof mappings bind original
+donor hashes and literal anchors. Total 81/4237, 4156 pending, 48 gaps; Rayan 17/2349.
+
+Full source quality and warm ESP-only busy-wire build pass (924368 bytes; bin
+SHA256 c2e97d576cf2d00ce8c6e65c880c7b0a66b5176fe2a5eed2cd3a85a5c09ceed8).
+Thirteen-reviewed gate retains full CSS pending. Two PU route target bindings
+rebound after unchanged consumer/route inspection; nineteen comparison references
+selectively rebound, original source hashes unchanged. Browser wide/narrow capture
+and Escape/focus/center/no-overflow checks pass against the visibly simulated,
+read-only fixture. Two JPEGs byte-verified; owned tab/process closed, viewport reset.
+No flash/native replacement/Android runtime claim. Prior 8849ab8 native execution
+now completes 114 passed/1 failed (shortcut label ink); harness no longer aborts.
+Next native primary-color policy review remains separate from this Web import.
+
 ## Native test output ownership recovery
 
 Uncaptured terminal 0c723f1 Windows job 114331734735 identifies headless texture

@@ -1,4 +1,5 @@
 {
+  "Dismiss {title}": "بستن {title}",
   "{count} selected": "{count} انتخاب‌شده",
   "Sent {sent} of {total} cell edits; awaiting device readback": "{sent} از {total} ویرایش خانه ارسال شد؛ در انتظار بازخوانی دستگاه",
   "Cancelled unsent edits. {sent} previously sent edits may have applied.": "ویرایش‌های ارسال‌نشده لغو شدند. ممکن است {sent} ویرایش ارسال‌شده اعمال شده باشند.",

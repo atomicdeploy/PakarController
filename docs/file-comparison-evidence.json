@@ -5,6 +5,178 @@
   "files": [
     {
       "origin": "RayanLamp",
+      "path": "webui/src/components/toasts.tsx",
+      "sha256": "81a5d6f6d1d77bc6466a6ee98770d4f248a7b195078ed029f1c39bd8f1724b36",
+      "source_read": "complete",
+      "verdict": "scoped-improvement",
+      "preserved": [
+        "Actual ToastRegion polite/nonatomic live region, per-ID status rows, tone icon selection, title/message and localized dismiss button adapted to shipped DOM queue. All real Web reports and saved-identity notices use this queue outside authenticated workspace.",
+        "Status SVG geometry and keyed store lifetimes imported from actual dependencies; bounded timers, hover/focus holds, safe text nodes, keyboard dismissal and teardown added without storage or network writes."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/toasts.js",
+          "sha256": "c416d19144ed962376079bf4aeed116ccd5aaed6c4ddc4bf63a846796f2e8d2e",
+          "anchor": "function createToastController"
+        },
+        {
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "anchor": "function report(e,tone)"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Preact signal-driven JSX/ToastRegion and Icon framework dependency",
+          "disposition": "replaced",
+          "reason": "ESP embeds classic scripts and existing DOM controls. Actual row, live-region, keyed queue and SVG semantics are adapted without a second UI framework; store/Icon get separate full-read comparisons with remaining generic contracts."
+        }
+      ],
+      "remaining": [
+        "Validate actual browser responsive/open-modal placement and screenshots; complete shared native/Web/mobile delivery and Windows OS notification surfaces. DOM tests are not pixels, deployment or all-feature parity."
+      ],
+      "proof": [
+        {
+          "path": "tests/toasts_test.mjs",
+          "sha256": "df864b7b15f9f61e3f291efaf2377e02dc85d4bf35496ae05a32c447d6e96e23",
+          "anchor": "older expiry must not erase newer notification"
+        }
+      ],
+      "improvement": "Four owned/cancelled timers, bounded duration/text, independent hover/focus holds, focus-preserving keyboard dismissal and idempotent teardown prevent newer-message expiry and lifetime leaks; executable shipped-module DOM tests cover these contracts. This is a scoped queue improvement, not screenshot or whole-app superiority."
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "webui/src/toast-layout.test.ts",
+      "sha256": "34e3226492ade7bb892a13f8e5e9f97d02c3f79aa4b30df80755c5e2e583e6b6",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Actual declarationsFor CSS extraction and both status/copy center-axis assertions ported against shipped canonical toast CSS. Added executable ID queue/focus/hover/safe DOM and one-pass embedding regressions."
+      ],
+      "targets": [
+        {
+          "path": "tests/toasts_test.mjs",
+          "sha256": "df864b7b15f9f61e3f291efaf2377e02dc85d4bf35496ae05a32c447d6e96e23",
+          "anchor": "function declarationsFor"
+        },
+        {
+          "path": "assets/web/toasts.css",
+          "sha256": "f117a82f068e3051caa053f9360617b37014f863adcf26c24bbd88358185d9b2",
+          "anchor": ".app-toast{display:flex;align-items:center;"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Vitest source file access against entire src/styles/app.css",
+          "disposition": "replaced",
+          "reason": "Built-in Node assertions read actual assets/web/toasts.css. Relevant donor style/viewport/accessibility slices were adapted; entire app.css remains pending and is not certified by this test import."
+        }
+      ],
+      "remaining": [
+        "Inspect real browser/native/mobile layout at narrow/wide widths; source declaration assertions and DOM doubles do not establish screenshot or physical acceptance."
+      ],
+      "proof": [],
+      "improvement": ""
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "webui/src/store.ts",
+      "sha256": "d0322ac4161e8e65354f0fcf6d02ac3b5409dc9ffe5bad1f0ca892ba6e5dc32c",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Fully read store; actual ToastMessage fields, monotonic serial IDs, last-three-plus-new four-item queue, 4500 ms per-ID expiry and dismissToast filter adapted into canonical toasts.js.",
+        "Added four-timer eviction, bounded text/duration, independent hover/focus holds, queue snapshots, no markup interpretation and idempotent teardown for long-lived firmware browser sessions."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/toasts.js",
+          "sha256": "c416d19144ed962376079bf4aeed116ccd5aaed6c4ddc4bf63a846796f2e8d2e",
+          "anchor": "function showToast("
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Lamp stateLabel, lamp.state event and lamp-only bootstrap/state interpretation",
+          "disposition": "not-applicable",
+          "reason": "No lamp get/on/off controller or lamp state contract exists on the Table/AVR board. Generic availability, diagnostics and transport ownership are separate pending work, not excluded with lamp vocabulary."
+        },
+        {
+          "code": "signal/computed/batch framework ownership",
+          "disposition": "replaced",
+          "reason": "Actual notification queue/filter is adapted to the current DOM engine without introducing Preact to ESP. Full generic signal/configuration ownership is not claimed."
+        },
+        {
+          "code": "applyBootstrap/applySnapshot/beginControllerConnection/markControllerAvailable/markControllerUnavailable/derivePhase, config/revision and client ownership",
+          "disposition": "pending",
+          "reason": "Need actual contracts.ts/api.ts transport comparison and mapped real Pakar capabilities, diagnostic state and epochs. Only the notification subcontract is integrated, not the entire store."
+        },
+        {
+          "code": "mergeRecord/updateConfig/configureSettingsPersistence/flushConfigPatch/acceptRemoteConfig/pendingSettingsPatch and theme/locale/motion persistence",
+          "disposition": "pending",
+          "reason": "Useful generic draft/conflict/ownership behavior requires full applicable device/client lifecycle integration. Donor optimistic failed-patch retention/retry must not automatically replay uncertain Pakar writes; current explicit ACK/readback/no-replay contracts remain authoritative."
+        }
+      ],
+      "remaining": [
+        "Compare actual API/contracts dependencies and adapt applicable bootstrap/revision/draft/client lifecycle with positive ACK/readback, secret handling and no uncertain replay. Finish real runtime/synchronized-client acceptance."
+      ],
+      "proof": [
+        {
+          "path": "tests/toasts_test.mjs",
+          "sha256": "df864b7b15f9f61e3f291efaf2377e02dc85d4bf35496ae05a32c447d6e96e23",
+          "anchor": "evicted timers must be cancelled"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "webui/src/components/icon.tsx",
+      "sha256": "60ee5f05d39b0cd5e93bf5abb6f2ac702d6964bf6d1878f13a0c8a3bc7f32b02",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Fully read actual icon source. Exact check/warning/info/close path/circle geometry plus size/viewBox/currentColor/1.75 stroke/round joins/aria-hidden contract imported into four real toast consumers; close uses 16px and status 20px.",
+        "Application branding remains shared Pealayer artwork, not replaced with RayanLamp icon."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/toasts.js",
+          "sha256": "c416d19144ed962376079bf4aeed116ccd5aaed6c4ddc4bf63a846796f2e8d2e",
+          "anchor": "const geometry="
+        }
+      ],
+      "omissions": [
+        {
+          "code": "lamp lightbulb artwork",
+          "disposition": "not-applicable",
+          "reason": "Lamp-specific artwork does not identify this controller or its peer-advertised board applications; keep the existing shared application identity."
+        },
+        {
+          "code": "settings/diagnostics/about/power/refresh/reconnect/window/moon/sun/system/menu/chevron/bell/sound/upload/keyboard/terminal/network SVG consumers",
+          "disposition": "pending",
+          "reason": "Reusable generic symbols need actual source-consumer mapping with the existing Phosphor system. Do not certify them from four notification paths or silently substitute application branding."
+        },
+        {
+          "code": "IconName reusable API, class and labeled role=img/aria-label variant",
+          "disposition": "pending",
+          "reason": "Current four icons are decorative within independently labeled status rows/buttons. A full searchable/labeled generic Web icon API and actual accessibility consumers remain useful pending work; TSX framework is not imported as a second renderer."
+        }
+      ],
+      "remaining": [
+        "Map remaining generic symbols/labeled API to real native/Web/mobile consumers, preserve Phosphor/shared-brand identity and verify accessible visual parity."
+      ],
+      "proof": [
+        {
+          "path": "tests/toasts_test.mjs",
+          "sha256": "df864b7b15f9f61e3f291efaf2377e02dc85d4bf35496ae05a32c447d6e96e23",
+          "anchor": "aria-hidden"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "RayanLamp",
       "path": "webui/src/browser-console.ts",
       "sha256": "5584e97f745eadd5fa52dd1cbec91813dd4f0638da0ca4cf7ca986658f730165",
       "source_read": "complete",
@@ -21,7 +193,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
           "anchor": "function connectWs()"
         }
       ],
@@ -118,12 +290,12 @@
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "8c00b555d38a25bd280c76b84202c535f5886130a28949991fc3abccfcfd36f2",
+          "sha256": "67b413df8ceaeaff6cb2b3724ac457a97ca7206c47887b15a46ae555a19d5eab",
           "anchor": "function startUiLocaleController()"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -219,7 +391,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -304,7 +476,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -501,7 +673,7 @@
         },
         {
           "path": "docs/PERSIAN-PARITY.md",
-          "sha256": "a18930c387b54d6a2c3a7c8d998596637bdeb5d0c326738e931d1173d376cf6c",
+          "sha256": "d1f873fb589b406316d77e9ca2fcaf652fe8773b1534063504fc1ab516b506da",
           "anchor": "## Exact source-to-target mapping"
         }
       ],
@@ -519,11 +691,11 @@
         {
           "code": "Separate ttf_parser coverage assertions and exhaustive native surface translations",
           "disposition": "pending",
-          "reason": "Avoid introducing a duplicate font parser dependency: actual renderer glyph/contextual tests pass individually in Windows CI. Uncaptured 0c723f1 logs identify the retention failure as unhandled headless texture deltas, not a font assertion; execution after the ownership repair remains pending. Additional Unicode, production rendering, device-settings and status/transport copy remain unaccepted."
+          "reason": "Avoid introducing a duplicate font parser dependency: actual renderer glyph/contextual and font-retention tests pass in 8849ab8 Windows CI after headless output repair. The run completes 114 passed/1 unrelated menu-label failure; no abort. Additional Unicode, production rendering, device-settings and status/transport copy remain unaccepted."
         }
       ],
       "remaining": [
-        "Rerun complete native tests after restoring actual donor headless texture ownership and rendered-color assertions; font retention is not accepted from source checks. Inspect real Persian inputs/menus/dialogs. Local cache budget remains enforced; finish application-copy and generic grouping parity."
+        "Inspect real deployed Persian inputs/menus/dialogs and finish application-copy/generic grouping parity. Actual 8849ab8 font-retention/shaping tests pass, but full native release remains open with one menu-label assertion; local cache budget remains enforced."
       ],
       "proof": [
         {
@@ -557,17 +729,17 @@
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "8c00b555d38a25bd280c76b84202c535f5886130a28949991fc3abccfcfd36f2",
+          "sha256": "67b413df8ceaeaff6cb2b3724ac457a97ca7206c47887b15a46ae555a19d5eab",
           "anchor": "function uiTr(text,values)"
         },
         {
           "path": "tools/generate-font-assets.mjs",
-          "sha256": "8a01f98da4ec7660159990609d2c1182281294e707e141e33cf458cf8e2a6867",
+          "sha256": "cdb4b79b7f0e6d1ed06d6f47effe631bde1c941d53dc596f7b4d5517a6b1b46b",
           "anchor": "const dictionary={}"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -699,7 +871,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "c977db5cfd2b27e38e1e792d2b10b460aa99fce9796bd0e3fe3d428ef2144a7c",
+          "sha256": "b514f29d793486651094f53a0fe1f34a136e99bd168b63e6b7e97c3e6131063d",
           "anchor": "export function runChecks"
         },
         {
@@ -736,7 +908,7 @@
         }
       ],
       "remaining": [
-        "Complete Windows native tests/package after headless texture lifecycle and painted-color test repairs, then validate the unexecuted draft publisher. Restore useful additional native targets and optional compressed package/runtime verification. 0c723f1 CI passes source, both firmware variants and Android preview but is not all-green or physical acceptance."
+        "Complete Windows menu-label primary-color assertion/package and validate the unexecuted draft publisher. 8849ab8 native execution completes 114 passed/1 failed without abort; workflow/source, both firmware variants, Android preview and CodeQL pass, not all-green or deployed acceptance. Restore useful additional native targets and optional compressed package/runtime verification."
       ],
       "improvement": "",
       "origin": "Pealayer",
@@ -1008,7 +1180,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
           "anchor": "function peerAvailability("
         }
       ],
@@ -1306,7 +1478,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -1316,7 +1488,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -1381,7 +1553,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -1493,7 +1665,7 @@
         },
         {
           "path": "docs/NATIVE-MENU-COMPARISON.md",
-          "sha256": "0eedd0936bf906d845e03cbba57667a4f1d725b33466b5cbccb906cc3eed80a1",
+          "sha256": "13e969f877692b181c597e6ce2f8ed49ddcedf9fd763716ca0b532083fab000e",
           "anchor": "## Exact donor menu mapping and remaining decisions"
         }
       ],
@@ -3323,7 +3495,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -3413,7 +3585,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -3535,7 +3707,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -3610,7 +3782,7 @@
         },
         {
           "path": "assets/web/localization.js",
-          "sha256": "8c00b555d38a25bd280c76b84202c535f5886130a28949991fc3abccfcfd36f2",
+          "sha256": "67b413df8ceaeaff6cb2b3724ac457a97ca7206c47887b15a46ae555a19d5eab",
           "anchor": "subscribeLocalePreferences(value=>"
         }
       ],

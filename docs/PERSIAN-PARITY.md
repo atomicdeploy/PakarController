@@ -6,6 +6,13 @@ Tracking: [settings #4](https://github.com/atomicdeploy/PakarController/issues/4
 
 ## Current CI acceptance boundary
 
+Later source 8849ab8 Windows job 114334311601 completes 114 tests successfully and
+one shortcut-label color test fails. The font-retention, contextual glyph, branding,
+cell and connection tests now pass; the texture/double-panic abort is gone. This
+is actual native test execution, not deployed font/UI or full translation parity.
+Production native acceptance and the separate menu-label assertion remain open.
+Both firmware variants/Android preview and CodeQL pass for that source.
+
 Source 0c723f1 Windows job 114331734735 now exposes the exact failures. The
 font-retention test panics when an unhandled TexturesDelta is dropped, not at a
 font-retention assertion. Branding, neutral-cell and connection tests have the
@@ -60,9 +67,9 @@ generated `file-comparison.csv`, not a separate completion checklist.
 - Native language preview/save/cancel updates fonts and direction. The added
   contextual-shaping test exercises both Proportional and Monospace. Another
   test checks that language changes retain Elegance symbols and avoid duplicate
-  fallbacks. These tests execute in CI: shaping passes, while retention is not
-  accepted because its harness drops an unhandled texture delta before completion.
-  No native production acceptance follows from the passing subset.
+  fallbacks. Both shaping and retention now pass in 8849ab8 native CI after the
+  output-ownership repair. No deployed native or all-surface translation acceptance
+  follows from that test subset; one unrelated menu-label assertion remains open.
 - Web Language and Direction controls persist per browser, with system locale
   and explicit overrides. Labels, settings catalog/navigation, hints, selected
   settings states, placeholders and accessibility captions use application copy.
@@ -98,8 +105,8 @@ ASUS, OTA, native-render or mobile-runtime acceptance is inferred from Web proof
 
 ## Useful work still pending (not accepted exclusions)
 
-- Resolve native headless-output ownership and the aborted harness; run restored
-  serial tests and inspect actual native Persian menus/editors/dialogs.
+- Inspect actual deployed native Persian menus/editors/dialogs and finish the
+  full translation matrix; headless ownership/retention tests now pass in CI.
 - Full native device-settings bodies, status/transport surfaces, formatted
   messages, search keyword localization and translation completeness audit.
 - Web dynamic error/confirmation copy, status/menu attributes generated after

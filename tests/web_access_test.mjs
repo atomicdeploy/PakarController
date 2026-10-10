@@ -65,13 +65,13 @@ assert.equal(nodes.deviceName.value,'test-fixture.local');assert.equal(nodes.nam
 assert.equal(nodes.boardDisplayName.value,'Fixture table');
 nodes.boardDisplayName.value='David’s table';await nodes.nameForm.listeners.submit({preventDefault(){}});await settle();
 assert.equal(displayName,'David’s table');assert.equal(nodes.nameSave.disabled,false);assert.equal(nodes.workspace.hidden,false);
-assert.match(nodes.notice.textContent,/verified/);
+assert.match(vm.runInContext('webToasts.snapshot().at(-1).message',context),/verified/);
 nodes.deviceName.value='https://bad.local';
 await nodes.nameForm.listeners.submit({preventDefault(){}});
 assert.equal(calls.filter(c=>c.path==='/api/v1/device/name'&&c.options.method==='POST').length,1);
 nodes.deviceName.value='LEDBOARD.Local';await nodes.nameForm.listeners.submit({preventDefault(){}});
 assert.equal(hostname,'ledboard');assert.equal(nodes.nameSave.disabled,true);
 assert.equal(nodes.nameResult.href,'http://ledboard.local/');assert.equal(nodes.nameResult.hidden,false);
-assert.match(nodes.notice.textContent,/Identity saved/);
+assert.match(vm.runInContext('webToasts.snapshot().at(-1).message',context),/Identity saved/);
 await vm.runInContext('signOut()',context);assert.equal(nodes.workspace.hidden,true);
 console.log('Embedded Web sign-in, rejection, rotation, secret clearing, validated persistent rename, reconnect link and sign-out passed.');

@@ -23,11 +23,16 @@ await sync('mobile/assets/fonts/Vazirmatn-OFL.txt',await readFile(new URL('deskt
 const native=await readFile(new URL('desktop/src/ui/i18n.rs',root),'utf8');
 let web=await readFile(new URL('firmware/esp8266/src/WebUi.h',root),'utf8');
 const consoleModule=await readFile(new URL('assets/web/browser-console.js',root),'utf8');
+const toastModule=await readFile(new URL('assets/web/toasts.js',root),'utf8');
+const toastStyles=await readFile(new URL('assets/web/toasts.css',root),'utf8');
+assert(!toastModule.includes('</script>')&&!toastModule.includes(')HTML"'),'Toasts cannot break the container');
+assert(!toastStyles.includes('</style>'),'Toast CSS cannot break the container');
 assert(!consoleModule.includes('</script>')&&!consoleModule.includes(')HTML"'),'Browser diagnostics cannot break the container');
 // Analyze the canonical module on the FIRST run too, never its previous embed.
 // Otherwise adding a translated literal takes two generator passes to stabilize.
 const withoutGenerated=(web.replace(/\/\/ BEGIN SHARED LOCALIZATION[\s\S]*?\/\/ END SHARED LOCALIZATION/,'')
-  .replace(/\/\/ BEGIN BROWSER DIAGNOSTICS[\s\S]*?\/\/ END BROWSER DIAGNOSTICS/,'')+'\n'+consoleModule)
+  .replace(/\/\/ BEGIN BROWSER DIAGNOSTICS[\s\S]*?\/\/ END BROWSER DIAGNOSTICS/,'')
+  .replace(/\/\/ BEGIN RAYANLAMP TOASTS[\s\S]*?\/\/ END RAYANLAMP TOASTS/,'')+'\n'+consoleModule+'\n'+toastModule)
   .replaceAll('&amp;','&').replaceAll('&lt;','<').replaceAll('&gt;','>');
 let js=await readFile(new URL('assets/web/localization.js',root),'utf8');
 const dictionary={};
@@ -54,5 +59,9 @@ web=web.replace('<script>','<script>\n'+rayanBegin+'\n'+await readFile(new URL('
 const consoleBegin='// BEGIN BROWSER DIAGNOSTICS',consoleEnd='// END BROWSER DIAGNOSTICS';
 web=web.replace(/\/\/ BEGIN BROWSER DIAGNOSTICS[\s\S]*?\/\/ END BROWSER DIAGNOSTICS\r?\n/,'');
 web=web.replace('<script>','<script>\n'+consoleBegin+'\n'+consoleModule+'\n'+consoleEnd);
+web=web.replace(/\/\/ BEGIN RAYANLAMP TOASTS[\s\S]*?\/\/ END RAYANLAMP TOASTS\r?\n/,'');
+web=web.replace('<script>','<script>\n// BEGIN RAYANLAMP TOASTS\n'+toastModule+'\n// END RAYANLAMP TOASTS');
+web=web.replace(/\/\* BEGIN RAYANLAMP TOAST CSS \*\/[\s\S]*?\/\* END RAYANLAMP TOAST CSS \*\//,'');
+web=web.replace('</style>','/* BEGIN RAYANLAMP TOAST CSS */\n'+toastStyles+'\n/* END RAYANLAMP TOAST CSS */</style>');
 await sync('firmware/esp8266/src/WebUi.h',web);
 console.log('Shared Vazirmatn assets verified:',font.length,'bytes; gzip',compressed.length);

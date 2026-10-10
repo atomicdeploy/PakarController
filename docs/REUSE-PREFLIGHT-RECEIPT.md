@@ -1,5 +1,66 @@
 # Donor-first preflight receipt
 
+## Actual Rayan toast/store/Icon import
+
+Freshly reread Build RayanLamp Go app, task 019f8cfc-271a-72e1-8747-e3eb883de5ec;
+not resumed or messaged. Consult exact donor-audit mappings. Fully read actual
+components/toasts.tsx, toast-layout.test.ts, store.ts and components/icon.tsx and
+verify original-byte hashes. Actual toast styles/viewport/motion/forced-colors
+slices were read from app.css; that entire file is NOT certified. Existing shared
+Pealayer palette/locale and MIT notice remain authoritative; no donor build/edit.
+
+Adapt actual serial ID, last-three-plus-new queue, 4500 ms per-ID expiry/filter,
+polite/nonatomic live region, status rows/title/message, four exact SVG consumers
+and translated dismissal. All current Web reports and identity success paths use
+one queue outside authenticated workspace; the old shared five-second timer no
+longer erases newer messages. Add four-timer eviction/teardown, bounded text and
+duration, safe text nodes, keyboard Escape, focus-preserving dismissal, independent
+focus/hover expiry holds, locale-dismissal repaint and pagehide cleanup. No storage
+or network writes, new framework or application-brand substitution by this queue.
+
+Port actual declarationsFor and both center-axis layout checks, plus executable
+queue/DOM tests for old-timer ownership, cap/eviction, focus/hover overlap, keyboard,
+literal injected markup, locale refresh, motion/forced-colors/RTL/viewport rules and
+canonical embedding. Actual Web auth/identity test still checks accepted/readback
+semantics against the new queue. Deterministic generator is stable after one pass.
+Generic store bootstrap/revision/persistence/transport, other icon API/consumers,
+full CSS, real responsive/modal screenshots, Windows OS notifications and shared
+native/mobile delivery remain open. Do not port optimistic uncertain-write replay.
+
+Coverage becomes 81/4237 complete, 4156 pending, 48 gap files; Rayan 17/2349,
+2332 pending. Four complete reads are comparisons, not all-feature acceptance.
+
+Full local source-quality suite passes. Its route guard initially rejects the
+changed WebUi.h identity: inspect unchanged update workspace and route consumers,
+then rebind the two exact PU route target hashes/line anchors without changing
+server registrations or source hashes. All 50 route classifications pass. Nineteen
+changed comparison references are selectively rebound; thirteen reviewed files
+are required by the expanded gate, with the routed full app.css still pending.
+The generator also rejects a scoped-improvement row without a named advantage;
+add the exact already-tested queue/timer advantage, not a bypass or verdict change.
+
+Warm ESP-only busy-wire build passes: bin 924368 bytes, SHA256
+c2e97d576cf2d00ce8c6e65c880c7b0a66b5176fe2a5eed2cd3a85a5c09ceed8.
+RAM 56620/80192 (70%), IRAM 63055/65536 (96%), flash code 874256/1048576 (83%).
+No AVR/native/APK rebuild, new cache or physical flash; IRAM headroom stays tight.
+Actual labeled read-only Web fixture: logical viewport 1280x720 and 390x844,
+no horizontal overflow, both toast/copy center alignments, all rows inside viewport.
+Keyboard Escape removes only the focused error row and restores next dismiss focus.
+Wide/narrow JPEGs were inspected, exclusive-created and copied byte-identically
+into docs/screenshots and user outputs: 89058/46865 bytes; SHA256
+408dc6867b44ef2fdd14d4ac110fffbbe794379627b6f435202744e415820e08 and
+ffbb898c242b05a7560bec25be43fcdcd3c8943b8e7422f38ad60c30a7717b41.
+Viewport reset, owned tab closed and PID/command-line-verified fixture stopped.
+This proves browser rendering with simulated notifications, not hardware or native
+delivery, open-modal behavior, mobile runtime or all CSS parity.
+
+During independent work, prior source 8849ab8 CI became terminal: workflow/source,
+both firmware variants, Android preview and CodeQL pass. Windows job 114334311601
+now completes 114 tests successfully, one fails (menu label_colors primary ink,
+src/ui/menu.rs:125). The old texture/double-panic abort is gone; no all-green or
+native package/runtime claim. Inspect real widget text policy next, not change
+production colors or weaken assertions to force a pass. No blocking CI wait.
+
 ## Native render ownership and painted-color test repair
 
 Terminal 0c723f1 Build run 38092457174 passes workflow/source quality, both

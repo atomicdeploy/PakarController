@@ -30,12 +30,13 @@ if(contextProfile==='controller'){status.avr_online=true;status.audio_cues=['wel
 // Extend the existing no-write visual harness, rather than a second package or
 // inferred live-board snapshot. Physical cell 80 is deliberately remapped to 1.
 const pixelFixture=process.argv.includes('--pixels');
+const toastFixture=process.argv.includes('--toasts');
 if(pixelFixture){values['/api/v1/cells/mapping'].physical[0]=80;values['/api/v1/cells/mapping'].physical[79]=1;}
 const server=http.createServer(async(req,res)=>{
   res.setHeader('Cache-Control','no-store');
   if(req.method==='GET'&&req.url==='/assets/fonts/Vazirmatn-Regular.ttf'){res.writeHead(200,{'Content-Type':'font/ttf'});res.end(await readFile(new URL('../assets/fonts/Vazirmatn-Regular.ttf',import.meta.url)));return;}
   if(req.method!=='GET'){res.writeHead(405,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Read-only SIMULATED fixture; no device mutation'}));return;}
-  if(req.url==='/'){const source=await readFile(webSourceUrl,'utf8');res.writeHead(200,{'Content-Type':'text/html;charset=utf-8'});res.end(source.match(/R"HTML\(([\s\S]*)\)HTML";/)[1]);return;}
+  if(req.url==='/'){const source=await readFile(webSourceUrl,'utf8');let html=source.match(/R"HTML\(([\s\S]*)\)HTML";/)[1];if(toastFixture)html=html.replace('</body>','<button type="button" id="fixtureToast" style="position:fixed;top:4px;left:4px;z-index:101" onclick="webToasts??=createToastController({root:notice,translate:uiTr});webToasts.showToast(\'info\',\'SIMULATED notification\',\'Read-only fixture — not a device event\',60000);webToasts.showToast(\'success\',\'SIMULATED success\',\'No board command was sent\',60000);webToasts.showToast(\'error\',\'SIMULATED error\',\'Keyboard Escape dismisses the focused notification\',60000)">SIMULATED · Test notifications</button></body>');res.writeHead(200,{'Content-Type':'text/html;charset=utf-8'});res.end(html);return;}
   const url=new URL(req.url,'http://localhost'),value=values[url.pathname];
   const response=pixelFixture&&url.pathname==='/api/v1/status'&&url.searchParams.get('pixels')==='1'?{...status,pixel_preview_requested:true,pixel_frame:{revision:42,brightness:255,physical:values['/api/v1/cells/mapping'].physical,rgb:['1234ab','ff0000','00ff00','0000ff','ffffff','000000'].join('').repeat(80)}}:value;
   res.writeHead(response?200:404,{'Content-Type':'application/json'});res.end(JSON.stringify(response||{error:'Fixture has no such endpoint'}));

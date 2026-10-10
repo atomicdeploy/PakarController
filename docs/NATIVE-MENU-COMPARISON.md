@@ -47,6 +47,13 @@ was an incomplete import, not evidence that the user wanted different heights.
 
 ## Proof boundaries
 
+Later source 8849ab8 Windows job 114334311601 completes 114 passed/1 failed. The
+texture destructor panics and abort are gone; actual shortcut muted-ink/right-edge
+checks get past their prior failure, but the label's primary-ink expectation fails
+at menu.rs:125. Native package/deployed acceptance is not complete. Inspect actual
+widget text-color policy before any production change or test-oracle correction;
+no weakened assertion or passing-runtime claim for this menu.
+
 The restored serial/uncaptured native harness identifies the actual failure in
 0c723f1 Windows job 114331734735: egui caches PLACEHOLDER layout colors and paints
 TextShape fallback/override colors. The shortcut test now checks actual tessellated
