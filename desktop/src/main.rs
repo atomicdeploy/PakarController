@@ -665,14 +665,13 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
             let mut sent_frames = 0_u32;
             loop {
                 match commands.try_recv() {
-                    Ok(WsCommand::Connect(new_endpoint)) if new_endpoint != current => {
+                    Ok(WsCommand::Connect(new_endpoint)) => {
                         mapping.clear();
                         sampling = false;
                         streaming = false;
                         endpoint = Some(new_endpoint);
                         break;
                     }
-                    Ok(WsCommand::Connect(_)) => {}
                     Ok(WsCommand::Rate(value)) => fps = value.min(streaming::MAX_FPS),
                     Ok(WsCommand::Mapping(value)) => {
                         mapping = value;

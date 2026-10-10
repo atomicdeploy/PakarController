@@ -607,6 +607,7 @@ impl PakarControllerApp {
                 ui::status_bar::Action::Preferences => self.open_preferences(),
             }
         }
+        let mut connection_actions = Vec::new();
         egui::Panel::top("pakar-workspace-toolbar")
             .frame(egui::Frame::new().inner_margin(egui::Margin::symmetric(12, 8)))
             .show(ui, |ui| {
@@ -627,8 +628,12 @@ impl PakarControllerApp {
                         },
                         snapshot.is_some(),
                     );
-                    badge(ui, "WebSocket", self.websocket_live);
-                    badge(ui, "USB", self.serial_live);
+                    ui::connection_controls::websocket(ui, self.websocket_live, &self.base,
+                        self.transport, &mut connection_actions);
+                    ui::connection_controls::usb(ui, self.serial_live, &self.serial_port,
+                        self.transport, self.identity_pending, || serialport::available_ports()
+                            .map(|ports| ports.into_iter().map(|port| port.port_name).collect())
+                            .map_err(|error| error.to_string()), &mut connection_actions);
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui.button(format!("{}  Workspaces", icons::TABS)).clicked() {
                             self.show_workspaces = true;
@@ -652,6 +657,28 @@ impl PakarControllerApp {
                     });
                 });
             });
+        for action in connection_actions {
+            use ui::connection_controls::Action;
+            match action {
+                Action::Route(route) => { self.transport = route; self.refresh(); }
+                Action::Port(port) if !self.identity_pending => {
+                    self.serial_port = port;
+                    self.config.serial_port = self.serial_port.clone();
+                    self.save_workspace();
+                }
+                Action::ReconnectWebSocket => { self.last_ws_endpoint = None; self.refresh(); }
+                Action::ReconnectUsb if !self.identity_pending && !self.serial_port.is_empty() => {
+                    // A same-port request closes/reopens the worker too. Clear the
+                    // old ACK immediately; reopening is not a successful connection.
+                    self.serial_status = None;
+                    self.last_serial_status_at = None;
+                    self.serial_live = false;
+                    let _ = self.serial_tx.send(SerialCommand::Port(self.serial_port.clone()));
+                }
+                Action::Configure => self.show_connection = true,
+                _ => {}
+            }
+        }
         self.open_panels.clear();
         let layout_changed = !self.close_panels.is_empty() || !self.reveal_panels.is_empty();
         for panel in std::mem::take(&mut self.close_panels) {
@@ -1559,6 +1586,9 @@ impl PakarControllerApp {
                 });
                 ui.add_space(10.0);
                 dialog::section(ui, icons::PLUG, "USB serial", |ui| {
+                    // Pealayer's custom hardware-path fallback: discovery is not
+                    // the only way to choose a stable OS serial endpoint.
+                    field(ui, icons::PLUG, "Port or hardware path", &mut self.serial_port, false);
                     egui::ComboBox::from_label("Port")
                         .selected_text(if self.serial_port.is_empty() {
                             "Disconnected"

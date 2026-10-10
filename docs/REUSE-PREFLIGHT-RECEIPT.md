@@ -1,5 +1,37 @@
 # Donor-first preflight receipt
 
+## Front-panel WebSocket/USB dropdown continuation
+
+Issue #10 owns this transport-context change. Read AGENTS/preflight and issue
+#10; ui-shell consultation first rejected concurrent Pealayer tracked inventory
+drift. Refreshed only its inventory, then consulted exact donor-audit status_bar
+and menu mappings. Both donor files were reread fully, including the real
+connection selector/custom OS-path fallback; donors remain read-only. The
+front-panel labels now call connection_controls popups with typed routing,
+port/disconnect, reconnect and configuration actions. USB scan happens only
+inside its open popup, reports failure and preserves unavailable configured
+ports. Same-endpoint WebSocket reconnect no longer silently drops the request.
+
+No native build guard bypass, cache duplication, automatic prune, firmware build
+or production replacement. Rust popup/pointer tests are added; Node wiring and
+menu source guards plus Rust parsing passed, not native runtime acceptance.
+Unexpected diagnostics: a guessed esp/src/web* path failed (no files changed);
+subsequent inventory uses exact known paths. Combined lookup output was too large,
+so reread both full donor files in bounded chunks. A receipt patch with a guessed
+heading failed atomically; reapplied only after reading its actual header.
+Current native build/deployment acceptance is recorded below and in issue #10.
+
+Result: guarded native Test refused before Cargo because desktop/target remains
+13.49 logical GiB / 16068 files against its 8 GiB policy. Consulted build-storage
+and completely reread actual Pealayer scripts/storage-hygiene.ps1; selected the
+already imported read-only summary, not donor recursive prune. No new native
+binary/screenshot or running-app replacement is claimed. Existing build gate,
+reuse preflight, ledger/file-comparison tests, connection/menu source guards and
+diff whitespace validation passed. Comparison patch attempts first exposed JSON
+anchor escaping and then out-of-order hunks; both failed atomically. Reapplied
+with JSON-escaped anchors and ordered, separate insertion after exact inspection.
+Inventory is 1885 files / 52 complete-read comparisons / 1833 pending / 33 gaps.
+
 ## Board/application identity continuation
 
 Issue #10 owns this identity request. Read AGENTS/preflight and issues #4/#10;

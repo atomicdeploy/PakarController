@@ -73,6 +73,7 @@ jobs:
           node tests/web_identity_test.mjs
           node tests/screenshot_harness_test.mjs
           node tests/native_menu_test.mjs
+          node tests/connection_controls_test.mjs
           node tools/generate-branding.mjs --check
           node tests/branding_test.mjs
           node tests/web_access_test.mjs

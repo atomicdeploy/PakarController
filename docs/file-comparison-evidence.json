@@ -4,6 +4,70 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
     {
+      "origin": "Pealayer",
+      "path": "src/ui/status_bar.rs",
+      "sha256": "99003b3a1c672b8e849ee587ed2144838e3eba99cf02af43e1056d5d24f5767d",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual per-item hide context menus, persistent visibility choices, bar-level restore menu and small truncating message labels adapted in Pakar status_bar.rs. Transport controls remain usable offline without claiming hardware readiness."
+      ],
+      "targets": [
+        {
+          "path": "desktop/src/ui/status_bar.rs",
+          "sha256": "ac3ad2971427a8b0b16e50eb1763d87080871df2a6ba88ce238e2eef5bbf7b26",
+          "anchor": "fn hide_menu("
+        },
+        {
+          "path": "desktop/src/ui/connection_controls.rs",
+          "sha256": "3216d5dde3a9bb6a8386cec0986140fdc2da5e1130c0cab17172d728b214fb76",
+          "anchor": "pub fn usb("
+        },
+        {
+          "path": "docs/CONNECTION-CONTROLS.md",
+          "sha256": "002ee046e9c206a4cc241ad2b9033971b4933959d8e14f43958848403879f21d",
+          "anchor": "# Front-panel transport dropdowns"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "current_status_message update-manager priority and OSD lifetime; fullscreen exclusion; workspace label; i18n/RTL layout",
+          "disposition": "pending",
+          "reason": "Pakar retains a status message and item menu, but does not yet share authoritative update/OSD lifetime, workspace text or localized/RTL/fullscreen policy. Restore actual dependencies and test rather than claim full-file parity."
+        },
+        {
+          "code": "draw_hardware_status board_ready/coordinator/active_transport distinction, physical RGB glyph and telemetry voltage/current/temperature/warnings",
+          "disposition": "pending",
+          "reason": "Pakar current peer freshness/ACK gates exist but generic coordinator, RGB sensor and warning inventories need actual adapters before those fields can be displayed. Native dropdown live indicators are transport state, not hardware ACK."
+        },
+        {
+          "code": "prepared_timeline, media-rate/fps mode, hardware timeline revision/feedback; estop_active label",
+          "disposition": "not-applicable",
+          "reason": "Prepared media/timeline playback is expressly excluded from this mpv-free controller. No E-stop contract is acknowledged by the current pair; reusable latch safety remains tracked in menu comparison, not fabricated as present."
+        },
+        {
+          "code": "Pealayer hardcoded connection dot RGB",
+          "disposition": "replaced",
+          "reason": "Pakar transport controls use its existing shared palette green/current text roles; menu state stays readable in both themes without tinting unrelated hardware controls."
+        }
+      ],
+      "remaining": [
+        "Run native popup/pointer tests, deploy and capture actual controls; restore useful generic status lifetime/readiness/localization contracts in issues #3/#10."
+      ],
+      "proof": [
+        {
+          "path": "tests/connection_controls_test.mjs",
+          "sha256": "4824489d60f705fccda52d3166ca487a1ea4d1721d0a0814706747fb7033aaf2",
+          "anchor": "Source wiring guard only."
+        },
+        {
+          "path": "desktop/src/ui/connection_controls.rs",
+          "sha256": "3216d5dde3a9bb6a8386cec0986140fdc2da5e1130c0cab17172d728b214fb76",
+          "anchor": "fn offline_dropdowns_open_independently_and_usb_enumerates_only_when_open()"
+        }
+      ]
+    },
+    {
       "origin": "PCController",
       "path": "Tools/Controller/web/src/peripheral-availability.ts",
       "sha256": "fcf2e397564c843711fd64db2bd2d820552180ac4f5abdf0d44ccbbb86be7a84",
@@ -132,7 +196,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9b4ef141a5aac40c7245a246321a28c834ebae82f20941b415b919173dc78092",
+          "sha256": "6976fba6f5d822325c02c8fe67130ce0215fee2e20bae99cbabe88fac4cf2f2e",
           "anchor": "fn synchronize_context("
         },
         {
@@ -431,7 +495,8 @@
       "verdict": "parity-gap",
       "preserved": [
         "Actual top_menu_button body imported with only application state ID/public visibility adaptation; all four production menu headings use active-menu sibling hover switching.",
-        "Actual Button::shortcut_text idiom replaces space-padded primary labels in all six shortcut rows; separate right-aligned muted atoms are supplied by the same egui 0.36.2 dependency. Existing dispatch/Phosphor submenu retained; user-requested height policy unchanged."
+        "Actual Button::shortcut_text idiom replaces space-padded primary labels in all six shortcut rows; separate right-aligned muted atoms are supplied by the same egui 0.36.2 dependency. Existing dispatch/Phosphor submenu retained; user-requested height policy unchanged.",
+        "Actual connection selector/persist-on-change and custom OS hardware-path fallback adapted to independent WebSocket and USB popup controls. Lazy factual enumeration, reconnect/disconnect and route actions added; complete donor lifecycle remains pending."
       ],
       "targets": [
         {
@@ -441,8 +506,13 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9b4ef141a5aac40c7245a246321a28c834ebae82f20941b415b919173dc78092",
+          "sha256": "6976fba6f5d822325c02c8fe67130ce0215fee2e20bae99cbabe88fac4cf2f2e",
           "anchor": "menu::top_menu_button(ui, \"File\".into()"
+        },
+        {
+          "path": "desktop/src/ui/connection_controls.rs",
+          "sha256": "3216d5dde3a9bb6a8386cec0986140fdc2da5e1130c0cab17172d728b214fb76",
+          "anchor": "pub fn websocket("
         },
         {
           "path": "docs/NATIVE-MENU-COMPARISON.md",
@@ -890,7 +960,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9b4ef141a5aac40c7245a246321a28c834ebae82f20941b415b919173dc78092",
+          "sha256": "6976fba6f5d822325c02c8fe67130ce0215fee2e20bae99cbabe88fac4cf2f2e",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -1308,7 +1378,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9b4ef141a5aac40c7245a246321a28c834ebae82f20941b415b919173dc78092",
+          "sha256": "6976fba6f5d822325c02c8fe67130ce0215fee2e20bae99cbabe88fac4cf2f2e",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],

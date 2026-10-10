@@ -2,6 +2,7 @@ pub mod cell_pixels;
 pub mod cell_search;
 pub mod cell_table;
 pub mod color_picker;
+pub mod connection_controls;
 pub mod dialog;
 pub(crate) mod elegance_theme;
 pub mod i18n;
