@@ -1,5 +1,57 @@
 # Donor-first preflight receipt
 
+## Restored donor native test execution contract
+
+Previous goal turn made progress: source c814379 imported actual browser trace,
+passed source quality and built ESP locally. Current authoritative CI run
+38091589105 is terminal: workflow/source, both ESP/AVR UART variants and Android
+preview pass; Windows fails. Separate CodeQL 38091589143 succeeds. Linux strict
+font equality now passes on the real runner, not only injected OS metadata.
+Firmware job 114329208305 also passes protocol/profile fixtures and uploads eight
+files in artifact 11684557100 (1331965 bytes; artifact archive digest
+e06cfdb894bfe958711b29c4c7287017e2eeca4b3466e79e8e2c636005107e74).
+This is build/fixture/artifact proof, not download integrity or physical flashing.
+
+Windows job 114329208291 repeats neutral-cell-fill, offline dropdown and
+language-change font-retention failures, followed by 0xc0000409. Its aborted
+capturing test harness hides assertion details. A logs request while that job was
+live returned BlobNotFound; only the later terminal job/status/logs established
+failure. No timeout/transient error was treated as terminal or restarted.
+
+Consulted localization, ui-shell, build-storage and exact donor audit mappings.
+Fully reread Pealayer src/ui/i18n.rs (1236 lines; original-byte SHA256
+811f1e08e7126932772c49da8aa9669ce8f47d4e2208c1ef6cde435dde20bdf4),
+scripts/run-windows.ps1 and complete .github/workflows/ci-cd.yml; live hashes match.
+Locked egui/elegance registry code was inspected for active theme, menu IDs and
+next-pass font installation. No donor/dependency change or new whole-file review.
+Pealayer actually runs all native tests with --test-threads=1 because process-wide
+application state is shared. Pakar omitted this; --jobs only limits compilation.
+config::live is process-wide and preference tests mutate it, so concurrent tests
+can race. This does not yet prove the cause of all three failures or the abort.
+
+Restore serial runtime tests in the mandatory wrapper and --nocapture so failure
+details survive a later crash. Keep compile jobs, assertions, test selection,
+dependency versions, symbols, same target/cache and storage guards unchanged.
+Restore donor CI isolated configuration and RUST_BACKTRACE=1. Local Test defaults
+to a stable build/native/native-tests.json instead of the user profile, preserves
+an explicit fixture override, and restores its process environment in finally.
+Check/Release never receive test runtime flags or default test configuration.
+Plan/regression tests cover exact dispatch and isolation; they are not compilation.
+
+Complete local source-quality suite passes after these changes. Actual native
+Test wrapper still refuses the >8 GiB canonical cache before cargo starts; no
+bypass, cleanup, extra cache, app replacement, firmware/APK rebuild or physical
+write. ASUS SSH localhost:1022 still refuses. Three native assertions/crash and
+new execution under restored contracts remain open. Nine existing references
+across five affected files are selectively rebound, with two additional exact
+CI-to-wrapper/test mappings. Coverage unchanged: 77/4237, 4160 pending, 46 gaps;
+Rayan 13/2349. CI is not waited on.
+
+PERSIAN-PARITY and the existing font/CI ledger actions now explicitly distinguish
+individually passing native contextual glyph tests from failing font retention.
+The previous unexecuted-test wording is superseded by observed CI results;
+remaining runtime/translation/grouping gaps are preserved, not silently certified.
+
 ## Rayan browser trace and portable font recovery
 
 Reread the actual task Build RayanLamp Go app without resuming or messaging it.

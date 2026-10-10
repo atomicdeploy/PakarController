@@ -501,7 +501,7 @@
         },
         {
           "path": "docs/PERSIAN-PARITY.md",
-          "sha256": "9e5e153c3872e2347365af8d60762ed971fb41f77210d1a6d6ff2306400e3864",
+          "sha256": "2ef9e80bc76dbbee577dc5b8b31d61d61f699135ad78f868a90f94a43f0c615a",
           "anchor": "## Exact source-to-target mapping"
         }
       ],
@@ -519,11 +519,11 @@
         {
           "code": "Separate ttf_parser coverage assertions and exhaustive native surface translations",
           "disposition": "pending",
-          "reason": "Avoid introducing a duplicate font parser dependency: actual renderer glyph/contextual tests are adapted instead, but unexecuted native tests and additional Unicode/surface acceptance remain gaps. Full device-settings bodies and status/transport copy still need audit."
+          "reason": "Avoid introducing a duplicate font parser dependency: actual renderer glyph/contextual tests are adapted and pass individually in c814379 Windows CI, but language-change font retention fails and the harness aborts. Additional Unicode, production rendering, device-settings and status/transport copy remain unaccepted."
         }
       ],
       "remaining": [
-        "Run native glyph/font-retention/locale tests after approved obsolete-debug cleanup; inspect actual Persian native inputs/menus/dialogs and replacement app. Complete all application-copy surfaces and generic folder/group behavior."
+        "Resolve failed font-retention assertion and aborted native harness under the restored donor serial/isolation contract; rerun complete tests and inspect real Persian inputs/menus/dialogs. Local cache budget remains enforced; finish application-copy and generic grouping parity."
       ],
       "proof": [
         {
@@ -678,7 +678,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "62a60755bc410d38ff04d7dbe178813ec8fd2ab5c8cdc9be98b0d718a44a55b0",
+          "sha256": "da232ac7efd7a41028424bffd0f08865fc8049b0a4f971faa74703da43b2d966",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -689,8 +689,13 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "0f02fbba3cf5e213715fffe0a73dcf947cb86e9216e7fcae688f3020a5ecb6f6",
+          "sha256": "c2bc9c995b4c3717a6e66916f31cef5b8010730e146b4e4dfe8ee437a62c80a2",
           "anchor": "name: \"🚀 Build · Test · Release\""
+        },
+        {
+          "path": "tools/build-desktop.ps1",
+          "sha256": "86a89643a790223d6ad96221877a9491ba6a65a9f48649fc27c7885309c9e989",
+          "anchor": "--test-threads=1"
         },
         {
           "path": "tools/ci-checks.mjs",
@@ -705,7 +710,8 @@
       ],
       "preserved": [
         "Actual donor branch/PR/tag/dispatch/merge-group triggers, concurrency policy, pinned actions without checkout credentials, health-before-build jobs, timeouts, Rust cache reuse, locked tests/builds, packaging, curated notes, manifest/checksums/provenance and aggregate results adapted to current Windows/ESP/AVR/Android targets.",
-        "Release content is gated on all builds, created as an immutable draft prerelease, with two correctly matched board pairs and raw HTTPS update manifests. Untrusted PRs do not execute publishing code with a write token."
+    "Release content is gated on all builds, created as an immutable draft prerelease, with two correctly matched board pairs and raw HTTPS update manifests. Untrusted PRs do not execute publishing code with a write token.",
+    "Actual donor serial native test execution, isolated test configuration and RUST_BACKTRACE=1 restored. Runtime harness flags are separated from compile jobs; immediate panic output remains available even if a later test aborts before its summary."
       ],
       "omissions": [
         {
@@ -730,7 +736,7 @@
         }
       ],
       "remaining": [
-        "Restore useful additional native targets and optional accepted compressed package/runtime verification; first execution of the new CI/publisher and physical acceptance remain separate."
+        "Complete failing Windows native tests/package and unexecuted draft publisher; restore useful additional native targets and optional compressed package/runtime verification. c814379 CI passes source, both firmware variants and Android preview but is not all-green or physical acceptance."
       ],
       "improvement": "",
       "origin": "Pealayer",
@@ -738,8 +744,13 @@
       "source_read": "complete",
       "proof": [
         {
+          "path": "tests/build_storage_test.ps1",
+          "sha256": "000880b19bea3b533ac88305f3d5967d87ae600d249980f20f3afc4aeebfff75",
+          "anchor": "Actual donor serial test contract"
+        },
+        {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "62a60755bc410d38ff04d7dbe178813ec8fd2ab5c8cdc9be98b0d718a44a55b0",
+          "sha256": "da232ac7efd7a41028424bffd0f08865fc8049b0a4f971faa74703da43b2d966",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -772,7 +783,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "62a60755bc410d38ff04d7dbe178813ec8fd2ab5c8cdc9be98b0d718a44a55b0",
+          "sha256": "da232ac7efd7a41028424bffd0f08865fc8049b0a4f971faa74703da43b2d966",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -805,7 +816,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "62a60755bc410d38ff04d7dbe178813ec8fd2ab5c8cdc9be98b0d718a44a55b0",
+          "sha256": "da232ac7efd7a41028424bffd0f08865fc8049b0a4f971faa74703da43b2d966",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -838,7 +849,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "62a60755bc410d38ff04d7dbe178813ec8fd2ab5c8cdc9be98b0d718a44a55b0",
+          "sha256": "da232ac7efd7a41028424bffd0f08865fc8049b0a4f971faa74703da43b2d966",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -1653,7 +1664,7 @@
       "targets": [
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "48fc7a68747bc747a4b9b0a4ae675097329e20a99ab12f4581b170d8cd2f74d3",
+          "sha256": "86a89643a790223d6ad96221877a9491ba6a65a9f48649fc27c7885309c9e989",
           "anchor": "Get-PakarCargoTargetDirectory"
         }
       ],
@@ -1685,7 +1696,7 @@
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "ac9af1dddae9cf93afdf7dad889c73e1b4f11e4efcce254d0b621b5218dd47aa",
+          "sha256": "000880b19bea3b533ac88305f3d5967d87ae600d249980f20f3afc4aeebfff75",
           "anchor": "One canonical target"
         }
       ],

@@ -1,5 +1,24 @@
 # PakarController comparison receipts
 
+## Native serial/isolation contract recovery
+
+Actual Pealayer CI source reread fully: serial tests, isolated test config and
+RUST_BACKTRACE=1 are now restored in Pakar's mandatory wrapper/workflow. Added
+immediate panic output, stable local test configuration and environment cleanup;
+compile job count, profiles/assertions/cache/storage gates unchanged. Actual Plan
+and source-quality regressions pass; local compilation is refused by the existing
+cache budget. No native pass, UI repair or runtime replacement claim yet.
+
+Terminal c814379 run 38091589105 proves real Ubuntu strict font assets, both
+ESP/AVR polling and busy-wire builds, protocol/profile fixtures, firmware artifact
+upload and Android preview pass. CodeQL 38091589143 succeeds. Windows test job
+114329208291 repeats the three assertions and 0xc0000409; restored execution is
+the next acceptance step, not a claim that serial policy fixes every failure.
+Source inspection establishes shared live-config state, not the crash root cause.
+Full Pealayer i18n.rs reread does not erase pending locale/group/UI work.
+No new donor certificate; same 77/4237, 4160 pending, 46 gaps. No physical flash,
+new local firmware/APK build, duplicate cache or blocked cleanup workaround.
+
 ## Rayan browser diagnostics execution
 
 Two additional exact complete-read comparisons: browser-console.ts original-byte

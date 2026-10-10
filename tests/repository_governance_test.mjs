@@ -24,6 +24,11 @@ assert.match(build,/node tools\/ci-checks.mjs (quality|desktop)/);
 const firmwareJob=build.split('  firmware:')[1].split('  windows-desktop:')[0];
 assert.match(firmwareJob,/actions\/setup-node@[a-f0-9]{40}[\s\S]*node-version: '24'/,
   'Firmware asset verification must use the same Node major as source quality');
+const nativeTestStep=build.split('      - name: Test and build the mpv-free Windows client')[1].split('      - uses:')[0];
+assert.match(nativeTestStep,/PAKAR_CONFIG_FILE: \$\{\{ runner.temp \}\}\/pakar-tests.json/,
+  'Native tests must not access a user configuration');
+assert.match(nativeTestStep,/RUST_BACKTRACE: '1'/,
+  'Keep actual donor failure backtraces enabled in native CI');
 let calls=[];
 assert.throws(()=>runChecks([['first'],['never']],cmd=>{calls.push(cmd);return {status:7};}),error=>error.exitCode===7);
 assert.deepEqual(calls,['first'],'Do not execute later commands after a failure');

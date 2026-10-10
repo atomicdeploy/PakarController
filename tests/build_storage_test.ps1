@@ -14,6 +14,11 @@ Assert-Storage ($taskTest.Arguments[0] -eq 'test') 'Test dispatch'
 Assert-Storage ($taskRelease.Arguments -contains '--release') 'Release remains explicit'
 Assert-Storage ($taskCheck.Cache -eq $taskTest.Cache -and $taskTest.Cache -eq $taskRelease.Cache) 'One canonical target'
 Assert-Storage ($taskTest.Arguments -contains '--locked') 'Locked dependencies'
+Assert-Storage (($taskTest.Arguments -join ' ') -match '--bin pakarcontroller -- --test-threads=1 --nocapture$') 'Actual donor serial test contract with immediate failure evidence'
+Assert-Storage (-not ($taskCheck.Arguments -contains '--test-threads=1') -and -not ($taskRelease.Arguments -contains '--test-threads=1')) 'Runtime test flags cannot change compile/release profiles'
+Assert-Storage ($taskTest.Arguments -contains '--jobs' -and $taskTest.Arguments -contains '2') 'Compile jobs remain independently bounded'
+Assert-Storage ($taskTest.TestConfigurationFile -eq $(if ($env:PAKAR_CONFIG_FILE) { $env:PAKAR_CONFIG_FILE } else { Join-Path $taskRoot 'build/native/native-tests.json' })) 'Stable isolated test config or explicit fixture override'
+Assert-Storage ($null -eq $taskCheck.TestConfigurationFile -and $null -eq $taskRelease.TestConfigurationFile) 'Test configuration never leaks into check/release'
 Assert-Storage ($taskCheck.MinimumFreeGiB -eq 8 -and $taskCheck.MaximumCacheGiB -eq 8) 'Storage budgets'
 # Both entrypoints construct the real CLI arguments; Plan never compiles/writes.
 $taskFirmware = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Plan )

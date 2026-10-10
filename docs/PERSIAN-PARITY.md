@@ -4,6 +4,20 @@ Tracking: [settings #4](https://github.com/atomicdeploy/PakarController/issues/4
 [exhaustive donor ledger #3](https://github.com/atomicdeploy/PakarController/issues/3),
 [storage #9](https://github.com/atomicdeploy/PakarController/issues/9).
 
+## Current CI acceptance boundary
+
+Terminal source c814379 run 38091589105 executes native logical-copy and
+contextual Persian glyph/shaping tests successfully, including Proportional and
+Monospace. However language-change font retention FAILS, along with dropdown and
+cell-surface tests, and the harness ends with 0xc0000409. Therefore symbol/font
+retention and the production native UI are not accepted. Source inspection is
+not a substitute for that failed assertion. Restore the actual donor serial
+test/config-isolation/backtrace contract and immediate failure output before
+choosing a font fix; do not guess the hidden assertion or remove its coverage.
+Full font source reread preserves the pending translation/group/runtime work.
+The same run passes both firmware variants and Android preview, not Android
+runtime/localization completeness. The local receipt below is historical.
+
 ## Regression cause
 
 The font was already bundled in native source, but its registration covered only
@@ -40,7 +54,8 @@ generated `file-comparison.csv`, not a separate completion checklist.
 - Native language preview/save/cancel updates fonts and direction. The added
   contextual-shaping test exercises both Proportional and Monospace. Another
   test checks that language changes retain Elegance symbols and avoid duplicate
-  fallbacks. These native tests exist but have NOT run in this checkpoint.
+  fallbacks. These tests now execute in CI: shaping passes, font retention fails;
+  no native production acceptance follows from the passing subset.
 - Web Language and Direction controls persist per browser, with system locale
   and explicit overrides. Labels, settings catalog/navigation, hints, selected
   settings states, placeholders and accessibility captions use application copy.
@@ -52,9 +67,9 @@ generated `file-comparison.csv`, not a separate completion checklist.
   allocating a font-sized heap copy. Only exact GET font/license paths are public;
   API authentication and write guards are unchanged.
 - Flutter now bundles and uses the identical font. This is NOT a complete mobile
-  locale implementation or an accepted Android build.
+  locale implementation or accepted Android runtime. Preview CI build passes.
 
-## Evidence, not production claims
+## Earlier local evidence, not production claims
 
 The actual embedded Web UI was rendered against the read-only, explicitly
 simulated fixture. Persian settings show joined text, translated hints and
@@ -76,6 +91,8 @@ ASUS, OTA, native-render or mobile-runtime acceptance is inferred from Web proof
 
 ## Useful work still pending (not accepted exclusions)
 
+- Resolve native font-retention assertion and the aborted harness; run restored
+  serial tests and inspect actual native Persian menus/editors/dialogs.
 - Full native device-settings bodies, status/transport surfaces, formatted
   messages, search keyword localization and translation completeness audit.
 - Web dynamic error/confirmation copy, status/menu attributes generated after

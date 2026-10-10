@@ -22,9 +22,21 @@ $taskVerb = if ($Mode -eq 'Check') { 'check' } elseif ($Mode -eq 'Test') { 'test
 $taskArguments = @($taskVerb, '--locked', '--manifest-path', $taskManifest,
     '--target-dir', $taskTarget, '--jobs', "$Jobs", '--bin', 'pakarcontroller')
 if ($Mode -eq 'Release') { $taskArguments += '--release' }
+if ($Mode -eq 'Test') {
+    # Actual Pealayer CI test contract: compile jobs != test concurrency.
+    # Native tests share process-wide preferences; preserve serial execution.
+    # Emit assertion output immediately so an eventual native abort cannot hide
+    # the earlier failures until a test-harness summary that never arrives.
+    $taskArguments += @('--', '--test-threads=1', '--nocapture')
+}
+$taskOriginalConfig = [Environment]::GetEnvironmentVariable('PAKAR_CONFIG_FILE', 'Process')
+$taskTestConfig = if ($Mode -eq 'Test') {
+    if ($taskOriginalConfig) { $taskOriginalConfig } else { Join-Path $taskRoot 'build/native/native-tests.json' }
+} else { $null }
 if ($Plan) {
     [pscustomobject]@{Executable='cargo'; Arguments=$taskArguments; Cache=$taskTarget;
-        MinimumFreeGiB=$MinimumFreeGiB; MaximumCacheGiB=$MaximumCacheGiB; ReuseGate=$taskReuse.GateChecked}
+        MinimumFreeGiB=$MinimumFreeGiB; MaximumCacheGiB=$MaximumCacheGiB; ReuseGate=$taskReuse.GateChecked;
+        TestConfigurationFile=$taskTestConfig}
     return
 }
 $taskDrive = Get-PSDrive -PSProvider FileSystem | Where-Object {
@@ -42,6 +54,15 @@ if (Test-Path -LiteralPath $taskTarget) {
 }
 # Cargo freshness does the work; never cargo clean or create another target tree.
 if ($ExpectedCommit) { Assert-PakarPackageSourceStable $taskRoot $ExpectedCommit }
-& cargo @taskArguments
-if ($LASTEXITCODE -ne 0) { throw "Desktop $Mode failed" }
-if ($ExpectedCommit) { Assert-PakarPackageSourceStable $taskRoot $ExpectedCommit }
+try {
+    # Donor CI isolates its tests. Local Test must also avoid the user profile;
+    # retain an explicitly supplied fixture path and restore process environment.
+    if ($Mode -eq 'Test') { $env:PAKAR_CONFIG_FILE = $taskTestConfig }
+    & cargo @taskArguments
+    if ($LASTEXITCODE -ne 0) { throw "Desktop $Mode failed" }
+    if ($ExpectedCommit) { Assert-PakarPackageSourceStable $taskRoot $ExpectedCommit }
+} finally {
+    if ($Mode -eq 'Test') {
+        [Environment]::SetEnvironmentVariable('PAKAR_CONFIG_FILE', $taskOriginalConfig, 'Process')
+    }
+}
