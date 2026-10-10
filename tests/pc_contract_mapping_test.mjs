@@ -8,7 +8,7 @@ const read=p=>readFileSync(resolve(root,p),'utf8').replaceAll('\r\n','\n');
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const mapping=JSON.parse(read('docs/pccontroller/SOURCE-MAPPING.json'));
 assert.equal(mapping.revision,'20c6115bb462fe5111b66cd7c21f7328a1f78892');
-assert.equal(mapping.files.length,22);
+assert.equal(mapping.files.length,23);
 const sources=new Set();
 for(const entry of mapping.files){
   assert(!sources.has(entry.source));sources.add(entry.source);
@@ -31,4 +31,4 @@ assert.equal(registry.envelope.maximumPayload,48);
 for(const op of registry.opcodes){
   assert.match(header,new RegExp('\\b'+op.cpp+'\\s*=\\s*0x'+op.value.toString(16).padStart(2,'0'),'i'),op.cpp);
 }
-console.log('22 exact donor mappings bound to current target hashes/lines; actual donor registry/header opcode values checked. No whole-repository or physical certification.');
+console.log('23 exact donor mappings bound to current target hashes/lines; actual donor registry/header opcode values checked. No whole-repository or physical certification.');

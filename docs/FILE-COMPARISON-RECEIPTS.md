@@ -111,7 +111,7 @@ tests are not automatically a passed GitHub build or complete production release
 
 ## Current-hardware PCController contract checkpoint
 
-Source 0.2.6: 22 focused donor-file mappings against PCController
+Source 0.2.6: 23 focused donor-file mappings against PCController
 20c6115bb462fe5111b66cd7c21f7328a1f78892, with current source/target
 hashes and line anchors in pccontroller/SOURCE-MAPPING.json. Donor hash
 verification ran against the clean canonical checkout. Separate legacy
@@ -122,7 +122,7 @@ Executed locally: all production-code C++ component tests including PC
 contracts, feature-off profile, 73 Rust tests, locked Windows release build,
 authenticated built-CLI contract fixture, Web/access/boot tests, source
 version check, comparison/ledger/adversarial checks, both firmware variants.
-Final AVR busy-wire 26672 flash bytes/1203 static RAM; polling 26386/1201.
+Initial e75a26a AVR busy-wire 26672 flash bytes/1203 static RAM; polling 26386/1201.
 ESP busy-wire 595560 IROM bytes/49772 static RAM, polling 595348/49764;
 both IRAM 63055 including 32768 instruction cache reservation. Each merged
 AVR plus Urboot image is 32768 bytes.
@@ -131,3 +131,11 @@ Fixture proof includes torn writes, chunks, late receipts and polling mirrors;
 it is not physical EEPROM, audible melody or electrically correct TM1637
 proof. No board writes. New exact-commit CI and hardware/surface acceptance
 remain tracked in PC-CONTRACT-TRACKING.md and the focused GitHub issue.
+
+Follow-up imports actual ControllerEvents header/implementation and restores
+exact five-byte key/buzzer payloads; no private UART timestamp extension.
+Final AVR busy-wire 26696 flash bytes/1221 static RAM (827 bytes for locals);
+polling 26410/1219 (829 bytes). ESP measurements unchanged.
+The e75a26a Linux firmware job built both boards but failed host compilation
+on an indirect offsetof dependency; AutomationStore now explicitly includes
+stddef.h. Android CI passed for e75a26a, not automatically for the follow-up.

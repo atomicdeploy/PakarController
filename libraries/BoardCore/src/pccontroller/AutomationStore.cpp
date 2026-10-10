@@ -1,5 +1,6 @@
 #if !defined(ESP8266)
 #include "AutomationStore.h"
+#include <stddef.h>
 
 #include <EEPROM.h>
 #include <string.h>

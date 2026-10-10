@@ -623,7 +623,7 @@
       "proof": [
         {
           "path": "tests/pc_contract_test.cpp",
-          "sha256": "325baf7036fa3a9cfcf65f8d4d415ee2ac42155a89fcdb1282c461b3e9102930",
+          "sha256": "bf7a1f95873b8c97caa37d27a698a3c2fa8ad63bd290afebd39c23ff201a6275",
           "anchor": "void keysAndDisplay()"
         },
         {
@@ -674,7 +674,7 @@
       "proof": [
         {
           "path": "tests/pc_contract_test.cpp",
-          "sha256": "325baf7036fa3a9cfcf65f8d4d415ee2ac42155a89fcdb1282c461b3e9102930",
+          "sha256": "bf7a1f95873b8c97caa37d27a698a3c2fa8ad63bd290afebd39c23ff201a6275",
           "anchor": "void keysAndDisplay()"
         },
         {

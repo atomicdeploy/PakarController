@@ -73,6 +73,7 @@ $pcBinary = Join-Path $outputDirectory 'pc_contract_test.exe'
     (Join-Path $projectRoot 'firmware/avr/SevenSegments.cpp') `
     (Join-Path $projectRoot 'libraries/BoardCore/src/pccontroller/MacroRing.cpp') `
     (Join-Path $projectRoot 'libraries/BoardCore/src/pccontroller/Keys.cpp') `
+    (Join-Path $projectRoot 'libraries/BoardCore/src/pccontroller/ControllerEvents.cpp') `
     (Join-Path $projectRoot 'libraries/BoardCore/src/pccontroller/AutomationStore.cpp') `
     -o $pcBinary
 if ($LASTEXITCODE -ne 0) { throw 'PCController contract compilation failed' }

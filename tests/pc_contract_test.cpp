@@ -253,11 +253,11 @@ void polling() {
   EEPROM.reset(); Hardware h; h.canReceive=false; PcControllerRuntime r(h); r.begin(0);
   send(r,h,PC::Hello); h.frames.clear(); r.service(1,1000); assert(h.frames.empty());
   send(r,h,PC::GetStatus); assert(h.frames.size()==2 && h.frames[1].p[0]==PC::SegmentChanged);
-  send(r,h,PC::GetStatus); assert(h.frames.size()==2 && h.frames[1].p[0]==PC::BuzzerChanged);
+  send(r,h,PC::GetStatus); assert(h.frames.size()==2 && h.frames[1].p[0]==PC::BuzzerChanged && h.frames[1].p.size()==6);
   h.live.muted=true;
   send(r,h,PC::GetStatus); assert(h.frames.size()==2 && h.frames[1].p[0]==PC::BuzzerChanged && h.frames[1].p[5]==1);
   r.key(8,KeyEvent::Down,0,110,110000);
-  send(r,h,PC::GetStatus,{},111); assert(h.frames.size()==2 && h.frames[1].p[0]==PC::Event);
+  send(r,h,PC::GetStatus,{},111); assert(h.frames.size()==2 && h.frames[1].p[0]==PC::Event && h.frames[1].p==std::vector<uint8_t>({PC::Event,1,8,5,0,0xFF}));
 }
 void savedMenuPage() {
   EEPROM.reset(); Hardware h; PcControllerRuntime r(h); r.begin(0);

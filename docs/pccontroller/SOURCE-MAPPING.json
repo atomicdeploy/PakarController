@@ -75,8 +75,8 @@
       "source_sha256": "57b32c4e0b9144a77a68118aceb35bbfcd366b6098601c5a5241a7125047a011",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.h",
-      "target_sha256_utf8_lf": "49a2ae7afe414ef84642c75490cd43bd536bd998a0fcca726e7cb479df925d3c",
-      "line": 68,
+      "target_sha256_utf8_lf": "79f7792995c1d8bda3efdada582b97e0db2c8ddda4d44dd45050e74fa18ef7b0",
+      "line": 71,
       "anchor": "ControllerCore::MacroRing ring_",
       "retained": "Same actual MacroRing owner behind Pakar hardware interface.",
       "omitted_code_and_reason": "Donor UartProtocol/global relay state wrapper replaced; a second ring or relay substitute would waste RAM or lie about installed hardware."
@@ -86,7 +86,7 @@
       "source_sha256": "43a627c50e9908c20ea4b1d33c2eb4ef914672362ec5b9f5129604a7e5678b96",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.cpp",
-      "target_sha256_utf8_lf": "706e81911c9c83a2007e749b06fe5856280bf188a2a057891c4f07ca2b6e64c1",
+      "target_sha256_utf8_lf": "08f13d7eb72f44e826b6bad46d5474a2af43c225c72efd1c1d2c8976a5d05243",
       "line": 280,
       "anchor": "PcControllerRuntime::macro(",
       "retained": "Ring lifecycle and result events integrated into guarded common dispatch; shift-mask recordings use real outputs.",
@@ -130,8 +130,8 @@
       "source_sha256": "09abbdbfe7fb317e7a690bb5783fe5eaca3809bb24fb0cbc8b6baf7bcc06dc5c",
       "source_read": "complete",
       "target": "libraries/BoardCore/src/pccontroller/AutomationStore.cpp",
-      "target_sha256_utf8_lf": "a7d7888e4761e4fafd915ee2bd7949ca9c3dc44465ec6f7c0285b7df4ce18bd5",
-      "line": 102,
+      "target_sha256_utf8_lf": "407a096581a52e81c2a7f58a1cc4a7b2a3a7b09507ec7a1719d2a5bef0c3acb4",
+      "line": 103,
       "anchor": "AutomationStore::valid(",
       "retained": "Actual budgets/recursion, CRC records, pagination/generation, transaction switching; commit readback added and blank EEPROM stays volatile. Key IDs extended 0..8.",
       "omitted_code_and_reason": "Implicit clear/provision on blank storage removed to avoid unauthorized EEPROM writes. UART CRC helper replaced with same shared CRC codec. ESP compile excludes AVR-owned EEPROM store."
@@ -174,7 +174,7 @@
       "source_sha256": "1e4e69d6d3b3a8d4a159104d7c4faf97e43520ed8ba33fc48bb3be4f9f60b084",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.cpp",
-      "target_sha256_utf8_lf": "706e81911c9c83a2007e749b06fe5856280bf188a2a057891c4f07ca2b6e64c1",
+      "target_sha256_utf8_lf": "08f13d7eb72f44e826b6bad46d5474a2af43c225c72efd1c1d2c8976a5d05243",
       "line": 10,
       "anchor": "constexpr uint8_t labels",
       "retained": "Stable page list/layout/hide/reorder and real six-page state adapted to present hardware.",
@@ -184,12 +184,12 @@
       "source": "Project/ControllerEvents.h",
       "source_sha256": "6657149568743f406838cd70c08623bd0ffe6213cf421c51d88480e249da791f",
       "source_read": "complete",
-      "target": "firmware/avr/PcControllerRuntime.cpp",
-      "target_sha256_utf8_lf": "706e81911c9c83a2007e749b06fe5856280bf188a2a057891c4f07ca2b6e64c1",
-      "line": 334,
-      "anchor": "PcControllerRuntime::queueEvent",
-      "retained": "Typed key/source, macro, automation event tags and bounded queues; segment/audio mirrors use actual state.",
-      "omitted_code_and_reason": "Door/Bluetooth/PWM/RF/relay/fault/hot events not synthesized without producers. Separate UartProtocol reference replaced by existing response tunnel."
+      "target": "libraries/BoardCore/src/pccontroller/ControllerEvents.h",
+      "target_sha256_utf8_lf": "86f129d130e8789f52f5d71dcfa91c7ead739f09b4e4df9c6a545d44d3a07f88",
+      "line": 53,
+      "anchor": "class ControllerEvents",
+      "retained": "Actual typed donor event API imported. Key and automation encoders feed a bounded sink and preserve exact five-byte payloads; all latent hardware encoders retained without fake emissions.",
+      "omitted_code_and_reason": "UartProtocol ownership replaced with ControllerEventSink, because existing SerialLink owns framing. Door/Bluetooth/PWM/RF/relay/fault/alert producers remain unavailable until actual hardware/profile adapters exist."
     },
     {
       "source": "Project/AddressableLeds.h",
@@ -240,11 +240,22 @@
       "source_sha256": "b176da4a854a9b0b77c653d96a00d5359277e9c9681b47e14551d92b282b3301",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.cpp",
-      "target_sha256_utf8_lf": "706e81911c9c83a2007e749b06fe5856280bf188a2a057891c4f07ca2b6e64c1",
+      "target_sha256_utf8_lf": "08f13d7eb72f44e826b6bad46d5474a2af43c225c72efd1c1d2c8976a5d05243",
       "line": 100,
       "anchor": "PcControllerRuntime::dispatch",
       "retained": "Entire donor dispatcher read; every registered request has an explicit current owner/response or exclusion. Actual algorithms reuse imported modules rather than duplicate engines.",
       "omitted_code_and_reason": "All mismatched hardware handlers fail HardwareUnavailable, preserved future guards require drivers/pin profiles; registry-only host-menu IDs Unsupported. Profile-specific settings/status/menu IDs are not stock schema-3 byte compatibility."
+    },
+    {
+      "source": "Project/ControllerEvents.cpp",
+      "source_sha256": "afb40acc830f3fa672fd34d32ca5e0308ebb1aa2cc200e7e5f379f46c5e4bb25",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/pccontroller/ControllerEvents.cpp",
+      "target_sha256_utf8_lf": "843504b233fc9b369c3ed375b6a8acac4e58c65324179cef7ff9b72d30b35051",
+      "line": 11,
+      "anchor": "void ControllerEvents::key",
+      "retained": "Actual donor key/source/automation and latent hardware event encoding methods imported. Five-byte key and buzzer payloads stay canonical; no UART-only timestamp extension.",
+      "omitted_code_and_reason": "Only transport sink and board automation build-flag names adapted. No event encoder removed. Producers for absent hardware cannot claim events."
     }
   ],
   "proof": [

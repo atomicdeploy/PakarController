@@ -7,6 +7,7 @@ c++ -std=c++17 -Wall -Wextra -Werror \
   -I "$root/tests/pc_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/avr" \
   "$root/tests/pc_feature_flags_test.cpp" "$root/firmware/avr/PcControllerRuntime.cpp" \
   "$root/firmware/avr/BoardSettings.cpp" \
+  "$root/libraries/BoardCore/src/pccontroller/ControllerEvents.cpp" \
   "$root/libraries/BoardCore/src/pccontroller/AutomationStore.cpp" \
   -o "$root/build/pc-flags-test"
 "$root/build/pc-flags-test"

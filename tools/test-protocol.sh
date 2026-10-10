@@ -37,6 +37,7 @@ c++ -std=c++17 -Wall -Wextra -Werror \
   "$root/firmware/avr/BoardSettings.cpp" "$root/firmware/avr/SevenSegments.cpp" \
   "$root/libraries/BoardCore/src/pccontroller/MacroRing.cpp" \
   "$root/libraries/BoardCore/src/pccontroller/Keys.cpp" \
+  "$root/libraries/BoardCore/src/pccontroller/ControllerEvents.cpp" \
   "$root/libraries/BoardCore/src/pccontroller/AutomationStore.cpp" \
   -o "$root/build/pc-contract-test"
 "$root/build/pc-contract-test"

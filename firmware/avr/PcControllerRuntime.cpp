@@ -119,7 +119,7 @@ P::Error PcControllerRuntime::dispatch(uint8_t op, uint8_t sequence,
     }
     case PC::GetStatus:
       if (n) return P::kBadPayload;
-      status(sequence, now); drainOne(nowUs, true); return P::kNoError;
+      status(sequence, now); drainOne(true); return P::kNoError;
     case PC::GetSettings: {
       if (n) return P::kBadPayload;
       uint8_t response[sizeof(BoardSettings) + 1];
@@ -341,10 +341,10 @@ void PcControllerRuntime::queueEvent(const uint8_t *p, uint8_t n) {
 }
 void PcControllerRuntime::key(uint8_t bit, KeyEvent gesture, uint8_t source,
                               uint32_t now, uint32_t nowUs) {
+  (void)nowUs;
   lastKeyError_ = P::kNoError;
-  uint8_t event[9] = {1, bit, static_cast<uint8_t>(gesture), source, 0xFF};
-  put32(event + 5, nowUs);
-  if (connected_) queueEvent(event, sizeof(event));
+  if (connected_) eventCodec_.key(bit, static_cast<uint8_t>(gesture),
+                                  static_cast<InputEventSource>(source), 0xFF);
   automationEvent(AutomationEventKind::Key,
                    static_cast<uint8_t>((bit << 4) | static_cast<uint8_t>(gesture)), now);
 #if PAKAR_PC_MENU
@@ -409,10 +409,13 @@ bool PcControllerRuntime::automationAction(const AutomationRecord &r, void *cont
     uint8_t p[4]; put16(p, r.value); put16(p + 2, r.extra);
     success = self.hardware_.execute(PC::Buzzer, p, sizeof(p), self.actionNow_) == P::kNoError;
   }
-  const uint8_t event[] = {13,
-      static_cast<uint8_t>(r.actionKind == static_cast<uint8_t>(AutomationActionKind::HostMacroRequest) ? 3 : success ? 1 : 2),
-      r.id, r.actionKind, r.actionTarget};
-  if (self.connected_) self.queueEvent(event, sizeof(event));
+#if PAKAR_PC_AUTOMATIONS
+  if (self.connected_) self.eventCodec_.automation(
+      r.actionKind == static_cast<uint8_t>(AutomationActionKind::HostMacroRequest)
+          ? ControllerAutomationState::HostMacroRequested
+          : success ? ControllerAutomationState::Executed : ControllerAutomationState::Rejected,
+      r.id, r.actionKind, r.actionTarget);
+#endif
   return success;
 }
 void PcControllerRuntime::automationEvent(AutomationEventKind kind, uint8_t value, uint32_t now) {
@@ -425,6 +428,7 @@ void PcControllerRuntime::automationEvent(AutomationEventKind kind, uint8_t valu
 }
 
 void PcControllerRuntime::service(uint32_t now, uint32_t nowUs) {
+  (void)nowUs;
   const auto s = hardware_.snapshot();
   settings_.service(now, !s.programming);
   if (connected_ && static_cast<uint32_t>(now - lastHostAt_) >= 5000) {
@@ -473,8 +477,8 @@ void PcControllerRuntime::service(uint32_t now, uint32_t nowUs) {
     return; // One bounded unsolicited frame per loop; no display/audio burst.
   }
   if (lastAudioRevision_ != s.audioRevision || lastMuted_ != s.muted) {
-    uint8_t audio[9]; put16(audio, s.frequency); put16(audio + 2, s.duration);
-    audio[4] = s.muted; put32(audio + 5, nowUs);
+    uint8_t audio[5]; put16(audio, s.frequency); put16(audio + 2, s.duration);
+    audio[4] = s.muted;
     if (reply(PC::BuzzerChanged, 0, audio, sizeof(audio))) {
       lastAudioRevision_ = s.audioRevision; lastMuted_ = s.muted;
     }
@@ -486,7 +490,7 @@ void PcControllerRuntime::service(uint32_t now, uint32_t nowUs) {
     status(0, now); lastStreamAt_ = now;
   }
 }
-void PcControllerRuntime::drainOne(uint32_t nowUs, bool mirror) {
+void PcControllerRuntime::drainOne(bool mirror) {
   // Polling builds have no unsolicited TX grant. A solicited status request
   // grants one bounded changed-only mirror/event frame after its own response.
   if (mirror) {
@@ -500,8 +504,8 @@ void PcControllerRuntime::drainOne(uint32_t nowUs, bool mirror) {
       return;
     }
     if (lastAudioRevision_ != s.audioRevision || lastMuted_ != s.muted) {
-      uint8_t audio[9]; put16(audio, s.frequency); put16(audio + 2, s.duration);
-      audio[4] = s.muted; put32(audio + 5, nowUs);
+      uint8_t audio[5]; put16(audio, s.frequency); put16(audio + 2, s.duration);
+      audio[4] = s.muted;
       if (reply(PC::BuzzerChanged, 0, audio, sizeof(audio))) {
         lastAudioRevision_ = s.audioRevision; lastMuted_ = s.muted;
       }

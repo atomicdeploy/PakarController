@@ -5,6 +5,7 @@
 #include <pccontroller/MacroRing.h>
 #include <pccontroller/AutomationStore.h>
 #include <pccontroller/Keys.h>
+#include <pccontroller/ControllerEvents.h>
 #include "BoardSettings.h"
 
 // Hardware adapter, not a parallel peripheral engine. Every mutation passes
@@ -31,7 +32,7 @@ class PcControllerHardware {
                     uint8_t length) = 0;
 };
 
-class PcControllerRuntime {
+class PcControllerRuntime : public ControllerEventSink {
  public:
   explicit PcControllerRuntime(PcControllerHardware &hardware) : hardware_(hardware) {}
   void begin(uint32_t now);
@@ -60,7 +61,9 @@ class PcControllerRuntime {
   static bool automationAction(const AutomationRecord &record, void *context);
   void automationEvent(AutomationEventKind kind, uint8_t value, uint32_t now);
   void queueEvent(const uint8_t *payload, uint8_t length);
-  struct PendingEvent { uint8_t length; uint8_t bytes[9]; };
+  void event(const uint8_t *payload, uint8_t length) override { queueEvent(payload, length); }
+  ControllerEvents eventCodec_{*this};
+  struct PendingEvent { uint8_t length; uint8_t bytes[10]; };
   struct PendingResult { uint8_t opcode; uint8_t error; };
   PcControllerHardware &hardware_;
   BoardSettingsStore settings_;
@@ -83,7 +86,7 @@ class PcControllerRuntime {
   uint32_t actionNow_ = 0;
   bool connected_ = false, running_ = false, menuActive_ = false, macroDirty_ = false;
   bool menuOwnedByHost_ = false;
-  void drainOne(uint32_t nowUs = 0, bool mirror = false);
+  void drainOne(bool mirror = false);
   void saveMenuPage(uint32_t now);
   BoardCore::Protocol::Error lastKeyError_ = BoardCore::Protocol::kNoError;
 };

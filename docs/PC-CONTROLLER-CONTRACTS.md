@@ -44,7 +44,7 @@ Actual donor generated opcode header and JSON registry imported. Pakar legacy 0x
 | 42 HOST_MENU_DIRECTORY, 43 HOST_MENU_CONTENT, 44 HOST_MENU_STATE_GET | Registry-only: donor ProtocolRuntime has no handlers. Unsupported, never fake ACK. Future host-directory/menu adapter remains work, not a dropped working donor handler. |
 | Reserved 13, 26, 4A; unknown | Unsupported; never aliases a Pakar opcode. |
 
-SEGMENT_CHANGED, BUZZER_CHANGED, keys, macro/automation events derive from actual state. Busy-wire emits at most one unsolicited frame per service iteration and retains blocked events/results. Polling GET_STATUS grants one extra bounded changed-only mirror/event frame after its own response. Polling builds never touch busy GPIO.
+SEGMENT_CHANGED, BUZZER_CHANGED, keys, macro/automation events derive from actual state. Actual donor ControllerEvents encoders are imported; key [type,id,gesture,source,sourceId] and buzzer [frequency_LE16,duration_LE16,muted] remain exactly five bytes. No extra UART timestamps. Latent hardware event encoders remain available for future adapters without synthesizing absent producers. Busy-wire emits at most one unsolicited frame per service iteration and retains blocked events/results. Polling GET_STATUS grants one extra bounded changed-only mirror/event frame after its own response. Polling builds never touch busy GPIO.
 
 ## Settings profile
 

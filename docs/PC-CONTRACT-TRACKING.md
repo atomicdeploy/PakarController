@@ -21,7 +21,8 @@ Parent production scope: #2. Source parity: #3. Device settings GUI: #4. Native 
 - [x] Prog/host-loss/reset safety; separate application state from ISP latch.
 - [x] Busy-wire and polling builds; polling mirror/event drains; AVR internal pull-up retained.
 - [x] Current features can be disabled. Seven future hardware guards default off and fail closed.
-- [x] 22 current-donor mappings with actual source/target hashes, line anchors and exclusions.
+- [x] 23 current-donor mappings with actual source/target hashes, line anchors and exclusions.
+- [x] Actual typed donor event encoder; five-byte key/buzzer payloads, without incompatible UART timestamp extensions.
 - [x] Native CLI/TUI configuration, ACK plus persistent readback; authenticated built-CLI fixture.
 - [x] Source versions consistent at 0.2.6; local firmware/host/Rust checks.
 
