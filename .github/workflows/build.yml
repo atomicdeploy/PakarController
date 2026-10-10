@@ -71,6 +71,8 @@ jobs:
           node tests/web_cell_table_test.mjs
           node tests/screenshot_harness_test.mjs
           node tests/native_menu_test.mjs
+          node tools/generate-branding.mjs --check
+          node tests/branding_test.mjs
           node tests/web_access_test.mjs
           node tests/web_remote_test.mjs
           node tests/remote_tools_test.mjs

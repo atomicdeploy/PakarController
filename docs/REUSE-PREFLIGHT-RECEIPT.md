@@ -190,3 +190,41 @@ passed, then the canonical-cache budget guard refused compilation (>8 GiB).
 No bypass, new cache, deletion reroute, donor build, or package copy attempted.
 Native paint/pointer tests must execute on CI; source guards are not native
 visual/runtime screenshots. The running app was not replaced in this pass.
+
+## Cross-surface application branding regression
+
+Cause: native build used Phosphor Circuitry; native toolbar/About separately
+tinted a font glyph; Web hardcoded a diamond and omitted application favicon.
+Read all of actual Pealayer src/branding.rs, build.rs, assets/icons/README.md,
+HeaderBar.tsx and webPlatform.ts before adapting the resolver/image binding.
+Imported icon_data_from_bytes unchanged and actual seven-frame ICO conversion
+with its shell-derivative test adapted to Pakar's PNG-only decoder. One 740-byte
+lossless PNG master preserves the verified existing native glyph pixels; native
+PE/window/tray/header/About and Web header/login/favicon/touch consume it.
+No per-surface recoloring, new drawing, donor build, compiler or icon disk cache.
+Existing semantic Phosphor quick-action generator remains unchanged.
+
+New generator first rejected adjacent empty bootstrap markers; fixed the order
+guard to explicitly accept an empty block. Appearance stale check caught new
+branding CSS placed inside its generated block; moved it outside that owned
+block before regeneration. Existing generate-web-appearance.mjs was reread and
+used as the no-write/marker-ownership reference. Both current-generation checks
+and unchanged-timestamp branding tests now pass; no blind repeat/build bypass.
+
+Live donor inventory then advanced to 498 tracked paths; the exhaustive guard
+rejected drift. Refreshed all Pealayer paths without touching donor files.
+Reread current src/ui/icons.rs through EOF: its only new change was the STOP
+re-export, now imported; old picker functions/eleven tests are retained. New
+unreviewed paths stay pending and unrelated changed files stay unreviewed/stale.
+Current report: 1873 paths, 47 complete-read comparisons, 1826 pending, 28 gap
+files. Branding/HeaderBar/WebPlatform/build rows are explicitly parity-gap,
+not claims that custom runtime presets or all browser capabilities are imported.
+
+Executed: actual decoder-body identity guard, exact PNG/native pixel hashes,
+four identical embedded Web assets, native production consumer/source checks,
+no-write generation, native menu source guard, ten appearance tests, Web access,
+Rustfmt parse/check, offline locked dependency metadata, comparison Check and
+reuse gate/adversarial tests. Reused already locked base64/image versions as
+build dependencies; no new dependency set/download/cache was created.
+New native pixel/ICO/texture tests run asynchronously on CI per user instruction;
+no blocking wait, running-app replacement or board flash claimed for this patch.

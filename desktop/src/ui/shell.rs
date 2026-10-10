@@ -499,9 +499,7 @@ impl PakarControllerApp {
                         self.show_connection = true;
                     }
                     ui.label(egui::RichText::new("PakarController").strong());
-                    ui.label(
-                        egui::RichText::new(icons::CIRCUITRY).color(ui.visuals().selection.bg_fill),
-                    );
+                    crate::branding::logo(ui, 18.0);
                 });
             });
         });
@@ -1609,7 +1607,7 @@ impl PakarControllerApp {
         if self.show_about {
             let mut open = true;
             egui::Window::new(format!("{}  About PakarController",icons::INFO)).id(egui::Id::new("about-pakar")).open(&mut open).default_size([520.0,300.0]).collapsible(false).frame(dialog::opaque_window_frame_from_context(ctx)).show(ctx,|ui|{
-                ui.horizontal(|ui|{ui.label(egui::RichText::new(icons::CIRCUITRY).size(48.0).color(ui.visuals().selection.bg_fill));ui.vertical(|ui|{ui.heading("PakarController");ui.label(format!("Version {}",env!("CARGO_PKG_VERSION")));ui.label("ESP + AVR control workstation");});});ui.add_space(16.0);
+                ui.horizontal(|ui|{crate::branding::logo(ui,48.0);ui.vertical(|ui|{ui.heading("PakarController");ui.label(format!("Version {}",env!("CARGO_PKG_VERSION")));ui.label("ESP + AVR control workstation");});});ui.add_space(16.0);
                 dialog::section(ui,icons::APP_WINDOW,"Application foundation",|ui|{ui.label("Built from Pealayer’s desktop workspace, dialog controls, icon and color pickers, themes, fonts, notifications, and native instance ownership.");ui.label("MIT License · Pealayer © 2026 ToghrolTP");ui.hyperlink_to("Pealayer source","https://github.com/ToghrolTP/pealayer");});ui.add_space(12.0);
                 dialog::action_row(ui,false,|ui|{if dialog::action_button(ui,icons::X,"Close").clicked(){self.show_about=false;}});
             });

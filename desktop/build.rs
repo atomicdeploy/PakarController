@@ -2,17 +2,19 @@
 mod windows_quick_actions;
 #[path = "src/platform/windows_shell_icons.rs"]
 mod windows_shell_icons;
+#[path = "src/brand_image.rs"]
+mod brand_image;
 fn main() {
     let out = std::path::PathBuf::from(std::env::var_os("OUT_DIR").unwrap());
     std::fs::write(
         out.join("pakarcontroller.ico"),
-        windows_shell_icons::shell_icon_ico(egui_phosphor::regular::CIRCUITRY),
+        brand_image::native_icon_bytes(brand_image::icon_bytes()).expect("shared application ICO"),
     )
     .unwrap();
     for size in [32, 64] {
         std::fs::write(
             out.join(format!("pakar-icon-{size}.rgba")),
-            windows_shell_icons::shell_icon_rgba(egui_phosphor::regular::CIRCUITRY, size),
+            brand_image::rgba_at_size(size),
         )
         .unwrap();
     }
@@ -44,4 +46,6 @@ fn main() {
     }
     println!("cargo:rerun-if-changed=src/platform/windows_shell_icons.rs");
     println!("cargo:rerun-if-changed=src/platform/windows_quick_actions.rs");
+    println!("cargo:rerun-if-changed=src/brand_image.rs");
+    println!("cargo:rerun-if-changed=../assets/branding/app-icon.png.base64");
 }

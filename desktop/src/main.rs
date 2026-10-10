@@ -7,6 +7,8 @@ use std::{
 
 mod access;
 mod audio;
+mod brand_image;
+mod branding;
 mod client_telemetry;
 mod config;
 mod device_settings;
@@ -1907,11 +1909,7 @@ fn main() -> eframe::Result {
             .with_active(std::env::var_os("PAKAR_SCREENSHOT_PATH").is_none())
             .with_inner_size([1180.0, 760.0])
             .with_maximized(true)
-            .with_icon(egui::IconData {
-                rgba: include_bytes!(concat!(env!("OUT_DIR"), "/pakar-icon-64.rgba")).to_vec(),
-                width: 64,
-                height: 64,
-            })
+            .with_icon(branding::window_icon())
             .with_min_inner_size([900.0, 600.0]),
         ..Default::default()
     };
