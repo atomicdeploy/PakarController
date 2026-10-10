@@ -1370,7 +1370,8 @@ impl PakarControllerApp {
             }
             if ui
                 .add_enabled(
-                    self.websocket_live,
+                    self.websocket_live
+                        && (self.sampling || streaming::valid_mapping(&self.mappings)),
                     egui::Button::new(format!(
                         "{}  {}",
                         icons::MONITOR_PLAY,
@@ -1381,6 +1382,7 @@ impl PakarControllerApp {
                         }
                     )),
                 )
+                .on_hover_text("Requires a complete validated cell map from this board")
                 .clicked()
             {
                 self.sampling = !self.sampling;

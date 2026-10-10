@@ -57,6 +57,9 @@ No Wi-Fi password or other deployment secret belongs in GitHub.
   are rejected, and destination changes clear old displayed state.
 - [x] Normal ESP/AVR handshake no longer queues a false update-success cue over
   the AVR welcome. Actual OTA/ISP cues remain; source regression passes.
+- [x] Native sampler uses only a complete validated board-advertised physical
+  map and the odd-column half-stagger; missing/duplicate maps disable it.
+  Remapped cells and bounds pass tests; live and monitor/region gates stay open.
 
 ## Donor completeness and provenance
 

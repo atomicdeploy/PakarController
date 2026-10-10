@@ -195,6 +195,7 @@ struct CellMappingResponse {
 enum WsCommand {
     Connect(Endpoint),
     Rate(u16),
+    Mapping(Vec<CellMapping>),
     Stream(bool),
     Sample(bool),
 }
@@ -479,7 +480,7 @@ fn pixel_packet(pixels: &[u8], offset: u16, count: u8, commit: bool) -> Vec<u8> 
     packet
 }
 
-fn sampled_screen_packets() -> Result<(Vec<u8>, Vec<u8>), String> {
+fn sampled_screen_packets(mapping: &[CellMapping]) -> Result<(Vec<u8>, Vec<u8>), String> {
     let monitors = xcap::Monitor::all().map_err(|error| error.to_string())?;
     let monitor = monitors
         .iter()
@@ -488,22 +489,13 @@ fn sampled_screen_packets() -> Result<(Vec<u8>, Vec<u8>), String> {
         .ok_or("no screen is available")?;
     let image = monitor.capture_image().map_err(|error| error.to_string())?;
     let mut pixels = vec![0_u8; 480 * 3];
-    for y in 0..8_u32 {
-        for x in 0..10_u32 {
-            let sample_x = ((x * 2 + 1) * image.width() / 20).min(image.width() - 1);
-            let sample_y = ((y * 2 + 1) * image.height() / 16).min(image.height() - 1);
-            let color = image.get_pixel(sample_x, sample_y).0;
-            let from_right = 9 - x as usize;
-            let cell = from_right * 8
-                + if from_right % 2 == 0 {
-                    7 - y as usize
-                } else {
-                    y as usize
-                };
-            for sector in 0..6 {
-                let at = (cell * 6 + sector) * 3;
-                pixels[at..at + 3].copy_from_slice(&color[..3]);
-            }
+    for (cell, sample_x, sample_y) in
+        streaming::sample_positions(image.width(), image.height(), mapping)?
+    {
+        let color = image.get_pixel(sample_x, sample_y).0;
+        for sector in 0..6 {
+            let at = (cell * 6 + sector) * 3;
+            pixels[at..at + 3].copy_from_slice(&color[..3]);
         }
     }
     Ok((
@@ -517,11 +509,13 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
     let mut streaming = false;
     let mut sampling = false;
     let mut fps = streaming::DEFAULT_FPS;
+    let mut mapping = Vec::new();
     loop {
         if endpoint.is_none() {
             match commands.recv() {
                 Ok(WsCommand::Connect(e)) => endpoint = Some(e),
                 Ok(WsCommand::Rate(value)) => fps = value.min(streaming::MAX_FPS),
+                Ok(WsCommand::Mapping(value)) => mapping = value,
                 Ok(WsCommand::Stream(v)) => streaming = v,
                 Ok(WsCommand::Sample(v)) => sampling = v,
                 Err(_) => return,
@@ -529,8 +523,16 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
         }
         while let Ok(command) = commands.try_recv() {
             match command {
-                WsCommand::Connect(e) => endpoint = Some(e),
+                WsCommand::Connect(e) => {
+                    if endpoint.as_ref() != Some(&e) {
+                        mapping.clear();
+                        sampling = false;
+                        streaming = false;
+                    }
+                    endpoint = Some(e);
+                }
                 WsCommand::Rate(value) => fps = value.min(streaming::MAX_FPS),
+                WsCommand::Mapping(value) => mapping = value,
                 WsCommand::Stream(v) => streaming = v,
                 WsCommand::Sample(v) => sampling = v,
             }
@@ -568,11 +570,20 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
             loop {
                 match commands.try_recv() {
                     Ok(WsCommand::Connect(new_endpoint)) if new_endpoint != current => {
+                        mapping.clear();
+                        sampling = false;
+                        streaming = false;
                         endpoint = Some(new_endpoint);
                         break;
                     }
                     Ok(WsCommand::Connect(_)) => {}
                     Ok(WsCommand::Rate(value)) => fps = value.min(streaming::MAX_FPS),
+                    Ok(WsCommand::Mapping(value)) => {
+                        mapping = value;
+                        if !streaming::valid_mapping(&mapping) {
+                            sampling = false;
+                        }
+                    }
                     Ok(WsCommand::Stream(value)) => {
                         streaming = value;
                         if value {
@@ -580,7 +591,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                         }
                     }
                     Ok(WsCommand::Sample(value)) => {
-                        sampling = value;
+                        sampling = value && streaming::valid_mapping(&mapping);
                         if value {
                             streaming = false;
                         }
@@ -602,7 +613,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 }
                 if sampling && last_stream.elapsed() >= streaming::interval(fps) {
                     let frame_at = Instant::now();
-                    let (first, second) = sampled_screen_packets()?;
+                    let (first, second) = sampled_screen_packets(&mapping)?;
                     socket
                         .send(Message::Binary(first.into()))
                         .map_err(|e| e.to_string())?;
@@ -1294,7 +1305,13 @@ impl PakarControllerApp {
                         self.message.clear();
                     }
                 }
-                Event::Mapping(mappings) => self.mappings = mappings,
+                Event::Mapping(mappings) => {
+                    self.mappings = mappings;
+                    let _ = self.ws_tx.send(WsCommand::Mapping(self.mappings.clone()));
+                    if !streaming::valid_mapping(&self.mappings) {
+                        self.sampling = false;
+                    }
+                }
                 Event::Configuration("/api/v1/auth/info", value) => {
                     self.access_user = value
                         .get("username")

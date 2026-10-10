@@ -20,6 +20,11 @@ This is **not** the completed production acceptance or a hardware deployment.
   60 FPS default, 0 uncapped, up to 240 requested. The hidden 25 FPS rainbow and
   8 FPS sampler delays are gone. Frame capture/write time is deducted from the
   pacing budget; no catch-up frame queue. Sent-rate UI is not LED-refresh proof.
+- Primary-screen sampling now uses the complete board-advertised physical map
+  instead of guessing the old serpentine order, and samples one-based odd
+  columns with the +0.5-row geometry. Missing/duplicate/out-of-range maps disable
+  sampling; bounds and swapped physical cells are tested. Monitor/region
+  selection and live sampler acceptance still remain open.
 - Normal first AVR handshake no longer replaces its welcome with an ESP
   update-success cue. Explicit successful OTA/ISP paths retain audible cues.
   The source boot-routing regression passes; audible acceptance remains open.
@@ -56,7 +61,7 @@ This is **not** the completed production acceptance or a hardware deployment.
   search/highlighting. Analyze and 13 tests pass; the release-mode preview
   APK builds. Production signing/physical mobile/full parity stay open.
 - Firmware/native/mobile source versions agree; local Windows release build,
-  28 Rust tests, ten C++ suites, Web/boot-routing tests, CLI loopback and ledger tests pass.
+  30 Rust tests, ten C++ suites, Web/boot-routing tests, CLI loopback and ledger tests pass.
   GitHub jobs additionally test/build Android preview and version/ledger gates.
 
 ## Actual native screenshots
