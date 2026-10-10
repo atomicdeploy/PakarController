@@ -7,6 +7,7 @@ param(
     [ValidateSet('Auto','Win32','Internal')][string]$Backend='Auto'
 )
 $ErrorActionPreference='Stop'
+$taskReuse = & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern capture -Gate
 if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {throw 'Windows capture requires Windows.'}
 $taskOutput=[IO.Path]::GetFullPath($OutputPath)
 if ([IO.Path]::GetExtension($taskOutput) -ne '.png') {throw 'Output must be a PNG.'}

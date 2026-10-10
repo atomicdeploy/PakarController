@@ -4,19 +4,22 @@ param(
     [ValidateRange(1, 32)] [int] $Jobs = 2,
     [ValidateRange(1, 1024)] [int] $MinimumFreeGiB = 8,
     [ValidateRange(1, 1024)] [int] $MaximumCacheGiB = 8,
+    [string] $ExpectedCommit,
     [switch] $Plan
 )
 $ErrorActionPreference = 'Stop'
+$taskReuse = & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+. (Join-Path $PSScriptRoot 'windows-build-host.ps1')
 $taskManifest = Join-Path $taskRoot 'desktop/Cargo.toml'
-$taskTarget = Join-Path $taskRoot 'desktop/target'
+$taskTarget = Get-PakarCargoTargetDirectory -RepositoryRoot $taskRoot
 $taskVerb = if ($Mode -eq 'Check') { 'check' } elseif ($Mode -eq 'Test') { 'test' } else { 'build' }
 $taskArguments = @($taskVerb, '--locked', '--manifest-path', $taskManifest,
     '--target-dir', $taskTarget, '--jobs', "$Jobs", '--bin', 'pakarcontroller')
 if ($Mode -eq 'Release') { $taskArguments += '--release' }
 if ($Plan) {
     [pscustomobject]@{Executable='cargo'; Arguments=$taskArguments; Cache=$taskTarget;
-        MinimumFreeGiB=$MinimumFreeGiB; MaximumCacheGiB=$MaximumCacheGiB}
+        MinimumFreeGiB=$MinimumFreeGiB; MaximumCacheGiB=$MaximumCacheGiB; ReuseGate=$taskReuse.GateChecked}
     return
 }
 $taskDrive = Get-PSDrive -PSProvider FileSystem | Where-Object {
@@ -33,5 +36,7 @@ if (Test-Path -LiteralPath $taskTarget) {
     }
 }
 # Cargo freshness does the work; never cargo clean or create another target tree.
+if ($ExpectedCommit) { Assert-PakarPackageSourceStable $taskRoot $ExpectedCommit }
 & cargo @taskArguments
 if ($LASTEXITCODE -ne 0) { throw "Desktop $Mode failed" }
+if ($ExpectedCommit) { Assert-PakarPackageSourceStable $taskRoot $ExpectedCommit }

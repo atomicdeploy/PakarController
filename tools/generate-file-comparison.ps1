@@ -9,6 +9,12 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $targetDirectory = [IO.Path]::GetFullPath($TargetRoot).TrimEnd('\','/')
+function Write-ChangedReport([string]$Path, [string]$Text) {
+    $full = [IO.Path]::GetFullPath($Path)
+    if (-not (Test-Path -LiteralPath $full) -or [IO.File]::ReadAllText($full).Replace("`r`n","`n") -ne $Text) {
+        [IO.File]::WriteAllText($full, $Text, [Text.UTF8Encoding]::new($false))
+    }
+}
 function Get-TextHash([string]$full) {
     # Evidence hashes retain every character except platform newline encoding.
     $bytes = [Text.Encoding]::UTF8.GetBytes([IO.File]::ReadAllText($full).Replace("`r`n", "`n"))
@@ -86,7 +92,7 @@ $rows = foreach ($source in (Import-Csv -LiteralPath $LedgerPath)) {
 }
 foreach ($key in $evidence.Keys) { if (-not $seen.ContainsKey($key)) { throw "Comparison source omitted from inventory: $key" } }
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $OutputPath) | Out-Null
-$rows | Export-Csv -NoTypeInformation -Encoding utf8 -LiteralPath $OutputPath
+Write-ChangedReport $OutputPath ((($rows | ConvertTo-Csv -NoTypeInformation) -join "`n") + "`n")
 $rows | Group-Object origin,comparison | Sort-Object Name | Select-Object Name,Count | Format-Table -AutoSize
 $pending = @($rows | Where-Object comparison -eq 'pending-comparison').Count
 $gaps = @($rows | Where-Object comparison -eq 'parity-gap').Count
@@ -134,6 +140,6 @@ if ($ReportPath) {
     $report.Add('')
     $report.Add('File-by-file checklist: https://github.com/atomicdeploy/PakarController/issues/3. Master production acceptance: https://github.com/atomicdeploy/PakarController/issues/2. Run `pwsh -File tools/generate-file-comparison.ps1 -RequireComplete` to enforce the comparison gate. It must fail while any pending comparison or known source parity gap remains. Physical, deployment, visual and all-surface acceptance are separate gates even after this one passes.')
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ReportPath) | Out-Null
-    $report | Set-Content -Encoding utf8 -LiteralPath $ReportPath
+    Write-ChangedReport $ReportPath (($report -join "`n") + "`n")
 }
 if ($RequireComplete -and ($pending -or $gaps)) { throw "Superiority certification blocked: $pending un-compared files and $gaps known parity gaps." }

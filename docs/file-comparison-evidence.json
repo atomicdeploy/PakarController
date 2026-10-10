@@ -5,6 +5,262 @@
   "files": [
     {
       "origin": "Pealayer",
+      "path": "scripts/package-probe-windows.ps1",
+      "sha256": "f4516884990ad76c020fbc6534d902c4949abae0b48da8ea40c008afa44dfd4f",
+      "source_read": "complete",
+      "verdict": "equivalent-file",
+      "preserved": [
+        "Byte-identical actual donor process-handle probe: no-shell hidden process, async redirected stdout, 30-second wait, explicit exit code, output return and Dispose. Optional staging probe calls this helper."
+      ],
+      "targets": [
+        {
+          "path": "tools/package-probe-windows.ps1",
+          "sha256": "f4516884990ad76c020fbc6534d902c4949abae0b48da8ea40c008afa44dfd4f",
+          "anchor": "function Invoke-PackageProbe"
+        }
+      ],
+      "omissions": [],
+      "remaining": [
+        "Donor timeout throws without terminating its child. Full GUI/runtime package smoke remains separate from CLI identity."
+      ],
+      "proof": [
+        {
+          "path": "tests/reuse_preflight_test.ps1",
+          "sha256": "04307bc30d999071a7c2c0f3f1c9cc02f85ae3a9c5296ce31834f5261e0e4c58",
+          "anchor": "Actual imported short-lived process stdout"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "scripts/libmpv-windows.ps1",
+      "sha256": "0f9e02efe880a0369b4223fab3dd9961ad848456ee7a3c0fe7bbcf7fe992bc02",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual Get-PealayerWindowsHostPaths, Get-PealayerCargoTargetDirectory and Get-PealayerFileIdentity adapted to Pakar names/locations. Environment expansion and relative overrides retained; native build and staging now call these helpers."
+      ],
+      "targets": [
+        {
+          "path": "tools/windows-build-host.ps1",
+          "sha256": "b8f2e66a30ef9990c62810e567449129faa6220e46caaa6a063a5cff1bf53990",
+          "anchor": "function Get-PakarCargoTargetDirectory"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Resolve-PealayerLibmpv, Copy-PealayerLibmpvRuntime and Set-PealayerLibmpvBuildEnvironment",
+          "disposition": "not-applicable",
+          "reason": "Pakar is explicitly mpv-free; importing DLL aliases, GNU/MSVC mpv imports, LIBMPV_DIR and native linker flags would restore an excluded media dependency."
+        },
+        {
+          "code": "Save-PealayerWindowsHostProfile generic host provenance and generated Cargo-config ownership protection",
+          "disposition": "pending",
+          "reason": "Saved host/compiler/cache provenance and refusal to overwrite user-managed configuration remain useful. Pakar currently resolves its established cache/explicit override but does not persist this generic host profile."
+        },
+        {
+          "code": "Program-root shared target default across separate source worktrees",
+          "disposition": "pending",
+          "reason": "Pakar keeps its existing single canonical desktop/target cache without moving or duplicating it. A future managed-worktree build needs a shared Pakar-owned cache; copying Pealayer's owner path would corrupt ownership."
+        }
+      ],
+      "remaining": [
+        "Adapt generic saved host provenance/config ownership checks without mpv, and keep one owned cache if worktrees are later authorized."
+      ],
+      "proof": [
+        {
+          "path": "tests/reuse_preflight_test.ps1",
+          "sha256": "04307bc30d999071a7c2c0f3f1c9cc02f85ae3a9c5296ce31834f5261e0e4c58",
+          "anchor": "Actual donor relative cache resolution"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "scripts/run-windows.ps1",
+      "sha256": "013e5c67e227ed851f8a3d26b27654e38c8816edca2965381bbb1b48d10a750d",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Shared resolver call and locked native build flow mapped to Pakar wrapper. Existing canonical cache is reused; explicit Check/Test/Release and storage/reuse gates avoid unnecessary links."
+      ],
+      "targets": [
+        {
+          "path": "tools/build-desktop.ps1",
+          "sha256": "a3259ebf165f2b4953b41b115f7bbe5cf4105349646896ae202d3b9fd7421094",
+          "anchor": "Get-PakarCargoTargetDirectory"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "RustBin machine/user/toolchain executable fallback selection and rustc -vV host detection",
+          "disposition": "pending",
+          "reason": "Pakar currently uses installed Cargo from PATH. Alternate host/toolchain executable fallback and recorded host triple are reusable infrastructure and remain unported."
+        },
+        {
+          "code": "libmpv host resolution/environment/profile and DLL copy",
+          "disposition": "not-applicable",
+          "reason": "These operations configure the excluded mpv renderer. Pakar uses its own mpv-free linked dependencies."
+        },
+        {
+          "code": "BuildOnly versus launch forwarding with ApplicationArguments",
+          "disposition": "pending",
+          "reason": "Pakar wrapper builds only. Generic built-executable validation and configurable run forwarding should become a Pakar runner; manual launching is not equivalent."
+        },
+        {
+          "code": "Set-Location to repository root",
+          "disposition": "replaced",
+          "reason": "Absolute manifest and resolved target paths preserve caller cwd without introducing a second cache."
+        }
+      ],
+      "remaining": [
+        "Import generic Windows runner/toolchain fallback and host-triple provenance without mpv."
+      ],
+      "proof": [
+        {
+          "path": "tests/build_storage_test.ps1",
+          "sha256": "ac9af1dddae9cf93afdf7dad889c73e1b4f11e4efcce254d0b621b5218dd47aa",
+          "anchor": "One canonical target"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "scripts/package-windows.ps1",
+      "sha256": "dfa23eec7ba6cfff15efdf1fc66983c6255eb4270a25db3095f5bdc6e0da88c3",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual Assert-PackageSourceStable adapted without Web exclusions; optional ExpectedCommit checks run before/after build/stage. Imported bounded Process probe and file-identity helper are used by staging; identical hashes skip payload copies."
+      ],
+      "targets": [
+        {
+          "path": "tools/windows-build-host.ps1",
+          "sha256": "b8f2e66a30ef9990c62810e567449129faa6220e46caaa6a063a5cff1bf53990",
+          "anchor": "function Assert-PakarPackageSourceStable"
+        },
+        {
+          "path": "tools/stage-desktop.ps1",
+          "sha256": "d738c8168947ed1b09fb6987a69c01ded4385395633e2f06f7eb7a1f338a82a3",
+          "anchor": "Invoke-PackageProbe"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "libmpv runtime/import-library packaging and pealayer-downloader media companion",
+          "disposition": "not-applicable",
+          "reason": "The user explicitly requested an mpv-free controller, not the donor media player/downloader. Board remote firmware contracts remain required separately."
+        },
+        {
+          "code": "Restore-PackageWebDistribution git restore and recursive generated-Web cleanup",
+          "disposition": "replaced",
+          "reason": "Pakar staging does not generate or mutate a tracked Web distribution. Blind donor restoration could overwrite user work and is not copied."
+        },
+        {
+          "code": "Branding, Persian font/Web bundle packaging, Win32 resource and quick-action icon verification, UPX validation",
+          "disposition": "pending",
+          "reason": "These are useful generic package capabilities. Existing app source contains icons/font but current staging does not validate/package all donor facilities."
+        },
+        {
+          "code": "Embedded --build-info/--smoke-test checks, GITHUB_SHA invalidation and host-manifest artifact/provenance/validation schema",
+          "disposition": "pending",
+          "reason": "Current app lacks equivalent embedded source identity and full runtime smoke. Optional Git source-stability and CLI-help checks are narrower and cannot certify the old executable's source commit."
+        },
+        {
+          "code": "Unconditional repeated executable/DLL/output copies",
+          "disposition": "replaced",
+          "reason": "One stable candidate and source/destination checksum equality skip identical writes; no mpv payload exists."
+        },
+        {
+          "code": "Timestamp package metadata and native optional Run",
+          "disposition": "pending",
+          "reason": "User excludes dated/random project/package names, not necessarily diagnostic time fields. Preserve useful manifest provenance and bounded explicit launching in a future adapted package pipeline."
+        }
+      ],
+      "remaining": [
+        "Import full mpv-free package manifest, embedded identity, resource/icon/font/Web validation and appropriate generic runner; do not call staging a full package release."
+      ],
+      "proof": [],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "docs/verification/LOCAL-WORKSPACE-HYGIENE.md",
+      "sha256": "3fa94f177cf2a8f2fd1b8dae130182928d2d7e290d49aa37d902f8dfa7a5df70",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual canonical-cache/stable-staging/preservation/blocked-operation and separate runtime-acceptance guidance read and adopted in mandatory continuation policy and tooling."
+      ],
+      "targets": [
+        {
+          "path": "docs/REUSE-PREFLIGHT.md",
+          "sha256": "7eff42cac0a2320ae4634163e4c1efa0688af2f6132b041b4a4d2af1f365e2b4",
+          "anchor": "Mandatory sequence on every task"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Historical Pealayer paths, exact relocation/cleanup/deployment/media-clock events",
+          "disposition": "not-applicable",
+          "reason": "These are donor historical facts, not Pakar installations. Copying them would misrepresent ownership or completed cleanup."
+        },
+        {
+          "code": "Same-volume rename/hardlink-aware relocation and reusable host profile/peer updater workflow",
+          "disposition": "pending",
+          "reason": "These are useful generic mechanisms but no Pakar cache relocation or complete updater deployment is implemented by this policy. Current blocked cleanup stays blocked; no rerouting through another shell."
+        },
+        {
+          "code": "Mandatory donor lookup was previously absent from executable build/stage/capture paths",
+          "disposition": "replaced",
+          "reason": "Capability lookup with source/target/test hash gates now runs before those actions; other task surfaces are required by AGENTS.md, not falsely claimed universally sandbox-enforced."
+        }
+      ],
+      "remaining": [
+        "Complete applicable generic host/relocation/updater tooling after ownership checks; extend executable gates when additional capability mappings are fully reviewed."
+      ],
+      "proof": [],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "scripts/check-crate-boundary.mjs",
+      "sha256": "da9b469ac596e6eb1999e4d499742a51ebf289335285549569116c1124963e38",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Entire source reviewed; single-crate contracts and duplicate resource linkage protection inventoried as reusable infrastructure, not media business."
+      ],
+      "targets": [
+        {
+          "path": "docs/REUSE-PREFLIGHT.md",
+          "sha256": "7eff42cac0a2320ae4634163e4c1efa0688af2f6132b041b4a4d2af1f365e2b4",
+          "anchor": "scripts/check-crate-boundary.mjs"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "pealayer::startup::run and main.rs/lib.rs module intersection assertions",
+          "disposition": "pending",
+          "reason": "Pakar has a single binary and no library crate today. The exact Pealayer startup symbol cannot compile here; adapt the generic duplication guard before introducing shared library/mobile contracts."
+        },
+        {
+          "code": "MSVC winres library/bin duplicate resource.lib guard",
+          "disposition": "pending",
+          "reason": "Pakar currently links resources through a binary build.rs. Retain this guard for a future crate-boundary change rather than treating it as irrelevant media code."
+        }
+      ],
+      "remaining": [
+        "Adapt/test a generic single-authority crate/resource boundary guard when the Pakar library split is introduced."
+      ],
+      "proof": [],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
       "path": "src/ui/toasts.rs",
       "sha256": "a6501d2c0f859e186cac659a37d256f26f8896e98644e9cfc8ac880da5460e54",
       "source_read": "complete",
@@ -1306,7 +1562,7 @@
       "targets": [
         {
           "path": "tools/capture-window-windows.ps1",
-          "sha256": "b092de02c6d0198336ca3682f48bb25ed111f979b3fb8898d181b705e1c337eb",
+          "sha256": "e6892b3c4da4f6a5bd90d6275f868b041516d8bebecb03de23dccaad94e60135",
           "anchor": "public static extern bool PrintWindow"
         }
       ],
@@ -1344,7 +1600,7 @@
       "targets": [
         {
           "path": "tools/capture-window-windows.ps1",
-          "sha256": "b092de02c6d0198336ca3682f48bb25ed111f979b3fb8898d181b705e1c337eb",
+          "sha256": "e6892b3c4da4f6a5bd90d6275f868b041516d8bebecb03de23dccaad94e60135",
           "anchor": "public static extern bool PrintWindow"
         }
       ],

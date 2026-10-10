@@ -78,6 +78,7 @@ jobs:
           pwsh -File tools/generate-file-comparison.ps1
           pwsh -File tests/file_comparison_test.ps1
           pwsh -File tools/verify-versions.ps1
+          pwsh -File tests/reuse_preflight_test.ps1
           pwsh -File tests/build_storage_test.ps1
           pwsh -File tools/build-desktop.ps1 -Mode Test
           pwsh -File tools/build-desktop.ps1 -Mode Release

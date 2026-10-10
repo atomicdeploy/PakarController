@@ -1,5 +1,7 @@
 # PakarController continuation
 
+- FIRST on every task, missing capability or tool/build failure: read docs/REUSE-PREFLIGHT.md and run tools/consult-reuse.ps1 -Concern <affected capability>. Inspect every matching mapping/pending action, then read actual donor sources/dependencies before replacement code or declaring unavailable. Reuse Pealayer/PCController/PU implementations and tests, not just their style. Update the existing hash-bound file ledger and GitHub issue with every useful omission; screened/unread files are never accepted exclusions. Add an index route when a failure has no match. Build/stage/capture gates are mandatory and must not be bypassed by direct commands.
+
 - Preserve existing user/concurrent changes. Donor checkouts remain read-only unless the user requests changes there.
 - Use hostname-first device access. A build, loopback fixture or screenshot is not physical acceptance.
 - For screenshots use the built-in framebuffer command or tools/capture-window-windows.ps1 with an explicit verified ExpectedProcessId. The tool imports Pealayer's read-only Win32 capture and automatically falls back when the expected owner cannot provide internal capture. Do not declare Windows screenshots unavailable merely because the external WGC helper failed.

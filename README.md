@@ -82,6 +82,13 @@ Linux supports `./build.sh busy-wire esp8266` (optional third argument `--clean`
 Use one stable staging directory and `tools/stage-desktop.ps1`; identical builds
 skip copying. Fixtures can run directly from the canonical built executable.
 
+Before any task or tool failure, follow [donor-first preflight](docs/REUSE-PREFLIGHT.md):
+`./tools/consult-reuse.ps1 -Concern build-storage` (or capture, ui-shell, preferences,
+windows-desktop, network-cloud, firmware-hardware, updates-telemetry, games-streaming).
+Read actual matched donor code before a replacement or unsupported claim. Build,
+stage and capture wrappers enforce hash-bound reviewed-slice gates automatically;
+pending mappings remain visible and are not accepted exclusions.
+
 The same executable provides scriptable CLI and interactive TUI surfaces. Set
 `PAKAR_ENDPOINT`, and optionally `PAKAR_USER` / `PAKAR_PASSWORD`, then use:
 

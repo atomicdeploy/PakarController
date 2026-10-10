@@ -8,7 +8,9 @@ param(
     [string]$Pu850Root = (Join-Path $PSScriptRoot '..\..\repos\pu850-esp'),
     [string]$DecisionsPath,
     [string]$EvidencePath,
-    [string]$OutputPath
+    [string]$OutputPath,
+    [ValidateSet('Pealayer','PCController','ControllerBoardMini/Puzzles','PuzzleBoard','ControllerBoardMini','PU850-ESP')]
+    [string]$OnlyOrigin
 )
 
 $ErrorActionPreference = 'Stop'
@@ -99,13 +101,22 @@ function Add-LedgerRows {
 }
 
 $rows = [System.Collections.Generic.List[object]]::new()
+if ($OnlyOrigin) {
+    if (-not (Test-Path -LiteralPath $OutputPath)) { throw 'Selective refresh requires the existing complete ledger.' }
+    foreach ($row in (Import-Csv -LiteralPath $OutputPath | Where-Object origin -ne $OnlyOrigin)) { $rows.Add($row) }
+}
 
+if (-not $OnlyOrigin -or $OnlyOrigin -eq 'Pealayer') {
 $pealayer = Get-GitFiles -Root $PealayerRoot
 Add-LedgerRows -Rows $rows -Origin 'Pealayer' -Root $PealayerRoot -Revision $pealayer.Commit -RelativePaths $pealayer.Files
+}
 
+if (-not $OnlyOrigin -or $OnlyOrigin -eq 'PCController') {
 $pccontroller = Get-GitFiles -Root $PCControllerRoot
 Add-LedgerRows -Rows $rows -Origin 'PCController' -Root $PCControllerRoot -Revision $pccontroller.Commit -RelativePaths $pccontroller.Files
+}
 
+if (-not $OnlyOrigin -or $OnlyOrigin -eq 'ControllerBoardMini/Puzzles') {
 $puzzleFiles = Get-ChildItem -LiteralPath $PuzzlesRoot -Recurse -File |
     Where-Object { $_.FullName -notmatch '[\\/](build|\.git|\.pio)[\\/]' } |
     ForEach-Object { $_.FullName.Substring($PuzzlesRoot.Length).TrimStart('\', '/') }
@@ -115,13 +126,17 @@ $puzzleRevision = if (Test-Path -LiteralPath (Join-Path $PuzzlesRoot '.git')) {
     'filesystem-snapshot'
 }
 Add-LedgerRows -Rows $rows -Origin 'ControllerBoardMini/Puzzles' -Root $PuzzlesRoot -Revision $puzzleRevision -RelativePaths $puzzleFiles
+}
 
+if (-not $OnlyOrigin -or $OnlyOrigin -eq 'PU850-ESP') {
 $pu850 = Get-GitFiles -Root $Pu850Root
 Add-LedgerRows -Rows $rows -Origin 'PU850-ESP' -Root $Pu850Root -Revision $pu850.Commit -RelativePaths $pu850.Files
+}
 foreach ($source in @(
     @{Origin='PuzzleBoard'; Root=$PuzzleBoardRoot},
     @{Origin='ControllerBoardMini'; Root=$ControllerBoardMiniRoot}
 )) {
+    if ($OnlyOrigin -and $OnlyOrigin -ne $source.Origin) { continue }
     $sourceFiles = Get-ChildItem -LiteralPath $source.Root -Recurse -File |
         Where-Object { $_.FullName -notmatch '[\\/](build|\.build|\.cache|\.git|\.pio|node_modules|target|\.vs|bin|obj)[\\/]' } |
         ForEach-Object { $_.FullName.Substring($source.Root.Length).TrimStart('\', '/') } |
@@ -136,6 +151,7 @@ if (Test-Path -LiteralPath $DecisionsPath) {
         $decisionIndex["$($decision.origin)|$($decision.path)"] = $decision
     }
     foreach ($row in $rows) {
+        if ($OnlyOrigin -and $row.origin -ne $OnlyOrigin) { continue }
         $decision = $decisionIndex["$($row.origin)|$($row.path)"]
         if ($null -eq $decision) { continue }
         if ($row.availability -ne 'present') { continue }
@@ -156,6 +172,7 @@ if (Test-Path -LiteralPath $EvidencePath) {
         $evidenceIndex[$key] = $evidence
     }
     foreach ($row in $rows) {
+        if ($OnlyOrigin -and $row.origin -ne $OnlyOrigin) { continue }
         $evidence = $evidenceIndex["$($row.origin)|$($row.path)"]
         if ($null -eq $evidence -or $row.availability -ne 'present') { continue }
         if ($row.sha256 -ne $evidence.sha256) {
@@ -171,7 +188,12 @@ if (Test-Path -LiteralPath $EvidencePath) {
 
 $outputDirectory = Split-Path -Parent $OutputPath
 New-Item -ItemType Directory -Force -Path $outputDirectory | Out-Null
-$rows | Sort-Object origin, path | Export-Csv -NoTypeInformation -Encoding utf8 -LiteralPath $OutputPath
+$csv = ($rows | Sort-Object origin, path | ConvertTo-Csv -NoTypeInformation) -join "`n"
+$csv += "`n"
+if (-not (Test-Path -LiteralPath $OutputPath) -or
+    [IO.File]::ReadAllText([IO.Path]::GetFullPath($OutputPath)).Replace("`r`n","`n") -ne $csv) {
+    [IO.File]::WriteAllText([IO.Path]::GetFullPath($OutputPath), $csv, [Text.UTF8Encoding]::new($false))
+}
 
 $summary = $rows | Group-Object origin | Sort-Object Name | ForEach-Object {
     [pscustomobject]@{ Origin = $_.Name; Files = $_.Count }
