@@ -33,6 +33,9 @@ enum Opcode : uint8_t {
   kNetworkConfig = 0x53,
   kAccessConfig = 0x54, // ESP physical USB only: reset staging, user/password chunks, commit.
   kDeviceName = 0x55, // ESP physical USB: reset(0), label chunks(1), persist/apply(2).
+  kPcContract = 0x56, // [PCController opcode, payload]; isolated from legacy 0x11 audio.
+  kPcContractChunk = 0x57, // Full 48-byte donor request, bounded two-frame assembly.
+  kPcContractResponse = 0xB0, // [PCController response opcode, payload].
 
   kAck = 0x80,
   kHelloResponse = 0x81,

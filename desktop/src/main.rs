@@ -13,6 +13,7 @@ mod display;
 mod identity;
 mod maintenance;
 mod messaging;
+mod pc_contract;
 mod platform;
 mod streaming;
 mod ui;
@@ -1499,6 +1500,39 @@ fn print_text_status(status: &DeviceStatus, table: bool) {
 }
 
 fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<(), String> {
+    if words.first()==Some(&"avr") {
+        let fetch=|op,payload: &[u8]| pc_contract::request(client,&endpoint.base,&endpoint.user,&endpoint.password,op,payload);
+        let value = match words {
+            ["avr","contracts"] => pc_contract::get(client,&endpoint.base,&endpoint.user,&endpoint.password,"/api/v1/avr/contracts")?,
+            ["avr","settings"] => {
+                let receipt=fetch(4,&[])?;
+                pc_contract::Settings::parse(receipt["payload_hex"].as_str().ok_or("Missing settings payload")?)?.json()
+            }
+            ["avr","set",key,input] => {
+                let current=fetch(4,&[])?;
+                let mut next=pc_contract::Settings::parse(current["payload_hex"].as_str().ok_or("Missing settings payload")?)?;
+                next.set(key,input)?;
+                let saved=fetch(5,&next.bytes)?;
+                if saved["response_opcode"].as_u64()!=Some(0x80) ||
+                    saved["payload_hex"].as_str()!=Some("0500") {
+                    return Err("AVR did not acknowledge settings; operation outcome is unknown".into());
+                }
+                let readback=fetch(4,&[])?;
+                let verified=pc_contract::Settings::parse(readback["payload_hex"].as_str().ok_or("Missing settings readback")?)?;
+                if !verified.persisted || verified.bytes!=next.bytes {
+                    return Err("AVR settings readback did not confirm the requested persistent values".into());
+                }
+                verified.json()
+            }
+            ["avr","status"] => fetch(2,&[])?,
+            ["avr","panel"] => fetch(0x3c,&[])?,
+            ["avr","command",op] => fetch(pc_contract::opcode(op)?,&[])?,
+            ["avr","command",op,payload] => fetch(pc_contract::opcode(op)?,&pc_contract::decode_hex(payload)?)?,
+            _ => return Err("avr contracts | settings | set PARAMETER VALUE | status | panel | command OPCODE [HEX]".into())
+        };
+        println!("{}",serde_json::to_string_pretty(&value).map_err(|e|e.to_string())?);
+        return Ok(());
+    }
     if words == ["device", "name"] {
         if let Event::Configuration(_, value) = http_request(
             client,
@@ -1670,7 +1704,7 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
                 }
                 if matches!(words.first(), Some(&"help")) {
                     println!(
-                        "status | device name | device rename NAME[.local] | auth info | auth change USERNAME (PAKAR_NEW_PASSWORD) | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | display stop | display segments [--speed-ms n] [--duration-ms n] [--repeat once|loop|interval] [--interval-ms n] [--scroll] -- TEXT | audio <cue> | snake <direction> | reset | quit"
+                        "status | device name | device rename NAME[.local] | auth info | auth change USERNAME (PAKAR_NEW_PASSWORD) | avr contracts | avr settings | avr set PARAMETER VALUE | avr panel | avr command OPCODE [HEX] | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | display stop | display segments [--speed-ms n] [--duration-ms n] [--repeat once|loop|interval] [--interval-ms n] [--scroll] -- TEXT | audio <cue> | snake <direction> | reset | quit"
                     );
                     continue;
                 }

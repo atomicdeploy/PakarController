@@ -204,6 +204,14 @@ void CloudServices::mqttCallback(char *, uint8_t *payload,
   cloudServices.handleCommand(payload, length, true);
 }
 
+void CloudServices::publishEvent(const String &event) {
+  if (mqtt_.connected()) {
+    const String destination = topic(F("/event"));
+    mqtt_.publish(destination.c_str(), event.c_str(), false);
+  }
+  if (webSocket_.isConnected()) webSocket_.sendTXT(event.c_str());
+}
+
 void CloudServices::webSocketEvent(WStype_t type, uint8_t *payload,
                                    size_t length) {
   if (type == WStype_CONNECTED) {

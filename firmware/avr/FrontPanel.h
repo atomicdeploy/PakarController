@@ -17,6 +17,11 @@ class FrontPanel {
                             uint32_t now);
   void release();
   bool hostActive() const { return hostTextActive_; }
+  bool captured() const { return captured_; }
+  uint16_t capturedMeta() const { return capturedMeta_; }
+  void setMenu(uint8_t page, bool active, int16_t value) {
+    menuPage_ = page; menuActive_ = active; menuValue_ = value;
+  }
 
  private:
   void showLocal(BoardCore::Protocol::GameMode mode, uint8_t selectedCell,
@@ -41,6 +46,11 @@ class FrontPanel {
   bool hostTextActive_ = false;
   bool transientActive_ = false;
   bool animationActive_ = false;
+  bool captured_ = false;
+  uint16_t capturedMeta_ = 0;
+  uint8_t menuPage_ = 0;
+  bool menuActive_ = false;
+  int16_t menuValue_ = 0;
 };
 
 extern FrontPanel frontPanel;

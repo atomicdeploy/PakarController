@@ -90,6 +90,14 @@ int main() {
   tick(rollover, 0xfffffff0U); assert(rollover.hostActive());
   tick(rollover, 0x90U); assert(!rollover.hostActive());
   auto invalid = message("HI", 3);
+  FrontPanel captured;
+  accept(captured,{3,0x34,0x12,4,'H','O','S','T'},3000); tick(captured,9000);
+  assert(captured.captured() && captured.capturedMeta()==0x1234 && shown=="HOST");
+  accept(captured,{4,0,0,0},9100); assert(!captured.captured());
+  captured.setMenu(2,true,257); tick(captured,9200); assert(shown=="257");
+  tick(captured,9300,true); assert(shown=="Prog");
+  FrontPanel full; accept(full,message("0123456789012345678901234567890123456789"),1000);
+  tick(full,1000); assert(shown=="0123");
   assert(!rollover.acceptDisplayPayload(invalid.data(), invalid.size(), 0));
   invalid = message("HI", 2, 160, 0);
   assert(!rollover.acceptDisplayPayload(invalid.data(), invalid.size(), 0));

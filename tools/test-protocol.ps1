@@ -62,3 +62,19 @@ $panelBinary = Join-Path $outputDirectory 'front_panel_test.exe'
 if ($LASTEXITCODE -ne 0) { throw 'Front-panel test compilation failed' }
 & $panelBinary
 if ($LASTEXITCODE -ne 0) { throw 'Front-panel tests failed' }
+$pcBinary = Join-Path $outputDirectory 'pc_contract_test.exe'
+& g++ -std=c++17 -Wall -Wextra -Werror `
+    -I (Join-Path $projectRoot 'tests/pc_stubs') `
+    -I (Join-Path $projectRoot 'libraries/BoardCore/src') `
+    -I (Join-Path $projectRoot 'firmware/avr') `
+    (Join-Path $projectRoot 'tests/pc_contract_test.cpp') `
+    (Join-Path $projectRoot 'firmware/avr/PcControllerRuntime.cpp') `
+    (Join-Path $projectRoot 'firmware/avr/BoardSettings.cpp') `
+    (Join-Path $projectRoot 'firmware/avr/SevenSegments.cpp') `
+    (Join-Path $projectRoot 'libraries/BoardCore/src/pccontroller/MacroRing.cpp') `
+    (Join-Path $projectRoot 'libraries/BoardCore/src/pccontroller/Keys.cpp') `
+    (Join-Path $projectRoot 'libraries/BoardCore/src/pccontroller/AutomationStore.cpp') `
+    -o $pcBinary
+if ($LASTEXITCODE -ne 0) { throw 'PCController contract compilation failed' }
+& $pcBinary
+if ($LASTEXITCODE -ne 0) { throw 'PCController contract tests failed' }

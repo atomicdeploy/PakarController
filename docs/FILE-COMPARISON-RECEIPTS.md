@@ -108,3 +108,26 @@ occurred; ASUS SSH refuses connection and ledboard.local remains offline.
 Full native/runtime evidence and concrete remaining source mappings are in
 `WINDOWS-DESKTOP-AUDIT.md`. Exact-commit CI is tracked in issue #5; source/local
 tests are not automatically a passed GitHub build or complete production release.
+
+## Current-hardware PCController contract checkpoint
+
+Source 0.2.6: 22 focused donor-file mappings against PCController
+20c6115bb462fe5111b66cd7c21f7328a1f78892, with current source/target
+hashes and line anchors in pccontroller/SOURCE-MAPPING.json. Donor hash
+verification ran against the clean canonical checkout. Separate legacy
+inventory remains 31 comparisons, 1837 pending, 16 known parity-gap files;
+the two TM1637 recovery gaps now have implemented/tested source mappings.
+
+Executed locally: all production-code C++ component tests including PC
+contracts, feature-off profile, 73 Rust tests, locked Windows release build,
+authenticated built-CLI contract fixture, Web/access/boot tests, source
+version check, comparison/ledger/adversarial checks, both firmware variants.
+Final AVR busy-wire 26672 flash bytes/1203 static RAM; polling 26386/1201.
+ESP busy-wire 595560 IROM bytes/49772 static RAM, polling 595348/49764;
+both IRAM 63055 including 32768 instruction cache reservation. Each merged
+AVR plus Urboot image is 32768 bytes.
+
+Fixture proof includes torn writes, chunks, late receipts and polling mirrors;
+it is not physical EEPROM, audible melody or electrically correct TM1637
+proof. No board writes. New exact-commit CI and hardware/surface acceptance
+remain tracked in PC-CONTRACT-TRACKING.md and the focused GitHub issue.

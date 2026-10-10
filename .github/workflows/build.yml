@@ -32,6 +32,7 @@ jobs:
           retry arduino-cli lib install FastLED@3.10.6
           retry arduino-cli lib install WebSockets@2.7.2
           retry arduino-cli lib install PubSubClient@2.8.0
+          retry arduino-cli lib install ArduinoJson@7.4.3
           retry arduino-cli lib install 'ESP Async WebServer@3.12.1'
           retry arduino-cli lib install 'ESP Async TCP@2.0.0'
       - name: Build both boards and test the shared protocol
@@ -40,6 +41,7 @@ jobs:
           ./build.sh polling
           ./build.sh busy-wire
           ./tools/test-protocol.sh
+          bash tools/test-pc-flags.sh
       - uses: actions/upload-artifact@v7
         with:
           name: PakarController-firmware
@@ -72,6 +74,8 @@ jobs:
           cargo test --locked --manifest-path desktop/Cargo.toml
           cargo build --locked --release --manifest-path desktop/Cargo.toml
           node tests/device_cli_test.mjs
+          node tests/pc_contract_cli_test.mjs
+          node tests/pc_contract_mapping_test.mjs
       - uses: actions/upload-artifact@v7
         with:
           name: PakarController-Windows

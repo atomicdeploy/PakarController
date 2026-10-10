@@ -2,12 +2,15 @@
 
 #include <BuildInfo.h>
 #include <Protocol.h>
+#include <PcContractAssembly.h>
 #include <SerialLink.h>
 
 #include "BootMelody.h"
 #include "BoardPins.h"
 #include "FrontPanel.h"
 #include "PakarBoardConfig.h"
+#include "PcControllerRuntime.h"
+#include <avr/wdt.h>
 #include "ProgrammingLatch.h"
 #include "SevenSegments.h"
 #include "ShiftRegisters.h"
@@ -26,7 +29,6 @@ using namespace BoardCore::Protocol;
 namespace {
 
 constexpr uint32_t kBaud = 38400;
-constexpr uint16_t kDebounceMs = 25;
 constexpr uint16_t kShiftPeriodMs = 5;
 
 BoardCore::SerialLink link(Serial);
@@ -36,16 +38,102 @@ CellState selectedState = kCellWhite;
 uint8_t selectedCell = 1;
 uint8_t winner = 0;
 uint8_t stableInputs = 0;
-uint8_t candidateInputs = 0;
 bool stableInput9 = false;
-bool candidateInput9 = false;
-uint32_t candidateChangedAt[9] = {};
 uint32_t lastShiftAt = 0;
 bool tm1637Ack = false;
 uint8_t cellActionRevision = 0;
 uint8_t resetRevision = 0;
 Effect cellActionEffect = kEffectImmediate;
 bool stateDirty = true;
+Key boardKeys[9];
+uint32_t resetPendingAt = 0;
+bool resetRequested = false;
+
+bool espReadyForUnsolicitedFrame();
+void recordCellAction(Effect effect);
+void showState();
+void markStateDirty();
+
+class BoardHardware final : public PcControllerHardware {
+ public:
+  Snapshot snapshot() const override {
+    Snapshot s{};
+    memcpy(s.segments, display.rawSegments(), 4);
+    s.brightness = display.brightness(); s.inputs = stableInputs;
+    s.input9 = stableInput9; s.outputs = shiftRegisters.activeOutputs();
+    s.mode = mode; s.cell = selectedCell; s.winner = winner;
+    s.displayDetected = display.detected(); s.hostDisplay = frontPanel.hostActive();
+    s.hostCaptured = frontPanel.captured(); s.panelMeta = frontPanel.capturedMeta();
+    s.programming = programmingLatch.active(); s.buzzerBusy = buzzer.isBusy();
+    s.muted = buzzer.muted(); s.frequency = buzzer.activeFrequencyHz();
+    s.duration = buzzer.activeDurationMs(); s.audioRevision = buzzer.revision();
+    s.uartErrors = link.errors(); return s;
+  }
+  Error execute(uint8_t opcode, const uint8_t *p, uint8_t n, uint32_t now) override {
+    if (programmingLatch.active()) return kUnsafe;
+    if (opcode == ControllerProtocol::Buzzer) {
+      if (n != 4) return kBadPayload;
+      const uint16_t hz = p[0] | static_cast<uint16_t>(p[1]) << 8;
+      const uint16_t ms = p[2] | static_cast<uint16_t>(p[3]) << 8;
+      if (!ms || (hz && (hz < 20 || hz > 20000))) return kBadPayload;
+      buzzer.stop();
+      return buzzer.enqueue(hz, ms) ? kNoError : kBusy;
+    }
+    if (opcode == ControllerProtocol::DisplayText) {
+      if (n >= 4 && (p[0] == 1 || p[0] == 2)) return kHardwareUnavailable; // LCD absent.
+      if (n < 4 || n != (p[0] == 5 ? 8 : 4) + p[3]) return kBadPayload;
+      if (!frontPanel.acceptDisplayPayload(p, n, now)) return kBadPayload;
+      markStateDirty(); return kNoError;
+    }
+    if (opcode == kOutputMask) {
+      if (n != 1) return kBadPayload;
+      shiftRegisters.setActiveOutputs(p[0]); markStateDirty(); return kNoError;
+    }
+    if (opcode == ControllerProtocol::Reset) {
+      if (n != 1 || p[0] > 1) return kBadPayload;
+      // Both targets reset through Urboot; target 1 is a hint, not an ISP write.
+      resetPendingAt = now + 100; resetRequested = true; return kNoError;
+    }
+    return kUnsupported;
+  }
+  void applySettings(const BoardSettings &s) override {
+    buzzer.setMuted(programmingLatch.active() || (s.flags & 1U));
+    markStateDirty();
+  }
+  Error menuAction(uint8_t action, uint8_t page) override {
+    if (programmingLatch.active()) return kUnsafe;
+    if (page == 0) {
+      selectedCell = action == 2 ? (selectedCell <= 1 ? 80 : selectedCell - 1) :
+                                  (selectedCell >= 80 ? 1 : selectedCell + 1);
+      showState(); markStateDirty(); return kNoError;
+    }
+    if (page == 1) {
+      const uint8_t mask = shiftRegisters.activeOutputs();
+      shiftRegisters.setActiveOutputs(action == 2 ? static_cast<uint8_t>(mask - 1) :
+                                                   static_cast<uint8_t>(mask + 1));
+      markStateDirty(); return kNoError;
+    }
+    return kUnsafe; // Read-only key monitor.
+  }
+  void showMenu(uint8_t page, bool active, bool running) override {
+    int16_t value = selectedCell;
+    if (page == 1) value = shiftRegisters.activeOutputs();
+    else if (page == 2) value = stableInputs | (stableInput9 ? 256 : 0);
+    else if (page == 3) value = buzzer.muted();
+    else if (page == 4) value = display.brightness();
+    else if (page == 5) value = running;
+    frontPanel.setMenu(page, active, value);
+  }
+  void safeStop() override {
+    shiftRegisters.allOutputsOff(); buzzer.stop(); markStateDirty();
+  }
+  bool ready() const override { return espReadyForUnsolicitedFrame(); }
+  bool send(uint8_t opcode, uint8_t sequence, const uint8_t *p, uint8_t n) override {
+    return link.send(opcode, sequence, p, n);
+  }
+} boardHardware;
+PcControllerRuntime pcController(boardHardware);
+BoardCore::PcContractAssembly pcAssembly;
 
 void applyProgrammingSafety() {
   shiftRegisters.allOutputsOff();
@@ -54,47 +142,13 @@ void applyProgrammingSafety() {
   display.showText(F("Prog"));
 }
 
-bool probeTm1637() {
-  pinMode(BoardPins::Tm1637Clock, OUTPUT);
-  pinMode(BoardPins::Tm1637Data, OUTPUT);
-  digitalWrite(BoardPins::Tm1637Clock, HIGH);
-  digitalWrite(BoardPins::Tm1637Data, HIGH);
-  delayMicroseconds(3);
-  digitalWrite(BoardPins::Tm1637Data, LOW);
-  delayMicroseconds(3);
-
-  uint8_t value = 0x8D;  // Display on, brightness 5.
-  for (uint8_t bit = 0; bit < 8; ++bit) {
-    digitalWrite(BoardPins::Tm1637Clock, LOW);
-    digitalWrite(BoardPins::Tm1637Data, value & 0x01U ? HIGH : LOW);
-    delayMicroseconds(3);
-    digitalWrite(BoardPins::Tm1637Clock, HIGH);
-    delayMicroseconds(3);
-    value >>= 1;
-  }
-  digitalWrite(BoardPins::Tm1637Clock, LOW);
-  pinMode(BoardPins::Tm1637Data, INPUT_PULLUP);
-  delayMicroseconds(3);
-  digitalWrite(BoardPins::Tm1637Clock, HIGH);
-  delayMicroseconds(3);
-  const bool acknowledged = digitalRead(BoardPins::Tm1637Data) == LOW;
-  digitalWrite(BoardPins::Tm1637Clock, LOW);
-  pinMode(BoardPins::Tm1637Data, OUTPUT);
-  digitalWrite(BoardPins::Tm1637Data, LOW);
-  delayMicroseconds(3);
-  digitalWrite(BoardPins::Tm1637Clock, HIGH);
-  delayMicroseconds(3);
-  digitalWrite(BoardPins::Tm1637Data, HIGH);
-  return acknowledged;
-}
-
 void showState() {
   if (mode == kModeFirstWins && winner != 0) {
     frontPanel.showTransientNumber(winner, millis(), 3000);
   } else if (mode == kModeCellSelect) {
     frontPanel.showTransientNumber(selectedCell, millis());
   }
-  tm1637Ack = probeTm1637();
+  tm1637Ack = display.detected();
 }
 
 void sendHello(uint8_t sequence = 0) {
@@ -107,6 +161,9 @@ void sendHello(uint8_t sequence = 0) {
       BoardCore::BuildInfo::kVersionMajor,
       BoardCore::BuildInfo::kVersionMinor,
       BoardCore::BuildInfo::kVersionPatch,
+      BoardSettings::Schema,
+      static_cast<uint8_t>(BoardCore::Features::enabled),
+      static_cast<uint8_t>(BoardCore::Features::enabled >> 8),
   };
   link.send(kHelloResponse, sequence, payload, sizeof(payload));
 }
@@ -197,11 +254,18 @@ void onInputChanged(uint8_t button, bool pressed) {
 void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
   if (programmingLatch.active() && frame.opcode != kHello &&
       frame.opcode != kGetStatus && frame.opcode != kProgrammingState &&
-      frame.opcode != kPing) {
+      frame.opcode != kPing && frame.opcode != kPcContract && frame.opcode != kPcContractChunk) {
     link.error(frame.sequence, frame.opcode, kUnsafe);
     return;
   }
   switch (frame.opcode) {
+    case kPcContractChunk:
+      if (pcAssembly.accept(frame.sequence, frame.payload, frame.payloadLength, millis()))
+        pcController.handle(frame.sequence, pcAssembly.data(), 49, millis(), micros());
+      break;
+    case kPcContract:
+      pcController.handle(frame.sequence, frame.payload, frame.payloadLength, millis(), micros());
+      break;
     case kHello:
       sendHello(frame.sequence);
       break;
@@ -274,7 +338,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
         link.error(frame.sequence, frame.opcode, kBadPayload);
         break;
       }
-      tm1637Ack = probeTm1637();
+      tm1637Ack = display.detected();
       markStateDirty();
       link.ack(frame.sequence, frame.opcode);
       break;
@@ -293,7 +357,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       if (programmingLatch.active()) {
         applyProgrammingSafety();
       } else {
-        buzzer.setMuted(false);
+        buzzer.setMuted((pcController.settings().values().flags & 1U) != 0);
         resetGame();
       }
       link.ack(frame.sequence, frame.opcode);
@@ -305,39 +369,32 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
   }
 }
 
+void boardKeyGesture(uint8_t bit, KeyEvent event, void *) {
+  const bool primary = event == KeyEvent::Down;
+  if (event == KeyEvent::Down || event == KeyEvent::Up) {
+    const bool pressed = event == KeyEvent::Down;
+    if (bit < 8) {
+      if (pressed) stableInputs |= _BV(bit);
+      else stableInputs &= static_cast<uint8_t>(~_BV(bit));
+    } else stableInput9 = pressed;
+    markStateDirty();
+  }
+  pcController.key(bit, event, 0, millis(), micros());
+  if (!pcController.menuActive() && !frontPanel.captured() && primary)
+    onInputChanged(bit + 1, true);
+}
+
 void serviceInputs(uint32_t now) {
   if (static_cast<uint32_t>(now - lastShiftAt) < kShiftPeriodMs) return;
   lastShiftAt = now;
   shiftRegisters.service();
   const uint8_t raw = shiftRegisters.activeInputs();
   const bool raw9 = analogRead(PakarBoardConfig::NinthButtonAdc) <
-                    PakarBoardConfig::NinthButtonThreshold;
-
-  for (uint8_t bit = 0; bit < 8; ++bit) {
-    const bool value = (raw & _BV(bit)) != 0;
-    const bool candidate = (candidateInputs & _BV(bit)) != 0;
-    if (value != candidate) {
-      if (value) candidateInputs |= _BV(bit); else candidateInputs &= ~_BV(bit);
-      candidateChangedAt[bit] = now;
-    } else if (static_cast<uint32_t>(now - candidateChangedAt[bit]) >= kDebounceMs) {
-      const bool stable = (stableInputs & _BV(bit)) != 0;
-      if (stable != value) {
-        if (value) stableInputs |= _BV(bit); else stableInputs &= ~_BV(bit);
-        onInputChanged(bit + 1, value);
-      }
-    }
-  }
-
-  if (raw9 != candidateInput9) {
-    candidateInput9 = raw9;
-    candidateChangedAt[8] = now;
-  } else if (static_cast<uint32_t>(now - candidateChangedAt[8]) >= kDebounceMs &&
-             stableInput9 != raw9) {
-    stableInput9 = raw9;
-    onInputChanged(9, raw9);
+                    pcController.settings().values().ninthThreshold;
+  for (uint8_t bit = 0; bit < 9; ++bit) {
+    boardKeys[bit].updateSample(bit < 8 ? (raw & _BV(bit)) != 0 : raw9, now);
   }
 }
-
 }  // namespace
 
 void setup() {
@@ -350,9 +407,14 @@ void setup() {
   frontPanel.begin(millis());
   programmingLatch.begin();
   if (programmingLatch.active()) applyProgrammingSafety();
-  else tm1637Ack = probeTm1637();
+  else tm1637Ack = display.detected();
+  pcController.begin(millis());
+  for (uint8_t bit = 0; bit < 9; ++bit) {
+    boardKeys[bit].begin(bit);
+    boardKeys[bit].setEventCallback(boardKeyGesture);
+  }
   link.begin(kBaud, handleFrame);
-  if (!programmingLatch.active()) playBootMelody();
+  if (!programmingLatch.active() && (pcController.settings().values().flags & 2U)) playBootMelody();
 }
 
 void loop() {
@@ -362,6 +424,22 @@ void loop() {
   buzzer.update(now);
   frontPanel.service(now, mode, selectedCell, winner,
                      programmingLatch.active());
+  display.service(now);
+  display.serviceBrightness(programmingLatch.active() ? 5 :
+                            pcController.settings().values().displayBrightness, now);
+  if (tm1637Ack != display.detected()) { tm1637Ack = display.detected(); markStateDirty(); }
+  pcController.service(now, micros());
+  boardHardware.showMenu(pcController.menuPage(), pcController.menuActive(), pcController.running());
+  static uint8_t previousSegments[4] = {};
+  static uint8_t previousBrightness = 0xFF;
+  if (memcmp(previousSegments, display.rawSegments(), 4) ||
+      previousBrightness != display.brightness()) {
+    memcpy(previousSegments, display.rawSegments(), 4); markStateDirty();
+    previousBrightness = display.brightness();
+  }
+  if (resetRequested && static_cast<int32_t>(now - resetPendingAt) >= 0) {
+    boardHardware.safeStop(); wdt_enable(WDTO_15MS); while (true) {}
+  }
 #if PAKAR_USE_BUSY_WIRE
   // Busy-wire builds are event-driven. Reconnect convergence comes from the
   // ESP's HELLO -> GET_STATUS exchange, so periodic unsolicited frames only

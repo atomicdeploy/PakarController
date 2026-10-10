@@ -18,6 +18,7 @@ constexpr uint8_t DisplayOffCommand = 0x80;
 constexpr uint8_t DisplayOnCommand = 0x88;
 constexpr uint8_t DecimalPoint = 0x80;
 constexpr uint8_t MinusSegment = 0x40;
+bool busNack = true;
 
 inline void busDelay() {
 #if defined(__AVR__)
@@ -104,13 +105,18 @@ void writeBusByte(uint8_t value) {
     value >>= 1;
   }
 
-  // Release DIO while the TM1637 drives its ACK bit. An ACK is not required
-  // for forward progress, but releasing the line prevents output contention.
+  // Actual PCController ninth-clock ACK sampling, mapped to PuzzleBoard PC4.
+  // Accumulate every NACK in the transaction, not just its final byte.
   clockLow();
   releaseData();
   busDelay();
   clockHigh();
   busDelay();
+#if defined(__AVR__) && defined(PINC) && defined(PINC4)
+  busNack |= (PINC & _BV(PINC4)) != 0;
+#else
+  busNack |= digitalRead(BoardPins::Tm1637Data) != LOW;
+#endif
   clockLow();
   dataLow();
 }
@@ -127,6 +133,8 @@ void SevenSegments::begin(uint8_t brightness) {
   clockHigh();
   dataHigh();
   begun_ = true;
+  brightness_ = 0xFF;
+  memset(cachedSegments_, 0xFF, sizeof(cachedSegments_));
   clear();
   setBrightness(brightness);
 }
@@ -177,16 +185,19 @@ void SevenSegments::setBrightness(uint8_t brightness) {
   if (brightness > 7) {
     brightness = 7;
   }
-  if (brightness_ == brightness) {
+  if (brightness_ == brightness && detected()) {
     return;
   }
   brightness_ = brightness;
   if (begun_) {
+    if (!detected()) writeSegments(cachedSegments_);
+    const bool frameFailed = busNack;
     // Zero is a true display-off level; values 1..7 retain their prior TM1637
     // intensity mapping so existing nonzero EEPROM settings do not get dimmer.
     sendCommand(brightness_ == 0
                     ? DisplayOffCommand
                     : static_cast<uint8_t>(DisplayOnCommand | brightness_));
+    busNack |= frameFailed;
   }
 }
 
@@ -346,6 +357,7 @@ void SevenSegments::commit(const uint8_t segments[4]) {
 }
 
 void SevenSegments::sendCommand(uint8_t command) {
+  busNack = false;
   startBus();
   writeBusByte(command);
   stopBus();
@@ -363,4 +375,18 @@ void SevenSegments::writeSegments(const uint8_t segments[4]) {
     writeBusByte(segments[index]);
   }
   stopBus();
+}
+
+bool SevenSegments::detected() const { return begun_ && !busNack; }
+
+void SevenSegments::service(uint32_t now) {
+  if (!begun_ || static_cast<uint32_t>(now - lastKeepAliveAt_) < 1000U) return;
+  lastKeepAliveAt_ = now;
+  // Reassert the complete cached frame even after an unobserved power cycle.
+  // This is bounded, rollover-safe, nonblocking with respect to audio Timer1.
+  writeSegments(cachedSegments_);
+  const bool frameFailed = busNack;
+  sendCommand(brightness_ == 0 ? DisplayOffCommand :
+              static_cast<uint8_t>(DisplayOnCommand | brightness_));
+  busNack |= frameFailed;
 }

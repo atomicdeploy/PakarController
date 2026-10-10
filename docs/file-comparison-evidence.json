@@ -9,70 +9,175 @@
       "sha256": "a6501d2c0f859e186cac659a37d256f26f8896e98644e9cfc8ac880da5460e54",
       "source_read": "complete",
       "verdict": "equivalent-behavior",
-      "preserved": ["Actual donor root-only overlay: four newest messages, severity icons and semantic palette roles, bounded width, scrollable text, title, dismiss and deadline-driven repaint."],
-      "targets": [{"path":"desktop/src/ui/toasts.rs","sha256":"8772d049fab0fba597bd7f4ba4403c7d7bd122f6027442e25f32da11d8f058f6","anchor":"pub fn draw(ctx:"}],
-      "omissions": [{"code":"interop::get_live_config() accessor","disposition":"replaced","reason":"Pakar owns the same live palette through config::live(). The OS-native notification route is separate; adding an explicit in-app enable preference does not remove the donor overlay when enabled."}],
-      "remaining": ["This native overlay mapping is not shared Web/TUI message-delivery parity."],
+      "preserved": [
+        "Actual donor root-only overlay: four newest messages, severity icons and semantic palette roles, bounded width, scrollable text, title, dismiss and deadline-driven repaint."
+      ],
+      "targets": [
+        {
+          "path": "desktop/src/ui/toasts.rs",
+          "sha256": "8772d049fab0fba597bd7f4ba4403c7d7bd122f6027442e25f32da11d8f058f6",
+          "anchor": "pub fn draw(ctx:"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "interop::get_live_config() accessor",
+          "disposition": "replaced",
+          "reason": "Pakar owns the same live palette through config::live(). The OS-native notification route is separate; adding an explicit in-app enable preference does not remove the donor overlay when enabled."
+        }
+      ],
+      "remaining": [
+        "This native overlay mapping is not shared Web/TUI message-delivery parity."
+      ],
       "proof": [],
-      "improvement":""
+      "improvement": ""
     },
     {
-      "origin":"Pealayer",
-      "path":"src/platform/windows_shell_icons.rs",
-      "sha256":"e1d8793f8f1697f2030bc407f51e48cab4063964c051f2e21d1f60ae3349732a",
-      "source_read":"complete",
-      "verdict":"equivalent-file",
-      "preserved":["Byte-identical actual Phosphor rasterizer, centered glyph coverage, all seven ICO resolutions, bottom-up BGRA, DWORD-aligned AND masks and explicit directory offsets. Pakar build.rs uses it for PE, tray and action assets."],
-      "targets":[{"path":"desktop/src/platform/windows_shell_icons.rs","sha256":"e1d8793f8f1697f2030bc407f51e48cab4063964c051f2e21d1f60ae3349732a","anchor":"pub fn shell_icon_ico"}],
-      "omissions":[],"remaining":["User-configurable icon packs and runtime state-icon transitions are a separate unresolved integration; retaining the generator does not implement that editor."],
-      "proof":[],"improvement":""
-    },
-    {
-      "origin":"Pealayer",
-      "path":"src/platform/windows_quick_actions.rs",
-      "sha256":"35f6de708a0e402f6958a4d8feeead5037b42174286050ddc98c494d4173e4cb",
-      "source_read":"complete",
-      "verdict":"equivalent-behavior",
-      "preserved":["Actual typed action/resource catalog, equality traits, explicit negative resource-index selection, Preferences, Exit and generic Toggle fullscreen. Controller actions share the launch/IPC dispatcher and resource compiler."],
-      "targets":[{"path":"desktop/src/platform/windows_quick_actions.rs","sha256":"cefe74617d723f5dd9ef987613cbcfd593e196f7a0bbfd704d65b0759034f2cd","anchor":"pub const WINDOWS_QUICK_ACTIONS"}],
-      "omissions":[{"code":"Play / Pause, Previous chapter, Next chapter, Mute / Unmute media quick actions","disposition":"not-applicable","reason":"Pakar intentionally has no mpv playback, chapters or media volume. These would call removed media business methods. Connect, device settings, refresh, workspaces and About are real controller navigation actions instead; generic fullscreen is retained, not misclassified as media-only."}],
-      "remaining":["Visible Windows Jump List clicks remain a manual acceptance gate; typed launch forwarding and resource uniqueness are tested."],
-      "proof":[{"path":"desktop/src/platform/windows_quick_actions.rs","sha256":"cefe74617d723f5dd9ef987613cbcfd593e196f7a0bbfd704d65b0759034f2cd","anchor":"fn controller_shell_actions_have_unique_native_resource_ids"}],
-      "improvement":""
-    },
-    {
-      "origin":"Pealayer",
-      "path":"src/application_shortcuts.rs",
-      "sha256":"1f173bef8acc2904eac5b0a91407aa4f7629ce65c88ea3a8ac78f8c13321d203",
-      "source_read":"complete",
-      "verdict":"parity-gap",
-      "preserved":["Default Preferences Ctrl+, and device configuration Ctrl+Shift+, navigation exist; F11 fullscreen is restored with the shared typed dispatcher. These are not equivalent to the donor persisted rebinding model."],
-      "targets":[{"path":"desktop/src/ui/shell.rs","sha256":"9f9b8afe14bfe43373bbbf02c19d236340a26d769c674de346324efbeeabb9fd","anchor":"egui::Key::F11"}],
-      "omissions":[
-        {"code":"ApplicationShortcuts persisted fields, parse_shortcut, entries, validate, action_for_event and their non-media tests","disposition":"pending","reason":"The foundation hardcoded its accelerators and omitted the reusable binding model. No accepted reason justifies leaving rebinding out. The actual donor depends on KeyChord and hardware_shortcuts match/key-code helpers, which must be ported and tested with controller-specific typed actions rather than guessed labels."},
-        {"code":"take_frame_step_shortcut and frame-step tests","disposition":"not-applicable","reason":"These consume Ctrl+Left/Right for media frame stepping and timeline transport. Those business domains were explicitly removed; Pakar must not hijack ordinary text word navigation for nonexistent video frames."},
-        {"code":"containing_media_folder and local-media path tests","disposition":"not-applicable","reason":"This resolves media files/streams, not board identities or firmware files. Firmware selection already uses explicit native file dialogs; introducing a nonexistent media folder action would be misleading."},
-        {"code":"media_information and media_folder accelerators","disposition":"pending","reason":"The media operations cannot be retained as-is, but their reusable information/folder-navigation affordances need explicit hardware-monitor and application-folder action decisions. They are not silently treated as completed controller mappings."}
+      "origin": "Pealayer",
+      "path": "src/platform/windows_shell_icons.rs",
+      "sha256": "e1d8793f8f1697f2030bc407f51e48cab4063964c051f2e21d1f60ae3349732a",
+      "source_read": "complete",
+      "verdict": "equivalent-file",
+      "preserved": [
+        "Byte-identical actual Phosphor rasterizer, centered glyph coverage, all seven ICO resolutions, bottom-up BGRA, DWORD-aligned AND masks and explicit directory offsets. Pakar build.rs uses it for PE, tray and action assets."
       ],
-      "remaining":["Restore validated persistent rebinding, exact-modifier matching, repeat/release rejection and text-edit protection; separately reconcile global/hardware shortcut ownership."],
-      "proof":[],"improvement":""
+      "targets": [
+        {
+          "path": "desktop/src/platform/windows_shell_icons.rs",
+          "sha256": "e1d8793f8f1697f2030bc407f51e48cab4063964c051f2e21d1f60ae3349732a",
+          "anchor": "pub fn shell_icon_ico"
+        }
+      ],
+      "omissions": [],
+      "remaining": [
+        "User-configurable icon packs and runtime state-icon transitions are a separate unresolved integration; retaining the generator does not implement that editor."
+      ],
+      "proof": [],
+      "improvement": ""
     },
     {
-      "origin":"Pealayer",
-      "path":"tests/windows_shell_suite_test.rs",
-      "sha256":"d8696d8b591ca8ae4c77c78a07d19f6aca103e29906f267f19ac8ba1aa5d6e01",
-      "source_read":"complete",
-      "verdict":"parity-gap",
-      "preserved":["Actual Preferences action/resource catalog is validated; invalid HWND registration rejects rather than claiming success; owner exclusion is tested. Live notification acceptance and shown-callback evidence are recorded independently."],
-      "targets":[{"path":"desktop/src/platform/windows_notifications.rs","sha256":"4603df421e6361701f4d092e0f966abdd39a0fb91f968a098fd5552b67c6c00a","anchor":"assert!(Hook::new(42).is_err())"}],
-      "omissions":[
-        {"code":"Playback-duration error/paused percentages and Play/Pause thumbnail/tray labels","disposition":"not-applicable","reason":"The tests model removed video playback, not device transfer progress. Pakar uses indeterminate taskbar activity only for a real pending settings/maintenance request; inventing a media percentage would publish false progress."},
-        {"code":"PealayerApp::default and media playback_time/duration/is_paused assignments","disposition":"replaced","reason":"Pakar is an executable-only mpv-free controller; creating the donor media engine is inappropriate. Actual controller IPC/live smoke and direct invalid-HWND tests exercise its own lifetime instead."},
-        {"code":"ensure_shell_initialized retry and repeated shell-lifecycle acceptance","disposition":"pending","reason":"Tray creation failures are visible and close-to-tray cannot hide an app without a tray, but complete root-taskbar initialization/retry and Explorer restart acceptance are not covered by the current tests."}
+      "origin": "Pealayer",
+      "path": "src/platform/windows_quick_actions.rs",
+      "sha256": "35f6de708a0e402f6958a4d8feeead5037b42174286050ddc98c494d4173e4cb",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Actual typed action/resource catalog, equality traits, explicit negative resource-index selection, Preferences, Exit and generic Toggle fullscreen. Controller actions share the launch/IPC dispatcher and resource compiler."
       ],
-      "remaining":["Add root-taskbar lifecycle/reinitialization and hidden-window/tray/notification-click acceptance without fabricating successful HWND installation."],
-      "proof":[{"path":"desktop/src/platform/windows_notifications.rs","sha256":"4603df421e6361701f4d092e0f966abdd39a0fb91f968a098fd5552b67c6c00a","anchor":"fn utf16_limits_preserve_complete_surrogates_and_termination"}],
-      "improvement":""
+      "targets": [
+        {
+          "path": "desktop/src/platform/windows_quick_actions.rs",
+          "sha256": "cefe74617d723f5dd9ef987613cbcfd593e196f7a0bbfd704d65b0759034f2cd",
+          "anchor": "pub const WINDOWS_QUICK_ACTIONS"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Play / Pause, Previous chapter, Next chapter, Mute / Unmute media quick actions",
+          "disposition": "not-applicable",
+          "reason": "Pakar intentionally has no mpv playback, chapters or media volume. These would call removed media business methods. Connect, device settings, refresh, workspaces and About are real controller navigation actions instead; generic fullscreen is retained, not misclassified as media-only."
+        }
+      ],
+      "remaining": [
+        "Visible Windows Jump List clicks remain a manual acceptance gate; typed launch forwarding and resource uniqueness are tested."
+      ],
+      "proof": [
+        {
+          "path": "desktop/src/platform/windows_quick_actions.rs",
+          "sha256": "cefe74617d723f5dd9ef987613cbcfd593e196f7a0bbfd704d65b0759034f2cd",
+          "anchor": "fn controller_shell_actions_have_unique_native_resource_ids"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "src/application_shortcuts.rs",
+      "sha256": "1f173bef8acc2904eac5b0a91407aa4f7629ce65c88ea3a8ac78f8c13321d203",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Default Preferences Ctrl+, and device configuration Ctrl+Shift+, navigation exist; F11 fullscreen is restored with the shared typed dispatcher. These are not equivalent to the donor persisted rebinding model."
+      ],
+      "targets": [
+        {
+          "path": "desktop/src/ui/shell.rs",
+          "sha256": "9f9b8afe14bfe43373bbbf02c19d236340a26d769c674de346324efbeeabb9fd",
+          "anchor": "egui::Key::F11"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "ApplicationShortcuts persisted fields, parse_shortcut, entries, validate, action_for_event and their non-media tests",
+          "disposition": "pending",
+          "reason": "The foundation hardcoded its accelerators and omitted the reusable binding model. No accepted reason justifies leaving rebinding out. The actual donor depends on KeyChord and hardware_shortcuts match/key-code helpers, which must be ported and tested with controller-specific typed actions rather than guessed labels."
+        },
+        {
+          "code": "take_frame_step_shortcut and frame-step tests",
+          "disposition": "not-applicable",
+          "reason": "These consume Ctrl+Left/Right for media frame stepping and timeline transport. Those business domains were explicitly removed; Pakar must not hijack ordinary text word navigation for nonexistent video frames."
+        },
+        {
+          "code": "containing_media_folder and local-media path tests",
+          "disposition": "not-applicable",
+          "reason": "This resolves media files/streams, not board identities or firmware files. Firmware selection already uses explicit native file dialogs; introducing a nonexistent media folder action would be misleading."
+        },
+        {
+          "code": "media_information and media_folder accelerators",
+          "disposition": "pending",
+          "reason": "The media operations cannot be retained as-is, but their reusable information/folder-navigation affordances need explicit hardware-monitor and application-folder action decisions. They are not silently treated as completed controller mappings."
+        }
+      ],
+      "remaining": [
+        "Restore validated persistent rebinding, exact-modifier matching, repeat/release rejection and text-edit protection; separately reconcile global/hardware shortcut ownership."
+      ],
+      "proof": [],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "tests/windows_shell_suite_test.rs",
+      "sha256": "d8696d8b591ca8ae4c77c78a07d19f6aca103e29906f267f19ac8ba1aa5d6e01",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual Preferences action/resource catalog is validated; invalid HWND registration rejects rather than claiming success; owner exclusion is tested. Live notification acceptance and shown-callback evidence are recorded independently."
+      ],
+      "targets": [
+        {
+          "path": "desktop/src/platform/windows_notifications.rs",
+          "sha256": "4603df421e6361701f4d092e0f966abdd39a0fb91f968a098fd5552b67c6c00a",
+          "anchor": "assert!(Hook::new(42).is_err())"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Playback-duration error/paused percentages and Play/Pause thumbnail/tray labels",
+          "disposition": "not-applicable",
+          "reason": "The tests model removed video playback, not device transfer progress. Pakar uses indeterminate taskbar activity only for a real pending settings/maintenance request; inventing a media percentage would publish false progress."
+        },
+        {
+          "code": "PealayerApp::default and media playback_time/duration/is_paused assignments",
+          "disposition": "replaced",
+          "reason": "Pakar is an executable-only mpv-free controller; creating the donor media engine is inappropriate. Actual controller IPC/live smoke and direct invalid-HWND tests exercise its own lifetime instead."
+        },
+        {
+          "code": "ensure_shell_initialized retry and repeated shell-lifecycle acceptance",
+          "disposition": "pending",
+          "reason": "Tray creation failures are visible and close-to-tray cannot hide an app without a tray, but complete root-taskbar initialization/retry and Explorer restart acceptance are not covered by the current tests."
+        }
+      ],
+      "remaining": [
+        "Add root-taskbar lifecycle/reinitialization and hidden-window/tray/notification-click acceptance without fabricating successful HWND installation."
+      ],
+      "proof": [
+        {
+          "path": "desktop/src/platform/windows_notifications.rs",
+          "sha256": "4603df421e6361701f4d092e0f966abdd39a0fb91f968a098fd5552b67c6c00a",
+          "anchor": "fn utf16_limits_preserve_complete_surrogates_and_termination"
+        }
+      ],
+      "improvement": ""
     },
     {
       "origin": "PCController",
@@ -483,19 +588,20 @@
       "path": "LocalLib/SevenSegments.h",
       "sha256": "e58e1783404f494ea7b1852780b6485cbfda872781b9159b9ee29426edae9240",
       "source_read": "complete",
-      "verdict": "parity-gap",
+      "verdict": "scoped-improvement",
       "preserved": [
-        "Bounded four-digit RAM/flash text, raw segments, integer/fixed-point output, caching and 0..7 brightness/display-off behavior."
+        "Bounded four-digit RAM/flash text, raw segments, integer/fixed-point output, caching and 0..7 brightness/display-off behavior.",
+        "Actual donor ACK sampling, one-second cached-frame/brightness keepalive, observed presence and active 70ms brightness service on PC4/PC5. Independent probing was removed."
       ],
       "targets": [
         {
           "path": "firmware/avr/SevenSegments.h",
-          "sha256": "3678996bf9b726e52a39622b7eee8ecb4a56fc6bc881f459cb2f7b40ba86ca88",
+          "sha256": "a2719b4f3d9c21e98200420a91cb0326b1869dbcfb90136a1184e379f7b7ee3b",
           "anchor": "void serviceBrightness("
         },
         {
           "path": "firmware/avr/SevenSegments.cpp",
-          "sha256": "75fb9ad26a78f104dbdcc93208e24ca55f7d33a518dd6de61c59462580a87b32",
+          "sha256": "28547987e3fe6bf85e13763fa93ef8bb234f8d8f6204b43658058f070f6d9228",
           "anchor": "void writeBusByte("
         },
         {
@@ -509,42 +615,44 @@
           "code": "PB3/PB5 TM1637 bus pins",
           "disposition": "replaced",
           "reason": "User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming."
-        },
-        {
-          "code": "detected(), busNack ACK sampling, reconnect cached-frame restoration and one-second keepalive",
-          "disposition": "pending",
-          "reason": "Useful matching-hardware recovery was lost. Pakar releases ACK but does not sample it, and its independent probe is not equivalent continuous driver detection."
-        },
-        {
-          "code": "serviceBrightness invocation in the active AVR service loop",
-          "disposition": "pending",
-          "reason": "The target has this method but no active service-loop call. A retained declaration does not demonstrate recovery or smoothing integration."
         }
       ],
       "remaining": [
-        "Import ACK/reconnect recovery onto PC4/PC5; connect observed detection and periodic service to AVR telemetry; test disconnect/reconnect and unchanged-frame recovery."
+        "Physical TM1637 unplug/replug and power-cycle acceptance remains unverified; host GPIO doubles are not a physical board."
       ],
-      "proof": [],
-      "improvement": ""
+      "proof": [
+        {
+          "path": "tests/pc_contract_test.cpp",
+          "sha256": "325baf7036fa3a9cfcf65f8d4d415ee2ac42155a89fcdb1282c461b3e9102930",
+          "anchor": "void keysAndDisplay()"
+        },
+        {
+          "path": "firmware/avr/avr.ino",
+          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
+          "anchor": "display.serviceBrightness("
+        }
+      ],
+      "improvement": "Retains donor recovery on the correct board pins, accumulates intermediate NACKs instead of letting the final control ACK hide failure; host disconnect/reconnect and true-off tests pass."
     },
     {
       "origin": "PCController",
       "path": "LocalLib/SevenSegments.cpp",
       "sha256": "54c366525142aca0103a8d58f7ce8d9cbc34c1b5884b20a1ad5ae50ddc6bb4a8",
       "source_read": "complete",
-      "verdict": "parity-gap",
+      "verdict": "scoped-improvement",
       "preserved": [
-        "Bounded four-digit RAM/flash text, raw segments, integer/fixed-point output, caching and 0..7 brightness/display-off behavior."
+        "Bounded four-digit RAM/flash text, raw segments, integer/fixed-point output, caching and 0..7 brightness/display-off behavior.",
+        "Actual donor ACK sampling, one-second cached-frame/brightness keepalive, observed presence and active 70ms brightness service on PC4/PC5. Independent probing was removed."
       ],
       "targets": [
         {
           "path": "firmware/avr/SevenSegments.h",
-          "sha256": "3678996bf9b726e52a39622b7eee8ecb4a56fc6bc881f459cb2f7b40ba86ca88",
+          "sha256": "a2719b4f3d9c21e98200420a91cb0326b1869dbcfb90136a1184e379f7b7ee3b",
           "anchor": "void serviceBrightness("
         },
         {
           "path": "firmware/avr/SevenSegments.cpp",
-          "sha256": "75fb9ad26a78f104dbdcc93208e24ca55f7d33a518dd6de61c59462580a87b32",
+          "sha256": "28547987e3fe6bf85e13763fa93ef8bb234f8d8f6204b43658058f070f6d9228",
           "anchor": "void writeBusByte("
         },
         {
@@ -558,23 +666,24 @@
           "code": "PB3/PB5 TM1637 bus pins",
           "disposition": "replaced",
           "reason": "User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming."
-        },
-        {
-          "code": "detected(), busNack ACK sampling, reconnect cached-frame restoration and one-second keepalive",
-          "disposition": "pending",
-          "reason": "Useful matching-hardware recovery was lost. Pakar releases ACK but does not sample it, and its independent probe is not equivalent continuous driver detection."
-        },
-        {
-          "code": "serviceBrightness invocation in the active AVR service loop",
-          "disposition": "pending",
-          "reason": "The target has this method but no active service-loop call. A retained declaration does not demonstrate recovery or smoothing integration."
         }
       ],
       "remaining": [
-        "Import ACK/reconnect recovery onto PC4/PC5; connect observed detection and periodic service to AVR telemetry; test disconnect/reconnect and unchanged-frame recovery."
+        "Physical TM1637 unplug/replug and power-cycle acceptance remains unverified; host GPIO doubles are not a physical board."
       ],
-      "proof": [],
-      "improvement": ""
+      "proof": [
+        {
+          "path": "tests/pc_contract_test.cpp",
+          "sha256": "325baf7036fa3a9cfcf65f8d4d415ee2ac42155a89fcdb1282c461b3e9102930",
+          "anchor": "void keysAndDisplay()"
+        },
+        {
+          "path": "firmware/avr/avr.ino",
+          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
+          "anchor": "display.serviceBrightness("
+        }
+      ],
+      "improvement": "Retains donor recovery on the correct board pins, accumulates intermediate NACKs instead of letting the final control ACK hide failure; host disconnect/reconnect and true-off tests pass."
     },
     {
       "origin": "ControllerBoardMini/Puzzles",
@@ -593,7 +702,7 @@
         },
         {
           "path": "firmware/avr/SevenSegments.h",
-          "sha256": "3678996bf9b726e52a39622b7eee8ecb4a56fc6bc881f459cb2f7b40ba86ca88",
+          "sha256": "a2719b4f3d9c21e98200420a91cb0326b1869dbcfb90136a1184e379f7b7ee3b",
           "anchor": "void showSegments("
         }
       ],
@@ -617,30 +726,31 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Active-low physical plus virtual shift input state and candidate/stable transition tracking; AVR reports releases as dirty state; press handling is mode-specific."
+        "Active-low physical plus virtual shift input state and candidate/stable transition tracking; AVR reports releases as dirty state; press handling is mode-specific.",
+        "Actual PCController per-key callback/gesture classifier now feeds all nine inputs; no game action waits for click classification."
       ],
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e94985ce9e1161d6b31df22d1f61c6496c4f675dc6ccbd2aeb957f1050ec1096",
+          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e94985ce9e1161d6b31df22d1f61c6496c4f675dc6ccbd2aeb957f1050ec1096",
-          "anchor": "void onInputChanged("
+          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
+          "anchor": "void boardKeyGesture("
         }
       ],
       "omissions": [
         {
           "code": "DEBOUNCE_MS = 50",
           "disposition": "pending",
-          "reason": "Pakar currently uses 25 ms. No switch-bounce/response measurements justify claiming the shorter period is better."
+          "reason": "Actual PCController classifier now uses macro-configurable PAKAR_KEY_DEBOUNCE_MS (default 20ms) with tested Down/Up, click and hold timing. Physical switch-bounce measurements remain pending; faster is not certified electrically."
         },
         {
           "code": "Key virtual readCurrentState/onStateChanged, setCallback, bool/getCurrentState interface",
-          "disposition": "pending",
-          "reason": "Pakar's fixed service function covers current game presses and state changes, but not the reusable per-key extension/callback contract. Generic input utility is not donor business logic."
+          "disposition": "replaced",
+          "reason": "Imported PCController per-key classifier, setCallback and setEventCallback are retained. updateSample separates the input driver from gesture classification and supports all nine shift/ADC keys; subclass-specific raw reads are replaced by the actual board sample adapter."
         },
         {
           "code": "Raw Puzzles lower-four input order",
@@ -661,30 +771,31 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Active-low physical plus virtual shift input state and candidate/stable transition tracking; AVR reports releases as dirty state; press handling is mode-specific."
+        "Active-low physical plus virtual shift input state and candidate/stable transition tracking; AVR reports releases as dirty state; press handling is mode-specific.",
+        "Actual PCController per-key callback/gesture classifier now feeds all nine inputs; no game action waits for click classification."
       ],
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e94985ce9e1161d6b31df22d1f61c6496c4f675dc6ccbd2aeb957f1050ec1096",
+          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e94985ce9e1161d6b31df22d1f61c6496c4f675dc6ccbd2aeb957f1050ec1096",
-          "anchor": "void onInputChanged("
+          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
+          "anchor": "void boardKeyGesture("
         }
       ],
       "omissions": [
         {
           "code": "DEBOUNCE_MS = 50",
           "disposition": "pending",
-          "reason": "Pakar currently uses 25 ms. No switch-bounce/response measurements justify claiming the shorter period is better."
+          "reason": "Actual PCController classifier now uses macro-configurable PAKAR_KEY_DEBOUNCE_MS (default 20ms) with tested Down/Up, click and hold timing. Physical switch-bounce measurements remain pending; faster is not certified electrically."
         },
         {
           "code": "Key virtual readCurrentState/onStateChanged, setCallback, bool/getCurrentState interface",
-          "disposition": "pending",
-          "reason": "Pakar's fixed service function covers current game presses and state changes, but not the reusable per-key extension/callback contract. Generic input utility is not donor business logic."
+          "disposition": "replaced",
+          "reason": "Imported PCController per-key classifier, setCallback and setEventCallback are retained. updateSample separates the input driver from gesture classification and supports all nine shift/ADC keys; subclass-specific raw reads are replaced by the actual board sample adapter."
         },
         {
           "code": "Raw Puzzles lower-four input order",
@@ -710,7 +821,7 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e94985ce9e1161d6b31df22d1f61c6496c4f675dc6ccbd2aeb957f1050ec1096",
+          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
           "anchor": "void serviceInputs("
         }
       ],
@@ -744,7 +855,7 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e94985ce9e1161d6b31df22d1f61c6496c4f675dc6ccbd2aeb957f1050ec1096",
+          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
           "anchor": "void serviceInputs("
         }
       ],
@@ -964,7 +1075,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "96a74aa9c0b2a7986f5f7295e75baff4043c7f143cc9107782ee3b41a31eb0d6"
+          "sha256": "3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54"
         }
       ],
       "proof": [
@@ -1031,7 +1142,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "96a74aa9c0b2a7986f5f7295e75baff4043c7f143cc9107782ee3b41a31eb0d6"
+          "sha256": "3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54"
         }
       ],
       "proof": [
@@ -1098,7 +1209,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "96a74aa9c0b2a7986f5f7295e75baff4043c7f143cc9107782ee3b41a31eb0d6"
+          "sha256": "3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54"
         }
       ],
       "proof": [
@@ -1150,7 +1261,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "96a74aa9c0b2a7986f5f7295e75baff4043c7f143cc9107782ee3b41a31eb0d6"
+          "sha256": "3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54"
         }
       ],
       "proof": [

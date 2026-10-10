@@ -36,6 +36,8 @@ void FrontPanel::release() {
   hostTextActive_ = false;
   transientActive_ = false;
   options_ = 0;
+  captured_ = false;
+  capturedMeta_ = 0;
 }
 
 void FrontPanel::showTransientNumber(int16_t value, uint32_t now,
@@ -63,7 +65,9 @@ bool FrontPanel::acceptDisplayPayload(const uint8_t *payload, uint8_t length,
     release();
     return true;
   }
-  if (target != kDisplaySegments && !scheduled) return false;
+  const bool capture = target == 3;
+  if (target != kDisplaySegments && !scheduled && !capture) return false;
+  if (capture && textLength != 4) return false; // No fitted LCD: segment capture only.
   if ((!scheduled && length < static_cast<uint8_t>(4 + textLength)) ||
       (scheduled &&
        (length < 8 || length < static_cast<uint8_t>(8 + textLength) ||
@@ -88,13 +92,15 @@ bool FrontPanel::acceptDisplayPayload(const uint8_t *payload, uint8_t length,
   // Legacy senders have no repeat selector. Repetition now requires an
   // explicit scheduled request; long text alone must not capture the panel.
   options_ = scheduled ? payload[4] : 0;
+  captured_ = capture;
+  capturedMeta_ = capture ? readU16(payload + 1) : 0;
   stepMs_ = readU16(payload + 1);
   if (stepMs_ == 0) stepMs_ = 260;
   if (stepMs_ < 80) stepMs_ = 80;
   holdMs_ = scheduled ? readU16(payload + 5) : readU16(payload + 1);
   intervalSeconds_ = scheduled ? payload[7] : 0;
   const bool scrolling = textLength > 4 || (options_ & kForceScroll) != 0;
-  nextAt_ = scrolling ? now + stepMs_
+  nextAt_ = capture ? 0 : scrolling ? now + stepMs_
                      : (holdMs_ == 0 || (options_ & kRepeatMask) == 1
                             ? 0 : now + holdMs_);
   hostTextActive_ = textLength != 0;
@@ -215,6 +221,12 @@ void FrontPanel::service(uint32_t now, BoardCore::Protocol::GameMode mode,
       return;
     }
     transientActive_ = false;
+  }
+  if (menuActive_) {
+    if (menuPage_ == 3) display.showText(menuValue_ ? F("MutE") : F("bEEP"));
+    else if (menuPage_ == 5) display.showText(menuValue_ ? F("run ") : F("IdLE"));
+    else display.showInteger(menuValue_);
+    return;
   }
   showLocal(mode, selectedCell, winner);
 }

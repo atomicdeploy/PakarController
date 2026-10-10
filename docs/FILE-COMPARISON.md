@@ -2,7 +2,7 @@
 
 Whole-repository superiority is **not established**. This report exposes retained code, scoped improvements, omissions and gaps; it does not turn missing reviews into exclusions.
 
-Inventory: 1868 files; 31 complete source-file comparisons; 1837 pending comparisons; 18 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
+Inventory: 1868 files; 31 complete source-file comparisons; 1837 pending comparisons; 16 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
 Every inventoried path, source revision/hash, target/proof file and line, omitted code, disposition and concrete reason is in `file-comparison.csv`. Hash-bound manual decisions are in `file-comparison-evidence.json`. Donor SHA-256 values bind original bytes; target/proof SHA-256 values bind UTF-8 without BOM with LF newlines. Anchors are recomputed into exact line numbers. Test-code presence is not test execution; execution receipts are in `FILE-COMPARISON-RECEIPTS.md`.
 
@@ -12,7 +12,7 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 |---|---:|---:|---:|---:|
 | ControllerBoardMini | 19 | 0 | 19 | 0 |
 | ControllerBoardMini/Puzzles | 18 | 12 | 6 | 9 |
-| PCController | 1207 | 6 | 1201 | 2 |
+| PCController | 1207 | 6 | 1201 | 0 |
 | Pealayer | 493 | 9 | 484 | 3 |
 | PU850-ESP | 109 | 4 | 105 | 4 |
 | PuzzleBoard | 22 | 0 | 22 | 0 |
@@ -23,11 +23,12 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `9ceb7e764ef9d4d5feb62b2c7a22eed59d614b7b56432fae87ce87b4aa434578`.
 
-- Target: `firmware/avr/avr.ino:308 [UTF8-LF sha256=e94985ce9e1161d6b31df22d1f61c6496c4f675dc6ccbd2aeb957f1050ec1096; anchor=void serviceInputs(]`.
-- Target: `firmware/avr/avr.ino:190 [UTF8-LF sha256=e94985ce9e1161d6b31df22d1f61c6496c4f675dc6ccbd2aeb957f1050ec1096; anchor=void onInputChanged(]`.
+- Target: `firmware/avr/avr.ino:387 [UTF8-LF sha256=0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a; anchor=void serviceInputs(]`.
+- Target: `firmware/avr/avr.ino:372 [UTF8-LF sha256=0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a; anchor=void boardKeyGesture(]`.
 - Retained: Active-low physical plus virtual shift input state and candidate/stable transition tracking; AVR reports releases as dirty state; press handling is mode-specific.
-- Omitted/replaced code: `DEBOUNCE_MS = 50`. Disposition: **pending**. Reason: Pakar currently uses 25 ms. No switch-bounce/response measurements justify claiming the shorter period is better.
-- Omitted/replaced code: `Key virtual readCurrentState/onStateChanged, setCallback, bool/getCurrentState interface`. Disposition: **pending**. Reason: Pakar's fixed service function covers current game presses and state changes, but not the reusable per-key extension/callback contract. Generic input utility is not donor business logic.
+- Retained: Actual PCController per-key callback/gesture classifier now feeds all nine inputs; no game action waits for click classification.
+- Omitted/replaced code: `DEBOUNCE_MS = 50`. Disposition: **pending**. Reason: Actual PCController classifier now uses macro-configurable PAKAR_KEY_DEBOUNCE_MS (default 20ms) with tested Down/Up, click and hold timing. Physical switch-bounce measurements remain pending; faster is not certified electrically.
+- Omitted/replaced code: `Key virtual readCurrentState/onStateChanged, setCallback, bool/getCurrentState interface`. Disposition: **replaced**. Reason: Imported PCController per-key classifier, setCallback and setEventCallback are retained. updateSample separates the input driver from gesture classification and supports all nine shift/ADC keys; subclass-specific raw reads are replaced by the actual board sample adapter.
 - Omitted/replaced code: `Raw Puzzles lower-four input order`. Disposition: **pending**. Reason: Current PCController-based register reader reverses those bits. Physical key identity must decide the mapping; source reuse alone cannot.
 - Remaining: Add input mapping/debounce configuration and bounce/press/release tests; preserve reusable callback capability or record a reviewed alternative contract.
 
@@ -35,11 +36,12 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `caa21fe97e3df262f0821bd582b60f2895a14ec193d7d6fec13321afe4c5a46d`.
 
-- Target: `firmware/avr/avr.ino:308 [UTF8-LF sha256=e94985ce9e1161d6b31df22d1f61c6496c4f675dc6ccbd2aeb957f1050ec1096; anchor=void serviceInputs(]`.
-- Target: `firmware/avr/avr.ino:190 [UTF8-LF sha256=e94985ce9e1161d6b31df22d1f61c6496c4f675dc6ccbd2aeb957f1050ec1096; anchor=void onInputChanged(]`.
+- Target: `firmware/avr/avr.ino:387 [UTF8-LF sha256=0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a; anchor=void serviceInputs(]`.
+- Target: `firmware/avr/avr.ino:372 [UTF8-LF sha256=0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a; anchor=void boardKeyGesture(]`.
 - Retained: Active-low physical plus virtual shift input state and candidate/stable transition tracking; AVR reports releases as dirty state; press handling is mode-specific.
-- Omitted/replaced code: `DEBOUNCE_MS = 50`. Disposition: **pending**. Reason: Pakar currently uses 25 ms. No switch-bounce/response measurements justify claiming the shorter period is better.
-- Omitted/replaced code: `Key virtual readCurrentState/onStateChanged, setCallback, bool/getCurrentState interface`. Disposition: **pending**. Reason: Pakar's fixed service function covers current game presses and state changes, but not the reusable per-key extension/callback contract. Generic input utility is not donor business logic.
+- Retained: Actual PCController per-key callback/gesture classifier now feeds all nine inputs; no game action waits for click classification.
+- Omitted/replaced code: `DEBOUNCE_MS = 50`. Disposition: **pending**. Reason: Actual PCController classifier now uses macro-configurable PAKAR_KEY_DEBOUNCE_MS (default 20ms) with tested Down/Up, click and hold timing. Physical switch-bounce measurements remain pending; faster is not certified electrically.
+- Omitted/replaced code: `Key virtual readCurrentState/onStateChanged, setCallback, bool/getCurrentState interface`. Disposition: **replaced**. Reason: Imported PCController per-key classifier, setCallback and setEventCallback are retained. updateSample separates the input driver from gesture classification and supports all nine shift/ADC keys; subclass-specific raw reads are replaced by the actual board sample adapter.
 - Omitted/replaced code: `Raw Puzzles lower-four input order`. Disposition: **pending**. Reason: Current PCController-based register reader reverses those bits. Physical key identity must decide the mapping; source reuse alone cannot.
 - Remaining: Add input mapping/debounce configuration and bounce/press/release tests; preserve reusable callback capability or record a reviewed alternative contract.
 
@@ -77,7 +79,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `e66094dc5cee382a71f87d043f7029eb359bc8fe9ff05f3a8f8d7715c3ed2dd2`.
 
 - Target: `firmware/avr/BoardPins.h:33 [UTF8-LF sha256=cd69a72a316a0ad001689b9ad19fd147bf335482a4d9e931124d8eff9af2892f; anchor=Tm1637Clock = I2cScl]`.
-- Target: `firmware/avr/SevenSegments.h:11 [UTF8-LF sha256=3678996bf9b726e52a39622b7eee8ecb4a56fc6bc881f459cb2f7b40ba86ca88; anchor=void showSegments(]`.
+- Target: `firmware/avr/SevenSegments.h:11 [UTF8-LF sha256=a2719b4f3d9c21e98200420a91cb0326b1869dbcfb90136a1184e379f7b7ee3b; anchor=void showSegments(]`.
 - Retained: A4/SDA DIO and A5/SCL CLK pin ownership; segment-level output via current compact driver.
 - Omitted/replaced code: `External TM1637Display wrapper and its complete external-library public API`. Disposition: **pending**. Reason: The compact driver replaces basic raw/text/number output but full external library parity, including leading-zero/dot/position APIs, has not been audited. Correct pins alone do not justify dropping those capabilities.
 - Remaining: Review exact donor library revision/API and either add useful capabilities or justify each missing entry; close matching PCController recovery gap.
@@ -86,7 +88,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `3f5ef23f7a8052d8086b2803343e3e22bb9751924b7760077950f4b0bd2cc196`.
 
-- Target: `firmware/avr/avr.ino:308 [UTF8-LF sha256=e94985ce9e1161d6b31df22d1f61c6496c4f675dc6ccbd2aeb957f1050ec1096; anchor=void serviceInputs(]`.
+- Target: `firmware/avr/avr.ino:387 [UTF8-LF sha256=0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a; anchor=void serviceInputs(]`.
 - Retained: Only cooperative target-specific timers exist in current AVR services; the generic donor task scheduler is not implemented.
 - Omitted/replaced code: `Tasks::addTask/cancelTask/update and ten callback slots`. Disposition: **pending**. Reason: Front-panel deadlines do not replace arbitrary scheduled callbacks or cancellation. It is useful infrastructure and needs an explicit replacement, not a business-logic exclusion.
 - Omitted/replaced code: `startsAt==0 free-slot sentinel and currentTime > startsAt comparison`. Disposition: **pending**. Reason: Do not copy the rollover/zero-deadline ambiguity unchanged. A replacement must keep the generic scheduling/cancellation API using explicit occupancy and wrap-safe deadlines; such a replacement is not present yet.
@@ -96,7 +98,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `5d838a7fb53c799160d55a65b22546ab2e749eb30f8412ed5d08e9ce44300fed`.
 
-- Target: `firmware/avr/avr.ino:308 [UTF8-LF sha256=e94985ce9e1161d6b31df22d1f61c6496c4f675dc6ccbd2aeb957f1050ec1096; anchor=void serviceInputs(]`.
+- Target: `firmware/avr/avr.ino:387 [UTF8-LF sha256=0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a; anchor=void serviceInputs(]`.
 - Retained: Only cooperative target-specific timers exist in current AVR services; the generic donor task scheduler is not implemented.
 - Omitted/replaced code: `Tasks::addTask/cancelTask/update and ten callback slots`. Disposition: **pending**. Reason: Front-panel deadlines do not replace arbitrary scheduled callbacks or cancellation. It is useful infrastructure and needs an explicit replacement, not a business-logic exclusion.
 - Omitted/replaced code: `startsAt==0 free-slot sentinel and currentTime > startsAt comparison`. Disposition: **pending**. Reason: Do not copy the rollover/zero-deadline ambiguity unchanged. A replacement must keep the generic scheduling/cancellation API using explicit occupancy and wrap-safe deadlines; such a replacement is not present yet.
@@ -158,29 +160,33 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 ### PCController: `LocalLib/SevenSegments.cpp`
 
-Verdict: **parity-gap**. Revision: `20c6115bb462fe5111b66cd7c21f7328a1f78892`. Original-byte SHA-256: `54c366525142aca0103a8d58f7ce8d9cbc34c1b5884b20a1ad5ae50ddc6bb4a8`.
+Verdict: **scoped-improvement**. Revision: `20c6115bb462fe5111b66cd7c21f7328a1f78892`. Original-byte SHA-256: `54c366525142aca0103a8d58f7ce8d9cbc34c1b5884b20a1ad5ae50ddc6bb4a8`.
 
-- Target: `firmware/avr/SevenSegments.h:26 [UTF8-LF sha256=3678996bf9b726e52a39622b7eee8ecb4a56fc6bc881f459cb2f7b40ba86ca88; anchor=void serviceBrightness(]`.
-- Target: `firmware/avr/SevenSegments.cpp:97 [UTF8-LF sha256=75fb9ad26a78f104dbdcc93208e24ca55f7d33a518dd6de61c59462580a87b32; anchor=void writeBusByte(]`.
+- Target: `firmware/avr/SevenSegments.h:26 [UTF8-LF sha256=a2719b4f3d9c21e98200420a91cb0326b1869dbcfb90136a1184e379f7b7ee3b; anchor=void serviceBrightness(]`.
+- Target: `firmware/avr/SevenSegments.cpp:98 [UTF8-LF sha256=28547987e3fe6bf85e13763fa93ef8bb234f8d8f6204b43658058f070f6d9228; anchor=void writeBusByte(]`.
 - Target: `firmware/avr/BoardPins.h:31 [UTF8-LF sha256=cd69a72a316a0ad001689b9ad19fd147bf335482a4d9e931124d8eff9af2892f; anchor=Tm1637Data = I2cSda]`.
 - Retained: Bounded four-digit RAM/flash text, raw segments, integer/fixed-point output, caching and 0..7 brightness/display-off behavior.
+- Retained: Actual donor ACK sampling, one-second cached-frame/brightness keepalive, observed presence and active 70ms brightness service on PC4/PC5. Independent probing was removed.
 - Omitted/replaced code: `PB3/PB5 TM1637 bus pins`. Disposition: **replaced**. Reason: User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming.
-- Omitted/replaced code: `detected(), busNack ACK sampling, reconnect cached-frame restoration and one-second keepalive`. Disposition: **pending**. Reason: Useful matching-hardware recovery was lost. Pakar releases ACK but does not sample it, and its independent probe is not equivalent continuous driver detection.
-- Omitted/replaced code: `serviceBrightness invocation in the active AVR service loop`. Disposition: **pending**. Reason: The target has this method but no active service-loop call. A retained declaration does not demonstrate recovery or smoothing integration.
-- Remaining: Import ACK/reconnect recovery onto PC4/PC5; connect observed detection and periodic service to AVR telemetry; test disconnect/reconnect and unchanged-frame recovery.
+- Test-code evidence: `tests/pc_contract_test.cpp:234 [UTF8-LF sha256=325baf7036fa3a9cfcf65f8d4d415ee2ac42155a89fcdb1282c461b3e9102930; anchor=void keysAndDisplay()]`.
+- Test-code evidence: `firmware/avr/avr.ino:428 [UTF8-LF sha256=0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a; anchor=display.serviceBrightness(]`.
+- Scoped advantage: Retains donor recovery on the correct board pins, accumulates intermediate NACKs instead of letting the final control ACK hide failure; host disconnect/reconnect and true-off tests pass.
+- Remaining: Physical TM1637 unplug/replug and power-cycle acceptance remains unverified; host GPIO doubles are not a physical board.
 
 ### PCController: `LocalLib/SevenSegments.h`
 
-Verdict: **parity-gap**. Revision: `20c6115bb462fe5111b66cd7c21f7328a1f78892`. Original-byte SHA-256: `e58e1783404f494ea7b1852780b6485cbfda872781b9159b9ee29426edae9240`.
+Verdict: **scoped-improvement**. Revision: `20c6115bb462fe5111b66cd7c21f7328a1f78892`. Original-byte SHA-256: `e58e1783404f494ea7b1852780b6485cbfda872781b9159b9ee29426edae9240`.
 
-- Target: `firmware/avr/SevenSegments.h:26 [UTF8-LF sha256=3678996bf9b726e52a39622b7eee8ecb4a56fc6bc881f459cb2f7b40ba86ca88; anchor=void serviceBrightness(]`.
-- Target: `firmware/avr/SevenSegments.cpp:97 [UTF8-LF sha256=75fb9ad26a78f104dbdcc93208e24ca55f7d33a518dd6de61c59462580a87b32; anchor=void writeBusByte(]`.
+- Target: `firmware/avr/SevenSegments.h:26 [UTF8-LF sha256=a2719b4f3d9c21e98200420a91cb0326b1869dbcfb90136a1184e379f7b7ee3b; anchor=void serviceBrightness(]`.
+- Target: `firmware/avr/SevenSegments.cpp:98 [UTF8-LF sha256=28547987e3fe6bf85e13763fa93ef8bb234f8d8f6204b43658058f070f6d9228; anchor=void writeBusByte(]`.
 - Target: `firmware/avr/BoardPins.h:31 [UTF8-LF sha256=cd69a72a316a0ad001689b9ad19fd147bf335482a4d9e931124d8eff9af2892f; anchor=Tm1637Data = I2cSda]`.
 - Retained: Bounded four-digit RAM/flash text, raw segments, integer/fixed-point output, caching and 0..7 brightness/display-off behavior.
+- Retained: Actual donor ACK sampling, one-second cached-frame/brightness keepalive, observed presence and active 70ms brightness service on PC4/PC5. Independent probing was removed.
 - Omitted/replaced code: `PB3/PB5 TM1637 bus pins`. Disposition: **replaced**. Reason: User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming.
-- Omitted/replaced code: `detected(), busNack ACK sampling, reconnect cached-frame restoration and one-second keepalive`. Disposition: **pending**. Reason: Useful matching-hardware recovery was lost. Pakar releases ACK but does not sample it, and its independent probe is not equivalent continuous driver detection.
-- Omitted/replaced code: `serviceBrightness invocation in the active AVR service loop`. Disposition: **pending**. Reason: The target has this method but no active service-loop call. A retained declaration does not demonstrate recovery or smoothing integration.
-- Remaining: Import ACK/reconnect recovery onto PC4/PC5; connect observed detection and periodic service to AVR telemetry; test disconnect/reconnect and unchanged-frame recovery.
+- Test-code evidence: `tests/pc_contract_test.cpp:234 [UTF8-LF sha256=325baf7036fa3a9cfcf65f8d4d415ee2ac42155a89fcdb1282c461b3e9102930; anchor=void keysAndDisplay()]`.
+- Test-code evidence: `firmware/avr/avr.ino:428 [UTF8-LF sha256=0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a; anchor=display.serviceBrightness(]`.
+- Scoped advantage: Retains donor recovery on the correct board pins, accumulates intermediate NACKs instead of letting the final control ACK hide failure; host disconnect/reconnect and true-off tests pass.
+- Remaining: Physical TM1637 unplug/replug and power-cycle acceptance remains unverified; host GPIO doubles are not a physical board.
 
 ### PCController: `LocalLib/ShiftRegisters.cpp`
 
@@ -333,7 +339,7 @@ Verdict: **parity-gap**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550d`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `0113acbff973285f5af186a4857d94cc2df3c99813e0db4ba876f861e7c1083b`.
 
 - Target: `firmware/esp8266/src/TelnetShell.h:63 [UTF8-LF sha256=bdd9e09124f9b5c60582beba58dc92bc4ab2b818a84fd3c98c8f5165971f4cf1; anchor=class LineEditor]`.
-- Target: `firmware/esp8266/esp8266.ino:1966 [UTF8-LF sha256=96a74aa9c0b2a7986f5f7295e75baff4043c7f143cc9107782ee3b41a31eb0d6; anchor=void executeTelnetCommand(String line)]`.
+- Target: `firmware/esp8266/esp8266.ino:2188 [UTF8-LF sha256=3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54; anchor=void executeTelnetCommand(String line)]`.
 - Retained: Actual insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL handling retained.
 - Retained: Password input is not echoed and is scrubbed; overflow discards the entire line instead of executing a truncated command; editor state is independent.
 - Omitted/replaced code: `ShellTransport_Serial, SerialShellSession and serial-shell service`. Disposition: **pending**. Reason: USB currently owns COBS-framed PC commands. Mixing raw shell bytes would corrupt that transport; provide an explicit framed shell channel or negotiated mode before claiming equivalent serial-shell support.
@@ -351,7 +357,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `9f8e76509ad917d8e204a82d9495e376607a159547d4eee3de6760e6bd5d7da6`.
 
 - Target: `firmware/esp8266/src/TelnetShell.h:63 [UTF8-LF sha256=bdd9e09124f9b5c60582beba58dc92bc4ab2b818a84fd3c98c8f5165971f4cf1; anchor=class LineEditor]`.
-- Target: `firmware/esp8266/esp8266.ino:1966 [UTF8-LF sha256=96a74aa9c0b2a7986f5f7295e75baff4043c7f143cc9107782ee3b41a31eb0d6; anchor=void executeTelnetCommand(String line)]`.
+- Target: `firmware/esp8266/esp8266.ino:2188 [UTF8-LF sha256=3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54; anchor=void executeTelnetCommand(String line)]`.
 - Retained: Actual insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL handling retained.
 - Retained: Password input is not echoed and is scrubbed; overflow discards the entire line instead of executing a truncated command; editor state is independent.
 - Omitted/replaced code: `ShellTransport_Serial, SerialShellSession and serial-shell service`. Disposition: **pending**. Reason: USB currently owns COBS-framed PC commands. Mixing raw shell bytes would corrupt that transport; provide an explicit framed shell channel or negotiated mode before claiming equivalent serial-shell support.
@@ -369,7 +375,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `a78d88c149d19d8989c6db3dce0731189c2bf46c45fd64b73e9871a80f6c9bdd`.
 
 - Target: `firmware/esp8266/src/TelnetShell.h:13 [UTF8-LF sha256=bdd9e09124f9b5c60582beba58dc92bc4ab2b818a84fd3c98c8f5165971f4cf1; anchor=class TelnetParser]`.
-- Target: `firmware/esp8266/esp8266.ino:2072 [UTF8-LF sha256=96a74aa9c0b2a7986f5f7295e75baff4043c7f143cc9107782ee3b41a31eb0d6; anchor=void serviceTelnet() {]`.
+- Target: `firmware/esp8266/esp8266.ino:2294 [UTF8-LF sha256=3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54; anchor=void serviceTelnet() {]`.
 - Retained: Actual five-state IAC/option/subnegotiation parser, escaped IAC, ECHO/SGA negotiation and greeting retained in standalone WiFiClient-based implementation.
 - Retained: Pakar tracks option state to suppress greeting-ack negotiation loops; unsupported DO/WILL options are explicitly rejected.
 - Omitted/replaced code: `ESPTelnet dependency and ESP8266WEBSERVER_H synchronous-header suppression`. Disposition: **replaced**. Reason: Native WiFiServer/WiFiClient removes the dependency which pulled a conflicting synchronous web-server header into an async server product; the actual protocol parser was retained rather than replaced by plain newline input.
@@ -384,7 +390,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `e85f5f1a4f2767323d9886313ddb2aabfd3acad7d781c2770bc8d2b2d2c6cb15`.
 
 - Target: `firmware/esp8266/src/TelnetShell.h:13 [UTF8-LF sha256=bdd9e09124f9b5c60582beba58dc92bc4ab2b818a84fd3c98c8f5165971f4cf1; anchor=class TelnetParser]`.
-- Target: `firmware/esp8266/esp8266.ino:2072 [UTF8-LF sha256=96a74aa9c0b2a7986f5f7295e75baff4043c7f143cc9107782ee3b41a31eb0d6; anchor=void serviceTelnet() {]`.
+- Target: `firmware/esp8266/esp8266.ino:2294 [UTF8-LF sha256=3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54; anchor=void serviceTelnet() {]`.
 - Retained: Actual five-state IAC/option/subnegotiation parser, escaped IAC, ECHO/SGA negotiation and greeting retained in standalone WiFiClient-based implementation.
 - Retained: Pakar tracks option state to suppress greeting-ack negotiation loops; unsupported DO/WILL options are explicitly rejected.
 - Omitted/replaced code: `ESPTelnet dependency and ESP8266WEBSERVER_H synchronous-header suppression`. Disposition: **replaced**. Reason: Native WiFiServer/WiFiClient removes the dependency which pulled a conflicting synchronous web-server header into an async server product; the actual protocol parser was retained rather than replaced by plain newline input.

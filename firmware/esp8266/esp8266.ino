@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <ESP8266SSDP.h>
 #include <ESP8266NetBIOS.h>
 #include <ESPAsyncTCP.h>
@@ -14,6 +15,9 @@
 #include <BuildInfo.h>
 #include <AudioCues.h>
 #include <Protocol.h>
+#include <PcContractTransport.h>
+#include <PcContractAssembly.h>
+#include <PcLedContract.h>
 #include <SerialLink.h>
 
 #include "src/AvrIsp.h"
@@ -85,6 +89,11 @@ uint32_t avrUploadOwner = 0;
 String hostname;
 bool avrOnline = false;
 bool avrVersionKnown = false;
+bool avrPcSupported = false;
+uint16_t avrPcFeatures = 0;
+BoardCore::PcContractTransport pcTransport;
+String pcBootId;
+uint32_t lastAvrPingAt = 0;
 uint8_t avrVersion[3] = {};
 bool apStarted = false;
 GameMode mode = kModeCellSelect;
@@ -164,6 +173,26 @@ void serviceDiscovery();
 void registerAsyncOta();
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
                const uint8_t *payload = nullptr, uint8_t payloadLength = 0);
+String pcReceiptJson(const BoardCore::PcContractTransport::Receipt &receipt);
+void publishPcEvent(const String &event) {
+  webSocket.textAll(event);
+  cloudServices.publishEvent(event);
+}
+void servicePcContracts();
+void serviceAvrFor(uint32_t durationMs);
+void setAvrTransmitBlocked(bool blocked);
+class PcStripOutput {
+ public:
+  void clear() { grid.fill(kCellOff); }
+  bool stage(uint8_t index, const uint8_t *rgb, uint8_t count) { return grid.stagePixels(index, rgb, count); }
+  void brightness(uint8_t value) { grid.setBrightness(value); }
+  void commit() {
+    setAvrTransmitBlocked(true); serviceAvrFor(18);
+    grid.showStaged(); streamFrameReady = false;
+    setAvrTransmitBlocked(false);
+  }
+} pcStripOutput;
+BoardCore::PcLedContract<PcStripOutput> pcStrip(pcStripOutput);
 
 void sendHostStatus(uint8_t requestSequence) {
   const time_t currentTime = time(nullptr);
@@ -189,10 +218,31 @@ void sendHostStatus(uint8_t requestSequence) {
 }
 
 void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
+  static BoardCore::PcContractAssembly usbPcAssembly;
   if ((otaActive || otaRebootAt || avrUploadOwner) && frame.opcode != kGetStatus && frame.opcode != kHello && frame.opcode != kPing) {
     hostLink.error(frame.sequence, frame.opcode, kBusy); return;
   }
   switch (frame.opcode) {
+    case kPcContractChunk:
+      if (usbPcAssembly.accept(frame.sequence, frame.payload, frame.payloadLength, millis())) {
+        const uint8_t *request = usbPcAssembly.data();
+        if (request[0] != ControllerProtocol::AddressableLed && (!avrOnline || !avrPcSupported))
+          hostLink.error(frame.sequence, kPcContract, kHardwareUnavailable);
+        else if (!pcTransport.enqueue(request[0], request + 1, 48, millis(), true, frame.sequence))
+          hostLink.error(frame.sequence, kPcContract, kBusy);
+      }
+      break;
+    case kPcContract:
+      if ((!frame.payloadLength || frame.payload[0] != ControllerProtocol::AddressableLed) &&
+          (!avrOnline || !avrPcSupported)) {
+        hostLink.error(frame.sequence, frame.opcode, kHardwareUnavailable); break;
+      }
+      if (!frame.payloadLength || !pcTransport.enqueue(frame.payload[0],
+          frame.payload + 1, frame.payloadLength - 1, millis(), true, frame.sequence)) {
+        hostLink.error(frame.sequence, frame.opcode, frame.payloadLength ? kBusy : kBadPayload);
+      }
+      // No fabricated ESP ACK: return the actual AVR inner response later.
+      break;
     case kDeviceName: {
       if (programmingLatched || networkApplyPending) { hostLink.error(frame.sequence, frame.opcode, kBusy); break; }
       if (frame.payloadLength == 1 && frame.payload[0] == 0) stagedDeviceName = String();
@@ -570,9 +620,74 @@ bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
   if (sent) {
     // The longest routine response is below 6 ms at 38400 baud. Keep a full
     // margin so FastLED cannot mask interrupts after only part of it arrived.
-    ledResumeAt = millis() + 12U;
+    ledResumeAt = millis() + (opcode == kPcContract ? 32U : 12U);
   }
   return sent;
+}
+
+String pcReceiptJson(const BoardCore::PcContractTransport::Receipt &receipt) {
+  using T = BoardCore::PcContractTransport;
+  String body = F("{\"type\":\"pc-contract\",\"boot_id\":\"");
+  body += pcBootId;
+  body += F("\",\"request_id\":"); body += receipt.id;
+  body += F(",\"request_opcode\":"); body += receipt.request[0];
+  body += F(",\"state\":\"");
+  body += receipt.state == T::Queued ? F("queued") : receipt.state == T::Awaiting ?
+      F("awaiting") : receipt.state == T::Responded ? F("responded") : F("outcome_unknown");
+  body += F("\",\"response_opcode\":");
+  if (receipt.state == T::Responded && receipt.responseLength) body += receipt.response[0];
+  else body += F("null");
+  body += F(",\"payload_hex\":\"");
+  constexpr char digits[] = "0123456789abcdef";
+  for (uint8_t i = 1; i < receipt.responseLength; ++i) {
+    body += digits[receipt.response[i] >> 4]; body += digits[receipt.response[i] & 15];
+  }
+  body += F("\"}"); return body;
+}
+
+void servicePcContracts() {
+  using T = BoardCore::PcContractTransport;
+  pcTransport.expire(millis(), [](T::Receipt &receipt) {
+    if (receipt.usb) {
+      // Transport timeout is uncertainty, not an AVR rejection or safe stop.
+      hostLink.error(receipt.hostSequence, kPcContract, kBusy);
+      pcTransport.releaseUsb(receipt);
+    } else publishPcEvent(pcReceiptJson(receipt));
+  });
+  if (otaActive || otaRebootAt || avrUploadOwner) return;
+  auto *request = pcTransport.next();
+  if (!request) return;
+  if (request->request[0] == ControllerProtocol::AddressableLed) {
+    pcTransport.sent(*request, true, millis());
+    const Error error = programmingLatched ? kUnsafe :
+        pcStrip.handle(request->request + 1, request->requestLength - 1);
+    BoardCore::Protocol::Frame response{};
+    response.opcode = kPcContractResponse; response.sequence = request->wireSequence;
+    response.payloadLength = 3;
+    response.payload[0] = error == kNoError ? ControllerProtocol::Ack : ControllerProtocol::ErrorResponse;
+    response.payload[1] = ControllerProtocol::AddressableLed; response.payload[2] = error;
+    auto *receipt = pcTransport.accept(response, millis());
+    if (receipt && receipt->usb) {
+      hostLink.send(kPcContractResponse, receipt->hostSequence, response.payload, response.payloadLength);
+      pcTransport.releaseUsb(*receipt);
+    } else if (receipt) publishPcEvent(pcReceiptJson(*receipt));
+    return;
+  }
+  if (!avrOnline || !avrPcSupported) return;
+  setAvrTransmitBlocked(false);
+  bool sent;
+  if (request->requestLength == 49) {
+    uint8_t start[48] = {0, request->request[0], 48};
+    memcpy(start + 3, request->request + 1, 45);
+    uint8_t finish[4] = {1};
+    memcpy(finish + 1, request->request + 46, 3);
+    sent = sendToAvr(kPcContractChunk, request->wireSequence, start, sizeof(start)) &&
+           sendToAvr(kPcContractChunk, request->wireSequence, finish, sizeof(finish));
+    ledResumeAt = millis() + 32;
+  } else sent = sendToAvr(kPcContract, request->wireSequence,
+                          request->request, request->requestLength);
+  pcTransport.sent(*request, sent, millis());
+  if (!sent && !request->usb) publishPcEvent(pcReceiptJson(*request));
 }
 
 void serviceAvrFor(uint32_t durationMs) {
@@ -786,6 +901,7 @@ String buildStatusJson() {
     if (i) body += ',';
     body += '"'; body += BoardCore::AudioCues::name(i); body += '"';
   }
+  // Contract support is peer-advertised, not inferred from ESP source flags.
   body += ']';
   body += F(",\"ap_started\":"); body += apStarted ? F("true") : F("false");
   body += F(",\"ap_enabled\":"); body += networkConfig.accessPointEnabled() ? F("true") : F("false");
@@ -855,6 +971,11 @@ String buildStatusJson() {
   body += F(",\"usb_serial_bytes_received\":"); body += hostLink.bytesReceived();
   body += F(",\"usb_serial_frames_received\":"); body += hostLink.framesReceived();
   body += F(",\"usb_serial_errors\":"); body += hostLink.errors();
+  body += F(",\"pc_contract_supported\":");
+  body += avrOnline && avrPcSupported ? F("true") : F("false");
+  body += F(",\"pc_contract_features\":");
+  if (avrOnline && avrPcSupported) body += avrPcFeatures;
+  else body += F("null");
   body += F(",\"pixels\":"); body += LedGrid::kPixels;
   body += F(",\"cells\":[");
   for (uint8_t cell = 1; cell <= LedGrid::kCells; ++cell) {
@@ -901,6 +1022,15 @@ void handleWebSocketMessage(AsyncWebSocketClient *client, uint8_t opcode,
     client->text(status);
   } else if (message.indexOf(F("\"type\":\"ping\"")) >= 0) {
     client->text("{\"type\":\"pong\"}");
+  } else {
+    JsonDocument request;
+    if (deserializeJson(request, message) ||
+        request["command"].as<String>() != F("pc-contract")) return;
+    String result;
+    const bool accepted = handleCloudCommand(message, result);
+    result.replace("\\", "\\\\"); result.replace("\"", "\\\"");
+    client->text(String(F("{\"accepted\":")) + (accepted ? "true" : "false") +
+                 F(",\"message\":\"") + result + F("\"}"));
   }
 }
 
@@ -1061,6 +1191,28 @@ bool jsonBooleanValue(const String &json, const char *key) {
 
 bool handleCloudCommand(const String &message, String &result) {
   const String command = jsonStringValue(message, "command");
+  if (command == F("pc-contract")) {
+    JsonDocument request;
+    if (message.length() > 512 || deserializeJson(request, message) ||
+        !request.is<JsonObject>() || !request["opcode"].is<int>() ||
+        (!request["payload_hex"].isNull() &&
+         !request["payload_hex"].is<const char *>())) {
+      result = F("bad PCController contract request"); return false;
+    }
+    const int op = request["opcode"].as<int>();
+    uint8_t p[48], n = 0;
+    if (op < 0 || op > 127 || !BoardCore::PcContractTransport::decodeHex(
+        request["payload_hex"] | "", p, n)) {
+      result = F("bad PCController opcode or payload"); return false;
+    }
+    if (otaActive || otaRebootAt || avrUploadOwner ||
+        (op != ControllerProtocol::AddressableLed && (!avrOnline || !avrPcSupported))) {
+      result = F("contract endpoint unavailable"); return false;
+    }
+    const uint32_t id = pcTransport.enqueue(op, p, n, millis());
+    if (!id) { result = F("contract queue full"); return false; }
+    result = pcReceiptJson(*pcTransport.get(id)); return true;
+  }
   if (command == F("status") ||
       jsonStringValue(message, "type") == F("status")) {
     result = F("status will be published");
@@ -1219,6 +1371,31 @@ bool handleCloudCommand(const String &message, String &result) {
 void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
   avrOnline = true;
   lastAvrFrameAt = millis();
+  if (frame.opcode == kPcContractResponse) {
+    auto *receipt = pcTransport.accept(frame, millis());
+    if (receipt) {
+      if (receipt->usb) {
+        hostLink.send(kPcContractResponse, receipt->hostSequence, frame.payload, frame.payloadLength);
+        pcTransport.releaseUsb(*receipt);
+      } else publishPcEvent(pcReceiptJson(*receipt));
+    } else if (frame.sequence == 0 || frame.sequence == 0xFE) {
+      String event = F("{\"type\":\"pc-contract-event\",\"response_opcode\":");
+      event += frame.payloadLength ? frame.payload[0] : 0;
+      event += F(",\"payload_hex\":\"");
+      constexpr char digits[] = "0123456789abcdef";
+      for (uint8_t i = 1; i < frame.payloadLength; ++i) {
+        event += digits[frame.payload[i] >> 4]; event += digits[frame.payload[i] & 15];
+      }
+      event += F("\"}"); publishPcEvent(event);
+      hostLink.send(kPcContractResponse, frame.sequence, frame.payload, frame.payloadLength);
+    }
+    if (frame.payloadLength == 6 && frame.payload[0] == ControllerProtocol::SegmentChanged) {
+      memcpy(tm1637Segments, frame.payload + 1, 4);
+      tm1637Brightness = frame.payload[5] & 7U;
+      tm1637Ack = (frame.payload[5] & 0xC0U) == 0xC0U;
+    }
+    return;
+  }
   if ((frame.opcode == kAck || frame.opcode == kErrorResponse) &&
       frame.sequence == awaitedSequence && frame.payloadLength >= 2 &&
       frame.payload[0] == awaitedOpcode) {
@@ -1230,6 +1407,8 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
                       frame.payload[0] == BoardCore::BuildInfo::kProtocolVersion &&
                       frame.payload[1] == kRoleAvr;
     if (avrVersionKnown) memcpy(avrVersion, frame.payload + 6, sizeof(avrVersion));
+    avrPcSupported = avrVersionKnown && frame.payloadLength >= 12 && frame.payload[9] == 0x50;
+    avrPcFeatures = avrPcSupported ? frame.payload[10] | static_cast<uint16_t>(frame.payload[11]) << 8 : 0;
     sendToAvr(kGetStatus, sequence++);
   } else if (frame.opcode == kGameState && frame.payloadLength >= 4) {
     const uint8_t previousWinner = winner;
@@ -1406,6 +1585,49 @@ void registerApi() {
   server.on("/api/v1/status", HTTP_GET, []() {
     if (!authenticate()) return;
     sendStatusJson();
+  });
+  server.on("/api/v1/avr/contracts", HTTP_GET, []() {
+    if (!authenticate()) return;
+    String body = F("{\"dialect\":\"pakar-pccontroller\",\"profile\":80,\"tunnel_opcode\":86,\"chunk_opcode\":87,\"maximum_payload\":48,\"supported\":");
+    body += avrOnline && avrPcSupported ? F("true") : F("false");
+    body += F(",\"enabled_features\":");
+    if (avrOnline && avrPcSupported) body += avrPcFeatures; else body += F("null");
+    body += F(",\"esp_addressable_led\":"); body += PAKAR_PC_ESP_LED ? F("true") : F("false");
+    body += F(",\"boot_id\":\""); body += pcBootId;
+    body += F("\",\"future_hardware_flags\":[\"PAKAR_PC_I2C\",\"PAKAR_PC_SENSORS\",\"PAKAR_PC_PWM\",\"PAKAR_PC_RF\",\"PAKAR_PC_RELAYS\",\"PAKAR_PC_STATUS_RGB\",\"PAKAR_PC_AVR_LED\"]}");
+    server.send(200, "application/json", body);
+  });
+  server.on("/api/v1/avr/contracts", HTTP_POST, []() {
+    if (!authenticate()) return;
+    uint8_t p[48], n = 0;
+    const String opcode = server.arg("opcode");
+    bool valid = opcode.length() && opcode.length() <= 3;
+    for (size_t i = 0; i < opcode.length(); ++i) valid &= opcode[i] >= '0' && opcode[i] <= '9';
+    const long value = opcode.toInt();
+    if (!valid || value < 0 || value > 255 ||
+        !BoardCore::PcContractTransport::decodeHex(server.arg("payload_hex").c_str(), p, n)) {
+      server.send(400, "application/json", "{\"error\":\"bad_contract_request\"}"); return;
+    }
+    if (value != ControllerProtocol::AddressableLed && (!avrOnline || !avrPcSupported)) {
+      server.send(503, "application/json", "{\"error\":\"avr_contract_unavailable\"}"); return;
+    }
+    const uint32_t id = pcTransport.enqueue(value, p, n, millis());
+    if (!id) { server.send(409, "application/json", "{\"error\":\"contract_queue_full\"}"); return; }
+    server.send(202, "application/json", pcReceiptJson(*pcTransport.get(id)));
+  });
+  server.on("/api/v1/avr/contracts/result", HTTP_GET, []() {
+    if (!authenticate()) return;
+    const String idText = server.arg("id");
+    bool valid = idText.length() && idText.length() <= 10;
+    uint32_t id = 0;
+    for (size_t i = 0; i < idText.length(); ++i) {
+      const char c = idText[i];
+      if (c < '0' || c > '9' || id > (UINT32_MAX - static_cast<uint32_t>(c - '0')) / 10) { valid = false; break; }
+      id = id * 10 + c - '0';
+    }
+    const auto *receipt = valid && id ? pcTransport.get(id) : nullptr;
+    if (!receipt || receipt->usb) { server.send(404, "application/json", "{\"error\":\"unknown_contract_request\"}"); return; }
+    server.send(200, "application/json", pcReceiptJson(*receipt));
   });
   server.on("/api/v1/cells/mapping", HTTP_GET, []() {
     if (!authenticate()) return;
@@ -2234,6 +2456,7 @@ void serviceConsole() {
 }  // namespace
 
 void setup() {
+  pcBootId = String(ESP.getChipId(), HEX) + "-" + String(ESP.getCycleCount(), HEX);
 #if PAKAR_USE_BUSY_WIRE
   // GPIO0 is pulled high by the NodeMCU boot circuit. Explicitly keep the AVR
   // blocked until UART, Wi-Fi, Web, and the LED renderer are ready.
@@ -2290,6 +2513,7 @@ void setup() {
 }
 
 void loop() {
+  servicePcContracts();
   const uint32_t now = millis();
   link.service();
   hostLink.service();
@@ -2343,10 +2567,16 @@ void loop() {
       static_cast<uint32_t>(afterServices - lastAvrFrameAt) > 3000U) {
     avrOnline = false;
     avrVersionKnown = false;
+    avrPcSupported = false;
   }
   if (!avrOnline && static_cast<uint32_t>(now - lastHelloAt) > 1000) {
     lastHelloAt = now;
     sendToAvr(kHello, sequence++);
+  }
+  if (PAKAR_USE_BUSY_WIRE && avrOnline &&
+      static_cast<uint32_t>(now - lastAvrPingAt) >= 1000U) {
+    lastAvrPingAt = now;
+    sendToAvr(kPing, sequence++); // Presence heartbeat, not state polling.
   }
   // AVR owns its welcome melody. A first HELLO is not a completed update:
   // sending the success cue here could replace the still-playing welcome.

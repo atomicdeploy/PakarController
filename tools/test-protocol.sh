@@ -31,3 +31,12 @@ c++ -std=c++17 -Wall -Wextra -Werror \
   "$root/tests/front_panel_test.cpp" "$root/firmware/avr/FrontPanel.cpp" \
   -o "$root/build/front-panel-test"
 "$root/build/front-panel-test"
+c++ -std=c++17 -Wall -Wextra -Werror \
+  -I "$root/tests/pc_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/avr" \
+  "$root/tests/pc_contract_test.cpp" "$root/firmware/avr/PcControllerRuntime.cpp" \
+  "$root/firmware/avr/BoardSettings.cpp" "$root/firmware/avr/SevenSegments.cpp" \
+  "$root/libraries/BoardCore/src/pccontroller/MacroRing.cpp" \
+  "$root/libraries/BoardCore/src/pccontroller/Keys.cpp" \
+  "$root/libraries/BoardCore/src/pccontroller/AutomationStore.cpp" \
+  -o "$root/build/pc-contract-test"
+"$root/build/pc-contract-test"
