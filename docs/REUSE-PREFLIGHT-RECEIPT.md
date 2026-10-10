@@ -1,5 +1,60 @@
 # Donor-first preflight receipt
 
+## Rayan realtime reconnect and bounded preparation
+
+Consult exact donor-audit for sync.ts/sync.test.ts/api.ts/api.test.ts; read all
+four actual files through EOF and verify source bytes. api.test.ts is a full read,
+not a completed import: authenticated host/config/hotkey/audio/registration tests
+remain pending their adapted implementations. App.tsx lifecycle slice was read
+as context only, not certified. Three exact new comparisons bind imported
+subcontracts, not whole-file feature parity. Readback-before-open uses Pakar's
+cookie-authorized status GET, not the donor Go /app/session CSRF mutation.
+
+Import actual exponential base 500 ms, cap 10 s, 0.8..1.2 jitter, failed preparation
+reschedule, reset-on-open and stop timer cleanup. Import api.ts AbortController,
+12 s bound and finally cleanup for this GET only. Add capped exponent, one queued
+retry owner, stale timer/promise generation checks, cancellation on login loss,
+pause/manual reconnect/pagehide and constructor failure recovery. Signal flows
+through actual refreshAuthenticated/api; no command replay, server write,
+endpoint guess or fabricated live capability. Generic lease/lock/channel election,
+revision/sequence projection, audio ownership and typed host API remain pending.
+
+Port actual prepare-before-reconnect and stop test concepts; execute actual shipped
+module plus Web connectWs/refreshAuthenticated/api with fake HTTP/socket/timers.
+Cover jitter/cap, failed reads, 401 login loss, late callbacks, deadline/cancel,
+constructor failure and HTTPS hostname URL. First jitter-edge assertion exposes
+normal floating-point 600.0000000000001; use tight 1e-9 numeric tolerance without
+rounding production delay. Integration test pins its injected Math.random only,
+not the global host RNG. Source/VM proof is not LAN/physical acceptance.
+
+Coverage becomes 84/4237 complete, 4153 pending, 51 gaps; Rayan 20/2349, 2329 pending.
+Full CSS, API test suite adaptation, native/mobile synchronization and hardware
+acceptance remain open. Canonical generator is checked in one pass; affected route
+and comparison references require exact anchor/hash revalidation before builds.
+The complete quality gate catches the old pause lifecycle in canonical
+assets/web/device-settings.js before compilation. Inspect its generator/consumer,
+apply cancellation there too and regenerate; do not accept only a hand-edited
+embedded copy. The PU route guard similarly rejects the changed WebUi.h hash:
+inspect unchanged remote workspace/job/readback/apply consumers, then rebind
+only its two exact target hashes (Verified remote update remains line 244).
+Server registrations/source identities and all 50 route classifications remain
+unchanged. Preparation cancellation also suppresses stale rendering even if an
+injected fetch ignores abort; timer/deadline cleanup is immediate on cancellation.
+Final review cancels preparation when applying a hostname change and relinquishes
+old socket identity before replacement construction. Constructor failure visibly
+reports retrying; captured old callbacks cannot regain ownership. Final shipped
+code/HTTP/socket tests and full local source quality pass. Sixteen-reviewed gate
+retains full CSS/API-test comparisons pending. Exact donor source hashes remain
+unchanged; no unread source is accepted as an exclusion. Final warm ESP-only
+busy-wire build passes; RAM 70%, IRAM 96%, flash code 83%. Exact image identity
+is recorded below. No AVR/native/APK rebuild, extra cache, flash or app replacement.
+Final image: 926960 bytes, SHA256
+cf52f0404185f0b5bcccba918e6911eec726b7f15391c43bb7aae2ae2a4cc16b.
+RAM 56620/80192; IRAM 63055/65536; flash code 876848/1048576. IRAM headroom remains
+tight. Final edge-case corrections reused the same warm build path, not a clean
+rebuild or downloaded SDK. Freshly reread Build RayanLamp Go app without resuming
+or messaging it; its interrupted Windows regression remains unverified.
+
 ## Native menu foreground policy traced, not recolored
 
 Consult ui-shell and exact donor-audit mappings; fully reread actual Pealayer

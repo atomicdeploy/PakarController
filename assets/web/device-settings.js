@@ -98,8 +98,8 @@ if(document.getElementById)initializeWorkspacePanels();
 
 // Independent socket lifecycle. A delayed close from an obsolete socket must
 // never schedule another connection or repaint the currently selected state.
-let webSocketPaused=false,webSocketRetry=0;
-function pauseWebSocket(){webSocketPaused=true;if(webSocketRetry)clearTimeout(webSocketRetry);webSocketRetry=0;stopStream();if(socket){socket.onclose=null;socket.close();socket=null}wsState.textContent='HTTP refresh · WS off';wsState.className='';}
+let webSocketPaused=false;
+function pauseWebSocket(){webSocketPaused=true;webSocketReconnect.cancel();stopStream();if(socket){socket.onclose=null;socket.close();socket=null}wsState.textContent='HTTP refresh · WS off';wsState.className='';}
 function reconnectWebSocket(){pauseWebSocket();webSocketPaused=false;connectWs()}
 
 if(document.getElementById){

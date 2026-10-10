@@ -249,6 +249,56 @@ html[data-motion=off] .app-toast,html[data-motion=off] .toast-dismiss{animation:
 <div id="notice" class="toast-region" aria-live="polite" aria-atomic="false"></div>
 <dialog id="cellManager" class="manager" aria-labelledby="cellManagerTitle"><header><h2 id="cellManagerTitle">Manage cells</h2><button aria-label="Close cell manager" onclick="cellManager.close()">×</button></header><p class="hint">Choose rows or cells, then apply a state and transition to the selection. Ctrl toggles, Shift extends. Selection never changes LEDs.</p><div class="row"><button onclick="selectAllCells()">Select all</button><button onclick="clearCellSelection()">Clear selection</button><b id="managerCount">0 selected</b></div><label class="switch"><input id="managerEditCellOrder" type="checkbox" onchange="setEditingOrder(this.checked)">Edit order · drag before/after a cell; IDs and wiring stay unchanged</label><button id="managerResetCellOrderButton" onclick="resetCellOrder()" disabled>Reset order</button><div id="managerRows" class="manager-rows"></div><div class="row"><label>State <select id="bulkState"><option value="red">Red</option><option value="white">White</option><option value="off">Off</option></select></label><label>Transition <select id="bulkEffect"><option value="fade">Fade</option><option value="immediate">Immediate</option><option value="pulse">Pulse</option></select></label></div><p class="hint">Edits are paced and checked against device readback. A batch is not atomic.</p><footer><button id="bulkCancel" onclick="cancelCellBatch()" disabled>Cancel unsent</button><button id="bulkApply" class="primary" onclick="applyCellBatch(bulkState.value)">Apply to selection</button><button onclick="cellManager.close()">Close</button></footer></dialog>
 <script>
+// BEGIN RAYANLAMP REALTIME RETRY
+// Actual RayanLamp webui/src/sync.ts scheduleReconnect/prepareReconnect/stop
+// adapted to Pakar's authenticated status GET, not a Go CSRF/session endpoint.
+// api.ts request's AbortController/12-second bound/finally cleanup is retained
+// for that read only. No blind session refresh or mutating-request retry.
+// MIT notice: desktop/licenses/RayanLamp-MIT.txt. Never replay a device write.
+function createRealtimeRetry({enabled,prepare,connect,onError=()=>{},
+  setTimer=(callback,delay)=>globalThis.setTimeout(callback,delay),
+  clearTimer=id=>globalThis.clearTimeout?.(id),random=()=>Math.random(),
+  makeAbort=()=>new AbortController()}){
+  let retry=0,timer=0,epoch=0,preparing=null,request=null,requestDeadline=0;
+  function cancel(reset=true){epoch++;if(timer)clearTimer(timer);timer=0;preparing=null;request?.abort();request=null;if(requestDeadline)clearTimer(requestDeadline);requestDeadline=0;if(reset)retry=0}
+  function schedule(){
+    if(!enabled()||timer||preparing!==null)return false;
+    // Actual donor backoff/jitter; cap the exponent too for long-lived pages.
+    const base=Math.min(10_000,500*2**retry);
+    retry=Math.min(5,retry+1);
+    const delay=base*(0.8+random()*0.4),owner=epoch;
+    timer=setTimer(async()=>{
+      if(owner!==epoch)return;
+      timer=0;if(!enabled())return;
+      preparing=owner;
+      const controller=makeAbort();request=controller;
+      const deadline=setTimer(()=>controller.abort(),12_000);requestDeadline=deadline;
+      try{
+        await prepare(controller.signal);
+        if(owner===epoch&&enabled())connect();
+      }catch(error){
+        if(owner===epoch&&enabled()){
+          preparing=null;
+          try{onError(error)}catch{}
+          if(owner===epoch)schedule();
+        }
+      }finally{clearTimer(deadline);if(request===controller){request=null;requestDeadline=0}if(preparing===owner)preparing=null}
+    },delay);
+    return true;
+  }
+  return {schedule,cancel};
+}
+const webSocketReconnect=createRealtimeRetry({
+  enabled:()=>authenticated&&!webSocketPaused,
+  prepare:signal=>refreshAuthenticated({signal}),
+  connect:()=>connectWs(),
+  onError:error=>traceBrowserEvent('warn','websocket.disconnected',
+    'Session status refresh failed; reconnect scheduled',
+    {source:'websocket',endpoint:'/api/v1/status',...browserErrorMetadata(error)},
+    {dedupeKey:'websocket.prepare',dedupeWindowMs:3000})
+});
+
+// END RAYANLAMP REALTIME RETRY
 // BEGIN RAYANLAMP TOASTS
 // Actual RayanLamp store::showToast/dismissToast and ToastRegion/Icon contracts
 // (MIT, YektaYar). DOM replaces Preact; no second framework or persistent store.
@@ -804,28 +854,30 @@ async function api(path,options={}){
     throw error;
   }
 }
-function showLogin(){if(typeof settingsInvalidate==="function")settingsInvalidate();authenticated=false;contextReceivedAt=0;renderContext();workspace.hidden=true;loginPanel.hidden=false;stopStream();if(socket){socket.onclose=null;socket.close();socket=null}}
+function showLogin(){webSocketReconnect.cancel();if(typeof settingsInvalidate==="function")settingsInvalidate();authenticated=false;contextReceivedAt=0;renderContext();workspace.hidden=true;loginPanel.hidden=false;stopStream();if(socket){socket.onclose=null;socket.close();socket=null}}
 async function openWorkspace(){await refreshAuthenticated();authenticated=true;workspace.hidden=false;loginPanel.hidden=true;loginPassword.value='';connectWs();remoteRefresh();reportBrowser();loadMappings();loadCloud();loadDeviceName();const info=await api('/api/v1/auth/info');accessUser.value=info.username;accessWarning.textContent=info.default_credentials?'Default password active. Change it in Device access.':''}
-async function refreshAuthenticated(){render(await api('/api/v1/status'+(cellShape.value!=='rounded'?'?pixels=1':'')))}
+async function refreshAuthenticated(options={}){const next=await api('/api/v1/status'+(cellShape.value!=='rounded'?'?pixels=1':''),options);if(!options.signal?.aborted)render(next)}
 async function bootstrap(){try{const info=await api('/api/v1/auth/info');loginUser.value=info.username;loginHint.textContent=!info.ready?'Device access storage is damaged. USB recovery is required.':info.default_credentials?'First login: admin / pakarcontroller. Change these in Device access after signing in.':'Use your configured device credentials.';if(info.ready){try{await openWorkspace()}catch{showLogin()}}}catch(e){loginError.textContent=e.message}}
 loginForm.addEventListener('submit',async e=>{e.preventDefault();loginError.textContent='';try{await api('/login',{method:'POST',body:new URLSearchParams({username:loginUser.value,password:loginPassword.value})});await openWorkspace()}catch(error){loginError.textContent=error.message;loginPassword.value=''}});
 accessForm.addEventListener('submit',async e=>{e.preventDefault();if(accessPassword.value!==accessConfirm.value)return report('Passwords do not match');try{await api('/api/v1/auth',{method:'POST',body:new URLSearchParams({current_password:accessCurrent.value,username:accessUser.value,password:accessPassword.value})});accessCurrent.value='';accessPassword.value='';accessConfirm.value='';showLogin();await bootstrap();loginHint.textContent='Credentials saved. Sign in with your new password.'}catch(error){report(error)}});
 async function loadDeviceName(){try{const value=await api('/api/v1/device/name');if(typeof value.hostname==='string'&&validBoardName(value.display_name)){savedIdentityHost=value.hostname;deviceName.value=value.hostname+'.local';boardDisplayName.value=value.display_name;nameSave.disabled=false}else{nameSave.disabled=true}}catch(e){nameSave.disabled=true;report(e)}}
-nameForm.addEventListener('submit',async e=>{e.preventDefault();const name=deviceName.value.toLowerCase().replace(/\.local$/,'');if(!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(name)||name==='localhost'||name==='local')return report('Invalid hostname. Use 1..63 letters/digits/hyphens, optionally ending in .local.');const label=boardDisplayName.value;if(!validBoardName(label))return report('Board name must be 1..63 UTF-8 bytes without controls or edge spaces.');try{nameSave.disabled=true;const value=await api('/api/v1/device/name',{method:'POST',body:new URLSearchParams({hostname:name,display_name:label})});if(!value.accepted||!value.persisted||value.hostname!==name||value.display_name!==label)throw Error('Device did not confirm the saved identity');if(!value.apply_pending){const check=await api('/api/v1/device/name');if(check.hostname!==name||check.display_name!==label)throw Error('Identity saved but readback differs. Refresh before retrying.');savedIdentityHost=name;nameSave.disabled=false;nameResult.hidden=true;report('Board name saved and verified. Wi-Fi was not restarted.','success');await refresh();return}stopStream();if(socket){socket.onclose=null;socket.close();socket=null}authenticated=false;nameResult.href='http://'+name+'.local/';nameResult.textContent='Identity saved. Open '+nameResult.href+' and sign in again.';nameResult.hidden=false;report(nameResult.textContent,'success')}catch(error){nameSave.disabled=false;report(error)}});
+nameForm.addEventListener('submit',async e=>{e.preventDefault();const name=deviceName.value.toLowerCase().replace(/\.local$/,'');if(!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(name)||name==='localhost'||name==='local')return report('Invalid hostname. Use 1..63 letters/digits/hyphens, optionally ending in .local.');const label=boardDisplayName.value;if(!validBoardName(label))return report('Board name must be 1..63 UTF-8 bytes without controls or edge spaces.');try{nameSave.disabled=true;const value=await api('/api/v1/device/name',{method:'POST',body:new URLSearchParams({hostname:name,display_name:label})});if(!value.accepted||!value.persisted||value.hostname!==name||value.display_name!==label)throw Error('Device did not confirm the saved identity');if(!value.apply_pending){const check=await api('/api/v1/device/name');if(check.hostname!==name||check.display_name!==label)throw Error('Identity saved but readback differs. Refresh before retrying.');savedIdentityHost=name;nameSave.disabled=false;nameResult.hidden=true;report('Board name saved and verified. Wi-Fi was not restarted.','success');await refresh();return}webSocketReconnect.cancel();stopStream();if(socket){socket.onclose=null;socket.close();socket=null}authenticated=false;nameResult.href='http://'+name+'.local/';nameResult.textContent='Identity saved. Open '+nameResult.href+' and sign in again.';nameResult.hidden=false;report(nameResult.textContent,'success')}catch(error){nameSave.disabled=false;report(error)}});
 async function signOut(){try{await api('/logout',{method:'POST'})}catch{}showLogin()}
 function report(e,tone){(webToasts??=createToastController({root:notice,translate:uiTr})).showToast(tone||(e instanceof Error?'error':'info'),e instanceof Error?uiTr('Error'):uiTr('Status'),e instanceof Error?e.message:String(e))}
-globalThis.addEventListener?.('pagehide',()=>{webToasts?.destroy();webToasts=null});
+globalThis.addEventListener?.('pagehide',()=>{webSocketReconnect.cancel();webToasts?.destroy();webToasts=null});
 function renderSegments(masks=[]){displayStop.hidden=!state.tm1637_host_active;const lines=[[8,5,28,5],[31,8,31,27],[31,32,31,51],[8,54,28,54],[5,32,5,51],[5,8,5,27],[8,29.5,28,29.5]];segmentDisplay.innerHTML='';for(let d=0;d<4;d++){const mask=masks[d]||0,svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 36 60');for(let bit=0;bit<7;bit++){const line=document.createElementNS(svg.namespaceURI,'line');['x1','y1','x2','y2'].forEach((k,i)=>line.setAttribute(k,lines[bit][i]));if(mask&(1<<bit))line.setAttribute('class','lit');svg.appendChild(line)}const dot=document.createElementNS(svg.namespaceURI,'circle');dot.setAttribute('cx','32');dot.setAttribute('cy','54');dot.setAttribute('r','2.4');if(mask&128)dot.setAttribute('class','lit');svg.appendChild(dot);segmentDisplay.appendChild(svg)}}
 function render(s){state=s;contextReceivedAt=Date.now();renderContext();renderAudio(s);summary.textContent=[s.hostname,s.canonical_url,currentPeer().has('leds')&&Number.isInteger(s.pixels)?s.pixels+' pixels':null].filter(Boolean).join(' · ');avr.textContent=s.avr_online?'online':'offline';avr.className=s.avr_online?'good':'bad';tm.textContent=s.tm1637_ack?'ready':'not responding';tm.className=s.tm1637_ack?'good':'bad';clients.textContent=s.websocket_clients??0;station.textContent=s.station_connected?`${s.station_ip} (${s.station_rssi} dBm)`:'disconnected';ap.textContent=s.ap_started?s.ap_ip:'disabled';discovery.textContent=`mDNS ${s.mdns_started?'on':'off'} · SSDP ${s.ssdp_started?'on':'off'} · NBNS ${s.netbios_started?'on':'off'}`;ntp.textContent=s.ntp_synced?new Date(s.utc_epoch*1000).toLocaleString():'waiting';uart.textContent=`ESP ${s.esp_uart_errors} / AVR ${s.avr_uart_errors} / USB ${s.usb_serial_errors??0}`;mqttState.textContent=s.mqtt_enabled?(s.mqtt_connected?'connected':`offline (${s.mqtt_state})`):'disabled';mqttState.className=s.mqtt_connected?'good':s.mqtt_enabled?'warn':'';cloudWsState.textContent=s.cloud_websocket_enabled?(s.cloud_websocket_connected?'connected':'offline'):'disabled';cloudWsState.className=s.cloud_websocket_connected?'good':s.cloud_websocket_enabled?'warn':'';winner.textContent=s.winner||'—';brightness.value=s.brightness;brightnessValue.textContent=s.brightness;pattern.value=s.effect||'none';renderSegments(s.tm1637_segments);document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===s.mode));for(const b of grid.querySelectorAll('.cell')){const id=Number(b.dataset.id),v=s.cells[id-1]||'off';b.classList.toggle('red',v==='red');b.classList.toggle('off',v==='off');if(cellShape.value==='rounded')b.textContent=mapping.names[id-1]||id;if(cellShape.value==='rounded')b.title=`Logical ${id} · physical ${mapping.physical[id-1]||id}`;}paintSelection(true);for(const c of outputs.querySelectorAll('input'))c.checked=!!(s.active_outputs&(1<<Number(c.dataset.bit)))}
 async function refresh(){try{render(await api('/api/v1/status'+(cellShape.value!=='rounded'?'?pixels=1':'')))}catch(e){report(e)}}
 function connectWs(){
   if(!authenticated||webSocketPaused)return;
-  if(webSocketRetry)clearTimeout(webSocketRetry);webSocketRetry=0;
-  if(socket){socket.onclose=null;socket.close()}
-  const scheme=location.protocol==='https:'?'wss:':'ws:',active=new WebSocket(`${scheme}//${location.host}/ws`);
+  webSocketReconnect.cancel(false);
+  if(socket){socket.onclose=null;socket.close();socket=null}
+  const scheme=location.protocol==='https:'?'wss:':'ws:';let active;
+  try{active=new WebSocket(`${scheme}//${location.host}/ws`)}catch(error){wsState.textContent='WebSocket retrying';wsState.className='warn';webSocketReconnect.schedule();return}
   socket=active;active.binaryType='arraybuffer';
   active.onopen=()=>{
     if(socket!==active)return;
+    webSocketReconnect.cancel();
     wsState.textContent='WebSocket live';wsState.className='good';
     traceBrowserEvent('info','websocket.connected','WebSocket transport connected',{source:'websocket',endpoint:'/ws'});
     active.send('{"type":"status"}');
@@ -837,7 +889,7 @@ function connectWs(){
     traceBrowserEvent('warn','websocket.disconnected','WebSocket closed; reconnect scheduled',
       {source:'websocket',endpoint:'/ws',error_code:Number.isInteger(e?.code)?e.code:'unknown_close'},
       {dedupeKey:'websocket.closed',dedupeWindowMs:3000});
-    webSocketRetry=setTimeout(()=>{webSocketRetry=0;if(authenticated&&!webSocketPaused)refresh().then(()=>connectWs())},1500);
+    webSocketReconnect.schedule();
   };
   active.onerror=()=>{if(socket===active)active.close()};
 }
@@ -971,8 +1023,8 @@ if(document.getElementById)initializeWorkspacePanels();
 
 // Independent socket lifecycle. A delayed close from an obsolete socket must
 // never schedule another connection or repaint the currently selected state.
-let webSocketPaused=false,webSocketRetry=0;
-function pauseWebSocket(){webSocketPaused=true;if(webSocketRetry)clearTimeout(webSocketRetry);webSocketRetry=0;stopStream();if(socket){socket.onclose=null;socket.close();socket=null}wsState.textContent='HTTP refresh · WS off';wsState.className='';}
+let webSocketPaused=false;
+function pauseWebSocket(){webSocketPaused=true;webSocketReconnect.cancel();stopStream();if(socket){socket.onclose=null;socket.close();socket=null}wsState.textContent='HTTP refresh · WS off';wsState.className='';}
 function reconnectWebSocket(){pauseWebSocket();webSocketPaused=false;connectWs()}
 
 if(document.getElementById){

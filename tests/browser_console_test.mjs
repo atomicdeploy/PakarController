@@ -96,7 +96,8 @@ const sockets=[],timers=[];let renderCount=0,stops=0;
 Object.assign(context,{location:{protocol:'http:',host:'ledboard.local'},wsState:{},stopStream:()=>stops++,render:()=>renderCount++,
   clearTimeout(){},setTimeout:callback=>{timers.push(callback);return timers.length},
   WebSocket:class {constructor(url){this.url=url;this.sent=[];sockets.push(this)}send(x){this.sent.push(x)}close(){this.closed=true}}});
-vm.runInContext('let authenticated=true,webSocketPaused=false,webSocketRetry=0,socket=null;\n'+web.slice(web.indexOf('function connectWs()'),web.indexOf('async function post(')),context);
+context.refreshAuthenticated=async()=>{};
+vm.runInContext('let authenticated=true,webSocketPaused=false,socket=null;\n'+read('assets/web/realtime-retry.js')+'\n'+web.slice(web.indexOf('function connectWs()'),web.indexOf('async function post(')),context);
 clear();run('connectWs()');const first=sockets[0];first.onopen();
 assert.equal(first.url,'ws://ledboard.local/ws');assert.equal(events()[0].args[4].event,'websocket.connected');
 assert.deepEqual(first.sent,['{"type":"status"}']);

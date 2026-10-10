@@ -25,6 +25,8 @@ let web=await readFile(new URL('firmware/esp8266/src/WebUi.h',root),'utf8');
 const consoleModule=await readFile(new URL('assets/web/browser-console.js',root),'utf8');
 const toastModule=await readFile(new URL('assets/web/toasts.js',root),'utf8');
 const toastStyles=await readFile(new URL('assets/web/toasts.css',root),'utf8');
+const retryModule=await readFile(new URL('assets/web/realtime-retry.js',root),'utf8');
+assert(!retryModule.includes('</script>')&&!retryModule.includes(')HTML"'),'Realtime retry cannot break the container');
 assert(!toastModule.includes('</script>')&&!toastModule.includes(')HTML"'),'Toasts cannot break the container');
 assert(!toastStyles.includes('</style>'),'Toast CSS cannot break the container');
 assert(!consoleModule.includes('</script>')&&!consoleModule.includes(')HTML"'),'Browser diagnostics cannot break the container');
@@ -32,7 +34,8 @@ assert(!consoleModule.includes('</script>')&&!consoleModule.includes(')HTML"'),'
 // Otherwise adding a translated literal takes two generator passes to stabilize.
 const withoutGenerated=(web.replace(/\/\/ BEGIN SHARED LOCALIZATION[\s\S]*?\/\/ END SHARED LOCALIZATION/,'')
   .replace(/\/\/ BEGIN BROWSER DIAGNOSTICS[\s\S]*?\/\/ END BROWSER DIAGNOSTICS/,'')
-  .replace(/\/\/ BEGIN RAYANLAMP TOASTS[\s\S]*?\/\/ END RAYANLAMP TOASTS/,'')+'\n'+consoleModule+'\n'+toastModule)
+  .replace(/\/\/ BEGIN RAYANLAMP TOASTS[\s\S]*?\/\/ END RAYANLAMP TOASTS/,'')
+  .replace(/\/\/ BEGIN RAYANLAMP REALTIME RETRY[\s\S]*?\/\/ END RAYANLAMP REALTIME RETRY/,'')+'\n'+consoleModule+'\n'+toastModule+'\n'+retryModule)
   .replaceAll('&amp;','&').replaceAll('&lt;','<').replaceAll('&gt;','>');
 let js=await readFile(new URL('assets/web/localization.js',root),'utf8');
 const dictionary={};
@@ -61,6 +64,8 @@ web=web.replace(/\/\/ BEGIN BROWSER DIAGNOSTICS[\s\S]*?\/\/ END BROWSER DIAGNOST
 web=web.replace('<script>','<script>\n'+consoleBegin+'\n'+consoleModule+'\n'+consoleEnd);
 web=web.replace(/\/\/ BEGIN RAYANLAMP TOASTS[\s\S]*?\/\/ END RAYANLAMP TOASTS\r?\n/,'');
 web=web.replace('<script>','<script>\n// BEGIN RAYANLAMP TOASTS\n'+toastModule+'\n// END RAYANLAMP TOASTS');
+web=web.replace(/\/\/ BEGIN RAYANLAMP REALTIME RETRY[\s\S]*?\/\/ END RAYANLAMP REALTIME RETRY\r?\n/,'');
+web=web.replace('<script>','<script>\n// BEGIN RAYANLAMP REALTIME RETRY\n'+retryModule+'\n// END RAYANLAMP REALTIME RETRY');
 web=web.replace(/\/\* BEGIN RAYANLAMP TOAST CSS \*\/[\s\S]*?\/\* END RAYANLAMP TOAST CSS \*\//,'');
 web=web.replace('</style>','/* BEGIN RAYANLAMP TOAST CSS */\n'+toastStyles+'\n/* END RAYANLAMP TOAST CSS */</style>');
 await sync('firmware/esp8266/src/WebUi.h',web);

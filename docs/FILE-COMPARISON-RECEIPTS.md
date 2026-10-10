@@ -1,5 +1,29 @@
 # PakarController comparison receipts
 
+## Rayan reconnect subcontracts
+
+Fully read/live-hash sync.ts, sync.test.ts and api.ts; import actual exponential
+jitter/cap, prepare-before-open, stop/reset lifecycle and 12 s AbortController read
+deadline/finally cleanup into canonical realtime-retry.js and actual Web consumers.
+Three parity-gap comparisons list all unported generic synchronization/API/tests.
+api.test.ts read completely but adaptation remains pending; App lifecycle slice
+is not certified. Existing cookie-authenticated readback and no uncertain-write
+replay remain authoritative. Shipped-module/Web HTTP/socket VM tests cover queue,
+jitter/cap, deadline, cancellation, stale generations, 401 and constructor failure.
+No proof is promoted to physical/native/shared-client acceptance.
+
+New totals: 84/4237 comparisons, 4153 pending, 51 known-gap files; Rayan 20/2349,
+2329 pending. No generic lease/sequence/config/audio contract is hidden as lamp
+business logic. Full source quality and selective build results follow execution.
+Final full local source quality passes. The settings generator catches a stale
+canonical pause lifecycle; update actual device-settings.js, regenerate/check and
+rebind its two exact existing mappings. Route targets revalidated against unchanged
+remote job/readback/apply controls, line 244; all 50 classifications pass. Final
+warm ESP-only busy-wire build passes: 926960 bytes, SHA256
+cf52f0404185f0b5bcccba918e6911eec726b7f15391c43bb7aae2ae2a4cc16b,
+RAM 70%, IRAM 96%, flash code 83%. No board flash/native replacement or unrelated
+build/cache; no new browser pixels claimed for this functional reconnect import.
+
 ## Native menu primary-ink oracle
 
 Actual Pealayer menu/palette sources reread in full, source hashes unchanged.

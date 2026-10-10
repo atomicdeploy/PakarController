@@ -12,6 +12,9 @@ unverified after interruption. Donor source and task state were not changed.
 
 | Donor source | Pakar target and use |
 |---|---|
+| webui/src/sync.ts | assets/web/realtime-retry.js and actual connectWs/refreshAuthenticated: actual 500 ms exponential retry, 10 s base cap, 0.8..1.2 jitter, prepare-before-open and stop cleanup. Pakar adds generation-safe cancellation, one queued owner, constructor-failure recovery and authenticated readback; no write replay. Leadership, typed event/config/diagnostic projection, audio ownership and sequence epochs remain pending, not wholesale synchronization parity. |
+| webui/src/sync.test.ts | tests/realtime_retry_test.mjs: actual prepare-before-reconnect and stop concepts adapted to Pakar status GET, plus shipped Web API/socket execution, stock jitter bounds, capped attempts, failed preparation, session loss, stale timers/promises, cancellation and deadlines. Other actual sequence/audio/leadership tests remain pending their implementations. |
+| webui/src/api.ts | assets/web/realtime-retry.js: actual AbortController, 12-second request bound and finally timer cleanup retained for reconnect's status GET; signal passed through actual refreshAuthenticated/api. Existing Pakar cookie/readback contract retained. Go coordinator routes/CSRF renewal and automatic mutating retry not copied; generic config revisions/errors/diagnostics/hotkey/integration/audio interfaces still require hardware/host adaptation. |
 | internal/i18n/digits.go | desktop/src/ui/digits.rs, assets/web/rayanlamp.js and mobile/lib/cell_search.dart: actual two decimal-script maps, applied to native/Web/mobile Find cells. Persian and Arabic-Indic IDs produce the same canonical ASCII IDs/ranges; names/protocol payloads are not rewritten. |
 | webui/src/haptics.ts | assets/web/rayanlamp.js: actual semantic patterns, bounded audio cue construction, fail-closed visibility/reduced-motion checks, host-error containment and copied pattern arrays. Web appearance has opt-in Touch feedback, default off, disabled when unsupported. Explicit command HTTP success/error triggers it; telemetry and streaming frames never vibrate. HTTP success is not physical actuator readback. |
 | webui/src/haptics.test.ts | tests/rayanlamp_reuse_test.mjs: actual donor scenarios adapted to built-in Node assertions, plus unknown cue and mutable-host protections. No Vitest/Go dependency or donor build. |
@@ -44,15 +47,17 @@ does not override an English primary preference. These replacements are exact
 ledger decisions, not omissions hidden behind a visual resemblance.
 
 The canonical generator embeds browser-appearance.js without a duplicate color
-engine. web-presentation requires thirteen reviewed files (eleven Rayan files,
+engine. web-presentation requires sixteen reviewed files (fourteen Rayan files,
 two previously read Pealayer files), invoked before ESP builds and source quality.
-The routed donor app.css remains pending: only toast/accessibility/viewport slices
-were read and adapted into assets/web/toasts.css, not certified as a full CSS import.
+The routed donor app.css and api.test.ts remain pending comparisons: only relevant
+style slices were adapted into assets/web/toasts.css, not certified as a full CSS
+import. api.test.ts was fully read but its generic authenticated host-contract
+tests still need matching implementations.
 The Bash ESP entrypoint requires PowerShell 7 for the same donor gate and now
 checks fonts/branding as the Windows entrypoint does. No extra SDK is installed.
 
-Coverage: RayanLamp 2349 inventoried, **17** completed comparisons, **2332** pending.
-Whole donor inventory 4237, 81 completed, 4156 pending, 48 known-gap files. The
+Coverage: RayanLamp 2349 inventoried, **20** completed comparisons, **2329** pending.
+Whole donor inventory 4237, 84 completed, 4153 pending, 51 known-gap files. The
 656-line i18n source and 71-line tests were fully read and hash-verified. Full
 settings, Persian calendar/protocol isolation, remaining dynamic copy and
 native/Web/mobile preference synchronization remain unfinished.
@@ -104,8 +109,10 @@ modifications. This is an inventory, not 100% import or full production parity.
   map only real Pakar routes, preserve optional observed values and never expose
   Wi-Fi secrets or invent device capabilities.
 - Direct/relay connection selection, URL normalization/security, static PWA,
-  reconnect/recovery, Web audio cues and resource bounds: donor transport remains
-  pending; this pass imports the preference channel, not the lamp transport.
+  full reconnect/leadership, Web audio cues and resource bounds remain pending.
+  Actual retry/session-check/abort subcontracts above are imported, not the whole
+  lamp transport. contracts.ts/direct-api/client-factory and full store adaptation
+  still require complete reads; no event sequence/capability is fabricated.
 - YekanBakh font: donor includes bytes but attribution lacks a specific font
   license. Verify permission before redistributing; retain licensed Vazirmatn.
 - CI editions, build packaging, memory/graphics tests, SDK and remaining UI:

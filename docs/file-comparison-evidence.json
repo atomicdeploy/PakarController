@@ -5,6 +5,182 @@
   "files": [
     {
       "origin": "RayanLamp",
+      "path": "webui/src/sync.ts",
+      "sha256": "bd849cbef1ee67ac97cca9e0c6e00ed69acf725d805ad986ae58f11513546d73",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual scheduleReconnect 500 ms exponential base, 10-second cap and 0.8..1.2 jitter, prepareReconnect-before-open, reset-on-open and stop cleanup adapted to actual Pakar WebSocket/status GET consumers.",
+        "Added one pending owner, bounded exponent, late timer/promise generation checks, login/pause/pagehide cancellation and constructor-failure recovery; no device command is replayed."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/realtime-retry.js",
+          "sha256": "b3ff00c8b1996d5b00675faf6a64fe8313d2f85525330f7cb2596ec16554eaee",
+          "anchor": "function createRealtimeRetry"
+        },
+        {
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
+          "anchor": "function connectWs()"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "start/electLeader/acquireLeadership/releaseLeadership and BroadcastChannel/Web Locks fallback lease election/heartbeats/watchdogs/connectionSyncNames",
+          "disposition": "pending",
+          "reason": "Generic per-origin leadership is useful but not imported. Pakar supports independent authenticated streaming clients; a shared socket requires validated command/stream ownership and follower readback. Compare full client/contracts/store dependencies and port actual multi-tab/takeover tests before enabling."
+        },
+        {
+          "code": "handleServerEvent/onChannelMessage/acceptSnapshot and serverSequenceDecision",
+          "disposition": "pending",
+          "reason": "Generic typed snapshot/config/diagnostic projection, revisions and epoch resets remain pending actual Pakar advertised contracts. Existing source-bound contextual readiness/no-replay ownership is retained; do not invent server event sequences or treat arbitrary channel objects as authoritative."
+        },
+        {
+          "code": "handleDirectStateCue initial on/off transition",
+          "disposition": "not-applicable",
+          "reason": "Lamp state transitions are not table/first-wins business. Adapt only future discovered board events, not hardcode lamp state."
+        },
+        {
+          "code": "audioCueCount/playDirectCue, generic message/haptic/diagnostic fanout and setConnectionState/relayDisconnectReason",
+          "disposition": "pending",
+          "reason": "Existing semantic haptics/toast/trace helpers do not implement full leader-only audible notification or graceful coordinator state. Generic audio/count/shutdown semantics remain useful pending exact firmware/host event and capability mapping."
+        }
+      ],
+      "remaining": [
+        "Read/adapt contracts.ts, direct-api/client-factory and complete store consumers; restore generic typed multi-tab/revision/diagnostic/audio contracts with factual capabilities.",
+        "Verify real reconnect/session loss across LAN and native/mobile interfaces; shipped-module VM tests are not physical/network acceptance."
+      ],
+      "proof": [
+        {
+          "path": "tests/realtime_retry_test.mjs",
+          "sha256": "ee9a3c1cc01dc42d5b1a181e0e37695f34fafe05685844ca6de7f37c925c4a9d",
+          "anchor": "Donor prepareReconnect is completed before any replacement socket"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "webui/src/sync.test.ts",
+      "sha256": "6c427de4b58ce89fbea38203e8dfb575a375be943b3a7072cb96399ff4c8b6ff",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Fully read actual tests. Prepare-before-reconnect/session-loss and stopped lifecycle concepts adapted to actual Pakar authenticated status GET and shipped Web connectWs/refreshAuthenticated/api execution.",
+        "Added deterministic injected timers/RNG, jitter/cap, deadline/AbortController, constructor failure, failed reads, one owner and stale timer/promise cancellation regressions."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/realtime-retry.js",
+          "sha256": "b3ff00c8b1996d5b00675faf6a64fe8313d2f85525330f7cb2596ec16554eaee",
+          "anchor": "function createRealtimeRetry"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "server event sequence epochs and duplicate ordinary events",
+          "disposition": "pending",
+          "reason": "No authoritative sequence contract has been adapted yet. Port hello/reset/duplicate tests with actual Pakar event epoch ownership; do not assign synthetic sequence values just to reuse assertions."
+        },
+        {
+          "code": "per-target sync names, event-disabled config synchronization, lease owner, initial-sync/HTTP/follower audio policies",
+          "disposition": "pending",
+          "reason": "Useful generic multi-tab/config/audio tests await their full implementation and validated dependencies. Existing independent clients and semantic haptics are not evidence of leadership parity."
+        },
+        {
+          "code": "marks coordinator unavailable/graceful close and renews browser session using Go API",
+          "disposition": "pending",
+          "reason": "Pakar 401 status GET fails closed to login, without creating a Go session or automatically replaying mutation. Readback-before-open recovery is adapted; generic coordinator shutdown/typed availability tests remain pending."
+        },
+        {
+          "code": "Vitest/Preact store fixtures and TestBroadcastChannel/TestRealtimeSocket classes",
+          "disposition": "replaced",
+          "reason": "Built-in Node VM and purpose-built HTTP/socket/timer fixtures execute shipped Pakar code, without adding a second framework or donor build. Channel fixtures remain pending leadership implementation."
+        }
+      ],
+      "remaining": [
+        "Port every useful remaining donor sequence/lease/config/audio/shutdown assertion with its actual consumer; no whole-test-file parity claim.",
+        "Real LAN, multi-client and native/mobile lifecycle verification remains required."
+      ],
+      "proof": [
+        {
+          "path": "tests/realtime_retry_test.mjs",
+          "sha256": "ee9a3c1cc01dc42d5b1a181e0e37695f34fafe05685844ca6de7f37c925c4a9d",
+          "anchor": "Execute actual Web connectWs + refreshAuthenticated + api"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "webui/src/api.ts",
+      "sha256": "1b201ac38c3ca4f45dea639d198204f294c83f7e07fb511be99b3d54154fc741",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Fully read actual client API. request's AbortController, default 12000 ms timeout and finally timer release adapted to reconnect preparation only; signal passes through actual refreshAuthenticated/api status GET.",
+        "Pakar cookie authentication and expired-session login are retained; no uncertain mutating request/session replay, credentials or raw endpoint/body diagnostics copied."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/realtime-retry.js",
+          "sha256": "b3ff00c8b1996d5b00675faf6a64fe8313d2f85525330f7cb2596ec16554eaee",
+          "anchor": "function createRealtimeRetry"
+        },
+        {
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
+          "anchor": "async function refreshAuthenticated(options={})"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "establishSession/requestSession, CSRF header and request retrySession on 401",
+          "disposition": "replaced",
+          "reason": "Go coordinator /app/session is absent on ESP. Reconnect checks the existing authenticated GET; 401 cancels recovery and requires sign-in. Blind mutating retry is incompatible with no-uncertain-write-replay. Generic session coalescing/authorization remains pending host-contract adaptation."
+        },
+        {
+          "code": "lamp on/off/toggle routes",
+          "disposition": "not-applicable",
+          "reason": "Lamp business commands do not apply to discovered table/other board modes. Existing capability-ACK controller actions remain authoritative."
+        },
+        {
+          "code": "bootstrap/getConfig/patchConfig If-Match, diagnostics and diagnosticsRefreshTimeout",
+          "disposition": "pending",
+          "reason": "Useful typed bootstrap/revision/config/diagnostic contracts still require actual native/Web/mobile transport and server concurrency/readback mapping; selected GET timeout is not full request lifecycle."
+        },
+        {
+          "code": "RayanLampClient interface, APIError/isEnvelope/unwrapResponse/readJSON and realtime event decoding",
+          "disposition": "pending",
+          "reason": "Pakar currently uses flat firmware responses and contextual status projection. Typed structured errors/content checks and client abstraction remain useful pending actual contracts.ts/direct-api/client-factory review, not an accepted superior omission."
+        },
+        {
+          "code": "hotkey capture begin/renew/release/probe, integration registration and window/show/hide",
+          "disposition": "pending",
+          "reason": "Generic host/desktop operations need verified native capability, lease ownership and full surfaces. No nonexistent ESP endpoints are exposed."
+        },
+        {
+          "code": "notify/playAudio/importAudio/validateAudioRequest/safeAudioFilenameHeader",
+          "disposition": "pending",
+          "reason": "Generic host/browser audio/notification/import support remains useful; AVR melody/buzzer control is not equivalent WAV playback or content-addressed host import. Adapt discovered host/device ownership and port exact tests."
+        }
+      ],
+      "remaining": [
+        "api.test.ts was fully read; all its authenticated host/config/audio/hotkey/registration scenarios remain pending matching implementations, not a completed import certificate.",
+        "Complete generic request timeout/cancellation/error/session/concurrency on actual interfaces without replaying uncertain writes; LAN/native/mobile verification remains open."
+      ],
+      "proof": [
+        {
+          "path": "tests/realtime_retry_test.mjs",
+          "sha256": "ee9a3c1cc01dc42d5b1a181e0e37695f34fafe05685844ca6de7f37c925c4a9d",
+          "anchor": "Actual api.ts AbortController deadline/finally cleanup"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "RayanLamp",
       "path": "webui/src/components/toasts.tsx",
       "sha256": "81a5d6f6d1d77bc6466a6ee98770d4f248a7b195078ed029f1c39bd8f1724b36",
       "source_read": "complete",
@@ -21,7 +197,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -193,7 +369,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
           "anchor": "function connectWs()"
         }
       ],
@@ -225,12 +401,12 @@
       "proof": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "72256bccce30f66427a78e109fa916397c9d31c540febb13be48618563b0db76",
+          "sha256": "7e820c8640413b2b05b82c8be6bc45a7374feae067270ecf39719a2f856f0120",
           "anchor": "Actual allowlist + recursive redaction"
         },
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "72256bccce30f66427a78e109fa916397c9d31c540febb13be48618563b0db76",
+          "sha256": "7e820c8640413b2b05b82c8be6bc45a7374feae067270ecf39719a2f856f0120",
           "anchor": "Actual WebSocket ownership"
         }
       ],
@@ -248,7 +424,7 @@
       "targets": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "72256bccce30f66427a78e109fa916397c9d31c540febb13be48618563b0db76",
+          "sha256": "7e820c8640413b2b05b82c8be6bc45a7374feae067270ecf39719a2f856f0120",
           "anchor": "Actual RayanLamp browser-console.test.ts scenarios"
         }
       ],
@@ -270,7 +446,7 @@
       "proof": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "72256bccce30f66427a78e109fa916397c9d31c540febb13be48618563b0db76",
+          "sha256": "7e820c8640413b2b05b82c8be6bc45a7374feae067270ecf39719a2f856f0120",
           "anchor": "Real HTTP adapter"
         }
       ],
@@ -295,7 +471,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -391,7 +567,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -476,7 +652,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -734,12 +910,12 @@
         },
         {
           "path": "tools/generate-font-assets.mjs",
-          "sha256": "cdb4b79b7f0e6d1ed06d6f47effe631bde1c941d53dc596f7b4d5517a6b1b46b",
+          "sha256": "ca865d3d3b12d94a2df75f8cbb29eb9dd6a415c696890fc6cff66e003ccc43c6",
           "anchor": "const dictionary={}"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -871,7 +1047,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "b514f29d793486651094f53a0fe1f34a136e99bd168b63e6b7e97c3e6131063d",
+          "sha256": "3421f14e3edf39f8ba0ad54950e4747698a377ca902d97415e2b5d30295015b1",
           "anchor": "export function runChecks"
         },
         {
@@ -1038,7 +1214,7 @@
       "targets": [
         {
           "path": "assets/web/device-settings.js",
-          "sha256": "1be5ee352c4344f06943eac10e91e07cc47b46e879a4e3fe25c6b4ebaa78dd31",
+          "sha256": "f3a38568cdd14a091d2a120d352adc40c25311c310c9f748c9e300c57eaee613",
           "anchor": "function panelToggle("
         },
         {
@@ -1180,7 +1356,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
           "anchor": "function peerAvailability("
         }
       ],
@@ -1478,7 +1654,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -1488,12 +1664,12 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
           "anchor": "function renderApplicationIdentity"
         },
         {
           "path": "assets/web/device-settings.js",
-          "sha256": "1be5ee352c4344f06943eac10e91e07cc47b46e879a4e3fe25c6b4ebaa78dd31",
+          "sha256": "f3a38568cdd14a091d2a120d352adc40c25311c310c9f748c9e300c57eaee613",
           "anchor": "function settingsCanClose()"
         },
         {
@@ -1553,7 +1729,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -3500,7 +3676,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -3590,7 +3766,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -3712,7 +3888,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "c724fc4710abe392b7c000a1305f2c3e07797be33bd2cc1ec7b472f3c7c7c8b6",
+          "sha256": "9b77c8d5c35380bf12dbe32cf9c852e365ba19089c09be0dbf7c26d4d90d4fde",
           "anchor": "id=\"uiHaptics\""
         }
       ],
