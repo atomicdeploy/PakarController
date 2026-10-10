@@ -19,7 +19,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or_else(|| "PakarController".into());
     for _ in 0..30 {
         for window in Window::all()? {
-            if window.title()?.contains(&title) && !window.is_minimized()? {
+            let actual_title = window.title()?;
+            let matches = if title == "PakarController" {
+                actual_title == title
+            } else {
+                actual_title.contains(&title)
+            };
+            if matches && !window.is_minimized()? {
                 println!(
                     "window bounds: {},{} {}x{}",
                     window.x()?,
