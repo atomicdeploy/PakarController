@@ -60,4 +60,3 @@ powershell -File tools/verify-versions.ps1
 powershell -File tests/file_comparison_test.ps1
 powershell -File tests/reuse_ledger_test.ps1
 ```
-
