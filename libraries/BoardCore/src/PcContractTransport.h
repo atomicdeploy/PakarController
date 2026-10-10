@@ -67,8 +67,10 @@ class PcContractTransport {
       if (response == ControllerProtocol::Ack || response == ControllerProtocol::ErrorResponse) {
         if (frame.payloadLength != 3 || frame.payload[1] != request ||
             frame.payload[2] > Protocol::kUnsafe ||
-            (response == ControllerProtocol::Ack && frame.payload[2] != Protocol::kNoError)) return nullptr;
-      } else if (response != expectedResponse(request)) return nullptr;
+            (response == ControllerProtocol::ErrorResponse && frame.payload[2] == Protocol::kNoError) ||
+            (response == ControllerProtocol::Ack && (frame.payload[2] != Protocol::kNoError ||
+             expectedResponse(entry) != ControllerProtocol::Ack))) return nullptr;
+      } else if (response != expectedResponse(entry)) return nullptr;
       entry.responseLength = frame.payloadLength;
       memcpy(entry.response, frame.payload, frame.payloadLength);
       entry.state = Responded; entry.changedAt = now; sequenceAt_[entry.wireSequence] = now;
@@ -119,13 +121,16 @@ class PcContractTransport {
            c >= 'a' && c <= 'f' ? c - 'a' + 10 :
            c >= 'A' && c <= 'F' ? c - 'A' + 10 : -1;
   }
-  static uint8_t expectedResponse(uint8_t request) {
+  static uint8_t expectedResponse(const Receipt &entry) {
     using namespace ControllerProtocol;
-    switch (request) {
+    switch (entry.request[0]) {
       case Hello: return HelloResponse; case GetStatus: return StatusResponse;
       case GetSettings: return SettingsResponse; case FrontPanelGet: return FrontPanelResponse;
       case MenuList: return MenuListResponse; case MenuLayoutGet: return MenuLayoutResponse;
-      case MacroStep: return MacroStatusResponse; case AutomationList: return AutomationListResponse;
+      case MacroStep:
+        return entry.requestLength > 1 && (entry.request[1] == 2 || entry.request[1] == 5)
+            ? MacroStatusResponse : Ack;
+      case AutomationList: return AutomationListResponse;
       case AutomationPut: return AutomationRecordResponse; default: return Ack;
     }
   }

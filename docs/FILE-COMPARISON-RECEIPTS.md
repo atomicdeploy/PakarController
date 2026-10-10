@@ -145,3 +145,7 @@ Android preview) in run 38044317586. A later capacity fix adds authenticated
 terminal receipt consumption after client response validation; source tests
 exercise 32 transport cycles and 12 consecutive built-CLI settings reads.
 The new fix is not automatically certified by the earlier green run.
+Final response-validation tests cover all eight macro selectors, rejecting
+ACK-for-query, status-for-mutation and zero-code ERROR. Built-CLI fixtures
+exercise both query/download and mutation replies with request-bound expected
+opcodes. These are protocol/fixture tests, not physical execution proof.

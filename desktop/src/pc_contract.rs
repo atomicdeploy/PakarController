@@ -133,6 +133,7 @@ fn consume(client: &Client, base: &str, user: &str, password: &str,
 pub fn request(client: &Client, base: &str, user: &str, password: &str,
                opcode: u8, payload: &[u8]) -> Result<Value,String> {
     if payload.len()>48 { return Err("PCController payload exceeds 48 bytes".into()); }
+    let payload_for_request=payload;
     let value: Value = client.post(format!("{}/api/v1/avr/contracts",base.trim_end_matches('/')))
         .basic_auth(user,Some(password)).form(&[("opcode",opcode.to_string()),("payload_hex",encode_hex(payload))])
         .send().map_err(|e|e.to_string())?.error_for_status().map_err(|e|e.to_string())?
@@ -164,7 +165,7 @@ pub fn request(client: &Client, base: &str, user: &str, password: &str,
                     1=>0x81,2=>0x90,4=>0x91,6=>0x95,0x15=>0x92,0x18=>0x9f,
                     0x24=>0x94,0x36=>0x93,0x3c=>0x96,0x3e=>0x97,0x40=>0x99,
                     0x44=>0x9b,0x46=>0xa1,0x47=>0xa2,
-                    0x3b if payload.first()==Some(&6)=>0x98,_=>0x80
+                    0x3b if matches!(payload_for_request.first().copied(),Some(2|5))=>0x98,_=>0x80
                 };
                 if response!=expected || (response==0x80 && payload!=[opcode,0]) {
                     return Err("Response does not match the request; operation outcome is unknown".into());

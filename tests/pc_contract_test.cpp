@@ -207,6 +207,26 @@ void transport() {
     assert(!owned.consume(id,PC::Buzzer)); // No double consumption.
     assert(!owned.accept(f,1002+i)); // Late duplicate quarantined.
   }
+  T selectors;
+  for(uint8_t action=0;action<8;++action) {
+    const auto id=selectors.enqueue(PC::MacroStep,&action,1,2000+action); assert(id);
+    auto *entry=selectors.next(); selectors.sent(*entry,true,2000+action);
+    f.sequence=entry->wireSequence; f.payloadLength=3;
+    f.payload[0]=PC::ErrorResponse; f.payload[1]=PC::MacroStep; f.payload[2]=0;
+    assert(!selectors.accept(f,2001+action)); // ERROR must contain a real error.
+    const bool query=action==2 || action==5;
+    f.payload[0]=query ? PC::Ack : PC::MacroStatusResponse;
+    assert(!selectors.accept(f,2001+action)); // Wrong response shape cannot complete.
+    f.payload[0]=query ? PC::MacroStatusResponse : PC::Ack;
+    assert(selectors.accept(f,2001+action));
+    assert(selectors.consume(id,PC::MacroStep));
+  }
+  const auto queryId=selectors.enqueue(PC::GetSettings,nullptr,0,3000);
+  auto *entry=selectors.next(); selectors.sent(*entry,true,3000);
+  f.sequence=entry->wireSequence; f.payload[0]=PC::Ack; f.payload[1]=PC::GetSettings;
+  assert(!selectors.accept(f,3001)); // Read-only settings requires SETTINGS, not ACK.
+  f.payload[0]=PC::SettingsResponse; assert(selectors.accept(f,3001));
+  assert(selectors.consume(queryId,PC::GetSettings));
 }
 struct Strip {
   uint8_t pixels[480][3] = {};

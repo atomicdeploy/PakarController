@@ -25,12 +25,13 @@ Parent production scope: #2. Source parity: #3. Device settings GUI: #4. Native 
 - [x] Actual typed donor event encoder; five-byte key/buzzer payloads, without incompatible UART timestamp extensions.
 - [x] Native CLI/TUI configuration, ACK plus persistent readback; authenticated built-CLI fixture.
 - [x] Explicit terminal receipt consumption; repeated settings edits free queue capacity while preserving late-response quarantine. No cleanup of pending or reboot-mismatched operations.
+- [x] Request-selector-bound macro query/download versus mutation response validation; read-only queries cannot be completed by an ACK, zero-code ERROR rejected.
 - [x] Source versions consistent at 0.2.6; local firmware/host/Rust checks.
 
 ## Acceptance still open
 
 - [x] Baseline f2e38a7 GitHub CI green: firmware, Windows desktop and Android preview in run 38044317586. Later receipt-consumption changes require a new run.
-- [ ] Exact final receipt-consumption commit GitHub CI green.
+- [ ] Exact final response-validation commit GitHub CI green.
 - [ ] Physical AVR/ESP firmware flash and version readback when ASUS/device returns.
 - [ ] Live UART/busy grant, all nine key/output identities and electrical acceptance.
 - [ ] Physical TM1637 unplug/replug, brightness/off/scroll/capture and welcome timing.

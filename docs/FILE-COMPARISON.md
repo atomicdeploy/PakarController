@@ -168,7 +168,7 @@ Verdict: **scoped-improvement**. Revision: `20c6115bb462fe5111b66cd7c21f7328a1f7
 - Retained: Bounded four-digit RAM/flash text, raw segments, integer/fixed-point output, caching and 0..7 brightness/display-off behavior.
 - Retained: Actual donor ACK sampling, one-second cached-frame/brightness keepalive, observed presence and active 70ms brightness service on PC4/PC5. Independent probing was removed.
 - Omitted/replaced code: `PB3/PB5 TM1637 bus pins`. Disposition: **replaced**. Reason: User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming.
-- Test-code evidence: `tests/pc_contract_test.cpp:246 [UTF8-LF sha256=67b8e6bf62626b011b37e55130c4d6a8dab531e6d58d5fbf036c789e616841ef; anchor=void keysAndDisplay()]`.
+- Test-code evidence: `tests/pc_contract_test.cpp:266 [UTF8-LF sha256=562145677bbcee14307aeeaed2a720f6138cc9ca156a1f5423b6696d97a7aff8; anchor=void keysAndDisplay()]`.
 - Test-code evidence: `firmware/avr/avr.ino:428 [UTF8-LF sha256=0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a; anchor=display.serviceBrightness(]`.
 - Scoped advantage: Retains donor recovery on the correct board pins, accumulates intermediate NACKs instead of letting the final control ACK hide failure; host disconnect/reconnect and true-off tests pass.
 - Remaining: Physical TM1637 unplug/replug and power-cycle acceptance remains unverified; host GPIO doubles are not a physical board.
@@ -183,7 +183,7 @@ Verdict: **scoped-improvement**. Revision: `20c6115bb462fe5111b66cd7c21f7328a1f7
 - Retained: Bounded four-digit RAM/flash text, raw segments, integer/fixed-point output, caching and 0..7 brightness/display-off behavior.
 - Retained: Actual donor ACK sampling, one-second cached-frame/brightness keepalive, observed presence and active 70ms brightness service on PC4/PC5. Independent probing was removed.
 - Omitted/replaced code: `PB3/PB5 TM1637 bus pins`. Disposition: **replaced**. Reason: User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming.
-- Test-code evidence: `tests/pc_contract_test.cpp:246 [UTF8-LF sha256=67b8e6bf62626b011b37e55130c4d6a8dab531e6d58d5fbf036c789e616841ef; anchor=void keysAndDisplay()]`.
+- Test-code evidence: `tests/pc_contract_test.cpp:266 [UTF8-LF sha256=562145677bbcee14307aeeaed2a720f6138cc9ca156a1f5423b6696d97a7aff8; anchor=void keysAndDisplay()]`.
 - Test-code evidence: `firmware/avr/avr.ino:428 [UTF8-LF sha256=0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a; anchor=display.serviceBrightness(]`.
 - Scoped advantage: Retains donor recovery on the correct board pins, accumulates intermediate NACKs instead of letting the final control ACK hide failure; host disconnect/reconnect and true-off tests pass.
 - Remaining: Physical TM1637 unplug/replug and power-cycle acceptance remains unverified; host GPIO doubles are not a physical board.

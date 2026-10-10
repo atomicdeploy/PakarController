@@ -17,6 +17,7 @@ Actual donor generated opcode header and JSON registry imported. Pakar legacy 0x
 * AVR HELLO preserves original nine-byte prefix and appends [0x50,features_LE16]. ESP does not assume support from version alone.
 * Prog rejects mutations including settings, macros and automations; queries remain available. Application PROGRAM_STATE is not ISP Prog. Reset ACK precedes safe shutdown/watchdog reset; no flash write.
 * ESP per-client receipts bind boot identity, request ID, sequence and expected response. Eight slots; 750ms sent timeout, 2s queued timeout, 60s retention unless explicitly consumed, 30s sequence quarantine. Queue acceptance is not AVR acceptance. Uncertain mutations never retry. Validated terminal receipts can be consumed without releasing sequence quarantine; queued/awaiting and USB receipts cannot be deleted.
+* MACRO_STEP selectors 2 (query) and 5 (download recording) require MACRO_STATUS. Other selectors require ACK. Expected shape derives from the stored request, not the incoming payload; read-only queries reject ACK and ERROR requires a nonzero defined error code.
 * Five-second PC session loss cancels active macros, safe-stops active/running outputs and clears stale events. Local physical menu ownership survives. PC clients must query within the lease.
 
 ## Every registered request
