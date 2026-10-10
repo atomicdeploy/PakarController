@@ -257,7 +257,7 @@ Verdict: **equivalent-file**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550
 Verdict: **equivalent-behavior**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550d`. Original-byte SHA-256: `d3a71c69516de9059735c6baee76791be785e65b7f435e0bd965f4db7f521d30`.
 
 - Target: `desktop/src/ui/icons.rs:567 [UTF8-LF sha256=b3d882b8832f0c74c579ddfba1a992723b4ed06a8521e1a0aa1d2d45128e6a11; anchor=pub fn searchable_workspace_icon_picker(]`.
-- Target: `desktop/src/ui/shell.rs:1652 [UTF8-LF sha256=d18753edf6d9ab004e2158b8918cb759933a0bcad7a442093b193dbfed7fb6ed; anchor=icons::searchable_workspace_icon_picker]`.
+- Target: `desktop/src/ui/shell.rs:1590 [UTF8-LF sha256=6b12b86ed6bc21be53ba20b6f8eba4386a6d224b8102f7aa69e3ab2c6ac470ef; anchor=icons::searchable_workspace_icon_picker]`.
 - Retained: Production Phosphor vocabulary, stable names/kind fallback, searchable list/grid picker, UTF-8-safe match highlighting, bounded popups, disclosure/submenu helpers.
 - Retained: Actual donor regression tests restored: eleven tests, including interactive egui-frame search/select/reopen, both themes and popup width.
 - Omitted/replaced code: `every_native_icon_editor_uses_the_shared_searchable_picker donor-only editor path list`. Disposition: **replaced**. Reason: That assertion references Pealayer media/4D editor files not present in this product. Replaced only its call-site assertion with Pakar's actual workspace editor; the other ten tests were imported. This does not excuse missing generic editor features elsewhere.

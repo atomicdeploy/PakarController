@@ -8,6 +8,7 @@ pub mod palette;
 pub mod seven_segment;
 pub mod status_bar;
 pub use elegance_theme::sync_elegance_theme;
+pub mod device_settings;
 pub mod layout;
 pub mod preferences;
 pub mod shell;

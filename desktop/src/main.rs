@@ -8,8 +8,10 @@ use std::{
 mod access;
 mod audio;
 mod config;
+mod device_settings;
 mod display;
 mod identity;
+mod maintenance;
 mod messaging;
 mod platform;
 mod streaming;
@@ -145,6 +147,8 @@ enum HttpCommand {
     Post(Endpoint, &'static str, Vec<(String, String)>),
     AccessChange(Endpoint, Endpoint),
     NameChange(Endpoint, String),
+    Settings(Endpoint, device_settings::Write),
+    Maintenance(Endpoint, u64, maintenance::Operation),
 }
 
 impl HttpCommand {
@@ -155,6 +159,8 @@ impl HttpCommand {
             | Self::Configuration(endpoint, ..)
             | Self::AccessChange(endpoint, ..)
             | Self::NameChange(endpoint, ..)
+            | Self::Settings(endpoint, ..)
+            | Self::Maintenance(endpoint, ..)
             | Self::Post(endpoint, ..) => endpoint,
         }
     }
@@ -174,6 +180,10 @@ impl HttpCommand {
                 Self::AccessChange(replace(endpoint), replace(next))
             }
             Self::NameChange(endpoint, name) => Self::NameChange(replace(endpoint), name.clone()),
+            Self::Settings(endpoint, write) => Self::Settings(replace(endpoint), write.clone()),
+            Self::Maintenance(endpoint, id, operation) => {
+                Self::Maintenance(replace(endpoint), *id, operation.clone())
+            }
         }
     }
 }
@@ -213,6 +223,12 @@ enum Event {
     CredentialsUpdated(Endpoint),
     NameUpdated(Endpoint),
     Failed(String),
+    SettingsFinished(
+        u64,
+        device_settings::Group,
+        Result<serde_json::Value, String>,
+    ),
+    MaintenanceFinished(u64, Result<String, String>),
     WebSocket(bool),
     Serial(String, bool, Option<DeviceStatus>),
 }
@@ -231,6 +247,33 @@ fn current_event(event: Event, endpoint: &Endpoint, serial_port: &str) -> Option
 }
 
 fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> {
+    if let HttpCommand::Maintenance(endpoint, id, operation) = &command {
+        return Ok(Event::MaintenanceFinished(
+            *id,
+            maintenance::run(client, endpoint, operation.clone()),
+        ));
+    }
+    if let HttpCommand::Settings(endpoint, write) = &command {
+        // Exactly one mutation. Neither discovery nor readback failure replays it.
+        let result = (|| -> Result<serde_json::Value, String> {
+            let response = client.post(format!("{}{}", endpoint.base.trim_end_matches('/'), write.group.path()))
+                .basic_auth(&endpoint.user, Some(&endpoint.password)).form(&write.form).send()
+                .map_err(|_| "Configuration write outcome is unknown. Refresh before retrying; no write was replayed.".to_string())?
+                .error_for_status().map_err(|e| format!("Configuration rejected: {e}"))?;
+            let accepted = response.json::<serde_json::Value>().map_err(|_| {
+                "Write response could not be validated; refresh before retrying".to_string()
+            })?;
+            write.verify_ack(&accepted)?;
+            let readback = client.get(format!("{}{}", endpoint.base.trim_end_matches('/'), write.group.path()))
+                .basic_auth(&endpoint.user, Some(&endpoint.password)).send()
+                .map_err(|_| "Write accepted; readback unavailable, possibly after Wi-Fi reassociation. Reconnect and refresh; no write was replayed.".to_string())?
+                .error_for_status().map_err(|e| format!("Write accepted; readback failed: {e}"))?
+                .json::<serde_json::Value>().map_err(|_| "Write accepted; malformed readback. Refresh before retrying.".to_string())?;
+            write.verify_readback(&readback)?;
+            Ok(readback)
+        })();
+        return Ok(Event::SettingsFinished(write.id, write.group, result));
+    }
     if let HttpCommand::NameChange(endpoint, input) = &command {
         let name = identity::normalize_name(input)?;
         let response = client
@@ -320,6 +363,8 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
         HttpCommand::Configuration(..)
         | HttpCommand::AccessChange(..)
         | HttpCommand::NameChange(..) => unreachable!(),
+        HttpCommand::Settings(..) => unreachable!(),
+        HttpCommand::Maintenance(..) => unreachable!(),
         HttpCommand::Post(endpoint, path, form) => {
             let url = format!("{}{}", endpoint.base.trim_end_matches('/'), path);
             let request = client.post(url).form(&form);
@@ -903,6 +948,7 @@ fn command_route(selected: Transport, wifi_fresh: bool, usb_fresh: bool) -> Opti
 struct PakarControllerApp {
     config: config::AppConfig,
     preferences: Option<ui::preferences::PreferencesDraft>,
+    device_settings: device_settings::Editor,
     control: platform::instance::Control,
     dock: egui_dock::DockState<ui::layout::Panel>,
     reveal_panels: Vec<ui::layout::Panel>,
@@ -941,25 +987,7 @@ struct PakarControllerApp {
     buzzer_frequency: u16,
     buzzer_duration: u16,
     output_mask: u8,
-    wifi_ssid: String,
-    wifi_password: String,
     device_name: Option<String>,
-    station_enabled: bool,
-    ap_enabled: bool,
-    mqtt_enabled: bool,
-    mqtt_tls: bool,
-    mqtt_host: String,
-    mqtt_port: u16,
-    mqtt_user: String,
-    mqtt_password: String,
-    mqtt_topic: String,
-    cloud_ws_enabled: bool,
-    cloud_ws_tls: bool,
-    cloud_ws_host: String,
-    cloud_ws_port: u16,
-    cloud_ws_path: String,
-    cloud_ws_token: String,
-    telemetry_seconds: u16,
     message: String,
     http_tx: Sender<HttpCommand>,
     ws_tx: Sender<WsCommand>,
@@ -1022,6 +1050,7 @@ impl PakarControllerApp {
             preferences: None,
             show_connection: false,
             show_mapping: false,
+            device_settings: device_settings::Editor::default(),
             show_workspaces: false,
             show_about: false,
             confirm_reset: false,
@@ -1056,25 +1085,7 @@ impl PakarControllerApp {
             buzzer_frequency: 1032,
             buzzer_duration: 100,
             output_mask: 0,
-            wifi_ssid: "DRS Tether".into(),
-            wifi_password: String::new(),
             device_name: None,
-            station_enabled: true,
-            ap_enabled: true,
-            mqtt_enabled: true,
-            mqtt_tls: true,
-            mqtt_host: "mqtt.digitalogic.ir".into(),
-            mqtt_port: 8883,
-            mqtt_user: String::new(),
-            mqtt_password: String::new(),
-            mqtt_topic: "pakarcontroller".into(),
-            cloud_ws_enabled: false,
-            cloud_ws_tls: true,
-            cloud_ws_host: String::new(),
-            cloud_ws_port: 443,
-            cloud_ws_path: "/".into(),
-            cloud_ws_token: String::new(),
-            telemetry_seconds: 5,
             message: "Connecting to PakarController".into(),
             http_tx,
             ws_tx,
@@ -1151,92 +1162,25 @@ impl PakarControllerApp {
                     .is_some_and(|at| at.elapsed() < Duration::from_secs(8)),
         )
     }
-    fn apply_network(&mut self) {
-        if self.wifi_password.is_empty() {
-            self.notify(
-                "Wi-Fi password required",
-                "Enter the Wi-Fi password before applying network changes",
-                messaging::Severity::Warning,
-            );
-            return;
+    fn provision_usb_network(
+        &mut self,
+        config: &device_settings::Network,
+        password: &str,
+        open: bool,
+    ) -> Result<(), String> {
+        if self.command_route() != Some(Transport::Serial) {
+            return Err("Reconnect to the selected USB peer before provisioning".into());
         }
-        if !self.station_enabled && !self.ap_enabled {
-            self.message = "Keep station or recovery AP enabled".into();
-            return;
+        for payload in device_settings::usb_payloads(config, password, open)? {
+            self.serial(OP_NETWORK_CONFIG, payload);
         }
-        let Some(route) = self.command_route() else {
-            self.message = "Reconnect before applying network settings".into();
-            return;
-        };
-        if route == Transport::WiFi {
-            self.post(
-                "/api/v1/network",
-                vec![
-                    ("station_enabled".into(), self.station_enabled.to_string()),
-                    ("ap_enabled".into(), self.ap_enabled.to_string()),
-                    ("ssid".into(), self.wifi_ssid.clone()),
-                    ("password".into(), self.wifi_password.clone()),
-                ],
-            );
-        }
-        if route == Transport::Serial {
-            self.serial(OP_NETWORK_CONFIG, vec![0]);
-            for chunk in self.wifi_ssid.as_bytes().chunks(47) {
-                let mut payload = vec![1];
-                payload.extend_from_slice(chunk);
-                self.serial(OP_NETWORK_CONFIG, payload);
-            }
-            for chunk in self.wifi_password.as_bytes().chunks(47) {
-                let mut payload = vec![2];
-                payload.extend_from_slice(chunk);
-                self.serial(OP_NETWORK_CONFIG, payload);
-            }
-            self.serial(
-                OP_NETWORK_CONFIG,
-                vec![3, u8::from(self.station_enabled), u8::from(self.ap_enabled)],
-            );
-        }
-        self.message = "Network configuration submitted".into();
-    }
-    fn apply_cloud(&mut self) {
-        if self.transport == Transport::Serial {
-            self.message = "Cloud settings require the authenticated HTTP path".into();
-            return;
-        }
-        let mut form = vec![
-            ("mqtt_enabled".into(), self.mqtt_enabled.to_string()),
-            ("mqtt_tls".into(), self.mqtt_tls.to_string()),
-            ("mqtt_host".into(), self.mqtt_host.clone()),
-            ("mqtt_port".into(), self.mqtt_port.to_string()),
-            ("mqtt_user".into(), self.mqtt_user.clone()),
-            ("mqtt_base_topic".into(), self.mqtt_topic.clone()),
-            (
-                "websocket_enabled".into(),
-                self.cloud_ws_enabled.to_string(),
-            ),
-            ("websocket_tls".into(), self.cloud_ws_tls.to_string()),
-            ("websocket_host".into(), self.cloud_ws_host.clone()),
-            ("websocket_port".into(), self.cloud_ws_port.to_string()),
-            ("websocket_path".into(), self.cloud_ws_path.clone()),
-            (
-                "telemetry_seconds".into(),
-                self.telemetry_seconds.to_string(),
-            ),
-        ];
-        if !self.mqtt_password.is_empty() {
-            form.push(("mqtt_password".into(), self.mqtt_password.clone()));
-        }
-        if !self.cloud_ws_token.is_empty() {
-            form.push(("websocket_token".into(), self.cloud_ws_token.clone()));
-        }
-        self.post("/api/v1/cloud", form);
-        self.mqtt_password.clear();
-        self.cloud_ws_token.clear();
-        self.message = "Cloud configuration submitted".into();
+        self.message = "USB provisioning queued; this serial protocol has no saved-settings readback. Verify via authenticated HTTP after reconnecting.".into();
+        Ok(())
     }
     fn poll(&mut self) {
         let endpoint = self.endpoint();
         if self.last_ws_endpoint.as_ref() != Some(&endpoint) {
+            self.device_settings.invalidate_peer();
             self.status = None;
             self.last_status_at = None;
             self.websocket_live = false;
@@ -1321,6 +1265,18 @@ impl PakarControllerApp {
                     self.access_info = Some(value);
                 }
                 Event::Configuration(path, value) => self.receive_configuration(path, value),
+                Event::MaintenanceFinished(id, result) => {
+                    if self.device_settings.maintenance_pending == Some(id) {
+                        self.device_settings.maintenance_pending = None;
+                        self.device_settings.message = result.unwrap_or_else(|e| e);
+                        self.record_event("Maintenance", &self.device_settings.message.clone());
+                        self.configuration_loaded = false;
+                    }
+                }
+                Event::SettingsFinished(id, group, result) => {
+                    self.device_settings.finish(id, group, result);
+                    self.record_event("Settings", &self.device_settings.message.clone());
+                }
                 Event::CredentialsUpdated(endpoint) => {
                     self.user = endpoint.user;
                     self.password = endpoint.password;
@@ -1343,6 +1299,11 @@ impl PakarControllerApp {
                     self.notify("Command accepted", &m, messaging::Severity::Success);
                 }
                 Event::Failed(e) => {
+                    if self.device_settings.scan_pending {
+                        self.device_settings.scan_pending = false;
+                        self.device_settings.message =
+                            "Network scan did not complete. Reconnect and scan again.".into();
+                    }
                     if self.message != e {
                         self.record_event("Error", &e);
                     }
@@ -1752,6 +1713,174 @@ fn main() -> eframe::Result {
 
 #[cfg(test)]
 mod tests {
+    fn mock_device(
+        responses: Vec<(u16, Vec<u8>)>,
+    ) -> (super::Endpoint, std::thread::JoinHandle<Vec<String>>) {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let endpoint = super::Endpoint {
+            base: format!("http://{}", listener.local_addr().unwrap()),
+            user: "fixture".into(),
+            password: "fixture-secret".into(),
+        };
+        let worker = std::thread::spawn(move || {
+            let mut requests = Vec::new();
+            for (code, body) in responses {
+                let (mut stream, _) = listener.accept().unwrap();
+                stream
+                    .set_read_timeout(Some(std::time::Duration::from_secs(3)))
+                    .unwrap();
+                let mut bytes = Vec::new();
+                let mut buffer = [0; 4096];
+                loop {
+                    let read = stream.read(&mut buffer).unwrap();
+                    assert!(read > 0);
+                    bytes.extend_from_slice(&buffer[..read]);
+                    if let Some(end) = bytes.windows(4).position(|w| w == b"\r\n\r\n") {
+                        let header = String::from_utf8_lossy(&bytes[..end]);
+                        let length = header
+                            .lines()
+                            .find_map(|line| {
+                                line.to_lowercase()
+                                    .strip_prefix("content-length:")
+                                    .and_then(|n| n.trim().parse::<usize>().ok())
+                            })
+                            .unwrap_or(0);
+                        if bytes.len() >= end + 4 + length {
+                            break;
+                        }
+                    }
+                    assert!(bytes.len() < 3 * 1024 * 1024);
+                }
+                requests.push(String::from_utf8_lossy(&bytes).into_owned());
+                write!(stream,"HTTP/1.1 {code} Fixture\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",body.len()).unwrap();
+                stream.write_all(&body).unwrap();
+            }
+            requests
+        });
+        (endpoint, worker)
+    }
+    fn fixture_network() -> super::device_settings::Network {
+        super::device_settings::Network {
+            station_enabled: true,
+            ap_enabled: true,
+            station_ssid: "Fixture".into(),
+        }
+    }
+    #[test]
+    fn settings_worker_requires_ack_and_exact_readback() {
+        let n = fixture_network();
+        let (endpoint, server) = mock_device(vec![
+            (202, br#"{"accepted":true}"#.to_vec()),
+            (200, serde_json::to_vec(&n).unwrap()),
+        ]);
+        let client = super::Client::builder()
+            .no_proxy()
+            .timeout(std::time::Duration::from_secs(3))
+            .build()
+            .unwrap();
+        let command =
+            super::device_settings::Write::network(41, &n, "fixture-pass", false).unwrap();
+        assert!(matches!(
+            super::http_request(&client, super::HttpCommand::Settings(endpoint, command)).unwrap(),
+            super::Event::SettingsFinished(41, _, Ok(_))
+        ));
+        let requests = server.join().unwrap();
+        assert_eq!(requests.len(), 2);
+        assert!(requests[0].starts_with("POST /api/v1/network "));
+        assert!(requests[1].starts_with("GET /api/v1/network "));
+        assert!(requests[0].to_lowercase().contains("authorization: basic "));
+    }
+    #[test]
+    fn mismatched_readback_and_negative_ack_never_replay_write() {
+        let client = super::Client::builder()
+            .no_proxy()
+            .timeout(std::time::Duration::from_secs(3))
+            .build()
+            .unwrap();
+        for negative_ack in [false, true] {
+            let mut changed = fixture_network();
+            changed.ap_enabled = false;
+            let responses = if negative_ack {
+                vec![(200, br#"{"accepted":false}"#.to_vec())]
+            } else {
+                vec![
+                    (202, br#"{"accepted":true}"#.to_vec()),
+                    (200, serde_json::to_vec(&changed).unwrap()),
+                ]
+            };
+            let (endpoint, server) = mock_device(responses);
+            let write = super::device_settings::Write::network(
+                9,
+                &fixture_network(),
+                "fixture-pass",
+                false,
+            )
+            .unwrap();
+            assert!(matches!(
+                super::http_request(&client, super::HttpCommand::Settings(endpoint, write))
+                    .unwrap(),
+                super::Event::SettingsFinished(9, _, Err(_))
+            ));
+            let requests = server.join().unwrap();
+            assert_eq!(
+                requests.iter().filter(|r| r.starts_with("POST ")).count(),
+                1
+            );
+        }
+    }
+    #[test]
+    fn maintenance_checks_positive_device_confirmation() {
+        let client = super::Client::builder().no_proxy().build().unwrap();
+        let (endpoint, server) = mock_device(vec![(
+            200,
+            br#"{"programmed":true,"verified":false}"#.to_vec(),
+        )]);
+        assert!(
+            super::maintenance::run(
+                &client,
+                &endpoint,
+                super::maintenance::Operation::ProgramAvr
+            )
+            .is_err()
+        );
+        assert_eq!(server.join().unwrap().len(), 1);
+        let (endpoint, server) = mock_device(vec![(201, b"AVR image stored".to_vec())]);
+        assert!(
+            super::maintenance::run(
+                &client,
+                &endpoint,
+                super::maintenance::Operation::StageAvr(vec![0; 32768])
+            )
+            .unwrap()
+            .contains("NOT programmed")
+        );
+        let requests = server.join().unwrap();
+        assert!(requests[0].starts_with("POST /api/v1/avr/image "));
+        assert!(requests[0].contains("multipart/form-data"));
+    }
+    #[test]
+    fn backup_export_rejects_wrong_length_and_preserves_existing_files() {
+        let destination =
+            std::env::temp_dir().join(format!("pakar-fixture-{}.bin", uuid::Uuid::new_v4()));
+        let client = super::Client::builder().no_proxy().build().unwrap();
+        let operation = super::maintenance::Operation::Download {
+            eeprom: true,
+            destination: destination.clone(),
+        };
+        let (endpoint, server) = mock_device(vec![(200, vec![0; 1023])]);
+        assert!(super::maintenance::run(&client, &endpoint, operation.clone()).is_err());
+        server.join().unwrap();
+        assert!(!destination.exists());
+        let (endpoint, server) = mock_device(vec![(200, vec![7; 1024])]);
+        assert!(super::maintenance::run(&client, &endpoint, operation.clone()).is_ok());
+        server.join().unwrap();
+        let (endpoint, server) = mock_device(vec![(200, vec![8; 1024])]);
+        assert!(super::maintenance::run(&client, &endpoint, operation).is_err());
+        server.join().unwrap();
+        assert_eq!(std::fs::read(&destination).unwrap(), vec![7; 1024]);
+        std::fs::remove_file(destination).unwrap();
+    }
     #[test]
     fn late_observations_are_bound_to_their_requested_peer() {
         let current = super::Endpoint {

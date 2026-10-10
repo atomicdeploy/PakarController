@@ -339,7 +339,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "d18753edf6d9ab004e2158b8918cb759933a0bcad7a442093b193dbfed7fb6ed",
+          "sha256": "6b12b86ed6bc21be53ba20b6f8eba4386a6d224b8102f7aa69e3ab2c6ac470ef",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],

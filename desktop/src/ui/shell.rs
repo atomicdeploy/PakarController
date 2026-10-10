@@ -11,7 +11,13 @@ use eframe::egui;
 use platform::instance::Command;
 
 pub fn launch_command(args: &[String]) -> Command {
-    if args.iter().any(|v| v == "--connect-dialog") {
+    if let Some(at) = args.iter().position(|v| v == "--settings-page") {
+        Command::DeviceSettingsPage {
+            page: args.get(at + 1).cloned().unwrap_or_default(),
+        }
+    } else if args.iter().any(|v| v == "--device-settings") {
+        Command::DeviceSettings
+    } else if args.iter().any(|v| v == "--connect-dialog") {
         Command::Connect
     } else if args.iter().any(|v| v == "--quit") {
         Command::Quit
@@ -70,7 +76,7 @@ mod table_geometry_tests {
     fn footer_stays_below_every_half_staggered_row_after_absolute_widgets() {
         for pitch in [30.0, 60.0, 94.0] {
             let ctx = egui::Context::default();
-            let _ = ctx.run_ui(egui::RawInput::default(), |ui| {
+            let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
                 let height = pitch * 0.72;
                 let (area, _) = ui.allocate_exact_size(
                     egui::vec2(pitch * 10.0, height * 8.5),
@@ -88,66 +94,22 @@ mod table_geometry_tests {
                     "Footer overlaps staggered grid at pitch {pitch}: {area:?} {footer:?}"
                 );
             });
+            output.textures_delta.clear();
         }
     }
 }
 impl PakarControllerApp {
     pub fn receive_configuration(&mut self, path: &str, value: serde_json::Value) {
-        let flag = |key: &str| value.get(key).and_then(|v| v.as_bool());
-        let text = |key: &str| value.get(key).and_then(|v| v.as_str()).map(str::to_owned);
-        let port = |key: &str| {
-            value
-                .get(key)
-                .and_then(|v| v.as_u64())
-                .and_then(|v| u16::try_from(v).ok())
-        };
+        if let Err(error) = self.device_settings.observe(path, value.clone()) {
+            self.device_settings.message = error;
+            return;
+        }
         if path == "/api/v1/device/name" {
-            if let Some(name) = text("hostname") {
-                if crate::identity::normalize_name(&name).is_ok() {
-                    self.device_name = Some(name);
-                }
-            }
-        } else if path == "/api/v1/network" {
-            if let (Some(station), Some(ap), Some(ssid)) = (
-                flag("station_enabled"),
-                flag("ap_enabled"),
-                text("station_ssid"),
-            ) {
-                self.station_enabled = station;
-                self.ap_enabled = ap;
-                self.wifi_ssid = ssid;
-            }
-        } else if path == "/api/v1/cloud" {
-            if let (Some(enabled), Some(tls), Some(host), Some(p), Some(user), Some(topic)) = (
-                flag("mqtt_enabled"),
-                flag("mqtt_tls"),
-                text("mqtt_host"),
-                port("mqtt_port"),
-                text("mqtt_user"),
-                text("mqtt_base_topic"),
-            ) {
-                self.mqtt_enabled = enabled;
-                self.mqtt_tls = tls;
-                self.mqtt_host = host;
-                self.mqtt_port = p;
-                self.mqtt_user = user;
-                self.mqtt_topic = topic;
-            }
-            if let (Some(enabled), Some(tls), Some(host), Some(p), Some(path)) = (
-                flag("websocket_enabled"),
-                flag("websocket_tls"),
-                text("websocket_host"),
-                port("websocket_port"),
-                text("websocket_path"),
-            ) {
-                self.cloud_ws_enabled = enabled;
-                self.cloud_ws_tls = tls;
-                self.cloud_ws_host = host;
-                self.cloud_ws_port = p;
-                self.cloud_ws_path = path;
-            }
-            if let Some(seconds) = port("telemetry_seconds") {
-                self.telemetry_seconds = seconds;
+            if let Some(name) = value["hostname"]
+                .as_str()
+                .filter(|name| crate::identity::normalize_name(name).is_ok())
+            {
+                self.device_name = Some(name.into());
             }
         }
     }
@@ -158,6 +120,20 @@ impl PakarControllerApp {
     }
     pub fn dispatch(&mut self, command: Command, ctx: &egui::Context) {
         match command {
+            Command::DeviceSettings => {
+                self.device_settings.open = true;
+                self.configuration_loaded = false;
+            }
+            Command::DeviceSettingsPage { page } => {
+                if let Some(index) = ui::device_settings::page_index(&page) {
+                    self.device_settings.open = true;
+                    self.device_settings.page = index;
+                    self.device_settings.search.clear();
+                    self.configuration_loaded = false;
+                } else {
+                    self.message = "Unknown device settings page".into();
+                }
+            }
             Command::Quit => {
                 self.exiting = true;
                 self.save_workspace();
@@ -219,7 +195,7 @@ impl PakarControllerApp {
             }
         }
     }
-    fn live_status(&self) -> Option<&DeviceStatus> {
+    pub(super) fn live_status(&self) -> Option<&DeviceStatus> {
         match self.command_route() {
             Some(Transport::WiFi) => self.status.as_ref(),
             Some(Transport::Serial) => self.serial_status.as_ref(),
@@ -257,7 +233,15 @@ impl PakarControllerApp {
             ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
             self.save_workspace();
         }
-        if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::Comma)) {
+        if ctx.input_mut(|i| {
+            i.consume_key(
+                egui::Modifiers::CTRL | egui::Modifiers::SHIFT,
+                egui::Key::Comma,
+            )
+        }) {
+            self.device_settings.open = true;
+            self.configuration_loaded = false;
+        } else if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::Comma)) {
             self.open_preferences();
         }
         if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::K)) {
@@ -269,7 +253,11 @@ impl PakarControllerApp {
         if ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::F5)) {
             self.refresh();
         }
-        if self.preferences.is_none() && !self.show_connection && !self.confirm_reset {
+        if self.preferences.is_none()
+            && !self.device_settings.open
+            && !self.show_connection
+            && !self.confirm_reset
+        {
             if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::F)) {
                 self.reveal_panels.push(Panel::Table);
                 self.focus_cell_search = true;
@@ -292,10 +280,22 @@ impl PakarControllerApp {
         let snapshot = self.live_status().cloned();
         if let Ok(mut value) = self.control.snapshot.lock() {
             *value = serde_json::json!({"application":"PakarController","version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":self.cell_search,"search_matches":ui::cell_search::parse(&self.cell_search).unwrap_or_default(),"selected_cell":self.selected_cell});
+            value["device_settings"] = serde_json::json!({"open": self.device_settings.open, "page": self.device_settings.page, "network_loaded": self.device_settings.network.is_some(), "cloud_loaded": self.device_settings.cloud.is_some(), "write_pending": self.device_settings.pending.is_some(), "maintenance_pending": self.device_settings.maintenance_pending.is_some()});
         }
         egui::Panel::top("pakar-menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
+                    if ui
+                        .button(format!(
+                            "{}  Device settings…   Ctrl+Shift+,",
+                            icons::CIRCUITRY
+                        ))
+                        .clicked()
+                    {
+                        self.device_settings.open = true;
+                        self.configuration_loaded = false;
+                        ui.close();
+                    }
                     if ui
                         .button(format!("{}  Connect…       Ctrl+K", icons::PLUG))
                         .clicked()
@@ -488,6 +488,7 @@ impl PakarControllerApp {
                 }
             });
         ui::preferences::draw(self, &ctx);
+        ui::device_settings::draw(self, &ctx);
         self.draw_dialogs(&ctx);
         ui::toasts::draw(&ctx);
     }
@@ -867,7 +868,7 @@ impl PakarControllerApp {
             });
         }
     }
-    fn draw_front_panel(&mut self, ui: &mut egui::Ui) {
+    pub(super) fn draw_front_panel(&mut self, ui: &mut egui::Ui) {
         let snapshot = self.live_status().cloned();
         dialog::section(ui, icons::GAUGE, "Live display", |ui| {
             if let Some(s) = &snapshot {
@@ -1057,7 +1058,7 @@ impl PakarControllerApp {
             }
         });
     }
-    fn draw_hardware(&mut self, ui: &mut egui::Ui) {
+    pub(super) fn draw_hardware(&mut self, ui: &mut egui::Ui) {
         let Some(s) = self.live_status().cloned() else {
             ui.label("Hardware state unavailable");
             return;
@@ -1131,7 +1132,7 @@ impl PakarControllerApp {
             });
         });
     }
-    fn draw_network(&mut self, ui: &mut egui::Ui) {
+    pub(super) fn draw_device_identity(&mut self, ui: &mut egui::Ui) {
         dialog::section(ui, icons::GLOBE, "Device name", |ui| {
             if let Some(name) = &mut self.device_name {
                 field(ui, icons::GLOBE, "Hostname", name, false);
@@ -1158,7 +1159,8 @@ impl PakarControllerApp {
                 });
             }
         });
-        ui.add_space(10.0);
+    }
+    pub(super) fn draw_device_access(&mut self, ui: &mut egui::Ui) {
         dialog::section(ui, icons::LOCK, "Device access", |ui| {
             if let Some(info) = &self.access_info {
                 if info.get("ready").and_then(|v| v.as_bool()) != Some(true) {
@@ -1225,94 +1227,30 @@ impl PakarControllerApp {
                 ui.label("Credential settings have not been advertised by the device. Connect to the updated firmware to configure them.");
             }
         });
-        ui.add_space(10.0);
-        if let Some(s) = self.live_status().cloned() {
-            dialog::section(ui, icons::BROADCAST, "Live network", |ui| {
-                ui.horizontal_wrapped(|ui| {
-                    badge(ui, "Station", s.station_connected);
-                    badge(ui, "AP", s.ap_started);
-                    badge(ui, "NTP", s.ntp_synced);
-                    badge(ui, "MQTT", s.mqtt_connected);
-                    badge(ui, "Cloud WS", s.cloud_websocket_connected);
-                });
-                ui.label(format!(
-                    "{} · {} dBm · {} clients",
-                    s.station_ssid, s.station_rssi, s.websocket_clients
-                ));
-                ui.hyperlink_to(&s.canonical_url, &s.canonical_url);
-                ui.label(
-                    egui::RichText::new(format!(
-                        "mDNS {} · SSDP {} · NetBIOS {}",
-                        s.mdns_started, s.ssdp_started, s.netbios_started
-                    ))
-                    .small()
-                    .weak(),
-                );
-                if !s.cloud_error.is_empty() {
-                    ui.colored_label(ui.visuals().error_fg_color, s.cloud_error);
-                }
-            });
-            ui.add_space(10.0);
-        }
-        dialog::section(ui, icons::WIFI_HIGH, "Wi-Fi policy", |ui| {
-            ui.horizontal(|ui| {
-                ui.checkbox(&mut self.station_enabled, "Station");
-                ui.checkbox(&mut self.ap_enabled, "Recovery AP");
-            });
-            field(ui, icons::WIFI_HIGH, "SSID", &mut self.wifi_ssid, false);
-            field(ui, icons::LOCK, "Password", &mut self.wifi_password, true);
-            if dialog::primary_action_button(ui, icons::CHECK, "Apply network").clicked() {
-                self.apply_network();
+    }
+    fn draw_network(&mut self, ui: &mut egui::Ui) {
+        dialog::section(ui, icons::GEAR, "Device configuration", |ui| {
+            ui.label("Manage the controller's saved settings, network services and front panel.");
+            if dialog::primary_action_button(ui, icons::GEAR, "Device settings…").clicked() {
+                self.device_settings.open = true;
+                self.configuration_loaded = false;
             }
         });
-        ui.add_space(10.0);
-        dialog::section(ui, icons::GLOBE, "MQTT", |ui| {
-            ui.horizontal(|ui| {
-                ui.checkbox(&mut self.mqtt_enabled, "Enabled");
-                ui.checkbox(&mut self.mqtt_tls, "TLS");
-                ui.label("Port");
-                ui.add(egui::DragValue::new(&mut self.mqtt_port).range(1..=65535));
+        if let Some(status) = self.live_status().cloned() {
+            ui.add_space(12.0);
+            dialog::section(ui, icons::BROADCAST, "Live services", |ui| {
+                ui.horizontal_wrapped(|ui| {
+                    badge(ui, "Station", status.station_connected);
+                    badge(ui, "AP", status.ap_started);
+                    badge(ui, "NTP", status.ntp_synced);
+                    badge(ui, "MQTT", status.mqtt_connected);
+                    badge(ui, "Cloud WS", status.cloud_websocket_connected);
+                });
+                ui.hyperlink_to(&status.canonical_url, &status.canonical_url);
+                if !status.cloud_error.is_empty() {
+                    ui.colored_label(ui.visuals().error_fg_color, status.cloud_error);
+                }
             });
-            field(ui, icons::GLOBE, "Broker", &mut self.mqtt_host, false);
-            field(ui, icons::LIST, "Topic", &mut self.mqtt_topic, false);
-            field(ui, icons::LOCK, "Username", &mut self.mqtt_user, false);
-            field(ui, icons::LOCK, "Password", &mut self.mqtt_password, true);
-        });
-        ui.add_space(10.0);
-        dialog::section(ui, icons::BROADCAST, "Outbound WebSocket", |ui| {
-            ui.horizontal(|ui| {
-                ui.checkbox(&mut self.cloud_ws_enabled, "Enabled");
-                ui.checkbox(&mut self.cloud_ws_tls, "TLS");
-                ui.label("Port");
-                ui.add(egui::DragValue::new(&mut self.cloud_ws_port).range(1..=65535));
-            });
-            field(ui, icons::GLOBE, "Host", &mut self.cloud_ws_host, false);
-            field(ui, icons::LINK, "Path", &mut self.cloud_ws_path, false);
-            field(
-                ui,
-                icons::LOCK,
-                "Bearer token",
-                &mut self.cloud_ws_token,
-                true,
-            );
-            ui.horizontal(|ui| {
-                ui.label("Telemetry");
-                ui.add(
-                    egui::DragValue::new(&mut self.telemetry_seconds)
-                        .range(1..=3600)
-                        .suffix(" s"),
-                );
-            });
-        });
-        ui.add_space(8.0);
-        if ui
-            .add_enabled(
-                self.transport != Transport::Serial,
-                egui::Button::new(format!("{}  Apply cloud settings", icons::CHECK)),
-            )
-            .clicked()
-        {
-            self.apply_cloud();
         }
     }
     fn draw_streaming(&mut self, ui: &mut egui::Ui) {

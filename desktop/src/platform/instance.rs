@@ -13,6 +13,8 @@ use std::{
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "command", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Command {
+    DeviceSettings,
+    DeviceSettingsPage { page: String },
     Show,
     Connect,
     Preferences,
@@ -29,6 +31,7 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
     let allowed = match object.get("command").and_then(|v| v.as_str()) {
         Some("panel") => &["command", "name"][..],
         Some("find_cell") => &["command", "query"][..],
+        Some("device_settings_page") => &["command", "page"][..],
         _ => &["command"][..],
     };
     if object.keys().any(|key| !allowed.contains(&key.as_str())) {
@@ -37,6 +40,11 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
     let command: Command = serde_json::from_value(value).map_err(|e| e.to_string())?;
     if let Command::FindCell { query } = &command {
         crate::ui::cell_search::parse(query)?;
+    }
+    if let Command::DeviceSettingsPage { page } = &command {
+        if crate::ui::device_settings::page_index(page).is_none() {
+            return Err("Unknown device settings page".into());
+        }
     }
     Ok(command)
 }
