@@ -57,6 +57,7 @@ pub struct WorkspaceProfile {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AppConfig {
+    pub display: crate::display::Settings,
     pub theme: AppTheme,
     pub color_palette: ColorPalette,
     pub accent: String,
@@ -76,6 +77,7 @@ pub struct AppConfig {
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
+            display: crate::display::Settings::default(),
             theme: AppTheme::System,
             color_palette: ColorPalette::Studio,
             accent: "#38D27A".into(),

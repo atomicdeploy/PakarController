@@ -6,6 +6,7 @@ use std::{
 };
 
 mod config;
+mod display;
 mod messaging;
 mod platform;
 mod ui;
@@ -582,7 +583,7 @@ fn serial_status(payload: &[u8]) -> Option<DeviceStatus> {
         return None;
     }
     Some(DeviceStatus {
-        mode: ["idle", "cell", "first-wins"]
+        mode: ["idle", "cell", "first-wins", "snake"]
             .get(payload[0] as usize)
             .unwrap_or(&"unknown")
             .to_string(),
@@ -595,6 +596,9 @@ fn serial_status(payload: &[u8]) -> Option<DeviceStatus> {
             .to_string(),
         avr_online: payload[5] != 0,
         tm1637_ack: payload[6] != 0,
+        tm1637_segments: payload.get(19..23).unwrap_or_default().to_vec(),
+        tm1637_brightness: payload.get(23).copied().unwrap_or_default(),
+        tm1637_host_active: payload.get(24).is_some_and(|value| *value != 0),
         programming_latch: payload[7] != 0,
         active_inputs: payload[8],
         input_9: payload[9] != 0,
@@ -732,8 +736,6 @@ struct PakarControllerApp {
     pattern: String,
     display_value: i16,
     display_text: String,
-    display_speed_ms: u16,
-    display_force_scroll: bool,
     buzzer_frequency: u16,
     buzzer_duration: u16,
     output_mask: u8,
@@ -842,8 +844,6 @@ impl PakarControllerApp {
             pattern: "none".into(),
             display_value: 1,
             display_text: "PAKAR CONTROLLER".into(),
-            display_speed_ms: 260,
-            display_force_scroll: true,
             buzzer_frequency: 1032,
             buzzer_duration: 100,
             output_mask: 0,
@@ -1170,6 +1170,32 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
     if words.is_empty() || words[0] == "status" {
         return blocking_status(client, endpoint).map(|status| print_text_status(&status, true));
     }
+    if matches!(words, ["display", "segments", ..] | ["display", "stop"]) {
+        let form = if words == ["display", "stop"] {
+            vec![("release".into(), "true".into())]
+        } else {
+            let (settings, text) = display::parse_command(&words[2..])?;
+            settings.form(&text)
+        };
+        let response = client
+            .post(format!(
+                "{}/api/v1/display",
+                endpoint.base.trim_end_matches('/')
+            ))
+            .basic_auth(&endpoint.user, Some(&endpoint.password))
+            .form(&form)
+            .send()
+            .map_err(|e| e.to_string())?;
+        if !response.status().is_success() {
+            return Err(format!(
+                "HTTP {}: {}",
+                response.status(),
+                response.text().unwrap_or_default()
+            ));
+        }
+        println!("accepted");
+        return Ok(());
+    }
     let (path, form): (&str, Vec<(&str, &str)>) =
         match words {
             ["mode", value] => ("/api/v1/mode", vec![("value", value)]),
@@ -1256,7 +1282,7 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
                 }
                 if matches!(words.first(), Some(&"help")) {
                     println!(
-                        "status | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | audio <cue> | snake <direction> | reset | quit"
+                        "status | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | display stop | display segments [--speed-ms n] [--duration-ms n] [--repeat once|loop|interval] [--interval-ms n] [--scroll] -- TEXT | audio <cue> | snake <direction> | reset | quit"
                     );
                     continue;
                 }
@@ -1371,5 +1397,21 @@ mod tests {
     fn cell_states_cycle() {
         assert_eq!(PakarControllerApp::next_cell_state("white"), ("red", 1));
         assert_eq!(PakarControllerApp::next_cell_state("red"), ("off", 2));
+    }
+    #[test]
+    fn serial_display_state_extension_preserves_old_status() {
+        let mut payload = vec![0; 19];
+        payload[0] = 3;
+        let old = serial_status(&payload).unwrap();
+        assert_eq!(old.mode, "snake");
+        assert!(old.tm1637_segments.is_empty());
+        payload.extend([1, 2, 4, 8, 5, 1]);
+        let current = serial_status(&payload).unwrap();
+        assert_eq!(current.tm1637_segments, [1, 2, 4, 8]);
+        assert_eq!(current.tm1637_brightness, 5);
+        assert!(current.tm1637_host_active);
+        payload[24] = 0;
+        assert!(!serial_status(&payload).unwrap().tm1637_host_active);
+        assert!(serial_status(&payload[..18]).is_none());
     }
 }

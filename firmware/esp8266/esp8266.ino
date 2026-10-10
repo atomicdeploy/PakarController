@@ -156,6 +156,9 @@ void sendHostStatus(uint8_t requestSequence) {
       static_cast<uint8_t>(apStarted),
       static_cast<uint8_t>(currentTime > 1700000000),
       static_cast<uint8_t>(PAKAR_USE_BUSY_WIRE),
+      // Append-only extension: preserve the original 19-byte status prefix.
+      tm1637Segments[0], tm1637Segments[1], tm1637Segments[2], tm1637Segments[3],
+      tm1637Brightness, static_cast<uint8_t>(tm1637HostActive),
   };
   hostLink.send(kStatusResponse, requestSequence, payload, sizeof(payload));
 }
@@ -881,6 +884,49 @@ long jsonIntegerValue(const String &json, const char *key, long fallback) {
   return json.substring(at, end < 0 ? json.length() : end).toInt();
 }
 
+bool submitDisplayText(const String &text, long speed, long hold,
+                       const String &repeat, bool forceScroll, long interval,
+                       String &result) {
+  if ((!repeat.isEmpty() && repeat != F("once") && repeat != F("loop") &&
+       repeat != F("interval")) || text.length() > 40 || speed < 80 ||
+      speed > 5000 || hold < 0 || hold > 60000 || interval < 1 || interval > 255) {
+    result = F("invalid display text scheduling values");
+    return false;
+  }
+  for (size_t i = 0; i < text.length(); ++i) {
+    if (static_cast<uint8_t>(text[i]) < 0x20U || static_cast<uint8_t>(text[i]) > 0x7EU) {
+      result = F("display text must be printable ASCII");
+      return false;
+    }
+  }
+  uint8_t payload[48] = {};
+  payload[0] = 5;
+  payload[1] = static_cast<uint8_t>(speed);
+  payload[2] = static_cast<uint8_t>(speed >> 8);
+  payload[3] = static_cast<uint8_t>(text.length());
+  const uint8_t repeatMode = repeat == F("loop") ? 1 : repeat == F("interval") ? 2 : 0;
+  payload[4] = static_cast<uint8_t>(repeatMode | (forceScroll ? 0x80U : 0));
+  payload[5] = static_cast<uint8_t>(hold);
+  payload[6] = static_cast<uint8_t>(hold >> 8);
+  payload[7] = static_cast<uint8_t>(interval);
+  memcpy(payload + 8, text.c_str(), text.length());
+  sendToAvr(kDisplayText, sequence++, payload, static_cast<uint8_t>(8 + text.length()));
+  result = F("display text submitted");
+  return true;
+}
+
+bool jsonBooleanValue(const String &json, const char *key) {
+  const String needle = String('"') + key + '"';
+  int at = json.indexOf(needle);
+  if (at < 0) return false;
+  at = json.indexOf(':', at + needle.length());
+  if (at < 0) return false;
+  const int end = json.indexOf(',', at);
+  String value = json.substring(at + 1, end < 0 ? json.length() - 1 : end);
+  value.trim();
+  return value == F("true") || value == F("1");
+}
+
 bool handleCloudCommand(const String &message, String &result) {
   const String command = jsonStringValue(message, "command");
   if (command == F("status") ||
@@ -960,6 +1006,18 @@ bool handleCloudCommand(const String &message, String &result) {
     return true;
   }
   if (command == F("display")) {
+    if (jsonBooleanValue(message, "release")) {
+      const uint8_t payload[] = {4, 0, 0, 0};
+      sendToAvr(kDisplayText, sequence++, payload, sizeof(payload));
+      result = F("display released");
+      return true;
+    }
+    if (message.indexOf(F("\"text\"")) >= 0) {
+      return submitDisplayText(jsonStringValue(message, "text"),
+          jsonIntegerValue(message, "speed_ms", 260), jsonIntegerValue(message, "hold_ms", 1500),
+          jsonStringValue(message, "repeat"), jsonBooleanValue(message, "force_scroll"),
+          jsonIntegerValue(message, "interval_seconds", 5), result);
+    }
     const long value = jsonIntegerValue(message, "value", 10000);
     if (value < -999 || value > 9999) {
       result = F("display value must be -999..9999");
@@ -1309,6 +1367,12 @@ void registerApi() {
   });
   server.on("/api/v1/display", HTTP_POST, []() {
     if (!authenticate()) return;
+    if (server.arg("release") == F("true") || server.arg("release") == F("1")) {
+      const uint8_t payload[] = {4, 0, 0, 0};
+      sendToAvr(kDisplayText, sequence++, payload, sizeof(payload));
+      server.send(202, "application/json", "{\"accepted\":true}");
+      return;
+    }
     if (server.hasArg("text")) {
       const String text = server.arg("text");
       const int speed = server.hasArg("speed_ms")
@@ -1318,38 +1382,21 @@ void registerApi() {
                            ? server.arg("hold_ms").toInt()
                            : 1500;
       const String repeat = server.arg("repeat");
-      const uint8_t repeatMode =
-          repeat == F("loop") ? 1 : repeat == F("interval") ? 2 : 0;
       const bool forceScroll = server.arg("force_scroll") == F("true") ||
                                server.arg("force_scroll") == F("1");
       const int interval = server.hasArg("interval_seconds")
                                ? server.arg("interval_seconds").toInt()
                                : 5;
-      if (text.length() > 40 || speed < 80 || speed > 5000 ||
-          hold < 0 || hold > 60000 || interval < 1 || interval > 255) {
-        server.send(400, "text/plain", "invalid display text scheduling values");
+      String result;
+      if (!submitDisplayText(text, speed, hold, repeat, forceScroll, interval, result)) {
+        server.send(400, "text/plain", result);
         return;
       }
-      for (size_t i = 0; i < text.length(); ++i) {
-        if (static_cast<uint8_t>(text[i]) < 0x20U ||
-            static_cast<uint8_t>(text[i]) > 0x7EU) {
-          server.send(400, "text/plain", "display text must be printable ASCII");
-          return;
-        }
-      }
-      uint8_t payload[48] = {};
-      payload[0] = 5;  // PCController scheduled-segment target.
-      payload[1] = static_cast<uint8_t>(speed);
-      payload[2] = static_cast<uint8_t>(speed >> 8);
-      payload[3] = static_cast<uint8_t>(text.length());
-      payload[4] = static_cast<uint8_t>(repeatMode | (forceScroll ? 0x80U : 0));
-      payload[5] = static_cast<uint8_t>(hold);
-      payload[6] = static_cast<uint8_t>(hold >> 8);
-      payload[7] = static_cast<uint8_t>(interval);
-      memcpy(payload + 8, text.c_str(), text.length());
-      sendToAvr(kDisplayText, sequence++, payload,
-                static_cast<uint8_t>(8 + text.length()));
       server.send(202, "application/json", "{\"accepted\":true}");
+      return;
+    }
+    if (!server.hasArg("value")) {
+      server.send(400, "text/plain", "provide text, value, or release=true");
       return;
     }
     const int value = server.arg("value").toInt();
@@ -1646,12 +1693,45 @@ void executeTelnetCommand(String line) {
           "cell <1..80> <white|red|off> [immediate|fade|pulse]"));
     telnetClient.println(
         F("brightness <1..255> | effect <none|rainbow|fire> | "
-          "display <-999..9999> | audio <cue> | reset | quit"));
+          "display <-999..9999> | display stop | audio <cue> | reset | quit"));
+    telnetClient.println(F("display text <once|loop|interval> <speed_ms> <hold_ms> <pause_seconds> <scroll 0|1> <TEXT>"));
     telnetPrompt();
     return;
   }
   if (line == F("status")) {
     telnetClient.println(buildStatusJson());
+    telnetPrompt();
+    return;
+  }
+  if (line == F("display stop")) {
+    const uint8_t payload[] = {4, 0, 0, 0};
+    sendToAvr(kDisplayText, sequence++, payload, sizeof(payload));
+    telnetClient.println(F("OK display released"));
+    telnetPrompt();
+    return;
+  }
+  if (line.startsWith(F("display text "))) {
+    String remainder = line.substring(13);
+    String values[5];
+    bool complete = true;
+    for (uint8_t i = 0; i < 5; ++i) {
+      const int space = remainder.indexOf(' ');
+      if (space < 0) { complete = false; break; }
+      values[i] = remainder.substring(0, space);
+      remainder = remainder.substring(space + 1);
+    }
+    String result;
+    bool numeric = true;
+    for (uint8_t i = 1; i < 5; ++i) {
+      if (values[i].length() == 0) numeric = false;
+      for (size_t j = 0; j < values[i].length(); ++j)
+        if (values[i][j] < '0' || values[i][j] > '9') numeric = false;
+    }
+    const bool ok = complete && numeric && (values[4] == F("0") || values[4] == F("1")) &&
+        submitDisplayText(remainder, values[1].toInt(), values[2].toInt(), values[0],
+                          values[4] == F("1"), values[3].toInt(), result);
+    telnetClient.print(ok ? F("OK ") : F("ERR "));
+    telnetClient.println(result.isEmpty() ? F("invalid display text arguments; use help") : result);
     telnetPrompt();
     return;
   }

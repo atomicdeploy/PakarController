@@ -375,6 +375,7 @@ impl PakarControllerApp {
         ui::status_bar::draw(
             ui,
             ui::status_bar::StatusBar {
+                peer_known: snapshot.is_some(),
                 message: &self.message,
                 hostname: &s.hostname,
                 station: &s.station_ssid,
@@ -836,7 +837,16 @@ impl PakarControllerApp {
         let snapshot = self.live_status().cloned();
         dialog::section(ui, icons::GAUGE, "Live display", |ui| {
             if let Some(s) = &snapshot {
-                ui::seven_segment::draw(ui, &s.tm1637_segments, s.tm1637_brightness, s.tm1637_ack);
+                if s.tm1637_segments.len() == 4 {
+                    ui::seven_segment::draw(
+                        ui,
+                        &s.tm1637_segments,
+                        s.tm1637_brightness,
+                        s.tm1637_ack,
+                    );
+                } else {
+                    ui.label("Segment readback unavailable");
+                }
                 badge(
                     ui,
                     if s.tm1637_ack {
@@ -851,41 +861,90 @@ impl PakarControllerApp {
             }
         });
         ui.add_space(10.0);
-        dialog::section(ui, icons::TEXT_ALIGN_LEFT, "Marquee", |ui| {
+        dialog::section(ui, icons::TEXT_ALIGN_LEFT, "Text", |ui| {
             ui.add_sized(
                 [ui.available_width(), 28.0],
                 dialog::singleline_text_edit(&mut self.display_text)
                     .char_limit(40)
                     .hint_text("Front-panel text"),
             );
-            ui.horizontal(|ui| {
+            ui.horizontal_wrapped(|ui| {
                 ui.label("Step");
                 ui.add(
-                    egui::DragValue::new(&mut self.display_speed_ms)
+                    egui::DragValue::new(&mut self.config.display.speed_ms)
                         .range(80..=5000)
                         .suffix(" ms"),
                 );
-                ui.checkbox(&mut self.display_force_scroll, "Scroll");
+                ui.checkbox(&mut self.config.display.force_scroll, "Scroll short text");
             });
-            if ui
-                .add_enabled(
-                    snapshot.is_some() && self.transport != Transport::Serial,
-                    egui::Button::new(format!("{}  Present", icons::PLAY)),
-                )
-                .clicked()
-            {
-                self.post(
-                    "/api/v1/display",
-                    vec![
-                        ("text".into(), self.display_text.clone()),
-                        ("speed_ms".into(), self.display_speed_ms.to_string()),
-                        ("hold_ms".into(), "1500".into()),
-                        ("repeat".into(), "loop".into()),
-                        ("force_scroll".into(), self.display_force_scroll.to_string()),
-                        ("interval_seconds".into(), "5".into()),
-                    ],
-                );
+            ui.horizontal_wrapped(|ui| {
+                ui.label("Repeat");
+                egui::ComboBox::from_id_salt("display-repeat")
+                    .selected_text(self.config.display.repeat.label())
+                    .show_ui(ui, |ui| {
+                        for value in [
+                            crate::display::Repeat::Once,
+                            crate::display::Repeat::Loop,
+                            crate::display::Repeat::Interval,
+                        ] {
+                            ui.selectable_value(
+                                &mut self.config.display.repeat,
+                                value,
+                                value.label(),
+                            );
+                        }
+                    });
+                if self.config.display.repeat == crate::display::Repeat::Interval {
+                    ui.label("Pause");
+                    ui.add(
+                        egui::DragValue::new(&mut self.config.display.interval_seconds)
+                            .range(1..=255)
+                            .suffix(" s"),
+                    );
+                }
+                if self.display_text.len() <= 4
+                    && !self.config.display.force_scroll
+                    && self.config.display.repeat != crate::display::Repeat::Loop
+                {
+                    ui.label("Hold");
+                    ui.add(
+                        egui::DragValue::new(&mut self.config.display.hold_ms)
+                            .range(0..=60000)
+                            .suffix(" ms"),
+                    );
+                }
+            });
+            let payload = self.config.display.payload(&self.display_text);
+            if let Err(error) = &payload {
+                ui.colored_label(ui.visuals().error_fg_color, error);
             }
+            ui.horizontal(|ui| {
+                if ui
+                    .add_enabled(
+                        snapshot.is_some() && payload.is_ok() && !self.display_text.is_empty(),
+                        egui::Button::new(format!("{}  Present", icons::PLAY)),
+                    )
+                    .clicked()
+                {
+                    self.action(
+                        "/api/v1/display",
+                        self.config.display.form(&self.display_text),
+                        OP_DISPLAY,
+                        payload.clone().unwrap(),
+                    );
+                    self.save_workspace();
+                }
+                if snapshot.as_ref().is_some_and(|s| s.tm1637_host_active)
+                    && ui.button("Stop text").clicked()
+                {
+                    self.action(
+                        "/api/v1/display",
+                        vec![("release".into(), "true".into())],
+                        OP_DISPLAY,
+                        crate::display::RELEASE.to_vec(),
+                    );
+                }
+            });
             ui.separator();
             ui.horizontal(|ui| {
                 ui.add(egui::DragValue::new(&mut self.display_value).range(-999..=9999));

@@ -58,10 +58,16 @@ arguments are `--preferences`, `--workspaces`, `--connect-dialog`, `--about`,
 
 ## Verification and remaining parity
 
-Sixteen Rust tests cover protocol encoding, packet bounds, discovery parsing,
+Twenty-one Rust tests cover protocol encoding, packet bounds, discovery parsing,
 notification lifecycle, palette completeness, draft preview isolation, dock
 serialization/reveal, command validation, Windows owner exclusion and exact
-cell search parsing/bounds/navigation.
+cell search parsing/bounds/navigation, display defaults and command validation,
+scheduled display payload compatibility, and extended USB display readback.
+The front-panel editor now offers Once (default), Loop and Interval, with speed,
+static hold, repeat pause, forced short-text scrolling and explicit Stop.
+Settings persist without automatically presenting text at startup. See
+`FRONT-PANEL-PARITY.md` for the focused PCController source mapping and physical
+acceptance boundaries.
 Live IPC also verified a second launch opened Preferences in the same process.
 The app received real device status and WebSocket events, and screenshots were
 captured for the workspace, native Preferences and Pealayer reference.

@@ -49,6 +49,7 @@ bool FrontPanel::acceptDisplayPayload(const uint8_t *payload, uint8_t length,
                                       uint32_t now) {
   if (payload == nullptr) return false;
   if (length == 2) {
+    release();
     showTransientNumber(static_cast<int16_t>(readU16(payload)), now, 3000);
     return true;
   }
@@ -84,14 +85,18 @@ bool FrontPanel::acceptDisplayPayload(const uint8_t *payload, uint8_t length,
   hostText_[textLength] = '\0';
   hostTextLength_ = textLength;
   scrollIndex_ = 0;
-  options_ = scheduled ? payload[4] : (textLength > 4 ? 1 : 0);
+  // Legacy senders have no repeat selector. Repetition now requires an
+  // explicit scheduled request; long text alone must not capture the panel.
+  options_ = scheduled ? payload[4] : 0;
   stepMs_ = readU16(payload + 1);
   if (stepMs_ == 0) stepMs_ = 260;
   if (stepMs_ < 80) stepMs_ = 80;
   holdMs_ = scheduled ? readU16(payload + 5) : readU16(payload + 1);
   intervalSeconds_ = scheduled ? payload[7] : 0;
   const bool scrolling = textLength > 4 || (options_ & kForceScroll) != 0;
-  nextAt_ = now + (scrolling ? stepMs_ : holdMs_);
+  nextAt_ = scrolling ? now + stepMs_
+                     : (holdMs_ == 0 || (options_ & kRepeatMask) == 1
+                            ? 0 : now + holdMs_);
   hostTextActive_ = textLength != 0;
   transientActive_ = false;
   animationActive_ = false;
@@ -142,12 +147,14 @@ bool FrontPanel::showHostText(uint32_t now) {
     }
   }
   char window[5];
+  const bool raw = (options_ & kRawCells) != 0;
   for (uint8_t index = 0; index < 4; ++index) {
     const uint8_t source = static_cast<uint8_t>(scrollIndex_ + index);
-    window[index] = source < hostTextLength_ ? hostText_[source] : ' ';
+    window[index] = source < hostTextLength_ ? hostText_[source] : (raw ? 0 : ' ');
   }
   window[4] = '\0';
-  display.showText(window);
+  if (raw) display.showSegments(reinterpret_cast<const uint8_t *>(window));
+  else display.showText(window);
   return true;
 }
 

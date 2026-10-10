@@ -1,7 +1,7 @@
 # HTTP and streaming API
 
 All HTTP routes use Basic authentication. The development image starts an
-access point named `pakarcontroller-<chip-id>` at `192.168.4.1`. The temporary
+access point named `pakarcontroller` at `192.168.4.1`. The temporary
 credentials are `admin` / `pakarcontroller` and must be replaced before a
 public installation.
 
@@ -18,7 +18,7 @@ public installation.
 | POST | `/api/v1/effect` | form `value=none|rainbow|fire` |
 | POST | `/api/v1/buzzer` | form `frequency=20..12000`, `duration_ms=1..5000` |
 | POST | `/api/v1/audio` | form `cue=welcome|finish|lost|incorrect|rapid-error|fault|increase|decrease|update-start|update-success|winner|error` |
-| POST | `/api/v1/display` | form `value=-999..9999` for the AVR TM1637 |
+| POST | `/api/v1/display` | `value=-999..9999`, scheduled `text`, or `release=true`; see below |
 | POST | `/api/v1/outputs` | form `mask=0..255` for direct 74HC595 diagnostics |
 | GET | `/api/v1/network` | AP/station state without returning credentials |
 | POST | `/api/v1/network` | form `station_enabled`, `ap_enabled`, `ssid`, `password`; persist and apply AP+station configuration |
@@ -39,6 +39,18 @@ one pixel count, one flags byte, then RGB triples. Bit zero of flags commits
 the staged frame. A packet is rejected unless its exact size and pixel range
 are valid.
 
+Display text accepts `text` (0..40 printable ASCII bytes), `speed_ms=80..5000`
+(default 260), `hold_ms=0..60000` (default 1500),
+`repeat=once|loop|interval` (**default once**), `force_scroll=true|false`
+(default false), and `interval_seconds=1..255` (default 5). Long text scrolls
+automatically; short text scrolls only when forced. Static hold zero is an
+explicit persistent lease. A one-shot scroll renders a terminal blank frame
+and returns to the local page; Interval exposes the local page during its pause.
+`release=true` cancels host text; presenting a number replaces prior text.
+Invalid repeat names are rejected rather than silently changed. The USB path
+uses PCController scheduled target 5 and explicit release target 4 on opcode
+`0x38`. See `FRONT-PANEL-PARITY.md` for reuse and verification boundaries.
+
 `/ws` is the authenticated same-origin WebSocket. It pushes the complete JSON
 status record to every connected client, accepts `{"type":"status"}` and
 `{"type":"ping"}`, and accepts the same bounded binary `PKR1` chunks as UDP.
@@ -54,6 +66,8 @@ JSON and accepts the same JSON command objects as MQTT. Supported commands are
 `status`, `mode`, `cell`, `brightness`, `effect`, `outputs`,
 `display`, `buzzer`, `audio`, `snake-direction`, and `reset`. Secret values are write-only through
 the API; blank omitted password/token fields preserve the stored value.
+Cloud `display` also accepts the same text scheduling fields above or
+`{"command":"display","release":true}`. An omitted repeat means one-shot.
 
 The password-authenticated Telnet shell on TCP 23 exposes `status`, `mode`,
 `cell`, `brightness`, `effect`, `display`, `audio`, and `reset`. It uses the
@@ -61,6 +75,8 @@ same validation and state transitions as cloud JSON commands. The password is
 the HTTP development password; the service is advertised through mDNS as
 `_telnet._tcp`. USB serial remains a framed machine interface rather than a
 text shell, so Telnet cannot interfere with the simultaneous desktop link.
+Telnet supports `display stop` and
+`display text <once|loop|interval> <speed_ms> <hold_ms> <pause_seconds> <scroll 0|1> <TEXT>`.
 
 The NodeMCU USB UART is a simultaneous 115200-baud PC endpoint using the same
 COBS, CRC-8/ATM, sequence, opcode, and bounded-payload envelope as the board

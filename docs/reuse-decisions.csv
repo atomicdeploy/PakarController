@@ -26,10 +26,11 @@ PCController,Tools/Controller/web/src/components.tsx,reviewed,firmware/esp8266/s
 PCController,Tools/Controller/web/src/views.tsx,reviewed,firmware/esp8266/src/WebUi.h,Contextual board and front panel views selected for Web redesign
 PCController,Tools/Controller/web/src/styles.css,reviewed,firmware/esp8266/src/WebUi.h,Front panel and hardware monitor presentation selected for Web redesign
 PCController,Tools/Controller/internal/tui/frontpanel.go,reviewed,desktop/src/main.rs,Front panel facts and menu layout selected for TUI expansion
-PCController,Tools/Controller/internal/tui/display_editor.go,reviewed,desktop/src/main.rs,Marquee timing repeat and scheduling controls selected for TUI expansion
+PCController,Tools/Controller/internal/tui/display_editor.go,adapted,desktop/src/display.rs,Once Loop Interval speed hold pause force-scroll settings and PCController-compatible CLI and TUI command syntax
+PCController,Tools/Controller/internal/native/commands.go,adapted,desktop/src/display.rs,Scheduled target 5 payload and explicit target 4 host release adapted to the existing Rust client
 PCController,Project/ProtocolContract.h,reviewed,libraries/BoardCore/src/Protocol.h,Opcode and capability compatibility checked
 PCController,Project/Runtime/ControllerContext.inc.h,adapted,firmware/avr/FrontPanel.h,Bounded display presentation state imported
-PCController,Project/Runtime/FrontPanelRuntime.inc.h,adapted,firmware/avr/FrontPanel.cpp,Marquee ownership and terminal blank frame lifecycle imported
+PCController,Project/Runtime/FrontPanelRuntime.inc.h,adapted,firmware/avr/FrontPanel.cpp,Terminal blank frame and local ownership during interval wait retained with one-shot legacy default and numeric override regression tests
 PCController,Project/Runtime/ProtocolRuntime.inc.h,adapted,firmware/avr/avr.ino,DISPLAY_TEXT validation and scheduling semantics imported
 ControllerBoardMini/Puzzles,Puzzles.ino,adapted,firmware/avr/FrontPanel.cpp,Exact twelve step 75 ms TM1637 perimeter animation imported
 ControllerBoardMini/Puzzles,LocalLib/SevenSegments.cpp,reviewed,firmware/avr/SevenSegments.cpp,TM1637 transport and character encoder lineage verified
