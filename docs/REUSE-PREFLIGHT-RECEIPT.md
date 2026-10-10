@@ -1,5 +1,30 @@
 # Donor-first preflight receipt
 
+## RayanLamp Web theme continuation
+
+Reconsulted full Rayan inventory and exact theme rows plus existing appearance
+mapping. Imported actual pre-paint/controller/metadata code and donor tests into
+one shared palette engine. Added web-presentation five-source gate, before ESP
+builds and quality; Bash uses the same PowerShell gate and checks all generated
+font/brand assets. Partial i18n/settings reads remain pending, not exclusions.
+
+Guard caught ci-checks.mjs hash drift when registering the new tests. Consulted
+the exact Pealayer workflow row and reread its full source; runner still stops on
+the first failed child and retains governance contracts. Rebound only that
+reviewed hash. Next guard caught old WebUi hash/line in existing PU route evidence:
+reread the actual route checker, inspected unchanged target forms and updated
+only two Web targets to anchor line 220. No altered donor source or blanket
+certification. Documentation patch with an incorrect heading failed atomically;
+read exact headings and retried the targeted patch, without shell rewrite.
+
+Full source quality, six new theme tests, ten appearance tests, actual browser
+Persian light/dark reloads and ESP warm compilation pass. Browser evidence saves
+with exclusive-create to avoid overwriting; native capture/build tools not used
+because native code is unchanged. Existing licensed font and peer identity are
+preserved. ASUS SSH still refuses; no device mutation, native replacement,
+Android rebuild, CI wait, duplicate SDK/cache or blocked cleanup reroute.
+Exact image/build identities and acceptance limits are in the existing receipts.
+
 ## RayanLamp import recovery
 
 Located Build RayanLamp Go app through the task index and read its exact thread.

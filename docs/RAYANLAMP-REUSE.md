@@ -18,11 +18,33 @@ unverified after interruption. Donor source and task state were not changed.
 | webui/src/connection-preferences.ts | assets/web/rayanlamp.js and assets/web/localization.js: actual validated local-event/BroadcastChannel subscription and teardown adapted to client language/direction. Adds storage-event fallback, API failure containment, no identical writes and no rebroadcast. No board drafts, passwords or identity are synchronized by this presentation channel. |
 | webui/src/connection-preferences.test.ts | tests/rayanlamp_reuse_test.mjs: persistence, immediate delivery and malformed-value rejection; added blocked API, no-echo and cleanup acceptance. Static-export and lamp URL tests remain pending with their transport implementation. |
 | LICENSE | desktop/licenses/RayanLamp-MIT.txt preserves YektaYar MIT notice. |
+| webui/src/theme.ts | assets/themes/browser-appearance.js: actual restart/stop ownership, System-only media reconciliation and browser chrome metadata; existing Pealayer palettes/helpers remain the only color engine. |
+| webui/src/theme.test.ts | tests/rayanlamp_theme_test.mjs: all three donor scenarios adapted to the shipped bootstrap, plus teardown/new-owner, blocked API/storage, cross-tab reset, all palettes and no-device-request checks. |
+| webui/public/theme-init.js | Single classic inline head script before CSS/body: validated saved appearance and locale/direction are applied before first paint, with one palette catalog, no extra endpoint, requests or preference writes. |
 
 Canonical browser code is embedded by the existing deterministic font/Web
 generator, with equality tests preventing a separate drifting firmware copy.
 The same authoritative legacy-source-ledger.csv and file-comparison evidence
 track this donor; no second decision spreadsheet is introduced.
+
+The additional theme import preserves existing dark/Studio defaults and the
+resolved data-theme CSS contract; themePreference and resolvedTheme expose the
+separate states. Browser chrome uses the selected shared palette canvas, not
+RayanLamp's fixed lamp colors. Existing pakar-locale primary-language behavior
+and an explicit direction override are retained. Secondary Persian language
+does not override an English primary preference. These replacements are exact
+ledger decisions, not omissions hidden behind a visual resemblance.
+
+The canonical generator embeds browser-appearance.js without a duplicate color
+engine. web-presentation is a five-file reviewed-slice gate (three Rayan files,
+two previously read Pealayer files), invoked before ESP builds and source quality.
+The Bash ESP entrypoint requires PowerShell 7 for the same donor gate and now
+checks fonts/branding as the Windows entrypoint does. No extra SDK is installed.
+
+Coverage: RayanLamp 2349 inventoried, **9** completed comparisons, **2340** pending.
+Whole donor inventory 4237, 73 completed, 4164 pending, 44 known-gap files. A
+partially read i18n/settings file remains pending; this is not full localization
+or native/Web/mobile settings synchronization.
 
 The imported decimal map also normalizes actual mobile port/telemetry inputs,
 tested with mixed Persian/Arabic-Indic digits through explicit save/readback.
@@ -71,3 +93,17 @@ its existing canonical cache guard remains authoritative. No donor compilation,
 extra cache, production app replacement or board flash is part of this import
 checkpoint. Hardware, native runtime and Android vibration acceptance are separate.
 Track continued imports and exact omission decisions on issue #3.
+
+Current theme evidence: six added Node tests, ten existing appearance tests,
+full source-quality suite, actual read-only browser light/Neutral and
+dark/Studio reloads with Persian/Vazirmatn/RTL, and warm ESP busy-wire compilation.
+The simulated peer title is retained verbatim; the logical grid stays LTR.
+The fixture rejects all non-GET requests and was closed/stopped by verified owner.
+Dynamic untranslated captions remain visible and pending, not called full parity.
+No physical board, desktop replacement, Android rebuild or CI waiting occurred.
+
+Actual browser captures (simulated peer, not hardware):
+
+![Dark Studio with Persian](screenshots/rayan-theme-dark-persian.jpg)
+
+![Light Neutral with Persian](screenshots/rayan-theme-light-persian.jpg)

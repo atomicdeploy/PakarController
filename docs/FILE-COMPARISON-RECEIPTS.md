@@ -1,5 +1,45 @@
 # PakarController comparison receipts
 
+## RayanLamp Web theme continuation
+
+Task reverified: Build RayanLamp Go app, 019f8cfc-271a-72e1-8747-e3eb883de5ec,
+local; not loaded. Last donor turn remains interrupted/unverified. No message,
+resume, donor file mutation or fabricated Git revision. Three additional exact
+files read through EOF and original-byte hashes verified against the inventory:
+webui/src/theme.ts, webui/src/theme.test.ts, webui/public/theme-init.js. Actual
+Pealayer appearance.ts and its four-test file reread; existing helper bodies and
+palette catalog move to the head once, without changing unrelated peer/control
+contracts. Mapped targets/anchors explicitly rereviewed before selective rebinding.
+
+Six new actual shipped-bootstrap tests and ten existing appearance tests pass.
+The complete source-quality runner passes every child, including auth/rename,
+remote jobs, 50 PU route registrations, fonts, cell geometry, ledger, gates and
+governance. ESP-only warm busy-wire wrapper build passes: RAM 56620/80192,
+IRAM 63055/65536, flash code 853184/1048576; bin 903296 bytes, SHA256
+43545b2d0bcc8c939e3064c54b54793752e08bc5119837a67bbccbb326203108.
+IRAM headroom remains tight; no unbounded extra ESP features claimed.
+
+Actual served HTML inspected in in-app browser at owned read-only fixture
+localhost:65351 (PID 78652). Saved Light/Neutral/green and Dark/Studio/blue survive
+reload; root and meta colors match selected palettes (#eeeeee and #080a0e),
+Persian lang/RTL and real Vazirmatn render correctly, peer title is unchanged and
+the logical table remains LTR. Expected WebSocket retries reflect deliberately
+absent fixture socket, not a live-board failure/pass. Non-GET is refused by
+fixture. Temporary tab closed and fixture stopped after PID/command-line check.
+
+Inspected actual browser screenshots in outputs/PakarController:
+- rayan-theme-light-persian.jpg SHA256 765ea49ee7c12c874aea244f53261026fab2300f2411c7bb6d6e2bb8d71ca378.
+- rayan-theme-dark-persian.jpg SHA256 df116f31383b96debd7c8c65f0f32ac83d0bafd9e8b22c145d2ec7db301b5de7.
+
+Two small copies in docs/screenshots were byte/hash verified against those saved
+captures for inspectable GitHub evidence; no entire package duplication.
+
+Authoritative counts 4237/73/4164/44 (inventory/compared/pending/gaps), RayanLamp
+2349/9/2340. No full source parity, native/Android build, production replacement,
+firmware flash or CI wait. ASUS localhost:1022 still refuses banner exchange.
+Full mobile appearance/localization, dynamic Web copy and generic donor Windows,
+settings, transport, notification, scripts and packaging imports stay pending.
+
 ## RayanLamp source checkpoint
 
 Located task Build RayanLamp Go app, id 019f8cfc-271a-72e1-8747-e3eb883de5ec,

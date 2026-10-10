@@ -3,6 +3,137 @@
   "target_hash_encoding": "UTF8-without-BOM-LF",
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
+      {
+        "origin": "RayanLamp",
+        "source_read": "complete",
+        "verdict": "equivalent-behavior",
+        "improvement": "",
+        "path": "webui/src/theme.ts",
+        "sha256": "b4a927e80577f163257b62a28b6df2148d10ee506f2cdeeb51e6b1666b9ce54e",
+        "preserved": [
+          "Actual startWebThemeController detach/restart ownership, idempotent stop, captured listener cleanup, System-only OS reconciliation, safe stored selection and browser color-scheme/theme-color metadata adapted into startBrowserAppearanceController/applyBrowserAppearance. Used by actual pre-paint embedded Web UI, with storage-event reset handling and no hardware writes.",
+          "Pealayer appearance helpers and four shared palettes remain the only color engine; requested theme and resolved theme are distinct root metadata. Existing form persistence skips identical writes and retains session selection on storage failure."
+        ],
+        "targets": [
+          {
+            "path": "assets/themes/browser-appearance.js",
+            "sha256": "a3cfd720a376fc399dd8abfef91a172180b583b828516f4d1198e4be7bd34dae",
+            "anchor": "function startBrowserAppearanceController()"
+          },
+          {
+            "path": "firmware/esp8266/src/WebUi.h",
+            "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
+            "anchor": "<script data-pakar-presentation>"
+          }
+        ],
+        "omissions": [
+          {
+            "code": "Preact signal state, RayanLamp storage key/default System, root.dataset.theme as requested mode, fixed lamp theme colors and applyWebTheme persistence entrypoint",
+            "disposition": "replaced",
+            "reason": "Dependency-free ESP HTML uses existing browserAppearance state and pakar-appearance object with explicit Pakar dark/Studio defaults. Existing resolved root.dataset.theme is preserved for CSS; themePreference and resolvedTheme retain both states. Shared palette canvas drives browser chrome, not lamp colors. Existing form is the persistence owner; rendering and OS events never rewrite preferences."
+          }
+        ],
+        "remaining": [
+          "Real browser/device acceptance and cross-client native/mobile appearance transport remain independent requirements; this comparison covers the donor Web theme controller only."
+        ],
+        "proof": [
+          {
+            "path": "tests/rayanlamp_theme_test.mjs",
+            "sha256": "f1ca3a14805c3b186d52918164fe968a6da07319dba15299a10deee658480783",
+            "anchor": "RayanLamp controller restart and idempotent teardown"
+          },
+          {
+            "path": "tests/web_appearance_test.mjs",
+            "sha256": "91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f",
+            "anchor": "unavailable storage still applies"
+          }
+        ]
+      },
+      {
+        "origin": "RayanLamp",
+        "source_read": "complete",
+        "verdict": "equivalent-behavior",
+        "improvement": "",
+        "path": "webui/src/theme.test.ts",
+        "sha256": "827e41f9229227582fb78819344dceda12a9b1d581a4b73266e4780b3de2a5b8",
+        "preserved": [
+          "All three actual donor scenarios adapted: live System OS changes update browser chrome and preserve selection; explicit override is stable; classic pre-paint bootstrap precedes application initialization. Added old-stop/new-owner, no duplicated listeners, idempotent cleanup, cross-tab clear/malformed input, all palettes, blocked storage and no-device-call assertions."
+        ],
+        "targets": [
+          {
+            "path": "tests/rayanlamp_theme_test.mjs",
+            "sha256": "f1ca3a14805c3b186d52918164fe968a6da07319dba15299a10deee658480783",
+            "anchor": "Actual RayanLamp theme.test.ts scenarios"
+          }
+        ],
+        "omissions": [
+          {
+            "code": "Vitest/Preact imports, lamp-only metadata constants and index.html external classic /theme-init.js before src/main.tsx assertion",
+            "disposition": "replaced",
+            "reason": "Node built-in test/VM executes the actual embedded bootstrap and controller without installing a second donor toolchain. Expected chrome values come from shared Pakar palettes. Firmware serves one HTML document; classic inline script precedes CSS/body with no extra endpoint or render-blocking HTTP fetch. Source equality and script order are asserted."
+          }
+        ],
+        "remaining": [
+          "VM/DOM doubles are not actual browser pixels or live firmware verification."
+        ],
+        "proof": [
+          {
+            "path": "tests/rayanlamp_theme_test.mjs",
+            "sha256": "f1ca3a14805c3b186d52918164fe968a6da07319dba15299a10deee658480783",
+            "anchor": "RayanLamp pre-paint bootstrap runs before CSS/body"
+          }
+        ]
+      },
+      {
+        "origin": "RayanLamp",
+        "source_read": "complete",
+        "verdict": "equivalent-behavior",
+        "improvement": "",
+        "path": "webui/public/theme-init.js",
+        "sha256": "0e39142a82287beefd43b59e032ff8e55f0a054b52be83a2cb3efd26ae5bb2b8",
+        "preserved": [
+          "Actual safe validated storage read, requested/OS theme resolution, root color-scheme and chrome metadata, locale/direction and resolved-locale pre-paint behavior are adapted into the single head bootstrap. It runs without dialog/body nodes, requests, preference writes or application/peer title mutation; generator checks canonical equality."
+        ],
+        "targets": [
+          {
+            "path": "assets/themes/browser-appearance.js",
+            "sha256": "a3cfd720a376fc399dd8abfef91a172180b583b828516f4d1198e4be7bd34dae",
+            "anchor": "function applyPrepaintLocale()"
+          },
+          {
+            "path": "tools/generate-web-appearance.mjs",
+            "sha256": "bcf9cdb01e96c932d0ac2895930d52e774846d5791f40f11fd7254e52cecb18e",
+            "anchor": "replaceBlock('// BEGIN BROWSER CONTROLLER'"
+          },
+          {
+            "path": "firmware/esp8266/src/WebUi.h",
+            "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
+            "anchor": "<script data-pakar-presentation>"
+          }
+        ],
+        "omissions": [
+          {
+            "code": "Separate same-origin /theme-init.js, duplicated theme resolver, lamp colors and rayanlamp.web.locale auto/language-list some(fa) selection",
+            "disposition": "replaced",
+            "reason": "Inline canonical bootstrap shares the existing Pealayer helpers and palette once, before CSS, saving an ESP endpoint and extra request. Existing Pakar locale keys use system/en/fa, primary browser language and explicit Auto/LTR/RTL override, consistent with current runtime resolver. Supporting a secondary Persian language must not unexpectedly override an English primary choice. Existing dark/Studio defaults are retained rather than silently changing user appearance."
+          }
+        ],
+        "remaining": [
+          "Post-bootstrap generic dynamic copy, browser language-change lifecycle and complete native/Web/mobile localization remain pending in the existing localization concern; this import certifies pre-paint behavior, not those separate source files."
+        ],
+        "proof": [
+          {
+            "path": "tests/rayanlamp_theme_test.mjs",
+            "sha256": "f1ca3a14805c3b186d52918164fe968a6da07319dba15299a10deee658480783",
+            "anchor": "Pre-paint survives blocked storage"
+          },
+          {
+            "path": "tests/rayanlamp_theme_test.mjs",
+            "sha256": "f1ca3a14805c3b186d52918164fe968a6da07319dba15299a10deee658480783",
+            "anchor": "RayanLamp pre-paint bootstrap runs before CSS/body"
+          }
+        ]
+      },
     {
       "origin": "Pealayer",
       "path": "web_ui/src/components/ServerFilePicker.tsx",
@@ -239,7 +370,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
+          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -366,7 +497,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "9e6028a3ad338cc6bb631a216204cfd3b5480c149188ed099152fc48768e49e6",
+          "sha256": "7ac69d9ab72ce6794fcef0365fbcd34f91240b3b3eaf54d74974664487db7b97",
           "anchor": "export function runChecks"
         },
         {
@@ -669,7 +800,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
+          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
           "anchor": "function peerAvailability("
         }
       ],
@@ -967,7 +1098,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
+          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -977,7 +1108,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
+          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -1042,7 +1173,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
+          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -1998,7 +2129,7 @@
         },
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c",
+          "sha256": "91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f",
           "anchor": "embedded catalog exactly matches"
         }
       ],
@@ -2979,12 +3110,12 @@
         },
         {
           "path": "tools/generate-web-appearance.mjs",
-          "sha256": "16789897f672dad4c853e7d25e4f27a3b54663b67b6b875c904e93704faea339",
+          "sha256": "bcf9cdb01e96c932d0ac2895930d52e774846d5791f40f11fd7254e52cecb18e",
           "anchor": "replaceBlock('// BEGIN SHARED APPEARANCE'"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
+          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -3006,12 +3137,12 @@
       "proof": [
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c",
+          "sha256": "91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f",
           "anchor": "System theme and accent preserve donor host resolution"
         },
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c",
+          "sha256": "91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f",
           "anchor": "dialog draft/cancel never changes"
         }
       ],
@@ -3029,7 +3160,7 @@
       "targets": [
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c",
+          "sha256": "91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f",
           "anchor": "First four tests port the actual Pealayer"
         }
       ],
@@ -3051,7 +3182,7 @@
       "proof": [
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c",
+          "sha256": "91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f",
           "anchor": "live host theme events leave System preference unchanged"
         }
       ],
@@ -3074,7 +3205,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
+          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -3196,7 +3327,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
+          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
           "anchor": "id=\"uiHaptics\""
         }
       ],

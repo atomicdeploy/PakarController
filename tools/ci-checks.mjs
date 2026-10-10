@@ -4,9 +4,11 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 export const phases={
   "quality": [
+    ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "web-presentation", "-Gate"],
     ["node", "tools/generate-font-assets.mjs", "--check"],
     ["node", "tests/localization_test.mjs"],
     ["node", "tests/rayanlamp_reuse_test.mjs"],
+    ["node", "tests/rayanlamp_theme_test.mjs"],
     [
       "node",
       "tests/web_display_test.mjs"

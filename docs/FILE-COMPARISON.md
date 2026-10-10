@@ -4,7 +4,7 @@ Whole-repository superiority is **not established**. This report exposes retaine
 
 Routing: 1315 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
 
-Inventory: 4237 files; 70 complete source-file comparisons; 4167 pending comparisons; 44 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
+Inventory: 4237 files; 73 complete source-file comparisons; 4164 pending comparisons; 44 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
 Every inventoried path, source revision/hash, target/proof file and line, omitted code, disposition and concrete reason is in `file-comparison.csv`. Hash-bound manual decisions are in `file-comparison-evidence.json`. Donor SHA-256 values bind original bytes; target/proof SHA-256 values bind UTF-8 without BOM with LF newlines. Anchors are recomputed into exact line numbers. Test-code presence is not test execution; execution receipts are in `FILE-COMPARISON-RECEIPTS.md`.
 
@@ -18,7 +18,7 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 | Pealayer | 509 | 39 | 470 | 25 |
 | PU850-ESP | 109 | 4 | 105 | 4 |
 | PuzzleBoard | 22 | 0 | 22 | 0 |
-| RayanLamp | 2349 | 6 | 2343 | 3 |
+| RayanLamp | 2349 | 9 | 2340 | 3 |
 
 ## Exact reviewed-file mappings and omission decisions
 
@@ -279,7 +279,7 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 - Target: `mobile/lib/peer_context.dart:35 [UTF8-LF sha256=d15536d7b1c4315b737004e9e90cc6757f972353431dbad09151255d7c41cf77; anchor=static PeerContext fromStatus]`.
 - Target: `mobile/lib/main.dart:274 [UTF8-LF sha256=771361f85f85fade6d4fdd7e9532752249d4724482782bfd7b7ef1913a58b5b8; anchor=Future<bool> _command]`.
 - Target: `libraries/BoardCore/src/DeviceContext.h:26 [UTF8-LF sha256=ce571a112f7d06dc25cdf7f35a383ba4f23c3ca4337ac1bb9968ef17dec72689; anchor=inline uint16_t features(]`.
-- Target: `firmware/esp8266/src/WebUi.h:319 [UTF8-LF sha256=0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622; anchor=function peerAvailability(]`.
+- Target: `firmware/esp8266/src/WebUi.h:401 [UTF8-LF sha256=1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8; anchor=function peerAvailability(]`.
 - Retained: Actual connected AND have_status AND advertised-capability conjunction adapted to selected-peer fresh manifests. No feature inference from hostname, pixel count, catalog, defaults or online alone.
 - Retained: TM1637 additionally requires fresh measured ACK; Text and Buzzer have independent HELLO support. Native/Web hide unrelated controls and gate domain commands.
 - Retained: Flutter now adapts the same ready AND advertised schema-1 conjunction, table geometry and individual ACK policy; selected owner revisions reject old replies and retained dialogs. Unknown/stale peers have only client connection/overview navigation.
@@ -307,7 +307,7 @@ Verdict: **scoped-improvement**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a2
 Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `4efb85988474d177a90ea1e31320e64bab1b027c42c3c5ba842fed9781b4eb5b`.
 
 - Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=8cd07cef477916c2cf052cc30d01c03a3860734155acd94cefdca366f5f1a39c; anchor=name: "🚀 Build · Test · Release"]`.
-- Target: `tools/ci-checks.mjs:177 [UTF8-LF sha256=9e6028a3ad338cc6bb631a216204cfd3b5480c149188ed099152fc48768e49e6; anchor=export function runChecks]`.
+- Target: `tools/ci-checks.mjs:179 [UTF8-LF sha256=7ac69d9ab72ce6794fcef0365fbcd34f91240b3b3eaf54d74974664487db7b97; anchor=export function runChecks]`.
 - Target: `tools/prepare-release.mjs:16 [UTF8-LF sha256=96c3a9f5fbc5dfd055a1b139b09271d92d19beaf9cc1cda3c83a88f266ee177e; anchor=export function firmwareManifest]`.
 - Retained: Actual donor branch/PR/tag/dispatch/merge-group triggers, concurrency policy, pinned actions without checkout credentials, health-before-build jobs, timeouts, Rust cache reuse, locked tests/builds, packaging, curated notes, manifest/checksums/provenance and aggregate results adapted to current Windows/ESP/AVR/Android targets.
 - Retained: Release content is gated on all builds, created as an immutable draft prerelease, with two correctly matched board pairs and raw HTTPS update manifests. Untrusted PRs do not execute publishing code with a write token.
@@ -335,7 +335,7 @@ Verdict: **equivalent-file**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fb
 - Retained: Byte-identical Studio/Native light/dark JSON catalog, all fourteen semantic roles.
 - No production-code omission claimed for this reviewed file.
 - Test-code evidence: `desktop/src/ui/palette.rs:71 [UTF8-LF sha256=418896294fbe25922736b41865a18dbb2f6bc96cb540c7401a435a6e0cfd38f3; anchor=fn imported_palettes_have_every_required_role()]`.
-- Test-code evidence: `tests/web_appearance_test.mjs:54 [UTF8-LF sha256=e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c; anchor=embedded catalog exactly matches]`.
+- Test-code evidence: `tests/web_appearance_test.mjs:55 [UTF8-LF sha256=91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f; anchor=embedded catalog exactly matches]`.
 - Remaining: Embedded Web now consumes all four actual palettes and fourteen roles. Mobile catalog use and native/Web shared preference synchronization remain pending; byte-identical asset retention is not all-surface parity.
 
 ### Pealayer: `build.rs`
@@ -580,7 +580,7 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `4ffdd81afbaa2f918cb572f11d1ec978b279ca0e263f9bfad83e99a59bc27781`.
 
 - Target: `desktop/src/ui/cell_table.rs:349 [UTF8-LF sha256=031e1161d656673af02349c80e3c615a7a9ccd280258d428cccd69439b78bb1b; anchor=fn manager_selector(]`.
-- Target: `firmware/esp8266/src/WebUi.h:46 [UTF8-LF sha256=0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622; anchor=/* Fixed manager slots:]`.
+- Target: `firmware/esp8266/src/WebUi.h:179 [UTF8-LF sha256=1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8; anchor=/* Fixed manager slots:]`.
 - Retained: Read all 952 donor lines through EOF. navigation_control's fixed allocation, clipped centered text and inside-stroke painting are adapted to manager_selector. Compact cell/row/state slots use the existing shared neutral animated cell_surface; state-dependent Button Frames cannot resize their text/content geometry. Selected widget metadata is retained explicitly.
 - Omitted/replaced code: `navigation_control's 80px minimum, left-aligned icon/title/metadata slots and selected bg_fill tint`. Disposition: **replaced**. Reason: A compact cell needs a centered number in 32x28; row/action slots are 96/104x28. The user requires neutral shared selection, not a tinted navigation side rail. Fixed text positions and inside strokes are preserved; existing side-rail helper remains unchanged.
 - Omitted/replaced code: `singleline_text_edit/workspace_overlay_layer/preferred_host/centered_default_rect/bounded_geometry/opaque frame/action buttons/action rows/navigation detail/section/compact_row/setting_row/scroll_column/fit_scroll and their donor tests`. Disposition: **pending**. Reason: Existing imported dialog helpers are present, but this scoped geometry fix does not certify each call site or host/resize/action/localization test. Useful generic code is not excluded; full consumer and test reconciliation remains issue #3 work.
@@ -712,11 +712,11 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 
 Verdict: **equivalent-behavior**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `35f269e9463e49dbc41572683ca374be8674a93e0e97c84240838d34dc950ddc`.
 
-- Target: `tests/web_appearance_test.mjs:1 [UTF8-LF sha256=e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c; anchor=First four tests port the actual Pealayer]`.
+- Target: `tests/web_appearance_test.mjs:1 [UTF8-LF sha256=91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f; anchor=First four tests port the actual Pealayer]`.
 - Retained: All four actual donor contract tests ported: Neutral helper default, preference merge without unrelated-field loss/resolution leakage, host/offline theme/accent and repeated native event/explicit-theme handling. Additional shipped-code tests cover all palette roles, cancel/apply, contrast, identical-write skip, media events, malformed storage, cross-tab updates and session-only storage failure.
 - Omitted/replaced code: `volume:37 unrelated media setting fixture`. Disposition: **replaced**. Reason: The unrelated value is endpoint:http://ledboard.local instead. Its preservation and original-object immutability assertions are retained; no actual test contract is removed.
 - Omitted/replaced code: `Direct TypeScript test import`. Disposition: **replaced**. Reason: Tests import the actual adapted JavaScript functions; browser tests additionally execute the shipped embedded source, avoiding a separate mock appearance engine.
-- Test-code evidence: `tests/web_appearance_test.mjs:30 [UTF8-LF sha256=e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c; anchor=live host theme events leave System preference unchanged]`.
+- Test-code evidence: `tests/web_appearance_test.mjs:30 [UTF8-LF sha256=91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f; anchor=live host theme events leave System preference unchanged]`.
 - Remaining: Test execution proves module and simulated browser contracts, not connected native event transport or physical hardware.
 
 ### Pealayer: `web_ui/src/appearance.ts`
@@ -724,14 +724,14 @@ Verdict: **equivalent-behavior**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a
 Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `aca0c9aba5fe6389995f92306e20f62debf38fdb4ed3b3061cf9b9f17a56c430`.
 
 - Target: `assets/themes/appearance.js:4 [UTF8-LF sha256=62a7ebba994ad44f4e2d647bb97684aac9b563104f3f707b43573289e514ecdd; anchor=export function mergeAppearance]`.
-- Target: `tools/generate-web-appearance.mjs:27 [UTF8-LF sha256=16789897f672dad4c853e7d25e4f27a3b54663b67b6b875c904e93704faea339; anchor=replaceBlock('// BEGIN SHARED APPEARANCE']`.
-- Target: `firmware/esp8266/src/WebUi.h:255 [UTF8-LF sha256=0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622; anchor=// BEGIN SHARED APPEARANCE]`.
+- Target: `tools/generate-web-appearance.mjs:29 [UTF8-LF sha256=bcf9cdb01e96c932d0ac2895930d52e774846d5791f40f11fd7254e52cecb18e; anchor=replaceBlock('// BEGIN SHARED APPEARANCE']`.
+- Target: `firmware/esp8266/src/WebUi.h:9 [UTF8-LF sha256=1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8; anchor=// BEGIN SHARED APPEARANCE]`.
 - Retained: All five actual donor functions retained: mergeAppearance, resolvedAccent, resolvedAppearanceTheme, accentForeground and paletteName. TypeScript annotations removed for standalone embedded JavaScript; field names, host/offline resolution, exact accent constants, custom validation and luminance threshold remain unchanged.
 - Retained: Generated into the shipped WebUi.h with the shared palette asset; --check rejects stale embedding. Browser preferences dialog validates theme/palette/accent, protects drafts, handles storage failure and cross-tab/System events without device writes or repetitive identical storage writes.
 - Omitted/replaced code: `AppearanceState TypeScript interface and generic T return annotation`. Disposition: **replaced**. Reason: ESP serves standalone JavaScript, not a TypeScript/React build. Actual function bodies are retained; browser-facing enum/color validation rejects untrusted stored values. No preference or resolution field is dropped.
 - Omitted/replaced code: `Connected host AppearanceState broadcast/native-Web shared preference path`. Disposition: **pending**. Reason: Pure functions accept host state and tests preserve donor semantics, but standalone browser controls are browser-local today. No actual native appearance event/readback transport is integrated in this pass; System fallback is labeled browser-local.
-- Test-code evidence: `tests/web_appearance_test.mjs:22 [UTF8-LF sha256=e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c; anchor=System theme and accent preserve donor host resolution]`.
-- Test-code evidence: `tests/web_appearance_test.mjs:63 [UTF8-LF sha256=e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c; anchor=dialog draft/cancel never changes]`.
+- Test-code evidence: `tests/web_appearance_test.mjs:22 [UTF8-LF sha256=91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f; anchor=System theme and accent preserve donor host resolution]`.
+- Test-code evidence: `tests/web_appearance_test.mjs:64 [UTF8-LF sha256=91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f; anchor=dialog draft/cancel never changes]`.
 - Remaining: Implement native/Web/mobile shared preference transport and live authoritative host events, while keeping device parameters separate from client appearance; verify multi-client broadcast/readback.
 
 ### Pealayer: `web_ui/src/components/HeaderBar.tsx`
@@ -739,9 +739,9 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `df84386e53d729eabddf9476026a9f96afe130dd3429612f4c73509d1757d16b`.
 
 - Target: `tools/generate-branding.mjs:3 [UTF8-LF sha256=0e17da9eec334751e80fba97da219d0cfb69f2bf896f67b2e4d3a70a63e54ec2; anchor=Pakar embeds it for the standalone ESP surface]`.
-- Target: `firmware/esp8266/src/WebUi.h:69 [UTF8-LF sha256=0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622; anchor=<!-- BEGIN SHARED BRAND HEADER -->]`.
+- Target: `firmware/esp8266/src/WebUi.h:202 [UTF8-LF sha256=1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8; anchor=<!-- BEGIN SHARED BRAND HEADER -->]`.
 - Target: `docs/BRANDING-PARITY.md:40 [UTF8-LF sha256=b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7; anchor=## Explicit unfinished useful code and reasons]`.
-- Target: `firmware/esp8266/src/WebUi.h:362 [UTF8-LF sha256=0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622; anchor=function renderApplicationIdentity]`.
+- Target: `firmware/esp8266/src/WebUi.h:444 [UTF8-LF sha256=1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8; anchor=function renderApplicationIdentity]`.
 - Target: `assets/web/device-settings.js:53 [UTF8-LF sha256=ffbe4354eba7347ecd0a80618c9c92b72578e2a67b3e7c5097ce41333f75a2d8; anchor=function settingsCanClose()]`.
 - Target: `docs/INTERFACE-CONTRACT.md:8 [UTF8-LF sha256=bd8de673cab2e9d0c9d8948bedb0637dce7e8da10911f9a481bea0171f52ce47; anchor=## One catalog, distinct transport and platform adapters]`.
 - Retained: Actual resolved-artwork img/alt binding adapted to standalone header/login, replacing diamond and font fallback.
@@ -797,7 +797,7 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 
 - Target: `assets/web/localization.js:15 [UTF8-LF sha256=d11d246009a684e5de75e7c006623f33df1383e646d74a8d903a006cd89725e2; anchor=function uiTr(text)]`.
 - Target: `tools/generate-font-assets.mjs:27 [UTF8-LF sha256=58b1c4831be837ea38319d599d014add98f670f9006fd3d91599377e8e432f91; anchor=const dictionary={}]`.
-- Target: `firmware/esp8266/src/WebUi.h:197 [UTF8-LF sha256=0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622; anchor=// BEGIN SHARED LOCALIZATION]`.
+- Target: `firmware/esp8266/src/WebUi.h:330 [UTF8-LF sha256=1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8; anchor=// BEGIN SHARED LOCALIZATION]`.
 - Retained: Actual donor fa-dictionary fallback semantics reused for application copy, rather than translating arbitrary runtime data. Applicable native dictionary subset generates into the canonical Web module and actual firmware HTML.
 - Retained: Added system/explicit language and Auto/LTR/RTL preferences, owned-template text/placeholder/accessibility snapshots, per-browser low-write persistence, shared font route and immutable peer-name boundary.
 - Omitted/replaced code: `Media-library, player, playback, cue/timeline and libmpv-specific Web dictionary/surfaces`. Disposition: **not-applicable**. Reason: Those surfaces belong to excluded media business and would add unrelated controls, not controller capabilities.
@@ -821,7 +821,7 @@ Verdict: **equivalent-behavior**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a
 Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `23e8fd2a8f17d296f14b81d6618cbd166129e116e36515444239edac15f89554`.
 
 - Target: `tools/generate-branding.mjs:17 [UTF8-LF sha256=0e17da9eec334751e80fba97da219d0cfb69f2bf896f67b2e4d3a70a63e54ec2; anchor='FAVICON':]`.
-- Target: `firmware/esp8266/src/WebUi.h:7 [UTF8-LF sha256=0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622; anchor=<!-- BEGIN SHARED BRAND FAVICON -->]`.
+- Target: `firmware/esp8266/src/WebUi.h:140 [UTF8-LF sha256=1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8; anchor=<!-- BEGIN SHARED BRAND FAVICON -->]`.
 - Target: `docs/BRANDING-PARITY.md:40 [UTF8-LF sha256=b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7; anchor=## Explicit unfinished useful code and reasons]`.
 - Retained: Same resolved artwork binds favicon/touch/header before login; ESP embeds data instead of requesting a protected host filesystem icon.
 - Omitted/replaced code: `storedBoolean/supportsStandaloneMode/useWebPlatform capabilities/events; install/share/toggleFullscreen/enableNotifications/applyUpdate; settings setters/signalInteraction`. Disposition: **pending**. Reason: Generic browser capabilities/lifecycle/preferences need controller-specific integration and tests; static branding does not certify them.
@@ -922,6 +922,19 @@ Verdict: **equivalent-file**. Revision: `filesystem-snapshot-no-git`. Original-b
 - Test-code evidence: `tests/rayanlamp_reuse_test.mjs:1 [UTF8-LF sha256=8b10200e63b30f5b73c36986971c52438fa0f21858c6da74110d868149a30a5d; anchor=Adapted from RayanLamp haptics.test.ts]`.
 - Remaining: Include notice with eventual binary distributions, not just source.
 
+### RayanLamp: `webui/public/theme-init.js`
+
+Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `0e39142a82287beefd43b59e032ff8e55f0a054b52be83a2cb3efd26ae5bb2b8`.
+
+- Target: `assets/themes/browser-appearance.js:69 [UTF8-LF sha256=a3cfd720a376fc399dd8abfef91a172180b583b828516f4d1198e4be7bd34dae; anchor=function applyPrepaintLocale()]`.
+- Target: `tools/generate-web-appearance.mjs:31 [UTF8-LF sha256=bcf9cdb01e96c932d0ac2895930d52e774846d5791f40f11fd7254e52cecb18e; anchor=replaceBlock('// BEGIN BROWSER CONTROLLER']`.
+- Target: `firmware/esp8266/src/WebUi.h:8 [UTF8-LF sha256=1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8; anchor=<script data-pakar-presentation>]`.
+- Retained: Actual safe validated storage read, requested/OS theme resolution, root color-scheme and chrome metadata, locale/direction and resolved-locale pre-paint behavior are adapted into the single head bootstrap. It runs without dialog/body nodes, requests, preference writes or application/peer title mutation; generator checks canonical equality.
+- Omitted/replaced code: `Separate same-origin /theme-init.js, duplicated theme resolver, lamp colors and rayanlamp.web.locale auto/language-list some(fa) selection`. Disposition: **replaced**. Reason: Inline canonical bootstrap shares the existing Pealayer helpers and palette once, before CSS, saving an ESP endpoint and extra request. Existing Pakar locale keys use system/en/fa, primary browser language and explicit Auto/LTR/RTL override, consistent with current runtime resolver. Supporting a secondary Persian language must not unexpectedly override an English primary choice. Existing dark/Studio defaults are retained rather than silently changing user appearance.
+- Test-code evidence: `tests/rayanlamp_theme_test.mjs:55 [UTF8-LF sha256=f1ca3a14805c3b186d52918164fe968a6da07319dba15299a10deee658480783; anchor=Pre-paint survives blocked storage]`.
+- Test-code evidence: `tests/rayanlamp_theme_test.mjs:41 [UTF8-LF sha256=f1ca3a14805c3b186d52918164fe968a6da07319dba15299a10deee658480783; anchor=RayanLamp pre-paint bootstrap runs before CSS/body]`.
+- Remaining: Post-bootstrap generic dynamic copy, browser language-change lifecycle and complete native/Web/mobile localization remain pending in the existing localization concern; this import certifies pre-paint behavior, not those separate source files.
+
 ### RayanLamp: `webui/src/connection-preferences.test.ts`
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `26c99032222edf27a1b59476d107abc7aadbaf497b7e47887e4aa52460e0c331`.
@@ -960,12 +973,35 @@ Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Origin
 Verdict: **scoped-improvement**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `26b14208309628ea7eca9a05eb0f7e0d8206f2b59cd0c6a226e2389d7fde89a1`.
 
 - Target: `assets/web/rayanlamp.js:15 [UTF8-LF sha256=73144dfaf4a3e02fff90e25d3d53bb48029bb2dd802bf5051bf4f2bc67124491; anchor=class WebHaptics]`.
-- Target: `firmware/esp8266/src/WebUi.h:67 [UTF8-LF sha256=0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622; anchor=id="uiHaptics"]`.
+- Target: `firmware/esp8266/src/WebUi.h:200 [UTF8-LF sha256=1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8; anchor=id="uiHaptics"]`.
 - Retained: Actual pulse constants, bounded audio cues, optional vibration API, fail-closed visibility/reduced-motion conditions, copied pattern arrays and host-error containment adapted into embedded JavaScript. Opt-in Touch feedback defaults off, disabled when unsupported; only explicit command HTTP results trigger it, never polling/telemetry/frames.
 - Omitted/replaced code: `TypeScript interfaces/private/type annotations`. Disposition: **replaced**. Reason: ESP serves dependency-free JavaScript. Actual runtime bodies are retained; explicit own-property cue validation replaces a compile-time-only guarantee.
 - Test-code evidence: `tests/rayanlamp_reuse_test.mjs:24 [UTF8-LF sha256=8b10200e63b30f5b73c36986971c52438fa0f21858c6da74110d868149a30a5d; anchor=h.trigger('arbitrary raw frame')]`.
 - Scoped advantage: Unknown JavaScript cues now fail closed at runtime.
 - Remaining: Verify supported Android vibration and actual command lifecycle. HTTP acceptance is not actuator readback.
+
+### RayanLamp: `webui/src/theme.test.ts`
+
+Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `827e41f9229227582fb78819344dceda12a9b1d581a4b73266e4780b3de2a5b8`.
+
+- Target: `tests/rayanlamp_theme_test.mjs:1 [UTF8-LF sha256=f1ca3a14805c3b186d52918164fe968a6da07319dba15299a10deee658480783; anchor=Actual RayanLamp theme.test.ts scenarios]`.
+- Retained: All three actual donor scenarios adapted: live System OS changes update browser chrome and preserve selection; explicit override is stable; classic pre-paint bootstrap precedes application initialization. Added old-stop/new-owner, no duplicated listeners, idempotent cleanup, cross-tab clear/malformed input, all palettes, blocked storage and no-device-call assertions.
+- Omitted/replaced code: `Vitest/Preact imports, lamp-only metadata constants and index.html external classic /theme-init.js before src/main.tsx assertion`. Disposition: **replaced**. Reason: Node built-in test/VM executes the actual embedded bootstrap and controller without installing a second donor toolchain. Expected chrome values come from shared Pakar palettes. Firmware serves one HTML document; classic inline script precedes CSS/body with no extra endpoint or render-blocking HTTP fetch. Source equality and script order are asserted.
+- Test-code evidence: `tests/rayanlamp_theme_test.mjs:41 [UTF8-LF sha256=f1ca3a14805c3b186d52918164fe968a6da07319dba15299a10deee658480783; anchor=RayanLamp pre-paint bootstrap runs before CSS/body]`.
+- Remaining: VM/DOM doubles are not actual browser pixels or live firmware verification.
+
+### RayanLamp: `webui/src/theme.ts`
+
+Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `b4a927e80577f163257b62a28b6df2148d10ee506f2cdeeb51e6b1666b9ce54e`.
+
+- Target: `assets/themes/browser-appearance.js:40 [UTF8-LF sha256=a3cfd720a376fc399dd8abfef91a172180b583b828516f4d1198e4be7bd34dae; anchor=function startBrowserAppearanceController()]`.
+- Target: `firmware/esp8266/src/WebUi.h:8 [UTF8-LF sha256=1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8; anchor=<script data-pakar-presentation>]`.
+- Retained: Actual startWebThemeController detach/restart ownership, idempotent stop, captured listener cleanup, System-only OS reconciliation, safe stored selection and browser color-scheme/theme-color metadata adapted into startBrowserAppearanceController/applyBrowserAppearance. Used by actual pre-paint embedded Web UI, with storage-event reset handling and no hardware writes.
+- Retained: Pealayer appearance helpers and four shared palettes remain the only color engine; requested theme and resolved theme are distinct root metadata. Existing form persistence skips identical writes and retains session selection on storage failure.
+- Omitted/replaced code: `Preact signal state, RayanLamp storage key/default System, root.dataset.theme as requested mode, fixed lamp theme colors and applyWebTheme persistence entrypoint`. Disposition: **replaced**. Reason: Dependency-free ESP HTML uses existing browserAppearance state and pakar-appearance object with explicit Pakar dark/Studio defaults. Existing resolved root.dataset.theme is preserved for CSS; themePreference and resolvedTheme retain both states. Shared palette canvas drives browser chrome, not lamp colors. Existing form is the persistence owner; rendering and OS events never rewrite preferences.
+- Test-code evidence: `tests/rayanlamp_theme_test.mjs:49 [UTF8-LF sha256=f1ca3a14805c3b186d52918164fe968a6da07319dba15299a10deee658480783; anchor=RayanLamp controller restart and idempotent teardown]`.
+- Test-code evidence: `tests/web_appearance_test.mjs:91 [UTF8-LF sha256=91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f; anchor=unavailable storage still applies]`.
+- Remaining: Real browser/device acceptance and cross-client native/mobile appearance transport remain independent requirements; this comparison covers the donor Web theme controller only.
 
 ## Unreviewed files are not approved omissions
 

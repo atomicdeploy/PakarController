@@ -38,7 +38,8 @@ test('live host theme events leave System preference unchanged and respect expli
 
 const web=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
 const shipped=web.match(/<script>([\s\S]*?)<\/script>/)[1];
-const code=shipped.slice(shipped.indexOf('// BEGIN SHARED APPEARANCE'),shipped.indexOf('// END BROWSER APPEARANCE'));
+const prepaint=web.match(/<script data-pakar-presentation>([\s\S]*?)<\/script>/)[1];
+const code=prepaint+'\n'+shipped.slice(shipped.indexOf('// BEGIN BROWSER APPEARANCE'),shipped.indexOf('// END BROWSER APPEARANCE'));
 const catalog=JSON.parse(readFileSync(new URL('../assets/themes/palettes.json',import.meta.url),'utf8'));
 function fixture({stored=null,light=false,storageFailure=false}={}){
   const ids=['appearanceTheme','appearancePalette','appearanceAccent','appearanceCustom','appearanceDialog','appearanceForm','appearanceOpen','appearanceClose','appearanceCancel','appearanceError'];

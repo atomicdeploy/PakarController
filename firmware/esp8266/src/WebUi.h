@@ -4,6 +4,139 @@
 
 const char kWebUi[] PROGMEM = R"HTML(
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark"><meta name="theme-color" content="#080a0e">
+<script data-pakar-presentation>
+// BEGIN SHARED APPEARANCE
+// Actual Pealayer web_ui/src/appearance.ts functions, with TypeScript-only
+// annotations removed. Shared preference/resolution semantics are retained.
+// Source SHA-256 is recorded in docs/file-comparison-evidence.json.
+function mergeAppearance(values, appearance) {
+  return {
+    ...values,
+    theme: appearance.theme,
+    color_palette: appearance.color_palette,
+    accent_color: appearance.accent_color,
+    custom_accent_color: appearance.custom_accent_color ?? null,
+  };
+}
+
+function resolvedAccent(runtime, config, appearance) {
+  switch (config?.accent_color) {
+    case 'pealayer_green': return '#38d27a';
+    case 'windows_blue': return '#0078d4';
+    case 'macos_blue': return '#0a84ff';
+    case 'custom': return /^#[0-9a-f]{6}$/i.test(config?.custom_accent_color ?? '')
+      ? config.custom_accent_color
+      : (runtime?.accentColor ?? '#0078d4');
+    default: return appearance?.resolved_accent ?? runtime?.accentColor ?? '#0078d4';
+  }
+}
+
+function resolvedAppearanceTheme(preference, browserIsLight, appearance) {
+  if (preference !== 'system') return preference;
+  // Connected clients follow the host. Browser OS preference is offline only.
+  return appearance?.resolved_theme ?? (browserIsLight ? 'light' : 'dark');
+}
+
+function accentForeground(accent) {
+  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(accent);
+  if (!match) return '#ffffff';
+  const [red, green, blue] = match.slice(1).map((value) => Number.parseInt(value, 16));
+  return (red * 299 + green * 587 + blue * 114) > 150_000 ? '#141414' : '#ffffff';
+}
+
+function paletteName(config) {
+  return config?.color_palette === 'studio' ? 'studio' : 'native';
+}
+const PEALAYER_PALETTES={"studio":{"dark":{"canvas":"#080a0e","surface-0":"#0d1016","surface-1":"#11161e","surface-2":"#171d27","surface-3":"#1d2531","line":"#29313d","line-strong":"#3a4656","text":"#eef2f7","muted":"#909baa","subtle":"#687382","green":"#38d27a","blue":"#68a7ff","red":"#ff5c68","amber":"#f3b954"},"light":{"canvas":"#edf1f5","surface-0":"#f8fafc","surface-1":"#ffffff","surface-2":"#f2f5f8","surface-3":"#e8edf2","line":"#d5dde6","line-strong":"#b9c5d2","text":"#17202b","muted":"#5e6a78","subtle":"#7a8795","green":"#168a4e","blue":"#286fc5","red":"#d83b48","amber":"#a66a0a"}},"native":{"dark":{"canvas":"#181818","surface-0":"#202020","surface-1":"#242424","surface-2":"#2d2d2d","surface-3":"#373737","line":"#3c3c3c","line-strong":"#606060","text":"#eeeeee","muted":"#aaaaaa","subtle":"#888888","green":"#38d27a","blue":"#68a7ff","red":"#ff5c68","amber":"#f3b954"},"light":{"canvas":"#eeeeee","surface-0":"#f3f3f3","surface-1":"#fafafa","surface-2":"#eeeeee","surface-3":"#e4e4e4","line":"#d5d5d5","line-strong":"#b9b9b9","text":"#232a34","muted":"#5e6a78","subtle":"#7a8795","green":"#168a4e","blue":"#286fc5","red":"#d83b48","amber":"#a66a0a"}}};
+// END SHARED APPEARANCE
+// BEGIN BROWSER CONTROLLER
+// RayanLamp webui/src/theme.ts and public/theme-init.js (MIT, YektaYar).
+// Adapted controller ownership, pre-paint reconciliation and browser metadata.
+// Pealayer's actual helpers and shared palettes remain the sole color engine.
+// This module has no device requests, peer identity writes or dialog references.
+const appearanceDefaults={theme:'dark',color_palette:'studio',accent_color:'system',custom_accent_color:null};
+function normalizeBrowserAppearance(value){
+  const v=value&&typeof value==='object'?value:{};
+  return {
+    theme:['system','light','dark'].includes(v.theme)?v.theme:appearanceDefaults.theme,
+    color_palette:['studio','native'].includes(v.color_palette)?v.color_palette:appearanceDefaults.color_palette,
+    accent_color:['system','pealayer_green','windows_blue','macos_blue','custom'].includes(v.accent_color)?v.accent_color:appearanceDefaults.accent_color,
+    custom_accent_color:/^#[0-9a-f]{6}$/i.test(v.custom_accent_color??'')?v.custom_accent_color:null
+  };
+}
+let browserAppearance=appearanceDefaults;
+try{browserAppearance=normalizeBrowserAppearance(JSON.parse(localStorage.getItem('pakar-appearance')||'null'))}catch{}
+let appearanceMedia=null,stopAppearanceController=null;
+function browserPrefersLight(){
+  try{return globalThis.matchMedia?.('(prefers-color-scheme: light)').matches===true}catch{return false}
+}
+function applyBrowserAppearance(){
+  const root=document.documentElement;
+  const scheme=resolvedAppearanceTheme(browserAppearance.theme,appearanceMedia?.matches??browserPrefersLight());
+  const name=paletteName(browserAppearance),colors=PEALAYER_PALETTES[name][scheme],accent=resolvedAccent(null,browserAppearance);
+  root.dataset.theme=scheme; // Existing resolved-theme CSS contract, not a preference.
+  root.dataset.themePreference=browserAppearance.theme;
+  root.dataset.resolvedTheme=scheme;
+  root.dataset.palette=name;
+  root.style.colorScheme=scheme;
+  for(const[role,value]of Object.entries(colors))root.style.setProperty('--'+role,value);
+  root.style.setProperty('--accent',accent);
+  root.style.setProperty('--accent-text',accentForeground(accent));
+  root.style.setProperty('--accent-soft',`color-mix(in srgb, ${accent} 16%, transparent)`);
+  const colorScheme=document.querySelector?.('meta[name="color-scheme"]');
+  const themeColor=document.querySelector?.('meta[name="theme-color"]');
+  if(colorScheme)colorScheme.content=scheme;
+  if(themeColor)themeColor.content=colors.canvas;
+  return scheme;
+}
+function startBrowserAppearanceController(){
+  stopAppearanceController?.();
+  try{appearanceMedia=globalThis.matchMedia?.('(prefers-color-scheme: light)')??null}catch{appearanceMedia=null}
+  const media=appearanceMedia;
+  let stopped=false;
+  const onChange=()=>{if(!stopped&&browserAppearance.theme==='system')applyBrowserAppearance()};
+  const onStorage=event=>{
+    if(stopped||!['pakar-appearance',null].includes(event.key))return;
+    try{
+      const encoded=event.key===null?localStorage.getItem('pakar-appearance'):event.newValue;
+      browserAppearance=normalizeBrowserAppearance(JSON.parse(encoded||'null'));
+      applyBrowserAppearance();
+    }catch{} // Malformed/unavailable storage never breaks the running session.
+  };
+  media?.addEventListener?.('change',onChange);
+  globalThis.addEventListener?.('storage',onStorage);
+  const stop=()=>{
+    if(stopped)return;
+    stopped=true;
+    media?.removeEventListener?.('change',onChange);
+    globalThis.removeEventListener?.('storage',onStorage);
+    if(stopAppearanceController===stop){stopAppearanceController=null;appearanceMedia=null}
+  };
+  stopAppearanceController=stop;
+  applyBrowserAppearance();
+  return stop;
+}
+// Adapt theme-init's locale pre-paint without translating peer names or title.
+// Pakar's existing primary-browser-language rule and explicit direction win.
+function applyPrepaintLocale(){
+  let language='system',direction='auto';
+  try{language=localStorage.getItem('pakar-locale')||language;direction=localStorage.getItem('pakar-direction')||direction}catch{}
+  if(!['system','en','fa'].includes(language))language='system';
+  if(!['auto','ltr','rtl'].includes(direction))direction='auto';
+  const resolved=language==='system'
+    ? String(globalThis.navigator?.languages?.[0]||globalThis.navigator?.language||'en').toLowerCase().startsWith('fa')?'fa':'en'
+    : language;
+  const root=document.documentElement;
+  root.lang=resolved;
+  root.dir=direction==='auto'?(resolved==='fa'?'rtl':'ltr'):direction;
+  root.dataset.localePreference=language;
+  root.dataset.resolvedLocale=resolved;
+}
+startBrowserAppearanceController();
+applyPrepaintLocale();
+// END BROWSER CONTROLLER
+</script>
 <title>PakarController</title><!-- BEGIN SHARED BRAND FAVICON --><link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACq0lEQVR42u2av2sUQRTHT2MsJASJdqZKUP8ABRuxEBJ/nFoF0thdzn9ARC18xfG6i6+yCdopEUwE7Y2lBJMQqxSiaGwURBDBGFGjOzAHw2N2du5wYN/e+8K3mZ2Znfe5mdmZm6nVVCqVSqVSqVSqoADJeBiQEJCWAGm1RF4BpAVAmrLtTALABP8akP6W3K1UAFBA8Ma/AWksBYAl5yXfC7qk26DPgXwbLO/7HocAr2c6BQA3sNXOWMux25i5QL5jLO+Vgnqj61EACkABiATQ7jcAY57P2NV+AmB83wPhRj8B2GOXsRzCA0Bas2uOt4C0CEjHqwggBIH7VwbkmjQAdyO7cSyEHUA6LQnAFiBNREI46Qn2OSBtsvRXkgB0IExGALjFyjVt+gAgLbMNzz5JAGIhECsz6jxrsWdHpAEw/gFIZwLlZlj+WUDaa0G8cdK3AWlQCoAdD4SzOeWO2pmeb6d52jNJc8DDrOu/8EA4l1O26I+XLQtK1DpguAsIpsvf8fQc40+AdF7qQsgHYTsnIONTgHTbdvdHgHQzA3NQ+kowD0K9x12gyKVwHoQL/QIgBOFiFQDsZ40x6/tdkRB+9gihNAAagPTFM3u/BKTDXUC4JBHATM6nq+MP2c7wUBcQ6pIAjADS14it7L2cAHwQNiUBaLIGPLFdvm6Xsu4vOxiAsM7qEQNgljXAHe/twC6Oe04qgOusAe74fcqejVQRwKRnB9e2wf9x0t8VBCIWwIBnEvO5UVUANTu2PwaCn48IRDQA4wP2oOMb6/aNyEDEA+h4dwZivGDCqzSAXq0AygxgxXnBhn3p//ZjFkhsucv8PCEFgAUht8SMJ1IAmBISvNlEDaW6Kdqyx1JlDv5EqouS7q2OaXufpyxu2gPYoWRXZVUqlUqlUqlUFdM/lkF4sYxV/wAAAAAASUVORK5CYII="><link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACq0lEQVR42u2av2sUQRTHT2MsJASJdqZKUP8ABRuxEBJ/nFoF0thdzn9ARC18xfG6i6+yCdopEUwE7Y2lBJMQqxSiaGwURBDBGFGjOzAHw2N2du5wYN/e+8K3mZ2Znfe5mdmZm6nVVCqVSqVSqVSqoADJeBiQEJCWAGm1RF4BpAVAmrLtTALABP8akP6W3K1UAFBA8Ma/AWksBYAl5yXfC7qk26DPgXwbLO/7HocAr2c6BQA3sNXOWMux25i5QL5jLO+Vgnqj61EACkABiATQ7jcAY57P2NV+AmB83wPhRj8B2GOXsRzCA0Bas2uOt4C0CEjHqwggBIH7VwbkmjQAdyO7cSyEHUA6LQnAFiBNREI46Qn2OSBtsvRXkgB0IExGALjFyjVt+gAgLbMNzz5JAGIhECsz6jxrsWdHpAEw/gFIZwLlZlj+WUDaa0G8cdK3AWlQCoAdD4SzOeWO2pmeb6d52jNJc8DDrOu/8EA4l1O26I+XLQtK1DpguAsIpsvf8fQc40+AdF7qQsgHYTsnIONTgHTbdvdHgHQzA3NQ+kowD0K9x12gyKVwHoQL/QIgBOFiFQDsZ40x6/tdkRB+9gihNAAagPTFM3u/BKTDXUC4JBHATM6nq+MP2c7wUBcQ6pIAjADS14it7L2cAHwQNiUBaLIGPLFdvm6Xsu4vOxiAsM7qEQNgljXAHe/twC6Oe04qgOusAe74fcqejVQRwKRnB9e2wf9x0t8VBCIWwIBnEvO5UVUANTu2PwaCn48IRDQA4wP2oOMb6/aNyEDEA+h4dwZivGDCqzSAXq0AygxgxXnBhn3p//ZjFkhsucv8PCEFgAUht8SMJ1IAmBISvNlEDaW6Kdqyx1JlDv5EqouS7q2OaXufpyxu2gPYoWRXZVUqlUqlUqlUFdM/lkF4sYxV/wAAAAAASUVORK5CYII="><!-- END SHARED BRAND FAVICON --><style>
 /* BEGIN PALETTE FALLBACK */
 :root{color-scheme:dark;--canvas:#080a0e;--surface-0:#0d1016;--surface-1:#11161e;--surface-2:#171d27;--surface-3:#1d2531;--line:#29313d;--line-strong:#3a4656;--text:#eef2f7;--muted:#909baa;--subtle:#687382;--green:#38d27a;--blue:#68a7ff;--red:#ff5c68;--amber:#f3b954;--accent:#0078d4;--accent-text:#ffffff;--accent-soft:color-mix(in srgb,var(--accent) 16%,transparent);--cyan:var(--blue);--gold:var(--amber)}
@@ -252,58 +385,7 @@ function saveLocalization(){
 }
 
 // END SHARED LOCALIZATION
-// BEGIN SHARED APPEARANCE
-// Actual Pealayer web_ui/src/appearance.ts functions, with TypeScript-only
-// annotations removed. Shared preference/resolution semantics are retained.
-// Source SHA-256 is recorded in docs/file-comparison-evidence.json.
-function mergeAppearance(values, appearance) {
-  return {
-    ...values,
-    theme: appearance.theme,
-    color_palette: appearance.color_palette,
-    accent_color: appearance.accent_color,
-    custom_accent_color: appearance.custom_accent_color ?? null,
-  };
-}
-
-function resolvedAccent(runtime, config, appearance) {
-  switch (config?.accent_color) {
-    case 'pealayer_green': return '#38d27a';
-    case 'windows_blue': return '#0078d4';
-    case 'macos_blue': return '#0a84ff';
-    case 'custom': return /^#[0-9a-f]{6}$/i.test(config?.custom_accent_color ?? '')
-      ? config.custom_accent_color
-      : (runtime?.accentColor ?? '#0078d4');
-    default: return appearance?.resolved_accent ?? runtime?.accentColor ?? '#0078d4';
-  }
-}
-
-function resolvedAppearanceTheme(preference, browserIsLight, appearance) {
-  if (preference !== 'system') return preference;
-  // Connected clients follow the host. Browser OS preference is offline only.
-  return appearance?.resolved_theme ?? (browserIsLight ? 'light' : 'dark');
-}
-
-function accentForeground(accent) {
-  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(accent);
-  if (!match) return '#ffffff';
-  const [red, green, blue] = match.slice(1).map((value) => Number.parseInt(value, 16));
-  return (red * 299 + green * 587 + blue * 114) > 150_000 ? '#141414' : '#ffffff';
-}
-
-function paletteName(config) {
-  return config?.color_palette === 'studio' ? 'studio' : 'native';
-}
-const PEALAYER_PALETTES={"studio":{"dark":{"canvas":"#080a0e","surface-0":"#0d1016","surface-1":"#11161e","surface-2":"#171d27","surface-3":"#1d2531","line":"#29313d","line-strong":"#3a4656","text":"#eef2f7","muted":"#909baa","subtle":"#687382","green":"#38d27a","blue":"#68a7ff","red":"#ff5c68","amber":"#f3b954"},"light":{"canvas":"#edf1f5","surface-0":"#f8fafc","surface-1":"#ffffff","surface-2":"#f2f5f8","surface-3":"#e8edf2","line":"#d5dde6","line-strong":"#b9c5d2","text":"#17202b","muted":"#5e6a78","subtle":"#7a8795","green":"#168a4e","blue":"#286fc5","red":"#d83b48","amber":"#a66a0a"}},"native":{"dark":{"canvas":"#181818","surface-0":"#202020","surface-1":"#242424","surface-2":"#2d2d2d","surface-3":"#373737","line":"#3c3c3c","line-strong":"#606060","text":"#eeeeee","muted":"#aaaaaa","subtle":"#888888","green":"#38d27a","blue":"#68a7ff","red":"#ff5c68","amber":"#f3b954"},"light":{"canvas":"#eeeeee","surface-0":"#f3f3f3","surface-1":"#fafafa","surface-2":"#eeeeee","surface-3":"#e4e4e4","line":"#d5d5d5","line-strong":"#b9b9b9","text":"#232a34","muted":"#5e6a78","subtle":"#7a8795","green":"#168a4e","blue":"#286fc5","red":"#d83b48","amber":"#a66a0a"}}};
-// END SHARED APPEARANCE
 // BEGIN BROWSER APPEARANCE
-const appearanceDefaults={theme:'dark',color_palette:'studio',accent_color:'system',custom_accent_color:null};
-function normalizeBrowserAppearance(value){const v=value&&typeof value==='object'?value:{};return{theme:['system','light','dark'].includes(v.theme)?v.theme:appearanceDefaults.theme,color_palette:['studio','native'].includes(v.color_palette)?v.color_palette:appearanceDefaults.color_palette,accent_color:['system','pealayer_green','windows_blue','macos_blue','custom'].includes(v.accent_color)?v.accent_color:appearanceDefaults.accent_color,custom_accent_color:/^#[0-9a-f]{6}$/i.test(v.custom_accent_color??'')?v.custom_accent_color:null}}
-let browserAppearance=appearanceDefaults;try{browserAppearance=normalizeBrowserAppearance(JSON.parse(localStorage.getItem('pakar-appearance')||'null'))}catch{}
-const appearanceMedia=globalThis.matchMedia?.('(prefers-color-scheme: light)');
-function applyBrowserAppearance(){const root=document.documentElement,scheme=resolvedAppearanceTheme(browserAppearance.theme,appearanceMedia?.matches===true),name=paletteName(browserAppearance),accent=resolvedAccent(null,browserAppearance);root.dataset.theme=scheme;root.dataset.palette=name;root.style.colorScheme=scheme;for(const[role,value]of Object.entries(PEALAYER_PALETTES[name][scheme]))root.style.setProperty('--'+role,value);root.style.setProperty('--accent',accent);root.style.setProperty('--accent-text',accentForeground(accent));root.style.setProperty('--accent-soft',`color-mix(in srgb, ${accent} 16%, transparent)`)}
-appearanceMedia?.addEventListener('change',()=>{if(browserAppearance.theme==='system')applyBrowserAppearance()});
-globalThis.addEventListener?.('storage',event=>{if(event.key!=='pakar-appearance')return;try{browserAppearance=normalizeBrowserAppearance(JSON.parse(event.newValue||'null'));applyBrowserAppearance()}catch{}});
 function appearanceCustomControls(){appearanceCustom.disabled=appearanceAccent.value!=='custom'}
 appearanceOpen.addEventListener('click',()=>{appearanceTheme.value=browserAppearance.theme;appearancePalette.value=browserAppearance.color_palette;appearanceAccent.value=browserAppearance.accent_color;appearanceCustom.value=browserAppearance.custom_accent_color||'#0078d4';appearanceCustomControls();appearanceError.textContent='';appearanceDialog.showModal()});
 appearanceAccent.addEventListener('change',appearanceCustomControls);

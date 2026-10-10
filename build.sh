@@ -31,6 +31,9 @@ test "$(wc -c < "$build/avr$suffix/avr.ino.with_bootloader.bin")" -eq 32768
 fi
 
 if [[ "$target" != "avr" ]]; then
+pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern web-presentation -Gate > /dev/null
+node "$root/tools/generate-font-assets.mjs" --check
+node "$root/tools/generate-branding.mjs" --check
 node "$root/tools/generate-web-appearance.mjs" --check
 node "$root/tools/generate-interface-contract.mjs" --check
 mkdir -p "$build/esp8266$suffix"

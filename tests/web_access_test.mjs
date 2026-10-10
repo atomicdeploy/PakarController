@@ -37,6 +37,7 @@ const context=vm.createContext({...nodes,URLSearchParams,FormData,Uint8Array,Tex
     }else if(path==='/api/v1/cells/mapping')body={physical:[],names:[]};
     return {ok:code<400,status:code,statusText:String(code),text:async()=>typeof body==='string'?body:JSON.stringify(body)};
   }});
+vm.runInContext(source.match(/<script data-pakar-presentation>([\s\S]*?)<\/script>/)[1],context);
 vm.runInContext(script,context);
 const settle=async()=>{for(let i=0;i<15;i++)await Promise.resolve()};
 await settle();
