@@ -8,7 +8,7 @@
 // TonePlayer queues nonblocking tones on the board's Timer1 buzzer output.
 class TonePlayer {
 public:
-  TonePlayer() = default;
+  TonePlayer() : TonePlayer(BoardPins::Buzzer) {}
   // ATmega328P implementation owns Timer1 and the PB1/OC1A pin. It uses
   // hardware compare toggling (no audio-rate ISR); do not combine it with
   // Servo or analogWrite() on D9/D10.

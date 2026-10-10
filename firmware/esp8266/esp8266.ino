@@ -24,6 +24,8 @@
 #include "src/LedGrid.h"
 #include "src/NetworkConfig.h"
 #include "src/DeviceIdentity.h"
+#include "src/BusyLine.h"
+#include "src/TelnetShell.h"
 #include "src/WebUi.h"
 
 using namespace BoardCore::Protocol;
@@ -75,6 +77,7 @@ SoftwareSerial avrSerial(D4, D0);
 BoardCore::SerialLink link(static_cast<Stream &>(avrSerial));
 BoardCore::SerialLink hostLink(Serial);
 AvrIsp avrIsp(D1);
+BusyLine<PAKAR_USE_BUSY_WIRE != 0> busyLine(kBusyPin);
 LedGrid grid;
 File uploadFile;
 uint32_t avrUploadOwner = 0;
@@ -139,7 +142,9 @@ uint32_t otaRebootAt = 0;
 size_t otaUploadedBytes = 0;
 uint32_t otaOwner = 0;
 String otaPhase = "idle";
-String telnetLine;
+PakarShell::TelnetParser telnetParser;
+PakarShell::LineEditor telnetEditor;
+uint32_t telnetLastInputAt = 0;
 CellMappingRecord cellMapping{};
 
 void saveLedPreferences();
@@ -351,11 +356,7 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
 }
 
 void setAvrTransmitBlocked(bool blocked) {
-#if PAKAR_USE_BUSY_WIRE
-  digitalWrite(kBusyPin, blocked ? HIGH : LOW);
-#else
-  (void)blocked;
-#endif
+  busyLine.setBlocked(blocked);
 }
 
 uint8_t ledPreferencesCheck(const LedPreferences &value) {
@@ -2048,6 +2049,7 @@ void executeTelnetCommand(String line) {
 }
 
 void serviceTelnet() {
+  auto write = [](const uint8_t* bytes, size_t length) { telnetClient.write(bytes, length); };
   if (telnetServer.hasClient()) {
     WiFiClient candidate = telnetServer.accept();
     if (telnetClient && telnetClient.connected()) {
@@ -2057,34 +2059,49 @@ void serviceTelnet() {
       telnetClient = candidate;
       telnetClient.setNoDelay(true);
       telnetAuthenticated = false;
-      telnetLine = String();
+      telnetEditor.reset();
+      telnetParser.greet(write);
+      telnetLastInputAt = millis();
       telnetClient.println(F("PakarController authenticated shell"));
       telnetClient.print(F("Password: "));
     }
   }
-  if (!telnetClient || !telnetClient.connected()) return;
+  if (!telnetClient || !telnetClient.connected()) { telnetEditor.reset(); telnetParser.reset(); return; }
+  const uint32_t idleLimit = telnetAuthenticated ? 1800000UL : 60000UL;
+  if (static_cast<uint32_t>(millis() - telnetLastInputAt) >= idleLimit) {
+    telnetClient.println(F("Session expired.")); telnetClient.stop(); telnetEditor.reset(); return;
+  }
   uint8_t budget = 96;
   while (budget-- != 0 && telnetClient.available() != 0) {
-    const char ch = static_cast<char>(telnetClient.read());
-    if (ch == '\r') continue;
-    if (ch != '\n') {
-      if (telnetLine.length() < 120 && ch >= 0x20 && ch < 0x7f) telnetLine += ch;
-      continue;
-    }
-    String line = telnetLine;
-    telnetLine = String();
-    if (!telnetAuthenticated) {
-      if (accessConfig.ready() && BoardCore::Access::equal(line.c_str(), accessConfig.password())) {
-        telnetAuthenticated = true;
-        telnetClient.println(F("Authenticated. Type help for commands."));
-        telnetPrompt();
-      } else {
-        telnetClient.println(F("Authentication failed."));
-        telnetClient.stop();
+    telnetLastInputAt = millis();
+    telnetParser.feed(static_cast<uint8_t>(telnetClient.read()), write, [&](uint8_t ch) {
+      const auto event = telnetEditor.feed(ch, write);
+      if (event == PakarShell::LineEditor::None) return;
+      if (event == PakarShell::LineEditor::Cancel || event == PakarShell::LineEditor::TooLong) {
+        if (event == PakarShell::LineEditor::TooLong) telnetClient.println(F("ERR line too long; discarded"));
+        telnetEditor.clear();
+        if (telnetAuthenticated) telnetPrompt(); else telnetClient.print(F("Password: "));
+        return;
       }
-      continue;
-    }
-    executeTelnetCommand(line);
+      if (!telnetAuthenticated) {
+        const bool valid = accessConfig.ready() && BoardCore::Access::equal(telnetEditor.line(), accessConfig.password());
+        telnetEditor.clear();
+        if (valid) {
+          telnetAuthenticated = true;
+          telnetEditor.setEcho(true);
+          telnetClient.println(F("Authenticated. Type help for commands."));
+          telnetPrompt();
+        } else {
+          telnetClient.println(F("Authentication failed."));
+          telnetClient.stop();
+        }
+        return;
+      }
+      const String line(telnetEditor.line());
+      telnetEditor.clear();
+      executeTelnetCommand(line);
+    });
+    if (!telnetClient.connected()) { telnetEditor.reset(); break; }
   }
 }
 
@@ -2199,8 +2216,7 @@ void setup() {
 #if PAKAR_USE_BUSY_WIRE
   // GPIO0 is pulled high by the NodeMCU boot circuit. Explicitly keep the AVR
   // blocked until UART, Wi-Fi, Web, and the LED renderer are ready.
-  pinMode(kBusyPin, OUTPUT);
-  setAvrTransmitBlocked(true);
+  busyLine.begin();
 #endif
   pinMode(D1, INPUT);
   // Never erase damaged storage and silently restore public credentials.

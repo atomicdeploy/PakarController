@@ -5,10 +5,10 @@
 namespace BoardCore {
 namespace BuildInfo {
 
-constexpr char kVersion[] = "0.2.3";
+constexpr char kVersion[] = "0.2.4";
 constexpr uint8_t kVersionMajor = 0;
 constexpr uint8_t kVersionMinor = 2;
-constexpr uint8_t kVersionPatch = 3;
+constexpr uint8_t kVersionPatch = 4;
 constexpr uint8_t kProtocolVersion = 1;
 
 }  // namespace BuildInfo

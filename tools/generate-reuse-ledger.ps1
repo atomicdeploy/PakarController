@@ -3,13 +3,18 @@ param(
     [string]$PealayerRoot = 'C:\Users\David\AppData\Local\Programs\Pealayer\source\Pealayer',
     [string]$PCControllerRoot = 'C:\Users\David\AppData\Local\Programs\PCController\source\PCController',
     [string]$PuzzlesRoot = 'C:\Users\David\Desktop\Projects\ControllerBoardMini\Puzzles',
+    [string]$PuzzleBoardRoot = 'C:\Users\David\Desktop\Projects\PuzzleBoard',
+    [string]$ControllerBoardMiniRoot = 'C:\Users\David\Desktop\Projects\ControllerBoardMini',
+    [string]$Pu850Root = (Join-Path $PSScriptRoot '..\..\repos\pu850-esp'),
     [string]$DecisionsPath,
+    [string]$EvidencePath,
     [string]$OutputPath
 )
 
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($DecisionsPath)) { $DecisionsPath = Join-Path $PSScriptRoot '..\docs\reuse-decisions.csv' }
 if ([string]::IsNullOrWhiteSpace($OutputPath)) { $OutputPath = Join-Path $PSScriptRoot '..\docs\legacy-source-ledger.csv' }
+if ([string]::IsNullOrWhiteSpace($EvidencePath)) { $EvidencePath = Join-Path $PSScriptRoot '..\docs\reuse-review-evidence.csv' }
 
 function Get-GitFiles {
     param([string]$Root)
@@ -49,7 +54,15 @@ function Add-LedgerRows {
         if ([string]::IsNullOrWhiteSpace($relative)) { continue }
         $normalized = $relative.Replace('\', '/')
         $fullPath = Join-Path $Root $relative
-        if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) { continue }
+        if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+            $Rows.Add([pscustomobject][ordered]@{
+                origin=$Origin; revision=$Revision; path=$normalized; sha256=''; bytes='';
+                category=(Get-Category -Origin $Origin -RelativePath $normalized);
+                availability='missing'; screening_signals=''; review_status='missing';
+                reuse_target=''; notes='Tracked file is absent from this checkout (including sparse paths). It was not read or reviewed. Inspect its exact Git blob before resolving.'
+            })
+            continue
+        }
         $item = Get-Item -LiteralPath $fullPath
         $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $fullPath).Hash.ToLowerInvariant()
         $category = Get-Category -Origin $Origin -RelativePath $normalized
@@ -76,6 +89,7 @@ function Add-LedgerRows {
             sha256 = $hash
             bytes = $item.Length
             category = $category
+            availability = 'present'
             screening_signals = ($signals -join ';')
             review_status = 'screened'
             reuse_target = ''
@@ -102,6 +116,19 @@ $puzzleRevision = if (Test-Path -LiteralPath (Join-Path $PuzzlesRoot '.git')) {
 }
 Add-LedgerRows -Rows $rows -Origin 'ControllerBoardMini/Puzzles' -Root $PuzzlesRoot -Revision $puzzleRevision -RelativePaths $puzzleFiles
 
+$pu850 = Get-GitFiles -Root $Pu850Root
+Add-LedgerRows -Rows $rows -Origin 'PU850-ESP' -Root $Pu850Root -Revision $pu850.Commit -RelativePaths $pu850.Files
+foreach ($source in @(
+    @{Origin='PuzzleBoard'; Root=$PuzzleBoardRoot},
+    @{Origin='ControllerBoardMini'; Root=$ControllerBoardMiniRoot}
+)) {
+    $sourceFiles = Get-ChildItem -LiteralPath $source.Root -Recurse -File |
+        Where-Object { $_.FullName -notmatch '[\\/](build|\.build|\.cache|\.git|\.pio|node_modules|target|\.vs|bin|obj)[\\/]' } |
+        ForEach-Object { $_.FullName.Substring($source.Root.Length).TrimStart('\', '/') } |
+        Where-Object { $source.Origin -ne 'ControllerBoardMini' -or $_ -notmatch '^Puzzles[\\/]' }
+    Add-LedgerRows -Rows $rows -Origin $source.Origin -Root $source.Root -Revision 'filesystem-snapshot' -RelativePaths $sourceFiles
+}
+
 if (Test-Path -LiteralPath $DecisionsPath) {
     $decisions = Import-Csv -LiteralPath $DecisionsPath
     $decisionIndex = @{}
@@ -111,9 +138,34 @@ if (Test-Path -LiteralPath $DecisionsPath) {
     foreach ($row in $rows) {
         $decision = $decisionIndex["$($row.origin)|$($row.path)"]
         if ($null -eq $decision) { continue }
-        $row.review_status = $decision.review_status
+        if ($row.availability -ne 'present') { continue }
+        # Historical path-only decisions remain useful routing notes, not proof
+        # that this exact current source was manually read or integrated.
+        $row.review_status = 'legacy-unverified'
         $row.reuse_target = $decision.reuse_target
-        $row.notes = $decision.notes
+        $row.notes = "Unbound historical decision ($($decision.review_status)); requires source-hash evidence. $($decision.notes)"
+    }
+}
+
+if (Test-Path -LiteralPath $EvidencePath) {
+    $evidenceIndex = @{}
+    foreach ($evidence in (Import-Csv -LiteralPath $EvidencePath)) {
+        $key = "$($evidence.origin)|$($evidence.path)"
+        if ($evidenceIndex.ContainsKey($key)) { throw "Duplicate manual evidence: $key" }
+        if ($evidence.sha256 -notmatch '^[0-9a-f]{64}$') { throw "Manual evidence needs an exact SHA256: $key" }
+        $evidenceIndex[$key] = $evidence
+    }
+    foreach ($row in $rows) {
+        $evidence = $evidenceIndex["$($row.origin)|$($row.path)"]
+        if ($null -eq $evidence -or $row.availability -ne 'present') { continue }
+        if ($row.sha256 -ne $evidence.sha256) {
+            $row.review_status = 'stale-review'
+            $row.notes = "Source changed since manual review of $($evidence.sha256). Re-read required."
+            continue
+        }
+        $row.review_status = $evidence.review_status
+        $row.reuse_target = $evidence.reuse_target
+        $row.notes = $evidence.notes
     }
 }
 

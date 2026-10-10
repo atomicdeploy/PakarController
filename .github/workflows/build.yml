@@ -63,6 +63,9 @@ jobs:
         run: |
           node tests/web_display_test.mjs
           node tests/web_access_test.mjs
+          pwsh -File tools/check-reuse-ledger.ps1
+          pwsh -File tests/reuse_ledger_test.ps1
+          pwsh -File tools/verify-versions.ps1
           cargo test --locked --manifest-path desktop/Cargo.toml
           cargo build --locked --release --manifest-path desktop/Cargo.toml
           node tests/device_cli_test.mjs
@@ -71,3 +74,32 @@ jobs:
           name: PakarController-Windows
           if-no-files-found: error
           path: desktop/target/release/pakarcontroller.exe
+
+  android-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.3'
+      - name: Analyze and test mobile contracts
+        working-directory: mobile
+        env:
+          NO_PROXY: localhost,127.0.0.1,::1
+        run: |
+          flutter pub get --enforce-lockfile
+          flutter analyze
+          flutter test
+      - name: Build preview APK (not production signing)
+        working-directory: mobile
+        run: flutter build apk --release
+      - uses: actions/upload-artifact@v7
+        with:
+          name: PakarController-Android-preview
+          if-no-files-found: error
+          path: mobile/build/app/outputs/flutter-apk/app-release.apk

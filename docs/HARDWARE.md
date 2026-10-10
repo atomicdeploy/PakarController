@@ -32,6 +32,11 @@ ATmega328P signature `1E 95 0F`.
 - GPIO0/D3 is also a boot strap. The optional busy wire therefore uses a 10
   kOhm pull-up to 3.3 V. Its boot-high state is intentionally safe: it keeps
   the AVR quiet until the ESP application releases the line LOW.
+- Busy-wire builds explicitly use ESP `INPUT_PULLUP` while busy, then preload
+  LOW before enabling output when receive-ready. AVR D10 also uses
+  `INPUT_PULLUP`. The internal pulls supplement the external boot pull-up;
+  they are not a measured substitute for installation wiring. Polling builds
+  leave D3 untouched. Default remains busy-wire pending comparative live tests.
 - Never connect the 24 V LED supply to either MCU. Use a buck supply for the
   controller and a common signal ground.
 - The current strip accepts the ESP's 3.3 V data directly. A short series
