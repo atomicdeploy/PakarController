@@ -23,6 +23,10 @@ pub fn launch_command(args: &[String]) -> Command {
         Command::About
     } else if args.iter().any(|v| v == "--workspaces") {
         Command::Workspaces
+    } else if let Some(at) = args.iter().position(|v| v == "--find-cell") {
+        Command::FindCell {
+            query: args.get(at + 1).cloned().unwrap_or_default(),
+        }
     } else if let Some(at) = args.iter().position(|v| v == "--panel") {
         Command::Panel {
             name: args.get(at + 1).cloned().unwrap_or_else(|| "Table".into()),
@@ -122,6 +126,16 @@ impl PakarControllerApp {
             Command::Connect => self.show_connection = true,
             Command::About => self.show_about = true,
             Command::Workspaces => self.show_workspaces = true,
+            Command::FindCell { query } => {
+                if let Ok(matches) = ui::cell_search::parse(&query) {
+                    self.cell_search = query;
+                    if let Some(id) = matches.first() {
+                        self.selected_cell = *id;
+                    }
+                    self.reveal_panels.push(Panel::Table);
+                    self.focus_cell_search = true;
+                }
+            }
             Command::Panel { name } => {
                 if let Some(panel) = Panel::from_name(&name) {
                     self.reveal_panels.push(panel);
@@ -221,11 +235,29 @@ impl PakarControllerApp {
         if ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::F5)) {
             self.refresh();
         }
+        if self.preferences.is_none() && !self.show_connection && !self.confirm_reset {
+            if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::F)) {
+                self.reveal_panels.push(Panel::Table);
+                self.focus_cell_search = true;
+            }
+            let previous = ctx.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, egui::Key::F3));
+            let next = ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::F3));
+            if previous || next {
+                if let Ok(matches) = ui::cell_search::parse(&self.cell_search) {
+                    if let Some(id) =
+                        ui::cell_search::navigate(&matches, self.selected_cell, previous)
+                    {
+                        self.selected_cell = id;
+                        self.reveal_panels.push(Panel::Table);
+                    }
+                }
+            }
+        }
         self.poll();
         ctx.request_repaint_after(Duration::from_millis(250));
         let snapshot = self.live_status().cloned();
         if let Ok(mut value) = self.control.snapshot.lock() {
-            *value = serde_json::json!({"application":"PakarController","process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live});
+            *value = serde_json::json!({"application":"PakarController","process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":self.cell_search,"search_matches":ui::cell_search::parse(&self.cell_search).unwrap_or_default(),"selected_cell":self.selected_cell});
         }
         egui::Panel::top("pakar-menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
@@ -452,13 +484,91 @@ impl PakarControllerApp {
                 }
             });
         });
-        ui.add_space(10.0);
+        ui.add_space(8.0);
+        ui.horizontal_wrapped(|ui| {
+            ui.label(icons::MAGNIFYING_GLASS);
+            let search = ui.add_sized(
+                [ui.available_width().min(270.0), 28.0],
+                dialog::singleline_text_edit(&mut self.cell_search)
+                    .id(egui::Id::new("table-cell-search"))
+                    .hint_text("Find cell: 12, 3–8  ·  Ctrl+F")
+                    .char_limit(256),
+            ).on_hover_text("Exact logical cell IDs, lists and ranges. Search does not change LEDs. Enter/F3: next; Shift+F3: previous; Escape: clear.");
+            if self.focus_cell_search {
+                search.request_focus();
+                self.focus_cell_search = false;
+            }
+            if search.has_focus() && ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Escape)) {
+                self.cell_search.clear();
+            }
+            let result = ui::cell_search::parse(&self.cell_search);
+            let matches = result.as_ref().map(Vec::as_slice).unwrap_or_default();
+            if search.changed() && let Some(id) = matches.first() {
+                self.selected_cell = *id;
+            }
+            let previous = ui.add_enabled(!matches.is_empty(), egui::Button::new(icons::CARET_LEFT))
+                .on_hover_text("Previous match (Shift+F3)").clicked();
+            let next = ui.add_enabled(!matches.is_empty(), egui::Button::new(icons::CARET_RIGHT))
+                .on_hover_text("Next match (Enter / F3)").clicked()
+                || (search.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)));
+            if (previous || next) && let Some(id) = ui::cell_search::navigate(matches, self.selected_cell, previous) {
+                self.selected_cell = id;
+                if search.lost_focus() { search.request_focus(); }
+            }
+            if ui.add_enabled(!self.cell_search.is_empty(), egui::Button::new(icons::X))
+                .on_hover_text("Clear cell search").clicked() {
+                self.cell_search.clear();
+            }
+        });
+        let search_result = ui::cell_search::parse(&self.cell_search);
+        if let Err(error) = &search_result {
+            ui.colored_label(ui.visuals().error_fg_color, error);
+        } else if !self.cell_search.trim().is_empty() {
+            let matches = search_result.as_ref().unwrap();
+            let current = matches.iter().position(|id| *id == self.selected_cell);
+            ui.label(
+                egui::RichText::new(match current {
+                    Some(index) => format!(
+                        "Match {} of {} · logical cell {}",
+                        index + 1,
+                        matches.len(),
+                        self.selected_cell
+                    ),
+                    None => format!("{} matching cells", matches.len()),
+                })
+                .small()
+                .color(ui.visuals().warn_fg_color),
+            );
+        }
+        let matches = search_result.unwrap_or_default();
+        ui.add_space(8.0);
         let width = ui.available_width().max(200.0);
         let visible_height = (ui.clip_rect().bottom() - ui.cursor().min.y - 38.0).max(180.0);
         let pitch = (width / 10.0).min(visible_height / (8.5 * 0.72)).min(94.0);
         let height = (pitch * 0.72).max(20.0);
         let (area, _) =
-            ui.allocate_exact_size(egui::vec2(pitch * 10.0, height * 8.5), egui::Sense::hover());
+            ui.allocate_exact_size(egui::vec2(width, height * 8.5), egui::Sense::hover());
+        let grid_origin = area.min + egui::vec2((width - pitch * 10.0) * 0.5, 0.0);
+        let palette = config::live().color_palette;
+        for column in 0..10 {
+            let band = egui::Rect::from_min_size(
+                grid_origin + egui::vec2(column as f32 * pitch - 2.0, -3.0),
+                egui::vec2(pitch - 3.0, height * 8.5 + 1.0),
+            );
+            ui.painter().rect_filled(
+                band,
+                7.0,
+                ui::palette::color(
+                    palette,
+                    ui.visuals().dark_mode,
+                    if column % 2 == 0 {
+                        "surface-0"
+                    } else {
+                        "surface-2"
+                    },
+                ),
+            );
+        }
         for row in 0..8u8 {
             for column in 0..10u8 {
                 let id = row * 10 + column + 1;
@@ -469,8 +579,7 @@ impl PakarControllerApp {
                     .filter(|v| !v.is_empty())
                     .map(str::to_owned)
                     .unwrap_or_else(|| id.to_string());
-                let pos = area.min
-                    + egui::vec2((width - pitch * 10.0) * 0.5, 0.0)
+                let pos = grid_origin
                     + egui::vec2(
                         column as f32 * pitch,
                         row as f32 * height + if column % 2 == 0 { height * 0.5 } else { 0.0 },
@@ -484,7 +593,10 @@ impl PakarControllerApp {
                 } else {
                     ui.visuals().text_color()
                 };
-                let stroke = if self.selected_cell == id {
+                let matched = matches.contains(&id);
+                let stroke = if matched {
+                    egui::Stroke::new(3.0, ui.visuals().warn_fg_color)
+                } else if self.selected_cell == id {
                     egui::Stroke::new(2.5, ui.visuals().selection.bg_fill)
                 } else {
                     egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color)
@@ -494,8 +606,27 @@ impl PakarControllerApp {
                     egui::Button::new(RichText::new(label).size(14.0).strong().color(ink))
                         .fill(fill)
                         .stroke(stroke)
+                        .wrap_mode(egui::TextWrapMode::Truncate)
                         .corner_radius(9.0),
                 );
+                if matched && self.selected_cell == id {
+                    ui.painter().rect_stroke(
+                        rect.shrink(3.5),
+                        6.0,
+                        egui::Stroke::new(1.5, ui.visuals().selection.bg_fill),
+                        egui::StrokeKind::Inside,
+                    );
+                }
+                // A renamed cell still exposes its searchable logical ID.
+                if mapping.is_some_and(|m| !m.name.is_empty() && m.name != id.to_string()) {
+                    ui.painter().text(
+                        rect.right_bottom() - egui::vec2(5.0, 3.0),
+                        egui::Align2::RIGHT_BOTTOM,
+                        format!("#{id}"),
+                        egui::FontId::proportional(10.0),
+                        ink,
+                    );
+                }
                 let response = response.on_hover_text(format!(
                     "Cell {id} · {}",
                     mapping

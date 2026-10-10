@@ -1,3 +1,4 @@
+pub mod cell_search;
 pub mod color_picker;
 pub mod dialog;
 pub(crate) mod elegance_theme;

@@ -19,21 +19,26 @@ pub enum Command {
     About,
     Workspaces,
     Panel { name: String },
+    FindCell { query: String },
     Quit,
     Status,
 }
 fn parse_command(bytes: &[u8]) -> Result<Command, String> {
     let value: serde_json::Value = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
     let object = value.as_object().ok_or("Expected a command object")?;
-    let allowed = if object.get("command").and_then(|v| v.as_str()) == Some("panel") {
-        &["command", "name"][..]
-    } else {
-        &["command"][..]
+    let allowed = match object.get("command").and_then(|v| v.as_str()) {
+        Some("panel") => &["command", "name"][..],
+        Some("find_cell") => &["command", "query"][..],
+        _ => &["command"][..],
     };
     if object.keys().any(|key| !allowed.contains(&key.as_str())) {
         return Err("Unknown command field".into());
     }
-    serde_json::from_value(value).map_err(|e| e.to_string())
+    let command: Command = serde_json::from_value(value).map_err(|e| e.to_string())?;
+    if let Command::FindCell { query } = &command {
+        crate::ui::cell_search::parse(query)?;
+    }
+    Ok(command)
 }
 pub struct Control {
     pub rx: Receiver<Command>,
@@ -212,6 +217,9 @@ mod tests {
         assert!(serde_json::from_str::<Command>(r#"{"command":"preferences"}"#).is_ok());
         assert!(parse_command(br#"{"command":"show","inject":"x"}"#).is_err());
         assert!(serde_json::from_str::<Command>(r#"{"command":"firmware_erase"}"#).is_err());
+        assert!(parse_command(br#"{"command":"find_cell","query":"1, 20-28"}"#).is_ok());
+        assert!(parse_command(br#"{"command":"find_cell","query":"81"}"#).is_err());
+        assert!(parse_command(br#"{"command":"find_cell","query":"1","inject":"x"}"#).is_err());
     }
     #[cfg(windows)]
     #[test]

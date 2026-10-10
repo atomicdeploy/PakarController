@@ -40,6 +40,13 @@ Connection, mapping, game reset, About, workspace management and Preferences
 are real dialogs. The front-panel preview renders the board's segment bytes.
 Cells are logical row-major IDs with a half-cell offset on odd columns; physical
 mapping and names come from the device. Old status expires from the live display.
+Alternating theme-aware odd/even column bands sit behind the live cell colors.
+Ctrl+F opens exact logical-number search: lists and ranges such as `3,12,20–28`
+highlight matches without hiding cells or sending LED commands. Amber outlines
+mark every match, with the active cell also outlined in the selection accent.
+Enter/F3 selects the next match, Shift+F3 the previous; Escape in the search
+field or the clear button removes highlighting. Renamed cells retain a logical
+ID badge. `--find-cell "3,12,20-28"` forwards lookup to the running owner.
 The network editor reads the board's current public settings; secrets remain
 write-only. On the current firmware, enter the Wi-Fi password when applying
 network changes.
@@ -51,9 +58,10 @@ arguments are `--preferences`, `--workspaces`, `--connect-dialog`, `--about`,
 
 ## Verification and remaining parity
 
-Thirteen Rust tests cover protocol encoding, packet bounds, discovery parsing,
+Sixteen Rust tests cover protocol encoding, packet bounds, discovery parsing,
 notification lifecycle, palette completeness, draft preview isolation, dock
-serialization/reveal, command validation and Windows owner exclusion.
+serialization/reveal, command validation, Windows owner exclusion and exact
+cell search parsing/bounds/navigation.
 Live IPC also verified a second launch opened Preferences in the same process.
 The app received real device status and WebSocket events, and screenshots were
 captured for the workspace, native Preferences and Pealayer reference.
