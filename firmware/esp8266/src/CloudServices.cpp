@@ -65,6 +65,16 @@ String CloudServices::topic(const __FlashStringHelper *suffix) const {
   return value;
 }
 
+void CloudServices::renameDevice(const String &deviceId) {
+  if (deviceId_ == deviceId) return;
+  if (mqtt_.connected()) {
+    mqtt_.publish(topic(F("/availability")).c_str(), "offline", true);
+    mqtt_.disconnect();
+  }
+  deviceId_ = deviceId;
+  applyConfiguration();
+}
+
 void CloudServices::applyConfiguration() {
   if (mqtt_.connected()) mqtt_.disconnect();
   webSocket_.disconnect();

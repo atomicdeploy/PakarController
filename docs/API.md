@@ -1,6 +1,7 @@
 # HTTP and streaming API
 
-Open `http://pakarcontroller/` (or `.local`, with IP only as a fallback).
+Open your configured hostname (`http://ledboard.local/` for this instance;
+factory default `http://pakarcontroller.local/`, with IP only as a recovery fallback).
 The public sign-in page replaces the unexplained browser Basic-auth prompt.
 First-install credentials are `admin` / `pakarcontroller`; change them in
 **Device access**. Protected HTTP routes and `/ws` accept a browser session
@@ -107,3 +108,9 @@ status record exposes `programming_latch`,
 `tm1637_ack`, AP and station addresses, station association, NTP state,
 WebSocket/Telnet client state, link mode, and separate ESP, AVR, and USB UART counters.
 Passwords are never returned.
+## Persistent device name (firmware 0.2.3)
+
+Authenticated GET/POST `/api/v1/device/name`; POST form field `hostname=ledboard.local`.
+CLI: `PakarController.exe --command device name` / `--command device rename ledboard.local`.
+See [device naming](DEVICE-NAME.md) for complete CLI, authentication, recovery,
+name validation, connection changes and verification instructions.

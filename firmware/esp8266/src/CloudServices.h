@@ -16,6 +16,7 @@ class CloudServices {
   void begin(const String &deviceId, CommandHandler handler,
              StatusProvider statusProvider);
   void applyConfiguration();
+  void renameDevice(const String &deviceId);
   void service(bool networkReady, bool timeReady, uint32_t now);
 
   bool mqttConnected() { return mqtt_.connected(); }

@@ -23,6 +23,7 @@
 #include "src/CloudServices.h"
 #include "src/LedGrid.h"
 #include "src/NetworkConfig.h"
+#include "src/DeviceIdentity.h"
 #include "src/WebUi.h"
 
 using namespace BoardCore::Protocol;
@@ -41,7 +42,6 @@ constexpr uint32_t kBaud = 38400;
 constexpr uint16_t kStreamPort = 7890;
 constexpr uint8_t kBusyPin = D3;  // GPIO0 -> AVR D10/PB2, HIGH blocks AVR TX.
 constexpr char kDevelopmentPassword[] = "pakarcontroller";
-constexpr char kHostname[] = "pakarcontroller";
 constexpr char kAvrImagePath[] = "/avr/staged.bin";
 constexpr char kBackupDirectory[] = "/avr/backup";
 constexpr char kLedPreferencesPath[] = "/led.cfg";
@@ -123,6 +123,7 @@ String stagedStationSsid;
 String stagedStationPassword;
 String stagedAccessUser;
 String stagedAccessPassword;
+String stagedDeviceName;
 uint8_t snakeBody[LedGrid::kCells] = {};
 uint8_t snakeLength = 0;
 uint8_t snakeFood = 0;
@@ -143,6 +144,8 @@ CellMappingRecord cellMapping{};
 
 void saveLedPreferences();
 void loadCellMapping();
+bool scheduleDeviceRename(const String &name);
+String deviceNameJson(bool accepted = false);
 bool saveCellMapping();
 String buildStatusJson();
 bool handleCloudCommand(const String &message, String &result);
@@ -181,6 +184,21 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
     hostLink.error(frame.sequence, frame.opcode, kBusy); return;
   }
   switch (frame.opcode) {
+    case kDeviceName: {
+      if (programmingLatched || networkApplyPending) { hostLink.error(frame.sequence, frame.opcode, kBusy); break; }
+      if (frame.payloadLength == 1 && frame.payload[0] == 0) stagedDeviceName = String();
+      else if (frame.payloadLength >= 2 && frame.payload[0] == 1) {
+        if (stagedDeviceName.length() + frame.payloadLength - 1 > 69) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
+        for (uint8_t i = 1; i < frame.payloadLength; ++i) {
+          if (!frame.payload[i]) { stagedDeviceName = String(); hostLink.error(frame.sequence, frame.opcode, kBadPayload); return; }
+          stagedDeviceName += static_cast<char>(frame.payload[i]);
+        }
+      } else if (frame.payloadLength == 1 && frame.payload[0] == 2) {
+        const bool ok = scheduleDeviceRename(stagedDeviceName); stagedDeviceName = String();
+        if (!ok) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
+      } else { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
+      hostLink.ack(frame.sequence, frame.opcode); break;
+    }
     case kAccessConfig: {
       if (frame.payloadLength == 1 && frame.payload[0] == 0) {
         stagedAccessUser = String(); stagedAccessPassword = String();
@@ -480,7 +498,7 @@ void startDiscovery() {
 
   SSDP.setSchemaURL("description.xml");
   SSDP.setHTTPPort(80);
-  SSDP.setName("PakarController");
+  SSDP.setName(hostname);
   SSDP.setSerialNumber(ESP.getChipId());
   SSDP.setURL("/");
   SSDP.setModelName("PakarController ESP8266 + ATmega328P");
@@ -490,7 +508,8 @@ void startDiscovery() {
   snprintf(uuid, sizeof(uuid), "38323636-4558-4dda-9188-cda0e6%06x", ESP.getChipId());
   SSDP.setUUID(uuid);
   ssdpStarted = SSDP.begin();
-  netbiosStarted = NBNS.begin(hostname.c_str());
+  // NetBIOS labels are limited to 15; never advertise a silently truncated alias.
+  netbiosStarted = hostname.length() <= 15 && NBNS.begin(hostname.c_str());
 }
 
 void serviceDiscovery() {
@@ -504,9 +523,35 @@ void serviceDiscovery() {
 }
 
 void applyNetworkConfig() {
+  if (hostname != deviceIdentity.hostname()) {
+    cloudServices.renameDevice(deviceIdentity.hostname());
+    hostname = deviceIdentity.hostname();
+    webSocket.closeAll(1012, "Device name changed");
+    if (telnetClient) telnetClient.stop();
+    telnetAuthenticated = false;
+  }
   stopDiscovery();
   apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
   ntpConfigured = false;
+}
+
+bool scheduleDeviceRename(const String &name) {
+  if (!deviceIdentity.rename(name)) return false;
+  networkApplyAt = millis() + 1000U; networkApplyPending = true;
+  return true;
+}
+
+String deviceNameJson(bool accepted) {
+  String body = F("{\"hostname\":\""); body += deviceIdentity.hostname();
+  body += F("\",\"fqdn\":\""); body += deviceIdentity.hostname();
+  body += F(".local\",\"canonical_url\":\"http://"); body += deviceIdentity.hostname();
+  body += F(".local\",\"active_hostname\":\""); body += hostname;
+  body += F("\",\"persisted\":"); body += deviceIdentity.ready() ? F("true") : F("false");
+  body += F(",\"accepted\":"); body += accepted ? F("true") : F("false");
+  body += F(",\"apply_pending\":"); body += networkApplyPending ? F("true") : F("false");
+  body += F(",\"apply_after_ms\":"); body += accepted ? 1000 : 0;
+  body += F(",\"error\":\""); appendJsonEscaped(body, deviceIdentity.error().c_str()); body += F("\"}");
+  return body;
 }
 
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
@@ -730,7 +775,7 @@ String buildStatusJson() {
   body += F(",\"mdns_started\":"); body += mdnsStarted ? F("true") : F("false");
   body += F(",\"ssdp_started\":"); body += ssdpStarted ? F("true") : F("false");
   body += F(",\"netbios_started\":"); body += netbiosStarted ? F("true") : F("false");
-  body += F(",\"canonical_url\":\"http://"); body += hostname; body += F("\"");
+  body += F(",\"canonical_url\":\"http://"); body += hostname; body += F(".local\"");
   body += F(",\"mdns_url\":\"http://"); body += hostname; body += F(".local\"");
   body += F(",\"winner\":"); body += winner;
   body += F(",\"selected_cell\":"); body += selectedCell;
@@ -1398,9 +1443,12 @@ void registerApi() {
     server.send(200, "application/json", "{\"updated\":true}");
   });
   server.on("/description.xml", HTTP_GET, []() {
-    String xml = F("<?xml version=\"1.0\"?><root xmlns=\"urn:schemas-upnp-org:device-1-0\"><specVersion><major>1</major><minor>0</minor></specVersion><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>PakarController</friendlyName><manufacturer>AtomicDeploy</manufacturer><modelName>PakarController</modelName><UDN>uuid:");
+    String xml = F("<?xml version=\"1.0\"?><root xmlns=\"urn:schemas-upnp-org:device-1-0\"><specVersion><major>1</major><minor>0</minor></specVersion><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>");
+    xml += hostname;
+    xml += F("</friendlyName><manufacturer>AtomicDeploy</manufacturer><modelName>PakarController</modelName><UDN>uuid:");
     char uuid[37]; snprintf(uuid, sizeof(uuid), "38323636-4558-4dda-9188-cda0e6%06x", ESP.getChipId()); xml += uuid;
-    xml += F("</UDN><presentationURL>http://pakarcontroller/</presentationURL></device></root>");
+    xml += F("</UDN><presentationURL>http://"); xml += hostname;
+    xml += F(".local/</presentationURL></device></root>");
     server.send(200, "text/xml", xml);
   });
   server.on("/api/v1/time", HTTP_GET, []() {
@@ -1596,6 +1644,25 @@ void registerApi() {
     const uint8_t payload[] = {static_cast<uint8_t>(mask)};
     sendToAvr(kOutputMask, sequence++, payload, sizeof(payload));
     server.send(202, "application/json", "{\"accepted\":true}");
+  });
+  server.on("/api/v1/device/name", HTTP_GET, []() {
+    if (!authenticate()) return;
+    server.send(200, "application/json", deviceNameJson());
+  });
+  server.on("/api/v1/device/name", HTTP_POST, []() {
+    if (!authenticate()) return;
+    if (otaActive || otaRebootAt || avrUploadOwner || programmingLatched || networkApplyPending) {
+      server.send(409, "application/json", "{\"error\":\"device_busy\"}"); return;
+    }
+    char normalized[64];
+    const String input = server.arg("hostname");
+    if (input.length() != strlen(input.c_str()) || !BoardCore::Identity::normalizeName(input.c_str(), normalized)) {
+      server.send(400, "application/json", "{\"error\":\"invalid_hostname\"}"); return;
+    }
+    if (!scheduleDeviceRename(normalized)) {
+      server.send(503, "application/json", deviceNameJson()); return;
+    }
+    server.send(202, "application/json", deviceNameJson(true));
   });
   server.on("/api/v1/network", HTTP_GET, []() {
     if (!authenticate()) return;
@@ -1893,6 +1960,7 @@ void executeTelnetCommand(String line) {
         F("brightness <1..255> | effect <none|rainbow|fire> | "
           "display <-999..9999> | display stop | audio <cue> | reset | quit"));
     telnetClient.println(F("display text <once|loop|interval> <speed_ms> <hold_ms> <pause_seconds> <scroll 0|1> <TEXT>"));
+    telnetClient.println(F("device name | device rename <NAME[.local]>"));
     telnetPrompt();
     return;
   }
@@ -1900,6 +1968,13 @@ void executeTelnetCommand(String line) {
     telnetClient.println(buildStatusJson());
     telnetPrompt();
     return;
+  }
+  if (line == F("device name")) { telnetClient.println(deviceNameJson()); telnetPrompt(); return; }
+  if (line.startsWith(F("device rename "))) {
+    if (networkApplyPending || programmingLatched) telnetClient.println(F("ERR device busy"));
+    else if (scheduleDeviceRename(line.substring(14))) telnetClient.println(deviceNameJson(true));
+    else telnetClient.println(deviceIdentity.error());
+    telnetPrompt(); return;
   }
   if (line == F("display stop")) {
     const uint8_t payload[] = {4, 0, 0, 0};
@@ -2133,6 +2208,7 @@ void setup() {
   const bool filesystemMounted = LittleFS.begin();
   accessConfig.begin(LittleFS, filesystemMounted);
   networkConfig.begin(LittleFS);
+  deviceIdentity.begin(LittleFS, filesystemMounted);
   cloudConfig.begin(LittleFS);
   grid.begin();
   loadLedPreferences();
@@ -2143,7 +2219,7 @@ void setup() {
 
   // This is deliberately stable. Chip identity belongs in discovery metadata,
   // not in the human-facing host or recovery AP name.
-  hostname = kHostname;
+  hostname = deviceIdentity.hostname();
   apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
   cloudServices.begin(hostname, handleCloudCommand, buildStatusJson);
   stream.begin(kStreamPort);

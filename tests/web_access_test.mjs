@@ -8,7 +8,7 @@ const script=source.match(/<script>([\s\S]*?)<\/script>/)[1];
 function element(){return {value:'',checked:false,hidden:false,textContent:'',className:'',children:[],dataset:{},listeners:{},classList:{toggle(){}},appendChild(e){this.children.push(e)},append(...e){this.children.push(...e)},setAttribute(){},addEventListener(type,handler){this.listeners[type]=handler},querySelectorAll(){return []}}}
 const nodes=Object.fromEntries([...source.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],element()]));
 nodes.workspace.hidden=true;
-let signedIn=false,user='admin',password='pakarcontroller',socketCount=0,statusRequests=0;
+let signedIn=false,user='admin',password='pakarcontroller',socketCount=0,statusRequests=0,hostname='test-fixture';
 const calls=[];
 const context=vm.createContext({...nodes,URLSearchParams,FormData,Uint8Array,console,
   document:{querySelector:s=>nodes[s.slice(1)],querySelectorAll:()=>[],createElement:element,createTextNode:text=>({textContent:text}),createElementNS:()=>({...element(),namespaceURI:'svg'})},
@@ -26,6 +26,9 @@ const context=vm.createContext({...nodes,URLSearchParams,FormData,Uint8Array,con
       assert.equal(options.method,'POST');assert.equal(options.body.get('current_password'),password);
       user=options.body.get('username');password=options.body.get('password');signedIn=false;
       body={updated:true,reauthenticate:true};
+    }else if(path==='/api/v1/device/name'){
+      if(options.method==='POST')hostname=options.body.get('hostname');
+      body={hostname,persisted:true,accepted:options.method==='POST'};
     }else if(path==='/api/v1/status'){
       statusRequests++;body={hostname:'test-fixture',cells:[],tm1637_segments:[]};
     }else if(path==='/api/v1/cells/mapping')body={physical:[],names:[]};
@@ -54,5 +57,13 @@ assert.ok(calls.every(c=>!c.path.includes('password=')),'Secrets must not be put
 nodes.loginUser.value='David';nodes.loginPassword.value='new-password';
 await nodes.loginForm.listeners.submit({preventDefault(){}});await settle();
 assert.equal(nodes.workspace.hidden,false);assert.equal(nodes.accessWarning.textContent,'');
+assert.equal(nodes.deviceName.value,'test-fixture.local');assert.equal(nodes.nameSave.disabled,false);
+nodes.deviceName.value='https://bad.local';
+await nodes.nameForm.listeners.submit({preventDefault(){}});
+assert.equal(calls.filter(c=>c.path==='/api/v1/device/name'&&c.options.method==='POST').length,0);
+nodes.deviceName.value='LEDBOARD.Local';await nodes.nameForm.listeners.submit({preventDefault(){}});
+assert.equal(hostname,'ledboard');assert.equal(nodes.nameSave.disabled,true);
+assert.equal(nodes.nameResult.href,'http://ledboard.local/');assert.equal(nodes.nameResult.hidden,false);
+assert.match(nodes.notice.textContent,/Name saved/);
 await vm.runInContext('signOut()',context);assert.equal(nodes.workspace.hidden,true);
-console.log('Embedded Web sign-in, rejection, rotation, secret clearing, warning and sign-out passed.');
+console.log('Embedded Web sign-in, rejection, rotation, secret clearing, validated persistent rename, reconnect link and sign-out passed.');

@@ -8,6 +8,7 @@ use std::{
 mod access;
 mod config;
 mod display;
+mod identity;
 mod messaging;
 mod platform;
 mod ui;
@@ -136,6 +137,7 @@ enum HttpCommand {
     Configuration(Endpoint, &'static str),
     Post(Endpoint, &'static str, Vec<(String, String)>),
     AccessChange(Endpoint, Endpoint),
+    NameChange(Endpoint, String),
 }
 
 impl HttpCommand {
@@ -145,6 +147,7 @@ impl HttpCommand {
             | Self::Mapping(endpoint)
             | Self::Configuration(endpoint, ..)
             | Self::AccessChange(endpoint, ..)
+            | Self::NameChange(endpoint, ..)
             | Self::Post(endpoint, ..) => endpoint,
         }
     }
@@ -163,6 +166,7 @@ impl HttpCommand {
             Self::AccessChange(endpoint, next) => {
                 Self::AccessChange(replace(endpoint), replace(next))
             }
+            Self::NameChange(endpoint, name) => Self::NameChange(replace(endpoint), name.clone()),
         }
     }
 }
@@ -196,12 +200,45 @@ enum Event {
     Configuration(&'static str, serde_json::Value),
     Accepted(String),
     CredentialsUpdated(Endpoint),
+    NameUpdated(Endpoint),
     Failed(String),
     WebSocket(bool),
     Serial(bool, Option<DeviceStatus>),
 }
 
 fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> {
+    if let HttpCommand::NameChange(endpoint, input) = &command {
+        let name = identity::normalize_name(input)?;
+        let response = client
+            .post(format!(
+                "{}/api/v1/device/name",
+                endpoint.base.trim_end_matches('/')
+            ))
+            .basic_auth(&endpoint.user, Some(&endpoint.password))
+            .form(&[("hostname", &name)])
+            .send()
+            .map_err(|e| e.to_string())?;
+        if !response.status().is_success() {
+            return Err(format!(
+                "HTTP {}: {}",
+                response.status(),
+                response.text().unwrap_or_default()
+            ));
+        }
+        let value: serde_json::Value = response.json().map_err(|e| e.to_string())?;
+        if value.get("accepted").and_then(|v| v.as_bool()) != Some(true)
+            || value.get("persisted").and_then(|v| v.as_bool()) != Some(true)
+            || value.get("hostname").and_then(|v| v.as_str()) != Some(name.as_str())
+        {
+            return Err(
+                "Device did not confirm the saved name; no retry or endpoint switch was attempted"
+                    .into(),
+            );
+        }
+        let mut next = endpoint.clone();
+        next.base = format!("http://{name}.local");
+        return Ok(Event::NameUpdated(next));
+    }
     if let HttpCommand::AccessChange(endpoint, next) = &command {
         let response = client
             .post(format!(
@@ -256,7 +293,9 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
             let request = client.get(url);
             (endpoint, request, 2_u8)
         }
-        HttpCommand::Configuration(..) | HttpCommand::AccessChange(..) => unreachable!(),
+        HttpCommand::Configuration(..)
+        | HttpCommand::AccessChange(..)
+        | HttpCommand::NameChange(..) => unreachable!(),
         HttpCommand::Post(endpoint, path, form) => {
             let url = format!("{}{}", endpoint.base.trim_end_matches('/'), path);
             let request = client.post(url).form(&form);
@@ -309,19 +348,42 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
         .build()
         .expect("HTTP client");
     let mut discovered_base: Option<String> = None;
+    let mut requested_base = String::new();
     while let Ok(command) = commands.recv() {
-        let host_prefers_discovery = command.endpoint().base.contains("pakarcontroller");
+        if requested_base != command.endpoint().base {
+            discovered_base = None;
+            requested_base = command.endpoint().base.clone();
+        }
+        let requested_name = reqwest::Url::parse(&command.endpoint().base)
+            .ok()
+            .and_then(|url| {
+                url.host_str()
+                    .and_then(|host| identity::normalize_name(host).ok())
+            });
         let first = discovered_base
             .as_ref()
             .map(|base| command.with_base(base.clone()))
             .unwrap_or_else(|| command.clone());
         let mut result = http_request(&client, first);
         if result.is_err()
-            && host_prefers_discovery
-            && !matches!(command, HttpCommand::AccessChange(..))
+            && requested_name.is_some()
+            && matches!(
+                command,
+                HttpCommand::Status(..) | HttpCommand::Mapping(..) | HttpCommand::Configuration(..)
+            )
         {
             discovered_base = None;
             for base in platform::discovery::ssdp_locations(Duration::from_millis(1200)) {
+                let mut candidate = command.endpoint().clone();
+                candidate.base = base.clone();
+                // A rename must not make fallback select some other controller
+                // merely because it shares credentials. Read/verify its label first.
+                let Ok(status) = blocking_status(&client, &candidate) else {
+                    continue;
+                };
+                if Some(&status.hostname) != requested_name.as_ref() {
+                    continue;
+                }
                 if let Ok(event) = http_request(&client, command.with_base(base.clone())) {
                     discovered_base = Some(base);
                     result = Ok(event);
@@ -782,6 +844,7 @@ struct PakarControllerApp {
     output_mask: u8,
     wifi_ssid: String,
     wifi_password: String,
+    device_name: Option<String>,
     station_enabled: bool,
     ap_enabled: bool,
     mqtt_enabled: bool,
@@ -894,6 +957,7 @@ impl PakarControllerApp {
             output_mask: 0,
             wifi_ssid: "DRS Tether".into(),
             wifi_password: String::new(),
+            device_name: None,
             station_enabled: true,
             ap_enabled: true,
             mqtt_enabled: true,
@@ -1041,6 +1105,7 @@ impl PakarControllerApp {
         let endpoint = self.endpoint();
         if self.last_ws_endpoint.as_ref() != Some(&endpoint) {
             self.access_info = None;
+            self.device_name = None;
             let _ = self.ws_tx.send(WsCommand::Connect(endpoint.clone()));
             self.last_ws_endpoint = Some(endpoint);
             self.configuration_loaded = false;
@@ -1059,6 +1124,10 @@ impl PakarControllerApp {
             let _ = self.http_tx.send(HttpCommand::Configuration(
                 self.endpoint(),
                 "/api/v1/network",
+            ));
+            let _ = self.http_tx.send(HttpCommand::Configuration(
+                self.endpoint(),
+                "/api/v1/device/name",
             ));
             let _ = self
                 .http_tx
@@ -1104,6 +1173,13 @@ impl PakarControllerApp {
                     self.configuration_loaded = false;
                     self.last_ws_endpoint = None;
                     self.notify("Credentials saved", "All device sessions were signed out. This client will reconnect with the new credentials.", messaging::Severity::Success);
+                }
+                Event::NameUpdated(endpoint) => {
+                    self.base = endpoint.base;
+                    self.config.endpoint = self.base.clone();
+                    self.configuration_loaded = false;
+                    self.last_ws_endpoint = None;
+                    self.notify("Device name saved", &format!("Reconnect at {} after Wi-Fi reassociates. DNS caches may need time to expire.", self.base), messaging::Severity::Success);
                 }
                 Event::Accepted(m) => {
                     self.record_event("Command", &m);
@@ -1235,6 +1311,30 @@ fn print_text_status(status: &DeviceStatus, table: bool) {
 }
 
 fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<(), String> {
+    if words == ["device", "name"] {
+        if let Event::Configuration(_, value) = http_request(
+            client,
+            HttpCommand::Configuration(endpoint.clone(), "/api/v1/device/name"),
+        )? {
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?
+            );
+        }
+        return Ok(());
+    }
+    if let ["device", "rename", name] = words {
+        if let Event::NameUpdated(next) = http_request(
+            client,
+            HttpCommand::NameChange(endpoint.clone(), (*name).into()),
+        )? {
+            println!(
+                "Device confirmed persistent name saved. Reconnect at {} after Wi-Fi reassociates. Set PAKAR_ENDPOINT to this URL for subsequent CLI calls.",
+                next.base
+            );
+        }
+        return Ok(());
+    }
     if words == ["auth", "info"] {
         let value: serde_json::Value = client
             .get(format!(
@@ -1314,7 +1414,7 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
             ["snake", value] => ("/api/v1/snake/direction", vec![("value", value)]),
             ["reset"] => ("/api/v1/game/reset", vec![]),
             _ => return Err(
-                "commands: status, mode, cell, brightness, effect, display, audio, snake, reset"
+                "commands: device name, device rename NAME[.local], auth info, auth change USER, status, mode, cell, brightness, effect, display, audio, snake, reset"
                     .into(),
             ),
         };
@@ -1382,7 +1482,7 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
                 }
                 if matches!(words.first(), Some(&"help")) {
                     println!(
-                        "status | auth info | auth change USERNAME (PAKAR_NEW_PASSWORD) | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | display stop | display segments [--speed-ms n] [--duration-ms n] [--repeat once|loop|interval] [--interval-ms n] [--scroll] -- TEXT | audio <cue> | snake <direction> | reset | quit"
+                        "status | device name | device rename NAME[.local] | auth info | auth change USERNAME (PAKAR_NEW_PASSWORD) | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | display stop | display segments [--speed-ms n] [--duration-ms n] [--repeat once|loop|interval] [--interval-ms n] [--scroll] -- TEXT | audio <cue> | snake <direction> | reset | quit"
                     );
                     continue;
                 }
@@ -1392,6 +1492,9 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
                     endpoint.user = (*user).into();
                     endpoint.password =
                         std::env::var("PAKAR_NEW_PASSWORD").map_err(|e| e.to_string())?;
+                } else if let ["device", "rename", name] = words.as_slice() {
+                    endpoint.base = format!("http://{}.local", identity::normalize_name(name)?);
+                    thread::sleep(Duration::from_secs(1));
                 }
             }
             Ok(())

@@ -65,7 +65,13 @@ impl PakarControllerApp {
                 .and_then(|v| v.as_u64())
                 .and_then(|v| u16::try_from(v).ok())
         };
-        if path == "/api/v1/network" {
+        if path == "/api/v1/device/name" {
+            if let Some(name) = text("hostname") {
+                if crate::identity::normalize_name(&name).is_ok() {
+                    self.device_name = Some(name);
+                }
+            }
+        } else if path == "/api/v1/network" {
             if let (Some(station), Some(ap), Some(ssid)) = (
                 flag("station_enabled"),
                 flag("ap_enabled"),
@@ -1097,6 +1103,29 @@ impl PakarControllerApp {
         });
     }
     fn draw_network(&mut self, ui: &mut egui::Ui) {
+        dialog::section(ui, icons::GLOBE, "Device name", |ui| {
+            if let Some(name) = &mut self.device_name {
+                field(ui, icons::GLOBE, "Hostname", name, false);
+                ui.label(egui::RichText::new("Use a label or .local name. Saved across OTA; AP name and cloud identity follow it. Wi-Fi/login passwords stay unchanged. The connection briefly drops.").small().weak());
+                if dialog::primary_action_button(ui, icons::CHECK, "Save device name").clicked() {
+                    match crate::identity::normalize_name(name) {
+                        Ok(name) => {
+                            let _ = self
+                                .http_tx
+                                .send(crate::HttpCommand::NameChange(self.endpoint(), name));
+                        }
+                        Err(error) => self.notify(
+                            "Invalid device name",
+                            &error,
+                            crate::messaging::Severity::Warning,
+                        ),
+                    }
+                }
+            } else {
+                ui.label("Device naming has not been advertised by the connected firmware.");
+            }
+        });
+        ui.add_space(10.0);
         dialog::section(ui, icons::LOCK, "Device access", |ui| {
             if let Some(info) = &self.access_info {
                 if info.get("ready").and_then(|v| v.as_bool()) != Some(true) {

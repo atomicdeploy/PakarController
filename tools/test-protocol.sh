@@ -5,6 +5,9 @@ c++ -std=c++17 -Wall -Wextra -pedantic \
   -I "$root/libraries/BoardCore/src" \
   "$root/tests/protocol_test.cpp" -o "$root/build/protocol-test"
 "$root/build/protocol-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
+  "$root/tests/device_identity_test.cpp" "$root/firmware/esp8266/src/DeviceIdentity.cpp" -o "$root/build/device-identity-test"
+"$root/build/device-identity-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" \
   "$root/tests/access_policy_test.cpp" -o "$root/build/access-policy-test"
 "$root/build/access-policy-test"

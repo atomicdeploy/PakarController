@@ -11,6 +11,11 @@ if ($LASTEXITCODE -ne 0) { throw 'Protocol test compilation failed' }
 & $testBinary
 if ($LASTEXITCODE -ne 0) { throw 'Protocol tests failed' }
 Write-Host 'Protocol round-trip, bounds, and corruption tests passed.'
+$identityBinary = Join-Path $outputDirectory 'device_identity_test.exe'
+& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'libraries/BoardCore/src') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/device_identity_test.cpp') (Join-Path $projectRoot 'firmware/esp8266/src/DeviceIdentity.cpp') -o $identityBinary
+if ($LASTEXITCODE -ne 0) { throw 'Identity test compilation failed' }
+& $identityBinary
+if ($LASTEXITCODE -ne 0) { throw 'Identity tests failed' }
 $accessBinary = Join-Path $outputDirectory 'access_policy_test.exe'
 & g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'libraries/BoardCore/src') (Join-Path $projectRoot 'tests/access_policy_test.cpp') -o $accessBinary
 if ($LASTEXITCODE -ne 0) { throw 'Access test compilation failed' }
