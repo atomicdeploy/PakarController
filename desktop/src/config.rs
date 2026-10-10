@@ -78,6 +78,7 @@ pub struct AppConfig {
     pub additive_cell_selection: bool,
     pub animate_cells: bool,
     pub show_cell_indicators: bool,
+    pub cell_order: Vec<u8>,
     pub status_items: crate::ui::status_bar::Items,
 }
 impl Default for AppConfig {
@@ -104,6 +105,7 @@ impl Default for AppConfig {
             additive_cell_selection: false,
             animate_cells: true,
             show_cell_indicators: false,
+            cell_order: (1..=80).collect(),
             status_items: Default::default(),
         }
     }
@@ -121,7 +123,10 @@ impl AppConfig {
     pub fn load() -> Result<Self, String> {
         match std::fs::read(Self::path()) {
             Ok(bytes) => {
-                serde_json::from_slice(&bytes).map_err(|e| format!("Read preferences: {e}"))
+                let mut config: Self =
+                    serde_json::from_slice(&bytes).map_err(|e| format!("Read preferences: {e}"))?;
+                config.cell_order = crate::ui::cell_table::normalized_order(&config.cell_order);
+                Ok(config)
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Self::default()),
             Err(e) => Err(format!("Read preferences: {e}")),

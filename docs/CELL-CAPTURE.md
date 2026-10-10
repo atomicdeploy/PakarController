@@ -151,3 +151,47 @@ Web shipped-script DOM-double tests and CSS geometry guards pass, alongside
 appearance/access/display/menu/branding checks. No new running binary, screenshot
 of this fix or physical firmware deployment is claimed. See issue #8 and the
 hash-bound dialog.rs entry for exact donor/target/test mapping and pending work.
+
+## Editing cell order
+
+Table and Manage cells expose the same explicit Edit order toggle. It starts off
+on every launch/page load; the mode itself is not persisted. Normal dragging
+continues to marquee-select. Only editing mode enables cell reordering, including
+a model-level guard against disabled/invalid/no-op drops. Drag to the left/right
+half of another button to insert before/after it; insertion cues do not resize
+controls. Escape, leaving mode, ending a cancelled drag and dropping outside a
+valid visible native target do not commit. Native table/dialog drag ownership is
+separate, so the obscured table cannot consume a manager's release event.
+
+The saved order contains every logical ID 1–80 once. IDs, names, physical mapping,
+LED states, selection and Find membership do not change. The layout repositions
+existing buttons; alternating columns and half-row stagger follow display slots.
+Keyboard navigation and row selection follow visible slots. Reset order is only
+available in editing mode and returns to row-major 1–80. Persist only a changed
+completed drop/reset; native uses saved client preferences, Web browser-local
+table preferences. This is not device remapping or cross-client synchronization.
+
+Actual donor mappings (bounded reads, not full-file parity):
+
+- Pealayer src/ui/layout.rs hardware_channel_drag_handle,
+  hardware_channel_drop_target and reordered_channel_rank -> native order drag
+  state/release geometry and remove-source/remaining-target insertion. Adapt Y to
+  X for the table, generic controller keys/kinds to fixed cell IDs, and server
+  presentation writes to client-local preferences. Live source differs from the
+  inventory snapshot; screened only, with exact live hash in review evidence.
+- Pealayer web_ui/src/components/HardwareTab.tsx drag-image/effectAllowed/local
+  payload/drop-cleanup and dropControl -> bindCellOrderDrag lifecycle, with an
+  extra Edit order gate and validated own drag source. React/RPC are not required
+  for an offline client-local layout. Generic presentation transport and remaining
+  hardware-manager code/tests remain useful pending work, not exclusions.
+
+assets/cells/order-contract.json supplies the same nine insertion/rejection/no-op
+transitions to native and shipped-Web tests. Web tests execute actual grid and
+manager drag handlers, verify persisted DOM/model order, one write per changed
+drop, disabled mode/reset, in-flight mode cancellation, drag-end cancellation,
+normal marquee exclusion while editing, navigation, row selection and no device
+API calls. Existing selection/appearance/access/display/menu/branding checks pass.
+Native Test remains blocked by the canonical >8 GiB cache before compilation;
+the Rust fixture, deployed mouse gestures and screenshots remain pending. No
+running-app replacement, board flash, mobile touch-drag acceptance or shared
+native/Web/cloud order transport is claimed.

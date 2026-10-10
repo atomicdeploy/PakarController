@@ -76,7 +76,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "0aae32cf18f5e66b8724017128e6416cf08299e619c0bcb96f98a12be8137032",
+          "sha256": "827f2d8d85cfe2f037d16da864b489041d948b20d634d7902eb183000e4d5067",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -126,7 +126,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "0aae32cf18f5e66b8724017128e6416cf08299e619c0bcb96f98a12be8137032",
+          "sha256": "827f2d8d85cfe2f037d16da864b489041d948b20d634d7902eb183000e4d5067",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -2039,7 +2039,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "0aae32cf18f5e66b8724017128e6416cf08299e619c0bcb96f98a12be8137032",
+          "sha256": "827f2d8d85cfe2f037d16da864b489041d948b20d634d7902eb183000e4d5067",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -2124,12 +2124,12 @@
       "targets": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "a9e1a17360fc9ac21bb1ca72d1063b2f28d86d59cc423d345aca8396ab8ea142",
+          "sha256": "bbd153f6f4089d8561d8f883c7eff89e5e55933bf4bde9fcf0419966e490d126",
           "anchor": "fn manager_selector("
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "0aae32cf18f5e66b8724017128e6416cf08299e619c0bcb96f98a12be8137032",
+          "sha256": "827f2d8d85cfe2f037d16da864b489041d948b20d634d7902eb183000e4d5067",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -2157,12 +2157,12 @@
       "proof": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "a9e1a17360fc9ac21bb1ca72d1063b2f28d86d59cc423d345aca8396ab8ea142",
+          "sha256": "bbd153f6f4089d8561d8f883c7eff89e5e55933bf4bde9fcf0419966e490d126",
           "anchor": "fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width()"
         },
         {
           "path": "tests/web_cell_table_test.mjs",
-          "sha256": "1444aa58f8b8455d42c952cf6dbc7faf5e836c84c1fc746790a0b9a4391c53e9",
+          "sha256": "5d9d9c17edfab19da28e2c4485016e84c94dfea12322cbeba933e97191c4b4a4",
           "anchor": "Manager must not allocate state-dependent selectable Frames"
         }
       ],

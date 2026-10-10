@@ -33,7 +33,7 @@ assert(cellCode.length>5000);
 let document;
 function element(tag='div') {
   return {tag,value:'',checked:false,children:[],dataset:{},style:{},attributes:{},listeners:{},className:'',hidden:false,disabled:false,
-    classes:new Set(),classList:{toggle(){}},appendChild(e){this.children.push(e);e.parent=this},append(...es){es.forEach(e=>this.appendChild(e))},replaceChildren(){this.children=[]},
+    classes:new Set(),classList:{toggle(){}},appendChild(e){if(e.parent)e.parent.children=e.parent.children.filter(c=>c!==e);this.children.push(e);e.parent=this},append(...es){es.forEach(e=>this.appendChild(e))},replaceChildren(){this.children=[]},
     setAttribute(k,v){this.attributes[k]=v},setCustomValidity(v){this.validation=v},addEventListener(k,fn){this.listeners[k]=fn},
     querySelectorAll(selector){const nodes=this.children.flatMap(e=>[e,...e.querySelectorAll(selector)]);return nodes.filter(e=>selector==='.cell'?e.className==='cell':selector==='.marquee'?e.className==='marquee':selector==='[data-cell]'?e.dataset.cell!==undefined:selector==='[data-row]'?e.dataset.row!==undefined:selector==='button:not(:disabled)'?e.tag==='button'&&!e.disabled:false)},
     querySelector(selector){if(selector.startsWith('[data-id=')){return this.children.find(e=>Number(e.dataset.id)===Number(selector.match(/\d+/)[0]))}return this.querySelectorAll(selector)[0]},
@@ -44,9 +44,9 @@ const createElement=tag=>{const e=element(tag);e.classList.toggle=(name,on)=>on?
 document={activeElement:null,createElement,createElementNS:(_ns,tag)=>createElement(tag),createTextNode:text=>Object.assign(createElement('text'),{textContent:text}),addEventListener(){}};
 const nodes=Object.fromEntries([...source.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],element()]));
 nodes.animateCells.checked=true;nodes.bulkEffect.value='fade';
-const calls=[],actual={cells:Array(80).fill('white')},storage=new Map();let failId=0,cancelAfter=0;
+const calls=[],actual={cells:Array(80).fill('white')},storage=new Map();let failId=0,cancelAfter=0,storageWrites=0;
 const context=vm.createContext({...nodes,document,URLSearchParams,innerWidth:1280,innerHeight:800,
-  localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},
+  localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>{storageWrites++;storage.set(k,v)}},
   authenticated:true,loadMappingEditor(){},report(){},render(){},setTimeout:fn=>{fn();return 1},
   api:async(path,options)=>{if(!options)return actual;const id=Number(options.body.get('id'));calls.push(id);if(id===failId)throw Error('lost acknowledgement');actual.cells[id-1]=options.body.get('state');if(id===cancelAfter)vm.runInContext('cancelCellBatch()',context);return {accepted:true}}
 });
@@ -117,4 +117,44 @@ calls.length=0;failId=2;await run("applyCellBatch('off')");assert.deepEqual(call
 calls.length=0;failId=0;cancelAfter=1;await run("applyCellBatch('white')");assert.deepEqual(calls,[1]);assert.match(nodes.bulkStatus.textContent,/Cancelled unsent/);
 assert.match(source,/border:2px solid var\(--line-strong\)/);assert.doesNotMatch(source,/\.cell\{[^}]*background:#f6f7ff/);
 assert.match(source,/prefers-reduced-motion:reduce/);assert.match(source,/transition:background-color \.14s/);
+const orderContract=JSON.parse(readFileSync(new URL('../assets/cells/order-contract.json',import.meta.url),'utf8'));
+assert(nativeTable.includes('assets/cells/order-contract.json'));
+run('paintSelection()');
+const initialSelection=ids(),queryBefore=nodes.cellSearch.value,physicalBefore=JSON.stringify(actual);
+const visualOrder=()=>nodes.grid.querySelectorAll('.cell').map(b=>Number(b.dataset.id));
+calls.length=0;
+for(const step of orderContract.steps){
+  run(`setEditingOrder(${step.editing})`);
+  const previousWrites=storageWrites;
+  assert.equal(run(`reorderCell(${step.source},${step.target},${step.before})`),step.changed);
+  assert.equal(storageWrites-previousWrites,step.changed?1:0,'Save exactly once on a real completed reorder');
+  const expected=step.expected.flatMap(part=>Array.isArray(part)?Array.from({length:part[1]-part[0]+1},(_,i)=>part[0]+i):[part]);
+  assert.deepEqual(Array.from(run('cellOrder')),expected);
+  assert.deepEqual(visualOrder(),expected,'Grid DOM order follows the persisted model');
+  assert.deepEqual(nodes.managerRows.children.flatMap(row=>row.children.filter(b=>b.dataset.cell!==undefined).map(b=>Number(b.dataset.cell))),expected);
+  assert.equal(new Set(expected).size,80);
+  assert.deepEqual(ids(),initialSelection);assert.equal(nodes.cellSearch.value,queryBefore);
+  for(const b of nodes.grid.querySelectorAll('.cell'))assert.equal(b.draggable,step.editing);
+}
+assert.equal(run("cellNavigate(80,'ArrowRight')"),1);
+assert.equal(run("cellNavigate(1,'Home',true)"),80);
+assert.deepEqual(JSON.parse(storage.get('pakar-table')).order,visualOrder());
+const savedOrder=visualOrder();run('setEditingOrder(false);resetCellOrder()');assert.deepEqual(visualOrder(),savedOrder);
+const dragged=nodes.grid.children.find(b=>b.dataset.id===80),target=nodes.grid.children.find(b=>b.dataset.id===3);
+let prevented=0;const transfer={setData(){},setDragImage(){}};
+const dragEvent={clientX:0,clientY:0,dataTransfer:transfer,preventDefault(){prevented++}};
+dragged.ondragstart(dragEvent);assert.equal(prevented,1);assert.equal(run('orderDrag'),null);
+run('setEditingOrder(true)');dragged.ondragstart(dragEvent);assert.equal(run('orderDrag'),80);assert.equal(transfer.effectAllowed,'move');
+target.ondragover(dragEvent);assert(target.classes.has('order-before'));assert.equal(transfer.dropEffect,'move');
+target.ondrop(dragEvent);assert.equal(run('orderDrag'),null);assert.equal(visualOrder().at(-2),80);
+const afterDrop=visualOrder();dragged.ondragstart(dragEvent);run('setEditingOrder(false)');target.ondrop(dragEvent);assert.deepEqual(visualOrder(),afterDrop,'Leaving mode cancels an in-flight drop');
+run('setEditingOrder(true)');dragged.ondragstart(dragEvent);dragged.ondragend();assert.equal(run('orderDrag'),null);assert.deepEqual(visualOrder(),afterDrop,'Cancelled drag never saves a reorder');
+nodes.grid.listeners.pointerdown({button:0,pointerType:'mouse',clientX:0,clientY:0,pointerId:2});assert.equal(run('cellDrag'),null,'Edit order excludes marquee gestures');
+assert.deepEqual(Array.from(run('normalizedCellOrder([80,80,0,81,"2",1])')).slice(0,3),[80,1,2]);
+run('resetCellOrder();setEditingOrder(false)');assert.deepEqual(visualOrder(),Array.from({length:80},(_,i)=>i+1));
+const managerCells=nodes.managerRows.querySelectorAll('[data-cell]');
+run('setEditingOrder(true)');managerCells[0].ondragstart(dragEvent);managerCells[3].ondrop(dragEvent);assert.deepEqual(visualOrder().slice(0,4),[2,3,1,4]);
+run('selectRow(0)');assert.deepEqual(ids(),Array.from({length:10},(_,i)=>i+1),'Row selection uses reordered visible membership');
+run('selectedCells=new Set('+JSON.stringify(initialSelection)+');paintSelection();resetCellOrder();setEditingOrder(false)');
+assert.deepEqual(ids(),initialSelection);assert.equal(nodes.cellSearch.value,queryBefore);assert.equal(JSON.stringify(actual),physicalBefore);assert.equal(calls.length,0,'Reordering must not call a device API');
 console.log('Actual Web table: one authoritative selection, shared native/Web transition fixture, normalization/drafts/navigation, rows/keyboard/marquee, bulk readback and no uncertain retry passed (DOM/HTTP doubles; native execution separate).');

@@ -318,3 +318,40 @@ test filename was wrong; rg inventory identified web_display_test.mjs, which
 passed. Donor read/comparison is 48 complete files of 1874; 1826 are pending.
 Useful generic functionality remains open and no project-wide superiority is
 claimed. The existing issue #8 owns runtime acceptance; CI is not waited on.
+
+## Explicit mode-gated cell reorder
+
+Reconsulted ui-shell and exact donor-audit layout.rs/HardwareTab.tsx rows. Actual
+bounded drag source/target/rank and Web drop/drag-image lifecycle slices were
+read and adapted; neither large file is certified fully read/compared. Native
+layout source has changed from snapshot. Recorded current hash and screened
+status rather than rebinding a stale donor comparison. Added HardwareTab to the
+ui-shell index so this generic capability is not missed by future lookups.
+
+Implemented one validated client order used by both table and manager. Reorder
+and reset require explicit Edit order mode; mode defaults off and cancels active
+drags/marquee on transition. Before/after insertion preserves IDs, mapping, LED
+state and canonical selection. Native drag ownership is surface-specific and
+visible-target clipped; Web drops require an active own source, not external
+transfer text. Valid saved orders repair duplicate/missing/out-of-range IDs.
+Actual donor geometry/release/insertion and Web lifecycle code are adapted, not
+replaced by a style-only approximation. Generic host presentation RPC, full
+manager/lock/hide features and remaining donor tests stay pending.
+
+Same nine-step fixture drives native/Web insertion semantics. Actual shipped
+Web DOM/drop tests additionally cover both surfaces, cancellation, mode gates,
+normal-mode marquee, navigation and exact persistence-write counts; no reorder
+calls any device API. Existing appearance/access/display/menu/branding checks,
+generation consistency, Rustfmt parse and hash-bound comparison/preflight tests
+pass. Native Test wrapper again stops before compiling at the canonical >8 GiB
+guard; no bypass, alternate cache, cleanup or running deployment was attempted.
+CI is not waited on. Browser pixels/native mouse gestures/mobile touch behavior
+and cross-client shared presentation transport remain separate acceptance.
+
+Initial combined Web patch had an earlier CSS hunk after later script hunks and
+was rejected without partial edits. Sorted verified hunks before applying. The
+new fixture caught a stale query caused by an older test's direct Set assignment;
+normalized that fixture through the actual paint adapter before asserting order
+preserves canonical selection. Existing donor anchors were rereviewed in the
+focused diff; only affected target/proof hashes were updated. No extra completed
+donor-file reviews or whole-project parity claim.

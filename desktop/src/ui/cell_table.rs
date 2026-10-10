@@ -112,6 +112,8 @@ impl State {
     }
 }
 pub struct TableState {
+    pub editing_order: bool,
+    order_drag: Option<(u8, bool)>,
     pub selection: Selection,
     reflected_revision: u64,
     pub manager_open: bool,
@@ -129,6 +131,8 @@ pub struct TableState {
 impl Default for TableState {
     fn default() -> Self {
         Self {
+            editing_order: false,
+            order_drag: None,
             selection: Default::default(),
             reflected_revision: 0,
             manager_open: false,
@@ -164,6 +168,45 @@ pub fn navigate(id: u8, key: Key, ctrl: bool) -> u8 {
         Key::End => ((id - 1) / 10) * 10 + 10,
         _ => id,
     }
+}
+pub fn normalized_order(saved: &[u8]) -> Vec<u8> {
+    let mut seen = BTreeSet::new();
+    saved
+        .iter()
+        .copied()
+        .chain(1..=80)
+        .filter(|id| (1..=80).contains(id) && seen.insert(*id))
+        .collect()
+}
+/// Adapt Pealayer reordered_channel_rank: remove source, locate the remaining
+/// target, insert before/after. This is presentation only, never a device write.
+pub fn reorder_cell(
+    order: &mut Vec<u8>,
+    editing: bool,
+    source: u8,
+    target: u8,
+    before: bool,
+) -> bool {
+    if !editing || source == target || order.len() != 80 || normalized_order(order) != *order {
+        return false;
+    }
+    let (Some(from), Some(_)) = (
+        order.iter().position(|id| *id == source),
+        order.iter().position(|id| *id == target),
+    ) else {
+        return false;
+    };
+    let old = order.clone();
+    order.remove(from);
+    let to = order.iter().position(|id| *id == target).unwrap() + usize::from(!before);
+    order.insert(to, source);
+    *order != old
+}
+fn navigate_order(order: &[u8], id: u8, key: Key, ctrl: bool) -> u8 {
+    let Some(slot) = order.iter().position(|cell| *cell == id) else {
+        return id;
+    };
+    order[navigate(slot as u8 + 1, key, ctrl) as usize - 1]
 }
 pub fn cell_rect(origin: Pos2, pitch: f32, height: f32, id: u8) -> Rect {
     let row = (id - 1) / 10;
@@ -334,6 +377,85 @@ fn activation_key(ui: &egui::Ui, modifiers: Modifiers, key: Key) -> bool {
     initial && ui.input_mut(|i| i.consume_key(modifiers, key))
 }
 impl PakarControllerApp {
+    fn cell_order_controls(&mut self, ui: &mut egui::Ui) {
+        if ui
+            .checkbox(&mut self.table.editing_order, "Edit order")
+            .changed()
+        {
+            self.table.order_drag = None;
+            self.table.marquee = None;
+        }
+        if self.table.editing_order {
+            ui.label(
+                egui::RichText::new("Drag before/after a cell. IDs and wiring stay unchanged.")
+                    .small()
+                    .weak(),
+            );
+            if ui.button("Reset order").clicked()
+                && self.config.cell_order != (1..=80).collect::<Vec<_>>()
+            {
+                self.config.cell_order = (1..=80).collect();
+                self.table.order_drag = None;
+                self.save_workspace();
+            }
+        }
+    }
+    fn finish_cell_order_drag(&mut self, ui: &mut egui::Ui, cells: &[(u8, Rect)], manager: bool) {
+        if !self.table.editing_order || ui.input(|i| !i.focused || i.key_pressed(Key::Escape)) {
+            self.table.order_drag = None;
+            return;
+        }
+        let Some((source, surface)) = self.table.order_drag else {
+            return;
+        };
+        if surface != manager {
+            return;
+        }
+        ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
+        if let Some(pointer) = ui.ctx().pointer_interact_pos() {
+            // Adapt Pealayer hardware_channel_drop_target's geometry/release
+            // checks: horizontal table order uses the left/right half, not Y.
+            if let Some((target, rect)) = cells.iter().find(|(id, rect)| {
+                ui.clip_rect().contains(pointer) && *id != source && rect.contains(pointer)
+            }) {
+                let before = pointer.x < rect.center().x;
+                let x = if before {
+                    rect.left() + 2.0
+                } else {
+                    rect.right() - 2.0
+                };
+                ui.painter().line_segment(
+                    [
+                        egui::pos2(x, rect.top() + 4.0),
+                        egui::pos2(x, rect.bottom() - 4.0),
+                    ],
+                    Stroke::new(2.0, ui.visuals().selection.stroke.color),
+                );
+                if ui.input(|i| i.pointer.button_released(egui::PointerButton::Primary))
+                    && reorder_cell(
+                        &mut self.config.cell_order,
+                        self.table.editing_order,
+                        source,
+                        *target,
+                        before,
+                    )
+                {
+                    self.save_workspace();
+                    ui.ctx().request_repaint();
+                }
+            }
+            ui.painter().text(
+                pointer + egui::vec2(12.0, 12.0),
+                egui::Align2::LEFT_TOP,
+                format!("Move cell {source}"),
+                egui::FontId::proportional(13.0),
+                ui.visuals().text_color(),
+            );
+        }
+        if ui.input(|i| !i.pointer.primary_down()) {
+            self.table.order_drag = None;
+        }
+    }
     pub fn sync_cell_selection_search(&mut self) -> bool {
         super::cell_search::synchronize_selection(
             &self.table.selection.ids,
@@ -479,6 +601,7 @@ impl PakarControllerApp {
                 self.cell_actions_menu(ui);
             });
         });
+        ui.horizontal_wrapped(|ui| self.cell_order_controls(ui));
         if !self.table.result.is_empty() {
             ui.label(egui::RichText::new(&self.table.result).small().weak());
         }
@@ -521,8 +644,12 @@ impl PakarControllerApp {
         height: f32,
     ) {
         let snapshot = self.live_status().cloned();
-        let cells: Vec<_> = (1..=80)
-            .map(|id| (id, cell_rect(origin, pitch, height, id)))
+        let cells: Vec<_> = self
+            .config
+            .cell_order
+            .iter()
+            .enumerate()
+            .map(|(slot, id)| (*id, cell_rect(origin, pitch, height, slot as u8 + 1)))
             .collect();
         let background = ui.interact(
             area,
@@ -532,7 +659,7 @@ impl PakarControllerApp {
         let modifiers = ui.input(|i| i.modifiers);
         let mut begin_drag = background.drag_started();
         let mut focus_target = None;
-        for (id, rect) in &cells {
+        for (slot, (id, rect)) in cells.iter().enumerate() {
             let widget_id = ui.id().with(("logical-cell", id));
             let selected = self.table.selection.ids.contains(id);
             let state = snapshot
@@ -543,7 +670,7 @@ impl PakarControllerApp {
                 ui,
                 *rect,
                 widget_id,
-                *id,
+                slot as u8 + 1,
                 state,
                 selected,
                 self.config.animate_cells,
@@ -607,7 +734,7 @@ impl PakarControllerApp {
                     v.weak_text_color(),
                 );
             }
-            if pointer_or_accessibility_click(&response) {
+            if !self.table.editing_order && pointer_or_accessibility_click(&response) {
                 self.selected_cell = *id;
                 self.table.selection.click(
                     *id,
@@ -623,13 +750,22 @@ impl PakarControllerApp {
                 self.selected_cell = *id;
                 response.request_focus();
             }
-            if response.double_clicked() {
+            if !self.table.editing_order && response.double_clicked() {
                 if !self.table.selection.ids.contains(id) {
                     self.table.selection.click(*id, false, false);
                 }
                 self.table.manager_open = true;
             }
-            begin_drag |= response.drag_started();
+            if self.table.editing_order {
+                if response.drag_started_by(egui::PointerButton::Primary) {
+                    self.table.order_drag = Some((*id, false));
+                }
+                if response.hovered() {
+                    ui.ctx().set_cursor_icon(egui::CursorIcon::Grab);
+                }
+            } else {
+                begin_drag |= response.drag_started();
+            }
             if focus {
                 for key in [
                     Key::ArrowLeft,
@@ -640,9 +776,10 @@ impl PakarControllerApp {
                     Key::End,
                 ] {
                     if ui.input_mut(|i| i.consume_key(modifiers, key)) {
-                        let next = navigate(*id, key, modifiers.command);
+                        let next =
+                            navigate_order(&self.config.cell_order, *id, key, modifiers.command);
                         self.selected_cell = next;
-                        if !modifiers.command || modifiers.shift {
+                        if !self.table.editing_order && (!modifiers.command || modifiers.shift) {
                             self.table.selection.click(next, false, modifiers.shift);
                         }
                         focus_target = Some(ui.id().with(("logical-cell", next)));
@@ -654,7 +791,7 @@ impl PakarControllerApp {
                 if ui.input_mut(|i| i.consume_key(Modifiers::NONE, Key::Escape)) {
                     self.table.selection.clear();
                 }
-                if activation_key(ui, modifiers, Key::Space) {
+                if !self.table.editing_order && activation_key(ui, modifiers, Key::Space) {
                     self.table.selection.click(
                         *id,
                         modifiers.command || self.config.additive_cell_selection,
@@ -700,12 +837,12 @@ impl PakarControllerApp {
                     ui.close();
                 }
                 if ui
-                    .button(format!("{}  Select row {}", icons::LIST, (id - 1) / 10 + 1))
+                    .button(format!("{}  Select row {}", icons::LIST, slot / 10 + 1))
                     .clicked()
                 {
-                    let start = (id - 1) / 10 * 10 + 1;
+                    let start = slot / 10 * 10;
                     self.table.selection.group(
-                        start..start + 10,
+                        self.config.cell_order[start..start + 10].iter().copied(),
                         modifiers.command || self.config.additive_cell_selection,
                     );
                     ui.close();
@@ -718,12 +855,27 @@ impl PakarControllerApp {
                     ui.close();
                 }
             });
-            response.on_hover_text(format!("Cell {id} · {} · {}\nClick selects · Ctrl toggles · Shift extends · drag selects · Enter manages",mapping.map(|m|format!("physical {}",m.physical_cell)).unwrap_or_else(||"mapping unavailable".into()),state.unwrap_or("state unavailable")));
+            let gesture = if self.table.editing_order {
+                "Drag left/right of a cell to reorder · Escape cancels"
+            } else {
+                "Click selects · Ctrl toggles · Shift extends · drag selects · Enter manages"
+            };
+            response.on_hover_text(format!(
+                "Cell {id} · {} · {}\n{gesture}",
+                mapping
+                    .map(|m| format!("physical {}", m.physical_cell))
+                    .unwrap_or_else(|| "mapping unavailable".into()),
+                state.unwrap_or("state unavailable")
+            ));
         }
         if let Some(target) = focus_target {
             ui.memory_mut(|m| m.request_focus(target));
         }
-        if begin_drag && let Some(start) = ui.input(|i| i.pointer.press_origin()) {
+        self.finish_cell_order_drag(ui, &cells, false);
+        if !self.table.editing_order
+            && begin_drag
+            && let Some(start) = ui.input(|i| i.pointer.press_origin())
+        {
             let base = if modifiers.command || modifiers.shift {
                 self.table.selection.ids.clone()
             } else {
@@ -780,16 +932,20 @@ impl PakarControllerApp {
                 if ui.checkbox(&mut self.config.additive_cell_selection,"Toggle without Ctrl").changed(){self.save_workspace();}
             });
             let snapshot=self.live_status().cloned();
+            ui.horizontal_wrapped(|ui| self.cell_order_controls(ui));
+            let order=self.config.cell_order.clone();
+            let mut manager_cells=Vec::new();
             dialog::scroll_column(ui,"cell-management-rows",Some((ctx.content_rect().height()-340.0).clamp(120.0,360.0)),|ui| {
                 for row in 0..8u8 {
-                    let start=row*10+1;
+                    let row_ids=&order[row as usize*10..row as usize*10+10];
                     ui.horizontal_top(|ui| {
-                        let all=(start..start+10).all(|id|self.table.selection.ids.contains(&id));
-                        let row_response=manager_selector(ui,&format!("{} Row {}",icons::LIST,row+1),all,start,96.0,self.config.animate_cells);
-                        if row_response.clicked(){let m=ui.input(|i|i.modifiers);self.table.selection.group(start..start+10,m.command||self.config.additive_cell_selection);}
-                        ui.horizontal_wrapped(|ui|{for id in start..start+10 {let response=manager_selector(ui,&format!("{id:02}"),self.table.selection.ids.contains(&id),id,32.0,self.config.animate_cells);if response.clicked(){let m=ui.input(|i|i.modifiers);self.table.selection.click(id,m.command||self.config.additive_cell_selection,m.shift);self.selected_cell=id;}response.on_hover_text(self.mappings.iter().find(|m|m.logical_id==id).map(|m|format!("{} · physical {} · {}",m.name,m.physical_cell,snapshot.as_ref().and_then(|s|s.cells.get(id as usize-1)).map(String::as_str).unwrap_or("unavailable"))).unwrap_or_else(||format!("Cell {id} · mapping unavailable")));}});
+                        let all=row_ids.iter().all(|id|self.table.selection.ids.contains(id));
+                        let row_response=manager_selector(ui,&format!("{} Row {}",icons::LIST,row+1),all,row*10+1,96.0,self.config.animate_cells);
+                        if row_response.clicked(){let m=ui.input(|i|i.modifiers);self.table.selection.group(row_ids.iter().copied(),m.command||self.config.additive_cell_selection);}
+                        ui.horizontal_wrapped(|ui|{for (column,id) in row_ids.iter().copied().enumerate() {let response=manager_selector(ui,&format!("{id:02}"),self.table.selection.ids.contains(&id),column as u8+1,32.0,self.config.animate_cells);manager_cells.push((id,response.rect));if self.table.editing_order && response.drag_started_by(egui::PointerButton::Primary){self.table.order_drag=Some((id,true));}if self.table.editing_order && response.hovered(){ui.ctx().set_cursor_icon(egui::CursorIcon::Grab);}if !self.table.editing_order && response.clicked(){let m=ui.input(|i|i.modifiers);self.table.selection.click(id,m.command||self.config.additive_cell_selection,m.shift);self.selected_cell=id;}response.on_hover_text(self.mappings.iter().find(|m|m.logical_id==id).map(|m|format!("{} · physical {} · {}",m.name,m.physical_cell,snapshot.as_ref().and_then(|s|s.cells.get(id as usize-1)).map(String::as_str).unwrap_or("unavailable"))).unwrap_or_else(||format!("Cell {id} · mapping unavailable")));}});
                     });
                 }
+                self.finish_cell_order_drag(ui,&manager_cells,true);
             });
             dialog::section(ui,icons::LIGHTBULB,"Selected cell action",|ui| {
                 ui.horizontal_wrapped(|ui|{for state in [State::White,State::Red,State::Off]{if manager_selector(ui,&format!("{} {}",state.icon(),state.name()),self.table.manager_state==state,1,104.0,self.config.animate_cells).clicked(){self.table.manager_state=state;}}});
@@ -808,6 +964,7 @@ impl PakarControllerApp {
         });
         if close || modal.should_close() {
             self.table.manager_open = false;
+            self.table.order_drag = None;
         }
     }
 }
@@ -815,6 +972,48 @@ impl PakarControllerApp {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn reorder_is_mode_guarded_identity_preserving_and_matches_web_contract() {
+        let contract: serde_json::Value =
+            serde_json::from_str(include_str!("../../../assets/cells/order-contract.json"))
+                .unwrap();
+        let mut order: Vec<u8> = (1..=80).collect();
+        for step in contract["steps"].as_array().unwrap() {
+            let changed = reorder_cell(
+                &mut order,
+                step["editing"].as_bool().unwrap(),
+                step["source"].as_u64().unwrap() as u8,
+                step["target"].as_u64().unwrap() as u8,
+                step["before"].as_bool().unwrap(),
+            );
+            let expected: Vec<u8> = step["expected"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .flat_map(|part| {
+                    if let Some(id) = part.as_u64() {
+                        vec![id as u8]
+                    } else {
+                        (part[0].as_u64().unwrap() as u8..=part[1].as_u64().unwrap() as u8)
+                            .collect()
+                    }
+                })
+                .collect();
+            assert_eq!(changed, step["changed"].as_bool().unwrap());
+            assert_eq!(order, expected);
+            assert_eq!(
+                order.iter().copied().collect::<BTreeSet<_>>(),
+                (1..=80).collect()
+            );
+        }
+        assert_eq!(navigate_order(&order, 80, Key::ArrowRight, false), 1);
+        assert_eq!(navigate_order(&order, 1, Key::Home, true), 80);
+        assert_eq!(navigate_order(&order, 80, Key::End, true), 3);
+        let repaired = normalized_order(&[80, 80, 0, 81, 1]);
+        assert_eq!(repaired.len(), 80);
+        assert_eq!(&repaired[..3], &[80, 1, 2]);
+        assert_eq!(normalized_order(&[]), (1..=80).collect::<Vec<_>>());
+    }
     #[test]
     fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width() {
         for width in [240.0, 650.0] {
