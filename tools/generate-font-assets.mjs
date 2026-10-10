@@ -2,11 +2,11 @@
 // Like generate-branding: deterministic output and no identical-file writes.
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
-import {gzipSync} from 'node:zlib';
+import {portableGzip} from './portable-gzip.mjs';
 const root=new URL('../',import.meta.url);
 const font=await readFile(new URL('assets/fonts/Vazirmatn-Regular.ttf',root));
 assert.equal(font.readUInt32BE(0),0x00010000,'Real TrueType font');
-const compressed=gzipSync(font,{level:9});
+const compressed=portableGzip(font);
 const lines=[];
 for(let i=0;i<compressed.length;i+=24)lines.push('  '+[...compressed.subarray(i,i+24)].join(',')+',');
 const license=await readFile(new URL('desktop/licenses/Vazirmatn-OFL.txt',root),'utf8');
@@ -22,7 +22,13 @@ await sync('mobile/assets/fonts/Vazirmatn-OFL.txt',await readFile(new URL('deskt
 // Only keys occurring in this application are retained: no media/timeline UI.
 const native=await readFile(new URL('desktop/src/ui/i18n.rs',root),'utf8');
 let web=await readFile(new URL('firmware/esp8266/src/WebUi.h',root),'utf8');
-const withoutGenerated=web.replace(/\/\/ BEGIN SHARED LOCALIZATION[\s\S]*?\/\/ END SHARED LOCALIZATION/,'').replaceAll('&amp;','&').replaceAll('&lt;','<').replaceAll('&gt;','>');
+const consoleModule=await readFile(new URL('assets/web/browser-console.js',root),'utf8');
+assert(!consoleModule.includes('</script>')&&!consoleModule.includes(')HTML"'),'Browser diagnostics cannot break the container');
+// Analyze the canonical module on the FIRST run too, never its previous embed.
+// Otherwise adding a translated literal takes two generator passes to stabilize.
+const withoutGenerated=(web.replace(/\/\/ BEGIN SHARED LOCALIZATION[\s\S]*?\/\/ END SHARED LOCALIZATION/,'')
+  .replace(/\/\/ BEGIN BROWSER DIAGNOSTICS[\s\S]*?\/\/ END BROWSER DIAGNOSTICS/,'')+'\n'+consoleModule)
+  .replaceAll('&amp;','&').replaceAll('&lt;','<').replaceAll('&gt;','>');
 let js=await readFile(new URL('assets/web/localization.js',root),'utf8');
 const dictionary={};
 const controllerCopy=JSON.parse(await readFile(new URL('assets/web/controller-copy.json',root),'utf8'));
@@ -45,5 +51,8 @@ web=web.replace('<script>','<script>\n'+begin+'\n'+js+'\n'+end);
 const rayanBegin='// BEGIN RAYANLAMP ADAPTATIONS',rayanEnd='// END RAYANLAMP ADAPTATIONS';
 web=web.replace(/\/\/ BEGIN RAYANLAMP ADAPTATIONS[\s\S]*?\/\/ END RAYANLAMP ADAPTATIONS\r?\n/,'');
 web=web.replace('<script>','<script>\n'+rayanBegin+'\n'+await readFile(new URL('assets/web/rayanlamp.js',root),'utf8')+'\n'+rayanEnd);
+const consoleBegin='// BEGIN BROWSER DIAGNOSTICS',consoleEnd='// END BROWSER DIAGNOSTICS';
+web=web.replace(/\/\/ BEGIN BROWSER DIAGNOSTICS[\s\S]*?\/\/ END BROWSER DIAGNOSTICS\r?\n/,'');
+web=web.replace('<script>','<script>\n'+consoleBegin+'\n'+consoleModule+'\n'+consoleEnd);
 await sync('firmware/esp8266/src/WebUi.h',web);
 console.log('Shared Vazirmatn assets verified:',font.length,'bytes; gzip',compressed.length);

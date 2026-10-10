@@ -23,6 +23,8 @@ unverified after interruption. Donor source and task state were not changed.
 | webui/public/theme-init.js | Single classic inline head script before CSS/body: validated saved appearance and locale/direction are applied before first paint, with one palette catalog, no extra endpoint, requests or preference writes. |
 | webui/src/i18n.tsx | assets/web/localization.js and the real embedded Web UI: normalization, placeholder fallback, visual digits/Intl numbers and automatic languagechange lifecycle. Adds owned restart/idempotent teardown, no OS persistence writes, dynamic network/cloud label refresh and localized selection/batch results without touching peer identity or drafts. |
 | webui/src/i18n.test.tsx | tests/rayanlamp_locale_test.mjs: seven shipped-code tests adapt normalization/detection, translation/digits and system languagechange; add cleanup/ownership, restricted storage, preserved protocol/secret values and reversible dynamic labels. Rendered BidiLtr remains pending, not falsely certified. |
+| webui/src/browser-console.ts | assets/web/browser-console.js and actual HTTP/WebSocket adapters: real styled operational trace, allowlisted recursive sanitization, code-only Error projection and dedupe. Uses the shared Pealayer palette, not lamp colors. Adds bounded lifetime, camelCase/prototype/format protection and stale-socket guards; never logs raw response/body/header/frame or persists trace data. |
+| webui/src/browser-console.test.ts | tests/browser_console_test.mjs: all actual donor scenarios plus current palette, bounds/cycles, host failure, HTTP acceptance/readback distinction, no replay, quiet polls/telemetry and newest WebSocket ownership. Node VM replaces Vitest without a donor build. |
 
 Canonical browser code is embedded by the existing deterministic font/Web
 generator, with equality tests preventing a separate drifting firmware copy.
@@ -38,13 +40,13 @@ does not override an English primary preference. These replacements are exact
 ledger decisions, not omissions hidden behind a visual resemblance.
 
 The canonical generator embeds browser-appearance.js without a duplicate color
-engine. web-presentation is a seven-file reviewed-slice gate (five Rayan files,
+engine. web-presentation is a nine-file reviewed-slice gate (seven Rayan files,
 two previously read Pealayer files), invoked before ESP builds and source quality.
 The Bash ESP entrypoint requires PowerShell 7 for the same donor gate and now
 checks fonts/branding as the Windows entrypoint does. No extra SDK is installed.
 
-Coverage: RayanLamp 2349 inventoried, **11** completed comparisons, **2338** pending.
-Whole donor inventory 4237, 75 completed, 4162 pending, 46 known-gap files. The
+Coverage: RayanLamp 2349 inventoried, **13** completed comparisons, **2336** pending.
+Whole donor inventory 4237, 77 completed, 4160 pending, 46 known-gap files. The
 656-line i18n source and 71-line tests were fully read and hash-verified. Full
 settings, Persian calendar/protocol isolation, remaining dynamic copy and
 native/Web/mobile preference synchronization remain unfinished.
@@ -70,6 +72,14 @@ modifications. This is an inventory, not 100% import or full production parity.
 
 ## Next-file worklist; not accepted omissions
 
+- webui/src/components/toasts.tsx and toast-layout.test.ts were read, but remain
+  pending full dependency/call-site integration. Store, Icon, dismissal/focus and
+  responsive placement must be ported and tested together, not represented by a
+  console import or a screenshot of a similar-looking notification.
+- internal/design/tokens.go and tokens.json were read as browser-trace color
+  dependencies; they are not newly certified. The shared Pealayer catalog remains
+  the current color authority. Any additional useful token roles need explicit
+  mapping rather than installing a competing lamp palette.
 - Native Windows snapping/DPI/latching, acrylic/backdrop, GPU/software rendering,
   visibility-driven resource release: inspect winfx and UI hosts fully, adapt
   applicable window contracts to Rust/egui; Go/Walk is not copied as a second UI.
@@ -96,6 +106,14 @@ its existing canonical cache guard remains authoritative. No donor compilation,
 extra cache, production app replacement or board flash is part of this import
 checkpoint. Hardware, native runtime and Android vibration acceptance are separate.
 Track continued imports and exact omission decisions on issue #3.
+
+Browser diagnostics acceptance: all actual donor scenarios and added real HTTP/WS
+adapter tests pass, followed by every child in the complete local quality suite.
+Warm ESP busy-wire compile passes (915632 bytes; SHA256
+0544853c13cf64dbf78f488b765379d726e6c2da244b467c5a1156cc541cc5e3).
+No new screenshot or deployed-board behavior is inferred from console VM tests.
+Native assertions/crash and Linux cross-platform verification remain open; see
+FILE-COMPARISON-RECEIPTS.md and issue #11. No unrelated build or physical flash.
 
 Locale acceptance: all seven added Node tests and the full local source-quality
 suite pass. Actual read-only browser input `۱،٢،۳` becomes canonical `1–3`, with

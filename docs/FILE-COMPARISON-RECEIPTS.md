@@ -1,5 +1,33 @@
 # PakarController comparison receipts
 
+## Rayan browser diagnostics execution
+
+Two additional exact complete-read comparisons: browser-console.ts original-byte
+SHA256 5584e97f745eadd5fa52dd1cbec91813dd4f0638da0ca4cf7ca986658f730165;
+browser-console.test.ts 024ed161c6c71655ef67cdbed8cf743fd33864118604737a5f44f533bf9f48f5.
+Actual Node tests execute the canonical embedded module and actual HTTP/WS code:
+startup/levels, recursive redaction, Error-code-only, controls/Bidi, bounded
+dedupe/cycles/depth/prototype, current palette, quiet telemetry/polls/frames,
+accepted-vs-readback, no uncertain-write replay, stale ownership and one-pass
+generator equality. These tests and complete local source-quality pass. No new
+pixel screenshot is claimed; console VM proof is not LAN or physical acceptance.
+
+Portable gzip regression passes injected OS=3/10/11/255, unchanged compressed
+body/trailer, exact licensed font round-trip and unsafe header rejection. Firmware
+CI now uses the same Node 24 as quality; actual cross-OS execution remains pending.
+Terminal 2a5574c CI passed source/Android, failed firmware font equality and native
+assertions/crash. Native API compilation is repaired, native runtime is not.
+
+Exact mappings/omission reasons are in the same ledger: 77/4237 complete, 4160
+pending, 46 gap files; Rayan 13/2349, 2336 pending. No unread-file exclusions.
+ASUS SSH refuses; no app replacement or automatic physical flash.
+
+Warm mandatory ESP-only busy-wire build passes: bin 915632 bytes, SHA256
+0544853c13cf64dbf78f488b765379d726e6c2da244b467c5a1156cc541cc5e3.
+RAM 56620/80192 (70%), IRAM 63055/65536 (96%), flash code 865520/1048576 (82%).
+No new cache, AVR/native/APK rebuild or physical deployment. Tight IRAM headroom
+remains a production constraint; extra browser bytes live in flash, not IRAM.
+
 ## Native compile and Linux donor-gate repair checkpoint
 
 The terminal 527d8e9 Build run 38090009184 reproduces 11 egui/private-field

@@ -224,6 +224,123 @@ button{display:inline-flex;align-items:center;justify-content:center;vertical-al
 <div id="cellMenu" class="cell-menu" role="menu" hidden></div>
 <dialog id="cellManager" class="manager" aria-labelledby="cellManagerTitle"><header><h2 id="cellManagerTitle">Manage cells</h2><button aria-label="Close cell manager" onclick="cellManager.close()">×</button></header><p class="hint">Choose rows or cells, then apply a state and transition to the selection. Ctrl toggles, Shift extends. Selection never changes LEDs.</p><div class="row"><button onclick="selectAllCells()">Select all</button><button onclick="clearCellSelection()">Clear selection</button><b id="managerCount">0 selected</b></div><label class="switch"><input id="managerEditCellOrder" type="checkbox" onchange="setEditingOrder(this.checked)">Edit order · drag before/after a cell; IDs and wiring stay unchanged</label><button id="managerResetCellOrderButton" onclick="resetCellOrder()" disabled>Reset order</button><div id="managerRows" class="manager-rows"></div><div class="row"><label>State <select id="bulkState"><option value="red">Red</option><option value="white">White</option><option value="off">Off</option></select></label><label>Transition <select id="bulkEffect"><option value="fade">Fade</option><option value="immediate">Immediate</option><option value="pulse">Pulse</option></select></label></div><p class="hint">Edits are paced and checked against device readback. A batch is not atomic.</p><footer><button id="bulkCancel" onclick="cancelCellBatch()" disabled>Cancel unsent</button><button id="bulkApply" class="primary" onclick="applyCellBatch(bulkState.value)">Apply to selection</button><button onclick="cellManager.close()">Close</button></footer></dialog>
 <script>
+// BEGIN BROWSER DIAGNOSTICS
+// Actual RayanLamp webui/src/browser-console.ts (MIT, YektaYar), adapted.
+// Allowlisted operational events only: no global console interception, raw
+// responses, frames, request bodies, credentials or persistent log storage.
+const browserEventPresentation={
+  'app.start':'🚀','transport.ready':'🔌','transport.error':'⚠️',
+  'device.command':'⚡','websocket.connected':'📡','websocket.disconnected':'📡',
+  'message.received':'💬','audio.cue':'🔊','audio.error':'🔇','device.event':'📟',
+  'diagnostics.loaded':'🩺','diagnostics.error':'⚠️','settings.saved':'✅','settings.error':'⚠️'
+};
+const browserMetadataAllowlist=new Set(['source','action','state','attempt','elapsed_ms','count','endpoint','bytes','error_code']);
+// Include camelCase keys missed by the donor's token-boundary-only expression.
+const browserSensitiveKey=/(authorization|cookie|credential|csrf|password|passwd|passphrase|secret|session|token|api[_-]?key)/i;
+function redactBrowserText(value) {
+  const clean=String(value).replace(/[\r\n\t]+/g,' ')
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g,'')
+    .replace(/(\b[a-z][a-z0-9+.-]*:\/\/)[^/\s:@]+:[^/\s@]+@/gi,'$1[REDACTED]@')
+    .replace(/\bBearer\s+[A-Za-z0-9._~+/-]+=*/gi,'Bearer [REDACTED]')
+    .replace(/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g,'[REDACTED JWT]')
+    .replace(/([?&](?:authorization|csrf|password|secret|session|token|api[_-]?key)=)[^&#\s]*/gi,'$1[REDACTED]');
+  return clean.length<=500?clean:clean.slice(0,500)+'…';
+}
+function browserErrorMetadata(error) {
+  if(!(error instanceof Error))return {error_code:'unknown_error'};
+  const value=error.code??(Number.isFinite(error.status)?'http_'+error.status:error.name||'Error');
+  return {error_code:typeof value==='number'&&Number.isFinite(value)?value:
+    typeof value==='string'?redactBrowserText(value):'unknown_error'};
+}
+function sanitizeBrowserValue(value,seen=new WeakSet(),depth=0) {
+  if(value===null||typeof value==='boolean')return value;
+  if(typeof value==='number')return Number.isFinite(value)?value:'[Nonfinite number]';
+  if(typeof value==='string')return redactBrowserText(value);
+  if(typeof value==='bigint')return redactBrowserText(value+'n');
+  if(typeof value==='undefined')return undefined;
+  if(typeof value==='symbol')return redactBrowserText(value.description??'symbol');
+  if(typeof value==='function')return '[Function]';
+  if(value instanceof Error)return browserErrorMetadata(value);
+  if(depth>=4)return '[Maximum depth]';
+  if(seen.has(value))return '[Circular]';
+  seen.add(value);
+  try {
+    if(Array.isArray(value)){
+      const result=value.slice(0,20).map(v=>sanitizeBrowserValue(v,seen,depth+1));
+      if(value.length>20)result.push('['+(value.length-20)+' more items]');
+      return result;
+    }
+    if(ArrayBuffer.isView(value))return '[Typed buffer '+value.byteLength+' bytes]';
+    if(value instanceof ArrayBuffer)return '[ArrayBuffer '+value.byteLength+' bytes]';
+    if(value instanceof Date)return Number.isFinite(value.getTime())?value.toISOString():'[Invalid date]';
+    if(typeof Element!=='undefined'&&value instanceof Element)return '<'+redactBrowserText(value.tagName.toLowerCase())+'>';
+    const result=Object.create(null),entries=Object.entries(value);
+    for(const[key,item]of entries.slice(0,30)){
+      if(key==='__proto__'||key==='constructor'||key==='prototype')continue;
+      result[redactBrowserText(key)]=browserSensitiveKey.test(key)?'[REDACTED]':sanitizeBrowserValue(item,seen,depth+1);
+    }
+    if(entries.length>30)result.omitted=entries.length-30;
+    return result;
+  } finally {seen.delete(value)}
+}
+function sanitizeBrowserMetadata(metadata) {
+  const result=Object.create(null);
+  if(metadata&&typeof metadata==='object')for(const key of browserMetadataAllowlist){
+    if(Object.hasOwn(metadata,key))result[key]=sanitizeBrowserValue(metadata[key]);
+  }
+  return result;
+}
+function browserConsoleStyle(level,detail=false) {
+  // The already-shared Pealayer catalog is the only color engine. DevTools
+  // needs literal CSS colors, so resolve the current page palette at emission.
+  const root=typeof document==='undefined'?null:document.documentElement;
+  const colors=typeof PEALAYER_PALETTES==='undefined'?null:
+    PEALAYER_PALETTES[root?.dataset?.palette==='native'?'native':'studio'][root?.dataset?.theme==='light'?'light':'dark'];
+  const role={debug:'muted',info:'blue',success:'green',warn:'amber',error:'red'}[level];
+  const foreground=detail?(colors?.text??'inherit'):(colors?.canvas??'inherit');
+  const background=detail?(colors?.['surface-1']??'transparent'):(colors?.[role]??'transparent');
+  return `color:${foreground};background:${background};font:${detail?'500':'600'} 11px/1.8 system-ui,Segoe UI,sans-serif;padding:2px 8px;border-radius:${detail?'0 999px 999px 0':'999px 0 0 999px'}`;
+}
+class StyledBrowserConsole {
+  constructor(sink=globalThis.console,now=()=>Date.now()){this.sink=sink;this.now=now;this.recent=new Map();this.started=false}
+  start(metadata){
+    if(this.started)return false;
+    this.started=true;
+    try {
+      this.sink?.groupCollapsed?.('%c 🚀 PAKARCONTROLLER %c Browser operational trace%c',browserConsoleStyle('info'),browserConsoleStyle('info',true),'color:inherit;background:transparent');
+      this.event('info','app.start','Web controller initialized',metadata);
+      this.sink?.debug?.('Privacy: allowlisted metadata only; credentials are redacted.');
+      this.sink?.log?.('Filter by event, level or source. Heartbeats and unchanged polls stay quiet.');
+      this.sink?.groupEnd?.();
+      return true;
+    } catch {return false}
+  }
+  event(level,event,message,metadata,options={}) {
+    try {
+      if(!['debug','info','success','warn','error'].includes(level)||!Object.hasOwn(browserEventPresentation,event))return false;
+      const now=this.now();if(!Number.isFinite(now)||!Number.isFinite(new Date(now).getTime()))return false;
+      if(options.dedupeKey){
+        const key=redactBrowserText(options.dedupeKey),windowMs=Number.isFinite(options.dedupeWindowMs)?Math.max(0,Math.min(60000,options.dedupeWindowMs)):1000;
+        const previous=this.recent.get(key);
+        if(previous!==undefined&&now>=previous&&now-previous<windowMs)return false;
+        if(this.recent.size>=256&&!this.recent.has(key))this.recent.delete(this.recent.keys().next().value);
+        this.recent.set(key,now);
+      }
+      const method=level==='success'?'info':level,call=this.sink?.[method];
+      if(typeof call!=='function')return false;
+      const detail=redactBrowserText(message),safe=sanitizeBrowserMetadata(metadata);
+      call.call(this.sink,`%c ${browserEventPresentation[event]} ${level.toUpperCase()} · ${event} %c ${detail.replaceAll('%','%%')}%c`,
+        browserConsoleStyle(level),browserConsoleStyle(level,true),'color:inherit;background:transparent',
+        {...safe,timestamp:new Date(now).toISOString(),level,event,detail});
+      return true;
+    } catch {return false} // Diagnostics must never break an actual device action.
+  }
+}
+const browserConsole=new StyledBrowserConsole();
+function traceBrowserEvent(level,event,message,metadata,options){return browserConsole.event(level,event,message,metadata,options)}
+browserConsole.start({source:'web'});
+
+// END BROWSER DIAGNOSTICS
 // BEGIN RAYANLAMP ADAPTATIONS
 // Actual source adaptations from RayanLamp (MIT, YektaYar):
 // webui/src/haptics.ts, connection-preferences.ts, internal/i18n/digits.go.
@@ -331,7 +448,7 @@ function subscribeLocalePreferences(callback) {
 // Pealayer web_ui/src/i18n.ts::tr semantics: translate application copy only.
 // Generated shared dictionary follows; peer values never pass through tr.
 // BEGIN SHARED PERSIAN DICTIONARY
-const PAKAR_FA={"LEDs & cells":"LEDها و خانه‌ها","AVR & inputs":"AVR و ورودی‌ها","Firmware & storage":"میان‌افزار و ذخیره‌سازی","Search settings…":"جست‌وجوی تنظیمات…","Close device settings":"بستن تنظیمات دستگاه","Device settings pages":"صفحه‌های تنظیمات دستگاه","Discard & reload…":"لغو تغییرات و خواندن دوباره…","Read the device to load settings":"برای بارگذاری تنظیمات، دستگاه را بخوانید","Only fresh, acknowledged device capabilities are shown. Application preferences are separate from board configuration.":"فقط قابلیت‌های تازه و تأییدشدهٔ دستگاه نمایش داده می‌شوند. تنظیمات برنامه از پیکربندی برد جدا هستند.","Firmware build information · read-only":"اطلاعات ساخت میان‌افزار · فقط خواندنی","UART flow-control mode, pin ownership and hardware layout are build flags, not runtime switches. Rebuild and safely update firmware to change them.":"حالت کنترل جریان UART، تخصیص پایه‌ها و چیدمان سخت‌افزار گزینه‌های زمان ساخت هستند. برای تغییر آن‌ها، میان‌افزار را دوباره بسازید و به‌صورت ایمن به‌روز کنید.","No observed build information":"اطلاعات ساخت دریافت نشده است","Build information not reported by this peer":"این دستگاه اطلاعات ساخت را گزارش نکرده است","Use the same live workspace controls; settings does not duplicate device editors.":"از کنترل‌های زندهٔ فضای کاری استفاده کنید؛ ویرایشگرهای دستگاه در تنظیمات تکرار نمی‌شوند.","Table & mapping":"میز و نگاشت","Text presentation":"نمایش متن","Buzzer & melodies":"بیزر و ملودی‌ها","Waiting for acknowledgment and saved-settings readback…":"در انتظار تأیید و بازخوانی تنظیمات ذخیره‌شده…","Settings changed on another client. Your edits are preserved; discard and reload before saving.":"تنظیمات در کلاینت دیگری تغییر کرده‌اند. ویرایش‌های شما حفظ شده‌اند؛ پیش از ذخیره، تغییرات را لغو کنید و دوباره بخوانید.","Unsaved device edits":"ویرایش‌های ذخیره‌نشدهٔ دستگاه","Observed device settings; no pending edits":"تنظیمات دستگاه دریافت شده‌اند؛ ویرایش ذخیره‌نشده‌ای نیست","Reconnect to read device settings":"برای خواندن تنظیمات دستگاه دوباره متصل شوید","Station SSID":"نام شبکهٔ ایستگاه","Station password · re-enter on save":"گذرواژهٔ ایستگاه · هنگام ذخیره دوباره وارد کنید","Open station network · no password":"شبکهٔ باز ایستگاه · بدون گذرواژه","Station enabled":"ایستگاه فعال","Recovery AP enabled":"نقطهٔ دسترسی بازیابی فعال","Scanned networks":"شبکه‌های یافت‌شده","The station password is write-only. Re-enter it to save Wi-Fi changes, or explicitly select an open network. Keep at least one network path enabled.":"گذرواژهٔ ایستگاه فقط نوشتنی است. برای ذخیرهٔ تغییرات وای‌فای، آن را دوباره وارد کنید یا شبکهٔ باز را انتخاب کنید. دست‌کم یک مسیر شبکه را فعال نگه دارید.","Enable MQTT":"فعال‌کردن MQTT","Broker hostname":"نام میزبان بروکر","Base topic":"موضوع پایه","Password handling":"مدیریت گذرواژه","Replacement password":"گذرواژهٔ جایگزین","Enable outbound WebSocket":"فعال‌کردن وب‌سوکت خروجی","Server hostname":"نام میزبان سرور","Path":"مسیر","Token handling":"مدیریت توکن","Replacement token":"توکن جایگزین","Telemetry interval · seconds":"فاصلهٔ دورسنجی · ثانیه","Keep stored password":"حفظ گذرواژهٔ ذخیره‌شده","Keep stored token":"حفظ توکن ذخیره‌شده","Wait for the current operation to finish":"منتظر پایان عملیات جاری بمانید","Saved public settings verified by device readback. Secret values remain write-only.":"تنظیمات عمومی با بازخوانی دستگاه تأیید شدند. مقادیر محرمانه فقط نوشتنی می‌مانند.","No acknowledged workspace panels":"پنل تأییدشده‌ای برای فضای کاری نیست","Reset panel layout":"بازنشانی چیدمان پنل‌ها","Show":"نمایش","System":"سیستم","Dark":"تیره","Light":"روشن","Appearance…":"ظاهر…","Apply appearance":"اعمال ظاهر","Apply":"اعمال","Sign out":"خروج از حساب","Select all":"انتخاب همه","Manage cells…":"مدیریت خانه‌ها…","Toggle without Ctrl":"انتخاب چندتایی بدون Ctrl","Animate cells":"پویانمایی خانه‌ها","LED-state indicators":"نشانگرهای وضعیت LED","Edit order":"ویرایش ترتیب","Reset order":"بازنشانی ترتیب","Cell shape":"شکل خانه","Rounded":"گوشه‌های گرد","Circle · six pixels":"دایره · شش پیکسل","Hexagon · six pixels":"شش‌ضلعی · شش پیکسل","Physical pixel indices":"شمارهٔ پیکسل‌های فیزیکی","Board modes":"حالت‌های برد","Live device":"دستگاه زنده","Clients":"کلاینت‌ها","Station":"ایستگاه","Recovery AP":"نقطهٔ دسترسی بازیابی","Cloud WebSocket":"وب‌سوکت ابری","Cell identity":"هویت خانه","Cell action":"عملیات خانه","Addressable LEDs":"LEDهای آدرس‌پذیر","Save logical / physical mapping":"ذخیرهٔ نگاشت منطقی و فیزیکی","Stream rainbow":"ارسال جریان رنگین‌کمان","Transition":"گذار","Live display":"نمایشگر زنده","Show number":"نمایش عدد","Text":"متن","Scroll short text":"پیمایش متن کوتاه","Repeat":"تکرار","Present":"نمایش متن","Present text":"نمایش متن","Stop text":"توقف متن","Board identity":"هویت برد","Save board identity":"ذخیرهٔ هویت برد","Device access":"دسترسی به دستگاه","Device configuration":"پیکربندی دستگاه","Error":"خطا","Wi-Fi":"وای‌فای","Port":"درگاه","Mapping":"نگاشت","Logical":"خانهٔ منطقی","Logical cell":"خانهٔ منطقی","Physical":"خانهٔ فیزیکی","Find cells: 12, 3–8":"یافتن خانه‌ها: 12, 3–8","Search device settings":"جست‌وجوی تنظیمات دستگاه","Application":"برنامه","Device":"دستگاه","Device settings…":"تنظیمات دستگاه","Device settings":"تنظیمات دستگاه","Table":"میز","Hardware monitor":"پایش سخت‌افزار","Theme":"پوسته","Palette":"پالت رنگ","Search settings":"جست‌وجوی تنظیمات","Username":"نام کاربری","Password":"گذرواژه","Refresh":"تازه‌سازی","Find cell":"یافتن خانه","Manage cells":"مدیریت خانه‌ها","Current":"کنونی","File":"پرونده","Edit":"ویرایش","Audio":"صدا","Workspace":"فضای کاری","Window":"پنجره","Panels":"پنل‌ها","Language":"زبان","Touch feedback":"بازخورد لمسی","System language":"زبان سیستم","English":"انگلیسی","Persian":"فارسی","Direction":"جهت","Automatic":"خودکار","Left to right":"چپ به راست","Right to left":"راست به چپ","Left":"چپ","Right":"راست","Replacement":"جایگزین","Connect":"اتصال","Connecting…":"در حال اتصال…","Disconnect":"قطع اتصال","Identity":"هویت","Order":"ترتیب","Manage":"مدیریت","Type":"نوع","Control":"کنترل","Board":"برد","Color palette":"پالت رنگ","Studio":"استودیو","Neutral":"خنثی","New":"جدید","Overview":"نمای کلی","Capabilities":"قابلیت‌ها","Front panel":"پنل جلویی","Red":"قرمز","White":"سفید","Board name":"نام برد","Mode":"حالت","pixels":"پیکسل","Color":"رنگ","Pixel":"پیکسل","Stop stream":"توقف جریان","Controls":"کنترل‌ها","Page":"صفحه","Select":"انتخاب","Brightness":"روشنایی","No":"خیر","Reconnect":"اتصال دوباره","Connected":"متصل","Hold":"نگه‌داشتن","Toggle":"تغییر حالت","Segments":"نمایشگر هفت‌بخشی","Hide":"پنهان‌کردن","hidden":"پنهان","Visibility":"نمایانی","Telemetry":"دورسنجی","Search":"جست‌وجو","Connected board":"برد متصل","ON":"روشن","Discard":"دور انداختن","Close":"بستن","Save":"ذخیره","Preferences":"تنظیمات","Target":"مقصد","Status":"وضعیت","Server":"سرور","Open":"باز کردن","Cancel":"انصراف","Action":"عملکرد","Enabled":"فعال","Appearance":"ظاهر","Pealayer green":"سبز پی‌لیر","Windows blue":"آبی ویندوز","macOS blue":"آبی مک‌اواس","Custom":"سفارشی","Custom accent":"رنگ تأکیدی سفارشی","Reset":"بازنشانی","Icon":"نماد","Name":"نام","On":"روشن","Off":"خاموش","cues":"نشانه","selected":"انتخاب‌شده","Source":"منبع","Output":"خروجی","Effect":"جلوه","Play":"پخش","Pause":"مکث","Stop":"توقف","Unknown":"ناشناخته","End":"پایان","Step":"پله‌ای","Time":"زمان","Value":"مقدار","{count} selected":"{count} انتخاب‌شده","Sent {sent} of {total} cell edits; awaiting device readback":"{sent} از {total} ویرایش خانه ارسال شد؛ در انتظار بازخوانی دستگاه","Cancelled unsent edits. {sent} previously sent edits may have applied.":"ویرایش‌های ارسال‌نشده لغو شدند. ممکن است {sent} ویرایش ارسال‌شده اعمال شده باشند.","Verified {sent} cell states on the device":"وضعیت {sent} خانه در دستگاه تأیید شد","Readback did not confirm every edit. Refresh and inspect; batch is not atomic.":"بازخوانی همهٔ ویرایش‌ها را تأیید نکرد. تازه‌سازی و بررسی کنید؛ عملیات گروهی اتمی نیست.","Stopped after {sent} edits. Uncertain writes are not retried.":"پس از {sent} ویرایش متوقف شد. نوشته‌های نامطمئن دوباره ارسال نمی‌شوند."};
+const PAKAR_FA={"LEDs & cells":"LEDها و خانه‌ها","AVR & inputs":"AVR و ورودی‌ها","Firmware & storage":"میان‌افزار و ذخیره‌سازی","Search settings…":"جست‌وجوی تنظیمات…","Close device settings":"بستن تنظیمات دستگاه","Device settings pages":"صفحه‌های تنظیمات دستگاه","Discard & reload…":"لغو تغییرات و خواندن دوباره…","Read the device to load settings":"برای بارگذاری تنظیمات، دستگاه را بخوانید","Only fresh, acknowledged device capabilities are shown. Application preferences are separate from board configuration.":"فقط قابلیت‌های تازه و تأییدشدهٔ دستگاه نمایش داده می‌شوند. تنظیمات برنامه از پیکربندی برد جدا هستند.","Firmware build information · read-only":"اطلاعات ساخت میان‌افزار · فقط خواندنی","UART flow-control mode, pin ownership and hardware layout are build flags, not runtime switches. Rebuild and safely update firmware to change them.":"حالت کنترل جریان UART، تخصیص پایه‌ها و چیدمان سخت‌افزار گزینه‌های زمان ساخت هستند. برای تغییر آن‌ها، میان‌افزار را دوباره بسازید و به‌صورت ایمن به‌روز کنید.","No observed build information":"اطلاعات ساخت دریافت نشده است","Build information not reported by this peer":"این دستگاه اطلاعات ساخت را گزارش نکرده است","Use the same live workspace controls; settings does not duplicate device editors.":"از کنترل‌های زندهٔ فضای کاری استفاده کنید؛ ویرایشگرهای دستگاه در تنظیمات تکرار نمی‌شوند.","Table & mapping":"میز و نگاشت","Text presentation":"نمایش متن","Buzzer & melodies":"بیزر و ملودی‌ها","Waiting for acknowledgment and saved-settings readback…":"در انتظار تأیید و بازخوانی تنظیمات ذخیره‌شده…","Settings changed on another client. Your edits are preserved; discard and reload before saving.":"تنظیمات در کلاینت دیگری تغییر کرده‌اند. ویرایش‌های شما حفظ شده‌اند؛ پیش از ذخیره، تغییرات را لغو کنید و دوباره بخوانید.","Unsaved device edits":"ویرایش‌های ذخیره‌نشدهٔ دستگاه","Observed device settings; no pending edits":"تنظیمات دستگاه دریافت شده‌اند؛ ویرایش ذخیره‌نشده‌ای نیست","Reconnect to read device settings":"برای خواندن تنظیمات دستگاه دوباره متصل شوید","Station SSID":"نام شبکهٔ ایستگاه","Station password · re-enter on save":"گذرواژهٔ ایستگاه · هنگام ذخیره دوباره وارد کنید","Open station network · no password":"شبکهٔ باز ایستگاه · بدون گذرواژه","Station enabled":"ایستگاه فعال","Recovery AP enabled":"نقطهٔ دسترسی بازیابی فعال","Scanned networks":"شبکه‌های یافت‌شده","The station password is write-only. Re-enter it to save Wi-Fi changes, or explicitly select an open network. Keep at least one network path enabled.":"گذرواژهٔ ایستگاه فقط نوشتنی است. برای ذخیرهٔ تغییرات وای‌فای، آن را دوباره وارد کنید یا شبکهٔ باز را انتخاب کنید. دست‌کم یک مسیر شبکه را فعال نگه دارید.","Enable MQTT":"فعال‌کردن MQTT","Broker hostname":"نام میزبان بروکر","Base topic":"موضوع پایه","Password handling":"مدیریت گذرواژه","Replacement password":"گذرواژهٔ جایگزین","Enable outbound WebSocket":"فعال‌کردن وب‌سوکت خروجی","Server hostname":"نام میزبان سرور","Path":"مسیر","Token handling":"مدیریت توکن","Replacement token":"توکن جایگزین","Telemetry interval · seconds":"فاصلهٔ دورسنجی · ثانیه","Keep stored password":"حفظ گذرواژهٔ ذخیره‌شده","Keep stored token":"حفظ توکن ذخیره‌شده","Wait for the current operation to finish":"منتظر پایان عملیات جاری بمانید","Saved public settings verified by device readback. Secret values remain write-only.":"تنظیمات عمومی با بازخوانی دستگاه تأیید شدند. مقادیر محرمانه فقط نوشتنی می‌مانند.","No acknowledged workspace panels":"پنل تأییدشده‌ای برای فضای کاری نیست","Reset panel layout":"بازنشانی چیدمان پنل‌ها","Show":"نمایش","System":"سیستم","Dark":"تیره","Light":"روشن","Appearance…":"ظاهر…","Apply appearance":"اعمال ظاهر","Apply":"اعمال","Sign out":"خروج از حساب","Select all":"انتخاب همه","Manage cells…":"مدیریت خانه‌ها…","Toggle without Ctrl":"انتخاب چندتایی بدون Ctrl","Animate cells":"پویانمایی خانه‌ها","LED-state indicators":"نشانگرهای وضعیت LED","Edit order":"ویرایش ترتیب","Reset order":"بازنشانی ترتیب","Cell shape":"شکل خانه","Rounded":"گوشه‌های گرد","Circle · six pixels":"دایره · شش پیکسل","Hexagon · six pixels":"شش‌ضلعی · شش پیکسل","Physical pixel indices":"شمارهٔ پیکسل‌های فیزیکی","Board modes":"حالت‌های برد","Live device":"دستگاه زنده","Clients":"کلاینت‌ها","Station":"ایستگاه","Recovery AP":"نقطهٔ دسترسی بازیابی","Cloud WebSocket":"وب‌سوکت ابری","Cell identity":"هویت خانه","Cell action":"عملیات خانه","Addressable LEDs":"LEDهای آدرس‌پذیر","Save logical / physical mapping":"ذخیرهٔ نگاشت منطقی و فیزیکی","Stream rainbow":"ارسال جریان رنگین‌کمان","Transition":"گذار","Live display":"نمایشگر زنده","Show number":"نمایش عدد","Text":"متن","Scroll short text":"پیمایش متن کوتاه","Repeat":"تکرار","Present":"نمایش متن","Present text":"نمایش متن","Stop text":"توقف متن","Board identity":"هویت برد","Save board identity":"ذخیرهٔ هویت برد","Device access":"دسترسی به دستگاه","Device configuration":"پیکربندی دستگاه","Error":"خطا","Wi-Fi":"وای‌فای","Port":"درگاه","Mapping":"نگاشت","Logical":"خانهٔ منطقی","Logical cell":"خانهٔ منطقی","Physical":"خانهٔ فیزیکی","Find cells: 12, 3–8":"یافتن خانه‌ها: 12, 3–8","Search device settings":"جست‌وجوی تنظیمات دستگاه","Application":"برنامه","Device":"دستگاه","Device settings…":"تنظیمات دستگاه","Device settings":"تنظیمات دستگاه","Table":"میز","Hardware monitor":"پایش سخت‌افزار","Theme":"پوسته","Palette":"پالت رنگ","Search settings":"جست‌وجوی تنظیمات","Username":"نام کاربری","Password":"گذرواژه","Refresh":"تازه‌سازی","Find cell":"یافتن خانه","Manage cells":"مدیریت خانه‌ها","Current":"کنونی","File":"پرونده","Edit":"ویرایش","Audio":"صدا","Workspace":"فضای کاری","Window":"پنجره","Panels":"پنل‌ها","Language":"زبان","Touch feedback":"بازخورد لمسی","System language":"زبان سیستم","English":"انگلیسی","Persian":"فارسی","Direction":"جهت","Automatic":"خودکار","Left to right":"چپ به راست","Right to left":"راست به چپ","Left":"چپ","Right":"راست","Replacement":"جایگزین","Connect":"اتصال","Connecting…":"در حال اتصال…","Disconnect":"قطع اتصال","Identity":"هویت","Order":"ترتیب","Presentation":"نحوهٔ نمایش","Manage":"مدیریت","Type":"نوع","Control":"کنترل","Board":"برد","Color palette":"پالت رنگ","Studio":"استودیو","Neutral":"خنثی","New":"جدید","Overview":"نمای کلی","Capabilities":"قابلیت‌ها","Front panel":"پنل جلویی","Red":"قرمز","White":"سفید","Board name":"نام برد","Mode":"حالت","pixels":"پیکسل","Color":"رنگ","Pixel":"پیکسل","Stop stream":"توقف جریان","Controls":"کنترل‌ها","Page":"صفحه","Select":"انتخاب","Brightness":"روشنایی","No":"خیر","Reconnect":"اتصال دوباره","Connected":"متصل","Hold":"نگه‌داشتن","Toggle":"تغییر حالت","Segments":"نمایشگر هفت‌بخشی","Hide":"پنهان‌کردن","hidden":"پنهان","Visibility":"نمایانی","Telemetry":"دورسنجی","Search":"جست‌وجو","Connected board":"برد متصل","ON":"روشن","Discard":"دور انداختن","Close":"بستن","Save":"ذخیره","Preferences":"تنظیمات","Target":"مقصد","Status":"وضعیت","Server":"سرور","Open":"باز کردن","Cancel":"انصراف","Action":"عملکرد","Enabled":"فعال","Appearance":"ظاهر","Pealayer green":"سبز پی‌لیر","Windows blue":"آبی ویندوز","macOS blue":"آبی مک‌اواس","Custom":"سفارشی","Custom accent":"رنگ تأکیدی سفارشی","Reset":"بازنشانی","Icon":"نماد","Name":"نام","On":"روشن","Off":"خاموش","cues":"نشانه","selected":"انتخاب‌شده","Source":"منبع","Output":"خروجی","Effect":"جلوه","Play":"پخش","Pause":"مکث","Stop":"توقف","Unknown":"ناشناخته","End":"پایان","Step":"پله‌ای","Time":"زمان","Value":"مقدار","{count} selected":"{count} انتخاب‌شده","Sent {sent} of {total} cell edits; awaiting device readback":"{sent} از {total} ویرایش خانه ارسال شد؛ در انتظار بازخوانی دستگاه","Cancelled unsent edits. {sent} previously sent edits may have applied.":"ویرایش‌های ارسال‌نشده لغو شدند. ممکن است {sent} ویرایش ارسال‌شده اعمال شده باشند.","Verified {sent} cell states on the device":"وضعیت {sent} خانه در دستگاه تأیید شد","Readback did not confirm every edit. Refresh and inspect; batch is not atomic.":"بازخوانی همهٔ ویرایش‌ها را تأیید نکرد. تازه‌سازی و بررسی کنید؛ عملیات گروهی اتمی نیست.","Stopped after {sent} edits. Uncertain writes are not retried.":"پس از {sent} ویرایش متوقف شد. نوشته‌های نامطمئن دوباره ارسال نمی‌شوند."};
 // END SHARED PERSIAN DICTIONARY
 // Actual RayanLamp i18n.tsx normalize/detect/t/digits/controller contracts (MIT).
 // Keep Pakar's primary-language policy, explicit direction and peer identity.
@@ -570,7 +687,22 @@ async function applyCellBatch(value){if(!currentPeer().has('table')||cellBatchBu
 paintSelection();
 for(let i=0;i<8;i++){const l=document.createElement('label'),c=document.createElement('input');c.type='checkbox';c.onchange=setOutputs;c.dataset.bit=i;l.append(c,document.createTextNode(' '+(i+1)));outputs.appendChild(l)}
 let authenticated=false;
-async function api(path,options={}){const r=await fetch(path,{credentials:'same-origin',...options}),t=await r.text();if(r.status===401&&path!=='/login'){showLogin();throw Error('Please sign in again')}if(!r.ok)throw Error(t||r.statusText);try{return JSON.parse(t)}catch{return t}}
+async function api(path,options={}){
+  const method=String(options.method||'GET').toUpperCase();
+  // Never include query strings, bodies, headers, auth fields or raw responses.
+  const endpoint=String(path).split('?')[0].slice(0,128);
+  try {
+    const r=await fetch(path,{credentials:'same-origin',...options}),t=await r.text();
+    if(r.status===401&&path!=='/login'){showLogin();throw Object.assign(Error('Please sign in again'),{status:401})}
+    if(!r.ok)throw Object.assign(Error(t||r.statusText),{status:r.status});
+    if(method!=='GET'&&endpoint!=='/api/v1/clients/report'&&typeof traceBrowserEvent==='function')traceBrowserEvent('info','device.command','HTTP request accepted; device readback may still be required',{source:'http',action:method,endpoint});
+    try{return JSON.parse(t)}catch{return t}
+  } catch(error) {
+    if(typeof traceBrowserEvent==='function')traceBrowserEvent('error','transport.error','HTTP request failed',{source:'http',action:method,endpoint,...browserErrorMetadata(error)},
+      {dedupeKey:'http.failure:'+method+endpoint,dedupeWindowMs:3000});
+    throw error;
+  }
+}
 function showLogin(){if(typeof settingsInvalidate==="function")settingsInvalidate();authenticated=false;contextReceivedAt=0;renderContext();workspace.hidden=true;loginPanel.hidden=false;stopStream();if(socket){socket.onclose=null;socket.close();socket=null}}
 async function openWorkspace(){await refreshAuthenticated();authenticated=true;workspace.hidden=false;loginPanel.hidden=true;loginPassword.value='';connectWs();remoteRefresh();reportBrowser();loadMappings();loadCloud();loadDeviceName();const info=await api('/api/v1/auth/info');accessUser.value=info.username;accessWarning.textContent=info.default_credentials?'Default password active. Change it in Device access.':''}
 async function refreshAuthenticated(){render(await api('/api/v1/status'+(cellShape.value!=='rounded'?'?pixels=1':'')))}
@@ -584,7 +716,29 @@ function report(e){notice.textContent=e instanceof Error?e.message:String(e);set
 function renderSegments(masks=[]){displayStop.hidden=!state.tm1637_host_active;const lines=[[8,5,28,5],[31,8,31,27],[31,32,31,51],[8,54,28,54],[5,32,5,51],[5,8,5,27],[8,29.5,28,29.5]];segmentDisplay.innerHTML='';for(let d=0;d<4;d++){const mask=masks[d]||0,svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 36 60');for(let bit=0;bit<7;bit++){const line=document.createElementNS(svg.namespaceURI,'line');['x1','y1','x2','y2'].forEach((k,i)=>line.setAttribute(k,lines[bit][i]));if(mask&(1<<bit))line.setAttribute('class','lit');svg.appendChild(line)}const dot=document.createElementNS(svg.namespaceURI,'circle');dot.setAttribute('cx','32');dot.setAttribute('cy','54');dot.setAttribute('r','2.4');if(mask&128)dot.setAttribute('class','lit');svg.appendChild(dot);segmentDisplay.appendChild(svg)}}
 function render(s){state=s;contextReceivedAt=Date.now();renderContext();renderAudio(s);summary.textContent=[s.hostname,s.canonical_url,currentPeer().has('leds')&&Number.isInteger(s.pixels)?s.pixels+' pixels':null].filter(Boolean).join(' · ');avr.textContent=s.avr_online?'online':'offline';avr.className=s.avr_online?'good':'bad';tm.textContent=s.tm1637_ack?'ready':'not responding';tm.className=s.tm1637_ack?'good':'bad';clients.textContent=s.websocket_clients??0;station.textContent=s.station_connected?`${s.station_ip} (${s.station_rssi} dBm)`:'disconnected';ap.textContent=s.ap_started?s.ap_ip:'disabled';discovery.textContent=`mDNS ${s.mdns_started?'on':'off'} · SSDP ${s.ssdp_started?'on':'off'} · NBNS ${s.netbios_started?'on':'off'}`;ntp.textContent=s.ntp_synced?new Date(s.utc_epoch*1000).toLocaleString():'waiting';uart.textContent=`ESP ${s.esp_uart_errors} / AVR ${s.avr_uart_errors} / USB ${s.usb_serial_errors??0}`;mqttState.textContent=s.mqtt_enabled?(s.mqtt_connected?'connected':`offline (${s.mqtt_state})`):'disabled';mqttState.className=s.mqtt_connected?'good':s.mqtt_enabled?'warn':'';cloudWsState.textContent=s.cloud_websocket_enabled?(s.cloud_websocket_connected?'connected':'offline'):'disabled';cloudWsState.className=s.cloud_websocket_connected?'good':s.cloud_websocket_enabled?'warn':'';winner.textContent=s.winner||'—';brightness.value=s.brightness;brightnessValue.textContent=s.brightness;pattern.value=s.effect||'none';renderSegments(s.tm1637_segments);document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===s.mode));for(const b of grid.querySelectorAll('.cell')){const id=Number(b.dataset.id),v=s.cells[id-1]||'off';b.classList.toggle('red',v==='red');b.classList.toggle('off',v==='off');if(cellShape.value==='rounded')b.textContent=mapping.names[id-1]||id;if(cellShape.value==='rounded')b.title=`Logical ${id} · physical ${mapping.physical[id-1]||id}`;}paintSelection(true);for(const c of outputs.querySelectorAll('input'))c.checked=!!(s.active_outputs&(1<<Number(c.dataset.bit)))}
 async function refresh(){try{render(await api('/api/v1/status'+(cellShape.value!=='rounded'?'?pixels=1':'')))}catch(e){report(e)}}
-function connectWs(){if(!authenticated||webSocketPaused)return;if(webSocketRetry)clearTimeout(webSocketRetry);webSocketRetry=0;if(socket){socket.onclose=null;socket.close()}const scheme=location.protocol==='https:'?'wss:':'ws:',active=new WebSocket(`${scheme}//${location.host}/ws`);socket=active;active.binaryType='arraybuffer';active.onopen=()=>{if(socket!==active)return;wsState.textContent='WebSocket live';wsState.className='good';active.send('{"type":"status"}')};active.onmessage=e=>{if(socket!==active)return;if(typeof e.data==='string'){try{const x=JSON.parse(e.data);if(x.hostname)render(x)}catch{}}};active.onclose=()=>{if(socket!==active||!authenticated||webSocketPaused)return;wsState.textContent='WebSocket retrying';wsState.className='warn';stopStream();webSocketRetry=setTimeout(()=>{webSocketRetry=0;if(authenticated&&!webSocketPaused)refresh().then(()=>connectWs())},1500)};active.onerror=()=>active.close()}
+function connectWs(){
+  if(!authenticated||webSocketPaused)return;
+  if(webSocketRetry)clearTimeout(webSocketRetry);webSocketRetry=0;
+  if(socket){socket.onclose=null;socket.close()}
+  const scheme=location.protocol==='https:'?'wss:':'ws:',active=new WebSocket(`${scheme}//${location.host}/ws`);
+  socket=active;active.binaryType='arraybuffer';
+  active.onopen=()=>{
+    if(socket!==active)return;
+    wsState.textContent='WebSocket live';wsState.className='good';
+    traceBrowserEvent('info','websocket.connected','WebSocket transport connected',{source:'websocket',endpoint:'/ws'});
+    active.send('{"type":"status"}');
+  };
+  active.onmessage=e=>{if(socket!==active)return;if(typeof e.data==='string'){try{const x=JSON.parse(e.data);if(x.hostname)render(x)}catch{}}};
+  active.onclose=e=>{
+    if(socket!==active||!authenticated||webSocketPaused)return;
+    wsState.textContent='WebSocket retrying';wsState.className='warn';stopStream();
+    traceBrowserEvent('warn','websocket.disconnected','WebSocket closed; reconnect scheduled',
+      {source:'websocket',endpoint:'/ws',error_code:Number.isInteger(e?.code)?e.code:'unknown_close'},
+      {dedupeKey:'websocket.closed',dedupeWindowMs:3000});
+    webSocketRetry=setTimeout(()=>{webSocketRetry=0;if(authenticated&&!webSocketPaused)refresh().then(()=>connectWs())},1500);
+  };
+  active.onerror=()=>{if(socket===active)active.close()};
+}
 async function post(path,data={}){try{if(!contextAllows(path,data))throw Error('This board has not acknowledged this capability');await api(path+'?'+new URLSearchParams(data),{method:'POST'});commandHaptic('command.success');await refresh()}catch(e){commandHaptic('command.error');report(e)}}
 const setMode=value=>post('/api/v1/mode',{value}),resetGame=()=>post('/api/v1/game/reset');function setCell(cellState){post('/api/v1/cell',{id:cellId.value,state:cellState,effect:effect.value})}function setPattern(){post('/api/v1/effect',{value:pattern.value})}function setBrightness(value){post('/api/v1/brightness',{value})}function showDisplay(){post('/api/v1/display',{value:displayValue.value})}function showMarquee(){post('/api/v1/display',{text:displayText.value,speed_ms:displaySpeed.value,hold_ms:displayHold.value,repeat:displayRepeat.value,force_scroll:displayScroll.checked,interval_seconds:displayPause.value})}function playTone(){post('/api/v1/buzzer',{frequency:frequency.value,duration_ms:duration.value})}function playCue(){post('/api/v1/audio',{cue:audioCue.value})}function setOutputs(){let mask=0;for(const c of outputs.querySelectorAll('input'))if(c.checked)mask|=1<<Number(c.dataset.bit);post('/api/v1/outputs',{mask})}
 function displayControls(){displayPauseLabel.hidden=displayRepeat.value!=='interval';displayHoldLabel.hidden=displayText.value.length>4||displayScroll.checked||displayRepeat.value==='loop'}

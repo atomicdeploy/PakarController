@@ -6,6 +6,8 @@ export const phases={
   "quality": [
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "web-presentation", "-Gate"],
     ["node", "tools/generate-font-assets.mjs", "--check"],
+    ["node", "tests/font_gzip_test.mjs"],
+    ["node", "tests/browser_console_test.mjs"],
     ["node", "tests/localization_test.mjs"],
     ["node", "tests/rayanlamp_reuse_test.mjs"],
     ["node", "tests/rayanlamp_theme_test.mjs"],

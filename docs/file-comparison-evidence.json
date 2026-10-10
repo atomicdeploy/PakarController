@@ -5,6 +5,107 @@
   "files": [
     {
       "origin": "RayanLamp",
+      "path": "webui/src/browser-console.ts",
+      "sha256": "5584e97f745eadd5fa52dd1cbec91813dd4f0638da0ca4cf7ca986658f730165",
+      "source_read": "complete",
+      "verdict": "scoped-improvement",
+      "preserved": [
+        "Actual five-level styled sink/startup, operational event vocabulary, allowlisted metadata, recursive sanitizer, safe Error-code projection and keyed quiet-window deduplication imported into canonical browser module. Real HTTP and WebSocket lifecycle consumers execute it; routine successful polling, telemetry and binary frames stay quiet.",
+        "Actual URL/Bearer/JWT/query, single-line/control-character protection, depth/array/object bounds and cycle handling retained; no interception, secret/raw-response trace or persistent writes."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/browser-console.js",
+          "sha256": "6c0c640433ebfcfff648fed3ce3f384da857d92123f134b6ff122843d83cfa64",
+          "anchor": "class StyledBrowserConsole"
+        },
+        {
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "anchor": "function connectWs()"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Lamp-only lamp.state/lamp.command vocabulary and RAYAN LAMP startup brand",
+          "disposition": "replaced",
+          "reason": "Pakar uses device.event/device.command and its controller identity, not another device's lamp protocol. Generic operational semantics are retained."
+        },
+        {
+          "code": "Hardcoded lamp palettes/gradient and monospace badge typography",
+          "disposition": "replaced",
+          "reason": "Current shared Pealayer palette and controller typography are resolved on each emission; no second fixed color engine or unwanted tint."
+        },
+        {
+          "code": "Unbounded recent Map, boundary-only sensitiveKey, caller-controlled percent format, raw DOM id/function name and throwing host sink",
+          "disposition": "replaced",
+          "reason": "256-key/60-second bounds, camelCase redaction, percent escaping, minimal DOM/function summaries and fail-closed sink protect long-lived firmware clients and secret-bearing host data."
+        },
+        {
+          "code": "Vitest/TypeScript runtime packaging",
+          "disposition": "replaced",
+          "reason": "ESP's existing classic-script embedding and Node VM tests require no React/Vitest dependency, donor build or duplicate firmware copy."
+        }
+      ],
+      "remaining": [
+        "Actual LAN/physical firmware runtime remains separate. Other donor app-level settings/audio/diagnostics consumers are independently inventoried and pending, not certified by this utility import."
+      ],
+      "proof": [
+        {
+          "path": "tests/browser_console_test.mjs",
+          "sha256": "72256bccce30f66427a78e109fa916397c9d31c540febb13be48618563b0db76",
+          "anchor": "Actual allowlist + recursive redaction"
+        },
+        {
+          "path": "tests/browser_console_test.mjs",
+          "sha256": "72256bccce30f66427a78e109fa916397c9d31c540febb13be48618563b0db76",
+          "anchor": "Actual WebSocket ownership"
+        }
+      ],
+      "improvement": "Adds bounded dedupe lifetime, camelCase/prototype/format protection, newest-socket ownership and diagnostic failure containment, with executable negative fixtures."
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "webui/src/browser-console.test.ts",
+      "sha256": "024ed161c6c71655ef67cdbed8cf743fd33864118604737a5f44f533bf9f48f5",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "All actual donor startup, five-level dispatch, allowlist/redaction, keyed dedupe, Error-code-only and control/Bidi scenarios ported against shipped code. Added bounds/cycles/prototype, invalid sink/date, current palette, real HTTP secret/no-replay/quiet-poll, stale WebSocket ownership and canonical embedding checks."
+      ],
+      "targets": [
+        {
+          "path": "tests/browser_console_test.mjs",
+          "sha256": "72256bccce30f66427a78e109fa916397c9d31c540febb13be48618563b0db76",
+          "anchor": "Actual RayanLamp browser-console.test.ts scenarios"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Vitest describe/it.each/vi sink mocks",
+          "disposition": "replaced",
+          "reason": "Built-in Node assertions/VM sink and controlled time run the same scenarios plus real production adapter code without adding dependencies or build caches."
+        },
+        {
+          "code": "Lamp state names and fixed brand color expectations",
+          "disposition": "replaced",
+          "reason": "Tests assert adapted device vocabulary and actual shared Pealayer colors rather than claiming the lamp identity/colors apply to Pakar."
+        }
+      ],
+      "remaining": [
+        "VM execution is not pixels, deployment, LAN or physical board acceptance."
+      ],
+      "proof": [
+        {
+          "path": "tests/browser_console_test.mjs",
+          "sha256": "72256bccce30f66427a78e109fa916397c9d31c540febb13be48618563b0db76",
+          "anchor": "Real HTTP adapter"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "RayanLamp",
       "path": "webui/src/i18n.tsx",
       "sha256": "9a4843ade326c1ee323c3f60d6b0d6ac41cab9d2dcd50affed276fdd8096ff0a",
       "source_read": "complete",
@@ -17,12 +118,12 @@
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "49780d8f962b12f9daec283100b7c9b9cab6b255c7b6f2542ca7b6fb7f1eedce",
+          "sha256": "8c00b555d38a25bd280c76b84202c535f5886130a28949991fc3abccfcfd36f2",
           "anchor": "function startUiLocaleController()"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
+          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -117,9 +218,9 @@
             "anchor": "function startBrowserAppearanceController()"
           },
           {
-            "path": "firmware/esp8266/src/WebUi.h",
-            "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
-            "anchor": "<script data-pakar-presentation>"
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "anchor": "<script data-pakar-presentation>"
           }
         ],
         "omissions": [
@@ -202,9 +303,9 @@
             "anchor": "replaceBlock('// BEGIN BROWSER CONTROLLER'"
           },
           {
-            "path": "firmware/esp8266/src/WebUi.h",
-            "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
-            "anchor": "<script data-pakar-presentation>"
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
+          "anchor": "<script data-pakar-presentation>"
           }
         ],
         "omissions": [
@@ -456,17 +557,17 @@
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "49780d8f962b12f9daec283100b7c9b9cab6b255c7b6f2542ca7b6fb7f1eedce",
+          "sha256": "8c00b555d38a25bd280c76b84202c535f5886130a28949991fc3abccfcfd36f2",
           "anchor": "function uiTr(text,values)"
         },
         {
           "path": "tools/generate-font-assets.mjs",
-          "sha256": "f1825725a2ccf4cefeb29d1be8a4f17db4e755be4548c730dc567cccf0b6be9c",
+          "sha256": "8a01f98da4ec7660159990609d2c1182281294e707e141e33cf458cf8e2a6867",
           "anchor": "const dictionary={}"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
+          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -577,7 +678,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "b99575ce7960eb4e5242b34c181e86937083023da869471059f6e67f0687b351",
+          "sha256": "62a60755bc410d38ff04d7dbe178813ec8fd2ab5c8cdc9be98b0d718a44a55b0",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -588,12 +689,12 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "8cd07cef477916c2cf052cc30d01c03a3860734155acd94cefdca366f5f1a39c",
+          "sha256": "0f02fbba3cf5e213715fffe0a73dcf947cb86e9216e7fcae688f3020a5ecb6f6",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "93a3cf3713f69aebc51482adc158bbae32804ed7618586e4dcb765fd151f714a",
+          "sha256": "a8f227c5a469fb79d05c0fe807a522c8ccc3f3e4be5eb511109ad7a85dfcc8fb",
           "anchor": "export function runChecks"
         },
         {
@@ -638,7 +739,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "b99575ce7960eb4e5242b34c181e86937083023da869471059f6e67f0687b351",
+          "sha256": "62a60755bc410d38ff04d7dbe178813ec8fd2ab5c8cdc9be98b0d718a44a55b0",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -671,7 +772,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "b99575ce7960eb4e5242b34c181e86937083023da869471059f6e67f0687b351",
+          "sha256": "62a60755bc410d38ff04d7dbe178813ec8fd2ab5c8cdc9be98b0d718a44a55b0",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -704,7 +805,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "b99575ce7960eb4e5242b34c181e86937083023da869471059f6e67f0687b351",
+          "sha256": "62a60755bc410d38ff04d7dbe178813ec8fd2ab5c8cdc9be98b0d718a44a55b0",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -737,7 +838,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "b99575ce7960eb4e5242b34c181e86937083023da869471059f6e67f0687b351",
+          "sha256": "62a60755bc410d38ff04d7dbe178813ec8fd2ab5c8cdc9be98b0d718a44a55b0",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -896,7 +997,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
+          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
           "anchor": "function peerAvailability("
         }
       ],
@@ -1194,7 +1295,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
+          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -1204,7 +1305,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
+          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -1269,7 +1370,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
+          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -3211,7 +3312,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
+          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -3301,7 +3402,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
+          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -3423,7 +3524,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
+          "sha256": "fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -3498,7 +3599,7 @@
         },
         {
           "path": "assets/web/localization.js",
-          "sha256": "49780d8f962b12f9daec283100b7c9b9cab6b255c7b6f2542ca7b6fb7f1eedce",
+          "sha256": "8c00b555d38a25bd280c76b84202c535f5886130a28949991fc3abccfcfd36f2",
           "anchor": "subscribeLocalePreferences(value=>"
         }
       ],

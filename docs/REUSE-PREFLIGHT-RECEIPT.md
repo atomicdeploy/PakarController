@@ -1,5 +1,58 @@
 # Donor-first preflight receipt
 
+## Rayan browser trace and portable font recovery
+
+Reread the actual task Build RayanLamp Go app without resuming or messaging it.
+Read browser-console.ts and browser-console.test.ts completely and verify live
+original-byte hashes. The actual sanitizer, error projection, styled sink and
+quiet-window mechanism are imported; lamp names and fixed colors are replaced
+explicitly by device vocabulary and the existing shared Pealayer palette.
+Shipped HTTP and WebSocket consumers are tested, not merely a disconnected helper.
+Added safeguards include bounded lifetime, camelCase secret keys, prototype/format
+protection, invalid host containment and stale-socket ownership. No storage writes
+or automatic uncertain-command replay. Successful telemetry/polls/frames are quiet.
+
+Terminal source 2a5574c Build run 38090552957 passed lint, source quality and Android
+preview. CodeQL 38090552932 passed. Firmware passed the repaired missing-drive
+gate and AVR polling compile, then failed strict FontAssets.h equality under
+Node 22 on Linux. Windows compiled past the previous 11 API errors, then failed
+cell neutral-fill, offline connection dropdown and font-family tests; the process
+also ended with 0xc0000409. Those native assertions/crash need separate donor-first
+recovery and remain open. No all-green, native package or production claim.
+
+Fully reread Pealayer build.rs and ci-cd.yml before the font recovery. The latter's
+Node 24 setup is now also used by firmware verification. Windows gzip OS metadata
+is 10; normalize only the non-checksummed OS byte to RFC 1952 unknown=255. Deflate
+body, trailer/CRC and decompressed licensed font bytes remain unchanged. Header
+flags/MTIME that would make this unsafe are rejected. Strict asset equality stays
+enabled. Tests cover Unix/Windows OS fixtures; an actual Linux rerun is still
+required, not inferred from injected header bytes. No font/CDN/dependency change.
+
+The new module initially made localization settle only on a second generator
+pass. Recovery analyzes the canonical module before extracting translations,
+independent of its previous embed. One generation followed immediately by --check
+and shipped browser trace tests passes. Complete local source-quality suite passes.
+Selective 22 existing target/proof references and two PU route references retain
+their exact anchors/decisions; two new Rayan certificates bring coverage to 77/4237,
+4160 pending, 46 gaps; Rayan 13/2349, 2336 pending. Toast/tokens files remain pending.
+
+ASUS localhost:1022 still refuses SSH. No native cache bypass, cleanup, donor build,
+additional cache, app replacement or board flash. Only affected ESP busy-wire
+firmware is built through the mandatory warm wrapper; record its result separately.
+
+That ESP build passed: 915632-byte bin SHA256
+0544853c13cf64dbf78f488b765379d726e6c2da244b467c5a1156cc541cc5e3;
+RAM 70%, IRAM 96%, flash code 82%. Existing toolchain/link flags and cache retained.
+
+Optional local actionlint invocation failed at process execution: existing Go
+temporary root PCController/go-noexec-temp denies execution of actionlint.exe.
+Consulted repository-governance and the fully read Pealayer CI workflow; its
+Ubuntu lint job is the accepted execution surface. No ACL/temp-root bypass,
+second build cache or dependency churn. Current Node governance tests pass;
+new workflow actionlint execution remains pending CI. Comparison --check itself
+passes; piping its Format-Table stream into Select-Object -Last caused a local
+formatting error, so the check was rerun without that output projection.
+
 ## Native API and cross-platform gate recovery
 
 Terminal Build run 38090009184 at source 527d8e9 repeats the exact 11 native

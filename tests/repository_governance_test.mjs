@@ -21,6 +21,9 @@ assert.match(build,/needs: \[lint, quality, firmware, windows-desktop, android-p
 assert.match(build,/--draft --prerelease/);assert.match(build,/attest-build-provenance@/);
 assert.match(build,/retention-days: 7/);assert.match(build,/workspaces: desktop -> target/);
 assert.match(build,/node tools\/ci-checks.mjs (quality|desktop)/);
+const firmwareJob=build.split('  firmware:')[1].split('  windows-desktop:')[0];
+assert.match(firmwareJob,/actions\/setup-node@[a-f0-9]{40}[\s\S]*node-version: '24'/,
+  'Firmware asset verification must use the same Node major as source quality');
 let calls=[];
 assert.throws(()=>runChecks([['first'],['never']],cmd=>{calls.push(cmd);return {status:7};}),error=>error.exitCode===7);
 assert.deepEqual(calls,['first'],'Do not execute later commands after a failure');
