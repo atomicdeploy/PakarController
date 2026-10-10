@@ -52,7 +52,7 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "017b19795896c9157fed8961e0b67457e1c6522654eb8398eac7b5f0d1e388f5",
+          "sha256": "8cd07cef477916c2cf052cc30d01c03a3860734155acd94cefdca366f5f1a39c",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {

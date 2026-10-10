@@ -296,7 +296,7 @@ Verdict: **scoped-improvement**. Revision: `759dafebc836e75dac3678fe4722a4bd7c1c
 
 Verdict: **parity-gap**. Revision: `759dafebc836e75dac3678fe4722a4bd7c1cb846`. Original-byte SHA-256: `4efb85988474d177a90ea1e31320e64bab1b027c42c3c5ba842fed9781b4eb5b`.
 
-- Target: `.github/workflows/build.yml:1 [UTF8-LF sha256=017b19795896c9157fed8961e0b67457e1c6522654eb8398eac7b5f0d1e388f5; anchor=name: "🚀 Build · Test · Release"]`.
+- Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=8cd07cef477916c2cf052cc30d01c03a3860734155acd94cefdca366f5f1a39c; anchor=name: "🚀 Build · Test · Release"]`.
 - Target: `tools/ci-checks.mjs:174 [UTF8-LF sha256=1a416366464cb2bd123ea4555d554903bb17a0394792145d92fe3795712c3f00; anchor=export function runChecks]`.
 - Target: `tools/prepare-release.mjs:16 [UTF8-LF sha256=96c3a9f5fbc5dfd055a1b139b09271d92d19beaf9cc1cda3c83a88f266ee177e; anchor=export function firmwareManifest]`.
 - Retained: Actual donor branch/PR/tag/dispatch/merge-group triggers, concurrency policy, pinned actions without checkout credentials, health-before-build jobs, timeouts, Rust cache reuse, locked tests/builds, packaging, curated notes, manifest/checksums/provenance and aggregate results adapted to current Windows/ESP/AVR/Android targets.

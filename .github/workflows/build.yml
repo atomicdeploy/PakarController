@@ -1,9 +1,10 @@
+# Adapted from Pealayer CI/CD (MIT); see docs/licenses/Pealayer-MIT.txt.
 name: "🚀 Build · Test · Release"
 run-name: "🚀 PakarController · ${{ github.ref_name }} · ${{ github.event_name }}"
 
 on:
   push:
-    branches: ["**"]
+    branches: [main]
     tags: ["v*"]
   pull_request:
   merge_group:

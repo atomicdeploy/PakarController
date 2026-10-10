@@ -21,8 +21,11 @@ extra native cache. `.gitattributes` normalizes text to LF so a Windows checkout
 cannot corrupt hash-bound comparisons. Each native runner uses one canonical
 `desktop/target`; locked builds and existing disk-budget/donor gates remain intact.
 Hosted native cache reuse is separate from, and does not duplicate, the local cache.
-Superseded branch/PR runs cancel; main/tag runs remain preserved. Run artifacts
-expire after seven days. Local binaries are not rebuilt for README/governance edits.
+Superseded branch/PR runs cancel; main/tag runs remain preserved.
+Build pushes are restricted to main/tags; PR updates run once instead of compiling
+the same feature commit in both push and PR workflows. Other branches can dispatch
+explicitly. This adapts Pealayer's all-branch push trigger to avoid duplicate work.
+Run artifacts expire after seven days. Local binaries are not rebuilt for README/governance edits.
 
 Build stages: workflow lint → repository/interface checks → ESP/AVR (both UART
 flags), Windows test/release, Android preview. One aggregate check fails for a
@@ -66,6 +69,8 @@ Issue forms collect device/client versions, acknowledged capabilities, transport
 and proof scope. The PR checklist records actual donor paths and omissions,
 generated-contract tests, screenshots, privacy and low-write verification. Release
 categories use the same labels. Security disclosure stays private.
+The donor's emoji Bug alias is not duplicated: the existing canonical `bug` label
+is preserved and used by the forms. Useful domain labels are adapted, not removed.
 
 ## Default branch versus application review
 
