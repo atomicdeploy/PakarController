@@ -1,0 +1,58 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const source=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
+const script=source.match(/<script>([\s\S]*?)<\/script>/)[1];
+// Execute the actual embedded Web application with a DOM/HTTP test double.
+// These fixtures are not hardware observations or live firmware proof.
+function element(){return {value:'',checked:false,hidden:false,textContent:'',className:'',children:[],dataset:{},listeners:{},classList:{toggle(){}},appendChild(e){this.children.push(e)},append(...e){this.children.push(...e)},setAttribute(){},addEventListener(type,handler){this.listeners[type]=handler},querySelectorAll(){return []}}}
+const nodes=Object.fromEntries([...source.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],element()]));
+nodes.workspace.hidden=true;
+let signedIn=false,user='admin',password='pakarcontroller',socketCount=0,statusRequests=0;
+const calls=[];
+const context=vm.createContext({...nodes,URLSearchParams,FormData,Uint8Array,console,
+  document:{querySelector:s=>nodes[s.slice(1)],querySelectorAll:()=>[],createElement:element,createTextNode:text=>({textContent:text}),createElementNS:()=>({...element(),namespaceURI:'svg'})},
+  location:{protocol:'http:',host:'pakarcontroller'},setInterval:()=>1,clearInterval(){},setTimeout:()=>1,
+  WebSocket:class {constructor(){socketCount++;this.readyState=1}close(){this.readyState=3}send(){}},
+  fetch:async(path,options={})=>{
+    calls.push({path,options});let code=200,body={};
+    if(path==='/api/v1/auth/info')body={ready:true,username:user,default_credentials:password==='pakarcontroller'};
+    else if(path==='/login'){
+      signedIn=options.body.get('username')===user&&options.body.get('password')===password;
+      if(!signedIn){code=401;body='Incorrect username or password'}
+    }else if(!signedIn){code=401;body={error:'login_required'}}
+    else if(path==='/logout'){signedIn=false}
+    else if(path==='/api/v1/auth'){
+      assert.equal(options.method,'POST');assert.equal(options.body.get('current_password'),password);
+      user=options.body.get('username');password=options.body.get('password');signedIn=false;
+      body={updated:true,reauthenticate:true};
+    }else if(path==='/api/v1/status'){
+      statusRequests++;body={hostname:'test-fixture',cells:[],tm1637_segments:[]};
+    }else if(path==='/api/v1/cells/mapping')body={physical:[],names:[]};
+    return {ok:code<400,status:code,statusText:String(code),text:async()=>typeof body==='string'?body:JSON.stringify(body)};
+  }});
+vm.runInContext(script,context);
+const settle=async()=>{for(let i=0;i<15;i++)await Promise.resolve()};
+await settle();
+assert.equal(nodes.workspace.hidden,true);assert.equal(socketCount,0);
+assert.match(nodes.loginHint.textContent,/admin \/ pakarcontroller/);
+nodes.loginUser.value='admin';nodes.loginPassword.value='wrong';
+await nodes.loginForm.listeners.submit({preventDefault(){}});await settle();
+assert.match(nodes.loginError.textContent,/Incorrect/);assert.equal(socketCount,0);
+nodes.loginPassword.value='pakarcontroller';
+await nodes.loginForm.listeners.submit({preventDefault(){}});await settle();
+assert.equal(nodes.workspace.hidden,false,nodes.loginError.textContent);assert.equal(socketCount,1);assert.equal(nodes.loginPassword.value,'');
+assert.equal(statusRequests,1);assert.match(nodes.accessWarning.textContent,/Default password/);
+nodes.accessCurrent.value=password;nodes.accessUser.value='David';nodes.accessPassword.value='new-password';nodes.accessConfirm.value='different';
+await nodes.accessForm.listeners.submit({preventDefault(){}});
+assert.equal(calls.filter(c=>c.path==='/api/v1/auth').length,0);
+nodes.accessConfirm.value='new-password';await nodes.accessForm.listeners.submit({preventDefault(){}});await settle();
+assert.equal(nodes.workspace.hidden,true);assert.equal(nodes.accessCurrent.value,'');assert.equal(nodes.accessPassword.value,'');
+assert.equal(nodes.accessConfirm.value,'');assert.equal(nodes.loginUser.value,'David');
+assert.doesNotMatch(nodes.loginHint.textContent,/pakarcontroller/);
+assert.ok(calls.every(c=>!c.path.includes('password=')),'Secrets must not be put into URLs');
+nodes.loginUser.value='David';nodes.loginPassword.value='new-password';
+await nodes.loginForm.listeners.submit({preventDefault(){}});await settle();
+assert.equal(nodes.workspace.hidden,false);assert.equal(nodes.accessWarning.textContent,'');
+await vm.runInContext('signOut()',context);assert.equal(nodes.workspace.hidden,true);
+console.log('Embedded Web sign-in, rejection, rotation, secret clearing, warning and sign-out passed.');

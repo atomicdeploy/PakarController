@@ -1,5 +1,10 @@
 # PakarController ESP8266 + ATmega328P
 
+First-install login: `admin` / `pakarcontroller`; change it in **Device access**.
+See [Access and recovery](docs/ACCESS.md) and the explicit
+[PU850 parity audit](docs/PU850-PARITY.md). ESPAsyncWebServer now hosts the
+Web UI/API/WebSocket, ESP OTA and AVR ISP in the same firmware.
+
 PakarController is a two-controller game platform built from the reusable parts of
 AtomicDeploy's earlier PuzzleBoard, 40LED, Puzzles, pu850-esp, PCController,
 and Pealayer work.
@@ -34,7 +39,8 @@ It can stream a generated rainbow or sample the primary screen into the 10 by
 ## Build
 
 On the Windows hardware host with Arduino CLI and the locked libraries
-installed (FastLED 3.10.6, WebSockets 2.7.2, PubSubClient 2.8.0):
+installed (FastLED 3.10.6, WebSockets 2.7.2, PubSubClient 2.8.0,
+ESP Async WebServer 3.12.1, ESP Async TCP 2.0.0):
 
 ```powershell
 .\tools\build-firmware.ps1 -LinkMode polling

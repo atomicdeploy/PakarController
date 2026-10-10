@@ -51,3 +51,7 @@ Pealayer,build.rs,adapted,desktop/build.rs,Adapted executable resource compiler 
 Pealayer,assets/themes/ui-colors.json,adapted,assets/themes/ui-colors.json,Imported exact semantic color swatches
 Pealayer,assets/fonts/Vazirmatn-Regular.ttf,adapted,assets/fonts/Vazirmatn-Regular.ttf,Imported bundled font fallback
 Pealayer,LICENSE,adapted,desktop/licenses/Pealayer-MIT.txt,Preserved upstream license attribution
+PU850-ESP,LocalLib/FirmwareTransfer.cpp,adapted,firmware/esp8266/src/FirmwareTransfer.cpp + FirmwareRange.h,Actual donor GET HEAD Range ETag MD5 aligned flash source imported with shared authorization and Pakar identity
+PU850-ESP,LocalLib/Authentication.cpp + Sessions.cpp,adapted,firmware/esp8266/src/WebAccess.h + AccessConfig.cpp + libraries/BoardCore/src/AccessPolicy.h,Bounded sessions and constant comparison adapted with real authorization persistence rotation expiry and no secret dumps
+PU850-ESP,LocalLib/AsyncWebServer.cpp + AsyncOTA.cpp,adapted,firmware/esp8266/esp8266.ino + src/AsyncHttpService.h,Real async transport with deferred hardware work and exclusive owner-aware multipart OTA
+PU850-ESP,PRODUCT-PROFILES.md + ProductConfig.h,reviewed,docs/PU850-PARITY.md,Metadata and safe firmware transfer mapped; explicit open gaps retained

@@ -1097,6 +1097,73 @@ impl PakarControllerApp {
         });
     }
     fn draw_network(&mut self, ui: &mut egui::Ui) {
+        dialog::section(ui, icons::LOCK, "Device access", |ui| {
+            if let Some(info) = &self.access_info {
+                if info.get("ready").and_then(|v| v.as_bool()) != Some(true) {
+                    ui.colored_label(
+                        ui.visuals().error_fg_color,
+                        "Device access storage is unavailable. Physical USB recovery is required.",
+                    );
+                    return;
+                }
+                if info.get("default_credentials").and_then(|v| v.as_bool()) == Some(true) {
+                    ui.colored_label(
+                        ui.visuals().warn_fg_color,
+                        "Default login: admin / pakarcontroller. Change it here.",
+                    );
+                }
+                field(
+                    ui,
+                    icons::LOCK,
+                    "New username",
+                    &mut self.access_user,
+                    false,
+                );
+                field(
+                    ui,
+                    icons::LOCK,
+                    "New password",
+                    &mut self.access_password,
+                    true,
+                );
+                field(
+                    ui,
+                    icons::LOCK,
+                    "Confirm password",
+                    &mut self.access_confirm,
+                    true,
+                );
+                ui.label(egui::RichText::new("Uses your current connection password. Saved on the ESP across OTA; signs out every client. Wi-Fi credentials are unchanged. HTTP is not encrypted.").small().weak());
+                if dialog::primary_action_button(ui, icons::CHECK, "Save device credentials")
+                    .clicked()
+                {
+                    match crate::access::validate(
+                        &self.access_user,
+                        &self.access_password,
+                        &self.access_confirm,
+                    ) {
+                        Ok(()) => {
+                            let next = crate::Endpoint {
+                                base: self.base.clone(),
+                                user: self.access_user.clone(),
+                                password: self.access_password.clone(),
+                            };
+                            let _ = self
+                                .http_tx
+                                .send(crate::HttpCommand::AccessChange(self.endpoint(), next));
+                        }
+                        Err(error) => self.notify(
+                            "Cannot save credentials",
+                            &error,
+                            crate::messaging::Severity::Warning,
+                        ),
+                    }
+                }
+            } else {
+                ui.label("Credential settings have not been advertised by the device. Connect to the updated firmware to configure them.");
+            }
+        });
+        ui.add_space(10.0);
         if let Some(s) = self.live_status().cloned() {
             dialog::section(ui, icons::BROADCAST, "Live network", |ui| {
                 ui.horizontal_wrapped(|ui| {

@@ -5,6 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+mod access;
 mod config;
 mod display;
 mod messaging;
@@ -134,6 +135,7 @@ enum HttpCommand {
     Mapping(Endpoint),
     Configuration(Endpoint, &'static str),
     Post(Endpoint, &'static str, Vec<(String, String)>),
+    AccessChange(Endpoint, Endpoint),
 }
 
 impl HttpCommand {
@@ -142,6 +144,7 @@ impl HttpCommand {
             Self::Status(endpoint)
             | Self::Mapping(endpoint)
             | Self::Configuration(endpoint, ..)
+            | Self::AccessChange(endpoint, ..)
             | Self::Post(endpoint, ..) => endpoint,
         }
     }
@@ -157,6 +160,9 @@ impl HttpCommand {
             Self::Mapping(endpoint) => Self::Mapping(replace(endpoint)),
             Self::Configuration(endpoint, path) => Self::Configuration(replace(endpoint), path),
             Self::Post(endpoint, path, form) => Self::Post(replace(endpoint), path, form.clone()),
+            Self::AccessChange(endpoint, next) => {
+                Self::AccessChange(replace(endpoint), replace(next))
+            }
         }
     }
 }
@@ -189,12 +195,40 @@ enum Event {
     Mapping(Vec<CellMapping>),
     Configuration(&'static str, serde_json::Value),
     Accepted(String),
+    CredentialsUpdated(Endpoint),
     Failed(String),
     WebSocket(bool),
     Serial(bool, Option<DeviceStatus>),
 }
 
 fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> {
+    if let HttpCommand::AccessChange(endpoint, next) = &command {
+        let response = client
+            .post(format!(
+                "{}/api/v1/auth",
+                endpoint.base.trim_end_matches('/')
+            ))
+            .basic_auth(&endpoint.user, Some(&endpoint.password))
+            .form(&[
+                ("current_password", &endpoint.password),
+                ("username", &next.user),
+                ("password", &next.password),
+            ])
+            .send()
+            .map_err(|e| e.to_string())?;
+        if !response.status().is_success() {
+            return Err(format!(
+                "HTTP {}: {}",
+                response.status(),
+                response.text().unwrap_or_default()
+            ));
+        }
+        let value: serde_json::Value = response.json().map_err(|e| e.to_string())?;
+        if value.get("updated").and_then(|v| v.as_bool()) != Some(true) {
+            return Err("Device did not confirm a saved credential change".into());
+        }
+        return Ok(Event::CredentialsUpdated(next.clone()));
+    }
     if let HttpCommand::Configuration(endpoint, path) = &command {
         let response = client
             .get(format!("{}{}", endpoint.base.trim_end_matches('/'), path))
@@ -222,7 +256,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
             let request = client.get(url);
             (endpoint, request, 2_u8)
         }
-        HttpCommand::Configuration(..) => unreachable!(),
+        HttpCommand::Configuration(..) | HttpCommand::AccessChange(..) => unreachable!(),
         HttpCommand::Post(endpoint, path, form) => {
             let url = format!("{}{}", endpoint.base.trim_end_matches('/'), path);
             let request = client.post(url).form(&form);
@@ -282,7 +316,10 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
             .map(|base| command.with_base(base.clone()))
             .unwrap_or_else(|| command.clone());
         let mut result = http_request(&client, first);
-        if result.is_err() && host_prefers_discovery {
+        if result.is_err()
+            && host_prefers_discovery
+            && !matches!(command, HttpCommand::AccessChange(..))
+        {
             discovered_base = None;
             for base in platform::discovery::ssdp_locations(Duration::from_millis(1200)) {
                 if let Ok(event) = http_request(&client, command.with_base(base.clone())) {
@@ -728,6 +765,10 @@ struct PakarControllerApp {
     base: String,
     user: String,
     password: String,
+    access_user: String,
+    access_password: String,
+    access_confirm: String,
+    access_info: Option<serde_json::Value>,
     serial_port: String,
     transport: Transport,
     status: Option<DeviceStatus>,
@@ -835,6 +876,10 @@ impl PakarControllerApp {
             base: std::env::var("PAKAR_ENDPOINT").unwrap_or_else(|_| config.endpoint.clone()),
             user: std::env::var("PAKAR_USER").unwrap_or_else(|_| config.user.clone()),
             password: std::env::var("PAKAR_PASSWORD").unwrap_or_else(|_| "pakarcontroller".into()),
+            access_user: String::new(),
+            access_password: String::new(),
+            access_confirm: String::new(),
+            access_info: None,
             serial_port: std::env::var("PAKAR_SERIAL")
                 .unwrap_or_else(|_| config.serial_port.clone()),
             transport: Transport::Both,
@@ -995,6 +1040,7 @@ impl PakarControllerApp {
     fn poll(&mut self) {
         let endpoint = self.endpoint();
         if self.last_ws_endpoint.as_ref() != Some(&endpoint) {
+            self.access_info = None;
             let _ = self.ws_tx.send(WsCommand::Connect(endpoint.clone()));
             self.last_ws_endpoint = Some(endpoint);
             self.configuration_loaded = false;
@@ -1018,6 +1064,10 @@ impl PakarControllerApp {
                 .http_tx
                 .send(HttpCommand::Configuration(self.endpoint(), "/api/v1/cloud"));
             self.configuration_loaded = true;
+            let _ = self.http_tx.send(HttpCommand::Configuration(
+                self.endpoint(),
+                "/api/v1/auth/info",
+            ));
         }
         if self.last_mapping_poll.elapsed() >= Duration::from_secs(15) {
             self.last_mapping_poll = Instant::now();
@@ -1036,7 +1086,25 @@ impl PakarControllerApp {
                     }
                 }
                 Event::Mapping(mappings) => self.mappings = mappings,
+                Event::Configuration("/api/v1/auth/info", value) => {
+                    self.access_user = value
+                        .get("username")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default()
+                        .into();
+                    self.access_info = Some(value);
+                }
                 Event::Configuration(path, value) => self.receive_configuration(path, value),
+                Event::CredentialsUpdated(endpoint) => {
+                    self.user = endpoint.user;
+                    self.password = endpoint.password;
+                    self.config.user = self.user.clone();
+                    self.access_password.clear();
+                    self.access_confirm.clear();
+                    self.configuration_loaded = false;
+                    self.last_ws_endpoint = None;
+                    self.notify("Credentials saved", "All device sessions were signed out. This client will reconnect with the new credentials.", messaging::Severity::Success);
+                }
                 Event::Accepted(m) => {
                     self.record_event("Command", &m);
                     self.notify("Command accepted", &m, messaging::Severity::Success);
@@ -1167,6 +1235,38 @@ fn print_text_status(status: &DeviceStatus, table: bool) {
 }
 
 fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<(), String> {
+    if words == ["auth", "info"] {
+        let value: serde_json::Value = client
+            .get(format!(
+                "{}/api/v1/auth/info",
+                endpoint.base.trim_end_matches('/')
+            ))
+            .send()
+            .map_err(|e| e.to_string())?
+            .error_for_status()
+            .map_err(|e| e.to_string())?
+            .json()
+            .map_err(|e| e.to_string())?;
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?
+        );
+        return Ok(());
+    }
+    if let ["auth", "change", user] = words {
+        let password = std::env::var("PAKAR_NEW_PASSWORD").map_err(
+            |_| "Set PAKAR_NEW_PASSWORD privately; do not put passwords in command arguments",
+        )?;
+        access::validate(user, &password, &password)?;
+        let next = Endpoint {
+            base: endpoint.base.clone(),
+            user: (*user).into(),
+            password,
+        };
+        http_request(client, HttpCommand::AccessChange(endpoint.clone(), next))?;
+        println!("Credentials saved. Update PAKAR_USER/PAKAR_PASSWORD before further commands.");
+        return Ok(());
+    }
     if words.is_empty() || words[0] == "status" {
         return blocking_status(client, endpoint).map(|status| print_text_status(&status, true));
     }
@@ -1242,7 +1342,7 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
     ) {
         return Ok(false);
     }
-    let endpoint = environment_endpoint();
+    let mut endpoint = environment_endpoint();
     let client = Client::builder()
         .no_proxy()
         .timeout(Duration::from_secs(15))
@@ -1282,12 +1382,16 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
                 }
                 if matches!(words.first(), Some(&"help")) {
                     println!(
-                        "status | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | display stop | display segments [--speed-ms n] [--duration-ms n] [--repeat once|loop|interval] [--interval-ms n] [--scroll] -- TEXT | audio <cue> | snake <direction> | reset | quit"
+                        "status | auth info | auth change USERNAME (PAKAR_NEW_PASSWORD) | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | display stop | display segments [--speed-ms n] [--duration-ms n] [--repeat once|loop|interval] [--interval-ms n] [--scroll] -- TEXT | audio <cue> | snake <direction> | reset | quit"
                     );
                     continue;
                 }
                 if let Err(error) = text_command(&client, &endpoint, &words) {
                     eprintln!("{error}");
+                } else if let ["auth", "change", user] = words.as_slice() {
+                    endpoint.user = (*user).into();
+                    endpoint.password =
+                        std::env::var("PAKAR_NEW_PASSWORD").map_err(|e| e.to_string())?;
                 }
             }
             Ok(())

@@ -31,6 +31,7 @@ enum Opcode : uint8_t {
   kSetBrightness = 0x51,
   kSetLedPattern = 0x52,
   kNetworkConfig = 0x53,
+  kAccessConfig = 0x54, // ESP physical USB only: reset staging, user/password chunks, commit.
 
   kAck = 0x80,
   kHelloResponse = 0x81,

@@ -1,12 +1,25 @@
 # HTTP and streaming API
 
-All HTTP routes use Basic authentication. The development image starts an
-access point named `pakarcontroller` at `192.168.4.1`. The temporary
-credentials are `admin` / `pakarcontroller` and must be replaced before a
-public installation.
+Open `http://pakarcontroller/` (or `.local`, with IP only as a fallback).
+The public sign-in page replaces the unexplained browser Basic-auth prompt.
+First-install credentials are `admin` / `pakarcontroller`; change them in
+**Device access**. Protected HTTP routes and `/ws` accept a browser session
+or explicit Basic authentication for native/API clients. `/`, `/description.xml`
+and `/api/v1/auth/info` are public reads; `/login` accepts a form POST.
+Local HTTP and Telnet are not encrypted; never expose them directly to the Internet.
+The recovery AP Wi-Fi password is independent of the device login.
+See `ACCESS.md` for persistence, CLI/TUI, native editor and physical USB recovery.
 
 | Method | Route | Purpose |
 |---|---|---|
+| GET | `/api/v1/auth/info` | public readiness, username and default-credential warning; never the configured password |
+| POST | `/login` | form `username`, `password`; HttpOnly SameSite=Strict session cookie |
+| POST | `/logout` | revoke this session and close established sockets |
+| GET | `/api/v1/auth` | authenticated username and password-set flag |
+| POST | `/api/v1/auth` | form `current_password`, `username`, `password`; persist, revoke sessions and reconnect with new credentials |
+| GET | `/update/info` | PU-compatible product/name/model/hash/size/free plus version and actual OTA phase/received byte count |
+| GET | `/info` | redacted firmware, heap, reset reason, uptime and protocol diagnostics |
+| GET, HEAD | `/firmware/download` | imported PU850 sketch download with Range/ETag/MD5; full-flash dumps disabled |
 | GET | `/api/v1/status` | peer-advertised AVR, mode, winner, cell, brightness, and LED state |
 | GET | `/api/v1/time` | NTP synchronization state and UTC epoch |
 | GET | `/api/v1/wifi/scan` | visible SSIDs, RSSI, and encryption flag |
@@ -31,9 +44,11 @@ public installation.
 | GET | `/api/v1/avr/backup/eeprom` | download the last 1 KiB EEPROM backup |
 | POST | `/api/v1/avr/image` | multipart upload of one complete 32768-byte AVR+Urboot raw image |
 | POST | `/api/v1/avr/program` | backup, erase, program, and byte-verify the staged image |
-| POST | `/update` | ESP8266 HTTP self-update page |
+| GET, POST | `/update` | authenticated async ESP self-OTA form/upload; optional file `MD5` preceding the firmware file |
 
-UDP port 7890 accepts bounded `PKR1` chunks. Each datagram contains the four
+UDP port 7890 accepts bounded `PKR1` chunks **without authentication**;
+use only on a trusted LAN. The authenticated WebSocket is preferred.
+Each datagram contains the four
 ASCII magic bytes, two reserved/version bytes, little-endian pixel offset,
 one pixel count, one flags byte, then RGB triples. Bit zero of flags commits
 the staged frame. A packet is rejected unless its exact size and pixel range

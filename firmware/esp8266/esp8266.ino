@@ -1,14 +1,13 @@
 #include <Arduino.h>
-#include <ESP8266HTTPUpdateServer.h>
 #include <ESP8266SSDP.h>
 #include <ESP8266NetBIOS.h>
-#include <ESP8266WebServer.h>
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <LittleFS.h>
 #include <SoftwareSerial.h>
 #include <Updater.h>
-#include <WebSockets4WebServer.h>
 #include <WiFiUdp.h>
 #include <time.h>
 
@@ -17,6 +16,9 @@
 #include <SerialLink.h>
 
 #include "src/AvrIsp.h"
+#include "src/AsyncHttpService.h"
+#include "src/WebAccess.h"
+#include "src/FirmwareTransfer.h"
 #include "src/CloudConfig.h"
 #include "src/CloudServices.h"
 #include "src/LedGrid.h"
@@ -38,7 +40,6 @@ namespace {
 constexpr uint32_t kBaud = 38400;
 constexpr uint16_t kStreamPort = 7890;
 constexpr uint8_t kBusyPin = D3;  // GPIO0 -> AVR D10/PB2, HIGH blocks AVR TX.
-constexpr char kAdmin[] = "admin";
 constexpr char kDevelopmentPassword[] = "pakarcontroller";
 constexpr char kHostname[] = "pakarcontroller";
 constexpr char kAvrImagePath[] = "/avr/staged.bin";
@@ -64,9 +65,9 @@ struct CellMappingRecord {
   uint16_t check;
 };
 
-ESP8266WebServer server(80);
-WebSockets4WebServer webSocket;
-ESP8266HTTPUpdateServer updater;
+AsyncHttpService server(80);
+AsyncWebSocket webSocket("/ws");
+WebAccess webAccess;
 WiFiUDP stream;
 WiFiServer telnetServer(23);
 WiFiClient telnetClient;
@@ -76,6 +77,7 @@ BoardCore::SerialLink hostLink(Serial);
 AvrIsp avrIsp(D1);
 LedGrid grid;
 File uploadFile;
+uint32_t avrUploadOwner = 0;
 String hostname;
 bool avrOnline = false;
 bool apStarted = false;
@@ -119,6 +121,8 @@ bool netbiosStarted = false;
 IPAddress discoveryAddress;
 String stagedStationSsid;
 String stagedStationPassword;
+String stagedAccessUser;
+String stagedAccessPassword;
 uint8_t snakeBody[LedGrid::kCells] = {};
 uint8_t snakeLength = 0;
 uint8_t snakeFood = 0;
@@ -126,6 +130,14 @@ uint8_t snakeDirection = 1;
 uint32_t lastSnakeAt = 0;
 bool snakeAlive = false;
 bool telnetAuthenticated = false;
+bool otaActive = false;
+bool otaStartCuePending = false;
+bool otaSuccessCuePending = false;
+bool otaErrorCuePending = false;
+uint32_t otaRebootAt = 0;
+size_t otaUploadedBytes = 0;
+uint32_t otaOwner = 0;
+String otaPhase = "idle";
 String telnetLine;
 CellMappingRecord cellMapping{};
 
@@ -139,6 +151,7 @@ bool setSnakeDirection(uint8_t direction);
 void serviceSnake(uint32_t now);
 void serviceTelnet();
 void serviceDiscovery();
+void registerAsyncOta();
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
                const uint8_t *payload = nullptr, uint8_t payloadLength = 0);
 
@@ -164,7 +177,28 @@ void sendHostStatus(uint8_t requestSequence) {
 }
 
 void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
+  if ((otaActive || otaRebootAt || avrUploadOwner) && frame.opcode != kGetStatus && frame.opcode != kHello && frame.opcode != kPing) {
+    hostLink.error(frame.sequence, frame.opcode, kBusy); return;
+  }
   switch (frame.opcode) {
+    case kAccessConfig: {
+      if (frame.payloadLength == 1 && frame.payload[0] == 0) {
+        stagedAccessUser = String(); stagedAccessPassword = String();
+      } else if (frame.payloadLength >= 2 && (frame.payload[0] == 1 || frame.payload[0] == 2)) {
+        String &target = frame.payload[0] == 1 ? stagedAccessUser : stagedAccessPassword;
+        const size_t limit = frame.payload[0] == 1 ? 32 : 64;
+        if (target.length() + frame.payloadLength - 1 > limit) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
+        for (uint8_t i = 1; i < frame.payloadLength; ++i) target += static_cast<char>(frame.payload[i]);
+      } else if (frame.payloadLength == 1 && frame.payload[0] == 3) {
+        const bool ok = accessConfig.provisionFromPhysicalUsb(stagedAccessUser, stagedAccessPassword);
+        stagedAccessUser = String(); stagedAccessPassword = String();
+        if (!ok) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
+        webAccess.revokeAll(); webSocket.closeAll(1008, "Credentials changed");
+        if (telnetClient) telnetClient.stop();
+        telnetAuthenticated = false;
+      } else { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
+      hostLink.ack(frame.sequence, frame.opcode); break;
+    }
     case kHello: {
       const uint16_t capabilities =
           kCapLedGrid | kCapIsp | kCapOta | kCapLittleFs | kCapApi |
@@ -452,6 +486,9 @@ void startDiscovery() {
   SSDP.setModelName("PakarController ESP8266 + ATmega328P");
   SSDP.setModelNumber(BoardCore::BuildInfo::kVersion);
   SSDP.setManufacturer("AtomicDeploy");
+  char uuid[37];
+  snprintf(uuid, sizeof(uuid), "38323636-4558-4dda-9188-cda0e6%06x", ESP.getChipId());
+  SSDP.setUUID(uuid);
   ssdpStarted = SSDP.begin();
   netbiosStarted = NBNS.begin(hostname.c_str());
 }
@@ -552,8 +589,12 @@ void playUpdateSuccessCue() {
 }
 
 bool authenticate() {
-  if (server.authenticate(kAdmin, kDevelopmentPassword)) return true;
-  server.requestAuthentication();
+  if (otaActive || otaRebootAt) { server.send(503, "text/plain", "ESP update in progress"); return false; }
+  if (avrUploadOwner && server.request() && server.request()->method() != HTTP_GET) {
+    server.send(409, "text/plain", "AVR image upload in progress"); return false;
+  }
+  if (server.request() && webAccess.allowed(server.request())) return true;
+  server.send(401, "application/json", "{\"error\":\"login_required\"}");
   return false;
 }
 
@@ -721,7 +762,7 @@ String buildStatusJson() {
   body += F(",\"utc_epoch\":");
   body += currentTime > 1700000000 ? static_cast<uint32_t>(currentTime) : 0U;
   body += F(",\"websocket_clients\":");
-  body += webSocket.connectedClients(false);
+  body += webSocket.count();
   body += F(",\"telnet_connected\":");
   body += (telnetClient && telnetClient.connected()) ? F("true") : F("false");
   body += F(",\"mqtt_enabled\":");
@@ -778,27 +819,59 @@ bool applyStreamPacket(const uint8_t *packet, size_t length) {
   return true;
 }
 
-void onWebSocketEvent(uint8_t client, WStype_t type, uint8_t *payload,
-                      size_t length) {
-  if (type == WStype_CONNECTED) {
-    String status = buildStatusJson();
-    webSocket.sendTXT(client, status);
-    return;
-  }
-  if (type == WStype_BIN) {
-    applyStreamPacket(payload, length);
-    return;
-  }
-  if (type != WStype_TEXT || length > 256U) return;
+void handleWebSocketMessage(AsyncWebSocketClient *client, uint8_t opcode,
+                           const uint8_t *payload, size_t length) {
+  if (!webAccess.socketAllowed(client->id())) { client->close(1008, "Sign in again"); return; }
+  if (otaActive || otaRebootAt) return;
+  if (opcode == WS_BINARY) { applyStreamPacket(payload, length); return; }
+  if (opcode != WS_TEXT || length > 256U) return;
   String message;
   message.reserve(length);
   message.concat(reinterpret_cast<const char *>(payload), length);
   if (message.indexOf(F("\"type\":\"status\"")) >= 0) {
     String status = buildStatusJson();
-    webSocket.sendTXT(client, status);
+    client->text(status);
   } else if (message.indexOf(F("\"type\":\"ping\"")) >= 0) {
-    String pong = F("{\"type\":\"pong\"}");
-    webSocket.sendTXT(client, pong);
+    client->text("{\"type\":\"pong\"}");
+  }
+}
+
+struct WsAssembly { size_t used; size_t length; uint8_t opcode; uint8_t data[1]; };
+void onWebSocketEvent(AsyncWebSocket *, AsyncWebSocketClient *client,
+                      AwsEventType type, void *argument, uint8_t *payload, size_t length) {
+  if (type == WS_EVT_DISCONNECT || type == WS_EVT_ERROR) {
+    webAccess.forgetSocket(client->id());
+    if (client->_tempObject) { free(client->_tempObject); client->_tempObject = nullptr; }
+    return;
+  }
+  if (type == WS_EVT_CONNECT) {
+    if (webSocket.count() > 8) { client->close(1013, "Client limit reached"); return; }
+    if (!webAccess.bindSocket(client->id(), static_cast<AsyncWebServerRequest *>(argument))) {
+      client->close(1008, "Sign in required"); return;
+    }
+    client->text(buildStatusJson()); return;
+  }
+  if (type != WS_EVT_DATA) return;
+  AwsFrameInfo *info = static_cast<AwsFrameInfo *>(argument);
+  if (!info || !info->final || info->num != 0 || info->len > 1300 ||
+      info->index + length > info->len) { client->close(1009, "Message exceeds stream bounds"); return; }
+  if (info->index == 0 && info->len == length) {
+    handleWebSocketMessage(client, info->opcode, payload, length); return;
+  }
+  if (info->index == 0) {
+    if (client->_tempObject) free(client->_tempObject);
+    auto *assembly = static_cast<WsAssembly *>(malloc(sizeof(WsAssembly) + info->len));
+    client->_tempObject = assembly;
+    if (!assembly) { client->close(1013, "Message buffer unavailable"); return; }
+    assembly->used = 0; assembly->length = info->len; assembly->opcode = info->opcode;
+  }
+  auto *assembly = static_cast<WsAssembly *>(client->_tempObject);
+  if (!assembly || assembly->used != info->index || assembly->length != info->len ||
+      assembly->used + length > assembly->length) { client->close(1002, "Invalid message sequence"); return; }
+  memcpy(assembly->data + assembly->used, payload, length); assembly->used += length;
+  if (assembly->used == assembly->length) {
+    handleWebSocketMessage(client, assembly->opcode, assembly->data, assembly->length);
+    free(assembly); client->_tempObject = nullptr;
   }
 }
 
@@ -1161,9 +1234,108 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
   }
 }
 
+void registerAsyncOta() {
+  RegisterFirmwareTransferRoutes(&server.native(), [](AsyncWebServerRequest *request) {
+    return webAccess.allowed(request) && WebAccess::sameOrigin(request);
+  });
+  auto info = [](AsyncWebServerRequest *request) {
+    String body = F("{\"product\":\"PakarController\",\"product_id\":\"PakarController\",\"name\":\"PakarController\",\"model\":\"ESP8266 + ATmega328P\",\"version\":\"");
+    body += BoardCore::BuildInfo::kVersion;
+    body += F("\",\"sketch_size\":"); body += ESP.getSketchSize();
+    body += F(",\"size\":"); body += ESP.getSketchSize();
+    body += F(",\"free\":"); body += ESP.getFreeSketchSpace();
+    body += F(",\"hash\":\""); body += ESP.getSketchMD5(); body += '"';
+    body += F(",\"framework\":\"ESPAsyncWebServer\",\"framework_version\":\"3.12.1\"");
+    body += F(",\"sketch_md5\":\""); body += ESP.getSketchMD5();
+    body += F("\",\"phase\":\""); body += otaPhase;
+    body += F("\",\"uploaded_bytes\":"); body += otaUploadedBytes;
+    body += F(",\"free_heap\":"); body += ESP.getFreeHeap();
+    body += F(",\"upload\":\"/update\",\"download\":\"/firmware/download\",\"filesystem_ota\":false}");
+    auto response = request->beginResponse(200, "application/json", body);
+    response->addHeader("Cache-Control", "no-store"); request->send(response);
+  };
+  server.native().on("/update/info", HTTP_GET, info);
+  server.native().on("/info", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String text = F("product: PakarController\nmodel: ESP8266 + ATmega328P\nhostname: "); text += hostname;
+    text += F("\nversion: "); text += BoardCore::BuildInfo::kVersion;
+    text += F("\nweb server: ESPAsyncWebServer 3.12.1\nfirmware hash: "); text += ESP.getSketchMD5();
+    text += F("\nflash size: "); text += ESP.getFlashChipSize();
+    text += F("\nheap memory: "); text += ESP.getFreeHeap();
+    text += F("\nuptime seconds: "); text += millis() / 1000;
+    text += F("\nreset reason: "); text += ESP.getResetReason();
+    text += F("\nprotocol revision: "); text += BoardCore::BuildInfo::kProtocolVersion;
+    request->send(200, "text/plain", text);
+  });
+  server.native().on("/update", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/html", F("<!doctype html><meta name='viewport' content='width=device-width'><title>PakarController OTA</title><style>body{max-width:600px;margin:3rem auto;padding:20px;background:#11161e;color:#eef2f7;font:16px system-ui}input,button{margin:12px 0;padding:10px;display:block}a{color:#68a7ff}</style><h1>ESP firmware update</h1><p>Upload the PakarController ESP .bin or .bin.gz. The AVR and stored settings are preserved. Use the MD5 of the uploaded file when available; it checks transfer integrity, not authenticity.</p><form method='post' enctype='multipart/form-data'><label>File MD5 (optional)<input name='MD5' minlength='32' maxlength='32'></label><input type='file' name='firmware' accept='.bin,.gz' required><button>Upload and restart ESP</button></form><a href='/'>Back to controller</a>"));
+  });
+  server.native().on("/update", HTTP_POST, [](AsyncWebServerRequest *request) {
+    const bool ownsUpdate = otaOwner && request->getAttribute("ota_id") == String(otaOwner);
+    if (!ownsUpdate || request->hasAttribute("ota_error") || !request->hasAttribute("ota_uploaded")) {
+      if (ownsUpdate) {
+        if (Update.isRunning()) Update.end(false);
+        otaOwner = 0; otaActive = false; otaPhase = F("failed");
+      }
+      request->send(400, "text/plain", request->getAttribute("ota_error", String(F("No complete firmware uploaded")))); return;
+    }
+    const bool complete = otaUploadedBytes && Update.end(true);
+    otaOwner = 0; otaActive = false;
+    if (!complete) { otaPhase = F("failed"); request->send(400, "text/plain", Update.getErrorString()); return; }
+    otaPhase = F("ready-to-reboot");
+    request->send(200, "application/json", "{\"updated\":true,\"rebooting\":true}");
+    otaRebootAt = millis() + 2000;
+  }, [](AsyncWebServerRequest *request, String, size_t index, uint8_t *data, size_t length, bool final) {
+    // Upload callbacks run before the normal middleware pipeline: authorize before writing anything.
+    if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request)) return;
+    static uint32_t nextOwner = 0;
+    if (index == 0) {
+      if (otaOwner || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched || request->hasAttribute("ota_id")) {
+        request->setAttribute("ota_error", "Another operation is active or multiple files were supplied"); return;
+      }
+      if (++nextOwner == 0) ++nextOwner;
+      otaOwner = nextOwner; const uint32_t id = otaOwner;
+      request->setAttribute("ota_id", String(id).c_str());
+      request->onDisconnect([id]() {
+        if (otaOwner != id) return;
+        // Uploads are capped below Update.size(), so incomplete end cannot commit boot metadata.
+        if (Update.isRunning()) Update.end(false);
+        otaOwner = 0; otaActive = false; otaPhase = F("aborted"); otaErrorCuePending = true;
+      });
+      otaUploadedBytes = 0; otaPhase = F("receiving"); otaActive = true;
+      const uint32_t maximum = (ESP.getFreeSketchSpace() - 0x1000) & 0xfffff000;
+      Update.runAsync(true);
+      if (!Update.begin(maximum, U_FLASH)) {
+        request->setAttribute("ota_error", Update.getErrorString().c_str());
+        otaOwner = 0; otaActive = false; otaPhase = F("failed"); return;
+      }
+      String md5 = request->arg("MD5"); if (md5.isEmpty()) md5 = request->arg("md5");
+      if (!md5.isEmpty()) {
+        bool valid = md5.length() == 32;
+        for (size_t i = 0; i < md5.length(); ++i) valid = valid && isxdigit(static_cast<unsigned char>(md5[i]));
+        if (!valid || !Update.setMD5(md5.c_str())) {
+          request->setAttribute("ota_error", "Invalid MD5"); Update.end(false);
+          otaOwner = 0; otaActive = false; otaPhase = F("failed"); return;
+        }
+      }
+    }
+    if (request->hasAttribute("ota_error") || request->getAttribute("ota_id") != String(otaOwner)) return;
+    if (!Update.isRunning() || index != otaUploadedBytes || index + length >= Update.size() || Update.write(data, length) != length) {
+      request->setAttribute("ota_error", (Update.hasError() ? Update.getErrorString() : String(F("Invalid upload sequence or insufficient OTA space"))).c_str());
+      if (Update.isRunning()) Update.end(false);
+      otaOwner = 0; otaActive = false; otaPhase = F("failed"); otaErrorCuePending = true; return;
+    }
+    otaUploadedBytes += length;
+    if (final) {
+      request->setAttribute("ota_uploaded", "true");
+      // Commit only after the complete HTTP body has arrived: a second file or
+      // an interrupted multipart trailer must not accidentally schedule a boot.
+      otaPhase = F("verifying");
+    }
+  });
+}
+
 void registerApi() {
   server.on("/", HTTP_GET, []() {
-    if (!authenticate()) return;
     server.send_P(200, "text/html; charset=utf-8", kWebUi);
   });
   server.on("/api/v1/status", HTTP_GET, []() {
@@ -1226,7 +1398,10 @@ void registerApi() {
     server.send(200, "application/json", "{\"updated\":true}");
   });
   server.on("/description.xml", HTTP_GET, []() {
-    SSDP.schema(server.client());
+    String xml = F("<?xml version=\"1.0\"?><root xmlns=\"urn:schemas-upnp-org:device-1-0\"><specVersion><major>1</major><minor>0</minor></specVersion><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>PakarController</friendlyName><manufacturer>AtomicDeploy</manufacturer><modelName>PakarController</modelName><UDN>uuid:");
+    char uuid[37]; snprintf(uuid, sizeof(uuid), "38323636-4558-4dda-9188-cda0e6%06x", ESP.getChipId()); xml += uuid;
+    xml += F("</UDN><presentationURL>http://pakarcontroller/</presentationURL></device></root>");
+    server.send(200, "text/xml", xml);
   });
   server.on("/api/v1/time", HTTP_GET, []() {
     if (!authenticate()) return;
@@ -1640,26 +1815,49 @@ void registerApi() {
                     : "{\"programmed\":true,\"verified\":true}");
   });
 
-  server.on("/api/v1/avr/image", HTTP_POST,
-    []() {
-      if (!authenticate()) return;
-      if (uploadFile) uploadFile.close();
-      File image = LittleFS.open(kAvrImagePath, "r");
-      const bool valid = image && image.size() == AvrIsp::kFlashBytes;
-      if (image) image.close();
-      server.send(valid ? 201 : 400, "text/plain",
-                  valid ? "AVR image stored" : "image must be exactly 32768 bytes");
+  server.native().on("/api/v1/avr/image", HTTP_POST,
+    [](AsyncWebServerRequest *request) {
+      if (!webAccess.allowed(request)) { request->send(401); return; }
+      const bool ownsImage = avrUploadOwner && request->getAttribute("upload_id") == String(avrUploadOwner);
+      bool valid = ownsImage && !request->hasAttribute("upload_error") && request->hasAttribute("upload_complete");
+      if (valid) {
+        File pending = LittleFS.open("/avr/upload.pending", "r");
+        valid = pending && pending.size() == AvrIsp::kFlashBytes;
+        if (pending) pending.close();
+        valid = valid && LittleFS.rename("/avr/upload.pending", kAvrImagePath);
+      }
+      if (ownsImage) { if (uploadFile) uploadFile.close(); avrUploadOwner = 0; }
+      request->send(valid ? 201 : 400, "text/plain", valid ? String(F("AVR image stored")) :
+          request->getAttribute("upload_error", String(F("A complete 32768-byte image could not be committed"))));
     },
-    []() {
-      if (!server.authenticate(kAdmin, kDevelopmentPassword)) return;
-      HTTPUpload &upload = server.upload();
-      if (upload.status == UPLOAD_FILE_START) {
+    [](AsyncWebServerRequest *request, String, size_t index, uint8_t *data, size_t length, bool final) {
+      if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request)) return;
+      static uint32_t nextUpload = 0;
+      if (index == 0) {
+        if (avrUploadOwner || otaActive || otaRebootAt || server.processing() || request->hasAttribute("upload_id")) {
+          request->setAttribute("upload_error", "Another operation is active or multiple files were supplied"); return;
+        }
+        if (++nextUpload == 0) ++nextUpload;
+        avrUploadOwner = nextUpload;
+        const uint32_t id = avrUploadOwner;
+        request->setAttribute("upload_id", String(id).c_str());
+        request->onDisconnect([id]() { if (avrUploadOwner == id) { if (uploadFile) uploadFile.close(); avrUploadOwner = 0; } });
         LittleFS.mkdir("/avr");
-        uploadFile = LittleFS.open(kAvrImagePath, "w");
-      } else if (upload.status == UPLOAD_FILE_WRITE && uploadFile) {
-        uploadFile.write(upload.buf, upload.currentSize);
-      } else if (upload.status == UPLOAD_FILE_END || upload.status == UPLOAD_FILE_ABORTED) {
+        uploadFile = LittleFS.open("/avr/upload.pending", "w");
+      }
+      if (request->hasAttribute("upload_error")) return;
+      if (request->getAttribute("upload_id") != String(avrUploadOwner)) return;
+      if (!uploadFile || index + length > AvrIsp::kFlashBytes || uploadFile.write(data, length) != length) {
+        request->setAttribute("upload_error", "write failed or image too large");
         if (uploadFile) uploadFile.close();
+        avrUploadOwner = 0;
+        return;
+      }
+      if (final) {
+        uploadFile.close();
+        if (index + length != AvrIsp::kFlashBytes)
+          request->setAttribute("upload_error", "image must be exactly 32768 bytes");
+        else request->setAttribute("upload_complete", "true");
       }
     });
 }
@@ -1801,7 +1999,7 @@ void serviceTelnet() {
     String line = telnetLine;
     telnetLine = String();
     if (!telnetAuthenticated) {
-      if (line == kDevelopmentPassword) {
+      if (accessConfig.ready() && BoardCore::Access::equal(line.c_str(), accessConfig.password())) {
         telnetAuthenticated = true;
         telnetClient.println(F("Authenticated. Type help for commands."));
         telnetPrompt();
@@ -1930,7 +2128,10 @@ void setup() {
   setAvrTransmitBlocked(true);
 #endif
   pinMode(D1, INPUT);
-  LittleFS.begin();
+  // Never erase damaged storage and silently restore public credentials.
+  LittleFS.setConfig(LittleFSConfig().setAutoFormat(false));
+  const bool filesystemMounted = LittleFS.begin();
+  accessConfig.begin(LittleFS, filesystemMounted);
   networkConfig.begin(LittleFS);
   cloudConfig.begin(LittleFS);
   grid.begin();
@@ -1950,19 +2151,23 @@ void setup() {
   telnetServer.setNoDelay(true);
 
   registerApi();
-  webSocket.setAuthorization(kAdmin, kDevelopmentPassword);
-  server.addHook(webSocket.hookForWebserver("/ws", onWebSocketEvent));
+  webAccess.registerRoutes(server.native(), []() {
+    webSocket.closeAll(1008, "Sign in again");
+    if (telnetClient) telnetClient.stop();
+    telnetAuthenticated = false;
+  }, []() { return otaActive || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched; });
+  webSocket.onEvent(onWebSocketEvent);
+  server.native().addHandler(&webSocket);
   Update.onStart([]() {
-    playUpdateStartCue();
+    otaStartCuePending = true;
   });
   Update.onEnd([]() {
-    playUpdateSuccessCue();
+    otaSuccessCuePending = true;
   });
   Update.onError([](uint8_t) {
-    const uint8_t cue[] = {kCueError};
-    requestAndWaitForAck(kAudioCue, cue, sizeof(cue));
+    otaErrorCuePending = true;
   });
-  updater.setup(&server, "/update", kAdmin, kDevelopmentPassword);
+  registerAsyncOta();
   server.begin();
   serviceDiscovery();
   sendToAvr(kHello, sequence++);
@@ -1977,7 +2182,7 @@ void loop() {
   hostLink.service();
   // Render before issuing UART requests. The AVR is request/response only, so
   // its reply arrives while FastLED is not masking ESP8266 interrupts.
-  const bool ledFrameDue =
+  const bool ledFrameDue = !otaActive &&
       static_cast<int32_t>(now - ledResumeAt) >= 0 &&
       ((streamFrameReady && grid.readyToShow(now)) || grid.needsRender(now));
   if (ledFrameDue) {
@@ -1995,10 +2200,17 @@ void loop() {
     }
     setAvrTransmitBlocked(false);
   }
-  server.handleClient();
-  webSocket.loop();
-  serviceTelnet();
-  if (networkApplyPending &&
+  server.service();
+  webSocket.cleanupClients(8);
+  webAccess.expireSockets(webSocket);
+  if (otaStartCuePending) { otaStartCuePending = false; playUpdateStartCue(); }
+  if (otaSuccessCuePending) { otaSuccessCuePending = false; playUpdateSuccessCue(); }
+  if (otaErrorCuePending) {
+    otaErrorCuePending = false; const uint8_t cue[] = {kCueError}; sendToAvr(kAudioCue, sequence++, cue, sizeof(cue));
+  }
+  if (otaRebootAt && static_cast<int32_t>(millis() - otaRebootAt) >= 0) ESP.restart();
+  if (!otaActive && !otaRebootAt && !uploadFile) serviceTelnet();
+  if (!otaActive && !otaRebootAt && networkApplyPending &&
       static_cast<int32_t>(millis() - networkApplyAt) >= 0) {
     networkApplyPending = false;
     applyNetworkConfig();
@@ -2007,7 +2219,7 @@ void loop() {
   configureNtp();
   // TLS reconnects can take seconds on the ESP8266. Keep them out of the
   // timing-critical ISP recovery path while the AVR's Prog latch is armed.
-  if (!programmingLatched) {
+  if (!programmingLatched && !otaActive && !otaRebootAt) {
     cloudServices.service(networkConfig.stationConnected(),
                           time(nullptr) > 1700000000, now);
   }
@@ -2033,9 +2245,9 @@ void loop() {
   }
   if (static_cast<uint32_t>(now - lastWebSocketBroadcastAt) >= 500U) {
     lastWebSocketBroadcastAt = now;
-    if (webSocket.connectedClients(false) != 0) {
+    if (webSocket.count() != 0) {
       String status = buildStatusJson();
-      webSocket.broadcastTXT(status);
+      webSocket.textAll(status);
     }
   }
   yield();

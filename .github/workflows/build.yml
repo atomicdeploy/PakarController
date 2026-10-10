@@ -32,6 +32,8 @@ jobs:
           retry arduino-cli lib install FastLED@3.10.6
           retry arduino-cli lib install WebSockets@2.7.2
           retry arduino-cli lib install PubSubClient@2.8.0
+          retry arduino-cli lib install 'ESP Async WebServer@3.12.1'
+          retry arduino-cli lib install 'ESP Async TCP@2.0.0'
       - name: Build both boards and test the shared protocol
         run: |
           chmod +x build.sh tools/test-protocol.sh
@@ -60,6 +62,7 @@ jobs:
       - name: Test and build the mpv-free Windows client
         run: |
           node tests/web_display_test.mjs
+          node tests/web_access_test.mjs
           cargo test --locked --manifest-path desktop/Cargo.toml
           cargo build --locked --release --manifest-path desktop/Cargo.toml
       - uses: actions/upload-artifact@v7
