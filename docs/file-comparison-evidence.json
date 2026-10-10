@@ -76,7 +76,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "201f96a21ea73b673656a12a0fefd92fb436ef2864de0a2f9df5ad956d8f27d7",
+          "sha256": "2b13783f18325f416962ba2b196b78e5cad6287a61931d397fa1defe3fdc2164",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -126,7 +126,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "201f96a21ea73b673656a12a0fefd92fb436ef2864de0a2f9df5ad956d8f27d7",
+          "sha256": "2b13783f18325f416962ba2b196b78e5cad6287a61931d397fa1defe3fdc2164",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -227,7 +227,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "a53eddeb3b99087eb3eb9dd725604a4d134b27a567c56217c839930c29e9d9e5",
+          "sha256": "7a50bc7f8113b2a2c9cfe7e23d505436e4de02ef29d3b1be3c97b40e031bb259",
           "anchor": "menu::top_menu_button(ui, \"File\".into()"
         },
         {
@@ -676,7 +676,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-        "sha256": "a53eddeb3b99087eb3eb9dd725604a4d134b27a567c56217c839930c29e9d9e5",
+        "sha256": "7a50bc7f8113b2a2c9cfe7e23d505436e4de02ef29d3b1be3c97b40e031bb259",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -1070,7 +1070,7 @@
         },
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "5f16a126e409d6e50cd902f789d3cf1a178e18d61e61eedc8c382915d8a64b05",
+          "sha256": "e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c",
           "anchor": "embedded catalog exactly matches"
         }
       ],
@@ -1094,7 +1094,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-        "sha256": "a53eddeb3b99087eb3eb9dd725604a4d134b27a567c56217c839930c29e9d9e5",
+        "sha256": "7a50bc7f8113b2a2c9cfe7e23d505436e4de02ef29d3b1be3c97b40e031bb259",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -2039,7 +2039,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "201f96a21ea73b673656a12a0fefd92fb436ef2864de0a2f9df5ad956d8f27d7",
+          "sha256": "2b13783f18325f416962ba2b196b78e5cad6287a61931d397fa1defe3fdc2164",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -2061,12 +2061,12 @@
       "proof": [
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "5f16a126e409d6e50cd902f789d3cf1a178e18d61e61eedc8c382915d8a64b05",
+          "sha256": "e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c",
           "anchor": "System theme and accent preserve donor host resolution"
         },
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "5f16a126e409d6e50cd902f789d3cf1a178e18d61e61eedc8c382915d8a64b05",
+          "sha256": "e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c",
           "anchor": "dialog draft/cancel never changes"
         }
       ],
@@ -2084,7 +2084,7 @@
       "targets": [
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "5f16a126e409d6e50cd902f789d3cf1a178e18d61e61eedc8c382915d8a64b05",
+          "sha256": "e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c",
           "anchor": "First four tests port the actual Pealayer"
         }
       ],
@@ -2106,7 +2106,7 @@
       "proof": [
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "5f16a126e409d6e50cd902f789d3cf1a178e18d61e61eedc8c382915d8a64b05",
+          "sha256": "e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c",
           "anchor": "live host theme events leave System preference unchanged"
         }
       ],

@@ -325,13 +325,9 @@ impl PakarControllerApp {
             let previous = ctx.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, egui::Key::F3));
             let next = ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::F3));
             if previous || next {
-                if let Ok(matches) = ui::cell_search::parse(&self.cell_search) {
-                    if let Some(id) =
-                        ui::cell_search::navigate(&matches, self.selected_cell, previous)
-                    {
-                        self.selected_cell = id;
-                        self.reveal_panels.push(Panel::Table);
-                    }
+                if let Some(id) = self.table.selection.navigate(self.selected_cell, previous) {
+                    self.selected_cell = id;
+                    self.reveal_panels.push(Panel::Table);
                 }
             }
         }
@@ -354,7 +350,7 @@ impl PakarControllerApp {
         let snapshot = self.live_status().cloned();
         let fullscreen = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
         if let Ok(mut value) = self.control.snapshot.lock() {
-            *value = serde_json::json!({"application":"PakarController","version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":self.cell_search,"search_matches":ui::cell_search::parse(&self.cell_search).unwrap_or_default(),"selected_cell":self.selected_cell});
+            *value = serde_json::json!({"application":"PakarController","version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":ui::cell_search::format_selection(&self.table.selection.ids),"cell_search_draft":self.cell_search,"selected_cells":self.table.selection.cells(),"highlighted_cells":self.table.selection.cells(),"search_matches":self.table.selection.cells(),"selected_cell":self.selected_cell});
             value["device_settings"] = serde_json::json!({"open": self.device_settings.open, "page": self.device_settings.page, "network_loaded": self.device_settings.network.is_some(), "cloud_loaded": self.device_settings.cloud.is_some(), "write_pending": self.device_settings.pending.is_some(), "maintenance_pending": self.device_settings.maintenance_pending.is_some()});
             value["cell_management"] = serde_json::json!({"open":self.table.manager_open,"selection":self.table.selection.ids,"additive_selection":self.config.additive_cell_selection,"animations":self.config.animate_cells,"indicators":self.config.show_cell_indicators});
             value["screenshot"] = self.capture.status();
@@ -702,19 +698,20 @@ impl PakarControllerApp {
                 self.apply_cell_search_selection();
             }
             if search.changed() { self.apply_cell_search_selection(); }
-            let result = ui::cell_search::parse(&self.cell_search);
-            let matches = result.as_ref().map(Vec::as_slice).unwrap_or_default();
-            let previous = ui.add_enabled(!matches.is_empty(), egui::Button::new(icons::CARET_LEFT))
-                .on_hover_text("Previous match (Shift+F3)").clicked();
-            let next = ui.add_enabled(!matches.is_empty(), egui::Button::new(icons::CARET_RIGHT))
-                .on_hover_text("Next match (Enter / F3)").clicked()
+            if search.lost_focus() && ui::cell_search::parse(&self.cell_search).is_ok() {
+                self.cell_search = ui::cell_search::format_selection(&self.table.selection.ids);
+            }
+            let previous = ui.add_enabled(!self.table.selection.ids.is_empty(), egui::Button::new(icons::CARET_LEFT))
+                .on_hover_text("Previous selected cell (Shift+F3)").clicked();
+            let next = ui.add_enabled(!self.table.selection.ids.is_empty(), egui::Button::new(icons::CARET_RIGHT))
+                .on_hover_text("Next selected cell (Enter / F3)").clicked()
                 || (search.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)));
-            if (previous || next) && let Some(id) = ui::cell_search::navigate(matches, self.selected_cell, previous) {
+            if (previous || next) && let Some(id) = self.table.selection.navigate(self.selected_cell, previous) {
                 self.selected_cell = id;
                 if search.lost_focus() { search.request_focus(); }
             }
             if ui.add_enabled(!self.cell_search.is_empty(), egui::Button::new(icons::X))
-                .on_hover_text("Clear cell search").clicked() {
+                .on_hover_text("Clear cell selection").clicked() {
                 self.cell_search.clear();
                 self.apply_cell_search_selection();
             }
@@ -722,25 +719,25 @@ impl PakarControllerApp {
         let search_result = ui::cell_search::parse(&self.cell_search);
         if let Err(error) = &search_result {
             ui.colored_label(ui.visuals().error_fg_color, error);
-        } else if !self.cell_search.trim().is_empty() {
-            let matches = search_result.as_ref().unwrap();
-            let current = matches.iter().position(|id| *id == self.selected_cell);
+        }
+        if !self.table.selection.ids.is_empty() {
+            let cells = self.table.selection.cells();
+            let current = cells.iter().position(|id| *id == self.selected_cell);
             ui.label(
                 egui::RichText::new(match current {
                     Some(index) => format!(
-                        "Match {} of {} · logical cell {}",
+                        "Selection {} of {} · logical cell {}",
                         index + 1,
-                        matches.len(),
+                        cells.len(),
                         self.selected_cell
                     ),
-                    None => format!("{} matching cells", matches.len()),
+                    None => format!("{} selected cells", cells.len()),
                 })
                 .small()
                 .color(ui.visuals().warn_fg_color),
             );
         }
-        let matches = search_result.unwrap_or_default();
-        self.cell_selection_toolbar(ui, &matches);
+        self.cell_selection_toolbar(ui);
         ui.add_space(8.0);
         let width = ui.available_width().max(200.0);
         let visible_height = (ui.clip_rect().bottom() - ui.cursor().min.y - 38.0).max(180.0);
@@ -749,7 +746,7 @@ impl PakarControllerApp {
         let (area, _) =
             ui.allocate_exact_size(egui::vec2(width, height * 8.5), egui::Sense::hover());
         let grid_origin = area.min + egui::vec2((width - pitch * 10.0) * 0.5, 0.0);
-        self.draw_cell_grid(ui, area, grid_origin, pitch, height, &matches);
+        self.draw_cell_grid(ui, area, grid_origin, pitch, height);
         finish_table_area(ui, area);
         ui.horizontal(|ui| {
             ui.label(

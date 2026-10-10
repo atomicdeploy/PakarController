@@ -2,6 +2,31 @@
 
 ## Current tint-free selection and Find cell contract
 
+Selection, Find and highlighting are now one domain concept, not parallel
+sets with matching colors. Native `Selection.ids` and Web `selectedCells` are
+the authoritative per-client set. Rendering accepts only membership in that
+set; the native `matched` argument, Web `matched` class and redundant Select
+matches buttons are removed. Navigation, counts, managers, menus and bulk writes
+all read the same set. Keyboard cursor/focus remains separate, not a selected
+or highlighted set, and navigating within the selection never shrinks it.
+
+Parsing remains the validation/normalization input boundary. Valid input is
+committed to that set; invalid draft text changes neither selection nor highlights.
+On valid blur/Enter, the editor is normalized from the model as sorted,
+deduplicated compact ranges. Status `cell_search` is canonical; `cell_search_draft`
+is explicitly editor text. `selected_cells`, `highlighted_cells` and the legacy
+`search_matches` are read-only projections of the identical authoritative set,
+including while an invalid draft exists. There is no query reparsing to render
+highlights, drive navigation or manufacture status membership.
+
+`assets/cells/selection-contract.json` is shared by native and Web transition
+tests, covering normalized IDs, duplicates, invalid prefixes/incomplete ranges,
+click/toggle/extend/row, next and clear. Web executes this against shipped code and
+checks painted membership/ARIA/counts after every step. Native runs the same
+fixture against `Selection`; its execution still awaits the guarded build/CI.
+Selection remains client-local; this does not silently broadcast a client's
+temporary selection to other connected users or turn selection into an LED write.
+
 Supersedes the earlier tinted search/LED-state descriptions below. Native and Web
 cells retain neutral alternating-column backgrounds regardless of red/white/off
 LED state. Selection and search highlighting share one amber inside outline;

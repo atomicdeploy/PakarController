@@ -248,7 +248,7 @@ Verdict: **equivalent-file**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c82
 - Retained: Byte-identical Studio/Native light/dark JSON catalog, all fourteen semantic roles.
 - No production-code omission claimed for this reviewed file.
 - Test-code evidence: `desktop/src/ui/palette.rs:71 [UTF8-LF sha256=418896294fbe25922736b41865a18dbb2f6bc96cb540c7401a435a6e0cfd38f3; anchor=fn imported_palettes_have_every_required_role()]`.
-- Test-code evidence: `tests/web_appearance_test.mjs:54 [UTF8-LF sha256=5f16a126e409d6e50cd902f789d3cf1a178e18d61e61eedc8c382915d8a64b05; anchor=embedded catalog exactly matches]`.
+- Test-code evidence: `tests/web_appearance_test.mjs:54 [UTF8-LF sha256=e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c; anchor=embedded catalog exactly matches]`.
 - Remaining: Embedded Web now consumes all four actual palettes and fourteen roles. Mobile catalog use and native/Web shared preference synchronization remain pending; byte-identical asset retention is not all-surface parity.
 
 ### Pealayer: `build.rs`
@@ -384,7 +384,7 @@ Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. O
 
 Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. Original-byte SHA-256: `1f173bef8acc2904eac5b0a91407aa4f7629ce65c88ea3a8ac78f8c13321d203`.
 
-- Target: `desktop/src/ui/shell.rs:309 [UTF8-LF sha256=a53eddeb3b99087eb3eb9dd725604a4d134b27a567c56217c839930c29e9d9e5; anchor=egui::Key::F11]`.
+- Target: `desktop/src/ui/shell.rs:309 [UTF8-LF sha256=7a50bc7f8113b2a2c9cfe7e23d505436e4de02ef29d3b1be3c97b40e031bb259; anchor=egui::Key::F11]`.
 - Retained: Default Preferences Ctrl+, and device configuration Ctrl+Shift+, navigation exist; F11 fullscreen is restored with the shared typed dispatcher. These are not equivalent to the donor persisted rebinding model.
 - Omitted/replaced code: `ApplicationShortcuts persisted fields, parse_shortcut, entries, validate, action_for_event and their non-media tests`. Disposition: **pending**. Reason: The foundation hardcoded its accelerators and omitted the reusable binding model. No accepted reason justifies leaving rebinding out. The actual donor depends on KeyChord and hardware_shortcuts match/key-code helpers, which must be ported and tested with controller-specific typed actions rather than guessed labels.
 - Omitted/replaced code: `take_frame_step_shortcut and frame-step tests`. Disposition: **not-applicable**. Reason: These consume Ctrl+Left/Right for media frame stepping and timeline transport. Those business domains were explicitly removed; Pakar must not hijack ordinary text word navigation for nonexistent video frames.
@@ -441,7 +441,7 @@ Verdict: **equivalent-file**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c82
 Verdict: **equivalent-behavior**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. Original-byte SHA-256: `7a4716d266bccf5a7625ec3ad9b581a16d2d56f0c68dbd0db476edb63f5ae605`.
 
 - Target: `desktop/src/ui/icons.rs:567 [UTF8-LF sha256=eb09707f6334c27aa27569a3a27dc6078137be0dcc81b059ebe7df26dcc21188; anchor=pub fn searchable_workspace_icon_picker(]`.
-- Target: `desktop/src/ui/shell.rs:1644 [UTF8-LF sha256=a53eddeb3b99087eb3eb9dd725604a4d134b27a567c56217c839930c29e9d9e5; anchor=icons::searchable_workspace_icon_picker]`.
+- Target: `desktop/src/ui/shell.rs:1641 [UTF8-LF sha256=7a50bc7f8113b2a2c9cfe7e23d505436e4de02ef29d3b1be3c97b40e031bb259; anchor=icons::searchable_workspace_icon_picker]`.
 - Retained: Production Phosphor vocabulary, stable names/kind fallback, searchable list/grid picker, UTF-8-safe match highlighting, bounded popups, disclosure/submenu helpers.
 - Retained: Actual donor regression tests restored: eleven tests, including interactive egui-frame search/select/reopen, both themes and popup width.
 - Omitted/replaced code: `every_native_icon_editor_uses_the_shared_searchable_picker donor-only editor path list`. Disposition: **replaced**. Reason: That assertion references Pealayer media/4D editor files not present in this product. Replaced only its call-site assertion with Pakar's actual workspace editor; the other ten tests were imported. This does not excuse missing generic editor features elsewhere.
@@ -454,7 +454,7 @@ Verdict: **equivalent-behavior**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac1
 Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. Original-byte SHA-256: `83aa188b01de2e8eea1206c25b793e47ccaffa2eb3a40ab1617168c912d082af`.
 
 - Target: `desktop/src/ui/menu.rs:9 [UTF8-LF sha256=199cebacdf180d88cb724d458ee096ffd29555ec1a16df9d47c28799a5c46cff; anchor=pub fn top_menu_button<R>(]`.
-- Target: `desktop/src/ui/shell.rs:367 [UTF8-LF sha256=a53eddeb3b99087eb3eb9dd725604a4d134b27a567c56217c839930c29e9d9e5; anchor=menu::top_menu_button(ui, "File".into()]`.
+- Target: `desktop/src/ui/shell.rs:363 [UTF8-LF sha256=7a50bc7f8113b2a2c9cfe7e23d505436e4de02ef29d3b1be3c97b40e031bb259; anchor=menu::top_menu_button(ui, "File".into()]`.
 - Target: `docs/NATIVE-MENU-COMPARISON.md:32 [UTF8-LF sha256=a86271d68a6553075026ad4e1ffef59c44f87074401b7c2936d9cd539d032fb9; anchor=## Exact donor menu mapping and remaining decisions]`.
 - Retained: Actual top_menu_button body imported with only application state ID/public visibility adaptation; all four production menu headings use active-menu sibling hover switching.
 - Retained: Actual Button::shortcut_text idiom replaces space-padded primary labels in all six shortcut rows; separate right-aligned muted atoms are supplied by the same egui 0.36.2 dependency. Existing dispatch/Phosphor submenu retained; user-requested height policy unchanged.
@@ -505,11 +505,11 @@ Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. O
 
 Verdict: **equivalent-behavior**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. Original-byte SHA-256: `35f269e9463e49dbc41572683ca374be8674a93e0e97c84240838d34dc950ddc`.
 
-- Target: `tests/web_appearance_test.mjs:1 [UTF8-LF sha256=5f16a126e409d6e50cd902f789d3cf1a178e18d61e61eedc8c382915d8a64b05; anchor=First four tests port the actual Pealayer]`.
+- Target: `tests/web_appearance_test.mjs:1 [UTF8-LF sha256=e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c; anchor=First four tests port the actual Pealayer]`.
 - Retained: All four actual donor contract tests ported: Neutral helper default, preference merge without unrelated-field loss/resolution leakage, host/offline theme/accent and repeated native event/explicit-theme handling. Additional shipped-code tests cover all palette roles, cancel/apply, contrast, identical-write skip, media events, malformed storage, cross-tab updates and session-only storage failure.
 - Omitted/replaced code: `volume:37 unrelated media setting fixture`. Disposition: **replaced**. Reason: The unrelated value is endpoint:http://ledboard.local instead. Its preservation and original-object immutability assertions are retained; no actual test contract is removed.
 - Omitted/replaced code: `Direct TypeScript test import`. Disposition: **replaced**. Reason: Tests import the actual adapted JavaScript functions; browser tests additionally execute the shipped embedded source, avoiding a separate mock appearance engine.
-- Test-code evidence: `tests/web_appearance_test.mjs:30 [UTF8-LF sha256=5f16a126e409d6e50cd902f789d3cf1a178e18d61e61eedc8c382915d8a64b05; anchor=live host theme events leave System preference unchanged]`.
+- Test-code evidence: `tests/web_appearance_test.mjs:30 [UTF8-LF sha256=e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c; anchor=live host theme events leave System preference unchanged]`.
 - Remaining: Test execution proves module and simulated browser contracts, not connected native event transport or physical hardware.
 
 ### Pealayer: `web_ui/src/appearance.ts`
@@ -518,13 +518,13 @@ Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. O
 
 - Target: `assets/themes/appearance.js:4 [UTF8-LF sha256=62a7ebba994ad44f4e2d647bb97684aac9b563104f3f707b43573289e514ecdd; anchor=export function mergeAppearance]`.
 - Target: `tools/generate-web-appearance.mjs:27 [UTF8-LF sha256=16789897f672dad4c853e7d25e4f27a3b54663b67b6b875c904e93704faea339; anchor=replaceBlock('// BEGIN SHARED APPEARANCE']`.
-- Target: `firmware/esp8266/src/WebUi.h:73 [UTF8-LF sha256=201f96a21ea73b673656a12a0fefd92fb436ef2864de0a2f9df5ad956d8f27d7; anchor=// BEGIN SHARED APPEARANCE]`.
+- Target: `firmware/esp8266/src/WebUi.h:73 [UTF8-LF sha256=2b13783f18325f416962ba2b196b78e5cad6287a61931d397fa1defe3fdc2164; anchor=// BEGIN SHARED APPEARANCE]`.
 - Retained: All five actual donor functions retained: mergeAppearance, resolvedAccent, resolvedAppearanceTheme, accentForeground and paletteName. TypeScript annotations removed for standalone embedded JavaScript; field names, host/offline resolution, exact accent constants, custom validation and luminance threshold remain unchanged.
 - Retained: Generated into the shipped WebUi.h with the shared palette asset; --check rejects stale embedding. Browser preferences dialog validates theme/palette/accent, protects drafts, handles storage failure and cross-tab/System events without device writes or repetitive identical storage writes.
 - Omitted/replaced code: `AppearanceState TypeScript interface and generic T return annotation`. Disposition: **replaced**. Reason: ESP serves standalone JavaScript, not a TypeScript/React build. Actual function bodies are retained; browser-facing enum/color validation rejects untrusted stored values. No preference or resolution field is dropped.
 - Omitted/replaced code: `Connected host AppearanceState broadcast/native-Web shared preference path`. Disposition: **pending**. Reason: Pure functions accept host state and tests preserve donor semantics, but standalone browser controls are browser-local today. No actual native appearance event/readback transport is integrated in this pass; System fallback is labeled browser-local.
-- Test-code evidence: `tests/web_appearance_test.mjs:22 [UTF8-LF sha256=5f16a126e409d6e50cd902f789d3cf1a178e18d61e61eedc8c382915d8a64b05; anchor=System theme and accent preserve donor host resolution]`.
-- Test-code evidence: `tests/web_appearance_test.mjs:63 [UTF8-LF sha256=5f16a126e409d6e50cd902f789d3cf1a178e18d61e61eedc8c382915d8a64b05; anchor=dialog draft/cancel never changes]`.
+- Test-code evidence: `tests/web_appearance_test.mjs:22 [UTF8-LF sha256=e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c; anchor=System theme and accent preserve donor host resolution]`.
+- Test-code evidence: `tests/web_appearance_test.mjs:63 [UTF8-LF sha256=e634efa751b1fad2d351897adceccead42bda6978c2e43e71de6d63f936ef79c; anchor=dialog draft/cancel never changes]`.
 - Remaining: Implement native/Web/mobile shared preference transport and live authoritative host events, while keeping device parameters separate from client appearance; verify multi-client broadcast/readback.
 
 ### Pealayer: `web_ui/src/components/HeaderBar.tsx`
@@ -532,7 +532,7 @@ Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. O
 Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. Original-byte SHA-256: `df84386e53d729eabddf9476026a9f96afe130dd3429612f4c73509d1757d16b`.
 
 - Target: `tools/generate-branding.mjs:3 [UTF8-LF sha256=bba69ae8ad9252920fb8a61e0a577b7dbe8fbf10cbbe28581bd51c9af99ef745; anchor=Pakar embeds it for the standalone ESP surface]`.
-- Target: `firmware/esp8266/src/WebUi.h:49 [UTF8-LF sha256=201f96a21ea73b673656a12a0fefd92fb436ef2864de0a2f9df5ad956d8f27d7; anchor=<!-- BEGIN SHARED BRAND HEADER -->]`.
+- Target: `firmware/esp8266/src/WebUi.h:49 [UTF8-LF sha256=2b13783f18325f416962ba2b196b78e5cad6287a61931d397fa1defe3fdc2164; anchor=<!-- BEGIN SHARED BRAND HEADER -->]`.
 - Target: `docs/BRANDING-PARITY.md:40 [UTF8-LF sha256=d28d6a4d1785f8e40efc0879410a22f2ae16da04d11047d06b285e6f84a38217; anchor=## Explicit unfinished useful code and reasons]`.
 - Retained: Actual resolved-artwork img/alt binding adapted to standalone header/login, replacing diamond and font fallback.
 - Omitted/replaced code: `Header collapse/navigation; connectionOpen/draftTarget modal; connected/ws/http status and localization`. Disposition: **pending**. Reason: Artwork matching does not import functional shell state/command contracts; these remain useful generic work.
@@ -545,7 +545,7 @@ Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. O
 Verdict: **parity-gap**. Revision: `d71c88d6dfa670339dbfc808c9724c52ac12c821`. Original-byte SHA-256: `23e8fd2a8f17d296f14b81d6618cbd166129e116e36515444239edac15f89554`.
 
 - Target: `tools/generate-branding.mjs:17 [UTF8-LF sha256=bba69ae8ad9252920fb8a61e0a577b7dbe8fbf10cbbe28581bd51c9af99ef745; anchor='FAVICON':]`.
-- Target: `firmware/esp8266/src/WebUi.h:7 [UTF8-LF sha256=201f96a21ea73b673656a12a0fefd92fb436ef2864de0a2f9df5ad956d8f27d7; anchor=<!-- BEGIN SHARED BRAND FAVICON -->]`.
+- Target: `firmware/esp8266/src/WebUi.h:7 [UTF8-LF sha256=2b13783f18325f416962ba2b196b78e5cad6287a61931d397fa1defe3fdc2164; anchor=<!-- BEGIN SHARED BRAND FAVICON -->]`.
 - Target: `docs/BRANDING-PARITY.md:40 [UTF8-LF sha256=d28d6a4d1785f8e40efc0879410a22f2ae16da04d11047d06b285e6f84a38217; anchor=## Explicit unfinished useful code and reasons]`.
 - Retained: Same resolved artwork binds favicon/touch/header before login; ESP embeds data instead of requesting a protected host filesystem icon.
 - Omitted/replaced code: `storedBoolean/supportsStandaloneMode/useWebPlatform capabilities/events; install/share/toggleFullscreen/enableNotifications/applyUpdate; settings setters/signalInteraction`. Disposition: **pending**. Reason: Generic browser capabilities/lifecycle/preferences need controller-specific integration and tests; static branding does not certify them.

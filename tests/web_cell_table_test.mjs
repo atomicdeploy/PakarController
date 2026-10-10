@@ -4,7 +4,11 @@ import vm from 'node:vm';
 const source=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
 const nativeTable=readFileSync(new URL('../desktop/src/ui/cell_table.rs',import.meta.url),'utf8');
 const nativeShell=readFileSync(new URL('../desktop/src/ui/shell.rs',import.meta.url),'utf8');
-assert(nativeTable.includes('let emphasized = selected || matched;'));
+assert(nativeTable.includes('let emphasized = selected;'));
+assert(!nativeTable.includes('matched: bool'));
+assert(!nativeTable.includes('matches.contains'));
+assert(!nativeShell.includes('navigate(&matches'));
+for(const alias of ['selected_cells','highlighted_cells','search_matches'])assert(nativeShell.includes(`"${alias}":self.table.selection.cells()`));
 assert(!nativeTable.includes('blend(base_fill, v.error_fg_color'));
 assert(!nativeTable.includes('fill = blend(fill, v.selection.bg_fill'));
 assert(nativeShell.includes('if search.changed() { self.apply_cell_search_selection(); }'));
@@ -34,9 +38,32 @@ const context=vm.createContext({...nodes,document,URLSearchParams,innerWidth:128
 });
 vm.runInContext(cellCode,context);
 const run=code=>vm.runInContext(code,context),ids=()=>Array.from(run('[...selectedCells]')).sort((a,b)=>a-b);
+const contract=JSON.parse(readFileSync(new URL('../assets/cells/selection-contract.json',import.meta.url),'utf8'));
+assert(nativeTable.includes('assets/cells/selection-contract.json'));
+for(const step of contract.steps){
+  switch(step.op){
+    case 'find': nodes.cellSearch.value=step.query;nodes.cellSearch.listeners.input();assert.equal(Boolean(nodes.cellSearch.validation),step.invalid===true);if(!step.invalid)nodes.cellSearch.listeners.blur();break;
+    case 'click': run(`selectCell(${step.id},{ctrlKey:${!!step.toggle},shiftKey:${!!step.extend}})`);break;
+    case 'row':run(`selectRow(${step.row})`);break;
+    case 'next':run('navigateSelection()');break;
+    case 'clear':run('clearCellSelection()');break;
+    default:throw Error('Unknown shared selection operation '+step.op);
+  }
+  assert.deepEqual(ids(),step.ids,JSON.stringify(step));
+  assert.equal(run('selectionQuery()'),step.canonical);
+  if(step.active!==undefined)assert.equal(run('cellFocus'),step.active);
+  for(const cell of nodes.grid.children){const selected=step.ids.includes(Number(cell.dataset.id));assert.equal(cell.classes.has('selected'),selected);assert.equal(cell.attributes['aria-pressed'],String(selected));assert(!cell.classes.has('matched'),'No second highlight state');}
+  assert.equal(nodes.selectionSummary.textContent,step.ids.length+' selected');
+}
 assert.equal(nodes.grid.children.length,80);assert.equal(nodes.managerRows.children.length,8);
-assert.deepEqual(Array.from(run("cellMatches('1, 3–5 #80')")),[1,3,4,5,80]);
-for(const query of ['0','81','5-2','3x','1--4','1#2',','])assert.throws(()=>run('cellMatches('+JSON.stringify(query)+')'));
+nodes.cellSearch.value='023, 3, #3 21-22';nodes.cellSearch.listeners.input();nodes.cellSearch.listeners.blur();assert.equal(nodes.cellSearch.value,'3, 21–23');
+const keyEvent=key=>({key,shiftKey:false,preventDefault(){}});
+nodes.cellSearch.listeners.keydown(keyEvent('Enter'));assert.equal(run('cellFocus'),21);
+nodes.cellSearch.listeners.keydown(keyEvent('Enter'));assert.equal(run('cellFocus'),22);assert.deepEqual(ids(),[3,21,22,23]);
+nodes.cellSearch.value='3-';nodes.cellSearch.listeners.input();nodes.cellSearch.listeners.keydown(keyEvent('F3'));assert.equal(run('cellFocus'),23);assert.deepEqual(ids(),[3,21,22,23]);assert.equal(nodes.cellSearch.value,'3-');
+nodes.cellSearch.listeners.keydown(keyEvent('Escape'));assert.deepEqual(ids(),[]);assert.equal(nodes.cellSearch.value,'');
+assert.deepEqual(Array.from(run("parseSelectionQuery('1, 3–5 #80')")),[1,3,4,5,80]);
+for(const query of ['0','81','5-2','3x','1--4','1#2',',','##3','+3'])assert.throws(()=>run('parseSelectionQuery('+JSON.stringify(query)+')'));
 run('selectCell(3);selectCell(7,{shiftKey:true})');assert.deepEqual(ids(),[3,4,5,6,7]);assert.equal(calls.length,0,'Selection must not mutate hardware');
 assert.equal(nodes.cellSearch.value,'3–7','Range selection appears in Find cells');
 run('selectCell(4,{ctrlKey:true})');assert.deepEqual(ids(),[3,5,6,7]);
@@ -46,11 +73,13 @@ nodes.additiveSelection.checked=true;run('selectRow(1)');assert(!ids().includes(
 assert.equal(nodes.showCellIndicators.checked,false,'Indicators must default off');
 nodes.showCellIndicators.checked=true;run('saveTablePreferences()');assert.equal(JSON.parse(storage.get('pakar-table')).indicators,true);
 assert(source.includes('.grid:not(.show-cell-indicators) .cell::before{display:none}'));
-assert(source.includes('.cell.selected:hover,.cell.selected:active,.cell.selected:focus-visible,.cell.matched:hover,.cell.matched:active,.cell.matched:focus-visible{border-color:var(--amber);background:var(--cell-surface,var(--surface-2));box-shadow:none;outline-color:transparent}'));
+assert(source.includes('.cell.selected:hover,.cell.selected:active,.cell.selected:focus-visible{border-color:var(--amber);background:var(--cell-surface,var(--surface-2));box-shadow:none;outline-color:transparent}'));
+assert(!source.includes('.cell.matched'));
+assert(!source.includes('Select matches'));
 assert(!source.includes('.cell.red{background:color-mix'));
 assert(!source.includes('.cell.selected{border-color:var(--accent)'));
 assert.equal(run("cellNavigate(10,'ArrowRight')"),10);assert.equal(run("cellNavigate(11,'ArrowLeft')"),11);assert.equal(run("cellNavigate(37,'Home')"),31);assert.equal(run("cellNavigate(37,'End',true)"),80);
-nodes.additiveSelection.checked=false;nodes.cellSearch.value='2,12';run('selectSearchMatches()');assert.deepEqual(ids(),[2,12]);
+nodes.additiveSelection.checked=false;nodes.cellSearch.value='2,12';run('updateSelectionFromQuery()');assert.deepEqual(ids(),[2,12]);
 nodes.cellSearch.value='21–23, 80';nodes.cellSearch.listeners.input();assert.deepEqual(ids(),[21,22,23,80]);
 nodes.cellSearch.value='21-';nodes.cellSearch.listeners.input();assert.deepEqual(ids(),[21,22,23,80]);assert(nodes.cellSearch.validation);
 run('paintSelection(true)');assert.equal(nodes.cellSearch.value,'21-','Status repaint must not clobber a draft');
@@ -64,7 +93,7 @@ run('selectCell(11)');nodes.grid.children[10].onkeydown({key:'ArrowRight',preven
 nodes.grid.listeners.pointerdown({button:0,pointerType:'mouse',clientX:0,clientY:0,pointerId:1});
 nodes.grid.listeners.pointermove({clientX:115,clientY:58,pointerId:1});assert.deepEqual(ids(),[1,2]);
 assert.equal(nodes.cellSearch.value,'1–2','Marquee selection updates Find cells');
-for(const cell of nodes.grid.children.filter(e=>e.className==='cell'))assert.equal(cell.classes.has('matched'),cell.classes.has('selected'));
+for(const cell of nodes.grid.children.filter(e=>e.className==='cell'))assert.equal(cell.classes.has('selected'),ids().includes(Number(cell.dataset.id)));
 nodes.grid.listeners.pointerup({pointerId:1});assert.equal(run('suppressCellClick'),true);
 nodes.grid.children.find(b=>b.dataset.id===2).onclick({});assert.equal(run('suppressCellClick'),false);assert.deepEqual(ids(),[1,2]);
 run('openCellMenu(1,1200,790)');assert.equal(nodes.cellMenu.hidden,false);assert.equal(nodes.cellMenu.children[0].attributes.role,'menuitem');assert(nodes.cellMenu.children[0].children.some(c=>c.tag==='svg'));
@@ -74,4 +103,4 @@ calls.length=0;failId=2;await run("applyCellBatch('off')");assert.deepEqual(call
 calls.length=0;failId=0;cancelAfter=1;await run("applyCellBatch('white')");assert.deepEqual(calls,[1]);assert.match(nodes.bulkStatus.textContent,/Cancelled unsent/);
 assert.match(source,/border:2px solid var\(--line-strong\)/);assert.doesNotMatch(source,/\.cell\{[^}]*background:#f6f7ff/);
 assert.match(source,/prefers-reduced-motion:reduce/);assert.match(source,/transition:background-color \.14s/);
-console.log('Actual Web table: selection, rows, search, keyboard, marquee, icons/dialog, paced bulk readback, cancellation and no uncertain retry passed (DOM/HTTP doubles).');
+console.log('Actual Web table: one authoritative selection, shared native/Web transition fixture, normalization/drafts/navigation, rows/keyboard/marquee, bulk readback and no uncertain retry passed (DOM/HTTP doubles; native execution separate).');

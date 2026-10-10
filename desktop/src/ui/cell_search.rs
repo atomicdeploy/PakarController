@@ -51,8 +51,13 @@ pub fn parse(query: &str) -> Result<Vec<u8>, String> {
             continue;
         }
         let number = |value: &str| -> Result<u8, String> {
+            let value = value.strip_prefix('#').unwrap_or(value);
+            if value.is_empty() || !value.bytes().all(|byte| byte.is_ascii_digit()) {
+                return Err(
+                    "Use cell IDs 1–80, separated by commas, or ranges such as 20–28".into(),
+                );
+            }
             value
-                .trim_start_matches('#')
                 .parse::<u8>()
                 .ok()
                 .filter(|id| (1..=80).contains(id))
@@ -100,7 +105,9 @@ mod tests {
     }
     #[test]
     fn invalid_input_never_silently_matches_a_different_cell() {
-        for query in ["0", "81", "256", "4-2", "2-", "-4", "a", "3,,bad", ","] {
+        for query in [
+            "0", "81", "256", "4-2", "2-", "-4", "a", "3,,bad", ",", "##3", "+3",
+        ] {
             assert!(parse(query).is_err(), "{query}");
         }
         assert!(parse(&"1".repeat(257)).is_err());

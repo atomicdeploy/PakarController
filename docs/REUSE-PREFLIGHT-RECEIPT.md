@@ -259,3 +259,27 @@ Native Test wrapper passed donor/crate gates then refused the canonical cache
 above the existing 8 GiB budget. Consulted actual recorded build/storage recovery;
 no guard bypass, cleanup reroute, new cache or direct compiler retry. Rust tests
 and deployed screenshot acceptance remain pending; CI is not waited on.
+
+## One authoritative selection domain, with normalization retained
+
+Reconsulted ui-shell and exact controls.rs donor row and actual neutral/editor
+slices; no full-file import or new donor parity claim. The preceding fix still
+passed a separately reparsed matches list into native painting/navigation/status.
+Removed that path: Selection owns validated IDs, Find is its input adapter and
+highlighting is its membership projection. Web likewise removes the duplicate
+matched class and redundant Select matches command. Selection IDs now drive all
+paint, navigation, counts, manager/menu and bulk targets. Status canonical query
+and editor draft are explicitly distinct; membership aliases read the same set.
+
+User clarified that reparsing for normalization is useful: parsing is retained
+at validation/commit and valid blur/Enter; normalization derives sorted,
+deduplicated ranges from the model. Invalid drafts preserve canonical membership
+and navigation. Added one native/Web shared transition fixture and shipped-Web
+membership/ARIA/count/normalization/Enter/F3/Escape checks. Tightened native
+numeric input to match Web ASCII-digit and single-# rules; +3/##3 cannot diverge.
+
+Patch validation rejected a repeated file target and then out-of-order hunks;
+no partial edits were assumed. Split into verified ordered patches. No blind
+compiler retry: native Test passed donor/crate gates and again refused the
+existing canonical >8 GiB cache. Actual source/Node checks are distinct from
+pending Rust execution, native captures, app replacement and board deployment.

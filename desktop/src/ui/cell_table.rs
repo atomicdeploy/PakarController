@@ -15,6 +15,19 @@ pub struct Selection {
     revision: u64,
 }
 impl Selection {
+    /// Find is an input adapter, not a second set of highlighted cells.
+    pub fn replace_query(&mut self, query: &str) -> Result<(), String> {
+        let ids = super::cell_search::parse(query)?;
+        self.group(ids, false);
+        self.anchor = self.ids.first().copied();
+        Ok(())
+    }
+    pub fn cells(&self) -> Vec<u8> {
+        self.ids.iter().copied().collect()
+    }
+    pub fn navigate(&self, current: u8, backwards: bool) -> Option<u8> {
+        super::cell_search::navigate(&self.cells(), current, backwards)
+    }
     pub fn click(&mut self, id: u8, toggle: bool, extend: bool) {
         if !(1..=80).contains(&id) {
             return;
@@ -212,14 +225,13 @@ fn cell_surface(
     logical_id: u8,
     _state: Option<&str>,
     selected: bool,
-    matched: bool,
     animate: bool,
 ) -> egui::Response {
     let response = ui.interact(rect, id, egui::Sense::click_and_drag());
     let focus = response.has_focus();
     let v = ui.visuals();
     let base_fill = cell_base_fill(crate::config::live().color_palette, v.dark_mode, logical_id);
-    let emphasized = selected || matched;
+    let emphasized = selected;
     let mut fill = base_fill;
     if response.hovered() && !emphasized {
         fill = blend(
@@ -249,11 +261,7 @@ fn cell_surface(
     } else {
         v.widgets.noninteractive.bg_stroke.color
     };
-    let width = if selected || matched || focus {
-        2.0
-    } else {
-        1.0
-    };
+    let width = if selected || focus { 2.0 } else { 1.0 };
     let width = if animate {
         ui.ctx()
             .animate_value_with_time(id.with("width"), width, 0.14)
@@ -308,8 +316,12 @@ impl PakarControllerApp {
         )
     }
     pub fn apply_cell_search_selection(&mut self) {
-        if let Ok(matches) = super::cell_search::parse(&self.cell_search) {
-            self.table.selection.group(matches, false);
+        if self
+            .table
+            .selection
+            .replace_query(&self.cell_search)
+            .is_ok()
+        {
             self.table.reflected_revision = self.table.selection.revision;
             if let Some(first) = self.table.selection.ids.first() {
                 self.selected_cell = *first;
@@ -420,24 +432,11 @@ impl PakarControllerApp {
         self.table.next_send = Instant::now();
         self.table.result = "Cell edits queued; batch is not atomic".into();
     }
-    pub fn cell_selection_toolbar(&mut self, ui: &mut egui::Ui, matches: &[u8]) {
+    pub fn cell_selection_toolbar(&mut self, ui: &mut egui::Ui) {
         ui.horizontal_wrapped(|ui| {
             ui.label(format!("{} selected", self.table.selection.ids.len()));
             if ui.button(format!("{} All", icons::CHECK)).clicked() {
                 self.table.selection.group(1..=80, false);
-            }
-            if ui
-                .add_enabled(
-                    !matches.is_empty(),
-                    egui::Button::new(format!(
-                        "{} Matches ({})",
-                        icons::MAGNIFYING_GLASS,
-                        matches.len()
-                    )),
-                )
-                .clicked()
-            {
-                self.table.selection.group(matches.iter().copied(), false);
             }
             if ui.button(format!("{} Clear", icons::X)).clicked() {
                 self.table.selection.clear();
@@ -492,7 +491,6 @@ impl PakarControllerApp {
         origin: Pos2,
         pitch: f32,
         height: f32,
-        matches: &[u8],
     ) {
         let snapshot = self.live_status().cloned();
         let cells: Vec<_> = (1..=80)
@@ -520,7 +518,6 @@ impl PakarControllerApp {
                 *id,
                 state,
                 selected,
-                matches.contains(id),
                 self.config.animate_cells,
             );
             response.widget_info(|| {
@@ -821,7 +818,6 @@ mod tests {
                     Some("white"),
                     false,
                     false,
-                    false,
                 );
             }
         });
@@ -852,7 +848,7 @@ mod tests {
         let mut selection = Selection::default();
         selection.click(1, false, false);
         let mut first = ctx.run_ui(egui::RawInput::default(), |ui| {
-            cell_surface(ui, rect, id, 1, Some("white"), true, false, false);
+            cell_surface(ui, rect, id, 1, Some("white"), true, false);
         });
         first.textures_delta.clear();
         ctx.memory_mut(|m| m.request_focus(id));
@@ -868,7 +864,7 @@ mod tests {
                 ..Default::default()
             };
             let mut output = ctx.run_ui(input, |ui| {
-                let response = cell_surface(ui, rect, id, 1, Some("white"), true, false, false);
+                let response = cell_surface(ui, rect, id, 1, Some("white"), true, false);
                 if pointer_or_accessibility_click(&response) {
                     selection.click(1, true, false);
                 }
@@ -894,20 +890,15 @@ mod tests {
             });
             let rect = Rect::from_min_size(egui::pos2(40.0, 40.0), egui::vec2(53.0, 36.2));
             let id = egui::Id::new("geometry-test-cell");
-            for (index, (state, selected, matched)) in [
-                ("white", false, false),
-                ("red", true, false),
-                ("off", false, true),
-            ]
-            .into_iter()
-            .enumerate()
+            for (index, (state, selected)) in [("white", false), ("red", true), ("off", true)]
+                .into_iter()
+                .enumerate()
             {
                 if index == 2 {
                     ctx.memory_mut(|m| m.request_focus(id));
                 }
                 let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
-                    let response =
-                        cell_surface(ui, rect, id, 1, Some(state), selected, matched, false);
+                    let response = cell_surface(ui, rect, id, 1, Some(state), selected, false);
                     assert_eq!(response.rect, rect);
                 });
                 output.textures_delta.clear();
@@ -926,6 +917,55 @@ mod tests {
                         "Dark app must not render LED white as a white tile"
                     );
                 }
+            }
+        }
+    }
+    #[test]
+    fn native_and_web_share_the_exact_selection_transition_contract() {
+        let contract: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../assets/cells/selection-contract.json"
+        ))
+        .unwrap();
+        let mut selection = Selection::default();
+        let mut active = 1;
+        for step in contract["steps"].as_array().unwrap() {
+            let number = |name: &str| step[name].as_u64().unwrap() as u8;
+            match step["op"].as_str().unwrap() {
+                "find" => {
+                    let invalid = selection
+                        .replace_query(step["query"].as_str().unwrap())
+                        .is_err();
+                    assert_eq!(invalid, step["invalid"].as_bool().unwrap_or(false));
+                    if !invalid && let Some(first) = selection.ids.first() {
+                        active = *first;
+                    }
+                }
+                "click" => {
+                    active = number("id");
+                    selection.click(
+                        active,
+                        step["toggle"].as_bool().unwrap_or(false),
+                        step["extend"].as_bool().unwrap_or(false),
+                    );
+                }
+                "row" => {
+                    let start = number("row") * 10 + 1;
+                    selection.group(start..start + 10, false);
+                }
+                "clear" => selection.clear(),
+                "next" => {
+                    active = selection.navigate(active, false).unwrap();
+                }
+                op => panic!("Unknown shared selection operation: {op}"),
+            }
+            let expected: Vec<u8> = serde_json::from_value(step["ids"].clone()).unwrap();
+            assert_eq!(selection.cells(), expected, "{step}");
+            assert_eq!(
+                super::super::cell_search::format_selection(&selection.ids),
+                step["canonical"].as_str().unwrap()
+            );
+            if let Some(expected_active) = step["active"].as_u64() {
+                assert_eq!(active, expected_active as u8);
             }
         }
     }
@@ -956,7 +996,7 @@ mod tests {
             let rect = Rect::from_min_size(egui::pos2(40.0, 40.0), egui::vec2(53.0, 36.2));
             let id = egui::Id::new("highlight-precedence");
             let mut expected = None;
-            for (selected, matched) in [(false, true), (true, false), (true, true)] {
+            for state in [None, Some("white"), Some("red"), Some("off")] {
                 for focus in [false, true] {
                     ctx.memory_mut(|m| {
                         if focus {
@@ -966,7 +1006,7 @@ mod tests {
                         }
                     });
                     let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
-                        cell_surface(ui, rect, id, 1, Some("red"), selected, matched, false);
+                        cell_surface(ui, rect, id, 1, state, true, false);
                     });
                     output.textures_delta.clear();
                     let surface = output
@@ -1005,9 +1045,7 @@ mod tests {
             });
             let rect = Rect::from_min_size(egui::pos2(40.0, 40.0), egui::vec2(53.0, 36.2));
             for state in [None, Some("white"), Some("red"), Some("off")] {
-                for (selected, matched) in
-                    [(false, false), (true, false), (false, true), (true, true)]
-                {
+                for selected in [false, true] {
                     let output = ctx.run_ui(egui::RawInput::default(), |ui| {
                         cell_surface(
                             ui,
@@ -1016,7 +1054,6 @@ mod tests {
                             1,
                             state,
                             selected,
-                            matched,
                             false,
                         );
                     });
