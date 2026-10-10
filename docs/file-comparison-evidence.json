@@ -1650,7 +1650,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/menu.rs",
-          "sha256": "d8a24c0b6330ee118c5c74ac8d966d2c53b91570e084d25b214466ae7148270e",
+          "sha256": "485783deefe484f7d413e30f3020dc3c2355aa564ca038c39741f6149271420e",
           "anchor": "pub fn top_menu_button<R>("
         },
         {
@@ -1665,7 +1665,7 @@
         },
         {
           "path": "docs/NATIVE-MENU-COMPARISON.md",
-          "sha256": "13e969f877692b181c597e6ce2f8ed49ddcedf9fd763716ca0b532083fab000e",
+          "sha256": "7319a38240f9c23a43f5a18c2f20d05b0c9d5ff273cf0e8f28b2ba98aa1aabd8",
           "anchor": "## Exact donor menu mapping and remaining decisions"
         }
       ],
@@ -1713,18 +1713,23 @@
       "proof": [
         {
           "path": "desktop/src/ui/menu.rs",
-          "sha256": "d8a24c0b6330ee118c5c74ac8d966d2c53b91570e084d25b214466ae7148270e",
+          "sha256": "485783deefe484f7d413e30f3020dc3c2355aa564ca038c39741f6149271420e",
           "anchor": "fn shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes()"
         },
         {
           "path": "desktop/src/ui/menu.rs",
-          "sha256": "d8a24c0b6330ee118c5c74ac8d966d2c53b91570e084d25b214466ae7148270e",
+          "sha256": "485783deefe484f7d413e30f3020dc3c2355aa564ca038c39741f6149271420e",
           "anchor": "fn sibling_hover_switches_only_an_already_open_menu_and_clears_closed_state()"
         },
         {
           "path": "tests/native_menu_test.mjs",
           "sha256": "80ac61041de322c2c0e2c0fad379a74e6e89d02724f1b80f2d9fa6200c7ef937",
           "anchor": "actual donor helper must match after application ID/visibility/whitespace adaptation"
+        },
+        {
+          "path": "tests/native_render_lifecycle_test.mjs",
+          "sha256": "c817865734fb041b787c6756d14ce5a8c20f47a45150871e85d8a954c15d23ce",
+          "anchor": "const compact=source=>source.replace"
         }
       ],
       "improvement": ""

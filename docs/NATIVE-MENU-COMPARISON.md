@@ -47,12 +47,31 @@ was an incomplete import, not evidence that the user wanted different heights.
 
 ## Proof boundaries
 
+The remaining primary-ink failure is now traced through actual locked egui
+0.36.2 code: Visuals::text_color uses noninteractive foreground; Button::atom_ui
+uses widget_style(Inactive) on the first pointer-free frame and supplies that
+foreground as the AtomLayout fallback. Stock dark uses gray 180 for buttons
+versus 140 for labels; stock light uses 60 versus 80. menu_style changes padding
+and background strokes/fill, not foreground. Pealayer/Pakar palette::apply maps
+inactive and noninteractive foreground to the same named text role, so this was
+an incorrect stock-theme test oracle, not a production shortcut-color regression.
+
+The test now expects inactive-button ink (respecting override_text_color),
+explicitly proves stock label/button colors differ, and checks all six rows in
+both stock themes plus Studio/Native light/dark palettes. Palette primary/muted
+roles are asserted independently. Every tessellated glyph must retain the exact
+expected ink; right alignment, separate atoms, no overlap and original geometry
+remain required. Assertion messages expose theme/palette/row/actual ink. Production
+menu, palette, dispatch, fonts and sizing are unchanged. New native execution is
+pending; source guard and no-write parser are not runtime or screenshot proof.
+
 Later source 8849ab8 Windows job 114334311601 completes 114 passed/1 failed. The
 texture destructor panics and abort are gone; actual shortcut muted-ink/right-edge
 checks get past their prior failure, but the label's primary-ink expectation fails
 at menu.rs:125. Native package/deployed acceptance is not complete. Inspect actual
 widget text-color policy before any production change or test-oracle correction;
-no weakened assertion or passing-runtime claim for this menu.
+no passing-runtime claim for this menu. The source-backed oracle correction above
+supersedes that pending diagnosis without claiming a new native pass.
 
 The restored serial/uncaptured native harness identifies the actual failure in
 0c723f1 Windows job 114331734735: egui caches PLACEHOLDER layout colors and paints

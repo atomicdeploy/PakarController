@@ -1,5 +1,34 @@
 # Donor-first preflight receipt
 
+## Native menu foreground policy traced, not recolored
+
+Consult ui-shell and exact donor-audit mappings; fully reread actual Pealayer
+menu.rs and palette.rs, original bytes still match their reviewed hashes. Inspect
+locked egui 0.36.2 Button::atom_ui/shortcut_text, widget_style/button_style,
+Visuals::text_color/weak_text_color and menu_style. The first pointer-free Button
+uses Inactive foreground as its AtomLayout fallback, not noninteractive label
+ink. Stock dark 180/140 and light 60/80 differ; imported palettes map both to text.
+Correct only the native paint-test oracle, preserving exact per-vertex ink checks,
+all six atoms/right edges/separation and geometry. Expand to stock plus actual
+Studio/Native palettes in both themes; assert named primary/muted roles and
+explicitly distinguish stock label/button ink. Add diagnostic assertion context
+and mandatory source regression. No production style/font/menu changes.
+
+Full local source quality, native menu/lifecycle guards, no-write Rust parser
+(edition 2024), comparison Check and Test Plan pass. Rustfmt initially exposes
+a brittle literal-whitespace source guard: keep the same exact expressions but
+normalize whitespace before matching; preserve every semantic assertion. Four
+existing target/proof hashes selectively rebound after literal-anchor inspection,
+plus the exact mandatory lifecycle proof. No source-count inflation.
+Actual Test again refuses the existing >8 GiB canonical cache before Cargo;
+no bypass, duplicate cache, cleanup reroute or unrelated firmware/APK rebuild.
+Fresh SSH localhost:1022 refuses; ledboard.local resolution times out. No native
+execution, running-app replacement or physical flash is claimed. Latest 8530a33
+Windows job 114337095213 is terminal failure; new native execution/package and
+deployed visual acceptance remain separate and asynchronous, not waited on.
+Its actual completed job log confirms the same label-ink assertion at menu.rs:125:
+114 passed, 1 failed, 0 ignored/filtered, 1.41 s; no texture/double-panic abort.
+
 ## Actual Rayan toast/store/Icon import
 
 Freshly reread Build RayanLamp Go app, task 019f8cfc-271a-72e1-8747-e3eb883de5ec;

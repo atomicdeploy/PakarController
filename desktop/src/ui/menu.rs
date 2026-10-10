@@ -55,9 +55,11 @@ mod tests {
         )
         .into_iter()
         .flat_map(|primitive| match primitive.primitive {
-            egui::epaint::Primitive::Mesh(mesh) => {
-                mesh.vertices.into_iter().map(|v| v.color).collect::<Vec<_>>()
-            }
+            egui::epaint::Primitive::Mesh(mesh) => mesh
+                .vertices
+                .into_iter()
+                .map(|v| v.color)
+                .collect::<Vec<_>>(),
             egui::epaint::Primitive::Callback(_) => Vec::new(),
         })
         .collect()
@@ -65,16 +67,45 @@ mod tests {
 
     #[test]
     fn shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes() {
-        for dark in [false, true] {
+        for (dark, palette) in [
+            (false, None),
+            (true, None),
+            (false, Some(crate::ui::palette::Palette::Studio)),
+            (true, Some(crate::ui::palette::Palette::Studio)),
+            (false, Some(crate::ui::palette::Palette::Native)),
+            (true, Some(crate::ui::palette::Palette::Native)),
+        ] {
             let ctx = egui::Context::default();
-            ctx.set_visuals(if dark {
+            let mut visuals = if dark {
                 egui::Visuals::dark()
             } else {
                 egui::Visuals::light()
-            });
+            };
+            if let Some(palette) = palette {
+                crate::ui::palette::apply(&mut visuals, palette);
+            }
+            ctx.set_visuals(visuals);
             let style = ctx.style_of(ctx.theme());
             let weak = style.visuals.weak_text_color();
-            let primary = style.visuals.text_color();
+            // egui 0.36.2 Button::atom_ui uses widget_style(Inactive) for
+            // this first, pointer-free frame. Visuals::text_color instead
+            // belongs to noninteractive labels (different in stock themes).
+            let primary = style
+                .visuals
+                .override_text_color
+                .unwrap_or(style.visuals.widgets.inactive.fg_stroke.color);
+            if palette.is_none() {
+                assert_ne!(primary, style.visuals.text_color());
+            } else {
+                assert_eq!(
+                    primary,
+                    crate::ui::palette::color(palette.unwrap(), dark, "text")
+                );
+                assert_eq!(
+                    weak,
+                    crate::ui::palette::color(palette.unwrap(), dark, "muted")
+                );
+            }
             assert_ne!(weak, primary);
             let rows = [
                 ("Device settings…", "Ctrl+Shift+,"),
@@ -121,8 +152,14 @@ mod tests {
                 let label_colors = painted_text_colors(&ctx, text(label), output.pixels_per_point);
                 assert!(!binding_colors.is_empty());
                 assert!(!label_colors.is_empty());
-                assert!(binding_colors.iter().all(|color| *color == weak));
-                assert!(label_colors.iter().all(|color| *color == primary));
+                assert!(
+                    binding_colors.iter().all(|color| *color == weak),
+                    "shortcut ink: dark={dark}, palette={palette:?}, row={shortcut}, expected={weak:?}, actual={binding_colors:?}"
+                );
+                assert!(
+                    label_colors.iter().all(|color| *color == primary),
+                    "button ink: dark={dark}, palette={palette:?}, row={label}, expected={primary:?}, actual={label_colors:?}"
+                );
                 assert!(binding.pos.x > text(label).pos.x + text(label).galley.rect.right());
             }
         }
@@ -146,7 +183,8 @@ mod tests {
                     responses = Some([file.response, workspace.response]);
                 });
             },
-        ).drop_without_applying_deltas();
+        )
+        .drop_without_applying_deltas();
         responses.unwrap()
     }
 

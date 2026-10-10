@@ -24,9 +24,18 @@ const menu=read('desktop/src/ui/menu.rs');
 const shortcut=test('desktop/src/ui/menu.rs','shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes');
 assert.match(shortcut,/output\.textures_delta\.clear\(\);[\s\S]*?let text = \|value/);
 assert(menu.includes('ctx.tessellate('));
-assert(menu.includes('mesh.vertices.into_iter().map(|v| v.color)'));
-assert(shortcut.includes('binding_colors.iter().all(|color| *color == weak)'));
-assert(shortcut.includes('label_colors.iter().all(|color| *color == primary)'));
+const compact=source=>source.replace(/\s+/g,'');
+assert(compact(menu).includes('mesh.vertices.into_iter().map(|v|v.color)'));
+assert(compact(shortcut).includes('binding_colors.iter().all(|color|*color==weak)'));
+assert(compact(shortcut).includes('label_colors.iter().all(|color|*color==primary)'));
+assert(compact(shortcut).includes('letprimary=style.visuals.override_text_color.unwrap_or(style.visuals.widgets.inactive.fg_stroke.color)'));
+assert(shortcut.includes('assert_ne!(primary, style.visuals.text_color());'));
+for(const palette of ['Studio','Native']) {
+  for(const dark of ['false','true']) {
+    assert(shortcut.includes(`(${dark}, Some(crate::ui::palette::Palette::${palette}))`));
+  }
+}
+for(const role of ['text','muted']) assert(shortcut.includes(`dark, "${role}"`));
 assert(!shortcut.includes('galley.job.sections[0].format.color'));
 assert(test('desktop/src/ui/menu.rs','headings').includes('drop_without_applying_deltas()'));
 console.log('Native render lifecycle source checks passed; actual egui execution and production pixels remain separate.');

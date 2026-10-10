@@ -1,5 +1,24 @@
 # PakarController comparison receipts
 
+## Native menu primary-ink oracle
+
+Actual Pealayer menu/palette sources reread in full, source hashes unchanged.
+Locked egui 0.36.2 proves first-frame Button fallback is inactive-widget ink,
+whereas Visuals::text_color describes noninteractive labels. Correct the test
+oracle without modifying production; preserve exact glyph colors, all six rows,
+right edges, separate atoms and unchanged geometry. Add stock plus Studio/Native
+both-theme matrix, explicit palette text/muted role assertions and diagnostics.
+Mandatory lifecycle/source regression prevents reverting to label ink or dropping
+palette cases. New native execution is pending, not implied by source checks.
+Coverage stays 81/4237, 4156 pending, 48 gaps; Rayan remains 17/2349 complete reads.
+
+Full local source quality, exact menu/lifecycle guards, no-write edition-2024
+parser, comparison Check and Test Plan pass. Source guard accepts Rustfmt
+whitespace only; all glyph/ink/matrix contracts stay mandatory. Actual Test
+refuses >8 GiB canonical cache before Cargo; no bypass/duplicate cache or unrelated
+build. Four existing exact references rebound and new guard proof added. Fresh
+ASUS SSH refuses and hostname resolution times out; no native deployment/flash.
+
 ## Rayan toast queue and exact dependency subcontracts
 
 Actual complete reads: toasts.tsx, toast-layout.test.ts, store.ts, icon.tsx. Exact
