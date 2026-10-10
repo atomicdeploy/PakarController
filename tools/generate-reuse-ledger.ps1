@@ -6,10 +6,11 @@ param(
     [string]$PuzzleBoardRoot = 'C:\Users\David\Desktop\Projects\PuzzleBoard',
     [string]$ControllerBoardMiniRoot = 'C:\Users\David\Desktop\Projects\ControllerBoardMini',
     [string]$Pu850Root = (Join-Path $PSScriptRoot '..\..\repos\pu850-esp'),
+    [string]$RayanLampRoot = 'C:\Users\David\Documents\Codex\2026-07-23\ba\outputs\RayanLamp',
     [string]$DecisionsPath,
     [string]$EvidencePath,
     [string]$OutputPath,
-    [ValidateSet('Pealayer','PCController','ControllerBoardMini/Puzzles','PuzzleBoard','ControllerBoardMini','PU850-ESP')]
+    [ValidateSet('Pealayer','PCController','ControllerBoardMini/Puzzles','PuzzleBoard','ControllerBoardMini','PU850-ESP','RayanLamp')]
     [string]$OnlyOrigin
 )
 
@@ -27,6 +28,8 @@ function Get-GitFiles {
     if ($LASTEXITCODE -ne 0) { throw "Unable to enumerate Git files for $Root" }
     return @{ Commit = $commit; Files = $files }
 }
+
+. (Join-Path $PSScriptRoot 'donor-files.ps1')
 
 function Get-Category {
     param([string]$Origin, [string]$RelativePath)
@@ -104,6 +107,10 @@ $rows = [System.Collections.Generic.List[object]]::new()
 if ($OnlyOrigin) {
     if (-not (Test-Path -LiteralPath $OutputPath)) { throw 'Selective refresh requires the existing complete ledger.' }
     foreach ($row in (Import-Csv -LiteralPath $OutputPath | Where-Object origin -ne $OnlyOrigin)) { $rows.Add($row) }
+}
+
+if (-not $OnlyOrigin -or $OnlyOrigin -eq 'RayanLamp') {
+    Add-LedgerRows -Rows $rows -Origin 'RayanLamp' -Root $RayanLampRoot -Revision 'filesystem-snapshot-no-git' -RelativePaths (Get-RayanLampFiles $RayanLampRoot)
 }
 
 if (-not $OnlyOrigin -or $OnlyOrigin -eq 'Pealayer') {

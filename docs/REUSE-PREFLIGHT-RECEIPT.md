@@ -1,5 +1,33 @@
 # Donor-first preflight receipt
 
+## RayanLamp import recovery
+
+Located Build RayanLamp Go app through the task index and read its exact thread.
+Cross-task listing did not contain the older task; bounded read-only lookup
+located its original source, which has no Git metadata. No donor task was
+resumed/messaged and no donor files were edited.
+
+Consulted the existing games-streaming route, then extended the SAME ledger and
+donor-audit index with RayanLamp. Fully read haptics.ts/haptics.test.ts,
+connection-preferences.ts/its tests, digits.go and LICENSE before importing.
+Guessed absent paths were corrected by enumerating actual filenames; no missing
+filename became an excuse to discard a feature. Oversized thread/evidence output
+was filtered into bounded metadata and source-ordered diff hunks. A grouped-hash
+patch and an invalid receipt anchor were rejected; corrected exact hunks were
+applied, without wholesale file rewriting or donor mutation.
+
+The existing Web table/settings harnesses extract isolated script slices. They
+initially lacked the newly canonical dependency; updated those harnesses to load
+the actual rayanlamp.js first rather than adding fake production fallbacks.
+Unchanged donor certificates were retained; affected target/test/generator hashes
+were rebound only after reviewing their actual diffs and preserving old contract
+semantics. The font generator remains deterministic and skips identical writes.
+
+First-party/vendor source is inventoried and original-byte hashed; generated
+directories are pruned BEFORE traversal. Live filesystem inventory drift is
+checked, not just selected file hashes. Useful unreviewed files remain pending.
+See RAYANLAMP-REUSE.md and issue #3; test-code anchors are not runtime acceptance.
+
 ## Persian regression recovery
 
 Consulted localization, preferences, build-storage and exact donor-audit entries.

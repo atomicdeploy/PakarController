@@ -1,5 +1,32 @@
 # PakarController comparison receipts
 
+## RayanLamp source checkpoint
+
+Located task Build RayanLamp Go app, id 019f8cfc-271a-72e1-8747-e3eb883de5ec,
+and preserved its nongit original source. RAYANLAMP-REUSE.md records exact mappings,
+inventory boundaries and concrete next-file actions. The existing authorities now
+contain 4,237 paths / 67 complete comparisons / 4,170 pending / 42 known gap
+files. RayanLamp contributes 2,349 inventoried paths, six full-read comparisons
+and 2,343 pending comparisons. Vendor source/licenses are included.
+
+Passed all children of node tools/ci-checks.mjs quality, including actual
+RayanLamp-adapted haptics/preference/digit cases, existing Web cell selection,
+settings ACK/readback/conflict/secret guards, board context/identity, localized
+copy/fonts, all donor route hashes/anchors, inventory/gate negative tests,
+repository/build/storage contracts. New native Rust parses/formats in edition
+2024, but native tests have NOT executed: tools/build-desktop.ps1 -Mode Test
+refused the unchanged >8 GiB canonical cache guard before Cargo. No bypass,
+cache duplication, obsolete-cache deletion or production replacement occurred.
+
+tools/build-firmware.ps1 -Target esp8266 passed in busy-wire mode using its warm
+cache: RAM 56620/80192, IRAM 63055/65536, IROM 850240/1048576.
+Candidate image SHA256:
+e52958e1a682de6b510541abc29f749d4208f49f5c744cc4fc3f2b1ff049e294.
+This is build proof, NOT flashed-device or Android vibration acceptance.
+AVR/Android/donor builds were not run. Six exact donor hashes and the complete
+normalized MIT notice were checked against the original read-only source.
+No CI wait is required for the source checkpoint; CI is not claimed green.
+
 ## Repository infrastructure checkpoint
 
 Issue #11 compares the actual full Pealayer README, CI/CD, CodeQL, Dependabot

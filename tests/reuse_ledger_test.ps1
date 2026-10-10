@@ -18,7 +18,7 @@ $ledger = Join-Path $scratch 'ledger.csv'
     Export-Csv -NoTypeInformation -LiteralPath $evidence
 $options = @{
     PealayerRoot=$donor; PCControllerRoot=$donor; PuzzlesRoot=$donor;
-    PuzzleBoardRoot=$donor; ControllerBoardMiniRoot=$donor; Pu850Root=$donor;
+    PuzzleBoardRoot=$donor; ControllerBoardMiniRoot=$donor; Pu850Root=$donor; RayanLampRoot=$donor;
     DecisionsPath=$decisions; EvidencePath=$evidence; OutputPath=$ledger
 }
 function Assert-State([string]$origin, [string]$status) {
@@ -29,6 +29,18 @@ try {
     & (Join-Path $root 'tools/generate-reuse-ledger.ps1') @options | Out-Null
     Assert-State Pealayer legacy-unverified
     Assert-State PCController adapted
+    Assert-State RayanLamp screened
+    . (Join-Path $root 'tools/donor-files.ps1')
+    foreach ($relative in @('node_modules','dist','vendor')) {
+        New-Item -ItemType Directory -Path (Join-Path $donor $relative) -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'reuse_fixture/source.h') -Destination (Join-Path $donor "$relative/source.h")
+    }
+    $sourcePaths = @(Get-RayanLampFiles ($donor + [IO.Path]::DirectorySeparatorChar))
+    if ('vendor/source.h' -notin $sourcePaths -or 'dist/source.h' -in $sourcePaths -or 'node_modules/source.h' -in $sourcePaths) {
+        throw 'Source snapshot must retain vendor and prune generated output before recursion'
+    }
+    $initialRows = @(Import-Csv -LiteralPath $ledger)
+    if (@($initialRows | Where-Object {$_.origin -eq 'RayanLamp' -and $_.path -match '^\.git/'}).Count) { throw 'Generated Git internals were inventoried as donor source' }
     & (Join-Path $root 'tools/check-reuse-ledger.ps1') -LedgerPath $ledger -EvidencePath $evidence | Out-Null
     $rejected = $false
     try { & (Join-Path $root 'tools/check-reuse-ledger.ps1') -LedgerPath $ledger -EvidencePath $evidence -RequireComplete | Out-Null }

@@ -27,7 +27,7 @@ const ctx=vm.createContext({
     createTreeWalker(){let i=0;return {nextNode(){this.currentNode=[owned,peer][i++];return !!this.currentNode}}}
   }
 });
-vm.runInContext(js,ctx);
+vm.runInContext(read('assets/web/rayanlamp.js')+'\n'+js,ctx);
 const run=code=>vm.runInContext(code,ctx);
 assert.equal(run("resolveUiLanguage('system',['fa-IR'])"),'fa');
 assert.equal(run("resolveUiLanguage('en',['fa-IR'])"),'en');

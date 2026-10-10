@@ -6,6 +6,7 @@ export const phases={
   "quality": [
     ["node", "tools/generate-font-assets.mjs", "--check"],
     ["node", "tests/localization_test.mjs"],
+    ["node", "tests/rayanlamp_reuse_test.mjs"],
     [
       "node",
       "tests/web_display_test.mjs"

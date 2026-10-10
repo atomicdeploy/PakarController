@@ -11,7 +11,7 @@ a lack of available source or a reason to drop useful functionality.
 
 ## Authorities, not another disconnected checklist
 
-- legacy-source-ledger.csv: all six donor inventories, revision, original-byte
+- legacy-source-ledger.csv: all seven donor inventories, revision, original-byte
   hash, availability and read state. Selectively refresh Pealayer with
   tools/generate-reuse-ledger.ps1 -OnlyOrigin Pealayer; other donors stay unchanged.
   The generator skips identical CSV writes. Missing sparse files remain rows.

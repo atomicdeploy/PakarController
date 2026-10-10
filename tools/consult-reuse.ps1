@@ -7,11 +7,12 @@ param(
     [string]$EvidencePath=(Join-Path $PSScriptRoot '../docs/file-comparison-evidence.json'),
     [string]$IndexPath=(Join-Path $PSScriptRoot '../docs/reuse-capabilities.json'),
     [string]$TargetRoot=(Join-Path $PSScriptRoot '..'),
-    [hashtable]$DonorRoots=@{Pealayer='C:\Users\David\AppData\Local\Programs\Pealayer\source\Pealayer'},
+    [hashtable]$DonorRoots=@{Pealayer='C:\Users\David\AppData\Local\Programs\Pealayer\source\Pealayer'; RayanLamp='C:\Users\David\Documents\Codex\2026-07-23\ba\outputs\RayanLamp'},
     [switch]$Gate,
     [switch]$RequireLive
 )
 $ErrorActionPreference='Stop'
+. (Join-Path $PSScriptRoot 'donor-files.ps1')
 $taskIndex=Get-Content -LiteralPath $IndexPath -Raw | ConvertFrom-Json
 if($taskIndex.schema -ne 1){throw 'Unsupported reuse index'}
 $taskMatches=@($taskIndex.concerns | Where-Object id -eq $Concern)
@@ -37,6 +38,13 @@ foreach($taskReview in $taskEvidence.files){
 }
 $taskTargetRoot=[IO.Path]::GetFullPath($TargetRoot).TrimEnd('\','/')
 foreach($taskOrigin in $taskRoute.origins){
+    if($taskOrigin -eq 'RayanLamp' -and $DonorRoots.ContainsKey($taskOrigin) -and (Test-Path -LiteralPath $DonorRoots[$taskOrigin])){
+        $taskLivePaths=@(Get-RayanLampFiles $DonorRoots[$taskOrigin])
+        $taskSnapshot=@($taskLedger | Where-Object origin -eq $taskOrigin).path
+        if(@(Compare-Object $taskSnapshot $taskLivePaths).Count){
+            throw 'Filesystem donor inventory drift: RayanLamp; refresh source paths before consultation.'
+        }
+    }
     if($DonorRoots.ContainsKey($taskOrigin) -and (Test-Path -LiteralPath (Join-Path $DonorRoots[$taskOrigin] '.git'))){
         $taskTracked=@(& git -C $DonorRoots[$taskOrigin] ls-files)
         if($LASTEXITCODE -ne 0){throw 'Cannot verify live donor inventory'}

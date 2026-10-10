@@ -35,5 +35,9 @@ const begin='// BEGIN SHARED LOCALIZATION',end='// END SHARED LOCALIZATION';
 assert.equal(web.split(begin).length,2);assert.equal(web.split(end).length,2);
 web=web.replace(/\/\/ BEGIN SHARED LOCALIZATION[\s\S]*?\/\/ END SHARED LOCALIZATION\r?\n/,'');
 web=web.replace('<script>','<script>\n'+begin+'\n'+js+'\n'+end);
+// Canonical source adaptation, shared by tests and embedded Web UI.
+const rayanBegin='// BEGIN RAYANLAMP ADAPTATIONS',rayanEnd='// END RAYANLAMP ADAPTATIONS';
+web=web.replace(/\/\/ BEGIN RAYANLAMP ADAPTATIONS[\s\S]*?\/\/ END RAYANLAMP ADAPTATIONS\r?\n/,'');
+web=web.replace('<script>','<script>\n'+rayanBegin+'\n'+await readFile(new URL('assets/web/rayanlamp.js',root),'utf8')+'\n'+rayanEnd);
 await sync('firmware/esp8266/src/WebUi.h',web);
 console.log('Shared Vazirmatn assets verified:',font.length,'bytes; gzip',compressed.length);

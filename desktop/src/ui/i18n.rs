@@ -350,6 +350,7 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         }
         "Help" => "راهنما",
         "Language" => "زبان",
+        "Touch feedback" => "بازخورد لمسی",
         "System language" => "زبان سیستم",
         "English" => "انگلیسی",
         "Persian" => "فارسی",

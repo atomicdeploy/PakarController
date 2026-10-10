@@ -44,7 +44,9 @@ pub fn parse(query: &str) -> Result<Vec<u8>, String> {
     if query.len() > 256 {
         return Err("Search is too long".into());
     }
-    let normalized = query.replace(['–', '—'], "-");
+    let normalized = super::digits::latin(query)
+        .replace(['–', '—'], "-")
+        .replace('،', ",");
     let mut cells = BTreeSet::new();
     for token in normalized.split(|c: char| c == ',' || c == ';' || c.is_whitespace()) {
         if token.is_empty() {
@@ -102,6 +104,11 @@ mod tests {
         assert_eq!(parse("#3, 12;20–23 21").unwrap(), [3, 12, 20, 21, 22, 23]);
         assert_eq!(parse("01, 80").unwrap(), [1, 80]);
         assert!(parse("  ").unwrap().is_empty());
+        assert_eq!(parse("۱،٢;۳–۵ #۸۰").unwrap(), [1, 2, 3, 4, 5, 80]);
+        assert_eq!(
+            format_selection(&parse("۱،٢,۳").unwrap().into_iter().collect()),
+            "1–3"
+        );
     }
     #[test]
     fn invalid_input_never_silently_matches_a_different_cell() {

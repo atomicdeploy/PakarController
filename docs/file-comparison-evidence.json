@@ -16,7 +16,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "c58317a6398ba71708ce71fccef2bc16e142cd21edd0b26baff6fae907ef79aa",
+          "sha256": "9587bca5bd62d4e8827a8a4ccaabc81e5dd69289ce552e6f3929fd386e8c6ff8",
           "anchor": "pub(crate) fn configure_ui_fonts"
         },
         {
@@ -58,17 +58,17 @@
       "proof": [
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "c58317a6398ba71708ce71fccef2bc16e142cd21edd0b26baff6fae907ef79aa",
+          "sha256": "9587bca5bd62d4e8827a8a4ccaabc81e5dd69289ce552e6f3929fd386e8c6ff8",
           "anchor": "fn contextual_persian_in_labels_and_monospace_inputs"
         },
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "c58317a6398ba71708ce71fccef2bc16e142cd21edd0b26baff6fae907ef79aa",
+          "sha256": "9587bca5bd62d4e8827a8a4ccaabc81e5dd69289ce552e6f3929fd386e8c6ff8",
           "anchor": "fn changing_language_preserves_widget_fonts"
         },
         {
           "path": "tests/localization_test.mjs",
-          "sha256": "25a158d69ac28e9ad3d121a4b95d677d0babdda9477d65910924c6e8f477a49c",
+          "sha256": "c410cf90ffb005bd7a62735ca70711407f643bca9c81411e00e04e98fbcabcab",
           "anchor": "Peer text identical to a dictionary key"
         }
       ],
@@ -87,17 +87,17 @@
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "b9f1e85ab0f466c981a3a5cccc68cf8b34a602034a67f34e1ef961d7152ce5a7",
+          "sha256": "d11d246009a684e5de75e7c006623f33df1383e646d74a8d903a006cd89725e2",
           "anchor": "function uiTr(text)"
         },
         {
           "path": "tools/generate-font-assets.mjs",
-          "sha256": "a707826ccb6f9bafd17dd19e9eb1c55d3c1c88a98b103bbd435c15b088b9a6a2",
+          "sha256": "58b1c4831be837ea38319d599d014add98f670f9006fd3d91599377e8e432f91",
           "anchor": "const dictionary={}"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
+          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -119,12 +119,12 @@
       "proof": [
         {
           "path": "tests/localization_test.mjs",
-          "sha256": "25a158d69ac28e9ad3d121a4b95d677d0babdda9477d65910924c6e8f477a49c",
+          "sha256": "c410cf90ffb005bd7a62735ca70711407f643bca9c81411e00e04e98fbcabcab",
           "anchor": "No identical storage writes"
         },
         {
           "path": "tests/localization_test.mjs",
-          "sha256": "25a158d69ac28e9ad3d121a4b95d677d0babdda9477d65910924c6e8f477a49c",
+          "sha256": "c410cf90ffb005bd7a62735ca70711407f643bca9c81411e00e04e98fbcabcab",
           "anchor": "assert.equal(attrs.placeholder"
         }
       ],
@@ -142,7 +142,7 @@
       "targets": [
         {
           "path": "tests/localization_test.mjs",
-          "sha256": "25a158d69ac28e9ad3d121a4b95d677d0babdda9477d65910924c6e8f477a49c",
+          "sha256": "c410cf90ffb005bd7a62735ca70711407f643bca9c81411e00e04e98fbcabcab",
           "anchor": "Adapt Pealayer tests/i18n_surface_audit_test.rs"
         }
       ],
@@ -164,7 +164,7 @@
       "proof": [
         {
           "path": "tests/localization_test.mjs",
-          "sha256": "25a158d69ac28e9ad3d121a4b95d677d0babdda9477d65910924c6e8f477a49c",
+          "sha256": "c410cf90ffb005bd7a62735ca70711407f643bca9c81411e00e04e98fbcabcab",
           "anchor": "for(const key of"
         }
       ],
@@ -224,7 +224,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "80fa23d80d58f60a2af9d9ced71a3b24335f3926c3d8ac0fddb2dabf40541ddb",
+          "sha256": "9e6028a3ad338cc6bb631a216204cfd3b5480c149188ed099152fc48768e49e6",
           "anchor": "export function runChecks"
         },
         {
@@ -417,7 +417,7 @@
       "proof": [
         {
           "path": "tests/interface_settings_test.mjs",
-          "sha256": "81e86f64b3a7a6953687e44e0554eb3480153c9a4c0845cbff1e8a417327d63c",
+          "sha256": "e2588bf230a64a1260bba5acd7ad3d2f26c8f16361e07185a1059cd210ef122e",
           "anchor": "Capability loss must override stored panel visibility"
         }
       ],
@@ -516,7 +516,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
+          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
           "anchor": "function peerAvailability("
         }
       ],
@@ -777,7 +777,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
+          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -787,7 +787,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
+          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -829,7 +829,7 @@
         },
         {
           "path": "tests/interface_settings_test.mjs",
-          "sha256": "81e86f64b3a7a6953687e44e0554eb3480153c9a4c0845cbff1e8a417327d63c",
+          "sha256": "e2588bf230a64a1260bba5acd7ad3d2f26c8f16361e07185a1059cd210ef122e",
           "anchor": "Failed saves preserve the draft"
         }
       ],
@@ -852,7 +852,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
+          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -1245,7 +1245,7 @@
       "targets": [
         {
           "path": "docs/REUSE-PREFLIGHT.md",
-          "sha256": "e198405dd0829a9c2b97862d8ca5f2356eb45f84e419eeaffe1a8df70479b02c",
+          "sha256": "13521024e5b18f314abcc71af4e9c722262a7cb04c17f03155b1e88d0cf0972e",
           "anchor": "Mandatory sequence on every task"
         }
       ],
@@ -2783,7 +2783,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
+          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -2873,7 +2873,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "d5870ff002e90626dfdcb70d0c90377ce0eab434fa147ed802c127823b9257ff",
+          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -2906,8 +2906,243 @@
         },
         {
           "path": "tests/web_cell_table_test.mjs",
-          "sha256": "b56dc7093dd7919edc61727cefb85775f3adfca595c6ab3202050e0599d71109",
+          "sha256": "87f848f35d195bdf8bd6782cc90c0c5e786a734f49ea9415c779d3f49a1f2971",
           "anchor": "Manager must not allocate state-dependent selectable Frames"
+        }
+      ],
+      "improvement": ""
+    }
+    ,
+    {
+      "origin": "RayanLamp",
+      "path": "internal/i18n/digits.go",
+      "sha256": "e81f35286d38b645ed3846d3806021089663d9b74f95def6394f5ba921793542",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual Persian/Arabic-Indic-to-ASCII maps adapted into Rust and JavaScript and invoked by native/Web cell search. Canonical IDs/ranges stay ASCII; peer names and protocol identifiers are not globally transformed."
+      ],
+      "targets": [
+        {
+          "path": "desktop/src/ui/digits.rs",
+          "sha256": "5a93b2fe85c492c9cd393e96dce442f82b7f4936c08c3f81ec92e723a8df9929",
+          "anchor": "pub fn latin"
+        },
+        {
+          "path": "desktop/src/ui/cell_search.rs",
+          "sha256": "735f49c2159d9eeb61f08a24e41bace6242115a722ad58abcd9463ec54a3413e",
+          "anchor": "super::digits::latin(query)"
+        },
+        {
+          "path": "assets/web/rayanlamp.js",
+          "sha256": "73144dfaf4a3e02fff90e25d3d53bb48029bb2dd802bf5051bf4f2bc67124491",
+          "anchor": "function latinDigits"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "ShapePersianDigits visual decimal shaping",
+          "disposition": "pending",
+          "reason": "Search needs ASCII normalization now. Apply visual shaping only to audited application-owned numeric labels, not arbitrary peer text or wire IDs. Display consumers remain pending."
+        }
+      ],
+      "remaining": [
+        "Finish owned numeric display shaping and execute guarded native digit/search tests."
+      ],
+      "proof": [
+        {
+          "path": "tests/rayanlamp_reuse_test.mjs",
+          "sha256": "8b10200e63b30f5b73c36986971c52438fa0f21858c6da74110d868149a30a5d",
+          "anchor": "latinDigits('۰۱۲۳۴۵۶۷۸۹"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "webui/src/haptics.ts",
+      "sha256": "26b14208309628ea7eca9a05eb0f7e0d8206f2b59cd0c6a226e2389d7fde89a1",
+      "source_read": "complete",
+      "verdict": "scoped-improvement",
+      "preserved": [
+        "Actual pulse constants, bounded audio cues, optional vibration API, fail-closed visibility/reduced-motion conditions, copied pattern arrays and host-error containment adapted into embedded JavaScript. Opt-in Touch feedback defaults off, disabled when unsupported; only explicit command HTTP results trigger it, never polling/telemetry/frames."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/rayanlamp.js",
+          "sha256": "73144dfaf4a3e02fff90e25d3d53bb48029bb2dd802bf5051bf4f2bc67124491",
+          "anchor": "class WebHaptics"
+        },
+        {
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "0f6590811cc85cf72272921bc77c9c68afb4dfb8b822387dd63ebf0ae5996622",
+          "anchor": "id=\"uiHaptics\""
+        }
+      ],
+      "omissions": [
+        {
+          "code": "TypeScript interfaces/private/type annotations",
+          "disposition": "replaced",
+          "reason": "ESP serves dependency-free JavaScript. Actual runtime bodies are retained; explicit own-property cue validation replaces a compile-time-only guarantee."
+        }
+      ],
+      "remaining": [
+        "Verify supported Android vibration and actual command lifecycle. HTTP acceptance is not actuator readback."
+      ],
+      "proof": [
+        {
+          "path": "tests/rayanlamp_reuse_test.mjs",
+          "sha256": "8b10200e63b30f5b73c36986971c52438fa0f21858c6da74110d868149a30a5d",
+          "anchor": "h.trigger('arbitrary raw frame')"
+        }
+      ],
+      "improvement": "Unknown JavaScript cues now fail closed at runtime."
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "webui/src/haptics.test.ts",
+      "sha256": "5aa8461039519fb310b6cb8d22eb9c26ae9ea63bfd41a6fe586434ea0b8e6525",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Actual fixed patterns, message/audio normalization, absent API, hidden/reduced-motion, host exceptions and throwing condition tests adapted to Node assertions; adds mutable-host and unknown-cue protections."
+      ],
+      "targets": [
+        {
+          "path": "tests/rayanlamp_reuse_test.mjs",
+          "sha256": "8b10200e63b30f5b73c36986971c52438fa0f21858c6da74110d868149a30a5d",
+          "anchor": "Adapted from RayanLamp haptics.test.ts"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Vitest describe/it/vi mocks",
+          "disposition": "replaced",
+          "reason": "Existing Node assertions and VM doubles execute donor scenarios without new dependencies or a donor Web build cache."
+        }
+      ],
+      "remaining": [
+        "Android vibration remains separate platform acceptance."
+      ],
+      "proof": [
+        {
+          "path": "tests/rayanlamp_reuse_test.mjs",
+          "sha256": "8b10200e63b30f5b73c36986971c52438fa0f21858c6da74110d868149a30a5d",
+          "anchor": "fixedHapticPatterns"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "webui/src/connection-preferences.ts",
+      "sha256": "f2ab880c8676f63d1bed9ea548a4680625a5b707f5f8aab12d8e8fda93d9c531",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual validated local-event/BroadcastChannel announcement, subscription and teardown adapted to client language/direction. Adds storage fallback, blocked-channel containment, no identical writes and no receiver rebroadcast. Board drafts/secrets remain separate."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/rayanlamp.js",
+          "sha256": "73144dfaf4a3e02fff90e25d3d53bb48029bb2dd802bf5051bf4f2bc67124491",
+          "anchor": "function subscribeLocalePreferences"
+        },
+        {
+          "path": "assets/web/localization.js",
+          "sha256": "d11d246009a684e5de75e7c006623f33df1383e646d74a8d903a006cd89725e2",
+          "anchor": "subscribeLocalePreferences(value=>"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "ConnectionMode auto/relay/direct, static export defaults, normalizeLampBaseURL and lampURL preference",
+          "disposition": "pending",
+          "reason": "Lamp transport/endpoints differ from Pakar authenticated board/USB contracts. The event mechanism is imported; real endpoint/relay selection requires full direct-protocol/security review, not a cosmetic mode switch."
+        },
+        {
+          "code": "Unconditional save/broadcast persistence",
+          "disposition": "replaced",
+          "reason": "Pakar low-write policy skips identical values and receivers never rebroadcast."
+        }
+      ],
+      "remaining": [
+        "Port applicable endpoint security/connection selection with full transport review; verify real tabs and untouched device drafts."
+      ],
+      "proof": [
+        {
+          "path": "tests/rayanlamp_reuse_test.mjs",
+          "sha256": "8b10200e63b30f5b73c36986971c52438fa0f21858c6da74110d868149a30a5d",
+          "anchor": "Receiver never echoes"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "webui/src/connection-preferences.test.ts",
+      "sha256": "26c99032222edf27a1b59476d107abc7aadbaf497b7e47887e4aa52460e0c331",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual immediate preference delivery, persistence and malformed-value rejection adapted to locale channel; adds blocked API, no echo/write and listener teardown cases."
+      ],
+      "targets": [
+        {
+          "path": "tests/rayanlamp_reuse_test.mjs",
+          "sha256": "8b10200e63b30f5b73c36986971c52438fa0f21858c6da74110d868149a30a5d",
+          "anchor": "Actual donor local-event + cross-tab delivery"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Static-direct/embedded-relay defaults and unsafe stored lamp URL fixtures",
+          "disposition": "pending",
+          "reason": "Their actual transport is not imported; running those fixtures against a nonexistent Pakar relay adapter would manufacture coverage."
+        },
+        {
+          "code": "Vitest environment/mocks",
+          "disposition": "replaced",
+          "reason": "Built-in Node VM and deterministic host doubles replace the donor test dependency."
+        }
+      ],
+      "remaining": [
+        "Restore URL/default fixtures when actual connection adapter is implemented."
+      ],
+      "proof": [
+        {
+          "path": "tests/rayanlamp_reuse_test.mjs",
+          "sha256": "8b10200e63b30f5b73c36986971c52438fa0f21858c6da74110d868149a30a5d",
+          "anchor": "No identical persistence writes"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "LICENSE",
+      "sha256": "a7931f292caa44328db79c5b19515c6629a5b31042a4cf375f28c341d84fd28d",
+      "source_read": "complete",
+      "verdict": "equivalent-file",
+      "preserved": [
+        "Complete YektaYar MIT copyright and notice retained for actual donor code."
+      ],
+      "targets": [
+        {
+          "path": "desktop/licenses/RayanLamp-MIT.txt",
+          "sha256": "a7931f292caa44328db79c5b19515c6629a5b31042a4cf375f28c341d84fd28d",
+          "anchor": "Copyright (c) 2026 YektaYar"
+        }
+      ],
+      "omissions": [],
+      "remaining": [
+        "Include notice with eventual binary distributions, not just source."
+      ],
+      "proof": [
+        {
+          "path": "tests/rayanlamp_reuse_test.mjs",
+          "sha256": "8b10200e63b30f5b73c36986971c52438fa0f21858c6da74110d868149a30a5d",
+          "anchor": "Adapted from RayanLamp haptics.test.ts"
         }
       ],
       "improvement": ""
