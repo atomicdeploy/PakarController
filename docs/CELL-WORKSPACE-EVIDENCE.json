@@ -1,5 +1,7 @@
 {
   "schema": 1,
+  "implementation_commit": "ec80d5d5a4e06ca659da92858e3cc4f85f75633b",
+  "historical_snapshot": "Original workspace refinement; see CELL-CAPTURE.md for the current follow-up",
   "scope": "bounded donor slices and cell workspace only; not whole-file or hardware acceptance",
   "donor": {
     "repo": "Pealayer",

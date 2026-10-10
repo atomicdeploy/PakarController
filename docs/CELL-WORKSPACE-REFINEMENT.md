@@ -1,5 +1,7 @@
 # Cell workspace refinement
 
+Historical ec80d5d receipt. The current indicator/highlight and screenshot follow-up is in CELL-CAPTURE.md; hashes/counts below identify the original checkpoint, not the newer source.
+
 This is a scoped desktop/Web improvement, not a declaration that the entire donor backlog or physical production acceptance is complete.
 
 ## Delivered behavior

@@ -986,6 +986,8 @@ struct PakarControllerApp {
     selected_cell: u8,
     cell_search: String,
     table: ui::cell_table::TableState,
+    capture: ui::screenshot::State,
+    screenshot_harness: bool,
     focus_cell_search: bool,
     cell_effect: String,
     event_log: Vec<(String, String)>,
@@ -1047,8 +1049,10 @@ impl PakarControllerApp {
         ui::i18n::configure_ui_fonts(&context.egui_ctx, config.language.is_rtl());
         config::apply(&context.egui_ctx, &config);
         let dock = ui::layout::restore(&config.dock_layout);
+        let screenshot_harness = std::env::var_os("PAKAR_SCREENSHOT_PATH").is_some()
+            && std::env::var_os("PAKAR_CONFIG_FILE").is_some() && !config.single_instance;
         #[cfg(windows)]
-        if let Err(error) = platform::windows_jump_list::install() {
+        if !screenshot_harness && let Err(error) = platform::windows_jump_list::install() {
             eprintln!("Windows quick actions: {error}");
         }
         let (http_tx, http_rx) = mpsc::channel();
@@ -1072,19 +1076,19 @@ impl PakarControllerApp {
             .name("pakar-serial".into())
             .spawn(move || serial_worker(serial_rx, event_tx, ctx))
             .unwrap();
-        let tray = platform::windows_tray::TrayController::new();
+        let tray = if screenshot_harness {Ok(None)} else {platform::windows_tray::TrayController::new().map(Some)};
         let mut event_log = Vec::new();
         if let Err(error) = &tray {
             event_log.push(("Windows tray unavailable".into(), error.clone()));
         }
         #[cfg(windows)]
-        let windows_desktop = platform::windows_desktop::Desktop::new(context);
+        let windows_desktop = if screenshot_harness {Ok(None)} else {platform::windows_desktop::Desktop::new(context).map(Some)};
         #[cfg(windows)]
         if let Err(error) = &windows_desktop {
             event_log.push(("Windows desktop unavailable".into(), error.clone()));
         }
         Self {
-            control: platform::instance::start(context.egui_ctx.clone()),
+            control: platform::instance::start(context.egui_ctx.clone(), !screenshot_harness),
             dock,
             reveal_panels: Vec::new(),
             close_panels: Vec::new(),
@@ -1102,18 +1106,20 @@ impl PakarControllerApp {
             selected_cell: 1,
             cell_search: String::new(),
             table: Default::default(),
+            capture: ui::screenshot::State::from_environment(),
+            screenshot_harness,
             focus_cell_search: false,
             cell_effect: "fade".into(),
             event_log,
             last_status_at: None,
             last_serial_status_at: None,
             configuration_loaded: false,
-            tray: tray.ok(),
+            tray: tray.ok().flatten(),
             notifications: Default::default(),
             connection_notice: Default::default(),
             tray_tooltip: String::new(),
             #[cfg(windows)]
-            windows_desktop: windows_desktop.ok(),
+            windows_desktop: windows_desktop.ok().flatten(),
             base: std::env::var("PAKAR_ENDPOINT").unwrap_or_else(|_| config.endpoint.clone()),
             user: std::env::var("PAKAR_USER").unwrap_or_else(|_| config.user.clone()),
             password: std::env::var("PAKAR_PASSWORD").unwrap_or_else(|_| "pakarcontroller".into()),
@@ -1473,7 +1479,9 @@ impl PakarControllerApp {
 
 impl eframe::App for PakarControllerApp {
     fn ui(&mut self, ui: &mut egui::Ui, _: &mut eframe::Frame) {
+        self.capture.receive(ui.ctx());
         self.draw_shell(ui);
+        self.capture.after_frame(ui.ctx());
     }
     fn save(&mut self, _: &mut dyn eframe::Storage) {
         self.save_workspace();
@@ -1896,6 +1904,7 @@ fn main() -> eframe::Result {
     };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
+            .with_active(std::env::var_os("PAKAR_SCREENSHOT_PATH").is_none())
             .with_inner_size([1180.0, 760.0])
             .with_maximized(true)
             .with_icon(egui::IconData {

@@ -2,7 +2,7 @@
 
 Whole-repository superiority is **not established**. This report exposes retained code, scoped improvements, omissions and gaps; it does not turn missing reviews into exclusions.
 
-Inventory: 1868 files; 31 complete source-file comparisons; 1837 pending comparisons; 16 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
+Inventory: 1868 files; 33 complete source-file comparisons; 1835 pending comparisons; 17 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
 Every inventoried path, source revision/hash, target/proof file and line, omitted code, disposition and concrete reason is in `file-comparison.csv`. Hash-bound manual decisions are in `file-comparison-evidence.json`. Donor SHA-256 values bind original bytes; target/proof SHA-256 values bind UTF-8 without BOM with LF newlines. Anchors are recomputed into exact line numbers. Test-code presence is not test execution; execution receipts are in `FILE-COMPARISON-RECEIPTS.md`.
 
@@ -13,7 +13,7 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 | ControllerBoardMini | 19 | 0 | 19 | 0 |
 | ControllerBoardMini/Puzzles | 18 | 12 | 6 | 9 |
 | PCController | 1207 | 6 | 1201 | 0 |
-| Pealayer | 493 | 9 | 484 | 3 |
+| Pealayer | 493 | 11 | 482 | 4 |
 | PU850-ESP | 109 | 4 | 105 | 4 |
 | PuzzleBoard | 22 | 0 | 22 | 0 |
 
@@ -248,11 +248,36 @@ Verdict: **equivalent-file**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550
 - Test-code evidence: `desktop/src/ui/palette.rs:71 [UTF8-LF sha256=27e4d4ab36060699693c2bdd951c46666b1831fc9d0a1771b6980b431076cd3e; anchor=fn imported_palettes_have_every_required_role()]`.
 - Remaining: Embedded Web UI still hardcodes its palette; catalog retention is not all-surface integration.
 
+### Pealayer: `scripts/capture-visible-window-windows.ps1`
+
+Verdict: **scoped-improvement**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550d`. Original-byte SHA-256: `2876c19687b1a209e777f3d505e4b24b6c4b1403a0f1de99edcedf0a624d9527`.
+
+- Target: `tools/capture-window-windows.ps1:61 [UTF8-LF sha256=b092de02c6d0198336ca3682f48bb25ed111f979b3fb8898d181b705e1c337eb; anchor=public static extern bool PrintWindow]`.
+- Retained: Actual donor PrintWindow P/Invoke, minimized/window-bounds validation, DPI awareness, System.Drawing PNG lifecycle and read-only behavior.
+- Omitted/replaced code: `Get-Process -Name foreground filter`. Disposition: **replaced**. Reason: Explicit expected PID and window-owner revalidation remove ambiguity between production and fixtures; screen fallback checks foreground ownership without changing focus.
+- Omitted/replaced code: `RenderOccludedWindow branching and unconditional Bitmap.Save`. Disposition: **replaced**. Reason: Capability-gated egui framebuffer is tried first, then PrintWindow/BitBlt and verified foreground pixels. Blank images and overwrites are rejected.
+- Test-code evidence: `tests/screenshot_harness_test.mjs:9 [UTF8-LF sha256=b1378631676b871090abb8c83457b4c5c2a1c5dfbfaed7a662045cae2919bb9f; anchor=for(const forbidden]`.
+- Scoped advantage: PID-bound, no-overwrite capture with an app-owned framebuffer and automatic read-only Win32 fallback; runtime evidence is separate from source guards.
+
+### Pealayer: `scripts/update-screenshots-windows.ps1`
+
+Verdict: **parity-gap**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550d`. Original-byte SHA-256: `48507f6e9395c8c312c5557db729d05ed8d6a83e980d57a9b01e77ea525db287`.
+
+- Target: `tools/capture-window-windows.ps1:61 [UTF8-LF sha256=b092de02c6d0198336ca3682f48bb25ed111f979b3fb8898d181b705e1c337eb; anchor=public static extern bool PrintWindow]`.
+- Retained: Actual PrintWindow(PW_RENDERFULLCONTENT), near-uniform-black sampler, GetWindowDC/BitBlt/screen fallback and PID/dimension validation imported. Pakar fixture supplies isolated profile/selected surfaces; app-owned framebuffer capture does not depend on WGC.
+- Omitted/replaced code: `SetForegroundWindow, BringWindowToTop, SetWindowPos, ShowWindow, SetCursorPos, mouse_event, SendMouseWheel/Click/RightClick`. Disposition: **replaced**. Reason: Capture remains read-only and must not steal focus, resize or inject desktop input. Startup CLI sets the application's own surface; native gestures belong to the supported computer-use APIs.
+- Omitted/replaced code: `DwmGetWindowAttribute extended bounds and logical/client coordinate transformations`. Disposition: **replaced**. Reason: Per-monitor-v2 physical GetWindowRect is kept consistent with full window-DC capture, avoiding a mismatched crop origin. Internal framebuffer needs no desktop coordinates.
+- Omitted/replaced code: `Locale/Theme arrays, PreferencesTab/Icon, AppName/Branding, WorkspaceDockLayout and per-surface matrix manifest`. Disposition: **pending**. Reason: Config-driven Pakar CLI surfaces/isolated profiles exist, but the full multi-locale/theme/icon/width matrix and hashed per-capture manifest runner remain useful unported harness work.
+- Omitted/replaced code: `temporary GUID profile cleanup, process CloseMainWindow/Kill and generated_at_utc`. Disposition: **replaced**. Reason: Stable named evidence/profiles are retained for debugging rather than deleted. Only verified fixture processes are stopped; production replacement uses graceful typed IPC and avoids timestamp/suffix deliverables.
+- Omitted/replaced code: `native resize/scroll/client-coordinate scenario parameters`. Disposition: **pending**. Reason: Model/painter tests and selected-surface captures do not replace the full interactive narrow/wide scenario matrix. Native live gesture acceptance remains separate.
+- Test-code evidence: `tests/screenshot_harness_test.mjs:9 [UTF8-LF sha256=b1378631676b871090abb8c83457b4c5c2a1c5dfbfaed7a662045cae2919bb9f; anchor=for(const forbidden]`.
+- Remaining: Complete generic locale/theme/icon/width capture matrix and manifest receipts; verify native interaction scenarios.
+
 ### Pealayer: `src/application_shortcuts.rs`
 
 Verdict: **parity-gap**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550d`. Original-byte SHA-256: `1f173bef8acc2904eac5b0a91407aa4f7629ce65c88ea3a8ac78f8c13321d203`.
 
-- Target: `desktop/src/ui/shell.rs:298 [UTF8-LF sha256=6cacc871f57003b9d455de232584d18fcd33bd4983e712d11fde09c2acdbb865; anchor=egui::Key::F11]`.
+- Target: `desktop/src/ui/shell.rs:311 [UTF8-LF sha256=8734b90a738c921892402701648880402f1040f8c904bb1e3098d5e0f31d974c; anchor=egui::Key::F11]`.
 - Retained: Default Preferences Ctrl+, and device configuration Ctrl+Shift+, navigation exist; F11 fullscreen is restored with the shared typed dispatcher. These are not equivalent to the donor persisted rebinding model.
 - Omitted/replaced code: `ApplicationShortcuts persisted fields, parse_shortcut, entries, validate, action_for_event and their non-media tests`. Disposition: **pending**. Reason: The foundation hardcoded its accelerators and omitted the reusable binding model. No accepted reason justifies leaving rebinding out. The actual donor depends on KeyChord and hardware_shortcuts match/key-code helpers, which must be ported and tested with controller-specific typed actions rather than guessed labels.
 - Omitted/replaced code: `take_frame_step_shortcut and frame-step tests`. Disposition: **not-applicable**. Reason: These consume Ctrl+Left/Right for media frame stepping and timeline transport. Those business domains were explicitly removed; Pakar must not hijack ordinary text word navigation for nonexistent video frames.
@@ -294,7 +319,7 @@ Verdict: **equivalent-file**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550
 Verdict: **equivalent-behavior**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550d`. Original-byte SHA-256: `d3a71c69516de9059735c6baee76791be785e65b7f435e0bd965f4db7f521d30`.
 
 - Target: `desktop/src/ui/icons.rs:567 [UTF8-LF sha256=b3d882b8832f0c74c579ddfba1a992723b4ed06a8521e1a0aa1d2d45128e6a11; anchor=pub fn searchable_workspace_icon_picker(]`.
-- Target: `desktop/src/ui/shell.rs:1643 [UTF8-LF sha256=6cacc871f57003b9d455de232584d18fcd33bd4983e712d11fde09c2acdbb865; anchor=icons::searchable_workspace_icon_picker]`.
+- Target: `desktop/src/ui/shell.rs:1663 [UTF8-LF sha256=8734b90a738c921892402701648880402f1040f8c904bb1e3098d5e0f31d974c; anchor=icons::searchable_workspace_icon_picker]`.
 - Retained: Production Phosphor vocabulary, stable names/kind fallback, searchable list/grid picker, UTF-8-safe match highlighting, bounded popups, disclosure/submenu helpers.
 - Retained: Actual donor regression tests restored: eleven tests, including interactive egui-frame search/select/reopen, both themes and popup width.
 - Omitted/replaced code: `every_native_icon_editor_uses_the_shared_searchable_picker donor-only editor path list`. Disposition: **replaced**. Reason: That assertion references Pealayer media/4D editor files not present in this product. Replaced only its call-site assertion with Pakar's actual workspace editor; the other ten tests were imported. This does not excuse missing generic editor features elsewhere.

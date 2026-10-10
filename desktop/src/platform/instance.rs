@@ -26,6 +26,7 @@ pub enum Command {
     Panel { name: String },
     FindCell { query: String },
     CellManager,
+    Screenshot { path: String },
     Quit,
     Status,
     NotificationTest,
@@ -36,6 +37,7 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
     let allowed = match object.get("command").and_then(|v| v.as_str()) {
         Some("panel") => &["command", "name"][..],
         Some("find_cell") => &["command", "query"][..],
+        Some("screenshot") => &["command", "path"][..],
         Some("device_settings_page") => &["command", "page"][..],
         Some("preferences_page") => &["command", "page"][..],
         _ => &["command"][..],
@@ -44,6 +46,9 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
         return Err("Unknown command field".into());
     }
     let command: Command = serde_json::from_value(value).map_err(|e| e.to_string())?;
+    if let Command::Screenshot { path } = &command {
+        crate::ui::screenshot::validate_path(path)?;
+    }
     if let Command::FindCell { query } = &command {
         crate::ui::cell_search::parse(query)?;
     }
@@ -53,7 +58,9 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
         }
     }
     if let Command::PreferencesPage { page } = &command {
-        if crate::ui::preferences::page_index(page).is_none() { return Err("Unknown preferences page".into()); }
+        if crate::ui::preferences::page_index(page).is_none() {
+            return Err("Unknown preferences page".into());
+        }
     }
     Ok(command)
 }
@@ -166,15 +173,15 @@ pub fn send(command: &Command, timeout: Duration) -> Result<serde_json::Value, S
 pub fn send(_: &Command, _: Duration) -> Result<serde_json::Value, String> {
     Err("Native instance IPC is currently available on Windows".into())
 }
-pub fn start(ctx: eframe::egui::Context) -> Control {
+pub fn start(ctx: eframe::egui::Context, enable_listener: bool) -> Control {
     let (tx, rx) = mpsc::channel();
     let snapshot = Arc::new(Mutex::new(
         serde_json::json!({"process_id":std::process::id(),"application":"PakarController","ready":true}),
     ));
     #[cfg(windows)]
-    listener(tx, ctx, snapshot.clone());
+    if enable_listener {listener(tx, ctx, snapshot.clone());}
     #[cfg(not(windows))]
-    let _ = (tx, ctx);
+    let _ = (tx, ctx, enable_listener);
     Control { rx, snapshot }
 }
 #[cfg(windows)]
@@ -238,6 +245,14 @@ mod tests {
         assert!(parse_command(br#"{"command":"find_cell","query":"81"}"#).is_err());
         assert!(parse_command(br#"{"command":"find_cell","query":"1","inject":"x"}"#).is_err());
         assert!(parse_command(br#"{"command":"notification_test"}"#).is_ok());
+        assert!(parse_command(br#"{"command":"screenshot","path":"relative.png"}"#).is_err());
+        let capture = Command::Screenshot {
+            path: std::env::temp_dir()
+                .join("pakar-capture.png")
+                .to_string_lossy()
+                .into(),
+        };
+        assert!(parse_command(&serde_json::to_vec(&capture).unwrap()).is_ok());
         assert!(parse_command(br#"{"command":"notification_test","message":"injected"}"#).is_err());
         assert!(parse_command(br#"{"command":"preferences_page","page":"notifications"}"#).is_ok());
         assert!(parse_command(br#"{"command":"preferences_page","page":"unknown"}"#).is_err());

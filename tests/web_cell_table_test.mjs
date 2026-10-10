@@ -33,6 +33,10 @@ run('selectCell(3);selectCell(7,{shiftKey:true})');assert.deepEqual(ids(),[3,4,5
 run('selectCell(4,{ctrlKey:true})');assert.deepEqual(ids(),[3,5,6,7]);
 run('selectRow(1,{ctrlKey:true});selectRow(2,{ctrlKey:true})');assert(ids().includes(11)&&ids().includes(30));
 nodes.additiveSelection.checked=true;run('selectRow(1)');assert(!ids().includes(11));run('saveTablePreferences()');assert.equal(JSON.parse(storage.get('pakar-table')).additive,true);
+assert.equal(nodes.showCellIndicators.checked,false,'Indicators must default off');
+nodes.showCellIndicators.checked=true;run('saveTablePreferences()');assert.equal(JSON.parse(storage.get('pakar-table')).indicators,true);
+assert(source.includes('.grid:not(.show-cell-indicators) .cell::before{display:none}'));
+assert(source.includes('.cell.matched.selected,.cell.matched:hover,.cell.matched:active,.cell.matched:focus-visible{border-color:var(--amber)'));
 assert.equal(run("cellNavigate(10,'ArrowRight')"),10);assert.equal(run("cellNavigate(11,'ArrowLeft')"),11);assert.equal(run("cellNavigate(37,'Home')"),31);assert.equal(run("cellNavigate(37,'End',true)"),80);
 nodes.additiveSelection.checked=false;nodes.cellSearch.value='2,12';run('selectSearchMatches()');assert.deepEqual(ids(),[2,12]);
 nodes.grid.listeners.pointerdown({button:0,pointerType:'mouse',clientX:0,clientY:0,pointerId:1});

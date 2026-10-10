@@ -77,6 +77,7 @@ pub struct AppConfig {
     pub numeric_steps: BTreeMap<String, NumericInputSteps>,
     pub additive_cell_selection: bool,
     pub animate_cells: bool,
+    pub show_cell_indicators: bool,
     pub status_items: crate::ui::status_bar::Items,
 }
 impl Default for AppConfig {
@@ -102,6 +103,7 @@ impl Default for AppConfig {
             numeric_steps: BTreeMap::new(),
             additive_cell_selection: false,
             animate_cells: true,
+            show_cell_indicators: false,
             status_items: Default::default(),
         }
     }

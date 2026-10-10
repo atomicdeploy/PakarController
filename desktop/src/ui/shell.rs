@@ -11,7 +11,11 @@ use eframe::egui;
 use platform::instance::Command;
 
 pub fn launch_command(args: &[String]) -> Command {
-    if args.iter().any(|v| v == "--manage-cells") {
+    if let Some(at) = args.iter().position(|v| v == "--screenshot") {
+        Command::Screenshot {
+            path: args.get(at + 1).cloned().unwrap_or_default(),
+        }
+    } else if args.iter().any(|v| v == "--manage-cells") {
         Command::CellManager
     } else if args.iter().any(|v| v == "--notification-test") {
         Command::NotificationTest
@@ -132,6 +136,13 @@ impl PakarControllerApp {
     }
     pub fn dispatch(&mut self, command: Command, ctx: &egui::Context) {
         match command {
+            Command::Screenshot { path } => {
+                if let Err(error) = self.capture.request(path) {
+                    self.message = error;
+                }
+                ctx.request_repaint();
+                return; // A capture request never changes focus, panels or visibility.
+            }
             Command::DeviceSettings => {
                 self.device_settings.open = true;
                 self.configuration_loaded = false;
@@ -193,9 +204,11 @@ impl PakarControllerApp {
             }
             Command::Show | Command::Status => {}
         }
-        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
-        ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
-        ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+        if !self.screenshot_harness {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+            ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
+            ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+        }
         ctx.request_repaint();
     }
     pub fn notify(&self, title: &str, message: &str, severity: messaging::Severity) {
@@ -345,7 +358,8 @@ impl PakarControllerApp {
         if let Ok(mut value) = self.control.snapshot.lock() {
             *value = serde_json::json!({"application":"PakarController","version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":self.cell_search,"search_matches":ui::cell_search::parse(&self.cell_search).unwrap_or_default(),"selected_cell":self.selected_cell});
             value["device_settings"] = serde_json::json!({"open": self.device_settings.open, "page": self.device_settings.page, "network_loaded": self.device_settings.network.is_some(), "cloud_loaded": self.device_settings.cloud.is_some(), "write_pending": self.device_settings.pending.is_some(), "maintenance_pending": self.device_settings.maintenance_pending.is_some()});
-            value["cell_management"] = serde_json::json!({"open":self.table.manager_open,"selection":self.table.selection.ids,"additive_selection":self.config.additive_cell_selection,"animations":self.config.animate_cells});
+            value["cell_management"] = serde_json::json!({"open":self.table.manager_open,"selection":self.table.selection.ids,"additive_selection":self.config.additive_cell_selection,"animations":self.config.animate_cells,"indicators":self.config.show_cell_indicators});
+            value["screenshot"] = self.capture.status();
             value["notifications"] = self.notification_snapshot();
             value["tray_available"] = serde_json::json!(self.tray.is_some());
             value["fullscreen"] = serde_json::json!(fullscreen);
@@ -452,6 +466,12 @@ impl PakarControllerApp {
                     }
                 });
                 ui.menu_button("Help", |ui| {
+                    if ui.button(format!("{}  Save workspace screenshot…", icons::DOWNLOAD_SIMPLE)).clicked() {
+                        ui.close();
+                        if let Some(path) = rfd::FileDialog::new().add_filter("PNG image", &["png"]).set_file_name("PakarController.png").save_file() {
+                            if let Err(error)=self.capture.request(path.to_string_lossy().into()) {self.message=error;}
+                        }
+                    }
                     if ui
                         .button(format!("{}  About PakarController…", icons::INFO))
                         .clicked()

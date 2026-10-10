@@ -20,6 +20,7 @@ base64 = "0.22.1"
 serialport = "4.8.1"
 tungstenite = { version = "0.28.0", default-features = false, features = ["handshake"] }
 xcap = "0.9.8"
+image = { version = "0.25.10", default-features = false, features = ["png"] }
 tray-icon = "=0.26.1"
 
 [target.'cfg(windows)'.dependencies]

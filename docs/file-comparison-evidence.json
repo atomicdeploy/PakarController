@@ -102,7 +102,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "6cacc871f57003b9d455de232584d18fcd33bd4983e712d11fde09c2acdbb865",
+          "sha256": "8734b90a738c921892402701648880402f1040f8c904bb1e3098d5e0f31d974c",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -515,7 +515,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "6cacc871f57003b9d455de232584d18fcd33bd4983e712d11fde09c2acdbb865",
+          "sha256": "8734b90a738c921892402701648880402f1040f8c904bb1e3098d5e0f31d974c",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -1291,6 +1291,99 @@
       "remaining": [
         "Expose configurable enable/port and network-aware listener/discovery lifecycle; verify reconnect, disabled port, AP and station loss on hardware.",
         "Prove actual Telnet login, command/ACK outcome and simultaneous API/WebSocket clients; source parser tests are not LAN acceptance."
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "scripts/capture-visible-window-windows.ps1",
+      "sha256": "2876c19687b1a209e777f3d505e4b24b6c4b1403a0f1de99edcedf0a624d9527",
+      "source_read": "complete",
+      "verdict": "scoped-improvement",
+      "preserved": [
+        "Actual donor PrintWindow P/Invoke, minimized/window-bounds validation, DPI awareness, System.Drawing PNG lifecycle and read-only behavior."
+      ],
+      "targets": [
+        {
+          "path": "tools/capture-window-windows.ps1",
+          "sha256": "b092de02c6d0198336ca3682f48bb25ed111f979b3fb8898d181b705e1c337eb",
+          "anchor": "public static extern bool PrintWindow"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Get-Process -Name foreground filter",
+          "disposition": "replaced",
+          "reason": "Explicit expected PID and window-owner revalidation remove ambiguity between production and fixtures; screen fallback checks foreground ownership without changing focus."
+        },
+        {
+          "code": "RenderOccludedWindow branching and unconditional Bitmap.Save",
+          "disposition": "replaced",
+          "reason": "Capability-gated egui framebuffer is tried first, then PrintWindow/BitBlt and verified foreground pixels. Blank images and overwrites are rejected."
+        }
+      ],
+      "remaining": [],
+      "proof": [
+        {
+          "path": "tests/screenshot_harness_test.mjs",
+          "sha256": "b1378631676b871090abb8c83457b4c5c2a1c5dfbfaed7a662045cae2919bb9f",
+          "anchor": "for(const forbidden"
+        }
+      ],
+      "improvement": "PID-bound, no-overwrite capture with an app-owned framebuffer and automatic read-only Win32 fallback; runtime evidence is separate from source guards."
+    },
+    {
+      "origin": "Pealayer",
+      "path": "scripts/update-screenshots-windows.ps1",
+      "sha256": "48507f6e9395c8c312c5557db729d05ed8d6a83e980d57a9b01e77ea525db287",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual PrintWindow(PW_RENDERFULLCONTENT), near-uniform-black sampler, GetWindowDC/BitBlt/screen fallback and PID/dimension validation imported. Pakar fixture supplies isolated profile/selected surfaces; app-owned framebuffer capture does not depend on WGC."
+      ],
+      "targets": [
+        {
+          "path": "tools/capture-window-windows.ps1",
+          "sha256": "b092de02c6d0198336ca3682f48bb25ed111f979b3fb8898d181b705e1c337eb",
+          "anchor": "public static extern bool PrintWindow"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "SetForegroundWindow, BringWindowToTop, SetWindowPos, ShowWindow, SetCursorPos, mouse_event, SendMouseWheel/Click/RightClick",
+          "disposition": "replaced",
+          "reason": "Capture remains read-only and must not steal focus, resize or inject desktop input. Startup CLI sets the application's own surface; native gestures belong to the supported computer-use APIs."
+        },
+        {
+          "code": "DwmGetWindowAttribute extended bounds and logical/client coordinate transformations",
+          "disposition": "replaced",
+          "reason": "Per-monitor-v2 physical GetWindowRect is kept consistent with full window-DC capture, avoiding a mismatched crop origin. Internal framebuffer needs no desktop coordinates."
+        },
+        {
+          "code": "Locale/Theme arrays, PreferencesTab/Icon, AppName/Branding, WorkspaceDockLayout and per-surface matrix manifest",
+          "disposition": "pending",
+          "reason": "Config-driven Pakar CLI surfaces/isolated profiles exist, but the full multi-locale/theme/icon/width matrix and hashed per-capture manifest runner remain useful unported harness work."
+        },
+        {
+          "code": "temporary GUID profile cleanup, process CloseMainWindow/Kill and generated_at_utc",
+          "disposition": "replaced",
+          "reason": "Stable named evidence/profiles are retained for debugging rather than deleted. Only verified fixture processes are stopped; production replacement uses graceful typed IPC and avoids timestamp/suffix deliverables."
+        },
+        {
+          "code": "native resize/scroll/client-coordinate scenario parameters",
+          "disposition": "pending",
+          "reason": "Model/painter tests and selected-surface captures do not replace the full interactive narrow/wide scenario matrix. Native live gesture acceptance remains separate."
+        }
+      ],
+      "remaining": [
+        "Complete generic locale/theme/icon/width capture matrix and manifest receipts; verify native interaction scenarios."
+      ],
+      "proof": [
+        {
+          "path": "tests/screenshot_harness_test.mjs",
+          "sha256": "b1378631676b871090abb8c83457b4c5c2a1c5dfbfaed7a662045cae2919bb9f",
+          "anchor": "for(const forbidden"
+        }
       ],
       "improvement": ""
     }

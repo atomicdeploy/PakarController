@@ -6,6 +6,7 @@ pub(crate) mod elegance_theme;
 pub mod i18n;
 pub mod icons;
 pub mod palette;
+pub mod screenshot;
 pub mod seven_segment;
 pub mod status_bar;
 pub use elegance_theme::sync_elegance_theme;

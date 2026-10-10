@@ -129,6 +129,7 @@ fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
                 if draft.tab==3||!draft.search.is_empty(){dialog::section(ui,icons::TABS,"Workspace",|ui|{
                     ui.checkbox(&mut draft.config.additive_cell_selection,"Toggle multiple cells and rows without Ctrl").on_hover_text("When off, Ctrl+click toggles items. Shift extends a range; dragging always replaces unless Ctrl/Shift is held.");
                     ui.checkbox(&mut draft.config.animate_cells,"Animate cell state transitions").on_hover_text("Disable for reduced motion. Cell geometry never changes.");
+                    ui.checkbox(&mut draft.config.show_cell_indicators,"Show cell LED-state indicators").on_hover_text("Optional corner dots for white/red/off state. Hidden by default.");
                     ui.label(format!("{} saved workspaces",draft.config.workspace_profiles.len()));
                     ui.label("Drag panel tabs to rearrange or detach them. Workspace profiles save the current layout.");
                     if ui.button(format!("{}  Export preferences…",icons::FLOPPY_DISK)).clicked(){

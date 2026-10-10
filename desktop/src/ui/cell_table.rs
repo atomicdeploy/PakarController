@@ -194,19 +194,31 @@ fn cell_surface(
     } else {
         v.widgets.inactive.bg_fill
     };
-    if selected {
+    if matched {
+        // Search owns one amber treatment. Selection/focus must not add a
+        // conflicting green fill or ring to the same cell.
+        fill = blend(v.widgets.inactive.bg_fill, v.warn_fg_color, 0.10);
+    } else if selected {
         fill = blend(fill, v.selection.bg_fill, 0.28);
     }
     if response.hovered() {
         fill = blend(fill, v.widgets.hovered.bg_fill, 0.65);
     }
     if response.is_pointer_button_down_on() {
-        fill = blend(fill, v.selection.bg_fill, 0.45);
+        fill = blend(
+            fill,
+            if matched {
+                v.warn_fg_color
+            } else {
+                v.selection.bg_fill
+            },
+            0.18,
+        );
     }
-    let line = if focus {
-        v.selection.stroke.color
-    } else if matched {
+    let line = if matched {
         v.warn_fg_color
+    } else if focus {
+        v.selection.stroke.color
     } else if selected {
         v.selection.bg_fill
     } else if response.hovered() {
@@ -234,8 +246,8 @@ fn cell_surface(
     );
     let focus_alpha = if animate {
         ui.ctx()
-            .animate_bool_with_time(id.with("focus"), focus, 0.14)
-    } else if focus {
+            .animate_bool_with_time(id.with("focus"), focus && !matched, 0.14)
+    } else if focus && !matched {
         1.0
     } else {
         0.0
@@ -476,27 +488,6 @@ impl PakarControllerApp {
                 && !self.device_settings.open
                 && !self.show_connection
                 && !self.show_mapping;
-            let search_cursor = matches.contains(id) && self.selected_cell == *id;
-            let cursor_alpha = if self.config.animate_cells {
-                ui.ctx().animate_bool_with_time(
-                    widget_id.with("search-cursor"),
-                    search_cursor,
-                    0.14,
-                )
-            } else if search_cursor {
-                1.0
-            } else {
-                0.0
-            };
-            ui.painter().rect_stroke(
-                rect.shrink(4.0),
-                4.0,
-                Stroke::new(
-                    1.0,
-                    ui.visuals().selection.bg_fill.linear_multiply(cursor_alpha),
-                ),
-                egui::StrokeKind::Inside,
-            );
             let v = ui.visuals();
             let mapping = self.mappings.iter().find(|m| m.logical_id == *id).cloned();
             let label = mapping
@@ -515,23 +506,25 @@ impl PakarControllerApp {
                 text,
                 v.text_color(),
             );
-            let indicator = match state {
-                Some("white") => v.strong_text_color(),
-                Some("red") => v.error_fg_color,
-                _ => v.weak_text_color(),
-            };
-            let indicator = animated_color(
-                ui,
-                widget_id.with("led-indicator"),
-                indicator,
-                self.config.animate_cells,
-            );
-            let dot = rect.left_top() + egui::vec2(7.0, 7.0);
-            if state == Some("off") || state.is_none() {
-                ui.painter()
-                    .circle_stroke(dot, 2.5, Stroke::new(1.0, indicator));
-            } else {
-                ui.painter().circle_filled(dot, 2.5, indicator);
+            if self.config.show_cell_indicators {
+                let indicator = match state {
+                    Some("white") => v.strong_text_color(),
+                    Some("red") => v.error_fg_color,
+                    _ => v.weak_text_color(),
+                };
+                let indicator = animated_color(
+                    ui,
+                    widget_id.with("led-indicator"),
+                    indicator,
+                    self.config.animate_cells,
+                );
+                let dot = rect.left_top() + egui::vec2(7.0, 7.0);
+                if state == Some("off") || state.is_none() {
+                    ui.painter()
+                        .circle_stroke(dot, 2.5, Stroke::new(1.0, indicator));
+                } else {
+                    ui.painter().circle_filled(dot, 2.5, indicator);
+                }
             }
             if mapping
                 .as_ref()
@@ -852,6 +845,66 @@ mod tests {
         assert!((11..=20).all(|id| !s.ids.contains(&id)));
         s.click(81, false, false);
         assert_eq!(s.ids, BTreeSet::from([5, 7, 8]));
+    }
+    #[test]
+    fn highlighted_cell_keeps_one_style_when_selected_and_focused() {
+        for dark in [true, false] {
+            let ctx = egui::Context::default();
+            ctx.set_visuals(if dark {
+                egui::Visuals::dark()
+            } else {
+                egui::Visuals::light()
+            });
+            let rect = Rect::from_min_size(egui::pos2(40.0, 40.0), egui::vec2(53.0, 36.2));
+            let id = egui::Id::new("highlight-precedence");
+            let mut expected = None;
+            for selected in [false, true] {
+                for focus in [false, true] {
+                    ctx.memory_mut(|m| {
+                        if focus {
+                            m.request_focus(id)
+                        } else {
+                            m.surrender_focus(id)
+                        }
+                    });
+                    let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+                        cell_surface(ui, rect, id, Some("red"), selected, true, false);
+                    });
+                    output.textures_delta.clear();
+                    let surface = output
+                        .shapes
+                        .iter()
+                        .find_map(|s| match &s.shape {
+                            egui::Shape::Rect(r) if r.rect == rect => Some((r.fill, r.stroke)),
+                            _ => None,
+                        })
+                        .unwrap();
+                    if let Some(expected) = expected {
+                        assert_eq!(surface, expected)
+                    } else {
+                        expected = Some(surface)
+                    }
+                    assert!(
+                        output.shapes.iter().all(|s| match &s.shape {
+                            egui::Shape::Rect(r) if r.rect == rect.shrink(4.0) =>
+                                r.stroke.color.a() == 0,
+                            _ => true,
+                        }),
+                        "No competing focus ring on search highlights"
+                    );
+                }
+            }
+        }
+    }
+    #[test]
+    fn indicators_are_hidden_in_new_and_existing_preferences() {
+        assert!(!crate::config::AppConfig::default().show_cell_indicators);
+        let mut config: crate::config::AppConfig = serde_json::from_str("{}").unwrap();
+        assert!(!config.show_cell_indicators);
+        config.show_cell_indicators = true;
+        let restored: crate::config::AppConfig =
+            serde_json::from_str(&serde_json::to_string(&config).unwrap()).unwrap();
+        assert!(restored.show_cell_indicators);
     }
     #[test]
     fn keyboard_edges_are_row_major_without_wrapping() {
