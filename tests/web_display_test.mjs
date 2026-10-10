@@ -33,3 +33,16 @@ assert.equal(sent.data.force_scroll,true); assert.equal(fields.displayPauseLabel
 fields.displayRepeat.value='loop';vm.runInContext('displayControls()',context);
 assert.equal(fields.displayPauseLabel.hidden,true);assert.equal(fields.displayHoldLabel.hidden,true);
 console.log('Embedded Web display defaults, scheduling payload and contextual controls passed.');
+
+const audioCue={value:'welcome',options:[],replaceChildren(){this.options=[]},appendChild(option){this.options.push(option)}};
+const audioPlay={disabled:false};
+const audioContext=vm.createContext({audioCue,audioPlay,document:{createElement:()=>({})}});
+vm.runInContext(source.match(/^function renderAudio\(s\).*$/m)[0],audioContext);
+vm.runInContext(`renderAudio({avr_online:true,audio_cues:['welcome','welcome-40led','bad','welcome-40led',7]})`,audioContext);
+assert.deepEqual(audioCue.options.map(o=>o.value),['welcome','welcome-40led']);
+assert.equal(audioPlay.disabled,false);assert.equal(audioCue.value,'welcome');
+vm.runInContext('renderAudio({avr_online:false,audio_cues:[]})',audioContext);
+assert.equal(audioCue.options.length,0);assert.equal(audioPlay.disabled,true);
+vm.runInContext('renderAudio({avr_online:true})',audioContext);
+assert.equal(audioPlay.disabled,true);
+console.log('Web melodies use only known peer-advertised AVR cues; offline and absent metadata disable playback.');

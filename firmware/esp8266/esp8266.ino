@@ -12,6 +12,7 @@
 #include <time.h>
 
 #include <BuildInfo.h>
+#include <AudioCues.h>
 #include <Protocol.h>
 #include <SerialLink.h>
 
@@ -83,6 +84,8 @@ File uploadFile;
 uint32_t avrUploadOwner = 0;
 String hostname;
 bool avrOnline = false;
+bool avrVersionKnown = false;
+uint8_t avrVersion[3] = {};
 bool apStarted = false;
 GameMode mode = kModeCellSelect;
 uint8_t winner = 0;
@@ -180,6 +183,8 @@ void sendHostStatus(uint8_t requestSequence) {
       // Append-only extension: preserve the original 19-byte status prefix.
       tm1637Segments[0], tm1637Segments[1], tm1637Segments[2], tm1637Segments[3],
       tm1637Brightness, static_cast<uint8_t>(tm1637HostActive),
+      avrVersion[0], avrVersion[1], avrVersion[2],
+      BoardCore::AudioCues::supportedCount(avrOnline, avrVersionKnown, avrVersion),
   };
   hostLink.send(kStatusResponse, requestSequence, payload, sizeof(payload));
 }
@@ -339,6 +344,11 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
     case kBuzzer:
     case kAudioCue:
     case kDisplayText:
+      if (frame.opcode == kAudioCue &&
+          (frame.payloadLength != 1 || frame.payload[0] >=
+           BoardCore::AudioCues::supportedCount(avrOnline, avrVersionKnown, avrVersion))) {
+        hostLink.error(frame.sequence, frame.opcode, kBadPayload); break;
+      }
       if (!sendToAvr(frame.opcode, sequence++, frame.payload,
                      frame.payloadLength)) {
         hostLink.error(frame.sequence, frame.opcode, kHardwareUnavailable);
@@ -595,6 +605,7 @@ bool requestAndWaitForAck(uint8_t opcode, const uint8_t *payload = nullptr,
 
 bool waitForAvr(uint16_t timeoutMs = 2500) {
   avrOnline = false;
+  avrVersionKnown = false;
   const uint32_t startedAt = millis();
   uint32_t lastHello = 0;
   while (!avrOnline && static_cast<uint32_t>(millis() - startedAt) < timeoutMs) {
@@ -765,6 +776,18 @@ String buildStatusJson() {
   body += F("\",\"ip\":\""); body += WiFi.softAPIP().toString();
   body += F("\",\"mode\":\""); body += modeName();
   body += F("\",\"avr_online\":"); body += avrOnline ? F("true") : F("false");
+  body += F(",\"avr_version\":");
+  if (avrOnline && avrVersionKnown) {
+    body += '"'; body += avrVersion[0]; body += '.'; body += avrVersion[1];
+    body += '.'; body += avrVersion[2]; body += '"';
+  } else body += F("null");
+  body += F(",\"audio_cues\":[");
+  const uint8_t cueCount = BoardCore::AudioCues::supportedCount(avrOnline, avrVersionKnown, avrVersion);
+  for (uint8_t i = 0; i < cueCount; ++i) {
+    if (i) body += ',';
+    body += '"'; body += BoardCore::AudioCues::name(i); body += '"';
+  }
+  body += ']';
   body += F(",\"ap_started\":"); body += apStarted ? F("true") : F("false");
   body += F(",\"ap_enabled\":"); body += networkConfig.accessPointEnabled() ? F("true") : F("false");
   body += F(",\"ap_ip\":\""); body += WiFi.softAPIP().toString(); body += '"';
@@ -947,17 +970,8 @@ LedGrid::Pattern parsePattern(const String &value) {
 }
 
 bool parseAudioCue(const String &value, uint8_t &cue) {
-  const char *names[] = {
-      "welcome", "update-start", "update-success", "error", "winner", "finish",
-      "lost", "incorrect", "rapid-error", "fault", "increase", "decrease",
-  };
-  for (uint8_t index = 0; index <= kCueDecrease; ++index) {
-    if (value == names[index]) {
-      cue = index;
-      return true;
-    }
-  }
-  return false;
+  return BoardCore::AudioCues::parse(value.c_str(), cue) &&
+         cue < BoardCore::AudioCues::supportedCount(avrOnline, avrVersionKnown, avrVersion);
 }
 
 String jsonStringValue(const String &json, const char *key) {
@@ -1173,8 +1187,10 @@ bool handleCloudCommand(const String &message, String &result) {
       result = F("unknown audio cue");
       return false;
     }
-    sendToAvr(kAudioCue, sequence++, &cue, 1);
-    result = F("audio cue started");
+    if (!sendToAvr(kAudioCue, sequence++, &cue, 1)) {
+      result = F("AVR link unavailable"); return false;
+    }
+    result = F("audio cue queued");
     return true;
   }
   if (command == F("snake-direction")) {
@@ -1211,6 +1227,10 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     awaitedReplyOk = frame.opcode == kAck && frame.payload[1] == kNoError;
   }
   if (frame.opcode == kHelloResponse) {
+    avrVersionKnown = frame.payloadLength >= 9 &&
+                      frame.payload[0] == BoardCore::BuildInfo::kProtocolVersion &&
+                      frame.payload[1] == kRoleAvr;
+    if (avrVersionKnown) memcpy(avrVersion, frame.payload + 6, sizeof(avrVersion));
     sendToAvr(kGetStatus, sequence++);
   } else if (frame.opcode == kGameState && frame.payloadLength >= 4) {
     const uint8_t previousWinner = winner;
@@ -1586,8 +1606,10 @@ void registerApi() {
       server.send(400, "text/plain", "unknown audio cue");
       return;
     }
-    sendToAvr(kAudioCue, sequence++, &cue, 1);
-    server.send(202, "application/json", "{\"accepted\":true}");
+    if (!sendToAvr(kAudioCue, sequence++, &cue, 1)) {
+      server.send(503, "text/plain", "AVR link unavailable"); return;
+    }
+    server.send(202, "application/json", "{\"accepted\":true,\"state\":\"queued\"}");
   });
   server.on("/api/v1/display", HTTP_POST, []() {
     if (!authenticate()) return;
@@ -2321,6 +2343,7 @@ void loop() {
   if (avrOnline &&
       static_cast<uint32_t>(afterServices - lastAvrFrameAt) > 3000U) {
     avrOnline = false;
+    avrVersionKnown = false;
   }
   if (!avrOnline && static_cast<uint32_t>(now - lastHelloAt) > 1000) {
     lastHelloAt = now;

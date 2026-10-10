@@ -77,6 +77,9 @@ enum AudioCue : uint8_t {
   kCueFault = 9,
   kCueIncrease = 10,
   kCueDecrease = 11,
+  kCueWelcomePuzzleBoard = 12,
+  kCueWelcome40Led = 13,
+  kCueCount = 14,
 };
 
 enum Capability : uint16_t {

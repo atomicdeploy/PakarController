@@ -184,19 +184,11 @@ impl PakarControllerApp {
         }
     }
     fn live_status(&self) -> Option<&DeviceStatus> {
-        self.status
-            .as_ref()
-            .filter(|_| {
-                self.last_status_at
-                    .is_some_and(|at| at.elapsed() < Duration::from_secs(8))
-            })
-            .or_else(|| {
-                if self.serial_live {
-                    self.serial_status.as_ref()
-                } else {
-                    None
-                }
-            })
+        match self.command_route() {
+            Some(Transport::WiFi) => self.status.as_ref(),
+            Some(Transport::Serial) => self.serial_status.as_ref(),
+            _ => None,
+        }
     }
     fn refresh(&mut self) {
         self.configuration_loaded = false;
@@ -263,7 +255,7 @@ impl PakarControllerApp {
         ctx.request_repaint_after(Duration::from_millis(250));
         let snapshot = self.live_status().cloned();
         if let Ok(mut value) = self.control.snapshot.lock() {
-            *value = serde_json::json!({"application":"PakarController","process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":self.cell_search,"search_matches":ui::cell_search::parse(&self.cell_search).unwrap_or_default(),"selected_cell":self.selected_cell});
+            *value = serde_json::json!({"application":"PakarController","version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":self.cell_search,"search_matches":ui::cell_search::parse(&self.cell_search).unwrap_or_default(),"selected_cell":self.selected_cell});
         }
         egui::Panel::top("pakar-menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
@@ -970,24 +962,25 @@ impl PakarControllerApp {
         ui.add_space(10.0);
         dialog::section(ui, icons::MUSIC_NOTE, "Melodies", |ui| {
             ui.add_enabled_ui(
-                snapshot.is_some() && self.transport != Transport::Serial,
+                snapshot
+                    .as_ref()
+                    .is_some_and(|s| s.avr_online && !s.audio_cues.is_empty()),
                 |ui| {
                     ui.horizontal_wrapped(|ui| {
-                        for (name, cue) in [
-                            ("Welcome", "welcome"),
-                            ("Finish", "finish"),
-                            ("Winner", "winner"),
-                            ("Lost", "lost"),
-                            ("Incorrect", "incorrect"),
-                            ("Fault", "fault"),
-                            ("Increase", "increase"),
-                            ("Decrease", "decrease"),
-                            ("Update start", "update-start"),
-                            ("Update complete", "update-success"),
-                            ("Rapid error", "rapid-error"),
-                        ] {
+                        for (cue, name) in audio::CUES {
+                            if !snapshot
+                                .as_ref()
+                                .is_some_and(|s| s.audio_cues.iter().any(|v| v == cue))
+                            {
+                                continue;
+                            }
                             if ui.button(format!("{}  {name}", icons::PLAY)).clicked() {
-                                self.post("/api/v1/audio", vec![("cue".into(), cue.into())]);
+                                self.action(
+                                    "/api/v1/audio",
+                                    vec![("cue".into(), cue.into())],
+                                    OP_AUDIO,
+                                    vec![audio::id(cue).expect("catalog ID")],
+                                );
                             }
                         }
                     });

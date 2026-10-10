@@ -7,6 +7,16 @@ class DeviceStatus {
   String get stationIp => json['station_ip'] as String? ?? '';
   int? get rssi => json['station_rssi'] as int?;
   bool get avrOnline => json['avr_online'] == true;
+  List<String> get audioCues {
+    final reported = json['audio_cues'];
+    if (!avrOnline || reported is! List) return const [];
+    return reported
+        .whereType<String>()
+        .where(audioCueNames.contains)
+        .toSet()
+        .toList();
+  }
+
   bool get tmReady => json['tm1637_ack'] == true;
   bool get mdns => json['mdns_started'] == true;
   bool get ssdp => json['ssdp_started'] == true;
@@ -26,6 +36,23 @@ class DeviceStatus {
       .toList(growable: false);
   int get segmentBrightness => json['tm1637_brightness'] as int? ?? 0;
 }
+
+const audioCueNames = [
+  'welcome',
+  'update-start',
+  'update-success',
+  'error',
+  'winner',
+  'finish',
+  'lost',
+  'incorrect',
+  'rapid-error',
+  'fault',
+  'increase',
+  'decrease',
+  'welcome-puzzleboard',
+  'welcome-40led',
+];
 
 class CellMap {
   CellMap({required this.physical, required this.names});

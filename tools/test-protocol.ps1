@@ -22,7 +22,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Busy line compilation failed' }
 & $busyBinary
 if ($LASTEXITCODE -ne 0) { throw 'Busy line tests failed' }
 $toneBinary = Join-Path $outputDirectory 'tone_player_test.exe'
-& g++ -std=c++17 -Wall -Wextra -Werror -DF_CPU=16000000UL -I (Join-Path $projectRoot 'tests/tone_stubs') -I (Join-Path $projectRoot 'firmware/avr') (Join-Path $projectRoot 'tests/tone_player_test.cpp') (Join-Path $projectRoot 'firmware/avr/TonePlayer.cpp') (Join-Path $projectRoot 'firmware/avr/BootMelody.cpp') -o $toneBinary
+& g++ -std=c++17 -Wall -Wextra -Werror -DF_CPU=16000000UL -I (Join-Path $projectRoot 'libraries/BoardCore/src') -I (Join-Path $projectRoot 'tests/tone_stubs') -I (Join-Path $projectRoot 'firmware/avr') (Join-Path $projectRoot 'tests/tone_player_test.cpp') (Join-Path $projectRoot 'firmware/avr/TonePlayer.cpp') (Join-Path $projectRoot 'firmware/avr/BootMelody.cpp') -o $toneBinary
 if ($LASTEXITCODE -ne 0) { throw 'Tone player compilation failed' }
 & $toneBinary
 if ($LASTEXITCODE -ne 0) { throw 'Tone player tests failed' }

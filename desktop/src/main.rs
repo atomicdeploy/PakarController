@@ -6,6 +6,7 @@ use std::{
 };
 
 mod access;
+mod audio;
 mod config;
 mod display;
 mod identity;
@@ -21,6 +22,7 @@ use tungstenite::{Message, client::IntoClientRequest};
 
 const OP_GET_STATUS: u8 = 0x02;
 const OP_BUZZER: u8 = 0x10;
+const OP_AUDIO: u8 = 0x11;
 const OP_DISPLAY: u8 = 0x38;
 const OP_SET_MODE: u8 = 0x4b;
 const OP_CELL_ACTION: u8 = 0x4c;
@@ -42,6 +44,10 @@ struct Endpoint {
 struct DeviceStatus {
     #[serde(default)]
     version: String,
+    #[serde(default)]
+    avr_version: Option<String>,
+    #[serde(default)]
+    audio_cues: Vec<String>,
     #[serde(default)]
     hostname: String,
     #[serde(default)]
@@ -698,6 +704,21 @@ fn serial_status(payload: &[u8]) -> Option<DeviceStatus> {
         tm1637_segments: payload.get(19..23).unwrap_or_default().to_vec(),
         tm1637_brightness: payload.get(23).copied().unwrap_or_default(),
         tm1637_host_active: payload.get(24).is_some_and(|value| *value != 0),
+        avr_version: if payload.len() >= 29 && payload[5] != 0 && payload[28] > 0 {
+            Some(format!("{}.{}.{}", payload[25], payload[26], payload[27]))
+        } else {
+            None
+        },
+        audio_cues: payload
+            .get(28)
+            .filter(|count| payload[5] != 0 && **count as usize <= audio::CUES.len())
+            .map(|count| {
+                audio::CUES[..*count as usize]
+                    .iter()
+                    .map(|(name, _)| (*name).to_owned())
+                    .collect()
+            })
+            .unwrap_or_default(),
         programming_latch: payload[7] != 0,
         active_inputs: payload[8],
         input_9: payload[9] != 0,
@@ -796,11 +817,23 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
     }
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Transport {
     WiFi,
     Serial,
     Both,
+}
+
+// "Both" maintains both connections, not two copies of each mutation. A route
+// is selected before dispatch; uncertain outcomes must never trigger replay.
+fn command_route(selected: Transport, wifi_fresh: bool, usb_fresh: bool) -> Option<Transport> {
+    match selected {
+        Transport::WiFi if wifi_fresh => Some(Transport::WiFi),
+        Transport::Serial if usb_fresh => Some(Transport::Serial),
+        Transport::Both if wifi_fresh => Some(Transport::WiFi),
+        Transport::Both if usb_fresh => Some(Transport::Serial),
+        _ => None,
+    }
 }
 struct PakarControllerApp {
     config: config::AppConfig,
@@ -822,6 +855,7 @@ struct PakarControllerApp {
     cell_effect: String,
     event_log: Vec<(String, String)>,
     last_status_at: Option<Instant>,
+    last_serial_status_at: Option<Instant>,
     configuration_loaded: bool,
     tray: Option<platform::windows_tray::TrayController>,
     base: String,
@@ -934,6 +968,7 @@ impl PakarControllerApp {
             cell_effect: "fade".into(),
             event_log: Vec::new(),
             last_status_at: None,
+            last_serial_status_at: None,
             configuration_loaded: false,
             tray: platform::windows_tray::TrayController::new().ok(),
             base: std::env::var("PAKAR_ENDPOINT").unwrap_or_else(|_| config.endpoint.clone()),
@@ -1021,8 +1056,29 @@ impl PakarControllerApp {
         op: u8,
         payload: Vec<u8>,
     ) {
-        self.post(path, form);
-        self.serial(op, payload);
+        match self.command_route() {
+            Some(Transport::WiFi) => self.post(path, form),
+            Some(Transport::Serial) => self.serial(op, payload),
+            _ => self.notify(
+                "Device offline",
+                "No fresh status from the selected transport. Reconnect before sending a command.",
+                messaging::Severity::Warning,
+            ),
+        }
+    }
+    fn command_route(&self) -> Option<Transport> {
+        command_route(
+            self.transport,
+            self.status.is_some()
+                && self
+                    .last_status_at
+                    .is_some_and(|at| at.elapsed() < Duration::from_secs(8)),
+            self.serial_live
+                && self.serial_status.is_some()
+                && self
+                    .last_serial_status_at
+                    .is_some_and(|at| at.elapsed() < Duration::from_secs(8)),
+        )
     }
     fn apply_network(&mut self) {
         if self.wifi_password.is_empty() {
@@ -1037,16 +1093,22 @@ impl PakarControllerApp {
             self.message = "Keep station or recovery AP enabled".into();
             return;
         }
-        self.post(
-            "/api/v1/network",
-            vec![
-                ("station_enabled".into(), self.station_enabled.to_string()),
-                ("ap_enabled".into(), self.ap_enabled.to_string()),
-                ("ssid".into(), self.wifi_ssid.clone()),
-                ("password".into(), self.wifi_password.clone()),
-            ],
-        );
-        if self.transport != Transport::WiFi {
+        let Some(route) = self.command_route() else {
+            self.message = "Reconnect before applying network settings".into();
+            return;
+        };
+        if route == Transport::WiFi {
+            self.post(
+                "/api/v1/network",
+                vec![
+                    ("station_enabled".into(), self.station_enabled.to_string()),
+                    ("ap_enabled".into(), self.ap_enabled.to_string()),
+                    ("ssid".into(), self.wifi_ssid.clone()),
+                    ("password".into(), self.wifi_password.clone()),
+                ],
+            );
+        }
+        if route == Transport::Serial {
             self.serial(OP_NETWORK_CONFIG, vec![0]);
             for chunk in self.wifi_ssid.as_bytes().chunks(47) {
                 let mut payload = vec![1];
@@ -1194,8 +1256,13 @@ impl PakarControllerApp {
                 Event::WebSocket(v) => self.websocket_live = v,
                 Event::Serial(v, s) => {
                     self.serial_live = v;
+                    if !v {
+                        self.serial_status = None;
+                        self.last_serial_status_at = None;
+                    }
                     if let Some(s) = s {
-                        self.serial_status = Some(s)
+                        self.serial_status = Some(s);
+                        self.last_serial_status_at = Some(Instant::now());
                     }
                 }
             }
@@ -1587,6 +1654,29 @@ fn main() -> eframe::Result {
 mod tests {
     use super::*;
     #[test]
+    fn dual_transport_selects_one_route_without_replay() {
+        for wifi in [false, true] {
+            for usb in [false, true] {
+                assert_eq!(
+                    command_route(Transport::WiFi, wifi, usb),
+                    wifi.then_some(Transport::WiFi)
+                );
+                assert_eq!(
+                    command_route(Transport::Serial, wifi, usb),
+                    usb.then_some(Transport::Serial)
+                );
+                assert_eq!(
+                    command_route(Transport::Both, wifi, usb),
+                    if wifi {
+                        Some(Transport::WiFi)
+                    } else {
+                        usb.then_some(Transport::Serial)
+                    }
+                );
+            }
+        }
+    }
+    #[test]
     fn wire_round_trip() {
         let encoded = wire_frame(OP_CELL_ACTION, 7, &[80, 2, 1]);
         let (op, payload) = decode_frame(&encoded[..encoded.len() - 1]).unwrap();
@@ -1620,5 +1710,18 @@ mod tests {
         payload[24] = 0;
         assert!(!serial_status(&payload).unwrap().tm1637_host_active);
         assert!(serial_status(&payload[..18]).is_none());
+        assert!(current.audio_cues.is_empty() && current.avr_version.is_none());
+        payload.extend([0, 2, 5, 14]);
+        payload[5] = 1;
+        let catalog = serial_status(&payload).unwrap();
+        assert_eq!(catalog.avr_version.as_deref(), Some("0.2.5"));
+        assert_eq!(catalog.audio_cues.len(), 14);
+        assert_eq!(catalog.audio_cues[13], "welcome-40led");
+        payload[28] = 255;
+        assert!(serial_status(&payload).unwrap().audio_cues.is_empty());
+        payload[28] = 14;
+        payload[5] = 0;
+        assert!(serial_status(&payload).unwrap().audio_cues.is_empty());
+        assert!(serial_status(&payload).unwrap().avr_version.is_none());
     }
 }

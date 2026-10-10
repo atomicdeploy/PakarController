@@ -8,7 +8,7 @@ exclusion needs a concrete donor path, reason and hardware/business scope;
 
 Master tracking issue: https://github.com/atomicdeploy/PakarController/issues/2
 
-Current source checkpoint: version `0.2.4`, PR #1; commit/CI receipts are posted
+Current source checkpoint: version `0.2.5`, PR #1; commit/CI receipts are posted
 to the issue. ASUS localhost:1022 currently refuses
 connections; the previous board address times out and ledboard.local does not
 resolve here. Continue offline source/UI work while this live gate is unavailable.
@@ -42,6 +42,13 @@ No Wi-Fi password or other deployment secret belongs in GitHub.
 - [x] Existing Flutter source preserved and hardened: secure credential migration,
   no mutation replay, exact logical search and Once text default; source tests
   and analyzer pass. Phone/tablet and production-signing acceptance remain open.
+- [x] All fourteen current catalog cues are exercised by production source tests;
+  Puzzles 530 ms, PuzzleBoard 520 ms and 40LED 590 ms variants remain distinct.
+  Native/Web/mobile expose only known AVR-advertised cues; USB carries catalog.
+- [x] Native Wi-Fi+USB commands/network changes choose one route before dispatch;
+  no dual application and no replay on uncertain failure. Serial status expires.
+- [x] Broker TLS and anonymous rejection verified; exact ledboard topic ACL added
+  without resetting credentials or unrelated tenant rules. ESP cloud gate open.
 
 ## Donor completeness and provenance
 

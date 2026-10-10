@@ -11,6 +11,10 @@ SSDP friendly name/presentation URL and MQTT client/topic identity follow the
 new label. SSDP's hardware UUID stays unchanged. Outbound WebSocket reconnects
 and introduces the new device name. The old MQTT availability topic is marked
 offline if connected. Broker ACLs must allow the new name's topic paths.
+The office broker now has the exact `pakarcontroller/ledboard/...` permissions
+for the existing device account, preserving its old paths for migration.
+See `deployment/mqtt/README.md`; positive ESP authentication and the physical
+rename itself are not yet verified while the board is unreachable.
 
 ## CLI / TUI (Windows)
 

@@ -47,77 +47,6 @@ uint8_t resetRevision = 0;
 Effect cellActionEffect = kEffectImmediate;
 bool stateDirty = true;
 
-void playAudioCue(AudioCue cue) {
-  buzzer.stop();
-  switch (cue) {
-    case kCueWelcome:
-      playBootMelody();
-      break;
-    case kCueUpdateStart:
-      buzzer.enqueue(NOTE_G5, 90);
-      buzzer.pause(45);
-      buzzer.enqueue(NOTE_E5, 90);
-      buzzer.pause(45);
-      buzzer.enqueue(NOTE_C5, 180);
-      break;
-    case kCueUpdateSuccess:
-      buzzer.enqueue(NOTE_C5, 80);
-      buzzer.pause(35);
-      buzzer.enqueue(NOTE_E5, 90);
-      buzzer.pause(35);
-      buzzer.enqueue(NOTE_G5, 170);
-      break;
-    case kCueError:
-      buzzer.error();
-      break;
-    case kCueWinner:
-      buzzer.enqueue(NOTE_C6, 90);
-      buzzer.pause(35);
-      buzzer.enqueue(NOTE_G6, 180);
-      break;
-    case kCueFinish:
-      buzzer.enqueue(NOTE_E5, 100);
-      buzzer.enqueue(NOTE_G5, 100);
-      buzzer.enqueue(NOTE_A5, 250);
-      break;
-    case kCueLost:
-      buzzer.enqueue(NOTE_G4, 100);
-      buzzer.enqueue(NOTE_E4, 100);
-      buzzer.enqueue(NOTE_C4, 100);
-      buzzer.enqueue(NOTE_G3, 100);
-      break;
-    case kCueIncorrect:
-      for (uint8_t index = 0; index < 3; ++index) {
-        buzzer.enqueue(2000, 100);
-        buzzer.pause(100);
-      }
-      break;
-    case kCueRapidError:
-      for (uint8_t index = 0; index < 5; ++index) {
-        buzzer.enqueue(2000, 10);
-        buzzer.pause(10);
-      }
-      break;
-    case kCueFault:
-      buzzer.enqueue(1000, 250);
-      buzzer.enqueue(500, 500);
-      buzzer.pause(5000);
-      break;
-    case kCueIncrease:
-      buzzer.enqueue(2000, 100);
-      buzzer.pause(50);
-      buzzer.enqueue(2500, 100);
-      buzzer.pause(50);
-      break;
-    case kCueDecrease:
-      buzzer.enqueue(1500, 100);
-      buzzer.pause(50);
-      buzzer.enqueue(1000, 100);
-      buzzer.pause(50);
-      break;
-  }
-}
-
 void applyProgrammingSafety() {
   shiftRegisters.allOutputsOff();
   buzzer.stop();
@@ -330,7 +259,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       link.ack(frame.sequence, frame.opcode);
       break;
     case kAudioCue:
-      if (frame.payloadLength != 1 || frame.payload[0] > kCueDecrease ||
+      if (frame.payloadLength != 1 || frame.payload[0] >= kCueCount ||
           programmingLatch.active()) {
         link.error(frame.sequence, frame.opcode,
                    programmingLatch.active() ? kUnsafe : kBadPayload);

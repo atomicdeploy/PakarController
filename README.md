@@ -75,5 +75,8 @@ PakarController.exe --command mode snake
 PakarController.exe --tui
 ```
 
-The text table uses the same serpentine numbering and one-row offset for odd
-physical columns as the Web and graphical front panels.
+Logical IDs are row-major: 1 is upper-left, 2 is next to it, and 11 begins the
+second row. Graphical tables offset one-based odd columns by half a cell in Y;
+each cell contains six LEDs. Physical strip order is a separate editable map.
+The current text surface prints a flat status table and a command prompt;
+the requested fully interactive staggered TUI remains open in issue #2.

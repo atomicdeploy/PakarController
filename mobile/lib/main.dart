@@ -649,16 +649,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
       Wrap(
         spacing: 8,
         children: [
-          for (final cue in [
-            'welcome',
-            'finish',
-            'lost',
-            'incorrect',
-            'fault',
-            'increase',
-            'decrease',
-            'winner',
-          ])
+          for (final cue in widget.status?.audioCues ?? const <String>[])
             ActionChip(
               avatar: const Icon(PakarIcons.musicNote),
               label: Text(cue),

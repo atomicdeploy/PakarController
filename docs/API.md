@@ -31,7 +31,7 @@ See `ACCESS.md` for persistence, CLI/TUI, native editor and physical USB recover
 | POST | `/api/v1/brightness` | form `value=1..255` |
 | POST | `/api/v1/effect` | form `value=none|rainbow|fire` |
 | POST | `/api/v1/buzzer` | form `frequency=20..12000`, `duration_ms=1..5000` |
-| POST | `/api/v1/audio` | form `cue=welcome|finish|lost|incorrect|rapid-error|fault|increase|decrease|update-start|update-success|winner|error` |
+| POST | `/api/v1/audio` | form `cue` from status `audio_cues`; adds `welcome-puzzleboard` and `welcome-40led` on AVR >=0.2.5; 202 means queued, not playback completion |
 | POST | `/api/v1/display` | `value=-999..9999`, scheduled `text`, or `release=true`; see below |
 | POST | `/api/v1/outputs` | form `mask=0..255` for direct 74HC595 diagnostics |
 | GET | `/api/v1/network` | AP/station state without returning credentials |

@@ -1,10 +1,21 @@
-# PakarController 0.2.4 source checkpoint
+# PakarController 0.2.5 source checkpoint
 
 Refs https://github.com/atomicdeploy/PakarController/issues/2.
 This is **not** the completed production acceptance or a hardware deployment.
 
 ## Implemented and locally verified
 
+- Fourteen catalog cues now run through the actual production player. The
+  separately imported root PuzzleBoard 520 ms and 40LED setup 590 ms variations
+  do not replace the default Puzzles 530 ms welcome. Native/Web/mobile require
+  advertised AVR cues, based on a versioned HELLO; USB includes the catalog.
+- Wi-Fi+USB mode selects one route before each native action/network change;
+  it no longer duplicates mutations. Explicit transport and stale serial
+  observations are respected. Lost responses do not cause cross-route replay.
+- The existing MQTT broker's TLS identity and anonymous rejection passed.
+  An exact ledboard ACL alias was staged/validated and hot-reloaded without
+  changing passwords or other tenants. This is not ESP cloud round-trip proof.
+  See deployment/mqtt/README.md for hashes and the server recovery copy.
 - ESP busy HIGH explicitly uses INPUT_PULLUP; receive-ready preloads LOW
   before output enable. Polling builds never touch that GPIO. AVR input
   INPUT_PULLUP remains enabled. Both macro variants build.
@@ -23,19 +34,19 @@ This is **not** the completed production acceptance or a hardware deployment.
   broader donor inventory contains 1,868 files, 63 missing sparse paths and
   1,863 unresolved manual/integration decisions. Hash screening is not full
   review. The strict release gate intentionally blocks this scope.
-- Existing Android/Flutter source is preserved in GitHub, version 0.2.4,
+- Existing Android/Flutter source is preserved in GitHub, version 0.2.5,
   with platform-encrypted credential storage and safe legacy migration,
   identity-checked read-only discovery for renamed hosts, no mutation replay,
   Once text default, half-stagger table, alternating columns and exact logical
-  search/highlighting. Analyze and 12 tests pass; the release-mode preview
+  search/highlighting. Analyze and 13 tests pass; the release-mode preview
   APK builds. Production signing/physical mobile/full parity stay open.
 - Firmware/native/mobile source versions agree; local Windows release build,
-  23 Rust tests, ten C++ suites, Web tests, CLI loopback and ledger tests pass.
+  25 Rust tests, ten C++ suites, Web tests, CLI loopback and ledger tests pass.
   GitHub jobs additionally test/build Android preview and version/ledger gates.
 
 ## Actual native screenshots
 
-The 0.2.4 process was launched on David-PC. A secondary process forwards to
+The photographed 0.2.4 process was launched on David-PC. A secondary process forwards to
 the same primary PID; live IPC reports single-instance ownership, the dock
 panels, Preferences open and device/WebSocket/serial **offline**. The screenshot
 helper captures actual app windows, not mock UI. Preferences lives in a separate
@@ -48,6 +59,8 @@ native viewport and was captured by its actual observed window title.
 These receipts establish rendered native workspace/preferences, not complete
 Pealayer parity, light/narrow acceptance, hardware animation or Android visual
 acceptance. Those gates remain in PRODUCTION-ACCEPTANCE.md.
+These screenshots remain explicitly versioned 0.2.4 receipts, not screenshots
+of the additional 0.2.5 cue/routing changes or live board acceptance.
 
 ## Current external gate
 

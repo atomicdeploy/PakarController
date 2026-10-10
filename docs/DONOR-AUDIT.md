@@ -24,6 +24,11 @@ and hardware gaps remain open. The Puzzles folder has **no**
 path-only row naming that nonexistent file cannot serve as import proof.
 The PU850 Telnet and Shell headers and implementations have also been read
 in full, with the actual adapted parser/editor tested separately.
+Root PuzzleBoard and the complete 40LED base sketch were also read. Their
+520/590 ms musical variants are integrated separately, while useful input,
+output and progress primitives stay visibly open. The `.ino.new` file was
+compared by its complete two-hunk diff; this is explicitly not a separate
+full-file-read claim. See PUZZLEBOARD-VARIANTS.md for concrete differences.
 
 Run the inventory on a machine containing the donor trees:
 
