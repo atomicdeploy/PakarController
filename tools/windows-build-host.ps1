@@ -40,6 +40,22 @@ function Get-PakarFileIdentity {
     }
 }
 
+# Actual Pealayer Test-PealayerFileContentEqual; only the product name changes.
+function Test-PakarFileContentEqual {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][string]$Left,
+        [Parameter(Mandatory = $true)][string]$Right
+    )
+    if (-not (Test-Path -LiteralPath $Left -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $Right -PathType Leaf)) { return $false }
+    $leftFile = Get-Item -LiteralPath $Left
+    $rightFile = Get-Item -LiteralPath $Right
+    if ($leftFile.Length -ne $rightFile.Length) { return $false }
+    return (Get-FileHash -LiteralPath $Left -Algorithm SHA256).Hash -eq
+        (Get-FileHash -LiteralPath $Right -Algorithm SHA256).Hash
+}
+
 # Adapted actual source-stability check from Pealayer scripts/package-windows.ps1.
 function Assert-PakarPackageSourceStable([string]$RepositoryRoot, [string]$ExpectedCommit) {
     $currentCommit = (& git -C $RepositoryRoot rev-parse HEAD).Trim()

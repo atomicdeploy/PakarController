@@ -26,7 +26,7 @@
       "proof": [
         {
           "path": "tests/reuse_preflight_test.ps1",
-          "sha256": "a12ead0e223a41f5a4db2bf64a430c69e2518061ef3184a51fd71cfb9c3366f1",
+          "sha256": "30a46f7b0625b26115363c9241a4a56020159d8b2e29485459c3a2b034a92ed8",
           "anchor": "Actual imported short-lived process stdout"
         }
       ],
@@ -35,17 +35,23 @@
     {
       "origin": "Pealayer",
       "path": "scripts/libmpv-windows.ps1",
-      "sha256": "0f9e02efe880a0369b4223fab3dd9961ad848456ee7a3c0fe7bbcf7fe992bc02",
+      "sha256": "ab6e48f3e0a55a2d86ad1dbb19c01a23c751891cb5a7ed61875a21b1e52645e5",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual Get-PealayerWindowsHostPaths, Get-PealayerCargoTargetDirectory and Get-PealayerFileIdentity adapted to Pakar names/locations. Environment expansion and relative overrides retained; native build and staging now call these helpers."
+        "Actual Get-PealayerWindowsHostPaths, Get-PealayerCargoTargetDirectory and Get-PealayerFileIdentity adapted to Pakar names/locations. Environment expansion and relative overrides retained; native build and staging now call these helpers.",
+        "New actual Test-PealayerFileContentEqual imported as Test-PakarFileContentEqual and called by staging: missing files fail, size mismatch skips hashing, equal lengths require SHA-256 equality."
       ],
       "targets": [
         {
           "path": "tools/windows-build-host.ps1",
-          "sha256": "b8f2e66a30ef9990c62810e567449129faa6220e46caaa6a063a5cff1bf53990",
+          "sha256": "5115289daf89e09489faf340623fa4a1dbaacd97abe4abaf42384f1757def08e",
           "anchor": "function Get-PakarCargoTargetDirectory"
+        },
+        {
+          "path": "tools/windows-build-host.ps1",
+          "sha256": "5115289daf89e09489faf340623fa4a1dbaacd97abe4abaf42384f1757def08e",
+          "anchor": "function Test-PakarFileContentEqual"
         }
       ],
       "omissions": [
@@ -63,6 +69,16 @@
           "code": "Program-root shared target default across separate source worktrees",
           "disposition": "pending",
           "reason": "Pakar keeps its existing single canonical desktop/target cache without moving or duplicating it. A future managed-worktree build needs a shared Pakar-owned cache; copying Pealayer's owner path would corrupt ownership."
+        },
+        {
+          "code": "New Get-PealayerCargoTargetDirectory rejection of all source-checkout cache paths",
+          "disposition": "pending",
+          "reason": "Pakar's existing sole desktop/target is inside the checkout. Applying this rejection now would strand the warm cache or force a duplicate cold build. An owned same-volume relocation and wrapper/config migration are required first; the oversized-cache guard remains active and blocked cleanup is not bypassed."
+        },
+        {
+          "code": "Copy-PealayerFileLowWrite delete-destination-first copy and PreferHardLink",
+          "disposition": "replaced",
+          "reason": "Pakar retains its checksum-verified pending-copy then rename. The prior candidate is preserved until verification; a mutable executable is not hardlinked to compiler output. mpv immutable-runtime aliases are explicitly excluded, not a reason to omit generic content comparison."
         }
       ],
       "remaining": [
@@ -71,8 +87,13 @@
       "proof": [
         {
           "path": "tests/reuse_preflight_test.ps1",
-          "sha256": "a12ead0e223a41f5a4db2bf64a430c69e2518061ef3184a51fd71cfb9c3366f1",
+          "sha256": "30a46f7b0625b26115363c9241a4a56020159d8b2e29485459c3a2b034a92ed8",
           "anchor": "Actual donor relative cache resolution"
+        },
+        {
+          "path": "tests/storage_hygiene_test.ps1",
+          "sha256": "f8a5d8bfe1728d2643820229ce2c5310148e1e93dc2a727a714fe82c6e5a0f82",
+          "anchor": "Actual imported equal-content helper"
         }
       ],
       "improvement": ""
@@ -130,7 +151,7 @@
     {
       "origin": "Pealayer",
       "path": "scripts/package-windows.ps1",
-      "sha256": "dfa23eec7ba6cfff15efdf1fc66983c6255eb4270a25db3095f5bdc6e0da88c3",
+      "sha256": "3e6f8a82456329558c7ec24e596f353c75d39680d8807d6eb0261bd419e5025a",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -139,12 +160,12 @@
       "targets": [
         {
           "path": "tools/windows-build-host.ps1",
-          "sha256": "b8f2e66a30ef9990c62810e567449129faa6220e46caaa6a063a5cff1bf53990",
+          "sha256": "5115289daf89e09489faf340623fa4a1dbaacd97abe4abaf42384f1757def08e",
           "anchor": "function Assert-PakarPackageSourceStable"
         },
         {
           "path": "tools/stage-desktop.ps1",
-          "sha256": "d738c8168947ed1b09fb6987a69c01ded4385395633e2f06f7eb7a1f338a82a3",
+          "sha256": "bb1995575486751f88833de244be46b1d6c92727514c2acf81e9e516bccd9b2d",
           "anchor": "Invoke-PackageProbe"
         }
       ],
@@ -170,9 +191,9 @@
           "reason": "Current app lacks equivalent embedded source identity and full runtime smoke. Optional Git source-stability and CLI-help checks are narrower and cannot certify the old executable's source commit."
         },
         {
-          "code": "Unconditional repeated executable/DLL/output copies",
+          "code": "New Copy-PealayerFileLowWrite calls for executable/downloader/font and runtime aliases",
           "disposition": "replaced",
-          "reason": "One stable candidate and source/destination checksum equality skip identical writes; no mpv payload exists."
+          "reason": "Staging now calls the actual imported content-equality helper, skips identical candidates, and keeps verified pending-copy/rename rather than deleting the prior candidate first. No excluded mpv/downloader payload is created. Useful branding/font/Web packaging remains separately pending."
         },
         {
           "code": "Timestamp package metadata and native optional Run",
@@ -189,16 +210,17 @@
     {
       "origin": "Pealayer",
       "path": "docs/verification/LOCAL-WORKSPACE-HYGIENE.md",
-      "sha256": "3fa94f177cf2a8f2fd1b8dae130182928d2d7e290d49aa37d902f8dfa7a5df70",
+      "sha256": "acfcfccde3647841e3c55430fcc36677501659e8ff8fb1761c25391a0c6bad1d",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual canonical-cache/stable-staging/preservation/blocked-operation and separate runtime-acceptance guidance read and adopted in mandatory continuation policy and tooling."
+        "Actual canonical-cache/stable-staging/preservation/blocked-operation and separate runtime-acceptance guidance read and adopted in mandatory continuation policy and tooling.",
+        "Reread new shared-cache rejection/hash-copy/storage-inventory guidance at d3f11b1; actual read-only directory summary and equality helper now imported. Ownership and blocked-operation rules still apply."
       ],
       "targets": [
         {
           "path": "docs/REUSE-PREFLIGHT.md",
-          "sha256": "654a959c458f85ef420740fa99e15aba07f08fde0f7a3f7e19fd05b8a3536948",
+          "sha256": "e198405dd0829a9c2b97862d8ca5f2356eb45f84e419eeaffe1a8df70479b02c",
           "anchor": "Mandatory sequence on every task"
         }
       ],
@@ -217,6 +239,11 @@
           "code": "Mandatory donor lookup was previously absent from executable build/stage/capture paths",
           "disposition": "replaced",
           "reason": "Capability lookup with source/target/test hash gates now runs before those actions; other task surfaces are required by AGENTS.md, not falsely claimed universally sandbox-enforced."
+        },
+        {
+          "code": "New source-checkout cache prohibition and explicit guarded target prune",
+          "disposition": "pending",
+          "reason": "Canonical cache relocation requires an owner-preserving migration without duplication. Existing cleanup was blocked and cannot be rerouted through this helper. No reclaim or reduced physical SSD wear is claimed."
         }
       ],
       "remaining": [
@@ -746,13 +773,18 @@
       ],
       "omissions": [],
       "remaining": [
-        "Embedded Web UI still hardcodes its palette; catalog retention is not all-surface integration."
+        "Embedded Web now consumes all four actual palettes and fourteen roles. Mobile catalog use and native/Web shared preference synchronization remain pending; byte-identical asset retention is not all-surface parity."
       ],
       "proof": [
         {
           "path": "desktop/src/ui/palette.rs",
-          "sha256": "27e4d4ab36060699693c2bdd951c46666b1831fc9d0a1771b6980b431076cd3e",
+          "sha256": "418896294fbe25922736b41865a18dbb2f6bc96cb540c7401a435a6e0cfd38f3",
           "anchor": "fn imported_palettes_have_every_required_role()"
+        },
+        {
+          "path": "tests/web_appearance_test.mjs",
+          "sha256": "de685cabd7a98bd438f389c2d56a168cefe6caee44e340e6972de7addef2c9a5",
+          "anchor": "embedded catalog exactly matches"
         }
       ],
       "improvement": ""
@@ -815,7 +847,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/palette.rs",
-          "sha256": "27e4d4ab36060699693c2bdd951c46666b1831fc9d0a1771b6980b431076cd3e",
+          "sha256": "418896294fbe25922736b41865a18dbb2f6bc96cb540c7401a435a6e0cfd38f3",
           "anchor": "pub fn apply("
         }
       ],
@@ -832,12 +864,12 @@
         }
       ],
       "remaining": [
-        "Make embedded Web and mobile consume the same role catalog/appearance contract; port donor shared-preference tests after adapting types."
+        "Embedded Web consumes the same JSON catalog through a stale-generation check. Complete mobile catalog use and live native/Web preference broadcast/readback; pure donor host-resolution tests do not prove connected-host synchronization."
       ],
       "proof": [
         {
           "path": "desktop/src/ui/palette.rs",
-          "sha256": "27e4d4ab36060699693c2bdd951c46666b1831fc9d0a1771b6980b431076cd3e",
+          "sha256": "418896294fbe25922736b41865a18dbb2f6bc96cb540c7401a435a6e0cfd38f3",
           "anchor": "fn donor_surface_text_roles_and_geometry_are_preserved_in_both_themes()"
         }
       ],
@@ -1643,6 +1675,152 @@
           "path": "tests/screenshot_harness_test.mjs",
           "sha256": "b1378631676b871090abb8c83457b4c5c2a1c5dfbfaed7a662045cae2919bb9f",
           "anchor": "for(const forbidden"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "scripts/storage-hygiene.ps1",
+      "sha256": "52f93bf96867b286d7d1c22f36c08603558e10dc6e9c14433e0a9ea9bb5f4f42",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual Get-DirectorySummary imported into tools/storage-hygiene.ps1 with Pakar canonical cache, board cache, mobile build and stable staging paths. Read-only by default and warns at the existing 8 GiB budget; logical sizes explicitly distinguished from disk allocation or wear."
+      ],
+      "targets": [
+        {
+          "path": "tools/storage-hygiene.ps1",
+          "sha256": "bcb4b2b588ccf22a169e050602ac4a5a66d39ab446dd20c212744dbe27378d9a",
+          "anchor": "function Get-DirectorySummary"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "PruneRepositoryTarget exact-child/git-ignore/allowed-child/running-process checks and recursive deletion",
+          "disposition": "pending",
+          "reason": "Blocked earlier cleanup cannot be rerouted through a new helper. The current cache is still canonical, not an obsolete donor target. Preserve evidence/active owners and resolve the original cleanup/migration boundary first; no destructive entrypoint imported in this pass."
+        },
+        {
+          "code": "Pealayer target/shared-cache/staging paths and 48 GiB warning",
+          "disposition": "replaced",
+          "reason": "Pakar uses its actual existing sole cache, Arduino and Flutter products and stable outputs staging, with the established 8 GiB warning. Importing another project's directories would misstate ownership."
+        },
+        {
+          "code": "Silently ignored recursive read errors and empty Measure-Object Sum",
+          "disposition": "replaced",
+          "reason": "Unmeasured paths must fail visibly rather than understate storage. Empty directories use zero bytes instead of a missing StrictMode Sum property."
+        }
+      ],
+      "remaining": [
+        "Resolve owned canonical-cache migration/blocked cleanup without deleting evidence or another process's artifacts; then implement and test any separately authorized cleanup contract."
+      ],
+      "proof": [
+        {
+          "path": "tests/storage_hygiene_test.ps1",
+          "sha256": "f8a5d8bfe1728d2643820229ce2c5310148e1e93dc2a727a714fe82c6e5a0f82",
+          "anchor": "Actual imported recursive summary"
+        },
+        {
+          "path": "tests/storage_hygiene_test.ps1",
+          "sha256": "f8a5d8bfe1728d2643820229ce2c5310148e1e93dc2a727a714fe82c6e5a0f82",
+          "anchor": "Read-only import must never become"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "web_ui/src/appearance.ts",
+      "sha256": "aca0c9aba5fe6389995f92306e20f62debf38fdb4ed3b3061cf9b9f17a56c430",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "All five actual donor functions retained: mergeAppearance, resolvedAccent, resolvedAppearanceTheme, accentForeground and paletteName. TypeScript annotations removed for standalone embedded JavaScript; field names, host/offline resolution, exact accent constants, custom validation and luminance threshold remain unchanged.",
+        "Generated into the shipped WebUi.h with the shared palette asset; --check rejects stale embedding. Browser preferences dialog validates theme/palette/accent, protects drafts, handles storage failure and cross-tab/System events without device writes or repetitive identical storage writes."
+      ],
+      "targets": [
+        {
+          "path": "assets/themes/appearance.js",
+          "sha256": "62a7ebba994ad44f4e2d647bb97684aac9b563104f3f707b43573289e514ecdd",
+          "anchor": "export function mergeAppearance"
+        },
+        {
+          "path": "tools/generate-web-appearance.mjs",
+          "sha256": "16789897f672dad4c853e7d25e4f27a3b54663b67b6b875c904e93704faea339",
+          "anchor": "replaceBlock('// BEGIN SHARED APPEARANCE'"
+        },
+        {
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "fd18909f94a4ca13d5cdd367f6cc7a356644dfc0bfd245cc4e976beb4c1db9b5",
+          "anchor": "// BEGIN SHARED APPEARANCE"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "AppearanceState TypeScript interface and generic T return annotation",
+          "disposition": "replaced",
+          "reason": "ESP serves standalone JavaScript, not a TypeScript/React build. Actual function bodies are retained; browser-facing enum/color validation rejects untrusted stored values. No preference or resolution field is dropped."
+        },
+        {
+          "code": "Connected host AppearanceState broadcast/native-Web shared preference path",
+          "disposition": "pending",
+          "reason": "Pure functions accept host state and tests preserve donor semantics, but standalone browser controls are browser-local today. No actual native appearance event/readback transport is integrated in this pass; System fallback is labeled browser-local."
+        }
+      ],
+      "remaining": [
+        "Implement native/Web/mobile shared preference transport and live authoritative host events, while keeping device parameters separate from client appearance; verify multi-client broadcast/readback."
+      ],
+      "proof": [
+        {
+          "path": "tests/web_appearance_test.mjs",
+          "sha256": "de685cabd7a98bd438f389c2d56a168cefe6caee44e340e6972de7addef2c9a5",
+          "anchor": "System theme and accent preserve donor host resolution"
+        },
+        {
+          "path": "tests/web_appearance_test.mjs",
+          "sha256": "de685cabd7a98bd438f389c2d56a168cefe6caee44e340e6972de7addef2c9a5",
+          "anchor": "dialog draft/cancel never changes"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "web_ui/scripts/appearance.test.mjs",
+      "sha256": "35f269e9463e49dbc41572683ca374be8674a93e0e97c84240838d34dc950ddc",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "All four actual donor contract tests ported: Neutral helper default, preference merge without unrelated-field loss/resolution leakage, host/offline theme/accent and repeated native event/explicit-theme handling. Additional shipped-code tests cover all palette roles, cancel/apply, contrast, identical-write skip, media events, malformed storage, cross-tab updates and session-only storage failure."
+      ],
+      "targets": [
+        {
+          "path": "tests/web_appearance_test.mjs",
+          "sha256": "de685cabd7a98bd438f389c2d56a168cefe6caee44e340e6972de7addef2c9a5",
+          "anchor": "First four tests port the actual Pealayer"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "volume:37 unrelated media setting fixture",
+          "disposition": "replaced",
+          "reason": "The unrelated value is endpoint:http://ledboard.local instead. Its preservation and original-object immutability assertions are retained; no actual test contract is removed."
+        },
+        {
+          "code": "Direct TypeScript test import",
+          "disposition": "replaced",
+          "reason": "Tests import the actual adapted JavaScript functions; browser tests additionally execute the shipped embedded source, avoiding a separate mock appearance engine."
+        }
+      ],
+      "remaining": [
+        "Test execution proves module and simulated browser contracts, not connected native event transport or physical hardware."
+      ],
+      "proof": [
+        {
+          "path": "tests/web_appearance_test.mjs",
+          "sha256": "de685cabd7a98bd438f389c2d56a168cefe6caee44e340e6972de7addef2c9a5",
+          "anchor": "live host theme events leave System preference unchanged"
         }
       ],
       "improvement": ""

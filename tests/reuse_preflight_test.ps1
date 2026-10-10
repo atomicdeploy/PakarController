@@ -8,10 +8,11 @@ function Assert-Rejected([scriptblock]$action,[string]$pattern){
 }
 $taskConsult=Join-Path $taskRoot 'tools/consult-reuse.ps1'
 $taskIndex=Get-Content (Join-Path $taskRoot 'docs/reuse-capabilities.json') -Raw | ConvertFrom-Json
+$taskInventory=@(Import-Csv (Join-Path $taskRoot 'docs/legacy-source-ledger.csv'))
 Assert-Reuse (@($taskIndex.concerns.id | Select-Object -Unique).Count -eq $taskIndex.concerns.Count) 'Unique concern IDs'
 foreach($taskConcern in $taskIndex.concerns){
     $taskLookup=& $taskConsult -Concern $taskConcern.id -DonorRoots @{}
-    Assert-Reuse ($taskLookup.Matched -gt 0 -and $taskLookup.Inventoried -eq 1868) "Inventory coverage: $($taskConcern.id)"
+    Assert-Reuse ($taskLookup.Matched -gt 0 -and $taskLookup.Inventoried -eq $taskInventory.Count) "Inventory coverage: $($taskConcern.id)"
     Assert-Reuse ($taskLookup.Meaning -match 'NOT accepted') 'No lookup-as-acceptance claim'
 }
 Assert-Rejected {& $taskConsult -Concern invented -DonorRoots @{}} 'Unknown'
@@ -20,7 +21,7 @@ Assert-Reuse ($taskAll.Matched -eq $taskAll.Inventoried) 'Exhaustive route must 
 Assert-Reuse ($taskAll.AuditOnly -gt 0) 'Specialist routing gaps must remain visible'
 Assert-Reuse (@($taskAll.Rows | Where-Object {$_.Remaining.Count -eq 0 -and $_.Comparison -eq 'pending-comparison'}).Count -eq 0) 'Every unread file needs an action'
 $taskPealayer=& $taskConsult -Concern donor-audit -Origin Pealayer -DonorRoots @{}
-Assert-Reuse ($taskPealayer.Matched -eq 493) 'All Pealayer paths are reachable, not just keyword matches'
+Assert-Reuse ($taskPealayer.Matched -eq @($taskInventory | Where-Object origin -eq Pealayer).Count -and $taskPealayer.Matched -gt 0) 'All Pealayer paths are reachable, not just keyword matches'
 $taskExact=& $taskConsult -Concern donor-audit -Origin Pealayer -SourcePath scripts/package-probe-windows.ps1 -DonorRoots @{}
 Assert-Reuse ($taskExact.Matched -eq 1 -and $taskExact.Rows[0].SourceRead -eq 'complete' -and $taskExact.Rows[0].Proof.Count -gt 0) 'Exact-file lookup exposes source read and proof'
 $taskOmissions=& $taskConsult -Concern donor-audit -Origin Pealayer -SourcePath scripts/libmpv-windows.ps1 -DonorRoots @{}

@@ -13,7 +13,7 @@ let signedIn=false,user='admin',password='pakarcontroller',socketCount=0,statusR
 const calls=[];
 const context=vm.createContext({...nodes,URLSearchParams,FormData,Uint8Array,console,
   performance,crypto:webcrypto,navigator:{platform:'fixture',hardwareConcurrency:4},screen:{width:1280,height:720},
-  document:{querySelector:s=>nodes[s.slice(1)],querySelectorAll:()=>[],createElement:element,createTextNode:text=>({textContent:text}),createElementNS:()=>({...element(),namespaceURI:'svg'})},
+  document:{documentElement:{dataset:{},style:{setProperty(){}}},querySelector:s=>nodes[s.slice(1)],querySelectorAll:()=>[],createElement:element,createTextNode:text=>({textContent:text}),createElementNS:()=>({...element(),namespaceURI:'svg'})},
   location:{protocol:'http:',host:'pakarcontroller'},setInterval:()=>1,clearInterval(){},setTimeout:()=>1,
   WebSocket:class {constructor(){socketCount++;this.readyState=1}close(){this.readyState=3}send(){}},
   fetch:async(path,options={})=>{

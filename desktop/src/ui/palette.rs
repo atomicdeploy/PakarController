@@ -1,5 +1,5 @@
 //! Native palette adapter using Pealayer's actual catalog and role mapping.
-//! Pakar's embedded Web UI does not yet consume this shared catalog.
+//! Embedded Web UI also consumes the catalog; host preference synchronization remains pending.
 use std::{collections::BTreeMap, sync::OnceLock};
 
 type PaletteCatalog = BTreeMap<String, BTreeMap<String, BTreeMap<String, String>>>;

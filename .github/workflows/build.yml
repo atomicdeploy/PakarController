@@ -66,6 +66,8 @@ jobs:
       - name: Test and build the mpv-free Windows client
         run: |
           node tests/web_display_test.mjs
+          node tools/generate-web-appearance.mjs --check
+          node tests/web_appearance_test.mjs
           node tests/web_cell_table_test.mjs
           node tests/screenshot_harness_test.mjs
           node tests/web_access_test.mjs
@@ -80,6 +82,7 @@ jobs:
           pwsh -File tools/verify-versions.ps1
           pwsh -File tests/reuse_preflight_test.ps1
           pwsh -File tests/build_storage_test.ps1
+          pwsh -File tests/storage_hygiene_test.ps1
           node tools/check-crate-boundary.mjs
           node tests/crate_boundary_test.mjs
           pwsh -File tools/build-desktop.ps1 -Mode Test

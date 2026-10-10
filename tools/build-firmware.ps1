@@ -11,6 +11,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
+if ($Target -ne 'avr') {
+    & node (Join-Path $PSScriptRoot 'generate-web-appearance.mjs') --check | ForEach-Object { Write-Host $_ }
+    if ($LASTEXITCODE -ne 0) { throw 'Shared Web appearance is stale; regenerate before ESP build.' }
+}
 $libraries = Join-Path $projectRoot 'libraries'
 $build = Join-Path $projectRoot 'build'
 $projectCli = Join-Path $PSScriptRoot 'arduino-cli.exe'

@@ -24,9 +24,7 @@ if ((Split-Path $taskStage -Leaf) -eq 'production') { throw 'Do not use staging 
 if ($taskSource -eq $taskDestination) { throw 'Source and stage must be different paths.' }
 $taskIdentity = Get-PakarFileIdentity -Path $taskSource
 $taskHash = $taskIdentity.sha256
-$taskSame = (Test-Path -LiteralPath $taskDestination -PathType Leaf) -and
-    (Get-Item -LiteralPath $taskSource).Length -eq (Get-Item -LiteralPath $taskDestination).Length -and
-    (Get-FileHash -LiteralPath $taskDestination -Algorithm SHA256).Hash -eq $taskHash
+$taskSame = Test-PakarFileContentEqual -Left $taskSource -Right $taskDestination
 if ($Plan) {
     [pscustomobject]@{Path=$taskDestination; SHA256=$taskHash; Changed=(-not $taskSame); Written=$false}
     return

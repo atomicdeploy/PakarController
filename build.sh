@@ -31,6 +31,7 @@ test "$(wc -c < "$build/avr$suffix/avr.ino.with_bootloader.bin")" -eq 32768
 fi
 
 if [[ "$target" != "avr" ]]; then
+node "$root/tools/generate-web-appearance.mjs" --check
 mkdir -p "$build/esp8266$suffix"
 arduino-cli compile "${clean_args[@]}" \
   --fqbn 'esp8266:esp8266:nodemcuv2:eesz=4M2M' \

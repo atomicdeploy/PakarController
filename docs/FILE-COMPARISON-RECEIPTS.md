@@ -149,3 +149,37 @@ Final response-validation tests cover all eight macro selectors, rejecting
 ACK-for-query, status-for-mutation and zero-code ERROR. Built-CLI fixtures
 exercise both query/download and mutation replies with request-bound expected
 opcodes. These are protocol/fixture tests, not physical execution proof.
+
+## Donor-drift and Web appearance checkpoint
+
+Pealayer d3f11b1: 494 inventoried files, 20 complete comparisons, 474 pending
+and ten reviewed gap files. Overall 1,869 / 42 / 1,827 / 23. Actual new
+storage summary/equality code and all five appearance functions/four donor
+tests are mapped in the SAME evidence manifest. Fully reading App/styles does
+not close their pending complete-file comparisons. Exact generic omissions and
+connected appearance transport remain visible, not relabeled business logic.
+
+Executed locally: ten actual appearance/shipped-browser tests, existing Web
+access/display/cells/remote tests, PU route/hash tests, donor ledger and comparison
+adversarial tests, live required-source gate, storage summary/equality, build Plan,
+screenshot source guards and source-version checks. Real browser screenshots and
+fixed-geometry/390-pixel overflow/persistence checks are SIMULATED loopback proof.
+See WEB-APPEARANCE.md and REUSE-PREFLIGHT-RECEIPT.md for failures and exact recovery.
+
+Only affected ESP busy-wire compiled, through tools/build-firmware.ps1 without
+Clean and without SDK/library installation. Actual installed cores: ESP8266 3.1.2,
+MiniCore 3.1.3; libraries FastLED 3.10.6, WebSockets 2.7.2, PubSubClient 2.8,
+ArduinoJson 7.4.3, ESP Async WebServer 3.12.1, ESP Async TCP 2.0.0, matching CI locks.
+RAM 56,072 / 80,192 bytes, IRAM 63,055 / 65,536 (includes 32,768 cache reservation),
+IROM 694,512 / 1,048,576. This is static link output, not measured runtime heap,
+latency or physical reliability. Artifact build/esp8266-busy-wire/esp8266.ino.bin:
+744,160 bytes; SHA-256
+01ad9287377289c6b7eebf94e6e6a2d35eca9fc3245480214fce0bf69a8540fc.
+Shipped Web source UTF8-LF SHA-256
+fd18909f94a4ca13d5cdd367f6cc7a356644dfc0bfd245cc4e976beb4c1db9b5.
+
+Previous ecf882d CI runs 38059703363 and 38059700392 both passed all three jobs.
+New checkpoint CI must be checked separately. SSH localhost:1022 still refuses
+and ledboard.local still does not resolve; no firmware flash or board verification.
+Native app, private preferences, AVR image, Android package and donor builds were
+not replaced/rebuilt. Existing oversized cache/blocked cleanup remain unchanged.

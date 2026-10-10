@@ -1,0 +1,25 @@
+/* Adapted actual Pealayer web_ui/src/styles.css: semantic shadow, button glyph
+   centering, shrinkable content, responsive form stacking and reachable dialogs.
+   Controller-specific 80-cell layout replaces the excluded media/timeline layout. */
+:root{--shadow:0 24px 70px rgba(0,0,0,.38)}
+:root[data-theme=light]{--shadow:0 22px 54px rgba(31,45,61,.14)}
+button{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.cell-menu button{justify-content:flex-start}
+.card,.manager{box-shadow:var(--shadow)}
+.layout>*,.stack,.card,.brand,.brand>div{min-width:0}
+.status{overflow-wrap:anywhere}
+.row>*{min-width:0;flex:1 1 90px}
+.row input,.row select{max-width:100%}
+.form-grid{grid-template-columns:minmax(0,1fr) 100px}
+.form-grid>input{min-width:0;max-width:100%}
+.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+.table-tools>input{flex-basis:180px}
+.manager{overscroll-behavior:contain;scrollbar-gutter:stable}
+@media(max-width:560px){
+  main{padding:12px}
+  .grid{grid-template-columns:repeat(10,minmax(0,1fr));grid-auto-rows:auto}
+  .cell{min-width:0;font-size:12px}
+  .form-grid{grid-template-columns:minmax(0,1fr) 90px}
+  .manager header{align-items:flex-start}
+  .manager footer{flex-wrap:wrap;gap:8px}
+}

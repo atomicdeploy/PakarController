@@ -58,6 +58,7 @@ no space was reclaimed and no shared toolchain/source/backup was deleted.
 
 ```powershell
 ./tools/build-desktop.ps1 -Plan
+./tools/storage-hygiene.ps1
 ./tools/build-desktop.ps1 -Mode Test
 ./tools/build-desktop.ps1 -Mode Release
 ./tools/build-firmware.ps1 -Target esp8266 -LinkMode busy-wire
@@ -82,3 +83,21 @@ attached to its earlier source, not reattributed to this infrastructure patch.
 
 References: [Cargo profiles](https://doc.rust-lang.org/cargo/reference/profiles.html)
 and [Arduino compile flags](https://arduino.github.io/arduino-cli/1.5/commands/arduino-cli_compile/).
+
+## Actual donor-tool follow-up
+
+Pealayer's new storage-hygiene.ps1 was read fully at d3f11b1 and its real
+Get-DirectorySummary imported into tools/storage-hygiene.ps1. Missing directories
+stay explicitly missing; empty directories use zero; unreadable content fails
+instead of silently undercounting. Read-only default lists logical files/GiB for
+the established Cargo/Arduino/mobile/staging locations, with the existing budget.
+The actual new content-equality helper is also imported into windows-build-host
+and called by staging. No automatic deletion, duplicate cache, hardlink to mutable
+compiler output, or guard override was introduced.
+
+The donor's new cache-outside-checkout rule and guarded prune are documented
+pending requirements, not claimed implemented. Preserve the current sole cache
+and owners until an approved nonduplicating migration/cleanup boundary is resolved.
+The existing oversized-cache guard still blocks native builds. Detailed reasons,
+hashes, exact target/test anchors and failure recovery are in the SAME authoritative
+comparison ledger and REUSE-PREFLIGHT-RECEIPT.md; issue #9 stays open.

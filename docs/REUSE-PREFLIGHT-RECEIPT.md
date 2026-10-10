@@ -110,3 +110,49 @@ Next-file worklist (all remain open in authoritative rows / issue #3):
 
 No compiler, donor build, SDK download, firmware flash, app replacement,
 cache removal or package copy was performed for this follow-up.
+
+## Live donor drift caught and actual imports continued
+
+The historical counts above remain historical. Canonical Pealayer advanced from
+a54933a to clean d3f11b18d3b969398df18c26bc5871b426d4c332 during this pass. The build
+preflight rejected the changed tracked inventory **before** the ESP compiler ran.
+No failed-build retry bypassed that guard. Read the actual new storage-hygiene
+script and all changed libmpv-windows, package-windows and hygiene sources through
+EOF, then explicitly refreshed their individual source/mapping/test evidence.
+
+New actual imports: Get-DirectorySummary and Test-PealayerFileContentEqual
+(Pakar-named), called by read-only storage inventory and candidate staging.
+Delete-destination-first copying is replaced by verified pending-copy/rename;
+mutable compiler output is not hardlinked. Cache-inside-checkout rejection needs
+an owned nonduplicating migration of the existing sole cache. Prune remains
+pending: importing a newly available deletion script is not permission to reroute
+blocked cleanup. Read-only scan still measures Cargo 13.49 logical GiB, mobile
+build 0.971 GiB; these are not SSD writes or physical recovered-space claims.
+
+Also read actual appearance.ts, appearance.test.mjs, App.tsx and styles.css.
+All five appearance functions and four actual donor tests are now adapted into
+the shipped Web UI, with the actual palette catalog rather than another theme
+engine. Complete generic App/styles mappings and native/Web/mobile preference
+transport remain pending. See WEB-APPEARANCE.md for exact uses and browser proof.
+
+Current authoritative comparison: 1,869 files, 42 complete source comparisons,
+1,827 pending, 23 reviewed files with gaps. Pealayer: 494 / 20 compared / 474
+pending / 10 gap files. Increased gap count exposes additional unfinished useful
+behavior; it is not accepted as an exclusion or a whole-repository parity claim.
+New storage/appearance/App/styles routes prevent these files remaining invisible
+to specialist lookup; exhaustive donor-audit still reaches every inventory row.
+
+Executed: live build-storage Gate/RequireLive (11 paths, zero stale, four pending,
+five mapped gap files visible); donor routing/hash/adversarial tests; actual
+read-only summary and content-equality tests; comparison integrity and stale-report
+rejection; storage Plan/parser tests; ten appearance and existing access/display/
+cells/remote/PU-route tests; screenshot source guards and source version 0.2.7.
+Comparison Check also correctly rejected the report after its target hash was
+changed to reflect readable inventory formatting; regeneration follows explicit
+rereview, not a blind build retry. Firmware compile/deployment is separate proof.
+
+Both previous ecf882d CI runs (38059703363 and 38059700392) passed Windows,
+both firmware variants/protocol tests and Android preview. They do not certify
+the new appearance/storage checkpoint. Current CI is tracked on the existing PR.
+No native/Android/donor build, firmware flash, app replacement or cleanup was
+performed for these imports; only the affected ESP compile was requested.

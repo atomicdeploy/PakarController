@@ -90,6 +90,16 @@ or future agent behavior: AGENTS.md makes donor lookup mandatory for those too.
 | scripts/run-windows.ps1 | Native wrapper now uses the actual adapted shared resolver and locked builds. Toolchain fallback selection and host-triple provenance remain pending. |
 | docs/verification/LOCAL-WORKSPACE-HYGIENE.md | Canonical cache, stable staging, owner checks, separate runtime acceptance and no blocked-operation rerouting become mandatory instructions. Historical donor paths/deployments are not Pakar facts. |
 | scripts/check-crate-boundary.mjs | tools/check-crate-boundary.mjs imports actual module extraction/intersection, thin-entry and resource guards. Adapts to today's single binary and automatically enables library ownership checks when lib.rs exists. Native wrapper and CI execute it; six negative fixture cases prevent regression. |
+| scripts/storage-hygiene.ps1 | tools/storage-hygiene.ps1 imports its actual read-only directory summary with Pakar paths and empty-directory/read-error handling. No prune entrypoint: blocked cleanup remains blocked, with explicit pending ledger reasons. |
+
+Pealayer's newer Test-PealayerFileContentEqual is also imported as
+Test-PakarFileContentEqual and used by staging. Its delete-destination-first
+Copy-PealayerFileLowWrite is replaced by Pakar's existing checksum-verified
+pending-copy/rename, preserving the candidate until the new payload verifies.
+Mutable executables are not hardlinked to compiler output. The donor now rejects
+all caches inside its source checkout; Pakar's existing single desktop/target
+needs an owned, nonduplicating relocation before that exact policy can apply.
+No automatic relocation or cache-budget bypass is claimed.
 
 mpv resolution/import conversion, DLL aliases, LIBMPV_DIR/user-PATH persistence
 and media downloader packaging are not applicable to the requested mpv-free
