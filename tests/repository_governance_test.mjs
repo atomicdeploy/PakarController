@@ -4,6 +4,13 @@ import {releaseIdentity,firmwareManifest,checksumList,sha256} from '../tools/pre
 import {runChecks} from '../tools/ci-checks.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8').replaceAll('\r\n','\n');
 const build=read('.github/workflows/build.yml'),security=read('.github/workflows/codeql.yml');
+// CI actionlint invokes ShellCheck on Linux; Windows may lack that executable.
+// Preserve the donor's grouped summary redirection instead of suppressing SC2129.
+const securitySummary=security.split('        run: |')[1];
+assert.equal((securitySummary.match(/>>\s*"\$GITHUB_STEP_SUMMARY"/g)||[]).length,1);
+assert.match(securitySummary,/\{[\s\S]*Actions and JavaScript result:[\s\S]*\}\s*>>\s*"\$GITHUB_STEP_SUMMARY"/);
+assert.match(securitySummary,/test "\$RESULT" = success/);
+assert.doesNotMatch(security,/shellcheck disable/);
 for(const workflow of [build,security]){
   assert.match(workflow,/concurrency:/);assert.match(workflow,/timeout-minutes:/);
   for(const match of workflow.matchAll(/uses: ([^\s#]+)/g))assert.match(match[1],/@[a-f0-9]{40}$/,'Actions must be pinned');

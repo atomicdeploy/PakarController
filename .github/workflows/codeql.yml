@@ -48,7 +48,9 @@ jobs:
       - env:
           RESULT: ${{ needs.analyze.result }}
         run: |
-          echo '## PakarController security analysis' >> "$GITHUB_STEP_SUMMARY"
-          echo "Actions and JavaScript result: $RESULT" >> "$GITHUB_STEP_SUMMARY"
-          echo 'Rust and AVR/ESP C++ are not covered by this CodeQL configuration. Physical safety is a separate gate.' >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo '## PakarController security analysis'
+            echo "Actions and JavaScript result: $RESULT"
+            echo 'Rust and AVR/ESP C++ are not covered by this CodeQL configuration. Physical safety is a separate gate.'
+          } >> "$GITHUB_STEP_SUMMARY"
           test "$RESULT" = success

@@ -1,5 +1,14 @@
 # PakarController comparison receipts
 
+## CI security-summary recovery
+
+Observed terminal run 38088825179 failed before product builds: SC2129 from
+Ubuntu actionlint/ShellCheck in CodeQL summary. Actual donor grouped redirect
+imported after full-file reread; no warning disabled, success gate retained.
+Existing local actionlint v1.7.12 plus governance tests pass; Windows lacks
+ShellCheck, so remote execution remains separate. No product rebuild/tool
+download or CI wait. Fresh follow-up jobs must be inspected before acceptance.
+
 ## RayanLamp Web theme continuation
 
 Task reverified: Build RayanLamp Go app, 019f8cfc-271a-72e1-8747-e3eb883de5ec,

@@ -481,7 +481,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "c758bc9f48a363b61e7798be987673ecb06c2460a7bbdf19717e471a2a2334c1",
+          "sha256": "b99575ce7960eb4e5242b34c181e86937083023da869471059f6e67f0687b351",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -542,7 +542,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "c758bc9f48a363b61e7798be987673ecb06c2460a7bbdf19717e471a2a2334c1",
+          "sha256": "b99575ce7960eb4e5242b34c181e86937083023da869471059f6e67f0687b351",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -553,7 +553,7 @@
       "targets": [
         {
           "path": ".github/workflows/codeql.yml",
-          "sha256": "f5d8d998dba7c035ed67184dd3d4a45db41cf54828683648096eb0ed096fe653",
+          "sha256": "cb50de1c3e72fc9eeeb4931e82a519331857ca4f19e928f9964a649f0769718e",
           "anchor": "name: \"🛡️ Security · CodeQL\""
         }
       ],
@@ -575,7 +575,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "c758bc9f48a363b61e7798be987673ecb06c2460a7bbdf19717e471a2a2334c1",
+          "sha256": "b99575ce7960eb4e5242b34c181e86937083023da869471059f6e67f0687b351",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -608,7 +608,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "c758bc9f48a363b61e7798be987673ecb06c2460a7bbdf19717e471a2a2334c1",
+          "sha256": "b99575ce7960eb4e5242b34c181e86937083023da869471059f6e67f0687b351",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -641,7 +641,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "c758bc9f48a363b61e7798be987673ecb06c2460a7bbdf19717e471a2a2334c1",
+          "sha256": "b99575ce7960eb4e5242b34c181e86937083023da869471059f6e67f0687b351",
           "anchor": "console.log('Repository governance"
         }
       ]

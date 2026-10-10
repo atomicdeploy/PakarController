@@ -1,5 +1,18 @@
 # Donor-first preflight receipt
 
+## CI security-summary recovery
+
+Fresh run 38088825179 is terminal failure, not a job still awaited. Ubuntu's
+actionlint v1.7.12 invokes ShellCheck and reports SC2129 on repeated security
+summary redirects; all product build jobs were skipped, so no green native/APK
+claim is possible. Consulted repository-governance and the exact CodeQL row;
+reread the full actual Pealayer codeql.yml. Imported its grouped redirection,
+preserving the success gate and honest analyzer coverage, with no suppression.
+Added a local grouping/non-suppression regression; existing actionlint v1.7.12
+and governance tests pass. Local Windows lacks ShellCheck, so that is not an
+Ubuntu ShellCheck execution claim. No tool download, clean, rebuild or CI wait.
+Only the two affected target/proof hashes were rebound after explicit rereview.
+
 ## RayanLamp Web theme continuation
 
 Reconsulted full Rayan inventory and exact theme rows plus existing appearance
