@@ -1,5 +1,39 @@
 # Cell styling and screenshot capture
 
+## Current tint-free selection and Find cell contract
+
+Supersedes the earlier tinted search/LED-state descriptions below. Native and Web
+cells retain neutral alternating-column backgrounds regardless of red/white/off
+LED state. Selection and search highlighting share one amber inside outline;
+neither hover, focus nor pressed state adds a competing accent fill or ring.
+Optional LED-state dots remain default-off; tooltips still report actual state.
+Hover/press on unselected cells uses only neutral surface colors. Existing
+animation, half-row stagger and hit geometry are preserved.
+
+Find cell is two-way: valid input selects its exact logical cells without hardware
+writes; clicks, Ctrl toggles, Shift ranges, keyboard selection, row/all/clear,
+manager and marquee gestures replace it with the exact sorted range summary.
+F3/previous/next navigate within that selection without shrinking its query.
+Invalid partial drafts remain editable with validation; a selection gesture,
+including reselecting the same cell or clearing an already-empty selection,
+replaces the draft. Native selection revisions prevent stale drafts and repeated
+idle rewrites; the UI requests repaint after synchronization.
+
+Consulted actual Pealayer controls.rs neutral/fixed-geometry interaction helpers
+and its timecode selection-before-paint handling (bounded slices, not a complete
+file review). Existing imported dialog, palette and icons remain the reusable
+implementation. Its transport intent tint deliberately does not apply to this
+request to remove tint; timecode/playback mutations do not apply to cell selection.
+Generic remaining controls.rs capabilities stay pending in the authoritative
+ledger; no whole-file parity or new donor import is claimed by this domain fix.
+
+Actual embedded Web DOM/HTTP-doubles tests exercise selection/query agreement,
+invalid drafts, same-cell reselection, rows, all/clear, keyboard and marquee.
+Native tests cover range roundtrips, draft/revision sync, neutral LED-state fill
+and selection/highlight/focus equality. Native execution/deployed screenshots
+remain pending: the canonical Test wrapper refuses the cache above 8 GiB. No
+guard bypass, cleanup reroute, duplicate cache, app replacement or board flash.
+
 LED-state corner dots are configurable and hidden by default, including existing preferences that omit the setting. Native: Preferences -> Workspace -> Show cell LED-state indicators. Web: Table -> LED-state indicators, persisted per browser.
 
 Search owns one amber fill/border regardless of selection or keyboard focus. The competing green inner cursor stroke is removed. Web matching-cell CSS overrides selected/hover/active/focus layers; native light/dark painter tests compare the actual fill/stroke of selected and focused matches. Geometry remains fixed.

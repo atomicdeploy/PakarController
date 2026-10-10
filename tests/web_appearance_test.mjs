@@ -92,10 +92,12 @@ test('unavailable storage still applies for this session and visibly reports fai
   f.appearanceForm.listeners.submit({preventDefault(){}});assert.equal(f.root.dataset.theme,'light');
   assert.match(f.appearanceError.textContent,/session only/);assert.equal(f.appearanceDialog.open,true);
 });
-test('theme control labels and palette-safe cells retain fixed geometry, half-row offset and amber search priority',()=>{
+test('theme control labels and palette-safe cells retain fixed geometry, half-row offset and unified tint-free emphasis',()=>{
   assert.match(web,/aria-labelledby="appearanceTitle"/);assert.match(web,/Saved only in this browser/);
   assert.match(web,/transform:translateY\(50%\);--cell-surface:var\(--surface-0\)/);
   assert.match(web,/\.cell\{[^}]*border:2px solid var\(--line-strong\)/);
-  assert.match(web,/\.cell\.matched\.selected,\.cell\.matched:hover/);
+  assert.match(web,/\.cell\.selected:hover,\.cell\.selected:active,\.cell\.selected:focus-visible,\.cell\.matched:hover/);
+  assert.match(web,/border-color:var\(--amber\);background:var\(--cell-surface,var\(--surface-2\)\);box-shadow:none/);
+  assert.doesNotMatch(web,/\.cell\.red\{background:color-mix/);
   assert.doesNotMatch(web,/background:#(?:3a222b|214239|332a15)/);
 });

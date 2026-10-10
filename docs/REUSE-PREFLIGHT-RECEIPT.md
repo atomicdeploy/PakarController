@@ -228,3 +228,34 @@ reuse gate/adversarial tests. Reused already locked base64/image versions as
 build dependencies; no new dependency set/download/cache was created.
 New native pixel/ICO/texture tests run asynchronously on CI per user instruction;
 no blocking wait, running-app replacement or board flash claimed for this patch.
+
+## Tint-free unified cell selection and two-way Find cell
+
+Consulted ui-shell mappings and exhaustive exact donor lookup. An assumed
+src/ui/selection.rs path had no inventory row; stopped that lookup, searched
+actual files and consulted src/ui/controls.rs instead. Its neutral/fixed-geometry
+interaction and selection-before-paint slices were read, not falsely promoted
+to a whole-file review. Added controls.rs to ui-shell routing; its generic
+remaining capabilities remain pending in issue #3. Existing actual imported
+dialog/palette/icons are retained. Tinting transport intent is deliberately not
+copied onto cells because the user explicitly requested no tint.
+
+Native/Web selected and matched cells now share an amber outline and neutral
+alternating cell surface; red LED state no longer colors the background. Two-way
+query/selection binding covers clicks, toggles, ranges, row/all/clear, manager,
+keyboard and marquee; invalid drafts remain editable, but repeated selection
+gestures replace them. Native revision-based sync requests repaint; F3 navigation
+does not collapse multiple selected matches. No selection writes LEDs.
+
+Extended actual shipped Web DOM/HTTP-doubles tests pass, including same-cell
+reselection after invalid input and exact range display. The old appearance
+test correctly caught its obsolete matched-only selector; updated its expected
+contract to unified tint-free emphasis and retained all four donor tests.
+Reviewed focused changes at all existing shell/appearance/icon/branding evidence
+anchors before rebinding hashes. Native tests added/extended for query
+roundtrip, revision/draft handling, neutral LED state and shared painter output.
+
+Native Test wrapper passed donor/crate gates then refused the canonical cache
+above the existing 8 GiB budget. Consulted actual recorded build/storage recovery;
+no guard bypass, cleanup reroute, new cache or direct compiler retry. Rust tests
+and deployed screenshot acceptance remain pending; CI is not waited on.

@@ -12,12 +12,14 @@ use std::{
 pub struct Selection {
     pub ids: BTreeSet<u8>,
     anchor: Option<u8>,
+    revision: u64,
 }
 impl Selection {
     pub fn click(&mut self, id: u8, toggle: bool, extend: bool) {
         if !(1..=80).contains(&id) {
             return;
         }
+        self.revision = self.revision.wrapping_add(1);
         if extend {
             let anchor = self.anchor.unwrap_or(id);
             self.ids = (anchor.min(id)..=anchor.max(id)).collect();
@@ -32,6 +34,7 @@ impl Selection {
         }
     }
     pub fn group(&mut self, ids: impl IntoIterator<Item = u8>, toggle: bool) {
+        self.revision = self.revision.wrapping_add(1);
         let ids: BTreeSet<_> = ids.into_iter().filter(|v| (1..=80).contains(v)).collect();
         if toggle {
             let remove = ids.iter().all(|id| self.ids.contains(id));
@@ -47,6 +50,7 @@ impl Selection {
         }
     }
     fn marquee(&mut self, rect: Rect, cells: &[(u8, Rect)], base: &BTreeSet<u8>) {
+        let previous = self.ids.clone();
         self.ids = base.clone();
         self.ids.extend(
             cells
@@ -54,6 +58,14 @@ impl Selection {
                 .filter(|(_, cell)| rect.contains(cell.center()))
                 .map(|(id, _)| *id),
         );
+        if self.ids != previous {
+            self.revision = self.revision.wrapping_add(1);
+        }
+    }
+    pub fn clear(&mut self) {
+        self.ids.clear();
+        self.anchor = None;
+        self.revision = self.revision.wrapping_add(1);
     }
 }
 
@@ -88,6 +100,7 @@ impl State {
 }
 pub struct TableState {
     pub selection: Selection,
+    reflected_revision: u64,
     pub manager_open: bool,
     manager_state: State,
     marquee: Option<(Pos2, BTreeSet<u8>)>,
@@ -104,6 +117,7 @@ impl Default for TableState {
     fn default() -> Self {
         Self {
             selection: Default::default(),
+            reflected_revision: 0,
             manager_open: false,
             manager_state: State::Red,
             marquee: None,
@@ -182,7 +196,11 @@ fn cell_base_fill(palette: super::palette::Palette, dark: bool, logical_id: u8) 
     super::palette::color(
         palette,
         dark,
-        if column % 2 == 0 { "surface-0" } else { "surface-2" },
+        if column % 2 == 0 {
+            "surface-0"
+        } else {
+            "surface-2"
+        },
     )
 }
 
@@ -192,7 +210,7 @@ fn cell_surface(
     rect: Rect,
     id: egui::Id,
     logical_id: u8,
-    state: Option<&str>,
+    _state: Option<&str>,
     selected: bool,
     matched: bool,
     animate: bool,
@@ -201,38 +219,31 @@ fn cell_surface(
     let focus = response.has_focus();
     let v = ui.visuals();
     let base_fill = cell_base_fill(crate::config::live().color_palette, v.dark_mode, logical_id);
-    let mut fill = if state == Some("red") {
-        blend(base_fill, v.error_fg_color, 0.22)
-    } else {
-        base_fill
-    };
-    if matched {
-        // Search owns one amber treatment. Selection/focus must not add a
-        // conflicting green fill or ring to the same cell.
-        fill = blend(base_fill, v.warn_fg_color, 0.10);
-    } else if selected {
-        fill = blend(fill, v.selection.bg_fill, 0.28);
-    }
-    if response.hovered() {
-        fill = blend(fill, v.widgets.hovered.bg_fill, 0.65);
-    }
-    if response.is_pointer_button_down_on() {
+    let emphasized = selected || matched;
+    let mut fill = base_fill;
+    if response.hovered() && !emphasized {
         fill = blend(
             fill,
-            if matched {
-                v.warn_fg_color
-            } else {
-                v.selection.bg_fill
-            },
-            0.18,
+            super::palette::color(
+                crate::config::live().color_palette,
+                v.dark_mode,
+                "surface-3",
+            ),
+            0.65,
         );
     }
-    let line = if matched {
+    if response.is_pointer_button_down_on() && !emphasized {
+        fill = super::palette::color(
+            crate::config::live().color_palette,
+            v.dark_mode,
+            "surface-3",
+        );
+    }
+    // One tint-free outline, independent of LED state, hover and focus.
+    let line = if emphasized {
         v.warn_fg_color
     } else if focus {
         v.selection.stroke.color
-    } else if selected {
-        v.selection.bg_fill
     } else if response.hovered() {
         v.widgets.hovered.bg_stroke.color
     } else {
@@ -258,12 +269,14 @@ fn cell_surface(
     );
     let focus_alpha = if animate {
         ui.ctx()
-            .animate_bool_with_time(id.with("focus"), focus && !matched, 0.14)
-    } else if focus && !matched {
+            .animate_bool_with_time(id.with("focus"), focus && !emphasized, 0.14)
+    } else if focus && !emphasized {
         1.0
     } else {
         0.0
     };
+    // Do not briefly retain a fading accent ring after selection begins.
+    let focus_alpha = if emphasized { 0.0 } else { focus_alpha };
     ui.painter().rect_stroke(
         rect.shrink(4.0),
         4.0,
@@ -285,6 +298,24 @@ fn activation_key(ui: &egui::Ui, modifiers: Modifiers, key: Key) -> bool {
     initial && ui.input_mut(|i| i.consume_key(modifiers, key))
 }
 impl PakarControllerApp {
+    pub fn sync_cell_selection_search(&mut self) -> bool {
+        super::cell_search::synchronize_selection(
+            &self.table.selection.ids,
+            self.table.selection.revision,
+            &mut self.table.reflected_revision,
+            &mut self.cell_search,
+            &mut self.selected_cell,
+        )
+    }
+    pub fn apply_cell_search_selection(&mut self) {
+        if let Ok(matches) = super::cell_search::parse(&self.cell_search) {
+            self.table.selection.group(matches, false);
+            self.table.reflected_revision = self.table.selection.revision;
+            if let Some(first) = self.table.selection.ids.first() {
+                self.selected_cell = *first;
+            }
+        }
+    }
     fn cell_queue_peer(&self) -> Option<(crate::Transport, crate::Endpoint, String)> {
         self.command_route()
             .map(|route| (route, self.endpoint(), self.serial_port.clone()))
@@ -409,7 +440,7 @@ impl PakarControllerApp {
                 self.table.selection.group(matches.iter().copied(), false);
             }
             if ui.button(format!("{} Clear", icons::X)).clicked() {
-                self.table.selection.ids.clear();
+                self.table.selection.clear();
             }
             if ui
                 .button(format!("{} Manage…", icons::SLIDERS_HORIZONTAL))
@@ -596,7 +627,7 @@ impl PakarControllerApp {
                     self.table.selection.group(1..=80, false);
                 }
                 if ui.input_mut(|i| i.consume_key(Modifiers::NONE, Key::Escape)) {
-                    self.table.selection.ids.clear();
+                    self.table.selection.clear();
                 }
                 if activation_key(ui, modifiers, Key::Space) {
                     self.table.selection.click(
@@ -658,7 +689,7 @@ impl PakarControllerApp {
                     .button(format!("{}  Clear selection", icons::X))
                     .clicked()
                 {
-                    self.table.selection.ids.clear();
+                    self.table.selection.clear();
                     ui.close();
                 }
             });
@@ -692,7 +723,7 @@ impl PakarControllerApp {
             }
         }
         if background.clicked() && !modifiers.command && !modifiers.shift {
-            self.table.selection.ids.clear();
+            self.table.selection.clear();
         }
         background.context_menu(|ui| {
             compact_menu(ui);
@@ -720,7 +751,7 @@ impl PakarControllerApp {
             ui.horizontal_wrapped(|ui| {
                 ui.strong(format!("{} selected",self.table.selection.ids.len()));
                 if ui.button("Select all").clicked(){self.table.selection.group(1..=80,false);}
-                if ui.button("Clear").clicked(){self.table.selection.ids.clear();}
+                if ui.button("Clear").clicked(){self.table.selection.clear();}
                 if ui.checkbox(&mut self.config.additive_cell_selection,"Toggle without Ctrl").changed(){self.save_workspace();}
             });
             let snapshot=self.live_status().cloned();
@@ -761,11 +792,20 @@ mod tests {
     use super::*;
     #[test]
     fn alternating_surfaces_are_painted_on_cells_not_background_bands() {
-        for palette in [super::super::palette::Palette::Studio, super::super::palette::Palette::Native] {
+        for palette in [
+            super::super::palette::Palette::Studio,
+            super::super::palette::Palette::Native,
+        ] {
             for dark in [true, false] {
-                assert_ne!(cell_base_fill(palette, dark, 1), cell_base_fill(palette, dark, 2));
+                assert_ne!(
+                    cell_base_fill(palette, dark, 1),
+                    cell_base_fill(palette, dark, 2)
+                );
                 for id in 1..=70 {
-                    assert_eq!(cell_base_fill(palette, dark, id), cell_base_fill(palette, dark, id + 10));
+                    assert_eq!(
+                        cell_base_fill(palette, dark, id),
+                        cell_base_fill(palette, dark, id + 10)
+                    );
                 }
             }
         }
@@ -773,20 +813,36 @@ mod tests {
         let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
             for logical_id in [1, 2, 11, 12] {
                 let rect = cell_rect(egui::pos2(40.0, 40.0), 60.0, 43.2, logical_id);
-                cell_surface(ui, rect, egui::Id::new(logical_id), logical_id, Some("white"), false, false, false);
+                cell_surface(
+                    ui,
+                    rect,
+                    egui::Id::new(logical_id),
+                    logical_id,
+                    Some("white"),
+                    false,
+                    false,
+                    false,
+                );
             }
         });
         output.textures_delta.clear();
-        let fills: Vec<_> = output.shapes.iter().filter_map(|s| match &s.shape {
-            egui::Shape::Rect(r) if r.rect.width() == 53.0 => Some(r.fill),
-            _ => None,
-        }).collect();
+        let fills: Vec<_> = output
+            .shapes
+            .iter()
+            .filter_map(|s| match &s.shape {
+                egui::Shape::Rect(r) if r.rect.width() == 53.0 => Some(r.fill),
+                _ => None,
+            })
+            .collect();
         assert_eq!(fills.len(), 4);
         assert_ne!(fills[0], fills[1]);
         assert_eq!(fills[0], fills[2]);
         assert_eq!(fills[1], fills[3]);
         let shell = include_str!("shell.rs");
-        assert!(!shell.contains("let band ="), "No table background band painter");
+        assert!(
+            !shell.contains("let band ="),
+            "No table background band painter"
+        );
     }
     #[test]
     fn keyboard_activation_does_not_double_toggle_or_repeat() {
@@ -900,7 +956,7 @@ mod tests {
             let rect = Rect::from_min_size(egui::pos2(40.0, 40.0), egui::vec2(53.0, 36.2));
             let id = egui::Id::new("highlight-precedence");
             let mut expected = None;
-            for selected in [false, true] {
+            for (selected, matched) in [(false, true), (true, false), (true, true)] {
                 for focus in [false, true] {
                     ctx.memory_mut(|m| {
                         if focus {
@@ -910,7 +966,7 @@ mod tests {
                         }
                     });
                     let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
-                        cell_surface(ui, rect, id, 1, Some("red"), selected, true, false);
+                        cell_surface(ui, rect, id, 1, Some("red"), selected, matched, false);
                     });
                     output.textures_delta.clear();
                     let surface = output
@@ -932,7 +988,49 @@ mod tests {
                                 r.stroke.color.a() == 0,
                             _ => true,
                         }),
-                        "No competing focus ring on search highlights"
+                        "No competing focus ring on selection or search highlights"
+                    );
+                }
+            }
+        }
+    }
+    #[test]
+    fn led_state_and_emphasis_never_tint_the_neutral_cell_surface() {
+        for dark in [false, true] {
+            let ctx = egui::Context::default();
+            ctx.set_visuals(if dark {
+                egui::Visuals::dark()
+            } else {
+                egui::Visuals::light()
+            });
+            let rect = Rect::from_min_size(egui::pos2(40.0, 40.0), egui::vec2(53.0, 36.2));
+            for state in [None, Some("white"), Some("red"), Some("off")] {
+                for (selected, matched) in
+                    [(false, false), (true, false), (false, true), (true, true)]
+                {
+                    let output = ctx.run_ui(egui::RawInput::default(), |ui| {
+                        cell_surface(
+                            ui,
+                            rect,
+                            egui::Id::new("tint-free"),
+                            1,
+                            state,
+                            selected,
+                            matched,
+                            false,
+                        );
+                    });
+                    let fill = output
+                        .shapes
+                        .iter()
+                        .find_map(|s| match &s.shape {
+                            egui::Shape::Rect(r) if r.rect == rect => Some(r.fill),
+                            _ => None,
+                        })
+                        .unwrap();
+                    assert_eq!(
+                        fill,
+                        cell_base_fill(crate::config::live().color_palette, dark, 1)
                     );
                 }
             }

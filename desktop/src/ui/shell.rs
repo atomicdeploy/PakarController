@@ -188,11 +188,9 @@ impl PakarControllerApp {
                 self.reveal_panels.push(Panel::Table);
             }
             Command::FindCell { query } => {
-                if let Ok(matches) = ui::cell_search::parse(&query) {
+                if ui::cell_search::parse(&query).is_ok() {
                     self.cell_search = query;
-                    if let Some(id) = matches.first() {
-                        self.selected_cell = *id;
-                    }
+                    self.apply_cell_search_selection();
                     self.reveal_panels.push(Panel::Table);
                     self.focus_cell_search = true;
                 }
@@ -653,6 +651,7 @@ impl PakarControllerApp {
         ui::device_settings::draw(self, &ctx);
         self.draw_dialogs(&ctx);
         self.draw_cell_manager(&ctx);
+        if self.sync_cell_selection_search() { ctx.request_repaint(); }
         ui::toasts::draw(&ctx);
     }
     pub fn draw_panel(&mut self, ui: &mut egui::Ui, panel: Panel) {
@@ -672,6 +671,7 @@ impl PakarControllerApp {
         );
     }
     fn draw_table(&mut self, ui: &mut egui::Ui) {
+        self.sync_cell_selection_search();
         let snapshot = self.live_status().cloned();
         ui.horizontal(|ui| {
             ui.heading("Pakar table");
@@ -699,12 +699,11 @@ impl PakarControllerApp {
             }
             if search.has_focus() && ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Escape)) {
                 self.cell_search.clear();
+                self.apply_cell_search_selection();
             }
+            if search.changed() { self.apply_cell_search_selection(); }
             let result = ui::cell_search::parse(&self.cell_search);
             let matches = result.as_ref().map(Vec::as_slice).unwrap_or_default();
-            if search.changed() && let Some(id) = matches.first() {
-                self.selected_cell = *id;
-            }
             let previous = ui.add_enabled(!matches.is_empty(), egui::Button::new(icons::CARET_LEFT))
                 .on_hover_text("Previous match (Shift+F3)").clicked();
             let next = ui.add_enabled(!matches.is_empty(), egui::Button::new(icons::CARET_RIGHT))
@@ -717,6 +716,7 @@ impl PakarControllerApp {
             if ui.add_enabled(!self.cell_search.is_empty(), egui::Button::new(icons::X))
                 .on_hover_text("Clear cell search").clicked() {
                 self.cell_search.clear();
+                self.apply_cell_search_selection();
             }
         });
         let search_result = ui::cell_search::parse(&self.cell_search);

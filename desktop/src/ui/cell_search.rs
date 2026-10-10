@@ -1,6 +1,45 @@
 //! Logical cell lookup only: searching never changes the physical LED state.
 use std::collections::BTreeSet;
 
+/// Exact selection, compacted into sorted ranges rather than the last cursor.
+pub fn format_selection(ids: &BTreeSet<u8>) -> String {
+    let mut parts = Vec::new();
+    let mut cells = ids.iter().copied().peekable();
+    while let Some(start) = cells.next() {
+        let mut end = start;
+        while cells.peek().is_some_and(|next| *next == end + 1) {
+            end = cells.next().unwrap();
+        }
+        parts.push(if start == end {
+            start.to_string()
+        } else {
+            format!("{start}–{end}")
+        });
+    }
+    parts.join(", ")
+}
+
+/// A genuine selection gesture replaces the query; a partial draft stays editable.
+pub fn synchronize_selection(
+    ids: &BTreeSet<u8>,
+    revision: u64,
+    reflected: &mut u64,
+    query: &mut String,
+    active: &mut u8,
+) -> bool {
+    if revision == *reflected {
+        return false;
+    }
+    *query = format_selection(ids);
+    *reflected = revision;
+    if !ids.contains(active)
+        && let Some(first) = ids.first()
+    {
+        *active = *first;
+    }
+    true
+}
+
 pub fn parse(query: &str) -> Result<Vec<u8>, String> {
     if query.len() > 256 {
         return Err("Search is too long".into());
@@ -72,5 +111,84 @@ mod tests {
         assert_eq!(navigate(&[3, 12, 80], 3, true), Some(80));
         assert_eq!(navigate(&[3, 12, 80], 7, false), Some(3));
         assert_eq!(navigate(&[], 1, false), None);
+    }
+    #[test]
+    fn selection_query_roundtrips_every_cell_and_noncontiguous_ranges() {
+        for ids in [
+            BTreeSet::new(),
+            BTreeSet::from([1]),
+            BTreeSet::from([2, 3, 4, 12, 80]),
+            (1..=80).collect(),
+        ] {
+            assert_eq!(
+                parse(&format_selection(&ids))
+                    .unwrap()
+                    .into_iter()
+                    .collect::<BTreeSet<_>>(),
+                ids
+            );
+        }
+        assert_eq!(
+            format_selection(&BTreeSet::from([2, 3, 4, 12, 80])),
+            "2–4, 12, 80"
+        );
+    }
+    #[test]
+    fn real_selection_replaces_stale_query_but_draft_and_navigation_do_not() {
+        let mut reflected = 0;
+        let (mut query, mut active) = ("12-".into(), 12);
+        assert!(!synchronize_selection(
+            &BTreeSet::new(),
+            0,
+            &mut reflected,
+            &mut query,
+            &mut active
+        ));
+        assert_eq!(query, "12-");
+        let ids = BTreeSet::from([3, 4, 5, 12]);
+        assert!(synchronize_selection(
+            &ids,
+            1,
+            &mut reflected,
+            &mut query,
+            &mut active
+        ));
+        assert_eq!(query, "3–5, 12");
+        active = 5;
+        assert!(!synchronize_selection(
+            &ids,
+            1,
+            &mut reflected,
+            &mut query,
+            &mut active
+        ));
+        assert!(synchronize_selection(
+            &BTreeSet::from([80]),
+            2,
+            &mut reflected,
+            &mut query,
+            &mut active
+        ));
+        assert_eq!((query.as_str(), active), ("80", 80));
+        assert!(synchronize_selection(
+            &BTreeSet::new(),
+            3,
+            &mut reflected,
+            &mut query,
+            &mut active
+        ));
+        assert_eq!(query, "");
+        query = "invalid draft".into();
+        assert!(synchronize_selection(
+            &BTreeSet::new(),
+            4,
+            &mut reflected,
+            &mut query,
+            &mut active
+        ));
+        assert_eq!(
+            query, "",
+            "Clear must work even when the selection was already empty"
+        );
     }
 }
