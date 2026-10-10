@@ -47,3 +47,25 @@ The comparison ledger now has 33 complete source-file reviews, 1835 pending and 
 88 native tests pass: highlight composition, default-off/persisted indicators, actual PNG encode/decode and no-overwrite protection. Production Web interaction tests and screenshot source guards pass. Both busy-wire/polling firmware profiles compile. Actual internal framebuffer, PrintWindow and Auto-to-Win32 fallback captures are inspected; BitBlt/screen branches are not claimed runtime-exercised just because PrintWindow succeeded.
 
 Physical Web firmware deployment is blocked by unavailable ASUS SSH / unresolved ledboard.local. No firmware, EEPROM or device-setting writes occurred. Runtime captures/package identity are in the local cell-style receipt and GitHub issue #8. Full native gesture and screenshot-matrix acceptance remain separate.
+
+## Alternating cell surfaces
+
+Native alternating column bands are removed. Each individual cell now uses the
+imported palette's surface-0 (odd column) or surface-2 (even column) as its base
+fill. Row-major numbering, half-row stagger, inside strokes, animation, default-off
+indicators and amber search precedence are preserved. Red, selection and hover
+treatments compose with the cell's base surface. The embedded Web table already
+alternates individual cell surfaces and needs no firmware change for this fix.
+
+89 native tests pass, including actual painter output for cells 1/2/11/12,
+column continuity in both palettes and light/dark themes, and absence of the old
+band painter. Production Web table/access/remote/display tests, screenshot harness
+guards, version consistency and hash-bound comparison integrity pass. The release
+executable's SHA-256 is e67c141a5f015f7742c2dadb34ba7a51d718d25c85f256cc6192e5f578951ca5.
+The isolated internal-framebuffer capture in the local cell-surfaces receipt was
+visually inspected: colors belong to each rounded cell, not full-height bands.
+That screenshot is explicitly a simulated peer, not live-board acceptance.
+
+The two shell.rs donor contracts (F11 and icon picker) were rechecked in the
+focused diff; only the band painter changed. Their target hashes/line anchors
+were regenerated. Ledger scope remains 33 reviewed files and 1835 pending.

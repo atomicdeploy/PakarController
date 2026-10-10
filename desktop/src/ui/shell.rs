@@ -748,26 +748,6 @@ impl PakarControllerApp {
         let (area, _) =
             ui.allocate_exact_size(egui::vec2(width, height * 8.5), egui::Sense::hover());
         let grid_origin = area.min + egui::vec2((width - pitch * 10.0) * 0.5, 0.0);
-        let palette = config::live().color_palette;
-        for column in 0..10 {
-            let band = egui::Rect::from_min_size(
-                grid_origin + egui::vec2(column as f32 * pitch - 2.0, -3.0),
-                egui::vec2(pitch - 3.0, height * 8.5 + 1.0),
-            );
-            ui.painter().rect_filled(
-                band,
-                7.0,
-                ui::palette::color(
-                    palette,
-                    ui.visuals().dark_mode,
-                    if column % 2 == 0 {
-                        "surface-0"
-                    } else {
-                        "surface-2"
-                    },
-                ),
-            );
-        }
         self.draw_cell_grid(ui, area, grid_origin, pitch, height, &matches);
         finish_table_area(ui, area);
         ui.horizontal(|ui| {

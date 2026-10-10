@@ -176,11 +176,22 @@ fn animated_color(ui: &egui::Ui, id: egui::Id, target: Color32, animate: bool) -
     )
 }
 
+fn cell_base_fill(palette: super::palette::Palette, dark: bool, logical_id: u8) -> Color32 {
+    // Row-major IDs: the same logical column keeps its shade on every row.
+    let column = (logical_id.clamp(1, 80) - 1) % 10;
+    super::palette::color(
+        palette,
+        dark,
+        if column % 2 == 0 { "surface-0" } else { "surface-2" },
+    )
+}
+
 // Paint strokes INSIDE a fixed interaction rectangle, never through widget padding.
 fn cell_surface(
     ui: &mut egui::Ui,
     rect: Rect,
     id: egui::Id,
+    logical_id: u8,
     state: Option<&str>,
     selected: bool,
     matched: bool,
@@ -189,15 +200,16 @@ fn cell_surface(
     let response = ui.interact(rect, id, egui::Sense::click_and_drag());
     let focus = response.has_focus();
     let v = ui.visuals();
+    let base_fill = cell_base_fill(crate::config::live().color_palette, v.dark_mode, logical_id);
     let mut fill = if state == Some("red") {
-        blend(v.widgets.inactive.bg_fill, v.error_fg_color, 0.22)
+        blend(base_fill, v.error_fg_color, 0.22)
     } else {
-        v.widgets.inactive.bg_fill
+        base_fill
     };
     if matched {
         // Search owns one amber treatment. Selection/focus must not add a
         // conflicting green fill or ring to the same cell.
-        fill = blend(v.widgets.inactive.bg_fill, v.warn_fg_color, 0.10);
+        fill = blend(base_fill, v.warn_fg_color, 0.10);
     } else if selected {
         fill = blend(fill, v.selection.bg_fill, 0.28);
     }
@@ -474,6 +486,7 @@ impl PakarControllerApp {
                 ui,
                 *rect,
                 widget_id,
+                *id,
                 state,
                 selected,
                 matches.contains(id),
@@ -747,6 +760,35 @@ impl PakarControllerApp {
 mod tests {
     use super::*;
     #[test]
+    fn alternating_surfaces_are_painted_on_cells_not_background_bands() {
+        for palette in [super::super::palette::Palette::Studio, super::super::palette::Palette::Native] {
+            for dark in [true, false] {
+                assert_ne!(cell_base_fill(palette, dark, 1), cell_base_fill(palette, dark, 2));
+                for id in 1..=70 {
+                    assert_eq!(cell_base_fill(palette, dark, id), cell_base_fill(palette, dark, id + 10));
+                }
+            }
+        }
+        let ctx = egui::Context::default();
+        let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+            for logical_id in [1, 2, 11, 12] {
+                let rect = cell_rect(egui::pos2(40.0, 40.0), 60.0, 43.2, logical_id);
+                cell_surface(ui, rect, egui::Id::new(logical_id), logical_id, Some("white"), false, false, false);
+            }
+        });
+        output.textures_delta.clear();
+        let fills: Vec<_> = output.shapes.iter().filter_map(|s| match &s.shape {
+            egui::Shape::Rect(r) if r.rect.width() == 53.0 => Some(r.fill),
+            _ => None,
+        }).collect();
+        assert_eq!(fills.len(), 4);
+        assert_ne!(fills[0], fills[1]);
+        assert_eq!(fills[0], fills[2]);
+        assert_eq!(fills[1], fills[3]);
+        let shell = include_str!("shell.rs");
+        assert!(!shell.contains("let band ="), "No table background band painter");
+    }
+    #[test]
     fn keyboard_activation_does_not_double_toggle_or_repeat() {
         let ctx = egui::Context::default();
         let id = egui::Id::new("activation-cell");
@@ -754,7 +796,7 @@ mod tests {
         let mut selection = Selection::default();
         selection.click(1, false, false);
         let mut first = ctx.run_ui(egui::RawInput::default(), |ui| {
-            cell_surface(ui, rect, id, Some("white"), true, false, false);
+            cell_surface(ui, rect, id, 1, Some("white"), true, false, false);
         });
         first.textures_delta.clear();
         ctx.memory_mut(|m| m.request_focus(id));
@@ -770,7 +812,7 @@ mod tests {
                 ..Default::default()
             };
             let mut output = ctx.run_ui(input, |ui| {
-                let response = cell_surface(ui, rect, id, Some("white"), true, false, false);
+                let response = cell_surface(ui, rect, id, 1, Some("white"), true, false, false);
                 if pointer_or_accessibility_click(&response) {
                     selection.click(1, true, false);
                 }
@@ -809,7 +851,7 @@ mod tests {
                 }
                 let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
                     let response =
-                        cell_surface(ui, rect, id, Some(state), selected, matched, false);
+                        cell_surface(ui, rect, id, 1, Some(state), selected, matched, false);
                     assert_eq!(response.rect, rect);
                 });
                 output.textures_delta.clear();
@@ -868,7 +910,7 @@ mod tests {
                         }
                     });
                     let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
-                        cell_surface(ui, rect, id, Some("red"), selected, true, false);
+                        cell_surface(ui, rect, id, 1, Some("red"), selected, true, false);
                     });
                     output.textures_delta.clear();
                     let surface = output
