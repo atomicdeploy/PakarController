@@ -2,6 +2,7 @@
   "schema": 1,
   "authority": "docs/file-comparison-evidence.json",
   "concerns": [
+    {"id":"device-context","origins":["PCController","Pealayer"],"path_pattern":"(peripheral-availability|src/ui/board_info.rs|src/ui/status_bar.rs|HardwareTab|hardware_control|four_d/controller)","required_reviews":["PCController|Tools/Controller/web/src/peripheral-availability.ts","PCController|Tools/Controller/web/src/peripheral-availability.test.ts","Pealayer|src/ui/board_info.rs"],"issue":10},
     {"id":"donor-audit","origins":["Pealayer","PCController","PU850-ESP","ControllerBoardMini/Puzzles","ControllerBoardMini","PuzzleBoard"],"path_pattern":".*","required_reviews":[],"issue":3},
     {"id":"build-storage","origins":["Pealayer"],"path_pattern":"(^scripts/(run-windows|libmpv-windows|package-windows|package-probe-windows|check-crate-boundary|storage-hygiene)|LOCAL-WORKSPACE-HYGIENE|(^|/)Cargo.toml$|build-metadata)","required_reviews":["Pealayer|scripts/libmpv-windows.ps1","Pealayer|scripts/run-windows.ps1","Pealayer|scripts/package-probe-windows.ps1","Pealayer|scripts/package-windows.ps1","Pealayer|docs/verification/LOCAL-WORKSPACE-HYGIENE.md","Pealayer|scripts/check-crate-boundary.mjs","Pealayer|scripts/storage-hygiene.ps1"],"issue":9},
     {"id":"capture","origins":["Pealayer"],"path_pattern":"(capture-visible|update-screenshots|SCREENSHOTS|screenshot|screenshots)","required_reviews":["Pealayer|scripts/capture-visible-window-windows.ps1","Pealayer|scripts/update-screenshots-windows.ps1"],"issue":8},

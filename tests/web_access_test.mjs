@@ -6,7 +6,7 @@ const source=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.
 const script=source.match(/<script>([\s\S]*?)<\/script>/)[1];
 // Execute the actual embedded Web application with a DOM/HTTP test double.
 // These fixtures are not hardware observations or live firmware proof.
-function element(){return {value:'',checked:false,hidden:false,textContent:'',className:'',children:[],get options(){return this.children},replaceChildren(...e){this.children=[...e]},dataset:{},listeners:{},classList:{toggle(){}},appendChild(e){this.children.push(e)},append(...e){this.children.push(...e)},setAttribute(){},addEventListener(type,handler){this.listeners[type]=handler},querySelectorAll(){return []}}}
+function element(){return {value:'',checked:false,hidden:false,textContent:'',className:'',children:[],get options(){return this.children},replaceChildren(...e){this.children=[...e]},dataset:{},listeners:{},classList:{toggle(){}},appendChild(e){this.children.push(e)},append(...e){this.children.push(...e)},setAttribute(){},addEventListener(type,handler){this.listeners[type]=handler},querySelector(){return null},querySelectorAll(){return []}}}
 const nodes=Object.fromEntries([...source.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],element()]));
 nodes.workspace.hidden=true;
 let signedIn=false,user='admin',password='pakarcontroller',socketCount=0,statusRequests=0,hostname='test-fixture';

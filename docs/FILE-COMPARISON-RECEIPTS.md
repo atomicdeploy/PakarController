@@ -183,3 +183,38 @@ New checkpoint CI must be checked separately. SSH localhost:1022 still refuses
 and ledboard.local still does not resolve; no firmware flash or board verification.
 Native app, private preferences, AVR image, Android package and donor builds were
 not replaced/rebuilt. Existing oversized cache/blocked cleanup remain unchanged.
+
+## Device-context evidence
+
+Tracking #10. Actual PCController availability and Pealayer board-info owners were
+read and mapped; status-bar readiness slice remains screened. Three new complete
+comparisons and all preserved changed-target anchors pass normalized hash checks.
+1884 inventoried paths, 51 complete comparisons, 1833 pending, 32 known gap files.
+No whole-repository equivalence or superiority claim.
+
+Production context C++ tests pass both default Table and Table-disabled profile.
+The shipped Web code passes individual ACK, no-context, expiry, cross-board,
+mode-kind and malformed geometry/schema tests. Existing protocol, device, access,
+pixel, display, update, appearance and source-guard tests pass. Rust source parses;
+Rust tests/types/runtime are NOT established because the native wrapper stops at
+its unchanged 8 GiB cache-budget guard. No running native app replacement.
+
+Firmware static build results:
+
+| Profile | AVR flash / RAM | ESP RAM / IRAM / IROM |
+|---|---|---|
+| busy-wire | 26906 / 1225 bytes | 56284 / 63055 / 719216 bytes |
+| polling | 26620 / 1223 bytes | 56284 / 63055 / 719004 bytes |
+
+SHA-256 of build candidates, not deployed identity:
+
+- AVR busy-wire merged image: `6c7552e3ae98668045add8a3156ae422d0dc84a2afd630b88276a6b57641e178`
+- AVR polling merged image: `4bc5fb7963863673d1d736693800dc1ca1ef162c4669eb0a52dca25d12e465b4`
+- ESP busy-wire: `8aadebacc965d45d728510417ee53ac08ab25d5a2240d61cdf620bb0af299af5`
+- ESP polling: `d7f308e218293b50c965223dd0af847090db289a23c09a427c4059341d186803`
+
+Read-only simulated Web browser screenshots were actually inspected and retained
+as `docs/screenshots/context-{controller,unacknowledged,table}.jpg`.
+No board commands, firmware/EEPROM writes or native desktop screenshots occurred.
+Owned temporary tabs and identity-verified fixture processes were closed/stopped.
+SSH localhost:1022 refused; ledboard.local port 80 unreachable. CI not waited on.

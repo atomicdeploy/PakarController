@@ -102,6 +102,7 @@ enum Capability : uint16_t {
   kCapNtp = 1U << 11,
   kCapBusyWire = 1U << 12,
   kCapHostSerial = 1U << 13,
+  kCapDisplayText = 1U << 14, // Individual HELLO acknowledgement of the text adapter.
 };
 
 struct Frame {

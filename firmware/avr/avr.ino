@@ -170,7 +170,7 @@ void showState() {
 
 void sendHello(uint8_t sequence = 0) {
   const uint16_t capabilities = kCapShiftInputs | kCapShiftOutputs | kCapAdc9 |
-                                kCapTm1637 | kCapBuzzer;
+                                kCapTm1637 | kCapDisplayText | kCapBuzzer;
   const uint8_t payload[] = {
       BoardCore::BuildInfo::kProtocolVersion, kRoleAvr,
       static_cast<uint8_t>(capabilities),

@@ -81,6 +81,17 @@ fn matches(page: usize, search: &str) -> bool {
             .to_lowercase()
             .contains(&query)
 }
+pub(crate) fn available(app: &PakarControllerApp, page: usize) -> bool {
+    match page {
+        0 => true,
+        1..=5 => app.has_feature("network"),
+        6 => app.has_table(),
+        7 => app.has_feature("display") || app.has_feature("text") || app.has_feature("buzzer"),
+        8 => app.has_feature("inputs") || app.has_feature("outputs") || app.has_feature("settings"),
+        9 => app.has_feature("isp") || app.has_feature("ota"),
+        _ => false,
+    }
+}
 fn field(ui: &mut egui::Ui, icon: &str, label: &str, value: &mut String, secret: bool) {
     dialog::setting_row(ui, icon, label, None, |ui| {
         ui.add_sized(
@@ -413,6 +424,9 @@ fn maintenance_page(
     ready: bool,
 ) {
     use crate::maintenance::Operation;
+    let isp = app.has_feature("isp");
+    let ota = app.has_feature("ota");
+    if ota {
     dialog::section(ui, icons::GLOBE, "Verified remote firmware", |ui| {
         field(
             ui,
@@ -435,8 +449,8 @@ fn maintenance_page(
             &mut draft.firmware_bearer,
             true,
         );
-        if !(1..=3).contains(&draft.firmware_targets) {
-            draft.firmware_targets = 3;
+        if !(1..=3).contains(&draft.firmware_targets) || (!isp && draft.firmware_targets != 1) {
+            draft.firmware_targets = if isp { 3 } else { 1 };
         }
         dialog::setting_row(ui, icons::CPU, "Update target", None, |ui| {
             egui::ComboBox::from_id_salt("remote-target")
@@ -446,17 +460,17 @@ fn maintenance_page(
                     _ => "Both boards",
                 })
                 .show_ui(ui, |ui| {
-                    ui.selectable_value(&mut draft.firmware_targets, 3, "Both boards");
+                    if isp { ui.selectable_value(&mut draft.firmware_targets, 3, "Both boards"); }
                     ui.selectable_value(
                         &mut draft.firmware_targets,
                         1,
                         "ESP (same-version repair)",
                     );
-                    ui.selectable_value(
+                    if isp { ui.selectable_value(
                         &mut draft.firmware_targets,
                         2,
                         "AVR (same-version repair)",
-                    );
+                    ); }
                 });
         });
         let available =
@@ -549,7 +563,8 @@ fn maintenance_page(
             });
         }
     });
-    let recovery = app.command_route() == Some(Transport::WiFi)
+    }
+    let recovery = isp && app.command_route() == Some(Transport::WiFi)
         && app.status.as_ref().is_some_and(|s| s.programming_latch)
         && draft.pending.is_none()
         && draft.maintenance_pending.is_none();
@@ -560,19 +575,19 @@ fn maintenance_page(
         }
     }
     dialog::section(ui, icons::FLOPPY_DISK, "Firmware and backup tools", |ui| {
-        ui.label("Maintenance is explicit and never automatically retried. ISP operations interrupt the AVR. Confirm electrical readiness before programming.");
+        if isp { ui.label("Maintenance is explicit and never automatically retried. ISP operations interrupt the AVR. Confirm electrical readiness before programming."); }
         ui.add_enabled_ui(
             ready && draft.pending.is_none() && draft.maintenance_pending.is_none(),
             |ui| {
-                ui.horizontal_wrapped(|ui| {
+                if isp { ui.horizontal_wrapped(|ui| {
                     if ui.button("Probe AVR ISP…").clicked() {
                         draft.maintenance_confirmation = Some(Operation::Probe);
                     }
                     if ui.button("Back up AVR…").clicked() {
                         draft.maintenance_confirmation = Some(Operation::Backup);
                     }
-                });
-                ui.horizontal_wrapped(|ui| {
+                }); }
+                if isp { ui.horizontal_wrapped(|ui| {
                     for (eeprom, label, name) in [
                         (false, "Export flash backup…", "avr-flash.bin"),
                         (true, "Export EEPROM backup…", "avr-eeprom.bin"),
@@ -600,11 +615,12 @@ fn maintenance_page(
                             }
                         }
                     }
-                });
+                }); }
                 ui.horizontal_wrapped(|ui| {
                     for (esp, label) in
                         [(false, "Select AVR image…"), (true, "Update ESP firmware…")]
                     {
+                        if (esp && !ota) || (!esp && !isp) { continue; }
                         if ui.button(label).clicked() {
                             if let Some(path) = rfd::FileDialog::new()
                                 .add_filter("Firmware binary", &["bin"])
@@ -636,13 +652,13 @@ fn maintenance_page(
                             }
                         }
                     }
-                    if ui.button("Program staged AVR…").clicked() {
+                    if isp && ui.button("Program staged AVR…").clicked() {
                         draft.maintenance_confirmation = Some(Operation::ProgramAvr);
                     }
                 });
             },
         );
-        ui.label(egui::RichText::new("Flash export includes Urboot if present. EEPROM restore and fuse writes are not exposed by this firmware; no nonfunctional controls are shown. Header checks do not establish firmware authenticity.").small().weak());
+        if isp { ui.label(egui::RichText::new("Flash export includes Urboot if present. EEPROM restore and fuse writes are not exposed by this firmware; no nonfunctional controls are shown. Header checks do not establish firmware authenticity.").small().weak()); }
     });
 }
 fn page(
@@ -652,16 +668,20 @@ fn page(
     index: usize,
     ready: bool,
 ) {
+    if !available(app, index) { return; }
     ui.push_id(index, |ui| {
         ui.heading(PAGES[index].0); ui.add_space(12.0);
         match index {
             0 => {
                 dialog::section(ui, icons::CIRCUITRY, "Connected controller", |ui| {
                     if let Some(status) = app.live_status().cloned() {
-                        for (name,value) in [("Hostname",status.hostname.clone()),("Firmware",status.version.clone()),("UART mode",status.link_mode.clone()),("LED pixels",status.pixels.to_string())] {
+                        let mut values = vec![("Hostname",status.hostname.clone()),("Firmware",status.version.clone())];
+                        if ["display", "text", "buzzer", "inputs", "outputs", "settings"].iter().any(|v| app.has_feature(v)) { values.push(("UART mode",status.link_mode.clone())); }
+                        if app.has_feature("leds") { values.push(("LED pixels",status.pixels.to_string())); }
+                        for (name,value) in values {
                             dialog::setting_row(ui, icons::INFO, name, None, |ui| { ui.label(&value); });
                         }
-                        ui.label(if status.ntp_synced { "Device clock synchronized by NTP" } else { "Device clock is not synchronized" });
+                        if app.has_feature("network") { ui.label(if status.ntp_synced { "Device clock synchronized by NTP" } else { "Device clock is not synchronized" }); }
                     } else { ui.label("Device state unavailable. Connect to read the controller's configuration."); }
                     if dialog::action_button(ui, icons::PLUG, "Connection…").clicked() && return_to_workspace(draft,ui) { app.show_connection = true; }
                 });
@@ -707,6 +727,7 @@ fn return_to_workspace(draft: &mut Editor, ui: &egui::Ui) -> bool {
     true
 }
 fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
+    if !available(app, draft.page) { draft.page = 0; }
     let ready = app.command_route() == Some(Transport::WiFi)
         && app.transport != Transport::Serial
         && draft.maintenance_pending.is_none()
@@ -742,7 +763,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
     if !wide {
         ui.horizontal_wrapped(|ui| {
             for (index, (title, icon, _)) in PAGES.iter().enumerate() {
-                if matches(index, &draft.search)
+                if available(app, index) && matches(index, &draft.search)
                     && ui
                         .selectable_label(index == draft.page, format!("{icon} {title}"))
                         .clicked()
@@ -764,6 +785,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
                     egui::Layout::top_down(egui::Align::Min),
                     |ui| {
                         for (index, (title, icon, _)) in PAGES.iter().enumerate() {
+                            if !available(app, index) { continue; }
                             if index == 0 {
                                 ui.label(egui::RichText::new("DEVICE").small().weak());
                             }
@@ -775,7 +797,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
                                 ui.add_space(12.0);
                                 ui.label(egui::RichText::new("CONTROLLERS").small().weak());
                             }
-                            if matches(index, &draft.search)
+                            if available(app, index) && matches(index, &draft.search)
                                 && dialog::navigation_button(
                                     ui,
                                     draft.page == index,
@@ -800,7 +822,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
                 |ui| {
                     dialog::scroll_column(ui, "device-settings-body", Some(height), |ui| {
                         let results: Vec<_> = (0..PAGES.len())
-                            .filter(|&index| matches(index, &draft.search))
+                            .filter(|&index| available(app, index) && matches(index, &draft.search))
                             .collect();
                         if results.is_empty() {
                             ui.label("No settings match this search.");

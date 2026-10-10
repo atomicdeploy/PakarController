@@ -17,6 +17,11 @@ const values={
   '/api/v1/cloud':{mqtt_enabled:false,mqtt_tls:true,mqtt_host:'',mqtt_port:8883,mqtt_user:'',mqtt_base_topic:'',websocket_enabled:false,websocket_tls:true,websocket_host:'',websocket_port:443,websocket_path:'/',telemetry_seconds:30},
   '/api/v1/firmware/remote':{schema:1,job_id:0,boot_id:'SIMULATED',targets:3,manifest_sha256:'',phase:'idle',busy:false,cancellable:false},
 };
+const contextProfile=process.argv.includes('--controller')?'controller':process.argv.includes('--unacknowledged')?'unknown':'table';
+if(contextProfile!=='unknown')status.capabilities={schema:1,name:'SIMULATED '+contextProfile.toUpperCase()+' — NOT A BOARD',board_kind:contextProfile,
+  acknowledged_features:contextProfile==='table'?['network','telemetry','table','leds','streaming']:['network','telemetry','buzzer'],
+  ...(contextProfile==='table'?{table:{columns:10,rows:8,pixels_per_cell:6},modes:[{id:'cell',code:1,label:'Cell selection',kind:'presentation'},{id:'snake',code:3,label:'Snake',kind:'presentation'}]}:{})};
+if(contextProfile==='controller'){status.avr_online=true;status.audio_cues=['welcome'];}
 // Extend the existing no-write visual harness, rather than a second package or
 // inferred live-board snapshot. Physical cell 80 is deliberately remapped to 1.
 const pixelFixture=process.argv.includes('--pixels');

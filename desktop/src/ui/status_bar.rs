@@ -29,6 +29,10 @@ pub enum Action {
 }
 pub struct StatusBar<'a> {
     pub peer_known: bool,
+    pub avr_available: bool,
+    pub display_available: bool,
+    pub network_available: bool,
+    pub telemetry_available: bool,
     pub message: &'a str,
     pub hostname: &'a str,
     pub station: &'a str,
@@ -77,27 +81,14 @@ pub fn draw(ui: &mut egui::Ui, status: StatusBar<'_>, items: &mut Items) -> Vec<
                     actions.push(Action::Save);
                 }
             }
-            if items.telemetry {
+            if items.telemetry && status.telemetry_available {
                 let text = if status.peer_known {
-                    format!(
-                        "{} AVR · {} TM1637 · {} WS · {} USB",
-                        if status.avr_online { "live" } else { "offline" },
-                        if status.tm1637_ready {
-                            "ready"
-                        } else {
-                            "no ACK"
-                        },
-                        if status.websocket_live {
-                            "live"
-                        } else {
-                            "offline"
-                        },
-                        if status.serial_live {
-                            "live"
-                        } else {
-                            "offline"
-                        }
-                    )
+                    let mut parts = Vec::new();
+                    if status.avr_available { parts.push(if status.avr_online { "AVR live" } else { "AVR offline" }); }
+                    if status.display_available { parts.push(if status.tm1637_ready { "TM1637 ready" } else { "TM1637 no ACK" }); }
+                    if status.network_available { parts.push(if status.websocket_live { "WS live" } else { "WS offline" }); }
+                    if status.serial_live { parts.push("USB live"); }
+                    parts.join(" · ")
                 } else {
                     "Device state unavailable".into()
                 };
@@ -150,6 +141,8 @@ pub fn draw(ui: &mut egui::Ui, status: StatusBar<'_>, items: &mut Items) -> Vec<
                 (icons::GLOBE, "Network & cloud", Action::Network),
                 (icons::GEAR, "Preferences…", Action::Preferences),
             ] {
+                if matches!(&action, Action::Hardware) && !status.telemetry_available { continue; }
+                if matches!(&action, Action::Network) && !status.network_available { continue; }
                 if ui.button(format!("{icon}  {label}")).clicked() {
                     actions.push(action);
                     ui.close();

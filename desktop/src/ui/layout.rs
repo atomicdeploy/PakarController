@@ -53,6 +53,19 @@ impl Panel {
                 || format!("{panel:?}").eq_ignore_ascii_case(name)
         })
     }
+    pub fn available(self, context: Option<&crate::capabilities::Manifest>) -> bool {
+        if self == Self::Events { return true; }
+        let Some(c) = context else { return false; };
+        match self {
+            Self::Table => c.table(),
+            Self::EffectControls => c.has("leds") || c.modes().next().is_some(),
+            Self::FrontPanel => c.has("display") || c.has("text") || c.has("buzzer"),
+            Self::Hardware => c.has("telemetry"),
+            Self::Network => c.has("network"),
+            Self::Streaming => c.table() && c.has("streaming"),
+            Self::Events => true,
+        }
+    }
 }
 
 pub fn create_initial_layout() -> DockState<Panel> {
@@ -108,6 +121,7 @@ pub fn reveal(dock: &mut DockState<Panel>, panel: Panel) {
 pub fn draw_workspace_tab_menu(app: &mut PakarControllerApp, ui: &mut egui::Ui) {
     super::cell_table::compact_menu(ui);
     for panel in Panel::ALL {
+        if !panel.available(app.peer_context()) { continue; }
         let is_open = app.dock.find_tab(&panel).is_some() || app.open_panels.contains(&panel);
         let mut visible = is_open;
         if ui

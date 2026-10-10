@@ -9,6 +9,7 @@ mod access;
 mod audio;
 mod brand_image;
 mod branding;
+mod capabilities;
 mod client_telemetry;
 mod config;
 mod device_settings;
@@ -49,6 +50,8 @@ struct Endpoint {
 
 #[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
 struct DeviceStatus {
+    #[serde(default)]
+    capabilities: Option<capabilities::Manifest>,
     #[serde(default)]
     version: String,
     #[serde(default)]
@@ -827,6 +830,7 @@ fn serial_status(payload: &[u8]) -> Option<DeviceStatus> {
         return None;
     }
     Some(DeviceStatus {
+        capabilities: capabilities::Manifest::from_usb(payload),
         mode: ["idle", "cell", "first-wins", "snake"]
             .get(payload[0] as usize)
             .unwrap_or(&"unknown")
@@ -980,6 +984,9 @@ fn command_route(selected: Transport, wifi_fresh: bool, usb_fresh: bool) -> Opti
     }
 }
 struct PakarControllerApp {
+    context_panels: Vec<ui::layout::Panel>,
+    active_context: Option<String>,
+    context_layouts: std::collections::HashMap<String, egui_dock::DockState<ui::layout::Panel>>,
     config: config::AppConfig,
     preferences: Option<ui::preferences::PreferencesDraft>,
     device_settings: device_settings::Editor,
@@ -1101,6 +1108,9 @@ impl PakarControllerApp {
             event_log.push(("Windows desktop unavailable".into(), error.clone()));
         }
         Self {
+            context_panels: Vec::new(),
+            active_context: None,
+            context_layouts: Default::default(),
             control: platform::instance::start(context.egui_ctx.clone(), !screenshot_harness),
             dock,
             reveal_panels: Vec::new(),
@@ -1183,6 +1193,10 @@ impl PakarControllerApp {
         }
     }
     fn post(&mut self, path: &'static str, form: Vec<(String, String)>) {
+        if self.command_route() != Some(Transport::WiFi) || !self.peer_context().is_some_and(|c| c.allows(path, &form)) {
+            self.message = "This connected board has not acknowledged this capability".into();
+            return;
+        }
         if self.transport != Transport::Serial {
             let _ = self
                 .http_tx
@@ -1203,6 +1217,10 @@ impl PakarControllerApp {
         op: u8,
         payload: Vec<u8>,
     ) {
+        if !self.peer_context().is_some_and(|c| c.allows(path, &form)) {
+            self.message = "This connected board has not acknowledged this capability".into();
+            return;
+        }
         match self.command_route() {
             Some(Transport::WiFi) => self.post(path, form),
             Some(Transport::Serial) => self.serial(op, payload),
@@ -1304,7 +1322,7 @@ impl PakarControllerApp {
                 "/api/v1/auth/info",
             ));
         }
-        if self.last_mapping_poll.elapsed() >= Duration::from_secs(15) {
+        if self.command_route() == Some(Transport::WiFi) && self.has_table() && self.last_mapping_poll.elapsed() >= Duration::from_secs(15) {
             self.last_mapping_poll = Instant::now();
             let _ = self.http_tx.send(HttpCommand::Mapping(self.endpoint()));
         }

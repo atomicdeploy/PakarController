@@ -4,6 +4,198 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
     {
+      "origin": "PCController",
+      "path": "Tools/Controller/web/src/peripheral-availability.ts",
+      "sha256": "fcf2e397564c843711fd64db2bd2d820552180ac4f5abdf0d44ccbbb86be7a84",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual connected AND have_status AND advertised-capability conjunction adapted to selected-peer fresh manifests. No feature inference from hostname, pixel count, catalog, defaults or online alone.",
+        "TM1637 additionally requires fresh measured ACK; Text and Buzzer have independent HELLO support. Native/Web hide unrelated controls and gate domain commands."
+      ],
+      "targets": [
+        {
+          "path": "desktop/src/capabilities.rs",
+          "sha256": "96a8e3f599938beed5473e4d184bdfc5cd7a02b16e19313d8bbb51ac6f2f5667",
+          "anchor": "pub fn has("
+        },
+        {
+          "path": "libraries/BoardCore/src/DeviceContext.h",
+          "sha256": "bb6b24154650b6e6d0e930eb813ef657419360da0d1c6b5e0acaf8368bb08b4e",
+          "anchor": "inline uint16_t features("
+        },
+        {
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "46a795fa2da585b4f4039163a8fe6e4e3514bd245551ee63d495d4dde897e233",
+          "anchor": "function peerAvailability("
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Snapshot/status/hello fields and compact status flag fallback",
+          "disposition": "replaced",
+          "reason": "Pakar JSON and append-only USB share a schema-1 normalized manifest. AVR HELLO and display-status ACK are aggregated on ESP; copying PCController bit values would alias different protocols."
+        },
+        {
+          "code": "bounded, ina219, pwm, temperatureLED, temperatureBTAudio, lcd, bluetoothAudio, relays, rf, statusLED and invalid measurement fields",
+          "disposition": "pending",
+          "reason": "Those drivers are absent on the current pair. A real PCController adapter must preserve their detection, bounds and invalid-value distinctions later. No fabricated controls are displayed."
+        }
+      ],
+      "remaining": [
+        "Native execution and generic PCController profile/discovery adapter remain #10/#6 work; source/C++/Web proof is not native or physical acceptance."
+      ],
+      "proof": [
+        {
+          "path": "tests/web_context_test.mjs",
+          "sha256": "4d23df01d3abbbfc3abef0f68d08f33c817e5be1379a3f03f828b7a2b2087d4d",
+          "anchor": "No inferred board kind or controls"
+        },
+        {
+          "path": "tests/device_context_test.cpp",
+          "sha256": "aea06975d4e027b0804c0a78c0385aefe1b7766418cd7835f22e80ea361bc650",
+          "anchor": "int main("
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "PCController",
+      "path": "Tools/Controller/web/src/peripheral-availability.test.ts",
+      "sha256": "a5d7366279057e0868478846c6bbe92eda4209a6bdbcbc16e1c149e57dfe035e",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual disconnected, missing status and capability-free cases adapted into shipped-Web tests. Independent peripheral ACKs, expiry, cross-kind and malformed geometry/schema cases added. C++ tests execute actual HELLO/display-ACK policy."
+      ],
+      "targets": [
+        {
+          "path": "tests/web_context_test.mjs",
+          "sha256": "4d23df01d3abbbfc3abef0f68d08f33c817e5be1379a3f03f828b7a2b2087d4d",
+          "anchor": "const manifest="
+        },
+        {
+          "path": "tests/device_context_test.cpp",
+          "sha256": "aea06975d4e027b0804c0a78c0385aefe1b7766418cd7835f22e80ea361bc650",
+          "anchor": "int main("
+        },
+        {
+          "path": "desktop/src/capabilities.rs",
+          "sha256": "96a8e3f599938beed5473e4d184bdfc5cd7a02b16e19313d8bbb51ac6f2f5667",
+          "anchor": "fn serial_manifest_is_individual_and_table_modes_are_profile_scoped"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Vitest/liveSnapshot/emptySnapshot fixture ownership",
+          "disposition": "replaced",
+          "reason": "Node VM executes embedded Web code, C++ executes firmware policy, and Rust has USB adapter tests. React/Vitest would target a nonexistent React owner in this embedded surface."
+        },
+        {
+          "code": "Valid/invalid INA219, temperature, PWM, LCD, Bluetooth, relay/RF/statusLED fixture cases",
+          "disposition": "pending",
+          "reason": "Restore exact bounded-invalid-value cases with the genuine PCController adapter; those peripherals are currently absent, not replaced by synthetic zero fixtures."
+        }
+      ],
+      "remaining": [
+        "Rust tests remain cache-budget blocked; generic adapter sensor/profile tests and physical/native acceptance remain #10."
+      ],
+      "proof": [
+        {
+          "path": "tests/web_context_test.mjs",
+          "sha256": "4d23df01d3abbbfc3abef0f68d08f33c817e5be1379a3f03f828b7a2b2087d4d",
+          "anchor": "Unsupported geometry is not forced"
+        },
+        {
+          "path": "tests/device_context_test.cpp",
+          "sha256": "aea06975d4e027b0804c0a78c0385aefe1b7766418cd7835f22e80ea361bc650",
+          "anchor": "int main("
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "src/ui/board_info.rs",
+      "sha256": "135e259e7c4b36fede394943b754e9c438a19e9d8f41ea76fd065c57cfa596f1",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Read all 1279 lines through EOF. Actual overview/capability_list/front_panel rule uses authoritative peer fields; adapted into Manifest, contextual dock/menu/settings and independent peripheral cards.",
+        "Numeric display controls are independent of Text; peer title follows acknowledged name and lost capabilities cancel Table work."
+      ],
+      "targets": [
+        {
+          "path": "desktop/src/capabilities.rs",
+          "sha256": "96a8e3f599938beed5473e4d184bdfc5cd7a02b16e19313d8bbb51ac6f2f5667",
+          "anchor": "pub struct Manifest"
+        },
+        {
+          "path": "desktop/src/ui/shell.rs",
+          "sha256": "1a4370934792e0117f6d532b97d05416a1e75490d6d99ed1c98f08c60b985b47",
+          "anchor": "fn synchronize_context("
+        },
+        {
+          "path": "desktop/src/ui/device_settings.rs",
+          "sha256": "9b10a96b77d8f7a234ab8c33906026ccb9811b281179e205703c2da08d5d6873",
+          "anchor": "pub(crate) fn available("
+        },
+        {
+          "path": "docs/DEVICE-CONTEXT.md",
+          "sha256": "13429955cd7e98ba80de7a2394e46fd3e5c973b6ca0e559b5e2aee639126d277",
+          "anchor": "## Exact reuse and remaining useful code"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "TABS/draw persistence; overview typed board/profile/protocol/build/EEPROM identity; optional_row/yes_no",
+          "disposition": "pending",
+          "reason": "Existing settings/dialog owners retained; complete typed PCController identity/profile/readback and persistence/localization tests require a real adapter. Current manifest is not that universal adapter."
+        },
+        {
+          "code": "settings/settings_grid/setting_control/checkbox_setting/slider_setting/enum_combo/bit_checkbox/relay_mask_editor",
+          "disposition": "pending",
+          "reason": "Full EEPROM draft/write/readback, menu/reset/reboot and relay/PWM/RF/LCD/macro editors remain useful pending contracts. Current driver absence hides them but does not certify generic helpers imported."
+        },
+        {
+          "code": "capability_badges/capability_column_count/capability_pill/state_badge/unavailable and responsive tests",
+          "disposition": "pending",
+          "reason": "Availability semantics adapted; entire donor badge geometry, localized empty states and responsive/keyboard consumer tests remain unverified."
+        },
+        {
+          "code": "FRONT_PANEL_KEYS/key_icon fixed K1-K4 previous/next/decrease/increase",
+          "disposition": "not-applicable",
+          "reason": "Our board has nine shift-register/ADC keys; four hardcoded identities would be false. Matching future adapters can advertise them."
+        },
+        {
+          "code": "front_panel_key_button and acknowledged menu/key/layout readback",
+          "disposition": "pending",
+          "reason": "Nine-key state exists, but full remotely navigable front-panel/menu/key commands need per-board descriptors and donor ACK tests. Incompatible labels do not justify dropping reusable command helpers."
+        },
+        {
+          "code": "seven_segment_preview, section/row drawing",
+          "disposition": "replaced",
+          "reason": "Existing Pakar seven_segment/dialog primitives own preview and geometry. A duplicate renderer would fork styling; fresh peer gates wrap the current owners. Native paint acceptance remains pending."
+        }
+      ],
+      "remaining": [
+        "Typed PCController adapter, donor tests and native runtime proof remain #10/#3/#6. No whole-file equivalence or application superiority claimed."
+      ],
+      "proof": [
+        {
+          "path": "tests/web_context_test.mjs",
+          "sha256": "4d23df01d3abbbfc3abef0f68d08f33c817e5be1379a3f03f828b7a2b2087d4d",
+          "anchor": "Native wiring is source-checked only"
+        },
+        {
+          "path": "desktop/src/capabilities.rs",
+          "sha256": "96a8e3f599938beed5473e4d184bdfc5cd7a02b16e19313d8bbb51ac6f2f5667",
+          "anchor": "fn no_profile_or_individual_ack_means_no_controls"
+        }
+      ],
+      "improvement": ""
+    },
+    {
       "origin": "Pealayer",
       "path": "src/branding.rs",
       "sha256": "be44ca91dfb08ce78fb377ccfcc4676676c05e6b36ed319c497365788ab264fe",
@@ -76,7 +268,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "f81b2de9ecaddf9e6dd469f7d38b88c5dd86d1593ebe5953343cb0bc5748b171",
+          "sha256": "46a795fa2da585b4f4039163a8fe6e4e3514bd245551ee63d495d4dde897e233",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -126,7 +318,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "f81b2de9ecaddf9e6dd469f7d38b88c5dd86d1593ebe5953343cb0bc5748b171",
+          "sha256": "46a795fa2da585b4f4039163a8fe6e4e3514bd245551ee63d495d4dde897e233",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -227,7 +419,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7317008e4a2962ca4e014505196d18173aca8eb63b5f318ee92599e38b6ce86e",
+          "sha256": "1a4370934792e0117f6d532b97d05416a1e75490d6d99ed1c98f08c60b985b47",
           "anchor": "menu::top_menu_button(ui, \"File\".into()"
         },
         {
@@ -676,7 +868,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-        "sha256": "7317008e4a2962ca4e014505196d18173aca8eb63b5f318ee92599e38b6ce86e",
+          "sha256": "1a4370934792e0117f6d532b97d05416a1e75490d6d99ed1c98f08c60b985b47",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -1094,7 +1286,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-        "sha256": "7317008e4a2962ca4e014505196d18173aca8eb63b5f318ee92599e38b6ce86e",
+          "sha256": "1a4370934792e0117f6d532b97d05416a1e75490d6d99ed1c98f08c60b985b47",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -1207,7 +1399,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
+          "sha256": "5e568156133dec9eaffbdec4d5196fb6113693d2715387b78d5f9b3a471e23c3",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -1258,7 +1450,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
+          "sha256": "5e568156133dec9eaffbdec4d5196fb6113693d2715387b78d5f9b3a471e23c3",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -1311,12 +1503,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
+          "sha256": "5e568156133dec9eaffbdec4d5196fb6113693d2715387b78d5f9b3a471e23c3",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
+          "sha256": "5e568156133dec9eaffbdec4d5196fb6113693d2715387b78d5f9b3a471e23c3",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -1356,12 +1548,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
+          "sha256": "5e568156133dec9eaffbdec4d5196fb6113693d2715387b78d5f9b3a471e23c3",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
+          "sha256": "5e568156133dec9eaffbdec4d5196fb6113693d2715387b78d5f9b3a471e23c3",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -1400,7 +1592,7 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
+          "sha256": "5e568156133dec9eaffbdec4d5196fb6113693d2715387b78d5f9b3a471e23c3",
           "anchor": "void serviceInputs("
         }
       ],
@@ -1434,7 +1626,7 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
+          "sha256": "5e568156133dec9eaffbdec4d5196fb6113693d2715387b78d5f9b3a471e23c3",
           "anchor": "void serviceInputs("
         }
       ],
@@ -1654,7 +1846,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "52de8fb9b34babf4c765cb27a8d350efd9bd43f97a7cf75995ef84ac0a65601d"
+          "sha256": "36a4f859191af7c862bfbbfaa006ad41d23e226138f8ab0b2cb892b93433a9db"
         }
       ],
       "proof": [
@@ -1721,7 +1913,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "52de8fb9b34babf4c765cb27a8d350efd9bd43f97a7cf75995ef84ac0a65601d"
+          "sha256": "36a4f859191af7c862bfbbfaa006ad41d23e226138f8ab0b2cb892b93433a9db"
         }
       ],
       "proof": [
@@ -1788,7 +1980,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "52de8fb9b34babf4c765cb27a8d350efd9bd43f97a7cf75995ef84ac0a65601d"
+          "sha256": "36a4f859191af7c862bfbbfaa006ad41d23e226138f8ab0b2cb892b93433a9db"
         }
       ],
       "proof": [
@@ -1840,7 +2032,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "52de8fb9b34babf4c765cb27a8d350efd9bd43f97a7cf75995ef84ac0a65601d"
+          "sha256": "36a4f859191af7c862bfbbfaa006ad41d23e226138f8ab0b2cb892b93433a9db"
         }
       ],
       "proof": [
@@ -2039,7 +2231,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "f81b2de9ecaddf9e6dd469f7d38b88c5dd86d1593ebe5953343cb0bc5748b171",
+          "sha256": "46a795fa2da585b4f4039163a8fe6e4e3514bd245551ee63d495d4dde897e233",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -2124,12 +2316,12 @@
       "targets": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "8e41e6afb3527bf39630f52f9359359bc111673cbc934d258ed664219a7e949e",
+          "sha256": "031e1161d656673af02349c80e3c615a7a9ccd280258d428cccd69439b78bb1b",
           "anchor": "fn manager_selector("
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "f81b2de9ecaddf9e6dd469f7d38b88c5dd86d1593ebe5953343cb0bc5748b171",
+          "sha256": "46a795fa2da585b4f4039163a8fe6e4e3514bd245551ee63d495d4dde897e233",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -2157,12 +2349,12 @@
       "proof": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "8e41e6afb3527bf39630f52f9359359bc111673cbc934d258ed664219a7e949e",
+          "sha256": "031e1161d656673af02349c80e3c615a7a9ccd280258d428cccd69439b78bb1b",
           "anchor": "fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width()"
         },
         {
           "path": "tests/web_cell_table_test.mjs",
-          "sha256": "63da3cbda56135cc8bcdbbb7f2bacd4c818568b0c32f8ee4a8ce60a90fa6c772",
+          "sha256": "b56dc7093dd7919edc61727cefb85775f3adfca595c6ab3202050e0599d71109",
           "anchor": "Manager must not allocate state-dependent selectable Frames"
         }
       ],

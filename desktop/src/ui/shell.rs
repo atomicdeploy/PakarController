@@ -184,10 +184,12 @@ impl PakarControllerApp {
             Command::About => self.show_about = true,
             Command::Workspaces => self.show_workspaces = true,
             Command::CellManager => {
+                if !self.has_table() { return; }
                 self.table.manager_open = true;
                 self.reveal_panels.push(Panel::Table);
             }
             Command::FindCell { query } => {
+                if !self.has_table() { return; }
                 if ui::cell_search::parse(&query).is_ok() {
                     self.cell_search = query;
                     self.apply_cell_search_selection();
@@ -197,7 +199,7 @@ impl PakarControllerApp {
             }
             Command::Panel { name } => {
                 if let Some(panel) = Panel::from_name(&name) {
-                    self.reveal_panels.push(panel);
+                    if panel.available(self.peer_context()) { self.reveal_panels.push(panel); }
                 }
             }
             Command::Show | Command::Status => {}
@@ -256,6 +258,68 @@ impl PakarControllerApp {
         self.last_poll = Instant::now() - Duration::from_secs(2);
         self.last_mapping_poll = Instant::now() - Duration::from_secs(30);
     }
+    pub(crate) fn peer_context(&self) -> Option<&crate::capabilities::Manifest> {
+        self.live_status()?.capabilities.as_ref().filter(|c| c.schema == 1)
+    }
+    pub(crate) fn has_feature(&self, feature: &str) -> bool {
+        self.peer_context().is_some_and(|c| c.has(feature))
+    }
+    pub(crate) fn has_table(&self) -> bool {
+        self.peer_context().is_some_and(|c| c.table())
+    }
+    fn synchronize_context(&mut self, ctx: &egui::Context) {
+        let available: Vec<_> = Panel::ALL.into_iter().filter(|p| p.available(self.peer_context())).collect();
+        let key = self.peer_context().map(|c| format!("{:?}:{}:{}:{}", self.command_route(),
+            if self.command_route() == Some(Transport::Serial) { &self.serial_port } else { &self.base }, c.board_kind, c.name));
+        if key != self.active_context {
+            if let Some(previous) = self.active_context.take() {
+                // Runtime-only per-peer workspace cache. No discovery-driven SSD writes.
+                if self.context_layouts.len() >= 16 { self.context_layouts.clear(); }
+                self.context_layouts.insert(previous, self.dock.clone());
+            }
+            self.dock = key.as_ref().and_then(|key| self.context_layouts.get(key)).cloned()
+                .unwrap_or_else(|| if key.is_some() { layout::restore(&self.config.dock_layout) }
+                    else { egui_dock::DockState::new(vec![Panel::Events]) });
+            self.active_context = key;
+            self.context_panels = available.clone();
+            self.table.queue.clear(); self.table.awaiting.clear(); self.table.verification_started = None;
+            self.table.selection.ids.clear(); self.cell_search.clear();
+            self.table.pixel_sample = None; self.mappings.clear();
+            self.last_mapping_poll = Instant::now() - Duration::from_secs(16);
+            let _ = self.ws_tx.send(WsCommand::Mapping(Vec::new()));
+            let _ = self.ws_tx.send(WsCommand::Stream(false));
+            let _ = self.ws_tx.send(WsCommand::Sample(false));
+            self.streaming = false; self.sampling = false;
+            self.show_mapping = false; self.table.manager_open = false;
+        }
+        // Prune even on first restore; saved panels are preferences, never evidence.
+        let removed: Vec<_> = self.dock.iter_all_tabs().filter(|(_,p)| !available.contains(p)).map(|(_,p)| *p).collect();
+        for panel in removed { while let Some(path) = self.dock.find_tab(&panel) { self.dock.remove_tab(path); } }
+        if available != self.context_panels {
+            for panel in &available {
+                if !self.context_panels.contains(panel) && self.dock.find_tab(panel).is_none() {
+                    self.dock.push_to_focused_leaf(*panel);
+                }
+            }
+            self.context_panels = available;
+        }
+        if !self.has_table() {
+            self.table.queue.clear(); self.table.verification_started = None;
+            self.table.manager_open = false; self.table.editing_order = false;
+            self.show_mapping = false; self.confirm_reset = false;
+        }
+        if !self.has_table() || !self.has_feature("streaming") || self.command_route() != Some(Transport::WiFi) {
+            if self.streaming || self.sampling {
+                let _ = self.ws_tx.send(WsCommand::Stream(false));
+                let _ = self.ws_tx.send(WsCommand::Sample(false));
+                self.streaming = false; self.sampling = false;
+            }
+        }
+        let title = self.live_status().map(|s| s.capabilities.as_ref().map(|c| c.title())
+            .unwrap_or_else(|| "PakarController · Discovering capabilities".into()))
+            .unwrap_or_else(|| "PakarController · No board connected".into());
+        ctx.send_viewport_cmd(egui::ViewportCommand::Title(title));
+    }
     pub fn draw_shell(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         while let Ok(command) = self.control.rx.try_recv() {
@@ -300,7 +364,7 @@ impl PakarControllerApp {
         if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::K)) {
             self.show_connection = true;
         }
-        if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::M)) {
+        if self.has_table() && ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::M)) {
             self.show_mapping = true;
         }
         if ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::F5)) {
@@ -318,13 +382,13 @@ impl PakarControllerApp {
             && !self.show_workspaces
             && !self.show_about
         {
-            if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::F)) {
+            if self.has_table() && ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::F)) {
                 self.reveal_panels.push(Panel::Table);
                 self.focus_cell_search = true;
             }
             let previous = ctx.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, egui::Key::F3));
             let next = ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::F3));
-            if previous || next {
+            if self.has_table() && (previous || next) {
                 if let Some(id) = self.table.selection.navigate(self.selected_cell, previous) {
                     self.selected_cell = id;
                     self.reveal_panels.push(Panel::Table);
@@ -332,6 +396,7 @@ impl PakarControllerApp {
             }
         }
         self.poll();
+        self.synchronize_context(&ctx);
         self.process_cell_queue(&ctx);
         self.deliver_notifications();
         #[cfg(windows)]
@@ -352,6 +417,7 @@ impl PakarControllerApp {
         if let Ok(mut value) = self.control.snapshot.lock() {
             *value = serde_json::json!({"application":"PakarController","version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":ui::cell_search::format_selection(&self.table.selection.ids),"cell_search_draft":self.cell_search,"selected_cells":self.table.selection.cells(),"highlighted_cells":self.table.selection.cells(),"search_matches":self.table.selection.cells(),"selected_cell":self.selected_cell});
             value["device_settings"] = serde_json::json!({"open": self.device_settings.open, "page": self.device_settings.page, "network_loaded": self.device_settings.network.is_some(), "cloud_loaded": self.device_settings.cloud.is_some(), "write_pending": self.device_settings.pending.is_some(), "maintenance_pending": self.device_settings.maintenance_pending.is_some()});
+            value["peer_capabilities"] = serde_json::json!(self.peer_context());
             value["cell_management"] = serde_json::json!({"open":self.table.manager_open,"selection":self.table.selection.ids,"additive_selection":self.config.additive_cell_selection,"animations":self.config.animate_cells,"indicators":self.config.show_cell_indicators});
             value["screenshot"] = self.capture.status();
             value["notifications"] = self.notification_snapshot();
@@ -378,10 +444,10 @@ impl PakarControllerApp {
                         self.show_connection = true;
                         ui.close();
                     }
-                    if ui
+                    if self.has_table() && ui
                         .add(egui::Button::new(format!("{}  Cell mapping…", icons::GRID_FOUR))
                             .shortcut_text("Ctrl+M"))
-                        .clicked()
+                        .clicked() && self.has_table()
                     {
                         self.show_mapping = true;
                         ui.close();
@@ -441,14 +507,14 @@ impl PakarControllerApp {
                         self.refresh();
                         ui.close();
                     }
-                    if ui
+                    if self.has_feature("network") && ui
                         .button(format!("{}  Network & cloud", icons::GLOBE))
                         .clicked()
                     {
                         self.reveal_panels.push(Panel::Network);
                         ui.close();
                     }
-                    if ui
+                    if self.has_table() && ui
                         .add_enabled(
                             snapshot.is_some(),
                             egui::Button::new(format!(
@@ -492,7 +558,7 @@ impl PakarControllerApp {
                     {
                         self.show_connection = true;
                     }
-                    ui.label(egui::RichText::new("PakarController").strong());
+                    ui.label(egui::RichText::new(self.peer_context().map(|c| c.title()).unwrap_or_else(|| "PakarController".into())).strong());
                     crate::branding::logo(ui, 18.0);
                 });
             });
@@ -502,6 +568,10 @@ impl PakarControllerApp {
             ui,
             ui::status_bar::StatusBar {
                 peer_known: snapshot.is_some(),
+                avr_available: ["display", "text", "buzzer", "inputs", "outputs", "settings"].iter().any(|v| self.has_feature(v)),
+                display_available: self.has_feature("display"),
+                network_available: self.has_feature("network"),
+                telemetry_available: self.has_feature("telemetry"),
                 message: &self.message,
                 hostname: &s.hostname,
                 station: &s.station_ssid,
@@ -531,7 +601,7 @@ impl PakarControllerApp {
                             .size(19.0)
                             .color(ui.visuals().selection.bg_fill),
                     );
-                    ui.strong("Table workspace");
+                    ui.strong(self.peer_context().map(|c| c.name.as_str()).filter(|s| !s.is_empty()).unwrap_or("Controller workspace"));
                     ui.separator();
                     badge(
                         ui,
@@ -551,9 +621,9 @@ impl PakarControllerApp {
                         ui.menu_button(format!("{}  Panels", icons::TABS), |ui| {
                             layout::draw_workspace_tab_menu(self, ui)
                         });
-                        if ui
+                        if self.has_table() && ui
                             .button(format!("{}  Mapping", icons::GRID_FOUR))
-                            .clicked()
+                            .clicked() && self.has_table()
                         {
                             self.show_mapping = true;
                         }
@@ -575,11 +645,15 @@ impl PakarControllerApp {
             }
         }
         for panel in std::mem::take(&mut self.reveal_panels) {
-            layout::reveal(&mut self.dock, panel);
+            if panel.available(self.peer_context()) { layout::reveal(&mut self.dock, panel); }
         }
         if layout_changed {
             self.save_workspace();
         }
+        // Workspace restore/menu actions occur after discovery synchronization.
+        // Apply the same gate before any tab header is painted in this frame.
+        let unavailable: Vec<_> = self.dock.iter_all_tabs().filter(|(_,p)| !p.available(self.peer_context())).map(|(_,p)| *p).collect();
+        for panel in unavailable { while let Some(path) = self.dock.find_tab(&panel) { self.dock.remove_tab(path); } }
         egui::CentralPanel::default()
             .frame(egui::Frame::new().inner_margin(0))
             .show(ui, |ui| {
@@ -589,7 +663,7 @@ impl PakarControllerApp {
                             .button(format!("{}  Restore workspace", icons::TABS))
                             .clicked()
                         {
-                            self.dock = layout::create_initial_layout();
+                            self.dock = egui_dock::DockState::new(Panel::ALL.into_iter().filter(|p| p.available(self.peer_context())).collect());
                         }
                     });
                 } else {
@@ -651,6 +725,7 @@ impl PakarControllerApp {
         ui::toasts::draw(&ctx);
     }
     pub fn draw_panel(&mut self, ui: &mut egui::Ui, panel: Panel) {
+        if !panel.available(self.peer_context()) { return; }
         dialog::scroll_column(
             ui,
             ("panel-body", panel),
@@ -667,6 +742,7 @@ impl PakarControllerApp {
         );
     }
     fn draw_table(&mut self, ui: &mut egui::Ui) {
+        if !self.has_table() { return; }
         self.sync_cell_selection_search();
         let snapshot = self.live_status().cloned();
         ui.horizontal(|ui| {
@@ -784,14 +860,12 @@ impl PakarControllerApp {
     }
     fn draw_effects(&mut self, ui: &mut egui::Ui) {
         let snapshot = self.live_status().cloned();
-        dialog::section(ui, icons::PLAY, "Game mode", |ui| {
+        let modes: Vec<_> = self.peer_context().map(|c| c.modes().cloned().collect()).unwrap_or_default();
+        if !modes.is_empty() { dialog::section(ui, icons::PLAY, "Board modes", |ui| {
             ui.add_enabled_ui(snapshot.is_some(), |ui| {
-                for (label, name, value) in [
-                    ("80 cells", "cell", 1),
-                    ("First wins", "first-wins", 2),
-                    ("Snake", "snake", 3),
-                    ("Idle", "idle", 0),
-                ] {
+                for mode in &modes {
+                    let (label, name, value) = (mode.label.as_str(), mode.id.as_str(), mode.code);
+                    ui.weak(if mode.kind == "presentation" { "Table presentation" } else { "Game" });
                     let selected = snapshot.as_ref().is_some_and(|s| s.mode == name);
                     if ui
                         .add_sized(
@@ -815,8 +889,9 @@ impl PakarControllerApp {
                     self.confirm_reset = true;
                 }
             });
-        });
+        }); }
         ui.add_space(10.0);
+        if self.has_table() {
         dialog::section(
             ui,
             icons::HAND_TAP,
@@ -862,7 +937,9 @@ impl PakarControllerApp {
                 }
             },
         );
+        }
         ui.add_space(10.0);
+        if self.has_feature("leds") {
         dialog::section(ui, icons::SPARKLE, "Strip effect", |ui| {
             ui.add_enabled_ui(snapshot.is_some(), |ui| {
                 egui::ComboBox::from_id_salt("strip-effect")
@@ -899,7 +976,8 @@ impl PakarControllerApp {
                 }
             });
         });
-        if snapshot.as_ref().is_some_and(|s| s.mode == "snake") {
+        }
+        if modes.iter().any(|m| m.id == "snake") && snapshot.as_ref().is_some_and(|s| s.mode == "snake") {
             ui.add_space(10.0);
             dialog::section(ui, icons::ARROW_RIGHT, "Snake direction", |ui| {
                 ui.horizontal(|ui| {
@@ -922,6 +1000,7 @@ impl PakarControllerApp {
     }
     pub(super) fn draw_front_panel(&mut self, ui: &mut egui::Ui) {
         let snapshot = self.live_status().cloned();
+        if self.has_feature("display") {
         dialog::section(ui, icons::GAUGE, "Live display", |ui| {
             if let Some(s) = &snapshot {
                 if s.tm1637_segments.len() == 4 {
@@ -946,8 +1025,21 @@ impl PakarControllerApp {
             } else {
                 ui.label(egui::RichText::new("Display state unavailable").weak());
             }
+            ui.horizontal(|ui| {
+                ui.add(egui::DragValue::new(&mut self.display_value).range(-999..=9999));
+                if ui.button("Show number").clicked() {
+                    self.action(
+                        "/api/v1/display",
+                        vec![("value".into(), self.display_value.to_string())],
+                        OP_DISPLAY,
+                        self.display_value.to_le_bytes().to_vec(),
+                    );
+                }
+            });
         });
+        }
         ui.add_space(10.0);
+        if self.has_feature("text") {
         dialog::section(ui, icons::TEXT_ALIGN_LEFT, "Text", |ui| {
             ui.add_sized(
                 [ui.available_width(), 28.0],
@@ -1032,23 +1124,10 @@ impl PakarControllerApp {
                     );
                 }
             });
-            ui.separator();
-            ui.horizontal(|ui| {
-                ui.add(egui::DragValue::new(&mut self.display_value).range(-999..=9999));
-                if ui
-                    .add_enabled(snapshot.is_some(), egui::Button::new("Show number"))
-                    .clicked()
-                {
-                    self.action(
-                        "/api/v1/display",
-                        vec![("value".into(), self.display_value.to_string())],
-                        OP_DISPLAY,
-                        self.display_value.to_le_bytes().to_vec(),
-                    );
-                }
-            });
         });
+        }
         ui.add_space(10.0);
+        if self.has_feature("buzzer") {
         dialog::section(ui, icons::MUSIC_NOTE, "Melodies", |ui| {
             ui.add_enabled_ui(
                 snapshot
@@ -1108,39 +1187,36 @@ impl PakarControllerApp {
                     );
                 }
             }
-        });
+        }); }
     }
     pub(super) fn draw_hardware(&mut self, ui: &mut egui::Ui) {
         let Some(s) = self.live_status().cloned() else {
             ui.label("Hardware state unavailable");
             return;
         };
+        let avr_acknowledged = ["display", "text", "buzzer", "inputs", "outputs", "settings"]
+            .iter().any(|feature| self.has_feature(feature));
         dialog::section(ui, icons::CPU, "Controllers", |ui| {
-            badge(ui, "ATmega328P", s.avr_online);
-            badge(ui, "TM1637", s.tm1637_ack);
+            if avr_acknowledged { badge(ui, "AVR link", s.avr_online); }
+            if self.has_feature("display") { badge(ui, "TM1637", s.tm1637_ack); }
             egui::Grid::new("controller-health")
                 .num_columns(2)
                 .spacing([16.0, 8.0])
                 .show(ui, |ui| {
-                    for (name, value) in [
+                    let mut values = vec![
                         ("Firmware", s.version.clone()),
                         ("Host", s.hostname.clone()),
+                    ];
+                    if avr_acknowledged { values.extend([
                         ("Link", s.link_mode.clone()),
-                        (
-                            "Program latch",
-                            if s.programming_latch {
-                                "Active"
-                            } else {
-                                "Released"
-                            }
-                            .into(),
-                        ),
                         (
                             "UART errors",
                             format!("ESP {} / AVR {}", s.esp_uart_errors, s.avr_uart_errors),
                         ),
-                        ("USB errors", s.usb_serial_errors.to_string()),
-                    ] {
+                    ]); }
+                    if self.has_feature("isp") { values.push(("Program latch", if s.programming_latch { "Active" } else { "Released" }.into())); }
+                    if self.command_route() == Some(Transport::Serial) { values.push(("USB errors", s.usb_serial_errors.to_string())); }
+                    for (name, value) in values {
                         ui.label(egui::RichText::new(name).weak());
                         ui.label(value);
                         ui.end_row();
@@ -1148,7 +1224,7 @@ impl PakarControllerApp {
                 });
         });
         ui.add_space(10.0);
-        dialog::section(ui, icons::HAND_TAP, "Inputs", |ui| {
+        if self.has_feature("inputs") { dialog::section(ui, icons::HAND_TAP, "Inputs", |ui| {
             ui.horizontal_wrapped(|ui| {
                 for bit in 0..9 {
                     let active = if bit == 8 {
@@ -1159,9 +1235,9 @@ impl PakarControllerApp {
                     badge(ui, &format!("{}", bit + 1), active);
                 }
             });
-        });
+        }); }
         ui.add_space(10.0);
-        dialog::section(ui, icons::LIGHTBULB, "Shift-register outputs", |ui| {
+        if self.has_feature("outputs") { dialog::section(ui, icons::LIGHTBULB, "Shift-register outputs", |ui| {
             ui.add_enabled_ui(s.avr_online, |ui| {
                 ui.horizontal_wrapped(|ui| {
                     for bit in 0..8 {
@@ -1182,7 +1258,7 @@ impl PakarControllerApp {
                     }
                 });
             });
-        });
+        }); }
     }
     pub(super) fn draw_device_identity(&mut self, ui: &mut egui::Ui) {
         dialog::section(ui, icons::GLOBE, "Device name", |ui| {

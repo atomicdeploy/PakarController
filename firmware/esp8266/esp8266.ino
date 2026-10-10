@@ -16,6 +16,7 @@
 #include <BuildInfo.h>
 #include <AudioCues.h>
 #include <Protocol.h>
+#include <DeviceContext.h>
 #include <PcContractTransport.h>
 #include <PcContractAssembly.h>
 #include <PcLedContract.h>
@@ -94,6 +95,9 @@ uint32_t avrUploadOwner = 0;
 String hostname;
 bool avrOnline = false;
 bool avrVersionKnown = false;
+uint16_t avrCapabilities = 0;
+uint32_t avrDisplayStatusAt = 0;
+bool avrDisplayStatusKnown = false;
 bool avrPcSupported = false;
 uint16_t avrPcFeatures = 0;
 BoardCore::PcContractTransport pcTransport;
@@ -212,9 +216,29 @@ class PcStripOutput {
 } pcStripOutput;
 BoardCore::PcLedContract<PcStripOutput> pcStrip(pcStripOutput);
 
+uint16_t currentFeatures() {
+  return BoardCore::Context::features(avrOnline && avrVersionKnown,
+      avrCapabilities, tm1637Ack, avrDisplayStatusKnown &&
+      static_cast<uint32_t>(millis() - avrDisplayStatusAt) < 3000U, avrPcSupported);
+}
+
+bool contextAllows(uint8_t opcode, const uint8_t *payload, uint8_t length) {
+  using namespace BoardCore::Context;
+  const uint16_t available = currentFeatures();
+  switch (opcode) {
+    case kSetMode: return length == 1 && payload[0] < 4 && (modes(available) & (1U << payload[0]));
+    case kCellAction: case kGameReset: return available & Table;
+    case kBuzzer: case kAudioCue: return available & Buzzer;
+    case kDisplayText: return available & (length > 4 ? Text : Display);
+    case kOutputMask: return available & Outputs;
+    default: return true;
+  }
+}
+
 void sendHostStatus(uint8_t requestSequence) {
   const time_t currentTime = time(nullptr);
   const uint16_t errors = link.errors();
+  const uint16_t available = currentFeatures();
   const uint8_t payload[] = {
       static_cast<uint8_t>(mode), winner, selectedCell, grid.brightness(),
       static_cast<uint8_t>(grid.pattern()), static_cast<uint8_t>(avrOnline),
@@ -231,11 +255,19 @@ void sendHostStatus(uint8_t requestSequence) {
       tm1637Brightness, static_cast<uint8_t>(tm1637HostActive),
       avrVersion[0], avrVersion[1], avrVersion[2],
       BoardCore::AudioCues::supportedCount(avrOnline, avrVersionKnown, avrVersion),
+      // Schema-1 context: old prefixes retained; old peers cannot imply a profile.
+      1, static_cast<uint8_t>(available), static_cast<uint8_t>(available >> 8),
+      BoardCore::Context::modes(available), static_cast<uint8_t>(PAKAR_TABLE_ENABLED),
+      10, 8, 6, 0,
   };
   hostLink.send(kStatusResponse, requestSequence, payload, sizeof(payload));
 }
 
 void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
+  if (!contextAllows(frame.opcode, frame.payload, frame.payloadLength)) {
+    const uint8_t error[] = {frame.opcode, kHardwareUnavailable};
+    hostLink.send(kErrorResponse, frame.sequence, error, sizeof(error)); return;
+  }
   static BoardCore::PcContractAssembly usbPcAssembly;
   if ((remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner) && frame.opcode != kGetStatus && frame.opcode != kHello && frame.opcode != kPing) {
     hostLink.error(frame.sequence, frame.opcode, kBusy); return;
@@ -788,7 +820,24 @@ bool authenticate() {
   if (avrUploadOwner && server.request() && server.request()->method() != HTTP_GET) {
     server.send(409, "text/plain", "AVR image upload in progress"); return false;
   }
-  if (server.request() && webAccess.allowed(server.request())) return true;
+  if (server.request() && webAccess.allowed(server.request())) {
+    const String path = server.request()->url();
+    using namespace BoardCore::Context;
+    uint16_t required = 0;
+    if (path == F("/api/v1/cell") || path == F("/api/v1/cells/mapping") ||
+        path == F("/api/v1/game/reset") || path == F("/api/v1/snake/direction")) required = Table;
+    if (path == F("/api/v1/display")) required = server.hasArg("text") ? Text : Display;
+    if (path == F("/api/v1/audio") || path == F("/api/v1/buzzer")) required = Buzzer;
+    if (path == F("/api/v1/outputs")) required = Outputs;
+    bool allowed = !required || (currentFeatures() & required);
+    if (path == F("/api/v1/mode")) {
+      allowed = false;
+      for (uint8_t code = 0; code < 4; ++code)
+        if (server.arg("value") == BoardCore::Context::modeName(code) && (modes(currentFeatures()) & (1U << code))) allowed = true;
+    }
+    if (!allowed) { server.send(409, "application/json", "{\"error\":\"capability_not_acknowledged\"}"); return false; }
+    return true;
+  }
   server.send(401, "application/json", "{\"error\":\"login_required\"}");
   return false;
 }
@@ -1000,6 +1049,28 @@ String buildStatusJson() {
   body += F(",\"pc_contract_features\":");
   if (avrOnline && avrPcSupported) body += avrPcFeatures;
   else body += F("null");
+  body += F(",\"capabilities\":{\"schema\":1,\"board_kind\":\"");
+  body += PAKAR_TABLE_ENABLED ? F("table") : F("controller");
+  body += F("\",\"name\":\""); appendJsonEscaped(body, hostname.c_str());
+  body += F("\",\"acknowledged_features\":[");
+  const uint16_t available = currentFeatures();
+  bool separator = false;
+  for (uint8_t bit = 0; bit < 13; ++bit) if (available & (1U << bit)) {
+    if (separator) body += ',';
+    body += '"'; body += BoardCore::Context::name(bit); body += '"'; separator = true;
+  }
+  body += F("],\"modes\":["); separator = false;
+  for (uint8_t code = 0; code < 4; ++code) if (BoardCore::Context::modes(available) & (1U << code)) {
+    if (separator) body += ',';
+    body += F("{\"id\":\""); body += BoardCore::Context::modeName(code);
+    body += F("\",\"code\":"); body += code;
+    body += F(",\"label\":\""); body += BoardCore::Context::modeLabel(code);
+    body += F("\",\"kind\":\""); body += code == 2 ? F("game") : F("presentation");
+    body += F("\"}"); separator = true;
+  }
+  body += F("]");
+  if (PAKAR_TABLE_ENABLED) body += F(",\"table\":{\"columns\":10,\"rows\":8,\"pixels_per_cell\":6}");
+  body += F("}");
   body += F(",\"pixels\":"); body += LedGrid::kPixels;
   body += F(",\"cells\":[");
   for (uint8_t cell = 1; cell <= LedGrid::kCells; ++cell) {
@@ -1226,6 +1297,20 @@ bool jsonBooleanValue(const String &json, const char *key) {
 
 bool handleCloudCommand(const String &message, String &result) {
   const String command = jsonStringValue(message, "command");
+  using namespace BoardCore::Context;
+  uint16_t required = 0;
+  if (command == F("cell") || command == F("reset") || command == F("snake-direction") || command == F("mode")) required = Table;
+  if (command == F("display")) required = message.indexOf(F("\"text\"")) >= 0 ? Text : Display;
+  if (command == F("audio") || command == F("buzzer")) required = Buzzer;
+  if (command == F("outputs")) required = Outputs;
+  if (required && !(currentFeatures() & required)) { result = F("Capability not acknowledged by this board"); return false; }
+  if (command == F("mode")) {
+    const String value = jsonStringValue(message, "value");
+    bool allowed = false;
+    for (uint8_t code = 0; code < 4; ++code)
+      if (value == BoardCore::Context::modeName(code) && (modes(currentFeatures()) & (1U << code))) allowed = true;
+    if (!allowed) { result = F("Mode not advertised by this board"); return false; }
+  }
   if(command=="telemetry") {
     cloudServices.requestTelemetry();result=F("Complete checksummed telemetry snapshot queued");return true;
   }
@@ -1449,6 +1534,7 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       memcpy(tm1637Segments, frame.payload + 1, 4);
       tm1637Brightness = frame.payload[5] & 7U;
       tm1637Ack = (frame.payload[5] & 0xC0U) == 0xC0U;
+      avrDisplayStatusKnown = true; avrDisplayStatusAt = millis();
     }
     return;
   }
@@ -1463,6 +1549,8 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
                       frame.payload[0] == BoardCore::BuildInfo::kProtocolVersion &&
                       frame.payload[1] == kRoleAvr;
     if (avrVersionKnown) memcpy(avrVersion, frame.payload + 6, sizeof(avrVersion));
+    avrCapabilities = avrVersionKnown ? frame.payload[2] | static_cast<uint16_t>(frame.payload[3]) << 8 : 0;
+    avrDisplayStatusKnown = false; tm1637Ack = false;
     avrPcSupported = avrVersionKnown && frame.payloadLength >= 12 && frame.payload[9] == 0x50;
     avrPcFeatures = avrPcSupported ? frame.payload[10] | static_cast<uint16_t>(frame.payload[11]) << 8 : 0;
     sendToAvr(kGetStatus, sequence++);
@@ -1496,6 +1584,7 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     }
     if (frame.payloadLength >= 10) {
       tm1637Ack = frame.payload[9] != 0;
+      avrDisplayStatusKnown = true; avrDisplayStatusAt = millis();
     }
     if (frame.payloadLength >= 13) {
       const uint8_t cellRevision = frame.payload[10];

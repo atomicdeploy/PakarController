@@ -419,3 +419,60 @@ user/donor edits were discarded or source hashes silently certified.
 
 Final inventory: 1875 paths, 48 completed comparisons, 1827 pending and 29 known
 gap files. Refreshing screened evidence does not close their remaining imports.
+
+## Acknowledged peer context checkpoint
+
+Consulted ui-shell, firmware-hardware and exact donor-audit mappings before
+implementation. Read PCController peripheral-availability.ts and its test through
+EOF, plus all 1279 lines of Pealayer board_info.rs. Inspected status_bar.rs
+hardware readiness/optional telemetry slices only; its full-file comparison is
+still pending. Added device-context routing and three complete-read comparisons,
+with exact omissions rather than a claim of complete application parity.
+
+Fresh manifest ownership now gates native panels, menus, shortcuts, settings,
+title, status bar and independently acknowledged Display/Text/Buzzer cards.
+Table-only modes are advertised, Snake is a presentation, First wins additionally
+requires inputs/outputs. Workspace restoration cannot paint unavailable tabs.
+Domain commands, unsent batches, mapping/pixel selection and streaming are guarded
+on context loss/switch. Per-peer dock state is bounded memory, not discovery-driven
+SSD persistence. No runtime build/profile/cache policy changed.
+
+Passed production protocol/LED/remote/ISP/client/Telnet/busy/audio/identity/access/
+async/range/front-panel/PC-profile host tests, the context test including an extra
+Table-disabled C++ build, Web context/access/cells/display/remote/appearance,
+branding/menu/screenshot source guards, crate boundary, reuse ledger/preflight and
+comparison checks. Native source parses with the actual Cargo edition 2024.
+Native Test was attempted through the donor-gated wrapper and stops at the same
+>8 GiB canonical cache guard BEFORE Rust compilation. No bypass, duplicate cache,
+release copy or running app replacement. Runtime acceptance remains open in #10.
+
+Both AVR and ESP busy-wire/polling profiles compile in existing caches. No SDK
+installation, clean rebuild, unrelated APK/donor build, physical flash or EEPROM
+write. ledboard.local port 80 is unreachable and SSH localhost:1022 refused.
+CI is not waited on. Build output and checksum receipt below are static evidence.
+
+The computer-use skill directed actual read-only browser verification of explicit
+simulated controller, unacknowledged and Table peers. No board mutation was sent.
+Saved three no-overwrite JPEGs, inspected them, and retained small copies under
+docs/screenshots. Closed all three owned tabs and stopped only fixture PIDs whose
+node command lines were freshly verified. Source remains deployable work, not a
+claim that the older native executable or hardware already displays this UI.
+
+Recovery: the first ESP compile exposed String/const-char* JSON-escape mismatch;
+consulted firmware-hardware and inspected the actual helper before using c_str.
+A status-bar lookup caught concurrent tracked donor inventory drift; refreshed all
+tracked Pealayer paths before consultation, leaving donors read-only. PCController
+also gained four concurrent tracked paths; refreshed its inventory, not its code.
+Hash rebinding preserved existing donor source certificates and unchanged anchor
+semantics. Initial evidence hunks assumed field order and were rejected without
+partial writes; corrected from exact lines. Oversized combined JSON diagnostic
+output was truncated; switched to bounded references/hashes, not larger copies.
+PowerShell foreach-pipeline diagnostics were corrected into collected output.
+The guessed screenshot test filename was missing; inventoried tests and executed
+the actual screenshot_harness_test. Rust parsing initially used edition 2021;
+read Cargo.toml and re-ran with its actual edition 2024. No product workaround or
+guard bypass resulted from these diagnostic errors.
+
+Current inventory: 1884 paths; 51 complete-read comparisons, 1833 pending and
+32 known gap files. See DEVICE-CONTEXT.md and issue #10 for unchecked native,
+generic-adapter and physical acceptance. Screenshots are simulated Web proof only.

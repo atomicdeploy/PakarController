@@ -25,6 +25,8 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/lib
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" \
   "$root/tests/access_policy_test.cpp" -o "$root/build/access-policy-test"
 "$root/build/access-policy-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" "$root/tests/device_context_test.cpp" -o "$root/build/device-context-test"
+"$root/build/device-context-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
   "$root/tests/access_config_test.cpp" "$root/firmware/esp8266/src/AccessConfig.cpp" -o "$root/build/access-config-test"
 "$root/build/access-config-test"

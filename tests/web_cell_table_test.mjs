@@ -47,7 +47,7 @@ nodes.animateCells.checked=true;nodes.bulkEffect.value='fade';
 const calls=[],actual={cells:Array(80).fill('white')},storage=new Map();let failId=0,cancelAfter=0,storageWrites=0;
 const context=vm.createContext({...nodes,document,URLSearchParams,innerWidth:1280,innerHeight:800,
   localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>{storageWrites++;storage.set(k,v)}},
-  state:{cells:[]},mapping:{physical:[],names:[]},authenticated:true,loadMappingEditor(){},report(){},render(){},setTimeout:fn=>{fn();return 1},
+  state:{cells:[]},mapping:{physical:[],names:[]},currentPeer:()=>({has:feature=>feature==='table'}),authenticated:true,loadMappingEditor(){},report(){},render(){},setTimeout:fn=>{fn();return 1},
   api:async(path,options)=>{if(!options)return actual;const id=Number(options.body.get('id'));calls.push(id);if(id===failId)throw Error('lost acknowledgement');actual.cells[id-1]=options.body.get('state');if(id===cancelAfter)vm.runInContext('cancelCellBatch()',context);return {accepted:true}}
 });
 vm.runInContext(cellCode,context);

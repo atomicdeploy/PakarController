@@ -508,6 +508,11 @@ impl PakarControllerApp {
             .map(|route| (route, self.endpoint(), self.serial_port.clone()))
     }
     pub fn process_cell_queue(&mut self, ctx: &egui::Context) {
+        if !self.has_table() {
+            self.table.queue.clear(); self.table.awaiting.clear();
+            self.table.verification_started = None;
+            return;
+        }
         if (!self.table.queue.is_empty() || self.table.verification_started.is_some())
             && self.table.peer != self.cell_queue_peer()
         {
@@ -1016,7 +1021,7 @@ impl PakarControllerApp {
         });
     }
     pub fn draw_cell_manager(&mut self, ctx: &egui::Context) {
-        if !self.table.manager_open {
+        if !self.has_table() || !self.table.manager_open {
             return;
         }
         let mut close = false;
