@@ -5,7 +5,7 @@ import http from 'node:http';
 import {spawn} from 'node:child_process';
 import {writeFile,mkdir} from 'node:fs/promises';
 import {resolve} from 'node:path';
-const [exe,profile]=process.argv.slice(2);assert(exe&&profile);
+const [exe,profile,view='firmware']=process.argv.slice(2);assert(exe&&profile);assert(['firmware','table','cells'].includes(view));
 await mkdir(profile,{recursive:true});
 const remote={schema:1,job_id:0,boot_id:'SIMULATED-visual-fixture',phase:'idle',targets:3,manifest_sha256:'',busy:false,cancellable:false,received_bytes:0,expected_bytes:0,error:''};
 const server=http.createServer(async(req,res)=>{
@@ -31,7 +31,8 @@ server.on('upgrade',(_req,socket)=>socket.destroy());
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const endpoint='http://127.0.0.1:'+server.address().port;
 const config=resolve(profile,'preferences.json');await writeFile(config,JSON.stringify({endpoint,user:'fixture',single_instance:false,native_dialogs:true,theme:'Dark',close_to_tray:false}));
-const child=spawn(exe,['--settings-page','firmware'],{env:{...process.env,PAKAR_CONFIG_FILE:config,PAKAR_ENDPOINT:endpoint,PAKAR_USER:'fixture',PAKAR_PASSWORD:'fixture-only'},windowsHide:true,stdio:['ignore','pipe','pipe']});
+const args=view==='table'?['--panel','Table']:view==='cells'?['--manage-cells']:['--settings-page','firmware'];
+const child=spawn(exe,args,{env:{...process.env,PAKAR_CONFIG_FILE:config,PAKAR_ENDPOINT:endpoint,PAKAR_USER:'fixture',PAKAR_PASSWORD:'fixture-only'},windowsHide:true,stdio:['ignore','pipe','pipe']});
 child.stdout.resume();child.stderr.on('data',data=>process.stderr.write(data));
 console.log(JSON.stringify({scope:'SIMULATED peer, no physical firmware evidence',process_id:child.pid,executable:resolve(exe),endpoint,isolated_profile:config}));
 child.once('exit',()=>server.close());

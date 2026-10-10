@@ -20,7 +20,7 @@ mod streaming;
 mod ui;
 
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
-use eframe::egui::{self, Color32, RichText};
+use eframe::egui;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use tungstenite::{Message, client::IntoClientRequest};
@@ -973,6 +973,8 @@ struct PakarControllerApp {
     control: platform::instance::Control,
     dock: egui_dock::DockState<ui::layout::Panel>,
     reveal_panels: Vec<ui::layout::Panel>,
+    close_panels: Vec<ui::layout::Panel>,
+    open_panels: Vec<ui::layout::Panel>,
     show_connection: bool,
     show_mapping: bool,
     show_workspaces: bool,
@@ -983,6 +985,7 @@ struct PakarControllerApp {
     workspace_icon: String,
     selected_cell: u8,
     cell_search: String,
+    table: ui::cell_table::TableState,
     focus_cell_search: bool,
     cell_effect: String,
     event_log: Vec<(String, String)>,
@@ -1084,6 +1087,8 @@ impl PakarControllerApp {
             control: platform::instance::start(context.egui_ctx.clone()),
             dock,
             reveal_panels: Vec::new(),
+            close_panels: Vec::new(),
+            open_panels: Vec::new(),
             preferences: None,
             show_connection: false,
             show_mapping: false,
@@ -1096,6 +1101,7 @@ impl PakarControllerApp {
             workspace_icon: "hardware".into(),
             selected_cell: 1,
             cell_search: String::new(),
+            table: Default::default(),
             focus_cell_search: false,
             cell_effect: "fade".into(),
             event_log,
@@ -1455,13 +1461,7 @@ impl PakarControllerApp {
         let delivery = self.notifications.borrow();
         serde_json::json!({"backend":"Windows Shell", "policy":self.config.notifications.system, "sound":self.config.notifications.sound, "in_app":self.config.notifications.in_app, "accepted":delivery.accepted, "suppressed":delivery.suppressed, "failed":delivery.failed, "last_result":delivery.last_result, "shell_events":self.tray.as_ref().map(|tray| tray.notification_snapshot())})
     }
-    fn cell_color(s: &str) -> Color32 {
-        match s {
-            "red" => Color32::from_rgb(218, 54, 58),
-            "off" => Color32::from_rgb(45, 48, 54),
-            _ => Color32::from_rgb(235, 235, 225),
-        }
-    }
+    #[cfg(test)]
     fn next_cell_state(s: &str) -> (&'static str, u8) {
         match s {
             "white" => ("red", 1),

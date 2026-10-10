@@ -66,6 +66,7 @@ jobs:
       - name: Test and build the mpv-free Windows client
         run: |
           node tests/web_display_test.mjs
+          node tests/web_cell_table_test.mjs
           node tests/web_access_test.mjs
           node tests/web_remote_test.mjs
           node tests/remote_tools_test.mjs

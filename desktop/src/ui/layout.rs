@@ -106,24 +106,64 @@ pub fn reveal(dock: &mut DockState<Panel>, panel: Panel) {
     }
 }
 pub fn draw_workspace_tab_menu(app: &mut PakarControllerApp, ui: &mut egui::Ui) {
+    super::cell_table::compact_menu(ui);
     for panel in Panel::ALL {
-        let is_open = app.dock.find_tab(&panel).is_some();
+        let is_open = app.dock.find_tab(&panel).is_some() || app.open_panels.contains(&panel);
+        let mut visible = is_open;
         if ui
-            .button(format!(
-                "{}  {}  {}",
-                if is_open {
-                    super::icons::EYE
-                } else {
-                    super::icons::EYE_SLASH
-                },
-                panel.icon(),
-                panel.name()
-            ))
-            .clicked()
+            .checkbox(
+                &mut visible,
+                format!(
+                    "{}  {}  {}",
+                    if is_open {
+                        super::icons::EYE
+                    } else {
+                        super::icons::EYE_SLASH
+                    },
+                    panel.icon(),
+                    panel.name()
+                ),
+            )
+            .changed()
         {
-            app.reveal_panels.push(panel);
+            if visible {
+                app.reveal_panels.push(panel);
+            } else {
+                app.close_panels.push(panel);
+            }
             ui.close();
         }
+    }
+}
+// Imported from Pealayer ui/layout.rs::paint_dock_disclosure_icons.
+pub fn paint_dock_disclosure_icons(ui: &mut egui::Ui, dock: &DockState<Panel>, height: f32) {
+    let pointer = ui.ctx().pointer_hover_pos();
+    for (_, leaf) in dock.iter_leaves() {
+        if !leaf.rect.is_positive() || leaf.tabs.is_empty() {
+            continue;
+        }
+        let rect = egui::Rect::from_min_size(
+            leaf.rect.min,
+            egui::vec2(24.0_f32.min(leaf.rect.width()), height),
+        );
+        let hovered = pointer.is_some_and(|position| rect.contains(position));
+        let color = if hovered {
+            ui.visuals().strong_text_color()
+        } else {
+            ui.visuals().text_color()
+        };
+        let icon = if leaf.collapsed {
+            super::icons::CARET_RIGHT
+        } else {
+            super::icons::CARET_DOWN
+        };
+        ui.painter().text(
+            rect.center(),
+            egui::Align2::CENTER_CENTER,
+            icon,
+            egui::FontId::proportional(13.0),
+            color,
+        );
     }
 }
 pub struct PakarTabViewer<'a> {
@@ -145,7 +185,17 @@ impl TabViewer for PakarTabViewer<'_> {
     fn scroll_bars(&self, _: &Panel) -> [bool; 2] {
         [false, false]
     }
+    // Actual Pealayer on_tab_button implementation: register rendered tab hit rects.
+    fn on_tab_button(&mut self, _: &mut Panel, response: &egui::Response) {
+        response.ctx.data_mut(|data| {
+            let id = egui::Id::new("pakar-workspace-tab-button-rects");
+            let mut rects = data.get_temp::<Vec<egui::Rect>>(id).unwrap_or_default();
+            rects.push(response.rect);
+            data.insert_temp(id, rects);
+        });
+    }
     fn context_menu(&mut self, ui: &mut egui::Ui, tab: &mut Panel, _: egui_dock::NodePath) {
+        super::cell_table::compact_menu(ui);
         ui.strong(tab.name());
         ui.separator();
         if ui
@@ -156,8 +206,25 @@ impl TabViewer for PakarTabViewer<'_> {
             ui.close();
         }
         ui.separator();
-        ui.strong("Panels");
-        draw_workspace_tab_menu(self.app, ui);
+        super::icons::submenu(ui, format!("{}  Panels", super::icons::TABS), |ui| {
+            draw_workspace_tab_menu(self.app, ui)
+        });
+        if ui
+            .button(format!("{}  Close panel", super::icons::X))
+            .clicked()
+        {
+            self.app.close_panels.push(*tab);
+            ui.close();
+        }
+        if ui
+            .button(format!("{}  Close other panels", super::icons::EYE_SLASH))
+            .clicked()
+        {
+            self.app
+                .close_panels
+                .extend(self.app.open_panels.iter().copied().filter(|p| p != tab));
+            ui.close();
+        }
     }
 }
 #[cfg(test)]

@@ -75,6 +75,9 @@ pub struct AppConfig {
     pub dock_layout: String,
     pub workspace_profiles: BTreeMap<String, WorkspaceProfile>,
     pub numeric_steps: BTreeMap<String, NumericInputSteps>,
+    pub additive_cell_selection: bool,
+    pub animate_cells: bool,
+    pub status_items: crate::ui::status_bar::Items,
 }
 impl Default for AppConfig {
     fn default() -> Self {
@@ -97,6 +100,9 @@ impl Default for AppConfig {
             dock_layout: String::new(),
             workspace_profiles: BTreeMap::new(),
             numeric_steps: BTreeMap::new(),
+            additive_cell_selection: false,
+            animate_cells: true,
+            status_items: Default::default(),
         }
     }
 }

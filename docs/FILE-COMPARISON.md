@@ -252,7 +252,7 @@ Verdict: **equivalent-file**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550
 
 Verdict: **parity-gap**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550d`. Original-byte SHA-256: `1f173bef8acc2904eac5b0a91407aa4f7629ce65c88ea3a8ac78f8c13321d203`.
 
-- Target: `desktop/src/ui/shell.rs:284 [UTF8-LF sha256=9f9b8afe14bfe43373bbbf02c19d236340a26d769c674de346324efbeeabb9fd; anchor=egui::Key::F11]`.
+- Target: `desktop/src/ui/shell.rs:298 [UTF8-LF sha256=6cacc871f57003b9d455de232584d18fcd33bd4983e712d11fde09c2acdbb865; anchor=egui::Key::F11]`.
 - Retained: Default Preferences Ctrl+, and device configuration Ctrl+Shift+, navigation exist; F11 fullscreen is restored with the shared typed dispatcher. These are not equivalent to the donor persisted rebinding model.
 - Omitted/replaced code: `ApplicationShortcuts persisted fields, parse_shortcut, entries, validate, action_for_event and their non-media tests`. Disposition: **pending**. Reason: The foundation hardcoded its accelerators and omitted the reusable binding model. No accepted reason justifies leaving rebinding out. The actual donor depends on KeyChord and hardware_shortcuts match/key-code helpers, which must be ported and tested with controller-specific typed actions rather than guessed labels.
 - Omitted/replaced code: `take_frame_step_shortcut and frame-step tests`. Disposition: **not-applicable**. Reason: These consume Ctrl+Left/Right for media frame stepping and timeline transport. Those business domains were explicitly removed; Pakar must not hijack ordinary text word navigation for nonexistent video frames.
@@ -294,7 +294,7 @@ Verdict: **equivalent-file**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550
 Verdict: **equivalent-behavior**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550d`. Original-byte SHA-256: `d3a71c69516de9059735c6baee76791be785e65b7f435e0bd965f4db7f521d30`.
 
 - Target: `desktop/src/ui/icons.rs:567 [UTF8-LF sha256=b3d882b8832f0c74c579ddfba1a992723b4ed06a8521e1a0aa1d2d45128e6a11; anchor=pub fn searchable_workspace_icon_picker(]`.
-- Target: `desktop/src/ui/shell.rs:1637 [UTF8-LF sha256=9f9b8afe14bfe43373bbbf02c19d236340a26d769c674de346324efbeeabb9fd; anchor=icons::searchable_workspace_icon_picker]`.
+- Target: `desktop/src/ui/shell.rs:1643 [UTF8-LF sha256=6cacc871f57003b9d455de232584d18fcd33bd4983e712d11fde09c2acdbb865; anchor=icons::searchable_workspace_icon_picker]`.
 - Retained: Production Phosphor vocabulary, stable names/kind fallback, searchable list/grid picker, UTF-8-safe match highlighting, bounded popups, disclosure/submenu helpers.
 - Retained: Actual donor regression tests restored: eleven tests, including interactive egui-frame search/select/reopen, both themes and popup width.
 - Omitted/replaced code: `every_native_icon_editor_uses_the_shared_searchable_picker donor-only editor path list`. Disposition: **replaced**. Reason: That assertion references Pealayer media/4D editor files not present in this product. Replaced only its call-site assertion with Pakar's actual workspace editor; the other ten tests were imported. This does not excuse missing generic editor features elsewhere.

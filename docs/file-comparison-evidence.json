@@ -102,7 +102,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9f9b8afe14bfe43373bbbf02c19d236340a26d769c674de346324efbeeabb9fd",
+          "sha256": "6cacc871f57003b9d455de232584d18fcd33bd4983e712d11fde09c2acdbb865",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -515,7 +515,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9f9b8afe14bfe43373bbbf02c19d236340a26d769c674de346324efbeeabb9fd",
+          "sha256": "6cacc871f57003b9d455de232584d18fcd33bd4983e712d11fde09c2acdbb865",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],

@@ -5,8 +5,16 @@ use crate::{
     ui::{dialog, icons},
 };
 use eframe::egui;
-pub const PAGES: [&str; 5] = ["appearance", "application", "connection", "workspace", "notifications"];
-pub fn page_index(name: &str) -> Option<usize> { PAGES.iter().position(|page| *page == name) }
+pub const PAGES: [&str; 5] = [
+    "appearance",
+    "application",
+    "connection",
+    "workspace",
+    "notifications",
+];
+pub fn page_index(name: &str) -> Option<usize> {
+    PAGES.iter().position(|page| *page == name)
+}
 
 #[derive(Clone)]
 pub struct PreferencesDraft {
@@ -20,7 +28,10 @@ pub struct PreferencesDraft {
 }
 impl PreferencesDraft {
     pub fn select_page(&mut self, index: usize) {
-        if index < PAGES.len() { self.tab = index; self.search.clear(); }
+        if index < PAGES.len() {
+            self.tab = index;
+            self.search.clear();
+        }
     }
     pub fn new(config: AppConfig) -> Self {
         Self {
@@ -116,6 +127,8 @@ fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
                     });ui.add_space(8.0);
                 }
                 if draft.tab==3||!draft.search.is_empty(){dialog::section(ui,icons::TABS,"Workspace",|ui|{
+                    ui.checkbox(&mut draft.config.additive_cell_selection,"Toggle multiple cells and rows without Ctrl").on_hover_text("When off, Ctrl+click toggles items. Shift extends a range; dragging always replaces unless Ctrl/Shift is held.");
+                    ui.checkbox(&mut draft.config.animate_cells,"Animate cell state transitions").on_hover_text("Disable for reduced motion. Cell geometry never changes.");
                     ui.label(format!("{} saved workspaces",draft.config.workspace_profiles.len()));
                     ui.label("Drag panel tabs to rearrange or detach them. Workspace profiles save the current layout.");
                     if ui.button(format!("{}  Export preferences…",icons::FLOPPY_DISK)).clicked(){
@@ -176,7 +189,13 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
     };
     if draft.tab == 4 {
         let status = app.notification_snapshot();
-        draft.status = format!("OS accepted: {} · shown: {} · failed: {} · suppressed: {}", status["accepted"],status["shell_events"]["shown"],status["failed"],status["suppressed"]);
+        draft.status = format!(
+            "OS accepted: {} · shown: {} · failed: {} · suppressed: {}",
+            status["accepted"],
+            status["shell_events"]["shown"],
+            status["failed"],
+            status["suppressed"]
+        );
     }
     let mut open = true;
     let native = app.config.native_dialogs && !ctx.embed_viewports();
@@ -227,7 +246,9 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
             outcome.close = true;
         }
     }
-    if outcome.test_notification { app.notification_test(); }
+    if outcome.test_notification {
+        app.notification_test();
+    }
     if outcome.save {
         // Layout belongs to the workspace and can change while Preferences is open.
         draft.config.dock_layout = super::layout::serialize(&app.dock).unwrap_or_default();

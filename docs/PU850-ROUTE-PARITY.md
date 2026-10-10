@@ -6,7 +6,7 @@ Every route registration in the reviewed slice is classified below, including co
 
 | Donor source | Route | Disposition | Current implementation / reason |
 | --- | --- | --- | --- |
-| LocalLib/AsyncOTA.cpp:12 | /update GET | commented-replaced | firmware/esp8266/src/WebUi.h:34 — Commented donor HTML placeholder replaced by real firmware settings; no second OTA engine. |
+| LocalLib/AsyncOTA.cpp:12 | /update GET | commented-replaced | firmware/esp8266/src/WebUi.h:35 — Commented donor HTML placeholder replaced by real firmware settings; no second OTA engine. |
 | LocalLib/AsyncOTA.cpp:19 | /update POST | adapted | firmware/esp8266/esp8266.ino:1569 — Integrated guarded existing authenticated upload kept alongside pinned remote download. U_FS replacement disabled to preserve credentials and recovery backups. |
 | LocalLib/AsyncWebServer.h:22 | /ws WebSocket | adapted | firmware/esp8266/esp8266.ino:1046 — Authenticated multiple-client WebSocket retains board state and adds read-only full telemetry and pinned remote-job commands. |
 | LocalLib/Authentication.cpp:22 | /auth GET | adapted | firmware/esp8266/src/MaintenanceRoutes.h:321 — Local owner auth status, no credential disclosure. |
@@ -55,6 +55,6 @@ Every route registration in the reviewed slice is classified below, including co
 | pu850-esp.ino:1480 | /page_goto POST | not-applicable | PU page/business navigation cannot be copied as a table action. PCController SET MENU is available through the guarded contract API. |
 | pu850-esp.ino:1493 | /update/info GET | adapted | firmware/esp8266/esp8266.ino:1557 — Version/profile and both-board remote maintenance URLs; no misleading build-host/time identity. |
 | pu850-esp.ino:1513 | /info GET | adapted | firmware/esp8266/esp8266.ino:1558 — Authenticated full structured ESP/AVR/client/network/clock/cloud telemetry; optional format=text. |
-| pu850-esp.ino:1543 | / GET | adapted | firmware/esp8266/src/WebUi.h:34 — Real control workspace rather than donor static placeholder; access gate and actual peer state retained. |
+| pu850-esp.ino:1543 | / GET | adapted | firmware/esp8266/src/WebUi.h:35 — Real control workspace rather than donor static placeholder; access gate and actual peer state retained. |
 
 Broader repository/file parity remains tracked separately in FILE-COMPARISON.md and GitHub issue #3. Live route/TLS/board acceptance remains open.

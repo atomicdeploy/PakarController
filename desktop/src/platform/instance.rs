@@ -25,6 +25,7 @@ pub enum Command {
     Workspaces,
     Panel { name: String },
     FindCell { query: String },
+    CellManager,
     Quit,
     Status,
     NotificationTest,

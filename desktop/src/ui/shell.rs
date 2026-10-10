@@ -11,10 +11,14 @@ use eframe::egui;
 use platform::instance::Command;
 
 pub fn launch_command(args: &[String]) -> Command {
-    if args.iter().any(|v| v == "--notification-test") {
+    if args.iter().any(|v| v == "--manage-cells") {
+        Command::CellManager
+    } else if args.iter().any(|v| v == "--notification-test") {
         Command::NotificationTest
     } else if let Some(at) = args.iter().position(|v| v == "--preferences-page") {
-        Command::PreferencesPage { page: args.get(at + 1).cloned().unwrap_or_default() }
+        Command::PreferencesPage {
+            page: args.get(at + 1).cloned().unwrap_or_default(),
+        }
     } else if args.iter().any(|v| v == "--refresh") {
         Command::Refresh
     } else if args.iter().any(|v| v == "--fullscreen") {
@@ -152,8 +156,12 @@ impl PakarControllerApp {
             Command::PreferencesPage { page } => {
                 if let Some(index) = ui::preferences::page_index(&page) {
                     self.open_preferences();
-                    if let Some(draft) = &mut self.preferences { draft.select_page(index); }
-                } else { self.message = "Unknown preferences page".into(); }
+                    if let Some(draft) = &mut self.preferences {
+                        draft.select_page(index);
+                    }
+                } else {
+                    self.message = "Unknown preferences page".into();
+                }
             }
             Command::Refresh => self.refresh(),
             Command::Fullscreen => {
@@ -164,6 +172,10 @@ impl PakarControllerApp {
             Command::Connect => self.show_connection = true,
             Command::About => self.show_about = true,
             Command::Workspaces => self.show_workspaces = true,
+            Command::CellManager => {
+                self.table.manager_open = true;
+                self.reveal_panels.push(Panel::Table);
+            }
             Command::FindCell { query } => {
                 if let Ok(matches) = ui::cell_search::parse(&query) {
                     self.cell_search = query;
@@ -191,12 +203,12 @@ impl PakarControllerApp {
     }
     pub fn notify_id(&self, id: &str, title: &str, message: &str, severity: messaging::Severity) {
         let request = messaging::ToastRequest {
-                id: Some(id.into()),
-                title: title.into(),
-                message: message.chars().take(2048).collect(),
-                severity,
-                timeout_ms: 5000,
-            };
+            id: Some(id.into()),
+            title: title.into(),
+            message: message.chars().take(2048).collect(),
+            severity,
+            timeout_ms: 5000,
+        };
         if messaging::publish(request.clone(), "desktop").is_ok() {
             self.notifications.borrow_mut().enqueue(request);
         }
@@ -228,7 +240,7 @@ impl PakarControllerApp {
             _ => None,
         }
     }
-    fn refresh(&mut self) {
+    pub(super) fn refresh(&mut self) {
         self.configuration_loaded = false;
         self.last_poll = Instant::now() - Duration::from_secs(2);
         self.last_mapping_poll = Instant::now() - Duration::from_secs(30);
@@ -244,7 +256,9 @@ impl PakarControllerApp {
                 platform::windows_tray::TrayAction::Preferences => {
                     self.dispatch(Command::Preferences, &ctx)
                 }
-                platform::windows_tray::TrayAction::DeviceSettings => self.dispatch(Command::DeviceSettings, &ctx),
+                platform::windows_tray::TrayAction::DeviceSettings => {
+                    self.dispatch(Command::DeviceSettings, &ctx)
+                }
                 platform::windows_tray::TrayAction::Workspaces => {
                     self.dispatch(Command::Workspaces, &ctx)
                 }
@@ -288,6 +302,10 @@ impl PakarControllerApp {
             && !self.device_settings.open
             && !self.show_connection
             && !self.confirm_reset
+            && !self.table.manager_open
+            && !self.show_mapping
+            && !self.show_workspaces
+            && !self.show_about
         {
             if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::F)) {
                 self.reveal_panels.push(Panel::Table);
@@ -307,12 +325,19 @@ impl PakarControllerApp {
             }
         }
         self.poll();
+        self.process_cell_queue(&ctx);
         self.deliver_notifications();
         #[cfg(windows)]
         if let Some(desktop) = &mut self.windows_desktop {
-            let errors = desktop.sync(ui.visuals().dark_mode, self.config.color_palette,
-                self.device_settings.pending.is_some() || self.device_settings.maintenance_pending.is_some());
-            for error in errors { self.record_event("Windows desktop", &error); }
+            let errors = desktop.sync(
+                ui.visuals().dark_mode,
+                self.config.color_palette,
+                self.device_settings.pending.is_some()
+                    || self.device_settings.maintenance_pending.is_some(),
+            );
+            for error in errors {
+                self.record_event("Windows desktop", &error);
+            }
         }
         ctx.request_repaint_after(Duration::from_millis(250));
         let snapshot = self.live_status().cloned();
@@ -320,6 +345,7 @@ impl PakarControllerApp {
         if let Ok(mut value) = self.control.snapshot.lock() {
             *value = serde_json::json!({"application":"PakarController","version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":self.cell_search,"search_matches":ui::cell_search::parse(&self.cell_search).unwrap_or_default(),"selected_cell":self.selected_cell});
             value["device_settings"] = serde_json::json!({"open": self.device_settings.open, "page": self.device_settings.page, "network_loaded": self.device_settings.network.is_some(), "cloud_loaded": self.device_settings.cloud.is_some(), "write_pending": self.device_settings.pending.is_some(), "maintenance_pending": self.device_settings.maintenance_pending.is_some()});
+            value["cell_management"] = serde_json::json!({"open":self.table.manager_open,"selection":self.table.selection.ids,"additive_selection":self.config.additive_cell_selection,"animations":self.config.animate_cells});
             value["notifications"] = self.notification_snapshot();
             value["tray_available"] = serde_json::json!(self.tray.is_some());
             value["fullscreen"] = serde_json::json!(fullscreen);
@@ -366,13 +392,17 @@ impl PakarControllerApp {
                     }
                 });
                 ui.menu_button("Workspace", |ui| {
-                    if ui.button(format!("{}  Toggle fullscreen   F11", icons::APP_WINDOW)).clicked() {
+                    if ui
+                        .button(format!("{}  Toggle fullscreen   F11", icons::APP_WINDOW))
+                        .clicked()
+                    {
                         self.dispatch(Command::Fullscreen, &ctx);
                         ui.close();
                     }
                     ui.separator();
-                    ui.strong("Panels");
-                    layout::draw_workspace_tab_menu(self, ui);
+                    icons::submenu(ui, format!("{}  Panels", icons::TABS), |ui| {
+                        layout::draw_workspace_tab_menu(self, ui)
+                    });
                     ui.separator();
                     if ui
                         .button(format!("{}  Manage workspaces…", icons::TABS))
@@ -453,7 +483,7 @@ impl PakarControllerApp {
             });
         });
         let s = snapshot.clone().unwrap_or_default();
-        ui::status_bar::draw(
+        let status_actions = ui::status_bar::draw(
             ui,
             ui::status_bar::StatusBar {
                 peer_known: snapshot.is_some(),
@@ -465,7 +495,18 @@ impl PakarControllerApp {
                 websocket_live: self.websocket_live,
                 serial_live: self.serial_live,
             },
+            &mut self.config.status_items,
         );
+        for action in status_actions {
+            match action {
+                ui::status_bar::Action::Save => self.save_workspace(),
+                ui::status_bar::Action::Refresh => self.refresh(),
+                ui::status_bar::Action::Connect => self.show_connection = true,
+                ui::status_bar::Action::Hardware => self.reveal_panels.push(Panel::Hardware),
+                ui::status_bar::Action::Network => self.reveal_panels.push(Panel::Network),
+                ui::status_bar::Action::Preferences => self.open_preferences(),
+            }
+        }
         egui::Panel::top("pakar-workspace-toolbar")
             .frame(egui::Frame::new().inner_margin(egui::Margin::symmetric(12, 8)))
             .show(ui, |ui| {
@@ -492,6 +533,9 @@ impl PakarControllerApp {
                         if ui.button(format!("{}  Workspaces", icons::TABS)).clicked() {
                             self.show_workspaces = true;
                         }
+                        ui.menu_button(format!("{}  Panels", icons::TABS), |ui| {
+                            layout::draw_workspace_tab_menu(self, ui)
+                        });
                         if ui
                             .button(format!("{}  Mapping", icons::GRID_FOUR))
                             .clicked()
@@ -508,8 +552,18 @@ impl PakarControllerApp {
                     });
                 });
             });
+        self.open_panels.clear();
+        let layout_changed = !self.close_panels.is_empty() || !self.reveal_panels.is_empty();
+        for panel in std::mem::take(&mut self.close_panels) {
+            if let Some(path) = self.dock.find_tab(&panel) {
+                self.dock.remove_tab(path);
+            }
+        }
         for panel in std::mem::take(&mut self.reveal_panels) {
             layout::reveal(&mut self.dock, panel);
+        }
+        if layout_changed {
+            self.save_workspace();
         }
         egui::CentralPanel::default()
             .frame(egui::Frame::new().inner_margin(0))
@@ -524,19 +578,60 @@ impl PakarControllerApp {
                         }
                     });
                 } else {
+                    self.open_panels = self.dock.iter_all_tabs().map(|(_, p)| *p).collect();
+                    let tab_rects_id = egui::Id::new("pakar-workspace-tab-button-rects");
+                    ctx.data_mut(|data| data.insert_temp(tab_rects_id, Vec::<egui::Rect>::new()));
                     let mut dock =
                         std::mem::replace(&mut self.dock, egui_dock::DockState::new(vec![]));
-                    let style = egui_dock::Style::from_egui(ui.style().as_ref());
+                    let mut style = egui_dock::Style::from_egui(ui.style().as_ref());
+                    let tab_bar_height = style.tab_bar.height;
+                    style.buttons.collapse_tabs_color = egui::Color32::TRANSPARENT;
+                    style.buttons.collapse_tabs_active_color = egui::Color32::TRANSPARENT;
                     egui_dock::DockArea::new(&mut dock)
                         .style(style)
                         .show_leaf_collapse_buttons(true)
                         .show_inside(ui, &mut layout::PakarTabViewer { app: self });
                     self.dock = dock;
+                    layout::paint_dock_disclosure_icons(ui, &self.dock, tab_bar_height);
+                    // Adapted from Pealayer app.rs: empty header popup excludes real tab hit rects.
+                    let tab_rects = ctx.data_mut(|data| {
+                        data.get_temp::<Vec<egui::Rect>>(tab_rects_id)
+                            .unwrap_or_default()
+                    });
+                    let pointer = ctx.pointer_hover_pos();
+                    let in_header = pointer.is_some_and(|pos| {
+                        self.dock.iter_leaves().any(|(_, leaf)| {
+                            let header = egui::Rect::from_min_size(
+                                leaf.rect.min,
+                                egui::vec2(leaf.rect.width(), tab_bar_height),
+                            );
+                            header.contains(pos) && !tab_rects.iter().any(|rect| rect.contains(pos))
+                        })
+                    });
+                    let open = in_header
+                        && ctx.input(|i| i.pointer.button_clicked(egui::PointerButton::Secondary));
+                    let anchor = ui.interact(
+                        ui.max_rect(),
+                        egui::Id::new("pakar-empty-header-anchor"),
+                        egui::Sense::hover(),
+                    );
+                    egui::Popup::menu(&anchor)
+                        .id(egui::Id::new("pakar-empty-header-popup"))
+                        .at_pointer_fixed()
+                        .open_memory(open.then_some(egui::SetOpenCommand::Bool(true)))
+                        .show(|ui| {
+                            ui::cell_table::compact_menu(ui);
+                            ui.strong("Panels");
+                            ui.separator();
+                            layout::draw_workspace_tab_menu(self, ui);
+                        });
+                    self.open_panels.clear();
                 }
             });
         ui::preferences::draw(self, &ctx);
         ui::device_settings::draw(self, &ctx);
         self.draw_dialogs(&ctx);
+        self.draw_cell_manager(&ctx);
         ui::toasts::draw(&ctx);
     }
     pub fn draw_panel(&mut self, ui: &mut egui::Ui, panel: Panel) {
@@ -624,6 +719,7 @@ impl PakarControllerApp {
             );
         }
         let matches = search_result.unwrap_or_default();
+        self.cell_selection_toolbar(ui, &matches);
         ui.add_space(8.0);
         let width = ui.available_width().max(200.0);
         let visible_height = (ui.clip_rect().bottom() - ui.cursor().min.y - 38.0).max(180.0);
@@ -652,107 +748,17 @@ impl PakarControllerApp {
                 ),
             );
         }
-        for row in 0..8u8 {
-            for column in 0..10u8 {
-                let id = row * 10 + column + 1;
-                let state = snapshot.as_ref().and_then(|s| s.cells.get(id as usize - 1));
-                let mapping = self.mappings.iter().find(|entry| entry.logical_id == id);
-                let label = mapping
-                    .map(|m| m.name.as_str())
-                    .filter(|v| !v.is_empty())
-                    .map(str::to_owned)
-                    .unwrap_or_else(|| id.to_string());
-                let pos = grid_origin
-                    + egui::vec2(
-                        column as f32 * pitch,
-                        row as f32 * height + if column % 2 == 0 { height * 0.5 } else { 0.0 },
-                    );
-                let rect = egui::Rect::from_min_size(pos, egui::vec2(pitch - 7.0, height - 7.0));
-                let fill = state
-                    .map(|s| Self::cell_color(s))
-                    .unwrap_or(ui.visuals().faint_bg_color);
-                let ink = if state.is_some_and(|s| s == "white") {
-                    Color32::from_rgb(28, 34, 42)
-                } else {
-                    ui.visuals().text_color()
-                };
-                let matched = matches.contains(&id);
-                let stroke = if matched {
-                    egui::Stroke::new(3.0, ui.visuals().warn_fg_color)
-                } else if self.selected_cell == id {
-                    egui::Stroke::new(2.5, ui.visuals().selection.bg_fill)
-                } else {
-                    egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color)
-                };
-                let response = ui.put(
-                    rect,
-                    egui::Button::new(RichText::new(label).size(14.0).strong().color(ink))
-                        .fill(fill)
-                        .stroke(stroke)
-                        .wrap_mode(egui::TextWrapMode::Truncate)
-                        .corner_radius(9.0),
-                );
-                if matched && self.selected_cell == id {
-                    ui.painter().rect_stroke(
-                        rect.shrink(3.5),
-                        6.0,
-                        egui::Stroke::new(1.5, ui.visuals().selection.bg_fill),
-                        egui::StrokeKind::Inside,
-                    );
-                }
-                // A renamed cell still exposes its searchable logical ID.
-                if mapping.is_some_and(|m| !m.name.is_empty() && m.name != id.to_string()) {
-                    ui.painter().text(
-                        rect.right_bottom() - egui::vec2(5.0, 3.0),
-                        egui::Align2::RIGHT_BOTTOM,
-                        format!("#{id}"),
-                        egui::FontId::proportional(10.0),
-                        ink,
-                    );
-                }
-                let response = response.on_hover_text(format!(
-                    "Cell {id} · {}",
-                    mapping
-                        .map(|m| format!("physical {}", m.physical_cell))
-                        .unwrap_or_else(|| "mapping unavailable".into())
-                ));
-                if response.clicked() {
-                    self.selected_cell = id;
-                }
-                if response.double_clicked() {
-                    if let Some(state) = state {
-                        let (next, value) = Self::next_cell_state(state);
-                        self.set_cell(id, next, value);
-                    }
-                }
-                response.context_menu(|ui| {
-                    ui.strong(format!("Cell {id}"));
-                    ui.separator();
-                    for (name, value) in [("White", 0), ("Red", 1), ("Off", 2)] {
-                        if ui
-                            .add_enabled(snapshot.is_some(), egui::Button::new(name))
-                            .clicked()
-                        {
-                            self.selected_cell = id;
-                            self.set_cell(id, &name.to_lowercase(), value);
-                            ui.close();
-                        }
-                    }
-                    ui.separator();
-                    if ui
-                        .button(format!("{}  Edit mapping…", icons::PENCIL_SIMPLE))
-                        .clicked()
-                    {
-                        self.select_mapping(id);
-                        self.show_mapping = true;
-                        ui.close();
-                    }
-                });
-            }
-        }
+        self.draw_cell_grid(ui, area, grid_origin, pitch, height, &matches);
         finish_table_area(ui, area);
         ui.horizontal(|ui| {
-            ui.label(egui::RichText::new(format!("Cell {} selected", self.selected_cell)).weak());
+            ui.label(
+                egui::RichText::new(format!(
+                    "Cursor: cell {} · {} selected",
+                    self.selected_cell,
+                    self.table.selection.ids.len()
+                ))
+                .weak(),
+            );
             if snapshot.is_none() {
                 if ui.button(format!("{}  Connect…", icons::PLUG)).clicked() {
                     self.show_connection = true;
@@ -1400,7 +1406,7 @@ impl PakarControllerApp {
             });
         }
     }
-    fn select_mapping(&mut self, id: u8) {
+    pub(super) fn select_mapping(&mut self, id: u8) {
         self.mapping_logical = id;
         if let Some(m) = self.mappings.iter().find(|m| m.logical_id == id) {
             self.mapping_physical = m.physical_cell;
