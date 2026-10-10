@@ -1,5 +1,38 @@
 # Donor-first preflight receipt
 
+## RayanLamp locale continuation
+
+Reverified Build RayanLamp Go app (019f8cfc-271a-72e1-8747-e3eb883de5ec);
+not loaded, not resumed or messaged. Fully read i18n.tsx (656 lines) and its
+71-line test; original-byte hashes match inventory. Reread actual Pealayer Web
+i18n and current locale/generator/test consumers. Imported real normalization,
+translation placeholders, number/digit presentation and automatic locale
+lifecycle, preserving independent explicit direction and peer identity. No
+OS-event writes, request/replay or draft replacement. Seven tests and complete
+source-quality run pass; actual browser mixed-script selection and reversible
+network labels inspected. Dynamic copy still visibly incomplete; native/mobile
+and Persian-calendar/BidiLtr consumers remain explicit gaps.
+
+Interface --check caught edits in generated device-settings embedding. Fully
+read the actual generator/canonical module, moved edits to assets/web/device-settings.js
+and regenerated deterministically. No --check bypass. Reread exact PCController
+card-layout-controls and Pealayer HeaderBar; only affected target/test references
+were rebound. Actual canonical PCController bytes match its inventory even
+though the old lookup root is unavailable. PU route guard caught Web document
+hash drift; only the two unchanged Verified remote update rows at line 220 were
+reviewed/rebound. No blanket source certificate or route behavior change.
+
+Terminal CI run 38089030955 confirms the prior CodeQL lint fix works on Ubuntu:
+lint, quality and Android success, separate CodeQL run 38089030973 success.
+Overall Build fails: Linux firmware donor lookup trips on a missing C: drive;
+Windows tests have 11 egui/private-table API compile errors. These are real
+remaining release defects, not a job being awaited or a reason to suppress gates.
+ASUS SSH localhost:1022 refuses; no physical firmware/app replacement occurred.
+Warm mandatory ESP-only busy-wire wrapper then passed: 906928-byte image SHA256
+02464a4211b97e98ff1e22b2b88feeef32608a6465a480f0c96a055aa43e7012;
+IRAM remains 63055/65536, 96%. No AVR/native/Android rebuild, copied firmware
+package, new dependency/cache, clean or budget bypass.
+
 ## CI security-summary recovery
 
 Fresh run 38088825179 is terminal failure, not a job still awaited. Ubuntu's

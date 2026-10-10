@@ -21,6 +21,8 @@ unverified after interruption. Donor source and task state were not changed.
 | webui/src/theme.ts | assets/themes/browser-appearance.js: actual restart/stop ownership, System-only media reconciliation and browser chrome metadata; existing Pealayer palettes/helpers remain the only color engine. |
 | webui/src/theme.test.ts | tests/rayanlamp_theme_test.mjs: all three donor scenarios adapted to the shipped bootstrap, plus teardown/new-owner, blocked API/storage, cross-tab reset, all palettes and no-device-request checks. |
 | webui/public/theme-init.js | Single classic inline head script before CSS/body: validated saved appearance and locale/direction are applied before first paint, with one palette catalog, no extra endpoint, requests or preference writes. |
+| webui/src/i18n.tsx | assets/web/localization.js and the real embedded Web UI: normalization, placeholder fallback, visual digits/Intl numbers and automatic languagechange lifecycle. Adds owned restart/idempotent teardown, no OS persistence writes, dynamic network/cloud label refresh and localized selection/batch results without touching peer identity or drafts. |
+| webui/src/i18n.test.tsx | tests/rayanlamp_locale_test.mjs: seven shipped-code tests adapt normalization/detection, translation/digits and system languagechange; add cleanup/ownership, restricted storage, preserved protocol/secret values and reversible dynamic labels. Rendered BidiLtr remains pending, not falsely certified. |
 
 Canonical browser code is embedded by the existing deterministic font/Web
 generator, with equality tests preventing a separate drifting firmware copy.
@@ -36,15 +38,16 @@ does not override an English primary preference. These replacements are exact
 ledger decisions, not omissions hidden behind a visual resemblance.
 
 The canonical generator embeds browser-appearance.js without a duplicate color
-engine. web-presentation is a five-file reviewed-slice gate (three Rayan files,
+engine. web-presentation is a seven-file reviewed-slice gate (five Rayan files,
 two previously read Pealayer files), invoked before ESP builds and source quality.
 The Bash ESP entrypoint requires PowerShell 7 for the same donor gate and now
 checks fonts/branding as the Windows entrypoint does. No extra SDK is installed.
 
-Coverage: RayanLamp 2349 inventoried, **9** completed comparisons, **2340** pending.
-Whole donor inventory 4237, 73 completed, 4164 pending, 44 known-gap files. A
-partially read i18n/settings file remains pending; this is not full localization
-or native/Web/mobile settings synchronization.
+Coverage: RayanLamp 2349 inventoried, **11** completed comparisons, **2338** pending.
+Whole donor inventory 4237, 75 completed, 4162 pending, 46 known-gap files. The
+656-line i18n source and 71-line tests were fully read and hash-verified. Full
+settings, Persian calendar/protocol isolation, remaining dynamic copy and
+native/Web/mobile preference synchronization remain unfinished.
 
 The imported decimal map also normalizes actual mobile port/telemetry inputs,
 tested with mixed Persian/Arabic-Indic digits through explicit save/readback.
@@ -93,6 +96,19 @@ its existing canonical cache guard remains authoritative. No donor compilation,
 extra cache, production app replacement or board flash is part of this import
 checkpoint. Hardware, native runtime and Android vibration acceptance are separate.
 Track continued imports and exact omission decisions on issue #3.
+
+Locale acceptance: all seven added Node tests and the full local source-quality
+suite pass. Actual read-only browser input `۱،٢،۳` becomes canonical `1–3`, with
+`۳ انتخاب‌شده` and the same selected cells. Dynamic network labels translate to
+Persian and return to English on the same page; peer title/SSID stay unchanged.
+Two JPEGs were inspected and byte-verified; fixture rejects non-GET requests,
+its tab was closed and PID-verified owner stopped. OS languagechange is VM-tested,
+not an actual OS-setting change. English Scan/save/placeholder/status/tooltip
+copy remains visibly pending. Mobile appearance/localization remains open.
+
+![Persian selection with unchanged identity](screenshots/rayan-locale-selection.jpg)
+
+![Dynamic Persian network labels](screenshots/rayan-locale-settings.jpg)
 
 Current theme evidence: six added Node tests, ten existing appearance tests,
 full source-quality suite, actual read-only browser light/Neutral and

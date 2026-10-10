@@ -1,0 +1,8 @@
+{
+  "{count} selected": "{count} انتخاب‌شده",
+  "Sent {sent} of {total} cell edits; awaiting device readback": "{sent} از {total} ویرایش خانه ارسال شد؛ در انتظار بازخوانی دستگاه",
+  "Cancelled unsent edits. {sent} previously sent edits may have applied.": "ویرایش‌های ارسال‌نشده لغو شدند. ممکن است {sent} ویرایش ارسال‌شده اعمال شده باشند.",
+  "Verified {sent} cell states on the device": "وضعیت {sent} خانه در دستگاه تأیید شد",
+  "Readback did not confirm every edit. Refresh and inspect; batch is not atomic.": "بازخوانی همهٔ ویرایش‌ها را تأیید نکرد. تازه‌سازی و بررسی کنید؛ عملیات گروهی اتمی نیست.",
+  "Stopped after {sent} edits. Uncertain writes are not retried.": "پس از {sent} ویرایش متوقف شد. نوشته‌های نامطمئن دوباره ارسال نمی‌شوند."
+}

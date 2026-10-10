@@ -9,6 +9,7 @@ export const phases={
     ["node", "tests/localization_test.mjs"],
     ["node", "tests/rayanlamp_reuse_test.mjs"],
     ["node", "tests/rayanlamp_theme_test.mjs"],
+    ["node", "tests/rayanlamp_locale_test.mjs"],
     [
       "node",
       "tests/web_display_test.mjs"

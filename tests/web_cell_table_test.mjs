@@ -50,7 +50,7 @@ const context=vm.createContext({...nodes,document,URLSearchParams,innerWidth:128
   state:{cells:[]},mapping:{physical:[],names:[]},currentPeer:()=>({has:feature=>feature==='table'}),authenticated:true,loadMappingEditor(){},report(){},render(){},setTimeout:fn=>{fn();return 1},
   api:async(path,options)=>{if(!options)return actual;const id=Number(options.body.get('id'));calls.push(id);if(id===failId)throw Error('lost acknowledgement');actual.cells[id-1]=options.body.get('state');if(id===cancelAfter)vm.runInContext('cancelCellBatch()',context);return {accepted:true}}
 });
-vm.runInContext(readFileSync(new URL('../assets/web/rayanlamp.js',import.meta.url),'utf8')+'\n'+cellCode,context);
+vm.runInContext(readFileSync(new URL('../assets/web/rayanlamp.js',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../assets/web/localization.js',import.meta.url),'utf8')+'\n'+cellCode,context);
 const run=code=>vm.runInContext(code,context),ids=()=>Array.from(run('[...selectedCells]')).sort((a,b)=>a-b);
 const pixelContract=JSON.parse(readFileSync(new URL('../assets/cells/pixel-contract.json',import.meta.url),'utf8'));
 const pixelNative=readFileSync(new URL('../desktop/src/ui/cell_pixels.rs',import.meta.url),'utf8');

@@ -1,5 +1,31 @@
 # PakarController comparison receipts
 
+## RayanLamp localization source adaptation
+
+Two additional exact files read to EOF: webui/src/i18n.tsx SHA256
+9a4843ade326c1ee323c3f60d6b0d6ac41cab9d2dcd50affed276fdd8096ff0a;
+webui/src/i18n.test.tsx SHA256
+1c72c37780aeefe39c4d571636616e10c4bbc0fb0b57df8332e9b62c144d599b.
+Actual helpers/languagechange contracts are used by canonical embedded Web UI,
+with seven passing Node tests, full local quality and real read-only browser
+selection/reversible network-label inspection. Donor title/secondary-language/
+persistence policies are explicitly replaced; Persian calendar/BidiLtr/generic
+unused dictionary/platform settings remain pending. No full locale parity claim.
+
+Rayan coverage 11/2349; whole inventory 75/4237, 4162 pending, 46 known gaps.
+Gate extends from five to seven complete-read files. Generated interfaces and
+separate PU route hashes were reviewed rather than bypassed. Two exclusive JPEG
+captures: selection SHA256 03cf875998b961d4e5629e2f305f38f115f3c7ced781fc6f99df78d0e3a1f224;
+settings d09b8f50e41b9c8b12931d092337070c93ad4004d1667005dfe2ea7de37b8241.
+Actual Chrome pixels are not physical board, native or Android acceptance.
+Mandatory warm ESP-only busy-wire compile passes: RAM 56620/80192, IRAM
+63055/65536 (96%), flash code 856816/1048576. Bin 906928 bytes, SHA256
+02464a4211b97e98ff1e22b2b88feeef32608a6465a480f0c96a055aa43e7012.
+Built from reviewed working source; no final-commit embedded identity, staged
+release or physical flash claim. No AVR/native/Android rebuild or new cache.
+CI 38089030955 passes lint/quality/Android but fails Linux firmware and Windows
+native compilation; no production release acceptance or waiting claim.
+
 ## CI security-summary recovery
 
 Observed terminal run 38088825179 failed before product builds: SC2129 from

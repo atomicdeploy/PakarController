@@ -3,6 +3,102 @@
   "target_hash_encoding": "UTF8-without-BOM-LF",
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
+    {
+      "origin": "RayanLamp",
+      "path": "webui/src/i18n.tsx",
+      "sha256": "9a4843ade326c1ee323c3f60d6b0d6ac41cab9d2dcd50affed276fdd8096ff0a",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "improvement": "",
+      "preserved": [
+        "Actual normalization/detection, t placeholder fallback, visual digits, Intl.NumberFormat and languagechange lifecycle adapted into the real embedded localization module. Selection counts and batch readback messages are real consumers. Restart ownership, idempotent cleanup, missing/inherited placeholder handling, blocked storage and no OS-triggered preference writes are added.",
+        "Dynamic network/cloud labels and panel menus retranslate reversibly without replacing board identity, hostnames, mapping IDs, protocol strings or unsaved secrets."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/localization.js",
+          "sha256": "49780d8f962b12f9daec283100b7c9b9cab6b255c7b6f2542ca7b6fb7f1eedce",
+          "anchor": "function startUiLocaleController()"
+        },
+        {
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
+          "anchor": "function renderSelectionSummary()"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Preact signals, lamp storage key/auto enum, any secondary Persian language and unconditional render-time persistence",
+          "disposition": "replaced",
+          "reason": "ESP uses existing dependency-free state, system enum and presentation channel. Primary browser language and independent explicit direction preserve Pakar pre-paint policy. Persistence belongs only to validated preference changes; no OS/render writes or second toolchain."
+        },
+        {
+          "code": "Rayan Lamp document title/meta branding and lamp/coordinator/COM/URI-specific literal captions",
+          "disposition": "not-applicable",
+          "reason": "These describe another application's lamp identity/endpoints. Pakar title follows independently acknowledged board application metadata; translating peer names or claiming unrelated lamp actions would be incorrect. Generic mechanisms remain independently pending."
+        },
+        {
+          "code": "Persian-calendar formatDateTime, rendered reusable BidiLtr, additional generic dictionary/settings consumers and native/mobile locale synchronization",
+          "disposition": "pending",
+          "reason": "Need real controller date/protocol/settings consumers and runtime acceptance, not unused copied functions or fixture-only UI. Current grid/seven-segment LTR and unchanged wire text are not full BidiLtr parity. Visual digit helper exists but further app call sites remain pending."
+        }
+      ],
+      "remaining": [
+        "Finish dynamic confirmations/errors/status and generic protocol/date consumers. Port locale lifecycle into actual Flutter controls and validate native/mobile/browser synchronization. No full localization or hardware acceptance claim."
+      ],
+      "proof": [
+        {
+          "path": "tests/rayanlamp_locale_test.mjs",
+          "sha256": "526020d00cc63918018159a77ce2d06c46f1a2425f83bb99d6ca1e9acc193e47",
+          "anchor": "Automatic locale reacts to OS changes"
+        },
+        {
+          "path": "tests/web_cell_table_test.mjs",
+          "sha256": "420b8dfb17544ca9aa53204045d2e2b9fff993c98a225fc5eddb4a99adff5feb",
+          "anchor": "Selection must not mutate hardware"
+        }
+      ]
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "webui/src/i18n.test.tsx",
+      "sha256": "1c72c37780aeefe39c4d571636616e10c4bbc0fb0b57df8332e9b62c144d599b",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "improvement": "",
+      "preserved": [
+        "Actual normalization, Persian-vs-Arabic detection, translation/placeholder/visual-number and automatic languagechange tests adapted to actual shipped code. Added explicit language/direction stability, low-write persistence, new-owner teardown, identity/draft preservation, reversible dynamic labels and detached-node pruning."
+      ],
+      "targets": [
+        {
+          "path": "tests/rayanlamp_locale_test.mjs",
+          "sha256": "526020d00cc63918018159a77ce2d06c46f1a2425f83bb99d6ca1e9acc193e47",
+          "anchor": "Actual RayanLamp i18n.test.tsx contracts"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Vitest/Preact, lamp title/storage identity and secondary-language expectations",
+          "disposition": "replaced",
+          "reason": "Node/VM executes the dependency-free embedded module. Pakar deliberately retains primary language, explicit direction and acknowledged board identity; tests document each difference."
+        },
+        {
+          "code": "Rendered BidiLtr component test and full actual native/mobile/browser acceptance",
+          "disposition": "pending",
+          "reason": "Protocol fixture asserts unchanged text/direction but is not a new BDI renderer. Grid LTR is source-checked only. Actual protocol isolation/date/platform consumers still need implementation and runtime inspection."
+        }
+      ],
+      "remaining": [
+        "Implement/render protocol isolation and date consumers; complete native/mobile/browser matrix. VM tests are not pixels or physical board proof."
+      ],
+      "proof": [
+        {
+          "path": "tests/rayanlamp_locale_test.mjs",
+          "sha256": "526020d00cc63918018159a77ce2d06c46f1a2425f83bb99d6ca1e9acc193e47",
+          "anchor": "Restart and idempotent teardown"
+        }
+      ]
+    },
       {
         "origin": "RayanLamp",
         "source_read": "complete",
@@ -22,7 +118,7 @@
           },
           {
             "path": "firmware/esp8266/src/WebUi.h",
-            "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
+            "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
             "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -107,7 +203,7 @@
           },
           {
             "path": "firmware/esp8266/src/WebUi.h",
-            "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
+            "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
             "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -360,17 +456,17 @@
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "d11d246009a684e5de75e7c006623f33df1383e646d74a8d903a006cd89725e2",
-          "anchor": "function uiTr(text)"
+          "sha256": "49780d8f962b12f9daec283100b7c9b9cab6b255c7b6f2542ca7b6fb7f1eedce",
+          "anchor": "function uiTr(text,values)"
         },
         {
           "path": "tools/generate-font-assets.mjs",
-          "sha256": "58b1c4831be837ea38319d599d014add98f670f9006fd3d91599377e8e432f91",
+          "sha256": "f1825725a2ccf4cefeb29d1be8a4f17db4e755be4548c730dc567cccf0b6be9c",
           "anchor": "const dictionary={}"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
+          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -497,7 +593,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "7ac69d9ab72ce6794fcef0365fbcd34f91240b3b3eaf54d74974664487db7b97",
+          "sha256": "93a3cf3713f69aebc51482adc158bbae32804ed7618586e4dcb765fd151f714a",
           "anchor": "export function runChecks"
         },
         {
@@ -658,7 +754,7 @@
       "targets": [
         {
           "path": "assets/web/device-settings.js",
-          "sha256": "ffbe4354eba7347ecd0a80618c9c92b72578e2a67b3e7c5097ce41333f75a2d8",
+          "sha256": "1be5ee352c4344f06943eac10e91e07cc47b46e879a4e3fe25c6b4ebaa78dd31",
           "anchor": "function panelToggle("
         },
         {
@@ -800,7 +896,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
+          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
           "anchor": "function peerAvailability("
         }
       ],
@@ -1098,7 +1194,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
+          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -1108,12 +1204,12 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
+          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
           "anchor": "function renderApplicationIdentity"
         },
         {
           "path": "assets/web/device-settings.js",
-          "sha256": "ffbe4354eba7347ecd0a80618c9c92b72578e2a67b3e7c5097ce41333f75a2d8",
+          "sha256": "1be5ee352c4344f06943eac10e91e07cc47b46e879a4e3fe25c6b4ebaa78dd31",
           "anchor": "function settingsCanClose()"
         },
         {
@@ -1173,7 +1269,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
+          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -3115,7 +3211,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
+          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -3205,7 +3301,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
+          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -3238,7 +3334,7 @@
         },
         {
           "path": "tests/web_cell_table_test.mjs",
-          "sha256": "87f848f35d195bdf8bd6782cc90c0c5e786a734f49ea9415c779d3f49a1f2971",
+          "sha256": "420b8dfb17544ca9aa53204045d2e2b9fff993c98a225fc5eddb4a99adff5feb",
           "anchor": "Manager must not allocate state-dependent selectable Frames"
         }
       ],
@@ -3327,7 +3423,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1106a8ea550060f56dd84930cd5d509f7c5525835b9db8e4dc87e0102955d9e8",
+          "sha256": "d43212c58163b95401bfc0df4b12c75b975ab44012e50e148a5ed259bc15bd60",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -3402,7 +3498,7 @@
         },
         {
           "path": "assets/web/localization.js",
-          "sha256": "d11d246009a684e5de75e7c006623f33df1383e646d74a8d903a006cd89725e2",
+          "sha256": "49780d8f962b12f9daec283100b7c9b9cab6b255c7b6f2542ca7b6fb7f1eedce",
           "anchor": "subscribeLocalePreferences(value=>"
         }
       ],

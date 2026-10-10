@@ -25,8 +25,14 @@ let web=await readFile(new URL('firmware/esp8266/src/WebUi.h',root),'utf8');
 const withoutGenerated=web.replace(/\/\/ BEGIN SHARED LOCALIZATION[\s\S]*?\/\/ END SHARED LOCALIZATION/,'').replaceAll('&amp;','&').replaceAll('&lt;','<').replaceAll('&gt;','>');
 let js=await readFile(new URL('assets/web/localization.js',root),'utf8');
 const dictionary={};
+const controllerCopy=JSON.parse(await readFile(new URL('assets/web/controller-copy.json',root),'utf8'));
 for(const match of native.matchAll(/((?:"[^"\n]+"\s*\|\s*)*"[^"\n]+")\s*=>\s*(?:\{\s*)?"([^"\n]+)"/g)){
   for(const key of match[1].matchAll(/"([^"\n]+)"/g))if(withoutGenerated.includes(key[1])||['Language','Direction','System language','Automatic','Left to right','Right to left','English','Persian'].includes(key[1]))dictionary[key[1]]=match[2];
+}
+for(const[key,value]of Object.entries(controllerCopy)){
+  assert.equal(typeof value,'string');
+  assert(withoutGenerated.includes(key),'Unused controller translation: '+key);
+  dictionary[key]=value;
 }
 const dictionaryBegin='// BEGIN SHARED PERSIAN DICTIONARY',dictionaryEnd='// END SHARED PERSIAN DICTIONARY';
 js=js.slice(0,js.indexOf(dictionaryBegin)+dictionaryBegin.length)+'\nconst PAKAR_FA='+JSON.stringify(dictionary)+';\n'+js.slice(js.indexOf(dictionaryEnd));
