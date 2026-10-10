@@ -6,17 +6,23 @@ Tracking: [settings #4](https://github.com/atomicdeploy/PakarController/issues/4
 
 ## Current CI acceptance boundary
 
-Terminal source c814379 run 38091589105 executes native logical-copy and
-contextual Persian glyph/shaping tests successfully, including Proportional and
-Monospace. However language-change font retention FAILS, along with dropdown and
-cell-surface tests, and the harness ends with 0xc0000409. Therefore symbol/font
-retention and the production native UI are not accepted. Source inspection is
-not a substitute for that failed assertion. Restore the actual donor serial
-test/config-isolation/backtrace contract and immediate failure output before
-choosing a font fix; do not guess the hidden assertion or remove its coverage.
-Full font source reread preserves the pending translation/group/runtime work.
-The same run passes both firmware variants and Android preview, not Android
-runtime/localization completeness. The local receipt below is historical.
+Source 0c723f1 Windows job 114331734735 now exposes the exact failures. The
+font-retention test panics when an unhandled TexturesDelta is dropped, not at a
+font-retention assertion. Branding, neutral-cell and connection tests have the
+same headless-output ownership mistake. A separate shortcut test compares the
+cached PLACEHOLDER color instead of rendered text; its failed assertion then
+causes a second texture-destructor panic and 0xc0000409. Earlier wording that
+identified these test failures as font/dropdown/cell assertion failures is
+superseded by the uncaptured log. No font-registry or production-style defect
+is established by those failures.
+
+Restore actual Pealayer clear-before-assert resource handling, explicitly discard
+unused headless frames, and test shortcut colors on real tessellated vertices.
+The registry, all font assertions and both-family contextual glyph tests remain
+unchanged. Native re-execution and deployed UI acceptance remain pending; source
+checks do not certify font retention. Full translation/group/runtime work stays
+open. Run 38092457174 passes both firmware variants and Android preview, not
+Android runtime/localization completeness. The local receipt below is historical.
 
 ## Regression cause
 
@@ -54,8 +60,9 @@ generated `file-comparison.csv`, not a separate completion checklist.
 - Native language preview/save/cancel updates fonts and direction. The added
   contextual-shaping test exercises both Proportional and Monospace. Another
   test checks that language changes retain Elegance symbols and avoid duplicate
-  fallbacks. These tests now execute in CI: shaping passes, font retention fails;
-  no native production acceptance follows from the passing subset.
+  fallbacks. These tests execute in CI: shaping passes, while retention is not
+  accepted because its harness drops an unhandled texture delta before completion.
+  No native production acceptance follows from the passing subset.
 - Web Language and Direction controls persist per browser, with system locale
   and explicit overrides. Labels, settings catalog/navigation, hints, selected
   settings states, placeholders and accessibility captions use application copy.
@@ -91,7 +98,7 @@ ASUS, OTA, native-render or mobile-runtime acceptance is inferred from Web proof
 
 ## Useful work still pending (not accepted exclusions)
 
-- Resolve native font-retention assertion and the aborted harness; run restored
+- Resolve native headless-output ownership and the aborted harness; run restored
   serial tests and inspect actual native Persian menus/editors/dialogs.
 - Full native device-settings bodies, status/transport surfaces, formatted
   messages, search keyword localization and translation completeness audit.

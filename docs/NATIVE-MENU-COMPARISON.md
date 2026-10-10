@@ -47,6 +47,16 @@ was an incomplete import, not evidence that the user wanted different heights.
 
 ## Proof boundaries
 
+The restored serial/uncaptured native harness identifies the actual failure in
+0c723f1 Windows job 114331734735: egui caches PLACEHOLDER layout colors and paints
+TextShape fallback/override colors. The shortcut test now checks actual tessellated
+glyph vertex colors, retaining distinct muted/primary ink, right alignment, six
+separate atoms and unchanged geometry. Headless outputs drain texture deltas before
+assertions; unused heading frames explicitly discard them. This restores Pealayer's
+resource ownership pattern and prevents the observed double-panic path without
+changing production styling or weakening assertions. Native re-execution and
+deployed visual acceptance remain pending; source guards are not runtime proof.
+
 `tests/native_menu_test.mjs` binds the actual donor helper body after only
 ID/visibility/whitespace adaptation, checks all six production shortcut
 call sites and ensures the user's unchanged height policy. The three Rust tests

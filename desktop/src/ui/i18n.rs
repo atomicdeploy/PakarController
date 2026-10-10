@@ -1396,11 +1396,11 @@ mod tests {
     fn changing_language_preserves_widget_fonts_and_monospace_fallback() {
         let context = egui::Context::default();
         configure_ui_fonts(&context, false);
-        let _ = context.run_ui(Default::default(), |_| {});
+        context.run_ui(Default::default(), |_| {}).drop_without_applying_deltas();
         elegance::Theme::current(&context).install(&context);
-        let _ = context.run_ui(Default::default(), |_| {});
+        context.run_ui(Default::default(), |_| {}).drop_without_applying_deltas();
         configure_ui_fonts(&context, true);
-        let _ = context.run_ui(Default::default(), |ui| {
+        context.run_ui(Default::default(), |ui| {
             ui.fonts(|fonts| {
                 let defs = fonts.definitions();
                 assert!(defs.font_data.contains_key("elegance-symbols"));
@@ -1416,9 +1416,9 @@ mod tests {
                     1
                 );
             });
-        });
+        }).drop_without_applying_deltas();
         configure_ui_fonts(&context, false);
-        let _ = context.run_ui(Default::default(), |ui| {
+        context.run_ui(Default::default(), |ui| {
             ui.fonts(|fonts| {
                 assert!(
                     fonts
@@ -1427,7 +1427,7 @@ mod tests {
                         .contains_key("elegance-symbols")
                 )
             });
-        });
+        }).drop_without_applying_deltas();
     }
     // Actual Pealayer contextual-shaping test, expanded to the missing family.
     #[test]

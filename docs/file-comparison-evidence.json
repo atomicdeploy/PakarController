@@ -486,7 +486,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "9587bca5bd62d4e8827a8a4ccaabc81e5dd69289ce552e6f3929fd386e8c6ff8",
+          "sha256": "f44d0302f729f7e724b2d02c1ce1f94cf5915a1e7f111b911a68a63b8bbbac24",
           "anchor": "pub(crate) fn configure_ui_fonts"
         },
         {
@@ -501,7 +501,7 @@
         },
         {
           "path": "docs/PERSIAN-PARITY.md",
-          "sha256": "2ef9e80bc76dbbee577dc5b8b31d61d61f699135ad78f868a90f94a43f0c615a",
+          "sha256": "a18930c387b54d6a2c3a7c8d998596637bdeb5d0c326738e931d1173d376cf6c",
           "anchor": "## Exact source-to-target mapping"
         }
       ],
@@ -519,21 +519,21 @@
         {
           "code": "Separate ttf_parser coverage assertions and exhaustive native surface translations",
           "disposition": "pending",
-          "reason": "Avoid introducing a duplicate font parser dependency: actual renderer glyph/contextual tests are adapted and pass individually in c814379 Windows CI, but language-change font retention fails and the harness aborts. Additional Unicode, production rendering, device-settings and status/transport copy remain unaccepted."
+          "reason": "Avoid introducing a duplicate font parser dependency: actual renderer glyph/contextual tests pass individually in Windows CI. Uncaptured 0c723f1 logs identify the retention failure as unhandled headless texture deltas, not a font assertion; execution after the ownership repair remains pending. Additional Unicode, production rendering, device-settings and status/transport copy remain unaccepted."
         }
       ],
       "remaining": [
-        "Resolve failed font-retention assertion and aborted native harness under the restored donor serial/isolation contract; rerun complete tests and inspect real Persian inputs/menus/dialogs. Local cache budget remains enforced; finish application-copy and generic grouping parity."
+        "Rerun complete native tests after restoring actual donor headless texture ownership and rendered-color assertions; font retention is not accepted from source checks. Inspect real Persian inputs/menus/dialogs. Local cache budget remains enforced; finish application-copy and generic grouping parity."
       ],
       "proof": [
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "9587bca5bd62d4e8827a8a4ccaabc81e5dd69289ce552e6f3929fd386e8c6ff8",
+          "sha256": "f44d0302f729f7e724b2d02c1ce1f94cf5915a1e7f111b911a68a63b8bbbac24",
           "anchor": "fn contextual_persian_in_labels_and_monospace_inputs"
         },
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "9587bca5bd62d4e8827a8a4ccaabc81e5dd69289ce552e6f3929fd386e8c6ff8",
+          "sha256": "f44d0302f729f7e724b2d02c1ce1f94cf5915a1e7f111b911a68a63b8bbbac24",
           "anchor": "fn changing_language_preserves_widget_fonts"
         },
         {
@@ -699,7 +699,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "a8f227c5a469fb79d05c0fe807a522c8ccc3f3e4be5eb511109ad7a85dfcc8fb",
+          "sha256": "c977db5cfd2b27e38e1e792d2b10b460aa99fce9796bd0e3fe3d428ef2144a7c",
           "anchor": "export function runChecks"
         },
         {
@@ -736,7 +736,7 @@
         }
       ],
       "remaining": [
-        "Complete failing Windows native tests/package and unexecuted draft publisher; restore useful additional native targets and optional compressed package/runtime verification. c814379 CI passes source, both firmware variants and Android preview but is not all-green or physical acceptance."
+        "Complete Windows native tests/package after headless texture lifecycle and painted-color test repairs, then validate the unexecuted draft publisher. Restore useful additional native targets and optional compressed package/runtime verification. 0c723f1 CI passes source, both firmware variants and Android preview but is not all-green or physical acceptance."
       ],
       "improvement": "",
       "origin": "Pealayer",
@@ -921,7 +921,7 @@
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "3216d5dde3a9bb6a8386cec0986140fdc2da5e1130c0cab17172d728b214fb76",
+          "sha256": "7ae6fa52982d23b58928cab8fd5d2019bc777b2a44be815718f9e8b3a92c21f6",
           "anchor": "pub fn usb("
         },
         {
@@ -969,7 +969,7 @@
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "3216d5dde3a9bb6a8386cec0986140fdc2da5e1130c0cab17172d728b214fb76",
+          "sha256": "7ae6fa52982d23b58928cab8fd5d2019bc777b2a44be815718f9e8b3a92c21f6",
           "anchor": "fn offline_dropdowns_open_independently_and_usb_enumerates_only_when_open()"
         }
       ]
@@ -1224,7 +1224,7 @@
       "targets": [
         {
           "path": "desktop/src/branding.rs",
-          "sha256": "c9f9d6c0269af0e1356e59428e2a7a4f1bf532737a8d2e214ea0530f485a0d3c",
+          "sha256": "a16e879c4b7fba1154584e51822dba5bc2bb48ba9946270fb9b25d129e48bd18",
           "anchor": "pub fn icon_data_from_bytes"
         },
         {
@@ -1239,7 +1239,7 @@
         },
         {
           "path": "desktop/src/branding.rs",
-          "sha256": "c9f9d6c0269af0e1356e59428e2a7a4f1bf532737a8d2e214ea0530f485a0d3c",
+          "sha256": "a16e879c4b7fba1154584e51822dba5bc2bb48ba9946270fb9b25d129e48bd18",
           "anchor": "pub fn sync_peer"
         },
         {
@@ -1478,7 +1478,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/menu.rs",
-          "sha256": "ec5be094ec81858516c879fb5ea3e42f97490a65a24f8ed9d74f00aa2374bb3f",
+          "sha256": "d8a24c0b6330ee118c5c74ac8d966d2c53b91570e084d25b214466ae7148270e",
           "anchor": "pub fn top_menu_button<R>("
         },
         {
@@ -1488,12 +1488,12 @@
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "3216d5dde3a9bb6a8386cec0986140fdc2da5e1130c0cab17172d728b214fb76",
+          "sha256": "7ae6fa52982d23b58928cab8fd5d2019bc777b2a44be815718f9e8b3a92c21f6",
           "anchor": "pub fn websocket("
         },
         {
           "path": "docs/NATIVE-MENU-COMPARISON.md",
-          "sha256": "a86271d68a6553075026ad4e1ffef59c44f87074401b7c2936d9cd539d032fb9",
+          "sha256": "0eedd0936bf906d845e03cbba57667a4f1d725b33466b5cbccb906cc3eed80a1",
           "anchor": "## Exact donor menu mapping and remaining decisions"
         }
       ],
@@ -1541,12 +1541,12 @@
       "proof": [
         {
           "path": "desktop/src/ui/menu.rs",
-          "sha256": "ec5be094ec81858516c879fb5ea3e42f97490a65a24f8ed9d74f00aa2374bb3f",
+          "sha256": "d8a24c0b6330ee118c5c74ac8d966d2c53b91570e084d25b214466ae7148270e",
           "anchor": "fn shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes()"
         },
         {
           "path": "desktop/src/ui/menu.rs",
-          "sha256": "ec5be094ec81858516c879fb5ea3e42f97490a65a24f8ed9d74f00aa2374bb3f",
+          "sha256": "d8a24c0b6330ee118c5c74ac8d966d2c53b91570e084d25b214466ae7148270e",
           "anchor": "fn sibling_hover_switches_only_an_already_open_menu_and_clears_closed_state()"
         },
         {
@@ -3408,7 +3408,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "f1f54c749f8078443a3189c92cef8e6aaa19e39ab04e4a99a1aec4794cca5900",
+          "sha256": "88d23430ba97a525706fae20a108ffec6a8ab2d8485be6eaad2459bd5de45c3a",
           "anchor": "fn manager_selector("
         },
         {
@@ -3441,7 +3441,7 @@
       "proof": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "f1f54c749f8078443a3189c92cef8e6aaa19e39ab04e4a99a1aec4794cca5900",
+          "sha256": "88d23430ba97a525706fae20a108ffec6a8ab2d8485be6eaad2459bd5de45c3a",
           "anchor": "fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width()"
         },
         {

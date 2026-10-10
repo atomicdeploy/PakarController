@@ -1,5 +1,29 @@
 # PakarController comparison receipts
 
+## Native test output ownership recovery
+
+Uncaptured terminal 0c723f1 Windows job 114331734735 identifies headless texture
+destructor panics, not the previously inferred font/cell/dropdown assertion
+failures. The shortcut assertion separately inspects a cached placeholder color
+instead of actual painted ink, then triggers a second destructor panic on unwind.
+Actual Pealayer clear-before-assert handling is restored across five test modules;
+unused frames discard deltas explicitly and shortcut checks inspect tessellated
+glyph colors while retaining geometry and both-theme assertions. Production
+styles/fonts and test selection remain unchanged; actual execution is pending.
+
+Five source modules, the CI quality entry and two bound comparison documents are
+selectively rebound after literal-anchor verification. Source donor hashes and
+complete-read counts are unchanged. New lifecycle source guard is explicitly not
+Rust execution. RayanLamp remains 13/2349, with 2336 pending; no partial donor
+dependency read is certified as another complete-file import.
+
+Complete local source quality, comparison Check, new source guard and no-write
+Rust parser pass. Test Plan passes; actual Test is refused before Cargo by the
+unchanged 8 GiB canonical-cache guard. No native execution, replacement, unrelated
+firmware/APK build or physical acceptance follows. Source 0c723f1 terminal CI
+passes source quality, both firmware variants and Android preview; CodeQL also
+passes. Native re-execution after this repair remains a separate requirement.
+
 ## Native serial/isolation contract recovery
 
 Actual Pealayer CI source reread fully: serial tests, isolated test config and

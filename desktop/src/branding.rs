@@ -111,9 +111,9 @@ mod tests {
             changes+=usize::from(sync_peer(&ctx,Some(&peer)).is_some());
             assert!(sync_peer(&ctx,Some(&peer)).is_none());
         });
+        output.textures_delta.clear();
         assert_eq!(changes,1);
         assert!(output.viewport_output.values().any(|v|v.commands.iter().any(|c|matches!(c,egui::ViewportCommand::Icon(Some(_))))));
-        output.textures_delta.clear();
         peer.application.as_mut().unwrap().name="Pakar Keys".into();
         let mut output=ctx.run_ui(egui::RawInput::default(),|_|{
             assert!(sync_peer(&ctx,Some(&peer)).is_some());
@@ -174,29 +174,33 @@ mod tests {
             } else {
                 egui::Visuals::light()
             });
-            let output = ctx.run_ui(egui::RawInput::default(), |ui| {
+            let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
                 logo(ui, 18.0);
                 logo(ui, 48.0);
             });
-            assert!(
-                output
+            let uploaded_master = output
                     .textures_delta
                     .set
                     .values()
                     .flatten()
-                    .any(|delta| delta.image.size() == [64, 64])
-            );
-            let output = ctx.run_ui(egui::RawInput::default(), |ui| {
+                    .any(|delta| delta.image.size() == [64, 64]);
+            // Headless tests have no texture backend. Drain before assertions
+            // so a failed assertion cannot cause a second destructor panic.
+            output.textures_delta.clear();
+            assert!(uploaded_master);
+            let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
                 logo(ui, 18.0);
                 logo(ui, 48.0);
             });
-            assert!(
-                !output
+            let uploaded_again = output
                     .textures_delta
                     .set
                     .values()
                     .flatten()
-                    .any(|delta| delta.image.size() == [64, 64]),
+                    .any(|delta| delta.image.size() == [64, 64]);
+            output.textures_delta.clear();
+            assert!(
+                !uploaded_again,
                 "do not decode/upload on every frame"
             );
         }

@@ -115,7 +115,7 @@ mod tests {
         let mut responses = None;
         let mut frame = |events| {
             let mut actions = Vec::new();
-            let out = ctx.run_ui(egui::RawInput { events, ..Default::default() }, |ui| {
+            let mut out = ctx.run_ui(egui::RawInput { events, ..Default::default() }, |ui| {
                 ui.horizontal(|ui| {
                     let ws = websocket(ui, false, "http://ledboard.local", Transport::Both, &mut actions);
                     let usb = usb(ui, false, "", Transport::Both, false, || {
@@ -125,6 +125,7 @@ mod tests {
                     responses = Some([ws, usb]);
                 });
             });
+            out.textures_delta.clear();
             (out, actions, responses.clone().unwrap())
         };
         let (_, actions, initial) = frame(vec![]);

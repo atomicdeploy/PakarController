@@ -1518,7 +1518,7 @@ mod tests {
             let rect = Rect::from_min_size(egui::pos2(40.0, 40.0), egui::vec2(53.0, 36.2));
             for state in [None, Some("white"), Some("red"), Some("off")] {
                 for selected in [false, true] {
-                    let output = ctx.run_ui(egui::RawInput::default(), |ui| {
+                    let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
                         cell_surface(
                             ui,
                             rect,
@@ -1529,6 +1529,7 @@ mod tests {
                             false,
                         );
                     });
+                    output.textures_delta.clear();
                     let fill = output
                         .shapes
                         .iter()

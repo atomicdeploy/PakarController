@@ -39,6 +39,30 @@ pub fn top_menu_button<R>(
 mod tests {
     use super::*;
 
+    fn painted_text_colors(
+        ctx: &egui::Context,
+        text: &egui::epaint::TextShape,
+        scale: f32,
+    ) -> Vec<egui::Color32> {
+        // Layout jobs cache PLACEHOLDER colors. The renderer resolves the
+        // TextShape fallback/override; inspect its real tessellated vertices.
+        ctx.tessellate(
+            vec![egui::epaint::ClippedShape {
+                clip_rect: egui::Rect::EVERYTHING,
+                shape: egui::Shape::Text(text.clone()),
+            }],
+            scale,
+        )
+        .into_iter()
+        .flat_map(|primitive| match primitive.primitive {
+            egui::epaint::Primitive::Mesh(mesh) => {
+                mesh.vertices.into_iter().map(|v| v.color).collect::<Vec<_>>()
+            }
+            egui::epaint::Primitive::Callback(_) => Vec::new(),
+        })
+        .collect()
+    }
+
     #[test]
     fn shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes() {
         for dark in [false, true] {
@@ -60,7 +84,7 @@ mod tests {
                 ("Toggle fullscreen", "F11"),
                 ("Refresh", "F5"),
             ];
-            let output = ctx.run_ui(egui::RawInput::default(), |ui| {
+            let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
                 ui.style_mut().spacing.interact_size.y = 28.0;
                 ui.style_mut().spacing.item_spacing.y = 6.0;
                 let height = ui.spacing().interact_size.y;
@@ -76,6 +100,7 @@ mod tests {
                 assert_eq!(ui.spacing().interact_size.y, height);
                 assert_eq!(ui.spacing().item_spacing, spacing);
             });
+            output.textures_delta.clear();
             let text = |value: &str| {
                 output
                     .shapes
@@ -92,8 +117,12 @@ mod tests {
             for (label, shortcut) in rows {
                 let binding = text(shortcut);
                 assert!((binding.pos.x + binding.galley.rect.right() - right).abs() < 0.5);
-                assert_eq!(binding.galley.job.sections[0].format.color, weak);
-                assert_eq!(text(label).galley.job.sections[0].format.color, primary);
+                let binding_colors = painted_text_colors(&ctx, binding, output.pixels_per_point);
+                let label_colors = painted_text_colors(&ctx, text(label), output.pixels_per_point);
+                assert!(!binding_colors.is_empty());
+                assert!(!label_colors.is_empty());
+                assert!(binding_colors.iter().all(|color| *color == weak));
+                assert!(label_colors.iter().all(|color| *color == primary));
                 assert!(binding.pos.x > text(label).pos.x + text(label).galley.rect.right());
             }
         }
@@ -101,7 +130,7 @@ mod tests {
 
     fn headings(ctx: &egui::Context, events: Vec<egui::Event>) -> [egui::Response; 2] {
         let mut responses = None;
-        let _ = ctx.run_ui(
+        ctx.run_ui(
             egui::RawInput {
                 events,
                 ..Default::default()
@@ -117,7 +146,7 @@ mod tests {
                     responses = Some([file.response, workspace.response]);
                 });
             },
-        );
+        ).drop_without_applying_deltas();
         responses.unwrap()
     }
 

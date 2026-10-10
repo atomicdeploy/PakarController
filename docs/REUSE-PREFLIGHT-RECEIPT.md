@@ -1,5 +1,42 @@
 # Donor-first preflight receipt
 
+## Native render ownership and painted-color test repair
+
+Terminal 0c723f1 Build run 38092457174 passes workflow/source quality, both
+firmware UART variants and Android preview. Windows job 114331734735 fails.
+The restored --nocapture log establishes four unhandled TexturesDelta destructor
+panics (branding, neutral-cell, connection, font-retention tests), not their
+previously inferred feature assertion failures. The shortcut test separately
+compares cached PLACEHOLDER with muted ink; its assertion plus destructor panic
+causes the observed 0xc0000409 abort. Earlier diagnosis is superseded by this log.
+
+Consulted localization, ui-shell and exact donor-audit mappings; fully reread
+Pealayer src/ui/i18n.rs, src/ui/menu.rs, src/ui/palette.rs and src/branding.rs.
+Actual headless donor tests drain texture deltas before assertions. Read locked
+epaint 0.36.2 TexturesDelta Drop, TextShape color fields and tessellator resolution,
+plus egui FullOutput::drop_without_applying_deltas. No new dependency or donor edit.
+Restore that ownership contract in five existing Rust test modules; check shortcut
+ink through real tessellated glyph vertices rather than the galley placeholder.
+All production styling/font registration and original behavioral assertions stay
+intact. New native_render_lifecycle_test.mjs prevents this source-level regression
+and is mandatory in source quality; it does not execute Rust or certify pixels.
+
+No additional donor file is certified by these test repairs. Coverage remains
+77/4237 complete, 4160 pending, 46 gaps; RayanLamp 13/2349 complete, 2336 pending.
+Current hostname probe cannot resolve ledboard.local; ASUS SSH localhost:1022
+refuses at banner exchange. No board write, app replacement or unrelated build.
+Actual native re-execution, package and deployed physical/UI acceptance remain
+open. The existing cache budget must remain enforced and CI is not waited on.
+
+Complete local source-quality suite passes, including the new lifecycle guard
+and exact comparison regeneration/check. All five Rust modules parse with the
+actual Cargo edition 2024 using rustfmt stdout-only; this is not a typecheck.
+Test Plan passes and actual Test passes donor/crate gates, then refuses the
+canonical cache above 8 GiB before Cargo. Sixteen target/proof references across
+eight reviewed files/documents are selectively rebound with every literal anchor
+verified; no source hash refresh, donor-count inflation or new cache. The prior
+source's separate CodeQL run 38092457168 is now verified terminal success.
+
 ## Restored donor native test execution contract
 
 Previous goal turn made progress: source c814379 imported actual browser trace,

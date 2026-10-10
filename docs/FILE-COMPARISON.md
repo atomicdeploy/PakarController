@@ -308,7 +308,7 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 
 - Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=c2bc9c995b4c3717a6e66916f31cef5b8010730e146b4e4dfe8ee437a62c80a2; anchor=name: "🚀 Build · Test · Release"]`.
 - Target: `tools/build-desktop.ps1:30 [UTF8-LF sha256=86a89643a790223d6ad96221877a9491ba6a65a9f48649fc27c7885309c9e989; anchor=--test-threads=1]`.
-- Target: `tools/ci-checks.mjs:182 [UTF8-LF sha256=a8f227c5a469fb79d05c0fe807a522c8ccc3f3e4be5eb511109ad7a85dfcc8fb; anchor=export function runChecks]`.
+- Target: `tools/ci-checks.mjs:183 [UTF8-LF sha256=c977db5cfd2b27e38e1e792d2b10b460aa99fce9796bd0e3fe3d428ef2144a7c; anchor=export function runChecks]`.
 - Target: `tools/prepare-release.mjs:16 [UTF8-LF sha256=96c3a9f5fbc5dfd055a1b139b09271d92d19beaf9cc1cda3c83a88f266ee177e; anchor=export function firmwareManifest]`.
 - Retained: Actual donor branch/PR/tag/dispatch/merge-group triggers, concurrency policy, pinned actions without checkout credentials, health-before-build jobs, timeouts, Rust cache reuse, locked tests/builds, packaging, curated notes, manifest/checksums/provenance and aggregate results adapted to current Windows/ESP/AVR/Android targets.
 - Retained: Release content is gated on all builds, created as an immutable draft prerelease, with two correctly matched board pairs and raw HTTPS update manifests. Untrusted PRs do not execute publishing code with a write token.
@@ -319,7 +319,7 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 - Omitted/replaced code: `branch-tag and archive suffix creation, softprops update-existing release`. Disposition: **replaced**. Reason: User requests stable names without random/time suffixes. Version releases keep stable package names; release enumeration must succeed and an existing release is not overwritten.
 - Test-code evidence: `tests/build_storage_test.ps1:17 [UTF8-LF sha256=000880b19bea3b533ac88305f3d5967d87ae600d249980f20f3afc4aeebfff75; anchor=Actual donor serial test contract]`.
 - Test-code evidence: `tests/repository_governance_test.mjs:67 [UTF8-LF sha256=da232ac7efd7a41028424bffd0f08865fc8049b0a4f971faa74703da43b2d966; anchor=console.log('Repository governance]`.
-- Remaining: Complete failing Windows native tests/package and unexecuted draft publisher; restore useful additional native targets and optional compressed package/runtime verification. c814379 CI passes source, both firmware variants and Android preview but is not all-green or physical acceptance.
+- Remaining: Complete Windows native tests/package after headless texture lifecycle and painted-color test repairs, then validate the unexecuted draft publisher. Restore useful additional native targets and optional compressed package/runtime verification. 0c723f1 CI passes source, both firmware variants and Android preview but is not all-green or physical acceptance.
 
 ### Pealayer: `.github/workflows/codeql.yml`
 
@@ -510,10 +510,10 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 
 Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `be44ca91dfb08ce78fb377ccfcc4676676c05e6b36ed319c497365788ab264fe`.
 
-- Target: `desktop/src/branding.rs:63 [UTF8-LF sha256=c9f9d6c0269af0e1356e59428e2a7a4f1bf532737a8d2e214ea0530f485a0d3c; anchor=pub fn icon_data_from_bytes]`.
+- Target: `desktop/src/branding.rs:63 [UTF8-LF sha256=a16e879c4b7fba1154584e51822dba5bc2bb48ba9946270fb9b25d129e48bd18; anchor=pub fn icon_data_from_bytes]`.
 - Target: `desktop/src/brand_image.rs:25 [UTF8-LF sha256=ab71607dcde16d7af14b0a292982f902186dacf6b5b78b3f4c983e37464428e9; anchor=pub fn native_icon_bytes]`.
 - Target: `docs/BRANDING-PARITY.md:40 [UTF8-LF sha256=b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7; anchor=## Explicit unfinished useful code and reasons]`.
-- Target: `desktop/src/branding.rs:8 [UTF8-LF sha256=c9f9d6c0269af0e1356e59428e2a7a4f1bf532737a8d2e214ea0530f485a0d3c; anchor=pub fn sync_peer]`.
+- Target: `desktop/src/branding.rs:8 [UTF8-LF sha256=a16e879c4b7fba1154584e51822dba5bc2bb48ba9946270fb9b25d129e48bd18; anchor=pub fn sync_peer]`.
 - Target: `mobile/lib/main.dart:380 [UTF8-LF sha256=771361f85f85fade6d4fdd7e9532752249d4724482782bfd7b7ef1913a58b5b8; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
 - Target: `mobile/lib/application_artwork.dart:2 [UTF8-LF sha256=a1ee8fc15b0aa9111a5c416fcf74b3d05093b22e47b76d7744837f175f7b5ef4; anchor=const applicationArtworkBase64]`.
 - Retained: Actual icon_data_from_bytes imported unchanged; one embedded PNG supplies native/Web artwork without disk caches.
@@ -582,13 +582,13 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 
 Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `4ffdd81afbaa2f918cb572f11d1ec978b279ca0e263f9bfad83e99a59bc27781`.
 
-- Target: `desktop/src/ui/cell_table.rs:363 [UTF8-LF sha256=f1f54c749f8078443a3189c92cef8e6aaa19e39ab04e4a99a1aec4794cca5900; anchor=fn manager_selector(]`.
+- Target: `desktop/src/ui/cell_table.rs:363 [UTF8-LF sha256=88d23430ba97a525706fae20a108ffec6a8ab2d8485be6eaad2459bd5de45c3a; anchor=fn manager_selector(]`.
 - Target: `firmware/esp8266/src/WebUi.h:179 [UTF8-LF sha256=fb96849902aeba5fb7a3011aeded68101ff0912be4e175ee83e3a35c02177796; anchor=/* Fixed manager slots:]`.
 - Retained: Read all 952 donor lines through EOF. navigation_control's fixed allocation, clipped centered text and inside-stroke painting are adapted to manager_selector. Compact cell/row/state slots use the existing shared neutral animated cell_surface; state-dependent Button Frames cannot resize their text/content geometry. Selected widget metadata is retained explicitly.
 - Omitted/replaced code: `navigation_control's 80px minimum, left-aligned icon/title/metadata slots and selected bg_fill tint`. Disposition: **replaced**. Reason: A compact cell needs a centered number in 32x28; row/action slots are 96/104x28. The user requires neutral shared selection, not a tinted navigation side rail. Fixed text positions and inside strokes are preserved; existing side-rail helper remains unchanged.
 - Omitted/replaced code: `singleline_text_edit/workspace_overlay_layer/preferred_host/centered_default_rect/bounded_geometry/opaque frame/action buttons/action rows/navigation detail/section/compact_row/setting_row/scroll_column/fit_scroll and their donor tests`. Disposition: **pending**. Reason: Existing imported dialog helpers are present, but this scoped geometry fix does not certify each call site or host/resize/action/localization test. Useful generic code is not excluded; full consumer and test reconciliation remains issue #3 work.
 - Omitted/replaced code: `numeric_stepper/numeric_adjustment/adjust_numeric/numeric_slider_wheel/parse_numeric_paste/receive_numeric_paste/numeric_context_menu and seven pointer/paste/wheel tests`. Disposition: **pending**. Reason: Helpers already exist in the imported module; bounded input geometry, paste ownership, wheel tail suppression and context behavior need their actual donor runtime tests restored and controller settings coverage. Hover selector acceptance is not numeric-control parity.
-- Test-code evidence: `desktop/src/ui/cell_table.rs:1171 [UTF8-LF sha256=f1f54c749f8078443a3189c92cef8e6aaa19e39ab04e4a99a1aec4794cca5900; anchor=fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width()]`.
+- Test-code evidence: `desktop/src/ui/cell_table.rs:1171 [UTF8-LF sha256=88d23430ba97a525706fae20a108ffec6a8ab2d8485be6eaad2459bd5de45c3a; anchor=fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width()]`.
 - Test-code evidence: `tests/web_cell_table_test.mjs:11 [UTF8-LF sha256=420b8dfb17544ca9aa53204045d2e2b9fff993c98a225fc5eddb4a99adff5feb; anchor=Manager must not allocate state-dependent selectable Frames]`.
 - Remaining: Execute the added actual native painter test at narrow/wide widths with animation on/off, then capture/deploy through guarded workflows. Native Test is currently blocked by the canonical >8 GiB cache; Web checks are source/DOM-double evidence, not browser pixels or physical deployment.
 - Remaining: Complete the named generic dialog call-site/test reconciliation in issue #3; no whole-file behavioral equivalence or whole-project superiority claim.
@@ -597,19 +597,19 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 
 Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `811f1e08e7126932772c49da8aa9669ce8f47d4e2208c1ef6cde435dde20bdf4`.
 
-- Target: `desktop/src/ui/i18n.rs:6 [UTF8-LF sha256=9587bca5bd62d4e8827a8a4ccaabc81e5dd69289ce552e6f3929fd386e8c6ff8; anchor=pub(crate) fn configure_ui_fonts]`.
+- Target: `desktop/src/ui/i18n.rs:6 [UTF8-LF sha256=f44d0302f729f7e724b2d02c1ce1f94cf5915a1e7f111b911a68a63b8bbbac24; anchor=pub(crate) fn configure_ui_fonts]`.
 - Target: `desktop/src/ui/dialog.rs:18 [UTF8-LF sha256=b3786964dd0c375f0f73325a4046b3fc0e3967ace4e7e0c4f66b6f52d66eda47; anchor=pub fn singleline_text_edit]`.
 - Target: `desktop/src/ui/preferences.rs:102 [UTF8-LF sha256=545ba8ac309c796b1bd1dfd70eb7ca085f422e03b92fa4a5628906e723d49d1f; anchor=AppLanguage::Persian]`.
-- Target: `docs/PERSIAN-PARITY.md:35 [UTF8-LF sha256=2ef9e80bc76dbbee577dc5b8b31d61d61f699135ad78f868a90f94a43f0c615a; anchor=## Exact source-to-target mapping]`.
+- Target: `docs/PERSIAN-PARITY.md:41 [UTF8-LF sha256=a18930c387b54d6a2c3a7c8d998596637bdeb5d0c326738e931d1173d376cf6c; anchor=## Exact source-to-target mapping]`.
 - Retained: Actual donor platform/UI face loading, Vazirmatn and Phosphor registration, application dictionary, identity-preserving visual_text, script detection, input alignment and horizontal/vertical direction helpers retained and wired into real native controls.
 - Retained: Monospace Persian fallback and preference-driven priority refresh added without discarding later widget font registrations. Actual donor contextual glyph test adapted to both families; saved Unicode and peer identifiers never manually reversed.
 - Omitted/replaced code: `Media playback, cue/timeline reveal and keyframe-specific dictionary keys`. Disposition: **not-applicable**. Reason: They describe explicitly excluded media business; no corresponding controller surface exists. No generic UI/tooling capability is excluded on that basis.
 - Omitted/replaced code: `Manage folders, Manage folder, New folder, Expand folders, Collapse folders, Move to folder, Delete folder, Confirm delete, Channels will be moved to Ungrouped, pending folder change and attached-board folder configuration copy`. Disposition: **pending**. Reason: Generic grouping behavior is useful but not yet integrated with actual board cell/group contracts. No fake folder actions or completion claim; retain on issue #4 for real grouping and localized acceptance.
-- Omitted/replaced code: `Separate ttf_parser coverage assertions and exhaustive native surface translations`. Disposition: **pending**. Reason: Avoid introducing a duplicate font parser dependency: actual renderer glyph/contextual tests are adapted and pass individually in c814379 Windows CI, but language-change font retention fails and the harness aborts. Additional Unicode, production rendering, device-settings and status/transport copy remain unaccepted.
-- Test-code evidence: `desktop/src/ui/i18n.rs:1434 [UTF8-LF sha256=9587bca5bd62d4e8827a8a4ccaabc81e5dd69289ce552e6f3929fd386e8c6ff8; anchor=fn contextual_persian_in_labels_and_monospace_inputs]`.
-- Test-code evidence: `desktop/src/ui/i18n.rs:1396 [UTF8-LF sha256=9587bca5bd62d4e8827a8a4ccaabc81e5dd69289ce552e6f3929fd386e8c6ff8; anchor=fn changing_language_preserves_widget_fonts]`.
+- Omitted/replaced code: `Separate ttf_parser coverage assertions and exhaustive native surface translations`. Disposition: **pending**. Reason: Avoid introducing a duplicate font parser dependency: actual renderer glyph/contextual tests pass individually in Windows CI. Uncaptured 0c723f1 logs identify the retention failure as unhandled headless texture deltas, not a font assertion; execution after the ownership repair remains pending. Additional Unicode, production rendering, device-settings and status/transport copy remain unaccepted.
+- Test-code evidence: `desktop/src/ui/i18n.rs:1434 [UTF8-LF sha256=f44d0302f729f7e724b2d02c1ce1f94cf5915a1e7f111b911a68a63b8bbbac24; anchor=fn contextual_persian_in_labels_and_monospace_inputs]`.
+- Test-code evidence: `desktop/src/ui/i18n.rs:1396 [UTF8-LF sha256=f44d0302f729f7e724b2d02c1ce1f94cf5915a1e7f111b911a68a63b8bbbac24; anchor=fn changing_language_preserves_widget_fonts]`.
 - Test-code evidence: `tests/localization_test.mjs:40 [UTF8-LF sha256=c410cf90ffb005bd7a62735ca70711407f643bca9c81411e00e04e98fbcabcab; anchor=Peer text identical to a dictionary key]`.
-- Remaining: Resolve failed font-retention assertion and aborted native harness under the restored donor serial/isolation contract; rerun complete tests and inspect real Persian inputs/menus/dialogs. Local cache budget remains enforced; finish application-copy and generic grouping parity.
+- Remaining: Rerun complete native tests after restoring actual donor headless texture ownership and rendered-color assertions; font retention is not accepted from source checks. Inspect real Persian inputs/menus/dialogs. Local cache budget remains enforced; finish application-copy and generic grouping parity.
 
 ### Pealayer: `src/ui/icons.rs`
 
@@ -630,10 +630,10 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 
 Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `18e255a5ccc65dfa0588eac10283c7c1f5fe33ea63bb3e07bd599e30a0cf19c3`.
 
-- Target: `desktop/src/ui/menu.rs:9 [UTF8-LF sha256=ec5be094ec81858516c879fb5ea3e42f97490a65a24f8ed9d74f00aa2374bb3f; anchor=pub fn top_menu_button<R>(]`.
+- Target: `desktop/src/ui/menu.rs:9 [UTF8-LF sha256=d8a24c0b6330ee118c5c74ac8d966d2c53b91570e084d25b214466ae7148270e; anchor=pub fn top_menu_button<R>(]`.
 - Target: `desktop/src/ui/shell.rs:449 [UTF8-LF sha256=412b52fc56b9958c091a0e445544ecee6a36abe63f68c915bba7f4659966e75e; anchor=menu::top_menu_button(ui, crate::ui::i18n::text("File")]`.
-- Target: `desktop/src/ui/connection_controls.rs:38 [UTF8-LF sha256=3216d5dde3a9bb6a8386cec0986140fdc2da5e1130c0cab17172d728b214fb76; anchor=pub fn websocket(]`.
-- Target: `docs/NATIVE-MENU-COMPARISON.md:32 [UTF8-LF sha256=a86271d68a6553075026ad4e1ffef59c44f87074401b7c2936d9cd539d032fb9; anchor=## Exact donor menu mapping and remaining decisions]`.
+- Target: `desktop/src/ui/connection_controls.rs:38 [UTF8-LF sha256=7ae6fa52982d23b58928cab8fd5d2019bc777b2a44be815718f9e8b3a92c21f6; anchor=pub fn websocket(]`.
+- Target: `docs/NATIVE-MENU-COMPARISON.md:32 [UTF8-LF sha256=0eedd0936bf906d845e03cbba57667a4f1d725b33466b5cbccb906cc3eed80a1; anchor=## Exact donor menu mapping and remaining decisions]`.
 - Retained: Actual top_menu_button body imported with only application state ID/public visibility adaptation; all four production menu headings use active-menu sibling hover switching.
 - Retained: Actual Button::shortcut_text idiom replaces space-padded primary labels in all six shortcut rows; separate right-aligned muted atoms are supplied by the same egui 0.36.2 dependency. Existing dispatch/Phosphor submenu retained; user-requested height policy unchanged.
 - Retained: Actual connection selector/persist-on-change and custom OS hardware-path fallback adapted to independent WebSocket and USB popup controls. Lazy factual enumeration, reconnect/disconnect and route actions added; complete donor lifecycle remains pending.
@@ -644,8 +644,8 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 - Omitted/replaced code: `estop_button, draw_estop_release_dialog and draw shared-latch readiness/hide cluster`. Disposition: **pending**. Reason: Generic vector control, authoritative readiness, release confirmation/cancel/skip preference and synchronized remote release remain useful safety imports. Remove only media pause; adapt actual hardware latch contracts and tests.
 - Omitted/replaced code: `draw connection requested/connecting/connected status/manual discovery and remote connection/browser/download actions`. Disposition: **pending**. Reason: Pakar has connection/typed actions and firmware tools, but full donor lifecycle/readiness/authenticated endpoint adaptation is not compared or accepted. Media remote browser cannot be blindly substituted for firmware management.
 - Omitted/replaced code: `DropdownUiExt selected workspace/language/direction entries and new unified dropdown lifecycle`. Disposition: **pending**. Reason: Live donor tracked bytes were reread completely. They now depend on another task's uncommitted src/ui/dropdown.rs, outside the tracked inventory. Pakar retains prior imported mechanisms, but does not claim that new dependency, consumer migration or runtime tests. Preserve donor work and import after exact tracked provenance and native acceptance.
-- Test-code evidence: `desktop/src/ui/menu.rs:43 [UTF8-LF sha256=ec5be094ec81858516c879fb5ea3e42f97490a65a24f8ed9d74f00aa2374bb3f; anchor=fn shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes()]`.
-- Test-code evidence: `desktop/src/ui/menu.rs:125 [UTF8-LF sha256=ec5be094ec81858516c879fb5ea3e42f97490a65a24f8ed9d74f00aa2374bb3f; anchor=fn sibling_hover_switches_only_an_already_open_menu_and_clears_closed_state()]`.
+- Test-code evidence: `desktop/src/ui/menu.rs:67 [UTF8-LF sha256=d8a24c0b6330ee118c5c74ac8d966d2c53b91570e084d25b214466ae7148270e; anchor=fn shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes()]`.
+- Test-code evidence: `desktop/src/ui/menu.rs:154 [UTF8-LF sha256=d8a24c0b6330ee118c5c74ac8d966d2c53b91570e084d25b214466ae7148270e; anchor=fn sibling_hover_switches_only_an_already_open_menu_and_clears_closed_state()]`.
 - Test-code evidence: `tests/native_menu_test.mjs:12 [UTF8-LF sha256=80ac61041de322c2c0e2c0fad379a74e6e89d02724f1b80f2d9fa6200c7ef937; anchor=actual donor helper must match after application ID/visibility/whitespace adaptation]`.
 - Remaining: Restore remaining useful generic menu contracts above against actual dependencies; see exact function-level mapping in NATIVE-MENU-COMPARISON.md. Native CI paint/pointer tests and running-app visual acceptance are separate from source guards.
 - Remaining: Latest donor checkout is dirty; reviewed original-byte hash binds observed tracked source only. Audit/import the new dropdown dependency and consumers without overwriting its owner.
@@ -666,7 +666,7 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. Original-byte SHA-256: `7004bd7e936875b4d5328f10f482aa492827117251fce69e8ebb34561ff90663`.
 
 - Target: `desktop/src/ui/status_bar.rs:44 [UTF8-LF sha256=ac3ad2971427a8b0b16e50eb1763d87080871df2a6ba88ce238e2eef5bbf7b26; anchor=fn hide_menu(]`.
-- Target: `desktop/src/ui/connection_controls.rs:59 [UTF8-LF sha256=3216d5dde3a9bb6a8386cec0986140fdc2da5e1130c0cab17172d728b214fb76; anchor=pub fn usb(]`.
+- Target: `desktop/src/ui/connection_controls.rs:59 [UTF8-LF sha256=7ae6fa52982d23b58928cab8fd5d2019bc777b2a44be815718f9e8b3a92c21f6; anchor=pub fn usb(]`.
 - Target: `docs/CONNECTION-CONTROLS.md:1 [UTF8-LF sha256=002ee046e9c206a4cc241ad2b9033971b4933959d8e14f43958848403879f21d; anchor=# Front-panel transport dropdowns]`.
 - Retained: Actual per-item hide context menus, persistent visibility choices, bar-level restore menu and small truncating message labels adapted in Pakar status_bar.rs. Transport controls remain usable offline without claiming hardware readiness.
 - Omitted/replaced code: `current_status_message update-manager priority and OSD lifetime; fullscreen exclusion; workspace label; i18n/RTL layout`. Disposition: **pending**. Reason: Pakar retains a status message and item menu, but does not yet share authoritative update/OSD lifetime, workspace text or localized/RTL/fullscreen policy. Restore actual dependencies and test rather than claim full-file parity.
@@ -675,7 +675,7 @@ Verdict: **parity-gap**. Revision: `9f605ade0c8056d56816f1dffcdf04c3e0a27fbc`. O
 - Omitted/replaced code: `Pealayer hardcoded connection dot RGB`. Disposition: **replaced**. Reason: Pakar transport controls use its existing shared palette green/current text roles; menu state stays readable in both themes without tinting unrelated hardware controls.
 - Omitted/replaced code: `UI render-rate toggle/context policy and latest dropdown-backed FPS menu; authoritative physical RGB without double dimming`. Disposition: **pending**. Reason: Live donor tracked bytes were reread completely. They now depend on another task's uncommitted src/ui/dropdown.rs, outside the tracked inventory. Pakar retains prior imported mechanisms, but does not claim that new dependency, consumer migration or runtime tests. Preserve donor work and import after exact tracked provenance and native acceptance.
 - Test-code evidence: `tests/connection_controls_test.mjs:1 [UTF8-LF sha256=4824489d60f705fccda52d3166ca487a1ea4d1721d0a0814706747fb7033aaf2; anchor=Source wiring guard only.]`.
-- Test-code evidence: `desktop/src/ui/connection_controls.rs:112 [UTF8-LF sha256=3216d5dde3a9bb6a8386cec0986140fdc2da5e1130c0cab17172d728b214fb76; anchor=fn offline_dropdowns_open_independently_and_usb_enumerates_only_when_open()]`.
+- Test-code evidence: `desktop/src/ui/connection_controls.rs:112 [UTF8-LF sha256=7ae6fa52982d23b58928cab8fd5d2019bc777b2a44be815718f9e8b3a92c21f6; anchor=fn offline_dropdowns_open_independently_and_usb_enumerates_only_when_open()]`.
 - Remaining: Run native popup/pointer tests, deploy and capture actual controls; restore useful generic status lifetime/readiness/localization contracts in issues #3/#10.
 - Remaining: Latest donor checkout is dirty; reviewed original-byte hash binds observed tracked source only. Audit/import the new dropdown dependency and consumers without overwriting its owner.
 
