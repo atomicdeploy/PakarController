@@ -2,7 +2,9 @@
 
 Whole-repository superiority is **not established**. This report exposes retained code, scoped improvements, omissions and gaps; it does not turn missing reviews into exclusions.
 
-Inventory: 1868 files; 39 complete source-file comparisons; 1829 pending comparisons; 22 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
+Routing: 1338 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
+
+Inventory: 1868 files; 39 complete source-file comparisons; 1829 pending comparisons; 21 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
 Every inventoried path, source revision/hash, target/proof file and line, omitted code, disposition and concrete reason is in `file-comparison.csv`. Hash-bound manual decisions are in `file-comparison-evidence.json`. Donor SHA-256 values bind original bytes; target/proof SHA-256 values bind UTF-8 without BOM with LF newlines. Anchors are recomputed into exact line numbers. Test-code presence is not test execution; execution receipts are in `FILE-COMPARISON-RECEIPTS.md`.
 
@@ -13,7 +15,7 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 | ControllerBoardMini | 19 | 0 | 19 | 0 |
 | ControllerBoardMini/Puzzles | 18 | 12 | 6 | 9 |
 | PCController | 1207 | 6 | 1201 | 0 |
-| Pealayer | 493 | 17 | 476 | 9 |
+| Pealayer | 493 | 17 | 476 | 8 |
 | PU850-ESP | 109 | 4 | 105 | 4 |
 | PuzzleBoard | 22 | 0 | 22 | 0 |
 
@@ -252,7 +254,7 @@ Verdict: **equivalent-file**. Revision: `a54933aa7d0c05a058045dc9cd21b1b7fbc7378
 
 Verdict: **parity-gap**. Revision: `a54933aa7d0c05a058045dc9cd21b1b7fbc7378e`. Original-byte SHA-256: `3fa94f177cf2a8f2fd1b8dae130182928d2d7e290d49aa37d902f8dfa7a5df70`.
 
-- Target: `docs/REUSE-PREFLIGHT.md:33 [UTF8-LF sha256=7eff42cac0a2320ae4634163e4c1efa0688af2f6132b041b4a4d2af1f365e2b4; anchor=Mandatory sequence on every task]`.
+- Target: `docs/REUSE-PREFLIGHT.md:42 [UTF8-LF sha256=654a959c458f85ef420740fa99e15aba07f08fde0f7a3f7e19fd05b8a3536948; anchor=Mandatory sequence on every task]`.
 - Retained: Actual canonical-cache/stable-staging/preservation/blocked-operation and separate runtime-acceptance guidance read and adopted in mandatory continuation policy and tooling.
 - Omitted/replaced code: `Historical Pealayer paths, exact relocation/cleanup/deployment/media-clock events`. Disposition: **not-applicable**. Reason: These are donor historical facts, not Pakar installations. Copying them would misrepresent ownership or completed cleanup.
 - Omitted/replaced code: `Same-volume rename/hardlink-aware relocation and reusable host profile/peer updater workflow`. Disposition: **pending**. Reason: These are useful generic mechanisms but no Pakar cache relocation or complete updater deployment is implemented by this policy. Current blocked cleanup stays blocked; no rerouting through another shell.
@@ -272,13 +274,14 @@ Verdict: **scoped-improvement**. Revision: `a54933aa7d0c05a058045dc9cd21b1b7fbc7
 
 ### Pealayer: `scripts/check-crate-boundary.mjs`
 
-Verdict: **parity-gap**. Revision: `a54933aa7d0c05a058045dc9cd21b1b7fbc7378e`. Original-byte SHA-256: `da9b469ac596e6eb1999e4d499742a51ebf289335285549569116c1124963e38`.
+Verdict: **scoped-improvement**. Revision: `a54933aa7d0c05a058045dc9cd21b1b7fbc7378e`. Original-byte SHA-256: `da9b469ac596e6eb1999e4d499742a51ebf289335285549569116c1124963e38`.
 
-- Target: `docs/REUSE-PREFLIGHT.md:73 [UTF8-LF sha256=7eff42cac0a2320ae4634163e4c1efa0688af2f6132b041b4a4d2af1f365e2b4; anchor=scripts/check-crate-boundary.mjs]`.
-- Retained: Entire source reviewed; single-crate contracts and duplicate resource linkage protection inventoried as reusable infrastructure, not media business.
-- Omitted/replaced code: `pealayer::startup::run and main.rs/lib.rs module intersection assertions`. Disposition: **pending**. Reason: Pakar has a single binary and no library crate today. The exact Pealayer startup symbol cannot compile here; adapt the generic duplication guard before introducing shared library/mobile contracts.
-- Omitted/replaced code: `MSVC winres library/bin duplicate resource.lib guard`. Disposition: **pending**. Reason: Pakar currently links resources through a binary build.rs. Retain this guard for a future crate-boundary change rather than treating it as irrelevant media code.
-- Remaining: Adapt/test a generic single-authority crate/resource boundary guard when the Pakar library split is introduced.
+- Target: `tools/check-crate-boundary.mjs:10 [UTF8-LF sha256=4a8fbcecaf424460c051de61d5e44658532ec64527460ce21d4d86ec95c0550e; anchor=export function checkCrateBoundary]`.
+- Retained: Actual donor module extraction/intersection, thin executable and MSVC duplicate resource linkage guards imported/adapted. Native build wrapper and CI execute this read-only guard before compiling.
+- Omitted/replaced code: `pealayer::startup::run and main.rs/lib.rs module intersection assertions`. Disposition: **replaced**. Reason: Pakar has one binary today. The adapted tool detects optional lib.rs and then enforces zero executable modules, module ownership and delegation to Pakar's library namespace. Today's single binary additionally rejects duplicate declarations without requiring a nonexistent Pealayer startup symbol.
+- Omitted/replaced code: `MSVC winres library/bin duplicate resource.lib guard`. Disposition: **replaced**. Reason: Both original resource.lib patterns are retained and run for today's binary as well as a future shared-library layout. No need to defer these guards until the architecture changes.
+- Test-code evidence: `tests/crate_boundary_test.mjs:4 [UTF8-LF sha256=ebf1cbc5410a3f67a7b704d17415801e68daeba961253f8b60a183fdb5fec17f; anchor=const single =]`.
+- Scoped advantage: Executes useful donor guards immediately on the current single-binary layout, rejects duplicate declarations, and automatically activates library ownership/thin-entry checks when a library appears. No compiler or generated fixture writes.
 
 ### Pealayer: `scripts/libmpv-windows.ps1`
 
@@ -289,7 +292,7 @@ Verdict: **parity-gap**. Revision: `a54933aa7d0c05a058045dc9cd21b1b7fbc7378e`. O
 - Omitted/replaced code: `Resolve-PealayerLibmpv, Copy-PealayerLibmpvRuntime and Set-PealayerLibmpvBuildEnvironment`. Disposition: **not-applicable**. Reason: Pakar is explicitly mpv-free; importing DLL aliases, GNU/MSVC mpv imports, LIBMPV_DIR and native linker flags would restore an excluded media dependency.
 - Omitted/replaced code: `Save-PealayerWindowsHostProfile generic host provenance and generated Cargo-config ownership protection`. Disposition: **pending**. Reason: Saved host/compiler/cache provenance and refusal to overwrite user-managed configuration remain useful. Pakar currently resolves its established cache/explicit override but does not persist this generic host profile.
 - Omitted/replaced code: `Program-root shared target default across separate source worktrees`. Disposition: **pending**. Reason: Pakar keeps its existing single canonical desktop/target cache without moving or duplicating it. A future managed-worktree build needs a shared Pakar-owned cache; copying Pealayer's owner path would corrupt ownership.
-- Test-code evidence: `tests/reuse_preflight_test.ps1:59 [UTF8-LF sha256=04307bc30d999071a7c2c0f3f1c9cc02f85ae3a9c5296ce31834f5261e0e4c58; anchor=Actual donor relative cache resolution]`.
+- Test-code evidence: `tests/reuse_preflight_test.ps1:72 [UTF8-LF sha256=a12ead0e223a41f5a4db2bf64a430c69e2518061ef3184a51fd71cfb9c3366f1; anchor=Actual donor relative cache resolution]`.
 - Remaining: Adapt generic saved host provenance/config ownership checks without mpv, and keep one owned cache if worktrees are later authorized.
 
 ### Pealayer: `scripts/package-probe-windows.ps1`
@@ -299,7 +302,7 @@ Verdict: **equivalent-file**. Revision: `a54933aa7d0c05a058045dc9cd21b1b7fbc7378
 - Target: `tools/package-probe-windows.ps1:1 [UTF8-LF sha256=f4516884990ad76c020fbc6534d902c4949abae0b48da8ea40c008afa44dfd4f; anchor=function Invoke-PackageProbe]`.
 - Retained: Byte-identical actual donor process-handle probe: no-shell hidden process, async redirected stdout, 30-second wait, explicit exit code, output return and Dispose. Optional staging probe calls this helper.
 - No production-code omission claimed for this reviewed file.
-- Test-code evidence: `tests/reuse_preflight_test.ps1:63 [UTF8-LF sha256=04307bc30d999071a7c2c0f3f1c9cc02f85ae3a9c5296ce31834f5261e0e4c58; anchor=Actual imported short-lived process stdout]`.
+- Test-code evidence: `tests/reuse_preflight_test.ps1:76 [UTF8-LF sha256=a12ead0e223a41f5a4db2bf64a430c69e2518061ef3184a51fd71cfb9c3366f1; anchor=Actual imported short-lived process stdout]`.
 - Remaining: Donor timeout throws without terminating its child. Full GUI/runtime package smoke remains separate from CLI identity.
 
 ### Pealayer: `scripts/package-windows.ps1`
@@ -321,7 +324,7 @@ Verdict: **parity-gap**. Revision: `a54933aa7d0c05a058045dc9cd21b1b7fbc7378e`. O
 
 Verdict: **parity-gap**. Revision: `a54933aa7d0c05a058045dc9cd21b1b7fbc7378e`. Original-byte SHA-256: `013e5c67e227ed851f8a3d26b27654e38c8816edca2965381bbb1b48d10a750d`.
 
-- Target: `tools/build-desktop.ps1:15 [UTF8-LF sha256=a3259ebf165f2b4953b41b115f7bbe5cf4105349646896ae202d3b9fd7421094; anchor=Get-PakarCargoTargetDirectory]`.
+- Target: `tools/build-desktop.ps1:17 [UTF8-LF sha256=a19f70ece48ba03f3c2dc7accfa4a4bb179b0c36f84e59aaaed386af7b5db734; anchor=Get-PakarCargoTargetDirectory]`.
 - Retained: Shared resolver call and locked native build flow mapped to Pakar wrapper. Existing canonical cache is reused; explicit Check/Test/Release and storage/reuse gates avoid unnecessary links.
 - Omitted/replaced code: `RustBin machine/user/toolchain executable fallback selection and rustc -vV host detection`. Disposition: **pending**. Reason: Pakar currently uses installed Cargo from PATH. Alternate host/toolchain executable fallback and recorded host triple are reusable infrastructure and remain unported.
 - Omitted/replaced code: `libmpv host resolution/environment/profile and DLL copy`. Disposition: **not-applicable**. Reason: These operations configure the excluded mpv renderer. Pakar uses its own mpv-free linked dependencies.

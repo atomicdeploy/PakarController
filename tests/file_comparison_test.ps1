@@ -1,8 +1,12 @@
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-$scratch = Join-Path ([IO.Path]::GetTempPath()) ('PakarController-comparison-test-' + [guid]::NewGuid())
-New-Item -ItemType Directory -Path $scratch | Out-Null
-Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'reuse_fixture/source.h') -Destination $scratch
+$scratch = Join-Path $root 'build/native/file-comparison-fixture'
+New-Item -ItemType Directory -Force -Path $scratch | Out-Null
+$fixtureSource = Join-Path $PSScriptRoot 'reuse_fixture/source.h'
+if (-not (Test-Path -LiteralPath (Join-Path $scratch 'source.h')) -or
+    (Get-FileHash -LiteralPath $fixtureSource).Hash -ne (Get-FileHash -LiteralPath (Join-Path $scratch 'source.h')).Hash) {
+    Copy-Item -LiteralPath $fixtureSource -Destination $scratch
+}
 $source = Join-Path $scratch 'source.h'
 $rawHash = (Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant()
 $text = [IO.File]::ReadAllText($source).Replace("`r`n", "`n")
@@ -39,10 +43,21 @@ function Reject([string]$name, [scriptblock]$mutate, [string]$pattern) {
 Save-Manifest (Fresh-Manifest)
 & (Join-Path $root 'tools/generate-file-comparison.ps1') @options | Out-Null
 $result = @(Import-Csv -LiteralPath $output)
+$beforeCheck = (Get-Item -LiteralPath $output).LastWriteTimeUtc
+& (Join-Path $root 'tools/generate-file-comparison.ps1') @options -Check | Out-Null
+if ((Get-Item -LiteralPath $output).LastWriteTimeUtc -ne $beforeCheck) { throw 'Read-only check wrote the ledger' }
+$checkBlocked = $false
+[IO.File]::WriteAllText($output, 'stale-report-fixture')
+try { & (Join-Path $root 'tools/generate-file-comparison.ps1') @options -Check | Out-Null }
+catch { $checkBlocked = $_.Exception.Message -match 'Committed comparison report is stale' }
+if (-not $checkBlocked -or [IO.File]::ReadAllText($output) -ne 'stale-report-fixture') { throw 'Check must reject stale report without silently rewriting it' }
+& (Join-Path $root 'tools/generate-file-comparison.ps1') @options | Out-Null
 if ($result.Count -ne 2 -or $result[0].comparison -ne 'equivalent-file' -or
     $result[1].comparison -ne 'pending-comparison' -or
     $result[1].omission_reason -notmatch 'No approved reason' -or
-    $result[0].target_mapping -notmatch ':\d+ \[UTF8-LF sha256=') {
+    $result[0].target_mapping -notmatch ':\d+ \[UTF8-LF sha256=' -or
+    $result[1].concerns -ne 'donor-audit: specialist routing pending' -or
+    $result[1].tracking_issues -notmatch '/issues/3') {
     throw 'Coverage, explicit pending status or exact line reference lost'
 }
 $blocked = $false

@@ -2,9 +2,11 @@
 param(
     [string]$LedgerPath = (Join-Path $PSScriptRoot '../docs/legacy-source-ledger.csv'),
     [string]$EvidencePath = (Join-Path $PSScriptRoot '../docs/file-comparison-evidence.json'),
+    [string]$IndexPath = (Join-Path $PSScriptRoot '../docs/reuse-capabilities.json'),
     [string]$OutputPath = (Join-Path $PSScriptRoot '../docs/file-comparison.csv'),
     [string]$ReportPath = (Join-Path $PSScriptRoot '../docs/FILE-COMPARISON.md'),
     [string]$TargetRoot = (Join-Path $PSScriptRoot '..'),
+    [switch]$Check,
     [switch]$RequireComplete
 )
 $ErrorActionPreference = 'Stop'
@@ -12,6 +14,7 @@ $targetDirectory = [IO.Path]::GetFullPath($TargetRoot).TrimEnd('\','/')
 function Write-ChangedReport([string]$Path, [string]$Text) {
     $full = [IO.Path]::GetFullPath($Path)
     if (-not (Test-Path -LiteralPath $full) -or [IO.File]::ReadAllText($full).Replace("`r`n","`n") -ne $Text) {
+        if ($Check) { throw "Committed comparison report is stale: $Path; regenerate after explicit rereview." }
         [IO.File]::WriteAllText($full, $Text, [Text.UTF8Encoding]::new($false))
     }
 }
@@ -32,6 +35,8 @@ function Resolve-Target([string]$relative) {
     return $full
 }
 $manifest = Get-Content -LiteralPath $EvidencePath -Raw | ConvertFrom-Json
+$capabilities = Get-Content -LiteralPath $IndexPath -Raw | ConvertFrom-Json
+if ($capabilities.schema -ne 1) { throw 'Unsupported reuse capability index' }
 if ($manifest.schema -ne 1 -or $manifest.target_hash_encoding -ne 'UTF8-without-BOM-LF') { throw 'Unsupported comparison schema or target hash encoding' }
 $evidence = @{}
 $knownVerdicts = @('equivalent-file', 'equivalent-behavior', 'scoped-improvement', 'parity-gap')
@@ -75,9 +80,14 @@ $rows = foreach ($source in (Import-Csv -LiteralPath $LedgerPath)) {
     if ($seen.ContainsKey($key)) { throw "Duplicate inventoried source: $key" }
     $seen[$key] = $true
     $entry = $evidence[$key]
+    $routes = @($capabilities.concerns | Where-Object {
+        $_.id -ne 'donor-audit' -and $source.origin -in $_.origins -and $source.path -match $_.path_pattern
+    })
     if ($entry -and ($source.availability -ne 'present' -or $entry.sha256 -ne $source.sha256)) { throw "Donor hash changed or source absent: $key" }
     [pscustomobject][ordered]@{
         origin=$source.origin; path=$source.path; revision=$source.revision; source_sha256=$source.sha256
+        concerns=$(if ($routes.Count) { $routes.id -join ' | ' } else { 'donor-audit: specialist routing pending' })
+        tracking_issues=(@(3) + @($routes.issue) | Sort-Object -Unique | ForEach-Object { "https://github.com/atomicdeploy/PakarController/issues/$_" }) -join ' | '
         comparison= $(if ($entry) { $entry.verdict } else { 'pending-comparison' })
         source_read=$(if ($entry) { 'complete' } else { 'not-certified-by-this-comparison' })
         target_mapping=$(if ($entry) { ($entry.targets | ForEach-Object { Format-Reference $_ }) -join ' | ' } else { '' })
@@ -91,17 +101,20 @@ $rows = foreach ($source in (Import-Csv -LiteralPath $LedgerPath)) {
     }
 }
 foreach ($key in $evidence.Keys) { if (-not $seen.ContainsKey($key)) { throw "Comparison source omitted from inventory: $key" } }
-New-Item -ItemType Directory -Force -Path (Split-Path -Parent $OutputPath) | Out-Null
+if (-not $Check) { New-Item -ItemType Directory -Force -Path (Split-Path -Parent $OutputPath) | Out-Null }
 Write-ChangedReport $OutputPath ((($rows | ConvertTo-Csv -NoTypeInformation) -join "`n") + "`n")
 $rows | Group-Object origin,comparison | Sort-Object Name | Select-Object Name,Count | Format-Table -AutoSize
 $pending = @($rows | Where-Object comparison -eq 'pending-comparison').Count
 $gaps = @($rows | Where-Object comparison -eq 'parity-gap').Count
+$auditOnly = @($rows | Where-Object concerns -eq 'donor-audit: specialist routing pending').Count
 Write-Host "$($rows.Count) files accounted for; $($evidence.Count) hash-bound comparisons; $pending pending; $gaps known parity gaps. Test-code anchors are not test execution or physical proof."
 if ($ReportPath) {
     $report = [Collections.Generic.List[string]]::new()
     $report.Add('# PakarController donor comparison')
     $report.Add('')
     $report.Add('Whole-repository superiority is **not established**. This report exposes retained code, scoped improvements, omissions and gaps; it does not turn missing reviews into exclusions.')
+    $report.Add('')
+    $report.Add("Routing: $auditOnly paths have no specialist capability match. They remain visible through ``consult-reuse.ps1 -Concern donor-audit`` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.")
     $report.Add('')
     $report.Add("Inventory: $($rows.Count) files; $($evidence.Count) complete source-file comparisons; $pending pending comparisons; $gaps compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.")
     $report.Add('')
@@ -139,7 +152,7 @@ if ($ReportPath) {
     $report.Add('Every pending path has its own CSV row. Its omission reason explicitly says there is no approved reason to leave it out. Prior keyword screening or an unbound historical adaptation note is not accepted as behavior proof. This includes all still-pending PuzzleBoard/40LED variants and ControllerBoardMini legacy files, plus unreviewed Pealayer/PCController/PU850 files, assets, dependencies, tests and scripts. Earlier focused variant notes remain useful routing evidence, not complete comparative certification.')
     $report.Add('')
     $report.Add('File-by-file checklist: https://github.com/atomicdeploy/PakarController/issues/3. Master production acceptance: https://github.com/atomicdeploy/PakarController/issues/2. Run `pwsh -File tools/generate-file-comparison.ps1 -RequireComplete` to enforce the comparison gate. It must fail while any pending comparison or known source parity gap remains. Physical, deployment, visual and all-surface acceptance are separate gates even after this one passes.')
-    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ReportPath) | Out-Null
+    if (-not $Check) { New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ReportPath) | Out-Null }
     Write-ChangedReport $ReportPath (($report -join "`n") + "`n")
 }
 if ($RequireComplete -and ($pending -or $gaps)) { throw "Superiority certification blocked: $pending un-compared files and $gaps known parity gaps." }

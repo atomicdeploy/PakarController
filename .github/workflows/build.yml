@@ -75,11 +75,13 @@ jobs:
           node tests/boot_audio_test.mjs
           pwsh -File tools/check-reuse-ledger.ps1
           pwsh -File tests/reuse_ledger_test.ps1
-          pwsh -File tools/generate-file-comparison.ps1
+          pwsh -File tools/generate-file-comparison.ps1 -Check
           pwsh -File tests/file_comparison_test.ps1
           pwsh -File tools/verify-versions.ps1
           pwsh -File tests/reuse_preflight_test.ps1
           pwsh -File tests/build_storage_test.ps1
+          node tools/check-crate-boundary.mjs
+          node tests/crate_boundary_test.mjs
           pwsh -File tools/build-desktop.ps1 -Mode Test
           pwsh -File tools/build-desktop.ps1 -Mode Release
           node tests/device_cli_test.mjs

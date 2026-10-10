@@ -1,6 +1,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)][string]$Concern,
+    [string]$Origin,
+    [string]$SourcePath,
     [string]$LedgerPath=(Join-Path $PSScriptRoot '../docs/legacy-source-ledger.csv'),
     [string]$EvidencePath=(Join-Path $PSScriptRoot '../docs/file-comparison-evidence.json'),
     [string]$IndexPath=(Join-Path $PSScriptRoot '../docs/reuse-capabilities.json'),
@@ -18,6 +20,8 @@ $taskRoute=$taskMatches[0]
 $taskLedger=@(Import-Csv -LiteralPath $LedgerPath)
 $taskEvidence=Get-Content -LiteralPath $EvidencePath -Raw | ConvertFrom-Json
 $taskSelected=@($taskLedger | Where-Object {$_.origin -in $taskRoute.origins -and $_.path -match $taskRoute.path_pattern})
+if($Origin){$taskSelected=@($taskSelected | Where-Object origin -eq $Origin)}
+if($SourcePath){$taskSelected=@($taskSelected | Where-Object path -eq $SourcePath)}
 if(-not $taskSelected.Count){throw "No inventoried donors for $Concern"}
 $taskSeen=@{}
 foreach($taskRow in $taskLedger){
@@ -46,6 +50,10 @@ foreach($taskOrigin in $taskRoute.origins){
 $taskRows=@(foreach($taskRow in $taskSelected){
     $taskKey="$($taskRow.origin)|$($taskRow.path)"
     $taskReview=$taskReviewed[$taskKey]
+    $taskSpecialists=@($taskIndex.concerns | Where-Object {
+        $_.id -ne 'donor-audit' -and $taskRow.origin -in $_.origins -and $taskRow.path -match $_.path_pattern
+    })
+    $taskCurrentReview=$taskReview -and $taskReview.sha256 -eq $taskRow.sha256 -and $taskRow.availability -eq 'present'
     $taskLive='unavailable'
     if($DonorRoots.ContainsKey($taskRow.origin) -and (Test-Path -LiteralPath $DonorRoots[$taskRow.origin])){
         $taskSourceRoot=[IO.Path]::GetFullPath($DonorRoots[$taskRow.origin]).TrimEnd('\','/')
@@ -55,9 +63,19 @@ $taskRows=@(foreach($taskRow in $taskSelected){
             elseif((Get-FileHash -LiteralPath $taskSource -Algorithm SHA256).Hash.ToLowerInvariant() -ne $taskRow.sha256){'changed'}else{'matches-snapshot'}
     }
     [pscustomobject]@{Key=$taskKey;SnapshotRevision=$taskRow.revision;SourceSHA256=$taskRow.sha256;
-        Comparison=if($taskReview){$taskReview.verdict}else{'pending-comparison'};
+        Comparison=if($taskCurrentReview){$taskReview.verdict}elseif($taskReview){'stale-comparison'}else{'pending-comparison'};
+        SourceRead=if($taskCurrentReview){$taskReview.source_read}elseif($taskReview){'stale'}else{'not-certified'};
+        Availability=$taskRow.availability;
+        SpecialistConcerns=@($taskSpecialists | ForEach-Object {$_.id});
+        Routing=if($taskSpecialists.Count){'specialist-indexed'}else{'audit-only: specialist routing still pending'};
+        TrackingIssues=@(@(3)+@($taskSpecialists | ForEach-Object {$_.issue}) | Sort-Object -Unique);
         Live=$taskLive;Targets=if($taskReview){@($taskReview.targets.path)}else{@()};
-        Remaining=if($taskReview){@($taskReview.remaining)}else{@('Read complete donor and map applicable code; no approved exclusion.')}}
+        Preserved=if($taskReview){@($taskReview.preserved)}else{@()};
+        Omissions=if($taskReview){@($taskReview.omissions)}else{@()};
+        Proof=if($taskReview){@($taskReview.proof)}else{@()};
+        ProofMeaning='Hash-bound recorded test references, not execution/runtime acceptance; lookup does not validate targets unless Gate is requested.';
+        Remaining=if($taskReview -and -not $taskCurrentReview){@('Reread changed/absent donor; recorded comparison is stale.')+@($taskReview.remaining)}
+            elseif($taskReview){@($taskReview.remaining)}else{@('Read complete donor and map applicable code; no approved exclusion.')}}
 })
 if($RequireLive -and @($taskRows | Where-Object Live -ne 'matches-snapshot').Count){throw 'Live donor verification unavailable or stale; refresh before using it.'}
 if($Gate){
@@ -84,5 +102,8 @@ if($Gate){
     Meaning='Consultation/current mapped slice only; gaps and unreviewed files are NOT accepted exclusions or full feature parity.';
     Inventoried=$taskLedger.Count;Matched=$taskRows.Count;
     Pending=@($taskRows | Where-Object Comparison -eq 'pending-comparison').Count;
+    Stale=@($taskRows | Where-Object Comparison -eq 'stale-comparison').Count;
+    AuditOnly=@($taskRows | Where-Object {-not $_.SpecialistConcerns.Count}).Count;
+    OpenActions=@($taskRows | Where-Object {$_.Remaining.Count -gt 0}).Count;
     Gaps=@($taskRows | Where-Object Comparison -eq 'parity-gap').Count;
     Rows=$taskRows}

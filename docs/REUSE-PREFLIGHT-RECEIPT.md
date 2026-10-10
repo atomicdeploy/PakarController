@@ -57,3 +57,56 @@ sandbox-enforced; continuation instructions prohibit bypassing these gates.
 Earlier cleanup is still blocked; no old cache/SDK/source/app backup was removed.
 The running native app remains the prior cell-surface executable. Source/CI
 checks are not board, LAN, Android or whole-project production acceptance.
+
+## Exhaustive consultation and actual guard follow-up
+
+The earlier counts above describe the previous checkpoint, not current closure.
+This follow-up retains the SAME inventory and comparison authorities:
+1,868 files, 39 complete comparisons, 1,829 pending, now 21 reviewed gap files.
+Pealayer remains 493 files / 17 compared / 476 pending; eight reviewed gaps.
+Live canonical Pealayer is still clean at a54933aa7d0c05a058045dc9cd21b1b7fbc7378e;
+all 493 inventoried bytes match. No new complete-file read is claimed from lookup.
+
+Specific failure: specialist keyword routes cover only 530 distinct paths.
+The other 1,338 (including 309 Pealayer paths) were inventoried, not approved
+exclusions, but weren't returned by any specialist lookup. Added donor-audit
+to reach every path, plus exact Origin/SourcePath lookup, visible AuditOnly,
+read/availability, code/reason/disposition omissions, proof meaning, remaining
+actions and owning issues. Existing CSV now includes routes and issue links.
+Snapshot-stale comparisons are visibly stale even in ungated lookup.
+
+Actual recovery source consulted fully in this follow-up:
+
+- Pealayer docs/verification/LOCAL-WORKSPACE-HYGIENE.md: preserve the canonical
+  cache, stable candidate and owners; do not route around blocked cleanup.
+- Pealayer scripts/check-crate-boundary.mjs: adapted into
+  tools/check-crate-boundary.mjs, not merely copied into a plan. Its actual
+  module ownership/thin executable/resource guards now execute before native
+  builds and in CI. The original assumes a library; Pakar detects optional
+  lib.rs, applies shared ownership guards when present, and checks duplicate
+  declarations/resources today. Exact source/target/test hashes and reasons
+  replace this file's previous pending comparison in the same manifest.
+
+Locally executed: exhaustive/filtered lookup, stale-source comparison checks,
+all existing routing/gate/adversarial tests; comparison integrity and stale
+report rejection; storage plan/parser tests; actual single-binary guard and six
+negative crate/resource regression cases. Comparison -Check makes no writes and
+refuses stale committed reports; CI uses it. Repeated unchanged generation leaves
+CSV/report timestamps unchanged. Comparison fixtures use one owned stable
+build/native directory instead of creating a fresh GUID directory each run.
+
+Next-file worklist (all remain open in authoritative rows / issue #3):
+
+- scripts/build-metadata.rs and scripts/package-windows.ps1: embedded source
+  identity, package manifest and actual smoke tests, not just CLI --help.
+- scripts/libmpv-windows.ps1 and scripts/run-windows.ps1: generic host provenance,
+  saved configuration ownership, toolchain fallback and mpv-free runner.
+- scripts/new-icon-pack.ps1: inspect actual icon authoring pipeline before
+  replacing or claiming tool unavailability; currently only audit-routed.
+- scripts/verify-messaging.mjs: inspect actual event/action verification harness,
+  then map generic contracts; currently only audit-routed.
+- Pending UI/preferences/Web/mobile/PCController/PuzzleBoard/PU sources stay
+  open. This is not an import-completion or production claim.
+
+No compiler, donor build, SDK download, firmware flash, app replacement,
+cache removal or package copy was performed for this follow-up.

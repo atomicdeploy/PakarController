@@ -26,7 +26,7 @@
       "proof": [
         {
           "path": "tests/reuse_preflight_test.ps1",
-          "sha256": "04307bc30d999071a7c2c0f3f1c9cc02f85ae3a9c5296ce31834f5261e0e4c58",
+          "sha256": "a12ead0e223a41f5a4db2bf64a430c69e2518061ef3184a51fd71cfb9c3366f1",
           "anchor": "Actual imported short-lived process stdout"
         }
       ],
@@ -71,7 +71,7 @@
       "proof": [
         {
           "path": "tests/reuse_preflight_test.ps1",
-          "sha256": "04307bc30d999071a7c2c0f3f1c9cc02f85ae3a9c5296ce31834f5261e0e4c58",
+          "sha256": "a12ead0e223a41f5a4db2bf64a430c69e2518061ef3184a51fd71cfb9c3366f1",
           "anchor": "Actual donor relative cache resolution"
         }
       ],
@@ -89,7 +89,7 @@
       "targets": [
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "a3259ebf165f2b4953b41b115f7bbe5cf4105349646896ae202d3b9fd7421094",
+          "sha256": "a19f70ece48ba03f3c2dc7accfa4a4bb179b0c36f84e59aaaed386af7b5db734",
           "anchor": "Get-PakarCargoTargetDirectory"
         }
       ],
@@ -198,7 +198,7 @@
       "targets": [
         {
           "path": "docs/REUSE-PREFLIGHT.md",
-          "sha256": "7eff42cac0a2320ae4634163e4c1efa0688af2f6132b041b4a4d2af1f365e2b4",
+          "sha256": "654a959c458f85ef420740fa99e15aba07f08fde0f7a3f7e19fd05b8a3536948",
           "anchor": "Mandatory sequence on every task"
         }
       ],
@@ -230,34 +230,38 @@
       "path": "scripts/check-crate-boundary.mjs",
       "sha256": "da9b469ac596e6eb1999e4d499742a51ebf289335285549569116c1124963e38",
       "source_read": "complete",
-      "verdict": "parity-gap",
+      "verdict": "scoped-improvement",
       "preserved": [
-        "Entire source reviewed; single-crate contracts and duplicate resource linkage protection inventoried as reusable infrastructure, not media business."
+        "Actual donor module extraction/intersection, thin executable and MSVC duplicate resource linkage guards imported/adapted. Native build wrapper and CI execute this read-only guard before compiling."
       ],
       "targets": [
         {
-          "path": "docs/REUSE-PREFLIGHT.md",
-          "sha256": "7eff42cac0a2320ae4634163e4c1efa0688af2f6132b041b4a4d2af1f365e2b4",
-          "anchor": "scripts/check-crate-boundary.mjs"
+          "path": "tools/check-crate-boundary.mjs",
+          "sha256": "4a8fbcecaf424460c051de61d5e44658532ec64527460ce21d4d86ec95c0550e",
+          "anchor": "export function checkCrateBoundary"
         }
       ],
       "omissions": [
         {
           "code": "pealayer::startup::run and main.rs/lib.rs module intersection assertions",
-          "disposition": "pending",
-          "reason": "Pakar has a single binary and no library crate today. The exact Pealayer startup symbol cannot compile here; adapt the generic duplication guard before introducing shared library/mobile contracts."
+          "disposition": "replaced",
+          "reason": "Pakar has one binary today. The adapted tool detects optional lib.rs and then enforces zero executable modules, module ownership and delegation to Pakar's library namespace. Today's single binary additionally rejects duplicate declarations without requiring a nonexistent Pealayer startup symbol."
         },
         {
           "code": "MSVC winres library/bin duplicate resource.lib guard",
-          "disposition": "pending",
-          "reason": "Pakar currently links resources through a binary build.rs. Retain this guard for a future crate-boundary change rather than treating it as irrelevant media code."
+          "disposition": "replaced",
+          "reason": "Both original resource.lib patterns are retained and run for today's binary as well as a future shared-library layout. No need to defer these guards until the architecture changes."
         }
       ],
-      "remaining": [
-        "Adapt/test a generic single-authority crate/resource boundary guard when the Pakar library split is introduced."
+      "remaining": [],
+      "proof": [
+        {
+          "path": "tests/crate_boundary_test.mjs",
+          "sha256": "ebf1cbc5410a3f67a7b704d17415801e68daeba961253f8b60a183fdb5fec17f",
+          "anchor": "const single ="
+        }
       ],
-      "proof": [],
-      "improvement": ""
+      "improvement": "Executes useful donor guards immediately on the current single-binary layout, rejects duplicate declarations, and automatically activates library ownership/thin-entry checks when a library appears. No compiler or generated fixture writes."
     },
     {
       "origin": "Pealayer",

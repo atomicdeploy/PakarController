@@ -15,6 +15,17 @@ foreach($taskConcern in $taskIndex.concerns){
     Assert-Reuse ($taskLookup.Meaning -match 'NOT accepted') 'No lookup-as-acceptance claim'
 }
 Assert-Rejected {& $taskConsult -Concern invented -DonorRoots @{}} 'Unknown'
+$taskAll=& $taskConsult -Concern donor-audit -DonorRoots @{}
+Assert-Reuse ($taskAll.Matched -eq $taskAll.Inventoried) 'Exhaustive route must include every source, asset, script, test and absent blob'
+Assert-Reuse ($taskAll.AuditOnly -gt 0) 'Specialist routing gaps must remain visible'
+Assert-Reuse (@($taskAll.Rows | Where-Object {$_.Remaining.Count -eq 0 -and $_.Comparison -eq 'pending-comparison'}).Count -eq 0) 'Every unread file needs an action'
+$taskPealayer=& $taskConsult -Concern donor-audit -Origin Pealayer -DonorRoots @{}
+Assert-Reuse ($taskPealayer.Matched -eq 493) 'All Pealayer paths are reachable, not just keyword matches'
+$taskExact=& $taskConsult -Concern donor-audit -Origin Pealayer -SourcePath scripts/package-probe-windows.ps1 -DonorRoots @{}
+Assert-Reuse ($taskExact.Matched -eq 1 -and $taskExact.Rows[0].SourceRead -eq 'complete' -and $taskExact.Rows[0].Proof.Count -gt 0) 'Exact-file lookup exposes source read and proof'
+$taskOmissions=& $taskConsult -Concern donor-audit -Origin Pealayer -SourcePath scripts/libmpv-windows.ps1 -DonorRoots @{}
+Assert-Reuse ($taskOmissions.Rows[0].Omissions.Count -gt 0 -and $taskOmissions.Rows[0].Omissions[0].reason) 'Exact omission reasoning exposed, not just verdict'
+Assert-Rejected {& $taskConsult -Concern donor-audit -SourcePath 'scripts/*.ps1' -DonorRoots @{}} 'No inventoried donors'
 Assert-Rejected {& $taskConsult -Concern preferences -Gate -DonorRoots @{}} 'No reviewed gate'
 Assert-Rejected {& $taskConsult -Concern build-storage -RequireLive -DonorRoots @{}} 'unavailable or stale'
 foreach($taskConcern in @('build-storage','capture')){
@@ -42,6 +53,8 @@ Assert-Rejected {Invoke-Fixture} 'not fully reviewed'
 $taskChanged=$taskEntry | ConvertTo-Json -Depth 15 | ConvertFrom-Json
 $taskChanged.sha256='0'*64; Write-FixtureEvidence $taskChanged
 Assert-Rejected {Invoke-Fixture} 'not fully reviewed'
+$taskStale=& $taskConsult -Concern fixture -DonorRoots @{} -LedgerPath $taskLedgerPath -EvidencePath $taskEvidencePath -IndexPath $taskIndexPath
+Assert-Reuse ($taskStale.Stale -eq 1 -and $taskStale.Rows[0].SourceRead -eq 'stale') 'Ungated lookup cannot present changed snapshot as completed comparison'
 $taskChanged=$taskEntry | ConvertTo-Json -Depth 15 | ConvertFrom-Json
 $taskChanged.targets=@(); Write-FixtureEvidence $taskChanged
 Assert-Rejected {Invoke-Fixture} 'not fully reviewed'

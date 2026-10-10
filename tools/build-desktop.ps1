@@ -10,6 +10,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $taskReuse = & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+& node (Join-Path $PSScriptRoot 'check-crate-boundary.mjs') | ForEach-Object { Write-Host $_ }
+if ($LASTEXITCODE -ne 0) { throw 'Donor crate/resource guard failed before native build.' }
 . (Join-Path $PSScriptRoot 'windows-build-host.ps1')
 $taskManifest = Join-Path $taskRoot 'desktop/Cargo.toml'
 $taskTarget = Get-PakarCargoTargetDirectory -RepositoryRoot $taskRoot

@@ -29,6 +29,15 @@ a lack of available source or a reason to drop useful functionality.
   any matched source is unavailable/changed; without it CI can use the committed
   snapshot, explicitly marked live-unavailable. No cached result is presented
   as fresh physical or live-host acceptance.
+- Exhaustive lookup: `-Concern donor-audit` reaches EVERY inventoried path,
+  including assets, tests, scripts and absent sparse blobs. `-Origin Pealayer`
+  and literal `-SourcePath scripts/run-windows.ps1` narrow it without treating
+  unmatched keywords as omissions. Rows expose read/availability, specialist
+  routes, owning issues, preserved behavior, exact omission code/reason/disposition,
+  proof references and remaining actions. Stale snapshot comparisons are labeled
+  stale even outside a gate. `AuditOnly` counts paths without a specialist route;
+  those need routing/review, not an accepted exclusion. The existing comparison
+  CSV carries the same routes and issue links; there is no second decision ledger.
 
 ## Mandatory sequence on every task and unexpected issue
 
@@ -39,6 +48,10 @@ a lack of available source or a reason to drop useful functionality.
    Pending and Gaps, then read the exact donor and relevant dependencies in full.
    If the donor is available, check its live hash/revision; a stale mapping must
    be reread, not copied forward as proof.
+   Also consult `-Concern donor-audit -Origin DONOR` for inventory coverage;
+   specialist regexes alone miss unnamed implementation files. Use exact-file
+   lookup when a dependency/helper is found. Inspect omissions and proof meaning,
+   not just the verdict/count. Build a short next-file worklist from these rows.
 3. Before writing a replacement or claiming a platform/tool is unavailable,
    inspect relevant Pealayer/PCController/PU implementations and tests. Search
    additional inventoried files with rg when the index has insufficient coverage.
@@ -53,6 +66,12 @@ a lack of available source or a reason to drop useful functionality.
    consulted slice or passing source guards.
 6. Publish source/checkpoint and remaining work. Do not rebuild unrelated boards,
    APKs or donors, duplicate whole packages, or claim blocked cleanup completed.
+
+At an unexpected failure, stop retries and record the failed operation, exact
+donor files consulted, reusable mechanism selected, adaptation/rejection reason,
+test and remaining acceptance in REUSE-PREFLIGHT-RECEIPT.md and the owning issue.
+This applies to storage, screenshots, toolchain, UI behavior and deployment alike.
+Do not make the user rediscover a pending capability to get it onto the ledger.
 
 Build, stage and screenshot wrappers invoke their reviewed-slice gate before
 action, including build Plan. Other capability lookups expose unfinished work;
@@ -70,7 +89,7 @@ or future agent behavior: AGENTS.md makes donor lookup mandatory for those too.
 | scripts/package-windows.ps1 | Assert-PakarPackageSourceStable copied/adapted into shared helper; optional -ExpectedCommit checks before/after build or stage. No destructive Web restore copied. Full manifest/embedded identity still pending. |
 | scripts/run-windows.ps1 | Native wrapper now uses the actual adapted shared resolver and locked builds. Toolchain fallback selection and host-triple provenance remain pending. |
 | docs/verification/LOCAL-WORKSPACE-HYGIENE.md | Canonical cache, stable staging, owner checks, separate runtime acceptance and no blocked-operation rerouting become mandatory instructions. Historical donor paths/deployments are not Pakar facts. |
-| scripts/check-crate-boundary.mjs | Entire file read; exact pealayer::startup assertion needs a library absent from Pakar today. Generic duplicate-contract/module guard remains pending, not discarded. |
+| scripts/check-crate-boundary.mjs | tools/check-crate-boundary.mjs imports actual module extraction/intersection, thin-entry and resource guards. Adapts to today's single binary and automatically enables library ownership checks when lib.rs exists. Native wrapper and CI execute it; six negative fixture cases prevent regression. |
 
 mpv resolution/import conversion, DLL aliases, LIBMPV_DIR/user-PATH persistence
 and media downloader packaging are not applicable to the requested mpv-free
@@ -83,12 +102,18 @@ embedded source identity. -Probe currently tests CLI identity/exit/stdout, not
 GL startup, all runtime DLLs or full package smoke. Original probe timeout throws
 but does not terminate its child; that donor limitation remains explicit.
 
+CI runs comparison generation with `-Check`: stale committed reports fail instead
+of silently regenerating. Normal generation skips identical writes. Tiny comparison
+fixtures now reuse an owned stable build directory, not a new GUID directory each run.
+
 Example:
 
 ```powershell
 $reuse = ./tools/consult-reuse.ps1 -Concern build-storage -Gate
 $reuse.Rows | Format-Table Key,Comparison,Live
 $reuse.Rows | Where-Object Comparison -eq parity-gap | Select-Object Key,Remaining
+./tools/consult-reuse.ps1 -Concern donor-audit -Origin Pealayer
+./tools/consult-reuse.ps1 -Concern donor-audit -Origin Pealayer -SourcePath scripts/run-windows.ps1
 ./tools/consult-reuse.ps1 -Concern preferences
 ./tools/generate-reuse-ledger.ps1 -OnlyOrigin Pealayer
 ./tools/generate-file-comparison.ps1
