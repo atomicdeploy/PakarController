@@ -92,6 +92,15 @@ class PcContractTransport {
   }
   // USB responses need no REST retention; keep sequence quarantine separately.
   void releaseUsb(Receipt &entry) { if (entry.usb) entry.state = Missing; }
+  bool consume(uint32_t id, uint8_t opcode) {
+    for (auto &entry : slots_) {
+      if (entry.id != id || entry.usb || entry.request[0] != opcode) continue;
+      if (entry.state != Responded && entry.state != OutcomeUnknown) return false;
+      entry.state = Missing; // Keep sequence quarantine independently.
+      return true;
+    }
+    return false;
+  }
   static bool decodeHex(const char *text, uint8_t *output, uint8_t &length) {
     if (!text || !output) return false;
     const size_t size = strlen(text);

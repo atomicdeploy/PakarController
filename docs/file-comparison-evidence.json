@@ -623,7 +623,7 @@
       "proof": [
         {
           "path": "tests/pc_contract_test.cpp",
-          "sha256": "bf7a1f95873b8c97caa37d27a698a3c2fa8ad63bd290afebd39c23ff201a6275",
+          "sha256": "67b8e6bf62626b011b37e55130c4d6a8dab531e6d58d5fbf036c789e616841ef",
           "anchor": "void keysAndDisplay()"
         },
         {
@@ -674,7 +674,7 @@
       "proof": [
         {
           "path": "tests/pc_contract_test.cpp",
-          "sha256": "bf7a1f95873b8c97caa37d27a698a3c2fa8ad63bd290afebd39c23ff201a6275",
+          "sha256": "67b8e6bf62626b011b37e55130c4d6a8dab531e6d58d5fbf036c789e616841ef",
           "anchor": "void keysAndDisplay()"
         },
         {
@@ -1075,7 +1075,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54"
+          "sha256": "1c82a392e76e52ea4427be7cc97acd13f667703865c408f39168c38f0ce5020c"
         }
       ],
       "proof": [
@@ -1142,7 +1142,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54"
+          "sha256": "1c82a392e76e52ea4427be7cc97acd13f667703865c408f39168c38f0ce5020c"
         }
       ],
       "proof": [
@@ -1209,7 +1209,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54"
+          "sha256": "1c82a392e76e52ea4427be7cc97acd13f667703865c408f39168c38f0ce5020c"
         }
       ],
       "proof": [
@@ -1261,7 +1261,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54"
+          "sha256": "1c82a392e76e52ea4427be7cc97acd13f667703865c408f39168c38f0ce5020c"
         }
       ],
       "proof": [

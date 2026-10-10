@@ -139,3 +139,9 @@ polling 26410/1219 (829 bytes). ESP measurements unchanged.
 The e75a26a Linux firmware job built both boards but failed host compilation
 on an indirect offsetof dependency; AutomationStore now explicitly includes
 stddef.h. Android CI passed for e75a26a, not automatically for the follow-up.
+
+The f2e38a7 follow-up passed all three GitHub jobs (firmware, Windows desktop,
+Android preview) in run 38044317586. A later capacity fix adds authenticated
+terminal receipt consumption after client response validation; source tests
+exercise 32 transport cycles and 12 consecutive built-CLI settings reads.
+The new fix is not automatically certified by the earlier green run.

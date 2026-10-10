@@ -195,6 +195,18 @@ void transport() {
   mux.expire(3000,[&](auto &){++expired;});
   assert(!mux.enqueue(PC::Hello,nullptr,0,3001)); // Receipts remain readable for 60s.
   assert(mux.enqueue(PC::Hello,nullptr,0,63001));
+  T owned;
+  for(unsigned i=0;i<32;++i) {
+    const auto id=owned.enqueue(PC::Buzzer,p,4,1000+i); assert(id);
+    assert(!owned.consume(id,PC::Buzzer)); // Pending cannot be deleted.
+    auto *entry=owned.next(); owned.sent(*entry,true,1000+i);
+    f.sequence=entry->wireSequence; f.payload[1]=PC::Buzzer;
+    assert(owned.accept(f,1001+i));
+    assert(!owned.consume(id,PC::DisplayText)); // Wrong request cannot consume.
+    assert(owned.consume(id,PC::Buzzer) && !owned.get(id));
+    assert(!owned.consume(id,PC::Buzzer)); // No double consumption.
+    assert(!owned.accept(f,1002+i)); // Late duplicate quarantined.
+  }
 }
 struct Strip {
   uint8_t pixels[480][3] = {};

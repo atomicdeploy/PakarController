@@ -121,6 +121,15 @@ pub fn get(client: &Client, base: &str, user: &str, password: &str, path: &str) 
         .basic_auth(user,Some(password)).send().map_err(|e|e.to_string())?
         .error_for_status().map_err(|e|e.to_string())?.json().map_err(|e|e.to_string())
 }
+fn consume(client: &Client, base: &str, user: &str, password: &str,
+           id: u64, boot: &str, opcode: u8) -> bool {
+    client.delete(format!("{}/api/v1/avr/contracts/result",base.trim_end_matches('/')))
+        .basic_auth(user,Some(password))
+        .query(&[("id",id.to_string()),("boot_id",boot.to_owned()),("opcode",opcode.to_string())])
+        .send().ok().and_then(|r|r.error_for_status().ok())
+        .and_then(|r|r.json::<Value>().ok())
+        .is_some_and(|v|v["consumed"].as_bool()==Some(true))
+}
 pub fn request(client: &Client, base: &str, user: &str, password: &str,
                opcode: u8, payload: &[u8]) -> Result<Value,String> {
     if payload.len()>48 { return Err("PCController payload exceeds 48 bytes".into()); }
@@ -146,6 +155,9 @@ pub fn request(client: &Client, base: &str, user: &str, password: &str,
                     if payload.len()!=2 || payload[0]!=opcode || !(1..=6).contains(&payload[1]) {
                         return Err("Malformed device rejection; operation outcome is unknown".into());
                     }
+                    // Only our validated terminal receipt; never delete a
+                    // queued/awaiting or identity-mismatched transaction.
+                    let _=consume(client,base,user,password,id,&boot,opcode);
                     return Err(format!("AVR rejected opcode 0x{opcode:02x}: {payload:02x?}"));
                 }
                 let expected=match opcode {
@@ -157,7 +169,9 @@ pub fn request(client: &Client, base: &str, user: &str, password: &str,
                 if response!=expected || (response==0x80 && payload!=[opcode,0]) {
                     return Err("Response does not match the request; operation outcome is unknown".into());
                 }
-                return Ok(receipt);
+                let mut receipt=receipt;
+                receipt["receipt_consumed"]=Value::Bool(consume(client,base,user,password,id,&boot,opcode));
+                return Ok(receipt); // Cleanup failure does not undo real ACK.
             }
             Some("outcome_unknown") => return Err("Operation outcome is unknown; it was not retried".into()),
             Some("queued" | "awaiting") if Instant::now()<deadline => std::thread::sleep(Duration::from_millis(40)),

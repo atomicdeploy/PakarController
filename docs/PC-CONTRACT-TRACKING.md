@@ -24,17 +24,20 @@ Parent production scope: #2. Source parity: #3. Device settings GUI: #4. Native 
 - [x] 23 current-donor mappings with actual source/target hashes, line anchors and exclusions.
 - [x] Actual typed donor event encoder; five-byte key/buzzer payloads, without incompatible UART timestamp extensions.
 - [x] Native CLI/TUI configuration, ACK plus persistent readback; authenticated built-CLI fixture.
+- [x] Explicit terminal receipt consumption; repeated settings edits free queue capacity while preserving late-response quarantine. No cleanup of pending or reboot-mismatched operations.
 - [x] Source versions consistent at 0.2.6; local firmware/host/Rust checks.
 
 ## Acceptance still open
 
-- [ ] Exact-commit GitHub CI green, including firmware and Android preview.
+- [x] Baseline f2e38a7 GitHub CI green: firmware, Windows desktop and Android preview in run 38044317586. Later receipt-consumption changes require a new run.
+- [ ] Exact final receipt-consumption commit GitHub CI green.
 - [ ] Physical AVR/ESP firmware flash and version readback when ASUS/device returns.
 - [ ] Live UART/busy grant, all nine key/output identities and electrical acceptance.
 - [ ] Physical TM1637 unplug/replug, brightness/off/scroll/capture and welcome timing.
 - [ ] Live hostname-based API/WebSocket/USB and multi-client routing.
 - [ ] Live MQTT/outbound WebSocket endpoint/authentication acceptance.
 - [ ] Dedicated professional GUI/Web/mobile editing for every newly exposed AVR contract (track #4).
+- [ ] AVR-stored macro steps targeting ESP-owned LEDs: correlated cross-owner execution/completion without treating queue acceptance as LED success.
 - [ ] Remaining donor-wide file reviews/UI work (track #3/#5, not silently closed here).
 - [ ] Future sensors/PWM/RF/relay/status-RGB/I2C/AVR LED driver adapters, pins, memory and hardware tests before changing guards to 1.
 - [ ] Optional host-directory/menu adapter for donor registry-only 0x42..0x44.

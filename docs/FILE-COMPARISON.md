@@ -168,7 +168,7 @@ Verdict: **scoped-improvement**. Revision: `20c6115bb462fe5111b66cd7c21f7328a1f7
 - Retained: Bounded four-digit RAM/flash text, raw segments, integer/fixed-point output, caching and 0..7 brightness/display-off behavior.
 - Retained: Actual donor ACK sampling, one-second cached-frame/brightness keepalive, observed presence and active 70ms brightness service on PC4/PC5. Independent probing was removed.
 - Omitted/replaced code: `PB3/PB5 TM1637 bus pins`. Disposition: **replaced**. Reason: User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming.
-- Test-code evidence: `tests/pc_contract_test.cpp:234 [UTF8-LF sha256=bf7a1f95873b8c97caa37d27a698a3c2fa8ad63bd290afebd39c23ff201a6275; anchor=void keysAndDisplay()]`.
+- Test-code evidence: `tests/pc_contract_test.cpp:246 [UTF8-LF sha256=67b8e6bf62626b011b37e55130c4d6a8dab531e6d58d5fbf036c789e616841ef; anchor=void keysAndDisplay()]`.
 - Test-code evidence: `firmware/avr/avr.ino:428 [UTF8-LF sha256=0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a; anchor=display.serviceBrightness(]`.
 - Scoped advantage: Retains donor recovery on the correct board pins, accumulates intermediate NACKs instead of letting the final control ACK hide failure; host disconnect/reconnect and true-off tests pass.
 - Remaining: Physical TM1637 unplug/replug and power-cycle acceptance remains unverified; host GPIO doubles are not a physical board.
@@ -183,7 +183,7 @@ Verdict: **scoped-improvement**. Revision: `20c6115bb462fe5111b66cd7c21f7328a1f7
 - Retained: Bounded four-digit RAM/flash text, raw segments, integer/fixed-point output, caching and 0..7 brightness/display-off behavior.
 - Retained: Actual donor ACK sampling, one-second cached-frame/brightness keepalive, observed presence and active 70ms brightness service on PC4/PC5. Independent probing was removed.
 - Omitted/replaced code: `PB3/PB5 TM1637 bus pins`. Disposition: **replaced**. Reason: User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming.
-- Test-code evidence: `tests/pc_contract_test.cpp:234 [UTF8-LF sha256=bf7a1f95873b8c97caa37d27a698a3c2fa8ad63bd290afebd39c23ff201a6275; anchor=void keysAndDisplay()]`.
+- Test-code evidence: `tests/pc_contract_test.cpp:246 [UTF8-LF sha256=67b8e6bf62626b011b37e55130c4d6a8dab531e6d58d5fbf036c789e616841ef; anchor=void keysAndDisplay()]`.
 - Test-code evidence: `firmware/avr/avr.ino:428 [UTF8-LF sha256=0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a; anchor=display.serviceBrightness(]`.
 - Scoped advantage: Retains donor recovery on the correct board pins, accumulates intermediate NACKs instead of letting the final control ACK hide failure; host disconnect/reconnect and true-off tests pass.
 - Remaining: Physical TM1637 unplug/replug and power-cycle acceptance remains unverified; host GPIO doubles are not a physical board.
@@ -339,7 +339,7 @@ Verdict: **parity-gap**. Revision: `78563ff7501e13cb8e40a60dd181f69f127c550d`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `0113acbff973285f5af186a4857d94cc2df3c99813e0db4ba876f861e7c1083b`.
 
 - Target: `firmware/esp8266/src/TelnetShell.h:63 [UTF8-LF sha256=bdd9e09124f9b5c60582beba58dc92bc4ab2b818a84fd3c98c8f5165971f4cf1; anchor=class LineEditor]`.
-- Target: `firmware/esp8266/esp8266.ino:2188 [UTF8-LF sha256=3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54; anchor=void executeTelnetCommand(String line)]`.
+- Target: `firmware/esp8266/esp8266.ino:2208 [UTF8-LF sha256=1c82a392e76e52ea4427be7cc97acd13f667703865c408f39168c38f0ce5020c; anchor=void executeTelnetCommand(String line)]`.
 - Retained: Actual insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL handling retained.
 - Retained: Password input is not echoed and is scrubbed; overflow discards the entire line instead of executing a truncated command; editor state is independent.
 - Omitted/replaced code: `ShellTransport_Serial, SerialShellSession and serial-shell service`. Disposition: **pending**. Reason: USB currently owns COBS-framed PC commands. Mixing raw shell bytes would corrupt that transport; provide an explicit framed shell channel or negotiated mode before claiming equivalent serial-shell support.
@@ -357,7 +357,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `9f8e76509ad917d8e204a82d9495e376607a159547d4eee3de6760e6bd5d7da6`.
 
 - Target: `firmware/esp8266/src/TelnetShell.h:63 [UTF8-LF sha256=bdd9e09124f9b5c60582beba58dc92bc4ab2b818a84fd3c98c8f5165971f4cf1; anchor=class LineEditor]`.
-- Target: `firmware/esp8266/esp8266.ino:2188 [UTF8-LF sha256=3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54; anchor=void executeTelnetCommand(String line)]`.
+- Target: `firmware/esp8266/esp8266.ino:2208 [UTF8-LF sha256=1c82a392e76e52ea4427be7cc97acd13f667703865c408f39168c38f0ce5020c; anchor=void executeTelnetCommand(String line)]`.
 - Retained: Actual insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL handling retained.
 - Retained: Password input is not echoed and is scrubbed; overflow discards the entire line instead of executing a truncated command; editor state is independent.
 - Omitted/replaced code: `ShellTransport_Serial, SerialShellSession and serial-shell service`. Disposition: **pending**. Reason: USB currently owns COBS-framed PC commands. Mixing raw shell bytes would corrupt that transport; provide an explicit framed shell channel or negotiated mode before claiming equivalent serial-shell support.
@@ -375,7 +375,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `a78d88c149d19d8989c6db3dce0731189c2bf46c45fd64b73e9871a80f6c9bdd`.
 
 - Target: `firmware/esp8266/src/TelnetShell.h:13 [UTF8-LF sha256=bdd9e09124f9b5c60582beba58dc92bc4ab2b818a84fd3c98c8f5165971f4cf1; anchor=class TelnetParser]`.
-- Target: `firmware/esp8266/esp8266.ino:2294 [UTF8-LF sha256=3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54; anchor=void serviceTelnet() {]`.
+- Target: `firmware/esp8266/esp8266.ino:2314 [UTF8-LF sha256=1c82a392e76e52ea4427be7cc97acd13f667703865c408f39168c38f0ce5020c; anchor=void serviceTelnet() {]`.
 - Retained: Actual five-state IAC/option/subnegotiation parser, escaped IAC, ECHO/SGA negotiation and greeting retained in standalone WiFiClient-based implementation.
 - Retained: Pakar tracks option state to suppress greeting-ack negotiation loops; unsupported DO/WILL options are explicitly rejected.
 - Omitted/replaced code: `ESPTelnet dependency and ESP8266WEBSERVER_H synchronous-header suppression`. Disposition: **replaced**. Reason: Native WiFiServer/WiFiClient removes the dependency which pulled a conflicting synchronous web-server header into an async server product; the actual protocol parser was retained rather than replaced by plain newline input.
@@ -390,7 +390,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `e85f5f1a4f2767323d9886313ddb2aabfd3acad7d781c2770bc8d2b2d2c6cb15`.
 
 - Target: `firmware/esp8266/src/TelnetShell.h:13 [UTF8-LF sha256=bdd9e09124f9b5c60582beba58dc92bc4ab2b818a84fd3c98c8f5165971f4cf1; anchor=class TelnetParser]`.
-- Target: `firmware/esp8266/esp8266.ino:2294 [UTF8-LF sha256=3230b426ffc05aefe354e2e23434d5d94e0426f099ce2be1e809112bd828ca54; anchor=void serviceTelnet() {]`.
+- Target: `firmware/esp8266/esp8266.ino:2314 [UTF8-LF sha256=1c82a392e76e52ea4427be7cc97acd13f667703865c408f39168c38f0ce5020c; anchor=void serviceTelnet() {]`.
 - Retained: Actual five-state IAC/option/subnegotiation parser, escaped IAC, ECHO/SGA negotiation and greeting retained in standalone WiFiClient-based implementation.
 - Retained: Pakar tracks option state to suppress greeting-ack negotiation loops; unsupported DO/WILL options are explicitly rejected.
 - Omitted/replaced code: `ESPTelnet dependency and ESP8266WEBSERVER_H synchronous-header suppression`. Disposition: **replaced**. Reason: Native WiFiServer/WiFiClient removes the dependency which pulled a conflicting synchronous web-server header into an async server product; the actual protocol parser was retained rather than replaced by plain newline input.

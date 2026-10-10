@@ -1629,6 +1629,26 @@ void registerApi() {
     if (!receipt || receipt->usb) { server.send(404, "application/json", "{\"error\":\"unknown_contract_request\"}"); return; }
     server.send(200, "application/json", pcReceiptJson(*receipt));
   });
+  server.on("/api/v1/avr/contracts/result", HTTP_DELETE, []() {
+    if (!authenticate()) return;
+    const String idText = server.arg("id"), opText = server.arg("opcode");
+    uint32_t id = 0;
+    bool valid = idText.length() && idText.length() <= 10 &&
+                 opText.length() && opText.length() <= 3 &&
+                 server.arg("boot_id") == pcBootId;
+    for (size_t i = 0; i < idText.length(); ++i) {
+      const char c = idText[i];
+      if (c < '0' || c > '9' || id > (UINT32_MAX - static_cast<uint32_t>(c - '0')) / 10) { valid = false; break; }
+      id = id * 10 + c - '0';
+    }
+    for (size_t i = 0; i < opText.length(); ++i) valid &= opText[i] >= '0' && opText[i] <= '9';
+    const long op = opText.toInt();
+    if (!valid || !id || op < 0 || op > 255 ||
+        !pcTransport.consume(id, static_cast<uint8_t>(op))) {
+      server.send(409, "application/json", "{\"error\":\"receipt_not_consumable\"}"); return;
+    }
+    server.send(200, "application/json", "{\"consumed\":true}");
+  });
   server.on("/api/v1/cells/mapping", HTTP_GET, []() {
     if (!authenticate()) return;
     String body;

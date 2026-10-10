@@ -16,7 +16,7 @@ Actual donor generated opcode header and JSON registry imported. Pakar legacy 0x
 * Inner HELLO: [0x50,1,1,48,enabled_features_LE16,requested_features_LE16]. Profile **0x50** is not donor schema-3's sensor board. Stock PCController schema-3 decoding needs a profile adapter.
 * AVR HELLO preserves original nine-byte prefix and appends [0x50,features_LE16]. ESP does not assume support from version alone.
 * Prog rejects mutations including settings, macros and automations; queries remain available. Application PROGRAM_STATE is not ISP Prog. Reset ACK precedes safe shutdown/watchdog reset; no flash write.
-* ESP per-client receipts bind boot identity, request ID, sequence and expected response. Eight slots; 750ms sent timeout, 2s queued timeout, 60s retention, 30s sequence quarantine. Queue acceptance is not AVR acceptance. Uncertain mutations never retry.
+* ESP per-client receipts bind boot identity, request ID, sequence and expected response. Eight slots; 750ms sent timeout, 2s queued timeout, 60s retention unless explicitly consumed, 30s sequence quarantine. Queue acceptance is not AVR acceptance. Uncertain mutations never retry. Validated terminal receipts can be consumed without releasing sequence quarantine; queued/awaiting and USB receipts cannot be deleted.
 * Five-second PC session loss cancels active macros, safe-stops active/running outputs and clears stale events. Local physical menu ownership survives. PC clients must query within the lease.
 
 ## Every registered request
@@ -30,7 +30,7 @@ Actual donor generated opcode header and JSON registry imported. Pakar legacy 0x
 | 30 MENU_ACTION, 37 MENU_SET_PAGE, 3D REMOTE_KEY_GESTURE | Real local/injected lifecycle and six hardware-appropriate pages. Down/repeated-hold acts immediately. Key monitor rejects edits. |
 | 35 RESET | Safe shutdown, correlated ACK, deferred watchdog reset. Hint 0/1 is not programming. |
 | 38 DISPLAY_TEXT | TM1637 text, raw segments, capture/release/metadata, one-shot/loop/interval, full 40-character scrolling, true-off, donor marquee lifecycle. Default non-repeating. LCD targets 1/2 return HardwareUnavailable. |
-| 39 MACRO_START, 3A MACRO_CANCEL, 3B MACRO_STEP | Imported donor 128-byte ring/300-byte workspace, append/start/query, recording/read/replay/clear, timing, status/results, guarded dispatch. Recorded masks use actual shift command, not fictitious relays. |
+| 39 MACRO_START, 3A MACRO_CANCEL, 3B MACRO_STEP | Imported donor 128-byte ring/300-byte workspace, append/start/query, recording/read/replay/clear, timing, status/results, guarded dispatch for AVR-owned hardware. Recorded masks use actual shift command, not fictitious relays. ESP-owned LED steps in AVR-stored macros return HardwareUnavailable; correlated cross-owner forwarding is still open, not simulated success. |
 | 3C FRONT_PANEL_GET | Donor schema-2 47-byte offsets; observed segments/brightness/presence, inputs/page/mode/capture metadata. LCD rows blank and absence flags clear. |
 | 3E MENU_LIST, 40 MENU_LAYOUT_GET, 41 MENU_LAYOUT_SET | Stable six IDs, pagination, validated visible mask/permutation, persistence. CELL, OUT, KEYS, SND, DISP, HOST. |
 | 45 PROGRAM_STATE | Application idle/running independent from durable flashing latch. |
@@ -81,13 +81,14 @@ Hostname default http://ledboard.local. PAKAR_ENDPOINT, PAKAR_USER, PAKAR_PASSWO
     PakarController.exe --command avr command MENU_LIST 00
     PakarController.exe --command avr command BUZZER b801fa00
 
-TUI: same commands without --command. Typed set: GET current, validate, SET once, require ACK, GET persisted matching readback. Generic commands accept actual donor names or registered numeric/0x values; not reserved IDs.
+TUI: same commands without --command. Typed set: GET current, validate, SET once, require ACK, GET persisted matching readback. Generic commands accept actual donor names or registered numeric/0x values; not reserved IDs. The client consumes each validated success/error receipt so repeated settings edits do not exhaust the eight slots. Cleanup failure does not undo a real ACK or retry the write; the receipt instead expires normally. Unknown outcomes and mismatched reboot identities are left available for inspection.
 
 Authenticated HTTP:
 
 * GET /api/v1/avr/contracts: current support/features/profile/boot identity.
 * POST /api/v1/avr/contracts, form opcode=16&payload_hex=b801fa00: 202 queued receipt.
 * GET /api/v1/avr/contracts/result?id=ID: queued/awaiting/responded/outcome_unknown.
+* DELETE /api/v1/avr/contracts/result?id=ID&opcode=DECIMAL&boot_id=BOOT: explicitly consume your terminal receipt after verifying its identity and response. Authenticated, exact boot/request/opcode match required; 409 for pending/mismatched/missing receipts. An explicit caller may consume an outcome_unknown receipt after inspecting it; this never retries or cancels its possible device mutation.
 
 Authenticated inbound WebSocket and configured MQTT/outbound WebSocket share bounded queueing:
 
