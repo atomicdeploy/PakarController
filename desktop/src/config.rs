@@ -79,6 +79,8 @@ pub struct AppConfig {
     pub animate_cells: bool,
     pub show_cell_indicators: bool,
     pub cell_order: Vec<u8>,
+    pub cell_shape: crate::ui::cell_pixels::Shape,
+    pub pixel_diagnostics: bool,
     pub status_items: crate::ui::status_bar::Items,
 }
 impl Default for AppConfig {
@@ -106,6 +108,8 @@ impl Default for AppConfig {
             animate_cells: true,
             show_cell_indicators: false,
             cell_order: (1..=80).collect(),
+            cell_shape: Default::default(),
+            pixel_diagnostics: false,
             status_items: Default::default(),
         }
     }

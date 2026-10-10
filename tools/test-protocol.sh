@@ -49,3 +49,6 @@ c++ -std=c++17 -Wall -Wextra -Werror \
   "$root/libraries/BoardCore/src/pccontroller/AutomationStore.cpp" \
   -o "$root/build/pc-contract-test"
 "$root/build/pc-contract-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/pixel_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
+  "$root/tests/led_grid_test.cpp" "$root/firmware/esp8266/src/LedGrid.cpp" -o "$root/build/led-grid-test"
+"$root/build/led-grid-test"

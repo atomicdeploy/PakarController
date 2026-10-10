@@ -366,3 +366,56 @@ was attempted. The next donor consultation must refresh tracked inventory first;
 earlier test/comparison counts are checkpoint evidence, not a fresh claim about
 the concurrently changed donor. Recovery and source publication are recorded
 in issues #8/#3 and PR #1. Feature source is f5940fd; runtime acceptance stays open.
+
+## Six-pixel view and deployment gate
+
+Refreshed all tracked Pealayer paths before the new lookup, including concurrent
+source drift. Consulted ui-shell, games-streaming, firmware-hardware and exact
+donor-audit sources. Hardware-control/controls indicator and neutral fixed-slot
+slices remain screened, NOT complete comparisons. WS2811.h/cpp were reread fully;
+actual full-brightness WS2811/TypicalLEDStrip setup stays, BRG acceptance remains
+pending. Added WS2811 and hardware_control to specialist routing. Rereviewed
+unchanged Pealayer menu/icon/shortcut/appearance/branding/dialog and PU Shell/
+Telnet anchors before binding modified target hashes. No new full-file parity.
+
+Implemented configurable Circle/Hexagon/Rounded surfaces, six top-first CCW RGB
+sectors and optional zero-based physical indices. New opt-in authenticated status
+snapshot reads the committed ESP buffer and physical mapping. No cell-state or
+sampler-intent RGB invention, duplicate buffer, continuous UART broadcast, LED
+rate cap or per-frame file persistence. Missing/invalid/uncommitted/stale samples
+remain unavailable; native USB-only does not borrow another Wi-Fi peer's values.
+Immediate cell rendering and partial streamed-frame isolation have actual
+LedGrid host tests with Arduino/FastLED doubles.
+
+Web DOM/HTTP tests, shared geometry fixture, appearance/access/display/remote,
+branding/menu/capture guards and comparison/preflight checks pass. Both existing
+ESP profile caches compile final source; no unrelated AVR/APK/donor build.
+Native Test passes donor/crate gates then stops before compilation at the >8 GiB
+canonical-cache guard. No bypass, cache relocation, cleanup retry, package copy
+or app replacement. ASUS SSH localhost:1022 is refused; no physical deployment
+or EEPROM write. CI is not waited on. See CELL-PIXEL-VIEW.md for exact images,
+hashes, API semantics, hardware boundaries and remaining acceptance in #8/#3.
+
+The computer-use skill directed the supported browser workflow. Extended the
+existing read-only Web fixture with --pixels; no second capture/package harness.
+Actually observed Circle and Hexagon, side indices 474–479 after remapping,
+amber selection, and Find cell changing to 1. Saved no-overwrite JPEGs through
+the browser screenshot API and inspected them; closed the owned tab and fixture.
+These prove current embedded Web rendering, not the older running native binary.
+
+Recovery details: incorrect CSS/doc anchors and out-of-order hash hunks were
+rejected with no partial edits, then corrected from exact live context/file
+order. Comparison guard exposed additional LedGrid and ESP/Telnet target bindings;
+actual relevant donors were consulted before updating them. A raw PowerShell
+foreach pipeline was a parse error, repaired by collecting results first. The
+FastLED test double initially lacked std::max; inspected actual approach() and
+added the missing stub import, not a product workaround. The access fixture now
+matches the status pathname including its opt-in query, and long-name tests
+assert shortened labels plus full tooltips. A getByLabel locator mismatch was
+resolved from a fresh snapshot using the observed combobox role. rustfmt on the
+root module touched unrelated children; reversed only this turn's mechanical
+formatting and used skip_children for affected modules thereafter. No unknown
+user/donor edits were discarded or source hashes silently certified.
+
+Final inventory: 1875 paths, 48 completed comparisons, 1827 pending and 29 known
+gap files. Refreshing screened evidence does not close their remaining imports.

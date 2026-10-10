@@ -1640,7 +1640,16 @@ void registerApi() {
   });
   server.on("/api/v1/status", HTTP_GET, []() {
     if (!authenticate()) return;
-    sendStatusJson();
+    if (server.arg("pixels") == F("1")) {
+      String body = buildStatusJson();
+      if (!body.reserve(body.length()+LedGrid::kPixels*6U+LedGrid::kCells*4U+180U)) {
+        server.send(503,"application/json",F("{\"error\":\"Pixel snapshot memory unavailable\"}")); return;
+      }
+      body.remove(body.length()-1);
+      body += F(",\"pixel_preview_requested\":true,\"pixel_frame\":");
+      body += grid.pixelFrameJson(); body += '}';
+      server.send(200,"application/json",body);
+    } else sendStatusJson();
   });
   server.on("/api/v1/avr/contracts", HTTP_GET, []() {
     if (!authenticate()) return;

@@ -31,7 +31,7 @@ const context=vm.createContext({...nodes,URLSearchParams,FormData,Uint8Array,con
     }else if(path==='/api/v1/device/name'){
       if(options.method==='POST')hostname=options.body.get('hostname');
       body={hostname,persisted:true,accepted:options.method==='POST'};
-    }else if(path==='/api/v1/status'){
+    }else if(path.split('?')[0]==='/api/v1/status'){
       statusRequests++;body={hostname:'test-fixture',cells:[],tm1637_segments:[]};
     }else if(path==='/api/v1/cells/mapping')body={physical:[],names:[]};
     return {ok:code<400,status:code,statusText:String(code),text:async()=>typeof body==='string'?body:JSON.stringify(body)};

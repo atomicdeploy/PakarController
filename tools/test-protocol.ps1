@@ -11,6 +11,11 @@ if ($LASTEXITCODE -ne 0) { throw 'Protocol test compilation failed' }
 & $testBinary
 if ($LASTEXITCODE -ne 0) { throw 'Protocol tests failed' }
 Write-Host 'Protocol round-trip, bounds, and corruption tests passed.'
+$pixelBinary = Join-Path $outputDirectory 'led_grid_test.exe'
+& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/pixel_stubs') -I (Join-Path $projectRoot 'libraries/BoardCore/src') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/led_grid_test.cpp') (Join-Path $projectRoot 'firmware/esp8266/src/LedGrid.cpp') -o $pixelBinary
+if ($LASTEXITCODE -ne 0) { throw 'LED pixel snapshot compilation failed' }
+& $pixelBinary
+if ($LASTEXITCODE -ne 0) { throw 'LED pixel snapshot tests failed' }
 $remoteBinary = Join-Path $outputDirectory 'remote_policy_test.exe'
 & g++ -std=c++17 -Wall -Wextra -Werror (Join-Path $projectRoot 'tests/remote_policy_test.cpp') -o $remoteBinary
 if ($LASTEXITCODE -ne 0) { throw 'Remote policy compilation failed' }

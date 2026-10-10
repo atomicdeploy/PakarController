@@ -47,11 +47,47 @@ nodes.animateCells.checked=true;nodes.bulkEffect.value='fade';
 const calls=[],actual={cells:Array(80).fill('white')},storage=new Map();let failId=0,cancelAfter=0,storageWrites=0;
 const context=vm.createContext({...nodes,document,URLSearchParams,innerWidth:1280,innerHeight:800,
   localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>{storageWrites++;storage.set(k,v)}},
-  authenticated:true,loadMappingEditor(){},report(){},render(){},setTimeout:fn=>{fn();return 1},
+  state:{cells:[]},mapping:{physical:[],names:[]},authenticated:true,loadMappingEditor(){},report(){},render(){},setTimeout:fn=>{fn();return 1},
   api:async(path,options)=>{if(!options)return actual;const id=Number(options.body.get('id'));calls.push(id);if(id===failId)throw Error('lost acknowledgement');actual.cells[id-1]=options.body.get('state');if(id===cancelAfter)vm.runInContext('cancelCellBatch()',context);return {accepted:true}}
 });
 vm.runInContext(cellCode,context);
 const run=code=>vm.runInContext(code,context),ids=()=>Array.from(run('[...selectedCells]')).sort((a,b)=>a-b);
+const pixelContract=JSON.parse(readFileSync(new URL('../assets/cells/pixel-contract.json',import.meta.url),'utf8'));
+const pixelNative=readFileSync(new URL('../desktop/src/ui/cell_pixels.rs',import.meta.url),'utf8');
+assert(pixelNative.includes('assets/cells/pixel-contract.json'));
+pixelContract.ccw_unit_centers.forEach((p,sector)=>{const got=Array.from(run(`pixelPoint(${sector},1)`));assert(Math.abs(got[0]-50-p[0])<0.00001);assert(Math.abs(got[1]-50-p[1])<0.00001)});
+const physical=Array.from({length:80},(_,i)=>i+1);[physical[0],physical[79]]=[physical[79],physical[0]];
+const rgb='000000'.repeat(pixelContract.first_index)+pixelContract.colors.join('');
+const frame={rgb,physical,revision:123,brightness:180};
+context.mapping={physical,names:['Table A']};context.state={cells:Array(80).fill('off'),pixel_preview_requested:true,pixel_frame:frame};
+nodes.cellShape.value='circle';nodes.pixelDiagnostics.checked=true;run('renderCellPixels()');
+const face=nodes.grid.children[0].children[0];
+assert.equal(face.tag,'svg');
+assert.deepEqual(face.children.filter(n=>n.tag==='polygon').map(n=>n.attributes.fill),pixelContract.colors.map(c=>'#'+c));
+assert.deepEqual(face.children.filter(n=>n.tag==='text'&&n.attributes.class==='pixel-index').map(n=>n.textContent),[474,475,476,477,478,479]);
+assert.match(nodes.grid.children[0].title,/pixels 474–479/);
+assert.match(nodes.grid.children[0].title,/pre-brightness/);
+assert(face.children.some(n=>n.tag==='circle'),'Circle outline');
+assert(face.children.some(n=>n.attributes.class==='pixel-label'&&n.textContent==='Table…'));
+assert.match(nodes.grid.children[0].title,/Table A/,'Full name stays in accessible tooltip');
+const signatureBefore=nodes.grid.children[0].dataset.pixelSignature;
+run('renderCellPixels()');assert.equal(nodes.grid.children[0].children[0],face,'No identical per-cell SVG rebuild');
+context.state={cells:Array(80).fill('red')};run('renderCellPixels()');assert.equal(nodes.grid.children[0].dataset.pixelSignature,signatureBefore,'WebSocket cell state is not fabricated RGB');
+nodes.cellShape.value='hexagon';run('saveTablePreferences()');
+assert(nodes.grid.children[0].children[0].children.some(n=>n.tag==='polygon'&&n.attributes.class==='pixel-outline'));
+assert.equal(JSON.parse(storage.get('pakar-table')).shape,'hexagon');
+assert(run('validPixelFrame(state.pixel_frame)')==null);
+for(const bad of [{...frame,rgb:'ff'}, {...frame,rgb:'z'.repeat(2880)}, {...frame,physical:Array(80).fill(1)}, {...frame,brightness:256}])assert.equal(run('validPixelFrame('+JSON.stringify(bad)+')'),false);
+context.state={pixel_preview_requested:true,pixel_frame:null,cells:[]};run('renderCellPixels()');
+assert(nodes.grid.children[0].children[0].children.some(n=>n.attributes.class==='pixel-unknown'));
+assert.equal(nodes.grid.children[0].children[0].children.find(n=>n.attributes.class==='pixel-index').textContent,474,'Mapping diagnostics survive missing RGB');
+context.state={pixel_preview_requested:true,pixel_frame:frame,cells:[]};run('renderCellPixels();pixelSampleAt=Date.now()-6000;renderCellPixels()');
+assert(nodes.grid.children[0].children[0].children.some(n=>n.attributes.class==='pixel-unknown'),'Stale sample is never live RGB');
+context.mapping={physical:[],names:[]};context.state={cells:[]};run('pixelSample=null;renderCellPixels()');
+assert.equal(nodes.grid.children[0].children[0].children.find(n=>n.attributes.class==='pixel-index').textContent,'?','No guessed physical indices');
+nodes.cellShape.value='rounded';nodes.pixelDiagnostics.checked=false;run('saveTablePreferences()');
+assert.equal(nodes.grid.children[0].children.length,0);assert.equal(nodes.grid.children[0].textContent,'1');
+assert.equal(calls.length,0,'Shape and diagnostic controls never write LEDs');
 const contract=JSON.parse(readFileSync(new URL('../assets/cells/selection-contract.json',import.meta.url),'utf8'));
 assert(nativeTable.includes('assets/cells/selection-contract.json'));
 for(const step of contract.steps){

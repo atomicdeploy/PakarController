@@ -1,5 +1,9 @@
 # Cell styling and screenshot capture
 
+Configurable circular/hexagonal six-pixel RGB cells and physical-index diagnostics
+are documented in [CELL-PIXEL-VIEW.md](CELL-PIXEL-VIEW.md), including API, actual
+donor consultation, rendered fixture captures and pending native/board acceptance.
+
 ## Current tint-free selection and Find cell contract
 
 Selection, Find and highlighting are now one domain concept, not parallel

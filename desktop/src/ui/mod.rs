@@ -1,3 +1,4 @@
+pub mod cell_pixels;
 pub mod cell_search;
 pub mod cell_table;
 pub mod color_picker;

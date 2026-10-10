@@ -130,6 +130,8 @@ fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
                     ui.checkbox(&mut draft.config.additive_cell_selection,"Toggle multiple cells and rows without Ctrl").on_hover_text("When off, Ctrl+click toggles items. Shift extends a range; dragging always replaces unless Ctrl/Shift is held.");
                     ui.checkbox(&mut draft.config.animate_cells,"Animate cell state transitions").on_hover_text("Disable for reduced motion. Cell geometry never changes.");
                     ui.checkbox(&mut draft.config.show_cell_indicators,"Show cell LED-state indicators").on_hover_text("Optional corner dots for white/red/off state. Hidden by default.");
+                    egui::ComboBox::from_id_salt("preferences-cell-shape").selected_text(draft.config.cell_shape.label()).show_ui(ui,|ui|{for shape in [super::cell_pixels::Shape::Rounded,super::cell_pixels::Shape::Circle,super::cell_pixels::Shape::Hexagon]{ui.selectable_value(&mut draft.config.cell_shape,shape,shape.label());}});
+                    ui.checkbox(&mut draft.config.pixel_diagnostics,"Show physical pixel indices (top first, CCW)").on_hover_text("Applies to circle/hexagon cells. Zero-based 0–479; values are sampled from device RGB before brightness/correction.");
                     ui.label(format!("{} saved workspaces",draft.config.workspace_profiles.len()));
                     ui.label("Drag panel tabs to rearrange or detach them. Workspace profiles save the current layout.");
                     if ui.button(format!("{}  Export preferences…",icons::FLOPPY_DISK)).clicked(){

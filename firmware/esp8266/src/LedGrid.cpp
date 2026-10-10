@@ -38,11 +38,13 @@ bool LedGrid::setCell(uint8_t cell, BoardCore::Protocol::CellState state,
   target_[index] = colorFor(state);
   if (effect == BoardCore::Protocol::kEffectImmediate) current_[index] = target_[index];
   else if (effect == BoardCore::Protocol::kEffectPulse) current_[index] = CRGB::Black;
+  renderCell(index);
   dirty_ = true;
   return true;
 }
 
 void LedGrid::fill(BoardCore::Protocol::CellState state) {
+  staging_ = false;
   pattern_ = kPatternNone;
   for (uint8_t i = 0; i < kCells; ++i) {
     states_[i] = state;
@@ -57,6 +59,7 @@ void LedGrid::resetWhite() { fill(BoardCore::Protocol::kCellWhite); }
 
 void LedGrid::showWinner(uint8_t winner) {
   if (winner < 1 || winner > 9) return;
+  staging_ = false;
   pattern_ = kPatternNone;
   for (uint8_t i = 0; i < kCells; ++i) {
     const uint8_t group = static_cast<uint8_t>((static_cast<uint16_t>(i) * 9U) /
@@ -76,6 +79,7 @@ void LedGrid::setPattern(Pattern pattern) {
     dirty_ = true;
     return;
   }
+  staging_ = false;
   pattern_ = pattern;
   dirty_ = true;
 }
@@ -89,6 +93,7 @@ const char *LedGrid::patternName() const {
 }
 
 void LedGrid::stopPattern() {
+  if (staging_) { staging_ = false; dirty_ = true; for (uint8_t i=0;i<kCells;++i) renderCell(i); }
   if (pattern_ == kPatternNone) return;
   pattern_ = kPatternNone;
   for (uint8_t i = 0; i < kCells; ++i) {
@@ -112,6 +117,7 @@ bool LedGrid::readyToShow(uint32_t now) const {
 }
 
 bool LedGrid::needsRender(uint32_t now) const {
+  if (staging_) return false;
   if (!readyToShow(now)) return false;
   if (pattern_ != kPatternNone || dirty_) return true;
   for (uint8_t i = 0; i < kCells; ++i) {
@@ -121,6 +127,7 @@ bool LedGrid::needsRender(uint32_t now) const {
 }
 
 void LedGrid::service(uint32_t now) {
+  if (staging_) return;
   if (!readyToShow(now)) return;
   lastFrameAt_ = now;
   if (pattern_ != kPatternNone) {
@@ -186,6 +193,7 @@ void LedGrid::setPhysicalMapping(const uint8_t *physicalCells, uint8_t count) {
     seen[physical - 1] = true;
   }
   fill_solid(pixels_, kPixels, CRGB::Black);
+  staging_ = false;
   for (uint8_t i = 0; i < kCells; ++i) physicalCells_[i] = physicalCells[i];
   for (uint8_t i = 0; i < kCells; ++i) renderCell(i);
   dirty_ = true;
@@ -198,6 +206,7 @@ uint8_t LedGrid::physicalCell(uint8_t logicalCell) const {
 
 bool LedGrid::stagePixels(uint16_t offset, const uint8_t *rgb, uint8_t count) {
   if (offset + count > kPixels || rgb == nullptr) return false;
+  staging_ = true;
   pattern_ = kPatternNone;
   for (uint8_t i = 0; i < count; ++i) {
     pixels_[offset + i] = CRGB(rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]);
@@ -207,6 +216,26 @@ bool LedGrid::stagePixels(uint16_t offset, const uint8_t *rgb, uint8_t count) {
 
 void LedGrid::showStaged() {
   FastLED.show();
+  staging_ = false;
+  ++frameRevision_;
   lastFrameAt_ = millis();
   dirty_ = false;
+}
+
+String LedGrid::pixelFrameJson() const {
+  if (dirty_ || staging_ || !frameRevision_) return F("null");
+  String body;
+  if (!body.reserve(kPixels * 6U + kCells * 4U + 120U)) return F("null");
+  body = F("{\"revision\":"); body += frameRevision_;
+  body += F(",\"brightness\":"); body += brightness_;
+  body += F(",\"rgb\":\"");
+  const char hex[] = "0123456789abcdef";
+  for (uint16_t i=0;i<kPixels;++i) {
+    const uint8_t channels[] = {pixels_[i].r,pixels_[i].g,pixels_[i].b};
+    for (uint8_t channel : channels) { body += hex[channel >> 4]; body += hex[channel & 15]; }
+  }
+  body += F("\",\"physical\":[");
+  for (uint8_t i=0;i<kCells;++i) { if(i)body+=',';body+=physicalCells_[i]; }
+  body += F("]}");
+  return body;
 }

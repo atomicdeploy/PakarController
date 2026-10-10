@@ -141,6 +141,10 @@ struct DeviceStatus {
     link_mode: String,
     #[serde(default)]
     cells: Vec<String>,
+    #[serde(default)]
+    pixel_preview_requested: bool,
+    #[serde(default)]
+    pixel_frame: Option<ui::cell_pixels::Frame>,
 }
 
 #[derive(Clone)]
@@ -354,7 +358,14 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
     let (endpoint, request, response_kind) = match command {
         HttpCommand::Status(endpoint) => {
             let url = format!("{}/api/v1/status", endpoint.base.trim_end_matches('/'));
-            let request = client.get(url);
+            let request = client.get(url).query(&[(
+                "pixels",
+                if config::live().cell_shape != ui::cell_pixels::Shape::Rounded {
+                    "1"
+                } else {
+                    "0"
+                },
+            )]);
             (endpoint, request, 1_u8)
         }
         HttpCommand::Mapping(endpoint) => {
@@ -1239,6 +1250,7 @@ impl PakarControllerApp {
             self.connection_notice.reset();
             self.device_settings.invalidate_peer();
             self.status = None;
+            self.table.pixel_sample = None;
             self.last_status_at = None;
             self.websocket_live = false;
             self.stream_sent_fps = None;
@@ -1305,6 +1317,15 @@ impl PakarControllerApp {
                 Event::StreamStats(value) => self.stream_sent_fps = Some((value, Instant::now())),
                 Event::Status(s) => {
                     if !s.hostname.is_empty() {
+                        if s.pixel_preview_requested {
+                            self.table.pixel_sample =
+                                s.pixel_frame.clone().filter(|f| f.valid()).map(|frame| {
+                                    ui::cell_pixels::Sample {
+                                        frame,
+                                        at: Instant::now(),
+                                    }
+                                });
+                        }
                         self.brightness = s.brightness;
                         self.pattern = s.effect.clone();
                         self.output_mask = s.active_outputs;

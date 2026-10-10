@@ -17,11 +17,17 @@ const values={
   '/api/v1/cloud':{mqtt_enabled:false,mqtt_tls:true,mqtt_host:'',mqtt_port:8883,mqtt_user:'',mqtt_base_topic:'',websocket_enabled:false,websocket_tls:true,websocket_host:'',websocket_port:443,websocket_path:'/',telemetry_seconds:30},
   '/api/v1/firmware/remote':{schema:1,job_id:0,boot_id:'SIMULATED',targets:3,manifest_sha256:'',phase:'idle',busy:false,cancellable:false},
 };
+// Extend the existing no-write visual harness, rather than a second package or
+// inferred live-board snapshot. Physical cell 80 is deliberately remapped to 1.
+const pixelFixture=process.argv.includes('--pixels');
+if(pixelFixture){values['/api/v1/cells/mapping'].physical[0]=80;values['/api/v1/cells/mapping'].physical[79]=1;}
 const server=http.createServer(async(req,res)=>{
   res.setHeader('Cache-Control','no-store');
   if(req.method!=='GET'){res.writeHead(405,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Read-only SIMULATED fixture; no device mutation'}));return;}
   if(req.url==='/'){const source=await readFile(webSourceUrl,'utf8');res.writeHead(200,{'Content-Type':'text/html;charset=utf-8'});res.end(source.match(/R"HTML\(([\s\S]*)\)HTML";/)[1]);return;}
-  const value=values[req.url];res.writeHead(value?200:404,{'Content-Type':'application/json'});res.end(JSON.stringify(value||{error:'Fixture has no such endpoint'}));
+  const url=new URL(req.url,'http://localhost'),value=values[url.pathname];
+  const response=pixelFixture&&url.pathname==='/api/v1/status'&&url.searchParams.get('pixels')==='1'?{...status,pixel_preview_requested:true,pixel_frame:{revision:42,brightness:255,physical:values['/api/v1/cells/mapping'].physical,rgb:['1234ab','ff0000','00ff00','0000ff','ffffff','000000'].join('').repeat(80)}}:value;
+  res.writeHead(response?200:404,{'Content-Type':'application/json'});res.end(JSON.stringify(response||{error:'Fixture has no such endpoint'}));
 });
 server.on('upgrade',(_req,socket)=>socket.destroy());
 server.listen(0,'127.0.0.1',()=>console.log(JSON.stringify({scope:'SIMULATED read-only actual Web UI, not hardware acceptance',url:'http://localhost:'+server.address().port+'/',pid:process.pid})));

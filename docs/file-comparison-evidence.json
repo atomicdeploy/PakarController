@@ -76,7 +76,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "827f2d8d85cfe2f037d16da864b489041d948b20d634d7902eb183000e4d5067",
+          "sha256": "f81b2de9ecaddf9e6dd469f7d38b88c5dd86d1593ebe5953343cb0bc5748b171",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -126,7 +126,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "827f2d8d85cfe2f037d16da864b489041d948b20d634d7902eb183000e4d5067",
+          "sha256": "f81b2de9ecaddf9e6dd469f7d38b88c5dd86d1593ebe5953343cb0bc5748b171",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -227,7 +227,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7a50bc7f8113b2a2c9cfe7e23d505436e4de02ef29d3b1be3c97b40e031bb259",
+          "sha256": "7317008e4a2962ca4e014505196d18173aca8eb63b5f318ee92599e38b6ce86e",
           "anchor": "menu::top_menu_button(ui, \"File\".into()"
         },
         {
@@ -676,7 +676,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-        "sha256": "7a50bc7f8113b2a2c9cfe7e23d505436e4de02ef29d3b1be3c97b40e031bb259",
+        "sha256": "7317008e4a2962ca4e014505196d18173aca8eb63b5f318ee92599e38b6ce86e",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -1094,7 +1094,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-        "sha256": "7a50bc7f8113b2a2c9cfe7e23d505436e4de02ef29d3b1be3c97b40e031bb259",
+        "sha256": "7317008e4a2962ca4e014505196d18173aca8eb63b5f318ee92599e38b6ce86e",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -1536,12 +1536,12 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "1abd228ccecf1c949f90f5ce90ecdbdece35929239b1f3b12f08633414da5c4f",
+          "sha256": "18feb27f5eaa57208a60d92f809d395ddff34427bb7d2fcfc531b6c32623298c",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "279bb2156a6e1987acf9f84462efc88f4f633964ac9a37749dbe7c19c7557113",
+          "sha256": "fcbc8d0c6f3edfcb9be73964081a82407d489ff348c02ce9f70378f5676a4774",
           "anchor": "uint8_t brightness_ = 255"
         }
       ],
@@ -1580,12 +1580,12 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "1abd228ccecf1c949f90f5ce90ecdbdece35929239b1f3b12f08633414da5c4f",
+          "sha256": "18feb27f5eaa57208a60d92f809d395ddff34427bb7d2fcfc531b6c32623298c",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "279bb2156a6e1987acf9f84462efc88f4f633964ac9a37749dbe7c19c7557113",
+          "sha256": "fcbc8d0c6f3edfcb9be73964081a82407d489ff348c02ce9f70378f5676a4774",
           "anchor": "uint8_t brightness_ = 255"
         }
       ],
@@ -1654,7 +1654,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "bb55afd4c62d1a5c6e94c555dfe7207b4023543cbedab34129ada6f103bd0389"
+          "sha256": "52de8fb9b34babf4c765cb27a8d350efd9bd43f97a7cf75995ef84ac0a65601d"
         }
       ],
       "proof": [
@@ -1721,7 +1721,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "bb55afd4c62d1a5c6e94c555dfe7207b4023543cbedab34129ada6f103bd0389"
+          "sha256": "52de8fb9b34babf4c765cb27a8d350efd9bd43f97a7cf75995ef84ac0a65601d"
         }
       ],
       "proof": [
@@ -1788,7 +1788,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "bb55afd4c62d1a5c6e94c555dfe7207b4023543cbedab34129ada6f103bd0389"
+          "sha256": "52de8fb9b34babf4c765cb27a8d350efd9bd43f97a7cf75995ef84ac0a65601d"
         }
       ],
       "proof": [
@@ -1840,7 +1840,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "bb55afd4c62d1a5c6e94c555dfe7207b4023543cbedab34129ada6f103bd0389"
+          "sha256": "52de8fb9b34babf4c765cb27a8d350efd9bd43f97a7cf75995ef84ac0a65601d"
         }
       ],
       "proof": [
@@ -2039,7 +2039,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "827f2d8d85cfe2f037d16da864b489041d948b20d634d7902eb183000e4d5067",
+          "sha256": "f81b2de9ecaddf9e6dd469f7d38b88c5dd86d1593ebe5953343cb0bc5748b171",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -2124,12 +2124,12 @@
       "targets": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "bbd153f6f4089d8561d8f883c7eff89e5e55933bf4bde9fcf0419966e490d126",
+          "sha256": "8e41e6afb3527bf39630f52f9359359bc111673cbc934d258ed664219a7e949e",
           "anchor": "fn manager_selector("
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "827f2d8d85cfe2f037d16da864b489041d948b20d634d7902eb183000e4d5067",
+          "sha256": "f81b2de9ecaddf9e6dd469f7d38b88c5dd86d1593ebe5953343cb0bc5748b171",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -2157,12 +2157,12 @@
       "proof": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "bbd153f6f4089d8561d8f883c7eff89e5e55933bf4bde9fcf0419966e490d126",
+          "sha256": "8e41e6afb3527bf39630f52f9359359bc111673cbc934d258ed664219a7e949e",
           "anchor": "fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width()"
         },
         {
           "path": "tests/web_cell_table_test.mjs",
-          "sha256": "5d9d9c17edfab19da28e2c4485016e84c94dfea12322cbeba933e97191c4b4a4",
+          "sha256": "63da3cbda56135cc8bcdbbb7f2bacd4c818568b0c32f8ee4a8ce60a90fa6c772",
           "anchor": "Manager must not allocate state-dependent selectable Frames"
         }
       ],

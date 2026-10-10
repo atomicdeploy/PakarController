@@ -741,8 +741,9 @@ impl PakarControllerApp {
         ui.add_space(8.0);
         let width = ui.available_width().max(200.0);
         let visible_height = (ui.clip_rect().bottom() - ui.cursor().min.y - 38.0).max(180.0);
-        let pitch = (width / 10.0).min(visible_height / (8.5 * 0.72)).min(94.0);
-        let height = (pitch * 0.72).max(20.0);
+        let aspect = if self.config.cell_shape == super::cell_pixels::Shape::Rounded { 0.72 } else { 1.0 };
+        let pitch = (width / 10.0).min(visible_height / (8.5 * aspect)).min(94.0);
+        let height = (pitch * aspect).max(20.0);
         let (area, _) =
             ui.allocate_exact_size(egui::vec2(width, height * 8.5), egui::Sense::hover());
         let grid_origin = area.min + egui::vec2((width - pitch * 10.0) * 0.5, 0.0);

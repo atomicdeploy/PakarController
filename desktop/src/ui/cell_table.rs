@@ -112,6 +112,7 @@ impl State {
     }
 }
 pub struct TableState {
+    pub pixel_sample: Option<super::cell_pixels::Sample>,
     pub editing_order: bool,
     order_drag: Option<(u8, bool)>,
     pub selection: Selection,
@@ -131,6 +132,7 @@ pub struct TableState {
 impl Default for TableState {
     fn default() -> Self {
         Self {
+            pixel_sample: None,
             editing_order: false,
             order_drag: None,
             selection: Default::default(),
@@ -229,7 +231,12 @@ fn blend(a: Color32, b: Color32, t: f32) -> Color32 {
         channel(a.b(), b.b()),
     )
 }
-fn animated_color(ui: &egui::Ui, id: egui::Id, target: Color32, animate: bool) -> Color32 {
+pub(super) fn animated_color(
+    ui: &egui::Ui,
+    id: egui::Id,
+    target: Color32,
+    animate: bool,
+) -> Color32 {
     if !animate {
         return target;
     }
@@ -378,6 +385,24 @@ fn activation_key(ui: &egui::Ui, modifiers: Modifiers, key: Key) -> bool {
 }
 impl PakarControllerApp {
     fn cell_order_controls(&mut self, ui: &mut egui::Ui) {
+        let previous = (self.config.cell_shape, self.config.pixel_diagnostics);
+        egui::ComboBox::from_id_salt("cell-shape")
+            .selected_text(self.config.cell_shape.label())
+            .show_ui(ui, |ui| {
+                for shape in [
+                    super::cell_pixels::Shape::Rounded,
+                    super::cell_pixels::Shape::Circle,
+                    super::cell_pixels::Shape::Hexagon,
+                ] {
+                    ui.selectable_value(&mut self.config.cell_shape, shape, shape.label());
+                }
+            });
+        ui.add_enabled(self.config.cell_shape != super::cell_pixels::Shape::Rounded, egui::Checkbox::new(&mut self.config.pixel_diagnostics, "Pixel indices"))
+            .on_hover_text("Zero-based physical pixel indices. Top sector first, counter-clockwise. RGB is a sampled pre-brightness device frame, not optical measurement.");
+        if previous != (self.config.cell_shape, self.config.pixel_diagnostics) {
+            crate::config::set_live(&self.config);
+            self.save_workspace();
+        }
         if ui
             .checkbox(&mut self.table.editing_order, "Edit order")
             .changed()
@@ -666,15 +691,19 @@ impl PakarControllerApp {
                 .as_ref()
                 .and_then(|s| s.cells.get(*id as usize - 1))
                 .map(String::as_str);
-            let response = cell_surface(
-                ui,
-                *rect,
-                widget_id,
-                slot as u8 + 1,
-                state,
-                selected,
-                self.config.animate_cells,
-            );
+            let response = if self.config.cell_shape == super::cell_pixels::Shape::Rounded {
+                cell_surface(
+                    ui,
+                    *rect,
+                    widget_id,
+                    slot as u8 + 1,
+                    state,
+                    selected,
+                    self.config.animate_cells,
+                )
+            } else {
+                ui.interact(*rect, widget_id, egui::Sense::click_and_drag())
+            };
             response.widget_info(|| {
                 egui::WidgetInfo::labeled(egui::WidgetType::Button, true, format!("Cell {id}"))
             });
@@ -697,12 +726,49 @@ impl PakarControllerApp {
                 egui::FontId::proportional(14.0),
                 v.text_color(),
             );
-            ui.painter().with_clip_rect(rect.shrink(9.0)).galley(
-                rect.center() - text.size() * 0.5,
-                text,
-                v.text_color(),
-            );
-            if self.config.show_cell_indicators {
+            if self.config.cell_shape != super::cell_pixels::Shape::Rounded {
+                let frame = self
+                    .table
+                    .pixel_sample
+                    .as_ref()
+                    .filter(|sample| {
+                        sample.fresh()
+                            && matches!(self.command_route(), Some(crate::Transport::WiFi))
+                    })
+                    .map(|sample| &sample.frame);
+                let physical = (matches!(self.command_route(), Some(crate::Transport::WiFi))
+                    && crate::streaming::valid_mapping(&self.mappings))
+                .then(|| mapping.as_ref().map(|m| m.physical_cell))
+                .flatten();
+                let label = mapping
+                    .as_ref()
+                    .map(|m| m.name.as_str())
+                    .filter(|s| !s.is_empty())
+                    .map(str::to_owned)
+                    .unwrap_or_else(|| id.to_string());
+                super::cell_pixels::draw(
+                    ui,
+                    &response,
+                    self.config.cell_shape,
+                    selected,
+                    self.config.pixel_diagnostics,
+                    frame,
+                    physical,
+                    *id,
+                    &label,
+                    cell_base_fill(self.config.color_palette, v.dark_mode, slot as u8 + 1),
+                    self.config.animate_cells,
+                );
+            } else {
+                ui.painter().with_clip_rect(rect.shrink(9.0)).galley(
+                    rect.center() - text.size() * 0.5,
+                    text,
+                    v.text_color(),
+                );
+            }
+            if self.config.show_cell_indicators
+                && self.config.cell_shape == super::cell_pixels::Shape::Rounded
+            {
                 let indicator = match state {
                     Some("white") => v.strong_text_color(),
                     Some("red") => v.error_fg_color,
@@ -860,8 +926,42 @@ impl PakarControllerApp {
             } else {
                 "Click selects · Ctrl toggles · Shift extends · drag selects · Enter manages"
             };
+            let pixel_details = self
+                .table
+                .pixel_sample
+                .as_ref()
+                .filter(|sample| {
+                    sample.fresh() && matches!(self.command_route(), Some(crate::Transport::WiFi))
+                })
+                .and_then(|sample| {
+                    sample.frame.cell(*id).map(|(first, colors)| {
+                        format!(
+                            "\nFrame {} · pre-brightness RGB · brightness {}\n{}",
+                            sample.frame.revision,
+                            sample.frame.brightness,
+                            colors
+                                .iter()
+                                .enumerate()
+                                .map(|(s, c)| format!(
+                                    "Pixel {}: RGB({}, {}, {}) #{:02X}{:02X}{:02X}",
+                                    first + s as u16,
+                                    c.r(),
+                                    c.g(),
+                                    c.b(),
+                                    c.r(),
+                                    c.g(),
+                                    c.b()
+                                ))
+                                .collect::<Vec<_>>()
+                                .join("\n")
+                        )
+                    })
+                })
+                .unwrap_or_else(|| {
+                    "\nPixel RGB unavailable (requires Wi-Fi pixel telemetry).".into()
+                });
             response.on_hover_text(format!(
-                "Cell {id} · {} · {}\n{gesture}",
+                "Cell {id} · {} · {}\n{gesture}{pixel_details}",
                 mapping
                     .map(|m| format!("physical {}", m.physical_cell))
                     .unwrap_or_else(|| "mapping unavailable".into()),

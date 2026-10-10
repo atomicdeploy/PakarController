@@ -40,6 +40,9 @@ class LedGrid {
   uint8_t physicalCell(uint8_t logicalCell) const;
   bool stagePixels(uint16_t offset, const uint8_t *rgb, uint8_t count);
   void showStaged();
+  // A loop-thread snapshot of the last committed command RGB buffer, before
+  // FastLED brightness/correction. Never expose an uncommitted streamed chunk.
+  String pixelFrameJson() const;
 
  private:
   static CRGB colorFor(BoardCore::Protocol::CellState state);
@@ -58,6 +61,8 @@ class LedGrid {
   uint8_t hue_ = 0;
   Pattern pattern_ = kPatternNone;
   bool dirty_ = true;
+  bool staging_ = false;
+  uint32_t frameRevision_ = 0;
 #ifndef PAKAR_LED_FRAME_INTERVAL_MS
 #define PAKAR_LED_FRAME_INTERVAL_MS 0
 #endif
