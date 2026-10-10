@@ -62,7 +62,8 @@ class TelnetParser {
 
 class LineEditor {
  public:
-  static constexpr size_t kCapacity = 120;
+  // Full bounded HTTPS endpoint (383), SHA-256 and target fit without truncation.
+  static constexpr size_t kCapacity = 512;
   enum Event : uint8_t { None, Submit, Cancel, TooLong };
   const char* line() const { return command_; }
   size_t cursor() const { return cursor_; }

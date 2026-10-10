@@ -628,7 +628,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
+          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -679,7 +679,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
+          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -732,12 +732,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
+          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
+          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -777,12 +777,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
+          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
+          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -821,7 +821,7 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
+          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
           "anchor": "void serviceInputs("
         }
       ],
@@ -855,7 +855,7 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "0ebdc01cc3c3b0ce8168f825561337f3c317313b1cd90f3a2784fb276b9d068a",
+          "sha256": "f6423ea162c567a1d418a5f8512cc0e4c8ccc1a940f6cf6e8b945a433783d016",
           "anchor": "void serviceInputs("
         }
       ],
@@ -1070,12 +1070,12 @@
         {
           "path": "firmware/esp8266/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "bdd9e09124f9b5c60582beba58dc92bc4ab2b818a84fd3c98c8f5165971f4cf1"
+          "sha256": "dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec"
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "1c82a392e76e52ea4427be7cc97acd13f667703865c408f39168c38f0ce5020c"
+          "sha256": "bb55afd4c62d1a5c6e94c555dfe7207b4023543cbedab34129ada6f103bd0389"
         }
       ],
       "proof": [
@@ -1137,12 +1137,12 @@
         {
           "path": "firmware/esp8266/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "bdd9e09124f9b5c60582beba58dc92bc4ab2b818a84fd3c98c8f5165971f4cf1"
+          "sha256": "dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec"
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "1c82a392e76e52ea4427be7cc97acd13f667703865c408f39168c38f0ce5020c"
+          "sha256": "bb55afd4c62d1a5c6e94c555dfe7207b4023543cbedab34129ada6f103bd0389"
         }
       ],
       "proof": [
@@ -1204,12 +1204,12 @@
         {
           "path": "firmware/esp8266/src/TelnetShell.h",
           "anchor": "class TelnetParser",
-          "sha256": "bdd9e09124f9b5c60582beba58dc92bc4ab2b818a84fd3c98c8f5165971f4cf1"
+          "sha256": "dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec"
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "1c82a392e76e52ea4427be7cc97acd13f667703865c408f39168c38f0ce5020c"
+          "sha256": "bb55afd4c62d1a5c6e94c555dfe7207b4023543cbedab34129ada6f103bd0389"
         }
       ],
       "proof": [
@@ -1256,12 +1256,12 @@
         {
           "path": "firmware/esp8266/src/TelnetShell.h",
           "anchor": "class TelnetParser",
-          "sha256": "bdd9e09124f9b5c60582beba58dc92bc4ab2b818a84fd3c98c8f5165971f4cf1"
+          "sha256": "dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec"
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "1c82a392e76e52ea4427be7cc97acd13f667703865c408f39168c38f0ce5020c"
+          "sha256": "bb55afd4c62d1a5c6e94c555dfe7207b4023543cbedab34129ada6f103bd0389"
         }
       ],
       "proof": [

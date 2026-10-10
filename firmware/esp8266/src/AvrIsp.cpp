@@ -95,9 +95,11 @@ uint8_t AvrIsp::readFuse(uint8_t a, uint8_t b) {
 bool AvrIsp::backup(fs::FS &filesystem, const char *directory) {
   if (!enter()) return false;
   if (!validSignature()) return false;
+  if ((readFuse(0x58, 0x00) & 0x3F) != 0x3F)
+    return fail(F("Locked AVR cannot provide a verifiable full recovery backup"));
   filesystem.mkdir(directory);
 
-  const String flashPath = String(directory) + F("/flash.bin");
+  const String flashPath = String(directory) + F("/flash.pending");
   File flash = filesystem.open(flashPath, "w");
   if (!flash) return fail(F("Cannot create AVR flash backup"));
   uint8_t block[128];
@@ -109,9 +111,16 @@ bool AvrIsp::backup(fs::FS &filesystem, const char *directory) {
     }
     yield();
   }
+  flash.flush(); flash.close();
+  flash = filesystem.open(flashPath, "r");
+  if (!flash || flash.size()!=kFlashBytes) return fail(F("Flash backup could not be reopened"));
+  for (uint32_t i=0;i<kFlashBytes;++i) {
+    if (flash.read()!=readFlashByte(i)) {flash.close();return fail(F("Stored flash backup mismatch"));}
+    if ((i & 127U)==0) yield();
+  }
   flash.close();
 
-  const String eepromPath = String(directory) + F("/eeprom.bin");
+  const String eepromPath = String(directory) + F("/eeprom.pending");
   File eeprom = filesystem.open(eepromPath, "w");
   if (!eeprom) return fail(F("Cannot create AVR EEPROM backup"));
   for (uint16_t base = 0; base < kEepromBytes; base += sizeof(block)) {
@@ -123,31 +132,74 @@ bool AvrIsp::backup(fs::FS &filesystem, const char *directory) {
     }
     yield();
   }
+  eeprom.flush(); eeprom.close();
+  eeprom = filesystem.open(eepromPath, "r");
+  if (!eeprom || eeprom.size()!=kEepromBytes) return fail(F("EEPROM backup could not be reopened"));
+  for (uint16_t i=0;i<kEepromBytes;++i) {
+    if (eeprom.read()!=readEepromByte(i)) {eeprom.close();return fail(F("Stored EEPROM backup mismatch"));}
+    if ((i & 127U)==0) yield();
+  }
   eeprom.close();
 
   const uint8_t lfuse = readFuse(0x50, 0x00);
   const uint8_t hfuse = readFuse(0x58, 0x08);
   const uint8_t efuse = readFuse(0x50, 0x08);
   const uint8_t lock = readFuse(0x58, 0x00);
-  File metadata = filesystem.open(String(directory) + F("/metadata.txt"), "w");
+  const String metadataPath=String(directory)+F("/metadata.pending");
+  File metadata = filesystem.open(metadataPath, "w");
   if (!metadata) return fail(F("Cannot create AVR backup metadata"));
-  metadata.printf("signature=1E950F\nlfuse=%02X\nhfuse=%02X\nefuse=%02X\nlock=%02X\n",
-                  lfuse, hfuse, efuse, lock);
+  const size_t written=metadata.printf("signature=1E950F\nlfuse=%02X\nhfuse=%02X\nefuse=%02X\nlock=%02X\n",
+                  lfuse,hfuse,efuse,lock);
+  metadata.flush();metadata.close();
+  metadata=filesystem.open(metadataPath,"r");
+  if(!written || !metadata || metadata.size()!=written) return fail(F("Recovery metadata write failed"));
   metadata.close();
+  if(!filesystem.rename(flashPath,String(directory)+F("/flash.bin")) ||
+     !filesystem.rename(eepromPath,String(directory)+F("/eeprom.bin")) ||
+     !filesystem.rename(metadataPath,String(directory)+F("/metadata.txt")))
+    return fail(F("Recovery backup commit failed; no erase performed"));
   leave();
   return true;
 }
 
-bool AvrIsp::programFlash(File &image) {
+bool AvrIsp::programFlash(File &image, File &recoveryEeprom) {
   if (!image || image.size() != kFlashBytes) {
     error_ = F("AVR image must be exactly 32768 raw bytes");
     return false;
   }
   if (!enter()) return false;
   if (!validSignature()) return false;
+  if ((readFuse(0x58, 0x00) & 0x3F) != 0x3F)
+    return fail(F("Locked target: refusing erase without readable recovery state"));
+  uint8_t savedEeprom[kEepromBytes];
+  if (!recoveryEeprom || recoveryEeprom.size()!=kEepromBytes || !recoveryEeprom.seek(0,SeekSet) ||
+      recoveryEeprom.read(savedEeprom,sizeof(savedEeprom))!=sizeof(savedEeprom))
+    return fail(F("A complete durable EEPROM recovery snapshot is required"));
+  for (uint16_t i=0;i<kEepromBytes;++i) {
+    if (readEepromByte(i)!=savedEeprom[i]) return fail(F("EEPROM changed after recovery snapshot; erase refused"));
+    if ((i & 127U)==0) yield();
+  }
+  // Prove the entire source remains readable before the irreversible erase.
+  if (!image.seek(0,SeekSet)) return fail(F("Cannot seek flash image"));
+  uint8_t preflight[kPageBytes];
+  for(uint32_t i=0;i<kFlashBytes;i+=sizeof(preflight))
+    if(image.read(preflight,sizeof(preflight))!=sizeof(preflight))
+      return fail(F("Flash image unreadable before erase"));
 
   transfer4(0xAC, 0x80, 0x00, 0x00);
   delay(15);
+  // EESAVE is not assumed. Restore first, while reset remains asserted, so
+  // a later flash verification failure cannot silently erase settings/Prog.
+  // ATmega328P datasheet 27.8.3: C0 byte write, F0 RDY/BSY polling.
+  for (uint16_t i=0;i<kEepromBytes;++i) {
+    if(readEepromByte(i)!=savedEeprom[i]) {
+      transfer4(0xC0,static_cast<uint8_t>(i>>8),static_cast<uint8_t>(i),savedEeprom[i]);
+      uint8_t attempts=0;
+      while((transfer4(0xF0,0,0,0)&1U) && attempts++<20) delay(1);
+      if(readEepromByte(i)!=savedEeprom[i]) return fail(F("EEPROM restore mismatch; retained recovery file required"));
+    }
+    yield();
+  }
   image.seek(0, SeekSet);
   uint8_t page[kPageBytes];
   for (uint32_t base = 0; base < kFlashBytes; base += kPageBytes) {
@@ -180,6 +232,8 @@ bool AvrIsp::programFlash(File &image) {
     }
     yield();
   }
+  for(uint16_t i=0;i<kEepromBytes;++i)
+    if(readEepromByte(i)!=savedEeprom[i]) return fail(F("EEPROM final verification mismatch"));
   leave();
   return true;
 }

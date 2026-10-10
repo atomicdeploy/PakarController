@@ -134,6 +134,23 @@ class BoardHardware final : public PcControllerHardware {
 } boardHardware;
 PcControllerRuntime pcController(boardHardware);
 BoardCore::PcContractAssembly pcAssembly;
+extern "C" char __heap_start;
+extern "C" void *__brkval;
+void sendTelemetry(uint8_t sequence) {
+  uint8_t p[46]={1,BoardCore::BuildInfo::kVersionMajor,
+      BoardCore::BuildInfo::kVersionMinor,BoardCore::BuildInfo::kVersionPatch};
+  const uint32_t now=millis();memcpy(p+4,&now,4);
+  char stack;
+  const uint16_t freeRam=&stack-(__brkval?static_cast<char*>(__brkval):&__heap_start);
+  memcpy(p+8,&freeRam,2);
+  const uint16_t adc=analogRead(A6),hz=buzzer.activeFrequencyHz(),ms=buzzer.activeDurationMs();
+  memcpy(p+10,&adc,2);memcpy(p+12,&hz,2);memcpy(p+14,&ms,2);p[16]=buzzer.muted();
+  memcpy(p+17,&pcController.settings().values(),21);p[38]=pcController.settings().persisted();
+  const uint16_t features=BoardCore::Features::enabled,errors=link.errors();
+  memcpy(p+39,&features,2);p[41]=programmingLatch.active();memcpy(p+42,&errors,2);
+  const uint16_t lost=pcController.lostEvents();memcpy(p+44,&lost,2);
+  link.send(kTelemetryResponse,sequence,p,sizeof(p));
+}
 
 void applyProgrammingSafety() {
   shiftRegisters.allOutputsOff();
@@ -254,11 +271,16 @@ void onInputChanged(uint8_t button, bool pressed) {
 void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
   if (programmingLatch.active() && frame.opcode != kHello &&
       frame.opcode != kGetStatus && frame.opcode != kProgrammingState &&
-      frame.opcode != kPing && frame.opcode != kPcContract && frame.opcode != kPcContractChunk) {
+      frame.opcode != kPing && frame.opcode != kGetTelemetry &&
+      frame.opcode != kPcContract && frame.opcode != kPcContractChunk) {
     link.error(frame.sequence, frame.opcode, kUnsafe);
     return;
   }
   switch (frame.opcode) {
+    case kGetTelemetry:
+      if(frame.payloadLength) link.error(frame.sequence,frame.opcode,kBadPayload);
+      else sendTelemetry(frame.sequence);
+      break;
     case kPcContractChunk:
       if (pcAssembly.accept(frame.sequence, frame.payload, frame.payloadLength, millis()))
         pcController.handle(frame.sequence, pcAssembly.data(), 49, millis(), micros());

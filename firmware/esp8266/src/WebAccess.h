@@ -40,6 +40,7 @@ class WebAccess {
     return request->getHeader("Origin")->value() == String(F("http://")) + request->host();
   }
   void revokeAll() { sessions_.clear(); refreshCredentials(); }
+  uint8_t sessionCount() const {return sessions_.count(millis());}
   bool bindSocket(uint32_t id, AsyncWebServerRequest *request) {
     if (!request || !allowed(request) || !sameOrigin(request)) return false;
     for (auto &slot : sockets_) if (slot.id == 0) {

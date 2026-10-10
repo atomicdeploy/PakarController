@@ -5,6 +5,10 @@ See [Access and recovery](docs/ACCESS.md) and the explicit
 [PU850 parity audit](docs/PU850-PARITY.md). ESPAsyncWebServer now hosts the
 Web UI/API/WebSocket, ESP OTA and AVR ISP in the same firmware.
 
+Version 0.2.7 adds [pinned remote two-board updates and full operational telemetry](docs/REMOTE-MAINTENANCE.md).
+The [50-route PU850 mapping](docs/PU850-ROUTE-PARITY.md) records exact adaptations and exclusions.
+Physical and publisher acceptance remain open in [issue #7](https://github.com/atomicdeploy/PakarController/issues/7); no production deployment is implied by a passing build.
+
 PakarController is a two-controller game platform built from the reusable parts of
 AtomicDeploy's earlier PuzzleBoard, 40LED, Puzzles, pu850-esp, PCController,
 and Pealayer work.

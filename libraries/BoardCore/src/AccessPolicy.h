@@ -61,6 +61,13 @@ class Sessions {
     for (auto &slot : slots_) if (equal(slot.token, token)) slot.active = false;
   }
   void clear() { for (auto &slot : slots_) slot = Slot{}; }
+  uint8_t count(uint32_t now) const {
+    uint8_t n=0;
+    for (const auto &slot:slots_) {
+      if(slot.active && static_cast<uint32_t>(now-slot.lastActive)<kIdleMs) ++n;
+    }
+    return n;
+  }
  private:
   struct Slot { char token[33] = {}; uint32_t lastActive = 0; bool active = false; } slots_[kCapacity];
 };

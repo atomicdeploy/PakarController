@@ -35,6 +35,8 @@ enum Opcode : uint8_t {
   kDeviceName = 0x55, // ESP physical USB: reset(0), label chunks(1), persist/apply(2).
   kPcContract = 0x56, // [PCController opcode, payload]; isolated from legacy 0x11 audio.
   kPcContractChunk = 0x57, // Full 48-byte donor request, bounded two-frame assembly.
+  kGetTelemetry = 0x58, // Read-only; does not renew PCController's host/control lease.
+  kTelemetryResponse = 0xB1, // Schema 1, 46 bytes; actual AVR observations.
   kPcContractResponse = 0xB0, // [PCController response opcode, payload].
 
   kAck = 0x80,

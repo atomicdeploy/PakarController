@@ -14,7 +14,9 @@ class CloudServices {
   using StatusProvider = String (*)();
 
   void begin(const String &deviceId, CommandHandler handler,
-             StatusProvider statusProvider);
+             StatusProvider statusProvider,StatusProvider telemetryProvider=nullptr);
+  void suspend();
+  void requestTelemetry() {lastTelemetryAt_=millis()-static_cast<uint32_t>(cloudConfig.telemetrySeconds())*1000U;}
   void applyConfiguration();
   void renameDevice(const String &deviceId);
   void service(bool networkReady, bool timeReady, uint32_t now);
@@ -43,10 +45,13 @@ class CloudServices {
   PubSubClient mqtt_;
   WebSocketsClient webSocket_;
   String deviceId_;
+  String telemetryBoot_;
   String authorizationHeader_;
   String lastError_;
   CommandHandler commandHandler_ = nullptr;
   StatusProvider statusProvider_ = nullptr;
+  StatusProvider telemetryProvider_ = nullptr;
+  uint32_t snapshotSequence_=0;
   uint32_t nextMqttAttemptAt_ = 0;
   uint32_t lastTelemetryAt_ = 0;
   uint32_t mqttMessagesReceived_ = 0;
@@ -55,3 +60,5 @@ class CloudServices {
 };
 
 extern CloudServices cloudServices;
+// Shared pinned trust roots; neither firmware fetch nor cloud uses setInsecure().
+BearSSL::X509List &pakarTrustAnchor();

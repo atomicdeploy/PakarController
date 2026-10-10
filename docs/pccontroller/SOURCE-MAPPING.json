@@ -31,7 +31,7 @@
       "source_sha256": "287a95a65a9b9655e64a15ece051bc792a06564b648a1b53eed4f373c564e458",
       "source_read": "complete",
       "target": "libraries/BoardCore/src/Protocol.h",
-      "target_sha256_utf8_lf": "b8215f5ee94cc4b13108bbe2c9a1ffe2fc71b027e5e880efeed041fcc5329a79",
+      "target_sha256_utf8_lf": "bf7ed76ce7f6843476d5164f6b0e45051cc9b6d860390dab580bd1ec01792cda",
       "line": 36,
       "anchor": "kPcContract = 0x56",
       "retained": "Retains native opcode/error values in isolated tunneled dialect; existing COBS/CRC shared transport owns framing.",

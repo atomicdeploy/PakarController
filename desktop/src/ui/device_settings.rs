@@ -413,6 +413,142 @@ fn maintenance_page(
     ready: bool,
 ) {
     use crate::maintenance::Operation;
+    dialog::section(ui, icons::GLOBE, "Verified remote firmware", |ui| {
+        field(
+            ui,
+            icons::LINK,
+            "Manifest HTTPS URL",
+            &mut draft.firmware_url,
+            false,
+        );
+        field(
+            ui,
+            icons::LOCK,
+            "Pinned manifest SHA-256",
+            &mut draft.firmware_sha256,
+            false,
+        );
+        field(
+            ui,
+            icons::LOCK,
+            "Endpoint bearer (optional)",
+            &mut draft.firmware_bearer,
+            true,
+        );
+        if !(1..=3).contains(&draft.firmware_targets) {
+            draft.firmware_targets = 3;
+        }
+        dialog::setting_row(ui, icons::CPU, "Update target", None, |ui| {
+            egui::ComboBox::from_id_salt("remote-target")
+                .selected_text(match draft.firmware_targets {
+                    1 => "ESP",
+                    2 => "AVR",
+                    _ => "Both boards",
+                })
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(&mut draft.firmware_targets, 3, "Both boards");
+                    ui.selectable_value(
+                        &mut draft.firmware_targets,
+                        1,
+                        "ESP (same-version repair)",
+                    );
+                    ui.selectable_value(
+                        &mut draft.firmware_targets,
+                        2,
+                        "AVR (same-version repair)",
+                    );
+                });
+        });
+        let available =
+            app.command_route() == Some(Transport::WiFi) && draft.maintenance_pending.is_none();
+        ui.horizontal_wrapped(|ui| {
+            if ui
+                .add_enabled(available, egui::Button::new("Refresh update & telemetry"))
+                .clicked()
+            {
+                for path in ["/api/v1/firmware/remote", "/api/v1/telemetry"] {
+                    let _ = app
+                        .http_tx
+                        .send(HttpCommand::Configuration(app.endpoint(), path));
+                }
+            }
+            let valid = crate::maintenance::validate_remote(
+                &draft.firmware_url,
+                &draft.firmware_sha256,
+                draft.firmware_targets,
+            );
+            let busy = draft.remote_job.as_ref().is_some_and(|j| j.busy);
+            if ui
+                .add_enabled(
+                    available && draft.remote_job.is_some() && !busy && valid.is_ok() &&
+                        (ready || draft.firmware_targets==3),
+                    egui::Button::new("Download & verify…"),
+                )
+                .clicked()
+            {
+                draft.maintenance_confirmation = Some(Operation::RemoteStage {
+                    url: draft.firmware_url.clone(),
+                    sha256: draft.firmware_sha256.clone(),
+                    targets: draft.firmware_targets,
+                    bearer: std::mem::take(&mut draft.firmware_bearer),
+                });
+            }
+        });
+        if let Some(job) = draft.remote_job.clone() {
+            ui.label(format!(
+                "Job {} · {} · {}/{} bytes",
+                job.job_id, job.phase, job.received_bytes, job.expected_bytes
+            ));
+            if !job.error.is_empty() {
+                ui.colored_label(ui.visuals().warn_fg_color, &job.error);
+            }
+            ui.horizontal_wrapped(|ui| {
+                if ui
+                    .add_enabled(
+                        available && job.phase == "ready",
+                        egui::Button::new("Apply this verified job…"),
+                    )
+                    .clicked()
+                {
+                    draft.maintenance_confirmation = Some(Operation::RemoteApply(job.clone()));
+                }
+                if ui
+                    .add_enabled(
+                        available && (job.cancellable || job.phase == "ready"),
+                        egui::Button::new("Cancel this job…"),
+                    )
+                    .clicked()
+                {
+                    draft.maintenance_confirmation = Some(Operation::RemoteCancel(job));
+                }
+            });
+        } else {
+            ui.label("No remote transaction has been read from this device.");
+        }
+        ui.label(egui::RichText::new("Downloads never program automatically. Apply validates the exact job, boot identity and manifest digest. Matching board versions, durable Prog and recovery EEPROM readback are required. Credentials are memory-only.").small().weak());
+        if let Some(value) = &draft.telemetry {
+            ui.collapsing("Complete device & client telemetry", |ui| {
+                for key in [
+                    "esp",
+                    "avr",
+                    "network",
+                    "clock",
+                    "discovery",
+                    "cloud",
+                    "clients",
+                ] {
+                    ui.collapsing(key, |ui| {
+                        let text = serde_json::to_string_pretty(&value[key]).unwrap_or_default();
+                        ui.add(
+                            egui::Label::new(egui::RichText::new(text).monospace())
+                                .selectable(true)
+                                .wrap(),
+                        );
+                    });
+                }
+            });
+        }
+    });
     let recovery = app.command_route() == Some(Transport::WiFi)
         && app.status.as_ref().is_some_and(|s| s.programming_latch)
         && draft.pending.is_none()
@@ -802,6 +938,12 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
                 if ui
                     .add_enabled(
                         (ready
+                            || (matches!(
+                                operation,
+                                crate::maintenance::Operation::RemoteApply(_)
+                                    | crate::maintenance::Operation::RemoteCancel(_)
+                            ) && app.command_route() == Some(Transport::WiFi)
+                                && draft.maintenance_pending.is_none())
                             || (matches!(operation, crate::maintenance::Operation::ProgramAvr)
                                 && app.command_route() == Some(Transport::WiFi)
                                 && app.status.as_ref().is_some_and(|s| s.programming_latch)

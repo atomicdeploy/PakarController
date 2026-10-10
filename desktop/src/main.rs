@@ -7,6 +7,7 @@ use std::{
 
 mod access;
 mod audio;
+mod client_telemetry;
 mod config;
 mod device_settings;
 mod display;
@@ -413,6 +414,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
 }
 
 fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: egui::Context) {
+    let mut reporter = client_telemetry::Reporter::new();
     let client = Client::builder()
         .no_proxy()
         .timeout(Duration::from_secs(4))
@@ -462,8 +464,24 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
                 }
             }
         }
-        let operation = matches!(command, HttpCommand::Post(..) | HttpCommand::AccessChange(..) | HttpCommand::NameChange(..));
-        let event = result.unwrap_or_else(|e| if operation { Event::OperationFailed(e) } else { Event::Failed(e) });
+        if result.is_ok() && matches!(command, HttpCommand::Status(_)) && reporter.due() {
+            let mut endpoint = command.endpoint().clone();
+            if let Some(base) = &discovered_base {
+                endpoint.base = base.clone();
+            }
+            reporter.report(&client, &endpoint);
+        }
+        let operation = matches!(
+            command,
+            HttpCommand::Post(..) | HttpCommand::AccessChange(..) | HttpCommand::NameChange(..)
+        );
+        let event = result.unwrap_or_else(|e| {
+            if operation {
+                Event::OperationFailed(e)
+            } else {
+                Event::Failed(e)
+            }
+        });
         if events
             .send(for_endpoint(command.endpoint(), event))
             .is_err()
@@ -1053,11 +1071,15 @@ impl PakarControllerApp {
             .unwrap();
         let tray = platform::windows_tray::TrayController::new();
         let mut event_log = Vec::new();
-        if let Err(error) = &tray { event_log.push(("Windows tray unavailable".into(), error.clone())); }
+        if let Err(error) = &tray {
+            event_log.push(("Windows tray unavailable".into(), error.clone()));
+        }
         #[cfg(windows)]
         let windows_desktop = platform::windows_desktop::Desktop::new(context);
         #[cfg(windows)]
-        if let Err(error) = &windows_desktop { event_log.push(("Windows desktop unavailable".into(), error.clone())); }
+        if let Err(error) = &windows_desktop {
+            event_log.push(("Windows desktop unavailable".into(), error.clone()));
+        }
         Self {
             control: platform::instance::start(context.egui_ctx.clone()),
             dock,
@@ -1231,6 +1253,12 @@ impl PakarControllerApp {
         if self.last_poll.elapsed() >= Duration::from_secs(2) {
             self.last_poll = Instant::now();
             let _ = self.http_tx.send(HttpCommand::Status(self.endpoint()));
+            if self.device_settings.open && self.device_settings.page == 9 {
+                let _ = self.http_tx.send(HttpCommand::Configuration(
+                    self.endpoint(),
+                    "/api/v1/firmware/remote",
+                ));
+            }
         }
         if !self.configuration_loaded {
             let _ = self.http_tx.send(HttpCommand::Configuration(
@@ -1289,20 +1317,36 @@ impl PakarControllerApp {
                 Event::Configuration(path, value) => self.receive_configuration(path, value),
                 Event::MaintenanceFinished(id, result) => {
                     if self.device_settings.maintenance_pending == Some(id) {
-                        let severity = if result.is_ok() { messaging::Severity::Success } else { messaging::Severity::Error };
+                        let severity = maintenance::result_severity(&result);
                         self.device_settings.maintenance_pending = None;
                         self.device_settings.message = result.unwrap_or_else(|e| e);
                         self.record_event("Maintenance", &self.device_settings.message.clone());
-                        self.notify_id("pakar.maintenance", "Maintenance result", &self.device_settings.message, severity);
+                        self.notify_id(
+                            "pakar.maintenance",
+                            "Maintenance result",
+                            &self.device_settings.message,
+                            severity,
+                        );
                         self.configuration_loaded = false;
                     }
                 }
                 Event::SettingsFinished(id, group, result) => {
-                    if self.device_settings.pending != Some((id, group)) { continue; }
-                    let severity = if result.is_ok() { messaging::Severity::Success } else { messaging::Severity::Error };
+                    if self.device_settings.pending != Some((id, group)) {
+                        continue;
+                    }
+                    let severity = if result.is_ok() {
+                        messaging::Severity::Success
+                    } else {
+                        messaging::Severity::Error
+                    };
                     self.device_settings.finish(id, group, result);
                     self.record_event("Settings", &self.device_settings.message.clone());
-                    self.notify_id("pakar.settings", "Device settings result", &self.device_settings.message, severity);
+                    self.notify_id(
+                        "pakar.settings",
+                        "Device settings result",
+                        &self.device_settings.message,
+                        severity,
+                    );
                 }
                 Event::CredentialsUpdated(endpoint) => {
                     self.user = endpoint.user;
@@ -1327,7 +1371,12 @@ impl PakarControllerApp {
                 }
                 Event::OperationFailed(error) => {
                     self.record_event("Operation failed", &error);
-                    self.notify_id("pakar.operation-failed", "Operation failed", &error, messaging::Severity::Error);
+                    self.notify_id(
+                        "pakar.operation-failed",
+                        "Operation failed",
+                        &error,
+                        messaging::Severity::Error,
+                    );
                     self.message = error;
                 }
                 Event::Failed(e) => {
@@ -1366,23 +1415,39 @@ impl PakarControllerApp {
             self.notify_id("pakar.connection", "Connection changed", message, severity);
         }
         let tip = match self.live_status() {
-            Some(s) => format!("PakarController — {} — AVR {}", s.hostname, if s.avr_online { "online" } else { "offline" }),
+            Some(s) => format!(
+                "PakarController — {} — AVR {}",
+                s.hostname,
+                if s.avr_online { "online" } else { "offline" }
+            ),
             None => "PakarController — device offline".into(),
         };
         if tip != self.tray_tooltip {
             if let Some(tray) = &self.tray {
-                if let Err(error) = tray.set_tooltip(&tip) { self.record_event("Windows tray", &error); }
+                if let Err(error) = tray.set_tooltip(&tip) {
+                    self.record_event("Windows tray", &error);
+                }
             }
             self.tray_tooltip = tip;
         }
     }
     fn deliver_notifications(&mut self) {
         loop {
-            let request = self.notifications.borrow_mut().next(&self.config.notifications, messaging::now_ms());
-            let Some(request) = request else { break; };
-            let result = self.tray.as_ref().ok_or_else(|| "Native notification unavailable: tray registration failed".into())
+            let request = self
+                .notifications
+                .borrow_mut()
+                .next(&self.config.notifications, messaging::now_ms());
+            let Some(request) = request else {
+                break;
+            };
+            let result = self
+                .tray
+                .as_ref()
+                .ok_or_else(|| "Native notification unavailable: tray registration failed".into())
                 .and_then(|tray| tray.notify(&request, self.config.notifications.sound));
-            if let Err(error) = &result { self.record_event("Windows notification", error); }
+            if let Err(error) = &result {
+                self.record_event("Windows notification", error);
+            }
             self.notifications.borrow_mut().result(result);
         }
     }
@@ -1500,8 +1565,52 @@ fn print_text_status(status: &DeviceStatus, table: bool) {
 }
 
 fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<(), String> {
-    if words.first()==Some(&"avr") {
-        let fetch=|op,payload: &[u8]| pc_contract::request(client,&endpoint.base,&endpoint.user,&endpoint.password,op,payload);
+    if words.first() == Some(&"firmware") {
+        use maintenance::Operation;
+        let operation=match words {
+            ["firmware","status"]=>Operation::RemoteStatus,
+            ["firmware","fetch",url,sha] | ["firmware","fetch",url,sha,"all"]=>Operation::RemoteStage{url:(*url).into(),sha256:(*sha).into(),targets:3,bearer:std::env::var("PAKAR_FIRMWARE_TOKEN").unwrap_or_default()},
+            ["firmware","fetch",url,sha,target]=>Operation::RemoteStage{url:(*url).into(),sha256:(*sha).into(),targets:match *target{"esp"=>1,"avr"=>2,_=>return Err("Target must be all, esp or avr".into())},bearer:std::env::var("PAKAR_FIRMWARE_TOKEN").unwrap_or_default()},
+            ["firmware",action,id,boot,sha] if *action=="apply" || *action=="cancel"=>{
+                // Read-only preflight. Never fetch replacement identity for an
+                // unpinned mutation; the caller must supply the advertised triple.
+                let current=maintenance::run(client,endpoint,Operation::RemoteStatus)?;
+                let job=maintenance::parse_job(serde_json::from_str(&current).map_err(|_|"Invalid job JSON")?)?;
+                if job.job_id!=id.parse::<u32>().map_err(|_|"Invalid job ID")? || job.boot_id!=*boot || job.manifest_sha256!=*sha {
+                    return Err("Stale or incorrect remote job identity; nothing applied".into());
+                }
+                if *action=="apply"{Operation::RemoteApply(job)}else{Operation::RemoteCancel(job)}
+            }
+            _=>return Err("firmware status | fetch HTTPS_URL MANIFEST_SHA256 [all|esp|avr] | apply JOB BOOT SHA256 | cancel JOB BOOT SHA256".into()),
+        };
+        println!("{}", maintenance::run(client, endpoint, operation)?);
+        return Ok(());
+    }
+    if words == ["info"] || words == ["telemetry"] {
+        let value = pc_contract::get(
+            client,
+            &endpoint.base,
+            &endpoint.user,
+            &endpoint.password,
+            "/api/v1/telemetry",
+        )?;
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?
+        );
+        return Ok(());
+    }
+    if words.first() == Some(&"avr") {
+        let fetch = |op, payload: &[u8]| {
+            pc_contract::request(
+                client,
+                &endpoint.base,
+                &endpoint.user,
+                &endpoint.password,
+                op,
+                payload,
+            )
+        };
         let value = match words {
             ["avr","contracts"] => pc_contract::get(client,&endpoint.base,&endpoint.user,&endpoint.password,"/api/v1/avr/contracts")?,
             ["avr","settings"] => {
@@ -1530,7 +1639,10 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
             ["avr","command",op,payload] => fetch(pc_contract::opcode(op)?,&pc_contract::decode_hex(payload)?)?,
             _ => return Err("avr contracts | settings | set PARAMETER VALUE | status | panel | command OPCODE [HEX]".into())
         };
-        println!("{}",serde_json::to_string_pretty(&value).map_err(|e|e.to_string())?);
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?
+        );
         return Ok(());
     }
     if words == ["device", "name"] {
@@ -1704,7 +1816,7 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
                 }
                 if matches!(words.first(), Some(&"help")) {
                     println!(
-                        "status | device name | device rename NAME[.local] | auth info | auth change USERNAME (PAKAR_NEW_PASSWORD) | avr contracts | avr settings | avr set PARAMETER VALUE | avr panel | avr command OPCODE [HEX] | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | display stop | display segments [--speed-ms n] [--duration-ms n] [--repeat once|loop|interval] [--interval-ms n] [--scroll] -- TEXT | audio <cue> | snake <direction> | reset | quit"
+                        "status | info | telemetry | firmware status | firmware fetch HTTPS_URL SHA256 [all|esp|avr] | firmware apply JOB BOOT SHA256 | firmware cancel JOB BOOT SHA256 | device name | device rename NAME[.local] | auth info | auth change USERNAME (PAKAR_NEW_PASSWORD) | avr contracts | avr settings | avr set PARAMETER VALUE | avr panel | avr command OPCODE [HEX] | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | display stop | display segments [--speed-ms n] [--duration-ms n] [--repeat once|loop|interval] [--interval-ms n] [--scroll] -- TEXT | audio <cue> | snake <direction> | reset | quit"
                     );
                     continue;
                 }

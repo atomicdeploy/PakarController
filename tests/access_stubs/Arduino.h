@@ -9,6 +9,8 @@ class String : public std::string {
   using std::string::string;
   String() = default;
   bool isEmpty() const { return empty(); }
+  size_t write(uint8_t c) { push_back(static_cast<char>(c)); return 1; }
+  size_t write(const uint8_t *p,size_t n) { append(reinterpret_cast<const char*>(p),n); return n; }
   void trim() { const auto first = find_first_not_of(" \r\n\t"); if (first == npos) { clear(); return; } erase(0, first); erase(find_last_not_of(" \r\n\t") + 1); }
   bool startsWith(const char *prefix) const { return rfind(prefix, 0) == 0; }
   int indexOf(char value, size_t start = 0) const { const auto position = find(value, start); return position == npos ? -1 : static_cast<int>(position); }

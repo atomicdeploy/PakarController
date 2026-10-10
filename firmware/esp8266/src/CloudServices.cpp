@@ -1,4 +1,10 @@
 #include "CloudServices.h"
+#include <ArduinoJson.h>
+#include <libb64/cencode.h>
+#include <bearssl/bearssl.h>
+extern "C" {
+#include <osapi.h>
+}
 
 namespace {
 const char kIsrgRootX1[] PROGMEM = R"CERT(
@@ -39,12 +45,19 @@ BearSSL::X509List trustAnchor(kIsrgRootX1);
 }  // namespace
 
 CloudServices cloudServices;
+BearSSL::X509List &pakarTrustAnchor() { return trustAnchor; }
 
 void CloudServices::begin(const String &deviceId, CommandHandler handler,
-                          StatusProvider statusProvider) {
+                          StatusProvider statusProvider,StatusProvider telemetryProvider) {
   deviceId_ = deviceId;
   commandHandler_ = handler;
   statusProvider_ = statusProvider;
+  telemetryProvider_=telemetryProvider;
+  uint8_t entropy[16];
+  if(os_get_random(entropy,sizeof(entropy))==0) {
+    char identity[33];for(unsigned i=0;i<sizeof(entropy);++i)snprintf(identity+i*2,3,"%02x",entropy[i]);
+    telemetryBoot_=identity;
+  }
   secureClient_.setTrustAnchors(&trustAnchor);
   secureClient_.setBufferSizes(512, 512);
   mqtt_.setCallback(mqttCallback);
@@ -55,6 +68,9 @@ void CloudServices::begin(const String &deviceId, CommandHandler handler,
   webSocket_.setReconnectInterval(10000);
   webSocket_.enableHeartbeat(15000, 3000, 2);
   applyConfiguration();
+}
+void CloudServices::suspend() {
+  mqtt_.disconnect();secureClient_.stop();plainClient_.stop();webSocket_.disconnect();
 }
 
 String CloudServices::topic(const __FlashStringHelper *suffix) const {
@@ -150,6 +166,34 @@ void CloudServices::publishTelemetry(const String &statusJson, uint32_t now) {
   if (webSocket_.isConnected()) {
     webSocket_.sendTXT(statusJson.c_str());
   }
+  if(telemetryProvider_ && (mqtt_.connected() || webSocket_.isConnected())) {
+    const String full=telemetryProvider_();
+    if(full.length()>16384) {lastError_=F("Telemetry exceeds bounded snapshot size");return;}
+    if(webSocket_.isConnected()) webSocket_.sendTXT(full.c_str());
+    if(mqtt_.connected() && telemetryBoot_.length()) {
+      // Preserve donor /status consumers. Full snapshots use bounded packets,
+      // not a heap-heavy enlarged MQTT buffer. Reassemble only matching complete
+      // snapshot IDs, then verify SHA-256 before parsing the JSON.
+      br_sha256_context hash;br_sha256_init(&hash);br_sha256_update(&hash,full.c_str(),full.length());
+      uint8_t bytes[32];char hex[65];br_sha256_out(&hash,bytes);
+      for(unsigned i=0;i<32;++i)snprintf(hex+i*2,3,"%02x",bytes[i]);
+      const unsigned count=(full.length()+767)/768;
+      const String id=telemetryBoot_+"-"+String(++snapshotSequence_);
+      const String destination=topic(F("/telemetry/part"));
+      for(unsigned i=0;i<count;++i) {
+        const unsigned n=min<unsigned>(768,full.length()-i*768);
+        char encoded[1060];base64_encodestate state;base64_init_encodestate(&state);
+        int size=base64_encode_block(full.c_str()+i*768,n,encoded,&state);
+        size+=base64_encode_blockend(encoded+size,&state);encoded[size]=0;
+        JsonDocument part;part["schema"]=1;part["type"]="telemetry-fragment";part["snapshot_id"]=id;
+        part["index"]=i;part["count"]=count;part["total_bytes"]=full.length();
+        part["sha256"]=hex;part["encoding"]="base64";part["data"]=encoded;
+        String packet;serializeJson(part,packet);
+        if(!mqtt_.publish(destination.c_str(),packet.c_str(),false)) {lastError_=F("Telemetry fragment publish failed");break;}
+        yield();
+      }
+    }
+  }
 }
 
 void CloudServices::service(bool networkReady, bool timeReady, uint32_t now) {
@@ -173,7 +217,7 @@ void CloudServices::service(bool networkReady, bool timeReady, uint32_t now) {
 
 void CloudServices::handleCommand(const uint8_t *payload, size_t length,
                                   bool fromMqtt) {
-  if (payload == nullptr || length == 0 || length > 512) {
+  if (payload == nullptr || length == 0 || length > 1024) {
     lastError_ = F("cloud command length is invalid");
     return;
   }
@@ -183,13 +227,8 @@ void CloudServices::handleCommand(const uint8_t *payload, size_t length,
   String result;
   const bool accepted =
       commandHandler_ != nullptr && commandHandler_(message, result);
-  String response = F("{\"accepted\":");
-  response += accepted ? F("true") : F("false");
-  response += F(",\"message\":\"");
-  result.replace("\\", "\\\\");
-  result.replace("\"", "\\\"");
-  response += result;
-  response += F("\"}");
+  JsonDocument reply;reply["accepted"]=accepted;reply["message"]=result;
+  String response;serializeJson(reply,response);
   if (fromMqtt && mqtt_.connected()) {
     const String eventTopic = topic(F("/event"));
     mqtt_.publish(eventTopic.c_str(), response.c_str(), false);

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {webcrypto} from 'node:crypto';
 const source=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
 const script=source.match(/<script>([\s\S]*?)<\/script>/)[1];
 // Execute the actual embedded Web application with a DOM/HTTP test double.
@@ -11,6 +12,7 @@ nodes.workspace.hidden=true;
 let signedIn=false,user='admin',password='pakarcontroller',socketCount=0,statusRequests=0,hostname='test-fixture';
 const calls=[];
 const context=vm.createContext({...nodes,URLSearchParams,FormData,Uint8Array,console,
+  performance,crypto:webcrypto,navigator:{platform:'fixture',hardwareConcurrency:4},screen:{width:1280,height:720},
   document:{querySelector:s=>nodes[s.slice(1)],querySelectorAll:()=>[],createElement:element,createTextNode:text=>({textContent:text}),createElementNS:()=>({...element(),namespaceURI:'svg'})},
   location:{protocol:'http:',host:'pakarcontroller'},setInterval:()=>1,clearInterval(){},setTimeout:()=>1,
   WebSocket:class {constructor(){socketCount++;this.readyState=1}close(){this.readyState=3}send(){}},

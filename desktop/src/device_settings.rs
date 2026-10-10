@@ -288,6 +288,12 @@ pub struct Editor {
     pub usb_request: Option<Network>,
     pub maintenance_confirmation: Option<crate::maintenance::Operation>,
     pub maintenance_pending: Option<u64>,
+    pub firmware_url: String,
+    pub firmware_sha256: String,
+    pub firmware_bearer: String,
+    pub firmware_targets: u8,
+    pub remote_job: Option<crate::maintenance::RemoteJob>,
+    pub telemetry: Option<serde_json::Value>,
 }
 impl Editor {
     pub fn dirty(&self) -> bool {
@@ -300,6 +306,7 @@ impl Editor {
             || self.websocket_token.mode != SecretMode::Keep
     }
     pub fn clear_secrets(&mut self) {
+        self.firmware_bearer.clear();
         self.wifi_password.clear();
         self.open_network = false;
         self.mqtt_password = SecretEdit::default();
@@ -329,6 +336,17 @@ impl Editor {
         };
     }
     pub fn observe(&mut self, path: &str, value: serde_json::Value) -> Result<(), String> {
+        if path == "/api/v1/firmware/remote" {
+            self.remote_job = Some(crate::maintenance::parse_job(value)?);
+            return Ok(());
+        }
+        if path == "/api/v1/telemetry" {
+            if value["schema"].as_u64() != Some(1) || value["type"] != "telemetry" {
+                return Err("Complete telemetry unavailable".into());
+            }
+            self.telemetry = Some(value);
+            return Ok(());
+        }
         if path == "/api/v1/wifi/scan" {
             self.scan_pending = false;
             self.ssids = value["networks"]

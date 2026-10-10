@@ -11,6 +11,7 @@
 #include <Updater.h>
 #include <WiFiUdp.h>
 #include <time.h>
+#include <coredecls.h>
 
 #include <BuildInfo.h>
 #include <AudioCues.h>
@@ -21,6 +22,8 @@
 #include <SerialLink.h>
 
 #include "src/AvrIsp.h"
+#include "src/RemoteFirmware.h"
+#include "src/ClientTelemetry.h"
 #include "src/AsyncHttpService.h"
 #include "src/WebAccess.h"
 #include "src/FirmwareTransfer.h"
@@ -82,6 +85,8 @@ SoftwareSerial avrSerial(D4, D0);
 BoardCore::SerialLink link(static_cast<Stream &>(avrSerial));
 BoardCore::SerialLink hostLink(Serial);
 AvrIsp avrIsp(D1);
+RemoteFirmware remoteFirmware;
+unsigned artifactReaders=0;
 BusyLine<PAKAR_USE_BUSY_WIRE != 0> busyLine(kBusyPin);
 LedGrid grid;
 File uploadFile;
@@ -129,6 +134,12 @@ bool networkApplyPending = false;
 uint32_t networkApplyAt = 0;
 uint32_t lastWebSocketBroadcastAt = 0;
 bool ntpConfigured = false;
+bool ntpObserved = false;
+uint32_t lastClockSetAt = 0;
+const char *clockSource = "unset";
+uint8_t avrTelemetry[46] = {};
+uint32_t avrTelemetryAt = 0, lastTelemetryRequestAt = 0;
+bool avrTelemetryKnown = false;
 bool mdnsStarted = false;
 bool ssdpStarted = false;
 bool netbiosStarted = false;
@@ -164,7 +175,14 @@ bool scheduleDeviceRename(const String &name);
 String deviceNameJson(bool accepted = false);
 bool saveCellMapping();
 String buildStatusJson();
+String buildTelemetryJson();
+void registerMaintenanceRoutes();
+bool prepareRemotePair(const RemoteFirmware::Plan&,String&);
+bool programRemoteAvr(const char*,const String&,String&);
+int8_t finishRemotePair(const RemoteFirmware::Plan&,bool,String&);
 bool handleCloudCommand(const String &message, String &result);
+bool remoteCommand(const JsonDocument &request,String &result);
+bool handleMaintenanceShell(const String&,String&);
 void startSnake();
 bool setSnakeDirection(uint8_t direction);
 void serviceSnake(uint32_t now);
@@ -219,7 +237,7 @@ void sendHostStatus(uint8_t requestSequence) {
 
 void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
   static BoardCore::PcContractAssembly usbPcAssembly;
-  if ((otaActive || otaRebootAt || avrUploadOwner) && frame.opcode != kGetStatus && frame.opcode != kHello && frame.opcode != kPing) {
+  if ((remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner) && frame.opcode != kGetStatus && frame.opcode != kHello && frame.opcode != kPing) {
     hostLink.error(frame.sequence, frame.opcode, kBusy); return;
   }
   switch (frame.opcode) {
@@ -620,7 +638,7 @@ bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
   if (sent) {
     // The longest routine response is below 6 ms at 38400 baud. Keep a full
     // margin so FastLED cannot mask interrupts after only part of it arrived.
-    ledResumeAt = millis() + (opcode == kPcContract ? 32U : 12U);
+    ledResumeAt = millis() + (opcode == kPcContract || opcode == kGetTelemetry ? 32U : 12U);
   }
   return sent;
 }
@@ -654,7 +672,7 @@ void servicePcContracts() {
       pcTransport.releaseUsb(receipt);
     } else publishPcEvent(pcReceiptJson(receipt));
   });
-  if (otaActive || otaRebootAt || avrUploadOwner) return;
+  if (remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner) return;
   auto *request = pcTransport.next();
   if (!request) return;
   if (request->request[0] == ControllerProtocol::AddressableLed) {
@@ -760,6 +778,12 @@ void playUpdateSuccessCue() {
 }
 
 bool authenticate() {
+  if ((remoteFirmware.busy() || artifactReaders) && server.request() &&
+      !server.request()->url().startsWith("/api/v1/firmware/") &&
+      server.request()->url()!=F("/file/cancel") &&
+      (server.request()->method()!=HTTP_GET || server.request()->url()==F("/api/v1/avr/probe"))) {
+    server.send(409,"text/plain","Remote firmware operation owns board maintenance"); return false;
+  }
   if (otaActive || otaRebootAt) { server.send(503, "text/plain", "ESP update in progress"); return false; }
   if (avrUploadOwner && server.request() && server.request()->method() != HTTP_GET) {
     server.send(409, "text/plain", "AVR image upload in progress"); return false;
@@ -908,7 +932,7 @@ String buildStatusJson() {
   body += F(",\"ap_ip\":\""); body += WiFi.softAPIP().toString(); body += '"';
   body += F(",\"station_enabled\":"); body += networkConfig.stationEnabled() ? F("true") : F("false");
   body += F(",\"station_connected\":"); body += networkConfig.stationConnected() ? F("true") : F("false");
-  body += F(",\"station_ssid\":\""); body += networkConfig.stationSsid(); body += '"';
+  body += F(",\"station_ssid\":\""); appendJsonEscaped(body,networkConfig.stationSsid()); body += '"';
   body += F(",\"station_ip\":\""); body += WiFi.localIP().toString(); body += '"';
   body += F(",\"station_rssi\":"); body += networkConfig.stationConnected() ? WiFi.RSSI() : 0;
   body += F(",\"mdns_started\":"); body += mdnsStarted ? F("true") : F("false");
@@ -942,7 +966,7 @@ String buildStatusJson() {
   body += F(",\"active_outputs\":"); body += activeOutputs;
   const time_t currentTime = time(nullptr);
   body += F(",\"ntp_synced\":");
-  body += currentTime > 1700000000 ? F("true") : F("false");
+  body += ntpObserved && currentTime > 1700000000 ? F("true") : F("false");
   body += F(",\"utc_epoch\":");
   body += currentTime > 1700000000 ? static_cast<uint32_t>(currentTime) : 0U;
   body += F(",\"websocket_clients\":");
@@ -1012,11 +1036,22 @@ void handleWebSocketMessage(AsyncWebSocketClient *client, uint8_t opcode,
                            const uint8_t *payload, size_t length) {
   if (!webAccess.socketAllowed(client->id())) { client->close(1008, "Sign in again"); return; }
   if (otaActive || otaRebootAt) return;
-  if (opcode == WS_BINARY) { applyStreamPacket(payload, length); return; }
-  if (opcode != WS_TEXT || length > 256U) return;
+  if (opcode == WS_BINARY) { if(!remoteFirmware.busy())applyStreamPacket(payload, length); return; }
+  if (opcode != WS_TEXT || length > 1024U) return;
   String message;
   message.reserve(length);
   message.concat(reinterpret_cast<const char *>(payload), length);
+  JsonDocument parsed;
+  if(deserializeJson(parsed,message) || !parsed.is<JsonObject>()) return;
+  if(parsed["type"]=="telemetry") {client->text(buildTelemetryJson());return;}
+  if(parsed["command"].as<String>().startsWith("firmware-") || parsed["command"]=="telemetry") {
+    String result;const bool accepted=remoteCommand(parsed,result);
+    JsonDocument reply;reply["type"]="firmware-result";reply["accepted"]=accepted;
+    JsonDocument details;
+    if(accepted && !deserializeJson(details,result)) reply["job"]=details;
+    else reply["error"]=result;
+    String body;serializeJson(reply,body);client->text(body);return;
+  }
   if (message.indexOf(F("\"type\":\"status\"")) >= 0) {
     String status = buildStatusJson();
     client->text(status);
@@ -1191,6 +1226,20 @@ bool jsonBooleanValue(const String &json, const char *key) {
 
 bool handleCloudCommand(const String &message, String &result) {
   const String command = jsonStringValue(message, "command");
+  if(command=="telemetry") {
+    cloudServices.requestTelemetry();result=F("Complete checksummed telemetry snapshot queued");return true;
+  }
+  if(command.startsWith("firmware-") || command=="telemetry") {
+    JsonDocument d;
+    if(message.length()>1024 || deserializeJson(d,message) || !d.is<JsonObject>()) {
+      result=F("Invalid firmware/telemetry JSON");return false;
+    }
+    return remoteCommand(d,result);
+  }
+  if (remoteFirmware.busy() && command!=F("firmware-cancel") &&
+      command!=F("firmware-status") && command!=F("telemetry") && command!=F("status")) {
+    result=F("Remote firmware operation owns board maintenance");return false;
+  }
   if (command == F("pc-contract")) {
     JsonDocument request;
     if (message.length() > 512 || deserializeJson(request, message) ||
@@ -1371,6 +1420,13 @@ bool handleCloudCommand(const String &message, String &result) {
 void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
   avrOnline = true;
   lastAvrFrameAt = millis();
+  if(frame.opcode==kTelemetryResponse) {
+    if(frame.payloadLength==sizeof(avrTelemetry) && frame.payload[0]==1) {
+      memcpy(avrTelemetry,frame.payload,sizeof(avrTelemetry));
+      avrTelemetryKnown=true;avrTelemetryAt=millis();
+    }
+    return;
+  }
   if (frame.opcode == kPcContractResponse) {
     auto *receipt = pcTransport.accept(frame, millis());
     if (receipt) {
@@ -1494,21 +1550,21 @@ void registerAsyncOta() {
     body += F("\",\"phase\":\""); body += otaPhase;
     body += F("\",\"uploaded_bytes\":"); body += otaUploadedBytes;
     body += F(",\"free_heap\":"); body += ESP.getFreeHeap();
-    body += F(",\"upload\":\"/update\",\"download\":\"/firmware/download\",\"filesystem_ota\":false}");
+    body += F(",\"upload\":\"/update\",\"download\":\"/firmware/download\",\"remote_fetch\":\"/api/v1/firmware/fetch\",\"remote_apply\":\"/api/v1/firmware/apply\",\"remote_status\":\"/api/v1/firmware/remote\",\"telemetry\":\"/api/v1/telemetry\",\"avr_full_flash_bytes\":32768,\"avr_eeprom_bytes\":1024,\"filesystem_ota\":false}");
     auto response = request->beginResponse(200, "application/json", body);
     response->addHeader("Cache-Control", "no-store"); request->send(response);
   };
   server.native().on("/update/info", HTTP_GET, info);
-  server.native().on("/info", HTTP_GET, [](AsyncWebServerRequest *request) {
-    String text = F("product: PakarController\nmodel: ESP8266 + ATmega328P\nhostname: "); text += hostname;
-    text += F("\nversion: "); text += BoardCore::BuildInfo::kVersion;
-    text += F("\nweb server: ESPAsyncWebServer 3.12.1\nfirmware hash: "); text += ESP.getSketchMD5();
-    text += F("\nflash size: "); text += ESP.getFlashChipSize();
-    text += F("\nheap memory: "); text += ESP.getFreeHeap();
-    text += F("\nuptime seconds: "); text += millis() / 1000;
-    text += F("\nreset reason: "); text += ESP.getResetReason();
-    text += F("\nprotocol revision: "); text += BoardCore::BuildInfo::kProtocolVersion;
-    request->send(200, "text/plain", text);
+  server.on("/info",HTTP_GET,[]() {
+    if(!authenticate()) return;
+    const String json=buildTelemetryJson();
+    if(server.arg("format")=="text") {
+      server.send(200,"text/plain",String("PakarController ")+BoardCore::BuildInfo::kVersion+
+        "\nhostname: "+hostname+".local\n"+json+"\n");
+    } else {
+      auto *response=server.request()->beginResponse(200,"application/json",json);
+      response->addHeader("Cache-Control","no-store");server.request()->send(response);
+    }
   });
   server.native().on("/update", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/html", F("<!doctype html><meta name='viewport' content='width=device-width'><title>PakarController OTA</title><style>body{max-width:600px;margin:3rem auto;padding:20px;background:#11161e;color:#eef2f7;font:16px system-ui}input,button{margin:12px 0;padding:10px;display:block}a{color:#68a7ff}</style><h1>ESP firmware update</h1><p>Upload the PakarController ESP .bin or .bin.gz. The AVR and stored settings are preserved. Use the MD5 of the uploaded file when available; it checks transfer integrity, not authenticity.</p><form method='post' enctype='multipart/form-data'><label>File MD5 (optional)<input name='MD5' minlength='32' maxlength='32'></label><input type='file' name='firmware' accept='.bin,.gz' required><button>Upload and restart ESP</button></form><a href='/'>Back to controller</a>"));
@@ -1533,7 +1589,7 @@ void registerAsyncOta() {
     if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request)) return;
     static uint32_t nextOwner = 0;
     if (index == 0) {
-      if (otaOwner || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched || request->hasAttribute("ota_id")) {
+      if (artifactReaders || remoteFirmware.busy() || otaOwner || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched || request->hasAttribute("ota_id")) {
         request->setAttribute("ota_error", "Another operation is active or multiple files were supplied"); return;
       }
       if (++nextOwner == 0) ++nextOwner;
@@ -1936,7 +1992,7 @@ void registerApi() {
     body += networkConfig.stationConnected() ? F("true") : F("false");
     body += F(",\"ap_enabled\":");
     body += networkConfig.accessPointEnabled() ? F("true") : F("false");
-    body += F(",\"station_ssid\":\""); body += networkConfig.stationSsid();
+    body += F(",\"station_ssid\":\""); appendJsonEscaped(body,networkConfig.stationSsid());
     body += F("\",\"station_ip\":\""); body += WiFi.localIP().toString();
     body += F("\",\"ap_ip\":\""); body += WiFi.softAPIP().toString();
     body += F("\"}");
@@ -2076,74 +2132,20 @@ void registerApi() {
     file.close();
   });
   server.on("/api/v1/avr/program", HTTP_POST, []() {
-    if (!authenticate()) return;
-    File image = LittleFS.open(kAvrImagePath, "r");
-    if (!image || image.size() != AvrIsp::kFlashBytes) {
-      if (image) image.close();
-      server.send(400, "text/plain", "store one complete 32768-byte AVR image first");
-      return;
-    }
-    const bool resume = programmingLatched;
-    const LedGrid::Pattern patternBeforeUpdate = grid.pattern();
-    const uint8_t armed[] = {1};
-    bool latchArmed = resume;
-    if (!resume) {
-      if (!avrIsp.backup(LittleFS, kBackupDirectory)) {
-        image.close();
-        server.send(500, "text/plain",
-                    String("backup failed: ") + avrIsp.lastError());
-        return;
-      }
-      if (!waitForAvr()) {
-        image.close();
-        server.send(500, "text/plain",
-                    "backup succeeded but AVR UART did not return");
-        return;
-      }
-      // One-time migration accepts the original tone opcode; current images
-      // use the richer cue command. Both paths finish before ISP reset asserts.
-      if (!playUpdateStartCue()) {
-        image.close();
-        server.send(500, "text/plain",
-                    "AVR rejected both update cue formats");
-        return;
-      }
-      latchArmed =
-          requestAndWaitForAck(kProgrammingState, armed, sizeof(armed));
-      // The first migration image has no latch opcode. A complete ISP backup
-      // is already durable, so allow that one transition; every resulting and
-      // subsequent PakarController AVR image must prove the latch below.
-      programmingLatched = latchArmed;
-    }
-    const bool ok = avrIsp.programFlash(image);
+    if(!authenticate()) return;
+    File image=LittleFS.open(kAvrImagePath,"r");
+    if(!image || image.size()!=32768) {if(image)image.close();server.send(400,"text/plain","Complete AVR image required");return;}
     image.close();
-    if (!ok) { server.send(500, "text/plain", avrIsp.lastError()); return; }
-    if (!waitForAvr()) {
-      server.send(500, "text/plain",
-                  "flash verified but the AVR did not return; Prog remains latched");
-      return;
+    // Manual uploads retain compatibility, but no longer bypass durable Prog
+    // or EEPROM preservation. Exact remote provenance uses the manifest path.
+    RemoteFirmware::Plan plan;plan.targets=2;plan.avr.version=BoardCore::BuildInfo::kVersion;
+    String reason;
+    if(!prepareRemotePair(plan,reason) ||
+       !programRemoteAvr(kAvrImagePath,plan.avr.version,reason) ||
+       finishRemotePair(plan,true,reason)!=1) {
+      server.send(500,"text/plain",reason);return;
     }
-    if (!latchArmed &&
-        !requestAndWaitForAck(kProgrammingState, armed, sizeof(armed))) {
-      server.send(500, "text/plain",
-                  "flash verified but the new AVR Prog latch did not verify");
-      return;
-    }
-    programmingLatched = true;
-    const uint8_t released[] = {0};
-    if (!requestAndWaitForAck(kProgrammingState, released, sizeof(released))) {
-      server.send(500, "text/plain",
-                  "flash verified but Prog could not be cleared");
-      return;
-    }
-    programmingLatched = false;
-    playUpdateSuccessCue();
-    grid.setPattern(patternBeforeUpdate);
-    saveLedPreferences();
-    server.send(200, "application/json",
-                resume
-                    ? "{\"programmed\":true,\"verified\":true,\"resumed\":true}"
-                    : "{\"programmed\":true,\"verified\":true}");
+    server.send(200,"application/json","{\"programmed\":true,\"verified\":true,\"eeprom_preserved\":true}");
   });
 
   server.native().on("/api/v1/avr/image", HTTP_POST,
@@ -2165,7 +2167,7 @@ void registerApi() {
       if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request)) return;
       static uint32_t nextUpload = 0;
       if (index == 0) {
-        if (avrUploadOwner || otaActive || otaRebootAt || server.processing() || request->hasAttribute("upload_id")) {
+        if (artifactReaders || remoteFirmware.busy() || avrUploadOwner || otaActive || otaRebootAt || server.processing() || request->hasAttribute("upload_id")) {
           request->setAttribute("upload_error", "Another operation is active or multiple files were supplied"); return;
         }
         if (++nextUpload == 0) ++nextUpload;
@@ -2217,6 +2219,7 @@ void executeTelnetCommand(String line) {
     return;
   }
   if (line == F("help") || line == F("?")) {
+    telnetClient.println(F("info | telemetry | firmware status | firmware fetch HTTPS_URL SHA256 [all|esp|avr] | firmware apply JOB BOOT SHA256 | firmware cancel JOB BOOT"));
     telnetClient.println(
         F("help | status | mode <idle|cell|first-wins|snake> | "
           "cell <1..80> <white|red|off> [immediate|fade|pulse]"));
@@ -2234,6 +2237,10 @@ void executeTelnetCommand(String line) {
     return;
   }
   if (line == F("device name")) { telnetClient.println(deviceNameJson()); telnetPrompt(); return; }
+  if(line=="info" || line=="telemetry" || line.startsWith("firmware ")) {
+    String result;handleMaintenanceShell(line,result);telnetClient.println(result);telnetPrompt();return;
+  }
+  if(remoteFirmware.busy()) {telnetClient.println(F("ERR remote firmware owns maintenance"));telnetPrompt();return;}
   if (line.startsWith(F("device rename "))) {
     if (networkApplyPending || programmingLatched) telnetClient.println(F("ERR device busy"));
     else if (scheduleDeviceRename(line.substring(14))) telnetClient.println(deviceNameJson(true));
@@ -2473,10 +2480,19 @@ void serviceConsole() {
   }
 }
 
+#include "src/MaintenanceRoutes.h"
+#include "src/ArtifactDownload.h"
 }  // namespace
 
 void setup() {
-  pcBootId = String(ESP.getChipId(), HEX) + "-" + String(ESP.getCycleCount(), HEX);
+  uint8_t bootBytes[16];char bootHex[33];
+  if(os_get_random(bootBytes,sizeof(bootBytes))==0) {
+    for(unsigned i=0;i<16;++i)snprintf(bootHex+i*2,3,"%02x",bootBytes[i]);
+    pcBootId=bootHex;
+  } // No random identity means remote apply is unavailable, never a reused boot ID.
+  settimeofday_cb([](bool sntp) {
+    clockSource=sntp?"ntp":"manual";ntpObserved=sntp;lastClockSetAt=millis();
+  });
 #if PAKAR_USE_BUSY_WIRE
   // GPIO0 is pulled high by the NodeMCU boot circuit. Explicitly keep the AVR
   // blocked until UART, Wi-Fi, Web, and the LED renderer are ready.
@@ -2501,24 +2517,26 @@ void setup() {
   // not in the human-facing host or recovery AP name.
   hostname = deviceIdentity.hostname();
   apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
-  cloudServices.begin(hostname, handleCloudCommand, buildStatusJson);
+  cloudServices.begin(hostname, handleCloudCommand, buildStatusJson,buildTelemetryJson);
   stream.begin(kStreamPort);
   telnetServer.begin();
   telnetServer.setNoDelay(true);
 
   registerApi();
+  registerMaintenanceRoutes();
+  registerArtifactDownload();
   webAccess.registerRoutes(server.native(), []() {
     webSocket.closeAll(1008, "Sign in again");
     if (telnetClient) telnetClient.stop();
     telnetAuthenticated = false;
-  }, []() { return otaActive || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched; });
+  }, []() { return remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched; });
   webSocket.onEvent(onWebSocketEvent);
   server.native().addHandler(&webSocket);
   Update.onStart([]() {
-    otaStartCuePending = true;
+    if(!remoteFirmware.applying())otaStartCuePending = true;
   });
   Update.onEnd([]() {
-    otaSuccessCuePending = true;
+    if(!remoteFirmware.applying())otaSuccessCuePending = true;
   });
   Update.onError([](uint8_t) {
     otaErrorCuePending = true;
@@ -2539,7 +2557,7 @@ void loop() {
   hostLink.service();
   // Render before issuing UART requests. The AVR is request/response only, so
   // its reply arrives while FastLED is not masking ESP8266 interrupts.
-  const bool ledFrameDue = !otaActive &&
+  const bool ledFrameDue = !otaActive && !remoteFirmware.busy() &&
       static_cast<int32_t>(now - ledResumeAt) >= 0 &&
       ((streamFrameReady && grid.readyToShow(now)) || grid.needsRender(now));
   if (ledFrameDue) {
@@ -2558,6 +2576,11 @@ void loop() {
     setAvrTransmitBlocked(false);
   }
   server.service();
+  if (remoteFirmware.busy()) {
+    if(cloudServices.mqttConnected() || cloudServices.webSocketConnected())cloudServices.suspend();
+    setAvrTransmitBlocked(true);serviceAvrFor(18);
+    remoteFirmware.service();setAvrTransmitBlocked(false);
+  }
   webSocket.cleanupClients(8);
   webAccess.expireSockets(webSocket);
   if (otaStartCuePending) { otaStartCuePending = false; playUpdateStartCue(); }
@@ -2567,7 +2590,7 @@ void loop() {
   }
   if (otaRebootAt && static_cast<int32_t>(millis() - otaRebootAt) >= 0) ESP.restart();
   if (!otaActive && !otaRebootAt && !uploadFile) serviceTelnet();
-  if (!otaActive && !otaRebootAt && networkApplyPending &&
+  if (!remoteFirmware.busy() && !otaActive && !otaRebootAt && networkApplyPending &&
       static_cast<int32_t>(millis() - networkApplyAt) >= 0) {
     networkApplyPending = false;
     applyNetworkConfig();
@@ -2575,13 +2598,20 @@ void loop() {
   serviceDiscovery();
   configureNtp();
   // TLS reconnects can take seconds on the ESP8266. Keep them out of the
-  // timing-critical ISP recovery path while the AVR's Prog latch is armed.
-  if (!programmingLatched && !otaActive && !otaRebootAt) {
+  // timing-critical ISP/update transaction. After a failed transaction, cloud
+  // diagnostics can reconnect even with Prog armed; mutations remain guarded.
+  if (!remoteFirmware.busy() && !otaActive && !otaRebootAt) {
+    setAvrTransmitBlocked(true);serviceAvrFor(18);
     cloudServices.service(networkConfig.stationConnected(),
                           time(nullptr) > 1700000000, now);
+    setAvrTransmitBlocked(false);
   }
-  serviceSnake(now);
-  serviceStream();
+  if (!remoteFirmware.busy()) { serviceSnake(now);serviceStream(); }
+  if (!remoteFirmware.busy() && avrOnline && avrVersionKnown &&
+      (avrVersion[0]>0 || avrVersion[1]>2 || (avrVersion[1]==2 && avrVersion[2]>=7)) &&
+      static_cast<uint32_t>(now-lastTelemetryRequestAt)>=5000U) {
+    lastTelemetryRequestAt=now;sendToAvr(kGetTelemetry,sequence++);
+  }
   const uint32_t afterServices = millis();
   if (avrOnline &&
       static_cast<uint32_t>(afterServices - lastAvrFrameAt) > 3000U) {

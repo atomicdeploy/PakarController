@@ -37,6 +37,8 @@ jobs:
           retry arduino-cli lib install 'ESP Async TCP@2.0.0'
       - name: Build both boards and test the shared protocol
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libssl-dev
           chmod +x build.sh tools/test-protocol.sh
           ./build.sh polling
           ./build.sh busy-wire
@@ -65,6 +67,9 @@ jobs:
         run: |
           node tests/web_display_test.mjs
           node tests/web_access_test.mjs
+          node tests/web_remote_test.mjs
+          node tests/remote_tools_test.mjs
+          node tests/pu_routes_test.mjs
           node tests/boot_audio_test.mjs
           pwsh -File tools/check-reuse-ledger.ps1
           pwsh -File tests/reuse_ledger_test.ps1
@@ -75,6 +80,7 @@ jobs:
           cargo build --locked --release --manifest-path desktop/Cargo.toml
           node tests/device_cli_test.mjs
           node tests/pc_contract_cli_test.mjs
+          node tests/remote_cli_test.mjs
           node tests/pc_contract_mapping_test.mjs
       - uses: actions/upload-artifact@v7
         with:
