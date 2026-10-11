@@ -1622,8 +1622,14 @@ impl PakarControllerApp {
 }
 
 impl eframe::App for PakarControllerApp {
+    fn logic(&mut self, ctx: &egui::Context, _: &mut eframe::Frame) {
+        // Adapted from Pealayer: eframe runs logic while minimized/occluded.
+        // IPC/tray, device results and status must not depend on painting.
+        self.capture.receive(ctx);
+        self.capture.tick(ctx);
+        self.native_logic(ctx);
+    }
     fn ui(&mut self, ui: &mut egui::Ui, _: &mut eframe::Frame) {
-        self.capture.receive(ui.ctx());
         self.draw_shell(ui);
         self.capture.after_frame(ui.ctx());
     }

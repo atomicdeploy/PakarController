@@ -114,3 +114,13 @@ Requested review is not acceptance, and unrelated donor threads remain unresolve
 The glib security update is tracked separately on issue17; it is not fixed by
 merging the previous governance/import PRs. CI is checked asynchronously, never
 used as a blocking wait, and failed mapping evidence is repaired without bypass.
+
+The latest manual conversation projection now has21 full records and2 explicit
+comment scopes reviewed;771 of794 records remain pending. Pealayer70/78/87/102
+were read completely, with concrete branding/lifecycle/button constraints in
+github-conversation-decisions.json. Reread cached records is not a live donor
+refresh. Pakar was refreshed live and still has zero open PRs; no completed
+Copilot response was observed. Both0c3eca9 CI workflows completed successfully.
+That release was deployed and a real framebuffer inspected, but full UI parity
+remains unproven. Its minimized queue defect now has an actual source adaptation
+and129 passing native tests; source app.rs stays pending complete-file review.

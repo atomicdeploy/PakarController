@@ -28,6 +28,8 @@ pub fn launch_command(args: &[String]) -> Command {
         Command::Refresh
     } else if args.iter().any(|v| v == "--fullscreen") {
         Command::Fullscreen
+    } else if args.iter().any(|v| v == "--minimize") {
+        Command::Minimize
     } else if let Some(at) = args.iter().position(|v| v == "--settings-page") {
         Command::DeviceSettingsPage {
             page: args.get(at + 1).cloned().unwrap_or_default(),
@@ -168,6 +170,11 @@ impl PakarControllerApp {
                 self.save_workspace();
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 return;
+            }
+            Command::Minimize => {
+                ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+                ctx.request_repaint();
+                return; // Do not immediately restore through the shared tail.
             }
             Command::Preferences => self.open_preferences(),
             Command::PreferencesPage { page } => {
@@ -336,6 +343,59 @@ impl PakarControllerApp {
         }
         ctx.send_viewport_cmd(egui::ViewportCommand::Title(title));
     }
+    // Pealayer src/app.rs App::logic: command/event/snapshot work is not paint work.
+    pub fn native_logic(&mut self, ctx: &egui::Context) {
+        while let Ok(command) = self.control.rx.try_recv() {
+            self.dispatch(command, ctx);
+        }
+        if let Some(action) = self.tray.as_mut().and_then(|tray| tray.poll()) {
+            match action {
+                platform::windows_tray::TrayAction::Show => self.dispatch(Command::Show, ctx),
+                platform::windows_tray::TrayAction::Preferences => {
+                    self.dispatch(Command::Preferences, ctx)
+                }
+                platform::windows_tray::TrayAction::DeviceSettings => {
+                    self.dispatch(Command::DeviceSettings, ctx)
+                }
+                platform::windows_tray::TrayAction::Workspaces => {
+                    self.dispatch(Command::Workspaces, ctx)
+                }
+                platform::windows_tray::TrayAction::Refresh => self.refresh(),
+                platform::windows_tray::TrayAction::Exit => self.dispatch(Command::Quit, ctx),
+            }
+        }
+        self.poll();
+        self.synchronize_context(ctx);
+        self.process_cell_queue(ctx);
+        self.deliver_notifications();
+        #[cfg(windows)]
+        if let Some(desktop) = &mut self.windows_desktop {
+            let errors = desktop.sync(
+                ctx.theme() == egui::Theme::Dark,
+                self.config.color_palette,
+                self.device_settings.pending.is_some()
+                    || self.device_settings.maintenance_pending.is_some(),
+            );
+            for error in errors {
+                self.record_event("Windows desktop", &error);
+            }
+        }
+        ctx.request_repaint_after(Duration::from_millis(250));
+        let snapshot = self.live_status().cloned();
+        let fullscreen = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
+        if let Ok(mut value) = self.control.snapshot.lock() {
+            *value = serde_json::json!({"application":self.peer_context().and_then(|p|p.application()).map(|a|a.name.as_str()).unwrap_or("PakarController"),"client_application":"PakarController","app_title":self.peer_context().map(|p|p.title()),"version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":ui::cell_search::format_selection(&self.table.selection.ids),"cell_search_draft":self.cell_search,"selected_cells":self.table.selection.cells(),"highlighted_cells":self.table.selection.cells(),"search_matches":self.table.selection.cells(),"selected_cell":self.selected_cell});
+            value["device_settings"] = serde_json::json!({"open": self.device_settings.open, "page": self.device_settings.page, "network_loaded": self.device_settings.network.is_some(), "cloud_loaded": self.device_settings.cloud.is_some(), "write_pending": self.device_settings.pending.is_some(), "maintenance_pending": self.device_settings.maintenance_pending.is_some()});
+            value["peer_capabilities"] = serde_json::json!(self.peer_context());
+            value["cell_management"] = serde_json::json!({"open":self.table.manager_open,"selection":self.table.selection.ids,"additive_selection":self.config.additive_cell_selection,"animations":self.config.animate_cells,"indicators":self.config.show_cell_indicators});
+            value["screenshot"] = self.capture.status();
+            value["minimized"] = serde_json::json!(ctx.input(|i| i.viewport().minimized));
+            value["preferences_dirty"] = serde_json::json!(self.preferences.as_ref().is_some_and(|d| d.is_dirty()));
+            value["notifications"] = self.notification_snapshot();
+            value["tray_available"] = serde_json::json!(self.tray.is_some());
+            value["fullscreen"] = serde_json::json!(fullscreen);
+        }
+    }
     pub fn draw_shell(&mut self, ui: &mut egui::Ui) {
         ui.with_layout(super::i18n::vertical_layout(super::i18n::rtl()), |ui| {
             self.draw_shell_contents(ui);
@@ -343,25 +403,7 @@ impl PakarControllerApp {
     }
     fn draw_shell_contents(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
-        while let Ok(command) = self.control.rx.try_recv() {
-            self.dispatch(command, &ctx);
-        }
-        if let Some(action) = self.tray.as_mut().and_then(|tray| tray.poll()) {
-            match action {
-                platform::windows_tray::TrayAction::Show => self.dispatch(Command::Show, &ctx),
-                platform::windows_tray::TrayAction::Preferences => {
-                    self.dispatch(Command::Preferences, &ctx)
-                }
-                platform::windows_tray::TrayAction::DeviceSettings => {
-                    self.dispatch(Command::DeviceSettings, &ctx)
-                }
-                platform::windows_tray::TrayAction::Workspaces => {
-                    self.dispatch(Command::Workspaces, &ctx)
-                }
-                platform::windows_tray::TrayAction::Refresh => self.refresh(),
-                platform::windows_tray::TrayAction::Exit => self.dispatch(Command::Quit, &ctx),
-            }
-        }
+        let snapshot = self.live_status().cloned();
         if !self.exiting
             && self.config.close_to_tray
             && self.tray.is_some()
@@ -415,35 +457,6 @@ impl PakarControllerApp {
                     self.reveal_panels.push(Panel::Table);
                 }
             }
-        }
-        self.poll();
-        self.synchronize_context(&ctx);
-        self.process_cell_queue(&ctx);
-        self.deliver_notifications();
-        #[cfg(windows)]
-        if let Some(desktop) = &mut self.windows_desktop {
-            let errors = desktop.sync(
-                ui.visuals().dark_mode,
-                self.config.color_palette,
-                self.device_settings.pending.is_some()
-                    || self.device_settings.maintenance_pending.is_some(),
-            );
-            for error in errors {
-                self.record_event("Windows desktop", &error);
-            }
-        }
-        ctx.request_repaint_after(Duration::from_millis(250));
-        let snapshot = self.live_status().cloned();
-        let fullscreen = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
-        if let Ok(mut value) = self.control.snapshot.lock() {
-            *value = serde_json::json!({"application":self.peer_context().and_then(|p|p.application()).map(|a|a.name.as_str()).unwrap_or("PakarController"),"client_application":"PakarController","app_title":self.peer_context().map(|p|p.title()),"version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":ui::cell_search::format_selection(&self.table.selection.ids),"cell_search_draft":self.cell_search,"selected_cells":self.table.selection.cells(),"highlighted_cells":self.table.selection.cells(),"search_matches":self.table.selection.cells(),"selected_cell":self.selected_cell});
-            value["device_settings"] = serde_json::json!({"open": self.device_settings.open, "page": self.device_settings.page, "network_loaded": self.device_settings.network.is_some(), "cloud_loaded": self.device_settings.cloud.is_some(), "write_pending": self.device_settings.pending.is_some(), "maintenance_pending": self.device_settings.maintenance_pending.is_some()});
-            value["peer_capabilities"] = serde_json::json!(self.peer_context());
-            value["cell_management"] = serde_json::json!({"open":self.table.manager_open,"selection":self.table.selection.ids,"additive_selection":self.config.additive_cell_selection,"animations":self.config.animate_cells,"indicators":self.config.show_cell_indicators});
-            value["screenshot"] = self.capture.status();
-            value["notifications"] = self.notification_snapshot();
-            value["tray_available"] = serde_json::json!(self.tray.is_some());
-            value["fullscreen"] = serde_json::json!(fullscreen);
         }
         egui::Panel::top("pakar-menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {

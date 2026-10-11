@@ -16,6 +16,7 @@ pub enum Command {
     DeviceSettings,
     DeviceSettingsPage { page: String },
     Show,
+    Minimize,
     Connect,
     Preferences,
     PreferencesPage { page: String },
@@ -239,6 +240,8 @@ mod tests {
     #[test]
     fn launch_requests_use_only_known_typed_commands() {
         assert!(serde_json::from_str::<Command>(r#"{"command":"preferences"}"#).is_ok());
+        assert!(parse_command(br#"{"command":"minimize"}"#).is_ok());
+        assert!(parse_command(br#"{"command":"minimize","inject":"x"}"#).is_err());
         assert!(parse_command(br#"{"command":"show","inject":"x"}"#).is_err());
         assert!(serde_json::from_str::<Command>(r#"{"command":"firmware_erase"}"#).is_err());
         assert!(parse_command(br#"{"command":"find_cell","query":"1, 20-28"}"#).is_ok());

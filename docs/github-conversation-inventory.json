@@ -47,8 +47,8 @@
       "title": "File-by-file donor parity, exact mappings and justified omissions",
       "url": "https://github.com/atomicdeploy/PakarController/issues/3",
       "state": "open",
-      "content_sha256": "0da2904dd0cb31ffbe9bd0a4919c0d9396e7f10e0b45572de9d719d54c7253f2",
-      "comments": 25,
+      "content_sha256": "f270641aebc2b4a79cbfccb3aec3299f77b9d873847e371ece9793549e196366",
+      "comments": 26,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
@@ -132,8 +132,8 @@
       "title": "Refine cell workspace and restore Pealayer panel/status menus with acceptance evidence",
       "url": "https://github.com/atomicdeploy/PakarController/issues/8",
       "state": "open",
-      "content_sha256": "d2882e3e17238ff08000ded33a851d63b43630d865a6485ce4ecf6d5f8b945aa",
-      "comments": 7,
+      "content_sha256": "ada54768c7193915b31302d92d3a200734a50c05461d74a34a47ea9cf975562a",
+      "comments": 8,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
@@ -1485,8 +1485,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Keep private artwork overrides private; distinguish build resource stamping before signing from live contextual icon configuration. Existing shared Pakar artwork retained; complete transition/configuration and resource-manifest acceptance remains pending. Conversation read is not code-diff or donor deployment acceptance."
     },
     {
       "repository": "ToghrolTP/pealayer",
@@ -1621,8 +1621,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Branding updates must be transition/config-revision driven rather than cloning full configuration each frame; advance the revision even when artwork resolves unchanged. Generic Pakar frame/config performance remains pending, not certified by donor focused tests or CPU receipts."
     },
     {
       "repository": "ToghrolTP/pealayer",
@@ -1774,8 +1774,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Move native commands, device results and authoritative snapshots to App::logic so hidden/minimized windows process them without painting. Live Pakar reproduced the missing contract and actual donor lifecycle slice is adapted. Preserve preferences drafts and authority/ACK semantics; configurable generic disconnect safety remains pending. Media scrubbing and timeline intrinsic cue business are excluded, not generic effect timing. Full source file and physical timing remain unverified."
     },
     {
       "repository": "ToghrolTP/pealayer",
@@ -2029,8 +2029,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Share root/wrapper/SVG button centering including portaled dialogs, avoid inline baseline spacer and per-transport geometry overrides; retain semantic colors, RTL order and commands. Pakar Web/native/mobile button parity and actual phone/tablet screenshots remain pending; donor builds and responsive checks are not our pixels."
     },
     {
       "repository": "ToghrolTP/pealayer",

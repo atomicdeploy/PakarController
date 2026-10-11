@@ -39,3 +39,13 @@ for(const role of ['text','muted']) assert(shortcut.includes(`dark, "${role}"`))
 assert(!shortcut.includes('galley.job.sections[0].format.color'));
 assert(test('desktop/src/ui/menu.rs','headings').includes('drop_without_applying_deltas()'));
 console.log('Native render lifecycle source checks passed; actual egui execution and production pixels remain separate.');
+const app = read('desktop/src/main.rs'), shell = read('desktop/src/ui/shell.rs');
+const logic = app.slice(app.indexOf('    fn logic('), app.indexOf('    fn ui(', app.indexOf('impl eframe::App')));
+assert(logic.includes('self.native_logic(ctx)'));
+assert(logic.includes('self.capture.tick(ctx)'));
+const tick = shell.slice(shell.indexOf('    pub fn native_logic('), shell.indexOf('    pub fn draw_shell('));
+const draw = shell.slice(shell.indexOf('    fn draw_shell_contents('));
+for(const token of ['self.control.rx.try_recv()', 'tray.poll()', 'self.poll()', 'self.synchronize_context(ctx)', 'self.control.snapshot.lock()']) {
+  assert(tick.includes(token), 'Must operate without painting: '+token);
+  assert(!draw.includes(token), 'Do not process a second time while painting: '+token);
+}

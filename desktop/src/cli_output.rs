@@ -8,7 +8,7 @@ pub fn format_help_message() -> String {
     format!(
         "PakarController {} - Board control workspace\n\n\
 USAGE:\n  PakarController [APPLICATION_OPTION]\n  PakarController --status\n  PakarController --command COMMAND [ARGUMENTS...]\n  PakarController --tui\n\n\
-APPLICATION OPTIONS:\n  -h, --help         Print help and exit without starting an app\n  -V, --version      Print software identity and exit\n  --app-status       Read the existing app IPC state; no new app\n  --quit             Gracefully close the existing app\n  --preferences      Open application Preferences\n  --device-settings  Open acknowledged device settings\n  --connect-dialog   Open connection controls\n  --screenshot PATH  Request an existing app framebuffer capture\n\n\
+APPLICATION OPTIONS:\n  -h, --help         Print help and exit without starting an app\n  -V, --version      Print software identity and exit\n  --app-status       Read the existing app IPC state; no new app\n  --quit             Gracefully close the existing app\n  --minimize         Minimize the existing app (launch without flags to restore)\n  --preferences      Open application Preferences\n  --device-settings  Open acknowledged device settings\n  --connect-dialog   Open connection controls\n  --screenshot PATH  Request an existing app framebuffer capture\n\n\
 DEVICE COMMANDS (only advertised capabilities are available):\n  {}\n\n\
 ENDPOINT/AUTH:\n  PAKAR_ENDPOINT, PAKAR_USER, PAKAR_PASSWORD configure device access.\n  Keep credentials out of command arguments and logs.\n  REST uses /api/... without numbered namespaces; WebSocket uses /ws.\n",
         env!("CARGO_PKG_VERSION"),

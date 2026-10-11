@@ -21,13 +21,26 @@ if ($Backend -ne 'Win32') {
         $taskStatus=(& $taskExecutable --app-status | ConvertFrom-Json)
         if ($LASTEXITCODE -ne 0 -or $taskStatus.process_id -ne $ExpectedProcessId) {throw 'IPC target is not the expected process.'}
         if ($taskStatus.screenshot.backend -ne 'egui framebuffer') {throw 'Owner does not advertise internal screenshot capability.'}
+        if ($taskStatus.screenshot.pending) {throw 'Owner already has a screenshot pending.'}
+        $taskBeforeRequestId=$taskStatus.screenshot.request_id
+        $taskBeforeResult=$taskStatus.screenshot.result
+        $taskObservedPending=$false
         & $taskExecutable --screenshot $taskOutput | Out-Null
         if ($LASTEXITCODE -ne 0) {throw 'Internal screenshot request was rejected.'}
         $taskDeadline=[DateTime]::UtcNow.AddSeconds(12)
         while ([DateTime]::UtcNow -lt $taskDeadline) {
             $taskStatus=(& $taskExecutable --app-status | ConvertFrom-Json)
             if ($taskStatus.process_id -ne $ExpectedProcessId) {throw 'IPC owner changed during capture.'}
-            if ($taskStatus.screenshot.pending -eq $false) {
+            # Acceptance only queues work; the first snapshot can still be idle.
+            # New owners correlate by request ID/path; older owners require an
+            # observed pending edge or a changed completion result plus the file.
+            $taskCorrelated=if ($null -ne $taskBeforeRequestId) {
+                $taskStatus.screenshot.request_id -ne $taskBeforeRequestId -and $taskStatus.screenshot.path -eq $taskOutput
+            } else {
+                $taskObservedPending -or ($taskStatus.screenshot.result -ne $taskBeforeResult -and (Test-Path -LiteralPath $taskOutput))
+            }
+            if ($taskStatus.screenshot.pending) {$taskObservedPending=$true}
+            if ($taskCorrelated -and $taskStatus.screenshot.pending -eq $false) {
                 if (Test-Path -LiteralPath $taskOutput) {
                     [pscustomobject]@{ProcessId=$ExpectedProcessId;Method='egui framebuffer';Path=$taskOutput;Result=$taskStatus.screenshot.result}
                     return

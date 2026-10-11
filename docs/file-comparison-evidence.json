@@ -18,7 +18,7 @@
       "path": "desktop/src/ui/connection_controls.rs"
     },
     {
-      "sha256": "b82160d6435141268e77736d6b57408e00a5d8d1b138a50ea6a912a54a4560ee",
+      "sha256": "18372200696f758a22fe19dd155a74a5125d6afef0d46b73acc4101adb46c225",
       "anchor": "super::dropdown::ComboBox::from_id_salt(\"theme\")",
       "path": "desktop/src/ui/preferences.rs"
     },
@@ -28,7 +28,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2",
+      "sha256": "e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -96,7 +96,7 @@
       "path": "desktop/src/ui/color_picker.rs"
     },
     {
-      "sha256": "b82160d6435141268e77736d6b57408e00a5d8d1b138a50ea6a912a54a4560ee",
+      "sha256": "18372200696f758a22fe19dd155a74a5125d6afef0d46b73acc4101adb46c225",
       "anchor": "super::color_picker::accent_picker",
       "path": "desktop/src/ui/preferences.rs"
     },
@@ -144,8 +144,8 @@
     {
       "origin":"Pealayer","path":"src/cli.rs","sha256":"412b553fcdcd4436075af6bc93c956a4b7d9ac93a552a3458f2afabb8aa1448f","source_read":"complete","verdict":"parity-gap",
       "preserved":["Actual format_help_message and PrintHelp/PrintVersion flag branches adapted with native short/long help/version assertions; terminate before config, network, GUI ownership and windows. Share device command help with existing TUI instead of duplicate stale strings."],
-      "targets":[{"path":"desktop/src/cli_output.rs","sha256":"d39fb32a9329add6b160a401a16f04aa398797c4fc484c79bd358bbf245a7104","anchor":"pub fn parse_cli_output("}],
-      "proof":[{"path":"desktop/src/cli_output.rs","sha256":"d39fb32a9329add6b160a401a16f04aa398797c4fc484c79bd358bbf245a7104","anchor":"fn actual_donor_short_and_long_help_version_flags()"}],
+      "targets":[{"path":"desktop/src/cli_output.rs","sha256":"a0224e7006967fa7bc9915fe58d1595f4349cfa2e5763d3cc0263a513db898fc","anchor":"pub fn parse_cli_output("}],
+      "proof":[{"path":"desktop/src/cli_output.rs","sha256":"a0224e7006967fa7bc9915fe58d1595f4349cfa2e5763d3cc0263a513db898fc","anchor":"fn actual_donor_short_and_long_help_version_flags()"}],
       "omissions":[
         {"code":"Media target/chapter/playlist/seek/rate/player associations","disposition":"not-applicable","reason":"User explicitly requires an mpv-free controller; media/timeline/cue business must not replace board control."},
         {"code":"Embedded build identity, scoped peer/instance routing, unified remote request fallback, automatic verified host deployment/update status, headless Web-only backend and complete shortcut/command parser tests","disposition":"pending","reason":"These generic contracts are useful but not completed by static help output. Current Pakar typed GUI IPC and board command routes do not prove full donor CLI parity."}
@@ -1133,7 +1133,7 @@
         },
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "b82160d6435141268e77736d6b57408e00a5d8d1b138a50ea6a912a54a4560ee",
+          "sha256": "18372200696f758a22fe19dd155a74a5125d6afef0d46b73acc4101adb46c225",
           "anchor": "AppLanguage::Persian"
         },
         {
@@ -1777,7 +1777,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2",
+          "sha256": "e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6",
           "anchor": "fn synchronize_context("
         },
         {
@@ -2120,7 +2120,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2",
+          "sha256": "e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -2193,7 +2193,7 @@
         },
         {
           "path": "tests/native_render_lifecycle_test.mjs",
-          "sha256": "c817865734fb041b787c6756d14ce5a8c20f47a45150871e85d8a954c15d23ce",
+          "sha256": "89fafbd23df1f2a55c71bd5d8c8466166007e9d43306c1805cc03fad0e4d6b03",
           "anchor": "const compact=source=>source.replace"
         }
       ],
@@ -2585,7 +2585,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2",
+          "sha256": "e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -3003,7 +3003,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2",
+          "sha256": "e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -3800,7 +3800,7 @@
       "targets": [
         {
           "path": "tools/capture-window-windows.ps1",
-          "sha256": "e6892b3c4da4f6a5bd90d6275f868b041516d8bebecb03de23dccaad94e60135",
+          "sha256": "c9f48604a224599ea0252638558e80f4025beb4b53834112af9e48af03ae73d0",
           "anchor": "public static extern bool PrintWindow"
         }
       ],
@@ -3820,7 +3820,7 @@
       "proof": [
         {
           "path": "tests/screenshot_harness_test.mjs",
-          "sha256": "b1378631676b871090abb8c83457b4c5c2a1c5dfbfaed7a662045cae2919bb9f",
+          "sha256": "58f76c58e02a00f48ff7aed64321007a30f49d82e7bfaefbf936441929b7758b",
           "anchor": "for(const forbidden"
         }
       ],
@@ -3838,7 +3838,7 @@
       "targets": [
         {
           "path": "tools/capture-window-windows.ps1",
-          "sha256": "e6892b3c4da4f6a5bd90d6275f868b041516d8bebecb03de23dccaad94e60135",
+          "sha256": "c9f48604a224599ea0252638558e80f4025beb4b53834112af9e48af03ae73d0",
           "anchor": "public static extern bool PrintWindow"
         }
       ],
@@ -3875,7 +3875,7 @@
       "proof": [
         {
           "path": "tests/screenshot_harness_test.mjs",
-          "sha256": "b1378631676b871090abb8c83457b4c5c2a1c5dfbfaed7a662045cae2919bb9f",
+          "sha256": "58f76c58e02a00f48ff7aed64321007a30f49d82e7bfaefbf936441929b7758b",
           "anchor": "for(const forbidden"
         }
       ],

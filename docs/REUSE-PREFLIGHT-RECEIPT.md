@@ -1,5 +1,53 @@
 # Donor-first preflight receipt
 
+## Minimized native command processing
+
+Prior turn was progress: clean0c3eca9 source was pushed, release/stage/probe
+passed and deployed process54616 matched candidate SHA B3FAAC2569B18B94EB772791ADE5083F1A4583F8FA0517DE821229ED098901C9.
+Saved preferences SHA remained 5C6133A73641C8087A5D00B0CC978FA03CD2829C6D81F3959DA1F63F50F974DD;
+existing rollback files were preserved. Both current-source CI workflows passed.
+No physical board acceptance: ASUS SSH1022 refused and ledboard.local DNS failed.
+
+Live capture failed on a minimized owner, exposing accepted-but-undrained IPC.
+Consulted capture and actual donor read-only scripts; Win32 correctly refused
+a non-visible/non-minimized target, not a blanket screenshot capability loss.
+Consulted native-lifecycle/donor-audit and actual Pealayer App::logic and shell
+command slices. Full app.rs is not certified. Adapted non-render command,
+device-result, notification and snapshot placement; source guard checks no
+duplicate drain in UI. SourceStatus still needs a read-only rendering snapshot.
+Initial compile failed on that missing local and ctx.style (removed in locked
+egui); corrected with the rendering snapshot and donor's ctx.theme comparison.
+Locked egui run_logic read and used for the minimized capture-deadline test.
+No removed assertion, alternate cache, dependency upgrade or unrelated build.
+
+Capture wrapper also had an idle-snapshot race. Added request_id/path correlation
+and bounded older-owner pending/result handling. Its gate refused a changed
+capture target before use; rereviewed the wrapper and rebound only exact target
+and source-guard hashes, preserving all original donor hashes.
+An attempted unexpanded registry glob and a guessed test/tool filename failed;
+used rg --files and exact existing paths, not a blind replacement or unavailable
+claim. Second production Preferences capture timed out; no output file exists.
+Actual earlier framebuffer was inspected after supported window restoration.
+Physical Escape stopped Windows Computer Use; desktop input was not resumed.
+Open Preferences/draft preservation blocks replacement only, not source work.
+
+Four additional full Pealayer conversations70/78/87/102 read and hash-bound.
+They constrain private branding/resource ownership, transition/config revisions,
+hidden-window lifecycle/draft safety and shared portaled button geometry.
+Fresh source corpus counts remain separate from full semantic review.
+The guarded native Test completed:129 passed/0failed/0ignored, including
+the actual locked-egui run_logic minimized deadline fixture. Later user reply
+confirmed Preferences closed; IPC unavailable plus zero enumerated owners
+confirmed terminal state, not an observation timeout. Product --minimize and
+dirty/minimized status add a repeatable no-desktop-input live acceptance path.
+An overlapping adjacent-line evidence patch failed before mutation; grouped
+only consecutive changed references and preserved donor hashes. No test/gate
+bypass. A final native compile/test of the added control is still separate.
+That final guarded Test now passed129/0/0 (2m40 compile,0.17s execution),
+including strict typed minimize parsing. Source guards and exact comparison
+generation checks pass. Full production live lifecycle smoke is not inferred
+from these tests. Current0c source CI was confirmed success without waiting.
+
 ## Actual TM1637 bus recovery acceptance
 
 Reread complete live PCController LocalLib/SevenSegments.h and .cpp; both match

@@ -2,7 +2,7 @@
 
 Whole-repository superiority is **not established**. This report exposes retained code, scoped improvements, omissions and gaps; it does not turn missing reviews into exclusions.
 
-Routing: 1315 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
+Routing: 1313 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
 
 Inventory: 4242 files; 91 complete source-file comparisons; 4151 pending comparisons; 57 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
@@ -444,11 +444,11 @@ Verdict: **scoped-improvement**. Revision: `3265bf80b6f7543831e096a05b04c3b58b77
 
 Verdict: **scoped-improvement**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `2876c19687b1a209e777f3d505e4b24b6c4b1403a0f1de99edcedf0a624d9527`.
 
-- Target: `tools/capture-window-windows.ps1:62 [UTF8-LF sha256=e6892b3c4da4f6a5bd90d6275f868b041516d8bebecb03de23dccaad94e60135; anchor=public static extern bool PrintWindow]`.
+- Target: `tools/capture-window-windows.ps1:75 [UTF8-LF sha256=c9f48604a224599ea0252638558e80f4025beb4b53834112af9e48af03ae73d0; anchor=public static extern bool PrintWindow]`.
 - Retained: Actual donor PrintWindow P/Invoke, minimized/window-bounds validation, DPI awareness, System.Drawing PNG lifecycle and read-only behavior.
 - Omitted/replaced code: `Get-Process -Name foreground filter`. Disposition: **replaced**. Reason: Explicit expected PID and window-owner revalidation remove ambiguity between production and fixtures; screen fallback checks foreground ownership without changing focus.
 - Omitted/replaced code: `RenderOccludedWindow branching and unconditional Bitmap.Save`. Disposition: **replaced**. Reason: Capability-gated egui framebuffer is tried first, then PrintWindow/BitBlt and verified foreground pixels. Blank images and overwrites are rejected.
-- Test-code evidence: `tests/screenshot_harness_test.mjs:9 [UTF8-LF sha256=b1378631676b871090abb8c83457b4c5c2a1c5dfbfaed7a662045cae2919bb9f; anchor=for(const forbidden]`.
+- Test-code evidence: `tests/screenshot_harness_test.mjs:9 [UTF8-LF sha256=58f76c58e02a00f48ff7aed64321007a30f49d82e7bfaefbf936441929b7758b; anchor=for(const forbidden]`.
 - Scoped advantage: PID-bound, no-overwrite capture with an app-owned framebuffer and automatic read-only Win32 fallback; runtime evidence is separate from source guards.
 
 ### Pealayer: `scripts/check-crate-boundary.mjs`
@@ -537,21 +537,21 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `48507f6e9395c8c312c5557db729d05ed8d6a83e980d57a9b01e77ea525db287`.
 
-- Target: `tools/capture-window-windows.ps1:62 [UTF8-LF sha256=e6892b3c4da4f6a5bd90d6275f868b041516d8bebecb03de23dccaad94e60135; anchor=public static extern bool PrintWindow]`.
+- Target: `tools/capture-window-windows.ps1:75 [UTF8-LF sha256=c9f48604a224599ea0252638558e80f4025beb4b53834112af9e48af03ae73d0; anchor=public static extern bool PrintWindow]`.
 - Retained: Actual PrintWindow(PW_RENDERFULLCONTENT), near-uniform-black sampler, GetWindowDC/BitBlt/screen fallback and PID/dimension validation imported. Pakar fixture supplies isolated profile/selected surfaces; app-owned framebuffer capture does not depend on WGC.
 - Omitted/replaced code: `SetForegroundWindow, BringWindowToTop, SetWindowPos, ShowWindow, SetCursorPos, mouse_event, SendMouseWheel/Click/RightClick`. Disposition: **replaced**. Reason: Capture remains read-only and must not steal focus, resize or inject desktop input. Startup CLI sets the application's own surface; native gestures belong to the supported computer-use APIs.
 - Omitted/replaced code: `DwmGetWindowAttribute extended bounds and logical/client coordinate transformations`. Disposition: **replaced**. Reason: Per-monitor-v2 physical GetWindowRect is kept consistent with full window-DC capture, avoiding a mismatched crop origin. Internal framebuffer needs no desktop coordinates.
 - Omitted/replaced code: `Locale/Theme arrays, PreferencesTab/Icon, AppName/Branding, WorkspaceDockLayout and per-surface matrix manifest`. Disposition: **pending**. Reason: Config-driven Pakar CLI surfaces/isolated profiles exist, but the full multi-locale/theme/icon/width matrix and hashed per-capture manifest runner remain useful unported harness work.
 - Omitted/replaced code: `temporary GUID profile cleanup, process CloseMainWindow/Kill and generated_at_utc`. Disposition: **replaced**. Reason: Stable named evidence/profiles are retained for debugging rather than deleted. Only verified fixture processes are stopped; production replacement uses graceful typed IPC and avoids timestamp/suffix deliverables.
 - Omitted/replaced code: `native resize/scroll/client-coordinate scenario parameters`. Disposition: **pending**. Reason: Model/painter tests and selected-surface captures do not replace the full interactive narrow/wide scenario matrix. Native live gesture acceptance remains separate.
-- Test-code evidence: `tests/screenshot_harness_test.mjs:9 [UTF8-LF sha256=b1378631676b871090abb8c83457b4c5c2a1c5dfbfaed7a662045cae2919bb9f; anchor=for(const forbidden]`.
+- Test-code evidence: `tests/screenshot_harness_test.mjs:9 [UTF8-LF sha256=58f76c58e02a00f48ff7aed64321007a30f49d82e7bfaefbf936441929b7758b; anchor=for(const forbidden]`.
 - Remaining: Complete generic locale/theme/icon/width capture matrix and manifest receipts; verify native interaction scenarios.
 
 ### Pealayer: `src/application_shortcuts.rs`
 
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `1f173bef8acc2904eac5b0a91407aa4f7629ce65c88ea3a8ac78f8c13321d203`.
 
-- Target: `desktop/src/ui/shell.rs:394 [UTF8-LF sha256=d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2; anchor=egui::Key::F11]`.
+- Target: `desktop/src/ui/shell.rs:436 [UTF8-LF sha256=e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6; anchor=egui::Key::F11]`.
 - Retained: Default Preferences Ctrl+, and device configuration Ctrl+Shift+, navigation exist; F11 fullscreen is restored with the shared typed dispatcher. These are not equivalent to the donor persisted rebinding model.
 - Omitted/replaced code: `ApplicationShortcuts persisted fields, parse_shortcut, entries, validate, action_for_event and their non-media tests`. Disposition: **pending**. Reason: The foundation hardcoded its accelerators and omitted the reusable binding model. No accepted reason justifies leaving rebinding out. The actual donor depends on KeyChord and hardware_shortcuts match/key-code helpers, which must be ported and tested with controller-specific typed actions rather than guessed labels.
 - Omitted/replaced code: `take_frame_step_shortcut and frame-step tests`. Disposition: **not-applicable**. Reason: These consume Ctrl+Left/Right for media frame stepping and timeline transport. Those business domains were explicitly removed; Pakar must not hijack ordinary text word navigation for nonexistent video frames.
@@ -584,11 +584,11 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `412b553fcdcd4436075af6bc93c956a4b7d9ac93a552a3458f2afabb8aa1448f`.
 
-- Target: `desktop/src/cli_output.rs:19 [UTF8-LF sha256=d39fb32a9329add6b160a401a16f04aa398797c4fc484c79bd358bbf245a7104; anchor=pub fn parse_cli_output(]`.
+- Target: `desktop/src/cli_output.rs:19 [UTF8-LF sha256=a0224e7006967fa7bc9915fe58d1595f4349cfa2e5763d3cc0263a513db898fc; anchor=pub fn parse_cli_output(]`.
 - Retained: Actual format_help_message and PrintHelp/PrintVersion flag branches adapted with native short/long help/version assertions; terminate before config, network, GUI ownership and windows. Share device command help with existing TUI instead of duplicate stale strings.
 - Omitted/replaced code: `Media target/chapter/playlist/seek/rate/player associations`. Disposition: **not-applicable**. Reason: User explicitly requires an mpv-free controller; media/timeline/cue business must not replace board control.
 - Omitted/replaced code: `Embedded build identity, scoped peer/instance routing, unified remote request fallback, automatic verified host deployment/update status, headless Web-only backend and complete shortcut/command parser tests`. Disposition: **pending**. Reason: These generic contracts are useful but not completed by static help output. Current Pakar typed GUI IPC and board command routes do not prove full donor CLI parity.
-- Test-code evidence: `desktop/src/cli_output.rs:31 [UTF8-LF sha256=d39fb32a9329add6b160a401a16f04aa398797c4fc484c79bd358bbf245a7104; anchor=fn actual_donor_short_and_long_help_version_flags()]`.
+- Test-code evidence: `desktop/src/cli_output.rs:31 [UTF8-LF sha256=a0224e7006967fa7bc9915fe58d1595f4349cfa2e5763d3cc0263a513db898fc; anchor=fn actual_donor_short_and_long_help_version_flags()]`.
 - Scoped advantage: Top-level flags do not consume matching tokens inside device command payloads; board commands retain their own parsing. CLI endpoint/user default to saved GUI preferences rather than a conflicting hostname.
 - Remaining: Complete generic CLI parser/validation, command/IPC parity, embedded build identity and verified app-update contracts; media-only switches are explicitly excluded. Validate actual packaged help/version exit without creating windows and preserve Preferences/rollback when replacing the app.
 
@@ -626,7 +626,7 @@ Verdict: **equivalent-file**. Revision: `3265bf80b6f7543831e096a05b04c3b58b77058
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `c252864d80912a03bca718b0a13d721fda2e8f7378c033f44619590a82380fd2`.
 
 - Target: `desktop/src/capabilities.rs:7 [UTF8-LF sha256=cc3e3b3ffbfb3c776639b64326ddd90125285a389688dcc56ec147b3cecf80ed; anchor=pub struct Manifest]`.
-- Target: `desktop/src/ui/shell.rs:276 [UTF8-LF sha256=d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2; anchor=fn synchronize_context(]`.
+- Target: `desktop/src/ui/shell.rs:283 [UTF8-LF sha256=e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6; anchor=fn synchronize_context(]`.
 - Target: `desktop/src/ui/device_settings.rs:21 [UTF8-LF sha256=b339f425a20b873d7b8230dd24619e682334681e7cb72a7c0dabcfc42140d2c1; anchor=pub(crate) fn available(]`.
 - Target: `docs/DEVICE-CONTEXT.md:71 [UTF8-LF sha256=ad4669cbe23b48b4f6ee22634c21c015cd5b9767b8006d7316ad04d4ee99648b; anchor=## Exact reuse and remaining useful code]`.
 - Retained: Reread all 1280 lines through EOF. Prior authoritative overview/capability/front-panel adaptation remains; shared dropdown dependency is now imported, but full typed board settings and ACK consumers remain pending.
@@ -649,7 +649,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 
 - Target: `desktop/src/ui/color_picker.rs:25 [UTF8-LF sha256=e07f4284ff64968179df0888451169c5e915b5b231624755ab50750e7fccd8b8; anchor=pub fn remember_color(]`.
 - Target: `desktop/src/ui/color_picker.rs:240 [UTF8-LF sha256=e07f4284ff64968179df0888451169c5e915b5b231624755ab50750e7fccd8b8; anchor=pub fn accent_picker(]`.
-- Target: `desktop/src/ui/preferences.rs:101 [UTF8-LF sha256=b82160d6435141268e77736d6b57408e00a5d8d1b138a50ea6a912a54a4560ee; anchor=super::color_picker::accent_picker]`.
+- Target: `desktop/src/ui/preferences.rs:101 [UTF8-LF sha256=18372200696f758a22fe19dd155a74a5125d6afef0d46b73acc4101adb46c225; anchor=super::color_picker::accent_picker]`.
 - Target: `desktop/src/ui/i18n.rs:113 [UTF8-LF sha256=5fd85598dec811390440c9b82a1a8d487947d0fdc266a89b75cb38e1c89fcb9a; anchor="Recent colors"]`.
 - Retained: Read all 446 donor lines through EOF. Imported actual session-only 12-color MRU deduplication, recent/shared swatches, integrated HEX-field swatch, full-width Custom choice, independently anchored palette with validated temporary HEX draft and all four donor tests. Production accent consumer adapts the actual Pealayer Preferences Accent branch, not a full Preferences-file parity claim.
 - Omitted/replaced code: `Pealayer asset path, session ID and product-specific shared-colors heading`. Disposition: **replaced**. Reason: Uses the actual already imported shared palette asset, Pakar context ID and localized generic headings without disk persistence for recent colors.
@@ -679,9 +679,9 @@ Verdict: **scoped-improvement**. Revision: `3265bf80b6f7543831e096a05b04c3b58b77
 
 - Target: `desktop/src/ui/dropdown.rs:368 [UTF8-LF sha256=f7b1532924e3e3ae87d72d91983e7e49f48fed2efb9b01aede48d1a9734f1fa3; anchor=pub trait DropdownUiExt]`.
 - Target: `desktop/src/ui/connection_controls.rs:45 [UTF8-LF sha256=75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e; anchor=pub fn websocket(]`.
-- Target: `desktop/src/ui/preferences.rs:99 [UTF8-LF sha256=b82160d6435141268e77736d6b57408e00a5d8d1b138a50ea6a912a54a4560ee; anchor=super::dropdown::ComboBox::from_id_salt("theme")]`.
+- Target: `desktop/src/ui/preferences.rs:99 [UTF8-LF sha256=18372200696f758a22fe19dd155a74a5125d6afef0d46b73acc4101adb46c225; anchor=super::dropdown::ComboBox::from_id_salt("theme")]`.
 - Target: `desktop/src/ui/device_settings.rs:36 [UTF8-LF sha256=b339f425a20b873d7b8230dd24619e682334681e7cb72a7c0dabcfc42140d2c1; anchor=super::dropdown::ComboBox]`.
-- Target: `desktop/src/ui/shell.rs:971 [UTF8-LF sha256=d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2; anchor=super::dropdown::ComboBox]`.
+- Target: `desktop/src/ui/shell.rs:984 [UTF8-LF sha256=e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6; anchor=super::dropdown::ComboBox]`.
 - Retained: Read all 631 donor lines through EOF and locked egui 0.36.2 ComboBox factory identity. Actual focus owner, enabled/selected entries, search focus, Arrow/Home/End/Enter navigation, disabled skipping, full-width fixed 32px rows, inside focus stroke, nested menu framing and closed-popup cleanup imported, not restyled substitutes. All three donor native tests retained.
 - Omitted/replaced code: `Pealayer active-dropdown ID`. Disposition: **replaced**. Reason: Product-specific context key renamed to Pakar. No generic helper or donor assertion removed.
 - Test-code evidence: `desktop/src/ui/dropdown.rs:440 [UTF8-LF sha256=f7b1532924e3e3ae87d72d91983e7e49f48fed2efb9b01aede48d1a9734f1fa3; anchor=fn dropdown_arrows_seed_focus_skip_disabled_commit_enter_and_cancel_escape()]`.
@@ -698,7 +698,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 
 - Target: `desktop/src/ui/i18n.rs:6 [UTF8-LF sha256=5fd85598dec811390440c9b82a1a8d487947d0fdc266a89b75cb38e1c89fcb9a; anchor=pub(crate) fn configure_ui_fonts]`.
 - Target: `desktop/src/ui/dialog.rs:18 [UTF8-LF sha256=b3786964dd0c375f0f73325a4046b3fc0e3967ace4e7e0c4f66b6f52d66eda47; anchor=pub fn singleline_text_edit]`.
-- Target: `desktop/src/ui/preferences.rs:103 [UTF8-LF sha256=b82160d6435141268e77736d6b57408e00a5d8d1b138a50ea6a912a54a4560ee; anchor=AppLanguage::Persian]`.
+- Target: `desktop/src/ui/preferences.rs:103 [UTF8-LF sha256=18372200696f758a22fe19dd155a74a5125d6afef0d46b73acc4101adb46c225; anchor=AppLanguage::Persian]`.
 - Target: `docs/PERSIAN-PARITY.md:48 [UTF8-LF sha256=d1f873fb589b406316d77e9ca2fcaf652fe8773b1534063504fc1ab516b506da; anchor=## Exact source-to-target mapping]`.
 - Retained: Actual donor platform/UI face loading, Vazirmatn and Phosphor registration, application dictionary, identity-preserving visual_text, script detection, input alignment and horizontal/vertical direction helpers retained and wired into real native controls.
 - Retained: Monospace Persian fallback and preference-driven priority refresh added without discarding later widget font registrations. Actual donor contextual glyph test adapted to both families; saved Unicode and peer identifiers never manually reversed.
@@ -715,7 +715,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `fba85edd503798868acc5527600b2ee52326339816c5b73e9926d1d7b0929384`.
 
 - Target: `desktop/src/ui/icons.rs:573 [UTF8-LF sha256=d9e95867777af0771f64322fef26958558c4c976cd3bdec5377a41754550a8da; anchor=pub fn searchable_workspace_icon_picker(]`.
-- Target: `desktop/src/ui/shell.rs:1792 [UTF8-LF sha256=d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2; anchor=icons::searchable_workspace_icon_picker]`.
+- Target: `desktop/src/ui/shell.rs:1805 [UTF8-LF sha256=e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6; anchor=icons::searchable_workspace_icon_picker]`.
 - Retained: Production Phosphor vocabulary, stable names/kind fallback, searchable list/grid picker, UTF-8-safe match highlighting, bounded popups, disclosure/submenu helpers.
 - Retained: Actual donor regression tests restored: eleven tests, including interactive egui-frame search/select/reopen, both themes and popup width.
 - Omitted/replaced code: `every_native_icon_editor_uses_the_shared_searchable_picker donor-only editor path list`. Disposition: **replaced**. Reason: That assertion references Pealayer media/4D editor files not present in this product. Replaced only its call-site assertion with Pakar's actual workspace editor; the other ten tests were imported. This does not excuse missing generic editor features elsewhere.
@@ -730,7 +730,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `18e255a5ccc65dfa0588eac10283c7c1f5fe33ea63bb3e07bd599e30a0cf19c3`.
 
 - Target: `desktop/src/ui/menu.rs:9 [UTF8-LF sha256=485783deefe484f7d413e30f3020dc3c2355aa564ca038c39741f6149271420e; anchor=pub fn top_menu_button<R>(]`.
-- Target: `desktop/src/ui/shell.rs:450 [UTF8-LF sha256=d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2; anchor=menu::top_menu_button(ui, crate::ui::i18n::text("File")]`.
+- Target: `desktop/src/ui/shell.rs:463 [UTF8-LF sha256=e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6; anchor=menu::top_menu_button(ui, crate::ui::i18n::text("File")]`.
 - Target: `desktop/src/ui/connection_controls.rs:45 [UTF8-LF sha256=75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e; anchor=pub fn websocket(]`.
 - Target: `docs/NATIVE-MENU-COMPARISON.md:32 [UTF8-LF sha256=7319a38240f9c23a43f5a18c2f20d05b0c9d5ff273cf0e8f28b2ba98aa1aabd8; anchor=## Exact donor menu mapping and remaining decisions]`.
 - Retained: Actual top_menu_button body imported with only application state ID/public visibility adaptation; all four production menu headings use active-menu sibling hover switching.
@@ -746,7 +746,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 - Test-code evidence: `desktop/src/ui/menu.rs:69 [UTF8-LF sha256=485783deefe484f7d413e30f3020dc3c2355aa564ca038c39741f6149271420e; anchor=fn shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes()]`.
 - Test-code evidence: `desktop/src/ui/menu.rs:192 [UTF8-LF sha256=485783deefe484f7d413e30f3020dc3c2355aa564ca038c39741f6149271420e; anchor=fn sibling_hover_switches_only_an_already_open_menu_and_clears_closed_state()]`.
 - Test-code evidence: `tests/native_menu_test.mjs:12 [UTF8-LF sha256=80ac61041de322c2c0e2c0fad379a74e6e89d02724f1b80f2d9fa6200c7ef937; anchor=actual donor helper must match after application ID/visibility/whitespace adaptation]`.
-- Test-code evidence: `tests/native_render_lifecycle_test.mjs:27 [UTF8-LF sha256=c817865734fb041b787c6756d14ce5a8c20f47a45150871e85d8a954c15d23ce; anchor=const compact=source=>source.replace]`.
+- Test-code evidence: `tests/native_render_lifecycle_test.mjs:27 [UTF8-LF sha256=89fafbd23df1f2a55c71bd5d8c8466166007e9d43306c1805cc03fad0e4d6b03; anchor=const compact=source=>source.replace]`.
 - Remaining: Restore remaining useful generic menu contracts above against actual dependencies; see exact function-level mapping in NATIVE-MENU-COMPARISON.md. Native CI paint/pointer tests and running-app visual acceptance are separate from source guards.
 - Remaining: Shared dropdown dependency now has a complete-read comparison; preserve remaining generic consumer contracts and verify native runtime without claiming whole-file parity.
 

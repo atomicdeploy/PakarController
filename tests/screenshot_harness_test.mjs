@@ -10,4 +10,7 @@ for(const forbidden of ['SetForegroundWindow','SetCursorPos','mouse_event','Send
 assert(read('desktop/src/main.rs').includes('!screenshot_harness'));
 assert(read('desktop/src/platform/instance.rs').includes('if enable_listener'));
 assert(read('desktop/src/ui/shell.rs').includes('A capture request never changes focus'));
+for(const token of ['taskBeforeRequestId','taskObservedPending','taskCorrelated','screenshot.path -eq $taskOutput']) assert(capture.includes(token),token);
+assert(native.includes('pub fn tick('));
+assert(native.includes('hidden_viewport_deadline_and_request_identity_do_not_need_paint'));
 console.log('Screenshot harness wiring, no-overwrite, PID ownership and read-only Win32 fallback contracts pass (source guards; runtime PNG proof is separate).');

@@ -45,7 +45,7 @@ impl PreferencesDraft {
             confirm_close: false,
         }
     }
-    fn is_dirty(&self) -> bool {
+    pub(super) fn is_dirty(&self) -> bool {
         self.config != self.saved_config
     }
     fn take_preview_update(&mut self) -> Option<AppConfig> {

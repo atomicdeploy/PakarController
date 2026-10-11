@@ -28,6 +28,7 @@ struct Pending {
 pub struct State {
     pending: Option<Pending>,
     nonce: u64,
+    request_path: String,
     pub result: String,
 }
 impl State {
@@ -49,6 +50,7 @@ impl State {
             return Err("Screenshot file exists; choose a new output".into());
         }
         self.nonce = self.nonce.wrapping_add(1).max(1);
+        self.request_path = path.clone();
         self.pending = Some(Pending {
             path,
             id: self.nonce,
@@ -59,7 +61,7 @@ impl State {
         Ok(())
     }
     pub fn status(&self) -> serde_json::Value {
-        serde_json::json!({"pending":self.pending.is_some(),"result":self.result,"backend":"egui framebuffer"})
+        serde_json::json!({"pending":self.pending.is_some(),"request_id":self.nonce,"path":self.request_path,"result":self.result,"backend":"egui framebuffer"})
     }
     pub fn receive(&mut self, ctx: &egui::Context) {
         let images = ctx.input(|i| {
@@ -101,15 +103,22 @@ impl State {
             }
         }
     }
+    // Deadlines still run when the viewport cannot paint. Never reveal/focus it
+    // merely to obtain a screenshot; the caller may use read-only Win32 instead.
+    pub fn tick(&mut self, ctx: &egui::Context) {
+        if self.pending.as_ref().is_some_and(|p| p.started.elapsed() > Duration::from_secs(10)) {
+            self.pending = None;
+            self.result = "Screenshot timed out; use the read-only Win32 fallback".into();
+        }
+        if self.pending.is_some() {
+            ctx.request_repaint_after(Duration::from_millis(50));
+        }
+    }
     pub fn after_frame(&mut self, ctx: &egui::Context) {
+        self.tick(ctx);
         let Some(pending) = &mut self.pending else {
             return;
         };
-        if pending.started.elapsed() > Duration::from_secs(10) {
-            self.pending = None;
-            self.result = "Screenshot timed out; use the read-only Win32 fallback".into();
-            return;
-        }
         if !pending.requested && pending.started.elapsed() >= Duration::from_millis(400) {
             ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::new(
                 pending.id,
@@ -152,6 +161,24 @@ fn save_png(path: &str, image: &egui::ColorImage) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn hidden_viewport_deadline_and_request_identity_do_not_need_paint() {
+        let mut state = State::default();
+        let path = std::env::temp_dir().join("pakar-unpainted-test.png").to_string_lossy().into_owned();
+        state.request(path.clone()).unwrap();
+        assert_eq!(state.status()["path"], path);
+        assert_eq!(state.status()["request_id"], 1);
+        state.pending.as_mut().unwrap().started = Instant::now() - Duration::from_secs(11);
+        let ctx = egui::Context::default();
+        let mut input = egui::RawInput::default();
+        input.viewports.get_mut(&egui::ViewportId::ROOT).unwrap().minimized = Some(true);
+        let output = ctx.run_logic(&input, |ctx| state.tick(ctx));
+        assert_eq!(state.status()["pending"], false);
+        assert!(state.result.contains("timed out"));
+        assert!(output.viewport_commands.is_empty());
+        state.request(path).unwrap();
+        assert_eq!(state.status()["request_id"], 2);
+    }
     #[test]
     fn screenshot_paths_are_explicit_and_png_only() {
         for path in ["", "relative.png", "C:/test.txt"] {
