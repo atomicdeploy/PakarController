@@ -1610,3 +1610,16 @@ conversation decision hash. All seventeen reviewed-record and two comment-scope
 decisions now match the refreshed corpus; 775 records remain semantically pending.
 Pakar #3 current counts updated without marking runtime acceptance prematurely.
 Fresh ASUS SSH1022 still refuses and ledboard.local still fails DNS.
+
+## S3 flow-control lookup and provisional DevKit clarification
+
+The requested uart-flow-control concern was missing and its lookup failed closed.
+Consulted firmware-hardware instead and inspected all matched protocol/UART/event
+pending actions. Added an exact uart-flow-control route to the same index, including
+PCController UartProtocol, codec/runtime and VirtualBoard UART/codec tests. These
+files remain pending comparisons, not newly certified donor reads. No replacement
+protocol or untested AVR event-flow mutation was introduced after that failure.
+The current AVR no-busy build is still polling-only; paired buffered mode remains
+an explicit migration gate. S3 pinout now records the user's provisional common
+DevKit assumption without inventing flash/PSRAM or partition details, and calls
+out the AVR RESET pull-up voltage hazard in addition to TXD/MISO.

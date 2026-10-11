@@ -6,8 +6,10 @@ Existing ESP8266 firmware is preserved. No flash/EEPROM writes were attempted.
 
 ## Provisional common DevKitC-1 wiring
 
-Confirm the exact board/module before connecting power. GPIO numbers below are
-not NodeMCU D labels. UART remains hardware Serial on the AVR.
+Provisional target: a common ESP32-S3 DevKitC-1, as requested. Exact module,
+flash/PSRAM variant and clone routing still need confirmation before connecting
+power. GPIO numbers below are not NodeMCU D labels. UART remains hardware Serial
+on the AVR. This assumption does not select a flash size or partition layout.
 
 | ESP32-S3 | Connect to | Direction |
 |---|---|---|
@@ -27,6 +29,10 @@ overlapping or nonconservative pin overrides at compile time.
 
 **Do not feed 5 V signals into the S3.** Confirm AVR supply and oscillator before
 wiring; UART TXD and ISP MISO need level conversion if AVR is running at 5 V.
+The ISP RESET connection is also voltage-sensitive: an AVR RESET pull-up to 5 V
+must not connect directly to GPIO10. Use a suitable isolated/open-drain reset
+interface that keeps the S3 pin within its electrical limits. Check all ISP
+directions and AVR input thresholds, not only the UART receive wire.
 Power the strip from its correct external supply, not the DevKit 3V3 regulator.
 Previous ESP8266 operation without level shifting is not S3 electrical acceptance.
 Prefer a suitable 3.3-to-5 V data driver and series resistor for robust LED output.
