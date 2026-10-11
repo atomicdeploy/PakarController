@@ -1,5 +1,34 @@
 # Donor-first preflight receipt
 
+## Web streaming pacing
+
+Started from clean 5b54e4d; Build38154906733 and CodeQL38154906685 passed.
+No open Pakar PR or new completed Copilot review. ASUS1022 refused and
+ledboard.local did not resolve. Preserved live native process/settings/rollback.
+Consulted all 77 games-streaming rows and exact donor-audit rows; the two
+PCController status-frame-batcher files were unrouted and not yet compared.
+Read both actual sources completely; original byte hashes match the inventory.
+Adapted actual clock/generation/cancellation/disposal code and fake-clock test
+scenarios, not an assertion of whole status/metrics parity. Added specialist
+web-streaming routing/gate to quality and ESP builds. Useful generic status
+history and error-reducer omissions remain pending in the authoritative ledger.
+
+Replaced fixed 40ms Web timer with 60/default, 0/uncapped pacing and bounded
+latest-frame socket buffering. Focused tests run only after this substantial
+source slice, including real embedded Web start/reboot revocation. These are
+fixtures, not live board throughput. No native/mobile/AVR rebuild or deployment.
+
+Quality passed. Final ESP8266 busy-wire compile passed in the same warm cache,
+and exact module bytes were found in its945360-byte image. No hardware flash.
+Live PCController inventory gate caught25 added/14 removed tracked paths:
+selectively refreshed only PCController, then strict comparison and RequireLive
+scheduler gate passed. New board-mirroring paths remain unreviewed; current owner
+dirty work was hashed, never edited or called committed source. Totals4282/106
+manual/4176 pending/73 gaps. English/Persian live stream receipts are fixture-tested.
+Production executable and preferences hashes are unchanged. Initial GUI PID58400
+was absent at final check, with no Pakar process found; this turn did not terminate,
+replace or launch it. Do not present preserved executable bytes as a running GUI.
+
 ## Web board/boot adoption
 
 Started from clean b3e9d19 with Build38150481947 and CodeQL38150481964 green;

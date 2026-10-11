@@ -16,6 +16,12 @@ No Wi-Fi password or other deployment secret belongs in GitHub.
 
 ## Existing source/test checkpoints (not release acceptance)
 
+- [x] Web's fixed 25 FPS timer replaced with explicit 60/default and 0/uncapped
+  client pacing, bounded latest-frame buffering and peer/socket cancellation.
+  Exact donor scheduler/test mappings and limits are in WEB-STREAMING.md.
+  Physical refresh, queued-frame fencing, multi-client arbitration and full
+  mobile streaming/preferences parity remain open.
+
 - [x] ESP HTTP board/boot fence and TUI pinned mutations, with read-only fallback
   for absent/invalid identity. 151 native tests, C++ validation, quality guards,
   ESP8266 busy-wire and native release builds pass. See HTTP-PEER-FENCING.md.

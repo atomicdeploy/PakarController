@@ -39,7 +39,7 @@
       "target": "firmware/esp8266/src/WebUi.h",
       "anchor": "Verified remote update",
       "reason": "Commented donor HTML placeholder replaced by real firmware settings; no second OTA engine.",
-      "target_sha256_utf8_lf": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+      "target_sha256_utf8_lf": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
       "target_line": 244
     },
     {
@@ -603,7 +603,7 @@
       "target": "firmware/esp8266/src/WebUi.h",
       "anchor": "Verified remote update",
       "reason": "Real control workspace rather than donor static placeholder; access gate and actual peer state retained.",
-      "target_sha256_utf8_lf": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+      "target_sha256_utf8_lf": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
       "target_line": 244
     }
   ]

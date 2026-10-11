@@ -4,6 +4,103 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
     {
+      "origin": "PCController",
+      "path": "Tools/Controller/web/src/status-frame-batcher.ts",
+      "sha256": "f600267bf09d925eaf9e5cc3d752574a0a3fbc46350782c614440300c08799e4",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Full source read through EOF. Actual injected clock, generation admission, one scheduled callback, cancellation and disposal structure adapted to the mechanically embedded latest-frame Web stream.",
+        "Stale callbacks check generation before clearing the timer handle, strengthening the donor against disarming a replacement owner. Observed board/boot and exact socket ownership replace build/name-only identity for this bounded slice."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/frame-stream.js",
+          "sha256": "3d0ab90616b173570e5618be76aded339754caa92961868a1d9b43a02e3c6d90",
+          "anchor": "function createFrameStream"
+        },
+        {
+          "path": "firmware/esp8266/src/WebUi.h",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "anchor": "function readStreamPolicy"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "pendingStatus history queue and applyStatusFrameBatch ordered metrics/error reducer",
+          "disposition": "pending",
+          "reason": "All status arrivals are useful for telemetry/history, but stale LED actuations must not be replayed. This latest-only send scheduler does not implement the donor telemetry reducer; retain it as separate useful work."
+        },
+        {
+          "code": "sampleFrom, metricSamplesAfterSnapshot, controllerSnapshotIdentity and peripheralAvailability imports",
+          "disposition": "pending",
+          "reason": "Metric history and authoritative snapshot resets remain useful and need typed peer contracts. I2C supply/current sensor consumers must stay gated on boards without those sensors; stronger boot fencing alone is not complete metric parity."
+        },
+        {
+          "code": "TypeScript/React clock module ownership",
+          "disposition": "replaced",
+          "reason": "Standalone embedded Web consumes one generated JavaScript source and timer clock; requestAnimationFrame would add a display refresh cap to LED streaming. No second React toolchain is necessary for this firmware page."
+        }
+      ],
+      "remaining": [
+        "Port generic telemetry history/status reducer and sensor availability contracts with their own authoritative peer state; validate physical throughput, queued WebSocket epoch fencing, multi-client arbitration and all-client streaming parity."
+      ],
+      "proof": [
+        {
+          "path": "tests/web_streaming_test.mjs",
+          "sha256": "2f6706f00f4a4a44d1da308ca866195624b43a9de13474f802c6687668e7c5c9",
+          "anchor": "class FakeFrameClock"
+        },
+        {
+          "path": "tests/web_access_test.mjs",
+          "sha256": "2c4d232af4e2ed42d74ae96e282bc8a6c1ae38180cf5bc146bbb8834cb1804f7",
+          "anchor": "Reboot revokes the actual running browser stream"
+        }
+      ],
+      "improvement": "Explicit 60/default, 0/uncapped policy, bounded complete-frame buffering, no catch-up bursts, partial-send uncertainty and generation-before-handle checks; browser evidence only."
+    },
+    {
+      "origin": "PCController",
+      "path": "Tools/Controller/web/src/status-frame-batcher.test.ts",
+      "sha256": "61d9972be27e3ab35db5012600e8a7b5c8507815edeb55b80764357d4658d222",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Full source read through EOF. Actual fake-clock callback Map/cancelled-list and deliberately delivered cancelled callback scenarios ported to the actual Web streaming source.",
+        "Generation replacement and idempotent disposal scenarios strengthened to assert stale callback cannot disarm the newer handle; new pacing, buffering, peer loss, partial-send and final-page/back-cache cases exercise real source."
+      ],
+      "targets": [
+        {
+          "path": "tests/web_streaming_test.mjs",
+          "sha256": "2f6706f00f4a4a44d1da308ca866195624b43a9de13474f802c6687668e7c5c9",
+          "anchor": "class FakeFrameClock"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "100 status updates, 72-sample history, ordered batch/error-then-success and metric snapshot assertions",
+          "disposition": "pending",
+          "reason": "These test a still-useful telemetry reducer not implemented in the latest-only LED scheduler. No whole-suite parity is claimed; add them alongside generic status/history imports."
+        }
+      ],
+      "remaining": [
+        "Adapt donor status/history/error scenarios when those contracts are implemented; actual board throughput/reboot/buffering stress remains a separate physical gate."
+      ],
+      "proof": [
+        {
+          "path": "tests/web_streaming_test.mjs",
+          "sha256": "2f6706f00f4a4a44d1da308ca866195624b43a9de13474f802c6687668e7c5c9",
+          "anchor": "class FakeFrameClock"
+        },
+        {
+          "path": "tests/web_access_test.mjs",
+          "sha256": "2c4d232af4e2ed42d74ae96e282bc8a6c1ae38180cf5bc146bbb8834cb1804f7",
+          "anchor": "Reboot revokes the actual running browser stream"
+        }
+      ],
+      "improvement": "Real two-chunk packet and embedded module byte equality plus partial-send no-replay coverage; not hardware acceptance."
+    },
+    {
       "origin": "RayanLamp",
       "path": "webui/src/api.test.ts",
       "sha256": "6dfacf9fb7bff4896ac699547c46bf100c744b9017bec554ef42b9ea4d9c9f5b",
@@ -48,7 +145,7 @@
         },
         {
           "path": "tests/web_access_test.mjs",
-          "sha256": "6cd06bddb96be1460910397ad6e38c3249d3e8e158aa1af76dbfcfa2faf71b07",
+          "sha256": "2c4d232af4e2ed42d74ae96e282bc8a6c1ae38180cf5bc146bbb8834cb1804f7",
           "anchor": "Execute the actual embedded Web application"
         }
       ],
@@ -768,7 +865,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "function connectWs()"
         }
       ],
@@ -801,7 +898,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "afded6e6b6e8d0fb870cf9492cf39e3be8ea66add96531658b40df8f060c6858",
+          "sha256": "93051463cde69c096dfa66dbba285cde9c41c956dbf7db4ceec20010daefe60d",
           "anchor": "Donor prepareReconnect is completed before any replacement socket"
         }
       ],
@@ -853,7 +950,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "afded6e6b6e8d0fb870cf9492cf39e3be8ea66add96531658b40df8f060c6858",
+          "sha256": "93051463cde69c096dfa66dbba285cde9c41c956dbf7db4ceec20010daefe60d",
           "anchor": "Execute actual Web connectWs + refreshAuthenticated + api"
         }
       ],
@@ -877,7 +974,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "async function refreshAuthenticated(options={})"
         },
         {
@@ -925,7 +1022,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "afded6e6b6e8d0fb870cf9492cf39e3be8ea66add96531658b40df8f060c6858",
+          "sha256": "93051463cde69c096dfa66dbba285cde9c41c956dbf7db4ceec20010daefe60d",
           "anchor": "Actual api.ts AbortController deadline/finally cleanup"
         },
         {
@@ -954,7 +1051,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -1126,7 +1223,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "function connectWs()"
         }
       ],
@@ -1224,12 +1321,12 @@
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "e630c30dfd99b1e3b8d64497336798e86c3ee0e3b60a96a5ddbd9e00369f12b0",
+          "sha256": "010f6fcf22c8168d08c220e654096f16e2394e0be7b5ba7c3496aecf364946a3",
           "anchor": "function startUiLocaleController()"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -1325,7 +1422,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -1405,12 +1502,12 @@
           },
           {
             "path": "tools/generate-web-appearance.mjs",
-            "sha256": "f61cf9240bd11d5eee9fc1fb1fc6ede5be83cae7036312943c37a3b9919f6d15",
+            "sha256": "7fb8bbd16edbff1798dd77e16ee2abbf32ac34d0adf57e63baa4673abdf9d6a2",
             "anchor": "replaceBlock('// BEGIN BROWSER CONTROLLER'"
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -1663,7 +1760,7 @@
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "e630c30dfd99b1e3b8d64497336798e86c3ee0e3b60a96a5ddbd9e00369f12b0",
+          "sha256": "010f6fcf22c8168d08c220e654096f16e2394e0be7b5ba7c3496aecf364946a3",
           "anchor": "function uiTr(text,values)"
         },
         {
@@ -1673,7 +1770,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -1805,7 +1902,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "89058a4b869c7a8e7b80177b1f803377b643144a63bcc094caf2f09b72413185",
+          "sha256": "6ea155a7971fef046675c78af11649ac17c0ce200f1db1b8eb2389d827f6765a",
           "anchor": "export function runChecks"
         },
         {
@@ -2114,7 +2211,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "function peerAvailability("
         }
       ],
@@ -2412,7 +2509,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -2422,7 +2519,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -2487,7 +2584,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -4434,12 +4531,12 @@
         },
         {
           "path": "tools/generate-web-appearance.mjs",
-          "sha256": "f61cf9240bd11d5eee9fc1fb1fc6ede5be83cae7036312943c37a3b9919f6d15",
+          "sha256": "7fb8bbd16edbff1798dd77e16ee2abbf32ac34d0adf57e63baa4673abdf9d6a2",
           "anchor": "replaceBlock('// BEGIN SHARED APPEARANCE'"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -4529,7 +4626,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -4651,7 +4748,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
+          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -4726,7 +4823,7 @@
         },
         {
           "path": "assets/web/localization.js",
-          "sha256": "e630c30dfd99b1e3b8d64497336798e86c3ee0e3b60a96a5ddbd9e00369f12b0",
+          "sha256": "010f6fcf22c8168d08c220e654096f16e2394e0be7b5ba7c3496aecf364946a3",
           "anchor": "subscribeLocalePreferences(value=>"
         }
       ],

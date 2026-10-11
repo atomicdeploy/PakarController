@@ -64,7 +64,7 @@ assert(web.includes('if(!options.signal?.aborted)render(next)'));
 assert(module.includes('prepare:signal=>refreshAuthenticated({signal})'));
 assert(!module.includes("method:'POST'")&&!module.includes('establishSession(')&&!module.includes('localStorage'));
 assert(web.includes('function showLogin(){authEpoch++;peerHttp.revoke();webSocketReconnect.cancel();'));
-assert(web.includes("'pagehide',()=>{webSocketReconnect.cancel();"));
+assert(web.includes("'pagehide',event=>{webSocketReconnect.cancel();"));
 assert(web.includes('function pauseWebSocket(){webSocketPaused=true;webSocketReconnect.cancel();'));
 assert(!web.includes('webSocketRetry='));
 assert.equal(web.split('// BEGIN RAYANLAMP REALTIME RETRY\n')[1].split('\n// END RAYANLAMP REALTIME RETRY')[0],module);

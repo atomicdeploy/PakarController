@@ -15,7 +15,7 @@ const context=vm.createContext({...nodes,Headers,AbortController,URLSearchParams
   performance,crypto:webcrypto,navigator:{platform:'fixture',hardwareConcurrency:4},screen:{width:1280,height:720},
   document:{documentElement:{dataset:{},style:{setProperty(){}}},querySelector:s=>nodes[s.slice(1)],querySelectorAll:()=>[],createElement:element,createTextNode:text=>({textContent:text}),createElementNS:()=>({...element(),namespaceURI:'svg'})},
   location:{protocol:'http:',host:'pakarcontroller'},setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},
-  WebSocket:class {constructor(){socketCount++;this.readyState=1}close(){this.readyState=3}send(){}},
+  WebSocket:class {constructor(){socketCount++;this.readyState=1;this.bufferedAmount=0}close(){this.readyState=3}send(){}},
   fetch:async(path,options={})=>{
     calls.push({path,options});let code=200,body={};
     if(path==='/api/auth/info')body={ready:true,username:user,default_credentials:password==='pakarcontroller'};
@@ -33,7 +33,7 @@ const context=vm.createContext({...nodes,Headers,AbortController,URLSearchParams
       if(options.method==='POST'){changed=hostname!==options.body.get('hostname');hostname=options.body.get('hostname');displayName=options.body.get('display_name');}
       body={hostname,display_name:displayName,persisted:true,accepted:options.method==='POST',apply_pending:changed};
     }else if(path.split('?')[0]==='/api/status'){
-      statusRequests++;body={hostname:'test-fixture',board_id:'esp8266-aabbccddeeff',boot_id:'a'.repeat(32),http_peer_fencing:true,cells:[],tm1637_segments:[]};
+      statusRequests++;body={hostname:'test-fixture',board_id:'esp8266-aabbccddeeff',boot_id:'a'.repeat(32),http_peer_fencing:true,cells:[],tm1637_segments:[],capabilities:{name:'Fixture table',board_kind:'table',acknowledged_features:['table','leds','streaming'],table:{columns:10,rows:8,pixels_per_cell:6}}};
     }else if(path==='/api/cells/mapping')body={physical:[],names:[]};
     return {ok:code<400,status:code,statusText:String(code),text:async()=>typeof body==='string'?body:JSON.stringify(body)};
   }});
@@ -73,8 +73,20 @@ nodes.deviceName.value='LEDBOARD.Local';await nodes.nameForm.listeners.submit({p
 assert.equal(hostname,'ledboard');assert.equal(nodes.nameSave.disabled,true);
 assert.equal(nodes.nameResult.href,'http://ledboard.local/');assert.equal(nodes.nameResult.hidden,false);
 assert.match(vm.runInContext('webToasts.snapshot().at(-1).message',context),/Identity saved/);
+vm.runInContext('authenticated=true;syncStreamControls()',context);
+// The rename retired its socket; never enable streaming from stale UI identity.
+assert.equal(nodes.streamStart.disabled,true);
+await vm.runInContext('refresh();connectWs()',context);await settle();
+vm.runInContext('syncStreamControls()',context);assert.equal(nodes.streamStart.disabled,false);
+await vm.runInContext('startStream()',context);assert.equal(vm.runInContext('frameStream.running()',context),true);
+assert.equal(nodes.streamStart.disabled,true);assert.equal(nodes.streamStop.disabled,false);
+assert.equal(nodes.streamFps.value,'60');assert.equal(nodes.streamQueue.value,'2');
+vm.runInContext('uiLanguage="fa";renderStreamStatus()',context);
+assert.match(nodes.streamStats.textContent,/ارسال‌های مرورگر/);assert.match(nodes.streamStats.textContent,/۰ فریم/);
+vm.runInContext('uiLanguage="en";renderStreamStatus()',context);assert.match(nodes.streamStats.textContent,/Browser sends/);
 vm.runInContext('selectedCells=new Set([1,2]);cellSearch.value="1–2";remoteBearer.value="private";render({...state,boot_id:"b".repeat(32)})',context);
+assert.equal(vm.runInContext('frameStream.running()',context),false,'Reboot revokes the actual running browser stream');
 assert.equal(vm.runInContext('selectedCells.size',context),0);assert.equal(nodes.cellSearch.value,'');assert.equal(nodes.remoteBearer.value,'');
 assert.equal(vm.runInContext('webSettings.cloud',context),null);assert.equal(nodes.boardDisplayName.value,'');
 await vm.runInContext('signOut()',context);assert.equal(nodes.workspace.hidden,true);
-console.log('Embedded Web sign-in, rejection, rotation, secret clearing, validated persistent rename, reconnect link and sign-out passed.');
+console.log('Embedded Web sign-in, rotation, validated rename, acknowledged stream start, live Persian/English stream status, reboot cancellation and sign-out passed.');

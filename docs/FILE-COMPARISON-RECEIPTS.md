@@ -1,5 +1,39 @@
 # PakarController comparison receipts
 
+## Web scheduler and pacing checkpoint
+
+Full actual PCController status-frame-batcher.ts and status-frame-batcher.test.ts
+reads; original hashes F600267BF09D925EAF9E5CC3D752574A0A3FBC46350782C614440300C08799E4
+and 61D9972BE27E3AB35DB5012600E8A7B5C8507815EDEB55B80764357D4658D222 match inventory.
+Clock/generation/single callback/cancellation/disposal and actual late-callback
+fake-clock scenarios adapted into mechanically embedded frame-stream.js and its
+tests. Late callback cannot clear a newer owner's handle; complete LED frames
+are latest-only instead of retaining stale command history. All generic donor
+metric/status/error reducers and remaining tests stay explicitly pending.
+Two new parity-gap certificates, followed by a selective PCController inventory
+refresh:4282 inventoried,106 manual comparisons,4176 pending and73 known gaps.
+This is not complete import or donor superiority.
+Changed Web/generator/CI-test proof references rebound only after reviewing the
+affected anchors; no unrelated donor source hashes rewritten. PU850 Web route
+anchors remain actual line244. Full source-quality/ESP compile receipts follow
+separately; no hardware, native replacement, mobile or S3 acceptance inferred.
+
+Full source-quality phase passed before the subsequent inventory-only refresh;
+post-refresh comparison/live scheduler gates passed too. Final ESP8266 busy-wire
+compile passed using the existing cache:945360 bytes, SHA256
+5d601adf50ae712d0c6603fbd2a2a745b0f09aca54f62621684903b9ac399ccc.
+Both exact frame-stream and peer-http module bytes are present in that image.
+RAM56620/80192; IRAM63055/65536 including32k cache; flash code895296/1048576.
+Compiled, not flashed; resource pressure is not runtime headroom evidence.
+
+RequireLive initially rejected PCController tracked inventory drift. Refreshed
+only that donor with the existing generator:25 added and14 removed tracked paths,
+including new board-mirroring sources and rebuilt Web bundles. HEAD704fa73ab493ef254f3d655cfafea0e587378681
+had11 dirty owner paths; inventory binds actual working bytes, not an assertion
+that all those bytes belong to that commit. All18 prior PCController manual
+certificates plus the2 scheduler reads still match current hashes. New paths
+remain pending and other donors unchanged. No edits/builds in the donor checkout.
+
 ## Web HTTP ownership checkpoint
 
 Actual RayanLamp api.ts and api.test.ts reread in full, live hashes matched.
