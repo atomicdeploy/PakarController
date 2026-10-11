@@ -5,6 +5,7 @@ param(
     [ValidateRange(1,1024)][int]$MinimumFreeGiB=8,
     [ValidateRange(1,1024)][int]$MaximumCacheGiB=4,
     [switch]$Restore,
+    [switch]$BuildOnly,
     [string]$CapturePath,
     [ValidateSet('Table','SettingsTablet','SettingsPhone','FirmwareTablet','FirmwarePhone')][string]$CaptureView='Table',
     [switch]$Plan
@@ -27,9 +28,12 @@ if(-not(Test-Path -LiteralPath $FlutterPath)){
     elseif(-not $Plan){throw 'Flutter absent: inspect mobile/README.md and configured existing SDK before installing another copy.'}
 }
 $taskCommands=[Collections.Generic.List[object]]::new()
+if($BuildOnly -and $Mode -ne 'ApkPreview'){throw 'BuildOnly requires ApkPreview; tests remain explicit.'}
 if($Restore){$taskCommands.Add(@('pub','get','--offline','--enforce-lockfile'))}
-$taskCommands.Add(@('analyze','--no-pub'))
-if($Mode -ne 'Analyze'){$taskCommands.Add(@('test','--no-pub'))}
+if(-not $BuildOnly){
+    $taskCommands.Add(@('analyze','--no-pub'))
+    if($Mode -ne 'Analyze'){$taskCommands.Add(@('test','--no-pub'))}
+}
 if($Mode -eq 'ApkPreview'){$taskCommands.Add(@('build','apk','--release','--no-pub'))}
 if($Plan){return [pscustomobject]@{
     Executable=$FlutterPath;WorkingDirectory=$taskMobile;Commands=$taskCommands;

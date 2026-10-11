@@ -1,5 +1,55 @@
 # Donor-first preflight receipt
 
+## Live desktop replacement, Android launcher and low-write recovery
+
+Consult build-storage, localization, mobile-settings, capture and exact donor-audit.
+Fully reread actual Pealayer storage-hygiene, workspace-hygiene, changed CI helpers,
+runner, artwork consumers and appearance test; preserve concurrent donor changes.
+Refresh its inventory to 514 files and selectively rebind reviewed original-byte
+source hashes only after actual rereading. Totals are 84/4242 complete, 4158 pending,
+51 compared gaps; Pealayer 39/514, Rayan 20/2349. Screening is not completion.
+
+Explicit new cleanup authorization allows pruning only ignored, inactive,
+non-reparse desktop/target/debug: 11852 files / 10.408 logical GiB. Protected warm
+release/production/rollback executable hashes are unchanged. Routine native
+Check/Test share --release; -DebugArtifacts is an essential-diagnostics opt-in.
+Default storage inventory remains read-only. Newer donor cache-tag/effective
+Cargo cache validation, full prune fixtures and owned RAM relocation remain pending.
+Eight GiB is a guard, not a minimum RAM disk; 1 GiB scratch is optional/unallocated.
+
+Before the defer-tests instruction: native 115/115 and Flutter 73/73 pass; affected
+storage/source/security guards pass. Current native Release compiles and stages
+once; graceful quit after checking all drafts, checksum-verified pending rename,
+immutable deployed-inode rollback hardlink and byte-identical preferences verified.
+Current production PID 70980 runs e2464fa194e666dc8f85f34017d8b20ce37152dde3ba9958e2f0333baa935966.
+Actual current framebuffer PNG was inspected: offline context suppresses Table/
+Games/peripheral panels; WebSocket and USB controls are interactive shell elements.
+Hidden/minimized window initially queues IPC captures without updating snapshots;
+blank/old status is not completion. Supported computer-use activates the uniquely
+returned current window; queued capture then completes. Wrapper acknowledgement
+race remains useful recovery work, not a claim of unavailable Win32 capability.
+
+Android template launcher PNGs were an omitted OS consumer; generated canonical
+PNG plus legacy/adaptive launcher XML and roundIcon correct it. Compile-only APK
+is 53970105 bytes, SHA256 1dde7a0025552b5d8e0f74d845b00e314b3c074c9d46298fc7d16e57926ec941.
+Streamed install succeeds; AAPT confirms foreground resource and ZIP PNG hash is
+byte-identical to shared master. Running physical MainActivity screenshot inspected.
+Human authorizes wake/swipe for unsecured locks; android-device.ps1 directly uses
+the actual imported Pealayer package-probe helper for text probes. One bounded,
+dimension-derived swipe succeeds on secure=false; foreground readback/capture
+confirms launch. No PIN/password bypass or launcher-grid pixel claim. No repeated
+Rust/Flutter suites after the defer-tests instruction; no SDK/cache duplication.
+
+Fix four GitHub CodeQL findings: case-insensitive actual script extraction,
+direct read/ENOENT instead of exists/read race, and single-pass literal entity
+decode. Prior focused actual-script/helper regression execution passes; fresh
+security-policy scan awaits publishing. Do not dismiss alerts or merge failed scans.
+Copilot reviewer API rejects noncollaborator request; explicit @copilot PR comment
+requests review instead, with remaining acceptance preserved on issues 2/3/9/10.
+
+This is current package/runtime evidence, not full donor parity, board acceptance,
+an all-green new CI checkpoint or production-signed Android release.
+
 ## Rayan realtime reconnect and bounded preparation
 
 Consult exact donor-audit for sync.ts/sync.test.ts/api.ts/api.test.ts; read all

@@ -1,5 +1,25 @@
 # One PakarController application icon
 
+## Android launcher correction
+
+The previous mobile import covered only the in-app header, leaving all five
+Flutter template launcher PNGs in place. This was an omitted OS consumer.
+`generate-branding.mjs` now preserves the exact shared master in
+`drawable-nodpi/pakar_application.png`; legacy and API-26 adaptive launcher XML
+use that drawable, a Studio background and mask-safe insets. Both manifest icon
+and roundIcon resolve this same resource. The five obsolete template PNGs are
+removed (recoverable from Git), not retained as density-dependent fallbacks.
+No extra artwork source, dependency download, resize cache or donor build.
+Compiled and streamed-installed the corrected preview without repeating the
+Flutter test/analyzer pass. AAPT resolves the APK launcher to its adaptive XML,
+whose foreground is drawable/pakar_application. The APK's optimized res/XZ.png
+has SHA-256 05bc6ce48c57eb8bf6c8f1acd98f10389ae2e6fcc40b4bf41b09f9ce39c85783,
+byte-identical to the canonical PNG, not a Flutter density fallback. Physical
+ADB readback confirms MainActivity in foreground; the actual running UI was
+captured and inspected. Launcher-grid pixels are not inferred from header pixels.
+The existing 64x64 master limitation remains; a high-DPI editable master is not
+claimed. Runtime board artwork cannot rewrite the installed Android launcher.
+
 The mismatch was an incomplete integration: the native PE/window/tray generated
 Phosphor Circuitry, the native menu/About used a separate theme-tinted font
 glyph, and the Web header hardcoded a diamond with no application favicon.

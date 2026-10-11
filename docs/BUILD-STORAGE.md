@@ -1,5 +1,44 @@
 # Low-write build workflow
 
+## Current debug cleanup and prevention
+
+New explicit user authorization allowed pruning the exact ignored, unused
+`desktop/target/debug`: 11,852 files / 10.408 logical GiB. Its root/ancestors and
+contents passed reparse, ignored/tracked, known-root-content and active-owner/
+compiler checks. No compiler or debug executable was active. Installed app,
+rollback executables and warm release executable hashes stayed unchanged;
+free C: increased from 24.08 to 33.24 GiB. Logical size is not allocated bytes.
+Generated debug output was permanently removed and can be rebuilt if needed.
+Release cache, settings, source, shared SDKs and existing APK state were not deleted.
+
+Normal Check/Test now use `--release` as Pealayer's runner does for normal builds,
+sharing the same production dependency profile and canonical cache. Explicit
+`-DebugArtifacts` opts into dev/test output only for essential debugging; Release
+rejects that flag. Tests still run serially with isolated config and locked
+dependencies. No routine whole-cache clean, automatic repeated pruning or flags
+that silently weaken a debug profile. The existing 8-GiB guard remains.
+`storage-hygiene.ps1 -PruneObsoleteDebug -Plan` is read-only; actual pruning needs
+the explicit flag and refuses an overridden cache, links, unknown root content,
+tracked files and active compilers. Inventory remains the default.
+
+The current user also asks to defer subsequent test runs until completion or
+significant progress. Mobile `-Mode ApkPreview -BuildOnly` supports compile-only
+iteration without repeating analysis/tests; default acceptance still runs both.
+
+RAM disk sizing: machine total is about 64 GiB, observed free RAM only 9.42 GiB.
+Eight GiB was a whole-cache budget, not a RAM-disk minimum. An optional 1-GiB
+scratch disk may cover selected temporary files after measuring their peak;
+the entire cache does not need to be on RAM. Do not allocate a larger disk while
+that would starve applications/compilation. A 1-GiB disk cannot contain the
+observed 3.081-GiB native release dependency cache. Compiler objects/metadata,
+symbols and incremental states are build footprint, not runtime app memory.
+The current desktop executable is 24,992,768 bytes; an observed current process
+working set is 158,736,384 bytes and private committed memory 393,232,384 bytes.
+These are point-in-time runtime measurements, not constant upper bounds.
+No RAM disk, cache relocation, paging change or shared-cache deletion was made.
+
+Historical blocked cleanup notes below are preserved as history, not current state.
+
 ## Measured cause
 
 The Pakar canonical Cargo target occupied 13.49 GiB: debug/test 10.408 GiB

@@ -589,7 +589,7 @@
           },
           {
             "path": "tests/web_appearance_test.mjs",
-            "sha256": "91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f",
+            "sha256": "610045a01978ac3522788f612581185f9ef889edb579e237f3fc0c3fcdfb3a2e",
             "anchor": "unavailable storage still applies"
           }
         ]
@@ -910,7 +910,7 @@
         },
         {
           "path": "tools/generate-font-assets.mjs",
-          "sha256": "ca865d3d3b12d94a2df75f8cbb29eb9dd6a415c696890fc6cff66e003ccc43c6",
+          "sha256": "729da9321a12ee07e1ed0433f8a401b8c20d2d0281dc32deba1072f46f69540e",
           "anchor": "const dictionary={}"
         },
         {
@@ -999,7 +999,7 @@
         },
         {
           "path": "tools/generate-readme-artwork.mjs",
-          "sha256": "a167da336c6133ff59afcbbf22bb947b8a0e66e658773ca051f7d5ff8e4b97d4",
+          "sha256": "2162d1ad3760618260eb9d659dfebb6651ad1e5f5b4eb2c37c12cde1ef7ff8d2",
           "anchor": "README uses the same bytes"
         }
       ],
@@ -1042,12 +1042,12 @@
         },
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "86a89643a790223d6ad96221877a9491ba6a65a9f48649fc27c7885309c9e989",
+          "sha256": "14cd626601e9c3aad7b8d9913abe53078a9185e9bad10052c3cf0ff2e1c41fe6",
           "anchor": "--test-threads=1"
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "3421f14e3edf39f8ba0ad54950e4747698a377ca902d97415e2b5d30295015b1",
+          "sha256": "9144f55833c8bc5bd8f2552129bd874247bee75cc5355abbaef68ec8740302fb",
           "anchor": "export function runChecks"
         },
         {
@@ -1088,12 +1088,12 @@
       ],
       "improvement": "",
       "origin": "Pealayer",
-      "sha256": "4efb85988474d177a90ea1e31320e64bab1b027c42c3c5ba842fed9781b4eb5b",
+      "sha256": "449d49033eb2ab3ced173566858e0badfa700414fe82747131c4d18a8eda0b0c",
       "source_read": "complete",
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "000880b19bea3b533ac88305f3d5967d87ae600d249980f20f3afc4aeebfff75",
+          "sha256": "7fb730f4913809a4252404c97e5d73c21d9c9efed6ec794df48715b38c152590",
           "anchor": "Actual donor serial test contract"
         },
         {
@@ -1582,7 +1582,7 @@
         },
         {
           "path": "docs/BRANDING-PARITY.md",
-          "sha256": "b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7",
+          "sha256": "0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3",
           "anchor": "## Explicit unfinished useful code and reasons"
         },
         {
@@ -1649,7 +1649,7 @@
       "targets": [
         {
           "path": "tools/generate-branding.mjs",
-          "sha256": "0e17da9eec334751e80fba97da219d0cfb69f2bf896f67b2e4d3a70a63e54ec2",
+          "sha256": "b59b6a8fd73dad45d4015492d44460e9d4d3b78137aa567bebf13c3798f38ffc",
           "anchor": "Pakar embeds it for the standalone ESP surface"
         },
         {
@@ -1659,7 +1659,7 @@
         },
         {
           "path": "docs/BRANDING-PARITY.md",
-          "sha256": "b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7",
+          "sha256": "0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3",
           "anchor": "## Explicit unfinished useful code and reasons"
         },
         {
@@ -1724,7 +1724,7 @@
       "targets": [
         {
           "path": "tools/generate-branding.mjs",
-          "sha256": "0e17da9eec334751e80fba97da219d0cfb69f2bf896f67b2e4d3a70a63e54ec2",
+          "sha256": "b59b6a8fd73dad45d4015492d44460e9d4d3b78137aa567bebf13c3798f38ffc",
           "anchor": "'FAVICON':"
         },
         {
@@ -1734,7 +1734,7 @@
         },
         {
           "path": "docs/BRANDING-PARITY.md",
-          "sha256": "b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7",
+          "sha256": "0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3",
           "anchor": "## Explicit unfinished useful code and reasons"
         }
       ],
@@ -1784,7 +1784,7 @@
         },
         {
           "path": "docs/BRANDING-PARITY.md",
-          "sha256": "b9b3c92027c004ae46735034876e30bca688e9ec66d8391bfef98d25be7439e7",
+          "sha256": "0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3",
           "anchor": "## Explicit unfinished useful code and reasons"
         }
       ],
@@ -1999,7 +1999,7 @@
         },
         {
           "path": "tests/storage_hygiene_test.ps1",
-          "sha256": "f8a5d8bfe1728d2643820229ce2c5310148e1e93dc2a727a714fe82c6e5a0f82",
+          "sha256": "7e6d4223563e3e5f2b641928c87cda91fa06312815434d63d46b76602cd49dca",
           "anchor": "Actual imported equal-content helper"
         }
       ],
@@ -2017,7 +2017,7 @@
       "targets": [
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "86a89643a790223d6ad96221877a9491ba6a65a9f48649fc27c7885309c9e989",
+          "sha256": "14cd626601e9c3aad7b8d9913abe53078a9185e9bad10052c3cf0ff2e1c41fe6",
           "anchor": "Get-PakarCargoTargetDirectory"
         }
       ],
@@ -2049,7 +2049,7 @@
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "000880b19bea3b533ac88305f3d5967d87ae600d249980f20f3afc4aeebfff75",
+          "sha256": "7fb730f4913809a4252404c97e5d73c21d9c9efed6ec794df48715b38c152590",
           "anchor": "One canonical target"
         }
       ],
@@ -2117,7 +2117,7 @@
     {
       "origin": "Pealayer",
       "path": "docs/verification/LOCAL-WORKSPACE-HYGIENE.md",
-      "sha256": "acfcfccde3647841e3c55430fcc36677501659e8ff8fb1761c25391a0c6bad1d",
+      "sha256": "c79e88b50b9586fd937620456cb329350c60f9b825ec68c39d07c4544e559af9",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -2690,7 +2690,7 @@
         },
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f",
+          "sha256": "610045a01978ac3522788f612581185f9ef889edb579e237f3fc0c3fcdfb3a2e",
           "anchor": "embedded catalog exactly matches"
         }
       ],
@@ -3595,7 +3595,7 @@
     {
       "origin": "Pealayer",
       "path": "scripts/storage-hygiene.ps1",
-      "sha256": "52f93bf96867b286d7d1c22f36c08603558e10dc6e9c14433e0a9ea9bb5f4f42",
+      "sha256": "0d8fdeb3e15fb52b917784d4cb3875c68bc12c6c6ed78cd16f2ff8ee3561d89c",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -3605,20 +3605,20 @@
       "targets": [
         {
           "path": "tools/storage-hygiene.ps1",
-          "sha256": "bcb4b2b588ccf22a169e050602ac4a5a66d39ab446dd20c212744dbe27378d9a",
+          "sha256": "0d1af57a83775e2670a5ac222973970dfc3bfc2c2e1bde1a1753523b444bdb5c",
           "anchor": "function Get-DirectorySummary"
         },
         {
           "path": "tools/build-mobile.ps1",
-          "sha256": "4d5fb14c516beb40654f5bf89f523781e6648196241d2b2c5e2d9044d622976a",
+          "sha256": "449eb0b4949d19cb10e4c9ef9e22c34cc5d266df770879c499a8b82aa19e03cc",
           "anchor": "$taskCache=Get-DirectorySummary"
         }
       ],
       "omissions": [
         {
           "code": "PruneRepositoryTarget exact-child/git-ignore/allowed-child/running-process checks and recursive deletion",
-          "disposition": "pending",
-          "reason": "Blocked earlier cleanup cannot be rerouted through a new helper. The current cache is still canonical, not an obsolete donor target. Preserve evidence/active owners and resolve the original cleanup/migration boundary first; no destructive entrypoint imported in this pass."
+          "disposition": "replaced",
+          "reason": "New explicit user authorization permits obsolete debug-only deletion. Adapt the actual donor exact-child, ignore, allowed-content, reparse and writer checks to the owned desktop/target/debug; add tracked-file refusal and Plan. Never remove the target root, release cache, settings or rollback. The verified 10.408 GiB debug tree was pruned; stronger guards keep the read-only default intact."
         },
         {
           "code": "Pealayer target/shared-cache/staging paths and 48 GiB warning",
@@ -3632,18 +3632,18 @@
         }
       ],
       "remaining": [
-        "Resolve owned canonical-cache migration/blocked cleanup without deleting evidence or another process's artifacts; then implement and test any separately authorized cleanup contract."
+        "Debug-only cleanup is now authorized and implemented. Canonical nonduplicating RAM-disk/cache relocation, the newer donor Cargo-metadata/cache-tag proof for shared-cache migration, full fixture safety matrix and exact allocated-vs-logical accounting remain pending; no RAM disk has been allocated. Donor storage/CI files were reread while dirty concurrent peer work, not misrepresented as a new clean donor commit."
       ],
       "proof": [
         {
           "path": "tests/storage_hygiene_test.ps1",
-          "sha256": "f8a5d8bfe1728d2643820229ce2c5310148e1e93dc2a727a714fe82c6e5a0f82",
+          "sha256": "7e6d4223563e3e5f2b641928c87cda91fa06312815434d63d46b76602cd49dca",
           "anchor": "Actual imported recursive summary"
         },
         {
           "path": "tests/storage_hygiene_test.ps1",
-          "sha256": "f8a5d8bfe1728d2643820229ce2c5310148e1e93dc2a727a714fe82c6e5a0f82",
-          "anchor": "Read-only import must never become"
+          "sha256": "7e6d4223563e3e5f2b641928c87cda91fa06312815434d63d46b76602cd49dca",
+          "anchor": "Default inventory stays read-only"
         },
         {
           "path": "tests/reuse_preflight_test.ps1",
@@ -3698,12 +3698,12 @@
       "proof": [
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f",
+          "sha256": "610045a01978ac3522788f612581185f9ef889edb579e237f3fc0c3fcdfb3a2e",
           "anchor": "System theme and accent preserve donor host resolution"
         },
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f",
+          "sha256": "610045a01978ac3522788f612581185f9ef889edb579e237f3fc0c3fcdfb3a2e",
           "anchor": "dialog draft/cancel never changes"
         }
       ],
@@ -3721,7 +3721,7 @@
       "targets": [
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f",
+          "sha256": "610045a01978ac3522788f612581185f9ef889edb579e237f3fc0c3fcdfb3a2e",
           "anchor": "First four tests port the actual Pealayer"
         }
       ],
@@ -3743,7 +3743,7 @@
       "proof": [
         {
           "path": "tests/web_appearance_test.mjs",
-          "sha256": "91a257244839ddefe96c498cf99cdf71cb906c5c3aeba0b496ade4e9ae33e11f",
+          "sha256": "610045a01978ac3522788f612581185f9ef889edb579e237f3fc0c3fcdfb3a2e",
           "anchor": "live host theme events leave System preference unchanged"
         }
       ],

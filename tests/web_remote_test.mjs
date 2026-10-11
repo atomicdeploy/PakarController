@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const source=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
-const script=source.match(/<script>([\s\S]*?)<\/script>/)[1];new vm.Script(script); // Parse the complete shipped script.
+const script=source.match(/<script>([\s\S]*?)<\/script>/i)[1];new vm.Script(script); // Parse the complete shipped script.
 let posted;
 const context=vm.createContext({URLSearchParams,Number,JSON,Error,confirm:()=>true,report:e=>{throw e;},
   remoteState:{textContent:''},remoteStage:{disabled:false},remoteApply:{disabled:false},remoteCancel:{disabled:false},

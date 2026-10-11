@@ -5,6 +5,7 @@ param(
     [ValidateRange(1, 1024)] [int] $MinimumFreeGiB = 8,
     [ValidateRange(1, 1024)] [int] $MaximumCacheGiB = 8,
     [string] $ExpectedCommit,
+    [switch] $DebugArtifacts,
     [switch] $Plan
 )
 $ErrorActionPreference = 'Stop'
@@ -21,7 +22,10 @@ $taskTarget = Get-PakarCargoTargetDirectory -RepositoryRoot $taskRoot
 $taskVerb = if ($Mode -eq 'Check') { 'check' } elseif ($Mode -eq 'Test') { 'test' } else { 'build' }
 $taskArguments = @($taskVerb, '--locked', '--manifest-path', $taskManifest,
     '--target-dir', $taskTarget, '--jobs', "$Jobs", '--bin', 'pakarcontroller')
-if ($Mode -eq 'Release') { $taskArguments += '--release' }
+# Reuse the warm production dependency profile for routine checks/tests too.
+# Debug output is an explicit, essential-diagnostics opt-in, not another cache.
+if ($Mode -eq 'Release' -and $DebugArtifacts) { throw 'Release cannot request debug artifacts.' }
+if (-not $DebugArtifacts) { $taskArguments += '--release' }
 if ($Mode -eq 'Test') {
     # Actual Pealayer CI test contract: compile jobs != test concurrency.
     # Native tests share process-wide preferences; preserve serial execution.
@@ -36,7 +40,7 @@ $taskTestConfig = if ($Mode -eq 'Test') {
 if ($Plan) {
     [pscustomobject]@{Executable='cargo'; Arguments=$taskArguments; Cache=$taskTarget;
         MinimumFreeGiB=$MinimumFreeGiB; MaximumCacheGiB=$MaximumCacheGiB; ReuseGate=$taskReuse.GateChecked;
-        TestConfigurationFile=$taskTestConfig}
+        TestConfigurationFile=$taskTestConfig; DebugArtifacts=[bool]$DebugArtifacts}
     return
 }
 $taskDrive = Get-PSDrive -PSProvider FileSystem | Where-Object {

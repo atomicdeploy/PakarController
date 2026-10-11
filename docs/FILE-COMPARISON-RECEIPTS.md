@@ -1,5 +1,20 @@
 # PakarController comparison receipts
 
+## Current apps, launcher omission and storage checkpoint
+
+Latest inventory is 4242 files: 84 complete reads/comparisons, 4158 pending and
+51 known compared gaps. Pealayer's concurrently updated source/inventory is
+reread/refreshed, not reset or promoted wholesale; Pealayer 39/514 and Rayan 20/2349.
+Existing source/target/proof references selectively revalidated after functional
+script/security changes. Native 115/115 and Flutter 73/73 passed before the user
+requested deferred repeated suites. New current native binary is deployed with
+settings/rollback preserved; actual current framebuffer inspected. Android corrected
+launcher APK is built/installed, packaged foreground PNG matches the shared master,
+and actual running MainActivity screen inspected. The explicit unsecured-lock
+wake/swipe path succeeds on the physical phone. No new whole-file comparison or
+physical ESP/AVR acceptance is inferred; signed release and full launcher-grid
+appearance remain distinct. See REUSE-PREFLIGHT-RECEIPT.md and ANDROID-DEVICE.md.
+
 ## Rayan reconnect subcontracts
 
 Fully read/live-hash sync.ts, sync.test.ts and api.ts; import actual exponential

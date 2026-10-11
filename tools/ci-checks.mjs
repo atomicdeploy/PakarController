@@ -10,6 +10,7 @@ export const phases={
     ["node", "tests/browser_console_test.mjs"],
     ["node", "tests/toasts_test.mjs"],
     ["node", "tests/realtime_retry_test.mjs"],
+    ["node", "tests/build_script_security_test.mjs"],
     ["node", "tests/native_render_lifecycle_test.mjs"],
     ["node", "tests/localization_test.mjs"],
     ["node", "tests/rayanlamp_reuse_test.mjs"],

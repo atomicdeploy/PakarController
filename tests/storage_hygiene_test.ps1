@@ -18,5 +18,23 @@ Assert-Hygiene (-not (Test-PakarFileContentEqual $taskPalette (Join-Path $taskRo
 $taskAfter = @(Get-ChildItem -LiteralPath $taskAssets -File -Recurse -Force | Select-Object FullName,LastWriteTimeUtc) | ConvertTo-Json
 Assert-Hygiene ($taskBefore -eq $taskAfter) 'Inspection must not rewrite assets'
 $taskSource = Get-Content (Join-Path $taskRoot 'tools/storage-hygiene.ps1') -Raw
-Assert-Hygiene ($taskSource -notmatch '\b(Remove-Item|Copy-Item|Move-Item|Set-Content|WriteAllText)\b') 'Read-only import must never become an alternate cleanup path'
+Assert-Hygiene ($taskSource -match 'if \(\$PruneObsoleteDebug\)') 'Destruction requires explicit user-authorized debug-only opt-in'
+Assert-Hygiene ($taskSource -match 'Remove-Item -LiteralPath \$taskDebug -Recurse -Force') 'Only the validated exact debug child is removed'
+Assert-Hygiene ($taskSource -notmatch 'Remove-Item -LiteralPath \$(taskRoot|taskCanonical|taskTarget)\b') 'Release/cache/source roots cannot be cleanup targets'
+foreach($taskGate in @('ReparsePoint','check-ignore','ls-files','taskUnexpected','taskActive','if ($Plan)')){
+    Assert-Hygiene ($taskSource.Contains($taskGate)) "Mandatory donor cleanup gate: $taskGate"
+}
+$taskReadOnly=$taskSource.Substring($taskSource.IndexOf('$taskCache ='))
+Assert-Hygiene ($taskReadOnly -notmatch '\b(Remove-Item|Copy-Item|Move-Item|Set-Content|WriteAllText)\b') 'Default inventory stays read-only'
+$taskPreviousTarget=$env:CARGO_TARGET_DIR
+try{
+    $env:CARGO_TARGET_DIR=Join-Path $taskRoot 'mobile/build'
+    $taskRejected=$false
+    try{& (Join-Path $taskRoot 'tools/storage-hygiene.ps1') -PruneObsoleteDebug -Plan}catch{
+        $taskRejected=$_.Exception.Message -match 'owned canonical desktop/target'
+    }
+    Assert-Hygiene $taskRejected 'Real cleanup dispatch refuses an override before traversal/deletion'
+}finally{
+    [Environment]::SetEnvironmentVariable('CARGO_TARGET_DIR',$taskPreviousTarget,'Process')
+}
 Write-Host 'Actual donor storage summary and content-equality tests passed; no compiler, payload copy or cleanup.'

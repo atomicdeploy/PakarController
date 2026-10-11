@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {portableGzip} from './portable-gzip.mjs';
+import {decodeHtmlSourceText} from './html-source-text.mjs';
 const root=new URL('../',import.meta.url);
 const font=await readFile(new URL('assets/fonts/Vazirmatn-Regular.ttf',root));
 assert.equal(font.readUInt32BE(0),0x00010000,'Real TrueType font');
@@ -32,11 +33,10 @@ assert(!toastStyles.includes('</style>'),'Toast CSS cannot break the container')
 assert(!consoleModule.includes('</script>')&&!consoleModule.includes(')HTML"'),'Browser diagnostics cannot break the container');
 // Analyze the canonical module on the FIRST run too, never its previous embed.
 // Otherwise adding a translated literal takes two generator passes to stabilize.
-const withoutGenerated=(web.replace(/\/\/ BEGIN SHARED LOCALIZATION[\s\S]*?\/\/ END SHARED LOCALIZATION/,'')
+const withoutGenerated=decodeHtmlSourceText(web.replace(/\/\/ BEGIN SHARED LOCALIZATION[\s\S]*?\/\/ END SHARED LOCALIZATION/,'')
   .replace(/\/\/ BEGIN BROWSER DIAGNOSTICS[\s\S]*?\/\/ END BROWSER DIAGNOSTICS/,'')
   .replace(/\/\/ BEGIN RAYANLAMP TOASTS[\s\S]*?\/\/ END RAYANLAMP TOASTS/,'')
-  .replace(/\/\/ BEGIN RAYANLAMP REALTIME RETRY[\s\S]*?\/\/ END RAYANLAMP REALTIME RETRY/,'')+'\n'+consoleModule+'\n'+toastModule+'\n'+retryModule)
-  .replaceAll('&amp;','&').replaceAll('&lt;','<').replaceAll('&gt;','>');
+  .replace(/\/\/ BEGIN RAYANLAMP REALTIME RETRY[\s\S]*?\/\/ END RAYANLAMP REALTIME RETRY/,'')+'\n'+consoleModule+'\n'+toastModule+'\n'+retryModule);
 let js=await readFile(new URL('assets/web/localization.js',root),'utf8');
 const dictionary={};
 const controllerCopy=JSON.parse(await readFile(new URL('assets/web/controller-copy.json',root),'utf8'));
