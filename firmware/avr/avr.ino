@@ -5,6 +5,7 @@
 #include <PcContractAssembly.h>
 #include <SerialLink.h>
 #include <UartFlow.h>
+#include <Tasks.h>
 
 #include "BootMelody.h"
 #include "BoardPins.h"
@@ -39,8 +40,13 @@ uint8_t resetRevision = 0;
 Effect cellActionEffect = kEffectImmediate;
 bool stateDirty = true;
 Key boardKeys[9];
-uint32_t resetPendingAt = 0;
-bool resetRequested = false;
+BoardCore::Tasks taskManager;
+int8_t resetTask = -1;
+void executeDeferredReset(void *);
+void cancelDeferredReset() {
+  taskManager.cancelTask(resetTask);
+  resetTask = -1;
+}
 
 bool espReadyForUnsolicitedFrame();
 void recordCellAction(Effect effect);
@@ -85,7 +91,9 @@ class BoardHardware final : public PcControllerHardware {
     if (opcode == ControllerProtocol::Reset) {
       if (n != 1 || p[0] > 1) return kBadPayload;
       // Both targets reset through Urboot; target 1 is a hint, not an ISP write.
-      resetPendingAt = now + 100; resetRequested = true; return kNoError;
+      cancelDeferredReset();
+      resetTask = taskManager.addTask(100, executeDeferredReset, nullptr, now);
+      return resetTask >= 0 ? kNoError : kBusy;
     }
     return kUnsupported;
   }
@@ -146,10 +154,17 @@ void sendTelemetry(uint8_t sequence) {
 }
 
 void applyProgrammingSafety() {
+  cancelDeferredReset(); // A previously ACKed reset must not interrupt ISP.
   shiftRegisters.allOutputsOff();
   buzzer.stop();
   buzzer.setMuted(true);
   display.showText(F("Prog"));
+}
+
+void executeDeferredReset(void *) {
+  resetTask = -1;
+  if (programmingLatch.active()) return;
+  boardHardware.safeStop(); wdt_enable(WDTO_15MS); while (true) {}
 }
 
 void showState() {
@@ -458,9 +473,7 @@ void loop() {
     memcpy(previousSegments, display.rawSegments(), 4); markStateDirty();
     previousBrightness = display.brightness();
   }
-  if (resetRequested && static_cast<int32_t>(now - resetPendingAt) >= 0) {
-    boardHardware.safeStop(); wdt_enable(WDTO_15MS); while (true) {}
-  }
+  taskManager.update(now);
 #if PAKAR_USE_BUSY_WIRE || PAKAR_UART_BUFFERED
   // Busy-wire builds are event-driven. Reconnect convergence comes from the
   // ESP's HELLO -> GET_STATUS exchange, so periodic unsolicited frames only

@@ -1949,3 +1949,48 @@ Quality checks before the stale route failure passed; remaining checks resumed
 from that exact failed step and all succeeded, avoiding repeat suites/compiles.
 Ledger remains4285 inventoried/106 comparisons/4179 pending/73 parity gaps. This
 bounded safety adaptation is not complete donor parity or production acceptance.
+
+## Cooperative Tasks and Prog reset ownership
+
+Fresh exact79c28571 Build38166374087 and CodeQL38166373952 both completed
+successfully. Pakar open PR listing was empty. SSHlocalhost:1022 refused and
+ledboard.local did not resolve; no board action or app replacement occurred.
+
+Consulted firmware-hardware and exact donor-audit Tasks rows, then fully read
+PCController LocalLib/Tasks.h/cpp and ControllerBoardMini Puzzles/LocalLib and
+Timer/LocalLib Tasks.h/cpp. All six original-byte hashes match live donors; the
+PCController checkout is clean38f48d06f6922225e9a100d0afc2d787b5a000bd.
+The exact hashes, targets, omissions and next physical actions are in the SAME
+file-comparison evidence, not a second inventory or a claim to have read others.
+
+Found actual eight-slot PCController-derived code already present in BoardCore
+but unconsumed/untested; earlier Puzzles ledger text incorrectly called it absent.
+Hardened it in place instead of duplicating it: ten slots from Puzzles/Timer,
+explicit occupancy/context/retirement from PCController, bounded eligibility
+mask, cancellation/clear/recursive-update protection and half-range deadlines.
+Actual AVR loop consumes it for one100ms Reset callback. Entering Prog cancels
+that pending callback; dispatch checks the latch again before watchdog reset.
+ACK remains scheduling acceptance, not reboot or completed programming proof.
+
+Mechanical evidence patches initially failed context matching without altering
+files. Reviewed exact ledger contexts, applied ordered hunks, and rechecked
+affected AVR/CI/protocol-runner anchors. No stale donor source hash or failed
+gate was bypassed. Added cooperative-tasks routing and mandatory test/build gates.
+
+Guarded production C++ Tasks tests, actual sketch source wiring guard, strict
+RequireLive six-file donor gate and complete source-quality phase all passed.
+All affected AVR profiles compiled using existing warm caches (no Clean/debug):
+busy-wire program27656/RAM1317, polling27356/RAM1315, buffered27538/RAM1317.
+This leaves731-733bytes for stack/locals, not a measured runtime high-water mark.
+Each with_bootloader image is32768bytes; SHA256 by mode:
+
+- busy-wire:4577A98CE1FFD124FF5A41C8858637C412BF765A2527EFA2D4683605E9B7F1C6
+- polling:78E50DE1F66F10BEFE4F3546139A4712D97101E3EF4C32D23684F4B5932A1201
+- buffered:307365D1CBEFE8BDA3B163569B39BD266CED9DDD6D6B51AA5890AD95727B7261
+
+No ESP/native/Android/donor rebuild or deployment; source versions remain0.2.7.
+Actual clock-double scheduler tests do not execute AVR watchdog/ISP or establish
+physical service latency, welcome timing or wiring. Reusable slot handles require
+owner discipline; callbacks must return promptly and API is loop-only, not ISR.
+Ledger now4285 inventoried/110 comparisons/4175 pending/71 known parity gaps.
+Physical stress/reset/Prog acceptance and remaining production issue2 stay open.

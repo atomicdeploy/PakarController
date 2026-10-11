@@ -18,6 +18,7 @@ if ($LinkMode -eq 'buffered' -and $Target -ne 'avr') {
 if ($LASTEXITCODE -ne 0) { throw 'Living API policy failed before firmware build.' }
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($Target -ne 'esp8266') {
+    & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern cooperative-tasks -Gate | Out-Null
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern uart-flow-control -Gate | Out-Null
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern tm1637-display -Gate | Out-Null
 }

@@ -72,3 +72,4 @@ pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern peer-binding -Gat
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
   "$root/tests/web_access_fence_test.cpp" "$root/firmware/esp8266/src/AccessConfig.cpp" -o "$root/build/web-access-fence-test"
 "$root/build/web-access-fence-test"
+pwsh -NoProfile -File "$root/tools/test-tasks.ps1"

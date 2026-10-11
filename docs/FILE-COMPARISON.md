@@ -4,7 +4,7 @@ Whole-repository superiority is **not established**. This report exposes retaine
 
 Routing: 1332 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
 
-Inventory: 4285 files; 106 complete source-file comparisons; 4179 pending comparisons; 73 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
+Inventory: 4285 files; 110 complete source-file comparisons; 4175 pending comparisons; 71 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
 Every inventoried path, source revision/hash, target/proof file and line, omitted code, disposition and concrete reason is in `file-comparison.csv`. Hash-bound manual decisions are in `file-comparison-evidence.json`. Donor SHA-256 values bind original bytes; target/proof SHA-256 values bind UTF-8 without BOM with LF newlines. Anchors are recomputed into exact line numbers. Test-code presence is not test execution; execution receipts are in `FILE-COMPARISON-RECEIPTS.md`.
 
@@ -12,9 +12,9 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 
 | Donor | Inventoried | Compared | Pending | Files with gaps |
 |---|---:|---:|---:|---:|
-| ControllerBoardMini | 19 | 0 | 19 | 0 |
-| ControllerBoardMini/Puzzles | 18 | 12 | 6 | 9 |
-| PCController | 1247 | 20 | 1227 | 15 |
+| ControllerBoardMini | 19 | 2 | 17 | 0 |
+| ControllerBoardMini/Puzzles | 18 | 12 | 6 | 7 |
+| PCController | 1247 | 22 | 1225 | 15 |
 | Pealayer | 521 | 43 | 478 | 28 |
 | PU850-ESP | 109 | 4 | 105 | 4 |
 | PuzzleBoard | 22 | 0 | 22 | 0 |
@@ -22,12 +22,44 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 
 ## Exact reviewed-file mappings and omission decisions
 
+### ControllerBoardMini: `Timer/LocalLib/Tasks.cpp`
+
+Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `3f5ef23f7a8052d8086b2803343e3e22bb9751924b7760077950f4b0bd2cc196`.
+
+- Target: `libraries/BoardCore/src/Tasks.h:11 [UTF8-LF sha256=1726bd6aed88da9964bfce4bbc27becb58e10f85acc4b5b04d1b20741b6e7e74; anchor=class Tasks]`.
+- Target: `libraries/BoardCore/src/Tasks.cpp:7 [UTF8-LF sha256=55aac682e670f2aa62832818c60d45d508c85729aca242ff306439e9f4a1fb8b; anchor=void Tasks::update(]`.
+- Target: `firmware/avr/avr.ino:157 [UTF8-LF sha256=b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb; anchor=cancelDeferredReset(); // A previously ACKed reset]`.
+- Retained: Fully read original donor. Actual PCController context/occupancy/count/cancel/clear/deadline code adapted in existing BoardCore implementation; Puzzles/Timer ten-slot capacity restored. Actual AVR loop services the scheduler and uses it for the100ms Reset delay, canceled on Prog entry.
+- Retained: Cancellation/clear suppress later due work, callback-added/replaced slots wait for next outer pass, recursive update is blocked, zero/exact/wrapped deadlines work and half-range delays reject.
+- Omitted/replaced code: `Puzzles startsAt==0 sentinel, strict now > deadline, null callbacks and post-callback itemCount decrement; PCController eight slots, implicit millis-only addTask and same-pass additions`. Disposition: **replaced**. Reason: Use newer explicit occupancy/pre-callback retirement, ten-slot capacity, optional shared command clock, half-range bound and eligibility mask. Zero/wrap/reentrant/canceled/replaced/new callback regressions execute actual production code; no heap or callback batch copy.
+- Omitted/replaced code: `Puzzles Callback(void), both global taskManager and PCController serviceTasks wrapper; unused Puzzles index/full/empty helpers`. Disposition: **replaced**. Reason: Keep typed context callbacks, count/clear API inside BoardCore and one AVR-owned instance, explicitly serviced in loop. No unsafe function-pointer cast or cross-board global allocation. This is an adapted capability, not drop-in ABI aliases. Slots remain reusable indices; owners discard canceled handles.
+- Test-code evidence: `tests/tasks_test.cpp:61 [UTF8-LF sha256=1fc35f2e57d21d42048e392a28bdb09c123d7cf84a3a4c9a45c03534dc19977e; anchor=Reset-owner use]`.
+- Test-code evidence: `tests/tasks_wiring_test.mjs:11 [UTF8-LF sha256=e8cf37f8f07119bf2a8ce85d706883fe220d69337257fbdab70db745f69e20c0; anchor=No parallel uncancellable reset timer]`.
+- Scoped advantage: Restore tested actual scheduler consumption and ten-slot capacity; no zero deadline ambiguity or recursive same-pass scheduling. Loop-only service must run within half the clock and callbacks must not block.
+- Remaining: Physical watchdog/Prog/reset-versus-ISP and cooperative service latency acceptance; clock doubles/source/compile do not prove board timing. Other donor features remain independently pending.
+
+### ControllerBoardMini: `Timer/LocalLib/Tasks.h`
+
+Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `5d838a7fb53c799160d55a65b22546ab2e749eb30f8412ed5d08e9ce44300fed`.
+
+- Target: `libraries/BoardCore/src/Tasks.h:11 [UTF8-LF sha256=1726bd6aed88da9964bfce4bbc27becb58e10f85acc4b5b04d1b20741b6e7e74; anchor=class Tasks]`.
+- Target: `libraries/BoardCore/src/Tasks.cpp:7 [UTF8-LF sha256=55aac682e670f2aa62832818c60d45d508c85729aca242ff306439e9f4a1fb8b; anchor=void Tasks::update(]`.
+- Target: `firmware/avr/avr.ino:157 [UTF8-LF sha256=b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb; anchor=cancelDeferredReset(); // A previously ACKed reset]`.
+- Retained: Fully read original donor. Actual PCController context/occupancy/count/cancel/clear/deadline code adapted in existing BoardCore implementation; Puzzles/Timer ten-slot capacity restored. Actual AVR loop services the scheduler and uses it for the100ms Reset delay, canceled on Prog entry.
+- Retained: Cancellation/clear suppress later due work, callback-added/replaced slots wait for next outer pass, recursive update is blocked, zero/exact/wrapped deadlines work and half-range delays reject.
+- Omitted/replaced code: `Puzzles startsAt==0 sentinel, strict now > deadline, null callbacks and post-callback itemCount decrement; PCController eight slots, implicit millis-only addTask and same-pass additions`. Disposition: **replaced**. Reason: Use newer explicit occupancy/pre-callback retirement, ten-slot capacity, optional shared command clock, half-range bound and eligibility mask. Zero/wrap/reentrant/canceled/replaced/new callback regressions execute actual production code; no heap or callback batch copy.
+- Omitted/replaced code: `Puzzles Callback(void), both global taskManager and PCController serviceTasks wrapper; unused Puzzles index/full/empty helpers`. Disposition: **replaced**. Reason: Keep typed context callbacks, count/clear API inside BoardCore and one AVR-owned instance, explicitly serviced in loop. No unsafe function-pointer cast or cross-board global allocation. This is an adapted capability, not drop-in ABI aliases. Slots remain reusable indices; owners discard canceled handles.
+- Test-code evidence: `tests/tasks_test.cpp:61 [UTF8-LF sha256=1fc35f2e57d21d42048e392a28bdb09c123d7cf84a3a4c9a45c03534dc19977e; anchor=Reset-owner use]`.
+- Test-code evidence: `tests/tasks_wiring_test.mjs:11 [UTF8-LF sha256=e8cf37f8f07119bf2a8ce85d706883fe220d69337257fbdab70db745f69e20c0; anchor=No parallel uncancellable reset timer]`.
+- Scoped advantage: Restore tested actual scheduler consumption and ten-slot capacity; no zero deadline ambiguity or recursive same-pass scheduling. Loop-only service must run within half the clock and callbacks must not block.
+- Remaining: Physical watchdog/Prog/reset-versus-ISP and cooperative service latency acceptance; clock doubles/source/compile do not prove board timing. Other donor features remain independently pending.
+
 ### ControllerBoardMini/Puzzles: `LocalLib/Keys.cpp`
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `9ceb7e764ef9d4d5feb62b2c7a22eed59d614b7b56432fae87ce87b4aa434578`.
 
-- Target: `firmware/avr/avr.ino:408 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=void serviceInputs(]`.
-- Target: `firmware/avr/avr.ino:393 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=void boardKeyGesture(]`.
+- Target: `firmware/avr/avr.ino:423 [UTF8-LF sha256=b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb; anchor=void serviceInputs(]`.
+- Target: `firmware/avr/avr.ino:408 [UTF8-LF sha256=b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb; anchor=void boardKeyGesture(]`.
 - Retained: Active-low physical plus virtual shift input state and candidate/stable transition tracking; AVR reports releases as dirty state; press handling is mode-specific.
 - Retained: Actual PCController per-key callback/gesture classifier now feeds all nine inputs; no game action waits for click classification.
 - Omitted/replaced code: `DEBOUNCE_MS = 50`. Disposition: **pending**. Reason: Actual PCController classifier now uses macro-configurable PAKAR_KEY_DEBOUNCE_MS (default 20ms) with tested Down/Up, click and hold timing. Physical switch-bounce measurements remain pending; faster is not certified electrically.
@@ -39,8 +71,8 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `caa21fe97e3df262f0821bd582b60f2895a14ec193d7d6fec13321afe4c5a46d`.
 
-- Target: `firmware/avr/avr.ino:408 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=void serviceInputs(]`.
-- Target: `firmware/avr/avr.ino:393 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=void boardKeyGesture(]`.
+- Target: `firmware/avr/avr.ino:423 [UTF8-LF sha256=b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb; anchor=void serviceInputs(]`.
+- Target: `firmware/avr/avr.ino:408 [UTF8-LF sha256=b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb; anchor=void boardKeyGesture(]`.
 - Retained: Active-low physical plus virtual shift input state and candidate/stable transition tracking; AVR reports releases as dirty state; press handling is mode-specific.
 - Retained: Actual PCController per-key callback/gesture classifier now feeds all nine inputs; no game action waits for click classification.
 - Omitted/replaced code: `DEBOUNCE_MS = 50`. Disposition: **pending**. Reason: Actual PCController classifier now uses macro-configurable PAKAR_KEY_DEBOUNCE_MS (default 20ms) with tested Down/Up, click and hold timing. Physical switch-bounce measurements remain pending; faster is not certified electrically.
@@ -89,23 +121,35 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 ### ControllerBoardMini/Puzzles: `LocalLib/Tasks.cpp`
 
-Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `3f5ef23f7a8052d8086b2803343e3e22bb9751924b7760077950f4b0bd2cc196`.
+Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `3f5ef23f7a8052d8086b2803343e3e22bb9751924b7760077950f4b0bd2cc196`.
 
-- Target: `firmware/avr/avr.ino:408 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=void serviceInputs(]`.
-- Retained: Only cooperative target-specific timers exist in current AVR services; the generic donor task scheduler is not implemented.
-- Omitted/replaced code: `Tasks::addTask/cancelTask/update and ten callback slots`. Disposition: **pending**. Reason: Front-panel deadlines do not replace arbitrary scheduled callbacks or cancellation. It is useful infrastructure and needs an explicit replacement, not a business-logic exclusion.
-- Omitted/replaced code: `startsAt==0 free-slot sentinel and currentTime > startsAt comparison`. Disposition: **pending**. Reason: Do not copy the rollover/zero-deadline ambiguity unchanged. A replacement must keep the generic scheduling/cancellation API using explicit occupancy and wrap-safe deadlines; such a replacement is not present yet.
-- Remaining: Implement and test a bounded cooperative scheduler: cancellation, full queue, zero delay, callback reentrancy and millis rollover.
+- Target: `libraries/BoardCore/src/Tasks.h:11 [UTF8-LF sha256=1726bd6aed88da9964bfce4bbc27becb58e10f85acc4b5b04d1b20741b6e7e74; anchor=class Tasks]`.
+- Target: `libraries/BoardCore/src/Tasks.cpp:7 [UTF8-LF sha256=55aac682e670f2aa62832818c60d45d508c85729aca242ff306439e9f4a1fb8b; anchor=void Tasks::update(]`.
+- Target: `firmware/avr/avr.ino:157 [UTF8-LF sha256=b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb; anchor=cancelDeferredReset(); // A previously ACKed reset]`.
+- Retained: Fully read original donor. Actual PCController context/occupancy/count/cancel/clear/deadline code adapted in existing BoardCore implementation; Puzzles/Timer ten-slot capacity restored. Actual AVR loop services the scheduler and uses it for the100ms Reset delay, canceled on Prog entry.
+- Retained: Cancellation/clear suppress later due work, callback-added/replaced slots wait for next outer pass, recursive update is blocked, zero/exact/wrapped deadlines work and half-range delays reject.
+- Omitted/replaced code: `Puzzles startsAt==0 sentinel, strict now > deadline, null callbacks and post-callback itemCount decrement; PCController eight slots, implicit millis-only addTask and same-pass additions`. Disposition: **replaced**. Reason: Use newer explicit occupancy/pre-callback retirement, ten-slot capacity, optional shared command clock, half-range bound and eligibility mask. Zero/wrap/reentrant/canceled/replaced/new callback regressions execute actual production code; no heap or callback batch copy.
+- Omitted/replaced code: `Puzzles Callback(void), both global taskManager and PCController serviceTasks wrapper; unused Puzzles index/full/empty helpers`. Disposition: **replaced**. Reason: Keep typed context callbacks, count/clear API inside BoardCore and one AVR-owned instance, explicitly serviced in loop. No unsafe function-pointer cast or cross-board global allocation. This is an adapted capability, not drop-in ABI aliases. Slots remain reusable indices; owners discard canceled handles.
+- Test-code evidence: `tests/tasks_test.cpp:61 [UTF8-LF sha256=1fc35f2e57d21d42048e392a28bdb09c123d7cf84a3a4c9a45c03534dc19977e; anchor=Reset-owner use]`.
+- Test-code evidence: `tests/tasks_wiring_test.mjs:11 [UTF8-LF sha256=e8cf37f8f07119bf2a8ce85d706883fe220d69337257fbdab70db745f69e20c0; anchor=No parallel uncancellable reset timer]`.
+- Scoped advantage: Restore tested actual scheduler consumption and ten-slot capacity; no zero deadline ambiguity or recursive same-pass scheduling. Loop-only service must run within half the clock and callbacks must not block.
+- Remaining: Physical watchdog/Prog/reset-versus-ISP and cooperative service latency acceptance; clock doubles/source/compile do not prove board timing. Other donor features remain independently pending.
 
 ### ControllerBoardMini/Puzzles: `LocalLib/Tasks.h`
 
-Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `5d838a7fb53c799160d55a65b22546ab2e749eb30f8412ed5d08e9ce44300fed`.
+Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `5d838a7fb53c799160d55a65b22546ab2e749eb30f8412ed5d08e9ce44300fed`.
 
-- Target: `firmware/avr/avr.ino:408 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=void serviceInputs(]`.
-- Retained: Only cooperative target-specific timers exist in current AVR services; the generic donor task scheduler is not implemented.
-- Omitted/replaced code: `Tasks::addTask/cancelTask/update and ten callback slots`. Disposition: **pending**. Reason: Front-panel deadlines do not replace arbitrary scheduled callbacks or cancellation. It is useful infrastructure and needs an explicit replacement, not a business-logic exclusion.
-- Omitted/replaced code: `startsAt==0 free-slot sentinel and currentTime > startsAt comparison`. Disposition: **pending**. Reason: Do not copy the rollover/zero-deadline ambiguity unchanged. A replacement must keep the generic scheduling/cancellation API using explicit occupancy and wrap-safe deadlines; such a replacement is not present yet.
-- Remaining: Implement and test a bounded cooperative scheduler: cancellation, full queue, zero delay, callback reentrancy and millis rollover.
+- Target: `libraries/BoardCore/src/Tasks.h:11 [UTF8-LF sha256=1726bd6aed88da9964bfce4bbc27becb58e10f85acc4b5b04d1b20741b6e7e74; anchor=class Tasks]`.
+- Target: `libraries/BoardCore/src/Tasks.cpp:7 [UTF8-LF sha256=55aac682e670f2aa62832818c60d45d508c85729aca242ff306439e9f4a1fb8b; anchor=void Tasks::update(]`.
+- Target: `firmware/avr/avr.ino:157 [UTF8-LF sha256=b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb; anchor=cancelDeferredReset(); // A previously ACKed reset]`.
+- Retained: Fully read original donor. Actual PCController context/occupancy/count/cancel/clear/deadline code adapted in existing BoardCore implementation; Puzzles/Timer ten-slot capacity restored. Actual AVR loop services the scheduler and uses it for the100ms Reset delay, canceled on Prog entry.
+- Retained: Cancellation/clear suppress later due work, callback-added/replaced slots wait for next outer pass, recursive update is blocked, zero/exact/wrapped deadlines work and half-range delays reject.
+- Omitted/replaced code: `Puzzles startsAt==0 sentinel, strict now > deadline, null callbacks and post-callback itemCount decrement; PCController eight slots, implicit millis-only addTask and same-pass additions`. Disposition: **replaced**. Reason: Use newer explicit occupancy/pre-callback retirement, ten-slot capacity, optional shared command clock, half-range bound and eligibility mask. Zero/wrap/reentrant/canceled/replaced/new callback regressions execute actual production code; no heap or callback batch copy.
+- Omitted/replaced code: `Puzzles Callback(void), both global taskManager and PCController serviceTasks wrapper; unused Puzzles index/full/empty helpers`. Disposition: **replaced**. Reason: Keep typed context callbacks, count/clear API inside BoardCore and one AVR-owned instance, explicitly serviced in loop. No unsafe function-pointer cast or cross-board global allocation. This is an adapted capability, not drop-in ABI aliases. Slots remain reusable indices; owners discard canceled handles.
+- Test-code evidence: `tests/tasks_test.cpp:61 [UTF8-LF sha256=1fc35f2e57d21d42048e392a28bdb09c123d7cf84a3a4c9a45c03534dc19977e; anchor=Reset-owner use]`.
+- Test-code evidence: `tests/tasks_wiring_test.mjs:11 [UTF8-LF sha256=e8cf37f8f07119bf2a8ce85d706883fe220d69337257fbdab70db745f69e20c0; anchor=No parallel uncancellable reset timer]`.
+- Scoped advantage: Restore tested actual scheduler consumption and ten-slot capacity; no zero deadline ambiguity or recursive same-pass scheduling. Loop-only service must run within half the clock and callbacks must not block.
+- Remaining: Physical watchdog/Prog/reset-versus-ISP and cooperative service latency acceptance; clock doubles/source/compile do not prove board timing. Other donor features remain independently pending.
 
 ### ControllerBoardMini/Puzzles: `LocalLib/TonePlayer.cpp`
 
@@ -172,7 +216,7 @@ Verdict: **scoped-improvement**. Revision: `38f48d06f6922225e9a100d0afc2d787b5a0
 - Retained: Actual donor ACK sampling, one-second cached-frame/brightness keepalive, observed presence and active 70ms brightness service on PC4/PC5. Independent probing was removed.
 - Omitted/replaced code: `PB3/PB5 TM1637 bus pins`. Disposition: **replaced**. Reason: User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming.
 - Test-code evidence: `tests/pc_contract_test.cpp:267 [UTF8-LF sha256=3d688e877afed1bdcabc959ab2714c188b9c2d106ef8fb10e4deac89608f13e2; anchor=void keysAndDisplay()]`.
-- Test-code evidence: `firmware/avr/avr.ino:449 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=display.serviceBrightness(]`.
+- Test-code evidence: `firmware/avr/avr.ino:464 [UTF8-LF sha256=b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb; anchor=display.serviceBrightness(]`.
 - Scoped advantage: Retains donor recovery on the correct board pins, accumulates intermediate NACKs instead of letting the final control ACK hide failure; host disconnect/reconnect and true-off tests pass.
 - Remaining: Physical TM1637 unplug/replug and power-cycle acceptance remains unverified; host GPIO doubles are not a physical board.
 
@@ -188,7 +232,7 @@ Verdict: **scoped-improvement**. Revision: `38f48d06f6922225e9a100d0afc2d787b5a0
 - Omitted/replaced code: `PB3/PB5 TM1637 bus pins`. Disposition: **replaced**. Reason: User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming.
 - Omitted/replaced code: `New donor ATmega328P-only fast-port guard and AVR validation removal`. Disposition: **replaced**. Reason: Pakar AVR target remains explicitly ATmega328P, with its correct PC4/PC5 ports and retained sentinel/brightness validation on all branches. Removing checks only to mirror donor performance changes would weaken bounds without measured need. Other AVR targets are not advertised; future ports must bind their own pins and guard.
 - Test-code evidence: `tests/pc_contract_test.cpp:267 [UTF8-LF sha256=3d688e877afed1bdcabc959ab2714c188b9c2d106ef8fb10e4deac89608f13e2; anchor=void keysAndDisplay()]`.
-- Test-code evidence: `firmware/avr/avr.ino:449 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=display.serviceBrightness(]`.
+- Test-code evidence: `firmware/avr/avr.ino:464 [UTF8-LF sha256=b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb; anchor=display.serviceBrightness(]`.
 - Scoped advantage: Retains donor recovery on the correct board pins, accumulates intermediate NACKs instead of letting the final control ACK hide failure; host disconnect/reconnect and true-off tests pass.
 - Remaining: Physical TM1637 unplug/replug and power-cycle acceptance remains unverified; host GPIO doubles are not a physical board.
 
@@ -211,6 +255,38 @@ Verdict: **equivalent-file**. Revision: `38f48d06f6922225e9a100d0afc2d787b5a000b
 - Retained: The implementation retains PCController's lower-four input-bit reversal; this is not physical proof that the PuzzleBoard wiring uses the same order.
 - No production-code omission claimed for this reviewed file.
 - Remaining: Verify actual key/output mapping on PuzzleBoard; unchanged file depends on Pakar's different BoardPins.
+
+### PCController: `LocalLib/Tasks.cpp`
+
+Verdict: **scoped-improvement**. Revision: `38f48d06f6922225e9a100d0afc2d787b5a000bd`. Original-byte SHA-256: `267cfee4c78ceb42a426a5db5faa4e0707a41def64cfd394c3976045e4900bbc`.
+
+- Target: `libraries/BoardCore/src/Tasks.h:11 [UTF8-LF sha256=1726bd6aed88da9964bfce4bbc27becb58e10f85acc4b5b04d1b20741b6e7e74; anchor=class Tasks]`.
+- Target: `libraries/BoardCore/src/Tasks.cpp:7 [UTF8-LF sha256=55aac682e670f2aa62832818c60d45d508c85729aca242ff306439e9f4a1fb8b; anchor=void Tasks::update(]`.
+- Target: `firmware/avr/avr.ino:157 [UTF8-LF sha256=b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb; anchor=cancelDeferredReset(); // A previously ACKed reset]`.
+- Retained: Fully read original donor. Actual PCController context/occupancy/count/cancel/clear/deadline code adapted in existing BoardCore implementation; Puzzles/Timer ten-slot capacity restored. Actual AVR loop services the scheduler and uses it for the100ms Reset delay, canceled on Prog entry.
+- Retained: Cancellation/clear suppress later due work, callback-added/replaced slots wait for next outer pass, recursive update is blocked, zero/exact/wrapped deadlines work and half-range delays reject.
+- Omitted/replaced code: `Puzzles startsAt==0 sentinel, strict now > deadline, null callbacks and post-callback itemCount decrement; PCController eight slots, implicit millis-only addTask and same-pass additions`. Disposition: **replaced**. Reason: Use newer explicit occupancy/pre-callback retirement, ten-slot capacity, optional shared command clock, half-range bound and eligibility mask. Zero/wrap/reentrant/canceled/replaced/new callback regressions execute actual production code; no heap or callback batch copy.
+- Omitted/replaced code: `Puzzles Callback(void), both global taskManager and PCController serviceTasks wrapper; unused Puzzles index/full/empty helpers`. Disposition: **replaced**. Reason: Keep typed context callbacks, count/clear API inside BoardCore and one AVR-owned instance, explicitly serviced in loop. No unsafe function-pointer cast or cross-board global allocation. This is an adapted capability, not drop-in ABI aliases. Slots remain reusable indices; owners discard canceled handles.
+- Test-code evidence: `tests/tasks_test.cpp:61 [UTF8-LF sha256=1fc35f2e57d21d42048e392a28bdb09c123d7cf84a3a4c9a45c03534dc19977e; anchor=Reset-owner use]`.
+- Test-code evidence: `tests/tasks_wiring_test.mjs:11 [UTF8-LF sha256=e8cf37f8f07119bf2a8ce85d706883fe220d69337257fbdab70db745f69e20c0; anchor=No parallel uncancellable reset timer]`.
+- Scoped advantage: Restore tested actual scheduler consumption and ten-slot capacity; no zero deadline ambiguity or recursive same-pass scheduling. Loop-only service must run within half the clock and callbacks must not block.
+- Remaining: Physical watchdog/Prog/reset-versus-ISP and cooperative service latency acceptance; clock doubles/source/compile do not prove board timing. Other donor features remain independently pending.
+
+### PCController: `LocalLib/Tasks.h`
+
+Verdict: **scoped-improvement**. Revision: `38f48d06f6922225e9a100d0afc2d787b5a000bd`. Original-byte SHA-256: `eeafda75fd9b4e0830c77d31546b047a326da63448b9bb73800b65c2394569de`.
+
+- Target: `libraries/BoardCore/src/Tasks.h:11 [UTF8-LF sha256=1726bd6aed88da9964bfce4bbc27becb58e10f85acc4b5b04d1b20741b6e7e74; anchor=class Tasks]`.
+- Target: `libraries/BoardCore/src/Tasks.cpp:7 [UTF8-LF sha256=55aac682e670f2aa62832818c60d45d508c85729aca242ff306439e9f4a1fb8b; anchor=void Tasks::update(]`.
+- Target: `firmware/avr/avr.ino:157 [UTF8-LF sha256=b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb; anchor=cancelDeferredReset(); // A previously ACKed reset]`.
+- Retained: Fully read original donor. Actual PCController context/occupancy/count/cancel/clear/deadline code adapted in existing BoardCore implementation; Puzzles/Timer ten-slot capacity restored. Actual AVR loop services the scheduler and uses it for the100ms Reset delay, canceled on Prog entry.
+- Retained: Cancellation/clear suppress later due work, callback-added/replaced slots wait for next outer pass, recursive update is blocked, zero/exact/wrapped deadlines work and half-range delays reject.
+- Omitted/replaced code: `Puzzles startsAt==0 sentinel, strict now > deadline, null callbacks and post-callback itemCount decrement; PCController eight slots, implicit millis-only addTask and same-pass additions`. Disposition: **replaced**. Reason: Use newer explicit occupancy/pre-callback retirement, ten-slot capacity, optional shared command clock, half-range bound and eligibility mask. Zero/wrap/reentrant/canceled/replaced/new callback regressions execute actual production code; no heap or callback batch copy.
+- Omitted/replaced code: `Puzzles Callback(void), both global taskManager and PCController serviceTasks wrapper; unused Puzzles index/full/empty helpers`. Disposition: **replaced**. Reason: Keep typed context callbacks, count/clear API inside BoardCore and one AVR-owned instance, explicitly serviced in loop. No unsafe function-pointer cast or cross-board global allocation. This is an adapted capability, not drop-in ABI aliases. Slots remain reusable indices; owners discard canceled handles.
+- Test-code evidence: `tests/tasks_test.cpp:61 [UTF8-LF sha256=1fc35f2e57d21d42048e392a28bdb09c123d7cf84a3a4c9a45c03534dc19977e; anchor=Reset-owner use]`.
+- Test-code evidence: `tests/tasks_wiring_test.mjs:11 [UTF8-LF sha256=e8cf37f8f07119bf2a8ce85d706883fe220d69337257fbdab70db745f69e20c0; anchor=No parallel uncancellable reset timer]`.
+- Scoped advantage: Restore tested actual scheduler consumption and ten-slot capacity; no zero deadline ambiguity or recursive same-pass scheduling. Loop-only service must run within half the clock and callbacks must not block.
+- Remaining: Physical watchdog/Prog/reset-versus-ISP and cooperative service latency acceptance; clock doubles/source/compile do not prove board timing. Other donor features remain independently pending.
 
 ### PCController: `LocalLib/TonePlayer.cpp`
 
@@ -456,7 +532,7 @@ Verdict: **parity-gap**. Revision: `38f48d06f6922225e9a100d0afc2d787b5a000bd`. O
 - Omitted/replaced code: `Side A/B directional relay and motion-door policy matrix, temperature role swapping, retired MOVE alias and DS18B20 absent-pullup tests`. Disposition: **not-applicable**. Reason: This fitted board has no directional motors/door policy or DS18B20. Do not enable these or copy donor relay pin mapping; future generic adapters remain feature-flagged with their own acceptance.
 - Omitted/replaced code: `Full key double-click/fast-repeat/16-bit rollover, transition smoothing, context-sensitive leaf navigation/settings normalization and tone timer/queue cases`. Disposition: **pending**. Reason: Pakar has existing key/tone/front-panel suites, but these complete donor assertions have not all been transplanted or compared behavior-by-behavior. A display-only import is not proof of those generic contracts.
 - Test-code evidence: `tools/test-display.ps1:7 [UTF8-LF sha256=e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51; anchor=foreach ($taskVariant]`.
-- Test-code evidence: `tools/test-protocol.sh:59 [UTF8-LF sha256=a92844f312290ada664d81fab1fe1453f498e32739d981c4ef42e85a1187893d; anchor=for display_flags]`.
+- Test-code evidence: `tools/test-protocol.sh:59 [UTF8-LF sha256=4293316d439d7e720c2a3faef1cd99d1d86899c98363e9c195ab213511a98786; anchor=for display_flags]`.
 - Scoped advantage: Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified.
 - Remaining: Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof.
 
@@ -491,7 +567,7 @@ Verdict: **parity-gap**. Revision: `fbf2d162073fe6171cb17ba94ec68c3b202911db`. O
 
 - Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=ef76592e75ee05babd398a27bb72869bf88c154a5e545a4b17fe3cfd1093890c; anchor=name: "🚀 Build · Test · Release"]`.
 - Target: `tools/build-desktop.ps1:39 [UTF8-LF sha256=4de42c00c2dca7bb1ea1d234dd1529fd5a06b110192fd8cee3e03d6cd451dc20; anchor=--test-threads=1]`.
-- Target: `tools/ci-checks.mjs:201 [UTF8-LF sha256=6ea155a7971fef046675c78af11649ac17c0ce200f1db1b8eb2389d827f6765a; anchor=export function runChecks]`.
+- Target: `tools/ci-checks.mjs:202 [UTF8-LF sha256=dec33cb502f596ca8ea5b250dc237dddaab2d7f35c830c7a75d201ff81a950cc; anchor=export function runChecks]`.
 - Target: `tools/prepare-release.mjs:16 [UTF8-LF sha256=c5dcb698c397b30ca0ed076437a695838366aa0a82ed3c580df3cf6380d03306; anchor=export function firmwareManifest]`.
 - Retained: Actual donor branch/PR/tag/dispatch/merge-group triggers, concurrency policy, pinned actions without checkout credentials, health-before-build jobs, timeouts, Rust cache reuse, locked tests/builds, packaging, curated notes, manifest/checksums/provenance and aggregate results adapted to current Windows/ESP/AVR/Android targets.
 - Retained: Release content is gated on all builds, created as an immutable draft prerelease, with two correctly matched board pairs and raw HTTPS update manifests. Untrusted PRs do not execute publishing code with a write token.
