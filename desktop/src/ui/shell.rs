@@ -345,6 +345,7 @@ impl PakarControllerApp {
     }
     // Pealayer src/app.rs App::logic: command/event/snapshot work is not paint work.
     pub fn native_logic(&mut self, ctx: &egui::Context) {
+        ui::window_geometry::reconcile(ctx);
         while let Ok(command) = self.control.rx.try_recv() {
             self.dispatch(command, ctx);
         }

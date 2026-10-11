@@ -329,7 +329,7 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 - Omitted/replaced code: `Side A/B directional relay and motion-door policy matrix, temperature role swapping, retired MOVE alias and DS18B20 absent-pullup tests`. Disposition: **not-applicable**. Reason: This fitted board has no directional motors/door policy or DS18B20. Do not enable these or copy donor relay pin mapping; future generic adapters remain feature-flagged with their own acceptance.
 - Omitted/replaced code: `Full key double-click/fast-repeat/16-bit rollover, transition smoothing, context-sensitive leaf navigation/settings normalization and tone timer/queue cases`. Disposition: **pending**. Reason: Pakar has existing key/tone/front-panel suites, but these complete donor assertions have not all been transplanted or compared behavior-by-behavior. A display-only import is not proof of those generic contracts.
 - Test-code evidence: `tools/test-display.ps1:7 [UTF8-LF sha256=e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51; anchor=foreach ($taskVariant]`.
-- Test-code evidence: `tools/test-protocol.sh:59 [UTF8-LF sha256=519b636ccd793e75d03633672b8224b15afd5127ab75bb85e3271a46a8fa7729; anchor=for display_flags]`.
+- Test-code evidence: `tools/test-protocol.sh:59 [UTF8-LF sha256=ba65d4158474917bc5a24517e7413216a9419b7c26f4fe8cb89be08f32319a29; anchor=for display_flags]`.
 - Scoped advantage: Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified.
 - Remaining: Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof.
 
@@ -551,7 +551,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `1f173bef8acc2904eac5b0a91407aa4f7629ce65c88ea3a8ac78f8c13321d203`.
 
-- Target: `desktop/src/ui/shell.rs:436 [UTF8-LF sha256=d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90; anchor=egui::Key::F11]`.
+- Target: `desktop/src/ui/shell.rs:437 [UTF8-LF sha256=6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451; anchor=egui::Key::F11]`.
 - Retained: Default Preferences Ctrl+, and device configuration Ctrl+Shift+, navigation exist; F11 fullscreen is restored with the shared typed dispatcher. These are not equivalent to the donor persisted rebinding model.
 - Omitted/replaced code: `ApplicationShortcuts persisted fields, parse_shortcut, entries, validate, action_for_event and their non-media tests`. Disposition: **pending**. Reason: The foundation hardcoded its accelerators and omitted the reusable binding model. No accepted reason justifies leaving rebinding out. The actual donor depends on KeyChord and hardware_shortcuts match/key-code helpers, which must be ported and tested with controller-specific typed actions rather than guessed labels.
 - Omitted/replaced code: `take_frame_step_shortcut and frame-step tests`. Disposition: **not-applicable**. Reason: These consume Ctrl+Left/Right for media frame stepping and timeline transport. Those business domains were explicitly removed; Pakar must not hijack ordinary text word navigation for nonexistent video frames.
@@ -626,7 +626,7 @@ Verdict: **equivalent-file**. Revision: `3265bf80b6f7543831e096a05b04c3b58b77058
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `c252864d80912a03bca718b0a13d721fda2e8f7378c033f44619590a82380fd2`.
 
 - Target: `desktop/src/capabilities.rs:7 [UTF8-LF sha256=cc3e3b3ffbfb3c776639b64326ddd90125285a389688dcc56ec147b3cecf80ed; anchor=pub struct Manifest]`.
-- Target: `desktop/src/ui/shell.rs:283 [UTF8-LF sha256=d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90; anchor=fn synchronize_context(]`.
+- Target: `desktop/src/ui/shell.rs:283 [UTF8-LF sha256=6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451; anchor=fn synchronize_context(]`.
 - Target: `desktop/src/ui/device_settings.rs:21 [UTF8-LF sha256=b339f425a20b873d7b8230dd24619e682334681e7cb72a7c0dabcfc42140d2c1; anchor=pub(crate) fn available(]`.
 - Target: `docs/DEVICE-CONTEXT.md:71 [UTF8-LF sha256=ad4669cbe23b48b4f6ee22634c21c015cd5b9767b8006d7316ad04d4ee99648b; anchor=## Exact reuse and remaining useful code]`.
 - Retained: Reread all 1280 lines through EOF. Prior authoritative overview/capability/front-panel adaptation remains; shared dropdown dependency is now imported, but full typed board settings and ACK consumers remain pending.
@@ -681,7 +681,7 @@ Verdict: **scoped-improvement**. Revision: `3265bf80b6f7543831e096a05b04c3b58b77
 - Target: `desktop/src/ui/connection_controls.rs:45 [UTF8-LF sha256=75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e; anchor=pub fn websocket(]`.
 - Target: `desktop/src/ui/preferences.rs:99 [UTF8-LF sha256=18372200696f758a22fe19dd155a74a5125d6afef0d46b73acc4101adb46c225; anchor=super::dropdown::ComboBox::from_id_salt("theme")]`.
 - Target: `desktop/src/ui/device_settings.rs:36 [UTF8-LF sha256=b339f425a20b873d7b8230dd24619e682334681e7cb72a7c0dabcfc42140d2c1; anchor=super::dropdown::ComboBox]`.
-- Target: `desktop/src/ui/shell.rs:984 [UTF8-LF sha256=d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90; anchor=super::dropdown::ComboBox]`.
+- Target: `desktop/src/ui/shell.rs:985 [UTF8-LF sha256=6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451; anchor=super::dropdown::ComboBox]`.
 - Retained: Read all 631 donor lines through EOF and locked egui 0.36.2 ComboBox factory identity. Actual focus owner, enabled/selected entries, search focus, Arrow/Home/End/Enter navigation, disabled skipping, full-width fixed 32px rows, inside focus stroke, nested menu framing and closed-popup cleanup imported, not restyled substitutes. All three donor native tests retained.
 - Omitted/replaced code: `Pealayer active-dropdown ID`. Disposition: **replaced**. Reason: Product-specific context key renamed to Pakar. No generic helper or donor assertion removed.
 - Test-code evidence: `desktop/src/ui/dropdown.rs:440 [UTF8-LF sha256=f7b1532924e3e3ae87d72d91983e7e49f48fed2efb9b01aede48d1a9734f1fa3; anchor=fn dropdown_arrows_seed_focus_skip_disabled_commit_enter_and_cancel_escape()]`.
@@ -715,7 +715,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `fba85edd503798868acc5527600b2ee52326339816c5b73e9926d1d7b0929384`.
 
 - Target: `desktop/src/ui/icons.rs:573 [UTF8-LF sha256=d9e95867777af0771f64322fef26958558c4c976cd3bdec5377a41754550a8da; anchor=pub fn searchable_workspace_icon_picker(]`.
-- Target: `desktop/src/ui/shell.rs:1805 [UTF8-LF sha256=d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90; anchor=icons::searchable_workspace_icon_picker]`.
+- Target: `desktop/src/ui/shell.rs:1806 [UTF8-LF sha256=6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451; anchor=icons::searchable_workspace_icon_picker]`.
 - Retained: Production Phosphor vocabulary, stable names/kind fallback, searchable list/grid picker, UTF-8-safe match highlighting, bounded popups, disclosure/submenu helpers.
 - Retained: Actual donor regression tests restored: eleven tests, including interactive egui-frame search/select/reopen, both themes and popup width.
 - Omitted/replaced code: `every_native_icon_editor_uses_the_shared_searchable_picker donor-only editor path list`. Disposition: **replaced**. Reason: That assertion references Pealayer media/4D editor files not present in this product. Replaced only its call-site assertion with Pakar's actual workspace editor; the other ten tests were imported. This does not excuse missing generic editor features elsewhere.
@@ -730,7 +730,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `18e255a5ccc65dfa0588eac10283c7c1f5fe33ea63bb3e07bd599e30a0cf19c3`.
 
 - Target: `desktop/src/ui/menu.rs:9 [UTF8-LF sha256=485783deefe484f7d413e30f3020dc3c2355aa564ca038c39741f6149271420e; anchor=pub fn top_menu_button<R>(]`.
-- Target: `desktop/src/ui/shell.rs:463 [UTF8-LF sha256=d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90; anchor=menu::top_menu_button(ui, crate::ui::i18n::text("File")]`.
+- Target: `desktop/src/ui/shell.rs:464 [UTF8-LF sha256=6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451; anchor=menu::top_menu_button(ui, crate::ui::i18n::text("File")]`.
 - Target: `desktop/src/ui/connection_controls.rs:45 [UTF8-LF sha256=75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e; anchor=pub fn websocket(]`.
 - Target: `docs/NATIVE-MENU-COMPARISON.md:32 [UTF8-LF sha256=7319a38240f9c23a43f5a18c2f20d05b0c9d5ff273cf0e8f28b2ba98aa1aabd8; anchor=## Exact donor menu mapping and remaining decisions]`.
 - Retained: Actual top_menu_button body imported with only application state ID/public visibility adaptation; all four production menu headings use active-menu sibling hover switching.
@@ -746,7 +746,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 - Test-code evidence: `desktop/src/ui/menu.rs:69 [UTF8-LF sha256=485783deefe484f7d413e30f3020dc3c2355aa564ca038c39741f6149271420e; anchor=fn shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes()]`.
 - Test-code evidence: `desktop/src/ui/menu.rs:192 [UTF8-LF sha256=485783deefe484f7d413e30f3020dc3c2355aa564ca038c39741f6149271420e; anchor=fn sibling_hover_switches_only_an_already_open_menu_and_clears_closed_state()]`.
 - Test-code evidence: `tests/native_menu_test.mjs:12 [UTF8-LF sha256=80ac61041de322c2c0e2c0fad379a74e6e89d02724f1b80f2d9fa6200c7ef937; anchor=actual donor helper must match after application ID/visibility/whitespace adaptation]`.
-- Test-code evidence: `tests/native_render_lifecycle_test.mjs:27 [UTF8-LF sha256=4065ca7240e665786a3e6bfbebde97550a908ca8b1f0a4a7c60f9dfa4dd69b09; anchor=const compact=source=>source.replace]`.
+- Test-code evidence: `tests/native_render_lifecycle_test.mjs:27 [UTF8-LF sha256=6c0d49ab7db7c41b508b91845e6b7b6906b7e7b112b3eb3b261c85489b862924; anchor=const compact=source=>source.replace]`.
 - Remaining: Restore remaining useful generic menu contracts above against actual dependencies; see exact function-level mapping in NATIVE-MENU-COMPARISON.md. Native CI paint/pointer tests and running-app visual acceptance are separate from source guards.
 - Remaining: Shared dropdown dependency now has a complete-read comparison; preserve remaining generic consumer contracts and verify native runtime without claiming whole-file parity.
 

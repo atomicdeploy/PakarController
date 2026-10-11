@@ -28,7 +28,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90",
+      "sha256": "6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -173,7 +173,7 @@
       "remaining":["Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof."],
       "proof":[
         {"path":"tools/test-display.ps1","sha256":"e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51","anchor":"foreach ($taskVariant"},
-        {"path":"tools/test-protocol.sh","sha256":"519b636ccd793e75d03633672b8224b15afd5127ab75bb85e3271a46a8fa7729","anchor":"for display_flags"}
+        {"path":"tools/test-protocol.sh","sha256":"ba65d4158474917bc5a24517e7413216a9419b7c26f4fe8cb89be08f32319a29","anchor":"for display_flags"}
       ],
       "improvement":"Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified."
     },
@@ -1777,7 +1777,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90",
+          "sha256": "6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451",
           "anchor": "fn synchronize_context("
         },
         {
@@ -2120,7 +2120,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90",
+          "sha256": "6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -2193,7 +2193,7 @@
         },
         {
           "path": "tests/native_render_lifecycle_test.mjs",
-          "sha256": "4065ca7240e665786a3e6bfbebde97550a908ca8b1f0a4a7c60f9dfa4dd69b09",
+          "sha256": "6c0d49ab7db7c41b508b91845e6b7b6906b7e7b112b3eb3b261c85489b862924",
           "anchor": "const compact=source=>source.replace"
         }
       ],
@@ -2585,7 +2585,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90",
+          "sha256": "6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -3003,7 +3003,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90",
+          "sha256": "6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],

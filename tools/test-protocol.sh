@@ -64,3 +64,6 @@ done
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/pixel_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
   "$root/tests/led_grid_test.cpp" "$root/firmware/esp8266/src/LedGrid.cpp" -o "$root/build/led-grid-test"
 "$root/build/led-grid-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp32s3/src" \
+  "$root/tests/s3_menu_audio_test.cpp" -o "$root/build/s3-menu-audio-test"
+"$root/build/s3-menu-audio-test"

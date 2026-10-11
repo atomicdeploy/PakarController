@@ -45,7 +45,7 @@ assert(logic.includes('self.native_logic(ctx)'));
 assert(logic.includes('self.capture.tick(ctx)'));
 const tick = shell.slice(shell.indexOf('    pub fn native_logic('), shell.indexOf('    pub fn draw_shell('));
 const draw = shell.slice(shell.indexOf('    fn draw_shell_contents('));
-for(const token of ['self.control.rx.try_recv()', 'tray.poll()', 'self.poll()', 'self.synchronize_context(ctx)', 'self.control.snapshot.lock()', 'ViewportCommand::CancelClose']) {
+for(const token of ['ui::window_geometry::reconcile(ctx)', 'self.control.rx.try_recv()', 'tray.poll()', 'self.poll()', 'self.synchronize_context(ctx)', 'self.control.snapshot.lock()', 'ViewportCommand::CancelClose']) {
   assert(tick.includes(token), 'Must operate without painting: '+token);
   assert(!draw.includes(token), 'Do not process a second time while painting: '+token);
 }

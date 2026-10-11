@@ -58,7 +58,31 @@ Native130/0/0 pass; low-level2x2 PNG encoder tests remain valid and unchanged.
 Close-to-tray cancellation also runs outside painting. The full source quality
 phase passed after correcting its relocated capability assertion and using the
 existing screened/noncertified ledger status, not relaxing completion checks.
-The final updated live smoke still needs execution.
+The1dbfd0b release installedPID15492 and passed minimized command application,
+correlated no-file hidden deadline and Show observation. Visible capture failed:
+read-only Win32 confirmed79x101 visible/non-iconic geometry. Fullscreen via the
+product dispatcher recovered an inspected3840x2160 framebuffer, not a complete
+normal-window pass. Existing invalid96x96 failure evidence remains preserved.
+
+Read actual Pealayer App::logic non-fullscreen/non-minimized valid geometry
+observation and config.rs WindowGeometry::is_valid, plus locked winit restore,
+egui-winit viewport commands/window settings and eframe builder restoration.
+New window_geometry.rs adapts its finite/bounded valid-size sampling, keeps the
+last normal size in memory only, and requests size recovery once when a visible
+restored window is below320x240. No visibility/focus or per-frame disk writes;
+real valid user sizes remain untouched. Two actual native tests cover hidden/
+fullscreen sampling, retained size, storm prevention and run_logic commands.
+Execution/new release/live acceptance for this geometry repair remains pending.
+Corrected guarded Test executed132 cases: all pass, zero failed/ignored
+(2m47 compile,0.26s execution). New geometry tests both ran. Release and fresh
+normal-window live smoke remain separate pending gates.
+The first Test compile rejected the new assertion's assumed command tuple shape.
+Read locked egui LogicOutput: OrderedViewportIdMap<Vec<ViewportCommand>>. Inspect
+values().flatten() and retain resize/no-reveal assertions; not a gate bypass.
+The protocol CI runners now include the small S3 pin/menu-audio contract fixture.
+All prior runner commands and hardware/donor assertions remain unchanged. Rebind
+only their reviewed proof hashes; the PCController controls snapshot is explicitly
+live-unavailable in this lookup, not a fresh donor read or physical acceptance.
 
 Remaining generic donor imports: complete app.rs/platform ownership review,
 config-revision/idle repaint scheduling, shell initialization/recovery,

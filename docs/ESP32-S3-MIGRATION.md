@@ -85,3 +85,8 @@ Next gates: shared ESP platform extraction; partition-safe OTA and recovery;
 S3 TLS/telemetry/filesystem/USB/ISP/discovery adapters; paired buffered AVR flag;
 shared LED pin/RMT transport; desktop/mobile feedback and discovery UI; real S3
 build; simulated UI matrix; finally physical UART/ISP/LED/display/audio and OTA.
+
+Primary references: [Espressif GPIO restrictions](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/gpio.html),
+[Arduino-ESP32 UART buffer/pin API](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/serial.html),
+[S3 RMT DMA resource/transaction API](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/rmt.html).
+The exact installed source, not a generic chip claim, informs driver adaptation.
