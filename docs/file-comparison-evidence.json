@@ -4,6 +4,18 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
     {
+      "origin":"Pealayer","path":"src/cli.rs","sha256":"412b553fcdcd4436075af6bc93c956a4b7d9ac93a552a3458f2afabb8aa1448f","source_read":"complete","verdict":"parity-gap",
+      "preserved":["Actual format_help_message and PrintHelp/PrintVersion flag branches adapted with native short/long help/version assertions; terminate before config, network, GUI ownership and windows. Share device command help with existing TUI instead of duplicate stale strings."],
+      "targets":[{"path":"desktop/src/cli_output.rs","sha256":"d39fb32a9329add6b160a401a16f04aa398797c4fc484c79bd358bbf245a7104","anchor":"pub fn parse_cli_output("}],
+      "proof":[{"path":"desktop/src/cli_output.rs","sha256":"d39fb32a9329add6b160a401a16f04aa398797c4fc484c79bd358bbf245a7104","anchor":"fn actual_donor_short_and_long_help_version_flags()"}],
+      "omissions":[
+        {"code":"Media target/chapter/playlist/seek/rate/player associations","disposition":"not-applicable","reason":"User explicitly requires an mpv-free controller; media/timeline/cue business must not replace board control."},
+        {"code":"Embedded build identity, scoped peer/instance routing, unified remote request fallback, automatic verified host deployment/update status, headless Web-only backend and complete shortcut/command parser tests","disposition":"pending","reason":"These generic contracts are useful but not completed by static help output. Current Pakar typed GUI IPC and board command routes do not prove full donor CLI parity."}
+      ],
+      "remaining":["Complete generic CLI parser/validation, command/IPC parity, embedded build identity and verified app-update contracts; media-only switches are explicitly excluded. Validate actual packaged help/version exit without creating windows and preserve Preferences/rollback when replacing the app."],
+      "improvement":"Top-level flags do not consume matching tokens inside device command payloads; board commands retain their own parsing. CLI endpoint/user default to saved GUI preferences rather than a conflicting hostname."
+    },
+    {
       "origin":"PCController",
       "path":"Tools/VirtualBoard/tests/firmware_controls_test.cpp",
       "sha256":"f993a968991db7b0835e449950cc3a366b9af60d0214c677f20087c3c4f1eb36",

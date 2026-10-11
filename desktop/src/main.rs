@@ -11,6 +11,7 @@ mod brand_image;
 mod branding;
 mod capabilities;
 mod client_telemetry;
+mod cli_output;
 mod config;
 mod device_settings;
 mod display;
@@ -1632,9 +1633,10 @@ impl eframe::App for PakarControllerApp {
 }
 
 fn environment_endpoint() -> Endpoint {
+    let saved = config::AppConfig::load().unwrap_or_default();
     Endpoint {
-        base: std::env::var("PAKAR_ENDPOINT").unwrap_or_else(|_| "http://pakarcontroller".into()),
-        user: std::env::var("PAKAR_USER").unwrap_or_else(|_| "admin".into()),
+        base: std::env::var("PAKAR_ENDPOINT").unwrap_or(saved.endpoint),
+        user: std::env::var("PAKAR_USER").unwrap_or(saved.user),
         password: std::env::var("PAKAR_PASSWORD").unwrap_or_else(|_| "pakarcontroller".into()),
     }
 }
@@ -1984,9 +1986,7 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
                     break;
                 }
                 if matches!(words.first(), Some(&"help")) {
-                    println!(
-                        "status | info | telemetry | firmware status | firmware fetch HTTPS_URL SHA256 [all|esp|avr] | firmware apply JOB BOOT SHA256 | firmware cancel JOB BOOT SHA256 | device name | device rename NAME[.local] | auth info | auth change USERNAME (PAKAR_NEW_PASSWORD) | avr contracts | avr settings | avr set PARAMETER VALUE | avr panel | avr command OPCODE [HEX] | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | display stop | display segments [--speed-ms n] [--duration-ms n] [--repeat once|loop|interval] [--interval-ms n] [--scroll] -- TEXT | audio <cue> | snake <direction> | reset | quit"
-                    );
+                    println!("{}", cli_output::DEVICE_COMMANDS);
                     continue;
                 }
                 if let Err(error) = text_command(&client, &endpoint, &words) {
@@ -2009,6 +2009,10 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
 
 fn main() -> eframe::Result {
     let arguments = std::env::args().collect::<Vec<_>>();
+    if let Some(output) = cli_output::parse_cli_output(&arguments) {
+        println!("{output}");
+        return Ok(());
+    }
     match run_text_interface(&arguments) {
         Ok(true) => return Ok(()),
         Ok(false) => {}
