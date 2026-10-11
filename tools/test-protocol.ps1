@@ -120,3 +120,4 @@ if ($LASTEXITCODE -ne 0) { throw 'PCController contract tests failed' }
 & (Join-Path $PSScriptRoot 'test-display.ps1')
 & (Join-Path $PSScriptRoot 'test-s3-contract.ps1')
 & (Join-Path $PSScriptRoot 'test-uart-flow.ps1')
+& (Join-Path $PSScriptRoot 'test-web-access.ps1')

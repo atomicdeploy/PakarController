@@ -1908,3 +1908,44 @@ generated bundle; refreshed only that inventory and left additions pending.
 Current4285/106/4179/73. The subsequent ledger-only commit changes no compiled
 desktop inputs; binary build identity remains2bdbf76, not the documentation HEAD.
 Final output Native-HTTP-Ownership.json records actual replacement/capture status.
+
+## ISP GET ownership boundary
+
+Fresh c1517b2 Build and CodeQL both succeeded; Pakar open PR listing was empty.
+ASUS localhost:1022 still refused SSH and ledboard.local did not resolve. Actual
+desktop PID79784 was left running unchanged; no draft, settings, rollback or
+physical firmware replacement occurred.
+
+Consulted all firmware-hardware rows (88 matched/70 pending/11 gaps) and the
+peer-binding specialist plus exact PCController donor-audit row. Reread complete
+session.go and session_test.go through EOF; original-byte hashes remain
+1bf4d52d6810630d1fd4d5f0a0c18254ccdd73c0942dbe94f4c97a06360680c5 and
+ff6c7b21f72bfb944d232c87210f8ffa139dfe016e8b5756f2582604489fffc4.
+Adapted admission/dispatch checks into all-method supplied HTTP epoch validation
+and the real loop authenticate boundary. Hardware-affecting GET probe is no
+longer exempt. Header-free compatibility remains explicitly unfenced; this does
+not establish AVR-only identity, remembered pairing or non-HTTP ownership.
+
+Comparison generation caught stale tools/test-protocol.sh after adding the new
+test. Reviewed its exact additive diff and existing display runner anchor, then
+rebound that proof reference without changing donor hashes or closing omissions.
+Quality subsequently stopped at pu_routes_test.mjs on the changed firmware hash.
+Reviewed both shipping diffs and affected route anchors; updated six existing
+PU850 target hashes/line numbers, including previously stale Markdown anchors.
+No generic route classifications, source hashes or check strength were changed.
+
+Actual WebAccess middleware and AsyncHttpService queue execute in C++ using
+transport/auth/SDK doubles. Stale/partial/malformed pairs fail, matching pairs
+dispatch, legacy is explicit, auth/origin rejection precedes identity checks,
+and retirement between enqueue/dispatch never reaches the hardware-call double.
+These are not Basic-auth parser, SDK entropy, LAN or physical ISP proof.
+Guarded peer-binding RequireLive and shared C++ protocol checks passed. Only
+integrated ESP8266 busy-wire firmware was rebuilt in the existing warm cache:
+945392 bytes, SHA256 CBF2F9A2108CE47C4CAA9EC337296F8F591ED0E2407E2177F431449E865C3EE4.
+RAM56620, IRAM63055 including32KiB instruction cache, flash code895328. No native,
+AVR, Android or donor rebuild; no clean/debug/incremental cache was introduced.
+All source versions remain0.2.7, not proof of deployed version consistency.
+Quality checks before the stale route failure passed; remaining checks resumed
+from that exact failed step and all succeeded, avoiding repeat suites/compiles.
+Ledger remains4285 inventoried/106 comparisons/4179 pending/73 parity gaps. This
+bounded safety adaptation is not complete donor parity or production acceptance.

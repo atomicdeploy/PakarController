@@ -68,3 +68,7 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" -I "$roo
   "$root/tests/s3_menu_audio_test.cpp" -o "$root/build/s3-menu-audio-test"
 "$root/build/s3-menu-audio-test"
 pwsh -NoProfile -File "$root/tools/test-uart-flow.ps1"
+pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern peer-binding -Gate > /dev/null
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
+  "$root/tests/web_access_fence_test.cpp" "$root/firmware/esp8266/src/AccessConfig.cpp" -o "$root/build/web-access-fence-test"
+"$root/build/web-access-fence-test"

@@ -161,7 +161,8 @@
     "Actual Session.Request closing/context checks before and after admission adapted to TUI atomic stop checks before/after fresh preflight; no post-dispatch replay.",
     "Full source read. Fail-closed identity checks strengthened with HTTP server-side board/boot fences; donor HELLO/build stamp is NOT a boot epoch.",
     "Before/after admission ownership checks also adapted to Web's shared pinned HTTP preflight and post-response generation validation. Existing session.go full review/live 1bf4d52 hash remains unchanged; this is not import of Go serial acquisition or request-priority scheduling.",
-    "Full session.go reread through EOF and live source hash reverified. Actual acquireWrite/requestAdmission before/after admission closing checks adapted to native HTTP queued generation, deadline and post-preflight ownership checks. Shared native/TUI strict Pin validation removes the duplicate validator; pinned clients refuse redirects."
+    "Full session.go reread through EOF and live source hash reverified. Actual acquireWrite/requestAdmission before/after admission closing checks adapted to native HTTP queued generation, deadline and post-preflight ownership checks. Shared native/TUI strict Pin validation removes the duplicate validator; pinned clients refuse redirects.",
+    "Reread complete donor at unchanged live hash for firmware admission/dispatch ownership. Supplied HTTP headers are checked for all methods including hardware-affecting GET probe; actual loop dispatch rechecks the same request before SPI/reset. Header-free compatibility is deliberately unfenced, not ownership proof."
   ],
   "targets": [
     {
@@ -176,8 +177,13 @@
     },
     {
       "path": "firmware/esp8266/src/WebAccess.h",
-      "sha256": "6603f677d19f76b4b1af3b0d307a61e910cafb19c25783e1600d07d30c40a3e4",
+      "sha256": "61d03a9873f2e633a2f26efc059f24e692de4b2831fdf61ec128cddd8e251ae2",
       "anchor": "bool peerAllowed("
+    },
+    {
+      "path": "firmware/esp8266/esp8266.ino",
+      "sha256": "20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac",
+      "anchor": "bool authenticate()"
     },
     {
       "path": "assets/web/peer-http.js",
@@ -224,7 +230,7 @@
     },
     {
       "path": "tests/peer_fence_test.mjs",
-      "sha256": "09b55379b95c3b6402e82a180369b18f3261bd34f3f5b67b6511fdb3cf255c90",
+      "sha256": "a96ca49c6fdbc0c425f6199d6c4371a76536ca9db785e9d093047953d31a101c",
       "anchor": "Upload callbacks precede middleware"
     },
     {
@@ -241,6 +247,11 @@
       "path": "desktop/src/peer_http.rs",
       "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
       "anchor": "fn gui_revocation_after_dispatch_reports_uncertainty_not_success()"
+    },
+    {
+      "path": "tests/web_access_fence_test.cpp",
+      "sha256": "5eb03895e22d12a41c817a1d198a828494a299a4ef95922a9bfa9e553a1b461e",
+      "anchor": "Real async queue + real fence recheck"
     }
   ]
 },
@@ -253,7 +264,8 @@
   "preserved": [
     "Actual fakePort matching/mismatched request and identity scenarios read fully and adapted to C++ peer validation and native same-host reboot/pinned-header/409 no-replay HTTP fixtures.",
     "Old receipts stay in Events, not new peer's confirmed output.",
-    "Full session_test.go reread through EOF and live hash reverified. Admission revocation, peer mismatch and no-replay assertions adapted to actual native GUI HTTP loopback fixtures, not claims of importing Go fakePort acquisition/reset/ACK routing."
+    "Full session_test.go reread through EOF and live hash reverified. Admission revocation, peer mismatch and no-replay assertions adapted to actual native GUI HTTP loopback fixtures, not claims of importing Go fakePort acquisition/reset/ACK routing.",
+    "Reread complete donor at unchanged live hash; mismatch/admission assertions now also execute real WebAccess middleware and AsyncHttpService with SDK/transport/auth doubles. Retired queued probe never reaches the simulated hardware call or replays. This does not validate Basic-auth parsing, physical ISP or downstream AVR epoch."
   ],
   "targets": [
     {
@@ -301,7 +313,7 @@
     },
     {
       "path": "tests/peer_fence_test.mjs",
-      "sha256": "09b55379b95c3b6402e82a180369b18f3261bd34f3f5b67b6511fdb3cf255c90",
+      "sha256": "a96ca49c6fdbc0c425f6199d6c4371a76536ca9db785e9d093047953d31a101c",
       "anchor": "Upload callbacks precede middleware"
     },
     {
@@ -323,6 +335,11 @@
       "path": "desktop/src/peer_http.rs",
       "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
       "anchor": "fn gui_server_boot_conflict_is_not_replayed()"
+    },
+    {
+      "path": "tests/web_access_fence_test.cpp",
+      "sha256": "5eb03895e22d12a41c817a1d198a828494a299a4ef95922a9bfa9e553a1b461e",
+      "anchor": "Real async queue + real fence recheck"
     }
   ]
 },
@@ -776,7 +793,7 @@
       "remaining":["Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof."],
       "proof":[
         {"path":"tools/test-display.ps1","sha256":"e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51","anchor":"foreach ($taskVariant"},
-        {"path":"tools/test-protocol.sh","sha256":"3adc128d22eb0397fd547776d0c69394f58aaa4d4d57cb7d0c16efeae3863d2a","anchor":"for display_flags"}
+        {"path":"tools/test-protocol.sh","sha256":"a92844f312290ada664d81fab1fe1453f498e32739d981c4ef42e85a1187893d","anchor":"for display_flags"}
       ],
       "improvement":"Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified."
     },
@@ -866,7 +883,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebAccess.h",
-          "sha256": "6603f677d19f76b4b1af3b0d307a61e910cafb19c25783e1600d07d30c40a3e4",
+          "sha256": "61d03a9873f2e633a2f26efc059f24e692de4b2831fdf61ec128cddd8e251ae2",
           "anchor": "ApiPolicy::numberedRoute"
         }
       ],
@@ -4187,7 +4204,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "5568bbe0f08f2877959d4e170df2f4ec91bc184ec57b843607867d5ff6164e00"
+          "sha256": "20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac"
         }
       ],
       "proof": [
@@ -4254,7 +4271,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "5568bbe0f08f2877959d4e170df2f4ec91bc184ec57b843607867d5ff6164e00"
+          "sha256": "20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac"
         }
       ],
       "proof": [
@@ -4321,7 +4338,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "5568bbe0f08f2877959d4e170df2f4ec91bc184ec57b843607867d5ff6164e00"
+          "sha256": "20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac"
         }
       ],
       "proof": [
@@ -4373,7 +4390,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "5568bbe0f08f2877959d4e170df2f4ec91bc184ec57b843607867d5ff6164e00"
+          "sha256": "20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac"
         }
       ],
       "proof": [

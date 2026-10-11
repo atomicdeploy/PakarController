@@ -33,7 +33,8 @@ in Events rather than becoming the new peer's confirmed output.
   downstream ACK identity, USB/UART, WebSocket/MQTT, three-node ownership and
   integrated ESP32-S3 firmware remain open acceptance items.
 - Initial connection is trust-on-contact, not remembered/pinned board pairing.
-  GETs are unfenced readback. A reboot/rename during an in-flight command cannot
+  Supplied pairs are checked on GET/HEAD readback as well. Header-free reads
+  remain explicitly unfenced. A reboot/rename during an in-flight command cannot
   retract an already dispatched write. Shared multi-step commands have only an
   initial quit/admission cancellation check, but all HTTP writes keep one epoch.
 - Tests bind actual production C++ validation and native HTTP request headers;
@@ -61,8 +62,9 @@ Late responses from a revoked generation cannot populate settings or mapping.
 Observed identity loss/change clears selection/Find, mapping drafts, pixel sample,
 text/identity/secret edits and remote-job state; it retires the old WebSocket.
 Public settings/name verification includes a final same-boot status observation.
-GETs are still unfenced at the server: this does not prove durability or rule out
-an unobserved reboot during the readback window. Accepted is not physical output.
+Pinned GETs now reject a mismatched supplied epoch at the server too; header-free
+reads remain unfenced. This does not prove durability or rule out a later reboot
+during the readback window. Accepted is not physical output.
 
 The request deadline is 12 seconds (explicit bounded overrides up to 60 seconds),
 and cancellation releases timers immediately. A sent write may still have applied.
@@ -108,9 +110,13 @@ Cancellation inside multi-step maintenance, native WebSocket/USB boot fencing,
 AVR-only epochs, remembered pairing and Flutter/standalone CLI remain open.
 An old WebSocket status can still temporarily present an old identity; fresh HTTP
 preflight/server fences protect HTTP writes, not whole-native transport truth.
-ISP probe is a hardware-affecting GET: the current server exempts GET/HEAD from
-its epoch check. Client admission/capability checks and headers are not an atomic
-probe-dispatch fence. That handler exemption remains a separate firmware fix.
+ISP probe is a hardware-affecting GET. WebAccess now validates supplied headers
+independently of HTTP method, before async queue admission; authenticate() also
+rechecks the queued request at loop dispatch before the probe touches SPI/reset.
+The actual middleware and async queue are tested with transport/auth/SDK doubles
+for stale/malformed/partial pairs, all HTTP methods, auth/origin ordering and
+retirement between admission and dispatch. Optional header-free compatibility
+still has no ownership protection. This binds the ESP epoch, not an AVR-only boot.
 These fixture checks are not hardware, LAN, multi-client or durability acceptance.
 
 Actual Windows framebuffer inspection of the first candidate exposed offline

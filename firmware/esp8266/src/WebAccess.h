@@ -47,7 +47,9 @@ class WebAccess {
     return BoardCore::PeerFence::ready(boardId_.c_str(), bootId_.c_str());
   }
   bool peerAllowed(AsyncWebServerRequest *request) const {
-    if (request->method() == HTTP_GET || request->method() == HTTP_HEAD) return true;
+    // Method is not an ownership exemption: ISP probe is a hardware-affecting
+    // GET, and pinned readback must not silently read a different boot either.
+    // Absent headers retain explicitly unfenced compatibility in PeerFence.
     const auto *board = request->getHeader("X-Pakar-Board");
     const auto *boot = request->getHeader("X-Pakar-Boot");
     return BoardCore::PeerFence::accepts(boardId_.c_str(), bootId_.c_str(),

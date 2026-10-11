@@ -4,10 +4,12 @@
 #include <string>
 #define F(value) value
 #define strlen_P strlen
+inline uint32_t millis() { return 0; }
 class String : public std::string {
  public:
   using std::string::string;
   String() = default;
+  String(const std::string &value) : std::string(value) {}
   bool isEmpty() const { return empty(); }
   size_t write(uint8_t c) { push_back(static_cast<char>(c)); return 1; }
   size_t write(const uint8_t *p,size_t n) { append(reinterpret_cast<const char*>(p),n); return n; }

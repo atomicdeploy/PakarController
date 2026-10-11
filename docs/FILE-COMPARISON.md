@@ -293,7 +293,7 @@ Verdict: **parity-gap**. Revision: `38f48d06f6922225e9a100d0afc2d787b5a000bd`. O
 Verdict: **parity-gap**. Revision: `38f48d06f6922225e9a100d0afc2d787b5a000bd`. Original-byte SHA-256: `729b980122ce5e3b3024544c9229d52ce03647bf195d62958fa388304d44fbe8`.
 
 - Target: `libraries/BoardCore/src/ApiPolicy.h:8 [UTF8-LF sha256=ee7dcf1c76d2d1703ae2d8d11ab0feff19650f08e8cfddfa03faac17ba6a163c; anchor=inline bool numberedRoute]`.
-- Target: `firmware/esp8266/src/WebAccess.h:17 [UTF8-LF sha256=6603f677d19f76b4b1af3b0d307a61e910cafb19c25783e1600d07d30c40a3e4; anchor=ApiPolicy::numberedRoute]`.
+- Target: `firmware/esp8266/src/WebAccess.h:17 [UTF8-LF sha256=61d03a9873f2e633a2f26efc059f24e692de4b2831fdf61ec128cddd8e251ae2; anchor=ApiPolicy::numberedRoute]`.
 - Retained: Actual TestVersionedCoreAPIRoutesAreRejected test cases adapted into the C++ helper exercised by ESP async middleware; generalized to all numbered API roots and pre-auth rejection.
 - Omitted/replaced code: `TestCanonicalRESTRouteInventory, TestRESTAppActionCannotInjectCoordinatorNavigationMetadata, typed app launch/action outcome lifecycle`. Disposition: **pending**. Reason: These exercise the full PCController Go host coordinator, not the ESP handlers. Applicable generic typed action/outcome/auth ownership and full real multiplexer route inventory still need explicit Pakar contracts and tests. The narrower source/wire tests here do not claim end-to-end async server acceptance.
 - Test-code evidence: `tests/protocol_test.cpp:30 [UTF8-LF sha256=69424ba85e58733026f42c92802a0239702c1719b283d3d22a8a05eb97eb92c6; anchor=Actual donor TestVersionedCoreAPIRoutesAreRejected cases]`.
@@ -310,15 +310,17 @@ Verdict: **parity-gap**. Revision: `38f48d06f6922225e9a100d0afc2d787b5a000bd`. O
 - Retained: Actual fakePort matching/mismatched request and identity scenarios read fully and adapted to C++ peer validation and native same-host reboot/pinned-header/409 no-replay HTTP fixtures.
 - Retained: Old receipts stay in Events, not new peer's confirmed output.
 - Retained: Full session_test.go reread through EOF and live hash reverified. Admission revocation, peer mismatch and no-replay assertions adapted to actual native GUI HTTP loopback fixtures, not claims of importing Go fakePort acquisition/reset/ACK routing.
+- Retained: Reread complete donor at unchanged live hash; mismatch/admission assertions now also execute real WebAccess middleware and AsyncHttpService with SDK/transport/auth doubles. Retired queued probe never reaches the simulated hardware call or replays. This does not validate Basic-auth parsing, physical ISP or downstream AVR epoch.
 - Omitted/replaced code: `serialOpenWithPending/late acquisition/configuration cancellation/close retry, preclose ordering and terminal error ownership; corresponding fakePort tests`. Disposition: **pending**. Reason: Useful serial lifecycle/quarantine has no equivalent in HTTP-only TUI. Adapt with actual Rust USB owner before discovery/reconnect; never close another client's port.
 - Omitted/replaced code: `priority requestAdmission, sequence/opcode-matched ACK/Error/events, reserved macro sequence, boot HELLO retry and recoverable decoder overflow tests`. Disposition: **pending**. Reason: HTTP fencing is not downstream AVR ACK/decoder ownership. These production behaviors and exact tests remain pending with USB/UART host integration.
 - Omitted/replaced code: `compact HELLO schemas/build stamp and DTR reset/inactive control-line tests`. Disposition: **pending**. Reason: Build stamp is not board/boot identity; numbered public generation negotiation conflicts with living API. Adapt additive identity and explicit one-shot reset policy with serial owner, without schema selectors/reset-on-connect.
 - Test-code evidence: `desktop/src/terminal_ui.rs:1372 [UTF8-LF sha256=8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225; anchor=fn shared_cli_mutation_inherits_pinned_epoch_headers()]`.
-- Test-code evidence: `tests/peer_fence_test.mjs:11 [UTF8-LF sha256=09b55379b95c3b6402e82a180369b18f3261bd34f3f5b67b6511fdb3cf255c90; anchor=Upload callbacks precede middleware]`.
+- Test-code evidence: `tests/peer_fence_test.mjs:20 [UTF8-LF sha256=a96ca49c6fdbc0c425f6199d6c4371a76536ca9db785e9d093047953d31a101c; anchor=Upload callbacks precede middleware]`.
 - Test-code evidence: `desktop/src/peer_http.rs:321 [UTF8-LF sha256=8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c; anchor=fn gui_preflight_reboot_or_capability_loss_never_dispatches_mutation()]`.
 - Test-code evidence: `desktop/src/peer_http.rs:354 [UTF8-LF sha256=8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c; anchor=fn gui_readback_from_new_boot_is_not_applied()]`.
 - Test-code evidence: `desktop/src/peer_http.rs:413 [UTF8-LF sha256=8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c; anchor=fn gui_unfenced_mutation_fails_before_network_and_preserves_correlation()]`.
 - Test-code evidence: `desktop/src/peer_http.rs:338 [UTF8-LF sha256=8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c; anchor=fn gui_server_boot_conflict_is_not_replayed()]`.
+- Test-code evidence: `tests/web_access_fence_test.cpp:69 [UTF8-LF sha256=5eb03895e22d12a41c817a1d198a828494a299a4ef95922a9bfa9e553a1b461e; anchor=Real async queue + real fence recheck]`.
 - Remaining: GUI HTTP and Web pin adoption implemented as bounded slices; native WebSocket/USB/mobile/standalone CLI/cloud fencing, remembered pairing and AVR-only boot identity remain pending; ESP32-S3 application not integrated.
 - Remaining: Port remaining useful serial lifecycle/priority/ACK/reset tests; fixtures/source/compile are not physical acceptance.
 
@@ -328,7 +330,8 @@ Verdict: **parity-gap**. Revision: `38f48d06f6922225e9a100d0afc2d787b5a000bd`. O
 
 - Target: `desktop/src/terminal_ui.rs:804 [UTF8-LF sha256=8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225; anchor=fn command_request(]`.
 - Target: `libraries/BoardCore/src/PeerFence.h:31 [UTF8-LF sha256=9f1ab63252bd881d2fc786e230a18db331e66708a1bd3ccd0f096d2d2b5d49d5; anchor=inline bool accepts(]`.
-- Target: `firmware/esp8266/src/WebAccess.h:49 [UTF8-LF sha256=6603f677d19f76b4b1af3b0d307a61e910cafb19c25783e1600d07d30c40a3e4; anchor=bool peerAllowed(]`.
+- Target: `firmware/esp8266/src/WebAccess.h:49 [UTF8-LF sha256=61d03a9873f2e633a2f26efc059f24e692de4b2831fdf61ec128cddd8e251ae2; anchor=bool peerAllowed(]`.
+- Target: `firmware/esp8266/esp8266.ino:868 [UTF8-LF sha256=20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac; anchor=bool authenticate()]`.
 - Target: `assets/web/peer-http.js:32 [UTF8-LF sha256=a56aca0f2a159a0bdf22f1db0bde8541aa745693282167c28d3a0d08cb6c67d3; anchor=function assertOwner(peer)]`.
 - Target: `desktop/src/peer_http.rs:73 [UTF8-LF sha256=8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c; anchor=pub fn admit(]`.
 - Target: `desktop/src/main.rs:492 [UTF8-LF sha256=3c62247de08155ff30fbe04aebd095410f1d94c20e3d435a238cdbfa039d25f1; anchor=fn scoped_http_request(]`.
@@ -336,14 +339,16 @@ Verdict: **parity-gap**. Revision: `38f48d06f6922225e9a100d0afc2d787b5a000bd`. O
 - Retained: Full source read. Fail-closed identity checks strengthened with HTTP server-side board/boot fences; donor HELLO/build stamp is NOT a boot epoch.
 - Retained: Before/after admission ownership checks also adapted to Web's shared pinned HTTP preflight and post-response generation validation. Existing session.go full review/live 1bf4d52 hash remains unchanged; this is not import of Go serial acquisition or request-priority scheduling.
 - Retained: Full session.go reread through EOF and live source hash reverified. Actual acquireWrite/requestAdmission before/after admission closing checks adapted to native HTTP queued generation, deadline and post-preflight ownership checks. Shared native/TUI strict Pin validation removes the duplicate validator; pinned clients refuse redirects.
+- Retained: Reread complete donor at unchanged live hash for firmware admission/dispatch ownership. Supplied HTTP headers are checked for all methods including hardware-affecting GET probe; actual loop dispatch rechecks the same request before SPI/reset. Header-free compatibility is deliberately unfenced, not ownership proof.
 - Omitted/replaced code: `serialOpenWithPending/late acquisition/configuration cancellation/close retry, preclose ordering and terminal error ownership; corresponding fakePort tests`. Disposition: **pending**. Reason: Useful serial lifecycle/quarantine has no equivalent in HTTP-only TUI. Adapt with actual Rust USB owner before discovery/reconnect; never close another client's port.
 - Omitted/replaced code: `priority requestAdmission, sequence/opcode-matched ACK/Error/events, reserved macro sequence, boot HELLO retry and recoverable decoder overflow tests`. Disposition: **pending**. Reason: HTTP fencing is not downstream AVR ACK/decoder ownership. These production behaviors and exact tests remain pending with USB/UART host integration.
 - Omitted/replaced code: `compact HELLO schemas/build stamp and DTR reset/inactive control-line tests`. Disposition: **pending**. Reason: Build stamp is not board/boot identity; numbered public generation negotiation conflicts with living API. Adapt additive identity and explicit one-shot reset policy with serial owner, without schema selectors/reset-on-connect.
 - Test-code evidence: `desktop/src/terminal_ui.rs:1066 [UTF8-LF sha256=8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225; anchor=fn same_hostname_reboot_revokes_drafts_and_old_receipts()]`.
-- Test-code evidence: `tests/peer_fence_test.mjs:11 [UTF8-LF sha256=09b55379b95c3b6402e82a180369b18f3261bd34f3f5b67b6511fdb3cf255c90; anchor=Upload callbacks precede middleware]`.
+- Test-code evidence: `tests/peer_fence_test.mjs:20 [UTF8-LF sha256=a96ca49c6fdbc0c425f6199d6c4371a76536ca9db785e9d093047953d31a101c; anchor=Upload callbacks precede middleware]`.
 - Test-code evidence: `tests/web_peer_http_test.mjs:22 [UTF8-LF sha256=e6c5d2fec06ef43602252c62e341f0126c457b11c9fe5bb8a08636301ce37f0c; anchor=Same-host reboot between draft creation and preflight]`.
 - Test-code evidence: `desktop/src/peer_http.rs:371 [UTF8-LF sha256=8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c; anchor=fn gui_revocation_during_preflight_stops_before_write()]`.
 - Test-code evidence: `desktop/src/peer_http.rs:391 [UTF8-LF sha256=8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c; anchor=fn gui_revocation_after_dispatch_reports_uncertainty_not_success()]`.
+- Test-code evidence: `tests/web_access_fence_test.cpp:69 [UTF8-LF sha256=5eb03895e22d12a41c817a1d198a828494a299a4ef95922a9bfa9e553a1b461e; anchor=Real async queue + real fence recheck]`.
 - Remaining: GUI HTTP and Web pin adoption implemented as bounded slices; native WebSocket/USB/mobile/standalone CLI/cloud fencing, remembered pairing and AVR-only boot identity remain pending; ESP32-S3 application not integrated.
 - Remaining: Port remaining useful serial lifecycle/priority/ACK/reset tests; fixtures/source/compile are not physical acceptance.
 
@@ -451,7 +456,7 @@ Verdict: **parity-gap**. Revision: `38f48d06f6922225e9a100d0afc2d787b5a000bd`. O
 - Omitted/replaced code: `Side A/B directional relay and motion-door policy matrix, temperature role swapping, retired MOVE alias and DS18B20 absent-pullup tests`. Disposition: **not-applicable**. Reason: This fitted board has no directional motors/door policy or DS18B20. Do not enable these or copy donor relay pin mapping; future generic adapters remain feature-flagged with their own acceptance.
 - Omitted/replaced code: `Full key double-click/fast-repeat/16-bit rollover, transition smoothing, context-sensitive leaf navigation/settings normalization and tone timer/queue cases`. Disposition: **pending**. Reason: Pakar has existing key/tone/front-panel suites, but these complete donor assertions have not all been transplanted or compared behavior-by-behavior. A display-only import is not proof of those generic contracts.
 - Test-code evidence: `tools/test-display.ps1:7 [UTF8-LF sha256=e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51; anchor=foreach ($taskVariant]`.
-- Test-code evidence: `tools/test-protocol.sh:59 [UTF8-LF sha256=3adc128d22eb0397fd547776d0c69394f58aaa4d4d57cb7d0c16efeae3863d2a; anchor=for display_flags]`.
+- Test-code evidence: `tools/test-protocol.sh:59 [UTF8-LF sha256=a92844f312290ada664d81fab1fe1453f498e32739d981c4ef42e85a1187893d; anchor=for display_flags]`.
 - Scoped advantage: Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified.
 - Remaining: Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof.
 
@@ -1075,7 +1080,7 @@ Verdict: **parity-gap**. Revision: `fbf2d162073fe6171cb17ba94ec68c3b202911db`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `0113acbff973285f5af186a4857d94cc2df3c99813e0db4ba876f861e7c1083b`.
 
 - Target: `firmware/esp8266/src/TelnetShell.h:63 [UTF8-LF sha256=dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec; anchor=class LineEditor]`.
-- Target: `firmware/esp8266/esp8266.ino:2390 [UTF8-LF sha256=5568bbe0f08f2877959d4e170df2f4ec91bc184ec57b843607867d5ff6164e00; anchor=void executeTelnetCommand(String line)]`.
+- Target: `firmware/esp8266/esp8266.ino:2395 [UTF8-LF sha256=20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac; anchor=void executeTelnetCommand(String line)]`.
 - Retained: Actual insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL handling retained.
 - Retained: Password input is not echoed and is scrubbed; overflow discards the entire line instead of executing a truncated command; editor state is independent.
 - Omitted/replaced code: `ShellTransport_Serial, SerialShellSession and serial-shell service`. Disposition: **pending**. Reason: USB currently owns COBS-framed PC commands. Mixing raw shell bytes would corrupt that transport; provide an explicit framed shell channel or negotiated mode before claiming equivalent serial-shell support.
@@ -1093,7 +1098,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `9f8e76509ad917d8e204a82d9495e376607a159547d4eee3de6760e6bd5d7da6`.
 
 - Target: `firmware/esp8266/src/TelnetShell.h:63 [UTF8-LF sha256=dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec; anchor=class LineEditor]`.
-- Target: `firmware/esp8266/esp8266.ino:2390 [UTF8-LF sha256=5568bbe0f08f2877959d4e170df2f4ec91bc184ec57b843607867d5ff6164e00; anchor=void executeTelnetCommand(String line)]`.
+- Target: `firmware/esp8266/esp8266.ino:2395 [UTF8-LF sha256=20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac; anchor=void executeTelnetCommand(String line)]`.
 - Retained: Actual insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL handling retained.
 - Retained: Password input is not echoed and is scrubbed; overflow discards the entire line instead of executing a truncated command; editor state is independent.
 - Omitted/replaced code: `ShellTransport_Serial, SerialShellSession and serial-shell service`. Disposition: **pending**. Reason: USB currently owns COBS-framed PC commands. Mixing raw shell bytes would corrupt that transport; provide an explicit framed shell channel or negotiated mode before claiming equivalent serial-shell support.
@@ -1111,7 +1116,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `a78d88c149d19d8989c6db3dce0731189c2bf46c45fd64b73e9871a80f6c9bdd`.
 
 - Target: `firmware/esp8266/src/TelnetShell.h:13 [UTF8-LF sha256=dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec; anchor=class TelnetParser]`.
-- Target: `firmware/esp8266/esp8266.ino:2507 [UTF8-LF sha256=5568bbe0f08f2877959d4e170df2f4ec91bc184ec57b843607867d5ff6164e00; anchor=void serviceTelnet() {]`.
+- Target: `firmware/esp8266/esp8266.ino:2512 [UTF8-LF sha256=20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac; anchor=void serviceTelnet() {]`.
 - Retained: Actual five-state IAC/option/subnegotiation parser, escaped IAC, ECHO/SGA negotiation and greeting retained in standalone WiFiClient-based implementation.
 - Retained: Pakar tracks option state to suppress greeting-ack negotiation loops; unsupported DO/WILL options are explicitly rejected.
 - Omitted/replaced code: `ESPTelnet dependency and ESP8266WEBSERVER_H synchronous-header suppression`. Disposition: **replaced**. Reason: Native WiFiServer/WiFiClient removes the dependency which pulled a conflicting synchronous web-server header into an async server product; the actual protocol parser was retained rather than replaced by plain newline input.
@@ -1126,7 +1131,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `e85f5f1a4f2767323d9886313ddb2aabfd3acad7d781c2770bc8d2b2d2c6cb15`.
 
 - Target: `firmware/esp8266/src/TelnetShell.h:13 [UTF8-LF sha256=dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec; anchor=class TelnetParser]`.
-- Target: `firmware/esp8266/esp8266.ino:2507 [UTF8-LF sha256=5568bbe0f08f2877959d4e170df2f4ec91bc184ec57b843607867d5ff6164e00; anchor=void serviceTelnet() {]`.
+- Target: `firmware/esp8266/esp8266.ino:2512 [UTF8-LF sha256=20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac; anchor=void serviceTelnet() {]`.
 - Retained: Actual five-state IAC/option/subnegotiation parser, escaped IAC, ECHO/SGA negotiation and greeting retained in standalone WiFiClient-based implementation.
 - Retained: Pakar tracks option state to suppress greeting-ack negotiation loops; unsupported DO/WILL options are explicitly rejected.
 - Omitted/replaced code: `ESPTelnet dependency and ESP8266WEBSERVER_H synchronous-header suppression`. Disposition: **replaced**. Reason: Native WiFiServer/WiFiClient removes the dependency which pulled a conflicting synchronous web-server header into an async server product; the actual protocol parser was retained rather than replaced by plain newline input.

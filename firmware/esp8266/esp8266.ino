@@ -877,6 +877,11 @@ bool authenticate() {
     server.send(409, "text/plain", "AVR image upload in progress"); return false;
   }
   if (server.request() && webAccess.allowed(server.request())) {
+    // Middleware admits async requests before loop dispatch. Recheck ownership
+    // at the hardware boundary as well, not only when entering the queue.
+    if (!webAccess.peerAllowed(server.request())) {
+      server.send(409, "application/json", "{\"error\":\"peer_changed\",\"accepted\":false}"); return false;
+    }
     const String path = server.request()->url();
     using namespace BoardCore::Context;
     uint16_t required = 0;
