@@ -1,0 +1,273 @@
+{
+  "schema": 1,
+  "donor": "PCController",
+  "revision": "20c6115bb462fe5111b66cd7c21f7328a1f78892",
+  "scope": "Focused current-hardware contract review; not whole-project parity or physical proof",
+  "files": [
+    {
+      "source": "Project/ProtocolContract.json",
+      "source_sha256": "af30319345d28fbae9fb2fb2cee755252a224ce79c31ad3bd8039b27ab279a1f",
+      "source_read": "complete",
+      "target": "docs/pccontroller/ProtocolContract.json",
+      "target_sha256_utf8_lf": "af30319345d28fbae9fb2fb2cee755252a224ce79c31ad3bd8039b27ab279a1f",
+      "line": 5,
+      "anchor": "\"maximumPayload\"",
+      "retained": "Imported actual registry unchanged. All registered requests classified in PC-CONTROLLER-CONTRACTS.md.",
+      "omitted_code_and_reason": "None."
+    },
+    {
+      "source": "Project/ProtocolContract.h",
+      "source_sha256": "7d69fa2430137e34dda659b3dd7fcc526814d3ed685f8efebe0923d052f3f77a",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/pccontroller/ProtocolContract.h",
+      "target_sha256_utf8_lf": "7d69fa2430137e34dda659b3dd7fcc526814d3ed685f8efebe0923d052f3f77a",
+      "line": 11,
+      "anchor": "namespace ControllerProtocol",
+      "retained": "Imported actual generated constants, enum and assertions unchanged.",
+      "omitted_code_and_reason": "Donor schema-3 sensor settings/status not advertised as this board; explicitly negotiated profile 0x50."
+    },
+    {
+      "source": "Project/UartProtocol.h",
+      "source_sha256": "287a95a65a9b9655e64a15ece051bc792a06564b648a1b53eed4f373c564e458",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/Protocol.h",
+      "target_sha256_utf8_lf": "545ac0373b98edf2a67e5c062f3c48cbe2c5208455f84a978fe6323c505332f3",
+      "line": 36,
+      "anchor": "kPcContract = 0x56",
+      "retained": "Retains native opcode/error values in isolated tunneled dialect; existing COBS/CRC shared transport owns framing. Fully reread after contextual display capability and read-only USB identity chunk additions: envelope bounds, CRC validation and 0x56/0x57 tunneled dialect remain unchanged.",
+      "omitted_code_and_reason": "Donor Stream-owning wrapper replaced by existing SerialLink; copying a second UART owner would collide. Direct donor opcode namespace cannot alias Pakar 0x11 audio."
+    },
+    {
+      "source": "Project/ProtocolCodec.h",
+      "source_sha256": "b35dc074bf98c9782b83e2ebbdd594ba0537211f7ee90df5c36fcec2ecc771f1",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/WireCodec.h",
+      "target_sha256_utf8_lf": "d54686786b9e8295c2959c16623eb3831af05f26f6caf489a26916735b5c8a91",
+      "line": 8,
+      "anchor": "crc8",
+      "retained": "Existing bounded CRC/COBS codec retained; new transport/assembly tests bind sequence, size and corruption boundaries.",
+      "omitted_code_and_reason": "Do not instantiate duplicate raw decoder or enlarge AVR frame buffers; full 48-byte requests assembled with independent 0x57 chunks."
+    },
+    {
+      "source": "Project/Core/MacroRing.h",
+      "source_sha256": "7060f11e59ad79a44fcd182de0081e0235161ea0032eda09bb0709416cc76c37",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/pccontroller/MacroRing.h",
+      "target_sha256_utf8_lf": "7060f11e59ad79a44fcd182de0081e0235161ea0032eda09bb0709416cc76c37",
+      "line": 10,
+      "anchor": "class MacroRing",
+      "retained": "Actual fixed-budget scheduler imported unchanged.",
+      "omitted_code_and_reason": "None; board output opcode supplied by real adapter."
+    },
+    {
+      "source": "Project/Core/MacroRing.cpp",
+      "source_sha256": "d397ad0c974ad7eb530d84dc2cc56cd851807dc9dc25fdfb57ed8069c5a21498",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/pccontroller/MacroRing.cpp",
+      "target_sha256_utf8_lf": "d397ad0c974ad7eb530d84dc2cc56cd851807dc9dc25fdfb57ed8069c5a21498",
+      "line": 8,
+      "anchor": "MacroRing::initialize",
+      "retained": "Actual ring timing, append, cancel, record/read/replay and shared workspace imported unchanged.",
+      "omitted_code_and_reason": "None."
+    },
+    {
+      "source": "Project/MacroQueue.h",
+      "source_sha256": "57b32c4e0b9144a77a68118aceb35bbfcd366b6098601c5a5241a7125047a011",
+      "source_read": "complete",
+      "target": "firmware/avr/PcControllerRuntime.h",
+      "target_sha256_utf8_lf": "79f7792995c1d8bda3efdada582b97e0db2c8ddda4d44dd45050e74fa18ef7b0",
+      "line": 71,
+      "anchor": "ControllerCore::MacroRing ring_",
+      "retained": "Same actual MacroRing owner behind Pakar hardware interface.",
+      "omitted_code_and_reason": "Donor UartProtocol/global relay state wrapper replaced; a second ring or relay substitute would waste RAM or lie about installed hardware."
+    },
+    {
+      "source": "Project/MacroQueue.cpp",
+      "source_sha256": "43a627c50e9908c20ea4b1d33c2eb4ef914672362ec5b9f5129604a7e5678b96",
+      "source_read": "complete",
+      "target": "firmware/avr/PcControllerRuntime.cpp",
+      "target_sha256_utf8_lf": "08f13d7eb72f44e826b6bad46d5474a2af43c225c72efd1c1d2c8976a5d05243",
+      "line": 280,
+      "anchor": "PcControllerRuntime::macro(",
+      "retained": "Ring lifecycle and result events integrated into guarded common dispatch; shift-mask recordings use real outputs.",
+      "omitted_code_and_reason": "Relay-specific recording opcode replaced by Pakar OutputMask; no relay side/safety hardware exists."
+    },
+    {
+      "source": "LocalLib/Keys.h",
+      "source_sha256": "44cdda70444f99398c29195599b19707646bb89b4daaf527a27b2495ebd25752",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/pccontroller/Keys.h",
+      "target_sha256_utf8_lf": "6df4169d3ded9dab1a0948ea519a0fcf6353fb836a6eac8a2c92ea051a341c58",
+      "line": 21,
+      "anchor": "class Key",
+      "retained": "Actual callback/gesture classifier for Down/Up/click/double/hold/fast repeat, configurable debounce.",
+      "omitted_code_and_reason": "ShiftRegisters include/read method replaced by updateSample so the ninth ADC input uses the same classifier."
+    },
+    {
+      "source": "LocalLib/Keys.cpp",
+      "source_sha256": "cadb4100723f6f296ec58b6735384b625364034333418415a9a350ddff3a24a6",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/pccontroller/Keys.cpp",
+      "target_sha256_utf8_lf": "d9b8c8d4ec6beef667c01c5b5e3af539ead2429393e2632c4c59461f30c14224",
+      "line": 19,
+      "anchor": "Key::updateSample",
+      "retained": "Actual classified lifecycle algorithms retained; all nine actual samples connected.",
+      "omitted_code_and_reason": "Raw readCurrentState implementation replaced by board adapter; no alternate game debounce engine."
+    },
+    {
+      "source": "Project/AutomationStore.h",
+      "source_sha256": "adc48b05b237bac5093e748e820d06515efe991e4fef2a696dbdbecd262f658a",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/pccontroller/AutomationStore.h",
+      "target_sha256_utf8_lf": "881d09b14a807e8907209e6e14aa87d630313051180f01975b88d0c21b64d98f",
+      "line": 63,
+      "anchor": "class AutomationStore",
+      "retained": "Actual 11-record banked store and action executor retained.",
+      "omitted_code_and_reason": "Hardware mismatched event/actions remain rejected by installed-profile adapter."
+    },
+    {
+      "source": "Project/AutomationStore.cpp",
+      "source_sha256": "09abbdbfe7fb317e7a690bb5783fe5eaca3809bb24fb0cbc8b6baf7bcc06dc5c",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/pccontroller/AutomationStore.cpp",
+      "target_sha256_utf8_lf": "407a096581a52e81c2a7f58a1cc4a7b2a3a7b09507ec7a1719d2a5bef0c3acb4",
+      "line": 103,
+      "anchor": "AutomationStore::valid(",
+      "retained": "Actual budgets/recursion, CRC records, pagination/generation, transaction switching; commit readback added and blank EEPROM stays volatile. Key IDs extended 0..8.",
+      "omitted_code_and_reason": "Implicit clear/provision on blank storage removed to avoid unauthorized EEPROM writes. UART CRC helper replaced with same shared CRC codec. ESP compile excludes AVR-owned EEPROM store."
+    },
+    {
+      "source": "Project/EepromLayout.h",
+      "source_sha256": "0e66bc2ec21af409850514d2b1770478c502d2fe1136894248f91fce9b358f55",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/pccontroller/EepromLayout.h",
+      "target_sha256_utf8_lf": "09db0c5e3a6ae49be6fd3df87bf2bece49aba8f1b01b8ea3b351b104bc23221d",
+      "line": 5,
+      "anchor": "SettingsBankA",
+      "retained": "Named disjoint dual settings/automation banks and static budget retained.",
+      "omitted_code_and_reason": "RF/calibration/relay regions not installed. Current Prog record at 1008 retained, not overwritten by donor layout."
+    },
+    {
+      "source": "Project/SettingsStore.h",
+      "source_sha256": "f18c37c25e9c4320976f94efdac6166fc3177f8501486296e3be69c38e1c9c0a",
+      "source_read": "complete",
+      "target": "firmware/avr/BoardSettings.h",
+      "target_sha256_utf8_lf": "6bd5587eea26e1fbf0f1b5b827a5c5fc22b26bffb1bcf7cde8fcd2384d37946e",
+      "line": 9,
+      "anchor": "struct __attribute__((packed)) BoardSettings",
+      "retained": "Silent, brightness, stream, persistent visible/order/default and save-last-page behavior; validated explicit profile and name/ADC threshold.",
+      "omitted_code_and_reason": "PWM/relay restore, motion/door timings, status RGB, sensor swapping/decimals require absent hardware. ProgrammingMode remains independent existing durable Prog latch. New welcome bit is not donor ProgrammingMode bit."
+    },
+    {
+      "source": "Project/SettingsStore.cpp",
+      "source_sha256": "11cb84d95eb2f12f63b5de8c163aa097d7690dbbe43a206ab1d9f52d4805fd3f",
+      "source_read": "complete",
+      "target": "firmware/avr/BoardSettings.cpp",
+      "target_sha256_utf8_lf": "05fe32b1b3ea00f1e0dc49c0f6ecf7c2b9e32b9da8f5b097a6abd03bff11ec58",
+      "line": 31,
+      "anchor": "BoardSettingsStore::replace",
+      "retained": "Donor deferred 1500ms coalescing/wear reduction retained; dual-bank commit-last/readback and pending-edit rollback improved.",
+      "omitted_code_and_reason": "Single donor layout/implicit factory persistence replaced with explicit profile and no boot write; no copying incompatible donor EEPROM bytes."
+    },
+    {
+      "source": "Project/FrontPanelModel.h",
+      "source_sha256": "1e4e69d6d3b3a8d4a159104d7c4faf97e43520ed8ba33fc48bb3be4f9f60b084",
+      "source_read": "complete",
+      "target": "firmware/avr/PcControllerRuntime.cpp",
+      "target_sha256_utf8_lf": "08f13d7eb72f44e826b6bad46d5474a2af43c225c72efd1c1d2c8976a5d05243",
+      "line": 10,
+      "anchor": "constexpr uint8_t labels",
+      "retained": "Stable page list/layout/hide/reorder and real six-page state adapted to present hardware.",
+      "omitted_code_and_reason": "Fourteen sensor/motion/RF/PWM/relay modes and related enum values are not applicable; six IDs are explicitly profile-specific, not fake donor mode IDs."
+    },
+    {
+      "source": "Project/ControllerEvents.h",
+      "source_sha256": "6657149568743f406838cd70c08623bd0ffe6213cf421c51d88480e249da791f",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/pccontroller/ControllerEvents.h",
+      "target_sha256_utf8_lf": "86f129d130e8789f52f5d71dcfa91c7ead739f09b4e4df9c6a545d44d3a07f88",
+      "line": 53,
+      "anchor": "class ControllerEvents",
+      "retained": "Actual typed donor event API imported. Key and automation encoders feed a bounded sink and preserve exact five-byte payloads; all latent hardware encoders retained without fake emissions.",
+      "omitted_code_and_reason": "UartProtocol ownership replaced with ControllerEventSink, because existing SerialLink owns framing. Door/Bluetooth/PWM/RF/relay/fault/alert producers remain unavailable until actual hardware/profile adapters exist."
+    },
+    {
+      "source": "Project/AddressableLeds.h",
+      "source_sha256": "a28009e6211056f0cdb1071e7232d6d277a27cf9dc8e3e9951be9830745f18d4",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/PcLedContract.h",
+      "target_sha256_utf8_lf": "63612c90553fcda2cb77c360ceb700f6ed9395051c40985ff9514555019dc484",
+      "line": 15,
+      "anchor": "class PcLedContract",
+      "retained": "Actual donor bounded LED configure/stage/commit/pixel/fill wire semantics routed to ESP's one engine.",
+      "omitted_code_and_reason": "AVR Adafruit driver and duplicate buffer omitted: strip physically on ESP D2, AVR RAM scarce. Optional AVR guard default off."
+    },
+    {
+      "source": "Project/AddressableLeds.cpp",
+      "source_sha256": "858313b9936e6764aff93c77d9317d9ec9a11406dac00393206511ff1d980e5f",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/PcLedContract.h",
+      "target_sha256_utf8_lf": "63612c90553fcda2cb77c360ceb700f6ed9395051c40985ff9514555019dc484",
+      "line": 35,
+      "anchor": "output_.brightness",
+      "retained": "Donor 100-pixel indexed window and staging semantics; shared output brightness is real instead of donor stub.",
+      "omitted_code_and_reason": "Donor empty brightness implementation replaced with actual shared ESP brightness. Existing 480-pixel PKR1 remains separate, never silently truncated."
+    },
+    {
+      "source": "LocalLib/SevenSegments.h",
+      "source_sha256": "e58e1783404f494ea7b1852780b6485cbfda872781b9159b9ee29426edae9240",
+      "source_read": "complete",
+      "target": "firmware/avr/SevenSegments.h",
+      "target_sha256_utf8_lf": "a2719b4f3d9c21e98200420a91cb0326b1869dbcfb90136a1184e379f7b7ee3b",
+      "line": 29,
+      "anchor": "bool detected()",
+      "retained": "Actual bus presence/recovery API, cached raw snapshot and active brightness service.",
+      "omitted_code_and_reason": "Donor PB3/PB5 pins replaced with user-confirmed PC4/PC5; donor pins are needed for ISP."
+    },
+    {
+      "source": "LocalLib/SevenSegments.cpp",
+      "source_sha256": "54c366525142aca0103a8d58f7ce8d9cbc34c1b5884b20a1ad5ae50ddc6bb4a8",
+      "source_read": "complete",
+      "target": "firmware/avr/SevenSegments.cpp",
+      "target_sha256_utf8_lf": "28547987e3fe6bf85e13763fa93ef8bb234f8d8f6204b43658058f070f6d9228",
+      "line": 21,
+      "anchor": "bool busNack",
+      "retained": "Ninth-clock ACK, reasserted cached frame/brightness keepalive, true-off; cumulative NACK prevents final ACK hiding earlier failure.",
+      "omitted_code_and_reason": "Pin mapping changed only for actual board; independent probe removed because it disagreed with driver cache. Physical recovery remains unverified."
+    },
+    {
+      "source": "Project/Runtime/ProtocolRuntime.inc.h",
+      "source_sha256": "b176da4a854a9b0b77c653d96a00d5359277e9c9681b47e14551d92b282b3301",
+      "source_read": "complete",
+      "target": "firmware/avr/PcControllerRuntime.cpp",
+      "target_sha256_utf8_lf": "08f13d7eb72f44e826b6bad46d5474a2af43c225c72efd1c1d2c8976a5d05243",
+      "line": 100,
+      "anchor": "PcControllerRuntime::dispatch",
+      "retained": "Entire donor dispatcher read; every registered request has an explicit current owner/response or exclusion. Actual algorithms reuse imported modules rather than duplicate engines.",
+      "omitted_code_and_reason": "All mismatched hardware handlers fail HardwareUnavailable, preserved future guards require drivers/pin profiles; registry-only host-menu IDs Unsupported. Profile-specific settings/status/menu IDs are not stock schema-3 byte compatibility."
+    },
+    {
+      "source": "Project/ControllerEvents.cpp",
+      "source_sha256": "afb40acc830f3fa672fd34d32ca5e0308ebb1aa2cc200e7e5f379f46c5e4bb25",
+      "source_read": "complete",
+      "target": "libraries/BoardCore/src/pccontroller/ControllerEvents.cpp",
+      "target_sha256_utf8_lf": "843504b233fc9b369c3ed375b6a8acac4e58c65324179cef7ff9b72d30b35051",
+      "line": 11,
+      "anchor": "void ControllerEvents::key",
+      "retained": "Actual donor key/source/automation and latent hardware event encoding methods imported. Five-byte key and buzzer payloads stay canonical; no UART-only timestamp extension.",
+      "omitted_code_and_reason": "Only transport sink and board automation build-flag names adapted. No event encoder removed. Producers for absent hardware cannot claim events."
+    }
+  ],
+  "proof": [
+    "tests/pc_contract_test.cpp",
+    "tests/pc_feature_flags_test.cpp",
+    "tests/pc_contract_cli_test.mjs",
+    "tests/front_panel_test.cpp"
+  ],
+  "not_certified": [
+    "Project/Runtime/FrontPanelRuntime.inc.h was inspected in relevant sections, not fully reviewed; no whole-file equivalence certification",
+    "Optional hardware drivers require adapter/pin profile before enabling",
+    "Dedicated GUI/Web/mobile editors for all new AVR contracts remain future integration",
+    "Physical board, EEPROM, Wi-Fi and cloud acceptance remain unverified"
+  ]
+}

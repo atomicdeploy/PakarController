@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "implementation_commit": "ec80d5d5a4e06ca659da92858e3cc4f85f75633b",
+  "historical_snapshot": "Original workspace refinement; see CELL-CAPTURE.md for the current follow-up",
+  "scope": "bounded donor slices and cell workspace only; not whole-file or hardware acceptance",
+  "donor": {
+    "repo": "Pealayer",
+    "base_head": "78563ff7501e13cb8e40a60dd181f69f127c550d",
+    "snapshot": "dirty canonical workspace; left untouched",
+    "reviewed_excerpts": [
+      {
+        "source": "src/app.rs",
+        "sha256": "f10ee89874ce9343baa6bfdeef225db9cd07d8c04352278f0173f90c6487e96c",
+        "start_line": 1897,
+        "end_line": 1978,
+        "excerpt": "                        let workspace_tab_rects_id = egui::Id::new(\"workspace-tab-button-rects\");\n                        ui.ctx().data_mut(|data| {\n                            data.insert_temp(workspace_tab_rects_id, Vec::<egui::Rect>::new());\n                        });\n                        self.workspace_rendering = true;\n                        let mut dock_state =\n                            std::mem::replace(&mut self.dock_state, egui_dock::DockState::new(vec![]));\n                        let mut dock_style = egui_dock::Style::from_egui(ui.style().as_ref());\n                        let dock_tab_bar_height = dock_style.tab_bar.height;\n                        // egui_dock paints legacy solid triangles for leaf disclosure.\n                        // Keep its hit target and behavior, but let Pealayer paint the\n                        // matching Phosphor caret from the application's icon vocabulary.\n                        dock_style.buttons.collapse_tabs_color = egui::Color32::TRANSPARENT;\n                        dock_style.buttons.collapse_tabs_active_color = egui::Color32::TRANSPARENT;\n                        let dock_response = ui.scope(|ui| {\n                            let mut tab_viewer = crate::ui::layout::PealayerTabViewer { app: self };\n                            egui_dock::DockArea::new(&mut dock_state)\n                                .style(dock_style)\n                                .show_leaf_collapse_buttons(true)\n                                .show_inside(ui, &mut tab_viewer);\n                        });\n                        self.dock_state = dock_state;\n                        self.workspace_rendering = false;\n                        if !self.pending_tab_reveals.is_empty() {\n                            let mut layout_changed = false;\n                            for tab in std::mem::take(&mut self.pending_tab_reveals) {\n                                if crate::ui::layout::reveal_and_focus_tab(&mut self.dock_state, tab) {\n                                    layout_changed = true;\n                                }\n                            }\n                            if layout_changed {\n                                self.save_dock_layout();\n                            }\n                            ui.ctx().request_repaint();\n                        }\n                        crate::ui::layout::paint_dock_disclosure_icons(\n                            ui,\n                            &self.dock_state,\n                            dock_tab_bar_height,\n                        );\n\n                        let tab_rects = ui.ctx().data_mut(|data| {\n                            data.get_temp::<Vec<egui::Rect>>(workspace_tab_rects_id)\n                                .unwrap_or_default()\n                        });\n                        let pointer = ui.ctx().pointer_hover_pos();\n                        let open_empty_tab_menu = ui.ctx().input(|input| {\n                            input.pointer.button_clicked(egui::PointerButton::Secondary)\n                        }) && pointer.is_some_and(|position| {\n                            dock_response.response.rect.contains(position)\n                                && tab_rects\n                                    .iter()\n                                    .any(|rect| rect.y_range().contains(position.y))\n                                && !tab_rects.iter().any(|rect| rect.contains(position))\n                        });\n                        let popup_anchor = ui.interact(\n                            dock_response.response.rect,\n                            egui::Id::new(\"workspace-empty-tabbar-context-anchor\"),\n                            egui::Sense::hover(),\n                        );\n                        egui::Popup::menu(&popup_anchor)\n                            .id(egui::Id::new(\"workspace-empty-tabbar-context-menu\"))\n                            .at_pointer_fixed()\n                            .open_memory(\n                                open_empty_tab_menu\n                                    .then_some(egui::SetOpenCommand::Bool(true)),\n                            )\n                            .show(|ui| {\n                                ui.strong(self.tr(\"Panels\"));\n                                ui.separator();\n                                crate::ui::layout::draw_workspace_tab_menu(self, ui);\n                            });\n\n                        dock_response.response.context_menu(|ui| {\n                            ui.label(egui::RichText::new(self.tr(\"Workspace\")).strong());\n                            ui.separator();\n                            crate::ui::layout::draw_workspace_tab_menu(self, ui);\n                            ui.separator();\n                            if ui\n                                .button(format!(\n                                    \"{} {}\",\n                                    crate::ui::icons::TABS,"
+      },
+      {
+        "source": "src/ui/layout.rs",
+        "sha256": "a926e2b63a72145f2903780428c193862c617f4e03cc11862c90e701612b2ff4",
+        "start_line": 11986,
+        "end_line": 12011,
+        "excerpt": "pub fn draw_workspace_tab_menu(app: &mut PealayerApp, ui: &mut egui::Ui) {\n    for tab in PealayerTab::ALL {\n        let is_open = app.is_tab_open(tab);\n        let mut visible = is_open;\n        let visibility_icon = if is_open {\n            crate::ui::icons::EYE\n        } else {\n            crate::ui::icons::EYE_SLASH\n        };\n        let label = format!(\"{visibility_icon}  {}  {}\", tab.icon(), tab.title(app));\n        if ui.checkbox(&mut visible, label).changed() {\n            if visible && !is_open {\n                app.open_or_focus_tab(tab);\n            } else if !visible && is_open {\n                app.toggle_tab(tab);\n            }\n            ui.close();\n        }\n    }\n}\n\npub struct PealayerTabViewer<'a> {\n    pub app: &'a mut PealayerApp,\n}\n\nimpl<'a> TabViewer for PealayerTabViewer<'a> {"
+      },
+      {
+        "source": "src/ui/layout.rs",
+        "sha256": "a926e2b63a72145f2903780428c193862c617f4e03cc11862c90e701612b2ff4",
+        "start_line": 12121,
+        "end_line": 12130,
+        "excerpt": "    fn on_tab_button(&mut self, _tab: &mut Self::Tab, response: &egui::Response) {\n        let id = egui::Id::new(\"workspace-tab-button-rects\");\n        response.ctx.data_mut(|data| {\n            let mut rects = data.get_temp::<Vec<egui::Rect>>(id).unwrap_or_default();\n            rects.push(response.rect);\n            data.insert_temp(id, rects);\n        });\n    }\n\n    fn scroll_bars(&self, tab: &Self::Tab) -> [bool; 2] {"
+      },
+      {
+        "source": "src/ui/menu.rs",
+        "sha256": "83aa188b01de2e8eea1206c25b793e47ccaffa2eb3a40ab1617168c912d082af",
+        "start_line": 485,
+        "end_line": 491,
+        "excerpt": "                    ui.separator();\n                    crate::ui::icons::submenu(\n                        ui,\n                        format!(\"{} {}\", crate::ui::icons::TABS, app.tr(\"Panels\")),\n                        |ui| crate::ui::layout::draw_workspace_tab_menu(app, ui),\n                    );\n                    ui.separator();"
+      },
+      {
+        "source": "src/ui/status_bar.rs",
+        "sha256": "99003b3a1c672b8e849ee587ed2144838e3eba99cf02af43e1056d5d24f5767d",
+        "start_line": 24,
+        "end_line": 24,
+        "excerpt": "    let panel = egui::Panel::bottom(\"status_bar\").show_inside(ui, |ui| {"
+      },
+      {
+        "source": "src/ui/status_bar.rs",
+        "sha256": "99003b3a1c672b8e849ee587ed2144838e3eba99cf02af43e1056d5d24f5767d",
+        "start_line": 169,
+        "end_line": 189,
+        "excerpt": "fn hide_item_menu(app: &PealayerApp, response: egui::Response, label: String) -> bool {\n    let mut hide = false;\n    response.context_menu(|ui| {\n        ui.label(egui::RichText::new(&label).strong());\n        ui.separator();\n        if ui\n            .button(format!(\n                \"{} {} {label}\",\n                crate::ui::icons::EYE_SLASH,\n                app.tr(\"Hide\")\n            ))\n            .clicked()\n        {\n            hide = true;\n            ui.close();\n        }\n    });\n    hide\n}\n\nfn draw_hardware_status(app: &mut PealayerApp, ui: &mut egui::Ui) {"
+      }
+    ]
+  },
+  "targets": [
+    {
+      "path": "desktop/src/ui/cell_table.rs",
+      "sha256": "4b4ac1cea0b076690cca0406c70c53c5e052ef32bebfa6efb5a92980c5c8b3f5"
+    },
+    {
+      "path": "desktop/src/ui/layout.rs",
+      "sha256": "bd7e58f9ea77a98218f9750aa9e7984eb5f0718c4f769f0c845f31e71349e913"
+    },
+    {
+      "path": "desktop/src/ui/shell.rs",
+      "sha256": "6cacc871f57003b9d455de232584d18fcd33bd4983e712d11fde09c2acdbb865"
+    },
+    {
+      "path": "desktop/src/ui/status_bar.rs",
+      "sha256": "21ace14b582a3d66e69ac78e9d3dd1cd7c2a4dab4b8401551b3cabb310161ae5"
+    },
+    {
+      "path": "desktop/src/ui/preferences.rs",
+      "sha256": "37804701273837f37a06fc402ac2057e85c1bcceb98b0304b29a885781677531"
+    },
+    {
+      "path": "desktop/src/config.rs",
+      "sha256": "0f5d3eae0e1f0e112fce194d233816934702f08508d7a6eece2c4c5161e12442"
+    },
+    {
+      "path": "firmware/esp8266/src/WebUi.h",
+      "sha256": "f3ed777ea8538c7e8387784ead075f45370dbc2b36b96bfed962c1d172f9029a"
+    },
+    {
+      "path": "tests/web_cell_table_test.mjs",
+      "sha256": "2c7c1c7fa01806e067cd9f05d192de891b82f2f934d1a0a06b9f59def43d1499"
+    }
+  ],
+  "native_binary": {
+    "sha256": "563678af67f969e855264928dfbf807cfb4d3e1e6dccec7e01202beb30d180d0",
+    "version": "0.2.7",
+    "running_pid": 74824
+  },
+  "screenshots": [
+    {
+      "file": "cell-manager.png",
+      "scope": "final binary, simulated read-only peer"
+    },
+    {
+      "file": "running-table.png",
+      "scope": "replacement running app, real saved profile, peer offline"
+    }
+  ],
+  "tests": {
+    "native": 84,
+    "web": "actual production chunk with DOM/HTTP doubles",
+    "pu_routes": 50,
+    "pc_contract_mappings": 23,
+    "firmware_profiles": [
+      "busy-wire",
+      "polling"
+    ]
+  },
+  "pending": [
+    "native UI gesture acceptance",
+    "ASUS installation",
+    "physical Web firmware deployment and readback",
+    "1837 whole-file donor comparisons"
+  ]
+}

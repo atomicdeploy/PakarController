@@ -1,0 +1,57 @@
+// Actual RayanLamp toast-layout.test.ts declaration assertions plus shipped
+// showToast/dismissToast/ToastRegion contracts. VM/DOM doubles, not pixels.
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+const css=read('assets/web/toasts.css'),module=read('assets/web/toasts.js');
+function declarationsFor(selector){const escaped=selector.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const match=css.match(new RegExp(`${escaped}\\s*\\{(?<declarations>[^}]*)\\}`));if(!match?.groups?.declarations)throw Error(`CSS rule not found: ${selector}`);return match.groups.declarations}
+assert.match(declarationsFor('.app-toast'),/\balign-items\s*:\s*center\s*;/);
+assert.match(declarationsFor('.toast-copy'),/\balign-content\s*:\s*center\s*;/);
+const doc={activeElement:null};
+function element(tag){return {tag,children:[],attributes:{},dataset:{},listeners:{},textContent:'',setAttribute(key,value){this.attributes[key]=value},appendChild(node){this.children.push(node)},append(...nodes){this.children.push(...nodes)},replaceChildren(...nodes){this.children=[...nodes]},contains(node){return this===node||this.children.some(child=>child.contains?.(node))},addEventListener(name,callback){this.listeners[name]=callback},focus(){doc.activeElement=this}}}
+doc.createElement=element;doc.createElementNS=(namespaceURI,tag)=>({...element(tag),namespaceURI});
+const root=element('div'),callbacks=new Map(),cancelled=new Set();let timerSerial=0;
+const context=vm.createContext({root,doc,setTimer:(fn,ms)=>{const id=++timerSerial;callbacks.set(id,{fn,ms});return id},clearTimer:id=>{callbacks.delete(id);cancelled.add(id)}});
+vm.runInContext(module+'\nvar locale="en";var controller=createToastController({root,document:doc,setTimer,clearTimer,translate:(key,values)=>(locale==="fa"?"بستن {title}":key).replace("{title}",values.title)});',context);
+const run=code=>vm.runInContext(code,context),snapshot=()=>JSON.parse(run('JSON.stringify(controller.snapshot())'));
+const id=run('controller.showToast("info","First","older message")');
+assert.equal(callbacks.get(1).ms,4500);
+const oldCallback=callbacks.get(1).fn;
+run('controller.showToast("success","Second","newer message")');
+oldCallback();assert.deepEqual(snapshot().map(x=>x.title),['Second'],'older expiry must not erase newer notification');
+assert.equal(root.attributes['aria-live'],'polite');assert.equal(root.attributes['aria-atomic'],'false');
+assert.equal(root.children[0].attributes.role,'status');
+const dismiss=root.children[0].children[2];assert.equal(dismiss.attributes['aria-label'],'Dismiss Second');
+assert.equal(dismiss.children[0].attributes['aria-hidden'],'true');
+doc.activeElement=dismiss;root.children[0].listeners.focusin();assert.equal(callbacks.size,0,'focused toast never expires');
+run('controller.showToast("error","Third","<script>alert(1)</script>")');
+assert.equal(doc.activeElement,root.children[0].children[2],'non-focused add preserves focused dismiss control');
+assert.equal(root.children[1].children[1].children[1].textContent,'<script>alert(1)</script>');
+root.children[0].listeners.keydown({key:'Escape',preventDefault(){}});
+assert.deepEqual(snapshot().map(x=>x.title),['Third']);assert.equal(doc.activeElement,root.children[0].children[2]);
+doc.activeElement=null;root.children[0].listeners.focusout({relatedTarget:null});
+assert.equal(callbacks.size,1);
+root.children[0].listeners.pointerenter();assert.equal(callbacks.size,0);
+root.children[0].listeners.focusin();root.children[0].listeners.focusout({relatedTarget:null});
+assert.equal(callbacks.size,0,'blur does not cancel an independent hover hold');
+root.children[0].listeners.pointerleave();assert.equal(callbacks.size,1);
+root.children[0].children[2].listeners.click();assert.equal(snapshot().length,0);
+for(let index=0;index<10;index++)run(`controller.showToast('info','${index}','text')`);
+assert.deepEqual(snapshot().map(x=>x.title),['6','7','8','9']);assert.equal(callbacks.size,4,'evicted timers must be cancelled');
+run('locale="fa";controller.refresh()');assert.equal(callbacks.size,4,'locale repaint must not reset lifetimes');
+assert.equal(root.children[0].children[2].attributes['aria-label'],'بستن 6');
+assert.deepEqual(snapshot().map(x=>x.title),['6','7','8','9'],'locale repaint does not translate supplied identity/message values');
+run('controller.showToast("invalid","Safe","x".repeat(9000),Infinity)');
+assert.equal(snapshot().at(-1).tone,'info');assert.equal(snapshot().at(-1).message.length,4096);
+const stale=[...callbacks.values()][0].fn;run('controller.destroy();controller.destroy()');stale();
+assert.equal(root.children.length,0);assert.equal(callbacks.size,0);assert.equal(run('controller.showToast("info","No","No")'),null);
+assert(!/innerHTML|localStorage|fetch\(/.test(module),'no injected markup, persistent messages or device mutation');
+assert.match(css,/prefers-reduced-motion/);assert.match(css,/forced-colors/);assert.match(css,/safe-area-inset-bottom/);assert.match(css,/\[dir=rtl\]/);
+const web=read('firmware/esp8266/src/WebUi.h');
+assert.equal(web.split('// BEGIN RAYANLAMP TOASTS').length,2);assert(web.includes(module));assert(web.includes(css));
+assert(!web.includes('notice.textContent='),'all shipped notifications must go through one queue');
+assert.match(web,/function report\(e,tone\)[^\n]*createToastController/);
+assert.match(web,/globalThis\.addEventListener\?\.\('pagehide'/);
+assert(read('assets/web/localization.js').includes('webToasts?.refresh()'));
+console.log('Actual donor toast layout, bounded ID queue/timers, keyboard/focus/hover, safe markup, locale refresh and production embedding pass; VM proof, not rendered or physical acceptance.');

@@ -31,6 +31,15 @@ enum Opcode : uint8_t {
   kSetBrightness = 0x51,
   kSetLedPattern = 0x52,
   kNetworkConfig = 0x53,
+  kAccessConfig = 0x54, // ESP physical USB only: reset staging, user/password chunks, commit.
+  kDeviceName = 0x55, // ESP physical USB: reset(0), label chunks(1), persist/apply(2).
+  kPcContract = 0x56, // [PCController opcode, payload]; isolated from legacy 0x11 audio.
+  kPcContractChunk = 0x57, // Full 48-byte donor request, bounded two-frame assembly.
+  kGetTelemetry = 0x58, // Read-only; does not renew PCController's host/control lease.
+  kGetIdentity = 0x59, // ESP USB: [nonce, offset16], bounded read-only identity chunks.
+  kIdentityResponse = 0xB2, // [nonce, revision32, total16, offset16, <=39 JSON bytes].
+  kTelemetryResponse = 0xB1, // Schema 1, 46 bytes; actual AVR observations.
+  kPcContractResponse = 0xB0, // [PCController response opcode, payload].
 
   kAck = 0x80,
   kHelloResponse = 0x81,
@@ -75,6 +84,9 @@ enum AudioCue : uint8_t {
   kCueFault = 9,
   kCueIncrease = 10,
   kCueDecrease = 11,
+  kCueWelcomePuzzleBoard = 12,
+  kCueWelcome40Led = 13,
+  kCueCount = 14,
 };
 
 enum Capability : uint16_t {
@@ -92,6 +104,7 @@ enum Capability : uint16_t {
   kCapNtp = 1U << 11,
   kCapBusyWire = 1U << 12,
   kCapHostSerial = 1U << 13,
+  kCapDisplayText = 1U << 14, // Individual HELLO acknowledgement of the text adapter.
 };
 
 struct Frame {

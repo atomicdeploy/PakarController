@@ -1,0 +1,7 @@
+# Additive fragment for the existing device credentials. This username is a
+# legacy credential identity, NOT the configured device hostname.
+user pakarcontroller-b45634
+topic read pakarcontroller/ledboard/command
+topic write pakarcontroller/ledboard/status
+topic write pakarcontroller/ledboard/availability
+topic write pakarcontroller/ledboard/event

@@ -1,0 +1,84 @@
+#pragma once
+
+#include <Arduino.h>
+
+// Front-key debounce, multi-click, and accelerated-hold timing in milliseconds.
+// Keep debounce short: the primary action runs on the debounced Down edge and
+// must remain perceptibly immediate even though Click classification is later.
+#ifndef PAKAR_KEY_DEBOUNCE_MS
+#define PAKAR_KEY_DEBOUNCE_MS 20
+#endif
+static_assert(PAKAR_KEY_DEBOUNCE_MS >= 1 && PAKAR_KEY_DEBOUNCE_MS <= 1000,
+              "PAKAR_KEY_DEBOUNCE_MS must be 1..1000");
+constexpr uint16_t KEY_DEBOUNCE_MS = PAKAR_KEY_DEBOUNCE_MS;
+constexpr uint16_t KEY_DOUBLE_CLICK_MS = 300;
+constexpr uint16_t KEY_HOLD_START_MS = 600;
+constexpr uint16_t KEY_HOLD_REPEAT_MS = 150;
+constexpr uint16_t KEY_HOLD_FAST_AFTER_MS = 1800;
+constexpr uint16_t KEY_HOLD_REPEAT_FAST_MS = 60;
+
+// KeyEvent is the debounced, classified lifecycle emitted for one front key.
+enum class KeyEvent : uint8_t {
+  Click = 0,
+  DoubleClick,
+  HoldStart,
+  HoldRepeat,
+  HoldRelease,
+  Down,
+  Up,
+};
+
+// Local and injected key lifecycles share one latency contract: the initial
+// action belongs to Down, repeats belong to HoldRepeat, and Click/HoldStart are
+// classification/telemetry only. This prevents the double-click window from
+// ever becoming input latency.
+constexpr bool keyEventRunsPrimaryAction(KeyEvent event) {
+  return event == KeyEvent::Down || event == KeyEvent::HoldRepeat;
+}
+
+using KeyEventCallback =
+    void (*)(uint8_t bit, KeyEvent event, void *context);
+
+// Key classifies active-low samples into click, double-click, and hold events.
+class Key {
+public:
+  // Static firmware storage is zero-filled before setup. The trivial default
+  // constructor lets the four-key array avoid duplicating that reset in the
+  // AVR global-constructor path; begin() establishes its live bit identity.
+  Key() = default;
+  explicit Key(uint8_t bit);
+
+  void begin(uint8_t bit);
+
+  void updateSample(bool pressed, uint32_t now = millis());
+
+  bool isPressed() const;
+  bool isHeld() const;
+  uint8_t inputBit() const;
+
+  // Down/Up remain immediate after debounce; Click is deferred for telemetry
+  // until the double-click window closes and a hold never leaks a Click event.
+  void setEventCallback(KeyEventCallback callback, void *context = nullptr);
+
+  explicit operator bool() const { return isPressed(); }
+
+private:
+  void emitEvent(KeyEvent event);
+  void handlePressed(uint16_t now);
+  void handleReleased(uint16_t now);
+  void serviceGestures(uint16_t now);
+
+  uint8_t bit_;
+  // All gesture intervals are far below 65.536 seconds, so 16-bit millisecond
+  // timestamps preserve rollover safety while saving scarce ATmega328P SRAM.
+  uint16_t rawChangedAt_;
+  uint16_t lastRepeatAt_;
+  uint16_t pendingClickAt_;
+  uint8_t initialized_ : 1;
+  uint8_t rawState_ : 1;
+  uint8_t stableState_ : 1;
+  uint8_t holdActive_ : 1;
+  uint8_t clickPending_ : 1;
+  KeyEventCallback eventCallback_;
+  void *eventContext_;
+};

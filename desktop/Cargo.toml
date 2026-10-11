@@ -1,6 +1,6 @@
 [package]
 name = "pakarcontroller"
-version = "0.2.0"
+version = "0.2.7"
 edition = "2024"
 description = "Native PakarController control surface"
 license = "MIT"
@@ -8,13 +8,42 @@ repository = "https://github.com/atomicdeploy/PakarController"
 
 [dependencies]
 eframe = { version = "0.36.2", features = ["glow", "persistence"] }
-reqwest = { version = "0.12.28", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+egui-phosphor = { version = "0.14.0", default-features = false, features = ["regular"] }
+egui_dock = { version = "0.21.1", features = ["serde"] }
+egui-elegance = "=0.16.1"
+uuid = { version = "1.26.1", features = ["v4", "serde"] }
+rfd = "0.17.2"
+reqwest = { version = "0.12.28", default-features = false, features = ["blocking", "json", "multipart", "rustls-tls"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.145"
 base64 = "0.23.1"
 serialport = "4.8.1"
 tungstenite = { version = "0.30.0", default-features = false, features = ["handshake"] }
 xcap = "0.9.8"
+image = { version = "0.25.10", default-features = false, features = ["png"] }
+tray-icon = "=0.26.1"
+
+[target.'cfg(windows)'.dependencies]
+raw-window-handle = "0.6.2"
+windows = { version = "0.62", features = ["Win32_Globalization", "Win32_Foundation", "Win32_Graphics_Dwm", "Win32_UI_WindowsAndMessaging", "Win32_Security", "Win32_System_SystemInformation", "Win32_System_Threading", "Win32_System_RemoteDesktop", "Win32_System_Pipes", "Win32_System_IO", "Win32_Storage_FileSystem", "Win32_UI_Shell", "Win32_UI_Shell_Common", "Win32_UI_Shell_PropertiesSystem", "Win32_System_Com", "Win32_System_Com_StructuredStorage", "Win32_System_Variant"] }
+
+[build-dependencies]
+base64 = "0.23.1"
+image = { version = "0.25.10", default-features = false, features = ["png"] }
+winres = "0.1.12"
+ab_glyph = "0.2"
+egui-phosphor = { version = "0.14.0", default-features = false, features = ["regular"] }
+
+# Full dependency PDBs made routine tests consume >10 GiB on Windows.
+# Keep debug assertions and incremental reuse, but opt into symbols only when
+# actively debugging (CARGO_PROFILE_DEV_DEBUG=2 / CARGO_PROFILE_TEST_DEBUG=2).
+[profile.dev]
+debug = 0
+incremental = true
+
+[profile.test]
+debug = 0
+incremental = true
 
 [profile.release]
 strip = "symbols"

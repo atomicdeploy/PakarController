@@ -7,3 +7,5 @@ target/
 *.log
 *.lst
 tools/arduino-cli.exe
+release-assets/
+release-incoming/

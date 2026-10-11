@@ -1,0 +1,57 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const source=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
+const contextCode=source.split('// BEGIN PEER CONTEXT')[1].split('// END PEER CONTEXT')[0];
+function element(){return {hidden:false,dataset:{},children:[],classList:{toggle(){}},replaceChildren(){this.children=[]},appendChild(n){this.children.push(n)}}}
+const cards=[...source.matchAll(/data-capability="([^"]+)"/g)].map(m=>Object.assign(element(),{dataset:{capability:m[1]}}));
+for(const match of source.matchAll(/<[^>]+data-capability="[^" ]+"[^>]*>/g))assert(match[0].includes(' hidden'), 'No unacknowledged flash of controls at startup');
+const metrics=Object.fromEntries(['tm','avr','link','uart','winner'].map(id=>[id,element()]));
+const boardModes=element(),snakeControls=element(),contextMessage=element();
+let now=1000,stops=0,closed=0,cancelledOrders=0;
+const document={title:'PakarController',createElement:element,querySelector:s=>metrics[s.slice(1)]??null,querySelectorAll:s=>s==='[data-capability]'?cards:[]};
+const context=vm.createContext({Date:{now:()=>now},state:{cells:[]},document,boardModes,snakeControls,contextMessage,
+  cellManager:{open:false,close(){closed++;this.open=false}},cellBatchCancelled:false,
+  TextEncoder,DataView,Uint8Array,atob,
+  stopStream(){stops++},closeCellMenu(){},setEditingOrder(v){if(!v)cancelledOrders++}});
+vm.runInContext(source.split('// BEGIN APPLICATION IDENTITY')[1].split('// END APPLICATION IDENTITY')[0],context);
+vm.runInContext(contextCode,context);
+const run=s=>vm.runInContext(s,context);
+const set=s=>{context.state=s;run('contextReceivedAt=Date.now();renderContext()')};
+const visible=f=>cards.filter(n=>n.dataset.capability===f).some(n=>!n.hidden);
+const manifest=(features,kind='controller')=>({schema:1,name:'Fixture board',board_kind:kind,acknowledged_features:features});
+set({hostname:'ledboard',pixels:480,cells:Array(80).fill('white'),avr_online:true,tm1637_ack:true,audio_cues:['welcome']});
+assert(cards.every(n=>n.hidden),'No inferred board kind or controls from generic status/ACK/audio metadata');
+assert(!run("contextAllows('/api/v1/buzzer')"));
+set({capabilities:manifest(['telemetry','buzzer'])});
+assert(visible('buzzer'));assert(!visible('display'));assert(!visible('text'));assert(!visible('table'));
+assert.equal(boardModes.children.length,0);assert(snakeControls.hidden);
+set({capabilities:manifest(['telemetry','display'])});
+assert(visible('display'));assert(!visible('text'));assert(!visible('buzzer'));
+assert(!run("contextAllows('/api/v1/display',{text:'HELLO'})"));
+assert(run("contextAllows('/api/v1/display',{value:1})"));
+set({capabilities:manifest(['text'])});assert(visible('text'));assert(!visible('display'));assert(!visible('buzzer'));
+const modes=[{id:'idle',code:0,label:'Idle',kind:'presentation'},{id:'cell',code:1,label:'Cell selection',kind:'presentation'},{id:'snake',code:3,label:'Snake',kind:'presentation'},{id:'first-wins',code:2,label:'First wins',kind:'game'}];
+const table={...manifest(['table','leds','streaming'],'table'),table:{columns:10,rows:8,pixels_per_cell:6},modes};
+set({capabilities:table,mode:'snake'});assert(visible('table'));assert(!snakeControls.hidden);
+assert.equal(run('currentPeer().modes.length'),3);assert(!run("contextAllows('/api/v1/mode',{value:'first-wins'})"));
+table.acknowledged_features.push('inputs','outputs');set({capabilities:table,mode:'cell'});
+assert.equal(run('currentPeer().modes.length'),4);assert(snakeControls.hidden);
+assert(run("contextAllows('/api/v1/mode',{value:'snake'})"));
+assert(run("contextAllows('/api/v1/cell',{id:1})"));
+assert.match(document.title,/Fixture board/);
+const originalModes=boardModes.children;run('renderContext()');assert.equal(boardModes.children,originalModes,'Stable discovery does not replace focused mode widgets');
+context.cellManager.open=true;context.cellBatchCancelled=false;now+=8001;run('renderContext()');
+assert(cards.every(n=>n.hidden));assert(context.cellBatchCancelled);assert(closed>0&&stops>0&&cancelledOrders>0);
+assert(!run("contextAllows('/api/v1/mode',{value:'snake'})"));
+set({capabilities:{...table,board_kind:'controller'}});assert(!visible('table'));assert.equal(boardModes.children.length,0);
+set({capabilities:{...table,table:{columns:9,rows:8,pixels_per_cell:6}}});assert(!visible('table'),'Unsupported geometry is not forced into an 80-cell table');
+set({capabilities:{...table,schema:2}});assert(cards.every(n=>n.hidden));
+const native=readFileSync(new URL('../desktop/src/ui/shell.rs',import.meta.url),'utf8');
+const nativeStatus=readFileSync(new URL('../desktop/src/ui/status_bar.rs',import.meta.url),'utf8');
+for(const gate of ['status.avr_available','status.display_available','status.network_available','status.telemetry_available'])assert(nativeStatus.includes(gate));
+assert.match(source, /data-capability="display" hidden><h2>Live display<\/h2>[^\n]+id="displayValue"/,'Numeric display controls require Display, not Text');
+for(const feature of ['display','text','buzzer'])assert(native.includes(`if self.has_feature("${feature}")`));
+assert(native.includes('self.synchronize_context(&ctx)'));assert(native.includes('panel.available(self.peer_context())'));
+assert(!native.includes('("Snake", "snake", 3)'),'Native mode UI is not a fixed table list');
+console.log('Actual Web peer context: no-ACK/offline, independent peripheral ACKs, Table discovery, mode filtering, stale revocation and cross-board rebind passed. Native wiring is source-checked only.');

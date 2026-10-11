@@ -25,7 +25,8 @@ void TonePlayer::begin() {
 }
 
 bool TonePlayer::enqueue(uint16_t frequencyHz, uint16_t durationMs) {
-  if (durationMs == 0 || count_ >= MAX_TONES) {
+  if (durationMs == 0 || count_ >= MAX_TONES ||
+      (frequencyHz != 0 && (frequencyHz < 20 || frequencyHz > 20000))) {
     return false;
   }
 
@@ -58,33 +59,36 @@ void TonePlayer::error() {
 }
 
 void TonePlayer::update(uint32_t now) {
+  uint32_t startsAt = now;
   if (stepActive_) {
     if (static_cast<int32_t>(now - stepEndsAt_) < 0) {
       return;
     }
     stopHardwareTone();
     stepActive_ = false;
+    startsAt = stepEndsAt_;
   }
-
-  if (count_ == 0) {
+  // Keep the donor's musical deadlines, not loop-delay accumulation. If a
+  // service call is late, omit fully expired steps and play only the remaining
+  // portion of the current one. Work stays bounded by the ten-entry queue.
+  while (count_ != 0) {
+    const ToneStep step = queue_[head_];
+    head_ = static_cast<uint8_t>((head_ + 1) % MAX_TONES);
+    --count_;
+    const uint32_t endsAt = startsAt + step.durationMs;
+    if (static_cast<int32_t>(now - endsAt) >= 0) { startsAt = endsAt; continue; }
+    activeFrequencyHz_ = step.frequencyHz;
+    activeDurationMs_ = step.durationMs;
+    ++revision_;
+    if (!muted_ && step.frequencyHz != 0) startHardwareTone(step.frequencyHz);
+    else stopHardwareTone();
+    stepEndsAt_ = endsAt;
+    stepActive_ = true;
     return;
   }
-
-  const ToneStep step = queue_[head_];
-  head_ = static_cast<uint8_t>((head_ + 1) % MAX_TONES);
-  --count_;
-
-  activeFrequencyHz_ = step.frequencyHz;
-  activeDurationMs_ = step.durationMs;
-  ++revision_;
-
-  if (!muted_ && step.frequencyHz != 0) {
-    startHardwareTone(step.frequencyHz);
-  } else {
-    stopHardwareTone();
+  if (activeFrequencyHz_ != 0 || activeDurationMs_ != 0) {
+    activeFrequencyHz_ = 0; activeDurationMs_ = 0; ++revision_;
   }
-  stepEndsAt_ = now + step.durationMs;
-  stepActive_ = true;
 }
 
 void TonePlayer::stop() {
@@ -105,6 +109,8 @@ void TonePlayer::setMuted(bool muted) {
   muted_ = muted;
   if (muted_) {
     stopHardwareTone();
+  } else if (stepActive_ && activeFrequencyHz_ != 0) {
+    startHardwareTone(activeFrequencyHz_);
   }
 }
 

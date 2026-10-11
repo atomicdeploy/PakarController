@@ -32,9 +32,12 @@ previous/next and coarse navigation actions while TM1637 shows the selected
 cell; mappings remain configurable because the final keypad legends are not
 yet recorded.
 
-The default geometry is 10 columns by 8 rows. Cell 1 is the rightmost bottom
-cell; the chain travels upward, one column left, downward, and repeats.
-`sectorsPerCell` is either 1 (80 addressable drivers) or 6 (480 drivers).
+The geometry is 10 columns by 8 rows. Logical cell 1 is upper-left, 2 is right
+next to it, and the next row starts at 11. One-based odd columns are offset
+downward by **0.5** cell. Each cell contains six pixels (480 total).
+Physical chain index is separate: the default map starts physical 1 at the
+rightmost bottom position and traverses columns alternately upward/downward.
+Logical IDs/names remain unchanged when the physical map is edited.
 
 ### First press wins
 

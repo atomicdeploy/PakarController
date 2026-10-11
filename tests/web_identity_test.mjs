@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const source=read('firmware/esp8266/src/WebUi.h');
+const master=read('assets/branding/app-icon.png.base64').trim();
+const fallback='data:image/png;base64,'+master;
+const images=[{getAttribute:()=>fallback},{getAttribute:()=>fallback}];
+const links=[{},{}],heading={},info={};
+const document={title:'',querySelector:s=>s==='.app-logo'?images[0]:s==='.top h1'?heading:info,
+  querySelectorAll:s=>s==='.app-logo'?images:links};
+const context=vm.createContext({document,TextEncoder,Uint8Array,DataView,atob});
+vm.runInContext(source.split('// BEGIN APPLICATION IDENTITY')[1].split('// END APPLICATION IDENTITY')[0],context);
+const run=s=>vm.runInContext(s,context);
+const peer={schema:1,name:'Living room',hostname:'ledboard',application:{id:'board.table',name:'Pakar Table',title:'Table controller',icon_png_base64:master}};
+context.peer=peer;run('renderApplicationIdentity(peer)');
+assert.equal(heading.textContent,'Pakar Table');
+assert.equal(document.title,'Table controller · Living room · ledboard.local');
+assert(images.every(img=>img.src===fallback&&img.alt==='Pakar Table application logo'));
+assert(links.every(link=>link.href===fallback));
+peer.application={...peer.application,id:'board.keys',name:'Pakar Keys',title:'Keypad controller'};
+run('renderApplicationIdentity(peer)');assert.equal(heading.textContent,'Pakar Keys');
+assert.match(info.textContent,/board.keys/);assert.match(document.title,/Keypad controller/);
+assert(run("validBoardName('David’s table')"));assert(!run("validBoardName('é'.repeat(32))"));
+for(const value of ['', ' leading','trailing ','line\nfeed','control\u0080']){
+  context.value=value;assert(!run('validBoardName(value)'));
+}
+context.invalid={...peer.application,name:'bad\nname'};
+assert(!run('validApplication(invalid)'));
+context.invalid={...peer.application,icon_png_base64:'https://remote/icon.png'};
+assert.equal(run('applicationArtwork(invalid)'),fallback,'No remote artwork requests or credential leakage');
+const oversized=Buffer.from(master,'base64');oversized.writeUInt32BE(65535,16);
+context.invalid={...peer.application,icon_png_base64:oversized.toString('base64')};
+assert.equal(run('applicationArtwork(invalid)'),fallback,'Dimensions bounded before image decode');
+run('renderApplicationIdentity(null)');assert.equal(heading.textContent,'PakarController');
+assert(images.every(img=>img.alt==='PakarController application logo'));
+assert.equal(document.title,'PakarController · No acknowledged board');
+assert(read('desktop/src/main.rs').includes('SerialCommand::Identity'));
+assert(read('desktop/src/identity.rs').includes('Mixed or out-of-order identity response'));
+console.log('Actual Web application identity: title/header/icon/favicon, two applications, disconnect reset, UTF-8 bounds and invalid/remote artwork rejection passed. Native/USB runtime is separate.');

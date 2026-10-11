@@ -1,0 +1,22 @@
+/* RayanLamp app.css toast/viewport/motion/fallback slices; shared Pealayer roles.
+   Full donor CSS remains pending: these exact rules are not a whole-file import. */
+#notice.toast-region{position:fixed;z-index:100;inset-block-end:20px;inset-inline-end:20px;display:grid;width:min(390px,calc(100vw - 40px));gap:10px;pointer-events:none;border:0;padding:0;margin:0;background:none}
+#notice.toast-region:empty{display:none}
+.app-toast{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid var(--line-strong);border-radius:15px;background:color-mix(in srgb,var(--surface-2) 92%,transparent);box-shadow:var(--shadow);backdrop-filter:blur(24px) saturate(1.25);animation:toast-enter .24s cubic-bezier(.2,0,0,1) both;pointer-events:auto;min-width:0}
+.toast-icon{display:grid;width:32px;height:32px;flex:0 0 auto;place-items:center;border-radius:10px;color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
+.toast-success .toast-icon{color:var(--green);background:color-mix(in srgb,var(--green) 13%,transparent)}
+.toast-error .toast-icon{color:var(--red);background:color-mix(in srgb,var(--red) 13%,transparent)}
+.toast-copy{display:grid;min-width:0;flex:1;align-content:center;gap:2px;overflow-wrap:anywhere}
+.toast-copy strong,.toast-copy span{line-height:1.35;white-space:pre-wrap;unicode-bidi:plaintext}
+.toast-copy span{color:var(--muted);font-size:13px}
+.toast-dismiss{display:grid;place-items:center;flex:0 0 auto;width:30px;height:30px;padding:0;border:1px solid transparent;background:transparent;color:var(--muted);border-radius:7px;transition:color .14s,background .14s,border-color .14s}
+.toast-dismiss:hover,.toast-dismiss:active{color:var(--text);background:var(--surface-1);border-color:var(--line-strong)}
+.toast-dismiss:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:680px){#notice.toast-region{inset:auto 10px calc(12px + env(safe-area-inset-bottom)) 10px;width:auto}}
+@supports not (backdrop-filter:blur(1px)){.app-toast{background:var(--surface-2)}}
+@media(prefers-reduced-motion:reduce){.app-toast,.toast-dismiss{animation:none;transition:none}}
+html[data-motion=off] .app-toast,html[data-motion=off] .toast-dismiss{animation:none;transition:none}
+@media(forced-colors:active){.app-toast{color:CanvasText;background:Canvas;box-shadow:none;border:1px solid CanvasText;forced-color-adjust:auto}.toast-icon,.toast-copy span,.toast-dismiss{color:CanvasText;background:Canvas}.toast-dismiss:focus-visible{outline-color:Highlight}}
+@keyframes toast-enter{from{opacity:0;transform:translateX(20px) scale(.98)}}
+[dir=rtl] .app-toast{animation-name:toast-enter-rtl}
+@keyframes toast-enter-rtl{from{opacity:0;transform:translateX(-20px) scale(.98)}}

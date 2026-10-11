@@ -1,0 +1,277 @@
+//! Adapted from Pealayer's windows.rs GUI ownership and interop.rs named pipe.
+//! The owner mutex closes the startup race; secondary launches forward typed
+//! requests to the primary and exit, even while the primary window is hidden.
+use serde::{Deserialize, Serialize};
+use std::{
+    sync::{
+        Arc, Mutex,
+        mpsc::{self, Receiver, Sender},
+    },
+    time::Duration,
+};
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "command", rename_all = "snake_case", deny_unknown_fields)]
+pub enum Command {
+    DeviceSettings,
+    DeviceSettingsPage { page: String },
+    Show,
+    Connect,
+    Preferences,
+    PreferencesPage { page: String },
+    Refresh,
+    Fullscreen,
+    About,
+    Workspaces,
+    Panel { name: String },
+    FindCell { query: String },
+    CellManager,
+    Screenshot { path: String },
+    Quit,
+    Status,
+    NotificationTest,
+}
+fn parse_command(bytes: &[u8]) -> Result<Command, String> {
+    let value: serde_json::Value = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
+    let object = value.as_object().ok_or("Expected a command object")?;
+    let allowed = match object.get("command").and_then(|v| v.as_str()) {
+        Some("panel") => &["command", "name"][..],
+        Some("find_cell") => &["command", "query"][..],
+        Some("screenshot") => &["command", "path"][..],
+        Some("device_settings_page") => &["command", "page"][..],
+        Some("preferences_page") => &["command", "page"][..],
+        _ => &["command"][..],
+    };
+    if object.keys().any(|key| !allowed.contains(&key.as_str())) {
+        return Err("Unknown command field".into());
+    }
+    let command: Command = serde_json::from_value(value).map_err(|e| e.to_string())?;
+    if let Command::Screenshot { path } = &command {
+        crate::ui::screenshot::validate_path(path)?;
+    }
+    if let Command::FindCell { query } = &command {
+        crate::ui::cell_search::parse(query)?;
+    }
+    if let Command::DeviceSettingsPage { page } = &command {
+        if crate::ui::device_settings::page_index(page).is_none() {
+            return Err("Unknown device settings page".into());
+        }
+    }
+    if let Command::PreferencesPage { page } = &command {
+        if crate::ui::preferences::page_index(page).is_none() {
+            return Err("Unknown preferences page".into());
+        }
+    }
+    Ok(command)
+}
+pub struct Control {
+    pub rx: Receiver<Command>,
+    pub snapshot: Arc<Mutex<serde_json::Value>>,
+}
+#[cfg(windows)]
+pub struct GuiOwnershipGuard(windows::Win32::Foundation::HANDLE);
+#[cfg(windows)]
+impl Drop for GuiOwnershipGuard {
+    fn drop(&mut self) {
+        unsafe {
+            let _ = windows::Win32::Foundation::CloseHandle(self.0);
+        }
+    }
+}
+#[cfg(not(windows))]
+pub struct GuiOwnershipGuard;
+pub enum GuiOwnership {
+    Primary(GuiOwnershipGuard),
+    Existing,
+}
+fn identity_hash(identity: &str) -> u64 {
+    identity
+        .trim()
+        .to_lowercase()
+        .as_bytes()
+        .iter()
+        .fold(0xcbf29ce484222325_u64, |hash, byte| {
+            (hash ^ u64::from(*byte)).wrapping_mul(0x100000001b3)
+        })
+}
+#[cfg(windows)]
+pub fn current_session_id() -> Result<u32, String> {
+    use windows::Win32::System::{
+        RemoteDesktop::ProcessIdToSessionId, Threading::GetCurrentProcessId,
+    };
+    let mut session = 0;
+    unsafe { ProcessIdToSessionId(GetCurrentProcessId(), &mut session) }
+        .map_err(|e| e.to_string())?;
+    Ok(session)
+}
+#[cfg(windows)]
+fn pipe_name() -> String {
+    format!(
+        r"\\.\pipe\PakarController.Control.{:016x}.{}",
+        identity_hash("PakarController"),
+        current_session_id().unwrap_or_default()
+    )
+}
+#[cfg(windows)]
+pub fn acquire_gui_ownership() -> Result<GuiOwnership, String> {
+    use windows::{
+        Win32::{
+            Foundation::{CloseHandle, ERROR_ALREADY_EXISTS, GetLastError},
+            System::Threading::CreateMutexW,
+        },
+        core::PCWSTR,
+    };
+    let name = format!(
+        "Local\\PakarController.GuiOwner.{:016x}",
+        identity_hash("PakarController")
+    );
+    let wide: Vec<u16> = name.encode_utf16().chain(Some(0)).collect();
+    let handle =
+        unsafe { CreateMutexW(None, false, PCWSTR(wide.as_ptr())) }.map_err(|e| e.to_string())?;
+    if unsafe { GetLastError() } == ERROR_ALREADY_EXISTS {
+        unsafe {
+            let _ = CloseHandle(handle);
+        }
+        Ok(GuiOwnership::Existing)
+    } else {
+        Ok(GuiOwnership::Primary(GuiOwnershipGuard(handle)))
+    }
+}
+#[cfg(not(windows))]
+pub fn acquire_gui_ownership() -> Result<GuiOwnership, String> {
+    Ok(GuiOwnership::Primary(GuiOwnershipGuard))
+}
+#[cfg(windows)]
+pub fn send(command: &Command, timeout: Duration) -> Result<serde_json::Value, String> {
+    use windows::{
+        Win32::{Foundation::GetLastError, System::Pipes::CallNamedPipeW},
+        core::PCWSTR,
+    };
+    let name: Vec<u16> = pipe_name().encode_utf16().chain(Some(0)).collect();
+    let request = serde_json::to_vec(command).map_err(|e| e.to_string())?;
+    let mut buffer = vec![0u8; 65536];
+    let mut read = 0;
+    let ok = unsafe {
+        CallNamedPipeW(
+            PCWSTR(name.as_ptr()),
+            Some(request.as_ptr().cast()),
+            request.len() as u32,
+            Some(buffer.as_mut_ptr().cast()),
+            buffer.len() as u32,
+            &mut read,
+            timeout.as_millis().clamp(1, u128::from(u32::MAX)) as u32,
+        )
+    };
+    if !ok.as_bool() {
+        return Err(format!("PakarController IPC unavailable: {:?}", unsafe {
+            GetLastError()
+        }));
+    }
+    serde_json::from_slice(&buffer[..read as usize]).map_err(|e| e.to_string())
+}
+#[cfg(not(windows))]
+pub fn send(_: &Command, _: Duration) -> Result<serde_json::Value, String> {
+    Err("Native instance IPC is currently available on Windows".into())
+}
+pub fn start(ctx: eframe::egui::Context, enable_listener: bool) -> Control {
+    let (tx, rx) = mpsc::channel();
+    let snapshot = Arc::new(Mutex::new(
+        serde_json::json!({"process_id":std::process::id(),"application":"PakarController","ready":true}),
+    ));
+    #[cfg(windows)]
+    if enable_listener {listener(tx, ctx, snapshot.clone());}
+    #[cfg(not(windows))]
+    let _ = (tx, ctx, enable_listener);
+    Control { rx, snapshot }
+}
+#[cfg(windows)]
+fn listener(
+    tx: Sender<Command>,
+    ctx: eframe::egui::Context,
+    snapshot: Arc<Mutex<serde_json::Value>>,
+) {
+    use windows::{
+        Win32::{
+            Foundation::{CloseHandle, ERROR_PIPE_CONNECTED, GetLastError},
+            Storage::FileSystem::{FlushFileBuffers, PIPE_ACCESS_DUPLEX, ReadFile, WriteFile},
+            System::Pipes::{
+                ConnectNamedPipe, CreateNamedPipeW, DisconnectNamedPipe,
+                GetNamedPipeClientProcessId, PIPE_READMODE_MESSAGE, PIPE_REJECT_REMOTE_CLIENTS,
+                PIPE_TYPE_MESSAGE, PIPE_WAIT,
+            },
+            System::RemoteDesktop::ProcessIdToSessionId,
+        },
+        core::PCWSTR,
+    };
+    let name: Vec<u16> = pipe_name().encode_utf16().chain(Some(0)).collect();
+    let expected_session = current_session_id().ok();
+    std::thread::Builder::new().name("pakar-native-ipc".into()).spawn(move || loop {
+        let handle=unsafe {CreateNamedPipeW(PCWSTR(name.as_ptr()),PIPE_ACCESS_DUPLEX,PIPE_TYPE_MESSAGE|PIPE_READMODE_MESSAGE|PIPE_WAIT|PIPE_REJECT_REMOTE_CLIENTS,1,65536,65536,1000,None)};
+        if handle.is_invalid(){break;}
+        let connected=unsafe {ConnectNamedPipe(handle,None)}.is_ok() || unsafe {GetLastError()}==ERROR_PIPE_CONNECTED;
+        if connected {
+            let mut pid=0;let mut session=0;
+            let same_session=unsafe {GetNamedPipeClientProcessId(handle,&mut pid)}.is_ok() && unsafe {ProcessIdToSessionId(pid,&mut session)}.is_ok() && expected_session==Some(session);
+            let mut bytes=vec![0u8;65536];let mut read=0;
+            if same_session && unsafe {ReadFile(handle,Some(&mut bytes),Some(&mut read),None)}.is_ok() {
+                let result=parse_command(&bytes[..read as usize]);
+                let response=match result {
+                    Ok(Command::Status)=>snapshot.lock().map(|s|s.clone()).unwrap_or_default(),
+                    Ok(command)=>{
+                        let valid=!matches!(&command,Command::Panel{name} if crate::ui::layout::Panel::from_name(name).is_none());
+                        if valid && tx.send(command).is_ok(){ctx.request_repaint();serde_json::json!({"accepted":true,"process_id":std::process::id()})}
+                        else {serde_json::json!({"accepted":false,"error":"Unknown panel or closed application"})}
+                    }
+                    Err(error)=>serde_json::json!({"accepted":false,"error":error.to_string()}),
+                };
+                let reply=serde_json::to_vec(&response).unwrap_or_default();let mut written=0;
+                unsafe {let _=WriteFile(handle,Some(&reply),Some(&mut written),None);let _=FlushFileBuffers(handle);}
+            }
+            unsafe {let _=DisconnectNamedPipe(handle);}
+        }
+        unsafe {let _=CloseHandle(handle);}
+    }).expect("native IPC listener");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn launch_requests_use_only_known_typed_commands() {
+        assert!(serde_json::from_str::<Command>(r#"{"command":"preferences"}"#).is_ok());
+        assert!(parse_command(br#"{"command":"show","inject":"x"}"#).is_err());
+        assert!(serde_json::from_str::<Command>(r#"{"command":"firmware_erase"}"#).is_err());
+        assert!(parse_command(br#"{"command":"find_cell","query":"1, 20-28"}"#).is_ok());
+        assert!(parse_command(br#"{"command":"find_cell","query":"81"}"#).is_err());
+        assert!(parse_command(br#"{"command":"find_cell","query":"1","inject":"x"}"#).is_err());
+        assert!(parse_command(br#"{"command":"notification_test"}"#).is_ok());
+        assert!(parse_command(br#"{"command":"screenshot","path":"relative.png"}"#).is_err());
+        let capture = Command::Screenshot {
+            path: std::env::temp_dir()
+                .join("pakar-capture.png")
+                .to_string_lossy()
+                .into(),
+        };
+        assert!(parse_command(&serde_json::to_vec(&capture).unwrap()).is_ok());
+        assert!(parse_command(br#"{"command":"notification_test","message":"injected"}"#).is_err());
+        assert!(parse_command(br#"{"command":"preferences_page","page":"notifications"}"#).is_ok());
+        assert!(parse_command(br#"{"command":"preferences_page","page":"unknown"}"#).is_err());
+        for action in crate::platform::windows_quick_actions::WINDOWS_QUICK_ACTIONS {
+            let command = crate::ui::shell::launch_command(&[action.arguments.into()]);
+            assert!(parse_command(&serde_json::to_vec(&command).unwrap()).is_ok());
+        }
+    }
+    #[cfg(windows)]
+    #[test]
+    fn owner_mutex_does_not_admit_two_primary_instances() {
+        // Skip if a real application owns the production namespace.
+        let first = acquire_gui_ownership().unwrap();
+        if let GuiOwnership::Primary(guard) = first {
+            assert!(matches!(
+                acquire_gui_ownership().unwrap(),
+                GuiOwnership::Existing
+            ));
+            drop(guard);
+        }
+    }
+}

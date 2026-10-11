@@ -13,7 +13,9 @@ class AvrIsp {
 
   bool probe(uint8_t signature[3]);
   bool backup(fs::FS &filesystem, const char *directory);
-  bool programFlash(File &image);
+  // Recovery EEPROM must be a durable snapshot taken AFTER Prog is armed.
+  // Refuse erase unless every byte matches the still-running target.
+  bool programFlash(File &image, File &recoveryEeprom);
   const String &lastError() const { return error_; }
 
  private:

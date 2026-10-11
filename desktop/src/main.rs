@@ -5,14 +5,32 @@ use std::{
     time::{Duration, Instant},
 };
 
+mod access;
+mod audio;
+mod brand_image;
+mod branding;
+mod capabilities;
+mod client_telemetry;
+mod config;
+mod device_settings;
+mod display;
+mod identity;
+mod maintenance;
+mod messaging;
+mod pc_contract;
+mod platform;
+mod streaming;
+mod ui;
+
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
-use eframe::egui::{self, Color32, RichText, Theme};
+use eframe::egui;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use tungstenite::{Message, client::IntoClientRequest};
 
 const OP_GET_STATUS: u8 = 0x02;
 const OP_BUZZER: u8 = 0x10;
+const OP_AUDIO: u8 = 0x11;
 const OP_DISPLAY: u8 = 0x38;
 const OP_SET_MODE: u8 = 0x4b;
 const OP_CELL_ACTION: u8 = 0x4c;
@@ -30,10 +48,16 @@ struct Endpoint {
     password: String,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
 struct DeviceStatus {
     #[serde(default)]
+    capabilities: Option<capabilities::Manifest>,
+    #[serde(default)]
     version: String,
+    #[serde(default)]
+    avr_version: Option<String>,
+    #[serde(default)]
+    audio_cues: Vec<String>,
     #[serde(default)]
     hostname: String,
     #[serde(default)]
@@ -59,7 +83,21 @@ struct DeviceStatus {
     #[serde(default)]
     station_rssi: i16,
     #[serde(default)]
+    mdns_started: bool,
+    #[serde(default)]
+    ssdp_started: bool,
+    #[serde(default)]
+    netbios_started: bool,
+    #[serde(default)]
+    canonical_url: String,
+    #[serde(default)]
     tm1637_ack: bool,
+    #[serde(default)]
+    tm1637_segments: Vec<u8>,
+    #[serde(default)]
+    tm1637_brightness: u8,
+    #[serde(default)]
+    tm1637_host_active: bool,
     #[serde(default)]
     programming_latch: bool,
     #[serde(default)]
@@ -106,40 +144,264 @@ struct DeviceStatus {
     link_mode: String,
     #[serde(default)]
     cells: Vec<String>,
+    #[serde(default)]
+    pixel_preview_requested: bool,
+    #[serde(default)]
+    pixel_frame: Option<ui::cell_pixels::Frame>,
 }
 
+#[derive(Clone)]
 enum HttpCommand {
     Status(Endpoint),
+    Mapping(Endpoint),
+    Configuration(Endpoint, &'static str),
     Post(Endpoint, &'static str, Vec<(String, String)>),
+    AccessChange(Endpoint, Endpoint),
+    NameChange(Endpoint, String, Option<String>),
+    Settings(Endpoint, device_settings::Write),
+    Maintenance(Endpoint, u64, maintenance::Operation),
+}
+
+impl HttpCommand {
+    fn endpoint(&self) -> &Endpoint {
+        match self {
+            Self::Status(endpoint)
+            | Self::Mapping(endpoint)
+            | Self::Configuration(endpoint, ..)
+            | Self::AccessChange(endpoint, ..)
+            | Self::NameChange(endpoint, ..)
+            | Self::Settings(endpoint, ..)
+            | Self::Maintenance(endpoint, ..)
+            | Self::Post(endpoint, ..) => endpoint,
+        }
+    }
+
+    fn with_base(&self, base: String) -> Self {
+        let replace = |endpoint: &Endpoint| Endpoint {
+            base: base.clone(),
+            user: endpoint.user.clone(),
+            password: endpoint.password.clone(),
+        };
+        match self {
+            Self::Status(endpoint) => Self::Status(replace(endpoint)),
+            Self::Mapping(endpoint) => Self::Mapping(replace(endpoint)),
+            Self::Configuration(endpoint, path) => Self::Configuration(replace(endpoint), path),
+            Self::Post(endpoint, path, form) => Self::Post(replace(endpoint), path, form.clone()),
+            Self::AccessChange(endpoint, next) => {
+                Self::AccessChange(replace(endpoint), replace(next))
+            }
+            Self::NameChange(endpoint, name, label) => Self::NameChange(replace(endpoint), name.clone(), label.clone()),
+            Self::Settings(endpoint, write) => Self::Settings(replace(endpoint), write.clone()),
+            Self::Maintenance(endpoint, id, operation) => {
+                Self::Maintenance(replace(endpoint), *id, operation.clone())
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+struct CellMapping {
+    logical_id: u8,
+    physical_cell: u8,
+    name: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+struct CellMappingResponse {
+    #[serde(default)]
+    physical: Vec<u8>,
+    #[serde(default)]
+    names: Vec<String>,
 }
 enum WsCommand {
     Connect(Endpoint),
+    Rate(u16),
+    Mapping(Vec<CellMapping>),
     Stream(bool),
     Sample(bool),
 }
 enum SerialCommand {
     Port(String),
-    Send(u8, Vec<u8>),
+    Send(String, u8, Vec<u8>),
+    Identity(String, String, String),
 }
 enum Event {
+    ForEndpoint(Endpoint, Box<Event>),
+    StreamStats(f64),
     Status(DeviceStatus),
+    Mapping(Vec<CellMapping>),
+    Configuration(&'static str, serde_json::Value),
     Accepted(String),
+    CredentialsUpdated(Endpoint),
+    NameUpdated(Endpoint, bool),
+    SerialIdentity(String, serde_json::Value),
+    SerialIdentitySaved(String, Result<(), String>),
     Failed(String),
+    OperationFailed(String),
+    SettingsFinished(
+        u64,
+        device_settings::Group,
+        Result<serde_json::Value, String>,
+    ),
+    MaintenanceFinished(u64, Result<String, String>),
     WebSocket(bool),
-    Serial(bool, Option<DeviceStatus>),
+    Serial(String, bool, Option<DeviceStatus>),
+}
+
+fn for_endpoint(endpoint: &Endpoint, event: Event) -> Event {
+    Event::ForEndpoint(endpoint.clone(), Box::new(event))
+}
+
+fn current_event(event: Event, endpoint: &Endpoint, serial_port: &str) -> Option<Event> {
+    match event {
+        Event::ForEndpoint(origin, inner) if origin == *endpoint => Some(*inner),
+        Event::ForEndpoint(..) => None,
+        Event::Serial(ref port, ..) if port != serial_port => None,
+        other => Some(other),
+    }
 }
 
 fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> {
-    let (endpoint, request, status_request) = match command {
+    if let HttpCommand::Maintenance(endpoint, id, operation) = &command {
+        return Ok(Event::MaintenanceFinished(
+            *id,
+            maintenance::run(client, endpoint, operation.clone()),
+        ));
+    }
+    if let HttpCommand::Settings(endpoint, write) = &command {
+        // Exactly one mutation. Neither discovery nor readback failure replays it.
+        let result = (|| -> Result<serde_json::Value, String> {
+            let response = client.post(format!("{}{}", endpoint.base.trim_end_matches('/'), write.group.path()))
+                .basic_auth(&endpoint.user, Some(&endpoint.password)).form(&write.form).send()
+                .map_err(|_| "Configuration write outcome is unknown. Refresh before retrying; no write was replayed.".to_string())?
+                .error_for_status().map_err(|e| format!("Configuration rejected: {e}"))?;
+            let accepted = response.json::<serde_json::Value>().map_err(|_| {
+                "Write response could not be validated; refresh before retrying".to_string()
+            })?;
+            write.verify_ack(&accepted)?;
+            let readback = client.get(format!("{}{}", endpoint.base.trim_end_matches('/'), write.group.path()))
+                .basic_auth(&endpoint.user, Some(&endpoint.password)).send()
+                .map_err(|_| "Write accepted; readback unavailable, possibly after Wi-Fi reassociation. Reconnect and refresh; no write was replayed.".to_string())?
+                .error_for_status().map_err(|e| format!("Write accepted; readback failed: {e}"))?
+                .json::<serde_json::Value>().map_err(|_| "Write accepted; malformed readback. Refresh before retrying.".to_string())?;
+            write.verify_readback(&readback)?;
+            Ok(readback)
+        })();
+        return Ok(Event::SettingsFinished(write.id, write.group, result));
+    }
+    if let HttpCommand::NameChange(endpoint, input, label) = &command {
+        let name = identity::normalize_name(input)?;
+        if label.as_ref().is_some_and(|s| !identity::valid_display_name(s)) { return Err("Invalid board display name".into()); }
+        let mut form = vec![("hostname", name.as_str())];
+        if let Some(label) = label { form.push(("display_name", label.as_str())); }
+        let response = client
+            .post(format!(
+                "{}/api/v1/device/name",
+                endpoint.base.trim_end_matches('/')
+            ))
+            .basic_auth(&endpoint.user, Some(&endpoint.password))
+            .form(&form)
+            .send()
+            .map_err(|e| e.to_string())?;
+        if !response.status().is_success() {
+            return Err(format!(
+                "HTTP {}: {}",
+                response.status(),
+                response.text().unwrap_or_default()
+            ));
+        }
+        let value: serde_json::Value = response.json().map_err(|e| e.to_string())?;
+        if value.get("accepted").and_then(|v| v.as_bool()) != Some(true)
+            || value.get("persisted").and_then(|v| v.as_bool()) != Some(true)
+            || value.get("hostname").and_then(|v| v.as_str()) != Some(name.as_str())
+            || label.as_ref().is_some_and(|s| value["display_name"].as_str() != Some(s.as_str()))
+        {
+            return Err(
+                "Device did not confirm the saved name; no retry or endpoint switch was attempted"
+                    .into(),
+            );
+        }
+        let mut next = endpoint.clone();
+        next.base = format!("http://{name}.local");
+        let pending = value["apply_pending"].as_bool().unwrap_or(true);
+        if !pending {
+            let readback: serde_json::Value = client.get(format!("{}/api/v1/device/name",endpoint.base.trim_end_matches('/')))
+                .basic_auth(&endpoint.user, Some(&endpoint.password)).send().map_err(|_| "Identity saved but readback unavailable; refresh before retrying")?
+                .error_for_status().map_err(|e|e.to_string())?.json().map_err(|e|e.to_string())?;
+            if readback["hostname"] != value["hostname"] || readback["display_name"] != value["display_name"] { return Err("Identity saved but readback mismatch; no retry attempted".into()); }
+        }
+        return Ok(Event::NameUpdated(next, pending));
+    }
+    if let HttpCommand::AccessChange(endpoint, next) = &command {
+        let response = client
+            .post(format!(
+                "{}/api/v1/auth",
+                endpoint.base.trim_end_matches('/')
+            ))
+            .basic_auth(&endpoint.user, Some(&endpoint.password))
+            .form(&[
+                ("current_password", &endpoint.password),
+                ("username", &next.user),
+                ("password", &next.password),
+            ])
+            .send()
+            .map_err(|e| e.to_string())?;
+        if !response.status().is_success() {
+            return Err(format!(
+                "HTTP {}: {}",
+                response.status(),
+                response.text().unwrap_or_default()
+            ));
+        }
+        let value: serde_json::Value = response.json().map_err(|e| e.to_string())?;
+        if value.get("updated").and_then(|v| v.as_bool()) != Some(true) {
+            return Err("Device did not confirm a saved credential change".into());
+        }
+        return Ok(Event::CredentialsUpdated(next.clone()));
+    }
+    if let HttpCommand::Configuration(endpoint, path) = &command {
+        let response = client
+            .get(format!("{}{}", endpoint.base.trim_end_matches('/'), path))
+            .basic_auth(&endpoint.user, Some(&endpoint.password))
+            .send()
+            .map_err(|e| e.to_string())?
+            .error_for_status()
+            .map_err(|e| e.to_string())?;
+        return response
+            .json::<serde_json::Value>()
+            .map(|value| Event::Configuration(path, value))
+            .map_err(|e| e.to_string());
+    }
+    let (endpoint, request, response_kind) = match command {
         HttpCommand::Status(endpoint) => {
             let url = format!("{}/api/v1/status", endpoint.base.trim_end_matches('/'));
-            let request = client.get(url);
-            (endpoint, request, true)
+            let request = client.get(url).query(&[(
+                "pixels",
+                if config::live().cell_shape != ui::cell_pixels::Shape::Rounded {
+                    "1"
+                } else {
+                    "0"
+                },
+            )]);
+            (endpoint, request, 1_u8)
         }
+        HttpCommand::Mapping(endpoint) => {
+            let url = format!(
+                "{}/api/v1/cells/mapping",
+                endpoint.base.trim_end_matches('/')
+            );
+            let request = client.get(url);
+            (endpoint, request, 2_u8)
+        }
+        HttpCommand::Configuration(..)
+        | HttpCommand::AccessChange(..)
+        | HttpCommand::NameChange(..) => unreachable!(),
+        HttpCommand::Settings(..) => unreachable!(),
+        HttpCommand::Maintenance(..) => unreachable!(),
         HttpCommand::Post(endpoint, path, form) => {
             let url = format!("{}{}", endpoint.base.trim_end_matches('/'), path);
             let request = client.post(url).form(&form);
-            (endpoint, request, false)
+            (endpoint, request, 0_u8)
         }
     };
     let response = request
@@ -153,27 +415,107 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
             response.text().unwrap_or_default()
         ));
     }
-    if status_request {
-        response
+    match response_kind {
+        1 => response
             .json::<DeviceStatus>()
             .map(Event::Status)
-            .map_err(|e| e.to_string())
-    } else {
-        Ok(Event::Accepted(format!(
+            .map_err(|e| e.to_string()),
+        2 => response
+            .json::<CellMappingResponse>()
+            .map(|value| {
+                Event::Mapping(
+                    value
+                        .physical
+                        .into_iter()
+                        .enumerate()
+                        .map(|(index, physical_cell)| CellMapping {
+                            logical_id: (index + 1) as u8,
+                            physical_cell,
+                            name: value.names.get(index).cloned().unwrap_or_default(),
+                        })
+                        .collect(),
+                )
+            })
+            .map_err(|e| e.to_string()),
+        _ => Ok(Event::Accepted(format!(
             "Device accepted the command ({code})"
-        )))
+        ))),
     }
 }
 
 fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: egui::Context) {
+    let mut reporter = client_telemetry::Reporter::new();
     let client = Client::builder()
         .no_proxy()
         .timeout(Duration::from_secs(4))
         .build()
         .expect("HTTP client");
+    let mut discovered_base: Option<String> = None;
+    let mut requested_base = String::new();
     while let Ok(command) = commands.recv() {
-        let event = http_request(&client, command).unwrap_or_else(Event::Failed);
-        if events.send(event).is_err() {
+        if requested_base != command.endpoint().base {
+            discovered_base = None;
+            requested_base = command.endpoint().base.clone();
+        }
+        let requested_name = reqwest::Url::parse(&command.endpoint().base)
+            .ok()
+            .and_then(|url| {
+                url.host_str()
+                    .and_then(|host| identity::normalize_name(host).ok())
+            });
+        let first = discovered_base
+            .as_ref()
+            .map(|base| command.with_base(base.clone()))
+            .unwrap_or_else(|| command.clone());
+        let mut result = http_request(&client, first);
+        if result.is_err()
+            && requested_name.is_some()
+            && matches!(
+                command,
+                HttpCommand::Status(..) | HttpCommand::Mapping(..) | HttpCommand::Configuration(..)
+            )
+        {
+            discovered_base = None;
+            for base in platform::discovery::ssdp_locations(Duration::from_millis(1200)) {
+                let mut candidate = command.endpoint().clone();
+                candidate.base = base.clone();
+                // A rename must not make fallback select some other controller
+                // merely because it shares credentials. Read/verify its label first.
+                let Ok(status) = blocking_status(&client, &candidate) else {
+                    continue;
+                };
+                if Some(&status.hostname) != requested_name.as_ref() {
+                    continue;
+                }
+                if let Ok(event) = http_request(&client, command.with_base(base.clone())) {
+                    discovered_base = Some(base);
+                    result = Ok(event);
+                    break;
+                }
+            }
+        }
+        if result.is_ok() && matches!(command, HttpCommand::Status(_)) && reporter.due() {
+            let mut endpoint = command.endpoint().clone();
+            if let Some(base) = &discovered_base {
+                endpoint.base = base.clone();
+            }
+            reporter.report(&client, &endpoint);
+        }
+        let operation = matches!(
+            command,
+            HttpCommand::Post(..) | HttpCommand::AccessChange(..) | HttpCommand::NameChange(..)
+        );
+        let event = result.unwrap_or_else(|e| {
+            if operation {
+                Event::OperationFailed(e)
+            } else {
+                Event::Failed(e)
+            }
+        });
+        if events
+            .send(for_endpoint(command.endpoint(), event))
+            .is_err()
+        {
             break;
         }
         context.request_repaint();
@@ -234,7 +576,7 @@ fn pixel_packet(pixels: &[u8], offset: u16, count: u8, commit: bool) -> Vec<u8> 
     packet
 }
 
-fn sampled_screen_packets() -> Result<(Vec<u8>, Vec<u8>), String> {
+fn sampled_screen_packets(mapping: &[CellMapping]) -> Result<(Vec<u8>, Vec<u8>), String> {
     let monitors = xcap::Monitor::all().map_err(|error| error.to_string())?;
     let monitor = monitors
         .iter()
@@ -243,22 +585,13 @@ fn sampled_screen_packets() -> Result<(Vec<u8>, Vec<u8>), String> {
         .ok_or("no screen is available")?;
     let image = monitor.capture_image().map_err(|error| error.to_string())?;
     let mut pixels = vec![0_u8; 480 * 3];
-    for y in 0..8_u32 {
-        for x in 0..10_u32 {
-            let sample_x = ((x * 2 + 1) * image.width() / 20).min(image.width() - 1);
-            let sample_y = ((y * 2 + 1) * image.height() / 16).min(image.height() - 1);
-            let color = image.get_pixel(sample_x, sample_y).0;
-            let from_right = 9 - x as usize;
-            let cell = from_right * 8
-                + if from_right % 2 == 0 {
-                    7 - y as usize
-                } else {
-                    y as usize
-                };
-            for sector in 0..6 {
-                let at = (cell * 6 + sector) * 3;
-                pixels[at..at + 3].copy_from_slice(&color[..3]);
-            }
+    for (cell, sample_x, sample_y) in
+        streaming::sample_positions(image.width(), image.height(), mapping)?
+    {
+        let color = image.get_pixel(sample_x, sample_y).0;
+        for sector in 0..6 {
+            let at = (cell * 6 + sector) * 3;
+            pixels[at..at + 3].copy_from_slice(&color[..3]);
         }
     }
     Ok((
@@ -271,10 +604,14 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
     let mut endpoint: Option<Endpoint> = None;
     let mut streaming = false;
     let mut sampling = false;
+    let mut fps = streaming::DEFAULT_FPS;
+    let mut mapping = Vec::new();
     loop {
         if endpoint.is_none() {
             match commands.recv() {
                 Ok(WsCommand::Connect(e)) => endpoint = Some(e),
+                Ok(WsCommand::Rate(value)) => fps = value.min(streaming::MAX_FPS),
+                Ok(WsCommand::Mapping(value)) => mapping = value,
                 Ok(WsCommand::Stream(v)) => streaming = v,
                 Ok(WsCommand::Sample(v)) => sampling = v,
                 Err(_) => return,
@@ -282,7 +619,16 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
         }
         while let Ok(command) = commands.try_recv() {
             match command {
-                WsCommand::Connect(e) => endpoint = Some(e),
+                WsCommand::Connect(e) => {
+                    if endpoint.as_ref() != Some(&e) {
+                        mapping.clear();
+                        sampling = false;
+                        streaming = false;
+                    }
+                    endpoint = Some(e);
+                }
+                WsCommand::Rate(value) => fps = value.min(streaming::MAX_FPS),
+                WsCommand::Mapping(value) => mapping = value,
                 WsCommand::Stream(v) => streaming = v,
                 WsCommand::Sample(v) => sampling = v,
             }
@@ -311,17 +657,28 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                     .set_read_timeout(Some(Duration::from_millis(40)))
                     .map_err(|e| e.to_string())?;
             }
-            let _ = events.send(Event::WebSocket(true));
+            let _ = events.send(for_endpoint(&current, Event::WebSocket(true)));
             context.request_repaint();
             let mut hue = 0_u16;
             let mut last_stream = Instant::now() - Duration::from_millis(50);
+            let mut stats_at = Instant::now();
+            let mut sent_frames = 0_u32;
             loop {
                 match commands.try_recv() {
-                    Ok(WsCommand::Connect(new_endpoint)) if new_endpoint != current => {
+                    Ok(WsCommand::Connect(new_endpoint)) => {
+                        mapping.clear();
+                        sampling = false;
+                        streaming = false;
                         endpoint = Some(new_endpoint);
                         break;
                     }
-                    Ok(WsCommand::Connect(_)) => {}
+                    Ok(WsCommand::Rate(value)) => fps = value.min(streaming::MAX_FPS),
+                    Ok(WsCommand::Mapping(value)) => {
+                        mapping = value;
+                        if !streaming::valid_mapping(&mapping) {
+                            sampling = false;
+                        }
+                    }
                     Ok(WsCommand::Stream(value)) => {
                         streaming = value;
                         if value {
@@ -329,7 +686,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                         }
                     }
                     Ok(WsCommand::Sample(value)) => {
-                        sampling = value;
+                        sampling = value && streaming::valid_mapping(&mapping);
                         if value {
                             streaming = false;
                         }
@@ -337,7 +694,8 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                     Err(TryRecvError::Disconnected) => return Ok(()),
                     Err(TryRecvError::Empty) => {}
                 }
-                if streaming && last_stream.elapsed() >= Duration::from_millis(40) {
+                if streaming && last_stream.elapsed() >= streaming::interval(fps) {
+                    let frame_at = Instant::now();
                     socket
                         .send(Message::Binary(rainbow_packet(0, 240, false, hue).into()))
                         .map_err(|e| e.to_string())?;
@@ -345,22 +703,41 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                         .send(Message::Binary(rainbow_packet(240, 240, true, hue).into()))
                         .map_err(|e| e.to_string())?;
                     hue = (hue + 4) % 360;
-                    last_stream = Instant::now();
+                    last_stream = frame_at;
+                    sent_frames += 1;
                 }
-                if sampling && last_stream.elapsed() >= Duration::from_millis(120) {
-                    let (first, second) = sampled_screen_packets()?;
+                if sampling && last_stream.elapsed() >= streaming::interval(fps) {
+                    let frame_at = Instant::now();
+                    let (first, second) = sampled_screen_packets(&mapping)?;
                     socket
                         .send(Message::Binary(first.into()))
                         .map_err(|e| e.to_string())?;
                     socket
                         .send(Message::Binary(second.into()))
                         .map_err(|e| e.to_string())?;
-                    last_stream = Instant::now();
+                    last_stream = frame_at;
+                    sent_frames += 1;
+                }
+                if stats_at.elapsed() >= Duration::from_secs(1) {
+                    let measured = f64::from(sent_frames) / stats_at.elapsed().as_secs_f64();
+                    let _ = events.send(for_endpoint(&current, Event::StreamStats(measured)));
+                    sent_frames = 0;
+                    stats_at = Instant::now();
+                    context.request_repaint();
+                }
+                if let tungstenite::stream::MaybeTlsStream::Plain(stream) = socket.get_mut() {
+                    stream
+                        .set_read_timeout(Some(streaming::read_budget(
+                            streaming || sampling,
+                            fps,
+                            last_stream.elapsed(),
+                        )))
+                        .map_err(|e| e.to_string())?;
                 }
                 match socket.read() {
                     Ok(Message::Text(text)) => {
                         if let Ok(status) = serde_json::from_str::<DeviceStatus>(&text) {
-                            let _ = events.send(Event::Status(status));
+                            let _ = events.send(for_endpoint(&current, Event::Status(status)));
                             context.request_repaint();
                         }
                     }
@@ -373,10 +750,13 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
             }
             Ok(())
         })();
-        let _ = events.send(Event::WebSocket(false));
+        let _ = events.send(for_endpoint(&current, Event::WebSocket(false)));
         context.request_repaint();
         if let Err(error) = result {
-            let _ = events.send(Event::Failed(format!("WebSocket: {error}")));
+            let _ = events.send(for_endpoint(
+                &current,
+                Event::Failed(format!("WebSocket: {error}")),
+            ));
         }
         thread::sleep(Duration::from_millis(600));
     }
@@ -447,6 +827,9 @@ fn wire_frame(opcode: u8, sequence: u8, payload: &[u8]) -> Vec<u8> {
     cobs_encode(&raw)
 }
 fn decode_frame(encoded: &[u8]) -> Option<(u8, Vec<u8>)> {
+    decode_envelope(encoded).map(|(op,_,payload)|(op,payload))
+}
+fn decode_envelope(encoded: &[u8]) -> Option<(u8, u8, Vec<u8>)> {
     let raw = cobs_decode(encoded)?;
     if raw.len() < 6
         || raw[0] != 0xa5
@@ -456,14 +839,15 @@ fn decode_frame(encoded: &[u8]) -> Option<(u8, Vec<u8>)> {
     {
         return None;
     }
-    Some((raw[2], raw[5..raw.len() - 1].to_vec()))
+    Some((raw[2], raw[3], raw[5..raw.len() - 1].to_vec()))
 }
 fn serial_status(payload: &[u8]) -> Option<DeviceStatus> {
     if payload.len() < 19 {
         return None;
     }
     Some(DeviceStatus {
-        mode: ["idle", "cell", "first-wins"]
+        capabilities: capabilities::Manifest::from_usb(payload),
+        mode: ["idle", "cell", "first-wins", "snake"]
             .get(payload[0] as usize)
             .unwrap_or(&"unknown")
             .to_string(),
@@ -476,6 +860,24 @@ fn serial_status(payload: &[u8]) -> Option<DeviceStatus> {
             .to_string(),
         avr_online: payload[5] != 0,
         tm1637_ack: payload[6] != 0,
+        tm1637_segments: payload.get(19..23).unwrap_or_default().to_vec(),
+        tm1637_brightness: payload.get(23).copied().unwrap_or_default(),
+        tm1637_host_active: payload.get(24).is_some_and(|value| *value != 0),
+        avr_version: if payload.len() >= 29 && payload[5] != 0 && payload[28] > 0 {
+            Some(format!("{}.{}.{}", payload[25], payload[26], payload[27]))
+        } else {
+            None
+        },
+        audio_cues: payload
+            .get(28)
+            .filter(|count| payload[5] != 0 && **count as usize <= audio::CUES.len())
+            .map(|count| {
+                audio::CUES[..*count as usize]
+                    .iter()
+                    .map(|(name, _)| (*name).to_owned())
+                    .collect()
+            })
+            .unwrap_or_default(),
         programming_latch: payload[7] != 0,
         active_inputs: payload[8],
         input_9: payload[9] != 0,
@@ -498,6 +900,7 @@ fn serial_status(payload: &[u8]) -> Option<DeviceStatus> {
 fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, context: egui::Context) {
     let mut port_name = String::new();
     let mut sequence = 1_u8;
+    let mut nonce = 0_u8;
     loop {
         if port_name.is_empty() {
             match commands.recv() {
@@ -506,84 +909,194 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
                 Err(_) => return,
             }
         }
-        if port_name.is_empty() {
-            continue;
-        }
-        let opened = serialport::new(&port_name, 115_200)
-            .timeout(Duration::from_millis(60))
-            .open();
-        let Ok(mut port) = opened else {
-            let _ = events.send(Event::Serial(false, None));
+        if port_name.is_empty() { continue; }
+        let Ok(mut port) = serialport::new(&port_name,115_200).timeout(Duration::from_millis(60)).open() else {
+            let _ = events.send(Event::Serial(port_name.clone(),false,None));
             thread::sleep(Duration::from_secs(1));
-            while let Ok(c) = commands.try_recv() {
-                if let SerialCommand::Port(p) = c {
-                    port_name = p
-                }
-            }
+            while let Ok(c) = commands.try_recv() { if let SerialCommand::Port(p)=c {port_name=p} }
             continue;
         };
-        let _ = events.send(Event::Serial(true, None));
+        let connected_port = port_name.clone();
+        let _ = events.send(Event::Serial(connected_port.clone(),true,None));
         context.request_repaint();
-        let mut encoded = Vec::new();
-        let mut last_poll = Instant::now() - Duration::from_secs(1);
+        let mut encoded=Vec::new();
+        let mut last_poll=Instant::now()-Duration::from_secs(1);
+        let mut last_identity=Instant::now()-Duration::from_secs(20);
+        let mut stamp=None;
+        let mut identity: Option<serde_json::Value>=None;
+        let mut read: Option<identity::UsbRead>=None;
+        let mut read_wait: Option<(u8,Instant)>=None;
+        let mut packets=std::collections::VecDeque::new();
+        let mut write_wait: Option<(u8,Instant)>=None;
+        let mut expected: Option<(String,String)>=None;
         'connected: loop {
-            while let Ok(command) = commands.try_recv() {
-                match command {
-                    SerialCommand::Port(p) if p != port_name => {
-                        port_name = p;
-                        break 'connected;
+            while let Ok(c)=commands.try_recv() {
+                match c {
+                    SerialCommand::Port(p)=>{port_name=p;break 'connected}
+                    SerialCommand::Send(target,op,payload) if target==connected_port=>{
+                        let _=port.write_all(&wire_frame(op,sequence,&payload));sequence=sequence.wrapping_add(1);
                     }
-                    SerialCommand::Port(_) => {}
-                    SerialCommand::Send(op, payload) => {
-                        let _ = port.write_all(&wire_frame(op, sequence, &payload));
-                        sequence = sequence.wrapping_add(1);
-                    }
-                }
-            }
-            if last_poll.elapsed() >= Duration::from_millis(750) {
-                let _ = port.write_all(&wire_frame(OP_GET_STATUS, sequence, &[]));
-                sequence = sequence.wrapping_add(1);
-                last_poll = Instant::now();
-            }
-            let mut bytes = [0_u8; 128];
-            match port.read(&mut bytes) {
-                Ok(n) => {
-                    for byte in &bytes[..n] {
-                        if *byte == 0 {
-                            if let Some((op, payload)) = decode_frame(&encoded) {
-                                if op == OP_STATUS {
-                                    let _ =
-                                        events.send(Event::Serial(true, serial_status(&payload)));
-                                    context.request_repaint();
-                                }
-                            }
-                            encoded.clear();
-                        } else if encoded.len() < 80 {
-                            encoded.push(*byte)
+                    SerialCommand::Identity(target,host,label) if target==connected_port=>{
+                        if expected.is_some() {
+                            let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err("An identity write is already pending".into())));
                         } else {
-                            encoded.clear()
+                            match identity::usb_write(&host,&label) {
+                                Ok(next)=>{packets=next;expected=Some((identity::normalize_name(&host).unwrap(),label));read=None;read_wait=None;}
+                                Err(error)=>{let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err(error)));}
+                            }
                         }
                     }
+                    _=>{}
                 }
-                Err(e) if matches!(e.kind(), ErrorKind::TimedOut | ErrorKind::WouldBlock) => {}
-                Err(_) => break,
+            }
+            if write_wait.is_some_and(|(_,at)|at.elapsed()>Duration::from_secs(2)) ||
+                read_wait.is_some_and(|(_,at)|at.elapsed()>Duration::from_secs(2)) ||
+                (read.is_some() && last_identity.elapsed()>Duration::from_secs(8)) {
+                packets.clear();write_wait=None;read_wait=None;read=None;identity=None;
+                if expected.take().is_some() {
+                    let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err("Identity response timed out. Refresh before retrying; no mutation was replayed.".into())));
+                }
+                last_identity=Instant::now(); // Bounded backoff for a read-only refresh.
+            }
+            if write_wait.is_none() {
+                if let Some(payload)=packets.pop_front() {
+                    if port.write_all(&wire_frame(0x55,sequence,&payload)).is_err(){break}
+                    write_wait=Some((sequence,Instant::now()));sequence=sequence.wrapping_add(1);
+                } else if let Some(reader)=&read {
+                    if read_wait.is_none() {
+                        if port.write_all(&wire_frame(0x59,sequence,&reader.request())).is_err(){break}
+                        read_wait=Some((sequence,Instant::now()));sequence=sequence.wrapping_add(1);
+                    }
+                }
+            }
+            if last_poll.elapsed()>=Duration::from_millis(750) {
+                let _=port.write_all(&wire_frame(OP_GET_STATUS,sequence,&[]));sequence=sequence.wrapping_add(1);last_poll=Instant::now();
+            }
+            let mut bytes=[0_u8;128];
+            match port.read(&mut bytes) {
+                Ok(n)=>for byte in &bytes[..n] {
+                    if *byte==0 {
+                        if let Some((op,response_sequence,payload))=decode_envelope(&encoded) {
+                            if op==OP_STATUS {
+                                if payload.len()>=38 && payload[31]&(1<<5)!=0 && packets.is_empty() && write_wait.is_none()
+                                    && read.is_none() && (stamp!=Some(payload[37]) || last_identity.elapsed()>Duration::from_secs(10)) {
+                                    if stamp!=Some(payload[37]) { identity=None; }
+                                    stamp=Some(payload[37]);nonce=nonce.wrapping_add(1);
+                                    read=Some(identity::UsbRead{nonce,..Default::default()});last_identity=Instant::now();
+                                }
+                                if let Some(mut status)=serial_status(&payload) {
+                                    if let (Some(value),Some(c))=(&identity,&mut status.capabilities) {
+                                        c.name=value["display_name"].as_str().unwrap_or_default().into();
+                                        c.hostname=value["hostname"].as_str().unwrap_or_default().into();
+                                        c.application=serde_json::from_value(value["application"].clone()).ok();
+                                        status.hostname=c.hostname.clone();
+                                    }
+                                    let _=events.send(Event::Serial(connected_port.clone(),true,Some(status)));
+                                }
+                            } else if op==0xb2 && read_wait.is_some_and(|(s,_)|s==response_sequence) {
+                                read_wait=None;
+                                let result=read.as_mut().unwrap().accept(&payload);
+                                match result {
+                                    Ok(Some(value))=>{
+                                        read=None;
+                                        if let Some((host,label))=expected.take() {
+                                            let valid=value["hostname"].as_str()==Some(host.as_str())&&value["display_name"].as_str()==Some(label.as_str());
+                                            let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),if valid {Ok(())} else {Err("Identity ACK received but readback differs; no replay attempted".into())}));
+                                        }
+                                        let _=events.send(Event::SerialIdentity(connected_port.clone(),value.clone()));
+                                        identity=Some(value);
+                                    }
+                                    Ok(None)=>{}
+                                    Err(error)=>{
+                                        read=None;identity=None;
+                                        if expected.take().is_some(){let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err(error)));}
+                                    }
+                                }
+                            } else if write_wait.is_some_and(|(s,_)|s==response_sequence) && (op==0x80 || op==0x82) && payload.first()==Some(&0x55) {
+                                write_wait=None;
+                                if op==0x82 {
+                                    packets.clear();expected=None;
+                                    let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err(format!("Board rejected identity write ({:?}); no replay attempted",payload.get(1)))));
+                                } else if packets.is_empty() {
+                                    identity=None;nonce=nonce.wrapping_add(1);
+                                    read=Some(identity::UsbRead{nonce,..Default::default()});last_identity=Instant::now();
+                                }
+                            }
+                            context.request_repaint();
+                        }
+                        encoded.clear();
+                    } else if encoded.len()<80 {encoded.push(*byte)} else {encoded.clear()}
+                },
+                Err(e) if matches!(e.kind(),ErrorKind::TimedOut|ErrorKind::WouldBlock)=>{}
+                Err(_)=>break,
             }
         }
-        let _ = events.send(Event::Serial(false, None));
-        context.request_repaint();
+        if expected.is_some(){let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err("USB disconnected during identity write; reconnect and read before retrying".into())));}
+        let _=events.send(Event::Serial(connected_port,false,None));context.request_repaint();
     }
 }
-
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Transport {
     WiFi,
     Serial,
     Both,
 }
+
+// "Both" maintains both connections, not two copies of each mutation. A route
+// is selected before dispatch; uncertain outcomes must never trigger replay.
+fn command_route(selected: Transport, wifi_fresh: bool, usb_fresh: bool) -> Option<Transport> {
+    match selected {
+        Transport::WiFi if wifi_fresh => Some(Transport::WiFi),
+        Transport::Serial if usb_fresh => Some(Transport::Serial),
+        Transport::Both if wifi_fresh => Some(Transport::WiFi),
+        Transport::Both if usb_fresh => Some(Transport::Serial),
+        _ => None,
+    }
+}
 struct PakarControllerApp {
+    context_panels: Vec<ui::layout::Panel>,
+    active_context: Option<String>,
+    context_layouts: std::collections::HashMap<String, egui_dock::DockState<ui::layout::Panel>>,
+    config: config::AppConfig,
+    preferences: Option<ui::preferences::PreferencesDraft>,
+    device_settings: device_settings::Editor,
+    control: platform::instance::Control,
+    dock: egui_dock::DockState<ui::layout::Panel>,
+    reveal_panels: Vec<ui::layout::Panel>,
+    close_panels: Vec<ui::layout::Panel>,
+    open_panels: Vec<ui::layout::Panel>,
+    show_connection: bool,
+    show_mapping: bool,
+    show_workspaces: bool,
+    show_about: bool,
+    confirm_reset: bool,
+    exiting: bool,
+    workspace_name: String,
+    workspace_icon: String,
+    selected_cell: u8,
+    cell_search: String,
+    table: ui::cell_table::TableState,
+    capture: ui::screenshot::State,
+    screenshot_harness: bool,
+    focus_cell_search: bool,
+    cell_effect: String,
+    event_log: Vec<(String, String)>,
+    last_status_at: Option<Instant>,
+    last_serial_status_at: Option<Instant>,
+    configuration_loaded: bool,
+    tray: Option<platform::windows_tray::TrayController>,
+    notifications: std::cell::RefCell<platform::notifications::Delivery>,
+    connection_notice: platform::notifications::ConnectionNotice,
+    tray_tooltip: String,
+    #[cfg(windows)]
+    windows_desktop: Option<platform::windows_desktop::Desktop>,
     base: String,
     user: String,
     password: String,
+    access_user: String,
+    access_password: String,
+    access_confirm: String,
+    access_info: Option<serde_json::Value>,
     serial_port: String,
     transport: Transport,
     status: Option<DeviceStatus>,
@@ -591,27 +1104,14 @@ struct PakarControllerApp {
     brightness: u8,
     pattern: String,
     display_value: i16,
+    display_text: String,
     buzzer_frequency: u16,
     buzzer_duration: u16,
     output_mask: u8,
-    wifi_ssid: String,
-    wifi_password: String,
-    station_enabled: bool,
-    ap_enabled: bool,
-    mqtt_enabled: bool,
-    mqtt_tls: bool,
-    mqtt_host: String,
-    mqtt_port: u16,
-    mqtt_user: String,
-    mqtt_password: String,
-    mqtt_topic: String,
-    cloud_ws_enabled: bool,
-    cloud_ws_tls: bool,
-    cloud_ws_host: String,
-    cloud_ws_port: u16,
-    cloud_ws_path: String,
-    cloud_ws_token: String,
-    telemetry_seconds: u16,
+    device_name: Option<String>,
+    board_display_name: Option<String>,
+    identity_pending: bool,
+    identity_saved: Option<(String, String)>,
     message: String,
     http_tx: Sender<HttpCommand>,
     ws_tx: Sender<WsCommand>,
@@ -624,11 +1124,30 @@ struct PakarControllerApp {
     serial_live: bool,
     streaming: bool,
     sampling: bool,
+    stream_sent_fps: Option<(f64, Instant)>,
+    palette: ui::palette::Palette,
+    mappings: Vec<CellMapping>,
+    mapping_logical: u8,
+    mapping_physical: u8,
+    mapping_name: String,
+    last_mapping_poll: Instant,
 }
 
 impl PakarControllerApp {
     fn new(context: &eframe::CreationContext<'_>) -> Self {
-        install_pealayer_style(&context.egui_ctx);
+        let config = config::AppConfig::load().unwrap_or_else(|error| {
+            eprintln!("{error}");
+            config::AppConfig::default()
+        });
+        // apply resolves system/override locale and owns the initial font install.
+        config::apply(&context.egui_ctx, &config);
+        let dock = ui::layout::restore(&config.dock_layout);
+        let screenshot_harness = std::env::var_os("PAKAR_SCREENSHOT_PATH").is_some()
+            && std::env::var_os("PAKAR_CONFIG_FILE").is_some() && !config.single_instance;
+        #[cfg(windows)]
+        if !screenshot_harness && let Err(error) = platform::windows_jump_list::install() {
+            eprintln!("Windows quick actions: {error}");
+        }
         let (http_tx, http_rx) = mpsc::channel();
         let (ws_tx, ws_rx) = mpsc::channel();
         let (serial_tx, serial_rx) = mpsc::channel();
@@ -650,38 +1169,76 @@ impl PakarControllerApp {
             .name("pakar-serial".into())
             .spawn(move || serial_worker(serial_rx, event_tx, ctx))
             .unwrap();
+        let tray = if screenshot_harness {Ok(None)} else {platform::windows_tray::TrayController::new().map(Some)};
+        let mut event_log = Vec::new();
+        if let Err(error) = &tray {
+            event_log.push(("Windows tray unavailable".into(), error.clone()));
+        }
+        #[cfg(windows)]
+        let windows_desktop = if screenshot_harness {Ok(None)} else {platform::windows_desktop::Desktop::new(context).map(Some)};
+        #[cfg(windows)]
+        if let Err(error) = &windows_desktop {
+            event_log.push(("Windows desktop unavailable".into(), error.clone()));
+        }
         Self {
-            base: std::env::var("PAKAR_ENDPOINT").unwrap_or_else(|_| "http://192.168.4.1".into()),
-            user: std::env::var("PAKAR_USER").unwrap_or_else(|_| "admin".into()),
+            context_panels: Vec::new(),
+            active_context: None,
+            context_layouts: Default::default(),
+            control: platform::instance::start(context.egui_ctx.clone(), !screenshot_harness),
+            dock,
+            reveal_panels: Vec::new(),
+            close_panels: Vec::new(),
+            open_panels: Vec::new(),
+            preferences: None,
+            show_connection: false,
+            show_mapping: false,
+            device_settings: device_settings::Editor::default(),
+            show_workspaces: false,
+            show_about: false,
+            confirm_reset: false,
+            exiting: false,
+            workspace_name: String::new(),
+            workspace_icon: "hardware".into(),
+            selected_cell: 1,
+            cell_search: String::new(),
+            table: Default::default(),
+            capture: ui::screenshot::State::from_environment(),
+            screenshot_harness,
+            focus_cell_search: false,
+            cell_effect: "fade".into(),
+            event_log,
+            last_status_at: None,
+            last_serial_status_at: None,
+            configuration_loaded: false,
+            tray: tray.ok().flatten(),
+            notifications: Default::default(),
+            connection_notice: Default::default(),
+            tray_tooltip: String::new(),
+            #[cfg(windows)]
+            windows_desktop: windows_desktop.ok().flatten(),
+            base: std::env::var("PAKAR_ENDPOINT").unwrap_or_else(|_| config.endpoint.clone()),
+            user: std::env::var("PAKAR_USER").unwrap_or_else(|_| config.user.clone()),
             password: std::env::var("PAKAR_PASSWORD").unwrap_or_else(|_| "pakarcontroller".into()),
-            serial_port: std::env::var("PAKAR_SERIAL").unwrap_or_default(),
+            access_user: String::new(),
+            access_password: String::new(),
+            access_confirm: String::new(),
+            access_info: None,
+            serial_port: std::env::var("PAKAR_SERIAL")
+                .unwrap_or_else(|_| config.serial_port.clone()),
             transport: Transport::Both,
             status: None,
             serial_status: None,
             brightness: 255,
             pattern: "none".into(),
             display_value: 1,
+            display_text: "PAKAR CONTROLLER".into(),
             buzzer_frequency: 1032,
             buzzer_duration: 100,
             output_mask: 0,
-            wifi_ssid: "DRS Tether".into(),
-            wifi_password: String::new(),
-            station_enabled: true,
-            ap_enabled: true,
-            mqtt_enabled: true,
-            mqtt_tls: true,
-            mqtt_host: "mqtt.digitalogic.ir".into(),
-            mqtt_port: 8883,
-            mqtt_user: "pakarcontroller-b45634".into(),
-            mqtt_password: String::new(),
-            mqtt_topic: "pakarcontroller".into(),
-            cloud_ws_enabled: false,
-            cloud_ws_tls: true,
-            cloud_ws_host: String::new(),
-            cloud_ws_port: 443,
-            cloud_ws_path: "/".into(),
-            cloud_ws_token: String::new(),
-            telemetry_seconds: 5,
+            device_name: None,
+            board_display_name: None,
+            identity_pending: false,
+            identity_saved: None,
             message: "Connecting to PakarController".into(),
             http_tx,
             ws_tx,
@@ -694,6 +1251,14 @@ impl PakarControllerApp {
             serial_live: false,
             streaming: false,
             sampling: false,
+            stream_sent_fps: None,
+            palette: ui::palette::Palette::Studio,
+            mappings: Vec::new(),
+            mapping_logical: 1,
+            mapping_physical: 73,
+            mapping_name: "1".into(),
+            last_mapping_poll: Instant::now() - Duration::from_secs(30),
+            config,
         }
     }
     fn endpoint(&self) -> Endpoint {
@@ -704,6 +1269,10 @@ impl PakarControllerApp {
         }
     }
     fn post(&mut self, path: &'static str, form: Vec<(String, String)>) {
+        if self.command_route() != Some(Transport::WiFi) || !self.peer_context().is_some_and(|c| c.allows(path, &form)) {
+            self.message = "This connected board has not acknowledged this capability".into();
+            return;
+        }
         if self.transport != Transport::Serial {
             let _ = self
                 .http_tx
@@ -712,7 +1281,9 @@ impl PakarControllerApp {
     }
     fn serial(&self, op: u8, payload: Vec<u8>) {
         if self.transport != Transport::WiFi {
-            let _ = self.serial_tx.send(SerialCommand::Send(op, payload));
+            let _ = self
+                .serial_tx
+                .send(SerialCommand::Send(self.serial_port.clone(), op, payload));
         }
     }
     fn action(
@@ -722,85 +1293,82 @@ impl PakarControllerApp {
         op: u8,
         payload: Vec<u8>,
     ) {
-        self.post(path, form);
-        self.serial(op, payload);
-    }
-    fn apply_network(&mut self) {
-        if !self.station_enabled && !self.ap_enabled {
-            self.message = "Keep station or recovery AP enabled".into();
+        if !self.peer_context().is_some_and(|c| c.allows(path, &form)) {
+            self.message = "This connected board has not acknowledged this capability".into();
             return;
         }
-        self.post(
-            "/api/v1/network",
-            vec![
-                ("station_enabled".into(), self.station_enabled.to_string()),
-                ("ap_enabled".into(), self.ap_enabled.to_string()),
-                ("ssid".into(), self.wifi_ssid.clone()),
-                ("password".into(), self.wifi_password.clone()),
-            ],
-        );
-        if self.transport != Transport::WiFi {
-            self.serial(OP_NETWORK_CONFIG, vec![0]);
-            for chunk in self.wifi_ssid.as_bytes().chunks(47) {
-                let mut payload = vec![1];
-                payload.extend_from_slice(chunk);
-                self.serial(OP_NETWORK_CONFIG, payload);
-            }
-            for chunk in self.wifi_password.as_bytes().chunks(47) {
-                let mut payload = vec![2];
-                payload.extend_from_slice(chunk);
-                self.serial(OP_NETWORK_CONFIG, payload);
-            }
-            self.serial(
-                OP_NETWORK_CONFIG,
-                vec![3, u8::from(self.station_enabled), u8::from(self.ap_enabled)],
-            );
+        match self.command_route() {
+            Some(Transport::WiFi) => self.post(path, form),
+            Some(Transport::Serial) => self.serial(op, payload),
+            _ => self.notify(
+                "Device offline",
+                "No fresh status from the selected transport. Reconnect before sending a command.",
+                messaging::Severity::Warning,
+            ),
         }
-        self.message = "Network configuration submitted".into();
     }
-    fn apply_cloud(&mut self) {
-        if self.transport == Transport::Serial {
-            self.message = "Cloud settings require the authenticated HTTP path".into();
-            return;
+    fn command_route(&self) -> Option<Transport> {
+        command_route(
+            self.transport,
+            self.status.is_some()
+                && self.last_ws_endpoint.as_ref() == Some(&self.endpoint())
+                && self
+                    .last_status_at
+                    .is_some_and(|at| at.elapsed() < Duration::from_secs(8)),
+            self.serial_live
+                && self.last_serial_port == self.serial_port
+                && self.serial_status.is_some()
+                && self
+                    .last_serial_status_at
+                    .is_some_and(|at| at.elapsed() < Duration::from_secs(8)),
+        )
+    }
+    fn provision_usb_network(
+        &mut self,
+        config: &device_settings::Network,
+        password: &str,
+        open: bool,
+    ) -> Result<(), String> {
+        if self.command_route() != Some(Transport::Serial) {
+            return Err("Reconnect to the selected USB peer before provisioning".into());
         }
-        let mut form = vec![
-            ("mqtt_enabled".into(), self.mqtt_enabled.to_string()),
-            ("mqtt_tls".into(), self.mqtt_tls.to_string()),
-            ("mqtt_host".into(), self.mqtt_host.clone()),
-            ("mqtt_port".into(), self.mqtt_port.to_string()),
-            ("mqtt_user".into(), self.mqtt_user.clone()),
-            ("mqtt_base_topic".into(), self.mqtt_topic.clone()),
-            (
-                "websocket_enabled".into(),
-                self.cloud_ws_enabled.to_string(),
-            ),
-            ("websocket_tls".into(), self.cloud_ws_tls.to_string()),
-            ("websocket_host".into(), self.cloud_ws_host.clone()),
-            ("websocket_port".into(), self.cloud_ws_port.to_string()),
-            ("websocket_path".into(), self.cloud_ws_path.clone()),
-            (
-                "telemetry_seconds".into(),
-                self.telemetry_seconds.to_string(),
-            ),
-        ];
-        if !self.mqtt_password.is_empty() {
-            form.push(("mqtt_password".into(), self.mqtt_password.clone()));
+        for payload in device_settings::usb_payloads(config, password, open)? {
+            self.serial(OP_NETWORK_CONFIG, payload);
         }
-        if !self.cloud_ws_token.is_empty() {
-            form.push(("websocket_token".into(), self.cloud_ws_token.clone()));
-        }
-        self.post("/api/v1/cloud", form);
-        self.mqtt_password.clear();
-        self.cloud_ws_token.clear();
-        self.message = "Cloud configuration submitted".into();
+        self.message = "USB provisioning queued; this serial protocol has no saved-settings readback. Verify via authenticated HTTP after reconnecting.".into();
+        Ok(())
     }
     fn poll(&mut self) {
         let endpoint = self.endpoint();
         if self.last_ws_endpoint.as_ref() != Some(&endpoint) {
+            self.connection_notice.reset();
+            self.device_settings.invalidate_peer();
+            self.status = None;
+            self.table.pixel_sample = None;
+            self.last_status_at = None;
+            self.websocket_live = false;
+            self.stream_sent_fps = None;
+            self.streaming = false;
+            self.sampling = false;
+            self.mappings.clear();
+            self.access_info = None;
+            self.device_name = None;
+            self.board_display_name = None;
+            self.identity_pending = false;
+            self.identity_saved = None;
             let _ = self.ws_tx.send(WsCommand::Connect(endpoint.clone()));
+            let _ = self.ws_tx.send(WsCommand::Stream(false));
+            let _ = self.ws_tx.send(WsCommand::Sample(false));
+            let _ = self.ws_tx.send(WsCommand::Rate(self.config.stream_fps));
             self.last_ws_endpoint = Some(endpoint);
+            self.configuration_loaded = false;
         }
         if self.last_serial_port != self.serial_port {
+            self.identity_pending = false;
+            self.connection_notice.reset();
+            self.serial_status = None;
+            self.last_serial_status_at = None;
+            self.serial_live = false;
             let _ = self
                 .serial_tx
                 .send(SerialCommand::Port(self.serial_port.clone()));
@@ -809,36 +1377,240 @@ impl PakarControllerApp {
         if self.last_poll.elapsed() >= Duration::from_secs(2) {
             self.last_poll = Instant::now();
             let _ = self.http_tx.send(HttpCommand::Status(self.endpoint()));
+            if self.device_settings.open && self.device_settings.page == 9 {
+                let _ = self.http_tx.send(HttpCommand::Configuration(
+                    self.endpoint(),
+                    "/api/v1/firmware/remote",
+                ));
+            }
+        }
+        if !self.configuration_loaded {
+            let _ = self.http_tx.send(HttpCommand::Configuration(
+                self.endpoint(),
+                "/api/v1/network",
+            ));
+            let _ = self.http_tx.send(HttpCommand::Configuration(
+                self.endpoint(),
+                "/api/v1/device/name",
+            ));
+            let _ = self
+                .http_tx
+                .send(HttpCommand::Configuration(self.endpoint(), "/api/v1/cloud"));
+            self.configuration_loaded = true;
+            let _ = self.http_tx.send(HttpCommand::Configuration(
+                self.endpoint(),
+                "/api/v1/auth/info",
+            ));
+        }
+        if self.command_route() == Some(Transport::WiFi) && self.has_table() && self.last_mapping_poll.elapsed() >= Duration::from_secs(15) {
+            self.last_mapping_poll = Instant::now();
+            let _ = self.http_tx.send(HttpCommand::Mapping(self.endpoint()));
         }
         while let Ok(event) = self.event_rx.try_recv() {
+            let Some(event) = current_event(event, &self.endpoint(), &self.serial_port) else {
+                continue;
+            };
             match event {
+                Event::ForEndpoint(..) => {} // Worker envelopes are unwrapped once.
+                Event::StreamStats(value) => self.stream_sent_fps = Some((value, Instant::now())),
                 Event::Status(s) => {
                     if !s.hostname.is_empty() {
+                        if s.pixel_preview_requested {
+                            self.table.pixel_sample =
+                                s.pixel_frame.clone().filter(|f| f.valid()).map(|frame| {
+                                    ui::cell_pixels::Sample {
+                                        frame,
+                                        at: Instant::now(),
+                                    }
+                                });
+                        }
                         self.brightness = s.brightness;
                         self.pattern = s.effect.clone();
                         self.output_mask = s.active_outputs;
-                        self.status = Some(s)
+                        self.status = Some(s);
+                        self.last_status_at = Some(Instant::now());
+                        self.message.clear();
                     }
                 }
-                Event::Accepted(m) => self.message = m,
-                Event::Failed(e) => self.message = e,
-                Event::WebSocket(v) => self.websocket_live = v,
-                Event::Serial(v, s) => {
+                Event::Mapping(mappings) => {
+                    self.mappings = mappings;
+                    let _ = self.ws_tx.send(WsCommand::Mapping(self.mappings.clone()));
+                    if !streaming::valid_mapping(&self.mappings) {
+                        self.sampling = false;
+                    }
+                }
+                Event::Configuration("/api/v1/auth/info", value) => {
+                    self.access_user = value
+                        .get("username")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default()
+                        .into();
+                    self.access_info = Some(value);
+                }
+                Event::Configuration(path, value) => {
+                    if path != "/api/v1/device/name" || self.command_route() != Some(Transport::Serial) {
+                        self.receive_configuration(path, value);
+                    }
+                }
+                Event::MaintenanceFinished(id, result) => {
+                    if self.device_settings.maintenance_pending == Some(id) {
+                        let severity = maintenance::result_severity(&result);
+                        self.device_settings.maintenance_pending = None;
+                        self.device_settings.message = result.unwrap_or_else(|e| e);
+                        self.record_event("Maintenance", &self.device_settings.message.clone());
+                        self.notify_id(
+                            "pakar.maintenance",
+                            "Maintenance result",
+                            &self.device_settings.message,
+                            severity,
+                        );
+                        self.configuration_loaded = false;
+                    }
+                }
+                Event::SettingsFinished(id, group, result) => {
+                    if self.device_settings.pending != Some((id, group)) {
+                        continue;
+                    }
+                    let severity = if result.is_ok() {
+                        messaging::Severity::Success
+                    } else {
+                        messaging::Severity::Error
+                    };
+                    self.device_settings.finish(id, group, result);
+                    self.record_event("Settings", &self.device_settings.message.clone());
+                    self.notify_id(
+                        "pakar.settings",
+                        "Device settings result",
+                        &self.device_settings.message,
+                        severity,
+                    );
+                }
+                Event::CredentialsUpdated(endpoint) => {
+                    self.user = endpoint.user;
+                    self.password = endpoint.password;
+                    self.config.user = self.user.clone();
+                    self.access_password.clear();
+                    self.access_confirm.clear();
+                    self.configuration_loaded = false;
+                    self.last_ws_endpoint = None;
+                    self.notify("Credentials saved", "All device sessions were signed out. This client will reconnect with the new credentials.", messaging::Severity::Success);
+                }
+                Event::NameUpdated(endpoint, pending) => {
+                    self.identity_pending = false;
+                    self.identity_saved = None;
+                    self.base = endpoint.base;
+                    self.config.endpoint = self.base.clone();
+                    self.configuration_loaded = false;
+                    self.last_ws_endpoint = None;
+                    self.notify("Board identity saved", &if pending {format!("Reconnect at {} after Wi-Fi reassociates. DNS caches may need time to expire.", self.base)} else {"Board name verified. Wi-Fi was not restarted.".into()}, messaging::Severity::Success);
+                }
+                Event::SerialIdentity(port, value) => {
+                    if port == self.serial_port && self.command_route() == Some(Transport::Serial) {
+                        self.receive_configuration("/api/v1/device/name",value);
+                    }
+                }
+                Event::SerialIdentitySaved(port, result) => {
+                    if port == self.serial_port {
+                        self.identity_pending = false;
+                        if result.is_ok() { self.identity_saved = None; }
+                        match result {
+                            Ok(()) => self.notify("Board identity saved", "USB ACK and identity readback verified.", messaging::Severity::Success),
+                            Err(error) => self.notify("Board identity unverified", &error, messaging::Severity::Warning),
+                        }
+                    }
+                }
+                Event::Accepted(m) => {
+                    self.record_event("Command", &m);
+                    self.notify("Command accepted", &m, messaging::Severity::Success);
+                }
+                Event::OperationFailed(error) => {
+                    self.identity_pending = false;
+                    self.record_event("Operation failed", &error);
+                    self.notify_id(
+                        "pakar.operation-failed",
+                        "Operation failed",
+                        &error,
+                        messaging::Severity::Error,
+                    );
+                    self.message = error;
+                }
+                Event::Failed(e) => {
+                    if self.device_settings.scan_pending {
+                        self.device_settings.scan_pending = false;
+                        self.device_settings.message =
+                            "Network scan did not complete. Reconnect and scan again.".into();
+                    }
+                    if self.message != e {
+                        self.record_event("Error", &e);
+                    }
+                    self.message = e;
+                }
+                Event::WebSocket(v) => {
+                    self.websocket_live = v;
+                    if !v {
+                        self.stream_sent_fps = None;
+                    }
+                }
+                Event::Serial(_, v, s) => {
                     self.serial_live = v;
+                    if !v {
+                        self.serial_status = None;
+                        self.last_serial_status_at = None;
+                    }
                     if let Some(s) = s {
-                        self.serial_status = Some(s)
+                        self.serial_status = Some(s);
+                        self.last_serial_status_at = Some(Instant::now());
                     }
                 }
             }
         }
-    }
-    fn cell_color(s: &str) -> Color32 {
-        match s {
-            "red" => Color32::from_rgb(218, 54, 58),
-            "off" => Color32::from_rgb(45, 48, 54),
-            _ => Color32::from_rgb(235, 235, 225),
+        let state = self.live_status().map(|s| s.avr_online);
+        if let Some((message, severity)) = self.connection_notice.observe(state) {
+            self.record_event("Connection", message);
+            self.notify_id("pakar.connection", "Connection changed", message, severity);
+        }
+        let tip = match self.live_status() {
+            Some(s) => format!(
+                "{} — AVR {}",
+                s.capabilities.as_ref().map(|c|c.title()).unwrap_or_else(||"PakarController".into()),
+                if s.avr_online { "online" } else { "offline" }
+            ),
+            None => "PakarController — device offline".into(),
+        };
+        if tip != self.tray_tooltip {
+            if let Some(tray) = &self.tray {
+                if let Err(error) = tray.set_tooltip(&tip) {
+                    self.record_event("Windows tray", &error);
+                }
+            }
+            self.tray_tooltip = tip;
         }
     }
+    fn deliver_notifications(&mut self) {
+        loop {
+            let request = self
+                .notifications
+                .borrow_mut()
+                .next(&self.config.notifications, messaging::now_ms());
+            let Some(request) = request else {
+                break;
+            };
+            let result = self
+                .tray
+                .as_ref()
+                .ok_or_else(|| "Native notification unavailable: tray registration failed".into())
+                .and_then(|tray| tray.notify(&request, self.config.notifications.sound));
+            if let Err(error) = &result {
+                self.record_event("Windows notification", error);
+            }
+            self.notifications.borrow_mut().result(result);
+        }
+    }
+    fn notification_snapshot(&self) -> serde_json::Value {
+        let delivery = self.notifications.borrow();
+        serde_json::json!({"backend":"Windows Shell", "policy":self.config.notifications.system, "sound":self.config.notifications.sound, "in_app":self.config.notifications.in_app, "accepted":delivery.accepted, "suppressed":delivery.suppressed, "failed":delivery.failed, "last_result":delivery.last_result, "shell_events":self.tray.as_ref().map(|tray| tray.notification_snapshot())})
+    }
+    #[cfg(test)]
     fn next_cell_state(s: &str) -> (&'static str, u8) {
         match s {
             "white" => ("red", 1),
@@ -850,388 +1622,18 @@ impl PakarControllerApp {
 
 impl eframe::App for PakarControllerApp {
     fn ui(&mut self, ui: &mut egui::Ui, _: &mut eframe::Frame) {
-        self.poll();
-        ui.ctx().request_repaint_after(Duration::from_millis(150));
-        ui.horizontal_wrapped(|ui| {
-            ui.heading("PakarController");
-            ui.label("Wi-Fi");
-            ui.text_edit_singleline(&mut self.base);
-            ui.label("USB serial");
-            ui.add(egui::TextEdit::singleline(&mut self.serial_port).hint_text("COM9"));
-            egui::ComboBox::from_label("Commands")
-                .selected_text(match self.transport {
-                    Transport::WiFi => "Wi-Fi",
-                    Transport::Serial => "Serial",
-                    Transport::Both => "Both",
-                })
-                .show_ui(ui, |ui| {
-                    ui.selectable_value(&mut self.transport, Transport::Both, "Both");
-                    ui.selectable_value(&mut self.transport, Transport::WiFi, "Wi-Fi");
-                    ui.selectable_value(&mut self.transport, Transport::Serial, "Serial");
-                });
-        });
-        ui.horizontal_wrapped(|ui| {
-            ui.label(format!(
-                "WebSocket {}",
-                if self.websocket_live {
-                    "live"
-                } else {
-                    "offline"
-                }
-            ));
-            ui.label(format!(
-                "USB {}",
-                if self.serial_live { "live" } else { "offline" }
-            ));
-            if ui
-                .button(if self.streaming {
-                    "Stop streamed rainbow"
-                } else {
-                    "Stream rainbow"
-                })
-                .clicked()
-            {
-                self.streaming = !self.streaming;
-                if self.streaming {
-                    self.sampling = false;
-                }
-                let _ = self.ws_tx.send(WsCommand::Stream(self.streaming));
-            }
-            if ui
-                .button(if self.sampling {
-                    "Stop screen sampler"
-                } else {
-                    "Sample primary screen"
-                })
-                .clicked()
-            {
-                self.sampling = !self.sampling;
-                if self.sampling {
-                    self.streaming = false;
-                }
-                let _ = self.ws_tx.send(WsCommand::Sample(self.sampling));
-            }
-            ui.label(&self.message);
-        });
-        ui.horizontal_wrapped(|ui| {
-            ui.label("Wi-Fi SSID");
-            ui.text_edit_singleline(&mut self.wifi_ssid);
-            ui.label("Password");
-            ui.add(egui::TextEdit::singleline(&mut self.wifi_password).password(true));
-            ui.checkbox(&mut self.station_enabled, "Station");
-            ui.checkbox(&mut self.ap_enabled, "Recovery AP");
-            if ui.button("Apply network").clicked() {
-                self.apply_network();
-            }
-        });
-        egui::CollapsingHeader::new("Cloud MQTT and outbound WebSocket")
-            .default_open(false)
-            .show(ui, |ui| {
-                ui.horizontal_wrapped(|ui| {
-                    ui.checkbox(&mut self.mqtt_enabled, "MQTT");
-                    ui.checkbox(&mut self.mqtt_tls, "TLS");
-                    ui.label("Host");
-                    ui.text_edit_singleline(&mut self.mqtt_host);
-                    ui.add(egui::DragValue::new(&mut self.mqtt_port).range(1..=65535));
-                    ui.label("Topic");
-                    ui.text_edit_singleline(&mut self.mqtt_topic);
-                });
-                ui.horizontal_wrapped(|ui| {
-                    ui.label("MQTT user");
-                    ui.text_edit_singleline(&mut self.mqtt_user);
-                    ui.label("Password");
-                    ui.add(
-                        egui::TextEdit::singleline(&mut self.mqtt_password)
-                            .password(true)
-                            .hint_text("blank keeps stored"),
-                    );
-                });
-                ui.horizontal_wrapped(|ui| {
-                    ui.checkbox(&mut self.cloud_ws_enabled, "Outbound WebSocket");
-                    ui.checkbox(&mut self.cloud_ws_tls, "TLS");
-                    ui.label("Host");
-                    ui.text_edit_singleline(&mut self.cloud_ws_host);
-                    ui.add(egui::DragValue::new(&mut self.cloud_ws_port).range(1..=65535));
-                    ui.label("Path");
-                    ui.text_edit_singleline(&mut self.cloud_ws_path);
-                });
-                ui.horizontal_wrapped(|ui| {
-                    ui.label("Bearer token");
-                    ui.add(
-                        egui::TextEdit::singleline(&mut self.cloud_ws_token)
-                            .password(true)
-                            .hint_text("blank keeps stored"),
-                    );
-                    ui.label("Telemetry seconds");
-                    ui.add(egui::DragValue::new(&mut self.telemetry_seconds).range(1..=3600));
-                    if ui.button("Apply cloud").clicked() {
-                        self.apply_cloud();
-                    }
-                });
-            });
-        ui.separator();
-        ui.horizontal_wrapped(|ui| {
-            for (label, name, value) in [
-                ("Idle", "idle", 0_u8),
-                ("80 cells", "cell", 1),
-                ("First wins", "first-wins", 2),
-                ("Snake", "snake", 3),
-            ] {
-                if ui.button(label).clicked() {
-                    self.action(
-                        "/api/v1/mode",
-                        vec![("value".into(), name.into())],
-                        OP_SET_MODE,
-                        vec![value],
-                    );
-                }
-            }
-            if ui.button("Reset").clicked() {
-                self.action("/api/v1/game/reset", vec![], OP_RESET, vec![]);
-            }
-            for (label, direction) in [("↑", "up"), ("←", "left"), ("↓", "down"), ("→", "right")]
-            {
-                if ui.button(label).clicked() {
-                    self.post(
-                        "/api/v1/snake/direction",
-                        vec![("value".into(), direction.into())],
-                    );
-                }
-            }
-            if ui
-                .add(egui::Slider::new(&mut self.brightness, 1..=255).text("Brightness"))
-                .changed()
-            {
-                self.action(
-                    "/api/v1/brightness",
-                    vec![("value".into(), self.brightness.to_string())],
-                    OP_BRIGHTNESS,
-                    vec![self.brightness],
-                );
-            }
-            egui::ComboBox::from_label("Effect")
-                .selected_text(&self.pattern)
-                .show_ui(ui, |ui| {
-                    for name in ["none", "rainbow", "fire"] {
-                        ui.selectable_value(&mut self.pattern, name.into(), name);
-                    }
-                });
-            if ui.button("Apply").clicked() {
-                let p = match self.pattern.as_str() {
-                    "rainbow" => 1,
-                    "fire" => 2,
-                    _ => 0,
-                };
-                self.action(
-                    "/api/v1/effect",
-                    vec![("value".into(), self.pattern.clone())],
-                    OP_PATTERN,
-                    vec![p],
-                );
-            }
-        });
-        ui.horizontal_wrapped(|ui| {
-            ui.label("TM1637");
-            ui.add(egui::DragValue::new(&mut self.display_value).range(-999..=9999));
-            if ui.button("Show").clicked() {
-                self.action(
-                    "/api/v1/display",
-                    vec![("value".into(), self.display_value.to_string())],
-                    OP_DISPLAY,
-                    self.display_value.to_le_bytes().to_vec(),
-                );
-            }
-            ui.label("Buzzer Hz/ms");
-            ui.add(egui::DragValue::new(&mut self.buzzer_frequency).range(20..=12000));
-            ui.add(egui::DragValue::new(&mut self.buzzer_duration).range(1..=5000));
-            if ui.button("Play").clicked() {
-                let mut p = self.buzzer_frequency.to_le_bytes().to_vec();
-                p.extend(self.buzzer_duration.to_le_bytes());
-                self.action(
-                    "/api/v1/buzzer",
-                    vec![
-                        ("frequency".into(), self.buzzer_frequency.to_string()),
-                        ("duration_ms".into(), self.buzzer_duration.to_string()),
-                    ],
-                    OP_BUZZER,
-                    p,
-                );
-            }
-            ui.label("Outputs");
-            for bit in 0..8 {
-                let mut on = self.output_mask & (1 << bit) != 0;
-                if ui.checkbox(&mut on, (bit + 1).to_string()).changed() {
-                    if on {
-                        self.output_mask |= 1 << bit
-                    } else {
-                        self.output_mask &= !(1 << bit)
-                    }
-                    self.action(
-                        "/api/v1/outputs",
-                        vec![("mask".into(), self.output_mask.to_string())],
-                        OP_OUTPUT_MASK,
-                        vec![self.output_mask],
-                    );
-                }
-            }
-        });
-        ui.separator();
-        let snapshot = self.status.clone();
-        if let Some(s) = snapshot {
-            ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new(format!("{} v{}", s.hostname, s.version)).strong());
-                ui.label(format!(
-                    "{} · AP {} · NTP {} · WS clients {}",
-                    if s.station_connected {
-                        format!("{} / {} dBm", s.station_ip, s.station_rssi)
-                    } else {
-                        "station offline".into()
-                    },
-                    if s.ap_started { &s.ap_ip } else { "off" },
-                    if s.ntp_synced {
-                        s.utc_epoch.to_string()
-                    } else {
-                        "waiting".into()
-                    },
-                    s.websocket_clients
-                ));
-                ui.colored_label(
-                    if s.avr_online {
-                        Color32::LIGHT_GREEN
-                    } else {
-                        Color32::LIGHT_RED
-                    },
-                    if s.avr_online {
-                        "AVR online"
-                    } else {
-                        "AVR offline"
-                    },
-                );
-                ui.colored_label(
-                    if s.tm1637_ack {
-                        Color32::LIGHT_GREEN
-                    } else {
-                        Color32::LIGHT_RED
-                    },
-                    if s.tm1637_ack {
-                        "TM1637 ready"
-                    } else {
-                        "TM1637 missing"
-                    },
-                );
-                ui.label(format!(
-                    "{} · inputs {:02X}+{} · outputs {:02X} · UART {}/{}/USB {}",
-                    s.link_mode,
-                    s.active_inputs,
-                    u8::from(s.input_9),
-                    s.active_outputs,
-                    s.esp_uart_errors,
-                    s.avr_uart_errors,
-                    s.usb_serial_errors
-                ));
-                ui.colored_label(
-                    if s.mqtt_connected {
-                        Color32::LIGHT_GREEN
-                    } else if s.mqtt_enabled {
-                        Color32::GOLD
-                    } else {
-                        Color32::GRAY
-                    },
-                    if s.mqtt_connected {
-                        "MQTT connected".into()
-                    } else if s.mqtt_enabled {
-                        format!("MQTT offline ({})", s.mqtt_state)
-                    } else {
-                        "MQTT disabled".into()
-                    },
-                );
-                ui.colored_label(
-                    if s.cloud_websocket_connected {
-                        Color32::LIGHT_GREEN
-                    } else if s.cloud_websocket_enabled {
-                        Color32::GOLD
-                    } else {
-                        Color32::GRAY
-                    },
-                    if s.cloud_websocket_connected {
-                        "Cloud WS connected"
-                    } else if s.cloud_websocket_enabled {
-                        "Cloud WS offline"
-                    } else {
-                        "Cloud WS disabled"
-                    },
-                );
-                if !s.cloud_error.is_empty() {
-                    ui.colored_label(Color32::LIGHT_RED, &s.cloud_error);
-                }
-                if s.winner != 0 {
-                    ui.colored_label(Color32::GOLD, format!("Winner {}", s.winner));
-                }
-            });
-            egui::Grid::new("cells").spacing([5.0, 5.0]).show(ui, |ui| {
-                for visual_row in 0..9_i32 {
-                    for from_left in 0..10_i32 {
-                        let from_right = 9 - from_left;
-                        let offset = from_right % 2 == 0;
-                        let y = if offset { visual_row - 1 } else { visual_row };
-                        if !(0..8).contains(&y) {
-                            ui.add_space(48.0);
-                            continue;
-                        }
-                        let id = from_right * 8 + if from_right % 2 == 0 { 8 - y } else { y + 1 };
-                        let index = (id - 1) as usize;
-                        let state = s.cells.get(index).map(String::as_str).unwrap_or("off");
-                        let (next, value) = Self::next_cell_state(state);
-                        let color = if state == "white" {
-                            Color32::BLACK
-                        } else {
-                            Color32::WHITE
-                        };
-                        if ui
-                            .add_sized(
-                                [48.0, 34.0],
-                                egui::Button::new(RichText::new(id.to_string()).color(color))
-                                    .fill(Self::cell_color(state)),
-                            )
-                            .clicked()
-                        {
-                            self.action(
-                                "/api/v1/cell",
-                                vec![
-                                    ("id".into(), id.to_string()),
-                                    ("state".into(), next.into()),
-                                    ("effect".into(), "fade".into()),
-                                ],
-                                OP_CELL_ACTION,
-                                vec![id as u8, value, 1],
-                            );
-                        }
-                    }
-                    ui.end_row();
-                }
-            });
-        } else {
-            ui.label("Waiting for a live device response.");
-        }
+        self.capture.receive(ui.ctx());
+        self.draw_shell(ui);
+        self.capture.after_frame(ui.ctx());
     }
-}
-
-fn install_pealayer_style(context: &egui::Context) {
-    context.set_theme(egui::ThemePreference::System);
-    let accent = Color32::from_rgb(51, 132, 255);
-    let mut dark = egui::Visuals::dark();
-    dark.panel_fill = Color32::from_rgb(32, 32, 32);
-    dark.selection.bg_fill = accent;
-    let mut light = egui::Visuals::light();
-    light.panel_fill = Color32::from_rgb(243, 243, 243);
-    light.selection.bg_fill = accent;
-    context.set_visuals_of(Theme::Dark, dark);
-    context.set_visuals_of(Theme::Light, light);
+    fn save(&mut self, _: &mut dyn eframe::Storage) {
+        self.save_workspace();
+    }
 }
 
 fn environment_endpoint() -> Endpoint {
     Endpoint {
-        base: std::env::var("PAKAR_ENDPOINT").unwrap_or_else(|_| "http://192.168.4.1".into()),
+        base: std::env::var("PAKAR_ENDPOINT").unwrap_or_else(|_| "http://pakarcontroller".into()),
         user: std::env::var("PAKAR_USER").unwrap_or_else(|_| "admin".into()),
         password: std::env::var("PAKAR_PASSWORD").unwrap_or_else(|_| "pakarcontroller".into()),
     }
@@ -1299,19 +1701,9 @@ fn print_text_status(status: &DeviceStatus, table: bool) {
     if !table {
         return;
     }
-    for visual_row in 0..9_i32 {
-        for from_left in 0..10_i32 {
-            let from_right = 9 - from_left;
-            let y = if from_right % 2 == 0 {
-                visual_row - 1
-            } else {
-                visual_row
-            };
-            if !(0..8).contains(&y) {
-                print!("     ");
-                continue;
-            }
-            let id = from_right * 8 + if from_right % 2 == 0 { 8 - y } else { y + 1 };
+    for row in 0..8_i32 {
+        for column in 0..10_i32 {
+            let id = row * 10 + column + 1;
             let mark = match status.cells.get((id - 1) as usize).map(String::as_str) {
                 Some("white") => 'W',
                 Some("red") => 'R',
@@ -1324,8 +1716,188 @@ fn print_text_status(status: &DeviceStatus, table: bool) {
 }
 
 fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<(), String> {
+    if words.first() == Some(&"firmware") {
+        use maintenance::Operation;
+        let operation=match words {
+            ["firmware","status"]=>Operation::RemoteStatus,
+            ["firmware","fetch",url,sha] | ["firmware","fetch",url,sha,"all"]=>Operation::RemoteStage{url:(*url).into(),sha256:(*sha).into(),targets:3,bearer:std::env::var("PAKAR_FIRMWARE_TOKEN").unwrap_or_default()},
+            ["firmware","fetch",url,sha,target]=>Operation::RemoteStage{url:(*url).into(),sha256:(*sha).into(),targets:match *target{"esp"=>1,"avr"=>2,_=>return Err("Target must be all, esp or avr".into())},bearer:std::env::var("PAKAR_FIRMWARE_TOKEN").unwrap_or_default()},
+            ["firmware",action,id,boot,sha] if *action=="apply" || *action=="cancel"=>{
+                // Read-only preflight. Never fetch replacement identity for an
+                // unpinned mutation; the caller must supply the advertised triple.
+                let current=maintenance::run(client,endpoint,Operation::RemoteStatus)?;
+                let job=maintenance::parse_job(serde_json::from_str(&current).map_err(|_|"Invalid job JSON")?)?;
+                if job.job_id!=id.parse::<u32>().map_err(|_|"Invalid job ID")? || job.boot_id!=*boot || job.manifest_sha256!=*sha {
+                    return Err("Stale or incorrect remote job identity; nothing applied".into());
+                }
+                if *action=="apply"{Operation::RemoteApply(job)}else{Operation::RemoteCancel(job)}
+            }
+            _=>return Err("firmware status | fetch HTTPS_URL MANIFEST_SHA256 [all|esp|avr] | apply JOB BOOT SHA256 | cancel JOB BOOT SHA256".into()),
+        };
+        println!("{}", maintenance::run(client, endpoint, operation)?);
+        return Ok(());
+    }
+    if words == ["info"] || words == ["telemetry"] {
+        let value = pc_contract::get(
+            client,
+            &endpoint.base,
+            &endpoint.user,
+            &endpoint.password,
+            "/api/v1/telemetry",
+        )?;
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?
+        );
+        return Ok(());
+    }
+    if words.first() == Some(&"avr") {
+        let fetch = |op, payload: &[u8]| {
+            pc_contract::request(
+                client,
+                &endpoint.base,
+                &endpoint.user,
+                &endpoint.password,
+                op,
+                payload,
+            )
+        };
+        let value = match words {
+            ["avr","contracts"] => pc_contract::get(client,&endpoint.base,&endpoint.user,&endpoint.password,"/api/v1/avr/contracts")?,
+            ["avr","settings"] => {
+                let receipt=fetch(4,&[])?;
+                pc_contract::Settings::parse(receipt["payload_hex"].as_str().ok_or("Missing settings payload")?)?.json()
+            }
+            ["avr","set",key,input] => {
+                let current=fetch(4,&[])?;
+                let mut next=pc_contract::Settings::parse(current["payload_hex"].as_str().ok_or("Missing settings payload")?)?;
+                next.set(key,input)?;
+                let saved=fetch(5,&next.bytes)?;
+                if saved["response_opcode"].as_u64()!=Some(0x80) ||
+                    saved["payload_hex"].as_str()!=Some("0500") {
+                    return Err("AVR did not acknowledge settings; operation outcome is unknown".into());
+                }
+                let readback=fetch(4,&[])?;
+                let verified=pc_contract::Settings::parse(readback["payload_hex"].as_str().ok_or("Missing settings readback")?)?;
+                if !verified.persisted || verified.bytes!=next.bytes {
+                    return Err("AVR settings readback did not confirm the requested persistent values".into());
+                }
+                verified.json()
+            }
+            ["avr","status"] => fetch(2,&[])?,
+            ["avr","panel"] => fetch(0x3c,&[])?,
+            ["avr","command",op] => fetch(pc_contract::opcode(op)?,&[])?,
+            ["avr","command",op,payload] => fetch(pc_contract::opcode(op)?,&pc_contract::decode_hex(payload)?)?,
+            _ => return Err("avr contracts | settings | set PARAMETER VALUE | status | panel | command OPCODE [HEX]".into())
+        };
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?
+        );
+        return Ok(());
+    }
+    if words == ["device", "name"] || words == ["device", "identity"] {
+        if let Event::Configuration(_, value) = http_request(
+            client,
+            HttpCommand::Configuration(endpoint.clone(), "/api/v1/device/name"),
+        )? {
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?
+            );
+        }
+        return Ok(());
+    }
+    if let ["device", "label", rest @ ..] = words {
+        let label = rest.join(" ");
+        if !identity::valid_display_name(&label) { return Err("Board name must be 1..63 UTF-8 bytes without controls or edge spaces".into()); }
+        let Event::Configuration(_, value) = http_request(client,HttpCommand::Configuration(endpoint.clone(),"/api/v1/device/name"))? else { return Err("Identity unavailable".into()) };
+        let host = value["hostname"].as_str().ok_or("Hostname unavailable")?;
+        let _ = http_request(client,HttpCommand::NameChange(endpoint.clone(),host.into(),Some(label)))?;
+        println!("Board display name saved and verified; Wi-Fi was not restarted.");
+        return Ok(());
+    }
+    if let ["device", "configure", host, rest @ ..] = words {
+        let label = rest.join(" ");
+        if !identity::valid_display_name(&label) { return Err("Invalid board display name".into()); }
+        if let Event::NameUpdated(next,pending) = http_request(client,HttpCommand::NameChange(endpoint.clone(),(*host).into(),Some(label)))? {
+            println!("Board identity saved. Endpoint: {}. Network apply pending: {pending}",next.base);
+        }
+        return Ok(());
+    }
+    if let ["device", "rename", name] = words {
+        if let Event::NameUpdated(next, pending) = http_request(
+            client,
+            HttpCommand::NameChange(endpoint.clone(), (*name).into(), None),
+        )? {
+            println!(
+                "Device confirmed persistent name saved. Reconnect at {} after Wi-Fi reassociates. Set PAKAR_ENDPOINT to this URL for subsequent CLI calls.",
+                next.base
+            );
+            if !pending { println!("No Wi-Fi restart was required."); }
+        }
+        return Ok(());
+    }
+    if words == ["auth", "info"] {
+        let value: serde_json::Value = client
+            .get(format!(
+                "{}/api/v1/auth/info",
+                endpoint.base.trim_end_matches('/')
+            ))
+            .send()
+            .map_err(|e| e.to_string())?
+            .error_for_status()
+            .map_err(|e| e.to_string())?
+            .json()
+            .map_err(|e| e.to_string())?;
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?
+        );
+        return Ok(());
+    }
+    if let ["auth", "change", user] = words {
+        let password = std::env::var("PAKAR_NEW_PASSWORD").map_err(
+            |_| "Set PAKAR_NEW_PASSWORD privately; do not put passwords in command arguments",
+        )?;
+        access::validate(user, &password, &password)?;
+        let next = Endpoint {
+            base: endpoint.base.clone(),
+            user: (*user).into(),
+            password,
+        };
+        http_request(client, HttpCommand::AccessChange(endpoint.clone(), next))?;
+        println!("Credentials saved. Update PAKAR_USER/PAKAR_PASSWORD before further commands.");
+        return Ok(());
+    }
     if words.is_empty() || words[0] == "status" {
         return blocking_status(client, endpoint).map(|status| print_text_status(&status, true));
+    }
+    if matches!(words, ["display", "segments", ..] | ["display", "stop"]) {
+        let form = if words == ["display", "stop"] {
+            vec![("release".into(), "true".into())]
+        } else {
+            let (settings, text) = display::parse_command(&words[2..])?;
+            settings.form(&text)
+        };
+        let response = client
+            .post(format!(
+                "{}/api/v1/display",
+                endpoint.base.trim_end_matches('/')
+            ))
+            .basic_auth(&endpoint.user, Some(&endpoint.password))
+            .form(&form)
+            .send()
+            .map_err(|e| e.to_string())?;
+        if !response.status().is_success() {
+            return Err(format!(
+                "HTTP {}: {}",
+                response.status(),
+                response.text().unwrap_or_default()
+            ));
+        }
+        println!("accepted");
+        return Ok(());
     }
     let (path, form): (&str, Vec<(&str, &str)>) =
         match words {
@@ -1345,7 +1917,7 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
             ["snake", value] => ("/api/v1/snake/direction", vec![("value", value)]),
             ["reset"] => ("/api/v1/game/reset", vec![]),
             _ => return Err(
-                "commands: status, mode, cell, brightness, effect, display, audio, snake, reset"
+                "commands: device identity, device rename HOST[.local], device label DISPLAY NAME, device configure HOST DISPLAY NAME, auth info, auth change USER, status, mode, cell, brightness, effect, display, audio, snake, reset"
                     .into(),
             ),
         };
@@ -1373,7 +1945,7 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
     ) {
         return Ok(false);
     }
-    let endpoint = environment_endpoint();
+    let mut endpoint = environment_endpoint();
     let client = Client::builder()
         .no_proxy()
         .timeout(Duration::from_secs(15))
@@ -1413,12 +1985,19 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
                 }
                 if matches!(words.first(), Some(&"help")) {
                     println!(
-                        "status | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | audio <cue> | snake <direction> | reset | quit"
+                        "status | info | telemetry | firmware status | firmware fetch HTTPS_URL SHA256 [all|esp|avr] | firmware apply JOB BOOT SHA256 | firmware cancel JOB BOOT SHA256 | device name | device rename NAME[.local] | auth info | auth change USERNAME (PAKAR_NEW_PASSWORD) | avr contracts | avr settings | avr set PARAMETER VALUE | avr panel | avr command OPCODE [HEX] | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | display stop | display segments [--speed-ms n] [--duration-ms n] [--repeat once|loop|interval] [--interval-ms n] [--scroll] -- TEXT | audio <cue> | snake <direction> | reset | quit"
                     );
                     continue;
                 }
                 if let Err(error) = text_command(&client, &endpoint, &words) {
                     eprintln!("{error}");
+                } else if let ["auth", "change", user] = words.as_slice() {
+                    endpoint.user = (*user).into();
+                    endpoint.password =
+                        std::env::var("PAKAR_NEW_PASSWORD").map_err(|e| e.to_string())?;
+                } else if let ["device", "rename", name] = words.as_slice() {
+                    endpoint.base = format!("http://{}.local", identity::normalize_name(name)?);
+                    thread::sleep(Duration::from_secs(1));
                 }
             }
             Ok(())
@@ -1438,20 +2017,318 @@ fn main() -> eframe::Result {
             std::process::exit(2);
         }
     }
+    let config = config::AppConfig::load().unwrap_or_default();
+    let command = ui::shell::launch_command(&arguments);
+    let control_only = arguments
+        .iter()
+        .any(|arg| matches!(arg.as_str(), "--quit" | "--app-status"));
+    if control_only {
+        match platform::instance::send(&command, Duration::from_secs(2)) {
+            Ok(reply) => {
+                println!("{reply}");
+                return Ok(());
+            }
+            Err(error) => {
+                eprintln!("{error}");
+                std::process::exit(3);
+            }
+        }
+    }
+    let _ownership = if config.single_instance {
+        match platform::instance::acquire_gui_ownership() {
+            Ok(platform::instance::GuiOwnership::Primary(owner)) => Some(owner),
+            Ok(platform::instance::GuiOwnership::Existing) => {
+                let deadline = Instant::now() + Duration::from_secs(5);
+                loop {
+                    if let Ok(reply) =
+                        platform::instance::send(&command, Duration::from_millis(300))
+                    {
+                        if reply["accepted"] == true {
+                            println!("Forwarded to active PakarController");
+                            return Ok(());
+                        }
+                    }
+                    if Instant::now() >= deadline {
+                        eprintln!("The active instance did not accept the launch request");
+                        std::process::exit(3);
+                    }
+                    thread::sleep(Duration::from_millis(100));
+                }
+            }
+            Err(error) => {
+                eprintln!("{error}");
+                std::process::exit(3);
+            }
+        }
+    } else {
+        None
+    };
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([1180.0, 780.0]),
+        viewport: egui::ViewportBuilder::default()
+            .with_active(std::env::var_os("PAKAR_SCREENSHOT_PATH").is_none())
+            .with_inner_size([1180.0, 760.0])
+            .with_maximized(true)
+            .with_icon(branding::window_icon())
+            .with_min_inner_size([900.0, 600.0]),
         ..Default::default()
     };
     eframe::run_native(
         "PakarController",
         options,
-        Box::new(|c| Ok(Box::new(PakarControllerApp::new(c)))),
+        Box::new(move |c| {
+            let mut app = PakarControllerApp::new(c);
+            app.dispatch(command, &c.egui_ctx);
+            Ok(Box::new(app))
+        }),
     )
 }
 
 #[cfg(test)]
 mod tests {
+    fn mock_device(
+        responses: Vec<(u16, Vec<u8>)>,
+    ) -> (super::Endpoint, std::thread::JoinHandle<Vec<String>>) {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let endpoint = super::Endpoint {
+            base: format!("http://{}", listener.local_addr().unwrap()),
+            user: "fixture".into(),
+            password: "fixture-secret".into(),
+        };
+        let worker = std::thread::spawn(move || {
+            let mut requests = Vec::new();
+            for (code, body) in responses {
+                let (mut stream, _) = listener.accept().unwrap();
+                stream
+                    .set_read_timeout(Some(std::time::Duration::from_secs(3)))
+                    .unwrap();
+                let mut bytes = Vec::new();
+                let mut buffer = [0; 4096];
+                loop {
+                    let read = stream.read(&mut buffer).unwrap();
+                    assert!(read > 0);
+                    bytes.extend_from_slice(&buffer[..read]);
+                    if let Some(end) = bytes.windows(4).position(|w| w == b"\r\n\r\n") {
+                        let header = String::from_utf8_lossy(&bytes[..end]);
+                        let length = header
+                            .lines()
+                            .find_map(|line| {
+                                line.to_lowercase()
+                                    .strip_prefix("content-length:")
+                                    .and_then(|n| n.trim().parse::<usize>().ok())
+                            })
+                            .unwrap_or(0);
+                        if bytes.len() >= end + 4 + length {
+                            break;
+                        }
+                    }
+                    assert!(bytes.len() < 3 * 1024 * 1024);
+                }
+                requests.push(String::from_utf8_lossy(&bytes).into_owned());
+                write!(stream,"HTTP/1.1 {code} Fixture\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",body.len()).unwrap();
+                stream.write_all(&body).unwrap();
+            }
+            requests
+        });
+        (endpoint, worker)
+    }
+    fn fixture_network() -> super::device_settings::Network {
+        super::device_settings::Network {
+            station_enabled: true,
+            ap_enabled: true,
+            station_ssid: "Fixture".into(),
+        }
+    }
+    #[test]
+    fn settings_worker_requires_ack_and_exact_readback() {
+        let n = fixture_network();
+        let (endpoint, server) = mock_device(vec![
+            (202, br#"{"accepted":true}"#.to_vec()),
+            (200, serde_json::to_vec(&n).unwrap()),
+        ]);
+        let client = super::Client::builder()
+            .no_proxy()
+            .timeout(std::time::Duration::from_secs(3))
+            .build()
+            .unwrap();
+        let command =
+            super::device_settings::Write::network(41, &n, "fixture-pass", false).unwrap();
+        assert!(matches!(
+            super::http_request(&client, super::HttpCommand::Settings(endpoint, command)).unwrap(),
+            super::Event::SettingsFinished(41, _, Ok(_))
+        ));
+        let requests = server.join().unwrap();
+        assert_eq!(requests.len(), 2);
+        assert!(requests[0].starts_with("POST /api/v1/network "));
+        assert!(requests[1].starts_with("GET /api/v1/network "));
+        assert!(requests[0].to_lowercase().contains("authorization: basic "));
+    }
+    #[test]
+    fn mismatched_readback_and_negative_ack_never_replay_write() {
+        let client = super::Client::builder()
+            .no_proxy()
+            .timeout(std::time::Duration::from_secs(3))
+            .build()
+            .unwrap();
+        for negative_ack in [false, true] {
+            let mut changed = fixture_network();
+            changed.ap_enabled = false;
+            let responses = if negative_ack {
+                vec![(200, br#"{"accepted":false}"#.to_vec())]
+            } else {
+                vec![
+                    (202, br#"{"accepted":true}"#.to_vec()),
+                    (200, serde_json::to_vec(&changed).unwrap()),
+                ]
+            };
+            let (endpoint, server) = mock_device(responses);
+            let write = super::device_settings::Write::network(
+                9,
+                &fixture_network(),
+                "fixture-pass",
+                false,
+            )
+            .unwrap();
+            assert!(matches!(
+                super::http_request(&client, super::HttpCommand::Settings(endpoint, write))
+                    .unwrap(),
+                super::Event::SettingsFinished(9, _, Err(_))
+            ));
+            let requests = server.join().unwrap();
+            assert_eq!(
+                requests.iter().filter(|r| r.starts_with("POST ")).count(),
+                1
+            );
+        }
+    }
+    #[test]
+    fn maintenance_checks_positive_device_confirmation() {
+        let client = super::Client::builder().no_proxy().build().unwrap();
+        let (endpoint, server) = mock_device(vec![(
+            200,
+            br#"{"programmed":true,"verified":false}"#.to_vec(),
+        )]);
+        assert!(
+            super::maintenance::run(
+                &client,
+                &endpoint,
+                super::maintenance::Operation::ProgramAvr
+            )
+            .is_err()
+        );
+        assert_eq!(server.join().unwrap().len(), 1);
+        let (endpoint, server) = mock_device(vec![(201, b"AVR image stored".to_vec())]);
+        assert!(
+            super::maintenance::run(
+                &client,
+                &endpoint,
+                super::maintenance::Operation::StageAvr(vec![0; 32768])
+            )
+            .unwrap()
+            .contains("NOT programmed")
+        );
+        let requests = server.join().unwrap();
+        assert!(requests[0].starts_with("POST /api/v1/avr/image "));
+        assert!(requests[0].contains("multipart/form-data"));
+    }
+    #[test]
+    fn backup_export_rejects_wrong_length_and_preserves_existing_files() {
+        let destination =
+            std::env::temp_dir().join(format!("pakar-fixture-{}.bin", uuid::Uuid::new_v4()));
+        let client = super::Client::builder().no_proxy().build().unwrap();
+        let operation = super::maintenance::Operation::Download {
+            eeprom: true,
+            destination: destination.clone(),
+        };
+        let (endpoint, server) = mock_device(vec![(200, vec![0; 1023])]);
+        assert!(super::maintenance::run(&client, &endpoint, operation.clone()).is_err());
+        server.join().unwrap();
+        assert!(!destination.exists());
+        let (endpoint, server) = mock_device(vec![(200, vec![7; 1024])]);
+        assert!(super::maintenance::run(&client, &endpoint, operation.clone()).is_ok());
+        server.join().unwrap();
+        let (endpoint, server) = mock_device(vec![(200, vec![8; 1024])]);
+        assert!(super::maintenance::run(&client, &endpoint, operation).is_err());
+        server.join().unwrap();
+        assert_eq!(std::fs::read(&destination).unwrap(), vec![7; 1024]);
+        std::fs::remove_file(destination).unwrap();
+    }
+    #[test]
+    fn late_observations_are_bound_to_their_requested_peer() {
+        let current = super::Endpoint {
+            base: "http://ledboard.local".into(),
+            user: "test".into(),
+            password: "old".into(),
+        };
+        let mut other = current.clone();
+        other.base = "http://other.local".into();
+        assert!(
+            super::current_event(
+                super::for_endpoint(&other, super::Event::Status(super::DeviceStatus::default())),
+                &current,
+                "COM9"
+            )
+            .is_none()
+        );
+        other = current.clone();
+        other.password = "new".into();
+        assert!(
+            super::current_event(
+                super::for_endpoint(&other, super::Event::WebSocket(false)),
+                &current,
+                "COM9"
+            )
+            .is_none()
+        );
+        assert!(
+            super::current_event(
+                super::for_endpoint(&current, super::Event::WebSocket(true)),
+                &current,
+                "COM9"
+            )
+            .is_some()
+        );
+        assert!(
+            super::current_event(
+                super::Event::Serial("COM8".into(), true, None),
+                &current,
+                "COM9"
+            )
+            .is_none()
+        );
+        assert!(
+            super::current_event(
+                super::Event::Serial("COM9".into(), true, None),
+                &current,
+                "COM9"
+            )
+            .is_some()
+        );
+    }
     use super::*;
+    #[test]
+    fn dual_transport_selects_one_route_without_replay() {
+        for wifi in [false, true] {
+            for usb in [false, true] {
+                assert_eq!(
+                    command_route(Transport::WiFi, wifi, usb),
+                    wifi.then_some(Transport::WiFi)
+                );
+                assert_eq!(
+                    command_route(Transport::Serial, wifi, usb),
+                    usb.then_some(Transport::Serial)
+                );
+                assert_eq!(
+                    command_route(Transport::Both, wifi, usb),
+                    if wifi {
+                        Some(Transport::WiFi)
+                    } else {
+                        usb.then_some(Transport::Serial)
+                    }
+                );
+            }
+        }
+    }
     #[test]
     fn wire_round_trip() {
         let encoded = wire_frame(OP_CELL_ACTION, 7, &[80, 2, 1]);
@@ -1470,5 +2347,34 @@ mod tests {
     fn cell_states_cycle() {
         assert_eq!(PakarControllerApp::next_cell_state("white"), ("red", 1));
         assert_eq!(PakarControllerApp::next_cell_state("red"), ("off", 2));
+    }
+    #[test]
+    fn serial_display_state_extension_preserves_old_status() {
+        let mut payload = vec![0; 19];
+        payload[0] = 3;
+        let old = serial_status(&payload).unwrap();
+        assert_eq!(old.mode, "snake");
+        assert!(old.tm1637_segments.is_empty());
+        payload.extend([1, 2, 4, 8, 5, 1]);
+        let current = serial_status(&payload).unwrap();
+        assert_eq!(current.tm1637_segments, [1, 2, 4, 8]);
+        assert_eq!(current.tm1637_brightness, 5);
+        assert!(current.tm1637_host_active);
+        payload[24] = 0;
+        assert!(!serial_status(&payload).unwrap().tm1637_host_active);
+        assert!(serial_status(&payload[..18]).is_none());
+        assert!(current.audio_cues.is_empty() && current.avr_version.is_none());
+        payload.extend([0, 2, 5, 14]);
+        payload[5] = 1;
+        let catalog = serial_status(&payload).unwrap();
+        assert_eq!(catalog.avr_version.as_deref(), Some("0.2.5"));
+        assert_eq!(catalog.audio_cues.len(), 14);
+        assert_eq!(catalog.audio_cues[13], "welcome-40led");
+        payload[28] = 255;
+        assert!(serial_status(&payload).unwrap().audio_cues.is_empty());
+        payload[28] = 14;
+        payload[5] = 0;
+        assert!(serial_status(&payload).unwrap().audio_cues.is_empty());
+        assert!(serial_status(&payload).unwrap().avr_version.is_none());
     }
 }
