@@ -1198,7 +1198,6 @@ struct PakarControllerApp {
     tray: Option<platform::windows_tray::TrayController>,
     notifications: std::cell::RefCell<platform::notifications::Delivery>,
     connection_notice: platform::notifications::ConnectionNotice,
-    tray_tooltip: String,
     #[cfg(windows)]
     windows_desktop: Option<platform::windows_desktop::Desktop>,
     base: String,
@@ -1326,7 +1325,6 @@ impl PakarControllerApp {
             tray: tray.ok().flatten(),
             notifications: Default::default(),
             connection_notice: Default::default(),
-            tray_tooltip: String::new(),
             #[cfg(windows)]
             windows_desktop: windows_desktop.ok().flatten(),
             base: std::env::var("PAKAR_ENDPOINT").unwrap_or_else(|_| config.endpoint.clone()),
@@ -1757,13 +1755,12 @@ impl PakarControllerApp {
             ),
             None => "PakarController — device offline".into(),
         };
-        if tip != self.tray_tooltip {
-            if let Some(tray) = &self.tray {
-                if let Err(error) = tray.set_tooltip(&tip) {
-                    self.record_event("Windows tray", &error);
-                }
+        if let Some(tray) = &mut self.tray {
+            match tray.refresh_tooltip(&tip, Instant::now()) {
+                Ok(true) => self.event_log.recover("Windows tray tooltip"),
+                Ok(false) => {},
+                Err(error) => self.event_log.failure("Windows tray tooltip", &error),
             }
-            self.tray_tooltip = tip;
         }
     }
     fn deliver_notifications(&mut self) {

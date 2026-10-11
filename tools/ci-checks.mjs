@@ -4,6 +4,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 export const phases={
   "quality": [
+    ["node", "tests/windows_tray_test.mjs"],
     ["node", "tests/tasks_wiring_test.mjs"],
     ["node", "tests/web_streaming_test.mjs"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "web-streaming", "-Gate"],

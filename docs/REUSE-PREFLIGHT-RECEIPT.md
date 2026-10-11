@@ -1994,3 +1994,48 @@ physical service latency, welcome timing or wiring. Reusable slot handles requir
 owner discipline; callbacks must return promptly and API is loop-only, not ISR.
 Ledger now4285 inventoried/110 comparisons/4175 pending/71 known parity gaps.
 Physical stress/reset/Prog acceptance and remaining production issue2 stay open.
+
+## GUID-bound tray tooltip recovery
+
+Exact9ac741ab Build38170618852 and CodeQL38170618787 completed successfully;
+fresh Pakar PR listing is empty. ASUS SSH1022 refuses and ledboard.local is
+unresolved. Actual production PID79784 remains; current IPC reports Preferences
+closed/not dirty, mapping/settings closed and no pending settings/maintenance.
+
+Consulted windows-desktop plus donor-audit. Initial exact src/tray.rs lookup
+failed closed because that donor path does not exist. Located inventoried
+src/platform/windows.rs instead; did not manufacture a mapping or skip import.
+Fully read donor taskbar/tray plan and WINDOWS-SHELL-RECOVERY.md through EOF.
+Read actual windows.rs2364..2421 registration and2483..2513 tooltip sections;
+complete large-file review remains pending, NOT promoted by this focused read.
+New tray-tooltip route exposes that exact pending source and both full-read docs.
+
+Actual pinned tray-icon0.26.1 Windows implementation registers/apply_guid on
+creation/icon/disposal but omits it in set_tooltip237..269. Microsoft confirms
+subsequent Shell calls require the original GUID. Adapt Pealayer direct
+NIM_MODIFY/TIP to existing HWND/shared GUID and UTF16 helper, preserving crate
+menu/RAII/restart ownership. No dependency-source patch, upgrade or second icon.
+Failed presentation is not cached; bounded latest-value retries feed existing
+incident dedup/recovery. Observed TaskbarCreated invalidates cache after the
+crate's own recreation, not an inferred successful visible restart.
+
+PowerShell rg wildcard path was not expanded; resolved actual registry directory
+read-only before inspection. One generated evidence patch used relative paths
+at tool cwd and failed without modifying files; changed to absolute repository
+target. A caller tested stale LASTEXITCODE after a successful PowerShell generator
+and falsely reported failure; no generator/gate change or blind compiler retry.
+A live-check call used nonexistent SourceRoots; read parameters and used default
+DonorRoots. Correct strict live tray gate subsequently passed with zero stale.
+
+Reviewed actual shipping diffs and rebound all eight affected main/shell/hook/CI
+target references, preserving donor hashes/decisions and anchors. All45 compared
+Pealayer raw hashes still match clean8337a722b0c93bd393b49d4c9ca3b5ea64ae9c32;
+selectively refreshed only its521-file inventory, with no additional source read
+or false pending promotion. Same ledger4285/112 comparisons/4173 pending/73 gaps.
+
+Guarded native Test passed166/166 in the existing release cache (1m21compile,
+0.26sec execution); production retry/NOTIFYICONDATA/UTF16 fixtures are included.
+Full source-quality phase passed. No firmware/APK/donor rebuild or clean/debug
+cache. Versions0.2.7 remain source identity, not physical deployed consistency.
+Real package replacement/Shell acceptance, Explorer restart/visible action
+acceptance and all board/full donor production gates remain separate evidence.

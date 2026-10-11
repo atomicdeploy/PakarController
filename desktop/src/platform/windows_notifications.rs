@@ -6,12 +6,12 @@ use crate::messaging::Severity;
 use windows::{
     Win32::{Foundation::{HWND, LPARAM, LRESULT, WPARAM}, UI::Shell::{
         DefSubclassProc, NIF_GUID, NIF_INFO, NIIF_ERROR, NIIF_INFO, NIIF_NOSOUND,
-        NIIF_RESPECT_QUIET_TIME, NIIF_WARNING, NIM_MODIFY, NOTIFYICONDATAW,
+        NIIF_RESPECT_QUIET_TIME, NIIF_WARNING, NIF_TIP, NIM_MODIFY, NOTIFYICONDATAW,
         RemoveWindowSubclass, SetWindowSubclass, Shell_NotifyIconW,
-    }},
-    core::GUID,
+    }, UI::WindowsAndMessaging::RegisterWindowMessageW},
+    core::{GUID, w},
 };
-pub const TRAY_GUID: u128 = 0x5041_4b41_522d_434f_4e54_524f_4c4c_4552;
+use super::windows_tray::TRAY_GUID;
 const HOOK_ID: usize = 0x50414b;
 // tray-icon =0.26.1's observed, pinned callback contract. Not a guessed HWND.
 const TRAY_CALLBACK: u32 = 6002;
@@ -21,6 +21,8 @@ struct Events {
     hidden: std::cell::Cell<u64>,
     timed_out: std::cell::Cell<u64>,
     clicked: std::cell::Cell<u64>,
+    taskbar_created: u32,
+    explorer_epoch: std::cell::Cell<u64>,
 }
 pub struct Hook {
     hwnd: HWND,
@@ -40,17 +42,32 @@ unsafe extern "system" fn callback(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM,
         };
         if let Some(counter) = counter { counter.set(counter.get().saturating_add(1)); }
     }
-    unsafe { DefSubclassProc(hwnd, msg, wp, lp) }
+    // Let tray-icon recreate its OWN icon first. Never add a second icon here.
+    let restarted = msg == unsafe { &*(data as *const Events) }.taskbar_created;
+    let result = unsafe { DefSubclassProc(hwnd, msg, wp, lp) };
+    if restarted {
+        let events = unsafe { &*(data as *const Events) };
+        events.explorer_epoch.set(events.explorer_epoch.get().saturating_add(1));
+    }
+    result
 }
 impl Hook {
     pub fn new(hwnd_raw: isize) -> Result<Self, String> {
         if hwnd_raw == 0 { return Err("Notification tray HWND is unavailable".into()); }
         let hwnd = HWND(hwnd_raw as *mut _);
-        let events = Box::<Events>::default();
+        let taskbar_created = unsafe { RegisterWindowMessageW(w!("TaskbarCreated")) };
+        if taskbar_created == 0 { return Err("Windows taskbar restart message registration failed".into()); }
+        let events = Box::new(Events { taskbar_created, ..Default::default() });
         if !unsafe { SetWindowSubclass(hwnd, Some(callback), HOOK_ID, (&*events as *const Events) as usize) }.as_bool() {
             return Err("Windows notification callback registration failed".into());
         }
         Ok(Self { hwnd, events, handled_clicks: 0 })
+    }
+    pub fn explorer_epoch(&self) -> u64 { self.events.explorer_epoch.get() }
+    pub fn set_tooltip(&self, text: &str) -> Result<(), String> {
+        let nid = tooltip_data(self.hwnd, text);
+        unsafe { Shell_NotifyIconW(NIM_MODIFY, &nid) }.as_bool().then_some(())
+            .ok_or_else(|| "Windows Shell rejected GUID-bound tray tooltip".into())
     }
     pub fn show(&self, title: &str, message: &str, severity: &Severity, sound: bool) -> Result<(), String> {
         let severity_flag = match severity {
@@ -79,6 +96,18 @@ impl Hook {
     }
     pub fn snapshot(&self) -> serde_json::Value {
         serde_json::json!({"shown":self.events.shown.get(), "hidden":self.events.hidden.get(), "timed_out":self.events.timed_out.get(), "clicked":self.events.clicked.get()})
+    }
+}
+// Adapt actual Pealayer windows.rs::update_system_tray_icon NIM_MODIFY/TIP,
+// but use the identity originally registered by our owned tray-icon HWND/GUID.
+fn tooltip_data(hwnd: HWND, text: &str) -> NOTIFYICONDATAW {
+    NOTIFYICONDATAW {
+        cbSize: std::mem::size_of::<NOTIFYICONDATAW>() as u32,
+        hWnd: hwnd,
+        uFlags: NIF_TIP | NIF_GUID,
+        guidItem: GUID::from_u128(TRAY_GUID),
+        szTip: wide_buffer(text),
+        ..Default::default()
     }
 }
 impl Drop for Hook {
@@ -113,5 +142,14 @@ mod tests {
         assert_eq!(wide_buffer::<4>("A\0B"), [65,66,0,0]);
         assert!(Hook::new(0).is_err());
         assert!(Hook::new(42).is_err());
+    }
+    #[test]
+    fn tooltip_uses_the_registered_guid_and_bounded_utf16() {
+        let data = tooltip_data(HWND(42usize as *mut _), &format!("{}😀", "A".repeat(126)));
+        assert_eq!(data.hWnd.0 as usize, 42);
+        assert_eq!(data.guidItem, GUID::from_u128(TRAY_GUID));
+        assert_eq!(data.uFlags, NIF_TIP | NIF_GUID);
+        assert_eq!(data.szTip[126..], [0, 0]);
+        assert_eq!(data.uID, 0); // GUID, not an invented crate-internal ID.
     }
 }

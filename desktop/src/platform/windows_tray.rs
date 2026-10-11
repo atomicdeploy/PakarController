@@ -7,6 +7,60 @@ use tray_icon::{
     Icon, MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent,
     menu::{Menu, MenuEvent, MenuId, IconMenuItem, PredefinedMenuItem},
 };
+use std::time::{Duration, Instant};
+
+pub const TRAY_GUID: u128 = 0x5041_4b41_522d_434f_4e54_524f_4c4c_4552;
+
+/// Shell acceptance, not object presence or proof that the user saw an icon.
+/// Failed read-only presentation updates retry, never device commands/notices.
+#[derive(Default)]
+struct TooltipSync {
+    applied: Option<String>,
+    epoch: u64,
+    next_attempt: Option<Instant>,
+    retry_seconds: u64,
+    last_error: Option<String>,
+    attempts: u64,
+}
+impl TooltipSync {
+    fn sync(&mut self, text: &str, epoch: u64, now: Instant,
+            apply: impl FnOnce() -> Result<(), String>) -> Result<bool, String> {
+        if self.epoch != epoch {
+            self.epoch = epoch;
+            self.applied = None;
+            self.next_attempt = None;
+            self.retry_seconds = 0;
+        }
+        if self.applied.as_deref() == Some(text)
+            || self.next_attempt.is_some_and(|deadline| now < deadline) {
+            return Ok(false);
+        }
+        self.attempts = self.attempts.saturating_add(1);
+        match apply() {
+            Ok(()) => {
+                self.applied = Some(text.into());
+                self.next_attempt = None;
+                self.retry_seconds = 0;
+                self.last_error = None;
+                Ok(true)
+            }
+            Err(error) => {
+                self.applied = None; // Never cache a failed request as applied.
+                let delay = self.retry_seconds.max(2);
+                self.next_attempt = Some(now + Duration::from_secs(delay));
+                self.retry_seconds = (delay * 2).min(30);
+                self.last_error = Some(error.clone());
+                Err(error)
+            }
+        }
+    }
+    fn snapshot(&self, now: Instant) -> serde_json::Value {
+        serde_json::json!({"tooltip_applied":self.applied.is_some(),
+            "explorer_epoch":self.epoch,"attempts":self.attempts,
+            "last_error":self.last_error,"retry_ms":self.next_attempt
+                .map(|d|d.saturating_duration_since(now).as_millis())})
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TrayAction {
@@ -30,6 +84,7 @@ pub struct TrayController {
     workspaces_id: MenuId,
     refresh_id: MenuId,
     exit_id: MenuId,
+    tooltip: TooltipSync,
 }
 
 impl TrayController {
@@ -55,7 +110,7 @@ impl TrayController {
 
         let icon = Icon::from_rgba(controller_icon(), 32, 32).map_err(|error| error.to_string())?;
         let tray = TrayIconBuilder::new()
-            .with_guid(0x5041_4b41_522d_434f_4e54_524f_4c4c_4552)
+            .with_guid(TRAY_GUID)
             .with_tooltip("PakarController")
             .with_menu(Box::new(menu))
             .with_menu_on_left_click(false)
@@ -74,6 +129,7 @@ impl TrayController {
             workspaces_id: workspaces.id().clone(),
             refresh_id: refresh.id().clone(),
             exit_id: exit.id().clone(),
+            tooltip: TooltipSync::default(),
         })
     }
 
@@ -114,8 +170,22 @@ impl TrayController {
         }
         None
     }
-    pub fn set_tooltip(&self, text: &str) -> Result<(), String> {
-        self._icon.set_tooltip(Some(text)).map_err(|e| e.to_string())
+    pub fn refresh_tooltip(&mut self, text: &str, now: Instant) -> Result<bool, String> {
+        #[cfg(windows)]
+        {
+            // tray-icon0.26.1 set_tooltip omits NIF_GUID. Keep its owned HWND,
+            // RAII/menu/restart lifecycle, adapt Pealayer's direct NIM_MODIFY.
+            let hook = &self.notification_hook;
+            self.tooltip.sync(text, hook.explorer_epoch(), now, || hook.set_tooltip(text))
+        }
+        #[cfg(not(windows))]
+        {
+            let icon = &self._icon;
+            self.tooltip.sync(text, 0, now, || icon.set_tooltip(Some(text)).map_err(|e|e.to_string()))
+        }
+    }
+    pub fn shell_snapshot(&self) -> serde_json::Value {
+        self.tooltip.snapshot(Instant::now())
     }
     pub fn set_application(&self, name: &str, icon: &eframe::egui::IconData) -> Result<(), String> {
         self.show_item.set_text(format!("Show {name}"));
@@ -160,5 +230,38 @@ mod tests {
                 .chunks_exact(4)
                 .any(|pixel| pixel[3] == 255)
         );
+    }
+
+    #[test]
+    fn failed_tooltip_retries_latest_value_without_false_acceptance_or_flood() {
+        let mut sync = TooltipSync::default();
+        let now = Instant::now();
+        assert!(sync.sync("old", 0, now, ||Err("Shell unavailable".into())).is_err());
+        assert_eq!(sync.snapshot(now)["tooltip_applied"], false);
+        assert!(!sync.sync("latest", 0, now + Duration::from_secs(1), ||panic!("No early retry")).unwrap());
+        assert!(sync.sync("latest", 0, now + Duration::from_secs(2), ||Ok(())).unwrap());
+        assert_eq!(sync.applied.as_deref(), Some("latest"));
+        assert!(!sync.sync("latest", 0, now + Duration::from_secs(3), ||panic!("No repeated write")).unwrap());
+        assert!(sync.last_error.is_none());
+        assert_eq!(sync.attempts, 2);
+    }
+
+    #[test]
+    fn explorer_epoch_invalidates_success_and_failure_backoff_is_bounded() {
+        let mut sync = TooltipSync::default();
+        let now = Instant::now();
+        assert!(sync.sync("title", 0, now, ||Ok(())).unwrap());
+        assert!(sync.sync("title", 1, now, ||Err("different failure".into())).is_err());
+        assert_eq!(sync.snapshot(now)["tooltip_applied"], false);
+        let mut clock = now;
+        for delay in [2, 4, 8, 16, 30, 30] {
+            assert_eq!(sync.next_attempt.unwrap().duration_since(clock), Duration::from_secs(delay));
+            clock = sync.next_attempt.unwrap();
+            assert!(sync.sync("title", 1, clock, ||Err("offline".into())).is_err());
+        }
+        // Observed restart retries immediately, but is not itself success.
+        assert!(sync.sync("title", 2, clock, ||Ok(())).unwrap());
+        assert_eq!(sync.snapshot(clock)["explorer_epoch"], 2);
+        assert!(sync.next_attempt.is_none());
     }
 }

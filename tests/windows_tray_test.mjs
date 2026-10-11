@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
+const tray = read('desktop/src/platform/windows_tray.rs');
+const hook = read('desktop/src/platform/windows_notifications.rs');
+const app = read('desktop/src/main.rs');
+assert.match(tray, /\.with_guid\(TRAY_GUID\)/);
+assert.match(tray, /hook\.set_tooltip\(text\)/);
+assert.match(hook, /uFlags: NIF_TIP \| NIF_GUID,[\s\S]*guidItem: GUID::from_u128\(TRAY_GUID\)/);
+assert.match(hook, /RegisterWindowMessageW\(w!\("TaskbarCreated"\)\)/);
+assert.match(hook, /DefSubclassProc\(hwnd, msg, wp, lp\)[\s\S]*if restarted/);
+assert.match(tray, /self\.applied = None; \/\/ Never cache a failed request as applied/);
+assert.match(tray, /\(delay \* 2\)\.min\(30\)/);
+assert.match(app, /event_log\.failure\("Windows tray tooltip", &error\)/);
+assert.match(app, /Ok\(true\) => self\.event_log\.recover\("Windows tray tooltip"\)/);
+assert.doesNotMatch(app, /tray_tooltip/);
+assert.match(read('desktop/src/ui/shell.rs'), /value\["tray_shell"\]/);
+console.log('Actual GUID-bound tooltip/restart/retry/incident wiring guards passed; source assertions, not Explorer visibility proof.');

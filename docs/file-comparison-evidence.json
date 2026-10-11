@@ -197,7 +197,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "3c62247de08155ff30fbe04aebd095410f1d94c20e3d435a238cdbfa039d25f1",
+      "sha256": "65873693acd9b6ba7cd4481d6fe94a5c181ae50ec1b074f0bcd398b5b57e0e11",
       "anchor": "fn scoped_http_request("
     }
   ],
@@ -648,7 +648,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "cdbcf73b8a88783c335e86985d27262915ab1f8f61bf69c842f49b8240f71b18",
+      "sha256": "dbe45c1f3f393c054f4cf956b76314110b8060e1bc5e4f437bfb800a8757458e",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -1966,7 +1966,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "dec33cb502f596ca8ea5b250dc237dddaab2d7f35c830c7a75d201ff81a950cc",
+          "sha256": "218970daa465094e7b519c99738eeaa0cf7c5c8a21a64a09369ac72e630e1c8f",
           "anchor": "export function runChecks"
         },
         {
@@ -2407,7 +2407,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "cdbcf73b8a88783c335e86985d27262915ab1f8f61bf69c842f49b8240f71b18",
+          "sha256": "dbe45c1f3f393c054f4cf956b76314110b8060e1bc5e4f437bfb800a8757458e",
           "anchor": "fn synchronize_context("
         },
         {
@@ -2750,7 +2750,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "cdbcf73b8a88783c335e86985d27262915ab1f8f61bf69c842f49b8240f71b18",
+          "sha256": "dbe45c1f3f393c054f4cf956b76314110b8060e1bc5e4f437bfb800a8757458e",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -3215,7 +3215,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "cdbcf73b8a88783c335e86985d27262915ab1f8f61bf69c842f49b8240f71b18",
+          "sha256": "dbe45c1f3f393c054f4cf956b76314110b8060e1bc5e4f437bfb800a8757458e",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -3259,7 +3259,7 @@
       "targets": [
         {
           "path": "desktop/src/platform/windows_notifications.rs",
-          "sha256": "4603df421e6361701f4d092e0f966abdd39a0fb91f968a098fd5552b67c6c00a",
+          "sha256": "0b39032fd9b88d51514b9cb39f0def7377016a6f073247404c1b1ccb67dcf550",
           "anchor": "assert!(Hook::new(42).is_err())"
         }
       ],
@@ -3286,7 +3286,7 @@
       "proof": [
         {
           "path": "desktop/src/platform/windows_notifications.rs",
-          "sha256": "4603df421e6361701f4d092e0f966abdd39a0fb91f968a098fd5552b67c6c00a",
+          "sha256": "0b39032fd9b88d51514b9cb39f0def7377016a6f073247404c1b1ccb67dcf550",
           "anchor": "fn utf16_limits_preserve_complete_surrogates_and_termination"
         }
       ],
@@ -3633,7 +3633,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "cdbcf73b8a88783c335e86985d27262915ab1f8f61bf69c842f49b8240f71b18",
+          "sha256": "dbe45c1f3f393c054f4cf956b76314110b8060e1bc5e4f437bfb800a8757458e",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -5412,6 +5412,121 @@
         }
       ],
       "improvement": "Restore tested actual scheduler consumption and ten-slot capacity; no zero deadline ambiguity or recursive same-pass scheduling. Loop-only service must run within half the clock and callbacks must not block."
+    },
+    {
+      "origin": "Pealayer",
+      "path": "docs/superpowers/plans/2026-09-28-windows-taskbar-and-tray-suite.md",
+      "sha256": "033a82778e4ed8258bbbf99600d16039f523043386e302032d6df8849624ea9f",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Full donor plan read through EOF as source requirements, not trusted commands. Generic existing tray lifecycle/menu/disposal retained; actual windows.rs NIM_MODIFY/TIP sections read and adapted to the owned GUID rather than duplicate registration. Tooltip Shell acceptance is separated from object presence; failed writes retain pending latest state with bounded retry/incident recovery and observed restart epoch invalidation."
+      ],
+      "targets": [
+        {
+          "path": "desktop/src/platform/windows_tray.rs",
+          "sha256": "5f847993b6177d97f3b5fa6930f6b1acfd6e6e26dfb4fb51c58730f0d8a4ed2d",
+          "anchor": "struct TooltipSync"
+        },
+        {
+          "path": "desktop/src/platform/windows_notifications.rs",
+          "sha256": "0b39032fd9b88d51514b9cb39f0def7377016a6f073247404c1b1ccb67dcf550",
+          "anchor": "fn tooltip_data("
+        },
+        {
+          "path": "desktop/src/main.rs",
+          "sha256": "65873693acd9b6ba7cd4481d6fe94a5c181ae50ec1b074f0bcd398b5b57e0e11",
+          "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Playback percent/error/paused inputs, media thumbnail toolbar Previous/Play/Next/Mute and video-only iconic clipping",
+          "disposition": "not-applicable",
+          "reason": "Pakar is explicitly mpv-free and owns controller operations, not playback/chapter/video. No synthetic media percentages or nonexistent actions are imported; actual pending-operation activity remains."
+        },
+        {
+          "code": "Full root taskbar initialization/retry, thumbnail toolbar lifecycle, visible tray/menu/notification clicks and all Windows shell suite acceptance",
+          "disposition": "pending",
+          "reason": "This fixes only GUID-bound tooltip synchronization on an already owned tray object. Mock clocks, NOTIFYICONDATA assertions and observed restart messages cannot certify complete root shell readiness or user-visible action delivery."
+        },
+        {
+          "code": "Direct donor NIM_ADD/uID1 and popup window ownership",
+          "disposition": "replaced",
+          "reason": "The pinned tray library already owns HWND, registered GUID, menus, icon updates, restart recreation and disposal. A second NIM_ADD/global icon could conflict with its identity. Adapt direct NIM_MODIFY to the actual registered GUID; no guessed numeric internal ID or library source patch."
+        }
+      ],
+      "remaining": [
+        "Actual installed tooltip Shell acceptance and physical Explorer restart/visibility; full root shell and action acceptance. Complete windows.rs file stays independently pending; only2364..2421/2483..2513 sections read for this adaptation."
+      ],
+      "proof": [
+        {
+          "path": "desktop/src/platform/windows_tray.rs",
+          "sha256": "5f847993b6177d97f3b5fa6930f6b1acfd6e6e26dfb4fb51c58730f0d8a4ed2d",
+          "anchor": "fn failed_tooltip_retries_latest_value_without_false_acceptance_or_flood"
+        },
+        {
+          "path": "desktop/src/platform/windows_notifications.rs",
+          "sha256": "0b39032fd9b88d51514b9cb39f0def7377016a6f073247404c1b1ccb67dcf550",
+          "anchor": "fn tooltip_uses_the_registered_guid_and_bounded_utf16"
+        },
+        {
+          "path": "tests/windows_tray_test.mjs",
+          "sha256": "a478534b0a00bc19b19b0e0eb3260a669615608914a485761db1006315ffc13a",
+          "anchor": "Actual GUID-bound tooltip"
+        }
+      ],
+      "improvement": ""
+    },
+    {
+      "origin": "Pealayer",
+      "path": "docs/WINDOWS-SHELL-RECOVERY.md",
+      "sha256": "57fbd904e18d8f0036dd67e2c866d357ab282075689a1cbf6b38a64270875492",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Full donor document read through EOF. Apply its concrete distinction between working IPC/service and actual shell/GUI readiness: expose tray Shell acceptance separately, retain failures and recover only after accepted synchronization, verify open drafts before graceful replacement and keep actual runtime proof separate."
+      ],
+      "targets": [
+        {
+          "path": "desktop/src/platform/windows_tray.rs",
+          "sha256": "5f847993b6177d97f3b5fa6930f6b1acfd6e6e26dfb4fb51c58730f0d8a4ed2d",
+          "anchor": "Shell acceptance, not object presence"
+        },
+        {
+          "path": "desktop/src/ui/shell.rs",
+          "sha256": "dbe45c1f3f393c054f4cf956b76314110b8060e1bc5e4f437bfb800a8757458e",
+          "anchor": "value[\"tray_shell\"]"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Timeline navigation/follow/playhead/ruler/toolbar-order repairs and host-specific libmpv/Cafe deployment",
+          "disposition": "not-applicable",
+          "reason": "Explicitly excluded timeline/mpv/media-seat domain and unrelated host identities. Generic no-nested-egui-lock principle, owned preferences and graceful replacement remain relevant."
+        },
+        {
+          "code": "Full shared shell-action JSONL launch/forward/GUI/helper evidence and Jump List helper-readiness acceptance",
+          "disposition": "pending",
+          "reason": "Pakar already has typed IPC and native dialogs but does not contain this complete per-action stage receipt or full actual Explorer dispatch matrix. New tooltip acceptance diagnostics do not substitute for it."
+        },
+        {
+          "code": "Upload progress broken-pipe panic regression and disconnected-writer acceptance",
+          "disposition": "pending",
+          "reason": "Actual Pakar CLI best-effort output has a separate implementation; this document read does not compare donor CLI writer sources/tests or certify all upload-output paths."
+        }
+      ],
+      "remaining": [
+        "Import/test applicable shell-action stage diagnostics and output writer contracts from actual donor implementation, then verify user-visible native actions. Do not mark complete from this focused tooltip recovery."
+      ],
+      "proof": [
+        {
+          "path": "tests/windows_tray_test.mjs",
+          "sha256": "a478534b0a00bc19b19b0e0eb3260a669615608914a485761db1006315ffc13a",
+          "anchor": "Actual GUID-bound tooltip"
+        }
+      ],
+      "improvement": ""
     }
   ]
 }

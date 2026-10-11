@@ -400,6 +400,7 @@ impl PakarControllerApp {
             value["diagnostics"] = serde_json::json!({"events":self.event_log.len(),"active":self.event_log.active_count(),"repeated_occurrences":self.event_log.repeated_count(),"status_request_pending":self.status_request_pending,"status_retry_ms":self.status_retry.delay().as_millis()});
             value["notifications"] = self.notification_snapshot();
             value["tray_available"] = serde_json::json!(self.tray.is_some());
+            value["tray_shell"] = self.tray.as_ref().map(|tray|tray.shell_snapshot()).unwrap_or(serde_json::Value::Null);
             value["fullscreen"] = serde_json::json!(fullscreen);
         }
     }
