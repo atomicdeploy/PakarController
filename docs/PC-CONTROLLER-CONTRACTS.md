@@ -82,7 +82,7 @@ Hostname default http://ledboard.local. PAKAR_ENDPOINT, PAKAR_USER, PAKAR_PASSWO
     PakarController.exe --command avr command MENU_LIST 00
     PakarController.exe --command avr command BUZZER b801fa00
 
-TUI: same commands without --command. Typed set: GET current, validate, SET once, require ACK, GET persisted matching readback. Generic commands accept actual donor names or registered numeric/0x values; not reserved IDs. The client consumes each validated success/error receipt so repeated settings edits do not exhaust the eight slots. Cleanup failure does not undo a real ACK or retry the write; the receipt instead expires normally. Unknown outcomes and mismatched reboot identities are left available for inspection.
+TUI: press `:` and enter the same commands without --command; individual peer capabilities must allow them. Typed set: GET current, validate, SET once, require ACK, GET persisted matching readback. Generic commands accept actual donor names or registered numeric/0x values; not reserved IDs. The client consumes each validated success/error receipt so repeated settings edits do not exhaust the eight slots. Cleanup failure does not undo a real ACK or retry the write; the receipt instead expires normally. Unknown outcomes and mismatched reboot identities are left available for inspection.
 
 Authenticated HTTP:
 

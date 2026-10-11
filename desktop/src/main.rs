@@ -22,6 +22,7 @@ mod messaging;
 mod pc_contract;
 mod platform;
 mod streaming;
+mod terminal_ui;
 mod ui;
 
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
@@ -1721,7 +1722,7 @@ fn blocking_status(client: &Client, endpoint: &Endpoint) -> Result<DeviceStatus,
         ))
         .basic_auth(&endpoint.user, Some(&endpoint.password))
         .send()
-        .map_err(|error| error.to_string())?;
+        .map_err(diagnostics::describe_error)?;
     if !response.status().is_success() {
         return Err(format!(
             "HTTP {}: {}",
@@ -1729,10 +1730,13 @@ fn blocking_status(client: &Client, endpoint: &Endpoint) -> Result<DeviceStatus,
             response.text().unwrap_or_default()
         ));
     }
-    response.json().map_err(|error| error.to_string())
+    response.json().map_err(diagnostics::describe_error)
 }
 
-fn print_text_status(status: &DeviceStatus, table: bool) {
+fn format_text_status(status: &DeviceStatus, table: bool) -> String {
+    let mut output = String::new();
+    macro_rules! println { ($($arg:tt)*) => {{ use std::fmt::Write as _; let _ = writeln!(output, $($arg)*); }}; }
+    macro_rules! print { ($($arg:tt)*) => {{ use std::fmt::Write as _; let _ = write!(output, $($arg)*); }}; }
     println!(
         "{} {} | AVR {} | TM1637 {} | {} | MQTT {} | NTP {} | brightness {} | effect {}",
         status.hostname,
@@ -1772,8 +1776,8 @@ fn print_text_status(status: &DeviceStatus, table: bool) {
         status.avr_uart_errors,
         status.usb_serial_errors
     );
-    if !table {
-        return;
+    if !table || !status.capabilities.as_ref().is_some_and(|m| m.table()) {
+        return output;
     }
     for row in 0..8_i32 {
         for column in 0..10_i32 {
@@ -1787,9 +1791,25 @@ fn print_text_status(status: &DeviceStatus, table: bool) {
         }
         println!();
     }
+    output
 }
 
 fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<(), String> {
+    let mut output = String::new();
+    text_command_output(client, endpoint, words, &mut output)?;
+    print!("{output}");
+    Ok(())
+}
+
+// One command parser for CLI and the TUI command palette. Capturing output must
+// never replace a peer operation with a second invocation or stdout redirection.
+fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], output: &mut String) -> Result<(), String> {
+    macro_rules! println {
+        ($($arg:tt)*) => {{
+            use std::fmt::Write as _;
+            writeln!(output, $($arg)*).map_err(|e| e.to_string())?;
+        }};
+    }
     if words.first() == Some(&"firmware") {
         use maintenance::Operation;
         let operation=match words {
@@ -1945,7 +1965,9 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
         return Ok(());
     }
     if words.is_empty() || words[0] == "status" {
-        return blocking_status(client, endpoint).map(|status| print_text_status(&status, true));
+        let status = blocking_status(client, endpoint)?;
+        output.push_str(&format_text_status(&status, true));
+        return Ok(());
     }
     if matches!(words, ["display", "segments", ..] | ["display", "stop"]) {
         let form = if words == ["display", "stop"] {
@@ -2019,7 +2041,11 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
     ) {
         return Ok(false);
     }
-    let mut endpoint = environment_endpoint();
+    let endpoint = environment_endpoint();
+    if arguments[1] == "--tui" {
+        terminal_ui::run(endpoint)?;
+        return Ok(true);
+    }
     let client = Client::builder()
         .no_proxy()
         .timeout(Duration::from_secs(15))
@@ -2033,46 +2059,6 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
                 .map(String::as_str)
                 .collect::<Vec<_>>();
             text_command(&client, &endpoint, &words)
-        }
-        "--tui" => {
-            println!("PakarController TUI. Type help or quit.");
-            loop {
-                match blocking_status(&client, &endpoint) {
-                    Ok(status) => print_text_status(&status, true),
-                    Err(error) => eprintln!("status: {error}"),
-                }
-                print!("pakar> ");
-                std::io::stdout()
-                    .flush()
-                    .map_err(|error| error.to_string())?;
-                let mut line = String::new();
-                if std::io::stdin()
-                    .read_line(&mut line)
-                    .map_err(|error| error.to_string())?
-                    == 0
-                {
-                    break;
-                }
-                let words = line.split_whitespace().collect::<Vec<_>>();
-                if matches!(words.first(), Some(&"quit" | &"exit")) {
-                    break;
-                }
-                if matches!(words.first(), Some(&"help")) {
-                    println!("{}", cli_output::DEVICE_COMMANDS);
-                    continue;
-                }
-                if let Err(error) = text_command(&client, &endpoint, &words) {
-                    eprintln!("{error}");
-                } else if let ["auth", "change", user] = words.as_slice() {
-                    endpoint.user = (*user).into();
-                    endpoint.password =
-                        std::env::var("PAKAR_NEW_PASSWORD").map_err(|e| e.to_string())?;
-                } else if let ["device", "rename", name] = words.as_slice() {
-                    endpoint.base = format!("http://{}.local", identity::normalize_name(name)?);
-                    thread::sleep(Duration::from_secs(1));
-                }
-            }
-            Ok(())
         }
         _ => unreachable!(),
     }?;

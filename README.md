@@ -168,8 +168,10 @@ PakarController.exe --tui
 Logical IDs are row-major: 1 is upper-left, 2 is next to it, and 11 begins the
 second row. Graphical tables offset one-based odd columns by half a cell in Y;
 each cell contains six LEDs. Physical strip order is a separate editable map.
-The current text surface prints a flat status table and a command prompt;
-the requested fully interactive staggered TUI remains open in issue #2.
+The interactive terminal now has contextual pages, shared Find/selection,
+explicit bulk white/red/off actions and the shared CLI command palette.
+See [terminal controls and remaining acceptance](docs/TERMINAL-UI.md).
+Staggered graphics, richer editors and full TUI parity remain open in issue #2.
 
 ## Continuous integration & delivery
 

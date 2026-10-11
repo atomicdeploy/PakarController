@@ -165,6 +165,9 @@ No Wi-Fi password or other deployment secret belongs in GitHub.
   layouts; fix alignment, overflow, focus, empty/error/stale/pending states.
 - [ ] Build a proper interactive table TUI with per-cell effects, search/mapping,
   business modes and device configuration, not only a command prompt.
+  Interactive pages, shared Find/selection, guarded bulk actions and shared CLI
+  palette are implemented; see TERMINAL-UI.md. Rich editors, mapping, visual
+  parity and actual terminal/board acceptance remain open.
 - [ ] Complete Web UI parity with contextual panels, table controls, configuration,
   progress and hardware monitor; no fixed architecture narration or fake status.
 - [ ] Audit/preserve/finish the existing Flutter Android/tablet work; analyze/test/

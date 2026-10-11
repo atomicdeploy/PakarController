@@ -4,6 +4,286 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
 {
+  "origin": "RayanLamp",
+  "path": "internal/tui/run.go",
+  "sha256": "462fdbc977b5261f971120fd071b7dc6b023e6d6e66fd37e2dabf03af12c0a16",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "targets": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "pub fn run(endpoint: Endpoint)"
+    }
+  ],
+  "preserved": [
+    "Terminal/stdin/stdout ownership, early redirected guard, independent request worker, bounded exit cleanup and terminal-neutral command text are adapted to crossterm and the existing Rust HTTP client."
+  ],
+  "omissions": [
+    {
+      "code": "Bubble Tea program/context/screen options, UI theme/ASCII preferences and transport-manager ownership",
+      "disposition": "pending",
+      "reason": "Go toolkit-specific ownership is replaced by crossterm RAII and the existing Rust transport; theme controls and transport discovery/USB choice still require actual Pakar implementation."
+    }
+  ],
+  "remaining": [
+    "Complete useful omitted behavior and actual terminal/board acceptance; issue #2 remains open."
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "fn offline_and_unacknowledged_peers_have_no_table_actions()"
+    },
+    {
+      "path": "tests/terminal_ui_test.mjs",
+      "sha256": "3916ae657e18de899b278509cd0f8fad53886579c9af53deebc6e47cb5ff9b26",
+      "anchor": "TUI must reject redirected surfaces before contacting a device"
+    }
+  ],
+  "improvement": "Bounded checkpoint only; no whole-repository superiority or physical acceptance claim."
+},
+{
+  "origin": "RayanLamp",
+  "path": "internal/tui/run_test.go",
+  "sha256": "2d645e6b27b7a4d17afc027e8393471d6b19b7beec6bbf359cee1c8588ee832a",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "targets": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "fn enter()"
+    }
+  ],
+  "preserved": [
+    "The actual donor fail-before-control-sequences guard is retained; built executable piped-child fixture proves zero stdout/control escapes and zero HTTP requests."
+  ],
+  "omissions": [
+    {
+      "code": "Independent stdin-only/stdout-only terminal fixtures and real interactive raw-mode acceptance",
+      "disposition": "pending",
+      "reason": "The built test redirects both descriptors; separate mixed-descriptor and actual console navigation/cleanup acceptance remain pending. Do not equate guard tests with full terminal acceptance."
+    }
+  ],
+  "remaining": [
+    "Complete useful omitted behavior and actual terminal/board acceptance; issue #2 remains open."
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "fn offline_and_unacknowledged_peers_have_no_table_actions()"
+    },
+    {
+      "path": "tests/terminal_ui_test.mjs",
+      "sha256": "3916ae657e18de899b278509cd0f8fad53886579c9af53deebc6e47cb5ff9b26",
+      "anchor": "TUI must reject redirected surfaces before contacting a device"
+    }
+  ],
+  "improvement": "Bounded checkpoint only; no whole-repository superiority or physical acceptance claim."
+},
+{
+  "origin": "RayanLamp",
+  "path": "internal/tui/text.go",
+  "sha256": "ac575e39f688d9c796f4b013fdb768b0b3ecb5bbda04908950f14fc7217e327e",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "targets": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "pub fn safe_line(value: &str)"
+    }
+  ],
+  "preserved": [
+    "Actual sanitizeTerminalLine unsafe-control/bidi filtering and cell-aware truncation adapt to Unicode Rust strings and unicode-width. Removes OSC/CSI/DCS sequences and bounds work while retaining Persian text."
+  ],
+  "omissions": [
+    {
+      "code": "Donor renderer-specific text entry points and full terminal shaping acceptance",
+      "disposition": "pending",
+      "reason": "Rust TUI renderer calls one sanitizer for every emitted line rather than copying Go view APIs. Actual Persian shaping/terminal-font behavior is not inferred from string-preservation tests."
+    }
+  ],
+  "remaining": [
+    "Complete useful omitted behavior and actual terminal/board acceptance; issue #2 remains open."
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "fn donor_text_safety_preserves_unicode_not_peer_terminal_commands()"
+    },
+    {
+      "path": "tests/terminal_ui_test.mjs",
+      "sha256": "3916ae657e18de899b278509cd0f8fad53886579c9af53deebc6e47cb5ff9b26",
+      "anchor": "TUI must reject redirected surfaces before contacting a device"
+    }
+  ],
+  "improvement": "Bounded checkpoint only; no whole-repository superiority or physical acceptance claim."
+},
+{
+  "origin": "RayanLamp",
+  "path": "internal/terminal/policy.go",
+  "sha256": "c250474261e4ce8d6f63826719a408b0ae57a2533ec547c9a151c9939b5b5518",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "targets": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "fn color_allowed()"
+    }
+  ],
+  "preserved": [
+    "Actual NO_COLOR/TERM=dumb/CLICOLOR=0/FORCE_COLOR=0 opt-out precedence and redirected-input/output rejection are retained; crossterm owns native VT/raw transitions, checked on entry."
+  ],
+  "omissions": [
+    {
+      "code": "Emoji/style detection preferences and broader platform policy tests",
+      "disposition": "pending",
+      "reason": "Current TUI uses conservative text only and no donor emoji UI. Per-platform style controls/detection tests remain useful pending work, not accepted exclusions."
+    }
+  ],
+  "remaining": [
+    "Complete useful omitted behavior and actual terminal/board acceptance; issue #2 remains open."
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "fn donor_text_safety_preserves_unicode_not_peer_terminal_commands()"
+    },
+    {
+      "path": "tests/terminal_ui_test.mjs",
+      "sha256": "3916ae657e18de899b278509cd0f8fad53886579c9af53deebc6e47cb5ff9b26",
+      "anchor": "TUI must reject redirected surfaces before contacting a device"
+    }
+  ],
+  "improvement": "Bounded checkpoint only; no whole-repository superiority or physical acceptance claim."
+},
+{
+  "origin": "RayanLamp",
+  "path": "internal/tui/keys.go",
+  "sha256": "9db93f624f1fcc5b850993de2c6cd2ca1304bf91034849f246dd54fb70a02720",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "targets": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "fn key(&mut self, key: KeyEvent)"
+    }
+  ],
+  "preserved": [
+    "Contextual Tab/ShiftTab, arrows, Help/quit and Find draft Enter/Escape route into shared Pakar selection and explicit capability-gated actions; repeat presses cannot queue writes."
+  ],
+  "omissions": [
+    {
+      "code": "Theme/mouse/reconnect/help catalog, localized binding vocabulary and donor lamp actions",
+      "disposition": "pending",
+      "reason": "Lamp-specific actuation is replaced by ACKed table actions. Useful theme, mouse, reconnect and complete localized help remain pending rather than hidden; g refresh and r red are deliberate table bindings."
+    }
+  ],
+  "remaining": [
+    "Complete useful omitted behavior and actual terminal/board acceptance; issue #2 remains open."
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "fn shared_find_selection_and_arrow_navigation_never_write()"
+    },
+    {
+      "path": "tests/terminal_ui_test.mjs",
+      "sha256": "3916ae657e18de899b278509cd0f8fad53886579c9af53deebc6e47cb5ff9b26",
+      "anchor": "TUI must reject redirected surfaces before contacting a device"
+    }
+  ],
+  "improvement": "Bounded checkpoint only; no whole-repository superiority or physical acceptance claim."
+},
+{
+  "origin": "RayanLamp",
+  "path": "internal/tui/runtime.go",
+  "sha256": "1d6f08a67f0076c36a7951d79e7d35c9d8044090dbf60c9105bf4307ed052028",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "targets": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "let worker = thread::spawn(move ||"
+    }
+  ],
+  "preserved": [
+    "Independent model/network scheduling and deterministic keyboard/receipt tests adapt to a bounded Rust worker/channel. Shared incident log coalesces repeats but retains distinct causes and revokes lost peer controls."
+  ],
+  "omissions": [
+    {
+      "code": "Donor spinner/expiring-notice/theme scheduling and complete runtime injection surface",
+      "disposition": "pending",
+      "reason": "The new renderer shows observed busy state without fake device progress. Full spinner/theme scheduling and all runtime adapters remain pending; current model plus HTTP doubles do not certify hardware."
+    }
+  ],
+  "remaining": [
+    "Complete useful omitted behavior and actual terminal/board acceptance; issue #2 remains open."
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "fn loss_and_peer_change_revoke_controls_without_false_recovery()"
+    },
+    {
+      "path": "tests/terminal_ui_test.mjs",
+      "sha256": "3916ae657e18de899b278509cd0f8fad53886579c9af53deebc6e47cb5ff9b26",
+      "anchor": "TUI must reject redirected surfaces before contacting a device"
+    }
+  ],
+  "improvement": "Bounded checkpoint only; no whole-repository superiority or physical acceptance claim."
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/tui/table.go",
+  "sha256": "ecd399e2bf7718f3eb7b62e49f9dd884c0fb179e3d907bd15b238c01d31501e3",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "targets": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "fn window(total: usize, visible: usize, cursor: usize)"
+    }
+  ],
+  "preserved": [
+    "Actual tableWindow cursor-centred viewport arithmetic is adapted and exhaustively tested across total/visible/cursor cases. Reuses native logical selection/navigation and Unicode column clipping."
+  ],
+  "omissions": [
+    {
+      "code": "Donor gocui DataTable groups/control-tone rendering, visibleLine mouse mapping and richer table columns",
+      "disposition": "pending",
+      "reason": "Only the viewport math is currently integrated; gocui APIs require crossterm adaptation, while generic groups/tones/mouse and richer settings/mapping editors remain pending. No full donor table parity is claimed."
+    }
+  ],
+  "remaining": [
+    "Complete useful omitted behavior and actual terminal/board acceptance; issue #2 remains open."
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "anchor": "fn actual_donor_table_window_keeps_cursor_in_resized_viewport()"
+    },
+    {
+      "path": "tests/terminal_ui_test.mjs",
+      "sha256": "3916ae657e18de899b278509cd0f8fad53886579c9af53deebc6e47cb5ff9b26",
+      "anchor": "TUI must reject redirected surfaces before contacting a device"
+    }
+  ],
+  "improvement": "Bounded checkpoint only; no whole-repository superiority or physical acceptance claim."
+},
+{
   "origin": "Pealayer",
   "source_read": "complete",
   "targets": [
@@ -1113,7 +1393,7 @@
     {
       "origin": "Pealayer",
       "path": "src/ui/i18n.rs",
-      "sha256": "811f1e08e7126932772c49da8aa9669ce8f47d4e2208c1ef6cde435dde20bdf4",
+    "sha256": "87e8a9439df45a2bbdd8157ee20bbff46ab0de7a475f78b4936aaf763a19a5b7",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -1184,7 +1464,7 @@
     {
       "origin": "Pealayer",
       "path": "web_ui/src/i18n.ts",
-      "sha256": "331b0ef10c89f4e695101cb332e62607e15ce37bd0543104453060c0e45a66e6",
+    "sha256": "86c64de3924af9873d7a80386511ba42adb5e60b3db205d0eec932309a60edeb",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -1283,7 +1563,7 @@
       "targets": [
         {
           "path": "README.md",
-          "sha256": "badf979fd797d25a90ca6538ba49339d27a3af0cf6cb929ae588f9ad1ea13c4e",
+          "sha256": "14b6d49428f60f3d48b8b56f16e735f70ad791a99612f97a9c9ff13ba3f297d2",
           "anchor": "Connected boards. One contextual control workspace."
         },
         {
@@ -1336,7 +1616,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "4ac8ce68df222375d03f57b991ddc15bc2d2f3426f95ac7c9d2ec0d49f5783a5",
+          "sha256": "f2fe5b81cecdd2cb2f3c6e6bb6cc3eb994daf22026ae193235f735ca23cbee98",
           "anchor": "export function runChecks"
         },
         {
@@ -1359,7 +1639,7 @@
         {
           "code": "macOS Intel/Apple silicon and Linux native platform matrix/packages",
           "disposition": "pending",
-          "reason": "Current accepted native target is Windows; firmware and Android use Linux runners. Additional native targets need actual platform build/runtime tests rather than claiming donor's unrelated acceptance."
+        "reason": "Current accepted native target is Windows; firmware and Android use Linux runners. Full donor reread includes the new scripts/run-ci-rust-tests.sh macOS sampling helper and 15-minute native test step. Linux/macOS native matrix and diagnostic sampling remain useful pending work; they require actual Pakar platform coverage, not donor's unrelated acceptance."
         },
         {
           "code": "UPX checksum-locked packing and packed native package smoke/resource checks",
@@ -1373,11 +1653,11 @@
         }
       ],
       "remaining": [
-        "Complete Windows menu-label primary-color assertion/package and validate the unexecuted draft publisher. 8849ab8 native execution completes 114 passed/1 failed without abort; workflow/source, both firmware variants, Android preview and CodeQL pass, not all-green or deployed acceptance. Restore useful additional native targets and optional compressed package/runtime verification."
+      "The historical 8849ab8 menu failure was subsequently fixed; 5d02b07 Build 38141677102 and CodeQL 38141677110 pass. This is not production/deployment proof. Validate the unexecuted draft publisher, useful additional native targets, donor macOS diagnostics and optional compressed package/runtime verification."
       ],
       "improvement": "",
       "origin": "Pealayer",
-      "sha256": "449d49033eb2ab3ced173566858e0badfa700414fe82747131c4d18a8eda0b0c",
+    "sha256": "bba9a295ee7b59e318f76e0b6f6a80f0aec631e249f7d8c798f6c92c0bb7fd8c",
       "source_read": "complete",
       "proof": [
         {
@@ -2620,7 +2900,7 @@
     {
       "origin": "Pealayer",
       "path": "tests/windows_shell_suite_test.rs",
-      "sha256": "d8696d8b591ca8ae4c77c78a07d19f6aca103e29906f267f19ac8ba1aa5d6e01",
+    "sha256": "3f1f8f7709dd7b0e9dad2c58d1b345e9a7b054bb1bcfbcff9c6aede6598791c6",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -2771,7 +3051,7 @@
     {
       "origin": "PCController",
       "path": "LocalLib/TonePlayer.cpp",
-      "sha256": "e4715e126bcaa342fc3004f2d0fbc300921710d8e1ea7e6b44fc8fe7870ef343",
+    "sha256": "08b41c4240ec899a3184525a864740b2762e7e675d75302c0adbdb27b4a6e511",
       "source_read": "complete",
       "verdict": "scoped-improvement",
       "preserved": [
@@ -2901,11 +3181,11 @@
     {
       "origin": "PCController",
       "path": "LocalLib/ShiftRegisters.cpp",
-      "sha256": "43f944f0767f3cb59d5224e1241ca0aff2793c40c7ededdb95bd7553a0268133",
+    "sha256": "f3223125a4f9f285cc4678fb4956007ede42ad351adff3616bac0331426b65ce",
       "source_read": "complete",
-      "verdict": "equivalent-file",
+    "verdict": "parity-gap",
       "preserved": [
-        "Byte-identical donor file, including eight active-low inputs/outputs, shared-clock transfer, safe output-enable/reset startup and virtual input injection.",
+      "Actual active-low inputs/outputs, shared-clock transfer, safe output-enable/reset startup and virtual input injection retained. Full reread of the current donor shows its direct-port optimization is now specifically guarded for ATmega328P; Pakar still uses __AVR__ and is no longer byte-identical.",
         "The implementation retains PCController's lower-four input-bit reversal; this is not physical proof that the PuzzleBoard wiring uses the same order."
       ],
       "targets": [
@@ -2915,7 +3195,7 @@
           "anchor": "#include \"ShiftRegisters.h\""
         }
       ],
-      "omissions": [],
+    "omissions": [{"code":"ATmega328P-specific direct-port guard and generic AVR fallback","disposition":"pending","reason":"Current hardware is ATmega328P, so behavior is unchanged here; future AVR builds must narrow Pakar's broad __AVR__ guard and test alternate pin maps before enabling them. Do not advertise portability from native-only tests."}],
       "remaining": [
         "Verify actual key/output mapping on PuzzleBoard; unchanged file depends on Pakar's different BoardPins."
       ],
@@ -3108,7 +3388,12 @@
         {
           "code": "PB3/PB5 TM1637 bus pins",
           "disposition": "replaced",
-          "reason": "User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming."
+        "reason": "User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming."
+      },
+      {
+        "code": "New donor ATmega328P-only fast-port guard and AVR validation removal",
+        "disposition": "replaced",
+        "reason": "Pakar AVR target remains explicitly ATmega328P, with its correct PC4/PC5 ports and retained sentinel/brightness validation on all branches. Removing checks only to mirror donor performance changes would weaken bounds without measured need. Other AVR targets are not advertised; future ports must bind their own pins and guard."
         }
       ],
       "remaining": [
@@ -3131,7 +3416,7 @@
     {
       "origin": "PCController",
       "path": "LocalLib/SevenSegments.cpp",
-      "sha256": "54c366525142aca0103a8d58f7ce8d9cbc34c1b5884b20a1ad5ae50ddc6bb4a8",
+    "sha256": "34e0e8a481bc5febed33dc5610d783bb093c8be23fdbc4de796d066c1d389769",
       "source_read": "complete",
       "verdict": "scoped-improvement",
       "preserved": [

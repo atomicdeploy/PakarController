@@ -6,6 +6,7 @@ export const phases={
   "quality": [
     ["node", "tests/native_dropdown_test.mjs"],
     ["node", "tests/github_conversation_audit_test.mjs"],
+    ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "terminal-ui", "-Gate"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "api-contract", "-Gate"],
     ["node", "tools/check-living-contract.mjs"],
     ["node", "tests/living_contract_test.mjs"],
@@ -169,6 +170,10 @@ export const phases={
       "tools/build-desktop.ps1",
       "-Mode",
       "Release"
+    ],
+    [
+      "node",
+      "tests/terminal_ui_test.mjs"
     ],
     [
       "node",

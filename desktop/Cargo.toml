@@ -22,6 +22,8 @@ tungstenite = { version = "0.30.0", default-features = false, features = ["hands
 xcap = "0.9.8"
 image = { version = "0.25.10", default-features = false, features = ["png"] }
 tray-icon = "=0.26.1"
+crossterm = "0.29.0"
+unicode-width = "0.2.2"
 
 [target.'cfg(windows)'.dependencies]
 raw-window-handle = "0.6.2"

@@ -50,7 +50,7 @@ $env:PAKAR_ENDPOINT = 'http://ledboard.local'
 .\PakarController.exe --command device rename newname.local
 ```
 
-The TUI (`.\PakarController.exe --tui`) accepts `device name` and
+The TUI (`.\PakarController.exe --tui`, then `:`) accepts `device name` and
 `device rename newname.local`. It switches its own endpoint after confirmed
 success. CLI invocations are separate processes: update `PAKAR_ENDPOINT` yourself.
 Network → Device name in the native app offers the same setting and switches

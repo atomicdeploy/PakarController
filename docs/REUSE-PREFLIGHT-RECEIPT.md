@@ -1703,3 +1703,46 @@ exact meaning. Existing desktop/settings hashes preserved; no physical write or
 native/Android rebuild. Final partial-write refinement used only focused tests,
 same warm AVR caches and deterministic comparison generation, not another broad
 GUI/Android suite. Latest source CI proceeds asynchronously.
+
+## Interactive TUI: donor-backed bounded checkpoint
+
+Baseline 5d02b07 Build38141677102 and CodeQL38141677110 both passed;
+no open PRs. SSH1022 timed out and ledboard.local remained unresolved. User is
+migrating hardware, so no physical upload, discovery or LED/display success.
+
+Consulted real Rayan terminal/run/text/keys/runtime sources and their platform
+dependencies through EOF, plus actual PCController table.go viewport formula.
+Seven new hash-bound comparisons retain exact consumers and tests, with useful
+omissions pending rather than claiming full TUI parity. Crossterm replaces Go
+toolkit ownership; selection, Find, incidents and CLI parsing remain shared.
+New terminal-ui gate is part of source-quality CI. No GUI owner or settings edits.
+
+Donor inventory drift was detected rather than ignored: reread full changed
+Pealayer i18n.rs, web i18n.ts, Windows shell test and CI workflow (including new
+macOS diagnostic sampler), plus PCController TonePlayer/ShiftRegisters/
+SevenSegments.cpp. Rebound only their original source hashes after actual reads.
+ShiftRegisters comparison is now parity-gap: donor's new 328P-only guard is
+not silently called byte-identical. Correct PuzzleBoard A4/A5 pins and input
+validation remain intentionally stronger; no copied PB3/PB5 regression.
+
+Inventory now4255 files,101 manual comparisons,4154 pending,68 known gaps;
+not complete imports. Guessed legacy-review filename failed; rg --files resolved
+the actual reuse-review-evidence.csv. A full evidence JSON diagnostic exceeded
+output bounds before mutation; limited changes to parsed reference leaves.
+
+Final native Test:147 passed/0failed, including HTTP batch peer-change/false
+receipt stop, captured shared CLI output and post-preflight cancellation. Four
+bounded native passes reused the same release cache; no Android/firmware rebuild
+or debug artifacts. Release, built redirected-terminal guard and current source
+quality execution are separate receipts, not inferred from these unit tests.
+
+Full source-quality phase passed. First Release (4m56) and built CLI suites
+passed, then a real Windows ConPTY session (unreachable private loopback fixture)
+opened Events/Help and q restored raw mode/cursor/alternate screen with exit0.
+Repeated connection failures stayed one incident with increasing occurrences.
+This session predates the small resize clipping refinement, whose own native
+run verifies width0..33/height0..8. It is not board or graphical UI acceptance.
+Also wired the existing bounded describe_error cause-chain helper into shared
+blocking_status: otherwise the TUI would merge distinct DNS/socket/TLS failures
+behind reqwest's identical outer Display. Final Release/built status test verifies
+that integration; existing native diagnostic tests cover cause distinctions.
