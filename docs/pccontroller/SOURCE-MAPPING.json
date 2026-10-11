@@ -229,11 +229,11 @@
       "source_sha256": "54c366525142aca0103a8d58f7ce8d9cbc34c1b5884b20a1ad5ae50ddc6bb4a8",
       "source_read": "complete",
       "target": "firmware/avr/SevenSegments.cpp",
-      "target_sha256_utf8_lf": "28547987e3fe6bf85e13763fa93ef8bb234f8d8f6204b43658058f070f6d9228",
+      "target_sha256_utf8_lf": "776c190eb16a8aa72ed538a4728d35bbf7e51b4b9daddbbb81e62bfce252e74b",
       "line": 21,
       "anchor": "bool busNack",
-      "retained": "Ninth-clock ACK, reasserted cached frame/brightness keepalive, true-off; cumulative NACK prevents final ACK hiding earlier failure.",
-      "omitted_code_and_reason": "Pin mapping changed only for actual board; independent probe removed because it disagreed with driver cache. Physical recovery remains unverified."
+      "retained": "Ninth-clock ACK, reasserted cached frame/brightness keepalive, true-off; cumulative NACK prevents final ACK hiding earlier failure. Weak pull-up after driver release prevents an unplugged floating DIO from falsely reading as ACK; actual fallback and AVR-register transaction tests cover every NACK position, reconnect, off, fade and rollover.",
+      "omitted_code_and_reason": "PB3/PB5 replaced by confirmed PC4/PC5 to preserve ISP. Donor unbiased INPUT release replaced by INPUT_PULLUP (AVR clears DDRC4 before setting PORTC4); other port bits remain unchanged and no strong driver opposes ACK. Independent probe removed because it disagreed with driver cache. Physical voltage/timing/unplug recovery and stuck-low fault discrimination remain unverified. See docs/TM1637-RECOVERY.md and the authoritative file-comparison-evidence.json mapping."
     },
     {
       "source": "Project/Runtime/ProtocolRuntime.inc.h",

@@ -408,12 +408,12 @@ Verdict: **equivalent-behavior**. Revision: `1676ee8662d21dcfd5c7308a15cd27e809a
 Verdict: **parity-gap**. Revision: `1676ee8662d21dcfd5c7308a15cd27e809a484c3`. Original-byte SHA-256: `7a91d9fa8778383ee37e33d861ceebc5ab210e46bedab6af8be82d56c27523cc`.
 
 - Target: `tools/audit-github-conversations.mjs:59 [UTF8-LF sha256=d2b9dff0e72c8fa58a5982cde925e550bd159c22d207ac267f5991c68d57656a; anchor=export function collect]`.
-- Target: `docs/GITHUB-COORDINATION.md:1 [UTF8-LF sha256=ec796a0e6e1d207299a48a556bcfd4b3914eb1437a7772b5573c75c216127fec; anchor=# Conversation-aware integration]`.
+- Target: `docs/GITHUB-COORDINATION.md:1 [UTF8-LF sha256=f757de831c79a19a2281a90fbf9708a5705ee91463b2ab106da6ded4ca4b9681; anchor=# Conversation-aware integration]`.
 - Retained: Actual exhaustive review-thread/review-summary/standalone-comment audit procedure adapted into read-only paginated GitHub collection, hash-bound manual scope decisions, unresolved/outdated preservation and quota-versus-completed-review distinction. Used on every state of Pakar, Pealayer and PCController.
 - Omitted/replaced code: `Historical media thumbnails, MPV surface and DLL basename, timeline/cue migration, audio delay and media picking fixes`. Disposition: **not-applicable**. Reason: Pakar is an mpv-free controller and does not own donor playback/media/timeline models. Generic staging safety, keyboard ownership, error correlation, authentication and service-worker origin lessons remain applicable and tracked independently.
 - Omitted/replaced code: `Complete semantic disposition of every historical issue/review and full DNS-rebinding, actuator/persistence, UI/PWA/physical acceptance`. Disposition: **pending**. Reason: All pages are collected but fetching does not mean reading or implementing them. Only explicitly hash-bound reviewed scopes are marked; every unread record and source-file import remains pending.
 - Test-code evidence: `tests/github_conversation_audit_test.mjs:22 [UTF8-LF sha256=d71ee1e531770b756ab7f5269f9b6cb6d1bf75f7d17cd6c5e71e1529712ae7bd; anchor=Paginated GitHub audit]`.
-- Remaining: Read and reconcile the remaining 792-record conversation corpus; continue applicable source imports and exact source/test mapping. Verify RayanLamp repository when supplied; do not invent one or mutate donor comments from Pakar.
+- Remaining: Read and reconcile pending records in the refreshed 794-record conversation corpus; only nine full-record and two comment scopes have explicit semantic decisions. Continue applicable source imports and exact source/test mapping. Verify RayanLamp repository when supplied; do not invent one or mutate donor comments from Pakar.
 
 ### Pealayer: `docs/verification/LOCAL-WORKSPACE-HYGIENE.md`
 

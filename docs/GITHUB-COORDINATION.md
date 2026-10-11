@@ -82,3 +82,35 @@ a repository. Local Rayan source importing continues independently.
 
 Source/CI/package/live proof stay separate. No installed desktop/Android
 replacement, board flash, donor-repository edits or physical acceptance occurred.
+
+## Current-source continuation
+
+The newer complete enumeration contains 794 records: Pakar17, Pealayer143,
+PCController634. Every comment/review/thread page was collected, but most full
+records remain pending semantic review. The explicit decisions now include
+Pealayer56/142/143 and PCController53, in addition to the earlier reviewed scopes.
+Full conversation-record review is not a PR source-diff or merge-readiness review.
+
+Learned constraints applied to pending Pakar acceptance:
+
+- Pealayer56: one dialog state/renderer across hosts, shared actions and keyboard
+  semantics, fallback without losing drafts/preferences. Complete generic native
+  host migration remains pending, not another host-specific copy of controls.
+- PCController53: authoritative controller enumeration and HELLO, not an incomplete
+  secondary WMI inventory. Current OS-discovered port controls are retained;
+  SetupAPI identity enrichment and provider-disagreement tests remain pending.
+- Pealayer142: no implicit recorder all-selection, no optimistic publish/run,
+  cancel-safe previews and retention of the last valid catalog. Preserve complete
+  operation timing in saved effects before changing repeat semantics. Timeline
+  and media-seat cue business stays excluded; generic effect/recording contracts
+  are useful unfinished work, not excluded wholesale with the timeline.
+- Pealayer143: prior ACK/build/screenshot is not current physical readiness.
+  Actual Pakar a6f13a0a desktop production was replaced and captured, preserving
+  settings/rollback; observed UI defects stay open and no board was online.
+
+Fresh Pakar PR listing is empty and its sole local/remote branch is main. No
+completed Copilot review was observed in the refreshed Pakar conversations.
+Requested review is not acceptance, and unrelated donor threads remain unresolved.
+The glib security update is tracked separately on issue17; it is not fixed by
+merging the previous governance/import PRs. CI is checked asynchronously, never
+used as a blocking wait, and failed mapping evidence is repaired without bypass.

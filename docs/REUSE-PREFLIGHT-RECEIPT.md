@@ -1392,3 +1392,62 @@ File.Replace null-backup binding failed before mutation; inspected all hashes,
 reconsulted build-storage, reread actual stage-desktop.ps1 and used its established
 verified pending-copy/Move-Item pattern. Old published settings and earlier
 rollback APKs are retained, no redundant intermediate archive or new copy made.
+
+## TM1637 / local CLI / verified desktop replacement
+
+Source checkpoints be41d1af and a6f13a0a fully reread actual PCController
+LocalLib/SevenSegments.h/.cpp, firmware_controls_test.cpp and its Arduino
+dependency, and actual Pealayer src/cli.rs through EOF. The authoritative
+comparison ledger records exact source/target/proof hashes and concrete omissions.
+Actual display ACK/recovery tests now execute both fallback GPIO and AVR PC4/PC5
+register branches. The CLI imports donor help/version formatting and early-exit
+contracts; saved hostname/user defaults are shared with GUI configuration.
+
+Unexpected staging failure: the original package probe invoked --help, which
+Pakar mistakenly treated as GUI startup. It timed out, and the surrounding shell
+sequence failed to inspect the child staging exit code before using old staging
+bytes. Consequently the initial production replacement was NOT a latest-build
+deployment. No settings or older rollback files were removed. The mistakenly
+launched source executable was inspected for open drafts and gracefully closed
+through --quit before rebuilding. The correction adds actual donor CLI output
+before config/IPC/GUI/network creation; outer staging now checks its exit code
+before any production mutation. Probe timeout child disposal alone is still not
+child shutdown; that original donor limitation remains pending.
+
+Guarded release of a6f13a0a3de64fca9420df6938e01e455f08ee8c passed using the
+existing warm desktop/target release cache. The built and staged executable
+SHA256 is 828d499745c93b580c0cc2b1096bef012017f9b2b280ddb4a04a5d348de5edeb.
+Actual bounded --help and --version probes both exited successfully without
+creating an app. Then verified current production and the existing rollback
+matched one another, verified no owner was running, copied a checksum-verified
+pending candidate and renamed only production/PakarController.exe. No extra
+rollback rotation or package directory copy. Preferences were byte-identical
+before and after launch.
+
+Live production PID 81396 reports version 0.2.7, single_instance=true,
+configured_endpoint=http://ledboard.local, no Preferences/settings write draft,
+and no acknowledged connected board. --version and --app-status secondary
+processes retained that one owner. Internal framebuffer capture completed for
+that exact production PID; outputs/PakarController/desktop-current-cli.png was
+actually inspected. It truthfully hides table/peripheral/mode cards offline.
+It also exposes uncorrected caret glyph boxes, repeated disconnected transport
+errors and a Windows-shell initialization error. Those are useful native parity
+gaps, not acceptable exclusions or proof of an elegant completed UI.
+
+External Windows WGC capture failed with 0x8007041D, including one fresh-window
+recovery; no further retries or stale-coordinate input. The existing imported
+internal/Win32 capture wrapper succeeded via framebuffer instead. No blanket
+Windows screenshot-unavailable claim and no blank-image acceptance.
+
+CI be41d1af run38100858767 passed workflow/source, both firmware link modes and
+Android preview, but the Windows phase rejected a stale SevenSegments.cpp hash
+in the older PC contract manifest. Reconsulted tm1637-display and reread actual
+donor/target source; selectively rebound that one mapping, documented weak-bias
+adaptation and added contract-vs-authoritative-ledger hash agreement. The focused
+23-map assertion now passes. No assertion removed or unrelated hash rebound.
+
+Source-stability checks establish the clean compiled checkout, not embedded Git
+identity in the executable. Full app metadata/manifest/updater and native UI
+parity remain open. Local release execution is not all-green CI or physical
+hardware proof. ASUS SSH localhost:1022 refuses and ledboard.local does not
+resolve; no AVR/ESP flash or live bus/LED/audio acceptance this checkpoint.

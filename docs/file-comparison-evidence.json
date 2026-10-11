@@ -48,14 +48,14 @@
       "preserved":["Actual exhaustive review-thread/review-summary/standalone-comment audit procedure adapted into read-only paginated GitHub collection, hash-bound manual scope decisions, unresolved/outdated preservation and quota-versus-completed-review distinction. Used on every state of Pakar, Pealayer and PCController."],
       "targets":[
         {"path":"tools/audit-github-conversations.mjs","sha256":"d2b9dff0e72c8fa58a5982cde925e550bd159c22d207ac267f5991c68d57656a","anchor":"export function collect"},
-        {"path":"docs/GITHUB-COORDINATION.md","sha256":"ec796a0e6e1d207299a48a556bcfd4b3914eb1437a7772b5573c75c216127fec","anchor":"# Conversation-aware integration"}
+        {"path":"docs/GITHUB-COORDINATION.md","sha256":"f757de831c79a19a2281a90fbf9708a5705ee91463b2ab106da6ded4ca4b9681","anchor":"# Conversation-aware integration"}
       ],
       "proof":[{"path":"tests/github_conversation_audit_test.mjs","sha256":"d71ee1e531770b756ab7f5269f9b6cb6d1bf75f7d17cd6c5e71e1529712ae7bd","anchor":"Paginated GitHub audit"}],
       "omissions":[
         {"code":"Historical media thumbnails, MPV surface and DLL basename, timeline/cue migration, audio delay and media picking fixes","disposition":"not-applicable","reason":"Pakar is an mpv-free controller and does not own donor playback/media/timeline models. Generic staging safety, keyboard ownership, error correlation, authentication and service-worker origin lessons remain applicable and tracked independently."},
         {"code":"Complete semantic disposition of every historical issue/review and full DNS-rebinding, actuator/persistence, UI/PWA/physical acceptance","disposition":"pending","reason":"All pages are collected but fetching does not mean reading or implementing them. Only explicitly hash-bound reviewed scopes are marked; every unread record and source-file import remains pending."}
       ],
-      "remaining":["Read and reconcile the remaining 792-record conversation corpus; continue applicable source imports and exact source/test mapping. Verify RayanLamp repository when supplied; do not invent one or mutate donor comments from Pakar."],
+      "remaining":["Read and reconcile pending records in the refreshed 794-record conversation corpus; only nine full-record and two comment scopes have explicit semantic decisions. Continue applicable source imports and exact source/test mapping. Verify RayanLamp repository when supplied; do not invent one or mutate donor comments from Pakar."],
       "improvement":""
     },
     {

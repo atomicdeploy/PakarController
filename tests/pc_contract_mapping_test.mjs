@@ -7,6 +7,7 @@ const root=fileURLToPath(new URL('..',import.meta.url));
 const read=p=>readFileSync(resolve(root,p),'utf8').replaceAll('\r\n','\n');
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const mapping=JSON.parse(read('docs/pccontroller/SOURCE-MAPPING.json'));
+const evidence=JSON.parse(read('docs/file-comparison-evidence.json'));
 assert.equal(mapping.revision,'20c6115bb462fe5111b66cd7c21f7328a1f78892');
 assert.equal(mapping.files.length,23);
 const sources=new Set();
@@ -19,6 +20,12 @@ for(const entry of mapping.files){
   assert.equal(hash(text),entry.target_sha256_utf8_lf,entry.target+' changed; rereview mapping');
   assert(text.split('\n')[entry.line-1].includes(entry.anchor),entry.target+':'+entry.line+' stale anchor');
   assert(entry.retained.length>20 && entry.omitted_code_and_reason.length>4);
+  // The original contract manifest must not drift from the authoritative
+  // exhaustive donor ledger when a reviewed target changes.
+  const reviewed=evidence.files.find(file=>file.origin==='PCController' && file.path===entry.source);
+  for(const target of reviewed?.targets.filter(target=>target.path===entry.target)||[]){
+    assert.equal(entry.target_sha256_utf8_lf,target.sha256,entry.target+' contract/comparison hash disagreement');
+  }
   if(process.env.PAKAR_DONOR_PATH){
     const source=resolve(process.env.PAKAR_DONOR_PATH,entry.source);
     assert(existsSync(source));
