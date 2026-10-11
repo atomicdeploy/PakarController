@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+//! Imported from actual Pealayer src/ui/color_picker.rs; session history and all four tests retained.
 //! Compact RGB editor shared by channel presentation and custom accents.
 //! The swatch is a click target inside the text field's reserved leading margin.
 use eframe::egui;
@@ -17,8 +18,61 @@ pub fn semantic_swatches() -> &'static [PaletteSwatch] {
     &SWATCHES
 }
 
-fn swatch_row(ui: &mut egui::Ui) -> Option<egui::Color32> {
+fn recent_id() -> egui::Id {
+    egui::Id::new("pakar-recent-colors")
+}
+
+pub fn remember_color(ctx: &egui::Context, color: egui::Color32) {
+    ctx.data_mut(|data| {
+        let mut colors = data
+            .get_temp::<Vec<egui::Color32>>(recent_id())
+            .unwrap_or_default();
+        colors.retain(|previous| *previous != color);
+        colors.insert(0, color);
+        colors.truncate(12);
+        data.insert_temp(recent_id(), colors);
+    });
+}
+
+fn recent_row(ui: &mut egui::Ui) -> Option<egui::Color32> {
+    let colors = ui.data(|data| {
+        data.get_temp::<Vec<egui::Color32>>(recent_id())
+            .unwrap_or_default()
+    });
+    if colors.is_empty() {
+        return None;
+    }
+    ui.label(super::i18n::text("Recent colors"));
     let mut selected = None;
+    ui.horizontal_wrapped(|ui| {
+        for color in colors {
+            let (rect, response) =
+                ui.allocate_exact_size(egui::vec2(22.0, 22.0), egui::Sense::click());
+            ui.painter().circle_filled(rect.center(), 7.0, color);
+            ui.painter().circle_stroke(
+                rect.center(),
+                7.0,
+                ui.visuals().widgets.noninteractive.bg_stroke,
+            );
+            if response
+                .on_hover_text(format!(
+                    "#{:02X}{:02X}{:02X}",
+                    color.r(),
+                    color.g(),
+                    color.b()
+                ))
+                .clicked()
+            {
+                selected = Some(color);
+            }
+        }
+    });
+    selected
+}
+
+fn swatch_row(ui: &mut egui::Ui) -> Option<egui::Color32> {
+    let mut selected = recent_row(ui);
+    ui.label(super::i18n::text("Shared colors"));
     ui.horizontal_wrapped(|ui| {
         for swatch in semantic_swatches() {
             let [r, g, b] = crate::config::parse_rgb_hex(&swatch.hex).expect("valid shared swatch");
@@ -36,7 +90,108 @@ fn swatch_row(ui: &mut egui::Ui) -> Option<egui::Color32> {
             }
         }
     });
+    if let Some(color) = selected {
+        remember_color(ui.ctx(), color);
+    }
     selected
+}
+
+/// One full-width Custom choice. The inset is a preview, not a second item;
+/// the actual editable HEX field lives in the palette opened by this row.
+pub fn custom_menu_row(
+    ui: &mut egui::Ui,
+    selected: bool,
+    label: &str,
+    hex: &str,
+    rgb: [u8; 3],
+) -> egui::Response {
+    let color = egui::Color32::from_rgb(rgb[0], rgb[1], rgb[2]);
+    let response = crate::ui::dropdown::choice(ui, selected, label, Some(color));
+    let field = egui::Rect::from_center_size(
+        egui::pos2(response.rect.right() - 70.0, response.rect.center().y),
+        egui::vec2(124.0, 28.0),
+    );
+    ui.painter().rect(
+        field,
+        3.0,
+        ui.visuals().extreme_bg_color,
+        ui.visuals().widgets.inactive.bg_stroke,
+        egui::StrokeKind::Inside,
+    );
+    ui.painter().with_clip_rect(field.shrink(2.0)).text(
+        field.center(),
+        egui::Align2::CENTER_CENTER,
+        hex,
+        egui::FontId::monospace(12.0),
+        ui.visuals().text_color(),
+    );
+    response
+}
+
+/// This palette is anchored outside the closed dropdown: no competing nested
+/// menu close event can eat the click that opens it.
+pub fn palette_popup(
+    ui: &mut egui::Ui,
+    anchor: &egui::Response,
+    id: egui::Id,
+    open: bool,
+    hex: &mut String,
+    fallback: [u8; 3],
+) -> bool {
+    let keep_open = egui::Popup::is_id_open(ui.ctx(), id);
+    let draft_id = id.with("hex-draft");
+    let mut draft = ui
+        .data(|data| data.get_temp::<String>(draft_id))
+        .unwrap_or_else(|| hex.clone());
+    if open {
+        draft = hex.clone();
+    }
+    let mut changed = false;
+    egui::Popup::menu(anchor)
+        .id(id)
+        .open_memory(Some(egui::SetOpenCommand::Bool(open || keep_open)))
+        .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
+        .show(|ui| {
+            ui.set_width(280.0);
+            if let Some(color) = swatch_row(ui) {
+                draft = format!("#{:02X}{:02X}{:02X}", color.r(), color.g(), color.b());
+                changed = true;
+            }
+            ui.separator();
+            let field = ui.add_sized(
+                [ui.available_width(), 28.0],
+                crate::ui::dialog::singleline_text_edit(&mut draft)
+                    .char_limit(7)
+                    .hint_text("#RRGGBB"),
+            );
+            let rgb = crate::config::parse_rgb_hex(&draft).unwrap_or(fallback);
+            let mut color = egui::Color32::from_rgb(rgb[0], rgb[1], rgb[2]);
+            if field.changed() && crate::config::parse_rgb_hex(&draft).is_some() {
+                changed = true;
+            }
+            if egui::color_picker::color_picker_color32(
+                ui,
+                &mut color,
+                egui::color_picker::Alpha::Opaque,
+            ) {
+                draft = format!("#{:02X}{:02X}{:02X}", color.r(), color.g(), color.b());
+                changed = true;
+            }
+            if (field.lost_focus() || ui.input(|input| input.pointer.any_released()))
+                && let Some([r, g, b]) = crate::config::parse_rgb_hex(&draft)
+            {
+                remember_color(ui.ctx(), egui::Color32::from_rgb(r, g, b));
+            }
+        });
+    if changed {
+        *hex = draft.clone();
+    }
+    if egui::Popup::is_id_open(ui.ctx(), id) {
+        ui.data_mut(|data| data.insert_temp(draft_id, draft));
+    } else {
+        ui.data_mut(|data| data.remove::<String>(draft_id));
+    }
+    changed
 }
 
 /// Compact RGB-valued control with the same swatches as HEX fields.
@@ -63,6 +218,9 @@ pub fn color_button_srgba(ui: &mut egui::Ui, color: &mut egui::Color32) -> egui:
             ) {
                 response.mark_changed();
             }
+            if ui.input(|input| input.pointer.any_released()) {
+                remember_color(ui.ctx(), *color);
+            }
         });
     response
 }
@@ -74,6 +232,63 @@ pub fn color_button_srgb(ui: &mut egui::Ui, rgb: &mut [u8; 3]) -> egui::Response
         *rgb = [color.r(), color.g(), color.b()];
     }
     response
+}
+
+/// Actual Pealayer Preferences Accent branch: closed swatch, shared choices,
+/// one Custom row and a separately anchored palette (not a competing submenu).
+/// Pakar currently persists RGB, not the donor's System-accent selector mode.
+pub fn accent_picker(ui: &mut egui::Ui, hex: &mut String, width: f32) -> bool {
+    let rgb = crate::config::parse_rgb_hex(hex).unwrap_or([56, 210, 122]);
+    let preset = semantic_swatches()
+        .iter()
+        .find(|swatch| crate::config::parse_rgb_hex(&swatch.hex) == Some(rgb));
+    let selected = preset
+        .map(|swatch| super::i18n::text(&swatch.label))
+        .unwrap_or_else(|| super::i18n::text("Custom"));
+    let palette_id = ui.make_persistent_id("preference-accent-palette");
+    let mut open_custom = false;
+    let mut changed = false;
+    let combo = super::dropdown::ComboBox::from_id_salt("preference-accent")
+        .width(width)
+        .height(420.0)
+        .selected_text(super::dropdown::color_label(ui, &selected))
+        .show_ui(ui, |ui| {
+            ui.set_min_width(310.0);
+            for swatch in semantic_swatches() {
+                let candidate =
+                    crate::config::parse_rgb_hex(&swatch.hex).expect("valid shared swatch");
+                if super::dropdown::choice(
+                    ui,
+                    candidate == rgb,
+                    super::i18n::text(&swatch.label),
+                    Some(egui::Color32::from_rgb(
+                        candidate[0],
+                        candidate[1],
+                        candidate[2],
+                    )),
+                )
+                .clicked()
+                {
+                    changed = *hex != swatch.hex;
+                    *hex = swatch.hex.clone();
+                    remember_color(
+                        ui.ctx(),
+                        egui::Color32::from_rgb(candidate[0], candidate[1], candidate[2]),
+                    );
+                }
+            }
+            if custom_menu_row(ui, preset.is_none(), &super::i18n::text("Custom"), hex, rgb)
+                .clicked()
+            {
+                open_custom = true;
+            }
+        });
+    super::dropdown::paint_swatch(
+        ui,
+        combo.response.rect,
+        egui::Color32::from_rgb(rgb[0], rgb[1], rgb[2]),
+    );
+    changed | palette_popup(ui, &combo.response, palette_id, open_custom, hex, rgb)
 }
 
 pub fn color_field(
@@ -104,7 +319,7 @@ pub fn color_field(
     );
     let swatch = ui
         .interact(swatch_rect, id.with("swatch"), egui::Sense::click())
-        .on_hover_text("Choose color");
+        .on_hover_text(super::i18n::text("Choose color"));
     ui.painter().circle_filled(
         swatch_rect.center(),
         6.0,
@@ -138,6 +353,237 @@ pub fn color_field(
                 *hex = format!("#{:02X}{:02X}{:02X}", color.r(), color.g(), color.b());
                 response.mark_changed();
             }
+            if ui.input(|input| input.pointer.any_released()) {
+                remember_color(ui.ctx(), color);
+            }
         });
+    if response.lost_focus()
+        && let Some([r, g, b]) = crate::config::parse_rgb_hex(hex)
+    {
+        remember_color(ui.ctx(), egui::Color32::from_rgb(r, g, b));
+    }
     response
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn accent_custom_row_opens_separate_palette_without_mutating_on_open() {
+        for dark in [false, true] {
+            let ctx = egui::Context::default();
+            ctx.set_visuals(if dark {
+                egui::Visuals::dark()
+            } else {
+                egui::Visuals::light()
+            });
+            // Measure the root ID before opening anything. A probe-only pass
+            // afterwards would abandon the open popup (egui Memory::end_pass).
+            let mut palette_id = egui::Id::NULL;
+            let mut probe = ctx.run_ui(egui::RawInput::default(), |ui| {
+                palette_id = ui.make_persistent_id("preference-accent-palette");
+            });
+            probe.textures_delta.clear();
+            let mut hex = "#123ABC".to_string();
+            let mut owner = egui::Id::NULL;
+            let mut frame = |events| {
+                let mut changed = false;
+                let mut output = ctx.run_ui(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            egui::vec2(600.0, 900.0),
+                        )),
+                        events,
+                        ..Default::default()
+                    },
+                    |ui| {
+                        owner = ui.make_persistent_id(egui::IdSalt::new("preference-accent"));
+                        changed = accent_picker(ui, &mut hex, 180.0);
+                    },
+                );
+                output.textures_delta.clear();
+                (output, changed, owner, hex.clone())
+            };
+            let (_, changed, id, original) = frame(vec![]);
+            assert!(!changed);
+            assert_eq!(original, "#123ABC");
+            egui::Popup::open_id(&ctx, id.with("popup"));
+            frame(vec![]); // sizing pass
+            let (output, changed, _, _) = frame(vec![]);
+            assert!(!changed);
+            let popup = ctx
+                .memory(|memory| memory.area_rect(id.with("popup")))
+                .expect("actual accent choices popup");
+            let custom = output
+                .shapes
+                .iter()
+                .find_map(|shape| match &shape.shape {
+                    egui::epaint::Shape::Text(text)
+                        if text.galley.job.text == super::super::i18n::text("Custom")
+                            && popup.contains(text.pos + text.galley.rect.center().to_vec2()) =>
+                    {
+                        Some(text.pos + text.galley.rect.center().to_vec2())
+                    }
+                    _ => None,
+                })
+                .expect("actual Custom choice painted");
+            let click = |pressed| egui::Event::PointerButton {
+                pos: custom,
+                button: egui::PointerButton::Primary,
+                pressed,
+                modifiers: egui::Modifiers::NONE,
+            };
+            frame(vec![egui::Event::PointerMoved(custom), click(true)]);
+            let (_, changed, _, actual) = frame(vec![click(false)]);
+            assert!(!changed);
+            assert_eq!(actual, "#123ABC");
+            assert!(!super::super::dropdown::ComboBox::is_open(&ctx, id));
+            frame(vec![]); // independent palette sizing pass
+            let (output, changed, _, actual) = frame(vec![]);
+            assert!(!changed);
+            assert_eq!(actual, "#123ABC");
+            assert!(
+                egui::Popup::is_id_open(&ctx, palette_id),
+                "Custom opens its own anchored palette after selector closes"
+            );
+            assert!(output.shapes.iter().any(|shape| matches!(&shape.shape,
+                egui::epaint::Shape::Text(text) if text.galley.job.text == super::super::i18n::text("Shared colors"))));
+        }
+    }
+
+    #[test]
+    fn recent_colors_are_session_only_bounded_and_most_recent_first() {
+        let ctx = egui::Context::default();
+        for red in 0..20 {
+            remember_color(&ctx, egui::Color32::from_rgb(red, 0, 0));
+        }
+        remember_color(&ctx, egui::Color32::from_rgb(15, 0, 0));
+        let colors = ctx.data(|data| data.get_temp::<Vec<egui::Color32>>(recent_id()).unwrap());
+        assert_eq!(colors.len(), 12);
+        assert_eq!(colors[0], egui::Color32::from_rgb(15, 0, 0));
+        assert_eq!(colors.iter().filter(|color| color.r() == 15).count(), 1);
+        let fresh = egui::Context::default();
+        assert!(
+            fresh
+                .data(|data| data.get_temp::<Vec<egui::Color32>>(recent_id()))
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn shared_swatches_are_valid_and_include_semantic_marker_colors() {
+        for swatch in semantic_swatches() {
+            assert!(crate::config::parse_rgb_hex(&swatch.hex).is_some());
+        }
+        for expected in ["#EF4444", "#F59E0B", "#969696"] {
+            assert!(
+                semantic_swatches()
+                    .iter()
+                    .any(|swatch| swatch.hex == expected)
+            );
+        }
+    }
+
+    #[test]
+    fn integrated_color_field_keeps_round_swatch_inside_text_field_in_both_themes() {
+        for dark in [false, true] {
+            let ctx = egui::Context::default();
+            ctx.set_visuals(if dark {
+                egui::Visuals::dark()
+            } else {
+                egui::Visuals::light()
+            });
+            let mut hex = "#38D27A".to_owned();
+            let mut rect = egui::Rect::NOTHING;
+            let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+                rect = color_field(ui, &mut hex, [0, 0, 0], 124.0).rect;
+            });
+            output.textures_delta.clear();
+            assert!((rect.width() - 124.0).abs() < 0.1);
+            let circles: Vec<_> = output
+                .shapes
+                .iter()
+                .filter_map(|shape| {
+                    if let egui::epaint::Shape::Circle(circle) = &shape.shape {
+                        Some(circle)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            assert!(circles.iter().any(|circle| circle.fill
+                == egui::Color32::from_rgb(56, 210, 122)
+                && rect.contains(circle.center)
+                && circle.radius == 6.0));
+            assert_eq!(hex, "#38D27A");
+        }
+    }
+
+    #[test]
+    fn color_field_hex_edit_and_swatch_popup_are_interactive() {
+        let ctx = egui::Context::default();
+        let mut hex = "#38D27A".to_owned();
+        let frame = |events: Vec<egui::Event>, hex: &mut String| {
+            let mut response = None;
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    events,
+                    ..Default::default()
+                },
+                |ui| {
+                    response = Some(color_field(ui, hex, [0, 0, 0], 124.0));
+                },
+            );
+            output.textures_delta.clear();
+            response.unwrap()
+        };
+        let response = frame(vec![], &mut hex);
+        let text_pos = egui::pos2(response.rect.left() + 60.0, response.rect.center().y);
+        let click = |pos, pressed| egui::Event::PointerButton {
+            pos,
+            button: egui::PointerButton::Primary,
+            pressed,
+            modifiers: egui::Modifiers::NONE,
+        };
+        frame(
+            vec![egui::Event::PointerMoved(text_pos), click(text_pos, true)],
+            &mut hex,
+        );
+        frame(vec![click(text_pos, false)], &mut hex);
+        let command = egui::Modifiers {
+            ctrl: true,
+            command: true,
+            ..Default::default()
+        };
+        let changed = frame(
+            vec![
+                egui::Event::Key {
+                    key: egui::Key::A,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers: command,
+                },
+                egui::Event::Text("#123ABC".to_owned()),
+            ],
+            &mut hex,
+        );
+        assert!(changed.changed());
+        assert_eq!(hex, "#123ABC");
+        let swatch_pos = egui::pos2(response.rect.left() + 15.0, response.rect.center().y);
+        frame(
+            vec![
+                egui::Event::PointerMoved(swatch_pos),
+                click(swatch_pos, true),
+            ],
+            &mut hex,
+        );
+        frame(vec![click(swatch_pos, false)], &mut hex);
+        assert!(
+            egui::Popup::is_id_open(&ctx, response.id.with("palette")),
+            "leading swatch opens the actual color picker"
+        );
+    }
 }

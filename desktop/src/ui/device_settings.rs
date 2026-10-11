@@ -5,6 +5,7 @@ use crate::{
     *,
 };
 use eframe::egui;
+use super::dropdown::DropdownUiExt;
 
 include!("settings_catalog.rs");
 pub fn page_index(name: &str) -> Option<usize> {
@@ -32,7 +33,7 @@ fn field(ui: &mut egui::Ui, icon: &str, label: &str, value: &mut String, secret:
 fn secret(ui: &mut egui::Ui, id: &str, label: &str, stored: bool, value: &mut SecretEdit) {
     ui.push_id(id, |ui| {
         dialog::setting_row(ui, icons::LOCK, label, None, |ui| {
-            egui::ComboBox::from_id_salt("secret-mode")
+            super::dropdown::ComboBox::from_id_salt("secret-mode")
                 .selected_text(match value.mode {
                     SecretMode::Keep => {
                         if stored {
@@ -45,9 +46,9 @@ fn secret(ui: &mut egui::Ui, id: &str, label: &str, stored: bool, value: &mut Se
                     SecretMode::Clear => "Clear stored secret",
                 })
                 .show_ui(ui, |ui| {
-                    ui.selectable_value(&mut value.mode, SecretMode::Keep, "Keep stored value");
-                    ui.selectable_value(&mut value.mode, SecretMode::Replace, "Replace…");
-                    ui.selectable_value(&mut value.mode, SecretMode::Clear, "Clear");
+                    ui.dropdown_value(&mut value.mode, SecretMode::Keep, "Keep stored value");
+                    ui.dropdown_value(&mut value.mode, SecretMode::Replace, "Replace…");
+                    ui.dropdown_value(&mut value.mode, SecretMode::Clear, "Clear");
                 });
         });
         if value.mode == SecretMode::Replace {
@@ -157,11 +158,11 @@ fn network_page(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui:
                 ));
             }
             if !draft.ssids.is_empty() {
-                egui::ComboBox::from_id_salt("scanned-ssids")
+                super::dropdown::ComboBox::from_id_salt("scanned-ssids")
                     .selected_text("Choose a discovered network…")
                     .show_ui(ui, |ui| {
                         for ssid in &draft.ssids {
-                            ui.selectable_value(
+                            ui.dropdown_value(
                                 &mut network.value.station_ssid,
                                 ssid.clone(),
                                 ssid,
@@ -382,20 +383,20 @@ fn maintenance_page(
             draft.firmware_targets = if isp { 3 } else { 1 };
         }
         dialog::setting_row(ui, icons::CPU, "Update target", None, |ui| {
-            egui::ComboBox::from_id_salt("remote-target")
+            super::dropdown::ComboBox::from_id_salt("remote-target")
                 .selected_text(match draft.firmware_targets {
                     1 => "ESP",
                     2 => "AVR",
                     _ => "Both boards",
                 })
                 .show_ui(ui, |ui| {
-                    if isp { ui.selectable_value(&mut draft.firmware_targets, 3, "Both boards"); }
-                    ui.selectable_value(
+                    if isp { ui.dropdown_value(&mut draft.firmware_targets, 3, "Both boards"); }
+                    ui.dropdown_value(
                         &mut draft.firmware_targets,
                         1,
                         "ESP (same-version repair)",
                     );
-                    if isp { ui.selectable_value(
+                    if isp { ui.dropdown_value(
                         &mut draft.firmware_targets,
                         2,
                         "AVR (same-version repair)",

@@ -8,6 +8,7 @@ use crate::{
     *,
 };
 use eframe::egui;
+use super::dropdown::DropdownUiExt;
 use platform::instance::Command;
 
 pub fn launch_command(args: &[String]) -> Command {
@@ -967,11 +968,11 @@ impl PakarControllerApp {
                             }
                         }
                     });
-                    egui::ComboBox::from_label("Transition")
+                    super::dropdown::ComboBox::from_label("Transition")
                         .selected_text(&self.cell_effect)
                         .show_ui(ui, |ui| {
                             for name in ["immediate", "fade", "pulse"] {
-                                ui.selectable_value(&mut self.cell_effect, name.into(), name);
+                                ui.dropdown_value(&mut self.cell_effect, name.into(), name);
                             }
                         });
                 });
@@ -989,12 +990,12 @@ impl PakarControllerApp {
         if self.has_feature("leds") {
         dialog::section(ui, icons::SPARKLE, "Strip effect", |ui| {
             ui.add_enabled_ui(snapshot.is_some(), |ui| {
-                egui::ComboBox::from_id_salt("strip-effect")
+                super::dropdown::ComboBox::from_id_salt("strip-effect")
                     .width(ui.available_width() - 10.0)
                     .selected_text(&self.pattern)
                     .show_ui(ui, |ui| {
                         for name in ["none", "rainbow", "fire"] {
-                            ui.selectable_value(&mut self.pattern, name.into(), name);
+                            ui.dropdown_value(&mut self.pattern, name.into(), name);
                         }
                     });
                 if dialog::primary_action_button(ui, icons::PLAY, "Apply").clicked() {
@@ -1105,7 +1106,7 @@ impl PakarControllerApp {
             });
             ui.horizontal_wrapped(|ui| {
                 ui.label(crate::ui::i18n::text("Repeat"));
-                egui::ComboBox::from_id_salt("display-repeat")
+                super::dropdown::ComboBox::from_id_salt("display-repeat")
                     .selected_text(self.config.display.repeat.label())
                     .show_ui(ui, |ui| {
                         for value in [
@@ -1113,7 +1114,7 @@ impl PakarControllerApp {
                             crate::display::Repeat::Loop,
                             crate::display::Repeat::Interval,
                         ] {
-                            ui.selectable_value(
+                            ui.dropdown_value(
                                 &mut self.config.display.repeat,
                                 value,
                                 value.label(),
@@ -1594,36 +1595,36 @@ impl PakarControllerApp {
                     // Pealayer's custom hardware-path fallback: discovery is not
                     // the only way to choose a stable OS serial endpoint.
                     field(ui, icons::PLUG, "Port or hardware path", &mut self.serial_port, false);
-                    egui::ComboBox::from_label("Port")
+                    super::dropdown::ComboBox::from_label("Port")
                         .selected_text(if self.serial_port.is_empty() {
                             "Disconnected"
                         } else {
                             &self.serial_port
                         })
                         .show_ui(ui, |ui| {
-                            ui.selectable_value(
+                            ui.dropdown_value(
                                 &mut self.serial_port,
                                 String::new(),
                                 "Disconnected",
                             );
                             for port in serialport::available_ports().unwrap_or_default() {
-                                ui.selectable_value(
+                                ui.dropdown_value(
                                     &mut self.serial_port,
                                     port.port_name.clone(),
                                     &port.port_name,
                                 );
                             }
                         });
-                    egui::ComboBox::from_label("Commands")
+                    super::dropdown::ComboBox::from_label("Commands")
                         .selected_text(match self.transport {
                             Transport::WiFi => "Wi-Fi",
                             Transport::Serial => "Serial",
                             Transport::Both => "Wi-Fi + serial",
                         })
                         .show_ui(ui, |ui| {
-                            ui.selectable_value(&mut self.transport, Transport::WiFi, "Wi-Fi");
-                            ui.selectable_value(&mut self.transport, Transport::Serial, "Serial");
-                            ui.selectable_value(
+                            ui.dropdown_value(&mut self.transport, Transport::WiFi, "Wi-Fi");
+                            ui.dropdown_value(&mut self.transport, Transport::Serial, "Serial");
+                            ui.dropdown_value(
                                 &mut self.transport,
                                 Transport::Both,
                                 "Wi-Fi + serial",

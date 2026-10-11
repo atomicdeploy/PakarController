@@ -47,8 +47,8 @@
       "title": "File-by-file donor parity, exact mappings and justified omissions",
       "url": "https://github.com/atomicdeploy/PakarController/issues/3",
       "state": "open",
-      "content_sha256": "79458234b0ffd9d91987cea90b31f7767afa5687e824e98da36ff3154ddf2775",
-      "comments": 24,
+      "content_sha256": "0da2904dd0cb31ffbe9bd0a4919c0d9396e7f10e0b45572de9d719d54c7253f2",
+      "comments": 25,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
@@ -81,8 +81,8 @@
       "title": "Restore native Windows notifications and complete remaining Pealayer desktop parity",
       "url": "https://github.com/atomicdeploy/PakarController/issues/5",
       "state": "open",
-      "content_sha256": "731e536446d411192684d3b95eaf65b3b62cebe6b39707438ac50229b82cf278",
-      "comments": 3,
+      "content_sha256": "b2b9f7aac31a7610ef6666cf3ed0a0b4fcc8f4e1f990503d0d2ce36726cbe9ba",
+      "comments": 4,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
@@ -132,8 +132,8 @@
       "title": "Refine cell workspace and restore Pealayer panel/status menus with acceptance evidence",
       "url": "https://github.com/atomicdeploy/PakarController/issues/8",
       "state": "open",
-      "content_sha256": "3caee0912db60456514e976bbb07a2cb100794e651d00750c4a3f0186ced8a6c",
-      "comments": 6,
+      "content_sha256": "d2882e3e17238ff08000ded33a851d63b43630d865a6485ce4ecf6d5f8b945aa",
+      "comments": 7,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
@@ -149,8 +149,8 @@
       "title": "Low-write build storage and bounded artifact retention",
       "url": "https://github.com/atomicdeploy/PakarController/issues/9",
       "state": "open",
-      "content_sha256": "59ba7d6bfe38e2f37da02d9fad161b1c8d44259ef90d9e53d366ce01acffe549",
-      "comments": 4,
+      "content_sha256": "8e958b591c71829391cf14b5f4a7606e7cbf7fbd6fa0a8d7cc6b0ea328149b30",
+      "comments": 5,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
@@ -1648,8 +1648,8 @@
       "title": "Finish media, hardware and Web acceptance",
       "url": "https://github.com/ToghrolTP/pealayer/issues/80",
       "state": "open",
-      "content_sha256": "180a0e0072b2d354c963bedea69189224617819a5bf81d33c7aaa867d33919ca",
-      "comments": 75,
+      "content_sha256": "8e75493c11f96dae5515c4b7668de0fac200d25ccdf35e3213b49aac4d929c00",
+      "comments": 76,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
@@ -2131,8 +2131,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Palette roles and typography must map to the live resolved theme, not replace host styling; preserve specialized inputs and distinguish source/theme fixtures from human visual acceptance. Pakar existing palette gate retained; broad Elegance/contract parity still pending. Conversation review only, not a PR diff certificate."
     },
     {
       "repository": "ToghrolTP/pealayer",
@@ -2284,8 +2284,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Keep panel controls under Workspace/Panels and contextual empty-workspace guidance, not duplicate a Window menu. Pakar existing workspace controls retained; complete ordered-profile/menu persistence remains pending. Conversation review is not a complete source import."
     },
     {
       "repository": "ToghrolTP/pealayer",
@@ -2454,8 +2454,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "RTL right alignment must occupy a content-height row; hidden channels must not reserve synthetic space. Native geometry should cover theme/scale/narrow combinations and real menu interaction. Pakar full Hardware Monitor channel/disclosure contract remains pending; no media or donor deployment acceptance borrowed."
     },
     {
       "repository": "ToghrolTP/pealayer",
@@ -2505,8 +2505,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Actual complete dropdown/color modules and icon hooks now imported with full-width stable rows, keyboard/search ownership, Custom palette and bounded temporary recents. Retain donor tests; native Pakar execution and deployed capture must be independently verified. Complete Preferences/System accent and broader surface parity remain pending; no whole application equivalence."
     },
     {
       "repository": "ToghrolTP/pealayer",
@@ -2685,8 +2685,8 @@
       "title": "Effects Designer: cue gestures, whole-effect repeat, recording selection and translation parity",
       "url": "https://github.com/ToghrolTP/pealayer/issues/141",
       "state": "open",
-      "content_sha256": "91ce8af1e3f0bd07614ea44c6495317da5cdfb9a01a42c477d3395d69be3e6fc",
-      "comments": 3,
+      "content_sha256": "3a7a3dd70756307f87be5e280977600f7f3bf97c0aa6ba759e12eac6a8b75ff0",
+      "comments": 5,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
@@ -2702,15 +2702,15 @@
       "title": "Effects Designer: cue gestures, whole-effect repeat and selective capture",
       "url": "https://github.com/ToghrolTP/pealayer/pull/142",
       "state": "open",
-      "content_sha256": "2f3ba41b379aa6d89b8d5b4851337cfa726c2ed3e8857e630e81b61f578c4800",
-      "comments": 4,
+      "content_sha256": "cf0cb6c6523c08c14e827b22c5a9ba2ddce3d9d6a8bd473ab852107ffd93d049",
+      "comments": 6,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
       "read_state": "reviewed-record",
-      "application": "Read full body and four conversations, not the source diff. User-excluded timeline/media seat-cue placement is not imported. Generic finite effect repetition, explicit recorder input selection with empty default, cancel-safe preview, exact publish ACK, last-valid catalog retention, unrelated draft preservation and command-tail completion remain useful pending Pakar contracts. Existing saved schedules must not be silently reinterpreted or fields deleted for schema success. Donor PR stays under its owner; no merge/deployment acceptance inferred."
+      "application": "Reread current full body and all six comments after content hash drift, not the source diff. Explicit empty recorder selection, exact publish ACK, unrelated draft preservation, finite repeat and last-valid catalogue remain useful pending Pakar contracts; media/timeline business stays excluded. Newly added atomic bulk selection preserves unselected draft steps and resets stale index ownership on replacement/reorder. Do not erase old repeated operations to satisfy a new contract, bypass a command-tool smoke denial or borrow previous CI/runtime/physical acceptance. Current-head Windows passing checks do not resolve the recorded lifecycle failure or paired production semantics; PR remains with its owner."
     },
     {
       "repository": "ToghrolTP/pealayer",
@@ -9903,8 +9903,8 @@
       "unresolved_threads": [],
       "copilot_messages": 1,
       "copilot_quota_notices": 1,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Reachable host and acknowledged physical board are distinct identities and readiness states; keep truthful offline controls and no inferred peripheral data. Pakar existing ACK/capability gates retained; full bridge adapter and physical reconnect acceptance remain pending. Copilot quota notice is not a review or proof of cleared findings."
     },
     {
       "repository": "atomicdeploy/PCController",
@@ -10549,8 +10549,8 @@
       "unresolved_threads": [],
       "copilot_messages": 1,
       "copilot_quota_notices": 1,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Batch newest status at the paint boundary while preserving ordered bounded telemetry samples; discard stale callbacks on transport replacement/disposal. Stable recovery script revalidation and content-hashed asset caching must remain separate. Pakar generic lifecycle/reducer and service-worker parity remain pending; do not copy public generation selectors or hand-merge generated bundles."
     },
     {
       "repository": "atomicdeploy/PCController",
@@ -12385,8 +12385,8 @@
       "unresolved_threads": [],
       "copilot_messages": 1,
       "copilot_quota_notices": 1,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Disconnected recovery must have one authoritative lifecycle/retry/reason presentation, not duplicate filler or low-level identity dumps. Pakar current repeated offline HTTP/WS errors remain an explicit issue8 gap; preserve detailed identity in diagnostics and apply actual donor code before claiming fixed. No acceptance borrowed from donor deployment."
     },
     {
       "repository": "atomicdeploy/PCController",
@@ -12861,8 +12861,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Keep partial seven-segment authority distinct from exact full panel; low-rate authority edges should push snapshots to every subscriber, while high-rate segments use compact patches. Existing Pakar per-peripheral ACK gates retained; actual cross-client push reducer and board proof remain pending. Read body and both physical/browser acceptance comments, not the code diff."
     },
     {
       "repository": "atomicdeploy/PCController",
@@ -13483,8 +13483,8 @@
       "title": "Whole-effect repetition and explicit recorder capture selection",
       "url": "https://github.com/atomicdeploy/PCController/issues/633",
       "state": "open",
-      "content_sha256": "3ce07dcfb722ec040e50a53c63d8d985b4728f88b472dd2437633934b3aa9bf2",
-      "comments": 7,
+      "content_sha256": "e22704aef0353e92bc73165a8e8596cc1368bee30b1bda1f3c16576ec92f64da",
+      "comments": 8,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],

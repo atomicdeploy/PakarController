@@ -5,6 +5,7 @@ pub mod cell_table;
 pub mod color_picker;
 pub mod connection_controls;
 pub mod dialog;
+pub mod dropdown;
 pub(crate) mod elegance_theme;
 pub mod i18n;
 pub mod icons;

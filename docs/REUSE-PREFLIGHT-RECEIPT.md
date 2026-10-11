@@ -1451,3 +1451,82 @@ identity in the executable. Full app metadata/manifest/updater and native UI
 parity remain open. Local release execution is not all-green CI or physical
 hardware proof. ASUS SSH localhost:1022 refuses and ledboard.local does not
 resolve; no AVR/ESP flash or live bus/LED/audio acceptance this checkpoint.
+
+## Actual dropdown/color continuation
+
+Fully read Pealayer dropdown.rs (631 lines), color_picker.rs (446 lines) and
+icons.rs through EOF at clean donor HEAD 3265bf80. Import the actual modules,
+all three dropdown/four color tests and icon search/list/grid registration hooks.
+Read the locked egui ComboBox factory and the actual Preferences Accent branch;
+do not certify the entire Preferences dependency from that slice.
+Preferences/device-settings/shell selectors and both connection popups now use
+the shared focus/search/choice lifecycle. Session recents are temporary state,
+not per-click persistence. Busy USB choices and Custom palette have new native
+behavior fixtures. No top-menu height change or unrelated board build.
+
+Initial generated patch used a relative path and created one owned dropdown
+file outside the canonical checkout; verified its exact transformed donor bytes,
+then used apply_patch to move only that content into the absolute canonical
+target and remove only the mistakenly created file. No user files removed.
+An icon-context mismatch and a truncated shell patch were rejected atomically;
+actual bounded source rereads preceded precise replacement patches.
+PowerShell R/H aliases invalidated a generated evidence patch; fail-closed
+prefix validation rejected it before mutation, and explicit helper names plus
+terminating errors corrected the generator. A whitespace-dependent icon
+omission match and an incorrect proof anchor also failed before certification;
+inspected exact source/anchor and corrected them rather than suppressing gates.
+
+Selectively refreshed only Pealayer inventory and rebound reviewed native/
+wrapper target references. Original donor hashes were not blindly updated.
+Ledger now accounts for 4242 paths: 91 complete-read hash-bound comparisons,
+4151 pending comparisons and 57 known gap files. The older inventory's screened,
+stale or legacy hints are not extra accepted comparisons.
+Actual mapping and omissions: NATIVE-DROPDOWN-REUSE.md and the authoritative
+file-comparison-evidence.json. Dynamic System accent and complete shared
+Preferences/menu/board adapters remain pending, not excluded business.
+
+Fresh GitHub enumeration fetched every body/comment/review/thread page for
+Pakar17, Pealayer143 and PCController634 records. Read eight additional full
+UI/state conversations and rechecked all four unresolved donor threads;
+seventeen complete-record and two partial-comment decisions are hash-bound.
+Collection of the other records is not semantic review or PR-diff acceptance.
+Pakar/PCController have zero open PRs; Pealayer #142 remains under its owner
+with conversation read but full diff/readiness not certified here.
+Current committed b6bd876 Windows/firmware/Android workflow and CodeQL both
+completed successfully. New uncommitted native imports are separate.
+
+Read the exact Build RayanLamp Go app task again without resuming it or
+messaging it. Its source has no Git metadata; no verified GitHub repository
+can be inferred. Existing local imports remain usable, but a Rayan issue/PR
+audit cannot be claimed without its actual repository URL.
+
+Guarded native Test compiled in the existing release cache: 125 passed, three
+failed. All three donor dropdown tests, four color helpers and busy-port
+keyboard fixture passed. The new Accent fixture chose the closed Custom label
+instead of the popup row; its 11-row palette also needed an explicit bounded
+height. Scope the target to the measured popup, retain the no-mutation assertion
+and verify the actual palette content. The icon test failures were outdated
+Seat-in-viewport assertions: reread actual current donor tests, which explicitly
+use the visible Folder row after fixed-height scrolling. Import those exact
+reopen/filter assertions without deleting their behavior checks.
+Reconsulted native-dropdowns and read actual donor Accent interaction tests and
+icon test dependencies before correction. A path-before-hash-only mechanical
+rebinding missed new JSON references with reversed key order; the mandatory
+generator rejected it. Correct only the two reviewed target paths independent
+of key order, preserving source hashes and all assertions.
+
+Second Test run: 127 passed; icon cases fixed, Accent fixture still failed.
+Read actual locked egui Popup::show and Memory::end_pass: a probe-only frame
+abandons the popup. Move root-ID measurement before opening any popup; retain
+open-state, value-preservation and actual Shared-colors paint assertions.
+Final guarded Test: all 128 pass, zero ignored/failures. The source-quality
+phase passed; final focused wiring/menu/connection/lifecycle/API/PC mapping
+and generated-comparison checks pass. No test removed, gate bypassed or second
+cache/dependency tree created. No additional firmware/APK build for this change.
+Five existing/unused-helper warnings are not claimed fixed.
+
+Reread the drifted Pealayer #142 body and all six comments; refreshed only its
+conversation decision hash. All seventeen reviewed-record and two comment-scope
+decisions now match the refreshed corpus; 775 records remain semantically pending.
+Pakar #3 current counts updated without marking runtime acceptance prematurely.
+Fresh ASUS SSH1022 still refuses and ledboard.local still fails DNS.

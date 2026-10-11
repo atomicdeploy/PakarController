@@ -5,6 +5,7 @@ use crate::{
     ui::{dialog, icons},
 };
 use eframe::egui;
+use super::dropdown::DropdownUiExt;
 pub const PAGES: [&str; 5] = [
     "appearance",
     "application",
@@ -95,12 +96,12 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
             dialog::scroll_column(ui,"preferences-body",Some(body_height),|ui|{
                 if draft.tab==0||!draft.search.is_empty(){
                     dialog::section(ui,icons::PALETTE,"Appearance",|ui|{
-                        if draft.matches("Theme system light dark"){dialog::setting_row(ui,icons::SUN,"Theme",None,|ui|{egui::ComboBox::from_id_salt("theme").selected_text(super::i18n::text(&format!("{:?}",draft.config.theme))).show_ui(ui,|ui|{for t in [AppTheme::System,AppTheme::Light,AppTheme::Dark]{ui.selectable_value(&mut draft.config.theme,t,super::i18n::text(&format!("{t:?}")));}});});}
-                        if draft.matches("Palette Studio native"){dialog::setting_row(ui,icons::PALETTE,"Palette",None,|ui|{egui::ComboBox::from_id_salt("palette").selected_text(super::i18n::text(&format!("{:?}",draft.config.color_palette))).show_ui(ui,|ui|{for p in [ColorPalette::Studio,ColorPalette::Native]{ui.selectable_value(&mut draft.config.color_palette,p,super::i18n::text(&format!("{p:?}")));}});});}
-                        if draft.matches("Accent color"){dialog::setting_row(ui,icons::DIAMOND,"Accent color",None,|ui|{super::color_picker::color_field(ui,&mut draft.config.accent,[56,210,122],130.0);});}
+                        if draft.matches("Theme system light dark"){dialog::setting_row(ui,icons::SUN,"Theme",None,|ui|{super::dropdown::ComboBox::from_id_salt("theme").selected_text(super::i18n::text(&format!("{:?}",draft.config.theme))).show_ui(ui,|ui|{for t in [AppTheme::System,AppTheme::Light,AppTheme::Dark]{ui.dropdown_value(&mut draft.config.theme,t,super::i18n::text(&format!("{t:?}")));}});});}
+                        if draft.matches("Palette Studio native"){dialog::setting_row(ui,icons::PALETTE,"Palette",None,|ui|{super::dropdown::ComboBox::from_id_salt("palette").selected_text(super::i18n::text(&format!("{:?}",draft.config.color_palette))).show_ui(ui,|ui|{for p in [ColorPalette::Studio,ColorPalette::Native]{ui.dropdown_value(&mut draft.config.color_palette,p,super::i18n::text(&format!("{p:?}")));}});});}
+                        if draft.matches("Accent color"){dialog::setting_row(ui,icons::DIAMOND,"Accent color",None,|ui|{super::color_picker::accent_picker(ui,&mut draft.config.accent,180.0);});}
                         if draft.matches("UI scale size"){dialog::setting_row(ui,icons::MAGNIFYING_GLASS,"UI scale",None,|ui|{ui.add(egui::Slider::new(&mut draft.config.ui_scale,0.75..=2.0).step_by(0.05));});}
-                        if draft.matches("Language System Persian English"){dialog::setting_row(ui,icons::GLOBE,"Language",None,|ui|{egui::ComboBox::from_id_salt("language").selected_text(super::i18n::text(&format!("{:?}",draft.config.language))).show_ui(ui,|ui|{ui.selectable_value(&mut draft.config.language,AppLanguage::System,super::i18n::text("System language"));ui.selectable_value(&mut draft.config.language,AppLanguage::English,"English");ui.selectable_value(&mut draft.config.language,AppLanguage::Persian,"فارسی");});});}
-                        if draft.matches("Direction automatic RTL LTR"){dialog::setting_row(ui,icons::GLOBE,"Direction",None,|ui|{egui::ComboBox::from_id_salt("direction").selected_text(match draft.config.direction{AppDirection::Auto=>super::i18n::text("Automatic"),AppDirection::Ltr=>super::i18n::text("Left to right"),AppDirection::Rtl=>super::i18n::text("Right to left")}).show_ui(ui,|ui|{for(d,label)in[(AppDirection::Auto,"Automatic"),(AppDirection::Ltr,"Left to right"),(AppDirection::Rtl,"Right to left")]{ui.selectable_value(&mut draft.config.direction,d,super::i18n::text(label));}});});}
+                        if draft.matches("Language System Persian English"){dialog::setting_row(ui,icons::GLOBE,"Language",None,|ui|{super::dropdown::ComboBox::from_id_salt("language").selected_text(super::i18n::text(&format!("{:?}",draft.config.language))).show_ui(ui,|ui|{ui.dropdown_value(&mut draft.config.language,AppLanguage::System,super::i18n::text("System language"));ui.dropdown_value(&mut draft.config.language,AppLanguage::English,"English");ui.dropdown_value(&mut draft.config.language,AppLanguage::Persian,"فارسی");});});}
+                        if draft.matches("Direction automatic RTL LTR"){dialog::setting_row(ui,icons::GLOBE,"Direction",None,|ui|{super::dropdown::ComboBox::from_id_salt("direction").selected_text(match draft.config.direction{AppDirection::Auto=>super::i18n::text("Automatic"),AppDirection::Ltr=>super::i18n::text("Left to right"),AppDirection::Rtl=>super::i18n::text("Right to left")}).show_ui(ui,|ui|{for(d,label)in[(AppDirection::Auto,"Automatic"),(AppDirection::Ltr,"Left to right"),(AppDirection::Rtl,"Right to left")]{ui.dropdown_value(&mut draft.config.direction,d,super::i18n::text(label));}});});}
                     });ui.add_space(8.0);
                 }
                 if draft.tab==1||!draft.search.is_empty(){
@@ -123,10 +124,10 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
                         use crate::platform::notifications::Policy;
                         if draft.matches("In-app toast notification banner"){ui.checkbox(&mut draft.config.notifications.in_app, crate::ui::i18n::text("In-app toast banners"));}
                         if draft.matches("Windows system notification important all off"){dialog::setting_row(ui,icons::APP_WINDOW,"Windows notifications",None,|ui|{
-                            egui::ComboBox::from_id_salt("notification-policy").selected_text(format!("{:?}",draft.config.notifications.system)).show_ui(ui,|ui|{
-                                ui.selectable_value(&mut draft.config.notifications.system,Policy::Off,"Off");
-                                ui.selectable_value(&mut draft.config.notifications.system,Policy::Important,"Important — failures, connection, settings, maintenance");
-                                ui.selectable_value(&mut draft.config.notifications.system,Policy::All,"All — includes routine command messages");
+                            super::dropdown::ComboBox::from_id_salt("notification-policy").selected_text(format!("{:?}",draft.config.notifications.system)).show_ui(ui,|ui|{
+                                ui.dropdown_value(&mut draft.config.notifications.system,Policy::Off,"Off");
+                                ui.dropdown_value(&mut draft.config.notifications.system,Policy::Important,"Important — failures, connection, settings, maintenance");
+                                ui.dropdown_value(&mut draft.config.notifications.system,Policy::All,"All — includes routine command messages");
                             });
                         });}
                         if draft.matches("Notification sound silent"){ui.checkbox(&mut draft.config.notifications.sound, crate::ui::i18n::text("Allow Windows notification sound"));}
@@ -139,7 +140,7 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
                     ui.checkbox(&mut draft.config.additive_cell_selection, crate::ui::i18n::text("Toggle multiple cells and rows without Ctrl")).on_hover_text(crate::ui::i18n::text("When off, Ctrl+click toggles items. Shift extends a range; dragging always replaces unless Ctrl/Shift is held."));
                     ui.checkbox(&mut draft.config.animate_cells, crate::ui::i18n::text("Animate cell state transitions")).on_hover_text(crate::ui::i18n::text("Disable for reduced motion. Cell geometry never changes."));
                     ui.checkbox(&mut draft.config.show_cell_indicators, crate::ui::i18n::text("Show cell LED-state indicators")).on_hover_text(crate::ui::i18n::text("Optional corner dots for white/red/off state. Hidden by default."));
-                    egui::ComboBox::from_id_salt("preferences-cell-shape").selected_text(draft.config.cell_shape.label()).show_ui(ui,|ui|{for shape in [super::cell_pixels::Shape::Rounded,super::cell_pixels::Shape::Circle,super::cell_pixels::Shape::Hexagon]{ui.selectable_value(&mut draft.config.cell_shape,shape,shape.label());}});
+                    super::dropdown::ComboBox::from_id_salt("preferences-cell-shape").selected_text(draft.config.cell_shape.label()).show_ui(ui,|ui|{for shape in [super::cell_pixels::Shape::Rounded,super::cell_pixels::Shape::Circle,super::cell_pixels::Shape::Hexagon]{ui.dropdown_value(&mut draft.config.cell_shape,shape,shape.label());}});
                     ui.checkbox(&mut draft.config.pixel_diagnostics, crate::ui::i18n::text("Show physical pixel indices (top first, CCW)")).on_hover_text(crate::ui::i18n::text("Applies to circle/hexagon cells. Zero-based 0–479; values are sampled from device RGB before brightness/correction."));
                     ui.label(format!("{} saved workspaces",draft.config.workspace_profiles.len()));
                     ui.label(crate::ui::i18n::text("Drag panel tabs to rearrange or detach them. Workspace profiles save the current layout."));

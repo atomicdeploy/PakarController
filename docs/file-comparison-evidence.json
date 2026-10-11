@@ -3,6 +3,144 @@
   "target_hash_encoding": "UTF8-without-BOM-LF",
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
+{
+  "origin": "Pealayer",
+  "source_read": "complete",
+  "targets": [
+    {
+      "sha256": "f7b1532924e3e3ae87d72d91983e7e49f48fed2efb9b01aede48d1a9734f1fa3",
+      "anchor": "pub trait DropdownUiExt",
+      "path": "desktop/src/ui/dropdown.rs"
+    },
+    {
+      "sha256": "75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e",
+      "anchor": "pub fn websocket(",
+      "path": "desktop/src/ui/connection_controls.rs"
+    },
+    {
+      "sha256": "b82160d6435141268e77736d6b57408e00a5d8d1b138a50ea6a912a54a4560ee",
+      "anchor": "super::dropdown::ComboBox::from_id_salt(\"theme\")",
+      "path": "desktop/src/ui/preferences.rs"
+    },
+    {
+      "sha256": "b339f425a20b873d7b8230dd24619e682334681e7cb72a7c0dabcfc42140d2c1",
+      "anchor": "super::dropdown::ComboBox",
+      "path": "desktop/src/ui/device_settings.rs"
+    },
+    {
+      "sha256": "d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2",
+      "anchor": "super::dropdown::ComboBox",
+      "path": "desktop/src/ui/shell.rs"
+    }
+  ],
+  "sha256": "f77426310758c2a96f9b3e571b3ab716f950ff3bfd5e0c3dc9c2f18ebd3100a9",
+  "remaining": [],
+  "omissions": [
+    {
+      "code": "Pealayer active-dropdown ID",
+      "reason": "Product-specific context key renamed to Pakar. No generic helper or donor assertion removed.",
+      "disposition": "replaced"
+    }
+  ],
+  "preserved": [
+    "Read all 631 donor lines through EOF and locked egui 0.36.2 ComboBox factory identity. Actual focus owner, enabled/selected entries, search focus, Arrow/Home/End/Enter navigation, disabled skipping, full-width fixed 32px rows, inside focus stroke, nested menu framing and closed-popup cleanup imported, not restyled substitutes. All three donor native tests retained."
+  ],
+  "improvement": "Adds the locked egui from_label trigger identity for existing labeled settings and actual connection-control keyboard ownership with busy-port rejection. Clears texture ownership before native assertions to avoid a second panic masking a failure. Native execution and production visual acceptance must be reported separately from source wiring.",
+  "verdict": "scoped-improvement",
+  "proof": [
+    {
+      "sha256": "f7b1532924e3e3ae87d72d91983e7e49f48fed2efb9b01aede48d1a9734f1fa3",
+      "anchor": "fn dropdown_arrows_seed_focus_skip_disabled_commit_enter_and_cancel_escape()",
+      "path": "desktop/src/ui/dropdown.rs"
+    },
+    {
+      "sha256": "f7b1532924e3e3ae87d72d91983e7e49f48fed2efb9b01aede48d1a9734f1fa3",
+      "anchor": "fn dropdown_search_keeps_text_focus_until_arrow_enters_choices()",
+      "path": "desktop/src/ui/dropdown.rs"
+    },
+    {
+      "sha256": "f7b1532924e3e3ae87d72d91983e7e49f48fed2efb9b01aede48d1a9734f1fa3",
+      "anchor": "fn dropdown_color_rows_are_full_width_equal_height_and_hover_stable()",
+      "path": "desktop/src/ui/dropdown.rs"
+    },
+    {
+      "sha256": "f7b1532924e3e3ae87d72d91983e7e49f48fed2efb9b01aede48d1a9734f1fa3",
+      "anchor": "fn from_label_keeps_locked_egui_trigger_identity()",
+      "path": "desktop/src/ui/dropdown.rs"
+    },
+    {
+      "sha256": "75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e",
+      "anchor": "fn shared_keyboard_can_configure_but_cannot_change_a_busy_usb_port()",
+      "path": "desktop/src/ui/connection_controls.rs"
+    },
+    {
+      "sha256": "80e9872de3f7203c4e24a8499994326e97dee584bd6cf8eaa96b614ed7d3bf8a",
+      "anchor": "Wiring/provenance checks",
+      "path": "tests/native_dropdown_test.mjs"
+    }
+  ],
+  "path": "src/ui/dropdown.rs"
+},
+{
+  "origin": "Pealayer",
+  "source_read": "complete",
+  "targets": [
+    {
+      "sha256": "e07f4284ff64968179df0888451169c5e915b5b231624755ab50750e7fccd8b8",
+      "anchor": "pub fn remember_color(",
+      "path": "desktop/src/ui/color_picker.rs"
+    },
+    {
+      "sha256": "e07f4284ff64968179df0888451169c5e915b5b231624755ab50750e7fccd8b8",
+      "anchor": "pub fn accent_picker(",
+      "path": "desktop/src/ui/color_picker.rs"
+    },
+    {
+      "sha256": "b82160d6435141268e77736d6b57408e00a5d8d1b138a50ea6a912a54a4560ee",
+      "anchor": "super::color_picker::accent_picker",
+      "path": "desktop/src/ui/preferences.rs"
+    },
+    {
+      "sha256": "5fd85598dec811390440c9b82a1a8d487947d0fdc266a89b75cb38e1c89fcb9a",
+      "anchor": "\"Recent colors\"",
+      "path": "desktop/src/ui/i18n.rs"
+    }
+  ],
+  "sha256": "a455b2adfdc80889a2f402c404a0b2364a4a8f968a5cd6b706aa274f015087de",
+  "remaining": [
+    "Import the full applicable shared Preferences contract and System accent ownership across surfaces; execute native behavior tests and capture the deployed palette. Source guards are not runtime or visual evidence."
+  ],
+  "omissions": [
+    {
+      "code": "Pealayer asset path, session ID and product-specific shared-colors heading",
+      "reason": "Uses the actual already imported shared palette asset, Pakar context ID and localized generic headings without disk persistence for recent colors.",
+      "disposition": "replaced"
+    },
+    {
+      "code": "Full System accent mode and shared native/Web/mobile Preferences contract",
+      "reason": "This source module is imported, but the current persisted RGB-string consumer is not Pealayer dynamic OS-accent mode or cross-surface preferences ownership. The selected Preferences Accent branch was inspected; that entire dependency file is not certified by this review.",
+      "disposition": "pending"
+    }
+  ],
+  "preserved": [
+    "Read all 446 donor lines through EOF. Imported actual session-only 12-color MRU deduplication, recent/shared swatches, integrated HEX-field swatch, full-width Custom choice, independently anchored palette with validated temporary HEX draft and all four donor tests. Production accent consumer adapts the actual Pealayer Preferences Accent branch, not a full Preferences-file parity claim."
+  ],
+  "improvement": "",
+  "verdict": "parity-gap",
+  "proof": [
+    {
+      "sha256": "e07f4284ff64968179df0888451169c5e915b5b231624755ab50750e7fccd8b8",
+      "anchor": "fn accent_custom_row_opens_separate_palette_without_mutating_on_open()",
+      "path": "desktop/src/ui/color_picker.rs"
+    },
+    {
+      "sha256": "80e9872de3f7203c4e24a8499994326e97dee584bd6cf8eaa96b614ed7d3bf8a",
+      "anchor": "Wiring/provenance checks",
+      "path": "tests/native_dropdown_test.mjs"
+    }
+  ],
+  "path": "src/ui/color_picker.rs"
+},
     {
       "origin":"Pealayer","path":"src/cli.rs","sha256":"412b553fcdcd4436075af6bc93c956a4b7d9ac93a552a3458f2afabb8aa1448f","source_read":"complete","verdict":"parity-gap",
       "preserved":["Actual format_help_message and PrintHelp/PrintVersion flag branches adapted with native short/long help/version assertions; terminate before config, network, GUI ownership and windows. Share device command help with existing TUI instead of duplicate stale strings."],
@@ -55,7 +193,7 @@
         {"code":"Historical media thumbnails, MPV surface and DLL basename, timeline/cue migration, audio delay and media picking fixes","disposition":"not-applicable","reason":"Pakar is an mpv-free controller and does not own donor playback/media/timeline models. Generic staging safety, keyboard ownership, error correlation, authentication and service-worker origin lessons remain applicable and tracked independently."},
         {"code":"Complete semantic disposition of every historical issue/review and full DNS-rebinding, actuator/persistence, UI/PWA/physical acceptance","disposition":"pending","reason":"All pages are collected but fetching does not mean reading or implementing them. Only explicitly hash-bound reviewed scopes are marked; every unread record and source-file import remains pending."}
       ],
-      "remaining":["Read and reconcile pending records in the refreshed 794-record conversation corpus; only nine full-record and two comment scopes have explicit semantic decisions. Continue applicable source imports and exact source/test mapping. Verify RayanLamp repository when supplied; do not invent one or mutate donor comments from Pakar."],
+      "remaining":["Read and reconcile pending records in the refreshed 794-record conversation corpus; seventeen full-record and two comment scopes now have explicit semantic decisions. Continue applicable source imports and exact source/test mapping. Verify RayanLamp repository when supplied; do not invent one or mutate donor comments from Pakar."],
       "improvement":""
     },
     {
@@ -985,7 +1123,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "f44d0302f729f7e724b2d02c1ce1f94cf5915a1e7f111b911a68a63b8bbbac24",
+          "sha256": "5fd85598dec811390440c9b82a1a8d487947d0fdc266a89b75cb38e1c89fcb9a",
           "anchor": "pub(crate) fn configure_ui_fonts"
         },
         {
@@ -995,7 +1133,7 @@
         },
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "545ba8ac309c796b1bd1dfd70eb7ca085f422e03b92fa4a5628906e723d49d1f",
+          "sha256": "b82160d6435141268e77736d6b57408e00a5d8d1b138a50ea6a912a54a4560ee",
           "anchor": "AppLanguage::Persian"
         },
         {
@@ -1027,12 +1165,12 @@
       "proof": [
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "f44d0302f729f7e724b2d02c1ce1f94cf5915a1e7f111b911a68a63b8bbbac24",
+          "sha256": "5fd85598dec811390440c9b82a1a8d487947d0fdc266a89b75cb38e1c89fcb9a",
           "anchor": "fn contextual_persian_in_labels_and_monospace_inputs"
         },
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "f44d0302f729f7e724b2d02c1ce1f94cf5915a1e7f111b911a68a63b8bbbac24",
+          "sha256": "5fd85598dec811390440c9b82a1a8d487947d0fdc266a89b75cb38e1c89fcb9a",
           "anchor": "fn changing_language_preserves_widget_fonts"
         },
         {
@@ -1193,12 +1331,12 @@
         },
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "2f590972037d5db7be7c0da44197250e46f5cb36a9118b3ef4cb8e1584b30ac0",
+          "sha256": "dca301b2fddc2bbbea997f8f00e566a89280cac3a1a16b953a7d6dbd305d2f8c",
           "anchor": "--test-threads=1"
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "b611a6b5794bad31693fa985340eb2d1565f1e459792f940591b54aa4c59979f",
+          "sha256": "4ac8ce68df222375d03f57b991ddc15bc2d2f3426f95ac7c9d2ec0d49f5783a5",
           "anchor": "export function runChecks"
         },
         {
@@ -1420,7 +1558,7 @@
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "7ae6fa52982d23b58928cab8fd5d2019bc777b2a44be815718f9e8b3a92c21f6",
+          "sha256": "75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e",
           "anchor": "pub fn usb("
         },
         {
@@ -1453,12 +1591,12 @@
         {
           "code": "UI render-rate toggle/context policy and latest dropdown-backed FPS menu; authoritative physical RGB without double dimming",
           "disposition": "pending",
-          "reason": "Live donor tracked bytes were reread completely. They now depend on another task's uncommitted src/ui/dropdown.rs, outside the tracked inventory. Pakar retains prior imported mechanisms, but does not claim that new dependency, consumer migration or runtime tests. Preserve donor work and import after exact tracked provenance and native acceptance."
+          "reason": "The tracked shared dropdown module is now fully read and imported, with native consumers and donor tests. This does not implement every generic consumer contract in this file: render-rate policy, workspace/language/direction actions and complete board EEPROM enum ownership remain independently pending. Native execution and visual acceptance are reported separately."
         }
       ],
       "remaining": [
         "Run native popup/pointer tests, deploy and capture actual controls; restore useful generic status lifetime/readiness/localization contracts in issues #3/#10.",
-        "Latest donor checkout is dirty; reviewed original-byte hash binds observed tracked source only. Audit/import the new dropdown dependency and consumers without overwriting its owner."
+        "Shared dropdown dependency now has a complete-read comparison; preserve remaining generic consumer contracts and verify native runtime without claiming whole-file parity."
       ],
       "proof": [
         {
@@ -1468,7 +1606,7 @@
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "7ae6fa52982d23b58928cab8fd5d2019bc777b2a44be815718f9e8b3a92c21f6",
+          "sha256": "75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e",
           "anchor": "fn offline_dropdowns_open_independently_and_usb_enumerates_only_when_open()"
         }
       ]
@@ -1628,7 +1766,7 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Reread all 1280 current lines through EOF. Prior authoritative overview/capability/front-panel adaptation remains; new dropdown dependency is explicitly pending.",
+        "Reread all 1280 lines through EOF. Prior authoritative overview/capability/front-panel adaptation remains; shared dropdown dependency is now imported, but full typed board settings and ACK consumers remain pending.",
         "Numeric display controls are independent of Text; peer title follows acknowledged name and lost capabilities cancel Table work."
       ],
       "targets": [
@@ -1639,12 +1777,12 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "65ab83a7670e5b0a7f8cb90e25fae46f61f061cdb909f0f34be275d83e4dab9b",
+          "sha256": "d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2",
           "anchor": "fn synchronize_context("
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
-          "sha256": "5487e8e83bb5f97c9e1727cde66bcb5d8f7dc565ff56df2a6320fe08116203fe",
+          "sha256": "b339f425a20b873d7b8230dd24619e682334681e7cb72a7c0dabcfc42140d2c1",
           "anchor": "pub(crate) fn available("
         },
         {
@@ -1687,12 +1825,12 @@
         {
           "code": "DropdownUiExt / dropdown::ComboBox board enum selector integration",
           "disposition": "pending",
-          "reason": "Live donor tracked bytes were reread completely. They now depend on another task's uncommitted src/ui/dropdown.rs, outside the tracked inventory. Pakar retains prior imported mechanisms, but does not claim that new dependency, consumer migration or runtime tests. Preserve donor work and import after exact tracked provenance and native acceptance."
+          "reason": "The tracked shared dropdown module is now fully read and imported, with native consumers and donor tests. This does not implement every generic consumer contract in this file: render-rate policy, workspace/language/direction actions and complete board EEPROM enum ownership remain independently pending. Native execution and visual acceptance are reported separately."
         }
       ],
       "remaining": [
         "Typed PCController adapter, donor tests and native runtime proof remain #10/#3/#6. No whole-file equivalence or application superiority claimed.",
-        "Latest donor checkout is dirty; reviewed original-byte hash binds observed tracked source only. Audit/import the new dropdown dependency and consumers without overwriting its owner."
+        "Shared dropdown dependency now has a complete-read comparison; preserve remaining generic consumer contracts and verify native runtime without claiming whole-file parity."
       ],
       "proof": [
         {
@@ -1982,12 +2120,12 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "65ab83a7670e5b0a7f8cb90e25fae46f61f061cdb909f0f34be275d83e4dab9b",
+          "sha256": "d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "7ae6fa52982d23b58928cab8fd5d2019bc777b2a44be815718f9e8b3a92c21f6",
+          "sha256": "75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e",
           "anchor": "pub fn websocket("
         },
         {
@@ -2030,12 +2168,12 @@
         {
           "code": "DropdownUiExt selected workspace/language/direction entries and new unified dropdown lifecycle",
           "disposition": "pending",
-          "reason": "Live donor tracked bytes were reread completely. They now depend on another task's uncommitted src/ui/dropdown.rs, outside the tracked inventory. Pakar retains prior imported mechanisms, but does not claim that new dependency, consumer migration or runtime tests. Preserve donor work and import after exact tracked provenance and native acceptance."
+          "reason": "The tracked shared dropdown module is now fully read and imported, with native consumers and donor tests. This does not implement every generic consumer contract in this file: render-rate policy, workspace/language/direction actions and complete board EEPROM enum ownership remain independently pending. Native execution and visual acceptance are reported separately."
         }
       ],
       "remaining": [
         "Restore remaining useful generic menu contracts above against actual dependencies; see exact function-level mapping in NATIVE-MENU-COMPARISON.md. Native CI paint/pointer tests and running-app visual acceptance are separate from source guards.",
-        "Latest donor checkout is dirty; reviewed original-byte hash binds observed tracked source only. Audit/import the new dropdown dependency and consumers without overwriting its owner."
+        "Shared dropdown dependency now has a complete-read comparison; preserve remaining generic consumer contracts and verify native runtime without claiming whole-file parity."
       ],
       "proof": [
         {
@@ -2168,7 +2306,7 @@
       "targets": [
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "2f590972037d5db7be7c0da44197250e46f5cb36a9118b3ef4cb8e1584b30ac0",
+          "sha256": "dca301b2fddc2bbbea997f8f00e566a89280cac3a1a16b953a7d6dbd305d2f8c",
           "anchor": "Get-PakarCargoTargetDirectory"
         }
       ],
@@ -2447,7 +2585,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "65ab83a7670e5b0a7f8cb90e25fae46f61f061cdb909f0f34be275d83e4dab9b",
+          "sha256": "d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -2860,12 +2998,12 @@
       "targets": [
         {
           "path": "desktop/src/ui/icons.rs",
-          "sha256": "eb09707f6334c27aa27569a3a27dc6078137be0dcc81b059ebe7df26dcc21188",
+          "sha256": "d9e95867777af0771f64322fef26958558c4c976cd3bdec5377a41754550a8da",
           "anchor": "pub fn searchable_workspace_icon_picker("
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "65ab83a7670e5b0a7f8cb90e25fae46f61f061cdb909f0f34be275d83e4dab9b",
+          "sha256": "d45e095ddc5833c1ca48dcce56e5745f103fed5c0f13c1d4d5abd9df9d91c2c2",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -2877,23 +3015,23 @@
         },
         {
           "code": "DropdownUiExt, dropdown_choice, register_choice and dropdown::ComboBox in searchable icon pickers",
-          "disposition": "pending",
-          "reason": "Live donor tracked bytes were reread completely. They now depend on another task's uncommitted src/ui/dropdown.rs, outside the tracked inventory. Pakar retains prior imported mechanisms, but does not claim that new dependency, consumer migration or runtime tests. Preserve donor work and import after exact tracked provenance and native acceptance."
+          "disposition": "replaced",
+          "reason": "Actual donor search-focus registration, list choices, custom grid registration and lifecycle wrapper are imported against the fully tracked dropdown source. Product context IDs are adapted; all eleven existing icon tests remain. Native execution is separate proof, and UI-wide picker consumer parity remains pending."
         }
       ],
       "remaining": [
         "Imported compact/control picker helpers are not all used by current panels; UI-wide application/action parity needs separate file reviews.",
-        "Latest donor checkout is dirty; reviewed original-byte hash binds observed tracked source only. Audit/import the new dropdown dependency and consumers without overwriting its owner."
+        "Shared dropdown dependency now has a complete-read comparison; preserve remaining generic consumer contracts and verify native runtime without claiming whole-file parity."
       ],
       "proof": [
         {
           "path": "desktop/src/ui/icons.rs",
-          "sha256": "eb09707f6334c27aa27569a3a27dc6078137be0dcc81b059ebe7df26dcc21188",
+          "sha256": "d9e95867777af0771f64322fef26958558c4c976cd3bdec5377a41754550a8da",
           "anchor": "fn pakar_workspace_editor_uses_the_actual_shared_searchable_picker()"
         },
         {
           "path": "desktop/src/ui/icons.rs",
-          "sha256": "eb09707f6334c27aa27569a3a27dc6078137be0dcc81b059ebe7df26dcc21188",
+          "sha256": "d9e95867777af0771f64322fef26958558c4c976cd3bdec5377a41754550a8da",
           "anchor": "fn icon_picker_search_click_filter_select_and_reopen_work_in_both_forms()"
         }
       ],

@@ -110,6 +110,9 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
             "از کنترل‌های زندهٔ فضای کاری استفاده کنید؛ ویرایشگرهای دستگاه در تنظیمات تکرار نمی‌شوند."
         }
         "Table & mapping" => "میز و نگاشت",
+        "Recent colors" => "رنگ‌های اخیر",
+        "Shared colors" => "رنگ‌های مشترک",
+        "Choose color" => "انتخاب رنگ",
         "Text presentation" => "نمایش متن",
         "Buzzer & melodies" => "بیزر و ملودی‌ها",
         "Waiting for acknowledgment and saved-settings readback…" => {
