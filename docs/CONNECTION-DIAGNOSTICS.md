@@ -55,3 +55,34 @@ separately. Guarded native Test passed138/0/0 in the existing release cache
 passed. Firmware and mobile were not rebuilt for this host/Web change. Release
 replacement and live offline counters are the next acceptance, not inferred from
 unit tests. The separate tray initialization error remains unresolved.
+
+## Completed host and source acceptance
+
+Native source2af7358 passed138 guarded native tests. Root-cause refinement
+67948be passed all6 focused pure diagnostic tests (829440-byte stable harness,
+no repeated GUI test relink) and the guarded release build/stage/CLI probe.
+HTTP errors now expose bounded underlying DNS/TLS/socket causes before incident
+comparison, rather than only reqwest's generic outer request description.
+
+Production67948be is running locally as PID58400, version0.2.7, executable SHA256
+b5133dc91bddb3a70b186f4e179514739a1981e9c604ed5ca39dd49e1b38aebb.
+Replaced PID77020 through graceful IPC, with no input or force kill. Preferences
+remained byte-identical (22f8aeed4bf0cebc3116c670f681d90a3d1b1b833ece3de23a491d0d896a8711).
+Both prior packages were moved into verified rollback paths; five original
+rollback executables were preserved. Actual inspected1999x1453 internal capture
+shows the underlying DNS error and repeat badge, not generic HTTP-only text.
+The earlier2af7358 live snapshots retained7 rows while repeat counts rose5→8;
+final-package offline observation is recorded in the output receipt separately.
+
+The full local repository-quality phase passes after correcting two exposed
+fixture/certificate issues: reconnect VM now loads the actual shared logger;
+two stale PU Web target hashes were rebound after verifying unchanged line244
+route controls. All existing reconnect/session/no-replay and50 route assertions
+remain. Added continuing503, distinct500 and one handshake-recovery assertions.
+Reconnect preparation now uses the WebSocket incident owner too, so no timed
+quiet-window flood remains on that path. CI run38107886274 failed before those
+repairs; no all-green CI claim or CI wait. New source CI proceeds asynchronously.
+
+No firmware/APK build or board write. Web is source/VM verified, not deployed
+to the offline board. Real device loss/reconnect/USB and Android acceptance
+remain separate, as do the Windows tray error and glib advisory.

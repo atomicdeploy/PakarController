@@ -304,12 +304,12 @@
       "targets": [
         {
           "path": "assets/web/realtime-retry.js",
-          "sha256": "97f95c7b51872134e33a720750a692abe7a72352395ff8915faeae03674b44f0",
+          "sha256": "255036e79060b6d348944e5f1d1edc90ac1c79f20dc1a095a4384b38d85d15f0",
           "anchor": "function createRealtimeRetry"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "function connectWs()"
         }
       ],
@@ -342,7 +342,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "019f89d0e6775fd3a2809ca87a08a5c351dc675a92ad1cbcb292327db27194c0",
+          "sha256": "bd6436bd990fbb564d0e849179e8d75287c203b9bcd98f8fe9303d71203d3a2f",
           "anchor": "Donor prepareReconnect is completed before any replacement socket"
         }
       ],
@@ -361,7 +361,7 @@
       "targets": [
         {
           "path": "assets/web/realtime-retry.js",
-          "sha256": "97f95c7b51872134e33a720750a692abe7a72352395ff8915faeae03674b44f0",
+          "sha256": "255036e79060b6d348944e5f1d1edc90ac1c79f20dc1a095a4384b38d85d15f0",
           "anchor": "function createRealtimeRetry"
         }
       ],
@@ -394,7 +394,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "019f89d0e6775fd3a2809ca87a08a5c351dc675a92ad1cbcb292327db27194c0",
+          "sha256": "bd6436bd990fbb564d0e849179e8d75287c203b9bcd98f8fe9303d71203d3a2f",
           "anchor": "Execute actual Web connectWs + refreshAuthenticated + api"
         }
       ],
@@ -413,12 +413,12 @@
       "targets": [
         {
           "path": "assets/web/realtime-retry.js",
-          "sha256": "97f95c7b51872134e33a720750a692abe7a72352395ff8915faeae03674b44f0",
+          "sha256": "255036e79060b6d348944e5f1d1edc90ac1c79f20dc1a095a4384b38d85d15f0",
           "anchor": "function createRealtimeRetry"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "async function refreshAuthenticated(options={})"
         }
       ],
@@ -461,7 +461,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "019f89d0e6775fd3a2809ca87a08a5c351dc675a92ad1cbcb292327db27194c0",
+          "sha256": "bd6436bd990fbb564d0e849179e8d75287c203b9bcd98f8fe9303d71203d3a2f",
           "anchor": "Actual api.ts AbortController deadline/finally cleanup"
         }
       ],
@@ -485,7 +485,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -657,7 +657,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "function connectWs()"
         }
       ],
@@ -760,7 +760,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -856,7 +856,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -941,7 +941,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -1204,7 +1204,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -1645,7 +1645,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "function peerAvailability("
         }
       ],
@@ -1943,7 +1943,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -1953,7 +1953,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -2018,7 +2018,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -3965,7 +3965,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -4055,7 +4055,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -4177,7 +4177,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
+          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
           "anchor": "id=\"uiHaptics\""
         }
       ],

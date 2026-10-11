@@ -1649,3 +1649,21 @@ for only the reviewed target/proof paths, leaving all donor hashes untouched.
 Regenerated the same ledger and added exact error-management routing; no pending
 donor becomes an exclusion or complete read merely through this change. Native
 build/live proof is recorded separately in CONNECTION-DIAGNOSTICS.md.
+
+Completed CI run38107886274 exposed a stale realtime-retry VM fixture: its
+isolated globals omitted the actual logger now consumed by connectWs.
+Consulted web-presentation/error-management, reread the shipped retry/logger/test
+and the actual Rayan sync.ts scheduleReconnect/prepareReconnect slice. Load the
+real production logger instead of stubbing recover, preserving every existing
+session/cancellation/no-replay assertion. Added repeated503 preparation, distinct
+500 preparation and matching-handshake recovery assertions. Preparation errors
+now use the same WebSocket incident owner, not periodic three-second suppression.
+No new full donor-file read certificate from that slice. Rebind only changed
+target/proof bytes in the existing ledger; do not alter original donor hashes.
+
+The local quality run then found two older PU route-parity Web target hashes.
+Consulted updates-telemetry and reread both mapped target rows and actual line244:
+the remote-update section, authenticated root route, capability gate and no-replay
+warning are unchanged. Only diagnostic JS changed elsewhere. Rebound those two
+target hashes, retained their exact line244 anchor and all50 route assertions;
+no donor exclusion or firmware-route behavior was changed.

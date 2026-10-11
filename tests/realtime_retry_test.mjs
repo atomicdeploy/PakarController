@@ -70,17 +70,17 @@ assert(!web.includes('webSocketRetry='));
 assert.equal(web.split('// BEGIN RAYANLAMP REALTIME RETRY\n')[1].split('\n// END RAYANLAMP REALTIME RETRY')[0],module);
 
 // Execute actual Web connectWs + refreshAuthenticated + api, not just a helper.
-const sockets=[],requests=[],liveTimers=new Map(),activity=[];
+const sockets=[],requests=[],liveTimers=new Map(),activity=[],diagnosticEvents=[];
 let timerID=0,status=200,constructorFails=false;
 const live=vm.createContext({AbortController,Math:Object.assign(Object.create(Math),{random:()=>0.5}),location:{protocol:'https:',host:'ledboard.local'},
   cellShape:{value:'rounded'},wsState:{},render:value=>activity.push('render:'+value.hostname),
-  stopStream(){},traceBrowserEvent(){},browserErrorMetadata:()=>({}),
+  stopStream(){},console:Object.fromEntries(['debug','info','warn','error','log','groupCollapsed','groupEnd'].map(name=>[name,(...args)=>{if(args[4]?.event)diagnosticEvents.push(args[4])}])),
   setTimeout:(run,delay)=>{const id=++timerID;liveTimers.set(id,{run,delay});return id},
   clearTimeout:id=>liveTimers.delete(id),
   fetch:async(path,options)=>{requests.push({path,options});activity.push('GET');return {status,ok:status===200,text:async()=>JSON.stringify({hostname:'verified-peer'})}},
   WebSocket:class {constructor(url){if(constructorFails)throw Error('socket unavailable');this.url=url;this.sent=[];sockets.push(this);activity.push('socket')}close(){}send(value){this.sent.push(value)}}
 });
-vm.runInContext('let authenticated=true,webSocketPaused=false,socket=null;\n'+module+'\n'+
+vm.runInContext(read('assets/web/browser-console.js')+'\nlet authenticated=true,webSocketPaused=false,socket=null;\n'+module+'\n'+
   web.slice(web.indexOf('async function api('),web.indexOf('function showLogin()'))+'\n'+
   web.split('\n').find(line=>line.startsWith('async function refreshAuthenticated('))+'\n'+
   web.slice(web.indexOf('function connectWs()'),web.indexOf('async function post('))+
@@ -94,24 +94,33 @@ assert.equal(requests[0].path,'/api/status');assert.equal(requests[0].options.cr
 assert.equal(requests[0].options.method,undefined,'session preparation is read-only GET');
 assert(requests[0].options.signal instanceof AbortSignal);
 assert.equal(liveTimers.size,0);
+// Repeat preparation failures are one ongoing incident, not a quiet-window flood.
+diagnosticEvents.length=0;status=503;sockets[1].onclose({code:1006});
+for(let i=0;i<6;i++)await fireLive();
+assert.equal(diagnosticEvents.filter(e=>e.detail==='Session status refresh failed; reconnect scheduled').length,1);
+assert.equal(diagnosticEvents.filter(e=>e.error_code==='http_503'&&e.source==='http').length,1);
+status=500;await fireLive();
+assert.equal(diagnosticEvents.filter(e=>e.detail==='Session status refresh failed; reconnect scheduled').length,2,'A different preparation cause stays visible');
+status=200;await fireLive();assert.equal(sockets.length,3);sockets[2].onopen();
+assert.equal(diagnosticEvents.filter(e=>e.event==='transport.ready'&&e.source==='websocket').length,1);
 // Expired session stops recovery; no donor-style automatic mutating renewal.
-status=401;sockets[1].onclose({code:1006});await fireLive();
-assert.equal(sockets.length,2);assert.equal(liveTimers.size,0);assert.equal(execute('authenticated'),false);
+status=401;sockets[2].onclose({code:1006});await fireLive();
+assert.equal(sockets.length,3);assert.equal(liveTimers.size,0);assert.equal(execute('authenticated'),false);
 // Constructor failures get the same bounded recovery, not an unhandled throw.
 constructorFails=true;execute('authenticated=true;connectWs()');assert.equal(liveTimers.size,1);
 assert.equal(execute('socket'),null,'failed replacement relinquishes old socket ownership');
 assert.equal(live.wsState.textContent,'WebSocket retrying');
-constructorFails=false;status=200;await fireLive();assert.equal(sockets.length,3);
-execute('webSocketPaused=true;webSocketReconnect.cancel()');sockets[2].onclose({code:1006});
+constructorFails=false;status=200;await fireLive();assert.equal(sockets.length,4);
+execute('webSocketPaused=true;webSocketReconnect.cancel()');sockets[3].onclose({code:1006});
 assert.equal(liveTimers.size,0);
 // Even an injected fetch ignoring abort cannot repaint capabilities after logout.
 let finishRead;
 live.fetch=()=>new Promise(resolve=>finishRead=resolve);
-execute('webSocketPaused=false;authenticated=true');sockets[2].onclose({code:1006});
+execute('webSocketPaused=false;authenticated=true');sockets[3].onclose({code:1006});
 const lateRead=fireLive();await Promise.resolve();const paintBefore=activity.length;
 execute('showLogin()');assert.equal(liveTimers.size,0);
 finishRead({status:200,ok:true,text:async()=>'{"hostname":"obsolete-peer"}'});await lateRead;
-assert.equal(activity.length,paintBefore);assert.equal(sockets.length,3);
+assert.equal(activity.length,paintBefore);assert.equal(sockets.length,4);
 const rename=web.split('\n').find(line=>line.startsWith("nameForm.addEventListener('submit'"));
 assert(rename.includes('return}webSocketReconnect.cancel();stopStream();'));
 console.log('Rayan realtime retry: readback-before-open, exact capped jitter, timer/generation ownership, cancellation, 12s read deadline and no write replay passed; VM proof, not LAN.');

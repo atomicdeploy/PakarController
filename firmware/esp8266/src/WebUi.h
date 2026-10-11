@@ -295,7 +295,7 @@ const webSocketReconnect=createRealtimeRetry({
   onError:error=>traceBrowserEvent('warn','websocket.disconnected',
     'Session status refresh failed; reconnect scheduled',
     {source:'websocket',endpoint:'/api/status',...browserErrorMetadata(error)},
-    {dedupeKey:'websocket.prepare',dedupeWindowMs:3000})
+    {incidentKey:'websocket'})
 });
 
 // END RAYANLAMP REALTIME RETRY
