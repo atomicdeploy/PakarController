@@ -1,6 +1,7 @@
 #pragma once
 #include "AccessConfig.h"
 #include <ApiPolicy.h>
+#include <PeerFence.h>
 #include <ESPAsyncWebServer.h>
 extern "C" {
 #include <osapi.h>
@@ -28,6 +29,9 @@ class WebAccess {
       request->send(401, "application/json", "{\"error\":\"login_required\",\"login\":\"/login\"}");
       return; // no browser Basic-auth dialog; API clients may still send Basic
     }
+    if (!peerAllowed(request)) {
+      request->send(409, "application/json", "{\"error\":\"peer_changed\",\"accepted\":false}"); return;
+    }
     next();
   }) {}
   void refreshCredentials() {
@@ -36,6 +40,19 @@ class WebAccess {
     basic_.setRealm("PakarController");
   }
   AsyncMiddleware *middleware() { return &middleware_; }
+  void configurePeerFence(const String &board, const String &boot) {
+    boardId_ = board; bootId_ = boot;
+  }
+  bool peerFenceReady() const {
+    return BoardCore::PeerFence::ready(boardId_.c_str(), bootId_.c_str());
+  }
+  bool peerAllowed(AsyncWebServerRequest *request) const {
+    if (request->method() == HTTP_GET || request->method() == HTTP_HEAD) return true;
+    const auto *board = request->getHeader("X-Pakar-Board");
+    const auto *boot = request->getHeader("X-Pakar-Boot");
+    return BoardCore::PeerFence::accepts(boardId_.c_str(), bootId_.c_str(),
+        board ? board->value().c_str() : nullptr, boot ? boot->value().c_str() : nullptr);
+  }
   bool allowed(AsyncWebServerRequest *request) {
     if (!accessConfig.ready()) return false;
     if (basic_.allowed(request)) return true;
@@ -135,6 +152,7 @@ class WebAccess {
     return String();
   }
   AsyncAuthenticationMiddleware basic_;
+  String boardId_, bootId_;
   AsyncMiddlewareFunction middleware_;
   BoardCore::Access::Sessions sessions_;
   uint8_t failures_ = 0;

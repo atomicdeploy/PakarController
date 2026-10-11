@@ -24,14 +24,14 @@ escape sequences or network requests. Scripts should use `--status` or
 - `g`: read-only refresh; `d`: Events; `?`: Help; `q` / Ctrl+C: quit.
 
 Peer features must be individually ACKed. No offline game/table/display/buzzer
-controls or fabricated default cell state. A changed hostname/capability manifest
-clears selection and Find. Failures retain distinct causes/sources, coalesce only
+controls or fabricated default cell state. A changed board/boot/hostname/capability
+clears selection, Find and command drafts. Failures retain distinct causes/sources, coalesce only
 repeats and use bounded backoff. Terminal output strips peer escape/control/bidi
 sequences while retaining Unicode text. `NO_COLOR`, `TERM=dumb`, `CLICOLOR=0`
 and `FORCE_COLOR=0` veto ANSI colors; cursor/screen control still needs a terminal.
 
 Bulk cell changes are sequential, **not atomic**. Each cell gets a fresh peer /
-table / latch preflight and one POST, requiring `accepted:true`. The first error,
+table / latch preflight and one boot-pinned POST, requiring `accepted:true`. The first error,
 unknown receipt or changed peer stops the batch without retrying. Accepted count
 is not physical LED or persistent-state proof. Quit stops unsent work but cannot
 undo an in-flight write; inspect its outcome before repeating. Generic CLI
@@ -53,8 +53,9 @@ This is bounded progress, not full issue #2 acceptance. Still required: terminal
 hardware/manual navigation and resize acceptance, richer device-setting forms,
 mapping/reorder and arbitrary effects editors, graphical half-cell staggering /
 six-pixel diagnostic parity, mouse interaction, complete localized help/theme
-controls, USB/discovery transport choice, and boot/session identity fencing.
-The current key is hostname plus manifest, **not** an AVR/ESP boot identity.
+controls and USB/discovery transport choice. ESP HTTP board/boot fencing now
+exists (see HTTP-PEER-FENCING.md); AVR-only reset and other transports/clients
+still need their own session identity and ownership acceptance.
 Full desktop/Web/mobile parity and physical tests remain open. The donor macOS
 diagnostic sampler and Linux/macOS native CI need real Pakar platform coverage;
 no libmpv/media jobs are copied into this media-free client.

@@ -1,5 +1,34 @@
 # PakarController comparison receipts
 
+## HTTP peer-fence checkpoint
+
+Actual PCController internal/link/session.go and session_test.go fully read;
+source hashes verified live against canonical checkout. Added peer-binding route
+and two parity-gap certificates, with useful serial lifecycle/ACK/reset/decoder
+omissions explicitly pending. PC inventory refreshed to1234, overall4271:
+103 complete comparisons,4168 pending,70 known gaps. No whole-repository parity.
+
+- Native release-profile tests:151 passed,0 failed (3m02 compile).
+- Native release build: passed (4m44, same warm cache; existing warnings retained).
+- Production C++ PeerFence/protocol test compiled with warnings-as-errors and ran.
+- Full quality phase passed after repairing separate PU850 route target evidence;
+  final MAC-zero initialization revalidated affected route/peer wiring and
+  committed-report guards. No assertion removed, unknown source promoted or
+  old donor source hash substituted. CI still runs against the pushed head.
+- Final ESP8266 busy-wire build passed: RAM56620/80192, IRAM63055/65536
+  (includes cache reservation), code878880/1048576. Image928944 bytes, SHA256
+  36000F0C8F46DAE39B7A943164CC07684192F5EC8E185A0EAC02B777F6C4CAB9.
+- UART/AVR source, A4/A5 display mapping and all component versions0.2.7 remain
+  unchanged; no unrelated AVR/APK/donor build, debug/incremental cache or flash.
+
+Staging/probe/source identity is not embedded binary provenance or GUI startup,
+full three-node ownership, S3 driver/DMA acceptance or physical reboot proof.
+Production PID58400, exe SHA B5133DC91BDDB3A70B186F4E179514739A1981E9C604ED5CA39DD49E1B38AEBB
+and saved preferences SHA22F8AEED4BF0CEBC3116C670F681D90A3D1B1B833ECE3DE23A491D0D896A8711
+were preserved; rollback unchanged. The GUI has no new visible design change
+in this checkpoint, so it was not rotated for a terminal-only safety change.
+ASUS SSH1022 refused/ledboard.local unresolved. Master issue2 remains OPEN.
+
 ## Conversation-aware import checkpoint
 
 87/4242 complete source comparisons, 4155 pending, 54 known gaps. New complete

@@ -5,10 +5,28 @@
 
 #include "Protocol.h"
 #include "ApiPolicy.h"
+#include "PeerFence.h"
 
 using namespace BoardCore::Protocol;
 
 int main() {
+  // Adapt donor matching-identity/request assertions to an actual boot fence.
+  // Donor session.go HELLO build metadata itself is NOT a boot epoch.
+  using BoardCore::PeerFence::accepts;
+  const char *board = "esp8266-aabbccddeeff";
+  const char *boot = "123456789abcdef0123456789abcdef0";
+  assert(accepts(board, boot, nullptr, nullptr)); // Explicit legacy/unfenced.
+  assert(accepts(board, boot, board, boot));
+  assert(!accepts(board, boot, board, nullptr));
+  assert(!accepts(board, boot, nullptr, boot));
+  assert(!accepts(board, boot, "", boot));
+  assert(!accepts(board, boot, board, "223456789abcdef0123456789abcdef0"));
+  assert(!accepts(board, boot, "esp8266-aabbccddee00", boot));
+  assert(!accepts(board, "", board, boot));
+  assert(!accepts(board, boot, board, "00000000000000000000000000000000"));
+  assert(!accepts(board, boot, board, "123456789ABCDEF0123456789abcdef0"));
+  assert(!BoardCore::PeerFence::boardValid("bad\r\nheader"));
+  assert(!BoardCore::PeerFence::boardValid(""));
   // Actual donor TestVersionedCoreAPIRoutesAreRejected cases, plus vN bounds.
   for (const char *path : {"/api/v1", "/api/v1/rpc", "/api/v1/snapshot",
        "/api/v1/peripherals", "/api/v2/status", "/api/v123/", "/api/v1?x=1"}) {

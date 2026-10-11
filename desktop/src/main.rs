@@ -54,6 +54,12 @@ struct Endpoint {
 #[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
 struct DeviceStatus {
     #[serde(default)]
+    board_id: String,
+    #[serde(default)]
+    boot_id: String,
+    #[serde(default)]
+    http_peer_fencing: bool,
+    #[serde(default)]
     capabilities: Option<capabilities::Manifest>,
     #[serde(default)]
     version: String,

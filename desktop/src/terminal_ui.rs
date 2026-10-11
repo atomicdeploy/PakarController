@@ -1,7 +1,7 @@
 //! Actual RayanLamp internal/tui/run.go, text.go and terminal/policy.go
 //! adapted to Rust/crossterm; PCController tui/table.go owns viewport math.
 //! Shared Pakar capabilities/selection/diagnostics remain the authorities.
-use crate::{DeviceStatus, Endpoint, blocking_status, diagnostics, ui};
+use crate::{blocking_status, diagnostics, ui, DeviceStatus, Endpoint};
 use crossterm::{
     cursor,
     event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers},
@@ -12,9 +12,8 @@ use crossterm::{
 use std::{
     io::{self, IsTerminal, Write},
     sync::{
-        Arc,
         atomic::{AtomicBool, Ordering},
-        mpsc,
+        mpsc, Arc,
     },
     thread,
     time::{Duration, Instant},
@@ -198,13 +197,61 @@ impl Default for Model {
     }
 }
 fn peer_key(s: &DeviceStatus) -> String {
-    // A capability/hostname change revokes selection and queued ownership.
-    // Not a boot/session proof: hardware epoch fencing remains separately open.
+    // Actual board/boot changes revoke drafts even if hostname/manifest match.
     format!(
-        "{}:{}",
+        "{}:{}:{}:{}:{}",
+        s.board_id,
+        s.boot_id,
+        s.http_peer_fencing,
         s.hostname,
         serde_json::to_string(&s.capabilities).unwrap_or_default()
     )
+}
+fn fenced(s: &DeviceStatus) -> bool {
+    s.http_peer_fencing
+        && !s.board_id.is_empty()
+        && s.board_id.len() <= 64
+        && s.board_id
+            .bytes()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'-' || c == b'_')
+        && s.boot_id.len() == 32
+        && s.boot_id
+            .bytes()
+            .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
+        && s.boot_id.bytes().any(|c| c != b'0')
+}
+fn pinned_client(s: &DeviceStatus) -> Result<reqwest::blocking::Client, String> {
+    if !fenced(s) {
+        return Err(
+            "Read-only: peer has not advertised valid board/boot identity and HTTP fencing".into(),
+        );
+    }
+    let mut headers = reqwest::header::HeaderMap::new();
+    headers.insert(
+        "x-pakar-board",
+        s.board_id.parse().map_err(|_| "Invalid board identity")?,
+    );
+    headers.insert(
+        "x-pakar-boot",
+        s.boot_id.parse().map_err(|_| "Invalid boot identity")?,
+    );
+    reqwest::blocking::Client::builder()
+        .no_proxy()
+        .timeout(Duration::from_secs(4))
+        .default_headers(headers)
+        .build()
+        .map_err(diagnostics::describe_error)
+}
+fn read_only_command(words: &[&str]) -> bool {
+    matches!(
+        words,
+        ["status" | "info" | "telemetry"]
+            | ["device", "name" | "identity"]
+            | ["auth", "info"]
+            | ["firmware", "status"]
+            | ["avr", "contracts" | "settings"]
+    )
+    // AVR status/panel use POST to the raw contract. They are not HTTP reads.
 }
 impl Model {
     fn table(&self) -> bool {
@@ -217,6 +264,7 @@ impl Model {
     }
     fn receive(&mut self, reply: Reply) {
         self.busy = false;
+        let mut peer_changed = false;
         match reply.status {
             Ok(status) => {
                 if self
@@ -224,9 +272,14 @@ impl Model {
                     .as_ref()
                     .is_some_and(|s| peer_key(s) != peer_key(&status))
                 {
+                    peer_changed = true;
                     self.selection.clear();
                     self.cursor = 1;
                     self.find = None;
+                    self.find_error.clear();
+                    self.command = None;
+                    self.output.clear();
+                    self.scroll = 0;
                     self.log.reset_sources("TUI GET /api/status"); // Different peer is not recovery.
                 }
                 self.status = Some(status);
@@ -242,6 +295,18 @@ impl Model {
             self.page = Page::Overview;
         }
         if let Some(outcome) = reply.operation {
+            if peer_changed {
+                // Keep evidence, but never present an old receipt as the new
+                // peer's confirmed state or reapply the old command draft.
+                self.notice = "Peer changed during operation; previous-session outcome is in Events. Nothing replayed.".into();
+                self.log.record(
+                    "Previous-session outcome",
+                    &match outcome {
+                        Ok(message) | Err(message) => message,
+                    },
+                );
+                return;
+            }
             match outcome {
                 Ok(message) => {
                     self.output = message.lines().take(256).map(safe_line).collect();
@@ -375,6 +440,12 @@ impl Model {
             KeyCode::Char(c @ ('w' | 'r' | 'o'))
                 if self.table() && !self.busy && self.page == Page::Table =>
             {
+                if !self.status.as_ref().is_some_and(fenced) {
+                    self.notice =
+                        "Read-only: firmware must advertise board/boot identity and HTTP fencing"
+                            .into();
+                    return (false, None);
+                }
                 if self.selection.ids.is_empty() {
                     self.notice = "Select cells first; selection never changes output".into();
                 } else {
@@ -635,8 +706,10 @@ impl Model {
         lines.push(self.find_error.clone());
         lines.push(if self.busy {
             "Request in flight; no queued commands. Quit stops unsent work.".into()
-        } else if self.table() {
+        } else if self.table() && self.status.as_ref().is_some_and(fenced) {
             "/ Find  w White  r Red  o Off  : Commands  ? Help  q Quit".into()
+        } else if self.table() {
+            "/ Find  READ-ONLY: board/boot HTTP fencing unavailable  q Quit".into()
         } else {
             "g Refresh  d Events  : Commands  ? Help  q Quit".into()
         });
@@ -669,6 +742,7 @@ fn cell_request(
             )
         })?;
         if peer_key(&s) != peer
+            || !fenced(&s)
             || s.programming_latch
             || !(1..=80).contains(id)
             || !s.capabilities.as_ref().is_some_and(|m| m.table())
@@ -680,7 +754,9 @@ fn cell_request(
         if stop.load(Ordering::Acquire) {
             return Err(format!("Stopped; {accepted} writes accepted"));
         }
-        let response = client
+        // Fresh GET alone has a TOCTOU window. The server checks these pinned
+        // headers before dispatch/uploads; old boot writes receive 409, no replay.
+        let response = pinned_client(&s)?
             .post(format!("{}/api/cell", endpoint.base.trim_end_matches('/')))
             .basic_auth(&endpoint.user, Some(&endpoint.password))
             .form(&[
@@ -714,6 +790,9 @@ fn cell_request(
     ))
 }
 fn command_allowed(s: &DeviceStatus, words: &[&str]) -> bool {
+    if !read_only_command(words) && !fenced(s) {
+        return false;
+    }
     let Some(m) = s.capabilities.as_ref().filter(|m| m.known()) else {
         return words == ["status"];
     };
@@ -767,7 +846,13 @@ fn command_request(
     if stop.load(Ordering::Acquire) {
         return Err("Stopped after read-only preflight; command not dispatched".into());
     }
-    crate::text_command_output(client, endpoint, &words, &mut output)?;
+    if read_only_command(&words) {
+        crate::text_command_output(client, endpoint, &words, &mut output)?;
+    } else {
+        // Shared CLI nested requests inherit the SAME epoch; never rebind them
+        // after reboot. Admission cancellation cannot retract a dispatched POST.
+        crate::text_command_output(&pinned_client(&current)?, endpoint, &words, &mut output)?;
+    }
     Ok(output)
 }
 pub fn run(endpoint: Endpoint) -> Result<(), String> {
@@ -921,6 +1006,7 @@ mod tests {
     use super::*;
     fn table() -> DeviceStatus {
         serde_json::from_value(serde_json::json!({"hostname":"ledboard","cells":vec!["white";80],
+        "board_id":"esp8266-aabbccddeeff","boot_id":"123456789abcdef0123456789abcdef0","http_peer_fencing":true,
         "capabilities":{"board_kind":"table","name":"Table","acknowledged_features":["table"],"table":{"columns":10,"rows":8,"pixels_per_cell":6}}})).unwrap()
     }
     fn press(code: KeyCode) -> KeyEvent {
@@ -1006,6 +1092,60 @@ mod tests {
         assert!(m.selection.ids.is_empty());
     }
     #[test]
+    fn same_hostname_reboot_revokes_drafts_and_old_receipts() {
+        let mut m = Model::default();
+        m.receive(Reply {
+            status: Ok(table()),
+            operation: None,
+        });
+        m.selection.click(1, false, false);
+        m.command = Some("cell 1 red".into());
+        m.find = Some("1".into());
+        m.output = vec!["old output".into()];
+        let mut reboot = table();
+        reboot.boot_id = "223456789abcdef0123456789abcdef0".into();
+        assert_ne!(peer_key(&table()), peer_key(&reboot));
+        m.receive(Reply {
+            status: Ok(reboot),
+            operation: Some(Ok("accepted by old session".into())),
+        });
+        assert!(
+            m.selection.ids.is_empty()
+                && m.command.is_none()
+                && m.find.is_none()
+                && m.output.is_empty()
+        );
+        assert!(m.notice.contains("Previous-session") || m.notice.contains("previous-session"));
+        let mut replacement = table();
+        replacement.board_id = "esp8266-aabbccddee00".into();
+        assert_ne!(peer_key(&table()), peer_key(&replacement));
+    }
+    #[test]
+    fn missing_invalid_or_unacknowledged_fences_allow_only_reads() {
+        for field in ["board", "boot", "zero", "uppercase", "header", "ack"] {
+            let mut s = table();
+            match field {
+                "board" => s.board_id.clear(),
+                "boot" => s.boot_id.clear(),
+                "zero" => s.boot_id = "0".repeat(32),
+                "uppercase" => s.boot_id = "A".repeat(32),
+                "header" => s.board_id = "bad\r\nheader".into(),
+                _ => s.http_peer_fencing = false,
+            }
+            assert!(!fenced(&s));
+            assert!(command_allowed(&s, &["status"]));
+            assert!(!command_allowed(&s, &["cell", "1", "red"]));
+            let mut m = Model::default();
+            m.receive(Reply {
+                status: Ok(s),
+                operation: None,
+            });
+            m.page = Page::Table;
+            m.selection.click(1, false, false);
+            assert!(m.key(press(KeyCode::Char('r'))).1.is_none());
+        }
+    }
+    #[test]
     fn actual_donor_table_window_keeps_cursor_in_resized_viewport() {
         for width in 0..34 {
             for height in 0..9 {
@@ -1036,11 +1176,9 @@ mod tests {
         for (width, height) in [(34, 9), (60, 16), (80, 24), (140, 50)] {
             let lines = m.lines(width, height);
             assert!(lines.len() <= height);
-            assert!(
-                lines
-                    .iter()
-                    .all(|s| s.chars().map(|c| c.width().unwrap_or(0)).sum::<usize>() < width)
-            );
+            assert!(lines
+                .iter()
+                .all(|s| s.chars().map(|c| c.width().unwrap_or(0)).sum::<usize>() < width));
         }
     }
     #[test]
@@ -1110,12 +1248,14 @@ mod tests {
                 let mut first = String::new();
                 reader.read_line(&mut first).unwrap();
                 let mut length = 0;
+                let mut headers = String::new();
                 loop {
                     let mut line = String::new();
                     reader.read_line(&mut line).unwrap();
                     if line == "\r\n" {
                         break;
                     }
+                    headers.push_str(&line);
                     if let Some((key, value)) = line.split_once(':') {
                         if key.eq_ignore_ascii_case("content-length") {
                             length = value.trim().parse::<usize>().unwrap();
@@ -1124,10 +1264,17 @@ mod tests {
                 }
                 let mut body = vec![0; length];
                 reader.read_exact(&mut body).unwrap();
-                send.send(first.trim().to_owned() + " " + std::str::from_utf8(&body).unwrap())
-                    .unwrap();
+                send.send(
+                    first.trim().to_owned()
+                        + " "
+                        + std::str::from_utf8(&body).unwrap()
+                        + "\n"
+                        + &headers,
+                )
+                .unwrap();
                 let body = reply.to_string();
-                write!(stream,"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",body.len()).unwrap();
+                let code = reply["_http_status"].as_u64().unwrap_or(200);
+                write!(stream,"HTTP/1.1 {code} Fixture\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",body.len()).unwrap();
             }
         });
         (endpoint, receive, worker)
@@ -1136,7 +1283,7 @@ mod tests {
     fn actual_http_batch_stops_on_changed_peer_and_false_receipt_without_replay() {
         let s = table();
         let mut changed = s.clone();
-        changed.hostname = "another-board".into();
+        changed.boot_id = "223456789abcdef0123456789abcdef0".into();
         let (endpoint, requests, worker) = fixture(vec![
             serde_json::to_value(&s).unwrap(),
             serde_json::json!({"accepted":true}),
@@ -1161,25 +1308,53 @@ mod tests {
         assert!(requests[0].starts_with("GET /api/status "));
         assert!(requests[1].starts_with("POST /api/cell "));
         assert!(requests[1].contains("id=1&state=red&effect=fade"));
+        assert!(requests[1].contains("x-pakar-board: esp8266-aabbccddeeff\r\n"));
+        assert!(requests[1].contains("x-pakar-boot: 123456789abcdef0123456789abcdef0\r\n"));
         assert!(result.unwrap_err().contains("1 writes accepted"));
         let (endpoint, requests, worker) = fixture(vec![
             serde_json::to_value(&s).unwrap(),
             serde_json::json!({"accepted":false}),
         ]);
-        assert!(
-            cell_request(
-                &client,
-                &endpoint,
-                &[1, 2],
-                "red",
-                &peer_key(&s),
-                &AtomicBool::new(false)
-            )
-            .unwrap_err()
-            .contains("not acknowledged")
-        );
+        assert!(cell_request(
+            &client,
+            &endpoint,
+            &[1, 2],
+            "red",
+            &peer_key(&s),
+            &AtomicBool::new(false)
+        )
+        .unwrap_err()
+        .contains("not acknowledged"));
         worker.join().unwrap();
         assert_eq!(requests.iter().count(), 2);
+    }
+    #[test]
+    fn server_reboot_between_preflight_and_post_stops_without_replay() {
+        // Native HTTP wire path plus production C++ accepts() tests: a server
+        // that rebooted after GET rejects the old pinned POST with 409.
+        let s = table();
+        let (endpoint, requests, worker) = fixture(vec![
+            serde_json::to_value(&s).unwrap(),
+            serde_json::json!({"_http_status":409,"error":"peer_changed","accepted":false}),
+        ]);
+        let client = reqwest::blocking::Client::builder()
+            .no_proxy()
+            .build()
+            .unwrap();
+        let error = cell_request(
+            &client,
+            &endpoint,
+            &[1, 2],
+            "red",
+            &peer_key(&s),
+            &AtomicBool::new(false),
+        )
+        .unwrap_err();
+        worker.join().unwrap();
+        assert!(error.contains("HTTP 409"));
+        let requests: Vec<_> = requests.iter().collect();
+        assert_eq!(requests.len(), 2);
+        assert!(requests[1].contains("x-pakar-boot: "));
     }
     #[test]
     fn captured_shared_cli_command_is_read_only_and_has_no_output_side_effects() {
@@ -1210,18 +1385,42 @@ mod tests {
         assert!(result.contains("ledboard"));
         assert!(requests.iter().all(|r| r.starts_with("GET ")));
         let (endpoint, requests, worker) = fixture(vec![serde_json::to_value(&s).unwrap()]);
-        assert!(
-            command_request(
-                &client,
-                &endpoint,
-                &["device".into(), "name".into()],
-                &peer_key(&s),
-                &AtomicBool::new(true)
-            )
-            .unwrap_err()
-            .contains("not dispatched")
-        );
+        assert!(command_request(
+            &client,
+            &endpoint,
+            &["device".into(), "name".into()],
+            &peer_key(&s),
+            &AtomicBool::new(true)
+        )
+        .unwrap_err()
+        .contains("not dispatched"));
         worker.join().unwrap();
         assert_eq!(requests.iter().count(), 1);
+    }
+    #[test]
+    fn shared_cli_mutation_inherits_pinned_epoch_headers() {
+        let s = table();
+        let (endpoint, requests, worker) = fixture(vec![
+            serde_json::to_value(&s).unwrap(),
+            serde_json::json!({"accepted":true}),
+        ]);
+        let client = reqwest::blocking::Client::builder()
+            .no_proxy()
+            .build()
+            .unwrap();
+        command_request(
+            &client,
+            &endpoint,
+            &["cell".into(), "1".into(), "red".into()],
+            &peer_key(&s),
+            &AtomicBool::new(false),
+        )
+        .unwrap();
+        worker.join().unwrap();
+        let requests: Vec<_> = requests.iter().collect();
+        assert_eq!(requests.len(), 2);
+        assert!(requests[1].starts_with("POST /api/cell "));
+        assert!(requests[1].contains("x-pakar-board: esp8266-aabbccddeeff\r\n"));
+        assert!(requests[1].contains("x-pakar-boot: 123456789abcdef0123456789abcdef0\r\n"));
     }
 }

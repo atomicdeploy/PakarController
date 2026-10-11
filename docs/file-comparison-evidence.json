@@ -4,6 +4,123 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
 {
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/link/session.go",
+  "sha256": "1bf4d52d6810630d1fd4d5f0a0c18254ccdd73c0942dbe94f4c97a06360680c5",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Actual Session.Request closing/context checks before and after admission adapted to TUI atomic stop checks before/after fresh preflight; no post-dispatch replay.",
+    "Full source read. Fail-closed identity checks strengthened with HTTP server-side board/boot fences; donor HELLO/build stamp is NOT a boot epoch."
+  ],
+  "targets": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "anchor": "fn command_request("
+    },
+    {
+      "path": "libraries/BoardCore/src/PeerFence.h",
+      "sha256": "9f1ab63252bd881d2fc786e230a18db331e66708a1bd3ccd0f096d2d2b5d49d5",
+      "anchor": "inline bool accepts("
+    },
+    {
+      "path": "firmware/esp8266/src/WebAccess.h",
+      "sha256": "6603f677d19f76b4b1af3b0d307a61e910cafb19c25783e1600d07d30c40a3e4",
+      "anchor": "bool peerAllowed("
+    }
+  ],
+  "omissions": [
+    {
+      "code": "serialOpenWithPending/late acquisition/configuration cancellation/close retry, preclose ordering and terminal error ownership; corresponding fakePort tests",
+      "disposition": "pending",
+      "reason": "Useful serial lifecycle/quarantine has no equivalent in HTTP-only TUI. Adapt with actual Rust USB owner before discovery/reconnect; never close another client's port."
+    },
+    {
+      "code": "priority requestAdmission, sequence/opcode-matched ACK/Error/events, reserved macro sequence, boot HELLO retry and recoverable decoder overflow tests",
+      "disposition": "pending",
+      "reason": "HTTP fencing is not downstream AVR ACK/decoder ownership. These production behaviors and exact tests remain pending with USB/UART host integration."
+    },
+    {
+      "code": "compact HELLO schemas/build stamp and DTR reset/inactive control-line tests",
+      "disposition": "pending",
+      "reason": "Build stamp is not board/boot identity; numbered public generation negotiation conflicts with living API. Adapt additive identity and explicit one-shot reset policy with serial owner, without schema selectors/reset-on-connect."
+    }
+  ],
+  "remaining": [
+    "GUI/Web/mobile/standalone CLI/cloud/USB fencing and AVR-only boot identity remain pending; ESP32-S3 application not integrated.",
+    "Port remaining useful serial lifecycle/priority/ACK/reset tests; fixtures/source/compile are not physical acceptance."
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "anchor": "fn same_hostname_reboot_revokes_drafts_and_old_receipts()"
+    },
+    {
+      "path": "tests/peer_fence_test.mjs",
+      "sha256": "f0be101c25e0844d2ecd41c3cebdab476052f0303a2272221da963ce38ea6e94",
+      "anchor": "Upload callbacks precede middleware"
+    }
+  ]
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/link/session_test.go",
+  "sha256": "ff6c7b21f72bfb944d232c87210f8ffa139dfe016e8b5756f2582604489fffc4",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Actual fakePort matching/mismatched request and identity scenarios read fully and adapted to C++ peer validation and native same-host reboot/pinned-header/409 no-replay HTTP fixtures.",
+    "Old receipts stay in Events, not new peer's confirmed output."
+  ],
+  "targets": [
+    {
+      "path": "tests/protocol_test.cpp",
+      "sha256": "69424ba85e58733026f42c92802a0239702c1719b283d3d22a8a05eb97eb92c6",
+      "anchor": "Adapt donor matching-identity/request assertions"
+    },
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "anchor": "fn server_reboot_between_preflight_and_post_stops_without_replay()"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "serialOpenWithPending/late acquisition/configuration cancellation/close retry, preclose ordering and terminal error ownership; corresponding fakePort tests",
+      "disposition": "pending",
+      "reason": "Useful serial lifecycle/quarantine has no equivalent in HTTP-only TUI. Adapt with actual Rust USB owner before discovery/reconnect; never close another client's port."
+    },
+    {
+      "code": "priority requestAdmission, sequence/opcode-matched ACK/Error/events, reserved macro sequence, boot HELLO retry and recoverable decoder overflow tests",
+      "disposition": "pending",
+      "reason": "HTTP fencing is not downstream AVR ACK/decoder ownership. These production behaviors and exact tests remain pending with USB/UART host integration."
+    },
+    {
+      "code": "compact HELLO schemas/build stamp and DTR reset/inactive control-line tests",
+      "disposition": "pending",
+      "reason": "Build stamp is not board/boot identity; numbered public generation negotiation conflicts with living API. Adapt additive identity and explicit one-shot reset policy with serial owner, without schema selectors/reset-on-connect."
+    }
+  ],
+  "remaining": [
+    "GUI/Web/mobile/standalone CLI/cloud/USB fencing and AVR-only boot identity remain pending; ESP32-S3 application not integrated.",
+    "Port remaining useful serial lifecycle/priority/ACK/reset tests; fixtures/source/compile are not physical acceptance."
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/terminal_ui.rs",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "anchor": "fn shared_cli_mutation_inherits_pinned_epoch_headers()"
+    },
+    {
+      "path": "tests/peer_fence_test.mjs",
+      "sha256": "f0be101c25e0844d2ecd41c3cebdab476052f0303a2272221da963ce38ea6e94",
+      "anchor": "Upload callbacks precede middleware"
+    }
+  ]
+},
+{
   "origin": "RayanLamp",
   "path": "internal/tui/run.go",
   "sha256": "462fdbc977b5261f971120fd071b7dc6b023e6d6e66fd37e2dabf03af12c0a16",
@@ -12,7 +129,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "pub fn run(endpoint: Endpoint)"
     }
   ],
@@ -32,7 +149,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "fn offline_and_unacknowledged_peers_have_no_table_actions()"
     },
     {
@@ -52,7 +169,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "fn enter()"
     }
   ],
@@ -72,7 +189,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "fn offline_and_unacknowledged_peers_have_no_table_actions()"
     },
     {
@@ -92,7 +209,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "pub fn safe_line(value: &str)"
     }
   ],
@@ -112,7 +229,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "fn donor_text_safety_preserves_unicode_not_peer_terminal_commands()"
     },
     {
@@ -132,7 +249,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "fn color_allowed()"
     }
   ],
@@ -152,7 +269,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "fn donor_text_safety_preserves_unicode_not_peer_terminal_commands()"
     },
     {
@@ -172,7 +289,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "fn key(&mut self, key: KeyEvent)"
     }
   ],
@@ -192,7 +309,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "fn shared_find_selection_and_arrow_navigation_never_write()"
     },
     {
@@ -212,7 +329,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "let worker = thread::spawn(move ||"
     }
   ],
@@ -232,7 +349,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "fn loss_and_peer_change_revoke_controls_without_false_recovery()"
     },
     {
@@ -252,7 +369,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "fn window(total: usize, visible: usize, cursor: usize)"
     }
   ],
@@ -272,7 +389,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "b3bb18cd639487b811eb3b6c1e7a4b132ea9b0c833a42744fa2efe44013bcba8",
+      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
       "anchor": "fn actual_donor_table_window_keeps_cursor_in_resized_viewport()"
     },
     {
@@ -543,7 +660,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebAccess.h",
-          "sha256": "95e0a603d77fd46f8016b3a5b9b8e3631e56357dd6f3d5f9e2950878e5ff2d7a",
+          "sha256": "6603f677d19f76b4b1af3b0d307a61e910cafb19c25783e1600d07d30c40a3e4",
           "anchor": "ApiPolicy::numberedRoute"
         }
       ],
@@ -560,7 +677,7 @@
       "proof": [
         {
           "path": "tests/protocol_test.cpp",
-          "sha256": "415293ccbe30dd9faea16a8a1f2abb69df2a9495e8dcd8ada0e69fda7b3817b8",
+          "sha256": "69424ba85e58733026f42c92802a0239702c1719b283d3d22a8a05eb97eb92c6",
           "anchor": "Actual donor TestVersionedCoreAPIRoutesAreRejected cases"
         },
         {
@@ -1616,7 +1733,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "f2fe5b81cecdd2cb2f3c6e6bb6cc3eb994daf22026ae193235f735ca23cbee98",
+          "sha256": "dc8642bb844b1fbf34a0e4177a2c11a822e53adc5b4aa781576676562d58212d",
           "anchor": "export function runChecks"
         },
         {
@@ -3854,7 +3971,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "5461950c1df5b9b18c82aa4f42a9647e80e45c34ffe57eacff37f67b3ff62eef"
+          "sha256": "5568bbe0f08f2877959d4e170df2f4ec91bc184ec57b843607867d5ff6164e00"
         }
       ],
       "proof": [
@@ -3921,7 +4038,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "5461950c1df5b9b18c82aa4f42a9647e80e45c34ffe57eacff37f67b3ff62eef"
+          "sha256": "5568bbe0f08f2877959d4e170df2f4ec91bc184ec57b843607867d5ff6164e00"
         }
       ],
       "proof": [
@@ -3988,7 +4105,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "5461950c1df5b9b18c82aa4f42a9647e80e45c34ffe57eacff37f67b3ff62eef"
+          "sha256": "5568bbe0f08f2877959d4e170df2f4ec91bc184ec57b843607867d5ff6164e00"
         }
       ],
       "proof": [
@@ -4040,7 +4157,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "5461950c1df5b9b18c82aa4f42a9647e80e45c34ffe57eacff37f67b3ff62eef"
+          "sha256": "5568bbe0f08f2877959d4e170df2f4ec91bc184ec57b843607867d5ff6164e00"
         }
       ],
       "proof": [

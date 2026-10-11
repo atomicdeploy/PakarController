@@ -105,6 +105,7 @@ bool avrPcSupported = false;
 uint16_t avrPcFeatures = 0;
 BoardCore::PcContractTransport pcTransport;
 String pcBootId;
+String pcBoardId;
 uint32_t lastAvrPingAt = 0;
 uint8_t avrVersion[3] = {};
 bool apStarted = false;
@@ -1013,7 +1014,10 @@ String buildStatusJson() {
   // ESP8266 heap. Arduino String otherwise fails mid-JSON without an error.
   body.reserve(2600);
   body += F("{\"version\":\""); body += BoardCore::BuildInfo::kVersion;
-  body += F("\",\"hostname\":\""); body += hostname;
+  body += F("\",\"board_id\":\""); body += pcBoardId;
+  body += F("\",\"boot_id\":\""); body += pcBootId;
+  body += F("\",\"http_peer_fencing\":"); body += webAccess.peerFenceReady() ? F("true") : F("false");
+  body += F(",\"hostname\":\""); body += hostname;
   body += F("\",\"ip\":\""); body += WiFi.softAPIP().toString();
   body += F("\",\"mode\":\""); body += modeName();
   body += F("\",\"avr_online\":"); body += avrOnline ? F("true") : F("false");
@@ -1683,7 +1687,7 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
 
 void registerAsyncOta() {
   RegisterFirmwareTransferRoutes(&server.native(), [](AsyncWebServerRequest *request) {
-    return webAccess.allowed(request) && WebAccess::sameOrigin(request);
+    return webAccess.allowed(request) && WebAccess::sameOrigin(request) && webAccess.peerAllowed(request);
   });
   auto info = [](AsyncWebServerRequest *request) {
     String body = F("{\"product\":\"PakarController\",\"product_id\":\"PakarController\",\"name\":\"");
@@ -1736,7 +1740,7 @@ void registerAsyncOta() {
     otaRebootAt = millis() + 2000;
   }, [](AsyncWebServerRequest *request, String, size_t index, uint8_t *data, size_t length, bool final) {
     // Upload callbacks run before the normal middleware pipeline: authorize before writing anything.
-    if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request)) return;
+    if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request) || !webAccess.peerAllowed(request)) return;
     static uint32_t nextOwner = 0;
     if (index == 0) {
       if (artifactReaders || remoteFirmware.busy() || otaOwner || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched || request->hasAttribute("ota_id")) {
@@ -2340,7 +2344,7 @@ void registerApi() {
           request->getAttribute("upload_error", String(F("A complete 32768-byte image could not be committed"))));
     },
     [](AsyncWebServerRequest *request, String, size_t index, uint8_t *data, size_t length, bool final) {
-      if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request)) return;
+      if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request) || !webAccess.peerAllowed(request)) return;
       static uint32_t nextUpload = 0;
       if (index == 0) {
         if (artifactReaders || remoteFirmware.busy() || avrUploadOwner || otaActive || otaRebootAt || server.processing() || request->hasAttribute("upload_id")) {
@@ -2699,6 +2703,16 @@ void setup() {
   // not in the human-facing host or recovery AP name.
   hostname = deviceIdentity.hostname();
   apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
+  uint8_t stationMac[6] = {}; WiFi.macAddress(stationMac);
+  bool macNonzero = false, macBroadcast = true;
+  for (uint8_t byte : stationMac) { macNonzero |= byte != 0; macBroadcast &= byte == 255; }
+  if (macNonzero && !macBroadcast && !(stationMac[0] & 1)) {
+    char board[21];
+    snprintf(board, sizeof(board), "esp8266-%02x%02x%02x%02x%02x%02x",
+        stationMac[0], stationMac[1], stationMac[2], stationMac[3], stationMac[4], stationMac[5]);
+    pcBoardId = board;
+  }
+  webAccess.configurePeerFence(pcBoardId, pcBootId);
   cloudServices.begin(hostname, handleCloudCommand, buildStatusJson,buildTelemetryJson);
   stream.begin(kStreamPort);
   telnetServer.begin();

@@ -16,6 +16,11 @@ No Wi-Fi password or other deployment secret belongs in GitHub.
 
 ## Existing source/test checkpoints (not release acceptance)
 
+- [x] ESP HTTP board/boot fence and TUI pinned mutations, with read-only fallback
+  for absent/invalid identity. 151 native tests, C++ validation, quality guards,
+  ESP8266 busy-wire and native release builds pass. See HTTP-PEER-FENCING.md.
+  Other clients/transports, AVR-only reset and physical reboot tests remain open.
+
 - [x] Native/Web connection incidents preserve distinct sources/causes and
   explicit-operation outcomes, count repeats, recover per source and back off
   read-only retries; native67948be live stable-row/screenshot proof recorded.

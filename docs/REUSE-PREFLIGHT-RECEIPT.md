@@ -1,5 +1,45 @@
 # Donor-first preflight receipt
 
+## HTTP board/boot fence continuation
+
+Started from clean pushed d450866; Build38147533498 and CodeQL38147533441
+both succeeded, no open Pakar PR or new Copilot review was observed. ASUS
+localhost1022 refused and ledboard.local did not resolve; no physical write.
+
+Consulted donor-audit/device-context; session.go lookup caught PC inventory
+drift. Selectively refreshed PCController (1234 paths); did not promote new
+files into reviewed decisions. Completely read actual internal/link/session.go
+and session_test.go, with original hashes in the comparison ledger. Consulted
+firmware_identity.go/test too, but their immutable build stamp is not a boot
+epoch: no import/read certificate is invented for that unused investigation.
+
+Adapted before/after-admission cancellation and matching-identity tests. Added
+real optional HTTP epoch headers and firmware rejection before dispatch and
+both pre-middleware upload writes. Missing/invalid identity keeps TUI read-only.
+Generic useful serial acquisition/quarantine/ACK/reset/event tests remain open,
+with exact code and reasons; Go HELLO schema is not copied as API negotiation.
+
+A broad cargo fmt invocation accidentally formatted unrelated native files.
+Restored ONLY this turn's formatting via reverse diffs/apply_patch (initial
+native checkout was clean), retained intended changes, then formatted the
+terminal module alone with skip_children. No checkout/reset/user edit removal.
+First evidence patch failed atomically on final-property comma formatting;
+used exact existing lines, without changing original donor hashes. Quality
+gates then caught the separate PU850 route target hashes/line anchors. Read
+affected upload/WS/SSDP/info/login consumers, checked every mapped target,
+rebound exactly six route references. No assertions deleted/bypassed.
+
+151 native tests pass, including same-host reboot/replacement, draft revocation,
+invalid/missing fence read-only, wire headers in cell/shared CLI paths and HTTP409
+stop/no replay. Production C++ validation tests and full quality phase pass.
+First ESP8266 busy-wire compile passed; SDK macAddress ignores its SDK return,
+so the MAC buffer was explicitly zero-initialized to fail closed on no output.
+Final compile/package results are recorded in FILE-COMPARISON-RECEIPTS.md.
+
+Current inventory4271, complete103, pending4168, parity-gap70. Two new fully read
+PC files are scoped parity gaps, not full transport parity. Existing GUI owner,
+settings and rollback remain untouched. No AVR/APK/donor rebuild or new cache.
+
 ## Minimized native command processing
 
 Prior turn was progress: clean0c3eca9 source was pushed, release/stage/probe
