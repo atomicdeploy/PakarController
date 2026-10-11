@@ -364,6 +364,15 @@ impl PakarControllerApp {
                 platform::windows_tray::TrayAction::Exit => self.dispatch(Command::Quit, ctx),
             }
         }
+        if !self.exiting
+            && self.config.close_to_tray
+            && self.tray.is_some()
+            && ctx.input(|i| i.viewport().close_requested())
+        {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+            self.save_workspace();
+        }
         self.poll();
         self.synchronize_context(ctx);
         self.process_cell_queue(ctx);
@@ -404,15 +413,6 @@ impl PakarControllerApp {
     fn draw_shell_contents(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         let snapshot = self.live_status().cloned();
-        if !self.exiting
-            && self.config.close_to_tray
-            && self.tray.is_some()
-            && ctx.input(|i| i.viewport().close_requested())
-        {
-            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
-            self.save_workspace();
-        }
         if ctx.input_mut(|i| {
             i.consume_key(
                 egui::Modifiers::CTRL | egui::Modifiers::SHIFT,

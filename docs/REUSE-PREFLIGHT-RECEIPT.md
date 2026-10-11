@@ -48,6 +48,38 @@ including strict typed minimize parsing. Source guards and exact comparison
 generation checks pass. Full production live lifecycle smoke is not inferred
 from these tests. Current0c source CI was confirmed success without waiting.
 
+48e0165 release completed4m37 and stage/help/version probes passed. Installed
+process72012 matched SHA597999E33688A5B0ACCECE9CDA5B8ECFBC2EDC5DCCEC87E822A4A6F4C19216BB;
+settings and five existing rollback executables were unchanged. Live CLI smoke
+then failed: screenshot request while observed minimized saved96x96 cropped UI,
+not a usable workspace image. Inspected and renamed only that owned5474-byte
+failure PNG to desktop-minimized-invalid.png; not accepted screenshot evidence.
+Show subsequently applied and observed minimized=false; no desktop input.
+Read locked egui ViewportInfo::visible, egui-winit viewport sampling and eframe
+Glow/epi logic/paint paths. Explicitly suppress screenshot requests/receives
+while invisible and reject below320x240 root results, retaining low-level2x2 PNG
+encoder tests. Added actual egui minimized-paint/stale-event regression instead
+of weakening the live timeout/no-file assertion. Close-to-tray cancellation also
+moved into non-rendering logic so hidden close handling does not require UI.
+
+48 CI CodeQL succeeded; build failed its native wiring assertion in the Web
+context test: it required the obsolete &ctx spelling/location after moving to
+native_logic(ctx). Full Web no-ACK/offline/mode/stale tests are retained; replace
+only that assertion with stricter non-render placement and no duplicate UI call.
+Comparison generation independently rejected the earlier post-check GitHub-doc
+append's stale target hash. Consulted actual REVIEW-COMMENT-AUDIT plus current
+GitHub doc and rebound only that target, keeping donor original bytes unchanged.
+Do not claim the48 build all-green. Source/fixture/native/live gates remain
+distinct and the updated native/live tests must execute before replacement.
+Final guarded Test of the visibility/stale-frame fix:130 passed/0failed/0ignored
+(2m51 compile,0.16s execution). Quality first stopped on a new unsupported
+partial-read label in the old screening ledger. Read its actual validator;
+used existing screened status with explicit partial scope rather than widening
+resolved statuses or certifying unread source. Regenerated only Pealayer and
+resumed the quality phase from its exact failed child; every preceding child
+had passed and every remaining child now passed. Full CI will rerun the phase.
+The strict production completeness gate still rejects unresolved donor files.
+
 ## Actual TM1637 bus recovery acceptance
 
 Reread complete live PCController LocalLib/SevenSegments.h and .cpp; both match

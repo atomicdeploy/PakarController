@@ -46,6 +46,20 @@ while hidden and times out without revealing it, restores via the same Show
 dispatcher and takes a correlated visible framebuffer. Definitions are not
 execution proof; record actual results separately.
 
+First deployed48e0165 live smoke failed on a96x96 minimized framebuffer;
+that inspected5474-byte failure is preserved as desktop-minimized-invalid.png.
+No usable capture or full live pass was claimed. Explicit visibility guards now
+cover request and receipt, plus320x240 minimum root-frame dimensions consistent
+with the imported Win32 target filter. Locked egui visible()/egui-winit sampling
+and eframe Glow/epi control paths were read to investigate the transition.
+The new actual native regression injects that stale minimized framebuffer even
+when an integration paints; it must neither save nor request more pixels.
+Native130/0/0 pass; low-level2x2 PNG encoder tests remain valid and unchanged.
+Close-to-tray cancellation also runs outside painting. The full source quality
+phase passed after correcting its relocated capability assertion and using the
+existing screened/noncertified ledger status, not relaxing completion checks.
+The final updated live smoke still needs execution.
+
 Remaining generic donor imports: complete app.rs/platform ownership review,
 config-revision/idle repaint scheduling, shell initialization/recovery,
 native dialog-host capture, correlated application-vs-queue acknowledgements,

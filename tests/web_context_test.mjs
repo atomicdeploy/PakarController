@@ -53,6 +53,10 @@ const nativeStatus=readFileSync(new URL('../desktop/src/ui/status_bar.rs',import
 for(const gate of ['status.avr_available','status.display_available','status.network_available','status.telemetry_available'])assert(nativeStatus.includes(gate));
 assert.match(source, /data-capability="display" hidden><h2>Live display<\/h2>[^\n]+id="displayValue"/,'Numeric display controls require Display, not Text');
 for(const feature of ['display','text','buzzer'])assert(native.includes(`if self.has_feature("${feature}")`));
-assert(native.includes('self.synchronize_context(&ctx)'));assert(native.includes('panel.available(self.peer_context())'));
+const nativeLogic=native.slice(native.indexOf('pub fn native_logic('),native.indexOf('pub fn draw_shell('));
+assert(nativeLogic.includes('self.synchronize_context(ctx)'), 'Capability authority must update without painting');
+assert(!native.slice(native.indexOf('fn draw_shell_contents(')).includes('self.synchronize_context('), 'No second authority update during painting');
+assert(readFileSync(new URL('../desktop/src/main.rs',import.meta.url),'utf8').includes('self.native_logic(ctx)'));
+assert(native.includes('panel.available(self.peer_context())'));
 assert(!native.includes('("Snake", "snake", 3)'),'Native mode UI is not a fixed table list');
 console.log('Actual Web peer context: no-ACK/offline, independent peripheral ACKs, Table discovery, mode filtering, stale revocation and cross-board rebind passed. Native wiring is source-checked only.');

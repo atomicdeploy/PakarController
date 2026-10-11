@@ -251,7 +251,7 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 - Retained: Actual living unversioned contract policy, additive optional data, stable feature IDs and strict critical identity/auth/routing/replay/deadline/integrity rejection applied across firmware and all clients.
 - Omitted/replaced code: `host.New/Start/Stop, Host.Call/Events and foreign-function host lifecycle ownership`. Disposition: **pending**. Reason: Pakar is ESP/AVR plus Rust/Flutter, not the Go embedded host. Importing the entire Go lifecycle without a shared-runtime adapter would create a second UART owner. Generic typed host lifecycle, notifications and library integration remain useful and pending; only the exact API policy is completed here.
 - Test-code evidence: `tests/living_contract_test.mjs:26 [UTF8-LF sha256=55c421193701d61071019dccee676a0f8e7388518992dbb30d0ac8c3ddcbb676; anchor=Living-contract guard negative fixtures]`.
-- Test-code evidence: `tests/web_context_test.mjs:50 [UTF8-LF sha256=37c4335f0ce0a1ed4e0543b42b5f88daef989fc23b0d3f04fd060e318498782d; anchor=Additive metadata does not select another generation]`.
+- Test-code evidence: `tests/web_context_test.mjs:50 [UTF8-LF sha256=6ffe93034ab3cd0e92608fb8b4137621373c84e958c599904ddb4fea0b125080; anchor=Additive metadata does not select another generation]`.
 - Remaining: Compare and integrate applicable canonical host lifecycle and typed RPC/event ownership through an explicit adapter; not certified from this policy-only change.
 
 ### PCController: `Tools/Controller/internal/ipcjson/rest_routes_test.go`
@@ -283,7 +283,7 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 
 Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `a5d7366279057e0868478846c6bbe92eda4209a6bdbcbc16e1c149e57dfe035e`.
 
-- Target: `tests/web_context_test.mjs:22 [UTF8-LF sha256=37c4335f0ce0a1ed4e0543b42b5f88daef989fc23b0d3f04fd060e318498782d; anchor=const manifest=]`.
+- Target: `tests/web_context_test.mjs:22 [UTF8-LF sha256=6ffe93034ab3cd0e92608fb8b4137621373c84e958c599904ddb4fea0b125080; anchor=const manifest=]`.
 - Target: `mobile/test/peer_context_test.dart:12 [UTF8-LF sha256=8fd25b7d5f1b6392f077f72f1790ff80af2b7f54371cd35180286a34ddc8dbc5; anchor=No peer ACK cannot be inferred]`.
 - Target: `mobile/test/widget_test.dart:111 [UTF8-LF sha256=fc194efef9dddcf5260af2d824d79aa3343bc6deb656544d269a78d83820f3d7; anchor=Unacknowledged board has no Table]`.
 - Target: `tests/device_context_test.cpp:4 [UTF8-LF sha256=aea06975d4e027b0804c0a78c0385aefe1b7766418cd7835f22e80ea361bc650; anchor=int main(]`.
@@ -292,7 +292,7 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 - Retained: Equivalent Flutter fixture cases execute actual capability parsing, unsupported schema/geometry, display measured ACK, per-feature cards, identity change and phone/tablet navigation; API fixtures reject pending reads/queued writes after owner or credential changes.
 - Omitted/replaced code: `Vitest/liveSnapshot/emptySnapshot fixture ownership`. Disposition: **replaced**. Reason: Node VM executes embedded Web code, C++ executes firmware policy, and Rust has USB adapter tests. React/Vitest would target a nonexistent React owner in this embedded surface.
 - Omitted/replaced code: `Valid/invalid INA219, temperature, PWM, LCD, Bluetooth, relay/RF/statusLED fixture cases`. Disposition: **pending**. Reason: Restore exact bounded-invalid-value cases with the genuine PCController adapter; those peripherals are currently absent, not replaced by synthetic zero fixtures.
-- Test-code evidence: `tests/web_context_test.mjs:48 [UTF8-LF sha256=37c4335f0ce0a1ed4e0543b42b5f88daef989fc23b0d3f04fd060e318498782d; anchor=Unsupported geometry is not forced]`.
+- Test-code evidence: `tests/web_context_test.mjs:48 [UTF8-LF sha256=6ffe93034ab3cd0e92608fb8b4137621373c84e958c599904ddb4fea0b125080; anchor=Unsupported geometry is not forced]`.
 - Test-code evidence: `tests/device_context_test.cpp:4 [UTF8-LF sha256=aea06975d4e027b0804c0a78c0385aefe1b7766418cd7835f22e80ea361bc650; anchor=int main(]`.
 - Remaining: Rust tests remain cache-budget blocked; generic adapter sensor/profile tests and physical/native acceptance remain #10.
 
@@ -310,7 +310,7 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 - Retained: Flutter now adapts the same ready AND advertised schema-1 conjunction, table geometry and individual ACK policy; selected owner revisions reject old replies and retained dialogs. Unknown/stale peers have only client connection/overview navigation.
 - Omitted/replaced code: `Snapshot/status/hello fields and compact status flag fallback`. Disposition: **replaced**. Reason: Pakar JSON and append-only USB share a schema-1 normalized manifest. AVR HELLO and display-status ACK are aggregated on ESP; copying PCController bit values would alias different protocols.
 - Omitted/replaced code: `bounded, ina219, pwm, temperatureLED, temperatureBTAudio, lcd, bluetoothAudio, relays, rf, statusLED and invalid measurement fields`. Disposition: **pending**. Reason: Those drivers are absent on the current pair. A real PCController adapter must preserve their detection, bounds and invalid-value distinctions later. No fabricated controls are displayed.
-- Test-code evidence: `tests/web_context_test.mjs:24 [UTF8-LF sha256=37c4335f0ce0a1ed4e0543b42b5f88daef989fc23b0d3f04fd060e318498782d; anchor=No inferred board kind or controls]`.
+- Test-code evidence: `tests/web_context_test.mjs:24 [UTF8-LF sha256=6ffe93034ab3cd0e92608fb8b4137621373c84e958c599904ddb4fea0b125080; anchor=No inferred board kind or controls]`.
 - Test-code evidence: `mobile/test/peer_context_test.dart:28 [UTF8-LF sha256=8fd25b7d5f1b6392f077f72f1790ff80af2b7f54371cd35180286a34ddc8dbc5; anchor=Independent ACKs and measured display gate]`.
 - Test-code evidence: `mobile/test/widget_test.dart:260 [UTF8-LF sha256=fc194efef9dddcf5260af2d824d79aa3343bc6deb656544d269a78d83820f3d7; anchor=Peer ACK loss removes table and independent cards]`.
 - Test-code evidence: `mobile/test/api_test.dart:11 [UTF8-LF sha256=fe3ebf61af9206d9e160668662115f9f9ce1918f87668ec02ff2cbbd0637bd9f; anchor=Changed endpoint discards an in-flight status]`.
@@ -408,7 +408,7 @@ Verdict: **equivalent-behavior**. Revision: `3265bf80b6f7543831e096a05b04c3b58b7
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `7a91d9fa8778383ee37e33d861ceebc5ab210e46bedab6af8be82d56c27523cc`.
 
 - Target: `tools/audit-github-conversations.mjs:59 [UTF8-LF sha256=d2b9dff0e72c8fa58a5982cde925e550bd159c22d207ac267f5991c68d57656a; anchor=export function collect]`.
-- Target: `docs/GITHUB-COORDINATION.md:1 [UTF8-LF sha256=f757de831c79a19a2281a90fbf9708a5705ee91463b2ab106da6ded4ca4b9681; anchor=# Conversation-aware integration]`.
+- Target: `docs/GITHUB-COORDINATION.md:1 [UTF8-LF sha256=cbfea73af3d4c87e0d3bb7829940bc36c9bbc004797aae66e5314a5286fafd4b; anchor=# Conversation-aware integration]`.
 - Retained: Actual exhaustive review-thread/review-summary/standalone-comment audit procedure adapted into read-only paginated GitHub collection, hash-bound manual scope decisions, unresolved/outdated preservation and quota-versus-completed-review distinction. Used on every state of Pakar, Pealayer and PCController.
 - Omitted/replaced code: `Historical media thumbnails, MPV surface and DLL basename, timeline/cue migration, audio delay and media picking fixes`. Disposition: **not-applicable**. Reason: Pakar is an mpv-free controller and does not own donor playback/media/timeline models. Generic staging safety, keyboard ownership, error correlation, authentication and service-worker origin lessons remain applicable and tracked independently.
 - Omitted/replaced code: `Complete semantic disposition of every historical issue/review and full DNS-rebinding, actuator/persistence, UI/PWA/physical acceptance`. Disposition: **pending**. Reason: All pages are collected but fetching does not mean reading or implementing them. Only explicitly hash-bound reviewed scopes are marked; every unread record and source-file import remains pending.
@@ -448,7 +448,7 @@ Verdict: **scoped-improvement**. Revision: `3265bf80b6f7543831e096a05b04c3b58b77
 - Retained: Actual donor PrintWindow P/Invoke, minimized/window-bounds validation, DPI awareness, System.Drawing PNG lifecycle and read-only behavior.
 - Omitted/replaced code: `Get-Process -Name foreground filter`. Disposition: **replaced**. Reason: Explicit expected PID and window-owner revalidation remove ambiguity between production and fixtures; screen fallback checks foreground ownership without changing focus.
 - Omitted/replaced code: `RenderOccludedWindow branching and unconditional Bitmap.Save`. Disposition: **replaced**. Reason: Capability-gated egui framebuffer is tried first, then PrintWindow/BitBlt and verified foreground pixels. Blank images and overwrites are rejected.
-- Test-code evidence: `tests/screenshot_harness_test.mjs:9 [UTF8-LF sha256=58f76c58e02a00f48ff7aed64321007a30f49d82e7bfaefbf936441929b7758b; anchor=for(const forbidden]`.
+- Test-code evidence: `tests/screenshot_harness_test.mjs:9 [UTF8-LF sha256=9280c4441d44e2a070b81d3e22a24188621db226de01e93c125c205be4e9744a; anchor=for(const forbidden]`.
 - Scoped advantage: PID-bound, no-overwrite capture with an app-owned framebuffer and automatic read-only Win32 fallback; runtime evidence is separate from source guards.
 
 ### Pealayer: `scripts/check-crate-boundary.mjs`
@@ -544,14 +544,14 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 - Omitted/replaced code: `Locale/Theme arrays, PreferencesTab/Icon, AppName/Branding, WorkspaceDockLayout and per-surface matrix manifest`. Disposition: **pending**. Reason: Config-driven Pakar CLI surfaces/isolated profiles exist, but the full multi-locale/theme/icon/width matrix and hashed per-capture manifest runner remain useful unported harness work.
 - Omitted/replaced code: `temporary GUID profile cleanup, process CloseMainWindow/Kill and generated_at_utc`. Disposition: **replaced**. Reason: Stable named evidence/profiles are retained for debugging rather than deleted. Only verified fixture processes are stopped; production replacement uses graceful typed IPC and avoids timestamp/suffix deliverables.
 - Omitted/replaced code: `native resize/scroll/client-coordinate scenario parameters`. Disposition: **pending**. Reason: Model/painter tests and selected-surface captures do not replace the full interactive narrow/wide scenario matrix. Native live gesture acceptance remains separate.
-- Test-code evidence: `tests/screenshot_harness_test.mjs:9 [UTF8-LF sha256=58f76c58e02a00f48ff7aed64321007a30f49d82e7bfaefbf936441929b7758b; anchor=for(const forbidden]`.
+- Test-code evidence: `tests/screenshot_harness_test.mjs:9 [UTF8-LF sha256=9280c4441d44e2a070b81d3e22a24188621db226de01e93c125c205be4e9744a; anchor=for(const forbidden]`.
 - Remaining: Complete generic locale/theme/icon/width capture matrix and manifest receipts; verify native interaction scenarios.
 
 ### Pealayer: `src/application_shortcuts.rs`
 
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `1f173bef8acc2904eac5b0a91407aa4f7629ce65c88ea3a8ac78f8c13321d203`.
 
-- Target: `desktop/src/ui/shell.rs:436 [UTF8-LF sha256=e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6; anchor=egui::Key::F11]`.
+- Target: `desktop/src/ui/shell.rs:436 [UTF8-LF sha256=d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90; anchor=egui::Key::F11]`.
 - Retained: Default Preferences Ctrl+, and device configuration Ctrl+Shift+, navigation exist; F11 fullscreen is restored with the shared typed dispatcher. These are not equivalent to the donor persisted rebinding model.
 - Omitted/replaced code: `ApplicationShortcuts persisted fields, parse_shortcut, entries, validate, action_for_event and their non-media tests`. Disposition: **pending**. Reason: The foundation hardcoded its accelerators and omitted the reusable binding model. No accepted reason justifies leaving rebinding out. The actual donor depends on KeyChord and hardware_shortcuts match/key-code helpers, which must be ported and tested with controller-specific typed actions rather than guessed labels.
 - Omitted/replaced code: `take_frame_step_shortcut and frame-step tests`. Disposition: **not-applicable**. Reason: These consume Ctrl+Left/Right for media frame stepping and timeline transport. Those business domains were explicitly removed; Pakar must not hijack ordinary text word navigation for nonexistent video frames.
@@ -626,7 +626,7 @@ Verdict: **equivalent-file**. Revision: `3265bf80b6f7543831e096a05b04c3b58b77058
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `c252864d80912a03bca718b0a13d721fda2e8f7378c033f44619590a82380fd2`.
 
 - Target: `desktop/src/capabilities.rs:7 [UTF8-LF sha256=cc3e3b3ffbfb3c776639b64326ddd90125285a389688dcc56ec147b3cecf80ed; anchor=pub struct Manifest]`.
-- Target: `desktop/src/ui/shell.rs:283 [UTF8-LF sha256=e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6; anchor=fn synchronize_context(]`.
+- Target: `desktop/src/ui/shell.rs:283 [UTF8-LF sha256=d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90; anchor=fn synchronize_context(]`.
 - Target: `desktop/src/ui/device_settings.rs:21 [UTF8-LF sha256=b339f425a20b873d7b8230dd24619e682334681e7cb72a7c0dabcfc42140d2c1; anchor=pub(crate) fn available(]`.
 - Target: `docs/DEVICE-CONTEXT.md:71 [UTF8-LF sha256=ad4669cbe23b48b4f6ee22634c21c015cd5b9767b8006d7316ad04d4ee99648b; anchor=## Exact reuse and remaining useful code]`.
 - Retained: Reread all 1280 lines through EOF. Prior authoritative overview/capability/front-panel adaptation remains; shared dropdown dependency is now imported, but full typed board settings and ACK consumers remain pending.
@@ -638,7 +638,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 - Omitted/replaced code: `front_panel_key_button and acknowledged menu/key/layout readback`. Disposition: **pending**. Reason: Nine-key state exists, but full remotely navigable front-panel/menu/key commands need per-board descriptors and donor ACK tests. Incompatible labels do not justify dropping reusable command helpers.
 - Omitted/replaced code: `seven_segment_preview, section/row drawing`. Disposition: **replaced**. Reason: Existing Pakar seven_segment/dialog primitives own preview and geometry. A duplicate renderer would fork styling; fresh peer gates wrap the current owners. Native paint acceptance remains pending.
 - Omitted/replaced code: `DropdownUiExt / dropdown::ComboBox board enum selector integration`. Disposition: **pending**. Reason: The tracked shared dropdown module is now fully read and imported, with native consumers and donor tests. This does not implement every generic consumer contract in this file: render-rate policy, workspace/language/direction actions and complete board EEPROM enum ownership remain independently pending. Native execution and visual acceptance are reported separately.
-- Test-code evidence: `tests/web_context_test.mjs:58 [UTF8-LF sha256=37c4335f0ce0a1ed4e0543b42b5f88daef989fc23b0d3f04fd060e318498782d; anchor=Native wiring is source-checked only]`.
+- Test-code evidence: `tests/web_context_test.mjs:62 [UTF8-LF sha256=6ffe93034ab3cd0e92608fb8b4137621373c84e958c599904ddb4fea0b125080; anchor=Native wiring is source-checked only]`.
 - Test-code evidence: `desktop/src/capabilities.rs:186 [UTF8-LF sha256=cc3e3b3ffbfb3c776639b64326ddd90125285a389688dcc56ec147b3cecf80ed; anchor=fn no_profile_or_individual_ack_means_no_controls]`.
 - Remaining: Typed PCController adapter, donor tests and native runtime proof remain #10/#3/#6. No whole-file equivalence or application superiority claimed.
 - Remaining: Shared dropdown dependency now has a complete-read comparison; preserve remaining generic consumer contracts and verify native runtime without claiming whole-file parity.
@@ -681,7 +681,7 @@ Verdict: **scoped-improvement**. Revision: `3265bf80b6f7543831e096a05b04c3b58b77
 - Target: `desktop/src/ui/connection_controls.rs:45 [UTF8-LF sha256=75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e; anchor=pub fn websocket(]`.
 - Target: `desktop/src/ui/preferences.rs:99 [UTF8-LF sha256=18372200696f758a22fe19dd155a74a5125d6afef0d46b73acc4101adb46c225; anchor=super::dropdown::ComboBox::from_id_salt("theme")]`.
 - Target: `desktop/src/ui/device_settings.rs:36 [UTF8-LF sha256=b339f425a20b873d7b8230dd24619e682334681e7cb72a7c0dabcfc42140d2c1; anchor=super::dropdown::ComboBox]`.
-- Target: `desktop/src/ui/shell.rs:984 [UTF8-LF sha256=e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6; anchor=super::dropdown::ComboBox]`.
+- Target: `desktop/src/ui/shell.rs:984 [UTF8-LF sha256=d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90; anchor=super::dropdown::ComboBox]`.
 - Retained: Read all 631 donor lines through EOF and locked egui 0.36.2 ComboBox factory identity. Actual focus owner, enabled/selected entries, search focus, Arrow/Home/End/Enter navigation, disabled skipping, full-width fixed 32px rows, inside focus stroke, nested menu framing and closed-popup cleanup imported, not restyled substitutes. All three donor native tests retained.
 - Omitted/replaced code: `Pealayer active-dropdown ID`. Disposition: **replaced**. Reason: Product-specific context key renamed to Pakar. No generic helper or donor assertion removed.
 - Test-code evidence: `desktop/src/ui/dropdown.rs:440 [UTF8-LF sha256=f7b1532924e3e3ae87d72d91983e7e49f48fed2efb9b01aede48d1a9734f1fa3; anchor=fn dropdown_arrows_seed_focus_skip_disabled_commit_enter_and_cancel_escape()]`.
@@ -715,7 +715,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `fba85edd503798868acc5527600b2ee52326339816c5b73e9926d1d7b0929384`.
 
 - Target: `desktop/src/ui/icons.rs:573 [UTF8-LF sha256=d9e95867777af0771f64322fef26958558c4c976cd3bdec5377a41754550a8da; anchor=pub fn searchable_workspace_icon_picker(]`.
-- Target: `desktop/src/ui/shell.rs:1805 [UTF8-LF sha256=e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6; anchor=icons::searchable_workspace_icon_picker]`.
+- Target: `desktop/src/ui/shell.rs:1805 [UTF8-LF sha256=d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90; anchor=icons::searchable_workspace_icon_picker]`.
 - Retained: Production Phosphor vocabulary, stable names/kind fallback, searchable list/grid picker, UTF-8-safe match highlighting, bounded popups, disclosure/submenu helpers.
 - Retained: Actual donor regression tests restored: eleven tests, including interactive egui-frame search/select/reopen, both themes and popup width.
 - Omitted/replaced code: `every_native_icon_editor_uses_the_shared_searchable_picker donor-only editor path list`. Disposition: **replaced**. Reason: That assertion references Pealayer media/4D editor files not present in this product. Replaced only its call-site assertion with Pakar's actual workspace editor; the other ten tests were imported. This does not excuse missing generic editor features elsewhere.
@@ -730,7 +730,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `18e255a5ccc65dfa0588eac10283c7c1f5fe33ea63bb3e07bd599e30a0cf19c3`.
 
 - Target: `desktop/src/ui/menu.rs:9 [UTF8-LF sha256=485783deefe484f7d413e30f3020dc3c2355aa564ca038c39741f6149271420e; anchor=pub fn top_menu_button<R>(]`.
-- Target: `desktop/src/ui/shell.rs:463 [UTF8-LF sha256=e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6; anchor=menu::top_menu_button(ui, crate::ui::i18n::text("File")]`.
+- Target: `desktop/src/ui/shell.rs:463 [UTF8-LF sha256=d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90; anchor=menu::top_menu_button(ui, crate::ui::i18n::text("File")]`.
 - Target: `desktop/src/ui/connection_controls.rs:45 [UTF8-LF sha256=75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e; anchor=pub fn websocket(]`.
 - Target: `docs/NATIVE-MENU-COMPARISON.md:32 [UTF8-LF sha256=7319a38240f9c23a43f5a18c2f20d05b0c9d5ff273cf0e8f28b2ba98aa1aabd8; anchor=## Exact donor menu mapping and remaining decisions]`.
 - Retained: Actual top_menu_button body imported with only application state ID/public visibility adaptation; all four production menu headings use active-menu sibling hover switching.
@@ -746,7 +746,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 - Test-code evidence: `desktop/src/ui/menu.rs:69 [UTF8-LF sha256=485783deefe484f7d413e30f3020dc3c2355aa564ca038c39741f6149271420e; anchor=fn shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes()]`.
 - Test-code evidence: `desktop/src/ui/menu.rs:192 [UTF8-LF sha256=485783deefe484f7d413e30f3020dc3c2355aa564ca038c39741f6149271420e; anchor=fn sibling_hover_switches_only_an_already_open_menu_and_clears_closed_state()]`.
 - Test-code evidence: `tests/native_menu_test.mjs:12 [UTF8-LF sha256=80ac61041de322c2c0e2c0fad379a74e6e89d02724f1b80f2d9fa6200c7ef937; anchor=actual donor helper must match after application ID/visibility/whitespace adaptation]`.
-- Test-code evidence: `tests/native_render_lifecycle_test.mjs:27 [UTF8-LF sha256=89fafbd23df1f2a55c71bd5d8c8466166007e9d43306c1805cc03fad0e4d6b03; anchor=const compact=source=>source.replace]`.
+- Test-code evidence: `tests/native_render_lifecycle_test.mjs:27 [UTF8-LF sha256=4065ca7240e665786a3e6bfbebde97550a908ca8b1f0a4a7c60f9dfa4dd69b09; anchor=const compact=source=>source.replace]`.
 - Remaining: Restore remaining useful generic menu contracts above against actual dependencies; see exact function-level mapping in NATIVE-MENU-COMPARISON.md. Native CI paint/pointer tests and running-app visual acceptance are separate from source guards.
 - Remaining: Shared dropdown dependency now has a complete-read comparison; preserve remaining generic consumer contracts and verify native runtime without claiming whole-file parity.
 

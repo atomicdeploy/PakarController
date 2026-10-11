@@ -28,7 +28,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6",
+      "sha256": "d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -186,7 +186,7 @@
       "preserved":["Actual exhaustive review-thread/review-summary/standalone-comment audit procedure adapted into read-only paginated GitHub collection, hash-bound manual scope decisions, unresolved/outdated preservation and quota-versus-completed-review distinction. Used on every state of Pakar, Pealayer and PCController."],
       "targets":[
         {"path":"tools/audit-github-conversations.mjs","sha256":"d2b9dff0e72c8fa58a5982cde925e550bd159c22d207ac267f5991c68d57656a","anchor":"export function collect"},
-        {"path":"docs/GITHUB-COORDINATION.md","sha256":"f757de831c79a19a2281a90fbf9708a5705ee91463b2ab106da6ded4ca4b9681","anchor":"# Conversation-aware integration"}
+        {"path":"docs/GITHUB-COORDINATION.md","sha256":"cbfea73af3d4c87e0d3bb7829940bc36c9bbc004797aae66e5314a5286fafd4b","anchor":"# Conversation-aware integration"}
       ],
       "proof":[{"path":"tests/github_conversation_audit_test.mjs","sha256":"d71ee1e531770b756ab7f5269f9b6cb6d1bf75f7d17cd6c5e71e1529712ae7bd","anchor":"Paginated GitHub audit"}],
       "omissions":[
@@ -240,7 +240,7 @@
         },
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "37c4335f0ce0a1ed4e0543b42b5f88daef989fc23b0d3f04fd060e318498782d",
+          "sha256": "6ffe93034ab3cd0e92608fb8b4137621373c84e958c599904ddb4fea0b125080",
           "anchor": "Additive metadata does not select another generation"
         }
       ],
@@ -1667,7 +1667,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "37c4335f0ce0a1ed4e0543b42b5f88daef989fc23b0d3f04fd060e318498782d",
+          "sha256": "6ffe93034ab3cd0e92608fb8b4137621373c84e958c599904ddb4fea0b125080",
           "anchor": "No inferred board kind or controls"
         },
         {
@@ -1706,7 +1706,7 @@
       "targets": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "37c4335f0ce0a1ed4e0543b42b5f88daef989fc23b0d3f04fd060e318498782d",
+          "sha256": "6ffe93034ab3cd0e92608fb8b4137621373c84e958c599904ddb4fea0b125080",
           "anchor": "const manifest="
         },
         {
@@ -1748,7 +1748,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "37c4335f0ce0a1ed4e0543b42b5f88daef989fc23b0d3f04fd060e318498782d",
+          "sha256": "6ffe93034ab3cd0e92608fb8b4137621373c84e958c599904ddb4fea0b125080",
           "anchor": "Unsupported geometry is not forced"
         },
         {
@@ -1777,7 +1777,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6",
+          "sha256": "d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90",
           "anchor": "fn synchronize_context("
         },
         {
@@ -1835,7 +1835,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "37c4335f0ce0a1ed4e0543b42b5f88daef989fc23b0d3f04fd060e318498782d",
+          "sha256": "6ffe93034ab3cd0e92608fb8b4137621373c84e958c599904ddb4fea0b125080",
           "anchor": "Native wiring is source-checked only"
         },
         {
@@ -2120,7 +2120,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6",
+          "sha256": "d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -2193,7 +2193,7 @@
         },
         {
           "path": "tests/native_render_lifecycle_test.mjs",
-          "sha256": "89fafbd23df1f2a55c71bd5d8c8466166007e9d43306c1805cc03fad0e4d6b03",
+          "sha256": "4065ca7240e665786a3e6bfbebde97550a908ca8b1f0a4a7c60f9dfa4dd69b09",
           "anchor": "const compact=source=>source.replace"
         }
       ],
@@ -2585,7 +2585,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6",
+          "sha256": "d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -3003,7 +3003,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "e7c2cd23d24141b5da46663ca047bb69ad5ae4ab0187c19caf0e4c9d9420b3c6",
+          "sha256": "d47281ca76de12ee1a463276c7464f667c4c30661cb0dc4d6b72b1be00dbdc90",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -3820,7 +3820,7 @@
       "proof": [
         {
           "path": "tests/screenshot_harness_test.mjs",
-          "sha256": "58f76c58e02a00f48ff7aed64321007a30f49d82e7bfaefbf936441929b7758b",
+          "sha256": "9280c4441d44e2a070b81d3e22a24188621db226de01e93c125c205be4e9744a",
           "anchor": "for(const forbidden"
         }
       ],
@@ -3875,7 +3875,7 @@
       "proof": [
         {
           "path": "tests/screenshot_harness_test.mjs",
-          "sha256": "58f76c58e02a00f48ff7aed64321007a30f49d82e7bfaefbf936441929b7758b",
+          "sha256": "9280c4441d44e2a070b81d3e22a24188621db226de01e93c125c205be4e9744a",
           "anchor": "for(const forbidden"
         }
       ],

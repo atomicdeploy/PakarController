@@ -64,6 +64,12 @@ impl State {
         serde_json::json!({"pending":self.pending.is_some(),"request_id":self.nonce,"path":self.request_path,"result":self.result,"backend":"egui framebuffer"})
     }
     pub fn receive(&mut self, ctx: &egui::Context) {
+        if ctx.input(|i| i.viewport().visible() == Some(false)) {
+            // Windows can still deliver a tiny minimized framebuffer on a
+            // transition. It is not a screenshot of the application workspace.
+            if let Some(pending) = &mut self.pending { pending.requested = false; }
+            return;
+        }
         let images = ctx.input(|i| {
             i.events
                 .iter()
@@ -87,7 +93,7 @@ impl State {
                 .collect::<Vec<_>>()
         });
         for (id, image) in images {
-            if self
+            if image.size[0] >= 320 && image.size[1] >= 240 && self
                 .pending
                 .as_ref()
                 .is_some_and(|p| p.id == id && p.requested)
@@ -116,6 +122,7 @@ impl State {
     }
     pub fn after_frame(&mut self, ctx: &egui::Context) {
         self.tick(ctx);
+        if ctx.input(|i| i.viewport().visible() == Some(false)) { return; }
         let Some(pending) = &mut self.pending else {
             return;
         };
@@ -161,6 +168,25 @@ fn save_png(path: &str, image: &egui::ColorImage) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn minimized_capture_does_not_emit_or_accept_even_if_integration_paints() {
+        let mut state = State::default();
+        let path = std::env::temp_dir().join("pakar-minimized-rejection-test.png").to_string_lossy().into_owned();
+        state.request(path.clone()).unwrap();
+        let pending = state.pending.as_mut().unwrap();
+        pending.started = Instant::now() - Duration::from_millis(500);
+        pending.requested = true; // An earlier visible pass asked for pixels.
+        let ctx = egui::Context::default();
+        let mut input = egui::RawInput::default();
+        input.viewports.get_mut(&egui::ViewportId::ROOT).unwrap().minimized = Some(true);
+        input.events.push(egui::Event::Screenshot { viewport_id: egui::ViewportId::ROOT, user_data: egui::UserData::new(state.nonce), image: std::sync::Arc::new(egui::ColorImage::new([96,96],vec![egui::Color32::GRAY;96*96])) });
+        let mut output = ctx.run_ui(input, |ui| { state.receive(ui.ctx()); state.after_frame(ui.ctx()); });
+        output.textures_delta.clear();
+        assert!(output.viewport_output.values().all(|v| v.commands.iter().all(|c| !matches!(c,egui::ViewportCommand::Screenshot(_)))));
+        assert!(state.pending.is_some());
+        assert!(!state.pending.as_ref().unwrap().requested);
+        assert!(!Path::new(&path).exists());
+    }
     #[test]
     fn hidden_viewport_deadline_and_request_identity_do_not_need_paint() {
         let mut state = State::default();

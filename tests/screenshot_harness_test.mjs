@@ -13,4 +13,7 @@ assert(read('desktop/src/ui/shell.rs').includes('A capture request never changes
 for(const token of ['taskBeforeRequestId','taskObservedPending','taskCorrelated','screenshot.path -eq $taskOutput']) assert(capture.includes(token),token);
 assert(native.includes('pub fn tick('));
 assert(native.includes('hidden_viewport_deadline_and_request_identity_do_not_need_paint'));
+assert(native.includes('minimized_capture_does_not_emit_or_accept_even_if_integration_paints'));
+assert.equal(native.match(/viewport\(\)\.visible\(\) == Some\(false\)/g)?.length,2);
+assert(native.includes('image.size[0] >= 320 && image.size[1] >= 240'));
 console.log('Screenshot harness wiring, no-overwrite, PID ownership and read-only Win32 fallback contracts pass (source guards; runtime PNG proof is separate).');
