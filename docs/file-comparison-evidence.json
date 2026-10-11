@@ -1132,7 +1132,7 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "c2bc9c995b4c3717a6e66916f31cef5b8010730e146b4e4dfe8ee437a62c80a2",
+          "sha256": "ba243a747c6f01102bfd6a930a202c9369a6ed618a8c157e2ab1354d5de9aa33",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {
@@ -1204,7 +1204,7 @@
       "targets": [
         {
           "path": ".github/workflows/codeql.yml",
-          "sha256": "cb50de1c3e72fc9eeeb4931e82a519331857ca4f19e928f9964a649f0769718e",
+          "sha256": "71540360da38622faaa237eec4f1276d5b3f67853754d8a221149e8c0f2726ab",
           "anchor": "name: \"🛡️ Security · CodeQL\""
         }
       ],
