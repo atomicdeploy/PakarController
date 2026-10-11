@@ -120,7 +120,7 @@ impl PakarControllerApp {
             self.device_settings.message = error;
             return;
         }
-        if path == "/api/v1/device/name" {
+        if path == "/api/device/name" {
             let dirty = self.identity_saved.as_ref().is_some_and(|(host,label)|
                 self.device_name.as_ref()!=Some(host) || self.board_display_name.as_ref()!=Some(label));
             if dirty { return; } // Periodic readback must not erase a name draft.
@@ -264,7 +264,7 @@ impl PakarControllerApp {
         self.last_mapping_poll = Instant::now() - Duration::from_secs(30);
     }
     pub(crate) fn peer_context(&self) -> Option<&crate::capabilities::Manifest> {
-        self.live_status()?.capabilities.as_ref().filter(|c| c.schema == 1)
+        self.live_status()?.capabilities.as_ref().filter(|c| c.known())
     }
     pub(crate) fn has_feature(&self, feature: &str) -> bool {
         self.peer_context().is_some_and(|c| c.has(feature))
@@ -895,7 +895,7 @@ impl PakarControllerApp {
             _ => 0,
         };
         self.action(
-            "/api/v1/cell",
+            "/api/cell",
             vec![
                 ("id".into(), id.to_string()),
                 ("state".into(), state.into()),
@@ -922,7 +922,7 @@ impl PakarControllerApp {
                         .clicked()
                     {
                         self.action(
-                            "/api/v1/mode",
+                            "/api/mode",
                             vec![("value".into(), name.into())],
                             OP_SET_MODE,
                             vec![value],
@@ -1004,7 +1004,7 @@ impl PakarControllerApp {
                         _ => 0,
                     };
                     self.action(
-                        "/api/v1/effect",
+                        "/api/effect",
                         vec![("value".into(), self.pattern.clone())],
                         OP_PATTERN,
                         vec![value],
@@ -1015,7 +1015,7 @@ impl PakarControllerApp {
                     .changed()
                 {
                     self.action(
-                        "/api/v1/brightness",
+                        "/api/brightness",
                         vec![("value".into(), self.brightness.to_string())],
                         OP_BRIGHTNESS,
                         vec![self.brightness],
@@ -1036,7 +1036,7 @@ impl PakarControllerApp {
                     ] {
                         if ui.button(icon).clicked() {
                             self.post(
-                                "/api/v1/snake/direction",
+                                "/api/snake/direction",
                                 vec![("value".into(), direction.into())],
                             );
                         }
@@ -1076,7 +1076,7 @@ impl PakarControllerApp {
                 ui.add(egui::DragValue::new(&mut self.display_value).range(-999..=9999));
                 if ui.button(crate::ui::i18n::text("Show number")).clicked() {
                     self.action(
-                        "/api/v1/display",
+                        "/api/display",
                         vec![("value".into(), self.display_value.to_string())],
                         OP_DISPLAY,
                         self.display_value.to_le_bytes().to_vec(),
@@ -1153,7 +1153,7 @@ impl PakarControllerApp {
                     .clicked()
                 {
                     self.action(
-                        "/api/v1/display",
+                        "/api/display",
                         self.config.display.form(&self.display_text),
                         OP_DISPLAY,
                         payload.clone().unwrap(),
@@ -1164,7 +1164,7 @@ impl PakarControllerApp {
                     && ui.button(crate::ui::i18n::text("Stop text")).clicked()
                 {
                     self.action(
-                        "/api/v1/display",
+                        "/api/display",
                         vec![("release".into(), "true".into())],
                         OP_DISPLAY,
                         crate::display::RELEASE.to_vec(),
@@ -1191,7 +1191,7 @@ impl PakarControllerApp {
                             }
                             if ui.button(format!("{}  {name}", icons::PLAY)).clicked() {
                                 self.action(
-                                    "/api/v1/audio",
+                                    "/api/audio",
                                     vec![("cue".into(), cue.into())],
                                     OP_AUDIO,
                                     vec![audio::id(cue).expect("catalog ID")],
@@ -1224,7 +1224,7 @@ impl PakarControllerApp {
                     let mut p = self.buzzer_frequency.to_le_bytes().to_vec();
                     p.extend(self.buzzer_duration.to_le_bytes());
                     self.action(
-                        "/api/v1/buzzer",
+                        "/api/buzzer",
                         vec![
                             ("frequency".into(), self.buzzer_frequency.to_string()),
                             ("duration_ms".into(), self.buzzer_duration.to_string()),
@@ -1296,7 +1296,7 @@ impl PakarControllerApp {
                                 s.active_outputs & !(1 << bit)
                             };
                             self.action(
-                                "/api/v1/outputs",
+                                "/api/outputs",
                                 vec![("mask".into(), mask.to_string())],
                                 OP_OUTPUT_MASK,
                                 vec![mask],
@@ -1567,7 +1567,7 @@ impl PakarControllerApp {
                     if dialog::primary_action_button(ui, icons::ARROW_COUNTER_CLOCKWISE, "Reset")
                         .clicked()
                     {
-                        self.action("/api/v1/game/reset", vec![], OP_RESET, vec![]);
+                        self.action("/api/game/reset", vec![], OP_RESET, vec![]);
                         self.confirm_reset = false;
                     }
                     if dialog::action_button(ui, icons::X, "Cancel").clicked() {
@@ -1728,7 +1728,7 @@ impl PakarControllerApp {
                             .clicked()
                         {
                             self.post(
-                                "/api/v1/cells/mapping",
+                                "/api/cells/mapping",
                                 vec![
                                     ("logical_id".into(), self.mapping_logical.to_string()),
                                     ("physical_cell".into(), self.mapping_physical.to_string()),

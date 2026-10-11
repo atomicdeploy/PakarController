@@ -1,5 +1,4 @@
 {
-  "schema": 1,
   "pages": [
     {"id":"overview","label":"Overview","icon":"CIRCUITRY","keywords":"device version identity status hardware NTP time discovery build flags","features":[]},
     {"id":"identity","label":"Board identity","icon":"GLOBE","keywords":"identity hostname rename board name application title icon mDNS AP","features":["identity"]},

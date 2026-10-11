@@ -1,5 +1,39 @@
 # PakarController comparison receipts
 
+## Living unversioned API acceptance checkpoint
+
+Issue #16 and API-POLICY.md record the cross-chat policy investigation and exact
+donor adaptation. Inventory now contains 4242 files: 86 completed hash-bound
+comparisons, 4156 pending and 53 known compared gaps. Two actual PCController
+policy/test files were read completely; the large IPC implementation remains
+pending beyond its scoped route-rejection function. No unrelated row is certified.
+
+Firmware, Web, native/CLI/TUI, Android and operational scripts use `/api/...`.
+Numbered namespaces reject before authentication; no aliases or generation
+selectors remain in the declared shipping scope. Strict identity, capability ACK,
+ownership and update integrity remain. Private EEPROM/LittleFS layouts are retained.
+
+Local acceptance: native 116/116; Android analysis clean, 72 cases passed in the
+full batch and the corrected peer-context file passed all five cases; C++ protocol,
+ISP, persistence, remote update, display, audio and PC contracts passed. Web/quality
+passed across the batch and failed-tail recheck. Actual compiled release CLI passed
+authenticated device, PC contract and remote maintenance mock-device checks.
+Release package negative fixtures passed; these are dummy images, not publication.
+Six focused PC mapping references were reread/rebound after the reserved-zero
+HELLO/envelope and stable stream marker changes; no donor source hash changed.
+
+Both firmware peers compile in busy-wire and polling configurations. AVR busy-wire
+flash 26898 bytes, polling 26614 bytes; RAM 1225 bytes, 823 bytes free. ESP busy-wire
+RAM 56476 bytes, IRAM 63055 bytes, flash code 875976 bytes; polling RAM 56464 bytes,
+IRAM 63055 bytes, flash code 875828 bytes. ESP IRAM is 96%; this is a build limit,
+not live performance evidence. Native release uses the same warm cache; no debug
+artifacts exist. No Android APK rebuild or installed-client replacement this turn.
+
+Physical paired rollout is pending: ledboard.local does not resolve and
+localhost:1022 SSH refuses connection. No actual flash, Wi-Fi/WebSocket/MQTT,
+UART/USB or saved-settings readback is claimed. CI status is recorded separately
+on issue #16. Do not install only a new client against old numbered firmware.
+
 ## Current apps, launcher omission and storage checkpoint
 
 Latest inventory is 4242 files: 84 complete reads/comparisons, 4158 pending and

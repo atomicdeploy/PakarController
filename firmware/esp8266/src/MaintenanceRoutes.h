@@ -46,12 +46,12 @@ String networkTelemetry() {
 String buildTelemetryJson() {
   JsonDocument d;
   const uint32_t now=millis();
-  d[F("schema")]=1;d[F("type")]=F("telemetry");d[F("product")]=F("PakarController");
+  d[F("type")]=F("telemetry");d[F("product")]=F("PakarController");
   d[F("hostname")]=hostname;d[F("fqdn")]=hostname+".local";d[F("boot_id")]=pcBootId;
   d[F("display_name")]=deviceIdentity.displayName();
   auto application=d[F("application")].to<JsonObject>();
   application[F("id")]=APP_ID;application[F("name")]=APP_NAME;application[F("title")]=APP_TITLE;
-  d[F("version")]=BoardCore::BuildInfo::kVersion;d[F("protocol")]=BoardCore::BuildInfo::kProtocolVersion;
+  d[F("version")]=BoardCore::BuildInfo::kVersion;
   auto e=d[F("esp")].to<JsonObject>();
   e[F("model")]=F("nodemcuv2");e[F("chip_id")]=ESP.getChipId();e[F("flash_chip_id")]=ESP.getFlashChipId();
   e[F("core_version")]=ESP.getCoreVersion();e[F("sdk_version")]=ESP.getSdkVersion();e[F("full_version")]=ESP.getFullVersion();
@@ -86,7 +86,7 @@ String buildTelemetryJson() {
     a[F("buzzer")][F("frequency_hz")]=telemetry16(12);a[F("buzzer")][F("duration_ms")]=telemetry16(14);
     a[F("buzzer")][F("muted")]=static_cast<bool>(avrTelemetry[16]);a[F("uart_errors")]=telemetry16(42);
     a[F("lost_events")]=telemetry16(44);
-    auto s=a[F("settings")].to<JsonObject>();s[F("schema")]=avrTelemetry[17];s[F("flags")]=avrTelemetry[18];
+    auto s=a[F("settings")].to<JsonObject>();s[F("storage_layout")]=avrTelemetry[17];s[F("flags")]=avrTelemetry[18];
     s[F("display_brightness")]=avrTelemetry[19];s[F("stream_period_ms")]=telemetry16(20);
     s[F("ninth_threshold")]=telemetry16(22);s[F("default_page")]=avrTelemetry[24];
     s[F("visible_pages")]=avrTelemetry[25];s[F("persisted")]=static_cast<bool>(avrTelemetry[38]);
@@ -110,9 +110,9 @@ String buildTelemetryJson() {
   d[F("locale")]=displayLocale;d[F("locale_translation_available")]=false;
   d[F("client_capacity")]=8;d[F("client_ttl_ms")]=120000;
   // No credentials, arbitrary filesystem paths, synthetic voltage/temperature.
-  if(d.overflowed()) return "{\"schema\":1,\"type\":\"telemetry-error\",\"error\":\"insufficient_heap\"}";
+  if(d.overflowed()) return "{\"type\":\"telemetry-error\",\"error\":\"insufficient_heap\"}";
   String out=encodedJson(d);d.clear();
-  if(out.length()<2)return "{\"schema\":1,\"type\":\"telemetry-error\",\"error\":\"insufficient_heap\"}";
+  if(out.length()<2)return "{\"type\":\"telemetry-error\",\"error\":\"insufficient_heap\"}";
   out.remove(out.length()-1);
   // Append serialized sections, releasing each tree before creating the next.
   // No deserialize-and-copy of 80 cells and eight client records into a second
@@ -126,9 +126,9 @@ String buildTelemetryJson() {
   if(!add("network",networkTelemetry()) || !add("clock",clockJson()) ||
      !add("remote_firmware",remoteFirmware.json()) || !add("board",buildStatusJson()) ||
      !add("clients",clientTelemetry.json(now)))
-    return "{\"schema\":1,\"type\":\"telemetry-error\",\"error\":\"insufficient_heap_or_snapshot_limit\"}";
+    return "{\"type\":\"telemetry-error\",\"error\":\"insufficient_heap_or_snapshot_limit\"}";
   const size_t expected=out.length()+1;out+='}';
-  return out.length()==expected?out:String("{\"schema\":1,\"type\":\"telemetry-error\",\"error\":\"insufficient_heap\"}");
+  return out.length()==expected?out:String("{\"type\":\"telemetry-error\",\"error\":\"insufficient_heap\"}");
 }
 bool prepareRemotePair(const RemoteFirmware::Plan &plan,String &reason) {
   if(artifactReaders || otaActive || otaRebootAt || avrUploadOwner || networkApplyPending) {reason=F("Another maintenance/network operation is active");return false;}
@@ -255,14 +255,14 @@ void registerMaintenanceRoutes() {
     if(!strcmp(p,"en")||!strcmp(p,"fa")||!strcmp(p,"ar")||!strcmp(p,"ru")) displayLocale=p;
   }
   if(locale)locale.close();
-  server.on("/api/v1/telemetry",HTTP_GET,[](){if(authenticate())sendMaintenanceJson(buildTelemetryJson());});
-  server.on("/api/v1/clients/report",HTTP_POST,[](){
+  server.on("/api/telemetry",HTTP_GET,[](){if(authenticate())sendMaintenanceJson(buildTelemetryJson());});
+  server.on("/api/clients/report",HTTP_POST,[](){
     if(!authenticate())return;
     const bool ok=clientTelemetry.report(server.arg("report"),server.request()->client()->remoteIP().toString(),millis());
     sendMaintenanceJson(ok?"{\"accepted\":true}":"{\"error\":\"invalid_report_or_client_limit\"}",ok?200:400);
   });
-  server.on("/api/v1/firmware/remote",HTTP_GET,[](){if(authenticate())sendMaintenanceJson(remoteFirmware.json());});
-  const char *paths[]={"/api/v1/firmware/fetch","/api/v1/firmware/apply","/api/v1/firmware/cancel","/file/cancel"};
+  server.on("/api/firmware/remote",HTTP_GET,[](){if(authenticate())sendMaintenanceJson(remoteFirmware.json());});
+  const char *paths[]={"/api/firmware/fetch","/api/firmware/apply","/api/firmware/cancel","/file/cancel"};
   for(unsigned i=0;i<4;++i) {
     const unsigned op=i;
     server.on(paths[i],HTTP_POST,[op](){
@@ -325,7 +325,7 @@ void registerMaintenanceRoutes() {
     server.on(path,HTTP_GET,[](){
       if(!authenticate())return;JsonDocument d;d[F("username")]=accessConfig.username();
       d[F("ready")]=accessConfig.ready();d[F("secrets")]=F("redacted");d[F("sessions")]=webAccess.sessionCount();
-      d[F("role")]=F("device-owner");d[F("settings")]=F("/api/v1/auth");sendMaintenanceJson(encodedJson(d));
+      d[F("role")]=F("device-owner");d[F("settings")]=F("/api/auth");sendMaintenanceJson(encodedJson(d));
     });
   server.on("/pass",HTTP_POST,[](){
     if(!authenticate())return;

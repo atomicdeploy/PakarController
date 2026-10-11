@@ -16,7 +16,7 @@ Parent production scope: #2. Source parity: #3. Device settings GUI: #4. Native 
 - [x] Menu listing/layout/action/navigation and observed front-panel schema-2 mirror.
 - [x] Actual donor macro ring, guarded execution, buffering/query/cancel, recording/download/replay.
 - [x] Actual donor automation store/executor, all nine key IDs, budgets, CRC/readback, no boot provisioning.
-- [x] ESP-owned addressable LED adapter; one existing effects engine; retain full 480-pixel PKR1 streaming.
+- [x] ESP-owned addressable LED adapter; one existing effects engine; retain full 480-pixel PKAR streaming.
 - [x] JSON API, WebSocket/cloud, USB contract ingress and correlated receipts; no uncertain mutation retries.
 - [x] Prog/host-loss/reset safety; separate application state from ISP latch.
 - [x] Busy-wire and polling builds; polling mirror/event drains; AVR internal pull-up retained.

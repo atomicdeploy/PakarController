@@ -244,7 +244,7 @@ class _ControlShellState extends State<ControlShell> {
         throw const StaleConnection();
       }
       if (changedLogin) {
-        final actual = await api.getJson('/api/v1/auth');
+        final actual = await api.getJson('/api/auth');
         if (actual['username'] != user || actual['password_set'] != true) {
           throw const FormatException(
             'Credentials acknowledged but authenticated readback differs',
@@ -546,7 +546,7 @@ class _TablePageState extends State<TablePage> {
     var completed = 0;
     for (final id in ids) {
       if (!mounted ||
-          !await send('/api/v1/cell', {
+          !await send('/api/cell', {
             'id': '$id',
             'state': state,
             'effect': 'fade',
@@ -597,7 +597,7 @@ class _TablePageState extends State<TablePage> {
                           ) !=
                           true
                       ? null
-                      : () => command('/api/v1/game/reset'),
+                      : () => command('/api/game/reset'),
                   icon: const Icon(PakarIcons.arrowCounterClockwise),
                   label: const Text('Reset'),
                 ),
@@ -612,8 +612,7 @@ class _TablePageState extends State<TablePage> {
                   ChoiceChip(
                     label: Text(mode.label),
                     selected: status!.mode == mode.id,
-                    onSelected: (_) =>
-                        command('/api/v1/mode', {'value': mode.id}),
+                    onSelected: (_) => command('/api/mode', {'value': mode.id}),
                   ),
               ],
             ),
@@ -768,7 +767,7 @@ class _TablePageState extends State<TablePage> {
       ),
     );
     if (save == true) {
-      await command('/api/v1/cells/mapping', {
+      await command('/api/cells/mapping', {
         'logical_id': '$id',
         'physical_cell': physical.text,
         'name': name.text,
@@ -972,7 +971,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                     FilledButton.icon(
                       onPressed: widget.status == null
                           ? null
-                          : () => widget.command('/api/v1/display', {
+                          : () => widget.command('/api/display', {
                               'text': text.text,
                               'speed_ms': '${speed.round()}',
                               'hold_ms': '1500',
@@ -1000,7 +999,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                 label: Text(cue),
                 onPressed: widget.status == null
                     ? null
-                    : () => widget.command('/api/v1/audio', {'cue': cue}),
+                    : () => widget.command('/api/audio', {'cue': cue}),
               ),
           ],
         ),

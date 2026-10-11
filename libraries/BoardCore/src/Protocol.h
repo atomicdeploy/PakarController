@@ -9,7 +9,8 @@ namespace BoardCore {
 namespace Protocol {
 
 constexpr uint8_t kMagic = 0xA5;
-constexpr uint8_t kEnvelopeSchema = 1;
+// Fixed reserved byte. Evolution uses opcodes/capabilities, not generations.
+constexpr uint8_t kReserved = 0;
 constexpr uint8_t kMaximumPayload = 48;
 constexpr uint8_t kRawOverhead = 6;
 constexpr uint8_t kMaximumRaw = kMaximumPayload + kRawOverhead;
@@ -38,7 +39,7 @@ enum Opcode : uint8_t {
   kGetTelemetry = 0x58, // Read-only; does not renew PCController's host/control lease.
   kGetIdentity = 0x59, // ESP USB: [nonce, offset16], bounded read-only identity chunks.
   kIdentityResponse = 0xB2, // [nonce, revision32, total16, offset16, <=39 JSON bytes].
-  kTelemetryResponse = 0xB1, // Schema 1, 46 bytes; actual AVR observations.
+  kTelemetryResponse = 0xB1, // 46 bytes; actual AVR observations.
   kPcContractResponse = 0xB0, // [PCController response opcode, payload].
 
   kAck = 0x80,
@@ -118,7 +119,7 @@ inline uint8_t encode(const Frame &frame, uint8_t *output, uint8_t capacity) {
   if (frame.payloadLength > kMaximumPayload || capacity < 2) return 0;
   uint8_t raw[kMaximumRaw];
   raw[0] = kMagic;
-  raw[1] = kEnvelopeSchema;
+  raw[1] = kReserved;
   raw[2] = frame.opcode;
   raw[3] = frame.sequence;
   raw[4] = frame.payloadLength;
@@ -138,7 +139,7 @@ inline bool decode(const uint8_t *input, uint8_t length, Frame &frame) {
   uint8_t raw[kMaximumRaw];
   const uint8_t rawLength = WireCodec::cobsDecode(input, length, raw, sizeof(raw));
   if (rawLength < kRawOverhead || raw[0] != kMagic ||
-      raw[1] != kEnvelopeSchema ||
+      raw[1] != kReserved ||
       raw[4] > kMaximumPayload || rawLength != raw[4] + kRawOverhead ||
       raw[rawLength - 1] != WireCodec::crc8(raw, rawLength - 1)) {
     return false;

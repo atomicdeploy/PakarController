@@ -61,17 +61,17 @@ provides a new-address link after success; sign in again at the new origin.
 
 Exact paths:
 
-- GET `http://ledboard.local/api/v1/device/name` reads the configured name.
-- POST `http://CURRENT-NAME.local/api/v1/device/name` renames the board.
+- GET `http://ledboard.local/api/device/name` reads the configured name.
+- POST `http://CURRENT-NAME.local/api/device/name` renames the board.
 
 POST body is **application/x-www-form-urlencoded**, field `hostname`:
 
 ```powershell
 curl.exe --noproxy '*' --user admin `
     --data-urlencode 'hostname=ledboard.local' `
-    'http://pakarcontroller.local/api/v1/device/name'
+    'http://pakarcontroller.local/api/device/name'
 # --user admin prompts for its password, keeping it out of command arguments.
-curl.exe --noproxy '*' --user admin 'http://ledboard.local/api/v1/device/name'
+curl.exe --noproxy '*' --user admin 'http://ledboard.local/api/device/name'
 ```
 
 Authentication is the same configured Basic credentials used by other APIs;

@@ -81,8 +81,7 @@ impl UsbRead {
         }
         let value: serde_json::Value =
             serde_json::from_slice(&self.bytes).map_err(|_| "Malformed identity JSON")?;
-        if value["schema"] != 1
-            || value["revision"].as_u64() != Some(revision as u64)
+        if value["revision"].as_u64() != Some(revision as u64)
             || !value["hostname"]
                 .as_str()
                 .is_some_and(|v| normalize_name(v).is_ok())
@@ -190,7 +189,7 @@ mod tests {
     }
     #[test]
     fn usb_identity_assembly_rejects_mixed_offsets_revisions_and_replayed_nonce() {
-        let value = serde_json::json!({"schema":1,"hostname":"ledboard","display_name":"Table","revision":17});
+        let value = serde_json::json!({"hostname":"ledboard","display_name":"Table","revision":17});
         let bytes = serde_json::to_vec(&value).unwrap();
         let mut reader = UsbRead {
             nonce: 9,

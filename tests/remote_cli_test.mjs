@@ -6,27 +6,27 @@ import {fileURLToPath} from 'node:url';
 const run=promisify(execFile);
 const exe=process.argv[2]||fileURLToPath(new URL('../desktop/target/release/pakarcontroller.exe',import.meta.url));
 let posts=0,gets=0,wrongAck=false;
-let job={schema:1,job_id:1,boot_id:'fixture-boot',phase:'ready',targets:3,manifest_sha256:'a'.repeat(64),busy:false,cancellable:false,received_bytes:32768,expected_bytes:32768,error:''};
+let job={job_id:1,boot_id:'fixture-boot',phase:'ready',targets:3,manifest_sha256:'a'.repeat(64),busy:false,cancellable:false,received_bytes:32768,expected_bytes:32768,error:''};
 const server=http.createServer(async(req,res)=>{
  assert.equal(req.headers.authorization,'Basic '+Buffer.from('fixture:private-fixture-password').toString('base64'));
  let body='';for await(const c of req)body+=c;
  let value=job;
  if(req.method==='POST'){
   posts++;const form=new URLSearchParams(body);
-  if(req.url==='/api/v1/firmware/fetch'){
+  if(req.url==='/api/firmware/fetch'){
    assert.equal(form.get('apply'),'false');assert.equal(form.get('bearer'),'private-fixture-token');
    assert.equal(form.get('url'),'https://updates.example.test/PakarController/manifest.json');
    assert.equal(form.get('sha256'),'a'.repeat(64));job={...job,phase:'manifest',busy:true,cancellable:true};
   }else{
-   assert(['/api/v1/firmware/apply','/api/v1/firmware/cancel'].includes(req.url));
+   assert(['/api/firmware/apply','/api/firmware/cancel'].includes(req.url));
    assert.equal(form.get('job_id'),'1');assert.equal(form.get('boot_id'),'fixture-boot');assert.equal(form.get('sha256'),'a'.repeat(64));
    job={...job,phase:req.url.endsWith('apply')?'prepare':'cancelled',busy:req.url.endsWith('apply'),cancellable:false};
   }
   value=wrongAck?{...job,boot_id:'wrong-peer-boot'}:job;
  }else{
   gets++;
-  if(req.url==='/api/v1/telemetry')value={schema:1,type:'telemetry',product:'PakarController',boot_id:'fixture-boot',esp:{model:'fixture only'},avr:{online:false},clients:[]};
-  else assert.equal(req.url,'/api/v1/firmware/remote');
+  if(req.url==='/api/telemetry')value={type:'telemetry',product:'PakarController',boot_id:'fixture-boot',esp:{model:'fixture only'},avr:{online:false},clients:[]};
+  else assert.equal(req.url,'/api/firmware/remote');
  }
  res.writeHead(req.url.endsWith('fetch')?202:200,{'Content-Type':'application/json'});res.end(JSON.stringify(value));
 });

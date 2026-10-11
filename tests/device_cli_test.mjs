@@ -8,7 +8,7 @@ const exe=process.argv[2]||fileURLToPath(new URL('../desktop/target/release/paka
 // Loopback HTTP fixture, not an actual device; exercises the built CLI request path.
 let requests=0,persisted=true,hostname='old-board',display_name='Fixture board';
 const server=http.createServer(async(req,res)=>{
-  requests++;assert.equal(req.url,'/api/v1/device/name');
+  requests++;assert.equal(req.url,'/api/device/name');
   assert.equal(req.headers.authorization,'Basic '+Buffer.from('fixture:private-fixture-password').toString('base64'));
   let body='';for await(const chunk of req)body+=chunk;
   let apply_pending=false;

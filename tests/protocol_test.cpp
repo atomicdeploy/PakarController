@@ -1,12 +1,23 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
+#include <initializer_list>
 
 #include "Protocol.h"
+#include "ApiPolicy.h"
 
 using namespace BoardCore::Protocol;
 
 int main() {
+  // Actual donor TestVersionedCoreAPIRoutesAreRejected cases, plus vN bounds.
+  for (const char *path : {"/api/v1", "/api/v1/rpc", "/api/v1/snapshot",
+       "/api/v1/peripherals", "/api/v2/status", "/api/v123/", "/api/v1?x=1"}) {
+    assert(BoardCore::ApiPolicy::numberedRoute(path));
+  }
+  for (const char *path : {"/api/status", "/api/device/name", "/api/firmware/fetch",
+       "/api/version", "/api/v1other", "/ws", "/"}) {
+    assert(!BoardCore::ApiPolicy::numberedRoute(path));
+  }
   static_assert(kAudioCue == 0x11, "audio cue opcode changed");
   static_assert(kProgrammingState == 0x50,
                 "programming latch opcode changed");
@@ -39,6 +50,13 @@ int main() {
   assert(decoded.sequence == original.sequence);
   assert(decoded.payloadLength == original.payloadLength);
   assert(memcmp(decoded.payload, original.payload, original.payloadLength) == 0);
+  uint8_t raw[kMaximumRaw] = {};
+  const uint8_t rawLength = BoardCore::WireCodec::cobsDecode(encoded, length - 1, raw, sizeof(raw));
+  assert(raw[1] == 0); // Fixed reserved byte, not a contract generation.
+  raw[1] = 1;
+  raw[rawLength - 1] = BoardCore::WireCodec::crc8(raw, rawLength - 1);
+  const uint8_t numbered = BoardCore::WireCodec::cobsEncode(raw, rawLength, encoded, sizeof(encoded));
+  assert(!decode(encoded, numbered, decoded)); // Valid CRC cannot enable another generation.
 
   uint8_t damaged[kMaximumEncoded] = {};
   memcpy(damaged, encoded, length);

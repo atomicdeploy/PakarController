@@ -20,7 +20,7 @@ void main() {
         return pending.future;
       }),
     );
-    final write = api.post('/api/v1/game/reset');
+    final write = api.post('/api/game/reset');
     final check = expectLater(write, throwsA(isA<StaleConnection>()));
     api.baseUrl = 'http://other.local';
     pending.complete(http.Response('{"hostname":"ledboard"}', 200));
@@ -45,7 +45,7 @@ void main() {
     );
     await api.status();
     api.password = 'replacement';
-    final write = api.post('/api/v1/game/reset');
+    final write = api.post('/api/game/reset');
     final check = expectLater(write, throwsA(isA<StaleConnection>()));
     api.password = 'second replacement';
     pending.complete(http.Response('{"hostname":"ledboard"}', 200));
@@ -89,7 +89,7 @@ void main() {
       },
     );
     await expectLater(
-      api.post('/api/v1/game/reset'),
+      api.post('/api/game/reset'),
       throwsA(isA<OperationUncertain>()),
     );
     expect(posts, 1);
@@ -126,7 +126,7 @@ void main() {
         return http.Response('{"hostname":"other"}', 200);
       }),
     );
-    await expectLater(api.post('/api/v1/game/reset'), throwsFormatException);
+    await expectLater(api.post('/api/game/reset'), throwsFormatException);
     expect(posts, 0);
     await api.close();
   });

@@ -29,13 +29,11 @@ inline bool parse(const char *value, uint8_t &cue) {
   }
   return false;
 }
-// Original twelve IDs are stable. Added donor variations require an actual
-// versioned AVR HELLO; ESP version alone must not advertise AVR capabilities.
-inline uint8_t supportedCount(bool online, bool known, const uint8_t version[3]) {
-  if (!online || !known) return 0;
-  if (version[0] == 0 && version[1] < 2) return 0;
-  return version[0] > 0 || version[1] > 2 ||
-         (version[1] == 2 && version[2] >= 5) ? Protocol::kCueCount : 12;
+// Stable cue IDs, enabled only by this peer's explicit HELLO advertisement.
+// Build versions are descriptive and never substitute for feature ACKs.
+inline uint8_t supportedCount(bool online, bool acknowledged, uint8_t advertised) {
+  if (!online || !acknowledged) return 0;
+  return advertised < Protocol::kCueCount ? advertised : static_cast<uint8_t>(Protocol::kCueCount);
 }
 }  // namespace AudioCues
 }  // namespace BoardCore

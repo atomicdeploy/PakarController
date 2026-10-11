@@ -26,11 +26,11 @@ remain separate from settings stored on the boards.
 | Page | Actual controls and source contract | Persistence / verification |
 | --- | --- | --- |
 | Overview | Peer hostname, firmware, UART mode, pixels, NTP synchronization; connection and app preferences | Fresh selected-route state only; unavailable is not synthesized |
-| Device name | Rename, validation, canonical hostname endpoint | `/api/v1/device/name`; existing persistence acknowledgment before endpoint switch |
-| Wi-Fi | Station/AP flags, SSID, password/open-network choice, scan and discovered SSID selection | `/api/v1/network`, `/api/v1/wifi/scan`; validated POST acknowledgment plus exact public GET readback |
-| MQTT | Enabled, TLS, hostname, port, username, base topic, password keep/replace/clear, telemetry seconds | `/api/v1/cloud`; all public fields and secret-presence flags verified |
-| WebSocket | Enabled, TLS, hostname, port, path, token keep/replace/clear, telemetry seconds | Same shared cloud configuration/save; reconnect via `/api/v1/cloud/reconnect` accepts a request, not successful connectivity |
-| Device access | Observed storage readiness/default-login notice; username/password/confirmation validation | Existing `/api/v1/auth/info` and `/api/v1/auth` contract; login change invalidates sessions |
+| Device name | Rename, validation, canonical hostname endpoint | `/api/device/name`; existing persistence acknowledgment before endpoint switch |
+| Wi-Fi | Station/AP flags, SSID, password/open-network choice, scan and discovered SSID selection | `/api/network`, `/api/wifi/scan`; validated POST acknowledgment plus exact public GET readback |
+| MQTT | Enabled, TLS, hostname, port, username, base topic, password keep/replace/clear, telemetry seconds | `/api/cloud`; all public fields and secret-presence flags verified |
+| WebSocket | Enabled, TLS, hostname, port, path, token keep/replace/clear, telemetry seconds | Same shared cloud configuration/save; reconnect via `/api/cloud/reconnect` accepts a request, not successful connectivity |
+| Device access | Observed storage readiness/default-login notice; username/password/confirmation validation | Existing `/api/auth/info` and `/api/auth` contract; login change invalidates sessions |
 | LEDs & cells | Navigation to actual effect controls and mapping editor; logical/physical/name distinction | Existing brightness/effect/mapping APIs and USB operations, not cloned mock controls |
 | Front panel | Actual segment mirroring and presentation; brightness, text/number, scroll speed, one-shot/loop/interval, hold/release; advertised melodies and custom tone | Existing display/audio/buzzer APIs/USB commands; presentation defaults saved locally, not misrepresented as device EEPROM parameters |
 | AVR & inputs | Actual hardware monitor, input/output state and controls, UART errors, latch status | Current advertised hardware state; build-only parameters explicitly identified |

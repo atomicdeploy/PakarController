@@ -22,12 +22,12 @@ All maintenance and full telemetry require device-owner authentication. POST use
 
 | Route | Contract |
 | --- | --- |
-| GET /api/v1/firmware/remote | Schema 1, job_id, boot_id, phase, targets, manifest_sha256, actual byte counts, error, busy/cancellable |
-| POST /api/v1/firmware/fetch | url, sha256, targets=1 ESP / 2 AVR / 3 both; apply=false by default; optional bearer and explicit allow_downgrade=true |
-| POST /api/v1/firmware/apply | job_id, boot_id, sha256; only exact ready job |
-| POST /api/v1/firmware/cancel | job_id, boot_id; downloading/ready only, never cancel an erase/commit |
-| GET /api/v1/telemetry or /info | Full structured device/board/client snapshot; /info?format=text provides a text heading plus JSON |
-| POST /api/v1/clients/report | report=JSON, schema 1; authenticated allowlisted operational metadata, maximum 1024 bytes |
+| GET /api/firmware/remote | Schema 1, job_id, boot_id, phase, targets, manifest_sha256, actual byte counts, error, busy/cancellable |
+| POST /api/firmware/fetch | url, sha256, targets=1 ESP / 2 AVR / 3 both; apply=false by default; optional bearer and explicit allow_downgrade=true |
+| POST /api/firmware/apply | job_id, boot_id, sha256; only exact ready job |
+| POST /api/firmware/cancel | job_id, boot_id; downloading/ready only, never cancel an erase/commit |
+| GET /api/telemetry or /info | Full structured device/board/client snapshot; /info?format=text provides a text heading plus JSON |
+| POST /api/clients/report | report=JSON; authenticated allowlisted operational metadata, maximum 1024 bytes |
 | GET/HEAD /file/download | artifact=esp-running, esp-staged, avr-staged, avr-flash, avr-eeprom; Range supported, no arbitrary paths |
 
 Local WebSocket /ws accepts a read-only {"type":"telemetry"} request or JSON remote commands. Use job_id/boot_id/sha256 for apply and job_id/boot_id for cancel. Never replay an uncertain mutation. Both HTTP and WebSocket report the same updater state, not independent jobs. Only one maintenance operation can own the boards/storage; concurrent clients can inspect state. Artifact read leases prevent replacing files mid-download.
@@ -42,7 +42,7 @@ node tools/create-remote-manifest.mjs build/esp8266-busy-wire/esp8266.ino.bin bu
 
 For polling use the build/esp8266 and build/avr artifacts and link_mode polling. Do not serve one profile under the other profile's URLs. This tool generates checksums and copies publisher files; it neither deploys them nor flashes hardware. Replace the illustrative example.test URL before use. Never overwrite a live directory while a client is downloading.
 
-Manifest schema 1 requires product PakarController, profile pakar-nodemcu-atmega328p-v1, protocol 1, link_mode busy-wire/polling. Both components declare url, size, lowercase sha256, version and model. AVR additionally declares signature 1E950F and bootloader_included=true. Its raw image is exactly 32768 bytes including Urboot; application-only HEX is rejected. The ESP raw image must match the running flash mode. Both versions must match for target all. Single-board updates are same-version repair only; explicit downgrades do not bypass profile, signature, digest, Prog, EEPROM or pair verification.
+The living manifest requires product PakarController, profile pakar-nodemcu-atmega328p and link_mode busy-wire/polling, without schema or protocol generations. Both components declare url, size, lowercase sha256, version and model. AVR additionally declares signature 1E950F and bootloader_included=true. Its raw image is exactly 32768 bytes including Urboot; application-only HEX is rejected. The ESP raw image must match the running flash mode. Both versions must match for target all. Single-board updates are same-version repair only; explicit downgrades do not bypass profile, signature, digest, Prog, EEPROM or pair verification.
 
 Publisher requirements: direct HTTPS URLs; a chain anchored in ISRG Root X1; correct device clock; positive exact Content-Length; no redirects, chunked transfer, compression or content encoding. Bearer authorization is sent only to the original manifest authority, never a different image host. Bounded endpoint URLs are 383 characters, manifest 4096 bytes; timeout is 20 seconds idle / 300 seconds for the complete download transaction. HTTP firmware fetching is disabled unless PAKAR_ALLOW_HTTP_FIRMWARE=1 is explicitly built (native/Web surfaces continue to prefer HTTPS).
 
@@ -70,7 +70,7 @@ AVR firmware 0.2.7 adds a read-only 46-byte telemetry response (0x58 request, 0x
 
 Native Windows clients report application/version, session UUID, hostname, OS/architecture, process ID/uptime, CPU parallelism, physical/available RAM and primary-screen/monitor information. Web clients report only available browser/platform/CPU-hint/screen data. The ESP observes the source IP; every other client field is explicitly self-reported, not attested. Capacity is eight clients, recent TTL two minutes. A different peer cannot overwrite a live client ID. No passwords, cookies, bearer tokens, personal documents, file inventories, screen captures or arbitrary PC access are collected. Missing measurements are null. This is complete operational metadata for these transports, not all private information on a computer.
 
-Configured cloud connections retain the existing status feed and additionally deliver full telemetry. WebSocket sends schema-1 telemetry JSON. MQTT full snapshots use non-retained QoS0 packets at BASE/HOSTNAME/telemetry/part: schema/type, boot-unique snapshot_id, index/count/total_bytes, sha256, encoding=base64 and data. Raw chunk size is 768 bytes; snapshot limit 16384 bytes. tools/telemetry-reassembly.mjs rejects mixed metadata, invalid encodings, missing parts, checksum failures, conflicting duplicates and expired snapshots. Never present partial packets as current board state. A failed publication waits for the next snapshot; no guaranteed-delivery claim is made. The old retained /status feed remains compatible.
+Configured cloud connections retain the existing status feed and additionally deliver full telemetry. WebSocket sends living telemetry JSON. MQTT full snapshots use non-retained QoS0 packets at BASE/HOSTNAME/telemetry/part: type, boot-unique snapshot_id, index/count/total_bytes, sha256, encoding=base64 and data. Raw chunk size is 768 bytes; snapshot limit 16384 bytes. tools/telemetry-reassembly.mjs rejects mixed metadata, invalid encodings, missing parts, checksum failures, conflicting duplicates and expired snapshots. Never present partial packets as current board state. A failed publication waits for the next snapshot; no guaranteed-delivery claim is made. The retained /status feed is unchanged.
 
 ## Acceptance checklist
 

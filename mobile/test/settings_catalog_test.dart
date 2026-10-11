@@ -10,7 +10,6 @@ void main() {
       'hostname': 'ledboard',
       'link_mode': 'busy-wire',
       'capabilities': {
-        'schema': 1,
         'hostname': 'ledboard',
         'board_kind': 'controller',
         'acknowledged_features': ['network', 'buzzer'],

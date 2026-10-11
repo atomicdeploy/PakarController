@@ -23,8 +23,8 @@ ownership and host update identity. They are explicitly the host, not board firm
 
 ## HTTP / CLI / shell
 
-Authenticated GET `/api/v1/device/name` returns hostname/fqdn/canonical_url,
-display_name, schema/revision, persisted state, application and apply status.
+Authenticated GET `/api/device/name` returns hostname/fqdn/canonical_url,
+display_name, revision, persisted state, application and apply status.
 POST uses form fields `hostname` and optional `display_name`; omitted display
 name preserves it for old clients. Both fields validate before one verified,
 atomic commit. Credentials and network configuration are not rewritten.
@@ -50,7 +50,7 @@ or ASCII edge spaces. Hostname validation remains strict DNS-label normalization
 Identity capability bit 13; append-only status byte 37 carries revision low byte.
 GET 0x59 payload `nonce,offset_u16LE`; reply 0xB2 carries
 `nonce,revision_u32LE,total_u16LE,offset_u16LE,up-to-39 JSON bytes`.
-The stable JSON is schema/revision/hostname/display_name/application, no secrets.
+The living JSON is revision/hostname/display_name/application, no secrets.
 Client checks request sequence, nonce, revision, size <=8192, ordered offsets,
 UTF-8/JSON and identity fields. Two-second per-response and eight-second whole
 read deadlines prevent a hung transfer. Ten-second read-only refresh catches

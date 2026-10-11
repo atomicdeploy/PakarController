@@ -26,7 +26,7 @@ class SettingsFirmwareApi extends SettingsApi {
     required bool Function() authorize,
   }) async {
     if (!authorize()) throw const StaleConnection();
-    if (path == '/api/v1/firmware/remote') return firmwareJob();
+    if (path == '/api/firmware/remote') return firmwareJob();
     ++probes;
     return probeReply.future;
   }
@@ -38,19 +38,18 @@ class SettingsApi extends PakarApi {
   Completer<Map<String, dynamic>>? delayedAck;
   @override
   Future<Map<String, dynamic>> getJson(String path) async => switch (path) {
-    '/api/v1/network' => Map.of(simulatedNetwork),
-    '/api/v1/cloud' => Map.of(cloud),
-    '/api/v1/device/name' => {
-      'schema': 1,
+    '/api/network' => Map.of(simulatedNetwork),
+    '/api/cloud' => Map.of(cloud),
+    '/api/device/name' => {
       'hostname': 'ledboard',
       'display_name': 'Table board',
     },
-    '/api/v1/auth/info' => {
+    '/api/auth/info' => {
       'ready': true,
       'default_credentials': false,
       'username': 'fixture',
     },
-    '/api/v1/wifi/scan' => {
+    '/api/wifi/scan' => {
       'networks': [
         {'ssid': 'Fixture SSID'},
       ],
@@ -115,7 +114,7 @@ void main() {
         fixture(api, peerFixture(features: ['network', 'identity', 'isp'])),
       );
       await tester.pumpAndSettle();
-        await tester.tap(find.widgetWithText(ListTile, 'Firmware & storage'));
+      await tester.tap(find.widgetWithText(ListTile, 'Firmware & storage'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Probe ISP'));
       await tester.tap(find.text('Probe ISP'));
@@ -128,7 +127,7 @@ void main() {
         fixture(api, peerFixture(features: ['network', 'identity'])),
       );
       await tester.pumpAndSettle();
-        expect(find.text('Firmware & storage'), findsNothing);
+      expect(find.text('Firmware & storage'), findsNothing);
       expect(
         tester.widget<ListTile>(find.widgetWithText(ListTile, 'Wi-Fi')).onTap,
         isNotNull,

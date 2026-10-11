@@ -8,7 +8,7 @@ import 'settings_catalog.dart';
 enum SettingsGroup { network, cloud }
 
 extension SettingsGroupContract on SettingsGroup {
-  String get path => '/api/v1/$name';
+  String get path => '/api/$name';
   String get acknowledgment =>
       this == SettingsGroup.network ? 'accepted' : 'updated';
   Map<String, String> get fields =>

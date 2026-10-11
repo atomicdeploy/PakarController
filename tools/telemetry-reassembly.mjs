@@ -6,7 +6,7 @@ export class TelemetryReceiver{
   accept(packet,now=Date.now()){
     for(const [id,j]of this.#jobs)if(now-j.at>30000)this.#jobs.delete(id);
     const p=typeof packet==='string'?JSON.parse(packet):packet;
-    if(p?.schema!==1||p.type!=='telemetry-fragment'||p.encoding!=='base64'||
+    if(!p||p.type!=='telemetry-fragment'||p.encoding!=='base64'||
       typeof p.snapshot_id!=='string'||!/^[0-9a-f]{32}-\d{1,10}$/.test(p.snapshot_id)||
       !Number.isInteger(p.total_bytes)||p.total_bytes<1||p.total_bytes>16384||
       !Number.isInteger(p.count)||p.count!==Math.ceil(p.total_bytes/768)||
@@ -23,7 +23,7 @@ export class TelemetryReceiver{
     const full=Buffer.concat(Array.from({length:job.count},(_,i)=>job.parts.get(i)));
     if(full.length!==job.total||createHash('sha256').update(full).digest('hex')!==job.sha)throw Error('Snapshot checksum mismatch');
     const value=JSON.parse(full.toString('utf8'));
-    if(value.schema!==1||value.type!=='telemetry'||value.product!=='PakarController'||typeof value.boot_id!=='string')throw Error('Invalid telemetry schema');
+    if(value.type!=='telemetry'||value.product!=='PakarController'||typeof value.boot_id!=='string'||!value.boot_id||value.boot_id.length>80)throw Error('Invalid telemetry identity');
     return value;
   }
 }

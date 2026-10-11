@@ -13,7 +13,7 @@ const server=http.createServer(async(req,res)=>{
   let raw='';for await(const chunk of req)raw+=chunk;
   let value;
   if(req.method==='POST'){
-    assert.equal(req.url,'/api/v1/avr/contracts');posts++;
+    assert.equal(req.url,'/api/avr/contracts');posts++;
     const form=new URLSearchParams(raw);opcode=Number(form.get('opcode'));id++;
     const payload=Buffer.from(form.get('payload_hex'),'hex');
     requestPayload=payload;
@@ -21,13 +21,13 @@ const server=http.createServer(async(req,res)=>{
     value={request_id:id,boot_id:'fixture-boot'};
   }else if(req.method==='DELETE'){
     const url=new URL(req.url,'http://fixture');
-    assert.equal(url.pathname,'/api/v1/avr/contracts/result');
+    assert.equal(url.pathname,'/api/avr/contracts/result');
     assert.equal(url.searchParams.get('id'),String(id));
     assert.equal(url.searchParams.get('boot_id'),'fixture-boot');
     assert.equal(url.searchParams.get('opcode'),String(opcode));
     assert(!['reboot','timeout','wrong-ack','wrong-status'].includes(mode));consumed++;value={consumed:true};
   }else{
-    assert.equal(req.url,'/api/v1/avr/contracts/result?id='+id);
+    assert.equal(req.url,'/api/avr/contracts/result?id='+id);
     value={request_id:id,boot_id:mode==='reboot'?'different-boot':'fixture-boot',request_opcode:opcode,
       state:mode==='timeout'?'outcome_unknown':'responded',
       response_opcode:mode==='reject'?0x82:mode==='wrong-ack'?0x80:mode==='wrong-status'?0x98:

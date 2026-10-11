@@ -97,6 +97,7 @@ uint32_t avrUploadOwner = 0;
 String hostname;
 bool avrOnline = false;
 bool avrVersionKnown = false;
+uint8_t avrAudioCueCount = 0;
 uint16_t avrCapabilities = 0;
 uint32_t avrDisplayStatusAt = 0;
 bool avrDisplayStatusKnown = false;
@@ -261,9 +262,9 @@ void sendHostStatus(uint8_t requestSequence) {
       tm1637Segments[0], tm1637Segments[1], tm1637Segments[2], tm1637Segments[3],
       tm1637Brightness, static_cast<uint8_t>(tm1637HostActive),
       avrVersion[0], avrVersion[1], avrVersion[2],
-      BoardCore::AudioCues::supportedCount(avrOnline, avrVersionKnown, avrVersion),
-      // Schema-1 context: old prefixes retained; old peers cannot imply a profile.
-      1, static_cast<uint8_t>(available), static_cast<uint8_t>(available >> 8),
+      BoardCore::AudioCues::supportedCount(avrOnline, (avrCapabilities & kCapBuzzer) != 0, avrAudioCueCount),
+      // Living context: reserved zero followed by explicit acknowledged features.
+      0, static_cast<uint8_t>(available), static_cast<uint8_t>(available >> 8),
       BoardCore::Context::modes(available), static_cast<uint8_t>(PAKAR_TABLE_ENABLED),
       10, 8, 6, static_cast<uint8_t>(identityRevision()),
   };
@@ -282,7 +283,7 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
   switch (frame.opcode) {
     case kGetIdentity: {
       if (frame.payloadLength != 3) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
-      String json = F("{\"schema\":1,\"revision\":"); json += identityRevision();
+      String json = F("{\"revision\":"); json += identityRevision();
       json += F(",\"hostname\":\""); json += deviceIdentity.hostname();
       json += F("\",\"display_name\":\""); appendJsonEscaped(json, deviceIdentity.displayName());
       json += F("\",\"application\":"); json += applicationIdentityJson(); json += '}';
@@ -357,7 +358,7 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
           kCapWebSocket | kCapNtp | kCapHostSerial |
           (PAKAR_USE_BUSY_WIRE ? kCapBusyWire : 0U);
       const uint8_t payload[] = {
-          BoardCore::BuildInfo::kProtocolVersion, kRoleEsp,
+          0, kRoleEsp, // Reserved zero, not a protocol generation.
           static_cast<uint8_t>(capabilities),
           static_cast<uint8_t>(capabilities >> 8), LedGrid::kCells, 9,
           BoardCore::BuildInfo::kVersionMajor,
@@ -470,7 +471,7 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
     case kDisplayText:
       if (frame.opcode == kAudioCue &&
           (frame.payloadLength != 1 || frame.payload[0] >=
-           BoardCore::AudioCues::supportedCount(avrOnline, avrVersionKnown, avrVersion))) {
+           BoardCore::AudioCues::supportedCount(avrOnline, (avrCapabilities & kCapBuzzer) != 0, avrAudioCueCount))) {
         hostLink.error(frame.sequence, frame.opcode, kBadPayload); break;
       }
       if (!sendToAvr(frame.opcode, sequence++, frame.payload,
@@ -627,7 +628,7 @@ void startDiscovery() {
     MDNS.addServiceTxt("http", "tcp", "version",
                        BoardCore::BuildInfo::kVersion);
     MDNS.addService("pakarcontroller", "tcp", 80);
-    MDNS.addServiceTxt("pakarcontroller", "tcp", "api", "/api/v1/status");
+    MDNS.addServiceTxt("pakarcontroller", "tcp", "api", "/api/status");
     MDNS.addServiceTxt("pakarcontroller", "tcp", "websocket", "/ws");
     MDNS.addService("pakar-stream", "udp", kStreamPort);
     MDNS.addService("telnet", "tcp", 23);
@@ -708,7 +709,7 @@ String deviceNameJson(bool accepted) {
   body += F(".local\",\"canonical_url\":\"http://"); body += deviceIdentity.hostname();
   body += F(".local\",\"active_hostname\":\""); body += hostname;
   body += F("\",\"persisted\":"); body += deviceIdentity.ready() ? F("true") : F("false");
-  body += F(",\"schema\":1,\"display_name\":\""); appendJsonEscaped(body, deviceIdentity.displayName());
+  body += F(",\"display_name\":\""); appendJsonEscaped(body, deviceIdentity.displayName());
   body += F("\",\"revision\":"); body += identityRevision();
   body += F(",\"application\":"); body += applicationIdentityJson();
   body += F(",\"accepted\":"); body += accepted ? F("true") : F("false");
@@ -865,9 +866,9 @@ void playUpdateSuccessCue() {
 
 bool authenticate() {
   if ((remoteFirmware.busy() || artifactReaders) && server.request() &&
-      !server.request()->url().startsWith("/api/v1/firmware/") &&
+      !server.request()->url().startsWith("/api/firmware/") &&
       server.request()->url()!=F("/file/cancel") &&
-      (server.request()->method()!=HTTP_GET || server.request()->url()==F("/api/v1/avr/probe"))) {
+      (server.request()->method()!=HTTP_GET || server.request()->url()==F("/api/avr/probe"))) {
     server.send(409,"text/plain","Remote firmware operation owns board maintenance"); return false;
   }
   if (otaActive || otaRebootAt) { server.send(503, "text/plain", "ESP update in progress"); return false; }
@@ -878,13 +879,13 @@ bool authenticate() {
     const String path = server.request()->url();
     using namespace BoardCore::Context;
     uint16_t required = 0;
-    if (path == F("/api/v1/cell") || path == F("/api/v1/cells/mapping") ||
-        path == F("/api/v1/game/reset") || path == F("/api/v1/snake/direction")) required = Table;
-    if (path == F("/api/v1/display")) required = server.hasArg("text") ? Text : Display;
-    if (path == F("/api/v1/audio") || path == F("/api/v1/buzzer")) required = Buzzer;
-    if (path == F("/api/v1/outputs")) required = Outputs;
+    if (path == F("/api/cell") || path == F("/api/cells/mapping") ||
+        path == F("/api/game/reset") || path == F("/api/snake/direction")) required = Table;
+    if (path == F("/api/display")) required = server.hasArg("text") ? Text : Display;
+    if (path == F("/api/audio") || path == F("/api/buzzer")) required = Buzzer;
+    if (path == F("/api/outputs")) required = Outputs;
     bool allowed = !required || (currentFeatures() & required);
-    if (path == F("/api/v1/mode")) {
+    if (path == F("/api/mode")) {
       allowed = false;
       for (uint8_t code = 0; code < 4; ++code)
         if (server.arg("value") == BoardCore::Context::modeName(code) && (modes(currentFeatures()) & (1U << code))) allowed = true;
@@ -1012,8 +1013,7 @@ String buildStatusJson() {
   // ESP8266 heap. Arduino String otherwise fails mid-JSON without an error.
   body.reserve(2600);
   body += F("{\"version\":\""); body += BoardCore::BuildInfo::kVersion;
-  body += F("\",\"protocol_version\":"); body += BoardCore::BuildInfo::kProtocolVersion;
-  body += F(",\"hostname\":\""); body += hostname;
+  body += F("\",\"hostname\":\""); body += hostname;
   body += F("\",\"ip\":\""); body += WiFi.softAPIP().toString();
   body += F("\",\"mode\":\""); body += modeName();
   body += F("\",\"avr_online\":"); body += avrOnline ? F("true") : F("false");
@@ -1023,7 +1023,7 @@ String buildStatusJson() {
     body += '.'; body += avrVersion[2]; body += '"';
   } else body += F("null");
   body += F(",\"audio_cues\":[");
-  const uint8_t cueCount = BoardCore::AudioCues::supportedCount(avrOnline, avrVersionKnown, avrVersion);
+  const uint8_t cueCount = BoardCore::AudioCues::supportedCount(avrOnline, (avrCapabilities & kCapBuzzer) != 0, avrAudioCueCount);
   for (uint8_t i = 0; i < cueCount; ++i) {
     if (i) body += ',';
     body += '"'; body += BoardCore::AudioCues::name(i); body += '"';
@@ -1103,7 +1103,7 @@ String buildStatusJson() {
   body += F(",\"pc_contract_features\":");
   if (avrOnline && avrPcSupported) body += avrPcFeatures;
   else body += F("null");
-  body += F(",\"capabilities\":{\"schema\":1,\"board_kind\":\"");
+  body += F(",\"capabilities\":{\"board_kind\":\"");
   body += PAKAR_TABLE_ENABLED ? F("table") : F("controller");
   body += F("\",\"name\":\""); appendJsonEscaped(body, deviceIdentity.displayName());
   body += F("\",\"hostname\":\""); body += deviceIdentity.hostname();
@@ -1149,7 +1149,8 @@ void configureNtp() {
 
 bool applyStreamPacket(const uint8_t *packet, size_t length) {
   if (packet == nullptr || length < 10U || length > 1300U ||
-      memcmp(packet, "PKR1", 4) != 0) return false;
+      memcmp(packet, "PKAR", 4) != 0 || packet[4] != 0 || packet[5] != 0 ||
+      (packet[9] & ~1U) != 0) return false;
   const uint16_t offset = packet[6] | static_cast<uint16_t>(packet[7]) << 8;
   const uint8_t count = packet[8];
   const uint8_t flags = packet[9];
@@ -1262,7 +1263,7 @@ LedGrid::Pattern parsePattern(const String &value) {
 
 bool parseAudioCue(const String &value, uint8_t &cue) {
   return BoardCore::AudioCues::parse(value.c_str(), cue) &&
-         cue < BoardCore::AudioCues::supportedCount(avrOnline, avrVersionKnown, avrVersion);
+         cue < BoardCore::AudioCues::supportedCount(avrOnline, (avrCapabilities & kCapBuzzer) != 0, avrAudioCueCount);
 }
 
 String jsonStringValue(const String &json, const char *key) {
@@ -1562,7 +1563,7 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
   avrOnline = true;
   lastAvrFrameAt = millis();
   if(frame.opcode==kTelemetryResponse) {
-    if(frame.payloadLength==sizeof(avrTelemetry) && frame.payload[0]==1) {
+    if(frame.payloadLength==sizeof(avrTelemetry) && frame.payload[0]==0) {
       memcpy(avrTelemetry,frame.payload,sizeof(avrTelemetry));
       avrTelemetryKnown=true;avrTelemetryAt=millis();
     }
@@ -1602,10 +1603,11 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
   }
   if (frame.opcode == kHelloResponse) {
     avrVersionKnown = frame.payloadLength >= 9 &&
-                      frame.payload[0] == BoardCore::BuildInfo::kProtocolVersion &&
+                      frame.payload[0] == 0 &&
                       frame.payload[1] == kRoleAvr;
     if (avrVersionKnown) memcpy(avrVersion, frame.payload + 6, sizeof(avrVersion));
     avrCapabilities = avrVersionKnown ? frame.payload[2] | static_cast<uint16_t>(frame.payload[3]) << 8 : 0;
+    avrAudioCueCount = avrVersionKnown && frame.payloadLength >= 13 ? frame.payload[12] : 0;
     avrDisplayStatusKnown = false; tm1637Ack = false;
     avrPcSupported = avrVersionKnown && frame.payloadLength >= 12 && frame.payload[9] == 0x50;
     avrPcFeatures = avrPcSupported ? frame.payload[10] | static_cast<uint16_t>(frame.payload[11]) << 8 : 0;
@@ -1698,7 +1700,7 @@ void registerAsyncOta() {
     body += F("\",\"phase\":\""); body += otaPhase;
     body += F("\",\"uploaded_bytes\":"); body += otaUploadedBytes;
     body += F(",\"free_heap\":"); body += ESP.getFreeHeap();
-    body += F(",\"upload\":\"/update\",\"download\":\"/firmware/download\",\"remote_fetch\":\"/api/v1/firmware/fetch\",\"remote_apply\":\"/api/v1/firmware/apply\",\"remote_status\":\"/api/v1/firmware/remote\",\"telemetry\":\"/api/v1/telemetry\",\"avr_full_flash_bytes\":32768,\"avr_eeprom_bytes\":1024,\"filesystem_ota\":false}");
+    body += F(",\"upload\":\"/update\",\"download\":\"/firmware/download\",\"remote_fetch\":\"/api/firmware/fetch\",\"remote_apply\":\"/api/firmware/apply\",\"remote_status\":\"/api/firmware/remote\",\"telemetry\":\"/api/telemetry\",\"avr_full_flash_bytes\":32768,\"avr_eeprom_bytes\":1024,\"filesystem_ota\":false}");
     auto response = request->beginResponse(200, "application/json", body);
     response->addHeader("Cache-Control", "no-store"); request->send(response);
   };
@@ -1797,7 +1799,7 @@ void registerApi() {
   server.on("/", HTTP_GET, []() {
     server.send_P(200, "text/html; charset=utf-8", kWebUi);
   });
-  server.on("/api/v1/status", HTTP_GET, []() {
+  server.on("/api/status", HTTP_GET, []() {
     if (!authenticate()) return;
     if (server.arg("pixels") == F("1")) {
       String body = buildStatusJson();
@@ -1810,7 +1812,7 @@ void registerApi() {
       server.send(200,"application/json",body);
     } else sendStatusJson();
   });
-  server.on("/api/v1/avr/contracts", HTTP_GET, []() {
+  server.on("/api/avr/contracts", HTTP_GET, []() {
     if (!authenticate()) return;
     String body = F("{\"dialect\":\"pakar-pccontroller\",\"profile\":80,\"tunnel_opcode\":86,\"chunk_opcode\":87,\"maximum_payload\":48,\"supported\":");
     body += avrOnline && avrPcSupported ? F("true") : F("false");
@@ -1821,7 +1823,7 @@ void registerApi() {
     body += F("\",\"future_hardware_flags\":[\"PAKAR_PC_I2C\",\"PAKAR_PC_SENSORS\",\"PAKAR_PC_PWM\",\"PAKAR_PC_RF\",\"PAKAR_PC_RELAYS\",\"PAKAR_PC_STATUS_RGB\",\"PAKAR_PC_AVR_LED\"]}");
     server.send(200, "application/json", body);
   });
-  server.on("/api/v1/avr/contracts", HTTP_POST, []() {
+  server.on("/api/avr/contracts", HTTP_POST, []() {
     if (!authenticate()) return;
     uint8_t p[48], n = 0;
     const String opcode = server.arg("opcode");
@@ -1839,7 +1841,7 @@ void registerApi() {
     if (!id) { server.send(409, "application/json", "{\"error\":\"contract_queue_full\"}"); return; }
     server.send(202, "application/json", pcReceiptJson(*pcTransport.get(id)));
   });
-  server.on("/api/v1/avr/contracts/result", HTTP_GET, []() {
+  server.on("/api/avr/contracts/result", HTTP_GET, []() {
     if (!authenticate()) return;
     const String idText = server.arg("id");
     bool valid = idText.length() && idText.length() <= 10;
@@ -1853,7 +1855,7 @@ void registerApi() {
     if (!receipt || receipt->usb) { server.send(404, "application/json", "{\"error\":\"unknown_contract_request\"}"); return; }
     server.send(200, "application/json", pcReceiptJson(*receipt));
   });
-  server.on("/api/v1/avr/contracts/result", HTTP_DELETE, []() {
+  server.on("/api/avr/contracts/result", HTTP_DELETE, []() {
     if (!authenticate()) return;
     const String idText = server.arg("id"), opText = server.arg("opcode");
     uint32_t id = 0;
@@ -1873,7 +1875,7 @@ void registerApi() {
     }
     server.send(200, "application/json", "{\"consumed\":true}");
   });
-  server.on("/api/v1/cells/mapping", HTTP_GET, []() {
+  server.on("/api/cells/mapping", HTTP_GET, []() {
     if (!authenticate()) return;
     String body;
     body.reserve(1300);
@@ -1893,7 +1895,7 @@ void registerApi() {
     body += F("]}");
     server.send(200, "application/json", body);
   });
-  server.on("/api/v1/cells/mapping", HTTP_POST, []() {
+  server.on("/api/cells/mapping", HTTP_POST, []() {
     if (!authenticate()) return;
     const int logical = server.arg("logical_id").toInt();
     const int physical = server.arg("physical_cell").toInt();
@@ -1939,7 +1941,7 @@ void registerApi() {
     xml += F(".local/</presentationURL></device></root>");
     server.send(200, "text/xml", xml);
   });
-  server.on("/api/v1/time", HTTP_GET, []() {
+  server.on("/api/time", HTTP_GET, []() {
     if (!authenticate()) return;
     const time_t currentTime = time(nullptr);
     String body = F("{\"synced\":");
@@ -1949,7 +1951,7 @@ void registerApi() {
     body += '}';
     server.send(200, "application/json", body);
   });
-  server.on("/api/v1/wifi/scan", HTTP_GET, []() {
+  server.on("/api/wifi/scan", HTTP_GET, []() {
     if (!authenticate()) return;
     const int count = WiFi.scanNetworks(false, true);
     String body = F("{\"networks\":[");
@@ -1968,7 +1970,7 @@ void registerApi() {
     WiFi.scanDelete();
     server.send(200, "application/json", body);
   });
-  server.on("/api/v1/mode", HTTP_POST, []() {
+  server.on("/api/mode", HTTP_POST, []() {
     if (!authenticate()) return;
     const String value = server.arg("value");
     if (value != F("idle") && value != F("cell") &&
@@ -1988,7 +1990,7 @@ void registerApi() {
     sendToAvr(kSetMode, sequence++, payload, sizeof(payload));
     server.send(202, "application/json", "{\"accepted\":true}");
   });
-  server.on("/api/v1/cell", HTTP_POST, []() {
+  server.on("/api/cell", HTTP_POST, []() {
     if (!authenticate()) return;
     const int id = server.arg("id").toInt();
     if (id < 1 || id > LedGrid::kCells) {
@@ -2006,7 +2008,7 @@ void registerApi() {
     sendToAvr(kCellAction, sequence++, payload, sizeof(payload));
     server.send(202, "application/json", "{\"accepted\":true}");
   });
-  server.on("/api/v1/game/reset", HTTP_POST, []() {
+  server.on("/api/game/reset", HTTP_POST, []() {
     if (!authenticate()) return;
     winner = 0;
     if (mode == kModeSnake) startSnake(); else grid.resetWhite();
@@ -2014,7 +2016,7 @@ void registerApi() {
     sendToAvr(kGameReset, sequence++);
     server.send(202, "application/json", "{\"accepted\":true}");
   });
-  server.on("/api/v1/snake/direction", HTTP_POST, []() {
+  server.on("/api/snake/direction", HTTP_POST, []() {
     if (!authenticate()) return;
     const String value = server.arg("value");
     const int8_t direction =
@@ -2028,7 +2030,7 @@ void registerApi() {
     }
     server.send(202, "application/json", "{\"accepted\":true}");
   });
-  server.on("/api/v1/brightness", HTTP_POST, []() {
+  server.on("/api/brightness", HTTP_POST, []() {
     if (!authenticate()) return;
     const int value = server.arg("value").toInt();
     if (value < 1 || value > 255) {
@@ -2039,7 +2041,7 @@ void registerApi() {
     saveLedPreferences();
     server.send(200, "application/json", "{\"updated\":true}");
   });
-  server.on("/api/v1/effect", HTTP_POST, []() {
+  server.on("/api/effect", HTTP_POST, []() {
     if (!authenticate()) return;
     const String value = server.arg("value");
     const LedGrid::Pattern pattern = parsePattern(value);
@@ -2051,7 +2053,7 @@ void registerApi() {
     saveLedPreferences();
     server.send(200, "application/json", "{\"updated\":true}");
   });
-  server.on("/api/v1/buzzer", HTTP_POST, []() {
+  server.on("/api/buzzer", HTTP_POST, []() {
     if (!authenticate()) return;
     const int frequency = server.arg("frequency").toInt();
     const int duration = server.arg("duration_ms").toInt();
@@ -2066,7 +2068,7 @@ void registerApi() {
     sendToAvr(kBuzzer, sequence++, payload, sizeof(payload));
     server.send(202, "application/json", "{\"accepted\":true}");
   });
-  server.on("/api/v1/audio", HTTP_POST, []() {
+  server.on("/api/audio", HTTP_POST, []() {
     if (!authenticate()) return;
     uint8_t cue = 0;
     if (!parseAudioCue(server.arg("cue"), cue)) {
@@ -2078,7 +2080,7 @@ void registerApi() {
     }
     server.send(202, "application/json", "{\"accepted\":true,\"state\":\"queued\"}");
   });
-  server.on("/api/v1/display", HTTP_POST, []() {
+  server.on("/api/display", HTTP_POST, []() {
     if (!authenticate()) return;
     if (server.arg("release") == F("true") || server.arg("release") == F("1")) {
       const uint8_t payload[] = {4, 0, 0, 0};
@@ -2124,7 +2126,7 @@ void registerApi() {
     sendToAvr(kDisplayText, sequence++, payload, sizeof(payload));
     server.send(202, "application/json", "{\"accepted\":true}");
   });
-  server.on("/api/v1/outputs", HTTP_POST, []() {
+  server.on("/api/outputs", HTTP_POST, []() {
     if (!authenticate()) return;
     const int mask = server.arg("mask").toInt();
     if (mask < 0 || mask > 255) {
@@ -2135,11 +2137,11 @@ void registerApi() {
     sendToAvr(kOutputMask, sequence++, payload, sizeof(payload));
     server.send(202, "application/json", "{\"accepted\":true}");
   });
-  server.on("/api/v1/device/name", HTTP_GET, []() {
+  server.on("/api/device/name", HTTP_GET, []() {
     if (!authenticate()) return;
     server.send(200, "application/json", deviceNameJson());
   });
-  server.on("/api/v1/device/name", HTTP_POST, []() {
+  server.on("/api/device/name", HTTP_POST, []() {
     if (!authenticate()) return;
     if (otaActive || otaRebootAt || avrUploadOwner || programmingLatched || networkApplyPending) {
       server.send(409, "application/json", "{\"error\":\"device_busy\"}"); return;
@@ -2158,7 +2160,7 @@ void registerApi() {
     }
     server.send(202, "application/json", deviceNameJson(true));
   });
-  server.on("/api/v1/network", HTTP_GET, []() {
+  server.on("/api/network", HTTP_GET, []() {
     if (!authenticate()) return;
     String body = F("{\"station_enabled\":");
     body += networkConfig.stationEnabled() ? F("true") : F("false");
@@ -2172,7 +2174,7 @@ void registerApi() {
     body += F("\"}");
     server.send(200, "application/json", body);
   });
-  server.on("/api/v1/network", HTTP_POST, []() {
+  server.on("/api/network", HTTP_POST, []() {
     if (!authenticate()) return;
     const bool enabled = server.arg("station_enabled") != F("false") &&
                          server.arg("station_enabled") != F("0");
@@ -2193,7 +2195,7 @@ void registerApi() {
     networkApplyPending = true;
   });
 
-  server.on("/api/v1/cloud", HTTP_GET, []() {
+  server.on("/api/cloud", HTTP_GET, []() {
     if (!authenticate()) return;
     String body;
     body.reserve(700);
@@ -2229,7 +2231,7 @@ void registerApi() {
     body += F(",\"last_error\":\""); body += error; body += F("\"}");
     server.send(200, "application/json", body);
   });
-  server.on("/api/v1/cloud", HTTP_POST, []() {
+  server.on("/api/cloud", HTTP_POST, []() {
     if (!authenticate()) return;
     const bool mqttEnabled =
         server.arg("mqtt_enabled") == F("true") ||
@@ -2267,13 +2269,13 @@ void registerApi() {
     cloudServices.applyConfiguration();
     server.send(200, "application/json", "{\"updated\":true}");
   });
-  server.on("/api/v1/cloud/reconnect", HTTP_POST, []() {
+  server.on("/api/cloud/reconnect", HTTP_POST, []() {
     if (!authenticate()) return;
     cloudServices.applyConfiguration();
     server.send(202, "application/json", "{\"accepted\":true}");
   });
 
-  server.on("/api/v1/avr/probe", HTTP_GET, []() {
+  server.on("/api/avr/probe", HTTP_GET, []() {
     if (!authenticate()) return;
     uint8_t signature[3] = {};
     const bool ok = avrIsp.probe(signature);
@@ -2283,7 +2285,7 @@ void registerApi() {
     }
     server.send(200, "application/json", "{\"signature\":\"1E950F\"}");
   });
-  server.on("/api/v1/avr/backup", HTTP_POST, []() {
+  server.on("/api/avr/backup", HTTP_POST, []() {
     if (!authenticate()) return;
     if (!avrIsp.backup(LittleFS, kBackupDirectory)) {
       server.send(500, "text/plain", avrIsp.lastError());
@@ -2291,21 +2293,21 @@ void registerApi() {
     }
     server.send(200, "application/json", "{\"backed_up\":true}");
   });
-  server.on("/api/v1/avr/backup/flash", HTTP_GET, []() {
+  server.on("/api/avr/backup/flash", HTTP_GET, []() {
     if (!authenticate()) return;
     File file = LittleFS.open(String(kBackupDirectory) + F("/flash.bin"), "r");
     if (!file) { server.send(404, "text/plain", "no flash backup"); return; }
     server.streamFile(file, "application/octet-stream");
     file.close();
   });
-  server.on("/api/v1/avr/backup/eeprom", HTTP_GET, []() {
+  server.on("/api/avr/backup/eeprom", HTTP_GET, []() {
     if (!authenticate()) return;
     File file = LittleFS.open(String(kBackupDirectory) + F("/eeprom.bin"), "r");
     if (!file) { server.send(404, "text/plain", "no EEPROM backup"); return; }
     server.streamFile(file, "application/octet-stream");
     file.close();
   });
-  server.on("/api/v1/avr/program", HTTP_POST, []() {
+  server.on("/api/avr/program", HTTP_POST, []() {
     if(!authenticate()) return;
     File image=LittleFS.open(kAvrImagePath,"r");
     if(!image || image.size()!=32768) {if(image)image.close();server.send(400,"text/plain","Complete AVR image required");return;}
@@ -2322,7 +2324,7 @@ void registerApi() {
     server.send(200,"application/json","{\"programmed\":true,\"verified\":true,\"eeprom_preserved\":true}");
   });
 
-  server.native().on("/api/v1/avr/image", HTTP_POST,
+  server.native().on("/api/avr/image", HTTP_POST,
     [](AsyncWebServerRequest *request) {
       if (!webAccess.allowed(request)) { request->send(401); return; }
       const bool ownsImage = avrUploadOwner && request->getAttribute("upload_id") == String(avrUploadOwner);

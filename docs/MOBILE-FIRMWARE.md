@@ -12,7 +12,7 @@ browser was introduced. This is app/fixture acceptance, not physical flashing.
 | Pealayer web_ui/src/components/ServerFilePicker.tsx | mobile/lib/documents.dart, Android MainActivity.kt and firmware_page.dart: single selection, cancel, bounded/disabled state, stale ownership, review before acceptance. Android's document provider owns navigation/search instead of an ESP endpoint that does not exist. |
 | Pealayer web_ui/src/preferenceFiles.ts | Actual case-insensitive dot-extension suffix rule in documents.dart, executed by the firmware picker. File extension is not authenticity. Provider content URIs are not converted to filesystem parent paths. |
 | Canonical Pakar desktop/src/maintenance.rs | firmware.dart: explicit selected targets, HTTPS manifest and lowercase SHA-256 validation, exact job/boot/hash/target pins, phase guards, positive ACKs, full backup/image bounds, truthful stage/apply/completion and no replay. Adds fresh identity read before apply/cancel. |
-| Actual ESP RemoteFirmware JSON, MaintenanceRoutes and upload handlers | Exact /api/v1/firmware/remote/fetch/apply/cancel, /api/v1/avr/probe/backup/image/program, stored backup GETs and /update multipart fields. No synthetic defaults or unadvertised EEPROM/fuse restoration controls. |
+| Actual ESP RemoteFirmware JSON, MaintenanceRoutes and upload handlers | Exact /api/firmware/remote/fetch/apply/cancel, /api/avr/probe/backup/image/program, stored backup GETs and /update multipart fields. No synthetic defaults or unadvertised EEPROM/fuse restoration controls. |
 
 Original-byte donor hashes, normalized target/test hashes and exact omitted code
 remain in file-comparison-evidence.json. Both picker files now have a specialist

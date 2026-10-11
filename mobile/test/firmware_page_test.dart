@@ -23,13 +23,13 @@ class FirmwareApi extends PakarApi {
     required bool Function() authorize,
   }) async {
     if (!authorize()) throw const StaleConnection();
-    if (path == '/api/v1/firmware/remote') {
+    if (path == '/api/firmware/remote') {
       ++reads;
       return Map.of(observed);
     }
     ++mutations;
     if (loseProbe) throw const OperationUncertain();
-    if (path == '/api/v1/avr/probe') return {'signature': '1E950F'};
+    if (path == '/api/avr/probe') return {'signature': '1E950F'};
     return {};
   }
 }

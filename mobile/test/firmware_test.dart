@@ -15,7 +15,6 @@ Map<String, dynamic> firmwareJob({
   int id = 0,
   int targets = 3,
 }) => {
-  'schema': 1,
   'job_id': id,
   'boot_id': 'fixture-boot',
   'manifest_sha256': id == 0 ? '' : manifestHash,
@@ -40,13 +39,11 @@ http.StreamedResponse jsonResponse(Map<String, dynamic> value) =>
     http.StreamedResponse(Stream.value(utf8.encode(jsonEncode(value))), 200);
 
 void main() {
-  test('Strict job schema and truthful action phases reject defaults and impossible counts', () {
+  test('Strict job fields and truthful action phases reject defaults and impossible counts', () {
     final valid = firmwareJob(phase: 'ready', id: 1);
     expect(RemoteJob.parse(valid).canApply, true);
     expect(RemoteJob.parse(valid).canCancel, true);
     for (final override in [
-      {'schema': null},
-      {'schema': true},
       {'job_id': 1.0},
       {'job_id': -1},
       {'job_id': 4294967296},
@@ -127,7 +124,7 @@ void main() {
     var mutations = 0;
     final api = PakarApi(
       client: MaintenanceClient((request) async {
-        if (request.url.path == '/api/v1/status') {
+        if (request.url.path == '/api/status') {
           return jsonResponse({'hostname': 'ledboard'});
         }
         ++mutations;
@@ -180,7 +177,7 @@ void main() {
         };
         final api = PakarApi(
           client: MaintenanceClient((request) async {
-            if (request.url.path == '/api/v1/status') {
+            if (request.url.path == '/api/status') {
               return jsonResponse({'hostname': 'ledboard'});
             }
             if (request.method == 'POST') ++mutations;
@@ -204,7 +201,7 @@ void main() {
       final original = firmwareJob(phase: 'ready', id: 7);
       final api = PakarApi(
         client: MaintenanceClient((request) async {
-          if (request.url.path == '/api/v1/status') {
+          if (request.url.path == '/api/status') {
             return jsonResponse({'hostname': 'ledboard'});
           }
           if (request.method == 'GET') return jsonResponse(original);
@@ -239,10 +236,10 @@ void main() {
         return {};
       },
       client: MaintenanceClient((request) async {
-        if (request.url.path == '/api/v1/status') {
+        if (request.url.path == '/api/status') {
           return jsonResponse({'hostname': 'ledboard'});
         }
-        if (request.url.path == '/api/v1/firmware/remote') {
+        if (request.url.path == '/api/firmware/remote') {
           return jsonResponse(firmwareJob());
         }
         ++probes;
@@ -262,7 +259,7 @@ void main() {
     var writes = 0, authorized = true;
     final api = PakarApi(
       client: MaintenanceClient((request) async {
-        if (request.url.path == '/api/v1/status') return pending.future;
+        if (request.url.path == '/api/status') return pending.future;
         ++writes;
         return jsonResponse(firmwareJob(phase: 'manifest', id: 3));
       }),
@@ -288,10 +285,10 @@ void main() {
       var writes = 0;
       final api = PakarApi(
         client: MaintenanceClient((request) async {
-          if (request.url.path == '/api/v1/status') {
+          if (request.url.path == '/api/status') {
             return jsonResponse({'hostname': 'ledboard'});
           }
-          if (request.url.path == '/api/v1/firmware/remote') {
+          if (request.url.path == '/api/firmware/remote') {
             return jsonResponse(firmwareJob());
           }
           ++writes;
@@ -327,7 +324,7 @@ void main() {
       () async {
         final api = PakarApi(
           client: MaintenanceClient((request) async {
-            if (request.url.path == '/api/v1/status') {
+            if (request.url.path == '/api/status') {
               return jsonResponse({'hostname': 'ledboard'});
             }
             return http.StreamedResponse(
@@ -360,7 +357,7 @@ void main() {
       );
       final api = PakarApi(
         client: MaintenanceClient((request) async {
-          if (request.url.path == '/api/v1/status') {
+          if (request.url.path == '/api/status') {
             return jsonResponse({'hostname': 'ledboard'});
           }
           return http.StreamedResponse(stream.stream, 200);
@@ -368,7 +365,7 @@ void main() {
       );
       await expectLater(
         api.maintenanceBytes(
-          '/api/v1/avr/probe',
+          '/api/avr/probe',
           mayMutate: true,
           authorize: () => true,
           timeout: const Duration(milliseconds: 30),
@@ -386,7 +383,7 @@ void main() {
       var writes = 0;
       final api = PakarApi(
         client: MaintenanceClient((request) async {
-          if (request.url.path == '/api/v1/status') {
+          if (request.url.path == '/api/status') {
             return jsonResponse({'hostname': 'ledboard'});
           }
           ++writes;

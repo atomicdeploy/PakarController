@@ -6,11 +6,11 @@ This is a source/firmware-build/Web-fixture checkpoint, not live desktop or phys
 ## Authority and transport
 
 `libraries/BoardCore/src/DeviceContext.h` owns the ESP profile policy.
-`firmware/esp8266/esp8266.ino` publishes the same schema-1 `capabilities`
+`firmware/esp8266/esp8266.ino` publishes the same living `capabilities`
 object through authenticated status JSON and its WebSocket status feed:
 
 ```json
-{"schema":1,"board_kind":"table","name":"ledboard",
+{"board_kind":"table","name":"ledboard",
  "acknowledged_features":["table","leds","streaming"],
  "table":{"columns":10,"rows":8,"pixels_per_cell":6},
  "modes":[{"id":"snake","code":3,"label":"Snake","kind":"presentation"}]}
@@ -23,7 +23,7 @@ pixels, hostname, cached preferences or a version. Setting it to 0 excludes
 Table and its modes; the host policy test compiles and exercises both settings.
 `PAKAR_FIRST_WINS_ENABLED` separately gates that Table game (default 1).
 
-Existing 29 USB status bytes are preserved. Bytes 29–37 append schema, 16-bit
+Existing 29 USB status bytes are preserved. Bytes 29–37 append reserved zero, 16-bit
 feature mask, mode mask, board kind, columns, rows, pixels-per-cell and reserved
 byte. Old USB status cannot invent a Table. Feature mask bits 0–12 are network,
 telemetry, LEDs, streaming, Table, Display, Text, Buzzer, inputs, outputs,

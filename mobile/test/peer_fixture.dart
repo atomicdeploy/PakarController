@@ -29,8 +29,7 @@ DeviceStatus peerFixture({
   'tm1637_brightness': 7,
   'audio_cues': ['welcome'],
   'cells': List.filled(80, 'white'),
-  'capabilities': {
-    'schema': 1,
+  'capabilities': <String, dynamic>{
     'hostname': hostname,
     'name': 'Table board',
     'board_kind': kind,

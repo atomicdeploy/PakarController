@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 const root=new URL('../',import.meta.url),read=p=>readFile(new URL(p,root),'utf8');
 const c=JSON.parse(await read('assets/contracts/device-settings.json'));
-assert.equal(c.schema,1);assert.equal(c.pages.length,10);assert.equal(new Set(c.pages.map(p=>p.id)).size,10);
+assert.equal(c.pages.length,10);assert.equal(new Set(c.pages.map(p=>p.id)).size,10);
 for(const p of c.pages){assert.match(p.id,/^[a-z-]+$/);assert.match(p.icon,/^[A-Z_]+$/);assert(Array.isArray(p.features));}
 async function output(path,text){let old='';try{old=await read(path)}catch{}if(old.replace(/\r\n/g,'\n')!==text){assert(!process.argv.includes('--check'),'Stale interface contract: '+path);await writeFile(new URL(path,root),text);console.log('Generated '+path)}}
 const quoted=JSON.stringify;

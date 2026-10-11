@@ -296,7 +296,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
         if let Some(label) = label { form.push(("display_name", label.as_str())); }
         let response = client
             .post(format!(
-                "{}/api/v1/device/name",
+                "{}/api/device/name",
                 endpoint.base.trim_end_matches('/')
             ))
             .basic_auth(&endpoint.user, Some(&endpoint.password))
@@ -325,7 +325,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
         next.base = format!("http://{name}.local");
         let pending = value["apply_pending"].as_bool().unwrap_or(true);
         if !pending {
-            let readback: serde_json::Value = client.get(format!("{}/api/v1/device/name",endpoint.base.trim_end_matches('/')))
+            let readback: serde_json::Value = client.get(format!("{}/api/device/name",endpoint.base.trim_end_matches('/')))
                 .basic_auth(&endpoint.user, Some(&endpoint.password)).send().map_err(|_| "Identity saved but readback unavailable; refresh before retrying")?
                 .error_for_status().map_err(|e|e.to_string())?.json().map_err(|e|e.to_string())?;
             if readback["hostname"] != value["hostname"] || readback["display_name"] != value["display_name"] { return Err("Identity saved but readback mismatch; no retry attempted".into()); }
@@ -335,7 +335,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
     if let HttpCommand::AccessChange(endpoint, next) = &command {
         let response = client
             .post(format!(
-                "{}/api/v1/auth",
+                "{}/api/auth",
                 endpoint.base.trim_end_matches('/')
             ))
             .basic_auth(&endpoint.user, Some(&endpoint.password))
@@ -374,7 +374,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
     }
     let (endpoint, request, response_kind) = match command {
         HttpCommand::Status(endpoint) => {
-            let url = format!("{}/api/v1/status", endpoint.base.trim_end_matches('/'));
+            let url = format!("{}/api/status", endpoint.base.trim_end_matches('/'));
             let request = client.get(url).query(&[(
                 "pixels",
                 if config::live().cell_shape != ui::cell_pixels::Shape::Rounded {
@@ -387,7 +387,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
         }
         HttpCommand::Mapping(endpoint) => {
             let url = format!(
-                "{}/api/v1/cells/mapping",
+                "{}/api/cells/mapping",
                 endpoint.base.trim_end_matches('/')
             );
             let request = client.get(url);
@@ -539,8 +539,8 @@ fn websocket_url(base: &str) -> Result<String, String> {
 
 fn rainbow_packet(offset: u16, count: u8, commit: bool, hue: u16) -> Vec<u8> {
     let mut packet = vec![0_u8; 10 + count as usize * 3];
-    packet[0..4].copy_from_slice(b"PKR1");
-    packet[4] = 1;
+    packet[0..4].copy_from_slice(b"PKAR");
+    // Bytes 4 and 5 stay reserved zero, never an API generation.
     packet[6] = offset as u8;
     packet[7] = (offset >> 8) as u8;
     packet[8] = count;
@@ -564,8 +564,8 @@ fn rainbow_packet(offset: u16, count: u8, commit: bool, hue: u16) -> Vec<u8> {
 
 fn pixel_packet(pixels: &[u8], offset: u16, count: u8, commit: bool) -> Vec<u8> {
     let mut packet = vec![0_u8; 10 + count as usize * 3];
-    packet[0..4].copy_from_slice(b"PKR1");
-    packet[4] = 1;
+    packet[0..4].copy_from_slice(b"PKAR");
+    // Bytes 4 and 5 stay reserved zero, never an API generation.
     packet[6] = offset as u8;
     packet[7] = (offset >> 8) as u8;
     packet[8] = count;
@@ -821,7 +821,7 @@ fn cobs_decode(input: &[u8]) -> Option<Vec<u8>> {
     Some(out)
 }
 fn wire_frame(opcode: u8, sequence: u8, payload: &[u8]) -> Vec<u8> {
-    let mut raw = vec![0xa5, 1, opcode, sequence, payload.len() as u8];
+    let mut raw = vec![0xa5, 0, opcode, sequence, payload.len() as u8];
     raw.extend_from_slice(payload);
     raw.push(crc8(&raw));
     cobs_encode(&raw)
@@ -833,7 +833,7 @@ fn decode_envelope(encoded: &[u8]) -> Option<(u8, u8, Vec<u8>)> {
     let raw = cobs_decode(encoded)?;
     if raw.len() < 6
         || raw[0] != 0xa5
-        || raw[1] != 1
+        || raw[1] != 0
         || raw.len() != raw[4] as usize + 6
         || crc8(&raw[..raw.len() - 1]) != raw[raw.len() - 1]
     {
@@ -1380,26 +1380,26 @@ impl PakarControllerApp {
             if self.device_settings.open && self.device_settings.page == 9 {
                 let _ = self.http_tx.send(HttpCommand::Configuration(
                     self.endpoint(),
-                    "/api/v1/firmware/remote",
+                    "/api/firmware/remote",
                 ));
             }
         }
         if !self.configuration_loaded {
             let _ = self.http_tx.send(HttpCommand::Configuration(
                 self.endpoint(),
-                "/api/v1/network",
+                "/api/network",
             ));
             let _ = self.http_tx.send(HttpCommand::Configuration(
                 self.endpoint(),
-                "/api/v1/device/name",
+                "/api/device/name",
             ));
             let _ = self
                 .http_tx
-                .send(HttpCommand::Configuration(self.endpoint(), "/api/v1/cloud"));
+                .send(HttpCommand::Configuration(self.endpoint(), "/api/cloud"));
             self.configuration_loaded = true;
             let _ = self.http_tx.send(HttpCommand::Configuration(
                 self.endpoint(),
-                "/api/v1/auth/info",
+                "/api/auth/info",
             ));
         }
         if self.command_route() == Some(Transport::WiFi) && self.has_table() && self.last_mapping_poll.elapsed() >= Duration::from_secs(15) {
@@ -1439,7 +1439,7 @@ impl PakarControllerApp {
                         self.sampling = false;
                     }
                 }
-                Event::Configuration("/api/v1/auth/info", value) => {
+                Event::Configuration("/api/auth/info", value) => {
                     self.access_user = value
                         .get("username")
                         .and_then(|v| v.as_str())
@@ -1448,7 +1448,7 @@ impl PakarControllerApp {
                     self.access_info = Some(value);
                 }
                 Event::Configuration(path, value) => {
-                    if path != "/api/v1/device/name" || self.command_route() != Some(Transport::Serial) {
+                    if path != "/api/device/name" || self.command_route() != Some(Transport::Serial) {
                         self.receive_configuration(path, value);
                     }
                 }
@@ -1506,7 +1506,7 @@ impl PakarControllerApp {
                 }
                 Event::SerialIdentity(port, value) => {
                     if port == self.serial_port && self.command_route() == Some(Transport::Serial) {
-                        self.receive_configuration("/api/v1/device/name",value);
+                        self.receive_configuration("/api/device/name",value);
                     }
                 }
                 Event::SerialIdentitySaved(port, result) => {
@@ -1642,7 +1642,7 @@ fn environment_endpoint() -> Endpoint {
 fn blocking_status(client: &Client, endpoint: &Endpoint) -> Result<DeviceStatus, String> {
     let response = client
         .get(format!(
-            "{}/api/v1/status",
+            "{}/api/status",
             endpoint.base.trim_end_matches('/')
         ))
         .basic_auth(&endpoint.user, Some(&endpoint.password))
@@ -1743,7 +1743,7 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
             &endpoint.base,
             &endpoint.user,
             &endpoint.password,
-            "/api/v1/telemetry",
+            "/api/telemetry",
         )?;
         println!(
             "{}",
@@ -1763,7 +1763,7 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
             )
         };
         let value = match words {
-            ["avr","contracts"] => pc_contract::get(client,&endpoint.base,&endpoint.user,&endpoint.password,"/api/v1/avr/contracts")?,
+            ["avr","contracts"] => pc_contract::get(client,&endpoint.base,&endpoint.user,&endpoint.password,"/api/avr/contracts")?,
             ["avr","settings"] => {
                 let receipt=fetch(4,&[])?;
                 pc_contract::Settings::parse(receipt["payload_hex"].as_str().ok_or("Missing settings payload")?)?.json()
@@ -1799,7 +1799,7 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
     if words == ["device", "name"] || words == ["device", "identity"] {
         if let Event::Configuration(_, value) = http_request(
             client,
-            HttpCommand::Configuration(endpoint.clone(), "/api/v1/device/name"),
+            HttpCommand::Configuration(endpoint.clone(), "/api/device/name"),
         )? {
             println!(
                 "{}",
@@ -1811,7 +1811,7 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
     if let ["device", "label", rest @ ..] = words {
         let label = rest.join(" ");
         if !identity::valid_display_name(&label) { return Err("Board name must be 1..63 UTF-8 bytes without controls or edge spaces".into()); }
-        let Event::Configuration(_, value) = http_request(client,HttpCommand::Configuration(endpoint.clone(),"/api/v1/device/name"))? else { return Err("Identity unavailable".into()) };
+        let Event::Configuration(_, value) = http_request(client,HttpCommand::Configuration(endpoint.clone(),"/api/device/name"))? else { return Err("Identity unavailable".into()) };
         let host = value["hostname"].as_str().ok_or("Hostname unavailable")?;
         let _ = http_request(client,HttpCommand::NameChange(endpoint.clone(),host.into(),Some(label)))?;
         println!("Board display name saved and verified; Wi-Fi was not restarted.");
@@ -1841,7 +1841,7 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
     if words == ["auth", "info"] {
         let value: serde_json::Value = client
             .get(format!(
-                "{}/api/v1/auth/info",
+                "{}/api/auth/info",
                 endpoint.base.trim_end_matches('/')
             ))
             .send()
@@ -1882,7 +1882,7 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
         };
         let response = client
             .post(format!(
-                "{}/api/v1/display",
+                "{}/api/display",
                 endpoint.base.trim_end_matches('/')
             ))
             .basic_auth(&endpoint.user, Some(&endpoint.password))
@@ -1901,21 +1901,21 @@ fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<
     }
     let (path, form): (&str, Vec<(&str, &str)>) =
         match words {
-            ["mode", value] => ("/api/v1/mode", vec![("value", value)]),
+            ["mode", value] => ("/api/mode", vec![("value", value)]),
             ["cell", id, state] => (
-                "/api/v1/cell",
+                "/api/cell",
                 vec![("id", id), ("state", state), ("effect", "fade")],
             ),
             ["cell", id, state, effect] => (
-                "/api/v1/cell",
+                "/api/cell",
                 vec![("id", id), ("state", state), ("effect", effect)],
             ),
-            ["brightness", value] => ("/api/v1/brightness", vec![("value", value)]),
-            ["effect", value] => ("/api/v1/effect", vec![("value", value)]),
-            ["display", value] => ("/api/v1/display", vec![("value", value)]),
-            ["audio", cue] => ("/api/v1/audio", vec![("cue", cue)]),
-            ["snake", value] => ("/api/v1/snake/direction", vec![("value", value)]),
-            ["reset"] => ("/api/v1/game/reset", vec![]),
+            ["brightness", value] => ("/api/brightness", vec![("value", value)]),
+            ["effect", value] => ("/api/effect", vec![("value", value)]),
+            ["display", value] => ("/api/display", vec![("value", value)]),
+            ["audio", cue] => ("/api/audio", vec![("cue", cue)]),
+            ["snake", value] => ("/api/snake/direction", vec![("value", value)]),
+            ["reset"] => ("/api/game/reset", vec![]),
             _ => return Err(
                 "commands: device identity, device rename HOST[.local], device label DISPLAY NAME, device configure HOST DISPLAY NAME, auth info, auth change USER, status, mode, cell, brightness, effect, display, audio, snake, reset"
                     .into(),
@@ -2159,8 +2159,8 @@ mod tests {
         ));
         let requests = server.join().unwrap();
         assert_eq!(requests.len(), 2);
-        assert!(requests[0].starts_with("POST /api/v1/network "));
-        assert!(requests[1].starts_with("GET /api/v1/network "));
+        assert!(requests[0].starts_with("POST /api/network "));
+        assert!(requests[1].starts_with("GET /api/network "));
         assert!(requests[0].to_lowercase().contains("authorization: basic "));
     }
     #[test]
@@ -2228,7 +2228,7 @@ mod tests {
             .contains("NOT programmed")
         );
         let requests = server.join().unwrap();
-        assert!(requests[0].starts_with("POST /api/v1/avr/image "));
+        assert!(requests[0].starts_with("POST /api/avr/image "));
         assert!(requests[0].contains("multipart/form-data"));
     }
     #[test]
@@ -2340,7 +2340,7 @@ mod tests {
     fn streaming_packet_bounds() {
         let p = rainbow_packet(240, 240, true, 20);
         assert_eq!(p.len(), 730);
-        assert_eq!(&p[..4], b"PKR1");
+        assert_eq!(&p[..4], b"PKAR");
         assert_eq!(p[9], 1);
     }
     #[test]

@@ -269,7 +269,7 @@ class PakarApi {
   }
 
   Future<DeviceStatus> status() async {
-    final result = DeviceStatus(await _get('/api/v1/status'));
+    final result = DeviceStatus(await _get('/api/status'));
     final expected = _localLabel();
     if (expected != null && result.json['hostname'] != expected) {
       throw const FormatException(
@@ -281,7 +281,7 @@ class PakarApi {
   }
 
   Future<CellMap> mapping() async =>
-      CellMap.fromJson(await _get('/api/v1/cells/mapping'));
+      CellMap.fromJson(await _get('/api/cells/mapping'));
 
   Stream<DeviceStatus> liveStatus() async* {
     final revision = connectionRevision;
@@ -372,7 +372,7 @@ class PakarApi {
       }
       try {
         final probe = await _client
-            .get(_uri(candidate, '/api/v1/status'), headers: headers)
+            .get(_uri(candidate, '/api/status'), headers: headers)
             .timeout(const Duration(seconds: 2));
         if (probe.statusCode ~/ 100 != 2) continue;
         if (revision != connectionRevision) throw const StaleConnection();

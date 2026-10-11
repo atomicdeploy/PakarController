@@ -13,7 +13,7 @@ Actual donor generated opcode header and JSON registry imported. Pakar legacy 0x
 * Outer 0x56 request: donor opcode then payload.
 * Outer 0xB0 response: donor response opcode then payload. ACK/ERROR include actual request opcode/error.
 * Full 48-byte requests use outer 0x57: start [0, opcode, 48, first 45 payload bytes], final [1, remaining 3 bytes], same sequence, less than 200ms apart. No mutation before matched final. Preserves scheduled 40-character DISPLAY_TEXT and macro payload bounds. Current responses fit the 47-byte inner-response bound.
-* Inner HELLO: [0x50,1,1,48,enabled_features_LE16,requested_features_LE16]. Profile **0x50** is not donor schema-3's sensor board. Stock PCController schema-3 decoding needs a profile adapter.
+* Inner HELLO: [0x50,0,0,48,enabled_features_LE16,requested_features_LE16]. Bytes 1/2 are fixed reserved zero, not contract generations. Hardware profile **0x50** is not the donor sensor board. Stock PCController hardware decoding needs a profile adapter.
 * AVR HELLO preserves original nine-byte prefix and appends [0x50,features_LE16]. ESP does not assume support from version alone.
 * Prog rejects mutations including settings, macros and automations; queries remain available. Application PROGRAM_STATE is not ISP Prog. Reset ACK precedes safe shutdown/watchdog reset; no flash write.
 * ESP per-client receipts bind boot identity, request ID, sequence and expected response. Eight slots; 750ms sent timeout, 2s queued timeout, 60s retention unless explicitly consumed, 30s sequence quarantine. Queue acceptance is not AVR acceptance. Uncertain mutations never retry. Validated terminal receipts can be consumed without releasing sequence quarantine; queued/awaiting and USB receipts cannot be deleted.
@@ -27,7 +27,7 @@ Actual donor generated opcode header and JSON registry imported. Pakar legacy 0x
 | 01 HELLO, 02 GET_STATUS | Profile/features and actual 25-byte snapshot; no fabricated temperatures/voltage/current. |
 | 03 SET_STREAM, 04 GET_SETTINGS, 05 SET_SETTINGS | Validated board parameters, dual CRC banks, commit-last/readback, no implicit boot provisioning. Changed-only stream defaults off. |
 | 10 BUZZER | Actual Timer1 driver, 20..20000Hz, positive duration; all existing melody cues retained. |
-| 16 ADDRESSABLE_LED | ESP donor configure/stage/commit/pixel/fill adapter, real shared brightness, existing engine. Donor window 1..100; full 480 streaming remains PKR1. Direct AVR route rejects because AVR is not strip owner. |
+| 16 ADDRESSABLE_LED | ESP donor configure/stage/commit/pixel/fill adapter, real shared brightness, existing engine. Donor window 1..100; full 480 streaming remains PKAR. Direct AVR route rejects because AVR is not strip owner. |
 | 30 MENU_ACTION, 37 MENU_SET_PAGE, 3D REMOTE_KEY_GESTURE | Real local/injected lifecycle and six hardware-appropriate pages. Down/repeated-hold acts immediately. Key monitor rejects edits. |
 | 35 RESET | Safe shutdown, correlated ACK, deferred watchdog reset. Hint 0/1 is not programming. |
 | 38 DISPLAY_TEXT | TM1637 text, raw segments, capture/release/metadata, one-shot/loop/interval, full 40-character scrolling, true-off, donor marquee lifecycle. Default non-repeating. LCD targets 1/2 return HardwareUnavailable. |
@@ -86,10 +86,10 @@ TUI: same commands without --command. Typed set: GET current, validate, SET once
 
 Authenticated HTTP:
 
-* GET /api/v1/avr/contracts: current support/features/profile/boot identity.
-* POST /api/v1/avr/contracts, form opcode=16&payload_hex=b801fa00: 202 queued receipt.
-* GET /api/v1/avr/contracts/result?id=ID: queued/awaiting/responded/outcome_unknown.
-* DELETE /api/v1/avr/contracts/result?id=ID&opcode=DECIMAL&boot_id=BOOT: explicitly consume your terminal receipt after verifying its identity and response. Authenticated, exact boot/request/opcode match required; 409 for pending/mismatched/missing receipts. An explicit caller may consume an outcome_unknown receipt after inspecting it; this never retries or cancels its possible device mutation.
+* GET /api/avr/contracts: current support/features/profile/boot identity.
+* POST /api/avr/contracts, form opcode=16&payload_hex=b801fa00: 202 queued receipt.
+* GET /api/avr/contracts/result?id=ID: queued/awaiting/responded/outcome_unknown.
+* DELETE /api/avr/contracts/result?id=ID&opcode=DECIMAL&boot_id=BOOT: explicitly consume your terminal receipt after verifying its identity and response. Authenticated, exact boot/request/opcode match required; 409 for pending/mismatched/missing receipts. An explicit caller may consume an outcome_unknown receipt after inspecting it; this never retries or cancels its possible device mutation.
 
 Authenticated inbound WebSocket and configured MQTT/outbound WebSocket share bounded queueing:
 

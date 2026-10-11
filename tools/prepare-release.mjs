@@ -67,7 +67,7 @@ function prepare(){
   if(apk.length<64||apk.subarray(0,4).toString('hex')!=='504b0304')throw Error('Missing Android preview APK');
   emit('PakarController-Android-preview.apk',apk);
   const assets=()=>readdirSync(output).filter(name=>!name.startsWith('.')).map(name=>({name,data:readFileSync(join(output,name))}));
-  emit('release-manifest.json',JSON.stringify({schema:1,product:'PakarController',...identity,run,physicalAcceptance:false,
+  emit('release-manifest.json',JSON.stringify({product:'PakarController',...identity,run,physicalAcceptance:false,
     androidSigning:'preview',assets:assets().map(({name,data})=>({name,size:data.length,sha256:sha256(data)}))},null,2)+'\n');
   emit('RELEASE-NOTES.md',notes+`\n\nDraft prerelease; no automatic board flashing or physical acceptance.\n\n[Exact build](${run})\n\nVerify with \`sha256sum --check SHA256SUMS.txt\` and \`gh attestation verify ASSET --repo ${repository}\`. Firmware manifests pin both board images and the link mode; distribute the manifest hash through a separately trusted channel.\n`);
   emit('SHA256SUMS.txt',checksumList(assets()));

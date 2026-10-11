@@ -51,12 +51,11 @@ int main() {
   assert(!playAudioCue(static_cast<AudioCue>(255),player)); assert(player.activeFrequencyHz()==1032);
   uint8_t unchanged=77; assert(!BoardCore::AudioCues::parse("bad",unchanged) && unchanged==77);
   assert(!BoardCore::AudioCues::parse(nullptr,unchanged));
-  const uint8_t older[]={0,2,4}, current[]={0,2,5}, future[]={0,3,0}, unknown[]={0,1,0};
-  assert(BoardCore::AudioCues::supportedCount(true,true,older)==12);
-  assert(BoardCore::AudioCues::supportedCount(true,true,current)==14);
-  assert(BoardCore::AudioCues::supportedCount(true,true,future)==14);
-  assert(BoardCore::AudioCues::supportedCount(true,true,unknown)==0);
-  assert(BoardCore::AudioCues::supportedCount(false,true,current)==0);
-  assert(BoardCore::AudioCues::supportedCount(true,false,nullptr)==0);
+  assert(BoardCore::AudioCues::supportedCount(true,true,12)==12);
+  assert(BoardCore::AudioCues::supportedCount(true,true,14)==14);
+  assert(BoardCore::AudioCues::supportedCount(true,true,255)==14);
+  assert(BoardCore::AudioCues::supportedCount(true,true,0)==0);
+  assert(BoardCore::AudioCues::supportedCount(false,true,14)==0);
+  assert(BoardCore::AudioCues::supportedCount(true,false,14)==0);
   puts("Actual TonePlayer/BootMelody: all fourteen cues and exact 530/520/590 ms donor welcome variants, deadlines, rollover, capacity, mute, identity-gated cue metadata passed (register double; not audible proof).");
 }

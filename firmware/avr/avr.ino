@@ -137,7 +137,7 @@ BoardCore::PcContractAssembly pcAssembly;
 extern "C" char __heap_start;
 extern "C" void *__brkval;
 void sendTelemetry(uint8_t sequence) {
-  uint8_t p[46]={1,BoardCore::BuildInfo::kVersionMajor,
+  uint8_t p[46]={0,BoardCore::BuildInfo::kVersionMajor,
       BoardCore::BuildInfo::kVersionMinor,BoardCore::BuildInfo::kVersionPatch};
   const uint32_t now=millis();memcpy(p+4,&now,4);
   char stack;
@@ -172,7 +172,7 @@ void sendHello(uint8_t sequence = 0) {
   const uint16_t capabilities = kCapShiftInputs | kCapShiftOutputs | kCapAdc9 |
                                 kCapTm1637 | kCapDisplayText | kCapBuzzer;
   const uint8_t payload[] = {
-      BoardCore::BuildInfo::kProtocolVersion, kRoleAvr,
+      0, kRoleAvr, // Reserved zero; explicit capability bits own availability.
       static_cast<uint8_t>(capabilities),
       static_cast<uint8_t>(capabilities >> 8), 80, 9,
       BoardCore::BuildInfo::kVersionMajor,
@@ -181,6 +181,7 @@ void sendHello(uint8_t sequence = 0) {
       BoardSettings::Schema,
       static_cast<uint8_t>(BoardCore::Features::enabled),
       static_cast<uint8_t>(BoardCore::Features::enabled >> 8),
+      kCueCount, // Append-only explicit stable audio IDs [0, count).
   };
   link.send(kHelloResponse, sequence, payload, sizeof(payload));
 }

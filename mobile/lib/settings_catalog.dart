@@ -1,6 +1,5 @@
 // Generated shared device page catalog; mobile native editors remain tracked.
 const deviceSettingsCatalog = {
-  "schema": 1,
   "pages": [
     {
       "id": "overview",

@@ -48,9 +48,7 @@ class RemoteJob {
   static RemoteJob parse(Map<String, dynamic> value) {
     bool uint(String field) =>
         value[field] is int && value[field] >= 0 && value[field] <= 0xffffffff;
-    if (value['schema'] is! int ||
-        value['schema'] != 1 ||
-        !uint('job_id') ||
+    if (!uint('job_id') ||
         !uint('received_bytes') ||
         !uint('expected_bytes') ||
         value['targets'] is! int ||
@@ -140,7 +138,7 @@ class FirmwareController {
   Future<RemoteJob> status() async {
     if (!allowed('isp') && !allowed('ota')) throw const StaleConnection();
     final value = await api.maintenanceJson(
-      '/api/v1/firmware/remote',
+      '/api/firmware/remote',
       authorize: () => allowed('isp') || allowed('ota'),
     );
     if (!allowed('isp') && !allowed('ota')) {
@@ -160,7 +158,7 @@ class FirmwareController {
     checkTargets(targets);
     final ack = RemoteJob.parse(
       await api.maintenanceJson(
-        '/api/v1/firmware/fetch',
+        '/api/firmware/fetch',
         post: true,
         form: {
           'url': url,
@@ -202,7 +200,7 @@ class FirmwareController {
     }
     final ack = RemoteJob.parse(
       await api.maintenanceJson(
-        apply ? '/api/v1/firmware/apply' : '/api/v1/firmware/cancel',
+        apply ? '/api/firmware/apply' : '/api/firmware/cancel',
         post: true,
         form: expected.identityForm,
         authorize: () => allowedTargets(expected.targets),
@@ -230,10 +228,10 @@ class FirmwareController {
       );
     }
     final path = switch (action) {
-      'probe' => '/api/v1/avr/probe',
-      'backup' => '/api/v1/avr/backup',
-      'program' => '/api/v1/avr/program',
-      'stage' => '/api/v1/avr/image',
+      'probe' => '/api/avr/probe',
+      'backup' => '/api/avr/backup',
+      'program' => '/api/avr/program',
+      'stage' => '/api/avr/image',
       'update' => '/update',
       _ => throw const FormatException('Unknown maintenance action'),
     };
@@ -298,7 +296,7 @@ class FirmwareController {
     check('isp');
     final size = eeprom ? 1024 : 32768;
     final bytes = await api.maintenanceBytes(
-      '/api/v1/avr/backup/${eeprom ? 'eeprom' : 'flash'}',
+      '/api/avr/backup/${eeprom ? 'eeprom' : 'flash'}',
       maximum: size,
       authorize: () => allowed('isp'),
     );

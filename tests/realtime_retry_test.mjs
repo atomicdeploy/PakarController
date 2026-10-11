@@ -90,7 +90,7 @@ const fireLive=async()=>{const[id,timer]=liveTimers.entries().next().value;liveT
 execute('connectWs()');sockets[0].onopen();assert.equal(sockets[0].url,'wss://ledboard.local/ws');
 sockets[0].onclose({code:1006});assert.equal(await fireLive(),500);
 assert.equal(sockets.length,2);assert.deepEqual(activity.slice(-3),['GET','render:verified-peer','socket']);
-assert.equal(requests[0].path,'/api/v1/status');assert.equal(requests[0].options.credentials,'same-origin');
+assert.equal(requests[0].path,'/api/status');assert.equal(requests[0].options.credentials,'same-origin');
 assert.equal(requests[0].options.method,undefined,'session preparation is read-only GET');
 assert(requests[0].options.signal instanceof AbortSignal);
 assert.equal(liveTimers.size,0);

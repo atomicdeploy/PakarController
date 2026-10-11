@@ -9,6 +9,9 @@ param(
     [switch] $Plan
 )
 $ErrorActionPreference = 'Stop'
+& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern api-contract -Gate | Out-Null
+& node (Join-Path $PSScriptRoot 'check-living-contract.mjs') | ForEach-Object { Write-Host $_ }
+if ($LASTEXITCODE -ne 0) { throw 'Living API policy failed before native build.' }
 $taskReuse = & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate
 $taskLocaleReuse = & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern localization -Gate
 & node (Join-Path $PSScriptRoot 'generate-interface-contract.mjs') --check | ForEach-Object { Write-Host $_ }

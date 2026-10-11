@@ -103,7 +103,7 @@ mod tests {
     #[test]
     fn peer_icon_lifecycle_reuses_refresh_and_revokes_on_disconnect() {
         let ctx=egui::Context::default();
-        let mut peer=crate::capabilities::Manifest{schema:1,application:Some(crate::identity::Application{
+        let mut peer=crate::capabilities::Manifest{board_kind:"controller".into(),application:Some(crate::identity::Application{
             id:"table.app".into(),name:"Pakar Table".into(),title:"Table controller".into(),
             icon_png_base64:include_str!("../../assets/branding/app-icon.png.base64").trim().into()}),..Default::default()};
         let mut changes=0;

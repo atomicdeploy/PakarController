@@ -22,7 +22,7 @@ void main() {
       expect(status.peer.table, false);
       expect(status.peer.frontPanel, false);
       expect(status.peer.modes, isEmpty);
-      expect(status.peer.allows('/api/v1/cell', {'id': '1'}), false);
+      expect(status.peer.allows('/api/cell', {'id': '1'}), false);
     },
   );
   test('Independent ACKs and measured display gate follow donor ready AND advertised', () {
@@ -52,23 +52,20 @@ void main() {
       'first-wins',
       'snake',
     ]);
-    expect(status.peer.allows('/api/v1/mode', {'value': 'snake'}), true);
-    expect(
-      status.peer.allows('/api/v1/mode', {'value': 'not-advertised'}),
-      false,
-    );
+    expect(status.peer.allows('/api/mode', {'value': 'snake'}), true);
+    expect(status.peer.allows('/api/mode', {'value': 'not-advertised'}), false);
     final invalid = peerFixture().json;
     (invalid['capabilities']['table'] as Map)['rows'] = 9;
     expect(DeviceStatus(invalid).peer.table, false);
     (invalid['capabilities']['table'] as Map)['rows'] = 8.0;
     expect(DeviceStatus(invalid).peer.table, false);
   });
-  test('Mixed host and unsupported schema fail closed', () {
+  test('Mixed host and missing feature ACKs fail closed', () {
     final value = peerFixture().json;
     value['capabilities']['hostname'] = 'other';
     expect(DeviceStatus(value).peer.known, false);
     value['capabilities']['hostname'] = 'ledboard';
-    value['capabilities']['schema'] = 2;
+    value['capabilities']['acknowledged_features'] = null;
     expect(DeviceStatus(value).peer.known, false);
   });
   test(

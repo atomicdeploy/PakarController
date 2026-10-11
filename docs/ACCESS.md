@@ -28,9 +28,9 @@ command-line arguments. Set `PAKAR_USER` for the current username and
 variables after use. Successful TUI changes update in-memory credentials;
 new CLI processes need the new `PAKAR_USER` and `PAKAR_PASSWORD`.
 
-Public `GET /api/v1/auth/info` returns readiness, username, default-password
+Public `GET /api/auth/info` returns readiness, username, default-password
 status and route names, never the stored password. Protected
-`POST /api/v1/auth` accepts form fields `current_password`, `username`,
+`POST /api/auth` accepts form fields `current_password`, `username`,
 `password` and confirms `{updated:true, reauthenticate:true}` only after
 persistence succeeds. Basic authentication remains for native/API clients.
 Browsers use `/login` and an HttpOnly SameSite=Strict cookie.
