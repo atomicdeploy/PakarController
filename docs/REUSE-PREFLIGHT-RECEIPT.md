@@ -1893,3 +1893,18 @@ redundant preflight/expired events. Reconsulted peer-binding and actual native
 poll/admission path; gate settings and remote-job reads on fresh selected Wi-Fi
 status, retaining legacy reads. Added source guard. Windows Shell E_FAIL startup
 event remains separate production work; tray_available alone is not Shell success.
+
+2bdbf76 adds only fresh-status admission for configuration/remote-job reads.
+Its source guard and final comparison/version gates pass; guarded Release passed
+in3m15 using the same cache. Final payload25394176 bytes, SHA256
+4440B2B24C622A5BF58B5C466369FB621F453870A2E5BCA1D567B0C4DF81E435.
+Per user policy no repeated full incremental native suite:163 tests passed on
+73769c6; final small admission correction has source guard/build/live follow-up.
+
+Stage stopped on Pealayer tracked drift, not a compiler failure. Reconsulted
+build-storage; all43 compared Pealayer source hashes still match at clean
+fbf2d162073fe6171cb17ba94ec68c3b202911db. Two added paths and one removed
+generated bundle; refreshed only that inventory and left additions pending.
+Current4285/106/4179/73. The subsequent ledger-only commit changes no compiled
+desktop inputs; binary build identity remains2bdbf76, not the documentation HEAD.
+Final output Native-HTTP-Ownership.json records actual replacement/capture status.
