@@ -72,7 +72,8 @@ last normal size in memory only, and requests size recovery once when a visible
 restored window is below320x240. No visibility/focus or per-frame disk writes;
 real valid user sizes remain untouched. Two actual native tests cover hidden/
 fullscreen sampling, retained size, storm prevention and run_logic commands.
-Execution/new release/live acceptance for this geometry repair remains pending.
+Execution/new release/live acceptance were pending at this source step; final
+results are recorded below, not inferred from the new test definitions.
 Corrected guarded Test executed132 cases: all pass, zero failed/ignored
 (2m47 compile,0.26s execution). New geometry tests both ran. Release and fresh
 normal-window live smoke remain separate pending gates.
@@ -83,6 +84,24 @@ The protocol CI runners now include the small S3 pin/menu-audio contract fixture
 All prior runner commands and hardware/donor assertions remain unchanged. Rebind
 only their reviewed proof hashes; the PCController controls snapshot is explicitly
 live-unavailable in this lookup, not a fresh donor read or physical acceptance.
+
+Final2aaa811 source:132 native tests pass; release4m52, stage/CLI probe pass.
+Gracefully replaced closed-draft owner withPID67660, executable SHA256
+EA19E5437DFDABFAB79BD81F0E903989C5ECB17727447D568F3291D349BB33D8.
+Settings3F7FDE0BAD681CE83C7B2FD928215E13B516FB3CCC3349EC1B5A19260E49B3A6
+unchanged across replacement; all five existing rollback hashes preserved.
+Actual live script passes ALL assertions: minimized observed, hidden correlated
+request applied, ten-second deadline with no file/no reveal, Show applied and
+fresh internal1999x1453 framebuffer captured and inspected. Final normal window
+is not minimized/fullscreen; no desktop input. Image still exposes offline event
+flood and Windows tray unspecified error; those are not fixed by geometry repair.
+
+Actual Flutter read-only Table renderer capture passes analyze and its one
+targeted widget test; no APK/device writes. Its image reveals rectangular mobile
+cells rather than native/Web six-pixel shape options: generic parity remains
+pending, not an accepted omission. The current Web fixture is actual embedded
+HTML with SIMULATED labels, not a physical connected board. No S3 production
+compile, DMA/peripheral/OTA acceptance or all-feature app equivalence claimed.
 
 Remaining generic donor imports: complete app.rs/platform ownership review,
 config-revision/idle repaint scheduling, shell initialization/recovery,
