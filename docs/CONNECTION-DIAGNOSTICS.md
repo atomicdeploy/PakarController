@@ -74,6 +74,12 @@ shows the underlying DNS error and repeat badge, not generic HTTP-only text.
 The earlier2af7358 live snapshots retained7 rows while repeat counts rose5→8;
 final-package offline observation is recorded in the output receipt separately.
 
+Final67948be live snapshots retain8 event rows/7 active incidents while repeated
+occurrences rise6→11; status backoff reaches30seconds. Final inspected framebuffer
+shows DNS and timeout on the same status route as distinct causes, each with its
+own repeat count. That extra timeout is intentionally retained, not misreported
+as a deduplication failure. Five original rollback hashes were rechecked unchanged.
+
 The full local repository-quality phase passes after correcting two exposed
 fixture/certificate issues: reconnect VM now loads the actual shared logger;
 two stale PU Web target hashes were rebound after verifying unchanged line244
