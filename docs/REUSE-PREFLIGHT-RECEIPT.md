@@ -1,5 +1,47 @@
 # Donor-first preflight receipt
 
+## PR completion and exhaustive conversation collection
+
+PR14 and PR15 merged normally; only main remains on GitHub and locally. Read all
+their current diff/conversation/review-thread pages. Copilot requests are posted;
+no completed review is claimed. PR15's stale workflow target hashes were rebound
+only after rereading complete actual Pealayer CI/CD and CodeQL and Pakar workflows.
+Repository governance and comparison Check passed, without a protection bypass.
+
+Read Pealayer REVIEW-COMMENT-AUDIT.md completely and adapted its actual procedure
+into tools/audit-github-conversations.mjs: every issue/PR/review/thread/comment page,
+incomplete-response rejection, one stable ignored snapshot, unchanged-write skip,
+separate hash-bound manual scope, and no closed-to-resolved promotion. First complete
+792-record collection contains 142 Pealayer and 634 PCController records plus 16
+Pakar records. All four unresolved donor thread bodies read; only five complete
+donor issue records and those two comment scopes are marked reviewed. The rest
+are pending. Rayan has no verified GitHub repo; asked for URL, read its live chat
+and retained filesystem donor. Did not mutate other projects or their comments.
+Final Pakar-only refresh includes security issue17: 17 Pakar records, 793 total.
+Donor snapshots were retained rather than downloaded again; manual review scope
+remains five complete donor records and two review-comment scopes.
+
+Reread actual Rayan formatDateTime/BidiLtr and i18n test contracts. Imported real
+BDI LTR/isolate textContent-only rendering for hostname/URL summary and locale-
+specific Gregorian/Persian NTP dates. Existing protocol/secret values are not
+translated or rewritten. Nine shipped localization tests pass. Full Web/quality
+batch and affected failed-tail rechecks pass after correcting a missing style
+property in the DOM double and regenerating the exact route-proof snapshot.
+New GitHub pagination/manual-decision tests pass; this does not prove all records
+were reviewed. ESP-only warm busy-wire build passes: flash code 876696 bytes,
+RAM 56476 bytes, IRAM 63055 bytes. Image SHA-256:
+883cd159cd4d4b073fed29ef66e2abe45214d7e019b45f3e29629d6b8d68af30.
+
+87 completed source comparisons, 4155 pending, 54 known gaps out of 4242 files.
+Pealayer live revision was refreshed without promoting other read states or
+changing donor sources. Existing anchors selectively revalidated; no native,
+AVR or APK rebuild, package replacement, hardware writes, new debug cache or
+rendered-pixel acceptance. Native/mobile/browser cross-surface BDI/calendar,
+general event/gap and output confirmation and retention imports remain pending.
+GitHub glib alert1 remains open; Dependabot cannot resolve beyond 0.18.5 despite
+fixed baseline 0.20.0. Track and coordinate it rather than disabling tray features
+or pretending zero open PRs means security-clear.
+
 ## Living unversioned API correction
 
 Tracking issue #16. Read the PCController network runtime, client UX and

@@ -1,5 +1,21 @@
 # PakarController comparison receipts
 
+## Conversation-aware import checkpoint
+
+87/4242 complete source comparisons, 4155 pending, 54 known gaps. New complete
+Pealayer review-audit procedure comparison; actual Rayan BdiLtr/calendar contracts
+extended into current Web consumers and nine passing executable localization
+tests. No complete new source read is invented for the previously reviewed Rayan
+file; its selected functions/tests were reread and original hashes remain current.
+Remaining dictionary/inputs/monospace/platform/pixel acceptance is explicit.
+
+PR14/15 merged normally with evidence repair, no open Pakar PR or non-main remote
+branch at readback. Full paginated donor conversation collection is not semantic
+completion; hash-bound manual decisions mark five full issue records and four
+unresolved thread comments, with the rest pending. Source quality plus affected
+tail rechecks and ESP-only busy-wire build pass. No native/mobile build or package/
+physical deployment. Details: GITHUB-COORDINATION.md and REUSE-PREFLIGHT-RECEIPT.md.
+
 ## Living unversioned API acceptance checkpoint
 
 Issue #16 and API-POLICY.md record the cross-chat policy investigation and exact

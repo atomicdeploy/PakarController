@@ -4,6 +4,25 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
     {
+      "origin":"Pealayer",
+      "path":"docs/REVIEW-COMMENT-AUDIT.md",
+      "sha256":"7a91d9fa8778383ee37e33d861ceebc5ab210e46bedab6af8be82d56c27523cc",
+      "source_read":"complete",
+      "verdict":"parity-gap",
+      "preserved":["Actual exhaustive review-thread/review-summary/standalone-comment audit procedure adapted into read-only paginated GitHub collection, hash-bound manual scope decisions, unresolved/outdated preservation and quota-versus-completed-review distinction. Used on every state of Pakar, Pealayer and PCController."],
+      "targets":[
+        {"path":"tools/audit-github-conversations.mjs","sha256":"d2b9dff0e72c8fa58a5982cde925e550bd159c22d207ac267f5991c68d57656a","anchor":"export function collect"},
+        {"path":"docs/GITHUB-COORDINATION.md","sha256":"ec796a0e6e1d207299a48a556bcfd4b3914eb1437a7772b5573c75c216127fec","anchor":"# Conversation-aware integration"}
+      ],
+      "proof":[{"path":"tests/github_conversation_audit_test.mjs","sha256":"d71ee1e531770b756ab7f5269f9b6cb6d1bf75f7d17cd6c5e71e1529712ae7bd","anchor":"Paginated GitHub audit"}],
+      "omissions":[
+        {"code":"Historical media thumbnails, MPV surface and DLL basename, timeline/cue migration, audio delay and media picking fixes","disposition":"not-applicable","reason":"Pakar is an mpv-free controller and does not own donor playback/media/timeline models. Generic staging safety, keyboard ownership, error correlation, authentication and service-worker origin lessons remain applicable and tracked independently."},
+        {"code":"Complete semantic disposition of every historical issue/review and full DNS-rebinding, actuator/persistence, UI/PWA/physical acceptance","disposition":"pending","reason":"All pages are collected but fetching does not mean reading or implementing them. Only explicitly hash-bound reviewed scopes are marked; every unread record and source-file import remains pending."}
+      ],
+      "remaining":["Read and reconcile the remaining 792-record conversation corpus; continue applicable source imports and exact source/test mapping. Verify RayanLamp repository when supplied; do not invent one or mutate donor comments from Pakar."],
+      "improvement":""
+    },
+    {
       "origin": "PCController",
       "path": "Tools/Controller/docs/Go-Embedding-API.md",
       "sha256": "4d8ff85c9c44092100d4f349f20eb5493d1516d064dd03d0f6b8d1010e7b6795",
@@ -116,7 +135,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "function connectWs()"
         }
       ],
@@ -225,7 +244,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "async function refreshAuthenticated(options={})"
         }
       ],
@@ -292,7 +311,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -464,7 +483,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "function connectWs()"
         }
       ],
@@ -556,17 +575,18 @@
       "improvement": "",
       "preserved": [
         "Actual normalization/detection, t placeholder fallback, visual digits, Intl.NumberFormat and languagechange lifecycle adapted into the real embedded localization module. Selection counts and batch readback messages are real consumers. Restart ownership, idempotent cleanup, missing/inherited placeholder handling, blocked storage and no OS-triggered preference writes are added.",
-        "Dynamic network/cloud labels and panel menus retranslate reversibly without replacing board identity, hostnames, mapping IDs, protocol strings or unsaved secrets."
+        "Dynamic network/cloud labels and panel menus retranslate reversibly without replacing board identity, hostnames, mapping IDs, protocol strings or unsaved secrets.",
+        "Actual BidiLtr bdi/dir=ltr isolation and formatDateTime Persian/Gregorian calendar rules now serve the real hostname/URL summary and observed NTP time. TextContent-only rendering never parses peer HTML or rewrites protocol values."
       ],
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "67b413df8ceaeaff6cb2b3724ac457a97ca7206c47887b15a46ae555a19d5eab",
+          "sha256": "e630c30dfd99b1e3b8d64497336798e86c3ee0e3b60a96a5ddbd9e00369f12b0",
           "anchor": "function startUiLocaleController()"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -582,18 +602,18 @@
           "reason": "These describe another application's lamp identity/endpoints. Pakar title follows independently acknowledged board application metadata; translating peer names or claiming unrelated lamp actions would be incorrect. Generic mechanisms remain independently pending."
         },
         {
-          "code": "Persian-calendar formatDateTime, rendered reusable BidiLtr, additional generic dictionary/settings consumers and native/mobile locale synchronization",
+          "code": "Additional generic dictionary/settings/protocol consumers, protocol monospace styling and native/mobile locale synchronization",
           "disposition": "pending",
-          "reason": "Need real controller date/protocol/settings consumers and runtime acceptance, not unused copied functions or fixture-only UI. Current grid/seven-segment LTR and unchanged wire text are not full BidiLtr parity. Visual digit helper exists but further app call sites remain pending."
+          "reason": "Web hostname/URL summary now renders real BDI and NTP uses the actual calendar formatter. Remaining input/hash/status consumers, monospace styling and native/mobile/browser pixel acceptance are not implied by those two consumers or VM tests."
         }
       ],
       "remaining": [
-        "Finish dynamic confirmations/errors/status and generic protocol/date consumers. Port locale lifecycle into actual Flutter controls and validate native/mobile/browser synchronization. No full localization or hardware acceptance claim."
+      "Finish remaining dynamic confirmations/errors/status and protocol inputs; validate current BDI/NTP pixels and native/mobile locale synchronization. No full localization or hardware acceptance claim."
       ],
       "proof": [
         {
           "path": "tests/rayanlamp_locale_test.mjs",
-          "sha256": "271476797421102f0e90da5bac4f7dd58c2385ddc4bb8c7fa8123a4df806ff1e",
+          "sha256": "8e1cabaca26644801b145877f6b6d682e5153a7270d90087f1104e6f71bf6a2a",
           "anchor": "Automatic locale reacts to OS changes"
         },
         {
@@ -616,7 +636,7 @@
       "targets": [
         {
           "path": "tests/rayanlamp_locale_test.mjs",
-          "sha256": "271476797421102f0e90da5bac4f7dd58c2385ddc4bb8c7fa8123a4df806ff1e",
+          "sha256": "8e1cabaca26644801b145877f6b6d682e5153a7270d90087f1104e6f71bf6a2a",
           "anchor": "Actual RayanLamp i18n.test.tsx contracts"
         }
       ],
@@ -627,18 +647,18 @@
           "reason": "Node/VM executes the dependency-free embedded module. Pakar deliberately retains primary language, explicit direction and acknowledged board identity; tests document each difference."
         },
         {
-          "code": "Rendered BidiLtr component test and full actual native/mobile/browser acceptance",
+          "code": "Full actual native/mobile/browser pixel and cross-interface acceptance",
           "disposition": "pending",
-          "reason": "Protocol fixture asserts unchanged text/direction but is not a new BDI renderer. Grid LTR is source-checked only. Actual protocol isolation/date/platform consumers still need implementation and runtime inspection."
+          "reason": "Actual DOM-bound BDI and calendar tests now execute the shipped helper and verify real summary/NTP call sites. VM DOM contracts are not rendered pixels or the full platform/interface matrix."
         }
       ],
       "remaining": [
-        "Implement/render protocol isolation and date consumers; complete native/mobile/browser matrix. VM tests are not pixels or physical board proof."
+      "Inspect current protocol/date rendering in the browser; complete remaining consumers and native/mobile/browser matrix. VM tests are not pixels or physical board proof."
       ],
       "proof": [
         {
           "path": "tests/rayanlamp_locale_test.mjs",
-          "sha256": "271476797421102f0e90da5bac4f7dd58c2385ddc4bb8c7fa8123a4df806ff1e",
+          "sha256": "8e1cabaca26644801b145877f6b6d682e5153a7270d90087f1104e6f71bf6a2a",
           "anchor": "Restart and idempotent teardown"
         }
       ]
@@ -662,7 +682,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -747,7 +767,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -1000,7 +1020,7 @@
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "67b413df8ceaeaff6cb2b3724ac457a97ca7206c47887b15a46ae555a19d5eab",
+          "sha256": "e630c30dfd99b1e3b8d64497336798e86c3ee0e3b60a96a5ddbd9e00369f12b0",
           "anchor": "function uiTr(text,values)"
         },
         {
@@ -1010,7 +1030,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -1142,7 +1162,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "956b74f1cb8e1db5e7c410e14fa593bba59a4c53584fb47ed23a1831f313f994",
+          "sha256": "b611a6b5794bad31693fa985340eb2d1565f1e459792f940591b54aa4c59979f",
           "anchor": "export function runChecks"
         },
         {
@@ -1451,7 +1471,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "function peerAvailability("
         }
       ],
@@ -1749,7 +1769,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -1759,7 +1779,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -1824,7 +1844,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -3771,7 +3791,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -3861,7 +3881,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -3983,7 +4003,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "e60c921b9fecdec0fc37045b0a0890b4cb4b80f2182e0f53e2923fc46c3925ce",
+          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -4058,7 +4078,7 @@
         },
         {
           "path": "assets/web/localization.js",
-          "sha256": "67b413df8ceaeaff6cb2b3724ac457a97ca7206c47887b15a46ae555a19d5eab",
+          "sha256": "e630c30dfd99b1e3b8d64497336798e86c3ee0e3b60a96a5ddbd9e00369f12b0",
           "anchor": "subscribeLocalePreferences(value=>"
         }
       ],

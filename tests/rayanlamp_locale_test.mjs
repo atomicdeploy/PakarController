@@ -24,6 +24,7 @@ function fixture({languages=['en-US'],language='system',direction='auto',blocked
   const context=vm.createContext({window:events,navigator:{languages},NodeFilter:{SHOW_TEXT:4},
     localStorage:{getItem:key=>{if(blocked)throw Error('blocked');return storage.get(key)},setItem(key,value){writes++;if(blocked)throw Error('blocked');storage.set(key,value)}},
     document:{documentElement:root,title:'ACK Board Connect · ledboard.local',getElementById:id=>controls[id],querySelectorAll:()=>[],
+      createElement(tag){return {tagName:tag.toUpperCase(),style:{},attributes:{},setAttribute(key,value){this.attributes[key]=value},set innerHTML(value){throw Error('Never parse peer HTML')}}},
       createTreeWalker(){let index=0;return {nextNode(){this.currentNode=[owned,peer][index++];return !!this.currentNode}}}},
     fetch(){requests++;throw Error('Locale must not contact board')}
   });
@@ -78,6 +79,28 @@ test('Storage-restricted sessions still change language; dynamic owned labels an
   f.run('label.isConnected=false;applyLocalization()');assert.equal(f.run('ownedDynamicCopy.size'),1,'Detached labels are not leaked');
   assert.equal(f.requests,0);
 });
+test('Actual donor BDI isolation renders protocol text without translation or HTML parsing',()=>{
+  const f=fixture({language:'fa'}),node={replaceChildren(child){this.child=child}};
+  f.context.protocolNode=node;
+  f.run("setUiProtocolText(protocolNode,'http://ledboard.local:8118/api')");
+  assert.equal(node.child.tagName,'BDI');assert.equal(node.child.dir,'ltr');
+  assert.equal(node.child.className,'bidi-ltr');assert.equal(node.child.style.unicodeBidi,'isolate');
+  assert.equal(node.child.textContent,'http://ledboard.local:8118/api');
+  assert.equal(node.child.attributes['data-peer-value'],'');
+  f.run("setUiProtocolText(protocolNode,'<img src=x onerror=bad>')");
+  assert.equal(node.child.textContent,'<img src=x onerror=bad>');
+  f.select('en');assert.equal(node.child.dir,'ltr');assert.equal(f.requests,0);
+});
+test('Actual donor date formatter switches calendars only for presentation',()=>{
+  const f=fixture({language:'fa'}),epoch=Date.UTC(2026,9,11,8,30);
+  f.context.observedEpoch=epoch;
+  const options={dateStyle:'medium',timeStyle:'short',timeZone:'UTC'};
+  const code='uiDateTime(observedEpoch,'+JSON.stringify(options)+')';
+  assert.equal(f.run(code),new Intl.DateTimeFormat('fa-IR',{calendar:'persian',numberingSystem:'arabext',...options}).format(epoch));
+  f.select('en');
+  assert.equal(f.run(code),new Intl.DateTimeFormat('en-US',{calendar:'gregory',numberingSystem:'latn',...options}).format(epoch));
+  assert.equal(f.context.observedEpoch,epoch);assert.equal(f.writes,1,'Unchanged direction is not rewritten');assert.equal(f.requests,0);
+});
 test('Generated embedding, actual dynamic consumers and logical grid ownership stay coordinated',()=>{
   const web=read('firmware/esp8266/src/WebUi.h');
   assert.equal(web.split('// BEGIN SHARED LOCALIZATION')[1].split('// END SHARED LOCALIZATION')[0].trim(),read('assets/web/localization.js').trim());
@@ -85,4 +108,6 @@ test('Generated embedding, actual dynamic consumers and logical grid ownership s
   assert(web.includes("[uiLanguage,panels.map(p=>p.dataset.panelId),panelPreferences]"));
   assert(web.includes("uiTr('{count} selected',{count:uiNumber(selectedCells.size)})"));
   assert(web.includes('.grid,.segment-display{direction:ltr}'));
+  assert(web.includes('setUiProtocolText(summary,'));
+  assert(web.includes('uiDateTime(new Date(s.utc_epoch*1000),'));
 });
