@@ -47,6 +47,18 @@ security-policy scan awaits publishing. Do not dismiss alerts or merge failed sc
 Copilot reviewer API rejects noncollaborator request; explicit @copilot PR comment
 requests review instead, with remaining acceptance preserved on issues 2/3/9/10.
 
+Published source checkpoint 0054114c780700d397963d5eff8335f6b790a426 has a successful
+fresh CodeQL policy check; all six review threads are now resolved with concrete
+fix replies, not alert dismissal. PR13 is actually merged as
+5f1c3e9ae83ca7a974df1cac094295bd65bc9672. Merge main normally into the feature branch;
+keep its GTK/tray dependencies, ab_glyph and added native consumers rather than
+taking the older lockfile wholesale. Scoped offline Cargo reconciliation removes
+one unused generic-array entry; it does not update every dependency or download
+an SDK. Unify runtime/build base64 at 0.23.1, import tungstenite 0.30.0 from PR13.
+Guarded release-profile Check passes on the combined source in the same canonical
+cache. This is compile-only, not repeated tests or a newly deployed native binary.
+No current-source feature code/settings/artwork is replaced by a rollback.
+
 This is current package/runtime evidence, not full donor parity, board acceptance,
 an all-green new CI checkpoint or production-signed Android release.
 

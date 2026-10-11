@@ -16,9 +16,9 @@ rfd = "0.17.2"
 reqwest = { version = "0.12.28", default-features = false, features = ["blocking", "json", "multipart", "rustls-tls"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.145"
-base64 = "0.22.1"
+base64 = "0.23.1"
 serialport = "4.8.1"
-tungstenite = { version = "0.28.0", default-features = false, features = ["handshake"] }
+tungstenite = { version = "0.30.0", default-features = false, features = ["handshake"] }
 xcap = "0.9.8"
 image = { version = "0.25.10", default-features = false, features = ["png"] }
 tray-icon = "=0.26.1"
@@ -28,7 +28,7 @@ raw-window-handle = "0.6.2"
 windows = { version = "0.62", features = ["Win32_Globalization", "Win32_Foundation", "Win32_Graphics_Dwm", "Win32_UI_WindowsAndMessaging", "Win32_Security", "Win32_System_SystemInformation", "Win32_System_Threading", "Win32_System_RemoteDesktop", "Win32_System_Pipes", "Win32_System_IO", "Win32_Storage_FileSystem", "Win32_UI_Shell", "Win32_UI_Shell_Common", "Win32_UI_Shell_PropertiesSystem", "Win32_System_Com", "Win32_System_Com_StructuredStorage", "Win32_System_Variant"] }
 
 [build-dependencies]
-base64 = "0.22.1"
+base64 = "0.23.1"
 image = { version = "0.25.10", default-features = false, features = ["png"] }
 winres = "0.1.12"
 ab_glyph = "0.2"

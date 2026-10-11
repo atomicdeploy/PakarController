@@ -32,6 +32,12 @@ the entire cache does not need to be on RAM. Do not allocate a larger disk while
 that would starve applications/compilation. A 1-GiB disk cannot contain the
 observed 3.081-GiB native release dependency cache. Compiler objects/metadata,
 symbols and incremental states are build footprint, not runtime app memory.
+The installed eframe 0.36.2 manifest confirms its default WGPU backend plus this
+app's explicit Glow feature compile both graphics stacks. This adds build cost;
+it is not a justification for calling 8 GiB a runtime or scratch requirement.
+Backend reduction needs explicit renderer/platform and screenshot acceptance;
+it is not silently applied here merely to reclaim cache. Accessibility, fonts,
+links and platform support must not be discarded as unused without review.
 The current desktop executable is 24,992,768 bytes; an observed current process
 working set is 158,736,384 bytes and private committed memory 393,232,384 bytes.
 These are point-in-time runtime measurements, not constant upper bounds.
