@@ -4,6 +4,30 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
     {
+      "origin":"PCController",
+      "path":"Tools/VirtualBoard/tests/firmware_controls_test.cpp",
+      "sha256":"f993a968991db7b0835e449950cc3a366b9af60d0214c677f20087c3c4f1eb36",
+      "source_read":"complete",
+      "verdict":"parity-gap",
+      "preserved":["Actual require helper, testDisplayBrightnessFade and testDisplayAckDetectionAndRecovery adapted to the separate Pakar keepalive service and A4/A5 hardware ownership; decode actual data/address/control bytes rather than inferring frame recovery from cached values."],
+      "targets":[
+        {"path":"tests/tm1637_bus_test.cpp","sha256":"0bd8312952f6b58447d12126c698e835290add115b91a753a6b6d6efcbc7d031","anchor":"void testDisplayBrightnessFade()"},
+        {"path":"tests/display_stubs/Arduino.h","sha256":"b6c81c35395db97127f88f449e51f3cef884592bafe85406f381a73a37f20c5b","anchor":"namespace display_mock"},
+        {"path":"tests/display_stubs/avr/io.h","sha256":"a5dc33f85c2dde21843165ae0e64bd64bec0ed44c3fdc002c805e29b5e310e63","anchor":"struct DisplayRegister"},
+        {"path":"firmware/avr/SevenSegments.cpp","sha256":"776c190eb16a8aa72ed538a4728d35bbf7e51b4b9daddbbb81e62bfce252e74b","anchor":"pinMode(BoardPins::Tm1637Data, INPUT_PULLUP)"}
+      ],
+      "omissions":[
+        {"code":"Side A/B directional relay and motion-door policy matrix, temperature role swapping, retired MOVE alias and DS18B20 absent-pullup tests","disposition":"not-applicable","reason":"This fitted board has no directional motors/door policy or DS18B20. Do not enable these or copy donor relay pin mapping; future generic adapters remain feature-flagged with their own acceptance."},
+        {"code":"Full key double-click/fast-repeat/16-bit rollover, transition smoothing, context-sensitive leaf navigation/settings normalization and tone timer/queue cases","disposition":"pending","reason":"Pakar has existing key/tone/front-panel suites, but these complete donor assertions have not all been transplanted or compared behavior-by-behavior. A display-only import is not proof of those generic contracts."}
+      ],
+      "remaining":["Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof."],
+      "proof":[
+        {"path":"tools/test-display.ps1","sha256":"e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51","anchor":"foreach ($taskVariant"},
+        {"path":"tools/test-protocol.sh","sha256":"519b636ccd793e75d03633672b8224b15afd5127ab75bb85e3271a46a8fa7729","anchor":"for display_flags"}
+      ],
+      "improvement":"Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified."
+    },
+    {
       "origin":"Pealayer",
       "path":"docs/REVIEW-COMMENT-AUDIT.md",
       "sha256":"7a91d9fa8778383ee37e33d861ceebc5ab210e46bedab6af8be82d56c27523cc",
@@ -2921,7 +2945,7 @@
         },
         {
           "path": "firmware/avr/SevenSegments.cpp",
-          "sha256": "28547987e3fe6bf85e13763fa93ef8bb234f8d8f6204b43658058f070f6d9228",
+          "sha256": "776c190eb16a8aa72ed538a4728d35bbf7e51b4b9daddbbb81e62bfce252e74b",
           "anchor": "void writeBusByte("
         },
         {
@@ -2972,7 +2996,7 @@
         },
         {
           "path": "firmware/avr/SevenSegments.cpp",
-          "sha256": "28547987e3fe6bf85e13763fa93ef8bb234f8d8f6204b43658058f070f6d9228",
+          "sha256": "776c190eb16a8aa72ed538a4728d35bbf7e51b4b9daddbbb81e62bfce252e74b",
           "anchor": "void writeBusByte("
         },
         {

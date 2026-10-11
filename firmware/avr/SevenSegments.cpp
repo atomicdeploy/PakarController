@@ -68,11 +68,13 @@ inline void dataHigh() {
 
 inline void releaseData() {
 #if defined(__AVR__) && defined(PORTC) && defined(DDC4)
-  PORTC &= static_cast<uint8_t>(~_BV(PORTC4));
+  // Release the strong driver FIRST, then bias an unplugged bus high. A
+  // floating DIO can otherwise read LOW and falsely advertise an ACK. The
+  // TM1637 may still sink the weak pull-up during its ninth-clock ACK slot.
   DDRC &= static_cast<uint8_t>(~_BV(DDC4));
+  PORTC |= _BV(PORTC4);
 #else
-  pinMode(BoardPins::Tm1637Data, INPUT);
-  digitalWrite(BoardPins::Tm1637Data, LOW);
+  pinMode(BoardPins::Tm1637Data, INPUT_PULLUP);
 #endif
 }
 

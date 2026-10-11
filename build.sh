@@ -19,6 +19,7 @@ case "$link_mode" in
 esac
 
 if [[ "$target" != "esp8266" ]]; then
+pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern tm1637-display -Gate > /dev/null
 mkdir -p "$build/avr$suffix"
 arduino-cli compile "${clean_args[@]}" \
   --fqbn 'MiniCore:avr:328:bootloader=uart0,eeprom=keep,baudrate=115200,variant=modelP,BOD=2v7,LTO=Os_flto,clock=16MHz_external' \

@@ -1,5 +1,45 @@
 # Donor-first preflight receipt
 
+## Actual TM1637 bus recovery acceptance
+
+Reread complete live PCController LocalLib/SevenSegments.h and .cpp; both match
+their original snapshot hashes. Corrected the failed guessed Firmware/LocalLib
+lookup using the actual ledger path LocalLib/SevenSegments.cpp and explicit
+canonical PCController root. The default lookup only configures Pealayer/Rayan
+roots; unavailable in that lookup did not mean the real PCController was absent.
+Read Tools/VirtualBoard/tests/firmware_controls_test.cpp through EOF and its
+Arduino mock dependency. Actual donor require/fade/ACK tests are adapted, not
+replaced by an unrelated presence probe. Original donor source stays unchanged.
+
+Found DIO released with pull-up disabled, permitting an unplugged floating line
+to resemble LOW ACK. Release DDRC before enabling weak PORTC pull-up; fallback
+uses INPUT_PULLUP. Correct PC4/PC5 pins, ISP isolation, frame/brightness cache,
+zero/off and NACK aggregation remain. Titan/Microchip timing and DDR/PORT docs
+are linked in TM1637-RECOVERY.md. No global pull-up, EEPROM, pin or clock edits.
+
+New byte-decoding GPIO and instrumented-register fixtures execute both actual
+branches: input/pull-up on every ninth slot, no ACK contention, other PORTC bits
+unchanged, exact mode/address/segments/control replay, every NACK slot, true-off
+recovery, fade and 32-bit cadence rollover pass. First AVR fixture compile caught
+a singleton string splat; consulted actual Pealayer run-windows.ps1 typed-array
+runner and changed only the new test flag vector. First comparison rejected an
+invalid omission enum; used the existing not-applicable disposition with exact
+unfitted-hardware reasons. No guard weakened or failure hidden.
+
+New reviewed-slice gate is required by firmware build/test wrappers. Source
+comparison generation, reuse preflight regressions and source-ledger integrity
+pass. Warm AVR builds pass for busy-wire (26898/32384 flash) and polling
+(26614/32384 flash); both use1225/2048 RAM. Busy-wire merged Urboot image SHA256
+8d20b942f0c7157170c5428e6f4ac19cbeb395128d330d10bca3030a9f1d5c08.
+Both source layouts remain0.2.7, not a new public API generation. Existing native
+cache measured4013127900 bytes, release preserved; no debug cache or unrelated
+ESP/Android rebuild. No display flash/unplug/replug: fresh localhost1022 SSH
+refuses and ledboard.local DNS fails. ACK still is not actual emitted-pixel proof,
+and a shorted-low wire is not diagnosed by these doubles.
+
+Same ledger now88/4242 compared,4154 pending,55 known gap files; generic donor
+key/transition/menu/tone test import remains pending. No production-complete claim.
+
 ## PR completion and exhaustive conversation collection
 
 PR14 and PR15 merged normally; only main remains on GitHub and locally. Read all

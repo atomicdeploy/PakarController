@@ -14,6 +14,9 @@ $ErrorActionPreference = 'Stop'
 & node (Join-Path $PSScriptRoot 'check-living-contract.mjs') | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw 'Living API policy failed before firmware build.' }
 $projectRoot = Split-Path -Parent $PSScriptRoot
+if ($Target -ne 'esp8266') {
+    & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern tm1637-display -Gate | Out-Null
+}
 if ($Target -ne 'avr') {
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern web-presentation -Gate | Out-Null
     & node (Join-Path $PSScriptRoot 'generate-font-assets.mjs') --check | ForEach-Object { Write-Host $_ }

@@ -55,6 +55,12 @@ c++ -std=c++17 -Wall -Wextra -Werror \
   "$root/libraries/BoardCore/src/pccontroller/AutomationStore.cpp" \
   -o "$root/build/pc-contract-test"
 "$root/build/pc-contract-test"
+pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern tm1637-display -Gate > /dev/null
+for display_flags in '' '-D__AVR__'; do
+  c++ -std=c++17 -Wall -Wextra -Werror $display_flags -I "$root/tests/display_stubs" -I "$root/firmware/avr" \
+    "$root/tests/tm1637_bus_test.cpp" "$root/firmware/avr/SevenSegments.cpp" -o "$root/build/tm1637-bus-test"
+  "$root/build/tm1637-bus-test"
+done
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/pixel_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
   "$root/tests/led_grid_test.cpp" "$root/firmware/esp8266/src/LedGrid.cpp" -o "$root/build/led-grid-test"
 "$root/build/led-grid-test"
