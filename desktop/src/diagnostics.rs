@@ -7,6 +7,20 @@ use std::time::{Duration, Instant};
 const MAX_ROWS: usize = 256;
 const MAX_INCIDENTS: usize = 128;
 
+/// reqwest's outer Display omits its DNS/TLS/socket cause. Preserve that
+/// distinction before incident comparison, with bounded depth and text.
+pub fn describe_error(error: impl std::error::Error) -> String {
+    let mut details = vec![error.to_string().chars().take(2048).collect::<String>()];
+    let mut source = error.source();
+    for _ in 0..8 {
+        let Some(cause) = source else { break };
+        let detail: String = cause.to_string().chars().take(1024).collect();
+        if !detail.is_empty() && !details.contains(&detail) { details.push(detail); }
+        source = cause.source();
+    }
+    details.join(": ")
+}
+
 pub struct Row {
     pub kind: String,
     pub message: String,
@@ -102,6 +116,23 @@ impl Backoff {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn generic_outer_errors_keep_distinct_underlying_causes() {
+        #[derive(Debug)]
+        struct Outer(std::io::Error);
+        impl std::fmt::Display for Outer {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { f.write_str("request failed") }
+        }
+        impl std::error::Error for Outer {
+            fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        }
+        let dns = describe_error(Outer(std::io::Error::new(std::io::ErrorKind::AddrNotAvailable, "DNS failed")));
+        let refused = describe_error(Outer(std::io::Error::new(std::io::ErrorKind::ConnectionRefused, "connection refused")));
+        assert!(dns.contains("DNS failed")); assert!(refused.contains("connection refused"));
+        let mut log = EventLog::default();
+        log.failure("HTTP", &dns); log.failure("HTTP", &refused); log.failure("HTTP", &dns);
+        assert_eq!(log.len(), 2); assert_eq!(log.repeated_count(), 1);
+    }
     #[test]
     fn interleaved_failures_are_counted_but_distinct_causes_and_sources_survive() {
         let mut log = EventLog::default();

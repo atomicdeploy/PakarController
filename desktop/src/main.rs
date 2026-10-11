@@ -315,7 +315,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
             .basic_auth(&endpoint.user, Some(&endpoint.password))
             .form(&form)
             .send()
-            .map_err(|e| e.to_string())?;
+            .map_err(diagnostics::describe_error)?;
         if !response.status().is_success() {
             return Err(format!(
                 "HTTP {}: {}",
@@ -323,7 +323,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
                 response.text().unwrap_or_default()
             ));
         }
-        let value: serde_json::Value = response.json().map_err(|e| e.to_string())?;
+        let value: serde_json::Value = response.json().map_err(diagnostics::describe_error)?;
         if value.get("accepted").and_then(|v| v.as_bool()) != Some(true)
             || value.get("persisted").and_then(|v| v.as_bool()) != Some(true)
             || value.get("hostname").and_then(|v| v.as_str()) != Some(name.as_str())
@@ -358,7 +358,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
                 ("password", &next.password),
             ])
             .send()
-            .map_err(|e| e.to_string())?;
+            .map_err(diagnostics::describe_error)?;
         if !response.status().is_success() {
             return Err(format!(
                 "HTTP {}: {}",
@@ -366,7 +366,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
                 response.text().unwrap_or_default()
             ));
         }
-        let value: serde_json::Value = response.json().map_err(|e| e.to_string())?;
+        let value: serde_json::Value = response.json().map_err(diagnostics::describe_error)?;
         if value.get("updated").and_then(|v| v.as_bool()) != Some(true) {
             return Err("Device did not confirm a saved credential change".into());
         }
@@ -377,13 +377,13 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
             .get(format!("{}{}", endpoint.base.trim_end_matches('/'), path))
             .basic_auth(&endpoint.user, Some(&endpoint.password))
             .send()
-            .map_err(|e| e.to_string())?
+            .map_err(diagnostics::describe_error)?
             .error_for_status()
-            .map_err(|e| e.to_string())?;
+            .map_err(diagnostics::describe_error)?;
         return response
             .json::<serde_json::Value>()
             .map(|value| Event::Configuration(path, value))
-            .map_err(|e| e.to_string());
+            .map_err(diagnostics::describe_error);
     }
     let (endpoint, request, response_kind) = match command {
         HttpCommand::Status(endpoint) => {
@@ -420,7 +420,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
     let response = request
         .basic_auth(endpoint.user, Some(endpoint.password))
         .send()
-        .map_err(|error| error.to_string())?;
+        .map_err(diagnostics::describe_error)?;
     let code = response.status();
     if !code.is_success() {
         return Err(format!(
@@ -432,7 +432,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
         1 => response
             .json::<DeviceStatus>()
             .map(Event::Status)
-            .map_err(|e| e.to_string()),
+            .map_err(diagnostics::describe_error),
         2 => response
             .json::<CellMappingResponse>()
             .map(|value| {
@@ -449,7 +449,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
                         .collect(),
                 )
             })
-            .map_err(|e| e.to_string()),
+            .map_err(diagnostics::describe_error),
         _ => Ok(Event::Accepted(format!(
             "Device accepted the command ({code})"
         ))),
