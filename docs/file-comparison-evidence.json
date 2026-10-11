@@ -160,12 +160,13 @@
   "preserved": [
     "Actual Session.Request closing/context checks before and after admission adapted to TUI atomic stop checks before/after fresh preflight; no post-dispatch replay.",
     "Full source read. Fail-closed identity checks strengthened with HTTP server-side board/boot fences; donor HELLO/build stamp is NOT a boot epoch.",
-    "Before/after admission ownership checks also adapted to Web's shared pinned HTTP preflight and post-response generation validation. Existing session.go full review/live 1bf4d52 hash remains unchanged; this is not import of Go serial acquisition or request-priority scheduling."
+    "Before/after admission ownership checks also adapted to Web's shared pinned HTTP preflight and post-response generation validation. Existing session.go full review/live 1bf4d52 hash remains unchanged; this is not import of Go serial acquisition or request-priority scheduling.",
+    "Full session.go reread through EOF and live source hash reverified. Actual acquireWrite/requestAdmission before/after admission closing checks adapted to native HTTP queued generation, deadline and post-preflight ownership checks. Shared native/TUI strict Pin validation removes the duplicate validator; pinned clients refuse redirects."
   ],
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn command_request("
     },
     {
@@ -182,6 +183,16 @@
       "path": "assets/web/peer-http.js",
       "sha256": "a56aca0f2a159a0bdf22f1db0bde8541aa745693282167c28d3a0d08cb6c67d3",
       "anchor": "function assertOwner(peer)"
+    },
+    {
+      "path": "desktop/src/peer_http.rs",
+      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "anchor": "pub fn admit("
+    },
+    {
+      "path": "desktop/src/main.rs",
+      "sha256": "f5c5be307a08f7562d645dc58faf1c0e43a1661fa646d378421cae493dfeaa77",
+      "anchor": "fn scoped_http_request("
     }
   ],
   "omissions": [
@@ -202,13 +213,13 @@
     }
   ],
   "remaining": [
-    "GUI/Web/mobile/standalone CLI/cloud/USB fencing and AVR-only boot identity remain pending; ESP32-S3 application not integrated.",
+    "GUI HTTP and Web pin adoption implemented as bounded slices; native WebSocket/USB/mobile/standalone CLI/cloud fencing, remembered pairing and AVR-only boot identity remain pending; ESP32-S3 application not integrated.",
     "Port remaining useful serial lifecycle/priority/ACK/reset tests; fixtures/source/compile are not physical acceptance."
   ],
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn same_hostname_reboot_revokes_drafts_and_old_receipts()"
     },
     {
@@ -220,6 +231,16 @@
       "path": "tests/web_peer_http_test.mjs",
       "sha256": "e6c5d2fec06ef43602252c62e341f0126c457b11c9fe5bb8a08636301ce37f0c",
       "anchor": "Same-host reboot between draft creation and preflight"
+    },
+    {
+      "path": "desktop/src/peer_http.rs",
+      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "anchor": "fn gui_revocation_during_preflight_stops_before_write()"
+    },
+    {
+      "path": "desktop/src/peer_http.rs",
+      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "anchor": "fn gui_revocation_after_dispatch_reports_uncertainty_not_success()"
     }
   ]
 },
@@ -231,7 +252,8 @@
   "verdict": "parity-gap",
   "preserved": [
     "Actual fakePort matching/mismatched request and identity scenarios read fully and adapted to C++ peer validation and native same-host reboot/pinned-header/409 no-replay HTTP fixtures.",
-    "Old receipts stay in Events, not new peer's confirmed output."
+    "Old receipts stay in Events, not new peer's confirmed output.",
+    "Full session_test.go reread through EOF and live hash reverified. Admission revocation, peer mismatch and no-replay assertions adapted to actual native GUI HTTP loopback fixtures, not claims of importing Go fakePort acquisition/reset/ACK routing."
   ],
   "targets": [
     {
@@ -241,8 +263,13 @@
     },
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn server_reboot_between_preflight_and_post_stops_without_replay()"
+    },
+    {
+      "path": "desktop/src/peer_http.rs",
+      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "anchor": "fn gui_settings_pin_every_nested_request_and_verify_same_boot()"
     }
   ],
   "omissions": [
@@ -263,19 +290,39 @@
     }
   ],
   "remaining": [
-    "GUI/Web/mobile/standalone CLI/cloud/USB fencing and AVR-only boot identity remain pending; ESP32-S3 application not integrated.",
+    "GUI HTTP and Web pin adoption implemented as bounded slices; native WebSocket/USB/mobile/standalone CLI/cloud fencing, remembered pairing and AVR-only boot identity remain pending; ESP32-S3 application not integrated.",
     "Port remaining useful serial lifecycle/priority/ACK/reset tests; fixtures/source/compile are not physical acceptance."
   ],
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn shared_cli_mutation_inherits_pinned_epoch_headers()"
     },
     {
       "path": "tests/peer_fence_test.mjs",
       "sha256": "f0be101c25e0844d2ecd41c3cebdab476052f0303a2272221da963ce38ea6e94",
       "anchor": "Upload callbacks precede middleware"
+    },
+    {
+      "path": "desktop/src/peer_http.rs",
+      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "anchor": "fn gui_preflight_reboot_or_capability_loss_never_dispatches_mutation()"
+    },
+    {
+      "path": "desktop/src/peer_http.rs",
+      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "anchor": "fn gui_readback_from_new_boot_is_not_applied()"
+    },
+    {
+      "path": "desktop/src/peer_http.rs",
+      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "anchor": "fn gui_unfenced_mutation_fails_before_network_and_preserves_correlation()"
+    },
+    {
+      "path": "desktop/src/peer_http.rs",
+      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "anchor": "fn gui_server_boot_conflict_is_not_replayed()"
     }
   ]
 },
@@ -288,7 +335,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "pub fn run(endpoint: Endpoint)"
     }
   ],
@@ -308,7 +355,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn offline_and_unacknowledged_peers_have_no_table_actions()"
     },
     {
@@ -328,7 +375,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn enter()"
     }
   ],
@@ -348,7 +395,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn offline_and_unacknowledged_peers_have_no_table_actions()"
     },
     {
@@ -368,7 +415,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "pub fn safe_line(value: &str)"
     }
   ],
@@ -388,7 +435,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn donor_text_safety_preserves_unicode_not_peer_terminal_commands()"
     },
     {
@@ -408,7 +455,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn color_allowed()"
     }
   ],
@@ -428,7 +475,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn donor_text_safety_preserves_unicode_not_peer_terminal_commands()"
     },
     {
@@ -448,7 +495,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn key(&mut self, key: KeyEvent)"
     }
   ],
@@ -468,7 +515,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn shared_find_selection_and_arrow_navigation_never_write()"
     },
     {
@@ -488,7 +535,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "let worker = thread::spawn(move ||"
     }
   ],
@@ -508,7 +555,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn loss_and_peer_change_revoke_controls_without_false_recovery()"
     },
     {
@@ -528,7 +575,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn window(total: usize, visible: usize, cursor: usize)"
     }
   ],
@@ -548,7 +595,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "47ae4254b11cca0c6fafcbfe690aca676c8e5e03d8450a8533995969da6fcaa7",
+      "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn actual_donor_table_window_keeps_cursor_in_resized_viewport()"
     },
     {
@@ -579,12 +626,12 @@
       "path": "desktop/src/ui/preferences.rs"
     },
     {
-      "sha256": "b339f425a20b873d7b8230dd24619e682334681e7cb72a7c0dabcfc42140d2c1",
+      "sha256": "46b65c8602e55dd6418a959375b1fb23430445ee8ea9058a74f19c4d77156ac0",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "74821d5eebe93dbb30238237aa7f3644cb2e5d9b9fa47ebe30224dc8a9b2e2e5",
+      "sha256": "cdbcf73b8a88783c335e86985d27262915ab1f8f61bf69c842f49b8240f71b18",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -657,7 +704,7 @@
       "path": "desktop/src/ui/preferences.rs"
     },
     {
-      "sha256": "5fd85598dec811390440c9b82a1a8d487947d0fdc266a89b75cb38e1c89fcb9a",
+      "sha256": "8d839842bc94f3e8baabb054f4b96f1a83be236b4f758f37a1b306a1d39bd10b",
       "anchor": "\"Recent colors\"",
       "path": "desktop/src/ui/i18n.rs"
     }
@@ -1689,7 +1736,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "5fd85598dec811390440c9b82a1a8d487947d0fdc266a89b75cb38e1c89fcb9a",
+          "sha256": "8d839842bc94f3e8baabb054f4b96f1a83be236b4f758f37a1b306a1d39bd10b",
           "anchor": "pub(crate) fn configure_ui_fonts"
         },
         {
@@ -1731,12 +1778,12 @@
       "proof": [
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "5fd85598dec811390440c9b82a1a8d487947d0fdc266a89b75cb38e1c89fcb9a",
+          "sha256": "8d839842bc94f3e8baabb054f4b96f1a83be236b4f758f37a1b306a1d39bd10b",
           "anchor": "fn contextual_persian_in_labels_and_monospace_inputs"
         },
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "5fd85598dec811390440c9b82a1a8d487947d0fdc266a89b75cb38e1c89fcb9a",
+          "sha256": "8d839842bc94f3e8baabb054f4b96f1a83be236b4f758f37a1b306a1d39bd10b",
           "anchor": "fn changing_language_preserves_widget_fonts"
         },
         {
@@ -1897,7 +1944,7 @@
         },
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "dca301b2fddc2bbbea997f8f00e566a89280cac3a1a16b953a7d6dbd305d2f8c",
+          "sha256": "4de42c00c2dca7bb1ea1d234dd1529fd5a06b110192fd8cee3e03d6cd451dc20",
           "anchor": "--test-threads=1"
         },
         {
@@ -2343,12 +2390,12 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "74821d5eebe93dbb30238237aa7f3644cb2e5d9b9fa47ebe30224dc8a9b2e2e5",
+          "sha256": "cdbcf73b8a88783c335e86985d27262915ab1f8f61bf69c842f49b8240f71b18",
           "anchor": "fn synchronize_context("
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
-          "sha256": "b339f425a20b873d7b8230dd24619e682334681e7cb72a7c0dabcfc42140d2c1",
+          "sha256": "46b65c8602e55dd6418a959375b1fb23430445ee8ea9058a74f19c4d77156ac0",
           "anchor": "pub(crate) fn available("
         },
         {
@@ -2686,7 +2733,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "74821d5eebe93dbb30238237aa7f3644cb2e5d9b9fa47ebe30224dc8a9b2e2e5",
+          "sha256": "cdbcf73b8a88783c335e86985d27262915ab1f8f61bf69c842f49b8240f71b18",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -2872,7 +2919,7 @@
       "targets": [
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "dca301b2fddc2bbbea997f8f00e566a89280cac3a1a16b953a7d6dbd305d2f8c",
+          "sha256": "4de42c00c2dca7bb1ea1d234dd1529fd5a06b110192fd8cee3e03d6cd451dc20",
           "anchor": "Get-PakarCargoTargetDirectory"
         }
       ],
@@ -3151,7 +3198,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "74821d5eebe93dbb30238237aa7f3644cb2e5d9b9fa47ebe30224dc8a9b2e2e5",
+          "sha256": "cdbcf73b8a88783c335e86985d27262915ab1f8f61bf69c842f49b8240f71b18",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -3569,7 +3616,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "74821d5eebe93dbb30238237aa7f3644cb2e5d9b9fa47ebe30224dc8a9b2e2e5",
+          "sha256": "cdbcf73b8a88783c335e86985d27262915ab1f8f61bf69c842f49b8240f71b18",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -4621,7 +4668,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "8d24068c17bec55306510bbd21515f5bf2e87807f3b0950098481c29f70b37c0",
+          "sha256": "e1e1bb468a30f3d1974fe45d1ff9ddf0d4d9cf1d83b96e13b270477305cc7e4f",
           "anchor": "fn manager_selector("
         },
         {
@@ -4654,7 +4701,7 @@
       "proof": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "8d24068c17bec55306510bbd21515f5bf2e87807f3b0950098481c29f70b37c0",
+          "sha256": "e1e1bb468a30f3d1974fe45d1ff9ddf0d4d9cf1d83b96e13b270477305cc7e4f",
           "anchor": "fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width()"
         },
         {

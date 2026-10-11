@@ -24,7 +24,8 @@ in Events rather than becoming the new peer's confirmed output.
 
 - The optional header pair preserves existing unfenced HTTP clients. Missing
   headers do NOT mean ownership protection. TUI and embedded Web now require
-  and pin it; native GUI/mobile/standalone CLI still need adoption.
+  and pin it; native GUI HTTP now adopts it too. Mobile/standalone CLI still need
+  adoption, and native USB/WebSocket messages are not boot-fenced.
 - MAC/random correlation is not authentication, encryption, attestation or
   protection against a malicious server spoofing identity. Existing auth and
   same-origin guards remain separate. Login is exempt from mutation fencing.
@@ -70,6 +71,44 @@ Existing distinct-cause incident aggregation and secret-redacted logs are retain
 blank typed codes no longer mask HTTP status codes. Tests execute the actual
 shared helper, embedded sign-in app, batch and settings paths with HTTP/DOM doubles.
 They are not real LAN, multi-client, reboot, downstream AVR or WebSocket fencing
-acceptance. Native/Flutter transport adoption, remembered pairing and integrated
-ESP32-S3/DMA remain pending. Web streaming's fixed 40 ms timer is also still pending
-replacement by configurable pacing/backpressure; no all-interface FPS parity claim.
+acceptance. Flutter and non-HTTP native transport adoption, remembered pairing and
+integrated ESP32-S3/DMA remain pending. Embedded Web streaming now uses the shared
+configurable frame scheduler; see WEB-STREAMING.md. No all-interface FPS parity claim.
+
+## Native desktop HTTP queue adoption
+
+`desktop/src/peer_http.rs` shares strict fence validation and no-redirect pinned
+clients with the TUI. The GUI's HTTP queue captures the original board/boot pin
+and a revocable generation. Endpoint/credentials changes, observed boot changes
+and a current HTTP status failure revoke queued work and device drafts. An
+eight-second admission lease prevents old queued requests from later dispatching;
+it does not expire an already-dispatched maintenance receipt.
+
+Mutations require fresh status, the same pin and individually acknowledged
+capabilities, followed by a second admission check. Every nested settings,
+identity, upload and maintenance HTTP request retains one pin. Mapping/public
+settings readback gets a final same-boot observation before applying. Unfenced
+firmware remains readable; HTTP settings/identity mutation controls are disabled
+and the domain POST handler refuses writes. The settings page explains this in
+English/Persian. Bootstrap reads may be dropped until the first
+identity is adopted. Credential/hostname/self-update operations may intentionally
+retire their endpoint and cannot require old-credential same-host readback.
+
+Preflight failures preserve settings/maintenance request IDs so editors do not
+remain stuck waiting. Revoked operation receipts remain generic Events entries,
+not new-peer drafts/credentials; their bodies are not exposed there. Diagnostic
+recovery cannot be inferred from a correlated failed settings result. Client
+telemetry POSTs use the actual status pin, not a separate unfenced client.
+
+This adapts the already completely read PCController `session.go` before/after
+admission checks, with actual loopback tests for reboot/capability loss, pinned
+nested requests, 409 without replay, readback mismatch and cancellation before/
+after dispatch. It does not import serial priority/ACK routing/reset/quarantine.
+Cancellation inside multi-step maintenance, native WebSocket/USB boot fencing,
+AVR-only epochs, remembered pairing and Flutter/standalone CLI remain open.
+An old WebSocket status can still temporarily present an old identity; fresh HTTP
+preflight/server fences protect HTTP writes, not whole-native transport truth.
+ISP probe is a hardware-affecting GET: the current server exempts GET/HEAD from
+its epoch check. Client admission/capability checks and headers are not an atomic
+probe-dispatch fence. That handler exemption remains a separate firmware fix.
+These fixture checks are not hardware, LAN, multi-client or durability acceptance.

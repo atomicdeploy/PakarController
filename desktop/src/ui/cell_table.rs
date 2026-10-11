@@ -154,7 +154,7 @@ impl Default for TableState {
 impl TableState {
     /// Revoke unsent work and old readback ownership on peer/capability loss.
     /// Sent writes are never retried or represented as rolled back.
-    pub(super) fn stop_pending_edits(&mut self) {
+    pub(crate) fn stop_pending_edits(&mut self) {
         let pending = !self.queue.is_empty() || self.verification_started.is_some();
         self.queue.clear();
         self.awaiting.clear();

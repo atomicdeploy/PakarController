@@ -1,5 +1,34 @@
 # PakarController comparison receipts
 
+## Native HTTP queue ownership checkpoint
+
+Reread actual PCController session.go (23080 bytes,1bf4d52d6810630d1fd4d5f0a0c18254ccdd73c0942dbe94f4c97a06360680c5)
+and session_test.go (22139 bytes,ff6c7b21f72bfb944d232c87210f8ffa139dfe016e8b5756f2582604489fffc4)
+through EOF; no donor edits. Their existing parity-gap certificates now map
+exact native HTTP queue admission/preflight and loopback tests in peer_http.rs
+and main.rs. Shared TUI pin validation removes a duplicate implementation;
+serial acquisition/quarantine/priority/ACK/reset cases remain useful pending work.
+Selective PCController inventory refresh after RequireLive rejected tracked drift:
+HEAD38f48d06f6922225e9a100d0afc2d787b5a000bd, clean owner checkout, two added
+control/mirror_segments sources left pending. All20 compared PC source hashes
+still match. Current inventory4284/106 compared/4178 pending/73 known gaps,
+not full imports. Other donors unchanged; no donor edit/build or waived live gate.
+
+Final guarded release-profile Test:163 passed,0failed. New fixtures exercise
+queued revocation/expiry, nested pin headers, preflight reboot/capability loss,
+409 without replay, changed-boot readback, cancellation before/after dispatch,
+correlated editor failures and secret-free retired endpoint receipts. First
+compile exposed method visibility; second test pass exposed two short fixture
+passwords. Both corrected without bypass or weakening production validation.
+
+Full source-quality passed before final receipt retention/fixture corrections;
+final living API, render lifecycle, interface settings, peer wiring, versions
+and comparison guards passed afterward. One canonical release cache, no debug,
+incremental, firmware/Android/donor build or cache cleanup. Release/package/live
+capture evidence follows separately, not inferred from tests or source anchors.
+GET/HEAD server exemptions leave hardware-affecting ISP probe epoch fencing
+pending, alongside non-HTTP/mobile ownership, pairing, S3 and physical tests.
+
 ## Web scheduler and pacing checkpoint
 
 Full actual PCController status-frame-batcher.ts and status-frame-batcher.test.ts

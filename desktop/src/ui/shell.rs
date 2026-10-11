@@ -1320,6 +1320,7 @@ impl PakarControllerApp {
         }); }
     }
     pub(super) fn draw_device_identity(&mut self, ui: &mut egui::Ui) {
+        let writable = self.command_route() == Some(Transport::Serial) || self.http_writable();
         dialog::section(ui, icons::GLOBE, "Board identity", |ui| {
             if let Some(app) = self.peer_context().and_then(|p|p.application()) {
                 ui.label(egui::RichText::new(&app.name).strong());
@@ -1334,7 +1335,7 @@ impl PakarControllerApp {
                 field(ui, icons::GLOBE, "Hostname", name, false);
                 ui.label(egui::RichText::new(crate::ui::i18n::text("The display name is separate from the DNS hostname. Saved across OTA. Only a hostname change restarts Wi-Fi/AP; credentials stay unchanged.")).small().weak());
                 let label = self.board_display_name.clone();
-                if ui.add_enabled_ui(!self.identity_pending, |ui| dialog::primary_action_button(ui, icons::CHECK, "Save board identity")).inner.clicked() {
+                if ui.add_enabled_ui(writable && !self.identity_pending, |ui| dialog::primary_action_button(ui, icons::CHECK, "Save board identity")).inner.clicked() {
                     match crate::identity::normalize_name(name).and_then(|n| if label.as_ref().is_some_and(|s| !crate::identity::valid_display_name(s)) { Err("Board name must be 1..63 UTF-8 bytes without controls or edge spaces".into()) } else { Ok(n) }) {
                         Ok(name) => {
                             self.identity_pending = true;
@@ -1369,6 +1370,7 @@ impl PakarControllerApp {
         });
     }
     pub(super) fn draw_device_access(&mut self, ui: &mut egui::Ui) {
+        let writable = self.http_writable();
         dialog::section(ui, icons::LOCK, "Device access", |ui| {
             if let Some(info) = &self.access_info {
                 if info.get("ready").and_then(|v| v.as_bool()) != Some(true) {
@@ -1406,8 +1408,8 @@ impl PakarControllerApp {
                     true,
                 );
                 ui.label(egui::RichText::new(crate::ui::i18n::text("Uses your current connection password. Saved on the ESP across OTA; signs out every client. Wi-Fi credentials are unchanged. HTTP is not encrypted.")).small().weak());
-                if dialog::primary_action_button(ui, icons::CHECK, "Save device credentials")
-                    .clicked()
+                if ui.add_enabled_ui(writable, |ui| dialog::primary_action_button(ui, icons::CHECK, "Save device credentials"))
+                    .inner.clicked()
                 {
                     match crate::access::validate(
                         &self.access_user,

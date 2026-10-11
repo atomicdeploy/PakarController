@@ -1849,3 +1849,38 @@ Also wired the existing bounded describe_error cause-chain helper into shared
 blocking_status: otherwise the TUI would merge distinct DNS/socket/TLS failures
 behind reqwest's identical outer Display. Final Release/built status test verifies
 that integration; existing native diagnostic tests cover cause distinctions.
+
+## Native HTTP queue ownership continuation
+
+Exact HEAD 5212914 Build/CodeQL passed before this slice. ASUS SSH1022 refused
+and ledboard.local did not resolve; no hardware action or deployment occurred.
+PCController session.go/session_test.go were reread fully, matching the existing
+1bf4d52/ff6c7b2 source hashes. Admission checks are adapted into a revocable GUI
+HTTP generation with shared strict TUI pin validation; serial lifecycle/ACK/
+priority/reset and non-HTTP/mobile ownership remain explicitly pending.
+
+First guarded native Test stopped at compilation: main's common peer reset could
+not access TableState.stop_pending_edits, which was pub(super) inside ui.
+Consulted peer-binding again and inspected the actual existing table reset;
+changed only that method's visibility to pub(crate), not its behavior or cache.
+No package was produced/replaced, no direct Cargo bypass, cleanup or debug output.
+Rereview/rebind affected target hashes before retry; test execution is separate
+from source/proof anchors and cannot establish physical acceptance.
+
+Second guarded build compiled;160/162 tests passed. Two new loopback fixtures
+failed before sending because their test Wi-Fi password had only seven bytes.
+Inspected the actual device_settings::Write::network eight-byte lower bound and
+existing fixture tests, corrected the fixtures without weakening validation.
+Also retain generic retired receipts before the endpoint envelope filter, so
+an endpoint change cannot silently erase the old outcome. Payloads and credentials
+are absent from those receipts. Source-quality passed before this final correction;
+final native and hash/source guards must be rechecked, not inferred.
+
+Final guarded native Test passed163/163. Focused final living-contract, render
+lifecycle, settings, peer wiring, versions and generated comparison checks pass.
+No release/deployment or physical success follows automatically from that.
+
+Final RequireLive caught two newly tracked PCController control/mirror_segments
+files at clean HEAD38f48d0. All20 compared donor hashes remain unchanged. Refreshed
+only PC inventory, left both new files pending, regenerated comparisons and passed
+the strict live peer-binding gate. Counts4284/106/4178/73. No bypass or donor edits.

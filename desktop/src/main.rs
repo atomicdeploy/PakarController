@@ -20,6 +20,7 @@ mod identity;
 mod maintenance;
 mod messaging;
 mod pc_contract;
+mod peer_http;
 mod platform;
 mod streaming;
 mod terminal_ui;
@@ -161,6 +162,7 @@ struct DeviceStatus {
 
 #[derive(Clone)]
 enum HttpCommand {
+    Scoped(peer_http::Scope, Box<HttpCommand>),
     Status(Endpoint),
     Mapping(Endpoint),
     Configuration(Endpoint, &'static str),
@@ -172,8 +174,20 @@ enum HttpCommand {
 }
 
 impl HttpCommand {
+    fn is_status(&self) -> bool { match self {Self::Scoped(_, command) => command.is_status(),Self::Status(_) => true,_ => false} }
+    fn discoverable_read(&self) -> bool { match self {Self::Scoped(_, command) => command.discoverable_read(),Self::Status(_) | Self::Mapping(_) | Self::Configuration(..) => true,_ => false} }
+    fn failure(&self, error: String) -> Event {
+        match self {
+            Self::Scoped(scope, command) => Event::ForScope(scope.clone(), Box::new(command.failure(error))),
+            Self::Settings(_, write) => Event::SettingsFinished(write.id, write.group, Err(error)),
+            Self::Maintenance(_, id, _) => Event::MaintenanceFinished(*id, Err(error)),
+            _ if self.diagnostic_source().is_some() => Event::DiagnosticFailure(self.diagnostic_source().unwrap(), error),
+            _ => Event::OperationFailed(error),
+        }
+    }
     fn diagnostic_source(&self) -> Option<String> {
         match self {
+            Self::Scoped(_, command) => command.diagnostic_source(),
             Self::Status(_) => Some("HTTP GET /api/status".into()),
             Self::Mapping(_) => Some("HTTP GET /api/cells/mapping".into()),
             Self::Configuration(_, path) => Some(format!("HTTP GET {path}")),
@@ -182,6 +196,7 @@ impl HttpCommand {
     }
     fn endpoint(&self) -> &Endpoint {
         match self {
+            Self::Scoped(_, command) => command.endpoint(),
             Self::Status(endpoint)
             | Self::Mapping(endpoint)
             | Self::Configuration(endpoint, ..)
@@ -200,6 +215,7 @@ impl HttpCommand {
             password: endpoint.password.clone(),
         };
         match self {
+            Self::Scoped(scope, command) => Self::Scoped(scope.clone(), Box::new(command.with_base(base.clone()))),
             Self::Status(endpoint) => Self::Status(replace(endpoint)),
             Self::Mapping(endpoint) => Self::Mapping(replace(endpoint)),
             Self::Configuration(endpoint, path) => Self::Configuration(replace(endpoint), path),
@@ -243,6 +259,7 @@ enum SerialCommand {
     Identity(String, String, String),
 }
 enum Event {
+    ForScope(peer_http::Scope, Box<Event>),
     ForEndpoint(Endpoint, Box<Event>),
     StreamStats(f64),
     Status(DeviceStatus),
@@ -267,6 +284,11 @@ enum Event {
     Serial(String, bool, Option<DeviceStatus>),
 }
 
+impl Event {
+    fn http_status(&self) -> Option<&DeviceStatus> { match self { Self::ForScope(_, inner) => inner.http_status(),Self::Status(status) => Some(status),_ => None } }
+    fn http_succeeded(&self) -> bool { match self { Self::ForScope(_, inner) => inner.http_succeeded(),Self::DiagnosticFailure(..) | Self::OperationFailed(_) | Self::SettingsFinished(_, _, Err(_)) | Self::MaintenanceFinished(_, Err(_)) => false,_ => true } }
+}
+
 fn for_endpoint(endpoint: &Endpoint, event: Event) -> Event {
     Event::ForEndpoint(endpoint.clone(), Box::new(event))
 }
@@ -282,6 +304,9 @@ fn current_event(event: Event, endpoint: &Endpoint, serial_port: &str) -> Option
 }
 
 fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> {
+    if let HttpCommand::Scoped(scope, command) = command {
+        return scoped_http_request(client, &scope, &command).map(|result| Event::ForScope(scope, Box::new(result)));
+    }
     if let HttpCommand::Maintenance(endpoint, id, operation) = &command {
         return Ok(Event::MaintenanceFinished(
             *id,
@@ -393,6 +418,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
             .map_err(diagnostics::describe_error);
     }
     let (endpoint, request, response_kind) = match command {
+        HttpCommand::Scoped(..) => unreachable!(),
         HttpCommand::Status(endpoint) => {
             let url = format!("{}/api/status", endpoint.base.trim_end_matches('/'));
             let request = client.get(url).query(&[(
@@ -463,10 +489,52 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
     }
 }
 
+fn scoped_http_request(client: &Client, scope: &peer_http::Scope, command: &HttpCommand) -> Result<Event, String> {
+    // Adapt donor acquireWrite's checks before AND after waiting/admission.
+    scope.admit()?;
+    if matches!(command, HttpCommand::Status(_)) { return http_request(client, command.clone()); }
+    let mutating = !matches!(command, HttpCommand::Mapping(_) | HttpCommand::Configuration(..)
+        | HttpCommand::Maintenance(_, _, maintenance::Operation::RemoteStatus | maintenance::Operation::Download {..}));
+    if mutating && scope.pin.is_none() { return Err("Read-only: peer has not advertised valid board/boot identity and HTTP fencing".into()); }
+    let before = blocking_status(client, command.endpoint())?;
+    let observed = peer_http::Pin::from_status(&before);
+    if scope.pin != observed { return Err("Board/boot identity changed before dispatch; nothing was sent".into()); }
+    scope.admit()?;
+    if mutating {
+        let allowed = before.capabilities.as_ref().is_some_and(|c| match command {
+            HttpCommand::Post(_, path, form) => c.allows(path, form),
+            HttpCommand::Settings(_, write) => c.allows(write.group.path(), &write.form),
+            HttpCommand::NameChange(..) => c.has("identity"),
+            HttpCommand::AccessChange(..) => c.has("network"),
+            HttpCommand::Maintenance(_, _, operation) => c.has(match operation {
+                maintenance::Operation::ReconnectCloud => "network",
+                maintenance::Operation::Probe | maintenance::Operation::Backup | maintenance::Operation::StageAvr(_)
+                | maintenance::Operation::ProgramAvr => "isp",
+                _ => "ota",
+            }),
+            _ => false,
+        });
+        if !allowed { return Err("This board no longer acknowledges the requested capability; nothing was sent".into()); }
+    }
+    let pinned = scope.pin.as_ref().map(peer_http::Pin::client).transpose()?;
+    let result = http_request(pinned.as_ref().unwrap_or(client), command.clone())?;
+    // Credential/hostname/self-update results may intentionally retire the endpoint.
+    // Settings already performed readback; validate its observed epoch separately.
+    let verify_read = matches!(command, HttpCommand::Mapping(_) | HttpCommand::Configuration(..))
+        || matches!(&result, Event::SettingsFinished(_, _, Ok(_)) | Event::NameUpdated(_, false));
+    if verify_read {
+        let after = blocking_status(client, command.endpoint()).map_err(|_| "Result received but board/boot readback unavailable; inspect before retrying".to_string())?;
+        if scope.pin != peer_http::Pin::from_status(&after) { return Err("Board/boot changed during readback; result not applied to this peer".into()); }
+    }
+    if !scope.current() { return Err("Board session revoked after dispatch; outcome unknown, no replay".into()); }
+    Ok(result)
+}
+
 fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: egui::Context) {
     let mut reporter = client_telemetry::Reporter::new();
     let client = Client::builder()
         .no_proxy()
+        .redirect(reqwest::redirect::Policy::none())
         .timeout(Duration::from_secs(4))
         .build()
         .expect("HTTP client");
@@ -490,10 +558,7 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
         let mut result = http_request(&client, first);
         if result.is_err()
             && requested_name.is_some()
-            && matches!(
-                command,
-                HttpCommand::Status(..) | HttpCommand::Mapping(..) | HttpCommand::Configuration(..)
-            )
+            && command.discoverable_read()
         {
             discovered_base = None;
             for base in platform::discovery::ssdp_locations(Duration::from_millis(1200)) {
@@ -514,30 +579,25 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
                 }
             }
         }
-        if result.is_ok() && matches!(command, HttpCommand::Status(_)) && reporter.due() {
+        if command.is_status() && reporter.due() && let Some(status) = result.as_ref().ok().and_then(Event::http_status)
+            && status.capabilities.as_ref().is_some_and(|c| c.has("telemetry"))
+            && let Ok(pinned) = peer_http::pinned_client(status)
+            && match &command {HttpCommand::Scoped(scope, _) => scope.current(),_ => false} {
             let mut endpoint = command.endpoint().clone();
             if let Some(base) = &discovered_base {
                 endpoint.base = base.clone();
             }
-            reporter.report(&client, &endpoint);
+            reporter.report(&pinned, &endpoint);
         }
-        let operation = matches!(
-            command,
-            HttpCommand::Post(..) | HttpCommand::AccessChange(..) | HttpCommand::NameChange(..)
-        );
         let source = command.diagnostic_source();
-        if result.is_ok() {
+        if result.as_ref().is_ok_and(Event::http_succeeded) {
             if let Some(source) = &source {
-                let _ = events.send(for_endpoint(command.endpoint(), Event::DiagnosticRecovered(source.clone())));
+                let recovered = Event::DiagnosticRecovered(source.clone());
+                let recovered = match &command {HttpCommand::Scoped(scope, _) => Event::ForScope(scope.clone(), Box::new(recovered)),_ => recovered};
+                let _ = events.send(for_endpoint(command.endpoint(), recovered));
             }
         }
-        let event = result.unwrap_or_else(|e| {
-            if operation {
-                Event::OperationFailed(e)
-            } else {
-                Event::DiagnosticFailure(source.unwrap_or_else(|| "HTTP read".into()), e)
-            }
-        });
+        let event = result.unwrap_or_else(|e| command.failure(e));
         if events
             .send(for_endpoint(command.endpoint(), event))
             .is_err()
@@ -1164,7 +1224,7 @@ struct PakarControllerApp {
     identity_pending: bool,
     identity_saved: Option<(String, String)>,
     message: String,
-    http_tx: Sender<HttpCommand>,
+    http_tx: peer_http::Queue,
     ws_tx: Sender<WsCommand>,
     serial_tx: Sender<SerialCommand>,
     event_rx: Receiver<Event>,
@@ -1293,7 +1353,7 @@ impl PakarControllerApp {
             identity_pending: false,
             identity_saved: None,
             message: "Connecting to PakarController".into(),
-            http_tx,
+            http_tx: peer_http::Queue::new(http_tx),
             ws_tx,
             serial_tx,
             event_rx,
@@ -1321,8 +1381,29 @@ impl PakarControllerApp {
             password: self.password.clone(),
         }
     }
+    fn http_writable(&self) -> bool {
+        self.command_route() == Some(Transport::WiFi) && self.http_tx.writable()
+            && self.status.as_ref().and_then(peer_http::Pin::from_status).is_some()
+    }
+    fn revoke_http_drafts(&mut self) {
+        self.status_request_pending = false;
+        self.device_settings.invalidate_peer();
+        self.configuration_loaded = false;
+        self.table.stop_pending_edits(); self.table.selection.ids.clear();
+        self.table.editing_order = false; self.table.manager_open = false;
+        self.table.pixel_sample = None; self.cell_search.clear();
+        self.confirm_reset = false; self.show_mapping = false;
+        self.mappings.clear(); self.mapping_name.clear(); self.mapping_logical = 1; self.mapping_physical = 1;
+        self.access_info = None; self.access_user.clear(); self.access_password.clear(); self.access_confirm.clear();
+        self.display_text.clear(); self.device_name = None; self.board_display_name = None;
+        self.identity_pending = false; self.identity_saved = None;
+        self.streaming = false; self.sampling = false; self.stream_sent_fps = None;
+        self.last_mapping_poll = Instant::now() - Duration::from_secs(16);
+        let _ = self.ws_tx.send(WsCommand::Mapping(Vec::new()));
+        let _ = self.ws_tx.send(WsCommand::Stream(false)); let _ = self.ws_tx.send(WsCommand::Sample(false));
+    }
     fn post(&mut self, path: &'static str, form: Vec<(String, String)>) {
-        if self.command_route() != Some(Transport::WiFi) || !self.peer_context().is_some_and(|c| c.allows(path, &form)) {
+        if !self.http_writable() || !self.peer_context().is_some_and(|c| c.allows(path, &form)) {
             self.message = "This connected board has not acknowledged this capability".into();
             return;
         }
@@ -1394,6 +1475,8 @@ impl PakarControllerApp {
     fn poll(&mut self) {
         let endpoint = self.endpoint();
         if self.last_ws_endpoint.as_ref() != Some(&endpoint) {
+            self.http_tx.clear();
+            self.revoke_http_drafts();
             self.event_log.reset_sources("HTTP");
             self.event_log.reset_sources("WebSocket");
             self.status_request_pending = false;
@@ -1465,14 +1548,28 @@ impl PakarControllerApp {
             let _ = self.http_tx.send(HttpCommand::Mapping(self.endpoint()));
         }
         while let Ok(event) = self.event_rx.try_recv() {
+            if let Some(receipt) = peer_http::retired_envelope(&event) {
+                self.record_event("Previous board session", &receipt);
+                continue;
+            }
             let Some(event) = current_event(event, &self.endpoint(), &self.serial_port) else {
                 continue;
             };
+            let event = match event {
+                Event::ForScope(scope, inner) if scope.current() => *inner,
+                Event::ForScope(_, inner) => {
+                    if let Some(receipt) = peer_http::retired_receipt(&inner) { self.record_event("Previous board session", &receipt); }
+                    continue;
+                }
+                other => other,
+            };
             match event {
+                Event::ForScope(..) => {} // Scope envelopes are unwrapped once.
                 Event::ForEndpoint(..) => {} // Worker envelopes are unwrapped once.
                 Event::StreamStats(value) => self.stream_sent_fps = Some((value, Instant::now())),
                 Event::Status(s) => {
                     if !s.hostname.is_empty() {
+                        if self.http_tx.observe(&s) { self.revoke_http_drafts(); }
                         if s.pixel_preview_requested {
                             self.table.pixel_sample =
                                 s.pixel_frame.clone().filter(|f| f.valid()).map(|frame| {
@@ -1594,6 +1691,12 @@ impl PakarControllerApp {
                 }
                 Event::DiagnosticFailure(source, e) => {
                     if source == "HTTP GET /api/status" {
+                        if self.http_tx.writable() {
+                            self.http_tx.clear();
+                            self.revoke_http_drafts();
+                            self.status = None;
+                            self.last_status_at = None;
+                        }
                         self.status_request_pending = false;
                         self.status_retry.failed();
                         self.last_poll = Instant::now();
@@ -2153,8 +2256,14 @@ fn main() -> eframe::Result {
 
 #[cfg(test)]
 mod tests {
-    fn mock_device(
+    pub(super) fn mock_device(
         responses: Vec<(u16, Vec<u8>)>,
+    ) -> (super::Endpoint, std::thread::JoinHandle<Vec<String>>) {
+        mock_device_with_hook(responses, Box::new(|_| {}))
+    }
+    pub(super) fn mock_device_with_hook(
+        responses: Vec<(u16, Vec<u8>)>,
+        mut on_request: Box<dyn FnMut(usize) + Send>,
     ) -> (super::Endpoint, std::thread::JoinHandle<Vec<String>>) {
         use std::io::{Read, Write};
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
@@ -2193,6 +2302,7 @@ mod tests {
                     assert!(bytes.len() < 3 * 1024 * 1024);
                 }
                 requests.push(String::from_utf8_lossy(&bytes).into_owned());
+                on_request(requests.len());
                 write!(stream,"HTTP/1.1 {code} Fixture\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",body.len()).unwrap();
                 stream.write_all(&body).unwrap();
             }
@@ -2200,7 +2310,7 @@ mod tests {
         });
         (endpoint, worker)
     }
-    fn fixture_network() -> super::device_settings::Network {
+    pub(super) fn fixture_network() -> super::device_settings::Network {
         super::device_settings::Network {
             station_enabled: true,
             ap_enabled: true,

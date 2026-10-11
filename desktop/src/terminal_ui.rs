@@ -208,39 +208,10 @@ fn peer_key(s: &DeviceStatus) -> String {
     )
 }
 fn fenced(s: &DeviceStatus) -> bool {
-    s.http_peer_fencing
-        && !s.board_id.is_empty()
-        && s.board_id.len() <= 64
-        && s.board_id
-            .bytes()
-            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'-' || c == b'_')
-        && s.boot_id.len() == 32
-        && s.boot_id
-            .bytes()
-            .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
-        && s.boot_id.bytes().any(|c| c != b'0')
+    crate::peer_http::Pin::from_status(s).is_some()
 }
 fn pinned_client(s: &DeviceStatus) -> Result<reqwest::blocking::Client, String> {
-    if !fenced(s) {
-        return Err(
-            "Read-only: peer has not advertised valid board/boot identity and HTTP fencing".into(),
-        );
-    }
-    let mut headers = reqwest::header::HeaderMap::new();
-    headers.insert(
-        "x-pakar-board",
-        s.board_id.parse().map_err(|_| "Invalid board identity")?,
-    );
-    headers.insert(
-        "x-pakar-boot",
-        s.boot_id.parse().map_err(|_| "Invalid boot identity")?,
-    );
-    reqwest::blocking::Client::builder()
-        .no_proxy()
-        .timeout(Duration::from_secs(4))
-        .default_headers(headers)
-        .build()
-        .map_err(diagnostics::describe_error)
+    crate::peer_http::pinned_client(s)
 }
 fn read_only_command(words: &[&str]) -> bool {
     matches!(

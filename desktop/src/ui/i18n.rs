@@ -417,6 +417,7 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         "Connecting…" => "در حال اتصال…",
         "Disconnect" => "قطع اتصال",
         "Hardware Disconnected" => "سخت‌افزار قطع است",
+        "Read-only: firmware must advertise board/boot identity and HTTP fencing" => "فقط خواندنی: میان‌افزار باید هویت برد و راه‌اندازی و حفاظت HTTP را اعلام کند",
         "PCController coordinator connected" => "هماهنگ‌کنندهٔ PCController متصل است",
         "Custom endpoint or hardware path" => "نشانی سفارشی یا مسیر سخت‌افزار",
         "Enter a PCController endpoint or an OS hardware path." => {

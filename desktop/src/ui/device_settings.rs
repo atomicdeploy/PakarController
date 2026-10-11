@@ -658,7 +658,7 @@ fn return_to_workspace(draft: &mut Editor, ui: &egui::Ui) -> bool {
 }
 fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
     if !available(app, draft.page) { draft.page = 0; }
-    let ready = app.command_route() == Some(Transport::WiFi)
+    let ready = app.http_writable()
         && app.transport != Transport::Serial
         && draft.maintenance_pending.is_none()
         && app.status.as_ref().is_some_and(|s| !s.programming_latch);
@@ -674,6 +674,9 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
         });
     });
     ui.add_space(10.0);
+    if app.command_route() == Some(Transport::WiFi) && !app.http_writable() {
+        ui.label(egui::RichText::new(crate::ui::i18n::text("Read-only: firmware must advertise board/boot identity and HTTP fencing")).small().weak());
+    }
     ui.horizontal(|ui| {
         ui.label(icons::MAGNIFYING_GLASS);
         ui.add_sized(
@@ -894,10 +897,10 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
                                 operation,
                                 crate::maintenance::Operation::RemoteApply(_)
                                     | crate::maintenance::Operation::RemoteCancel(_)
-                            ) && app.command_route() == Some(Transport::WiFi)
+                            ) && app.http_writable()
                                 && draft.maintenance_pending.is_none())
                             || (matches!(operation, crate::maintenance::Operation::ProgramAvr)
-                                && app.command_route() == Some(Transport::WiFi)
+                                && app.http_writable()
                                 && app.status.as_ref().is_some_and(|s| s.programming_latch)
                                 && draft.maintenance_pending.is_none()))
                             && draft.pending.is_none(),
