@@ -11,10 +11,10 @@ const nodes=Object.fromEntries([...source.matchAll(/id="([^"]+)"/g)].map(m=>[m[1
 nodes.workspace.hidden=true;
 let signedIn=false,user='admin',password='pakarcontroller',socketCount=0,statusRequests=0,hostname='test-fixture',displayName='Fixture table';
 const calls=[];
-const context=vm.createContext({...nodes,URLSearchParams,FormData,Uint8Array,TextEncoder,DataView,atob,console,
+const context=vm.createContext({...nodes,Headers,AbortController,URLSearchParams,FormData,Uint8Array,TextEncoder,DataView,atob,console,
   performance,crypto:webcrypto,navigator:{platform:'fixture',hardwareConcurrency:4},screen:{width:1280,height:720},
   document:{documentElement:{dataset:{},style:{setProperty(){}}},querySelector:s=>nodes[s.slice(1)],querySelectorAll:()=>[],createElement:element,createTextNode:text=>({textContent:text}),createElementNS:()=>({...element(),namespaceURI:'svg'})},
-  location:{protocol:'http:',host:'pakarcontroller'},setInterval:()=>1,clearInterval(){},setTimeout:()=>1,
+  location:{protocol:'http:',host:'pakarcontroller'},setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},
   WebSocket:class {constructor(){socketCount++;this.readyState=1}close(){this.readyState=3}send(){}},
   fetch:async(path,options={})=>{
     calls.push({path,options});let code=200,body={};
@@ -33,13 +33,13 @@ const context=vm.createContext({...nodes,URLSearchParams,FormData,Uint8Array,Tex
       if(options.method==='POST'){changed=hostname!==options.body.get('hostname');hostname=options.body.get('hostname');displayName=options.body.get('display_name');}
       body={hostname,display_name:displayName,persisted:true,accepted:options.method==='POST',apply_pending:changed};
     }else if(path.split('?')[0]==='/api/status'){
-      statusRequests++;body={hostname:'test-fixture',cells:[],tm1637_segments:[]};
+      statusRequests++;body={hostname:'test-fixture',board_id:'esp8266-aabbccddeeff',boot_id:'a'.repeat(32),http_peer_fencing:true,cells:[],tm1637_segments:[]};
     }else if(path==='/api/cells/mapping')body={physical:[],names:[]};
     return {ok:code<400,status:code,statusText:String(code),text:async()=>typeof body==='string'?body:JSON.stringify(body)};
   }});
 vm.runInContext(source.match(/<script data-pakar-presentation>([\s\S]*?)<\/script>/)[1],context);
 vm.runInContext(script,context);
-const settle=async()=>{for(let i=0;i<15;i++)await Promise.resolve()};
+const settle=async()=>{for(let i=0;i<100;i++)await Promise.resolve()};
 await settle();
 assert.equal(nodes.workspace.hidden,true);assert.equal(socketCount,0);
 assert.match(nodes.loginHint.textContent,/admin \/ pakarcontroller/);
@@ -49,7 +49,7 @@ assert.match(nodes.loginError.textContent,/Incorrect/);assert.equal(socketCount,
 nodes.loginPassword.value='pakarcontroller';
 await nodes.loginForm.listeners.submit({preventDefault(){}});await settle();
 assert.equal(nodes.workspace.hidden,false,nodes.loginError.textContent);assert.equal(socketCount,1);assert.equal(nodes.loginPassword.value,'');
-assert.equal(statusRequests,1);assert.match(nodes.accessWarning.textContent,/Default password/);
+assert.equal(statusRequests,2,'Initial read and browser-telemetry write preflight');assert.match(nodes.accessWarning.textContent,/Default password/);
 nodes.accessCurrent.value=password;nodes.accessUser.value='David';nodes.accessPassword.value='new-password';nodes.accessConfirm.value='different';
 await nodes.accessForm.listeners.submit({preventDefault(){}});
 assert.equal(calls.filter(c=>c.path==='/api/auth').length,0);
@@ -73,5 +73,8 @@ nodes.deviceName.value='LEDBOARD.Local';await nodes.nameForm.listeners.submit({p
 assert.equal(hostname,'ledboard');assert.equal(nodes.nameSave.disabled,true);
 assert.equal(nodes.nameResult.href,'http://ledboard.local/');assert.equal(nodes.nameResult.hidden,false);
 assert.match(vm.runInContext('webToasts.snapshot().at(-1).message',context),/Identity saved/);
+vm.runInContext('selectedCells=new Set([1,2]);cellSearch.value="1–2";remoteBearer.value="private";render({...state,boot_id:"b".repeat(32)})',context);
+assert.equal(vm.runInContext('selectedCells.size',context),0);assert.equal(nodes.cellSearch.value,'');assert.equal(nodes.remoteBearer.value,'');
+assert.equal(vm.runInContext('webSettings.cloud',context),null);assert.equal(nodes.boardDisplayName.value,'');
 await vm.runInContext('signOut()',context);assert.equal(nodes.workspace.hidden,true);
 console.log('Embedded Web sign-in, rejection, rotation, secret clearing, validated persistent rename, reconnect link and sign-out passed.');

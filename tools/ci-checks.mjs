@@ -4,6 +4,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 export const phases={
   "quality": [
+    ["node", "tests/web_peer_http_test.mjs"],
     ["node", "tests/peer_fence_test.mjs"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "peer-binding", "-Gate"],
     ["node", "tests/native_dropdown_test.mjs"],

@@ -23,8 +23,8 @@ in Events rather than becoming the new peer's confirmed output.
 ## Deliberate boundaries and unfinished work
 
 - The optional header pair preserves existing unfenced HTTP clients. Missing
-  headers do NOT mean ownership protection. GUI/Web/mobile/standalone CLI must
-  still adopt this policy; only the TUI currently requires and pins it.
+  headers do NOT mean ownership protection. TUI and embedded Web now require
+  and pin it; native GUI/mobile/standalone CLI still need adoption.
 - MAC/random correlation is not authentication, encryption, attestation or
   protection against a malicious server spoofing identity. Existing auth and
   same-origin guards remain separate. Login is exempt from mutation fencing.
@@ -44,3 +44,32 @@ terminal cancellation and peer matching. Its HELLO/build stamp is not a boot
 epoch. Go serial acquisition/quarantine, ACK sequence/opcode routing, DTR policy
 and unsolicited-event transport ownership remain useful pending imports; see
 the exact omission ledger, not a claim of full session parity.
+
+## Embedded Web adoption
+
+`assets/web/peer-http.js` is mechanically embedded, not a second implementation.
+It adapts RayanLamp api.ts's typed error, Headers, no-store/same-origin fetch,
+AbortController deadline and finally cleanup. All mutating Web HTTP actions,
+including uploads and credential rotation, preflight `/api/status` then carry
+the original board/boot headers. Login/logout remain local-auth exceptions.
+One pin spans an entire cell batch or settings save; an observed new boot stops
+unsent edits rather than silently rebinding the remaining commands. False cell
+ACKs stop the batch. No POST or upload is replayed after 401, timeout or loss.
+
+Late responses from a revoked generation cannot populate settings or mapping.
+Observed identity loss/change clears selection/Find, mapping drafts, pixel sample,
+text/identity/secret edits and remote-job state; it retires the old WebSocket.
+Public settings/name verification includes a final same-boot status observation.
+GETs are still unfenced at the server: this does not prove durability or rule out
+an unobserved reboot during the readback window. Accepted is not physical output.
+
+The request deadline is 12 seconds (explicit bounded overrides up to 60 seconds),
+and cancellation releases timers immediately. A sent write may still have applied.
+The sign-in epoch also prevents an old bootstrap from dismissing a newer login.
+Existing distinct-cause incident aggregation and secret-redacted logs are retained;
+blank typed codes no longer mask HTTP status codes. Tests execute the actual
+shared helper, embedded sign-in app, batch and settings paths with HTTP/DOM doubles.
+They are not real LAN, multi-client, reboot, downstream AVR or WebSocket fencing
+acceptance. Native/Flutter transport adoption, remembered pairing and integrated
+ESP32-S3/DMA remain pending. Web streaming's fixed 40 ms timer is also still pending
+replacement by configurable pacing/backpressure; no all-interface FPS parity claim.

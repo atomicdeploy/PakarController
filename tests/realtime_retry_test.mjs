@@ -63,7 +63,7 @@ assert(web.includes("'?pixels=1':''),options)"));
 assert(web.includes('if(!options.signal?.aborted)render(next)'));
 assert(module.includes('prepare:signal=>refreshAuthenticated({signal})'));
 assert(!module.includes("method:'POST'")&&!module.includes('establishSession(')&&!module.includes('localStorage'));
-assert(web.includes('function showLogin(){webSocketReconnect.cancel();'));
+assert(web.includes('function showLogin(){authEpoch++;peerHttp.revoke();webSocketReconnect.cancel();'));
 assert(web.includes("'pagehide',()=>{webSocketReconnect.cancel();"));
 assert(web.includes('function pauseWebSocket(){webSocketPaused=true;webSocketReconnect.cancel();'));
 assert(!web.includes('webSocketRetry='));
@@ -72,7 +72,7 @@ assert.equal(web.split('// BEGIN RAYANLAMP REALTIME RETRY\n')[1].split('\n// END
 // Execute actual Web connectWs + refreshAuthenticated + api, not just a helper.
 const sockets=[],requests=[],liveTimers=new Map(),activity=[],diagnosticEvents=[];
 let timerID=0,status=200,constructorFails=false;
-const live=vm.createContext({AbortController,Math:Object.assign(Object.create(Math),{random:()=>0.5}),location:{protocol:'https:',host:'ledboard.local'},
+const live=vm.createContext({Headers,AbortController,Math:Object.assign(Object.create(Math),{random:()=>0.5}),location:{protocol:'https:',host:'ledboard.local'},
   cellShape:{value:'rounded'},wsState:{},render:value=>activity.push('render:'+value.hostname),
   stopStream(){},console:Object.fromEntries(['debug','info','warn','error','log','groupCollapsed','groupEnd'].map(name=>[name,(...args)=>{if(args[4]?.event)diagnosticEvents.push(args[4])}])),
   setTimeout:(run,delay)=>{const id=++timerID;liveTimers.set(id,{run,delay});return id},
@@ -80,7 +80,7 @@ const live=vm.createContext({AbortController,Math:Object.assign(Object.create(Ma
   fetch:async(path,options)=>{requests.push({path,options});activity.push('GET');return {status,ok:status===200,text:async()=>JSON.stringify({hostname:'verified-peer'})}},
   WebSocket:class {constructor(url){if(constructorFails)throw Error('socket unavailable');this.url=url;this.sent=[];sockets.push(this);activity.push('socket')}close(){}send(value){this.sent.push(value)}}
 });
-vm.runInContext(read('assets/web/browser-console.js')+'\nlet authenticated=true,webSocketPaused=false,socket=null;\n'+module+'\n'+
+vm.runInContext(read('assets/web/peer-http.js')+'\nconst peerHttp=createPeerHttp();\n'+read('assets/web/browser-console.js')+'\nlet authenticated=true,webSocketPaused=false,socket=null;\n'+module+'\n'+
   web.slice(web.indexOf('async function api('),web.indexOf('function showLogin()'))+'\n'+
   web.split('\n').find(line=>line.startsWith('async function refreshAuthenticated('))+'\n'+
   web.slice(web.indexOf('function connectWs()'),web.indexOf('async function post('))+
@@ -91,7 +91,7 @@ execute('connectWs()');sockets[0].onopen();assert.equal(sockets[0].url,'wss://le
 sockets[0].onclose({code:1006});assert.equal(await fireLive(),500);
 assert.equal(sockets.length,2);assert.deepEqual(activity.slice(-3),['GET','render:verified-peer','socket']);
 assert.equal(requests[0].path,'/api/status');assert.equal(requests[0].options.credentials,'same-origin');
-assert.equal(requests[0].options.method,undefined,'session preparation is read-only GET');
+assert.equal(requests[0].options.method,'GET','session preparation is read-only GET');
 assert(requests[0].options.signal instanceof AbortSignal);
 assert.equal(liveTimers.size,0);
 // Repeat preparation failures are one ongoing incident, not a quiet-window flood.

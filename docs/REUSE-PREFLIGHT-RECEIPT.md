@@ -1,5 +1,39 @@
 # Donor-first preflight receipt
 
+## Web board/boot adoption
+
+Started from clean b3e9d19 with Build38150481947 and CodeQL38150481964 green;
+no open Pakar PR or new completed Copilot review. ASUS1022 remains refused and
+ledboard.local unresolved. Current GUI/settings/rollback are preserved.
+Consulted web-presentation, exact RayanLamp api.ts and peer-binding ownership.
+api.ts and api.test.ts were reread through EOF; live source hashes match inventory.
+Adapted actual APIError, Headers, same-origin/no-store fetch, AbortController
+deadline and finally cleanup into assets/web/peer-http.js. No donor 401 mutation
+replay or nonexistent Go session endpoint. Existing PCController session.go's
+before/after admission contract now also applies to Web; no new serial parity
+claim. Mechanical embedding uses the existing generator and byte-equality test.
+
+Focused verification caught empty typed codes masking distinct HTTP failures,
+a bootstrap/sign-in ownership race, and external abort retaining its timer.
+Reconsulted the already fully read api.ts request/finally and sync.ts stop paths;
+fixed the actual adapter and explicit auth generation, not test suppression.
+DOM fixtures were upgraded with Headers/AbortController and explicit simulated
+board/boot identities; old fixtures were not physical/capability evidence.
+False batch ACK, shared transaction pins, old-peer draft clearing and no replay
+are covered. Final full quality and ESP8266 busy-wire build passed. A final
+redirect-error refinement was compiled again in the same cache; final image
+and exact embedded module proof are in FILE-COMPARISON-RECEIPTS.md. No flag
+churn or debug cache. The nonunique PU route anchor rebind was rejected;
+reread both actual route bindings and retained their verified line244 rather
+than choosing an arbitrary occurrence. Only target/proof leaves were rebound.
+
+Known gap newly exposed: Web streamTick still uses a 40 ms interval (25 FPS).
+Configurable/backpressured pacing remains open; native60/0 policy is not Web
+parity. GUI/Flutter/other transports, AVR-only reboot, ESP32-S3 integration/DMA,
+readback durability and physical multi-client tests remain open. No debug/native
+or Android build, cleanup, GUI replacement or hardware write is authorized by
+these fixture results.
+
 ## HTTP board/boot fence continuation
 
 Started from clean pushed d450866; Build38147533498 and CodeQL38147533441

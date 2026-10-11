@@ -746,6 +746,7 @@ function renderContext(){
   document.querySelector('.layout')?.classList.toggle('controller-only',!c.has('table'));
   renderApplicationIdentity(c.known?state.capabilities:null);
   contextMessage.textContent=c.known?(c.name||'Connected board')+' · '+(c.has('table')?'Table board':'Controller'):contextReceivedAt?'Capabilities unavailable or stale. Connect to a compatible board.':'Waiting for board capabilities…';
+  if(c.known&&typeof peerHttp!=='undefined'&&!peerHttp.writable())contextMessage.textContent+=' · Read-only: refresh to obtain a supported board/boot identity';
   const signature=JSON.stringify(c.modes);
   if(signature!==contextModeSignature){contextModeSignature=signature;boardModes.replaceChildren();for(const kind of ['presentation','game']){const modes=c.modes.filter(m=>m.kind===kind);if(!modes.length)continue;const label=document.createElement('p');label.className='hint';label.textContent=kind==='presentation'?'Table presentation':'Game';boardModes.appendChild(label);const row=document.createElement('div');row.className='row';for(const mode of modes){const button=document.createElement('button');button.dataset.mode=mode.id;button.textContent=mode.label;button.onclick=()=>setMode(mode.id);row.appendChild(button)}boardModes.appendChild(row)}}
   document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===state.mode));
@@ -860,40 +861,137 @@ grid.addEventListener('pointermove',e=>{if(!cellDrag||cellDrag.pointer!==e.point
 grid.addEventListener('pointerup',e=>{if(!cellDrag)return;suppressCellClick=cellDrag.started;grid.querySelector('.marquee')?.remove();if(grid.hasPointerCapture?.(e.pointerId))grid.releasePointerCapture(e.pointerId);cellDrag=null});
 grid.addEventListener('pointercancel',()=>{if(cellDrag)selectedCells=cellDrag.base;cellDrag=null;grid.querySelector('.marquee')?.remove();paintSelection()});
 function cancelCellBatch(){cellBatchCancelled=true}
-async function applyCellBatch(value){if(!currentPeer().has('table')||cellBatchBusy||!authenticated||!selectedCells.size||!['white','red','off'].includes(value))return;const ids=[...selectedCells].sort((a,b)=>a-b),transition=bulkEffect.value;cellBatchBusy=true;cellBatchCancelled=false;bulkApply.disabled=true;bulkCancel.disabled=false;let sent=0;try{for(const id of ids){if(cellBatchCancelled||!currentPeer().has('table')){cellBatchCancelled=true;break;}await api('/api/cell',{method:'POST',body:new URLSearchParams({id,state:value,effect:transition})});sent++;setUiText(bulkStatus,'Sent {sent} of {total} cell edits; awaiting device readback',{sent,total:ids.length});await new Promise(resolve=>setTimeout(resolve,50))}const actual=await api('/api/status');render(actual);if(cellBatchCancelled)setUiText(bulkStatus,'Cancelled unsent edits. {sent} previously sent edits may have applied.',{sent});else if(ids.every(id=>actual.cells[id-1]===value))setUiText(bulkStatus,'Verified {sent} cell states on the device',{sent});else setUiText(bulkStatus,'Readback did not confirm every edit. Refresh and inspect; batch is not atomic.')}catch(error){setUiText(bulkStatus,'Stopped after {sent} edits. Uncertain writes are not retried.',{sent});report(error)}finally{cellBatchBusy=false;bulkApply.disabled=false;bulkCancel.disabled=true}}
+async function applyCellBatch(value){if(!currentPeer().has('table')||cellBatchBusy||!authenticated||!selectedCells.size||!['white','red','off'].includes(value))return;const ids=[...selectedCells].sort((a,b)=>a-b),transition=bulkEffect.value;cellBatchBusy=true;cellBatchCancelled=false;bulkApply.disabled=true;bulkCancel.disabled=false;let sent=0;try{const peer=peerHttp.pin();for(const id of ids){if(cellBatchCancelled||!currentPeer().has('table')){cellBatchCancelled=true;break;}const ack=await api('/api/cell',{method:'POST',peer,body:new URLSearchParams({id,state:value,effect:transition})});if(ack?.accepted!==true)throw Error('Cell command was not acknowledged');sent++;setUiText(bulkStatus,'Sent {sent} of {total} cell edits; awaiting device readback',{sent,total:ids.length});await new Promise(resolve=>setTimeout(resolve,50))}const actual=await api('/api/status',{peer});render(actual);if(cellBatchCancelled)setUiText(bulkStatus,'Cancelled unsent edits. {sent} previously sent edits may have applied.',{sent});else if(ids.every(id=>actual.cells[id-1]===value))setUiText(bulkStatus,'Verified {sent} cell states on the device',{sent});else setUiText(bulkStatus,'Readback did not confirm every edit. Refresh and inspect; batch is not atomic.')}catch(error){setUiText(bulkStatus,'Stopped after {sent} edits. Uncertain writes are not retried.',{sent});report(error)}finally{cellBatchBusy=false;bulkApply.disabled=false;bulkCancel.disabled=true}}
 paintSelection();
 for(let i=0;i<8;i++){const l=document.createElement('label'),c=document.createElement('input');c.type='checkbox';c.onchange=setOutputs;c.dataset.bit=i;l.append(c,document.createTextNode(' '+(i+1)));outputs.appendChild(l)}
-let authenticated=false;
+let authenticated=false,authEpoch=0;
+// BEGIN PEER HTTP
+// Adapted from RayanLamp webui/src/api.ts: APIError, Headers, same-origin
+// no-store requests, AbortController deadline and finally cleanup. No 401 replay.
+// Board/session admission follows PCController internal/link/session.go; the
+// boot identity itself comes from Pakar's server, never a hostname/build stamp.
+class PeerAPIError extends Error {
+  constructor(message, status = 0, code = '') {
+    super(message); this.name = 'PeerAPIError'; this.status = status; if (code) this.code = code;
+  }
+}
+function createPeerHttp({fetcher = (...args) => fetch(...args), now = () => Date.now(),
+  setTimer = setTimeout, clearTimer = clearTimeout, changed = () => {}} = {}) {
+  let owner = null, generation = 0, observed = 0;
+  function identity(s) {
+    return s?.http_peer_fencing === true && typeof s.board_id === 'string' && typeof s.boot_id === 'string' && /^[a-z0-9_-]{1,64}$/.test(s.board_id) &&
+      /^[a-f0-9]{32}$/.test(s.boot_id ?? '') && !/^0{32}$/.test(s.boot_id)
+      ? {board: s.board_id, boot: s.boot_id} : null;
+  }
+  function observe(s) {
+    const next = identity(s);
+    if (owner?.board !== next?.board || owner?.boot !== next?.boot) {
+      owner = next; generation++; changed();
+    }
+    observed = now();
+  }
+  function revoke() { owner = null; observed = 0; generation++; changed(); }
+  function pin() {
+    const age = now() - observed;
+    if (!owner || age < 0 || age >= 8000)
+      throw new PeerAPIError('Refresh this board before writing; its boot identity is unavailable or stale.', 409, 'peer_unavailable');
+    return Object.freeze({...owner, generation});
+  }
+  function assertOwner(peer) {
+    if (!peer || peer.generation !== generation || peer.board !== owner?.board || peer.boot !== owner?.boot)
+      throw new PeerAPIError('Board or boot changed. Old edits were not transferred; refresh before a new action.', 409, 'peer_changed');
+  }
+  async function request(path, options = {}) {
+    if (typeof path !== 'string' || !/^\/(?!\/)/.test(path) || /[\x00-\x20\\]/.test(path))
+      throw new PeerAPIError('Only same-origin device paths are allowed.', 400, 'invalid_endpoint');
+    const {peer: expected, timeoutMs = 12000, signal: external, ...init} = options;
+    const method = String(init.method || 'GET').toUpperCase(), endpoint = path.split('?')[0];
+    const mutation = !['GET', 'HEAD'].includes(method), localAuth = ['/login', '/logout'].includes(endpoint);
+    const peer = expected || (mutation && !localAuth ? pin() : null);
+    if (peer) assertOwner(peer);
+    if (mutation && !localAuth) {
+      // One read preflight, never a mutation retry. The server closes the race
+      // between this observation and admission of the pinned POST/upload.
+      await request('/api/status', {signal: external, peer, timeoutMs});
+      assertOwner(peer);
+    }
+    const admission = generation, controller = new AbortController();
+    let timedOut = false, timer;
+    const abort = () => {controller.abort(); if (timer !== undefined) clearTimer(timer);};
+    if (external?.aborted) abort(); else external?.addEventListener('abort', abort, {once: true});
+    timer = setTimer(() => {timedOut = true; abort();}, Math.max(1, Math.min(60000, timeoutMs)));
+    if (controller.signal.aborted) clearTimer(timer);
+    try {
+      if (controller.signal.aborted) throw new PeerAPIError('Request cancelled.', 0, 'cancelled');
+      const headers = new Headers(init.headers); headers.set('Accept', 'application/json');
+      if (peer) {headers.set('X-Pakar-Board', peer.board); headers.set('X-Pakar-Boot', peer.boot);}
+      const response = await fetcher(path, {...init, method, headers, credentials: 'same-origin', cache: 'no-store', redirect: 'error', signal: controller.signal});
+      const text = await response.text();
+      if (controller.signal.aborted) throw new PeerAPIError('Request cancelled.', 0, 'cancelled');
+      if (!localAuth && admission !== generation) throw new PeerAPIError('Late reply from a previous board session was ignored.', 409, 'peer_changed');
+      let value;
+      try {value = JSON.parse(text);} catch {
+        if (response.headers?.get('Content-Type')?.includes('application/json'))
+          throw new PeerAPIError('Device returned malformed JSON.', 502, 'invalid_response');
+        value = text; // Existing plain-text firmware receipts remain supported.
+      }
+      if (!response.ok) {
+        if (response.status === 409 && value?.error === 'peer_changed') revoke();
+        const reported = typeof value?.error === 'string' ? value.error : value?.error?.code;
+        const code = typeof reported === 'string' && /^[a-z][a-z0-9_.-]{0,63}$/.test(reported) ? reported : '';
+        throw new PeerAPIError(response.status === 401 ? (endpoint === '/login' ? 'Incorrect username or password' : 'Please sign in again') : 'Device request failed (' + response.status + ').', response.status, code);
+      }
+      if (endpoint === '/api/status' && method === 'GET') observe(value);
+      if (peer) assertOwner(peer);
+      return value;
+    } catch (error) {
+      if (timedOut) throw new PeerAPIError('Request timed out. A sent write may have applied; it was not retried.', 408, 'timeout');
+      if (external?.aborted) throw new PeerAPIError('Request cancelled. A sent write may have applied; it was not retried.', 0, 'cancelled');
+      throw error;
+    } finally {clearTimer(timer); external?.removeEventListener('abort', abort);}
+  }
+  return {request, pin, assertOwner, observe, revoke, writable: () => {try {pin(); return true;} catch {return false;}}};
+}
+// END PEER HTTP
+function revokePeerDrafts(){
+  state={cells:[]};contextReceivedAt=0;cellBatchCancelled=true;selectedCells.clear();cellSearch.value='';
+  cellDrag=null;grid.querySelector('.marquee')?.remove();closeCellMenu();setEditingOrder(false);
+  mapping={physical:[],names:[]};pixelSample=null;pixelSampleAt=0;lastPixelStatus=null;remoteJob=null;remoteState.textContent='';
+  remoteApply.disabled=remoteCancel.disabled=true;
+  for(const id of ['deviceName','boardDisplayName','displayText','displayValue','mapLogical','mapPhysical','mapName','cellId','accessCurrent','accessPassword','accessConfirm','remoteBearer','remoteUrl','remoteHash']){const n=document.querySelector('#'+id);if(n)n.value='';}
+  nameSave.disabled=true;settingsInvalidate();stopStream();paintSelection();renderContext();
+  if(socket){socket.onclose=null;socket.close();socket=null;if(authenticated)webSocketReconnect.schedule();}
+}
+const peerHttp=createPeerHttp({changed:revokePeerDrafts});
 async function api(path,options={}){
   const method=String(options.method||'GET').toUpperCase();
   // Never include query strings, bodies, headers, auth fields or raw responses.
   const endpoint=String(path).split('?')[0].slice(0,128);
   try {
-    const r=await fetch(path,{credentials:'same-origin',...options}),t=await r.text();
-    if(r.status===401&&path!=='/login'){showLogin();throw Object.assign(Error('Please sign in again'),{status:401})}
-    if(!r.ok)throw Object.assign(Error(t||r.statusText),{status:r.status});
+    const value=await peerHttp.request(path,options);
     if(method==='GET'&&typeof browserConsole!=='undefined')browserConsole.recover('http:'+method+endpoint,{source:'http',action:method,endpoint});
     if(method!=='GET'&&endpoint!=='/api/clients/report'&&typeof traceBrowserEvent==='function')traceBrowserEvent('info','device.command','HTTP request accepted; device readback may still be required',{source:'http',action:method,endpoint});
-    try{return JSON.parse(t)}catch{return t}
+    return value;
   } catch(error) {
+    if(error.status===401&&path!=='/login')showLogin();
     if(typeof traceBrowserEvent==='function')traceBrowserEvent('error','transport.error','HTTP request failed',{source:'http',action:method,endpoint,...browserErrorMetadata(error)},
       method==='GET'?{incidentKey:'http:'+method+endpoint}:{});
     throw error;
   }
 }
-function showLogin(){webSocketReconnect.cancel();if(typeof settingsInvalidate==="function")settingsInvalidate();authenticated=false;contextReceivedAt=0;renderContext();workspace.hidden=true;loginPanel.hidden=false;stopStream();if(socket){socket.onclose=null;socket.close();socket=null}}
-async function openWorkspace(){await refreshAuthenticated();authenticated=true;workspace.hidden=false;loginPanel.hidden=true;loginPassword.value='';connectWs();remoteRefresh();reportBrowser();loadMappings();loadCloud();loadDeviceName();const info=await api('/api/auth/info');accessUser.value=info.username;accessWarning.textContent=info.default_credentials?'Default password active. Change it in Device access.':''}
+function showLogin(){authEpoch++;peerHttp.revoke();webSocketReconnect.cancel();if(typeof settingsInvalidate==="function")settingsInvalidate();authenticated=false;contextReceivedAt=0;renderContext();workspace.hidden=true;loginPanel.hidden=false;stopStream();if(socket){socket.onclose=null;socket.close();socket=null}}
+async function openWorkspace(epoch=authEpoch){await refreshAuthenticated();if(epoch!==authEpoch)return;authenticated=true;workspace.hidden=false;loginPanel.hidden=true;loginPassword.value='';connectWs();remoteRefresh();reportBrowser();loadMappings();loadCloud();loadDeviceName();const info=await api('/api/auth/info');accessUser.value=info.username;accessWarning.textContent=info.default_credentials?'Default password active. Change it in Device access.':''}
 async function refreshAuthenticated(options={}){const next=await api('/api/status'+(cellShape.value!=='rounded'?'?pixels=1':''),options);if(!options.signal?.aborted)render(next)}
-async function bootstrap(){try{const info=await api('/api/auth/info');loginUser.value=info.username;loginHint.textContent=!info.ready?'Device access storage is damaged. USB recovery is required.':info.default_credentials?'First login: admin / pakarcontroller. Change these in Device access after signing in.':'Use your configured device credentials.';if(info.ready){try{await openWorkspace()}catch{showLogin()}}}catch(e){loginError.textContent=e.message}}
-loginForm.addEventListener('submit',async e=>{e.preventDefault();loginError.textContent='';try{await api('/login',{method:'POST',body:new URLSearchParams({username:loginUser.value,password:loginPassword.value})});await openWorkspace()}catch(error){loginError.textContent=error.message;loginPassword.value=''}});
+async function bootstrap(){const epoch=authEpoch;try{const info=await api('/api/auth/info');if(epoch!==authEpoch)return;loginUser.value=info.username;loginHint.textContent=!info.ready?'Device access storage is damaged. USB recovery is required.':info.default_credentials?'First login: admin / pakarcontroller. Change these in Device access after signing in.':'Use your configured device credentials.';if(info.ready){try{await openWorkspace(epoch)}catch{if(epoch===authEpoch)showLogin()}}}catch(e){if(epoch===authEpoch)loginError.textContent=e.message}}
+loginForm.addEventListener('submit',async e=>{e.preventDefault();const epoch=++authEpoch;peerHttp.revoke();loginError.textContent='';try{await api('/login',{method:'POST',body:new URLSearchParams({username:loginUser.value,password:loginPassword.value})});if(epoch!==authEpoch)return;await openWorkspace(epoch)}catch(error){if(epoch!==authEpoch)return;loginError.textContent=error.message;loginPassword.value=''}});
 accessForm.addEventListener('submit',async e=>{e.preventDefault();if(accessPassword.value!==accessConfirm.value)return report('Passwords do not match');try{await api('/api/auth',{method:'POST',body:new URLSearchParams({current_password:accessCurrent.value,username:accessUser.value,password:accessPassword.value})});accessCurrent.value='';accessPassword.value='';accessConfirm.value='';showLogin();await bootstrap();loginHint.textContent='Credentials saved. Sign in with your new password.'}catch(error){report(error)}});
 async function loadDeviceName(){try{const value=await api('/api/device/name');if(typeof value.hostname==='string'&&validBoardName(value.display_name)){savedIdentityHost=value.hostname;deviceName.value=value.hostname+'.local';boardDisplayName.value=value.display_name;nameSave.disabled=false}else{nameSave.disabled=true}}catch(e){nameSave.disabled=true;report(e)}}
-nameForm.addEventListener('submit',async e=>{e.preventDefault();const name=deviceName.value.toLowerCase().replace(/\.local$/,'');if(!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(name)||name==='localhost'||name==='local')return report('Invalid hostname. Use 1..63 letters/digits/hyphens, optionally ending in .local.');const label=boardDisplayName.value;if(!validBoardName(label))return report('Board name must be 1..63 UTF-8 bytes without controls or edge spaces.');try{nameSave.disabled=true;const value=await api('/api/device/name',{method:'POST',body:new URLSearchParams({hostname:name,display_name:label})});if(!value.accepted||!value.persisted||value.hostname!==name||value.display_name!==label)throw Error('Device did not confirm the saved identity');if(!value.apply_pending){const check=await api('/api/device/name');if(check.hostname!==name||check.display_name!==label)throw Error('Identity saved but readback differs. Refresh before retrying.');savedIdentityHost=name;nameSave.disabled=false;nameResult.hidden=true;report('Board name saved and verified. Wi-Fi was not restarted.','success');await refresh();return}webSocketReconnect.cancel();stopStream();if(socket){socket.onclose=null;socket.close();socket=null}authenticated=false;nameResult.href='http://'+name+'.local/';nameResult.textContent='Identity saved. Open '+nameResult.href+' and sign in again.';nameResult.hidden=false;report(nameResult.textContent,'success')}catch(error){nameSave.disabled=false;report(error)}});
+nameForm.addEventListener('submit',async e=>{e.preventDefault();const name=deviceName.value.toLowerCase().replace(/\.local$/,'');if(!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(name)||name==='localhost'||name==='local')return report('Invalid hostname. Use 1..63 letters/digits/hyphens, optionally ending in .local.');const label=boardDisplayName.value;if(!validBoardName(label))return report('Board name must be 1..63 UTF-8 bytes without controls or edge spaces.');try{const peer=peerHttp.pin();nameSave.disabled=true;const value=await api('/api/device/name',{method:'POST',peer,body:new URLSearchParams({hostname:name,display_name:label})});if(!value.accepted||!value.persisted||value.hostname!==name||value.display_name!==label)throw Error('Device did not confirm the saved identity');if(!value.apply_pending){const check=await api('/api/device/name',{peer});await api('/api/status',{peer});if(check.hostname!==name||check.display_name!==label)throw Error('Identity saved but readback differs. Refresh before retrying.');savedIdentityHost=name;nameSave.disabled=false;nameResult.hidden=true;report('Board name saved and verified. Wi-Fi was not restarted.','success');await refresh();return}webSocketReconnect.cancel();stopStream();if(socket){socket.onclose=null;socket.close();socket=null}authenticated=false;nameResult.href='http://'+name+'.local/';nameResult.textContent='Identity saved. Open '+nameResult.href+' and sign in again.';nameResult.hidden=false;report(nameResult.textContent,'success')}catch(error){nameSave.disabled=false;report(error)}});
 async function signOut(){try{await api('/logout',{method:'POST'})}catch{}showLogin()}
 function report(e,tone){(webToasts??=createToastController({root:notice,translate:uiTr})).showToast(tone||(e instanceof Error?'error':'info'),e instanceof Error?uiTr('Error'):uiTr('Status'),e instanceof Error?e.message:String(e))}
 globalThis.addEventListener?.('pagehide',()=>{webSocketReconnect.cancel();webToasts?.destroy();webToasts=null});
 function renderSegments(masks=[]){displayStop.hidden=!state.tm1637_host_active;const lines=[[8,5,28,5],[31,8,31,27],[31,32,31,51],[8,54,28,54],[5,32,5,51],[5,8,5,27],[8,29.5,28,29.5]];segmentDisplay.innerHTML='';for(let d=0;d<4;d++){const mask=masks[d]||0,svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 36 60');for(let bit=0;bit<7;bit++){const line=document.createElementNS(svg.namespaceURI,'line');['x1','y1','x2','y2'].forEach((k,i)=>line.setAttribute(k,lines[bit][i]));if(mask&(1<<bit))line.setAttribute('class','lit');svg.appendChild(line)}const dot=document.createElementNS(svg.namespaceURI,'circle');dot.setAttribute('cx','32');dot.setAttribute('cy','54');dot.setAttribute('r','2.4');if(mask&128)dot.setAttribute('class','lit');svg.appendChild(dot);segmentDisplay.appendChild(svg)}}
-function render(s){state=s;contextReceivedAt=Date.now();renderContext();renderAudio(s);setUiProtocolText(summary,[s.hostname,s.canonical_url,currentPeer().has('leds')&&Number.isInteger(s.pixels)?s.pixels+' pixels':null].filter(Boolean).join(' · '));avr.textContent=s.avr_online?'online':'offline';avr.className=s.avr_online?'good':'bad';tm.textContent=s.tm1637_ack?'ready':'not responding';tm.className=s.tm1637_ack?'good':'bad';clients.textContent=s.websocket_clients??0;station.textContent=s.station_connected?`${s.station_ip} (${s.station_rssi} dBm)`:'disconnected';ap.textContent=s.ap_started?s.ap_ip:'disabled';discovery.textContent=`mDNS ${s.mdns_started?'on':'off'} · SSDP ${s.ssdp_started?'on':'off'} · NBNS ${s.netbios_started?'on':'off'}`;ntp.textContent=s.ntp_synced?uiDateTime(new Date(s.utc_epoch*1000),{dateStyle:'medium',timeStyle:'short'}):'waiting';uart.textContent=`ESP ${s.esp_uart_errors} / AVR ${s.avr_uart_errors} / USB ${s.usb_serial_errors??0}`;mqttState.textContent=s.mqtt_enabled?(s.mqtt_connected?'connected':`offline (${s.mqtt_state})`):'disabled';mqttState.className=s.mqtt_connected?'good':s.mqtt_enabled?'warn':'';cloudWsState.textContent=s.cloud_websocket_enabled?(s.cloud_websocket_connected?'connected':'offline'):'disabled';cloudWsState.className=s.cloud_websocket_connected?'good':s.cloud_websocket_enabled?'warn':'';winner.textContent=s.winner||'—';brightness.value=s.brightness;brightnessValue.textContent=s.brightness;pattern.value=s.effect||'none';renderSegments(s.tm1637_segments);document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===s.mode));for(const b of grid.querySelectorAll('.cell')){const id=Number(b.dataset.id),v=s.cells[id-1]||'off';b.classList.toggle('red',v==='red');b.classList.toggle('off',v==='off');if(cellShape.value==='rounded')b.textContent=mapping.names[id-1]||id;if(cellShape.value==='rounded')b.title=`Logical ${id} · physical ${mapping.physical[id-1]||id}`;}paintSelection(true);for(const c of outputs.querySelectorAll('input'))c.checked=!!(s.active_outputs&(1<<Number(c.dataset.bit)))}
+function render(s){peerHttp.observe(s);state=s;contextReceivedAt=Date.now();renderContext();renderAudio(s);setUiProtocolText(summary,[s.hostname,s.canonical_url,currentPeer().has('leds')&&Number.isInteger(s.pixels)?s.pixels+' pixels':null].filter(Boolean).join(' · '));avr.textContent=s.avr_online?'online':'offline';avr.className=s.avr_online?'good':'bad';tm.textContent=s.tm1637_ack?'ready':'not responding';tm.className=s.tm1637_ack?'good':'bad';clients.textContent=s.websocket_clients??0;station.textContent=s.station_connected?`${s.station_ip} (${s.station_rssi} dBm)`:'disconnected';ap.textContent=s.ap_started?s.ap_ip:'disabled';discovery.textContent=`mDNS ${s.mdns_started?'on':'off'} · SSDP ${s.ssdp_started?'on':'off'} · NBNS ${s.netbios_started?'on':'off'}`;ntp.textContent=s.ntp_synced?uiDateTime(new Date(s.utc_epoch*1000),{dateStyle:'medium',timeStyle:'short'}):'waiting';uart.textContent=`ESP ${s.esp_uart_errors} / AVR ${s.avr_uart_errors} / USB ${s.usb_serial_errors??0}`;mqttState.textContent=s.mqtt_enabled?(s.mqtt_connected?'connected':`offline (${s.mqtt_state})`):'disabled';mqttState.className=s.mqtt_connected?'good':s.mqtt_enabled?'warn':'';cloudWsState.textContent=s.cloud_websocket_enabled?(s.cloud_websocket_connected?'connected':'offline'):'disabled';cloudWsState.className=s.cloud_websocket_connected?'good':s.cloud_websocket_enabled?'warn':'';winner.textContent=s.winner||'—';brightness.value=s.brightness;brightnessValue.textContent=s.brightness;pattern.value=s.effect||'none';renderSegments(s.tm1637_segments);document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===s.mode));for(const b of grid.querySelectorAll('.cell')){const id=Number(b.dataset.id),v=s.cells[id-1]||'off';b.classList.toggle('red',v==='red');b.classList.toggle('off',v==='off');if(cellShape.value==='rounded')b.textContent=mapping.names[id-1]||id;if(cellShape.value==='rounded')b.title=`Logical ${id} · physical ${mapping.physical[id-1]||id}`;}paintSelection(true);for(const c of outputs.querySelectorAll('input'))c.checked=!!(s.active_outputs&(1<<Number(c.dataset.bit)))}
 async function refresh(){try{render(await api('/api/status'+(cellShape.value!=='rounded'?'?pixels=1':'')))}catch(e){report(e)}}
 function connectWs(){
   if(!authenticated||webSocketPaused)return;
@@ -978,7 +1076,7 @@ function settingsSecretsDirty(group){return group==='network'?!!settingsNode('wi
 function settingsDirty(group){const d=webSettings[group];return !!d&&(!settingsEqual(d.saved,settingsReadForm(group))||settingsSecretsDirty(group))}
 function settingsPopulate(group,c){for(const[key,type]of Object.entries(DEVICE_SETTINGS[group])){const n=settingsNode(settingsFields[key]);if(n){if(type==='boolean')n.checked=c[key];else n.value=c[key]}}}
 function settingsObserve(group,value){const c=settingsSnapshot(group,value),d=webSettings[group];if(!d||!settingsDirty(group)){webSettings[group]={saved:c,conflict:false};settingsPopulate(group,c)}else if(!settingsEqual(d.saved,c))d.conflict=true;settingsSecretControls()}
-function settingsState(message){const n=settingsNode('settingsMessage');if(!n)return;const conflict=['network','cloud'].some(g=>webSettings[g]?.conflict);n.textContent=uiTr(message|| (webSettings.pending?'Waiting for acknowledgment and saved-settings readback…':conflict?'Settings changed on another client. Your edits are preserved; discard and reload before saving.':['network','cloud'].some(settingsDirty)?'Unsaved device edits':'Observed device settings; no pending edits'));n.className=conflict?'warn':'hint';for(const group of ['network','cloud'])for(const key of Object.keys(DEVICE_SETTINGS[group])){const input=settingsNode(settingsFields[key]);if(input)input.disabled=webSettings.pending||!webSettings[group]||!currentPeer().has('network')}for(const[id,group]of [['wifiPassword','network'],['wifiOpen','network'],['mqttSecretMode','cloud'],['websocketSecretMode','cloud'],['mqttPassword','cloud'],['cloudWsToken','cloud']]){const input=settingsNode(id);if(input)input.disabled=webSettings.pending||!webSettings[group]||!currentPeer().has('network')||(id==='mqttPassword'&&settingsNode('mqttSecretMode').value!=='replace')||(id==='cloudWsToken'&&settingsNode('websocketSecretMode').value!=='replace')}for(const id of ['networkSave','cloudSave','settingsReload']){const b=settingsNode(id);if(b)b.disabled=webSettings.pending||(id!=='settingsReload'&&(!currentPeer().has('network')||!webSettings[id==='networkSave'?'network':'cloud']||conflict))}}
+function settingsState(message){const n=settingsNode('settingsMessage');if(!n)return;const conflict=['network','cloud'].some(g=>webSettings[g]?.conflict);n.textContent=uiTr(message|| (webSettings.pending?'Waiting for acknowledgment and saved-settings readback…':conflict?'Settings changed on another client. Your edits are preserved; discard and reload before saving.':['network','cloud'].some(settingsDirty)?'Unsaved device edits':'Observed device settings; no pending edits'));n.className=conflict?'warn':'hint';for(const group of ['network','cloud'])for(const key of Object.keys(DEVICE_SETTINGS[group])){const input=settingsNode(settingsFields[key]);if(input)input.disabled=webSettings.pending||!webSettings[group]||!currentPeer().has('network')}for(const[id,group]of [['wifiPassword','network'],['wifiOpen','network'],['mqttSecretMode','cloud'],['websocketSecretMode','cloud'],['mqttPassword','cloud'],['cloudWsToken','cloud']]){const input=settingsNode(id);if(input)input.disabled=webSettings.pending||!webSettings[group]||!currentPeer().has('network')||(id==='mqttPassword'&&settingsNode('mqttSecretMode').value!=='replace')||(id==='cloudWsToken'&&settingsNode('websocketSecretMode').value!=='replace')}for(const id of ['networkSave','cloudSave','settingsReload']){const b=settingsNode(id);if(b)b.disabled=webSettings.pending||(id!=='settingsReload'&&(!currentPeer().has('network')||!peerHttp.writable()||!webSettings[id==='networkSave'?'network':'cloud']||conflict))}}
 async function settingsLoad(group){if(webSettings.pending)return;const epoch=webSettings.epoch;const value=await api('/api/'+(group==='network'?'network':'cloud'));if(epoch===webSettings.epoch&&!webSettings.pending)settingsObserve(group,value)}
 function settingsClearSecrets(){for(const id of ['wifiPassword','mqttPassword','cloudWsToken']){const n=settingsNode(id);if(n)n.value=''}for(const id of ['mqttSecretMode','websocketSecretMode']){const n=settingsNode(id);if(n)n.value='keep'}const open=settingsNode('wifiOpen');if(open)open.checked=false;settingsSecretControls()}
 function settingsInvalidate(){webSettings.epoch++;webSettings.network=webSettings.cloud=null;webSettings.pending=false;settingsClearSecrets();if(settingsNode('deviceSettingsDialog')?.open)settingsNode('deviceSettingsDialog').close();settingsState('Reconnect to read device settings')}
@@ -990,14 +1088,14 @@ function settingsWrite(group){
  return {form,expected};
 }
 async function settingsSave(group){
- if(webSettings.pending||!currentPeer().has('network'))return;let write;try{write=settingsWrite(group)}catch(e){settingsState(e.message);return}
+ if(webSettings.pending||!currentPeer().has('network'))return;let write,peer;try{peer=peerHttp.pin();write=settingsWrite(group)}catch(e){settingsState(e.message);return}
  if(group==='network'&&!confirm('Save this Wi-Fi policy? Connectivity may change. The station password is replaced on every save.'))return;
  const epoch=++webSettings.epoch;webSettings.pending=true;settingsState();
  try{
-  const current=settingsSnapshot(group,await api('/api/'+group));if(epoch!==webSettings.epoch)return;if(!settingsEqual(current,webSettings[group].saved)){webSettings[group].conflict=true;throw Error('Another client changed these settings. Discard and reload before saving.')}
-  const ack=await api('/api/'+group,{method:'POST',body:new URLSearchParams(write.form)});if(epoch!==webSettings.epoch)return;
+  const current=settingsSnapshot(group,await api('/api/'+group,{peer}));if(epoch!==webSettings.epoch)return;if(!settingsEqual(current,webSettings[group].saved)){webSettings[group].conflict=true;throw Error('Another client changed these settings. Discard and reload before saving.')}
+  const ack=await api('/api/'+group,{method:'POST',peer,body:new URLSearchParams(write.form)});if(epoch!==webSettings.epoch)return;
   if(ack?.[group==='network'?'accepted':'updated']!==true)throw Error('Device did not confirm a saved configuration write');
-  const actual=settingsSnapshot(group,await api('/api/'+group));if(epoch!==webSettings.epoch)return;
+  const actual=settingsSnapshot(group,await api('/api/'+group,{peer}));await api('/api/status',{peer});if(epoch!==webSettings.epoch)return;
   if(!settingsEqual(write.expected,actual))throw Error('Write accepted, but readback differs. Refresh before retrying; no write was replayed.');
   webSettings[group]={saved:actual,conflict:false};settingsPopulate(group,actual);if(group==='network'){settingsNode('wifiPassword').value='';settingsNode('wifiOpen').checked=false}else{for(const id of ['mqttPassword','cloudWsToken'])settingsNode(id).value='';for(const id of ['mqttSecretMode','websocketSecretMode'])settingsNode(id).value='keep'}settingsSecretControls();settingsState('Saved public settings verified by device readback. Secret values remain write-only.');
  }catch(e){if(epoch===webSettings.epoch)settingsState(e.message+' Uncertain writes are not retried.')}

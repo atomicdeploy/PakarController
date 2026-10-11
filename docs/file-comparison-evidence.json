@@ -3,6 +3,57 @@
   "target_hash_encoding": "UTF8-without-BOM-LF",
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
+    {
+      "origin": "RayanLamp",
+      "path": "webui/src/api.test.ts",
+      "sha256": "6dfacf9fb7bff4896ac699547c46bf100c744b9017bec554ef42b9ea4d9c9f5b",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Full test source read through EOF. Actual same-origin request and exact mutation-header/body scenarios adapted to the real Web peer client with server-advertised board/boot pins; cookie auth is retained separately, pins are not substituted for CSRF/auth.",
+        "Typed status/error, no credential/body logging, no 401 write replay and versionless paths are exercised in existing embedded sign-in/console and new peer tests."
+      ],
+      "targets": [
+        {
+          "path": "assets/web/peer-http.js",
+          "sha256": "a56aca0f2a159a0bdf22f1db0bde8541aa745693282167c28d3a0d08cb6c67d3",
+          "anchor": "class PeerAPIError"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "establishSession forced renewal coalescing and X-RayanLamp-CSRF/If-Match session/config assertions",
+          "disposition": "pending",
+          "reason": "ESP cookie/origin authentication is different from the donor Go session endpoint. Explicit no-replay replaces 401 retries; generic coalescing/revision conflict tests remain useful pending the matching server/client contracts."
+        },
+        {
+          "code": "lamp toggle/on/off living routes",
+          "disposition": "not-applicable",
+          "reason": "Lamp commands are donor business; table/controller capability modes are retained instead."
+        },
+        {
+          "code": "diagnostics, UI bootstrap/config, audio content-addressed import/playback, hotkey capture lease and integration registration assertions",
+          "disposition": "pending",
+          "reason": "All are useful generic host contracts beyond this bounded device HTTP safety slice; need actual typed host implementations and contract fixtures, not fake ESP endpoints."
+        }
+      ],
+      "remaining": [
+        "Port authenticated coordinator/bootstrap/config/audio/hotkey/registration tests as their corresponding host contracts are imported. Do not claim the complete donor test suite from this request-header/error slice."
+      ],
+      "proof": [
+        {
+          "path": "tests/web_peer_http_test.mjs",
+          "sha256": "e6c5d2fec06ef43602252c62e341f0126c457b11c9fe5bb8a08636301ce37f0c",
+          "anchor": "exact pin headers"
+        },
+        {
+          "path": "tests/web_access_test.mjs",
+          "sha256": "6cd06bddb96be1460910397ad6e38c3249d3e8e158aa1af76dbfcfa2faf71b07",
+          "anchor": "Execute the actual embedded Web application"
+        }
+      ],
+      "improvement": ""
+    },
 {
   "origin": "PCController",
   "path": "Tools/Controller/internal/link/session.go",
@@ -11,7 +62,8 @@
   "verdict": "parity-gap",
   "preserved": [
     "Actual Session.Request closing/context checks before and after admission adapted to TUI atomic stop checks before/after fresh preflight; no post-dispatch replay.",
-    "Full source read. Fail-closed identity checks strengthened with HTTP server-side board/boot fences; donor HELLO/build stamp is NOT a boot epoch."
+    "Full source read. Fail-closed identity checks strengthened with HTTP server-side board/boot fences; donor HELLO/build stamp is NOT a boot epoch.",
+    "Before/after admission ownership checks also adapted to Web's shared pinned HTTP preflight and post-response generation validation. Existing session.go full review/live 1bf4d52 hash remains unchanged; this is not import of Go serial acquisition or request-priority scheduling."
   ],
   "targets": [
     {
@@ -28,6 +80,11 @@
       "path": "firmware/esp8266/src/WebAccess.h",
       "sha256": "6603f677d19f76b4b1af3b0d307a61e910cafb19c25783e1600d07d30c40a3e4",
       "anchor": "bool peerAllowed("
+    },
+    {
+      "path": "assets/web/peer-http.js",
+      "sha256": "a56aca0f2a159a0bdf22f1db0bde8541aa745693282167c28d3a0d08cb6c67d3",
+      "anchor": "function assertOwner(peer)"
     }
   ],
   "omissions": [
@@ -61,6 +118,11 @@
       "path": "tests/peer_fence_test.mjs",
       "sha256": "f0be101c25e0844d2ecd41c3cebdab476052f0303a2272221da963ce38ea6e94",
       "anchor": "Upload callbacks precede middleware"
+    },
+    {
+      "path": "tests/web_peer_http_test.mjs",
+      "sha256": "e6c5d2fec06ef43602252c62e341f0126c457b11c9fe5bb8a08636301ce37f0c",
+      "anchor": "Same-host reboot between draft creation and preflight"
     }
   ]
 },
@@ -706,7 +768,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "function connectWs()"
         }
       ],
@@ -739,7 +801,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "bd6436bd990fbb564d0e849179e8d75287c203b9bcd98f8fe9303d71203d3a2f",
+          "sha256": "afded6e6b6e8d0fb870cf9492cf39e3be8ea66add96531658b40df8f060c6858",
           "anchor": "Donor prepareReconnect is completed before any replacement socket"
         }
       ],
@@ -791,7 +853,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "bd6436bd990fbb564d0e849179e8d75287c203b9bcd98f8fe9303d71203d3a2f",
+          "sha256": "afded6e6b6e8d0fb870cf9492cf39e3be8ea66add96531658b40df8f060c6858",
           "anchor": "Execute actual Web connectWs + refreshAuthenticated + api"
         }
       ],
@@ -804,7 +866,7 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Fully read actual client API. request's AbortController, default 12000 ms timeout and finally timer release adapted to reconnect preparation only; signal passes through actual refreshAuthenticated/api status GET.",
+        "Fully read actual api.ts. APIError status/code, Headers Accept, same-origin/no-store fetch, AbortController 12000 ms deadline and finally cleanup now adapted to all embedded Web HTTP requests in the shared mechanically embedded peer-http.js, not reconnect GET only.",
         "Pakar cookie authentication and expired-session login are retained; no uncertain mutating request/session replay, credentials or raw endpoint/body diagnostics copied."
       ],
       "targets": [
@@ -815,8 +877,13 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "async function refreshAuthenticated(options={})"
+        },
+        {
+          "path": "assets/web/peer-http.js",
+          "sha256": "a56aca0f2a159a0bdf22f1db0bde8541aa745693282167c28d3a0d08cb6c67d3",
+          "anchor": "function createPeerHttp("
         }
       ],
       "omissions": [
@@ -833,12 +900,12 @@
         {
           "code": "bootstrap/getConfig/patchConfig If-Match, diagnostics and diagnosticsRefreshTimeout",
           "disposition": "pending",
-          "reason": "Useful typed bootstrap/revision/config/diagnostic contracts still require actual native/Web/mobile transport and server concurrency/readback mapping; selected GET timeout is not full request lifecycle."
+          "reason": "Typed bootstrap, If-Match revision/config concurrency and long-running diagnostic contracts remain pending; all Web HTTP requests now have cancellation/deadlines, but this is not atomic revision-controlled server persistence."
         },
         {
           "code": "RayanLampClient interface, APIError/isEnvelope/unwrapResponse/readJSON and realtime event decoding",
           "disposition": "pending",
-          "reason": "Pakar currently uses flat firmware responses and contextual status projection. Typed structured errors/content checks and client abstraction remain useful pending actual contracts.ts/direct-api/client-factory review, not an accepted superior omission."
+          "reason": "APIError and advertised JSON parse validation are adapted. Full RayanLampClient typed interface, isEnvelope/unwrapResponse result schema and realtime decoding still require contracts.ts/direct-api/client-factory imports; Pakar keeps real flat JSON and plain-text receipts, not invented Go envelopes."
         },
         {
           "code": "hotkey capture begin/renew/release/probe, integration registration and window/show/hide",
@@ -853,13 +920,18 @@
       ],
       "remaining": [
         "api.test.ts was fully read; all its authenticated host/config/audio/hotkey/registration scenarios remain pending matching implementations, not a completed import certificate.",
-        "Complete generic request timeout/cancellation/error/session/concurrency on actual interfaces without replaying uncertain writes; LAN/native/mobile verification remains open."
+        "Complete typed structured response schemas, revision concurrency, session coalescing and native/mobile adoption; actual LAN and physical acceptance remain open."
       ],
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "bd6436bd990fbb564d0e849179e8d75287c203b9bcd98f8fe9303d71203d3a2f",
+          "sha256": "afded6e6b6e8d0fb870cf9492cf39e3be8ea66add96531658b40df8f060c6858",
           "anchor": "Actual api.ts AbortController deadline/finally cleanup"
+        },
+        {
+          "path": "tests/web_peer_http_test.mjs",
+          "sha256": "e6c5d2fec06ef43602252c62e341f0126c457b11c9fe5bb8a08636301ce37f0c",
+          "anchor": "Deadline, timer release and external cancellation port api.ts"
         }
       ],
       "improvement": ""
@@ -882,7 +954,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -1054,7 +1126,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "function connectWs()"
         }
       ],
@@ -1086,12 +1158,12 @@
       "proof": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "28eb7b2b45ead64bcdd869c20c9f4436e4e0578d5de33643853512da88f533f8",
+          "sha256": "be3b1acb621e2fee5ff3cab473d882fe917e78c4b16e904ff4cdd6dc73af293c",
           "anchor": "Actual allowlist + recursive redaction"
         },
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "28eb7b2b45ead64bcdd869c20c9f4436e4e0578d5de33643853512da88f533f8",
+          "sha256": "be3b1acb621e2fee5ff3cab473d882fe917e78c4b16e904ff4cdd6dc73af293c",
           "anchor": "Actual WebSocket ownership"
         }
       ],
@@ -1109,7 +1181,7 @@
       "targets": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "28eb7b2b45ead64bcdd869c20c9f4436e4e0578d5de33643853512da88f533f8",
+          "sha256": "be3b1acb621e2fee5ff3cab473d882fe917e78c4b16e904ff4cdd6dc73af293c",
           "anchor": "Actual RayanLamp browser-console.test.ts scenarios"
         }
       ],
@@ -1131,7 +1203,7 @@
       "proof": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "28eb7b2b45ead64bcdd869c20c9f4436e4e0578d5de33643853512da88f533f8",
+          "sha256": "be3b1acb621e2fee5ff3cab473d882fe917e78c4b16e904ff4cdd6dc73af293c",
           "anchor": "Real HTTP adapter"
         }
       ],
@@ -1157,7 +1229,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -1189,7 +1261,7 @@
         },
         {
           "path": "tests/web_cell_table_test.mjs",
-          "sha256": "420b8dfb17544ca9aa53204045d2e2b9fff993c98a225fc5eddb4a99adff5feb",
+          "sha256": "38dae57d1e982f90edb831eb1381fb6323d7199c908f843b3295631d53444dbd",
           "anchor": "Selection must not mutate hardware"
         }
       ]
@@ -1253,7 +1325,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -1333,12 +1405,12 @@
           },
           {
             "path": "tools/generate-web-appearance.mjs",
-            "sha256": "bcf9cdb01e96c932d0ac2895930d52e774846d5791f40f11fd7254e52cecb18e",
+            "sha256": "f61cf9240bd11d5eee9fc1fb1fc6ede5be83cae7036312943c37a3b9919f6d15",
             "anchor": "replaceBlock('// BEGIN BROWSER CONTROLLER'"
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -1601,7 +1673,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -1733,7 +1805,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "dc8642bb844b1fbf34a0e4177a2c11a822e53adc5b4aa781576676562d58212d",
+          "sha256": "89058a4b869c7a8e7b80177b1f803377b643144a63bcc094caf2f09b72413185",
           "anchor": "export function runChecks"
         },
         {
@@ -1900,7 +1972,7 @@
       "targets": [
         {
           "path": "assets/web/device-settings.js",
-          "sha256": "e990cf0ea6d850cbde077c616f64c98bc8220d20dc5c08cf55c7bd904d883d0a",
+          "sha256": "559976f856ec1c29634ed2a7500efdaf2ba546591217ec14b7cf7f37137565bc",
           "anchor": "function panelToggle("
         },
         {
@@ -1932,7 +2004,7 @@
       "proof": [
         {
           "path": "tests/interface_settings_test.mjs",
-          "sha256": "e2588bf230a64a1260bba5acd7ad3d2f26c8f16361e07185a1059cd210ef122e",
+          "sha256": "fc93f316d25726000049fdbb3393e48a882d9dcf16c804b572a2c960e90d9f7c",
           "anchor": "Capability loss must override stored panel visibility"
         }
       ],
@@ -2042,7 +2114,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "function peerAvailability("
         }
       ],
@@ -2340,7 +2412,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -2350,12 +2422,12 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "function renderApplicationIdentity"
         },
         {
           "path": "assets/web/device-settings.js",
-          "sha256": "e990cf0ea6d850cbde077c616f64c98bc8220d20dc5c08cf55c7bd904d883d0a",
+          "sha256": "559976f856ec1c29634ed2a7500efdaf2ba546591217ec14b7cf7f37137565bc",
           "anchor": "function settingsCanClose()"
         },
         {
@@ -2392,7 +2464,7 @@
         },
         {
           "path": "tests/interface_settings_test.mjs",
-          "sha256": "e2588bf230a64a1260bba5acd7ad3d2f26c8f16361e07185a1059cd210ef122e",
+          "sha256": "fc93f316d25726000049fdbb3393e48a882d9dcf16c804b572a2c960e90d9f7c",
           "anchor": "Failed saves preserve the draft"
         }
       ],
@@ -2415,7 +2487,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -4362,12 +4434,12 @@
         },
         {
           "path": "tools/generate-web-appearance.mjs",
-          "sha256": "bcf9cdb01e96c932d0ac2895930d52e774846d5791f40f11fd7254e52cecb18e",
+          "sha256": "f61cf9240bd11d5eee9fc1fb1fc6ede5be83cae7036312943c37a3b9919f6d15",
           "anchor": "replaceBlock('// BEGIN SHARED APPEARANCE'"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -4457,7 +4529,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -4490,7 +4562,7 @@
         },
         {
           "path": "tests/web_cell_table_test.mjs",
-          "sha256": "420b8dfb17544ca9aa53204045d2e2b9fff993c98a225fc5eddb4a99adff5feb",
+          "sha256": "38dae57d1e982f90edb831eb1381fb6323d7199c908f843b3295631d53444dbd",
           "anchor": "Manager must not allocate state-dependent selectable Frames"
         }
       ],
@@ -4579,7 +4651,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "7d0675a4fd72555dee5240730b4fa95d5dc551a93e65b15f7a19ef3d38598cd6",
+          "sha256": "073fe132f2a4807fead9239f60ff654a625766103fa81b45cb4a406adca85c69",
           "anchor": "id=\"uiHaptics\""
         }
       ],

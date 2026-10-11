@@ -45,10 +45,11 @@ document={activeElement:null,createElement,createElementNS:(_ns,tag)=>createElem
 const nodes=Object.fromEntries([...source.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],element()]));
 nodes.animateCells.checked=true;nodes.bulkEffect.value='fade';
 const calls=[],actual={cells:Array(80).fill('white')},storage=new Map();let failId=0,cancelAfter=0,storageWrites=0;
-const context=vm.createContext({...nodes,document,URLSearchParams,innerWidth:1280,innerHeight:800,
+const fixturePeer=Object.freeze({board:'fixture',boot:'a'.repeat(32),generation:1});
+const context=vm.createContext({...nodes,peerHttp:{pin:()=>fixturePeer},document,URLSearchParams,innerWidth:1280,innerHeight:800,
   localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>{storageWrites++;storage.set(k,v)}},
   state:{cells:[]},mapping:{physical:[],names:[]},currentPeer:()=>({has:feature=>feature==='table'}),authenticated:true,loadMappingEditor(){},report(){},render(){},setTimeout:fn=>{fn();return 1},
-  api:async(path,options)=>{if(!options)return actual;const id=Number(options.body.get('id'));calls.push(id);if(id===failId)throw Error('lost acknowledgement');actual.cells[id-1]=options.body.get('state');if(id===cancelAfter)vm.runInContext('cancelCellBatch()',context);return {accepted:true}}
+  api:async(path,options)=>{assert.equal(options.peer,fixturePeer,'Whole batch must retain its original peer');if(path==='/api/status')return actual;const id=Number(options.body.get('id'));calls.push(id);if(id===failId)throw Error('lost acknowledgement');actual.cells[id-1]=options.body.get('state');if(id===cancelAfter)vm.runInContext('cancelCellBatch()',context);return {accepted:true}}
 });
 vm.runInContext(readFileSync(new URL('../assets/web/rayanlamp.js',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../assets/web/localization.js',import.meta.url),'utf8')+'\n'+cellCode,context);
 const run=code=>vm.runInContext(code,context),ids=()=>Array.from(run('[...selectedCells]')).sort((a,b)=>a-b);

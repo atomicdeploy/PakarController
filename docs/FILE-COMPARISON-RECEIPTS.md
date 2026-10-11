@@ -1,5 +1,44 @@
 # PakarController comparison receipts
 
+## Web HTTP ownership checkpoint
+
+Actual RayanLamp api.ts and api.test.ts reread in full, live hashes matched.
+Adapted APIError/Headers/no-store/AbortController request lifecycle and its
+same-origin/header/error scenarios into one mechanically embedded peer client.
+PCController session.go's existing full review/live source1bf4d52 remains valid;
+Web now also applies its before/after ownership-admission semantics. Go serial
+acquisition, request priorities, ACK/event routing and close quarantine remain
+pending, not falsely certified by an HTTP helper. Added one parity-gap test-file
+certificate:4271 inventoried,104 complete comparisons,4167 pending,71 known gaps.
+
+Exact shared helper LF SHA256: a56aca0f2a159a0bdf22f1db0bde8541aa745693282167c28d3a0d08cb6c67d3.
+Exact new peer test LF SHA256: e6c5d2fec06ef43602252c62e341f0126c457b11c9fe5bb8a08636301ce37f0c.
+Existing presentation/settings/console/appearance mappings were rereviewed at
+affected invocation/test anchors and rebound; untouched donor source hashes were
+not rewritten. Both PU850 Web route anchors still point to actual line244.
+Useful typed host/session/revision/audio/hotkey contracts remain pending in the
+same ledger, with concrete reasons rather than business-only dismissal.
+
+ESP8266 busy-wire final build passed:RAM56620/80192, IRAM63055/65536
+(includes cache reservation), code885952/1048576. Image936016 bytes, SHA256
+b32e3824235d547a289bdb2962c594e4cc11207faf33ad38517774475131602f.
+The exact peer-http.js bytes are present in this compiled image. A final security
+refinement rejects redirects, so fetch307/308 cannot automatically replay a write
+or transfer its payload/headers. Earlier image935984 bytes was superseded in the
+same cache, not duplicated into another package. No firmware was flashed.
+
+Focused fixtures pass actual helper/session headers, same-host boot changes,
+deadline/cancel cleanup, no 401/redirect replay, late read rejection, sign-in,
+credential rotation, identity settings, transaction pins, false batch ACK,
+old-peer draft clearing, contextual panels and distinct-cause/error redaction.
+Final complete source-quality phase passed, including living unversioned APIs,
+both reuse gates, strict committed reports, branding/fonts/settings, all affected
+Web fixtures and remaining quality checks. This does not imply new-head CI.
+Versions remain0.2.7; running PID58400/preferences/rollback remain unchanged.
+No native/AVR/Android rebuild or debug artifact. ASUS unavailable means no LAN,
+physical, audible, live OTA/ISP, S3/DMA or all-client ownership acceptance.
+Web's fixed25FPS interval remains an explicit next-action gap, not parity.
+
 ## HTTP peer-fence checkpoint
 
 Actual PCController internal/link/session.go and session_test.go fully read;

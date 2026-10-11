@@ -74,9 +74,12 @@ const dark=run("browserConsoleStyle('info')");run("document.documentElement.data
 assert.notEqual(run("browserConsoleStyle('info')"),dark);
 // Real HTTP adapter: quiet polls/telemetry, accepted != readback, no secrets/replay.
 let response={status:200,ok:true,text:async()=>'{"accepted":true}'},requestCount=0,loginCount=0;
-context.fetch=async()=>{requestCount++;return response};context.showLogin=()=>loginCount++;
+const fixtureIdentity={board_id:'esp8266-aabbccddeeff',boot_id:'a'.repeat(32),http_peer_fencing:true};
+Object.assign(context,{Headers,AbortController,setTimeout,clearTimeout});
+context.fetch=async(path,options)=>{requestCount++;if(path==='/api/status'&&response.ok)return {status:200,ok:true,text:async()=>JSON.stringify(fixtureIdentity)};return response};context.showLogin=()=>loginCount++;
+vm.runInContext(read('assets/web/peer-http.js')+'\nconst peerHttp=createPeerHttp();',context);
 vm.runInContext(web.slice(web.indexOf('async function api('),web.indexOf('function showLogin()')),context);
-clear();await run("api('/api/status?token=poll-secret')");
+clear();await run("api('/api/status')");
 await run("api('/api/clients/report',{method:'POST',body:'private-client-data'})");
 assert.equal(events().length,0);
 await run("api('/api/cell?token=path-secret',{method:'POST',body:'body-secret',headers:{Authorization:'Bearer header-secret'}})");
