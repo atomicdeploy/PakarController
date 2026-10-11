@@ -1884,3 +1884,12 @@ Final RequireLive caught two newly tracked PCController control/mirror_segments
 files at clean HEAD38f48d0. All20 compared donor hashes remain unchanged. Refreshed
 only PC inventory, left both new files pending, regenerated comparisons and passed
 the strict live peer-binding gate. Counts4284/106/4178/73. No bypass or donor edits.
+
+73769c6 guarded Release/stage/probe passed, then atomic File.Replace moved the
+staged payload into production with prior B5133DC9 executable retained, no running
+owner and settings hash22F8AEED unchanged. Actual PID74392 framebuffer captured
+and inspected. It revealed bootstrap configuration reads while offline, producing
+redundant preflight/expired events. Reconsulted peer-binding and actual native
+poll/admission path; gate settings and remote-job reads on fresh selected Wi-Fi
+status, retaining legacy reads. Added source guard. Windows Shell E_FAIL startup
+event remains separate production work; tray_available alone is not Shell success.

@@ -19,4 +19,9 @@ for (const path of ['/update','/api/avr/image']) {
 const tui=read('desktop/src/terminal_ui.rs');
 assert.match(tui,/text_command_output\(&pinned_client\(&current\)\?/);
 assert.match(tui,/let response = pinned_client\(&s\)\?/);
+const native=read('desktop/src/main.rs');
+assert.match(native,/if !self\.configuration_loaded && self\.command_route\(\) == Some\(Transport::WiFi\)/,
+  'Settings bootstrap must wait for fresh selected Wi-Fi status, not add offline preflight incidents');
+assert.match(native,/self\.device_settings\.page == 9\s*&& self\.command_route\(\) == Some\(Transport::WiFi\)/,
+  'Remote-job reads must also wait for the selected Wi-Fi peer');
 console.log('Peer fence wiring guards passed (source assertions, not hardware/network acceptance).');

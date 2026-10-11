@@ -191,7 +191,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "f5c5be307a08f7562d645dc58faf1c0e43a1661fa646d378421cae493dfeaa77",
+      "sha256": "3c62247de08155ff30fbe04aebd095410f1d94c20e3d435a238cdbfa039d25f1",
       "anchor": "fn scoped_http_request("
     }
   ],
@@ -224,7 +224,7 @@
     },
     {
       "path": "tests/peer_fence_test.mjs",
-      "sha256": "f0be101c25e0844d2ecd41c3cebdab476052f0303a2272221da963ce38ea6e94",
+      "sha256": "09b55379b95c3b6402e82a180369b18f3261bd34f3f5b67b6511fdb3cf255c90",
       "anchor": "Upload callbacks precede middleware"
     },
     {
@@ -301,7 +301,7 @@
     },
     {
       "path": "tests/peer_fence_test.mjs",
-      "sha256": "f0be101c25e0844d2ecd41c3cebdab476052f0303a2272221da963ce38ea6e94",
+      "sha256": "09b55379b95c3b6402e82a180369b18f3261bd34f3f5b67b6511fdb3cf255c90",
       "anchor": "Upload callbacks precede middleware"
     },
     {

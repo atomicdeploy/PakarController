@@ -1518,14 +1518,17 @@ impl PakarControllerApp {
         if !self.status_request_pending && self.last_poll.elapsed() >= self.status_retry.delay() {
             self.last_poll = Instant::now();
             self.status_request_pending = self.http_tx.send(HttpCommand::Status(self.endpoint())).is_ok();
-            if self.device_settings.open && self.device_settings.page == 9 {
+            if self.device_settings.open && self.device_settings.page == 9
+                && self.command_route() == Some(Transport::WiFi) {
                 let _ = self.http_tx.send(HttpCommand::Configuration(
                     self.endpoint(),
                     "/api/firmware/remote",
                 ));
             }
         }
-        if !self.configuration_loaded {
+        // Never flood an offline/bootstrap queue with settings preflights.
+        // Read-only legacy peers can still load after a fresh Wi-Fi status.
+        if !self.configuration_loaded && self.command_route() == Some(Transport::WiFi) {
             let _ = self.http_tx.send(HttpCommand::Configuration(
                 self.endpoint(),
                 "/api/network",

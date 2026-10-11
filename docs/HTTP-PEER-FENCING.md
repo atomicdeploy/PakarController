@@ -112,3 +112,9 @@ ISP probe is a hardware-affecting GET: the current server exempts GET/HEAD from
 its epoch check. Client admission/capability checks and headers are not an atomic
 probe-dispatch fence. That handler exemption remains a separate firmware fix.
 These fixture checks are not hardware, LAN, multi-client or durability acceptance.
+
+Actual Windows framebuffer inspection of the first candidate exposed offline
+bootstrap settings preflights adding separate expired/read errors. Configuration
+and remote-job reads now wait for fresh selected Wi-Fi status. Offline startup
+queues only status discovery, not four redundant settings preflights. This does
+not merge distinct transport/cause incidents or erase a Windows Shell failure.
