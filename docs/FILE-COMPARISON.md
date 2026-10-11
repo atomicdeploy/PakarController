@@ -331,7 +331,7 @@ Verdict: **scoped-improvement**. Revision: `33448d7a9aa6652b556554f8d686dff0cac9
 
 Verdict: **parity-gap**. Revision: `33448d7a9aa6652b556554f8d686dff0cac90c3c`. Original-byte SHA-256: `449d49033eb2ab3ced173566858e0badfa700414fe82747131c4d18a8eda0b0c`.
 
-- Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=c2bc9c995b4c3717a6e66916f31cef5b8010730e146b4e4dfe8ee437a62c80a2; anchor=name: "🚀 Build · Test · Release"]`.
+- Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=ba243a747c6f01102bfd6a930a202c9369a6ed618a8c157e2ab1354d5de9aa33; anchor=name: "🚀 Build · Test · Release"]`.
 - Target: `tools/build-desktop.ps1:37 [UTF8-LF sha256=2f590972037d5db7be7c0da44197250e46f5cb36a9118b3ef4cb8e1584b30ac0; anchor=--test-threads=1]`.
 - Target: `tools/ci-checks.mjs:189 [UTF8-LF sha256=956b74f1cb8e1db5e7c410e14fa593bba59a4c53584fb47ed23a1831f313f994; anchor=export function runChecks]`.
 - Target: `tools/prepare-release.mjs:16 [UTF8-LF sha256=c5dcb698c397b30ca0ed076437a695838366aa0a82ed3c580df3cf6380d03306; anchor=export function firmwareManifest]`.
@@ -350,7 +350,7 @@ Verdict: **parity-gap**. Revision: `33448d7a9aa6652b556554f8d686dff0cac90c3c`. O
 
 Verdict: **equivalent-behavior**. Revision: `33448d7a9aa6652b556554f8d686dff0cac90c3c`. Original-byte SHA-256: `fc3c298cf966d77f50b575614b4c26f24f1606459f07749a46880cd482f1cb53`.
 
-- Target: `.github/workflows/codeql.yml:2 [UTF8-LF sha256=cb50de1c3e72fc9eeeb4931e82a519331857ca4f19e928f9964a649f0769718e; anchor=name: "🛡️ Security · CodeQL"]`.
+- Target: `.github/workflows/codeql.yml:2 [UTF8-LF sha256=71540360da38622faaa237eec4f1276d5b3f67853754d8a221149e8c0f2726ab; anchor=name: "🛡️ Security · CodeQL"]`.
 - Retained: Actual donor Actions and JavaScript matrix, no-build security-extended queries, pinned checkout/CodeQL actions, no persisted checkout credentials, PR/main/schedule/dispatch/merge-group triggers, cancellation, timeouts and fail-closed aggregate summary.
 - Omitted/replaced code: `Pealayer React/Vite names, packages:read permission and branded prose`. Disposition: **replaced**. Reason: Pakar analyzes embedded Web/scripts and Actions, not Pealayer React. Package read permission is unnecessary for these none-build scans; Rust/C++ coverage is explicitly not invented.
 - Test-code evidence: `tests/repository_governance_test.mjs:67 [UTF8-LF sha256=da232ac7efd7a41028424bffd0f08865fc8049b0a4f971faa74703da43b2d966; anchor=console.log('Repository governance]`.
