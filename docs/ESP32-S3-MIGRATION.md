@@ -39,8 +39,13 @@ Prefer a suitable 3.3-to-5 V data driver and series resistor for robust LED outp
 
 The S3 UART adapter uses UART1 at the existing 38400 baud, RX buffer 2048 bytes,
 TX buffer 256 bytes and hardware error counters. No busy wire is planned by
-default, but the paired AVR **build** must change: today's no-busy firmware is
-polling-only. Buffered UART does not guarantee zero loss. Bounded frames,
+default. The paired AVR **build** now has an explicit buffered profile:
+`./tools/build-firmware.ps1 -Target avr -LinkMode buffered`, defining
+`PAKAR_USE_BUSY_WIRE=0` and `PAKAR_UART_BUFFERED=1`. The existing polling build
+remains polling-only; changing hardware must not silently reinterpret it.
+Buffered sends reserve room for a complete frame and do not access the busy GPIO.
+All three AVR profiles compile; this is not a deployed S3/AVR pair.
+Buffered UART does not guarantee zero loss. Bounded frames,
 ACK/deadlines, reconnect recovery and overflow stress are still necessary.
 
 ## Current structure and libraries
@@ -88,7 +93,7 @@ once per navigation, not per repaint. Physical beeps and all-client integration
 remain pending, not claimed complete.
 
 Next gates: shared ESP platform extraction; partition-safe OTA and recovery;
-S3 TLS/telemetry/filesystem/USB/ISP/discovery adapters; paired buffered AVR flag;
+S3 TLS/telemetry/filesystem/USB/ISP/discovery adapters; paired buffered-link integration;
 shared LED pin/RMT transport; desktop/mobile feedback and discovery UI; real S3
 build; simulated UI matrix; finally physical UART/ISP/LED/display/audio and OTA.
 

@@ -1667,3 +1667,39 @@ the remote-update section, authenticated root route, capability gate and no-repl
 warning are unchanged. Only diagnostic JS changed elsewhere. Rebound those two
 target hashes, retained their exact line244 anchor and all50 route assertions;
 no donor exclusion or firmware-route behavior was changed.
+
+## Buffered AVR/S3 preparation and actual UART donor review
+
+Fresh source/main clean; prior60d8668 complete CI38140468478 succeeded (Windows,
+both firmware variants, Android); f0adf3a still running at snapshot, not waited.
+ASUS SSH refused, ledboard.local DNS absent; continue offline as authorized.
+Consulted uart-flow-control, exact donor-audit and build-storage. Read complete
+actual PCController UartProtocol.h/cpp, uart_protocol_test.cpp and codec/contract
+dependencies. Canonical c26cc561 clean; refresh only its1211-file inventory,
+preserving twelve earlier reviewed hashes and every other donor row.
+
+Adapted actual bounded RX snapshot and nested/split/noisy test behaviors into
+shared SerialLink; cap64 bytes for large S3 rings, reject negative reads/occupancy,
+expose existing ESP counters for ESP32, and repair a failed TX boundary before a
+later independent frame without payload replay. Partial outcomes stay unknown;
+a delimiter may complete a CRC-valid prefix, never infer rejection from failure.
+Added mutually exclusive buffered AVR macro/profile, full-frame TX readiness and
+failed game-state dirty retention. Reject buffered ESP8266 and preserve busy-wire
+default/INPUT_PULLUP, polling and physical pinout. No extra protocol/effects engine.
+
+Comparison gate correctly exposed changed old test/proof hashes. Reread changed
+target behavior and existing assertions; only script test invocation/build mode,
+AVR dirty handling/flow branch and small firmware CI additions changed. The first
+rebinding attempt assumed multi-line refs but one was compact JSON; it failed
+atomically. Match parsed selected refs and original whole lines independent of
+formatting; rebind only those reviewed target/proof hashes, no donor certificates.
+Same ledger now94/4242 complete,4148 pending,60 gap files. Useful zero-copy,
+counter taxonomy, timestamp/runtime and physical omissions remain explicit.
+
+Actual focused UART tests pass in three profiles; full source-quality phase passes.
+All three final AVR compiles pass:26840/26958/26670 flash bytes (buffered/busy/poll),
+1226 static SRAM bytes,32768 merged Urboot images. See UART-FLOW-MIGRATION.md for
+exact meaning. Existing desktop/settings hashes preserved; no physical write or
+native/Android rebuild. Final partial-write refinement used only focused tests,
+same warm AVR caches and deterministic comparison generation, not another broad
+GUI/Android suite. Latest source CI proceeds asynchronously.

@@ -13,18 +13,23 @@ case "$target" in both|avr|esp8266) ;; *) echo "target must be both, avr or esp8
 if [[ -n "${3:-}" && "${3:-}" != "--clean" ]]; then echo "third argument must be --clean" >&2; exit 2; fi
 
 case "$link_mode" in
-  polling) busy_flag=0; suffix="" ;;
-  busy-wire) busy_flag=1; suffix="-busy-wire" ;;
-  *) echo "link mode must be polling or busy-wire" >&2; exit 2 ;;
+  polling) busy_flag=0; buffered_flag=0; suffix="" ;;
+  busy-wire) busy_flag=1; buffered_flag=0; suffix="-busy-wire" ;;
+  buffered) busy_flag=0; buffered_flag=1; suffix="-buffered" ;;
+  *) echo "link mode must be polling, busy-wire or buffered" >&2; exit 2 ;;
 esac
+if [[ "$link_mode" == "buffered" && "$target" != "avr" ]]; then
+  echo "buffered mode targets paired AVR only; ESP8266 needs busy-wire or polling" >&2; exit 2
+fi
 
 if [[ "$target" != "esp8266" ]]; then
+pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern uart-flow-control -Gate > /dev/null
 pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern tm1637-display -Gate > /dev/null
 mkdir -p "$build/avr$suffix"
 arduino-cli compile "${clean_args[@]}" \
   --fqbn 'MiniCore:avr:328:bootloader=uart0,eeprom=keep,baudrate=115200,variant=modelP,BOD=2v7,LTO=Os_flto,clock=16MHz_external' \
   --libraries "$libraries" \
-  --build-property "compiler.cpp.extra_flags=-DPAKAR_USE_BUSY_WIRE=$busy_flag" \
+  --build-property "compiler.cpp.extra_flags=-DPAKAR_USE_BUSY_WIRE=$busy_flag -DPAKAR_UART_BUFFERED=$buffered_flag" \
   --build-path "$build/cache/avr$suffix" \
   --output-dir "$build/avr$suffix" \
   "$root/firmware/avr"
@@ -41,7 +46,7 @@ mkdir -p "$build/esp8266$suffix"
 arduino-cli compile "${clean_args[@]}" \
   --fqbn 'esp8266:esp8266:nodemcuv2:eesz=4M2M' \
   --libraries "$libraries" \
-  --build-property "compiler.cpp.extra_flags=-DPAKAR_USE_BUSY_WIRE=$busy_flag" \
+  --build-property "compiler.cpp.extra_flags=-DPAKAR_USE_BUSY_WIRE=$busy_flag -DPAKAR_UART_BUFFERED=$buffered_flag" \
   --build-path "$build/cache/esp8266$suffix" \
   --output-dir "$build/esp8266$suffix" \
   "$root/firmware/esp8266"

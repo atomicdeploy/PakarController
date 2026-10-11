@@ -4,6 +4,7 @@
 #include <Protocol.h>
 #include <PcContractAssembly.h>
 #include <SerialLink.h>
+#include <UartFlow.h>
 
 #include "BootMelody.h"
 #include "BoardPins.h"
@@ -17,14 +18,6 @@
 #include "TonePlayer.h"
 
 using namespace BoardCore::Protocol;
-
-#ifndef PAKAR_USE_BUSY_WIRE
-#define PAKAR_USE_BUSY_WIRE 1
-#endif
-
-#if PAKAR_USE_BUSY_WIRE != 0 && PAKAR_USE_BUSY_WIRE != 1
-#error "PAKAR_USE_BUSY_WIRE must be 0 or 1"
-#endif
 
 namespace {
 
@@ -186,7 +179,7 @@ void sendHello(uint8_t sequence = 0) {
   link.send(kHelloResponse, sequence, payload, sizeof(payload));
 }
 
-void sendGameState(uint8_t sequence = 0) {
+bool sendGameState(uint8_t sequence = 0) {
   const uint16_t errors = link.errors();
   const uint8_t *segments = display.rawSegments();
   const uint8_t payload[] = {
@@ -200,12 +193,17 @@ void sendGameState(uint8_t sequence = 0) {
       segments[0], segments[1], segments[2], segments[3],
       display.brightness(), static_cast<uint8_t>(frontPanel.hostActive()),
   };
-  link.send(kGameState, sequence, payload, sizeof(payload));
+  return link.send(kGameState, sequence, payload, sizeof(payload));
 }
 
 bool espReadyForUnsolicitedFrame() {
 #if PAKAR_USE_BUSY_WIRE
   return digitalRead(BoardPins::EspBusy) == LOW;
+#elif PAKAR_UART_BUFFERED
+  // Admit a whole bounded frame without blocking autonomous peripherals.
+  // A failed send leaves stateDirty armed; do not mistake a queue attempt for
+  // successful transmission, let alone for peer acceptance.
+  return BoardCore::UartFlow::ready(false, Serial.availableForWrite(), kMaximumEncoded);
 #else
   return false;
 #endif
@@ -463,13 +461,12 @@ void loop() {
   if (resetRequested && static_cast<int32_t>(now - resetPendingAt) >= 0) {
     boardHardware.safeStop(); wdt_enable(WDTO_15MS); while (true) {}
   }
-#if PAKAR_USE_BUSY_WIRE
+#if PAKAR_USE_BUSY_WIRE || PAKAR_UART_BUFFERED
   // Busy-wire builds are event-driven. Reconnect convergence comes from the
   // ESP's HELLO -> GET_STATUS exchange, so periodic unsolicited frames only
   // waste UART bandwidth and increase the chance of colliding with FastLED.
   if (stateDirty && espReadyForUnsolicitedFrame()) {
-    sendGameState();
-    stateDirty = false;
+    stateDirty = !sendGameState();
   }
 #endif
 }

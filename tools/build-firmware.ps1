@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('polling', 'busy-wire')]
+    [ValidateSet('polling', 'busy-wire', 'buffered')]
     [string] $LinkMode = $(if ($env:PAKAR_LINK_MODE) { $env:PAKAR_LINK_MODE } else { 'busy-wire' }),
     [ValidatePattern('^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$')]
     [string] $DeviceName,
@@ -10,11 +10,15 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if ($LinkMode -eq 'buffered' -and $Target -ne 'avr') {
+    throw 'Buffered mode currently targets the paired AVR only; ESP8266 requires busy-wire or polling.'
+}
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern api-contract -Gate | Out-Null
 & node (Join-Path $PSScriptRoot 'check-living-contract.mjs') | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw 'Living API policy failed before firmware build.' }
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($Target -ne 'esp8266') {
+    & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern uart-flow-control -Gate | Out-Null
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern tm1637-display -Gate | Out-Null
 }
 if ($Target -ne 'avr') {
@@ -40,10 +44,11 @@ $cli = if (Test-Path -LiteralPath $projectCli) {
     (Get-Command arduino-cli -ErrorAction Stop).Source
 }
 $busyFlag = if ($LinkMode -eq 'busy-wire') { 1 } else { 0 }
-$suffix = if ($busyFlag) { '-busy-wire' } else { '' }
+$bufferedFlag = if ($LinkMode -eq 'buffered') { 1 } else { 0 }
+$suffix = if ($busyFlag) { '-busy-wire' } elseif ($bufferedFlag) { '-buffered' } else { '' }
 $avrOutput = Join-Path $build ("avr$suffix")
 $espOutput = Join-Path $build ("esp8266$suffix")
-$extraFlags = "-DPAKAR_USE_BUSY_WIRE=$busyFlag"
+$extraFlags = "-DPAKAR_USE_BUSY_WIRE=$busyFlag -DPAKAR_UART_BUFFERED=$bufferedFlag"
 $espFlags = $extraFlags
 if ($DeviceName) {
     if ($DeviceName -in @('local', 'localhost')) { throw 'Reserved device hostname' }

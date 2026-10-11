@@ -8,13 +8,21 @@ exclusion needs a concrete donor path, reason and hardware/business scope;
 
 Master tracking issue: https://github.com/atomicdeploy/PakarController/issues/2
 
-Current source checkpoint: version `0.2.5`, PR #1; commit/CI receipts are posted
-to the issue. ASUS localhost:1022 currently refuses
-connections; the previous board address times out and ledboard.local does not
-resolve here. Continue offline source/UI work while this live gate is unavailable.
+Current source checkpoint: version `0.2.7` on main; no open Pakar PRs observed.
+Exact commit/CI receipts are posted to the issue. ASUS localhost:1022 refuses
+connections and ledboard.local does not resolve here. Physical acceptance is
+deferred during the user's ESP32-S3 migration; continue offline source/UI work.
 No Wi-Fi password or other deployment secret belongs in GitHub.
 
 ## Existing source/test checkpoints (not release acceptance)
+
+- [x] Native/Web connection incidents preserve distinct sources/causes and
+  explicit-operation outcomes, count repeats, recover per source and back off
+  read-only retries; native67948be live stable-row/screenshot proof recorded.
+- [x] Separate buffered AVR build profile for S3 preparation; hardware Serial,
+  busy-wire INPUT_PULLUP/default and polling preserved. Actual shared UART
+  fairness/recovery/ownership tests and all three AVR compiles pass; no S3 pair
+  deployment or zero-loss claim. See UART-FLOW-MIGRATION.md.
 
 - [x] One integrated ESP firmware contains API/WebSocket, LED engine, cloud,
   storage, self-OTA and AVR ISP; no separate programmer firmware is required.

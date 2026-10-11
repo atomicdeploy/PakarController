@@ -35,6 +35,11 @@ $taskPolling = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target avr
 Assert-Storage ($taskEsp.Count -eq 1 -and $taskEsp[0].Board -eq 'esp8266') 'Selective ESP build'
 Assert-Storage ($taskPolling.Count -eq 1 -and $taskPolling[0].Arguments -contains '--clean') 'Explicit clean only'
 Assert-Storage (($taskPolling[0].Arguments -join ' ') -match 'PAKAR_USE_BUSY_WIRE=0') 'Polling flags preserved'
+$taskBuffered = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target avr -LinkMode buffered -Plan )
+Assert-Storage ($taskBuffered.Count -eq 1 -and ($taskBuffered[0].Arguments -join ' ') -match 'PAKAR_USE_BUSY_WIRE=0 -DPAKAR_UART_BUFFERED=1') 'Paired AVR buffered flags'
+Assert-Storage (($taskBuffered[0].Arguments -join ' ') -match 'cache[\\/]avr-buffered') 'Stable buffered AVR cache'
+try { & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp8266 -LinkMode buffered -Plan; throw 'Must reject buffered ESP8266' }
+catch { Assert-Storage ($_.Exception.Message -like 'Buffered mode currently targets*') 'Do not accidentally enable buffered ESP8266' }
 $taskManifest = Get-Content -LiteralPath (Join-Path $taskRoot 'desktop/Cargo.toml') -Raw
 Assert-Storage ($taskManifest -match '(?s)\[profile.dev\]\s+debug = 0\s+incremental = true') 'Low-symbol dev profile'
 Assert-Storage ($taskManifest -match '(?s)\[profile.test\]\s+debug = 0\s+incremental = true') 'Low-symbol test profile'

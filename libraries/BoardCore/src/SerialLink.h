@@ -3,6 +3,7 @@
 #include <Arduino.h>
 
 #include "Protocol.h"
+#include "UartFlow.h"
 
 namespace BoardCore {
 
@@ -22,17 +23,19 @@ class SerialLink {
   }
 
   void service() {
-    uint16_t pending = serial_.available();
+    uint16_t pending = UartFlow::receiveBudget(serial_.available());
     while (pending-- != 0) {
-      const uint8_t value = static_cast<uint8_t>(serial_.read());
-#if defined(ESP8266)
+      const int read = serial_.read();
+      if (read < 0) break; // Occupancy changed; do not invent an 0xFF byte.
+      const uint8_t value = static_cast<uint8_t>(read);
+#if defined(ESP8266) || defined(ESP32)
       ++bytesReceived_;
 #endif
       if (value == 0) {
         if (!dropping_ && receiveLength_ != 0) {
           Protocol::Frame frame = {};
           if (Protocol::decode(receive_, receiveLength_, frame)) {
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(ESP32)
             ++framesReceived_;
 #endif
             if (handler_ != nullptr) handler_(frame, context_);
@@ -65,8 +68,23 @@ class SerialLink {
     if (payloadLength != 0) memcpy(frame.payload, payload, payloadLength);
     uint8_t encoded[Protocol::kMaximumEncoded];
     const uint8_t length = Protocol::encode(frame, encoded, sizeof(encoded));
-    if (length == 0 || serial_.write(encoded, length) != length) return false;
-#if defined(ESP8266)
+    if (length == 0) return false;
+    // A partial transport write has an unknown outcome. Never replay it.
+    // End its incomplete COBS packet before a subsequent independent frame.
+    if (resyncTransmit_) {
+      const uint8_t delimiter = 0;
+      if (serial_.write(&delimiter, 1) != 1) return false;
+      resyncTransmit_ = false;
+#if defined(ESP8266) || defined(ESP32)
+      ++bytesTransmitted_;
+#endif
+    }
+    const size_t written = serial_.write(encoded, length);
+    if (written != length) {
+      resyncTransmit_ = written != 0;
+      return false;
+    }
+#if defined(ESP8266) || defined(ESP32)
     bytesTransmitted_ += length;
     ++framesTransmitted_;
 #endif
@@ -84,7 +102,7 @@ class SerialLink {
   }
 
   uint16_t errors() const { return errors_; }
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(ESP32)
   uint32_t bytesReceived() const { return bytesReceived_; }
   uint32_t bytesTransmitted() const { return bytesTransmitted_; }
   uint32_t framesReceived() const { return framesReceived_; }
@@ -99,8 +117,9 @@ class SerialLink {
   uint8_t receive_[Protocol::kMaximumEncoded] = {};
   uint8_t receiveLength_ = 0;
   bool dropping_ = false;
+  bool resyncTransmit_ = false;
   uint16_t errors_ = 0;
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(ESP32)
   uint32_t bytesReceived_ = 0;
   uint32_t bytesTransmitted_ = 0;
   uint32_t framesReceived_ = 0;

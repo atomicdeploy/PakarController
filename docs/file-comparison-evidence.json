@@ -173,7 +173,7 @@
       "remaining":["Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof."],
       "proof":[
         {"path":"tools/test-display.ps1","sha256":"e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51","anchor":"foreach ($taskVariant"},
-        {"path":"tools/test-protocol.sh","sha256":"ba65d4158474917bc5a24517e7413216a9419b7c26f4fe8cb89be08f32319a29","anchor":"for display_flags"}
+        {"path":"tools/test-protocol.sh","sha256":"3adc128d22eb0397fd547776d0c69394f58aaa4d4d57cb7d0c16efeae3863d2a","anchor":"for display_flags"}
       ],
       "improvement":"Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified."
     },
@@ -1326,7 +1326,7 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "ba243a747c6f01102bfd6a930a202c9369a6ed618a8c157e2ab1354d5de9aa33",
+          "sha256": "ef76592e75ee05babd398a27bb72869bf88c154a5e545a4b17fe3cfd1093890c",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {
@@ -1382,7 +1382,7 @@
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "7fb730f4913809a4252404c97e5d73c21d9c9efed6ec794df48715b38c152590",
+          "sha256": "4bc7dfaa3c70014662b6cc63f9c302d5be53b988083acb62dcadcf462ae01d6d",
           "anchor": "Actual donor serial test contract"
         },
         {
@@ -2338,7 +2338,7 @@
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "7fb730f4913809a4252404c97e5d73c21d9c9efed6ec794df48715b38c152590",
+          "sha256": "4bc7dfaa3c70014662b6cc63f9c302d5be53b988083acb62dcadcf462ae01d6d",
           "anchor": "One canonical target"
         }
       ],
@@ -3122,7 +3122,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3",
+          "sha256": "ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -3173,7 +3173,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3",
+          "sha256": "ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -3226,12 +3226,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3",
+          "sha256": "ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3",
+          "sha256": "ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -3271,12 +3271,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3",
+          "sha256": "ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3",
+          "sha256": "ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -3315,7 +3315,7 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3",
+          "sha256": "ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5",
           "anchor": "void serviceInputs("
         }
       ],
@@ -3349,7 +3349,7 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3",
+          "sha256": "ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5",
           "anchor": "void serviceInputs("
         }
       ],
@@ -4348,6 +4348,167 @@
         }
       ],
       "improvement": ""
+    }
+    ,
+    {
+      "origin": "PCController",
+      "path": "Project/UartProtocol.h",
+      "sha256": "287a95a65a9b9655e64a15ece051bc792a06564b648a1b53eed4f373c564e458",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Fully read actual UART API and synchronous payload lifetime contract. Shared SerialLink keeps AVR HardwareSerial ownership, separate RX/TX frame storage and handler/opaque context; Stream constructor preserves the S3 explicit pins/buffers."
+      ],
+      "targets": [
+        {
+          "path": "libraries/BoardCore/src/SerialLink.h",
+          "sha256": "63f84c4c294b7c3a84a5170048a453097ee0ff6452e637c1e0b686a120507bbe",
+          "anchor": "UartFlow::receiveBudget(serial_.available())"
+        },
+        {
+          "path": "libraries/BoardCore/src/UartFlow.h",
+          "sha256": "44f8638f725c9cf83a6f53639144f107aace1556dd254d6dcebcaed4853c6469",
+          "anchor": "constexpr uint16_t serviceBudget = 64"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Zero-copy Frame view, in-place RX decode, raw_ TX/macro scratch and writeCobs streaming encoder",
+          "disposition": "pending",
+          "reason": "Useful AVR stack/SRAM optimization remains pending. Pakar's current Frame is a bounded owning 48-byte payload and synchronous nested responses cannot overwrite it; retain tested ownership until optimizing the actual shared codec/consumers and stack budget. No full memory-efficiency parity claim."
+        },
+        {
+          "code": "framingErrors(), crcErrors(), responseErrors() separate counters",
+          "disposition": "pending",
+          "reason": "Existing shared combined errors and S3 hardwareErrors are retained. Separate counter taxonomy and peer/client telemetry need full validated layout adaptation; this bounded flow change does not invent or renumber remote fields."
+        },
+        {
+          "code": "Event high-bit timestamp, BuzzerChanged and timed Ack/ErrorResponse suffixes",
+          "disposition": "pending",
+          "reason": "Donor raw operation/schema values differ from the established Pakar envelope and explicit PCController adapter. Blindly appending suffixes would change ACK matching and nested contract semantics. Read full ProtocolRuntime/ControllerEvents and clients, then integrate timestamped projection through the explicit adapter."
+        },
+        {
+          "code": "advisory unknown reserved envelope byte acceptance",
+          "disposition": "replaced",
+          "reason": "Pakar deliberately requires its fixed zero reserved byte and valid CRC, per living API fail-closed integrity policy. No numbered generation negotiation or compatibility alias is introduced. Existing protocol_test preserves CRC-correct nonzero rejection; optional opcodes still reach semantic dispatch."
+        }
+      ],
+      "remaining": [
+        "Optimize zero-copy/storage only with full shared consumer and AVR stack/RAM proof; no claim of donor-wide protocol parity.",
+        "Finish separate counters and timestamped event contracts, and physical UART/LED/OTA contention acceptance."
+      ],
+      "proof": [
+        {
+          "path": "tests/serial_link_test.cpp",
+          "sha256": "0bd90ca96053cfdd5369b155f848b7823f250cddb951d2d1ac7c2d79e12ec2b0",
+          "anchor": "Actual donor split-RX/synchronous-TX isolation"
+        }
+      ],
+      "improvement": "Bounded large-ring RX, negative availability/read rejection and paired buffered build mode without busy GPIO."
+    },
+    {
+      "origin": "PCController",
+      "path": "Project/UartProtocol.cpp",
+      "sha256": "bd2d1b8586622e7cc5a2712402b8832519745c7403b0326097dfd4dda07efb2f",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual entry-occupancy receive snapshot, drop-until-delimiter recovery, bounded framing and synchronous response behavior adapted to shared SerialLink. Added64-byte cap for ESP32's larger RX ring and explicit negative-read handling; CRC/COBS code unchanged.",
+        "Hardware UART remains on AVR; buffered unsolicited sends require enough TX ring space for a complete maximum frame. Failed game-state sends keep stateDirty armed. Busy-wire/polling behavior and default retained."
+      ],
+      "targets": [
+        {
+          "path": "libraries/BoardCore/src/SerialLink.h",
+          "sha256": "63f84c4c294b7c3a84a5170048a453097ee0ff6452e637c1e0b686a120507bbe",
+          "anchor": "UartFlow::receiveBudget(serial_.available())"
+        },
+        {
+          "path": "libraries/BoardCore/src/UartFlow.h",
+          "sha256": "44f8638f725c9cf83a6f53639144f107aace1556dd254d6dcebcaed4853c6469",
+          "anchor": "constexpr uint16_t serviceBudget = 64"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Zero-copy Frame view, in-place RX decode, raw_ TX/macro scratch and writeCobs streaming encoder",
+          "disposition": "pending",
+          "reason": "Useful AVR stack/SRAM optimization remains pending. Pakar's current Frame is a bounded owning 48-byte payload and synchronous nested responses cannot overwrite it; retain tested ownership until optimizing the actual shared codec/consumers and stack budget. No full memory-efficiency parity claim."
+        },
+        {
+          "code": "framingErrors(), crcErrors(), responseErrors() separate counters",
+          "disposition": "pending",
+          "reason": "Existing shared combined errors and S3 hardwareErrors are retained. Separate counter taxonomy and peer/client telemetry need full validated layout adaptation; this bounded flow change does not invent or renumber remote fields."
+        },
+        {
+          "code": "Event high-bit timestamp, BuzzerChanged and timed Ack/ErrorResponse suffixes",
+          "disposition": "pending",
+          "reason": "Donor raw operation/schema values differ from the established Pakar envelope and explicit PCController adapter. Blindly appending suffixes would change ACK matching and nested contract semantics. Read full ProtocolRuntime/ControllerEvents and clients, then integrate timestamped projection through the explicit adapter."
+        },
+        {
+          "code": "advisory unknown reserved envelope byte acceptance",
+          "disposition": "replaced",
+          "reason": "Pakar deliberately requires its fixed zero reserved byte and valid CRC, per living API fail-closed integrity policy. No numbered generation negotiation or compatibility alias is introduced. Existing protocol_test preserves CRC-correct nonzero rejection; optional opcodes still reach semantic dispatch."
+        }
+      ],
+      "remaining": [
+        "Paired S3 application integration, reconnect/readback ownership and physical stress; build flag is not hardware acceptance.",
+        "Complete zero-copy/counter/timestamp projection pending above; actual donor protocol registry is not imported wholesale."
+      ],
+      "proof": [
+        {
+          "path": "tests/serial_link_test.cpp",
+          "sha256": "0bd90ca96053cfdd5369b155f848b7823f250cddb951d2d1ac7c2d79e12ec2b0",
+          "anchor": "Actual donor split-RX/synchronous-TX isolation"
+        }
+      ],
+      "improvement": "Buffered AVR profile is distinct and explicitly rejects ESP8266 targeting; no blind write replay."
+    },
+    {
+      "origin": "PCController",
+      "path": "Tools/VirtualBoard/tests/uart_protocol_test.cpp",
+      "sha256": "56c0474a5f0a7475340ec22e718b262b61a449820eb958403cd47bc36b1497c7",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Fully read all seven actual donor scenarios. Adapted representative/consecutive-zero/max48 payload, optional opcode dispatch, nested ACK stability, split RX with synchronous TX, oversized noise/yield/delimiter recovery and malformed/CRC rejection to actual shared SerialLink.",
+        "Added2048-byte ring/64-byte pass, negative occupancy/read, failed-write/no-automatic-replay, explicit S3 Stream setup preservation, ESP32 counters and all three flow-profile readiness assertions."
+      ],
+      "targets": [
+        {
+          "path": "tests/serial_link_test.cpp",
+          "sha256": "0bd90ca96053cfdd5369b155f848b7823f250cddb951d2d1ac7c2d79e12ec2b0",
+          "anchor": "Adapt actual PCController Tools/VirtualBoard/tests/uart_protocol_test.cpp"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "testBuzzerPushCarriesMCUTimestamp and separate framing/CRC counter assertions",
+          "disposition": "pending",
+          "reason": "Timestamped raw donor events and separate counter layout are not yet adapted to Pakar clients/contracts. Port those exact assertions with their production projection instead of deleting useful behavior or declaring parity."
+        },
+        {
+          "code": "testUnknownReservedEnvelopeByteDoesNotBlockSemanticFrames",
+          "disposition": "replaced",
+          "reason": "Pakar fixed reserved-zero integrity rejection is intentionally retained and covered in existing protocol_test.cpp. Optional opcode semantic-dispatch test is adapted independently; no product generation or alias introduced."
+        },
+        {
+          "code": "framePayloadScratch macro mutation test fixture",
+          "disposition": "replaced",
+          "reason": "SerialLink exposes no mutable TX scratch API. The test exercises split RX plus an actual synchronous ACK between halves and nested response stability, preserving the ownership behavior without fabricating a missing macro scratch interface."
+        }
+      ],
+      "remaining": [
+        "Port remaining useful counter/timestamp tests when their actual production path is implemented.",
+        "Loopback C++ tests do not prove S3 driver compile, physical link, overflow stress or zero loss."
+      ],
+      "proof": [
+        {
+          "path": "tests/serial_link_test.cpp",
+          "sha256": "0bd90ca96053cfdd5369b155f848b7823f250cddb951d2d1ac7c2d79e12ec2b0",
+          "anchor": "Actual donor split-RX/synchronous-TX isolation"
+        }
+      ],
+      "improvement": "One stable tiny test executable reused for all modes; no donor build or debug cache."
     }
   ]
 }

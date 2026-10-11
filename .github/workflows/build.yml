@@ -96,6 +96,7 @@ jobs:
           chmod +x build.sh tools/test-protocol.sh
           ./build.sh polling
           ./build.sh busy-wire
+          ./build.sh buffered avr
           ./tools/test-protocol.sh
           bash tools/test-pc-flags.sh
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -112,6 +113,8 @@ jobs:
             build/avr-busy-wire/avr.ino.hex
             build/esp8266-busy-wire/esp8266.ino.bin
             build/SHA256SUMS-busy-wire
+            build/avr-buffered/avr.ino.with_bootloader.bin
+            build/avr-buffered/avr.ino.hex
 
   windows-desktop:
     name: "🪟 Windows · Test · Package"

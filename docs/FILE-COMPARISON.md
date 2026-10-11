@@ -4,7 +4,7 @@ Whole-repository superiority is **not established**. This report exposes retaine
 
 Routing: 1310 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
 
-Inventory: 4242 files; 91 complete source-file comparisons; 4151 pending comparisons; 57 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
+Inventory: 4242 files; 94 complete source-file comparisons; 4148 pending comparisons; 60 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
 Every inventoried path, source revision/hash, target/proof file and line, omitted code, disposition and concrete reason is in `file-comparison.csv`. Hash-bound manual decisions are in `file-comparison-evidence.json`. Donor SHA-256 values bind original bytes; target/proof SHA-256 values bind UTF-8 without BOM with LF newlines. Anchors are recomputed into exact line numbers. Test-code presence is not test execution; execution receipts are in `FILE-COMPARISON-RECEIPTS.md`.
 
@@ -14,7 +14,7 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 |---|---:|---:|---:|---:|
 | ControllerBoardMini | 19 | 0 | 19 | 0 |
 | ControllerBoardMini/Puzzles | 18 | 12 | 6 | 9 |
-| PCController | 1211 | 12 | 1199 | 6 |
+| PCController | 1211 | 15 | 1196 | 9 |
 | Pealayer | 514 | 43 | 471 | 28 |
 | PU850-ESP | 109 | 4 | 105 | 4 |
 | PuzzleBoard | 22 | 0 | 22 | 0 |
@@ -26,8 +26,8 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `9ceb7e764ef9d4d5feb62b2c7a22eed59d614b7b56432fae87ce87b4aa434578`.
 
-- Target: `firmware/avr/avr.ino:410 [UTF8-LF sha256=03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3; anchor=void serviceInputs(]`.
-- Target: `firmware/avr/avr.ino:395 [UTF8-LF sha256=03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3; anchor=void boardKeyGesture(]`.
+- Target: `firmware/avr/avr.ino:408 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=void serviceInputs(]`.
+- Target: `firmware/avr/avr.ino:393 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=void boardKeyGesture(]`.
 - Retained: Active-low physical plus virtual shift input state and candidate/stable transition tracking; AVR reports releases as dirty state; press handling is mode-specific.
 - Retained: Actual PCController per-key callback/gesture classifier now feeds all nine inputs; no game action waits for click classification.
 - Omitted/replaced code: `DEBOUNCE_MS = 50`. Disposition: **pending**. Reason: Actual PCController classifier now uses macro-configurable PAKAR_KEY_DEBOUNCE_MS (default 20ms) with tested Down/Up, click and hold timing. Physical switch-bounce measurements remain pending; faster is not certified electrically.
@@ -39,8 +39,8 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `caa21fe97e3df262f0821bd582b60f2895a14ec193d7d6fec13321afe4c5a46d`.
 
-- Target: `firmware/avr/avr.ino:410 [UTF8-LF sha256=03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3; anchor=void serviceInputs(]`.
-- Target: `firmware/avr/avr.ino:395 [UTF8-LF sha256=03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3; anchor=void boardKeyGesture(]`.
+- Target: `firmware/avr/avr.ino:408 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=void serviceInputs(]`.
+- Target: `firmware/avr/avr.ino:393 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=void boardKeyGesture(]`.
 - Retained: Active-low physical plus virtual shift input state and candidate/stable transition tracking; AVR reports releases as dirty state; press handling is mode-specific.
 - Retained: Actual PCController per-key callback/gesture classifier now feeds all nine inputs; no game action waits for click classification.
 - Omitted/replaced code: `DEBOUNCE_MS = 50`. Disposition: **pending**. Reason: Actual PCController classifier now uses macro-configurable PAKAR_KEY_DEBOUNCE_MS (default 20ms) with tested Down/Up, click and hold timing. Physical switch-bounce measurements remain pending; faster is not certified electrically.
@@ -91,7 +91,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `3f5ef23f7a8052d8086b2803343e3e22bb9751924b7760077950f4b0bd2cc196`.
 
-- Target: `firmware/avr/avr.ino:410 [UTF8-LF sha256=03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3; anchor=void serviceInputs(]`.
+- Target: `firmware/avr/avr.ino:408 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=void serviceInputs(]`.
 - Retained: Only cooperative target-specific timers exist in current AVR services; the generic donor task scheduler is not implemented.
 - Omitted/replaced code: `Tasks::addTask/cancelTask/update and ten callback slots`. Disposition: **pending**. Reason: Front-panel deadlines do not replace arbitrary scheduled callbacks or cancellation. It is useful infrastructure and needs an explicit replacement, not a business-logic exclusion.
 - Omitted/replaced code: `startsAt==0 free-slot sentinel and currentTime > startsAt comparison`. Disposition: **pending**. Reason: Do not copy the rollover/zero-deadline ambiguity unchanged. A replacement must keep the generic scheduling/cancellation API using explicit occupancy and wrap-safe deadlines; such a replacement is not present yet.
@@ -101,7 +101,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `5d838a7fb53c799160d55a65b22546ab2e749eb30f8412ed5d08e9ce44300fed`.
 
-- Target: `firmware/avr/avr.ino:410 [UTF8-LF sha256=03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3; anchor=void serviceInputs(]`.
+- Target: `firmware/avr/avr.ino:408 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=void serviceInputs(]`.
 - Retained: Only cooperative target-specific timers exist in current AVR services; the generic donor task scheduler is not implemented.
 - Omitted/replaced code: `Tasks::addTask/cancelTask/update and ten callback slots`. Disposition: **pending**. Reason: Front-panel deadlines do not replace arbitrary scheduled callbacks or cancellation. It is useful infrastructure and needs an explicit replacement, not a business-logic exclusion.
 - Omitted/replaced code: `startsAt==0 free-slot sentinel and currentTime > startsAt comparison`. Disposition: **pending**. Reason: Do not copy the rollover/zero-deadline ambiguity unchanged. A replacement must keep the generic scheduling/cancellation API using explicit occupancy and wrap-safe deadlines; such a replacement is not present yet.
@@ -163,7 +163,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 ### PCController: `LocalLib/SevenSegments.cpp`
 
-Verdict: **scoped-improvement**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `54c366525142aca0103a8d58f7ce8d9cbc34c1b5884b20a1ad5ae50ddc6bb4a8`.
+Verdict: **scoped-improvement**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `54c366525142aca0103a8d58f7ce8d9cbc34c1b5884b20a1ad5ae50ddc6bb4a8`.
 
 - Target: `firmware/avr/SevenSegments.h:26 [UTF8-LF sha256=a2719b4f3d9c21e98200420a91cb0326b1869dbcfb90136a1184e379f7b7ee3b; anchor=void serviceBrightness(]`.
 - Target: `firmware/avr/SevenSegments.cpp:100 [UTF8-LF sha256=776c190eb16a8aa72ed538a4728d35bbf7e51b4b9daddbbb81e62bfce252e74b; anchor=void writeBusByte(]`.
@@ -172,13 +172,13 @@ Verdict: **scoped-improvement**. Revision: `bd9fbf92162182b9d05e99b357943f72353a
 - Retained: Actual donor ACK sampling, one-second cached-frame/brightness keepalive, observed presence and active 70ms brightness service on PC4/PC5. Independent probing was removed.
 - Omitted/replaced code: `PB3/PB5 TM1637 bus pins`. Disposition: **replaced**. Reason: User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming.
 - Test-code evidence: `tests/pc_contract_test.cpp:267 [UTF8-LF sha256=3d688e877afed1bdcabc959ab2714c188b9c2d106ef8fb10e4deac89608f13e2; anchor=void keysAndDisplay()]`.
-- Test-code evidence: `firmware/avr/avr.ino:451 [UTF8-LF sha256=03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3; anchor=display.serviceBrightness(]`.
+- Test-code evidence: `firmware/avr/avr.ino:449 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=display.serviceBrightness(]`.
 - Scoped advantage: Retains donor recovery on the correct board pins, accumulates intermediate NACKs instead of letting the final control ACK hide failure; host disconnect/reconnect and true-off tests pass.
 - Remaining: Physical TM1637 unplug/replug and power-cycle acceptance remains unverified; host GPIO doubles are not a physical board.
 
 ### PCController: `LocalLib/SevenSegments.h`
 
-Verdict: **scoped-improvement**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `e58e1783404f494ea7b1852780b6485cbfda872781b9159b9ee29426edae9240`.
+Verdict: **scoped-improvement**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `e58e1783404f494ea7b1852780b6485cbfda872781b9159b9ee29426edae9240`.
 
 - Target: `firmware/avr/SevenSegments.h:26 [UTF8-LF sha256=a2719b4f3d9c21e98200420a91cb0326b1869dbcfb90136a1184e379f7b7ee3b; anchor=void serviceBrightness(]`.
 - Target: `firmware/avr/SevenSegments.cpp:100 [UTF8-LF sha256=776c190eb16a8aa72ed538a4728d35bbf7e51b4b9daddbbb81e62bfce252e74b; anchor=void writeBusByte(]`.
@@ -187,13 +187,13 @@ Verdict: **scoped-improvement**. Revision: `bd9fbf92162182b9d05e99b357943f72353a
 - Retained: Actual donor ACK sampling, one-second cached-frame/brightness keepalive, observed presence and active 70ms brightness service on PC4/PC5. Independent probing was removed.
 - Omitted/replaced code: `PB3/PB5 TM1637 bus pins`. Disposition: **replaced**. Reason: User-confirmed PuzzleBoard owns A4/SDA as DIO and A5/SCL as CLK. D11/D13 must remain free for ESP-driven ISP; copying PCController's pins would conflict with programming.
 - Test-code evidence: `tests/pc_contract_test.cpp:267 [UTF8-LF sha256=3d688e877afed1bdcabc959ab2714c188b9c2d106ef8fb10e4deac89608f13e2; anchor=void keysAndDisplay()]`.
-- Test-code evidence: `firmware/avr/avr.ino:451 [UTF8-LF sha256=03ec4919dfc150a0f640a244646aada2e73edc5c23e87999c6dab1dc22f6f4f3; anchor=display.serviceBrightness(]`.
+- Test-code evidence: `firmware/avr/avr.ino:449 [UTF8-LF sha256=ef1dd03d4d5329a8962ea9ee0bcbd738206071b99aece22655f2df6b55eedcb5; anchor=display.serviceBrightness(]`.
 - Scoped advantage: Retains donor recovery on the correct board pins, accumulates intermediate NACKs instead of letting the final control ACK hide failure; host disconnect/reconnect and true-off tests pass.
 - Remaining: Physical TM1637 unplug/replug and power-cycle acceptance remains unverified; host GPIO doubles are not a physical board.
 
 ### PCController: `LocalLib/ShiftRegisters.cpp`
 
-Verdict: **equivalent-file**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `43f944f0767f3cb59d5224e1241ca0aff2793c40c7ededdb95bd7553a0268133`.
+Verdict: **equivalent-file**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `43f944f0767f3cb59d5224e1241ca0aff2793c40c7ededdb95bd7553a0268133`.
 
 - Target: `firmware/avr/ShiftRegisters.cpp:1 [UTF8-LF sha256=43f944f0767f3cb59d5224e1241ca0aff2793c40c7ededdb95bd7553a0268133; anchor=#include "ShiftRegisters.h"]`.
 - Retained: Byte-identical donor file, including eight active-low inputs/outputs, shared-clock transfer, safe output-enable/reset startup and virtual input injection.
@@ -203,7 +203,7 @@ Verdict: **equivalent-file**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43e
 
 ### PCController: `LocalLib/ShiftRegisters.h`
 
-Verdict: **equivalent-file**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `397dc4abff3e865e922cfd94dc66d554345368a3f95f899c75b49c3dc1215bff`.
+Verdict: **equivalent-file**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `397dc4abff3e865e922cfd94dc66d554345368a3f95f899c75b49c3dc1215bff`.
 
 - Target: `firmware/avr/ShiftRegisters.h:32 [UTF8-LF sha256=397dc4abff3e865e922cfd94dc66d554345368a3f95f899c75b49c3dc1215bff; anchor=class ShiftRegisters]`.
 - Retained: Byte-identical donor file, including eight active-low inputs/outputs, shared-clock transfer, safe output-enable/reset startup and virtual input injection.
@@ -213,7 +213,7 @@ Verdict: **equivalent-file**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43e
 
 ### PCController: `LocalLib/TonePlayer.cpp`
 
-Verdict: **scoped-improvement**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `e4715e126bcaa342fc3004f2d0fbc300921710d8e1ea7e6b44fc8fe7870ef343`.
+Verdict: **scoped-improvement**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `e4715e126bcaa342fc3004f2d0fbc300921710d8e1ea7e6b44fc8fe7870ef343`.
 
 - Target: `firmware/avr/TonePlayer.h:19 [UTF8-LF sha256=03ede515e478fd936c0414a9332b50cb9dd07c540a22a11738317e18220da1f3; anchor=bool enqueue]`.
 - Target: `firmware/avr/TonePlayer.cpp:69 [UTF8-LF sha256=ca7d0f91005fed47fa5410e2109f7a667a86fc2d56652ea8f08a1243f02a224f; anchor=startsAt = stepEndsAt_]`.
@@ -228,7 +228,7 @@ Verdict: **scoped-improvement**. Revision: `bd9fbf92162182b9d05e99b357943f72353a
 
 ### PCController: `LocalLib/TonePlayer.h`
 
-Verdict: **scoped-improvement**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `edb2f40cfdfb37d1c08867c121c617beb8f9f53ad2583855ae2218a07eb9fd89`.
+Verdict: **scoped-improvement**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `edb2f40cfdfb37d1c08867c121c617beb8f9f53ad2583855ae2218a07eb9fd89`.
 
 - Target: `firmware/avr/TonePlayer.h:19 [UTF8-LF sha256=03ede515e478fd936c0414a9332b50cb9dd07c540a22a11738317e18220da1f3; anchor=bool enqueue]`.
 - Target: `firmware/avr/TonePlayer.cpp:69 [UTF8-LF sha256=ca7d0f91005fed47fa5410e2109f7a667a86fc2d56652ea8f08a1243f02a224f; anchor=startsAt = stepEndsAt_]`.
@@ -241,9 +241,42 @@ Verdict: **scoped-improvement**. Revision: `bd9fbf92162182b9d05e99b357943f72353a
 - Scoped advantage: Tested late-loop and wraparound timing without cumulative melody-length drift; initialized default construction; validation at enqueue; unmute restarts the active tone.
 - Remaining: Physical timing, mute/unmute acoustics and supply/clock validity remain issue #2 gates.
 
+### PCController: `Project/UartProtocol.cpp`
+
+Verdict: **parity-gap**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `bd2d1b8586622e7cc5a2712402b8832519745c7403b0326097dfd4dda07efb2f`.
+
+- Target: `libraries/BoardCore/src/SerialLink.h:26 [UTF8-LF sha256=63f84c4c294b7c3a84a5170048a453097ee0ff6452e637c1e0b686a120507bbe; anchor=UartFlow::receiveBudget(serial_.available())]`.
+- Target: `libraries/BoardCore/src/UartFlow.h:25 [UTF8-LF sha256=44f8638f725c9cf83a6f53639144f107aace1556dd254d6dcebcaed4853c6469; anchor=constexpr uint16_t serviceBudget = 64]`.
+- Retained: Actual entry-occupancy receive snapshot, drop-until-delimiter recovery, bounded framing and synchronous response behavior adapted to shared SerialLink. Added64-byte cap for ESP32's larger RX ring and explicit negative-read handling; CRC/COBS code unchanged.
+- Retained: Hardware UART remains on AVR; buffered unsolicited sends require enough TX ring space for a complete maximum frame. Failed game-state sends keep stateDirty armed. Busy-wire/polling behavior and default retained.
+- Omitted/replaced code: `Zero-copy Frame view, in-place RX decode, raw_ TX/macro scratch and writeCobs streaming encoder`. Disposition: **pending**. Reason: Useful AVR stack/SRAM optimization remains pending. Pakar's current Frame is a bounded owning 48-byte payload and synchronous nested responses cannot overwrite it; retain tested ownership until optimizing the actual shared codec/consumers and stack budget. No full memory-efficiency parity claim.
+- Omitted/replaced code: `framingErrors(), crcErrors(), responseErrors() separate counters`. Disposition: **pending**. Reason: Existing shared combined errors and S3 hardwareErrors are retained. Separate counter taxonomy and peer/client telemetry need full validated layout adaptation; this bounded flow change does not invent or renumber remote fields.
+- Omitted/replaced code: `Event high-bit timestamp, BuzzerChanged and timed Ack/ErrorResponse suffixes`. Disposition: **pending**. Reason: Donor raw operation/schema values differ from the established Pakar envelope and explicit PCController adapter. Blindly appending suffixes would change ACK matching and nested contract semantics. Read full ProtocolRuntime/ControllerEvents and clients, then integrate timestamped projection through the explicit adapter.
+- Omitted/replaced code: `advisory unknown reserved envelope byte acceptance`. Disposition: **replaced**. Reason: Pakar deliberately requires its fixed zero reserved byte and valid CRC, per living API fail-closed integrity policy. No numbered generation negotiation or compatibility alias is introduced. Existing protocol_test preserves CRC-correct nonzero rejection; optional opcodes still reach semantic dispatch.
+- Test-code evidence: `tests/serial_link_test.cpp:44 [UTF8-LF sha256=0bd90ca96053cfdd5369b155f848b7823f250cddb951d2d1ac7c2d79e12ec2b0; anchor=Actual donor split-RX/synchronous-TX isolation]`.
+- Scoped advantage: Buffered AVR profile is distinct and explicitly rejects ESP8266 targeting; no blind write replay.
+- Remaining: Paired S3 application integration, reconnect/readback ownership and physical stress; build flag is not hardware acceptance.
+- Remaining: Complete zero-copy/counter/timestamp projection pending above; actual donor protocol registry is not imported wholesale.
+
+### PCController: `Project/UartProtocol.h`
+
+Verdict: **parity-gap**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `287a95a65a9b9655e64a15ece051bc792a06564b648a1b53eed4f373c564e458`.
+
+- Target: `libraries/BoardCore/src/SerialLink.h:26 [UTF8-LF sha256=63f84c4c294b7c3a84a5170048a453097ee0ff6452e637c1e0b686a120507bbe; anchor=UartFlow::receiveBudget(serial_.available())]`.
+- Target: `libraries/BoardCore/src/UartFlow.h:25 [UTF8-LF sha256=44f8638f725c9cf83a6f53639144f107aace1556dd254d6dcebcaed4853c6469; anchor=constexpr uint16_t serviceBudget = 64]`.
+- Retained: Fully read actual UART API and synchronous payload lifetime contract. Shared SerialLink keeps AVR HardwareSerial ownership, separate RX/TX frame storage and handler/opaque context; Stream constructor preserves the S3 explicit pins/buffers.
+- Omitted/replaced code: `Zero-copy Frame view, in-place RX decode, raw_ TX/macro scratch and writeCobs streaming encoder`. Disposition: **pending**. Reason: Useful AVR stack/SRAM optimization remains pending. Pakar's current Frame is a bounded owning 48-byte payload and synchronous nested responses cannot overwrite it; retain tested ownership until optimizing the actual shared codec/consumers and stack budget. No full memory-efficiency parity claim.
+- Omitted/replaced code: `framingErrors(), crcErrors(), responseErrors() separate counters`. Disposition: **pending**. Reason: Existing shared combined errors and S3 hardwareErrors are retained. Separate counter taxonomy and peer/client telemetry need full validated layout adaptation; this bounded flow change does not invent or renumber remote fields.
+- Omitted/replaced code: `Event high-bit timestamp, BuzzerChanged and timed Ack/ErrorResponse suffixes`. Disposition: **pending**. Reason: Donor raw operation/schema values differ from the established Pakar envelope and explicit PCController adapter. Blindly appending suffixes would change ACK matching and nested contract semantics. Read full ProtocolRuntime/ControllerEvents and clients, then integrate timestamped projection through the explicit adapter.
+- Omitted/replaced code: `advisory unknown reserved envelope byte acceptance`. Disposition: **replaced**. Reason: Pakar deliberately requires its fixed zero reserved byte and valid CRC, per living API fail-closed integrity policy. No numbered generation negotiation or compatibility alias is introduced. Existing protocol_test preserves CRC-correct nonzero rejection; optional opcodes still reach semantic dispatch.
+- Test-code evidence: `tests/serial_link_test.cpp:44 [UTF8-LF sha256=0bd90ca96053cfdd5369b155f848b7823f250cddb951d2d1ac7c2d79e12ec2b0; anchor=Actual donor split-RX/synchronous-TX isolation]`.
+- Scoped advantage: Bounded large-ring RX, negative availability/read rejection and paired buffered build mode without busy GPIO.
+- Remaining: Optimize zero-copy/storage only with full shared consumer and AVR stack/RAM proof; no claim of donor-wide protocol parity.
+- Remaining: Finish separate counters and timestamped event contracts, and physical UART/LED/OTA contention acceptance.
+
 ### PCController: `Tools/Controller/docs/Go-Embedding-API.md`
 
-Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `4d8ff85c9c44092100d4f349f20eb5493d1516d064dd03d0f6b8d1010e7b6795`.
+Verdict: **parity-gap**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `4d8ff85c9c44092100d4f349f20eb5493d1516d064dd03d0f6b8d1010e7b6795`.
 
 - Target: `docs/API-POLICY.md:1 [UTF8-LF sha256=8597dc02ab8d2d379b964f79a05f512768f8a0dbff33b0b8d095ec4510da67d9; anchor=# One living API contract]`.
 - Target: `tools/check-living-contract.mjs:7 [UTF8-LF sha256=238b20f9f3915ea76759d303e57ad25ce9dfed9a9dc0da14fbbf89de0eae25d4; anchor=export function violations]`.
@@ -256,7 +289,7 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 
 ### PCController: `Tools/Controller/internal/ipcjson/rest_routes_test.go`
 
-Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `729b980122ce5e3b3024544c9229d52ce03647bf195d62958fa388304d44fbe8`.
+Verdict: **parity-gap**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `729b980122ce5e3b3024544c9229d52ce03647bf195d62958fa388304d44fbe8`.
 
 - Target: `libraries/BoardCore/src/ApiPolicy.h:8 [UTF8-LF sha256=ee7dcf1c76d2d1703ae2d8d11ab0feff19650f08e8cfddfa03faac17ba6a163c; anchor=inline bool numberedRoute]`.
 - Target: `firmware/esp8266/src/WebAccess.h:16 [UTF8-LF sha256=95e0a603d77fd46f8016b3a5b9b8e3631e56357dd6f3d5f9e2950878e5ff2d7a; anchor=ApiPolicy::numberedRoute]`.
@@ -268,7 +301,7 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 
 ### PCController: `Tools/Controller/web/src/card-layout-controls.tsx`
 
-Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `de67f2ac9dd8037e354b98227616ed8c207379dbc8205692587bc07a6392be83`.
+Verdict: **parity-gap**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `de67f2ac9dd8037e354b98227616ed8c207379dbc8205692587bc07a6392be83`.
 
 - Target: `assets/web/device-settings.js:94 [UTF8-LF sha256=e990cf0ea6d850cbde077c616f64c98bc8220d20dc5c08cf55c7bd904d883d0a; anchor=function panelToggle(]`.
 - Target: `docs/INTERFACE-CONTRACT.md:50 [UTF8-LF sha256=bd8de673cab2e9d0c9d8948bedb0637dce7e8da10911f9a481bea0171f52ce47; anchor=## Known useful parity gaps, not accepted exclusions]`.
@@ -281,7 +314,7 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 
 ### PCController: `Tools/Controller/web/src/peripheral-availability.test.ts`
 
-Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `a5d7366279057e0868478846c6bbe92eda4209a6bdbcbc16e1c149e57dfe035e`.
+Verdict: **parity-gap**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `a5d7366279057e0868478846c6bbe92eda4209a6bdbcbc16e1c149e57dfe035e`.
 
 - Target: `tests/web_context_test.mjs:22 [UTF8-LF sha256=6ffe93034ab3cd0e92608fb8b4137621373c84e958c599904ddb4fea0b125080; anchor=const manifest=]`.
 - Target: `mobile/test/peer_context_test.dart:12 [UTF8-LF sha256=8fd25b7d5f1b6392f077f72f1790ff80af2b7f54371cd35180286a34ddc8dbc5; anchor=No peer ACK cannot be inferred]`.
@@ -298,7 +331,7 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 
 ### PCController: `Tools/Controller/web/src/peripheral-availability.ts`
 
-Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `fcf2e397564c843711fd64db2bd2d820552180ac4f5abdf0d44ccbbb86be7a84`.
+Verdict: **parity-gap**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `fcf2e397564c843711fd64db2bd2d820552180ac4f5abdf0d44ccbbb86be7a84`.
 
 - Target: `desktop/src/capabilities.rs:43 [UTF8-LF sha256=cc3e3b3ffbfb3c776639b64326ddd90125285a389688dcc56ec147b3cecf80ed; anchor=pub fn has(]`.
 - Target: `mobile/lib/peer_context.dart:35 [UTF8-LF sha256=b97790f7b9ffbe47e8af864b0eed36c7f621baf38d2a84821d2370265fa3bf7d; anchor=static PeerContext fromStatus]`.
@@ -319,7 +352,7 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 
 ### PCController: `Tools/VirtualBoard/tests/firmware_controls_test.cpp`
 
-Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. Original-byte SHA-256: `f993a968991db7b0835e449950cc3a366b9af60d0214c677f20087c3c4f1eb36`.
+Verdict: **parity-gap**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `f993a968991db7b0835e449950cc3a366b9af60d0214c677f20087c3c4f1eb36`.
 
 - Target: `tests/tm1637_bus_test.cpp:15 [UTF8-LF sha256=0bd8312952f6b58447d12126c698e835290add115b91a753a6b6d6efcbc7d031; anchor=void testDisplayBrightnessFade()]`.
 - Target: `tests/display_stubs/Arduino.h:17 [UTF8-LF sha256=b6c81c35395db97127f88f449e51f3cef884592bafe85406f381a73a37f20c5b; anchor=namespace display_mock]`.
@@ -329,9 +362,24 @@ Verdict: **parity-gap**. Revision: `bd9fbf92162182b9d05e99b357943f72353a43ea`. O
 - Omitted/replaced code: `Side A/B directional relay and motion-door policy matrix, temperature role swapping, retired MOVE alias and DS18B20 absent-pullup tests`. Disposition: **not-applicable**. Reason: This fitted board has no directional motors/door policy or DS18B20. Do not enable these or copy donor relay pin mapping; future generic adapters remain feature-flagged with their own acceptance.
 - Omitted/replaced code: `Full key double-click/fast-repeat/16-bit rollover, transition smoothing, context-sensitive leaf navigation/settings normalization and tone timer/queue cases`. Disposition: **pending**. Reason: Pakar has existing key/tone/front-panel suites, but these complete donor assertions have not all been transplanted or compared behavior-by-behavior. A display-only import is not proof of those generic contracts.
 - Test-code evidence: `tools/test-display.ps1:7 [UTF8-LF sha256=e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51; anchor=foreach ($taskVariant]`.
-- Test-code evidence: `tools/test-protocol.sh:59 [UTF8-LF sha256=ba65d4158474917bc5a24517e7413216a9419b7c26f4fe8cb89be08f32319a29; anchor=for display_flags]`.
+- Test-code evidence: `tools/test-protocol.sh:59 [UTF8-LF sha256=3adc128d22eb0397fd547776d0c69394f58aaa4d4d57cb7d0c16efeae3863d2a; anchor=for display_flags]`.
 - Scoped advantage: Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified.
 - Remaining: Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof.
+
+### PCController: `Tools/VirtualBoard/tests/uart_protocol_test.cpp`
+
+Verdict: **parity-gap**. Revision: `c26cc561d2bf353a948312f89f59d90dbda8e38d`. Original-byte SHA-256: `56c0474a5f0a7475340ec22e718b262b61a449820eb958403cd47bc36b1497c7`.
+
+- Target: `tests/serial_link_test.cpp:1 [UTF8-LF sha256=0bd90ca96053cfdd5369b155f848b7823f250cddb951d2d1ac7c2d79e12ec2b0; anchor=Adapt actual PCController Tools/VirtualBoard/tests/uart_protocol_test.cpp]`.
+- Retained: Fully read all seven actual donor scenarios. Adapted representative/consecutive-zero/max48 payload, optional opcode dispatch, nested ACK stability, split RX with synchronous TX, oversized noise/yield/delimiter recovery and malformed/CRC rejection to actual shared SerialLink.
+- Retained: Added2048-byte ring/64-byte pass, negative occupancy/read, failed-write/no-automatic-replay, explicit S3 Stream setup preservation, ESP32 counters and all three flow-profile readiness assertions.
+- Omitted/replaced code: `testBuzzerPushCarriesMCUTimestamp and separate framing/CRC counter assertions`. Disposition: **pending**. Reason: Timestamped raw donor events and separate counter layout are not yet adapted to Pakar clients/contracts. Port those exact assertions with their production projection instead of deleting useful behavior or declaring parity.
+- Omitted/replaced code: `testUnknownReservedEnvelopeByteDoesNotBlockSemanticFrames`. Disposition: **replaced**. Reason: Pakar fixed reserved-zero integrity rejection is intentionally retained and covered in existing protocol_test.cpp. Optional opcode semantic-dispatch test is adapted independently; no product generation or alias introduced.
+- Omitted/replaced code: `framePayloadScratch macro mutation test fixture`. Disposition: **replaced**. Reason: SerialLink exposes no mutable TX scratch API. The test exercises split RX plus an actual synchronous ACK between halves and nested response stability, preserving the ownership behavior without fabricating a missing macro scratch interface.
+- Test-code evidence: `tests/serial_link_test.cpp:44 [UTF8-LF sha256=0bd90ca96053cfdd5369b155f848b7823f250cddb951d2d1ac7c2d79e12ec2b0; anchor=Actual donor split-RX/synchronous-TX isolation]`.
+- Scoped advantage: One stable tiny test executable reused for all modes; no donor build or debug cache.
+- Remaining: Port remaining useful counter/timestamp tests when their actual production path is implemented.
+- Remaining: Loopback C++ tests do not prove S3 driver compile, physical link, overflow stress or zero loss.
 
 ### Pealayer: `.github/dependabot.yml`
 
@@ -347,7 +395,7 @@ Verdict: **scoped-improvement**. Revision: `3265bf80b6f7543831e096a05b04c3b58b77
 
 Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. Original-byte SHA-256: `449d49033eb2ab3ced173566858e0badfa700414fe82747131c4d18a8eda0b0c`.
 
-- Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=ba243a747c6f01102bfd6a930a202c9369a6ed618a8c157e2ab1354d5de9aa33; anchor=name: "🚀 Build · Test · Release"]`.
+- Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=ef76592e75ee05babd398a27bb72869bf88c154a5e545a4b17fe3cfd1093890c; anchor=name: "🚀 Build · Test · Release"]`.
 - Target: `tools/build-desktop.ps1:38 [UTF8-LF sha256=dca301b2fddc2bbbea997f8f00e566a89280cac3a1a16b953a7d6dbd305d2f8c; anchor=--test-threads=1]`.
 - Target: `tools/ci-checks.mjs:191 [UTF8-LF sha256=4ac8ce68df222375d03f57b991ddc15bc2d2f3426f95ac7c9d2ec0d49f5783a5; anchor=export function runChecks]`.
 - Target: `tools/prepare-release.mjs:16 [UTF8-LF sha256=c5dcb698c397b30ca0ed076437a695838366aa0a82ed3c580df3cf6380d03306; anchor=export function firmwareManifest]`.
@@ -358,7 +406,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 - Omitted/replaced code: `macOS Intel/Apple silicon and Linux native platform matrix/packages`. Disposition: **pending**. Reason: Current accepted native target is Windows; firmware and Android use Linux runners. Additional native targets need actual platform build/runtime tests rather than claiming donor's unrelated acceptance.
 - Omitted/replaced code: `UPX checksum-locked packing and packed native package smoke/resource checks`. Disposition: **pending**. Reason: Existing Windows wrappers preserve donor resource/donor/cache gates and CLI runtime tests, but Pakar has no accepted compressed native package probe. Do not call a source or CLI test full packed GUI runtime acceptance.
 - Omitted/replaced code: `branch-tag and archive suffix creation, softprops update-existing release`. Disposition: **replaced**. Reason: User requests stable names without random/time suffixes. Version releases keep stable package names; release enumeration must succeed and an existing release is not overwritten.
-- Test-code evidence: `tests/build_storage_test.ps1:17 [UTF8-LF sha256=7fb730f4913809a4252404c97e5d73c21d9c9efed6ec794df48715b38c152590; anchor=Actual donor serial test contract]`.
+- Test-code evidence: `tests/build_storage_test.ps1:17 [UTF8-LF sha256=4bc7dfaa3c70014662b6cc63f9c302d5be53b988083acb62dcadcf462ae01d6d; anchor=Actual donor serial test contract]`.
 - Test-code evidence: `tests/repository_governance_test.mjs:67 [UTF8-LF sha256=da232ac7efd7a41028424bffd0f08865fc8049b0a4f971faa74703da43b2d966; anchor=console.log('Repository governance]`.
 - Remaining: Complete Windows menu-label primary-color assertion/package and validate the unexecuted draft publisher. 8849ab8 native execution completes 114 passed/1 failed without abort; workflow/source, both firmware variants, Android preview and CodeQL pass, not all-green or deployed acceptance. Restore useful additional native targets and optional compressed package/runtime verification.
 
@@ -514,7 +562,7 @@ Verdict: **parity-gap**. Revision: `3265bf80b6f7543831e096a05b04c3b58b770584`. O
 - Omitted/replaced code: `libmpv host resolution/environment/profile and DLL copy`. Disposition: **not-applicable**. Reason: These operations configure the excluded mpv renderer. Pakar uses its own mpv-free linked dependencies.
 - Omitted/replaced code: `BuildOnly versus launch forwarding with ApplicationArguments`. Disposition: **pending**. Reason: Pakar wrapper builds only. Generic built-executable validation and configurable run forwarding should become a Pakar runner; manual launching is not equivalent.
 - Omitted/replaced code: `Set-Location to repository root`. Disposition: **replaced**. Reason: Absolute manifest and resolved target paths preserve caller cwd without introducing a second cache.
-- Test-code evidence: `tests/build_storage_test.ps1:15 [UTF8-LF sha256=7fb730f4913809a4252404c97e5d73c21d9c9efed6ec794df48715b38c152590; anchor=One canonical target]`.
+- Test-code evidence: `tests/build_storage_test.ps1:15 [UTF8-LF sha256=4bc7dfaa3c70014662b6cc63f9c302d5be53b988083acb62dcadcf462ae01d6d; anchor=One canonical target]`.
 - Remaining: Import generic Windows runner/toolchain fallback and host-triple provenance without mpv.
 
 ### Pealayer: `scripts/storage-hygiene.ps1`

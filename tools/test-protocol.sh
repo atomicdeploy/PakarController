@@ -67,3 +67,4 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/pixel_stubs" -I "$root/libr
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp32s3/src" \
   "$root/tests/s3_menu_audio_test.cpp" -o "$root/build/s3-menu-audio-test"
 "$root/build/s3-menu-audio-test"
+pwsh -NoProfile -File "$root/tools/test-uart-flow.ps1"
