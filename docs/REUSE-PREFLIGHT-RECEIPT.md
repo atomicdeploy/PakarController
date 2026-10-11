@@ -2039,3 +2039,29 @@ Full source-quality phase passed. No firmware/APK/donor rebuild or clean/debug
 cache. Versions0.2.7 remain source identity, not physical deployed consistency.
 Real package replacement/Shell acceptance, Explorer restart/visible action
 acceptance and all board/full donor production gates remain separate evidence.
+
+3fa9bc676f813c1b0050db24a2bd95ebf5e7069a guarded Release passed in1m58, then
+stage/source-stability/CLI probe passed. Replacement guard initially compared
+forward-slash input with backslash process path and stopped BEFORE quit. Applied
+IO.GetFullPath/OrdinalIgnoreCase to both verified identities, rechecked current
+draft/pending state and gracefully quit PID79784; verified exit, no forced kill.
+Atomic File.Replace moved the staged payload to production and preserved old
+4440B2B24C622A5BF58B5C466369FB621F453870A2E5BCA1D567B0C4DF81E435 executable
+as PakarController.before-tray-recovery.exe. Saved preferences remain unchanged
+22F8AEED4BF0CEBC3116C670F681D90A3D1B1B833ECE3DE23A491D0D896A8711.
+Older rollback packages remain untouched; staging executable no longer exists.
+
+Actual new PID79484/version0.2.7/25414656bytes, production SHA256
+8F433FFAE3A812703CCD6BFBD6CB86C9ECCF8FD4ACBFCD104BE187879CD53EC4.
+Fresh IPC reports tooltip_applied:true, attempts:1, explorer_epoch:0,
+last_error/retry_ms:null. Later snapshot retains one attempt, while network
+errors coalesce independently. This is actual Shell NIM_MODIFY acceptance, not
+visible icon or Explorer restart proof; no restart was induced.
+
+Captured and visually inspected actual PID framebuffer1999x1453. Screenshot
+SHA256 B292582543B369A3E17972CA382D0AC9E610C705BC8C98C722A2E9C5DAAA9910:
+offline Events workspace shows separate HTTP DNS/timeout and repeated WebSocket
+DNS, no tray startup error or invented board cards. Small user-facing
+outputs/PakarController/Tray-Recovery.json records source/package/capture proof.
+No simulated or screenshot observation is physical board acceptance. New CI
+remains asynchronous; production issue2 and visible shell gates stay open.
