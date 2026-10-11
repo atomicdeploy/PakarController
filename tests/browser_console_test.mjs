@@ -88,9 +88,29 @@ const before=requestCount;
 await assert.rejects(run("api('/api/cell',{method:'POST',body:'lost-secret'})"));
 assert.equal(requestCount,before+1,'Uncertain write is never retried');
 assert.equal(events()[0].args[4].error_code,'http_500');assert.doesNotMatch(JSON.stringify(calls),/server-secret|raw-secret|lost-secret/);
-await assert.rejects(run("api('/api/cell',{method:'POST'})"));assert.equal(events().length,1,'Repeated failure is deduped');
+await assert.rejects(run("api('/api/cell',{method:'POST'})"));assert.equal(events().length,2,'Each explicit mutation outcome remains visible');
 response={status:401,ok:false,text:async()=>'login-secret'};
 await assert.rejects(run("api('/api/status')"));assert.equal(loginCount,1);
+// Distinct failures survive interleaving; no timer reopens a continuing outage.
+clear();
+for(let i=0;i<20;i++){
+  response={status:i%2?500:503,ok:false,text:async()=>'private'};
+  await assert.rejects(run("api('/api/status')"));
+  clock+=60000;
+}
+assert.equal(events().length,2);
+assert.deepEqual(events().map(e=>e.args[4].error_code),['http_503','http_500']);
+await assert.rejects(run("api('/api/cloud')"));assert.equal(events().length,3,'Another source stays independent');
+response={status:200,ok:true,text:async()=>'{}'};
+await run("api('/api/status')");
+assert.equal(events().at(-1).args[4].count,21,'Recovery includes the preceding authentication failure too');
+assert.equal(events().at(-1).args[4].event,'transport.ready');
+await run("api('/api/status')");assert.equal(events().length,4,'Successful polls stay quiet');
+response={status:503,ok:false,text:async()=>'private'};
+await assert.rejects(run("api('/api/status')"));assert.equal(events().length,5,'A later outage is new');
+assert.equal(run("browserConsole.incidents.size"),2,'Cloud was not falsely recovered');
+run("for(let i=0;i<300;i++)output.event('error','transport.error','failure',{error_code:i},{incidentKey:'bounded'})");
+assert.equal(run('output.incidents.size'),128);
 // Actual WebSocket ownership: transitions only; frames and stale callbacks quiet.
 const sockets=[],timers=[];let renderCount=0,stops=0;
 Object.assign(context,{location:{protocol:'http:',host:'ledboard.local'},wsState:{},stopStream:()=>stops++,render:()=>renderCount++,

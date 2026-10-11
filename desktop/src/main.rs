@@ -14,6 +14,7 @@ mod client_telemetry;
 mod cli_output;
 mod config;
 mod device_settings;
+mod diagnostics;
 mod display;
 mod identity;
 mod maintenance;
@@ -164,6 +165,14 @@ enum HttpCommand {
 }
 
 impl HttpCommand {
+    fn diagnostic_source(&self) -> Option<String> {
+        match self {
+            Self::Status(_) => Some("HTTP GET /api/status".into()),
+            Self::Mapping(_) => Some("HTTP GET /api/cells/mapping".into()),
+            Self::Configuration(_, path) => Some(format!("HTTP GET {path}")),
+            _ => None, // Explicit operations keep their own correlated outcomes.
+        }
+    }
     fn endpoint(&self) -> &Endpoint {
         match self {
             Self::Status(endpoint)
@@ -237,7 +246,9 @@ enum Event {
     NameUpdated(Endpoint, bool),
     SerialIdentity(String, serde_json::Value),
     SerialIdentitySaved(String, Result<(), String>),
-    Failed(String),
+    DiagnosticFailure(String, String),
+    DiagnosticRecovered(String),
+    SerialFailure(String, String),
     OperationFailed(String),
     SettingsFinished(
         u64,
@@ -258,6 +269,7 @@ fn current_event(event: Event, endpoint: &Endpoint, serial_port: &str) -> Option
         Event::ForEndpoint(origin, inner) if origin == *endpoint => Some(*inner),
         Event::ForEndpoint(..) => None,
         Event::Serial(ref port, ..) if port != serial_port => None,
+        Event::SerialFailure(ref port, ..) if port != serial_port => None,
         other => Some(other),
     }
 }
@@ -506,11 +518,17 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
             command,
             HttpCommand::Post(..) | HttpCommand::AccessChange(..) | HttpCommand::NameChange(..)
         );
+        let source = command.diagnostic_source();
+        if result.is_ok() {
+            if let Some(source) = &source {
+                let _ = events.send(for_endpoint(command.endpoint(), Event::DiagnosticRecovered(source.clone())));
+            }
+        }
         let event = result.unwrap_or_else(|e| {
             if operation {
                 Event::OperationFailed(e)
             } else {
-                Event::Failed(e)
+                Event::DiagnosticFailure(source.unwrap_or_else(|| "HTTP read".into()), e)
             }
         });
         if events
@@ -602,6 +620,7 @@ fn sampled_screen_packets(mapping: &[CellMapping]) -> Result<(Vec<u8>, Vec<u8>),
 }
 
 fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui::Context) {
+    let mut retry = diagnostics::Backoff::new(Duration::from_millis(600), Duration::from_secs(15));
     let mut endpoint: Option<Endpoint> = None;
     let mut streaming = false;
     let mut sampling = false;
@@ -659,6 +678,8 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                     .map_err(|e| e.to_string())?;
             }
             let _ = events.send(for_endpoint(&current, Event::WebSocket(true)));
+            let _ = events.send(for_endpoint(&current, Event::DiagnosticRecovered("WebSocket".into())));
+            retry.reset();
             context.request_repaint();
             let mut hue = 0_u16;
             let mut last_stream = Instant::now() - Duration::from_millis(50);
@@ -754,12 +775,24 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
         let _ = events.send(for_endpoint(&current, Event::WebSocket(false)));
         context.request_repaint();
         if let Err(error) = result {
+            streaming = false;
+            sampling = false; // Reconnect must not silently restart a stream.
             let _ = events.send(for_endpoint(
                 &current,
-                Event::Failed(format!("WebSocket: {error}")),
+                Event::DiagnosticFailure("WebSocket".into(), error),
             ));
+            // Interruptible: changing peer or stopping streaming need not wait
+            // for the retry deadline. Mutations are never replayed here.
+            match commands.recv_timeout(retry.delay()) {
+                Ok(WsCommand::Connect(e)) => { endpoint = Some(e); mapping.clear(); streaming = false; sampling = false; retry.reset(); }
+                Ok(WsCommand::Rate(value)) => fps = value.min(streaming::MAX_FPS),
+                Ok(WsCommand::Mapping(value)) => mapping = value,
+                Ok(WsCommand::Stream(value)) => streaming = value,
+                Ok(WsCommand::Sample(value)) => sampling = value,
+                Err(mpsc::RecvTimeoutError::Disconnected) => return,
+                Err(mpsc::RecvTimeoutError::Timeout) => retry.failed(),
+            }
         }
-        thread::sleep(Duration::from_millis(600));
     }
 }
 
@@ -911,11 +944,16 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
             }
         }
         if port_name.is_empty() { continue; }
-        let Ok(mut port) = serialport::new(&port_name,115_200).timeout(Duration::from_millis(60)).open() else {
-            let _ = events.send(Event::Serial(port_name.clone(),false,None));
-            thread::sleep(Duration::from_secs(1));
-            while let Ok(c) = commands.try_recv() { if let SerialCommand::Port(p)=c {port_name=p} }
-            continue;
+        let mut port = match serialport::new(&port_name,115_200).timeout(Duration::from_millis(60)).open() {
+            Ok(port) => port,
+            Err(error) => {
+                let _ = events.send(Event::SerialFailure(port_name.clone(), error.to_string()));
+                let _ = events.send(Event::Serial(port_name.clone(),false,None));
+                context.request_repaint();
+                thread::sleep(Duration::from_secs(1));
+                while let Ok(c) = commands.try_recv() { if let SerialCommand::Port(p)=c {port_name=p} }
+                continue;
+            }
         };
         let connected_port = port_name.clone();
         let _ = events.send(Event::Serial(connected_port.clone(),true,None));
@@ -1029,7 +1067,10 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
                     } else if encoded.len()<80 {encoded.push(*byte)} else {encoded.clear()}
                 },
                 Err(e) if matches!(e.kind(),ErrorKind::TimedOut|ErrorKind::WouldBlock)=>{}
-                Err(_)=>break,
+                Err(error)=>{
+                    let _=events.send(Event::SerialFailure(connected_port.clone(),error.to_string()));
+                    break;
+                },
             }
         }
         if expected.is_some(){let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err("USB disconnected during identity write; reconnect and read before retrying".into())));}
@@ -1081,7 +1122,9 @@ struct PakarControllerApp {
     screenshot_harness: bool,
     focus_cell_search: bool,
     cell_effect: String,
-    event_log: Vec<(String, String)>,
+    event_log: diagnostics::EventLog,
+    status_request_pending: bool,
+    status_retry: diagnostics::Backoff,
     last_status_at: Option<Instant>,
     last_serial_status_at: Option<Instant>,
     configuration_loaded: bool,
@@ -1171,15 +1214,15 @@ impl PakarControllerApp {
             .spawn(move || serial_worker(serial_rx, event_tx, ctx))
             .unwrap();
         let tray = if screenshot_harness {Ok(None)} else {platform::windows_tray::TrayController::new().map(Some)};
-        let mut event_log = Vec::new();
+        let mut event_log = diagnostics::EventLog::default();
         if let Err(error) = &tray {
-            event_log.push(("Windows tray unavailable".into(), error.clone()));
+            event_log.record("Windows tray unavailable", error);
         }
         #[cfg(windows)]
         let windows_desktop = if screenshot_harness {Ok(None)} else {platform::windows_desktop::Desktop::new(context).map(Some)};
         #[cfg(windows)]
         if let Err(error) = &windows_desktop {
-            event_log.push(("Windows desktop unavailable".into(), error.clone()));
+            event_log.record("Windows desktop unavailable", error);
         }
         Self {
             context_panels: Vec::new(),
@@ -1208,6 +1251,8 @@ impl PakarControllerApp {
             focus_cell_search: false,
             cell_effect: "fade".into(),
             event_log,
+            status_request_pending: false,
+            status_retry: diagnostics::Backoff::new(Duration::from_secs(2), Duration::from_secs(30)),
             last_status_at: None,
             last_serial_status_at: None,
             configuration_loaded: false,
@@ -1342,6 +1387,10 @@ impl PakarControllerApp {
     fn poll(&mut self) {
         let endpoint = self.endpoint();
         if self.last_ws_endpoint.as_ref() != Some(&endpoint) {
+            self.event_log.reset_sources("HTTP");
+            self.event_log.reset_sources("WebSocket");
+            self.status_request_pending = false;
+            self.status_retry.reset();
             self.connection_notice.reset();
             self.device_settings.invalidate_peer();
             self.status = None;
@@ -1365,6 +1414,7 @@ impl PakarControllerApp {
             self.configuration_loaded = false;
         }
         if self.last_serial_port != self.serial_port {
+            self.event_log.reset_sources("USB");
             self.identity_pending = false;
             self.connection_notice.reset();
             self.serial_status = None;
@@ -1375,9 +1425,9 @@ impl PakarControllerApp {
                 .send(SerialCommand::Port(self.serial_port.clone()));
             self.last_serial_port = self.serial_port.clone();
         }
-        if self.last_poll.elapsed() >= Duration::from_secs(2) {
+        if !self.status_request_pending && self.last_poll.elapsed() >= self.status_retry.delay() {
             self.last_poll = Instant::now();
-            let _ = self.http_tx.send(HttpCommand::Status(self.endpoint()));
+            self.status_request_pending = self.http_tx.send(HttpCommand::Status(self.endpoint())).is_ok();
             if self.device_settings.open && self.device_settings.page == 9 {
                 let _ = self.http_tx.send(HttpCommand::Configuration(
                     self.endpoint(),
@@ -1535,24 +1585,40 @@ impl PakarControllerApp {
                     );
                     self.message = error;
                 }
-                Event::Failed(e) => {
+                Event::DiagnosticFailure(source, e) => {
+                    if source == "HTTP GET /api/status" {
+                        self.status_request_pending = false;
+                        self.status_retry.failed();
+                        self.last_poll = Instant::now();
+                    }
                     if self.device_settings.scan_pending {
                         self.device_settings.scan_pending = false;
                         self.device_settings.message =
                             "Network scan did not complete. Reconnect and scan again.".into();
                     }
-                    if self.message != e {
-                        self.record_event("Error", &e);
-                    }
+                    self.event_log.failure(&source, &e);
                     self.message = e;
                 }
+                Event::DiagnosticRecovered(source) => {
+                    if source == "HTTP GET /api/status" {
+                        self.status_request_pending = false;
+                        self.status_retry.reset();
+                    }
+                    self.event_log.recover(&source);
+                }
+                Event::SerialFailure(port, error) => self.event_log.failure(&format!("USB {port}"), &error),
                 Event::WebSocket(v) => {
+                    if self.websocket_live && !v { self.record_event("Connection", "WebSocket connection lost; reconnecting with bounded backoff."); }
                     self.websocket_live = v;
                     if !v {
                         self.stream_sent_fps = None;
+                        self.streaming = false;
+                        self.sampling = false;
                     }
                 }
                 Event::Serial(_, v, s) => {
+                    if self.serial_live && !v { self.record_event("Connection", "USB connection lost; reconnecting."); }
+                    if v { self.event_log.recover(&format!("USB {}", self.serial_port)); }
                     self.serial_live = v;
                     if !v {
                         self.serial_status = None;
@@ -2271,6 +2337,7 @@ mod tests {
             password: "old".into(),
         };
         let mut other = current.clone();
+        assert!(super::current_event(super::Event::SerialFailure("COM8".into(), "removed".into()), &current, "COM9").is_none());
         other.base = "http://other.local".into();
         assert!(
             super::current_event(
@@ -2282,6 +2349,9 @@ mod tests {
         );
         other = current.clone();
         other.password = "new".into();
+        for event in [super::Event::DiagnosticFailure("HTTP".into(), "offline".into()), super::Event::DiagnosticRecovered("HTTP".into())] {
+            assert!(super::current_event(super::for_endpoint(&other, event), &current, "COM9").is_none());
+        }
         assert!(
             super::current_event(
                 super::for_endpoint(&other, super::Event::WebSocket(false)),
@@ -2316,6 +2386,14 @@ mod tests {
         );
     }
     use super::*;
+    #[test]
+    fn diagnostic_sources_separate_reads_and_never_coalesce_explicit_writes() {
+        let peer = Endpoint { base: "http://ledboard.local".into(), user: "fixture".into(), password: "secret".into() };
+        assert_eq!(HttpCommand::Status(peer.clone()).diagnostic_source().as_deref(), Some("HTTP GET /api/status"));
+        assert_ne!(HttpCommand::Mapping(peer.clone()).diagnostic_source(), HttpCommand::Status(peer.clone()).diagnostic_source());
+        assert!(HttpCommand::Post(peer.clone(), "/api/cell", vec![]).diagnostic_source().is_none());
+        assert!(HttpCommand::NameChange(peer, "board".into(), None).diagnostic_source().is_none());
+    }
     #[test]
     fn dual_transport_selects_one_route_without_replay() {
         for wifi in [false, true] {

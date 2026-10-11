@@ -243,11 +243,7 @@ impl PakarControllerApp {
         self.notify_id("pakar.notification-test", "Notification test", "This is an in-app toast and a native Windows notification request. OS visibility is reported separately in Preferences and --app-status.", messaging::Severity::Info);
     }
     pub fn record_event(&mut self, kind: &str, message: &str) {
-        self.event_log
-            .push((kind.into(), message.chars().take(2048).collect()));
-        if self.event_log.len() > 256 {
-            self.event_log.remove(0);
-        }
+        self.event_log.record(kind, message);
     }
     pub fn save_workspace(&mut self) {
         if let Ok(json) = layout::serialize(&self.dock) {
@@ -401,6 +397,7 @@ impl PakarControllerApp {
             value["screenshot"] = self.capture.status();
             value["minimized"] = serde_json::json!(ctx.input(|i| i.viewport().minimized));
             value["preferences_dirty"] = serde_json::json!(self.preferences.as_ref().is_some_and(|d| d.is_dirty()));
+            value["diagnostics"] = serde_json::json!({"events":self.event_log.len(),"active":self.event_log.active_count(),"repeated_occurrences":self.event_log.repeated_count(),"status_request_pending":self.status_request_pending,"status_retry_ms":self.status_retry.delay().as_millis()});
             value["notifications"] = self.notification_snapshot();
             value["tray_available"] = serde_json::json!(self.tray.is_some());
             value["fullscreen"] = serde_json::json!(fullscreen);
@@ -1553,14 +1550,21 @@ impl PakarControllerApp {
                 self.event_log.clear();
             }
         });
-        for (kind, message) in self.event_log.iter().rev() {
+        for event in self.event_log.iter().rev() {
+            let kind = &event.kind;
             ui.horizontal_wrapped(|ui| {
                 ui.label(egui::RichText::new(kind).color(if kind == "Error" {
                     ui.visuals().error_fg_color
                 } else {
                     ui.visuals().weak_text_color()
                 }));
-                ui.label(message);
+                ui.label(&event.message);
+                if event.occurrences > 1 {
+                    ui.label(egui::RichText::new(format!("×{}", event.occurrences)).weak())
+                        .on_hover_text(format!("{} occurrences; last seen {:.0}s ago; {}",
+                            event.occurrences, event.last_seen.elapsed().as_secs_f64(),
+                            if event.active { "unresolved diagnostic" } else { "closed diagnostic" }));
+                }
             });
         }
     }

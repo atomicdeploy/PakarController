@@ -75,7 +75,13 @@ function browserConsoleStyle(level,detail=false) {
   return `color:${foreground};background:${background};font:${detail?'500':'600'} 11px/1.8 system-ui,Segoe UI,sans-serif;padding:2px 8px;border-radius:${detail?'0 999px 999px 0':'999px 0 0 999px'}`;
 }
 class StyledBrowserConsole {
-  constructor(sink=globalThis.console,now=()=>Date.now()){this.sink=sink;this.now=now;this.recent=new Map();this.started=false}
+  constructor(sink=globalThis.console,now=()=>Date.now()){this.sink=sink;this.now=now;this.recent=new Map();this.incidents=new Map();this.started=false}
+  recover(source,metadata={}) {
+    let count=0;
+    for(const [key,value]of this.incidents)if(value.source===source){count+=value.count;this.incidents.delete(key)}
+    if(!count)return false;
+    return this.event('success','transport.ready','Transport recovered; repeated diagnostics were coalesced',{...metadata,count});
+  }
   start(metadata){
     if(this.started)return false;
     this.started=true;
@@ -92,8 +98,18 @@ class StyledBrowserConsole {
     try {
       if(!['debug','info','success','warn','error'].includes(level)||!Object.hasOwn(browserEventPresentation,event))return false;
       const now=this.now();if(!Number.isFinite(now)||!Number.isFinite(new Date(now).getTime()))return false;
+      const detail=redactBrowserText(message),safe=sanitizeBrowserMetadata(metadata);
+      // A category alone must not swallow a different HTTP/close code or cause.
+      const signature=JSON.stringify([level,event,detail,safe.error_code??null]);
+      if(options.incidentKey){
+        const source=redactBrowserText(options.incidentKey),key=JSON.stringify([source,signature]);
+        const previous=this.incidents.get(key);
+        if(previous){previous.count=Math.min(Number.MAX_SAFE_INTEGER,previous.count+1);return false}
+        if(this.incidents.size>=128)this.incidents.delete(this.incidents.keys().next().value);
+        this.incidents.set(key,{source,count:1});
+      }
       if(options.dedupeKey){
-        const key=redactBrowserText(options.dedupeKey),windowMs=Number.isFinite(options.dedupeWindowMs)?Math.max(0,Math.min(60000,options.dedupeWindowMs)):1000;
+        const key=JSON.stringify([redactBrowserText(options.dedupeKey),signature]),windowMs=Number.isFinite(options.dedupeWindowMs)?Math.max(0,Math.min(60000,options.dedupeWindowMs)):1000;
         const previous=this.recent.get(key);
         if(previous!==undefined&&now>=previous&&now-previous<windowMs)return false;
         if(this.recent.size>=256&&!this.recent.has(key))this.recent.delete(this.recent.keys().next().value);
@@ -101,7 +117,6 @@ class StyledBrowserConsole {
       }
       const method=level==='success'?'info':level,call=this.sink?.[method];
       if(typeof call!=='function')return false;
-      const detail=redactBrowserText(message),safe=sanitizeBrowserMetadata(metadata);
       call.call(this.sink,`%c ${browserEventPresentation[event]} ${level.toUpperCase()} · ${event} %c ${detail.replaceAll('%','%%')}%c`,
         browserConsoleStyle(level),browserConsoleStyle(level,true),'color:inherit;background:transparent',
         {...safe,timestamp:new Date(now).toISOString(),level,event,detail});

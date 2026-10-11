@@ -28,7 +28,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451",
+      "sha256": "74821d5eebe93dbb30238237aa7f3644cb2e5d9b9fa47ebe30224dc8a9b2e2e5",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -309,7 +309,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "function connectWs()"
         }
       ],
@@ -418,7 +418,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "async function refreshAuthenticated(options={})"
         }
       ],
@@ -485,7 +485,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -652,12 +652,12 @@
       "targets": [
         {
           "path": "assets/web/browser-console.js",
-          "sha256": "6c0c640433ebfcfff648fed3ce3f384da857d92123f134b6ff122843d83cfa64",
+          "sha256": "7789b2a4baae93afdd45a0a803f8567722ef0b9ea776c1051fc8482be93e0b60",
           "anchor": "class StyledBrowserConsole"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "function connectWs()"
         }
       ],
@@ -689,16 +689,16 @@
       "proof": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "fbaa739c363abc73bf3e00a7e72ef33410a73a47a4e605518f477d740c8bf01e",
+          "sha256": "28eb7b2b45ead64bcdd869c20c9f4436e4e0578d5de33643853512da88f533f8",
           "anchor": "Actual allowlist + recursive redaction"
         },
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "fbaa739c363abc73bf3e00a7e72ef33410a73a47a4e605518f477d740c8bf01e",
+          "sha256": "28eb7b2b45ead64bcdd869c20c9f4436e4e0578d5de33643853512da88f533f8",
           "anchor": "Actual WebSocket ownership"
         }
       ],
-      "improvement": "Adds bounded dedupe lifetime, camelCase/prototype/format protection, newest-socket ownership and diagnostic failure containment, with executable negative fixtures."
+      "improvement": "Adds bounded dedupe lifetime, camelCase/prototype/format protection, newest-socket ownership and diagnostic failure containment. Source-specific continuing incidents coalesce interleaved GET/WS failures until recovery while different error codes and every explicit write outcome remain visible; recovery reports occurrence counts. Executable production-module/API/socket fixtures cover these adaptations."
     },
     {
       "origin": "RayanLamp",
@@ -712,7 +712,7 @@
       "targets": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "fbaa739c363abc73bf3e00a7e72ef33410a73a47a4e605518f477d740c8bf01e",
+          "sha256": "28eb7b2b45ead64bcdd869c20c9f4436e4e0578d5de33643853512da88f533f8",
           "anchor": "Actual RayanLamp browser-console.test.ts scenarios"
         }
       ],
@@ -734,7 +734,7 @@
       "proof": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "fbaa739c363abc73bf3e00a7e72ef33410a73a47a4e605518f477d740c8bf01e",
+          "sha256": "28eb7b2b45ead64bcdd869c20c9f4436e4e0578d5de33643853512da88f533f8",
           "anchor": "Real HTTP adapter"
         }
       ],
@@ -760,7 +760,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -856,7 +856,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -941,7 +941,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -1204,7 +1204,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -1645,7 +1645,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "function peerAvailability("
         }
       ],
@@ -1777,7 +1777,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451",
+          "sha256": "74821d5eebe93dbb30238237aa7f3644cb2e5d9b9fa47ebe30224dc8a9b2e2e5",
           "anchor": "fn synchronize_context("
         },
         {
@@ -1943,7 +1943,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -1953,7 +1953,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -2018,7 +2018,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -2120,7 +2120,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451",
+          "sha256": "74821d5eebe93dbb30238237aa7f3644cb2e5d9b9fa47ebe30224dc8a9b2e2e5",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -2585,7 +2585,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451",
+          "sha256": "74821d5eebe93dbb30238237aa7f3644cb2e5d9b9fa47ebe30224dc8a9b2e2e5",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -3003,7 +3003,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "6d19fabc1f9b21817e9d4304fa8b53e8f60421c7ac9ead87f4558d20c7143451",
+          "sha256": "74821d5eebe93dbb30238237aa7f3644cb2e5d9b9fa47ebe30224dc8a9b2e2e5",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -3965,7 +3965,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -4055,7 +4055,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -4177,7 +4177,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "704cdd05cbb376a443fd9c2b1d8498b8f43b96562fe03dd79767f3e3b0815460",
+          "sha256": "1bcab41f55adb1b75da441e278978cbcb73fcb3349ac1fcacdc2f94bc89885e0",
           "anchor": "id=\"uiHaptics\""
         }
       ],

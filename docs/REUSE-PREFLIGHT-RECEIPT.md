@@ -1623,3 +1623,29 @@ The current AVR no-busy build is still polling-only; paired buffered mode remain
 an explicit migration gate. S3 pinout now records the user's provisional common
 DevKit assumption without inventing flash/PSRAM or partition details, and calls
 out the AVR RESET pull-up voltage hazard in addition to TXD/MISO.
+
+## Connection incidents, distinct failures and quiet recovery
+
+Consulted network-cloud, donor-audit Pealayer messaging.rs, web-presentation and
+the new error-management route. Read actual Pealayer messaging.rs, ui/error.rs
+and network.rs, plus RayanLamp browser-console.ts and full tests. Missing
+Pealayer src/error.rs was resolved with rg to src/ui/error.rs, not declared absent.
+Pealayer four_d/engine.rs transport-rejection/mark-disconnected slice informs
+separate lifecycle versus explicit-operation outcomes; no full-file certificate.
+
+Adapted the existing Rayan logger's keyed mechanism to bounded source/cause
+incidents rather than periodic category suppression. Native diagnostics now
+coalesce alternating failures, preserve differing causes/routes/ports and every
+explicit operation result, count repeats and report source-specific recovery.
+Added read-only retry backoff, one in-flight status poll and stream cancellation
+on WebSocket loss. No donor mutation, new dependencies or persistent event files.
+
+First browser recovery count assertion saw21, correctly including the prior401;
+retained it with the exact explanation. Browser tests then passed. The old
+hash-only rebinding regex missed reference objects whose quoted anchors contain
+braces, so the comparison gate rejected api.ts's Web target. Reconsulted the
+actual API source and guard; used quoted-string-aware reference-object matching
+for only the reviewed target/proof paths, leaving all donor hashes untouched.
+Regenerated the same ledger and added exact error-management routing; no pending
+donor becomes an exclusion or complete read merely through this change. Native
+build/live proof is recorded separately in CONNECTION-DIAGNOSTICS.md.
