@@ -10,6 +10,9 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern api-contract -Gate | Out-Null
+& node (Join-Path $PSScriptRoot 'check-living-contract.mjs') | ForEach-Object { Write-Host $_ }
+if ($LASTEXITCODE -ne 0) { throw 'Living API policy failed before firmware build.' }
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($Target -ne 'avr') {
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern web-presentation -Gate | Out-Null

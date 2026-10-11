@@ -110,9 +110,9 @@ P::Error PcControllerRuntime::dispatch(uint8_t op, uint8_t sequence,
   switch (op) {
     case PC::Hello: {
       if (n) return P::kBadPayload;
-      // Explicit dialect/profile/feature negotiation. Never masquerade as the
-      // donor's schema-3 sensor board or reuse its incompatible capability bits.
-      uint8_t response[8] = {BoardSettings::Schema, 1, 1, 48};
+      // Explicit hardware profile and features. Two fixed reserved bytes,
+      // never selectable contract generations or donor sensor capability bits.
+      uint8_t response[8] = {BoardSettings::Schema, 0, 0, 48};
       put16(response + 4, BoardCore::Features::enabled);
       put16(response + 6, BoardCore::Features::requested);
       reply(PC::HelloResponse, sequence, response, sizeof(response)); return P::kNoError;

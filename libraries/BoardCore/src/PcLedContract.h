@@ -11,7 +11,7 @@ namespace BoardCore {
 // Adapter of actual PCController ProtocolRuntime::AddressableLed and
 // AddressableLeds::configure/stagePixels. No second effects engine or AVR buffer.
 // The legacy native contract has an 8-bit index and a 100-pixel maximum;
-// full 480-pixel table streaming remains PKR1, never truncated to this window.
+// full 480-pixel table streaming remains PKAR, never truncated to this window.
 template<class Output> class PcLedContract {
  public:
   explicit PcLedContract(Output &output) : output_(output) {}

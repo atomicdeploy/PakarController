@@ -89,13 +89,13 @@ pub fn run(client: &Client, endpoint: &Endpoint, operation: Operation) -> Result
         return remote_run(client, endpoint, operation);
     }
     let (path, post) = match &operation {
-        Operation::ReconnectCloud => ("/api/v1/cloud/reconnect", true),
-        Operation::Probe => ("/api/v1/avr/probe", false),
-        Operation::Backup => ("/api/v1/avr/backup", true),
-        Operation::Download { eeprom: true, .. } => ("/api/v1/avr/backup/eeprom", false),
-        Operation::Download { .. } => ("/api/v1/avr/backup/flash", false),
-        Operation::StageAvr(_) => ("/api/v1/avr/image", true),
-        Operation::ProgramAvr => ("/api/v1/avr/program", true),
+        Operation::ReconnectCloud => ("/api/cloud/reconnect", true),
+        Operation::Probe => ("/api/avr/probe", false),
+        Operation::Backup => ("/api/avr/backup", true),
+        Operation::Download { eeprom: true, .. } => ("/api/avr/backup/eeprom", false),
+        Operation::Download { .. } => ("/api/avr/backup/flash", false),
+        Operation::StageAvr(_) => ("/api/avr/image", true),
+        Operation::ProgramAvr => ("/api/avr/program", true),
         Operation::UpdateEsp(_) => ("/update", true),
         _ => unreachable!(),
     };
@@ -196,7 +196,6 @@ pub fn run(client: &Client, endpoint: &Endpoint, operation: Operation) -> Result
 }
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct RemoteJob {
-    pub schema: u8,
     pub job_id: u32,
     pub boot_id: String,
     pub phase: String,
@@ -237,8 +236,7 @@ pub fn validate_remote(url: &str, sha: &str, targets: u8) -> Result<(), String> 
 pub fn parse_job(value: serde_json::Value) -> Result<RemoteJob, String> {
     let job: RemoteJob =
         serde_json::from_value(value).map_err(|_| "Malformed remote job response")?;
-    if job.schema != 1
-        || !(1..=3).contains(&job.targets)
+    if !(1..=3).contains(&job.targets)
         || job.boot_id.is_empty()
         || job.boot_id.len() > 80
         || job.received_bytes > job.expected_bytes
@@ -282,7 +280,7 @@ fn remote_run(
     operation: Operation,
 ) -> Result<String, String> {
     let (path, form) = match &operation {
-        Operation::RemoteStatus => ("/api/v1/firmware/remote", None),
+        Operation::RemoteStatus => ("/api/firmware/remote", None),
         Operation::RemoteStage {
             url,
             sha256,
@@ -294,7 +292,7 @@ fn remote_run(
                 return Err("Invalid firmware endpoint bearer token".into());
             }
             (
-                "/api/v1/firmware/fetch",
+                "/api/firmware/fetch",
                 Some(vec![
                     ("url", url.clone()),
                     ("sha256", sha256.clone()),
@@ -316,9 +314,9 @@ fn remote_run(
             }
             (
                 if apply {
-                    "/api/v1/firmware/apply"
+                    "/api/firmware/apply"
                 } else {
-                    "/api/v1/firmware/cancel"
+                    "/api/firmware/cancel"
                 },
                 Some(vec![
                     ("job_id", job.job_id.to_string()),
@@ -394,7 +392,7 @@ mod tests {
         }
         assert!(validate_remote("https://host/file",&"A".repeat(64),3).is_err());
         assert!(validate_remote("https://host/file",&sha,4).is_err());
-        assert!(parse_job(serde_json::json!({"schema":1})).is_err());
+        assert!(parse_job(serde_json::json!({})).is_err());
     }
     #[test]
     fn remote_requests_pin_identity_and_never_replay_lost_or_wrong_ack() {
@@ -402,7 +400,7 @@ mod tests {
         let listener=TcpListener::bind("127.0.0.1:0").unwrap();
         let address=listener.local_addr().unwrap();
         let sha="b".repeat(64);
-        let ready=RemoteJob{schema:1,job_id:7,boot_id:"observed-boot".into(),phase:"ready".into(),targets:3,
+        let ready=RemoteJob{job_id:7,boot_id:"observed-boot".into(),phase:"ready".into(),targets:3,
             manifest_sha256:sha.clone(),busy:false,cancellable:false,received_bytes:32768,expected_bytes:32768,error:String::new()};
         let job=ready.clone();
         let server=std::thread::spawn(move|| {
@@ -418,7 +416,7 @@ mod tests {
                     }
                 }
                 let text=String::from_utf8(request).unwrap();
-                assert!(text.starts_with(if i==0{"POST /api/v1/firmware/fetch"}else{"POST /api/v1/firmware/apply"}));
+                assert!(text.starts_with(if i==0{"POST /api/firmware/fetch"}else{"POST /api/firmware/apply"}));
                 assert!(text.to_lowercase().contains("authorization: basic "));
                 let body=text.split("\r\n\r\n").nth(1).unwrap();
                 let form:std::collections::HashMap<_,_>=reqwest::Url::parse(&format!("http://fixture/?{body}")).unwrap().query_pairs().into_owned().collect();
@@ -440,7 +438,7 @@ mod tests {
     #[test]
     fn accepted_update_is_not_reported_as_completion() {
         use crate::messaging::Severity;
-        let mut value=serde_json::json!({"schema":1,"job_id":1,"boot_id":"observed",
+        let mut value=serde_json::json!({"job_id":1,"boot_id":"observed",
             "phase":"prepare","targets":3,"manifest_sha256":"a".repeat(64),
             "busy":true,"cancellable":false,"received_bytes":0,"expected_bytes":0,"error":""});
         assert_eq!(result_severity(&Ok(value.to_string())),Severity::Info);

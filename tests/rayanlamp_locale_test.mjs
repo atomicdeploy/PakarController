@@ -17,7 +17,7 @@ function fixture({languages=['en-US'],language='system',direction='auto',blocked
   let writes=0,requests=0;
   const owned={nodeValue:' Connect ',isConnected:true,parentElement:{closest:()=>false}};
   const peer={nodeValue:'Connect',isConnected:true,parentElement:{closest:()=>true}};
-  const protocol={value:'http://ledboard.local:8118/api/v1',dir:'ltr'};
+  const protocol={value:'http://ledboard.local:8118/api',dir:'ltr'};
   const draft={value:'Secret ۱۲۳'};
   const controls={uiLanguage:{value:language},uiDirection:{value:direction},protocol,draft};
   const root={dataset:{}};
@@ -49,7 +49,7 @@ test('Actual donor translation placeholders, number formatting and visual digits
   assert.equal(f.run("uiTr('{toString}',{})"),'{toString}','Inherited properties are not placeholders');
   assert.match(f.run('uiNumber(123456)'),/[۱۲۳۴۵۶]/);
   assert.equal(f.run("uiDigits('Port 47831')"),'Port ۴۷۸۳۱');
-  assert.equal(f.protocol.value,'http://ledboard.local:8118/api/v1');assert.equal(f.protocol.dir,'ltr');
+  assert.equal(f.protocol.value,'http://ledboard.local:8118/api');assert.equal(f.protocol.dir,'ltr');
 });
 test('Automatic locale reacts to OS changes without preference writes, peer translation or draft replacement',()=>{
   const f=fixture();f.change(['fa-IR']);

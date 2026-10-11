@@ -27,7 +27,7 @@ struct Fixture{
   prepares=programs=releases=0;prepareOk=programOk=releaseOk=true;crashRelease=corruptEsp=false;
   // Synthetic valid policy headers, NOT an executable board firmware image.
   esp[0]=0xe9;esp[1]=1;esp[2]=2;avr[0]=0x0c;avr[1]=0x94;avr.back()=1;
-  JsonDocument d;d["schema"]=1;d["product"]="PakarController";d["profile"]="pakar-nodemcu-atmega328p-v1";d["protocol"]=1;d["link_mode"]="busy-wire";
+  JsonDocument d;d["product"]="PakarController";d["profile"]="pakar-nodemcu-atmega328p";d["link_mode"]="busy-wire";
   for(const char*key:{"esp","avr"}){bool e=!strcmp(key,"esp");auto o=d[key].to<JsonObject>();o["url"]=e?"https://updates.example.test/PakarController/esp.bin":"https://images.example.test/avr.bin";o["size"]=e?esp.size():avr.size();o["sha256"]=hash(e?esp:avr);o["version"]="0.2.7";o["model"]=e?"nodemcuv2":"atmega328p";if(!e){o["signature"]="1E950F";o["bootloader_included"]=true;}}
   String manifest;serializeJson(d,manifest);sha=hash(bytes(manifest));
   testResponses[url].bytes=bytes(manifest);testResponses["https://updates.example.test/PakarController/esp.bin"].bytes=esp;testResponses["https://images.example.test/avr.bin"].bytes=avr;

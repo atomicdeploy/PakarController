@@ -117,11 +117,11 @@ void CloudServices::configureWebSocket() {
     webSocket_.beginSslWithCA(cloudConfig.webSocketHost(),
                               cloudConfig.webSocketPort(),
                               cloudConfig.webSocketPath(), &trustAnchor,
-                              "pakarcontroller-v1");
+                              "pakarcontroller");
   } else {
     webSocket_.begin(cloudConfig.webSocketHost(),
                      cloudConfig.webSocketPort(),
-                     cloudConfig.webSocketPath(), "pakarcontroller-v1");
+                     cloudConfig.webSocketPath(), "pakarcontroller");
   }
   webSocketConfigured_ = true;
 }
@@ -185,7 +185,7 @@ void CloudServices::publishTelemetry(const String &statusJson, uint32_t now) {
         char encoded[1060];base64_encodestate state;base64_init_encodestate(&state);
         int size=base64_encode_block(full.c_str()+i*768,n,encoded,&state);
         size+=base64_encode_blockend(encoded+size,&state);encoded[size]=0;
-        JsonDocument part;part["schema"]=1;part["type"]="telemetry-fragment";part["snapshot_id"]=id;
+        JsonDocument part;part["type"]="telemetry-fragment";part["snapshot_id"]=id;
         part["index"]=i;part["count"]=count;part["total_bytes"]=full.length();
         part["sha256"]=hex;part["encoding"]="base64";part["data"]=encoded;
         String packet;serializeJson(part,packet);

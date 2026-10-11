@@ -76,21 +76,21 @@ assert.notEqual(run("browserConsoleStyle('info')"),dark);
 let response={status:200,ok:true,text:async()=>'{"accepted":true}'},requestCount=0,loginCount=0;
 context.fetch=async()=>{requestCount++;return response};context.showLogin=()=>loginCount++;
 vm.runInContext(web.slice(web.indexOf('async function api('),web.indexOf('function showLogin()')),context);
-clear();await run("api('/api/v1/status?token=poll-secret')");
-await run("api('/api/v1/clients/report',{method:'POST',body:'private-client-data'})");
+clear();await run("api('/api/status?token=poll-secret')");
+await run("api('/api/clients/report',{method:'POST',body:'private-client-data'})");
 assert.equal(events().length,0);
-await run("api('/api/v1/cell?token=path-secret',{method:'POST',body:'body-secret',headers:{Authorization:'Bearer header-secret'}})");
-assert.equal(events().length,1);assert.equal(events()[0].args[4].endpoint,'/api/v1/cell');
+await run("api('/api/cell?token=path-secret',{method:'POST',body:'body-secret',headers:{Authorization:'Bearer header-secret'}})");
+assert.equal(events().length,1);assert.equal(events()[0].args[4].endpoint,'/api/cell');
 assert.match(events()[0].args[4].detail,/readback may still be required/);
 assert.doesNotMatch(JSON.stringify(calls),/poll-secret|private-client-data|path-secret|body-secret|header-secret/);
 clear();response={status:500,ok:false,text:async()=>'Bearer server-secret ?token=raw-secret'};
 const before=requestCount;
-await assert.rejects(run("api('/api/v1/cell',{method:'POST',body:'lost-secret'})"));
+await assert.rejects(run("api('/api/cell',{method:'POST',body:'lost-secret'})"));
 assert.equal(requestCount,before+1,'Uncertain write is never retried');
 assert.equal(events()[0].args[4].error_code,'http_500');assert.doesNotMatch(JSON.stringify(calls),/server-secret|raw-secret|lost-secret/);
-await assert.rejects(run("api('/api/v1/cell',{method:'POST'})"));assert.equal(events().length,1,'Repeated failure is deduped');
+await assert.rejects(run("api('/api/cell',{method:'POST'})"));assert.equal(events().length,1,'Repeated failure is deduped');
 response={status:401,ok:false,text:async()=>'login-secret'};
-await assert.rejects(run("api('/api/v1/status')"));assert.equal(loginCount,1);
+await assert.rejects(run("api('/api/status')"));assert.equal(loginCount,1);
 // Actual WebSocket ownership: transitions only; frames and stale callbacks quiet.
 const sockets=[],timers=[];let renderCount=0,stops=0;
 Object.assign(context,{location:{protocol:'http:',host:'ledboard.local'},wsState:{},stopStream:()=>stops++,render:()=>renderCount++,

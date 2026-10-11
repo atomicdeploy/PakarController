@@ -9,8 +9,8 @@ pub enum Group {
 impl Group {
     pub fn path(self) -> &'static str {
         match self {
-            Self::Network => "/api/v1/network",
-            Self::Cloud => "/api/v1/cloud",
+            Self::Network => "/api/network",
+            Self::Cloud => "/api/cloud",
         }
     }
 }
@@ -336,18 +336,19 @@ impl Editor {
         };
     }
     pub fn observe(&mut self, path: &str, value: serde_json::Value) -> Result<(), String> {
-        if path == "/api/v1/firmware/remote" {
+        if path == "/api/firmware/remote" {
             self.remote_job = Some(crate::maintenance::parse_job(value)?);
             return Ok(());
         }
-        if path == "/api/v1/telemetry" {
-            if value["schema"].as_u64() != Some(1) || value["type"] != "telemetry" {
+        if path == "/api/telemetry" {
+            if value["type"] != "telemetry" || value["product"] != "PakarController"
+                || !value["boot_id"].as_str().is_some_and(|s| !s.is_empty() && s.len() <= 80) {
                 return Err("Complete telemetry unavailable".into());
             }
             self.telemetry = Some(value);
             return Ok(());
         }
-        if path == "/api/v1/wifi/scan" {
+        if path == "/api/wifi/scan" {
             self.scan_pending = false;
             self.ssids = value["networks"]
                 .as_array()

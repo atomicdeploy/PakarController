@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 /// Actual PCController peripheral-availability.ts ready AND advertised rule,
-/// adapted through Pakar's shared schema-1 manifest (capabilities.rs).
+/// adapted through Pakar's living capability manifest (capabilities.rs).
 /// No table, peripheral or application identity is inferred from pixel counts.
 class PeerContext {
   PeerContext._(
@@ -34,7 +34,10 @@ class PeerContext {
 
   static PeerContext fromStatus(Map<String, dynamic> status) {
     final value = status['capabilities'];
-    if (value is! Map || value['schema'] is! int || value['schema'] != 1) {
+    if (value is! Map ||
+        value['board_kind'] is! String ||
+        !validText(value['board_kind'], 64) ||
+        value['acknowledged_features'] is! List) {
       return unknown;
     }
     final host = value['hostname'];
@@ -100,17 +103,17 @@ class PeerContext {
   bool allows(String path, Map<String, String> values) {
     if (!known) return false;
     return switch (path) {
-      '/api/v1/cell' ||
-      '/api/v1/cells/mapping' ||
-      '/api/v1/game/reset' ||
-      '/api/v1/snake/direction' => table,
-      '/api/v1/mode' => modes.any((mode) => mode.id == values['value']),
-      '/api/v1/display' => has(values.containsKey('text') ? 'text' : 'display'),
-      '/api/v1/audio' || '/api/v1/buzzer' => has('buzzer'),
-      '/api/v1/outputs' => has('outputs'),
-      '/api/v1/brightness' || '/api/v1/effect' => has('leds'),
-      '/api/v1/device/name' => has('identity'),
-      '/api/v1/network' || '/api/v1/cloud' => has('network'),
+      '/api/cell' ||
+      '/api/cells/mapping' ||
+      '/api/game/reset' ||
+      '/api/snake/direction' => table,
+      '/api/mode' => modes.any((mode) => mode.id == values['value']),
+      '/api/display' => has(values.containsKey('text') ? 'text' : 'display'),
+      '/api/audio' || '/api/buzzer' => has('buzzer'),
+      '/api/outputs' => has('outputs'),
+      '/api/brightness' || '/api/effect' => has('leds'),
+      '/api/device/name' => has('identity'),
+      '/api/network' || '/api/cloud' => has('network'),
       _ => false, // Add an explicit contract before exposing a new mutation.
     };
   }

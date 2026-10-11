@@ -9,7 +9,7 @@ class ClientTelemetry {
   bool report(const String &json,const String &peer,uint32_t now) {
     if(json.length()>1024) return false;
     JsonDocument d;
-    if(deserializeJson(d,json) || !d.is<JsonObject>() || d["schema"]!=1) return false;
+    if(deserializeJson(d,json) || !d.is<JsonObject>()) return false;
     Entry next;
     if(!text(d["id"],next.id,sizeof(next.id),true) ||
        !text(d["hostname"],next.hostname,sizeof(next.hostname)) ||

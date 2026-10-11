@@ -14,14 +14,14 @@ shortened inside the face, with full names in tooltips.
 
 ## Authoritative RGB and physical numbering
 
-Authenticated GET `/api/v1/status?pixels=1` adds `pixel_preview_requested: true`
+Authenticated GET `/api/status?pixels=1` adds `pixel_preview_requested: true`
 and `pixel_frame`: revision, brightness, 2880 hexadecimal RGB characters (480
 physical pixels) and the current 80-cell physical mapping. GET without the opt-in
 keeps its existing payload; WebSocket/cloud/USB status does not gain continuous
 480-pixel broadcasting. Password-prompt command:
 
 ```powershell
-curl.exe --user YOUR_USER "http://ledboard.local/api/v1/status?pixels=1"
+curl.exe --user YOUR_USER "http://ledboard.local/api/status?pixels=1"
 ```
 
 This is the committed ESP render buffer BEFORE FastLED brightness/TypicalLEDStrip

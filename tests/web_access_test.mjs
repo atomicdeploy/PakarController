@@ -18,23 +18,23 @@ const context=vm.createContext({...nodes,URLSearchParams,FormData,Uint8Array,Tex
   WebSocket:class {constructor(){socketCount++;this.readyState=1}close(){this.readyState=3}send(){}},
   fetch:async(path,options={})=>{
     calls.push({path,options});let code=200,body={};
-    if(path==='/api/v1/auth/info')body={ready:true,username:user,default_credentials:password==='pakarcontroller'};
+    if(path==='/api/auth/info')body={ready:true,username:user,default_credentials:password==='pakarcontroller'};
     else if(path==='/login'){
       signedIn=options.body.get('username')===user&&options.body.get('password')===password;
       if(!signedIn){code=401;body='Incorrect username or password'}
     }else if(!signedIn){code=401;body={error:'login_required'}}
     else if(path==='/logout'){signedIn=false}
-    else if(path==='/api/v1/auth'){
+    else if(path==='/api/auth'){
       assert.equal(options.method,'POST');assert.equal(options.body.get('current_password'),password);
       user=options.body.get('username');password=options.body.get('password');signedIn=false;
       body={updated:true,reauthenticate:true};
-    }else if(path==='/api/v1/device/name'){
+    }else if(path==='/api/device/name'){
       let changed=false;
       if(options.method==='POST'){changed=hostname!==options.body.get('hostname');hostname=options.body.get('hostname');displayName=options.body.get('display_name');}
       body={hostname,display_name:displayName,persisted:true,accepted:options.method==='POST',apply_pending:changed};
-    }else if(path.split('?')[0]==='/api/v1/status'){
+    }else if(path.split('?')[0]==='/api/status'){
       statusRequests++;body={hostname:'test-fixture',cells:[],tm1637_segments:[]};
-    }else if(path==='/api/v1/cells/mapping')body={physical:[],names:[]};
+    }else if(path==='/api/cells/mapping')body={physical:[],names:[]};
     return {ok:code<400,status:code,statusText:String(code),text:async()=>typeof body==='string'?body:JSON.stringify(body)};
   }});
 vm.runInContext(source.match(/<script data-pakar-presentation>([\s\S]*?)<\/script>/)[1],context);
@@ -52,7 +52,7 @@ assert.equal(nodes.workspace.hidden,false,nodes.loginError.textContent);assert.e
 assert.equal(statusRequests,1);assert.match(nodes.accessWarning.textContent,/Default password/);
 nodes.accessCurrent.value=password;nodes.accessUser.value='David';nodes.accessPassword.value='new-password';nodes.accessConfirm.value='different';
 await nodes.accessForm.listeners.submit({preventDefault(){}});
-assert.equal(calls.filter(c=>c.path==='/api/v1/auth').length,0);
+assert.equal(calls.filter(c=>c.path==='/api/auth').length,0);
 nodes.accessConfirm.value='new-password';await nodes.accessForm.listeners.submit({preventDefault(){}});await settle();
 assert.equal(nodes.workspace.hidden,true);assert.equal(nodes.accessCurrent.value,'');assert.equal(nodes.accessPassword.value,'');
 assert.equal(nodes.accessConfirm.value,'');assert.equal(nodes.loginUser.value,'David');
@@ -68,7 +68,7 @@ assert.equal(displayName,'David’s table');assert.equal(nodes.nameSave.disabled
 assert.match(vm.runInContext('webToasts.snapshot().at(-1).message',context),/verified/);
 nodes.deviceName.value='https://bad.local';
 await nodes.nameForm.listeners.submit({preventDefault(){}});
-assert.equal(calls.filter(c=>c.path==='/api/v1/device/name'&&c.options.method==='POST').length,1);
+assert.equal(calls.filter(c=>c.path==='/api/device/name'&&c.options.method==='POST').length,1);
 nodes.deviceName.value='LEDBOARD.Local';await nodes.nameForm.listeners.submit({preventDefault(){}});
 assert.equal(hostname,'ledboard');assert.equal(nodes.nameSave.disabled,true);
 assert.equal(nodes.nameResult.href,'http://ledboard.local/');assert.equal(nodes.nameResult.hidden,false);

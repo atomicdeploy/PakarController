@@ -123,7 +123,7 @@ pub fn get(client: &Client, base: &str, user: &str, password: &str, path: &str) 
 }
 fn consume(client: &Client, base: &str, user: &str, password: &str,
            id: u64, boot: &str, opcode: u8) -> bool {
-    client.delete(format!("{}/api/v1/avr/contracts/result",base.trim_end_matches('/')))
+    client.delete(format!("{}/api/avr/contracts/result",base.trim_end_matches('/')))
         .basic_auth(user,Some(password))
         .query(&[("id",id.to_string()),("boot_id",boot.to_owned()),("opcode",opcode.to_string())])
         .send().ok().and_then(|r|r.error_for_status().ok())
@@ -134,7 +134,7 @@ pub fn request(client: &Client, base: &str, user: &str, password: &str,
                opcode: u8, payload: &[u8]) -> Result<Value,String> {
     if payload.len()>48 { return Err("PCController payload exceeds 48 bytes".into()); }
     let payload_for_request=payload;
-    let value: Value = client.post(format!("{}/api/v1/avr/contracts",base.trim_end_matches('/')))
+    let value: Value = client.post(format!("{}/api/avr/contracts",base.trim_end_matches('/')))
         .basic_auth(user,Some(password)).form(&[("opcode",opcode.to_string()),("payload_hex",encode_hex(payload))])
         .send().map_err(|e|e.to_string())?.error_for_status().map_err(|e|e.to_string())?
         .json().map_err(|e|e.to_string())?;
@@ -143,7 +143,7 @@ pub fn request(client: &Client, base: &str, user: &str, password: &str,
     let deadline=Instant::now()+Duration::from_secs(3);
     loop {
         // Only read the existing receipt. Never re-POST an uncertain mutation.
-        let receipt=get(client,base,user,password,&format!("/api/v1/avr/contracts/result?id={id}"))?;
+        let receipt=get(client,base,user,password,&format!("/api/avr/contracts/result?id={id}"))?;
         if receipt["request_id"].as_u64()!=Some(id) || receipt["boot_id"].as_str()!=Some(&boot) ||
             receipt["request_opcode"].as_u64()!=Some(opcode as u64) {
             return Err("Contract receipt identity changed; operation outcome is unknown".into());

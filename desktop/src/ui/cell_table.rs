@@ -550,7 +550,7 @@ impl PakarControllerApp {
                         _ => 0,
                     };
                     self.action(
-                        "/api/v1/cell",
+                        "/api/cell",
                         vec![
                             ("id".into(), id.to_string()),
                             ("state".into(), state.name().into()),

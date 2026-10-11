@@ -71,7 +71,7 @@ function announceLocalePreferences(value) {
     window.dispatchEvent(new CustomEvent('pakar:locale-preferences',{detail:value}));
   if(typeof BroadcastChannel==='function') {
     let channel;
-    try { channel=new BroadcastChannel('pakar-locale-v1');channel.postMessage(value); }
+    try { channel=new BroadcastChannel('pakar-locale');channel.postMessage(value); }
     catch {} finally { try { channel?.close(); } catch {} }
   }
   return true;
@@ -90,7 +90,7 @@ function subscribeLocalePreferences(callback) {
   window.addEventListener('storage',onStorage);
   let channel;
   try { if(typeof BroadcastChannel==='function'){
-    channel=new BroadcastChannel('pakar-locale-v1');channel.addEventListener('message',onBroadcast);
+    channel=new BroadcastChannel('pakar-locale');channel.addEventListener('message',onBroadcast);
   }} catch {}
   return ()=>{
     window.removeEventListener('pakar:locale-preferences',onLocal);

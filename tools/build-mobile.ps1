@@ -6,11 +6,15 @@ param(
     [ValidateRange(1,1024)][int]$MaximumCacheGiB=4,
     [switch]$Restore,
     [switch]$BuildOnly,
+    [ValidatePattern('^test/[A-Za-z0-9_/-]+_test\.dart$')][string]$TestPath,
     [string]$CapturePath,
     [ValidateSet('Table','SettingsTablet','SettingsPhone','FirmwareTablet','FirmwarePhone')][string]$CaptureView='Table',
     [switch]$Plan
 )
 $ErrorActionPreference='Stop'
+& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern api-contract -Gate | Out-Null
+& node (Join-Path $PSScriptRoot 'check-living-contract.mjs') | ForEach-Object { Write-Host $_ }
+if ($LASTEXITCODE -ne 0) { throw 'Living API policy failed before mobile build.' }
 $taskRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $taskMobile=Join-Path $taskRoot 'mobile'
 $taskContext=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern device-context -Gate
@@ -28,11 +32,18 @@ if(-not(Test-Path -LiteralPath $FlutterPath)){
     elseif(-not $Plan){throw 'Flutter absent: inspect mobile/README.md and configured existing SDK before installing another copy.'}
 }
 $taskCommands=[Collections.Generic.List[object]]::new()
+if($TestPath -and ($Mode -ne 'Test' -or -not(Test-Path -LiteralPath (Join-Path $taskMobile $TestPath) -PathType Leaf))){
+    throw 'TestPath requires Test mode and an existing relative mobile/test file.'
+}
 if($BuildOnly -and $Mode -ne 'ApkPreview'){throw 'BuildOnly requires ApkPreview; tests remain explicit.'}
 if($Restore){$taskCommands.Add(@('pub','get','--offline','--enforce-lockfile'))}
 if(-not $BuildOnly){
     $taskCommands.Add(@('analyze','--no-pub'))
-    if($Mode -ne 'Analyze'){$taskCommands.Add(@('test','--no-pub'))}
+    if($Mode -ne 'Analyze'){
+        $taskTestArguments=@('test','--no-pub')
+        if($TestPath){$taskTestArguments+=@($TestPath)}
+        $taskCommands.Add($taskTestArguments)
+    }
 }
 if($Mode -eq 'ApkPreview'){$taskCommands.Add(@('build','apk','--release','--no-pub'))}
 if($Plan){return [pscustomobject]@{

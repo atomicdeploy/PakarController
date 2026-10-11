@@ -9,8 +9,8 @@ assert.equal(plan.avr.size,32768);assert.equal(plan.avr.bootloader_included,true
 assert.equal(plan.esp.sha256,createHash('sha256').update(esp).digest('hex'));
 assert.throws(()=>manifest(esp,avr.subarray(0,32000),'https://updates.example.test/','0.2.7','busy-wire'));
 for(const url of ['http://updates.example.test/','https://user:pass@updates.example.test/','https://updates.example.test/?secret=x'])assert.throws(()=>manifest(esp,avr,url,'0.2.7','busy-wire'));
-const full=Buffer.from(JSON.stringify({schema:1,type:'telemetry',product:'PakarController',boot_id:'actual-device-boot',clients:[],test_padding:'x'.repeat(2200)}));
-const packets=Array.from({length:Math.ceil(full.length/768)},(_,index)=>({schema:1,type:'telemetry-fragment',snapshot_id:'a'.repeat(32)+'-1',index,count:Math.ceil(full.length/768),total_bytes:full.length,sha256:createHash('sha256').update(full).digest('hex'),encoding:'base64',data:full.subarray(index*768,(index+1)*768).toString('base64')}));
+const full=Buffer.from(JSON.stringify({type:'telemetry',product:'PakarController',boot_id:'actual-device-boot',clients:[],test_padding:'x'.repeat(2200)}));
+const packets=Array.from({length:Math.ceil(full.length/768)},(_,index)=>({type:'telemetry-fragment',snapshot_id:'a'.repeat(32)+'-1',index,count:Math.ceil(full.length/768),total_bytes:full.length,sha256:createHash('sha256').update(full).digest('hex'),encoding:'base64',data:full.subarray(index*768,(index+1)*768).toString('base64')}));
 const rx=new TelemetryReceiver();assert.equal(rx.accept(packets[2],1),null);assert.equal(rx.accept(packets[0],2),null);assert.equal(rx.accept(packets[0],3),null);
 assert.throws(()=>rx.accept({...packets[1],sha256:'0'.repeat(64)},4));
 assert.equal(rx.accept(packets[1],5),null);assert.equal(rx.accept(packets[3],6).boot_id,'actual-device-boot');

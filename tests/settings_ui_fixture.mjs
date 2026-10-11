@@ -19,11 +19,11 @@ const server=http.createServer((req,res)=>{
   requests.push({method:req.method,path:req.url});
   if(req.method!=='GET'){res.writeHead(405);res.end('This visual fixture is read-only');return;}
   const values={
-    '/api/v1/status':{hostname:'SIMULATED-settings-fixture',version:'FIXTURE ONLY',mode:'idle',brightness:200,effect:'rainbow',pixels:480,station_enabled:true,ap_enabled:true,station_connected:true,ap_started:true,ntp_synced:true,link_mode:'busy-wire',avr_online:true,tm1637_ack:true,tm1637_segments:[6,91,79,102],tm1637_brightness:4,tm1637_host_active:true,cells:Array(80).fill('white')},
-    '/api/v1/network':network,'/api/v1/cloud':cloud,
-    '/api/v1/device/name':{hostname:'SIMULATED-settings-fixture'},
-    '/api/v1/auth/info':{ready:true,default_credentials:false,username:'fixture'},
-    '/api/v1/cells/mapping':{physical:Array.from({length:80},(_,i)=>i+1),names:Array(80).fill('')},
+    '/api/status':{hostname:'SIMULATED-settings-fixture',version:'FIXTURE ONLY',mode:'idle',brightness:200,effect:'rainbow',pixels:480,station_enabled:true,ap_enabled:true,station_connected:true,ap_started:true,ntp_synced:true,link_mode:'busy-wire',avr_online:true,tm1637_ack:true,tm1637_segments:[6,91,79,102],tm1637_brightness:4,tm1637_host_active:true,cells:Array(80).fill('white')},
+    '/api/network':network,'/api/cloud':cloud,
+    '/api/device/name':{hostname:'SIMULATED-settings-fixture'},
+    '/api/auth/info':{ready:true,default_credentials:false,username:'fixture'},
+    '/api/cells/mapping':{physical:Array.from({length:80},(_,i)=>i+1),names:Array(80).fill('')},
   };
   const value=values[req.url];res.writeHead(value?200:404,{'Content-Type':'application/json'});res.end(JSON.stringify(value||{}));
 });

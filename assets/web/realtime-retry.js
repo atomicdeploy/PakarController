@@ -42,6 +42,6 @@ const webSocketReconnect=createRealtimeRetry({
   connect:()=>connectWs(),
   onError:error=>traceBrowserEvent('warn','websocket.disconnected',
     'Session status refresh failed; reconnect scheduled',
-    {source:'websocket',endpoint:'/api/v1/status',...browserErrorMetadata(error)},
+    {source:'websocket',endpoint:'/api/status',...browserErrorMetadata(error)},
     {dedupeKey:'websocket.prepare',dedupeWindowMs:3000})
 });

@@ -83,6 +83,7 @@ void dispatcher() {
   EEPROM.reset(); Hardware h; PcControllerRuntime r(h); r.begin(0);
   assert(EEPROM.writes == 0);
   send(r,h,PC::Hello); assert(h.frames[0].p[0] == PC::HelloResponse && h.frames[0].p[1] == 0x50);
+  assert(h.frames[0].p[2] == 0 && h.frames[0].p[3] == 0); // Reserved, not contract generations.
   assert(h.frames[0].p[4] == 48);
   send(r,h,PC::GetSettings); assert(h.frames[0].p.size()==23 && h.frames[0].p.back()==0);
   send(r,h,PC::SetSettings,{3}); error(h,PC::SetSettings,P::kBadPayload);

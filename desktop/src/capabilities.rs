@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Manifest {
-    pub schema: u8,
     pub board_kind: String,
     pub name: String,
     pub hostname: String,
@@ -30,15 +29,19 @@ pub struct Table {
     pub pixels_per_cell: u8,
 }
 impl Manifest {
+    pub fn known(&self) -> bool {
+        !self.board_kind.is_empty() && self.board_kind.len() <= 64
+            && !self.board_kind.chars().any(char::is_control)
+    }
     pub fn application(&self) -> Option<&crate::identity::Application> {
-        if self.schema == 1 {
+        if self.known() {
             self.application.as_ref().filter(|a| a.valid())
         } else {
             None
         }
     }
     pub fn has(&self, feature: &str) -> bool {
-        self.schema == 1 && self.acknowledged_features.iter().any(|v| v == feature)
+        self.known() && self.acknowledged_features.iter().any(|v| v == feature)
     }
     pub fn table(&self) -> bool {
         self.has("table")
@@ -61,7 +64,7 @@ impl Manifest {
         })
     }
     pub fn title(&self) -> String {
-        if self.schema != 1 {
+        if !self.known() {
             return "PakarController · Discovering capabilities".into();
         }
         let label = if self.name.trim().is_empty() {
@@ -81,26 +84,31 @@ impl Manifest {
     }
     pub fn allows(&self, path: &str, form: &[(String, String)]) -> bool {
         let feature = match path {
-            "/api/v1/cell"
-            | "/api/v1/cells/mapping"
-            | "/api/v1/game/reset"
-            | "/api/v1/snake/direction" => "table",
-            "/api/v1/mode" => {
+            "/api/cell"
+            | "/api/cells/mapping"
+            | "/api/game/reset"
+            | "/api/snake/direction" => "table",
+            "/api/mode" => {
                 return self
                     .modes()
                     .any(|m| form.iter().any(|(k, v)| k == "value" && v == &m.id));
             }
-            "/api/v1/display" => {
+            "/api/display" => {
                 if form.iter().any(|(k, _)| k == "text") {
                     "text"
                 } else {
                     "display"
                 }
             }
-            "/api/v1/audio" | "/api/v1/buzzer" => "buzzer",
-            "/api/v1/outputs" => "outputs",
-            "/api/v1/brightness" | "/api/v1/effect" => "leds",
-            _ => return self.schema == 1,
+            "/api/audio" | "/api/buzzer" => "buzzer",
+            "/api/outputs" => "outputs",
+            "/api/brightness" | "/api/effect" => "leds",
+            "/api/device/name" => "identity",
+            "/api/network" | "/api/cloud" | "/api/cloud/reconnect" | "/api/auth" => "network",
+            "/api/clients/report" => "telemetry",
+            _ if path.starts_with("/api/avr/") => "isp",
+            _ if path.starts_with("/api/firmware/") => "ota",
+            _ => return false,
         };
         if feature == "table" {
             self.table()
@@ -109,7 +117,7 @@ impl Manifest {
         }
     }
     pub fn from_usb(payload: &[u8]) -> Option<Self> {
-        if payload.len() < 38 || payload[29] != 1 {
+        if payload.len() < 38 || payload[29] != 0 {
             return None;
         }
         let mask = u16::from_le_bytes([payload[30], payload[31]]);
@@ -130,7 +138,6 @@ impl Manifest {
             "identity",
         ];
         let mut value = Self {
-            schema: 1,
             board_kind: if payload[33] == 1 {
                 "table"
             } else {
@@ -181,7 +188,7 @@ mod tests {
         assert!(!m.has("display"));
         assert!(!m.table());
         assert_eq!(m.modes().count(), 0);
-        m.schema = 1;
+        m.board_kind = "controller".into();
         m.acknowledged_features = vec!["buzzer".into()];
         assert!(m.has("buzzer"));
         assert!(!m.has("display"));
@@ -199,9 +206,23 @@ mod tests {
         assert!(Manifest::from_usb(&[0; 29]).is_none());
     }
     #[test]
+    fn living_manifest_tolerates_optional_fields_but_cannot_invent_capabilities() {
+        let m: Manifest = serde_json::from_value(serde_json::json!({
+            "board_kind":"controller", "acknowledged_features":["buzzer","future.optional"],
+            "extra_optional":{"value":true}
+        })).unwrap();
+        assert!(m.known() && m.has("buzzer"));
+        assert!(!m.has("display") && !m.table());
+        assert!(m.allows("/api/buzzer", &[]));
+        assert!(!m.allows("/api/not-advertised", &[]));
+        assert!(serde_json::from_value::<Manifest>(serde_json::json!({
+            "board_kind":"controller","acknowledged_features":false
+        })).is_err());
+    }
+    #[test]
     fn serial_manifest_is_individual_and_table_modes_are_profile_scoped() {
         let mut payload = [0; 38];
-        payload[29] = 1;
+        payload[29] = 0; // Reserved, never a selectable contract generation.
         payload[30] = 1 << 7; // Buzzer only, not Display or Text.
         payload[32] = 15;
         let m = Manifest::from_usb(&payload).unwrap();

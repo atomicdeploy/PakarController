@@ -152,9 +152,8 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   }
 
   Future<void> loadIdentity() =>
-      readOwned('identity', '/api/v1/device/name', (value) {
-        if (value['schema'] != 1 ||
-            value['hostname'] is! String ||
+      readOwned('identity', '/api/device/name', (value) {
+        if (value['hostname'] is! String ||
             !validHostname(value['hostname']) ||
             !validText(value['display_name'], 63)) {
           throw const FormatException('Device identity unavailable');
@@ -168,16 +167,15 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
         }
         identity = value;
       });
-  Future<void> loadAccess() =>
-      readOwned('network', '/api/v1/auth/info', (value) {
-        if (value['ready'] is! bool ||
-            value['default_credentials'] is! bool ||
-            value['username'] is! String) {
-          throw const FormatException('Device access information unavailable');
-        }
-        if (access == null) login.text = value['username'];
-        access = value;
-      });
+  Future<void> loadAccess() => readOwned('network', '/api/auth/info', (value) {
+    if (value['ready'] is! bool ||
+        value['default_credentials'] is! bool ||
+        value['username'] is! String) {
+      throw const FormatException('Device access information unavailable');
+    }
+    if (access == null) login.text = value['username'];
+    access = value;
+  });
   Future<bool> confirm(String title, String detail) async =>
       await showDialog<bool>(
         context: context,
@@ -279,7 +277,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       return;
     }
     await runWrite('identity', () async {
-      final prior = await widget.api.getJson('/api/v1/device/name');
+      final prior = await widget.api.getJson('/api/device/name');
       check('identity');
       if (prior['hostname'] != identity!['hostname'] ||
           prior['display_name'] != identity!['display_name']) {
@@ -288,7 +286,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
         );
       }
       final ack = await widget.api.postJson(
-        '/api/v1/device/name',
+        '/api/device/name',
         {'hostname': next, 'display_name': label},
         authorize: () =>
             mounted &&
@@ -313,7 +311,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
           widget.api.password,
         );
       } else {
-        final actual = await widget.api.getJson('/api/v1/device/name');
+        final actual = await widget.api.getJson('/api/device/name');
         check('identity');
         if (actual['hostname'] != next || actual['display_name'] != label) {
           throw const FormatException('Saved identity readback differs');
@@ -344,7 +342,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
     }
     await runWrite('network', () async {
       final ack = await widget.api.postJson(
-        '/api/v1/auth',
+        '/api/auth',
         {
           'current_password': current.text,
           'username': username,
@@ -371,7 +369,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   }
 
   Future<void> scan() => runWrite('network', () async {
-    final value = await widget.api.getJson('/api/v1/wifi/scan');
+    final value = await widget.api.getJson('/api/wifi/scan');
     check('network');
     if (value['networks'] is! List) {
       throw const FormatException('Wi-Fi scan unavailable');

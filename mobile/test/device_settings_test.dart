@@ -247,7 +247,7 @@ void main() {
         return preflight.future;
       }),
     );
-    final action = api.postJson('/api/v1/cloud', {
+    final action = api.postJson('/api/cloud', {
       'websocket_token': 'private',
     }, authorize: () => authorized);
     final check = expectLater(action, throwsA(isA<StaleConnection>()));

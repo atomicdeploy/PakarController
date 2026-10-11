@@ -22,7 +22,7 @@ impl Reporter {
         // Opportunistic, bounded, no retry: reporting cannot stop board control.
         let _ = client
             .post(format!(
-                "{}/api/v1/clients/report",
+                "{}/api/clients/report",
                 endpoint.base.trim_end_matches('/')
             ))
             .basic_auth(&endpoint.user, Some(&endpoint.password))
@@ -31,7 +31,7 @@ impl Reporter {
             .send();
     }
     pub fn value(&self) -> serde_json::Value {
-        let mut d = serde_json::json!({"schema":1,"id":self.id,"os":std::env::consts::OS,
+        let mut d = serde_json::json!({"id":self.id,"os":std::env::consts::OS,
             "architecture":std::env::consts::ARCH,"application":"PakarController","version":env!("CARGO_PKG_VERSION"),
             "transport":"http","process_id":std::process::id(),"uptime_seconds":self.started.elapsed().as_secs().min(u32::MAX as u64)});
         if let Ok(name) = std::env::var("COMPUTERNAME").or_else(|_| std::env::var("HOSTNAME")) {

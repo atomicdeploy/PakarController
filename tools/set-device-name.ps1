@@ -43,7 +43,7 @@ $serial.DtrEnable = $false; $serial.RtsEnable = $false; $serial.ReadTimeout = 10
 $script:nameSequence = 0
 function Send-NameChunk([byte[]] $Payload) {
     $script:nameSequence++; $sequence = [byte] $script:nameSequence
-    [byte[]] $raw = @(0xa5, 1, 0x55, $sequence, $Payload.Length) + $Payload
+    [byte[]] $raw = @(0xa5, 0, 0x55, $sequence, $Payload.Length) + $Payload
     $raw += Get-Crc8 $raw
     [byte[]] $wire = Encode-Cobs $raw
     $serial.Write($wire, 0, $wire.Length)
@@ -52,7 +52,7 @@ function Send-NameChunk([byte[]] $Payload) {
         try { $value = $serial.ReadByte() } catch [TimeoutException] { continue }
         if ($value -ne 0) { if ($received.Count -lt 60) { $received.Add([byte] $value) }; continue }
         [byte[]] $reply = Decode-Cobs $received.ToArray(); $received.Clear()
-        if (-not $reply -or $reply.Length -lt 6 -or $reply[0] -ne 0xa5 -or $reply[1] -ne 1 -or $reply[3] -ne $sequence) { continue }
+        if (-not $reply -or $reply.Length -lt 6 -or $reply[0] -ne 0xa5 -or $reply[1] -ne 0 -or $reply[3] -ne $sequence) { continue }
         if ($reply.Length -ne $reply[4] + 6 -or (Get-Crc8 $reply[0..($reply.Length - 2)]) -ne $reply[-1]) { continue }
         if ($reply[2] -eq 0x80 -and $reply[4] -ge 1 -and $reply[5] -eq 0x55) { return }
         if ($reply[2] -eq 0x82) { throw 'Device rejected device naming. Check firmware version, hostname rules and ongoing updates.' }

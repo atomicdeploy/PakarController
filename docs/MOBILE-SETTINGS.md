@@ -32,7 +32,7 @@ a successful UI patch is not evidence of a persisted board save.
   input; exact persisted ACK before following a rename with existing credentials.
 - Access: observed storage/default-credential state, username/current/new/confirm
   password; exact positive ACK before following new credentials. Authenticated
-  /api/v1/auth readback is checked with the new login.
+  /api/auth readback is checked with the new login.
 - LEDs/front panel/AVR pages navigate existing acknowledged live controls;
   no ineffective UART, fuse, pin or pixel-count runtime switches are invented.
 - Overview uses observed build/peer values. Firmware/storage page says explicitly

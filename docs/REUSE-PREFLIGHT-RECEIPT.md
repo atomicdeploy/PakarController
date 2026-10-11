@@ -1,5 +1,40 @@
 # Donor-first preflight receipt
 
+## Living unversioned API correction
+
+Tracking issue #16. Read the PCController network runtime, client UX and
+firmware chats plus consolidation/Pealayer context. Read actual Go-Embedding-API
+policy and rest_routes_test.go completely; inspect ipc.go's top-level rejection
+function without certifying the unread remainder. Original bytes of the two
+complete-read files match the pinned donor snapshot. Added api-contract lookup
+and required gates; preserved every other pending donor row.
+
+Applied versionless REST across firmware, discovery, Web, native/CLI and Android;
+removed JSON generation selectors and numbered product subprotocol/profile/stream
+identities. Reserved-zero framing and explicit capability/audio acknowledgement
+replace generation/build-version inference. Authentication, operation ownership,
+hash/signature/model checks and private saved settings are retained. No aliases.
+
+Validation found an enum/non-enum warning, a nullable malformed-ACK test fixture
+type error, and guard stdout contaminating typed build Plan objects. Fixed the
+actual cast, fixture type and Write-Host routing. Imported storage/capture/build
+gates were used, not bypassed. A normalization mistake in evidence preparation
+was corrected using generate-file-comparison.ps1's exact LF hash rule; compact
+and multiline references were rechecked by their unchanged anchors.
+
+Native: 116 tests passed. Android: analysis clean, 72 cases passed in the full
+batch; the failing peer-context fixture was corrected and its five-case file
+passed through the gated wrapper. C++ protocol/ISP/remote update/persistence/
+display/audio/PC contracts passed. Web/quality checks passed in the completed
+batch plus the failed-tail recheck, without repeating unrelated suites.
+Final firmware build identities and CI/physical boundaries are recorded in the
+issue and FILE-COMPARISON-RECEIPTS.md, not inferred from these source checks.
+
+Live migration remains unverified: ledboard.local lookup fails and SSH
+localhost:1022 refuses connection. No physical flash, retained-settings readback,
+or current production-app replacement is claimed. Never perform a client-only
+rollout against the old numbered firmware API.
+
 ## Live desktop replacement, Android launcher and low-write recovery
 
 Consult build-storage, localization, mobile-settings, capture and exact donor-audit.

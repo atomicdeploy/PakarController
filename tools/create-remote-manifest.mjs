@@ -12,7 +12,7 @@ export function manifest(esp,avr,base,version,mode){
   const vector=avr.length===32768&&((avr[1]&0xf0)===0xc0||(avr[0]===0x0c&&avr[1]===0x94));
   if(!vector||!avr.subarray(32768-384).some(b=>b!==0xff))throw Error('Use the complete 32768-byte AVR image including Urboot, not HEX or application-only');
   const component=(data,file,model)=>({url:new URL(file,url).href,size:data.length,sha256:createHash('sha256').update(data).digest('hex'),version,model});
-  return {schema:1,product:'PakarController',profile:'pakar-nodemcu-atmega328p-v1',protocol:1,link_mode:mode,
+  return {product:'PakarController',profile:'pakar-nodemcu-atmega328p',link_mode:mode,
     esp:component(esp,'esp.bin','nodemcuv2'),avr:{...component(avr,'avr.bin','atmega328p'),signature:'1E950F',bootloader_included:true}};
 }
 // Publish the three files as one immutable server-side release directory; never

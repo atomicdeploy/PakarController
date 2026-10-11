@@ -153,7 +153,7 @@ fn network_page(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui:
                 draft.scan_pending = true;
                 let _ = app.http_tx.send(HttpCommand::Configuration(
                     app.endpoint(),
-                    "/api/v1/wifi/scan",
+                    "/api/wifi/scan",
                 ));
             }
             if !draft.ssids.is_empty() {
@@ -409,7 +409,7 @@ fn maintenance_page(
                 .add_enabled(available, egui::Button::new("Refresh update & telemetry"))
                 .clicked()
             {
-                for path in ["/api/v1/firmware/remote", "/api/v1/telemetry"] {
+                for path in ["/api/firmware/remote", "/api/telemetry"] {
                     let _ = app
                         .http_tx
                         .send(HttpCommand::Configuration(app.endpoint(), path));

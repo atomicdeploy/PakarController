@@ -21,14 +21,13 @@ class TestApi extends PakarApi {
   Future<CellMap> mapping() async => CellMap.defaults();
   @override
   Future<Map<String, dynamic>> getJson(String path) async => switch (path) {
-    '/api/v1/network' => Map.of(simulatedNetwork),
-    '/api/v1/cloud' => Map.of(simulatedCloud),
-    '/api/v1/device/name' => {
-      'schema': 1,
+    '/api/network' => Map.of(simulatedNetwork),
+    '/api/cloud' => Map.of(simulatedCloud),
+    '/api/device/name' => {
       'hostname': snapshot.hostname,
       'display_name': snapshot.peer.name,
     },
-    '/api/v1/auth/info' => {
+    '/api/auth/info' => {
       'ready': true,
       'default_credentials': false,
       'username': 'fixture',
@@ -109,7 +108,7 @@ void main() {
     expect(calls, 0);
   });
   testWidgets(
-    'Unknown schema has no Table, hardware, modes, display/text or buzzer cards',
+    'Unacknowledged board has no Table, hardware, modes, display/text or buzzer cards',
     (tester) async {
       await tester.pumpWidget(
         PakarControllerApp(

@@ -21,7 +21,7 @@ for (const name of ['showMarquee','displayControls']) {
   vm.runInContext(expression,context);
 }
 vm.runInContext('showMarquee();displayControls()',context);
-assert.equal(sent.path,'/api/v1/display');
+assert.equal(sent.path,'/api/display');
 assert.equal(sent.data.repeat,'once'); assert.equal(sent.data.force_scroll,false);
 assert.equal(fields.displayPauseLabel.hidden,true); assert.equal(fields.displayHoldLabel.hidden,true);
 fields.displayText.value='HI';vm.runInContext('displayControls()',context);

@@ -4,6 +4,9 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 export const phases={
   "quality": [
+    ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "api-contract", "-Gate"],
+    ["node", "tools/check-living-contract.mjs"],
+    ["node", "tests/living_contract_test.mjs"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "web-presentation", "-Gate"],
     ["node", "tools/generate-font-assets.mjs", "--check"],
     ["node", "tests/font_gzip_test.mjs"],

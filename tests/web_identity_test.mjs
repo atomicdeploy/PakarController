@@ -12,7 +12,7 @@ const document={title:'',querySelector:s=>s==='.app-logo'?images[0]:s==='.top h1
 const context=vm.createContext({document,TextEncoder,Uint8Array,DataView,atob});
 vm.runInContext(source.split('// BEGIN APPLICATION IDENTITY')[1].split('// END APPLICATION IDENTITY')[0],context);
 const run=s=>vm.runInContext(s,context);
-const peer={schema:1,name:'Living room',hostname:'ledboard',application:{id:'board.table',name:'Pakar Table',title:'Table controller',icon_png_base64:master}};
+const peer={name:'Living room',hostname:'ledboard',application:{id:'board.table',name:'Pakar Table',title:'Table controller',icon_png_base64:master}};
 context.peer=peer;run('renderApplicationIdentity(peer)');
 assert.equal(heading.textContent,'Pakar Table');
 assert.equal(document.title,'Table controller · Living room · ledboard.local');

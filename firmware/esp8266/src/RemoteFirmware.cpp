@@ -55,7 +55,7 @@ void RemoteFirmware::fail(const char *reason) {
 }
 String RemoteFirmware::json() const {
   JsonDocument d;
-  d[F("schema")]=1; d[F("job_id")]=id_;d[F("boot_id")]=boot_;d[F("phase")]=phase();
+  d[F("job_id")]=id_;d[F("boot_id")]=boot_;d[F("phase")]=phase();
   d[F("targets")]=plan_.targets;d[F("busy")]=busy();d[F("cancellable")]=busy()&&!applying()&&phase_!=VerifyPair;
   d[F("received_bytes")]=transfer_.received;d[F("expected_bytes")]=transfer_.expected;
   d[F("manifest_sha256")]=manifestSha_;d[F("error")]=error_;
@@ -68,7 +68,7 @@ String RemoteFirmware::json() const {
 }
 bool RemoteFirmware::save() {
   JsonDocument d;
-  d[F("schema")]=1;d[F("id")]=id_;d[F("phase")]=static_cast<uint8_t>(phase_);
+  d[F("id")]=id_;d[F("phase")]=static_cast<uint8_t>(phase_);
   d[F("targets")]=plan_.targets;d[F("manifest_sha256")]=manifestSha_;
   d[F("downgrade")]=downgrade_;d[F("error")]=error_;
   d[F("esp_version")]=plan_.esp.version;d[F("esp_sha")]=plan_.esp.sha;d[F("esp_size")]=plan_.esp.size;
@@ -90,7 +90,7 @@ void RemoteFirmware::begin(const String &boot,Prepare p,Program program,Finish f
   if(!f) return;
   if(f.size()>1024) { f.close();error_=F("Invalid remote journal; preserved for inspection");phase_=Failed;return; }
   JsonDocument d;
-  if(deserializeJson(d,f) || d[F("schema")]!=1 || !d[F("id")].is<uint32_t>() ||
+  if(deserializeJson(d,f) || !d.is<JsonObject>() || !d[F("id")].is<uint32_t>() ||
       !d[F("phase")].is<unsigned>() || d[F("phase")].as<unsigned>()>Cancelled ||
       !d[F("targets")].is<unsigned>() || d[F("targets")].as<unsigned>()<1 ||
       d[F("targets")].as<unsigned>()>3) {
@@ -192,8 +192,8 @@ bool RemoteFirmware::parseManifest() {
   File f=LittleFS.open(kManifest,"r");
   if(!f || f.size()>4096 || hashFile(f)!=manifestSha_) {if(f)f.close();return false;}
   f.seek(0,SeekSet);JsonDocument d;const bool parsed=!deserializeJson(d,f);f.close();
-  if(!parsed || d[F("schema")]!=1 || d[F("product")]!="PakarController" ||
-      d[F("profile")]!="pakar-nodemcu-atmega328p-v1" || d[F("protocol")]!=1) return false;
+  if(!parsed || !d.is<JsonObject>() || d[F("product")]!="PakarController" ||
+      d[F("profile")]!="pakar-nodemcu-atmega328p") return false;
 #if PAKAR_USE_BUSY_WIRE
   if(d[F("link_mode")]!="busy-wire") return false;
 #else
