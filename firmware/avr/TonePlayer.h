@@ -28,6 +28,7 @@ public:
   uint8_t revision() const { return revision_; }
   uint16_t activeFrequencyHz() const { return activeFrequencyHz_; }
   uint16_t activeDurationMs() const { return activeDurationMs_; }
+  uint32_t activeStartedMicros() const { return activeStartedMs_ * 1000UL; }
   bool muted() const { return muted_; }
 
 private:
@@ -53,6 +54,7 @@ private:
   uint8_t revision_;
   uint16_t activeFrequencyHz_;
   uint16_t activeDurationMs_;
+  uint32_t activeStartedMs_ = 0;
 };
 
 // buzzer is the single board-wide feedback player.

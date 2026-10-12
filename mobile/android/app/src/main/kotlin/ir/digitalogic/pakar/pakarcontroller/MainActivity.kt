@@ -13,6 +13,7 @@ import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
     private var discovery: DiscoveryChannel? = null
+    private var toneMirror: ToneMirrorChannel? = null
     private val io = Executors.newSingleThreadExecutor()
     private var pending: MethodChannel.Result? = null
     private var maximum = 0
@@ -25,6 +26,7 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         discovery = DiscoveryChannel(this, flutterEngine.dartExecutor.binaryMessenger)
+        toneMirror = ToneMirrorChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ir.digitalogic.pakar/documents")
             .setMethodCallHandler { call, result ->
                 try {
@@ -125,7 +127,13 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    override fun onPause() {
+        toneMirror?.stopAll() // Native cutoff also works if Dart stalls or loses lifecycle delivery.
+        super.onPause()
+    }
+
     override fun onDestroy() {
+        toneMirror?.close(); toneMirror = null
         discovery?.close(); discovery = null
         closed = true
         pending?.error("closed", "Document picker closed; no operation will be reopened automatically", null)

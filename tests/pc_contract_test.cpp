@@ -286,7 +286,11 @@ void polling() {
   EEPROM.reset(); Hardware h; h.canReceive=false; PcControllerRuntime r(h); r.begin(0);
   send(r,h,PC::Hello); h.frames.clear(); r.service(1,1000); assert(h.frames.empty());
   send(r,h,PC::GetStatus); assert(h.frames.size()==2 && h.frames[1].p[0]==PC::SegmentChanged);
-  send(r,h,PC::GetStatus); assert(h.frames.size()==2 && h.frames[1].p[0]==PC::BuzzerChanged && h.frames[1].p.size()==6);
+  h.live.audioStartedMicros = 0xFFFFFE00UL;
+  send(r,h,PC::GetStatus); assert(h.frames.size()==2 && h.frames[1].p[0]==PC::BuzzerChanged && h.frames[1].p.size()==14);
+  // Appended actual musical start and observation clocks, little endian;
+  // existing frequency/duration/mute bytes retain their offsets.
+  assert(h.frames[1].p[6] == 0 && h.frames[1].p[7] == 0xFE && h.frames[1].p[8] == 0xFF && h.frames[1].p[9] == 0xFF);
   h.live.muted=true;
   send(r,h,PC::GetStatus); assert(h.frames.size()==2 && h.frames[1].p[0]==PC::BuzzerChanged && h.frames[1].p[5]==1);
   r.key(8,KeyEvent::Down,0,110,110000);

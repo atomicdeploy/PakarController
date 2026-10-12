@@ -3,6 +3,120 @@
   "target_hash_encoding": "UTF8-without-BOM-LF",
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/hostbridge/buzzer_mirror.go",
+  "sha256": "2a6d0fd4d0bd2a59513430407b343e1c0d8afd94b3caa2f3a263241bf9390d81",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Fully read actual current donor through EOF. Adapted uint32 MCU timestamp wrap, 50ms playout delay, 250ms skew bound, absolute note deadlines, source-generation cancellation, independent opt-in and distinct failure transitions into real Android mirroring.",
+    "Donor cadence/stop/reconnect tests adapted to a silent injectable Flutter output. Actual PCM Android renderer uses bounded 5ms buffers, exact requested Hz, click-reducing envelope, finite deadline, focus/lifecycle cancellation and an independent six-second native receive lease."
+  ],
+  "targets": [
+    {
+      "anchor": "class ToneTimeline",
+      "path": "mobile/lib/mirroring.dart",
+      "sha256": "996e6ca2d96e8f4b6999439fb775d59612e0ed575f514b38ffbef0b0ab10ce4d"
+    },
+    {
+      "anchor": "class ToneMirrorChannel",
+      "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/ToneMirrorChannel.kt",
+      "sha256": "48934806ea64dc02be68fbdf73978d65337fdb36dd94482749c14422aaf8dd20"
+    },
+    {
+      "anchor": "put32(audio + 5, s.audioStartedMicros);",
+      "path": "firmware/avr/PcControllerRuntime.cpp",
+      "sha256": "2b17ef65a5b7a731aa19cdd1be64d97af2f2bf6246c8fe854243ec48c25accbe"
+    }
+  ],
+  "proof": [
+    {"path":"mobile/test/mirroring_transport_test.dart","sha256":"5b86dae832e659a5f2a1cb5d3587ae4d3e1a354dfae33c62b14dfed3ccc1f8cf","anchor":"Actual authenticated WebSocket"},
+    {
+      "anchor": "Actual donor cadence",
+      "path": "mobile/test/mirroring_test.dart",
+      "sha256": "43df9cb38f7b52892a66db911dfd2a6c0317c68e580247536cdf8a6cd61c1eaf"
+    },
+    {
+      "anchor": "Appended actual musical start",
+      "path": "tests/pc_contract_test.cpp",
+      "sha256": "a551e4b70ad1fe91670490dba2f583cc9aa4e03d03284976b8df8603a0c4c063"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Go multi-source pending/replacement sorting, Linux KDMKTONE/external beep drivers and bridge ingress",
+      "reason": "Android mirrors only the explicitly selected peer. Independent session tokens and selected board/boot/AVR-session ownership replace multi-source scheduling; Android AudioTrack PCM replaces incompatible PC-speaker drivers. No background service or remote note ingestion is silently enabled.",
+      "disposition": "replaced"
+    },
+    {
+      "code": "Native receiver physical waveform/latency and complete all-host audio-domain parity",
+      "reason": "No connected ADB phone or physical board acceptance yet. Native/Web do not yet consume the new timestamped audio stream; ESP32-S3 integration remains separate pending work. Phone synthesis matches reported pitch, not piezo timbre or measured Timer1 quantization.",
+      "disposition": "pending"
+    }
+  ],
+  "remaining": [
+    "Install APK on authorized phone, deploy integrated ESP/AVR together after backups; measure welcome cadence, background/focus/long-tone/disconnect cutoff, all actual front-panel keys and segment masks.",
+    "Complete S3 shared firmware integration, multi-source/background receiver if requested and network bridge note forwarding without echo/replay."
+  ]
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/hostbridge/buzzer_mirror_test.go",
+  "sha256": "83b8726d8ef22627d76fbf3650cbd1128d1cc1cca4d4a3f4a59fda1a440b6f08",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Fully read actual current donor through EOF. Adapted uint32 MCU timestamp wrap, 50ms playout delay, 250ms skew bound, absolute note deadlines, source-generation cancellation, independent opt-in and distinct failure transitions into real Android mirroring.",
+    "Donor cadence/stop/reconnect tests adapted to a silent injectable Flutter output. Actual PCM Android renderer uses bounded 5ms buffers, exact requested Hz, click-reducing envelope, finite deadline, focus/lifecycle cancellation and an independent six-second native receive lease."
+  ],
+  "targets": [
+    {
+      "anchor": "class ToneTimeline",
+      "path": "mobile/lib/mirroring.dart",
+      "sha256": "996e6ca2d96e8f4b6999439fb775d59612e0ed575f514b38ffbef0b0ab10ce4d"
+    },
+    {
+      "anchor": "class ToneMirrorChannel",
+      "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/ToneMirrorChannel.kt",
+      "sha256": "48934806ea64dc02be68fbdf73978d65337fdb36dd94482749c14422aaf8dd20"
+    },
+    {
+      "anchor": "put32(audio + 5, s.audioStartedMicros);",
+      "path": "firmware/avr/PcControllerRuntime.cpp",
+      "sha256": "2b17ef65a5b7a731aa19cdd1be64d97af2f2bf6246c8fe854243ec48c25accbe"
+    }
+  ],
+  "proof": [
+    {"path":"mobile/test/mirroring_transport_test.dart","sha256":"5b86dae832e659a5f2a1cb5d3587ae4d3e1a354dfae33c62b14dfed3ccc1f8cf","anchor":"Actual authenticated WebSocket"},
+    {
+      "anchor": "Actual donor cadence",
+      "path": "mobile/test/mirroring_test.dart",
+      "sha256": "43df9cb38f7b52892a66db911dfd2a6c0317c68e580247536cdf8a6cd61c1eaf"
+    },
+    {
+      "anchor": "Appended actual musical start",
+      "path": "tests/pc_contract_test.cpp",
+      "sha256": "a551e4b70ad1fe91670490dba2f583cc9aa4e03d03284976b8df8603a0c4c063"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Go multi-source pending/replacement sorting, Linux KDMKTONE/external beep drivers and bridge ingress",
+      "reason": "Android mirrors only the explicitly selected peer. Independent session tokens and selected board/boot/AVR-session ownership replace multi-source scheduling; Android AudioTrack PCM replaces incompatible PC-speaker drivers. No background service or remote note ingestion is silently enabled.",
+      "disposition": "replaced"
+    },
+    {
+      "code": "Native receiver physical waveform/latency and complete all-host audio-domain parity",
+      "reason": "No connected ADB phone or physical board acceptance yet. Native/Web do not yet consume the new timestamped audio stream; ESP32-S3 integration remains separate pending work. Phone synthesis matches reported pitch, not piezo timbre or measured Timer1 quantization.",
+      "disposition": "pending"
+    }
+  ],
+  "remaining": [
+    "Install APK on authorized phone, deploy integrated ESP/AVR together after backups; measure welcome cadence, background/focus/long-tone/disconnect cutoff, all actual front-panel keys and segment masks.",
+    "Complete S3 shared firmware integration, multi-source/background receiver if requested and network bridge note forwarding without echo/replay."
+  ]
+},
       {
         "origin": "PCController",
         "path": "Tools/Controller/internal/discovery/discovery.go",
@@ -346,8 +460,8 @@
       "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn command_request("
     },
-    {"path":"mobile/lib/api.dart","sha256":"e653cd40168a23cc399de40b97a24b832e4737c3f56d8bd2e06707c227eca6bd","anchor":"bool _acceptIdentity("},
-    {"path":"mobile/lib/main.dart","sha256":"2ff496d8b6e18d0a30c595ac60d9e5d4f1d5b626c6d3ec2c1a90efa23ec24ab3","anchor":"api.onPeerChanged = ()"},
+    {"path":"mobile/lib/api.dart","sha256":"fcdc03cb654eabb48c94f921fb2f64e998b3d18837ff09cb03288d1c67aaf864","anchor":"bool _acceptIdentity("},
+    {"path":"mobile/lib/main.dart","sha256":"6ea527d0625585fd493101975fb55a6156d9f30a4d53430cdd494b48021cee61","anchor":"api.onPeerChanged = ()"},
     {"path":"mobile/lib/bridge.dart","sha256":"4fd40d999691968be1d32826a925a4bb221a5bd102c2a237ed947f6bf37b2be9","anchor":"watchdog = Timer.periodic"},
     {
       "path": "libraries/BoardCore/src/PeerFence.h",
@@ -361,7 +475,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0",
+      "sha256": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d",
       "anchor": "bool authenticate()"
     },
     {
@@ -1796,7 +1910,7 @@
         },
         {
           "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt",
-          "sha256": "3d2ff9a55542ccb71803b39039206ff2f7acdb36696073365a155f3ef6ea16f5",
+          "sha256": "a2b240972900683f5f2622bbe69f47569c0a0bfabee8f66311116f8ae0c6a61e",
           "anchor": "Intent.ACTION_OPEN_DOCUMENT"
         },
         {
@@ -1811,7 +1925,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "e653cd40168a23cc399de40b97a24b832e4737c3f56d8bd2e06707c227eca6bd",
+          "sha256": "fcdc03cb654eabb48c94f921fb2f64e998b3d18837ff09cb03288d1c67aaf864",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -1848,7 +1962,7 @@
         },
         {
           "path": "mobile/test/capture_test.dart",
-          "sha256": "699f426930710b88e51cc6495f7a0d4a0c4d9d716a62920451447ffd72870e09",
+          "sha256": "f4042a5e06690a29010ced124f1ec5a540ad060a23fecf480aaee03a89b61cab",
           "anchor": "Firmware capture must never issue a device mutation"
         }
       ],
@@ -1916,7 +2030,7 @@
       "proof": [
         {"path":"mobile/test/device_settings_test.dart","sha256":"18f2ad9b2a9c6826a38cfe04321810fa367165797f835a9d50375bf980339480","anchor":"Settings write $behavior: one POST"},
         {"path":"mobile/test/device_settings_page_test.dart","sha256":"da7de6a91d19dee9231d9b16e80da25864f4bcc84146d1b4425564f98d6d234b","anchor":"Acknowledged $route handoff after old view closes"},
-        {"path":"mobile/test/capture_test.dart","sha256":"699f426930710b88e51cc6495f7a0d4a0c4d9d716a62920451447ffd72870e09","anchor":"Capture must never issue a device mutation"}
+        {"path":"mobile/test/capture_test.dart","sha256":"f4042a5e06690a29010ced124f1ec5a540ad060a23fecf480aaee03a89b61cab","anchor":"Capture must never issue a device mutation"}
       ],
       "improvement":""
     },
@@ -2445,7 +2559,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "2ff496d8b6e18d0a30c595ac60d9e5d4f1d5b626c6d3ec2c1a90efa23ec24ab3",
+          "sha256": "6ea527d0625585fd493101975fb55a6156d9f30a4d53430cdd494b48021cee61",
           "anchor": "Future<bool> _command"
         },
         {
@@ -2691,7 +2805,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "2ff496d8b6e18d0a30c595ac60d9e5d4f1d5b626c6d3ec2c1a90efa23ec24ab3",
+          "sha256": "6ea527d0625585fd493101975fb55a6156d9f30a4d53430cdd494b48021cee61",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -3485,12 +3599,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "03ede515e478fd936c0414a9332b50cb9dd07c540a22a11738317e18220da1f3",
+          "sha256": "3884bc416745c54a4cc2aed23abc60c1b284b7c67e8586d380e805811325cc1d",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "ca7d0f91005fed47fa5410e2109f7a667a86fc2d56652ea8f08a1243f02a224f",
+          "sha256": "405a1d11908e89e9abee584354f49e32dd0bd65e07209f75f8b297eeef21eae1",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
@@ -3512,12 +3626,12 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "9b09ab22eaaf7f28d7138ef4b30b8fe36b7cddbcead32bf411b242664c6f6ea6",
+          "sha256": "64793f18a88d57e9102b7a20f04986bc6f5e250c763d524449e5e94f48191a55",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "9b09ab22eaaf7f28d7138ef4b30b8fe36b7cddbcead32bf411b242664c6f6ea6",
+          "sha256": "64793f18a88d57e9102b7a20f04986bc6f5e250c763d524449e5e94f48191a55",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -3535,12 +3649,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "03ede515e478fd936c0414a9332b50cb9dd07c540a22a11738317e18220da1f3",
+          "sha256": "3884bc416745c54a4cc2aed23abc60c1b284b7c67e8586d380e805811325cc1d",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "ca7d0f91005fed47fa5410e2109f7a667a86fc2d56652ea8f08a1243f02a224f",
+          "sha256": "405a1d11908e89e9abee584354f49e32dd0bd65e07209f75f8b297eeef21eae1",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
@@ -3567,12 +3681,12 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "9b09ab22eaaf7f28d7138ef4b30b8fe36b7cddbcead32bf411b242664c6f6ea6",
+          "sha256": "64793f18a88d57e9102b7a20f04986bc6f5e250c763d524449e5e94f48191a55",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "9b09ab22eaaf7f28d7138ef4b30b8fe36b7cddbcead32bf411b242664c6f6ea6",
+          "sha256": "64793f18a88d57e9102b7a20f04986bc6f5e250c763d524449e5e94f48191a55",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -3591,12 +3705,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "03ede515e478fd936c0414a9332b50cb9dd07c540a22a11738317e18220da1f3",
+          "sha256": "3884bc416745c54a4cc2aed23abc60c1b284b7c67e8586d380e805811325cc1d",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "ca7d0f91005fed47fa5410e2109f7a667a86fc2d56652ea8f08a1243f02a224f",
+          "sha256": "405a1d11908e89e9abee584354f49e32dd0bd65e07209f75f8b297eeef21eae1",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
@@ -3618,12 +3732,12 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "9b09ab22eaaf7f28d7138ef4b30b8fe36b7cddbcead32bf411b242664c6f6ea6",
+          "sha256": "64793f18a88d57e9102b7a20f04986bc6f5e250c763d524449e5e94f48191a55",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "9b09ab22eaaf7f28d7138ef4b30b8fe36b7cddbcead32bf411b242664c6f6ea6",
+          "sha256": "64793f18a88d57e9102b7a20f04986bc6f5e250c763d524449e5e94f48191a55",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -3641,12 +3755,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "03ede515e478fd936c0414a9332b50cb9dd07c540a22a11738317e18220da1f3",
+          "sha256": "3884bc416745c54a4cc2aed23abc60c1b284b7c67e8586d380e805811325cc1d",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "ca7d0f91005fed47fa5410e2109f7a667a86fc2d56652ea8f08a1243f02a224f",
+          "sha256": "405a1d11908e89e9abee584354f49e32dd0bd65e07209f75f8b297eeef21eae1",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
@@ -3673,12 +3787,12 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "9b09ab22eaaf7f28d7138ef4b30b8fe36b7cddbcead32bf411b242664c6f6ea6",
+          "sha256": "64793f18a88d57e9102b7a20f04986bc6f5e250c763d524449e5e94f48191a55",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "9b09ab22eaaf7f28d7138ef4b30b8fe36b7cddbcead32bf411b242664c6f6ea6",
+          "sha256": "64793f18a88d57e9102b7a20f04986bc6f5e250c763d524449e5e94f48191a55",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -3932,12 +4046,12 @@
       "proof": [
         {
           "path": "tests/pc_contract_test.cpp",
-          "sha256": "3d688e877afed1bdcabc959ab2714c188b9c2d106ef8fb10e4deac89608f13e2",
+          "sha256": "a551e4b70ad1fe91670490dba2f583cc9aa4e03d03284976b8df8603a0c4c063",
           "anchor": "void keysAndDisplay()"
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb",
+          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -3983,12 +4097,12 @@
       "proof": [
         {
           "path": "tests/pc_contract_test.cpp",
-          "sha256": "3d688e877afed1bdcabc959ab2714c188b9c2d106ef8fb10e4deac89608f13e2",
+          "sha256": "a551e4b70ad1fe91670490dba2f583cc9aa4e03d03284976b8df8603a0c4c063",
           "anchor": "void keysAndDisplay()"
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb",
+          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -4041,12 +4155,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb",
+          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb",
+          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -4086,12 +4200,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb",
+          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb",
+          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -4141,7 +4255,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb",
+          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -4197,7 +4311,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb",
+          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -4428,7 +4542,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0"
+          "sha256": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d"
         }
       ],
       "proof": [
@@ -4495,7 +4609,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0"
+          "sha256": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d"
         }
       ],
       "proof": [
@@ -4562,7 +4676,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0"
+          "sha256": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d"
         }
       ],
       "proof": [
@@ -4614,7 +4728,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0"
+          "sha256": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d"
         }
       ],
       "proof": [
@@ -4758,7 +4872,7 @@
         },
         {
           "path": "tools/build-mobile.ps1",
-          "sha256": "354f14d1353b06823d8c59ec1461e802eaee95b3ba05045f71a63d645cf39156",
+          "sha256": "cd2502238f503647a3ff252b0c79ab5d988064416c1d968c34c7cc858ee39781",
           "anchor": "$taskCache=Get-DirectorySummary"
         }
       ],
@@ -5397,7 +5511,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb",
+          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -5453,7 +5567,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb",
+          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -5509,7 +5623,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb",
+          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -5565,7 +5679,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "b1d96c3fb09fc1c36416ab223499c6069466e2fa51518bab7b5d388b701edcdb",
+          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],

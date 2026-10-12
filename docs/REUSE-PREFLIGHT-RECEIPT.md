@@ -1,5 +1,63 @@
 # Donor-first preflight receipt
 
+## Android peripheral mirroring
+
+Started from clean a6dec77; refreshed owning issue #2 and open PR state (none).
+Prior Build38275253969 completed with Android/Windows/quality success but the
+firmware setup failed three times on the ESP8266 python3 tool HTTP500; CodeQL
+passed. That is not all-green CI or evidence of a firmware source failure.
+
+Consulted firmware-hardware and literal donor-audit for PCController
+buzzer_mirror.go, buzzer_mirror_test.go and FrontPanelModel.h. Fully read current
+Go scheduler/tests through EOF at704f44042e6bf46c4459bd63f37230460f221389, exact
+original SHA2a6d0fd4.../83b8726d...; unrelated dirty donor files preserved.
+Adapted actual cadence, wrap, jitter cushion, absolute expiry, Stop/reconnect
+flush, opt-in and independent failure transitions into Android PCM mirroring.
+FrontPanelModel was read, but motion/RF/sensor menus are not fabricated into this
+hardware profile; broader menu/action imports remain explicitly pending.
+
+Added AVR musical-start/observed clocks, explicit HELLO timestamp acknowledgment
+and actual front-panel state. ESP's existing raw event projection now binds
+board/boot/AVR-session/event ID; Android events cannot authorize identity or
+renew stale status. Hardware UART, A4/A5 and busy/poll/buffered profiles remain.
+Added a mobile-mirroring donor gate and exact source/target/test hashes to the
+existing ledger, plus refreshed original PC contract target hashes/line anchors
+and PU route target hashes. No disconnected replacement ledger was created.
+
+Recovered expected proof-hash failures by rereviewing only changed shipping
+targets, not bumping unread donor hashes. Pealayer inventory moved564->567 during
+this slice; ten changed previously reviewed files retain their immutable prior
+source snapshots with current live hashes and explicit reread actions. Later
+repository-wide preflight encountered further concurrent tracked-path drift;
+local whole quality is not declared passed or bypassed. A patch-generation
+helper hit the default1MiB child-output buffer and unordered hunks; selected
+read-only rows were bounded and sorted before apply_patch, without shell writes
+or donor mutations. The donor-first tooling remains mandatory.
+
+The first UI test's short viewport lazily omitted the display; an explicit tall
+fixture verifies independent mirrors. A real socket test was separated from
+widget-binding's intentional HTTP400 override, not patched into production.
+The first tablet capture rendered correctly but left a test lease active at
+invariant checking; explicit idempotent disposal fixes the harness. Existing
+capture evidence was inspected and preserved, never overwritten.
+
+Final guarded analyze and86/86 mobile tests pass, including real authenticated
+loopback WebSocket routing and inspected phone capture. C++ production protocol
+suite passes; AVR busy-wire/polling/buffered and integrated ESP8266 busy-wire
+builds pass. AVR RAM1327/2048 (721stack bytes available), busy-wire flash28062/
+32384; ESP RAM56700/80192, IRAM63055/65536, flash897192/1048576. Clock/register/
+transport doubles are not hardware waveform, memory-margin or audible proof.
+
+Final preview APK55396153bytes, SHA256
+74c10aabf1e6c4735c403969a1cf730346871090f6bd138bea1ab242dbcca011,
+copied to the stable delivered APK and hash-verified. Debug signing remains a
+preview limitation. Tablet screenshot86063bytes/SHA97d37cedd9c6b7d2f9843b04660d5c41b3e831383351bd9a93d2c823f735e4f6;
+phone86459bytes/SHAfb57825d3b2df5ea7ef46d898d62709285368811417212a627c375ca9b15c279.
+Both are explicit simulated peers with silent output, not live device evidence.
+ADB freshly lists no device. No firmware, fuses, EEPROM or remote buzzer writes.
+S3 integration, phone installation/audible timing/focus tests and native/Web
+audio consumers/optional bridge note forwarding remain open in issue #2.
+
 ## Web streaming pacing
 
 Started from clean 5b54e4d; Build38154906733 and CodeQL38154906685 passed.

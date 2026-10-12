@@ -10,6 +10,9 @@ import 'package:pakarcontroller/models.dart';
 import 'package:pakarcontroller/device_settings_page.dart';
 import 'package:pakarcontroller/firmware_page.dart';
 import 'package:pakarcontroller/bridge_page.dart';
+import 'package:pakarcontroller/mirroring.dart';
+
+import 'mirroring_test.dart' show mirroredPeer, SilentOutput;
 
 import 'peer_fixture.dart';
 import 'device_settings_page_test.dart' show SettingsApi;
@@ -30,9 +33,15 @@ void main() {
         'FirmwarePhone',
         'BridgeTablet',
         'BridgePhone',
+        'FrontPanelTablet',
+        'FrontPanelPhone',
       ], contains(view));
       final firmware = view.startsWith('Firmware');
       final bridge = view.startsWith('Bridge');
+      final frontPanel = view.startsWith('FrontPanel');
+      final mirror = PeripheralMirror(output: SilentOutput())
+        ..observe(mirroredPeer(), 1);
+      addTearDown(mirror.dispose);
       final settings = view != 'Table', phone = view.endsWith('Phone');
       final api = SettingsApi();
       final firmwareApi = FirmwareApi();
@@ -80,7 +89,15 @@ void main() {
               appBar: AppBar(
                 title: const Text('PakarController · Simulated fixture'),
               ),
-              body: bridge
+              body: frontPanel
+                  ? FrontPanelPage(
+                      status: mirroredPeer(),
+                      mirror: mirror,
+                      command: (_, [values = const {}]) async {
+                        fail('No board mutation in screenshot');
+                      },
+                    )
+                  : bridge
                   ? BridgePage(api: api, observed: () => peerFixture())
                   : firmware
                   ? SingleChildScrollView(
@@ -110,13 +127,13 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      if (settings && !firmware && !bridge) {
+      if (settings && !firmware && !bridge && !frontPanel) {
         await tester.tap(
           phone
               ? find.widgetWithText(ChoiceChip, 'MQTT')
               : find.widgetWithText(ListTile, 'MQTT'),
         );
-      } else if (!firmware && !bridge) {
+      } else if (!firmware && !bridge && !frontPanel) {
         await tester.enterText(find.byType(TextField).first, '1–3, 12, 80');
       }
       await tester.pumpAndSettle();
@@ -140,6 +157,7 @@ void main() {
         await output.writeAsBytes(bytes!.buffer.asUint8List(), flush: true);
         image.dispose();
       });
+      mirror.dispose(); // Retire the lease before widget-test invariant checks.
     },
   );
 }

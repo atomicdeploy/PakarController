@@ -19,6 +19,7 @@ class PcControllerHardware {
     uint16_t panelMeta;
     uint16_t frequency, duration, uartErrors;
     uint8_t audioRevision;
+    uint32_t audioStartedMicros;
   };
   virtual Snapshot snapshot() const = 0;
   virtual BoardCore::Protocol::Error execute(uint8_t opcode, const uint8_t *payload,

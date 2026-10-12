@@ -66,6 +66,7 @@ class BoardHardware final : public PcControllerHardware {
     s.programming = programmingLatch.active(); s.buzzerBusy = buzzer.isBusy();
     s.muted = buzzer.muted(); s.frequency = buzzer.activeFrequencyHz();
     s.duration = buzzer.activeDurationMs(); s.audioRevision = buzzer.revision();
+    s.audioStartedMicros = buzzer.activeStartedMicros();
     s.uartErrors = link.errors(); return s;
   }
   Error execute(uint8_t opcode, const uint8_t *p, uint8_t n, uint32_t now) override {
@@ -190,6 +191,7 @@ void sendHello(uint8_t sequence = 0) {
       static_cast<uint8_t>(BoardCore::Features::enabled),
       static_cast<uint8_t>(BoardCore::Features::enabled >> 8),
       kCueCount, // Append-only explicit stable audio IDs [0, count).
+      1, // Explicit timestamped tone telemetry acknowledgement, not an API generation.
   };
   link.send(kHelloResponse, sequence, payload, sizeof(payload));
 }
@@ -207,6 +209,9 @@ bool sendGameState(uint8_t sequence = 0) {
       static_cast<uint8_t>(programmingLatch.active()),
       segments[0], segments[1], segments[2], segments[3],
       display.brightness(), static_cast<uint8_t>(frontPanel.hostActive()),
+      pcController.menuPage(), static_cast<uint8_t>(pcController.menuActive()),
+      static_cast<uint8_t>(pcController.running()), static_cast<uint8_t>(frontPanel.captured()),
+      static_cast<uint8_t>(frontPanel.capturedMeta()), static_cast<uint8_t>(frontPanel.capturedMeta() >> 8),
   };
   return link.send(kGameState, sequence, payload, sizeof(payload));
 }
@@ -466,6 +471,14 @@ void loop() {
   if (tm1637Ack != display.detected()) { tm1637Ack = display.detected(); markStateDirty(); }
   pcController.service(now, micros());
   boardHardware.showMenu(pcController.menuPage(), pcController.menuActive(), pcController.running());
+  static uint8_t previousPanel[6] = {};
+  const uint16_t panelMeta = frontPanel.capturedMeta();
+  const uint8_t panel[6] = {pcController.menuPage(), static_cast<uint8_t>(pcController.menuActive()),
+      static_cast<uint8_t>(pcController.running()), static_cast<uint8_t>(frontPanel.captured()),
+      static_cast<uint8_t>(panelMeta), static_cast<uint8_t>(panelMeta >> 8)};
+  if (memcmp(previousPanel, panel, sizeof(panel))) {
+    memcpy(previousPanel, panel, sizeof(panel)); markStateDirty();
+  }
   static uint8_t previousSegments[4] = {};
   static uint8_t previousBrightness = 0xFF;
   if (memcmp(previousSegments, display.rawSegments(), 4) ||

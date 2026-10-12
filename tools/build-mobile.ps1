@@ -8,7 +8,7 @@ param(
     [switch]$BuildOnly,
     [ValidatePattern('^test/[A-Za-z0-9_/-]+_test\.dart$')][string]$TestPath,
     [string]$CapturePath,
-    [ValidateSet('Table','SettingsTablet','SettingsPhone','FirmwareTablet','FirmwarePhone','BridgeTablet','BridgePhone')][string]$CaptureView='Table',
+    [ValidateSet('Table','SettingsTablet','SettingsPhone','FirmwareTablet','FirmwarePhone','BridgeTablet','BridgePhone','FrontPanelTablet','FrontPanelPhone')][string]$CaptureView='Table',
     [switch]$Plan
 )
 $ErrorActionPreference='Stop'
@@ -21,6 +21,7 @@ $taskContext=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern device-con
 $taskSettings=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-settings -Gate
 $taskFirmware=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-firmware -Gate
 $taskNetwork=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-network -Gate
+$taskMirror=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-mirroring -Gate
 $taskStorage=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate
 foreach($taskGenerator in @('generate-font-assets.mjs','generate-interface-contract.mjs','generate-branding.mjs')){
     $taskGeneratorOutput=& node (Join-Path $PSScriptRoot $taskGenerator) --check 2>&1

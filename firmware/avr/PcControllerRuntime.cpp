@@ -477,8 +477,10 @@ void PcControllerRuntime::service(uint32_t now, uint32_t nowUs) {
     return; // One bounded unsolicited frame per loop; no display/audio burst.
   }
   if (lastAudioRevision_ != s.audioRevision || lastMuted_ != s.muted) {
-    uint8_t audio[5]; put16(audio, s.frequency); put16(audio + 2, s.duration);
+    uint8_t audio[13]; put16(audio, s.frequency); put16(audio + 2, s.duration);
     audio[4] = s.muted;
+    put32(audio + 5, s.audioStartedMicros);
+    put32(audio + 9, nowUs);
     if (reply(PC::BuzzerChanged, 0, audio, sizeof(audio))) {
       lastAudioRevision_ = s.audioRevision; lastMuted_ = s.muted;
     }
@@ -504,8 +506,10 @@ void PcControllerRuntime::drainOne(bool mirror) {
       return;
     }
     if (lastAudioRevision_ != s.audioRevision || lastMuted_ != s.muted) {
-      uint8_t audio[5]; put16(audio, s.frequency); put16(audio + 2, s.duration);
+      uint8_t audio[13]; put16(audio, s.frequency); put16(audio + 2, s.duration);
       audio[4] = s.muted;
+      put32(audio + 5, s.audioStartedMicros);
+      put32(audio + 9, micros());
       if (reply(PC::BuzzerChanged, 0, audio, sizeof(audio))) {
         lastAudioRevision_ = s.audioRevision; lastMuted_ = s.muted;
       }

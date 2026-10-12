@@ -29,6 +29,8 @@ class PakarApi {
   int _connectionRevision = 0;
   int get connectionRevision => _connectionRevision;
   void Function()? onPeerChanged;
+  void Function()? onTransportRetired;
+  void Function(Map<String, dynamic>)? onPeripheralEvent;
   bool _identityRequired = false;
   String get baseUrl => _baseUrl;
   set baseUrl(String value) {
@@ -378,6 +380,16 @@ class PakarApi {
       if (revision != connectionRevision) return;
       if (message is! String) continue;
       final value = jsonDecode(message);
+      if (value is Map<String, dynamic> &&
+          value['type'] == 'pc-contract-event') {
+        // Events cannot establish identity or refresh an expired status lease.
+        if (_verifiedBoard != null &&
+            value['board_id'] == _verifiedBoard &&
+            value['boot_id'] == _verifiedBoot) {
+          onPeripheralEvent?.call(value);
+        }
+        continue;
+      }
       if (value is Map<String, dynamic> && value.containsKey('hostname')) {
         final expected = _localLabel();
         if (expected != null && value['hostname'] != expected) {
@@ -405,6 +417,7 @@ class PakarApi {
     ++_connectionRevision;
     _discoveredBaseUrl = _transportOwner = _verifiedEndpoint = null;
     _verifiedBoard = _verifiedBoot = null;
+    onTransportRetired?.call();
     final active = _channel;
     _channel = null;
     if (active != null) {

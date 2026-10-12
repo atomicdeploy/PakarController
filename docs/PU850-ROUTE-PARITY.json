@@ -51,8 +51,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.native().on(\"/update\"",
       "reason": "Integrated guarded existing authenticated upload kept alongside pinned remote download. U_FS replacement disabled to preserve credentials and recovery backups.",
-      "target_sha256_utf8_lf": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0",
-      "target_line": 1737
+      "target_sha256_utf8_lf": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d",
+      "target_line": 1765
     },
     {
       "source": "LocalLib/AsyncWebServer.h",
@@ -63,8 +63,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "if(parsed[\"type\"]==\"telemetry\")",
       "reason": "Authenticated multiple-client WebSocket retains board state and adds read-only full telemetry and pinned remote-job commands.",
-      "target_sha256_utf8_lf": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0",
-      "target_line": 1192
+      "target_sha256_utf8_lf": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d",
+      "target_line": 1208
     },
     {
       "source": "LocalLib/Authentication.cpp",
@@ -111,8 +111,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.on(\"/description.xml\"",
       "reason": "SSDP root-device XML, actual product and hostname without nonexistent weighing/UPnP services.",
-      "target_sha256_utf8_lf": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0",
-      "target_line": 1951
+      "target_sha256_utf8_lf": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d",
+      "target_line": 1979
     },
     {
       "source": "pu850-esp.ino",
@@ -579,8 +579,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.native().on(\"/update/info\"",
       "reason": "Version/profile and both-board remote maintenance URLs; no misleading build-host/time identity.",
-      "target_sha256_utf8_lf": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0",
-      "target_line": 1725
+      "target_sha256_utf8_lf": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d",
+      "target_line": 1753
     },
     {
       "source": "pu850-esp.ino",
@@ -591,8 +591,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.on(\"/info\"",
       "reason": "Authenticated full structured ESP/AVR/client/network/clock/cloud telemetry; optional format=text.",
-      "target_sha256_utf8_lf": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0",
-      "target_line": 1726
+      "target_sha256_utf8_lf": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d",
+      "target_line": 1754
     },
     {
       "source": "pu850-esp.ino",

@@ -39,3 +39,10 @@ bundle. mqtt_client implements the MQTT wire protocol; Android DNS-SD uses the
 system NsdManager rather than a copied Go runtime. Owner-directed PU850 MNDP
 TLV/metadata adaptation and concrete omissions are hash-bound in the existing
 file comparison ledger; there is no claim of complete donor parity.
+
+Android peripheral mirroring adapts the actual MIT-option PCController
+`Tools/Controller/internal/hostbridge/buzzer_mirror.go` and its tests at
+`704f44042e6bf46c4459bd63f37230460f221389`: timestamp cadence, bounded jitter,
+finite deadlines and source cancellation. Android AudioTrack replaces the
+platform-incompatible PC speaker drivers; concrete omissions and original-byte
+hashes are recorded in the same file-comparison ledger.

@@ -125,6 +125,11 @@ bool tm1637Ack = false;
 uint8_t tm1637Segments[4] = {};
 uint8_t tm1637Brightness = 0;
 bool tm1637HostActive = false;
+bool avrToneTimestamps = false, avrPanelKnown = false;
+uint32_t avrSession = 0, mirrorSequence = 0;
+uint8_t avrMenuPage = 0;
+bool avrMenuActive = false, avrRunning = false, avrCaptured = false;
+uint16_t avrPanelMeta = 0;
 bool gameStateInitialized = false;
 bool streamFrameReady = false;
 uint8_t lastCellActionRevision = 0;
@@ -1078,6 +1083,17 @@ String buildStatusJson() {
   body += F("]");
   body += F(",\"tm1637_brightness\":"); body += tm1637Brightness;
   body += F(",\"tm1637_host_active\":"); body += tm1637HostActive ? F("true") : F("false");
+  body += F(",\"mirroring\":{\"avr_session\":"); body += avrSession;
+  body += F(",\"buzzer_timestamps\":"); body += avrOnline && avrToneTimestamps ? F("true") : F("false");
+  body += F(",\"front_panel\":"); body += avrOnline && avrPanelKnown ? F("true") : F("false");
+  body += F("}");
+  if (avrOnline && avrPanelKnown) {
+    body += F(",\"front_panel\":{\"menu_page\":"); body += avrMenuPage;
+    body += F(",\"menu_active\":"); body += avrMenuActive ? F("true") : F("false");
+    body += F(",\"running\":"); body += avrRunning ? F("true") : F("false");
+    body += F(",\"captured\":"); body += avrCaptured ? F("true") : F("false");
+    body += F(",\"meta\":"); body += avrPanelMeta; body += '}';
+  }
   body += F(",\"programming_latch\":"); body += programmingLatched ? F("true") : F("false");
   body += F(",\"link_mode\":\"");
   body += PAKAR_USE_BUSY_WIRE ? F("busy-wire") : F("polling");
@@ -1595,7 +1611,11 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
         pcTransport.releaseUsb(*receipt);
       } else publishPcEvent(pcReceiptJson(*receipt));
     } else if (frame.sequence == 0 || frame.sequence == 0xFE) {
-      String event = F("{\"type\":\"pc-contract-event\",\"response_opcode\":");
+      String event = F("{\"type\":\"pc-contract-event\",\"board_id\":\"");
+      event += pcBoardId; event += F("\",\"boot_id\":\""); event += pcBootId;
+      event += F("\",\"avr_session\":"); event += avrSession;
+      event += F(",\"event_id\":"); event += ++mirrorSequence;
+      event += F(",\"response_opcode\":");
       event += frame.payloadLength ? frame.payload[0] : 0;
       event += F(",\"payload_hex\":\"");
       constexpr char digits[] = "0123456789abcdef";
@@ -1626,6 +1646,8 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     if (avrVersionKnown) memcpy(avrVersion, frame.payload + 6, sizeof(avrVersion));
     avrCapabilities = avrVersionKnown ? frame.payload[2] | static_cast<uint16_t>(frame.payload[3]) << 8 : 0;
     avrAudioCueCount = avrVersionKnown && frame.payloadLength >= 13 ? frame.payload[12] : 0;
+    avrToneTimestamps = avrVersionKnown && frame.payloadLength >= 14 && frame.payload[13] == 1;
+    ++avrSession; avrPanelKnown = false;
     avrDisplayStatusKnown = false; tm1637Ack = false;
     avrPcSupported = avrVersionKnown && frame.payloadLength >= 12 && frame.payload[9] == 0x50;
     avrPcFeatures = avrPcSupported ? frame.payload[10] | static_cast<uint16_t>(frame.payload[11]) << 8 : 0;
@@ -1687,6 +1709,12 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       memcpy(tm1637Segments, frame.payload + 14, sizeof(tm1637Segments));
       tm1637Brightness = frame.payload[18];
       tm1637HostActive = frame.payload[19] != 0;
+    }
+    avrPanelKnown = frame.payloadLength >= 26;
+    if (avrPanelKnown) {
+      avrMenuPage = frame.payload[20]; avrMenuActive = frame.payload[21] != 0;
+      avrRunning = frame.payload[22] != 0; avrCaptured = frame.payload[23] != 0;
+      avrPanelMeta = frame.payload[24] | static_cast<uint16_t>(frame.payload[25]) << 8;
     }
     if (mode == kModeFirstWins && winner != 0 && winner != previousWinner) {
       grid.showWinner(winner);

@@ -83,3 +83,10 @@ Complete localization/appearance and Android-back draft protection remain open.
 Capture paths must be new files within this task's outputs/PakarController.
 SettingsPhone, FirmwareTablet, FirmwarePhone and Table are also supported; captures assert zero mutations and
 do not control an installed phone or the production Windows desktop.
+
+FrontPanelTablet and FrontPanelPhone capture the real peripheral mirroring UI
+with an explicit simulated peer and a silent injected audio output. Front panel
+and actual 7-segment masks are independent previews; phone-speaker mirroring
+synthesizes the advertised AVR Hz and timestamp cadence and is opt-in,
+foreground-only and peer/boot/AVR-session fenced. See
+[MOBILE-MIRRORING](../docs/MOBILE-MIRRORING.md) for contracts and live-test gates.

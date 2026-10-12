@@ -20,3 +20,4 @@ inline int digitalRead(uint8_t pin) {
 }
 inline void delayMicroseconds(unsigned) {}
 inline uint32_t millis() { return mockNow; }
+inline uint32_t micros() { return mockNow * 1000UL; }

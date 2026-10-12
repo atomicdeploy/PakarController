@@ -17,6 +17,7 @@ import 'device_settings_page.dart';
 import 'devices_page.dart';
 import 'bridge_page.dart';
 import 'firmware_page.dart';
+import 'mirroring.dart';
 
 final bundledApplicationArtwork = base64Decode(applicationArtworkBase64);
 
@@ -77,8 +78,10 @@ class ControlShell extends StatefulWidget {
   State<ControlShell> createState() => _ControlShellState();
 }
 
-class _ControlShellState extends State<ControlShell> {
+class _ControlShellState extends State<ControlShell>
+    with WidgetsBindingObserver {
   late final api = widget.api ?? PakarApi();
+  final mirror = PeripheralMirror();
   DeviceStatus? status;
   CellMap mapping = CellMap(physical: const [], names: const []);
   StreamSubscription<DeviceStatus>? live;
@@ -93,6 +96,9 @@ class _ControlShellState extends State<ControlShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    api.onPeripheralEvent = mirror.event;
+    api.onTransportRetired = () => mirror.observe(null, api.connectionRevision);
     api.onPeerChanged = () {
       if (!mounted) return;
       _revoke('Board/boot identity changed; previous operations retired');
@@ -191,6 +197,7 @@ class _ControlShellState extends State<ControlShell> {
   }
 
   void _observe(DeviceStatus value) {
+    mirror.observe(value, api.connectionRevision);
     final changed = status?.hostname != value.hostname;
     expiry?.cancel();
     ++observation;
@@ -206,6 +213,7 @@ class _ControlShellState extends State<ControlShell> {
   }
 
   void _revoke(String reason) {
+    mirror.observe(null, api.connectionRevision);
     expiry?.cancel();
     ++observation;
     if (!mounted) return;
@@ -306,7 +314,16 @@ class _ControlShellState extends State<ControlShell> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    mirror.foreground(state == AppLifecycleState.resumed);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    api.onPeripheralEvent = null;
+    api.onTransportRetired = null;
+    mirror.dispose();
     api.onPeerChanged = null;
     live?.cancel();
     fallback?.cancel();
@@ -363,6 +380,7 @@ class _ControlShellState extends State<ControlShell> {
               key: ValueKey('front:$owner:${hostname ?? ''}'),
               status: status,
               command: scoped,
+              mirror: mirror,
             ),
             'hardware' => HardwarePage(status: status),
             'device-settings' => DeviceSettingsPage(
@@ -979,9 +997,11 @@ class FrontPanelPage extends StatefulWidget {
     super.key,
     required this.status,
     required this.command,
+    this.mirror,
   });
   final DeviceStatus? status;
   final Command command;
+  final PeripheralMirror? mirror;
   @override
   State<FrontPanelPage> createState() => _FrontPanelPageState();
 }
@@ -999,7 +1019,14 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
   }
 
   @override
-  Widget build(BuildContext context) => ListView(
+  Widget build(BuildContext context) => widget.mirror == null
+      ? _contents(context)
+      : AnimatedBuilder(
+          animation: widget.mirror!,
+          builder: (_, _) => _contents(context),
+        );
+
+  Widget _contents(BuildContext context) => ListView(
     padding: const EdgeInsets.all(16),
     children: [
       const Text(
@@ -1007,14 +1034,85 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
         style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
       ),
       const SizedBox(height: 12),
-      if (widget.status?.peer.has('display') == true)
+      if (widget.mirror != null) _mirrorControls(widget.mirror!),
+      if (widget.mirror?.panelEnabled == true && widget.mirror!.panelAvailable)
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: widget.status!.segments.length == 4
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Live front panel',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  'Menu page ${widget.mirror!.panel['menu_page']} · '
+                  '${widget.mirror!.panel['menu_active'] == true ? 'Menu open' : 'Menu closed'} · '
+                  '${widget.mirror!.panel['running'] == true ? 'Running' : 'Stopped'}',
+                ),
+                Text(
+                  widget.mirror!.panel['captured'] == true
+                      ? 'Host owns key capture'
+                      : 'Board owns keys',
+                ),
+                const SizedBox(height: 12),
+                if (widget.status?.peer.has('inputs') == true)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (var i = 0; i < 9; i++)
+                        Chip(
+                          avatar: Icon(
+                            i == 8
+                                ? (widget.status?.json['input_9'] == true
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_unchecked)
+                                : ((widget.status!.activeInputs & (1 << i)) != 0
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_unchecked),
+                            size: 16,
+                          ),
+                          label: Text('Key ${i + 1}'),
+                        ),
+                    ],
+                  ),
+                if (widget.status?.peer.has('outputs') == true)
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (var i = 0; i < 8; i++)
+                        Chip(
+                          avatar: Icon(
+                            Icons.circle,
+                            size: 12,
+                            color:
+                                (widget.status!.activeOutputs & (1 << i)) != 0
+                                ? Theme.of(context).colorScheme.secondary
+                                : Theme.of(context).colorScheme.outline,
+                          ),
+                          label: Text('LED ${i + 1}'),
+                        ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+      if (widget.status?.peer.has('display') == true &&
+          widget.mirror?.segmentsEnabled != false)
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child:
+                (widget.mirror?.segments ?? widget.status!.segments).length == 4
                 ? SevenSegmentPreview(
-                    segments: widget.status!.segments,
-                    brightness: widget.status!.segmentBrightness,
+                    segments:
+                        widget.mirror?.segments ?? widget.status!.segments,
+                    brightness:
+                        widget.mirror?.brightness ??
+                        widget.status!.segmentBrightness,
                     active: true,
                   )
                 : const Text('Display state unavailable'),
@@ -1100,6 +1198,90 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
         ),
     ],
   );
+
+  Widget _mirrorControls(PeripheralMirror mirror) => Card(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              'Mirror on this phone',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+          ),
+          if (mirror.panelAvailable)
+            SwitchListTile.adaptive(
+              title: const Text('Front panel'),
+              subtitle: const Text('Live menu, ownership and physical keys'),
+              value: mirror.panelEnabled,
+              onChanged: mirror.setPanel,
+            ),
+          if (mirror.segmentsAvailable)
+            SwitchListTile.adaptive(
+              title: const Text('7-segment display'),
+              subtitle: const Text(
+                'Actual segment masks, decimal points and brightness',
+              ),
+              value: mirror.segmentsEnabled,
+              onChanged: mirror.setSegments,
+            ),
+          if (mirror.buzzerAvailable) ...[
+            SwitchListTile.adaptive(
+              title: const Text('Exact-tone buzzer'),
+              subtitle: const Text(
+                'Phone speaker · live AVR frequency and cadence · foreground only',
+              ),
+              value: mirror.buzzerEnabled,
+              onChanged: mirror.setBuzzer,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  const Text('Phone volume'),
+                  Expanded(
+                    child: Slider(
+                      value: mirror.volume,
+                      label: '${(mirror.volume * 100).round()}%',
+                      divisions: 20,
+                      onChanged: mirror.setVolume,
+                    ),
+                  ),
+                  Text('${(mirror.volume * 100).round()}%'),
+                ],
+              ),
+            ),
+            if (mirror.buzzerEnabled)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextButton.icon(
+                  onPressed: () => mirror.setBuzzer(false),
+                  icon: const Icon(Icons.volume_off_outlined),
+                  label: const Text('Stop phone audio'),
+                ),
+              ),
+          ] else if (widget.status?.peer.has('buzzer') == true)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Exact-tone mirroring awaits the AVR timestamp capability acknowledgment.',
+              ),
+            ),
+          if (mirror.failure != null)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                mirror.failure!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
 }
 
 class SevenSegmentPreview extends StatelessWidget {
@@ -1166,6 +1348,14 @@ class SegmentPainter extends CustomPainter {
             ..strokeCap = StrokeCap.round,
         );
       }
+      canvas.drawCircle(
+        Offset(startX + (digit * 36 + 34) * scale, 12 + 54 * scale),
+        2 * scale,
+        Paint()
+          ..color = (mask & 0x80) != 0
+              ? Color.fromRGBO(255, 74, 58, alpha)
+              : const Color(0xff4d2023),
+      );
     }
   }
 

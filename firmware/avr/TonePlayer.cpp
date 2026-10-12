@@ -79,6 +79,7 @@ void TonePlayer::update(uint32_t now) {
     if (static_cast<int32_t>(now - endsAt) >= 0) { startsAt = endsAt; continue; }
     activeFrequencyHz_ = step.frequencyHz;
     activeDurationMs_ = step.durationMs;
+    activeStartedMs_ = startsAt;
     ++revision_;
     if (!muted_ && step.frequencyHz != 0) startHardwareTone(step.frequencyHz);
     else stopHardwareTone();
@@ -88,6 +89,7 @@ void TonePlayer::update(uint32_t now) {
   }
   if (activeFrequencyHz_ != 0 || activeDurationMs_ != 0) {
     activeFrequencyHz_ = 0; activeDurationMs_ = 0; ++revision_;
+    activeStartedMs_ = now;
   }
 }
 
@@ -101,6 +103,7 @@ void TonePlayer::stop() {
   if (activeFrequencyHz_ != 0 || activeDurationMs_ != 0) {
     activeFrequencyHz_ = 0;
     activeDurationMs_ = 0;
+    activeStartedMs_ = millis();
     ++revision_;
   }
 }
