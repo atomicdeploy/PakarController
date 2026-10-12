@@ -7,12 +7,12 @@ Every route registration in the reviewed slice is classified below, including co
 | Donor source | Route | Disposition | Current implementation / reason |
 | --- | --- | --- | --- |
 | LocalLib/AsyncOTA.cpp:12 | /update GET | commented-replaced | firmware/esp8266/src/WebUi.h:244 — Commented donor HTML placeholder replaced by real firmware settings; no second OTA engine. |
-| LocalLib/AsyncOTA.cpp:19 | /update POST | adapted | firmware/esp8266/esp8266.ino:1728 — Integrated guarded existing authenticated upload kept alongside pinned remote download. U_FS replacement disabled to preserve credentials and recovery backups. |
-| LocalLib/AsyncWebServer.h:22 | /ws WebSocket | adapted | firmware/esp8266/esp8266.ino:1183 — Authenticated multiple-client WebSocket retains board state and adds read-only full telemetry and pinned remote-job commands. |
+| LocalLib/AsyncOTA.cpp:19 | /update POST | adapted | firmware/esp8266/esp8266.ino:1737 — Integrated guarded existing authenticated upload kept alongside pinned remote download. U_FS replacement disabled to preserve credentials and recovery backups. |
+| LocalLib/AsyncWebServer.h:22 | /ws WebSocket | adapted | firmware/esp8266/esp8266.ino:1192 — Authenticated multiple-client WebSocket retains board state and adds read-only full telemetry and pinned remote-job commands. |
 | LocalLib/Authentication.cpp:22 | /auth GET | adapted | firmware/esp8266/src/MaintenanceRoutes.h:324 — Local owner auth status, no credential disclosure. |
 | LocalLib/Authentication.cpp:57 | /pass POST | adapted | firmware/esp8266/src/MaintenanceRoutes.h:330 — Requires current password, persistent change and revocation of Web/Telnet sessions. |
 | LocalLib/FirmwareTransfer.cpp:213 | /firmware/download GET|HEAD | imported | firmware/esp8266/src/FirmwareTransfer.cpp:141 — Actual donor implementation imported earlier, with authorization, ranges, ETag, MD5 and bounded flash reads. Full flash export disabled to protect secrets. |
-| LocalLib/SSDP.cpp:113 | /description.xml GET | adapted | firmware/esp8266/esp8266.ino:1942 — SSDP root-device XML, actual product and hostname without nonexistent weighing/UPnP services. |
+| LocalLib/SSDP.cpp:113 | /description.xml GET | adapted | firmware/esp8266/esp8266.ino:1951 — SSDP root-device XML, actual product and hostname without nonexistent weighing/UPnP services. |
 | pu850-esp.ino:591 | /beep POST | adapted | firmware/esp8266/src/MaintenanceRoutes.h:357 — Actual AVR buzzer ACK, 1..8 bounded count. Mutating GET removed. |
 | pu850-esp.ino:597 | /message/send POST | adapted | firmware/esp8266/src/MaintenanceRoutes.h:365 — Actual TM1637 single-pass ASCII text; existing display engine owns timing, no duplicate scrolling engine. |
 | pu850-esp.ino:611 | /weight/display GET|POST | not-applicable | PU weighing UI/value format requires a load cell; none is fitted. Generic TM1637 text/number is implemented separately. |
@@ -53,8 +53,8 @@ Every route registration in the reviewed slice is classified below, including co
 | pu850-esp.ino:1470 | /is_exec GET | not-applicable | PU chart execution state has no equivalent on this table; actual game/automation state is exposed through negotiated contracts. |
 | pu850-esp.ino:1475 | /page_id GET | not-applicable | PU chart page identifier is not this board's front-panel menu. PCController GET MENU remains the actual supported contract. |
 | pu850-esp.ino:1480 | /page_goto POST | not-applicable | PU page/business navigation cannot be copied as a table action. PCController SET MENU is available through the guarded contract API. |
-| pu850-esp.ino:1493 | /update/info GET | adapted | firmware/esp8266/esp8266.ino:1716 — Version/profile and both-board remote maintenance URLs; no misleading build-host/time identity. |
-| pu850-esp.ino:1513 | /info GET | adapted | firmware/esp8266/esp8266.ino:1717 — Authenticated full structured ESP/AVR/client/network/clock/cloud telemetry; optional format=text. |
+| pu850-esp.ino:1493 | /update/info GET | adapted | firmware/esp8266/esp8266.ino:1725 — Version/profile and both-board remote maintenance URLs; no misleading build-host/time identity. |
+| pu850-esp.ino:1513 | /info GET | adapted | firmware/esp8266/esp8266.ino:1726 — Authenticated full structured ESP/AVR/client/network/clock/cloud telemetry; optional format=text. |
 | pu850-esp.ino:1543 | / GET | adapted | firmware/esp8266/src/WebUi.h:244 — Real control workspace rather than donor static placeholder; access gate and actual peer state retained. |
 
 Broader repository/file parity remains tracked separately in FILE-COMPARISON.md and GitHub issue #3. Live route/TLS/board acceptance remains open.

@@ -5,6 +5,8 @@ c++ -std=c++17 -Wall -Wextra -pedantic \
   -I "$root/libraries/BoardCore/src" \
   "$root/tests/protocol_test.cpp" -o "$root/build/protocol-test"
 "$root/build/protocol-test"
+c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/mndp_test.cpp" -o "$root/build/mndp-test"
+"$root/build/mndp-test"
 c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/remote_policy_test.cpp" -o "$root/build/remote-policy-test"
 "$root/build/remote-policy-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/isp_stubs" "$root/tests/avr_isp_test.cpp" "$root/firmware/esp8266/src/AvrIsp.cpp" -o "$root/build/avr-isp-test"

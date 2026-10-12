@@ -309,6 +309,19 @@ class FirmwareController {
     return bytes;
   }
 
+  Future<Uint8List> espBytes() async {
+    check('ota');
+    final bytes = await api.maintenanceBytes(
+      '/firmware/download',
+      maximum: 2 * 1024 * 1024,
+      verifySketch: true,
+      authorize: () => allowed('ota'),
+    );
+    check('ota');
+    validateFirmwareImage(true, bytes);
+    return bytes;
+  }
+
   void dispose() {
     disposed = true;
   }

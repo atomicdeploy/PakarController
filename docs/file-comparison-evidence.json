@@ -3,6 +3,181 @@
   "target_hash_encoding": "UTF8-without-BOM-LF",
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
+      {
+        "origin": "PCController",
+        "path": "Tools/Controller/internal/discovery/discovery.go",
+        "sha256": "ffcf40f4a285bd5c39eb9626a1aefa60d6e6d5ff5d03dc786f718050f7a3070a",
+        "source_read": "complete",
+        "verdict": "parity-gap",
+        "preserved": [
+          "Fully read source through EOF. Adapted actual mDNS/DNS-SD single transport intent, metadata-only discovery, bounded search lifetime/cleanup, M-SEARCH headers, validated origins and explicit authentication separation into Android discovery.",
+          "Android NsdManager replaces Go zeroconf; serialized resolves, scan generation ownership, multicast-lock acquisition/release and lifecycle cleanup are real native code. Local/remote saved device types describe transport, never fabricate capabilities. Actual peer ACK remains authoritative."
+        ],
+        "targets": [
+          {
+            "path": "mobile/lib/discovery.dart",
+            "sha256": "c02419074d5e3c47d2a967f3ed818e3a6196ab50c94d412d6dbae18f54050914",
+            "anchor": "class DeviceDiscovery"
+          },
+          {
+            "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/DiscoveryChannel.kt",
+            "sha256": "b6e39b4cce47a1eb35051ed1f007046e08d4cf476354db243ca89b948ae5f0f1",
+            "anchor": "class DiscoveryChannel"
+          },
+          {
+            "path": "mobile/lib/devices_page.dart",
+            "sha256": "077c722018b5849d5d972f228b326151da15cc4238c3cd54052219df4d8d59db",
+            "anchor": "class DevicesPage"
+          }
+        ],
+        "omissions": [
+          {
+            "code": "Advertiser/UpdateText/SSDP alive/byebye, public enrichment/mergeInstances and TXT metadata normalization",
+            "disposition": "pending",
+            "reason": "Android bridge is deliberately authenticated loopback-only. Publishing a LAN-reachable phone URL would be false; an opt-in LAN/TLS listener and advertisement lifecycle need a separate implementation. Advertised names alone cannot merge authenticated board identity. PublicInfo enrichment dependencies are not yet fully reviewed."
+          },
+          {
+            "code": "WSDiscovery, broadcast and NetBIOS adapter consumers",
+            "disposition": "pending",
+            "reason": "The current phone implements requested DNS-SD/SSDP/MNDP browsing, not every PCController discovery wire adapter. Android-specific permission/network ownership and complete adapter tests remain useful work."
+          },
+          {
+            "code": "PCController product service type and Go zeroconf goroutines",
+            "disposition": "replaced",
+            "reason": "Android's platform NSD resolves Pakar/HTTP/PCController metadata without importing a Go runtime or copying numbered product contract names. Advertisements never assert generic PCController RPC compatibility."
+          }
+        ],
+        "proof": [
+          {
+            "path": "mobile/test/bridge_discovery_test.dart",
+            "sha256": "e233594eaa2763444ec62cd59dd06245f08caac290938022e3475ddad9de1acc",
+            "anchor": "Actual loopback bridge requires bearer"
+          }
+        ],
+        "remaining": [
+          "Real Android multicast/router/AP-isolation, NSD failed/partial resolves and identity verification; optional authenticated LAN/TLS app advertiser; all outstanding donor discovery adapters."
+        ]
+      },
+      {
+        "origin": "PU850-ESP",
+        "path": "LocalLib/MNDP.cpp",
+        "sha256": "33a7389ec2e1b5c3d75bf88f06d8397f2bf4ba008298ecd4610ddfaccc6e4eb3",
+        "source_read": "complete",
+        "verdict": "parity-gap",
+        "preserved": [
+          "Fully read header/implementation. Actual port 5678/group 224.0.0.88 and big-endian TLV type/length layout adapted into bounded packets; MAC, hostname, firmware version, platform, board, uptime, stable board ID and IPv4 metadata retained.",
+          "Integrated station lifecycle starts/stops MNDP alongside existing discovery, announces at 30 seconds and accepts only a rate-limited four-zero-byte query. Android scans/decodes defensive bounded TLVs without sending credentials. Packet overflow prevents any partial advertisement."
+        ],
+        "targets": [
+          {
+            "path": "firmware/esp8266/src/Mndp.h",
+            "sha256": "5d579c4dcc95c4fb298212798d03d127ce6f131819ac2b348036367c0ed5428a",
+            "anchor": "class Packet"
+          },
+          {
+            "path": "firmware/esp8266/src/MndpService.h",
+            "sha256": "4af970a677da2433b316bf9d8a50965485b909aaa412bb54dabeacaf5e47f0b7",
+            "anchor": "class MndpService"
+          },
+          {
+            "path": "mobile/lib/discovery.dart",
+            "sha256": "c02419074d5e3c47d2a967f3ed818e3a6196ab50c94d412d6dbae18f54050914",
+            "anchor": "DiscoveredDevice? parseMndp"
+          }
+        ],
+        "omissions": [
+          {
+            "code": "Unbounded addTlv into 255-byte buffer; global UDP/ASA0002E header inclusion",
+            "disposition": "replaced",
+            "reason": "Each copy checks the complete packet capacity and fails closed; module-owned socket state avoids donor globals/application header dependency. The header uses reserved/version bytes plus a bounded big-endian sequence, not a host-endian counter."
+          },
+          {
+            "code": "E_SerialNumber/firmwareVersion fallback and interface WiFi.SSID",
+            "disposition": "replaced",
+            "reason": "Use the actual stable Pakar board ID, descriptive build identity and station interface instead of unknown PU serial/business fields or disclosing private SSIDs. This does not synthesize an AVR serial or expose Wi-Fi credentials."
+          },
+          {
+            "code": "IPv6 and unpack TLV definitions",
+            "disposition": "pending",
+            "reason": "Donor send path does not implement these TLVs. Actual IPv6 readiness/metadata and compatibility need an explicit adapter and tests; do not emit invented addresses."
+          }
+        ],
+        "proof": [
+          {
+            "path": "tests/mndp_test.cpp",
+            "sha256": "871599d4f8ba3c23c123c769c5e85be75b3ce5d5c6ac4890ca4ed52eb8b8dbfa",
+            "anchor": "never emit a partial advertisement"
+          },
+          {
+            "path": "mobile/test/bridge_discovery_test.dart",
+            "sha256": "e233594eaa2763444ec62cd59dd06245f08caac290938022e3475ddad9de1acc",
+            "anchor": "Actual loopback bridge requires bearer"
+          }
+        ],
+        "remaining": [
+          "Live router/Winbox response/announcement compatibility, interface/UUID continuity across rename/reconnect and integrated S3 adapter; compiled/fixture packets are not physical discovery acceptance."
+        ]
+      },
+      {
+        "origin": "PU850-ESP",
+        "path": "LocalLib/MNDP.h",
+        "sha256": "d61e3e316c4a21f5c8f8fd7f6879008e68a1af4adc32b3459a9857b26d0bb03f",
+        "source_read": "complete",
+        "verdict": "parity-gap",
+        "preserved": [
+          "Fully read header/implementation. Actual port 5678/group 224.0.0.88 and big-endian TLV type/length layout adapted into bounded packets; MAC, hostname, firmware version, platform, board, uptime, stable board ID and IPv4 metadata retained.",
+          "Integrated station lifecycle starts/stops MNDP alongside existing discovery, announces at 30 seconds and accepts only a rate-limited four-zero-byte query. Android scans/decodes defensive bounded TLVs without sending credentials. Packet overflow prevents any partial advertisement."
+        ],
+        "targets": [
+          {
+            "path": "firmware/esp8266/src/Mndp.h",
+            "sha256": "5d579c4dcc95c4fb298212798d03d127ce6f131819ac2b348036367c0ed5428a",
+            "anchor": "class Packet"
+          },
+          {
+            "path": "firmware/esp8266/src/MndpService.h",
+            "sha256": "4af970a677da2433b316bf9d8a50965485b909aaa412bb54dabeacaf5e47f0b7",
+            "anchor": "class MndpService"
+          },
+          {
+            "path": "mobile/lib/discovery.dart",
+            "sha256": "c02419074d5e3c47d2a967f3ed818e3a6196ab50c94d412d6dbae18f54050914",
+            "anchor": "DiscoveredDevice? parseMndp"
+          }
+        ],
+        "omissions": [
+          {
+            "code": "Unbounded addTlv into 255-byte buffer; global UDP/ASA0002E header inclusion",
+            "disposition": "replaced",
+            "reason": "Each copy checks the complete packet capacity and fails closed; module-owned socket state avoids donor globals/application header dependency. The header uses reserved/version bytes plus a bounded big-endian sequence, not a host-endian counter."
+          },
+          {
+            "code": "E_SerialNumber/firmwareVersion fallback and interface WiFi.SSID",
+            "disposition": "replaced",
+            "reason": "Use the actual stable Pakar board ID, descriptive build identity and station interface instead of unknown PU serial/business fields or disclosing private SSIDs. This does not synthesize an AVR serial or expose Wi-Fi credentials."
+          },
+          {
+            "code": "IPv6 and unpack TLV definitions",
+            "disposition": "pending",
+            "reason": "Donor send path does not implement these TLVs. Actual IPv6 readiness/metadata and compatibility need an explicit adapter and tests; do not emit invented addresses."
+          }
+        ],
+        "proof": [
+          {
+            "path": "tests/mndp_test.cpp",
+            "sha256": "871599d4f8ba3c23c123c769c5e85be75b3ce5d5c6ac4890ca4ed52eb8b8dbfa",
+            "anchor": "never emit a partial advertisement"
+          },
+          {
+            "path": "mobile/test/bridge_discovery_test.dart",
+            "sha256": "e233594eaa2763444ec62cd59dd06245f08caac290938022e3475ddad9de1acc",
+            "anchor": "Actual loopback bridge requires bearer"
+          }
+        ],
+        "remaining": [
+          "Live router/Winbox response/announcement compatibility, interface/UUID continuity across rename/reconnect and integrated S3 adapter; compiled/fixture packets are not physical discovery acceptance."
+        ]
+      },
     {
       "origin": "PCController",
       "path": "Tools/Controller/web/src/status-frame-batcher.ts",
@@ -162,7 +337,8 @@
     "Full source read. Fail-closed identity checks strengthened with HTTP server-side board/boot fences; donor HELLO/build stamp is NOT a boot epoch.",
     "Before/after admission ownership checks also adapted to Web's shared pinned HTTP preflight and post-response generation validation. Existing session.go full review/live 1bf4d52 hash remains unchanged; this is not import of Go serial acquisition or request-priority scheduling.",
     "Full session.go reread through EOF and live source hash reverified. Actual acquireWrite/requestAdmission before/after admission closing checks adapted to native HTTP queued generation, deadline and post-preflight ownership checks. Shared native/TUI strict Pin validation removes the duplicate validator; pinned clients refuse redirects.",
-    "Reread complete donor at unchanged live hash for firmware admission/dispatch ownership. Supplied HTTP headers are checked for all methods including hardware-affecting GET probe; actual loop dispatch rechecks the same request before SPI/reset. Header-free compatibility is deliberately unfenced, not ownership proof."
+      "Reread complete donor at unchanged live hash for firmware admission/dispatch ownership. Supplied HTTP headers are checked for all methods including hardware-affecting GET probe; actual loop dispatch rechecks the same request before SPI/reset. Header-free compatibility is deliberately unfenced, not ownership proof.",
+      "Fully reread current session.go and session_test.go for Android networking. Adapted actual SetBeforeClose/notifyBeforeClose synchronous retirement into mobile HTTP/WebSocket board/boot acceptance, root state revocation and discarded prior firmware owners. Learned critical identity cannot silently disappear into legacy readiness. A one-second bridge watchdog is independent from the chosen telemetry interval, and retired MQTT callbacks cannot publish through a replacement client."
   ],
   "targets": [
     {
@@ -170,6 +346,9 @@
       "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn command_request("
     },
+    {"path":"mobile/lib/api.dart","sha256":"e653cd40168a23cc399de40b97a24b832e4737c3f56d8bd2e06707c227eca6bd","anchor":"bool _acceptIdentity("},
+    {"path":"mobile/lib/main.dart","sha256":"2ff496d8b6e18d0a30c595ac60d9e5d4f1d5b626c6d3ec2c1a90efa23ec24ab3","anchor":"api.onPeerChanged = ()"},
+    {"path":"mobile/lib/bridge.dart","sha256":"4fd40d999691968be1d32826a925a4bb221a5bd102c2a237ed947f6bf37b2be9","anchor":"watchdog = Timer.periodic"},
     {
       "path": "libraries/BoardCore/src/PeerFence.h",
       "sha256": "9f1ab63252bd881d2fc786e230a18db331e66708a1bd3ccd0f096d2d2b5d49d5",
@@ -182,7 +361,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac",
+      "sha256": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0",
       "anchor": "bool authenticate()"
     },
     {
@@ -228,6 +407,7 @@
       "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn same_hostname_reboot_revokes_drafts_and_old_receipts()"
     },
+    {"path":"mobile/test/bridge_discovery_test.dart","sha256":"e233594eaa2763444ec62cd59dd06245f08caac290938022e3475ddad9de1acc","anchor":"Same-host board/boot replacement retires firmware owners synchronously"},
     {
       "path": "tests/peer_fence_test.mjs",
       "sha256": "a96ca49c6fdbc0c425f6199d6c4371a76536ca9db785e9d093047953d31a101c",
@@ -793,7 +973,7 @@
       "remaining":["Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof."],
       "proof":[
         {"path":"tools/test-display.ps1","sha256":"e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51","anchor":"foreach ($taskVariant"},
-        {"path":"tools/test-protocol.sh","sha256":"4293316d439d7e720c2a3faef1cd99d1d86899c98363e9c195ab213511a98786","anchor":"for display_flags"}
+        {"path":"tools/test-protocol.sh","sha256":"975b5a892eca2287c01df2f366ceb094f617780195e0ecc021cb3597da06bd86","anchor":"for display_flags"}
       ],
       "improvement":"Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified."
     },
@@ -1616,22 +1796,22 @@
         },
         {
           "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt",
-          "sha256": "013f73929d124fa0b4125ea2bf60e24544a08b1f5bb02f51d2e8d75f217562f0",
+          "sha256": "3d2ff9a55542ccb71803b39039206ff2f7acdb36696073365a155f3ef6ea16f5",
           "anchor": "Intent.ACTION_OPEN_DOCUMENT"
         },
         {
           "path": "mobile/lib/firmware_page.dart",
-          "sha256": "be11fe1304b15a04da43e9c7d268f40afedc12bc406a1dd2a7d631a7da72384b",
+          "sha256": "40b64996112f85e7acfb3f5c7db19c473cbfc0a018c72387f1447a4e386be626",
           "anchor": "class FirmwarePage"
         },
         {
           "path": "mobile/lib/firmware.dart",
-          "sha256": "007242d876e15a580d1d03c4181af0f84a0efdbb283c0f05eda13a756f45b485",
+          "sha256": "a9e1ecce00ae674541490e64733accdfc882dcec8ff78d1c594d0ff89d5b9c86",
           "anchor": "class FirmwareController"
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "0d41ee73659e6b1b337d10d2fbcbc6f6feed1f757ef1be19eb8f0a0bf7fb2e0e",
+          "sha256": "e653cd40168a23cc399de40b97a24b832e4737c3f56d8bd2e06707c227eca6bd",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -1668,7 +1848,7 @@
         },
         {
           "path": "mobile/test/capture_test.dart",
-          "sha256": "e1a4512a8697c0ffaf37d5018cbd19d56e7430b9ee944e1664ee112c5963b28b",
+          "sha256": "699f426930710b88e51cc6495f7a0d4a0c4d9d716a62920451447ffd72870e09",
           "anchor": "Firmware capture must never issue a device mutation"
         }
       ],
@@ -1712,7 +1892,7 @@
     {
       "origin": "Pealayer",
       "path": "web_ui/src/components/PreferencesTab.tsx",
-      "sha256": "bada7d4b1cdd332fc51bcbc00ac59544c860f7012eca7d425e477ef932170c27",
+      "sha256": "cc9f7b6abd57fccd3889b12abae30147c39484ea82be4bef91d0ac2512910832",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -1736,7 +1916,7 @@
       "proof": [
         {"path":"mobile/test/device_settings_test.dart","sha256":"18f2ad9b2a9c6826a38cfe04321810fa367165797f835a9d50375bf980339480","anchor":"Settings write $behavior: one POST"},
         {"path":"mobile/test/device_settings_page_test.dart","sha256":"da7de6a91d19dee9231d9b16e80da25864f4bcc84146d1b4425564f98d6d234b","anchor":"Acknowledged $route handoff after old view closes"},
-        {"path":"mobile/test/capture_test.dart","sha256":"e1a4512a8697c0ffaf37d5018cbd19d56e7430b9ee944e1664ee112c5963b28b","anchor":"Capture must never issue a device mutation"}
+        {"path":"mobile/test/capture_test.dart","sha256":"699f426930710b88e51cc6495f7a0d4a0c4d9d716a62920451447ffd72870e09","anchor":"Capture must never issue a device mutation"}
       ],
       "improvement":""
     },
@@ -2265,7 +2445,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "34175e303e86f024e89fb2473b2d52c52789e1354c4b477416c02d7d2fab9a8e",
+          "sha256": "2ff496d8b6e18d0a30c595ac60d9e5d4f1d5b626c6d3ec2c1a90efa23ec24ab3",
           "anchor": "Future<bool> _command"
         },
         {
@@ -2392,7 +2572,7 @@
     {
       "origin": "Pealayer",
       "path": "src/ui/board_info.rs",
-      "sha256": "c252864d80912a03bca718b0a13d721fda2e8f7378c033f44619590a82380fd2",
+      "sha256": "ab1c99e674e902e37626963e2dd5cf7d993965334411d5e33dafd1ea2bf79e51",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -2511,7 +2691,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "34175e303e86f024e89fb2473b2d52c52789e1354c4b477416c02d7d2fab9a8e",
+          "sha256": "2ff496d8b6e18d0a30c595ac60d9e5d4f1d5b626c6d3ec2c1a90efa23ec24ab3",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -4248,7 +4428,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac"
+          "sha256": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0"
         }
       ],
       "proof": [
@@ -4315,7 +4495,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac"
+          "sha256": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0"
         }
       ],
       "proof": [
@@ -4382,7 +4562,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac"
+          "sha256": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0"
         }
       ],
       "proof": [
@@ -4434,7 +4614,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "20bb6af670b94229778ef4d6443c02f7c216cf5e2f24f8f8e467013aa6beabac"
+          "sha256": "0dd675795a7d62ae16a79cef0097b4c7693c30d81ef82ce599e2bb7398ce29f0"
         }
       ],
       "proof": [
@@ -4470,7 +4650,7 @@
     {
       "origin": "Pealayer",
       "path": "scripts/capture-visible-window-windows.ps1",
-      "sha256": "2876c19687b1a209e777f3d505e4b24b6c4b1403a0f1de99edcedf0a624d9527",
+      "sha256": "94bc5aed91407818905412d50dde72ea669f3c799ef56a043dd0a81befdce47f",
       "source_read": "complete",
       "verdict": "scoped-improvement",
       "preserved": [
@@ -4578,7 +4758,7 @@
         },
         {
           "path": "tools/build-mobile.ps1",
-          "sha256": "803b23fadf630bb7f6ec9656c4e844614637380edfa9cbc12ac7a87540c8bc20",
+          "sha256": "354f14d1353b06823d8c59ec1461e802eaee95b3ba05045f71a63d645cf39156",
           "anchor": "$taskCache=Get-DirectorySummary"
         }
       ],
@@ -4624,11 +4804,11 @@
     {
       "origin": "Pealayer",
       "path": "web_ui/src/appearance.ts",
-      "sha256": "aca0c9aba5fe6389995f92306e20f62debf38fdb4ed3b3061cf9b9f17a56c430",
+      "sha256": "b6a56ff95deaa1779e5021bdc8db9e45bdbf3cb54f4158c20f1e922e16959d54",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "All five actual donor functions retained: mergeAppearance, resolvedAccent, resolvedAppearanceTheme, accentForeground and paletteName. TypeScript annotations removed for standalone embedded JavaScript; field names, host/offline resolution, exact accent constants, custom validation and luminance threshold remain unchanged.",
+        "Fully reread current source through EOF. The five previously adapted helpers remain in the target: mergeAppearance, resolvedAccent, resolvedAppearanceTheme, accentForeground and paletteName. Existing theme/palette/accent host resolution and luminance semantics remain; newer animation/density/font preference fields and font CSS helpers are explicitly pending, not claimed imported.",
         "Generated into the shipped WebUi.h with the shared palette asset; --check rejects stale embedding. Browser preferences dialog validates theme/palette/accent, protects drafts, handles storage failure and cross-tab/System events without device writes or repetitive identical storage writes."
       ],
       "targets": [
@@ -4650,9 +4830,14 @@
       ],
       "omissions": [
         {
+          "code": "ui_animation_mode, ui_control_density, ui_font_family, monospace_font_family merge fields; uiFontCss and monoFontCss",
+          "disposition": "pending",
+          "reason": "New current donor behavior was fully read during mobile-network build preflight. Existing embedded target does not consume these client preferences and does not bundle PealayerUbuntu/PealayerHack; copying their font names would imply unavailable assets. Add actual shared settings/asset support and cross-client tests before claiming parity."
+        },
+        {
           "code": "AppearanceState TypeScript interface and generic T return annotation",
           "disposition": "replaced",
-          "reason": "ESP serves standalone JavaScript, not a TypeScript/React build. Actual function bodies are retained; browser-facing enum/color validation rejects untrusted stored values. No preference or resolution field is dropped."
+          "reason": "ESP serves standalone JavaScript, not a TypeScript/React build. Browser-facing enum/color validation rejects untrusted stored values. New fields/helpers are separately tracked pending rather than silently dropped."
         },
         {
           "code": "Connected host AppearanceState broadcast/native-Web shared preference path",

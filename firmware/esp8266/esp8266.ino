@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <ESP8266SSDP.h>
+#include "src/MndpService.h"
 #include <ESP8266NetBIOS.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
@@ -150,6 +151,8 @@ uint32_t avrTelemetryAt = 0, lastTelemetryRequestAt = 0;
 bool avrTelemetryKnown = false;
 bool mdnsStarted = false;
 bool ssdpStarted = false;
+MndpService mndpService;
+uint32_t discoveryAttemptAt = 0;
 bool netbiosStarted = false;
 IPAddress discoveryAddress;
 String stagedStationSsid;
@@ -608,6 +611,7 @@ void loadLedPreferences() {
 void stopDiscovery() {
   MDNS.close();
   SSDP.end();
+  mndpService.stop();
   NBNS.end();
   mdnsStarted = false;
   ssdpStarted = false;
@@ -616,6 +620,7 @@ void stopDiscovery() {
 }
 
 void startDiscovery() {
+  discoveryAttemptAt = millis();
   stopDiscovery();
   if (!networkConfig.stationConnected()) return;
 
@@ -647,6 +652,7 @@ void startDiscovery() {
   snprintf(uuid, sizeof(uuid), "38323636-4558-4dda-9188-cda0e6%06x", ESP.getChipId());
   SSDP.setUUID(uuid);
   ssdpStarted = SSDP.begin();
+  mndpService.begin();
   // NetBIOS labels are limited to 15; never advertise a silently truncated alias.
   netbiosStarted = hostname.length() <= 15 && NBNS.begin(hostname.c_str());
 }
@@ -654,11 +660,13 @@ void startDiscovery() {
 void serviceDiscovery() {
   const bool connected = networkConfig.stationConnected();
   const IPAddress address = connected ? WiFi.localIP() : IPAddress();
-  if ((connected && (!mdnsStarted || address != discoveryAddress)) ||
+  if ((connected && (address != discoveryAddress ||
+      (!mdnsStarted && static_cast<uint32_t>(millis()-discoveryAttemptAt)>=10000UL))) ||
       (!connected && (mdnsStarted || ssdpStarted))) {
     startDiscovery();
   }
   if (mdnsStarted) MDNS.update();
+  mndpService.service(hostname.c_str(),pcBoardId.c_str());
 }
 
 void applyNetworkConfig() {
@@ -1049,6 +1057,7 @@ String buildStatusJson() {
   body += F(",\"station_rssi\":"); body += networkConfig.stationConnected() ? WiFi.RSSI() : 0;
   body += F(",\"mdns_started\":"); body += mdnsStarted ? F("true") : F("false");
   body += F(",\"ssdp_started\":"); body += ssdpStarted ? F("true") : F("false");
+  body += F(",\"mndp_started\":"); body += mndpService.running() ? F("true") : F("false");
   body += F(",\"netbios_started\":"); body += netbiosStarted ? F("true") : F("false");
   body += F(",\"canonical_url\":\"http://"); body += hostname; body += F(".local\"");
   body += F(",\"mdns_url\":\"http://"); body += hostname; body += F(".local\"");

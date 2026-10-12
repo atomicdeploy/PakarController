@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:crypto/crypto.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -27,11 +28,14 @@ class PakarApi {
   String _baseUrl, _user, _password;
   int _connectionRevision = 0;
   int get connectionRevision => _connectionRevision;
+  void Function()? onPeerChanged;
+  bool _identityRequired = false;
   String get baseUrl => _baseUrl;
   set baseUrl(String value) {
     final normalized = normalizeEndpoint(value);
     if (_baseUrl != normalized) {
       _baseUrl = normalized;
+      _identityRequired = false;
       resetTransport();
     }
   }
@@ -58,9 +62,17 @@ class PakarApi {
   String? _discoveredBaseUrl;
   String? _transportOwner;
   String? _verifiedEndpoint;
+  String? _verifiedBoard, _verifiedBoot;
 
   Map<String, String> get _headers => {
     'authorization': 'Basic ${base64Encode(utf8.encode('$user:$password'))}',
+  };
+  Map<String, String> get _writeHeaders => {
+    ..._headers,
+    if (_verifiedBoard != null && _verifiedBoot != null) ...{
+      'X-Pakar-Board': _verifiedBoard!,
+      'X-Pakar-Boot': _verifiedBoot!,
+    },
   };
 
   String get transportUrl =>
@@ -111,6 +123,7 @@ class PakarApi {
     Uint8List? upload,
     String? uploadField,
     int maximum = 8192,
+    bool verifySketch = false,
     Duration timeout = const Duration(seconds: 180),
     required bool Function() authorize,
   }) async {
@@ -136,7 +149,7 @@ class PakarApi {
     } else {
       request = http.Request(post ? 'POST' : 'GET', uri)..bodyFields = form;
     }
-    request.headers.addAll(_headers);
+    request.headers.addAll(_writeHeaders);
     request.followRedirects = false; // No credential forwarding or POST replay.
     final mutation = post || mayMutate;
     final elapsed = Stopwatch()..start();
@@ -147,6 +160,7 @@ class PakarApi {
         throw const StaleConnection();
       }
       if (response.statusCode ~/ 100 != 2 ||
+          (!post && response.statusCode != 200) ||
           (response.contentLength ?? 0) > maximum) {
         await response.stream.listen((_) {}).cancel();
         throw const FormatException(
@@ -175,7 +189,24 @@ class PakarApi {
         await reader.cancel();
       }
       if (revision != connectionRevision) throw const StaleConnection();
-      return bytes.takeBytes();
+      final result = bytes.takeBytes();
+      if (response.contentLength != null &&
+          response.contentLength != result.length) {
+        throw const FormatException(
+          'Truncated firmware transfer; no export created',
+        );
+      }
+      if (verifySketch) {
+        final digest = response.headers['x-firmware-md5'];
+        if (digest == null ||
+            !RegExp(r'^[a-fA-F0-9]{32}$').hasMatch(digest) ||
+            md5.convert(result).toString() != digest.toLowerCase()) {
+          throw const FormatException(
+            'Running firmware transfer digest unavailable or mismatched; no export created',
+          );
+        }
+      }
+      return result;
     } on StaleConnection {
       rethrow;
     } on FormatException {
@@ -229,8 +260,11 @@ class PakarApi {
     }
     late final http.Response response;
     try {
-      response = await _client
-          .post(_uri(transportUrl, path), headers: _headers, body: values)
+      final request = http.Request('POST', _uri(transportUrl, path))
+        ..headers.addAll(_writeHeaders)
+        ..bodyFields = values
+        ..followRedirects = false;
+      response = await http.Response.fromStream(await _client.send(request))
           .timeout(const Duration(seconds: 12));
     } on Exception {
       throw const OperationUncertain();
@@ -258,8 +292,11 @@ class PakarApi {
     if (revision != connectionRevision) throw const StaleConnection();
     late final http.Response response;
     try {
-      response = await _client
-          .post(_uri(transportUrl, path, values), headers: _headers)
+      final request = http.Request('POST', _uri(transportUrl, path))
+        ..headers.addAll(_writeHeaders)
+        ..bodyFields = values
+        ..followRedirects = false;
+      response = await http.Response.fromStream(await _client.send(request))
           .timeout(const Duration(seconds: 12));
     } on Exception {
       throw const OperationUncertain();
@@ -276,8 +313,38 @@ class PakarApi {
         'Device identity does not match the requested hostname',
       );
     }
+    _acceptIdentity(result.json);
     _verifiedEndpoint = baseUrl;
     return result;
+  }
+
+  // Adapt Session's synchronous retirement boundary: retire captured owners
+  // before a new board/boot may authorize any old dialog or in-flight request.
+  bool _acceptIdentity(Map<String, dynamic> value) {
+    final board = value['board_id'], boot = value['boot_id'];
+    bool identity(Object? v) =>
+        v is String && RegExp(r'^[!-~]{1,80}$').hasMatch(v);
+    if ((_identityRequired ||
+            value.containsKey('board_id') ||
+            value.containsKey('boot_id')) &&
+        (!identity(board) || !identity(boot))) {
+      if (_verifiedBoard != null) {
+        resetTransport();
+        onPeerChanged?.call();
+      }
+      throw const StaleConnection();
+    }
+    final changed =
+        _verifiedBoard != null &&
+        (board != _verifiedBoard || boot != _verifiedBoot);
+    if (changed) {
+      resetTransport();
+      onPeerChanged?.call();
+    }
+    _verifiedBoard = identity(board) && identity(boot) ? board as String : null;
+    _verifiedBoot = identity(board) && identity(boot) ? boot as String : null;
+    if (_verifiedBoard != null) _identityRequired = true;
+    return changed;
   }
 
   Future<CellMap> mapping() async =>
@@ -316,6 +383,9 @@ class PakarApi {
         if (expected != null && value['hostname'] != expected) {
           throw const StaleConnection();
         }
+        if (_acceptIdentity(value)) {
+          return; // Reconnect only reads; never replay.
+        }
         yield DeviceStatus(value);
       }
     }
@@ -326,6 +396,7 @@ class PakarApi {
     final active = _channel;
     _channel = null;
     _verifiedEndpoint = _transportOwner = _discoveredBaseUrl = null;
+    _verifiedBoard = _verifiedBoot = null;
     await active?.sink.close();
     _client.close();
   }
@@ -333,6 +404,7 @@ class PakarApi {
   void resetTransport() {
     ++_connectionRevision;
     _discoveredBaseUrl = _transportOwner = _verifiedEndpoint = null;
+    _verifiedBoard = _verifiedBoot = null;
     final active = _channel;
     _channel = null;
     if (active != null) {

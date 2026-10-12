@@ -12,6 +12,7 @@ import java.util.UUID
 import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
+    private var discovery: DiscoveryChannel? = null
     private val io = Executors.newSingleThreadExecutor()
     private var pending: MethodChannel.Result? = null
     private var maximum = 0
@@ -23,6 +24,7 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        discovery = DiscoveryChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ir.digitalogic.pakar/documents")
             .setMethodCallHandler { call, result ->
                 try {
@@ -59,7 +61,7 @@ class MainActivity : FlutterActivity() {
                             val uri = destinations.remove(call.argument<String>("token"))
                                 ?: error("Unknown or already consumed destination")
                             val bytes = call.argument<ByteArray>("bytes") ?: error("Missing backup bytes")
-                            require(bytes.size == 32768 || bytes.size == 1024) { "Invalid full backup length" }
+                            require(bytes.size in 1..2097152) { "Invalid firmware export bound" }
                             writing = true
                             io.execute {
                                 try {
@@ -124,6 +126,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        discovery?.close(); discovery = null
         closed = true
         pending?.error("closed", "Document picker closed; no operation will be reopened automatically", null)
         pending = null

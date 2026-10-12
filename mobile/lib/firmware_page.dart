@@ -478,6 +478,23 @@ class _FirmwarePageState extends State<FirmwarePage> {
             ),
             const SizedBox(height: 12),
             button(
+              'Export running ESP firmware',
+              PakarIcons.floppyDisk,
+              () => run('Download running ESP firmware?', 'Read the running application image, not full flash or private settings. Choose a new Android document. This is not an authenticated release manifest.', () async {
+                final bytes = await controller.espBytes();
+                final saved = await documents.export(
+                  'esp-firmware.bin',
+                  bytes,
+                  stillOwned: () => mounted && controller.allowed('ota'),
+                );
+                return saved
+                    ? '${bytes.length} running firmware bytes exported.'
+                    : 'Export cancelled.';
+              }, mutation: false),
+              enabled: free,
+            ),
+            const SizedBox(height: 12),
+            button(
               'Select and update ESP',
               PakarIcons.warning,
               () => manual('update'),

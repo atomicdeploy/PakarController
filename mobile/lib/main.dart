@@ -14,6 +14,9 @@ import 'cell_search.dart';
 import 'peer_context.dart';
 import 'application_artwork.dart';
 import 'device_settings_page.dart';
+import 'devices_page.dart';
+import 'bridge_page.dart';
+import 'firmware_page.dart';
 
 final bundledApplicationArtwork = base64Decode(applicationArtworkBase64);
 
@@ -90,6 +93,11 @@ class _ControlShellState extends State<ControlShell> {
   @override
   void initState() {
     super.initState();
+    api.onPeerChanged = () {
+      if (!mounted) return;
+      _revoke('Board/boot identity changed; previous operations retired');
+      unawaited(_connectLive());
+    };
     _restore();
   }
 
@@ -299,6 +307,7 @@ class _ControlShellState extends State<ControlShell> {
 
   @override
   void dispose() {
+    api.onPeerChanged = null;
     live?.cancel();
     fallback?.cancel();
     liveRetry?.cancel();
@@ -327,6 +336,7 @@ class _ControlShellState extends State<ControlShell> {
         ('hardware', 'Hardware', PakarIcons.circuitry),
       if (peer.known) ('device-settings', 'Device settings', PakarIcons.gear),
       ('connection', 'Connection', PakarIcons.gear),
+      ('devices', 'Devices', PakarIcons.broadcast),
     ];
     final active = pages.indexWhere((item) => item.$1 == page);
     final index = active < 0 ? 0 : active;
@@ -373,6 +383,20 @@ class _ControlShellState extends State<ControlShell> {
               api: api,
               reconnect: _reconnect,
             ),
+            'devices' =>
+              page != 'devices'
+                  ? const SizedBox.shrink()
+                  : DevicesPage(
+                      select: (device, password) async {
+                        await _adoptConnection(
+                          owner,
+                          device.endpoint,
+                          device.user,
+                          password,
+                        );
+                        if (mounted) setState(() => page = 'overview');
+                      },
+                    ),
             _ => BoardOverview(status: status),
           },
       ],
@@ -411,6 +435,77 @@ class _ControlShellState extends State<ControlShell> {
             ],
           ),
           actions: [
+            PopupMenuButton<String>(
+              tooltip: 'Device context menu',
+              onSelected: (target) async {
+                if (target == 'devices') {
+                  setState(() => page = 'devices');
+                  return;
+                }
+                var locked = false;
+                await Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => StatefulBuilder(
+                      builder: (context, update) => PopScope(
+                        canPop: !locked,
+                        child: Scaffold(
+                          appBar: AppBar(
+                            title: Text(
+                              target == 'bridge'
+                                  ? 'Advanced bridge'
+                                  : 'Firmware',
+                            ),
+                            automaticallyImplyLeading: !locked,
+                          ),
+                          body: target == 'bridge'
+                              ? BridgePage(api: api, observed: () => status)
+                              : FirmwarePage(
+                                  api: api,
+                                  authorized: (feature) =>
+                                      mounted &&
+                                      owner == api.connectionRevision &&
+                                      status?.hostname == hostname &&
+                                      status?.peer.has(feature) == true,
+                                  busyChanged: (value) {
+                                    if (context.mounted) {
+                                      update(() => locked = value);
+                                    }
+                                  },
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+              itemBuilder: (_) => [
+                const PopupMenuItem(
+                  value: 'devices',
+                  child: ListTile(
+                    dense: true,
+                    leading: Icon(PakarIcons.broadcast),
+                    title: Text('Devices…'),
+                  ),
+                ),
+                if (peer.has('isp') || peer.has('ota'))
+                  const PopupMenuItem(
+                    value: 'firmware',
+                    child: ListTile(
+                      dense: true,
+                      leading: Icon(PakarIcons.cpu),
+                      title: Text('Firmware upload / download…'),
+                    ),
+                  ),
+                const PopupMenuItem(
+                  value: 'bridge',
+                  child: ListTile(
+                    dense: true,
+                    leading: Icon(PakarIcons.link),
+                    title: Text('Advanced MQTT / bridge…'),
+                  ),
+                ),
+              ],
+            ),
             IconButton(
               onPressed: _refresh,
               tooltip: 'Refresh device state',

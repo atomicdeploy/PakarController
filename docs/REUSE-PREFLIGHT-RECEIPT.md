@@ -2065,3 +2065,79 @@ DNS, no tray startup error or invented board cards. Small user-facing
 outputs/PakarController/Tray-Recovery.json records source/package/capture proof.
 No simulated or screenshot observation is physical board acceptance. New CI
 remains asynchronous; production issue2 and visible shell gates stay open.
+
+## Android device/network workspace checkpoint
+
+Actual missing feature found: previous mobile firmware actions existed, but
+Android only had one configured endpoint with SSDP fallback, not a saved device
+catalog, DNS-SD/MNDP scanner or Android-owned MQTT/bridge service. Fully read
+PCController Tools/Controller/internal/discovery/discovery.go and PU850
+LocalLib/MNDP.h/cpp, NetDiscovery.h/cpp and SSDP.h/cpp; the three selected actual
+implementation mappings were added to the SAME file-comparison-evidence.json.
+NetDiscovery's old endless example loops and wider SSDP dependencies are not
+certified whole-file imports. The new mobile-network gate pins the selected
+source/target/test hashes. Imported Pealayer file picker/SAF semantics, Phosphor,
+Vazirmatn and peer-context gates remain; no invented file or firmware APIs.
+
+Preflight first found Pealayer inventory drift to 555 tracked paths at
+48fd59ce65022b039d28570288ff967bf52bca8e, then refreshed to 564 paths at
+290f85f352668e556bb535ae6eb38ba5e1a7c13b during concurrent donor work. Fully reread current PreferencesTab.tsx,
+board_info.rs, capture-visible-window-windows.ps1 and appearance.ts. New
+appearance animation/density/font fields/helpers are explicitly pending, not
+claimed imported. Ten other changed already-compared files retain their prior
+immutable source snapshots, with the current live hash and reread action in
+each ledger note. Their current live-source gates intentionally still reject;
+old snapshot comparisons are not fresh donor parity. All source/target anchors
+are regenerated, including six early sketch-line shifts in PU850 route mapping.
+4328 inventoried /115 snapshot-bound comparisons /4213 pending /76 known gaps
+is not complete imports or superiority. Existing screenshots/older proof survive.
+
+Verified: mobile analyze no issues, complete 79-test suite, then all six focused
+bridge/discovery/export tests after changing generic POST arguments to form
+bodies (never credential-bearing URL queries). Tests execute real loopback
+HTTP with bearer refusal, same-ID no replay and board/boot headers; they are
+not a real ESP, MQTT broker, TLS handshake or Android background acceptance.
+Full production C++ protocol suite including bounded MNDP packet passed.
+ESP8266 busy-wire integrated build passed: RAM56684/80192, IRAM63055/65536,
+flash896388/1048576. Final image SHA256
+3debe61b5d19e94716776c172318a09a228b2b23fc3477009dfbf075b8ea8e70.
+Discovery retries after failed mDNS are spaced by ten seconds so loop retries
+cannot repeatedly tear down/respond/announce the new MNDP service every frame.
+AVR hardware UART, confirmed TM1637 A4/A5 and busy/polling choices were unchanged;
+AVR/native/S3/donor sources were not rebuilt or deployed.
+
+Rendered and inspected explicit simulated1200x1100 BridgeTablet via the existing
+mobile capture wrapper; no fixture mutations. Canonical release APK build passed,
+including native Android NSD. Source versions remain0.2.7. Only the existing warm
+mobile cache was used; no clean/new SDK/debug build or production app replacement.
+No authorized ADB device is connected. Master issue2 physical/production gates
+stay open, including integrated S3, LAN phone advertisement and foreground-service
+ownership; current bridge stops when page/app backgrounds or peer expires.
+
+Source-quality phase passed through PU route parity after re-review/rebinding,
+then reuse/ledger/comparison/version/preflight checks passed. The broader
+build-storage test is blocked by the actual changed live Pealayer src/ui/i18n.rs
+review gate; it was NOT bypassed or reported green. Remaining source-quality
+commands and CI are separate from already-passing mobile/C++/ESP checks.
+The remaining quality commands after that blocked storage check passed separately;
+the entire phase is still not reported green.
+
+Final safety review reread actual PCController session.go (879 lines) and
+session_test.go (788 lines), original SHA2561bf4d52d.../ff6c7b21... unchanged.
+Adapted synchronous owner retirement into mobile HTTP/WebSocket board/boot
+acceptance and root state revocation; invalid/partial or vanished learned identity
+cannot silently regain legacy readiness. Retained firmware dialogs now lose
+authority on a same-host replacement/reboot. One-second bridge freshness watchdog
+is independent from a user-selected long telemetry interval, and late MQTT
+callbacks cannot publish through a replacement client. Actual mapping/proof was
+added to the existing PCController session.go ledger entry, not a second ledger.
+
+After the same-host safety addition, the final guarded analyze and complete
+80-test mobile suite passed. Final guarded release APK passed (55215657 bytes),
+SHA256 e11c9b392a9856f5fbd2d7d20c4cb97c5809bfdd1b4848a0fd1514ab0b6bb850;
+identical delivered outputs/PakarController/mobile/PakarController.apk verified.
+Package contains assets/flutter_assets/NOTICES.Z. This is debug-key-signed preview,
+not production signing or an installed phone test. Simulated screenshot86160bytes,
+SHA2566ad4ade13a464c4a29a92fc0818a04dc36604aaba373eee07f2feec50fd140b2,
+also retained in docs/screenshots/mobile-bridge-tablet.png. No source screenshot
+claims Android NSD/MCU/peripheral acceptance or a completed production release.

@@ -1,5 +1,18 @@
 # PakarController mobile
 
+The Devices page now scans mDNS/DNS-SD, SSDP and MNDP and saves independent
+local/remote profiles with secure credentials. Actual board type/capabilities
+are detected after selection, not invented by profile labels. The app-bar
+context menu opens separate Firmware and Advanced MQTT/bridge pages. Firmware
+supports uploads, SHA-256-pinned coordinated remote staging/apply, stored AVR
+flash/EEPROM export and digest-checked running ESP image export. The Android
+bridge supports TLS MQTT (including WebSocket transport), QoS, broker subscription
+ACK, availability/LWT, an outbound WebSocket and authenticated local Android
+HTTP/WebSocket clients. It is explicitly foreground-only and loopback-only;
+remote commands/firmware staging are opt-in, duplicate/retained/stale requests
+fail closed, and no lost command is replayed. See
+[the contracts and remaining acceptance](../docs/MOBILE-NETWORK-WORKSPACE.md).
+
 The Flutter control surface targets Android phones and tablets with the same
 truthful board-state contract as the native and embedded Web interfaces.
 

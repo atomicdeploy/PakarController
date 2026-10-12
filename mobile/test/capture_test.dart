@@ -9,6 +9,7 @@ import 'package:pakarcontroller/main.dart';
 import 'package:pakarcontroller/models.dart';
 import 'package:pakarcontroller/device_settings_page.dart';
 import 'package:pakarcontroller/firmware_page.dart';
+import 'package:pakarcontroller/bridge_page.dart';
 
 import 'peer_fixture.dart';
 import 'device_settings_page_test.dart' show SettingsApi;
@@ -27,8 +28,11 @@ void main() {
         'SettingsPhone',
         'FirmwareTablet',
         'FirmwarePhone',
+        'BridgeTablet',
+        'BridgePhone',
       ], contains(view));
       final firmware = view.startsWith('Firmware');
+      final bridge = view.startsWith('Bridge');
       final settings = view != 'Table', phone = view.endsWith('Phone');
       final api = SettingsApi();
       final firmwareApi = FirmwareApi();
@@ -76,7 +80,9 @@ void main() {
               appBar: AppBar(
                 title: const Text('PakarController · Simulated fixture'),
               ),
-              body: firmware
+              body: bridge
+                  ? BridgePage(api: api, observed: () => peerFixture())
+                  : firmware
                   ? SingleChildScrollView(
                       child: FirmwarePage(
                         api: firmwareApi,
@@ -104,13 +110,13 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      if (settings && !firmware) {
+      if (settings && !firmware && !bridge) {
         await tester.tap(
           phone
               ? find.widgetWithText(ChoiceChip, 'MQTT')
               : find.widgetWithText(ListTile, 'MQTT'),
         );
-      } else if (!firmware) {
+      } else if (!firmware && !bridge) {
         await tester.enterText(find.byType(TextField).first, '1–3, 12, 80');
       }
       await tester.pumpAndSettle();

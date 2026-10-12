@@ -30,3 +30,12 @@ game behavior was reimplemented behind the bounded PakarController protocol.
 PCController hardware services listed above are reused as source rather than
 rewritten. Exact inspected files and revisions are recorded in
 `docs/LEGACY-CODE-AUDIT.md`.
+
+Android advanced network dependencies: mqtt_client 10.12.0 (MIT; included
+Observable code also carries the Dart authors' BSD-style notice), event_bus
+2.0.1 (MIT), and crypto 3.0.7 (Dart BSD-style license). Original package license
+texts remain in the dependency distribution and Flutter's generated license
+bundle. mqtt_client implements the MQTT wire protocol; Android DNS-SD uses the
+system NsdManager rather than a copied Go runtime. Owner-directed PU850 MNDP
+TLV/metadata adaptation and concrete omissions are hash-bound in the existing
+file comparison ledger; there is no claim of complete donor parity.
