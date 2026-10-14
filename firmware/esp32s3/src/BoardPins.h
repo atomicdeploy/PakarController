@@ -27,10 +27,33 @@
 #define PAKAR_S3_ISP_MOSI 11
 #endif
 
+// Optional W5500 reservations, not an enabled Ethernet driver. Keep it on
+// independent SPI3/HSPI; AVR ISP owns SPI2/FSPI and has no ordinary CS input.
+#ifndef PAKAR_S3_W5500_SCK
+#define PAKAR_S3_W5500_SCK 5
+#endif
+#ifndef PAKAR_S3_W5500_MISO
+#define PAKAR_S3_W5500_MISO 6
+#endif
+#ifndef PAKAR_S3_W5500_MOSI
+#define PAKAR_S3_W5500_MOSI 7
+#endif
+#ifndef PAKAR_S3_W5500_CS
+#define PAKAR_S3_W5500_CS 8
+#endif
+#ifndef PAKAR_S3_W5500_RESET
+#define PAKAR_S3_W5500_RESET 9
+#endif
+#ifndef PAKAR_S3_W5500_IRQ
+#define PAKAR_S3_W5500_IRQ 14
+#endif
+
 namespace PakarS3 {
 constexpr uint8_t kPins[] = {PAKAR_S3_AVR_RX, PAKAR_S3_AVR_TX,
     PAKAR_S3_LED_DATA, PAKAR_S3_ISP_RESET, PAKAR_S3_ISP_SCK,
-    PAKAR_S3_ISP_MISO, PAKAR_S3_ISP_MOSI};
+    PAKAR_S3_ISP_MISO, PAKAR_S3_ISP_MOSI,
+    PAKAR_S3_W5500_SCK, PAKAR_S3_W5500_MISO, PAKAR_S3_W5500_MOSI,
+    PAKAR_S3_W5500_CS, PAKAR_S3_W5500_RESET, PAKAR_S3_W5500_IRQ};
 constexpr bool safePins() {
   for (unsigned i = 0; i < sizeof(kPins); ++i) {
     // Deliberately conservative: avoid boot straps, USB, module memory,

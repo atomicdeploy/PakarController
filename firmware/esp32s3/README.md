@@ -5,6 +5,11 @@ This supersedes the earlier provisional reversed pair. ISP remains MOSI11,
 MISO13, SCK12, RESET-control10 through a voltage-safe driver; see the migration
 document for electrical protection and the exact module confirmation gate.
 
+Optional W5500 is reserved on a separate SPI3/HSPI bus: SCK5, MISO6, MOSI7, CS8,
+RSTn9, INTn14. It must not share the AVR ISP bus/object. This is wiring/pin
+ownership preparation only; core ETH/lwIP integration and physical tests remain
+pending. Confirm the module supply input before powering it.
+
 The shared production application currently lives in `../esp8266` and the AVR
 application in `../avr`. These S3-specific adapters start the hardware boundary;
 they do not replace the integrated application with an ISP-only image, advertise

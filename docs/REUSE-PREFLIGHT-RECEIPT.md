@@ -1,5 +1,32 @@
 # Donor-first preflight receipt
 
+## W5500 separate-bus wiring preparation
+
+Consulted network-cloud and literal PU850 donor audit before selecting pins.
+Fully reread actual PU850 NetDiscovery.h/cpp: unused configuration and blocking
+Wi-Fi-only prototype loops are not an Ethernet driver and were not copied.
+Existing broader discovery/import gaps remain pending, not silently excluded.
+Inspected the current AvrIsp enter/leave SPI lifetime: its global SPI.end()
+cannot own Ethernet's SPI object. Reserved W5500 SCK5/MISO6/MOSI7/CS8/RSTn9/INTn14
+on independent SPI3/HSPI, retaining AVR SPI2/FSPI and TX17/RX18 and LED4.
+All thirteen signals are unique; source guards cover documentation and defaults.
+
+Fully read installed Arduino-ESP32 3.3.12 libraries/SPI/src/SPI.h,
+libraries/Ethernet/src/ETH.h and the ETH_W5500_Arduino_SPI example. SHA256:
+SPI.h 4fdfa675a719087981d67cfa8d6c1719e17386121dd859b28114cca459f892df;
+ETH.h 5c8fe676e61ffe33be8363d20d23c5bf242c11f1b85e2a2a91d100177dd79904;
+example ac085528784f6187507d1740809254f62adf55a56b7e27f303744841d81d3628.
+The selected future integration is core ETH/lwIP, not a parallel Arduino
+Ethernet socket stack. No driver/example code was imported or enabled here.
+Inspected only the bus-definition excerpt of esp32-hal-spi.h, not its full file.
+
+Sent the explicit pin plan to Merge PCController PRs for Pealayer, then read its
+completed review: it agrees, conditional on exact DevKit GPIO exposure and
+module supply confirmation. Official WIZnet electrical/reset specifications
+were checked. Carrier power input, integrated S3 Ethernet/ISP, discovery,
+OTA/network continuity, and physical tests remain open. Pin source guards and
+diff checks pass; no SDK build, dependency installation or powered test occurred.
+
 ## S3 UART wiring agreement
 
 Read the referenced Merge PCController PRs for Pealayer chat, including its
