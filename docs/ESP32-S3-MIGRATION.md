@@ -13,14 +13,20 @@ on the AVR. This assumption does not select a flash size or partition layout.
 
 | ESP32-S3 | Connect to | Direction |
 |---|---|---|
-| GPIO17 / UART1 RX | AVR D1 / TXD | AVR to S3 |
-| GPIO18 / UART1 TX | AVR D0 / RXD | S3 to AVR |
+| GPIO17 / UART1 TX | AVR D0 / PD0 / RXD | S3 to AVR |
+| GPIO18 / UART1 RX | AVR D1 / PD1 / TXD | AVR to S3 |
 | GPIO4 | WS2811 DIN | S3 to strip |
 | GPIO12 / SPI SCK | AVR D13 / PB5 / SCK | ISP clock |
 | GPIO11 / SPI MOSI | AVR D11 / PB3 / MOSI | ISP write |
 | GPIO13 / SPI MISO | AVR D12 / PB4 / MISO | ISP read |
 | GPIO10 | AVR RESET, not AVR D10 | ISP reset |
 | GND | AVR GND and LED-supply GND | Common reference |
+
+This is the canonical mapping and supersedes the earlier provisional RX17/TX18
+plan. The S3 GPIO matrix permits either assignment, but the firmware must match
+the wires. BoardPins now defaults to TX17/RX18, agreeing with the PCController
+chat's conventional UART1 plan. AvrUart passes RX then TX to HardwareSerial.begin.
+Neither plan is evidence of a deployed S3 programmer or working physical link.
 
 TM1637 stays on AVR A4/DIO and A5/CLK; buzzer stays on AVR D9. These are not
 I2C modules. Reserve S3 GPIO19/20 for native USB, GPIO43/44 for bridge UART;
@@ -33,6 +39,9 @@ The ISP RESET connection is also voltage-sensitive: an AVR RESET pull-up to 5 V
 must not connect directly to GPIO10. Use a suitable isolated/open-drain reset
 interface that keeps the S3 pin within its electrical limits. Check all ISP
 directions and AVR input thresholds, not only the UART receive wire.
+An external transistor reset driver may invert the GPIO control polarity; the
+ISP implementation must match that circuit. S3 GPIO open-drain mode alone does
+not make its pad safe for a 5 V RESET pull-up.
 Power the strip from its correct external supply, not the DevKit 3V3 regulator.
 Previous ESP8266 operation without level shifting is not S3 electrical acceptance.
 Prefer a suitable 3.3-to-5 V data driver and series resistor for robust LED output.

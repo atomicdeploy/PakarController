@@ -3,11 +3,13 @@
 
 // PROVISIONAL common DevKitC-1 plan, not confirmation of the user's module.
 // GPIO numbers, never NodeMCU Dx names. Confirm board schematic before wiring.
+// UART1 conventional routing: S3 TX17 -> AVR RXD; AVR TXD -> S3 RX18.
+// Overrides must match the actual wires; older provisional plans reversed this pair.
 #ifndef PAKAR_S3_AVR_RX
-#define PAKAR_S3_AVR_RX 17
+#define PAKAR_S3_AVR_RX 18
 #endif
 #ifndef PAKAR_S3_AVR_TX
-#define PAKAR_S3_AVR_TX 18
+#define PAKAR_S3_AVR_TX 17
 #endif
 #ifndef PAKAR_S3_LED_DATA
 #define PAKAR_S3_LED_DATA 4

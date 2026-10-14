@@ -621,7 +621,7 @@ Verdict: **parity-gap**. Revision: `392e6432e317e3a96ca757b59f8bc0ae2c3c0d44`. O
 
 - Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=ef76592e75ee05babd398a27bb72869bf88c154a5e545a4b17fe3cfd1093890c; anchor=name: "🚀 Build · Test · Release"]`.
 - Target: `tools/build-desktop.ps1:39 [UTF8-LF sha256=4de42c00c2dca7bb1ea1d234dd1529fd5a06b110192fd8cee3e03d6cd451dc20; anchor=--test-threads=1]`.
-- Target: `tools/ci-checks.mjs:203 [UTF8-LF sha256=218970daa465094e7b519c99738eeaa0cf7c5c8a21a64a09369ac72e630e1c8f; anchor=export function runChecks]`.
+- Target: `tools/ci-checks.mjs:204 [UTF8-LF sha256=a47e857551722430876fec34e9adb98f3d04a93d84adbbdcf2e9b450572d8ee4; anchor=export function runChecks]`.
 - Target: `tools/prepare-release.mjs:16 [UTF8-LF sha256=c5dcb698c397b30ca0ed076437a695838366aa0a82ed3c580df3cf6380d03306; anchor=export function firmwareManifest]`.
 - Retained: Actual donor branch/PR/tag/dispatch/merge-group triggers, concurrency policy, pinned actions without checkout credentials, health-before-build jobs, timeouts, Rust cache reuse, locked tests/builds, packaging, curated notes, manifest/checksums/provenance and aggregate results adapted to current Windows/ESP/AVR/Android targets.
 - Retained: Release content is gated on all builds, created as an immutable draft prerelease, with two correctly matched board pairs and raw HTTPS update manifests. Untrusted PRs do not execute publishing code with a write token.

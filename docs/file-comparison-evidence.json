@@ -2260,7 +2260,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "218970daa465094e7b519c99738eeaa0cf7c5c8a21a64a09369ac72e630e1c8f",
+          "sha256": "a47e857551722430876fec34e9adb98f3d04a93d84adbbdcf2e9b450572d8ee4",
           "anchor": "export function runChecks"
         },
         {

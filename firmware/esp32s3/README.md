@@ -1,5 +1,10 @@
 # ESP32-S3 migration adapters — not a production firmware yet
 
+Canonical UART wiring: GPIO17/TX -> AVR D0/RXD; AVR D1/TXD -> GPIO18/RX.
+This supersedes the earlier provisional reversed pair. ISP remains MOSI11,
+MISO13, SCK12, RESET-control10 through a voltage-safe driver; see the migration
+document for electrical protection and the exact module confirmation gate.
+
 The shared production application currently lives in `../esp8266` and the AVR
 application in `../avr`. These S3-specific adapters start the hardware boundary;
 they do not replace the integrated application with an ISP-only image, advertise

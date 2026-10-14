@@ -1,5 +1,27 @@
 # Donor-first preflight receipt
 
+## S3 UART wiring agreement
+
+Read the referenced Merge PCController PRs for Pealayer chat, including its
+actual ISP/UART reply, rather than inferring from its title. ISP pins agree:
+MOSI11, MISO13, SCK12, RESET-control10 through a voltage-safe external driver.
+Its conventional TX17/RX18 differed from Pakar's provisional RX17/TX18 defaults.
+Both are routable, but mixed code/wiring would fail communication. Standardized
+Pakar's defaults and migration table to TX17 -> AVR D0/RXD and AVR D1/TXD -> RX18.
+The old chat answer/table is superseded; no AVR peripheral assignments changed.
+
+Consulted uart-flow-control and literal donor-audit; fully reread actual current
+PCController Project/UartProtocol.h, SHA287a95a65a9b9655e64a15ece051bc792a06564b648a1b53eed4f373c564e458,
+and actual Pakar BoardPins/AvrUart. Existing frame/hardware UART behavior is
+unchanged. Official Arduino-ESP32 begin() documentation confirms RX-before-TX
+argument order. Added a lightweight S3 source-wiring guard to existing CI; changed
+CI target proof hash after rereviewing the added command and unchanged fail-closed
+runner. Existing donor omissions and integrated S3/hardware gates remain open.
+
+Source guards and diff checks pass. No dependency installation, unrelated app/
+firmware build, flash, fuse/EEPROM write, reset or electrical test. This is pin
+configuration/document agreement, not a working S3 programmer/deployment claim.
+
 ## Android peripheral mirroring
 
 Started from clean a6dec77; refreshed owning issue #2 and open PR state (none).
