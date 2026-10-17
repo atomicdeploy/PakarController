@@ -1,6 +1,6 @@
 #pragma once
-// Pakar EEPROM ownership; deliberately not the donor's unrelated RF/reset/
-// status-profile image. Settings and automation banks are disjoint from Prog.
+// Pakar EEPROM ownership; not the donor's unrelated RF/status-profile image.
+// Settings, automation and reset-health journal are disjoint from Prog.
 namespace EepromLayout {
 constexpr int SettingsBankA = 32;
 constexpr int SettingsBankBytes = 48;
@@ -13,5 +13,10 @@ constexpr int AutomationBankBytes = AutomationHeaderBytes +
                                    AutomationCapacity * AutomationRecordBytes;
 constexpr int AutomationBankBAddress = AutomationBankAAddress + AutomationBankBytes;
 constexpr int AutomationEnd = AutomationBankBAddress + AutomationBankBytes;
-static_assert(AutomationEnd <= 1008, "EEPROM overlaps durable Prog latch");
+constexpr int ResetJournalAddress = 416;
+constexpr unsigned char ResetJournalSlots = 64;
+constexpr unsigned char ResetRecordBytes = 6;
+constexpr int ResetJournalEnd = ResetJournalAddress + ResetJournalSlots * ResetRecordBytes;
+static_assert(AutomationEnd <= ResetJournalAddress, "Automation overlaps reset journal");
+static_assert(ResetJournalEnd <= 1008, "Reset journal overlaps durable Prog latch");
 }

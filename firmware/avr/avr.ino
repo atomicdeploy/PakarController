@@ -14,6 +14,7 @@
 #include "PcControllerRuntime.h"
 #include <avr/wdt.h>
 #include "ProgrammingLatch.h"
+#include "ResetTelemetry.h"
 #include "SevenSegments.h"
 #include "ShiftRegisters.h"
 #include "TonePlayer.h"
@@ -160,6 +161,11 @@ void sendTelemetry(uint8_t sequence) {
   memcpy(p+39,&features,2);p[41]=programmingLatch.active();memcpy(p+42,&errors,2);
   const uint16_t lost=pcController.lostEvents();memcpy(p+44,&lost,2);
   link.send(kTelemetryResponse,sequence,p,sizeof(p));
+  // Additive companion: preserve the existing 46-byte telemetry payload.
+  uint8_t reset[6]={resetTelemetry.cause()};
+  const uint32_t boots=resetTelemetry.count();memcpy(reset+1,&boots,4);
+  reset[5]=resetTelemetry.persisted();
+  link.send(kResetTelemetryResponse,sequence,reset,sizeof(reset));
 }
 
 void applyProgrammingSafety() {
@@ -462,6 +468,7 @@ void serviceInputs(uint32_t now) {
 }  // namespace
 
 void setup() {
+  resetTelemetry.begin(); // EEPROM work only after .init3 disabled stale WDT.
 #if PAKAR_USE_BUSY_WIRE
   pinMode(BoardPins::EspBusy, INPUT_PULLUP);
 #endif
@@ -478,7 +485,9 @@ void setup() {
     boardKeys[bit].setEventCallback(boardKeyGesture);
   }
   link.begin(kBaud, handleFrame);
-  if (!programmingLatch.active() && (pcController.settings().values().flags & 2U)) playBootMelody();
+  const uint8_t flags=pcController.settings().values().flags;
+  if (!programmingLatch.active() && (flags & 2U) && !(flags & 1U) &&
+      resetTelemetry.allowWelcome()) playBootMelody();
 }
 
 void loop() {

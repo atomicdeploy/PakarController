@@ -42,6 +42,7 @@ enum Opcode : uint8_t {
   kAvrRxDiagnostic = 0x5B, // Physical ESP USB only, quiet S3 build: bounded RX-only capture.
   kSetLedOutput = 0x5C, // ESP only: one boolean; independent of presentation/game mode.
   kAvrRxDiagnosticResponse = 0xB4, // Action/error + actual capture/pad observations; never AVR ACK.
+  kResetTelemetryResponse = 0xB5, // [MCUSR cause,countLE32,journal_verified]; optional GET_TELEMETRY companion.
   kEspPanelResponse = 0xB3, // Correlated action, error and authoritative ESP readback.
   kIdentityResponse = 0xB2, // [nonce, revision32, total16, offset16, <=39 JSON bytes].
   kTelemetryResponse = 0xB1, // 46 bytes; actual AVR observations.
