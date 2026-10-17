@@ -12,7 +12,28 @@ use super::dropdown::DropdownUiExt;
 use platform::instance::Command;
 
 pub fn launch_command(args: &[String]) -> Command {
-    if let Some(at) = args.iter().position(|v| v == "--screenshot") {
+    let option = |flag: &str| args.iter().position(|v| v == flag)
+        .and_then(|at| args.get(at + 1)).filter(|v| !v.starts_with("--")).cloned();
+    if args.iter().any(|v| v == "--wifi") {
+        Command::UseWifi { endpoint: option("--endpoint") }
+    } else if args.iter().any(|v| v == "--usb") {
+        Command::UseUsb { port: option("--port") }
+    } else if args.iter().any(|v| v == "--disconnect") {
+        Command::Disconnect
+    } else if args.iter().any(|v| v == "--update-esp") {
+        Command::UpdateEsp { path: option("--update-esp").unwrap_or_default(),
+            confirmed: args.iter().any(|v| v == "--confirm") }
+    } else if args.iter().any(|v| v == "--led-effect") {
+        Command::LedEffect { value: option("--led-effect").unwrap_or_default() }
+    } else if args.iter().any(|v| v == "--led-mode") {
+        Command::LedMode { value: option("--led-mode").unwrap_or_default() }
+    } else if let Some(at) = args.iter().position(|v| v == "--led-cell") {
+        Command::LedCell {
+            id: args.get(at + 1).and_then(|v| v.parse().ok()).unwrap_or(0),
+            state: args.get(at + 2).filter(|v| !v.starts_with("--")).cloned().unwrap_or_default(),
+            effect: args.get(at + 3).filter(|v| !v.starts_with("--")).cloned().unwrap_or_else(|| "immediate".into()),
+        }
+    } else if let Some(at) = args.iter().position(|v| v == "--screenshot") {
         Command::Screenshot {
             path: args.get(at + 1).cloned().unwrap_or_default(),
         }
@@ -58,6 +79,86 @@ pub fn launch_command(args: &[String]) -> Command {
         }
     } else {
         Command::Show
+    }
+}
+
+fn led_effect_code(value: &str) -> Option<u8> {
+    match value { "none" => Some(0), "rainbow" => Some(1), "fire" => Some(2), _ => None }
+}
+fn led_mode_code(value: &str) -> Option<u8> {
+    match value { "idle" => Some(0), "cell" => Some(1), "snake" => Some(3), _ => None }
+}
+fn led_cell_payload(id: u8, state: &str, effect: &str) -> Option<Vec<u8>> {
+    if !(1..=80).contains(&id) { return None; }
+    let state = match state { "white" => 0, "red" => 1, "off" => 2, _ => return None };
+    let effect = match effect { "immediate" => 0, "fade" => 1, "pulse" => 2, _ => return None };
+    Some(vec![id, state, effect])
+}
+fn connection_change_blocked(preferences_dirty: bool, device_dirty: bool, pending: bool,
+    maintenance: bool, identity_pending: bool) -> bool {
+    preferences_dirty || device_dirty || pending || maintenance || identity_pending
+}
+
+#[cfg(test)]
+mod lifecycle_launch_tests {
+    use super::*;
+    fn parsed(args: &[&str]) -> serde_json::Value {
+        serde_json::to_value(launch_command(&args.iter().map(|value| value.to_string()).collect::<Vec<_>>())).unwrap()
+    }
+    #[test]
+    fn explicit_lifecycle_launches_retain_optional_configured_endpoints() {
+        assert_eq!(parsed(&["--wifi"]), serde_json::json!({"command":"use_wifi","endpoint":null}));
+        assert_eq!(parsed(&["--wifi", "--endpoint", "http://ledboard.local"]),
+            serde_json::json!({"command":"use_wifi","endpoint":"http://ledboard.local"}));
+        assert_eq!(parsed(&["--usb"]), serde_json::json!({"command":"use_usb","port":null}));
+        assert_eq!(parsed(&["--usb", "--port", "COM22"]), serde_json::json!({"command":"use_usb","port":"COM22"}));
+        assert_eq!(parsed(&["--disconnect"]), serde_json::json!({"command":"disconnect"}));
+        assert_eq!(parsed(&["--wifi", "--endpoint", "--app-status"])["endpoint"], serde_json::Value::Null);
+    }
+    #[test]
+    fn esp_update_launch_requires_a_separate_explicit_confirmation() {
+        assert_eq!(parsed(&["--update-esp", "C:\\firmware\\pakar.bin"]),
+            serde_json::json!({"command":"update_esp","path":"C:\\firmware\\pakar.bin","confirmed":false}));
+        assert_eq!(parsed(&["--update-esp", "C:\\firmware\\pakar.bin", "--confirm"]),
+            serde_json::json!({"command":"update_esp","path":"C:\\firmware\\pakar.bin","confirmed":true}));
+        assert_eq!(parsed(&["--update-esp", "--confirm"])["path"], "");
+    }
+    #[test]
+    fn led_launches_use_the_exact_existing_api_and_wire_values() {
+        for (name, code) in [("none",0), ("rainbow",1), ("fire",2)] {
+            assert_eq!(parsed(&["--led-effect", name]), serde_json::json!({"command":"led_effect","value":name}));
+            assert_eq!(led_effect_code(name), Some(code));
+        }
+        for (name, code) in [("idle",0), ("cell",1), ("snake",3)] {
+            assert_eq!(parsed(&["--led-mode", name]), serde_json::json!({"command":"led_mode","value":name}));
+            assert_eq!(led_mode_code(name), Some(code));
+        }
+        assert_eq!(parsed(&["--led-cell", "80", "white"]), serde_json::json!({"command":"led_cell","id":80,"state":"white","effect":"immediate"}));
+        assert_eq!(parsed(&["--led-cell", "2", "off", "pulse"]), serde_json::json!({"command":"led_cell","id":2,"state":"off","effect":"pulse"}));
+        for (state, code) in [("white",0), ("red",1), ("off",2)] {
+            for (effect, transition) in [("immediate",0), ("fade",1), ("pulse",2)] {
+                assert_eq!(led_cell_payload(1, state, effect), Some(vec![1, code, transition]));
+            }
+        }
+        for args in [&["--led-cell", "256", "white"][..], &["--led-cell", "garbage", "white"][..], &["--led-cell"][..]] {
+            assert_eq!(parsed(args)["id"], 0);
+        }
+        assert!(led_effect_code("").is_none());
+        assert!(led_effect_code("confetti").is_none());
+        assert!(led_mode_code("first-wins").is_none()); // No AVR/game shortcut in this bounded interface.
+        assert!(led_cell_payload(0, "white", "immediate").is_none());
+        assert!(led_cell_payload(81, "white", "immediate").is_none());
+        assert!(led_cell_payload(1, "unknown", "immediate").is_none());
+        assert!(led_cell_payload(1, "white", "unknown").is_none());
+    }
+    #[test]
+    fn each_dirty_or_pending_owner_independently_blocks_connection_changes() {
+        assert!(!connection_change_blocked(false, false, false, false, false));
+        for bit in 0..5 {
+            let mut guards = [false;5];
+            guards[bit] = true;
+            assert!(connection_change_blocked(guards[0], guards[1], guards[2], guards[3], guards[4]));
+        }
     }
 }
 fn badge(ui: &mut egui::Ui, label: &str, active: bool) {
@@ -144,6 +245,72 @@ impl PakarControllerApp {
     }
     pub fn dispatch(&mut self, command: Command, ctx: &egui::Context) {
         match command {
+            Command::UseWifi { endpoint } => {
+                if self.connection_change_guard() { return; }
+                if let Some(endpoint) = endpoint {
+                    let endpoint = endpoint.trim();
+                    if reqwest::Url::parse(endpoint).ok().is_none_or(|url|
+                        endpoint.len() > 512 || !matches!(url.scheme(), "http" | "https") || url.host_str().is_none()
+                            || !url.username().is_empty() || url.password().is_some() || url.query().is_some()
+                            || url.fragment().is_some() || !matches!(url.path(), "" | "/")) {
+                        self.message = "Use http(s)://hostname[:port] without credentials or a path".into();
+                        return;
+                    }
+                    self.base = endpoint.to_owned();
+                }
+                self.set_connection(Transport::WiFi, true);
+                ctx.request_repaint();
+                return; // Process-local lifecycle must never focus the desktop.
+            }
+            Command::UseUsb { port } => {
+                if self.connection_change_guard() { return; }
+                if let Some(port) = port {
+                    if port.trim().is_empty() || port.len() > 512 || port.chars().any(char::is_control) {
+                        self.message = "Use a nonempty USB serial port or hardware path".into();
+                        return;
+                    }
+                    self.serial_port = port.trim().to_owned();
+                }
+                self.set_connection(Transport::Serial, true);
+                ctx.request_repaint();
+                return;
+            }
+            Command::Disconnect => {
+                self.set_connection(self.transport, false);
+                ctx.request_repaint();
+                return;
+            }
+            Command::UpdateEsp { path, confirmed } => {
+                if !confirmed {
+                    self.message = "ESP firmware update requires explicit --confirm".into();
+                } else if let Err(error) = self.update_esp_from_file(&path) {
+                    self.message = error;
+                }
+                ctx.request_repaint();
+                return; // The guarded existing maintenance owner handles OTA.
+            }
+            Command::LedEffect { value } => {
+                if let Some(code) = led_effect_code(&value) {
+                    self.action("/api/effect", vec![("value".into(), value)], OP_PATTERN, vec![code]);
+                } else { self.message = "Unknown LED effect; use none, rainbow or fire".into(); }
+                ctx.request_repaint();
+                return;
+            }
+            Command::LedMode { value } => {
+                if let Some(code) = led_mode_code(&value) {
+                    self.action("/api/mode", vec![("value".into(), value)], OP_SET_MODE, vec![code]);
+                } else { self.message = "Unknown LED mode; use idle, cell or snake".into(); }
+                ctx.request_repaint();
+                return;
+            }
+            Command::LedCell { id, state, effect } => {
+                if let Some(payload) = led_cell_payload(id, &state, &effect) {
+                    self.action("/api/cell", vec![("id".into(), id.to_string()),
+                        ("state".into(), state), ("effect".into(), effect)], OP_CELL_ACTION, payload);
+                } else { self.message = "Invalid LED cell, state or transition".into(); }
+                ctx.request_repaint();
+                return;
+            }
             Command::Screenshot { path } => {
                 if let Err(error) = self.capture.request(path) {
                     self.message = error;
@@ -246,6 +413,8 @@ impl PakarControllerApp {
         self.event_log.record(kind, message);
     }
     pub fn save_workspace(&mut self) {
+        self.config.connection_method = self.transport;
+        self.config.connection_enabled = self.connection_enabled;
         if let Ok(json) = layout::serialize(&self.dock) {
             self.config.dock_layout = json;
         }
@@ -254,6 +423,16 @@ impl PakarControllerApp {
                 self.message = error;
             }
         }
+    }
+    pub(crate) fn connection_change_guard(&mut self) -> bool {
+        let blocked = connection_change_blocked(
+            self.preferences.as_ref().is_some_and(|draft| draft.is_dirty()),
+            self.device_settings.dirty(), self.device_settings.pending.is_some(),
+            self.device_settings.maintenance_pending.is_some(), self.identity_pending);
+        if blocked {
+            self.message = "Save or discard settings drafts and wait for pending operations before changing connection".into();
+        }
+        blocked
     }
     pub(crate) fn live_status(&self) -> Option<&DeviceStatus> {
         match self.command_route() {
@@ -392,6 +571,15 @@ impl PakarControllerApp {
         if let Ok(mut value) = self.control.snapshot.lock() {
             *value = serde_json::json!({"application":self.peer_context().and_then(|p|p.application()).map(|a|a.name.as_str()).unwrap_or("PakarController"),"client_application":"PakarController","app_title":self.peer_context().map(|p|p.title()),"version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":ui::cell_search::format_selection(&self.table.selection.ids),"cell_search_draft":self.cell_search,"selected_cells":self.table.selection.cells(),"highlighted_cells":self.table.selection.cells(),"search_matches":self.table.selection.cells(),"selected_cell":self.selected_cell});
             value["device_settings"] = serde_json::json!({"open": self.device_settings.open, "page": self.device_settings.page, "network_loaded": self.device_settings.network.is_some(), "cloud_loaded": self.device_settings.cloud.is_some(), "write_pending": self.device_settings.pending.is_some(), "maintenance_pending": self.device_settings.maintenance_pending.is_some()});
+            value["connection"] = serde_json::json!({
+                "method": self.transport.label(), "enabled": self.connection_enabled,
+                "releasing": self.connection_gate.releasing().map(|method| method.label()),
+                "online": self.command_route() == Some(self.transport),
+            });
+            value["serial_port"] = serde_json::json!(self.serial_port);
+            value["device_status"] = serde_json::json!(snapshot);
+            value["message"] = serde_json::json!(self.message);
+            value["device_settings"]["message"] = serde_json::json!(self.device_settings.message);
             value["peer_capabilities"] = serde_json::json!(self.peer_context());
             value["cell_management"] = serde_json::json!({"open":self.table.manager_open,"selection":self.table.selection.ids,"additive_selection":self.config.additive_cell_selection,"animations":self.config.animate_cells,"indicators":self.config.show_cell_indicators});
             value["screenshot"] = self.capture.status();
@@ -604,15 +792,15 @@ impl PakarControllerApp {
                 peer_known: snapshot.is_some(),
                 avr_available: ["display", "text", "buzzer", "inputs", "outputs", "settings"].iter().any(|v| self.has_feature(v)),
                 display_available: self.has_feature("display"),
-                network_available: self.has_feature("network"),
+                network_available: self.transport == Transport::WiFi && self.has_feature("network"),
                 telemetry_available: self.has_feature("telemetry"),
                 message: &self.message,
                 hostname: &s.hostname,
-                station: &s.station_ssid,
+                station: if self.transport == Transport::WiFi { &s.station_ssid } else { "" },
                 avr_online: s.avr_online,
                 tm1637_ready: s.tm1637_ack,
-                websocket_live: self.websocket_live,
-                serial_live: self.serial_live,
+                websocket_live: self.transport == Transport::WiFi && self.websocket_live,
+                serial_live: self.transport == Transport::Serial && self.serial_live,
             },
             &mut self.config.status_items,
         );
@@ -647,10 +835,14 @@ impl PakarControllerApp {
                         },
                         snapshot.is_some(),
                     );
-                    ui::connection_controls::websocket(ui, self.websocket_live, &self.base,
-                        self.transport, &mut connection_actions);
-                    ui::connection_controls::usb(ui, self.serial_live, &self.serial_port,
-                        self.transport, self.identity_pending, || serialport::available_ports()
+                    ui::connection_controls::draw(ui, ui::connection_controls::State {
+                        method: self.transport,
+                        enabled: self.connection_enabled,
+                        live: self.command_route().is_some(),
+                        endpoint: &self.base,
+                        port: &self.serial_port,
+                        identity_pending: self.identity_pending,
+                    }, || serialport::available_ports()
                             .map(|ports| ports.into_iter().map(|port| port.port_name).collect())
                             .map_err(|error| error.to_string()), &mut connection_actions);
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -679,20 +871,15 @@ impl PakarControllerApp {
         for action in connection_actions {
             use ui::connection_controls::Action;
             match action {
-                Action::Route(route) => { self.transport = route; self.refresh(); }
+                Action::Method(method) if !self.identity_pending => self.set_connection(method, false),
+                Action::Lifecycle(enabled) if !self.identity_pending => self.set_connection(self.transport, enabled),
                 Action::Port(port) if !self.identity_pending => {
+                    if self.connection_change_guard() { continue; }
+                    self.set_connection(self.transport, false);
+                    if self.connection_enabled { continue; } // A refused release cannot change its endpoint.
                     self.serial_port = port;
                     self.config.serial_port = self.serial_port.clone();
                     self.save_workspace();
-                }
-                Action::ReconnectWebSocket => { self.last_ws_endpoint = None; self.refresh(); }
-                Action::ReconnectUsb if !self.identity_pending && !self.serial_port.is_empty() => {
-                    // A same-port request closes/reopens the worker too. Clear the
-                    // old ACK immediately; reopening is not a successful connection.
-                    self.serial_status = None;
-                    self.last_serial_status_at = None;
-                    self.serial_live = false;
-                    let _ = self.serial_tx.send(SerialCommand::Port(self.serial_port.clone()));
                 }
                 Action::Configure => self.show_connection = true,
                 _ => {}
@@ -1603,72 +1790,70 @@ impl PakarControllerApp {
             }
         }
         if self.show_connection {
+            let mut method = self.transport;
+            let mut draft = ui::connection_controls::Draft {
+                endpoint: self.base.clone(), user: self.user.clone(),
+                password: self.password.clone(), port: self.serial_port.clone(),
+            };
+            let mut lifecycle = None;
             let response = egui::Modal::new(egui::Id::new("connection-dialog")).show(ctx, |ui| {
                 ui.set_width(480.0);
                 ui.heading(format!("{}  {}", icons::PLUG, crate::ui::i18n::text("Connect to controller")));
                 ui.add_space(12.0);
-                dialog::section(ui, icons::GLOBE, "Wi-Fi", |ui| {
-                    field(ui, icons::GLOBE, "Endpoint", &mut self.base, false);
-                    field(ui, icons::LOCK, "Username", &mut self.user, false);
-                    field(ui, icons::LOCK, "Password", &mut self.password, true);
-                });
+                ui::connection_controls::method_picker(ui, &mut method, self.identity_pending);
                 ui.add_space(10.0);
-                dialog::section(ui, icons::PLUG, "USB serial", |ui| {
-                    // Pealayer's custom hardware-path fallback: discovery is not
-                    // the only way to choose a stable OS serial endpoint.
-                    field(ui, icons::PLUG, "Port or hardware path", &mut self.serial_port, false);
-                    super::dropdown::ComboBox::from_label("Port")
-                        .selected_text(if self.serial_port.is_empty() {
-                            "Disconnected"
-                        } else {
-                            &self.serial_port
-                        })
-                        .show_ui(ui, |ui| {
-                            ui.dropdown_value(
-                                &mut self.serial_port,
-                                String::new(),
-                                "Disconnected",
-                            );
-                            for port in serialport::available_ports().unwrap_or_default() {
-                                ui.dropdown_value(
-                                    &mut self.serial_port,
-                                    port.port_name.clone(),
-                                    &port.port_name,
-                                );
-                            }
-                        });
-                    super::dropdown::ComboBox::from_label("Commands")
-                        .selected_text(match self.transport {
-                            Transport::WiFi => "Wi-Fi",
-                            Transport::Serial => "Serial",
-                            Transport::Both => "Wi-Fi + serial",
-                        })
-                        .show_ui(ui, |ui| {
-                            ui.dropdown_value(&mut self.transport, Transport::WiFi, "Wi-Fi");
-                            ui.dropdown_value(&mut self.transport, Transport::Serial, "Serial");
-                            ui.dropdown_value(
-                                &mut self.transport,
-                                Transport::Both,
-                                "Wi-Fi + serial",
-                            );
-                        });
-                });
+                ui::connection_controls::details(ui, method,
+                    !self.identity_pending && !self.connection_enabled, &mut draft,
+                    || serialport::available_ports()
+                        .map(|ports| ports.into_iter().map(|port| port.port_name).collect())
+                        .map_err(|error| error.to_string()));
+                if self.identity_pending {
+                    ui.weak("Identity write in progress; connection changes are locked.");
+                } else if self.connection_enabled {
+                    ui.weak("Disconnect before editing the endpoint or credentials.");
+                }
                 ui.add_space(12.0);
                 dialog::action_row(ui, false, |ui| {
-                    if dialog::primary_action_button(ui, icons::PLUG, "Connect").clicked() {
-                        self.config.endpoint = self.base.clone();
-                        self.config.user = self.user.clone();
-                        self.config.serial_port = self.serial_port.clone();
-                        self.last_ws_endpoint = None;
-                        self.refresh();
+                    let endpoint_present = match method {
+                        Transport::WiFi => !draft.endpoint.trim().is_empty(),
+                        Transport::Serial => !draft.port.trim().is_empty(),
+                    };
+                    if ui.add_enabled_ui(!self.identity_pending && (self.connection_enabled || endpoint_present), |ui|
+                        dialog::primary_action_button(ui, icons::PLUG,
+                            if self.connection_enabled { "Disconnect" } else { "Connect" })
+                    ).inner.clicked() {
+                        lifecycle = Some(!self.connection_enabled);
                         self.show_connection = false;
-                        self.save_workspace();
                     }
                     if dialog::action_button(ui, icons::X, "Close").clicked() {
                         self.show_connection = false;
                     }
                 });
             });
+            let connection_draft_changed = draft.endpoint != self.base || draft.user != self.user
+                || draft.password != self.password || draft.port != self.serial_port;
+            let connection_change_requested = method != self.transport || connection_draft_changed || lifecycle.is_some();
+            if connection_change_requested && !self.connection_change_guard() {
+                if method != self.transport {
+                    self.set_connection(method, false);
+                    // Switching the method is a deliberate disconnect, never
+                    // a same-frame implicit connect through another worker.
+                    lifecycle = None;
+                }
+                if method == self.transport && !self.connection_enabled && connection_draft_changed {
+                    self.base = draft.endpoint;
+                    self.user = draft.user;
+                    self.password = draft.password;
+                    self.serial_port = draft.port;
+                    self.config.endpoint = self.base.clone();
+                    self.config.user = self.user.clone();
+                    self.config.serial_port = self.serial_port.clone();
+                    self.save_workspace();
+                }
+                if method == self.transport {
+                    if let Some(enabled) = lifecycle { self.set_connection(method, enabled); }
+                }
+            }
             if response.should_close() {
                 self.show_connection = false;
             }

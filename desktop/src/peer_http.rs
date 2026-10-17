@@ -145,6 +145,8 @@ pub fn retired_receipt(event: &Event) -> Option<String> {
 /// Never carry its response body or credentials into the new peer.
 pub fn retired_envelope(event: &Event) -> Option<String> {
     match event {
+        Event::ForConnection(stamp, inner) if !stamp.current() => retired_envelope(inner).or_else(||retired_receipt(inner)),
+        Event::ForConnection(_, inner) => retired_envelope(inner),
         Event::ForEndpoint(_, inner) => retired_envelope(inner),
         Event::ForScope(scope, inner) if !scope.current() => retired_receipt(inner),
         _ => None,

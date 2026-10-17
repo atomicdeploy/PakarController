@@ -377,12 +377,13 @@
 {
   "origin": "PCController",
   "path": "Tools/Controller/internal/hostbridge/buzzer_mirror.go",
-  "sha256": "2a6d0fd4d0bd2a59513430407b343e1c0d8afd94b3caa2f3a263241bf9390d81",
+  "sha256": "dcb9bf3c1a31cb6cc06f4f5ed52def32b7388fd4d33587e233476a3a76e1f032",
   "source_read": "complete",
   "verdict": "parity-gap",
   "preserved": [
     "Fully read actual current donor through EOF. Adapted uint32 MCU timestamp wrap, 50ms playout delay, 250ms skew bound, absolute note deadlines, source-generation cancellation, independent opt-in and distinct failure transitions into real Android mirroring.",
-    "Donor cadence/stop/reconnect tests adapted to a silent injectable Flutter output. Actual PCM Android renderer uses bounded 5ms buffers, exact requested Hz, click-reducing envelope, finite deadline, focus/lifecycle cancellation and an independent six-second native receive lease."
+    "Donor cadence/stop/reconnect tests adapted to a silent injectable Flutter output. Actual PCM Android renderer uses bounded 5ms buffers, exact requested Hz, click-reducing envelope, finite deadline, focus/lifecycle cancellation and an independent six-second native receive lease.",
+    "Canonical buzzer_mirror.go435lines fully reread through EOF. Existing Android timeline/peer-owner mappings remain partial retained adaptations, not parity with the refreshed scheduler/backend lifecycle."
   ],
   "targets": [
     {
@@ -402,7 +403,11 @@
     }
   ],
   "proof": [
-    {"path":"mobile/test/mirroring_transport_test.dart","sha256":"5b86dae832e659a5f2a1cb5d3587ae4d3e1a354dfae33c62b14dfed3ccc1f8cf","anchor":"Actual authenticated WebSocket"},
+    {
+      "path": "mobile/test/mirroring_transport_test.dart",
+      "sha256": "5b86dae832e659a5f2a1cb5d3587ae4d3e1a354dfae33c62b14dfed3ccc1f8cf",
+      "anchor": "Actual authenticated WebSocket"
+    },
     {
       "anchor": "Actual donor cadence",
       "path": "mobile/test/mirroring_test.dart",
@@ -424,6 +429,11 @@
       "code": "Native receiver physical waveform/latency and complete all-host audio-domain parity",
       "reason": "No connected ADB phone or physical board acceptance yet. Native/Web do not yet consume the new timestamped audio stream; ESP32-S3 integration remains separate pending work. Phone synthesis matches reported pitch, not piezo timbre or measured Timer1 quantization.",
       "disposition": "pending"
+    },
+    {
+      "code": "Fresh short-note/scheduler/timer rebuffering; source-wide queued-plan rebasing; original receipt-time and ready backend reuse without KDMKTONE reprobe",
+      "disposition": "pending",
+      "reason": "Current mobile ToneTimeline spends age from its cushion and can discard delayed short notes; no rebaseForStart equivalent exists. Import bounded fresh-note recovery with silent fixtures without rehabilitating stale observations. Native backend reuse is useful when implemented; unrelated settings must not probe live speakers."
     }
   ],
   "remaining": [
@@ -434,12 +444,13 @@
 {
   "origin": "PCController",
   "path": "Tools/Controller/internal/hostbridge/buzzer_mirror_test.go",
-  "sha256": "83b8726d8ef22627d76fbf3650cbd1128d1cc1cca4d4a3f4a59fda1a440b6f08",
+  "sha256": "d92d0826cd9665520087a3b5704ed874ee5c605695d571975b3c15b7a54aa84a",
   "source_read": "complete",
   "verdict": "parity-gap",
   "preserved": [
     "Fully read actual current donor through EOF. Adapted uint32 MCU timestamp wrap, 50ms playout delay, 250ms skew bound, absolute note deadlines, source-generation cancellation, independent opt-in and distinct failure transitions into real Android mirroring.",
-    "Donor cadence/stop/reconnect tests adapted to a silent injectable Flutter output. Actual PCM Android renderer uses bounded 5ms buffers, exact requested Hz, click-reducing envelope, finite deadline, focus/lifecycle cancellation and an independent six-second native receive lease."
+    "Donor cadence/stop/reconnect tests adapted to a silent injectable Flutter output. Actual PCM Android renderer uses bounded 5ms buffers, exact requested Hz, click-reducing envelope, finite deadline, focus/lifecycle cancellation and an independent six-second native receive lease.",
+    "Canonical buzzer_mirror_test.go539lines fully reread through EOF; existing Flutter fixture mappings remain bounded historical adaptations, not execution of refreshed Go tests."
   ],
   "targets": [
     {
@@ -459,7 +470,11 @@
     }
   ],
   "proof": [
-    {"path":"mobile/test/mirroring_transport_test.dart","sha256":"5b86dae832e659a5f2a1cb5d3587ae4d3e1a354dfae33c62b14dfed3ccc1f8cf","anchor":"Actual authenticated WebSocket"},
+    {
+      "path": "mobile/test/mirroring_transport_test.dart",
+      "sha256": "5b86dae832e659a5f2a1cb5d3587ae4d3e1a354dfae33c62b14dfed3ccc1f8cf",
+      "anchor": "Actual authenticated WebSocket"
+    },
     {
       "anchor": "Actual donor cadence",
       "path": "mobile/test/mirroring_test.dart",
@@ -481,6 +496,11 @@
       "code": "Native receiver physical waveform/latency and complete all-host audio-domain parity",
       "reason": "No connected ADB phone or physical board acceptance yet. Native/Web do not yet consume the new timestamped audio stream; ESP32-S3 integration remains separate pending work. Phone synthesis matches reported pitch, not piezo timbre or measured Timer1 quantization.",
       "disposition": "pending"
+    },
+    {
+      "code": "Fresh10ms/1ms recovery; scheduler handoff; stale-note rejection; no backend reprobe; same-source playback/stop/reconnect purge fixtures",
+      "disposition": "pending",
+      "reason": "Current Flutter fixtures do not implement all refreshed short-note recovery/source-wide scheduler assertions. These useful regression imports remain pending with silent outputs. No donor suite or physical audio was run by this review."
     }
   ],
   "remaining": [
@@ -488,61 +508,67 @@
     "Complete S3 shared firmware integration, multi-source/background receiver if requested and network bridge note forwarding without echo/replay."
   ]
 },
-      {
-        "origin": "PCController",
-        "path": "Tools/Controller/internal/discovery/discovery.go",
-        "sha256": "ffcf40f4a285bd5c39eb9626a1aefa60d6e6d5ff5d03dc786f718050f7a3070a",
-        "source_read": "complete",
-        "verdict": "parity-gap",
-        "preserved": [
-          "Fully read source through EOF. Adapted actual mDNS/DNS-SD single transport intent, metadata-only discovery, bounded search lifetime/cleanup, M-SEARCH headers, validated origins and explicit authentication separation into Android discovery.",
-          "Android NsdManager replaces Go zeroconf; serialized resolves, scan generation ownership, multicast-lock acquisition/release and lifecycle cleanup are real native code. Local/remote saved device types describe transport, never fabricate capabilities. Actual peer ACK remains authoritative."
-        ],
-        "targets": [
-          {
-            "path": "mobile/lib/discovery.dart",
-            "sha256": "c02419074d5e3c47d2a967f3ed818e3a6196ab50c94d412d6dbae18f54050914",
-            "anchor": "class DeviceDiscovery"
-          },
-          {
-            "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/DiscoveryChannel.kt",
-            "sha256": "b6e39b4cce47a1eb35051ed1f007046e08d4cf476354db243ca89b948ae5f0f1",
-            "anchor": "class DiscoveryChannel"
-          },
-          {
-            "path": "mobile/lib/devices_page.dart",
-            "sha256": "077c722018b5849d5d972f228b326151da15cc4238c3cd54052219df4d8d59db",
-            "anchor": "class DevicesPage"
-          }
-        ],
-        "omissions": [
-          {
-            "code": "Advertiser/UpdateText/SSDP alive/byebye, public enrichment/mergeInstances and TXT metadata normalization",
-            "disposition": "pending",
-            "reason": "Android bridge is deliberately authenticated loopback-only. Publishing a LAN-reachable phone URL would be false; an opt-in LAN/TLS listener and advertisement lifecycle need a separate implementation. Advertised names alone cannot merge authenticated board identity. PublicInfo enrichment dependencies are not yet fully reviewed."
-          },
-          {
-            "code": "WSDiscovery, broadcast and NetBIOS adapter consumers",
-            "disposition": "pending",
-            "reason": "The current phone implements requested DNS-SD/SSDP/MNDP browsing, not every PCController discovery wire adapter. Android-specific permission/network ownership and complete adapter tests remain useful work."
-          },
-          {
-            "code": "PCController product service type and Go zeroconf goroutines",
-            "disposition": "replaced",
-            "reason": "Android's platform NSD resolves Pakar/HTTP/PCController metadata without importing a Go runtime or copying numbered product contract names. Advertisements never assert generic PCController RPC compatibility."
-          }
-        ],
-        "proof": [
-          {
-            "path": "mobile/test/bridge_discovery_test.dart",
-            "sha256": "e233594eaa2763444ec62cd59dd06245f08caac290938022e3475ddad9de1acc",
-            "anchor": "Actual loopback bridge requires bearer"
-          }
-        ],
-        "remaining": [
-          "Real Android multicast/router/AP-isolation, NSD failed/partial resolves and identity verification; optional authenticated LAN/TLS app advertiser; all outstanding donor discovery adapters."
-        ]
-      },
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/discovery/discovery.go",
+  "sha256": "4ca50ce622f998f1922a828350ad71aea5fa5dee7506069ca3df2e857536198e",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Fully read source through EOF. Adapted actual mDNS/DNS-SD single transport intent, metadata-only discovery, bounded search lifetime/cleanup, M-SEARCH headers, validated origins and explicit authentication separation into Android discovery.",
+    "Android NsdManager replaces Go zeroconf; serialized resolves, scan generation ownership, multicast-lock acquisition/release and lifecycle cleanup are real native code. Local/remote saved device types describe transport, never fabricate capabilities. Actual peer ACK remains authoritative.",
+    "Canonical discovery.go783lines fully reread through EOF. Android NSD/SSDP/MNDP mappings remain metadata-only partial adaptations; advertisements do not grant authenticated board ownership."
+  ],
+  "targets": [
+    {
+      "path": "mobile/lib/discovery.dart",
+      "sha256": "c02419074d5e3c47d2a967f3ed818e3a6196ab50c94d412d6dbae18f54050914",
+      "anchor": "class DeviceDiscovery"
+    },
+    {
+      "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/DiscoveryChannel.kt",
+      "sha256": "b6e39b4cce47a1eb35051ed1f007046e08d4cf476354db243ca89b948ae5f0f1",
+      "anchor": "class DiscoveryChannel"
+    },
+    {
+      "path": "mobile/lib/devices_page.dart",
+      "sha256": "077c722018b5849d5d972f228b326151da15cc4238c3cd54052219df4d8d59db",
+      "anchor": "class DevicesPage"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Advertiser/UpdateText/SSDP alive/byebye, public enrichment/mergeInstances and TXT metadata normalization",
+      "disposition": "pending",
+      "reason": "Android bridge is deliberately authenticated loopback-only. Publishing a LAN-reachable phone URL would be false; an opt-in LAN/TLS listener and advertisement lifecycle need a separate implementation. Advertised names alone cannot merge authenticated board identity. PublicInfo enrichment dependencies are not yet fully reviewed."
+    },
+    {
+      "code": "WSDiscovery, broadcast and NetBIOS adapter consumers",
+      "disposition": "pending",
+      "reason": "The current phone implements requested DNS-SD/SSDP/MNDP browsing, not every PCController discovery wire adapter. Android-specific permission/network ownership and complete adapter tests remain useful work."
+    },
+    {
+      "code": "PCController product service type and Go zeroconf goroutines",
+      "disposition": "replaced",
+      "reason": "Android's platform NSD resolves Pakar/HTTP/PCController metadata without importing a Go runtime or copying numbered product contract names. Advertisements never assert generic PCController RPC compatibility."
+    },
+    {
+      "code": "ActiveProtocols/Failures degraded startup; instance.id SSDP UUID;64-record255-byte secret-filtered TXT refresh; eight-slot enrichment and multi-product browsing",
+      "disposition": "pending",
+      "reason": "Phone still has no donor LAN advertiser/UpdateText lifecycle, public enrichment/identity merge or complete WSDiscovery/broadcast/NetBIOS consumers. Native USB-only mode must invoke no discovery/public HTTP enrichment. Never merge verified identity from names or claim merely configured responders started."
+    }
+  ],
+  "proof": [
+    {
+      "path": "mobile/test/bridge_discovery_test.dart",
+      "sha256": "e233594eaa2763444ec62cd59dd06245f08caac290938022e3475ddad9de1acc",
+      "anchor": "Actual loopback bridge requires bearer"
+    }
+  ],
+  "remaining": [
+    "Real Android multicast/router/AP-isolation, NSD failed/partial resolves and identity verification; optional authenticated LAN/TLS app advertiser; all outstanding donor discovery adapters."
+  ]
+},
       {
         "origin": "PU850-ESP",
         "path": "LocalLib/MNDP.cpp",
@@ -814,7 +840,7 @@
 {
   "origin": "PCController",
   "path": "Tools/Controller/internal/link/session.go",
-  "sha256": "1bf4d52d6810630d1fd4d5f0a0c18254ccdd73c0942dbe94f4c97a06360680c5",
+  "sha256": "1311fdcde94b2ef8ed06db63ff874a255c135dc1969709e6f43ff4b5c5c8235b",
   "source_read": "complete",
   "verdict": "parity-gap",
   "preserved": [
@@ -822,8 +848,9 @@
     "Full source read. Fail-closed identity checks strengthened with HTTP server-side board/boot fences; donor HELLO/build stamp is NOT a boot epoch.",
     "Before/after admission ownership checks also adapted to Web's shared pinned HTTP preflight and post-response generation validation. Existing session.go full review/live 1bf4d52 hash remains unchanged; this is not import of Go serial acquisition or request-priority scheduling.",
     "Full session.go reread through EOF and live source hash reverified. Actual acquireWrite/requestAdmission before/after admission closing checks adapted to native HTTP queued generation, deadline and post-preflight ownership checks. Shared native/TUI strict Pin validation removes the duplicate validator; pinned clients refuse redirects.",
-      "Reread complete donor at unchanged live hash for firmware admission/dispatch ownership. Supplied HTTP headers are checked for all methods including hardware-affecting GET probe; actual loop dispatch rechecks the same request before SPI/reset. Header-free compatibility is deliberately unfenced, not ownership proof.",
-      "Fully reread current session.go and session_test.go for Android networking. Adapted actual SetBeforeClose/notifyBeforeClose synchronous retirement into mobile HTTP/WebSocket board/boot acceptance, root state revocation and discarded prior firmware owners. Learned critical identity cannot silently disappear into legacy readiness. A one-second bridge watchdog is independent from the chosen telemetry interval, and retired MQTT callbacks cannot publish through a replacement client."
+    "Reread complete donor at unchanged live hash for firmware admission/dispatch ownership. Supplied HTTP headers are checked for all methods including hardware-affecting GET probe; actual loop dispatch rechecks the same request before SPI/reset. Header-free compatibility is deliberately unfenced, not ownership proof.",
+    "Fully reread current session.go and session_test.go for Android networking. Adapted actual SetBeforeClose/notifyBeforeClose synchronous retirement into mobile HTTP/WebSocket board/boot acceptance, root state revocation and discarded prior firmware owners. Learned critical identity cannot silently disappear into legacy readiness. A one-second bridge watchdog is independent from the chosen telemetry interval, and retired MQTT callbacks cannot publish through a replacement client.",
+    "Canonical b0111ae0 session.go916lines fully reread through EOF; old1bf4d52 review remains historical. Existing bounded HTTP/mobile ownership targets do not imply current whole serial-session parity. Frozen native transport targets were separately reviewed: selected-method epoch Gate/Stamp/Lease, before-write lease checks, actual USB handle drop before handoff, HTTP/WS lease retention, no idle HTTP connection pool, no Both fallback and stale-event retirement."
   ],
   "targets": [
     {
@@ -831,9 +858,21 @@
       "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn command_request("
     },
-    {"path":"mobile/lib/api.dart","sha256":"fcdc03cb654eabb48c94f921fb2f64e998b3d18837ff09cb03288d1c67aaf864","anchor":"bool _acceptIdentity("},
-    {"path":"mobile/lib/main.dart","sha256":"6ea527d0625585fd493101975fb55a6156d9f30a4d53430cdd494b48021cee61","anchor":"api.onPeerChanged = ()"},
-    {"path":"mobile/lib/bridge.dart","sha256":"4fd40d999691968be1d32826a925a4bb221a5bd102c2a237ed947f6bf37b2be9","anchor":"watchdog = Timer.periodic"},
+    {
+      "path": "mobile/lib/api.dart",
+      "sha256": "fcdc03cb654eabb48c94f921fb2f64e998b3d18837ff09cb03288d1c67aaf864",
+      "anchor": "bool _acceptIdentity("
+    },
+    {
+      "path": "mobile/lib/main.dart",
+      "sha256": "6ea527d0625585fd493101975fb55a6156d9f30a4d53430cdd494b48021cee61",
+      "anchor": "api.onPeerChanged = ()"
+    },
+    {
+      "path": "mobile/lib/bridge.dart",
+      "sha256": "4fd40d999691968be1d32826a925a4bb221a5bd102c2a237ed947f6bf37b2be9",
+      "anchor": "watchdog = Timer.periodic"
+    },
     {
       "path": "libraries/BoardCore/src/PeerFence.h",
       "sha256": "9f1ab63252bd881d2fc786e230a18db331e66708a1bd3ccd0f096d2d2b5d49d5",
@@ -856,12 +895,12 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "sha256": "ab52253344193953b470f963358afca041f8e0871a86d74778c91044bd5bc055",
       "anchor": "pub fn admit("
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "d34e18102b9e2311bc187f3d5924219b0b46b73150f88ad0e3dd5711b3a63874",
+      "sha256": "65e92fb29dd0b55895c725be9f78fa8a868366d30fd7aa0b0cf9284fe8bac0a0",
       "anchor": "fn scoped_http_request("
     }
   ],
@@ -880,6 +919,11 @@
       "code": "compact HELLO schemas/build stamp and DTR reset/inactive control-line tests",
       "disposition": "pending",
       "reason": "Build stamp is not board/boot identity; numbered public generation negotiation conflicts with living API. Adapt additive identity and explicit one-shot reset policy with serial owner, without schema selectors/reset-on-connect."
+    },
+    {
+      "code": "WithRequestWriteGuard final transport admission;750ms strip ACK/background priority and active-opcode slot diagnostics",
+      "disposition": "pending",
+      "reason": "Selected-method lease checks now precede normal Rust serial write calls, with old physical-owner lease retained until resource drop. Full donor request-priority scheduling, reserved macro sequence and single-inflight opcode/sequence ACK ownership are not imported by that gate; OS-inflight bytes remain non-retractable. Rust USB/PnP close/open cancellation, timing and actual no-network handoff require runtime acceptance."
     }
   ],
   "remaining": [
@@ -892,7 +936,11 @@
       "sha256": "8750a3b3f5ed8ceb2434c68217aaf0eb9c4f6fd9003dbfa2692142b3c37ce225",
       "anchor": "fn same_hostname_reboot_revokes_drafts_and_old_receipts()"
     },
-    {"path":"mobile/test/bridge_discovery_test.dart","sha256":"e233594eaa2763444ec62cd59dd06245f08caac290938022e3475ddad9de1acc","anchor":"Same-host board/boot replacement retires firmware owners synchronously"},
+    {
+      "path": "mobile/test/bridge_discovery_test.dart",
+      "sha256": "e233594eaa2763444ec62cd59dd06245f08caac290938022e3475ddad9de1acc",
+      "anchor": "Same-host board/boot replacement retires firmware owners synchronously"
+    },
     {
       "path": "tests/peer_fence_test.mjs",
       "sha256": "a96ca49c6fdbc0c425f6199d6c4371a76536ca9db785e9d093047953d31a101c",
@@ -905,12 +953,12 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "sha256": "ab52253344193953b470f963358afca041f8e0871a86d74778c91044bd5bc055",
       "anchor": "fn gui_revocation_during_preflight_stops_before_write()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "sha256": "ab52253344193953b470f963358afca041f8e0871a86d74778c91044bd5bc055",
       "anchor": "fn gui_revocation_after_dispatch_reports_uncertainty_not_success()"
     },
     {
@@ -945,7 +993,7 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "sha256": "ab52253344193953b470f963358afca041f8e0871a86d74778c91044bd5bc055",
       "anchor": "fn gui_settings_pin_every_nested_request_and_verify_same_boot()"
     }
   ],
@@ -983,22 +1031,22 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "sha256": "ab52253344193953b470f963358afca041f8e0871a86d74778c91044bd5bc055",
       "anchor": "fn gui_preflight_reboot_or_capability_loss_never_dispatches_mutation()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "sha256": "ab52253344193953b470f963358afca041f8e0871a86d74778c91044bd5bc055",
       "anchor": "fn gui_readback_from_new_boot_is_not_applied()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "sha256": "ab52253344193953b470f963358afca041f8e0871a86d74778c91044bd5bc055",
       "anchor": "fn gui_unfenced_mutation_fails_before_network_and_preserves_correlation()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8370e398e9c55097625d3d6c5402281a5e567610d5cdc188617b6f7cc7f8070c",
+      "sha256": "ab52253344193953b470f963358afca041f8e0871a86d74778c91044bd5bc055",
       "anchor": "fn gui_server_boot_conflict_is_not_replayed()"
     },
     {
@@ -1298,8 +1346,8 @@
       "path": "desktop/src/ui/dropdown.rs"
     },
     {
-      "sha256": "75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e",
-      "anchor": "pub fn websocket(",
+      "sha256": "573fe0f11df41826f7ff797cec716abf76a2482339dac7f5e9ff592fffbad6d4",
+      "anchor": "pub fn draw(",
       "path": "desktop/src/ui/connection_controls.rs"
     },
     {
@@ -1313,7 +1361,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "11d6a4a5388d1d68616fdb143b3faac078c15ac48ad016ada8b03529450e1fb5",
+      "sha256": "46697fee16f151e0f1e6b836a9318dc9ca061247cf1c9511adffffa79ab9a4b3",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -1333,7 +1381,8 @@
     }
   ],
   "preserved": [
-    "Reread all 646 current donor lines through EOF against the retained target. Actual focus owner, enabled/selected entries, search focus, Arrow/Home/End/Enter navigation, disabled skipping, inside focus stroke, nested menu framing and closed-popup cleanup remain imported. The prior three native tests remain adapted to fixed32px Pakar rows; newer dynamic density/chevron and inline-expansion behavior is explicitly pending."
+      "Reread all 646 current donor lines through EOF against the retained target. Actual focus owner, enabled/selected entries, search focus, Arrow/Home/End/Enter navigation, disabled skipping, inside focus stroke, nested menu framing and closed-popup cleanup remain imported. The prior three native tests remain adapted to fixed32px Pakar rows; newer dynamic density/chevron and inline-expansion behavior is explicitly pending.",
+      "Current exclusive-transport slice reread all646 donor lines again. Unified connection draw uses actual menu_ui/DropdownUiExt enabled/selected/focus registration, one lifecycle action, lazy selected-USB OS enumeration and closed-popup cleanup. Old dual-popup proof anchors were replaced with real new contextual/lifecycle tests, not kept as fictitious surviving tests; runtime execution remains separate."
   ],
   "improvement": "Adds the locked egui from_label trigger identity for existing labeled settings and actual connection-control keyboard ownership with busy-port rejection. Clears texture ownership before native assertions to avoid a second panic masking a failure. Native execution and production visual acceptance must be reported separately from source wiring.",
   "verdict": "parity-gap",
@@ -1359,8 +1408,8 @@
       "path": "desktop/src/ui/dropdown.rs"
     },
     {
-      "sha256": "75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e",
-      "anchor": "fn shared_keyboard_can_configure_but_cannot_change_a_busy_usb_port()",
+      "sha256": "573fe0f11df41826f7ff797cec716abf76a2482339dac7f5e9ff592fffbad6d4",
+      "anchor": "fn one_contextual_control_lazy_usb_scan_and_busy_guard()",
       "path": "desktop/src/ui/connection_controls.rs"
     },
     {
@@ -1451,10 +1500,10 @@
     {
       "origin":"PCController",
       "path":"Tools/VirtualBoard/tests/firmware_controls_test.cpp",
-      "sha256":"f993a968991db7b0835e449950cc3a366b9af60d0214c677f20087c3c4f1eb36",
+      "sha256":"4facf265f8593b83f7610ae99ce58050013226cf1aa5a4d6e60bdbd6e5cc399e",
       "source_read":"complete",
       "verdict":"parity-gap",
-      "preserved":["Actual require helper, testDisplayBrightnessFade and testDisplayAckDetectionAndRecovery adapted to the separate Pakar keepalive service and A4/A5 hardware ownership; decode actual data/address/control bytes rather than inferring frame recovery from cached values."],
+      "preserved":["Actual require helper, testDisplayBrightnessFade and testDisplayAckDetectionAndRecovery adapted to the separate Pakar keepalive service and A4/A5 hardware ownership; decode actual data/address/control bytes rather than inferring frame recovery from cached values.","Canonical firmware_controls_test.cpp639lines fully reread through EOF; rechecked unchanged Pakar require/fade/ACK-recovery subset and A4/A5 fixtures. No all-controls parity or physical acceptance is inferred."],
       "targets":[
         {"path":"tests/tm1637_bus_test.cpp","sha256":"0bd8312952f6b58447d12126c698e835290add115b91a753a6b6d6efcbc7d031","anchor":"void testDisplayBrightnessFade()"},
         {"path":"tests/display_stubs/Arduino.h","sha256":"b6c81c35395db97127f88f449e51f3cef884592bafe85406f381a73a37f20c5b","anchor":"namespace display_mock"},
@@ -1463,7 +1512,8 @@
       ],
       "omissions":[
         {"code":"Side A/B directional relay and motion-door policy matrix, temperature role swapping, retired MOVE alias and DS18B20 absent-pullup tests","disposition":"not-applicable","reason":"This fitted board has no directional motors/door policy or DS18B20. Do not enable these or copy donor relay pin mapping; future generic adapters remain feature-flagged with their own acceptance."},
-        {"code":"Full key double-click/fast-repeat/16-bit rollover, transition smoothing, context-sensitive leaf navigation/settings normalization and tone timer/queue cases","disposition":"pending","reason":"Pakar has existing key/tone/front-panel suites, but these complete donor assertions have not all been transplanted or compared behavior-by-behavior. A display-only import is not proof of those generic contracts."}
+        {"code":"Full key double-click/fast-repeat/16-bit rollover, transition smoothing, context-sensitive leaf navigation/settings normalization and tone timer/queue cases","disposition":"pending","reason":"Pakar has existing key/tone/front-panel suites, but these complete donor assertions have not all been transplanted or compared behavior-by-behavior. A display-only import is not proof of those generic contracts."},
+        {"code":"testDisplayNumericBoundaries/testEveryEasedBytePair; calibrated expandByte12 and EMA/deadband assertions","disposition":"pending","reason":"Pakar display-bus fixtures do not contain new donor numeric overflow-to-dashes or exhaustive65536 transition-pair assertions. Generic display/transition tests remain pending. Temperature-ROM EEPROM threshold/CRC tests remain inapplicable while no DS18B20 is fitted; do not transplant its EEPROM layout."}
       ],
       "remaining":["Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof."],
       "proof":[
@@ -2919,8 +2969,8 @@
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e",
-          "anchor": "pub fn usb("
+          "sha256": "573fe0f11df41826f7ff797cec716abf76a2482339dac7f5e9ff592fffbad6d4",
+          "anchor": "pub fn draw("
         },
         {
           "path": "docs/CONNECTION-CONTROLS.md",
@@ -2977,13 +3027,13 @@
         },
         {
           "path": "tests/connection_controls_test.mjs",
-          "sha256": "4824489d60f705fccda52d3166ca487a1ea4d1721d0a0814706747fb7033aaf2",
+          "sha256": "574c605348414b7f65ce48f3e92821ab1abdf41f05ccb4be1d6f7b5526d6a38b",
           "anchor": "Source wiring guard only."
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e",
-          "anchor": "fn offline_dropdowns_open_independently_and_usb_enumerates_only_when_open()"
+          "sha256": "573fe0f11df41826f7ff797cec716abf76a2482339dac7f5e9ff592fffbad6d4",
+          "anchor": "fn lifecycle_is_one_explicit_action_and_disconnect_retains_port()"
         }
       ]
     },
@@ -3153,7 +3203,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "11d6a4a5388d1d68616fdb143b3faac078c15ac48ad016ada8b03529450e1fb5",
+          "sha256": "46697fee16f151e0f1e6b836a9318dc9ca061247cf1c9511adffffa79ab9a4b3",
           "anchor": "fn synchronize_context("
         },
         {
@@ -3504,7 +3554,7 @@
       "preserved": [
         "Actual top_menu_button body imported with only application state ID/public visibility adaptation; all four production menu headings use active-menu sibling hover switching.",
         "Actual Button::shortcut_text idiom replaces space-padded primary labels in all six shortcut rows; separate right-aligned muted atoms are supplied by the same egui 0.36.2 dependency. Existing dispatch/Phosphor submenu retained; user-requested height policy unchanged.",
-        "Actual connection selector/persist-on-change and custom OS hardware-path fallback adapted to independent WebSocket and USB popup controls. Lazy factual enumeration, reconnect/disconnect and route actions added; complete donor lifecycle remains pending.",
+      "Earlier independent WebSocket/USB popup adaptation is superseded by the user-required single selected Wi-Fi-or-USB dropdown/lifecycle. Retained actual selector persistence, manual OS hardware paths, lazy factual enumeration and explicit Connect/Disconnect; no Both mode or automatic fallback. Complete donor readiness and fixed endpoint geometry remain pending.",
         "Current complete 883-line donor and full mapped Pakar menu.rs were reread by the status/front-panel agent. The actual top-menu helper and six shortcut_text consumers remain retained; this does not implement the newly added endpoint trigger."
       ],
       "targets": [
@@ -3515,13 +3565,13 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "11d6a4a5388d1d68616fdb143b3faac078c15ac48ad016ada8b03529450e1fb5",
+          "sha256": "46697fee16f151e0f1e6b836a9318dc9ca061247cf1c9511adffffa79ab9a4b3",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "75d82b9d995db63f885c2cd4468081bc4986af93a766893f23bfc3dafd30202e",
-          "anchor": "pub fn websocket("
+          "sha256": "573fe0f11df41826f7ff797cec716abf76a2482339dac7f5e9ff592fffbad6d4",
+          "anchor": "pub fn draw("
         },
         {
           "path": "docs/NATIVE-MENU-COMPARISON.md",
@@ -3568,7 +3618,7 @@
         {
           "code": "Current header_endpoint_combo fixed 154-pixel clipped trigger/full 240-pixel popup and density/font/disabled-hover geometry tests",
           "disposition": "pending",
-          "reason": "Pakar has independent connection dialog/status dropdown controls. Review their actual geometry and ownership before adapting this shared helper; no duplicate or pretend-ready endpoint control should be added merely to match labels."
+        "reason": "Pakar now has one unified method trigger and selected-method details, not independent route popups. It reuses240px popup choices but not the donor154px endpoint trigger/dynamic-density geometry assertions. Compare actual long-text/font/scale layouts before claiming geometry parity; no duplicate or pretend-ready control should be added to match labels."
         }
       ],
       "remaining": [
@@ -3995,7 +4045,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "11d6a4a5388d1d68616fdb143b3faac078c15ac48ad016ada8b03529450e1fb5",
+          "sha256": "46697fee16f151e0f1e6b836a9318dc9ca061247cf1c9511adffffa79ab9a4b3",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -4419,7 +4469,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "11d6a4a5388d1d68616fdb143b3faac078c15ac48ad016ada8b03529450e1fb5",
+          "sha256": "46697fee16f151e0f1e6b836a9318dc9ca061247cf1c9511adffffa79ab9a4b3",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -6237,7 +6287,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "d34e18102b9e2311bc187f3d5924219b0b46b73150f88ad0e3dd5711b3a63874",
+          "sha256": "65e92fb29dd0b55895c725be9f78fa8a868366d30fd7aa0b0cf9284fe8bac0a0",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -6297,7 +6347,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "11d6a4a5388d1d68616fdb143b3faac078c15ac48ad016ada8b03529450e1fb5",
+          "sha256": "46697fee16f151e0f1e6b836a9318dc9ca061247cf1c9511adffffa79ab9a4b3",
           "anchor": "value[\"tray_shell\"]"
         }
       ],
@@ -6329,6 +6379,32 @@
         }
       ],
       "improvement": ""
+    },
+    {
+      "origin": "PCController",
+      "path": "Tools/Controller/internal/link/request_admission_test.go",
+      "sha256": "0148ea4aac3cf230050045756a4308157adf786a2b6ca2d4fd99bcf665a622c1",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Fully read all489lines through EOF. Adapted queued-intent revocation/no-late-write and ownership-before/after admission assertions as Rust selected-method epoch tests. The production Gate keeps revoked owners until their resource leases drop and never admits a competing route or a second USB handle.",
+        "New main fixture invokes the actual HTTP worker against a live loopback listener while USB is selected, asserting zero accepted connections and zero failure events. This is an unexecuted source fixture reference until the guarded owner runs tests, not live USB or electrical proof."
+      ],
+      "targets": [
+        {"path":"desktop/src/connection.rs","sha256":"38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6","anchor":"pub struct Gate"},
+        {"path":"desktop/src/main.rs","sha256":"65e92fb29dd0b55895c725be9f78fa8a868366d30fd7aa0b0cf9284fe8bac0a0","anchor":"fn serial_worker("}
+      ],
+      "omissions": [
+        {"code":"Priority/background strip scheduling,750ms ACK bound, active-opcode wait diagnostics and delayed/concurrent exact ACK matching","disposition":"pending","reason":"A mutually exclusive route lease does not implement the donor's one-command-on-wire response scheduler or exact opcode/sequence ACK admission. Preserve these useful serial contracts for the hardware-matched host transport rather than declaring all session tests imported."},
+        {"code":"PulseDTR cancellation/restoration/write exclusion and live physical port acquisition/late-close tests","disposition":"pending","reason":"This pass intentionally adds no automatic reset and keeps AVR/ISP/audio deferred. Inactive DTR on Rust open is source configuration, not measured electrical behavior; OS acquisition/cancellation/retryable-close ownership still needs dedicated fake-handle and real-host acceptance."}
+      ],
+      "remaining": ["Run guarded native tests and verify selected USB causes no HTTP/DNS/SSDP/telemetry or second physical connection; validate bounded route retirement, dirty-draft protection and retired outcomes in actual runtime. Do not infer whole donor parity or electrical acceptance from Gate tests."],
+      "proof": [
+        {"path":"desktop/src/connection.rs","sha256":"38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6","anchor":"fn handoff_waits_for_all_actual_old_resources_and_rejects_stale_epoch()"},
+        {"path":"desktop/src/connection.rs","sha256":"38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6","anchor":"fn usb_offline_never_admits_network_and_disconnect_revokes_everything()"},
+        {"path":"desktop/src/main.rs","sha256":"65e92fb29dd0b55895c725be9f78fa8a868366d30fd7aa0b0cf9284fe8bac0a0","anchor":"fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"}
+      ],
+      "improvement": "User-required exclusive Wi-Fi-or-USB lifecycle replaces Both rather than silently falling back; physical resources retire before the new method opens. Source evidence only until guarded tests and runtime observations."
     }
   ]
 }

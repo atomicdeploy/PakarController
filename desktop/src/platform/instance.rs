@@ -31,6 +31,13 @@ pub enum Command {
     Quit,
     Status,
     NotificationTest,
+    UseWifi { endpoint: Option<String> },
+    UseUsb { port: Option<String> },
+    Disconnect,
+    LedEffect { value: String },
+    LedMode { value: String },
+    LedCell { id: u8, state: String, effect: String },
+    UpdateEsp { path: String, confirmed: bool },
 }
 fn parse_command(bytes: &[u8]) -> Result<Command, String> {
     let value: serde_json::Value = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
@@ -41,12 +48,40 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
         Some("screenshot") => &["command", "path"][..],
         Some("device_settings_page") => &["command", "page"][..],
         Some("preferences_page") => &["command", "page"][..],
+        Some("use_wifi") => &["command", "endpoint"][..],
+        Some("use_usb") => &["command", "port"][..],
+        Some("led_effect") | Some("led_mode") => &["command", "value"][..],
+        Some("led_cell") => &["command", "id", "state", "effect"][..],
+        Some("update_esp") => &["command", "path", "confirmed"][..],
         _ => &["command"][..],
     };
     if object.keys().any(|key| !allowed.contains(&key.as_str())) {
         return Err("Unknown command field".into());
     }
     let command: Command = serde_json::from_value(value).map_err(|e| e.to_string())?;
+    match &command {
+        Command::UpdateEsp { path, confirmed } if !confirmed || !std::path::Path::new(path).is_absolute()
+            || path.len() > 2048 || path.chars().any(char::is_control) => {
+            return Err("An absolute firmware path and explicit confirmation are required".into());
+        }
+        Command::UseWifi { endpoint: Some(value) } => {
+            let url = reqwest::Url::parse(value).map_err(|_| "Invalid Wi-Fi endpoint")?;
+            if value.len() > 512 || !matches!(url.scheme(), "http" | "https") || url.host_str().is_none()
+                || !url.username().is_empty() || url.password().is_some() || url.query().is_some()
+                || url.fragment().is_some() || !matches!(url.path(), "" | "/") {
+                return Err("Expected http(s)://hostname[:port] without credentials or a path".into());
+            }
+        }
+        Command::UseUsb { port: Some(value) } if value.trim().is_empty() || value.len() > 512 || value.chars().any(char::is_control) => {
+            return Err("Select a valid OS serial port/path".into());
+        }
+        Command::LedEffect { value } if !matches!(value.as_str(), "none" | "rainbow" | "fire") => return Err("Unknown LED effect".into()),
+        Command::LedMode { value } if !matches!(value.as_str(), "idle" | "cell" | "snake") => return Err("Unknown LED mode".into()),
+        Command::LedCell { id, state, effect } if !(1..=80).contains(id)
+            || !matches!(state.as_str(), "white" | "red" | "off")
+            || !matches!(effect.as_str(), "immediate" | "fade" | "pulse") => return Err("Invalid LED cell operation".into()),
+        _ => {}
+    }
     if let Command::Screenshot { path } = &command {
         crate::ui::screenshot::validate_path(path)?;
     }
@@ -237,6 +272,26 @@ fn listener(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn connection_and_led_ipc_are_explicit_typed_and_bounded() {
+        for bytes in [
+            br#"{"command":"disconnect"}"#.as_slice(),
+            br#"{"command":"use_usb","port":"COM22"}"#,
+            br#"{"command":"use_wifi","endpoint":"http://ledboard.local"}"#,
+            br#"{"command":"led_effect","value":"rainbow"}"#,
+            br#"{"command":"led_cell","id":80,"state":"red","effect":"fade"}"#,
+        ] { assert!(parse_command(bytes).is_ok()); }
+        for bytes in [
+            br#"{"command":"use_wifi","endpoint":"http://user:secret@host"}"#.as_slice(),
+            br#"{"command":"use_wifi","endpoint":"http://ledboard.local/api/status"}"#,
+            br#"{"command":"use_usb","port":""}"#,
+            br#"{"command":"led_effect","value":"unknown"}"#,
+            br#"{"command":"led_cell","id":0,"state":"red","effect":"fade"}"#,
+            br#"{"command":"led_cell","id":1,"state":"purple","effect":"fade"}"#,
+            br#"{"command":"update_esp","path":"relative.bin","confirmed":true}"#,
+            br#"{"command":"disconnect","endpoint":"other"}"#,
+        ] { assert!(parse_command(bytes).is_err()); }
+    }
     #[test]
     fn launch_requests_use_only_known_typed_commands() {
         assert!(serde_json::from_str::<Command>(r#"{"command":"preferences"}"#).is_ok());

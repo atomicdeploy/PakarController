@@ -2680,6 +2680,119 @@ its actual surviving checks. Root executed that exact g++17 pure-helper case
 successfully. No full suite or SDK rerun was performed for this documentation
 finalization; strict comparison and whitespace checks remain the final guards.
 
+## Exclusive native transport donor preflight
+
+For the user's new single Wi-Fi-or-USB lifecycle requirement, read AGENTS and
+REUSE-PREFLIGHT, issue2, peer-binding and exact donor-audit entries first.
+Default consultation reports PCController live-unavailable; explicitly selecting
+the actual canonical installed root correctly detected tracked inventory drift.
+Root authorized a PCController-only generator refresh: canonical b0111ae0c80dc34149ea1044de7dd5488920301b,
+1517 tracked paths,4673 total inventory. All other donor-origin rows were checked
+and preserved exactly. The270 additional paths are inventoried, NOT newly read.
+
+Fully reread current files through EOF, preserving prior mapping history:
+
+| Canonical donor | Lines | Original-byte SHA256 |
+|---|---:|---|
+|Tools/Controller/internal/link/session.go|916|1311fdcde94b2ef8ed06db63ff874a255c135dc1969709e6f43ff4b5c5c8235b|
+|Tools/Controller/internal/link/session_test.go|788|ff6c7b21f72bfb944d232c87210f8ffa139dfe016e8b5756f2582604489fffc4|
+|Tools/Controller/internal/link/request_admission_test.go|489|0148ea4aac3cf230050045756a4308157adf786a2b6ca2d4fd99bcf665a622c1|
+|Tools/Controller/internal/hostbridge/buzzer_mirror.go|435|dcb9bf3c1a31cb6cc06f4f5ed52def32b7388fd4d33587e233476a3a76e1f032|
+|Tools/Controller/internal/hostbridge/buzzer_mirror_test.go|539|d92d0826cd9665520087a3b5704ed874ee5c605695d571975b3c15b7a54aa84a|
+|Tools/Controller/internal/discovery/discovery.go|783|4ca50ce622f998f1922a828350ad71aea5fa5dee7506069ca3df2e857536198e|
+|Tools/VirtualBoard/tests/firmware_controls_test.cpp|639|4facf265f8593b83f7610ae99ce58050013226cf1aa5a4d6e60bdbd6e5cc399e|
+
+Five previously compared sources changed; only those five source hashes were
+refreshed after complete reads. Unchanged session_test was reread too; the extra
+request_admission test remains a reviewed dependency awaiting actual target
+mapping, not an invented whole-file import. Existing target/proof hashes are not
+stamped while root and UI owner still change their implementations. All original
+omissions remain; newly useful generic gaps were appended to the same entries.
+
+Concrete session contracts: closing/context checks before AND after admission;
+final WithRequestWriteGuard immediately before port.Write after both queues;
+physical-handle ownership through late open/configure cancellation and retryable
+close; synchronous pre-close observer; persistent terminal error; ACK/Error
+opcode+sequence matching and unsolicited routing; reserved macro sequence;
+priority and bounded strip ACK slots; inactive initial DTR/RTS and deliberate
+one-shot reset. A Rust route/epoch lease must be reviewed at its real OS-write
+boundary. It cannot retract bytes already handed to the OS or substitute an
+HTTP board/boot fence for complete downstream serial ACK ownership.
+
+The extra drift review found useful pending short-note/timer rebuffering and
+source-wide scheduler rebasing, original receipt-time preservation and avoiding
+ready speaker reprobes; discovery started-vs-configured failure reporting,
+secret-filtered bounded TXT/instance UUID and eight-slot public enrichment;
+numeric overflow display and exhaustive byte-transition tests. Android's current
+ToneTimeline lacks donor rebaseForStart, and display-bus tests cover only their
+stated fade/ACK subset. No donor suite, production code, SDK build, device,
+speaker/PBX or audio action was run in this source review. Final frozen native
+target/proof binding, gates and runtime exclusivity evidence are still pending.
+
+## Exclusive native transport frozen source binding
+
+Reviewed the root's complete new connection.rs and changed main/config/HTTP/IPC
+sections, plus the UI owner's complete unified control, shell dispatch/dialog
+changes and actual replacement source guard. Fully reread Pealayer dropdown.rs
+646lines (134f1613df05c9db44f8ccd178981a8eca4fb6c254ced6466229afca66b40ee9)
+and menu.rs883lines (a0196878c7b76b898d0a5791b122181d9045d3fbbe9f56de52bc43242edf2d9d).
+Current meaningful source identities:
+
+- main95016f60e1032efe11d0d5e2e1f30b8f271bb4ec05d1a242d290f930a4c43c63
+- connection38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6
+- peer_httpab52253344193953b470f963358afca041f8e0871a86d74778c91044bd5bc055
+- shell8e250a5e1dfb4d7902913b98c97e57fdff3288a743b429195a8b7a9b323aec2c
+- connection_controls573fe0f11df41826f7ff797cec716abf76a2482339dac7f5e9ff592fffbad6d4
+- replacement source guard574c605348414b7f65ce48f3e92821ab1abdf41f05ccb4be1d6f7b5526d6a38b
+
+Before admission, both method and epoch must match; selected USB rejects Wi-Fi
+leases and a second USB handle. Revoked HTTP/WS resources retain leases until
+drop; normal serial checks its lease before writes and drops the actual port
+before handoff. Old events are discarded while generic uncertain operation
+receipts can stay in Events. Existing board/boot HTTP scopes remain independent.
+One persisted method/enabled intent replaces Both; USB status does not require
+a usable Wi-Fi URL and no HTTP worker/discovery/telemetry is admitted on USB.
+These are reviewed source mechanisms, not measured resource-release timing.
+
+Review identified two concrete gaps and owners fixed both before binding:
+root disabled idle HTTP pooling so leases do not leave pooled TCP owners;
+UI now applies the common dirty/pending guard before Port mutation and verifies
+a refused release cannot change its port. Dialog commits share that guard and
+check the selected method after handoff. The live indicator now requires fresh
+selected-board status, not only a WebSocket socket-open event. Existing manual
+paths, focus/keyboard/dropdown semantics, settings drafts and delayed outcome
+receipts are retained. Dynamic density/chevron/endpoint geometry remains pending.
+
+Rebound only reviewed surviving targets/proofs; removed dual-popup function/test
+anchors now map real unified draw/lifecycle/lazy-scan tests. Added ONE narrow
+request_admission_test comparison with actual production Gate and zero-network
+HTTP-worker fixture references. Its priority, exact ACK/sequence, reset, late
+open/close and physical timing omissions remain explicit; no whole-file parity.
+The UI owner reports source wiring/six negative guards passed. Rust fixtures,
+native Check/Test/Release, runtime screenshots and true USB/Wi-Fi isolation were
+NOT executed by this evidence slice and must be recorded by their owning runner.
+
+Comparison generation and strict Check passed:4673 inventoried,129 comparisons,
+4544 pending,93 known gaps. Mandatory build-storage, localization,
+native-dropdowns, peer-binding and api-contract gates all passed with exact
+current source/target/proof hashes; whitespace validation passed. This unblocks
+guarded native compilation without weakening a gate, closing the donor ledger
+or claiming physical acceptance. No firmware/AVR/ISP/audio/PBX action occurred.
+
+Actual first guarded Check then reached Rust compilation and reported E0624:
+main attempted PreferencesDraft::is_dirty, whose existing visibility is
+pub(super). Root consulted preferences reuse and the actual existing draft
+helper, then reused the SAME shell connection_change_guard from set_connection
+and OTA instead of widening the Preferences API or duplicating its checks.
+Reviewed final main65e92fb29dd0b55895c725be9f78fa8a868366d30fd7aa0b0cf9284fe8bac0a0
+and shell46697fee16f151e0f1e6b836a9318dc9ca061247cf1c9511adffffa79ab9a4b3:
+the centralized guard is pub(crate), and Preferences/device dirty drafts,
+pending settings/maintenance and identity writes all still block. Preferences
+source is unchanged. Rebound only these two reviewed target/proof hashes;
+generation/strict comparison, the same five mandatory gates and whitespace
+checks passed again. The first compile failure is not hidden as success;
+subsequent actual Check/Test/Release results remain the build owner's evidence.
+
 ## Actual bounded ASUS LAN discovery and read-only API observations
 
 After root explicitly confirmed the quiet image alive and passive captures
