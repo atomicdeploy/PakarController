@@ -6,5 +6,6 @@ class TestUpdater{
  void runAsync(bool){}bool begin(uint32_t,int){staged.clear();return true;}
  size_t write(const uint8_t*p,size_t n){staged.insert(staged.end(),p,p+n);return n;}
  bool end(bool commit){if(!commit||failCommit)return false;ESP.flash=staged;++commits;return true;}
+ String getErrorString()const{return failCommit?String("fixture OTA commit failed"):String();}
 };
 extern TestUpdater Update;

@@ -1,18 +1,32 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#if defined(ARDUINO_ARCH_ESP32)
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#include <AsyncTCP.h>
+#include <Update.h>
+#include <firmware/esp32s3/src/BoardPins.h>
+#include <firmware/esp32s3/src/Discovery.h>
+#include <firmware/esp32s3/src/StatusRgb.h>
+#include <firmware/esp32s3/src/StatusRgbConfig.h>
+#else
 #include <ESP8266SSDP.h>
-#include "src/MndpService.h"
 #include <ESP8266NetBIOS.h>
 #include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
-#include <LittleFS.h>
 #include <SoftwareSerial.h>
 #include <Updater.h>
+#include <coredecls.h>
+#endif
+#include "src/MndpService.h"
+#include <ESPAsyncWebServer.h>
+#include <LittleFS.h>
 #include <WiFiUdp.h>
 #include <time.h>
-#include <coredecls.h>
+#include "src/SystemPlatform.h"
+#include "src/FirmwarePlatform.h"
+#include "src/EspFrontPanel.h"
 
 #include <BuildInfo.h>
 #include <AudioCues.h>
@@ -43,23 +57,63 @@
 using namespace BoardCore::Protocol;
 
 #ifndef PAKAR_USE_BUSY_WIRE
+#if defined(ARDUINO_ARCH_ESP32)
+#define PAKAR_USE_BUSY_WIRE 0
+#else
 #define PAKAR_USE_BUSY_WIRE 1
+#endif
 #endif
 
 #if PAKAR_USE_BUSY_WIRE != 0 && PAKAR_USE_BUSY_WIRE != 1
 #error "PAKAR_USE_BUSY_WIRE must be 0 or 1"
 #endif
 
+#ifndef PAKAR_AVR_LINK_ENABLED
+#define PAKAR_AVR_LINK_ENABLED 1
+#endif
+#if PAKAR_AVR_LINK_ENABLED != 0 && PAKAR_AVR_LINK_ENABLED != 1
+#error "PAKAR_AVR_LINK_ENABLED must be 0 or 1"
+#endif
+#if defined(ARDUINO_ARCH_ESP32)
+#include <firmware/esp32s3/src/PassiveAvrRx.h>
+#endif
+
 namespace {
 
 constexpr uint32_t kBaud = 38400;
 constexpr uint16_t kStreamPort = 7890;
+#if defined(ARDUINO_ARCH_ESP32)
+constexpr uint8_t kBusyPin = 15; // Unused by the S3 buffered profile.
+constexpr uint8_t kAvrResetPin = PAKAR_S3_ISP_RESET;
+constexpr uint8_t kAvrRxPin = PAKAR_S3_AVR_RX;
+PakarS3::Discovery s3Discovery;
+PakarS3::StatusRgb statusRgb;
+PakarS3::StatusRgbConfig statusRgbConfig;
+#if !PAKAR_AVR_LINK_ENABLED
+PakarS3::PassiveAvrRx passiveAvrRx;
+std::atomic<bool> passiveCaptureGuard{false};
+#endif
+bool writeStatusRgb(int pin, uint8_t red, uint8_t green, uint8_t blue) {
+  rgbLedWrite(pin, red, green, blue); return true;
+}
+#else
 constexpr uint8_t kBusyPin = D3;  // GPIO0 -> AVR D10/PB2, HIGH blocks AVR TX.
+constexpr uint8_t kAvrResetPin = D1;
+constexpr uint8_t kAvrRxPin = D4;
+#endif
 constexpr char kDevelopmentPassword[] = "pakarcontroller";
 constexpr char kAvrImagePath[] = "/avr/staged.bin";
 constexpr char kBackupDirectory[] = "/avr/backup";
 constexpr char kLedPreferencesPath[] = "/led.cfg";
 constexpr char kCellMappingPath[] = "/cells.map";
+
+bool passiveCaptureActive() {
+#if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
+  return passiveCaptureGuard.load(std::memory_order_acquire);
+#else
+  return false;
+#endif
+}
 
 struct LedPreferences {
   uint8_t magic0;
@@ -85,10 +139,20 @@ WebAccess webAccess;
 WiFiUDP stream;
 WiFiServer telnetServer(23);
 WiFiClient telnetClient;
+#if defined(ARDUINO_ARCH_ESP32)
+HardwareSerial avrSerial(1);
+#else
 SoftwareSerial avrSerial(D4, D0);
+#endif
 BoardCore::SerialLink link(static_cast<Stream &>(avrSerial));
+BoardCore::SerialLink &avrLink = link; // Unambiguous outside namespace vs POSIX link().
+#if defined(ARDUINO_ARCH_ESP32) && !defined(PAKAR_S3_HOST_NATIVE_USB)
+// CH343/UART socket remains a real independent PC path on UART0; UART1 is AVR.
+BoardCore::SerialLink hostLink(Serial0);
+#else
 BoardCore::SerialLink hostLink(Serial);
-AvrIsp avrIsp(D1);
+#endif
+AvrIsp avrIsp(kAvrResetPin);
 RemoteFirmware remoteFirmware;
 unsigned artifactReaders=0;
 BusyLine<PAKAR_USE_BUSY_WIRE != 0> busyLine(kBusyPin);
@@ -204,6 +268,7 @@ int8_t finishRemotePair(const RemoteFirmware::Plan&,bool,String&);
 bool handleCloudCommand(const String &message, String &result);
 bool remoteCommand(const JsonDocument &request,String &result);
 bool handleMaintenanceShell(const String&,String&);
+bool strictU32(const String&,uint32_t&);
 void startSnake();
 bool setSnakeDirection(uint8_t direction);
 void serviceSnake(uint32_t now);
@@ -220,13 +285,60 @@ void publishPcEvent(const String &event) {
 void servicePcContracts();
 void serviceAvrFor(uint32_t durationMs);
 void setAvrTransmitBlocked(bool blocked);
+EspFrontPanel espFrontPanel;
+bool wifiScanQueued = false;
+uint32_t lastEspPanelOfferAt = 0;
+class EspPanelSettings : public EspFrontPanel::Settings {
+ public:
+  bool read(BoardCore::Protocol::EspPanel::Snapshot &state) const override {
+    if (!deviceIdentity.ready() || strlen(deviceIdentity.hostname()) > 32) return false;
+    state.mode = (networkConfig.accessPointEnabled() ? 1 : 0) | (networkConfig.stationEnabled() ? 2 : 0);
+    state.dhcp = networkConfig.dhcpEnabled();
+    state.stationConfigured = strlen(networkConfig.stationSsid()) != 0;
+    state.stationConnected = networkConfig.stationConnected();
+    strlcpy(state.hostname, deviceIdentity.hostname(), sizeof(state.hostname));
+    return state.mode != 0;
+  }
+  Error setMode(uint8_t value) override {
+    if (busy()) return kBusy;
+    NetworkConfigStore candidate = networkConfig;
+    if (!candidate.setStation(candidate.stationSsid(), String(), (value & 2) != 0, false) ||
+        !candidate.setAccessPointEnabled((value & 1) != 0)) return kUnsafe;
+    return commit(candidate);
+  }
+  Error setDhcp(bool enabled) override {
+    if (busy()) return kBusy;
+    NetworkConfigStore candidate = networkConfig;
+    if (!candidate.setAddressing(enabled, candidate.stationAddress().toString(), candidate.stationGateway().toString(),
+        candidate.stationSubnet().toString(), candidate.stationDns1().toString(), candidate.stationDns2().toString())) return kUnsafe;
+    return commit(candidate);
+  }
+  Error reconnect() override {
+    if (busy()) return kBusy;
+    networkApplyPending = true; networkApplyAt = millis() + 250U; return kNoError;
+  }
+  Error scan() override {
+    if (busy()) return kBusy;
+    wifiScanQueued = true; return kNoError; // Queued, never a claim that scan completed.
+  }
+ private:
+  static bool busy() { return remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || programmingLatched || networkApplyPending; }
+  static Error commit(NetworkConfigStore &candidate) {
+    if (!candidate.save()) return kHardwareUnavailable;
+    networkConfig = candidate;
+    networkApplyPending = true; networkApplyAt = millis() + 250U; return kNoError;
+  }
+} espPanelSettings;
 class PcStripOutput {
  public:
   void clear() { grid.fill(kCellOff); }
   bool stage(uint8_t index, const uint8_t *rgb, uint8_t count) { return grid.stagePixels(index, rgb, count); }
   void brightness(uint8_t value) { grid.setBrightness(value); }
   void commit() {
-    setAvrTransmitBlocked(true); serviceAvrFor(18);
+    setAvrTransmitBlocked(true);
+#if !defined(ARDUINO_ARCH_ESP32)
+    serviceAvrFor(18);
+#endif
     grid.showStaged(); streamFrameReady = false;
     setAvrTransmitBlocked(false);
   }
@@ -234,9 +346,13 @@ class PcStripOutput {
 BoardCore::PcLedContract<PcStripOutput> pcStrip(pcStripOutput);
 
 uint16_t currentFeatures() {
-  return BoardCore::Context::features(avrOnline && avrVersionKnown,
+  uint16_t available = BoardCore::Context::features(avrOnline && avrVersionKnown,
       avrCapabilities, tm1637Ack, avrDisplayStatusKnown &&
       static_cast<uint32_t>(millis() - avrDisplayStatusAt) < 3000U, avrPcSupported);
+#if defined(ARDUINO_ARCH_ESP32) && !PAKAR_S3_ISP_ELECTRICAL_VERIFIED
+  available &= ~BoardCore::Context::Isp;
+#endif
+  return available;
 }
 
 bool contextAllows(uint8_t opcode, const uint8_t *payload, uint8_t length) {
@@ -276,6 +392,11 @@ void sendHostStatus(uint8_t requestSequence) {
       0, static_cast<uint8_t>(available), static_cast<uint8_t>(available >> 8),
       BoardCore::Context::modes(available), static_cast<uint8_t>(PAKAR_TABLE_ENABLED),
       10, 8, 6, static_cast<uint8_t>(identityRevision()),
+      // Configured state is distinct from observed station/AP link state above.
+      static_cast<uint8_t>(networkConfig.stationEnabled()),
+      static_cast<uint8_t>(networkConfig.accessPointEnabled()),
+      static_cast<uint8_t>(networkConfig.dhcpEnabled()),
+      static_cast<uint8_t>(PAKAR_AVR_LINK_ENABLED),
   };
   hostLink.send(kStatusResponse, requestSequence, payload, sizeof(payload));
 }
@@ -289,6 +410,12 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
   if ((remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner) && frame.opcode != kGetStatus && frame.opcode != kGetIdentity && frame.opcode != kHello && frame.opcode != kPing) {
     hostLink.error(frame.sequence, frame.opcode, kBusy); return;
   }
+#if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
+  if (passiveAvrRx.snapshot().active && frame.opcode!=kAvrRxDiagnostic &&
+      frame.opcode!=kGetStatus && frame.opcode!=kGetIdentity && frame.opcode!=kHello && frame.opcode!=kPing) {
+    hostLink.error(frame.sequence,frame.opcode,kBusy);return;
+  }
+#endif
   switch (frame.opcode) {
     case kGetIdentity: {
       if (frame.payloadLength != 3) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
@@ -305,6 +432,45 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       const uint8_t count = min(static_cast<size_t>(39), json.length() - offset);
       memcpy(response + 9, json.c_str() + offset, count);
       hostLink.send(kIdentityResponse, frame.sequence, response, count + 9); break;
+    }
+    case kAvrRxDiagnostic: {
+#if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
+      if (!frame.payloadLength || frame.payload[0]>3 ||
+          (frame.payloadLength != ((frame.payload[0]==1 || frame.payload[0]==3) ? 2 : 1)) ||
+          (frame.payload[0]==1 && frame.payload[1]>1) ||
+          (frame.payload[0]==3 && frame.payload[1]>128)) {
+        hostLink.error(frame.sequence,frame.opcode,kBadPayload);break;
+      }
+      passiveAvrRx.service(millis());
+      passiveCaptureGuard.store(passiveAvrRx.snapshot().active,std::memory_order_release);
+      const uint8_t action=frame.payload[0];
+      if(action==3) {
+        uint8_t response[36]={action,kNoError,frame.payload[1],0};
+        response[3]=passiveAvrRx.readChunk(frame.payload[1],32,response+4);
+        hostLink.send(kAvrRxDiagnosticResponse,frame.sequence,response,response[3]+4);break;
+      }
+      if(action==1 && (programmingLatched || networkApplyPending)) {
+        hostLink.error(frame.sequence,frame.opcode,kBusy);break;
+      }
+      const bool started=action!=1 || passiveAvrRx.begin(frame.payload[1] ? 115200U : 38400U,millis());
+      if(action==2)passiveAvrRx.stop();
+      const auto state=passiveAvrRx.snapshot();
+      passiveCaptureGuard.store(state.active,std::memory_order_release);
+      uint8_t response[27]={action,static_cast<uint8_t>(started?kNoError:kUnsafe),
+          static_cast<uint8_t>(state.active),static_cast<uint8_t>(state.baud==38400 ? 0 : state.baud==115200 ? 1 : 255),
+          static_cast<uint8_t>(state.pinsSafe),static_cast<uint8_t>(state.error),
+          static_cast<uint8_t>(state.stopReason),static_cast<uint8_t>(state.stored)};
+      const uint32_t counts[]={state.received,state.dropped,state.hardwareErrors,state.elapsedMs};
+      for(uint8_t i=0;i<4;++i)for(uint8_t byte=0;byte<4;++byte)response[8+i*4+byte]=counts[i]>>(byte*8);
+      response[24]=digitalRead(PAKAR_S3_AVR_RX);
+      response[25]=digitalRead(PAKAR_S3_ISP_RESET);
+      gpio_io_config_t resetConfig{};
+      response[26]=gpio_get_io_config(static_cast<gpio_num_t>(PAKAR_S3_ISP_RESET),&resetConfig)==ESP_OK ? resetConfig.oe : 255;
+      hostLink.send(kAvrRxDiagnosticResponse,frame.sequence,response,sizeof(response));
+#else
+      hostLink.error(frame.sequence,frame.opcode,kUnsupported);
+#endif
+      break;
     }
     case kPcContractChunk:
       if (usbPcAssembly.accept(frame.sequence, frame.payload, frame.payloadLength, millis())) {
@@ -362,10 +528,13 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       hostLink.ack(frame.sequence, frame.opcode); break;
     }
     case kHello: {
-      const uint16_t capabilities =
-          kCapLedGrid | kCapIsp | kCapOta | kCapLittleFs | kCapApi |
+      uint16_t capabilities =
+          kCapLedGrid | kCapOta | kCapLittleFs | kCapApi |
           kCapWebSocket | kCapNtp | kCapHostSerial |
           (PAKAR_USE_BUSY_WIRE ? kCapBusyWire : 0U);
+#if !defined(ARDUINO_ARCH_ESP32) || PAKAR_S3_ISP_ELECTRICAL_VERIFIED
+      capabilities |= kCapIsp;
+#endif
       const uint8_t payload[] = {
           0, kRoleEsp, // Reserved zero, not a protocol generation.
           static_cast<uint8_t>(capabilities),
@@ -456,16 +625,22 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
           target += static_cast<char>(frame.payload[index]);
         }
       } else if (frame.payload[0] == 3 && frame.payloadLength == 3) {
+        if (programmingLatched || networkApplyPending || frame.payload[1]>1 || frame.payload[2]>1) {
+          hostLink.error(frame.sequence, frame.opcode, kUnsafe); break;
+        }
         const bool stationEnabled = frame.payload[1] != 0;
         const bool apEnabled = frame.payload[2] != 0;
-        if (!networkConfig.setStation(stagedStationSsid,
+        NetworkConfigStore candidate = networkConfig;
+        const bool saved = candidate.setStation(stagedStationSsid,
                                       stagedStationPassword,
-                                      stationEnabled) ||
-            !networkConfig.setAccessPointEnabled(apEnabled) ||
-            !networkConfig.save()) {
+                                      stationEnabled) &&
+            candidate.setAccessPointEnabled(apEnabled) && candidate.save();
+        stagedStationSsid = String(); stagedStationPassword = String();
+        if (!saved) {
           hostLink.error(frame.sequence, frame.opcode, kBadPayload);
           break;
         }
+        networkConfig = candidate;
         networkApplyAt = millis() + 250U;
         networkApplyPending = true;
       } else {
@@ -614,10 +789,14 @@ void loadLedPreferences() {
 }
 
 void stopDiscovery() {
+#if defined(ARDUINO_ARCH_ESP32)
+  s3Discovery.end();
+#else
   MDNS.close();
   SSDP.end();
   mndpService.stop();
   NBNS.end();
+#endif
   mdnsStarted = false;
   ssdpStarted = false;
   netbiosStarted = false;
@@ -627,6 +806,14 @@ void stopDiscovery() {
 void startDiscovery() {
   discoveryAttemptAt = millis();
   stopDiscovery();
+#if defined(ARDUINO_ARCH_ESP32)
+  if (!networkConfig.stationConnected() && !apStarted) return;
+  discoveryAddress = networkConfig.stationConnected() ? WiFi.localIP() : WiFi.softAPIP();
+  s3Discovery.begin(hostname.c_str(), deviceIdentity.displayName(), SystemPlatform::chipId(), kStreamPort);
+  mdnsStarted = s3Discovery.mdnsReady();
+  ssdpStarted = s3Discovery.ssdpReady();
+  netbiosStarted = s3Discovery.netbiosReady();
+#else
   if (!networkConfig.stationConnected()) return;
 
   discoveryAddress = WiFi.localIP();
@@ -660,18 +847,29 @@ void startDiscovery() {
   mndpService.begin();
   // NetBIOS labels are limited to 15; never advertise a silently truncated alias.
   netbiosStarted = hostname.length() <= 15 && NBNS.begin(hostname.c_str());
+#endif
 }
 
 void serviceDiscovery() {
+#if defined(ARDUINO_ARCH_ESP32)
+  const bool connected = networkConfig.stationConnected() || apStarted;
+  const IPAddress address = networkConfig.stationConnected() ? WiFi.localIP() : apStarted ? WiFi.softAPIP() : IPAddress();
+#else
   const bool connected = networkConfig.stationConnected();
   const IPAddress address = connected ? WiFi.localIP() : IPAddress();
+#endif
   if ((connected && (address != discoveryAddress ||
       (!mdnsStarted && static_cast<uint32_t>(millis()-discoveryAttemptAt)>=10000UL))) ||
       (!connected && (mdnsStarted || ssdpStarted))) {
     startDiscovery();
   }
+#if defined(ARDUINO_ARCH_ESP32)
+  s3Discovery.service(pcBoardId.c_str());
+  mdnsStarted = s3Discovery.mdnsReady(); ssdpStarted = s3Discovery.ssdpReady();
+#else
   if (mdnsStarted) MDNS.update();
   mndpService.service(hostname.c_str(),pcBoardId.c_str());
+#endif
 }
 
 void applyNetworkConfig() {
@@ -735,6 +933,7 @@ String deviceNameJson(bool accepted) {
 
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
                const uint8_t *payload, uint8_t payloadLength) {
+  if (!PAKAR_AVR_LINK_ENABLED) return false;
   const bool sent = link.send(opcode, requestSequence, payload, payloadLength);
   if (sent) {
     // The longest routine response is below 6 ms at 38400 baud. Keep a full
@@ -896,6 +1095,12 @@ bool authenticate() {
       server.send(409, "application/json", "{\"error\":\"peer_changed\",\"accepted\":false}"); return false;
     }
     const String path = server.request()->url();
+#if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
+    if (passiveAvrRx.snapshot().active && (server.request()->method()!=HTTP_GET ||
+        path==F("/api/wifi/scan") || path==F("/hostname/check") || path==F("/api/avr/probe"))) {
+      server.send(409,"text/plain","Bounded passive UART capture owns diagnostics");return false;
+    }
+#endif
     using namespace BoardCore::Context;
     uint16_t required = 0;
     if (path == F("/api/cell") || path == F("/api/cells/mapping") ||
@@ -1036,7 +1241,7 @@ String buildStatusJson() {
   body += F("\",\"boot_id\":\""); body += pcBootId;
   body += F("\",\"http_peer_fencing\":"); body += webAccess.peerFenceReady() ? F("true") : F("false");
   body += F(",\"hostname\":\""); body += hostname;
-  body += F("\",\"ip\":\""); body += WiFi.softAPIP().toString();
+  body += F("\",\"ip\":\""); body += (networkConfig.stationConnected() ? WiFi.localIP() : WiFi.softAPIP()).toString();
   body += F("\",\"mode\":\""); body += modeName();
   body += F("\",\"avr_online\":"); body += avrOnline ? F("true") : F("false");
   body += F(",\"avr_version\":");
@@ -1062,7 +1267,23 @@ String buildStatusJson() {
   body += F(",\"station_rssi\":"); body += networkConfig.stationConnected() ? WiFi.RSSI() : 0;
   body += F(",\"mdns_started\":"); body += mdnsStarted ? F("true") : F("false");
   body += F(",\"ssdp_started\":"); body += ssdpStarted ? F("true") : F("false");
-  body += F(",\"mndp_started\":"); body += mndpService.running() ? F("true") : F("false");
+  body += F(",\"mndp_started\":");
+#if defined(ARDUINO_ARCH_ESP32)
+  body += s3Discovery.mndpReady() ? F("true") : F("false");
+  const auto &rgb = statusRgb.snapshot();
+  body += F(",\"status_rgb\":{\"available\":"); body += rgb.available ? F("true") : F("false");
+  body += F(",\"enabled\":"); body += rgb.enabled ? F("true") : F("false");
+  body += F(",\"have_output\":"); body += rgb.haveOutput ? F("true") : F("false");
+  body += F(",\"pin\":"); body += rgb.pin;
+  body += F(",\"rgb\":["); body += rgb.red; body += ','; body += rgb.green; body += ','; body += rgb.blue;
+  body += F("],\"brightness\":"); body += rgb.brightness;
+  body += F(",\"state\":\""); body += PakarS3::StatusRgb::name(rgb.condition);
+  body += F("\",\"revision\":"); body += rgb.revision;
+  body += F(",\"updated_uptime_ms\":"); body += rgb.updatedAt; body += '}';
+  body += F(",\"isp_available\":"); body += PAKAR_S3_ISP_ELECTRICAL_VERIFIED ? F("true") : F("false");
+#else
+  body += mndpService.running() ? F("true") : F("false");
+#endif
   body += F(",\"netbios_started\":"); body += netbiosStarted ? F("true") : F("false");
   body += F(",\"canonical_url\":\"http://"); body += hostname; body += F(".local\"");
   body += F(",\"mdns_url\":\"http://"); body += hostname; body += F(".local\"");
@@ -1096,8 +1317,13 @@ String buildStatusJson() {
   }
   body += F(",\"programming_latch\":"); body += programmingLatched ? F("true") : F("false");
   body += F(",\"link_mode\":\"");
+#if defined(PAKAR_UART_BUFFERED) && PAKAR_UART_BUFFERED
+  body += F("buffered");
+#else
   body += PAKAR_USE_BUSY_WIRE ? F("busy-wire") : F("polling");
+#endif
   body += '"';
+  body += F(",\"avr_link_enabled\":"); body += PAKAR_AVR_LINK_ENABLED ? F("true") : F("false");
   body += F(",\"active_inputs\":"); body += activeInputs;
   body += F(",\"input_9\":"); body += activeInput9 ? F("true") : F("false");
   body += F(",\"active_outputs\":"); body += activeOutputs;
@@ -1197,6 +1423,9 @@ bool applyStreamPacket(const uint8_t *packet, size_t length) {
 void handleWebSocketMessage(AsyncWebSocketClient *client, uint8_t opcode,
                            const uint8_t *payload, size_t length) {
   if (!webAccess.socketAllowed(client->id())) { client->close(1008, "Sign in again"); return; }
+  if(passiveCaptureActive()) {
+    client->text("{\"accepted\":false,\"error\":\"passive_uart_capture_active\"}");return;
+  }
   if (otaActive || otaRebootAt) return;
   if (opcode == WS_BINARY) { if(!remoteFirmware.busy())applyStreamPacket(payload, length); return; }
   if (opcode != WS_TEXT || length > 1024U) return;
@@ -1387,6 +1616,7 @@ bool jsonBooleanValue(const String &json, const char *key) {
 }
 
 bool handleCloudCommand(const String &message, String &result) {
+  if(passiveCaptureActive()) {result=F("Bounded passive UART capture owns diagnostics");return false;}
   const String command = jsonStringValue(message, "command");
   using namespace BoardCore::Context;
   uint16_t required = 0;
@@ -1594,6 +1824,9 @@ bool handleCloudCommand(const String &message, String &result) {
 }
 
 void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
+  if (frame.opcode == kEspPanel && avrOnline && (avrCapabilities & kCapEspPanel)) {
+    espFrontPanel.handle(frame, millis(), espPanelSettings, link); return;
+  }
   avrOnline = true;
   lastAvrFrameAt = millis();
   if(frame.opcode==kTelemetryResponse) {
@@ -1735,7 +1968,7 @@ void registerAsyncOta() {
     String body = F("{\"product\":\"PakarController\",\"product_id\":\"PakarController\",\"name\":\"");
     appendJsonEscaped(body, APP_NAME);
     body += F("\",\"application\":"); body += applicationIdentityJson();
-    body += F(",\"model\":\"ESP8266 + ATmega328P\",\"version\":\"");
+    body += F(",\"model\":\""); body += FirmwarePlatform::model(); body += F(" + ATmega328P\",\"version\":\"");
     body += BoardCore::BuildInfo::kVersion;
     body += F("\",\"sketch_size\":"); body += ESP.getSketchSize();
     body += F(",\"size\":"); body += ESP.getSketchSize();
@@ -1769,14 +2002,14 @@ void registerAsyncOta() {
     const bool ownsUpdate = otaOwner && request->getAttribute("ota_id") == String(otaOwner);
     if (!ownsUpdate || request->hasAttribute("ota_error") || !request->hasAttribute("ota_uploaded")) {
       if (ownsUpdate) {
-        if (Update.isRunning()) Update.end(false);
+        if (Update.isRunning()) FirmwarePlatform::abortUpdate();
         otaOwner = 0; otaActive = false; otaPhase = F("failed");
       }
       request->send(400, "text/plain", request->getAttribute("ota_error", String(F("No complete firmware uploaded")))); return;
     }
     const bool complete = otaUploadedBytes && Update.end(true);
     otaOwner = 0; otaActive = false;
-    if (!complete) { otaPhase = F("failed"); request->send(400, "text/plain", Update.getErrorString()); return; }
+    if (!complete) { otaPhase = F("failed"); request->send(400, "text/plain", FirmwarePlatform::updateError()); return; }
     otaPhase = F("ready-to-reboot");
     request->send(200, "application/json", "{\"updated\":true,\"rebooting\":true}");
     otaRebootAt = millis() + 2000;
@@ -1785,7 +2018,7 @@ void registerAsyncOta() {
     if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request) || !webAccess.peerAllowed(request)) return;
     static uint32_t nextOwner = 0;
     if (index == 0) {
-      if (artifactReaders || remoteFirmware.busy() || otaOwner || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched || request->hasAttribute("ota_id")) {
+      if (passiveCaptureActive() || artifactReaders || remoteFirmware.busy() || otaOwner || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched || request->hasAttribute("ota_id")) {
         request->setAttribute("ota_error", "Another operation is active or multiple files were supplied"); return;
       }
       if (++nextOwner == 0) ++nextOwner;
@@ -1794,14 +2027,16 @@ void registerAsyncOta() {
       request->onDisconnect([id]() {
         if (otaOwner != id) return;
         // Uploads are capped below Update.size(), so incomplete end cannot commit boot metadata.
-        if (Update.isRunning()) Update.end(false);
+        if (Update.isRunning()) FirmwarePlatform::abortUpdate();
         otaOwner = 0; otaActive = false; otaPhase = F("aborted"); otaErrorCuePending = true;
       });
       otaUploadedBytes = 0; otaPhase = F("receiving"); otaActive = true;
-      const uint32_t maximum = (ESP.getFreeSketchSpace() - 0x1000) & 0xfffff000;
+      const uint32_t maximum = FirmwarePlatform::otaCapacity();
+#if !defined(ARDUINO_ARCH_ESP32)
       Update.runAsync(true);
+#endif
       if (!Update.begin(maximum, U_FLASH)) {
-        request->setAttribute("ota_error", Update.getErrorString().c_str());
+        request->setAttribute("ota_error", FirmwarePlatform::updateError().c_str());
         otaOwner = 0; otaActive = false; otaPhase = F("failed"); return;
       }
       String md5 = request->arg("MD5"); if (md5.isEmpty()) md5 = request->arg("md5");
@@ -1809,15 +2044,15 @@ void registerAsyncOta() {
         bool valid = md5.length() == 32;
         for (size_t i = 0; i < md5.length(); ++i) valid = valid && isxdigit(static_cast<unsigned char>(md5[i]));
         if (!valid || !Update.setMD5(md5.c_str())) {
-          request->setAttribute("ota_error", "Invalid MD5"); Update.end(false);
+          request->setAttribute("ota_error", "Invalid MD5"); FirmwarePlatform::abortUpdate();
           otaOwner = 0; otaActive = false; otaPhase = F("failed"); return;
         }
       }
     }
     if (request->hasAttribute("ota_error") || request->getAttribute("ota_id") != String(otaOwner)) return;
     if (!Update.isRunning() || index != otaUploadedBytes || index + length >= Update.size() || Update.write(data, length) != length) {
-      request->setAttribute("ota_error", (Update.hasError() ? Update.getErrorString() : String(F("Invalid upload sequence or insufficient OTA space"))).c_str());
-      if (Update.isRunning()) Update.end(false);
+      request->setAttribute("ota_error", (Update.hasError() ? FirmwarePlatform::updateError() : String(F("Invalid upload sequence or insufficient OTA space"))).c_str());
+      if (Update.isRunning()) FirmwarePlatform::abortUpdate();
       otaOwner = 0; otaActive = false; otaPhase = F("failed"); otaErrorCuePending = true; return;
     }
     otaUploadedBytes += length;
@@ -1831,6 +2066,50 @@ void registerAsyncOta() {
 }
 
 void registerApi() {
+#if defined(ARDUINO_ARCH_ESP32)
+  server.on("/api/status-rgb", HTTP_GET, []() {
+    if (!authenticate()) return;
+    const auto &config = statusRgbConfig.configuration();
+    JsonDocument d;
+    d["enabled"] = config.enabled; d["pin"] = config.pin;
+    d["pin_confirmed"] = config.pinConfirmed; d["brightness"] = config.brightness;
+    d["persisted"] = statusRgbConfig.persisted(); d["error"] = statusRgbConfig.lastError();
+    String body; serializeJson(d,body); server.send(200,"application/json",body);
+  });
+  server.on("/api/status-rgb", HTTP_POST, []() {
+    if (!authenticate()) return;
+    if (remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || programmingLatched) {
+      server.send(409,"text/plain","Maintenance active"); return;
+    }
+    auto config = statusRgbConfig.configuration();
+    for (const char *field : {"enabled","pin_confirmed"}) if (server.hasArg(field)) {
+      const String value = server.arg(field);
+      if (value!="true" && value!="false" && value!="0" && value!="1") {
+        server.send(400,"text/plain","Boolean fields require true/false or 0/1"); return;
+      }
+    }
+    if (server.hasArg("enabled")) config.enabled = server.arg("enabled")=="true" || server.arg("enabled")=="1";
+    if (server.hasArg("pin")) {
+      const String pin=server.arg("pin");
+      if(pin!="38" && pin!="48" && pin!="-1") {server.send(400,"text/plain","Reviewed onboard RGB GPIO must be 38 or 48, or -1 disabled");return;}
+      if(config.pin!=pin.toInt()) config.pinConfirmed=false;
+      config.pin=pin.toInt();
+    }
+    if (server.hasArg("pin_confirmed")) config.pinConfirmed = server.arg("pin_confirmed")=="true" || server.arg("pin_confirmed")=="1";
+    if (server.hasArg("brightness")) {
+      uint32_t value;
+      if (!strictU32(server.arg("brightness"),value) || value>255) {server.send(400,"text/plain","Brightness must be 0..255");return;}
+      config.brightness=value;
+    }
+    if (!PakarS3::StatusRgbConfig::validate(config) || !statusRgbConfig.save(config)) {
+      server.send(400,"text/plain",statusRgbConfig.lastError()); return;
+    }
+    if (!statusRgb.configure(config,millis(),writeStatusRgb)) {
+      server.send(503,"text/plain","Settings saved; local RGB driver unavailable"); return;
+    }
+    server.send(200,"application/json","{\"saved\":true,\"driver_submitted\":true,\"optical_verified\":false}");
+  });
+#endif
   server.native().on("/assets/fonts/Vazirmatn-OFL.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send_P(200,"text/plain; charset=utf-8",kVazirmatnLicense);
   });
@@ -1977,6 +2256,9 @@ void registerApi() {
     server.send(200, "application/json", "{\"updated\":true}");
   });
   server.on("/description.xml", HTTP_GET, []() {
+#if defined(ARDUINO_ARCH_ESP32)
+    server.send(200, "text/xml", s3Discovery.xmlDescription()); return;
+#else
     String xml = F("<?xml version=\"1.0\"?><root xmlns=\"urn:schemas-upnp-org:device-1-0\"><specVersion><major>1</major><minor>0</minor></specVersion><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>");
     auto escaped = [](const char *input) { String s(input); s.replace("&","&amp;");s.replace("<","&lt;");s.replace(">","&gt;");s.replace("\"","&quot;");s.replace("'","&apos;");return s; };
     xml += escaped(deviceIdentity.displayName());
@@ -1986,6 +2268,7 @@ void registerApi() {
     xml += F("</UDN><presentationURL>http://"); xml += hostname;
     xml += F(".local/</presentationURL></device></root>");
     server.send(200, "text/xml", xml);
+#endif
   });
   server.on("/api/time", HTTP_GET, []() {
     if (!authenticate()) return;
@@ -2009,7 +2292,11 @@ void registerApi() {
       body += F("{\"ssid\":\""); body += ssid;
       body += F("\",\"rssi\":"); body += WiFi.RSSI(index);
       body += F(",\"encrypted\":");
+#if defined(ARDUINO_ARCH_ESP32)
+      body += WiFi.encryptionType(index) == WIFI_AUTH_OPEN ? F("false") : F("true");
+#else
       body += WiFi.encryptionType(index) == ENC_TYPE_NONE ? F("false") : F("true");
+#endif
       body += '}';
     }
     body += F("]}");
@@ -2217,23 +2504,39 @@ void registerApi() {
     body += F(",\"station_ssid\":\""); appendJsonEscaped(body,networkConfig.stationSsid());
     body += F("\",\"station_ip\":\""); body += WiFi.localIP().toString();
     body += F("\",\"ap_ip\":\""); body += WiFi.softAPIP().toString();
-    body += F("\"}");
+    body += F("\",\"dhcp\":"); body += networkConfig.dhcpEnabled() ? F("true") : F("false");
+    body += F(",\"address\":\""); body += networkConfig.stationAddress().toString();
+    body += F("\",\"gateway\":\""); body += networkConfig.stationGateway().toString();
+    body += F("\",\"subnet\":\""); body += networkConfig.stationSubnet().toString();
+    body += F("\",\"dns1\":\""); body += networkConfig.stationDns1().toString();
+    body += F("\",\"dns2\":\""); body += networkConfig.stationDns2().toString(); body += F("\"}");
     server.send(200, "application/json", body);
   });
   server.on("/api/network", HTTP_POST, []() {
     if (!authenticate()) return;
-    const bool enabled = server.arg("station_enabled") != F("false") &&
-                         server.arg("station_enabled") != F("0");
-    const bool apEnabled = !server.hasArg("ap_enabled") ||
-                           (server.arg("ap_enabled") != F("false") &&
-                            server.arg("ap_enabled") != F("0"));
-    if (!networkConfig.setStation(server.arg("ssid"), server.arg("password"),
-                                  enabled) ||
-        !networkConfig.setAccessPointEnabled(apEnabled) ||
-        !networkConfig.save()) {
-      server.send(400, "text/plain", networkConfig.lastError());
+    if (remoteFirmware.busy() || otaActive || otaRebootAt || networkApplyPending || programmingLatched) {
+      server.send(409, "text/plain", "Device maintenance/network change active"); return;
+    }
+    NetworkConfigStore candidate = networkConfig;
+    const bool enabled = server.hasArg("station_enabled") ?
+        server.arg("station_enabled") != F("false") && server.arg("station_enabled") != F("0") : candidate.stationEnabled();
+    const bool apEnabled = server.hasArg("ap_enabled") ?
+        server.arg("ap_enabled") != F("false") && server.arg("ap_enabled") != F("0") : candidate.accessPointEnabled();
+    const bool dhcp = server.hasArg("dhcp") ? server.arg("dhcp") != F("false") && server.arg("dhcp") != F("0") : candidate.dhcpEnabled();
+    // Omitted addressing fields retain the stored values. Empty password retains
+    // the existing station secret unless explicitly changing SSID/open network.
+    if (!candidate.setStation(server.hasArg("ssid") ? server.arg("ssid") : String(candidate.stationSsid()), server.arg("password"), enabled, server.hasArg("password")) ||
+        !candidate.setAccessPointEnabled(apEnabled) ||
+        !candidate.setAddressing(dhcp,
+            server.hasArg("address") ? server.arg("address") : candidate.stationAddress().toString(),
+            server.hasArg("gateway") ? server.arg("gateway") : candidate.stationGateway().toString(),
+            server.hasArg("subnet") ? server.arg("subnet") : candidate.stationSubnet().toString(),
+            server.hasArg("dns1") ? server.arg("dns1") : candidate.stationDns1().toString(),
+            server.hasArg("dns2") ? server.arg("dns2") : candidate.stationDns2().toString()) || !candidate.save()) {
+      server.send(400, "text/plain", candidate.lastError());
       return;
     }
+    networkConfig = candidate;
     server.send(202, "application/json", "{\"accepted\":true}");
     // Flush the response through the old interface before changing station
     // association. The recovery AP remains active throughout the reconfigure.
@@ -2389,7 +2692,7 @@ void registerApi() {
       if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request) || !webAccess.peerAllowed(request)) return;
       static uint32_t nextUpload = 0;
       if (index == 0) {
-        if (artifactReaders || remoteFirmware.busy() || avrUploadOwner || otaActive || otaRebootAt || server.processing() || request->hasAttribute("upload_id")) {
+        if (passiveCaptureActive() || artifactReaders || remoteFirmware.busy() || avrUploadOwner || otaActive || otaRebootAt || server.processing() || request->hasAttribute("upload_id")) {
           request->setAttribute("upload_error", "Another operation is active or multiple files were supplied"); return;
         }
         if (++nextUpload == 0) ++nextUpload;
@@ -2673,20 +2976,25 @@ void serviceConsole() {
       grid.resetWhite();
       Serial.println(F("{\"diagnostic\":\"led_rainbow\",\"enabled\":false}"));
     } else if (command == 'W') {
-      pinMode(D1, OUTPUT_OPEN_DRAIN);
-      digitalWrite(D1, LOW);
+#if defined(ARDUINO_ARCH_ESP32)
+      Serial.println(F("{\"diagnostic\":\"avr_tx_wire\",\"error\":\"Use gated ISP reset; direct reset diagnostic disabled on S3\"}"));
+      continue;
+#else
+      pinMode(kAvrResetPin, OUTPUT_OPEN_DRAIN);
+      digitalWrite(kAvrResetPin, LOW);
       delay(10);
-      digitalWrite(D1, HIGH);
-      pinMode(D1, INPUT);
+      digitalWrite(kAvrResetPin, HIGH);
+      pinMode(kAvrResetPin, INPUT);
+#endif
 
       const uint32_t startedAt = millis();
       uint32_t nextYieldAt = startedAt + 10;
       uint32_t samples = 0;
       uint32_t lowSamples = 0;
       uint32_t transitions = 0;
-      uint8_t previous = digitalRead(D4);
+      uint8_t previous = digitalRead(kAvrRxPin);
       while (static_cast<uint32_t>(millis() - startedAt) < 1500U) {
-        const uint8_t current = digitalRead(D4);
+        const uint8_t current = digitalRead(kAvrRxPin);
         ++samples;
         if (current == LOW) ++lowSamples;
         if (current != previous) {
@@ -2714,22 +3022,27 @@ void serviceConsole() {
 
 void setup() {
   uint8_t bootBytes[16];char bootHex[33];
-  if(os_get_random(bootBytes,sizeof(bootBytes))==0) {
+  if(SystemPlatform::randomBytes(bootBytes,sizeof(bootBytes))==0) {
     for(unsigned i=0;i<16;++i)snprintf(bootHex+i*2,3,"%02x",bootBytes[i]);
     pcBootId=bootHex;
   } // No random identity means remote apply is unavailable, never a reused boot ID.
+#if defined(ARDUINO_ARCH_ESP32)
+  sntp_set_time_sync_notification_cb([](struct timeval *) {
+    clockSource="ntp"; ntpObserved=true; lastClockSetAt=millis();
+  });
+#else
   settimeofday_cb([](bool sntp) {
     clockSource=sntp?"ntp":"manual";ntpObserved=sntp;lastClockSetAt=millis();
   });
+#endif
 #if PAKAR_USE_BUSY_WIRE
   // GPIO0 is pulled high by the NodeMCU boot circuit. Explicitly keep the AVR
   // blocked until UART, Wi-Fi, Web, and the LED renderer are ready.
   busyLine.begin();
 #endif
-  pinMode(D1, INPUT);
+  pinMode(kAvrResetPin, INPUT);
   // Never erase damaged storage and silently restore public credentials.
-  LittleFS.setConfig(LittleFSConfig().setAutoFormat(false));
-  const bool filesystemMounted = LittleFS.begin();
+  const bool filesystemMounted = SystemPlatform::mountFilesystem();
   accessConfig.begin(LittleFS, filesystemMounted);
   networkConfig.begin(LittleFS);
   deviceIdentity.begin(LittleFS, filesystemMounted);
@@ -2738,19 +3051,47 @@ void setup() {
   loadLedPreferences();
   loadCellMapping();
   hostLink.begin(115200, onHostFrame);
+#if defined(ARDUINO_ARCH_ESP32)
+#if PAKAR_AVR_LINK_ENABLED
+  avrSerial.setRxBufferSize(PakarS3::kAvrRxBuffer);
+  avrSerial.setTxBufferSize(PakarS3::kAvrTxBuffer);
+  avrSerial.begin(kBaud, SERIAL_8N1, PAKAR_S3_AVR_RX, PAKAR_S3_AVR_TX);
+#else
+  // Quiet commissioning: no UART driver, TX frame or pin drive while tracing
+  // the observed AVR reset loop. Reset/ISP pins remain untouched too.
+  pinMode(PAKAR_S3_AVR_RX, INPUT);
+  pinMode(PAKAR_S3_AVR_TX, INPUT);
+#endif
+  PakarS3::StatusRgb::Configuration statusConfig;
+#ifdef PAKAR_S3_STATUS_RGB_PIN
+  statusConfig.pin = PAKAR_S3_STATUS_RGB_PIN;
+  statusConfig.pinConfirmed = true; statusConfig.enabled = true;
+#endif
+  statusRgbConfig.begin(LittleFS, statusConfig);
+  statusRgb.configure(statusRgbConfig.configuration(), millis(), writeStatusRgb);
+  statusRgb.setState(PakarS3::StatusRgb::State::Boot, millis());
+#else
   avrSerial.begin(kBaud);
-  link.begin(kBaud, onAvrFrame);
+#endif
+  if (PAKAR_AVR_LINK_ENABLED) avrLink.begin(kBaud, onAvrFrame);
 
   // This is deliberately stable. Chip identity belongs in discovery metadata,
   // not in the human-facing host or recovery AP name.
   hostname = deviceIdentity.hostname();
   apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
-  uint8_t stationMac[6] = {}; WiFi.macAddress(stationMac);
+  uint8_t stationMac[6] = {};
+#if defined(ARDUINO_ARCH_ESP32)
+  // WiFi.macAddress() can be all-zero on the S3's first AP-only boot. Hardware
+  // identity must exist before STA is enabled, not change when mode changes.
+  esp_efuse_mac_get_default(stationMac);
+#else
+  WiFi.macAddress(stationMac);
+#endif
   bool macNonzero = false, macBroadcast = true;
   for (uint8_t byte : stationMac) { macNonzero |= byte != 0; macBroadcast &= byte == 255; }
   if (macNonzero && !macBroadcast && !(stationMac[0] & 1)) {
     char board[21];
-    snprintf(board, sizeof(board), "esp8266-%02x%02x%02x%02x%02x%02x",
+    snprintf(board, sizeof(board), "%s-%02x%02x%02x%02x%02x%02x", SystemPlatform::architecture(),
         stationMac[0], stationMac[1], stationMac[2], stationMac[3], stationMac[4], stationMac[5]);
     pcBoardId = board;
   }
@@ -2770,6 +3111,7 @@ void setup() {
   }, []() { return remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched; });
   webSocket.onEvent(onWebSocketEvent);
   server.native().addHandler(&webSocket);
+#if !defined(ARDUINO_ARCH_ESP32)
   Update.onStart([]() {
     if(!remoteFirmware.applying())otaStartCuePending = true;
   });
@@ -2779,6 +3121,7 @@ void setup() {
   Update.onError([](uint8_t) {
     otaErrorCuePending = true;
   });
+#endif
   registerAsyncOta();
   server.begin();
   serviceDiscovery();
@@ -2789,9 +3132,23 @@ void setup() {
 }
 
 void loop() {
+#if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
+  passiveAvrRx.service(millis());
+  passiveCaptureGuard.store(passiveAvrRx.snapshot().active,std::memory_order_release);
+#endif
   servicePcContracts();
   const uint32_t now = millis();
-  link.service();
+#if defined(ARDUINO_ARCH_ESP32)
+  using RgbState = PakarS3::StatusRgb::State;
+  const RgbState rgbState = otaActive || remoteFirmware.busy() ? RgbState::Updating :
+      !accessConfig.ready() ? RgbState::Fault :
+      networkConfig.stationEnabled() && !networkConfig.stationConnected() ? RgbState::Connecting :
+      !avrOnline ? RgbState::PeerLost :
+      networkConfig.stationConnected() ? RgbState::Ready : RgbState::AccessPoint;
+  statusRgb.setState(rgbState, now);
+  statusRgb.service(now, writeStatusRgb);
+#endif
+  avrLink.service();
   hostLink.service();
   // Render before issuing UART requests. The AVR is request/response only, so
   // its reply arrives while FastLED is not masking ESP8266 interrupts.
@@ -2804,7 +3161,9 @@ void loop() {
     // passed the AVR's LOW check just before this edge and still be draining
     // from its hardware UART. Consume that bounded frame before FastLED masks
     // ESP8266 interrupts for the 480-pixel transfer.
+#if !defined(ARDUINO_ARCH_ESP32)
     serviceAvrFor(8U);
+#endif
     if (streamFrameReady) {
       grid.showStaged();
       streamFrameReady = false;
@@ -2835,11 +3194,27 @@ void loop() {
   }
   serviceDiscovery();
   configureNtp();
+  if (wifiScanQueued && !remoteFirmware.busy() && !otaActive && !networkApplyPending) {
+    wifiScanQueued = false;
+    if (WiFi.scanComplete() != -1) WiFi.scanNetworks(true, true);
+  }
+  if (avrOnline && (avrCapabilities & kCapEspPanel) && !programmingLatched &&
+      !remoteFirmware.busy() && !otaActive && static_cast<uint32_t>(now-lastEspPanelOfferAt)>=2000U) {
+    lastEspPanelOfferAt = now;
+    espFrontPanel.offer(espPanelSettings, avrLink, sequence++);
+  }
   // TLS reconnects can take seconds on the ESP8266. Keep them out of the
   // timing-critical ISP/update transaction. After a failed transaction, cloud
   // diagnostics can reconnect even with Prog armed; mutations remain guarded.
-  if (!remoteFirmware.busy() && !otaActive && !otaRebootAt) {
-    setAvrTransmitBlocked(true);serviceAvrFor(18);
+  if (!remoteFirmware.busy() && !otaActive && !otaRebootAt
+#if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
+      && !passiveAvrRx.snapshot().active
+#endif
+      ) {
+    setAvrTransmitBlocked(true);
+#if !defined(ARDUINO_ARCH_ESP32)
+    serviceAvrFor(18);
+#endif
     cloudServices.service(networkConfig.stationConnected(),
                           time(nullptr) > 1700000000, now);
     setAvrTransmitBlocked(false);
@@ -2861,18 +3236,24 @@ void loop() {
     lastHelloAt = now;
     sendToAvr(kHello, sequence++);
   }
-  if (PAKAR_USE_BUSY_WIRE && avrOnline &&
+  if ((PAKAR_USE_BUSY_WIRE
+#if defined(PAKAR_UART_BUFFERED)
+      || PAKAR_UART_BUFFERED
+#endif
+      ) && avrOnline &&
       static_cast<uint32_t>(now - lastAvrPingAt) >= 1000U) {
     lastAvrPingAt = now;
     sendToAvr(kPing, sequence++); // Presence heartbeat, not state polling.
   }
   // AVR owns its welcome melody. A first HELLO is not a completed update:
   // sending the success cue here could replace the still-playing welcome.
+#if !defined(PAKAR_UART_BUFFERED) || !PAKAR_UART_BUFFERED
   if (!PAKAR_USE_BUSY_WIRE && avrOnline &&
       static_cast<uint32_t>(now - lastStatusPollAt) >= 100U) {
     lastStatusPollAt = now;
     sendToAvr(kGetStatus, sequence++);
   }
+#endif
   if (static_cast<uint32_t>(now - lastWebSocketBroadcastAt) >= 500U) {
     lastWebSocketBroadcastAt = now;
     if (webSocket.count() != 0) {

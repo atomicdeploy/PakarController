@@ -103,5 +103,22 @@ int main() {
   assert(!rollover.acceptDisplayPayload(invalid.data(), invalid.size(), 0));
   invalid = {5,80,0,40,0,0,0,0};
   assert(!rollover.acceptDisplayPayload(invalid.data(), invalid.size(), 0));
+  FrontPanel esp;
+  esp.setEspMenu(true,0,BoardCore::Protocol::EspPanel::Current,3,"ledboard",1000);
+  tick(esp,1000); assert(shown=="nEt ");
+  tick(esp,1700); assert(shown=="both");
+  esp.setEspMenu(true,0,BoardCore::Protocol::EspPanel::Pending,3,"ledboard",1800);
+  tick(esp,1800); assert(shown=="buSY");
+  esp.setEspMenu(true,0,BoardCore::Protocol::EspPanel::Failed,3,"ledboard",1900);
+  tick(esp,1900); assert(shown=="Err ");
+  tick(esp,2000,true); assert(shown=="Prog");
+  esp.setEspMenu(true,2,BoardCore::Protocol::EspPanel::Saved,0,"ledboard",2100);
+  tick(esp,2100); assert(shown=="SEnt"); // Queue acceptance isn't completed scan.
+  esp.setEspMenu(true,4,BoardCore::Protocol::EspPanel::Current,0,"ledboard",3000);
+  tick(esp,3700); assert(shown=="ledb");
+  tick(esp,9000); assert(shown=="oard");
+  tick(esp,12000); assert(shown=="oard"); // Scroll once, then hold last window.
+  esp.setEspMenu(false,4,0,0,nullptr,12100);
+  tick(esp,12100); assert(shown=="PAKr");
   std::cout << "Front-panel one-shot, loop, interval, release, number override, raw cells, priority, bounds and rollover passed.\n";
 }

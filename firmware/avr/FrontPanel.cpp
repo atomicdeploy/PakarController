@@ -26,6 +26,50 @@ uint16_t readU16(const uint8_t *value) {
 
 FrontPanel frontPanel;
 
+void FrontPanel::setEspMenu(bool active, uint8_t page, uint8_t notice,
+                             uint8_t value, const char *hostname, uint32_t now) {
+  if (active && (!espActive_ || page != espPage_)) espPageAt_ = now;
+  espActive_ = active; espPage_ = page; espNotice_ = notice;
+  espValue_ = value; espHostname_ = hostname;
+}
+
+void FrontPanel::showEspMenu(uint32_t now) {
+  using namespace BoardCore::Protocol;
+  if (espNotice_ == EspPanel::Pending) { display.showText(F("buSY")); return; }
+  if (espNotice_ == EspPanel::Failed) { display.showText(F("Err ")); return; }
+  if (espNotice_ == EspPanel::TimedOut) { display.showText(F("tout")); return; }
+  if (espNotice_ == EspPanel::Saved) {
+    display.showText(espPage_ == 1 || espPage_ == 2 ? F("SEnt") : F("donE"));
+    return; // Scan/reconnect ACK means queued, never completed scan/link success.
+  }
+  const uint32_t elapsed = now - espPageAt_;
+  if (elapsed < 650) {
+    switch (espPage_) {
+      case 0: display.showText(F("nEt ")); break;
+      case 1: display.showText(F("rECn")); break;
+      case 2: display.showText(F("SCAn")); break;
+      case 3: display.showText(F("dHCP")); break;
+      case 4: display.showText(F("nAME")); break;
+      default: display.showText(F("bAC ")); break;
+    }
+    return;
+  }
+  if (espPage_ == 0) {
+    display.showText(espValue_ == 1 ? F("AP  ") : espValue_ == 2 ? F("CL  ") : F("both"));
+  } else if (espPage_ == 3) display.showText(espValue_ ? F("Auto") : F("StAt"));
+  else if (espPage_ == 4 && espHostname_) {
+    // One pass only; do not resume the annoying perpetual default marquee.
+    const uint8_t length = strlen(espHostname_);
+    const uint32_t step = (elapsed - 650) / 350;
+    const uint8_t offset = length > 4 && step < static_cast<uint32_t>(length - 3) ? step
+        : length > 4 ? length - 4 : 0;
+    char text[5] = {};
+    for (uint8_t i = 0; i < 4 && offset + i < length; ++i)
+      text[i] = espHostname_[offset + i];
+    display.showText(text);
+  } else display.showText(F("SEL "));
+}
+
 void FrontPanel::begin(uint32_t now) {
   animationStartedAt_ = now;
   animationActive_ = true;
@@ -188,6 +232,7 @@ void FrontPanel::service(uint32_t now, BoardCore::Protocol::GameMode mode,
     display.showText(F("Prog"));
     return;
   }
+  if (espActive_) { showEspMenu(now); return; }
   if (animationActive_) {
     // Imported from ControllerBoardMini/Puzzles::animation(): the lit segment
     // traces the exact twelve-step perimeter at the original 75 ms cadence.

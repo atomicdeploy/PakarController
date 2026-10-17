@@ -3,9 +3,7 @@
 #include <ApiPolicy.h>
 #include <PeerFence.h>
 #include <ESPAsyncWebServer.h>
-extern "C" {
-#include <osapi.h>
-}
+#include "SystemPlatform.h"
 
 // PU850 Authentication/Sessions capability with complete authorization,
 // expiring sessions and no password/token diagnostic dumps.
@@ -112,7 +110,7 @@ class WebAccess {
       }
       failures_ = 0;
       uint8_t bytes[16]; char token[33];
-      if (os_get_random(bytes, sizeof(bytes)) != 0) { request->send(503, "text/plain", "Session entropy unavailable"); return; }
+      if (SystemPlatform::randomBytes(bytes, sizeof(bytes)) != 0) { request->send(503, "text/plain", "Session entropy unavailable"); return; }
       const char hex[] = "0123456789abcdef";
       for (size_t i = 0; i < sizeof(bytes); ++i) { token[i * 2] = hex[bytes[i] >> 4]; token[i * 2 + 1] = hex[bytes[i] & 15]; }
       token[32] = 0;

@@ -12,6 +12,6 @@
     {"id":"firmware","label":"Firmware & storage","icon":"FLOPPY_DISK","keywords":"OTA firmware flash EEPROM backup ISP update","features":["isp","ota"]}
   ],
   "build_only": ["link_mode", "AVR clock and fuses", "pin ownership", "WS2811 chipset and channel order", "pixel count"],
-  "network": {"station_enabled":"boolean","ap_enabled":"boolean","station_ssid":"string"},
+  "network": {"station_enabled":"boolean","ap_enabled":"boolean","station_ssid":"string","dhcp":"optional:boolean","address":"optional:string","gateway":"optional:string","subnet":"optional:string","dns1":"optional:string","dns2":"optional:string"},
   "cloud": {"mqtt_enabled":"boolean","mqtt_tls":"boolean","mqtt_host":"string","mqtt_port":"port","mqtt_user":"string","mqtt_base_topic":"string","mqtt_password_set":"boolean","websocket_enabled":"boolean","websocket_tls":"boolean","websocket_host":"string","websocket_port":"port","websocket_path":"string","websocket_token_set":"boolean","telemetry_seconds":"interval"}
 }

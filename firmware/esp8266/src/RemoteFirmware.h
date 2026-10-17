@@ -2,9 +2,15 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#if defined(ARDUINO_ARCH_ESP32)
+#include <HTTPClient.h>
+#include <WiFiClient.h>
+#include <WiFiClientSecure.h>
+#else
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecureBearSSL.h>
-#include <bearssl/bearssl.h>
+#endif
+#include "FirmwarePlatform.h"
 #include <memory>
 #include "RemotePolicy.h"
 
@@ -52,7 +58,7 @@ class RemoteFirmware {
   void close();
   bool installEsp();
   void verifyBoot();
-  static String digest(const br_sha256_context&);
+  static String digest(const FirmwarePlatform::Sha256&);
   Phase phase_=Idle;
   Plan plan_;
   String boot_,manifestSha_,bearer_,error_,credentialOrigin_;
@@ -63,6 +69,6 @@ class RemoteFirmware {
   File file_;
   HTTPClient http_;
   std::unique_ptr<WiFiClient> socket_;
-  br_sha256_context sha_{};
+  FirmwarePlatform::Sha256 sha_;
   Prepare prepare_=nullptr; Program program_=nullptr; Finish finish_=nullptr;
 };

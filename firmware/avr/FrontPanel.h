@@ -22,11 +22,14 @@ class FrontPanel {
   void setMenu(uint8_t page, bool active, int16_t value) {
     menuPage_ = page; menuActive_ = active; menuValue_ = value;
   }
+  void setEspMenu(bool active, uint8_t page, uint8_t notice, uint8_t value,
+                  const char *hostname, uint32_t now);
 
  private:
   void showLocal(BoardCore::Protocol::GameMode mode, uint8_t selectedCell,
                  uint8_t winner);
   bool showHostText(uint32_t now);
+  void showEspMenu(uint32_t now);
   bool timeReached(uint32_t now, uint32_t deadline) const {
     return static_cast<int32_t>(now - deadline) >= 0;
   }
@@ -51,6 +54,10 @@ class FrontPanel {
   uint8_t menuPage_ = 0;
   bool menuActive_ = false;
   int16_t menuValue_ = 0;
+  const char *espHostname_ = nullptr; // Runtime-owned stable storage, no heap/copy.
+  uint32_t espPageAt_ = 0;
+  uint8_t espPage_ = 0, espNotice_ = 0, espValue_ = 0;
+  bool espActive_ = false;
 };
 
 extern FrontPanel frontPanel;

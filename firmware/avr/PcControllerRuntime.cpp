@@ -348,6 +348,7 @@ void PcControllerRuntime::key(uint8_t bit, KeyEvent gesture, uint8_t source,
   automationEvent(AutomationEventKind::Key,
                    static_cast<uint8_t>((bit << 4) | static_cast<uint8_t>(gesture)), now);
 #if PAKAR_PC_MENU
+  if (espKey(bit, gesture, source, now)) return;
   if (bit == 8 && gesture == KeyEvent::DoubleClick) {
     menuActive_ = !menuActive_; menuOwnedByHost_ = false;
   }
@@ -377,6 +378,95 @@ void PcControllerRuntime::key(uint8_t bit, KeyEvent gesture, uint8_t source,
 #endif
   saveMenuPage(now);
   hardware_.showMenu(page_, menuActive_, running_);
+}
+
+bool PcControllerRuntime::observeEspPanel(const P::Frame &frame, uint32_t now) {
+#if PAKAR_PC_MENU
+  const uint8_t *p = frame.payload;
+  uint8_t offset = 0;
+  const bool response = frame.opcode == P::kEspPanelResponse;
+  if (response) {
+    if (!espPending_ || frame.sequence != espSequence_ || frame.payloadLength < 2 ||
+        p[0] != espPendingAction_ || p[1] > P::kUnsafe ||
+        static_cast<uint32_t>(now - espSentAt_) >= 1500) return false;
+    offset = 2;
+  } else if (frame.opcode == P::kEspPanel && frame.payloadLength &&
+             p[0] == P::EspPanel::Offer) offset = 1;
+  else return false;
+  P::EspPanel::Snapshot incoming;
+  const bool valid = frame.payloadLength > offset &&
+      P::EspPanel::decodeSnapshot(p + offset, frame.payloadLength - offset, incoming);
+  // Even an explicit error without readback retires the pending request, but
+  // cannot manufacture an acknowledged network state.
+  if (!valid && (!response || p[1] == P::kNoError)) return false;
+  if (valid) { espState_ = incoming; espKnown_ = true; espSeenAt_ = now; }
+  if (response) {
+    espPending_ = false;
+    espNotice_ = p[1] == P::kNoError ? P::EspPanel::Saved : P::EspPanel::Failed;
+    espNoticeAt_ = now;
+    espDraft_ = espPage_ == 3 ? espState_.dhcp : espState_.mode;
+  }
+  showEspPanel(now);
+  return true;
+#else
+  (void)frame; (void)now; return false;
+#endif
+}
+
+void PcControllerRuntime::showEspPanel(uint32_t now) {
+  hardware_.showEspMenu(espMenuActive_, espPage_, espNotice_, espDraft_,
+                         espState_.hostname, now);
+}
+void PcControllerRuntime::requestEspAction(uint32_t now) {
+  if (espPending_ || !espMenuAvailable(now) || hardware_.snapshot().programming ||
+      !hardware_.ready()) return;
+  uint8_t p[2], n = 1;
+  switch (espPage_) {
+    case 0: p[0] = P::EspPanel::SetMode; p[1] = espDraft_; n = 2; break;
+    case 1: p[0] = P::EspPanel::Reconnect; break;
+    case 2: p[0] = P::EspPanel::Scan; break;
+    case 3: p[0] = P::EspPanel::SetDhcp; p[1] = espDraft_; n = 2; break;
+    case 4: p[0] = P::EspPanel::Query; break;
+    default: espMenuActive_ = false; showEspPanel(now); return;
+  }
+  ++espSequence_;
+  if (!espSequence_) ++espSequence_;
+  if (!hardware_.send(P::kEspPanel, espSequence_, p, n)) {
+    espNotice_ = P::EspPanel::Failed; espNoticeAt_ = now; return;
+  }
+  espPending_ = true; espPendingAction_ = p[0]; espSentAt_ = now;
+  espNotice_ = P::EspPanel::Pending;
+}
+bool PcControllerRuntime::espKey(uint8_t bit, KeyEvent gesture, uint8_t source,
+                                uint32_t now) {
+  if (source != 0) return false; // Dedicated physical-board menu, no host hijack.
+  if (bit == 8 && gesture == KeyEvent::HoldStart && espMenuAvailable(now) &&
+      !hardware_.snapshot().programming && !hardware_.snapshot().hostCaptured) {
+    espMenuActive_ = !espMenuActive_;
+    espPage_ = 0; espDraft_ = espState_.mode; espNotice_ = P::EspPanel::Current;
+    hardware_.menuNavigationCue(true); showEspPanel(now); return true;
+  }
+  if (!espMenuActive_) return false;
+  if (hardware_.snapshot().programming) { espMenuActive_ = false; showEspPanel(now); return true; }
+  if (bit == 8 && gesture == KeyEvent::DoubleClick && !espPending_) {
+    espMenuActive_ = false; showEspPanel(now); return true; // Discard draft.
+  }
+  if (bit == 8 && gesture == KeyEvent::Click) {
+    requestEspAction(now); showEspPanel(now); return true;
+  }
+  if (bit < 4 && keyEventRunsPrimaryAction(gesture) && !espPending_) {
+    if (bit < 2) {
+      espPage_ = (espPage_ + (bit ? 1 : 5)) % 6;
+      espDraft_ = espPage_ == 3 ? espState_.dhcp : espState_.mode;
+      espNotice_ = P::EspPanel::Current;
+    } else if (espPage_ == 0 || espPage_ == 3) {
+      if (espPage_ == 0) espDraft_ = ((espDraft_ - 1 + (bit == 3 ? 1 : 2)) % 3) + 1;
+      else espDraft_ = !espDraft_;
+      espNotice_ = P::EspPanel::Draft;
+    } else return true;
+    hardware_.menuNavigationCue(bit == 1 || bit == 3); showEspPanel(now);
+  }
+  return true; // Consumed ESP keys never mutate local board pages/settings.
 }
 void PcControllerRuntime::saveMenuPage(uint32_t now) {
 #if PAKAR_PC_MENU
@@ -430,6 +520,15 @@ void PcControllerRuntime::automationEvent(AutomationEventKind kind, uint8_t valu
 void PcControllerRuntime::service(uint32_t now, uint32_t nowUs) {
   (void)nowUs;
   const auto s = hardware_.snapshot();
+  if (espPending_ && static_cast<uint32_t>(now - espSentAt_) >= 1500) {
+    espPending_ = false; espNotice_ = P::EspPanel::TimedOut; espNoticeAt_ = now;
+  }
+  if (espMenuActive_ && (!espMenuAvailable(now) || s.programming)) {
+    espMenuActive_ = false;
+  }
+  if (!espPending_ && espNotice_ >= P::EspPanel::Saved &&
+      static_cast<uint32_t>(now - espNoticeAt_) >= 1800) espNotice_ = P::EspPanel::Current;
+  showEspPanel(now);
   settings_.service(now, !s.programming);
   if (connected_ && static_cast<uint32_t>(now - lastHostAt_) >= 5000) {
     connected_ = false;

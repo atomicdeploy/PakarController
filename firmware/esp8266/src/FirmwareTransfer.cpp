@@ -1,5 +1,6 @@
 #include "FirmwareTransfer.h"
 #include "FirmwareRange.h"
+#include "FirmwarePlatform.h"
 
 #include <BuildInfo.h>
 #include <functional>
@@ -7,14 +8,22 @@
 // Imported from atomicdeploy/pu850-esp LocalLib/FirmwareTransfer.cpp.
 // Identity/auth adapted; full-flash dumps stay disabled to protect stored secrets.
 #define FW_PRODUCT_ID "PakarController"
+#if defined(ARDUINO_ARCH_ESP32)
+#define FW_PRODUCT_MODEL_NAME "ESP32-S3 + ATmega328P"
+#else
 #define FW_PRODUCT_MODEL_NAME "ESP8266 + ATmega328P"
+#endif
 #define FW_ENABLE_FIRMWARE_DOWNLOAD 1
 #define FW_ENABLE_FULL_FLASH_DOWNLOAD 0
 static std::function<bool(AsyncWebServerRequest*)> transferAuthorization;
 
 #include <Arduino.h>
+#if defined(ARDUINO_ARCH_ESP32)
+#include <mbedtls/base64.h>
+#else
 #include <ESP8266WiFi.h>
 #include <libb64/cencode.h>
+#endif
 
 namespace {
 
@@ -22,7 +31,12 @@ using namespace FirmwareTransferRange;
 
 size_t readFlashRange(uint32_t address, uint8_t* output, size_t length) {
 	if (output == nullptr || length == 0) return 0;
-
+#if defined(ARDUINO_ARCH_ESP32)
+	// This route permits app-image downloads only. Offset zero is relative to
+	// the running OTA partition, NOT physical flash and its boot/settings area.
+	if (static_cast<uint64_t>(address)+length>ESP.getSketchSize()) return 0;
+	return FirmwarePlatform::readRunning(address,output,length) ? length : 0;
+#else
 	const uint32_t flashSize = ESP.getFlashChipSize();
 	const uint64_t requestedEnd = static_cast<uint64_t>(address) + length;
 	if (requestedEnd > flashSize) return 0;
@@ -45,6 +59,7 @@ size_t readFlashRange(uint32_t address, uint8_t* output, size_t length) {
 	if (read) memcpy(output, alignedBuffer + prefix, length);
 	free(alignedBuffer);
 	return read ? length : 0;
+#endif
 }
 
 int hexNibble(char value) {
@@ -66,10 +81,16 @@ String sketchMd5Base64(const String& hexadecimal) {
 	}
 
 	char encoded[32] = {};
+#if defined(ARDUINO_ARCH_ESP32)
+	size_t length=0;
+	if(mbedtls_base64_encode(reinterpret_cast<unsigned char *>(encoded),sizeof(encoded),&length,
+	    reinterpret_cast<const unsigned char *>(bytes),sizeof(bytes))!=0) return String();
+#else
 	base64_encodestate state;
 	base64_init_encodestate(&state);
 	int length = base64_encode_block(bytes, sizeof(bytes), encoded, &state);
 	length += base64_encode_blockend(encoded + length, &state);
+#endif
 	while (length > 0 && (encoded[length - 1] == '\r' || encoded[length - 1] == '\n')) {
 		--length;
 	}

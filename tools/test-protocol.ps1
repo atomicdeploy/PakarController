@@ -122,6 +122,36 @@ $pcBinary = Join-Path $outputDirectory 'pc_contract_test.exe'
 if ($LASTEXITCODE -ne 0) { throw 'PCController contract compilation failed' }
 & $pcBinary
 if ($LASTEXITCODE -ne 0) { throw 'PCController contract tests failed' }
+$espPanelBinary = Join-Path $outputDirectory 'esp_front_panel_test.exe'
+& g++ -std=c++17 -Wall -Wextra -Werror `
+    -I (Join-Path $projectRoot 'tests/pc_stubs') `
+    -I (Join-Path $projectRoot 'libraries/BoardCore/src') `
+    -I (Join-Path $projectRoot 'firmware/avr') `
+    -I (Join-Path $projectRoot 'firmware/esp8266/src') `
+    (Join-Path $projectRoot 'tests/esp_front_panel_test.cpp') `
+    (Join-Path $projectRoot 'firmware/avr/PcControllerRuntime.cpp') `
+    (Join-Path $projectRoot 'firmware/avr/BoardSettings.cpp') `
+    (Join-Path $projectRoot 'firmware/avr/SevenSegments.cpp') `
+    (Join-Path $projectRoot 'libraries/BoardCore/src/pccontroller/MacroRing.cpp') `
+    (Join-Path $projectRoot 'libraries/BoardCore/src/pccontroller/Keys.cpp') `
+    (Join-Path $projectRoot 'libraries/BoardCore/src/pccontroller/ControllerEvents.cpp') `
+    (Join-Path $projectRoot 'libraries/BoardCore/src/pccontroller/AutomationStore.cpp') `
+    -o $espPanelBinary
+if ($LASTEXITCODE -ne 0) { throw 'ESP front-panel contract compilation failed' }
+& $espPanelBinary
+if ($LASTEXITCODE -ne 0) { throw 'ESP front-panel contract tests failed' }
+foreach ($rgbCase in @('s3_status_rgb_test', 's3_status_rgb_config_test', 's3_passive_avr_rx_test')) {
+    $rgbBinary = Join-Path $outputDirectory "$rgbCase.exe"
+    & g++ -std=c++17 -Wall -Wextra -Werror `
+        -I (Join-Path $projectRoot 'tests/access_stubs') `
+        -I (Join-Path $projectRoot 'firmware/esp32s3/src') `
+        (Join-Path $projectRoot "tests/$rgbCase.cpp") -o $rgbBinary
+    if ($LASTEXITCODE -ne 0) { throw "$rgbCase compilation failed" }
+    & $rgbBinary
+    if ($LASTEXITCODE -ne 0) { throw "$rgbCase assertions failed" }
+}
+& (Join-Path $projectRoot 'tests/device_network_script_test.ps1')
+& (Join-Path $projectRoot 'tests/avr_rx_script_test.ps1')
 & (Join-Path $PSScriptRoot 'test-display.ps1')
 & (Join-Path $PSScriptRoot 'test-s3-contract.ps1')
 & (Join-Path $PSScriptRoot 'test-uart-flow.ps1')

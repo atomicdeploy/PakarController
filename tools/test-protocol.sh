@@ -57,6 +57,22 @@ c++ -std=c++17 -Wall -Wextra -Werror \
   "$root/libraries/BoardCore/src/pccontroller/AutomationStore.cpp" \
   -o "$root/build/pc-contract-test"
 "$root/build/pc-contract-test"
+c++ -std=c++17 -Wall -Wextra -Werror \
+  -I "$root/tests/pc_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/avr" -I "$root/firmware/esp8266/src" \
+  "$root/tests/esp_front_panel_test.cpp" "$root/firmware/avr/PcControllerRuntime.cpp" \
+  "$root/firmware/avr/BoardSettings.cpp" "$root/firmware/avr/SevenSegments.cpp" \
+  "$root/libraries/BoardCore/src/pccontroller/MacroRing.cpp" \
+  "$root/libraries/BoardCore/src/pccontroller/Keys.cpp" \
+  "$root/libraries/BoardCore/src/pccontroller/ControllerEvents.cpp" \
+  "$root/libraries/BoardCore/src/pccontroller/AutomationStore.cpp" -o "$root/build/esp-front-panel-test"
+"$root/build/esp-front-panel-test"
+for rgb_case in s3_status_rgb_test s3_status_rgb_config_test s3_passive_avr_rx_test; do
+  c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/firmware/esp32s3/src" \
+    "$root/tests/$rgb_case.cpp" -o "$root/build/$rgb_case"
+  "$root/build/$rgb_case"
+done
+pwsh -NoProfile -File "$root/tests/device_network_script_test.ps1"
+pwsh -NoProfile -File "$root/tests/avr_rx_script_test.ps1"
 pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern tm1637-display -Gate > /dev/null
 for display_flags in '' '-D__AVR__'; do
   c++ -std=c++17 -Wall -Wextra -Werror $display_flags -I "$root/tests/display_stubs" -I "$root/firmware/avr" \

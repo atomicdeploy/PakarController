@@ -2248,3 +2248,488 @@ not production signing or an installed phone test. Simulated screenshot86160byte
 SHA2566ad4ade13a464c4a29a92fc0818a04dc36604aaba373eee07f2feec50fd140b2,
 also retained in docs/screenshots/mobile-bridge-tablet.png. No source screenshot
 claims Android NSD/MCU/peripheral acceptance or a completed production release.
+
+## Integrated ESP32-S3 source and current-donor reconciliation
+
+The S3 migration keeps the canonical integrated sketch, update/ISP state machines
+and 480-pixel LedGrid/FastLED engine. Private FSPI owns AVR ISP GPIO11/13/12 with
+reset-driver GPIO10; the unverified electrical/polarity gate defaults closed.
+Hardware UART1 owns AVR TX17/RX18 at 38400 with bounded buffers. AVR hardware
+UART and TM1637 A4/A5 remain unchanged. Shared GPIO4 matrix output has no hidden
+frame-interval cap; a separate semantic RGB writer does not duplicate effects.
+Actual FastLED IDF5 RMT implementation was read, but neither DMA operation nor
+frame rate, UART losslessness, electrical ISP safety or visible output is proved
+by those API/source observations.
+
+Fully read actual PU850 FirmwareTransfer.cpp/h were added to the SAME comparison
+ledger with exact source hashes, retained Range/HEAD/ETag/MD5/auth mappings and
+bounded production-parser/source-guard anchors. S3 downloads are relative to the
+running application partition, never raw flash offset zero. OTA capacity uses a
+distinct next application partition and explicit Update.abort on cancellation;
+the fail-closed remote staging/journal/backup workflow stays shared. Full-flash
+network downloads remain disabled to protect credentials. ESP32 image validation,
+mbedTLS hashing/CA trust and Update APIs replace ESP8266-specific APIs; this is
+not a claim of power-loss-safe rollback or real OTA/AVR flash acceptance.
+
+Current installed Pealayer inventory was selectively refreshed by the root task.
+Actual changed compared sources were fully reread rather than bulk-stamped:
+native dropdown/color-picker/icons, dialog/menu, i18n, branding, status-bar,
+Web appearance/i18n/Preferences/file-picker/header/browser-platform, Windows
+package script and workspace hygiene guidance. The status/front-panel agent
+completely reread dialog/menu and their actual Pakar targets; network and status
+agents completely reread the physical RGB status-bar donor. Existing source
+comparisons and target/test meanings survive. New generic behavior is explicitly
+pending, including density-aware controls, bounded diagnostic details, native
+font-family controls, fixed close/toggle/confirmation focus helpers, endpoint
+trigger geometry, HWND/preset icon lifecycle and browser/PWA capabilities.
+The earlier MessageHub byte identity remains recorded as historical, not current
+equivalence. Source re-review is not implementation or whole-donor parity.
+
+Three actual PCController StatusLedMath/StatusLedController mappings were added
+with exact hashes and bounded S3 semantic RGB/test targets. The native/Web mirror
+uses actual already-scaled output bytes only with fresh peer/have_output guards;
+it does not multiply brightness twice. AVR PWM/EEPROM profile storage is replaced
+by the S3 addressable output and existing persistence ownership, while arbitrary
+profile authoring/manual overrides/cue priorities remain pending. The changed
+PCController status-led-event.ts complete ordering adapter is NOT certified by
+these three source imports. Native/Web rendering and optical/audio acceptance
+are separate; the mobile generated settings catalog alone is not a mobile
+addressing editor or physical RGB mirror. TUI DHCP/static editor parity remains
+pending too.
+
+Read actual canonical-main/platform diffs before rebinding retained auth/shell
+anchors. Live api-contract, build-storage, native-dropdowns, peer-binding,
+web-presentation and web-streaming gates passed at their reviewed frozen hashes;
+peer-binding main hash f08f05f2633775d99d3d47d7d9415d77e541f225cb9834f2beb33b9ec50561c4.
+The root task solved Arduino include preprocessing by removing literal quotes
+from the expanded -I root property, retaining both C/C++ recipe flags; S3 build
+uses -Os -g0 to avoid unnecessary debug artifacts. Subsequent root-owned SDK
+compile diagnostics are not hidden or replaced by source checks. No hardware
+flash/read/write or native build was performed by this evidence task.
+
+Verified here: focused s3_platform_wiring_test.mjs source guards, strict
+generate-file-comparison.ps1 -Check and git diff --check. The generated reports
+account for 4403 inventoried files, 126 hash-bound manual comparisons, 4277 still
+pending comparisons and 90 known parity gaps. No compared current donor source
+or target/proof hash was bypassed. Test-code anchors do not mean tests ran;
+current SDK/native build, actual hardware deployment, SSID association/discovery,
+matrix/peripheral behavior and production acceptance are reported separately by
+their owners. Keep issue #2 and all applicable physical acceptance gates open.
+
+The actual PU850 SSDP.h/cpp and SSDPDevice.h/cpp are now mapped in the same
+ledger too. The network agent fully read all four original files and adapted
+the complete device engine; the evidence owner reread the small wrappers and
+the complete source/header adaptation diffs. Delayed bounded/de-duplicated
+M-SEARCH, alive/update/byebye, topology/identity and escaped descriptions are
+retained, with instance-owned S3 sockets and AP/STA interface membership replacing
+the ESP8266 singleton/manual IGMP policy. This is actual donor code, not only a
+Wi-Fi SDK call. Real LAN/router/AP/phone discovery remains pending; optional
+unimplemented SOAP/GENA is not advertised. NetBIOS remains truthfully false on
+S3 rather than reported as available. CI target references were rereviewed for
+the added pinned S3 core/AsyncTCP, buffered build artifacts and focused source/
+network checks; that source update is not a claim that CI has executed.
+
+Subsequent legitimate SDK diagnostic found RemoteFirmware's WiFiClient alias
+was not transitively declared by ESP32 HTTPClient/secure-client headers. Read
+the actual installed 3.3.12 WiFiClient.h (NetworkClient alias), added its explicit
+include only to the ESP32 branch, and added/passed a focused source regression
+assertion. This fixes the observed declaration error without replacing the
+shared updater or declaring the next SDK build successful. Refreshed main target
+bindings after reviewing the added status payload bytes38/39/40 (configured
+station/AP/DHCP distinct from observed link state) and atomic USB provisioning
+candidate/save/commit with staged secret retirement. Current reviewed main is
+4b60de4011dac897ede9983b042e2902246ad819f16c95c3cea697ce7ce3964a.
+
+Network agent's separate guarded native receipt: Check passed, 169 Rust tests
+passed with zero failures, Release passed from the single warm release cache,
+stage-desktop.ps1 -Probe passed and candidate --version reports0.2.7. Staged
+candidate outputs/PakarController/staging/PakarController.exe is25549312bytes,
+SHA2567666716054c1d3e5fabe38a8ca468e356e95a72af17d5f6eb13ff09e6fef8dc9.
+This is actual native build/test/stage evidence, not a production GUI replacement,
+live peer test, screenshot acceptance or physical board proof. The SDK build and
+device deployment remain separately owned and must be reported with their own
+final result, source identity and live observations.
+
+The next real S3 SDK diagnostic exposed the AVR-only AutomationStore EEPROM
+implementation being compiled on ESP32 because its previous guard excluded only
+ESP8266. Fully read actual donor Project/AutomationStore.cpp/h and EEPROM layout,
+full current targets and adaptation diffs before extending the guard to both
+ESP families and their ARDUINO_ARCH macros. This retains the AVR/native fixture
+owner, shared record contract, dual-bank/CRC/readback validation and nine-key
+adaptation; no ESP EEPROM shim, local rule migration or hardware write was added.
+Actual g++ syntax-only checks pass for four excluded ESP macro variants with no
+EEPROM/Arduino include paths, and for included HOST/__AVR__ fixtures. Focused
+S3 source regression passes too. Common-library scan found no other EEPROM or
+AVR-only includes in the remaining C++ translation units; this does not predict
+all future SDK errors. Root owns the resumed full SDK build result.
+
+Added the fully reviewed AutomationStore cpp/h to the same evidence ledger;
+strict generation/check and diff checks pass with4403 inventoried/128 hash-bound
+comparisons/4275 pending/92 known parity gaps. Reviewed test-protocol wrappers
+retain all prior cases and add panel/status/config/provisioning fixtures;
+refreshed only their changed target proof and passed the live tm1637-display
+reuse gate before the owner resumed remaining AVR checks. Existing S3 migration
+documentation changes introduced no stale comparison references.
+
+Optional TFT/W5500 backlog is durable in GitHub issue19 under issue2. Checked
+existing issue titles/bodies first; applied existing labels using only a scoped
+owner credential when the active account lacked label permission, without
+changing global authentication. The S3 status/front-panel document links it and
+separates completed source callback/configuration wiring from still-unchecked
+SDK/deployment/key/display/audio/optical acceptance. No TFT or Ethernet driver,
+link, pin-voltage approval or hardware success is implied by reservations.
+
+## Final S3 identity and quiet-link review
+
+Root reported the first actual integrated S3 SDK build passed: app1841104bytes,
+SHA256834fe8da7e35967c4c68c53b7887549b8e11679b4656faab2d68d001e15a0f56.
+Its authorized COM22 deployment verified written hashes and USB HELLO0.2.7 plus
+41-byte status/CRC; AP started, station association and NTP were subsequently
+observed, and ledboard.local resolved from ASUS. These are root-owned observations
+of that earlier image, not acceptance of the final source or the AVR. AVR RX
+bytes remained zero and the paired buffered AVR image has not been flashed.
+User reported an AVR welcome/reset loop and later that it stopped, without
+changing wiring or grounding AVR RESET. The cause remains unknown; the S3-only
+bootloader pause is a temporal correlation, not a wiring fix. VCC is user-confirmed3.3V.
+No further photos or PBX calls are requested; all announcements remain stopped.
+
+Actual AP-only HTTP commissioning exposed an empty board identity from the
+inactive station interface. Reviewed the final source fix and fully read actual
+installed S3 SDK esp_mac.h: esp_efuse_mac_get_default reads the factory-programmed
+MAC; it does not write eFuses or mutate the base/interface MAC. Existing zero/
+broadcast/multicast checks still fail closed. Stable hardware identity therefore
+does not depend on enabling STA, while boot identity and peer-bound request
+checks remain separate. Fully reread the unchanged actual PCController session
+test file (788lines, SHA256ff6c7b21f72bfb944d232c87210f8ffa139dfe016e8b5756f2582604489fffc4)
+including close-before-notify, pending acquisition, inactive control lines,
+one-shot reset hooks and correlated/error-response behavior. This is source
+review, not execution of donor Go tests or permission to pulse hardware.
+
+Other reviewed final changes: truthful buffered link-mode JSON; station-selected
+IP with AP fallback; clear ISP capabilities when the electrical gate is closed;
+no ESP32-specific18ms matrix/normal-cloud delay inherited from ESP8266; optional
+S3-only PauseAvrLink build flag. Quiet-link source does not begin AVR UART, leaves
+TX/RX as inputs and rejects normal sendToAvr calls. Production defaults still
+enable the link. Final normal builds omit the already-used one-shot filesystem
+initialization flag; onboard RGB GPIO48 is an explicit common-DevKit assumption
+to be configured through its existing API, not claimed optical identification.
+
+Read the complete build-script diff and updated S3 source guards, verified every
+surviving target anchor, then rebound only actual changed comparison references.
+Final reviewed main SHA256eb0de02bb00252adfc89fc4431acfb8d9f88195238c237a81113888776fc6972;
+source-guard test SHA256f3c253d28d73a419928f4f454a6f0cc3363177574fae47b7267666c24aafaaff.
+Source guards, strict comparison generation/check, diff check and live
+api-contract/peer-binding/web-presentation/web-streaming/uart-flow-control gates
+all pass. Final exact-source SDK build/deployment, live fenced mutations,
+WebSocket/client rendering, AVR link/peripherals, RGB and matrix/OTA/ISP remain
+separate acceptance steps; prior image observations do not close them.
+
+## First physical S3 commissioning: bounded evidence and limitations
+
+Root's actual first integrated SDK report: program1840959/3342336bytes,
+globals74892/327680bytes; emitted application1841104bytes,
+SHA256834fe8da7e35967c4c68c53b7887549b8e11679b4656faab2d68d001e15a0f56.
+On COM22, esptool wrote and hash-verified the four S3 ranges for bootloader,
+partition table, boot_app0 and application, then reset the S3. Hardware MAC read
+90:70:69:ea:c8:00. Original complete16MB flash backup was independently retained
+and verified on both PCs outside Git, SHA256
+cd0f30ac9491da499eaf2167f07b5accf23cf6779c506110431aa766f346273e.
+These are S3 writes only, not AVR deployment or successful AVR communication.
+
+USB readback had valid COBS/CRC, ESP role/version0.2.7 and41-byte status.
+Private station provisioning used one explicit commit with AP+station flags;
+persist ACK and configured-state readback succeeded. Subsequent ASUS observation:
+ledboard.local resolved10.252.139.27, ping and authenticated HTTP Basic worked,
+DRS Tether was connected at reported RSSI-48, NTP synchronized and AP started.
+mDNS/SSDP/MNDP only reported started at this checkpoint: no discovery query,
+multicast interoperability or phone/AP acceptance was proved. No private Wi-Fi
+secret is recorded here. AVR received0bytes/0frames, version was null and
+TM1637 ACK was false; no UART, display, keypad or buzzer acceptance follows.
+
+Initial AP-only commissioning also exposed zero station-interface MAC/empty
+board identity, false HTTP peer-fencing readiness, polling text for the buffered
+profile and untruthful ISP advertisement. Source fixes described above are bound
+to main eb0de02bb00252adfc89fc4431acfb8d9f88195238c237a81113888776fc6972;
+their subsequent exact-source SDK/deployment result must be reported separately.
+That normal UART-enabled build was in progress, not a finished firmware claim.
+
+Clarification: the user did not change wiring and NEVER held AVR RESET to GND.
+The later report that the problem stopped followed root placing only the S3 in
+its ROM bootloader; this correlation is not an established cause or a physical
+wiring fix. Root used no erase for that pause. No AVR ISP/fuse/flash/EEPROM or
+reset-control write occurred. Keep all PBX calls and test melodies stopped.
+The next intended integrated image pauses AVR UART entirely for quiet diagnosis;
+normal UART-enabled firmware is not to be deployed as an assumed remedy.
+
+Both PCs run the native candidate hash
+7666716054c1d3e5fabe38a8ca468e356e95a72af17d5f6eb13ff09e6fef8dc9,
+and captured screenshots are genuine offline application views, not a live AVR
+or peripheral test. The reuse source gate remains128 bound comparisons with
+4275 pending comparisons; this commissioning evidence does not close donor
+parity, physical AVR, final firmware or production acceptance.
+
+## Passive UART SDK design review only
+
+Read actual installed Arduino-ESP323.3.12 HardwareSerial begin/end/setPins,
+HAL pin validation/attach/detach/driver initialization/end, inversion and RX-pull
+function bodies, plus applicable IDF UART/GPIO declarations. This was a targeted
+API review, not a claim to have imported or fully read every unrelated line in
+the large SDK files. Original-byte SDK hashes:
+
+- HardwareSerial.h:f0a25409647e9c5daf3cb9b59f5d7020a422962aab7afe7cb0e637e510af92ac
+- HardwareSerial.cpp:df718558a059669e35b1c034d6e458b00d13317ec8403e5a74dd9a84898544bf
+- esp32-hal-uart.h:7de851dbb9d263cf80d5c7fe547a6e3055b863250900f5f2d1a522968231fca1
+- esp32-hal-uart.c:e6ec2520ffa76edba0170694bc984cdad74d47d64b23a60cec0c1396d8363994
+
+Negative TX means retain an existing TX assignment, not detach. On a fully
+detached UART, explicit RX18/TX-1 avoids default pin assignment because defaults
+are chosen only when BOTH effective pins are negative. HardwareSerial::end and
+HAL uartEnd detach registered UART pin matrix/ownership and clear stored pins.
+There is no ordinary UART_RX_ONLY mode in these actual APIs; IRDA_RX changes the
+wire protocol and TX-buffer-size0 only selects blocking transmission, not a TX
+disable. Neither is a substitute for keeping the physical TX pad as input.
+
+Recommended, not implemented: a dedicated spare UART2 capture owner only in
+quiet-link builds, no write/HELLO/actuator API, no normal SerialLink callback or
+automatic resume, bounded explicit38400/115200 capture and optional RX inversion.
+Using UART2 avoids the normal UART1 avrLink.service draining diagnostic bytes.
+Require UART2 TX pin unassigned before/after begin, GPIO17 input/no pulls with
+public gpio_get_io_config output-enable readback, and no GPIO10 operation.
+Disable optional internal RX pull before begin for passive observation; fail
+closed and end capture on any ownership/driver/pin-readback disagreement.
+No diagnostic production code, COM access, waveform, reset or AVR command was
+performed by this review. Software pin-state checks still are not electrical
+measurement or proof that the unknown AVR firmware will transmit spontaneously.
+
+Separate status-agent compatibility receipt: guarded ESP8266 busy-wire SDK build
+at reviewed main eb0de02 passed, binary958848bytes,
+SHA256165537f5c8552c9e34ee1411793f671b2903146c3b4e8667a56511d3b98fa236;
+RAM56936/80192, IRAM63055/65536 and IROM908640/1048576. This preserves the old
+target as a built option; tight8266 headroom and all physical acceptance remain
+visible. It was not deployed and does not replace final quiet-S3 build evidence.
+
+## Approved bounded passive capture source
+
+After the preceding design review, root explicitly approved the new narrow
+firmware/esp32s3/src/PassiveAvrRx.h owner and pure production-helper test, not
+main/Protocol changes or hardware access. The adapter exists only for S3 quiet
+builds with PAKAR_AVR_LINK_ENABLED=0 and references spare Serial2/UART2. Its
+constructor starts no driver/GPIO. Explicit begin accepts38400/115200 only;
+requires unowned RX/TX/flow-control assignments and GPIO17 input/output-disabled
+readback, disables optional RX pull before attachment, uses RX18/TX-1 only after
+that detached check, then verifies driver/RX18/input/no-TX readback again.
+Failure ends only its owned driver. There is no write, reset-pin operation,
+normal frame decoder/callback, auto-sweep or normal-UART resume path.
+
+The actual shared helper stores at most128bytes, counts received and overflow
+drops independently, bounds chunks to32bytes/offset128, and preserves captured
+bytes after explicit stop, unsafe-state stop and wrap-safe8000ms expiry.
+Error callbacks update a separate atomic count; cooperative reads have a64-byte
+per-loop budget. The root owner must continue servicing during capture: expiry
+is enforced in service(), not claimed to be a hard real-time interrupt deadline
+if unrelated code blocks the loop. The adapter has no remote HTTP API; explicit
+USB start/status/chunk integration remains root-owned and was not added here.
+
+Actual g++17 -O2 -g0 execution of tests/s3_passive_avr_rx_test.cpp passed exact
+capacity, independent drops, invalid chunk/null limits, duplicate/invalid begin
+preservation, stopped-buffer retention and deadline rollover. That test compiles
+the SAME pure helper, not fake SDK GPIO/UART implementations; actual adapter
+SDK compilation, GPIO readback, bytes and safety under hardware remain pending.
+Header SHA256037a61bd063248358093549efef01479670da34695a3e1b26088c0b29d4c4662;
+test SHA25641072f11f04a65099ee2a2d75ebf66e4d9370e055ec9e4a4c1c93cc8f3f6d065.
+The existing uart-flow-control reuse gate was consulted before this work; no
+SDK API excerpts are falsely classified as a new complete donor-file import.
+No donor, main, protocol, serial port, audio or PBX mutation occurred in this slice.
+
+## Quiet USB integration source gate
+
+Reviewed root's frozen canonical main
+e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2:
+the capture header follows the quiet build flag; only that profile constructs
+the spare UART2 adapter. Physical USB opcode0x5B returns status/start/stop or
+bounded chunks through0xB4, with strict request lengths, a27-byte snapshot and
+at most32 raw bytes per chunk. The normal status appends the explicit link-enabled
+byte without changing its existing prefix. Protocol reserved-envelope byte0 and
+COBS/CRC validation remain unchanged; no stock-PCController framing adapter is
+implied. RESET GPIO10 is only observed with digitalRead/gpio_get_io_config here.
+
+Reviewed the actual loop service, cloud-TLS pause and USB/HTTP/WS/cloud/upload
+capture guards. They reject concurrent mutations during the bounded diagnostic;
+they are not claimed to constitute a proven race-free global maintenance lease.
+Commissioning still requires exclusive USB ownership and no concurrent client
+mutations. Ordinary UART1 requests return false in the quiet build, and GPIO17
+stays input; the new adapter has no AVR write or automatic resume path.
+
+The source guard7e011e779e0aec34d73931ccde54566fb87bec811291bbae52fe5cffce57dd17
+passed. All five existing main references and both platform-test proof references
+were rebound only after reviewing the changed integration and surviving anchors.
+Also reviewed the additive script-test registrations in protocol wrappers and
+quality checks: no existing check was removed. Protocol.sh hash
+00a526480bb65c5245ebe1c945af554663bdfe137b00b50badf7c85397014f31 and ci-checks.mjs
+449c07e0b26f93a640444a7ab1729ea1a0e2d6c2ae5c0beae49b1a2961cb1c60 are now bound.
+Generated comparison and strict Check passed:4403 inventoried,128 bound,
+4275 pending and92 known parity gaps. api-contract, peer-binding,
+web-presentation, web-streaming and uart-flow-control gates all passed; diff
+whitespace validation passed. These are source-evidence checks, not an SDK build.
+
+The preceding normal UART-enabled S3 image at eb0de02 completed SDK compilation:
+program1840543bytes, globals74876bytes, app SHA256
+ef153bd25f9c8080530702e038090176829152c17b1aa21d5cd0a8590829a3c2.
+It was NEVER flashed. The exact quiet adapter/integration SDK build and hardware
+pad/capture observations are still pending at this receipt. No physical success,
+reset-loop cause, pin electrical safety, AVR communication or production closure
+is inferred. User confirmed3.3V and the GPIO10 RESET connection, but never changed
+wiring or grounded AVR RESET; correlation with pausing S3 remains only correlation.
+All PBX calls and unsolicited test audio remain stopped.
+
+## Explicit S3 ISP commissioning build option
+
+Reviewed tools/build-firmware.ps1
+ee572248013c49c6cc2690c1256ac337ff581809ed2b46255007c52895400700:
+the new S3IspElectricalVerified switch is false by default, rejects every non-S3
+target before build setup, and adds PAKAR_S3_ISP_ELECTRICAL_VERIFIED=1 only when
+explicitly requested in the S3 branch. The source macro still defaults to0 and
+the quiet passive adapter has not gained any reset or transmit operation.
+Actual Plan execution confirmed non-S3 rejection and both C/C++ recipe flags
+for the explicit16MB/OPI quiet profile; Plan starts no compiler or serial port.
+
+Root intentionally selected this acknowledgment for the user's reported current
+3.3V AVR and direct AVR RESET-to-GPIO10 wiring, retaining the planned active-low
+reset polarity. This is an operator-selected build gate, not an electrical
+measurement, verified AVR signature or proof of every ISP connection. The quiet
+image can therefore advertise the enabled ISP feature, but no probe/reset/erase,
+flash/fuse/EEPROM operation is automatically authorized or executed by enabling
+the flag. Root's exact quiet SDK build was started, not yet reported successful
+here. Any later deliberate signature probe must be a separately controlled
+operation: releasing AVR RESET could cause its existing boot cue once. No such
+operation, hardware access, audio or PBX call was performed by this review.
+
+## Quiet adapter CI source coverage
+
+Reviewed the complete current build workflow and governance test against the
+existing fully reviewed Pealayer ci-cd.yml mapping; the donor hash remains
+bba9a295ee7b59e318f76e0b6f6a80f0aec631e249f7d8c798f6c92c0bb7fd8c.
+The guarded quiet S3 SDK command now precedes the normal S3 command in the same
+firmware job. Both reuse the existing S3 cache/output; no clean, second diagnostic
+cache or separate quiet package is added. The normal build runs last before
+upload and replaces the diagnostic artifact. CI's quiet profile does not enable
+the electrical-acknowledgment ISP switch. Governance asserts exact single
+commands, ordering before upload and no cold diagnostic caches. All existing
+firmware, protocol, desktop, mobile and release checks remain.
+
+Rebound only workflow target4e284a5e8b4f01ae8bfd62731b533cc02c3e24bf10c108b49f9120ce07b92bf6
+and governance proof5bc629302abaeb749345d1eebc7b2ed1144251e65c7a87b7bbbd1d6bbe05125b;
+ci-checks.mjs remains449c07e0 and its actual fail-fast child runner is unchanged.
+Actual repository_governance_test and build_script_security_test execution,
+comparison generation/strict Check and whitespace validation passed. The network
+owner additionally reports actual actionlint passing for this workflow. This is
+local source/lint evidence, not a GitHub Actions SDK run, artifact publication,
+quiet-image deployment or AVR hardware acceptance. Existing pending reuse and
+physical requirements remain open without changing their dispositions.
+
+## Actual quiet S3 SDK, deployment and passive observations
+
+Root reports the real quiet SDK build at frozen shared main
+e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2 passed:
+sketch1843223/3342336, globals74916. Actual application1843376bytes SHA256
+6c65e309173c91284605476662c2aad1f26349e5c6fa68bc2431c4482c3789f5 was then
+flashed only at0x10000 on COM22/same MAC and esptool hash-verified. Full original
+backup remains unchanged; this was not another bootloader/partition rewrite.
+Build flags included PauseAvrLink and explicit S3IspElectricalVerified,16MB/OPI.
+Thus the actual SDK compiled the adapter, not only its pure helper fixture.
+
+USB ESP0.2.7 returned valid42-byte GetStatus with normal AVR link0,
+station/AP/NTP true and reported errors0. Root performed two explicitly selected
+RX-only captures, with pin-ownership checks and stop confirmed:
+
+| Baud | Elapsed ms | Received | Stored | Dropped | Hardware RX errors |
+|---|---:|---:|---:|---:|---:|
+|38400|3059|140|128|12|96|
+|115200|3030|172|128|44|92|
+
+RESET GPIO10 was observed high/output-disabled in both. RX18 stopped high;
+115200 also observed low during capture. Bytes were mostly00/FF/FE and no
+plausible framing was established. Counts are observations, not valid AVR
+frames, known baud, electrical measurement or causal diagnosis. No AVR TX or
+RESET drive occurred during capture; no ISP probe, AVR flash/fuse/EEPROM action
+or AVR reset-control write was performed.
+
+The user confirms welcome audio STILL repeats with quiet UART firmware.
+Cause remains UNKNOWN: this does not establish MCU resets or a software/electrical
+root cause. Root stopped all board tests and requested AVR power disconnected,
+or the whole assembly if power is shared. No PBX or test melody was issued.
+The user never changed wiring or grounded RESET; do not describe that as a fix.
+
+Read-only source audit found NO existing persistent reset-hold capability.
+AvrIsp::enter/leave are private; public probe enters, reads signature and always
+leaves, deasserting RESET then selecting INPUT. Backup/program use the same
+scoped lifecycle. GET /api/avr/probe is not electrically non-mutating and cannot
+be used as a safe hold. Legacy direct console W toggle is disabled on S3 and
+serviceConsole is not loop-dispatched. Game reset only resets game state.
+No new hold API or workaround was implemented or invoked. Valid AVR ACK,
+display/keypad/audio/matrix, discovery interoperability and final acceptance
+remain open; this evidence does not close issue2 or the pending donor gaps.
+
+Final wrapper review: root added the actual pure s3_passive_avr_rx_test to both
+existing host-helper compile/run loops, preserving all prior cases. It is no
+longer only an ad-hoc invocation. Reviewed PS1 hash
+61844cd674bbc5d163b1800f3382fc45bd0a8c466dfd00804f97533c6930bc5c and SH hash
+1563e4959ca64611c6519cb300cae044a57faa0c53eb5d91269f56f33281296e;
+rebound the existing firmware_controls_test mapping's SH target only, retaining
+its actual surviving checks. Root executed that exact g++17 pure-helper case
+successfully. No full suite or SDK rerun was performed for this documentation
+finalization; strict comparison and whitespace checks remain the final guards.
+
+## Actual bounded ASUS LAN discovery and read-only API observations
+
+After root explicitly confirmed the quiet image alive and passive captures
+stopped, executed one bounded read-only helper on ASUS Wi-Fi10.252.139.56,
+interface9, targeting hostname ledboard.local. No scan of unrelated addresses,
+firewall/service change, board mutation/reset/audio, tunnel or app endpoint change
+was performed. The normal AVR link remained disabled and AVR remained offline;
+the unresolved repeating welcome report still requires silence and causal
+diagnosis, not more actuation. Credentials were process-scoped and cleared.
+
+The original private evidence remains byte-preserved on ASUS staging and local
+outputs/PakarController/verification/S3-network-discovery-proof.json, SHA256
+e56d9ddb4ec253de0291e5271594cefb526226a8a7e815a30596e0a7c3725f3c.
+Its actual helper source was cf19bfd4568048f52a44ba5b547362aed14158e7e9046cc08a0cd851c6f5c465.
+Raw query/response datagrams are retained as Base64, filtered to the one resolved
+board address10.252.139.27; this is actual LAN evidence, not a loopback fixture.
+
+- Six mDNS packets contained only A records for ledboard.local10.252.139.27.
+  No PTR/SRV/TXT response was observed; the DNS-SD follow-up is null, not one
+  successful packet. The first summary's PowerShell `@($null).Count` was misleading
+  and was corrected after reading the original wire proof. DNS-SD remains open.
+- Direct unicast SSDP M-SEARCH returned three actual root/basic/UUID responses,
+  with interface-correct LOCATION http://10.252.139.27:80/description.xml and
+  PakarController0.2.7 identity. Multicast M-SEARCH yielded zero responses within
+  the bounded window; this is not full multicast-discovery acceptance.
+- A four-zero-byte MNDP query received one valid TLV reply: station MAC
+  90:70:69:ea:c8:00, identity ledboard, ESP32-S3, version0.2.7, station address
+  10.252.139.27 and board ID esp32s3-907069eac800.
+- Authenticated GET /api/status, /api/network, /api/time and /description.xml
+  each returned200. Status matched board ID esp32s3-907069eac800 and fresh boot
+  c7f43b2d700581a7bc10c14dbaf9bd7c, with HTTP peer fencing true, buffered mode,
+  AVR link false/AVR offline, configured STA connected and AP started.
+- WebSocket opened, delivered initial status and answered the read-only
+  `{"type":"telemetry"}` request with actual type telemetry and the same boot.
+  Its clock reported source ntp, observed true and valid true. This proves the
+  measured JSON exchange, not remote cloud MQTT/WebSocket or AVR communication.
+- RGB reported available/enabled/have_output false, pin-1; no optical success
+  was inferred. ISP available true reflects root's explicit operator-selected
+  electrical-acknowledgment build flag, not a signature probe or physical proof.
+
+The helper exposed a PowerShell Task<void> result-shape bug: ConnectAsync and
+SendAsync emitted two empty objects ahead of the actual HTTP result map. The
+original proof is not rewritten; its final map contains the verified responses.
+Only those task results are now explicitly discarded, with a narrow static
+regression added to the existing offline parser fixture. No live rerun or firmware
+change accompanies this correction. The helper/test are not yet target/proof
+bindings in file-comparison-evidence.json, so no unrelated hashes were refreshed.
+
+Actual PTR/SRV/TXT DNS-SD, multicast SSDP/router/phone interoperability, SSID scan,
+mobile AP Web UI, semantic RGB/matrix optical output, AVR UART/peripherals and
+production multi-client/physical acceptance remain open. mDNS on the ASUS LAN
+does not imply multicast crosses the routed VPN to the local PC. App forwarding
+and endpoint changes remain held until silence is confirmed.

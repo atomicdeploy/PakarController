@@ -1,7 +1,11 @@
 #include "LedGrid.h"
 
 namespace {
+#if defined(ARDUINO_ARCH_ESP32)
+constexpr uint8_t kLedDataPin = PAKAR_S3_LED_DATA;
+#else
 constexpr uint8_t kLedDataPin = D2;
+#endif
 
 uint8_t approach(uint8_t value, uint8_t target) {
   if (value == target) return value;

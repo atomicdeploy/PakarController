@@ -1,4 +1,7 @@
-#if !defined(ESP8266)
+// This EEPROM owner belongs to the AVR (and its native test fixtures), not to
+// an ESP transport proxy. Never initialize an ESP EEPROM shim for AVR rules.
+#if !defined(ESP8266) && !defined(ARDUINO_ARCH_ESP8266) && \
+    !defined(ESP32) && !defined(ARDUINO_ARCH_ESP32)
 #include "AutomationStore.h"
 #include <stddef.h>
 

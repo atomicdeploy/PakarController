@@ -27,6 +27,9 @@ class PcControllerHardware {
   virtual void applySettings(const BoardSettings &settings) = 0;
   virtual BoardCore::Protocol::Error menuAction(uint8_t action, uint8_t page) = 0;
   virtual void showMenu(uint8_t page, bool active, bool running) = 0;
+  virtual void showEspMenu(bool, uint8_t, uint8_t, uint8_t,
+                           const char *, uint32_t) {}
+  virtual void menuNavigationCue(bool) {}
   virtual void safeStop() = 0;
   virtual bool ready() const = 0;
   virtual bool send(uint8_t opcode, uint8_t sequence, const uint8_t *payload,
@@ -47,6 +50,12 @@ class PcControllerRuntime : public ControllerEventSink {
   bool menuActive() const { return menuActive_; }
   uint8_t menuPage() const { return page_; }
   uint16_t lostEvents() const { return lostEvents_; }
+  // Feed actual ESP offers/results only, never an invented host-menu ACK.
+  bool observeEspPanel(const BoardCore::Protocol::Frame &frame, uint32_t now);
+  bool espMenuActive() const { return espMenuActive_; }
+  bool espMenuAvailable(uint32_t now) const {
+    return espKnown_ && static_cast<uint32_t>(now - espSeenAt_) < 5000;
+  }
  private:
   BoardCore::Protocol::Error dispatch(uint8_t opcode, uint8_t sequence,
       const uint8_t *payload, uint8_t length, uint32_t now, uint32_t nowUs,
@@ -89,5 +98,13 @@ class PcControllerRuntime : public ControllerEventSink {
   bool menuOwnedByHost_ = false;
   void drainOne(bool mirror = false);
   void saveMenuPage(uint32_t now);
+  void showEspPanel(uint32_t now);
+  bool espKey(uint8_t bit, KeyEvent gesture, uint8_t source, uint32_t now);
+  void requestEspAction(uint32_t now);
+  BoardCore::Protocol::EspPanel::Snapshot espState_{};
+  uint32_t espSeenAt_ = 0, espSentAt_ = 0, espNoticeAt_ = 0;
+  uint8_t espPage_ = 0, espDraft_ = 1, espSequence_ = 0;
+  uint8_t espPendingAction_ = 0, espNotice_ = 0;
+  bool espKnown_ = false, espMenuActive_ = false, espPending_ = false;
   BoardCore::Protocol::Error lastKeyError_ = BoardCore::Protocol::kNoError;
 };

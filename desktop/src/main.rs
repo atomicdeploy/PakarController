@@ -55,6 +55,8 @@ struct Endpoint {
 #[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
 struct DeviceStatus {
     #[serde(default)]
+    status_rgb: Option<ui::status_bar::PhysicalStatusRgb>,
+    #[serde(default)]
     board_id: String,
     #[serde(default)]
     boot_id: String,
@@ -2315,6 +2317,7 @@ mod tests {
             station_enabled: true,
             ap_enabled: true,
             station_ssid: "Fixture".into(),
+            addressing: Default::default(),
         }
     }
     #[test]

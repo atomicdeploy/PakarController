@@ -6,7 +6,12 @@ export const phases={
   "quality": [
     ["node", "tests/windows_tray_test.mjs"],
     ["node", "tests/tasks_wiring_test.mjs"],
+    ["pwsh", "-File", "tests/device_discovery_script_test.ps1"],
     ["node", "tests/s3_pin_mapping_test.mjs"],
+    ["node", "tests/s3_platform_wiring_test.mjs"],
+    ["node", "tests/esp_front_panel_wiring_test.mjs"],
+    ["pwsh", "-NoProfile", "-File", "tests/avr_rx_script_test.ps1"],
+    ["pwsh", "-File", "tools/test-network.ps1"],
     ["node", "tests/web_streaming_test.mjs"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "web-streaming", "-Gate"],
     ["node", "tests/web_peer_http_test.mjs"],

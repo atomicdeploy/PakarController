@@ -8,6 +8,12 @@ const read=p=>readFileSync(resolve(root,p),'utf8').replaceAll('\r\n','\n');
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const value=JSON.parse(read('docs/PU850-ROUTE-PARITY.json'));
 assert.equal(value.revision,'431104072952f694a35b3a83c19f13fbb098ca5b');
+assert.deepEqual(value.migration.platforms,['ESP8266','ESP32-S3']);
+assert.match(value.migration.review,/registration slice 560-1554/);
+assert.match(value.migration.diagnostic_build,/USB-only passive UART2 RX18 capture/);
+assert.match(value.migration.diagnostic_build,/not a compatible AVR protocol/);
+for(const gap of [/LAN GET\/HEAD\/Range/,/ISP.*disabled/,/NetBIOS\/LLMNR/,/TUI DHCP\/static/,/translated=false/,/SDK default blocking deadline/])
+ assert(value.migration.remaining.some(text=>gap.test(text)),'Migration omission needs a concrete remaining acceptance step: '+gap);
 assert.equal(value.routes.length,50);const identities=new Set();
 for(const row of value.routes){
  const id=row.source+':'+row.line;assert(!identities.has(id));identities.add(id);

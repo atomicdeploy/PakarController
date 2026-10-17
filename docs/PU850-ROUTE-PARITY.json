@@ -3,6 +3,23 @@
   "donor": "atomicdeploy/pu850-esp (ASA0002E)",
   "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
   "scope": "Route-registration slice only; not whole-project parity, translation parity, production deployment or physical certification",
+  "migration": {
+    "platforms": [
+      "ESP8266",
+      "ESP32-S3"
+    ],
+    "review": "Donor registration slice 560-1554 and complete listed LocalLib sources reread against shared route implementations and current S3 conditional changes; generated hashes are bindings, not execution proof.",
+    "diagnostic_build": "Normal builds retain AVR hardware UART. Optional PAKAR_AVR_LINK_ENABLED=0 quiet commissioning omits normal AVR TX and permits an explicit USB-only passive UART2 RX18 capture at 38400/115200 baud, at most 8 seconds/128 retained bytes. The helper checks TX17 input ownership and never drives reset GPIO10. Capture is diagnostic evidence, not a compatible AVR protocol or repaired reset-loop claim.",
+    "remaining": [
+      "Real authenticated LAN GET/HEAD/Range/ETag/download-byte comparison and interrupted upload/power-loss/AVR recovery acceptance remain open for both platforms.",
+      "S3 ISP erase/programming remains disabled until the actual AVR voltage, reset isolation and ISP wiring are electrically verified; UART communication alone does not certify ISP.",
+      "S3 NetBIOS/LLMNR are not implemented or advertised as available. mDNS/DNS-SD/SSDP/MNDP source support is not live multicast reachability proof.",
+      "TUI DHCP/static editing and mobile addressing/RGB settings controls remain pending; adding shared catalog fields does not certify all-interface parity.",
+      "Legacy /lang continues to report translated=false; partial Web translations are not whole application/route translation parity.",
+      "S3 hostname lookup currently uses the SDK default blocking deadline; explicit asynchronous/bounded request scheduling and compressed OTA acceptance need separate work.",
+      "Quiet passive capture needs actual GPIO/received-byte/timing acceptance and reset-loop causal diagnosis; it does not replace normal UART/AVR protocol delivery. Atomic capture-state checks now cover WebSocket/cloud dispatch and new async ESP/AVR upload ownership alongside HTTP/USB guards and TLS service suspension. These checks do not certify a race-free cross-task maintenance lease; production multi-client/concurrency acceptance remains open."
+    ]
+  },
   "sources": {
     "LocalLib/AsyncOTA.cpp": {
       "sha256": "3d681d678b58e5e615448acddc52fd623914c8ec4a76f80f5bbb75cd34c3aaec",
@@ -39,8 +56,8 @@
       "target": "firmware/esp8266/src/WebUi.h",
       "anchor": "Verified remote update",
       "reason": "Commented donor HTML placeholder replaced by real firmware settings; no second OTA engine.",
-      "target_sha256_utf8_lf": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
-      "target_line": 244
+      "target_sha256_utf8_lf": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
+      "target_line": 246
     },
     {
       "source": "LocalLib/AsyncOTA.cpp",
@@ -50,9 +67,9 @@
       "status": "adapted",
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.native().on(\"/update\"",
-      "reason": "Integrated guarded existing authenticated upload kept alongside pinned remote download. U_FS replacement disabled to preserve credentials and recovery backups.",
-      "target_sha256_utf8_lf": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d",
-      "target_line": 1765
+      "reason": "Integrated guarded authenticated upload, owner/disconnect fencing and platform OTA capacity/abort retained beside pinned remote download. Quiet S3 passive capture rejects new upload ownership. U_FS replacement is disabled to preserve credentials/recovery; S3 compressed-image support is not certified.",
+      "target_sha256_utf8_lf": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2",
+      "target_line": 1998
     },
     {
       "source": "LocalLib/AsyncWebServer.h",
@@ -62,9 +79,9 @@
       "status": "adapted",
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "if(parsed[\"type\"]==\"telemetry\")",
-      "reason": "Authenticated multiple-client WebSocket retains board state and adds read-only full telemetry and pinned remote-job commands.",
-      "target_sha256_utf8_lf": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d",
-      "target_line": 1208
+      "reason": "Authenticated multiple-client WebSocket retains board state and adds read-only full telemetry and pinned remote-job commands. Incoming messages are explicitly rejected during quiet S3 passive capture, before binary streaming or command dispatch.",
+      "target_sha256_utf8_lf": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2",
+      "target_line": 1437
     },
     {
       "source": "LocalLib/Authentication.cpp",
@@ -75,8 +92,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "\"/auth\"",
       "reason": "Local owner auth status, no credential disclosure.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 324
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 364
     },
     {
       "source": "LocalLib/Authentication.cpp",
@@ -87,8 +104,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "server.on(\"/pass\"",
       "reason": "Requires current password, persistent change and revocation of Web/Telnet sessions.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 330
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 370
     },
     {
       "source": "LocalLib/FirmwareTransfer.cpp",
@@ -98,9 +115,9 @@
       "status": "imported",
       "target": "firmware/esp8266/src/FirmwareTransfer.cpp",
       "anchor": "void RegisterFirmwareTransferRoutes",
-      "reason": "Actual donor implementation imported earlier, with authorization, ranges, ETag, MD5 and bounded flash reads. Full flash export disabled to protect secrets.",
-      "target_sha256_utf8_lf": "9c49e615f04ea67e29e05915109d195db065aa55e9f889a516b353211632986b",
-      "target_line": 141
+      "reason": "Actual donor range/HEAD/ETag/MD5/export code imported. S3 reads offsets relative to its running application partition with mbedTLS Base64; ESP8266 aligned flash reads remain. Full flash export is disabled to protect secrets.",
+      "target_sha256_utf8_lf": "4a9fc21b2cdb0ef2e4525c00d4516a344c800cb3356437580394b4e2d440b06d",
+      "target_line": 162
     },
     {
       "source": "LocalLib/SSDP.cpp",
@@ -110,9 +127,9 @@
       "status": "adapted",
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.on(\"/description.xml\"",
-      "reason": "SSDP root-device XML, actual product and hostname without nonexistent weighing/UPnP services.",
-      "target_sha256_utf8_lf": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d",
-      "target_line": 1979
+      "reason": "Actual product/hostname root-device XML; S3 delegates escaped description generation to the adapted donor SSDP device, ESP8266 keeps its existing description. Neither advertises nonexistent SOAP/GENA services; S3 NetBIOS remains unavailable, not true.",
+      "target_sha256_utf8_lf": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2",
+      "target_line": 2258
     },
     {
       "source": "pu850-esp.ino",
@@ -123,8 +140,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "server.on(\"/beep\"",
       "reason": "Actual AVR buzzer ACK, 1..8 bounded count. Mutating GET removed.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 357
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 397
     },
     {
       "source": "pu850-esp.ino",
@@ -135,8 +152,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "server.on(\"/message/send\"",
       "reason": "Actual TM1637 single-pass ASCII text; existing display engine owns timing, no duplicate scrolling engine.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 365
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 405
     },
     {
       "source": "pu850-esp.ino",
@@ -207,8 +224,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "\"/file/cancel\"",
       "reason": "Exact job/boot ownership; no blind cancellation of another client or running erase.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 265
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 296
     },
     {
       "source": "pu850-esp.ino",
@@ -231,8 +248,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "\"/debug/info\"",
       "reason": "Actual remote/manual OTA phase, errors, UART counters and ACK observations; no fabricated PU enum.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 375
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 415
     },
     {
       "source": "pu850-esp.ino",
@@ -243,8 +260,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "\"/debug/info\"",
       "reason": "Actual bounded diagnostics, no raw UART dump containing secrets.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 375
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 415
     },
     {
       "source": "pu850-esp.ino",
@@ -255,8 +272,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "server.on(\"/debug/clear\"",
       "reason": "Clear observed reply only; persistent update journal and non-resettable counters explicitly retained.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 385
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 425
     },
     {
       "source": "pu850-esp.ino",
@@ -267,8 +284,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "\"/debug/info\"",
       "reason": "Actual remote updater state replaces PU process enum.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 375
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 415
     },
     {
       "source": "pu850-esp.ino",
@@ -279,8 +296,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "\"/debug/info\"",
       "reason": "Actual last ACK and reply observation replaces PU response enum.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 375
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 415
     },
     {
       "source": "pu850-esp.ino",
@@ -291,8 +308,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "server.on(\"/crash\"",
       "reason": "410: deliberate null write/division/watchdog corruption is unsafe and is not a production capability.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 374
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 414
     },
     {
       "source": "pu850-esp.ino",
@@ -303,8 +320,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "for(const char *path:{\"/datetime/",
       "reason": "ESP software clock, UTC/source/validity; no AVR RTC is fitted.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 289
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 320
     },
     {
       "source": "pu850-esp.ino",
@@ -315,8 +332,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "for(const char *path:{\"/datetime/",
       "reason": "Strict Gregorian UTC parse then software-clock update; no fake AVR time ACK. NTP may subsequently adjust.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 289
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 320
     },
     {
       "source": "pu850-esp.ino",
@@ -327,8 +344,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "for(const char *path:{\"/datetime/",
       "reason": "Strict read-only UTC validation, including leap-day checks; donor Debug gate no longer required.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 289
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 320
     },
     {
       "source": "pu850-esp.ino",
@@ -339,8 +356,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "for(const char *path:{\"/datetime/",
       "reason": "Actual software clock snapshot; no stale PU adjusted timestamp.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 289
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 320
     },
     {
       "source": "pu850-esp.ino",
@@ -351,8 +368,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "\"/ntp/get\"",
       "reason": "Previously commented; reports real SNTP callback observation rather than claiming every valid epoch is NTP.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 289
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 320
     },
     {
       "source": "pu850-esp.ino",
@@ -363,8 +380,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "server.on(\"/wifi/signal\"",
       "reason": "Real RSSI when connected; null when offline, no fake percentage.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 305
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 336
     },
     {
       "source": "pu850-esp.ino",
@@ -375,8 +392,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "server.on(\"/wifi/country\"",
       "reason": "Actual SDK regulatory country/channel values.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 310
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 341
     },
     {
       "source": "pu850-esp.ino",
@@ -386,9 +403,9 @@
       "status": "adapted",
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "\"/config/",
-      "reason": "Actual STA/AP mode, connectivity, MAC/IP/netmask/gateway/DNS/channel/DHCP and AP client count.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 303
+      "reason": "Shared ESP8266/S3 STA/AP mode, connectivity, MAC/IP/netmask/gateway/DNS/channel/DHCP and AP client count. S3 DHCP is the persisted requested policy, not a lease-acquisition assertion.",
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 334
     },
     {
       "source": "pu850-esp.ino",
@@ -399,8 +416,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "\"/config/",
       "reason": "Actual AP configuration, passwords redacted. Writes remain /api/network.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 303
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 334
     },
     {
       "source": "pu850-esp.ino",
@@ -411,8 +428,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "\"/config/",
       "reason": "Actual station configuration, passwords redacted. Writes remain /api/network.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 303
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 334
     },
     {
       "source": "pu850-esp.ino",
@@ -422,9 +439,9 @@
       "status": "adapted",
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "server.on(\"/hostname/check\"",
-      "reason": "Validated DNS hostname and bounded lookup; refuses while firmware owns maintenance.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 316
+      "reason": "Validated DNS hostname and SDK lookup; refuses during remote firmware maintenance. ESP8266 has an explicit 3-second timeout; S3 uses the SDK default, not an asserted identical latency bound.",
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 351
     },
     {
       "source": "pu850-esp.ino",
@@ -435,8 +452,8 @@
       "target": "firmware/esp8266/src/WebAccess.h",
       "anchor": "server.on(\"/login\"",
       "reason": "Commented donor stub replaced by existing authenticated expiring cookie/session login with same-origin validation.",
-      "target_sha256_utf8_lf": "61d03a9873f2e633a2f26efc059f24e692de4b2831fdf61ec128cddd8e251ae2",
-      "target_line": 102
+      "target_sha256_utf8_lf": "663dacf63a1457835946b5d9fef484585fd2d6a8ce08beda647e885fe7c8cf10",
+      "target_line": 100
     },
     {
       "source": "pu850-esp.ino",
@@ -447,8 +464,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "\"/auth_dump\"",
       "reason": "Authenticated username/readiness only; raw password/token dumping deliberately removed.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 324
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 364
     },
     {
       "source": "pu850-esp.ino",
@@ -459,8 +476,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "\"/auth_dump\"",
       "reason": "Authenticated bounded session count, never bearer/cookie values.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 324
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 364
     },
     {
       "source": "pu850-esp.ino",
@@ -471,8 +488,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "server.on(\"/random\"",
       "reason": "Fresh hardware-entropy random bytes, not a live authorization token.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 340
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 380
     },
     {
       "source": "pu850-esp.ino",
@@ -483,8 +500,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "\"/auth_dump\"",
       "reason": "Actual local device-owner identity instead of unsupported PU user-role RPC.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 324
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 364
     },
     {
       "source": "pu850-esp.ino",
@@ -495,8 +512,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "server.on(\"/lang\"",
       "reason": "Persisted locale preference; translated=false explicitly, no claim of translated application parity.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 346
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 386
     },
     {
       "source": "pu850-esp.ino",
@@ -507,8 +524,8 @@
       "target": "firmware/esp8266/src/MaintenanceRoutes.h",
       "anchor": "server.on(\"/lang\"",
       "reason": "Bounded validated locale persisted atomically; PU language RPC not sent.",
-      "target_sha256_utf8_lf": "ecec4896398ac3a87db99187a031280cbdbc0bfd996ffd42c5906b1779d0bc5b",
-      "target_line": 346
+      "target_sha256_utf8_lf": "49beb25b29ccba18381be45a2464d482335840a5c5f157faec9985646fccd1f3",
+      "target_line": 386
     },
     {
       "source": "pu850-esp.ino",
@@ -538,7 +555,7 @@
       "status": "not-applicable",
       "target": null,
       "anchor": null,
-      "reason": "Old PU reset pin and chart state replaced by actual D1 ISP reset and guarded maintenance; copying the old pin is electrically wrong."
+      "reason": "Old PU reset pin/chart state are not copied: ESP8266 uses guarded D1/GPIO5 ISP reset, S3 uses reviewed build pin ownership and refuses ISP until its electrical-verification flag is enabled."
     },
     {
       "source": "pu850-esp.ino",
@@ -579,8 +596,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.native().on(\"/update/info\"",
       "reason": "Version/profile and both-board remote maintenance URLs; no misleading build-host/time identity.",
-      "target_sha256_utf8_lf": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d",
-      "target_line": 1753
+      "target_sha256_utf8_lf": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2",
+      "target_line": 1986
     },
     {
       "source": "pu850-esp.ino",
@@ -591,8 +608,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.on(\"/info\"",
       "reason": "Authenticated full structured ESP/AVR/client/network/clock/cloud telemetry; optional format=text.",
-      "target_sha256_utf8_lf": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d",
-      "target_line": 1754
+      "target_sha256_utf8_lf": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2",
+      "target_line": 1987
     },
     {
       "source": "pu850-esp.ino",
@@ -602,9 +619,9 @@
       "status": "adapted",
       "target": "firmware/esp8266/src/WebUi.h",
       "anchor": "Verified remote update",
-      "reason": "Real control workspace rather than donor static placeholder; access gate and actual peer state retained.",
-      "target_sha256_utf8_lf": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
-      "target_line": 244
+      "reason": "Real control workspace rather than donor static placeholder; access gate and actual peer state retained. Optional DHCP/static editor preserves stored station credentials and RGB preview requires fresh actual output, not a synthetic animation.",
+      "target_sha256_utf8_lf": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
+      "target_line": 246
     }
   ]
 }

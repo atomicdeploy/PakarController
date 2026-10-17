@@ -19,6 +19,56 @@ pub struct Network {
     pub station_enabled: bool,
     pub ap_enabled: bool,
     pub station_ssid: String,
+    #[serde(flatten)]
+    pub addressing: Addressing,
+}
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+pub struct Addressing {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dhcp: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub address: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gateway: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub subnet: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dns1: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dns2: Option<String>,
+}
+impl Addressing {
+    pub fn observed(&self) -> bool {
+        self.dhcp.is_some() && [&self.address,&self.gateway,&self.subnet,&self.dns1,&self.dns2].iter().all(|v| v.is_some())
+    }
+    fn validate(&self) -> Result<(), String> {
+        if *self == Self::default() { return Ok(()); }
+        if !self.observed() { return Err("Incomplete device addressing settings; refresh before editing".into()); }
+        let mut values = [0u32; 5];
+        for (index, text) in [&self.address,&self.gateway,&self.subnet,&self.dns1,&self.dns2].iter().enumerate() {
+            let text = text.as_deref().unwrap_or_default();
+            if index >= 3 && text.is_empty() { continue; }
+            values[index] = u32::from(text.parse::<std::net::Ipv4Addr>().map_err(|_| "Enter valid IPv4 address, gateway, subnet and DNS values")?);
+        }
+        if self.dhcp == Some(true) { return Ok(()); }
+        let [address,gateway,subnet,dns1,dns2] = values;
+        let host = !subnet;
+        if host < 3 || host == u32::MAX || host & host.wrapping_add(1) != 0 ||
+            address >> 24 == 0 || address >> 24 >= 224 || address & host == 0 || address & host == host ||
+            gateway >> 24 == 0 || gateway >> 24 >= 224 || gateway & host == 0 || gateway & host == host ||
+            address & subnet != gateway & subnet || address == gateway || dns1 >> 24 >= 224 || dns2 >> 24 >= 224 {
+            return Err("Invalid static subnet, host, gateway or DNS address".into());
+        }
+        Ok(())
+    }
+    fn form(&self) -> Vec<(String,String)> {
+        let mut result = Vec::new();
+        if let Some(dhcp) = self.dhcp { result.push(("dhcp".into(),dhcp.to_string())); }
+        for (name,value) in [("address",&self.address),("gateway",&self.gateway),("subnet",&self.subnet),("dns1",&self.dns1),("dns2",&self.dns2)] {
+            if let Some(value) = value { result.push((name.into(),value.clone())); }
+        }
+        result
+    }
 }
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Cloud {
@@ -67,7 +117,7 @@ impl Network {
         if self.station_enabled && self.station_ssid.is_empty() {
             return Err("Select or enter the station SSID".into());
         }
-        Ok(())
+        self.addressing.validate()
     }
 }
 impl Cloud {
@@ -151,23 +201,30 @@ pub struct Write {
 impl Write {
     pub fn network(id: u64, config: &Network, password: &str, open: bool) -> Result<Self, String> {
         config.validate()?;
-        if config.station_enabled && !open && !(8..=63).contains(&password.len()) {
-            return Err("Enter an 8–63 byte Wi-Fi password or explicitly select an open network. This firmware replaces the station password on every network save.".into());
+        if !password.is_empty() && !open && !(8..=63).contains(&password.len()) {
+            return Err("Enter an 8–63 byte replacement Wi-Fi password, or keep the existing secret by leaving this blank.".into());
         }
         bounded(password, 63, "Wi-Fi password")?;
+        let mut expected = config.clone();
+        if expected.addressing.dhcp == Some(false) {
+            for value in [&mut expected.addressing.dns1,&mut expected.addressing.dns2] {
+                if value.as_deref() == Some("") { *value = Some("0.0.0.0".into()); }
+            }
+        }
+        let mut form = vec![
+            ("station_enabled".into(), config.station_enabled.to_string()),
+            ("ap_enabled".into(), config.ap_enabled.to_string()),
+            ("ssid".into(), config.station_ssid.clone()),
+        ];
+        form.extend(expected.addressing.form());
+        if open || !password.is_empty() {
+            form.push(("password".into(),if open {String::new()} else {password.into()}));
+        }
         Ok(Self {
             id,
             group: Group::Network,
-            expected: Expected::Network(config.clone()),
-            form: vec![
-                ("station_enabled".into(), config.station_enabled.to_string()),
-                ("ap_enabled".into(), config.ap_enabled.to_string()),
-                ("ssid".into(), config.station_ssid.clone()),
-                (
-                    "password".into(),
-                    if open { String::new() } else { password.into() },
-                ),
-            ],
+            expected: Expected::Network(expected),
+            form,
         })
     }
     pub fn cloud(
@@ -296,6 +353,19 @@ pub struct Editor {
     pub telemetry: Option<serde_json::Value>,
 }
 impl Editor {
+    pub fn network_write(&self, id: u64) -> Result<Write, String> {
+        let draft = self.network.as_ref().ok_or("Network settings unavailable")?;
+        if draft.value.station_enabled && draft.value.station_ssid != draft.saved.station_ssid
+            && self.wifi_password.is_empty() && !self.open_network {
+            return Err("Enter a password or explicitly select Open when changing the station SSID".into());
+        }
+        let mut config = draft.value.clone();
+        if config.addressing.dhcp == Some(true) {
+            config.addressing = draft.saved.addressing.clone();
+            config.addressing.dhcp = Some(true);
+        }
+        Write::network(id, &config, &self.wifi_password, self.open_network)
+    }
     pub fn dirty(&self) -> bool {
         self.usb_request.is_some()
             || self.network.as_ref().is_some_and(Draft::dirty)
@@ -416,14 +486,14 @@ impl Editor {
     }
 }
 pub fn usb_payloads(config: &Network, password: &str, open: bool) -> Result<Vec<Vec<u8>>, String> {
-    let write = Write::network(0, config, password, open)?;
-    let password = write
-        .form
-        .iter()
-        .find(|(k, _)| k == "password")
-        .unwrap()
-        .1
-        .as_bytes();
+    if config.station_enabled && !open && !(8..=63).contains(&password.len()) {
+        return Err("USB provisioning requires an explicit password or Open choice; saved secrets cannot be read over this transport".into());
+    }
+    if config.addressing.dhcp == Some(false) {
+        return Err("Static addressing must be configured over the authenticated network API".into());
+    }
+    config.validate()?; bounded(password, 63, "Wi-Fi password")?;
+    let password = if open { b"".as_slice() } else { password.as_bytes() };
     let mut payloads = vec![vec![0]];
     for (kind, bytes) in [(1, config.station_ssid.as_bytes()), (2, password)] {
         for chunk in bytes.chunks(47) {
@@ -447,6 +517,7 @@ mod tests {
             station_enabled: true,
             ap_enabled: true,
             station_ssid: "Fixture network".into(),
+            addressing: Addressing::default(),
         }
     }
     #[test]
@@ -514,7 +585,8 @@ mod tests {
     #[test]
     fn network_bounds_and_explicit_open_choice() {
         let mut n = network();
-        assert!(Write::network(1, &n, "", false).is_err());
+        assert!(Write::network(1, &n, "", false).is_ok());
+        assert!(!Write::network(1, &n, "", false).unwrap().form.iter().any(|(k,_)| k == "password"));
         assert!(Write::network(1, &n, "", true).is_ok());
         assert!(Write::network(1, &n, "fixture-pass", false).is_ok());
         n.ap_enabled = false;
@@ -523,6 +595,27 @@ mod tests {
         n.station_enabled = true;
         n.station_ssid = "é".repeat(17);
         assert!(n.validate().is_err());
+    }
+    #[test]
+    fn optional_addressing_preserves_unknown_and_validates_static_profile() {
+        let old: Network = serde_json::from_value(serde_json::json!({"station_enabled":true,"ap_enabled":true,"station_ssid":"Fixture"})).unwrap();
+        assert!(!old.addressing.observed()); assert!(old.validate().is_ok());
+        assert!(!serde_json::to_value(&old).unwrap().as_object().unwrap().contains_key("dhcp"));
+        let mut current = network();
+        current.addressing = Addressing {dhcp:Some(false),address:Some("192.168.7.8".into()),gateway:Some("192.168.7.1".into()),
+            subnet:Some("255.255.255.0".into()),dns1:Some(String::new()),dns2:Some(String::new())};
+        let write = Write::network(1,&current,"",false).unwrap();
+        assert!(write.form.contains(&("dns1".into(),"0.0.0.0".into())));
+        current.addressing.subnet=Some("255.0.255.0".into()); assert!(current.validate().is_err());
+    }
+    #[test]
+    fn secret_keep_never_silently_turns_a_new_ssid_into_open_network() {
+        let mut editor = Editor {network:Some(Draft::new(network())),..Default::default()};
+        assert!(editor.network_write(1).is_ok());
+        editor.network.as_mut().unwrap().value.station_ssid = "Other network".into();
+        assert!(editor.network_write(1).is_err());
+        editor.open_network=true;
+        assert!(editor.network_write(1).unwrap().form.contains(&("password".into(),String::new())));
     }
     #[test]
     fn public_readback_cannot_confirm_different_configuration() {

@@ -3,6 +3,377 @@
   "target_hash_encoding": "UTF8-without-BOM-LF",
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
+    {
+      "origin": "PCController",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "remaining": [
+        "Run exact-source AVR firmware and integrated ESP32-S3/ESP8266 builds, physical automation/EEPROM readback and interruption tests on the actual board. Existing host fixtures/source syntax checks are not physical EEPROM, power-loss, actuator or integrated SDK acceptance."
+      ],
+      "improvement": "",
+      "path": "Project/AutomationStore.cpp",
+      "sha256": "09abbdbfe7fb317e7a690bb5783fe5eaca3809bb24fb0cbc8b6baf7bcc06dc5c",
+      "preserved": [
+        "Complete actual donor implementation/header and dependency EEPROM ownership layout were read, together with complete current target and source adaptation diffs. Retains dual-bank committed-generation selection, per-record/header CRC, stable twelve-byte UART record encoding, mutation validation, ascending-slot executor, event/window budgets and recursion protection.",
+        "Adapted actual CRC calls to shared WireCodec, supports all nine physical keys, leaves blank EEPROM volatile until an explicit edit and verifies committed bank readback before replacing active state. Architecture guard preserves this AVR EEPROM owner and native fixtures while excluding ESP8266/ESP32 transport proxies; no ESP EEPROM emulation or duplicated persistent owner."
+      ],
+      "targets": [
+        {
+          "path": "libraries/BoardCore/src/pccontroller/AutomationStore.cpp",
+          "sha256": "22e9cdf2018d0247ef1c6192b50c8fb6f991ccbaecfdcbf07a00a76fe1756223",
+          "anchor": "bool AutomationStore::commit("
+        },
+        {
+          "path": "libraries/BoardCore/src/pccontroller/AutomationStore.cpp",
+          "sha256": "22e9cdf2018d0247ef1c6192b50c8fb6f991ccbaecfdcbf07a00a76fe1756223",
+          "anchor": "uint8_t AutomationExecutor::dispatch("
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Immediate clear/write when both EEPROM banks are invalid; publishing active generation before verifying committed bank",
+          "disposition": "replaced",
+          "reason": "Pakar retains a volatile empty state until an explicit user mutation and verifies the actual inactive-bank commit before promoting it. This preserves existing EEPROM and allows failure reporting instead of falsely accepting a torn write."
+        },
+        {
+          "code": "Four-key eventValue bound and donor UART CRC namespace",
+          "disposition": "replaced",
+          "reason": "This board has nine confirmed inputs; valid key IDs0..8 replace donor0..3. Shared WireCodec provides the same CRC algorithm without importing a second UART protocol engine."
+        },
+        {
+          "code": "Compiling AVR EEPROM owner into ESP transport targets",
+          "disposition": "replaced",
+          "reason": "Both ESP architectures proxy PCController operations to the AVR. The observed S3 SDK EEPROM.update error exposed an overly narrow ESP8266-only guard; the guard now excludes both families and their architecture macros. AVR/host fixture code remains intact."
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/pc_contract_test.cpp",
+          "sha256": "a551e4b70ad1fe91670490dba2f583cc9aa4e03d03284976b8df8603a0c4c063",
+          "anchor": "void macroAndAutomations() {"
+        },
+        {
+          "path": "tests/s3_platform_wiring_test.mjs",
+          "sha256": "7e011e779e0aec34d73931ccde54566fb87bec811291bbae52fe5cffce57dd17",
+          "anchor": "assert.match(automationStore,"
+        }
+      ]
+    },
+    {
+      "origin": "PCController",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "remaining": [
+        "Run exact-source AVR firmware and integrated ESP32-S3/ESP8266 builds, physical automation/EEPROM readback and interruption tests on the actual board. Existing host fixtures/source syntax checks are not physical EEPROM, power-loss, actuator or integrated SDK acceptance."
+      ],
+      "improvement": "",
+      "path": "Project/AutomationStore.h",
+      "sha256": "adc48b05b237bac5093e748e820d06515efe991e4fef2a696dbdbecd262f658a",
+      "preserved": [
+        "Complete actual donor/current header read. Retains event/action enums and allowed flags, packed twelve-byte UART record static assertion, compact stored record/header layouts, dual-bank API, executor budgets and explicit action callback. Adds initialized_ to represent volatile blank storage truthfully."
+      ],
+      "targets": [
+        {
+          "path": "libraries/BoardCore/src/pccontroller/AutomationStore.h",
+          "sha256": "881d09b14a807e8907209e6e14aa87d630313051180f01975b88d0c21b64d98f",
+          "anchor": "class AutomationStore {"
+        },
+        {
+          "path": "libraries/BoardCore/src/pccontroller/AutomationStore.h",
+          "sha256": "881d09b14a807e8907209e6e14aa87d630313051180f01975b88d0c21b64d98f",
+          "anchor": "class AutomationExecutor {"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Unrelated ProjectConfig include and donor RF/reset/status-profile EEPROM allocation",
+          "disposition": "replaced",
+          "reason": "Pakar uses its existing explicit disjoint settings/automation/Prog layout, not the donor's other-board persistent image. The new architecture exclusion applies to the implementation, not the portable record contract; optional hardware actions remain gated by actual runtime capabilities."
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/pc_contract_test.cpp",
+          "sha256": "a551e4b70ad1fe91670490dba2f583cc9aa4e03d03284976b8df8603a0c4c063",
+          "anchor": "AutomationRecord rec{"
+        }
+      ]
+    },
+    {
+      "origin": "PU850-ESP",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "remaining": [
+        "Validate actual S3 AP/STA multicast membership, M-SEARCH responses, alive/update/byebye/rename lifecycle, interface-correct LOCATION, escaped description and router/phone interoperability. Source anchors and compilation do not prove on-LAN discovery."
+      ],
+      "proof": [],
+      "improvement": "",
+      "path": "LocalLib/SSDPDevice.cpp",
+      "sha256": "82f8c2a3c9779392202dc9b864328040cf47b9303674f142e5348df2b17e34b4",
+      "preserved": [
+        "Network agent fully read the actual complete PU850 donor and copied/adapted its source, not merely an SDK call. The evidence owner reviewed the complete donor-to-target diff. Retains bounded/de-duplicated delayed M-SEARCH queue, root/UUID/device responses, alive/update/byebye, boot/config identity, topology change handling and XML escaping/schema.",
+        "Only platform boundary and ownership are changed: PakarS3 namespace/instance-owned class, ESP32 chip identity and interface-bound SsdpUdp replace global ESP8266 WiFiUDP/IGMP. Both active AP and station memberships are supported rather than carrying ESP8266's small-IGMP-pool one-interface restriction."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp32s3/src/SsdpDevice.cpp",
+          "sha256": "2ebc872f04fec0e5c9bdc6965c7c67df18425d08283b7fab95a768d59f81f819",
+          "anchor": "void SsdpDevice::post("
+        },
+        {
+          "path": "firmware/esp32s3/src/SsdpDevice.cpp",
+          "sha256": "2ebc872f04fec0e5c9bdc6965c7c67df18425d08283b7fab95a768d59f81f819",
+          "anchor": "void SsdpDevice::schema(Print &client) const"
+        },
+        {
+          "path": "firmware/esp32s3/src/SsdpUdp.h",
+          "sha256": "e25782c43552d9a2fb570b2dd18446c99907a9b58d0d1ec6f5f190b9fee84f98",
+          "anchor": "bool beginPacketMulticast("
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Global SSDPDeviceClass singleton, ESP.getChipId and manual igmp_leavegroup/ESP8266 one-interface IGMP-pool policy",
+          "disposition": "replaced",
+          "reason": "Instance-owned S3 Discovery explicitly owns teardown and stable identity; socket-scoped membership/IF/TTL replaces incompatible ESP8266 UDP internals. The adapter is bounded/nonblocking and no arbitrary shared global SPI/network engine is substituted. Actual AP/STA behavior remains unverified."
+        }
+      ]
+    },
+    {
+      "origin": "PU850-ESP",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "remaining": [
+        "Validate actual S3 AP/STA multicast membership, M-SEARCH responses, alive/update/byebye/rename lifecycle, interface-correct LOCATION, escaped description and router/phone interoperability. Source anchors and compilation do not prove on-LAN discovery."
+      ],
+      "proof": [],
+      "improvement": "",
+      "path": "LocalLib/SSDPDevice.h",
+      "sha256": "3d94b63400ab64c0e556b1e73c722b40f7adade996aaf40ce73f88d1d0ab7cf2",
+      "preserved": [
+        "Network agent fully read the actual donor; evidence owner reviewed the complete header diff. Retains packet templates, bounded queue and metadata fields, public discovery/description setters, cache interval and protocol structures. Adds truthful running() state from the real socket/interface."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp32s3/src/SsdpDevice.h",
+          "sha256": "ba308c286db11cfa5cbabf540f784fda419805bc35e287825e264ca59a46feec",
+          "anchor": "class SsdpDevice {"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "ESP8266WiFi/WiFiUDP/IGMP includes, ProductConfig and extern singleton declaration",
+          "disposition": "replaced",
+          "reason": "ESP32 WiFi, explicit socket adapter, Pakar DiscoveryConfig and namespace-owned instance replace platform-specific includes/global ownership. SERVER announces ESP32-S3 rather than falsely identifying as ESP8266. Useful public protocol behavior is retained; physical discovery remains open."
+        }
+      ]
+    },
+    {
+      "origin": "PU850-ESP",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "remaining": [
+        "Validate actual S3 AP/STA multicast membership, M-SEARCH responses, alive/update/byebye/rename lifecycle, interface-correct LOCATION, escaped description and router/phone interoperability. Source anchors and compilation do not prove on-LAN discovery."
+      ],
+      "proof": [],
+      "improvement": "",
+      "path": "LocalLib/SSDP.cpp",
+      "sha256": "2f9c9f8f0b613d958e8bb31920174a7d8fa9f523b3477b88d9430a71d385bf48",
+      "preserved": [
+        "Complete donor wrapper was reread by the evidence owner, in addition to network agent's full read. Actual initSSDP metadata/schema/periodic-service ownership maps to Discovery::begin/service/xmlDescription and the imported SsdpDevice::schema XML escaper. Hostname/display name/application/version are Pakar-owned; no PU850 EEPROM business identity is retained."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp32s3/src/Discovery.h",
+          "sha256": "ceb14ad85094384dbbe3225ca467f52dc43e187b44dcc78a1a7892a03a95dec7",
+          "anchor": "class Discovery {"
+        },
+        {
+          "path": "firmware/esp32s3/src/Discovery.h",
+          "sha256": "ceb14ad85094384dbbe3225ca467f52dc43e187b44dcc78a1a7892a03a95dec7",
+          "anchor": "String xmlDescription() const {"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "ASA0002E/E_MainVersion/E_SerialNumber globals, include-SSDPDevice.cpp pattern, server-global registration and duplicate hand-built description",
+          "disposition": "replaced",
+          "reason": "Canonical main registers the description route; instance-owned Discovery uses consistent Pakar metadata and the imported escaped schema. No duplicate compiled .cpp/global service or PU serial/version state is retained."
+        },
+        {
+          "code": "Optional UPnP serviceList/SOAP/GENA implementation",
+          "disposition": "not-applicable",
+          "reason": "The donor intentionally does not advertise an unimplemented service. Pakar likewise leaves optional service discovery disabled; no invented control protocol is exposed. Add a real contract before enabling it."
+        }
+      ]
+    },
+    {
+      "origin": "PU850-ESP",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "remaining": [
+        "Validate actual S3 AP/STA multicast membership, M-SEARCH responses, alive/update/byebye/rename lifecycle, interface-correct LOCATION, escaped description and router/phone interoperability. Source anchors and compilation do not prove on-LAN discovery."
+      ],
+      "proof": [],
+      "improvement": "",
+      "path": "LocalLib/SSDP.h",
+      "sha256": "f9f7b078b6085e731f0ed42c5dd983d1ab0a3a48c2912797406fb3e0b0df3ea5",
+      "preserved": [
+        "Complete tiny donor header was reread by the evidence owner. Its current role is only the historical SSDP-to-singleton alias; actual device declarations map separately to the imported SsdpDevice.h."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp32s3/src/Discovery.h",
+          "sha256": "ceb14ad85094384dbbe3225ca467f52dc43e187b44dcc78a1a7892a03a95dec7",
+          "anchor": "SsdpDevice ssdp_;"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "#define SSDP SSDPDevice singleton shorthand",
+          "disposition": "replaced",
+          "reason": "Explicit Discovery-owned instance avoids macro alias collisions and makes restart/teardown ownership clear; no useful implementation is silently dropped with this alias."
+        }
+      ]
+    },
+    {
+      "origin": "PU850-ESP",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "remaining": [
+        "Real HTTP GET/HEAD/Range/auth/ETag checks against the integrated S3 and ESP8266 firmware remain separate from source/host-parser proof; verify exported application bytes against the running partition and protect credentials. Physical OTA/AVR flashing/power-loss/recovery acceptance remains open."
+      ],
+      "improvement": "",
+      "path": "LocalLib/FirmwareTransfer.cpp",
+      "sha256": "1dada0f284ba4c81a6185f1aeb34dbd299752a7b48b0ba56336d1dfdc9e2ac3c",
+      "preserved": [
+        "Complete actual donor read through EOF and current adapted production target reviewed. Imported GET/HEAD firmware download, bounded single byte ranges/open/suffix ranges, 416 responses, ETag/304, Content-MD5/Digest/identity headers and chunked flash reads; extracted parser exercises the production implementation.",
+        "ESP8266 aligned flash implementation is retained. ESP32-S3 adaptation downloads only the running application partition using bounded esp_partition_read, uses mbedtls Base64 and platform model, and shares the same endpoint/HTTP engine instead of a second flasher firmware."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp8266/src/FirmwareTransfer.cpp",
+          "sha256": "4a9fc21b2cdb0ef2e4525c00d4516a344c800cb3356437580394b4e2d440b06d",
+          "anchor": "void RegisterFirmwareTransferRoutes("
+        },
+        {
+          "path": "firmware/esp8266/src/FirmwareRange.h",
+          "sha256": "03bf18b46233e539a84563f1eb63330d2eaf8e57b9bb73b6cfd92026bda6bef8",
+          "anchor": "inline bool parseRange("
+        },
+        {
+          "path": "firmware/esp8266/src/FirmwarePlatform.h",
+          "sha256": "944d37c11ad396f61054afd539bb498f4cdbbb6240a04f7323e16c53f6a65dc7",
+          "anchor": "inline bool readRunning("
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Optional build-time FW_OTA_BEARER_TOKEN/secureEquals and WWW-Authenticate bearer realm",
+          "disposition": "replaced",
+          "reason": "Shared Pakar WebAccess callback now owns authorization and defaults to deny without an authorization provider. Credentials/session policy must not diverge between firmware download and other device endpoints. X-Login-Path links the actual login flow without provoking unexplained browser Basic authentication."
+        },
+        {
+          "code": "FW_ENABLE_FULL_FLASH_DOWNLOAD full raw flash including settings",
+          "disposition": "replaced",
+          "reason": "Network full-flash export remains disabled because it can expose stored Wi-Fi/cloud/access secrets. Application-partition download and separately authorized backup paths are retained. User-authorized physical full flash backup is separate, not this network route."
+        },
+        {
+          "code": "ProductConfig PU model/product identity and compile date/time header",
+          "disposition": "replaced",
+          "reason": "Uses Pakar product/model and consistent BuildInfo version without dates/timestamp naming; no PU850 business identity is retained."
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/firmware_range_test.cpp",
+          "sha256": "96a79254872cd829c6e23a240225063503d0286e9fe1a477dd48aac5e05a6ed5",
+          "anchor": "assert(parseRange(\"bytes=0-9\""
+        },
+        {
+          "path": "tests/s3_platform_wiring_test.mjs",
+          "sha256": "7e011e779e0aec34d73931ccde54566fb87bec811291bbae52fe5cffce57dd17",
+          "anchor": "assert.match(transfer, /FirmwarePlatform::readRunning"
+        }
+      ]
+    },
+    {
+      "origin": "PU850-ESP",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "remaining": [
+        "Real HTTP GET/HEAD/Range/auth/ETag checks against the integrated S3 and ESP8266 firmware remain separate from source/host-parser proof; verify exported application bytes against the running partition and protect credentials. Physical OTA/AVR flashing/power-loss/recovery acceptance remains open."
+      ],
+      "improvement": "",
+      "path": "LocalLib/FirmwareTransfer.h",
+      "sha256": "23121e9cb09ad44e41d0f4d9a4f3dec68ef09c8b79010b57cd0d2e4d14df3929",
+      "preserved": [
+        "Complete donor header read through EOF. Public authorization check and route registration remain integrated with the shared asynchronous HTTP server; no separate ISP-only image or parallel updater service."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp8266/src/FirmwareTransfer.h",
+          "sha256": "e0e828cc9cde406ed9009c46a2e803b965f36eac58e160c5aaa233deed390496",
+          "anchor": "void RegisterFirmwareTransferRoutes(AsyncWebServer* server,"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Single-argument RegisterFirmwareTransferRoutes declaration and optional token-only comments",
+          "disposition": "replaced",
+          "reason": "The explicit std::function authorization provider adapts the same route to Pakar session/access ownership, defaults to deny without a provider and avoids duplicated credentials. Real device authorization acceptance is still required."
+        }
+      ],
+      "proof": [
+        {
+          "path": "firmware/esp8266/src/FirmwareTransfer.cpp",
+          "sha256": "4a9fc21b2cdb0ef2e4525c00d4516a344c800cb3356437580394b4e2d440b06d",
+          "anchor": "return transferAuthorization && transferAuthorization(request);"
+        }
+      ]
+    },
+    {
+      "origin": "PCController",
+      "path": "Project/StatusLedMath.h",
+      "sha256": "997e15f12ca1d51689567f3a15b2f3b716261173878797cd5e68866289724740",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": ["Full original source read through EOF. Actual unsigned byte-exact scale(value, level) and interpolate(from, to, phase) arithmetic copied into the S3 semantic onboard-pixel engine, independent of the GPIO4 matrix."],
+      "targets": [{"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"fc589df726f9c3892194ecc3eb7c679a41881ae2471c6a76e995d1e006c8be50","anchor":"static uint8_t scale("}],
+      "proof": [{"path":"tests/s3_status_rgb_test.cpp","sha256":"9afb15932b6efd3c82928e727894e9658e47ced87829ba09bd7bc802826ebca1","anchor":"Already-scaled output bytes"}],
+      "omissions": [{"code":"phaseDeadline distributing 64 phases in a modulo-16-bit AVR clock","disposition":"replaced","reason":"S3 evaluates the present phase directly from uint32 elapsed milliseconds rather than scheduling 64 deadline steps. Late service does not slow the animation; native tests cover real production arithmetic and millis wrap, not optical output."}],
+      "remaining": ["Verify exact optical RGB order, configured onboard GPIO and animation timing on the identified S3 under simultaneous Wi-Fi/matrix load; source and writer acceptance are not physical light proof."]
+    },
+    {
+      "origin": "PCController",
+      "path": "Project/StatusLedController.h",
+      "sha256": "afbc70e3e8674c80d779168c37dc7430ab058e35baf2705b4b45cc11dd4e22ca",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": ["Full header/implementation read through EOF. Adapted nonblocking lifecycle state, absolute elapsed/period animation, repeat-state phase preservation, brightness-scaled rendered-byte reporting and explicit board-owned configuration into PakarS3::StatusRgb."],
+      "targets": [{"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"fc589df726f9c3892194ecc3eb7c679a41881ae2471c6a76e995d1e006c8be50","anchor":"class StatusRgb"}],
+      "proof": [{"path":"tests/s3_status_rgb_test.cpp","sha256":"9afb15932b6efd3c82928e727894e9658e47ced87829ba09bd7bc802826ebca1","anchor":"New mode cross-fades from actual frame"}],
+      "omissions": [
+        {"code":"AVR PwmController channels13..15/Power signal driver, EEPROM profile records and uint16 clock","disposition":"replaced","reason":"The S3 owns a separate explicitly confirmed addressable pixel, not PCController PWM channels or the AVR EEPROM map. Its current network configuration owner persists enable/brightness and uint32 elapsed arithmetic avoids the AVR clock restriction; no electrical pin probing is performed."},
+        {"code":"19-condition editable profile catalog, temporary cue composition/priority, retained manual descriptors and Flash/Cycle/Transition effects","disposition":"pending","reason":"Current semantic states use smooth transitions and breathe, not the full generic donor manual/profile/cue contract. Custom descriptors, priorities, persistence and native/Web/mobile/front-panel editors remain useful work; fixed semantic profiles do not certify full donor parity."}
+      ],
+      "remaining": ["Finish generic manual/profile/cue capabilities with persisted ACK/readback across all clients; verify physical onboard output and safety/error/update state priorities under real peer loss."]
+    },
+    {
+      "origin": "PCController",
+      "path": "Project/StatusLedController.cpp",
+      "sha256": "b68da7e21af4396027c0f7ed7267d4c778292da47c19f1b9172bb4547ed1f53d",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": ["Full header/implementation read through EOF. Actual absolute elapsed/period evaluation, idempotent state ownership and already-scaled rendered RGB reporting adapted into the S3's board-owned semantic engine. Added bounded 300ms eased state transitions, explicit pin safety and driver-accepted output revision; no independent client-side animation reconstruction."],
+      "targets": [{"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"fc589df726f9c3892194ecc3eb7c679a41881ae2471c6a76e995d1e006c8be50","anchor":"bool service(uint32_t now, Writer writer)"}],
+      "proof": [{"path":"tests/s3_status_rgb_test.cpp","sha256":"9afb15932b6efd3c82928e727894e9658e47ced87829ba09bd7bc802826ebca1","anchor":"No duplicate state events"}],
+      "omissions": [
+        {"code":"PwmController/EEPROM/StatusProfileAddress dependencies and sixteen-bit phase clock","disposition":"replaced","reason":"Those target AVR RGB PWM wiring and EEPROM allocation, not the identified S3 addressable pixel. Existing S3 persisted configuration owns enable/brightness, writer acceptance owns reported output, and the 32-bit elapsed timer advances without per-loop phase drift."},
+        {"code":"profile/setProfile/defaultProfile, applyRequested/cancelEffect, playCue priority and finite Flash/Cycle/Transition descriptors","disposition":"pending","reason":"This source slice implements lifecycle semantic light, not every manually controllable donor RGB behavior. Preserve pending custom profiles/cues/descriptors and their exact owner tests rather than replacing them with optimistic UI controls."}
+      ],
+      "remaining": ["Implement useful generic omitted RGB profile/manual/cue contracts; measure physical GPIO/RGB order and latency under simultaneous matrix/network/AVR work. Native writer doubles are not optical acceptance."]
+    },
 {
   "origin": "PCController",
   "path": "Tools/Controller/internal/hostbridge/buzzer_mirror.go",
@@ -27,7 +398,7 @@
     {
       "anchor": "put32(audio + 5, s.audioStartedMicros);",
       "path": "firmware/avr/PcControllerRuntime.cpp",
-      "sha256": "2b17ef65a5b7a731aa19cdd1be64d97af2f2bf6246c8fe854243ec48c25accbe"
+      "sha256": "43be8fbede226483a9a71c6459a97cbb41a331a6b802c004f23ac981058990e8"
     }
   ],
   "proof": [
@@ -84,7 +455,7 @@
     {
       "anchor": "put32(audio + 5, s.audioStartedMicros);",
       "path": "firmware/avr/PcControllerRuntime.cpp",
-      "sha256": "2b17ef65a5b7a731aa19cdd1be64d97af2f2bf6246c8fe854243ec48c25accbe"
+      "sha256": "43be8fbede226483a9a71c6459a97cbb41a331a6b802c004f23ac981058990e8"
     }
   ],
   "proof": [
@@ -190,7 +561,7 @@
           },
           {
             "path": "firmware/esp8266/src/MndpService.h",
-            "sha256": "4af970a677da2433b316bf9d8a50965485b909aaa412bb54dabeacaf5e47f0b7",
+            "sha256": "12e73866ec7c6b554c57532c1482ce369b072ede745ae2402f66f970027770ae",
             "anchor": "class MndpService"
           },
           {
@@ -250,7 +621,7 @@
           },
           {
             "path": "firmware/esp8266/src/MndpService.h",
-            "sha256": "4af970a677da2433b316bf9d8a50965485b909aaa412bb54dabeacaf5e47f0b7",
+            "sha256": "12e73866ec7c6b554c57532c1482ce369b072ede745ae2402f66f970027770ae",
             "anchor": "class MndpService"
           },
           {
@@ -310,7 +681,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "function readStreamPolicy"
         }
       ],
@@ -470,12 +841,12 @@
     },
     {
       "path": "firmware/esp8266/src/WebAccess.h",
-      "sha256": "61d03a9873f2e633a2f26efc059f24e692de4b2831fdf61ec128cddd8e251ae2",
+      "sha256": "663dacf63a1457835946b5d9fef484585fd2d6a8ce08beda647e885fe7c8cf10",
       "anchor": "bool peerAllowed("
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d",
+      "sha256": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2",
       "anchor": "bool authenticate()"
     },
     {
@@ -490,7 +861,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "65873693acd9b6ba7cd4481d6fe94a5c181ae50ec1b074f0bcd398b5b57e0e11",
+      "sha256": "d34e18102b9e2311bc187f3d5924219b0b46b73150f88ad0e3dd5711b3a63874",
       "anchor": "fn scoped_http_request("
     }
   ],
@@ -937,19 +1308,24 @@
       "path": "desktop/src/ui/preferences.rs"
     },
     {
-      "sha256": "46b65c8602e55dd6418a959375b1fb23430445ee8ea9058a74f19c4d77156ac0",
+      "sha256": "1c4c1ed4aa4fa1f30320fc9d7a3b7ef622e8894217503890881c9e98319a4240",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "dbe45c1f3f393c054f4cf956b76314110b8060e1bc5e4f437bfb800a8757458e",
+      "sha256": "11d6a4a5388d1d68616fdb143b3faac078c15ac48ad016ada8b03529450e1fb5",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
   ],
-  "sha256": "f77426310758c2a96f9b3e571b3ab716f950ff3bfd5e0c3dc9c2f18ebd3100a9",
-  "remaining": [],
+  "sha256": "134f1613df05c9db44f8ccd178981a8eca4fb6c254ced6466229afca66b40ee9",
+  "remaining": ["Integrate current donor control_density height/chevron dependency and configurable density through real persisted native/Web/mobile preferences, then port current dynamic-height geometry assertions; preserve existing focus/ID/selection behavior."],
   "omissions": [
+    {
+      "code":"control_density::height/paint_chevron in trigger and choice geometry, temporary interact_size restoration, choice_with_close reusable expansion rows",
+      "disposition":"pending",
+      "reason":"Fully reread all 646 current donor lines through EOF. Pakar retains fixed32px rows and the previous explicit keyboard/search-focus owner, but lacks the new dynamic density and inline expansion API. Current scoped advantage remains source-ID/texture handling, not full newer donor parity."
+    },
     {
       "code": "Pealayer active-dropdown ID",
       "reason": "Product-specific context key renamed to Pakar. No generic helper or donor assertion removed.",
@@ -957,10 +1333,10 @@
     }
   ],
   "preserved": [
-    "Read all 631 donor lines through EOF and locked egui 0.36.2 ComboBox factory identity. Actual focus owner, enabled/selected entries, search focus, Arrow/Home/End/Enter navigation, disabled skipping, full-width fixed 32px rows, inside focus stroke, nested menu framing and closed-popup cleanup imported, not restyled substitutes. All three donor native tests retained."
+    "Reread all 646 current donor lines through EOF against the retained target. Actual focus owner, enabled/selected entries, search focus, Arrow/Home/End/Enter navigation, disabled skipping, inside focus stroke, nested menu framing and closed-popup cleanup remain imported. The prior three native tests remain adapted to fixed32px Pakar rows; newer dynamic density/chevron and inline-expansion behavior is explicitly pending."
   ],
   "improvement": "Adds the locked egui from_label trigger identity for existing labeled settings and actual connection-control keyboard ownership with busy-port rejection. Clears texture ownership before native assertions to avoid a second panic masking a failure. Native execution and production visual acceptance must be reported separately from source wiring.",
-  "verdict": "scoped-improvement",
+  "verdict": "parity-gap",
   "proof": [
     {
       "sha256": "f7b1532924e3e3ae87d72d91983e7e49f48fed2efb9b01aede48d1a9734f1fa3",
@@ -1020,11 +1396,16 @@
       "path": "desktop/src/ui/i18n.rs"
     }
   ],
-  "sha256": "a455b2adfdc80889a2f402c404a0b2364a4a8f968a5cd6b706aa274f015087de",
+  "sha256": "fe2bf96c968d83874903f5d06085775f5787cf24467fb0c7be3fcf53077c1aa4",
   "remaining": [
     "Import the full applicable shared Preferences contract and System accent ownership across surfaces; execute native behavior tests and capture the deployed palette. Source guards are not runtime or visual evidence."
   ],
   "omissions": [
+    {
+      "code":"palette_contents baseline/draft ownership and integrated color_dropdown one-popup Custom expansion, dynamic screen-height clamp/growth, explicit arrow-key opening, control_density geometry/chevron",
+      "disposition":"pending",
+      "reason":"Fully reread all 550 current donor lines through EOF. Pakar still uses its previously imported independently anchored Custom palette/validated HEX draft and fixed row geometry. The newer single-popup expansion and dynamic density mechanics require the real shared preference/density dependency and adapted focus/geometry tests before replacing those working owners."
+    },
     {
       "code": "Pealayer asset path, session ID and product-specific shared-colors heading",
       "reason": "Uses the actual already imported shared palette asset, Pakar context ID and localized generic headings without disk persistence for recent colors.",
@@ -1037,7 +1418,7 @@
     }
   ],
   "preserved": [
-    "Read all 446 donor lines through EOF. Imported actual session-only 12-color MRU deduplication, recent/shared swatches, integrated HEX-field swatch, full-width Custom choice, independently anchored palette with validated temporary HEX draft and all four donor tests. Production accent consumer adapts the actual Pealayer Preferences Accent branch, not a full Preferences-file parity claim."
+    "Reread all 550 current donor lines through EOF. Actual session-only12-color MRU deduplication, recent/shared swatches, integrated HEX-field swatch, full-width Custom choice, independently anchored palette/validated temporary HEX draft and prior donor tests remain adapted. The newer integrated Custom expansion/density behavior is pending; current production accent consumer is not a complete Preferences contract."
   ],
   "improvement": "",
   "verdict": "parity-gap",
@@ -1087,7 +1468,7 @@
       "remaining":["Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof."],
       "proof":[
         {"path":"tools/test-display.ps1","sha256":"e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51","anchor":"foreach ($taskVariant"},
-        {"path":"tools/test-protocol.sh","sha256":"975b5a892eca2287c01df2f366ceb094f617780195e0ecc021cb3597da06bd86","anchor":"for display_flags"}
+        {"path":"tools/test-protocol.sh","sha256":"1563e4959ca64611c6519cb300cae044a57faa0c53eb5d91269f56f33281296e","anchor":"for display_flags"}
       ],
       "improvement":"Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified."
     },
@@ -1177,7 +1558,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebAccess.h",
-          "sha256": "61d03a9873f2e633a2f26efc059f24e692de4b2831fdf61ec128cddd8e251ae2",
+          "sha256": "663dacf63a1457835946b5d9fef484585fd2d6a8ce08beda647e885fe7c8cf10",
           "anchor": "ApiPolicy::numberedRoute"
         }
       ],
@@ -1223,7 +1604,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "function connectWs()"
         }
       ],
@@ -1332,7 +1713,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "async function refreshAuthenticated(options={})"
         },
         {
@@ -1409,7 +1790,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -1581,7 +1962,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "function connectWs()"
         }
       ],
@@ -1679,12 +2060,12 @@
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "010f6fcf22c8168d08c220e654096f16e2394e0be7b5ba7c3496aecf364946a3",
+          "sha256": "9761b88471261b763819a3ad76b332d4aa5243bf2d81a9c37b293e1be2b5ac1b",
           "anchor": "function startUiLocaleController()"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -1780,7 +2161,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -1865,7 +2246,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -1895,7 +2276,7 @@
     {
       "origin": "Pealayer",
       "path": "web_ui/src/components/ServerFilePicker.tsx",
-      "sha256": "9fef787ded9a20c0efa58a3dd8ed69e9e9fb1fc0cbeac7304490862389882071",
+      "sha256": "df5b59007e0b726c815bed0eafcce87e4f5a6e4a59e8c79a1414f2cc7be89316",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -1939,6 +2320,11 @@
           "code": "initialFile parent path, remembered folder, custom icon table/size labels and full localized picker controls",
           "disposition": "pending",
           "reason": "SAF system navigation is available, but mobile app-owned retained-folder hints and a complete localized review/preview workflow still need actual provider/phone tests. Donor custom server file-browser behavior remains useful for native/Web preference consumers; this Android adaptation is not whole-app picker parity."
+        },
+        {
+          "code": "Current FileLocationSelect location/drive/network-root selector and disabled-while-loading navigation",
+          "disposition": "pending",
+          "reason": "Current donor was completely reread. The new FileLocationSelect dependency is not yet fully reviewed/imported for native/Web consumers. Android SAF provides provider-owned navigation but does not establish parity with the donor server's filesystem location contract."
         }
       ],
       "remaining": [
@@ -2006,7 +2392,7 @@
     {
       "origin": "Pealayer",
       "path": "web_ui/src/components/PreferencesTab.tsx",
-      "sha256": "cc9f7b6abd57fccd3889b12abae30147c39484ea82be4bef91d0ac2512910832",
+      "sha256": "30a63cc1db61a46346c2d4c30ce011dc74081a8a6da2e29853e56d39811a0de1",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -2014,30 +2400,75 @@
         "Actual valueAtPath/updatePaths structured settings ownership adapted to separate public drafts and secret actions. DeviceSettingsSession uses the fully read canonical Pakar native/Web validation, observe/conflict and positive acknowledgment/exact public readback workflow rather than generic optimistic UI success. In-memory secrets never enter saved client preferences; one POST body per explicit operation, no mutation replay."
       ],
       "targets": [
-        {"path":"mobile/lib/device_settings_page.dart","sha256":"ce24d6aa8c8d05095692920a60d990269c741f7756036761f28a5283ed0d1ab3","anchor":"class DeviceSettingsPage"},
-        {"path":"mobile/lib/device_settings.dart","sha256":"16c5f8ec88c242baa279bc42bdf4c81024f4473eccc62ec8e317267937a9ab2c","anchor":"class DeviceSettingsSession"}
+        {
+          "path": "mobile/lib/device_settings_page.dart",
+          "sha256": "ce24d6aa8c8d05095692920a60d990269c741f7756036761f28a5283ed0d1ab3",
+          "anchor": "class DeviceSettingsPage"
+        },
+        {
+          "path": "mobile/lib/device_settings.dart",
+          "sha256": "16c5f8ec88c242baa279bc42bdf4c81024f4473eccc62ec8e317267937a9ab2c",
+          "anchor": "class DeviceSettingsSession"
+        }
       ],
       "omissions": [
-        {"code":"updatePaths optimistic autosave to /api/config and playback.preference_set","disposition":"replaced","reason":"These are Pealayer state/RPC contracts, not Pakar persisted board endpoints. Password replacement and network restart require explicit confirmation, positive accepted/updated ACK and exact public readback. No optimistic physical save success or automatic write replay."},
-        {"code":"Ant Design components and ServerFilePicker transport","disposition":"replaced","reason":"Android Flutter cannot import TSX/Ant Design components directly. Actual section/group/control logic is adapted to Material controls with the shared Studio palette, Vazirmatn and verified Phosphor glyphs. Mobile firmware now uses the fully read ServerFilePicker selection/ownership contract with native Android SAF; exact mapping and remaining generic consumers have their own comparison row."},
-        {"code":"AccentColorPicker, color swatches, appearance live preview, NumericValueControl steps/defaults, multi_select rich options, replacement_list add/delete, Collapsible groups, ServerFilePicker and refreshAudioOutputs two-stage option refresh","disposition":"pending","reason":"Device Wi-Fi/cloud/identity/access editors are implemented, not the entire application preference framework. Generic appearance, collection editors, defaults/step controls, reusable file picking and dynamic options remain useful and require actual client/device capability contracts and tests before importing their controls."},
-        {"code":"tr(locale, ...) complete control/description localization","disposition":"pending","reason":"Vazirmatn is loaded and the actual RayanLamp digit map normalizes numeric fields, but the new settings copy is English. Full mobile locale/direction must be audited and rendered before claiming Persian preference parity."},
-        {"code":"timelineWheelPreferences merge, playback audio-output RPC and media-extension preference consumers","disposition":"not-applicable","reason":"Timeline/cue/media playback business was explicitly excluded from Pakar. Their generic dynamic-option and file-picker mechanisms remain pending above; they are not excluded as media business."}
+        {
+          "code": "updatePaths optimistic autosave to /api/config and playback.preference_set",
+          "disposition": "replaced",
+          "reason": "These are Pealayer state/RPC contracts, not Pakar persisted board endpoints. Password replacement and network restart require explicit confirmation, positive accepted/updated ACK and exact public readback. No optimistic physical save success or automatic write replay."
+        },
+        {
+          "code": "Ant Design components and ServerFilePicker transport",
+          "disposition": "replaced",
+          "reason": "Android Flutter cannot import TSX/Ant Design components directly. Actual section/group/control logic is adapted to Material controls with the shared Studio palette, Vazirmatn and verified Phosphor glyphs. Mobile firmware now uses the fully read ServerFilePicker selection/ownership contract with native Android SAF; exact mapping and remaining generic consumers have their own comparison row."
+        },
+        {
+          "code": "AccentColorPicker, color swatches, appearance live preview, NumericValueControl steps/defaults, multi_select rich options, replacement_list add/delete, Collapsible groups, ServerFilePicker and refreshAudioOutputs two-stage option refresh",
+          "disposition": "pending",
+          "reason": "Device Wi-Fi/cloud/identity/access editors are implemented, not the entire application preference framework. Generic appearance, collection editors, defaults/step controls, reusable file picking and dynamic options remain useful and require actual client/device capability contracts and tests before importing their controls."
+        },
+        {
+          "code": "tr(locale, ...) complete control/description localization",
+          "disposition": "pending",
+          "reason": "Vazirmatn is loaded and the actual RayanLamp digit map normalizes numeric fields, but the new settings copy is English. Full mobile locale/direction must be audited and rendered before claiming Persian preference parity."
+        },
+        {
+          "code": "timelineWheelPreferences merge, playback audio-output RPC and media-extension preference consumers",
+          "disposition": "not-applicable",
+          "reason": "Timeline/cue/media playback business was explicitly excluded from Pakar. Their generic dynamic-option and file-picker mechanisms remain pending above; they are not excluded as media business."
+        },
+        {
+          "code": "Current ColorDropdown custom/accent popup, discrete choice_slider indexed preview/commit and NumericValueControl persisted per-field adjustment steps",
+          "disposition": "pending",
+          "reason": "Current 563-line donor was completely reread. These generic typed controls are not in the mobile device settings implementation; shared appearance controls, structured batch changes and keyboard/locale acceptance must be imported with their dependencies instead of claiming the earlier section/group adaptation covers them."
+        }
       ],
       "remaining": [
         "Mobile firmware/update/backup and Android picker workflows are implemented in the separate ServerFilePicker row; physical acceptance remains. Complete connection/discovery controls, unsaved Android-back/quit protection, client appearance/localization, generic typed preference controls and applicable donor dependencies. Verify physical phone/tablet configuration readback and hostname/credential handoffs; current API lacks transactional compare-and-set and encrypted HTTP transport."
       ],
       "proof": [
-        {"path":"mobile/test/device_settings_test.dart","sha256":"18f2ad9b2a9c6826a38cfe04321810fa367165797f835a9d50375bf980339480","anchor":"Settings write $behavior: one POST"},
-        {"path":"mobile/test/device_settings_page_test.dart","sha256":"da7de6a91d19dee9231d9b16e80da25864f4bcc84146d1b4425564f98d6d234b","anchor":"Acknowledged $route handoff after old view closes"},
-        {"path":"mobile/test/capture_test.dart","sha256":"f4042a5e06690a29010ced124f1ec5a540ad060a23fecf480aaee03a89b61cab","anchor":"Capture must never issue a device mutation"}
+        {
+          "path": "mobile/test/device_settings_test.dart",
+          "sha256": "18f2ad9b2a9c6826a38cfe04321810fa367165797f835a9d50375bf980339480",
+          "anchor": "Settings write $behavior: one POST"
+        },
+        {
+          "path": "mobile/test/device_settings_page_test.dart",
+          "sha256": "da7de6a91d19dee9231d9b16e80da25864f4bcc84146d1b4425564f98d6d234b",
+          "anchor": "Acknowledged $route handoff after old view closes"
+        },
+        {
+          "path": "mobile/test/capture_test.dart",
+          "sha256": "f4042a5e06690a29010ced124f1ec5a540ad060a23fecf480aaee03a89b61cab",
+          "anchor": "Capture must never issue a device mutation"
+        }
       ],
-      "improvement":""
+      "improvement": ""
     },
     {
       "origin": "Pealayer",
       "path": "src/ui/i18n.rs",
-    "sha256": "87e8a9439df45a2bbdd8157ee20bbff46ab0de7a475f78b4936aaf763a19a5b7",
+    "sha256": "811a48221c47c903c1d70ca904ead90a7a6b7f5ee0ba9a5f26a7e60dd30a75c3",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -2067,6 +2498,11 @@
         }
       ],
       "omissions": [
+        {
+          "code": "configure_preferred_fonts/install_ui_fonts UiFontFamily cache, normal/monospace font-family preferences, named pealayer-status-strong and pealayer-status-mono-strong emphasis faces, newer generic hardware/effects/status dictionary additions",
+          "disposition": "pending",
+          "reason": "Fully reread all 1665 current donor lines through EOF. Pakar retains its existing registry-preserving language font installation and both-family Persian fallback; it does not yet expose these font-family preferences or named status emphasis faces. Generic hardware/action/status translations still need actual corresponding Pakar consumers and localization tests; only media/timeline-specific copy remains excluded."
+        },
         {
           "code": "Media playback, cue/timeline reveal and keyframe-specific dictionary keys",
           "disposition": "not-applicable",
@@ -2108,17 +2544,17 @@
     {
       "origin": "Pealayer",
       "path": "web_ui/src/i18n.ts",
-    "sha256": "86c64de3924af9873d7a80386511ba42adb5e60b3db205d0eec932309a60edeb",
+    "sha256": "331d2545379e36ea717fcf2876508315437bc5abe49923170f50a4f1bb1b47fc",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual donor fa-dictionary fallback semantics reused for application copy, rather than translating arbitrary runtime data. Applicable native dictionary subset generates into the canonical Web module and actual firmware HTML.",
+        "Fully reread all 630 current donor lines through EOF. Actual fa-dictionary fallback semantics remain reused for application copy, rather than translating arbitrary runtime data. Applicable native dictionary subset generates into the canonical Web module and actual firmware HTML; the new generic hardware/status/font/control vocabulary is useful pending consumer work, not an automatic dictionary import.",
         "Added system/explicit language and Auto/LTR/RTL preferences, owned-template text/placeholder/accessibility snapshots, per-browser low-write persistence, shared font route and immutable peer-name boundary."
       ],
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "010f6fcf22c8168d08c220e654096f16e2394e0be7b5ba7c3496aecf364946a3",
+          "sha256": "9761b88471261b763819a3ad76b332d4aa5243bf2d81a9c37b293e1be2b5ac1b",
           "anchor": "function uiTr(text,values)"
         },
         {
@@ -2128,7 +2564,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -2239,7 +2675,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "da232ac7efd7a41028424bffd0f08865fc8049b0a4f971faa74703da43b2d966",
+          "sha256": "5bc629302abaeb749345d1eebc7b2ed1144251e65c7a87b7bbbd1d6bbe05125b",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -2250,7 +2686,7 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "ef76592e75ee05babd398a27bb72869bf88c154a5e545a4b17fe3cfd1093890c",
+          "sha256": "4e284a5e8b4f01ae8bfd62731b533cc02c3e24bf10c108b49f9120ce07b92bf6",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {
@@ -2260,7 +2696,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "a47e857551722430876fec34e9adb98f3d04a93d84adbbdcf2e9b450572d8ee4",
+          "sha256": "449c07e0b26f93a640444a7ab1729ea1a0e2d6c2ae5c0beae49b1a2961cb1c60",
           "anchor": "export function runChecks"
         },
         {
@@ -2311,7 +2747,7 @@
         },
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "da232ac7efd7a41028424bffd0f08865fc8049b0a4f971faa74703da43b2d966",
+          "sha256": "5bc629302abaeb749345d1eebc7b2ed1144251e65c7a87b7bbbd1d6bbe05125b",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -2344,7 +2780,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "da232ac7efd7a41028424bffd0f08865fc8049b0a4f971faa74703da43b2d966",
+          "sha256": "5bc629302abaeb749345d1eebc7b2ed1144251e65c7a87b7bbbd1d6bbe05125b",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -2377,7 +2813,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "da232ac7efd7a41028424bffd0f08865fc8049b0a4f971faa74703da43b2d966",
+          "sha256": "5bc629302abaeb749345d1eebc7b2ed1144251e65c7a87b7bbbd1d6bbe05125b",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -2410,7 +2846,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "da232ac7efd7a41028424bffd0f08865fc8049b0a4f971faa74703da43b2d966",
+          "sha256": "5bc629302abaeb749345d1eebc7b2ed1144251e65c7a87b7bbbd1d6bbe05125b",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -2427,7 +2863,7 @@
       "targets": [
         {
           "path": "assets/web/device-settings.js",
-          "sha256": "559976f856ec1c29634ed2a7500efdaf2ba546591217ec14b7cf7f37137565bc",
+          "sha256": "0174e9db3639482585cf498595dd38e412ba7d71b05bae8edffea15d2ee650f3",
           "anchor": "function panelToggle("
         },
         {
@@ -2459,7 +2895,7 @@
       "proof": [
         {
           "path": "tests/interface_settings_test.mjs",
-          "sha256": "fc93f316d25726000049fdbb3393e48a882d9dcf16c804b572a2c960e90d9f7c",
+          "sha256": "7a3717629e56db13e988faf28730a6f4b358e748fbc61709b6aaf43a13f96f0e",
           "anchor": "Capability loss must override stored panel visibility"
         }
       ],
@@ -2468,16 +2904,17 @@
     {
       "origin": "Pealayer",
       "path": "src/ui/status_bar.rs",
-      "sha256": "7004bd7e936875b4d5328f10f482aa492827117251fce69e8ebb34561ff90663",
+      "sha256": "e407025a1ee959230634f8350de20d58432313d6dd0f734ada735b8fc9fec4db",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual per-item hide context menus, persistent visibility choices, bar-level restore menu and small truncating message labels adapted in Pakar status_bar.rs. Transport controls remain usable offline without claiming hardware readiness."
+        "Current complete source read through EOF independently by the status/front-panel and network/UI agents; selected target changes reviewed again during evidence integration. Actual per-item hide context menus, persistent visibility choices, bar-level restore menu and small truncating message labels remain adapted. Transport controls remain usable offline without claiming hardware readiness.",
+        "Actual status_led_display_color direct emitted RGB semantics, 20x22 Widget::StatusRgb slot, circle radius6, hover metadata/copy-color/hide menu and no-double-dimming test adapted into native status bar. Web uses the same authoritative observed channels, individual availability/output and fresh-peer guards; no locally reconstructed status animation."
       ],
       "targets": [
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "ac3ad2971427a8b0b16e50eb1763d87080871df2a6ba88ce238e2eef5bbf7b26",
+          "sha256": "bca2fdc67bba3a46b37cc6fd165857c42055888edc979d53d694672e9bbd582d",
           "anchor": "fn hide_menu("
         },
         {
@@ -2489,6 +2926,11 @@
           "path": "docs/CONNECTION-CONTROLS.md",
           "sha256": "002ee046e9c206a4cc241ad2b9033971b4933959d8e14f43958848403879f21d",
           "anchor": "# Front-panel transport dropdowns"
+        },
+        {
+          "path":"firmware/esp8266/src/WebUi.h",
+          "sha256":"6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
+          "anchor":"function statusRgbOutput"
         }
       ],
       "omissions": [
@@ -2498,9 +2940,9 @@
           "reason": "Pakar retains a status message and item menu, but does not yet share authoritative update/OSD lifetime, workspace text or localized/RTL/fullscreen policy. Restore actual dependencies and test rather than claim full-file parity."
         },
         {
-          "code": "draw_hardware_status board_ready/coordinator/active_transport distinction, physical RGB glyph and telemetry voltage/current/temperature/warnings",
+          "code": "draw_hardware_status board_ready/coordinator/active_transport distinction and telemetry voltage/current/temperature/warnings",
           "disposition": "pending",
-          "reason": "Pakar current peer freshness/ACK gates exist but generic coordinator, RGB sensor and warning inventories need actual adapters before those fields can be displayed. Native dropdown live indicators are transport state, not hardware ACK."
+          "reason": "Pakar peer freshness/ACK gates and actual S3 physical RGB mirror now exist, but generic coordinator, sensor and warning inventories still need actual adapters before display. Native dropdown live indicators and local pixel-writer acceptance are not independent physical measurement."
         },
         {
           "code": "prepared_timeline, media-rate/fps mode, hardware timeline revision/feedback; estop_active label",
@@ -2513,7 +2955,7 @@
           "reason": "Pakar transport controls use its existing shared palette green/current text roles; menu state stays readable in both themes without tinting unrelated hardware controls."
         },
         {
-          "code": "UI render-rate toggle/context policy and latest dropdown-backed FPS menu; authoritative physical RGB without double dimming",
+          "code": "UI render-rate toggle/context policy, latest dropdown-backed FPS menu, new widget ordering/dividers/fonts/value ranges/chart history/update operation ownership",
           "disposition": "pending",
           "reason": "The tracked shared dropdown module is now fully read and imported, with native consumers and donor tests. This does not implement every generic consumer contract in this file: render-rate policy, workspace/language/direction actions and complete board EEPROM enum ownership remain independently pending. Native execution and visual acceptance are reported separately."
         }
@@ -2523,6 +2965,16 @@
         "Shared dropdown dependency now has a complete-read comparison; preserve remaining generic consumer contracts and verify native runtime without claiming whole-file parity."
       ],
       "proof": [
+        {
+          "path":"desktop/src/ui/status_bar.rs",
+          "sha256":"bca2fdc67bba3a46b37cc6fd165857c42055888edc979d53d694672e9bbd582d",
+          "anchor":"fn rgb_requires_observed_output_and_does_not_double_dim"
+        },
+        {
+          "path":"tests/interface_settings_test.mjs",
+          "sha256":"7a3717629e56db13e988faf28730a6f4b358e748fbc61709b6aaf43a13f96f0e",
+          "anchor":"Actual emitted RGB is not brightness-scaled again"
+        },
         {
           "path": "tests/connection_controls_test.mjs",
           "sha256": "4824489d60f705fccda52d3166ca487a1ea4d1721d0a0814706747fb7033aaf2",
@@ -2569,7 +3021,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "function peerAvailability("
         }
       ],
@@ -2701,12 +3153,12 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "dbe45c1f3f393c054f4cf956b76314110b8060e1bc5e4f437bfb800a8757458e",
+          "sha256": "11d6a4a5388d1d68616fdb143b3faac078c15ac48ad016ada8b03529450e1fb5",
           "anchor": "fn synchronize_context("
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
-          "sha256": "46b65c8602e55dd6418a959375b1fb23430445ee8ea9058a74f19c4d77156ac0",
+          "sha256": "1c4c1ed4aa4fa1f30320fc9d7a3b7ef622e8894217503890881c9e98319a4240",
           "anchor": "pub(crate) fn available("
         },
         {
@@ -2773,14 +3225,15 @@
     {
       "origin": "Pealayer",
       "path": "src/branding.rs",
-      "sha256": "be44ca91dfb08ce78fb377ccfcc4676676c05e6b36ed319c497365788ab264fe",
+      "sha256": "ee6ef94e685a86e72258e4609692a9fefa516d5935d75d15a5abe0ee42ada3c1",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
         "Actual icon_data_from_bytes imported unchanged; one embedded PNG supplies native/Web artwork without disk caches.",
         "Actual native_icon_bytes seven-frame ICO encoding/master preservation/Lanczos3 resampling and shell derivative test adapted to shared supplied bytes and PNG-only decoder.",
         "Actual sync_native_window_icon source-signature cache, multi-viewport icon publication and tray refresh lifecycle adapted to fresh selected-peer Application metadata; no per-frame decode or disk cache.",
-        "Flutter now shares the exact embedded native/Web PNG fallback instead of a different Phosphor glyph, with bounded peer-application title and inline PNG overrides and default-artwork decode fallback. Android launcher equivalent and runtime icon preferences remain pending."
+        "Flutter now shares the exact embedded native/Web PNG fallback instead of a different Phosphor glyph, with bounded peer-application title and inline PNG overrides and default-artwork decode fallback. Android launcher equivalent and runtime icon preferences remain pending.",
+        "Current 447-line donor and actual Pakar branding/ICO conversion were reread completely. Shared image decoding, seven-frame ICO master preservation and source-signature/multi-viewport mechanisms survive; current native window and artwork preferences still have explicit gaps."
       ],
       "targets": [
         {
@@ -2829,6 +3282,11 @@
           "code": "PlaybackIconState/from_player/playback_state_is_unambiguous",
           "disposition": "not-applicable",
           "reason": "Video state business expressly removed; hardware state icons require a separate validated state contract."
+        },
+        {
+          "code": "Current apply_native_window_icon shared Preferences/main HWND path, native window_icons::apply fallback, (state,revision,HWND) sync stamp and file-metadata change detection",
+          "disposition": "pending",
+          "reason": "Pakar currently caches selected peer Application metadata and emits viewport icon commands; it does not implement donor native HWND registration/replacement lifecycle, file override metadata or preset precedence. Preserve bounded inline peer artwork and import applicable native lifecycle only after Windows tests; playback business remains excluded separately."
         }
       ],
       "remaining": [
@@ -2851,13 +3309,14 @@
     {
       "origin": "Pealayer",
       "path": "web_ui/src/components/HeaderBar.tsx",
-      "sha256": "df84386e53d729eabddf9476026a9f96afe130dd3429612f4c73509d1757d16b",
+      "sha256": "ad53ee284d969054f69b65e8447a313498b5928eae0aed2564e95f8c71e70d04",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
         "Actual resolved-artwork img/alt binding adapted to standalone header/login, replacing diamond and font fallback.",
         "Firmware name/title/artwork binding replaces fixed header branding; stale/disconnected peer resets title/header/favicon/touch artwork and validates bounded inline PNG.",
-        "Actual retained Modal/draft lifecycle adapted to grouped device settings; separate same-instance WebSocket actions preserve HTTP refresh and reject obsolete socket callbacks. Native Draft/SecretEdit/Write validation/readback semantics are reused."
+        "Actual retained Modal/draft lifecycle adapted to grouped device settings; separate same-instance WebSocket actions preserve HTTP refresh and reject obsolete socket callbacks. Native Draft/SecretEdit/Write validation/readback semantics are reused.",
+        "Current 223-line donor was fully reread. Existing shared artwork/draft mapping is retained; accessible Enter/Space connection-pill activation, responsive overflow copies and capability-specific browser controls are not implied by that mapping."
       ],
       "targets": [
         {
@@ -2867,7 +3326,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -2877,12 +3336,12 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "function renderApplicationIdentity"
         },
         {
           "path": "assets/web/device-settings.js",
-          "sha256": "559976f856ec1c29634ed2a7500efdaf2ba546591217ec14b7cf7f37137565bc",
+          "sha256": "0174e9db3639482585cf498595dd38e412ba7d71b05bae8edffea15d2ee650f3",
           "anchor": "function settingsCanClose()"
         },
         {
@@ -2901,6 +3360,11 @@
           "code": "capability-aware Dropdown install/update/share/fullscreen/notifications/haptics/audio/wake-lock cluster",
           "disposition": "pending",
           "reason": "Requires actual WebPlatform integration and ownership/permission tests; not excluded media business."
+        },
+        {
+          "code": "Current keyboard-activatable connection-pill, collapsible action overflow parity and capability-aware web-feature preference switches",
+          "disposition": "pending",
+          "reason": "Pakar must adapt actual endpoint lifecycle, capability/permission detection and keyboard semantics rather than presenting nonfunctional shortcuts. Shared static artwork and device-settings drafts do not provide these generic browser/header behaviors."
         }
       ],
       "remaining": [
@@ -2919,7 +3383,7 @@
         },
         {
           "path": "tests/interface_settings_test.mjs",
-          "sha256": "fc93f316d25726000049fdbb3393e48a882d9dcf16c804b572a2c960e90d9f7c",
+          "sha256": "7a3717629e56db13e988faf28730a6f4b358e748fbc61709b6aaf43a13f96f0e",
           "anchor": "Failed saves preserve the draft"
         }
       ],
@@ -2928,11 +3392,12 @@
     {
       "origin": "Pealayer",
       "path": "web_ui/src/webPlatform.ts",
-      "sha256": "23e8fd2a8f17d296f14b81d6618cbd166129e116e36515444239edac15f89554",
+      "sha256": "d6ee8217c05e96be2e20f9a40ab4c46249d57f58871c661a31c33e2310a92f0e",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Same resolved artwork binds favicon/touch/header before login; ESP embeds data instead of requesting a protected host filesystem icon."
+        "Same resolved artwork binds favicon/touch/header before login; ESP embeds data instead of requesting a protected host filesystem icon.",
+        "Current 383-line donor was completely reread. Existing favicon/header/touch artwork mapping remains valid; this is not browser-platform parity."
       ],
       "targets": [
         {
@@ -2942,7 +3407,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -2966,6 +3431,11 @@
           "code": "mediaTitle/current_video state icon resolution, MediaSession video metadata/play/pause/seek/chapter handlers",
           "disposition": "not-applicable",
           "reason": "Video title/track/session business is excluded; generic browser capabilities are still pending."
+        },
+        {
+          "code": "Current app_icon_revision-qualified touch/manifest URL refresh, dynamic application-title metadata and explicit media-action callback retirement/position clearing",
+          "disposition": "pending",
+          "reason": "Generic artwork revision/title refresh must be adapted to board-owned application identity and actual PWA resources. Retained stale media callbacks and position cleanup illustrate useful lifecycle patterns, not permission to expose playback actions on a controller. Generic event ownership must be tested in Pakar's real contexts."
         }
       ],
       "remaining": [
@@ -3028,13 +3498,14 @@
     {
       "origin": "Pealayer",
       "path": "src/ui/menu.rs",
-      "sha256": "18e255a5ccc65dfa0588eac10283c7c1f5fe33ea63bb3e07bd599e30a0cf19c3",
+      "sha256": "a0196878c7b76b898d0a5791b122181d9045d3fbbe9f56de52bc43242edf2d9d",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
         "Actual top_menu_button body imported with only application state ID/public visibility adaptation; all four production menu headings use active-menu sibling hover switching.",
         "Actual Button::shortcut_text idiom replaces space-padded primary labels in all six shortcut rows; separate right-aligned muted atoms are supplied by the same egui 0.36.2 dependency. Existing dispatch/Phosphor submenu retained; user-requested height policy unchanged.",
-        "Actual connection selector/persist-on-change and custom OS hardware-path fallback adapted to independent WebSocket and USB popup controls. Lazy factual enumeration, reconnect/disconnect and route actions added; complete donor lifecycle remains pending."
+        "Actual connection selector/persist-on-change and custom OS hardware-path fallback adapted to independent WebSocket and USB popup controls. Lazy factual enumeration, reconnect/disconnect and route actions added; complete donor lifecycle remains pending.",
+        "Current complete 883-line donor and full mapped Pakar menu.rs were reread by the status/front-panel agent. The actual top-menu helper and six shortcut_text consumers remain retained; this does not implement the newly added endpoint trigger."
       ],
       "targets": [
         {
@@ -3044,7 +3515,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "dbe45c1f3f393c054f4cf956b76314110b8060e1bc5e4f437bfb800a8757458e",
+          "sha256": "11d6a4a5388d1d68616fdb143b3faac078c15ac48ad016ada8b03529450e1fb5",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -3093,6 +3564,11 @@
           "code": "DropdownUiExt selected workspace/language/direction entries and new unified dropdown lifecycle",
           "disposition": "pending",
           "reason": "The tracked shared dropdown module is now fully read and imported, with native consumers and donor tests. This does not implement every generic consumer contract in this file: render-rate policy, workspace/language/direction actions and complete board EEPROM enum ownership remain independently pending. Native execution and visual acceptance are reported separately."
+        },
+        {
+          "code": "Current header_endpoint_combo fixed 154-pixel clipped trigger/full 240-pixel popup and density/font/disabled-hover geometry tests",
+          "disposition": "pending",
+          "reason": "Pakar has independent connection dialog/status dropdown controls. Review their actual geometry and ownership before adapting this shared helper; no duplicate or pretend-ready endpoint control should be added merely to match labels."
         }
       ],
       "remaining": [
@@ -3271,11 +3747,11 @@
     {
       "origin": "Pealayer",
       "path": "scripts/package-windows.ps1",
-      "sha256": "3e6f8a82456329558c7ec24e596f353c75d39680d8807d6eb0261bd419e5025a",
+      "sha256": "5651709cfb58c2f1e0d7052b3ca604df154563ce552498a066c6e67b8f9baedf",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual Assert-PackageSourceStable adapted without Web exclusions; optional ExpectedCommit checks run before/after build/stage. Imported bounded Process probe and file-identity helper are used by staging; identical hashes skip payload copies."
+        "Fully reread all 302 current donor lines through EOF and actual Pakar windows-build-host/stage-desktop helpers. Actual Assert-PackageSourceStable remains adapted without Web exclusions; optional ExpectedCommit checks run before/after build/stage. Imported bounded Process probe and file-identity helper are used by staging; identical hashes skip payload copies."
       ],
       "targets": [
         {
@@ -3290,6 +3766,11 @@
         }
       ],
       "omissions": [
+        {
+          "code": "SkipTests selecting npm build:bundle rather than build, web_regression_tests skipped versus web_bundle_integrity verified manifest fields",
+          "disposition": "pending",
+          "reason": "The current donor explicitly separates bundle integrity from omitted regression suites. Pakar staging does not run npm or build an external Web bundle; a complete package/manifest pipeline is still pending. Firmware source/embedded Web checks are not reported as those package operations."
+        },
         {
           "code": "libmpv runtime/import-library packaging and pealayer-downloader media companion",
           "disposition": "not-applicable",
@@ -3330,12 +3811,12 @@
     {
       "origin": "Pealayer",
       "path": "docs/verification/LOCAL-WORKSPACE-HYGIENE.md",
-      "sha256": "c79e88b50b9586fd937620456cb329350c60f9b825ec68c39d07c4544e559af9",
+      "sha256": "c024125307f6e466c924e1b8874f869a575b085b2a05bb4493bfd1d1e9f38975",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
         "Actual canonical-cache/stable-staging/preservation/blocked-operation and separate runtime-acceptance guidance read and adopted in mandatory continuation policy and tooling.",
-        "Reread new shared-cache rejection/hash-copy/storage-inventory guidance at d3f11b1; actual read-only directory summary and equality helper now imported. Ownership and blocked-operation rules still apply."
+        "Fully reread the current donor through EOF: shared-cache rejection/hash-copy/storage inventory, routine symbol/incremental policy, debug-only guarded cleanup, measured scratch-RAM sizing and skipped-test versus bundle-integrity distinction. Actual read-only directory summary/equality helper and mandatory low-write/preservation guidance remain; donor historical cleanup/deployment results are not Pakar facts."
       ],
       "targets": [
         {
@@ -3413,9 +3894,9 @@
     {
       "origin": "Pealayer",
       "path": "src/ui/toasts.rs",
-      "sha256": "a6501d2c0f859e186cac659a37d256f26f8896e98644e9cfc8ac880da5460e54",
+      "sha256": "30d4ff8c9a30b783f9513a3508787e9ca233881bb3a9bda2e1b9f9cd1bc9c989",
       "source_read": "complete",
-      "verdict": "equivalent-behavior",
+      "verdict": "parity-gap",
       "preserved": [
         "Actual donor root-only overlay: four newest messages, severity icons and semantic palette roles, bounded width, scrollable text, title, dismiss and deadline-driven repaint."
       ],
@@ -3431,6 +3912,11 @@
           "code": "interop::get_live_config() accessor",
           "disposition": "replaced",
           "reason": "Pakar owns the same live palette through config::live(). The OS-native notification route is separate; adding an explicit in-app enable preference does not remove the donor overlay when enabled."
+        },
+        {
+          "code": "Current optional Toast.details collapsible disclosure and localized details_label",
+          "disposition": "pending",
+          "reason": "The complete current donor was reread against Pakar's actual renderer. Pakar still renders title/message only. Import bounded detailed diagnostics together with MessageHub validation and regression tests; earlier overlay behavior is retained but is not current whole-file parity."
         }
       ],
       "remaining": [
@@ -3509,7 +3995,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "dbe45c1f3f393c054f4cf956b76314110b8060e1bc5e4f437bfb800a8757458e",
+          "sha256": "11d6a4a5388d1d68616fdb143b3faac078c15ac48ad016ada8b03529450e1fb5",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -3849,11 +4335,11 @@
     {
       "origin": "Pealayer",
       "path": "src/messaging.rs",
-      "sha256": "471236bd7e8b1733fef743c81a9dff407816cd221a4d290d0cfa5a9fc753c573",
+      "sha256": "44ba995614f2acc3230f6adc13c00500e6844db81aa36d5e60e7eeb9e90d6f9f",
       "source_read": "complete",
-      "verdict": "equivalent-file",
+      "verdict": "parity-gap",
       "preserved": [
-        "Byte-identical MessageHub, validation, bounded queue, expiry/upsert/dismiss/revision/source identity, and both donor tests."
+        "Earlier MessageHub remains byte-identical to historical source hash 471236bd7e8b1733fef743c81a9dff407816cd221a4d290d0cfa5a9fc753c573: request validation, bounded queue, expiry/upsert/dismiss/revision/source identity and both original tests. The current 226-line donor was completely reread; new detailed diagnostics remain pending, not falsely described as current file equivalence."
       ],
       "targets": [
         {
@@ -3862,9 +4348,15 @@
           "anchor": "pub fn publish("
         }
       ],
-      "omissions": [],
+      "omissions": [
+        {
+          "code": "Current Toast.details optional serialized payload, publish_with_details, public publish_detailed and bounded-diagnostics preserving-last-good-toast regression",
+          "disposition": "pending",
+          "reason": "Pakar has no detailed-diagnostics payload yet. Import the 8192-character pre-mutation validation and preserving-last-good-toast regression together with disclosure UI, retaining existing distinct-event identity/upsert behavior."
+        }
+      ],
       "remaining": [
-        "This file equivalence does not establish Web/TUI/IPC notification-surface parity."
+        "Import current bounded detailed diagnostics and native disclosure; historical hub equivalence does not establish current Web/TUI/IPC notification-surface parity."
       ],
       "proof": [
         {
@@ -3912,11 +4404,11 @@
     {
       "origin": "Pealayer",
       "path": "src/ui/icons.rs",
-      "sha256": "fba85edd503798868acc5527600b2ee52326339816c5b73e9926d1d7b0929384",
+      "sha256": "cd56a5849a0be621d8472b440c9cbac8b91bcaf603d228cb6148bba1eb554fc9",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Production Phosphor vocabulary, stable names/kind fallback, searchable list/grid picker, UTF-8-safe match highlighting, bounded popups, disclosure/submenu helpers.",
+        "Fully reread all1190 current donor lines through EOF. Production Phosphor vocabulary, stable names/kind fallback, searchable list/grid picker, UTF-8-safe match highlighting, bounded popups and disclosure/submenu helpers remain retained. New catalog/density/localized-title/fixed-header-slot behavior is separately pending, not certified by the prior eleven tests.",
         "Actual donor regression tests restored: eleven tests, including interactive egui-frame search/select/reopen, both themes and popup width."
       ],
       "targets": [
@@ -3927,11 +4419,16 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "dbe45c1f3f393c054f4cf956b76314110b8060e1bc5e4f437bfb800a8757458e",
+          "sha256": "11d6a4a5388d1d68616fdb143b3faac078c15ac48ad016ada8b03529450e1fb5",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
       "omissions": [
+        {
+          "code":"control_icon_catalog with icon_catalog.rs complete1500+ repertoire and new alias tests; translated_icon_name/localized search and preset title tests; searchable_icon_button_sized/with_slot and fixed_header geometry test; density chevrons",
+          "disposition":"pending",
+          "reason":"Pakar retains its prior Phosphor presets/search/list/grid helpers, not the expanded donor catalog or new localized title/density/fixed-slot consumer contracts. icon_catalog.rs remains an independently pending dependency; do not copy unavailable presets or claim the new tests imported merely by reading this file."
+        },
         {
           "code": "every_native_icon_editor_uses_the_shared_searchable_picker donor-only editor path list",
           "disposition": "replaced",
@@ -4051,7 +4548,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
+          "sha256": "ef1cca7fe1006e5c5350aa3e8117a723e5197a6e70338a41e493067ded908bf3",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -4102,7 +4599,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
+          "sha256": "ef1cca7fe1006e5c5350aa3e8117a723e5197a6e70338a41e493067ded908bf3",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -4155,12 +4652,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
+          "sha256": "ef1cca7fe1006e5c5350aa3e8117a723e5197a6e70338a41e493067ded908bf3",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
+          "sha256": "ef1cca7fe1006e5c5350aa3e8117a723e5197a6e70338a41e493067ded908bf3",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -4200,12 +4697,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
+          "sha256": "ef1cca7fe1006e5c5350aa3e8117a723e5197a6e70338a41e493067ded908bf3",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
+          "sha256": "ef1cca7fe1006e5c5350aa3e8117a723e5197a6e70338a41e493067ded908bf3",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -4255,7 +4752,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
+          "sha256": "ef1cca7fe1006e5c5350aa3e8117a723e5197a6e70338a41e493067ded908bf3",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -4311,7 +4808,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
+          "sha256": "ef1cca7fe1006e5c5350aa3e8117a723e5197a6e70338a41e493067ded908bf3",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -4424,12 +4921,12 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "18feb27f5eaa57208a60d92f809d395ddff34427bb7d2fcfc531b6c32623298c",
+          "sha256": "b8324474326127758aa38c30a5a68e30cdd30315abab314b064d955e5ea8b55c",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "fcbc8d0c6f3edfcb9be73964081a82407d489ff348c02ce9f70378f5676a4774",
+          "sha256": "f4b1fd7cc0e7d367f6ce5cf88ec527bba69819422d584169d785388096c45b0d",
           "anchor": "uint8_t brightness_ = 255"
         }
       ],
@@ -4437,7 +4934,7 @@
         {
           "code": "AVR D6 / 11-pixel final effect buffer",
           "disposition": "replaced",
-          "reason": "User assigned final WS2811 effects to ESP D2 and 80 groups of six LEDs. A duplicate 480-pixel AVR buffer would consume 1440 bytes before protocol/game state on a 2 KiB AVR; streaming it over UART would also consume bandwidth. D6 remains a diagnostic pin, not a second full engine."
+          "reason": "Final effects remain in the shared ESP engine: ESP8266 D2 or migrated ESP32-S3 GPIO4, with 80 groups of six LEDs. A duplicate 480-pixel AVR buffer would consume 1440 bytes before protocol/game state on a 2 KiB AVR; streaming it over UART would also consume bandwidth. D6 remains a diagnostic pin, not a second full engine."
         },
         {
           "code": "COLOR_ORDER BRG",
@@ -4468,12 +4965,12 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "18feb27f5eaa57208a60d92f809d395ddff34427bb7d2fcfc531b6c32623298c",
+          "sha256": "b8324474326127758aa38c30a5a68e30cdd30315abab314b064d955e5ea8b55c",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "fcbc8d0c6f3edfcb9be73964081a82407d489ff348c02ce9f70378f5676a4774",
+          "sha256": "f4b1fd7cc0e7d367f6ce5cf88ec527bba69819422d584169d785388096c45b0d",
           "anchor": "uint8_t brightness_ = 255"
         }
       ],
@@ -4481,7 +4978,7 @@
         {
           "code": "AVR D6 / 11-pixel final effect buffer",
           "disposition": "replaced",
-          "reason": "User assigned final WS2811 effects to ESP D2 and 80 groups of six LEDs. A duplicate 480-pixel AVR buffer would consume 1440 bytes before protocol/game state on a 2 KiB AVR; streaming it over UART would also consume bandwidth. D6 remains a diagnostic pin, not a second full engine."
+          "reason": "Final effects remain in the shared ESP engine: ESP8266 D2 or migrated ESP32-S3 GPIO4, with 80 groups of six LEDs. A duplicate 480-pixel AVR buffer would consume 1440 bytes before protocol/game state on a 2 KiB AVR; streaming it over UART would also consume bandwidth. D6 remains a diagnostic pin, not a second full engine."
         },
         {
           "code": "COLOR_ORDER BRG",
@@ -4542,7 +5039,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d"
+          "sha256": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2"
         }
       ],
       "proof": [
@@ -4609,7 +5106,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d"
+          "sha256": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2"
         }
       ],
       "proof": [
@@ -4676,7 +5173,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d"
+          "sha256": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2"
         }
       ],
       "proof": [
@@ -4728,7 +5225,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "64a6b657124d0348e107eef8439985bcad1060a363f575c608bcf7f89f18240d"
+          "sha256": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2"
         }
       ],
       "proof": [
@@ -4918,7 +5415,7 @@
     {
       "origin": "Pealayer",
       "path": "web_ui/src/appearance.ts",
-      "sha256": "b6a56ff95deaa1779e5021bdc8db9e45bdbf3cb54f4158c20f1e922e16959d54",
+      "sha256": "b521c20a1f10e6f818978bcb09948c689b74caaf72df18bdec56f2f566f8db58",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
@@ -4938,13 +5435,13 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
       "omissions": [
         {
-          "code": "ui_animation_mode, ui_control_density, ui_font_family, monospace_font_family merge fields; uiFontCss and monoFontCss",
+          "code": "ui_animation_mode, ui_control_density, ui_font_family, monospace_font_family merge fields; ControlDensity/controlDensityHeight 24/28/32/36 geometry; uiFontCss and monoFontCss",
           "disposition": "pending",
           "reason": "New current donor behavior was fully read during mobile-network build preflight. Existing embedded target does not consume these client preferences and does not bundle PealayerUbuntu/PealayerHack; copying their font names would imply unavailable assets. Add actual shared settings/asset support and cross-client tests before claiming parity."
         },
@@ -5019,11 +5516,12 @@
     {
       "origin": "Pealayer",
       "path": "src/ui/dialog.rs",
-      "sha256": "4ffdd81afbaa2f918cb572f11d1ec978b279ca0e263f9bfad83e99a59bc27781",
+      "sha256": "8a396d67862578f8727e43a952e82120b20c9c582ebcc5366ab0968ba8f704d8",
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Read all 952 donor lines through EOF. navigation_control's fixed allocation, clipped centered text and inside-stroke painting are adapted to manager_selector. Compact cell/row/state slots use the existing shared neutral animated cell_surface; state-dependent Button Frames cannot resize their text/content geometry. Selected widget metadata is retained explicitly."
+        "Read all 952 donor lines through EOF. navigation_control's fixed allocation, clipped centered text and inside-stroke painting are adapted to manager_selector. Compact cell/row/state slots use the existing shared neutral animated cell_surface; state-dependent Button Frames cannot resize their text/content geometry. Selected widget metadata is retained explicitly.",
+        "Current complete 1236-line donor and complete mapped Pakar dialog.rs were reread by the status/front-panel agent; historical bounded geometry, inside-stroke navigation, equal action sizing, RTL adjustments, numeric modifier/clipboard/wheel and scrolling mappings remain intact. This is source comparison, not native test execution."
       ],
       "targets": [
         {
@@ -5033,7 +5531,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -5052,6 +5550,11 @@
           "code": "numeric_stepper/numeric_adjustment/adjust_numeric/numeric_slider_wheel/parse_numeric_paste/receive_numeric_paste/numeric_context_menu and seven pointer/paste/wheel tests",
           "disposition": "pending",
           "reason": "Helpers already exist in the imported module; bounded input geometry, paste ownership, wheel tail suppression and context behavior need their actual donor runtime tests restored and controller settings coverage. Hover selector acceptance is not numeric-control parity."
+        },
+        {
+          "code": "Current stable_toggle, fixed-slot close_button, confirmation_modal AlertDialog focus restoration/top-modal Escape/non-destructive backdrop, inline_caption_edit and density-aware singleline_text_edit",
+          "disposition": "pending",
+          "reason": "These useful generic helpers are absent from Pakar and must be imported with geometry/accessibility/focus regression tests while preserving Pakar's RTL input alignment. Existing Preferences and device dialogs remain custom implementations, not equivalent implementations of the new helpers."
         }
       ],
       "remaining": [
@@ -5155,7 +5658,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "922375f9199627c64c057ca4191748abb91b3f1653a309f089e405633d72f2d9",
+          "sha256": "6a68077dd5ade973b060269b6dfde17dbc10576091f25173c23107cfb6a55c44",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -5230,7 +5733,7 @@
         },
         {
           "path": "assets/web/localization.js",
-          "sha256": "010f6fcf22c8168d08c220e654096f16e2394e0be7b5ba7c3496aecf364946a3",
+          "sha256": "9761b88471261b763819a3ad76b332d4aa5243bf2d81a9c37b293e1be2b5ac1b",
           "anchor": "subscribeLocalePreferences(value=>"
         }
       ],
@@ -5511,7 +6014,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
+          "sha256": "ef1cca7fe1006e5c5350aa3e8117a723e5197a6e70338a41e493067ded908bf3",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -5567,7 +6070,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
+          "sha256": "ef1cca7fe1006e5c5350aa3e8117a723e5197a6e70338a41e493067ded908bf3",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -5623,7 +6126,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
+          "sha256": "ef1cca7fe1006e5c5350aa3e8117a723e5197a6e70338a41e493067ded908bf3",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -5679,7 +6182,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "f1bc2edf96f6422311580aef34b6104a3aee51ad462b693fba1cc024c05a958e",
+          "sha256": "ef1cca7fe1006e5c5350aa3e8117a723e5197a6e70338a41e493067ded908bf3",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -5734,7 +6237,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "65873693acd9b6ba7cd4481d6fe94a5c181ae50ec1b074f0bcd398b5b57e0e11",
+          "sha256": "d34e18102b9e2311bc187f3d5924219b0b46b73150f88ad0e3dd5711b3a63874",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -5794,7 +6297,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "dbe45c1f3f393c054f4cf956b76314110b8060e1bc5e4f437bfb800a8757458e",
+          "sha256": "11d6a4a5388d1d68616fdb143b3faac078c15ac48ad016ada8b03529450e1fb5",
           "anchor": "value[\"tray_shell\"]"
         }
       ],

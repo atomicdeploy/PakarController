@@ -38,6 +38,10 @@ enum Opcode : uint8_t {
   kPcContractChunk = 0x57, // Full 48-byte donor request, bounded two-frame assembly.
   kGetTelemetry = 0x58, // Read-only; does not renew PCController's host/control lease.
   kGetIdentity = 0x59, // ESP USB: [nonce, offset16], bounded read-only identity chunks.
+  kEspPanel = 0x5A, // Paired ESP settings: state offer or AVR physical-menu action.
+  kAvrRxDiagnostic = 0x5B, // Physical ESP USB only, quiet S3 build: bounded RX-only capture.
+  kAvrRxDiagnosticResponse = 0xB4, // Action/error + actual capture/pad observations; never AVR ACK.
+  kEspPanelResponse = 0xB3, // Correlated action, error and authoritative ESP readback.
   kIdentityResponse = 0xB2, // [nonce, revision32, total16, offset16, <=39 JSON bytes].
   kTelemetryResponse = 0xB1, // 46 bytes; actual AVR observations.
   kPcContractResponse = 0xB0, // [PCController response opcode, payload].
@@ -106,7 +110,44 @@ enum Capability : uint16_t {
   kCapBusyWire = 1U << 12,
   kCapHostSerial = 1U << 13,
   kCapDisplayText = 1U << 14, // Individual HELLO acknowledgement of the text adapter.
+  kCapEspPanel = 1U << 15, // Explicit paired ESP settings/front-panel adapter.
 };
+
+namespace EspPanel {
+enum Action : uint8_t { Offer = 0, Query = 16, SetMode = 17,
+  Reconnect = 18, Scan = 19, SetDhcp = 20 };
+enum Notice : uint8_t { Current = 0, Draft = 1, Pending = 2,
+  Saved = 3, Failed = 4, TimedOut = 5 };
+struct Snapshot {
+  uint8_t mode = 1; // 1 AP, 2 station, 3 both; zero is never a safe network mode.
+  bool dhcp = true, stationConfigured = false, stationConnected = false;
+  char hostname[33] = {};
+};
+inline uint8_t encodeSnapshot(const Snapshot &state, uint8_t *out) {
+  uint8_t size = 0;
+  while (size < 32 && state.hostname[size]) ++size;
+  out[0] = state.mode; out[1] = state.dhcp;
+  out[2] = state.stationConfigured; out[3] = state.stationConnected;
+  out[4] = size;
+  memcpy(out + 5, state.hostname, size);
+  return 5 + size;
+}
+inline bool decodeSnapshot(const uint8_t *p, uint8_t size, Snapshot &state) {
+  if (!p || size < 6 || p[0] < 1 || p[0] > 3 || p[1] > 1 ||
+      p[2] > 1 || p[3] > 1 || !p[4] || p[4] > 32 || size != 5 + p[4])
+    return false;
+  for (uint8_t i = 0; i < p[4]; ++i) {
+    const uint8_t ch = p[5 + i];
+    if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+          (ch >= '0' && ch <= '9') || (ch == '-' && i && i + 1 < p[4])))
+      return false;
+  }
+  state.mode = p[0]; state.dhcp = p[1];
+  state.stationConfigured = p[2]; state.stationConnected = p[3];
+  memcpy(state.hostname, p + 5, p[4]); state.hostname[p[4]] = 0;
+  return true;
+}
+} // namespace EspPanel
 
 struct Frame {
   uint8_t opcode;

@@ -71,6 +71,7 @@ fn network_page(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui:
                     station_enabled: true,
                     ap_enabled: true,
                     station_ssid: String::new(),
+                    addressing: Default::default(),
                 });
             }
             if let Some(request) = &mut draft.usb_request {
@@ -178,13 +179,25 @@ fn network_page(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui:
                 field(
                     ui,
                     icons::LOCK,
-                    "Wi-Fi password",
+                    "Replacement password (blank keeps stored)",
                     &mut draft.wifi_password,
                     true,
                 );
             }
+            if network.value.addressing.observed() {
+                let address = &mut network.value.addressing;
+                ui.separator();
+                let dhcp = address.dhcp.as_mut().expect("observed addressing");
+                ui.checkbox(dhcp, "Automatic station addressing (DHCP)");
+                if !*dhcp {
+                    for (label,value) in [("IPv4 address",&mut address.address),("Gateway",&mut address.gateway),
+                        ("Subnet mask",&mut address.subnet),("Primary DNS",&mut address.dns1),("Secondary DNS",&mut address.dns2)] {
+                        if let Some(value) = value { field(ui, icons::GLOBE,label,value,false); }
+                    }
+                }
+            } else { ui.label(egui::RichText::new("Addressing is not reported by this firmware; no DHCP/static defaults are assumed.").small().weak()); }
         });
-        ui.label(egui::RichText::new("Station credentials are write-only. This firmware replaces them on each network save; re-enter the password, or explicitly choose an open network.").small().weak());
+        ui.label(egui::RichText::new("Station credentials are write-only. Blank keeps the stored password for the unchanged SSID. Enter a password or explicitly choose Open when changing networks.").small().weak());
         if !network.value.ap_enabled {
             ui.colored_label(
                 ui.visuals().warn_fg_color,
@@ -320,11 +333,7 @@ fn submit(app: &mut PakarControllerApp, draft: &mut Editor, group: Group) {
     }
     let id = draft.next_id();
     let result = match group {
-        Group::Network => draft
-            .network
-            .as_ref()
-            .ok_or("Network settings unavailable".into())
-            .and_then(|d| Write::network(id, &d.value, &draft.wifi_password, draft.open_network)),
+        Group::Network => draft.network_write(id),
         Group::Cloud => draft
             .cloud
             .as_ref()
@@ -776,9 +785,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
         ui.label(egui::RichText::new(&draft.message).small());
     }
     let validation = match draft.page {
-        2 => draft.network.as_ref().and_then(|d| {
-            Write::network(0, &d.value, &draft.wifi_password, draft.open_network).err()
-        }),
+        2 => draft.network.as_ref().and_then(|_| draft.network_write(0).err()),
         3 | 4 => draft.cloud.as_ref().and_then(|d| {
             Write::cloud(0, &d.value, &draft.mqtt_password, &draft.websocket_token).err()
         }),
@@ -816,8 +823,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
                 let valid = match group {
                     Group::Network => draft.network.as_ref().is_some_and(|d| {
                         !d.conflict
-                            && Write::network(0, &d.value, &draft.wifi_password, draft.open_network)
-                                .is_ok()
+                            && draft.network_write(0).is_ok()
                     }),
                     Group::Cloud => draft.cloud.as_ref().is_some_and(|d| {
                         !d.conflict
@@ -867,7 +873,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
     if draft.network_confirmation {
         egui::Modal::new(egui::Id::new("network-save-confirm")).show(ui.ctx(),|ui| {
             ui.set_width(390.0); ui.heading("Apply network changes?");
-            ui.label("The ESP will reassociate Wi-Fi. This connection may drop; reconnect and refresh if readback is unavailable. The station password will be replaced.");
+            ui.label("The ESP will reassociate Wi-Fi. This connection may drop; reconnect and refresh if readback is unavailable. A blank password preserves the stored secret; Open explicitly clears it.");
             dialog::action_row(ui,false,|ui| {
                 let usb_ready=app.command_route()==Some(Transport::Serial) && draft.usb_request.is_some();
                 if ui.add_enabled(ready || usb_ready,egui::Button::new("Apply network")).clicked() {

@@ -1,6 +1,9 @@
 #pragma once
 
 #include <Arduino.h>
+#if defined(ARDUINO_ARCH_ESP32)
+#include "../../esp32s3/src/BoardPins.h"
+#endif
 #include <FastLED.h>
 
 #include <Protocol.h>

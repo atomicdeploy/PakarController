@@ -40,4 +40,7 @@ struct FakeSPI {
     }return 0;
   }
 };
-inline FakeSPI SPI;
+// Production now holds the SDK's SPIClass reference; retain the exact same
+// behavioral fixture under that real SDK type name, not a production fallback.
+using SPIClass = FakeSPI;
+inline SPIClass SPI;

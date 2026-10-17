@@ -9,7 +9,7 @@ target="${2:-both}"
 clean_args=()
 # Explicit troubleshooting only, never part of a routine build.
 if [[ "${3:-}" == "--clean" ]]; then clean_args=(--clean); fi
-case "$target" in both|avr|esp8266) ;; *) echo "target must be both, avr or esp8266" >&2; exit 2 ;; esac
+case "$target" in both|avr|esp8266|esp32s3) ;; *) echo "target must be both, avr, esp8266 or esp32s3" >&2; exit 2 ;; esac
 if [[ -n "${3:-}" && "${3:-}" != "--clean" ]]; then echo "third argument must be --clean" >&2; exit 2; fi
 
 case "$link_mode" in
@@ -18,8 +18,15 @@ case "$link_mode" in
   buffered) busy_flag=0; buffered_flag=1; suffix="-buffered" ;;
   *) echo "link mode must be polling, busy-wire or buffered" >&2; exit 2 ;;
 esac
-if [[ "$link_mode" == "buffered" && "$target" != "avr" ]]; then
+if [[ "$link_mode" == "buffered" && "$target" != "avr" && "$target" != "esp32s3" ]]; then
   echo "buffered mode targets paired AVR only; ESP8266 needs busy-wire or polling" >&2; exit 2
+fi
+if [[ "$target" == "esp32s3" ]]; then
+  # Reuse the same reviewed S3 command and warm per-target cache on both hosts.
+  pwsh -NoProfile -File "$root/tools/build-firmware.ps1" -Target esp32s3 \
+    -LinkMode "$link_mode" -S3FlashMB "${PAKAR_S3_FLASH_MB:-16}" \
+    -S3Psram "${PAKAR_S3_PSRAM:-opi}"
+  exit $?
 fi
 
 if [[ "$target" != "esp8266" ]]; then

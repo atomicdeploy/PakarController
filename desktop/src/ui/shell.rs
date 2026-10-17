@@ -600,6 +600,7 @@ impl PakarControllerApp {
         let status_actions = ui::status_bar::draw(
             ui,
             ui::status_bar::StatusBar {
+                status_rgb: s.status_rgb.as_ref(),
                 peer_known: snapshot.is_some(),
                 avr_available: ["display", "text", "buzzer", "inputs", "outputs", "settings"].iter().any(|v| self.has_feature(v)),
                 display_available: self.has_feature("display"),

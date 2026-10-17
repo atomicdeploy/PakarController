@@ -1,8 +1,13 @@
 # PakarController ESP32-S3 migration
 
-Status: migration adapters added; **not an S3 production build or physical acceptance**.
-ASUS/board acceptance is deliberately deferred while hardware is being replaced.
-Existing ESP8266 firmware is preserved. No flash/EEPROM writes were attempted.
+Status: integrated S3 source and native candidate implemented; actual SDK and
+physical acceptance are in progress, **not a completed production delivery**.
+David-ASUS is reachable on SSH port8022. COM22 identifies the actual S3's CH343
+bridge; read-only inventory confirmed16MB flash/8MB PSRAM and a complete private
+flash backup on both PCs. Existing ESP8266 firmware remains a separate target.
+See [commissioning and recovery](ESP32-S3-COMMISSIONING.md) for exact hardware,
+backup hash, guarded build and setup commands. Do not interpret old source-only
+checkpoint statements below as current deployment proof.
 
 ## Provisional common DevKitC-1 wiring
 
@@ -98,7 +103,8 @@ default. The paired AVR **build** now has an explicit buffered profile:
 `PAKAR_USE_BUSY_WIRE=0` and `PAKAR_UART_BUFFERED=1`. The existing polling build
 remains polling-only; changing hardware must not silently reinterpret it.
 Buffered sends reserve room for a complete frame and do not access the busy GPIO.
-All three AVR profiles compile; this is not a deployed S3/AVR pair.
+All three AVR profiles compiled at the earlier preparation checkpoint; the new
+front-panel extension requires its own paired build/deployment acceptance.
 Buffered UART does not guarantee zero loss. Bounded frames,
 ACK/deadlines, reconnect recovery and overflow stress are still necessary.
 
@@ -107,7 +113,7 @@ ACK/deadlines, reconnect recovery and overflow stress are still necessary.
 | Area | Current source / stack |
 |---|---|
 | ESP application | firmware/esp8266; Arduino ESP8266 3.1.2, FastLED 3.10.6, ESP Async WebServer 3.12.1 / ESP Async TCP 2.0.0, ArduinoJson 7.4.3, WebSockets 2.7.2, PubSubClient 2.8.0, LittleFS |
-| S3 migration | firmware/esp32s3/src: BoardPins, AvrUart, MenuAudio; Arduino-ESP32 3.3.12 installed, integration/compile pending |
+| S3 migration | firmware/esp32s3 includes the shared integrated application; BoardPins, hardware UART1, semantic StatusRgb, PU-derived SSDP/MNDP/mDNS; Arduino-ESP323.3.12, maintained Async TCP3.5.0; actual SDK acceptance in progress |
 | AVR | firmware/avr + shared libraries/BoardCore, MiniCore/Urboot, actual PCController-compatible contracts and board peripherals |
 | Desktop | desktop: Rust/eframe+egui 0.36.2, egui_dock 0.21.1, Phosphor 0.14.0, egui-elegance 0.16.1, tray-icon, reqwest, tungstenite, serialport; no mpv |
 | Android | mobile: Flutter/Dart, http, web_socket_channel, shared_preferences, secure storage; vendored Vazirmatn/Phosphor fonts |
@@ -123,7 +129,9 @@ and NetBIOS (only labels fitting 15 characters). Desktop and Android use stable
 hostname-first access plus authenticated, hostname-matched SSDP transport fallback.
 They do not currently implement a full browsable DNS-SD discovery catalog.
 Physical multicast/reconnect/AP/rename acceptance remains unverified while offline.
-S3 discovery still needs its platform adapters; none is claimed operating.
+S3 platform adapters now exist, including the actual adapted PU SSDP engine and
+AP/STA interface handling; live LAN/phone discovery acceptance remains pending.
+S3 NetBIOS is explicitly unavailable, not falsely advertised as implemented.
 
 ## LED and protocol decisions
 
@@ -146,10 +154,11 @@ and cue support; accepts success only on matching ACK. Menu actions must call it
 once per navigation, not per repaint. Physical beeps and all-client integration
 remain pending, not claimed complete.
 
-Next gates: shared ESP platform extraction; partition-safe OTA and recovery;
-S3 TLS/telemetry/filesystem/USB/ISP/discovery adapters; paired buffered-link integration;
-shared LED pin/RMT transport; desktop/mobile feedback and discovery UI; real S3
-build; simulated UI matrix; finally physical UART/ISP/LED/display/audio and OTA.
+Implemented source now includes the shared sketch/per-TU wrappers, partition-safe
+OTA reads/abort, TLS/telemetry/filesystem/USB/ISP/discovery adapters, buffered UART,
+shared LED engine and actual-output RGB native/Web mirror. Next gates remain
+actual SDK compilation, paired safe deployment, optical/audio/UART/ISP/OTA
+acceptance, mobile/TUI parity and full ESP front-panel text/address editors.
 
 Primary references: [Espressif GPIO restrictions](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/gpio.html),
 [Arduino-ESP32 UART buffer/pin API](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/serial.html),

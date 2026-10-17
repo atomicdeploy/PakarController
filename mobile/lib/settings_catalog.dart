@@ -105,7 +105,13 @@ const deviceSettingsCatalog = {
   "network": {
     "station_enabled": "boolean",
     "ap_enabled": "boolean",
-    "station_ssid": "string"
+    "station_ssid": "string",
+    "dhcp": "optional:boolean",
+    "address": "optional:string",
+    "gateway": "optional:string",
+    "subnet": "optional:string",
+    "dns1": "optional:string",
+    "dns2": "optional:string"
   },
   "cloud": {
     "mqtt_enabled": "boolean",

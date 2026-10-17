@@ -13,30 +13,48 @@ bool AvrIsp::fail(const __FlashStringHelper *message) {
 
 uint8_t AvrIsp::transfer4(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
                           uint8_t *third) {
-  SPI.transfer(a);
-  SPI.transfer(b);
-  const uint8_t thirdValue = SPI.transfer(c);
+  spi_.transfer(a);
+  spi_.transfer(b);
+  const uint8_t thirdValue = spi_.transfer(c);
   if (third != nullptr) *third = thirdValue;
-  return SPI.transfer(d);
+  return spi_.transfer(d);
 }
 
 bool AvrIsp::enter() {
   error_ = String();
+#if defined(ARDUINO_ARCH_ESP32)
+  if (!PAKAR_S3_ISP_ELECTRICAL_VERIFIED) {
+    error_ = F("ISP disabled: confirm voltage-safe circuit and reset polarity before enabling build flag");
+    return false;
+  }
+  digitalWrite(resetPin_, !PAKAR_S3_ISP_RESET_ASSERT_LEVEL);
+  pinMode(resetPin_, OUTPUT);
+  if (!spi_.begin(PAKAR_S3_ISP_SCK, PAKAR_S3_ISP_MISO, PAKAR_S3_ISP_MOSI, -1)) {
+    pinMode(resetPin_, INPUT);
+    error_ = F("Cannot start dedicated AVR ISP SPI bus");
+    return false;
+  }
+  busStarted_ = true;
+  spi_.beginTransaction(SPISettings(kSpiClock, MSBFIRST, SPI_MODE0));
+  digitalWrite(PAKAR_S3_ISP_SCK, LOW);
+  delay(5);
+  digitalWrite(resetPin_, PAKAR_S3_ISP_RESET_ASSERT_LEVEL);
+#else
   pinMode(resetPin_, OUTPUT_OPEN_DRAIN);
   digitalWrite(resetPin_, HIGH);
-  SPI.begin();
-  SPI.beginTransaction(SPISettings(kSpiClock, MSBFIRST, SPI_MODE0));
+  spi_.begin();
+  busStarted_ = true;
+  spi_.beginTransaction(SPISettings(kSpiClock, MSBFIRST, SPI_MODE0));
   digitalWrite(SCK, LOW);
   delay(5);
   digitalWrite(resetPin_, LOW);
+#endif
+  active_ = true;
   delay(30);
   uint8_t echo = 0;
   transfer4(0xAC, 0x53, 0x00, 0x00, &echo);
   if (echo != 0x53) {
-    SPI.endTransaction();
-    SPI.end();
-    digitalWrite(resetPin_, HIGH);
-    pinMode(resetPin_, INPUT);
+    leave();
     error_ = F("AVR did not enter serial programming mode");
     return false;
   }
@@ -45,13 +63,21 @@ bool AvrIsp::enter() {
 }
 
 void AvrIsp::leave() {
-  if (active_) SPI.endTransaction();
-  SPI.end();
+  if (!busStarted_) return;
+  if (active_) spi_.endTransaction();
+  spi_.end();
+#if defined(ARDUINO_ARCH_ESP32)
+  pinMode(PAKAR_S3_ISP_MOSI, INPUT);
+  pinMode(PAKAR_S3_ISP_SCK, INPUT);
+  digitalWrite(resetPin_, !PAKAR_S3_ISP_RESET_ASSERT_LEVEL);
+#else
   pinMode(MOSI, INPUT);
   pinMode(SCK, INPUT);
   digitalWrite(resetPin_, HIGH);
+#endif
   pinMode(resetPin_, INPUT);
   active_ = false;
+  busStarted_ = false;
   delay(10);
 }
 

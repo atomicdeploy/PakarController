@@ -35,12 +35,20 @@ String networkTelemetry() {
   d[F("station")][F("dns0")]=WiFi.dnsIP(0).toString();d[F("station")][F("dns1")]=WiFi.dnsIP(1).toString();
   if(connected) {d[F("station")][F("rssi_dbm")]=WiFi.RSSI();d[F("station")][F("channel")]=WiFi.channel();}
   else {d[F("station")][F("rssi_dbm")]=nullptr;d[F("station")][F("channel")]=nullptr;}
+#if defined(ARDUINO_ARCH_ESP32)
+  d[F("station")][F("dhcp")]=networkConfig.dhcpEnabled();
+#else
   d[F("station")][F("dhcp")]=wifi_station_dhcpc_status()==DHCP_STARTED;
+#endif
   d[F("ap")][F("enabled")]=apStarted;d[F("ap")][F("configured")]=networkConfig.accessPointEnabled();
   d[F("ap")][F("ssid")]=WiFi.softAPSSID();d[F("ap")][F("mac")]=WiFi.softAPmacAddress();
   d[F("ap")][F("ip")]=WiFi.softAPIP().toString();d[F("ap")][F("clients")]=WiFi.softAPgetStationNum();
+#if defined(ARDUINO_ARCH_ESP32)
+  d[F("ap")][F("netmask")]=WiFi.softAPSubnetMask().toString();
+#else
   struct ip_info ip;
   if(wifi_get_ip_info(SOFTAP_IF,&ip)) d[F("ap")][F("netmask")]=IPAddress(ip.netmask.addr).toString();
+#endif
   d[F("passwords")]=F("redacted");return encodedJson(d);
 }
 String buildTelemetryJson() {
@@ -53,23 +61,46 @@ String buildTelemetryJson() {
   application[F("id")]=APP_ID;application[F("name")]=APP_NAME;application[F("title")]=APP_TITLE;
   d[F("version")]=BoardCore::BuildInfo::kVersion;
   auto e=d[F("esp")].to<JsonObject>();
-  e[F("model")]=F("nodemcuv2");e[F("chip_id")]=ESP.getChipId();e[F("flash_chip_id")]=ESP.getFlashChipId();
+  e[F("model")]=FirmwarePlatform::model();e[F("chip_id")]=SystemPlatform::chipId();
+#if defined(ARDUINO_ARCH_ESP32)
+  e[F("chip_model")]=ESP.getChipModel();e[F("chip_revision")]=ESP.getChipRevision();e[F("chip_cores")]=ESP.getChipCores();
+  e[F("flash_chip_id")]=nullptr;e[F("core_version")]=ESP_ARDUINO_VERSION_STR;
+  e[F("sdk_version")]=ESP.getSdkVersion();e[F("full_version")]=ESP_ARDUINO_VERSION_STR;
+  e[F("flash_real_bytes")]=ESP.getFlashChipSize();
+  e[F("largest_heap_block_bytes")]=ESP.getMaxAllocHeap();e[F("heap_fragmentation_percent")]=nullptr;
+  e[F("reset_reason")]=SystemPlatform::resetReason();e[F("reset_info")]=nullptr;
+  e[F("psram_bytes")]=ESP.getPsramSize();e[F("free_psram_bytes")]=ESP.getFreePsram();
+  e[F("filesystem")][F("total_bytes")]=LittleFS.totalBytes();e[F("filesystem")][F("used_bytes")]=LittleFS.usedBytes();
+#else
+  e[F("flash_chip_id")]=ESP.getFlashChipId();
   e[F("core_version")]=ESP.getCoreVersion();e[F("sdk_version")]=ESP.getSdkVersion();e[F("full_version")]=ESP.getFullVersion();
+  e[F("flash_real_bytes")]=ESP.getFlashChipRealSize();
+  e[F("largest_heap_block_bytes")]=ESP.getMaxFreeBlockSize();e[F("heap_fragmentation_percent")]=ESP.getHeapFragmentation();
+  e[F("reset_reason")]=ESP.getResetReason();e[F("reset_info")]=ESP.getResetInfo();
+  FSInfo fs;if(LittleFS.info(fs)) {e[F("filesystem")][F("total_bytes")]=fs.totalBytes;e[F("filesystem")][F("used_bytes")]=fs.usedBytes;}
+#endif
   e[F("cpu_mhz")]=ESP.getCpuFreqMHz();e[F("flash_bytes")]=ESP.getFlashChipSize();
-  e[F("flash_real_bytes")]=ESP.getFlashChipRealSize();e[F("flash_hz")]=ESP.getFlashChipSpeed();
+  e[F("flash_hz")]=ESP.getFlashChipSpeed();
   e[F("flash_mode")]=static_cast<int>(ESP.getFlashChipMode());
   e[F("sketch_bytes")]=ESP.getSketchSize();e[F("sketch_md5")]=ESP.getSketchMD5();
   e[F("boot_integrity_verified")]=bootIntegrity;e[F("ota_free_bytes")]=ESP.getFreeSketchSpace();
-  e[F("free_heap_bytes")]=ESP.getFreeHeap();e[F("largest_heap_block_bytes")]=ESP.getMaxFreeBlockSize();
-  e[F("heap_fragmentation_percent")]=ESP.getHeapFragmentation();e[F("uptime_ms")]=now;
-  e[F("reset_reason")]=ESP.getResetReason();e[F("reset_info")]=ESP.getResetInfo();
-  FSInfo fs;if(LittleFS.info(fs)) {e[F("filesystem")][F("total_bytes")]=fs.totalBytes;e[F("filesystem")][F("used_bytes")]=fs.usedBytes;}
+  e[F("free_heap_bytes")]=ESP.getFreeHeap();e[F("uptime_ms")]=now;
   e[F("uart_errors")]=link.errors();e[F("usb_errors")]=hostLink.errors();
-  e[F("hardware")][F("ws2811_pin")]=F("D2/GPIO4");e[F("hardware")][F("pixels")]=480;e[F("hardware")][F("cells")]=80;
+#if defined(ARDUINO_ARCH_ESP32)
+  e[F("hardware")][F("ws2811_pin")]=PAKAR_S3_LED_DATA;
+  e[F("hardware")][F("avr_rx")]=PAKAR_S3_AVR_RX;e[F("hardware")][F("avr_tx")]=PAKAR_S3_AVR_TX;
+  e[F("hardware")][F("uart_baud")]=38400;e[F("hardware")][F("busy_pin")]=nullptr;
+  e[F("hardware")][F("isp_reset")]=PAKAR_S3_ISP_RESET;e[F("hardware")][F("isp_spi")]=F("GPIO11,GPIO13,GPIO12");
+  e[F("hardware")][F("isp_available")]=static_cast<bool>(PAKAR_S3_ISP_ELECTRICAL_VERIFIED);
+#else
+  e[F("hardware")][F("ws2811_pin")]=F("D2/GPIO4");
   e[F("hardware")][F("avr_rx")]=F("D4/GPIO2");e[F("hardware")][F("avr_tx")]=F("D0/GPIO16");
   e[F("hardware")][F("uart_baud")]=38400;e[F("hardware")][F("busy_pin")]=F("D3/GPIO0");
   e[F("hardware")][F("busy_wire")]=static_cast<bool>(PAKAR_USE_BUSY_WIRE);
   e[F("hardware")][F("isp_reset")]=F("D1/GPIO5");e[F("hardware")][F("isp_spi")]=F("D5,D6,D7");
+#endif
+  e[F("hardware")][F("pixels")]=480;e[F("hardware")][F("cells")]=80;
+  e[F("hardware")][F("busy_wire")]=static_cast<bool>(PAKAR_USE_BUSY_WIRE);
   e[F("hardware")][F("i2c_present")]=false;
   auto a=d[F("avr")].to<JsonObject>();a[F("online")]=avrOnline;a[F("version_known")]=avrVersionKnown;
   if(avrVersionKnown) a[F("version")]=avrVersionText();else a[F("version")]=nullptr;
@@ -248,7 +279,7 @@ bool handleMaintenanceShell(const String &line,String &result) {
   return remoteCommand(d,result);
 }
 void registerMaintenanceRoutes() {
-  bootIntegrity=ESP.checkFlashCRC();
+  bootIntegrity=FirmwarePlatform::runningIntegrity();
   remoteFirmware.begin(pcBootId,prepareRemotePair,programRemoteAvr,finishRemotePair);
   File locale=LittleFS.open("/locale.cfg","r");
   if(locale && locale.size()==2) {char p[3]={};locale.read(reinterpret_cast<uint8_t*>(p),2);
@@ -309,7 +340,11 @@ void registerMaintenanceRoutes() {
   });
   server.on("/wifi/country",HTTP_GET,[](){
     if(!authenticate())return;wifi_country_t country{};JsonDocument d;
+#if defined(ARDUINO_ARCH_ESP32)
+    if(esp_wifi_get_country(&country)==ESP_OK) {char cc[3]={country.cc[0],country.cc[1],0};d[F("country")]=cc;d[F("start_channel")]=country.schan;d[F("channels")]=country.nchan;}
+#else
     if(wifi_get_country(&country)) {char cc[3]={country.cc[0],country.cc[1],0};d[F("country")]=cc;d[F("start_channel")]=country.schan;d[F("channels")]=country.nchan;}
+#endif
     else d[F("country")]=nullptr;
     sendMaintenanceJson(encodedJson(d));
   });
@@ -317,7 +352,12 @@ void registerMaintenanceRoutes() {
     if(!authenticate())return;const String name=server.arg("value");
     if(!RemotePolicy::host(name.c_str(),name.length())) {server.send(400,"text/plain","Invalid DNS hostname");return;}
     if(remoteFirmware.busy()) {server.send(409,"text/plain","Firmware operation active");return;}
-    IPAddress ip;const bool ok=WiFi.hostByName(name.c_str(),ip,3000)==1;
+    IPAddress ip;
+#if defined(ARDUINO_ARCH_ESP32)
+    const bool ok=WiFi.hostByName(name.c_str(),ip)==1;
+#else
+    const bool ok=WiFi.hostByName(name.c_str(),ip,3000)==1;
+#endif
     JsonDocument d;d[F("hostname")]=name;d[F("resolved")]=ok;if(ok)d[F("ip")]=ip.toString();else d[F("ip")]=nullptr;
     sendMaintenanceJson(encodedJson(d),ok?200:404);
   });
@@ -339,7 +379,7 @@ void registerMaintenanceRoutes() {
   });
   server.on("/random",HTTP_GET,[](){
     if(!authenticate())return;uint8_t bytes[32];char hex[65];
-    if(os_get_random(bytes,sizeof(bytes))) {server.send(503,"text/plain","Entropy unavailable");return;}
+    if(SystemPlatform::randomBytes(bytes,sizeof(bytes))) {server.send(503,"text/plain","Entropy unavailable");return;}
     for(unsigned i=0;i<32;++i)snprintf(hex+i*2,3,"%02x",bytes[i]);
     JsonDocument d;d[F("random_hex")]=hex;sendMaintenanceJson(encodedJson(d));
   });
@@ -379,7 +419,7 @@ void registerMaintenanceRoutes() {
       d[F("avr_online")]=avrOnline;d[F("prog")]=programmingLatched;d[F("uart_errors")]=link.errors();d[F("usb_errors")]=hostLink.errors();
       d[F("last_reply_seen")]=awaitedReplySeen;
       if(awaitedReplySeen) {d[F("request_opcode")]=awaitedOpcode;d[F("acknowledged")]=awaitedReplyOk;} else d[F("request_opcode")]=nullptr;
-      d[F("reset_reason")]=ESP.getResetReason();d[F("raw_uart_logging")]=false;
+      d[F("reset_reason")]=SystemPlatform::resetReason();d[F("raw_uart_logging")]=false;
       sendMaintenanceJson(encodedJson(d));
     });
   server.on("/debug/clear",HTTP_POST,[](){

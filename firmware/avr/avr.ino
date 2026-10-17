@@ -126,6 +126,14 @@ class BoardHardware final : public PcControllerHardware {
     else if (page == 5) value = running;
     frontPanel.setMenu(page, active, value);
   }
+  void showEspMenu(bool active, uint8_t page, uint8_t notice, uint8_t value,
+                    const char *hostname, uint32_t now) override {
+    frontPanel.setEspMenu(active, page, notice, value, hostname, now);
+  }
+  void menuNavigationCue(bool forward) override {
+    if (!programmingLatch.active() && !buzzer.muted())
+      playAudioCue(forward ? kCueIncrease : kCueDecrease);
+  }
   void safeStop() override {
     shiftRegisters.allOutputsOff(); buzzer.stop(); markStateDirty();
   }
@@ -179,7 +187,11 @@ void showState() {
 
 void sendHello(uint8_t sequence = 0) {
   const uint16_t capabilities = kCapShiftInputs | kCapShiftOutputs | kCapAdc9 |
-                                kCapTm1637 | kCapDisplayText | kCapBuzzer;
+                                kCapTm1637 | kCapDisplayText | kCapBuzzer
+#if PAKAR_PC_MENU
+                                | kCapEspPanel
+#endif
+                                ;
   const uint8_t payload[] = {
       0, kRoleAvr, // Reserved zero; explicit capability bits own availability.
       static_cast<uint8_t>(capabilities),
@@ -291,11 +303,21 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
   if (programmingLatch.active() && frame.opcode != kHello &&
       frame.opcode != kGetStatus && frame.opcode != kProgrammingState &&
       frame.opcode != kPing && frame.opcode != kGetTelemetry &&
-      frame.opcode != kPcContract && frame.opcode != kPcContractChunk) {
+      frame.opcode != kPcContract && frame.opcode != kPcContractChunk &&
+      frame.opcode != kEspPanel && frame.opcode != kEspPanelResponse) {
     link.error(frame.sequence, frame.opcode, kUnsafe);
     return;
   }
   switch (frame.opcode) {
+    case kEspPanel:
+    case kEspPanelResponse:
+      // These frames carry ESP-owned settings readback only. They cannot
+      // clear Prog or mutate AVR settings; no fictitious generic HostMenu ACK.
+      if (pcController.observeEspPanel(frame, millis())) markStateDirty();
+      else if (frame.opcode == kEspPanel)
+        link.error(frame.sequence, frame.opcode,
+                   PAKAR_PC_MENU ? kBadPayload : kUnsupported);
+      break;
     case kGetTelemetry:
       if(frame.payloadLength) link.error(frame.sequence,frame.opcode,kBadPayload);
       else sendTelemetry(frame.sequence);
@@ -421,7 +443,8 @@ void boardKeyGesture(uint8_t bit, KeyEvent event, void *) {
     markStateDirty();
   }
   pcController.key(bit, event, 0, millis(), micros());
-  if (!pcController.menuActive() && !frontPanel.captured() && primary)
+  if (!pcController.menuActive() && !pcController.espMenuActive() &&
+      !frontPanel.captured() && primary)
     onInputChanged(bit + 1, true);
 }
 

@@ -24,6 +24,16 @@ assert.match(build,/node tools\/ci-checks.mjs (quality|desktop)/);
 const firmwareJob=build.split('  firmware:')[1].split('  windows-desktop:')[0];
 assert.match(firmwareJob,/actions\/setup-node@[a-f0-9]{40}[\s\S]*node-version: '24'/,
   'Firmware asset verification must use the same Node major as source quality');
+const quietSdkCommand='pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -PauseAvrLink -Jobs 2';
+const normalSdkCommand='./build.sh buffered esp32s3';
+assert.equal(firmwareJob.split(quietSdkCommand).length-1,1,'Compile the quiet-only SDK adapter exactly once through the guarded wrapper');
+assert.equal(firmwareJob.split(normalSdkCommand).length-1,1,'Keep one canonical normal S3 build');
+assert(firmwareJob.indexOf(quietSdkCommand)<firmwareJob.indexOf(normalSdkCommand),
+  'Normal S3 output must replace the quiet diagnostic image in the shared cache/output before upload');
+assert(firmwareJob.indexOf(normalSdkCommand)<firmwareJob.indexOf('actions/upload-artifact@'),
+  'Never publish the quiet diagnostic output as canonical firmware');
+assert.doesNotMatch(firmwareJob,/--clean|\s-Clean\b/,'Variant coverage must reuse the warm cache');
+assert.doesNotMatch(firmwareJob,/esp32s3-(quiet|passive)/,'Do not create a separate diagnostic cache/package');
 const nativeTestStep=build.split('      - name: Test and build the mpv-free Windows client')[1].split('      - uses:')[0];
 assert.match(nativeTestStep,/PAKAR_CONFIG_FILE: \$\{\{ runner.temp \}\}\/pakar-tests.json/,
   'Native tests must not access a user configuration');
