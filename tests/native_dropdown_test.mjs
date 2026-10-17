@@ -30,8 +30,20 @@ for(const source of [shell,settings]) {
 }
 assert(!controls.includes('▾'));
 assert(controls.includes('icons::CARET_DOWN'));
-assert.equal(controls.match(/dropdown::menu_ui\(ui, owner/g)?.length,2);
-assert.equal(controls.match(/dropdown::clear_menu\(ui.ctx\(\), owner/g)?.length,2);
+function connectionConsumers(source) {
+  assert.equal(source.match(/dropdown::menu_ui\(ui, owner/g)?.length,1, 'one shared connection popup focus owner');
+  assert.equal(source.match(/dropdown::clear_menu\(ui.ctx\(\), owner/g)?.length,1, 'one matching closed-popup cleanup');
+  assert.ok(!/pub fn (websocket|usb)\(/.test(source), 'no independent transport popup consumers');
+}
+connectionConsumers(controls);
+assert.throws(()=>connectionConsumers(`${controls}\ndropdown::menu_ui(ui, owner`), /one shared connection/);
+assert.throws(()=>connectionConsumers(controls.replace('dropdown::clear_menu(ui.ctx(), owner', 'removed_cleanup(ui.ctx(), owner')), /one matching/);
+assert(prefs.includes('outcome.connection_settings && !draft.is_dirty()'));
+assert(prefs.includes('app.show_connection = true;'));
+assert(prefs.includes('draft.sync_connection_owner(app.transport, app.connection_enabled, &app.base, &app.user, &app.serial_port);'));
+assert(!prefs.includes('dialog::singleline_text_edit(&mut draft.config.endpoint)'));
+assert(!prefs.includes('dialog::singleline_text_edit(&mut draft.config.serial_port)'));
+assert(!prefs.includes('app.base = app.config.endpoint.clone();'));
 for(const hook of ['remember_color','custom_menu_row','palette_popup']) assert(colors.includes(`pub fn ${hook}`));
 assert(colors.includes('colors.truncate(12)'));
 assert(colors.includes('data.get_temp::<Vec<egui::Color32>>'));

@@ -58,6 +58,18 @@ impl PreferencesDraft {
     fn matches(&self, text: &str) -> bool {
         self.search.is_empty() || text.to_lowercase().contains(&self.search.to_lowercase())
     }
+    // Adapted from Pealayer PreferencesDraft::sync_external_appearance: live
+    // owner fields update all three baselines without erasing unrelated drafts.
+    fn sync_connection_owner(&mut self, method: crate::connection::Method, enabled: bool,
+        endpoint: &str, user: &str, port: &str) {
+        for target in [&mut self.config, &mut self.saved_config, &mut self.previewed_config] {
+            target.connection_method = method;
+            target.connection_enabled = enabled;
+            target.endpoint = endpoint.to_owned();
+            target.user = user.to_owned();
+            target.serial_port = port.to_owned();
+        }
+    }
 }
 #[derive(Default)]
 struct Outcome {
@@ -65,6 +77,19 @@ struct Outcome {
     close: bool,
     discard: bool,
     test_notification: bool,
+    connection_settings: bool,
+}
+fn connection_summary(draft: &PreferencesDraft, ui: &mut egui::Ui) -> egui::Response {
+    let config = &draft.config;
+    ui.strong(format!("{} · {}", super::connection_controls::method_label(config.connection_method),
+        if config.connection_enabled { "Enabled" } else { "Disconnected" }));
+    ui.weak(match config.connection_method {
+        crate::connection::Method::WiFi => config.endpoint.as_str(),
+        crate::connection::Method::Serial if config.serial_port.is_empty() => "No port selected",
+        crate::connection::Method::Serial => config.serial_port.as_str(),
+    });
+    ui.add_enabled(!draft.is_dirty(), egui::Button::new(format!("{}  Connection settings…", icons::GEAR)))
+        .on_disabled_hover_text("Save or discard preference changes before opening connection settings.")
 }
 fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
     crate::config::set_live(&draft.config);
@@ -113,10 +138,10 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
                     });ui.add_space(8.0);
                 }
                 if draft.tab==2||!draft.search.is_empty(){
-                    dialog::section(ui,icons::PLUG,"Connection defaults",|ui|{
-                        if draft.matches("Endpoint hostname URL"){dialog::setting_row(ui,icons::GLOBE,"Device endpoint",None,|ui|{ui.add_sized([ui.available_width(),28.0],dialog::singleline_text_edit(&mut draft.config.endpoint));});}
-                        if draft.matches("Username user"){dialog::setting_row(ui,icons::LOCK,"Username",None,|ui|{ui.add_sized([ui.available_width(),28.0],dialog::singleline_text_edit(&mut draft.config.user));});}
-                        if draft.matches("USB serial port COM"){dialog::setting_row(ui,icons::PLUG,"USB serial port",None,|ui|{ui.add_sized([ui.available_width(),28.0],dialog::singleline_text_edit(&mut draft.config.serial_port));});}
+                    dialog::section(ui,icons::PLUG,"Connection",|ui|{
+                        if draft.matches("Connection settings Endpoint hostname URL Username user USB serial port COM") {
+                            outcome.connection_settings = connection_summary(draft, ui).clicked();
+                        }
                     });ui.add_space(8.0);
                 }
                 if draft.tab==4||!draft.search.is_empty(){
@@ -200,6 +225,7 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
     let Some(mut draft) = app.preferences.take() else {
         return;
     };
+    draft.sync_connection_owner(app.transport, app.connection_enabled, &app.base, &app.user, &app.serial_port);
     if draft.tab == 4 {
         let status = app.notification_snapshot();
         draft.status = format!(
@@ -262,16 +288,19 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
     if outcome.test_notification {
         app.notification_test();
     }
+    if outcome.connection_settings && !draft.is_dirty() {
+        app.show_connection = true;
+        crate::config::apply(ctx, &app.config);
+        return; // Close only this clean Preferences editor; the canonical dialog owns connection edits.
+    }
     if outcome.save {
         // Layout belongs to the workspace and can change while Preferences is open.
         draft.config.dock_layout = super::layout::serialize(&app.dock).unwrap_or_default();
+        draft.sync_connection_owner(app.transport, app.connection_enabled, &app.base, &app.user, &app.serial_port);
         match draft.config.save() {
             Ok(()) => {
                 app.config = draft.config.clone();
                 app.palette = app.config.color_palette;
-                app.base = app.config.endpoint.clone();
-                app.user = app.config.user.clone();
-                app.serial_port = app.config.serial_port.clone();
                 crate::config::apply(ctx, &app.config);
                 app.notify(
                     "Preferences saved",
@@ -320,5 +349,48 @@ mod tests {
         assert!(page_index("notification").is_none());
         d.select_page(50);
         assert_eq!(d.tab, 4);
+    }
+    #[test]
+    fn external_connection_owner_updates_all_baselines_without_losing_unrelated_drafts() {
+        for dirty in [false, true] {
+            let mut draft = PreferencesDraft::new(AppConfig::default());
+            if dirty { draft.config.close_to_tray = !draft.config.close_to_tray; }
+            let close_to_tray = draft.config.close_to_tray;
+            draft.sync_connection_owner(crate::connection::Method::Serial, true,
+                "http://new-board.local", "operator", "COM22");
+            assert_eq!(draft.is_dirty(), dirty, "a clean editor must not become dirty after IPC changes method");
+            assert_eq!(draft.config.close_to_tray, close_to_tray);
+            for baseline in [&draft.config, &draft.saved_config, &draft.previewed_config] {
+                assert_eq!(baseline.connection_method, crate::connection::Method::Serial);
+                assert!(baseline.connection_enabled);
+                assert_eq!(baseline.endpoint, "http://new-board.local");
+                assert_eq!(baseline.user, "operator");
+                assert_eq!(baseline.serial_port, "COM22");
+            }
+        }
+    }
+    #[test]
+    fn connection_summary_is_contextual_and_dirty_preferences_cannot_open_another_editor() {
+        for method in [crate::connection::Method::WiFi, crate::connection::Method::Serial] {
+            for dirty in [false, true] {
+                let ctx = egui::Context::default();
+                let mut draft = PreferencesDraft::new(AppConfig::default());
+                draft.sync_connection_owner(method, false, "http://ledboard.local", "operator", "COM22");
+                if dirty { draft.config.close_to_tray = !draft.config.close_to_tray; }
+                let mut enabled = false;
+                let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+                    enabled = connection_summary(&draft, ui).enabled();
+                });
+                output.textures_delta.clear();
+                let texts: Vec<_> = output.shapes.iter().filter_map(|shape| match &shape.shape {
+                    egui::epaint::Shape::Text(text) => Some(text.galley.job.text.as_str()), _ => None,
+                }).collect();
+                assert_eq!(enabled, !dirty);
+                assert_eq!(texts.contains(&"http://ledboard.local"), method == crate::connection::Method::WiFi);
+                assert_eq!(texts.contains(&"COM22"), method == crate::connection::Method::Serial);
+                assert!(!texts.contains(&"operator"), "no duplicate authentication editor");
+                assert!(!texts.contains(&"Connect") && !texts.contains(&"Disconnect"), "no second lifecycle action");
+            }
+        }
     }
 }

@@ -2846,3 +2846,55 @@ mobile AP Web UI, semantic RGB/matrix optical output, AVR UART/peripherals and
 production multi-client/physical acceptance remain open. mDNS on the ASUS LAN
 does not imply multicast crosses the routed VPN to the local PC. App forwarding
 and endpoint changes remain held until silence is confirmed.
+
+## Exclusive connection Preferences and exact contract-proof recovery
+
+Fully reread current Pealayer src/ui/preferences.rs through all2308 lines,
+SHA1fa2482a389fee84c79eef3d69ad8cc0ecb922c319fd222219af3e90d7e6f965,
+after consulting Preferences and exact donor-audit entries. The actual
+sync_external_appearance three-baseline merge is now adapted to the live
+connection owner, not merely copied as styling. Reviewed frozen Pakar Preferences
+c5356e250994432a76e9bc3533e482d3c9903dd5db73864c1479f5c7d1b81739:
+selected-method summary delegates to the canonical dialog only from a clean
+draft; incoming owner fields refresh config/saved/previewed together; unrelated
+Save cannot restore stale Wi-Fi/USB fields. New source-bound donor row preserves
+concrete pending helper HWND/process, watcher/config-authority, typed-controls,
+density, picker and full lifecycle-test imports. Media-specific options alone
+are not applicable; generic mechanisms remain pending. No whole-file parity.
+
+Parent reports actual guarded Check and181 Rust tests passed including the two
+new Preferences cases; the earlier checkpoint had179. Release ExpectedCommit
+abbreviation39c878d was rejected by its full40-hex identity guard before compilation;
+the full39c878da3e9abca43db7bfdb12445ed8d11014f1 was accepted. This is not a
+compiler failure, and source tests are not installed-app/human acceptance.
+
+CI correctly exposed two obsolete dual-control fixture assumptions after the
+unified connection UI. Reviewed native_dropdown_test.mjs and the full updated
+native_render_lifecycle_test.mjs, including new negative mutants: the single
+shared consumer remains mandatory, lazy enumeration belongs only to selected USB,
+keyboard Configure stays tested and clear-before-return cannot be removed.
+Only their reviewed reference hashes were rebound; no acceptance test was
+disabled. Parent reports the focused fixtures passed; this reviewer ran no
+native/SDK build or device action.
+
+The separate23-file historical docs/pccontroller/SOURCE-MAPPING.json had stale
+target hashes despite the exhaustive ledger already identifying the newer S3
+sources. Fully reread pinned20c6115 donor UartProtocol.h, MacroQueue.h/.cpp,
+FrontPanelModel.h, AutomationStore.cpp and all1007 ProtocolRuntime.inc.h lines,
+together with complete current Protocol.h, SerialLink.h, PcControllerRuntime.h/
+.cpp and AutomationStore.cpp. Additive ESP front-panel/passive-diagnostic opcodes
+do not alter fixed-zero envelope integrity, bounded COBS/CRC or tunneled0x56/57
+semantics. ESP menu callbacks do not replace the shared MacroRing owner; EEPROM
+guards exclude both ESP proxies while retaining AVR store ownership. Updated
+only four target identities and two shifted anchors; preserved the original
+source revision/hashes and all hardware/pending omissions. The focused
+pc_contract_mapping test passed all23 exact mappings without weakening its
+checks. AVR/ISP/audio and physical EEPROM remain deferred, not reaccepted.
+
+Root also changed three architecture-neutral maintenance labels from ESP8266
+to ESP/ESP board-module wording and esp.bin. Reviewed the text-only diff:
+request paths, file validation and the existing2MiB client cap are unchanged.
+This label fix does not establish partition-aware larger-image desktop upload
+or module/size verification parity. Final Release/Test after the checkpoint,
+runtime replacement, actual USB/no-network observation and human UI acceptance
+remain distinct evidence owned by the deployment task.

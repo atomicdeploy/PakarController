@@ -14,9 +14,13 @@ assert.match(branding,/let uploaded_again = output[\s\S]*?output\.textures_delta
 const surface=test('desktop/src/ui/cell_table.rs','led_state_and_emphasis_never_tint_the_neutral_cell_surface');
 assert.match(surface,/output\.textures_delta\.clear\(\);[\s\S]*?let fill = output/);
 assert(surface.includes('cell_base_fill(crate::config::live().color_palette, dark, 1)'));
-const ports=test('desktop/src/ui/connection_controls.rs','offline_dropdowns_open_independently_and_usb_enumerates_only_when_open');
-assert.match(ports,/out\.textures_delta\.clear\(\);\s*\(out, actions, responses/);
-assert(ports.includes('assert_eq!(actions, vec![Action::Port("COM7".into())]);'));
+const ports=test('desktop/src/ui/connection_controls.rs','one_contextual_control_lazy_usb_scan_and_busy_guard');
+const releasedPortFrame=/out\.textures_delta\.clear\(\);\s*\(out, responses\.unwrap\(\), actions\)/;
+assert.match(ports,releasedPortFrame);
+assert.doesNotMatch(ports.replace('out.textures_delta.clear();',''),releasedPortFrame,
+  'A returning headless frame must still release texture deltas before assertions');
+assert(ports.includes('assert_eq!(scans.get() > 0, method == Transport::Serial && !busy);'));
+assert.match(ports,/actions,\s*vec!\[Action::Configure\]/);
 const fonts=test('desktop/src/ui/i18n.rs','changing_language_preserves_widget_fonts_and_monospace_fallback');
 assert.equal(fonts.match(/drop_without_applying_deltas\(\)/g)?.length,4);
 assert(fonts.includes('assert!(defs.font_data.contains_key("elegance-symbols"));'));

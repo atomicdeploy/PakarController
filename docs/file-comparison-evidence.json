@@ -1351,7 +1351,7 @@
       "path": "desktop/src/ui/connection_controls.rs"
     },
     {
-      "sha256": "18372200696f758a22fe19dd155a74a5125d6afef0d46b73acc4101adb46c225",
+      "sha256": "c5356e250994432a76e9bc3533e482d3c9903dd5db73864c1479f5c7d1b81739",
       "anchor": "super::dropdown::ComboBox::from_id_salt(\"theme\")",
       "path": "desktop/src/ui/preferences.rs"
     },
@@ -1413,7 +1413,7 @@
       "path": "desktop/src/ui/connection_controls.rs"
     },
     {
-      "sha256": "80e9872de3f7203c4e24a8499994326e97dee584bd6cf8eaa96b614ed7d3bf8a",
+      "sha256": "fb892411e1339a82d7de1be2df090f86ea46b71750fd15a482bf796afad468da",
       "anchor": "Wiring/provenance checks",
       "path": "tests/native_dropdown_test.mjs"
     }
@@ -1435,7 +1435,7 @@
       "path": "desktop/src/ui/color_picker.rs"
     },
     {
-      "sha256": "18372200696f758a22fe19dd155a74a5125d6afef0d46b73acc4101adb46c225",
+      "sha256": "c5356e250994432a76e9bc3533e482d3c9903dd5db73864c1479f5c7d1b81739",
       "anchor": "super::color_picker::accent_picker",
       "path": "desktop/src/ui/preferences.rs"
     },
@@ -1478,7 +1478,7 @@
       "path": "desktop/src/ui/color_picker.rs"
     },
     {
-      "sha256": "80e9872de3f7203c4e24a8499994326e97dee584bd6cf8eaa96b614ed7d3bf8a",
+      "sha256": "fb892411e1339a82d7de1be2df090f86ea46b71750fd15a482bf796afad468da",
       "anchor": "Wiring/provenance checks",
       "path": "tests/native_dropdown_test.mjs"
     }
@@ -2538,7 +2538,7 @@
         },
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "18372200696f758a22fe19dd155a74a5125d6afef0d46b73acc4101adb46c225",
+          "sha256": "c5356e250994432a76e9bc3533e482d3c9903dd5db73864c1479f5c7d1b81739",
           "anchor": "AppLanguage::Persian"
         },
         {
@@ -3643,7 +3643,7 @@
         },
         {
           "path": "tests/native_render_lifecycle_test.mjs",
-          "sha256": "6c0d49ab7db7c41b508b91845e6b7b6906b7e7b112b3eb3b261c85489b862924",
+          "sha256": "655bb0a62d3144718b1b13d350fb7e416006b6c468e7e1445bbd2ebcb7c946dc",
           "anchor": "const compact=source=>source.replace"
         }
       ],
@@ -6405,6 +6405,34 @@
         {"path":"desktop/src/main.rs","sha256":"65e92fb29dd0b55895c725be9f78fa8a868366d30fd7aa0b0cf9284fe8bac0a0","anchor":"fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"}
       ],
       "improvement": "User-required exclusive Wi-Fi-or-USB lifecycle replaces Both rather than silently falling back; physical resources retire before the new method opens. Source evidence only until guarded tests and runtime observations."
+    },
+    {
+      "origin": "Pealayer",
+      "path": "src/ui/preferences.rs",
+      "sha256": "1fa2482a389fee84c79eef3d69ad8cc0ecb922c319fd222219af3e90d7e6f965",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Fully reread all2308 actual donor lines through EOF, including draft lifecycle, helper ownership, control rendering and tests. Pakar retains saved/config/previewed baselines, live preview, dirty close confirmation and rail/body/footer layout; this is a narrow adaptation, not complete Preferences equivalence.",
+        "Adapted actual PreferencesDraft::sync_external_appearance triple-baseline merge to sync_connection_owner. External selected method/enabled/endpoint/user/port update all three baselines while preserving unrelated dirty edits. Preferences now shows only the selected method's summary and delegates clean drafts to the single canonical connection dialog; unrelated Save cannot restore stale connection owner fields."
+      ],
+      "targets": [
+        {"path":"desktop/src/ui/preferences.rs","sha256":"c5356e250994432a76e9bc3533e482d3c9903dd5db73864c1479f5c7d1b81739","anchor":"fn sync_connection_owner("},
+        {"path":"desktop/src/ui/preferences.rs","sha256":"c5356e250994432a76e9bc3533e482d3c9903dd5db73864c1479f5c7d1b81739","anchor":"fn connection_summary("}
+      ],
+      "omissions": [
+        {"code":"NativePreferencesController helper process/HWND ownership, independent exit wake/watch, owned chrome and peer-active embedded authority","disposition":"pending","reason":"Pakar uses its existing deferred egui viewport rather than the donor helper process. A matching appearance or native-dialog option does not establish owner-window, helper-exit cancellation or focus/chrome equivalence; import only after actual process/interop dependencies and host lifecycle tests are compared."},
+        {"code":"External ConfigFileWatcher90ms debounce, shared server config authority and complete dirty external-file conflict merge","disposition":"pending","reason":"The actual triple-baseline algorithm is adapted only to the live connection owner fields. Other persisted/external fields and watcher/readback lifecycle are not covered by this change and must not overwrite unrelated drafts."},
+        {"code":"preferences_contract typed sections/groups, content-derived responsive rows, inline checkbox and ChoiceSlider/MultiSelect/numeric-step controls, density/font/motion parity","disposition":"pending","reason":"Existing Pakar controls implement only part of the donor editor. The full typed-contract dependency and dynamic layout/control tests were not imported in this slice; no all-controls or visual parity claim."},
+        {"code":"Config-file open/copy/edit/folder menus, complete reload/import/export ownership, timed footer feedback and full save/preview failure lifecycle matrix","disposition":"pending","reason":"Basic import/export and dirty Save/Discard behavior already exist, but do not implement the donor's complete picker/config authority, transient status and helper-exit matrix. Generic file-picker/control mechanisms remain useful, not excluded media business."},
+        {"code":"Playback/track/subtitle/history/media-association options and mpv audio refresh","disposition":"not-applicable","reason":"The requested controller is explicitly mpv-free and has no media playback domain. Generic preference lifecycle, navigation, picker and rendering mechanisms remain independently pending rather than excluded with those options."}
+      ],
+      "remaining": ["Compare/import the pending generic helper/controller/config-watcher and typed-control dependencies, then verify native visual/navigation/focus and dirty concurrent-owner behavior in the installed app. Guarded Rust tests are not live USB or human acceptance."],
+      "proof": [
+        {"path":"desktop/src/ui/preferences.rs","sha256":"c5356e250994432a76e9bc3533e482d3c9903dd5db73864c1479f5c7d1b81739","anchor":"fn external_connection_owner_updates_all_baselines_without_losing_unrelated_drafts()"},
+        {"path":"desktop/src/ui/preferences.rs","sha256":"c5356e250994432a76e9bc3533e482d3c9903dd5db73864c1479f5c7d1b81739","anchor":"fn connection_summary_is_contextual_and_dirty_preferences_cannot_open_another_editor()"}
+      ],
+      "improvement": "One connection owner instead of conflicting Preferences editors, while preserving unrelated drafts and the donor's triple-baseline merge mechanism."
     }
   ]
 }

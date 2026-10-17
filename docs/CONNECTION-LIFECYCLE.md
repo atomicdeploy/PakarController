@@ -4,6 +4,9 @@ The native application has one connection selector and one Connect/Disconnect
 action. Choose **USB serial** or **Wi-Fi**. Changing the method disconnects; it
 does not silently connect the other method. The selected method, enabled intent,
 endpoint and serial port are saved. There is no automatic fallback or Both mode.
+Preferences shows only the selected method's summary and opens this same
+connection dialog. Unrelated Preferences saves preserve the live connection
+owner; external changes update all draft baselines without discarding other edits.
 
 USB uses only the selected serial port and the board's framed protocol. It does
 not require a valid Wi-Fi endpoint, network access, discovery, HTTP status or a
@@ -67,7 +70,9 @@ control and lazy serial enumeration. Source tests cannot prove physical USB,
 Wi-Fi loss recovery, an actual OTA, externally powered reboot or optical output.
 Record those separately in the LED-first checklist; AVR integration stays deferred.
 
-Guarded native Check and all 179 native tests pass for this checkpoint. The
+Guarded native Check and all 181 native tests pass for this checkpoint. The
 connection wiring source guard (including six negative mutation cases), HTTP
 peer-fence source guard, exact comparison generation/check and mandatory donor
 build gates also pass. This is source/fixture evidence, not the live handoff.
+The final update warnings and upload filename are architecture-neutral; the
+existing E9/2 MiB preflight is unchanged and is not an exact-target image check.

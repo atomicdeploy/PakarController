@@ -60,7 +60,7 @@ impl Operation {
                 "Store this complete 32 KiB AVR binary (including the intended bootloader). Staging replaces the shared image but does not program the AVR."
             }
             Self::UpdateEsp(_) => {
-                "Replace ESP firmware and reboot. Confirm this binary is built for this ESP8266 and preserves the device's pin mapping. A lost connection does not prove failure; reconnect before retrying."
+                "Replace ESP firmware and reboot. Confirm this binary is built for this exact ESP board/module and preserves its pin mapping. A lost connection does not prove failure; reconnect before retrying."
             }
             Self::Download { .. } => {
                 "Export the existing backup. No board write is performed and existing PC files will not be overwritten."
@@ -71,7 +71,7 @@ impl Operation {
 pub fn validate_image(esp: bool, bytes: &[u8]) -> Result<(), String> {
     if esp {
         if bytes.len() < 16 || bytes.len() > 2 * 1024 * 1024 || bytes[0] != 0xe9 {
-            return Err("Select an uncompressed ESP8266 .bin (E9 header, 16 bytes–2 MiB). Device flash capacity is validated by the updater.".into());
+            return Err("Select an uncompressed ESP .bin (E9 header, 16 bytes–2 MiB). Confirm the exact board/module; device flash capacity is validated by the updater.".into());
         }
     } else if bytes.len() != 32768 {
         return Err("AVR staging requires exactly 32768 bytes; Intel HEX and partial application images are not accepted".into());
@@ -113,7 +113,7 @@ pub fn run(client: &Client, endpoint: &Endpoint, operation: Operation) -> Result
             let esp = matches!(operation, Operation::UpdateEsp(_));
             validate_image(esp, bytes)?;
             let part = multipart::Part::bytes(bytes.clone()).file_name(if esp {
-                "esp8266.bin"
+                "esp.bin"
             } else {
                 "avr.bin"
             });
