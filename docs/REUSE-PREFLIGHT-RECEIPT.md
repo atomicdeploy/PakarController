@@ -2898,3 +2898,33 @@ This label fix does not establish partition-aware larger-image desktop upload
 or module/size verification parity. Final Release/Test after the checkpoint,
 runtime replacement, actual USB/no-network observation and human UI acceptance
 remain distinct evidence owned by the deployment task.
+
+## Android optional settings catalog failure: bounded parser repair
+
+The sole reported Android CI39045757076 failure exposed real parser/catalog
+drift, not a clock/lease workaround: generated optional:boolean/optional:string
+DHCP/static fields were treated as unknown required types, so an otherwise valid
+older peer response could leave the network draft absent. Fully reread actual
+Pealayer PreferencesTab.tsx563lines (30a63cc1db61a46346c2d4c30ce011dc74081a8a6da2e29853e56d39811a0de1),
+the frozen mobile DeviceSettingsSession/parser and entire focused test, with
+the actual Web settingsType/settingsSnapshot/settingsValidateAddressing and
+native Addressing::validate functions. No new source-complete claim is made
+for the rest of the native settings module or donor dependencies.
+
+Reviewed mobile35309b6a6d18d9fb8a5ef687509edee9c9f3aa25d63ad3026081bc96b17d5f1b:
+only absent optional keys are skipped; present values stay strictly typed.
+The six addressing fields must be absent together or complete, with valid IPv4,
+static mask/host/gateway/DNS bounds and no fabricated default observations.
+Peer ownership, late-read/write epochs, secret handling, positive ACK and exact
+post-write readback remain unchanged. Focused test365cb9c9e9986b9f5ad42bf99fdd910be723b690113ebb126253c5c337b79c63
+adds absent/complete/partial/null/type/address-boundary checks and explicit
+successful network/cloud load assertions without removing the existing no-replay
+or ownership cases. This does not complete mobile static-address editor/UI parity.
+
+Rebound only the existing PreferencesTab mobile target/test references; preserved
+all generic control/localization/picker omissions. Strict comparison generation,
+all seven mobile wrapper gates and whitespace checks passed, with130 comparisons
+out of4673 inventoried files unchanged. The UI owner was released to run only
+the guarded focused test file; no APK, full suite, device or firmware operations
+were performed by the evidence reviewer. Its actual test result remains separate
+from this source review and from Android phone/physical board acceptance.

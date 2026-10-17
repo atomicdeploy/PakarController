@@ -2457,7 +2457,7 @@
         },
         {
           "path": "mobile/lib/device_settings.dart",
-          "sha256": "16c5f8ec88c242baa279bc42bdf4c81024f4473eccc62ec8e317267937a9ab2c",
+          "sha256": "35309b6a6d18d9fb8a5ef687509edee9c9f3aa25d63ad3026081bc96b17d5f1b",
           "anchor": "class DeviceSettingsSession"
         }
       ],
@@ -2499,7 +2499,7 @@
       "proof": [
         {
           "path": "mobile/test/device_settings_test.dart",
-          "sha256": "18f2ad9b2a9c6826a38cfe04321810fa367165797f835a9d50375bf980339480",
+          "sha256": "365cb9c9e9986b9f5ad42bf99fdd910be723b690113ebb126253c5c337b79c63",
           "anchor": "Settings write $behavior: one POST"
         },
         {

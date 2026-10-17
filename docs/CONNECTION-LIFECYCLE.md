@@ -131,3 +131,11 @@ port. Wait for user isolation/re-power confirmation before opening a port.
 Next: passive boot/reset diagnostics and stability, actual offline USB control,
 explicit switch back to Wi-Fi, app LED readback, then one verified self-OTA/new
 boot/image/settings check. AVR programming, resets and audible tests stay deferred.
+
+The Android CI failure found alongside this checkpoint was a separate parser
+defect, not a settings-lease timeout: newly declared optional DHCP/static fields
+were rejected when absent, so network settings never loaded. The mobile parser
+now preserves absent optional groups, validates present types and complete
+addressing, and retains exact ACK/readback/owner fencing. Guarded analysis and
+all11 focused device-settings tests pass. No APK build/deployment or full mobile
+suite was performed for this bounded fix; native package bytes are unchanged.

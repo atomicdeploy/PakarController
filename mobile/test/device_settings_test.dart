@@ -79,6 +79,45 @@ void main() {
     expect(secretOnly.value['mqtt_host'], simulatedCloud['mqtt_host']);
     expect(secretOnly.conflict, true);
   });
+  test('Optional addressing is absent or complete, strictly typed and validated without defaults', () {
+    final absent = settingsSnapshot(SettingsGroup.network, simulatedNetwork);
+    expect(absent.keys, unorderedEquals(simulatedNetwork.keys));
+    const addressing = <String, Object>{
+      'dhcp': false,
+      'address': '192.168.4.20',
+      'gateway': '192.168.4.1',
+      'subnet': '255.255.255.0',
+      'dns1': '1.1.1.1',
+      'dns2': '',
+    };
+    final complete = settingsSnapshot(SettingsGroup.network, {...simulatedNetwork, ...addressing});
+    for (final entry in addressing.entries) {
+      expect(complete[entry.key], entry.value);
+    }
+    expect(settingsSnapshot(SettingsGroup.network, {
+      ...simulatedNetwork, ...addressing, 'dhcp': true,
+      'address': '0.0.0.0', 'gateway': '0.0.0.0', 'subnet': '0.0.0.0',
+    })['dhcp'], true);
+    for (final field in addressing.keys) {
+      final incomplete = {...simulatedNetwork, ...addressing}..remove(field);
+      expect(() => settingsSnapshot(SettingsGroup.network, incomplete), throwsFormatException);
+    }
+    for (final patch in <Map<String, Object?>>[
+      {'dhcp': 'false'}, {'dhcp': null}, {'address': 123}, {'address': '999.1.1.1'},
+      {'address': '192.168.4.0'}, {'address': '192.168.4.255'},
+      {'gateway': '192.168.5.1'}, {'gateway': '192.168.4.20'},
+      {'subnet': '255.0.255.0'}, {'subnet': '255.255.255.254'},
+      {'dns1': '224.0.0.1'}, {'dns2': 'not-an-address'},
+    ]) {
+      expect(() => settingsSnapshot(SettingsGroup.network, {
+        ...simulatedNetwork, ...addressing, ...patch,
+      }), throwsFormatException);
+    }
+    final write = SettingsWrite(SettingsGroup.network, {}, complete);
+    write.verifyReadback(Map.of(complete));
+    expect(() => write.verifyReadback(absent), throwsFormatException);
+    expect(() => write.verifyReadback({...complete, 'dhcp': true}), throwsFormatException);
+  });
   for (final behavior in [
     'success',
     'negative',
@@ -180,6 +219,8 @@ void main() {
     final session = DeviceSettingsSession(api, authorized: () => true);
     await session.load(SettingsGroup.network);
     await session.load(SettingsGroup.cloud);
+    expect(session.drafts.keys, containsAll([SettingsGroup.network, SettingsGroup.cloud]),
+      reason: 'Optional catalog fields must not silently prevent loading either settings group');
     final keep = session.write(SettingsGroup.cloud);
     expect(keep.form.containsKey('mqtt_password'), false);
     expect(keep.form.containsKey('websocket_token'), false);

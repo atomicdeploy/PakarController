@@ -32,8 +32,11 @@ Map<String, Object> settingsSnapshot(
 ) {
   final result = <String, Object>{};
   for (final entry in group.fields.entries) {
+    final optional = entry.value.startsWith('optional:');
+    if (optional && !json.containsKey(entry.key)) continue;
+    final type = optional ? entry.value.substring('optional:'.length) : entry.value;
     final v = json[entry.key];
-    final valid = switch (entry.value) {
+    final valid = switch (type) {
       'boolean' => v is bool,
       'string' => v is String,
       'port' => v is int && v >= 1 && v <= 65535,
@@ -51,6 +54,7 @@ Map<String, Object> settingsSnapshot(
     if (result['station_enabled'] == true && result['station_ssid'] == '') {
       throw const FormatException('Enter the station SSID');
     }
+    settingsValidateAddressing(result);
   } else {
     for (final prefix in ['mqtt', 'websocket']) {
       final host = result['${prefix}_host'] as String;
@@ -84,6 +88,43 @@ Map<String, Object> settingsSnapshot(
     }
   }
   return result;
+}
+
+/// Actual Web settingsValidateAddressing/native Addressing::validate contract:
+/// older peers may omit the whole optional group, never fabricate its values.
+void settingsValidateAddressing(Map<String, Object> value) {
+  const fields = ['dhcp', 'address', 'gateway', 'subnet', 'dns1', 'dns2'];
+  if (!fields.any(value.containsKey)) return;
+  if (!fields.every(value.containsKey)) {
+    throw const FormatException('Incomplete device addressing settings');
+  }
+  int ipv4(String text) {
+    if (!RegExp(r'^\d{1,3}(\.\d{1,3}){3}$').hasMatch(text)) {
+      throw const FormatException('Enter IPv4 address values');
+    }
+    final parts = text.split('.').map(int.parse).toList();
+    if (parts.any((part) => part > 255)) {
+      throw const FormatException('Enter IPv4 address values');
+    }
+    return parts.fold(0, (address, octet) => address * 256 + octet);
+  }
+  final values = <int>[];
+  for (final key in fields.skip(1)) {
+    final text = value[key] as String;
+    values.add(key.startsWith('dns') && text.isEmpty ? 0 : ipv4(text));
+  }
+  if (value['dhcp'] == true) return;
+  final address = values[0], gateway = values[1], subnet = values[2];
+  final host = (~subnet) & 0xffffffff;
+  if (host < 3 || host == 0xffffffff || (host & (host + 1)) != 0 ||
+      address >> 24 == 0 || address >> 24 >= 224 ||
+      (address & host) == 0 || (address & host) == host ||
+      gateway >> 24 == 0 || gateway >> 24 >= 224 ||
+      (gateway & host) == 0 || (gateway & host) == host ||
+      (address & subnet) != (gateway & subnet) || address == gateway ||
+      values[3] >> 24 >= 224 || values[4] >> 24 >= 224) {
+    throw const FormatException('Invalid static subnet, host, gateway or DNS address');
+  }
 }
 
 enum SecretMode { keep, replace, clear }
