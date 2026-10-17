@@ -76,3 +76,58 @@ peer-fence source guard, exact comparison generation/check and mandatory donor
 build gates also pass. This is source/fixture evidence, not the live handoff.
 The final update warnings and upload filename are architecture-neutral; the
 existing E9/2 MiB preflight is unchanged and is not an exact-target image check.
+
+## Live ASUS checkpoint and power gate
+
+Source/build checkpoint `11d6b8ac44dcc26419da23ffb7eb49e995645273`, version0.2.7,
+produced the staged executable SHA256
+`e63c1bb0a7dca68f3d1d2ea16c28bd7bdffddf58d0f66ccde7836090da365f89`.
+Guarded Release/stage/CLI probe and the full source-quality phase pass. Final
+guarded native tests pass181/181 on the recorded rerun. One prior run failed
+the unchanged TUI loopback409 assertion; its isolated run and full cached rerun
+passed without source/assertion changes. Its intermittent cause is unresolved,
+not silently treated as a fixed defect.
+
+ASUS runs that exact staged executable, PID4296/session1, on `ledboard.local`.
+Owner/draft checks and actual internal1920x991 framebuffer capture verified one
+Wi-Fi dropdown/Disconnect control, contextual Table identity and live480-pixel
+preview. This is native runtime/render evidence, not optical LED acceptance.
+The owner appeared before the guarded launcher and was not forcibly replaced.
+Its active profile was not overridden: normal runtime changes are preserved,
+and the exact pre-start original settings plus previous executable remain backed
+up. The separate staged candidate profile remains unchanged.
+
+The local candidate is staged, but local GUI launch was rejected by tool policy
+after graceful shutdown of the old owner. No alternate launch was attempted;
+manual user launch is requested. This PC's owned loopback58080 forward reaches
+the board hostname through ASUS. No global DNS or hosts change was made.
+
+App-mediated LED checks submitted only cell-mode and cell1-red IPC actions.
+Connectivity expired during readback; no cell80/rainbow action or OTA followed,
+and no uncertain write was replayed. The first helper predicate incorrectly
+accepted the pre-existing white logical cells while rainbow was still active;
+this is NOT a passed all-white write. The private helper now also requires the
+global effect to stop, but has only been syntax-checked, not rerun against hardware.
+
+Multiple boot changes were observed without our issuing reboot/OTA. Actual
+telemetry then reported reset reason9, uptime162710ms, verified boot integrity,
+and sketch MD5 `9ec4ce6a0f2a0d4ad982468acfe46f2e`. The installed ESP32-S3 SDK3.3.12
+enum identifies9 as `ESP_RST_BROWNOUT`; this does not locate the electrical fault.
+The user confirmed power entering the ESP3V3 pin from the AVR controller supply.
+The supply/wiring path is a plausible cause, not a measured diagnosis.
+
+**Wi-Fi-only handoff and OTA remain on hold.** With both boards off, isolate the
+ESP's external3V3 feed before powering it through the ASUS USB-to-UART cable.
+Keep common GND and appropriate separate AVR power; do not join independent
+regulator outputs. ESP USB does not power the480-pixel strip: its correctly rated
+supply remains separate. Espressif documents the DevKit power inputs as mutually
+exclusive and recommends at least500mA for an ESP32-S3 supply:
+[DevKit power options](https://docs.espressif.com/projects/esp-idf/en/v5.1/esp32s3/hw-reference/esp32s3/user-guide-devkitc-1-v1.0.html),
+[S3 supply design](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32s3/schematic-checklist.html).
+
+One requested PBX announcement completed and was answered; no retry. The final
+read-only ASUS inventory still contained only a Samsung modem, not an ESP USB
+port. Wait for user isolation/re-power confirmation before opening a port.
+Next: passive boot/reset diagnostics and stability, actual offline USB control,
+explicit switch back to Wi-Fi, app LED readback, then one verified self-OTA/new
+boot/image/settings check. AVR programming, resets and audible tests stay deferred.
