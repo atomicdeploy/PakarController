@@ -129,6 +129,58 @@ editing and scan-result selection remain pending; see
 
 ## Status pixel and discovery
 
+### Standalone WS2811 wiring and USB-free handoff
+
+The ESP owns the matrix renderer; the AVR is not required for rainbow, fire,
+cell colors or streamed pixels. The current image uses WS2811/RGB on **GPIO4**,
+with 480 addressable RGB pixels arranged as 80 logical cells of six pixels.
+Count addressable controller groups, not merely physical LED emitters: some
+WS2811 strips drive several emitters from one address. Current per-cell effects
+are immediate/fade/pulse with white/red/off; arbitrary named semantic groups,
+independent group effect instances and full WLED feature/API parity are not yet
+implemented or accepted.
+
+With all power disconnected, connect GPIO4 to the strip's **DIN/input** end,
+ESP GND to strip GND and supply negative, and the strip's V+ directly to its
+correctly rated external supply. Follow its printed voltage; WS2811 products can
+use different supply voltages. Never feed strip voltage into a GPIO or 3V3 pin,
+and never power 480 pixels through the DevKit regulator/USB/header traces. Use
+appropriate fused distribution/injection and wire ratings. A 3.3-to-5 V AHCT
+data buffer and a short data lead are preferred for reliable final wiring.
+
+Removing PC USB still requires an independent ESP power source. For the assumed
+common DevKit, use a USB wall supply or regulated 5 V at 5V/GND, not strip 12 V.
+Use one selected power-input method; do not parallel external 5 V with PC USB
+unless the actual board's isolation is established. AVR stays on its reported
+3.3 V supply. Matrix GPIO4 is independent of the onboard status RGB, which remains
+disabled until its configured GPIO is enabled and optically checked.
+
+**Current stored LED state was observed as cell mode, all cells white,
+brightness255.** Do not treat startup as dark or current-limited. Arrange an
+adequate supply before connecting the full matrix, or deliberately select off
+before wiring and verify its persisted state.
+
+USB-free update readiness is still OPEN. A fresh ASUS hostname-first read returned
+the expected board ID, station/AP active, AVR link disabled and 480 configured
+pixels. `/update/info` initially exceeded a seven-second request deadline; a
+subsequent independent bounded curl read returned HTTP200 in2.868267 seconds,
+OTA phase idle, slot capacity3342336 and MD5
+`9ec4ce6a0f2a0d4ad982468acfe46f2e`, matching the exact local quiet application.
+An intended same-image Wi-Fi OTA then stopped at the initial hostname preflight:
+`ledboard.local` did not resolve. **No upload started and no firmware was written.**
+This does not distinguish power-off from a discovery/network fault. Do not
+declare OTA broken or successful from these observations.
+
+Before a Wi-Fi-only handoff, verify one authenticated/pinned OTA upload, reconnect
+to the same hardware/new boot with the expected image and preserved network
+settings, then perform external-power startup and actual WS2811 effects tests.
+Retain USB recovery until this milestone is explicitly reported passed. Keep
+AVR reset/ISP, buzzer and UART actuation out of that standalone LED test.
+
+Electrical references: [Espressif common DevKit power and headers](https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32s3/hw-reference/esp32s3/user-guide-devkitc-1.html),
+[WLED strip voltage variants](https://kno.wled.ge/basics/compatible-led-strips/) and
+[WLED power distribution guidance](https://kno.wled.ge/advanced/wiring/).
+
 The onboard pixel is independent of matrix GPIO4. Its actual GPIO must first
 be confirmed (supported DevKit variants: 38 or 48). It then transitions smoothly
 between semantic boot/connecting/ready/AP/peer-lost/update/warning/fault states.
