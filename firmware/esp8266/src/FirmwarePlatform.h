@@ -7,6 +7,7 @@
 #include <esp_image_format.h>
 #include <esp_app_format.h>
 #include <mbedtls/sha256.h>
+#include "../../esp32s3/src/LedFlashGuard.h"
 #else
 #include <Updater.h>
 #include <bearssl/bearssl.h>
@@ -16,6 +17,32 @@
 // downloads on ESP32 are partition-relative, never raw offset zero (bootloader,
 // partition table and private settings must not escape /firmware/download).
 namespace FirmwarePlatform {
+inline String sketchMd5() {
+#if defined(ARDUINO_ARCH_ESP32)
+  // Arduino's MD5 loop directly calls ESP.flashRead, bypassing partition APIs.
+  PakarS3::ScopedLedFlashPause pause;
+  if(!pause) return String();
+#endif
+  return ESP.getSketchMD5();
+}
+inline auto flashChipMode() -> decltype(ESP.getFlashChipMode()) {
+#if defined(ARDUINO_ARCH_ESP32)
+  PakarS3::ScopedLedFlashPause pause;
+  if(!pause) return FM_UNKNOWN;
+#endif
+  return ESP.getFlashChipMode();
+}
+inline uint32_t sketchSize() {
+#if defined(ARDUINO_ARCH_ESP32)
+  const auto *running=esp_ota_get_running_partition();
+  if(!running) return 0;
+  const esp_partition_pos_t position{running->address,running->size};
+  esp_image_metadata_t metadata{};
+  return esp_image_verify(ESP_IMAGE_VERIFY,&position,&metadata)==ESP_OK ? metadata.image_len : 0;
+#else
+  return ESP.getSketchSize();
+#endif
+}
 inline String updateError() {
 #if defined(ARDUINO_ARCH_ESP32)
   return String(Update.errorString());

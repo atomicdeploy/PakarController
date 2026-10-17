@@ -2,14 +2,26 @@
 #include <stdint.h>
 #include <string.h>
 #include <string>
+#include <atomic>
 #define F(value) value
 #define strlen_P strlen
-inline uint32_t millis() { return 0; }
+inline std::atomic<uint32_t> pakarTestMillis{0};
+inline bool pakarTestStringConcatAllowed=true;
+inline uint32_t millis() { return pakarTestMillis.load(std::memory_order_relaxed); }
 class String : public std::string {
+#if defined(ARDUINOJSON_ENABLE_ARDUINO_STRING) && ARDUINOJSON_ENABLE_ARDUINO_STRING
+  // Real Arduino String is not an STL container. Hide this inherited host-only
+  // type when selecting ArduinoJson's actual ArduinoStringReader/Writer path.
+  using const_iterator = std::string::const_iterator;
+#endif
  public:
   using std::string::string;
   String() = default;
   String(const std::string &value) : std::string(value) {}
+  // Actual ArduinoJson ArduinoStringWriter clears with a null const char* and
+  // flushes through concat(); generic write() below intentionally appends.
+  String& operator=(const char* value) { assign(value ? value : ""); return *this; }
+  bool concat(const char* value) { if(!pakarTestStringConcatAllowed)return false;if(value)append(value);return true; }
   bool isEmpty() const { return empty(); }
   size_t write(uint8_t c) { push_back(static_cast<char>(c)); return 1; }
   size_t write(const uint8_t *p,size_t n) { append(reinterpret_cast<const char*>(p),n); return n; }

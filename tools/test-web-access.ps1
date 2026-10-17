@@ -4,7 +4,7 @@ $taskRoot = Split-Path -Parent $PSScriptRoot
 $taskOutputDirectory = Join-Path $taskRoot 'build/native'
 New-Item -ItemType Directory -Force -Path $taskOutputDirectory | Out-Null
 $taskOutput = Join-Path $taskOutputDirectory 'web_access_fence_test.exe'
-& g++ -std=c++17 -Wall -Wextra -Werror `
+& g++ -std=c++17 -Wall -Wextra -Werror -pthread `
     -I (Join-Path $taskRoot 'tests/access_stubs') `
     -I (Join-Path $taskRoot 'libraries/BoardCore/src') `
     -I (Join-Path $taskRoot 'firmware/esp8266/src') `

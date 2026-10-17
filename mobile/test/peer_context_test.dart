@@ -41,13 +41,11 @@ void main() {
   test('Table geometry and advertised mode identity must agree; First wins needs IO', () {
     expect(peerFixture(kind: 'controller').peer.modes, isEmpty);
     expect(peerFixture(features: ['table']).peer.modes.map((m) => m.id), [
-      'idle',
       'cell',
       'snake',
     ]);
     final status = peerFixture();
     expect(status.peer.modes.map((m) => m.id), [
-      'idle',
       'cell',
       'first-wins',
       'snake',

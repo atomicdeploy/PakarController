@@ -180,7 +180,7 @@ void RegisterFirmwareTransferRoutes(AsyncWebServer* server, std::function<bool(A
 #endif
 
 			const uint32_t totalSize =
-				fullFlash ? ESP.getFlashChipSize() : ESP.getSketchSize();
+				fullFlash ? ESP.getFlashChipSize() : FirmwarePlatform::sketchSize();
 			if (totalSize == 0) {
 				sendTransferError(request, 500, "Firmware size is unavailable");
 				return;
@@ -202,7 +202,7 @@ void RegisterFirmwareTransferRoutes(AsyncWebServer* server, std::function<bool(A
 			}
 
 			const uint32_t contentLength = range.end - range.start + 1;
-			const String sketchMd5 = ESP.getSketchMD5();
+			const String sketchMd5 = FirmwarePlatform::sketchMd5();
 			const String etag = String("\"") + sketchMd5 + "\"";
 			if (!fullFlash &&
 				!range.partial &&

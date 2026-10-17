@@ -4,6 +4,25 @@
 #include <PeerFence.h>
 #include <ESPAsyncWebServer.h>
 #include "SystemPlatform.h"
+#if !defined(ESP8266) && !defined(ARDUINO_ARCH_ESP8266)
+#include <mutex>
+#endif
+
+namespace PakarAccessDetail {
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+// ESP8266 callbacks and loop cooperate. Never yield while touching admission.
+struct Mutex { void lock() {} void unlock() {} };
+#else
+using Mutex = std::mutex;
+#endif
+struct Guard {
+  Mutex &mutex;
+  explicit Guard(Mutex &value) : mutex(value) { mutex.lock(); }
+  ~Guard() { mutex.unlock(); }
+  Guard(const Guard &) = delete;
+  Guard &operator=(const Guard &) = delete;
+};
+}
 
 // PU850 Authentication/Sessions capability with complete authorization,
 // expiring sessions and no password/token diagnostic dumps.
@@ -21,7 +40,8 @@ class WebAccess {
          path == F("/assets/fonts/Vazirmatn-Regular.ttf") || path == F("/assets/fonts/Vazirmatn-OFL.txt"));
     const bool login = path == F("/login") && request->method() == HTTP_POST;
     if (publicRead || login) { next(); return; }
-    if (!accessConfig.ready()) { request->send(503, "text/plain", accessConfig.error()); return; }
+    String unavailable;
+    if (!ready(unavailable)) { request->send(503, "text/plain", unavailable); return; }
     if (!sameOrigin(request)) { request->send(403, "text/plain", "Cross-origin request rejected"); return; }
     if (!allowed(request)) {
       request->send(401, "application/json", "{\"error\":\"login_required\",\"login\":\"/login\"}");
@@ -33,15 +53,16 @@ class WebAccess {
     next();
   }) {}
   void refreshCredentials() {
-    basic_.setAuthType(AsyncAuthType::AUTH_BASIC);
-    basic_.setUsername(accessConfig.username()); basic_.setPassword(accessConfig.password());
-    basic_.setRealm("PakarController");
+    PakarAccessDetail::Guard lock(mutex_);
+    refreshCredentialsLocked();
   }
   AsyncMiddleware *middleware() { return &middleware_; }
   void configurePeerFence(const String &board, const String &boot) {
+    PakarAccessDetail::Guard lock(mutex_);
     boardId_ = board; bootId_ = boot;
   }
   bool peerFenceReady() const {
+    PakarAccessDetail::Guard lock(mutex_);
     return BoardCore::PeerFence::ready(boardId_.c_str(), bootId_.c_str());
   }
   bool peerAllowed(AsyncWebServerRequest *request) const {
@@ -50,10 +71,12 @@ class WebAccess {
     // Absent headers retain explicitly unfenced compatibility in PeerFence.
     const auto *board = request->getHeader("X-Pakar-Board");
     const auto *boot = request->getHeader("X-Pakar-Boot");
+    PakarAccessDetail::Guard lock(mutex_);
     return BoardCore::PeerFence::accepts(boardId_.c_str(), bootId_.c_str(),
         board ? board->value().c_str() : nullptr, boot ? boot->value().c_str() : nullptr);
   }
   bool allowed(AsyncWebServerRequest *request) {
+    PakarAccessDetail::Guard lock(mutex_);
     if (!accessConfig.ready()) return false;
     if (basic_.allowed(request)) return true;
     const String token = cookieToken(request);
@@ -63,82 +86,140 @@ class WebAccess {
     if (!request->hasHeader("Origin")) return true; // native clients
     return request->getHeader("Origin")->value() == String(F("http://")) + request->host();
   }
-  void revokeAll() { sessions_.clear(); refreshCredentials(); }
-  uint8_t sessionCount() const {return sessions_.count(millis());}
+  void revokeAll() {
+    PakarAccessDetail::Guard lock(mutex_);
+    sessions_.clear();
+    for (auto &slot : sockets_) slot = Socket{};
+    refreshCredentialsLocked();
+  }
+  uint8_t sessionCount() const {
+    PakarAccessDetail::Guard lock(mutex_); return sessions_.count(millis());
+  }
   bool bindSocket(uint32_t id, AsyncWebServerRequest *request) {
-    if (!request || !allowed(request) || !sameOrigin(request)) return false;
+    if (!id || !request || !sameOrigin(request)) return false;
+    const String token = cookieToken(request);
+    PakarAccessDetail::Guard lock(mutex_);
+    if (!accessConfig.ready()) return false;
+    const bool basic = basic_.allowed(request);
+    if (!basic && !sessions_.validate(token.c_str(), millis())) return false;
+    for (const auto &slot : sockets_) if (slot.id == id) return false;
     for (auto &slot : sockets_) if (slot.id == 0) {
-      slot.id = id; slot.basic = basic_.allowed(request);
-      const String token = cookieToken(request);
+      slot.id = id; slot.basic = basic;
       token.toCharArray(slot.token, sizeof(slot.token)); return true;
     }
     return false;
   }
   bool socketAllowed(uint32_t id) {
+    PakarAccessDetail::Guard lock(mutex_);
     for (auto &slot : sockets_) if (slot.id == id)
       return accessConfig.ready() && (slot.basic || sessions_.validate(slot.token, millis()));
     return false;
   }
-  void forgetSocket(uint32_t id) { for (auto &slot : sockets_) if (slot.id == id) slot = Socket{}; }
+  void forgetSocket(uint32_t id) {
+    PakarAccessDetail::Guard lock(mutex_);
+    for (auto &slot : sockets_) if (slot.id == id) slot = Socket{};
+  }
   void expireSockets(AsyncWebSocket &ws) {
-    for (auto &slot : sockets_) if (slot.id && !slot.basic && !sessions_.validate(slot.token, millis(), false)) {
-      const uint32_t id = slot.id; slot = Socket{};
-      if (auto *client = ws.client(id)) client->close(1008, "Session expired");
+    uint32_t expired[8]{}; size_t count = 0;
+    {
+      PakarAccessDetail::Guard lock(mutex_);
+      for (auto &slot : sockets_) if (slot.id && !slot.basic && !sessions_.validate(slot.token, millis(), false)) {
+        expired[count++] = slot.id; slot = Socket{};
+      }
     }
+    // SDK close may synchronously call forgetSocket while holding its client
+    // mutex. Never invert that SDK-client -> access-state lock order.
+    for (size_t i = 0; i < count; ++i) ws.close(expired[i], 1008, "Session expired");
   }
   void registerRoutes(AsyncWebServer &server, std::function<void()> credentialsChanged,
       std::function<bool()> busy) {
     refreshCredentials(); server.addMiddleware(&middleware_);
-    server.on("/api/auth/info", HTTP_GET, [](AsyncWebServerRequest *request) {
-      String body = F("{\"ready\":"); body += accessConfig.ready() ? F("true") : F("false");
-      body += F(",\"username\":\""); body += accessConfig.username();
-      body += F("\",\"default_credentials\":"); body += accessConfig.defaultsActive() ? F("true") : F("false");
-      body += F(",\"login\":\"/login\",\"settings\":\"/api/auth\"}");
+    server.on("/api/auth/info", HTTP_GET, [this](AsyncWebServerRequest *request) {
+      String body;
+      {
+        PakarAccessDetail::Guard lock(mutex_);
+        body = F("{\"ready\":"); body += accessConfig.ready() ? F("true") : F("false");
+        body += F(",\"username\":\""); body += accessConfig.username();
+        body += F("\",\"default_credentials\":"); body += accessConfig.defaultsActive() ? F("true") : F("false");
+        body += F(",\"login\":\"/login\",\"settings\":\"/api/auth\"}");
+      }
       auto response = request->beginResponse(200, "application/json", body);
       response->addHeader("Cache-Control", "no-store"); request->send(response);
     });
     server.on("/login", HTTP_POST, [this](AsyncWebServerRequest *request) {
-      if (!accessConfig.ready()) { request->send(503, "text/plain", accessConfig.error()); return; }
       if (!sameOrigin(request)) { request->send(403, "text/plain", "Cross-origin login rejected"); return; }
-      const uint32_t now = millis();
-      if (failures_ >= 5 && static_cast<uint32_t>(now - failedAt_) < 15000UL) {
-        request->send(429, "text/plain", "Too many login attempts; retry in 15 seconds"); return;
-      }
-      if (!accessConfig.verify(request->arg("username").c_str(), request->arg("password").c_str())) {
-        if (static_cast<uint32_t>(now - failedAt_) >= 15000UL) failures_ = 0;
-        ++failures_; failedAt_ = now; request->send(401, "text/plain", "Incorrect username or password"); return;
-      }
-      failures_ = 0;
-      uint8_t bytes[16]; char token[33];
-      if (SystemPlatform::randomBytes(bytes, sizeof(bytes)) != 0) { request->send(503, "text/plain", "Session entropy unavailable"); return; }
-      const char hex[] = "0123456789abcdef";
-      for (size_t i = 0; i < sizeof(bytes); ++i) { token[i * 2] = hex[bytes[i] >> 4]; token[i * 2 + 1] = hex[bytes[i] & 15]; }
-      token[32] = 0;
-      if (!sessions_.add(token, now)) { request->send(503, "text/plain", "Session limit reached; sign out another client"); return; }
+      char token[33]{}; String error;
+      const int status = createSession(request, token, error);
+      if (status != 200) { request->send(status, "text/plain", error); return; }
       auto response = request->beginResponse(200, "application/json", "{\"authenticated\":true}");
       response->addHeader("Set-Cookie", String(F("PakarSession=")) + token + F("; Path=/; HttpOnly; SameSite=Strict; Max-Age=1800"));
       response->addHeader("Cache-Control", "no-store"); request->send(response);
     });
     server.on("/logout", HTTP_POST, [this, credentialsChanged](AsyncWebServerRequest *request) {
-      sessions_.revoke(cookieToken(request).c_str());
+      {
+        PakarAccessDetail::Guard lock(mutex_);
+        sessions_.revoke(cookieToken(request).c_str());
+        // All transports are closed below; revoke their queued admission first.
+        for (auto &slot : sockets_) slot = Socket{};
+      }
       credentialsChanged(); // close established transports; other sessions may reconnect
       auto response = request->beginResponse(200, "application/json", "{\"signed_out\":true}");
       response->addHeader("Set-Cookie", "PakarSession=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0");
       response->addHeader("Cache-Control", "no-store"); request->send(response);
     });
-    server.on("/api/auth", HTTP_GET, [](AsyncWebServerRequest *request) {
-      request->send(200, "application/json", String(F("{\"username\":\"")) + accessConfig.username() + F("\",\"password_set\":true}"));
+    server.on("/api/auth", HTTP_GET, [this](AsyncWebServerRequest *request) {
+      String body;
+      { PakarAccessDetail::Guard lock(mutex_);
+        body = String(F("{\"username\":\"")) + accessConfig.username() + F("\",\"password_set\":true}"); }
+      request->send(200, "application/json", body);
     });
     server.on("/api/auth", HTTP_POST, [this, credentialsChanged, busy](AsyncWebServerRequest *request) {
       if (busy()) { request->send(409, "text/plain", "Finish the current firmware operation before changing credentials"); return; }
-      if (!accessConfig.change(request->arg("current_password"), request->arg("username"), request->arg("password"))) {
-        request->send(400, "text/plain", accessConfig.error()); return;
+      String error;
+      {
+        PakarAccessDetail::Guard lock(mutex_);
+        if (!accessConfig.change(request->arg("current_password"), request->arg("username"), request->arg("password"))) error = accessConfig.error();
+        else {
+          sessions_.clear(); for (auto &slot : sockets_) slot = Socket{};
+          refreshCredentialsLocked();
+        }
       }
-      revokeAll(); credentialsChanged();
+      if (error.length()) { request->send(400, "text/plain", error); return; }
+      credentialsChanged();
       request->send(200, "application/json", "{\"updated\":true,\"reauthenticate\":true}");
     });
   }
  private:
+  bool ready(String &error) const {
+    PakarAccessDetail::Guard lock(mutex_);
+    if (!accessConfig.ready()) { error = accessConfig.error(); return false; }
+    return true;
+  }
+  void refreshCredentialsLocked() {
+    basic_.setAuthType(AsyncAuthType::AUTH_BASIC);
+    basic_.setUsername(accessConfig.username()); basic_.setPassword(accessConfig.password());
+    basic_.setRealm("PakarController");
+  }
+  int createSession(AsyncWebServerRequest *request, char (&token)[33], String &error) {
+    PakarAccessDetail::Guard lock(mutex_);
+    if (!accessConfig.ready()) { error = accessConfig.error(); return 503; }
+    const uint32_t now = millis();
+    if (failures_ >= 5 && static_cast<uint32_t>(now - failedAt_) < 15000UL) {
+      error = F("Too many login attempts; retry in 15 seconds"); return 429;
+    }
+    if (!accessConfig.verify(request->arg("username").c_str(), request->arg("password").c_str())) {
+      if (static_cast<uint32_t>(now - failedAt_) >= 15000UL) failures_ = 0;
+      ++failures_; failedAt_ = now; error = F("Incorrect username or password"); return 401;
+    }
+    failures_ = 0;
+    uint8_t bytes[16];
+    if (SystemPlatform::randomBytes(bytes, sizeof(bytes)) != 0) { error = F("Session entropy unavailable"); return 503; }
+    const char hex[] = "0123456789abcdef";
+    for (size_t i = 0; i < sizeof(bytes); ++i) { token[i * 2] = hex[bytes[i] >> 4]; token[i * 2 + 1] = hex[bytes[i] & 15]; }
+    token[32] = 0;
+    if (!sessions_.add(token, now)) { error = F("Session limit reached; sign out another client"); return 503; }
+    return 200;
+  }
   static String cookieToken(AsyncWebServerRequest *request) {
     if (!request->hasHeader("Cookie")) return String();
     String cookies = request->getHeader("Cookie")->value();
@@ -152,6 +233,7 @@ class WebAccess {
     return String();
   }
   AsyncAuthenticationMiddleware basic_;
+  mutable PakarAccessDetail::Mutex mutex_;
   String boardId_, bootId_;
   AsyncMiddlewareFunction middleware_;
   BoardCore::Access::Sessions sessions_;

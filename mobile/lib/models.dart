@@ -46,6 +46,14 @@ class DeviceStatus {
   bool get ntp => json['ntp_synced'] == true;
   String get effect => json['effect'] as String? ?? 'none';
   int get brightness => json['brightness'] as int? ?? 255;
+  bool? get ledOutputEnabled {
+    if (!peer.has('leds')) return null;
+    final output = json['led_output'];
+    return output is Map && output['enabled'] is bool
+        ? output['enabled'] as bool
+        : null;
+  }
+
   int get winner => json['winner'] as int? ?? 0;
   int get selectedCell => json['selected_cell'] as int? ?? 1;
   int get activeInputs => json['active_inputs'] as int? ?? 0;

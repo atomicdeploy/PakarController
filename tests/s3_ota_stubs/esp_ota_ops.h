@@ -4,6 +4,7 @@
 #include <cstring>
 #include <map>
 #include <vector>
+#include <cassert>
 using esp_err_t=int;using esp_ota_handle_t=uint32_t;
 constexpr int ESP_OK=0;
 constexpr size_t OTA_WITH_SEQUENTIAL_WRITES=0xfffffffe;
@@ -15,6 +16,14 @@ inline bool active=false,failBegin=false,failWrite=false,failEnd=false,failRead=
 inline std::map<uint32_t,std::vector<uint8_t>> images;
 inline void reset(){running=boot=aborts=ends=selections=begins=0;active=failBegin=failWrite=failEnd=failRead=failSelect=failVerify=false;images.clear();}
 inline void reboot(){running=boot;}
+}
+// This fixture owns no LED worker or hardware. Retain balanced scoped-helper
+// accounting while the actual GNU-linked guard/unsafe-context tests live in
+// test-s3-flash-guard.ps1; these doubles do NOT establish flash/DMA exclusion.
+namespace PakarS3 {
+inline unsigned otaFixtureFlashHolds=0;
+inline bool acquireTaskLedFlashPause(){++otaFixtureFlashHolds;return true;}
+inline void releaseLedFlashPause(){assert(otaFixtureFlashHolds>0);--otaFixtureFlashHolds;}
 }
 inline const esp_partition_t *esp_ota_get_running_partition(){return &OtaFixture::partitions[OtaFixture::running];}
 inline const esp_partition_t *esp_ota_get_boot_partition(){return &OtaFixture::partitions[OtaFixture::boot];}

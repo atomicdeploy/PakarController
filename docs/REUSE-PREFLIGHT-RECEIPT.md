@@ -3369,3 +3369,241 @@ Kept the same e63c1bb0... native executable, original protected preferences,
 separate candidate profile and rollback; no force-stop, USB fallback or native
 rebuild. Remote OTA and live app connectivity are separate from visual/human
 acceptance and from direct Internet commands while the ASUS relay is absent.
+
+## Continuous LED output and Wi-Fi scheduling regression
+
+User reports visible stale/garbled output during Wi-Fi activity. Current board
+was reread over hostname on ASUS: same13acc69e... quiet ESP-only boot, cell/none.
+Read games-streaming lookup and literal Puzzles WS2811.cpp inventory; fully read
+actual Puzzles LocalLib/WS2811.h/.cpp and verified original hashes39509602... /
+0f7fec78... against the ledger. Retain its255 brightness and TypicalLEDStrip
+correction; not its AVR D6/eleven-pixel buffer or BRG order. Independent channel/
+480-address/optical testing remains required, not a declared donor exclusion.
+Also fully read current PCController Tasks.h/.cpp and Pakar's existing adapted
+Tasks: those loop-only cooperative callbacks cannot isolate seconds-long DNS/
+TLS work or synchronize an AsyncTCP producer; no duplicate scheduler was copied.
+
+Actual code inspection found WebSocket callbacks mutating LedGrid and producing
+status from the network task while loop renders/transmits. Complete incoming
+messages now pass a bounded eight-slot synchronized FIFO into the main loop;
+closed/unauthorized peers are rechecked, overflow explicitly closes1013, and no
+network payload pointer survives the callback. The FIFO publication discipline
+adapts the existing reviewed AsyncHttpService fix, with no I/O under its lock.
+
+Separate staged RGB storage prevents incomplete chunks editing committed pixels;
+an explicit frame commit snapshots before later chunks, and abandoned partial
+stages expire after500ms. The S3 output worker owns immutable current RGB and
+preencoded internal-DRAM symbols, a capacity-one latest-complete-frame mailbox,
+mandatory RMT DMA and a bounded100ms completion wait before buffer reuse. RMT is
+initialized on core1 separately from Wi-Fi core0. Maximum legal2046 DMA symbols
+respects the reviewed SDK descriptor4092-byte-per-half bound; an entire480-pixel
+symbol frame would exceed it and was not blindly configured. Existing FastLED
+3.10.6 WS2811 legacy250/350/650ns timings were read and retained exactly at40MHz,
+with RGB order, TypicalLEDStrip correction,300us low latch and no temporal dither.
+No SPI2/3 bus is borrowed from AVR ISP or future W5500. Initialization/transmit
+failures remain visible, with no silent non-DMA fallback or in-flight overwrite.
+
+Idle is removed from Table advertisements/client selection without renumbering
+the remaining mode codes or changing the deferred AVR firmware. A runtime LED
+output service defaults On each boot; explicit Off queues a full black frame,
+then sleeps while settings/mode remain accessible. REST /api/led/output, MQTT/
+WebSocket command led-output with boolean enabled, USB opcode0x5C, native CLI/
+TUI led-output on|off and Telnet expose the same setting. Native/Web/mobile show
+the switch only when the current peer actually reports enabled; missing is not
+treated as enabled. Driver ready/active/transmitted/failed/revision/error_code
+are separate from the requested switch and the renderer command-buffer revision.
+
+Focused actual renderer and20000-message concurrent FIFO fixtures pass with
+Arduino/FastLED doubles, including bounded overflow, copying, all480 pixel
+encoding, complete black/latch, static refresh, disable/re-enable and abandoned
+partial isolation. Web mode/context and S3 source guards pass. These do not prove
+SDK compilation, actual DMA, optical waveform or Wi-Fi contention. SDK build,
+app checks/deployment and live wire-worker observations are pending at this point.
+Physical user confirmation remains required before marking the glitch fixed.
+
+Independent safety review then found and fixed two additional ownership paths:
+legacy PC0xFC commits now validate staging owner and return Busy on refusal,
+and successful raw stream commits retire pending cell fades without repainting
+their targets over the raw frame. Wrong-owner/expired-commit and old-fade
+regressions pass in actual LedGrid/PcLedContract fixtures. Continuing raw commits
+while output is disabled update logical RGB only; they do not repeatedly submit
+black. PKAR/WS/UDP owner tags prevent cross-source staging, but legacy PC-contract
+transports still share owner0, and the existing PKAR header has no frame sequence
+to reject late/reordered chunks from the same source. These remain explicit gaps.
+
+Actual SDK disassembly showed RMT DMA ISR cache safety is not enabled in this
+bundled configuration. Flash partition write/write_raw/erase wrappers therefore
+acquire a bounded150ms full-frame quiescence hold, nest safely across tasks, and
+refuse unsafe ISR/cache-off/suspended-scheduler contexts before blocking. They
+cover current LittleFS/NVS/OTA application paths, not lower-level panic dump
+writers. No shipping direct esp_flash or ESP.flashWrite bypass was found. Actual
+worker host fixtures pass functional/timeout/stop-failure cases, including2000
+concurrent submissions, immutable in-flight encoding, stable refresh, black once,
+resume, nested holds and failed DMA stop refusing flash. Actual linked wrapper
+fixtures pass failure/error propagation, unsafe contexts and2000 concurrent calls.
+These are source/double proofs; final ELF binding and physical coexistence remain
+independent gates. The initial SDK compile caught FastLED CRGB memcpy ADL
+ambiguity; qualifying ::memcpy resolved it rather than altering SDK sources.
+
+Async WebSocket dispatch retains client IDs, never a raw client pointer across
+tasks. Admission/session maps have short locks with SDK send/close outside them;
+the actual middleware fixture passes20000 concurrent lifecycle operations and a
+reentrant-close lock test. Existing credential-record access paths outside this
+slice still need a complete auth synchronization review before broad concurrency
+acceptance. The Linux fixture now links pthread explicitly.
+
+Native guarded Check and Release pass: version0.2.7,25529344-byte executable
+SHA91a3ea57c7ae6cf16bc1577f5bf3d54bdfe187267141216766354a86ce29c6a8.
+Guarded stable staging plus CLI identity probe pass. Full native suite deferred
+per incremental user policy. Mobile analyze and focused LED4/peer5 tests pass;
+initial test-only Map identity matching was corrected to deep-map assertions.
+Preview APK0.2.7 is55396153bytes,
+SHA38bd2a0edad8b3fb3fb4e995d5e6f35876a84023d29de074ad352f5b740af423.
+ASUS ADB currently has no devices, so no phone installation/launch is claimed.
+Web generic-LED placement, live Persian Output localization, pending interlock,
+unknown-state hiding and post-readback behavior now execute in the focused DOM
+fixture; not browser/human acceptance. Generic non-table Flutter placement and
+programming-latch admission parity remain pending before resumed AVR integration.
+The private rebinding helper initially used an incorrect manifest property;
+the comparison gate caught the stale test hash. Corrected to actual files array,
+rebound reviewed changed targets only and retained every original donor hash.
+
+### Follow-up: reconnect, unavailable preview/mapping and requested R/B swap
+
+The user then explicitly requested reconnect and pixel/mapping fixes plus a
+red/blue swap. S3 wire encoding now defaults to BGR, configurable at build time
+with PAKAR_S3_LED_SWAP_RED_BLUE=0 for RGB. Logical API/effect/preview RGB values
+and per-logical-channel correction remain unchanged. Actual worker fixtures
+pass functional/timeout/stop-failure in both profiles. A rerun exposed a fixture
+race: its live flag could identify an already-completing frame rather than a
+driver wait stopped at the test barrier. Generation-specific barrier ACKs now
+make the forced-quiesce-timeout test deterministic; no production timeout was
+increased. Ten focused runs of the corrected scenario passed.
+
+LedGrid now keeps a distinct immutable last-published RGB/map/brightness snapshot
+through render-dirty, partial streaming and disabled-service states. Its optional
+pending flag distinguishes a newer uncommitted draft. This removes the actual
+null-preview starvation path without exposing uncommitted pixels or implying
+physical transmission. Actual renderer fixtures verify snapshot/revision
+retention and subsequent publication. The API mapping response now checks a
+complete worst-case escaped-name reserve and returns503 rather than attempting
+truncated200 JSON after allocation failure. Mapping POST atomic persistence and
+stricter name validation remain separate pending hardening.
+
+AsyncHttpService now dispatches occupied slots round-robin: first-free producer
+reuse can no longer indefinitely starve older mapping/status requests behind a
+continually refilled low slot. Deterministic seven-older-request fairness and
+existing20000-operation lifetime/publication fixtures pass. This is one concrete
+timeout path, not a claim that all intermittent HTTP failures are fixed; SDK
+DNS/TLS/MQTT calls can still block the loop longer than a client's read deadline.
+Hostname-first ASUS reads of the old13acc69e... boot returned actual valid80-cell
+mapping and complete2880-character RGB in281–344ms; these did not prove the new
+firmware was installed or that a physical reset caused the client reconnects.
+
+The guarded final S3 build passes for16MB/OPI PSRAM, buffered UART profile with
+normal AVR link paused:1773600bytes,
+SHAc48201f02e2e52046d3dc3e0f7c5a5935acb2263291b3ffb24fb067aec917c43,
+ELF494d5a33504f010f26440f3d16e74952024f157b29ff1b1fdde6718e11155a08.
+Independent final map/disassembly verifies all three partition wrappers in IRAM,
+actual LittleFS/NVS/encrypted/OTA caller rewrites, context/acquire/real/release
+flow and unchanged lower-level panic flash APIs. Not hardware coexistence proof.
+
+The Rust reconnect fix retains a fresh same-peer view after transient HTTP loss
+rather than clearing it while WebSocket is healthy; eight-second peer freshness,
+preflight/epoch/write fencing and explicit Disconnect remain. Null pixel samples
+retain only their original five-second age, never renew it; invalid data, changed
+mapping and revoked peers clear it. Mapping reads validate80 unique physical IDs,
+coalesce pending requests and retry initial failures with bounded backoff.
+WebSocket recovery/backoff resets only on an acknowledged actual status, not TCP
+upgrade, and write waits are bounded. Guarded Check/Release and, at this
+significant milestone, one guarded native Test pass186/186. New executable is
+25562112bytes, SHA557cc3d2cb695f539bcc182d104df9b942c3e019efcb69fb35f8c1370330015e.
+Source stability and stable stage/probe pass; actual replacement/readback remain
+separate. Six preexisting compiler warnings remain, not new clean-build claims.
+
+The first Internet Fetch lost its direct curl52 response. Independent actual SDK
+inspection showed closed TCP makes a queued weak request ineligible to execute;
+the loop-served job remained old7 (queue increments ID before any yield). After
+that explicit outcome reconciliation, one native CLI Fetch returned new job8,
+then exact Ready identity/length/hash was observed. The first Apply helper stopped
+before dispatch because native info returned telemetry-error, not a board object;
+its failed receipt is retained. Correcting read-only preflight to actual status
+kept the only Apply in the verified native CLI. That Apply acknowledged prepare;
+same-board new boot85c496400eebcf04b5b57540724914b8 reports Complete/c482...,
+DMA ready/active, BGR, failed0/error0 and all480 preview pixels. No USB/AVR writes.
+
+This first deployed scheduler did NOT pass the bounded HTTP-load test:12 valid
+status/mapping pairs,9 empty replies and no LED mutations before two consecutive
+read failures stopped it. Actual wire counter advanced1341 to3539; this separates
+working driver service from unreliable API delivery. Do not check reliable
+reconnection/Off/On/optical acceptance from this observation.
+
+Further actual ESPAsyncWebServer3.12.1 inspection found a precise response race:
+its AsyncTCP _onData calls _send after middleware returns; our loop could already
+call request.send, while _sent is set only after response._respond. ACK/poll and
+response fields were likewise not protected by the application's queue mutex.
+AsyncHttpService now constructs independent owned responses in loop and publishes
+them into a bounded per-request mailbox. A public AsyncClient.onPoll event sends
+only on the SDK's network actor; the installed SDK's exact _onPoll ACK progression
+is retained. Weak request ownership, disconnect cancellation and destructor
+cleanup avoid dead connections or leaked unsent responses. No SDK/global-library
+patch, forced delay or arbitrary sleep establishes safety. Peer IP is captured
+at admission instead of dereferencing the mutable PCB in loop. The two deferred
+raw send sites now publish through this adapter; native SDK-context OTA/auth/file
+routes retain their direct sends. Two deferred AVR backup downloads no longer
+explicitly close the File handle shared with an asynchronous response; actual
+ESP32 FS shared_ptr destruction and AsyncFileResponse ownership were inspected.
+
+The focused actor fixture models the real outer SDK send tail, late sent flag,
+network-actor-only response/ACK operations, disconnect/duplicate cleanup, fair
+dispatch and20000 concurrent publications. It passes; WebAccess tests now use
+fresh requests for independent authorization probes and explicit network poll
+events for queued responses. The initial reused already-sent fixture failed,
+was corrected without relaxing production authentication, and passes. Real SDK
+compile/deployment/load confirmation for this actor is still pending here.
+
+The telemetry failure has a separately reproduced cause: ArduinoJson's actual
+ArduinoStringWriter clears its destination, unlike the old generic host write
+stub. ClientTelemetry.json serialized directly into an existing array string,
+losing its prefix and previous clients. It now serializes a bounded entry, then
+explicitly appends it with length checks. The fixture enables the real Arduino
+String writer: old code fails, new empty/one/eight-client arrays, failed writes,
+TTL, observed-IP distinction and secret allowlist pass. No blind heap/snapshot
+limit increase was used. Production telemetry and actor coexistence still need
+their own live proof; maintenance-admission counters, credentials/Telnet task
+ownership and blocking outbound DNS/TLS remain independent concurrency gaps.
+
+### Critical optical regression and emergency stop
+
+The user then reported rapid visible flashing on current c482.../boot85c49640...
+while the replacement actor image was being staged. One authenticated pinned
+Off request was acknowledged and read back enabled=false/driver.active=false.
+The user confirmed flashing stopped but some pixels remained lit: no all-black
+or fixed-waveform claim is made. Job9 Ready/bc624443... was explicitly cancelled
+through native557c/PID19088 and read back cancelled; it was never applied.
+
+Actual SDK review found the missing coverage: esp_partition_read/read_raw and
+esp_image_verify's bootloader_flash_read path can disable cache too. The installed
+GDMA refill interrupt lacks the cache-safe registration; a2046-symbol two-half
+DMA buffer still needs refills about every1.28ms during a14.7ms480-pixel frame.
+The higher RMT interrupt priority does not configure the independently allocated
+GDMA refill interrupt. This is a concrete scheduling defect and strong causal
+candidate, not a measured waveform diagnosis. Dynamic PM clock changes were
+excluded by the actual SDK config; timings match the installed FastLED legacy
+WS2811 setup. Increasing RMT memory beyond its two4092-byte descriptors is not a
+valid full-frame DMA fix.
+
+Added task-context read/read_raw/full image-verifier wrappers with the same
+frame-boundary pause. Guarded FirmwarePlatform metadata helpers cover Arduino's
+direct getSketchMD5/flashRead and flash-mode reads; sketchSize now initializes
+metadata and checks verification failure instead of reading an uninitialized
+result. Lower-level panic esp_flash APIs remain untouched. Actual GNU-linked
+fixtures pass all six guarded boundaries, denied acquisition, unsafe contexts,
+original errors, nested verifier/read/metadata holds and8000 concurrent accesses.
+Focused actual RemoteFirmware fixtures pass on both ESP8266 and S3 using narrowly
+updated SDK doubles, without weakening existing assertions.
+
+Next quiet SDK build uses PauseLedOutput; its standard source default remains On.
+Quiet begin queues one black frame while keeping scene and service Off, so the
+next image must not automatically resume a potentially flashing effect. SDK/
+linked-artifact and physical black-clear acceptance remain pending at this point.

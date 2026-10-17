@@ -5,12 +5,19 @@
 #include "../../esp32s3/src/BoardPins.h"
 #endif
 #include <FastLED.h>
+#if defined(ARDUINO_ARCH_ESP32)
+#include "../../esp32s3/src/LedOutput.h"
+#endif
 
 #include <Protocol.h>
 
 #ifndef PAKARCONTROLLER_SECTORS_PER_CELL
 #define PAKARCONTROLLER_SECTORS_PER_CELL 6
 #endif
+#ifndef PAKAR_LED_START_ENABLED
+#define PAKAR_LED_START_ENABLED 1
+#endif
+static_assert(PAKAR_LED_START_ENABLED==0 || PAKAR_LED_START_ENABLED==1,"LED startup policy must be boolean");
 
 class LedGrid {
  public:
@@ -23,6 +30,9 @@ class LedGrid {
   static constexpr uint8_t kCells = 80;
   static constexpr uint8_t kSectorsPerCell = PAKARCONTROLLER_SECTORS_PER_CELL;
   static constexpr uint16_t kPixels = kCells * kSectorsPerCell;
+#if defined(ARDUINO_ARCH_ESP32)
+  static_assert(kPixels==PakarS3::LedOutput::pixels,"S3 output profile must match the full pixel buffer");
+#endif
 
   void begin();
   bool readyToShow(uint32_t now) const;
@@ -41,19 +51,34 @@ class LedGrid {
   BoardCore::Protocol::CellState state(uint8_t cell) const;
   void setPhysicalMapping(const uint8_t *physicalCells, uint8_t count);
   uint8_t physicalCell(uint8_t logicalCell) const;
-  bool stagePixels(uint16_t offset, const uint8_t *rgb, uint8_t count);
-  void showStaged();
+  bool stagePixels(uint16_t offset, const uint8_t *rgb, uint8_t count,uint64_t owner=0);
+  void discardStaged(uint64_t owner){if(staging_&&stageOwner_==owner){staging_=false;dirty_=true;}}
+  bool canStage(uint64_t owner=0);
+  bool commitStaged(uint64_t owner=0);
+  void setOutputEnabled(bool enabled);
+  bool outputEnabled()const{return outputEnabled_;}
+  String outputJson()const;
   // A loop-thread snapshot of the last committed command RGB buffer, before
   // FastLED brightness/correction. Never expose an uncommitted streamed chunk.
   String pixelFrameJson() const;
 
  private:
+  void showStaged(); // Loop renderer only; external commits must validate ownership.
   static CRGB colorFor(BoardCore::Protocol::CellState state);
   void renderCell(uint8_t index);
   void renderPattern();
   void stopPattern();
 
   CRGB pixels_[kPixels];
+  CRGB staged_[kPixels];
+  // Last loop-published command snapshot, independent of mutable render/stage
+  // buffers. Driver transmission/physical output remain separately observed.
+  CRGB published_[kPixels];
+  uint8_t publishedPhysical_[kCells] = {};
+  uint8_t publishedBrightness_ = 255;
+#if defined(ARDUINO_ARCH_ESP32)
+  PakarS3::LedOutput output_;
+#endif
   CRGB current_[kCells];
   CRGB target_[kCells];
   uint8_t heat_[kPixels] = {};
@@ -65,6 +90,9 @@ class LedGrid {
   Pattern pattern_ = kPatternNone;
   bool dirty_ = true;
   bool staging_ = false;
+  bool outputEnabled_ = PAKAR_LED_START_ENABLED != 0;
+  uint32_t stagingAt_ = 0;
+  uint64_t stageOwner_ = 0;
   uint32_t frameRevision_ = 0;
 #ifndef PAKAR_LED_FRAME_INTERVAL_MS
 #define PAKAR_LED_FRAME_INTERVAL_MS 0

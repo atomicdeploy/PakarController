@@ -91,8 +91,8 @@ String buildTelemetryJson() {
 #endif
   e[F("cpu_mhz")]=ESP.getCpuFreqMHz();e[F("flash_bytes")]=ESP.getFlashChipSize();
   e[F("flash_hz")]=ESP.getFlashChipSpeed();
-  e[F("flash_mode")]=static_cast<int>(ESP.getFlashChipMode());
-  e[F("sketch_bytes")]=ESP.getSketchSize();e[F("sketch_md5")]=ESP.getSketchMD5();
+  e[F("flash_mode")]=static_cast<int>(FirmwarePlatform::flashChipMode());
+  e[F("sketch_bytes")]=FirmwarePlatform::sketchSize();e[F("sketch_md5")]=FirmwarePlatform::sketchMd5();
   e[F("boot_integrity_verified")]=bootIntegrity;e[F("ota_free_bytes")]=ESP.getFreeSketchSpace();
   e[F("free_heap_bytes")]=ESP.getFreeHeap();e[F("uptime_ms")]=now;
   e[F("uart_errors")]=link.errors();e[F("usb_errors")]=hostLink.errors();
@@ -278,7 +278,7 @@ bool remoteCommand(const JsonDocument &d,String &result) {
 void sendMaintenanceJson(const String &body,int code=200) {
   if(auto *request=server.request()) {
     auto *response=request->beginResponse(code,"application/json",body);
-    response->addHeader("Cache-Control","no-store");request->send(response);
+    response->addHeader("Cache-Control","no-store");server.send(response);
   }
 }
 bool handleMaintenanceShell(const String &line,String &result) {
@@ -311,7 +311,7 @@ void registerMaintenanceRoutes() {
   server.on("/api/telemetry",HTTP_GET,[](){if(authenticate())sendMaintenanceJson(buildTelemetryJson());});
   server.on("/api/clients/report",HTTP_POST,[](){
     if(!authenticate())return;
-    const bool ok=clientTelemetry.report(server.arg("report"),server.request()->client()->remoteIP().toString(),millis());
+    const bool ok=clientTelemetry.report(server.arg("report"),server.remoteAddress(),millis());
     sendMaintenanceJson(ok?"{\"accepted\":true}":"{\"error\":\"invalid_report_or_client_limit\"}",ok?200:400);
   });
   server.on("/api/firmware/remote",HTTP_GET,[](){if(authenticate())sendMaintenanceJson(remoteFirmware.json());});

@@ -44,6 +44,7 @@ const OP_RESET: u8 = 0x4d;
 const OP_OUTPUT_MASK: u8 = 0x4e;
 const OP_BRIGHTNESS: u8 = 0x51;
 const OP_PATTERN: u8 = 0x52;
+const OP_LED_OUTPUT: u8 = 0x5c;
 const OP_NETWORK_CONFIG: u8 = 0x53;
 const OP_STATUS: u8 = 0x90;
 
@@ -120,6 +121,8 @@ struct DeviceStatus {
     selected_cell: u8,
     #[serde(default)]
     brightness: u8,
+    #[serde(default)]
+    led_output: serde_json::Value,
     #[serde(default)]
     effect: String,
     #[serde(default)]
@@ -249,6 +252,24 @@ struct CellMappingResponse {
     physical: Vec<u8>,
     #[serde(default)]
     names: Vec<String>,
+}
+impl CellMappingResponse {
+    fn decode(self) -> Result<Vec<CellMapping>, String> {
+        let mappings: Vec<_> = self.physical.into_iter().enumerate().map(|(index, physical_cell)| CellMapping {
+            logical_id: u8::try_from(index + 1).unwrap_or(0), physical_cell,
+            name: self.names.get(index).cloned().unwrap_or_else(|| (index + 1).to_string()),
+        }).collect();
+        if !streaming::valid_mapping(&mappings) {
+            return Err("Board mapping is incomplete or invalid; previous same-peer mapping retained, nothing written".into());
+        }
+        Ok(mappings)
+    }
+}
+fn status_observation_fresh(last: Option<Instant>) -> bool {
+    last.is_some_and(|at| at.elapsed() < Duration::from_secs(8))
+}
+fn websocket_status_ready(status: &DeviceStatus) -> bool {
+    !status.hostname.is_empty() && status.capabilities.as_ref().is_some_and(|manifest| manifest.known())
 }
 enum WsCommand {
     Connect(Endpoint, u64),
@@ -481,21 +502,8 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
             .map_err(diagnostics::describe_error),
         2 => response
             .json::<CellMappingResponse>()
-            .map(|value| {
-                Event::Mapping(
-                    value
-                        .physical
-                        .into_iter()
-                        .enumerate()
-                        .map(|(index, physical_cell)| CellMapping {
-                            logical_id: (index + 1) as u8,
-                            physical_cell,
-                            name: value.names.get(index).cloned().unwrap_or_default(),
-                        })
-                        .collect(),
-                )
-            })
-            .map_err(diagnostics::describe_error),
+            .map_err(diagnostics::describe_error)
+            .and_then(|value| value.decode().map(Event::Mapping)),
         _ => Ok(Event::Accepted(format!(
             "Device accepted the command ({code})"
         ))),
@@ -782,10 +790,12 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 stream
                     .set_read_timeout(Some(Duration::from_millis(40)))
                     .map_err(|e| e.to_string())?;
+                stream.set_write_timeout(Some(Duration::from_secs(4))).map_err(|e| e.to_string())?;
             }
             let _ = events.send(for_endpoint(&current, Event::WebSocket(true)));
-            let _ = events.send(for_endpoint(&current, Event::DiagnosticRecovered("WebSocket".into())));
-            retry.reset();
+            // A successful TCP/HTTP upgrade is not recovery if the service then
+            // immediately closes or never acknowledges an actual board status.
+            let mut confirmed = false;
             context.request_repaint();
             let mut hue = 0_u16;
             let mut last_stream = Instant::now() - Duration::from_millis(50);
@@ -868,6 +878,10 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 match socket.read() {
                     Ok(Message::Text(text)) => {
                         if let Ok(status) = serde_json::from_str::<DeviceStatus>(&text) {
+                            if !confirmed && websocket_status_ready(&status) {
+                                confirmed = true; retry.reset();
+                                let _ = events.send(for_endpoint(&current, Event::DiagnosticRecovered("WebSocket".into())));
+                            }
                             let _ = events.send(for_endpoint(&current, Event::Status(status)));
                             context.request_repaint();
                         }
@@ -893,7 +907,8 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
             ));
             // Interruptible: changing peer or stopping streaming need not wait
             // for the retry deadline. Mutations are never replayed here.
-            match commands.recv_timeout(retry.delay()) {
+            let delay = retry.delay(); retry.failed();
+            match commands.recv_timeout(delay) {
                 Ok(WsCommand::Connect(e, epoch)) => { endpoint = Some(e); generation = epoch; mapping.clear(); streaming = false; sampling = false; retry.reset(); }
                 Ok(WsCommand::Disconnect) => { endpoint = None; mapping.clear(); streaming = false; sampling = false; retry.reset(); }
                 Ok(WsCommand::Rate(value)) => fps = value.min(streaming::MAX_FPS),
@@ -901,7 +916,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 Ok(WsCommand::Stream(value)) => streaming = value,
                 Ok(WsCommand::Sample(value)) => sampling = value,
                 Err(mpsc::RecvTimeoutError::Disconnected) => return,
-                Err(mpsc::RecvTimeoutError::Timeout) => retry.failed(),
+                Err(mpsc::RecvTimeoutError::Timeout) => {},
             }
         }
     }
@@ -992,13 +1007,15 @@ fn serial_status(payload: &[u8]) -> Option<DeviceStatus> {
     }
     Some(DeviceStatus {
         capabilities: capabilities::Manifest::from_usb(payload),
-        mode: ["idle", "cell", "first-wins", "snake"]
+        mode: ["unknown", "cell", "first-wins", "snake"]
             .get(payload[0] as usize)
             .unwrap_or(&"unknown")
             .to_string(),
         winner: payload[1],
         selected_cell: payload[2],
         brightness: payload[3],
+        led_output: payload.get(42).filter(|v| **v <= 1)
+            .map(|v| serde_json::json!({"enabled": *v != 0})).unwrap_or_default(),
         effect: ["none", "rainbow", "fire"]
             .get(payload[4] as usize)
             .unwrap_or(&"unknown")
@@ -1293,6 +1310,8 @@ struct PakarControllerApp {
     mapping_physical: u8,
     mapping_name: String,
     last_mapping_poll: Instant,
+    mapping_request_pending: bool,
+    mapping_retry: diagnostics::Backoff,
 }
 
 impl PakarControllerApp {
@@ -1428,6 +1447,8 @@ impl PakarControllerApp {
             mapping_physical: 73,
             mapping_name: "1".into(),
             last_mapping_poll: Instant::now() - Duration::from_secs(30),
+            mapping_request_pending: false,
+            mapping_retry: diagnostics::Backoff::new(Duration::from_secs(2), Duration::from_secs(15)),
             config,
         }
     }
@@ -1456,6 +1477,7 @@ impl PakarControllerApp {
         self.identity_pending = false; self.identity_saved = None;
         self.streaming = false; self.sampling = false; self.stream_sent_fps = None;
         self.last_mapping_poll = Instant::now() - Duration::from_secs(16);
+        self.mapping_request_pending = false; self.mapping_retry.reset();
         let _ = self.ws_tx.send(WsCommand::Mapping(Vec::new()));
         let _ = self.ws_tx.send(WsCommand::Stream(false)); let _ = self.ws_tx.send(WsCommand::Sample(false));
     }
@@ -1659,9 +1681,11 @@ impl PakarControllerApp {
                 "/api/auth/info",
             ));
         }
-        if self.command_route() == Some(Transport::WiFi) && self.has_table() && self.last_mapping_poll.elapsed() >= Duration::from_secs(15) {
+        let mapping_interval = if self.mappings.is_empty() { self.mapping_retry.delay() } else { Duration::from_secs(15) };
+        if self.command_route() == Some(Transport::WiFi) && self.has_table() && !self.mapping_request_pending
+            && self.last_mapping_poll.elapsed() >= mapping_interval {
             self.last_mapping_poll = Instant::now();
-            let _ = self.http_tx.send(HttpCommand::Mapping(self.endpoint()));
+            self.mapping_request_pending = self.http_tx.send(HttpCommand::Mapping(self.endpoint())).is_ok();
         }
         while let Ok(event) = self.event_rx.try_recv() {
             if let Some(receipt) = peer_http::retired_envelope(&event) {
@@ -1698,13 +1722,7 @@ impl PakarControllerApp {
                     if !s.hostname.is_empty() {
                         if self.http_tx.observe(&s) { self.revoke_http_drafts(); }
                         if s.pixel_preview_requested {
-                            self.table.pixel_sample =
-                                s.pixel_frame.clone().filter(|f| f.valid()).map(|frame| {
-                                    ui::cell_pixels::Sample {
-                                        frame,
-                                        at: Instant::now(),
-                                    }
-                                });
+                            ui::cell_pixels::Sample::observe(&mut self.table.pixel_sample, s.pixel_frame.clone());
                         }
                         self.brightness = s.brightness;
                         self.pattern = s.effect.clone();
@@ -1715,6 +1733,12 @@ impl PakarControllerApp {
                     }
                 }
                 Event::Mapping(mappings) => {
+                    self.mapping_request_pending = false; self.mapping_retry.reset();
+                    self.last_mapping_poll = Instant::now();
+                    if self.table.pixel_sample.as_ref().is_some_and(|sample|
+                        mappings.iter().any(|m| sample.frame.physical.get(usize::from(m.logical_id - 1)) != Some(&m.physical_cell))) {
+                        self.table.pixel_sample = None;
+                    }
                     self.mappings = mappings;
                     let _ = self.ws_tx.send(WsCommand::Mapping(self.mappings.clone()));
                     if !streaming::valid_mapping(&self.mappings) {
@@ -1818,7 +1842,10 @@ impl PakarControllerApp {
                 }
                 Event::DiagnosticFailure(source, e) => {
                     if source == "HTTP GET /api/status" {
-                        if self.http_tx.writable() {
+                        // A recoverable HTTP read failure is not a peer change.
+                        // Fresh WS/HTTP observations retain the same bound view;
+                        // writes still require fresh preflight and pinned headers.
+                        if self.http_tx.writable() && !status_observation_fresh(self.last_status_at) {
                             self.http_tx.clear();
                             self.revoke_http_drafts();
                             self.status = None;
@@ -1827,6 +1854,10 @@ impl PakarControllerApp {
                         self.status_request_pending = false;
                         self.status_retry.failed();
                         self.last_poll = Instant::now();
+                    }
+                    if source == "HTTP GET /api/cells/mapping" {
+                        self.mapping_request_pending = false;
+                        self.mapping_retry.failed(); self.last_mapping_poll = Instant::now();
                     }
                     if self.device_settings.scan_pending {
                         self.device_settings.scan_pending = false;
@@ -1973,7 +2004,7 @@ fn format_text_status(status: &DeviceStatus, table: bool) -> String {
     macro_rules! println { ($($arg:tt)*) => {{ use std::fmt::Write as _; let _ = writeln!(output, $($arg)*); }}; }
     macro_rules! print { ($($arg:tt)*) => {{ use std::fmt::Write as _; let _ = write!(output, $($arg)*); }}; }
     println!(
-        "{} {} | AVR {} | TM1637 {} | {} | MQTT {} | NTP {} | brightness {} | effect {}",
+        "{} {} | AVR {} | TM1637 {} | {} | MQTT {} | NTP {} | brightness {} | effect {} | LED output {}",
         status.hostname,
         status.station_ip,
         if status.avr_online {
@@ -1998,7 +2029,10 @@ fn format_text_status(status: &DeviceStatus, table: bool) -> String {
             "waiting"
         },
         status.brightness,
-        status.effect
+        status.effect,
+        match status.led_output.get("enabled").and_then(|v| v.as_bool()) {
+            Some(true) => "On", Some(false) => "Off", None => "Unknown",
+        }
     );
     println!(
         "inputs {:02X}+{} outputs {:02X} winner {} link {} UART {}/{}/{}",
@@ -2242,13 +2276,15 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
                 vec![("id", id), ("state", state), ("effect", effect)],
             ),
             ["brightness", value] => ("/api/brightness", vec![("value", value)]),
+            ["led-output", "on"] => ("/api/led/output", vec![("enabled", "true")]),
+            ["led-output", "off"] => ("/api/led/output", vec![("enabled", "false")]),
             ["effect", value] => ("/api/effect", vec![("value", value)]),
             ["display", value] => ("/api/display", vec![("value", value)]),
             ["audio", cue] => ("/api/audio", vec![("cue", cue)]),
             ["snake", value] => ("/api/snake/direction", vec![("value", value)]),
             ["reset"] => ("/api/game/reset", vec![]),
             _ => return Err(
-                "commands: device identity, device rename HOST[.local], device label DISPLAY NAME, device configure HOST DISPLAY NAME, auth info, auth change USER, status, mode, cell, brightness, effect, display, audio, snake, reset"
+                "commands: device identity, device rename HOST[.local], device label DISPLAY NAME, device configure HOST DISPLAY NAME, auth info, auth change USER, status, mode, cell, brightness, led-output on|off, effect, display, audio, snake, reset"
                     .into(),
             ),
         };
@@ -2319,7 +2355,7 @@ fn main() -> eframe::Result {
     let control_only = arguments
         .iter()
         .any(|arg| matches!(arg.as_str(), "--quit" | "--app-status" | "--wifi" | "--usb" | "--disconnect"
-            | "--led-effect" | "--led-mode" | "--led-cell" | "--update-esp"));
+            | "--led-effect" | "--led-mode" | "--led-cell" | "--led-output" | "--update-esp"));
     if control_only {
         match platform::instance::send(&command, Duration::from_secs(2)) {
             Ok(reply) => {
@@ -2715,5 +2751,38 @@ mod tests {
         payload[5] = 0;
         assert!(serial_status(&payload).unwrap().audio_cues.is_empty());
         assert!(serial_status(&payload).unwrap().avr_version.is_none());
+    }
+    #[test]
+    fn led_output_status_never_invents_enabled_for_missing_or_invalid_usb_extension() {
+        let mut payload = vec![0; 42];
+        assert!(serial_status(&payload).unwrap().led_output.is_null());
+        for (byte, expected) in [(0, false), (1, true)] {
+            payload.resize(43, byte);
+            payload[42] = byte;
+            assert_eq!(serial_status(&payload).unwrap().led_output["enabled"], expected);
+        }
+        payload[42] = 255;
+        assert!(serial_status(&payload).unwrap().led_output.is_null());
+        let status = DeviceStatus::default();
+        assert!(format_text_status(&status, false).contains("LED output Unknown"));
+    }
+    #[test]
+    fn a_transport_failure_does_not_retire_a_fresh_peer_observation() {
+        assert!(status_observation_fresh(Some(Instant::now())));
+        assert!(!status_observation_fresh(None));
+        assert!(!status_observation_fresh(Some(Instant::now() - Duration::from_secs(9))));
+        assert!(!websocket_status_ready(&DeviceStatus::default()));
+        let ready: DeviceStatus = serde_json::from_value(serde_json::json!({"hostname":"ledboard",
+            "capabilities":{"board_kind":"table","acknowledged_features":["table"]}})).unwrap();
+        assert!(websocket_status_ready(&ready));
+    }
+    #[test]
+    fn mapping_requires_all_unique_cells_but_optional_labels_can_be_absent() {
+        let valid: CellMappingResponse = serde_json::from_value(serde_json::json!({"physical":(1..=80).collect::<Vec<_>>() })).unwrap();
+        let decoded = valid.decode().unwrap();
+        assert_eq!(decoded.len(), 80); assert_eq!(decoded[79].name, "80");
+        let duplicate: CellMappingResponse = serde_json::from_value(serde_json::json!({"physical":vec![1;80]})).unwrap();
+        assert!(duplicate.decode().is_err());
+        assert!(CellMappingResponse::default().decode().is_err());
     }
 }

@@ -25,6 +25,8 @@ pub fn launch_command(args: &[String]) -> Command {
             confirmed: args.iter().any(|v| v == "--confirm") }
     } else if args.iter().any(|v| v == "--led-effect") {
         Command::LedEffect { value: option("--led-effect").unwrap_or_default() }
+    } else if args.iter().any(|v| v == "--led-output") {
+        Command::LedOutput { value: option("--led-output").unwrap_or_default() }
     } else if args.iter().any(|v| v == "--led-mode") {
         Command::LedMode { value: option("--led-mode").unwrap_or_default() }
     } else if let Some(at) = args.iter().position(|v| v == "--led-cell") {
@@ -86,7 +88,7 @@ fn led_effect_code(value: &str) -> Option<u8> {
     match value { "none" => Some(0), "rainbow" => Some(1), "fire" => Some(2), _ => None }
 }
 fn led_mode_code(value: &str) -> Option<u8> {
-    match value { "idle" => Some(0), "cell" => Some(1), "snake" => Some(3), _ => None }
+    match value { "cell" => Some(1), "snake" => Some(3), _ => None }
 }
 fn led_cell_payload(id: u8, state: &str, effect: &str) -> Option<Vec<u8>> {
     if !(1..=80).contains(&id) { return None; }
@@ -113,6 +115,8 @@ mod lifecycle_launch_tests {
         assert_eq!(parsed(&["--usb"]), serde_json::json!({"command":"use_usb","port":null}));
         assert_eq!(parsed(&["--usb", "--port", "COM22"]), serde_json::json!({"command":"use_usb","port":"COM22"}));
         assert_eq!(parsed(&["--disconnect"]), serde_json::json!({"command":"disconnect"}));
+        assert_eq!(parsed(&["--led-output", "on"]), serde_json::json!({"command":"led_output","value":"on"}));
+        assert_eq!(parsed(&["--led-output", "off"]), serde_json::json!({"command":"led_output","value":"off"}));
         assert_eq!(parsed(&["--wifi", "--endpoint", "--app-status"])["endpoint"], serde_json::Value::Null);
     }
     #[test]
@@ -129,7 +133,7 @@ mod lifecycle_launch_tests {
             assert_eq!(parsed(&["--led-effect", name]), serde_json::json!({"command":"led_effect","value":name}));
             assert_eq!(led_effect_code(name), Some(code));
         }
-        for (name, code) in [("idle",0), ("cell",1), ("snake",3)] {
+        for (name, code) in [("cell",1), ("snake",3)] {
             assert_eq!(parsed(&["--led-mode", name]), serde_json::json!({"command":"led_mode","value":name}));
             assert_eq!(led_mode_code(name), Some(code));
         }
@@ -296,10 +300,19 @@ impl PakarControllerApp {
                 ctx.request_repaint();
                 return;
             }
+            Command::LedOutput { value } => {
+                if matches!(value.as_str(), "on" | "off") {
+                    let enabled = value == "on";
+                    self.action("/api/led/output", vec![("enabled".into(), enabled.to_string())],
+                        OP_LED_OUTPUT, vec![u8::from(enabled)]);
+                } else { self.message = "LED output requires on or off".into(); }
+                ctx.request_repaint();
+                return;
+            }
             Command::LedMode { value } => {
                 if let Some(code) = led_mode_code(&value) {
                     self.action("/api/mode", vec![("value".into(), value)], OP_SET_MODE, vec![code]);
-                } else { self.message = "Unknown LED mode; use idle, cell or snake".into(); }
+                } else { self.message = "Unknown LED mode; use cell or snake".into(); }
                 ctx.request_repaint();
                 return;
             }
@@ -1189,6 +1202,15 @@ impl PakarControllerApp {
         ui.add_space(10.0);
         if self.has_feature("leds") {
         dialog::section(ui, icons::SPARKLE, "Strip effect", |ui| {
+            if let Some(mut enabled) = snapshot.as_ref()
+                .and_then(|s| s.led_output.get("enabled")).and_then(|v| v.as_bool()) {
+                if ui.checkbox(&mut enabled, "LED output service").changed() {
+                    self.action("/api/led/output", vec![("enabled".into(), enabled.to_string())],
+                        OP_LED_OUTPUT, vec![u8::from(enabled)]);
+                }
+            } else {
+                ui.label(egui::RichText::new("LED output service: Unknown").weak());
+            }
             ui.add_enabled_ui(snapshot.is_some(), |ui| {
                 super::dropdown::ComboBox::from_id_salt("strip-effect")
                     .width(ui.available_width() - 10.0)

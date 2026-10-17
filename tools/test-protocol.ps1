@@ -11,6 +11,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Protocol test compilation failed' }
 & $testBinary
 if ($LASTEXITCODE -ne 0) { throw 'Protocol tests failed' }
 Write-Host 'Protocol round-trip, bounds, and corruption tests passed.'
+& (Join-Path $PSScriptRoot 'test-led-pipeline.ps1')
+& (Join-Path $PSScriptRoot 'test-led-worker.ps1')
 $mndpBinary = Join-Path $outputDirectory 'mndp_test.exe'
 & g++ -std=c++17 -Wall -Wextra -Werror (Join-Path $projectRoot 'tests/mndp_test.cpp') -o $mndpBinary
 if ($LASTEXITCODE -ne 0) { throw 'MNDP packet compilation failed' }
@@ -44,6 +46,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Remote firmware state-machine compilation fail
 if ($LASTEXITCODE -ne 0) { throw 'Remote firmware state-machine tests failed' }
 & (Join-Path $PSScriptRoot 'test-remote-s3.ps1')
 & (Join-Path $PSScriptRoot 'test-s3-dns.ps1')
+& (Join-Path $PSScriptRoot 'test-s3-flash-guard.ps1')
 $shellBinary = Join-Path $outputDirectory 'telnet_shell_test.exe'
 & g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/telnet_shell_test.cpp') -o $shellBinary
 if ($LASTEXITCODE -ne 0) { throw 'Telnet shell compilation failed' }

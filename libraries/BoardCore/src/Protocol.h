@@ -40,6 +40,7 @@ enum Opcode : uint8_t {
   kGetIdentity = 0x59, // ESP USB: [nonce, offset16], bounded read-only identity chunks.
   kEspPanel = 0x5A, // Paired ESP settings: state offer or AVR physical-menu action.
   kAvrRxDiagnostic = 0x5B, // Physical ESP USB only, quiet S3 build: bounded RX-only capture.
+  kSetLedOutput = 0x5C, // ESP only: one boolean; independent of presentation/game mode.
   kAvrRxDiagnosticResponse = 0xB4, // Action/error + actual capture/pad observations; never AVR ACK.
   kEspPanelResponse = 0xB3, // Correlated action, error and authoritative ESP readback.
   kIdentityResponse = 0xB2, // [nonce, revision32, total16, offset16, <=39 JSON bytes].

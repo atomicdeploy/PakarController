@@ -45,12 +45,17 @@ class ClientTelemetry {
   String json(uint32_t now) const {
     String out="[";bool first=true;
     for(const auto &e:entries_) if(e.active) {
-      if(!first)out+=',';
-      first=false;
       JsonDocument d;populate(d.to<JsonObject>(),e,now);
       if(d.overflowed())return String();
-      const size_t expected=measureJson(d),before=out.length();
-      if(serializeJson(d,out)!=expected || out.length()!=before+expected)return String();
+      // ArduinoJson's ArduinoStringWriter clears its destination. Serialize
+      // this one bounded entry separately, then explicitly append it; using
+      // serializeJson(d,out) would erase the array prefix/previous clients.
+      String entry;const size_t expected=measureJson(d);
+      if(serializeJson(d,entry)!=expected || entry.length()!=expected)return String();
+      size_t before=out.length();
+      if(!first){out+=',';if(out.length()!=before+1)return String();++before;}
+      first=false;out+=entry;
+      if(out.length()!=before+expected)return String();
     }
     const size_t before=out.length();out+=']';
     return out.length()==before+1?out:String();

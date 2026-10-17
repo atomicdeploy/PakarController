@@ -733,13 +733,14 @@ let contextReceivedAt=0,contextModeSignature='';
 function peerAvailability(s,ready=true){
   const c=s?.capabilities,known=ready&&c!=null&&typeof c.board_kind==='string'&&c.board_kind.length>0&&c.board_kind.length<=64&&Array.isArray(c.acknowledged_features),features=new Set(known?c.acknowledged_features.filter(v=>typeof v==='string'):[]);
   const table=features.has('table')&&c.board_kind==='table'&&c.table?.columns===10&&c.table?.rows===8&&c.table?.pixels_per_cell===6;
-  const modes=(table&&Array.isArray(c.modes)?c.modes:[]).filter(m=>m&&typeof m.label==='string'&&((m.kind==='presentation'&&[['idle',0],['cell',1],['snake',3]].some(([id,code])=>m.id===id&&m.code===code))||(m.kind==='game'&&m.id==='first-wins'&&m.code===2&&features.has('inputs')&&features.has('outputs'))));
+  const modes=(table&&Array.isArray(c.modes)?c.modes:[]).filter(m=>m&&typeof m.label==='string'&&((m.kind==='presentation'&&[['cell',1],['snake',3]].some(([id,code])=>m.id===id&&m.code===code))||(m.kind==='game'&&m.id==='first-wins'&&m.code===2&&features.has('inputs')&&features.has('outputs'))));
   return {has:feature=>feature==='table'?table:features.has(feature),modes,name:known&&typeof c.name==='string'?c.name:'',known};
 }
 function currentPeer(){return peerAvailability(state,contextReceivedAt>0&&Date.now()-contextReceivedAt<8000)}
 function contextAllows(path,data={}){
   const c=currentPeer(),required={'/api/cell':'table','/api/cells/mapping':'table','/api/game/reset':'table','/api/snake/direction':'table','/api/buzzer':'buzzer','/api/audio':'buzzer','/api/outputs':'outputs','/api/effect':'leds','/api/brightness':'leds','/api/device/name':'identity','/api/network':'network','/api/cloud':'network'};
   if(path==='/api/mode')return c.modes.some(m=>m.id===data.value);
+  if(path==='/api/led/output')return c.has('leds');
   if(path==='/api/display')return c.has(Object.hasOwn(data,'text')?'text':'display');
   return required[path]?c.has(required[path]):c.known;
 }
@@ -747,8 +748,25 @@ function contextAllows(path,data={}){
 // channels directly, with no second brightness scale or synthetic animation.
 function statusRgbOutput(s,fresh){const v=s?.status_rgb;if(!fresh||v?.available!==true||v.have_output!==true||!Array.isArray(v.rgb)||v.rgb.length!==3||!v.rgb.every(c=>Number.isInteger(c)&&c>=0&&c<=255))return null;return v}
 function renderStatusRgb(){const root=document.getElementById?.('statusRgbPreview');if(!root)return;const v=statusRgbOutput(state,currentPeer().known);root.hidden=!v;if(!v)return;const color=`rgb(${v.rgb.join(',')})`,condition=typeof v.state==='string'?v.state.slice(0,64):'unknown';document.getElementById('statusRgbDot').style.backgroundColor=color;document.getElementById('statusRgbCaption').textContent='RGB · '+condition;root.title=`Physical status RGB · ${condition}\nRGB ${v.rgb.join(', ')} · brightness ${Number.isInteger(v.brightness)?v.brightness:'unknown'}`;root.setAttribute('aria-label',root.title)}
+let ledOutputPending=false;
+function renderLedOutputControl(){
+  const anchor=document.getElementById?.('pattern')?.parentElement;if(!anchor?.parentElement)return;
+  const known=currentPeer().has('leds')&&typeof state.led_output?.enabled==='boolean';
+  let row=document.getElementById('ledOutputControl');
+  if(!row&&known){
+    row=document.createElement('label');row.id='ledOutputControl';row.className='row';
+    const input=document.createElement('input');input.type='checkbox';input.id='ledOutputEnabled';
+    const caption=document.createElement('span');setUiText(caption,'Output');row.append(input,caption);
+    input.onchange=async()=>{if(ledOutputPending||!currentPeer().has('leds')||typeof state.led_output?.enabled!=='boolean')return;
+      const requested=input.checked;input.checked=state.led_output.enabled;ledOutputPending=true;renderLedOutputControl();
+      try{await post('/api/led/output',{enabled:String(requested)})}finally{ledOutputPending=false;renderLedOutputControl()}};
+    anchor.parentElement.insertBefore(row,anchor);
+  }
+  if(row){row.hidden=!known;const input=document.getElementById('ledOutputEnabled');input.disabled=ledOutputPending||!peerHttp.writable();if(known)input.checked=state.led_output.enabled;}
+}
 function renderContext(){
   const c=currentPeer();
+  renderLedOutputControl();
   renderStatusRgb();
   document.querySelectorAll('[data-capability]').forEach(node=>node.hidden=!c.has(node.dataset.capability));
   document.querySelector('.layout')?.classList.toggle('controller-only',!c.has('table'));

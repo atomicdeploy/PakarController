@@ -70,7 +70,6 @@ class PeerContext {
         if (mode is! Map || mode['code'] is! int) continue;
         final id = mode['id'], code = mode['code'], kind = mode['kind'];
         final valid =
-            (id == 'idle' && code == 0 && kind == 'presentation') ||
             (id == 'cell' && code == 1 && kind == 'presentation') ||
             (id == 'snake' && code == 3 && kind == 'presentation') ||
             (id == 'first-wins' &&
@@ -111,7 +110,7 @@ class PeerContext {
       '/api/display' => has(values.containsKey('text') ? 'text' : 'display'),
       '/api/audio' || '/api/buzzer' => has('buzzer'),
       '/api/outputs' => has('outputs'),
-      '/api/brightness' || '/api/effect' => has('leds'),
+      '/api/brightness' || '/api/effect' || '/api/led/output' => has('leds'),
       '/api/device/name' => has('identity'),
       '/api/network' || '/api/cloud' => has('network'),
       _ => false, // Add an explicit contract before exposing a new mutation.

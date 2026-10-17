@@ -61,6 +61,17 @@ impl Sample {
     pub fn fresh(&self) -> bool {
         self.at.elapsed() < Duration::from_secs(5)
     }
+    /// A transient no-frame observation is not a new RGB sample. Keep only the
+    /// existing same-peer sample for its original freshness window; never renew
+    /// its clock from null/invalid telemetry. Peer/map revocation clears outside.
+    pub fn observe(slot: &mut Option<Self>, frame: Option<Frame>) {
+        match frame {
+            Some(frame) if frame.valid() => *slot = Some(Self { frame, at: Instant::now() }),
+            Some(_) => *slot = None,
+            None if slot.as_ref().is_some_and(|sample| !sample.fresh()) => *slot = None,
+            None => {},
+        }
+    }
 }
 /// Screen Y increases downward: subtracting angle gives CCW. Sector 0 is top.
 pub fn point(center: Pos2, radius: f32, sector: f32) -> Pos2 {
@@ -189,6 +200,21 @@ pub fn draw(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn transient_null_preserves_only_original_fresh_same_peer_sample() {
+        let frame = Frame { rgb: "00ff00".repeat(480), physical: (1..=80).collect(), revision: 7, brightness: 255 };
+        let mut slot = None;
+        Sample::observe(&mut slot, Some(frame.clone()));
+        let observed = slot.as_ref().unwrap().at;
+        Sample::observe(&mut slot, None);
+        assert_eq!(slot.as_ref().unwrap().at, observed);
+        assert_eq!(slot.as_ref().unwrap().frame.revision, 7);
+        slot.as_mut().unwrap().at = Instant::now() - Duration::from_secs(6);
+        Sample::observe(&mut slot, None); assert!(slot.is_none());
+        Sample::observe(&mut slot, Some(frame.clone()));
+        let mut invalid = frame; invalid.physical[1] = 1;
+        Sample::observe(&mut slot, Some(invalid)); assert!(slot.is_none());
+    }
     #[test]
     fn top_origin_counter_clockwise_and_physical_mapping() {
         let contract: serde_json::Value =

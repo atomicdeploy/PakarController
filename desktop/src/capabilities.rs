@@ -55,8 +55,7 @@ impl Manifest {
         self.modes.iter().filter(|m| {
             self.table()
                 && match (m.id.as_str(), m.code, m.kind.as_str()) {
-                    ("idle", 0, "presentation")
-                    | ("cell", 1, "presentation")
+                    ("cell", 1, "presentation")
                     | ("snake", 3, "presentation") => true,
                     ("first-wins", 2, "game") => self.has("inputs") && self.has("outputs"),
                     _ => false,
@@ -102,7 +101,7 @@ impl Manifest {
             }
             "/api/audio" | "/api/buzzer" => "buzzer",
             "/api/outputs" => "outputs",
-            "/api/brightness" | "/api/effect" => "leds",
+            "/api/brightness" | "/api/effect" | "/api/led/output" => "leds",
             "/api/device/name" => "identity",
             "/api/network" | "/api/cloud" | "/api/cloud/reconnect" | "/api/auth" => "network",
             "/api/clients/report" => "telemetry",
@@ -161,7 +160,6 @@ impl Manifest {
             });
         }
         for (code, id, label, kind) in [
-            (0, "idle", "Idle", "presentation"),
             (1, "cell", "Cell selection", "presentation"),
             (2, "first-wins", "First wins", "game"),
             (3, "snake", "Snake", "presentation"),
@@ -234,9 +232,9 @@ mod tests {
         payload[34..37].copy_from_slice(&[10, 8, 6]);
         let m = Manifest::from_usb(&payload).unwrap();
         assert!(m.table());
-        assert_eq!(m.modes().count(), 3); // No input/output ACK: no First wins.
+        assert_eq!(m.modes().count(), 2); // No Idle or input/output ACK: no First wins.
         payload[31] = 3;
-        assert_eq!(Manifest::from_usb(&payload).unwrap().modes().count(), 4);
+        assert_eq!(Manifest::from_usb(&payload).unwrap().modes().count(), 3);
         payload[29] = 2;
         assert!(Manifest::from_usb(&payload).is_none());
     }

@@ -35,6 +35,7 @@ pub enum Command {
     UseUsb { port: Option<String> },
     Disconnect,
     LedEffect { value: String },
+    LedOutput { value: String },
     LedMode { value: String },
     LedCell { id: u8, state: String, effect: String },
     UpdateEsp { path: String, confirmed: bool },
@@ -50,7 +51,7 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
         Some("preferences_page") => &["command", "page"][..],
         Some("use_wifi") => &["command", "endpoint"][..],
         Some("use_usb") => &["command", "port"][..],
-        Some("led_effect") | Some("led_mode") => &["command", "value"][..],
+        Some("led_effect") | Some("led_mode") | Some("led_output") => &["command", "value"][..],
         Some("led_cell") => &["command", "id", "state", "effect"][..],
         Some("update_esp") => &["command", "path", "confirmed"][..],
         _ => &["command"][..],
@@ -76,7 +77,8 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
             return Err("Select a valid OS serial port/path".into());
         }
         Command::LedEffect { value } if !matches!(value.as_str(), "none" | "rainbow" | "fire") => return Err("Unknown LED effect".into()),
-        Command::LedMode { value } if !matches!(value.as_str(), "idle" | "cell" | "snake") => return Err("Unknown LED mode".into()),
+        Command::LedOutput { value } if !matches!(value.as_str(), "on" | "off") => return Err("LED output requires on or off".into()),
+        Command::LedMode { value } if !matches!(value.as_str(), "cell" | "snake") => return Err("Unknown LED mode".into()),
         Command::LedCell { id, state, effect } if !(1..=80).contains(id)
             || !matches!(state.as_str(), "white" | "red" | "off")
             || !matches!(effect.as_str(), "immediate" | "fade" | "pulse") => return Err("Invalid LED cell operation".into()),
@@ -279,6 +281,8 @@ mod tests {
             br#"{"command":"use_usb","port":"COM22"}"#,
             br#"{"command":"use_wifi","endpoint":"http://ledboard.local"}"#,
             br#"{"command":"led_effect","value":"rainbow"}"#,
+            br#"{"command":"led_output","value":"on"}"#,
+            br#"{"command":"led_output","value":"off"}"#,
             br#"{"command":"led_cell","id":80,"state":"red","effect":"fade"}"#,
         ] { assert!(parse_command(bytes).is_ok()); }
         for bytes in [
@@ -286,6 +290,9 @@ mod tests {
             br#"{"command":"use_wifi","endpoint":"http://ledboard.local/api/status"}"#,
             br#"{"command":"use_usb","port":""}"#,
             br#"{"command":"led_effect","value":"unknown"}"#,
+            br#"{"command":"led_output","value":"toggle"}"#,
+            br#"{"command":"led_output","value":true}"#,
+            br#"{"command":"led_mode","value":"idle"}"#,
             br#"{"command":"led_cell","id":0,"state":"red","effect":"fade"}"#,
             br#"{"command":"led_cell","id":1,"state":"purple","effect":"fade"}"#,
             br#"{"command":"update_esp","path":"relative.bin","confirmed":true}"#,

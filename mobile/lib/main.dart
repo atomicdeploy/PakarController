@@ -630,6 +630,7 @@ class _TablePageState extends State<TablePage> {
   Set<int> selection = {};
   String? searchError;
   bool multiple = true, showIndicators = false, applying = false;
+  bool outputPending = false;
   String? batchMessage;
 
   @override
@@ -647,6 +648,17 @@ class _TablePageState extends State<TablePage> {
     query.text = formatCellSelection(selection);
     searchError = null;
   });
+
+  Future<void> setOutputEnabled(bool enabled) async {
+    if (outputPending || status?.ledOutputEnabled == null) return;
+    setState(() => outputPending = true);
+    try {
+      await command('/api/led/output', {'enabled': '$enabled'});
+      // Only a fresh peer observation changes the switch, never the request.
+    } finally {
+      if (mounted) setState(() => outputPending = false);
+    }
+  }
 
   Future<void> applySelection(String state) async {
     final send = widget.verifiedCommand;
@@ -730,6 +742,17 @@ class _TablePageState extends State<TablePage> {
               ],
             ),
             const SizedBox(height: 12),
+            if (status!.ledOutputEnabled != null)
+              SwitchListTile.adaptive(
+                title: const Text('LED output service'),
+                subtitle: Text(
+                  outputPending
+                      ? 'Waiting for device; showing last observed state.'
+                      : 'Off clears the strip; modes and settings stay available.',
+                ),
+                value: status!.ledOutputEnabled!,
+                onChanged: outputPending ? null : setOutputEnabled,
+              ),
             TextField(
               controller: query,
               decoration: InputDecoration(

@@ -231,9 +231,10 @@ void transport() {
 }
 struct Strip {
   uint8_t pixels[480][3] = {};
-  uint8_t level=255; unsigned commits=0;
+  uint8_t level=255; unsigned commits=0; bool admitted=true, commitOk=true;
+  bool available() { return admitted; }
   void clear() { memset(pixels,0,sizeof(pixels)); }
-  void commit() { ++commits; }
+  bool commit() { if(!commitOk)return false; ++commits;return true; }
   void brightness(uint8_t v) { level=v; }
   bool stage(uint8_t start,const uint8_t *p,uint8_t count) {
     if (start+count>100) return false;
@@ -250,6 +251,12 @@ void stripAndChunks() {
   uint8_t stage[]={0xFD,1,1,2,3}; assert(led.handle(stage,5)==P::kNoError && strip.commits==2);
   stage[1]=2; assert(led.handle(stage,5)==P::kBadPayload && strip.commits==2);
   uint8_t commit[]={0xFC}; assert(led.handle(commit,1)==P::kNoError && strip.commits==3);
+  strip.admitted=false;
+  assert(led.handle(commit,1)==P::kBusy && strip.commits==3);
+  assert(led.handle(configure,2)==P::kBusy && led.count()==2);
+  assert(led.handle(fill,5)==P::kBusy && strip.level==200);
+  strip.admitted=true;strip.commitOk=false;
+  assert(led.handle(commit,1)==P::kBusy && strip.commits==3);
   BoardCore::PcContractAssembly assembly;
   uint8_t start[48]={0,PC::DisplayText,48}, finish[4]={1,45,46,47};
   for(unsigned i=0;i<45;++i) start[i+3]=i;

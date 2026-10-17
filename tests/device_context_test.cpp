@@ -20,6 +20,7 @@ int main() {
     assert((live & Table)); assert((modes(live) & 8));
     assert((modes(live) & 4) == (PAKAR_FIRST_WINS_ENABLED ? 4 : 0));
     assert(!(modes(offline) & 4));
+    assert(!(modes(live)&1)); // No Idle presentation; output has its own service switch.
   } else { assert(!(live & Table)); assert(modes(live) == 0); }
   assert(modes(Display | Buzzer) == 0);
   std::cout << "Peer context: individual HELLO, live display ACK, stale/missing evidence and Table-only modes passed\n";

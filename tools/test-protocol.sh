@@ -5,6 +5,10 @@ c++ -std=c++17 -Wall -Wextra -pedantic \
   -I "$root/libraries/BoardCore/src" \
   "$root/tests/protocol_test.cpp" -o "$root/build/protocol-test"
 "$root/build/protocol-test"
+c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/firmware/esp8266/src" "$root/tests/led_scheduler_test.cpp" -o "$root/build/led-scheduler-test"
+"$root/build/led-scheduler-test"
+c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/tests/led_worker_stubs" "$root/tests/led_worker_test.cpp" "$root/firmware/esp32s3/src/LedOutput.cpp" -o "$root/build/led-worker-test"
+for scenario in functional timeout stop-failure; do "$root/build/led-worker-test" "$scenario"; done
 c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/mndp_test.cpp" -o "$root/build/mndp-test"
 "$root/build/mndp-test"
 c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/remote_policy_test.cpp" -o "$root/build/remote-policy-test"
@@ -28,13 +32,15 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/s3_dns_stubs" \
 "$root/build/s3-dns-lock-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/s3_dns_stubs" "$root/tests/s3_dns_recovery_test.cpp" -o "$root/build/s3-dns-recovery-test"
 "$root/build/s3-dns-recovery-test"
+c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/tests/s3_flash_guard_stubs" "$root/tests/s3_flash_guard_test.cpp" "$root/tests/s3_flash_guard_runtime.cpp" "$root/firmware/esp32s3/src/LedFlashGuard.cpp" -Wl,--wrap=esp_partition_write,--wrap=esp_partition_write_raw,--wrap=esp_partition_erase_range -o "$root/build/s3-flash-guard-test"
+"$root/build/s3-flash-guard-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/firmware/esp8266/src" "$root/tests/telnet_shell_test.cpp" -o "$root/build/telnet-shell-test"
 "$root/build/telnet-shell-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/busy_stubs" -I "$root/firmware/esp8266/src" "$root/tests/busy_line_test.cpp" -o "$root/build/busy-line-test"
 "$root/build/busy-line-test"
 c++ -std=c++17 -Wall -Wextra -Werror -DF_CPU=16000000UL -I "$root/libraries/BoardCore/src" -I "$root/tests/tone_stubs" -I "$root/firmware/avr" "$root/tests/tone_player_test.cpp" "$root/firmware/avr/TonePlayer.cpp" "$root/firmware/avr/BootMelody.cpp" -o "$root/build/tone-player-test"
 "$root/build/tone-player-test"
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
+c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
   "$root/tests/device_identity_test.cpp" "$root/firmware/esp8266/src/DeviceIdentity.cpp" -o "$root/build/device-identity-test"
 "$root/build/device-identity-test"
 for identity_flags in -DPAKAR_TABLE_ENABLED=1 -DPAKAR_TABLE_ENABLED=0 -DPAKAR_IDENTITY_CUSTOM=1; do

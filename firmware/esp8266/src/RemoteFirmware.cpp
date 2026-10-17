@@ -301,7 +301,7 @@ bool RemoteFirmware::validateImage(const Component &c,const char *path,bool esp)
         (header.max_chip_rev_full==0 || header.max_chip_rev_full==UINT16_MAX ||
          revision<=header.max_chip_rev_full);
 #else
-    ok &= p[2]==static_cast<uint8_t>(ESP.getFlashChipMode());
+    ok &= p[2]==static_cast<uint8_t>(FirmwarePlatform::flashChipMode());
 #endif
   }
   if(!esp) {

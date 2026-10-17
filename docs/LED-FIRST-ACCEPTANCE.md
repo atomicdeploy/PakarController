@@ -2,16 +2,64 @@
 
 ## Current priority
 
+Critical optical regression: the user observed rapid flashing on deployed
+c48201f0...; Off stopped flashing but left some latched pixels lit. Keep output
+disabled. Driver failed0/error0 did NOT establish a correct waveform. The staged
+actor-only bc624443... image was explicitly cancelled as job9, not applied.
+Read/read_raw/full image-verification guards and guarded metadata helpers are
+now required alongside write/erase guards. Quiet diagnostic builds use
+`-PauseLedOutput` (`PAKAR_LED_START_ENABLED=0`) to send black once and remain Off;
+ordinary builds retain default On. Do not re-enable visible effects or mark the
+regression fixed without controlled physical confirmation after deployment.
+
 The user explicitly deferred AVR integration until the ESP32-S3 WS2811 matrix
 and Pakar LED API are operational. Do not let AVR diagnosis, ISP, buzzer,
 TM1637, donor-wide audits, unrelated UI redesign or optional hardware block
 this milestone. Retain existing code; defer rather than delete those features.
 Do not resume AVR commands, resets, flashing or audible/PBX tests in this phase.
 
-Target: GPIO4, WS2811/RGB, 480 addressable pixels, 80 logical cells with six
+Target: GPIO4, WS2811, logical RGB / default S3 BGR wire order, 480 addressable pixels, 80 logical cells with six
 pixels per cell. The existing image has normal AVR UART disabled. The ESP owns
 the renderer and does not need a working AVR. There is no arbitrary 20 FPS cap;
 physical LED refresh/throughput still needs measurement.
+
+## Continuous output service
+
+The new source replaces the Idle presentation with an independent output service
+(On by default each boot, runtime Off is not a saved boot-black policy). Off sends
+black before stopping, while retaining logical cells/mode/effect settings. Use
+authenticated, peer-fenced POST `/api/led/output` with form `enabled=true|false`;
+CLI/TUI/Telnet `led-output on|off`, ESP USB opcode0x5C with a boolean byte, or cloud
+JSON `{"command":"led-output","enabled":true}`. Status `led_output.enabled` is
+the requested setting; `led_output.driver.active/ready/transmitted/failed/error_code`
+report actual S3 driver observations, not optical acceptance. No wire refresh cap
+of20fps is imposed. Static content also refreshes rather than leaving one boot
+transmission latched indefinitely.
+
+S3 uses a dedicated core1 RMT-DMA output worker, immutable in-flight encoding and
+a one-frame mailbox; old complete frames coalesce rather than building latency.
+WebSocket messages are copied into a bounded loop-owned FIFO; staging and complete
+output are separate buffers. The reviewed SDK permits at most2046 DMA symbols,
+so this is DMA with bounded refill, not a claim that all11521 symbols fit one SDK
+DMA descriptor. Wi-Fi/LED interrupt contention is a documented SDK concern:
+[Espressif RMT FAQ](https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/peripherals/rmt.html).
+
+- [x] Focused renderer/complete-frame FIFO/encoding/source guard checks.
+- [x] Guarded SDK build and final ELF partition-wrapper binding for this worker.
+- [ ] Exact-image OTA and new-boot readback for this new worker.
+- [ ] Actual transmitted counter advances with static content and during network work.
+- [ ] Explicit Off completes a black frame; On resumes current content without reboot.
+- [ ] Human optical confirmation: no corrupt/stale frames under Wi-Fi/streaming load.
+
+Earlier compiled/deployed scheduler (not accepted optical fix):1773600bytes,
+SHA256 `c48201f02e2e52046d3dc3e0f7c5a5935acb2263291b3ffb24fb067aec917c43`.
+This identity is not deployment proof. API/effect RGB remains logical RGB; build
+flag `PAKAR_S3_LED_SWAP_RED_BLUE=0` selects unswapped RGB when needed. Status
+`led_output.driver.channel_order` reports the built wire order. The pixel preview
+now keeps its last published command snapshot during pending renders/stream
+assembly/Off and exposes `pending`; it is not an optical feedback sensor.
+
+## Earlier acceptance observations
 
 - [x] Actual ASUS-to-ESP authenticated Wi-Fi API requests, pinned to one
   acknowledged hardware/boot identity, without AVR or USB serial operations.
@@ -70,7 +118,8 @@ identity changes or a request outcome is uncertain; do not automatically replay.
 | POST `/api/effect` | `value=rainbow` | Continuous rainbow |
 | POST `/api/effect` | `value=fire` | Continuous fire |
 | POST `/api/effect` | `value=none` | Stop pattern; does not mean all-off |
-| POST `/api/mode` | `value=idle` | All pixels off |
+| POST `/api/led/output` | `enabled=false` | Clear output once, then disable wire service; retain scene |
+| POST `/api/led/output` | `enabled=true` | Resume latest scene; default On each boot |
 | POST `/api/mode` | `value=cell` | Reset all cells white |
 | POST `/api/cell` | `id=1&state=red&effect=immediate` | Six pixels of logical cell1 red |
 | POST `/api/cell` | `id=80&state=off&effect=fade` | Fade logical cell80 off |

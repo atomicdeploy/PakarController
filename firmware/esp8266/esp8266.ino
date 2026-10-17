@@ -47,6 +47,7 @@
 #include "src/CloudConfig.h"
 #include "src/CloudServices.h"
 #include "src/LedGrid.h"
+#include "src/LoopMessages.h"
 #include "src/LedPreferences.h"
 #include "src/NetworkConfig.h"
 #include "src/DeviceIdentity.h"
@@ -150,6 +151,7 @@ RemoteFirmware remoteFirmware;
 unsigned artifactReaders=0;
 BusyLine<PAKAR_USE_BUSY_WIRE != 0> busyLine(kBusyPin);
 LedGrid grid;
+LoopMessages loopMessages;
 File uploadFile;
 uint32_t avrUploadOwner = 0;
 String hostname;
@@ -188,7 +190,6 @@ uint8_t avrMenuPage = 0;
 bool avrMenuActive = false, avrRunning = false, avrCaptured = false;
 uint16_t avrPanelMeta = 0;
 bool gameStateInitialized = false;
-bool streamFrameReady = false;
 uint8_t lastCellActionRevision = 0;
 uint8_t lastResetRevision = 0;
 bool programmingLatched = false;
@@ -324,16 +325,18 @@ class EspPanelSettings : public EspFrontPanel::Settings {
 } espPanelSettings;
 class PcStripOutput {
  public:
+  bool available() { return grid.canStage(0); }
   void clear() { grid.fill(kCellOff); }
   bool stage(uint8_t index, const uint8_t *rgb, uint8_t count) { return grid.stagePixels(index, rgb, count); }
   void brightness(uint8_t value) { grid.setBrightness(value); }
-  void commit() {
+  bool commit() {
     setAvrTransmitBlocked(true);
 #if !defined(ARDUINO_ARCH_ESP32)
     serviceAvrFor(18);
 #endif
-    grid.showStaged(); streamFrameReady = false;
+    const bool committed=grid.commitStaged(0);
     setAvrTransmitBlocked(false);
+    return committed;
   }
 } pcStripOutput;
 BoardCore::PcLedContract<PcStripOutput> pcStrip(pcStripOutput);
@@ -390,6 +393,7 @@ void sendHostStatus(uint8_t requestSequence) {
       static_cast<uint8_t>(networkConfig.accessPointEnabled()),
       static_cast<uint8_t>(networkConfig.dhcpEnabled()),
       static_cast<uint8_t>(PAKAR_AVR_LINK_ENABLED),
+      static_cast<uint8_t>(grid.outputEnabled()),
   };
   hostLink.send(kStatusResponse, requestSequence, payload, sizeof(payload));
 }
@@ -550,7 +554,6 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       mode = static_cast<GameMode>(frame.payload[0]);
       winner = 0;
       if (mode == kModeSnake) startSnake();
-      else if (mode == kModeIdle) grid.fill(kCellOff);
       else grid.resetWhite();
       sendToAvr(kSetMode, sequence++, frame.payload, 1);
       hostLink.ack(frame.sequence, frame.opcode);
@@ -575,7 +578,6 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
     case kGameReset:
       winner = 0;
       if (mode == kModeSnake) startSnake();
-      else if (mode == kModeIdle) grid.fill(kCellOff);
       else grid.resetWhite();
       sendToAvr(kGameReset, sequence++);
       hostLink.ack(frame.sequence, frame.opcode);
@@ -589,6 +591,9 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       saveLedPreferences();
       hostLink.ack(frame.sequence, frame.opcode);
       break;
+    case kSetLedOutput:
+      if(frame.payloadLength!=1 || frame.payload[0]>1){hostLink.error(frame.sequence,frame.opcode,kBadPayload);break;}
+      grid.setOutputEnabled(frame.payload[0]);hostLink.ack(frame.sequence,frame.opcode);break;
     case kSetLedPattern:
       if (frame.payloadLength != 1 || frame.payload[0] > LedGrid::kPatternFire) {
         hostLink.error(frame.sequence, frame.opcode, kBadPayload);
@@ -1210,7 +1215,7 @@ const char *modeName() {
     case kModeCellSelect: return "cell";
     case kModeFirstWins: return "first-wins";
     case kModeSnake: return "snake";
-    default: return "idle";
+    default: return "unknown";
   }
 }
 
@@ -1234,7 +1239,9 @@ String buildStatusJson() {
   body += F(",\"hostname\":\""); body += hostname;
   body += F("\",\"ip\":\""); body += (networkConfig.stationConnected() ? WiFi.localIP() : WiFi.softAPIP()).toString();
   body += F("\",\"mode\":\""); body += modeName();
-  body += F("\",\"avr_online\":"); body += avrOnline ? F("true") : F("false");
+  body += F("\",\"led_output\":");body+=grid.outputJson();
+  body += F(",\"ws_queue_rejected\":");body+=loopMessages.rejected();
+  body += F(",\"avr_online\":"); body += avrOnline ? F("true") : F("false");
   body += F(",\"avr_version\":");
   if (avrOnline && avrVersionKnown) {
     body += '"'; body += avrVersion[0]; body += '.'; body += avrVersion[1];
@@ -1401,55 +1408,61 @@ void configureNtp() {
   ntpConfigured = true;
 }
 
-bool applyStreamPacket(const uint8_t *packet, size_t length) {
+bool applyStreamPacket(const uint8_t *packet, size_t length,uint64_t owner=0) {
   if (packet == nullptr || length < 10U || length > 1300U ||
       memcmp(packet, "PKAR", 4) != 0 || packet[4] != 0 || packet[5] != 0 ||
       (packet[9] & ~1U) != 0) return false;
   const uint16_t offset = packet[6] | static_cast<uint16_t>(packet[7]) << 8;
   const uint8_t count = packet[8];
   const uint8_t flags = packet[9];
+  if(!count && !(flags&1U))return false;
   if (length != static_cast<size_t>(10U + count * 3U)) return false;
-  if (!grid.stagePixels(offset, packet + 10, count)) return false;
-  if ((flags & 0x01U) != 0) streamFrameReady = true;
+  if (!grid.stagePixels(offset, packet + 10, count,owner)) return false;
+  // Publish this exact complete frame now; a later packet cannot alter a
+  // ready frame while it waits for the wire worker. No I/O in network callbacks.
+  if ((flags & 0x01U) != 0 && !grid.commitStaged(owner)) return false;
   return true;
 }
 
-void handleWebSocketMessage(AsyncWebSocketClient *client, uint8_t opcode,
+void handleWebSocketMessage(uint32_t clientId, uint8_t opcode,
                            const uint8_t *payload, size_t length) {
-  if (!webAccess.socketAllowed(client->id())) { client->close(1008, "Sign in again"); return; }
+  // Only an immutable ID crosses the async -> loop boundary. SDK lookup/use
+  // must remain under its own client-list lock; client(id) returns no lease.
+  if (!webAccess.socketAllowed(clientId)) { webSocket.close(clientId, 1008, "Sign in again"); return; }
   if(passiveCaptureActive()) {
-    client->text("{\"accepted\":false,\"error\":\"passive_uart_capture_active\"}");return;
+    webSocket.text(clientId, "{\"accepted\":false,\"error\":\"passive_uart_capture_active\"}");return;
   }
   if (otaActive || otaRebootAt) return;
-  if (opcode == WS_BINARY) { if(!remoteFirmware.busy())applyStreamPacket(payload, length); return; }
+  if (opcode == WS_BINARY) { if(!remoteFirmware.busy())applyStreamPacket(payload, length, (1ULL << 63) | clientId); return; }
   if (opcode != WS_TEXT || length > 1024U) return;
   String message;
   message.reserve(length);
   message.concat(reinterpret_cast<const char *>(payload), length);
   JsonDocument parsed;
   if(deserializeJson(parsed,message) || !parsed.is<JsonObject>()) return;
-  if(parsed["type"]=="telemetry") {client->text(buildTelemetryJson());return;}
+  if(parsed["type"]=="telemetry") {webSocket.text(clientId, buildTelemetryJson());return;}
   if(parsed["command"].as<String>().startsWith("firmware-") || parsed["command"]=="telemetry") {
     String result;const bool accepted=remoteCommand(parsed,result);
     JsonDocument reply;reply["type"]="firmware-result";reply["accepted"]=accepted;
     JsonDocument details;
     if(accepted && !deserializeJson(details,result)) reply["job"]=details;
     else reply["error"]=result;
-    String body;serializeJson(reply,body);client->text(body);return;
+    String body;serializeJson(reply,body);webSocket.text(clientId, body);return;
   }
   if (message.indexOf(F("\"type\":\"status\"")) >= 0) {
     String status = buildStatusJson();
-    client->text(status);
+    webSocket.text(clientId, status);
   } else if (message.indexOf(F("\"type\":\"ping\"")) >= 0) {
-    client->text("{\"type\":\"pong\"}");
+    webSocket.text(clientId, "{\"type\":\"pong\"}");
   } else {
     JsonDocument request;
-    if (deserializeJson(request, message) ||
-        request["command"].as<String>() != F("pc-contract")) return;
+    if (deserializeJson(request, message)) return;
+    const String command = request["command"].as<String>();
+    if (command != F("pc-contract") && command != F("led-output")) return;
     String result;
     const bool accepted = handleCloudCommand(message, result);
     result.replace("\\", "\\\\"); result.replace("\"", "\\\"");
-    client->text(String(F("{\"accepted\":")) + (accepted ? "true" : "false") +
+    webSocket.text(clientId, String(F("{\"accepted\":")) + (accepted ? "true" : "false") +
                  F(",\"message\":\"") + result + F("\"}"));
   }
 }
@@ -1457,39 +1470,52 @@ void handleWebSocketMessage(AsyncWebSocketClient *client, uint8_t opcode,
 struct WsAssembly { size_t used; size_t length; uint8_t opcode; uint8_t data[1]; };
 void onWebSocketEvent(AsyncWebSocket *, AsyncWebSocketClient *client,
                       AwsEventType type, void *argument, uint8_t *payload, size_t length) {
+  const auto closeSocket = [&](uint16_t code, const char *reason) {
+    // A close handshake need not disconnect immediately. Revoke queued-command
+    // admission before marking the callback-owned client as closing.
+    webAccess.forgetSocket(client->id()); client->close(code, reason);
+  };
   if (type == WS_EVT_DISCONNECT || type == WS_EVT_ERROR) {
     webAccess.forgetSocket(client->id());
+    const uint8_t unused = 0;
+    // A full queue may drop this advisory release; the stage-owner lease still
+    // expires, and immediately revoked auth rejects already queued data.
+    loopMessages.push(client->id(), 0xfe, &unused, 0);
     if (client->_tempObject) { free(client->_tempObject); client->_tempObject = nullptr; }
     return;
   }
   if (type == WS_EVT_CONNECT) {
-    if (webSocket.count() > 8) { client->close(1013, "Client limit reached"); return; }
+    if (webSocket.count() > 8) { closeSocket(1013, "Client limit reached"); return; }
     if (!webAccess.bindSocket(client->id(), static_cast<AsyncWebServerRequest *>(argument))) {
-      client->close(1008, "Sign in required"); return;
+      closeSocket(1008, "Sign in required"); return;
     }
-    client->text(buildStatusJson()); return;
+    const uint8_t statusRequest[]="{\"type\":\"status\"}";
+    if(!loopMessages.push(client->id(),WS_TEXT,statusRequest,sizeof(statusRequest)-1))closeSocket(1013,"Command queue full");
+    return;
   }
   if (type != WS_EVT_DATA) return;
+  if (!webAccess.socketAllowed(client->id())) { closeSocket(1008, "Sign in again"); return; }
   AwsFrameInfo *info = static_cast<AwsFrameInfo *>(argument);
   if (!info || !info->final || info->num != 0 || info->len > 1300 ||
-      info->index + length > info->len) { client->close(1009, "Message exceeds stream bounds"); return; }
+      info->index + length > info->len) { closeSocket(1009, "Message exceeds stream bounds"); return; }
   if (info->index == 0 && info->len == length) {
-    handleWebSocketMessage(client, info->opcode, payload, length); return;
+    if(!loopMessages.push(client->id(),info->opcode,payload,length))closeSocket(1013,"Command queue full");return;
   }
   if (info->index == 0) {
     if (client->_tempObject) free(client->_tempObject);
     auto *assembly = static_cast<WsAssembly *>(malloc(sizeof(WsAssembly) + info->len));
     client->_tempObject = assembly;
-    if (!assembly) { client->close(1013, "Message buffer unavailable"); return; }
+    if (!assembly) { closeSocket(1013, "Message buffer unavailable"); return; }
     assembly->used = 0; assembly->length = info->len; assembly->opcode = info->opcode;
   }
   auto *assembly = static_cast<WsAssembly *>(client->_tempObject);
   if (!assembly || assembly->used != info->index || assembly->length != info->len ||
-      assembly->used + length > assembly->length) { client->close(1002, "Invalid message sequence"); return; }
+      assembly->used + length > assembly->length) { closeSocket(1002, "Invalid message sequence"); return; }
   memcpy(assembly->data + assembly->used, payload, length); assembly->used += length;
   if (assembly->used == assembly->length) {
-    handleWebSocketMessage(client, assembly->opcode, assembly->data, assembly->length);
+    const bool queued=loopMessages.push(client->id(),assembly->opcode,assembly->data,assembly->length);
     free(assembly); client->_tempObject = nullptr;
+    if(!queued)closeSocket(1013,"Command queue full");
   }
 }
 
@@ -1497,7 +1523,7 @@ GameMode parseMode(const String &value) {
   if (value == F("snake")) return kModeSnake;
   if (value == F("first-wins")) return kModeFirstWins;
   if (value == F("cell")) return kModeCellSelect;
-  return kModeIdle;
+  return kModeCellSelect;
 }
 
 CellState parseCellState(const String &value) {
@@ -1669,15 +1695,14 @@ bool handleCloudCommand(const String &message, String &result) {
   }
   if (command == F("mode")) {
     const String value = jsonStringValue(message, "value");
-    if (value != F("idle") && value != F("cell") &&
+    if (value != F("cell") &&
         value != F("first-wins") && value != F("snake")) {
-      result = F("mode must be idle, cell, first-wins, or snake");
+      result = F("mode must be cell, first-wins, or snake");
       return false;
     }
     mode = parseMode(value);
     winner = 0;
     if (mode == kModeSnake) startSnake();
-    else if (mode == kModeIdle) grid.fill(kCellOff);
     else grid.resetWhite();
     const uint8_t payload[] = {static_cast<uint8_t>(mode)};
     sendToAvr(kSetMode, sequence++, payload, sizeof(payload));
@@ -1714,6 +1739,11 @@ bool handleCloudCommand(const String &message, String &result) {
     saveLedPreferences();
     result = F("brightness updated");
     return true;
+  }
+  if(command==F("led-output")){
+    JsonDocument request;if(deserializeJson(request,message)||!request["enabled"].is<bool>()){
+      result=F("enabled must be boolean");return false;}
+    grid.setOutputEnabled(request["enabled"].as<bool>());result=grid.outputJson();return true;
   }
   if (command == F("effect")) {
     const String value = jsonStringValue(message, "value");
@@ -1964,12 +1994,12 @@ void registerAsyncOta() {
     body += F("\",\"application\":"); body += applicationIdentityJson();
     body += F(",\"model\":\""); body += FirmwarePlatform::model(); body += F(" + ATmega328P\",\"version\":\"");
     body += BoardCore::BuildInfo::kVersion;
-    body += F("\",\"sketch_size\":"); body += ESP.getSketchSize();
-    body += F(",\"size\":"); body += ESP.getSketchSize();
+    body += F("\",\"sketch_size\":"); body += FirmwarePlatform::sketchSize();
+    body += F(",\"size\":"); body += FirmwarePlatform::sketchSize();
     body += F(",\"free\":"); body += ESP.getFreeSketchSpace();
-    body += F(",\"hash\":\""); body += ESP.getSketchMD5(); body += '"';
+    body += F(",\"hash\":\""); body += FirmwarePlatform::sketchMd5(); body += '"';
     body += F(",\"framework\":\"ESPAsyncWebServer\",\"framework_version\":\"3.12.1\"");
-    body += F(",\"sketch_md5\":\""); body += ESP.getSketchMD5();
+    body += F(",\"sketch_md5\":\""); body += FirmwarePlatform::sketchMd5();
     body += F("\",\"phase\":\""); body += otaPhase;
     body += F("\",\"uploaded_bytes\":"); body += otaUploadedBytes;
     body += F(",\"free_heap\":"); body += ESP.getFreeHeap();
@@ -1986,7 +2016,7 @@ void registerAsyncOta() {
         "\nhostname: "+hostname+".local\n"+json+"\n");
     } else {
       auto *response=server.request()->beginResponse(200,"application/json",json);
-      response->addHeader("Cache-Control","no-store");server.request()->send(response);
+      response->addHeader("Cache-Control","no-store");server.send(response);
     }
   });
   server.native().on("/update", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -2197,7 +2227,11 @@ void registerApi() {
   server.on("/api/cells/mapping", HTTP_GET, []() {
     if (!authenticate()) return;
     String body;
-    body.reserve(1300);
+    // Names may each contain15 bytes requiring two-byte JSON escaping. Reserve
+    // the complete bounded response once; never return truncated JSON as200.
+    if(!body.reserve(sizeof(cellMapping.names)*2U+LedGrid::kCells*8U+256U)){
+      server.send(503,"application/json","{\"error\":\"mapping_memory_unavailable\"}");return;
+    }
     body += F("{\"logical_order\":\"row-major\",\"odd_column_offset\":0.5,\"physical\":[");
     for (uint8_t logical = 1; logical <= LedGrid::kCells; ++logical) {
       if (logical != 1) body += ',';
@@ -2300,22 +2334,29 @@ void registerApi() {
   server.on("/api/mode", HTTP_POST, []() {
     if (!authenticate()) return;
     const String value = server.arg("value");
-    if (value != F("idle") && value != F("cell") &&
+    if (value != F("cell") &&
         value != F("first-wins") && value != F("snake")) {
       server.send(400, "text/plain",
-                  "mode must be idle, cell, first-wins, or snake");
+                  "mode must be cell, first-wins, or snake");
       return;
     }
     const GameMode requested = parseMode(value);
     mode = requested;
     winner = 0;
     if (mode == kModeSnake) startSnake();
-    else if (mode == kModeIdle) grid.fill(kCellOff);
     else grid.resetWhite();
     saveLedPreferences();
     const uint8_t payload[] = {static_cast<uint8_t>(mode)};
     sendToAvr(kSetMode, sequence++, payload, sizeof(payload));
     server.send(202, "application/json", "{\"accepted\":true}");
+  });
+  server.on("/api/led/output",HTTP_POST,[](){
+    if(!authenticate())return;
+    const String value=server.arg("enabled");
+    if(value!="true"&&value!="false"&&value!="1"&&value!="0"){
+      server.send(400,"text/plain","enabled must be true or false");return;}
+    grid.setOutputEnabled(value=="true"||value=="1");
+    server.send(200,"application/json",grid.outputJson());
   });
   server.on("/api/cell", HTTP_POST, []() {
     if (!authenticate()) return;
@@ -2641,14 +2682,14 @@ void registerApi() {
     File file = LittleFS.open(String(kBackupDirectory) + F("/flash.bin"), "r");
     if (!file) { server.send(404, "text/plain", "no flash backup"); return; }
     server.streamFile(file, "application/octet-stream");
-    file.close();
+    // Response owns a File copy; explicit close would close its shared handle.
   });
   server.on("/api/avr/backup/eeprom", HTTP_GET, []() {
     if (!authenticate()) return;
     File file = LittleFS.open(String(kBackupDirectory) + F("/eeprom.bin"), "r");
     if (!file) { server.send(404, "text/plain", "no EEPROM backup"); return; }
     server.streamFile(file, "application/octet-stream");
-    file.close();
+    // Let the local wrapper release its reference, not close the response's file.
   });
   server.on("/api/avr/program", HTTP_POST, []() {
     if(!authenticate()) return;
@@ -2719,7 +2760,8 @@ void serviceStream() {
   if (packetSize < 10 || packetSize > 1300) return;
   uint8_t packet[1300];
   const int length = stream.read(packet, sizeof(packet));
-  if (length > 0) applyStreamPacket(packet, static_cast<size_t>(length));
+  if (length > 0) applyStreamPacket(packet, static_cast<size_t>(length),
+      (1ULL<<62)|(uint64_t(static_cast<uint32_t>(stream.remoteIP()))<<16)|stream.remotePort());
 }
 
 void telnetPrompt() {
@@ -2740,7 +2782,7 @@ void executeTelnetCommand(String line) {
   if (line == F("help") || line == F("?")) {
     telnetClient.println(F("info | telemetry | firmware status | firmware fetch HTTPS_URL SHA256 [all|esp|avr] | firmware apply JOB BOOT SHA256 | firmware cancel JOB BOOT"));
     telnetClient.println(
-        F("help | status | mode <idle|cell|first-wins|snake> | "
+        F("help | status | led-output <on|off> | mode <cell|first-wins|snake> | "
           "cell <1..80> <white|red|off> [immediate|fade|pulse]"));
     telnetClient.println(
         F("brightness <1..255> | effect <none|rainbow|fire> | "
@@ -2754,6 +2796,11 @@ void executeTelnetCommand(String line) {
     telnetClient.println(buildStatusJson());
     telnetPrompt();
     return;
+  }
+  if(line=="led-output on" || line=="led-output off"){
+    if(remoteFirmware.busy()||otaActive||programmingLatched)telnetClient.println(F("ERR device busy"));
+    else{grid.setOutputEnabled(line=="led-output on");telnetClient.println(grid.outputJson());}
+    telnetPrompt();return;
   }
   if (line == F("device name") || line == F("device identity")) { telnetClient.println(deviceNameJson()); telnetPrompt(); return; }
   if (line.startsWith(F("device label "))) {
@@ -3148,7 +3195,7 @@ void loop() {
   // its reply arrives while FastLED is not masking ESP8266 interrupts.
   const bool ledFrameDue = !otaActive && !remoteFirmware.busy() &&
       static_cast<int32_t>(now - ledResumeAt) >= 0 &&
-      ((streamFrameReady && grid.readyToShow(now)) || grid.needsRender(now));
+      grid.needsRender(now);
   if (ledFrameDue) {
     setAvrTransmitBlocked(true);
     // The busy edge prevents a new unsolicited AVR frame, but one may have
@@ -3158,15 +3205,16 @@ void loop() {
 #if !defined(ARDUINO_ARCH_ESP32)
     serviceAvrFor(8U);
 #endif
-    if (streamFrameReady) {
-      grid.showStaged();
-      streamFrameReady = false;
-    } else {
-      grid.service(now);
-    }
+    grid.service(now);
     setAvrTransmitBlocked(false);
   }
   server.service();
+  LoopMessages::Message message;
+  if(loopMessages.pop(message)){
+    if(message.opcode==0xfe) grid.discardStaged((1ULL << 63) | message.client);
+    else if(webAccess.socketAllowed(message.client))
+      handleWebSocketMessage(message.client,message.opcode,message.data,message.length);
+  }
   if (remoteFirmware.busy()) {
 #if defined(ARDUINO_ARCH_ESP32)
     if(remoteFirmware.needsDownloadConnection())

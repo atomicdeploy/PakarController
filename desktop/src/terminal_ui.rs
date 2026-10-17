@@ -532,6 +532,11 @@ impl Model {
                                 s.mode, s.effect, s.brightness
                             ));
                         }
+                        if m.has("leds") {
+                            lines.push(format!("LED output: {}", match s.led_output.get("enabled").and_then(|v| v.as_bool()) {
+                                Some(true) => "On", Some(false) => "Off", None => "Unknown",
+                            }));
+                        }
                         if m.has("display") && s.tm1637_ack {
                             lines.push(format!(
                                 "TM1637: {:02X?}  Brightness: {}",
@@ -651,6 +656,7 @@ impl Model {
                     "/: Find cell IDs/ranges, Enter: apply selection",
                     "w / r / o: selected cells white / red / off",
                     ": command palette uses the real shared CLI parser",
+                    ":led-output on / :led-output off: output service",
                     "Selection does not write; actions send once, no replay",
                     "q / Ctrl+C: exit, stop unsent work",
                     "Rich device-settings forms remain pending",
@@ -785,6 +791,8 @@ fn command_allowed(s: &DeviceStatus, words: &[&str]) -> bool {
                 && m.modes().any(|v| v.id == "snake");
         }
         ["brightness" | "effect", ..] => "leds",
+        ["led-output", "on" | "off"] => return !s.programming_latch
+            && m.has("leds") && s.led_output.get("enabled").and_then(|v| v.as_bool()).is_some(),
         ["display", "segments", ..] => "text",
         ["display", ..] => "display",
         ["audio", cue] => {
@@ -1007,6 +1015,23 @@ mod tests {
         assert!(!m.table());
         m.page = Page::Table;
         assert!(m.key(press(KeyCode::Char('r'))).1.is_none());
+    }
+    #[test]
+    fn output_service_command_requires_fresh_advertised_known_state() {
+        let mut s = table();
+        s.capabilities.as_mut().unwrap().acknowledged_features.push("leds".into());
+        assert!(!command_allowed(&s, &["led-output", "on"]));
+        for enabled in [true, false] {
+            s.led_output = serde_json::json!({"enabled":enabled});
+            assert!(command_allowed(&s, &["led-output", "on"]));
+            assert!(command_allowed(&s, &["led-output", "off"]));
+        }
+        assert!(!command_allowed(&s, &["led-output", "toggle"]));
+        s.programming_latch = true;
+        assert!(!command_allowed(&s, &["led-output", "on"]));
+        s.programming_latch = false;
+        s.boot_id.clear();
+        assert!(!command_allowed(&s, &["led-output", "off"]));
     }
     #[test]
     fn shared_find_selection_and_arrow_navigation_never_write() {

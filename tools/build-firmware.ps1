@@ -10,6 +10,7 @@ param(
     [ValidateSet(-1, 38, 48)] [int] $S3StatusRgbPin = -1,
     [switch] $InitializeFilesystem,
     [switch] $PauseAvrLink,
+    [switch] $PauseLedOutput,
     [switch] $S3IspElectricalVerified,
     [switch] $VerboseBuild,
     [switch] $Clean,
@@ -20,6 +21,7 @@ $ErrorActionPreference = 'Stop'
 if ($Target -eq 'esp32s3' -and -not $PSBoundParameters.ContainsKey('LinkMode') -and -not $env:PAKAR_LINK_MODE) { $LinkMode = 'buffered' }
 if ($Target -eq 'esp32s3' -and $LinkMode -ne 'buffered') { throw 'ESP32-S3 UART integration requires the explicit paired buffered profile.' }
 if ($PauseAvrLink -and $Target -ne 'esp32s3') { throw 'Quiet AVR-link commissioning currently targets ESP32-S3 only.' }
+if ($PauseLedOutput -and $Target -ne 'esp32s3') { throw 'Quiet LED commissioning currently targets ESP32-S3 only.' }
 if ($S3IspElectricalVerified -and $Target -ne 'esp32s3') { throw 'The S3 ISP electrical acknowledgment is target-specific.' }
 if ($LinkMode -eq 'buffered' -and $Target -notin @('avr', 'esp32s3')) {
     throw 'Buffered mode currently targets the paired AVR only; ESP8266 requires busy-wire or polling.'
@@ -90,6 +92,7 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         if ($S3StatusRgbPin -ne -1) { $flags += " -DPAKAR_S3_STATUS_RGB_PIN=$S3StatusRgbPin" }
         if ($InitializeFilesystem) { $flags += ' -DPAKAR_INITIALIZE_FILESYSTEM=1' }
         if ($PauseAvrLink) { $flags += ' -DPAKAR_AVR_LINK_ENABLED=0' }
+        if ($PauseLedOutput) { $flags += ' -DPAKAR_LED_START_ENABLED=0' }
         if ($S3IspElectricalVerified) { $flags += ' -DPAKAR_S3_ISP_ELECTRICAL_VERIFIED=1' }
         "esp32:esp32:esp32s3:CDCOnBoot=cdc,USBMode=hwcdc,FlashSize=${S3FlashMB}M,PartitionScheme=$partitions,PSRAM=$S3Psram"
     } else { 'esp8266:esp8266:nodemcuv2:eesz=4M2M' }
@@ -103,7 +106,7 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         # Arduino's initial sketch dependency scan also uses the C recipe.
         $arguments += @('--build-property', "compiler.c.extra_flags=$flags")
         $arguments += @('--build-property', 'compiler.optimization_flags=-Os -g0')
-        $arguments += @('--build-property', 'compiler.c.elf.extra_flags=-Wl,--wrap=dns_clear_cache')
+        $arguments += @('--build-property', 'compiler.c.elf.extra_flags=-Wl,--wrap=dns_clear_cache,--wrap=esp_partition_write,--wrap=esp_partition_write_raw,--wrap=esp_partition_erase_range,--wrap=esp_partition_read,--wrap=esp_partition_read_raw,--wrap=esp_image_verify')
     }
     if ($Clean) { $arguments += '--clean' }
     if ($VerboseBuild) { $arguments += '--verbose' }

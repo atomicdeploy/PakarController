@@ -18,13 +18,15 @@ template<class Output> class PcLedContract {
   Protocol::Error handle(const uint8_t *p, uint8_t n) {
 #if PAKAR_PC_ESP_LED
     if (!p || !n) return Protocol::kBadPayload;
+    // A legacy commit must never publish another streaming source's partial.
+    if (!output_.available()) return Protocol::kBusy;
     if (n == 2 && p[0] == 0xFE) {
       if (!p[1] || p[1] > 100) return Protocol::kBadPayload;
-      output_.clear(); output_.commit(); count_ = p[1];
+      output_.clear(); if (!output_.commit()) return Protocol::kBusy; count_ = p[1];
       return Protocol::kNoError;
     }
     if (n == 1 && p[0] == 0xFC) {
-      output_.commit(); return Protocol::kNoError;
+      return output_.commit() ? Protocol::kNoError : Protocol::kBusy;
     }
     if (n >= 5 && p[0] == 0xFD) {
       if ((n - 2) % 3 || p[1] >= count_ || (n - 2) / 3 > count_ - p[1]) return Protocol::kBadPayload;
@@ -37,7 +39,7 @@ template<class Output> class PcLedContract {
       for (uint8_t i = 0; i < count_; ++i)
         if (!output_.stage(i, p + 1, 1)) return Protocol::kHardwareUnavailable;
     } else if (!output_.stage(p[0], p + 1, 1)) return Protocol::kHardwareUnavailable;
-    output_.commit(); return Protocol::kNoError;
+    return output_.commit() ? Protocol::kNoError : Protocol::kBusy;
 #else
     (void)p; (void)n; return Protocol::kHardwareUnavailable;
 #endif

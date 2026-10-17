@@ -40,17 +40,17 @@ inline uint16_t features(bool helloFresh, uint16_t avrCaps, bool displayAck,
 }
 inline uint8_t modes(uint16_t available) {
   if (!(available & Table)) return 0;
-  // Idle and cell presentation belong to the ESP table. First wins also needs
+  // Cell presentation belongs to the ESP table. First wins also needs
   // the acknowledged AVR inputs and outputs, not just a connected ESP.
-  return 1U | 2U | 8U |
+  return 2U | 8U |
     ((PAKAR_FIRST_WINS_ENABLED && (available & (Inputs | Outputs)) == (Inputs | Outputs)) ? 4U : 0U);
 }
 inline const char *modeName(uint8_t code) {
-  static const char *const names[] = {"idle", "cell", "first-wins", "snake"};
+  static const char *const names[] = {nullptr, "cell", "first-wins", "snake"};
   return code < 4 ? names[code] : nullptr;
 }
 inline const char *modeLabel(uint8_t code) {
-  static const char *const names[] = {"Idle", "Cell selection", "First wins", "Snake"};
+  static const char *const names[] = {nullptr, "Cell selection", "First wins", "Snake"};
   return code < 4 ? names[code] : nullptr;
 }
 }

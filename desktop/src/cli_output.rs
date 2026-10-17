@@ -2,7 +2,7 @@
 //! branches adapted to this controller. These terminate before preferences,
 //! networking, GUI ownership or windows are initialized. Media/update/remote
 //! command parsing is not silently certified by this local-output import.
-pub const DEVICE_COMMANDS: &str = "status | info | telemetry | firmware status | firmware fetch HTTPS_URL SHA256 [all|esp|avr] | firmware apply JOB BOOT SHA256 | firmware cancel JOB BOOT SHA256 | device name | device rename NAME[.local] | auth info | auth change USERNAME (PAKAR_NEW_PASSWORD) | avr contracts | avr settings | avr set PARAMETER VALUE | avr panel | avr command OPCODE [HEX] | mode <...> | cell <id> <state> [effect] | brightness <n> | effect <name> | display <n> | display stop | display segments [--speed-ms n] [--duration-ms n] [--repeat once|loop|interval] [--interval-ms n] [--scroll] -- TEXT | audio <cue> | snake <direction> | reset | quit";
+pub const DEVICE_COMMANDS: &str = "status | info | telemetry | firmware status | firmware fetch HTTPS_URL SHA256 [all|esp|avr] | firmware apply JOB BOOT SHA256 | firmware cancel JOB BOOT SHA256 | device name | device rename NAME[.local] | auth info | auth change USERNAME (PAKAR_NEW_PASSWORD) | avr contracts | avr settings | avr set PARAMETER VALUE | avr panel | avr command OPCODE [HEX] | mode <...> | cell <id> <state> [effect] | brightness <n> | led-output on|off | effect <name> | display <n> | display stop | display segments [--speed-ms n] [--duration-ms n] [--repeat once|loop|interval] [--interval-ms n] [--scroll] -- TEXT | audio <cue> | snake <direction> | reset | quit";
 
 pub fn format_help_message() -> String {
     format!(
@@ -12,7 +12,7 @@ APPLICATION OPTIONS:\n  -h, --help         Print help and exit without starting 
 DEVICE COMMANDS (only advertised capabilities are available):\n  {}\n\n\
 ENDPOINT/AUTH:\n  PAKAR_ENDPOINT, PAKAR_USER, PAKAR_PASSWORD configure device access.\n  Keep credentials out of command arguments and logs.\n  REST uses /api/... without numbered namespaces; WebSocket uses /ws.\n",
         env!("CARGO_PKG_VERSION"),
-        DEVICE_COMMANDS
+        format!("{DEVICE_COMMANDS}\n\n  Existing app (selected USB or Wi-Fi only): --led-output on|off")
     )
 }
 
