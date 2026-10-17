@@ -43,6 +43,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Remote firmware state-machine compilation fail
 & $remoteStateBinary
 if ($LASTEXITCODE -ne 0) { throw 'Remote firmware state-machine tests failed' }
 & (Join-Path $PSScriptRoot 'test-remote-s3.ps1')
+& (Join-Path $PSScriptRoot 'test-s3-dns.ps1')
 $shellBinary = Join-Path $outputDirectory 'telnet_shell_test.exe'
 & g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/telnet_shell_test.cpp') -o $shellBinary
 if ($LASTEXITCODE -ne 0) { throw 'Telnet shell compilation failed' }
@@ -86,7 +87,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Access persistence test compilation failed' }
 & $accessConfigBinary
 if ($LASTEXITCODE -ne 0) { throw 'Access persistence tests failed' }
 $asyncBinary = Join-Path $outputDirectory 'async_http_test.exe'
-& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/async_http_test.cpp') -o $asyncBinary
+& g++ -std=c++17 -pthread -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/async_http_test.cpp') -o $asyncBinary
 if ($LASTEXITCODE -ne 0) { throw 'Async HTTP test compilation failed' }
 & $asyncBinary
 if ($LASTEXITCODE -ne 0) { throw 'Async HTTP tests failed' }

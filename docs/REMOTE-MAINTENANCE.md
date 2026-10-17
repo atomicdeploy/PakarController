@@ -1,6 +1,6 @@
 # Remote firmware and telemetry
 
-Version 0.2.7 contains one integrated updater for ESP8266 or ESP32-S3 and ATmega328P. This is a release candidate: compilation and host/emulator tests are not physical board, TLS endpoint, power-loss or production deployment proof. The S3 inactive-slot implementation and publisher compile and pass host tests. A corrected live Wi-Fi upload and full running-image SHA readback passed, but intermittent stream failures and a later panic remain unresolved. See the current deployment receipt before attempting a handoff.
+Version 0.2.7 contains one integrated updater for ESP8266 or ESP32-S3 and ATmega328P. This is a release candidate: compilation and host/emulator tests are not physical board, power-loss or production deployment proof. Actual S3 HTTPS Internet staging and a separate Apply through the ASUS PakarController CLI now pass for a changed image. The new boot reports the expected digest, completed job and VALID selected/running OTA slot. Three actual software crashes were diagnosed and fixed; intermittent HTTP read failures, recovery/concurrency/physical acceptance remain open. See the current deployment receipt before attempting a handoff.
 
 ## Owner workflow
 
@@ -69,6 +69,119 @@ The explicitly built S3 quiet profile (`PAKAR_AVR_LINK_ENABLED=0`) permits ESP-o
 
 ## Current deployment receipt
 
+The quiet 16 MB quad-flash / 8 MB OPI-PSRAM S3 image is **1,853,328 bytes**,
+SHA-256 `29fca3373f32e875ae7181e775ef9b4373b85c898f3ae5375a1d0af6d0cea15c`,
+MD5 `57dbbb3f6cfbe03a50289adb50539567`, ELF SHA-256
+`ccce33b9afce12c575649d567b6f2925d93fea25dbdb9aec22ce451d19f0ac8b`.
+Version remains 0.2.7 across firmware/native/mobile. This is the LED-first quiet
+profile: AVR UART/reset/ISP/EEPROM/fuses and sound were not actuated.
+
+Internet job **7** fetched the pinned manifest and this complete image over
+HTTPS. A fresh exact-job/boot/hash/length preflight through the installed ASUS
+PakarController CLI observed Ready, then its separate Apply returned exit 0 and
+a positive prepare-phase acknowledgment. This final image was **not USB-flashed**.
+The ESP changed from boot `a7372ca8158212349c4e01295a351446` to
+`13acc69e049a90569d631f1bc7950281`; its journal reports job 7 complete and the
+expected image SHA. New actual telemetry reports running_offset=65536,
+boot_offset=65536 and running_state_code=2 (VALID): app0 is both running and
+selected. These additive fields are absent from the previous app1 image.
+
+Trusted manifest SHA-256:
+`71cf1a19e786c27eaa0cc84f899cf40d0be070d5b20744ddbec0a551547e0035`.
+[Immutable publisher](https://office.digitalogic.ir/pakarcontroller/firmware/esp32s3/29fca3373f32e875ae7181e775ef9b4373b85c898f3ae5375a1d0af6d0cea15c/manifest.json).
+Current commissioning is ESP-only (`targets=1`, CLI target `esp`), not all.
+
+Three telemetry observations on that same final boot reached uptime 982638 ms,
+reset reason 3 (software restart), station connected and AP enabled. Automatic
+SNTP was observed at uptime 131463 ms, not inferred from configured NTP or a
+manually supplied clock. All 80 logical cells and the complete 480-pixel command
+buffer read back white at brightness 255, mode cell/effect none. This is not
+optical proof, an external-power power-cycle test or long/concurrent-client soak.
+The owner-authorized replacement station network is persisted; no Wi-Fi password
+is included in repository evidence.
+
+Private ASUS receipts: `internet-slot-telemetry-native-apply.json` contains the
+actual Ready preflight and positive Apply response;
+`internet-slot-telemetry-handoff.json` contains the final slot/clock/network and
+white-buffer observations. The original fetch observer lost one read late in
+download; later Ready and Complete observations, not replaying Fetch, establish
+the outcome. Earlier jobs 5 and 6 were explicitly cancelled before job 7.
+
+The subsequent boot-fenced running-artifact readback passed: **29 exact HTTP206
+ranges, all 1,853,328 bytes, SHA-256 matching the final image above**, same board
+and boot before/after. Each response's Content-Range/Length and MD5 ETag were
+checked; bytes were aggregated into SHA in RAM, without a second image on disk.
+Private receipt: `internet-slot-telemetry-range-readback.json`. Four read failures
+were retained (three empty replies and one partial-range timeout); only complete
+verified ranges entered the digest. No mutation was retried.
+
+An initial single-stream read truncated after 269428 bytes, and an initial range
+attempt failed after 262144 bytes. The boot stayed unchanged; these failures are
+not silently counted as successful readback or diagnosed as new panics. Small
+GETs also sometimes return empty replies. Reliable single-stream/client resume
+remains open despite the successful complete bounded readback. Preserve USB
+recovery availability until HTTP/discovery/AP recovery, external-power/optical
+and concurrency tests pass. MQTT/cloud commands without the ASUS relay and AVR
+integration are still open.
+
+The existing ASUS interactive app (PID9796, executable SHA e63c1bb0...) was
+reconnected using guarded typed IPC, not replaced or force-stopped. Actual
+readback reports exclusive Wi-Fi online, the expected hardware and final boot,
+white cell mode, no AVR and no pending maintenance; the connection uses
+`http://ledboard.local`. Original installed settings and rollback are preserved.
+Private receipts: `internet-final-desktop-connect.json` and the later guarded
+`internet-final-desktop-inspect.json`, both reporting the exact peer online;
+enabled alone was not counted as online. Native executable identity is unchanged
+by this firmware fix. Small copies of the receipts are retained on the build PC
+as well as ASUS; raw crash cores remain private because RAM can contain secrets.
+
+| Private receipt | SHA-256 |
+| --- | --- |
+| internet-slot-telemetry-native-apply.json | f6262620a0055ade7c23331428ff74d33e62027d1be535770b852f8ab6a4516e |
+| internet-slot-telemetry-handoff.json | 7af4eb8cbe525bb13d1f5f56c0bbdb08610fb567111f7d2bb4c2e9fd7671ac06 |
+| internet-slot-telemetry-range-readback.json | 712e54c4e12c93e49705cc247754be1d69d1fd7a064fb43f05945020f44612ed |
+| internet-final-desktop-inspect.json | 4c9f59d89bb83cbd627bee11e6081b349907e3a77323149f1b611db178a11aa5 |
+
+### Historical Internet staging and failed Apply (superseded image)
+
+The previous quiet16MB/OPI S3 image was1852128bytes, SHA256
+`8acf99396902bec038d5da5503c9cd8338f778e8ff6c52ef27afa61d9ddf5a7e`,
+MD5 `b24ce509a9bcfa3894efd023e435de12`. Selected-app1 USB bootstrap and
+esptool raw flash hash verification passed; this bootstrap is not Wi-Fi upload
+proof. Boot `9df32324800985664510a69762524f75` synchronized automatically via
+SNTP at4208ms, with station connected/AP enabled/AVR disabled/white default.
+The router periodically overwrites DNS, so the initial NTP and new firmware
+connection paths now run immediate validated DNS preparation, in addition to
+periodic background repair.
+
+Actual Internet job5 downloaded the419byte pinned HTTPS manifest and all1852128
+image bytes into the inactive OTA slot and reached Ready without a reset.
+Full staged-artifact export then returned the exact expected SHA above in
+72.708seconds, with the same hardware/boot before and after. An earlier export
+returned an empty reply and is retained as failed evidence, not hidden by the
+successful read-only check. Private receipts: internet-boundary-fetch.json,
+internet-boundary-stage-hash.json (failed), internet-boundary-stage-readback.json
+(passed). Raw bytes were hashed in memory rather than duplicated onto SSD.
+
+Trusted manifest SHA256
+`771059cb334ad09a73805fa2f003543b55ab64a9775033ffd2006d6405eca4b5`;
+[historical immutable publisher](https://office.digitalogic.ir/pakarcontroller/firmware/esp32s3/8acf99396902bec038d5da5503c9cd8338f778e8ff6c52ef27afa61d9ddf5a7e/manifest.json).
+That commissioning was **ESP-only** (`targets=1`, CLI target `esp`), not all.
+
+HTTP Apply lost its response. Read-only telemetry subsequently established the
+same exact job5/boot still Ready, not applying/complete. The installed ASUS
+PakarController CLI's fresh state-bound attempt also reported an unknown remote
+request outcome; subsequent same-boot readback again stayed Ready. No Apply
+completion/reboot was claimed and no command was automatically replayed. That
+stage was later explicitly cancelled after the dispatch-race fix bootstrap.
+Auth Telnet inspection also failed its response deadline before any Apply;
+neither its mere TCP connection nor configured discovery flags certify the shell.
+Ready then advertised cancellable=false despite the explicit cancel API
+supporting Ready; this mismatch was subsequently corrected and cancellation
+was positively acknowledged and read back before the final job.
+
+### Historical commissioning attempts (superseded images)
+
 The guarded 16 MB/OPI quiet S3 candidate is 1,850,096 bytes, SHA-256 `5b5d775a77e66d853566e56b4b1af8ccadaabfd30272e52845f0b4d5c4739f12`. A corrected live Wi-Fi upload returned HTTP200 with updated/rebooting=true. After explicit hostname recovery, boot `62122282967feaf4192b9e2f9fa7646e` reported matching size and MD5 `6b2b76343d415a3a1a3584f4bb181137`, idle upload state, all80 cells white and all480 committed RGB pixels ffffff at255. This is actual command-buffer evidence, not optical proof.
 
 Initial full streams failed, and a65536-byte range returned206 correctly in17.3 seconds. The later full HTTP200 application download completed in19.24seconds with all1850096bytes and the exact candidate SHA above. It was pinned to boot `dc2b802cd3318072494ae7282e8c9e46`; its telemetry independently reported candidate MD5/integrity and reset reason4 (panic). An uncertain earlier Internet fetch left no acknowledged/persisted job in that new boot. A bounded180second zero-transmission USB console capture during the successful download contained no new console output; this does not identify or clear the earlier panic. Do not declare the USB recovery path unnecessary.
@@ -83,7 +196,61 @@ ASUS joined the ESP recovery AP, preserving Ethernet management and existing Wi-
 
 ## Full operational telemetry
 
-ESP: actual chip/flash/core/SDK/version/integrity, uptime/reset, heap/fragmentation, OTA space, filesystem use, UART/USB counters and pinout. Network: actual STA/AP mode, connectivity, SSIDs, IP/MAC/netmask/gateway/DNS, RSSI/channel/DHCP/AP client count and discovery state. Clock: valid/source/configured NTP/observed SNTP callback, UTC and last-setting uptime; no fabricated RTC. Board state includes cells, effects, inputs/outputs, seven-segment mirror and Prog.
+### S3 DNS crash recovery checkpoint
+
+The actual preserved crash record has a valid CRC and matching fault-ELF hash
+prefix. Its backtrace reaches `NetworkManager::hostByName` → `dns_clear_cache`
+→ SNTP callback → UDP allocation without the required lwIP core lock. The
+project-only `DnsCoreLock.cpp` linker wrapper acquires that lock only when the
+caller does not already hold it; DNS/TLS/SNI/CA checks remain enabled. SDK files
+are unchanged. Actual linked disassembly and the production-adapter host fixture
+verify the wrapper path and existing-lock cases.
+
+Candidate1850176bytes/SHA256
+`87a62afd005c104ab713a013ff51069325fd5dd97d7c3ed1587cd1ed02700d58`
+was installed using a **USB bootstrap**, after the LAN attempt aborted without
+commit. Only the CRC-selected app1 application's bytes were written; NVS,
+LittleFS, partition table, OTA selection and crash record were preserved.
+Boot `fa9d4563d68224b0f87919a17c0f618c` reports the exact size/MD5,
+station connected, AP enabled, and AVR disabled. A subsequent Internet job2
+failed cleanly without a boot change; this is not a successful Internet apply.
+
+Live DHCP supplied IPv6 DNS `2a02:4544:e0:200::1012` while board hostname
+resolution failed. ASUS successfully resolved the same publisher through the
+network gateway192.168.1.1. The S3 DHCP DNS recovery policy preserves working
+resolvers/static configuration, promotes a usable IPv4 backup or uses that
+network's gateway only when no primary resolver is usable. It never installs a
+public resolver, changes AP settings or writes a settings record. It is
+build-disableable with `PAKAR_S3_DNS_GATEWAY_FALLBACK=0`. Live DNS/NTP and the
+final candidate's delivery remain pending until explicitly recorded below.
+
+DNS recovery was actually observed on candidate
+`82ba2e463536b6a86935f629300ddbb78a80f88d7ef89efba1c10a2cfc311554`:
+boot `b8a67e1bf0d56ee8f5e5b788008dda4e`, DHCP resolver192.168.1.1,
+publisher hostname resolution, and automatic SNTP callback at41154ms with
+source=ntp/ntp_observed=true. Its Internet job3 parsed the manifest, then
+crashed before image staging; it was recovered as failed and was never applied.
+The new CRC-valid crash record/backtrace identifies a second defect:
+HTTPClient::setTimeout inspected a freed client left behind by end() on an
+already-disconnected connection. The stricter HTTP fixture now preserves that
+pointer and asserts liveness instead of unconditionally nulling it. The fix
+keeps a stopped socket object alive until rebinding and destroys HTTPClient
+before the socket. TLS resources are stopped; idle network connections are not
+retained. Manifest→image, cancel→new job and destruction fixtures pass on both
+updater profiles. The subsequent candidate is1851120bytes, SHA256
+`94d227ed2e5a070e22a7a52e9e2ab273f4d7d332fb6f3b050192f555bfecef41`.
+Its guarded SDK build and app1-only USB write/flash hash verification pass;
+Internet stage/apply and raw export require their own live evidence.
+
+ASUS now uses Ethernet only for this board path: its extra ledboard Wi-Fi client
+was disconnected, preserving the profile and ESP AP. The manually set ASUS UTC
+clock is explicitly **not SNTP proof**; `/datetime/get` source reporting after
+manual set also remains incomplete. Do not use a PC's HTTPS result, configured
+NTP flag, or accepted fetch request as board download/apply evidence.
+
+## Telemetry contract
+
+ESP: actual chip/flash/core/SDK/version/integrity, uptime/reset, heap/fragmentation, OTA space, filesystem use, UART/USB counters and pinout. S3 OTA additionally reports actual selected/running partition offsets and nullable SDK running-image state, not an inferred boot slot. Network: actual STA/AP mode, connectivity, SSIDs, IP/MAC/netmask/gateway/DNS, RSSI/channel/DHCP/AP client count and discovery state. Clock: valid/source/configured NTP/observed SNTP callback, UTC and last-setting uptime; no fabricated RTC. Board state includes cells, effects, inputs/outputs, seven-segment mirror and Prog.
 
 AVR firmware 0.2.7 adds a read-only 46-byte telemetry response (0x58 request, 0xB1 response), preserving the existing PCController tunneled dialect. It reports actual uptime, free SRAM snapshot, raw ADC6, buzzer, board settings/persistence, UART errors and lost events. Poll every five seconds; after twelve seconds values are stale/null, not invented. Older AVR versions do not advertise this extension.
 
@@ -100,7 +267,12 @@ Configured cloud connections retain the existing status feed and additionally de
 - [x] All 50 reviewed PU850 route registrations have concrete source/target mapping or exclusions.
 - [x] Actual S3 remote updater host/SDK-double tests cover a larger-than-LittleFS image, no boot selection while staging, explicit apply, resumed stage validation and injected transfer/write/hash/journal failures; guarded S3 SDK compile passes. These are not flash/TLS/power-loss acceptance.
 - [x] Identified S3 Wi-Fi `/update` happy path: positive commit ACK, actual new boot, persisted network settings, white480-pixel command buffer, matching MD5/size and complete running-application SHA download. This does not accept intermittent panic/AP recovery or the abort/concurrency/power-loss matrix.
-- [ ] Actual HTTPS publisher compatibility and complete download/cancel/hash rejection on ledboard.local.
+- [x] Actual ESP-only HTTPS publisher compatibility, exact-length Internet stage and complete staged-image raw SHA readback on the identified S3. Manifest/image remain pinned; no insecure TLS. This is not Apply, cancel, wrong-hash or external-power acceptance.
+- [x] Changed-image Internet stage, separate exact-job native CLI Apply acknowledgment, new same-board boot and completed postboot digest verification; actual app0 selected/running VALID. No final USB install substituted for this path.
+- [x] Complete boot-fenced raw running-image SHA-256 after the final Internet update:29 exact206 ranges/all1853328bytes, with four failed read attempts recorded. This does not establish reliable single streams or automatic client resume.
+- [ ] Reliable single-stream/resumable client export and intermittent empty/partial HTTP response diagnosis; retain the failures separately from successful digest/slot checks.
+- [x] Ready cancellation capability now agrees with the API; obsolete stages were explicitly cancelled and read back, not automatically replayed.
+- [ ] Broader hardware cancel/wrong-hash rejection, AP HTTP recovery and reliable all-client maintenance progress/outcome reporting.
 - [ ] Full eight-client telemetry snapshot, peak heap, MQTT and WebSocket cloud reception on hardware.
 - [ ] Real two-board update, EEPROM/Urboot preservation, post-reboot pair/readback/Prog release, audible cues and peripherals.
 - [ ] Controlled power-loss/recovery acceptance with a known-good exported snapshot and safe electrical setup.

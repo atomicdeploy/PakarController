@@ -71,6 +71,16 @@ String buildTelemetryJson() {
   e[F("reset_reason")]=SystemPlatform::resetReason();e[F("reset_info")]=nullptr;
   e[F("psram_bytes")]=ESP.getPsramSize();e[F("free_psram_bytes")]=ESP.getFreePsram();
   e[F("filesystem")][F("total_bytes")]=LittleFS.totalBytes();e[F("filesystem")][F("used_bytes")]=LittleFS.usedBytes();
+  const auto *runningPartition=esp_ota_get_running_partition();
+  const auto *bootPartition=esp_ota_get_boot_partition();
+  if(runningPartition)e[F("ota")][F("running_offset")]=runningPartition->address;
+  else e[F("ota")][F("running_offset")]=nullptr;
+  if(bootPartition)e[F("ota")][F("boot_offset")]=bootPartition->address;
+  else e[F("ota")][F("boot_offset")]=nullptr;
+  esp_ota_img_states_t imageState;
+  if(runningPartition && esp_ota_get_state_partition(runningPartition,&imageState)==ESP_OK)
+    e[F("ota")][F("running_state_code")]=static_cast<uint32_t>(imageState);
+  else e[F("ota")][F("running_state_code")]=nullptr;
 #else
   e[F("flash_chip_id")]=ESP.getFlashChipId();
   e[F("core_version")]=ESP.getCoreVersion();e[F("sdk_version")]=ESP.getSdkVersion();e[F("full_version")]=ESP.getFullVersion();

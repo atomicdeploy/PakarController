@@ -7,6 +7,7 @@
 #include <Update.h>
 #include <firmware/esp32s3/src/BoardPins.h>
 #include <firmware/esp32s3/src/Discovery.h>
+#include <firmware/esp32s3/src/DnsRecovery.h>
 #include <firmware/esp32s3/src/StatusRgb.h>
 #include <firmware/esp32s3/src/StatusRgbConfig.h>
 #else
@@ -1392,6 +1393,9 @@ void sendStatusJson() {
 }
 
 void configureNtp() {
+#if defined(ARDUINO_ARCH_ESP32)
+  PakarS3::serviceDhcpDns(millis(),networkConfig.dhcpEnabled(),!ntpConfigured);
+#endif
   if (!networkConfig.stationConnected() || ntpConfigured) return;
   configTime(0, 0, "pool.ntp.org", "time.cloudflare.com");
   ntpConfigured = true;
@@ -3164,6 +3168,10 @@ void loop() {
   }
   server.service();
   if (remoteFirmware.busy()) {
+#if defined(ARDUINO_ARCH_ESP32)
+    if(remoteFirmware.needsDownloadConnection())
+      PakarS3::serviceDhcpDns(millis(),networkConfig.dhcpEnabled(),true);
+#endif
     if(cloudServices.mqttConnected() || cloudServices.webSocketConnected())cloudServices.suspend();
     setAvrTransmitBlocked(true);serviceAvrFor(18);
     remoteFirmware.service();setAvrTransmitBlocked(false);

@@ -22,6 +22,12 @@ c++ -std=c++17 -Wall -Wextra -Werror -DARDUINO_ARCH_ESP32 -DESP32 \
   "$root/tests/remote_s3_test.cpp" "$root/firmware/esp8266/src/RemoteFirmware.cpp" \
   -lcrypto -o "$root/build/remote-s3-test"
 "$root/build/remote-s3-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/s3_dns_stubs" \
+  "$root/tests/s3_dns_lock_test.cpp" "$root/tests/s3_dns_runtime.cpp" \
+  "$root/firmware/esp32s3/src/DnsCoreLock.cpp" -Wl,--wrap=dns_clear_cache -o "$root/build/s3-dns-lock-test"
+"$root/build/s3-dns-lock-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/s3_dns_stubs" "$root/tests/s3_dns_recovery_test.cpp" -o "$root/build/s3-dns-recovery-test"
+"$root/build/s3-dns-recovery-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/firmware/esp8266/src" "$root/tests/telnet_shell_test.cpp" -o "$root/build/telnet-shell-test"
 "$root/build/telnet-shell-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/busy_stubs" -I "$root/firmware/esp8266/src" "$root/tests/busy_line_test.cpp" -o "$root/build/busy-line-test"
@@ -44,7 +50,7 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/lib
   "$root/tests/access_config_test.cpp" "$root/firmware/esp8266/src/AccessConfig.cpp" -o "$root/build/access-config-test"
 "$root/build/access-config-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/firmware/esp8266/src" \
-  "$root/tests/async_http_test.cpp" -o "$root/build/async-http-test"
+  "$root/tests/async_http_test.cpp" -pthread -o "$root/build/async-http-test"
 "$root/build/async-http-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/firmware/esp8266/src" \
   "$root/tests/firmware_range_test.cpp" -o "$root/build/firmware-range-test"

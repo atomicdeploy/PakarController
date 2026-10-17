@@ -14,7 +14,8 @@ struct AsyncWebServerResponse {
 struct AsyncClient { bool alive = true; bool connected() const { return alive; } };
 class AsyncWebServerRequest : public std::enable_shared_from_this<AsyncWebServerRequest> {
  public:
-  std::weak_ptr<AsyncWebServerRequest> pause() { paused = true; return shared_from_this(); }
+  std::weak_ptr<AsyncWebServerRequest> pause() { if(onPause)onPause();paused = true; return shared_from_this(); }
+  std::function<void()> onPause;
   AsyncClient *client() { return &connection; }
   bool isSent() const { return sent; }
   int method() const { return requestMethod; }

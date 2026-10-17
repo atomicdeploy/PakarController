@@ -103,6 +103,7 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         # Arduino's initial sketch dependency scan also uses the C recipe.
         $arguments += @('--build-property', "compiler.c.extra_flags=$flags")
         $arguments += @('--build-property', 'compiler.optimization_flags=-Os -g0')
+        $arguments += @('--build-property', 'compiler.c.elf.extra_flags=-Wl,--wrap=dns_clear_cache')
     }
     if ($Clean) { $arguments += '--clean' }
     if ($VerboseBuild) { $arguments += '--verbose' }

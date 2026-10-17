@@ -2,6 +2,7 @@
 #include "CloudServices.h"
 #include <BuildInfo.h>
 #include <time.h>
+#include <stdio.h>
 
 namespace {
 constexpr char kManifest[]="/remote/manifest.json";
@@ -44,7 +45,11 @@ void RemoteFirmware::close() {
 #if defined(ARDUINO_ARCH_ESP32)
   espStage_.abort();downloadingEspStage_=false;
 #endif
-  http_.end(); socket_.reset(); opened_=false;
+  http_.end();
+  // S3 HTTPClient::end leaves its client pointer set when already disconnected.
+  // Release TLS resources, but keep that object alive until begin rebinds it.
+  if(socket_) socket_->stop();
+  opened_=false;
 }
 void RemoteFirmware::fail(const char *reason) {
   close(); bearer_=String();error_=reason; phase_=Failed;
@@ -54,7 +59,7 @@ void RemoteFirmware::fail(const char *reason) {
 String RemoteFirmware::json() const {
   JsonDocument d;
   d[F("job_id")]=id_;d[F("boot_id")]=boot_;d[F("phase")]=phase();
-  d[F("targets")]=plan_.targets;d[F("busy")]=busy();d[F("cancellable")]=busy()&&!applying()&&phase_!=VerifyPair;
+  d[F("targets")]=plan_.targets;d[F("busy")]=busy();d[F("cancellable")]=(busy()||phase_==Ready)&&!applying()&&phase_!=VerifyPair;
   d[F("received_bytes")]=transfer_.received;d[F("expected_bytes")]=transfer_.expected;
   d[F("manifest_sha256")]=manifestSha_;d[F("error")]=error_;
   d[F("esp")][F("size")]=plan_.esp.size;d[F("esp")][F("sha256")]=plan_.esp.sha;
@@ -151,9 +156,13 @@ bool RemoteFirmware::cancel(uint32_t id,const String &boot) {
   close();bearer_=String();phase_=Cancelled;error_=String();return save();
 }
 bool RemoteFirmware::openDownload(const String &url,uint32_t size,const String &sha,const char *path) {
-  if(!RemotePolicy::url(url.c_str(),PAKAR_ALLOW_HTTP_FIRMWARE)) return false;
+  error_=String();
+  auto reject=[this](const char *reason){error_=reason;return false;};
+  if(!RemotePolicy::url(url.c_str(),PAKAR_ALLOW_HTTP_FIRMWARE)) return reject("Download URL policy rejected");
+  std::unique_ptr<WiFiClient> nextSocket;
   if(url.startsWith("https://")) {
-    if(time(nullptr)<1700000000 || ESP.getFreeHeap()<18000) return false;
+    if(time(nullptr)<1700000000) return reject("Download requires a valid TLS clock");
+    if(ESP.getFreeHeap()<18000) return reject("Download TLS heap below safety reserve");
 #if defined(ARDUINO_ARCH_ESP32)
     auto *secure=new WiFiClientSecure;
     secure->setCACert(pakarTrustAnchorPem());
@@ -167,28 +176,44 @@ bool RemoteFirmware::openDownload(const String &url,uint32_t size,const String &
     const bool fullRecords=ESP.getFreeHeap()>=34000 && ESP.getMaxFreeBlockSize()>=26000;
     secure->setBufferSizes(fullRecords?16384:4096,512);secure->setTimeout(5000);
 #endif
-    socket_.reset(secure);
-  } else socket_.reset(new WiFiClient);
+    nextSocket.reset(secure);
+  } else nextSocket.reset(new WiFiClient);
+  // Bind before replacing the old socket or calling setters that inspect it.
+  const bool bound=http_.begin(*nextSocket,url);
+  socket_=std::move(nextSocket);
+  if(!bound) return reject("Download HTTP client binding failed");
   http_.setTimeout(5000);http_.setReuse(false);http_.useHTTP10(true);
   // No redirects: credentials cannot leak to another authority. Publish direct URLs.
   http_.setFollowRedirects(HTTPC_DISABLE_FOLLOW_REDIRECTS);
-  if(!http_.begin(*socket_,url)) return false;
   const char *headers[]={"Content-Encoding","Transfer-Encoding"};
   http_.collectHeaders(headers,2);
   if(bearer_.length() && origin(url)==credentialOrigin_)
     http_.addHeader("Authorization",String("Bearer ")+bearer_);
   http_.addHeader("Accept-Encoding","identity");
   const int code=http_.GET(),length=http_.getSize();
-  if(code!=200 || length<1 || (size && static_cast<uint32_t>(length)!=size) ||
-      (!size && length>4096) || http_.header("Content-Encoding").length() ||
-      http_.header("Transfer-Encoding").length()) return false;
+  if(code!=200) {
+    char message[96]{};snprintf(message,sizeof(message),"Download HTTP status %d",code);error_=message;
+#if defined(ARDUINO_ARCH_ESP32)
+    if(code<0 && url.startsWith("https://")) {
+      char unusedReason[96]{};
+      const int tls=static_cast<WiFiClientSecure*>(socket_.get())->lastError(unusedReason,sizeof(unusedReason));
+      snprintf(message,sizeof(message),"; TLS error %d",tls);error_+=message;
+    }
+#endif
+    // Numeric SDK errors only: never expose URLs, bearer tokens or response bodies.
+    return false;
+  }
+  if(length<1 || (size && static_cast<uint32_t>(length)!=size) || (!size && length>4096))
+    return reject("Download Content-Length missing or mismatched");
+  if(http_.header("Content-Encoding").length()) return reject("Download Content-Encoding is not identity");
+  if(http_.header("Transfer-Encoding").length()) return reject("Download Transfer-Encoding is not supported");
   transfer_={static_cast<uint32_t>(length),0};expectedSha_=sha;
 #if defined(ARDUINO_ARCH_ESP32)
   downloadingEspStage_=!strcmp(path,kEsp);
-  if(downloadingEspStage_) {if(!espStage_.begin(size)) return false;}
+  if(downloadingEspStage_) {if(!espStage_.begin(size)) return reject("Download inactive OTA stage could not begin");}
   else
 #endif
-  {file_=LittleFS.open(path,"w");if(!file_) return false;}
+  {file_=LittleFS.open(path,"w");if(!file_) return reject("Download filesystem stage could not open");}
   sha_.begin();lastDataAt_=millis();opened_=true;return true;
 }
 int RemoteFirmware::download() {
@@ -380,7 +405,8 @@ void RemoteFirmware::service() {
       const Component &c=esp?plan_.esp:plan_.avr;
       if(!openDownload(manifest?plan_.esp.url:c.url,manifest?0:c.size,
           manifest?manifestSha_:c.sha,manifest?kManifest:esp?kEsp:kAvr)) {
-        fail(F("Download rejected: TLS/time/heap, HTTP status/length/encoding or storage"));return;
+        const String reason=error_;
+        fail(reason.length()?reason.c_str():"Download rejected before transfer");return;
       }
     }
     const int result=download();

@@ -34,10 +34,20 @@ struct Fixture {
  }
 };
 int main(){
+ {Fixture f;RemoteFirmware j;f.queue(j);testResponses[f.url].status=-1;j.service();
+  assert(!strcmp(j.phase(),"failed") && j.error()=="Download HTTP status -1; TLS error 0");
+  assert(j.error().find("secret-fixture")==String::npos && OtaFixture::selections==0);
+ }
+ {Fixture f;{
+  RemoteFirmware j;f.queue(j);Fixture::pump(j,"ready");
+  assert(j.cancel(1,"boot-A"));assert(j.queue(f.url,f.sha,1,false,false,"secret-fixture"));
+  Fixture::pump(j,"ready");
+ }assert(WiFiClient::live.empty());} // manifest→image, cancel→new job, HTTP-before-socket destruction
  {Fixture f;RemoteFirmware j;f.queue(j);Fixture::pump(j,"ready");
   assert(f.image.size()>LittleFS.totalBytes());assert(!LittleFS.files.count("/remote/esp.bin"));
   assert(OtaFixture::ends==1 && OtaFixture::selections==0 && OtaFixture::running==0 && prepares==0);
   assert(j.ownsEspStage() && j.stagedEspSize()==f.image.size());
+  JsonDocument ready;assert(!deserializeJson(ready,j.json()) && ready["cancellable"]==true);
   uint8_t sample[24];assert(j.readStagedEsp(0,sample,sizeof(sample))&&sample[0]==0xe9);
   assert(!j.readStagedEsp(f.image.size()-1,sample,2));
   assert(j.json().find("secret-fixture")==String::npos);
@@ -61,6 +71,11 @@ int main(){
   if(failure==6)testResponses[f.imageUrl].transfer="chunked";
   if(failure==7)testResponses[f.imageUrl].encoding="gzip";
   Fixture::pump(j,"failed");assert(OtaFixture::selections==0 && prepares==0 && programs==0 && !OtaFixture::active);
+  if(failure==0)assert(j.error()=="Download inactive OTA stage could not begin");
+  if(failure==4)assert(j.error()=="Download Content-Length missing or mismatched");
+  if(failure==5)assert(j.error()=="Download HTTP status 302");
+  if(failure==6)assert(j.error()=="Download Transfer-Encoding is not supported");
+  if(failure==7)assert(j.error()=="Download Content-Encoding is not identity");
  }
  {Fixture f;RemoteFirmware j;f.queue(j);Fixture::pump(j,"ready");
   OtaFixture::images[0x340000][100]^=1;Fixture::apply(j);Fixture::pump(j,"failed");assert(OtaFixture::selections==0&&prepares==0);

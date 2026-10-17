@@ -54,7 +54,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "9fd89470c5dae0b5877a1c823797c4c64fcbb580d5a958bd7ad84939326b44d2",
+          "sha256": "5ea958c615ec4bf98ca5c6996e607bf63ff24cb90c7a6d514a939cb3e96ba0ae",
           "anchor": "assert.match(automationStore,"
         }
       ]
@@ -292,7 +292,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "9fd89470c5dae0b5877a1c823797c4c64fcbb580d5a958bd7ad84939326b44d2",
+          "sha256": "5ea958c615ec4bf98ca5c6996e607bf63ff24cb90c7a6d514a939cb3e96ba0ae",
           "anchor": "assert.match(transfer, /FirmwarePlatform::readRunning"
         }
       ]
@@ -885,7 +885,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "a65fedddb7e7741739ebdcd04078f7847f844b74e0dc92c5204ceb7bb454688e",
+      "sha256": "ef415a86d1c34821d9d717a15d330e8c74e849c3ac422c026c9e5b59508e7c91",
       "anchor": "bool authenticate()"
     },
     {
@@ -1518,7 +1518,7 @@
       "remaining":["Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof."],
       "proof":[
         {"path":"tools/test-display.ps1","sha256":"e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51","anchor":"foreach ($taskVariant"},
-        {"path":"tools/test-protocol.sh","sha256":"20b221af60c6bbab505ad50491fa18a12a8e7c26f2a35b2b673bbeb10cbe2213","anchor":"for display_flags"}
+        {"path":"tools/test-protocol.sh","sha256":"5dd6c87ab085d4535ec41a53cca423b460ca4d20194c5346b87ee4a1b7303551","anchor":"for display_flags"}
       ],
       "improvement":"Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified."
     },
@@ -5089,7 +5089,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "a65fedddb7e7741739ebdcd04078f7847f844b74e0dc92c5204ceb7bb454688e"
+          "sha256": "ef415a86d1c34821d9d717a15d330e8c74e849c3ac422c026c9e5b59508e7c91"
         }
       ],
       "proof": [
@@ -5156,7 +5156,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "a65fedddb7e7741739ebdcd04078f7847f844b74e0dc92c5204ceb7bb454688e"
+          "sha256": "ef415a86d1c34821d9d717a15d330e8c74e849c3ac422c026c9e5b59508e7c91"
         }
       ],
       "proof": [
@@ -5223,7 +5223,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "a65fedddb7e7741739ebdcd04078f7847f844b74e0dc92c5204ceb7bb454688e"
+          "sha256": "ef415a86d1c34821d9d717a15d330e8c74e849c3ac422c026c9e5b59508e7c91"
         }
       ],
       "proof": [
@@ -5275,7 +5275,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "a65fedddb7e7741739ebdcd04078f7847f844b74e0dc92c5204ceb7bb454688e"
+          "sha256": "ef415a86d1c34821d9d717a15d330e8c74e849c3ac422c026c9e5b59508e7c91"
         }
       ],
       "proof": [
@@ -6445,7 +6445,7 @@
         "The existing private LED record/checksum/layout remains six bytes. saveLedPreferences stores runtime-none with the chosen brightness, so transient effects cannot become boot animations and identical bytes cause no flash write. Valid old none/rainbow/fire records retain brightness but reset all80 cells/480 pixels to white; invalid magic/checksum/brightness/pattern records are rejected without changing the current grid."
       ],
       "targets": [
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"a65fedddb7e7741739ebdcd04078f7847f844b74e0dc92c5204ceb7bb454688e","anchor":"const LedPreferences value = whiteBootPreferences(grid.brightness())"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"ef415a86d1c34821d9d717a15d330e8c74e849c3ac422c026c9e5b59508e7c91","anchor":"const LedPreferences value = whiteBootPreferences(grid.brightness())"},
         {"path":"firmware/esp8266/src/LedPreferences.h","sha256":"bb0a86a9b0506953270c5bf58f0fb9a49d5e6990b67f3adbd1b22d7e3a71d6cc","anchor":"inline bool applyLedBootPreferences("}
       ],
       "omissions": [
@@ -6456,7 +6456,7 @@
       "remaining": ["Verify final guarded S3/ESP8266 SDK builds and actual white boot plus retained brightness after power cycle. Add bounded filesystem failure/write-count fixtures and transactional persistence before claiming durable-save parity; no reboot or optical success inferred from host doubles."],
       "proof": [
         {"path":"tests/led_grid_test.cpp","sha256":"136526419cbf0b2985119d24117082970c0cececc9d57c4b232319434a34da07","anchor":"Boot policy accepts existing files without restoring a saved animation"},
-        {"path":"tests/s3_platform_wiring_test.mjs","sha256":"9fd89470c5dae0b5877a1c823797c4c64fcbb580d5a958bd7ad84939326b44d2","anchor":"whiteBootPreferences"}
+        {"path":"tests/s3_platform_wiring_test.mjs","sha256":"5ea958c615ec4bf98ca5c6996e607bf63ff24cb90c7a6d514a939cb3e96ba0ae","anchor":"whiteBootPreferences"}
       ],
       "improvement": "White is the deliberate boot presentation; runtime animation commands remain available without becoming a persistence side effect."
     },
@@ -6469,24 +6469,35 @@
       "preserved":[
         "Actual full AsyncOTA.cpp/header and FirmwareTransfer.cpp/header read through EOF. Retains the donor's authenticated chunked application-image OTA and explicit finalization/reboot workflow in the existing integrated /update handler; this is not an additional programmer firmware.",
         "S3-specific remote download stages directly into the inactive OTA partition because the identified image exceeds LittleFS capacity. Bounded1024-byte writes, sequential erase, exact transfer length/SHA, SDK image validation, explicit journaled boot selection, persisted-stage revalidation and actual running-image hash checks replace ESP8266-only FS staging. Quiet ESP-only preparation/finish does not send AVR commands; integrated builds retain paired Prog/backup/version gates.",
-        "The publisher now accepts a raw hashed S3 application and buffered profile with optional AVR component. Ready S3 stages retain bounded download/Range support and block competing local OTA. Firmware-download response bounds are captured once, removing repeated whole-image verification from the S3 TCP chunk callback."
+        "The publisher now accepts a raw hashed S3 application and buffered profile with optional AVR component. Ready S3 stages retain bounded download/Range support and block competing local OTA. Firmware-download response bounds are captured once, removing repeated whole-image verification from the S3 TCP chunk callback.",
+        "Actual S3 crash dump traced the Internet stage failure to Arduino NetworkManager DNS cache clearing outside the lwIP core lock, invoking an SNTP UDP callback. A project-only linker adapter locks just cache clearing, respects existing TCPIP/lock ownership, and leaves DNS/TLS/SNI/CA verification unchanged; no SDK file, broad socket lock or insecure/IP-only fallback is used. This is a platform fix, not code present in the ESP8266-only PU donor."
       ],
       "targets":[
         {"path":"firmware/esp32s3/src/OtaStage.h","sha256":"38f573b619915ff3c09062d4198aef6d2cc4b44a25fb72ec187edb33a8f22f9b","anchor":"class S3OtaStage"},
-        {"path":"firmware/esp8266/src/RemoteFirmware.cpp","sha256":"6430fa249685ddce5f5267b801697f80dfc77b9b3eb49320787d94d695d7198b","anchor":"bool RemoteFirmware::validateEspStage()"},
-        {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"0a3543ef149f69346c545b510ebc941490a0c6e68eba463258f91f4bf8defe04","anchor":"if(plan.targets==RemotePolicy::Esp && !programmingLatched) return true;"},
-        {"path":"firmware/esp8266/src/ArtifactDownload.h","sha256":"140a5db58e6fbdb7aad0797eb69d32f9794067db512b547dfcca2b4f57dec32d","anchor":"remoteFirmware.readStagedEsp"}
+        {"path":"firmware/esp8266/src/RemoteFirmware.cpp","sha256":"47cfe839eb3824e241b4cf89eba4dcd591f4afc3545f610e8d59f2cc9e8eda57","anchor":"bool RemoteFirmware::validateEspStage()"},
+        {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"ec77ece2432d4d3427085d266408f85413b3b5ff9f60738134aac3045785b3f8","anchor":"if(plan.targets==RemotePolicy::Esp && !programmingLatched) return true;"},
+        {"path":"firmware/esp8266/src/ArtifactDownload.h","sha256":"140a5db58e6fbdb7aad0797eb69d32f9794067db512b547dfcca2b4f57dec32d","anchor":"remoteFirmware.readStagedEsp"},
+        {"path":"firmware/esp32s3/src/DnsCoreLock.cpp","sha256":"5b4540c3bab1666c2b1da6b940f580b67a4dc66ce9e19ecddffcee9d08d30f2a","anchor":"extern \"C\" void __wrap_dns_clear_cache"},
+        {"path":"firmware/esp8266/src/AsyncHttpService.h","sha256":"a9585a9ddccef9b3462a658005e1bf816a50b9012a77d30ed578011c1108f0fb","anchor":"No queue lock across handlers"},
+        {"path":"firmware/esp32s3/src/DnsRecovery.h","sha256":"dd0edc8470b2d8073176e8328bae8bba5b3be84137381a6874f990f7bc511869","anchor":"class DnsRecovery"},
+        {"path":"firmware/esp8266/src/RemoteFirmware.h","sha256":"f275837050953ff9b46b4c4b51efd8cf66c5258e50749577402ffa93fe4d3a80","anchor":"Declaration order keeps that client alive"}
       ],
       "omissions":[
         {"code":"ESP8266 raw FS linker symbols, filesystem OTA, global updater cancellation and watchdog disable/PU busy-status callbacks","disposition":"replaced","reason":"S3 has named OTA partitions and esp_ota handles; global cancellation could affect another owner. Filesystem OTA would erase runtime network/auth/recovery data and remains disabled. PU-specific UART callbacks do not match the AVR protocol, and the quiet profile must remain silent."},
-        {"code":"Robust physical LAN OTA, Internet fetch/apply, interrupted-power recovery, boot rollback and concurrency/soak matrix","disposition":"pending","reason":"Host fixtures use SDK/HTTP/flash doubles. Resolved actual HTTP400 rejection from a typed MD5 multipart field being interpreted as a file, without weakening duplicate-file ownership. Corrected Wi-Fi upload returned200; actual new boot reports candidate size/MD5, white480-pixel command buffer and persisted station/AP settings. Complete1850096-byte running-image SHA readback later matched the candidate in19.24seconds, but earlier streams failed and a later boot reports panic reset4. Happy-path delivery is not robust recovery/optical/soak or board Internet apply acceptance. Server HTTPS artifacts alone are not board TLS/download/apply proof; boot selection safety is not automatic rollback."},
+        {"code":"Robust physical LAN OTA, Internet fetch/apply, interrupted-power recovery, boot rollback and concurrency/soak matrix","disposition":"pending","reason":"Actual corrected multipart LAN upload passed. Three CRC-validated crash/backtrace diagnoses led to scoped DNS core-lock, HTTPClient socket-lifetime and cross-core callback-publication fixes, with actual implementation fixtures. Internet job7 subsequently staged a changed1853328-byte image, then the installed ASUS native CLI observed exact Ready identity/hash/length and received positive separate Apply acknowledgment. New boot13acc69e049a90569d631f1bc7950281 reports Complete, SHA29fca337..., matching running MD5 and selected/running app0 VALID. Same-boot short checks observe AP/station, automatic NTP and all480 white buffer pixels. Earlier truncated/empty HTTP reads remain failed evidence; this does not establish robust export, power-loss/rollback, optical or concurrent-client soak acceptance. No AVR write/acceptance."},
         {"code":"All-client progress/outcome persistence, bounded DNS/TLS opening and complete staged export concurrency","disposition":"pending","reason":"Existing native IPC acceptance did not expose a durable dispatch outcome; HTTP synchronous connect/DNS still has SDK-bound blocking. Range/lease integration has static/SDK checks but still needs live slow-client contention and credential/owner isolation testing."}
       ],
-      "remaining":["Diagnose the observed S3 panic with actual console/backtrace; finish AP recovery, stable external-power/optical and OTA concurrency/abort acceptance beyond the verified full-image happy path. Restore the native app connection. Resolve NTP/clock recovery and the uncertain Internet stage request by actual job/boot inspection before any new mutation; then verify pinned HTTPS stage/export/explicit apply and rejection/cancel/reconnect. Keep AVR and production issue2 acceptance open."],
+      "remaining":["Changed-image Internet stage/separate native CLI Apply/new-boot VALID, automatic NTP, complete1853328-byte boot-fenced running SHA and ASUS GUI exclusive hostname Wi-Fi online readback pass for the quiet S3 profile; final image was not USB-flashed. Complete raw export needed29 exact206 ranges and four read retries, not reliable single-stream/client resume. Finish intermittent empty/partial HTTP diagnosis, discovery/AP HTTP recovery, external-power/optical and OTA concurrency/abort/power-loss acceptance. Verify cloud commands without the ASUS relay independently. Preserve distinct USB/LAN/Internet proof and keep AVR, donor-wide parity and production issue2 acceptance open."],
       "proof":[
-        {"path":"tests/remote_s3_test.cpp","sha256":"7e653b709febe81e26a1b80531074d12c897643028b0ca160919585765703498","anchor":"Actual S3 RemoteFirmware"},
+        {"path":"tests/remote_s3_test.cpp","sha256":"33f0d41444900cf26f63d32f9b114a78b7d5c31eead727850ffb4a6f85ad7a49","anchor":"Actual S3 RemoteFirmware"},
         {"path":"tests/remote_tools_test.mjs","sha256":"4a38cbf8a24751720b35f940e894a64bcd1689b1402972feeb69fa079603e760","anchor":"const solo=manifest"},
-        {"path":"tests/s3_platform_wiring_test.mjs","sha256":"9fd89470c5dae0b5877a1c823797c4c64fcbb580d5a958bd7ad84939326b44d2","anchor":"const flashRead ="}
+        {"path":"tests/s3_platform_wiring_test.mjs","sha256":"5ea958c615ec4bf98ca5c6996e607bf63ff24cb90c7a6d514a939cb3e96ba0ae","anchor":"const flashRead ="},
+        {"path":"tests/s3_dns_lock_test.cpp","sha256":"0c28b63dfedb4224d1ba1fde2f9ac98179515b2fdc8858fa25282b882315dc50","anchor":"reset();nested=true;dns_clear_cache();"},
+        {"path":"tests/async_http_test.cpp","sha256":"fd811867b7c512a6be0f9b295baa7f26b2f3bbb51f0bf7adc9d8015420c5cc9e","anchor":"publishing->onPause"},
+        {"path":"tests/access_stubs/ESPAsyncWebServer.h","sha256":"bce6642b249d18a4d8447fa416356f044b4b61fc2cddc9482b4b28ac47890594","anchor":"if(onPause)onPause();"},
+        {"path":"tests/s3_dns_recovery_test.cpp","sha256":"c41d7526e9983da068a7c23db8dcad9cf0b4589b4f94ca1ad08d939e56a1fa8a","anchor":"DnsRecovery promote;"},
+        {"path":"tests/remote_stubs/ESP8266HTTPClient.h","sha256":"95ba429c20162a3e707bab9e3a761e0b3a0d6e5b5b4b3b7fff5dd834be3ab924","anchor":"Actual S3 end() retains _client"},
+        {"path":"tests/remote_stubs/ESP8266WiFi.h","sha256":"7baa860ecaf20e87da444822d12253bbfe2a95836f250f972d347861dff86987","anchor":"inline static std::set<const WiFiClient*> live;"}
       ],
       "improvement":"Explicit inactive-slot staging with independent apply, instead of an image that cannot fit its filesystem or an upload that chooses boot before separate consent."
     }

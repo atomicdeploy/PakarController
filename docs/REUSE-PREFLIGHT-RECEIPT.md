@@ -3117,3 +3117,255 @@ The next bootc900bd0d775661e6ab978a527590fba1 recovered that journal as failed:
 Interrupted update; inspect Prog and backups. No operation was replayed.
 No Apply was sent. Preserve the acknowledged-job distinction from transport-only
 failures and diagnose the actual ESP crash before another Internet download.
+
+## Actual S3 DNS/SNTP panic and project-only core-lock adapter
+
+Read the current physical partition table instead of inferring it from the
+original factory backup: app0 at0x10000/app1 at0x340000, each0x330000,
+LittleFS0x670000/0x180000, crash0x7f0000/0x10000. Read only4KiB table,
+64KiB crash and8KiB OTA selection through the identified CH343/COM22 and
+MAC90:70:69:ea:c8:00. Those read-only esptool operations reset ESP; they are not
+claims of no electrical reset. No AVR UART/ISP/reset command or fuse operation.
+
+Crash partition SHA17e1459ecb1e13022795dc361c7a691d296c0d00cbefd7c0cdbf0762f68c4e8c
+has a valid24580-byte ESP ELF/CRC record. Its note contains the9e9299abf ELF
+hash prefix matching the preserved fault ELF's complete SHA
+9e9299abf8424e06c52d22721976eb9d4e508f3310251b98bce4afe84820130e.
+GDB with auto-loading disabled and arguments suppressed shows:
+RemoteFirmware::openDownload -> HTTPClient::GET -> NetworkClientSecure::connect
+-> NetworkManager::hostByName -> dns_clear_cache -> sntp_dns_found
+-> sntp_request -> dns_gethostbyname -> udp_new_ip_type assertion:
+Required to lock TCPIP core functionality! This establishes this crash's
+software cause; do not attribute it to the earlier corrected supply drop.
+Raw RAM/core dumps may contain secrets and remain private, never web exports.
+The one preserved13.8MB fault ELF is essential diagnosis/verification evidence,
+not another debug build cache or a copied desktop package.
+
+Fully read actual Arduino3.3.12 NetworkManager.cpp (SHA
+a4c0c9c35fa185884d5acbc3c9a3e029d0fb9e4bf824d313e81b5dd4c6d5328a),
+the applicable secure-client connect overloads, and the actual lwIP core-lock
+query/mark macros and nonrecursive mutex contract. Reviewed Espressif's core
+dump loader/header/CRC and bootloader OTA selection implementation. The latest
+stable core remains3.3.12; did not downgrade or install a prerelease SDK.
+The project linker adapter wraps ONLY dns_clear_cache, acquiring the core lock
+only when this caller does not already own it. It holds no lock around blocking
+DNS/TLS/socket operations. Original DNS, SNTP, SNI and CA validation remain.
+Shared SDK bytes are unchanged; the exact S3 build wrapper carries the linker
+flag and a source guard prevents forgetting it. Actual linked disassembly
+confirms NetworkManager::hostByName calls __wrap_dns_clear_cache.
+
+The actual production adapter fixture passed caller-owned, already-locked,
+TCPIP-task and nested-callback cases through the real linker wrap. Added it
+to both protocol runners, preserving every prior test/display assertion; only
+their hash bindings and the four extended source-guard references were rebound
+after reviewing those diffs. Guarded16MB/OPI quiet SDK build passed in the same
+cache with no clean. Candidate1850176bytes SHA
+87a62afd005c104ab713a013ff51069325fd5dd97d7c3ed1587cd1ed02700d58,
+MD57a6cbc3d511cc13c912bb1fcd4340a55, ELF SHA
+16b53202d7c4b71cb08de0700ed3ae91ded3dc7a610c0abd48c7325d919ac7ce.
+
+Consulted the network-cloud PU mappings and read the entire actual PU
+WiFi_Setup function plus CrashHandler.cpp/header through EOF. The ESP8266
+crash UART-suppression hook/cont_t callback do not implement an S3 crash
+collector; most persistence is commented TODO code. Do not transplant that
+suppression or invent log-rotation parity. Generic safe diagnostics/export/UI
+remain pending, as do the donor-wide comparisons; this focused SDK adapter is
+not PU shell/discovery/crash-feature completeness.
+
+LAN upload of the fixed candidate ended after520627bytes; actual same boot,
+aborted phase and unchanged old image resolved no commit. Did not replay it.
+The required one-time USB bootstrap wrote ONLY the selected app1 application
+at0x340000..0x503fff, with esptool hash verification. Actual OTA selection
+records were CRC-verified(seq1 and seq2/valid); table, OTA metadata, NVS,
+LittleFS, inactive slot and crash partition were not written. Known-good5b
+application and original16MB backup remain preserved. Boot
+fa9d4563d68224b0f87919a17c0f618c reports matching new size/MD5 and persisted
+station/AP configuration. ASUS disconnected only its ledboard Wi-Fi client,
+retaining Ethernet; ESP AP remains enabled. This USB bootstrap is not passed
+off as successful LAN OTA of this fixed image. Internet stage/apply and full
+postboot hash/soak still require their own actual receipts.
+
+The post-bootstrap Internet job2 failed cleanly in the same fa9 boot, without
+the prior panic. Actual telemetry showed IPv6-only primary DNS and no publisher
+resolution; the network gateway answered the identical lookup from ASUS. Read
+the SDK's actual STA dnsIP setter: esp_netif_set_dns_info changes the resolver
+without stopping DHCP. Added a rate-bounded S3-only DHCP recovery policy using
+only the usable backup or this network's IPv4 gateway; static profiles, working
+IPv4/IPv6 primary or routed IPv6 backup, offline state and AP settings remain
+untouched. No public DNS, insecure TLS, hardcoded publisher IP or settings write.
+The build macro can disable fallback. Actual production-header fixtures cover
+missing/global IPv6, valid primary/backup, static/offline, unavailable gateway,
+setter failure/retry, throttling and millis rollover. Kept the existing PU
+AsyncOTA comparison, exact target/proof hashes and remaining live gates rather
+than creating a second checklist or claiming donor-wide network parity.
+
+DNS recovery candidate1850752bytes/SHA82ba2e463536b6a86935f629300ddbb78a80f88d7ef89efba1c10a2cfc311554
+was USB-bootstrapped after another LAN abort (25202bytes, no commit). Current
+OTA metadata was reread before writing only app1. Bootb8a67e1bf0d56ee8f5e5b788008dda4e
+reports matching size/MD5; actual DNS became192.168.1.1, publisher resolution
+succeeded and SNTP synchronized automatically at41154ms (source ntp,
+ntp_observed=true). No manual clock set in this boot. Station/AP persisted.
+
+The .NET fetch helper failed in read-only preflight with dispatched=false; no
+mutation was replayed. A new curl-based request returned an actual job3 manifest
+ACK. The private helper incorrectly expected an accepted boolean rather than
+the documented job-state response; this harness false negative was corrected,
+not counted as device rejection. Readback, not a second POST, established that
+the board had parsed the manifest but rebooted; interrupted journal became
+failed and no Apply occurred. Current crash record SHA
+5c6082a3b5f594a108f0386266c5dffa67a4cbeb211bb543d2e35885c5489d35
+has a valid23332byte ELF/CRC record. The preserved matching eeffe49a fault ELF
+resolves the call chain through HTTPClient::setTimeout → openDownload → service.
+PC0 and the installed SDK source establish a dangling client on the transition
+from manifest to image: end() leaves _client set if already disconnected, but
+Pakar destroyed the socket before begin/setTimeout reused that pointer.
+
+Read actual ESP32 HTTPClient begin/end/disconnect/connected/setTimeout/destructor
+and the corresponding ESP8266 ownership implementation. Keep the stopped client
+object alive through rebinding, bind the new client before replacing the old
+owner or inspecting it, and declare HTTPClient after its socket so destruction
+is correctly ordered. stop releases TLS resources; no idle open socket is kept.
+The host double now models end retaining a disconnected client and asserts
+client liveness during setters, rebinding, end and destruction. Added explicit
+manifest→image, cancel→fresh job and destruction coverage. Both actual S3 and
+shared updater fixtures pass with this stricter model; old unconditional-null
+test behavior was insufficient. No TLS/auth/identity/apply gate was weakened.
+Keep private raw cores and the essential matching fault ELF out of GitHub.
+
+The lifetime-fixed94d227ed candidate was app1-only USB-verified, then Internet
+job4 failed cleanly before receiving its manifest, in the unchanged0715a909
+boot. Automatic SNTP was observed again at96510ms. The generic combined error
+was not sufficient diagnosis, so openDownload now preserves distinct URL,
+clock/heap, binding, numeric HTTP/TLS, length/encoding and FS/inactive-slot
+failure reasons through cleanup/journaling. It never exports response bodies,
+signed URLs, auth headers or token text. Added exact rejection assertions and
+negative-HTTP numeric TLS coverage; focused production-module fixtures pass.
+The fixture initially exposed its own missing String+integer overload; changed
+production formatting to bounded snprintf, rather than weakening the tests.
+
+Diagnostics candidate1852176bytes SHA
+40a4024e620877295a63385812f43f83344cf9919a4232e337f21c89489294e1,
+MD5c7a394b090864fe59b81e8ea709794bd, ELF SHA
+e8cc6afc4ea86df5c92c3fd9b37f37bba9cd4ab8aae28cbe9c2534e01d782776
+passes the guarded16MB/OPI buffered quiet build and selected-app1 USB hash
+verification. Current metadata was reread before each bootstrap; no OTA select,
+NVS/FS/table/bootloader/crash or AVR write. Immutable publisher file hashes
+match; actual ASUS TLS1.2 HTTPS returns200 and the server verifies200 using
+RootX1 with no default CA directory. None of these bootstrap/server/PC facts
+substitute for successful board Internet Apply. Keep the LAN aborts, intermittent
+empty HTTP replies and full physical/discovery/soak/client gates open.
+
+Live boot76e35a7c showed DNS being overwritten again: IPv6 primary at26577
+and57296ms, then gateway restored at34053/71019ms; SNTP was still unset at147s.
+This exposes a periodic-repair race, not evidence that one successful NTP boot
+means startup is robust. Added immediate, still validated DNS preparation before
+the initial configTime call and only when RemoteFirmware needs a new download
+connection. Normal background checks remain five-second bounded. No new public
+resolver or arbitrary probe: the exact same policy preserves working/static/
+offline configurations. Production-header tests inject RDNSS replacement inside
+the throttle interval and cover first-boot preparation, immediate repair and no
+rewrite of already-valid DNS. Source guards require both actual call sites.
+
+Job5 subsequently reached Ready with all1852128 Internet bytes and the complete
+staged raw SHA8acf9939... in72.708seconds. Lost HTTP Apply responses were not
+treated as commits; actual journal/boot readback stayed Ready. A later genuine
+panic(reset4) occurred while Ready. The CRC-valid23524byte crash record SHA
+15604c6d170f81da048a7292b980d790328c631a20724bc6aaee9499f4394aaa
+decoded against the current c2cad8f6 ELF shows __throw_bad_function_call →
+std::function<void()>::operator() → AsyncHttpService::service → loop. Read the
+actual request continuation implementation and adapter: AsyncTCP and loop
+concurrently touched the same weak-request/std::function slot; service could
+clear the callback while the producer was between assigning it and publishing
+the weak request. Weak/shared pointer counters do not synchronize that pair.
+
+Queue publication/take is now one mutex-protected unit on S3/host, with an atomic
+processing flag for native upload admission. ESP8266 keeps its cooperative
+single-core path. No mutex is held across pause, handler execution, response I/O
+or reentrant service. An impossible empty callback returns503 rather than
+actuating/panicking. The actual adapter fixture injects the old publication
+interleaving through pause, then accounts for every one of20000 concurrent
+producer/consumer requests as exactly one200 dispatch or bounded503 rejection.
+Retains all old weak-lifetime/disconnect/reentrancy assertions; the actual
+WebAccess/epoch fixture also passes. These are doubles/stress, not hardware soak.
+Ready's cancellable report now agrees with its actual API; source fixture checks
+it. No auth/fence, image validation or explicit Apply requirement was weakened.
+
+The first USB bootstrap guard correctly refused changed metadata before writing:
+sector0 was fully erased; sector1 remained seq2/stateVALID/CRC55f63774. Reviewed
+Espressif v5.5.5 esp_ota_begin/invalidate-inactive implementation: rollback-aware
+staging erases the inactive selection record without selecting it for boot.
+Only that exact erased-inactive + unchanged valid app1 case was added to the
+guard; current metadata was reread before app1-only write. No metadata was
+rewritten to force a slot. Primary implementation:
+https://raw.githubusercontent.com/espressif/esp-idf/v5.5.5/components/app_update/esp_ota_ops.c
+
+Queue-fixed candidate1852656bytes SHA
+a0dfcd6388e5590acdd184c051e379a411891c9180a9748f10bbb2d50e2b6e74,
+MD579c037feb006c16ac3d066aa8b37c12e, ELF SHA
+6e0ceea211031e8ed93f1b847811db36570fefe38a7a42f77b1b906c715db9da
+passes the guarded warm16MB/OPI build and USB flash hash verification. The old
+stage was explicitly cancelled in boota7372ca8 with positive ACK/readback and
+no read errors, so it cannot later regress the queue fix. Job6 must stage this
+new image before any explicit Apply; no final delivery is inferred from builds.
+
+## Changed-image Internet OTA through the ASUS application
+
+The queue-fixed bootstrap remained app1. A subsequent guarded warm S3 build
+added actual esp.ota selected/running offsets and nullable SDK state telemetry;
+this additive living contract does not introduce an API version or infer slots
+from a backup. Final binary1853328bytes SHA256
+29fca3373f32e875ae7181e775ef9b4373b85c898f3ae5375a1d0af6d0cea15c,
+MD557dbbb3f6cfbe03a50289adb50539567, ELF SHA
+ccce33b9afce12c575649d567b6f2925d93fea25dbdb9aec22ce451d19f0ac8b.
+The raw application was published under its immutable digest directory; server
+files match and the separately trusted manifest SHA is
+71cf1a19e786c27eaa0cc84f899cf40d0be070d5b20744ddbec0a551547e0035.
+No server configuration/service/account change. No Wi-Fi secrets in this ledger.
+
+After explicit cancellation of obsolete stages5/6, Internet job7 fetched this
+different image. Its observer lost a read late in transfer; no Fetch was replayed.
+The installed ASUS PakarController e63c1bb0... CLI independently observed exact
+Ready job/boot/manifest/image/length, then sent one explicit Apply and returned
+exit0 with prepare-phase acknowledgment. New boot13acc69e049a90569d631f1bc7950281
+reports Complete job7/expectedSHA, actual running_offset=boot_offset=65536 and
+running_state_code=2 VALID. This final image was not USB-flashed. The old boot
+was a7372ca8158212349c4e01295a351446. Independent image identity, changed
+firmware-only fields, completed postboot journal and actual slot state are
+stronger evidence than merely seeing the same descriptive version0.2.7.
+
+Short same-boot readback through uptime982638ms reports reset3, persisted
+station/AP, automatic NTP observed at131463ms, all80 cells white and all480 RGB
+tripletsffffff atbrightness255, modecell/effectnone/AVRfalse. Not optical,
+external-power cycling, arbitrary concurrent clients or long soak. One small
+read needed a retry; original failure is recorded. A complete single running
+image stream truncated after269428bytes and the first range observer failed
+after262144bytes; neither was counted as successful full raw export. The ESP
+remained on the same boot afterward. Private named receipts are documented in
+REMOTE-MAINTENANCE; retain failed evidence and recovery availability.
+
+Latest focused verification: guarded S3 build passes; real-linked DNS wrapper
+and production DNS policy tests, actual S3/shared RemoteFirmware with stricter
+HTTP client liveness doubles, actual async adapter deterministic interleaving
+and20000-request producer/consumer fixture, WebAccess/epoch fixture and S3
+wiring/PU routes/living-contract guards pass. The10 new telemetry lines required
+explicit PU route anchor rebinding; the initial stale-anchor failure was fixed,
+not skipped. No unrelated desktop/mobile rebuild or repeated full suite.
+Existing comparison count remains132/4673,4541 pending,96 explicit gaps.
+No claim of all-donor, AVR, discovery, UI, phone, rollback or production acceptance.
+
+Final independent running-image readback subsequently passed:29 boot-fenced
+HTTP206 ranges, exactly1853328bytes, SHA29fca337... matching the changed OTA
+image, same hardware/boot before and after. Every range checked Content-Range,
+Content-Length and expected MD5 ETag; complete chunks only entered the aggregate
+SHA in RAM. Three empty replies and one partial45second read timeout were
+retained in the receipt and retried only as bounded reads; no mutation replay
+or duplicate firmware SSD copy. The failed initial streams remain evidence.
+This establishes complete bytes, not reliable streaming/resume or network soak.
+
+Restored the existing ASUS interactive owner9796 via guarded no-draft typed
+Wi-Fi Connect. Positive app readback reports online=true, the exact board/final
+boot and all-white cells with no pending maintenance, not just enabled=true.
+Kept the same e63c1bb0... native executable, original protected preferences,
+separate candidate profile and rollback; no force-stop, USB fallback or native
+rebuild. Remote OTA and live app connectivity are separate from visual/human
+acceptance and from direct Internet commands while the ASUS relay is absent.

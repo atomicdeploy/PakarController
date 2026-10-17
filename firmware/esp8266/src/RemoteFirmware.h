@@ -41,6 +41,9 @@ class RemoteFirmware {
   bool cancel(uint32_t id,const String &boot);
   void service();
   bool busy() const;
+  bool needsDownloadConnection() const {
+    return !opened_ && (phase_==Manifest || phase_==DownloadEsp || phase_==DownloadAvr);
+  }
   bool applying() const;
   bool rebooting() const { return phase_==Rebooting; }
   bool ownsEspStage() const { return phase_==Ready && (plan_.targets&RemotePolicy::Esp); }
@@ -80,8 +83,10 @@ class RemoteFirmware {
   RemotePolicy::Transfer transfer_;
   String expectedSha_;
   File file_;
-  HTTPClient http_;
+  // HTTPClient's destructor may call stop on its last disconnected client.
+  // Declaration order keeps that client alive until HTTPClient is destroyed.
   std::unique_ptr<WiFiClient> socket_;
+  HTTPClient http_;
   FirmwarePlatform::Sha256 sha_;
   Prepare prepare_=nullptr; Program program_=nullptr; Finish finish_=nullptr;
 };

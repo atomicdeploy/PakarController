@@ -1,8 +1,15 @@
 #pragma once
 #include "Arduino.h"
 #include <vector>
+#include <set>
+#include <cassert>
 class WiFiClient{
- public:virtual ~WiFiClient()=default;std::vector<uint8_t>bytes;size_t at=0;
+ public:
+ inline static std::set<const WiFiClient*> live;
+ WiFiClient(){live.insert(this);}
+ virtual ~WiFiClient(){live.erase(this);}
+ virtual void stop(){assert(live.count(this));at=bytes.size();}
+ std::vector<uint8_t>bytes;size_t at=0;
  int available()const{return static_cast<int>(min<size_t>(1024,bytes.size()-at));}
  int read(uint8_t*out,size_t n){n=min(n,bytes.size()-at);memcpy(out,bytes.data()+at,n);at+=n;return n;}
 };
