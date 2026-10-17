@@ -46,6 +46,7 @@
 #include "src/CloudConfig.h"
 #include "src/CloudServices.h"
 #include "src/LedGrid.h"
+#include "src/LedPreferences.h"
 #include "src/NetworkConfig.h"
 #include "src/DeviceIdentity.h"
 #include "src/ApplicationIdentity.h"
@@ -114,15 +115,6 @@ bool passiveCaptureActive() {
   return false;
 #endif
 }
-
-struct LedPreferences {
-  uint8_t magic0;
-  uint8_t magic1;
-  uint8_t schema;
-  uint8_t pattern;
-  uint8_t brightness;
-  uint8_t check;
-};
 
 struct CellMappingRecord {
   uint8_t magic0;
@@ -678,11 +670,6 @@ void setAvrTransmitBlocked(bool blocked) {
   busyLine.setBlocked(blocked);
 }
 
-uint8_t ledPreferencesCheck(const LedPreferences &value) {
-  return static_cast<uint8_t>(value.magic0 ^ value.magic1 ^ value.schema ^
-                              value.pattern ^ value.brightness ^ 0xA5U);
-}
-
 uint16_t cellMappingCheck(const CellMappingRecord &value) {
   const uint8_t *bytes = reinterpret_cast<const uint8_t *>(&value);
   const size_t length = offsetof(CellMappingRecord, check);
@@ -762,9 +749,18 @@ void appendJsonEscaped(String &body, const char *value) {
 }
 
 void saveLedPreferences() {
-  LedPreferences value = {0x50, 0x4C, 1, static_cast<uint8_t>(grid.pattern()),
-                          grid.brightness(), 0};
-  value.check = ledPreferencesCheck(value);
+  const LedPreferences value = whiteBootPreferences(grid.brightness());
+  // Like PCController SettingsStore's changed-byte writes, avoid touching flash
+  // when only a transient cell/effect changed. LittleFS replaces EEPROM here.
+  File existing = LittleFS.open(kLedPreferencesPath, "r");
+  if (existing) {
+    LedPreferences saved{};
+    const bool same = existing.size() == sizeof(saved) &&
+        existing.read(reinterpret_cast<uint8_t *>(&saved), sizeof(saved)) == sizeof(saved) &&
+        memcmp(&saved, &value, sizeof(value)) == 0;
+    existing.close();
+    if (same) return;
+  }
   File file = LittleFS.open(kLedPreferencesPath, "w");
   if (file) {
     file.write(reinterpret_cast<const uint8_t *>(&value), sizeof(value));
@@ -779,13 +775,7 @@ void loadLedPreferences() {
   const bool complete = file.read(reinterpret_cast<uint8_t *>(&value),
                                   sizeof(value)) == sizeof(value);
   file.close();
-  if (!complete || value.magic0 != 0x50 || value.magic1 != 0x4C ||
-      value.schema != 1 || value.pattern > LedGrid::kPatternFire ||
-      value.brightness == 0 || value.check != ledPreferencesCheck(value)) {
-    return;
-  }
-  grid.setBrightness(value.brightness);
-  grid.setPattern(static_cast<LedGrid::Pattern>(value.pattern));
+  if (complete) applyLedBootPreferences(grid, value);
 }
 
 void stopDiscovery() {

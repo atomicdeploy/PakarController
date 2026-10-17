@@ -2928,3 +2928,69 @@ out of4673 inventoried files unchanged. The UI owner was released to run only
 the guarded focused test file; no APK, full suite, device or firmware operations
 were performed by the evidence reviewer. Its actual test result remains separate
 from this source review and from Android phone/physical board acceptance.
+
+## Deliberate white boot and unchanged LED-record write avoidance
+
+Fully read current actual PCController Project/SettingsStore.cpp/header and
+the EEPROM ownership dependencies; source cpp is7309fd36f0680722a4260e8f1251ae5a0fc67e99fc60f2426bb1294f789e87d4.
+The applicable donor saveNow mechanism is EEPROM.update changed-byte avoidance,
+not an ESP filesystem driver. Reviewed the entire white-boot diff, new
+LedPreferences.h and both changed test files: the existing six-byte private
+record/checksum is retained, old valid animation records restore brightness but
+reset the table white, and saves store pattern-none. Existing exact record bytes
+are compared before opening LittleFS with truncation; transient effect changes
+therefore do not trigger identical writes. Runtime rainbow/fire remain explicit
+commands, not automatic boot animations. No new API generation/layout selector.
+
+Main e25f493d620f64c1b82e863d84003060a4914e50d24d19c490259d18d94df61c
+changes only these record/save/load callsites; peer binding, UART, ISP and
+maintenance paths were not relaxed. Rebound its surviving historical anchors
+and the extended s3_platform_wiring proof007155a9be17532b0912e97aea8a3c65d98f7ab5a08b6fe9b65b1ec96c5a4fb1.
+New SettingsStore narrow comparison binds headerbb0a86a9b0506953270c5bf58f0fb9a49d5e6990b67f3adbd1b22d7e3a71d6cc
+and LED test136526419cbf0b2985119d24117082970c0cececc9d57c4b232319434a34da07.
+Changed-record coalescing, transactional rename/verified save error propagation
+and exact filesystem write-count tests remain explicit pending gaps. This is
+not crash-safe persistence or donor-wide settings parity.
+
+Root reports the actual protocol wrapper passed the LED case and preceding
+protocol/ISP/tone/front-panel fixtures, then correctly stopped at the stale
+peer-binding main reference before the WebAccess tail. No full-wrapper success
+was inferred; root owns the remaining gated tail and final SDK results. This
+reviewer ran no test suite, build, flash, reset, audible test or device request.
+Comparison generation/strict Check and API/peer-binding gates passed with131
+comparisons,4542 pending and95 known gaps. Generic firmware-hardware is routing,
+not a configured gate; no nonexistent S3-specific gate acceptance is claimed.
+
+The preceding read-only reset audit stays separate: saved S3 telemetry reason9
+matches the installed SDK brownout enum, not AVR reset cause. Current AVR
+telemetry has no MCUSR field; welcome can also replay on game/key/mode/Prog
+actions without a CPU reboot. Donor ResetTelemetry's early capture/watchdog
+disable is useful pending work, but its EEPROM journal336..719 would overlap
+Pakar automation storage270..411 if transplanted unchanged. Actual AVR image,
+bootloader/fuses, ISP signature and verified recovery backup remain unproven.
+No firmware-cause diagnosis or working paired-programmer claim is made.
+
+Final root verification: the protocol wrapper's substantive C++ cases passed;
+its expected stale-evidence stop was followed by successful gated WebAccess and
+Tasks tail runs. Quality stopped at the independently hash-bound PU route
+manifest; the actual route bodies were rereviewed and its five shared-sketch
+hashes/shifted anchors repaired, not the guard bypassed. The same quality runner
+resumed at that failed checkpoint and all remaining checks passed. Guarded
+16MB/OPI quiet S3 compile passed, using the existing warm cache without clean.
+Candidate SHA599509ab551e4b372ad1f15b8ac98d3f22dfdea093d0d107e0ddda4e7ba9fac9
+matches ASUS staged readback. No board deployment or physical white-boot test
+was possible. Android preview SHA3ce5304a88caad521238216107da51f789a982a69882c44ce08a3b90e516e1b9
+was installed preserving data and verified from the actual installed APK; phone
+lock blocked launch/capture after one permitted swipe. No second swipe, server
+restart, audio, ISP, erase or fuse operation was performed.
+
+The subsequent quality run exposed the separate PU route manifest's stale
+main-file binding. Read its complete test/audit definitions, actual PU AsyncOTA,
+AsyncWebServer and SSDP sources plus the bounded info-registration slice;
+rereviewed the five current route bodies against the LED-only diff. Their route,
+authentication, upload/capture ownership and response contracts did not change.
+Updated only those five hashes and shifted target lines in the existing
+PU850-ROUTE-PARITY.json/.md; source revision/hashes,50 dispositions and every
+pending omission remain unchanged. Focused pu_routes_test passed all50 mappings.
+Search across docs/tests/tools/.github machine-readable manifests found no other
+old main or S3 wiring-test hash. No route source/test guard was weakened.

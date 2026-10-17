@@ -26,7 +26,8 @@ physical LED refresh/throughput still needs measurement.
 - [ ] Complete actual full-frame WebSocket pixel streaming/readback, including
   boundary rejection. Source support and previous read-only WS proof are not
   a successful streaming test.
-- [ ] Confirm reboot restores saved rainbow with external power and Wi-Fi access.
+- [ ] Confirm reboot starts all80 cells white with external power and Wi-Fi
+  access. Rainbow/fire are explicit runtime requests, not restored boot effects.
 - [ ] Confirm authenticated Wi-Fi OTA and same-board/new-boot/image/settings
   readback before declaring USB recovery unnecessary.
 
@@ -88,9 +89,45 @@ With all power off: GPIO4 to strip DIN/input, common GND between ESP/strip/suppl
 strip V+ directly to its correctly rated external supply. Do not power480 pixels
 through the DevKit. Power the ESP separately with an appropriate USB wall supply
 or the reviewed regulated5V header route; never feed strip12V to it or parallel
-power inputs without confirmed isolation. Current saved test is rainbow at255.
+power inputs without confirmed isolation. The last verified older-image test
+selection was rainbow at255; it is not the new white boot policy below.
 The AVR is unnecessary and may remain disconnected. Details and references are
 in [commissioning](ESP32-S3-COMMISSIONING.md).
+
+## White startup policy checkpoint
+
+The shared ESP8266/ESP32-S3 firmware now starts white even when an older valid
+`/led.cfg` contains rainbow or fire. Brightness still persists; the existing
+six-byte private record stays compatible. Explicit `/api/effect` or front-panel
+effect choices still run until replaced or rebooted. Saving transient cell/effect
+changes no longer rewrites an identical preferences file. This adapts the actual
+PCController `Project/SettingsStore.cpp` changed-byte write avoidance to LittleFS;
+it does not import its EEPROM layout, journal or imply full settings parity.
+
+`tools/test-protocol.ps1` exercises the actual LED renderer and boot-preferences
+helper: all valid older pattern records produce480 white command pixels and80
+white cell states, brightness is retained, damaged records are rejected, and
+explicit runtime rainbow still changes pixels. These use Arduino/FastLED doubles,
+not an optical test. Source and compiled candidate do not change the installed
+board; its last known quiet image predates this policy. USB/application access
+and stable power are needed before deployment/readback/reboot acceptance.
+
+The guarded S3 build passed with the identified16MB/OPI-PSRAM buffered profile,
+hostname `ledboard`, normal AVR UART paused and the existing ISP build gate
+unchanged. Application image:1,843,552bytes,
+SHA256 `599509ab551e4b372ad1f15b8ac98d3f22dfdea093d0d107e0ddda4e7ba9fac9`.
+The identical image is staged on ASUS as
+`C:\Users\David\Documents\PakarController\staging\firmware\esp32s3-white.ino.bin`.
+This is staged only: no upload/reset/erase/EEPROM/fuse operation took place.
+
+The Flutter0.2.7 preview was updated on the ASUS-connected authorized Samsung
+using `install-r`, after package/signature/rollback verification. Installed APK
+SHA256 `3ce5304a88caad521238216107da51f789a982a69882c44ce08a3b90e516e1b9`
+matches the build; app-data directories/inodes and first-install time were
+preserved. The prior APK remains backed up. Runtime launch/screenshot remain
+unverified: one permitted unsecured-lock swipe did not dismiss the lock, and
+the guard stopped before launch. Manual phone unlock is required; installation
+does not prove mobile-to-board control or production signing.
 
 ## Deferred queue: resume after the LED milestone
 

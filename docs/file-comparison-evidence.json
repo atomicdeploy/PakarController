@@ -54,7 +54,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "7e011e779e0aec34d73931ccde54566fb87bec811291bbae52fe5cffce57dd17",
+          "sha256": "007155a9be17532b0912e97aea8a3c65d98f7ab5a08b6fe9b65b1ec96c5a4fb1",
           "anchor": "assert.match(automationStore,"
         }
       ]
@@ -292,7 +292,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "7e011e779e0aec34d73931ccde54566fb87bec811291bbae52fe5cffce57dd17",
+          "sha256": "007155a9be17532b0912e97aea8a3c65d98f7ab5a08b6fe9b65b1ec96c5a4fb1",
           "anchor": "assert.match(transfer, /FirmwarePlatform::readRunning"
         }
       ]
@@ -885,7 +885,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2",
+      "sha256": "e25f493d620f64c1b82e863d84003060a4914e50d24d19c490259d18d94df61c",
       "anchor": "bool authenticate()"
     },
     {
@@ -5089,7 +5089,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2"
+          "sha256": "e25f493d620f64c1b82e863d84003060a4914e50d24d19c490259d18d94df61c"
         }
       ],
       "proof": [
@@ -5156,7 +5156,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2"
+          "sha256": "e25f493d620f64c1b82e863d84003060a4914e50d24d19c490259d18d94df61c"
         }
       ],
       "proof": [
@@ -5223,7 +5223,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2"
+          "sha256": "e25f493d620f64c1b82e863d84003060a4914e50d24d19c490259d18d94df61c"
         }
       ],
       "proof": [
@@ -5275,7 +5275,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "e19a7c10fe7e0bcd2ed523a9a011123748ba1640637827bfe5fa72411930b5f2"
+          "sha256": "e25f493d620f64c1b82e863d84003060a4914e50d24d19c490259d18d94df61c"
         }
       ],
       "proof": [
@@ -6433,6 +6433,32 @@
         {"path":"desktop/src/ui/preferences.rs","sha256":"c5356e250994432a76e9bc3533e482d3c9903dd5db73864c1479f5c7d1b81739","anchor":"fn connection_summary_is_contextual_and_dirty_preferences_cannot_open_another_editor()"}
       ],
       "improvement": "One connection owner instead of conflicting Preferences editors, while preserving unrelated drafts and the donor's triple-baseline merge mechanism."
+    },
+    {
+      "origin": "PCController",
+      "path": "Project/SettingsStore.cpp",
+      "sha256": "7309fd36f0680722a4260e8f1251ae5a0fc67e99fc60f2426bb1294f789e87d4",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Fully read actual current SettingsStore.cpp/header through EOF and its EEPROM ownership layout. This mapping is only the saveNow changed-byte write-avoidance mechanism, adapted to a complete six-byte LittleFS record comparison before opening with truncation; it does not claim the complete donor settings owner was moved into ESP.",
+        "The existing private LED record/checksum/layout remains six bytes. saveLedPreferences stores runtime-none with the chosen brightness, so transient effects cannot become boot animations and identical bytes cause no flash write. Valid old none/rainbow/fire records retain brightness but reset all80 cells/480 pixels to white; invalid magic/checksum/brightness/pattern records are rejected without changing the current grid."
+      ],
+      "targets": [
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"e25f493d620f64c1b82e863d84003060a4914e50d24d19c490259d18d94df61c","anchor":"const LedPreferences value = whiteBootPreferences(grid.brightness())"},
+        {"path":"firmware/esp8266/src/LedPreferences.h","sha256":"bb0a86a9b0506953270c5bf58f0fb9a49d5e6990b67f3adbd1b22d7e3a71d6cc","anchor":"inline bool applyLedBootPreferences("}
+      ],
+      "omissions": [
+        {"code":"Donor AVR EEPROM address/layout,14-page motion-alias normalization, relay/PWM/motion/sensor restore and temperature/name records","disposition":"replaced","reason":"LED preferences live in ESP LittleFS, not the donor AVR record. Copying the address/layout or actuator settings would collide with the separate Pakar AVR owner and imply absent hardware. Applicable board settings have an independent historical manifest; this narrow mapping neither replaces it nor certifies those full current-source contracts."},
+        {"code":"Dirty1500ms coalescing service, complete settings normalization and field-level persistence lifecycle","disposition":"pending","reason":"Identical-record skipping addresses repeated unchanged flash writes only. Changed brightness still uses the existing explicit save path, not the donor full coalescing/state machine; generic settings-owner parity needs separate consumer and interrupted-save tests."},
+        {"code":"LittleFS changed-record transactional pending/rename, write/close/readback failure propagation and exact unchanged-write count fixture","disposition":"pending","reason":"The six-byte path still opens changed records with write/truncate and does not report a verified durable commit. Pure grid/record tests and static callsite checks do not prove filesystem power-loss recovery or actual flash-write counts. Do not claim crash-safe LED persistence from the checksum or EEPROM donor algorithm."}
+      ],
+      "remaining": ["Verify final guarded S3/ESP8266 SDK builds and actual white boot plus retained brightness after power cycle. Add bounded filesystem failure/write-count fixtures and transactional persistence before claiming durable-save parity; no reboot or optical success inferred from host doubles."],
+      "proof": [
+        {"path":"tests/led_grid_test.cpp","sha256":"136526419cbf0b2985119d24117082970c0cececc9d57c4b232319434a34da07","anchor":"Boot policy accepts existing files without restoring a saved animation"},
+        {"path":"tests/s3_platform_wiring_test.mjs","sha256":"007155a9be17532b0912e97aea8a3c65d98f7ab5a08b6fe9b65b1ec96c5a4fb1","anchor":"whiteBootPreferences"}
+      ],
+      "improvement": "White is the deliberate boot presentation; runtime animation commands remain available without becoming a persistence side effect."
     }
   ]
 }

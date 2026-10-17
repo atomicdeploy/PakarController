@@ -30,6 +30,9 @@ assert.match(remote, /link_mode"\)\]!="buffered"/);
 assert.match(read('LedGrid.cpp'), /kLedDataPin = PAKAR_S3_LED_DATA/);
 assert.match(read('LedGrid.cpp'), /FastLED\.addLeds<WS2811, kLedDataPin, RGB>/);
 assert.match(read('LedGrid.h'), /#define PAKAR_LED_FRAME_INTERVAL_MS 0/);
+assert.match(sketch, /const LedPreferences value = whiteBootPreferences\(grid.brightness\(\)\)/);
+assert.match(sketch, /if \(complete\) applyLedBootPreferences\(grid, value\)/);
+assert.doesNotMatch(sketch, /grid\.setPattern\(static_cast<LedGrid::Pattern>\(value.pattern\)\)/);
 assert.match(sketch, /esp_efuse_mac_get_default\(stationMac\)/,
   'S3 identity must not depend on an active station interface');
 assert.match(sketch, /available &= ~BoardCore::Context::Isp/,
