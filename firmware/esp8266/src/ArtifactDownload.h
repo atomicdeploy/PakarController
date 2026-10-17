@@ -7,6 +7,11 @@ struct ArtifactReadLease {
   ArtifactReadLease(File f,unsigned &count):file(f),readers(count){++readers;}
   ~ArtifactReadLease(){file.close();--readers;}
 };
+struct ArtifactCounterLease {
+  unsigned &readers;
+  explicit ArtifactCounterLease(unsigned &count):readers(count){++readers;}
+  ~ArtifactCounterLease(){--readers;}
+};
 void registerArtifactDownload() {
   server.native().on("/file/download",HTTP_GET|HTTP_HEAD,[](AsyncWebServerRequest *request) {
     if(!webAccess.allowed(request) || !WebAccess::sameOrigin(request)){request->send(401);return;}
@@ -14,6 +19,32 @@ void registerArtifactDownload() {
       request->send(409,"text/plain","Maintenance/storage active");return;
     }
     const String kind=request->arg("artifact");
+#if defined(ARDUINO_ARCH_ESP32)
+    if(kind=="esp-staged") {
+      const uint32_t total=remoteFirmware.stagedEspSize();
+      if(!total){request->send(404,"text/plain","No verified ESP stage ready");return;}
+      FirmwareTransferRange::FirmwareRange range{0,total-1,false};
+      if(request->hasHeader("Range") && !FirmwareTransferRange::parseRange(request->getHeader("Range")->value(),total,range)) {
+        auto *r=request->beginResponse(416);r->addHeader("Content-Range",String("bytes */")+total);request->send(r);return;
+      }
+      const uint32_t length=range.end-range.start+1;AsyncWebServerResponse *r=nullptr;
+      if(request->method()==HTTP_HEAD){r=request->beginResponse(range.partial?206:200,"application/octet-stream","");r->setContentLength(length);}
+      else {
+        auto lease=std::make_shared<ArtifactCounterLease>(artifactReaders);
+        r=request->beginResponse("application/octet-stream",length,
+          [lease,start=range.start,length](uint8_t *out,size_t maximum,size_t offset)->size_t {
+            if(offset>=length)return 0;const size_t bytes=min<size_t>(maximum,length-offset);
+            return remoteFirmware.readStagedEsp(start+offset,out,bytes)?bytes:0;
+          });
+        if(range.partial)r->setCode(206);
+      }
+      r->addHeader("Cache-Control","no-store");r->addHeader("Accept-Ranges","bytes");
+      r->addHeader("X-Firmware-Size",String(total));
+      r->addHeader("Content-Disposition","attachment; filename=\"PakarController-esp-staged.bin\"");
+      if(range.partial)r->addHeader("Content-Range",String("bytes ")+range.start+"-"+range.end+"/"+total);
+      request->send(r);return;
+    }
+#endif
     if(kind=="esp-running") {
       auto *r=request->beginResponse(307);r->addHeader("Location","/firmware/download");
       r->addHeader("Cache-Control","no-store");request->send(r);return;

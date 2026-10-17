@@ -7,6 +7,15 @@ const avr=Buffer.alloc(32768,0xff);avr[0]=0x0c;avr[1]=0x94;avr[32767]=0;
 const plan=manifest(esp,avr,'https://updates.example.test/PakarController/','0.2.7','busy-wire');
 assert.equal(plan.avr.size,32768);assert.equal(plan.avr.bootloader_included,true);
 assert.equal(plan.esp.sha256,createHash('sha256').update(esp).digest('hex'));
+const s3=Buffer.alloc(1843552);s3[0]=0xe9;s3[1]=5;s3.writeUInt16LE(9,12);s3[23]=1;
+const solo=manifest(s3,null,'https://updates.example.test/PakarController/','0.2.7','buffered','esp32s3');
+assert.equal(solo.profile,'pakar-esp32s3-atmega328p');assert.equal(solo.esp.model,'esp32s3');assert.equal(solo.avr,undefined);
+assert.equal(solo.esp.size,s3.length);assert.equal(solo.esp.sha256,createHash('sha256').update(s3).digest('hex'));
+assert.equal(manifest(s3,avr,'https://updates.example.test/','0.2.7','buffered','esp32s3').avr.size,32768);
+for(const mode of ['busy-wire','polling'])assert.throws(()=>manifest(s3,avr,'https://updates.example.test/','0.2.7',mode,'esp32s3'));
+assert.throws(()=>manifest(s3,null,'https://updates.example.test/','0.2.7','buffered','esp8266'));
+assert.throws(()=>manifest(Buffer.alloc(0x330000),null,'https://updates.example.test/','0.2.7','buffered','esp32s3'));
+for(const field of [12,23]){const bad=Buffer.from(s3);bad[field]=0;assert.throws(()=>manifest(bad,null,'https://updates.example.test/','0.2.7','buffered','esp32s3'));}
 assert.throws(()=>manifest(esp,avr.subarray(0,32000),'https://updates.example.test/','0.2.7','busy-wire'));
 for(const url of ['http://updates.example.test/','https://user:pass@updates.example.test/','https://updates.example.test/?secret=x'])assert.throws(()=>manifest(esp,avr,url,'0.2.7','busy-wire'));
 const full=Buffer.from(JSON.stringify({type:'telemetry',product:'PakarController',boot_id:'actual-device-boot',clients:[],test_padding:'x'.repeat(2200)}));

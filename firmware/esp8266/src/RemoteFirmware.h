@@ -6,6 +6,7 @@
 #include <HTTPClient.h>
 #include <WiFiClient.h>
 #include <WiFiClientSecure.h>
+#include "../../esp32s3/src/OtaStage.h"
 #else
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecureBearSSL.h>
@@ -42,6 +43,13 @@ class RemoteFirmware {
   bool busy() const;
   bool applying() const;
   bool rebooting() const { return phase_==Rebooting; }
+  bool ownsEspStage() const { return phase_==Ready && (plan_.targets&RemotePolicy::Esp); }
+#if defined(ARDUINO_ARCH_ESP32)
+  uint32_t stagedEspSize() const {return ownsEspStage()?espStage_.size():0;}
+  bool readStagedEsp(uint32_t offset,uint8_t *out,size_t bytes) const {
+    return ownsEspStage() && espStage_.read(offset,out,bytes);
+  }
+#endif
   String json() const;
   const String &error() const { return error_; }
   const char *phase() const;
@@ -57,6 +65,7 @@ class RemoteFirmware {
   void fail(const __FlashStringHelper *s) {const String reason(s);fail(reason.c_str());}
   void close();
   bool installEsp();
+  bool validateEspStage();
   void verifyBoot();
   static String digest(const FirmwarePlatform::Sha256&);
   Phase phase_=Idle;
@@ -64,6 +73,10 @@ class RemoteFirmware {
   String boot_,manifestSha_,bearer_,error_,credentialOrigin_;
   uint32_t id_=0,lastDataAt_=0,startedAt_=0,rebootAt_=0,verifyAt_=0;
   bool autoApply_=false,downgrade_=false,opened_=false,prepareDone_=false;
+#if defined(ARDUINO_ARCH_ESP32)
+  S3OtaStage espStage_;
+  bool downloadingEspStage_=false;
+#endif
   RemotePolicy::Transfer transfer_;
   String expectedSha_;
   File file_;

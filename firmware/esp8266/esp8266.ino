@@ -2008,7 +2008,7 @@ void registerAsyncOta() {
     if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request) || !webAccess.peerAllowed(request)) return;
     static uint32_t nextOwner = 0;
     if (index == 0) {
-      if (passiveCaptureActive() || artifactReaders || remoteFirmware.busy() || otaOwner || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched || request->hasAttribute("ota_id")) {
+      if (passiveCaptureActive() || artifactReaders || remoteFirmware.busy() || remoteFirmware.ownsEspStage() || otaOwner || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched || request->hasAttribute("ota_id")) {
         request->setAttribute("ota_error", "Another operation is active or multiple files were supplied"); return;
       }
       if (++nextOwner == 0) ++nextOwner;

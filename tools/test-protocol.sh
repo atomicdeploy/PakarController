@@ -15,6 +15,13 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$HOME/Ard
 "$root/build/client-telemetry-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/remote_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/libraries/BoardCore/src" "$root/tests/remote_firmware_test.cpp" "$root/firmware/esp8266/src/RemoteFirmware.cpp" -lcrypto -o "$root/build/remote-firmware-test"
 "$root/build/remote-firmware-test"
+pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern remote-ota -Gate > /dev/null
+c++ -std=c++17 -Wall -Wextra -Werror -DARDUINO_ARCH_ESP32 -DESP32 \
+  -I "$root/tests/s3_ota_stubs" -I "$root/tests/remote_stubs" \
+  -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/libraries/BoardCore/src" \
+  "$root/tests/remote_s3_test.cpp" "$root/firmware/esp8266/src/RemoteFirmware.cpp" \
+  -lcrypto -o "$root/build/remote-s3-test"
+"$root/build/remote-s3-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/firmware/esp8266/src" "$root/tests/telnet_shell_test.cpp" -o "$root/build/telnet-shell-test"
 "$root/build/telnet-shell-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/busy_stubs" -I "$root/firmware/esp8266/src" "$root/tests/busy_line_test.cpp" -o "$root/build/busy-line-test"

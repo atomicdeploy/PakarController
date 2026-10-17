@@ -2,6 +2,7 @@
   "schema": 1,
   "authority": "docs/file-comparison-evidence.json",
   "concerns": [
+    {"id":"remote-ota","origins":["PU850-ESP"],"path_pattern":"^LocalLib/(AsyncOTA|FirmwareTransfer)\\.(cpp|h)$","required_reviews":["PU850-ESP|LocalLib/AsyncOTA.cpp","PU850-ESP|LocalLib/FirmwareTransfer.cpp"],"issue":7},
     {"id":"mobile-mirroring","origins":["PCController"],"path_pattern":"(^Tools/Controller/internal/hostbridge/buzzer_mirror(?:_test)?.go$|^Project/FrontPanelModel.h$)","required_reviews":["PCController|Tools/Controller/internal/hostbridge/buzzer_mirror.go","PCController|Tools/Controller/internal/hostbridge/buzzer_mirror_test.go"],"issue":2},
     {"id":"mobile-network","origins":["PCController","PU850-ESP"],"path_pattern":"(^Tools/Controller/internal/discovery/discovery.go$|^LocalLib/MNDP\\.(cpp|h)$)","required_reviews":["PCController|Tools/Controller/internal/discovery/discovery.go","PU850-ESP|LocalLib/MNDP.cpp","PU850-ESP|LocalLib/MNDP.h"],"issue":2},
     {"id":"tray-tooltip","origins":["Pealayer"],"path_pattern":"(^src/platform/windows.rs$|^docs/WINDOWS-SHELL-RECOVERY.md$|^docs/superpowers/plans/2026-09-28-windows-taskbar-and-tray-suite.md$)","required_reviews":["Pealayer|docs/superpowers/plans/2026-09-28-windows-taskbar-and-tray-suite.md","Pealayer|docs/WINDOWS-SHELL-RECOVERY.md"],"issue":5},

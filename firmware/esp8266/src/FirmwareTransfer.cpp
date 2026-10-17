@@ -29,12 +29,15 @@ namespace {
 
 using namespace FirmwareTransferRange;
 
-size_t readFlashRange(uint32_t address, uint8_t* output, size_t length) {
+size_t readFlashRange(uint32_t address, uint8_t* output, size_t length, uint32_t totalSize) {
 	if (output == nullptr || length == 0) return 0;
+	if (static_cast<uint64_t>(address)+length>totalSize) return 0;
 #if defined(ARDUINO_ARCH_ESP32)
 	// This route permits app-image downloads only. Offset zero is relative to
 	// the running OTA partition, NOT physical flash and its boot/settings area.
-	if (static_cast<uint64_t>(address)+length>ESP.getSketchSize()) return 0;
+	// totalSize was verified once when constructing this response. On S3 the
+	// SDK getSketchSize() hashes/verifies the full image, so never call it for
+	// every TCP chunk from the AsyncTCP task.
 	return FirmwarePlatform::readRunning(address,output,length) ? length : 0;
 #else
 	const uint32_t flashSize = ESP.getFlashChipSize();
@@ -222,14 +225,14 @@ void RegisterFirmwareTransferRoutes(AsyncWebServer* server, std::function<bool(A
 				response = request->beginResponse(
 					"application/octet-stream",
 					contentLength,
-					[start = range.start, contentLength](
+					[start = range.start, contentLength, totalSize](
 						uint8_t* output,
 						size_t maximumLength,
 						size_t offset) -> size_t {
 						if (offset >= contentLength) return 0;
 						const size_t remaining = contentLength - offset;
 						const size_t requested = min(remaining, maximumLength);
-						return readFlashRange(start + offset, output, requested);
+						return readFlashRange(start + offset, output, requested, totalSize);
 					});
 				if (range.partial) response->setCode(206);
 			}

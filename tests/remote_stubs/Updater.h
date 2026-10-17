@@ -7,5 +7,7 @@ class TestUpdater{
  size_t write(const uint8_t*p,size_t n){staged.insert(staged.end(),p,p+n);return n;}
  bool end(bool commit){if(!commit||failCommit)return false;ESP.flash=staged;++commits;return true;}
  String getErrorString()const{return failCommit?String("fixture OTA commit failed"):String();}
+ const char *errorString()const{return "fixture OTA error";}
+ void abort(){}
 };
 extern TestUpdater Update;

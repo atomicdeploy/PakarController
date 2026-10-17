@@ -163,6 +163,11 @@ String buildTelemetryJson() {
 }
 bool prepareRemotePair(const RemoteFirmware::Plan &plan,String &reason) {
   if(artifactReaders || otaActive || otaRebootAt || avrUploadOwner || networkApplyPending) {reason=F("Another maintenance/network operation is active");return false;}
+#if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
+  // Isolated LED commissioning can update ONLY ESP without touching AVR pins,
+  // Prog, backup or audio. Integrated builds retain all paired safety checks.
+  if(plan.targets==RemotePolicy::Esp && !programmingLatched) return true;
+#endif
   if(!waitForAvr() || !avrVersionKnown || !avrPcSupported) {reason=F("AVR UART/profile unavailable; no erase allowed");return false;}
   if(plan.targets==1 && plan.esp.version!=avrVersionText()) {
     reason=F("ESP-only update would produce mismatched board versions; use target all");return false;
@@ -208,6 +213,13 @@ bool programRemoteAvr(const char *path,const String &version,String &reason) {
   programmingLatched=true;return true;
 }
 int8_t finishRemotePair(const RemoteFirmware::Plan &plan,bool commit,String &reason) {
+#if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
+  if(plan.targets==RemotePolicy::Esp && !programmingLatched) {
+    // RemoteFirmware already checked actual running-image SHA/integrity/version.
+    // There is no AVR latch to release and no update melody in this profile.
+    return plan.esp.version==BoardCore::BuildInfo::kVersion?1:-1;
+  }
+#endif
   if(!avrOnline || !avrVersionKnown || !avrPcSupported) {reason=F("Waiting for actual AVR version/profile");return 0;}
   if(avrVersionText()!=BoardCore::BuildInfo::kVersion ||
      ((plan.targets&2) && avrVersionText()!=plan.avr.version) ||

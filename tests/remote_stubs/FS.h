@@ -23,6 +23,8 @@ class File{
 namespace fs{class FS{
  public:std::map<std::string,std::shared_ptr<File::Data>>files;bool failWrite=false,failRename=false;
  bool mkdir(const char*){return true;}
+ size_t totalBytes()const{return 1572864;}
+ size_t usedBytes()const{size_t used=0;for(auto&e:files)used+=e.second->bytes.size();return used;}
  bool info(FSInfo &i){i.totalBytes=2097152;i.usedBytes=0;for(auto&e:files)i.usedBytes+=e.second->bytes.size();return true;}
  File open(const String&path,const char*mode){if(mode[0]=='w')files[path]=std::make_shared<File::Data>();auto it=files.find(path);return it==files.end()?File():File(it->second,failWrite);}
  bool rename(const String&a,const String&b){if(failRename)return false;auto it=files.find(a);if(it==files.end())return false;files[b]=it->second;files.erase(it);return true;}

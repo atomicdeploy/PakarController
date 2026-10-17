@@ -41,6 +41,9 @@ String RemoteFirmware::digest(const FirmwarePlatform::Sha256 &c) {
 }
 void RemoteFirmware::close() {
   if(file_) file_.close();
+#if defined(ARDUINO_ARCH_ESP32)
+  espStage_.abort();downloadingEspStage_=false;
+#endif
   http_.end(); socket_.reset(); opened_=false;
 }
 void RemoteFirmware::fail(const char *reason) {
@@ -59,6 +62,11 @@ String RemoteFirmware::json() const {
   d[F("avr")][F("size")]=plan_.avr.size;d[F("avr")][F("sha256")]=plan_.avr.sha;
   d[F("avr")][F("version")]=plan_.avr.version;
   d[F("atomic_pair")]=false;d[F("automatic_retry")]=false;d[F("eeprom_policy")]=F("preserve-and-verify");
+#if defined(ARDUINO_ARCH_ESP32)
+  d[F("esp_staging")]=F("inactive-ota-slot");
+#else
+  d[F("esp_staging")]=F("filesystem");
+#endif
   String out;serializeJson(d,out);return out;
 }
 bool RemoteFirmware::save() {
@@ -68,6 +76,9 @@ bool RemoteFirmware::save() {
   d[F("downgrade")]=downgrade_;d[F("error")]=error_;
   d[F("esp_version")]=plan_.esp.version;d[F("esp_sha")]=plan_.esp.sha;d[F("esp_size")]=plan_.esp.size;
   d[F("avr_version")]=plan_.avr.version;d[F("avr_sha")]=plan_.avr.sha;d[F("avr_size")]=plan_.avr.size;
+#if defined(ARDUINO_ARCH_ESP32)
+  d[F("esp_stage_address")]=espStage_.address();
+#endif
   File f=LittleFS.open("/remote/job.pending","w"); if(!f) return false;
   const size_t expected=measureJson(d),written=serializeJson(d,f);
   f.flush();f.close();
@@ -98,6 +109,13 @@ void RemoteFirmware::begin(const String &boot,Prepare p,Program program,Finish f
   plan_.avr.version=d[F("avr_version")]|"";plan_.avr.sha=d[F("avr_sha")]|"";plan_.avr.size=d[F("avr_size")]|0;
   if(phase_==Ready || phase_==Rebooting || phase_==VerifyPair) {
     if(!parseManifest()) { fail(F("Persisted manifest failed validation"));return; }
+#if defined(ARDUINO_ARCH_ESP32)
+    if(phase_==Ready && (plan_.targets&RemotePolicy::Esp) &&
+        (!d[F("esp_stage_address")].is<uint32_t>() ||
+         !espStage_.resume(d[F("esp_stage_address")],plan_.esp.size) || !validateEspStage())) {
+      fail(F("Persisted inactive OTA stage failed validation"));return;
+    }
+#endif
     if(phase_!=Ready) { phase_=VerifyPair;verifyAt_=millis();verifyBoot(); }
   } else if(busy()) fail(F("Interrupted update; inspect Prog and backups. No operation was replayed"));
 }
@@ -165,7 +183,12 @@ bool RemoteFirmware::openDownload(const String &url,uint32_t size,const String &
       (!size && length>4096) || http_.header("Content-Encoding").length() ||
       http_.header("Transfer-Encoding").length()) return false;
   transfer_={static_cast<uint32_t>(length),0};expectedSha_=sha;
-  file_=LittleFS.open(path,"w");if(!file_) return false;
+#if defined(ARDUINO_ARCH_ESP32)
+  downloadingEspStage_=!strcmp(path,kEsp);
+  if(downloadingEspStage_) {if(!espStage_.begin(size)) return false;}
+  else
+#endif
+  {file_=LittleFS.open(path,"w");if(!file_) return false;}
   sha_.begin();lastDataAt_=millis();opened_=true;return true;
 }
 int RemoteFirmware::download() {
@@ -175,13 +198,23 @@ int RemoteFirmware::download() {
     const size_t n=min<size_t>(sizeof(block),min<uint32_t>(available,transfer_.expected-transfer_.received));
     if(!n) return -1;
     const int read=s->read(block,n);
-    if(read<=0 || !transfer_.append(read) || file_.write(block,read)!=static_cast<size_t>(read)) return -1;
+    if(read<=0 || !transfer_.append(read)) return -1;
+#if defined(ARDUINO_ARCH_ESP32)
+    if(downloadingEspStage_) {if(!espStage_.write(block,read)) return -1;}
+    else
+#endif
+    if(file_.write(block,read)!=static_cast<size_t>(read)) return -1;
     sha_.add(block,read);lastDataAt_=millis();
   }
   if(transfer_.received==transfer_.expected) {
     if(s && s->available()>0) return -1;
-    const bool ok=transfer_.complete(digest(sha_)==expectedSha_);
-    file_.flush();close();return ok?1:-1;
+    bool ok=transfer_.complete(digest(sha_)==expectedSha_);
+#if defined(ARDUINO_ARCH_ESP32)
+    if(downloadingEspStage_) {ok=ok && espStage_.finish();}
+    else
+#endif
+    file_.flush();
+    close();return ok?1:-1;
   }
   if(!http_.connected() && !available) return -1;
   if(static_cast<uint32_t>(millis()-lastDataAt_)>20000 ||
@@ -223,6 +256,9 @@ bool RemoteFirmware::parseManifest() {
   return true;
 }
 bool RemoteFirmware::validateImage(const Component &c,const char *path,bool esp) {
+#if defined(ARDUINO_ARCH_ESP32)
+  if(esp) return c.size==espStage_.size() && validateEspStage();
+#endif
   File f=LittleFS.open(path,"r");
   if(!f || f.size()!=c.size || hashFile(f)!=c.sha) {if(f)f.close();return false;}
   uint8_t p[24];f.seek(0,SeekSet);
@@ -251,6 +287,26 @@ bool RemoteFirmware::validateImage(const Component &c,const char *path,bool esp)
   }
   f.close();return ok;
 }
+bool RemoteFirmware::validateEspStage() {
+#if defined(ARDUINO_ARCH_ESP32)
+  if(espStage_.size()!=plan_.esp.size) return false;
+  esp_image_header_t header{};
+  if(!espStage_.read(0,reinterpret_cast<uint8_t *>(&header),sizeof(header)) ||
+     header.magic!=0xe9 || header.chip_id!=ESP_CHIP_ID_ESP32S3 || header.hash_appended!=1) return false;
+  const uint16_t revision=ESP.getChipRevision();
+  if(revision<header.min_chip_rev_full ||
+     (header.max_chip_rev_full && header.max_chip_rev_full!=UINT16_MAX && revision>header.max_chip_rev_full)) return false;
+  FirmwarePlatform::Sha256 c;uint8_t block[1024];
+  for(uint32_t offset=0;offset<plan_.esp.size;offset+=sizeof(block)) {
+    const size_t bytes=min<uint32_t>(sizeof(block),plan_.esp.size-offset);
+    if(!espStage_.read(offset,block,bytes)) return false;
+    c.add(block,bytes);yield();
+  }
+  return c.hex()==plan_.esp.sha;
+#else
+  return false;
+#endif
+}
 void RemoteFirmware::verifyBoot() {
   if(!(plan_.targets&RemotePolicy::Esp)) return;
   if(plan_.esp.version!=BoardCore::BuildInfo::kVersion || !FirmwarePlatform::runningIntegrity()) {
@@ -265,6 +321,14 @@ void RemoteFirmware::verifyBoot() {
   if(digest(c)!=plan_.esp.sha) fail(F("Running ESP SHA-256 mismatch; Prog remains armed"));
 }
 bool RemoteFirmware::installEsp() {
+#if defined(ARDUINO_ARCH_ESP32)
+  if(!validateEspStage()) return false;
+  // A durable intent precedes selecting the already-validated inactive slot.
+  // Power loss before/after selection is verified on boot, never auto-replayed.
+  phase_=Rebooting;
+  if(!save() || !espStage_.selectForBoot()) return false;
+  rebootAt_=millis()+2000;return true;
+#else
   File f=LittleFS.open(kEsp,"r");if(!f) return false;
   const uint32_t maximum=FirmwarePlatform::otaCapacity();
   // Leave a gap: end(false) must always abort, never commit a full unchecked stream.
@@ -286,6 +350,7 @@ bool RemoteFirmware::installEsp() {
   if(!save()) {FirmwarePlatform::abortUpdate();return false;}
   if(!Update.end(true)) return false;
   rebootAt_=millis()+2000;return true;
+#endif
 }
 void RemoteFirmware::service() {
   if(phase_==Rebooting) {
@@ -323,7 +388,11 @@ void RemoteFirmware::service() {
     if(!result) return;
     if(phase_==Manifest) {
       if(!parseManifest()) {fail(F("Manifest identity/profile/version/target validation failed"));return;}
-      const uint32_t need=((plan_.targets&1)?plan_.esp.size:0)+((plan_.targets&2)?plan_.avr.size:0)+98304;
+      const uint32_t need=
+#if !defined(ARDUINO_ARCH_ESP32)
+          ((plan_.targets&1)?plan_.esp.size:0)+
+#endif
+          ((plan_.targets&2)?plan_.avr.size:0)+98304;
       if(FirmwarePlatform::freeStorage()<need) {fail(F("Insufficient staging and recovery storage"));return;}
       phase_=(plan_.targets&1)?DownloadEsp:DownloadAvr;
     } else {

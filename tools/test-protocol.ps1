@@ -42,6 +42,7 @@ $remoteStateBinary = Join-Path $outputDirectory 'remote_firmware_test.exe'
 if ($LASTEXITCODE -ne 0) { throw 'Remote firmware state-machine compilation failed' }
 & $remoteStateBinary
 if ($LASTEXITCODE -ne 0) { throw 'Remote firmware state-machine tests failed' }
+& (Join-Path $PSScriptRoot 'test-remote-s3.ps1')
 $shellBinary = Join-Path $outputDirectory 'telnet_shell_test.exe'
 & g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/telnet_shell_test.cpp') -o $shellBinary
 if ($LASTEXITCODE -ne 0) { throw 'Telnet shell compilation failed' }

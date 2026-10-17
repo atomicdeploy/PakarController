@@ -2994,3 +2994,126 @@ PU850-ROUTE-PARITY.json/.md; source revision/hashes,50 dispositions and every
 pending omission remain unchanged. Focused pu_routes_test passed all50 mappings.
 Search across docs/tests/tools/.github machine-readable manifests found no other
 old main or S3 wiring-test hash. No route source/test guard was weakened.
+
+## S3 inactive-slot remote staging and live OTA admission failure
+
+Read the actual complete PU850 LocalLib/AsyncOTA.cpp/header and
+FirmwareTransfer.cpp/header, with the current RemoteFirmware, RemotePolicy,
+FirmwarePlatform, MaintenanceRoutes and ArtifactDownload implementations.
+AsyncOTA.cpp donor SHA3d681d678b58e5e615448acddc52fd623914c8ec4a76f80f5bbb75cd34c3aaec
+is now a narrow hash-bound comparison. The new remote-ota index reaches the
+four OTA/transfer donor files; its gate validates two required reviewed cpp
+sources, not every donor. AsyncOTA.h still has no independent comparison row.
+
+The identified S3 application exceeds LittleFS capacity. Adapted the actual
+ESP-IDF OTA handle lifecycle into S3OtaStage: sequential inactive-partition
+staging, bounded writes, exact length/SHA/SDK image validation, no boot selection
+while downloading, explicit journaled apply, persisted-stage revalidation and
+actual postboot running-image checks. Quiet ESP-only maintenance bypasses only
+absent-AVR preparation, never paired Prog/backup/version gates. Ready stages block
+competing local OTA and retain bounded artifact export. ESP8266 staging remains.
+The publisher now accepts the actual S3 hardware profile/raw image and an omitted
+AVR component; no versioned API or compatibility alias was introduced.
+
+The old SDK's getSketchSize verifies the complete image. Actual installed-core
+Esp.cpp confirmed the firmware-download chunk callback repeated it for every
+chunk. Captured verified response bounds once instead; no repeated image scan
+inside the reader. A live old-image download timed out, with a new panic-reset
+boot observed during the interval. Without a backtrace this is not proven reset
+causality. The user separately reports correcting the SS36 supply drop; that is
+not our measured external-power acceptance or an AVR reset diagnosis.
+
+Full protocol wrapper, the actual S3 RemoteFirmware host/SDK-double harness,
+publisher cases, S3 wiring guards and complete quality runner passed. Fixtures
+exercise a1843552-byte image beyond FS capacity, real BCrypt SHA, stage/resume,
+explicit apply, journal/HTTP/length/encoding/write/end/hash/tamper/cancel failures.
+Final guarded16MB/OPI quiet S3 build passed without clean/new cache. Raw candidate
+1850096bytes SHA5b5d775a77e66d853566e56b4b1af8ccadaabfd30272e52845f0b4d5c4739f12
+was staged and hash-checked on ASUS; no new native/APK/AVR builds were needed.
+
+Published only raw application and pinned manifest into a new immutable scoped
+office HTTPS directory. Server disk image hash and HTTPS manifest hash match;
+manifest SHA isb828e7dfd3833461aa7e83bc1281761569f973828d69d7fb4f4aa08005e231c9.
+No server configuration, unrelated tenant, broker credential or full flash backup
+was published/changed. This is server artifact proof, not board Internet delivery.
+
+Native IPC enqueue did not expose a durable update result. Fresh same-board old
+image/boot/idle/zero-upload resolved no applied image. Later direct one-shot OTA
+returned HTTP400: Another operation is active or multiple files were supplied.
+Retrieved that exact saved response after SSH returned; no blind replay. A
+subsequent attempt stopped at preflight without POST. Disconnected ASUS's native
+app through guarded typed IPC to quiesce polling; observed enabled=false and no
+retiring resource. It still requires a guarded reconnect before handoff.
+
+ASUS retained Ethernet and joined ledboard AP after replacing only the newly
+owned current-user profile with the same all-user profile; original XML was
+preserved, existing profiles untouched. Hostname resolution failed on this AP.
+Use explicitly selected current192.168.4.1 only with actual board/boot guards;
+do not silently change routes. Tunnel access then became intermittent before
+the latest private station credentials were applied. No password is in this
+receipt or source. Preserve AP recovery and verify real network persistence.
+
+Rebound only reviewed target/test hashes and affected route anchors; all50 PU
+route dispositions remain. Comparison count132/4673 leaves4541 pending and96
+known gaps, not completed donor parity. Native outcome persistence, bounded
+DNS/TLS opening, real OTA admission/HTTP export, slow-client ownership, board
+TLS fetch/apply, rejection/cancel/reconnect, rollback/power-loss/soak and optical
+white boot remain open. No AVR command/reset/ISP/fuse/audio or PBX was performed.
+
+Live continuation recovered ASUS, read the same isolated board/boot through the
+AP, and saved the new private station settings once (202 accepted). Actual
+association and AP-enabled readback passed; hostname resolution through ASUS
+worked after the OTA reboot. No station secret was written to source or GitHub.
+The prior upload's failed phase/32bytes plus saved negative ACK were resolved:
+the installed ESPAsync parser treats a Content-Type-bearing MD5 field as a file.
+Removed that header and quoted multipart dispositions in the private uploader;
+did not weaken the device's duplicate-file/ownership guard. Corrected one-shot
+upload returned200 updated/rebooting=true. Boot62122282967feaf4192b9e2f9fa7646e
+reported1850096bytes and matching MD56b2b76343d415a3a1a3584f4bb181137,
+all80 cells white and480 committed RGB pixels white at255; network settings
+persisted. Initial AP readback failed, so recovery used the now-resolving hostname
+without repeating any upload. Full-image SHA/optical acceptance remain open.
+
+Measured a65536-byte HTTP range:206, exact Content-Range0-65535/1850096,
+17.3seconds. Full stream received at least265120bytes before closing; a later
+boot change was observed. Bounded passive USB capture used the existing guarded
+SerialPort setup with DTR/RTS false and transmitted zero bytes. It returned
+POWERON boot text and an esp_cache_msync invalid-address warning, but cannot
+establish when that boot happened or attribute it to download, power or port
+opening. Do not claim that an explicit no-reset command guarantees no electrical
+reset, or diagnose panic from this log. Subsequent read-only status succeeded.
+S3 host fixtures are also wired into the Linux protocol CI runner using its
+existing OpenSSL SHA adapter; Windows uses the already-executed BCrypt adapter.
+
+The added Linux S3 invocation correctly tripped the existing display donor's
+whole-runner hash binding. Reread the actual current639-line PCController
+Tools/VirtualBoard/tests/firmware_controls_test.cpp through EOF and the complete
+runner/diff; donor hash4facf265f8593b83f7610ae99ce58050013226cf1aa5a4d6e60bdbd6e5cc399e
+still matches. Only the new S3 test/gate was added; the display loop and all
+existing invocations are unchanged. Rebound that single runner proof hash,
+retaining every display/key/transition/tone pending omission and hardware scope.
+
+The remote-ota gate now runs before every ESP build/Plan and the focused S3 test;
+the guarded quiet S3 Plan passed all gates without compiling or writing assets.
+The full Linux invocation remains CI execution, not locally asserted Linux proof.
+An instrumented full HTTP200 running-image download then completed1850096bytes
+in19.24seconds with SHA5b5d775a77e66d853566e56b4b1af8ccadaabfd30272e52845f0b4d5c4739f12.
+Request headers pinned bootdc2b802cd3318072494ae7282e8c9e46. Independent telemetry
+reported matching MD5/integrity and panic reset4 on that boot; the180second passive
+console window contained zero new bytes. Happy-path OTA/image proof is now real,
+but intermittent failures, panic cause, AP recovery, optical and soak remain open.
+
+The first Internet stage guard refused an unset clock before dispatch. A pinned
+owner set UTC from ASUS and read it back valid; this is not SNTP proof, and the
+existing manual-time route still reports source unset (a remaining telemetry gap).
+A later stage POST lost its response; actual new boot/idle/job0 was inspected,
+never interpreted as completion and never followed by Apply. No two-board action
+or remote application/rollback success is claimed. Keep USB available.
+
+Resolved the later pooled-client failure separately: same bootdc2b..., idle/job0,
+no error/ACK and no console output. A fresh non-reused mutation transport obtained
+the real202 state ACK for job1, manifest phase/ESP-only/apply=false/received0.
+The next bootc900bd0d775661e6ab978a527590fba1 recovered that journal as failed:
+Interrupted update; inspect Prog and backups. No operation was replayed.
+No Apply was sent. Preserve the acknowledged-job distinction from transport-only
+failures and diagnose the actual ESP crash before another Internet download.

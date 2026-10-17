@@ -10,6 +10,7 @@ class TestEsp{
  public:std::vector<uint8_t>flash;bool crc=true;unsigned restarts=0;uint32_t heap=50000;
  uint32_t getFreeHeap()const{return heap;}uint32_t getMaxFreeBlockSize()const{return heap;}
  uint8_t getFlashChipMode()const{return 2;}uint32_t getFreeSketchSpace()const{return 1048576;}
+ uint16_t getChipRevision()const{return 2;}
  bool checkFlashCRC()const{return crc;}
  bool flashRead(uint32_t at,uint8_t*out,size_t n){if(at+n>flash.size())return false;memcpy(out,flash.data()+at,n);return true;}
  void restart(){++restarts;}
