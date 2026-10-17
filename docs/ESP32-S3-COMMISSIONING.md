@@ -1,5 +1,9 @@
 # ESP32-S3 migration and commissioning
 
+**Current delivery priority:** [LED-first acceptance](LED-FIRST-ACCEPTANCE.md).
+AVR integration is explicitly deferred until the480-pixel matrix and LED API
+work. Historical AVR commissioning evidence below is not a request to resume it.
+
 The ESP32-S3 target builds the **same integrated application** as the ESP8266:
 Web/API/WebSocket, table effects, cloud clients, storage, self-OTA and AVR ISP.
 `firmware/esp32s3/esp32s3.ino` includes the shared sketch; its individual source
