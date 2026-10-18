@@ -1,4 +1,5 @@
 #include "../firmware/esp8266/src/UpdateProgress.h"
+#include "../firmware/esp8266/src/SemanticPanel.h"
 #include <cassert>
 #include <cstring>
 #include <thread>
@@ -49,5 +50,26 @@ int main() {
   assert(panel.next(UINT32_MAX-100,true,true,"P004",payload));
   assert(!panel.next(100,true,true,"P005",payload));
   assert(panel.next(200,true,true,"P005",payload));
+  // The integrated owner is now SemanticPanel, shared by updates and ordinary
+  // notices. Exercise its actual lease bytes/admission, not only source tokens.
+  PakarPanel::Presenter semantic;
+  semantic.persistent(true,"P042");
+  assert(!semantic.frame(1000,false,false,payload));
+  assert(!semantic.frame(1000,true,true,payload));
+  assert(semantic.frame(1000,true,false,payload));
+  assert(payload[0]==5 && payload[3]==4 && payload[4]==0 &&
+      (payload[5]|payload[6]<<8)==1200 && !memcmp(payload+8,"P042",4));
+  assert(semantic.frame(1001,true,false,payload)); // Failed send: still eligible.
+  semantic.admitted(1001,payload);
+  assert(!semantic.frame(1900,true,false,payload));
+  assert(semantic.frame(1901,true,false,payload));
+  semantic.post(PakarPanel::Fault,"Err ",0,2000,95,PakarPanel::DoubleFast,6000);
+  semantic.view(2000,text);assert(!strcmp(text,"P042")); // Active update wins.
+  semantic.persistent(false,nullptr);
+  semantic.view(2000,text);assert(!strcmp(text,"Err "));
+  semantic.view(8000,text);assert(!strcmp(text,"C001")); // Finite, no replay.
+  const uint8_t manualLease[]={5,80,0,4,0,0xd0,7,0,'T','E','S','T'};
+  semantic.manual(manualLease,sizeof(manualLease),0xfffffff0U);
+  assert(semantic.manualActive(0x100U) && !semantic.manualActive(0x800U));
   std::cout<<"Update progress: measured/unknown stages, atomic snapshot, finite/coalesced panel and rollover passed. No hardware proof.\n";
 }

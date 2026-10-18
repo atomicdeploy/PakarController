@@ -96,9 +96,31 @@ function maskedFrame(opcode,payload) {
   return frame;
 }
 function compactWebSocketEvent(value,peer) {
-  if(!['status-rgb','update-progress'].includes(value?.type))return false;
+  if(!['status-rgb','update-progress','panel-event','pc-contract-event'].includes(value?.type))return false;
   if(value.board_id!==peer.board || value.boot_id!==peer.boot)
     throw Error('Compact WebSocket event identity changed');
+  const unsigned=(number,maximum=0xffffffff)=>Number.isSafeInteger(number)&&number>=0&&number<=maximum;
+  const ascii=(text,maximum)=>typeof text==='string'&&text.length<=maximum&&/^[\x20-\x7e]*$/.test(text);
+  // Optional requested presentation and observed AVR events carry no full
+  // status/capability authority. Validate them, then keep waiting for the ONE
+  // requested same-peer full status; they never renew its deadline or replay IO.
+  if(value.type==='panel-event') {
+    const p=value.presentation;
+    if(!unsigned(value.event_id)||!unsigned(value.uptime_ms)||!unsigned(value.value,65535)||
+      !['rest','cell','mode','effect','pixel','network','progress','fault','complete','output','menu','scan','state'].includes(value.kind)||
+      !ascii(value.text,32)||value.hardware_confirmed!==false||!p||
+      !ascii(p.text,4)||p.text.length!==4||!unsigned(p.lifetime_ms,65535)||!unsigned(p.priority,255)||
+      !['steady','slow','double-fast'].includes(p.blink)||!['once','none'].includes(p.marquee))
+      throw Error('Invalid compact WebSocket panel event');
+    return true;
+  }
+  if(value.type==='pc-contract-event') {
+    if(!unsigned(value.event_id)||!unsigned(value.avr_session)||!unsigned(value.response_opcode,255)||
+      value.response_opcode<128||typeof value.payload_hex!=='string'||
+      !/^(?:[a-f0-9]{2}){0,47}$/.test(value.payload_hex))
+      throw Error('Invalid compact WebSocket AVR event');
+    return true;
+  }
   if(!Number.isSafeInteger(value.revision)||value.revision<1)throw Error('Invalid compact WebSocket revision');
   if(value.type==='status-rgb') {
     const rgb=value.status_rgb;

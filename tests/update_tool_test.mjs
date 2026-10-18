@@ -119,6 +119,25 @@ server.on('upgrade',(req,socket)=>{
           event:'update.phase',phase:'download',progress_known:false});
         if(wsMode==='only-compact')return;
       }
+      if(wsMode.startsWith('panel-')||wsMode.startsWith('avr-')||wsMode==='all-compact'||wsMode==='only-panel') {
+        const panel={type:'panel-event',board_id:base.board_id,boot_id:base.boot_id,event_id:1,uptime_ms:100,
+          kind:'progress',value:42,text:'P042',hardware_confirmed:false,
+          presentation:{text:'P042',lifetime_ms:2000,priority:90,blink:'steady',marquee:'none'}};
+        const avr={type:'pc-contract-event',board_id:base.board_id,boot_id:base.boot_id,event_id:2,
+          avr_session:7,response_opcode:0x9c,payload_hex:'393f3f06c5'};
+        const event=wsMode.startsWith('avr-')?avr:panel;
+        if(wsMode.endsWith('-foreign'))event.board_id='other';
+        if(wsMode.endsWith('-wrong-boot'))event.boot_id='c'.repeat(32);
+        if(wsMode==='panel-malformed')event.presentation.lifetime_ms=-1;
+        if(wsMode==='panel-confirmed')event.hardware_confirmed=true;
+        if(wsMode==='panel-oversized')event.text='x'.repeat(33);
+        if(wsMode==='avr-malformed')event.payload_hex='0x';
+        if(wsMode==='avr-oversized')event.payload_hex='00'.repeat(48);
+        if(wsMode==='avr-request-opcode')event.response_opcode=0x38;
+        send(event);
+        if(wsMode==='all-compact')send(avr);
+        if(!['panel-valid','avr-valid','all-compact'].includes(wsMode))return;
+      }
       if(wsMode==='unknown-event'){send({type:'pong',board_id:base.board_id,boot_id:base.boot_id});return;}
       if(wsMode==='bad-fragment'){socket.write(frame(0x80,Buffer.from('{}')));return;}
       if(wsMode==='compact-wrong-boot'){send({type:'status-rgb',board_id:base.board_id,boot_id:'c'.repeat(32),revision:2,status_rgb:{available:true,have_output:true,rgb:[1,2,3]}});return;}
@@ -139,18 +158,23 @@ try{
   assert.equal(received.headers['x-pakar-firmware-size'],String(image.length));assert.equal(received.headers['x-pakar-firmware-md5'],identity.md5);
   assert.equal(Number(received.headers['content-length']),received.body.length);assert.ok(received.body.includes(image));
   assert.ok(received.body.indexOf(Buffer.from('name="MD5"'))<received.body.indexOf(Buffer.from('name="firmware"')));
-  for(wsMode of ['valid','compact']){
+  for(wsMode of ['valid','compact','panel-valid','avr-valid','all-compact']){
     const before=statusRequests,result=await checkWebSocket(origin,peer);
     assert.equal(statusRequests,before+1,'Exactly one read-only request, no replay');assert.equal(result.status_requests,1);
-    assert.equal(result.ignored_events,wsMode==='compact'?2:0);assert(result.connect_ms>=0&&result.status_ms>=0&&result.total_ms>=0);
+    assert.equal(result.ignored_events,['compact','all-compact'].includes(wsMode)?2:['panel-valid','avr-valid'].includes(wsMode)?1:0);assert(result.connect_ms>=0&&result.status_ms>=0&&result.total_ms>=0);
   }
-  for(wsMode of ['bad-upgrade','auth','other-peer','foreign-compact','compact-wrong-boot','unknown-event','bad-fragment']){
+  for(wsMode of ['bad-upgrade','auth','other-peer','foreign-compact','compact-wrong-boot','unknown-event','bad-fragment',
+    'panel-foreign','panel-wrong-boot','panel-malformed','panel-confirmed','panel-oversized',
+    'avr-foreign','avr-wrong-boot','avr-malformed','avr-oversized','avr-request-opcode']){
     const before=statusRequests;await assert.rejects(checkWebSocket(origin,peer));
     assert.equal(statusRequests,before+(['bad-upgrade','auth'].includes(wsMode)?0:1));
   }
   wsMode='only-compact';const before=statusRequests;
   await assert.rejects(checkWebSocket(origin,peer,{statusTimeoutMs:50}),/full-status deadline.*compact events 2/);
   assert.equal(statusRequests,before+1,'Partial events never satisfy readiness or trigger request replay');
+  wsMode='only-panel';const panelBefore=statusRequests;
+  await assert.rejects(checkWebSocket(origin,peer,{statusTimeoutMs:50}),/full-status deadline.*compact events 1/);
+  assert.equal(statusRequests,panelBefore+1,'A valid panel event is not full status and never triggers replay');
   wsMode='no-upgrade';await assert.rejects(checkWebSocket(origin,peer,{connectTimeoutMs:50}),/connect\/upgrade deadline/);
   assert(pongs>=1,'Interleaved ping receives a masked pong');
 }finally{for(const socket of sockets)socket.destroy();server.close();await once(server,'close');}
@@ -159,8 +183,25 @@ const sketch=readFileSync(new URL('../firmware/esp8266/esp8266.ino',import.meta.
 const info=sketch.slice(sketch.indexOf('void registerAsyncOta() {'),sketch.indexOf('void registerApi() {'));
 assert.doesNotMatch(info,/FirmwarePlatform::sketch(?:Size|Md5)\(/,'Progress info cannot hash the whole image on each poll');
 for(const token of ['X-Pakar-Firmware-Size','X-Pakar-Firmware-MD5','otaUploadedBytes!=otaExpectedBytes','Update.end(true)','otaProgress.advance'])assert.ok(info.includes(token));
-assert.ok(sketch.indexOf('updatePanel.next')>sketch.indexOf('void loop()'));
-assert.ok(sketch.includes('!programmingLatched && !avrUploadOwner,updateText'));
+const panelService=readFileSync(new URL('../firmware/esp8266/src/SemanticPanelService.h',import.meta.url),'utf8');
+const panel=readFileSync(new URL('../firmware/esp8266/src/SemanticPanel.h',import.meta.url),'utf8');
+const loop=sketch.slice(sketch.indexOf('void loop()'));
+const background=sketch.slice(sketch.indexOf('void upgradeBackground() {'),sketch.indexOf('bool upgradeRebootReady() {'));
+assert.match(loop,/serviceSemanticPanel\(millis\(\)\)/,'Main loop owns presentation');
+assert.match(background,/serviceUpgrade\(\);[\s\S]*serviceSemanticPanel\(millis\(\)\)/,'Cooperative maintenance also samples the same presenter');
+assert.doesNotMatch(info,/serviceSemanticPanel\(|sendToAvr\(/,'Async upload callbacks may publish progress, never perform UART presentation');
+assert.match(panelService,/updating&&upgradeLifecycle\.known\(\)\?upgradeLifecycle\.percent\(\):-1/,'Unknown stages stay indeterminate');
+assert.match(panelService,/semanticPanel\.persistent\(updating,text\)/,'Measured update state has priority over ordinary notices');
+assert.match(panelService,/urbootRawOwned\|\|programmingLatched\|\|avrUploadOwner\|\|avrCaptured\|\|[\s\S]*semanticPanel\.manualActive\(now\)/,'Raw UART, Prog, uploads and manual owners inhibit automatic leases');
+assert.match(panelService,/semanticPanel\.frame\(now,tm1637DetectionKnown\(\)&&tm1637Ack,inhibited,payload\)/,'Fresh observed TM1637 ACK gates admission');
+assert.match(panelService,/if\(updating&&avrMaintenancePanel\)payload\[4\]\|=0x04U/,'Menu override requires the actual AVR acknowledgement');
+assert.match(panelService,/if\(sendToAvr\(kDisplayText,sequence\+\+,payload,sizeof\(payload\)\)\)semanticPanel\.admitted\(now,payload\)/,'Failed UART writes cannot advance the presentation lease');
+assert.doesNotMatch(panelService,/requestAndWaitForAck\(|\bdelay\(/,'Presenter cannot block the maintenance loop');
+assert.match(panelService,/d\["hardware_confirmed"\]=false/,'Requested presentation never fabricates physical confirmation');
+const frame=panel.slice(panel.indexOf('bool frame('),panel.indexOf('void admitted('));
+assert.match(frame,/if\(!available\|\|inhibited\)/);
+assert.match(frame,/prefix\[8\]=\{5,4,1,4,0,0xb0,4,0\}/,'Actual producer uses a once-only 1200ms scheduled lease, not capture or a looping marquee');
+assert.doesNotMatch(frame,/sent_\s*=\s*true/,'Only acknowledged transport admission advances the send clock');
 const wrapper=readFileSync(new URL('../tools/update-firmware.ps1',import.meta.url),'utf8');
 assert.ok(wrapper.includes('@(Get-Command node -CommandType Application -ErrorAction Stop)[0].Source'),'Multiple installed Node runtimes must resolve to one PATH-preferred executable');
 assert.ok(wrapper.includes('[long]$ResumeJobId')&&wrapper.includes("'--resume-job'"));

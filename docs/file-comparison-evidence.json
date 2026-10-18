@@ -13,13 +13,13 @@
   "targets":[
     {"path":"firmware/avr/FrontPanel.cpp","sha256":"d90acc624b6d9e9248238eb5015a573bb3081bde5546b9bdc3d1e14661f3dea4","anchor":"void FrontPanel::service("},
     {"path":"firmware/avr/PcControllerRuntime.cpp","sha256":"cd62f7447553664a06de9b55bdb18371d26972b63833d80035e795d367669694","anchor":"espTouchedAt_"},
-    {"path":"firmware/esp8266/src/SemanticPanel.h","sha256":"21da8d0116c02bcd3073bec0e48f94aec7b6878cde61750eeec44f8489927a7f","anchor":"class Presenter"},
+    {"path":"firmware/esp8266/src/SemanticPanel.h","sha256":"8cd5384e86c8201e42d6d80b96eacd84668bcb3a7ee88bacef5addb4be1bc958","anchor":"class Presenter"},
     {"path":"firmware/esp8266/src/SemanticPanelService.h","sha256":"a05fd486a8ea5f3a8f04c597d75d919eda2edb340bb13088bdcfe300046746ff","anchor":"void serviceSemanticPanel("}
   ],
   "proof":[
     {"path":"tests/front_panel_test.cpp","sha256":"318ba761cdc2548b25e45b9114480ff761b6e994f21e0ca3a15ce19c20e2533a","anchor":"int main()"},
     {"path":"tests/esp_front_panel_test.cpp","sha256":"58220f795fcb6d16277308285f37f7cede5af7f431ceafd675ad8bfe6f3c5013","anchor":"int main()"},
-    {"path":"tests/semantic_panel_test.cpp","sha256":"d2dda61302a6abf6953fc40f29b3a042024bf4b2bbca95cbbfa98a41d0f5ca6d","anchor":"int main()"}
+    {"path":"tests/semantic_panel_test.cpp","sha256":"43b274cf478f41bca5435d38fd8e9cc42c5014342361e1e667201f74923fd598","anchor":"int main()"}
   ],
   "omissions":[
     {"code":"relay/motion/door/BT/RF/sensor/PWM-specific display pages and EEPROM editors","disposition":"pending","reason":"Read but not fitted or individually acknowledged on this table. Safety-sensitive actuator/sensor behavior remains capability-gated and needs separate matching-hardware review; no full editor/automation parity is claimed."},
@@ -1632,7 +1632,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "const server=createServer",
-          "sha256": "a08fcbad1da17475eba65005c8625dd067f25abb478f2dfdb068b82f1eff98cb"
+          "sha256": "7ff8056fd1269f616676d5c46b32ee56ed750b43954172207f21baa03b538f9c"
         }
       ],
       "omissions": [
@@ -1661,7 +1661,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "Automatic updater plan/preflight",
-          "sha256": "a08fcbad1da17475eba65005c8625dd067f25abb478f2dfdb068b82f1eff98cb"
+          "sha256": "7ff8056fd1269f616676d5c46b32ee56ed750b43954172207f21baa03b538f9c"
         }
       ],
       "remaining": [
@@ -1694,7 +1694,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "await uploadImage(origin,peer,image,identity)",
-          "sha256": "a08fcbad1da17475eba65005c8625dd067f25abb478f2dfdb068b82f1eff98cb"
+          "sha256": "7ff8056fd1269f616676d5c46b32ee56ed750b43954172207f21baa03b538f9c"
         }
       ],
       "omissions": [
@@ -1728,7 +1728,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "Automatic updater plan/preflight",
-          "sha256": "a08fcbad1da17475eba65005c8625dd067f25abb478f2dfdb068b82f1eff98cb"
+          "sha256": "7ff8056fd1269f616676d5c46b32ee56ed750b43954172207f21baa03b538f9c"
         }
       ],
       "remaining": [
@@ -1762,7 +1762,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "04e744f6b910c0d5f9e2e0928985637dd8e5a2872bcd66b255cc58050b7f9fb4"
+          "sha256": "3d57c9f57c6d76103f679cd70f410b8f5dd32db0915aa11dc5719b7bb5b2fe9b"
         }
       ],
       "omissions": [
@@ -1877,7 +1877,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "04e744f6b910c0d5f9e2e0928985637dd8e5a2872bcd66b255cc58050b7f9fb4"
+          "sha256": "3d57c9f57c6d76103f679cd70f410b8f5dd32db0915aa11dc5719b7bb5b2fe9b"
         }
       ],
       "omissions": [
@@ -1940,7 +1940,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "04e744f6b910c0d5f9e2e0928985637dd8e5a2872bcd66b255cc58050b7f9fb4"
+          "sha256": "3d57c9f57c6d76103f679cd70f410b8f5dd32db0915aa11dc5719b7bb5b2fe9b"
         }
       ],
       "omissions": [
@@ -2102,7 +2102,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "04e744f6b910c0d5f9e2e0928985637dd8e5a2872bcd66b255cc58050b7f9fb4"
+          "sha256": "3d57c9f57c6d76103f679cd70f410b8f5dd32db0915aa11dc5719b7bb5b2fe9b"
         },
         {
           "path": "tools/deploy-artifact.mjs",
@@ -2917,7 +2917,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "04e744f6b910c0d5f9e2e0928985637dd8e5a2872bcd66b255cc58050b7f9fb4"
+          "sha256": "3d57c9f57c6d76103f679cd70f410b8f5dd32db0915aa11dc5719b7bb5b2fe9b"
         }
       ],
       "omissions": [
@@ -3204,7 +3204,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "e1830695d75b741c6b01a3443b2d10d0ab589167a3214095afddd7347d72c148"
+          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -3214,7 +3214,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware(",
-          "sha256": "04e744f6b910c0d5f9e2e0928985637dd8e5a2872bcd66b255cc58050b7f9fb4"
+          "sha256": "3d57c9f57c6d76103f679cd70f410b8f5dd32db0915aa11dc5719b7bb5b2fe9b"
         },
         {
           "path": "tools/update-firmware.ps1",
@@ -3273,7 +3273,7 @@
         {
           "path": "tests/update_progress_test.cpp",
           "anchor": "Concurrent reader never observes",
-          "sha256": "62aecbc798946936ed78c60869ad34e9b9dc703e0c7ceb96b8241c8b8aea5a84"
+          "sha256": "7e5badfe3e170d3070d7612509f6429cdfc4f69e4e279921c946aeb77919dbab"
         },
         {
           "path": "tests/front_panel_test.cpp",
@@ -3283,7 +3283,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "for(const scenario of",
-          "sha256": "a08fcbad1da17475eba65005c8625dd067f25abb478f2dfdb068b82f1eff98cb"
+          "sha256": "7ff8056fd1269f616676d5c46b32ee56ed750b43954172207f21baa03b538f9c"
         },
         {
           "path": "tools/test-update.ps1",
@@ -3696,7 +3696,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "e1830695d75b741c6b01a3443b2d10d0ab589167a3214095afddd7347d72c148"
+          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -3746,7 +3746,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "e1830695d75b741c6b01a3443b2d10d0ab589167a3214095afddd7347d72c148"
+          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
         }
       ],
       "omissions": [
@@ -3793,13 +3793,13 @@
           "sha256": "89ce1cff79adbdbe98f44beac5aea8cc30bf72187012db6720a4c42f4be5cf73"
         },
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0","anchor":"Message *items_=nullptr;"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"e1830695d75b741c6b01a3443b2d10d0ab589167a3214095afddd7347d72c148","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
         {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"e87ed119fa144aad18dc999a4f1df8460f3f83a3ede985811b57bdb588cb2d96","anchor":"internal_heap_largest_block_bytes"},
-        {"path":"tools/update-firmware.mjs","sha256":"04e744f6b910c0d5f9e2e0928985637dd8e5a2872bcd66b255cc58050b7f9fb4","anchor":"export function checkWebSocket("},
+        {"path":"tools/update-firmware.mjs","sha256":"3d57c9f57c6d76103f679cd70f410b8f5dd32db0915aa11dc5719b7bb5b2fe9b","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "e1830695d75b741c6b01a3443b2d10d0ab589167a3214095afddd7347d72c148"
+          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -3832,8 +3832,8 @@
       "proof": [
         {"path":"tests/led_scheduler_test.cpp","sha256":"b0d695eb6ce287be4944d42c81d719f170283f66ae7d448594d592835f2a4a04","anchor":"S3 queue must not retain internal bulk storage"},
         {"path":"tests/ble_storage_stubs/esp_heap_caps.h","sha256":"f6ff5f7843125cd7e780df39fd9d31006af9ef23070641ec580288235750365c","anchor":"assert(capabilities==(MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT))"},
-        {"path":"tests/update_tool_test.mjs","sha256":"a08fcbad1da17475eba65005c8625dd067f25abb478f2dfdb068b82f1eff98cb","anchor":"Exactly one read-only request, no replay"},
-        {"path":"tests/update_tool_test.mjs","sha256":"a08fcbad1da17475eba65005c8625dd067f25abb478f2dfdb068b82f1eff98cb","anchor":"Partial events never satisfy readiness or trigger request replay"},
+        {"path":"tests/update_tool_test.mjs","sha256":"7ff8056fd1269f616676d5c46b32ee56ed750b43954172207f21baa03b538f9c","anchor":"Exactly one read-only request, no replay"},
+        {"path":"tests/update_tool_test.mjs","sha256":"7ff8056fd1269f616676d5c46b32ee56ed750b43954172207f21baa03b538f9c","anchor":"Partial events never satisfy readiness or trigger request replay"},
         {
           "path": "tests/async_http_test.cpp",
           "anchor": "Reproduce installed SDK3.12.1",
@@ -5521,7 +5521,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "e1830695d75b741c6b01a3443b2d10d0ab589167a3214095afddd7347d72c148",
+      "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5",
       "anchor": "bool authenticate()"
     },
     {
@@ -10170,7 +10170,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "e1830695d75b741c6b01a3443b2d10d0ab589167a3214095afddd7347d72c148"
+          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
         }
       ],
       "proof": [
@@ -10237,7 +10237,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "e1830695d75b741c6b01a3443b2d10d0ab589167a3214095afddd7347d72c148"
+          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
         }
       ],
       "proof": [
@@ -10304,7 +10304,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "e1830695d75b741c6b01a3443b2d10d0ab589167a3214095afddd7347d72c148"
+          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
         }
       ],
       "proof": [
@@ -10356,7 +10356,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "e1830695d75b741c6b01a3443b2d10d0ab589167a3214095afddd7347d72c148"
+          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
         }
       ],
       "proof": [
@@ -11642,7 +11642,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "e1830695d75b741c6b01a3443b2d10d0ab589167a3214095afddd7347d72c148",
+          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -12367,7 +12367,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "e1830695d75b741c6b01a3443b2d10d0ab589167a3214095afddd7347d72c148",
+          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -12518,7 +12518,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "e1830695d75b741c6b01a3443b2d10d0ab589167a3214095afddd7347d72c148",
+          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {

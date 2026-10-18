@@ -31,6 +31,11 @@ int main() {
   p.manual(scheduled,sizeof(scheduled),0xfffffff0);assert(p.manualActive(0x100));assert(!p.manualActive(0x800));
   Presenter rollover;rollover.post(Cell,"C003",3,0xfffffff0);shown(rollover,0x100,"C003");shown(rollover,0x800,"C001");
   Presenter overload;
+  Presenter longNotice;
+  longNotice.post(Cell,"C001 WHITE FADE",1,0);
+  assert(longNotice.pop(event));
+  assert(event.lifetime==450U+(strlen(event.text)+1U)*180U);
+  encode(event,wire);assert(uint16_t(wire[11]|wire[12]<<8)==event.lifetime);
   for(unsigned i=0;i<40;++i)overload.post(Cell,"C001",i,i);
   assert(overload.dropped()==24&&overload.historyCount()==8);
   assert(overload.history(0).id==33&&overload.history(7).id==40);

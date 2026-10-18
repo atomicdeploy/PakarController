@@ -34,6 +34,11 @@ class Presenter {
     event.priority=priority;event.lifetime=lifetime;event.value=value;
     if(text)for(unsigned i=0;i<32 && text[i];++i)
       event.text[i]=text[i]>=32&&text[i]<=126?text[i]:'?';
+    // Advertise the actual one-pass duration to BOTH clients/transports, not
+    // a two-second timeout while the physical marquee is still running.
+    const auto length=strlen(event.text);
+    const uint16_t scroll=length>4?450U+(length+1U)*180U:0;
+    if(event.lifetime && scroll>event.lifetime)event.lifetime=scroll;
     // The display coalesces, but clients retain distinct event IDs. A bounded
     // overload discards oldest telemetry, never replays commands or blocks IO.
     if(count_==capacity){head_=(head_+1)%capacity;--count_;++dropped_;}

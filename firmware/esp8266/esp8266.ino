@@ -1923,7 +1923,7 @@ String commandReply(const String &message) {
     const String command=PakarCommand::stringValue(object,"command");
     reply["request_id"]=id;
     const bool supported=command=="cells"||command=="cell"||command=="effect"||
-        command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic";
+        command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic"||command=="panel-notice";
     if(PakarCommand::stringValue(object,"board_id")!=pcBoardId ||
        PakarCommand::stringValue(object,"boot_id")!=pcBootId || !webAccess.peerFenceReady()) {
       reply["error"]="peer_changed";

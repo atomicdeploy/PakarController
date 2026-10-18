@@ -1,5 +1,47 @@
 # Front-panel reuse and acceptance
 
+## Current semantic presentation
+
+Version0.2.7 / clientbuild14 supersedes the historical checkpoint below.
+Current donor comparison uses b0111ae0 and its1379-line FrontPanelRuntime fragment;
+exact source/target/test hashes are in file-comparison-evidence.json.
+
+| Context | Display and lifetime |
+|---|---|
+| Cell selection | C001..C080 resting selected logical cell; no brand-logo filler |
+| Physical pixel diagnostic | P001..P480 stays until another LED operation supersedes diagnostics |
+| Pattern / output | rAIn, FIrE, CHAS or OFF remain the resting context |
+| First wins | rEAd, then U001..U009 (seven-segment W approximation) |
+| Action / mode / network / scan | Normally2s; long text scrolls once through a terminal blank, with the actual extended duration in WS/USB metadata |
+| Connectivity warning | Slow500ms on/500ms off, then return to resting context |
+| Failure / completion | Double-fast100ms on/100off/100on/700off; failure6s, completion2s |
+| Update | Actual P000..P100 while progress is known, UPdt otherwise; no synthetic percentage or unverified completion |
+| ESP settings menu | Contextual labels/values including APCL, not unexplained both; abandoned physical menu closes after15s, offers cannot renew it |
+
+Programming remains highest priority, then explicit capture. An individually
+acknowledged maintenance-panel option permits finite update messages over menus.
+Ordinary notices do not steal a manual message/capture/menu. Lower-priority
+events remain in the client stream even when not selected for physical display.
+No notice writes flash/EEPROM or triggers a buzzer. The ESP owns bounded policy;
+AVR continues the confirmed A4/A5 TM1637 transport and raw-segment observation.
+
+GET `/api/panel` returns requested text, bounded event history/drops and separate
+fresh AVR masks/ACK/session. WS `panel-event` and USB opcode0xB8 share kind, ID,
+uptime, value, actual lifetime, blink and full text. Their hardware_confirmed
+is false; only AVR observation is physical bus readback, not optical acceptance.
+Native and Flutter retain separate owner-bound semantic and actual mirror state.
+
+The common receipted WS/HTTP command supports `panel-notice` with printable ASCII
+text<=32, optional blink steady/slow/double-fast and duration_ms100..10000.
+Use the same required board_id/boot_id/request_id/expires_at_ms envelope as other
+commands. A long one-pass message extends its advertised lifetime enough to
+finish; an accepted request is not an AVR ACK or a physical-display assertion.
+
+Focused verification: `tools/test-panel.ps1`, `tools/test-display.ps1`,
+`tools/test-update.ps1`, native panel_event/peripheral_events and Flutter
+panel_event/mirroring_transport fixtures. Actual delivery/readback evidence is
+recorded in the commissioning checkpoint; fixture success is not human approval.
+
 Source comparison: canonical PCController commit
 `20c6115bb462fe5111b66cd7c21f7328a1f78892`. This is a focused front-panel
 comparison, not a claim that every PCController subsystem has been imported.
