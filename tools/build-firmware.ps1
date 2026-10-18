@@ -151,7 +151,7 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
                 [IO.File]::WriteAllText($ledProfile.Path, $ledProfile.Content, [Text.UTF8Encoding]::new($false))
             }
         }
-        Write-PakarStep "Firmware $board · $LinkMode · warm cache; no automatic flash"
+        Write-PakarStep "Firmware $board · $LinkMode · reusable cache (CLI may invalidate source/options); no automatic flash"
         Invoke-PakarNative -WorkingDirectory $projectRoot -FilePath $cli -Arguments $arguments
     } finally {
         if ($ledProfileLease) { $ledProfileLease.Dispose() }

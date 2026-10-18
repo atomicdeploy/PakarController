@@ -47,6 +47,28 @@ Historical blocked cleanup notes below are preserved as history, not current sta
 
 ## Measured cause
 
+### Arduino whole-cache invalidation on a new sketch helper
+
+An S3 delivery showed a second, distinct cause of writes: CLI1.5.1 records the
+entire sketch AdditionalFiles list in build.options.json and wipes/recreates the
+build path when that map changes. Adding BleStorage.h changed38 entries to39;
+all other properties (production FQBN/compiler flags/paths) matched. Actual cache
+creation and new Wi-Fi/BLE object timestamps confirmed genuine recompilation,
+not merely the seven-minute dependency scan. No explicit clean or SDK change was
+requested. The wrapper now describes a reusable cache, not an assured warm hit.
+
+Preserve the run and subsequent same-inventory/flags cache. Do not falsify options,
+restore unverified deleted objects, or use the hidden discovery-skip flag; that
+flag does not bypass this invalidation. A stable shared-library source layout is
+an open follow-up in issue#9, not an implemented selective-cache restore or a new
+parallel cache. No extra build was run merely to measure a no-op.
+
+Exact reviewed CLI source:
+[stored file inventory](https://github.com/arduino/arduino-cli/blob/01f3d4f2b/internal/arduino/builder/build_options_manager.go#L72-L81),
+[comparison and wipe](https://github.com/arduino/arduino-cli/blob/01f3d4f2b/internal/arduino/builder/build_options_manager.go#L106-L170).
+
+### Native debug artifacts (historical measurements)
+
 The Pakar canonical Cargo target occupied 13.49 GiB: debug/test 10.408 GiB
 (deps 7.847, incremental 1.947, build helpers 0.613), release 3.081 GiB.
 Six retained hashed Pakar test PDBs alone were approximately 260 MiB each.
