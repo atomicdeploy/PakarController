@@ -246,11 +246,15 @@ bool NetworkConfigStore::configure(const char *hostname,
   // ASA0002E WiFi_Setup applies its persisted identity BEFORE enabling Wi-Fi.
   // Arduino-ESP32 mode() copies Network's default into the new STA netif.
   if (!WiFi.setHostname(hostname)) { error_ = F("Cannot set network hostname"); return false; }
+  // Set the SDK's retained policy before STA starts, and reapply below once
+  // started: mode changes/reconnects must not restore implicit modem sleep.
+  WiFi.setSleep(PAKAR_S3_WIFI_MODEM_SLEEP != 0);
 #endif
   if (!WiFi.mode(apEnabled ? (stationEnabled() ? WIFI_AP_STA : WIFI_AP) : WIFI_STA)) {
     error_ = F("Cannot start requested Wi-Fi mode"); return false;
   }
 #if defined(ESP32)
+  const bool sleepPolicyApplied = WiFi.setSleep(PAKAR_S3_WIFI_MODEM_SLEEP != 0);
   // Network's global buffer is only 32 bytes in SDK 3.3.12. Apply the full
   // validated DNS label to each netif before addressing/association as well.
   if ((stationEnabled() && (!WiFi.STA.setHostname(hostname) ||
@@ -281,6 +285,9 @@ bool NetworkConfigStore::configure(const char *hostname,
 #endif
   }
   if (apEnabled && !ap) error_ = F("access point startup failed");
+#if defined(ESP32)
+  else if (!sleepPolicyApplied) error_ = F("Wi-Fi latency policy was not applied");
+#endif
   else error_ = String();
   // Return AP availability for existing callers; STA-only is not an AP startup.
   return ap;

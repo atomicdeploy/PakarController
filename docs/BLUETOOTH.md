@@ -51,7 +51,30 @@ time, and consume the existing request receipt before shared command dispatch.
 `GET /api/ble` reports the exact supported routes and limits. `POST /api/ble`
 with `enabled=true|false` persists the setting through the existing HTTP peer
 fences or the selected BLE session. Disable replies have a finite completion
-window before link teardown. `PAKAR_S3_BLE_ENABLED=0` is the build-time exclusion.
+window before link teardown. Missing or damaged settings default to Off; BLE
+does not automatically start on a new/reinitialized filesystem.
+
+Enabling an unstarted stack at runtime saves the request and reports
+`reboot_required=true`; only boot initialization may enter the bundled SDK.
+Disabling revokes owners/stops advertising within the bounded reply window, but
+does not release the SDK's internal pools/tasks. `started` and
+`startup_attempted` remain truthful, and `reboot_required` remains true until a
+boot with BLE Off actually omits initialization. A pending reply/configuration
+ACK is not evidence that heap was recovered or the radio is operational.
+
+`PAKAR_S3_BLE_ENABLED=0` is the build-time exclusion. It preserves the saved
+enabled request rather than silently resetting it: `configured=false` and
+`build_required=true` distinguish that case from a reboot-only change.
+`requested_enabled` retains the saved intent while effective `enabled` is
+false. New enable requests are rejected as unavailable in that build; Off can
+still be persisted. A later BLE-capable build can read the retained setting.
+
+The installed SDK's boot-time `BLEDevice::init` still has an unbounded host-sync
+wait. This change prevents entering that wait from a runtime control action; it
+does not claim that boot initialization, USB recovery, or simultaneous BLE,
+Wi-Fi/TLS and OTA are production-safe. Keep this instance BLE Off until the
+measured coexistence/heap gate in issue #20 is met. Synchronous cloud connects
+can still delay the shared loop; a separate cloud-owner fix remains pending.
 
 ## Supported operations and boundaries
 

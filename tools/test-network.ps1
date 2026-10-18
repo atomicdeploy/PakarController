@@ -17,6 +17,10 @@ foreach($taskPlatform in @('-DESP8266','-DESP32')) {
   & $taskOutput
   if($LASTEXITCODE){throw 'Network contract assertions failed'}
 }
+& g++ -DESP32 -DPAKAR_S3_WIFI_MODEM_SLEEP=1 @taskArguments
+if($LASTEXITCODE){throw 'Opt-in modem-sleep contract compilation failed'}
+& $taskOutput
+if($LASTEXITCODE){throw 'Opt-in modem-sleep contract assertions failed'}
 $taskDiscovery=Join-Path $taskRoot 'build/native/discovery_mdns_test.exe'
 & g++ -std=c++17 -Wall -Wextra -Werror (Join-Path $taskRoot 'tests/discovery_mdns_test.cpp') -o $taskDiscovery
 if($LASTEXITCODE){throw 'mDNS registration fixture compilation failed'}

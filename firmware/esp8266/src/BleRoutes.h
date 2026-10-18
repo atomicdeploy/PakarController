@@ -169,7 +169,10 @@ bool write(const String &path,JsonObjectConst form,String &body,int &status) {
 
 String bleStatusJson() {
   JsonDocument d;d["configured"]=static_cast<bool>(PAKAR_S3_BLE_ENABLED);d["enabled"]=bleService.enabled();
+  d["requested_enabled"]=bleService.requestedEnabled();
   d["started"]=bleService.started();d["connected"]=bleService.connected();d["apply_pending"]=bleService.applyPending();
+  d["reboot_required"]=bleService.rebootRequired();d["build_required"]=bleService.buildRequired();
+  d["startup_attempted"]=bleService.startupAttempted();
   d["service_uuid"]=PakarS3::BleService::serviceUuid;d["rx_uuid"]=PakarS3::BleService::rxUuid;
   d["tx_uuid"]=PakarS3::BleService::txUuid;d["info_uuid"]=PakarS3::BleService::infoUuid;
   d["auth_required"]=!accessConfig.ready()||accessConfig.enabled();d["credentials_over_ble"]=false;

@@ -1,4 +1,5 @@
 #include "../firmware/esp32s3/src/BleStorage.h"
+#include "../firmware/esp32s3/src/BleService.h"
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -6,6 +7,47 @@
 using namespace PakarS3;
 using namespace BoardCore::BleWire;
 int main() {
+  {
+    BleLifecyclePolicy missing;
+    assert(missing.restore(nullptr,0,false));
+    assert(!missing.requested()&&!missing.mayStartAtBoot()&&!missing.rebootRequired(false));
+    // Runtime enable is a persisted request, not permission to start the SDK
+    // from service(). The subsequent boot restores that exact request.
+    missing.request(true);
+    assert(missing.requested()&&missing.rebootRequired(false)&&!missing.attempted());
+    uint8_t record[4];BleLifecyclePolicy::encode(missing.requested(),record);
+    BleLifecyclePolicy boot;
+    assert(boot.restore(record,sizeof(record),true)&&boot.mayStartAtBoot());
+    boot.startupAttempted();
+    assert(!boot.mayStartAtBoot()&&boot.attempted()); // No second initialization attempt.
+    assert(!boot.rebootRequired(true)&&boot.rebootRequired(false));
+    boot.request(false);
+    assert(!boot.requested()&&boot.rebootRequired(true)&&boot.rebootRequired(false));
+    BleLifecyclePolicy::encode(false,record);
+    BleLifecyclePolicy offBoot;
+    assert(offBoot.restore(record,sizeof(record),true));
+    assert(!offBoot.requested()&&!offBoot.mayStartAtBoot()&&!offBoot.rebootRequired(false));
+    // A build exclusion never erases a saved preference or implies that just
+    // rebooting the unavailable build will magically provide the BLE feature.
+    BleLifecyclePolicy::encode(true,record);BleLifecyclePolicy excluded(false);
+    assert(excluded.restore(record,sizeof(record),true));
+    assert(excluded.requested()&&!excluded.available()&&excluded.buildRequired());
+    assert(!excluded.canRequest(true)&&excluded.canRequest(false));
+    assert(excluded.requested()); // Rejected enable never clears a saved request.
+    assert(!excluded.mayStartAtBoot()&&!excluded.rebootRequired(false));
+    BleLifecyclePolicy::encode(excluded.requested(),record);
+    BleLifecyclePolicy future;
+    assert(future.restore(record,sizeof(record),true)&&future.mayStartAtBoot());
+    excluded.request(false);assert(!excluded.buildRequired()&&!excluded.requested());
+    // Corrupt, truncated and absent records all fail closed; malformed bytes
+    // must not retain an earlier true value in the policy.
+    record[3]^=1;
+    assert(!future.restore(record,sizeof(record),true)&&!future.requested());
+    assert(!future.restore(record,3,true)&&!future.requested());
+    assert(!future.restore(nullptr,4,true)&&!future.requested());
+    BleLifecyclePolicy::encode(true,record);record[2]=2;
+    assert(!future.restore(record,sizeof(record),true)&&!future.requested());
+  }
   static_assert(sizeof(BleBulkOwner)==sizeof(void*),"Do not retain an internal bulk-buffer fallback");
   static_assert(sizeof(BleBulkStorage)>=8*512+kRequest+kPacket,"All BLE application buffers must move together");
   using namespace PakarPsramFixture;
@@ -51,5 +93,5 @@ int main() {
     assert(storage->ingress[7].bytes[511]==0xa5&&allocations==2&&releases==0);
   }
   assert(releases==1&&owned==nullptr);
-  puts("BLE application bulk storage: explicit PSRAM-only allocation, failure without DRAM fallback, stable lifetime, full8192-byte minimum-MTU framing and exact fragment retry fixtures passed; not heap/RF/OTA acceptance.");
+  puts("BLE boot policy and application storage: Wi-Fi-first missing/corrupt configuration, persisted enable/reboot and build-exclusion state, explicit PSRAM-only allocation, stable lifetime, full8192-byte minimum-MTU framing and exact retry fixtures passed; not SDK-init timeout/USB/heap/RF/OTA acceptance.");
 }

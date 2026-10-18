@@ -5983,3 +5983,41 @@ Actual whole8192-byte minimum-MTU framing, identical fragment retry, allocation
 failure/lifetime and cross-thread queue fixtures passed. The ESP8266 inline queue
 is unchanged. SDK build, measured live headroom and OTA acceptance of this memory
 fix must be recorded separately before claiming a Wi-Fi-only handoff.
+
+## Web-service incident and recovery policy
+
+Fresh ASUS observation found the same79db5e boot and PSRAM image still running,
+BLE enabled:false/started:false, about62KB internal free/largest31KB, but one
+HTTP connect timeout and variable receive latency. Later root Web/auth/status
+responses completed; do not label this incident Bluetooth-caused or a reboot fix.
+The existing guarded interactive native observer verified actual COM22 USB
+recovery and return to Wi-Fi/WebSocket with80 mappings/white cells and zero active
+incidents. Its inherited PT1M task deadline terminated the60-second observer;
+preserve the partial progress and independent final guarded receipt, not a
+fictional completed soak. No scene, AVR, buzzer or settings rewrite was performed.
+
+Consulted the actual PU850-ESP WiFi_Setup at unchanged75d5492a hash, the installed
+Arduino-ESP32 WiFiGeneric.cpp setSleep/getSleep and STA.cpp startup hook, plus
+Espressif's power-save latency documentation. S3 now explicitly requests awake
+Wi-Fi before/after startup, with opt-in PAKAR_S3_WIFI_MODEM_SLEEP and actual
+esp_wifi_get_ps status readback. This is an SDK adaptation of donor wake ownership,
+not a claim that power saving alone caused every observed network failure.
+ESP8266 behavior and persisted network layout are unchanged. Default/opt-in and
+failed-application/AP-preservation fixtures passed.
+
+BLE's real lifecycle owner now defaults missing/corrupt records Off, distinguishes
+saved request from running radio, never enters SDK initialization from a runtime
+setting, and reports reboot/build requirements and retained SDK resources.
+The original reply deadline still retires owners, including a late GAP connection.
+The build wrapper exposes -S3Bluetooth runtime|disabled; disabled preserves USB
+flags and rejects new enable requests. Existing pure lifecycle/storage fixtures,
+source guards and canonical build-plan tests passed; SDK deployment/HTTP and
+post-update native acceptance are separate receipts, not implied by those tests.
+
+Source audit also found synchronous PubSubClient TCP/CONNACK and outbound
+WebSocketsClient connection paths still run on the main loop. An explicit
+hostLink progress callback around writes does not run inside these SDK waits.
+The correct single-owner cloud-worker/immutable-queue redesign remains open;
+do not claim continuously serviced application USB or BLE/TLS/OTA coexistence
+from this bounded recovery slice. The hardware USB bootloader recovery path is
+independent, but no USB flash was required or performed for this incident yet.

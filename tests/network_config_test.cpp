@@ -70,6 +70,7 @@ int main() {
   assert(loaded.setAccessPointEnabled(true));
   assert(loaded.configure("ledboard","fixture-ap-passphrase"));assert(WiFi.modeValue==WIFI_AP_STA);
 #if defined(ESP32)
+  assert(WiFi.sleepCalls>=2 && WiFi.sleepEnabled==(PAKAR_S3_WIFI_MODEM_SLEEP!=0));
   assert(WiFi.nameAtStart=="ledboard" && WiFi.STA.name=="ledboard" && WiFi.AP.name=="ledboard");
   const char *longName="a-long-configured-hostname-with-no-random-suffix";
   assert(loaded.configure(longName,"fixture-ap-passphrase"));
@@ -79,6 +80,11 @@ int main() {
   assert(WiFi.modeValue==WIFI_OFF);WiFi.STA.fail=false;
   assert(loaded.configure("renamed-board","fixture-ap-passphrase"));
   assert(WiFi.STA.name=="renamed-board" && WiFi.AP.name=="renamed-board");
+  WiFi.sleepResult=false;
+  assert(loaded.configure("ledboard","fixture-ap-passphrase"));
+  assert(String(loaded.lastError())=="Wi-Fi latency policy was not applied");
+  assert(WiFi.modeValue==WIFI_AP_STA); // A latency-policy failure must not kill recovery AP.
+  WiFi.sleepResult=true;
 #endif
   assert(loaded.setStation("","",false));
   assert(loaded.configure("ledboard","fixture-ap-passphrase"));assert(WiFi.modeValue==WIFI_AP);

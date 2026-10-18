@@ -1,4 +1,49 @@
 #pragma once
+#include <stddef.h>
+#include <stdint.h>
+
+#ifndef PAKAR_S3_BLE_ENABLED
+#define PAKAR_S3_BLE_ENABLED 1
+#endif
+#if PAKAR_S3_BLE_ENABLED != 0 && PAKAR_S3_BLE_ENABLED != 1
+#error "PAKAR_S3_BLE_ENABLED must be 0 or 1"
+#endif
+
+namespace PakarS3 {
+// Pure boot policy: a saved request is not proof that the SDK/radio is running.
+// Keep it outside the ESP32 includes so host fixtures exercise this real owner.
+class BleLifecyclePolicy {
+ public:
+  explicit constexpr BleLifecyclePolicy(bool available=PAKAR_S3_BLE_ENABLED):available_(available) {}
+  bool restore(const uint8_t *bytes,size_t length,bool exists) {
+    requested_=false;
+    if(!exists)return true; // Missing settings are deliberately Wi-Fi-first.
+    if(!bytes||length!=4||bytes[0]!='B'||bytes[1]!='L'||bytes[2]>1||
+        bytes[3]!=static_cast<uint8_t>(0xa5^bytes[2]))return false;
+    requested_=bytes[2]!=0;return true;
+  }
+  static void encode(bool enabled,uint8_t *bytes) {
+    bytes[0]='B';bytes[1]='L';bytes[2]=static_cast<uint8_t>(enabled);
+    bytes[3]=static_cast<uint8_t>(0xa5^bytes[2]);
+  }
+  void request(bool enabled) {requested_=enabled;}
+  bool canRequest(bool enabled) const {return !enabled||available_;}
+  bool requested() const {return requested_;}
+  bool available() const {return available_;}
+  bool mayStartAtBoot() const {return available_&&requested_&&!attempted_;}
+  void startupAttempted() {attempted_=true;}
+  bool attempted() const {return attempted_;}
+  bool buildRequired() const {return requested_&&!available_;}
+  bool rebootRequired(bool started) const {
+    // Disabling advertising does not release SDK pools/tasks. Do not claim
+    // memory recovery until a subsequent boot actually omits initialization.
+    return available_&&(requested_?!started:attempted_);
+  }
+ private:
+  bool available_,requested_=false,attempted_=false;
+};
+} // namespace PakarS3
+
 #if defined(ARDUINO_ARCH_ESP32)
 #include <Arduino.h>
 #include <ArduinoJson.h>
@@ -16,13 +61,6 @@
 #include <mutex>
 #include <new>
 
-#ifndef PAKAR_S3_BLE_ENABLED
-#define PAKAR_S3_BLE_ENABLED 1
-#endif
-#if PAKAR_S3_BLE_ENABLED != 0 && PAKAR_S3_BLE_ENABLED != 1
-#error "PAKAR_S3_BLE_ENABLED must be 0 or 1"
-#endif
-
 namespace PakarS3 {
 class BleService {
  public:
@@ -32,16 +70,19 @@ class BleService {
   static constexpr const char *infoUuid="a4b68d13-5c3f-4c5a-9f12-50616b617243";
   using Handler=String (*)(const String &,uint32_t);
   void begin(fs::FS &fs,bool mounted,const String &name,Handler handler) {
-    fs_=&fs;mounted_=mounted;handler_=handler;desired_=mounted && PAKAR_S3_BLE_ENABLED;
+    fs_=&fs;mounted_=mounted;handler_=handler;lifecycle_.restore(nullptr,0,false);
     if(mounted && fs.exists(configPath)) {
       File file=fs.open(configPath,"r");uint8_t bytes[4]{};
-      const bool valid=file && file.size()==4 && file.read(bytes,4)==4 &&
-        bytes[0]=='B' && bytes[1]=='L' && bytes[2]<=1 && bytes[3]==static_cast<uint8_t>(0xa5^bytes[2]);
+      const bool complete=file && file.size()==4 && file.read(bytes,4)==4;
       if(file)file.close();
-      if(valid)desired_=bytes[2] && PAKAR_S3_BLE_ENABLED;
-      else {desired_=false;error_="Invalid BLE configuration; disabled";}
+      if(!lifecycle_.restore(complete?bytes:nullptr,complete?sizeof(bytes):0,true))
+        error_="Invalid BLE configuration; disabled";
     }
-    name_=name;if(desired_)start();
+    name_=name;
+    if(lifecycle_.buildRequired())error_="BLE is excluded from this build; saved preference retained";
+    // SDK init waits for host synchronization. It is permitted only here at
+    // boot, never from a runtime settings action/main-loop service pass.
+    if(lifecycle_.mayStartAtBoot())start();
   }
   // Authentication is deliberately not transported over an unencrypted GATT
   // channel. An enabled/damaged AccessConfig closes admission before ingress;
@@ -51,15 +92,17 @@ class BleService {
     if(before&&!allowed)fence(true);
   }
   bool configure(bool enabled,String &error) {
-    if(!mounted_||!fs_||!PAKAR_S3_BLE_ENABLED){error="BLE configuration unavailable";return false;}
-    const uint8_t bytes[]={ 'B','L',static_cast<uint8_t>(enabled),static_cast<uint8_t>(0xa5^static_cast<uint8_t>(enabled)) };
+    if(!mounted_||!fs_){error="BLE configuration unavailable";return false;}
+    if(!lifecycle_.canRequest(enabled)){error="BLE is excluded from this build; cannot enable";return false;}
+    uint8_t bytes[4];BleLifecyclePolicy::encode(enabled,bytes);
     File pending=fs_->open(pendingPath,"w");
     bool ok=pending && pending.write(bytes,sizeof(bytes))==sizeof(bytes);if(pending){pending.flush();pending.close();}
     uint8_t readback[4]{};File check=fs_->open(pendingPath,"r");
     ok=ok && check && check.size()==sizeof(bytes) && check.read(readback,sizeof(readback))==sizeof(readback) && !memcmp(bytes,readback,sizeof(bytes));
     if(check)check.close();
     if(!ok || !fs_->rename(pendingPath,configPath)){error="BLE configuration verification failed";return false;}
-    desired_=enabled;applyAt_=millis()+250U;applyPending_=true;error_=String();return true;
+    lifecycle_.request(enabled);applyAt_=millis()+250U;applyPending_=true;
+    error_=lifecycle_.buildRequired()?String("BLE is excluded from this build; saved preference retained"):String();return true;
   }
   void setInfo(const String &info) {
     // A readable GATT attribute is at most512bytes, regardless of framed limit.
@@ -73,11 +116,15 @@ class BleService {
   bool connected() const { return owner_.load(std::memory_order_acquire)!=noOwner; }
   bool started() const { return started_; }
   uint16_t mtu() const {const uint16_t peer=owner_.load();return server_&&peer!=noOwner?server_->getPeerMTU(peer):23;}
-  bool enabled() const { return desired_; }
+  bool enabled() const { return lifecycle_.available()&&lifecycle_.requested(); }
+  bool requestedEnabled() const {return lifecycle_.requested();}
+  bool rebootRequired() const {return lifecycle_.rebootRequired(started_);}
+  bool buildRequired() const {return lifecycle_.buildRequired();}
+  bool startupAttempted() const {return lifecycle_.attempted();}
   bool applyPending() const { return applyPending_; }
   uint32_t epoch() const { return epoch_.load(std::memory_order_acquire); }
   bool owns(uint32_t epoch) const { return bulk_ && started_ && connected() && !retiring_.load(std::memory_order_acquire) &&
-    desired_ && epoch==this->epoch() && allowed_.load(std::memory_order_acquire); }
+    enabled() && epoch==this->epoch() && allowed_.load(std::memory_order_acquire); }
   const String &error() const { return error_; }
   uint32_t rejected() const { return rejected_.load(std::memory_order_relaxed); }
   uint32_t eventsLost() const { return eventsLost_; }
@@ -94,7 +141,7 @@ class BleService {
     ++eventCount_;return true;
   }
   bool canPush(uint32_t now) const {
-    return bulk_ && desired_ && started_ && connected() && !retiring_.load() && bootstrapped_ && allowed_.load(std::memory_order_acquire) &&
+    return bulk_ && enabled() && started_ && connected() && !retiring_.load() && bootstrapped_ && allowed_.load(std::memory_order_acquire) &&
       !maintenance_ && !eventCount_ && !bulk_->sender.busy() && !bulk_->receiver.ready() && static_cast<uint32_t>(now-lastPush_)>=2000U;
   }
   bool push(const String &body,uint32_t now) {
@@ -116,13 +163,20 @@ class BleService {
     if(applyPending_ && static_cast<int32_t>(now-applyAt_)>=0 &&
        (!sending || static_cast<uint32_t>(now-applyAt_)>=2500U)) {
       applyPending_=false;
-      if(!desired_) {fence(true);if(advertising_)advertising_->stop();}
-      else if(!started_)start();
-      else if(!connected())advertise();
+      if(!enabled()) {fence(true);if(advertising_)advertising_->stop();}
+      else if(started_&&!connected())advertise();
+      // A newly enabled but unstarted stack remains pending a reboot. Calling
+      // BLEDevice::init here could indefinitely block HTTP and USB recovery.
     }
     // Disabling keeps its bounded reply/fragment ACK path alive until complete
     // or the explicit2500ms teardown deadline; it cannot admit another action.
-    if((!desired_&&!applyPending_) || !started_ || !bulk_)return;
+    if(!enabled()&&!applyPending_) {
+      // A GAP connect already in flight when advertising stopped can arrive
+      // after teardown. Retire that late owner on the next loop pass as well.
+      if(connected()&&!retiring_.load(std::memory_order_acquire))fence(true);
+      return;
+    }
+    if(!started_ || !bulk_)return;
     if(restartAdvertising_.exchange(false,std::memory_order_acq_rel) && !connected() && !renamePending_)advertise();
     bulk_->receiver.expire(now);
     Ingress item;
@@ -277,7 +331,7 @@ class BleService {
   }
   bool hasRejectedPeer() const {for(const auto &slot:rejectPeers_)if(slot.load()!=noOwner)return true;return false;}
   void advertise() {
-    if(!advertising_||!desired_||connected())return;
+    if(!advertising_||!enabled()||connected())return;
     advertising_->stop();BLEAdvertisementData data,scan;
 #if defined(CONFIG_NIMBLE_ENABLED)
     ble_svc_gap_device_name_set(name_.c_str());
@@ -291,10 +345,11 @@ class BleService {
   }
   void start() {
 #if PAKAR_S3_BLE_ENABLED
-    if(started_)return;
+    if(started_||!lifecycle_.mayStartAtBoot())return;
     // App buffers must not compete with the SDK's internal-only BLE pools and
     // Wi-Fi/OTA heap. Allocate before creating any host task or callback owner.
     if(!bulk_.begin()){error_="BLE PSRAM storage unavailable; internal RAM retained for Wi-Fi/OTA";return;}
+    lifecycle_.startupAttempted();
     if(!BLEDevice::init(name_)){error_="BLE stack initialization failed";return;}
     if(BLEDevice::setMTU(247)!=ESP_OK)error_="Preferred BLE MTU unavailable; negotiated MTU remains authoritative";
     server_=BLEDevice::createServer();
@@ -331,7 +386,8 @@ class BleService {
   struct Event {String body;uint32_t at=0;};Event events_[32];
   uint8_t eventHead_=0,eventCount_=0;uint32_t eventsLost_=0;
   String name_,info_,response_,error_;uint32_t observedEpoch_=1,lastPush_=0,applyAt_=0,renameAt_=0;uint16_t nextMessage_=0;
-  bool desired_=false,mounted_=false,started_=false,maintenance_=false,bootstrapped_=false,applyPending_=false,renamePending_=false;
+  BleLifecyclePolicy lifecycle_;
+  bool mounted_=false,started_=false,maintenance_=false,bootstrapped_=false,applyPending_=false,renamePending_=false;
 };
 } // namespace PakarS3
 #endif

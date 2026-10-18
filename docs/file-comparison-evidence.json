@@ -40,17 +40,18 @@
     "Actual complete 65234-byte donor sketch read through EOF, not keyword-screened. WiFi_Setup, Settings_Read/Settings_Write, setNetFlags, hostname change and ConfirmSettings were compared to the integrated Pakar network/configuration owner. Persisted AP-only/STA-only/AP+STA, stable configured hostname without chip suffixes, station credentials, DHCP/static address/gateway/subnet/DNS and reconnect behavior map to NetworkConfigStore and NetworkPath; no second network service or PU business state is introduced.",
     "Actual donor startup/service ownership is adapted to the S3 checked mDNS/DNS-SD registration helper and existing SSDP/MNDP interface owners. Every required service/TXT registration is checked, partial initialization is retired before bounded retry, and failed registration is not reported ready. AP SSID is explicitly bounded to32 bytes while full DNS hostname remains unchanged; a failed STA configuration preserves genuinely started AP recovery.",
     "ESP settings are exposed through the same persisted network owner used by API/Web/native/mobile. The paired AVR front-panel adapter offers actual fresh mode/DHCP/connectivity/hostname preview and queues reconnect/scan; queries never replay stale snapshots or evict the previous mutation receipt. Scan admission is not misrepresented as completed SSID results.",
-    "Donor storage writes are adapted to checksum/exact private-layout validation, identical-write suppression, pending-file readback and rename. Invalid enabled-empty SSIDs fail closed to AP recovery; static profiles are retained while DHCP is selected. Accepted default-route and resolver changes are distinct, avoiding cloud-session teardown on DNS-only refreshes."
+    "Donor storage writes are adapted to checksum/exact private-layout validation, identical-write suppression, pending-file readback and rename. Invalid enabled-empty SSIDs fail closed to AP recovery; static profiles are retained while DHCP is selected. Accepted default-route and resolver changes are distinct, avoiding cloud-session teardown on DNS-only refreshes.",
+    "S3 latency policy adapts the actual donor WiFi_Setup wake/reconnect ownership to Arduino-ESP32 setSleep before and after interface startup: externally powered default explicitly disables modem sleep, with opt-in PAKAR_S3_WIFI_MODEM_SLEEP=1. Actual esp_wifi_get_ps readback is exposed separately from the requested policy; AP recovery is preserved even if setting latency policy fails. ESP8266 behavior and private persisted network layout are unchanged."
   ],
   "targets": [
-    {"path":"firmware/esp8266/src/NetworkConfig.cpp","sha256":"a7763012953dce3a5cefaee72b05f524bf7697db29bf3203e771991e01eb6d3d","anchor":"bool NetworkConfigStore::configure("},
+    {"path":"firmware/esp8266/src/NetworkConfig.cpp","sha256":"ca7a5b310f4ad58d329cdef66050c9f746056eafe100f870156dc0074d6648ec","anchor":"bool NetworkConfigStore::configure("},
     {"path":"firmware/esp8266/src/NetworkPath.h","sha256":"03854f708e454c2ba60b2d7cedd1b750a826df3418335bb065451979d12032f7","anchor":"inline bool service()"},
     {"path":"firmware/esp8266/src/EspFrontPanel.h","sha256":"373453bd3730a23b62740ebcbd672d9de15bffac40068bb2e4868b4344ef8e04","anchor":"Queries report the actual current connection/settings"},
     {"path":"firmware/esp32s3/src/Discovery.h","sha256":"ddd272f6906d24f37e88efacd9cf198e531a850b1ab537f1d8e2d7687c2cd298","anchor":"mdnsReady_ = startDiscoveryMdns("},
     {"path":"firmware/esp32s3/src/DiscoveryMdns.h","sha256":"8b456d394c7cd82bc4b77fec88d44887ef8c7e1ea454060bcb76b91e1daac1a0","anchor":"bool startDiscoveryMdns("}
   ],
   "proof": [
-    {"path":"tests/network_config_test.cpp","sha256":"a3f04a17c3f372b772e197fec2e224376796d8d2c532c53390b857720cfafe36","anchor":"AP remains genuinely available on STA apply failure"},
+    {"path":"tests/network_config_test.cpp","sha256":"b557ca652f70e7dcf0d98c541259dad4d37cdd37f8b1b54b4957c530b0b56a2f","anchor":"AP remains genuinely available on STA apply failure"},
     {"path":"tests/network_path_test.cpp","sha256":"e1e1b8c23498d6b67bc8334f4c8d4c73bf88d83f7373930d11f90d8318d8ec69","anchor":"state().routeChanges==fallbackRoutes"},
     {"path":"tests/esp_front_panel_test.cpp","sha256":"67c84199e9055e5186c7dcdcd8abf47fc6104f5d18115fbc2873afd7c0adac7a","anchor":"f=request(E::Scan);f.sequence=12;service.handle(f,110"},
     {"path":"tests/discovery_mdns_test.cpp","sha256":"52528e82b480078f521227fac46ec0b0905c128960d8566940969b100bd882fc","anchor":"for(unsigned at=1;at<=10;++at)"}
@@ -2030,7 +2031,7 @@
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "d1675645f30e59f69cc03545abc778cc79108506bb09b423d52c8b2dddb6c31b"
+          "sha256": "9ea55e8330e1bc0b18f0c4028f0ffedb42fbb71f61bff853b2bce55d227bfe75"
         }
       ],
       "omissions": [
@@ -3179,7 +3180,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "ddf72ae539f8e5860030116302e3435d972e17017647252da4aefcfd1c509dc2"
+          "sha256": "046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -3671,7 +3672,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "ddf72ae539f8e5860030116302e3435d972e17017647252da4aefcfd1c509dc2"
+          "sha256": "046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -3721,7 +3722,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "ddf72ae539f8e5860030116302e3435d972e17017647252da4aefcfd1c509dc2"
+          "sha256": "046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24"
         }
       ],
       "omissions": [
@@ -3767,13 +3768,13 @@
           "sha256": "22fde9b24ddc97453c105ad7f2d76070a26c74ac930b2205bdcb3f17b3edef51"
         },
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0","anchor":"Message *items_=nullptr;"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"ddf72ae539f8e5860030116302e3435d972e17017647252da4aefcfd1c509dc2","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
         {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"e87ed119fa144aad18dc999a4f1df8460f3f83a3ede985811b57bdb588cb2d96","anchor":"internal_heap_largest_block_bytes"},
         {"path":"tools/update-firmware.mjs","sha256":"04e744f6b910c0d5f9e2e0928985637dd8e5a2872bcd66b255cc58050b7f9fb4","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "ddf72ae539f8e5860030116302e3435d972e17017647252da4aefcfd1c509dc2"
+          "sha256": "046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -4021,7 +4022,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "d1675645f30e59f69cc03545abc778cc79108506bb09b423d52c8b2dddb6c31b",
+          "sha256": "9ea55e8330e1bc0b18f0c4028f0ffedb42fbb71f61bff853b2bce55d227bfe75",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -4072,7 +4073,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "d1675645f30e59f69cc03545abc778cc79108506bb09b423d52c8b2dddb6c31b",
+          "sha256": "9ea55e8330e1bc0b18f0c4028f0ffedb42fbb71f61bff853b2bce55d227bfe75",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -5459,7 +5460,8 @@
       "Bluetooth slice: fully reread canonical b0111ae0 Session source (SHA1311fdcde...), not the old ../repos copy. Adapted RequestWithPriority/acquireWrite/WithRequestWriteGuard, consumed single-inflight admission and synchronous close fencing to S3 main-loop GATT ingress and targeted replies. Existing CommandReceipts and shared business/configuration/update handlers remain authoritative; fragment ACK is not a command receipt.",
       "Memory-pressure review retains those exact ownership/wire rules while moving all eight BLE ingress slots and the unchanged whole Receiver/Sender into one PSRAM-only BleBulkStorage lifetime allocation before BLEDevice::init. Missing storage prevents BLE startup/admission, with no scarce-DRAM fallback. Fences/disable/reconnect reset session state but never free/replace storage underneath callbacks. Internal mutexes/atomics/callback owners, INFO bytes and SDK/LED timing-critical memory remain internal; pure BleWire protocol source is unchanged.",
       "Actual Arduino-ESP32 3.3.12 cores/esp32/esp32-hal-psram.c was read through EOF (original-byte SHA2562f47f8b635de8ffb64d160576a2705b063235fb9f54e01b98e8d2bf3f48352bd). Its explicit MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT allocation/no-internal-fallback boundary is used by the new Pakar owner. The Go donor does not implement S3 PSRAM or NimBLE allocation; this platform adaptation does not transplant or relabel serial buffers, and does not override the prebuilt SDK's internal-only NimBLE pool/host-stack settings.",
-    "Reread canonical Session source at SHA1311fdcde94b2ef8ed06db63ff874a255c135dc1969709e6f43ff4b5c5c8235b for the native mapping failure. Adapt its before/after admission and matched-response ownership principles: a current pinned mapping GET validates the response producer board/boot plus the unexpired, still-current scope, without an unrelated HTTP status preflight. Foreign or incomplete producer envelopes reject without fallback. An absent envelope is discarded before the original status -> mapping -> status legacy fences run; no stale mapping survives a changed board/boot. Six actual loopback HTTP fixtures passed via the canonical native gui_mapping filter. ASUS build12 runtime separately confirmed80 mappings with no active incidents on the selected current peer; that is not a long-soak, pixel RGB, or physical cell-order acceptance."
+    "Reread canonical Session source at SHA1311fdcde94b2ef8ed06db63ff874a255c135dc1969709e6f43ff4b5c5c8235b for the native mapping failure. Adapt its before/after admission and matched-response ownership principles: a current pinned mapping GET validates the response producer board/boot plus the unexpired, still-current scope, without an unrelated HTTP status preflight. Foreign or incomplete producer envelopes reject without fallback. An absent envelope is discarded before the original status -> mapping -> status legacy fences run; no stale mapping survives a changed board/boot. Six actual loopback HTTP fixtures passed via the canonical native gui_mapping filter. ASUS build12 runtime separately confirmed80 mappings with no active incidents on the selected current peer; that is not a long-soak, pixel RGB, or physical cell-order acceptance.",
+    "BLE lifecycle remains a scoped S3 SDK adaptation, not an unreviewed donor feature: missing/corrupt settings default Off; runtime enable persists intent without entering unbounded SDK initialization in the loop; disable retires late owners and honestly requires reboot to release retained SDK pools. Compile exclusion preserves loaded intent and rejects enabling unavailable hardware. Pure real-owner fixtures cover missing/corrupt records, reboot state, exclusion and request admission; no claim of SDK init timeout or BLE/TLS/OTA coexistence."
   ],
   "targets": [
     {
@@ -5494,7 +5496,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "ddf72ae539f8e5860030116302e3435d972e17017647252da4aefcfd1c509dc2",
+      "sha256": "046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24",
       "anchor": "bool authenticate()"
     },
     {
@@ -5555,13 +5557,13 @@
       {
         "path": "firmware/esp32s3/src/BleService.h",
         "anchor": "class BleService",
-        "sha256": "ffded9f005568c9e141269843a0f50a87d430a0f379919fcf286a4a1c8597ee5"
+        "sha256": "72aa625873277ec8798fffea22042888dd17ebfc7459181cd87301754cb7d36e"
       },
       {"path":"firmware/esp32s3/src/BleStorage.h","sha256":"1b0b11d0d1f7f398699629ccdbd32d11e3308aef5f738f5963fcfd1d176d81e8","anchor":"class BleBulkOwner"},
     {
       "path": "firmware/esp8266/src/BleRoutes.h",
       "anchor": "String bleRequest(",
-      "sha256": "c2be2306f72673a2521455b739907f3b66295f9a7ab026e9ff98a4ce2ad6d323"
+      "sha256": "6cb10713efd958f81b0e4f54e58dec8e80ae8ae57ac3f116e8e6129b184288ac"
     }
   ],
   "omissions": [
@@ -5740,9 +5742,9 @@
       {
         "path": "tests/ble_firmware_test.mjs",
         "anchor": "BLE firmware integration source guards",
-        "sha256": "8f728229c1eb1c547af4711290ca34333cc5e99e44d64956cf5c59d21b9823fc"
+        "sha256": "76d3a6d2a35ec9aec5bce1ab5efb1aeaf721ac85845494dfd5a05f9db3c54eaa"
       },
-      {"path":"tests/ble_storage_test.cpp","sha256":"01c777e04d0833437735ad95743388f9d625893c9bde385c725dd5e4d968237a","anchor":"Do not retain an internal bulk-buffer fallback"},
+      {"path":"tests/ble_storage_test.cpp","sha256":"22f4c0e4fc0846492ddaa6c04a01e113ace607d86e9edeac1d2c69b8ee46a349","anchor":"Do not retain an internal bulk-buffer fallback"},
       {"path":"tests/ble_storage_stubs/esp_heap_caps.h","sha256":"f6ff5f7843125cd7e780df39fd9d31006af9ef23070641ec580288235750365c","anchor":"assert(capabilities==(MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT))"}
   ]
 },
@@ -7607,7 +7609,7 @@
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "e76f7b0ff6cd0155bd8c00f3f243c9e680d9e6c0e8317c285bbabbe1302cf864",
+          "sha256": "177e74c9fc7d0f1a9d78ae4aa994344a3410c37bf43019db12b3afcff69d8d82",
           "anchor": "Actual donor serial test contract"
         },
         {
@@ -8677,7 +8679,7 @@
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "e76f7b0ff6cd0155bd8c00f3f243c9e680d9e6c0e8317c285bbabbe1302cf864",
+          "sha256": "177e74c9fc7d0f1a9d78ae4aa994344a3410c37bf43019db12b3afcff69d8d82",
           "anchor": "One canonical target"
         }
       ],
@@ -10143,7 +10145,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "ddf72ae539f8e5860030116302e3435d972e17017647252da4aefcfd1c509dc2"
+          "sha256": "046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24"
         }
       ],
       "proof": [
@@ -10210,7 +10212,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "ddf72ae539f8e5860030116302e3435d972e17017647252da4aefcfd1c509dc2"
+          "sha256": "046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24"
         }
       ],
       "proof": [
@@ -10277,7 +10279,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "ddf72ae539f8e5860030116302e3435d972e17017647252da4aefcfd1c509dc2"
+          "sha256": "046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24"
         }
       ],
       "proof": [
@@ -10329,7 +10331,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "ddf72ae539f8e5860030116302e3435d972e17017647252da4aefcfd1c509dc2"
+          "sha256": "046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24"
         }
       ],
       "proof": [
@@ -11615,7 +11617,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "ddf72ae539f8e5860030116302e3435d972e17017647252da4aefcfd1c509dc2",
+          "sha256": "046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -12340,12 +12342,12 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "ddf72ae539f8e5860030116302e3435d972e17017647252da4aefcfd1c509dc2",
+          "sha256": "046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "d1675645f30e59f69cc03545abc778cc79108506bb09b423d52c8b2dddb6c31b",
+          "sha256": "9ea55e8330e1bc0b18f0c4028f0ffedb42fbb71f61bff853b2bce55d227bfe75",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -12417,7 +12419,7 @@
         },
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "e76f7b0ff6cd0155bd8c00f3f243c9e680d9e6c0e8317c285bbabbe1302cf864",
+          "sha256": "177e74c9fc7d0f1a9d78ae4aa994344a3410c37bf43019db12b3afcff69d8d82",
           "anchor": "$taskStaticS3"
         },
         {
@@ -12491,12 +12493,12 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "ddf72ae539f8e5860030116302e3435d972e17017647252da4aefcfd1c509dc2",
+          "sha256": "046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "d1675645f30e59f69cc03545abc778cc79108506bb09b423d52c8b2dddb6c31b",
+          "sha256": "9ea55e8330e1bc0b18f0c4028f0ffedb42fbb71f61bff853b2bce55d227bfe75",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -12568,7 +12570,7 @@
         },
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "e76f7b0ff6cd0155bd8c00f3f243c9e680d9e6c0e8317c285bbabbe1302cf864",
+          "sha256": "177e74c9fc7d0f1a9d78ae4aa994344a3410c37bf43019db12b3afcff69d8d82",
           "anchor": "$taskStaticS3"
         },
         {

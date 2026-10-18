@@ -8,6 +8,7 @@ param(
     [ValidateSet(4, 8, 16, 32)] [int] $S3FlashMB = 4,
     [ValidateSet('disabled', 'enabled', 'opi')] [string] $S3Psram = 'disabled',
     [ValidateSet('static', 'rmt-dma')] [string] $S3LedBackend = 'static',
+    [ValidateSet('runtime', 'disabled')] [string] $S3Bluetooth = 'runtime',
     [ValidateSet(-1, 38, 48)] [int] $S3StatusRgbPin = -1,
     [switch] $InitializeFilesystem,
     [switch] $PauseAvrLink,
@@ -29,6 +30,7 @@ if ($PauseLedOutput -and $Target -ne 'esp32s3') { throw 'Quiet LED commissioning
 if ($CellChaseOnBoot -and ($Target -ne 'esp32s3' -or $PauseLedOutput)) { throw 'Cell-chase boot testing requires ESP32-S3 with LED output enabled.' }
 if ($S3IspElectricalVerified -and $Target -ne 'esp32s3') { throw 'The S3 ISP electrical acknowledgment is target-specific.' }
 if ($S3Ethernet -and $Target -ne 'esp32s3') { throw 'Native W5500 Ethernet requires ESP32-S3.' }
+if ($S3Bluetooth -ne 'runtime' -and $Target -ne 'esp32s3') { throw 'Bluetooth build selection requires ESP32-S3.' }
 if ($S3LedBackend -ne 'static' -and $Target -ne 'esp32s3') { throw 'The RMT-DMA LED backend requires ESP32-S3.' }
 if ($LinkMode -eq 'buffered' -and $Target -notin @('avr', 'esp32s3')) {
     throw 'Buffered mode currently targets the paired AVR only; ESP8266 requires busy-wire or polling.'
@@ -111,6 +113,7 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         if ($CellChaseOnBoot) { $flags += ' -DPAKAR_LED_START_CELL_CHASE=1' }
         if ($S3IspElectricalVerified) { $flags += ' -DPAKAR_S3_ISP_ELECTRICAL_VERIFIED=1' }
         if ($S3Ethernet) { $flags += ' -DPAKAR_S3_ETHERNET_ENABLED=1' }
+        if ($S3Bluetooth -eq 'disabled') { $flags += ' -DPAKAR_S3_BLE_ENABLED=0' }
         "esp32:esp32:esp32s3:CDCOnBoot=cdc,USBMode=hwcdc,FlashSize=${S3FlashMB}M,PartitionScheme=$partitions,PSRAM=$S3Psram"
     } else { 'esp8266:esp8266:nodemcuv2:eesz=4M2M' }
     # One reusable cache per board/link-mode; never force a cold compile by default.

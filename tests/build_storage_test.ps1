@@ -39,6 +39,12 @@ $taskBuffered = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target av
 Assert-Storage ($taskBuffered.Count -eq 1 -and ($taskBuffered[0].Arguments -join ' ') -match 'PAKAR_USE_BUSY_WIRE=0 -DPAKAR_UART_BUFFERED=1') 'Paired AVR buffered flags'
 Assert-Storage (($taskBuffered[0].Arguments -join ' ') -match 'cache[\\/]avr-buffered') 'Stable buffered AVR cache'
 $taskStaticS3 = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp32s3 -Plan )
+$taskNoBleS3 = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp32s3 -S3Bluetooth disabled -Plan )
+Assert-Storage (($taskNoBleS3[0].Arguments -join ' ') -match 'PAKAR_S3_BLE_ENABLED=0') 'Explicit Bluetooth exclusion reaches the S3 compiler'
+Assert-Storage (($taskStaticS3[0].Arguments -join ' ') -notmatch 'PAKAR_S3_BLE_ENABLED=0') 'Runtime BLE choice remains available in the default profile'
+Assert-Storage (($taskNoBleS3[0].Arguments -join ' ') -match 'ARDUINO_USB_CDC_ON_BOOT=1 -DARDUINO_USB_MODE=1') 'Bluetooth exclusion must not remove USB recovery'
+try { & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp8266 -S3Bluetooth disabled -Plan; throw 'Must reject S3 Bluetooth flag on ESP8266' }
+catch { Assert-Storage ($_.Exception.Message -like 'Bluetooth build selection requires ESP32-S3*') 'Bluetooth exclusion is S3-specific' }
 $taskDmaS3 = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp32s3 -S3LedBackend rmt-dma -Plan )
 Assert-Storage ($taskStaticS3[0].LedBackendProfile.Content -match 'PAKAR_S3_LED_USE_DMA 0') 'Non-DMA remains the safe default'
 Assert-Storage ($taskDmaS3[0].LedBackendProfile.Content -match 'PAKAR_S3_LED_USE_DMA 1') 'Explicit RMT-DMA build reaches the application-only profile'

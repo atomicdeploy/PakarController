@@ -3,6 +3,7 @@
 #include <CommandReceipts.h>
 #if defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
+#include <esp_wifi.h>
 #include <ESPmDNS.h>
 #include <AsyncTCP.h>
 #include <Update.h>
@@ -1647,6 +1648,11 @@ String buildStatusJson() {
   body += F(",\"ethernet\":");body+=ethernetStatusJson();
 #if defined(ARDUINO_ARCH_ESP32)
   body += F(",\"ble\":");body+=bleStatusJson();
+  wifi_ps_type_t observedSleep=WIFI_PS_NONE;
+  const bool sleepKnown=esp_wifi_get_ps(&observedSleep)==ESP_OK;
+  body += F(",\"wifi_modem_sleep\":");
+  body += sleepKnown ? (observedSleep==WIFI_PS_NONE ? F("false") : F("true")) : F("null");
+  body += F(",\"wifi_modem_sleep_requested\":");body+=PAKAR_S3_WIFI_MODEM_SLEEP?F("true"):F("false");
 #endif
   body += F(",\"ip\":\""); body += (NetworkPath::ready() ? NetworkPath::localIP() : WiFi.softAPIP()).toString();
   body += F("\",\"mode\":\""); body += modeName();

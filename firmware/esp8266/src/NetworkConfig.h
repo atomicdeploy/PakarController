@@ -8,6 +8,16 @@
 #endif
 #include <FS.h>
 
+// This externally powered controller prioritizes command/OTA latency. Arduino
+// ESP32 otherwise defaults to MIN_MODEM and defers receives to the AP's DTIM.
+// Opt-in power saving is a deliberate build profile, not a lost settings file.
+#ifndef PAKAR_S3_WIFI_MODEM_SLEEP
+#define PAKAR_S3_WIFI_MODEM_SLEEP 0
+#endif
+#if PAKAR_S3_WIFI_MODEM_SLEEP != 0 && PAKAR_S3_WIFI_MODEM_SLEEP != 1
+#error "PAKAR_S3_WIFI_MODEM_SLEEP must be 0 or 1"
+#endif
+
 // PU850-derived AP+station policy with PakarController-owned, checksum-backed
 // LittleFS storage. AP, station and simultaneous mode never block boot while
 // infrastructure is absent. At least one interface must remain enabled.

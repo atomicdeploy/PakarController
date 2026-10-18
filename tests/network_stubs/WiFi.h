@@ -30,9 +30,11 @@ struct NetworkFixtureWiFi {
   } STA, AP;
   int modeValue=0, connection=0;
   bool persistentValue=true, apResult=true, configResult=true, autoReconnect=false;
+  bool sleepEnabled=true,sleepResult=true;unsigned sleepCalls=0;
   String hostnameValue, ssidValue, passwordValue,apSsidValue;
   IPAddress address;
   void persistent(bool value){persistentValue=value;}
+  bool setSleep(bool value){++sleepCalls;if(!sleepResult)return false;sleepEnabled=value;return true;}
   String nameAtStart;
   bool mode(int value){modeValue=value;if(value!=WIFI_OFF){nameAtStart=hostnameValue;STA.name=hostnameValue;}return true;}
   void disconnect(bool){}
