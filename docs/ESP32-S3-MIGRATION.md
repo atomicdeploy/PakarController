@@ -1,7 +1,8 @@
 # PakarController ESP32-S3 migration
 
-Status: integrated S3 source and native candidate implemented; actual SDK and
-physical acceptance are in progress, **not a completed production delivery**.
+Status: integrated S3 firmware and native build13 are delivered to ASUS; actual
+Wi-Fi OTA/full-image readback and discovery passed. Physical and broader parity
+acceptance remain open, **not a completed production release**.
 David-ASUS is currently reachable through SSH8022. Fresh inventory confirms the
 same CH343 bridge on COM22; live telemetry confirms16MB flash/8MB PSRAM and the
 identified board MAC. The complete private flash backup remains preserved on
@@ -189,18 +190,22 @@ board identity. Actual menus/peripherals remain capability-gated per peer.
 ESP8266 advertises mDNS HTTP/controller/stream/telnet services, SSDP description,
 and NetBIOS (only labels fitting 15 characters). Desktop and Android use stable
 hostname-first access plus authenticated, hostname-matched SSDP transport fallback.
-They do not currently implement a full browsable DNS-SD discovery catalog.
-Physical multicast/reconnect/AP/rename acceptance remains unverified while offline.
+Actual S3 Wi-Fi A/PTR/SRV/TXT DNS-SD, multicast/unicast SSDP and MNDP responses
+are now captured in the commissioning checkpoint. This does not establish a
+complete all-client browsable catalog or AP/rename/reconnect matrix.
 S3 platform adapters now exist, including the actual adapted PU SSDP engine and
 AP/STA interface handling; live LAN/phone discovery acceptance remains pending.
 S3 NetBIOS is explicitly unavailable, not falsely advertised as implemented.
 
 ## LED and protocol decisions
 
-Reuse LedGrid rather than add another effects engine. FastLED RMT5 attempts S3
-DMA for its first nonempty TX channel, with possible non-DMA fallback. Actual DMA
-status and Wi-Fi/UART stress remain release gates; do not infer DMA from the chip
-name. Existing application has no default 20 FPS cap. A 480-RGB-pixel 800-kbit/s
+Reuse LedGrid rather than add another effects engine. The current S3 driver is
+Pakar's own LedOutput worker, with explicit gpio-static or rmt-dma build selection;
+it is not FastLED's automatic RMT fallback. FastLED still supplies shared color/
+effect helpers and the ESP8266 transmitter. Production currently uses static
+GPIO4/BGR with actual rmt=false/dma=false capabilities. DMA optical/Wi-Fi/UART
+stress remains a release gate; do not infer DMA from the chip name.
+Existing application has no default 20 FPS cap. A 480-RGB-pixel 800-kbit/s
 single wire still needs about 14.4 ms of data time; DMA frees CPU but does not
 remove that physical limit.
 

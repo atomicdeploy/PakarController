@@ -12,6 +12,77 @@ wrappers retain separate translation units. The ESP8266 target remains available
 for a later, separately configured device. Do not attach two controllers to the
 same AVR UART/ISP signals at once.
 
+## Delivered Wi-Fi-first checkpoint
+
+Source8a3827a48aec5265adb6dde699c8c2a101d35fd4, version0.2.7; native/Android
+client build13. The S3 application is2221280bytes, SHA256
+`fa1a7a9aca7427517485d1729393666c3599b2ad88078e0b19f8fc89bdc8831a`,
+MD5`467416f0d9f60404c1bf19ac02534831`. A hash-verified app-slot-only USB
+bootstrap was followed by a real automatic local Wi-Fi OTA. It changed boot
+`67ebb82317aecf582b6ecd0bdcb33115` to`79db5ecd43872d3e64e5dbd5dea65997`;
+the whole running image was read back in bounded ranges and its SHA verified.
+Running and selected OTA offsets are0x340000, state2 VALID. Preflight+upload
+took35185ms; complete reboot/hash/WebSocket verification took63244ms.
+No AVR image/EEPROM/fuse, ESP bootloader or partition table was written; the
+filesystem was not reflashed or reformatted. Explicit RGB/BLE configuration and
+debounced scene settings were saved normally.
+
+The current instance is deliberately Wi-Fi-first: optional BLE is configured
+off, not removed from the integrated firmware. Its NimBLE/controller internal
+pools reduced initial free heap to8272bytes. Moving BLE application framing and
+the WS queue to PSRAM recovered about23KB, but a BLE-on OTA still aborted at
+135800bytes with a232-byte internal minimum. That attempt did not reboot/commit
+the image and was not blindly replayed. BLE-off persisted across a controlled
+reboot:106268bytes free /63476largest /87092minimum initially. After NTP and MQTT
+connected, a later snapshot was59264free /31732largest /43624minimum. BLE/TLS/OTA
+coexistence remains an explicit issue#20 gate, not an accepted simultaneous mode.
+
+The static GPIO4/BGR matrix profile is enabled and all80 cells are saved white.
+An actual same-boot command/readback confirmed logical1 red and79 white; a later
+80-cell white batch and AP readback confirmed80white/saved. This is controller
+state and driver evidence, not optical proof of physical group alignment.
+GPIO48 status RGB is configured/persisted at brightness64 under the user's
+common-DevKit assumption; driver-submitted ready bytes are[0,64,10]. Its physical
+light and transition appearance still require human confirmation.
+
+Actual AVR hardware-UART telemetry reports0.2.7 online, TM1637 ACK, freeSRAM474,
+and no lost events. Boot count1076 and uptime continued through the ESP OTA;
+the cached prior POR/brownout flags are not a new measured voltage fault. UART
+error count changed1->2, so zero-error contention/long-soak acceptance remains
+open. No repeated welcome/reset loop was observed in these snapshots.
+
+Current firmware AP+station policy, hostname, static scene, RGB and BLE-off
+configuration survived reboot/OTA. ASUS directly joined the saved ledboard AP
+profile, obtained192.168.4.3 and read the same board/boot at recovery gateway
+192.168.4.1 with auth disabled, AP+station true and80white/saved. Its original
+Wi-Fi profile was restored afterward. This does not certify all AP-only/
+station-only transitions or an externally powered restart with USB removed.
+
+Actual Wi-Fi discovery captured mDNS/DNS-SD A/PTR/SRV/TXT and follow-up records,
+three multicast SSDP responses, three unicast responses and one MNDP reply with
+the same MAC/hostname/board identity. Private receipt s3-final-discovery.json
+SHA256`d4b66810bd4e29fa88b2c543a46e482cc929e9675467d86739e95a1bd4202136`.
+The latest ESP scan found four networks, not DRS Tether; its requested join test
+is therefore still open. NTP callback/source and MQTT connected state are now
+observed; broker connection alone is not cloud-command/telemetry round-trip proof.
+
+ASUS had equal Ethernet/Wi-Fi metrics and unreliable Ethernet-bound board
+sessions. A bounded comparison received WS101 then no data/reset via Ethernet,
+but real frame data via Wi-Fi. An owned device-only ActiveStore/32 route via its
+Wi-Fi interface made canonical updater readiness pass. This is a temporary,
+current-address ASUS workaround, not a permanent IP in the application or a
+W5500 test; cross-adapter routing/reacquisition remains issue#10 acceptance.
+
+Native13 is running on ASUS, with80 confirmed mappings, WS/HTTP online, verified
+upgrade state and zero active incidents at the post-OTA checkpoint. Android13
+is staged/published, not phone-installed (no authorized ADB device present).
+Both public artifacts and release metadata were independently hash-verified;
+Android is still a debug-signed preview. Full native299/mobile287 suites passed,
+two opt-in mobile captures skipped; exact8a3827a CI succeeded. No open PRs remain.
+PBX milestone call17923611908127222 was completed/ANSWERED for34seconds, no retry.
+External-power/optical/audio/keypad/shift-register/phone and broader donor parity
+gates remain open in the owning issues; do not close the production issue.
+
 ## Identified connected hardware
 
 The actual device reported ESP32-S3 revision 0.2, 16 MB quad flash, 8 MB embedded
