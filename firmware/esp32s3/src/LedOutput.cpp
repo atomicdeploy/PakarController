@@ -1,11 +1,11 @@
 #include "LedOutput.h"
 #include "LedWire.h"
 #include <esp_heap_caps.h>
+#include <esp_rom_sys.h>
 #if !PAKAR_S3_LED_USE_DMA
 #include <sdkconfig.h>
 #include <esp_attr.h>
 #include <esp_cpu.h>
-#include <esp_rom_sys.h>
 #include <driver/gpio.h>
 #include <soc/gpio_reg.h>
 #include <soc/soc.h>
@@ -27,18 +27,18 @@ void IRAM_ATTR __attribute__((noinline)) writeStaticWire(const uint8_t *bytes,si
   constexpr uint32_t lowRegister=PAKAR_S3_LED_DATA<32?GPIO_OUT_W1TC_REG:GPIO_OUT1_W1TC_REG;
   // Explicitly checked240MHz below:250/600ns high,1250ns period.
   portENTER_CRITICAL(&pixelMux);
-  uint32_t previous=esp_cpu_get_cycle_count()-300U;
+  uint32_t previous=esp_cpu_get_cycle_count()-staticBitCycles;
   for(size_t i=0;i<size;++i)for(uint8_t bit=0x80;bit;bit>>=1){
-    while(static_cast<uint32_t>(esp_cpu_get_cycle_count()-previous)<300U){}
+    while(static_cast<uint32_t>(esp_cpu_get_cycle_count()-previous)<staticBitCycles){}
     previous=esp_cpu_get_cycle_count();
     REG_WRITE(highRegister,mask);
-    const uint32_t high=(bytes[i]&bit)?144U:60U;
+    const uint32_t high=(bytes[i]&bit)?staticOneHighCycles:staticZeroHighCycles;
     while(static_cast<uint32_t>(esp_cpu_get_cycle_count()-previous)<high){}
     REG_WRITE(lowRegister,mask);
   }
-  while(static_cast<uint32_t>(esp_cpu_get_cycle_count()-previous)<300U){}
+  while(static_cast<uint32_t>(esp_cpu_get_cycle_count()-previous)<staticBitCycles){}
   portEXIT_CRITICAL(&pixelMux);
-  esp_rom_delay_us(300); // Reset/latch is low, with interrupts enabled.
+  esp_rom_delay_us(resetMicros); // Reset/latch is low, with interrupts enabled.
 }
 }
 #endif
@@ -105,13 +105,7 @@ void LedOutput::work(){
     if(flashHolds_.load()){vTaskDelay(1);continue;}
     if(!pending){
       if(xQueueReceive(queue_,&current_,pdMS_TO_TICKS(10))!=pdTRUE)continue;
-      const uint8_t correction[]={255,176,240};
-      for(size_t p=0;p<pixels;++p){
-        const uint8_t raw[]={current_.rgb[p].r,current_.rgb[p].g,current_.rgb[p].b};
-        for(size_t c=0;c<3;++c){const size_t logical=PAKAR_S3_LED_SWAP_RED_BLUE?2-c:c;
-          payload[p*3+c]=current_.enabled?wireChannel(raw[logical],current_.brightness,correction[logical]):0;
-        }
-      }
+      encodeWireBytes(current_.rgb,pixels,current_.brightness,current_.enabled,payload);
       pending=true;
     }
     {
@@ -126,19 +120,27 @@ void LedOutput::work(){
   }
 #else
   rmt_channel_handle_t channel=nullptr;rmt_encoder_handle_t encoder=nullptr;
-  constexpr size_t symbols=pixels*24+1;
-  auto *encoded=static_cast<rmt_symbol_word_t*>(heap_caps_malloc(symbols*sizeof(rmt_symbol_word_t),MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));
+  constexpr size_t bytes=pixels*3;
+  // IDF5.5.5's IRAM bytes encoder refills its own bounded internal DMA ring.
+  // Keep only the immutable1440-byte source internal, not46084 expanded
+  // symbols. PSRAM/flash payloads are deliberately not an ISR fallback.
+  auto *payload=static_cast<uint8_t*>(heap_caps_malloc(bytes,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));
   rmt_tx_channel_config_t config{};config.gpio_num=static_cast<gpio_num_t>(PAKAR_S3_LED_DATA);
   config.clk_src=RMT_CLK_SRC_DEFAULT;config.resolution_hz=40000000;
   config.mem_block_symbols=2046;config.trans_queue_depth=1;config.intr_priority=3;
   config.flags.with_dma=true; // Required, never silently fall back to bit-bang/non-DMA.
-  int error=encoded?rmt_new_tx_channel(&config,&channel):ESP_ERR_NO_MEM;
-  rmt_copy_encoder_config_t copy{};
-  if(!error)error=rmt_new_copy_encoder(&copy,&encoder);
+  int error=payload?rmt_new_tx_channel(&config,&channel):ESP_ERR_NO_MEM;
+  rmt_bytes_encoder_config_t coding{};
+  coding.bit0.level0=1;coding.bit0.duration0=zeroHigh;
+  coding.bit0.level1=0;coding.bit0.duration1=zeroLow;
+  coding.bit1.level0=1;coding.bit1.duration0=oneHigh;
+  coding.bit1.level1=0;coding.bit1.duration1=oneLow;
+  coding.flags.msb_first=1;
+  if(!error)error=rmt_new_bytes_encoder(&coding,&encoder);
   if(!error)error=rmt_enable(channel);
   if(error){
     error_.store(error);if(encoder)rmt_del_encoder(encoder);if(channel)rmt_del_channel(channel);
-    if(encoded)heap_caps_free(encoded);
+    if(payload)heap_caps_free(payload);
     vTaskDelete(nullptr);return;
   }
   ready_.store(true);
@@ -146,12 +148,12 @@ void LedOutput::work(){
   // needlessly exercises DMA refill under RF load. The renderer still sends
   // periodic repair frames and uncapped animation frames as needed.
   bool pending=true;
-  encodeWire(current_.rgb,pixels,0,false,encoded); // One startup black frame.
+  ::memset(payload,0,bytes); // One startup black frame.
   for(;;){
     if(flashHolds_.load()){vTaskDelay(1);continue;}
     if(!pending){
       if(xQueueReceive(queue_,&current_,pdMS_TO_TICKS(10))!=pdTRUE)continue;
-      encodeWire(current_.rgb,pixels,current_.brightness,current_.enabled,encoded);
+      encodeWireBytes(current_.rgb,pixels,current_.brightness,current_.enabled,payload);
       pending=true;
     }
     {
@@ -159,8 +161,8 @@ void LedOutput::work(){
       if(flashHolds_.load())continue;
       inFlight_.store(true);
     }
-    rmt_transmit_config_t tx{};tx.loop_count=0;tx.flags.eot_level=0;
-    error=rmt_transmit(channel,encoder,encoded,symbols*sizeof(*encoded),&tx);
+    rmt_transmit_config_t tx{};tx.loop_count=0;tx.flags.eot_level=0;tx.flags.queue_nonblocking=1;
+    error=rmt_transmit(channel,encoder,payload,bytes,&tx);
     if(!error)error=rmt_tx_wait_all_done(channel,100);
     if(error){
       // Never reuse a possibly in-flight buffer after an uncertain deadline.
@@ -170,6 +172,9 @@ void LedOutput::work(){
       if(rmt_disable(channel)==ESP_OK)inFlight_.store(false);
       vTaskDelete(nullptr);return;
     }
+    // EOT keeps the pad LOW after the final data bit. Hold the frame/flash
+    // ownership until the full reset interval, not merely descriptor admission.
+    esp_rom_delay_us(resetMicros);
     inFlight_.store(false);
     transmitted_.fetch_add(1);revision_.store(current_.revision);active_.store(current_.enabled);
     pending=false;

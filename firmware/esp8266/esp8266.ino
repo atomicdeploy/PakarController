@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <utility>
 #include <CommandReceipts.h>
 #if defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
@@ -60,6 +61,7 @@
 #include "src/CloudConfig.h"
 #include "src/CloudServices.h"
 #include "src/LedGrid.h"
+#include "src/LedRenderAdmission.h"
 #include "src/LoopMessages.h"
 #include "src/LedPreferences.h"
 #include "src/SceneStore.h"
@@ -309,6 +311,8 @@ uint32_t localObservedOperation=0;
 bool servicingUpgrade=false;
 uint32_t otaNextOwner=0;
 String pendingUpgradeCloud;
+String pendingDisplayCloud;
+uint32_t displayCloudCoalesced=0,lastDisplayCloudAt=0;
 const char *localUpgradeSound="none";
 uint32_t otaExpectedBytes = 0;
 PakarShell::TelnetParser telnetParser;
@@ -368,12 +372,17 @@ void registerAsyncOta();
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
                const uint8_t *payload = nullptr, uint8_t payloadLength = 0);
 String pcReceiptJson(const BoardCore::PcContractTransport::Receipt &receipt);
-void publishPcEvent(const String &event) {
+void publishPcEvent(const String &event,bool displaySnapshot=false) {
 #if defined(ARDUINO_ARCH_ESP32)
   publishBleEvent(event);
 #endif
   webSocket.textAll(event);
-  cloudServices.publishEvent(event);
+  // Raw masks are latest-state snapshots, not ordered tone edges. Never let
+  // an Internet publish stall AVR RX/LED admission for every marquee window.
+  if(displaySnapshot) {
+    if(pendingDisplayCloud.length())++displayCloudCoalesced;
+    pendingDisplayCloud=event;
+  } else cloudServices.publishEvent(event); // Preserve ordered command/tone semantics.
 }
 void servicePcContracts();
 void serviceAvrFor(uint32_t durationMs);
@@ -2537,7 +2546,8 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       for (uint8_t i = 1; i < frame.payloadLength; ++i) {
         event += digits[frame.payload[i] >> 4]; event += digits[frame.payload[i] & 15];
       }
-      event += F("\"}"); publishPcEvent(event);
+      event += F("\"}"); publishPcEvent(event,
+        frame.payloadLength==6 && frame.payload[0]==ControllerProtocol::SegmentChanged);
       hostLink.send(kPcContractResponse, frame.sequence, frame.payload, frame.payloadLength);
     }
     if (frame.payloadLength == 6 && frame.payload[0] == ControllerProtocol::SegmentChanged) {
@@ -3996,9 +4006,10 @@ void loop() {
   serviceUpgrade();
   // Render before issuing UART requests. The AVR is request/response only, so
   // its reply arrives while FastLED is not masking ESP8266 interrupts.
-  const bool ledFrameDue = upgradeLifecycle.visual(millis())==PakarUpdate::Visual::None && !otaActive && !remoteFirmware.busy() &&
-      static_cast<int32_t>(now - ledResumeAt) >= 0 &&
-      grid.needsRender(now);
+  const uint32_t ledNow=millis(); // AVR observation/cloud callbacks may have taken time.
+  const bool ledFrameDue = upgradeLifecycle.visual(ledNow)==PakarUpdate::Visual::None && !otaActive && !remoteFirmware.busy() &&
+      PakarLed::uartWindowReady(PAKAR_UART_BUFFERED,ledNow,ledResumeAt) &&
+      grid.needsRender(ledNow);
   if (ledFrameDue) {
     setAvrTransmitBlocked(true);
     // The busy edge prevents a new unsolicited AVR frame, but one may have
@@ -4008,7 +4019,7 @@ void loop() {
 #if !defined(ARDUINO_ARCH_ESP32)
     serviceAvrFor(8U);
 #endif
-    grid.service(now);
+    grid.service(ledNow);
     setAvrTransmitBlocked(false);
   }
   server.service();
@@ -4135,6 +4146,14 @@ void loop() {
   }
   const bool showUpdate=otaActive || otaRebootAt || remoteFirmware.busy();
   serviceSemanticPanel(millis());
+  // Bounded latest-display cloud feed, outside AVR receive/renderer ownership.
+  // Local WS/USB retain immediate raw events. Do not flush stale animation
+  // windows after a blocked link; one newest snapshot is sufficient.
+  if(!urbootRawOwned && !otaActive && !otaRebootAt && !remoteFirmware.busy() &&
+      pendingDisplayCloud.length() && uint32_t(millis()-lastDisplayCloudAt)>=1000U) {
+    lastDisplayCloudAt=millis();String latest=std::move(pendingDisplayCloud);pendingDisplayCloud=String();
+    cloudServices.publishEvent(latest);
+  }
   // Single loop-owner I2C writer, independent of AVR TM1637 and LED RMT/DMA.
 #if defined(ARDUINO_ARCH_ESP32)
   char lcdLine[17];

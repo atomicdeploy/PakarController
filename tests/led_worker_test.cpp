@@ -22,6 +22,8 @@ std::mutex mutex;
 std::condition_variable changed;
 bool live=false,block=false,timeout=false,disableFails=false,blockDisable=false;
 unsigned stops=0;
+unsigned latches=0;
+rmt_bytes_encoder_config_t byteCoding{};
 unsigned blockGeneration=0,blockedGeneration=0;
 const void* buffer=nullptr;
 std::vector<uint8_t> snapshot;
@@ -60,16 +62,30 @@ int xTaskCreatePinnedToCore(void(*run)(void*),const char*,unsigned bytes,void* c
 }
 void vTaskDelay(TickType_t delay){if(Fixture::stopping)throw Fixture::Stop{};std::this_thread::sleep_for(std::chrono::milliseconds(delay));if(Fixture::stopping)throw Fixture::Stop{};}
 void vTaskDelete(void*){throw Fixture::Stop{};}
-void* heap_caps_malloc(size_t bytes,int caps){assert(caps==(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));auto* p=std::malloc(bytes);Fixture::allocations.push_back(p);return p;}
+void* heap_caps_malloc(size_t bytes,int caps){assert(caps==(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));assert(bytes==1440);auto* p=std::malloc(bytes);Fixture::allocations.push_back(p);return p;}
 void heap_caps_free(void* pointer){for(auto& p:Fixture::allocations)if(p==pointer)p=nullptr;std::free(pointer);}
 int rmt_new_tx_channel(const rmt_tx_channel_config_t* config,rmt_channel_handle_t* channel){assert(config->flags.with_dma&&config->mem_block_symbols==2046&&config->intr_priority==3&&config->resolution_hz==40000000&&config->trans_queue_depth==1&&config->gpio_num==4);*channel=reinterpret_cast<void*>(1);return ESP_OK;}
 int rmt_new_copy_encoder(const rmt_copy_encoder_config_t*,rmt_encoder_handle_t* encoder){*encoder=reinterpret_cast<void*>(2);return ESP_OK;}
+int rmt_new_bytes_encoder(const rmt_bytes_encoder_config_t* config,rmt_encoder_handle_t* encoder){
+ assert(config->flags.msb_first==1);
+ assert(config->bit0.level0==1&&config->bit0.level1==0&&config->bit0.duration0==14&&config->bit0.duration1==36);
+ assert(config->bit1.level0==1&&config->bit1.level1==0&&config->bit1.duration0==28&&config->bit1.duration1==22);
+ Fixture::byteCoding=*config;*encoder=reinterpret_cast<void*>(3);return ESP_OK;
+}
 int rmt_enable(rmt_channel_handle_t){return ESP_OK;}
 int rmt_del_channel(rmt_channel_handle_t){return ESP_OK;}
 int rmt_del_encoder(rmt_encoder_handle_t){return ESP_OK;}
-int rmt_transmit(rmt_channel_handle_t,rmt_encoder_handle_t,const void* source,size_t bytes,const rmt_transmit_config_t* tx){
- std::lock_guard<std::mutex> lock(Fixture::mutex);assert(!Fixture::live&&tx->loop_count==0&&tx->flags.eot_level==0);Fixture::live=true;Fixture::buffer=source;
- Fixture::snapshot.assign(static_cast<const uint8_t*>(source),static_cast<const uint8_t*>(source)+bytes);Fixture::frames.push_back(Fixture::snapshot);Fixture::changed.notify_all();return ESP_OK;
+int rmt_transmit(rmt_channel_handle_t,rmt_encoder_handle_t encoder,const void* source,size_t bytes,const rmt_transmit_config_t* tx){
+ std::lock_guard<std::mutex> lock(Fixture::mutex);assert(!Fixture::live&&tx->loop_count==0&&tx->flags.eot_level==0&&tx->flags.queue_nonblocking);
+ assert(encoder==reinterpret_cast<void*>(3)&&bytes==480*3);Fixture::live=true;Fixture::buffer=source;
+ Fixture::snapshot.assign(static_cast<const uint8_t*>(source),static_cast<const uint8_t*>(source)+bytes);
+ // Model the SDK bytes encoder's MSB-first mapping. The source is compact and
+ // remains immutable while an ISR may refill either half of the DMA ring.
+ std::vector<rmt_symbol_word_t> symbols;symbols.reserve(bytes*8);
+ for(uint8_t value:Fixture::snapshot)for(uint8_t mask=0x80;mask;mask>>=1)
+  symbols.push_back(value&mask?Fixture::byteCoding.bit1:Fixture::byteCoding.bit0);
+ const auto* encoded=reinterpret_cast<const uint8_t*>(symbols.data());
+ Fixture::frames.emplace_back(encoded,encoded+symbols.size()*sizeof(symbols[0]));Fixture::changed.notify_all();return ESP_OK;
 }
 int rmt_tx_wait_all_done(rmt_channel_handle_t,int deadline){
  assert(deadline==100);std::unique_lock<std::mutex> lock(Fixture::mutex);
@@ -87,6 +103,11 @@ int rmt_disable(rmt_channel_handle_t){
  assert(!Fixture::blockDisable||Fixture::stopping);
  if(Fixture::disableFails)return ESP_ERR_TIMEOUT;
  Fixture::live=false;return ESP_OK;
+}
+void esp_rom_delay_us(unsigned micros){
+ assert(micros==PakarS3::resetMicros);
+ {std::lock_guard<std::mutex> lock(Fixture::mutex);assert(!Fixture::live);++Fixture::latches;}
+ std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
 #if !PAKAR_S3_LED_USE_DMA
@@ -116,7 +137,6 @@ void fixtureCriticalExit(){
  std::lock_guard<std::mutex> lock(Fixture::mutex);assert(Fixture::bitCount==480*24);
  Fixture::frames.push_back(Fixture::staticBytes);Fixture::live=false;Fixture::changed.notify_all();
 }
-void esp_rom_delay_us(unsigned micros){assert(micros==300);std::this_thread::sleep_for(std::chrono::milliseconds(1));}
 void staticFunctional(){
  PakarS3::LedOutput output;assert(output.begin());Fixture::until([&]{return Fixture::count()==1;});
  {std::lock_guard<std::mutex> lock(Fixture::mutex);for(auto b:Fixture::frames.front())assert(b==0);}
@@ -157,12 +177,16 @@ void functional(){
  const auto steady=Fixture::count();std::this_thread::sleep_for(std::chrono::milliseconds(30));
  assert(Fixture::count()==steady);assert(Fixture::field(output,"submitted")==2000);
  {std::lock_guard<std::mutex> lock(Fixture::mutex);const auto& bytes=Fixture::frames.back();
+  assert(bytes.size()==480*24*sizeof(rmt_symbol_word_t));
   for(size_t pixel=0;pixel<480;++pixel)for(size_t bit=0;bit<24;++bit){
    rmt_symbol_word_t symbol;std::memcpy(&symbol,bytes.data()+(pixel*24+bit)*sizeof(symbol),sizeof(symbol));
    constexpr size_t redByte=PAKAR_S3_LED_SWAP_RED_BLUE?16:0;
    const bool one=bit>=redByte&&bit<redByte+8&&(static_cast<uint8_t>(2000)&(0x80U>>(bit-redByte)));
    assert(symbol.duration0==(one?PakarS3::oneHigh:PakarS3::zeroHigh));
+   assert(symbol.duration1==(one?PakarS3::oneLow:PakarS3::zeroLow));
+   assert(symbol.level0==1&&symbol.level1==0);
   }
+  assert(Fixture::latches==Fixture::field(output,"transmitted"));
  }
  // Deliberately violate the SDK100ms wait deadline to model an unresponsive
  // driver. Wait for THIS barrier generation, not a prior TX's completion tail:
@@ -175,7 +199,7 @@ void functional(){
  {std::lock_guard<std::mutex> lock(Fixture::mutex);const auto& bytes=Fixture::frames.back();for(size_t i=0;i<480*24;++i){rmt_symbol_word_t symbol;std::memcpy(&symbol,bytes.data()+i*sizeof(symbol),sizeof(symbol));assert(symbol.duration0==PakarS3::zeroHigh&&symbol.duration1==PakarS3::zeroLow);}}
  output.submit(rgb,255,true,2003);Fixture::until([&]{return Fixture::field(output,"revision")==2003;});
  const auto resumed=Fixture::count();std::this_thread::sleep_for(std::chrono::milliseconds(30));assert(Fixture::count()==resumed&&resumed==off+1);
- Fixture::cleanup();puts("Actual DMA worker: startup black, immutable TX,2000 mailbox submissions/coalescing,no unchanged replay,off black/sleep/on resume,boundary/nested/concurrent holds and failed-quiesce recovery passed.");
+ Fixture::cleanup();puts("Actual DMA worker:1440-byte internal source,SDK MSB-first bytes encoding/timing,300us post-completion latch,startup black,immutable TX,2000 mailbox submissions/coalescing,no unchanged replay,off black/sleep/on resume,boundary/nested/concurrent holds and failed-quiesce recovery passed.");
 }
 void failure(bool disableFails){
  PakarS3::LedOutput output;Fixture::timeout=true;Fixture::disableFails=disableFails;Fixture::blockDisable=true;CRGB rgb[480]{};assert(output.begin());output.submit(rgb,255,true,1);

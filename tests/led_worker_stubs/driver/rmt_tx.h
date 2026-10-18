@@ -10,7 +10,7 @@ struct rmt_tx_channel_config_t{
  gpio_num_t gpio_num=0;int clk_src=0;unsigned resolution_hz=0,mem_block_symbols=0,trans_queue_depth=0,intr_priority=0;
  struct{bool with_dma=false;}flags;
 };
-struct rmt_transmit_config_t{int loop_count=0;struct{int eot_level=0;}flags;};
+struct rmt_transmit_config_t{int loop_count=0;struct{int eot_level=0;bool queue_nonblocking=false;}flags;};
 int rmt_new_tx_channel(const rmt_tx_channel_config_t*,rmt_channel_handle_t*);
 int rmt_enable(rmt_channel_handle_t);
 int rmt_disable(rmt_channel_handle_t);

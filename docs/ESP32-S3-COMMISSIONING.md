@@ -14,6 +14,76 @@ same AVR UART/ISP signals at once.
 
 ## Delivered Wi-Fi-first checkpoint
 
+### Current all-off signal recovery
+
+The user reported that Rust showed C001 OFF fade but the matrix did not clear.
+One explicit same-peer80-cell immediate Off batch was accepted; published RGB
+contained1440 zero bytes and gpio-static reported completed transmissions, yet
+the user confirmed pixels remained lit. This is failed physical acceptance, not
+an app receipt or driver-counter success. Output was then explicitly disabled;
+no subsequent color/effect tests were sent.
+
+The integrated recovery code builds against Arduino-ESP32 3.3.12/IDF5.5.5 with
+the explicit rmt-dma, buffered,16MB/OPI, electrically verified ISP, BLE-disabled
+profile. Static remains selectable; this does not change generic defaults. The
+RMT worker uses an immutable1440-byte internal source and SDK MSB-first bytes
+encoder/ring instead of a46084-byte expanded-symbol allocation. The recovery
+profile requests350/700ns highs at1250ns/bit and300us LOW latch. These are code
+parameters, not measured scope values or an underrun-immunity claim. Startup
+always emits a complete black frame, including when output is disabled.
+
+Fresh post-UART time and buffered-UART admission remove the obsolete12ms
+SoftwareSerial lease from S3 rendering. Raw segment cloud snapshots coalesce
+outside AVR receive while local WS/USB events remain immediate. Non-display
+cloud I/O and reconnect still block the loop; the display drain's timestamp
+currently precedes the blocking publish, so it is not a guaranteed inter-attempt
+quiet interval on a stalled link. A single-owner asynchronous cloud worker and
+full coexistence/timeout acceptance remain open.
+
+One canonical local OTA attempt aborted at42460/2046320bytes after5556ms with
+ECONNRESET. Independent ASUS and forwarded reads confirmed unchanged old boot
+ca1acf3d423c6a8c0256ef6d9d7d3863 and old2045120-byte image before USB recovery.
+No upload replay occurred. Fresh USB partition/OTA reads validated sequence19/20
+CRCs, selected app1/0x340000, bridge COM22/5CE4108809 and MAC90:70:69:ea:c8:00.
+Only app1 was written,31.7seconds/460800baud, and esptool verified the data hash.
+No bootloader, partition table, OTA selection record, filesystem or AVR write
+occurred in this ESP recovery. Old images and settings remain preserved.
+
+Actual running image:2046320bytes, SHA256
+`d46b74b74d3471215fff3ac85cc4777287a7f9718f42cfd504804e195628f88f`,
+MD5`b66aca0895d8d3ad7e52232c93c54e94`; boot
+`730642a9a16509512ec9365ec42b1f0b`. Full ranged readback matches SHA; selected
+and running app1 are VALID. One firmware-export read needed the existing bounded
+read-only retry. Auth remains disabled, BLE unstarted, Wi-Fi awake. Actual driver
+reports rmt-dma/ready, submitted2/transmitted3/failed0/error0; service disabled
+and80 saved Off states. This still awaits the user's physical all-black verdict.
+
+Actual native PID15928/build14 reconnected over Wi-Fi/WS: mapping80,80Off,
+AVR online/TM ACKtrue, resting masks[63,113,113,0] (OFF), no pending maintenance
+or active incidents. Recovery timeouts remain in inactive history. Its older
+historical progress message is not a verified update receipt. Four subsequent
+cached-address reads returned complete status529ms/panel479ms/Web223213bytes
+in1336ms/SSDP XML661ms; WS upgrade110ms plus requested status36ms. This is not
+a soak or proof OTA ingress is repaired. Cloud service still reached2044ms.
+Internal heap at the image-verification sample:71000free/31732largest/55024min.
+
+Source progression:174da58 adds the semantic AVR/ESP/native/mobile events;
+fae96a6 fixes custom notice receipts and updater event compatibility. Current
+recovery code is the subsequent LED/scheduler checkpoint. AVR app-only Urboot
+delivery and build14 native deployment precede this incident; their exact
+receipts are in REUSE-PREFLIGHT-RECEIPT.md. Android build14 is staged on ASUS,
+not phone-installed. Focused panel/LED pipeline and8 worker-double cases pass;
+real S3 compile and readback are distinct from electrical/optical acceptance.
+
+Private local receipts: verification/led-signal-recovery-verified.json
+(SHAacc55175e2f6d1a512d9b94a38536f1d336ac019b9799558b29e4d7fdf98d48b),
+led-signal-recovery-service.json and rmt-recovery-native-final.json
+(SHA98d850c48d9a8294af76ded96907207a0a0b1b9cac691dd33e81c31d295923e2)
+under outputs/PakarController. Do not publish the boot-metadata dump: it also
+contains private NVS. USB-disconnected operation and current all-off/color
+optical acceptance remain unchecked. The older checkpoints below are history,
+not current shipping identity.
+
 ### Web-service recovery update
 
 Shipping firmware source802512cb6f6a24b3ae977a7f164298c913fb5016 replaces the

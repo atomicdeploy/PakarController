@@ -2,6 +2,8 @@
 #include "LedPreferences.h"
 #include <cassert>
 #include <cstdio>
+unsigned panelNotifications=0;uint8_t panelKind=0;uint16_t panelValue=0;
+void panelNotice(uint8_t kind,uint16_t value,uint8_t){++panelNotifications;panelKind=kind;panelValue=value;}
 String withoutPending(const String& frame){
  String value=frame;const auto at=value.find(",\"pending\":");assert(at!=String::npos);
  const auto end=value.find(',',at+1);assert(end!=String::npos);value.erase(at,end-at);return value;
@@ -255,5 +257,13 @@ int main(){
    assert(!maintenance.outputEnabled() && FastLED.shows==disabledShows && maintenance.maintenancePresented());
    assert(original.size()==480*6);
  }
+  grid.setPanelObserver(panelNotice);
+  BoardCore::CellBatch all;for(uint8_t id=1;id<=80;++id)all.add(id);
+  assert(grid.setCells(all,kCellOff,kEffectImmediate));
+  assert(panelNotifications==1&&panelKind==12&&panelValue==kCellOff);
+  grid.service(++pixelTestNow);
+  const auto black=grid.pixelFrameJson();const auto start=black.find("\"rgb\":\"")+7;
+  assert(black.substr(start,480*6)==String(480*6,'0'));
+  assert(grid.setCell(2,kCellRed,kEffectImmediate));assert(panelKind==1&&panelValue==2);
   puts("Actual LedGrid: cable mapping,6-pixel cells, full480 maintenance black, per-pixel fade, scene preservation and disabled-output isolation passed (host doubles, not optical output).");
 }

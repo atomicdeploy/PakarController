@@ -14,12 +14,12 @@
     {"path":"firmware/avr/FrontPanel.cpp","sha256":"d90acc624b6d9e9248238eb5015a573bb3081bde5546b9bdc3d1e14661f3dea4","anchor":"void FrontPanel::service("},
     {"path":"firmware/avr/PcControllerRuntime.cpp","sha256":"cd62f7447553664a06de9b55bdb18371d26972b63833d80035e795d367669694","anchor":"espTouchedAt_"},
     {"path":"firmware/esp8266/src/SemanticPanel.h","sha256":"8cd5384e86c8201e42d6d80b96eacd84668bcb3a7ee88bacef5addb4be1bc958","anchor":"class Presenter"},
-    {"path":"firmware/esp8266/src/SemanticPanelService.h","sha256":"a05fd486a8ea5f3a8f04c597d75d919eda2edb340bb13088bdcfe300046746ff","anchor":"void serviceSemanticPanel("}
+    {"path":"firmware/esp8266/src/SemanticPanelService.h","sha256":"eb57a4681c9238663102707b17c1005ba2479e359bde8e4c544b6ccfee02abd2","anchor":"void serviceSemanticPanel("}
   ],
   "proof":[
     {"path":"tests/front_panel_test.cpp","sha256":"318ba761cdc2548b25e45b9114480ff761b6e994f21e0ca3a15ce19c20e2533a","anchor":"int main()"},
     {"path":"tests/esp_front_panel_test.cpp","sha256":"58220f795fcb6d16277308285f37f7cede5af7f431ceafd675ad8bfe6f3c5013","anchor":"int main()"},
-    {"path":"tests/semantic_panel_test.cpp","sha256":"43b274cf478f41bca5435d38fd8e9cc42c5014342361e1e667201f74923fd598","anchor":"int main()"}
+    {"path":"tests/semantic_panel_test.cpp","sha256":"2b28c99ae967228e678d9bca3332b051f7727008b46d74163d4873c6df619d9c","anchor":"int main()"}
   ],
   "omissions":[
     {"code":"relay/motion/door/BT/RF/sensor/PWM-specific display pages and EEPROM editors","disposition":"pending","reason":"Read but not fitted or individually acknowledged on this table. Safety-sensitive actuator/sensor behavior remains capability-gated and needs separate matching-hardware review; no full editor/automation parity is claimed."},
@@ -3204,7 +3204,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
+          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -3696,7 +3696,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
+          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -3746,7 +3746,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
+          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
         }
       ],
       "omissions": [
@@ -3793,13 +3793,13 @@
           "sha256": "89ce1cff79adbdbe98f44beac5aea8cc30bf72187012db6720a4c42f4be5cf73"
         },
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0","anchor":"Message *items_=nullptr;"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
         {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"e87ed119fa144aad18dc999a4f1df8460f3f83a3ede985811b57bdb588cb2d96","anchor":"internal_heap_largest_block_bytes"},
         {"path":"tools/update-firmware.mjs","sha256":"3d57c9f57c6d76103f679cd70f410b8f5dd32db0915aa11dc5719b7bb5b2fe9b","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
+          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -5521,7 +5521,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5",
+      "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d",
       "anchor": "bool authenticate()"
     },
     {
@@ -10046,7 +10046,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "98483c611717d40ed332506e215eed91b4c4d5820ec91048666056469ae5e023",
+          "sha256": "9d7a762b1c1c2937a26450e14e75935e438f83710ae9fe18355cf190c410421a",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
@@ -10054,8 +10054,8 @@
           "sha256": "6e9c86561ffeafc775604ea17d67073ec463dd6cc8f601095a8b4e88733eaabf",
           "anchor": "uint8_t brightness_ = 255"
         },
-        {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"687f35d99175e9fc109bdd6a03db225cac97cd63ba0e9ffa68386ef66f6571b9","anchor":"config.flags.with_dma=true"},
-        {"path":"firmware/esp32s3/src/LedWire.h","sha256":"cc11d6829c36b3390e0bef8ec407be72ceab47a25357661d5fcac90befef1495","anchor":"void encodeWire("},
+        {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"a7c73c4a15d3876204d9902011e93d02b5507357d5684c1e48d12acb687236a9","anchor":"config.flags.with_dma=true"},
+        {"path":"firmware/esp32s3/src/LedWire.h","sha256":"767a834768348560dab7d9a08fd026803419c480079e4fe54c6aac683364b46b","anchor":"void encodeWire("},
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0","anchor":"class LoopMessages"}
       ],
       "omissions": [
@@ -10079,7 +10079,7 @@
         "Make chipset/channel order configurable and verify R/G/B plus all 480 pixels on hardware; expose current configuration across the control surfaces."
       ],
       "proof": [
-        {"path":"tests/led_worker_test.cpp","sha256":"63cde4350c895746060315aec95e59c751b8c16458995c583e54985dcaed7f89","anchor":"Compile the ACTUAL S3 output worker"},
+        {"path":"tests/led_worker_test.cpp","sha256":"e27f0993c50d0c49fd1d8b2da6121b3445f8ba507b0a5f9d2a322934ad7384db","anchor":"Compile the ACTUAL S3 output worker"},
         {"path":"tests/led_scheduler_test.cpp","sha256":"b0d695eb6ce287be4944d42c81d719f170283f66ae7d448594d592835f2a4a04","anchor":"int main()"}
       ],
       "improvement": "Actual worker/mailbox tests establish source-level frame ownership and quiescence, not optical or SDK acceptance."
@@ -10096,7 +10096,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "98483c611717d40ed332506e215eed91b4c4d5820ec91048666056469ae5e023",
+          "sha256": "9d7a762b1c1c2937a26450e14e75935e438f83710ae9fe18355cf190c410421a",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
@@ -10170,7 +10170,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
+          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
         }
       ],
       "proof": [
@@ -10237,7 +10237,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
+          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
         }
       ],
       "proof": [
@@ -10304,7 +10304,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
+          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
         }
       ],
       "proof": [
@@ -10356,7 +10356,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5"
+          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
         }
       ],
       "proof": [
@@ -11642,7 +11642,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5",
+          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -11726,7 +11726,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "6aab5684d2735a5b86f60100f20369354d510b3d0ad3ecebc9c326690ae45440",
+          "sha256": "1d9d4d8c0af2c42a76aafed99406572c95072f4cedfd392436e3ad4ef4b158de",
           "anchor": "Boot policy accepts existing files without restoring a saved animation"
         },
         {
@@ -12337,7 +12337,8 @@
         "Complete donor reread at matching raw hash. User cable pattern has a tested80-cell bijection. Board-owned logical80-to1 chase composes one six-pixel-red frame every750ms with no skip/repeat/fades. GPIO and DMA workers sleep between submitted complete frames, with startup black and renderer-owned repair refresh. Physical acceptance remains open.",
         "Backend selector is now a low-write application-only generated header, not a global compiler define. Plan remains read-only and both backend plans share identical SDK/compiler arguments; same canonical cache and no forced clean. SDK recompilation/cache-hit timing and physical driver acceptance remain separately measured.",
         "Mobile pixel diagnostics adapts clear/stage/show through the existing desktop PKAR frame format: single pixel or six aligned pixels, arbitrary RGB, bounded previous/next/direct position, full480 black on every move and All off. Same-board/boot acknowledged effects mode, one pending write, exact published RGB/revision readback and no reconnect replay; no AVR sender/timing code copied into Flutter.",
-        "Operational diagnostic repair moves clear/stage/show into one optional pixel-diagnostic board command, no AVR fan-out or persistence. Correlated full RGB readback uses deduplicated same-ID WS/HTTP recovery; older firmware keeps the explicitly labelled raw socket path. Compact controls retain confirmed cursor on failure, expose six physical indices and verified logical labels, and keep board-keyed draft cursor/colour. Loopback/page/renderer evidence does not certify phone or optical acceptance."
+        "Operational diagnostic repair moves clear/stage/show into one optional pixel-diagnostic board command, no AVR fan-out or persistence. Correlated full RGB readback uses deduplicated same-ID WS/HTTP recovery; older firmware keeps the explicitly labelled raw socket path. Compact controls retain confirmed cursor on failure, expose six physical indices and verified logical labels, and keep board-keyed draft cursor/colour. Loopback/page/renderer evidence does not certify phone or optical acceptance.",
+        "The donor stage/show ownership and startup clear are adapted to one immutable480-pixel worker mailbox. The explicit S3 RMT-DMA recovery scales/swaps logical RGB once into1440 internal bytes; IDF5.5.5's MSB-first bytes encoder fills its bounded DMA ring instead of allocating46084 expanded-symbol bytes. Wait completion and300us low latch precede buffer release; disabled startup still sends a complete black frame. Static GPIO remains separately selectable; no optical acceptance is inferred."
       ],
       "targets": [
         {
@@ -12347,7 +12348,7 @@
         },
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "98483c611717d40ed332506e215eed91b4c4d5820ec91048666056469ae5e023",
+          "sha256": "9d7a762b1c1c2937a26450e14e75935e438f83710ae9fe18355cf190c410421a",
           "anchor": "bool LedGrid::setCells("
         },
         {
@@ -12362,12 +12363,22 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "687f35d99175e9fc109bdd6a03db225cac97cd63ba0e9ffa68386ef66f6571b9",
+          "sha256": "a7c73c4a15d3876204d9902011e93d02b5507357d5684c1e48d12acb687236a9",
           "anchor": "bool pending=true;"
         },
         {
+          "path": "firmware/esp32s3/src/LedWire.h",
+          "sha256": "767a834768348560dab7d9a08fd026803419c480079e4fe54c6aac683364b46b",
+          "anchor": "inline constexpr uint16_t zeroHigh=14"
+        },
+        {
+          "path": "firmware/esp8266/src/LedRenderAdmission.h",
+          "sha256": "a6dc69b69cba74db1fff54fd75b8940bf88958404f6c3ac971b27797d5b13c50",
+          "anchor": "inline bool uartWindowReady("
+        },
+        {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5",
+          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -12415,7 +12426,7 @@
         {
           "code": "Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness",
           "disposition": "pending",
-          "reason": "Bulk atomicity and host tests cannot establish an electrical waveform. Actual SDK uses interrupt-refilled two-node RMT DMA; a reported completed transaction/error0 is not proof against underrun. Wi-Fi optical stress and observed white-to-red transitions remain open."
+          "reason": "The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery uses350/700ns highs,1250ns bits and300us low; its SDK ring still requires ISR refill. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof."
         }
       ],
       "remaining": [
@@ -12424,7 +12435,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "6aab5684d2735a5b86f60100f20369354d510b3d0ad3ecebc9c326690ae45440",
+          "sha256": "1d9d4d8c0af2c42a76aafed99406572c95072f4cedfd392436e3ad4ef4b158de",
           "anchor": "Entire selection validation"
         },
         {
@@ -12434,12 +12445,12 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "63cde4350c895746060315aec95e59c751b8c16458995c583e54985dcaed7f89",
+          "sha256": "e27f0993c50d0c49fd1d8b2da6121b3445f8ba507b0a5f9d2a322934ad7384db",
           "anchor": "void functional()"
         },
         {
           "path": "tests/cell_chase_wiring_test.mjs",
-          "sha256": "f86eb092e2a85dc1d35706fb624e4bcb1aa4c2cf6a75d7fc2fd124e4ebbbd05f",
+          "sha256": "e071f0a389df2fd27942b8b33b7b27b24d8e19a7d327c0986c930de770529790",
           "anchor": "const preset="
         },
         {
@@ -12488,7 +12499,8 @@
         "Complete donor reread at matching raw hash. User cable pattern has a tested80-cell bijection. Board-owned logical80-to1 chase composes one six-pixel-red frame every750ms with no skip/repeat/fades. GPIO and DMA workers sleep between submitted complete frames, with startup black and renderer-owned repair refresh. Physical acceptance remains open.",
         "Backend selector is now a low-write application-only generated header, not a global compiler define. Plan remains read-only and both backend plans share identical SDK/compiler arguments; same canonical cache and no forced clean. SDK recompilation/cache-hit timing and physical driver acceptance remain separately measured.",
         "Mobile pixel diagnostics adapts clear/stage/show through the existing desktop PKAR frame format: single pixel or six aligned pixels, arbitrary RGB, bounded previous/next/direct position, full480 black on every move and All off. Same-board/boot acknowledged effects mode, one pending write, exact published RGB/revision readback and no reconnect replay; no AVR sender/timing code copied into Flutter.",
-        "Operational diagnostic repair moves clear/stage/show into one optional pixel-diagnostic board command, no AVR fan-out or persistence. Correlated full RGB readback uses deduplicated same-ID WS/HTTP recovery; older firmware keeps the explicitly labelled raw socket path. Compact controls retain confirmed cursor on failure, expose six physical indices and verified logical labels, and keep board-keyed draft cursor/colour. Loopback/page/renderer evidence does not certify phone or optical acceptance."
+        "Operational diagnostic repair moves clear/stage/show into one optional pixel-diagnostic board command, no AVR fan-out or persistence. Correlated full RGB readback uses deduplicated same-ID WS/HTTP recovery; older firmware keeps the explicitly labelled raw socket path. Compact controls retain confirmed cursor on failure, expose six physical indices and verified logical labels, and keep board-keyed draft cursor/colour. Loopback/page/renderer evidence does not certify phone or optical acceptance.",
+        "The donor stage/show ownership and startup clear are adapted to one immutable480-pixel worker mailbox. The explicit S3 RMT-DMA recovery scales/swaps logical RGB once into1440 internal bytes; IDF5.5.5's MSB-first bytes encoder fills its bounded DMA ring instead of allocating46084 expanded-symbol bytes. Wait completion and300us low latch precede buffer release; disabled startup still sends a complete black frame. Static GPIO remains separately selectable; no optical acceptance is inferred."
       ],
       "targets": [
         {
@@ -12498,7 +12510,7 @@
         },
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "98483c611717d40ed332506e215eed91b4c4d5820ec91048666056469ae5e023",
+          "sha256": "9d7a762b1c1c2937a26450e14e75935e438f83710ae9fe18355cf190c410421a",
           "anchor": "bool LedGrid::setCells("
         },
         {
@@ -12513,12 +12525,22 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "687f35d99175e9fc109bdd6a03db225cac97cd63ba0e9ffa68386ef66f6571b9",
+          "sha256": "a7c73c4a15d3876204d9902011e93d02b5507357d5684c1e48d12acb687236a9",
           "anchor": "bool pending=true;"
         },
         {
+          "path": "firmware/esp32s3/src/LedWire.h",
+          "sha256": "767a834768348560dab7d9a08fd026803419c480079e4fe54c6aac683364b46b",
+          "anchor": "inline constexpr uint16_t zeroHigh=14"
+        },
+        {
+          "path": "firmware/esp8266/src/LedRenderAdmission.h",
+          "sha256": "a6dc69b69cba74db1fff54fd75b8940bf88958404f6c3ac971b27797d5b13c50",
+          "anchor": "inline bool uartWindowReady("
+        },
+        {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "42926afc071c5fdf2d6b1f4c97c3dd090a6afe526587c118bf2e3a7e2abd3dc5",
+          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -12566,7 +12588,7 @@
         {
           "code": "Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness",
           "disposition": "pending",
-          "reason": "Bulk atomicity and host tests cannot establish an electrical waveform. Actual SDK uses interrupt-refilled two-node RMT DMA; a reported completed transaction/error0 is not proof against underrun. Wi-Fi optical stress and observed white-to-red transitions remain open."
+          "reason": "The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery uses350/700ns highs,1250ns bits and300us low; its SDK ring still requires ISR refill. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof."
         }
       ],
       "remaining": [
@@ -12575,7 +12597,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "6aab5684d2735a5b86f60100f20369354d510b3d0ad3ecebc9c326690ae45440",
+          "sha256": "1d9d4d8c0af2c42a76aafed99406572c95072f4cedfd392436e3ad4ef4b158de",
           "anchor": "Entire selection validation"
         },
         {
@@ -12585,12 +12607,12 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "63cde4350c895746060315aec95e59c751b8c16458995c583e54985dcaed7f89",
+          "sha256": "e27f0993c50d0c49fd1d8b2da6121b3445f8ba507b0a5f9d2a322934ad7384db",
           "anchor": "void functional()"
         },
         {
           "path": "tests/cell_chase_wiring_test.mjs",
-          "sha256": "f86eb092e2a85dc1d35706fb624e4bcb1aa4c2cf6a75d7fc2fd124e4ebbbd05f",
+          "sha256": "e071f0a389df2fd27942b8b33b7b27b24d8e19a7d327c0986c930de770529790",
           "anchor": "const preset="
         },
         {

@@ -1,4 +1,5 @@
 #include "../firmware/esp8266/src/SemanticPanel.h"
+#include "../firmware/esp8266/src/LedRenderAdmission.h"
 #include <cassert>
 #include <cstring>
 #include <iostream>
@@ -7,6 +8,15 @@ static void shown(const Presenter &p,uint32_t now,const char *expected) {
   char text[5];p.view(now,text);assert(!strcmp(text,expected));
 }
 int main() {
+  // Repeated optional UART refreshes at slow-loop tails cannot starve the S3
+  // renderer. SoftwareSerial still waits, using the fresh post-drain clock.
+  for(uint32_t tail=1000;tail<10000;tail+=1000) {
+    assert(!PakarLed::uartWindowReady(false,tail+1,tail+12));
+    assert(PakarLed::uartWindowReady(true,tail+1,tail+12));
+    assert(PakarLed::uartWindowReady(false,tail+20,tail+12));
+  }
+  assert(PakarLed::uartWindowReady(false,0x20,0x10));
+  assert(!PakarLed::uartWindowReady(false,0xfffffff0,0x10));
   Presenter p;uint8_t wire[48],frame[12];Event event;
   p.resting("C080");shown(p,0,"C080");
   p.post(Cell,"C001",1,1000);shown(p,1000,"C001");shown(p,2999,"C001");shown(p,3000,"C080");

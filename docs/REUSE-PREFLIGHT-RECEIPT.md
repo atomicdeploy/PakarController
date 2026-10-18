@@ -1,5 +1,39 @@
 # Donor-first preflight receipt
 
+## LED all-off physical regression and scoped recovery
+
+The user rejected physical all-off after an explicit80-cell Off batch. The
+published480-pixel RGB buffer was entirely black and gpio-static counters
+advanced without reported error; those observations did not prove a valid
+GPIO4 waveform or latch. Stop color tests, preserve80Off and disable output.
+
+Reconsulted firmware-hardware/led-cell-test and actual canonical PCController
+Project/AddressableLeds.cpp/.h through EOF at43417181.../a28009e6...; the existing
+owning ledger rows now bind the recovery, not a second disconnected inventory.
+Adapt donor stage/show/startup-clear ownership to a complete immutable worker
+mailbox, replacing AVR D6/PORTD16MHz ASM/MacroQueue/100-pixel addressing because
+the confirmed S3 owns GPIO4 and480 pixels. Read actual installed IDF5.5.5 RMT
+bytes-encoder/channel implementation and IRAM configuration, not only examples.
+Use1440 internal wire bytes and bounded SDK DMA ring; retain full-frame ownership,
+flash fence,300us low latch, startup black and fail-closed stop behavior. The
+new350/700ns recovery timing is requested, not measured, and static remains a
+separate selectable backend. Eight worker doubles (RGB/BGR/static/DMA/failure),
+panel and LED pipeline fixtures, and canonical real S3 compile passed.
+
+Fresh post-drain render time and hardware-UART admission fix a genuine renewed
+SoftwareSerial-lease starvation path. Segment cloud snapshots now coalesce
+outside AVR receive; other synchronous cloud I/O remains, including the drain's
+pre-publish timestamp limitation. Do not claim HTTP/OTA stalls fully solved.
+
+One LAN OTA aborted42460/2046320bytes; independent reads established the unchanged
+old boot/image before explicitly selected USB recovery. Fresh CRC-valid OTA19/20
+and same bridge/MAC selected app1; only that app range was written and verified.
+Full live image SHA d46b74b74d3471215fff3ac85cc4777287a7f9718f42cfd504804e195628f88f,
+VALID selected/running slot, auth-disabled WS/HTTP and same-owner native reconnection
+were verified. Exact image/boot/receipts and response timings are in commissioning.
+Three startup/clear transactions, error0 and80Off still require the user's
+physical all-black feedback; do not check optical production acceptance yet.
+
 ## Semantic TM1637 and live client events
 
 Read actual PCController Project/Runtime/FrontPanelRuntime.inc.h through all1379

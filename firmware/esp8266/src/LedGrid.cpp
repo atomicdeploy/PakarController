@@ -73,7 +73,10 @@ bool LedGrid::setCells(const BoardCore::CellBatch &selection,
     renderCell(index);
   }
   diagnosticActive_=false;
-  if(panelObserver_)panelObserver_(1,selection.first(),uint8_t(state)|(uint8_t(effect)<<2));
+  if(panelObserver_) {
+    if(selection.count()==kCells)panelObserver_(12,state,0); // ALL, not misleading C001.
+    else panelObserver_(1,selection.first(),uint8_t(state)|(uint8_t(effect)<<2));
+  }
   dirty_=true;return true;
 }
 

@@ -38,6 +38,8 @@ String panelStatusJson() {
   JsonDocument d;const auto now=millis();char text[5];semanticPanel.view(now,text);
   d["board_id"]=pcBoardId;d["boot_id"]=pcBootId;d["requested_text"]=text;
   d["event_id"]=semanticPanel.revision();d["dropped_events"]=semanticPanel.dropped();
+  d["cloud_display_coalesced"]=displayCloudCoalesced;
+  d["cloud_display_pending"]=pendingDisplayCloud.length()!=0;
   d["manual_owner"]=semanticPanel.manualActive(now)||avrCaptured;
   d["menu_active"]=avrMenuActive;d["hardware_confirmed"]=false;
   d["observation"]["fresh"]=tm1637DetectionKnown();
