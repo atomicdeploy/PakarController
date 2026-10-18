@@ -6,10 +6,44 @@
 #include "Protocol.h"
 #include "ApiPolicy.h"
 #include "PeerFence.h"
+#include "LedOutputControl.h"
+#include "AvrPeerHealth.h"
 
 using namespace BoardCore::Protocol;
 
 int main() {
+  Frame peer{};
+  peer.opcode = kPong;
+  assert(!BoardCore::validAvrObservation(peer, false));
+  assert(BoardCore::validAvrObservation(peer, true));
+  peer.opcode = kHelloResponse; peer.payloadLength = 9;
+  peer.payload[1] = kRoleHost;
+  assert(!BoardCore::validAvrObservation(peer, false));
+  peer.payload[1] = kRoleAvr;
+  assert(BoardCore::validAvrObservation(peer, false));
+  peer.payloadLength = 8;
+  assert(!BoardCore::validAvrObservation(peer, true));
+  peer.opcode = kGameState; peer.payloadLength = 4;
+  peer.payload[0] = kModeCellSelect; peer.payload[1] = 0;
+  peer.payload[2] = 80; peer.payload[3] = kCellWhite;
+  assert(BoardCore::validAvrObservation(peer, true));
+  peer.payload[2] = 0;
+  assert(!BoardCore::validAvrObservation(peer, true));
+  peer.opcode = kResetTelemetryResponse; peer.payloadLength = 6; peer.payload[5] = 1;
+  assert(BoardCore::validAvrObservation(peer, true));
+  peer.payload[5] = 2;
+  assert(!BoardCore::validAvrObservation(peer, true));
+  peer.opcode = 0xFF;
+  assert(!BoardCore::validAvrObservation(peer, true));
+  BoardCore::LedOutputControl output;
+  const uint8_t off[]={0},on[]={1},statik[]={2,0},effects[]={2,1},bad[]={2,2};
+  assert(BoardCore::parseLedOutputControl(off,1,output)&&!output.modeOnly&&!output.value);
+  assert(BoardCore::parseLedOutputControl(on,1,output)&&!output.modeOnly&&output.value);
+  assert(BoardCore::parseLedOutputControl(statik,2,output)&&output.modeOnly&&!output.value);
+  assert(BoardCore::parseLedOutputControl(effects,2,output)&&output.modeOnly&&output.value);
+  for(const auto length:{size_t(0),size_t(1),size_t(2),size_t(3)})assert(!BoardCore::parseLedOutputControl(bad,length,output));
+  assert(!BoardCore::parseLedOutputControl(nullptr,1,output));
+  assert(!BoardCore::parseLedOutputControl(on,2,output));
   // Adapt donor matching-identity/request assertions to an actual boot fence.
   // Donor session.go HELLO build metadata itself is NOT a boot epoch.
   using BoardCore::PeerFence::accepts;

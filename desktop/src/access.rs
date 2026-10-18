@@ -1,3 +1,8 @@
+/// Cached public metadata is scoped to its exact selected endpoint. It controls
+/// credential presentation only, never command admission or connection startup.
+pub fn requirement(cached: &Option<(String, bool)>, endpoint: &str) -> Option<bool> {
+    cached.as_ref().filter(|(source, _)| source == endpoint).map(|(_, enabled)| *enabled)
+}
 pub fn validate(user: &str, password: &str, confirmation: &str) -> Result<(), String> {
     if user.is_empty()
         || user.len() > 32
@@ -19,6 +24,15 @@ pub fn validate(user: &str, password: &str, confirmation: &str) -> Result<(), St
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn public_auth_requirement_survives_offline_editing_but_not_endpoint_changes() {
+        for enabled in [false, true] {
+            let cached=Some(("http://ledboard.local".into(),enabled));
+            assert_eq!(requirement(&cached,"http://ledboard.local"),Some(enabled));
+            assert_eq!(requirement(&cached,"http://other-board.local"),None);
+        }
+        assert_eq!(requirement(&None,"http://ledboard.local"),None);
+    }
     #[test]
     fn credential_boundaries_and_confirmation() {
         assert!(validate("admin", "new password", "new password").is_ok());

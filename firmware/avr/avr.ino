@@ -254,7 +254,7 @@ void recordCellAction(Effect effect) {
   ++cellActionRevision;
 }
 
-void resetGame() {
+void resetGame(bool playWelcome = true) {
   ++resetRevision;
   winner = 0;
   shiftRegisters.allOutputsOff();
@@ -263,7 +263,7 @@ void resetGame() {
     selectedState = kCellWhite;
   }
   showState();
-  if (!programmingLatch.active()) playBootMelody();
+  if (playWelcome && !programmingLatch.active()) playBootMelody();
   markStateDirty();
 }
 
@@ -336,10 +336,16 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       pcController.handle(frame.sequence, frame.payload, frame.payloadLength, millis(), micros());
       break;
     case kHello:
+      pcController.companionHeartbeat(millis());
       sendHello(frame.sequence);
       break;
     case kGetStatus:
       sendGameState(frame.sequence);
+#if !PAKAR_USE_BUSY_WIRE && !PAKAR_UART_BUFFERED
+      pcController.companionPoll(millis(),micros());
+#else
+      pcController.companionHeartbeat(millis());
+#endif
       break;
     case kSetMode:
       if (frame.payloadLength != 1 || frame.payload[0] > kModeSnake) {
@@ -412,6 +418,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       link.ack(frame.sequence, frame.opcode);
       break;
     case kPing:
+      pcController.companionHeartbeat(millis());
       link.send(kPong, frame.sequence, frame.payload, frame.payloadLength);
       break;
     case kProgrammingState:
@@ -427,7 +434,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
         applyProgrammingSafety();
       } else {
         buzzer.setMuted((pcController.settings().values().flags & 1U) != 0);
-        resetGame();
+        resetGame(false);
       }
       link.ack(frame.sequence, frame.opcode);
       markStateDirty();
@@ -468,7 +475,9 @@ void serviceInputs(uint32_t now) {
 }  // namespace
 
 void setup() {
-  resetTelemetry.begin(); // EEPROM work only after .init3 disabled stale WDT.
+  programmingLatch.begin();
+  // .init3 has disabled stale WDT; Prog must keep the ISP EEPROM backup exact.
+  resetTelemetry.begin(!programmingLatch.active());
 #if PAKAR_USE_BUSY_WIRE
   pinMode(BoardPins::EspBusy, INPUT_PULLUP);
 #endif
@@ -476,7 +485,6 @@ void setup() {
   buzzer.begin(BoardPins::Buzzer);
   display.begin(5);
   frontPanel.begin(millis());
-  programmingLatch.begin();
   if (programmingLatch.active()) applyProgrammingSafety();
   else tm1637Ack = display.detected();
   pcController.begin(millis());

@@ -42,15 +42,10 @@ void main() {
     expect(peerFixture(kind: 'controller').peer.modes, isEmpty);
     expect(peerFixture(features: ['table']).peer.modes.map((m) => m.id), [
       'cell',
-      'snake',
     ]);
     final status = peerFixture();
-    expect(status.peer.modes.map((m) => m.id), [
-      'cell',
-      'first-wins',
-      'snake',
-    ]);
-    expect(status.peer.allows('/api/mode', {'value': 'snake'}), true);
+    expect(status.peer.modes.map((m) => m.id), ['cell', 'first-wins']);
+    expect(status.peer.allows('/api/mode', {'value': 'snake'}), false);
     expect(status.peer.allows('/api/mode', {'value': 'not-advertised'}), false);
     final invalid = peerFixture().json;
     (invalid['capabilities']['table'] as Map)['rows'] = 9;

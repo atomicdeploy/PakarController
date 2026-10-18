@@ -27,7 +27,31 @@ for (const path of ['/update','/api/avr/image']) {
 }
 const tui=read('desktop/src/terminal_ui.rs');
 assert.match(tui,/text_command_output\(&pinned_client\(&current\)\?/);
-assert.match(tui,/let response = pinned_client\(&s\)\?/);
+// Cell mutations moved from a local per-cell POST to the shared atomic batch
+// path. Check its actual fresh-peer pin handoff and ACK/readback contract, not
+// the obsolete local variable spelling from that removed implementation.
+const batch=read('desktop/src/cell_batch.rs');
+function checkTuiBatch(source,batchSource) {
+  const start=source.indexOf('fn cell_request('),end=source.indexOf('fn command_allowed(');
+  assert.ok(start>=0 && end>start);
+  const cells=source.slice(start,end);
+  assert.match(cells,/let current=blocking_status\(client,endpoint\)\?/);
+  assert.match(cells,/if peer_key\(&current\)!=peer\{return Err/);
+  assert.match(cells,/let pin=crate::peer_http::Pin::from_status\(&current\).ok_or\("Verified peer required"\)\?/);
+  assert.match(cells,/crate::cell_batch::Request::new\(ids,state,"fade"\)\?/);
+  assert.match(cells,/crate::cell_batch::send\(client,endpoint,&request,Some\(&pin\),Some\(stop\),None\)/);
+  assert.doesNotMatch(cells,/\.post\(|for .*\bids\b/,'No unfenced scalar fallback');
+  assert.match(batchSource,/expected.is_some_and\(\|expected\|expected!=&pin\) \|\| !Request::supported\(&current\)/);
+  assert.match(batchSource,/let pinned=pin.client\(\)\?/);
+  assert.match(batchSource,/let response=pinned.post\(format!\("\{\}\/api\/cells"/);
+  assert.match(batchSource,/receipt\["accepted"\].as_bool\(\)!=Some\(true\) \|\| receipt\["count"\].as_u64\(\)!=Some\(request.ids.len\(\) as u64\)/);
+  assert.match(batchSource,/Pin::from_status\(&observed\).as_ref\(\)!=Some\(&pin\) \|\| !request.verify\(&observed\)/);
+}
+checkTuiBatch(tui,batch);
+assert.throws(()=>checkTuiBatch(tui.replace('if peer_key(&current)!=peer','if false'),batch));
+assert.throws(()=>checkTuiBatch(tui.replace('send(client,endpoint,&request,Some(&pin),Some(stop),None)','send(client,endpoint,&request,None,Some(stop),None)'),batch));
+assert.throws(()=>checkTuiBatch(tui,batch.replace('let response=pinned.post','let response=client.post')));
+assert.throws(()=>checkTuiBatch(tui,batch.replace(' || !request.verify(&observed)','')));
 const native=read('desktop/src/main.rs');
 assert.match(native,/if !self\.configuration_loaded && self\.command_route\(\) == Some\(Transport::WiFi\)/,
   'Settings bootstrap must wait for fresh selected Wi-Fi status, not add offline preflight incidents');

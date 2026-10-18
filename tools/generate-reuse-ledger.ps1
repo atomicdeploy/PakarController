@@ -9,6 +9,7 @@ param(
     [string]$RayanLampRoot = 'C:\Users\David\Documents\Codex\2026-07-23\ba\outputs\RayanLamp',
     [string]$DecisionsPath,
     [string]$EvidencePath,
+    [string]$ComparisonPath=(Join-Path $PSScriptRoot '../docs/file-comparison-evidence.json'),
     [string]$OutputPath,
     [ValidateSet('Pealayer','PCController','ControllerBoardMini/Puzzles','PuzzleBoard','ControllerBoardMini','PU850-ESP','RayanLamp')]
     [string]$OnlyOrigin
@@ -30,6 +31,12 @@ function Get-GitFiles {
 }
 
 . (Join-Path $PSScriptRoot 'donor-files.ps1')
+$taskPinnedSources=@{}
+if(Test-Path -LiteralPath $ComparisonPath){
+    foreach($taskEntry in (Get-Content -LiteralPath $ComparisonPath -Raw | ConvertFrom-Json).files){
+        if($taskEntry.PSObject.Properties['source_blob']){$taskPinnedSources["$($taskEntry.origin)|$($taskEntry.path)"]=$taskEntry}
+    }
+}
 
 function Get-Category {
     param([string]$Origin, [string]$RelativePath)
@@ -60,6 +67,22 @@ function Add-LedgerRows {
         $normalized = $relative.Replace('\', '/')
         $fullPath = Join-Path $Root $relative
         if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+            $taskPinned=$taskPinnedSources["$Origin|$normalized"]
+            if($taskPinned -and $Origin -eq 'PU850-ESP' -and $taskPinned.source_blob.revision -eq $Revision){
+                # Compare the cached read's Git object to the CURRENT tree without
+                # fetching blobs, filling the sparse checkout or accepting path-only hints.
+                $taskTree=& git -C $Root ls-tree $Revision -- $normalized
+                if($LASTEXITCODE -ne 0){throw 'Cannot verify pinned source tree'}
+                $taskOid=[regex]::Match(($taskTree -join "`n"),'^[0-9]+ blob ([a-f0-9]{40})\t').Groups[1].Value
+                $taskCandidate=[pscustomobject]@{origin=$Origin;availability='pinned-blob';revision=$Revision;sha256=$taskPinned.sha256}
+                if($taskOid -eq $taskPinned.source_blob.git_sha -and (Test-PakarDonorSnapshot $taskCandidate $taskPinned)){
+                    $Rows.Add([pscustomobject][ordered]@{
+                        origin=$Origin;revision=$Revision;path=$normalized;sha256=$taskPinned.sha256;bytes=$taskPinned.source_blob.bytes;
+                        category=(Get-Category -Origin $Origin -RelativePath $normalized);availability='pinned-blob';screening_signals='';review_status='screened';reuse_target='';
+                        notes='Exact immutable GitHub blob read, raw hash and current Git tree object bound in file-comparison-evidence.json. Sparse working-tree file remains absent; not live filesystem proof.'
+                    });continue
+                }
+            }
             $Rows.Add([pscustomobject][ordered]@{
                 origin=$Origin; revision=$Revision; path=$normalized; sha256=''; bytes='';
                 category=(Get-Category -Origin $Origin -RelativePath $normalized);

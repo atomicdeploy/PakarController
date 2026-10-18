@@ -15,7 +15,7 @@ pub enum Action {
 
 pub fn method_label(method: Transport) -> &'static str {
     match method {
-        Transport::WiFi => "Wi-Fi",
+        Transport::WiFi => "Network",
         Transport::Serial => "USB serial",
     }
 }
@@ -27,7 +27,7 @@ pub fn method_picker(ui: &mut egui::Ui, method: &mut Transport, busy: bool) {
             .selected_text(method_label(*method))
             .width(180.0)
             .show_ui(ui, |ui| {
-                ui.dropdown_value(method, Transport::WiFi, "Wi-Fi");
+                ui.dropdown_value(method, Transport::WiFi, method_label(Transport::WiFi));
                 ui.dropdown_value(method, Transport::Serial, "USB serial");
             });
     });
@@ -199,14 +199,17 @@ pub fn details(
     ui: &mut egui::Ui,
     method: Transport,
     editable: bool,
+    authentication: Option<bool>,
     draft: &mut Draft,
     ports: impl FnOnce() -> Result<Vec<String>, String>,
 ) {
     ui.add_enabled_ui(editable, |ui| match method {
-        Transport::WiFi => dialog::section(ui, icons::GLOBE, "Wi-Fi", |ui| {
+        Transport::WiFi => dialog::section(ui, icons::GLOBE, "Network", |ui| {
             field(ui, icons::GLOBE, "Endpoint", &mut draft.endpoint, false);
-            field(ui, icons::LOCK, "Username", &mut draft.user, false);
-            field(ui, icons::LOCK, "Password", &mut draft.password, true);
+            if authentication == Some(true) {
+                field(ui, icons::LOCK, "Username", &mut draft.user, false);
+                field(ui, icons::LOCK, "Password", &mut draft.password, true);
+            }
         }),
         Transport::Serial => dialog::section(ui, icons::PLUG, "USB serial", |ui| {
             field(
@@ -231,6 +234,11 @@ pub fn details(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn ethernet_and_wifi_share_one_network_method_not_two_owners() {
+        assert_eq!(method_label(Transport::WiFi), "Network");
+        assert_eq!(method_label(Transport::Serial), "USB serial");
+    }
     fn text(output: &egui::FullOutput) -> Vec<String> {
         output
             .shapes
@@ -326,6 +334,7 @@ mod tests {
     #[test]
     fn dialog_details_are_selected_method_only_and_do_not_probe_closed_ports() {
         for method in [Transport::WiFi, Transport::Serial] {
+          for authentication in [None, Some(false), Some(true)] {
             let ctx = egui::Context::default();
             let mut draft = Draft {
                 endpoint: "http://ledboard.local".into(),
@@ -334,7 +343,7 @@ mod tests {
                 port: "COM7".into(),
             };
             let mut out = ctx.run_ui(egui::RawInput::default(), |ui| {
-                details(ui, method, true, &mut draft, || {
+                details(ui, method, true, authentication, &mut draft, || {
                     panic!("closed port popup must not enumerate")
                 });
             });
@@ -346,13 +355,16 @@ mod tests {
             );
             assert_eq!(
                 texts.iter().any(|s| s == "Username"),
-                method == Transport::WiFi
+                method == Transport::WiFi && authentication == Some(true)
             );
+            assert_eq!(texts.iter().any(|s|s == "Password"),
+                method == Transport::WiFi && authentication == Some(true));
             assert_eq!(
                 texts.iter().any(|s| s == "Port or hardware path"),
                 method == Transport::Serial
             );
             assert_eq!(draft.port, "COM7");
+          }
         }
     }
     #[test]

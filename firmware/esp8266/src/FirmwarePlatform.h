@@ -32,6 +32,14 @@ inline auto flashChipMode() -> decltype(ESP.getFlashChipMode()) {
 #endif
   return ESP.getFlashChipMode();
 }
+inline uint32_t flashChipSpeed() {
+#if defined(ARDUINO_ARCH_ESP32)
+  // Arduino reads the image header through esp_flash_read, not a partition API.
+  PakarS3::ScopedLedFlashPause pause;
+  if(!pause) return 0;
+#endif
+  return ESP.getFlashChipSpeed();
+}
 inline uint32_t sketchSize() {
 #if defined(ARDUINO_ARCH_ESP32)
   const auto *running=esp_ota_get_running_partition();

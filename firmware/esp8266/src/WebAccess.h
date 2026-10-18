@@ -36,7 +36,7 @@ class WebAccess {
       return;
     }
     const bool publicRead = request->method() == HTTP_GET &&
-        (path == F("/") || path == F("/api/auth/info") || path == F("/description.xml") ||
+        (path == F("/") || path == F("/basic") || path == F("/api/auth/info") || path == F("/description.xml") ||
          path == F("/assets/fonts/Vazirmatn-Regular.ttf") || path == F("/assets/fonts/Vazirmatn-OFL.txt"));
     const bool login = path == F("/login") && request->method() == HTTP_POST;
     if (publicRead || login) { next(); return; }
@@ -78,6 +78,7 @@ class WebAccess {
   bool allowed(AsyncWebServerRequest *request) {
     PakarAccessDetail::Guard lock(mutex_);
     if (!accessConfig.ready()) return false;
+    if (!accessConfig.enabled()) return true;
     if (basic_.allowed(request)) return true;
     const String token = cookieToken(request);
     return sessions_.validate(token.c_str(), millis());
@@ -100,11 +101,12 @@ class WebAccess {
     const String token = cookieToken(request);
     PakarAccessDetail::Guard lock(mutex_);
     if (!accessConfig.ready()) return false;
+    const bool open = !accessConfig.enabled();
     const bool basic = basic_.allowed(request);
-    if (!basic && !sessions_.validate(token.c_str(), millis())) return false;
+    if (!open && !basic && !sessions_.validate(token.c_str(), millis())) return false;
     for (const auto &slot : sockets_) if (slot.id == id) return false;
     for (auto &slot : sockets_) if (slot.id == 0) {
-      slot.id = id; slot.basic = basic;
+      slot.id = id; slot.basic = basic; slot.open = open;
       token.toCharArray(slot.token, sizeof(slot.token)); return true;
     }
     return false;
@@ -112,7 +114,8 @@ class WebAccess {
   bool socketAllowed(uint32_t id) {
     PakarAccessDetail::Guard lock(mutex_);
     for (auto &slot : sockets_) if (slot.id == id)
-      return accessConfig.ready() && (slot.basic || sessions_.validate(slot.token, millis()));
+      return accessConfig.ready() && (slot.open ? !accessConfig.enabled() :
+          (slot.basic || sessions_.validate(slot.token, millis())));
     return false;
   }
   void forgetSocket(uint32_t id) {
@@ -123,7 +126,8 @@ class WebAccess {
     uint32_t expired[8]{}; size_t count = 0;
     {
       PakarAccessDetail::Guard lock(mutex_);
-      for (auto &slot : sockets_) if (slot.id && !slot.basic && !sessions_.validate(slot.token, millis(), false)) {
+      for (auto &slot : sockets_) if (slot.id && (!accessConfig.ready() ||
+          (slot.open ? accessConfig.enabled() : (!slot.basic && !sessions_.validate(slot.token, millis(), false))))) {
         expired[count++] = slot.id; slot = Socket{};
       }
     }
@@ -139,8 +143,9 @@ class WebAccess {
       {
         PakarAccessDetail::Guard lock(mutex_);
         body = F("{\"ready\":"); body += accessConfig.ready() ? F("true") : F("false");
+        body += F(",\"enabled\":"); body += accessConfig.enabled() ? F("true") : F("false");
         body += F(",\"username\":\""); body += accessConfig.username();
-        body += F("\",\"default_credentials\":"); body += accessConfig.defaultsActive() ? F("true") : F("false");
+        body += F("\",\"default_credentials\":"); body += accessConfig.enabled() && accessConfig.defaultsActive() ? F("true") : F("false");
         body += F(",\"login\":\"/login\",\"settings\":\"/api/auth\"}");
       }
       auto response = request->beginResponse(200, "application/json", body);
@@ -148,6 +153,12 @@ class WebAccess {
     });
     server.on("/login", HTTP_POST, [this](AsyncWebServerRequest *request) {
       if (!sameOrigin(request)) { request->send(403, "text/plain", "Cross-origin login rejected"); return; }
+      {
+        PakarAccessDetail::Guard lock(mutex_);
+        if (accessConfig.ready() && !accessConfig.enabled()) {
+          request->send(200, "application/json", "{\"authenticated\":true,\"enabled\":false}"); return;
+        }
+      }
       char token[33]{}; String error;
       const int status = createSession(request, token, error);
       if (status != 200) { request->send(status, "text/plain", error); return; }
@@ -170,23 +181,32 @@ class WebAccess {
     server.on("/api/auth", HTTP_GET, [this](AsyncWebServerRequest *request) {
       String body;
       { PakarAccessDetail::Guard lock(mutex_);
-        body = String(F("{\"username\":\"")) + accessConfig.username() + F("\",\"password_set\":true}"); }
+        body = String(F("{\"username\":\"")) + accessConfig.username() + F("\",\"password_set\":true,\"enabled\":") +
+            (accessConfig.enabled() ? F("true}") : F("false}")); }
       request->send(200, "application/json", body);
     });
     server.on("/api/auth", HTTP_POST, [this, credentialsChanged, busy](AsyncWebServerRequest *request) {
       if (busy()) { request->send(409, "text/plain", "Finish the current firmware operation before changing credentials"); return; }
       String error;
+      bool enabled = false;
       {
         PakarAccessDetail::Guard lock(mutex_);
-        if (!accessConfig.change(request->arg("current_password"), request->arg("username"), request->arg("password"))) error = accessConfig.error();
+        const String flag = request->arg("enabled");
+        if (request->hasArg("enabled") && flag != "true" && flag != "false") error = F("enabled must be true or false");
+        else if (!accessConfig.configure(request->arg("current_password"),
+            request->hasArg("enabled") ? flag == "true" : accessConfig.enabled(),
+            request->arg("username"), request->arg("password"))) error = accessConfig.error();
         else {
+          enabled = accessConfig.enabled();
           sessions_.clear(); for (auto &slot : sockets_) slot = Socket{};
           refreshCredentialsLocked();
         }
       }
       if (error.length()) { request->send(400, "text/plain", error); return; }
       credentialsChanged();
-      request->send(200, "application/json", "{\"updated\":true,\"reauthenticate\":true}");
+      request->send(200, "application/json", enabled ?
+          "{\"updated\":true,\"enabled\":true,\"reauthenticate\":true}" :
+          "{\"updated\":true,\"enabled\":false,\"reauthenticate\":false}");
     });
   }
  private:
@@ -239,5 +259,5 @@ class WebAccess {
   BoardCore::Access::Sessions sessions_;
   uint8_t failures_ = 0;
   uint32_t failedAt_ = 0;
-  struct Socket { uint32_t id = 0; bool basic = false; char token[33] = {}; } sockets_[8];
+  struct Socket { uint32_t id = 0; bool basic = false; bool open = false; char token[33] = {}; } sockets_[8];
 };

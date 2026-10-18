@@ -417,6 +417,10 @@ impl Model {
                             .into();
                     return (false, None);
                 }
+                if !self.status.as_ref().is_some_and(crate::cell_batch::Request::supported){
+                    self.notice="Atomic cell-batch support is not acknowledged; no per-cell fallback".into();
+                    return (false,None);
+                }
                 if self.selection.ids.is_empty() {
                     self.notice = "Select cells first; selection never changes output".into();
                 } else {
@@ -536,6 +540,7 @@ impl Model {
                             lines.push(format!("LED output: {}", match s.led_output.get("enabled").and_then(|v| v.as_bool()) {
                                 Some(true) => "On", Some(false) => "Off", None => "Unknown",
                             }));
+                            lines.push(format!("Output mode: {}", crate::led_output_mode(s).unwrap_or("Unknown")));
                         }
                         if m.has("display") && s.tm1637_ack {
                             lines.push(format!(
@@ -656,7 +661,7 @@ impl Model {
                     "/: Find cell IDs/ranges, Enter: apply selection",
                     "w / r / o: selected cells white / red / off",
                     ": command palette uses the real shared CLI parser",
-                    ":led-output on / :led-output off: output service",
+                    ":led-output on|off|static|effects: output service and mode",
                     "Selection does not write; actions send once, no replay",
                     "q / Ctrl+C: exit, stop unsent work",
                     "Rich device-settings forms remain pending",
@@ -705,66 +710,11 @@ fn cell_request(
     peer: &str,
     stop: &AtomicBool,
 ) -> Result<String, String> {
-    let mut accepted = 0;
-    for id in ids {
-        if stop.load(Ordering::Acquire) {
-            return Err(format!(
-                "Stopped before cell {id}; {accepted} writes accepted, not rolled back"
-            ));
-        }
-        // Read preflight for EVERY write; no old capability or peer gets reused.
-        let s = blocking_status(client, endpoint).map_err(|error| {
-            format!(
-                "Preflight failed before cell {id}; {accepted} earlier writes accepted: {error}"
-            )
-        })?;
-        if peer_key(&s) != peer
-            || !fenced(&s)
-            || s.programming_latch
-            || !(1..=80).contains(id)
-            || !s.capabilities.as_ref().is_some_and(|m| m.table())
-        {
-            return Err(format!(
-                "Peer/capability/latch changed; stopped with {accepted} writes accepted"
-            ));
-        }
-        if stop.load(Ordering::Acquire) {
-            return Err(format!("Stopped; {accepted} writes accepted"));
-        }
-        // Fresh GET alone has a TOCTOU window. The server checks these pinned
-        // headers before dispatch/uploads; old boot writes receive 409, no replay.
-        let response = pinned_client(&s)?
-            .post(format!("{}/api/cell", endpoint.base.trim_end_matches('/')))
-            .basic_auth(&endpoint.user, Some(&endpoint.password))
-            .form(&[
-                ("id", id.to_string()),
-                ("state", state.into()),
-                ("effect", "fade".into()),
-            ])
-            .send()
-            .map_err(|e| {
-                format!(
-                    "Cell {id} outcome unknown: {}; earlier {accepted} accepted; nothing replayed",
-                    diagnostics::describe_error(e)
-                )
-            })?;
-        if !response.status().is_success() {
-            return Err(format!(
-                "Cell {id}: HTTP {}; earlier {accepted} accepted; stopped",
-                response.status()
-            ));
-        }
-        let receipt: serde_json::Value = response.json().map_err(|_| format!("Cell {id} outcome unknown: invalid receipt; earlier {accepted} accepted; nothing replayed"))?;
-        if receipt["accepted"].as_bool() != Some(true) {
-            return Err(format!(
-                "Cell {id} was not acknowledged; earlier {accepted} accepted; nothing replayed"
-            ));
-        }
-        accepted += 1;
-    }
-    Ok(format!(
-        "{accepted} writes accepted. Readback below; acceptance is not physical/durable proof."
-    ))
+    let current=blocking_status(client,endpoint)?;
+    if peer_key(&current)!=peer{return Err("Selection belongs to a retired peer; nothing sent".into());}
+    let pin=crate::peer_http::Pin::from_status(&current).ok_or("Verified peer required")?;
+    let request=crate::cell_batch::Request::new(ids,state,"fade")?;
+    crate::cell_batch::send(client,endpoint,&request,Some(&pin),Some(stop),None)
 }
 fn command_allowed(s: &DeviceStatus, words: &[&str]) -> bool {
     if !read_only_command(words) && !fenced(s) {
@@ -779,11 +729,12 @@ fn command_allowed(s: &DeviceStatus, words: &[&str]) -> bool {
         ["device", "name" | "identity"] | ["device", "rename" | "label" | "configure", ..] => {
             "identity"
         }
-        ["auth", "info" | "change", ..] => "network",
+        ["auth", "info" | "change" | "disable", ..] => "network",
         ["avr", ..] => "isp",
         ["firmware", ..] => "ota",
         ["mode", mode] => return !s.programming_latch && m.modes().any(|v| v.id == *mode),
         ["cell", ..] | ["reset"] => return !s.programming_latch && m.table(),
+        ["cells", ..] => return crate::cell_batch::Request::supported(s),
         ["snake", ..] => {
             return !s.programming_latch
                 && m.table()
@@ -793,6 +744,8 @@ fn command_allowed(s: &DeviceStatus, words: &[&str]) -> bool {
         ["brightness" | "effect", ..] => "leds",
         ["led-output", "on" | "off"] => return !s.programming_latch
             && m.has("leds") && s.led_output.get("enabled").and_then(|v| v.as_bool()).is_some(),
+        ["led-output", "static" | "effects"] => return !s.programming_latch
+            && m.has("leds") && crate::led_output_mode(s).is_some(),
         ["display", "segments", ..] => "text",
         ["display", ..] => "display",
         ["audio", cue] => {
@@ -824,6 +777,12 @@ fn command_request(
     let mut output = String::new();
     if stop.load(Ordering::Acquire) {
         return Err("Stopped after read-only preflight; command not dispatched".into());
+    }
+    if let ["cells",ids,state,rest @ ..]=words.as_slice(){
+        let effect=match rest{[]=>"immediate",[effect]=>effect,_=>return Err("cells IDS STATE [EFFECT]".into())};
+        let request=crate::cell_batch::Request::new(&ui::cell_search::parse(ids)?,state,effect)?;
+        let pin=crate::peer_http::Pin::from_status(&current).ok_or("Verified peer required")?;
+        return crate::cell_batch::send(client,endpoint,&request,Some(&pin),Some(stop),None);
     }
     if read_only_command(&words) {
         crate::text_command_output(client, endpoint, &words, &mut output)?;
@@ -880,6 +839,7 @@ pub fn run(endpoint: Endpoint) -> Result<(), String> {
                                 Ok(password) => { endpoint.user = (*user).into(); endpoint.password = password; }
                                 Err(_) => result = Err("Credentials may have changed; refresh private authentication before continuing".into()),
                             },
+                            ["auth", "disable"] => { endpoint.user.clear(); endpoint.password.clear(); },
                             _ => {}
                         }
                     }
@@ -986,7 +946,7 @@ mod tests {
     fn table() -> DeviceStatus {
         serde_json::from_value(serde_json::json!({"hostname":"ledboard","cells":vec!["white";80],
         "board_id":"esp8266-aabbccddeeff","boot_id":"123456789abcdef0123456789abcdef0","http_peer_fencing":true,
-        "capabilities":{"board_kind":"table","name":"Table","acknowledged_features":["table"],"table":{"columns":10,"rows":8,"pixels_per_cell":6}}})).unwrap()
+        "capabilities":{"board_kind":"table","name":"Table","acknowledged_features":["table","cell-batch"],"table":{"columns":10,"rows":8,"pixels_per_cell":6}}})).unwrap()
     }
     fn press(code: KeyCode) -> KeyEvent {
         KeyEvent::new(code, KeyModifiers::NONE)
@@ -1027,6 +987,14 @@ mod tests {
             assert!(command_allowed(&s, &["led-output", "off"]));
         }
         assert!(!command_allowed(&s, &["led-output", "toggle"]));
+        assert!(!command_allowed(&s, &["led-output", "static"]));
+        for mode in ["static", "effects"] {
+            s.led_output["mode"] = mode.into();
+            assert!(command_allowed(&s, &["led-output", "static"]));
+            assert!(command_allowed(&s, &["led-output", "effects"]));
+        }
+        s.led_output["mode"] = "future".into();
+        assert!(!command_allowed(&s, &["led-output", "effects"]));
         s.programming_latch = true;
         assert!(!command_allowed(&s, &["led-output", "on"]));
         s.programming_latch = false;
@@ -1045,7 +1013,9 @@ mod tests {
         assert!(m.key(press(KeyCode::Enter)).1.is_none());
         assert_eq!(ui::cell_search::format_selection(&m.selection.ids), "1–3");
         assert!(m.key(press(KeyCode::Down)).1.is_none());
-        assert_eq!(m.cursor, 11);
+        // Shared visual navigation keeps the column: the next row pair is21,
+        // while11 is the adjacent half-staggered column to the right of1.
+        assert_eq!(m.cursor, 21);
         assert_eq!(m.selection.cells(), [1, 2, 3]);
         if let Some(Work::Cells { ids, state, .. }) = m.key(press(KeyCode::Char('r'))).1 {
             assert_eq!(ids, [1, 2, 3]);
@@ -1059,6 +1029,9 @@ mod tests {
         let mut repeat = press(KeyCode::Char('w'));
         repeat.kind = KeyEventKind::Repeat;
         assert!(m.key(repeat).1.is_none());
+        m.status.as_mut().unwrap().capabilities.as_mut().unwrap().acknowledged_features.retain(|feature|feature!="cell-batch");
+        assert!(m.key(press(KeyCode::Char('r'))).1.is_none());
+        assert!(!command_allowed(m.status.as_ref().unwrap(),&["cells","1-3","red"]));
     }
     #[test]
     fn loss_and_peer_change_revoke_controls_without_false_recovery() {
@@ -1282,7 +1255,8 @@ mod tests {
         changed.boot_id = "223456789abcdef0123456789abcdef0".into();
         let (endpoint, requests, worker) = fixture(vec![
             serde_json::to_value(&s).unwrap(),
-            serde_json::json!({"accepted":true}),
+            serde_json::to_value(&s).unwrap(),
+            serde_json::json!({"accepted":true,"count":2}),
             serde_json::to_value(changed).unwrap(),
         ]);
         let client = reqwest::blocking::Client::builder()
@@ -1300,14 +1274,15 @@ mod tests {
         );
         worker.join().unwrap();
         let requests = requests.iter().collect::<Vec<_>>();
-        assert_eq!(requests.len(), 3);
+        assert_eq!(requests.len(), 4);
         assert!(requests[0].starts_with("GET /api/status "));
-        assert!(requests[1].starts_with("POST /api/cell "));
-        assert!(requests[1].contains("id=1&state=red&effect=fade"));
-        assert!(requests[1].contains("x-pakar-board: esp8266-aabbccddeeff\r\n"));
-        assert!(requests[1].contains("x-pakar-boot: 123456789abcdef0123456789abcdef0\r\n"));
-        assert!(result.unwrap_err().contains("1 writes accepted"));
+        assert!(requests[2].starts_with("POST /api/cells "));
+        assert!(requests[2].contains("ids=1%2C2&state=red&effect=fade"));
+        assert!(requests[2].contains("x-pakar-board: esp8266-aabbccddeeff\r\n"));
+        assert!(requests[2].contains("x-pakar-boot: 123456789abcdef0123456789abcdef0\r\n"));
+        assert!(result.unwrap_err().contains("same-board readback"));
         let (endpoint, requests, worker) = fixture(vec![
+            serde_json::to_value(&s).unwrap(),
             serde_json::to_value(&s).unwrap(),
             serde_json::json!({"accepted":false}),
         ]);
@@ -1322,7 +1297,7 @@ mod tests {
         .unwrap_err()
         .contains("not acknowledged"));
         worker.join().unwrap();
-        assert_eq!(requests.iter().count(), 2);
+        assert_eq!(requests.iter().count(), 3);
     }
     #[test]
     fn server_reboot_between_preflight_and_post_stops_without_replay() {
@@ -1330,6 +1305,7 @@ mod tests {
         // that rebooted after GET rejects the old pinned POST with 409.
         let s = table();
         let (endpoint, requests, worker) = fixture(vec![
+            serde_json::to_value(&s).unwrap(),
             serde_json::to_value(&s).unwrap(),
             serde_json::json!({"_http_status":409,"error":"peer_changed","accepted":false}),
         ]);
@@ -1349,8 +1325,8 @@ mod tests {
         worker.join().unwrap();
         assert!(error.contains("HTTP 409"));
         let requests: Vec<_> = requests.iter().collect();
-        assert_eq!(requests.len(), 2);
-        assert!(requests[1].contains("x-pakar-boot: "));
+        assert_eq!(requests.len(), 3);
+        assert!(requests[2].contains("x-pakar-boot: "));
     }
     #[test]
     fn captured_shared_cli_command_is_read_only_and_has_no_output_side_effects() {

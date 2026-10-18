@@ -27,8 +27,18 @@ pub fn launch_command(args: &[String]) -> Command {
         Command::LedEffect { value: option("--led-effect").unwrap_or_default() }
     } else if args.iter().any(|v| v == "--led-output") {
         Command::LedOutput { value: option("--led-output").unwrap_or_default() }
+    } else if args.iter().any(|v| v == "--pixel-arm") {
+        Command::PixelArm
+    } else if args.iter().any(|v| v == "--pixel-show") {
+        Command::PixelShow { index: option("--pixel-show").and_then(|v| v.parse().ok()).unwrap_or(0) }
     } else if args.iter().any(|v| v == "--led-mode") {
         Command::LedMode { value: option("--led-mode").unwrap_or_default() }
+    } else if let Some(at) = args.iter().position(|v| v == "--led-cells") {
+        Command::LedCells {
+            ids:args.get(at+1).filter(|v|!v.starts_with("--")).cloned().unwrap_or_default(),
+            state:args.get(at+2).filter(|v|!v.starts_with("--")).cloned().unwrap_or_default(),
+            effect:args.get(at+3).filter(|v|!v.starts_with("--")).cloned().unwrap_or_else(||"immediate".into()),
+        }
     } else if let Some(at) = args.iter().position(|v| v == "--led-cell") {
         Command::LedCell {
             id: args.get(at + 1).and_then(|v| v.parse().ok()).unwrap_or(0),
@@ -87,6 +97,13 @@ pub fn launch_command(args: &[String]) -> Command {
 fn led_effect_code(value: &str) -> Option<u8> {
     match value { "none" => Some(0), "rainbow" => Some(1), "fire" => Some(2), _ => None }
 }
+fn led_output_request(value: &str) -> Option<(Vec<(String, String)>, Vec<u8>)> {
+    match value {
+        "on" | "off" => Some((vec![("enabled".into(), (value == "on").to_string())], vec![u8::from(value == "on")])),
+        "static" | "effects" => Some((vec![("mode".into(), value.into())], vec![2, u8::from(value == "effects")])),
+        _ => None,
+    }
+}
 fn led_mode_code(value: &str) -> Option<u8> {
     match value { "cell" => Some(1), "snake" => Some(3), _ => None }
 }
@@ -117,6 +134,16 @@ mod lifecycle_launch_tests {
         assert_eq!(parsed(&["--disconnect"]), serde_json::json!({"command":"disconnect"}));
         assert_eq!(parsed(&["--led-output", "on"]), serde_json::json!({"command":"led_output","value":"on"}));
         assert_eq!(parsed(&["--led-output", "off"]), serde_json::json!({"command":"led_output","value":"off"}));
+        for mode in ["static", "effects"] {
+            assert_eq!(parsed(&["--led-output", mode]), serde_json::json!({"command":"led_output","value":mode}));
+            let (form, payload) = led_output_request(mode).unwrap();
+            assert_eq!(form, vec![("mode".into(), mode.into())]);
+            assert_eq!(payload, vec![2, u8::from(mode == "effects")]);
+        }
+        assert!(led_output_request("animated").is_none());
+        assert_eq!(parsed(&["--pixel-arm"]), serde_json::json!({"command":"pixel_arm"}));
+        assert_eq!(parsed(&["--pixel-show", "480"]), serde_json::json!({"command":"pixel_show","index":480}));
+        assert_eq!(parsed(&["--pixel-show", "bad"])["index"], 0);
         assert_eq!(parsed(&["--wifi", "--endpoint", "--app-status"])["endpoint"], serde_json::Value::Null);
     }
     #[test]
@@ -129,6 +156,7 @@ mod lifecycle_launch_tests {
     }
     #[test]
     fn led_launches_use_the_exact_existing_api_and_wire_values() {
+        assert_eq!(parsed(&["--led-cells","1,8-12,80","red","fade"]),serde_json::json!({"command":"led_cells","ids":"1,8-12,80","state":"red","effect":"fade"}));
         for (name, code) in [("none",0), ("rainbow",1), ("fire",2)] {
             assert_eq!(parsed(&["--led-effect", name]), serde_json::json!({"command":"led_effect","value":name}));
             assert_eq!(led_effect_code(name), Some(code));
@@ -187,8 +215,8 @@ fn field(ui: &mut egui::Ui, icon: &str, label: &str, value: &mut String, passwor
 }
 
 fn finish_table_area(ui: &mut egui::Ui, area: egui::Rect) {
-    // Absolute ui.put calls move the cursor to the last (unshifted) cell.
-    // Restore the complete 8.5-row extent before placing the footer.
+    // Absolute ui.put calls move the cursor to the last cell.
+    // Restore the complete staggered-grid extent before placing the footer.
     ui.advance_cursor_after_rect(area);
     ui.add_space(8.0);
 }
@@ -203,13 +231,10 @@ mod table_geometry_tests {
             let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
                 let height = pitch * 0.72;
                 let (area, _) = ui.allocate_exact_size(
-                    egui::vec2(pitch * 10.0, height * 8.5),
+                    egui::vec2(pitch * 20.0, height * 4.5),
                     egui::Sense::hover(),
                 );
-                let last_cell = egui::Rect::from_min_size(
-                    area.min + egui::vec2(pitch * 9.0, height * 7.0),
-                    egui::vec2(pitch - 7.0, height - 7.0),
-                );
+                let last_cell = crate::ui::cell_table::cell_rect(area.min,pitch,height,80);
                 ui.put(last_cell, egui::Label::new("80"));
                 finish_table_area(ui, area);
                 let footer = ui.label(crate::ui::i18n::text("Cell selected")).rect;
@@ -301,14 +326,19 @@ impl PakarControllerApp {
                 return;
             }
             Command::LedOutput { value } => {
-                if matches!(value.as_str(), "on" | "off") {
-                    let enabled = value == "on";
-                    self.action("/api/led/output", vec![("enabled".into(), enabled.to_string())],
-                        OP_LED_OUTPUT, vec![u8::from(enabled)]);
-                } else { self.message = "LED output requires on or off".into(); }
+                if let Some((form, payload)) = led_output_request(&value) {
+                    let known = self.live_status().is_some_and(|s| match value.as_str() {
+                        "static" | "effects" => led_output_mode(s).is_some(),
+                        _ => s.led_output.get("enabled").and_then(|v| v.as_bool()).is_some(),
+                    });
+                    if known { self.action("/api/led/output", form, OP_LED_OUTPUT, payload); }
+                    else { self.message = "LED output state is unknown for the current board; refresh before changing it".into(); }
+                } else { self.message = "LED output requires on, off, static or effects".into(); }
                 ctx.request_repaint();
                 return;
             }
+            Command::PixelArm => { self.arm_pixel_diagnostic(); ctx.request_repaint(); return; }
+            Command::PixelShow { index } => { self.show_pixel_diagnostic(index); ctx.request_repaint(); return; }
             Command::LedMode { value } => {
                 if let Some(code) = led_mode_code(&value) {
                     self.action("/api/mode", vec![("value".into(), value)], OP_SET_MODE, vec![code]);
@@ -323,6 +353,13 @@ impl PakarControllerApp {
                 } else { self.message = "Invalid LED cell, state or transition".into(); }
                 ctx.request_repaint();
                 return;
+            }
+            Command::LedCells { ids,state,effect } => {
+                match super::cell_search::parse(&ids).and_then(|ids|crate::cell_batch::Request::new(&ids,&state,&effect)) {
+                    Ok(batch)=>{if let Err(error)=self.dispatch_cell_batch(batch){self.message=error;}},
+                    Err(error)=>self.message=error,
+                }
+                ctx.request_repaint();return;
             }
             Command::Screenshot { path } => {
                 if let Err(error) = self.capture.request(path) {
@@ -468,6 +505,25 @@ impl PakarControllerApp {
     pub(crate) fn has_table(&self) -> bool {
         self.peer_context().is_some_and(|c| c.table())
     }
+    pub(crate) fn mapping_status(&self) -> String {
+        if !self.has_table() { return "This connected board has not acknowledged table mapping".into(); }
+        if self.command_route()==Some(Transport::Serial) && self.live_status().and_then(peer_http::Pin::from_status)==self.mapping_peer && !self.mappings.is_empty(){
+            return "Confirmed mapping from this board’s immutable USB snapshot · Wi-Fi is not used".into();
+        }
+        if self.command_route() != Some(Transport::WiFi) {
+            return "Mapping readback requires the selected Wi-Fi connection; USB never falls back to Wi-Fi".into();
+        }
+        let peer = self.status.as_ref().and_then(peer_http::Pin::from_status);
+        let confirmed = peer.is_some() && peer == self.mapping_peer && !self.mappings.is_empty();
+        match (confirmed, self.mapping_request_pending.is_some(), self.mapping_error.as_deref()) {
+            (true, _, Some(error)) => format!("Using confirmed mapping for this board; refresh failed and will retry: {error}"),
+            (false, _, Some(error)) => format!("Mapping not received yet; retrying: {error}"),
+            (true, true, _) => "Confirmed mapping for this board · refreshing…".into(),
+            (true, false, _) => "Confirmed mapping for this board".into(),
+            (false, true, _) => "Reading this board’s mapping…".into(),
+            _ => "Waiting to read this board’s mapping; not evidence of an unsupported capability".into(),
+        }
+    }
     fn synchronize_context(&mut self, ctx: &egui::Context) {
         let available: Vec<_> = Panel::ALL.into_iter().filter(|p| p.available(self.peer_context())).collect();
         let key = self.peer_context().map(|c| format!("{:?}:{}:{}:{}", self.command_route(),
@@ -489,9 +545,19 @@ impl PakarControllerApp {
             self.context_panels = available.clone();
             self.table.stop_pending_edits();
             self.table.selection.ids.clear(); self.cell_search.clear();
-            self.table.pixel_sample = None; self.mappings.clear();
-            self.last_mapping_poll = Instant::now() - Duration::from_secs(16);
-            let _ = self.ws_tx.send(WsCommand::Mapping(Vec::new()));
+            self.table.pixel_sample = None;
+            // A title/capability refresh can change the workspace key without
+            // changing board/boot. Do not erase its confirmed mapping merely
+            // because the next optional HTTP refresh has not completed yet.
+            let peer = self.live_status().and_then(peer_http::Pin::from_status);
+            if peer.is_none() || peer != self.mapping_peer {
+                self.mappings.clear(); self.mapping_peer = None;
+                if !self.mapping_request_pending.as_ref().is_some_and(|pending| Some(&pending.peer) == peer.as_ref()) {
+                    self.mapping_request_pending = None; self.mapping_error = None;
+                }
+                self.last_mapping_poll = Instant::now() - Duration::from_secs(16);
+                let _ = self.ws_tx.send(WsCommand::Mapping(Vec::new()));
+            }
             let _ = self.ws_tx.send(WsCommand::Stream(false));
             let _ = self.ws_tx.send(WsCommand::Sample(false));
             self.streaming = false; self.sampling = false;
@@ -590,6 +656,10 @@ impl PakarControllerApp {
                 "online": self.command_route() == Some(self.transport),
             });
             value["serial_port"] = serde_json::json!(self.serial_port);
+            value["pixel_diagnostic"] = serde_json::json!({"wire_pixel":self.pixel_diagnostic.index.clamp(1,480),
+                "raw_index":self.pixel_diagnostic.index.clamp(1,480)-1,"pending":self.pixel_diagnostic.pending.is_some(),
+                "armed":snapshot.as_ref().is_some_and(|s| pixel_diagnostic::ready(s)
+                    && peer_http::Pin::from_status(s) == self.pixel_diagnostic.armed),"message":self.pixel_diagnostic.message});
             value["device_status"] = serde_json::json!(snapshot);
             value["message"] = serde_json::json!(self.message);
             value["device_settings"]["message"] = serde_json::json!(self.device_settings.message);
@@ -599,6 +669,8 @@ impl PakarControllerApp {
             value["minimized"] = serde_json::json!(ctx.input(|i| i.viewport().minimized));
             value["preferences_dirty"] = serde_json::json!(self.preferences.as_ref().is_some_and(|d| d.is_dirty()));
             value["diagnostics"] = serde_json::json!({"events":self.event_log.len(),"active":self.event_log.active_count(),"repeated_occurrences":self.event_log.repeated_count(),"status_request_pending":self.status_request_pending,"status_retry_ms":self.status_retry.delay().as_millis()});
+            value["mapping"] = serde_json::json!({"count":self.mappings.len(),"pending":self.mapping_request_pending.is_some(),"status":self.mapping_status(),"error":self.mapping_error});
+            value["usb_commands_pending"] = serde_json::json!(self.serial_operations_pending);
             value["notifications"] = self.notification_snapshot();
             value["tray_available"] = serde_json::json!(self.tray.is_some());
             value["tray_shell"] = self.tray.as_ref().map(|tray|tray.shell_snapshot()).unwrap_or(serde_json::Value::Null);
@@ -809,7 +881,9 @@ impl PakarControllerApp {
                 telemetry_available: self.has_feature("telemetry"),
                 message: &self.message,
                 hostname: &s.hostname,
-                station: if self.transport == Transport::WiFi { &s.station_ssid } else { "" },
+                station: if self.transport != Transport::WiFi { "" }
+                    else if s.uplink == "ethernet" && s.uplink_ipv4_ready == Some(true) { "Ethernet" }
+                    else { &s.station_ssid },
                 avr_online: s.avr_online,
                 tm1637_ready: s.tm1637_ack,
                 websocket_live: self.transport == Transport::WiFi && self.websocket_live,
@@ -1017,6 +1091,15 @@ impl PakarControllerApp {
             });
         });
         ui.add_space(8.0);
+        if self.has_feature("streaming") && self.command_route()==Some(Transport::WiFi) {
+            egui::CollapsingHeader::new("Physical pixel diagnostic")
+                .id_salt("physical-pixel-diagnostic").default_open(true)
+                .show(ui, |ui| self.draw_pixel_diagnostic(ui));
+            ui.add_space(6.0);
+        }
+        if self.mappings.is_empty() || self.mapping_error.is_some() {
+            ui.weak(self.mapping_status());
+        }
         ui.horizontal_wrapped(|ui| {
             ui.label(icons::MAGNIFYING_GLASS);
             let search = ui.add_sized(
@@ -1078,14 +1161,18 @@ impl PakarControllerApp {
         ui.add_space(8.0);
         let width = ui.available_width().max(200.0);
         let visible_height = (ui.clip_rect().bottom() - ui.cursor().min.y - 38.0).max(180.0);
-        let aspect = if self.config.cell_shape == super::cell_pixels::Shape::Rounded { 0.72 } else { 1.0 };
-        let pitch = (width / 10.0).min(visible_height / (8.5 * aspect)).min(94.0);
-        let height = (pitch * aspect).max(20.0);
-        let (area, _) =
-            ui.allocate_exact_size(egui::vec2(width, height * 8.5), egui::Sense::hover());
-        let grid_origin = area.min + egui::vec2((width - pitch * 10.0) * 0.5, 0.0);
-        self.draw_cell_grid(ui, area, grid_origin, pitch, height);
-        finish_table_area(ui, area);
+        let (pitch,height)=super::cell_table::grid_metrics(width,visible_height,
+            self.config.cell_shape==super::cell_pixels::Shape::Rounded);
+        if self.table.pixel_sample.as_ref().is_none_or(|sample|!sample.fresh()) {
+            ui.weak("Showing acknowledged cell states · individual pixel RGB is unavailable.");
+        }
+        egui::ScrollArea::horizontal().id_salt("table-usable-cell-width").auto_shrink([false,true]).show(ui,|ui|{
+            let grid_width=width.max(pitch*20.0);
+            let (area,_)=ui.allocate_exact_size(egui::vec2(grid_width,height*4.5),egui::Sense::hover());
+            let grid_origin=area.min+egui::vec2((grid_width-pitch*20.0)*0.5,0.0);
+            self.draw_cell_grid(ui,area,grid_origin,pitch,height);
+            finish_table_area(ui,area);
+        });
         ui.horizontal(|ui| {
             ui.label(
                 egui::RichText::new(format!(
@@ -1101,6 +1188,87 @@ impl PakarControllerApp {
                 }
             }
         });
+    }
+    fn draw_pixel_diagnostic(&mut self, ui: &mut egui::Ui) {
+        if self.transport != Transport::WiFi {
+            ui.weak("Individual-pixel diagnostics currently require the selected Wi-Fi raw-frame path. USB controls remain offline; no network fallback.");
+            return;
+        }
+        let Some(status) = self.live_status().cloned().filter(pixel_diagnostic::supported) else {
+            ui.weak("Connect to an acknowledged 480-pixel streaming board first."); return;
+        };
+        let Some(peer) = peer_http::Pin::from_status(&status) else { return; };
+        let busy = self.pixel_diagnostic.pending.is_some();
+        ui.weak("Manual only: one white wire pixel, all others black. No automatic stepping. Confirm effects mode first.");
+        ui.horizontal_wrapped(|ui| {
+            if self.streaming || self.sampling {
+                if ui.button("Stop active streams").clicked() {
+                    self.streaming = false; self.sampling = false;
+                    let _ = self.ws_tx.send(WsCommand::Stream(false));
+                    let _ = self.ws_tx.send(WsCommand::Sample(false));
+                }
+            }
+            let can_arm = !busy && self.websocket_live && !self.streaming && !self.sampling && pixel_diagnostic::can_arm(&status);
+            if ui.add_enabled(can_arm, egui::Button::new("Confirm individual-pixel mode")).clicked() {
+                self.arm_pixel_diagnostic();
+            }
+            if !pixel_diagnostic::can_arm(&status) { ui.weak("Requires enabled output, Cell mode and no global effect."); }
+        });
+        self.pixel_diagnostic.index = self.pixel_diagnostic.index.clamp(1, 480);
+        let ready = !busy && self.websocket_live && !self.streaming && !self.sampling
+            && self.pixel_diagnostic.armed.as_ref() == Some(&peer) && pixel_diagnostic::ready(&status);
+        let mut show = None;
+        ui.horizontal_wrapped(|ui| {
+            ui.label("Wire pixel (1–480)");
+            ui.add_enabled(!busy, egui::DragValue::new(&mut self.pixel_diagnostic.index).range(1..=480));
+            if ui.add_enabled(ready && self.pixel_diagnostic.index > 1, egui::Button::new("Previous")).clicked() {
+                show = Some(self.pixel_diagnostic.index - 1);
+            }
+            if ui.add_enabled(ready, egui::Button::new("Show pixel")).clicked() { show = Some(self.pixel_diagnostic.index); }
+            if ui.add_enabled(ready && self.pixel_diagnostic.index < 480, egui::Button::new("Next")).clicked() {
+                show = Some(self.pixel_diagnostic.index + 1);
+            }
+            let raw = self.pixel_diagnostic.index - 1;
+            let group = (raw / 6 + 1) as u8;
+            let mapped = self.mappings.iter().find(|m| m.physical_cell == group)
+                .map(|m| format!(" · reported logical cell {}", m.logical_id)).unwrap_or_else(|| " · logical mapping unavailable".into());
+            ui.weak(format!("raw {raw} · wire group {group} · sector {}{mapped}", raw % 6 + 1));
+        });
+        if let Some(index) = show {
+            self.show_pixel_diagnostic(index);
+        }
+        if !self.pixel_diagnostic.message.is_empty() { ui.label(&self.pixel_diagnostic.message); }
+    }
+    fn arm_pixel_diagnostic(&mut self) {
+        let status = self.live_status().cloned();
+        if self.command_route() != Some(Transport::WiFi) || !self.websocket_live || self.streaming || self.sampling
+            || self.pixel_diagnostic.pending.is_some() || !status.as_ref().is_some_and(pixel_diagnostic::can_arm) {
+            self.pixel_diagnostic.message = "Use the enabled Wi-Fi Cell board, stop global effects/streams, then confirm diagnostics.".into(); return;
+        }
+        let peer = peer_http::Pin::from_status(status.as_ref().unwrap()).unwrap();
+        self.pixel_diagnostic.armed = None;
+        let id = self.pixel_diagnostic.begin();
+        self.pixel_diagnostic.message = "Confirming effects mode via WebSocket ACK and same-board readback…".into();
+        let request = pixel_diagnostic::Request { id, index: 0, peer, endpoint: self.endpoint(), at: Instant::now() };
+        if self.ws_tx.send(WsCommand::ArmPixel(request)).is_err() {
+            self.pixel_diagnostic.finish(id, "WebSocket worker unavailable; no frame sent".into());
+        }
+    }
+    fn show_pixel_diagnostic(&mut self, index: u16) {
+        let status = self.live_status().cloned();
+        let peer = status.as_ref().and_then(peer_http::Pin::from_status);
+        if !(1..=480).contains(&index) || self.command_route() != Some(Transport::WiFi) || !self.websocket_live
+            || self.streaming || self.sampling || self.pixel_diagnostic.pending.is_some()
+            || peer.is_none() || self.pixel_diagnostic.armed != peer || !status.as_ref().is_some_and(pixel_diagnostic::ready) {
+            self.pixel_diagnostic.message = "Confirm individual-pixel effects mode on the current Wi-Fi board before showing a pixel.".into(); return;
+        }
+        self.pixel_diagnostic.index = index;
+        let id = self.pixel_diagnostic.begin();
+        self.pixel_diagnostic.message = format!("Sending physical wire pixel {index} once…");
+        let request = pixel_diagnostic::Request { id, index: index - 1, peer: peer.unwrap(), endpoint: self.endpoint(), at: Instant::now() };
+        if self.ws_tx.send(WsCommand::Pixel(request)).is_err() {
+            self.pixel_diagnostic.finish(id, "WebSocket worker unavailable; frame not sent".into());
+        }
     }
     fn set_cell(&mut self, id: u8, state: &str, value: u8) {
         let effect = match self.cell_effect.as_str() {
@@ -1121,7 +1289,7 @@ impl PakarControllerApp {
     }
     fn draw_effects(&mut self, ui: &mut egui::Ui) {
         let snapshot = self.live_status().cloned();
-        let modes: Vec<_> = self.peer_context().map(|c| c.modes().cloned().collect()).unwrap_or_default();
+        let modes: Vec<_> = self.peer_context().map(|c| c.modes().filter(|mode|mode.id!="snake").cloned().collect()).unwrap_or_default();
         if !modes.is_empty() { dialog::section(ui, icons::PLAY, "Board modes", |ui| {
             ui.add_enabled_ui(snapshot.is_some(), |ui| {
                 for mode in &modes {
@@ -1200,16 +1368,70 @@ impl PakarControllerApp {
         );
         }
         ui.add_space(10.0);
+        self.draw_led_settings(ui);
+        if modes.iter().any(|m| m.id == "snake") && snapshot.as_ref().is_some_and(|s| s.mode == "snake") {
+            ui.add_space(10.0);
+            dialog::section(ui, icons::ARROW_RIGHT, "Snake direction", |ui| {
+                ui.horizontal(|ui| {
+                    for (icon, direction) in [
+                        (icons::ARROW_UP, "up"),
+                        (icons::CARET_LEFT, "left"),
+                        (icons::ARROW_DOWN, "down"),
+                        (icons::ARROW_RIGHT, "right"),
+                    ] {
+                        if ui.button(icon).clicked() {
+                            self.post(
+                                "/api/snake/direction",
+                                vec![("value".into(), direction.into())],
+                            );
+                        }
+                    }
+                });
+            });
+        }
+    }
+    pub(super) fn draw_led_settings(&mut self, ui: &mut egui::Ui) {
+        let snapshot = self.live_status().cloned();
         if self.has_feature("leds") {
         dialog::section(ui, icons::SPARKLE, "Strip effect", |ui| {
             if let Some(mut enabled) = snapshot.as_ref()
                 .and_then(|s| s.led_output.get("enabled")).and_then(|v| v.as_bool()) {
-                if ui.checkbox(&mut enabled, "LED output service").changed() {
-                    self.action("/api/led/output", vec![("enabled".into(), enabled.to_string())],
-                        OP_LED_OUTPUT, vec![u8::from(enabled)]);
-                }
+                ui.horizontal(|ui| {
+                    if ui.checkbox(&mut enabled, "LED output service").changed() {
+                        self.action("/api/led/output", vec![("enabled".into(), enabled.to_string())],
+                            OP_LED_OUTPUT, vec![u8::from(enabled)]);
+                    }
+                    if ui.small_button("Off").on_hover_text("Send black again, even when output is already off.").clicked() {
+                        self.action("/api/led/output", vec![("enabled".into(), "false".into())], OP_LED_OUTPUT, vec![0]);
+                    }
+                });
             } else {
                 ui.label(egui::RichText::new("LED output service: Unknown").weak());
+            }
+            if let Some(observed) = snapshot.as_ref().and_then(led_output_mode) {
+                let mut mode = observed.to_owned();
+                super::dropdown::ComboBox::from_label("Output mode")
+                    .selected_text(if mode == "static" { "Static grouped" } else { "Animated effects" })
+                    .show_ui(ui, |ui| {
+                        ui.dropdown_value(&mut mode, "static".into(), "Static grouped");
+                        ui.dropdown_value(&mut mode, "effects".into(), "Animated effects");
+                    });
+                if mode != observed {
+                    if let Some((form, payload)) = led_output_request(&mode) {
+                        self.action("/api/led/output", form, OP_LED_OUTPUT, payload);
+                    }
+                }
+                ui.weak(if observed == "static" { "Static grouped cells; six pixels share one color. Rainbow test still animates." }
+                    else { "Animated effects are explicitly enabled." });
+            } else { ui.weak("Output mode: Unknown"); }
+            let observed_effect=snapshot.as_ref().map(|s|s.effect.as_str()).filter(|effect|!effect.is_empty());
+            ui.label(format!("Current effect: {}",observed_effect.unwrap_or("Unknown")));
+            let test_ready = snapshot.as_ref().is_some_and(|s|
+                s.led_output.get("enabled").and_then(|v| v.as_bool()) == Some(true));
+            if ui.add_enabled(test_ready, egui::Button::new(format!("{}  Rainbow test", icons::SPARKLE)).selected(observed_effect==Some("rainbow")))
+                .on_hover_text("Rainbow animates in both modes, keeping each cell's six pixels together in static mode. Does not change output mode or enable the service.")
+                .clicked() {
+                self.action("/api/effect", vec![("value".into(), "rainbow".into())], OP_PATTERN, vec![1]);
             }
             ui.add_enabled_ui(snapshot.is_some(), |ui| {
                 super::dropdown::ComboBox::from_id_salt("strip-effect")
@@ -1234,7 +1456,7 @@ impl PakarControllerApp {
                     );
                 }
                 if ui
-                    .add(egui::Slider::new(&mut self.brightness, 0..=255).text("Brightness"))
+                    .add(egui::Slider::new(&mut self.brightness, 1..=255).text("Brightness"))
                     .changed()
                 {
                     self.action(
@@ -1247,29 +1469,22 @@ impl PakarControllerApp {
             });
         });
         }
-        if modes.iter().any(|m| m.id == "snake") && snapshot.as_ref().is_some_and(|s| s.mode == "snake") {
-            ui.add_space(10.0);
-            dialog::section(ui, icons::ARROW_RIGHT, "Snake direction", |ui| {
-                ui.horizontal(|ui| {
-                    for (icon, direction) in [
-                        (icons::ARROW_UP, "up"),
-                        (icons::CARET_LEFT, "left"),
-                        (icons::ARROW_DOWN, "down"),
-                        (icons::ARROW_RIGHT, "right"),
-                    ] {
-                        if ui.button(icon).clicked() {
-                            self.post(
-                                "/api/snake/direction",
-                                vec![("value".into(), direction.into())],
-                            );
-                        }
-                    }
-                });
-            });
-        }
     }
     pub(super) fn draw_front_panel(&mut self, ui: &mut egui::Ui) {
         let snapshot = self.live_status().cloned();
+        if self.has_feature("lcd") {
+            if let Some(lcd) = snapshot.as_ref().and_then(|s| s.lcd.as_ref()) {
+                if let Some(lines) = lcd.confirmed_lines() {
+                    dialog::section(ui, icons::TEXT_ALIGN_LEFT, "LCD display", |ui| {
+                        ui.label(egui::RichText::new(format!("I²C 0x{:02X} · 16×2", lcd.address.unwrap())).weak());
+                        egui::Frame::group(ui.style()).show(ui, |ui| {
+                            for line in lines { ui.monospace(line); }
+                        });
+                        if lcd.pending { ui.spinner(); }
+                    });
+                }
+            }
+        }
         if self.has_feature("display") {
         dialog::section(ui, icons::GAUGE, "Live display", |ui| {
             if let Some(s) = &snapshot {
@@ -1551,7 +1766,9 @@ impl PakarControllerApp {
                         Ok(name) => {
                             self.identity_pending = true;
                             if self.command_route() == Some(Transport::Serial) {
-                                let _ = self.serial_tx.send(crate::SerialCommand::Identity(self.serial_port.clone(),name,label.unwrap_or_default()));
+                                if let Some(admission)=self.serial_admission().filter(|a|a.peer.is_some()){
+                                    let _=self.serial_tx.send(crate::SerialCommand::Identity(self.serial_port.clone(),admission,name,label.unwrap_or_default()));
+                                }else{self.identity_pending=false;self.message="Read this USB board’s verified identity before saving; nothing queued".into();}
                             } else {
                                 let _ = self.http_tx.send(crate::HttpCommand::NameChange(self.endpoint(), name, label));
                             }
@@ -1591,13 +1808,14 @@ impl PakarControllerApp {
                     );
                     return;
                 }
-                if info.get("default_credentials").and_then(|v| v.as_bool()) == Some(true) {
+                ui.add_enabled_ui(writable, |ui| { ui.checkbox(&mut self.access_enabled, "Require authentication"); });
+                if self.access_enabled && info.get("default_credentials").and_then(|v| v.as_bool()) == Some(true) {
                     ui.colored_label(
                         ui.visuals().warn_fg_color,
                         "Default login: admin / pakarcontroller. Change it here.",
                     );
                 }
-                field(
+                if self.access_enabled { field(
                     ui,
                     icons::LOCK,
                     "New username",
@@ -1617,25 +1835,25 @@ impl PakarControllerApp {
                     "Confirm password",
                     &mut self.access_confirm,
                     true,
-                );
-                ui.label(egui::RichText::new(crate::ui::i18n::text("Uses your current connection password. Saved on the ESP across OTA; signs out every client. Wi-Fi credentials are unchanged. HTTP is not encrypted.")).small().weak());
-                if ui.add_enabled_ui(writable, |ui| dialog::primary_action_button(ui, icons::CHECK, "Save device credentials"))
+                ); }
+                ui.weak(if self.access_enabled { "Saved on the device across OTA. Existing clients reconnect after a change." } else { "Authentication is disabled. No username or password is required." });
+                if ui.add_enabled_ui(writable, |ui| dialog::primary_action_button(ui, icons::CHECK, "Save device access"))
                     .inner.clicked()
                 {
-                    match crate::access::validate(
+                    match if self.access_enabled { crate::access::validate(
                         &self.access_user,
                         &self.access_password,
                         &self.access_confirm,
-                    ) {
+                    ) } else { Ok(()) } {
                         Ok(()) => {
                             let next = crate::Endpoint {
                                 base: self.base.clone(),
-                                user: self.access_user.clone(),
-                                password: self.access_password.clone(),
+                                user: if self.access_enabled { self.access_user.clone() } else { String::new() },
+                                password: if self.access_enabled { self.access_password.clone() } else { String::new() },
                             };
                             let _ = self
                                 .http_tx
-                                .send(crate::HttpCommand::AccessChange(self.endpoint(), next));
+                                .send(crate::HttpCommand::AccessChange(self.endpoint(), next, self.access_enabled));
                         }
                         Err(error) => self.notify(
                             "Cannot save credentials",
@@ -1825,7 +2043,8 @@ impl PakarControllerApp {
                 ui::connection_controls::method_picker(ui, &mut method, self.identity_pending);
                 ui.add_space(10.0);
                 ui::connection_controls::details(ui, method,
-                    !self.identity_pending && !self.connection_enabled, &mut draft,
+                    !self.identity_pending && !self.connection_enabled,
+                    crate::access::requirement(&self.access_requirement, &draft.endpoint), &mut draft,
                     || serialport::available_ports()
                         .map(|ports| ports.into_iter().map(|port| port.port_name).collect())
                         .map_err(|error| error.to_string()));
@@ -1899,6 +2118,7 @@ impl PakarControllerApp {
                 .collapsible(false)
                 .frame(dialog::opaque_window_frame_from_context(ctx))
                 .show(ctx, |ui| {
+                    ui.weak(self.mapping_status());
                     ui.horizontal(|ui| {
                         ui.label(crate::ui::i18n::text("Logical"));
                         let changed = ui
@@ -1951,7 +2171,7 @@ impl PakarControllerApp {
                     dialog::action_row(ui, false, |ui| {
                         if ui
                             .add_enabled(
-                                !self.mappings.is_empty(),
+                                !self.mappings.is_empty() && self.command_route()==Some(Transport::WiFi),
                                 egui::Button::new(format!("{}  {}", icons::CHECK, crate::ui::i18n::text("Save mapping")))
                                     .min_size(egui::vec2(104.0, 28.0)),
                             )

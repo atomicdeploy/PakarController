@@ -73,9 +73,9 @@ test('Restart and idempotent teardown remove all old listeners while preserving 
   f.change(['fa-IR']);assert.equal(f.root.lang,'en');
 });
 test('Storage-restricted sessions still change language; dynamic owned labels and numbers are reversible',()=>{
-  const f=fixture({blocked:true});f.run("var label={isConnected:true};setUiText(label,'Station SSID');var progress={isConnected:true};setUiText(progress,'Verified {sent} cell states on the device',{sent:12})");
-  f.select('fa');assert.equal(f.run('label.textContent'),'نام شبکهٔ ایستگاه');assert.equal(f.run('progress.textContent'),'وضعیت ۱۲ خانه در دستگاه تأیید شد');
-  f.select('en');assert.equal(f.run('label.textContent'),'Station SSID');assert.equal(f.run('progress.textContent'),'Verified 12 cell states on the device');
+  const f=fixture({blocked:true});f.run("var label={isConnected:true};setUiText(label,'Station SSID');var progress={isConnected:true};setUiText(progress,'Verified {total} requested cell states on the device. Inspect the actual LEDs.',{total:12})");
+  f.select('fa');assert.equal(f.run('label.textContent'),'نام شبکهٔ ایستگاه');assert.equal(f.run('progress.textContent'),'وضعیت درخواستی ۱۲ خانه با بازخوانی دستگاه تأیید شد؛ LEDهای واقعی را بررسی کنید.');
+  f.select('en');assert.equal(f.run('label.textContent'),'Station SSID');assert.equal(f.run('progress.textContent'),'Verified 12 requested cell states on the device. Inspect the actual LEDs.');
   f.run('label.isConnected=false;applyLocalization()');assert.equal(f.run('ownedDynamicCopy.size'),1,'Detached labels are not leaked');
   assert.equal(f.requests,0);
 });

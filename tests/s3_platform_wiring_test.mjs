@@ -42,10 +42,23 @@ const maintenance = read('MaintenanceRoutes.h');
 const dnsLock = readFileSync(new URL('../firmware/esp32s3/src/DnsCoreLock.cpp', import.meta.url), 'utf8');
 assert.match(dnsLock, /alreadyHeld=sys_thread_tcpip\(LWIP_CORE_LOCK_QUERY_HOLDER\)/);
 assert.match(dnsLock, /if\(!alreadyHeld\) LOCK_TCPIP_CORE\(\);\s+__real_dns_clear_cache\(\);\s+if\(!alreadyHeld\) UNLOCK_TCPIP_CORE\(\);/);
-assert.match(sketch, /PakarS3::serviceDhcpDns\(millis\(\),networkConfig.dhcpEnabled\(\),!ntpConfigured\)/);
-assert.match(sketch, /if\(remoteFirmware.needsDownloadConnection\(\)\)\s+PakarS3::serviceDhcpDns\(millis\(\),networkConfig.dhcpEnabled\(\),true\)/);
+const networkPath=read('NetworkPath.h');
+const dnsRecovery=readFileSync(new URL('../firmware/esp32s3/src/DnsRecovery.h',import.meta.url),'utf8');
+function checkDnsPath(main,path,recovery) {
+  assert.match(main, /void configureNtp\(\) \{\s+NetworkPath::serviceDns\(millis\(\), !ntpConfigured\);/);
+  assert.match(main, /if\(remoteFirmware.needsDownloadConnection\(\)\)\s+NetworkPath::serviceDns\(millis\(\),true\)/);
+  assert.match(path, /if \(state\(\).selected == Interface::Wifi\)\s+PakarS3::serviceDhcpDns\(now, networkConfig.dhcpEnabled\(\), immediate\)/);
+  assert.match(path, /#if PAKAR_S3_ETHERNET_ENABLED && PAKAR_S3_DNS_GATEWAY_FALLBACK/);
+  assert.match(path, /if \(state\(\).selected == Interface::Ethernet && state\(\).ethernetDhcp\) \{/);
+  assert.match(path, /if \(!usable\(ETH.dnsIP\(0\)\)\) \{[\s\S]*?usable\(backup\) \? backup : ETH.gatewayIP\(\);\s+if \(usable\(candidate\)\) ETH.dnsIP\(0, candidate\)/);
+  assert.match(recovery, /if\(!dhcp \|\| WiFi.status\(\)!=WL_CONNECTED\) return false/);
+}
+checkDnsPath(sketch,networkPath,dnsRecovery);
+assert.throws(()=>checkDnsPath(sketch,networkPath.replace(' && state().ethernetDhcp',''),dnsRecovery));
+assert.throws(()=>checkDnsPath(sketch,networkPath.replace('networkConfig.dhcpEnabled()','true'),dnsRecovery));
+assert.throws(()=>checkDnsPath(sketch,networkPath,dnsRecovery.replace('!dhcp || ','')));
 assert.match(readFileSync(new URL('../tools/build-firmware.ps1', import.meta.url), 'utf8'), /compiler.c.elf.extra_flags=-Wl,--wrap=dns_clear_cache/);
-assert.match(maintenance, /#if defined\(ARDUINO_ARCH_ESP32\) && !PAKAR_AVR_LINK_ENABLED\s+[\s\S]*?if\(plan.targets==RemotePolicy::Esp && !programmingLatched\) return true/);
+assert.match(maintenance, /if\(plan.targets==RemotePolicy::Esp && !programmingLatched\) return true/);
 assert.match(automationStore, /#if !defined\(ESP8266\) && !defined\(ARDUINO_ARCH_ESP8266\) && \\\r?\n\s*!defined\(ESP32\) && !defined\(ARDUINO_ARCH_ESP32\)/);
 assert.match(remote, /link_mode"\)\]!="buffered"/);
 assert.match(read('LedGrid.cpp'), /kLedDataPin = PAKAR_S3_LED_DATA/);
@@ -68,7 +81,15 @@ assert.match(sketch, /available &= ~BoardCore::Context::Isp/,
 assert.match(sketch, /body \+= F\("buffered"\)/);
 assert.match(sketch, /if \(!PAKAR_AVR_LINK_ENABLED\) return false/,
   'Quiet commissioning cannot send normal AVR UART requests');
-assert.match(sketch, /if \(PAKAR_AVR_LINK_ENABLED\) avrLink.begin/);
+assert.match(sketch, /avrUart\.begin\(onAvrFrame\)/);
+assert.match(sketch, /PakarS3::AvrUart avrUart/);
+const avrDrain=sketch.slice(sketch.indexOf('void serviceAvrFor(uint32_t durationMs) {'),sketch.indexOf('bool requestAndWaitForAck('));
+assert.match(avrDrain,/if \(!PAKAR_AVR_LINK_ENABLED\) return;/,
+  'Disabled AVR must return before time measurement, UART service, delays or yields; no download pacing tax');
+assert.match(avrDrain,/#if defined\(ARDUINO_ARCH_ESP32\) && PAKAR_UART_BUFFERED[\s\S]*?link\.service\(\);\s+return;\s+#else/,
+  'Buffered S3 drains once without imposing the legacy per-chunk sleep');
+assert.match(avrDrain,/link\.service\(\);\s+delay\(1\);\s+yield\(\);/,
+  'Enabled AVR retains its existing bounded UART drain behavior');
 assert.match(sketch, /case kAvrRxDiagnostic:/);
 assert.match(sketch, /passiveAvrRx\.service\(millis\(\)\)/);
 const passive = readFileSync(new URL('../firmware/esp32s3/src/PassiveAvrRx.h', import.meta.url), 'utf8');

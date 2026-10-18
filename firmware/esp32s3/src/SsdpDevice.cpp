@@ -2,6 +2,7 @@
 // retaining queued/de-duplicated M-SEARCH, alive/update/byebye and escaped XML.
 // ESP8266-only UDP/IGMP lifecycle is replaced by an interface-bound S3 adapter.
 #include "SsdpDevice.h"
+#include "DiscoveryInterfaces.h"
 
 #include <new>
 namespace PakarS3 {
@@ -74,6 +75,8 @@ void SsdpDevice::end() {
 		if (m_accessPointJoined != m_stationJoined) {
 			sendAllByebye(m_accessPointJoined);
 		}
+		if (m_ethernetJoined != m_stationJoined && m_ethernetJoined != m_accessPointJoined)
+			sendAllByebye(m_ethernetJoined);
 
 		m_server->stop();
 		leaveJoinedInterfaces();
@@ -84,6 +87,8 @@ void SsdpDevice::end() {
 	m_last = IPAddress(0, 0, 0, 0);
 	m_stationJoined = IPAddress(0, 0, 0, 0);
 	m_accessPointJoined = IPAddress(0, 0, 0, 0);
+	m_ethernetJoined = IPAddress();
+	m_stationSeen = m_accessPointSeen = m_ethernetSeen = IPAddress();
 	m_joinRetryAt = 0;
 
 	clearQueue();
@@ -105,6 +110,8 @@ void SsdpDevice::update() {
 	if (m_accessPointJoined != m_stationJoined) {
 		postNotifyUpdate(m_accessPointJoined);
 	}
+	if (m_ethernetJoined != m_stationJoined && m_ethernetJoined != m_accessPointJoined)
+		postNotifyUpdate(m_ethernetJoined);
 
 	// postNotifyUpdate captures the old and next IDs in each queue entry.
 	m_bootId = nextBootId;
@@ -531,37 +538,14 @@ void SsdpDevice::leaveJoinedInterfaces() {
 }
 
 IPAddress SsdpDevice::interfaceForRemote(IPAddress remote) const {
-	if (m_accessPointJoined != IPAddress(0, 0, 0, 0)) {
-		// ESP8266 soft-AP defaults to a /24. If both interfaces are ever joined,
-		// prefer it for peers on that subnet.
-		const IPAddress mask(255, 255, 255, 0);
-		bool sameSubnet = true;
-		for (uint8_t index = 0; index < 4; ++index) {
-			if (
-				(remote[index] & mask[index]) !=
-				(m_accessPointJoined[index] & mask[index])
-			) {
-				sameSubnet = false;
-				break;
-			}
-		}
-		if (sameSubnet) return m_accessPointJoined;
+	const auto active = activeDiscoveryInterfaces();
+	DiscoveryInterfaces joined;
+	for (uint8_t i=0;i<active.count;++i) {
+		const auto &entry=active.entries[i]; const IPAddress ip=discoveryAddress(entry.address);
+		if (ip==m_ethernetJoined || ip==m_stationJoined || ip==m_accessPointJoined) joined.add(entry);
 	}
-
-	if (m_stationJoined != IPAddress(0, 0, 0, 0)) {
-		const IPAddress mask = WiFi.subnetMask();
-		bool sameSubnet = mask != IPAddress(0, 0, 0, 0);
-		for (uint8_t index = 0; sameSubnet && index < 4; ++index) {
-			if (
-				(remote[index] & mask[index]) !=
-				(m_stationJoined[index] & mask[index])
-			) {
-				sameSubnet = false;
-			}
-		}
-		if (sameSubnet) return m_stationJoined;
-	}
-
+	const auto *selected=joined.forRemote(discoveryAddress(remote));
+	if (selected) return discoveryAddress(selected->address);
 	return m_last;
 }
 
@@ -624,26 +608,22 @@ void SsdpDevice::schema(Print &client) const {
 void SsdpDevice::handleClient() {
 	const IPAddress zero(0, 0, 0, 0);
 
-	IPAddress station = zero;
-	if (WiFi.status() == WL_CONNECTED && WiFi.localIP() != zero) {
-		station = WiFi.localIP();
+	const auto interfaces=activeDiscoveryInterfaces();
+	IPAddress station=zero, accessPoint=zero, ethernet=zero;
+	for (uint8_t i=0;i<interfaces.count;++i) {
+		const auto &entry=interfaces.entries[i];
+		if (!strcmp(entry.kind,"ethernet")) ethernet=discoveryAddress(entry.address);
+		else if (!strcmp(entry.kind,"station")) station=discoveryAddress(entry.address);
+		else accessPoint=discoveryAddress(entry.address);
 	}
-
-	IPAddress accessPoint = zero;
-	const WiFiMode_t mode = WiFi.getMode();
-	if (mode == WIFI_AP || mode == WIFI_AP_STA) {
-		accessPoint = WiFi.softAPIP();
-	}
-
-	// ESP32 socket memberships are interface scoped. Unlike the ESP8266 donor's
-	// small IGMP-pool fallback, join both active interfaces so an AP-connected
-	// phone can discover the board while its station also stays connected.
-	const IPAddress preferred = station != zero ? station : accessPoint;
+	// Join all active local netifs, including Ethernet without an associated STA.
+	// Preferred address is a discovery/default fallback, not Internet proof.
+	const IPAddress preferred=interfaces.count ? discoveryAddress(interfaces.entries[0].address) : zero;
 
 	const bool topologyChanged =
 		(m_last != zero && m_last != preferred) ||
-		(m_stationJoined != zero && m_stationJoined != station) ||
-		(m_accessPointJoined != zero && m_accessPointJoined != accessPoint);
+		m_stationSeen != station || m_accessPointSeen != accessPoint || m_ethernetSeen != ethernet;
+	m_stationSeen=station; m_accessPointSeen=accessPoint; m_ethernetSeen=ethernet;
 
 	if (topologyChanged) {
 		clearQueue();
@@ -652,6 +632,8 @@ void SsdpDevice::handleClient() {
 			if (m_accessPointJoined != m_stationJoined) {
 				sendAllByebye(m_accessPointJoined);
 			}
+			if (m_ethernetJoined != m_stationJoined && m_ethernetJoined != m_accessPointJoined)
+				sendAllByebye(m_ethernetJoined);
 			m_server->stop();
 			leaveJoinedInterfaces();
 		}
@@ -659,6 +641,7 @@ void SsdpDevice::handleClient() {
 		m_last = zero;
 		m_stationJoined = zero;
 		m_accessPointJoined = zero;
+		m_ethernetJoined = zero;
 		m_joinRetryAt = 0;
 	}
 
@@ -675,17 +658,13 @@ void SsdpDevice::handleClient() {
 				m_last = preferred;
 				if (preferred == station) m_stationJoined = station;
 				if (preferred == accessPoint) m_accessPointJoined = accessPoint;
-				if (accessPoint != zero && accessPoint != preferred &&
-					m_server->joinMulticast(accessPoint, SSDP_MULTICAST_ADDR)) {
-					m_accessPointJoined = accessPoint;
-					postNotifyALive(accessPoint);
-				}
+				if (preferred == ethernet) m_ethernetJoined = ethernet;
 				m_joinRetryAt = 0;
 				postNotifyALive(preferred);
 			}
 			else {
-				// beginMulticast() joins IGMP before opening its UDP context and
-				// does not undo the join when listen() fails.
+				// Socket-scoped membership and the failed socket are released
+				// together; retry does not retain a partial membership owner.
 				m_server->stop();
 				m_joinRetryAt = now + 1000UL;
 			}
@@ -693,6 +672,22 @@ void SsdpDevice::handleClient() {
 		else {
 			m_joinRetryAt = now + 1000UL;
 		}
+	}
+	// Retry failed secondary joins at a bounded cadence; a new STA/AP/ETH netif
+	// is not silently ignored just because another membership already exists.
+	if (m_server && m_last != zero &&
+		(m_joinRetryAt==0 || static_cast<int32_t>(now-m_joinRetryAt)>=0)) {
+		bool retry=false;
+		for (uint8_t i=0;i<interfaces.count;++i) {
+			const IPAddress ip=discoveryAddress(interfaces.entries[i].address);
+			if (ip==m_stationJoined || ip==m_accessPointJoined || ip==m_ethernetJoined) continue;
+			if (!m_server->joinMulticast(ip,SSDP_MULTICAST_ADDR)) { retry=true; continue; }
+			if (ip==station) m_stationJoined=ip;
+			if (ip==accessPoint) m_accessPointJoined=ip;
+			if (ip==ethernet) m_ethernetJoined=ip;
+			postNotifyALive(ip);
+		}
+		m_joinRetryAt=retry ? now+1000UL : 0;
 	}
 
 	if (m_server && m_last != zero && m_server->parsePacket()) {
@@ -773,20 +768,8 @@ void SsdpDevice::handleClient() {
 }
 
 IPAddress SsdpDevice::activeInterfaceIP() const {
-	const IPAddress zero(0, 0, 0, 0);
-	const IPAddress station = WiFi.localIP();
-
-	if (WiFi.status() == WL_CONNECTED && station != zero) {
-		return station;
-	}
-
-	const WiFiMode_t mode = WiFi.getMode();
-	const IPAddress accessPoint = WiFi.softAPIP();
-	if ((mode == WIFI_AP || mode == WIFI_AP_STA) && accessPoint != zero) {
-		return accessPoint;
-	}
-
-	return zero;
+	const auto interfaces=activeDiscoveryInterfaces();
+	return interfaces.count ? discoveryAddress(interfaces.entries[0].address) : IPAddress();
 }
 
 void SsdpDevice::setSchemaURL(const char *url) {

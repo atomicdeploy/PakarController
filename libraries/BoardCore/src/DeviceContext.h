@@ -9,6 +9,9 @@
 #ifndef PAKAR_FIRST_WINS_ENABLED
 #define PAKAR_FIRST_WINS_ENABLED 1
 #endif
+#ifndef PAKAR_SNAKE_ENABLED
+#define PAKAR_SNAKE_ENABLED 0
+#endif
 namespace BoardCore {
 namespace Context {
 enum Feature : uint16_t {
@@ -16,17 +19,18 @@ enum Feature : uint16_t {
   Streaming = 1U << 3, Table = 1U << 4, Display = 1U << 5,
   Text = 1U << 6, Buzzer = 1U << 7, Inputs = 1U << 8,
   Outputs = 1U << 9, Settings = 1U << 10, Isp = 1U << 11,
-  Ota = 1U << 12, Identity = 1U << 13
+  Ota = 1U << 12, Identity = 1U << 13, CellBatch = 1U << 14,
+  Lcd = 1U << 15
 };
 inline const char *name(uint8_t bit) {
   static const char *const names[] = {"network", "telemetry", "leds", "streaming",
-    "table", "display", "text", "buzzer", "inputs", "outputs", "settings", "isp", "ota", "identity"};
-  return bit < 14 ? names[bit] : nullptr;
+    "table", "display", "text", "buzzer", "inputs", "outputs", "settings", "isp", "ota", "identity", "cell-batch", "lcd"};
+  return bit < 16 ? names[bit] : nullptr;
 }
 inline uint16_t features(bool helloFresh, uint16_t avrCaps, bool displayAck,
                          bool statusFresh, bool pcSupported) {
   uint16_t result = Network | Telemetry | Leds | Streaming | Isp | Ota | Identity;
-  if (PAKAR_TABLE_ENABLED) result |= Table;
+  if (PAKAR_TABLE_ENABLED) result |= Table | CellBatch;
   if (!helloFresh) return result;
   if (avrCaps & Protocol::kCapBuzzer) result |= Buzzer;
   if (avrCaps & Protocol::kCapShiftInputs) result |= Inputs;
@@ -38,11 +42,16 @@ inline uint16_t features(bool helloFresh, uint16_t avrCaps, bool displayAck,
   }
   return result;
 }
+inline bool displayObservationFresh(bool helloFresh,uint16_t caps,bool observed,
+                                    uint32_t at,uint32_t now) {
+  return helloFresh&&(caps&Protocol::kCapTm1637)&&observed&&
+      static_cast<uint32_t>(now-at)<3000U;
+}
 inline uint8_t modes(uint16_t available) {
   if (!(available & Table)) return 0;
   // Cell presentation belongs to the ESP table. First wins also needs
   // the acknowledged AVR inputs and outputs, not just a connected ESP.
-  return 2U | 8U |
+  return 2U | (PAKAR_SNAKE_ENABLED ? 8U : 0U) |
     ((PAKAR_FIRST_WINS_ENABLED && (available & (Inputs | Outputs)) == (Inputs | Outputs)) ? 4U : 0U);
 }
 inline const char *modeName(uint8_t code) {

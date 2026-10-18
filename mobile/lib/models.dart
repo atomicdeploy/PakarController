@@ -34,12 +34,16 @@ class DeviceStatus {
     if (!peer.has('buzzer') || !avrOnline || reported is! List) return const [];
     return reported
         .whereType<String>()
-        .where(audioCueNames.contains)
+        .where((cue) => RegExp(r'^[a-z0-9][a-z0-9-]{0,39}$').hasMatch(cue))
         .toSet()
+        .take(64)
         .toList();
   }
 
   bool get tmReady => json['tm1637_ack'] == true;
+  List<String> get lcdLines => peer.has('lcd') && lcdObservationReady(json)
+      ? ((json['lcd'] as Map)['lines'] as List).cast<String>()
+      : const [];
   bool get mdns => json['mdns_started'] == true;
   bool get ssdp => json['ssdp_started'] == true;
   bool get mqtt => json['mqtt_connected'] == true;
@@ -52,6 +56,13 @@ class DeviceStatus {
     return output is Map && output['enabled'] is bool
         ? output['enabled'] as bool
         : null;
+  }
+
+  String? get ledOutputMode {
+    if (!peer.has('leds')) return null;
+    final output = json['led_output'];
+    final value = output is Map ? output['mode'] : null;
+    return value == 'static' || value == 'effects' ? value as String : null;
   }
 
   int get winner => json['winner'] as int? ?? 0;
@@ -89,6 +100,7 @@ const audioCueNames = [
   'decrease',
   'welcome-puzzleboard',
   'welcome-40led',
+  'attention',
 ];
 
 class CellMap {

@@ -1,8 +1,47 @@
 #include "LedOutput.h"
 #include "LedWire.h"
 #include <esp_heap_caps.h>
+#if !PAKAR_S3_LED_USE_DMA
+#include <sdkconfig.h>
+#include <esp_attr.h>
+#include <esp_cpu.h>
+#include <esp_rom_sys.h>
+#include <driver/gpio.h>
+#include <soc/gpio_reg.h>
+#include <soc/soc.h>
+#if CONFIG_PM_ENABLE
+#include <esp_pm.h>
+#endif
+#endif
 
 namespace PakarS3 {
+#if !PAKAR_S3_LED_USE_DMA
+namespace {
+portMUX_TYPE pixelMux=portMUX_INITIALIZER_UNLOCKED;
+// Cycle-count technique follows FastLED's actual ESP32 core/clock_cycles.h.
+// The complete payload is internal RAM. This function has no flash/library
+// calls while core1 interrupts are masked; core0 Wi-Fi remains schedulable.
+void IRAM_ATTR __attribute__((noinline)) writeStaticWire(const uint8_t *bytes,size_t size) {
+  constexpr uint32_t mask=1U<<(PAKAR_S3_LED_DATA%32);
+  constexpr uint32_t highRegister=PAKAR_S3_LED_DATA<32?GPIO_OUT_W1TS_REG:GPIO_OUT1_W1TS_REG;
+  constexpr uint32_t lowRegister=PAKAR_S3_LED_DATA<32?GPIO_OUT_W1TC_REG:GPIO_OUT1_W1TC_REG;
+  // Explicitly checked240MHz below:250/600ns high,1250ns period.
+  portENTER_CRITICAL(&pixelMux);
+  uint32_t previous=esp_cpu_get_cycle_count()-300U;
+  for(size_t i=0;i<size;++i)for(uint8_t bit=0x80;bit;bit>>=1){
+    while(static_cast<uint32_t>(esp_cpu_get_cycle_count()-previous)<300U){}
+    previous=esp_cpu_get_cycle_count();
+    REG_WRITE(highRegister,mask);
+    const uint32_t high=(bytes[i]&bit)?144U:60U;
+    while(static_cast<uint32_t>(esp_cpu_get_cycle_count()-previous)<high){}
+    REG_WRITE(lowRegister,mask);
+  }
+  while(static_cast<uint32_t>(esp_cpu_get_cycle_count()-previous)<300U){}
+  portEXIT_CRITICAL(&pixelMux);
+  esp_rom_delay_us(300); // Reset/latch is low, with interrupts enabled.
+}
+}
+#endif
 std::mutex LedOutput::wireGate_;
 std::atomic<uint32_t> LedOutput::flashHolds_{0};
 std::atomic<bool> LedOutput::inFlight_{false};
@@ -21,8 +60,9 @@ void LedOutput::releaseFlashPause(){flashHolds_.fetch_sub(1);}
 bool LedOutput::begin(){
   queue_=xQueueCreateStatic(1,sizeof(Frame),queueBytes_,&queueState_);
   if(!queue_){error_.store(ESP_ERR_NO_MEM);return false;}
-  // Wi-Fi runs on core0. Initialize RMT/DMA interrupts on the output worker's
-  // core1; no device/network callbacks execute here and no spin/masked IRQs.
+  // Wi-Fi runs on core0. Output is isolated on core1: the default static GPIO
+  // backend masks local IRQs for one bounded changed frame; optional RMT-DMA
+  // initializes its refill interrupt here. No network callbacks execute here.
   if(xTaskCreatePinnedToCore(run,"pakar-led",4096,this,2,nullptr,1)!=pdPASS){
     error_.store(ESP_ERR_NO_MEM);queue_=nullptr;return false;
   }
@@ -37,6 +77,54 @@ void LedOutput::submit(const CRGB *rgb,uint8_t brightness,bool enabled,uint32_t 
   xQueueOverwrite(queue_,&next);submitted_.fetch_add(1);
 }
 void LedOutput::work(){
+#if !PAKAR_S3_LED_USE_DMA
+  constexpr size_t bytes=pixels*3;
+  auto *payload=static_cast<uint8_t*>(heap_caps_malloc(bytes,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));
+  int error=payload?gpio_reset_pin(static_cast<gpio_num_t>(PAKAR_S3_LED_DATA)):ESP_ERR_NO_MEM;
+  if(!error)error=gpio_set_direction(static_cast<gpio_num_t>(PAKAR_S3_LED_DATA),GPIO_MODE_OUTPUT);
+  if(!error)error=gpio_set_level(static_cast<gpio_num_t>(PAKAR_S3_LED_DATA),0);
+#if CONFIG_PM_ENABLE
+  esp_pm_lock_handle_t frequencyLock=nullptr;
+  if(!error)error=esp_pm_lock_create(ESP_PM_CPU_FREQ_MAX,0,"pakar-led",&frequencyLock);
+  if(!error)error=esp_pm_lock_acquire(frequencyLock);
+#endif
+  // The shipping SDK has automatic frequency scaling disabled. When enabled,
+  // the explicit maximum-frequency lock above pins the worker's timing clock.
+  if(!error && getCpuFrequencyMhz()!=240)error=ESP_ERR_NOT_SUPPORTED;
+  if(error){
+    error_.store(error);
+#if CONFIG_PM_ENABLE
+    if(frequencyLock){esp_pm_lock_release(frequencyLock);esp_pm_lock_delete(frequencyLock);}
+#endif
+    if(payload)heap_caps_free(payload);
+    vTaskDelete(nullptr);return;
+  }
+  ::memset(payload,0,bytes);ready_.store(true);
+  bool pending=true; // Always clear480 pixels once before accepting white/color.
+  for(;;){
+    if(flashHolds_.load()){vTaskDelay(1);continue;}
+    if(!pending){
+      if(xQueueReceive(queue_,&current_,pdMS_TO_TICKS(10))!=pdTRUE)continue;
+      const uint8_t correction[]={255,176,240};
+      for(size_t p=0;p<pixels;++p){
+        const uint8_t raw[]={current_.rgb[p].r,current_.rgb[p].g,current_.rgb[p].b};
+        for(size_t c=0;c<3;++c){const size_t logical=PAKAR_S3_LED_SWAP_RED_BLUE?2-c:c;
+          payload[p*3+c]=current_.enabled?wireChannel(raw[logical],current_.brightness,correction[logical]):0;
+        }
+      }
+      pending=true;
+    }
+    {
+      std::lock_guard<std::mutex> lock(wireGate_);
+      if(flashHolds_.load())continue;
+      inFlight_.store(true);
+    }
+    writeStaticWire(payload,bytes);
+    inFlight_.store(false);pending=false;
+    transmitted_.fetch_add(1);revision_.store(current_.revision);active_.store(current_.enabled);
+    vTaskDelay(1); // On-change only: never free-run or replay an animation queue.
+  }
+#else
   rmt_channel_handle_t channel=nullptr;rmt_encoder_handle_t encoder=nullptr;
   constexpr size_t symbols=pixels*24+1;
   auto *encoded=static_cast<rmt_symbol_word_t*>(heap_caps_malloc(symbols*sizeof(rmt_symbol_word_t),MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));
@@ -54,15 +142,18 @@ void LedOutput::work(){
     vTaskDelete(nullptr);return;
   }
   ready_.store(true);
-  bool have=false,blackSent=false;
+  // Submit complete frames only. Replaying unchanged contrast-heavy frames
+  // needlessly exercises DMA refill under RF load. The renderer still sends
+  // periodic repair frames and uncapped animation frames as needed.
+  bool pending=true;
+  encodeWire(current_.rgb,pixels,0,false,encoded); // One startup black frame.
   for(;;){
     if(flashHolds_.load()){vTaskDelay(1);continue;}
-    const bool received=xQueueReceive(queue_,&current_,have&&(!blackSent)?0:pdMS_TO_TICKS(10))==pdTRUE;
-    if(received){
-      have=true;blackSent=false;
+    if(!pending){
+      if(xQueueReceive(queue_,&current_,pdMS_TO_TICKS(10))!=pdTRUE)continue;
       encodeWire(current_.rgb,pixels,current_.brightness,current_.enabled,encoded);
+      pending=true;
     }
-    if(!have||(!received&&blackSent))continue;
     {
       std::lock_guard<std::mutex> lock(wireGate_);
       if(flashHolds_.load())continue;
@@ -81,14 +172,18 @@ void LedOutput::work(){
     }
     inFlight_.store(false);
     transmitted_.fetch_add(1);revision_.store(current_.revision);active_.store(current_.enabled);
-    blackSent=!current_.enabled; // Explicit Off clears once, then sleeps; default On refreshes.
+    pending=false;
     vTaskDelay(1); // Yield to other services, not a20fps/application rate cap.
   }
+#endif
 }
 String LedOutput::json()const{
   String value=F("{\"ready\":");value+=ready_.load()?F("true"):F("false");
   value+=F(",\"active\":");value+=active_.load()?F("true"):F("false");
-  value+=F(",\"backend\":\"rmt-dma\",\"submitted\":");value+=submitted_.load();
+  value+=F(",\"backend\":\"");value+=PAKAR_S3_LED_USE_DMA?F("rmt-dma"):F("gpio-static");
+  value+=F("\",\"dma\":");value+=PAKAR_S3_LED_USE_DMA?F("true"):F("false");
+  value+=F(",\"on_change_only\":true");
+  value+=F(",\"submitted\":");value+=submitted_.load();
   value+=F(",\"channel_order\":\"");value+=PAKAR_S3_LED_SWAP_RED_BLUE?F("bgr"):F("rgb");value+='"';
   value+=F(",\"transmitted\":");value+=transmitted_.load();value+=F(",\"failed\":");value+=failed_.load();
   value+=F(",\"flash_paused\":");value+=(flashHolds_.load()&&!inFlight_.load())?F("true"):F("false");

@@ -55,8 +55,7 @@ impl Manifest {
         self.modes.iter().filter(|m| {
             self.table()
                 && match (m.id.as_str(), m.code, m.kind.as_str()) {
-                    ("cell", 1, "presentation")
-                    | ("snake", 3, "presentation") => true,
+                    ("cell", 1, "presentation") => true,
                     ("first-wins", 2, "game") => self.has("inputs") && self.has("outputs"),
                     _ => false,
                 }
@@ -83,6 +82,7 @@ impl Manifest {
     }
     pub fn allows(&self, path: &str, form: &[(String, String)]) -> bool {
         let feature = match path {
+            "/api/cells" => return self.table() && self.has("cell-batch"),
             "/api/cell"
             | "/api/cells/mapping"
             | "/api/game/reset"
@@ -135,6 +135,8 @@ impl Manifest {
             "isp",
             "ota",
             "identity",
+            "cell-batch",
+            "lcd",
         ];
         let mut value = Self {
             board_kind: if payload[33] == 1 {
@@ -232,9 +234,12 @@ mod tests {
         payload[34..37].copy_from_slice(&[10, 8, 6]);
         let m = Manifest::from_usb(&payload).unwrap();
         assert!(m.table());
-        assert_eq!(m.modes().count(), 2); // No Idle or input/output ACK: no First wins.
+        assert!(!m.allows("/api/cells",&[]));
+        payload[31]|=1<<6; // CellBatch bit14, individually acknowledged.
+        assert!(Manifest::from_usb(&payload).unwrap().allows("/api/cells",&[]));
+        assert_eq!(m.modes().count(), 1); // Snake is hidden; no input/output ACK: no First wins.
         payload[31] = 3;
-        assert_eq!(Manifest::from_usb(&payload).unwrap().modes().count(), 3);
+        assert_eq!(Manifest::from_usb(&payload).unwrap().modes().count(), 2);
         payload[29] = 2;
         assert!(Manifest::from_usb(&payload).is_none());
     }

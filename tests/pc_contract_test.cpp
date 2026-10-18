@@ -112,8 +112,25 @@ void dispatcher() {
   }
   h.live.programming=true;
   send(r,h,PC::Buzzer,{0,0,1,0}); error(h,PC::Buzzer,P::kUnsafe);
+  uint8_t silentRequest[22] = {PC::SetSettings};
+  auto silentSettings = r.settings().values(); silentSettings.flags |= 1;
+  memcpy(silentRequest+1,&silentSettings,sizeof(silentSettings));
+  h.frames.clear(); r.handle(7,silentRequest,sizeof(silentRequest),300,300000);
+  error(h,PC::SetSettings,P::kUnsafe); // Silent never clears the Prog safety gate.
   send(r,h,PC::GetSettings); assert(h.frames[0].p[0]==PC::SettingsResponse);
   h.live.programming=false;
+  for (bool silent : {true, false}) {
+    const auto oldFlags = r.settings().values().flags;
+    silentSettings = r.settings().values();
+    silentSettings.flags = (oldFlags & ~1U) | (silent ? 1 : 0);
+    memcpy(silentRequest+1,&silentSettings,sizeof(silentSettings));
+    h.frames.clear(); r.handle(7,silentRequest,sizeof(silentRequest),300,300000);
+    assert(h.frames[0].p == std::vector<uint8_t>({PC::Ack,PC::SetSettings,0}));
+    assert(h.live.muted == silent && r.settings().persisted());
+    Hardware rebooted; PcControllerRuntime restored(rebooted); restored.begin(301);
+    assert(rebooted.live.muted == silent && restored.settings().persisted());
+    assert((restored.settings().values().flags & ~1U) == (oldFlags & ~1U));
+  }
   send(r,h,PC::Reset,{0}); assert(h.frames[0].p[0]==PC::Ack);
   send(r,h,PC::ProgramState,{1},200); h.live.outputs=255;
   r.service(5199,5199000); assert(r.running());
@@ -313,7 +330,22 @@ void savedMenuPage() {
   r.service(1700,1700000); assert(r.settings().persisted());
   PcControllerRuntime restarted(h); restarted.begin(1800); assert(restarted.menuPage()==4);
 }
+void companionMirroring() {
+  EEPROM.reset();Hardware h;PcControllerRuntime r(h);r.begin(0);
+  r.service(1,1000);assert(h.frames.empty());
+  r.companionHeartbeat(10);r.service(10,10000);
+  assert(h.frames.size()==1 && h.frames.back().p[0]==PC::SegmentChanged);
+  h.frames.clear();h.live.frequency=880;h.live.duration=125;h.live.audioStartedMicros=123;
+  r.service(11,11000);assert(h.frames.size()==1 && h.frames.back().p[0]==PC::BuzzerChanged);
+  assert(h.frames.back().p[1]==0x70 && h.frames.back().p[2]==3 && h.frames.back().p[6]==123);
+  h.frames.clear();r.service(12,12000);assert(h.frames.empty());
+  ++h.live.audioRevision;r.service(3010,3010000);assert(h.frames.empty()); // Lease expired.
+  h.canReceive=false;r.companionHeartbeat(3020);r.service(3020,3020000);assert(h.frames.empty());
+  r.companionPoll(3021,3021000);assert(h.frames.size()==1 && h.frames[0].p[0]==PC::BuzzerChanged);
+  h.frames.clear();r.companionPoll(3022,3022000);assert(h.frames.empty());
+  assert(h.commands==0 && h.stops==0 && !r.menuActive() && !r.running());
+}
 int main() {
-  settingsTransactions(); dispatcher(); macroAndAutomations(); transport(); keysAndDisplay(); stripAndChunks(); polling(); savedMenuPage();
+  settingsTransactions(); dispatcher(); macroAndAutomations(); transport(); keysAndDisplay(); stripAndChunks(); polling(); savedMenuPage(); companionMirroring();
   puts("PCController profile: dispatch, safety, settings/automation torn writes, macros, transport, keys, TM1637 passed.");
 }

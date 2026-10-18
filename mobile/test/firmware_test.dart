@@ -140,6 +140,9 @@ void main() {
         return jsonResponse(firmwareJob(phase: 'manifest', id: 42));
       }),
     );
+    // Authentication is optional; this case explicitly tests configured Basic
+    // credentials instead of expecting a header for an empty password.
+    api.password = 'fixture-password';
     final controller = FirmwareController(api, authorized: (_) => true);
     expect(
       (await controller.stage(

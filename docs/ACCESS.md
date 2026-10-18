@@ -2,13 +2,19 @@
 
 ## Sign in and change credentials
 
-Use `http://pakarcontroller/` first, `.local` second, and the station IP as a fallback.
-Existing hardcoded development firmware uses **admin / pakarcontroller**.
-Version 0.2.2 replaces the native browser Basic-auth dialog with a sign-in form.
-Initial credentials are displayed only while those defaults are active.
+Use the saved hostname, e.g. `http://ledboard.local/`, with an IP only for recovery.
+Authentication is disabled by default. `/api/auth/info` reports `ready` and
+`enabled`; Web and egui only show login fields when authentication is enabled.
+Connection/storage failures are not login requests. Browser Direction and Touch
+feedback belong to Preferences; unsupported haptics are hidden.
 
-After signing in, open **Device access**, enter the current password, a new
-username, password and confirmation, then save. This applies to HTTP/API,
+A valid old factory-credential record migrates to disabled. An old explicitly
+changed credential record retains protection; use Device access or `auth disable`
+to opt out. Corrupt records still fail closed, never silently disable access control.
+
+Open **Device access**, select **Require authentication**, then enter a new
+username, password and confirmation, then save. If authentication is already
+enabled, its current password is required, including when disabling it. This applies to HTTP/API,
 inbound WebSocket and Telnet. AP and station Wi-Fi passwords are separate.
 The native editor is in **Network & cloud → Device access**, uses your current
 connection password, and reconnects after the ESP confirms persistence.
@@ -19,7 +25,7 @@ characters. Credential POST bodies are used, never password query strings.
 
 ## CLI, TUI and API
 
-CLI/TUI commands: `auth info` and `auth change USERNAME`.
+CLI/TUI commands: `auth info`, `auth change USERNAME` (enable/change), and `auth disable`.
 For CLI: `pakarcontroller.exe --command auth info` or
 `pakarcontroller.exe --command auth change David`.
 Current password: `PAKAR_PASSWORD`; new password: `PAKAR_NEW_PASSWORD`, not
@@ -28,11 +34,12 @@ command-line arguments. Set `PAKAR_USER` for the current username and
 variables after use. Successful TUI changes update in-memory credentials;
 new CLI processes need the new `PAKAR_USER` and `PAKAR_PASSWORD`.
 
-Public `GET /api/auth/info` returns readiness, username, default-password
-status and route names, never the stored password. Protected
-`POST /api/auth` accepts form fields `current_password`, `username`,
-`password` and confirms `{updated:true, reauthenticate:true}` only after
-persistence succeeds. Basic authentication remains for native/API clients.
+Public `GET /api/auth/info` returns readiness, `enabled`, username, enabled-only
+default-password status and route names, never the stored password.
+`POST /api/auth` accepts `enabled=true|false` and, when required,
+`current_password`, `username`, `password`. It confirms `updated`, `enabled`
+and `reauthenticate` only after persistence succeeds. Disabling needs no new
+credentials. Enabling from off requires an explicit valid username/password. Basic authentication remains for native/API clients.
 Browsers use `/login` and an HttpOnly SameSite=Strict cookie.
 
 At most eight browser sessions; 30-minute inactivity expiry includes

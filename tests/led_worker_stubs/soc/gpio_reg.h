@@ -1,0 +1,2 @@
+#pragma once
+constexpr unsigned GPIO_OUT_W1TS_REG=1,GPIO_OUT_W1TC_REG=2,GPIO_OUT1_W1TS_REG=3,GPIO_OUT1_W1TC_REG=4;

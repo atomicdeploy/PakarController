@@ -7,6 +7,7 @@ import 'cell_search.dart';
 import 'device_settings.dart';
 import 'firmware_page.dart';
 import 'icons.dart';
+import 'workspace_widgets.dart';
 import 'models.dart';
 import 'peer_context.dart';
 
@@ -424,19 +425,8 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       onChanged: edit,
     ),
   );
-  Widget card(String title, List<Widget> children) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 16),
-          ...children,
-        ],
-      ),
-    ),
-  );
+  Widget card(String title, List<Widget> children) =>
+      WorkspaceSection(title: title, icon: PakarIcons.gear, children: children);
   Widget publicField(SettingsGroup group, String key, String label) {
     final draft = session.drafts[group]!;
     if (group.fields[key] == 'boolean') {

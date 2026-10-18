@@ -25,7 +25,7 @@ const firmwareJob=build.split('  firmware:')[1].split('  windows-desktop:')[0];
 assert.match(firmwareJob,/actions\/setup-node@[a-f0-9]{40}[\s\S]*node-version: '24'/,
   'Firmware asset verification must use the same Node major as source quality');
 const quietSdkCommand='pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -PauseAvrLink -Jobs 2';
-const normalSdkCommand='./build.sh buffered esp32s3';
+const normalSdkCommand='bash build.sh buffered esp32s3 --s3-flash-mb 16 --s3-psram opi';
 assert.equal(firmwareJob.split(quietSdkCommand).length-1,1,'Compile the quiet-only SDK adapter exactly once through the guarded wrapper');
 assert.equal(firmwareJob.split(normalSdkCommand).length-1,1,'Keep one canonical normal S3 build');
 assert(firmwareJob.indexOf(quietSdkCommand)<firmwareJob.indexOf(normalSdkCommand),

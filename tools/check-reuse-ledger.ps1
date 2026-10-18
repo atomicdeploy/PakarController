@@ -22,7 +22,8 @@ foreach ($row in $rows) {
     $seen[$key] = $true
     if (-not $row.origin -or -not $row.path -or -not $row.revision) { throw "Incomplete identity: $key" }
     if ($row.review_status -notin $known) { throw "Invalid review status: $key" }
-    if ($row.availability -notin @('present','missing')) { throw "Invalid availability: $key" }
+    if ($row.availability -notin @('present','missing','pinned-blob')) { throw "Invalid availability: $key" }
+    if($row.availability -eq 'pinned-blob' -and ($row.revision -notmatch '^[a-f0-9]{40}$' -or -not $row.notes -or $row.review_status -eq 'missing')){throw "Invalid pinned blob identity: $key"}
     if ($row.availability -eq 'missing') {
         if ($row.review_status -ne 'missing' -or $row.sha256) { throw "Missing source falsely reviewed: $key" }
     } elseif ($row.sha256 -notmatch '^[0-9a-f]{64}$') { throw "Invalid source hash: $key" }

@@ -40,14 +40,14 @@ class ConnectionPreferences {
     if (legacy != null && password != null) {
       await preferences.remove('password');
     }
-    api.password = password ?? 'pakarcontroller';
+    api.password = password ?? '';
     api.resetTransport();
   }
 
   Future<void> save(String endpoint, String user, String password) async {
     final normalized = PakarApi.normalizeEndpoint(endpoint);
-    if (user.trim().isEmpty || password.isEmpty) {
-      throw const FormatException('Username and password are required');
+    if (user.length > 96 || password.length > 256) {
+      throw const FormatException('Credentials exceed their limits');
     }
     await secrets.write(password); // Never fall back to plaintext persistence.
     await preferences.setString('endpoint', normalized);

@@ -174,6 +174,8 @@ protected:
 	IPAddress m_last;
 	IPAddress m_stationJoined;
 	IPAddress m_accessPointJoined;
+	IPAddress m_ethernetJoined;
+	IPAddress m_stationSeen, m_accessPointSeen, m_ethernetSeen;
 	uint32_t m_joinRetryAt = 0;
 	uint32_t m_bootId = 1;
 	uint32_t m_configId = 1;

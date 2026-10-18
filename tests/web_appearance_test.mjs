@@ -42,12 +42,14 @@ const prepaint=web.match(/<script data-pakar-presentation>([\s\S]*?)<\/script>/i
 const code=prepaint+'\n'+shipped.slice(shipped.indexOf('// BEGIN BROWSER APPEARANCE'),shipped.indexOf('// END BROWSER APPEARANCE'));
 const catalog=JSON.parse(readFileSync(new URL('../assets/themes/palettes.json',import.meta.url),'utf8'));
 function fixture({stored=null,light=false,storageFailure=false}={}){
-  const ids=['appearanceTheme','appearancePalette','appearanceAccent','appearanceCustom','appearanceDialog','appearanceForm','appearanceOpen','appearanceClose','appearanceCancel','appearanceError'];
+  const ids=['appearanceTheme','appearancePalette','appearanceAccent','appearanceCustom','appearanceDialog','appearanceForm','appearanceOpen','appearanceClose','appearanceCancel','appearanceError','uiLanguage','uiDirection','uiHaptics','uiHapticsRow'];
   const nodes=Object.fromEntries(ids.map(id=>[id,{value:'',disabled:false,open:false,textContent:'',listeners:{},addEventListener(k,v){this.listeners[k]=v},showModal(){this.open=true},close(){this.open=false}}]));
   const properties=new Map(),root={dataset:{},style:{setProperty:(key,value)=>properties.set(key,value)}};
   const media={matches:light,addEventListener(k,v){this.listener=v}},events={},storage=new Map(stored===null?[]:[['pakar-appearance',stored]]);
   let writes=0;
-  const context=vm.createContext({...nodes,document:{documentElement:root},matchMedia:()=>media,addEventListener:(key,fn)=>events[key]=fn,
+  // These dependencies belong to the separate locale/haptics tests and the
+  // full embedded-app fixture; this slice exercises the actual appearance owner.
+  const context=vm.createContext({...nodes,uiLanguagePreference:'system',uiDirectionPreference:'auto',webHapticsEnabled:false,webHaptics:{supported:false},saveLocalization(){},saveHaptics(){},document:{documentElement:root,getElementById:id=>nodes[id]},matchMedia:()=>media,addEventListener:(key,fn)=>events[key]=fn,
     localStorage:{getItem:key=>{if(storageFailure)throw Error('blocked');return storage.get(key)},setItem:(key,value)=>{if(storageFailure)throw Error('blocked');writes++;storage.set(key,value)}}});
   vm.runInContext(code,context);
   return{...nodes,root,properties,media,events,storage,get writes(){return writes},run:source=>vm.runInContext(source,context)};
@@ -94,7 +96,7 @@ test('unavailable storage still applies for this session and visibly reports fai
   assert.match(f.appearanceError.textContent,/session only/);assert.equal(f.appearanceDialog.open,true);
 });
 test('theme control labels and palette-safe cells retain fixed geometry, half-row offset and unified tint-free emphasis',()=>{
-  assert.match(web,/aria-labelledby="appearanceTitle"/);assert.match(web,/Saved only in this browser/);
+  assert.match(web,/aria-labelledby="appearanceTitle"/);assert.match(web,/Appearance is saved in this browser/);
   assert.match(web,/transform:translateY\(50%\);--cell-surface:var\(--surface-0\)/);
   assert.match(web,/\.cell\{[^}]*border:2px solid var\(--line-strong\)/);
   assert.match(web,/\.cell\.selected:hover,\.cell\.selected:active,\.cell\.selected:focus-visible/);

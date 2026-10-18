@@ -10,6 +10,7 @@ param(
     [switch]$RequireComplete
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'donor-files.ps1')
 $targetDirectory = [IO.Path]::GetFullPath($TargetRoot).TrimEnd('\','/')
 function Write-ChangedReport([string]$Path, [string]$Text) {
     $full = [IO.Path]::GetFullPath($Path)
@@ -83,7 +84,7 @@ $rows = foreach ($source in (Import-Csv -LiteralPath $LedgerPath)) {
     $routes = @($capabilities.concerns | Where-Object {
         $_.id -ne 'donor-audit' -and $source.origin -in $_.origins -and $source.path -match $_.path_pattern
     })
-    if ($entry -and ($source.availability -ne 'present' -or $entry.sha256 -ne $source.sha256)) { throw "Donor hash changed or source absent: $key" }
+    if ($entry -and (-not (Test-PakarDonorSnapshot $source $entry) -or $entry.sha256 -ne $source.sha256)) { throw "Donor hash changed or source absent: $key" }
     [pscustomobject][ordered]@{
         origin=$source.origin; path=$source.path; revision=$source.revision; source_sha256=$source.sha256
         concerns=$(if ($routes.Count) { $routes.id -join ' | ' } else { 'donor-audit: specialist routing pending' })

@@ -66,6 +66,16 @@ int main() {
   filesystem.failRename=false;
   assert(loaded.setAccessPointEnabled(true));
   assert(loaded.configure("ledboard","fixture-ap-passphrase"));assert(WiFi.modeValue==WIFI_AP_STA);
+#if defined(ESP32)
+  assert(WiFi.nameAtStart=="ledboard" && WiFi.STA.name=="ledboard" && WiFi.AP.name=="ledboard");
+  const char *longName="a-long-configured-hostname-with-no-random-suffix";
+  assert(loaded.configure(longName,"fixture-ap-passphrase"));
+  assert(WiFi.nameAtStart==longName && WiFi.STA.name==longName && WiFi.AP.name==longName);
+  WiFi.STA.fail=true;assert(!loaded.configure("renamed-board","fixture-ap-passphrase"));
+  assert(WiFi.modeValue==WIFI_OFF);WiFi.STA.fail=false;
+  assert(loaded.configure("renamed-board","fixture-ap-passphrase"));
+  assert(WiFi.STA.name=="renamed-board" && WiFi.AP.name=="renamed-board");
+#endif
   assert(loaded.setStation("","",false));
   assert(loaded.configure("ledboard","fixture-ap-passphrase"));assert(WiFi.modeValue==WIFI_AP);
   assert(loaded.setAddressing(true));assert(loaded.save());

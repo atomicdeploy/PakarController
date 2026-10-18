@@ -6,7 +6,8 @@
 // separate EEPROM region; this service never touches settings or the Prog latch.
 class ResetTelemetry {
  public:
-  void begin();
+  // Programming mode must preserve the exact EEPROM backup across RESET.
+  void begin(bool allowWrite=true);
   uint8_t cause()const{return cause_;}
   uint32_t count()const{return count_;}
   bool persisted()const{return persisted_;}

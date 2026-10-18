@@ -61,14 +61,17 @@ class SerialLink {
             uint8_t payloadLength = 0) {
     if (payloadLength > Protocol::kMaximumPayload ||
         (payloadLength != 0 && payload == nullptr)) return false;
-    Protocol::Frame frame = {};
-    frame.opcode = opcode;
-    frame.sequence = sequence;
-    frame.payloadLength = payloadLength;
-    if (payloadLength != 0) memcpy(frame.payload, payload, payloadLength);
-    uint8_t encoded[Protocol::kMaximumEncoded];
-    const uint8_t length = Protocol::encode(frame, encoded, sizeof(encoded));
-    if (length == 0) return false;
+    // Actual PCController UartProtocol::send/writeCobs mechanism: keep bounded
+    // TX scratch separate from RX, rather than nesting Frame51 + encoded56 +
+    // encodeRaw54 on the AVR stack while a request handler is still active.
+    transmit_[0] = Protocol::kMagic;
+    transmit_[1] = Protocol::kReserved;
+    transmit_[2] = opcode;
+    transmit_[3] = sequence;
+    transmit_[4] = payloadLength;
+    if (payloadLength) memcpy(transmit_ + 5, payload, payloadLength);
+    const uint8_t rawLength = payloadLength + Protocol::kRawOverhead;
+    transmit_[rawLength - 1] = WireCodec::crc8(transmit_, rawLength - 1);
     // A partial transport write has an unknown outcome. Never replay it.
     // End its incomplete COBS packet before a subsequent independent frame.
     if (resyncTransmit_) {
@@ -79,13 +82,16 @@ class SerialLink {
       ++bytesTransmitted_;
 #endif
     }
-    const size_t written = serial_.write(encoded, length);
-    if (written != length) {
+    uint8_t written = 0;
+    if (!writeCobs(transmit_, rawLength, written)) {
       resyncTransmit_ = written != 0;
+#if defined(ESP8266) || defined(ESP32)
+      bytesTransmitted_ += written;
+#endif
       return false;
     }
 #if defined(ESP8266) || defined(ESP32)
-    bytesTransmitted_ += length;
+    bytesTransmitted_ += written;
     ++framesTransmitted_;
 #endif
     return true;
@@ -110,11 +116,38 @@ class SerialLink {
 #endif
 
  private:
+  // Adapt donor streaming COBS with explicit fragment/final-delimiter outcome
+  // checks. send() is synchronous, called by main-loop handlers, never an ISR.
+  // A failed fragment is not replayed; the next independent send repairs only
+  // its packet boundary. The RX frame remains intact during a nested reply.
+  bool writeCobs(const uint8_t *input, uint8_t length, uint8_t &written) {
+    static_assert(Protocol::kMaximumRaw < 254,
+                  "Streaming COBS requires bounded single-code blocks");
+    uint8_t readIndex = 0;
+    do {
+      const uint8_t blockStart = readIndex;
+      while (readIndex < length && input[readIndex] != 0) ++readIndex;
+      const uint8_t blockLength = readIndex - blockStart;
+      const uint8_t code = blockLength + 1;
+      if (!writeFragment(&code, 1, written) ||
+          (blockLength && !writeFragment(input + blockStart, blockLength, written))) return false;
+      if (readIndex < length) ++readIndex;
+      else break;
+    } while (readIndex <= length);
+    const uint8_t delimiter = 0;
+    return writeFragment(&delimiter, 1, written);
+  }
+  bool writeFragment(const uint8_t *data, uint8_t length, uint8_t &written) {
+    const size_t count = serial_.write(data, length);
+    written += static_cast<uint8_t>(count > length ? length : count);
+    return count == length;
+  }
   Stream &serial_;
   HardwareSerial *hardware_ = nullptr;
   FrameHandler handler_ = nullptr;
   void *context_ = nullptr;
   uint8_t receive_[Protocol::kMaximumEncoded] = {};
+  uint8_t transmit_[Protocol::kMaximumRaw] = {};
   uint8_t receiveLength_ = 0;
   bool dropping_ = false;
   bool resyncTransmit_ = false;

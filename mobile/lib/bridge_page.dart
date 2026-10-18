@@ -9,6 +9,7 @@ import 'api.dart';
 import 'bridge.dart';
 import 'icons.dart';
 import 'models.dart';
+import 'workspace_widgets.dart';
 
 class BridgePage extends StatefulWidget {
   const BridgePage({super.key, required this.api, required this.observed});
@@ -34,6 +35,7 @@ class _BridgePageState extends State<BridgePage> with WidgetsBindingObserver {
       foreground = true;
   int qos = 0;
   String message = '';
+  String activeSection = 'Session';
   static const vault = FlutterSecureStorage();
   @override
   void initState() {
@@ -150,129 +152,159 @@ class _BridgePageState extends State<BridgePage> with WidgetsBindingObserver {
           decoration: InputDecoration(labelText: label),
         ),
       );
-  Widget section(String title, List<Widget> children) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 16),
-          ...children,
-        ],
-      ),
-    ),
+  Widget section(String title, List<Widget> children) => WorkspaceSection(
+    title: title,
+    icon: title.startsWith('MQTT')
+        ? PakarIcons.cloud
+        : title.startsWith('Routing')
+        ? PakarIcons.gear
+        : PakarIcons.link,
+    children: children,
   );
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.all(16),
+  Widget build(BuildContext context) => WorkspaceBody(
     children: [
-      const Text(
-        'Advanced · Android bridge',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+      WorkspaceHeader(
+        title: 'Android bridge',
+        icon: PakarIcons.broadcast,
+        subtitle: 'Advanced connections',
+        actions: [
+          WorkspaceBadge(
+            bridge.running ? 'Running' : 'Stopped',
+            active: bridge.running,
+          ),
+        ],
       ),
-      const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Text(
-          'Forward observed telemetry and explicitly allowed commands between this ESP, Android clients, MQTT and a remote WebSocket. Runs only while this page/app is foreground. Changing peers or losing peer freshness stops the bridge.',
-        ),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final item in const ['Session', 'MQTT', 'WebSocket', 'Routing'])
+            ChoiceChip(
+              label: Text(item),
+              selected: item == activeSection,
+              showCheckmark: false,
+              onSelected: (_) => setState(() => activeSection = item),
+            ),
+        ],
       ),
-      section('MQTT · Android client', [
-        field(broker, 'Broker · mqtts://host:8883 or wss://host/mqtt'),
-        field(topic, 'Exact base topic'),
-        field(user, 'Broker username'),
-        field(password, 'Broker password · secure storage', secret: true),
-        DropdownButtonFormField<int>(
-          initialValue: qos,
-          decoration: const InputDecoration(labelText: 'Telemetry / reply QoS'),
-          items: const [
-            DropdownMenuItem(value: 0, child: Text('0 · at most once')),
-            DropdownMenuItem(value: 1, child: Text('1 · at least once')),
-          ],
-          onChanged: working || bridge.running
-              ? null
-              : (v) => setState(() => qos = v!),
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'Clean session; no retained commands, no automatic reconnect/offline replay. Broker subscription acknowledgment and transport status are separate from board acknowledgment.',
-        ),
-      ]),
-      section('Remote WebSocket', [
-        field(ws, 'wss:// endpoint · optional'),
-        field(token, 'Remote bearer token · secure storage', secret: true),
-      ]),
-      section('Routing policy', [
-        field(interval, 'Telemetry interval · seconds (1–3600)'),
-        SwitchListTile(
-          title: const Text('Local Android HTTP / WebSocket bridge'),
-          subtitle: const Text(
-            'Loopback only · bearer token required · no browser CORS',
-          ),
-          value: local,
-          onChanged: working || bridge.running
-              ? null
-              : (v) => setState(() => local = v),
-        ),
-        SwitchListTile(
-          title: const Text('Allow remote/local control commands'),
-          value: commands,
-          onChanged: working || bridge.running
-              ? null
-              : (v) => setState(() => commands = v),
-        ),
-        SwitchListTile(
-          title: const Text('Allow firmware export / pinned staging'),
-          subtitle: const Text(
-            'No remote apply, reboot, arbitrary URL proxy or binary auto-flash',
-          ),
-          value: firmware,
-          onChanged: working || bridge.running
-              ? null
-              : (v) => setState(() => firmware = v),
-        ),
-      ]),
-      section('Bridge session', [
-        Text(bridge.state),
-        Text(
-          'MQTT: ${bridge.mqttConnected ? 'connected' : 'offline'} · remote WebSocket: ${bridge.webSocketConnected ? 'connected' : 'offline'}',
-        ),
-        Text(
-          'MQTT request subscription: ${bridge.subscriptionAcknowledged ? 'acknowledged by broker' : 'not acknowledged'}',
-        ),
-        Text(
-          'Received ${bridge.received} · rejected ${bridge.rejected} · telemetry snapshots ${bridge.sent}',
-        ),
-        if (bridge.server != null)
-          SelectableText(
-            'Local endpoint: http://127.0.0.1:${bridge.server!.port}\nBearer token: ${bridge.token}',
-          ),
-        if (bridge.admission != null && bridge.running)
-          SelectableText('Request session: ${bridge.admission!.session}'),
-        const Text(
-          'Tokens are intentionally visible here for explicit trusted-app setup; never included in telemetry/discovery. Requests require id, bridge_session, board_id, boot_id and expires_at_ms (max 60 seconds).',
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          children: [
-            FilledButton.icon(
-              onPressed: working || bridge.running ? null : start,
-              icon: const Icon(PakarIcons.play),
-              label: const Text('Start bridge'),
+      const SizedBox(height: 16),
+      if (activeSection == 'MQTT')
+        section('MQTT · Android client', [
+          field(broker, 'Broker · mqtts://host:8883 or wss://host/mqtt'),
+          field(topic, 'Exact base topic'),
+          field(user, 'Broker username'),
+          field(password, 'Broker password · secure storage', secret: true),
+          DropdownButtonFormField<int>(
+            initialValue: qos,
+            decoration: const InputDecoration(
+              labelText: 'Telemetry / reply QoS',
             ),
-            OutlinedButton(
-              onPressed: working || !bridge.running
-                  ? null
-                  : () => bridge.stop(),
-              child: const Text('Stop bridge'),
+            items: const [
+              DropdownMenuItem(value: 0, child: Text('0 · at most once')),
+              DropdownMenuItem(value: 1, child: Text('1 · at least once')),
+            ],
+            onChanged: working || bridge.running
+                ? null
+                : (v) => setState(() => qos = v!),
+          ),
+          const SizedBox(height: 12),
+        ]),
+      if (activeSection == 'WebSocket')
+        section('Remote WebSocket', [
+          field(ws, 'wss:// endpoint · optional'),
+          field(token, 'Remote bearer token · secure storage', secret: true),
+        ]),
+      if (activeSection == 'Routing')
+        section('Routing policy', [
+          field(interval, 'Telemetry interval · seconds (1–3600)'),
+          SwitchListTile(
+            title: const Text('Local Android HTTP / WebSocket bridge'),
+            subtitle: const Text(
+              'Loopback only · bearer token required · no browser CORS',
             ),
-          ],
-        ),
-        if (working) const LinearProgressIndicator(),
-        for (final incident in bridge.incidents.entries) Text('${incident.key}${incident.value > 1 ? ' · ${incident.value} occurrences' : ''}'),
-        if (message.isNotEmpty) Text(message),
-      ]),
+            value: local,
+            onChanged: working || bridge.running
+                ? null
+                : (v) => setState(() => local = v),
+          ),
+          SwitchListTile(
+            title: const Text('Allow remote/local control commands'),
+            value: commands,
+            onChanged: working || bridge.running
+                ? null
+                : (v) => setState(() => commands = v),
+          ),
+          SwitchListTile(
+            title: const Text('Allow firmware export / pinned staging'),
+            subtitle: const Text(
+              'No remote apply, reboot, arbitrary URL proxy or binary auto-flash',
+            ),
+            value: firmware,
+            onChanged: working || bridge.running
+                ? null
+                : (v) => setState(() => firmware = v),
+          ),
+        ]),
+      if (activeSection == 'Session')
+        section('Bridge session', [
+          Text(bridge.state),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              WorkspaceBadge(
+                'MQTT',
+                active: bridge.mqttConnected,
+                icon: PakarIcons.cloud,
+              ),
+              WorkspaceBadge(
+                'WebSocket',
+                active: bridge.webSocketConnected,
+                icon: PakarIcons.link,
+              ),
+              WorkspaceBadge(
+                bridge.subscriptionAcknowledged
+                    ? 'Subscribed'
+                    : 'Not subscribed',
+                active: bridge.subscriptionAcknowledged,
+              ),
+            ],
+          ),
+          Text(
+            'Received ${bridge.received} · rejected ${bridge.rejected} · telemetry snapshots ${bridge.sent}',
+          ),
+          if (bridge.server != null)
+            SelectableText(
+              'Local endpoint: http://127.0.0.1:${bridge.server!.port}\nBearer token: ${bridge.token}',
+            ),
+          if (bridge.admission != null && bridge.running)
+            SelectableText('Request session: ${bridge.admission!.session}'),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            children: [
+              FilledButton.icon(
+                onPressed: working || bridge.running ? null : start,
+                icon: const Icon(PakarIcons.play),
+                label: const Text('Start bridge'),
+              ),
+              OutlinedButton(
+                onPressed: working || !bridge.running
+                    ? null
+                    : () => bridge.stop(),
+                child: const Text('Stop bridge'),
+              ),
+            ],
+          ),
+          if (working) const LinearProgressIndicator(),
+          for (final incident in bridge.incidents.entries)
+            Text(
+              '${incident.key}${incident.value > 1 ? ' · ${incident.value} occurrences' : ''}',
+            ),
+          if (message.isNotEmpty) Text(message),
+        ]),
     ],
   );
 }

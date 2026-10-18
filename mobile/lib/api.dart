@@ -4,30 +4,69 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import 'package:crypto/crypto.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'models.dart';
+import 'board_sound.dart';
+import 'lan_resolver.dart';
+
+enum ConnectionMethod { network, usb }
 
 class PakarApi {
   PakarApi({
     String baseUrl = 'http://ledboard.local',
     String user = 'admin',
-    String password = 'pakarcontroller',
+    String password = '',
     http.Client? client,
+    LanResolver? resolver,
     this.discovery,
-  }) : _client = client ?? http.Client(),
+  }) : resolver = resolver ?? LanResolver(),
        _baseUrl = normalizeEndpoint(baseUrl),
        // Preserve public argument names; private setters own revisions.
        // ignore: prefer_initializing_formals
        _user = user,
        // ignore: prefer_initializing_formals
-       _password = password;
+       _password = password {
+    _client = client ?? IOClient(_ioClient);
+  }
 
   String _baseUrl, _user, _password;
   int _connectionRevision = 0;
   int get connectionRevision => _connectionRevision;
+  bool _connectionWanted = true;
+  bool get connectionWanted => _connectionWanted;
+  ConnectionMethod _connectionMethod = ConnectionMethod.network;
+  ConnectionMethod get connectionMethod => _connectionMethod;
+  set connectionMethod(ConnectionMethod value) {
+    if (_connectionMethod == value) return;
+    _connectionMethod = value;
+    resetTransport();
+  }
+
+  // Android USB-host transport is not implemented yet. Never substitute an
+  // HTTP/WS connection, discovery, or a remote bridge for explicit USB intent.
+  void _requireNetwork() {
+    if (!_connectionWanted) throw const ConnectionStopped();
+    if (_connectionMethod != ConnectionMethod.network) {
+      throw const FormatException(
+        'Direct Android USB is not available in this build; no network fallback was attempted',
+      );
+    }
+  }
+
+  void disconnect() {
+    _connectionWanted = false;
+    resetTransport();
+  }
+
+  void connect() {
+    _connectionWanted = true;
+    resetTransport();
+  }
+
   void Function()? onPeerChanged;
   void Function()? onTransportRetired;
   void Function(Map<String, dynamic>)? onPeripheralEvent;
@@ -58,7 +97,9 @@ class PakarApi {
     }
   }
 
-  final http.Client _client;
+  late final http.Client _client;
+  final LanResolver resolver;
+  late final HttpClient _ioClient = resolver.createClient();
   final Future<Set<String>> Function()? discovery;
   WebSocketChannel? _channel;
   String? _discoveredBaseUrl;
@@ -67,7 +108,8 @@ class PakarApi {
   String? _verifiedBoard, _verifiedBoot;
 
   Map<String, String> get _headers => {
-    'authorization': 'Basic ${base64Encode(utf8.encode('$user:$password'))}',
+    if (password.isNotEmpty)
+      'authorization': 'Basic ${base64Encode(utf8.encode('$user:$password'))}',
   };
   Map<String, String> get _writeHeaders => {
     ..._headers,
@@ -101,15 +143,34 @@ class PakarApi {
       Uri.parse('${base.replaceFirst(RegExp(r'/$'), '')}$path')
           .replace(queryParameters: query);
 
+  Future<http.Response> _readResponse(
+    String base,
+    String path,
+    Map<String, String> headers,
+  ) {
+    final request = http.Request('GET', _uri(base, path))
+      ..headers.addAll(headers)
+      ..followRedirects = false;
+    return _client.send(request).then(http.Response.fromStream);
+  }
+
   Future<Map<String, dynamic>> _get(String path) async {
+    _requireNetwork();
     final revision = connectionRevision, headers = _headers;
     final response = await _withDiscovery(
-      (base) => _client
-          .get(_uri(base, path), headers: headers)
-          .timeout(const Duration(seconds: 6)),
+      (base) => _readResponse(
+        base,
+        path,
+        headers,
+      ).timeout(const Duration(seconds: 6)),
     );
     if (revision != connectionRevision) throw const StaleConnection();
-    if (response.statusCode ~/ 100 != 2) throw Exception(response.body);
+    if (response.statusCode == 401) throw const AuthenticationRequired();
+    if (response.statusCode ~/ 100 != 2) {
+      throw FormatException(
+        'Device read rejected (HTTP ${response.statusCode})',
+      );
+    }
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
@@ -129,6 +190,7 @@ class PakarApi {
     Duration timeout = const Duration(seconds: 180),
     required bool Function() authorize,
   }) async {
+    _requireNetwork();
     final revision = connectionRevision;
     if (_verifiedEndpoint != baseUrl) await status();
     if (revision != connectionRevision || !authorize()) {
@@ -255,6 +317,7 @@ class PakarApi {
     Map<String, String> values, {
     bool Function()? authorize,
   }) async {
+    _requireNetwork();
     final revision = connectionRevision;
     if (_verifiedEndpoint != baseUrl) await status();
     if (revision != connectionRevision || authorize?.call() == false) {
@@ -287,6 +350,7 @@ class PakarApi {
     String path, [
     Map<String, String> values = const {},
   ]) async {
+    _requireNetwork();
     final revision = connectionRevision;
     // Resolve/verify through a read first; a POST must never be automatically
     // replayed after a timeout or disconnect (the board may have applied it).
@@ -304,7 +368,11 @@ class PakarApi {
       throw const OperationUncertain();
     }
     if (revision != connectionRevision) throw const StaleConnection();
-    if (response.statusCode ~/ 100 != 2) throw Exception(response.body);
+    if (response.statusCode ~/ 100 != 2) {
+      throw FormatException(
+        'Device write rejected (HTTP ${response.statusCode}); not retried',
+      );
+    }
   }
 
   Future<DeviceStatus> status() async {
@@ -349,10 +417,115 @@ class PakarApi {
     return changed;
   }
 
-  Future<CellMap> mapping() async =>
-      CellMap.fromJson(await _get('/api/cells/mapping'));
+  Future<BoardSound> boardSound({bool? silent}) async {
+    final revision = connectionRevision;
+    final before = await status();
+    void admit() {
+      _requireNetwork();
+      if (revision != connectionRevision) throw const StaleConnection();
+    }
+
+    admit();
+    if (before.json['avr_online'] != true ||
+        !before.peer.has('settings') ||
+        !before.peer.has('buzzer') ||
+        (silent != null && before.json['programming_latch'] == true)) {
+      throw const FormatException('Board sound settings unavailable');
+    }
+    final boot = before.json['boot_id'];
+    if (_verifiedBoard == null || _verifiedBoot == null) {
+      throw const StaleConnection();
+    }
+    Future<Map<String, dynamic>> contract(int opcode, String payload) async {
+      admit();
+      final queued = await postJson('/api/avr/contracts', {
+        'opcode': '$opcode',
+        'payload_hex': payload,
+      }, authorize: () => revision == connectionRevision);
+      final id = queued['request_id'];
+      if (id is! int || id <= 0 || queued['boot_id'] != boot) {
+        throw const OperationUncertain();
+      }
+      final deadline = DateTime.now().add(const Duration(seconds: 3));
+      while (true) {
+        admit();
+        final receipt = await _get('/api/avr/contracts/result?id=$id');
+        if (receipt['request_id'] != id ||
+            receipt['boot_id'] != boot ||
+            receipt['request_opcode'] != opcode) {
+          throw const OperationUncertain();
+        }
+        if (receipt['state'] == 'responded') {
+          final response = receipt['response_opcode'],
+              hex = receipt['payload_hex'];
+          if (hex is! String ||
+              (response != 0x82 &&
+                  (opcode == 4
+                      ? response != 0x91
+                      : response != 0x80 || hex != '0500'))) {
+            throw const OperationUncertain();
+          }
+          // Consume only the matching terminal receipt, never a queued write.
+          admit();
+          final request =
+              http.Request(
+                  'DELETE',
+                  _uri(transportUrl, '/api/avr/contracts/result', {
+                    'id': '$id',
+                    'boot_id': '$boot',
+                    'opcode': '$opcode',
+                  }),
+                )
+                ..headers.addAll(_writeHeaders)
+                ..followRedirects = false;
+          await http.Response.fromStream(await _client.send(request))
+              .timeout(const Duration(seconds: 4));
+          admit();
+          if (response == 0x82) {
+            throw const FormatException(
+              'AVR rejected sound settings; not retried',
+            );
+          }
+          return receipt;
+        }
+        if (!['queued', 'awaiting'].contains(receipt['state']) ||
+            DateTime.now().isAfter(deadline)) {
+          throw const OperationUncertain();
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+      }
+    }
+
+    final read = await contract(4, '');
+    var value = BoardSound.parse(read['payload_hex'] as String);
+    if (silent != null && (!value.persisted || value.silent != silent)) {
+      final expected = value.withSilent(silent);
+      await contract(5, expected);
+      final readback = await contract(4, '');
+      value = BoardSound.parse(readback['payload_hex'] as String);
+      if (!value.persisted || BoardSound.encode(value.bytes) != expected) {
+        throw const FormatException(
+          'Persistent Silent mode readback did not match',
+        );
+      }
+    }
+    await status();
+    admit();
+    return value;
+  }
+
+  Future<CellMap> mapping() async {
+    final revision = connectionRevision;
+    await status();
+    if (revision != connectionRevision) throw const StaleConnection();
+    final value = await _get('/api/cells/mapping');
+    await status();
+    if (revision != connectionRevision) throw const StaleConnection();
+    return CellMap.fromJson(value);
+  }
 
   Stream<DeviceStatus> liveStatus() async* {
+    _requireNetwork();
     final revision = connectionRevision;
     if (_verifiedEndpoint != baseUrl) await status();
     if (revision != connectionRevision) throw const StaleConnection();
@@ -368,6 +541,8 @@ class PakarApi {
       uri,
       headers: _headers,
       pingInterval: const Duration(seconds: 20),
+      connectTimeout: const Duration(seconds: 6),
+      customClient: _ioClient,
     );
     _channel = active;
     await active.ready;
@@ -407,15 +582,16 @@ class PakarApi {
     ++_connectionRevision;
     final active = _channel;
     _channel = null;
-    _verifiedEndpoint = _transportOwner = _discoveredBaseUrl = null;
+    _verifiedEndpoint = null;
     _verifiedBoard = _verifiedBoot = null;
     await active?.sink.close();
     _client.close();
+    _ioClient.close(force: true);
   }
 
   void resetTransport() {
     ++_connectionRevision;
-    _discoveredBaseUrl = _transportOwner = _verifiedEndpoint = null;
+    _verifiedEndpoint = null;
     _verifiedBoard = _verifiedBoot = null;
     onTransportRetired?.call();
     final active = _channel;
@@ -438,11 +614,20 @@ class PakarApi {
     Future<http.Response> Function(String base) request,
   ) async {
     final revision = connectionRevision, headers = _headers;
+    final lookupBefore = resolver.lookupFailureRevision(
+      Uri.parse(baseUrl).host,
+    );
     try {
       return await request(transportUrl);
-    } on Exception {
+    } on Exception catch (error) {
       if (revision != connectionRevision) throw const StaleConnection();
-      if (_localLabel() == null) rethrow;
+      if (_localLabel() == null ||
+          (error is! HostLookupFailure &&
+              (error is! SocketException ||
+                  resolver.lookupFailureRevision(Uri.parse(baseUrl).host) ==
+                      lookupBefore))) {
+        rethrow;
+      }
     }
 
     _discoveredBaseUrl = null;
@@ -456,9 +641,11 @@ class PakarApi {
         continue;
       }
       try {
-        final probe = await _client
-            .get(_uri(candidate, '/api/status'), headers: headers)
-            .timeout(const Duration(seconds: 2));
+        final probe = await _readResponse(
+          candidate,
+          '/api/status',
+          headers,
+        ).timeout(const Duration(seconds: 2));
         if (probe.statusCode ~/ 100 != 2) continue;
         if (revision != connectionRevision) throw const StaleConnection();
         final json = jsonDecode(probe.body);
@@ -527,11 +714,21 @@ class PakarApi {
   }
 }
 
+class AuthenticationRequired extends FormatException {
+  const AuthenticationRequired() : super('Sign in required');
+}
+
 class StaleConnection implements Exception {
   const StaleConnection();
   @override
   String toString() =>
       'Connection changed; obsolete board replies and unsent commands were discarded.';
+}
+
+class ConnectionStopped implements Exception {
+  const ConnectionStopped();
+  @override
+  String toString() => 'Disconnected; press Connect to resume device access.';
 }
 
 class OperationUncertain implements Exception {

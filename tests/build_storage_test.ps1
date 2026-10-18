@@ -38,6 +38,15 @@ Assert-Storage (($taskPolling[0].Arguments -join ' ') -match 'PAKAR_USE_BUSY_WIR
 $taskBuffered = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target avr -LinkMode buffered -Plan )
 Assert-Storage ($taskBuffered.Count -eq 1 -and ($taskBuffered[0].Arguments -join ' ') -match 'PAKAR_USE_BUSY_WIRE=0 -DPAKAR_UART_BUFFERED=1') 'Paired AVR buffered flags'
 Assert-Storage (($taskBuffered[0].Arguments -join ' ') -match 'cache[\\/]avr-buffered') 'Stable buffered AVR cache'
+$taskStaticS3 = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp32s3 -Plan )
+$taskDmaS3 = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp32s3 -S3LedBackend rmt-dma -Plan )
+Assert-Storage ($taskStaticS3[0].LedBackendProfile.Content -match 'PAKAR_S3_LED_USE_DMA 0') 'Non-DMA remains the safe default'
+Assert-Storage ($taskDmaS3[0].LedBackendProfile.Content -match 'PAKAR_S3_LED_USE_DMA 1') 'Explicit RMT-DMA build reaches the application-only profile'
+Assert-Storage (($taskDmaS3[0].Arguments -join ' ') -eq ($taskStaticS3[0].Arguments -join ' ')) 'Backend changes must not invalidate global SDK/library compiler flags'
+Assert-Storage ($taskDmaS3[0].LedBackendProfile.Path -eq $taskStaticS3[0].LedBackendProfile.Path) 'One stable LED profile, not another cache'
+Assert-Storage (($taskDmaS3[0].Arguments -join ' ') -notmatch '--clean') 'Backend selection does not force clean or a duplicate cache'
+try { & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp8266 -S3LedBackend rmt-dma -Plan; throw 'Must reject DMA ESP8266' }
+catch { Assert-Storage ($_.Exception.Message -like 'The RMT-DMA LED backend requires ESP32-S3*') 'DMA is S3-specific' }
 try { & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp8266 -LinkMode buffered -Plan; throw 'Must reject buffered ESP8266' }
 catch { Assert-Storage ($_.Exception.Message -like 'Buffered mode currently targets*') 'Do not accidentally enable buffered ESP8266' }
 $taskManifest = Get-Content -LiteralPath (Join-Path $taskRoot 'desktop/Cargo.toml') -Raw
@@ -45,5 +54,6 @@ Assert-Storage ($taskManifest -match '(?s)\[profile.dev\]\s+debug = 0\s+incremen
 Assert-Storage ($taskManifest -match '(?s)\[profile.test\]\s+debug = 0\s+incremental = true') 'Low-symbol test profile'
 $taskShell = Get-Content -LiteralPath (Join-Path $taskRoot 'build.sh') -Raw
 Assert-Storage (-not ($taskShell -match 'arduino-cli compile --clean')) 'Shell must not force clean'
-Assert-Storage (($taskShell -split '--build-path').Count -eq 3) 'Shell stable cache for both boards'
+Assert-Storage ($taskShell -match 'pakar.sh.*build.*\$@') 'Shell delegates to the same reviewed owner instead of a drifting second compiler implementation'
+Assert-Storage ($taskShell -notmatch 'arduino-cli compile') 'No duplicate shell-side compiler plan'
 Write-Host 'Build storage dispatch, parsing, locked canonical cache, budgets, selective firmware and explicit clean tests passed; no compiler was run.'

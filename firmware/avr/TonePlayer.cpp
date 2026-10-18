@@ -109,12 +109,14 @@ void TonePlayer::stop() {
 }
 
 void TonePlayer::setMuted(bool muted) {
+  if (muted_ == muted) return;
   muted_ = muted;
+  ++revision_; // Publish mute changes even when no new note is scheduled.
   if (muted_) {
     stopHardwareTone();
-  } else if (stepActive_ && activeFrequencyHz_ != 0) {
-    startHardwareTone(activeFrequencyHz_);
   }
+  // As in PCController, unmute never restarts an interrupted note. The
+  // nonblocking timeline continues for host mirroring; only future steps sound.
 }
 
 bool TonePlayer::isBusy() const { return stepActive_ || count_ != 0; }

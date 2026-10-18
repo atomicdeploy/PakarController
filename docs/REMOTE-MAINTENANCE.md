@@ -258,6 +258,65 @@ Native Windows clients report application/version, session UUID, hostname, OS/ar
 
 Configured cloud connections retain the existing status feed and additionally deliver full telemetry. WebSocket sends living telemetry JSON. MQTT full snapshots use non-retained QoS0 packets at BASE/HOSTNAME/telemetry/part: type, boot-unique snapshot_id, index/count/total_bytes, sha256, encoding=base64 and data. Raw chunk size is 768 bytes; snapshot limit 16384 bytes. tools/telemetry-reassembly.mjs rejects mixed metadata, invalid encodings, missing parts, checksum failures, conflicting duplicates and expired snapshots. Never present partial packets as current board state. A failed publication waits for the next snapshot; no guaranteed-delivery claim is made. The retained /status feed is unchanged.
 
+## Automatic network updater and measured progress
+
+Use the guarded entry point from this checkout:
+
+```powershell
+# Plan only: validates the local raw S3 application, no device contact or writes.
+./tools/update-firmware.ps1
+# One selected update, then actual new-boot/running-image verification.
+./tools/update-firmware.ps1 -Origin http://ledboard.local -Run
+# Explicit pinned Internet stage and separate apply; same expected local image.
+./tools/update-firmware.ps1 -Mode remote -Manifest HTTPS_MANIFEST_URL -ManifestSha MANIFEST_SHA256 -Run
+```
+
+`auto` is the default. It prefers the advertised local Async HTTP upload path;
+if unavailable before dispatch, a configured pinned manifest may select the
+advertised Internet fetch/apply path. It does not silently change the app's
+exclusive USB/Wi-Fi connection setting. USB bootstrap/recovery remains a separate
+inventoried-device operation: no guessed COM port, reset, erase-all or automatic
+second firmware write after an uncertain network result. Direct LAN and Internet
+transfer times and total verification time are reported separately; there is no
+current-device speed benchmark while ASUS/device access is unavailable.
+
+No authentication is enabled by this workflow. It requires explicit
+`/api/auth` `enabled:false` before and after, pins board/boot/TCP identity before
+every mutation, and verifies WebSocket status both before and after. A local POST
+is not completion: a new boot, matching image size/MD5, verified image integrity,
+selected/running VALID OTA slot and full range-read SHA256 must all agree. The
+existing access configuration remains default-off; an explicitly protected saved
+record must be disabled through the existing owner settings, not bypassed by the
+updater. Corrupt storage continues to fail closed.
+
+Local uploads may supply `X-Pakar-Firmware-Size` (raw file bytes, never multipart
+Content-Length) and `X-Pakar-Firmware-MD5`. The tool also places the MD5 form field
+before the firmware file. A declared short/oversized stream is aborted before
+boot commit. Uploads without an exact denominator remain indeterminate.
+`/api/status.update`, WebSocket status and `/update/info.update` expose the same
+coherent measured byte snapshot. `progress_percent` describes that transfer
+stage; `completion_verified:false` deliberately leaves reboot verification to
+the client. `/update/info` uses boot-captured image metadata instead of hashing
+flash during every poll. Status/ping reads remain available during local OTA;
+mutations are rejected.
+
+The main loop, not an async callback, coalesces finite scheduled TM1637 `P000`
+through `P100` frames (maximum four admissions/second, unchanged-frame refresh
+once/second,1200ms lease), or `UPdt` when indeterminate. This requires a fresh
+TM1637 ACK and no Prog/AVR upload owner; UART enqueue is not physical display
+proof. The ESP-side optional LCD uses the same measured transfer. An AVR held in
+ISP RESET cannot run its own display, so Prog safety takes precedence and the
+ESP LCD/network clients cover that stage. No extra AVR firmware or audible cue
+was introduced by this progress change.
+
+Focused host tests cover the real progress encoder and unchanged AVR consumer,
+atomic publication, rollover, lost-reply/no-replay cases, auth-off guards,
+same-board reboot/full-SHA verification and actual loopback multipart/fragmented
+WebSocket traffic. These are not current physical OTA, timing, power-loss,
+concurrent-client soak or seven-segment presentation acceptance. Keep USB until
+the current candidate has actually been installed and verified on the identified
+board, with the external power and Wi-Fi/AP recovery path checked.
+
 ## Acceptance checklist
 
 - [x] Both firmware profiles compile against the locked toolchain; native protocol/policy/actual ISP driver emulation tests.

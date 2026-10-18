@@ -6,10 +6,14 @@ param(
     [ValidateRange(1, 1024)] [int] $MaximumCacheGiB = 8,
     [string] $ExpectedCommit,
     [switch] $DebugArtifacts,
+    [string] $TestFilter,
     [switch] $Plan
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'script-runtime.ps1')
+if ($TestFilter -and $Mode -ne 'Test') { throw 'TestFilter requires Test mode.' }
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern api-contract -Gate | Out-Null
+& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern pu-tooling -Gate | Out-Null
 & node (Join-Path $PSScriptRoot 'check-living-contract.mjs') | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw 'Living API policy failed before native build.' }
 $taskReuse = & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate
@@ -32,6 +36,7 @@ $taskArguments = @($taskVerb, '--locked', '--manifest-path', $taskManifest,
 if ($Mode -eq 'Release' -and $DebugArtifacts) { throw 'Release cannot request debug artifacts.' }
 if (-not $DebugArtifacts) { $taskArguments += '--release' }
 if ($Mode -eq 'Test') {
+    if ($TestFilter) { $taskArguments += $TestFilter }
     # Actual Pealayer CI test contract: compile jobs != test concurrency.
     # Native tests share process-wide preferences; preserve serial execution.
     # Emit assertion output immediately so an eventual native abort cannot hide
@@ -67,8 +72,8 @@ try {
     # Donor CI isolates its tests. Local Test must also avoid the user profile;
     # retain an explicitly supplied fixture path and restore process environment.
     if ($Mode -eq 'Test') { $env:PAKAR_CONFIG_FILE = $taskTestConfig }
-    & cargo @taskArguments
-    if ($LASTEXITCODE -ne 0) { throw "Desktop $Mode failed" }
+    Write-PakarStep "Desktop $Mode · canonical cache · $Jobs compile jobs"
+    Invoke-PakarNative -WorkingDirectory $taskRoot -FilePath 'cargo' -Arguments $taskArguments
     if ($ExpectedCommit) { Assert-PakarPackageSourceStable $taskRoot $ExpectedCommit }
 } finally {
     if ($Mode -eq 'Test') {

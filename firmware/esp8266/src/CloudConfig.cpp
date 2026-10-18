@@ -5,6 +5,7 @@
 
 namespace {
 constexpr char kPath[] = "/cloud.bin";
+constexpr char kPending[] = "/cloud.pending";
 constexpr uint32_t kMagic = 0x504B434CUL;  // PKCL
 constexpr uint8_t kSchema = 1;
 
@@ -16,6 +17,35 @@ uint32_t checksumBytes(const uint8_t *bytes, size_t length) {
   }
   return value;
 }
+
+// All stored strings are canonical zero-padded C strings, not a visible
+// prefix followed by hidden bytes. This also bounds every later strlen.
+bool canonicalString(const char *value, size_t capacity) {
+  bool ended = false;
+  for (size_t index = 0; index < capacity; ++index) {
+    if (value[index] == '\0') ended = true;
+    else if (ended) return false;
+  }
+  return ended;
+}
+
+bool validHost(const char *value) {
+  for (size_t index = 0; value[index]; ++index) {
+    const unsigned char c = static_cast<unsigned char>(value[index]);
+    if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+          (c >= '0' && c <= '9') || c == '.' || c == '-' || c == ':')) return false;
+  }
+  return true; // Empty is allowed only for a disabled service below.
+}
+
+bool validText(const char *value, bool path = false, bool topic = false) {
+  for (size_t index = 0; value[index]; ++index) {
+    const unsigned char c = static_cast<unsigned char>(value[index]);
+    if (c < (path ? 0x21 : 0x20) || c == 0x7f ||
+        (topic && (c == '+' || c == '#'))) return false;
+  }
+  return true; // UTF-8 data is retained rather than treated as ASCII controls.
+}
 }  // namespace
 
 CloudConfigStore cloudConfig;
@@ -25,12 +55,31 @@ uint32_t CloudConfigStore::checksum(const Record &record) {
                        offsetof(Record, checksum));
 }
 
+bool CloudConfigStore::validRecord(const Record &r) {
+  if (r.magic != kMagic || r.schema != kSchema || r.mqttEnabled > 1 ||
+      r.mqttTls > 1 || r.webSocketEnabled > 1 || r.webSocketTls > 1 ||
+      r.mqttPort == 0 || r.webSocketPort == 0 || r.telemetrySeconds < 1 ||
+      r.telemetrySeconds > 3600 || r.checksum != checksum(r)) return false;
+  if (!canonicalString(r.mqttHost, sizeof(r.mqttHost)) ||
+      !canonicalString(r.mqttUser, sizeof(r.mqttUser)) ||
+      !canonicalString(r.mqttPassword, sizeof(r.mqttPassword)) ||
+      !canonicalString(r.mqttBaseTopic, sizeof(r.mqttBaseTopic)) ||
+      !canonicalString(r.webSocketHost, sizeof(r.webSocketHost)) ||
+      !canonicalString(r.webSocketPath, sizeof(r.webSocketPath)) ||
+      !canonicalString(r.webSocketToken, sizeof(r.webSocketToken))) return false;
+  return (!r.mqttEnabled || r.mqttHost[0]) && validHost(r.mqttHost) &&
+      r.mqttBaseTopic[0] && validText(r.mqttBaseTopic, false, true) &&
+      (!r.webSocketEnabled || r.webSocketHost[0]) && validHost(r.webSocketHost) &&
+      r.webSocketPath[0] == '/' && validText(r.webSocketPath, true) &&
+      validText(r.webSocketToken);
+}
+
 bool CloudConfigStore::copyChecked(char *target, size_t capacity,
                                    const String &value,
                                    const __FlashStringHelper *name,
                                    String &error) {
-  if (value.length() >= capacity) {
-    error = String(name) + F(" is too long");
+  if (value.length() >= capacity || value.length() != strlen(value.c_str())) {
+    error = String(name) + F(" is too long or contains NUL");
     return false;
   }
   memset(target, 0, capacity);
@@ -55,6 +104,7 @@ void CloudConfigStore::defaults() {
 bool CloudConfigStore::begin(fs::FS &filesystem) {
   filesystem_ = &filesystem;
   defaults();
+  error_ = String();
   File file = filesystem.open(kPath, "r");
   if (!file) return true;
   Record stored{};
@@ -63,18 +113,7 @@ bool CloudConfigStore::begin(fs::FS &filesystem) {
       file.read(reinterpret_cast<uint8_t *>(&stored), sizeof(stored)) ==
           sizeof(stored);
   file.close();
-  const bool terminated =
-      stored.mqttHost[sizeof(stored.mqttHost) - 1] == '\0' &&
-      stored.mqttUser[sizeof(stored.mqttUser) - 1] == '\0' &&
-      stored.mqttPassword[sizeof(stored.mqttPassword) - 1] == '\0' &&
-      stored.mqttBaseTopic[sizeof(stored.mqttBaseTopic) - 1] == '\0' &&
-      stored.webSocketHost[sizeof(stored.webSocketHost) - 1] == '\0' &&
-      stored.webSocketPath[sizeof(stored.webSocketPath) - 1] == '\0' &&
-      stored.webSocketToken[sizeof(stored.webSocketToken) - 1] == '\0';
-  if (!complete || !terminated || stored.magic != kMagic ||
-      stored.schema != kSchema || stored.mqttPort == 0 ||
-      stored.webSocketPort == 0 || stored.telemetrySeconds < 1 ||
-      stored.telemetrySeconds > 3600 || stored.checksum != checksum(stored)) {
+  if (!complete || !validRecord(stored)) {
     error_ = F("cloud settings checksum is invalid; safe disabled defaults loaded");
     return false;
   }
@@ -88,7 +127,18 @@ bool CloudConfigStore::save() {
     return false;
   }
   record_.checksum = checksum(record_);
-  File file = filesystem_->open(kPath, "w");
+  if (!validRecord(record_)) {
+    error_ = F("invalid cloud settings; previous settings preserved"); return false;
+  }
+  // Adapt the actual NetworkConfigStore pending/readback/rename transaction.
+  // Never truncate the sole credential copy; identical saves touch no flash.
+  File current = filesystem_->open(kPath, "r"); Record previous{};
+  const bool identical = current && current.size() == sizeof(record_) &&
+      current.read(reinterpret_cast<uint8_t *>(&previous), sizeof(previous)) == sizeof(previous) &&
+      memcmp(&previous, &record_, sizeof(previous)) == 0;
+  if (current) current.close();
+  if (identical) { error_ = String(); return true; }
+  File file = filesystem_->open(kPending, "w");
   if (!file) {
     error_ = F("cannot create cloud settings");
     return false;
@@ -97,8 +147,15 @@ bool CloudConfigStore::save() {
       file.write(reinterpret_cast<const uint8_t *>(&record_), sizeof(record_)) ==
       sizeof(record_);
   file.close();
-  if (!complete) error_ = F("cloud settings write failed");
-  return complete;
+  File verify = filesystem_->open(kPending, "r"); Record readback{};
+  const bool verified = verify && verify.size() == sizeof(record_) &&
+      verify.read(reinterpret_cast<uint8_t *>(&readback), sizeof(readback)) == sizeof(readback) &&
+      memcmp(&readback, &record_, sizeof(readback)) == 0;
+  if (verify) verify.close();
+  if (!complete || !verified || !filesystem_->rename(kPending, kPath)) {
+    error_ = F("cloud settings commit failed; previous settings preserved"); return false;
+  }
+  error_ = String(); return true;
 }
 
 bool CloudConfigStore::setMqtt(bool enabled, bool tls, const String &host,
@@ -106,6 +163,10 @@ bool CloudConfigStore::setMqtt(bool enabled, bool tls, const String &host,
                                const String &password,
                                const String &baseTopic,
                                bool replacePassword) {
+  if (password.length() >= sizeof(record_.mqttPassword) ||
+      password.length() != strlen(password.c_str())) {
+    error_ = F("MQTT password is too long or contains NUL"); return false;
+  }
   if (port == 0 || baseTopic.length() == 0 ||
       (enabled && host.length() == 0)) {
     error_ = F("MQTT host, port, and base topic are required");
@@ -127,6 +188,9 @@ bool CloudConfigStore::setMqtt(bool enabled, bool tls, const String &host,
   candidate.mqttTls = tls ? 1 : 0;
   candidate.mqttPort = port;
   candidate.checksum = checksum(candidate);
+  if (!validRecord(candidate)) {
+    error_ = F("invalid MQTT host or base topic"); return false;
+  }
   record_ = candidate;
   error_ = String();
   return true;
@@ -136,6 +200,10 @@ bool CloudConfigStore::setWebSocket(bool enabled, bool tls,
                                     const String &host, uint16_t port,
                                     const String &path, const String &token,
                                     bool replaceToken) {
+  if (token.length() >= sizeof(record_.webSocketToken) ||
+      token.length() != strlen(token.c_str()) || !validText(token.c_str())) {
+    error_ = F("WebSocket token is too long or contains control bytes"); return false;
+  }
   if (port == 0 || path.length() == 0 || path[0] != '/' ||
       (enabled && host.length() == 0)) {
     error_ = F("WebSocket host, port, and slash-prefixed path are required");
@@ -156,6 +224,9 @@ bool CloudConfigStore::setWebSocket(bool enabled, bool tls,
   candidate.webSocketTls = tls ? 1 : 0;
   candidate.webSocketPort = port;
   candidate.checksum = checksum(candidate);
+  if (!validRecord(candidate)) {
+    error_ = F("invalid WebSocket host, path or token"); return false;
+  }
   record_ = candidate;
   error_ = String();
   return true;

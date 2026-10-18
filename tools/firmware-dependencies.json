@@ -1,0 +1,17 @@
+{
+  "platforms": [
+    {"name":"esp8266:esp8266","version":"3.1.2","index":"https://arduino.esp8266.com/stable/package_esp8266com_index.json"},
+    {"name":"MiniCore:avr","version":"3.1.3","index":"https://mcudude.github.io/MiniCore/package_MCUdude_MiniCore_index.json"},
+    {"name":"esp32:esp32","version":"3.3.12","index":"https://espressif.github.io/arduino-esp32/package_esp32_index.json"}
+  ],
+  "library_index":"https://downloads.arduino.cc/libraries/library_index.json.gz",
+  "libraries": [
+    {"name":"FastLED","version":"3.10.6"},
+    {"name":"WebSockets","version":"2.7.2"},
+    {"name":"PubSubClient","version":"2.8.0"},
+    {"name":"ArduinoJson","version":"7.4.3"},
+    {"name":"ESP Async WebServer","version":"3.12.1"},
+    {"name":"ESP Async TCP","version":"2.0.0"},
+    {"name":"Async TCP","version":"3.5.0"}
+  ]
+}

@@ -34,6 +34,69 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/s3_dns_stubs" "$root/tests/
 "$root/build/s3-dns-recovery-test"
 c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/tests/s3_flash_guard_stubs" "$root/tests/s3_flash_guard_test.cpp" "$root/tests/s3_flash_guard_runtime.cpp" "$root/firmware/esp32s3/src/LedFlashGuard.cpp" -Wl,--wrap=esp_partition_write,--wrap=esp_partition_write_raw,--wrap=esp_partition_erase_range -o "$root/build/s3-flash-guard-test"
 "$root/build/s3-flash-guard-test"
+# The Linux equivalents of the focused PowerShell runners use the SAME gates,
+# profiles and canonical output directory. Use Arduino CLI's existing Linux
+# library path, not Windows MyDocuments; no second SDK/cache or test install.
+pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern api-contract -Gate > /dev/null
+pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern network-cloud > /dev/null
+pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern build-storage -Gate > /dev/null
+pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern peer-binding -Gate > /dev/null
+mkdir -p "$root/build/native"
+for cloud_platform in ESP8266 ESP32; do
+  c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror "-D$cloud_platform" \
+    -I "$root/libraries/BoardCore/src" "$root/tests/cloud_command_guard_test.cpp" \
+    -o "$root/build/native/cloud_command_guard_test"
+  "$root/build/native/cloud_command_guard_test"
+  c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror "-D$cloud_platform" \
+    -I "$root/tests/cloud_stubs" "$root/tests/cloud_config_test.cpp" \
+    "$root/firmware/esp8266/src/CloudConfig.cpp" -o "$root/build/native/cloud_config_test"
+  "$root/build/native/cloud_config_test"
+  c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror "-D$cloud_platform" \
+    -I "$root/tests/cloud_service_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" \
+    -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
+    "$root/tests/cloud_services_test.cpp" "$root/firmware/esp8266/src/CloudServices.cpp" \
+    "$root/firmware/esp8266/src/CloudConfig.cpp" -o "$root/build/native/cloud_services_test"
+  "$root/build/native/cloud_services_test"
+  cloud_arch_flags=()
+  if [[ "$cloud_platform" == ESP32 ]]; then cloud_arch_flags=(-DARDUINO_ARCH_ESP32); fi
+  c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror "-D$cloud_platform" "${cloud_arch_flags[@]}" \
+    -DARDUINOJSON_ENABLE_ARDUINO_STRING=1 \
+    -I "$root/tests/management_stubs" -I "$root/tests/cloud_stubs" \
+    -I "$root/tests/network_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" \
+    "$root/tests/cloud_management_test.cpp" "$root/firmware/esp8266/src/CloudConfig.cpp" \
+    "$root/firmware/esp8266/src/NetworkConfig.cpp" -o "$root/build/native/cloud_management_test"
+  "$root/build/native/cloud_management_test"
+done
+c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror \
+  -I "$root/tests/access_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" \
+  -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
+  "$root/tests/command_values_test.cpp" -o "$root/build/native/command_values_test"
+"$root/build/native/command_values_test"
+c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -DESP32 \
+  -I "$root/tests/ethernet_config_stubs" "$root/tests/ethernet_config_test.cpp" \
+  -o "$root/build/native/ethernet_config_test"
+"$root/build/native/ethernet_config_test"
+for ethernet_profile in 0 1; do
+  c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -DESP32 -DARDUINO_ARCH_ESP32 \
+    "-DPAKAR_S3_ETHERNET_ENABLED=$ethernet_profile" -DARDUINOJSON_ENABLE_ARDUINO_STRING=1 \
+    -I "$root/tests/management_stubs" -I "$root/tests/ethernet_config_stubs" \
+    -I "$root/tests/network_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" \
+    "$root/tests/ethernet_management_test.cpp" "$root/firmware/esp8266/src/CloudConfig.cpp" \
+    "$root/firmware/esp8266/src/NetworkConfig.cpp" -o "$root/build/native/ethernet_management_test"
+  "$root/build/native/ethernet_management_test"
+  c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -DARDUINO_ARCH_ESP32 -DCONFIG_IDF_TARGET_ESP32S3 \
+    "-DPAKAR_S3_ETHERNET_ENABLED=$ethernet_profile" -I "$root/tests/ethernet_stubs" \
+    "$root/tests/s3_ethernet_port_test.cpp" "$root/firmware/esp32s3/src/EthernetPort.cpp" \
+    -o "$root/build/native/s3_ethernet_port_test"
+  "$root/build/native/s3_ethernet_port_test"
+  c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -DESP32 -DARDUINO_ARCH_ESP32 -DCONFIG_IDF_TARGET_ESP32S3 \
+    "-DPAKAR_S3_ETHERNET_ENABLED=$ethernet_profile" -I "$root/tests/network_path_stubs" -I "$root" \
+    "$root/tests/network_path_test.cpp" "$root/firmware/esp32s3/src/EthernetPort.cpp" \
+    -o "$root/build/native/network_path_test"
+  "$root/build/native/network_path_test"
+done
+node "$root/tests/ethernet_discovery_test.mjs"
+node "$root/tests/esp_only_maintenance_test.mjs"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/firmware/esp8266/src" "$root/tests/telnet_shell_test.cpp" -o "$root/build/telnet-shell-test"
 "$root/build/telnet-shell-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/busy_stubs" -I "$root/firmware/esp8266/src" "$root/tests/busy_line_test.cpp" -o "$root/build/busy-line-test"

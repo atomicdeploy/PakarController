@@ -1,5 +1,6 @@
 param()
 $ErrorActionPreference='Stop'
+& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern avr-boot-chain -Gate | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern firmware-hardware | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern api-contract -Gate | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern cooperative-tasks -Gate | Out-Null
@@ -12,3 +13,5 @@ New-Item -ItemType Directory -Force (Split-Path -Parent $taskOutput) | Out-Null
 if($LASTEXITCODE){throw 'Actual AVR reset journal fixture compilation failed'}
 & $taskOutput
 if($LASTEXITCODE){throw 'Actual AVR reset journal fixture failed'}
+& node (Join-Path $taskRoot 'tests/avr_boot_image_test.mjs')
+if($LASTEXITCODE){throw 'AVR Urboot image safety tests failed'}

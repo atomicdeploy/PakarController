@@ -1,6 +1,7 @@
 #pragma once
 #include <ESPmDNS.h>
 #include "SsdpDevice.h"
+#include "DiscoveryInterfaces.h"
 #include "../../esp8266/src/MndpService.h"
 #include "../../esp8266/src/ApplicationIdentity.h"
 
@@ -9,7 +10,7 @@ class Discovery {
  public:
   bool begin(const String &hostname, const String &displayName, uint32_t chipId, uint16_t streamPort = 7777) {
     end(); hostname_ = hostname;
-    if (WiFi.status() != WL_CONNECTED && WiFi.softAPIP() == IPAddress()) return false;
+    if (!activeDiscoveryInterfaces().count) return false;
     mdnsReady_ = MDNS.begin(hostname.c_str());
     if (mdnsReady_) {
       MDNS.addService("http", "tcp", 80);
@@ -44,7 +45,7 @@ class Discovery {
   }
   bool mdnsReady() const { return mdnsReady_; }
   bool ssdpReady() const { return ssdp_.running(); }
-  bool mndpReady() const { return mndpReady_; }
+  bool mndpReady() const { return mndp_.running(); }
   bool netbiosReady() const { return false; } // Not provided by the installed S3 core.
   String xmlDescription() const {
     // Reuse the donor's complete XML escaping/description rather than maintaining

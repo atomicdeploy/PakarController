@@ -8,7 +8,10 @@ import 'icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api.dart';
+import 'board_sound_preferences.dart';
 import 'models.dart';
+import 'command_readback.dart';
+import 'table_layout.dart';
 import 'connection_preferences.dart';
 import 'cell_search.dart';
 import 'peer_context.dart';
@@ -18,19 +21,13 @@ import 'devices_page.dart';
 import 'bridge_page.dart';
 import 'firmware_page.dart';
 import 'mirroring.dart';
+import 'app_theme.dart';
+import 'workspace_widgets.dart';
+export 'app_theme.dart' show studioDark;
 
 final bundledApplicationArtwork = base64Decode(applicationArtworkBase64);
 
 void main() => runApp(const PakarControllerApp());
-
-const studioDark = ColorScheme.dark(
-  primary: Color(0xff68a7ff),
-  secondary: Color(0xff38d27a),
-  error: Color(0xffff5c68),
-  surface: Color(0xff11161e),
-  onSurface: Color(0xffeef2f7),
-  outline: Color(0xff29313d),
-);
 
 class PakarControllerApp extends StatelessWidget {
   const PakarControllerApp({super.key, this.api});
@@ -41,23 +38,7 @@ class PakarControllerApp extends StatelessWidget {
     title: 'PakarController',
     debugShowCheckedModeBanner: false,
     themeMode: ThemeMode.dark,
-    darkTheme: ThemeData(
-      fontFamily: 'Vazirmatn',
-      colorScheme: studioDark,
-      scaffoldBackgroundColor: const Color(0xff080a0e),
-      cardTheme: const CardThemeData(
-        color: Color(0xff11161e),
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: Color(0xff29313d)),
-          borderRadius: BorderRadius.all(Radius.circular(14)),
-        ),
-      ),
-      inputDecorationTheme: const InputDecorationTheme(
-        border: OutlineInputBorder(),
-      ),
-      useMaterial3: true,
-    ),
+    darkTheme: studioTheme(),
     home: ControlShell(api: api),
   );
 }
@@ -90,6 +71,10 @@ class _ControlShellState extends State<ControlShell>
   Timer? expiry;
   int? refreshingRevision;
   int observation = 0;
+  int liveGeneration = 0;
+  String? incident;
+  final reportedIncidents = <String>{};
+  bool commandPending = false;
   String page = 'overview';
   String message = 'Connecting to ledboard.local';
 
@@ -98,9 +83,14 @@ class _ControlShellState extends State<ControlShell>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     api.onPeripheralEvent = mirror.event;
-    api.onTransportRetired = () => mirror.observe(null, api.connectionRevision);
+    api.onTransportRetired = () {
+      mirror.observe(null, api.connectionRevision);
+      if (mounted) {
+        _revoke('Connection changed; waiting for fresh device state');
+      }
+    };
     api.onPeerChanged = () {
-      if (!mounted) return;
+      if (!mounted || !api.connectionWanted) return;
       _revoke('Board/boot identity changed; previous operations retired');
       unawaited(_connectLive());
     };
@@ -118,47 +108,80 @@ class _ControlShellState extends State<ControlShell>
       return;
     }
     if (!mounted) return;
+    if (api.connectionWanted) await _startConnection();
+  }
+
+  Future<void> _startConnection() async {
+    fallback?.cancel();
+    fallback = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (api.connectionWanted) unawaited(_refresh(silent: true));
+    });
     await _refresh();
-    _connectLive();
-    fallback = Timer.periodic(
-      const Duration(seconds: 3),
-      (_) => _refresh(silent: true),
-    );
+    if (mounted && api.connectionWanted) unawaited(_connectLive());
   }
 
   Future<void> _connectLive() async {
-    if (!mounted) return;
+    if (!mounted || !api.connectionWanted) return;
     final owner = api.connectionRevision;
+    // Adapt donor StatusFrameBatcher's generation retirement: an old socket's
+    // error/done callbacks cannot revoke or schedule work for its replacement.
+    final generation = ++liveGeneration;
     liveRetry?.cancel();
     await live?.cancel();
-    if (!mounted || owner != api.connectionRevision) return;
+    if (!mounted ||
+        !api.connectionWanted ||
+        owner != api.connectionRevision ||
+        generation != liveGeneration) {
+      return;
+    }
+    var ended = false;
+    void disconnected() {
+      if (ended ||
+          !mounted ||
+          !api.connectionWanted ||
+          owner != api.connectionRevision ||
+          generation != liveGeneration) {
+        return;
+      }
+      ended = true;
+      // A failed WS does not invalidate a still-fresh authenticated HTTP
+      // snapshot. Its own lease expires if the fallback read also fails.
+      _reportIncident(
+        'live-disconnected',
+        'Live updates disconnected; checking device state',
+      );
+      _retryLive();
+    }
+
     live = api.liveStatus().listen(
       (value) {
-        if (mounted && owner == api.connectionRevision) _observe(value);
-      },
-      onError: (Object _) {
-        if (!mounted || owner != api.connectionRevision) return;
-        _revoke('WebSocket disconnected');
-        _retryLive();
-      },
-      onDone: () {
-        if (owner == api.connectionRevision) {
-          _revoke('WebSocket disconnected');
-          _retryLive();
+        if (mounted &&
+            api.connectionWanted &&
+            owner == api.connectionRevision &&
+            generation == liveGeneration) {
+          reportedIncidents.remove('live-disconnected');
+          _observe(value);
         }
       },
+      onError: (Object _) => disconnected(),
+      onDone: disconnected,
     );
   }
 
   void _retryLive() {
-    if (!mounted) return;
+    if (!mounted || !api.connectionWanted) return;
     liveRetry?.cancel();
     liveRetry = Timer(const Duration(seconds: 2), _connectLive);
   }
 
   Future<void> _refresh({bool silent = false}) async {
     final owner = api.connectionRevision, started = observation;
-    if (!mounted || refreshingRevision == owner) return;
+    if (!mounted ||
+        !api.connectionWanted ||
+        commandPending ||
+        refreshingRevision == owner) {
+      return;
+    }
     refreshingRevision = owner;
     try {
       final value = await api.status();
@@ -178,7 +201,13 @@ class _ControlShellState extends State<ControlShell>
             setState(() => mapping = next);
           }
         } on Exception {
-          /* Fresh status remains usable; no fabricated map. */
+          if (mounted &&
+              owner == api.connectionRevision &&
+              accepted == observation) {
+            setState(
+              () => mapping = CellMap(physical: const [], names: const []),
+            );
+          }
         }
       }
       if (!mounted || owner != api.connectionRevision) return;
@@ -197,12 +226,15 @@ class _ControlShellState extends State<ControlShell>
   }
 
   void _observe(DeviceStatus value) {
+    if (!mounted || !api.connectionWanted) return;
     mirror.observe(value, api.connectionRevision);
     final changed = status?.hostname != value.hostname;
     expiry?.cancel();
     ++observation;
     setState(() {
       status = value;
+      if (incident != null) message = 'Live device synchronized';
+      incident = null;
       if (changed || !value.peer.table) {
         mapping = CellMap(physical: const [], names: const []);
       }
@@ -215,29 +247,54 @@ class _ControlShellState extends State<ControlShell>
   void _revoke(String reason) {
     mirror.observe(null, api.connectionRevision);
     expiry?.cancel();
-    ++observation;
+    if (status != null) ++observation;
     if (!mounted) return;
+    if (status == null && incident == reason) return;
     setState(() {
       status = null;
       mapping = CellMap(physical: const [], names: const []);
       message = reason;
+      incident = reason;
     });
   }
 
+  void _reportIncident(String key, String reason) {
+    if (!mounted || !reportedIncidents.add(key)) return;
+    setState(() {
+      incident = key;
+      message = reason;
+    });
+  }
+
+  Future<void> _disconnect() async {
+    // Retire before awaiting cancellation: no callback may reconnect afterward.
+    ++liveGeneration;
+    reportedIncidents.clear();
+    api.disconnect();
+    fallback?.cancel();
+    liveRetry?.cancel();
+    _revoke('Disconnected');
+    final previous = live;
+    live = null;
+    await previous?.cancel();
+  }
+
   Future<void> _reconnect() async {
+    ++liveGeneration;
+    api.connect();
     _revoke('Connecting to ${api.baseUrl}');
     liveRetry?.cancel();
     await live?.cancel();
-    await _refresh();
-    if (mounted) await _connectLive();
+    if (mounted) await _startConnection();
   }
 
   Future<void> _adoptConnection(
     int owner,
     String endpoint,
     String user,
-    String password,
-  ) async {
+    String password, {
+    bool verifyCredentialChange = true,
+  }) async {
     if (!mounted || owner != api.connectionRevision) {
       throw const StaleConnection();
     }
@@ -259,7 +316,7 @@ class _ControlShellState extends State<ControlShell>
       if (!mounted || adopted != api.connectionRevision) {
         throw const StaleConnection();
       }
-      if (changedLogin) {
+      if (changedLogin && verifyCredentialChange) {
         final actual = await api.getJson('/api/auth');
         if (actual['username'] != user || actual['password_set'] != true) {
           throw const FormatException(
@@ -293,23 +350,84 @@ class _ControlShellState extends State<ControlShell>
     String path,
     Map<String, String> values,
   ) async {
+    if (commandPending) return false;
     try {
-      if (owner != api.connectionRevision ||
+      if (!api.connectionWanted ||
+          owner != api.connectionRevision ||
           peer != status?.hostname ||
           status?.peer.allows(path, values) != true) {
         throw const FormatException(
           'This peer has not freshly acknowledged this capability',
         );
       }
-      await api.post(path, values);
+      commandPending = true;
+      // Fresh preflight may discover a reboot, retiring the original intent.
+      final before = await api.status();
+      if (!mounted ||
+          !api.connectionWanted ||
+          owner != api.connectionRevision ||
+          peer != before.hostname ||
+          !before.peer.allows(path, values)) {
+        throw const StaleConnection();
+      }
+      if (path == '/api/cells') {
+        final count = parseCellSearch(values['ids'] ?? '').length;
+        final ack = await api.postJson(
+          path,
+          values,
+          authorize: () =>
+              mounted &&
+              owner == api.connectionRevision &&
+              status?.peer.allows(path, values) == true,
+        );
+        if (count == 0 || ack['accepted'] != true || ack['count'] != count) {
+          throw const OperationUncertain();
+        }
+      } else {
+        await api.post(path, values);
+      }
       if (!mounted || owner != api.connectionRevision) return false;
-      await _refresh();
+      final actual = await api.status();
+      if (!mounted ||
+          !api.connectionWanted ||
+          owner != api.connectionRevision ||
+          peer != actual.hostname ||
+          !actual.peer.allows(path, values)) {
+        throw const StaleConnection();
+      }
+      _observe(actual);
+      if (!commandReadbackMatches(actual, path, values)) {
+        throw const FormatException(
+          'Command acknowledged but device readback differs; not retried',
+        );
+      }
+      if (path == '/api/cells/mapping') {
+        final actualMap = await api.mapping();
+        final id = int.tryParse(values['logical_id'] ?? '');
+        if (!mounted ||
+            owner != api.connectionRevision ||
+            status?.hostname != peer ||
+            id == null ||
+            id < 1 ||
+            id > actualMap.physical.length ||
+            actualMap.physical[id - 1] !=
+                int.tryParse(values['physical_cell'] ?? '') ||
+            actualMap.names[id - 1] != values['name']) {
+          throw const FormatException('Mapping readback differs; not retried');
+        }
+        setState(() => mapping = actualMap);
+      }
+      setState(
+        () => message = 'Device acknowledged; fresh state read back (not physical output proof)',
+      );
       return true;
     } catch (error) {
       if (mounted && owner == api.connectionRevision) {
-        setState(() => message = error.toString());
+        _revoke(error.toString());
       }
       return false;
+    } finally {
+      commandPending = false;
     }
   }
 
@@ -411,6 +529,7 @@ class _ControlShellState extends State<ControlShell>
                           device.endpoint,
                           device.user,
                           password,
+                          verifyCredentialChange: false,
                         );
                         if (mounted) setState(() => page = 'overview');
                       },
@@ -453,6 +572,13 @@ class _ControlShellState extends State<ControlShell>
             ],
           ),
           actions: [
+            IconButton(
+              onPressed: api.connectionWanted ? _disconnect : _reconnect,
+              tooltip: api.connectionWanted ? 'Disconnect' : 'Connect',
+              icon: Icon(
+                api.connectionWanted ? PakarIcons.check : PakarIcons.link,
+              ),
+            ),
             PopupMenuButton<String>(
               tooltip: 'Device context menu',
               onSelected: (target) async {
@@ -525,7 +651,7 @@ class _ControlShellState extends State<ControlShell>
               ],
             ),
             IconButton(
-              onPressed: _refresh,
+              onPressed: api.connectionWanted ? _refresh : null,
               tooltip: 'Refresh device state',
               icon: const Icon(PakarIcons.arrowClockwise),
             ),
@@ -627,15 +753,18 @@ class _TablePageState extends State<TablePage> {
   CellMap get mapping => widget.mapping;
   Command get command => widget.command;
   final query = TextEditingController();
+  final tableScroll = ScrollController();
   Set<int> selection = {};
   String? searchError;
   bool multiple = true, showIndicators = false, applying = false;
+  String cellEffect = 'immediate';
   bool outputPending = false;
   String? batchMessage;
 
   @override
   void dispose() {
     query.dispose();
+    tableScroll.dispose();
     super.dispose();
   }
 
@@ -645,6 +774,12 @@ class _TablePageState extends State<TablePage> {
     } else {
       selection = {id};
     }
+    query.text = formatCellSelection(selection);
+    searchError = null;
+  });
+
+  void replaceSelection(Set<int> ids) => setState(() {
+    selection = ids;
     query.text = formatCellSelection(selection);
     searchError = null;
   });
@@ -660,32 +795,62 @@ class _TablePageState extends State<TablePage> {
     }
   }
 
+  Future<void> setOutputMode(String mode) async {
+    if (outputPending ||
+        status?.ledOutputMode == null ||
+        !const ['static', 'effects'].contains(mode)) {
+      return;
+    }
+    setState(() => outputPending = true);
+    try {
+      await command('/api/led/output', {'mode': mode});
+    } finally {
+      if (mounted) setState(() => outputPending = false);
+    }
+  }
+
+  Future<void> rainbowTest() async {
+    if (outputPending || status?.ledOutputMode == null) return;
+    setState(() => outputPending = true);
+    try {
+      // Only a pattern command: keep observed output On/Off and mode unchanged.
+      await command('/api/effect', {'value': 'rainbow'});
+    } finally {
+      if (mounted) setState(() => outputPending = false);
+    }
+  }
+
   Future<void> applySelection(String state) async {
     final send = widget.verifiedCommand;
-    if (send == null || applying || selection.isEmpty) return;
+    if (send == null ||
+        applying ||
+        selection.isEmpty ||
+        searchError != null ||
+        status?.peer.has('cell-batch') != true) {
+      return;
+    }
     final ids = selection.toList()..sort();
     setState(() {
       applying = true;
       batchMessage = null;
     });
-    var completed = 0;
-    for (final id in ids) {
-      if (!mounted ||
-          !await send('/api/cell', {
-            'id': '$id',
-            'state': state,
-            'effect': 'fade',
-          })) {
-        break;
-      }
-      ++completed;
+    var applied = false;
+    try {
+      applied = await send('/api/cells', {
+        'ids': ids.join(','),
+        'state': state,
+        'effect': cellEffect,
+      });
+    } on Exception {
+      // A transport failure may happen after the atomic mutation. Never fan
+      // out/replay; require a fresh peer observation before another intent.
     }
     if (mounted) {
       setState(() {
         applying = false;
-        batchMessage = completed == ids.length
-            ? '$completed commands acknowledged; inspect live cells for output.'
-            : 'Stopped after $completed/${ids.length}. Failed or uncertain commands were not retried.';
+        batchMessage = applied
+            ? '${ids.length} cell states read back after one board-side update; physical output not verified.'
+            : 'Batch outcome unverified. No per-cell fallback or retry was sent.';
       });
     }
   }
@@ -710,7 +875,7 @@ class _TablePageState extends State<TablePage> {
                         ),
                       ),
                       Text(
-                        'Logical row-major identity · odd columns offset by half a cell',
+                        'Display: 1, 11, 2, 12… · logical IDs and physical mapping unchanged',
                       ),
                     ],
                   ),
@@ -753,6 +918,34 @@ class _TablePageState extends State<TablePage> {
                 value: status!.ledOutputEnabled!,
                 onChanged: outputPending ? null : setOutputEnabled,
               ),
+            if (status!.ledOutputMode != null) ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  for (final mode in const ['static', 'effects'])
+                    ChoiceChip(
+                      label: Text(mode == 'static' ? 'Static' : 'Effects'),
+                      selected: status!.ledOutputMode == mode,
+                      onSelected: outputPending
+                          ? null
+                          : (_) => setOutputMode(mode),
+                    ),
+                  OutlinedButton(
+                    onPressed: outputPending ? null : rainbowTest,
+                    child: const Text('Rainbow test'),
+                  ),
+                ],
+              ),
+              Text(
+                status!.ledOutputMode == 'static'
+                    ? 'Static cells: six matching pixels. Rainbow test animates explicitly.'
+                    : 'Effects: animated output enabled explicitly.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+            ],
             TextField(
               controller: query,
               decoration: InputDecoration(
@@ -791,6 +984,23 @@ class _TablePageState extends State<TablePage> {
                 TextButton(
                   onPressed: applying
                       ? null
+                      : () => replaceSelection({
+                          for (var id = 1; id <= 80; id++) id,
+                        }),
+                  child: const Text('Select all'),
+                ),
+                TextButton(
+                  onPressed: applying
+                      ? null
+                      : () => replaceSelection({
+                          for (var id = 1; id <= 80; id++)
+                            if (!selection.contains(id)) id,
+                        }),
+                  child: const Text('Invert selection'),
+                ),
+                TextButton(
+                  onPressed: applying
+                      ? null
                       : () => setState(() {
                           selection = {};
                           query.clear();
@@ -803,59 +1013,99 @@ class _TablePageState extends State<TablePage> {
                     onPressed:
                         selection.isEmpty ||
                             applying ||
-                            widget.verifiedCommand == null
+                            searchError != null ||
+                            widget.verifiedCommand == null ||
+                            !status!.peer.has('cell-batch')
                         ? null
                         : () => applySelection(value),
                     child: Text('Set $value'),
                   ),
               ],
             ),
+            DropdownButtonFormField<String>(
+              initialValue: cellEffect,
+              decoration: const InputDecoration(
+                labelText: 'Cell transition · board-side',
+              ),
+              items: [
+                for (final effect in const ['immediate', 'fade', 'pulse'])
+                  DropdownMenuItem(value: effect, child: Text(effect)),
+              ],
+              onChanged: applying
+                  ? null
+                  : (value) => setState(() => cellEffect = value!),
+            ),
+            if (!status!.peer.has('cell-batch'))
+              const Text(
+                'This board has not acknowledged atomic cell updates. Update its firmware to enable selection actions.',
+              ),
             if (batchMessage != null) Text(batchMessage!),
             const SizedBox(height: 12),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: AspectRatio(
-                  aspectRatio: 10 / 8.6,
-                  child: LayoutBuilder(
-                    builder: (context, bounds) {
-                      final pitchX = bounds.maxWidth / 10;
-                      final pitchY = bounds.maxHeight / 8.5;
-                      return Stack(
-                        children: [
-                          for (var id = 1; id <= 80; id++)
-                            Positioned(
-                              left: ((id - 1) % 10) * pitchX + 2,
-                              top:
-                                  ((id - 1) ~/ 10) * pitchY +
-                                  (((id - 1) % 10).isEven ? pitchY * .5 : 0) +
-                                  2,
-                              width: pitchX - 4,
-                              height: pitchY - 4,
-                              child: CellButton(
-                                key: ValueKey('cell-$id'),
-                                id: id,
-                                highlighted: selection.contains(id),
-                                showIndicator: showIndicators,
-                                name:
-                                    mapping.names.elementAtOrNull(id - 1) ??
-                                    '$id',
-                                physical:
-                                    mapping.physical.elementAtOrNull(id - 1) ??
-                                    0,
-                                state:
-                                    status?.cells.elementAtOrNull(id - 1) ??
-                                    'unknown',
-                                onPressed: applying ? null : () => select(id),
-                                onLongPress: !mapping.valid
-                                    ? null
-                                    : () => _editMapping(context, id),
-                              ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
+                child: LayoutBuilder(
+                  builder: (context, bounds) {
+                    // Keep 44px cell targets rather than squeezing 20 columns
+                    // onto a phone. Horizontal panning owns its own gestures.
+                    final minimumWidth = 48.0 * tableDisplayWidth;
+                    final width = bounds.maxWidth < minimumWidth
+                        ? minimumWidth
+                        : bounds.maxWidth;
+                    final pitch = width / tableDisplayWidth;
+                    return Scrollbar(
+                      controller: tableScroll,
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        key: const ValueKey('table-cell-scroll'),
+                        controller: tableScroll,
+                        scrollDirection: Axis.horizontal,
+                        // Physical cell order is left-to-right even when the
+                        // surrounding application is displayed in RTL.
+                        reverse:
+                            Directionality.of(context) == TextDirection.rtl,
+                        child: SizedBox(
+                          key: const ValueKey('table-cell-canvas'),
+                          width: width,
+                          height: pitch * tableDisplayHeight + 12,
+                          child: Stack(
+                            children: [
+                              for (var id = 1; id <= 80; id++)
+                                Positioned(
+                                  left: tableCellPosition(id).x * pitch + 2,
+                                  top: tableCellPosition(id).y * pitch + 2,
+                                  width: pitch - 4,
+                                  height: pitch - 4,
+                                  child: CellButton(
+                                    key: ValueKey('cell-$id'),
+                                    id: id,
+                                    highlighted: selection.contains(id),
+                                    showIndicator: showIndicators,
+                                    name:
+                                        mapping.names.elementAtOrNull(id - 1) ??
+                                        '$id',
+                                    physical:
+                                        mapping.physical.elementAtOrNull(
+                                          id - 1,
+                                        ) ??
+                                        0,
+                                    state:
+                                        status?.cells.elementAtOrNull(id - 1) ??
+                                        'unknown',
+                                    onPressed: applying
+                                        ? null
+                                        : () => select(id),
+                                    onLongPress: !mapping.valid
+                                        ? null
+                                        : () => _editMapping(context, id),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -947,7 +1197,7 @@ class _CellButtonState extends State<CellButton> {
     // Adapt cell_surface's tint-free inside outline, independent of LED state.
     final background = hovered && !widget.highlighted
         ? const Color(0xff222b38)
-        : ((widget.id - 1) % 10).isEven
+        : tableCellPosition(widget.id).column.isEven
         ? const Color(0xff121820)
         : const Color(0xff1b2330);
     final outline = widget.highlighted
@@ -1034,6 +1284,18 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
   double speed = 260;
   String repeat = 'once';
   bool forceScroll = false;
+  String? selectedCue;
+  bool audioPending = false;
+
+  Future<void> sendCue(String cue) async {
+    if (audioPending || widget.status?.audioCues.contains(cue) != true) return;
+    setState(() => audioPending = true);
+    try {
+      await widget.command('/api/audio', {'cue': cue});
+    } finally {
+      if (mounted) setState(() => audioPending = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -1123,6 +1385,28 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
             ),
           ),
         ),
+      if (widget.status?.lcdLines.isNotEmpty == true)
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'LCD display',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                for (final line in widget.status!.lcdLines)
+                  Text(
+                    line,
+                    textDirection: TextDirection.ltr,
+                    style: const TextStyle(fontFamily: 'monospace'),
+                  ),
+              ],
+            ),
+          ),
+        ),
       if (widget.status?.peer.has('display') == true &&
           widget.mirror?.segmentsEnabled != false)
         Card(
@@ -1205,22 +1489,45 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
           ),
         ),
       const SizedBox(height: 12),
-      if (widget.status?.peer.has('buzzer') == true)
-        Wrap(
-          spacing: 8,
-          children: [
-            for (final cue in widget.status?.audioCues ?? const <String>[])
-              ActionChip(
-                avatar: const Icon(PakarIcons.musicNote),
-                label: Text(cue),
-                onPressed: widget.status == null
-                    ? null
-                    : () => widget.command('/api/audio', {'cue': cue}),
-              ),
-          ],
-        ),
+      if (widget.status?.audioCues.isNotEmpty == true) _melodyControls(),
     ],
   );
+
+  Widget _melodyControls() {
+    final cues = widget.status!.audioCues;
+    final cue = cues.contains(selectedCue) ? selectedCue! : cues.first;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Board melody'),
+            DropdownButtonFormField<String>(
+              key: ValueKey('audio-cues:${cues.join(',')}:$cue'),
+              initialValue: cue,
+              decoration: const InputDecoration(
+                labelText: 'Acknowledged AVR cue',
+              ),
+              items: [
+                for (final item in cues)
+                  DropdownMenuItem(value: item, child: Text(item)),
+              ],
+              onChanged: audioPending
+                  ? null
+                  : (value) => setState(() => selectedCue = value),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: audioPending ? null : () => sendCue(cue),
+              icon: const Icon(PakarIcons.musicNote),
+              label: Text(audioPending ? 'Sending cue…' : 'Send melody'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _mirrorControls(PeripheralMirror mirror) => Card(
     child: Padding(
@@ -1259,6 +1566,14 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
               ),
               value: mirror.buzzerEnabled,
               onChanged: mirror.setBuzzer,
+            ),
+            SwitchListTile.adaptive(
+              title: const Text('Follow board Silent mode'),
+              subtitle: const Text(
+                'Otherwise phone audio remains independent of the physical buzzer',
+              ),
+              value: mirror.followBoardMute,
+              onChanged: mirror.setFollowBoardMute,
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1503,77 +1818,74 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.all(16),
+  Widget build(BuildContext context) => WorkspaceBody(
     children: [
-      const Text(
-        'Preferences',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+      const WorkspaceHeader(
+        title: 'Preferences',
+        icon: PakarIcons.gear,
+        subtitle: 'Application connection',
       ),
-      const SizedBox(height: 12),
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              TextField(
-                controller: endpoint,
-                decoration: const InputDecoration(
-                  labelText: 'Device hostname or URL',
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: user,
-                decoration: const InputDecoration(labelText: 'User'),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: password,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password'),
-              ),
-              const SizedBox(height: 12),
-              if (error != null)
-                Text(
-                  error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton.icon(
-                  onPressed: saving
-                      ? null
-                      : () async {
-                          setState(() {
-                            saving = true;
-                            error = null;
-                          });
-                          try {
-                            final prefs = await SharedPreferences.getInstance();
-                            final settings = ConnectionPreferences(prefs);
-                            await settings.save(
-                              endpoint.text,
-                              user.text,
-                              password.text,
-                            );
-                            await settings.restore(widget.api);
-                            await widget.reconnect();
-                          } on Exception catch (failure) {
-                            if (mounted) {
-                              setState(() => error = failure.toString());
-                            }
-                          } finally {
-                            if (mounted) setState(() => saving = false);
-                          }
-                        },
-                  icon: const Icon(PakarIcons.floppyDisk),
-                  label: const Text('Save and reconnect'),
-                ),
-              ),
-            ],
+      BoardSoundPreferences(api: widget.api),
+      WorkspaceSection(
+        title: 'Network connection',
+        icon: PakarIcons.link,
+        children: [
+          TextField(
+            controller: endpoint,
+            decoration: const InputDecoration(
+              labelText: 'Device hostname or URL',
+            ),
           ),
-        ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: user,
+            decoration: const InputDecoration(labelText: 'User'),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: password,
+            obscureText: true,
+            decoration: const InputDecoration(labelText: 'Password (optional)'),
+          ),
+          const SizedBox(height: 12),
+          if (error != null)
+            Text(
+              error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.icon(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      setState(() {
+                        saving = true;
+                        error = null;
+                      });
+                      try {
+                        final prefs = await SharedPreferences.getInstance();
+                        final settings = ConnectionPreferences(prefs);
+                        await settings.save(
+                          endpoint.text,
+                          user.text,
+                          password.text,
+                        );
+                        await settings.restore(widget.api);
+                        await widget.reconnect();
+                      } on Exception catch (failure) {
+                        if (mounted) {
+                          setState(() => error = failure.toString());
+                        }
+                      } finally {
+                        if (mounted) setState(() => saving = false);
+                      }
+                    },
+              icon: const Icon(PakarIcons.floppyDisk),
+              label: const Text('Save and reconnect'),
+            ),
+          ),
+        ],
       ),
     ],
   );

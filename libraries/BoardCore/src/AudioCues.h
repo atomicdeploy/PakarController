@@ -19,6 +19,7 @@ inline const char *name(uint8_t cue) {
     case Protocol::kCueDecrease: return "decrease";
     case Protocol::kCueWelcomePuzzleBoard: return "welcome-puzzleboard";
     case Protocol::kCueWelcome40Led: return "welcome-40led";
+    case Protocol::kCueAttention: return "attention";
     default: return nullptr;
   }
 }

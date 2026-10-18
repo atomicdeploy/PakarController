@@ -34,7 +34,7 @@ class DiscoveryChannel(context: Context, messenger: BinaryMessenger) {
                 found.clear(); queue.clear(); resolving = false
                 try {
                     lock = wifi.createMulticastLock("pakar-discovery").apply { setReferenceCounted(false); acquire() }
-                    for (type in listOf("_pakarcontroller._tcp.", "_http._tcp.", "_pccontroller._tcp.")) {
+                    for (type in listOf("_pakarcontroller._tcp.", "_http._tcp.")) {
                         val listener = object: NsdManager.DiscoveryListener {
                             override fun onDiscoveryStarted(s: String) {}
                             override fun onDiscoveryStopped(s: String) {}
@@ -64,10 +64,12 @@ class DiscoveryChannel(context: Context, messenger: BinaryMessenger) {
                 override fun onServiceResolved(s: NsdServiceInfo) { main.post {
                     if (epoch != generation) return@post
                     val address = s.host?.hostAddress
-                    if (address != null && s.port in 1..65535 && !address.contains('%')) {
+                    val application = s.attributes["app_id"]?.toString(Charsets.UTF_8)
+                    val compatible = s.serviceType.startsWith("_pakarcontroller.") || application == "atomicdeploy.pakarcontroller"
+                    if (compatible && address != null && s.port in 1..65535 && !address.contains('%')) {
                         val host = if (address.contains(':')) "[$address]" else address
                         val endpoint = "http://$host:${s.port}"
-                        found[endpoint] = mapOf("name" to s.serviceName.take(96), "endpoint" to endpoint)
+                        found[endpoint] = mapOf("name" to s.serviceName.take(96), "endpoint" to endpoint, "address" to address)
                     }
                     resolving = false; resolve(epoch)
                 } }

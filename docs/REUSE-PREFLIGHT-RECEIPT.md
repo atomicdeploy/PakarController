@@ -1,5 +1,645 @@
 # Donor-first preflight receipt
 
+## Native board settings and application preferences
+
+Consulted preferences and donor-audit, owning issue4 and the existing settings
+catalog/editor before implementation. Reread the complete canonical PCController
+Project/SettingsStore.h/.cpp (raw SHA256 ccdcfb6e1ab186abd6a4f0b5a302bb14bab295c9a0bd9b4a306036fa32f1eaf3
+and 7309fd36f0680722a4260e8f1251ae5a0fc67e99fc60f2426bb1294f789e87d4).
+Reviewed Pealayer's existing PreferencesDraft/clean navigation/section controls
+and organization guide; its mapped source hash remains unchanged. Same ledger
+rows now bind the native full-record editor, transaction and tests. No new
+whole-donor completion certification or incompatible donor EEPROM layout copy.
+
+Device Settings / AVR & inputs now offers all supported saved Pakar fields with
+explicit draft/save, validation, conflict/readback and pending-close ownership.
+Both selected USB and fenced HTTP use the same GET/SET/GET transaction. Fresh
+baseline disagreement refuses SET; exact ACK and persistent full readback are
+required. This is optimistic conflict detection, not atomic multi-client CAS.
+LED settings uses the same actual controls as the live panel. Preferences Board
+now links to device settings for any acknowledged board, preserving dirty local
+preferences. USB header shows the selected port, not an unrelated HTTP endpoint.
+
+Initial Check exposed one local borrow lifetime in the expanded Preferences
+view; calculated availability before mutation. Reused the canonical build gate
+and owned-file hash rebinding, not direct cargo/cache bypass. A ledger patch
+initially assumed uniform JSON formatting, then omitted the closing row comma;
+both failed without changing source decisions. Retained actual row text and
+delimiter, updating only the same three reviewed rows. No parallel ledger.
+Native Check, 11 initial focused tests and final 24 settings-focused tests pass.
+No board contact, sound, flashing, native replacement or APK build. Mobile/Web
+full AVR editor and physical/installed visual acceptance remain open. Large
+pre-existing uncommitted changes were preserved, not bulk committed.
+
+## Cell-selection flicker, cable mapping and two-driver chase
+
+Read AGENTS/preflight and owning issue2; consulted games-streaming and exact
+donor-audit PCController inventory. The guessed LocalLib/LedStrip.h source does
+not exist; the actual dependency is Project/AddressableLeds.h/.cpp. Read both
+canonical files through EOF and verified unchanged raw hashes
+`a28009e6211056f0cdb1071e7232d6d277a27cf9dc8e3e9951be9830745f18d4`
+and`43417181b23cab40b8a58ec26159ca025fb41d5bdbaf52d20a46bfc926fee1b0`.
+Retain donor buffer/show separation, not AVR D6 timing or a duplicate engine.
+The new led-cell-test route binds both complete source reviews to exact mapping,
+renderer/worker/boot/build and actual-test hashes in the same canonical ledger.
+Gate passes2 matched/0 stale; full donor parity remains incomplete.
+
+User cable sequence is80,60,40,20,10,30,50,70 then subtract1 per eight-group lane.
+Mapping tests exposed the important distinction: that pattern ends with physical
+group80=logical61; logical1 is group77/pixels457–462. Asked for clarification,
+and use a logical80-down-to1 chase so all80 cells are visited and it stops at1.
+Each step composes six identical red pixels and474 white pixels before one
+publication.750ms dwell is board-owned, no per-cell HTTP/flash/AVR work. Test
+boot override is RAM-only and opt-in; ordinary saved mappings/names are retained.
+The named mapping preset preserves names and saves the full permutation once.
+
+Source inspection found RMT-DMA continually replayed unchanged enabled frames.
+Removed unsubmitted replay: both workers now consume immutable complete frames,
+clear startup black, and sleep until a submission. Renderer repair refresh and
+uncapped rainbow remain. This is a candidate firmware improvement, not measured
+proof of DMA refill/power/wire correctness. Tests also caught/fixed the delayed
+first-render skip and Off/On immediate-advance edge cases; no skipped catch-up,
+loop or fade. Source states/frame snapshots are not optical sensors.
+
+Actual renderer, FIFO,10000 full80-cell batches per render mode, static/DMA
+RGB/BGR worker scenarios (coalescing, unchanged sleep, startup/Off black,
+flash holds and failure), new boot/preset wiring and S3 source guards pass.
+First mapping assertion correctly failed because it conflated cable termination
+with logical chase termination; corrected the interpretation rather than
+changing the permutation to fit an unsupported last-pixel assumption.
+Ledger patch initially failed on a row delimiter; reread exact original lines
+and retained each row's actual trailing comma without wholesale JSON rewriting.
+
+Final SDK candidates, including delayed boot/Off dwell and completed-active fixes:
+
+- RMT-DMA:1881839/3342336 application bytes,99084 static RAM; raw1881984-byte
+  `build/led-comparison/rmt-dma.bin`, SHA256
+  `0a4dcf47b2856a600adbe27c4852c2e0987943ffee980508f1c3c147d04e3800`.
+- Non-RMT GPIO:1881747/3342336 application bytes,99084 static RAM;
+  raw1881888-byte`build/led-comparison/gpio-static.bin`, SHA256
+  `98ddf93d90e9ff87c267b6f04a2cf10a662057dd720db41c0e7df79ee6c80c33`.
+
+Build uses16MB/OPI, buffered, PauseAvrLink, CellChaseOnBoot. A preliminary DMA
+compile before the dwell fix was superseded, not copied or deployed. The earlier
+23b4e75d candidate was replaced only after verifying that exact owned hash.
+No clean, debug cache, SDK upgrade or donor mutation.
+Only the small comparison images need retaining; no duplicated package tree.
+Host has about5GB available RAM/64GB and31GB pagefile already in use; next full
+profile build uses2 jobs instead of worsening memory pressure with all16 CPUs.
+Other running applications/processes remain untouched.
+
+Reconsulted build-storage and reread actual Pealayer LOCAL-WORKSPACE-HYGIENE.md,
+plus pinned PU Tool/build-all.ps1 through the GitHub content API after the guessed
+local sparse-donor path proved absent. Do not create another checkout/cache.
+Removed backend selection from global compiler flags: canonical wrapper now
+writes a changed-only application header at build/config/esp32s3/LedBackend.h.
+Plan is write-free and has identical SDK/compiler arguments for both backends.
+Exclusive FileShare.None lease covers profile write and the full compile; tested
+that another handle is refused while building and that the lease releases.
+Full build-storage Plan suite and actual worker profiles pass. Actual compiled
+worker literals distinguish GPIO from DMA correctly, not merely a plan string.
+All150 cached SDK/library object/archive sizes and modification times remained
+unchanged across final warm static and backend-switch DMA builds; metadata
+fingerprint7b61bad0ea149181e8f782545bc3e38417779d26b6e6d714d2c56f3d63f71821.
+This is measured cache reuse, not a claim of zero writes or measured SSD wear.
+
+ASUS8022 refuses, hostname paths do not resolve, and former58080 forward is
+absent. Bounded read-only last-address and authorized server hostname attempts
+also failed. No board/UART/AVR/ISP/OTA/phone/native deployment occurred. Existing
+PBX service query does not normalize the human phone like its call command:
+the first raw-number query expired. After verified expiry/no active channel,
+used the canonical trunk target; that separate attempt also expired without
+DTMF. Neither is delivered-call or optical evidence. No automatic redial or
+service/dialplan change. Prepared separate RMT/GPIO visual prompts with
+1=stable/correct,2=flicker,3=wrong mapping,4=no output, for use after deployment.
+Private task-local PBX query adapter/prompts are outside shipping source.
+
+Tracking: https://github.com/atomicdeploy/PakarController/issues/2#issuecomment-6246618912.
+Source remains the preserved uncommitted worktree based on2dc319fb; no release,
+complete CI or physical flicker-fix claim. Both exact-image deployments, pixel
+readbacks and driver-specific PBX/DTMF visual acceptance remain open.
+
+## Finite attention/update melodies and companion-driven phone mirroring
+
+Reconsulted board-silent, mobile-mirroring, remote-ota and donor-audit. Fully
+reread actual PCController TonePlayer.h/.cpp, Project/BootMelody.h/.cpp,
+hostbridge/buzzer_mirror.go and its entire514-line test source at current local
+b0111ae0c80dc34149ea1044de7dd5488920301b. Four existing tone/mirror raw hashes
+still match the inventory. Actual PU850 AsyncOTA.cpp reread through EOF; retain
+explicit start/end/error intent, not PU UART/watchdog callbacks. Donors unchanged.
+
+Implemented ACK-advertised additive attention cue ID14,240ms (C6/90ms,pause60ms,
+E6/90ms), using the existing single Timer1 player. All prior14 IDs and original
+welcome schedules remain. Desktop/Web/mobile catalogs agree; old peer counts do
+not acquire the new cue. Existing fenced API/audio command provides operator
+attention; physical Silent and Prog still suppress sound.
+
+Both S3 and8266 local upload callbacks now publish atomic/coalesced notice intent,
+including error/abort and explicit finalization. Only the loop emits one UART
+cue; no750ms ACK wait, guessed fallback tone or replay after companion recovery.
+Remote phase/job observation sends start only on apply, verified completion only
+after the existing terminal checks, and uses a cooperative500ms pre-Prog lead.
+Missing audio is not a firmware/erase safety acknowledgement. Local commit cue
+means finalized upload before reboot, not proof of the subsequently running image.
+
+AVR note publication previously required an active desktop contract session.
+Added a separate three-second companion mirror lease on real HELLO/PING/status
+traffic, without host/menu/macro authority. Buffered/busy-wire sends one changed
+frame per loop; polling receives one solicited changed mirror frame. Audio data
+uses one shared timestamped encoder and the original13-byte payload. Polling
+can undersample short notes; no missed-note invention. S3 buffered is preferred.
+
+Preserved donor-independent, explicitly enabled phone audio even while physical
+AVR Silent is on; that was intentional, not a missing-mute bug. Added explicit
+Follow board Silent mode and flush on policy change. Mute/unmute metadata cannot
+restart one musical step or resume an interrupted note. Fresh short notes now
+rebuffer after missed transport cushion; device-expired notes remain expired.
+Stop, duplicate/owner/lease/lifecycle cancellation and finite native PCM remain.
+
+Focused audio/AVR production-code doubles pass all15 cue durations/mute/rollover,
+upload coalescing/terminal/no-old-completion, companion-no-desktop/polling/expiry
+and no-host-ownership cases. S3 menu-audio, Web picker ACK filtering, updater
+loopback and script/actionlint checks pass. First Flutter analysis correctly
+rejected two unbraced new ifs; corrected the actual statements without lint
+suppression. Analysis then passed, all7 mirroring tests and separate real loopback
+WS test passed. Native locked release-profile Check passed with existing warnings.
+
+Actual warm-cache SDK builds pass, source versions0.2.7:
+
+- AVR buffered:31538/32384 application bytes,1465/2048 static SRAM. Full32768-byte
+  stock Urboot/vector-chain image verified, SHA256
+  4f3f00454ec913551c88da4746ea11955087835c9619e6331406c67f15034fb1.
+- S3 buffered16MB/OPI/RMT-DMA/W5500/ISP build acknowledgement:1995639/3342336
+  application bytes,99424 static RAM. Final raw bin1995792 bytes, SHA256
+  6006ecf027f16cdc821c93a81f52c70af7b0d4f4b522f457efbfde7079c8a05d.
+- Android preview APK55740293 bytes, SHA256
+  c98e83381b64a1c25817d75b22ff17cb6dacca4fa1c353bc653b3955036f5fba.
+  Existing preview signing/cache; no new SDK, clean, debug or package copy.
+- Native Release build passed (3m13s, existing seven warnings), executable
+  26200064 bytes, SHA256
+  8561faf3a8970aa83c72452bf7a75389122cb18d8f5e668cbead95a52b896037.
+  CLI-only --version probe returned PakarController 0.2.7 with exit code 0.
+  It was not launched/replaced as a GUI or accepted visually.
+
+ASUS SSHlocalhost:8022 refuses. No board write, phone install, audible cue,
+speaker/server/PBX action, fuse/EEPROM change or physical acceptance this turn.
+Local ADB inventory is empty as well. The final S3 recompile includes the
+fresh-HELLO/version-known gate on every automatic cue, not stale capability
+cache alone; it supersedes the earlier1995760-byte candidate in the issue note.
+Native/Web host-speaker consumers remain unimplemented; this slice fixes actual
+AVR publication and existing Android consumer, not those remaining consumers.
+No current GitHub CI or production-release claim; preserved large worktree is
+uncommitted on main2dc319fb. New canonical comparison total189/4673,4484 pending,
+147 known gap files. Seven-source audio-attention gate and report checks pass.
+
+Four changed runtime/header contract-manifest entries were rebound only after
+matching their old hashes to untouched HEAD and reviewing this exact delta.
+The separate23-file mapping test still rejects pre-existing Protocol/EepromLayout/
+PcLedContract target drift; did not blindly refresh it. Existing PU route-audit
+drift also remains. Full-project quality is not certified by focused audio passes.
+
+GitHub tracking: [implementation and focused proof](https://github.com/atomicdeploy/PakarController/issues/6#issuecomment-6246432940)
+and [final candidate identities and deployment hold](https://github.com/atomicdeploy/PakarController/issues/6#issuecomment-6246468378).
+Issue #6 remains open for actual paired-board/phone acoustic acceptance and the
+native/Web host-speaker consumers; no production checklist was closed.
+
+## Actual PU850 script/CI import and shared cross-platform owner
+
+Read this repository's AGENTS/preflight and existing build-storage, repository,
+update and donor-audit routes before implementation. Verified PU850 local and
+GitHub main revision431104072952f694a35b3a83c19f13fbb098ca5b, clean read-only
+sparse checkout. Fully read28 actual script/workflow/config/test/documentation
+files through EOF, including1114-line upload.js,568-line upload.test.js and
+424-line C++ loopback suite. Exact original-byte SHA256, Git blob, bytes,
+individual target/proof anchors, omissions and remaining actions are in the
+existing canonical comparison ledger; no second source inventory was created.
+
+Imported/adapted actual PU logger/sanitizer/exit categories, HashSet component
+selection, Write-Step/Assert-Executable/Invoke-Native/scoped directory/elapsed
+helpers, registry-index check/apply flow and staged artifact/deployment concepts.
+Root Windows/Bash build/upgrade aliases and pakar.cmd/pakar.sh now share one
+Node owner and existing reviewed PowerShell build/update policies. No default
+clean, SDK/npm installation, beep, debug artifacts, host-config reset or flash.
+See docs/SCRIPT-TOOLING.md for commands, activation/platform limits and concrete
+reasons not to import incompatible ASA wire formats or duplicate language stacks.
+
+Failures found and corrected, without bypassing reviewed guards:
+
+- Current main CI39074428460 failed on a boot-audio source assertion that
+  predated silent/reset-loop guards. Reread actual AVR boot/reset path; corrected
+  the test and added negative removal checks for every required guard. No
+  welcome/silent firmware policy was weakened. Latest GitHub run remains failed;
+  this uncommitted repair is not a remote green build.
+- Donor terminal sanitizer alternation left OSC title payload after broad ESC
+  matching. Actual hostile-title fixture now verifies complete removal; color
+  is also conditioned on the corresponding output stream, not stdout alone.
+- Plan execution exposed string-array option binding in build-all; use typed
+  hashtable splatting so Plan/Mode/Target reach the actual wrappers.
+- Sparse donor files read from exact Git blobs were wrongly rejected by the
+  filesystem-only gate. Added a distinct pinned-blob state, exact repository/
+  revision/tree-object/raw-hash binding and regeneration tests. RequireLive still
+  rejects absent files; unavailable snapshots are not current filesystem proof.
+- Dependency comparison now handles numeric/two-component stable versions,
+  prevents downgrade/concurrent overwrite, caches each index once in memory and
+  honors configured HTTP/SOCKS proxies via bounded curl without logged credentials.
+- Actual WSL Bash execution reached Windows node.exe with an incompatible
+  /mnt/c absolute module path. Reused PU build.sh's scoped repository cwd and
+  relative entrypoint; real Bash/Windows launchers and outside-cwd help fixtures
+  now pass. Bash syntax alone was insufficient evidence.
+- AVR boot packaging source test still assumed the old Bash compiler body.
+  Verify the complete launcher/dispatcher/canonical packager chain instead, with
+  negative cases breaking each hop; full32768-byte/vector/Urboot checks remain.
+
+Focused Node/PowerShell tooling, child exit/directory handling, real subprocess
+offline/invalid update plans, unchanged boot guard, storage dispatch, repository
+governance, updater loopback multipart/fragmented WS and build-script security
+checks pass. Actual actionlint passes; all three component plans and build-all
+plans run without SDK compilers. Ledger fixture verifies wrong Git object/repo
+reverts to missing. Selective PU ledger regeneration preserves the reviewed blob
+rows without expanding donor checkout or losing other origins.
+
+Broader source-quality reached the pre-existing PU route audit then failed:
+WebUi.h actual4ca3a928335f176211f3756823372a93eb54080bec0711e2681f4d0753f2ee71
+versus its route evidence45e734f5fa28c77b9844cbbc3aa50ee81f2fc65222cc5d418a2d8bac66f1ab16.
+That file/evidence already had unrelated firmware/UI edits before this task.
+Did not rehash it blindly or weaken the audit. Full local quality is NOT green;
+the earlier targeted tooling/boot/storage/governance/loopback results stand.
+Remaining checks are diagnostic continuation only, not a skipped-gate pass.
+
+Live official registry check succeeded: current pins remain unchanged; FastLED
+3.10.8 is available versus pinned3.10.6. It is reported, not installed/applied.
+No dependency version or firmware/native/mobile version was changed by this slice.
+Current canonical inventory4673, complete comparisons187, pending4486, known
+parity-gap files147; PU46/109. All28 tooling reads remain honest scoped gap
+records, not full uploader/distribution parity or whole-repository superiority.
+
+New CI source adds OS-matrix fixtures/plans, centralized locked SDK install,
+integrity/size summaries, guarded draft dependency PRs and disabled-by-default
+exact-artifact deployment. Actions are pinned; no GitHub settings/runner/bot
+activation, new workflow execution, SDK/app build, board contact or deployment
+is claimed. Changes remain in the preserved dirty checkout based on2dc319fb;
+do not sweep unrelated app/firmware work into a tooling commit. Watch/resume/
+verified CLI backup/export, full donor case/native-package parity, actual OS CI
+execution and physical acceptance remain open in #11/#2.
+Source/fixture checkpoint recorded on GitHub:
+https://github.com/atomicdeploy/PakarController/issues/11#issuecomment-6246254783
+and master pointer:
+https://github.com/atomicdeploy/PakarController/issues/2#issuecomment-6246257339 .
+Remaining diagnostic checks (comparison negatives, versions0.2.7, donor routing,
+storage dispatch/hygiene, crate boundary, README artwork and governance) passed.
+This does not change the full-quality PU route audit failure above.
+
+## Integrated Async/WS/OTA progress and automatic network update path
+
+Reconsulted remote-ota, updates-telemetry and tm1637-display, then exact donor
+audit rows. Read actual PU850 AsyncOTA.h/.cpp and FirmwareTransfer.h/.cpp through
+EOF, canonical PCController docs/UPDATE-PROGRESS.md through EOF and the existing
+Pakar AVR FrontPanel.h/.cpp. Original-byte SHA matches the recorded PU updater
+and PC progress document. Reused measured stage counters/unknown progress and
+explicit completion, not PU-specific UART callbacks or watchdog disabling.
+
+Implemented exact optional upload-size/MD5 headers, short/overrun rejection,
+coherent async-to-loop progress, read-only HTTP/WS status during OTA, boot-cached
+info, finite/coalesced existing AVR scheduled-text frames and matching optional
+LCD progress. Native Async HTTP and persisted auth-off behavior remain integrated;
+the new network updater requires auth-off readback, defaults auto/local-first,
+supports pinned Internet stage/separate apply and verifies new-boot full image
+SHA/MD5/size/VALID slot and same-peer WS. Unknown writes are never replayed.
+Replaced task-level work/remote-ota.ps1's obsolete fixed IP/factory-password call
+with the guarded checkout wrapper; no SDK/dependency duplication or clean.
+
+First compiler/actual RemoteFirmware fixture run caught the newly inserted
+progress accessor outside its class. Inspected the actual class/ownership and
+consulted donor measured-stage contract; moved it into the existing public
+owner, not a global or a new updater. Corrected actual S3 updater fixture passes.
+The first build also correctly rejected a stale literal ledger anchor after
+otaRebootAt became atomic; reread/rebound its exact source anchor, not a gate
+bypass. Full comparison generation/check remains authoritative.
+
+Focused progress/unchanged AVR consumer, real loopback multipart/fragmented WS,
+no-replay/auth/new-boot/SHA fixtures pass. Actual async HTTP publication/lifetime,
+WebAccess auth/origin/epoch/persistence and S3 remote staging/tamper/abort fixtures
+pass. These are host doubles/source evidence, not physical flash/display proof.
+Current ASUS localhost:8022 refuses connections, ledboard.local is unresolved,
+and local ports show only COM1. No board contact, auth change, AVR reset, ISP,
+flash, audible/PBX call, deployment, speed benchmark or USB-removal acceptance
+is claimed. Restore actual access before installing/verifying this candidate.
+Office SSH and its MQTT service are reachable. A bounded read-only subscription
+without stored operator credentials is correctly rejected; no usable current
+board/boot observation was obtained. Kept the multi-tenant broker authentication
+and ACL unchanged; broker reachability is not an ESP/cloud/OTA success. No remote
+firmware or control command was published as a substitute for board evidence.
+
+Candidate SDK build passed through tools/build-firmware.ps1, S3 buffered,
+16MB/OPI PSRAM/RMT-DMA, ISP electrical build acknowledgement and W5500 enabled.
+Version0.2.7; application1994971/3342336, globals99408/327680. Raw image1995120
+bytes, SHA256c5c4b39067e33d37bd65f6726d5f22310414fa5bf04b9c701b00bf49dafaf047,
+MD5 4b565333ed0f6538d44cc47591af2005. Source is the preserved dirty worktree
+based on main2dc319fb8add1516a0f2caa4306bee1bcb1284ab, not a new pushed commit
+or installed release. Native/mobile sources remain0.2.7; not rebuilt by this
+firmware/tooling slice. Automatic updater plan reads this exact raw image and
+performs no device contact. Comparison generation and -Check pass:4673files,
+159hash-bound comparisons,4514pending,119known parity gaps. No all-donor claim.
+
+Remaining: live authenticated-state disable/readback if needed, LAN/Internet
+measured comparison, aborted/concurrent
+OTA, external-power/AP recovery, physical displays and all-client durable update
+outcome/UI parity. No all-donor completeness is claimed by this reviewed slice.
+
+## TM1637 freshness and separate S3 LCD initialization/presentation
+
+Read current canonical PCController SevenSegments.h/.cpp, I2cLcd.h/.cpp,
+CompactI2c.h/.cpp and BoardPins.h. Kept PuzzleBoard's actual AVR A4/DIO,A5/CLK
+mapping, not the donor's ISP-conflicting PB3/PB5 mapping. Existing physical-bus
+host fixtures pass both generic and actual AVR register branches: pulled-up
+ACK, every byte's NACK, replay after observed loss, off-state restoration,
+brightness fade and rollover. No AVR firmware change/flash was needed here.
+S3 JSON now exposes fresh tm1637_detection_known/nullable tm1637_detected;
+legacy JSON/USB ACK also expires when AVR evidence is absent/stale. Actual
+production freshness helper is exercised for HELLO/capability/status loss,
+expiry and rollover. A cached ACK is no longer a current observation.
+
+Imported/adapted real PCController common PCF8574/HD44780 transport and16x2
+normalization/cache into BoardCore LcdDisplay. Dedicated S3 I2C1 GPIO15/SDA and
+GPIO16/SCL avoid the incompatible AVR TM1637 connector and the other13 assigned
+signals; UART/ISP/W5500/LED pins stay unchanged. Wire3.3.12 owns native
+I2C at100kHz with5ms transaction timeout. Fixed donor unconditional initialized
+success after ignored write errors: paced wake/control, checked writes and both
+completed rows are required before available/lcd capability. Discovery is
+bounded to0x27/0x3F; failed/observed-disconnected modules lose ready state and
+reinitialize/replay without an MCU reset. Unobserved LCD-only power reset needs
+explicit rescan; a backpack ACK cannot certify glass, contrast or geometry.
+
+Standalone LCD shows hostname/cell/state and update phase. Protected/fenced
+GET/POST /api/display/lcd exposes actual progress, finite ASCII presentation,
+release/rescan and requested/presented revisions. A202 is admission only. Native,
+Web and Flutter expose the last complete driver frame only after this display's
+own ACK/initialization/geometry/row validation; absent displays stay hidden.
+Full native/mobile/USB LCD editors, arbitrary I2C, alternate backpack/geometry
+and the donor host-owned prompt/priority policy remain pending, not invented.
+
+New bus fixtures cover every one of246 wake/init/frame write failures, bounded
+scan, cache/padding, observed disconnect/recovery and rollover. One native
+validation test, focused Flutter model/ACK test, Flutter analysis and actual
+Web renderer/context tests pass. Full existing protocol/AVR/front-panel host
+suite passes once at this completion boundary; none used a board or played
+audio. LCD/CompactI2c four-source live-hash gate passes. Ledger now158 compared,
+4515 pending,118 known parity gaps out of4673; no donor-wide parity claim.
+
+Native release/staging SHA256
+4510f06c0e15a8c133de956e89fbee6e0a1b579dedc71a79569fd0dd847da5bf;
+Android preview APK SHA256
+a7db816cf1e3d796a4c7c19a30c07594250b27929be470f182dd6b2205d70d5a.
+Versions remain0.2.7. The new Web label correctly triggered stale generated
+localization; the existing shared Vazirmatn/translation generator was rerun
+and its no-write check passes. Flutter's new unbraced-if lint was corrected
+and the changed Dart files formatted; no guard was bypassed.
+
+Native optional LCD deserialization now discards only invalid display metadata,
+not the valid parent board status; the focused native test covers this and the
+final release was rebuilt/staged. Actual production LCD HTTP handlers also pass
+bounds/auth/maintenance, admission-vs-frame, release/rescan and absent-module
+fixtures, rather than just a separate validator. S3 SDK3.3.12 candidate build
+passes with W5500,buffered UART,16MB/OPI and RMT-DMA:1991423 sketch bytes and
+99392 globals. Application1991568 bytes, SHA256
+5421f6d15b10574dc90ff22503b936719bc1c2e8d40e1eb53fd1f7d8fd84d055;
+image contains the actual LCD endpoint and new TM1637 freshness fields.
+This is compilation, not actual I2C/Ethernet/DMA acceptance.
+Fresh ASUS SSH8022 still refuses. No board deployment, reset/write, actual I2C/
+TM1637 transaction, optical test, audible cue or PBX occurred. Confirm the LCD
+backpack/voltage/pull-ups (5V bus requires a bidirectional level shifter), deploy
+the candidate, then test both displays with actual AVR UART and concurrent
+LED/Ethernet traffic. No live insertion or production acceptance is checked.
+
+## Optional W5500: shared native network candidate, physical tests pending
+
+Reread complete canonical PCController netpolicy/http_url.go and PU850
+AsyncWebServer.h/.cpp, AsyncOTA.h/.cpp and FirmwareTransfer.h/.cpp. Added a live
+hash-checked seven-source Ethernet gate to the feature-enabled build and CI.
+Three newly reviewed headers/implementation rows and four expanded existing
+mappings preserve the shared HTTP/WebSocket/OTA contract, explain unsafe donor
+buffer mutation/direct callback and PU globals exclusions, and distinguish native
+SDK Ethernet additions from donor functionality. The durable inventory now has
+154 hash-bound comparisons,4519 pending and114 known parity gaps out of4673.
+Seven current Ethernet donors match live bytes; this does not close those gaps.
+
+The explicit native ETH/lwIP option uses W5500 private HSPI/SPI3 pins
+SCK5/MISO6/MOSI7/CS8/RST9/IRQ14. AVR FSPI/SPI2, UART TX17/RX18 and LED4 are
+unchanged. No WIZnet socket library, parallel HTTP server or separate updater is
+introduced. Installed AsyncTCP3.5.0 binds its existing server to INADDR_ANY.
+The same routes/auth, NTP, cloud and firmware fetch use the common native stack;
+Ethernet takes preference only while IPv4-ready. Independent persisted
+DHCP/static settings and route-change cloud invalidation remain in place.
+
+Fixed the absent-module recovery gap: explicit Ethernet settings apply retries
+initialization, including safe partial-driver cleanup; cable loss never resets
+a healthy driver and service never retries automatically. Cheap status now
+publishes initialized/started/carrier/IPv4/DNS/MAC/error, with null disconnected
+addresses rather than stale IPs or synthetic connectivity. Native connection
+method now says Network for Wi-Fi/Ethernet, preserving exclusive USB ownership;
+status can show the acknowledged Ethernet uplink instead of an old station SSID.
+Dedicated graphical DHCP/static Ethernet editors remain open.
+
+Focused port lifecycle (both flags), NetworkPath (both flags), config persistence,
+typed management/status (both flags), discovery, pin-map and live-probe fixture
+tests pass. Probe tests include actual loopback TCP/redirect rejection, but no
+ESP or WAN. One focused native Ethernet-label test and connection wiring guards
+pass. The probe checks the actual wired TCP address, Web/JSON/XML and firmware
+HEAD/Range; optional one-shot pinned HTTPS ESP staging requires Wi-Fi station
+disconnected and never applies/cancels firmware or touches AVR. Lost results,
+changed boot/peer/job/hash or existing maintenance stop without mutation replay.
+
+Actual Arduino-ESP32 3.3.12 buffered16MB/OPI/RMT-DMA/W5500 SDK build passes:
+1961319 sketch bytes,97720 global bytes. Application binary1961472 bytes,
+SHA256 7e197801d4b05bf690312f272ea073e9e2da176c08cab4be636a875a0b095225.
+The first attempt linked a stale copied EthernetPort.cpp after its source was
+changed during Arduino's initial library build; the undefined symbols were
+diagnosed in the cached object. Final incremental recopy/build resolved both
+methods without a clean, SDK patch or duplicate cache. No library rebuild was
+forced for the final source-only pass.
+
+Native release passes and its verified staging candidate is26164224 bytes,
+SHA256 36cbe1e44e3bc7ea90452fdba084f73055764659b616228c78baf7e23fbc0430.
+All app/firmware versions remain0.2.7. Existing AVR and Android candidates are
+unchanged. Build/staging identities do not establish an installed runtime.
+
+Fresh ASUS SSH8022 refuses connections; this PC's ledboard.local lookup did not
+resolve within3s. Module supply labels still need confirmation (3V3 vs carrier
+VCC/VIN requirement), not a board photo. No firmware deployment, live Ethernet,
+OTA/WAN fetch, AVR reset/write, tone or PBX action occurred. Physical DHCP/static,
+HTTP/WebSocket, wired multicast discovery, Ethernet-only fetch/apply/reboot,
+cable/fallback/AP recovery and LED traffic soak remain unchecked in issue2.
+See ESP32-S3-COMMISSIONING.md for the exact pinout and safe acceptance probe.
+
+## Board Silent preference: persistent owner and all three Preferences surfaces
+
+Read the complete current PCController LocalLib/TonePlayer.h/.cpp,
+Project/SettingsStore.h/.cpp and Tools/Controller/internal/appconfig/buzzer_runtime.go,
+plus Pealayer src/ui/board_info.rs. Their original hashes are recorded in the same
+comparison ledger. The new board-silent gate verifies all six against live donor
+bytes; generic remaining donor controls/backend/routing work stays pending.
+
+Adapted the existing MCU-owned flags bit0, independent of host notification sound.
+Native Preferences > Board and Flutter/Web Preferences > Board sound are contextual
+on AVR settings+buzzer ACKs. Native uses the selected fenced HTTP or revocable USB
+session only (USB never falls back to Wi-Fi); all surfaces use the existing inner
+GET_SETTINGS/SET_SETTINGS/GET_SETTINGS contract. Readback must match the complete
+preserved record and report persisted=true. Unknown is not Off; pending/expired,
+rejected and stale-peer results cannot optimistically update the toggle. No
+uncertain mutation is automatically replayed or saved as an app preference.
+
+AVR mute now publishes its revision immediately, including between notes, and
+unmute follows donor behavior without restarting an interrupted note. Prog safety
+stays independent. Actual production tone/register fixtures cover all fourteen
+muted cues; actual settings/runtime EEPROM fixtures cover reboot persistence,
+untouched flags and rejection while programming. Four focused native tests and
+four Flutter model/API/widget tests pass, as do Flutter analysis and the focused
+Web transaction, auth/Preferences, appearance, peer HTTP and localization tests.
+Corrected stale test doubles: Web listeners must compose instead of overwriting;
+appearance owns its real locale/haptics dependencies; old per-cell batch source
+assertions now check the implemented atomic request/readback instead.
+
+Native release candidate staged (not production replacement):
+SHA256 df110c19c3eafdb9d594f5f0f1709080bf4c5f7e87e8f72d872f586d61748d10.
+S3 buffered16MB/OPI/RMT-DMA build passes, application binary1863072 bytes,
+SHA256 1254f86ef970c04dd6fdfa74fed8a777404b9bcded4b722788d5be1473eba8a3.
+AVR buffered build passes at31602 application bytes and1460 static SRAM bytes;
+verified Urboot merged32768-byte image SHA256
+3fa829d2104295d92a24194f5ce85b5f38647240b5bc7d6a60de8dfade9d53af.
+Native/firmware/mobile versions remain0.2.7.
+Android preview APK build passes; SHA256
+34a231b50c64bc013b04ad9e66c09d0b99779ab82c7fc4006bf46d069ee12672.
+These are build identities, not installed firmware/runtime receipts.
+Fresh ASUS SSH8022 refuses connections;
+no board contact, flash, reset, audible test or PBX call was made. Physical
+mute/unmute, welcome/menu/cue silence after power cycle and actual USB/Wi-Fi
+deployment remain open. No hardware acceptance checkbox was checked.
+
+## AVR ISP/UART restoration: boot-chain defect corrected, hardware unavailable
+
+User explicitly requested live ISP/UART recovery, brownout and bootloader repair.
+Fresh SSH8022 refuses; bounded TCP checks on the current8022 and historical
+7022/1022 tunnels are unavailable. This PC enumerates only ACPI COM1, not an
+ESP/AVR USB endpoint. Requested restored ASUS access; no different Cafe/PCController
+board was substituted. No actual AVR reset, signature/fuse read, backup, chip
+erase, programming, UART exchange or audible operation occurred.
+
+Ran canonical AVR reset tests and the full test-protocol.ps1 suite successfully,
+including actual production ISP/EEPROM-preservation code against its SPI emulator,
+all three UART flow profiles, Prog/settings contracts, TM1637 and melody timing
+fixtures. Buffered AVR compile passes at31610 application bytes and1460 static
+SRAM bytes, leaving588 static headroom (not a runtime stack/soak measurement).
+Inspected current .init3 output: capture MCUSR/r2, clear MCUSR, WDT disable and
+fall-through at0x17E to data initialization. Host tests do not prove live health.
+
+Found a real packaging defect: the old 32768-byte merged ISP image contained
+stock vector Urboot but reset still jumped directly to the application at0x14E.
+Before correction SHA25648ec5cb57429f18641d698a2d8e6d7029b0285e304234ee3b302de3374a3b3ac.
+Read PCController Tools/Bootloader/Urboot-Custom/build.mjs and README.md completely,
+including reset/trampoline, metadata, unused-vector ELF proof and round-trip code.
+Imported/adapted those actual mechanisms into tools/prepare-avr-image.mjs and
+both canonical PowerShell/shell builds. The packager pins the installed stock
+UART0/384-byte HEX hash, verifies __bad_interrupt ownership before reserving
+vector25, normalizes erased gaps and checks every decoded output byte.
+
+One packaging check correctly rejected the stock Intel HEX type03 start-segment
+record. The donor parser ignores non-data metadata; the adaptation now explicitly
+validates its shape, bounded/aligned entry and agreement with Urboot's metadata,
+with a regression, rather than silently ignoring arbitrary records. No flash or
+fuse write was involved in that failure or repair. The first live-donor gate
+rejected work/repos/PCController inventory drift (old2a0e971e/1207 tracked paths).
+Diagnosed, then used the actual canonical installed PCController source at
+b0111ae0/1517 paths, matching the inventory; avr-boot-chain -Gate -RequireLive
+passes there. Both donor file hashes match the recorded source bytes.
+
+The final candidate's reset is wrapped RJMP0xCF3F to0x7E80; metadata-selected
+vector25 at0x64 is an absolute jump to the original application at0x14E. Urboot
+bytes are unchanged, full flash is32768 bytes, and HEX round-trip/negative-vector,
+overlap, checksum, EOF and start-record tests pass. The canonical build passes;
+build storage/gate checks pass. Corrected binary SHA256:
+5e836361ff97119a96e54f719fcb4443f64840abb85274e04cf905ec1a050140.
+HEX SHA2564e2889f4dba489b0be2ab4a718a01a1e6a81480203e313834b124a012ee2dfa5.
+build/avr-buffered/avr-image.json carries exact source/profile/hash proof and
+physical_validation=false. Firmware/application versions are unchanged.
+
+No fuses were written or guessed. The build still describes external16MHz/BOD2.7V;
+the reported3.3V rail and actual speed grade/clock/fuses must be reconciled before
+deployment. BOD disabling is not a repair for inadequate voltage/clock margin.
+The existing ISP API deliberately does not expose arbitrary fuse writes. Any
+required constrained fuse recovery needs the actual readback and verified backup
+first; current hardware BOD/bootloader/UART are NOT accepted. Relevant primary
+references: installed MiniCore3.1.3 boards.txt and stock Urboot README, and
+Microchip ATmega328/P datasheet DS40002061.
+
+Two complete donor reviews added with explicit remaining custom-progress work:
+the donor512-byte TM1637 D13/D11 backend must not be deployed on A5/A4 hardware.
+Stock Urboot remains selected. Original MIT and upstream GPL notices retained.
+Ledger149 compared,4524 pending,109 parity gaps; not full donor parity. Production
+ESP/app images, rollback, settings, unknown edits and donor trees remain untouched.
+
+## Configured hostname and contextual authentication repair
+
+Read the installed Arduino-ESP32 3.3.12 NetworkManager/WiFi startup implementation:
+the global default is generated as chip target plus MAC suffix, and mode() copies
+it into the new station netif. Pakar applied setHostname after mode(), leaving
+DHCP with the SDK name. Reviewed ASA0002E WiFi_Setup and onValueUpdate HostName
+slices: saved identity is applied before enabling interfaces and reused by
+discovery. Shared NetworkConfig now restores that order, applies/checks the
+full saved label on station and AP netifs, and stops interfaces on a hostname
+application failure. It retains DeviceIdentity as authority, without suffixes.
+This is a slice review, not certification of the entire PU850 sketch.
+
+Read LocalLib/Authentication.cpp and .h completely; live hashes match the
+inventoried PU850 snapshot. Both now have exact file-comparison decisions and
+omission reasons. Replaced hardcoded protection/password-token dumps and the
+incomplete role skeleton with the actual middleware, bounded sessions and
+atomic access persistence. Ledger: 147 compared, 4526 pending, 107 parity gaps;
+full donor/production acceptance is not claimed.
+
+Authentication has a real persisted enabled flag, off on fresh installations
+and migrated old factory-credential records. Legacy custom credentials retain
+protection; users can explicitly disable it. New enable/change/disable commits
+verify staged readback before rename. An enabled configuration requires its
+current password for changes. Corrupt or unmounted access storage remains
+unavailable, not an anonymous fallback. HTTP/WS/Telnet use the same flag; origin,
+peer/boot fencing, WS ownership and firmware-busy guards remain in place.
+
+Web login and Sign out are hidden when disabled, including /basic. A network
+failure offers retry instead of inventing a login requirement. Direction,
+language and supported-only haptics are in browser Preferences with Apply/Cancel.
+Native credential fields require explicit enabled metadata and are absent for
+USB. Exact-endpoint public requirement metadata survives Disconnect only for
+offline credential editing; it never grants device control. CLI/TUI can use
+auth disable. The native implicit factory-password fallback was removed.
+
+Executed focused checks: shared network model for ESP8266 and ESP32; actual
+WebAccess plus access-record persistence/legacy migration and unavailable-storage
+doubles; embedded Web auth-on/off, lost-connection and Preferences open/cancel;
+basic controller; localization and nine donor locale cases; S3 platform guards;
+three native connection-control tests and two access tests; built CLI access and
+hostname mutation/acknowledgement tests. No full CI/suite wait. The locale fixture
+was updated from obsolete per-cell progress wording to the actual current atomic
+batch readback message, retaining the exact Persian assertion.
+
+Native Check and Release passed using the canonical warm release cache. Staging
+PakarController.exe is checksum-verified and CLI-probed, SHA256:
+bac4c656aa1633c3464c93656388dbe8620d2b691a1c203c482d2e945a632361.
+Production executable, rollback and settings were not replaced.
+S3 firmware compilation passed with the existing buffered UART, 16 MB flash,
+OPI PSRAM, RMT-DMA and ISP-electrical-verified build profile, SDK3.3.12; no
+W5500 flag. Image1,856,096 bytes, SHA256:
+d3d144ce7998c655d632d12fd84c143ef2d873914e8f08d731d774207675d047.
+Compiler reports1,855,947 bytes program and97,340 bytes static RAM. A binary
+content probe confirms the final Preferences handler and checked-hostname
+failure path are actually embedded; it is not an older cached image. This
+candidate remains in build/esp32s3-buffered, not a flashed/accepted image.
+
+Source is base 2dc319fb8add1516a0f2caa4306bee1bcb1284ab plus preserved working-tree
+edits, not a clean-head release. Fresh localhost:8022 SSH and direct TCP checks
+refuse; ledboard.local does not resolve within the bounded lookup. No ASUS
+install, firmware deployment, live DHCP/mDNS/AP/login test, AVR, audio or PBX
+action is claimed. Issue2 hardware and human acceptance remain open.
+
 ## W5500 separate-bus wiring preparation
 
 Consulted network-cloud and literal PU850 donor audit before selecting pins.
@@ -3607,3 +4247,583 @@ Next quiet SDK build uses PauseLedOutput; its standard source default remains On
 Quiet begin queues one black frame while keeping scene and service Off, so the
 next image must not automatically resume a potentially flashing effect. SDK/
 linked-artifact and physical black-clear acceptance remain pending at this point.
+
+### Static six-pixel fallback requested after emergency stop
+
+The user explicitly requested a non-DMA default, immediate identical values for
+each six-pixel cell, no animation or transition, deployment and an explicit
+rainbow test. This supersedes the prior quiet-only commissioning plan. Consulted
+games-streaming and reread actual Puzzles LocalLib/WS2811.h and WS2811.cpp: retain
+its FastLED WS2811 timing/correction and full brightness intent, but its AVR
+11-pixel driver is not a suitable 480-pixel S3 transport implementation.
+
+LedGrid now defaults to static mode, applies cell changes immediately, normalizes
+each physical six-pixel group to its first pixel (including streamed commits),
+and does not refresh unchanged scenes. Explicit rainbow in static mode is a
+stationary grouped color test; effects is an explicit runtime opt-in. The same
+led_output.mode contract is being wired into API and clients. The focused actual
+LedGrid fixture verifies immediate pulse requests, identical grouped pixels,
+stationary rainbow, grouped raw input and no unchanged retransmission. Existing
+effects-path tests remain explicitly selected and pass. These are source/fixture
+results; new backend SDK, deployed image and optical evidence remain pending.
+
+User correction before deployment: rainbow test must animate, including with
+static grouped cell control selected. The renderer now explicitly animates that
+test while retaining equal six-pixel groups; ordinary cell changes remain static.
+Repeated Off requests now enqueue black even when requested state is already Off,
+instead of returning early and leaving WS2811's latched garbage untouched. Native
+UI has an explicit Off action to resend it. Focused renderer checks cover repeated
+black and animated grouped rainbow. Compiled-object inspection also caught GCC
+inlining the IRAM pulse routine into flash-resident work(); noinline is required
+and the superseded image must not deploy. These corrections require one warm
+firmware rebuild; no CI wait or full test rerun is a prerequisite for user viewing.
+
+## AVR recovery resumed
+
+User explicitly resumed hardware UART and ISP restoration. Actual PCController
+`Project/ResetTelemetry.cpp` and `.h` were completely read, with EEPROM layout,
+codec and reset-fixture dependencies. Root verified the donor checkout at
+`b0111ae0c80dc34149ea1044de7dd5488920301b`, with raw source SHA256
+`8699f6cb75170fb62ee94e24ce0faa74bdfb51021b9eba6fb95c61013619199c`
+and `7ad43276b93bc31248848ad80cb4c2f5f40500dd33bf736ddeb6c2d5114256a9`.
+The existing comparison ledger records both actual imports; its new `avr-reset`
+route prevents this startup capability being missed by broad hardware keywords.
+
+Adapted early MCUSR/r2 capture and watchdog disable, journal416..799 with
+commit-last CRC/readback and quiet watchdog/brownout/unknown welcome policy.
+Optional B5 adds reset flags/count/persistence without changing46-byte B1.
+The buffered AVR build passed at31628flash/1406static-SRAM. Final ELF
+`c6d916c3c04c85af668c74845f354a16c61660d76ba40592afbe35befa9157e7`
+contains the intended early instructions and fall-through. Raw32KiB image SHA256
+is `8e06ffe3b286012ed1fd743c1d93166349ac01bc83d71c8ff5e45a8bae16db9a`.
+Focused actual reset-journal, packet/identity and ISP EEPROM-preservation fixtures
+passed; no broad suite or CI wait was used. These are source/host/compile results.
+
+S3 source now uses its existing dedicated UART1 adapter instead of duplicating
+unchecked initialization. It reports driver-ready/hardware errors, requires
+valid AVR identity before online state and avoids the legacy18ms drain delay
+for buffered hardware UART. GPIO assignments, AVR hardware serial, original ISP
+backup/byte verification and fuse policy are unchanged.
+
+ASUS localhost:8022 timed out before SSH login; local ledboard.local resolution
+also failed. No physical AVR probe/backup/program or audible action was possible.
+Recovery remains open until access, verified backups and both live paths work.
+The user subsequently stopped the private evidence PowerShell helper: its last
+run had finished; it must not be invoked again or replaced with another wrapper.
+
+## Basic White/Red delivery
+
+Delivered `/basic` on the integrated S3 firmware, with80 logical buttons and
+explicit White/Red controls using the existing shared peer HTTP implementation,
+application artwork and palette. Actual RayanLamp `webui/src/api.ts`, Pealayer
+`web_ui/src/appearance.ts` and PU850 `LocalLib/AsyncWebServer.h/.cpp` were consulted;
+this bounded delivery is not donor-wide UI parity.
+
+The first page request failed with an empty reply. Reviewed installed SDK3.12.1
+`ESPAsyncWebServer.h`, `WebRequest.cpp` and `WebResponses.cpp`: ESP32's deprecated
+char-pointer `send_P` selects a heap-backed BasicResponse. Serve this immutable
+page directly on the native SDK actor with explicit bytes/length instead. Hardware
+mutations remain queued; do not restore loop-side network sends. Direct ASUS GET
+returned200/18672bytes. Local forwarded-browser failures remain a separate open
+transport/browser acceptance item; neither their cause nor a universal fix is claimed.
+
+USB application-slot flash verified image SHA256
+`f5572b0b5cf8d750f00390ad25c1c53e8699410d0086487bc66e9a174cdc82da`.
+Live boot `d62f69605c125734372ebd96d8cb3c7e` acknowledged Cell mode;
+static `gpio-static`, DMAfalse and all80 white were read back. Shipping controller
+code then performed cell1 Red and White against the actual board from ASUS:
+both POST202 and subsequent state readback succeeded. This was a Node transport
+integration using the actual app code, not a browser-click or optical/mapping test.
+The focused controller fixture and S3 build passed; no broad suite/CI wait ran.
+ASUS has the hostname-based desktop shortcut. The one requested PBX call completed
+with archived Completed receipt and matching ANSWERED CDR,30 connected seconds.
+Physical cell placement/colors and browser interaction remain for live acceptance.
+Final direct readback matched running sketch MD5
+`4297dbf58cf1aa6a36c3b79186db241e`, same boot, Cell/none,80 white/0 red,
+11 transmitted frames and0 reported driver failures. The isolated source
+checkpoint still needs reconciliation with preserved concurrent working-tree edits.
+
+## ASUS native USB-only delivery
+
+The prior compact USB packet did not contain all80 cell states or mapping. Added
+a frozen, bounded nonce/token/offset snapshot and exact-boot-fenced table commands.
+The reviewed PCController Session admission/matched-ACK/no-replay mechanisms are
+adapted in `desktop/src/usb_table.rs`; UI connection epoch, physical-open session,
+peer pin and enqueue time are captured before queueing, never rebound by the worker.
+Capture-start time remains the freshness authority. Windows serialport4.10.1 uses
+first-byte COMMTIMEOUTS; its60ms timeout is not a per-chunk fixed sleep.
+
+ESP application image SHA256
+`34e685d5191c62fbb4a69739a08d9053015a260731babc6c25d27a867c15089b`
+was written through ASUS COM22 to the previously verified application slot0x10000,
+with esptool byte/hash verification. AVR firmware/EEPROM/fuses were not changed.
+The boot stayed `2143183069bb9f814ab1cd714a2da268` across app USB reconnect.
+
+Native candidate SHA256
+`4c49835d24c96b3663ecfc7276095557436ef6ffa23212a05d3e31f859b3ced8`
+is running interactively on ASUS as PID18680, version0.2.7, one process, COM22 USB,
+WebSocket disconnected and no established TCP connections. It reads80 real cells
+and80 mappings. The preceding USB candidate performed cell1 Red then White with
+matched ACK and new same-board snapshot readback. Disconnect cleared live state,
+an offline command was rejected, and reconnect returned80 White with no replay.
+This is live protocol evidence, not confirmation of physical placement/color.
+The final UI adds readable semantic state circles when individual RGB is unknown;
+the user clarified logical11 is right/half below1. Native and mobile now interleave
+paired logical rows for presentation only; physical mapping and API IDs stay intact.
+Actual final framebuffer capture: outputs/PakarController/native-usb-ready.png.
+The old browser shortcut was preserved in staging and replaced by a native shortcut.
+Settings, original executable and the working USB rollback remain preserved.
+
+All196 guarded native tests passed after correcting the TUI's stale Down-from1
+assertion to21; that final correction is test/comment-only after the runtime build.
+Flutter analyze and5 lifecycle/readback tests plus2 geometry/phone-panning tests
+passed. Preview APK SHA256
+`2fa5d2e296bd6bdf948cc0adc2442ab2906cf4d3326429049b4dba1cf3557364`
+was built and checksum-verified on ASUS. Neither host lists an ADB device; phone
+installation/touch/physical mobile acceptance remain open. Android direct USB is
+not implemented or presented as operational, and no network fallback is claimed.
+
+Rainbow was restored by the actual ASUS native USB path at the user's request.
+Same boot, gpio-static/non-DMA, output enabled, increasing transmitted counters,
+no reported driver error. The user reports glitches/rough movement: acceptance is
+OPEN. Source shows frame-count-based hue increments and six-pixel grouping with a
+large inter-cell hue jump. This establishes animation roughness in firmware, not
+that all corruption is software; GPIO counters cannot validate the wire waveform.
+No further driver/physical-mapping changes were made from that observation alone.
+
+These are preserved-working-tree candidates, not a clean reproducible release or
+complete donor/production acceptance. Master issue2 remains open.
+
+### USB RGB/effect follow-up — deployment pending
+
+The later user request to remove the Wi-Fi telemetry limitation is implemented
+as actual480-pixel published RGB in the same frozen USB capture, not a text-only
+change. Firmware/client bounds are16KiB. Existing Frame validation, capture-start
+age, current peer and confirmed mapping gate preview/tooltip use. USB also updates
+the observed effect; the panel has an explicit selected Rainbow test control.
+New native candidate SHA256
+`f800bd10b0c4982e31ed4c945bbc83a12327d4cb2cdb33ed61375c071a5693ef`;
+new firmware SHA256
+`0528a38523f3fa76fa363dee09b056bb6fa8bc943d8ff707de6fd939d80f2067`.
+The new source passes197 native tests and the S3 build. A test-only serde Value
+construction correction followed the release build; shipping behavior is unchanged.
+
+LedGrid adds RAM-only actual-pattern-transition attribution with constant reasons,
+previous/new pattern, uptime and then-published frame revision. It changes neither
+wire timing/defaults nor EEPROM/flash. It cannot identify individual API clients
+or distinguish an AVR caller from another caller of the same grid method.
+
+Neither new candidate is deployed: ASUS tunnel8022 alternated banner timeout/reset,
+then lost its listener/refused connections. The existing USB app remains the
+previous4c49835d candidate; the final rainbow retry was only IPC-accepted before
+confirmation became unavailable. Do not claim current optical effect success.
+The owned untriggered PakarControllerUsbControl task still holds that last explicit
+rainbow-and-status action; inspect and reset to status-only before any blind start
+after reconnect. No automatic replay or new PBX call is authorized by this note.
+
+### GPIO4 stop investigation and static recovery
+
+ASUS8022 returned. The actual selected-USB app first observed boot
+`0c4babc5dee21e8d343747a12a54abe3`, effect none, enabled gpio-static, no flash
+pause/driver errors. One explicit native rainbow command was followed by about
+1490 completed frames and then effect none on the same ESP boot. This proves a
+logical cancellation occurred, not its caller or an electrically correct frame.
+AVR input9 was true; a held input alone does not prove repeated press edges.
+
+The already-built0528a385 diagnostic firmware was application-slot flashed and
+byte-verified on ESP90:70:69:ea:c8:00, and matching nativef800bd10 was installed
+gracefully with current settings and previous binaries preserved. The older
+4c49835d app rejected the larger USB RGB snapshot; pairing the already-built
+client restored complete table/mapping state. Fresh live snapshots on the new
+boot413ed378 show rainbow selected and243,1947,4925,7477,10880 submitted frame
+revisions, completed counts one higher, no driver failure/pause, and actual2880
+RGB hex characters over USB. No Wi-Fi transport fallback or optical acceptance
+is inferred from these reports. No AVR programming or audible test was run.
+
+Read the actual Puzzles LocalLib/WS2811.cpp and header completely again; their
+original hashes remain0f7fec78 and39509602. They initialize FastLED/brightness/
+black, but do not solve delayed external strip power. The shared LedGrid's
+static early returns plus the fallback worker's queue wait explained why an
+unchanged static scene never sent again. Added an enabled-only1000ms full-buffer
+maintenance resend to needsRender/service, without stepping fire/fades, changing
+cell values, adding persistence, or limiting rainbow throughput. Exposed its
+interval in led_output. Focused actual-renderer/FIFO fixtures pass, including
+999/1000ms boundary, identical RGB, static-fire nonadvancement and disabled-output
+behavior; the guarded S3 build passes (1826727 sketch bytes,90052 global bytes).
+Candidate image62d26c0f96c67d3f461e3f96df03046acca5cb98fd43d549557e0a29ce490f76.
+
+Read-only review also found old AVR action/reset revisions survive a HELLO/new
+session and can replay phantom deltas after a reconnect. This remains a distinct
+source-confirmed defect, not today's proven cancellation cause; no speculative
+AVR or session behavior change is hidden in the static-refresh fix. Live waveform,
+visible colors, all480 pixels and the user's original logical mapping remain open.
+
+### Explicit RMT-DMA run
+
+The user then requested rainbow using RMT and DMA. Added canonical wrapper option
+`-S3LedBackend rmt-dma`, passing PAKAR_S3_LED_USE_DMA=1 to the paired S3 build.
+Static remains the default; other targets reject this S3-specific selection.
+The same cache/output path is reused without clean. Added Plan assertions for
+the explicit flag/default/target restriction; that broader script suite is
+deferred, not reported as executed before deployment. Changing the global
+compiler flag required a full dependency rebuild; no duplicate cache was made.
+
+Guarded build passed (1826843 sketch bytes,90036 global bytes). Image SHA256
+94da0453188c3b07a1ab1ebc6a0e651887a18dcfeb820b3b3996d980d4fadaa4 was copied,
+hash checked, application-slot flashed and byte-verified on the same COM22 S3.
+Non-DMA62d26 remains available in ASUS staging/usb-table-refresh.bin. Current
+nativef800bd10 was gracefully restarted without changing user preferences or AVR.
+Fresh native USB readback on boot6b13a6ab5f9b383db8ca671e76b949ec reports actual
+backend rmt-dma,dma true,ready/active true,failed/error0 and transmitted1569 then
+3451. Full effects mode was explicitly commanded through the app and ACK plus
+same-board readback verified before the separate rainbow request. Station link
+remained connected; this is not a high-load Wi-Fi or optical acceptance test.
+Subsequent fresh same-boot native snapshots verify rainbow/effects and RMT-DMA
+with submitted1055 then2632, completed5695 then7273, failed/error0, no flash
+pause, actual480-pixel RGB previews changing from06fd0101ef10... to9a0166ac0153....
+Both commands have ACK plus same-board readback. Current task is status-only,
+not a retained mutation for replay. The app remains USB-only; AVR remains
+unprogrammed and no audible/PBX tests were performed. Visible smoothness and
+electrical correctness await the user's observation; master issue2 stays open.
+
+### Atomic cell updates and Flutter selection/network controls
+
+Implemented one board-owned selection mutation across ESP HTTP `/api/cells`,
+cloud JSON `cells`, authenticated Telnet `cells`, native GUI/TUI/CLI, USB opcode
+0x5F, Flutter and both Web controllers. The full80-cell selection is validated
+before mutation; the12-byte USB bitmap fits the existing boot fence. One common
+start timestamp drives300ms wall-clock fade/pulse on the ESP; delayed rendering
+catches up rather than requiring client frame uploads. Static grouped fallback
+deliberately remains immediate. No EEPROM/LittleFS scene write or80-command AVR
+fan-out occurs. Explicit `cell-batch` acknowledgment is required; no per-cell
+fallback, optimistic success or automatic uncertain-command replay. Every
+selected target state requires matching-board post-ACK readback. This does not
+prove completion of a fade or physical light output.
+
+Flutter adds Select all, Invert and Clear using the same normalized Find
+selection, transition choice and live AVR-advertised melody chooser. Snake is
+hidden across clients and excluded from the default firmware mode manifest;
+implementation remains behind PAKAR_SNAKE_ENABLED. Successful hostname addresses
+survive reconnect/transport retirement; real lookup failure, not HTTP/auth errors,
+evicts a route. Missed discovery scans retain explicitly unverified records.
+Actual PCController lanresolver and netpolicy/proxy source/tests were read fully,
+adapted and bound in the existing ledger. Actual canonical AddressableLeds.cpp/.h
+stage/show ownership is adapted, not its AVR timing sender or old100-pixel limit.
+PU850 Shell.cpp/.h were reread fully at their original hashes; Telnet now forwards
+the correct audio `cue` field and uses escaped JSON for the new bulk command.
+Generic shell registry/broadcast/serial-shell parity remains open.
+
+Failures were investigated rather than bypassed: obsolete queue translations
+were replaced and canonical assets regenerated. The widget binding intentionally
+blocked real HTTP with400; transport fixtures were isolated using the existing
+mirroring transport pattern. Their next timeout exposed an actual proxy defect:
+ledboard.local went through the dependency-download proxy (zero local lookups).
+Imported donor LAN/private/link-local proxy bypass while retaining remote proxy
+policy. Actual Dart SDK custom-factory code also required explicit direct TLS;
+SecureSocket.startConnect now preserves hostname validation and cancellable SDK
+ownership. Public localhost test-only certificate/key are not APK assets. Real
+loopback tests verify original HTTP Host/cache reuse, untrusted/wrong-host TLS
+rejection and explicitly trusted fixture success; no bad-certificate bypass.
+
+Verification: guarded S3 RMT-DMA build passes (1833047 sketch bytes,90676 global
+bytes);202 native tests and native Release/stage probe pass; Flutter analyze and
+seven selection/cache/melody plus three actual transport/TLS tests pass; Android
+preview release APK builds. Focused Web table/basic/context tests and complete
+protocol wrapper pass with actual renderer/FIFO/worker/ownership host doubles.
+The native read-only fixture's first transient failure did not recur unchanged;
+the separate batch fixture was corrected to require the real accepted count.
+Comparison generation/Check and configured mobile-network gate pass. The broad
+firmware-hardware lookup has no acceptance gate configured and correctly refuses
+`-Gate`; it is routing, not a claim that all hardware donor parity is certified.
+
+Checksum-verified candidates in outputs/PakarController/staging:
+
+- PakarController.exe:8f176ca8ad5d0c71ee2b4094125adf5681b7c630cdb5072101a70192cf138084.
+- PakarController.apk:1070e6c34ae6216ed010ef5da7bbab949c63a6cf5a4be85b248ba3b13860be19.
+- PakarController-esp32s3.bin:75f2b18280fc494d8a251d33bc691244f1669c555f68cde97950095f7eca4aef.
+
+These remain preserved-working-tree candidates, not clean-main/release promotion.
+ASUS SSH8022 refuses connections and ledboard.local is unavailable here; no
+current candidate was flashed/installed on ASUS/phone. Local ADB lists no device.
+The previously deployed94da045 RMT image is not replaced or silently switched to
+another backend. AVR programming and all audible/PBX tests remain held.
+
+Critical remaining gate: SDK5.5.5 RMT DMA is interrupt-refilled ping-pong, not an
+autonomous full-frame transfer. Existing immutable buffer/loop-owner tests do not
+establish refill-deadline safety or optical stability under Wi-Fi. Bulk atomicity
+fixes staggered client requests but is NOT claimed to fix all green flashes.
+Deploy the matched candidates after access returns, then verify USB and direct
+Wi-Fi80-cell batches, clean-white-to-red fades, all480 pixels, mapping and actual
+visible stability. No production/hardware checkbox is closed; issue2 stays open.
+
+### Quick stress/benchmark continuation
+
+Host fixtures pass static/DMA x BGR/RGB (2000 mailbox submissions, timeout/flash
+holds;8.45s wrapper including compilation), plus async HTTP20000 concurrent
+publications accepted200 or explicitly rejected503 (2.955s wrapper). Actual
+renderer10000 full80-cell batches per mode: static10.759ms total/p95 0.900us,
+effects21.076ms/p95 2.100us. Desktop CPU/FastLED doubles, NOT ESP/API/FPS evidence.
+
+Fixed two reproduced issues: an abandoned partial stream repainted unrelated
+committed raw pixels from stale logical targets; Rust manager could confirm
+another same-sized batch. Regression first fails then passes in both renderer
+modes; immutable operation ID+exact selection/state/effect+peer+route now crosses
+HTTP/USB admission/result, rejecting foreign/identical-but-different-ID/retired
+receipts and altered payloads.202 native tests, Release/stage and S3 RMT-DMA SDK
+build pass. Cheap optional free_heap_bytes status avoids sketch hashes/flash holds.
+
+Added bounded hostname-only tools/benchmark-led-api.mjs:8seconds each static/
+effects, two5Hz readers and one5Hz writer on cells1/80, strict boot fencing and
+ACK/count/all80 readback, cancellation/no replay, response bounds/85s deadline.
+Reports HTTP latency/throughput, minimum observed heap, submitted/transmitted/
+revision/error deltas; frozen repeated frames are failure, not FPS. Success
+restores logical targets/pattern/mode, NOT raw-stream pixels or animation phase.
+Real local HTTP tests cover both backend profiles, bad count, changed boot,
+read failure, driver mismatch, stalled transmission and frozen revision. Fixed
+a deadline-edge pacing burst caught by that fixture. Added it to existing CI.
+Read actual PCController http_url.go and dependency network.mjs completely;
+adapted URL bounds/secret-safe diagnostics, rejected dependency retry semantics
+for hardware mutations. Existing ledger/led-benchmark gate reflects exact hashes.
+
+Live ledboard.local run failed preflight after3005ms, zero completed writes and
+zero mutations. SSH8022 refuses; no local8022 listener or S3 USB device exists.
+No physical/API throughput, optical success or deployment claimed. New staged
+firmware15b00358308ca3acd8eea1ebd05db6215c22020b2f7af31460264e3386880fbc;
+native5cb4ad2e3cd1c4433a150c8cba11d655ef7f51dfb5497abdf9c50cc66a3704f9.
+APK/caches/settings/rollbacks preserved; no AVR/audio/PBX contact. RMT refill and
+green-glitch physical acceptance remain OPEN on issue2.
+
+### Standalone Internet and Ethernet continuation
+
+Actual ESP boot already loaded network/cloud settings without PC/USB ownership.
+Fixed STA-only readiness in cloud, NTP, DNS and discovery using NetworkPath;
+ready Ethernet is preferred, station is fallback, AP stays local, and route/IP/
+gateway/DNS changes revoke old cloud sessions. Native W5500 uses isolated HSPI/
+SPI3, not AVR FSPI/SPI2. Build feature defaults off. Separate verified/pending/
+rename Ethernet DHCP/static persistence never overwrites the Wi-Fi profile;
+HTTP /api/network/ethernet and cloud ethernet-config/configure-ethernet expose it.
+Dedicated graphical Ethernet editors and physical discovery remain pending.
+
+CloudConfig imports the actual NetworkConfig no-op/pending/readback/rename
+transaction. Shared typed cloud/network/Ethernet handlers save copied candidates
+before active RAM publication and defer transport changes after receipts. Remote
+commands use bounded board/boot/deadline/replay admission before dispatch, with
+typed top-level normalized JSON closing duplicate/nested-key parser disagreement.
+Status streams in256-byte MQTT writes without enlarging the2048-byte RX buffer.
+Existing cloud sessions carry update progress/cancel without new TLS handshakes
+or full captures during maintenance; boot-image telemetry identity caches once,
+while update integrity checks remain fresh. ESP-only OTA is AVR-independent when
+unlatched; paired backups/Prog/version gates remain. Cached original availability
+topics now get offline on graceful changes; failed writes preserve broker LWT.
+Stable hardware MQTT client IDs and high-uptime/long-offline retry tests added.
+
+Focused actual-source host fixtures pass for ESP8266/ESP32 cloud config, cloud
+services, command admission/typed getters and settings; Ethernet off/on adapter,
+route/discovery and management tests pass, plus independent Ethernet storage
+fault tests. Protocol runners include these checks on Windows/Linux. Two stale
+DNS/TUI source guards were re-reviewed against actual shared route/batch code,
+with negative mutants rather than reduced coverage. Ledger -Check and living
+API guard pass;142 complete hash-bound comparisons,4531 pending are unchanged.
+
+Frozen-source ESP32-S3 SDK3.3.12 buffered/RMT-DMA/16MB/OPI/W5500-enabled build
+passes:1948979 bytes flash,97720 bytes static RAM. Image SHA256:
+9deb77baa18b188e6a10e7514215fe33659b864fe14564d0f66d20bf8343ccee.
+This is a working-tree optional-Ethernet build, not a clean-head production
+release, staged Wi-Fi-only replacement or a deployed board image. Native/mobile
+packages, settings, rollbacks and warm caches were preserved; no unrelated build.
+
+Office broker TLS certificate verification, operator MQTT authentication and
+ledboard status subscription pass. Only three Pakar telemetry/part ACL grants
+were added after exact baseline hash comparison, isolated config parse validation
+and rollback preservation. Broker remains active after HUP. Active ACL SHA256:
+65efddef57a02bb6d5dfb584fcf34a8ea83fb4d948d86de2845098e250bd962f;
+rollback /etc/mosquitto/acl.pakar-standalone-rollback retains2991371e... .
+Temporary validation config was hash-verified then removed; passwords unchanged.
+Mosquitto2.0.22 warns shared passwd/ACL ownership will need future migration;
+no unrelated ownership/service upgrade was performed.
+
+ASUS SSH8022 still refuses. A bounded authenticated Internet read-only status
+request got no fresh or retained board record within12seconds. Broker proof is
+NOT ESP cloud/physical proof. Actual ESP deployment, PC-unplugged commands,
+telemetry, remote settings, Internet stage/apply/reboot/recovery and W5500
+DHCP/static/cable-loss/multicast acceptance remain OPEN on issue2. No AVR/audio/
+PBX action and no hardware success inferred. Pre-existing working-tree changes
+were preserved rather than swept into a blanket commit or release.
+
+### Flutter physical table stagger correction
+
+Kept the display origin at cell1, with11 to the right and half a cell below,
+and added alternating half-cell horizontal row offsets. Display coordinates are
+separate from API IDs and the board's physical LED-chain mapping. The preview
+uses1.5-cell vertical row pitch to prevent diagonally overlapping square touch
+targets. Alternating-versus-cumulative row offset and exact physical row pitch
+remain user-confirmation items; no physical geometry acceptance is claimed.
+Canvas width includes the last staggered column; phone targets stay44px minimum
+and pan rather than being squeezed. RTL does not mirror the physical table.
+
+Consulted ui-shell and exact donor-audit entries, then read actual PCController
+mobile/test/appearance_layout_test.dart, relay_layout_test.dart and
+front_panel_scroll_test.dart completely. Reused the viewport matrix, measured
+widget bounds, DPR/size teardown and isolated fixtures, not the donor's unrelated
+relay/telemetry business. Added a narrow hash-bound appearance-layout comparison
+with concrete remaining appearance/lifecycle cases rather than certifying the
+entire donor. Existing main.dart source references were explicitly rereviewed and
+rebound;143 comparisons are complete,4530 pending and107 have known parity gaps.
+
+Canonical build-mobile wrapper analyze and six focused table layout tests pass.
+All80 bounds, cell1/11 geometry, row offsets, no overlapping hit targets, phone
+scroll/tap selection, independent reverse physical mapping and LTR/RTL phone/
+tablet layouts are checked. The separate real-widget renderer capture passes
+with zero mutations and was visually inspected. No repeated full suite, SDK
+upgrade, clean, duplicate build cache, firmware/native build or board contact.
+
+Reviewed source SHA256 (UTF8-LF):
+- mobile/lib/table_layout.dart:3d4e3a476034e29fe197fe0d8eb704e64d57e3ecc164d0293c6fd7c8eb31cd69.
+- mobile/test/table_layout_test.dart:00e5e159745a24dd53771a7a65a004a25cb0d9185b9ecc42534f3521f40a6647.
+- mobile/lib/main.dart:2b4b39772724d58c38d51bc0e3ebf36e2711ea91ea06d33b1fc966bb128945f3.
+
+Simulated outputs/PakarController/mobile/table-stagger.png SHA256:
+075205e9f984d2cb894a5e75cdbb07069f6da91973b0ed82ef28819c9cc4e408.
+Warm release-mode preview APK build passed in50seconds;55,494,457 bytes, SHA256:
+ba89236aa89dfe1409a19b5e9fc80daddee6d6748a591a43e9db6a946605c749.
+Updated only the owned stable staging/PakarController.apk after donor storage
+gate, exact previous/candidate hashes and verified pending-copy/rename. Existing
+production/rollback APKs, settings and warm caches remain untouched. This is a
+debug-signed working-tree preview, not a clean-head production release.
+
+Fresh ASUS SSH localhost:8022 refuses and local ADB has no device. No APK install
+or phone screenshot was possible; phone/touch/physical-table acceptance and
+issue2 remain open. No AVR, audio, PBX, broker or firmware mutation this pass.
+
+### Unified Flutter directory and shared workspace redesign
+
+Read the actual complete PCController mobile/lib/discovery.dart and
+mobile/lib/devices_page.dart, its complete discovery.go, the complete Pealayer
+PreferencesTab.tsx, current Pakar client/profile/NSD/XML/MNDP implementations and
+affected fixtures. The existing ledger now maps both additional donor files,
+their concrete replaced contracts, exact target/test hashes and remaining live
+acceptance:145 comparisons,4528 pending and107 known parity gaps. This is not
+whole-repository parity. Existing references were rereviewed and rebound; stale
+Android discovery/build-wrapper hashes stopped the gate before compilation and
+were corrected after reviewing the actual affected source.
+
+Discovery no longer keys rows by endpoint+protocol. One directory merges saved
+profiles and compatible observations using board ID, UDN, normalized MAC and
+canonical IP/origin aliases; explicit conflicting identities remain separate.
+Actual ESP DNS-SD instance/hostname correlation preserves a legacy saved .local
+profile's relationship to the resolved IP even if ordinary Android DNS fails.
+Different origins are publicly probed before coalescing so a failed hostname
+does not suppress a working IP. Failed scans retire availability, not remembered
+intent. Saved names survive and saved profiles not reached in the latest scan
+dim while remaining manually selectable. Search, All/Available/Saved filtering,
+compact source/status badges and icon-labelled profile actions share one list.
+
+Adapted the donor's four-worker/deadline/source-pinned public verification to
+Pakar's actual description.xml and capability-bearing status, not host healthz.
+Generic HTTP/router MNDP records are filtered; MNDP must carry the actual Pakar
+model/MAC fields. DNS-SD restricts generic HTTP to the advertised Pakar app ID.
+XML/status probes send no credentials, follow no redirects, cap response size
+and time, and never mutate. XML metadata verifies compatibility, NOT crypto
+identity or hardware presence; fresh hostname/capability/board/boot checks still
+own selected-peer control. Existing authenticated GETs now also refuse redirects.
+
+New profiles save without credentials. Existing profile edits keep, replace or
+clear an optional stored password; no plaintext/default-password fallback.
+Connection first performs a read-only probe, prompts only after401 and verifies
+the submitted login before save/selection. Discovery does not read the vault.
+The selected-profile path no longer incorrectly invokes credential-rotation
+readback on a newly selected open board. Rotation's authenticated readback stays.
+
+Shared app_theme.dart/workspace_widgets.dart now own Studio colors, typography,
+stable input borders, header/actions, grouped sections, menus/dialogs and badges
+across Devices, connection preferences, device settings, firmware and bridge.
+Bridge Session/MQTT/WebSocket/Routing navigation retains controller drafts.
+The screenshot harness imports the actual application theme. The requested
+permanent plain-HTTP warning was removed from embedded WebUi.h; server access
+protections are unchanged. The embedded Web change is SOURCE ONLY, not deployed.
+
+Focused canonical-wrapper verification passes:7 device/registry/widget cases,
+5 real HTTP/XML/DNS-SD cases,3 credential-storage cases,7 existing bridge/discovery
+cases and7 existing network/batch cases. Two renderer captures pass with zero
+device mutations and were visually inspected. Initial narrow badge overflow,
+optional-profile alias normalization and progress animation behind sign-in were
+fixed rather than hiding failures. The existing batch fixture now settles the
+focused field's bring-into-view work before measuring/tapping; no missed-tap
+warning or assertion was suppressed. Analyzer and ledger -Check pass. Unrelated
+formatter-only changes to generated assets/settings were exactly reversed;
+canonical generator checks pass, no donor source was edited and no full suite
+or CI wait was introduced.
+
+Actual simulated captures under outputs/PakarController/mobile:
+- devices-phone.png SHA256:37d3de6e23f1fc5bd6eaea30a0b1f1c5d4f9748fcab60243aa0922110507a863.
+- bridge-workspace.png SHA256:5e7e2c060aea581116af4a75bc3f471955875bbc4081fda803d233c34da34bcd.
+
+Final warm release-mode APK build passed in40seconds after the additional
+DNS-SD alias regression. Preview55,723,909 bytes, SHA256:
+d624597060b2fb5094c454eea702da84b38dadfb68188c577de72ccf2815833d.
+Checksum-promoted once to the owned stable staging/PakarController.apk using
+the donor storage gate and verified pending-copy/rename, replacing only the old
+staging candidate. No extra archived APK, cache clean, SDK install or unrelated
+firmware/native build. Existing production/rollback/settings remain untouched.
+Base2dc319fb8add1516a0f2caa4306bee1bcb1284ab plus preserved working-tree edits;
+debug-signed preview, not a clean-head commit or production-release claim.
+
+Fresh ASUS SSH8022 refuses and local ADB lists no phone. No APK install, actual
+Android/LAN multicast/credential test or Web firmware deployment is claimed.
+Phone/human, live board discovery and complete application/donor acceptance stay
+open in issue2. No AVR, board, broker, audio or PBX action this pass.
+
+## Integrated S3/AVR and application handoff checkpoint
+
+ASUS identity was freshly established through its already-trusted hostname key;
+the stale forwarded-port key was not accepted or deleted. Both Rust candidates
+are running from verified staging/deploy paths, not overwritten primary binaries.
+Release SHA256 is14110a245082ba48bdb66477dd69dfc3b700967d22109d1d314c748892cd879b.
+The local candidate acknowledges the actual board over its ASUS SSH HTTP forward,
+with live WebSocket, contextual title, all80 mappings and actual RGB snapshots.
+Settings, previous executables, recovery images and warm release cache survive.
+
+Flutter's columns are now exactly1/21/41/61,11/31/51/71,2/22/42/62,...,
+with no horizontal row offset. Neighboring columns keep their half-cell vertical
+stagger. All134 Flutter tests/analyzer pass, including all80 positions and actual
+phone/tablet LTR/RTL bounds. APK SHA256
+fee48458e08ce49bd786fe0651266b8f08636eca318dbefb3748990d9f20264b
+was installed and launched on the authorized ASUS-connected phone. Its captured
+runtime was disconnected, not visual table acceptance. The separately inspected
+aligned-table renderer capture is explicitly simulated. Disconnect also stops
+hidden board-preferences polling. All214 Rust tests and source quality pass.
+
+Integrated RMT S3 imagebc73583039b79113d32500dd46bc5577c6f5ec54041ccefdbba1d491c84bec36
+was uploaded over LAN in20.95seconds, rebooted, and matched a complete downloaded
+SHA256; selected/running OTA slot is VALID, auth is disabled and same-peer HTTP/WS
+pass. No USB, filesystem format or fuse write was used. The initial private .NET
+helper accidentally typed the MD5 form field as a file; installed SDK3.12.1
+WebRequest.cpp::_parseMultipartPostByte confirmed that Content-Type marks a file.
+After read-only rejection/unchanged-boot inspection, the corrected plain-field
+wire format from tools/update-firmware.mjs/PU850 AsyncOTA.cpp succeeded. Existing
+firmware backup was verified and preserved, not overwritten or retried blindly.
+
+AVR full image4f3f00454ec913551c88da4746ea11955087835c9619e6331406c67f15034fb1
+was programmed through the integrated ISP path in43.98seconds with byte-verify,
+durable Prog/UART admission/release and EEPROM preservation. Original recovery
+and fresh pre-erase flash/EEPROM/metadata were exported privately. Hardware UART
+returned online, settings read back unchanged and Silent remains enabled.
+Post-update watchdog reset reason is recorded, not evidence of a continuing loop.
+
+User optical feedback still reports cross-cell spill and incomplete cell80.
+The steady cell80 test snapshot contains exactly physical pixels1..6 white;
+English PBX DTMF3 reported missing pixels without spill. Manual individual pixel1
+and pixel2 frames sent through the actual Rust app matched exact RGB readback,
+but operator DTMF3 reported each dark. This does not establish a wiring or driver
+root cause. Non-DMA comparison and physical acceptance remain open, as do the
+display, power/clock, network recovery and all outstanding donor/production gates.
+PBX coordination is now keep-open, with a separate scoped Jitsi coordinator;
+queued audio, bot presence and screenshots are not bidirectional audio proof.
+
+PR18's complete dependency diff/conversations were reviewed and normally merged
+as71d8f0f5153718fa4f6593ff95ca47b3a9574073; no open PR remained at recheck.
+Its exact-head CI does not certify this integrated tree. Current native CLI
+fixtures exposed stale contract mapping hashes/one line anchor: reread actual
+UartProtocol.h, EepromLayout.h and AddressableLeds.h/.cpp and current adapters;
+rebound only the four changed consumer references. Donor revisions/source hashes
+remain unchanged; no unread donor row or hardware checkbox was promoted.

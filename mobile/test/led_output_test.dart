@@ -14,6 +14,26 @@ DeviceStatus observedOutput(Object? output, {bool leds = true}) =>
     });
 
 void main() {
+  test('Output mode is optional, exact and never inferred from enabled', () {
+    for (final value in [
+      null,
+      {},
+      {'enabled': true},
+      {'mode': 1},
+      {'mode': 'future'},
+    ]) {
+      expect(observedOutput(value).ledOutputMode, isNull);
+    }
+    for (final mode in ['static', 'effects']) {
+      expect(observedOutput({'mode': mode}).ledOutputMode, mode);
+      expect(observedOutput({'mode': mode}, leds: false).ledOutputMode, isNull);
+      expect(
+        observedOutput({'mode': mode}).peer
+            .allows('/api/led/output', {'mode': mode}),
+        true,
+      );
+    }
+  });
   test('Output is optional, boolean-only and requires explicit LED ACK', () {
     expect(peerFixture().ledOutputEnabled, isNull);
     for (final output in [
@@ -128,6 +148,66 @@ void main() {
     expect(writes.last.$1, '/api/led/output');
     expect(writes.last.$2, {'enabled': 'true'});
     expect(tester.widget<SwitchListTile>(toggle).value, false);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Mode uses readback; rainbow keeps mode and output unchanged', (
+    tester,
+  ) async {
+    final ack = Completer<void>();
+    final writes = <(String, Map<String, String>)>[];
+    Future<void> render(String mode) => tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TablePage(
+            status: observedOutput({'enabled': false, 'mode': mode}),
+            mapping: CellMap.defaults(),
+            command: (path, [values = const {}]) async {
+              writes.add((path, Map.of(values)));
+              await ack.future;
+            },
+          ),
+        ),
+      ),
+    );
+    ChoiceChip chip(String label) =>
+        tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label));
+    await render('static');
+    final effects = find.widgetWithText(ChoiceChip, 'Effects');
+    await tester.ensureVisible(effects);
+    await tester.tap(effects);
+    await tester.pump();
+    expect(writes.length, 1);
+    expect(writes.single.$1, '/api/led/output');
+    expect(writes.single.$2, {'mode': 'effects'});
+    expect(chip('Static').selected, true);
+    expect(chip('Effects').selected, false);
+    expect(chip('Effects').onSelected, isNull);
+    ack.complete();
+    await tester.pump();
+    expect(chip('Static').selected, true);
+    await render('effects');
+    expect(chip('Effects').selected, true);
+    await render('static');
+    final rainbow = find.widgetWithText(OutlinedButton, 'Rainbow test');
+    await tester.ensureVisible(rainbow);
+    await tester.tap(rainbow);
+    await tester.pump();
+    expect(writes.length, 2);
+    expect(writes.last.$1, '/api/effect');
+    expect(writes.last.$2, {'value': 'rainbow'});
+    expect(chip('Static').selected, true);
+    // Rainbow is below the switch; scroll back before inspecting the lazily
+    // recycled ListView child rather than assuming every control stays mounted.
+    await tester.scrollUntilVisible(
+      find.byType(SwitchListTile),
+      -150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+      false,
+    );
     expect(tester.takeException(), isNull);
   });
 }

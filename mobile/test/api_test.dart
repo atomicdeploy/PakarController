@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:pakarcontroller/api.dart';
+import 'package:pakarcontroller/lan_resolver.dart';
 
 void main() {
   test('Changed endpoint discards an in-flight status and never dispatches its queued POST', () async {
@@ -101,7 +102,7 @@ void main() {
       baseUrl: 'http://renamed.local',
       client: MockClient((request) async {
         if (request.url.host.endsWith('.local')) {
-          throw const SocketException('no mDNS');
+          throw HostLookupFailure(request.url.host);
         }
         return http.Response(
           jsonEncode({

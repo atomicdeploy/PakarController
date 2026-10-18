@@ -331,6 +331,9 @@ pub struct Editor {
     pub search: String,
     pub network: Option<Draft<Network>>,
     pub cloud: Option<Draft<Cloud>>,
+    pub avr: Option<Draft<crate::board_silent::Parameters>>,
+    pub avr_owner: Option<(crate::peer_http::Pin, crate::Transport)>,
+    pub avr_pending: Option<u64>,
     pub wifi_password: String,
     pub open_network: bool,
     pub mqtt_password: SecretEdit,
@@ -368,6 +371,7 @@ impl Editor {
     }
     pub fn dirty(&self) -> bool {
         self.usb_request.is_some()
+            || self.avr.as_ref().is_some_and(Draft::dirty)
             || self.network.as_ref().is_some_and(Draft::dirty)
             || self.cloud.as_ref().is_some_and(Draft::dirty)
             || !self.wifi_password.is_empty()
@@ -384,6 +388,7 @@ impl Editor {
     }
     pub fn discard(&mut self) {
         self.usb_request = None;
+        if let Some(d) = &mut self.avr { d.discard(); }
         if let Some(d) = &mut self.network {
             d.discard();
         }
@@ -404,6 +409,26 @@ impl Editor {
             serial,
             ..Self::default()
         };
+    }
+    pub fn finish_avr(&mut self, id: u64, peer: Option<&crate::peer_http::Pin>,
+        route: Option<crate::Transport>, result: &Result<crate::pc_contract::Settings, String>) {
+        if self.avr_pending != Some(id) { return; }
+        self.avr_pending=None;
+        if self.avr_owner.as_ref().is_none_or(|(p,r)| Some(p)!=peer || Some(*r)!=route) {
+            self.avr=None; self.avr_owner=None;
+            self.message="Board changed; settings result was not applied to this editor.".into();
+            return;
+        }
+        match result {
+            Ok(settings) => {
+                self.avr=Some(Draft::new(crate::board_silent::Parameters::from_settings(settings)));
+                self.message="AVR settings verified · saved in EEPROM".into();
+            }
+            Err(error) => {
+                if let Some(d)=&mut self.avr { d.conflict=true; }
+                self.message=error.clone();
+            }
+        }
     }
     pub fn observe(&mut self, path: &str, value: serde_json::Value) -> Result<(), String> {
         if path == "/api/firmware/remote" {
@@ -512,6 +537,30 @@ pub fn usb_payloads(config: &Network, password: &str, open: bool) -> Result<Vec<
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn avr_editor_owns_dirty_draft_pending_receipt_and_same_peer_readback() {
+        let peer=|boot:char| crate::peer_http::Pin::from_status(&crate::DeviceStatus {
+            board_id:"esp32s3-settings-fixture".into(), boot_id:boot.to_string().repeat(32),
+            http_peer_fencing:true, ..Default::default()
+        }).unwrap();
+        let a=peer('a'); let b=peer('b');
+        let mut bytes=vec![0x50,2,5,0,0,0,2,0,63,0x10,0x32,0x54,0];
+        bytes.extend_from_slice(&[0;8]); bytes.push(1);
+        let settings=crate::pc_contract::Settings::parse(&crate::pc_contract::encode_hex(&bytes)).unwrap();
+        let mut e=Editor { avr:Some(Draft::new(crate::board_silent::Parameters::from_settings(&settings))),
+            avr_owner:Some((a.clone(),crate::Transport::Serial)), ..Default::default() };
+        assert!(!e.dirty());
+        e.avr.as_mut().unwrap().value.threshold=700; assert!(e.dirty());
+        e.avr_pending=Some(3);
+        e.finish_avr(2,Some(&a),Some(crate::Transport::Serial),&Ok(settings.clone()));
+        assert!(e.dirty()); assert_eq!(e.avr_pending,Some(3));
+        e.finish_avr(3,Some(&a),Some(crate::Transport::Serial),&Err("ACK lost".into()));
+        assert!(e.dirty() && e.avr.as_ref().unwrap().conflict); assert!(e.avr_pending.is_none());
+        e.discard(); assert!(!e.dirty());
+        e.avr_pending=Some(4);
+        e.finish_avr(4,Some(&b),Some(crate::Transport::Serial),&Ok(settings));
+        assert!(e.avr.is_none() && e.avr_owner.is_none());
+    }
     fn network() -> Network {
         Network {
             station_enabled: true,

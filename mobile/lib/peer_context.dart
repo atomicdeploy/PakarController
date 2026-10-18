@@ -63,6 +63,7 @@ class PeerContext {
     if (!table) features.remove('table');
     // The measured TM1637 bus ACK is independent from AVR connectivity/text.
     if (status['tm1637_ack'] != true) features.remove('display');
+    if (!lcdObservationReady(status)) features.remove('lcd');
     final rawModes = value['modes'];
     final modes = <PeerMode>[];
     if (table && rawModes is List) {
@@ -71,7 +72,6 @@ class PeerContext {
         final id = mode['id'], code = mode['code'], kind = mode['kind'];
         final valid =
             (id == 'cell' && code == 1 && kind == 'presentation') ||
-            (id == 'snake' && code == 3 && kind == 'presentation') ||
             (id == 'first-wins' &&
                 code == 2 &&
                 kind == 'game' &&
@@ -98,7 +98,8 @@ class PeerContext {
   }
 
   bool has(String feature) => known && features.contains(feature);
-  bool get frontPanel => has('display') || has('text') || has('buzzer');
+  bool get frontPanel =>
+      has('display') || has('text') || has('buzzer') || has('lcd');
   bool allows(String path, Map<String, String> values) {
     if (!known) return false;
     return switch (path) {
@@ -106,6 +107,7 @@ class PeerContext {
       '/api/cells/mapping' ||
       '/api/game/reset' ||
       '/api/snake/direction' => table,
+      '/api/cells' => table && has('cell-batch'),
       '/api/mode' => modes.any((mode) => mode.id == values['value']),
       '/api/display' => has(values.containsKey('text') ? 'text' : 'display'),
       '/api/audio' || '/api/buzzer' => has('buzzer'),
@@ -128,6 +130,7 @@ const knownFeatures = {
   'leds',
   'streaming',
   'table',
+  'cell-batch',
   'display',
   'text',
   'buzzer',
@@ -137,7 +140,33 @@ const knownFeatures = {
   'isp',
   'ota',
   'identity',
+  'lcd',
 };
+bool lcdObservationReady(Map<String, dynamic> status) {
+  final lcd = status['lcd'];
+  if (lcd is! Map ||
+      lcd['configured'] != true ||
+      lcd['started'] != true ||
+      lcd['detection_known'] != true ||
+      lcd['backpack_ack'] != true ||
+      lcd['initialized'] != true ||
+      lcd['available'] != true ||
+      lcd['columns'] != 16 ||
+      lcd['rows'] != 2 ||
+      !const [0x27, 0x3f].contains(lcd['address'])) {
+    return false;
+  }
+  final lines = lcd['lines'];
+  return lines is List &&
+      lines.length == 2 &&
+      lines.every(
+        (line) =>
+            line is String &&
+            line.length == 16 &&
+            line.codeUnits.every((code) => code >= 0x20 && code <= 0x7e),
+      );
+}
+
 bool validHostname(String value) =>
     value.length <= 63 &&
     !{'local', 'localhost'}.contains(value) &&

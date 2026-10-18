@@ -30,7 +30,11 @@ class AvrIsp {
   bool backup(fs::FS &filesystem, const char *directory);
   // Recovery EEPROM must be a durable snapshot taken AFTER Prog is armed.
   // Refuse erase unless every byte matches the still-running target.
-  bool programFlash(File &image, File &recoveryEeprom);
+  // UART-dead recovery additionally pins the original full flash and creates a
+  // distinct read/write armed EEPROM file; the original backup stays unchanged.
+  // Both optional pointers must be present together. No fuse writes are made.
+  bool programFlash(File &image, File &recoveryEeprom,
+                    File *expectedFlash = nullptr, File *armedEeprom = nullptr);
   const String &lastError() const { return error_; }
 
  private:

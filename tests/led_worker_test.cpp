@@ -8,6 +8,10 @@
 #include <cstdlib>
 #include <thread>
 #include <vector>
+#if !PAKAR_S3_LED_USE_DMA
+#include <driver/gpio.h>
+#include <soc/gpio_reg.h>
+#endif
 
 namespace Fixture {
 using Clock=std::chrono::steady_clock;
@@ -23,6 +27,9 @@ const void* buffer=nullptr;
 std::vector<uint8_t> snapshot;
 std::vector<std::vector<uint8_t>> frames;
 std::vector<void*> allocations;
+uint32_t cycle=0xfffffff0U,highAt=0,lastRise=0;
+unsigned bitCount=0;
+std::vector<uint8_t> staticBytes;
 template<class Predicate>void until(Predicate predicate){
  const auto deadline=Clock::now()+std::chrono::seconds(2);
  while(!predicate()){assert(Clock::now()<deadline);std::this_thread::sleep_for(std::chrono::milliseconds(1));}
@@ -82,11 +89,64 @@ int rmt_disable(rmt_channel_handle_t){
  Fixture::live=false;return ESP_OK;
 }
 
+#if !PAKAR_S3_LED_USE_DMA
+int gpio_reset_pin(gpio_num_t pin){assert(pin==4);return ESP_OK;}
+int gpio_set_direction(gpio_num_t pin,int mode){assert(pin==4&&mode==GPIO_MODE_OUTPUT);return ESP_OK;}
+int gpio_set_level(gpio_num_t pin,int value){assert(pin==4&&value==0);return ESP_OK;}
+void fixtureCriticalEnter(){
+ std::unique_lock<std::mutex> lock(Fixture::mutex);assert(!Fixture::live);Fixture::live=true;
+ if(Fixture::block){Fixture::blockedGeneration=Fixture::blockGeneration;Fixture::changed.notify_all();}
+ Fixture::changed.wait_for(lock,std::chrono::milliseconds(500),[]{return !Fixture::block||Fixture::stopping.load();});
+ assert(!Fixture::block||Fixture::stopping);if(Fixture::stopping)throw Fixture::Stop{};
+ Fixture::bitCount=0;Fixture::staticBytes.assign(1440,0);
+}
+void fixtureGpioWrite(unsigned address,unsigned value){
+ assert(value==(1U<<4));
+ if(address==GPIO_OUT_W1TS_REG){
+  if(Fixture::bitCount)assert(static_cast<uint32_t>(Fixture::cycle-Fixture::lastRise)>=300U);
+  Fixture::lastRise=Fixture::highAt=Fixture::cycle;
+ }else{
+  assert(address==GPIO_OUT_W1TC_REG);
+  const uint32_t high=Fixture::cycle-Fixture::highAt;assert(high==60U||high==144U);
+  if(high==144U)Fixture::staticBytes.at(Fixture::bitCount/8)|=static_cast<uint8_t>(0x80U>>(Fixture::bitCount%8));
+  ++Fixture::bitCount;
+ }
+}
+void fixtureCriticalExit(){
+ std::lock_guard<std::mutex> lock(Fixture::mutex);assert(Fixture::bitCount==480*24);
+ Fixture::frames.push_back(Fixture::staticBytes);Fixture::live=false;Fixture::changed.notify_all();
+}
+void esp_rom_delay_us(unsigned micros){assert(micros==300);std::this_thread::sleep_for(std::chrono::milliseconds(1));}
+void staticFunctional(){
+ PakarS3::LedOutput output;assert(output.begin());Fixture::until([&]{return Fixture::count()==1;});
+ {std::lock_guard<std::mutex> lock(Fixture::mutex);for(auto b:Fixture::frames.front())assert(b==0);}
+ CRGB rgb[480];for(auto& p:rgb)p={255,0,0};Fixture::setBlock(true);output.submit(rgb,255,true,1);Fixture::waitBlocked();
+ for(uint32_t i=2;i<=2000;++i){for(auto& p:rgb)p={static_cast<uint8_t>(i),0,0};output.submit(rgb,255,true,i);}
+ assert(!output.canAccept());std::atomic<bool> acquired{false};
+ std::thread flash([&]{assert(PakarS3::LedOutput::acquireFlashPause());acquired=true;});
+ std::this_thread::sleep_for(std::chrono::milliseconds(15));assert(!acquired);Fixture::setBlock(false);flash.join();
+ assert(acquired&&!Fixture::isLive());const auto paused=Fixture::count();
+ assert(PakarS3::LedOutput::acquireFlashPause());PakarS3::LedOutput::releaseFlashPause();
+ std::this_thread::sleep_for(std::chrono::milliseconds(15));assert(Fixture::count()==paused);
+ PakarS3::LedOutput::releaseFlashPause();Fixture::until([&]{return Fixture::field(output,"revision")==2000;});
+ const auto stable=Fixture::count();std::this_thread::sleep_for(std::chrono::milliseconds(30));assert(Fixture::count()==stable);
+ {std::lock_guard<std::mutex> lock(Fixture::mutex);for(size_t p=0;p<480;++p){const auto& f=Fixture::frames.back();
+   for(size_t c=0;c<3;++c)assert(f[p*3+c]==(c==(PAKAR_S3_LED_SWAP_RED_BLUE?2U:0U)?static_cast<uint8_t>(2000):0));}}
+ Fixture::setBlock(true);output.submit(rgb,255,true,2001);Fixture::waitBlocked();
+ assert(!PakarS3::LedOutput::acquireFlashPause());Fixture::setBlock(false);Fixture::until([&]{return Fixture::field(output,"revision")==2001;});
+ output.submit(rgb,255,false,2002);Fixture::until([&]{return Fixture::field(output,"revision")==2002;});
+ const auto off=Fixture::count();std::this_thread::sleep_for(std::chrono::milliseconds(30));assert(Fixture::count()==off);
+ {std::lock_guard<std::mutex> lock(Fixture::mutex);for(auto b:Fixture::frames.back())assert(b==0);}
+ Fixture::cleanup();puts("Actual static worker: startup black, full480 RGB encoding/cycle-wrap timing,2000 mailbox coalescing, no unchanged refresh, Off black, frame-boundary/nested holds and timeout rejection passed.");
+}
+#endif
+
 void functional(){
  PakarS3::LedOutput output;assert(output.begin());CRGB rgb[480];for(auto& p:rgb)p={255,0,0};
+ Fixture::until([&]{return Fixture::count()==1;});
  Fixture::setBlock(true);output.submit(rgb,255,true,1);Fixture::waitBlocked();
  std::thread producer([&]{for(uint32_t i=2;i<=2000;++i){for(auto& p:rgb)p={static_cast<uint8_t>(i),0,0};output.submit(rgb,255,true,i);} });producer.join();
- assert(Fixture::count()==1);assert(!output.canAccept());
+ assert(Fixture::count()==2);assert(!output.canAccept());
  std::atomic<bool> acquired{false};std::thread waiter([&]{assert(PakarS3::LedOutput::acquireFlashPause());acquired=true;});
  std::this_thread::sleep_for(std::chrono::milliseconds(15));assert(!acquired);
  Fixture::setBlock(false);waiter.join();assert(acquired&&!Fixture::isLive());
@@ -94,8 +154,9 @@ void functional(){
  std::thread nested([]{assert(PakarS3::LedOutput::acquireFlashPause());PakarS3::LedOutput::releaseFlashPause();});nested.join();
  PakarS3::LedOutput::releaseFlashPause();std::this_thread::sleep_for(std::chrono::milliseconds(15));assert(Fixture::count()==held);
  PakarS3::LedOutput::releaseFlashPause();Fixture::until([&]{return Fixture::field(output,"revision")==2000;});
- Fixture::until([&]{return Fixture::count()>=held+4;});assert(Fixture::field(output,"submitted")==2000);
- {std::lock_guard<std::mutex> lock(Fixture::mutex);const auto& bytes=Fixture::frames.at(1);
+ const auto steady=Fixture::count();std::this_thread::sleep_for(std::chrono::milliseconds(30));
+ assert(Fixture::count()==steady);assert(Fixture::field(output,"submitted")==2000);
+ {std::lock_guard<std::mutex> lock(Fixture::mutex);const auto& bytes=Fixture::frames.back();
   for(size_t pixel=0;pixel<480;++pixel)for(size_t bit=0;bit<24;++bit){
    rmt_symbol_word_t symbol;std::memcpy(&symbol,bytes.data()+(pixel*24+bit)*sizeof(symbol),sizeof(symbol));
    constexpr size_t redByte=PAKAR_S3_LED_SWAP_RED_BLUE?16:0;
@@ -106,13 +167,15 @@ void functional(){
  // Deliberately violate the SDK100ms wait deadline to model an unresponsive
  // driver. Wait for THIS barrier generation, not a prior TX's completion tail:
  // a normal100ms timeout/stop can correctly quiesce before the150ms guard.
- Fixture::setBlock(true);Fixture::waitBlocked();assert(!PakarS3::LedOutput::acquireFlashPause());Fixture::setBlock(false);
- const auto before=Fixture::count();Fixture::until([&]{return Fixture::count()>before+2;});
- output.submit(rgb,255,false,2001);Fixture::until([&]{return Fixture::field(output,"revision")==2001;});
+ Fixture::setBlock(true);output.submit(rgb,255,true,2001);Fixture::waitBlocked();
+ assert(!PakarS3::LedOutput::acquireFlashPause());Fixture::setBlock(false);
+ Fixture::until([&]{return Fixture::field(output,"revision")==2001;});
+ output.submit(rgb,255,false,2002);Fixture::until([&]{return Fixture::field(output,"revision")==2002;});
  const auto off=Fixture::count();std::this_thread::sleep_for(std::chrono::milliseconds(35));assert(Fixture::count()==off);
  {std::lock_guard<std::mutex> lock(Fixture::mutex);const auto& bytes=Fixture::frames.back();for(size_t i=0;i<480*24;++i){rmt_symbol_word_t symbol;std::memcpy(&symbol,bytes.data()+i*sizeof(symbol),sizeof(symbol));assert(symbol.duration0==PakarS3::zeroHigh&&symbol.duration1==PakarS3::zeroLow);}}
- output.submit(rgb,255,true,2002);Fixture::until([&]{return Fixture::field(output,"revision")==2002;});Fixture::until([&]{return Fixture::count()>=off+3;});
- Fixture::cleanup();puts("Actual worker: immutable TX,2000 mailbox submissions/coalescing,continuous refresh,off black/sleep/on resume,boundary/nested/concurrent holds and failed-quiesce recovery passed.");
+ output.submit(rgb,255,true,2003);Fixture::until([&]{return Fixture::field(output,"revision")==2003;});
+ const auto resumed=Fixture::count();std::this_thread::sleep_for(std::chrono::milliseconds(30));assert(Fixture::count()==resumed&&resumed==off+1);
+ Fixture::cleanup();puts("Actual DMA worker: startup black, immutable TX,2000 mailbox submissions/coalescing,no unchanged replay,off black/sleep/on resume,boundary/nested/concurrent holds and failed-quiesce recovery passed.");
 }
 void failure(bool disableFails){
  PakarS3::LedOutput output;Fixture::timeout=true;Fixture::disableFails=disableFails;Fixture::blockDisable=true;CRGB rgb[480]{};assert(output.begin());output.submit(rgb,255,true,1);
@@ -128,6 +191,12 @@ void failure(bool disableFails){
 }
 int main(int argc,char** argv){
  assert(argc==2);std::thread watchdog([]{const auto end=Fixture::Clock::now()+std::chrono::seconds(8);while(!Fixture::finished){if(Fixture::Clock::now()>end)std::_Exit(2);std::this_thread::sleep_for(std::chrono::milliseconds(10));}});
- const std::string mode=argv[1];if(mode=="functional")functional();else if(mode=="timeout")failure(false);else{assert(mode=="stop-failure");failure(true);}watchdog.join();
+ const std::string mode=argv[1];
+#if !PAKAR_S3_LED_USE_DMA
+ assert(mode=="static");staticFunctional();
+#else
+ if(mode=="functional")functional();else if(mode=="timeout")failure(false);else{assert(mode=="stop-failure");failure(true);}
+#endif
+ watchdog.join();
  puts("Host SDK doubles only: not physical RMT/DMA,RF,OTA or optical acceptance.");
 }

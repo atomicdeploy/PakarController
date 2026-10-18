@@ -233,11 +233,26 @@ bool NetworkConfigStore::configure(const char *hostname,
   WiFi.softAPdisconnect(true);
   delay(10);
   const bool apEnabled = accessPointEnabled();
-  WiFi.mode(apEnabled ? (stationEnabled() ? WIFI_AP_STA : WIFI_AP) : WIFI_STA);
 #if defined(ESP32)
-  WiFi.setHostname(hostname);
+  // ASA0002E WiFi_Setup applies its persisted identity BEFORE enabling Wi-Fi.
+  // Arduino-ESP32 mode() copies Network's default into the new STA netif.
+  if (!WiFi.setHostname(hostname)) { error_ = F("Cannot set network hostname"); return false; }
+#endif
+  if (!WiFi.mode(apEnabled ? (stationEnabled() ? WIFI_AP_STA : WIFI_AP) : WIFI_STA)) {
+    error_ = F("Cannot start requested Wi-Fi mode"); return false;
+  }
+#if defined(ESP32)
+  // Network's global buffer is only 32 bytes in SDK 3.3.12. Apply the full
+  // validated DNS label to each netif before addressing/association as well.
+  if ((stationEnabled() && (!WiFi.STA.setHostname(hostname) ||
+          !WiFi.STA.getHostname() || strcmp(WiFi.STA.getHostname(), hostname) != 0)) ||
+      (apEnabled && (!WiFi.softAPsetHostname(hostname) ||
+          !WiFi.softAPgetHostname() || strcmp(WiFi.softAPgetHostname(), hostname) != 0))) {
+    WiFi.mode(WIFI_OFF);
+    error_ = F("Wi-Fi hostname was not applied; interfaces stopped"); return false;
+  }
 #else
-  WiFi.hostname(hostname);
+  if (!WiFi.hostname(hostname)) { error_ = F("Cannot set station hostname"); return false; }
 #endif
   bool ap = false;
   if (apEnabled) ap = WiFi.softAP(hostname, apPassword);

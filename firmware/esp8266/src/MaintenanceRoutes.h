@@ -3,6 +3,21 @@
 // PU850 route adaptation owns no duplicate UART/peripheral implementation.
 ClientTelemetry clientTelemetry;
 bool bootIntegrity=false;
+// Running-image identity is immutable until reboot. Capture once before cloud
+// servicing, not a whole-image verification/LED flash hold on every telemetry
+// interval. Update admission still performs its independent fresh checks.
+struct BootTelemetryImage {
+  uint32_t size=0,flashHz=0,capturedAt=0;
+  int flashMode=0;
+  String md5;
+} bootTelemetryImage;
+void captureBootTelemetryImage() {
+  bootTelemetryImage.size=FirmwarePlatform::sketchSize();
+  bootTelemetryImage.md5=FirmwarePlatform::sketchMd5();
+  bootTelemetryImage.flashHz=FirmwarePlatform::flashChipSpeed();
+  bootTelemetryImage.flashMode=static_cast<int>(FirmwarePlatform::flashChipMode());
+  bootTelemetryImage.capturedAt=millis();
+}
 String displayLocale="en";
 String avrVersionText() {
   return String(avrVersion[0])+'.'+String(avrVersion[1])+'.'+String(avrVersion[2]);
@@ -25,6 +40,35 @@ String clockJson() {
 String networkTelemetry() {
   JsonDocument d;
   const bool connected=networkConfig.stationConnected();
+  // Route readiness is local IPv4 availability, never verified Internet access.
+  d[F("uplink")][F("interface")]=NetworkPath::interfaceName();
+  d[F("uplink")][F("ipv4_ready")]=NetworkPath::ready();
+#if defined(ARDUINO_ARCH_ESP32)
+  const auto &ethernet=NetworkPath::ethernet();
+  const bool ethernetStarted=ethernet.started();
+  d[F("ethernet")][F("configured")]=ethernet.configured();
+  d[F("ethernet")][F("started")]=ethernetStarted;
+  d[F("ethernet")][F("link_up")]=ethernet.linkUp();
+  d[F("ethernet")][F("ipv4_ready")]=ethernet.connected();
+  if(ethernetStarted) {
+    d[F("ethernet")][F("ip")]=ethernet.localIP().toString();
+    d[F("ethernet")][F("mac")]=ethernet.macAddress();
+    d[F("ethernet")][F("gateway")]=ethernet.gatewayIP().toString();
+    d[F("ethernet")][F("netmask")]=ethernet.subnetMask().toString();
+    d[F("ethernet")][F("dns0")]=ethernet.dnsIP(0).toString();
+    d[F("ethernet")][F("dns1")]=ethernet.dnsIP(1).toString();
+  } else {
+    for(const char *field:{"ip","mac","gateway","netmask","dns0","dns1"})
+      d[F("ethernet")][field]=nullptr;
+  }
+  d[F("ethernet")][F("last_error")]=ethernet.lastError();
+#else
+  for(const char *field:{"configured","started","link_up","ipv4_ready"})
+    d[F("ethernet")][field]=false;
+  for(const char *field:{"ip","mac","gateway","netmask","dns0","dns1"})
+    d[F("ethernet")][field]=nullptr;
+  d[F("ethernet")][F("last_error")]=F("");
+#endif
   d[F("mode")]=static_cast<int>(WiFi.getMode());
   d[F("station")][F("configured")]=networkConfig.stationEnabled();
   d[F("station")][F("configured_ssid")]=networkConfig.stationSsid();
@@ -55,7 +99,8 @@ String buildTelemetryJson() {
   JsonDocument d;
   const uint32_t now=millis();
   d[F("type")]=F("telemetry");d[F("product")]=F("PakarController");
-  d[F("hostname")]=hostname;d[F("fqdn")]=hostname+".local";d[F("boot_id")]=pcBootId;
+  d[F("hostname")]=hostname;d[F("fqdn")]=hostname+".local";
+  d[F("board_id")]=pcBoardId;d[F("boot_id")]=pcBootId;
   d[F("display_name")]=deviceIdentity.displayName();
   auto application=d[F("application")].to<JsonObject>();
   application[F("id")]=APP_ID;application[F("name")]=APP_NAME;application[F("title")]=APP_TITLE;
@@ -90,9 +135,13 @@ String buildTelemetryJson() {
   FSInfo fs;if(LittleFS.info(fs)) {e[F("filesystem")][F("total_bytes")]=fs.totalBytes;e[F("filesystem")][F("used_bytes")]=fs.usedBytes;}
 #endif
   e[F("cpu_mhz")]=ESP.getCpuFreqMHz();e[F("flash_bytes")]=ESP.getFlashChipSize();
-  e[F("flash_hz")]=ESP.getFlashChipSpeed();
-  e[F("flash_mode")]=static_cast<int>(FirmwarePlatform::flashChipMode());
-  e[F("sketch_bytes")]=FirmwarePlatform::sketchSize();e[F("sketch_md5")]=FirmwarePlatform::sketchMd5();
+  e[F("flash_hz")]=bootTelemetryImage.flashHz;
+  e[F("flash_mode")]=bootTelemetryImage.flashMode;
+  e[F("sketch_bytes")]=bootTelemetryImage.size;
+  if(bootTelemetryImage.md5.length())e[F("sketch_md5")]=bootTelemetryImage.md5;
+  else e[F("sketch_md5")]=nullptr;
+  e[F("image_identity_scope")]=F("running_boot_image");
+  e[F("image_identity_captured_uptime_ms")]=bootTelemetryImage.capturedAt;
   e[F("boot_integrity_verified")]=bootIntegrity;e[F("ota_free_bytes")]=ESP.getFreeSketchSpace();
   e[F("free_heap_bytes")]=ESP.getFreeHeap();e[F("uptime_ms")]=now;
   e[F("uart_errors")]=link.errors();e[F("usb_errors")]=hostLink.errors();
@@ -120,6 +169,18 @@ String buildTelemetryJson() {
   a[F("telemetry_supported")]=avrTelemetryKnown;
   const bool recent=avrOnline && avrTelemetryKnown && static_cast<uint32_t>(now-avrTelemetryAt)<=12000U;
   a[F("telemetry_recent")]=recent;
+  const bool resetRecent=avrOnline && avrResetTelemetryKnown &&
+      static_cast<uint32_t>(now-avrResetTelemetryAt)<=12000U;
+  a[F("reset_telemetry_known")]=resetRecent;
+  if(resetRecent) {
+    a[F("reset")][F("cause_raw")]=avrResetCause;
+    a[F("reset")][F("power_on")]=static_cast<bool>(avrResetCause&1U);
+    a[F("reset")][F("external")]=static_cast<bool>(avrResetCause&2U);
+    a[F("reset")][F("brownout")]=static_cast<bool>(avrResetCause&4U);
+    a[F("reset")][F("watchdog")]=static_cast<bool>(avrResetCause&8U);
+    a[F("reset")][F("boot_count")]=avrBootCount;
+    a[F("reset")][F("boot_count_persisted")]=avrBootCountPersisted;
+  } else a[F("reset")]=nullptr;
   if(avrTelemetryKnown) a[F("telemetry_age_ms")]=static_cast<uint32_t>(now-avrTelemetryAt);
   else a[F("telemetry_age_ms")]=nullptr;
   if(recent) {
@@ -172,12 +233,11 @@ String buildTelemetryJson() {
   return out.length()==expected?out:String("{\"type\":\"telemetry-error\",\"error\":\"insufficient_heap\"}");
 }
 bool prepareRemotePair(const RemoteFirmware::Plan &plan,String &reason) {
-  if(artifactReaders || otaActive || otaRebootAt || avrUploadOwner || networkApplyPending) {reason=F("Another maintenance/network operation is active");return false;}
-#if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
-  // Isolated LED commissioning can update ONLY ESP without touching AVR pins,
-  // Prog, backup or audio. Integrated builds retain all paired safety checks.
+  if(artifactReaders || otaActive || otaRebootAt || avrUploadOwner || networkApplyPending || cloudApplyPending) {reason=F("Another maintenance/network operation is active");return false;}
+  // An explicitly ESP-only update owns no AVR mutation, regardless of whether
+  // UART support was compiled in or a companion is currently reachable. A
+  // known recovery latch still requires all existing paired recovery gates.
   if(plan.targets==RemotePolicy::Esp && !programmingLatched) return true;
-#endif
   if(!waitForAvr() || !avrVersionKnown || !avrPcSupported) {reason=F("AVR UART/profile unavailable; no erase allowed");return false;}
   if(plan.targets==1 && plan.esp.version!=avrVersionText()) {
     reason=F("ESP-only update would produce mismatched board versions; use target all");return false;
@@ -190,7 +250,8 @@ bool prepareRemotePair(const RemoteFirmware::Plan &plan,String &reason) {
     reason=F("AVR downgrade refused before erase");return false;
   }
   const bool retainRecovery=programmingLatched;
-  if(!programmingLatched && !playUpdateStartCue()) {reason=F("AVR update cue not acknowledged");return false;}
+  // Audio is best effort, never a firmware/erase safety acknowledgement. The
+  // loop already emitted the one start notice; Prog/ISP must remain silent.
   const uint8_t armed[]={1};
   if(!requestAndWaitForAck(kProgrammingState,armed,1)) {reason=F("AVR durable Prog arm not acknowledged; erase refused");return false;}
   programmingLatched=true;
@@ -223,13 +284,14 @@ bool programRemoteAvr(const char *path,const String &version,String &reason) {
   programmingLatched=true;return true;
 }
 int8_t finishRemotePair(const RemoteFirmware::Plan &plan,bool commit,String &reason) {
-#if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
   if(plan.targets==RemotePolicy::Esp && !programmingLatched) {
     // RemoteFirmware already checked actual running-image SHA/integrity/version.
-    // There is no AVR latch to release and no update melody in this profile.
-    return plan.esp.version==BoardCore::BuildInfo::kVersion?1:-1;
+    // Do not wait for an optional AVR, release its Prog or emit a melody.
+    if(plan.esp.version!=BoardCore::BuildInfo::kVersion) {
+      reason=F("Actual ESP version differs from the staged update");return -1;
+    }
+    return 1;
   }
-#endif
   if(!avrOnline || !avrVersionKnown || !avrPcSupported) {reason=F("Waiting for actual AVR version/profile");return 0;}
   if(avrVersionText()!=BoardCore::BuildInfo::kVersion ||
      ((plan.targets&2) && avrVersionText()!=plan.avr.version) ||
@@ -239,7 +301,7 @@ int8_t finishRemotePair(const RemoteFirmware::Plan &plan,bool commit,String &rea
   if(!commit) return 1;
   const uint8_t released[]={0};
   if(!requestAndWaitForAck(kProgrammingState,released,1)) {reason=F("Prog release outcome unknown; not retried");return -1;}
-  programmingLatched=false;playUpdateSuccessCue();return 1;
+  programmingLatched=false;return 1; // Verified terminal phase owns the one cue.
 }
 bool strictU32(const String &s,uint32_t &out) {
   if(!s.length() || s.length()>10) return false;
@@ -253,7 +315,7 @@ bool remoteCommand(const JsonDocument &d,String &result) {
   if(command=="firmware-status") {result=remoteFirmware.json();return true;}
   if(command=="telemetry") {result=buildTelemetryJson();return true;}
   if(command=="firmware-fetch") {
-    if(artifactReaders || otaActive || otaRebootAt || avrUploadOwner || networkApplyPending) {
+    if(artifactReaders || otaActive || otaRebootAt || avrUploadOwner || networkApplyPending || cloudApplyPending) {
       result="Another operation is active or recovery is required";return false;
     }
     if(!d[F("url")].is<const char*>() || !d[F("sha256")].is<const char*>() ||
@@ -268,6 +330,10 @@ bool remoteCommand(const JsonDocument &d,String &result) {
         d[F("apply")]|false,d[F("allow_downgrade")]|false,d[F("bearer")]|"");
   } else if(command=="firmware-apply" || command=="firmware-cancel") {
     if(artifactReaders) {result=F("Artifact download owns storage; retry after completion");return false;}
+    if(command=="firmware-apply" && (otaActive || otaRebootAt || avrUploadOwner ||
+        networkApplyPending || cloudApplyPending)) {
+      result=F("Another maintenance/configuration operation is active");return false;
+    }
     if(!d[F("job_id")].is<uint32_t>() || !d[F("boot_id")].is<const char*>() ||
        (command=="firmware-apply"&&!d[F("sha256")].is<const char*>())) {result="Job identity required";return false;}
     ok=command=="firmware-apply"?remoteFirmware.apply(d[F("job_id")],d[F("boot_id")].as<String>(),d[F("sha256")].as<String>()):
@@ -277,7 +343,7 @@ bool remoteCommand(const JsonDocument &d,String &result) {
 }
 void sendMaintenanceJson(const String &body,int code=200) {
   if(auto *request=server.request()) {
-    auto *response=request->beginResponse(code,"application/json",body);
+    auto *response=server.beginResponse(code,"application/json",body);
     response->addHeader("Cache-Control","no-store");server.send(response);
   }
 }
@@ -302,6 +368,7 @@ bool handleMaintenanceShell(const String &line,String &result) {
 }
 void registerMaintenanceRoutes() {
   bootIntegrity=FirmwarePlatform::runningIntegrity();
+  captureBootTelemetryImage();
   remoteFirmware.begin(pcBootId,prepareRemotePair,programRemoteAvr,finishRemotePair);
   File locale=LittleFS.open("/locale.cfg","r");
   if(locale && locale.size()==2) {char p[3]={};locale.read(reinterpret_cast<uint8_t*>(p),2);
@@ -437,7 +504,7 @@ void registerMaintenanceRoutes() {
   for(const char *path:{"/debug/info","/debug/data","/eProcessState","/eResponseStatus"})
     server.on(path,HTTP_GET,[](){
       if(!authenticate())return;JsonDocument d;
-      d[F("remote_phase")]=remoteFirmware.phase();d[F("remote_error")]=remoteFirmware.error();d[F("manual_ota_phase")]=otaPhase;
+      d[F("remote_phase")]=remoteFirmware.phase();d[F("remote_error")]=remoteFirmware.error();d[F("manual_ota_phase")]=PakarUpdate::name(otaProgress.snapshot().phase);
       d[F("avr_online")]=avrOnline;d[F("prog")]=programmingLatched;d[F("uart_errors")]=link.errors();d[F("usb_errors")]=hostLink.errors();
       d[F("last_reply_seen")]=awaitedReplySeen;
       if(awaitedReplySeen) {d[F("request_opcode")]=awaitedOpcode;d[F("acknowledged")]=awaitedReplyOk;} else d[F("request_opcode")]=nullptr;

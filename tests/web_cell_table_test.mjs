@@ -44,12 +44,21 @@ const createElement=tag=>{const e=element(tag);e.classList.toggle=(name,on)=>on?
 document={activeElement:null,createElement,createElementNS:(_ns,tag)=>createElement(tag),createTextNode:text=>Object.assign(createElement('text'),{textContent:text}),addEventListener(){}};
 const nodes=Object.fromEntries([...source.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],element()]));
 nodes.animateCells.checked=true;nodes.bulkEffect.value='fade';
-const calls=[],actual={cells:Array(80).fill('white')},storage=new Map();let failId=0,cancelAfter=0,storageWrites=0;
+const calls=[],actual={cells:Array(80).fill('white'),capabilities:{acknowledged_features:['table','cell-batch']}},storage=new Map();let failPost=false,failRead=false,cancelAfter=false,hasBatch=true,ackCount=null,afterPost=null,rendered=0,storageWrites=0;
 const fixturePeer=Object.freeze({board:'fixture',boot:'a'.repeat(32),generation:1});
 const context=vm.createContext({...nodes,peerHttp:{pin:()=>fixturePeer},document,URLSearchParams,innerWidth:1280,innerHeight:800,
   localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>{storageWrites++;storage.set(k,v)}},
-  state:{cells:[]},mapping:{physical:[],names:[]},currentPeer:()=>({has:feature=>feature==='table'}),authenticated:true,loadMappingEditor(){},report(){},render(){},setTimeout:fn=>{fn();return 1},
-  api:async(path,options)=>{assert.equal(options.peer,fixturePeer,'Whole batch must retain its original peer');if(path==='/api/status')return actual;const id=Number(options.body.get('id'));calls.push(id);if(id===failId)throw Error('lost acknowledgement');actual.cells[id-1]=options.body.get('state');if(id===cancelAfter)vm.runInContext('cancelCellBatch()',context);return {accepted:true}}
+  state:{cells:[]},mapping:{physical:[],names:[]},currentPeer:()=>({has:feature=>feature==='table'||(feature==='cell-batch'&&hasBatch)}),peerAvailability:s=>({has:feature=>s.capabilities?.acknowledged_features?.includes(feature)===true}),authenticated:true,loadMappingEditor(){},report(){},render(){rendered++},setTimeout:fn=>{fn();return 1},
+  api:async(path,options)=>{
+    assert.equal(options.peer,fixturePeer,'Whole batch must retain its original peer');
+    if(path==='/api/status'){if(failRead)throw Error('lost readback');return actual}
+    assert.equal(path,'/api/cells','No per-cell fan-out or fallback');assert.equal(options.method,'POST');
+    const ids=options.body.get('ids').split(',').map(Number),state=options.body.get('state');
+    assert.deepEqual([...options.body.keys()],['ids','state','effect']);calls.push({ids,state,effect:options.body.get('effect')});
+    for(const id of ids)actual.cells[id-1]=state;
+    if(cancelAfter)vm.runInContext('cancelCellBatch()',context);if(afterPost)afterPost();
+    if(failPost)throw Error('lost acknowledgement');return {accepted:true,count:ackCount??ids.length};
+  }
 });
 vm.runInContext(readFileSync(new URL('../assets/web/rayanlamp.js',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../assets/web/localization.js',import.meta.url),'utf8')+'\n'+cellCode,context);
 const run=code=>vm.runInContext(code,context),ids=()=>Array.from(run('[...selectedCells]')).sort((a,b)=>a-b);
@@ -149,9 +158,18 @@ nodes.grid.listeners.pointerup({pointerId:1});assert.equal(run('suppressCellClic
 nodes.grid.children.find(b=>b.dataset.id===2).onclick({});assert.equal(run('suppressCellClick'),false);assert.deepEqual(ids(),[1,2]);
 run('openCellMenu(1,1200,790)');assert.equal(nodes.cellMenu.hidden,false);assert.equal(nodes.cellMenu.children[0].attributes.role,'menuitem');assert(nodes.cellMenu.children[0].children.some(c=>c.tag==='svg'));
 run('openCellManager()');assert.equal(nodes.cellManager.open,true);
-run('selectedCells=new Set([1,2,3])');await run("applyCellBatch('red')");assert.deepEqual(calls,[1,2,3]);assert.match(nodes.bulkStatus.textContent,/Verified 3/);
-calls.length=0;failId=2;await run("applyCellBatch('off')");assert.deepEqual(calls,[1,2]);assert.match(nodes.bulkStatus.textContent,/not retried/);assert.equal(nodes.bulkApply.disabled,false);
-calls.length=0;failId=0;cancelAfter=1;await run("applyCellBatch('white')");assert.deepEqual(calls,[1]);assert.match(nodes.bulkStatus.textContent,/Cancelled unsent/);
+run('selectedCells=new Set([3,1,2])');await run("applyCellBatch('red')");assert.deepEqual(calls,[{ids:[1,2,3],state:'red',effect:'fade'}]);assert.match(nodes.bulkStatus.textContent,/Verified 3/);
+assert.doesNotMatch(source,/setTimeout\(resolve,50\)|Cancel unsent|A batch is not atomic|Edits are paced/);
+calls.length=0;failPost=true;await run("applyCellBatch('off')");assert.equal(calls.length,1);assert.deepEqual(calls[0].ids,[1,2,3]);assert.match(nodes.bulkStatus.textContent,/Outcome unknown.*not retried/);assert.equal(nodes.bulkApply.disabled,false);
+calls.length=0;failPost=false;cancelAfter=true;const beforeCancelledRender=rendered;await run("applyCellBatch('white')");assert.equal(calls.length,1);assert.deepEqual(calls[0].ids,[1,2,3]);assert.equal(rendered,beforeCancelledRender,'Revoked context never paints a late result');assert.match(nodes.bulkStatus.textContent,/Outcome unknown/);assert.doesNotMatch(nodes.bulkStatus.textContent,/cancelled unsent/i);
+calls.length=0;cancelAfter=false;hasBatch=false;await run("applyCellBatch('red')");assert.equal(calls.length,0);assert.match(nodes.bulkStatus.textContent,/No per-cell fallback/);hasBatch=true;
+calls.length=0;ackCount=2;await run("applyCellBatch('red')");assert.equal(calls.length,1);assert.match(nodes.bulkStatus.textContent,/Outcome unknown/);ackCount=null;
+calls.length=0;failRead=true;await run("applyCellBatch('red')");assert.equal(calls.length,1);assert.match(nodes.bulkStatus.textContent,/not retried/);failRead=false;
+calls.length=0;afterPost=()=>run('selectedCells=new Set([80])');await run("applyCellBatch('white')");assert.deepEqual(calls[0].ids,[1,2,3],'Selection changes cannot alter the captured in-flight command');assert.match(nodes.bulkStatus.textContent,/Verified 3/);afterPost=null;
+calls.length=0;run('selectedCells=new Set(Array.from({length:80},(_,i)=>i+1))');await run("applyCellBatch('red')");assert.equal(calls.length,1);assert.equal(calls[0].ids.length,80);assert.match(nodes.bulkStatus.textContent,/Verified 80/);
+calls.length=0;await run("applyCellBatch('white',[80],'immediate')");assert.deepEqual(calls,[{ids:[80],state:'white',effect:'immediate'}],'Single-cell consumer also sends one batch');
+calls.length=0;afterPost=()=>{actual.cells.pop()};await run("applyCellBatch('off',[1],'immediate')");assert.equal(calls.length,1);assert.match(nodes.bulkStatus.textContent,/Outcome unknown/);actual.cells.push('white');afterPost=null;
+calls.length=0;afterPost=()=>{actual.capabilities.acknowledged_features=['table']};await run("applyCellBatch('red',[1],'immediate')");assert.equal(calls.length,1);assert.match(nodes.bulkStatus.textContent,/Outcome unknown/);actual.capabilities.acknowledged_features=['table','cell-batch'];afterPost=null;
 assert.match(source,/border:2px solid var\(--line-strong\)/);assert.doesNotMatch(source,/\.cell\{[^}]*background:#f6f7ff/);
 assert.match(source,/prefers-reduced-motion:reduce/);assert.match(source,/transition:background-color \.14s/);
 const orderContract=JSON.parse(readFileSync(new URL('../assets/cells/order-contract.json',import.meta.url),'utf8'));

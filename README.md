@@ -10,7 +10,7 @@
 [![CodeQL](https://github.com/atomicdeploy/PakarController/actions/workflows/codeql.yml/badge.svg)](https://github.com/atomicdeploy/PakarController/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-10b981.svg)](LICENSE)
 [![Rust · egui](https://img.shields.io/badge/Desktop-Rust%20%7C%20egui-f59e0b?logo=rust)](desktop)
-[![ESP + AVR](https://img.shields.io/badge/Firmware-ESP8266%20%2B%20ATmega328P-06b6d4)](firmware)
+[![ESP + AVR](https://img.shields.io/badge/Firmware-ESP32--S3%20%7C%20ESP8266%20%2B%20ATmega328P-06b6d4)](firmware)
 [![Android preview](https://img.shields.io/badge/Android-preview-8b5cf6?logo=android)](https://github.com/atomicdeploy/PakarController/pull/1)
 
 [Overview](#overview) · [Architecture](#architecture) · [Build](#build) · [CI/CD](#continuous-integration--delivery) · [Roadmap](https://github.com/atomicdeploy/PakarController/issues/2)
@@ -19,12 +19,12 @@
 
 > [!IMPORTANT]
 > This is an actively developed controller, not a certified production release.
-> The expanded application is reviewed in [PR #1](https://github.com/atomicdeploy/PakarController/pull/1).
+> Current production acceptance is tracked in [issue #2](https://github.com/atomicdeploy/PakarController/issues/2).
 > Build artifacts, source tests and screenshots are not proof of physical-board acceptance.
 
 ## Overview
 
-An ESP8266 + ATmega328P controller with an mpv-free Windows workspace, embedded
+An ESP32-S3 / ESP8266 + ATmega328P controller with an mpv-free Windows workspace, embedded
 Web interface, CLI/TUI and an Android preview. Controls must follow the connected
 board's acknowledged capabilities; offline or unsupported peripherals are not
 invented by the client. Pealayer supplies real reusable desktop foundations,
@@ -57,7 +57,9 @@ flowchart LR
 
 ## Access and recovery
 
-First-install login: `admin` / `pakarcontroller`; change it in **Device access**.
+Authentication defaults off in the current firmware; older installations can
+retain persisted credentials. Inspect **Device access** or use the explicit USB
+recovery utility rather than guessing a factory password.
 See [Access and recovery](https://github.com/atomicdeploy/PakarController/blob/feature/pealayer-desktop-foundation/docs/ACCESS.md) and the explicit
 [PU850 parity audit](https://github.com/atomicdeploy/PakarController/blob/feature/pealayer-desktop-foundation/docs/PU850-PARITY.md). ESPAsyncWebServer now hosts the
 Web UI/API/WebSocket, ESP OTA and AVR ISP in the same firmware.
@@ -102,34 +104,38 @@ refresh. Monitor/region selection and live frame-rate acceptance remain open.
 
 ## Build
 
-The commands below describe the expanded source on PR #1. Until that application
-is merged, select its branch after cloning:
+Use the current main checkout and existing SDK installations:
 
 ```powershell
 git clone https://github.com/atomicdeploy/PakarController.git
 cd PakarController
-git switch feature/pealayer-desktop-foundation
+.\pakar.cmd doctor
+.\pakar.cmd all                         # plan only, no SDK compilation
 ```
 
-On the Windows hardware host with Arduino CLI and the locked libraries
-installed (FastLED 3.10.6, WebSockets 2.7.2, PubSubClient 2.8.0,
-ESP Async WebServer 3.12.1, ESP Async TCP 2.0.0):
+Windows and Bash entrypoints share one dispatcher, staged output, validated
+arguments and guarded build wrappers. Node 20.19+ and PowerShell 7 are required.
+The central [firmware pins](tools/firmware-dependencies.json) are unchanged by
+builds; installation and dependency updates are explicit:
 
 ```powershell
-.\tools\build-firmware.ps1 -LinkMode polling
-.\tools\build-firmware.ps1 -LinkMode busy-wire
-# PU850-style repository entrypoint; also runs the protocol tests
-.\build.cmd
+.\pakar.cmd dependencies --plan
+.\pakar.cmd firmware --target esp32s3 --plan
+.\pakar.cmd firmware --target esp32s3 --link-mode buffered --s3-flash-mb 16 --s3-psram opi
+.\pakar.cmd desktop --mode Check --plan
+.\pakar.cmd mobile --mode ApkPreview --build-only --plan
 ```
 
-Linux/CI uses `./build.sh polling` and `./build.sh busy-wire`. CI builds both
-variants; the deployed pair must use the same link mode. Every merged
-AVR+Urboot artifact must be exactly 32 KiB.
+Linux/macOS use `bash pakar.sh` with the same options. Legacy `build.cmd` and
+`bash build.sh polling` / `bash build.sh busy-wire` remain aliases; tests are
+explicit rather than hidden build side effects. CI builds polling/busy-wire
+ESP8266+AVR pairs and buffered S3+AVR; deployed peers need compatible build
+flags. Every merged AVR+Urboot image must be exactly 32 KiB.
 
-The script compiles the ESP8266 image and the exact MiniCore ATmega328P target,
-then verifies that `build/avr/avr.ino.with_bootloader.bin` is a complete 32 KiB
-application plus Urboot image suitable for the ESP ISP programmer. Run
-`.\tools\test-protocol.ps1` for the native COBS/CRC bounds and corruption test.
+Run `.\pakar.cmd test protocol` for COBS/CRC bounds/corruption fixtures.
+The [script tooling reference](docs/SCRIPT-TOOLING.md) covers common help,
+JSON/quiet output, proxy support, dependency maintenance, artifact checksums,
+automatic update plans, platform limits and exact PU850 source imports.
 
 Build the Windows application with:
 
@@ -144,7 +150,7 @@ debug/test symbols are disabled by default, with incremental reuse retained.
 Build scripts refuse low free space or an oversized canonical Cargo cache.
 Firmware compilation is incremental; use `-Target avr` or `-Target esp8266` for
 an isolated board change and `-Clean` only when diagnosing a stale cache.
-Linux supports `./build.sh busy-wire esp8266` (optional third argument `--clean`).
+Linux supports `bash build.sh busy-wire esp8266` (optional `--clean`).
 Use one stable staging directory and `tools/stage-desktop.ps1`; identical builds
 skip copying. Fixtures can run directly from the canonical built executable.
 
@@ -175,19 +181,24 @@ Staggered graphics, richer editors and full TUI parity remain open in issue #2.
 
 ## Continuous integration & delivery
 
-The expanded [CI/CD pipeline on PR #1](https://github.com/atomicdeploy/PakarController/blob/feature/pealayer-desktop-foundation/.github/workflows/build.yml) checks generated interface,
+The [CI/CD pipeline](.github/workflows/build.yml) checks generated interface,
 branding and donor-evidence contracts, tests both UART build variants, builds
 the Windows client and analyzes/tests/builds the Android preview. It stops at
 the first failed command. Timeouts, superseded-run cancellation and short artifact
-retention bound wasted work. The default-branch Build workflow remains the initial
-build until the application/CI upgrade is reviewed and merged. [CodeQL](.github/workflows/codeql.yml) scans Actions
+retention bound wasted work. The tooling matrix checks shared CLI fixtures and
+guarded command plans on Windows/Linux/macOS; these are not native package or
+hardware acceptance. [CodeQL](.github/workflows/codeql.yml) scans Actions
 and JavaScript; it does not claim Rust, AVR C++ or physical hardware coverage.
 
 The expanded pipeline supports version tags and explicit owner dispatch for **draft prereleases**, with
 Windows and two-board firmware packages, Android preview, SHA-256 checksums,
 source/run manifest and provenance attestation. No automatic flash occurs and
 no development artifact is silently promoted to a production release.
-See [repository governance and exact donor mappings](docs/REPOSITORY-GOVERNANCE.md).
+PU-derived dependency checking and exact-artifact device deployment have separate
+guarded workflows. Deployment is disabled until the owner explicitly configures
+its runner/environment/opt-in. See [shared tooling and activation](docs/SCRIPT-TOOLING.md)
+and [repository governance](docs/REPOSITORY-GOVERNANCE.md). Source configuration
+does not certify that a current GitHub run passed or a device was updated.
 
 ## Documentation & contribution
 

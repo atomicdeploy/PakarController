@@ -59,7 +59,7 @@ impl Panel {
         match self {
             Self::Table => c.table(),
             Self::EffectControls => c.has("leds") || c.modes().next().is_some(),
-            Self::FrontPanel => c.has("display") || c.has("text") || c.has("buzzer"),
+            Self::FrontPanel => c.has("display") || c.has("text") || c.has("buzzer") || c.has("lcd"),
             Self::Hardware => c.has("telemetry"),
             Self::Network => c.has("network"),
             Self::Streaming => c.table() && c.has("streaming"),

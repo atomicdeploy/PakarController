@@ -41,6 +41,10 @@ enum Opcode : uint8_t {
   kEspPanel = 0x5A, // Paired ESP settings: state offer or AVR physical-menu action.
   kAvrRxDiagnostic = 0x5B, // Physical ESP USB only, quiet S3 build: bounded RX-only capture.
   kSetLedOutput = 0x5C, // ESP only: one boolean; independent of presentation/game mode.
+  kGetTableSnapshot = 0x5D, // USB [nonce,offset16,token32]; zero token/offset captures immutable table state.
+  kTableCommand = 0x5E, // USB [boot_id16,inner opcode,<=31 bytes]; bounded table-only, ACK names inner opcode.
+  kCellsAction = 0x5F, // ESP only: [state,effect,10-byte logical-cell bitmap], one atomic loop-owner update.
+  kTableSnapshotResponse = 0xB6, // [nonce,token32,total16,offset16,<=39 immutable JSON bytes].
   kAvrRxDiagnosticResponse = 0xB4, // Action/error + actual capture/pad observations; never AVR ACK.
   kResetTelemetryResponse = 0xB5, // [MCUSR cause,countLE32,journal_verified]; optional GET_TELEMETRY companion.
   kEspPanelResponse = 0xB3, // Correlated action, error and authoritative ESP readback.
@@ -93,7 +97,8 @@ enum AudioCue : uint8_t {
   kCueDecrease = 11,
   kCueWelcomePuzzleBoard = 12,
   kCueWelcome40Led = 13,
-  kCueCount = 14,
+  kCueAttention = 14,
+  kCueCount = 15,
 };
 
 enum Capability : uint16_t {

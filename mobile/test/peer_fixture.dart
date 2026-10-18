@@ -6,6 +6,7 @@ DeviceStatus peerFixture({
     'network',
     'telemetry',
     'table',
+    'cell-batch',
     'leds',
     'streaming',
     'display',

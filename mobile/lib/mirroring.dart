@@ -39,9 +39,11 @@ class MirrorTone {
     this.frequency,
     this.durationMs,
     this.deviceMicros,
-    this.deviceNowMicros,
-  );
+    this.deviceNowMicros, {
+    this.muted = false,
+  });
   final int frequency, durationMs, deviceMicros, deviceNowMicros;
+  final bool muted;
   static MirrorTone? decode(Object? value) {
     if (value is! String || !RegExp(r'^[0-9a-f]{26}$').hasMatch(value)) {
       return null;
@@ -63,6 +65,7 @@ class MirrorTone {
       ms,
       data.getUint32(5, Endian.little),
       data.getUint32(9, Endian.little),
+      muted: bytes[4] == 1,
     );
   }
 }
@@ -83,6 +86,7 @@ class ToneTimeline {
       final delta = (tone.deviceMicros - _device!) & 0xffffffff;
       final candidate = _start! + delta;
       if (delta <= 300000000 &&
+          candidate >= observedUs - age &&
           (candidate - (observedUs - age)).abs() <= 250000) {
         start = candidate;
       }
@@ -108,6 +112,8 @@ class PeripheralMirror extends ChangeNotifier {
   List<int> segments = const [];
   int brightness = 0;
   bool segmentsEnabled = true, panelEnabled = true, buzzerEnabled = false;
+  bool followBoardMute = false;
+  MirrorTone? _lastTone;
   double volume = .35;
   String? failure, _owner, _session;
   int _lastEvent = 0, _epoch = 0;
@@ -211,6 +217,26 @@ class PeripheralMirror extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setFollowBoardMute(bool value) {
+    if (_closed || value == followBoardMute) return;
+    followBoardMute = value;
+    _flushNotes(); // A policy change never replays buffered/interrupted notes.
+    notifyListeners();
+  }
+
+  void _flushNotes() {
+    ++_epoch;
+    for (final timer in pending) {
+      timer.cancel();
+    }
+    pending.clear();
+    timeline.clear();
+    final session = _session;
+    if (session != null && buzzerEnabled) {
+      _call(output.note(session, 0, 0), session);
+    }
+  }
+
   void event(Map<String, dynamic> event) {
     final raw = status?.json, manifest = raw?['mirroring'];
     if (_closed ||
@@ -251,12 +277,22 @@ class PeripheralMirror extends ChangeNotifier {
     final tone = MirrorTone.decode(payload), session = _session;
     if (tone == null || session == null) return;
     if (tone.frequency == 0 && tone.durationMs == 0) {
-      for (final timer in pending) {
-        timer.cancel();
-      }
-      pending.clear();
-      timeline.clear();
-      _call(output.note(session, 0, 0), session);
+      _lastTone = null;
+      _flushNotes();
+      return;
+    }
+    final previous = _lastTone;
+    _lastTone = tone;
+    if (followBoardMute && tone.muted) {
+      _flushNotes();
+      return;
+    }
+    // Mute/settings notifications can repeat the same musical step with a new
+    // event ID. They must not restart PCM or revive an interrupted note.
+    if (previous != null &&
+        previous.deviceMicros == tone.deviceMicros &&
+        previous.frequency == tone.frequency &&
+        previous.durationMs == tone.durationMs) {
       return;
     }
     final plan = timeline.plan(tone, elapsedUs);
@@ -310,6 +346,7 @@ class PeripheralMirror extends ChangeNotifier {
     }
     pending.clear();
     timeline.clear();
+    _lastTone = null;
     buzzerEnabled = false;
     final session = _session;
     _session = null;

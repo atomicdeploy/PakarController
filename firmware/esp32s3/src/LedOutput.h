@@ -9,6 +9,17 @@
 #include <driver/rmt_tx.h>
 #include <driver/rmt_encoder.h>
 #include "BoardPins.h"
+#if !defined(PAKAR_S3_LED_USE_DMA) && defined(ARDUINO_ARCH_ESP32)
+// Only LED application units depend on this canonical, ignored build profile.
+// Changing the backend must not invalidate unrelated SDK/FastLED objects.
+#if __has_include(<build/config/esp32s3/LedBackend.h>)
+#include <build/config/esp32s3/LedBackend.h>
+#endif
+#endif
+#ifndef PAKAR_S3_LED_USE_DMA
+#define PAKAR_S3_LED_USE_DMA 0
+#endif
+static_assert(PAKAR_S3_LED_USE_DMA==0 || PAKAR_S3_LED_USE_DMA==1,"LED DMA selection must be boolean");
 
 namespace PakarS3 {
 class LedOutput {

@@ -1,0 +1,181 @@
+import 'dart:async';
+import 'dart:io';
+
+/// Adapted from PCController internal/lanresolver/resolver.go: retain URL host,
+/// Host header and TLS/SNI while dialing a cached successful address. Unlike
+/// the donor, TCP/HTTP/auth/timeouts never evict an address. A failed reconnect
+/// may perform one read-only lookup; only an actual lookup failure evicts it.
+class LanResolver {
+  LanResolver({
+    Future<List<InternetAddress>> Function(String)? lookup,
+    this.securityContext,
+  }) : _lookup = lookup ?? InternetAddress.lookup;
+  final Future<List<InternetAddress>> Function(String) _lookup;
+  final SecurityContext? securityContext;
+  final _cache = <String, InternetAddress>{};
+  final _pending = <String, Future<List<InternetAddress>>>{};
+  final _lookupFailures = <String, int>{};
+  int lookupFailureRevision(String host) =>
+      _lookupFailures[host.toLowerCase()] ?? 0;
+
+  Future<List<InternetAddress>> _resolve(String host) async {
+    final key = host.toLowerCase();
+    if (_pending[key] case final pending?) return pending;
+    final old = _cache[key];
+    Future<List<InternetAddress>> work() async {
+      try {
+        final values = await _lookup(host).timeout(const Duration(seconds: 2));
+        if (values.isEmpty) {
+          throw const SocketException('Hostname lookup returned no address');
+        }
+        return values.take(2).toList(growable: false);
+      } on SocketException {
+        if (_cache[key] == old) _cache.remove(key);
+        _lookupFailures[key] = lookupFailureRevision(key) + 1;
+        throw HostLookupFailure(host);
+      }
+    }
+
+    final pending = work();
+    _pending[key] = pending;
+    try {
+      return await pending;
+    } finally {
+      _pending.remove(key);
+    }
+  }
+
+  Future<T> connect<T>(
+    String host,
+    Future<T> Function(InternetAddress) dial, {
+    bool Function()? isCancelled,
+  }) async {
+    final literal = InternetAddress.tryParse(host);
+    if (literal != null) return dial(literal);
+    final key = host.toLowerCase(), cached = _cache[host.toLowerCase()];
+    if (cached != null) {
+      try {
+        return await dial(cached);
+      } on Exception {
+        // Keep the previous route on timeout/refused/reset. DNS metadata never
+        // grants board identity, and no HTTP request has been dispatched here.
+      }
+    }
+    if (isCancelled?.call() == true) {
+      throw const SocketException('Connection cancelled');
+    }
+    final candidates = await _resolve(host);
+    Object? last;
+    for (final candidate in candidates) {
+      if (isCancelled?.call() == true) {
+        throw const SocketException('Connection cancelled');
+      }
+      try {
+        final connection = await dial(candidate);
+        if (!_cache.containsKey(key) && _cache.length >= 64) {
+          _cache.remove(_cache.keys.first);
+        }
+        _cache[key] = candidate;
+        return connection;
+      } on Exception catch (error) {
+        last = error;
+      }
+    }
+    throw last ?? const SocketException('No reachable hostname address');
+  }
+
+  HttpClient createClient() => HttpClient(context: securityContext)
+    ..connectionTimeout = const Duration(seconds: 6)
+    ..findProxy = controllerProxyFor
+    ..connectionFactory = (uri, proxyHost, proxyPort) {
+      ConnectionTask<Socket>? active;
+      Socket? connected;
+      var cancelled = false;
+      final result = connect(proxyHost ?? uri.host, (address) async {
+        if (cancelled) throw const SocketException('Connection cancelled');
+        final secure = proxyHost == null && uri.scheme == 'https';
+        // SDK custom factories own direct TLS. Native DNS results preserve
+        // InternetAddress.host; use them only when that name is the original
+        // TLS identity. Injected bare IP metadata cannot replace SNI/cert name.
+        final tlsHost = address.host.toLowerCase() == uri.host.toLowerCase()
+            ? address
+            : uri.host;
+        final ConnectionTask<Socket> task = secure
+            ? await SecureSocket.startConnect(
+                tlsHost,
+                uri.port,
+                context: securityContext,
+              )
+            : await Socket.startConnect(address, proxyPort ?? uri.port);
+        active = task;
+        if (cancelled) task.cancel();
+        final socket = await task.socket.timeout(
+          Duration(seconds: secure ? 5 : 2),
+          onTimeout: () {
+            task.cancel();
+            throw TimeoutException('Connection deadline');
+          },
+        );
+        if (cancelled) {
+          socket.destroy();
+          throw const SocketException('Connection cancelled');
+        }
+        connected = socket;
+        return socket;
+      }, isCancelled: () => cancelled);
+      return Future.value(
+        ConnectionTask.fromSocket(result, () {
+          cancelled = true;
+          active?.cancel();
+          connected?.destroy();
+        }),
+      );
+    };
+}
+
+/// Actual PCController netpolicy/proxy.go LAN bypass ranges/suffixes, adapted
+/// without altering process environment or public endpoint proxy preferences.
+String controllerProxyFor(Uri uri, {Map<String, String>? environment}) =>
+    localControllerHost(uri.host)
+    ? 'DIRECT'
+    : HttpClient.findProxyFromEnvironment(uri, environment: environment);
+
+bool localControllerHost(String host) {
+  final name = host.toLowerCase().replaceFirst(RegExp(r'\.$'), '');
+  if (name == 'localhost' ||
+      !name.contains('.') && !name.contains(':') ||
+      const [
+        '.home.arpa',
+        '.internal',
+        '.lan',
+        '.local',
+        '.localdomain',
+        '.localhost',
+      ].any(name.endsWith)) {
+    return true;
+  }
+  final address = InternetAddress.tryParse(name);
+  if (address == null) return false;
+  if (address.isLoopback || address.isLinkLocal) return true;
+  var bytes = address.rawAddress;
+  if (bytes.length == 16 &&
+      bytes.take(10).every((value) => value == 0) &&
+      bytes[10] == 0xff &&
+      bytes[11] == 0xff) {
+    bytes = bytes.sublist(12);
+  }
+  if (bytes.length == 16) {
+    return (bytes[0] & 0xfe) == 0xfc ||
+        bytes[0] == 0xfe && (bytes[1] & 0xc0) == 0xc0;
+  }
+  return bytes[0] == 10 ||
+      bytes[0] == 127 ||
+      bytes[0] == 169 && bytes[1] == 254 ||
+      bytes[0] == 100 && bytes[1] >= 64 && bytes[1] <= 127 ||
+      bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31 ||
+      bytes[0] == 192 && bytes[1] == 168;
+}
+
+class HostLookupFailure extends SocketException {
+  HostLookupFailure(String host) : super('Hostname lookup failed for $host');
+}

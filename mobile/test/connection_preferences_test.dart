@@ -48,4 +48,18 @@ void main() {
     expect(prefs.getString('endpoint'), 'http://renamed.local');
     expect(prefs.getString('password'), isNull);
   });
+  test('Empty credentials are optional and restore without default-password guesses', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance(),
+        secrets = TestSecrets();
+    final settings = ConnectionPreferences(prefs, secrets: secrets),
+        api = PakarApi();
+    await settings.restore(api);
+    expect(api.password, '');
+    await settings.save('ledboard.local', '', '');
+    await settings.restore(api);
+    expect(api.user, '');
+    expect(api.password, '');
+    await api.close();
+  });
 }

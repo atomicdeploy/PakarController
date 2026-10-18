@@ -1,0 +1,58 @@
+# Actual PU upload.yml shape with exact-main provenance and opt-in target scope.
+name: "📡 Verified firmware deployment"
+on:
+  workflow_run:
+    workflows: ["🚀 Build · Test · Release"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Exact successful main build run ID
+        required: true
+        type: string
+      source_sha:
+        description: Expected full source commit SHA
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: ledboard-deployment
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: >-
+      github.repository == 'atomicdeploy/PakarController' &&
+      vars.PAKAR_ENABLE_DEVICE_DEPLOY == 'true' &&
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    # Must be an explicitly authorized runner on the device LAN/VPN. Hosted
+    # runners cannot be assumed to resolve or reach a private .local device.
+    runs-on: [self-hosted, pakar-deploy]
+    environment: ledboard
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PAKAR_BUILD_RUN: ${{ inputs.run_id || github.event.workflow_run.id }}
+      PAKAR_EXPECTED_SHA: ${{ inputs.source_sha || github.event.workflow_run.head_sha }}
+      PAKAR_DEVICE_ORIGIN: ${{ vars.PAKAR_DEVICE_ORIGIN || 'http://ledboard.local' }}
+      PAKAR_INCOMING: incoming-firmware
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+      - name: Verify exact trusted source run before artifact download
+        run: node tools/deploy-artifact.mjs --preflight
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: PakarController-firmware
+          path: incoming-firmware
+          run-id: ${{ env.PAKAR_BUILD_RUN }}
+          github-token: ${{ github.token }}
+      - name: Verify image and perform one auth-off update plus readback
+        run: node tools/deploy-artifact.mjs --run

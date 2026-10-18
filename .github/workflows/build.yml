@@ -44,7 +44,7 @@ jobs:
       - run: node tests/release_package_test.mjs
   quality:
     name: "🧭 Contracts · Repository health"
-    needs: lint
+    needs: [lint, tooling]
     runs-on: windows-2025
     timeout-minutes: 20
     steps:
@@ -55,6 +55,34 @@ jobs:
         with:
           node-version: '24'
       - run: node tools/ci-checks.mjs quality
+  tooling:
+    name: "🧰 Scripts · ${{ matrix.os }}"
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+      - name: CLI, dependency and artifact fixtures (no devices or SDK builds)
+        run: node tests/script_tooling_test.mjs
+      - name: All PowerShell syntax and shared runner fixtures
+        shell: pwsh
+        run: ./tests/script_tooling_test.ps1
+      - name: Guarded firmware, native and mobile command plans
+        shell: pwsh
+        run: |
+          ./tools/build-firmware.ps1 -Target esp32s3 -Plan
+          ./tools/build-desktop.ps1 -Plan
+          ./tools/build-mobile.ps1 -Mode Analyze -Plan
+          ./tools/build-all.ps1
   firmware:
     name: "🔧 ESP32-S3 + ESP8266 + AVR"
     needs: quality
@@ -69,43 +97,21 @@ jobs:
         with:
           node-version: '24'
       - name: Install locked board platforms and libraries
-        run: |
-          retry() {
-            for attempt in 1 2 3; do
-              if "$@"; then return 0; fi
-              if [ "$attempt" -lt 3 ]; then sleep "$((attempt * 5))"; fi
-            done
-            return 1
-          }
-          arduino-cli config init
-          arduino-cli config add board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
-          arduino-cli config add board_manager.additional_urls https://mcudude.github.io/MiniCore/package_MCUdude_MiniCore_index.json
-          arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
-          retry arduino-cli core update-index
-          retry arduino-cli core install esp8266:esp8266@3.1.2
-          retry arduino-cli core install MiniCore:avr@3.1.3
-          retry arduino-cli core install esp32:esp32@3.3.12
-          retry arduino-cli lib install FastLED@3.10.6
-          retry arduino-cli lib install WebSockets@2.7.2
-          retry arduino-cli lib install PubSubClient@2.8.0
-          retry arduino-cli lib install ArduinoJson@7.4.3
-          retry arduino-cli lib install 'ESP Async WebServer@3.12.1'
-          retry arduino-cli lib install 'ESP Async TCP@2.0.0'
-          retry arduino-cli lib install 'Async TCP@3.5.0'
+        run: node tools/firmware-dependencies.mjs --install
       - name: Build both boards and test the shared protocol
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y libssl-dev
-          chmod +x build.sh tools/test-protocol.sh
-          ./build.sh polling
-          ./build.sh busy-wire
-          ./build.sh buffered avr
+          bash build.sh polling
+          bash build.sh busy-wire
+          bash build.sh buffered avr
           # Compile the optional RX-only SDK adapter, then restore the canonical
           # normal image in the SAME cache/output before any artifact upload.
           pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -PauseAvrLink -Jobs 2
-          ./build.sh buffered esp32s3
-          ./tools/test-protocol.sh
+          bash build.sh buffered esp32s3 --s3-flash-mb 16 --s3-psram opi
+          bash tools/test-protocol.sh
           bash tools/test-pc-flags.sh
+          node tools/firmware-report.mjs --require --write
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: PakarController-firmware
@@ -119,12 +125,15 @@ jobs:
             build/avr-busy-wire/avr.ino.with_bootloader.bin
             build/avr-busy-wire/avr.ino.hex
             build/esp8266-busy-wire/esp8266.ino.bin
-            build/SHA256SUMS-busy-wire
+            build/firmware-report.json
             build/avr-buffered/avr.ino.with_bootloader.bin
             build/avr-buffered/avr.ino.hex
             build/esp32s3-buffered/esp32s3.ino.bin
             build/esp32s3-buffered/esp32s3.ino.merged.bin
             build/esp32s3-buffered/esp32s3.ino.partitions.bin
+      - name: Firmware sizes and integrity summary
+        if: success()
+        run: node tools/firmware-report.mjs --require
 
   windows-desktop:
     name: "🪟 Windows · Test · Package"
@@ -253,12 +262,13 @@ jobs:
   complete:
     name: "🚦 PakarController · Complete"
     if: always()
-    needs: [lint, quality, firmware, windows-desktop, android-preview, release]
+    needs: [lint, tooling, quality, firmware, windows-desktop, android-preview, release]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - env:
           LINT: ${{ needs.lint.result }}
+          TOOLING: ${{ needs.tooling.result }}
           QUALITY: ${{ needs.quality.result }}
           FIRMWARE: ${{ needs.firmware.result }}
           WINDOWS: ${{ needs.windows-desktop.result }}
@@ -269,6 +279,7 @@ jobs:
             echo '# PakarController build verification'; echo
             echo '| Stage | Result |'; echo '|---|---|'
             echo "| Workflow syntax | $LINT |"
+            echo "| Windows / Linux / macOS script plans | $TOOLING |"
             echo "| Interface / donor contracts | $QUALITY |"
             echo "| ESP + AVR, both link modes | $FIRMWARE |"
             echo "| Windows | $WINDOWS |"
@@ -276,5 +287,5 @@ jobs:
             echo "| Draft release | $RELEASE |"
             echo; echo '> CI does not prove physical operation or deployment.'
           } >> "$GITHUB_STEP_SUMMARY"
-          [[ "$LINT" == success && "$QUALITY" == success && "$FIRMWARE" == success && "$WINDOWS" == success && "$ANDROID" == success ]]
+          [[ "$LINT" == success && "$TOOLING" == success && "$QUALITY" == success && "$FIRMWARE" == success && "$WINDOWS" == success && "$ANDROID" == success ]]
           [[ "$RELEASE" == success || "$RELEASE" == skipped ]]

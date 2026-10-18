@@ -1,8 +1,9 @@
 # ESP32-S3 migration and commissioning
 
-**Current delivery priority:** [LED-first acceptance](LED-FIRST-ACCEPTANCE.md).
-AVR integration is explicitly deferred until the480-pixel matrix and LED API
-work. Historical AVR commissioning evidence below is not a request to resume it.
+**Current request:** restore AVR hardware UART and ESP-mediated ISP. The user
+has explicitly resumed this work after the LED-first interval. Keep the existing
+LED renderer and saved mapping intact during recovery. Historical commissioning
+observations below do not establish the current board's health.
 
 The ESP32-S3 target builds the **same integrated application** as the ESP8266:
 Web/API/WebSocket, table effects, cloud clients, storage, self-OTA and AVR ISP.
@@ -200,6 +201,35 @@ client isolation can prevent it even when ordinary HTTP works.
 
 ## Acceptance boundaries
 
+### AVR recovery candidate
+
+The buffered AVR candidate includes actual PCController reset capture before
+C++ startup, the Urboot r2 fallback, watchdog shutdown and a CRC/commit-last boot
+journal at EEPROM416..799. Settings, automation and Prog ownership are preserved.
+Automatic welcome playback requires a clean power-on/external reset and is
+suppressed for watchdog, brownout and unknown causes. Existing46-byte telemetry
+is unchanged; optional B5 reports raw reset flags, boot count and journal validity.
+
+The integrated S3 source now uses its actual UART1 adapter with checked buffer
+setup, driver-ready state and hardware error counts. Peer availability requires
+an identified AVR and a semantically valid response. Buffered S3 UART draining
+does not inherit the ESP8266's18ms per-download-chunk wait. The ISP build keeps
+the existing explicit GPIO10 electrical acknowledgment and does not write fuses.
+
+The AVR candidate compiled at31628bytes flash and1406bytes static SRAM. Its
+compiled .init3 sequence was inspected: MCUSR/r2 capture, MCUSR clear, watchdog
+disable and fall-through into data initialization. The reset journal fixture,
+protocol/identity cases, ISP EEPROM-preservation fixture and S3 source guards
+passed. These are compile/host results; physical UART and ISP remain open.
+
+David-ASUS SSH on localhost:8022 timed out before login during this recovery
+attempt. No AVR signature read, backup, erase, firmware upload or audible test
+has been performed. On restored access: identify the live ESP/boot, inspect UART
+and reset state, read ISP signature/fuses and export verified flash/EEPROM backup,
+then apply the paired candidate as required and verify fresh UART telemetry.
+Do not label the AVR healthy until its live reset count, uptime and errors are
+observed stable and its actual peripherals respond.
+
 ### Observed quiet commissioning checkpoint
 
 The exact shared main is
@@ -244,5 +274,88 @@ physical tests. FastLED uses the S3 backend; actual DMA use and refresh timing
 are not inferred from a target macro. Firmware transfer abort/partition checks
 do not establish hardware rollback or interrupted-power recovery.
 
-Optional TFT LCD and W5500 work is separate from this migration's working
-hardware capability; see the [hardware backlog](S3-STATUS-FRONTPANEL-INTEGRATION.md#additional-hardware-backlog).
+## W5500 Ethernet commissioning
+
+The W5500-enabled S3 candidate builds against Arduino-ESP32 3.3.12 using native
+ETH/lwIP and the existing AsyncTCP/ESPAsyncWebServer stack. No second Ethernet
+server, updater, authentication policy or API namespace is introduced. This is
+source/build readiness, not a physically verified Ethernet delivery.
+
+| W5500 signal | ESP32-S3 GPIO |
+|---|---|
+| SCK/SCLK | 5 |
+| MISO/SO | 6 |
+| MOSI/SI | 7 |
+| CS/SCS/SS | 8 |
+| RST/RSTn | 9 |
+| INT/INTn | 14 |
+| GND | GND |
+
+Power off while wiring. W5500 signals are3.3V; supply a module's explicit3V3
+input with regulated3.3V. VCC/VIN-only carriers need their input requirement
+confirmed first; do not guess between3.3V and5V. Do not join regulator outputs.
+The private HSPI/SPI3 bus is separate from AVR FSPI/SPI2. LED GPIO4, AVR UART
+TX17/RX18 and ISP RESET10/MOSI11/SCK12/MISO13 remain unchanged. Onboard RGB is
+not reassigned by this driver. See the [migration wiring notes](ESP32-S3-MIGRATION.md#optional-w5500-ethernet-separate-spi-bus).
+
+Build without a cold clean (retain the confirmed16MB/OPI hardware profile):
+
+```powershell
+./tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3LedBackend rmt-dma -S3IspElectricalVerified -S3Ethernet -Jobs 16
+```
+
+The ISP acknowledgment above retains the existing candidate profile; it does not
+prove the live wiring or authorize fuse/EEPROM changes. Ethernet testing does not
+need an AVR reset, melody or flash operation.
+
+After deploying through the authorized OTA/USB path, read `/api/status` and
+`/api/network/ethernet` on `http://ledboard.local`. Status includes actual
+`uplink`, `uplink_ipv4_ready` and `ethernet` initialized/started/carrier/IP/DNS/MAC
+state. Disconnected addresses are null, not a stale DHCP address. IP readiness
+does not imply an Internet connection. The latter route provides independent
+persisted DHCP/static settings, not Wi-Fi settings; POST uses form fields
+`dhcp`, `address`, `gateway`, `subnet`, `dns1`, `dns2` with normal access and
+board/boot fencing. A same-value `dhcp=true` save is also an explicit driver
+recovery attempt if initialization failed at boot. No background reset storm is
+used for an absent module or unplugged cable. Read `apply_pending`, `apply_error`
+and fresh status after the delayed apply; an accepted save is not a live link ACK.
+
+On an on-LAN PC with Node:
+
+```powershell
+node tools/check-ethernet-live.mjs --run --origin http://ledboard.local
+```
+
+This checks a compatible board/boot, the real TCP peer against the Ethernet IP,
+Web UI, JSON, SSDP description and firmware HEAD/Range serving. It does not
+automatically change settings or apply firmware. If auth is enabled, provide
+`PAKAR_ETH_USERNAME` and `PAKAR_ETH_PASSWORD` privately in the environment.
+
+To verify Ethernet-only Internet download, first disconnect Wi-Fi station using
+the existing network settings while retaining the recovery AP, then add
+`--manifest HTTPS_URL --manifest-sha256 SHA256 --image-sha256 SHA256` to the same
+command. Use a known-compatible manifest/image and optional private environment
+`PAKAR_ETH_FIRMWARE_BEARER`. It sends exactly one ESP-only stage request with
+`apply=false`, follows the original fenced job to Ready and compares its image
+hash. Unknown dispatch, timeout, reboot, wrong interface or busy firmware state
+stops without replay/apply/cancel; inspect the original job. This staging step
+writes the inactive OTA slot. Do not use arbitrary images for convenience.
+
+Remaining physical checklist (GitHub issue2 stays open):
+
+- [ ] Confirm module power input and inventory the actual S3/installed image.
+- [ ] DHCP and static profile work across reboot; hostname resolves on Ethernet.
+- [ ] Same local APIs, WebSocket handshake/control, Web UI and LED bulk commands
+  work over the actual wired peer, without duplicated app connection owners.
+- [ ] NTP, MQTT/WSS and a pinned Internet image stage work with Wi-Fi station
+  disconnected; separate explicit OTA apply/reboot/running-image verification.
+- [ ] Cable unplug/replug and Wi-Fi fallback recover without stale state,
+  duplicate mutations or AVR resets; AP recovery remains reachable.
+- [ ] mDNS/DNS-SD, SSDP and MNDP discovery work on the wired LAN; XML serving
+  alone is not multicast proof. Observe LED timing under concurrent traffic.
+
+The latest ASUS SSH8022 attempt refuses connections. No W5500 board deployment,
+Ethernet connection or Internet download was attempted in this source checkpoint.
+Dedicated graphical Ethernet DHCP/static editors remain pending; settings are
+available through the shared API/cloud path. TFT LCD remains in the separate
+[hardware backlog](S3-STATUS-FRONTPANEL-INTEGRATION.md#additional-hardware-backlog).

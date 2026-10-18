@@ -10,6 +10,8 @@
 #endif
 
 #include <Protocol.h>
+#include <CellBatch.h>
+#include <TableCellMapping.h>
 
 #ifndef PAKARCONTROLLER_SECTORS_PER_CELL
 #define PAKARCONTROLLER_SECTORS_PER_CELL 6
@@ -17,6 +19,10 @@
 #ifndef PAKAR_LED_START_ENABLED
 #define PAKAR_LED_START_ENABLED 1
 #endif
+#ifndef PAKAR_LED_START_CELL_CHASE
+#define PAKAR_LED_START_CELL_CHASE 0
+#endif
+static_assert(PAKAR_LED_START_CELL_CHASE==0 || PAKAR_LED_START_CELL_CHASE==1,"Cell chase startup must be boolean");
 static_assert(PAKAR_LED_START_ENABLED==0 || PAKAR_LED_START_ENABLED==1,"LED startup policy must be boolean");
 
 class LedGrid {
@@ -25,6 +31,7 @@ class LedGrid {
     kPatternNone,
     kPatternRainbow,
     kPatternFire,
+    kPatternCellChase,
   };
 
   static constexpr uint8_t kCells = 80;
@@ -40,6 +47,8 @@ class LedGrid {
   void service(uint32_t now);
   bool setCell(uint8_t cell, BoardCore::Protocol::CellState state,
                BoardCore::Protocol::Effect effect);
+  bool setCells(const BoardCore::CellBatch &selection, BoardCore::Protocol::CellState state,
+                BoardCore::Protocol::Effect effect);
   void fill(BoardCore::Protocol::CellState state);
   void resetWhite();
   void showWinner(uint8_t winner);
@@ -57,6 +66,8 @@ class LedGrid {
   bool commitStaged(uint64_t owner=0);
   void setOutputEnabled(bool enabled);
   bool outputEnabled()const{return outputEnabled_;}
+  void setStaticMode(bool enabled);
+  bool staticMode()const{return staticMode_;}
   String outputJson()const;
   // A loop-thread snapshot of the last committed command RGB buffer, before
   // FastLED brightness/correction. Never expose an uncommitted streamed chunk.
@@ -67,7 +78,9 @@ class LedGrid {
   static CRGB colorFor(BoardCore::Protocol::CellState state);
   void renderCell(uint8_t index);
   void renderPattern();
-  void stopPattern();
+  void stopPattern(const char *reason = "stop-pattern");
+  void changePattern(Pattern pattern, const char *reason);
+  void renderChaseStep(uint8_t physical);
 
   CRGB pixels_[kPixels];
   CRGB staged_[kPixels];
@@ -81,6 +94,9 @@ class LedGrid {
 #endif
   CRGB current_[kCells];
   CRGB target_[kCells];
+  CRGB transitionFrom_[kCells];
+  uint32_t transitionAt_[kCells] = {};
+  bool transitioning_[kCells] = {};
   uint8_t heat_[kPixels] = {};
   uint8_t states_[kCells] = {};
   uint8_t physicalCells_[kCells] = {};
@@ -88,7 +104,20 @@ class LedGrid {
   uint32_t lastFrameAt_ = 0;
   uint8_t hue_ = 0;
   Pattern pattern_ = kPatternNone;
+  uint8_t chaseStep_ = 0, chaseCell_ = 0;
+  bool chaseFirstFrame_ = false;
+  uint32_t chaseAt_ = 0;
+  static constexpr uint32_t kChaseIntervalMs = 750;
+  // Loop-owned diagnostic only: constant reason pointers, no allocation,
+  // persistence or logging in the renderer. Revision is the last published
+  // frame when the logical effect changed, not a claim of wire completion.
+  struct EffectChange {
+    const char *reason = nullptr;
+    Pattern previous = kPatternNone, next = kPatternNone;
+    uint32_t at = 0, revision = 0;
+  } lastEffectChange_;
   bool dirty_ = true;
+  bool staticMode_ = true;
   bool staging_ = false;
   bool outputEnabled_ = PAKAR_LED_START_ENABLED != 0;
   uint32_t stagingAt_ = 0;

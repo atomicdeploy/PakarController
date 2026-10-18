@@ -54,7 +54,7 @@ int slotAddress(uint8_t slot){return EepromLayout::ResetJournalAddress+static_ca
 void pakarTestSetResetCause(uint8_t cause){capturedResetCause=cause;}
 #endif
 ResetTelemetry resetTelemetry;
-void ResetTelemetry::begin(){
+void ResetTelemetry::begin(bool allowWrite){
   if(begun_)return;
   begun_=true;cause_=capturedResetCause;
   bool found=false;uint8_t newest=0;ResetRecord record;
@@ -63,6 +63,9 @@ void ResetTelemetry::begin(){
     if(valid(record)&&(!found||newer(record.count,count_))){found=true;newest=slot;count_=record.count;}
   }
   count_=count_==UINT32_MAX?1:count_+1;
+  // Still expose this boot's cause/count, but leave the ISP backup byte-exact.
+  // begin is idempotent: a later default call must not turn this into a write.
+  if(!allowWrite)return;
   const uint8_t next=found?static_cast<uint8_t>((newest+1)%EepromLayout::ResetJournalSlots):0;
   const int address=slotAddress(next);
   EEPROM.update(address+offsetof(ResetRecord,marker),0);

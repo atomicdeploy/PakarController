@@ -139,6 +139,21 @@ void main() {
       0,
       3,
       ...utf8.encode('led'),
+      0,
+      12,
+      0,
+      15,
+      ...utf8.encode('PakarController'),
+      0,
+      1,
+      0,
+      6,
+      2,
+      1,
+      2,
+      3,
+      4,
+      5,
     ]);
     expect(parseMndp(packet, '192.0.2.1')?.name, 'led');
     expect(parseMndp(packet.sublist(0, 10), '192.0.2.1'), isNull);

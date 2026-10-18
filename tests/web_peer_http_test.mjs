@@ -53,9 +53,14 @@ const timeout=client.request('/api/cloud');assert.equal(timers.size,1);[...timer
 await assert.rejects(timeout,/timed out/);assert.equal(timers.size,0);
 const abort=new AbortController(),cancel=client.request('/api/cloud',{signal:abort.signal});abort.abort();await assert.rejects(cancel,/cancelled/);assert.equal(timers.size,0);
 // Transaction pins are wired through actual batch and settings paths.
-assert(web.includes("const peer=peerHttp.pin();for(const id of ids)"));
-assert(web.includes("const ack=await api('/api/cell',{method:'POST',peer,"));
-assert(web.includes("if(ack?.accepted!==true)throw Error('Cell command was not acknowledged')"));
+const batchStart=web.indexOf('async function applyCellBatch(');
+const batch=web.slice(batchStart,web.indexOf('\n}',batchStart)+2);
+assert(batch.includes('const peer=peerHttp.pin();'));
+assert(batch.includes("api('/api/cells',{method:'POST',peer,"));
+assert(!batch.includes("api('/api/cell',"),'A bulk action must never become per-cell requests');
+assert(batch.includes("ack?.accepted!==true"));
+assert(batch.includes("actual.cells"),'Device readback is mandatory, not app-side color inference');
+assert(web.includes("boardSoundTransaction((path,options={})=>api(path,{...options,peer}),guard,desired,peer.boot)"));
 assert(web.includes('peer=peerHttp.pin();write=settingsWrite(group)'));
 assert(web.includes("await api('/api/status',{peer});if(epoch!==webSettings.epoch)return"));
 assert(web.includes('selectedCells.clear();cellSearch.value='));

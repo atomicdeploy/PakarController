@@ -229,7 +229,7 @@ void main() {
     },
   );
   testWidgets(
-    'Bulk output stops at first uncertain command; never continues/replays',
+    'Atomic bulk output dispatches once; uncertain outcome never fans out/replays',
     (tester) async {
       final sent = <String>[];
       await tester.pumpWidget(
@@ -240,8 +240,9 @@ void main() {
               mapping: CellMap.defaults(),
               command: (path, [values = const {}]) async {},
               verifiedCommand: (path, values) async {
-                sent.add(values['id']!);
-                return sent.length < 2;
+                expect(path, '/api/cells');
+                sent.add(values['ids']!);
+                return false;
               },
             ),
           ),
@@ -252,8 +253,8 @@ void main() {
       await tester.ensureVisible(find.text('Set red'));
       await tester.tap(find.text('Set red'));
       await tester.pump();
-      expect(sent, ['1', '2']);
-      expect(find.textContaining('Stopped after 1/3'), findsOneWidget);
+      expect(sent, ['1,2,3']);
+      expect(find.textContaining('No per-cell fallback'), findsOneWidget);
     },
   );
   testWidgets(

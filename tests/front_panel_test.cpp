@@ -1,6 +1,7 @@
 // Executes production FrontPanel.cpp against a display transport double.
 #include "FrontPanel.h"
 #include "SevenSegments.h"
+#include "../firmware/esp8266/src/UpdateProgress.h"
 #include <array>
 #include <cassert>
 #include <cstring>
@@ -39,6 +40,14 @@ void accept(FrontPanel &panel, const std::vector<uint8_t> &p, uint32_t now) {
 }
 
 int main() {
+  // The ESP's actual progress encoder is accepted by the unchanged AVR owner.
+  PakarUpdate::Panel updateEncoder; uint8_t updatePayload[12];
+  assert(updateEncoder.next(1000,true,true,"P042",updatePayload));
+  FrontPanel update;
+  assert(update.acceptDisplayPayload(updatePayload,sizeof(updatePayload),1000));
+  tick(update,1000); assert(shown=="P042" && update.hostActive());
+  tick(update,1100,true); assert(shown=="Prog"); // ISP safety keeps priority.
+  tick(update,2200); assert(shown=="PAKr" && !update.hostActive());
   // Long text scrolls once, including one blank frame, then releases locally.
   FrontPanel once; accept(once, message("HELLO"), 1000);
   tick(once, 1000); assert(shown == "HELL");

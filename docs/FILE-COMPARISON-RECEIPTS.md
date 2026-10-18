@@ -1,5 +1,78 @@
 # PakarController comparison receipts
 
+## Native saved board preferences
+
+Same SettingsStore.h/.cpp and Pealayer Preferences rows now map the actual native
+full AVR record editor and shared LED controls. Retains MCU-owned validation,
+dirty/draft separation, packed menu ordering and no-op EEPROM avoidance without
+copying absent motion/relay/temperature fields. Generic pending donor omissions
+remain in those rows. Source/target/test hashes are recorded in the same ledger;
+not a full Pealayer, Flutter/Web or hardware acceptance claim. Native Check and
+24 final settings-focused tests passed (plus 11 initial focused tests).
+
+## Cell-selection flicker comparison
+
+Actual AddressableLeds.h/.cpp reread at matching raw hashes; same two comparison
+rows now bind cable mapping, board-owned chase and both output workers. Actual
+renderer/FIFO,10000 full80-cell batches per mode, static/DMA RGB/BGR worker and
+S3 wiring checks pass. Final DMA SDK image1881984 bytes,
+SHA2560a4dcf47b2856a600adbe27c4852c2e0987943ffee980508f1c3c147d04e3800.
+Final GPIO SDK image1881888 bytes,
+SHA25698ddf93d90e9ff87c267b6f04a2cf10a662057dd720db41c0e7df79ee6c80c33.
+Build-storage Plan suite passes. Backend switches use an exclusively leased,
+changed-only application header;150 SDK/library object/archive metadata entries
+remain unchanged across final builds. No deployment/optical acceptance: ASUS offline,
+PBX query expired without DTMF. Details and mapping interpretation caveat:
+REUSE-PREFLIGHT-RECEIPT.md; issue2 comment6246618912. Full donor parity remains open.
+
+## Attention melodies and Android mirror checkpoint
+
+Actual current PCController TonePlayer, BootMelody and hostbridge scheduler/test
+sources reread; original raw identities match canonical b0111ae0 inventory.
+Two new full BootMelody comparisons; existing tone/mirror records map current
+companion lease, finite attention, timestamp encoder, mute-follow/duplicate-step
+and short-note jitter fixtures. PU updater start/end/error source reread without
+importing its business UART or watchdog disable. Current total189/4673 compared,
+4484 pending,147 known gap files. No donor-wide parity claim.
+
+Focused host audio/contract/tone tests, Web ACK-gated attention picker, S3 menu,
+updater loopback, actionlint, mobile analysis/seven mirroring tests and actual
+separate loopback WS pass. AVR buffered and integrated S3 buffered SDK builds
+pass; native Check passes; Android preview APK builds. Exact sizes/hashes in
+REUSE-PREFLIGHT-RECEIPT.md. No audible test, phone install or board deployment:
+ASUS SSH8022 refuses. Physical timing, Silent/Prog, OTA cue/phone and native/Web
+host-speaker acceptance stay open; no inferred electrical/production proof.
+Full project gates also retain pre-existing route/contract-manifest drift.
+
+## PU850 tooling source/fixture checkpoint
+
+PU850 revision431104072952f694a35b3a83c19f13fbb098ca5b;28 complete original
+tooling-related reads, all individual source hashes/Git objects and target/test
+hashes in file-comparison-evidence.json. Existing donor checkout remains clean
+and sparse. No test-source read is confused with execution or physical acceptance.
+
+Passed: Node/PowerShell script-tooling fixtures, actual child exit7 and caller
+directory preservation, CLI offline/invalid mode no-contact subprocesses,
+logger terminal/quiet/JSON/proxy-credential safety, numeric dependency cache/
+no-downgrade/concurrent-edit cases, exact trusted-run/artifact/tamper cases,
+real updater multipart/fragmented WS loopback, build-script security, boot-audio
+guard-removal negatives, repository governance, existing storage-dispatch plans,
+ledger stale/missing/reviewed-blob regeneration negatives and actionlint.
+All three component plans plus build-all plans passed without SDK compilers.
+Live registry report passed without editing/installing dependencies.
+Real Windows and WSL Bash launchers, outside-cwd help and optional-target flags
+pass after correcting native/WSL path mixing. The full source-quality attempt
+remains failed at pre-existing PU route WebUi.h audit drift (actual4ca3a928…,
+recorded45e734f5…). The route certificate was not blindly refreshed or skipped;
+diagnostic continuation does not count as full quality success.
+
+Canonical total4673/187 compared/4486 pending/147 known gap files; PU46/109.
+Configured Windows/Linux/macOS matrix, dependency PR and opt-in device workflow
+have not executed from this source checkpoint. No release/SDK/application build,
+device write, physical proof or complete watch/resume/package parity is claimed.
+The preserved worktree is still uncommitted on main2dc319fb; the historical main
+CI remains failed pending coherent source publication and a successful rerun.
+
 ## Native HTTP queue ownership checkpoint
 
 Reread actual PCController session.go (23080 bytes,1bf4d52d6810630d1fd4d5f0a0c18254ccdd73c0942dbe94f4c97a06360680c5)

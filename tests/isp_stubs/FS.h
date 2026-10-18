@@ -6,7 +6,12 @@
 enum SeekMode {SeekSet};
 class File {
  public:
-  struct Data {std::vector<uint8_t> bytes;size_t readLimit=SIZE_MAX;};
+  struct Data {
+    std::vector<uint8_t> bytes;
+    size_t readLimit=SIZE_MAX,writeLimit=SIZE_MAX;
+    bool corruptOnFlush=false;
+    unsigned flushes=0;
+  };
   File()=default;
   File(std::shared_ptr<Data> data,bool fail=false):d_(data),fail_(fail){}
   explicit operator bool()const{return bool(d_);}
@@ -19,6 +24,7 @@ class File {
   int read(){uint8_t b;return read(&b,1)==1?b:-1;}
   size_t write(const uint8_t *p,size_t n){
     if(!d_||fail_)return 0;
+    n=min(n,d_->writeLimit);
     if(at_+n>size())d_->bytes.resize(at_+n);
     memcpy(d_->bytes.data()+at_,p,n);at_+=n;return n;
   }
@@ -26,7 +32,11 @@ class File {
     char b[256];va_list ap;va_start(ap,fmt);int n=vsnprintf(b,sizeof(b),fmt,ap);va_end(ap);
     return write(reinterpret_cast<const uint8_t*>(b),n);
   }
-  void flush(){}
+  void flush(){
+    if(!d_)return;
+    ++d_->flushes;
+    if(d_->corruptOnFlush && !d_->bytes.empty())d_->bytes[0]^=1;
+  }
   void close(){d_.reset();}
  private:std::shared_ptr<Data>d_;size_t at_=0;bool fail_=false;
 };

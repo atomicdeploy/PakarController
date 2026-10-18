@@ -44,6 +44,10 @@ class PcControllerRuntime : public ControllerEventSink {
   void handle(uint8_t sequence, const uint8_t *payload, uint8_t length,
               uint32_t now, uint32_t nowUs);
   void service(uint32_t now, uint32_t nowUs);
+  // ESP heartbeat grants only fresh changed-state mirroring, not a host/menu
+  // session or ownership. Works without any desktop-protocol client.
+  void companionHeartbeat(uint32_t now) { companionSeenAt_=now; companionKnown_=true; }
+  void companionPoll(uint32_t now, uint32_t nowUs) { companionHeartbeat(now); mirrorOne(nowUs); }
   void key(uint8_t bit, KeyEvent gesture, uint8_t source, uint32_t now, uint32_t nowUs);
   const BoardSettingsStore &settings() const { return settings_; }
   bool running() const { return running_; }
@@ -97,6 +101,9 @@ class PcControllerRuntime : public ControllerEventSink {
   bool connected_ = false, running_ = false, menuActive_ = false, macroDirty_ = false;
   bool menuOwnedByHost_ = false;
   void drainOne(bool mirror = false);
+  bool mirrorOne(uint32_t nowUs);
+  uint32_t companionSeenAt_=0;
+  bool companionKnown_=false;
   void saveMenuPage(uint32_t now);
   void showEspPanel(uint32_t now);
   bool espKey(uint8_t bit, KeyEvent gesture, uint8_t source, uint32_t now);

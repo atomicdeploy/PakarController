@@ -5,6 +5,42 @@
 #include <atomic>
 #include <vector>
 int main() {
+  // Reproduce installed SDK3.12.1's actual bare-string/first-registration
+  // collision, rather than a map lookup that always selects the exact key.
+  {
+    AsyncWebServer sdk(80);
+    sdk.on("/api/avr/contracts",HTTP_GET,[](AsyncWebServerRequest*r){r->send(200,"text/plain","metadata");});
+    sdk.on("/api/avr/contracts/result",HTTP_GET,[](AsyncWebServerRequest*r){r->send(200,"text/plain","receipt");});
+    auto request=std::make_shared<AsyncWebServerRequest>();request->path="/api/avr/contracts/result";
+    request->arguments["id"]="2";
+    assert(sdk.dispatch(request.get()) && request->body=="metadata");
+  }
+  {
+    AsyncHttpService exact(80);unsigned parentReads=0,parentWrites=0,childReads=0,childDeletes=0,rootReads=0;
+    // Parents intentionally registered before descendants, as production is.
+    exact.on("/",HTTP_GET,[&](){++rootReads;exact.send(200,"text/plain","root");});
+    exact.on("/api/avr/contracts",HTTP_GET,[&](){++parentReads;exact.send(200,"text/plain","metadata");});
+    exact.on("/api/avr/contracts",HTTP_POST,[&](){++parentWrites;exact.send(202,"text/plain","enqueued");});
+    exact.on("/api/avr/contracts/result",HTTP_GET,[&](){++childReads;assert(exact.arg("id")=="2");exact.send(200,"text/plain","receipt2");});
+    exact.on("/api/avr/contracts/result",HTTP_DELETE,[&](){++childDeletes;exact.send(200,"text/plain","deleted2");});
+    auto dispatch=[&](const char*path,int method,const char*body,int status=200){
+      auto request=std::make_shared<AsyncWebServerRequest>();request->path=path;request->requestMethod=method;request->arguments["id"]="2";
+      assert(exact.native().dispatch(request.get()));exact.service();request->connection.poll();
+      assert(request->status==status && request->body==body && request->responseStarts==1);
+    };
+    dispatch("/api/avr/contracts/result",HTTP_GET,"receipt2");
+    dispatch("/api/avr/contracts",HTTP_GET,"metadata");
+    dispatch("/api/avr/contracts",HTTP_POST,"enqueued",202);
+    dispatch("/api/avr/contracts/result",HTTP_DELETE,"deleted2");
+    dispatch("/",HTTP_GET,"root");
+    for(const char*path:{"/api/avr/contracts/","/api/avr/contracts/result/extra","/api/avr/contracts2"}){
+      auto request=std::make_shared<AsyncWebServerRequest>();request->path=path;
+      assert(!exact.native().dispatch(request.get()) && request->status==404);
+    }
+    auto unsupported=std::make_shared<AsyncWebServerRequest>();unsupported->path="/api/avr/contracts/result";unsupported->requestMethod=HTTP_POST;
+    assert(!exact.native().dispatch(unsupported.get()) && unsupported->status==404);
+    assert(parentReads==1 && parentWrites==1 && childReads==1 && childDeletes==1 && rootReads==1);
+  }
   AsyncHttpService server(80); int called = 0;
   server.on("/hardware", HTTP_GET, [&]() {
     ++called; server.service(); // a hardware handler may yield; don't replace current request
@@ -62,6 +98,29 @@ int main() {
   server.on("/duplicate",HTTP_GET,[&](){assert(server.remoteAddress()=="192.0.2.10");server.send(200,"text/plain","first");server.send(new AsyncWebServerResponse(201,"second"));});
   auto duplicate=std::make_shared<AsyncWebServerRequest>();server.native().handlers.at("/duplicate")(duplicate.get());
   server.service();duplicate->connection.poll();assert(duplicate->status==200 && duplicate->body=="first" && duplicate->responseStarts==1);
+  // Larger than the installed S3 TCP send window (5744 bytes): use actual
+  // callback factory and independently owned immutable content across polls.
+  // The transport double bounds fills/ACKs; it is not an LwIP hardware test.
+  String large;for(unsigned i=0;i<16384;++i)large+=static_cast<char>('A'+i%26);
+  const String expectedLarge=large;
+  server.on("/large",HTTP_GET,[&](){auto *response=server.beginResponse(206,"application/json",large);response->addHeader("Cache-Control","no-store");server.send(response);});
+  auto largeRequest=std::make_shared<AsyncWebServerRequest>();
+  server.native().handlers.at("/large")(largeRequest.get());server.service();large="changed after snapshot";
+  assert(largeRequest->status==0);largeRequest->connection.poll();
+  assert(largeRequest->status==206 && largeRequest->getResponse()->filler && largeRequest->body.size()==1024);
+  assert(largeRequest->responseHeaders.at("Cache-Control")=="no-store");
+  largeRequest->connection.writable=false;largeRequest->connection.poll();assert(largeRequest->body.size()==1024);
+  {AsyncSdkFixture::Actor actor;largeRequest->getResponse()->_ack(largeRequest.get(),1024,1);}assert(largeRequest->body.size()==1024);
+  largeRequest->connection.writable=true;largeRequest->connection.chunkLimit=333;
+  while(largeRequest->body.size()<expectedLarge.size()){
+    largeRequest->connection.poll();
+    AsyncSdkFixture::Actor actor;largeRequest->getResponse()->_ack(largeRequest.get(),333,1);
+  }
+  assert(largeRequest->body==expectedLarge && largeRequest->responseStarts==1);
+  const auto completed=largeRequest->body;largeRequest->connection.poll();assert(largeRequest->body==completed);
+  auto *largeResponse=largeRequest->getResponse();uint8_t tail[4];
+  assert(largeResponse->filler(tail,sizeof(tail),expectedLarge.length())==0);
+  assert(largeResponse->filler(tail,0,0)==0);
   // Deterministic starvation regression: refill the first free slot before
   // every dispatch while seven older requests are already waiting. A fixed
   // slot-zero scan serves newcomers forever; round-robin must serve the old
@@ -95,5 +154,5 @@ int main() {
   unsigned accepted=0,rejected=0;
   for(const auto&r:parallel){if(r->status==200)++accepted;else if(r->status==503)++rejected;else assert(false);}
   assert(accepted==served && accepted+rejected==count && !server.processing());
-  puts("Production async queue: SDK actor-only response publication with real outer-send tail model, poll/ACK progression, cancelled/duplicate response ownership, immutable peer address, bounded fairness, weak lifetime, reentrancy,20000 concurrent publications and exact accounting passed (transport doubles, not hardware soak).");
+  puts("Production async queue: SDK first-match descendant collision reproduced and literal routes exact; actor-only responses, outer-send tail, poll/ACK progression, response ownership, immutable peer address, bounded fairness, weak lifetime, reentrancy,20000 concurrent publications and exact accounting passed (transport doubles, not hardware soak).");
 }

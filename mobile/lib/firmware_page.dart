@@ -6,6 +6,7 @@ import 'api.dart';
 import 'documents.dart';
 import 'firmware.dart';
 import 'icons.dart';
+import 'workspace_widgets.dart';
 
 class FirmwarePage extends StatefulWidget {
   const FirmwarePage({
@@ -253,18 +254,14 @@ class _FirmwarePageState extends State<FirmwarePage> {
             ? '${bytes.length}-byte stored backup exported to the new document.'
             : 'Export cancelled; no document written.';
       }, mutation: false);
-  Widget card(String title, List<Widget> children) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 16),
-          ...children,
-        ],
-      ),
-    ),
+  Widget card(String title, List<Widget> children) => WorkspaceSection(
+    title: title,
+    icon: title.startsWith('Remote')
+        ? PakarIcons.cloud
+        : title.startsWith('Observed')
+        ? PakarIcons.clock
+        : PakarIcons.cpu,
+    children: children,
   );
   Widget button(
     String text,
@@ -288,6 +285,11 @@ class _FirmwarePageState extends State<FirmwarePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const WorkspaceHeader(
+          title: 'Firmware',
+          icon: PakarIcons.cpu,
+          subtitle: 'Updates and recovery',
+        ),
         card('Remote firmware · pinned manifest', [
           const Text(
             'HTTPS download → verified staging → explicit apply → post-boot pair verification. No automatic replay.',
@@ -474,7 +476,7 @@ class _FirmwarePageState extends State<FirmwarePage> {
         if (ota)
           card('Manual ESP OTA', [
             const Text(
-              'For a known complete ESP8266 binary only. Pinned remote coordinated updates are preferred. Reconnect and read the actual running version after reboot.',
+              'Import a complete application binary for this ESP. The device restarts after updating.',
             ),
             const SizedBox(height: 12),
             button(

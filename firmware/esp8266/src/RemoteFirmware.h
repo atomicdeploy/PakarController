@@ -14,6 +14,7 @@
 #include "FirmwarePlatform.h"
 #include <memory>
 #include "RemotePolicy.h"
+#include "UpdateProgress.h"
 
 #ifndef PAKAR_USE_BUSY_WIRE
 #define PAKAR_USE_BUSY_WIRE 1
@@ -46,6 +47,7 @@ class RemoteFirmware {
   }
   bool applying() const;
   bool rebooting() const { return phase_==Rebooting; }
+  uint32_t jobId() const { return id_; }
   bool ownsEspStage() const { return phase_==Ready && (plan_.targets&RemotePolicy::Esp); }
 #if defined(ARDUINO_ARCH_ESP32)
   uint32_t stagedEspSize() const {return ownsEspStage()?espStage_.size():0;}
@@ -53,6 +55,11 @@ class RemoteFirmware {
     return ownsEspStage() && espStage_.read(offset,out,bytes);
   }
 #endif
+  PakarUpdate::Observation progress() const {
+    const bool transfer=phase_==DownloadEsp || phase_==DownloadAvr;
+    return {PakarUpdate::Phase::Receiving,transfer?transfer_.received:0,
+            transfer?transfer_.expected:0};
+  }
   String json() const;
   const String &error() const { return error_; }
   const char *phase() const;

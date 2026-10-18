@@ -1,7 +1,15 @@
 # PakarController mobile
 
-The Devices page now scans mDNS/DNS-SD, SSDP and MNDP and saves independent
-local/remote profiles with secure credentials. Actual board type/capabilities
+The Devices page scans mDNS/DNS-SD, SSDP and MNDP into one searchable directory
+with saved local/remote profiles. Compatible observations merge by board ID,
+UDN, normalized MAC and IP/origin aliases; conflicting board IDs are not merged
+just because DHCP reused an address. Saved names survive discovery, and saved
+profiles not reached in the latest scan dim without disabling a manual retry.
+DNS-SD retains the actual ESP hostname/IPv4 correlation when ordinary Android
+`.local` resolution is unavailable. Passwords are optional: new profiles need
+none, existing profile edits can keep/replace/clear one, and connection prompts
+only after HTTP401. Credentials stay in secure storage, never advertisements.
+Actual board type/capabilities
 are detected after selection, not invented by profile labels. The app-bar
 context menu opens separate Firmware and Advanced MQTT/bridge pages. Firmware
 supports uploads, SHA-256-pinned coordinated remote staging/apply, stored AVR
@@ -13,11 +21,23 @@ remote commands/firmware staging are opt-in, duplicate/retained/stale requests
 fail closed, and no lost command is replayed. See
 [the contracts and remaining acceptance](../docs/MOBILE-NETWORK-WORKSPACE.md).
 
+Discovery now performs bounded, credential-free public XML/status probes before
+showing a nearby candidate. Generic HTTP/SSDP/router MNDP advertisements are not
+compatible-board proof. XML compatibility is not authentication: selected-peer
+capability, hostname, board and boot checks still own control authorization.
+Read-only probes and authenticated API reads do not follow redirects.
+
+`app_theme.dart` and `workspace_widgets.dart` own the shared Studio typography,
+surfaces, stable field outlines, page headers, grouped sections and badges across
+Devices, connection preferences, device settings, firmware and Android bridge.
+The bridge uses Session/MQTT/WebSocket/Routing navigation with retained drafts.
+Renderer captures use that same application theme rather than a mock palette.
+
 The Flutter control surface targets Android phones and tablets with the same
 truthful board-state contract as the native and embedded Web interfaces.
 
 It provides the row-major 80-cell table with the physical/logical identity
-editor and half-cell column stagger, game modes, front-panel marquee and live
+editor and half-cell column/row stagger, game modes, front-panel marquee and live
 seven-segment preview, hardware/discovery state, and persistent authenticated
 connection preferences. The user-facing endpoint defaults to
 `http://ledboard.local`; any valid renamed `.local` hostname is supported. An SSDP origin is used only as a matching identity-checked
@@ -29,7 +49,14 @@ palette roles. Logical-ID search supports exact numbers and ranges with
 one shared selection; alternating colors are on cells, not column backgrounds,
 and odd columns use +0.5. Finding or tapping selects without physical writes;
 explicit bulk output stops at the first failed/uncertain command. Indicators
-are optional and initially hidden. Neutral animated inside outlines do not
+are optional and initially hidden. The display starts `1, 11, 2, 12…`: cell 1 is
+at the upper-left, and 11 is to its right and half a cell lower. Alternate display
+rows shift half a cell right. The preview uses 1.5-cell row spacing to keep square
+touch targets disjoint; exact physical row spacing still needs user confirmation.
+RTL changes application text direction, not the physical table orientation. The
+canvas includes the final half-cell offset and pans horizontally rather than
+shrinking phone targets. Display coordinates never rewrite logical IDs or the
+device's independent physical chain mapping. Neutral animated inside outlines do not
 change cell geometry or conflict with selection.
 Unknown board state is not displayed as zero or a confirmed off cell.
 

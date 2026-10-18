@@ -23,7 +23,9 @@ function Get-PakarCargoTargetDirectory {
         }
         return [IO.Path]::GetFullPath($configured)
     }
-    return (Get-PakarWindowsHostPaths -RepositoryRoot $RepositoryRoot).CargoTargetDirectory
+    # Cache selection is platform-neutral; do not resolve Windows LOCALAPPDATA
+    # just to plan/build the native Rust application on Linux or macOS.
+    return (Join-Path $RepositoryRoot 'desktop/target')
 }
 
 function Get-PakarFileIdentity {

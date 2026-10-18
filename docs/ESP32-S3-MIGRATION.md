@@ -2,9 +2,10 @@
 
 Status: integrated S3 source and native candidate implemented; actual SDK and
 physical acceptance are in progress, **not a completed production delivery**.
-David-ASUS is reachable on SSH port8022. COM22 identifies the actual S3's CH343
-bridge; read-only inventory confirmed16MB flash/8MB PSRAM and a complete private
-flash backup on both PCs. Existing ESP8266 firmware remains a separate target.
+The latest David-ASUS SSH8022 attempt refuses connections. The earlier hardware
+inventory identified the S3's CH343 bridge on COM22,16MB flash/8MB PSRAM and a
+complete private flash backup on both PCs; re-inventory ports before deployment.
+Existing ESP8266 firmware remains a separate target.
 See [commissioning and recovery](ESP32-S3-COMMISSIONING.md) for exact hardware,
 backup hash, guarded build and setup commands. Do not interpret old source-only
 checkpoint statements below as current deployment proof.
@@ -56,27 +57,87 @@ MISO can conflict. A second bus avoids that electrical/ownership problem and
 leaves a path for future network-driven AVR updates, without claiming they work.
 
 All thirteen assigned signals are disjoint and limited to GPIO4..18; UART17/18,
-ISP10..13 and LED4 stay unchanged. GPIO15/16 remain unassigned. These optional
-reservations do not advertise or enable an Ethernet capability yet.
+ISP10..13 and LED4 stay unchanged. GPIO15/16 are reserved for the separate LCD
+bus described below. The optional
+native driver is enabled explicitly with `tools/build-firmware.ps1 -S3Ethernet`
+or `PAKAR_S3_ETHERNET_ENABLED=1`; ordinary builds do not allocate this SPI bus.
 
 Use 3.3 V GPIO signals and short wires. A bare W5500/3.3 V carrier needs a regulated
 3.3 V supply; a breakout's VCC/VIN may instead feed its own regulator and must be
-confirmed from its model/photo. Allow about 150 mA additional supply budget for
+confirmed from its input labels/schematic. Allow about 150 mA additional supply budget for
 the Ethernet module, plus S3/AVR/peripheral load; no DevKit regulator capacity is
 assumed. Do not join independently regulated 3V3 outputs. External 10k pull-ups
 on CS/RSTn to 3.3 V are optional startup hardening when the carrier lacks them.
 Do not power a W5500 3.3 V input at 5 V or tie W5500 reset to AVR reset.
 
 Fully read the installed Arduino-ESP32 3.3.12 SPI.h, ETH.h and actual
-ETH_W5500_Arduino_SPI example. The integration plan uses the core ETH/lwIP path,
+ETH_W5500_Arduino_SPI example. The implementation uses the core ETH/lwIP path,
 not a separate Arduino Ethernet socket stack, so the shared API/WebSocket/OTA
-application can use the same network abstractions. The example's blocking demo
-HTTP loop and unrelated pin defaults are not production integration. DHCP/static
-IP, interface selection, Wi-Fi coexistence, hostname/discovery, authentication,
-OTA/cloud and link-loss behavior remain integration/physical acceptance gates.
+application uses the same network abstractions. The example's blocking demo
+HTTP loop and unrelated pin defaults are not imported. Independent persisted
+DHCP/static settings, Ethernet-preferred IPv4 route selection, Wi-Fi fallback,
+AP coexistence and explicit driver recovery are implemented with host fixtures
+and an actual W5500-enabled SDK build. Local API/WebSocket serving, discovery,
+authentication, Internet firmware fetching, OTA and link-loss behavior still need
+physical acceptance. See the [Ethernet commissioning procedure](ESP32-S3-COMMISSIONING.md#w5500-ethernet-commissioning).
 
 References: [Arduino-ESP32 Ethernet](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/ethernet.html),
 [W5500 electrical/reset specifications](https://docs.wiznet.io/img/products/w5500/w5500_ds_v109e.pdf).
+
+### TM1637 and optional I2C character LCD
+
+| Display | Data | Clock | Bus owner |
+|---|---|---|---|
+| TM1637 | AVR A4 / PC4 → DIO | AVR A5 / PC5 → CLK | AVR, non-I2C |
+| HD44780 + PCF8574 16x2 LCD | S3 GPIO15 → SDA | S3 GPIO16 → SCL | S3 hardware I2C1 |
+
+This is the recommended separate-bus plan; a direct LCD substitution on the
+AVR's same A4/A5 connector is NOT enabled. Never attach both protocols to that
+connector or enable AVR Wire on those occupied pins. W5500, UART, ISP and LED
+pins remain unchanged. The S3 LCD adapter is compiled by default and can be
+excluded with PAKAR_S3_LCD_ENABLED=0 for a different hardware profile.
+
+Power off before inserting/removing either module. A3V3-rated LCD/backpack with
+bus pull-ups to3V3 may connect directly to the S3; a5V module/backpack with5V
+pull-ups needs a bidirectional I2C level shifter and its rated supply. Do not
+assume a PCF8574's supply range proves the LCD glass operates at3V3. Confirm
+LCD voltage/backpack type before power-on; no picture of the S3 is needed.
+See [NXP PCF8574 electrical limits](https://www.nxp.com/docs/en/data-sheet/PCF8574_PCF8574A.pdf)
+and [Espressif S3 electrical characteristics](https://documentation.espressif.com/esp32-s3-wroom-2_datasheet_en.html).
+
+The adapted PCController LCD driver supports the common0x27/0x3F backpack
+mapping at100kHz,16columns/two rows. It does not infer OLED/TFT/20x4 geometry
+or treat an arbitrary I2C ACK as proof of visible characters. Initialization
+is paced through the main loop; all expander writes must ACK. Default text
+shows hostname and selected cell/state, with update-state text during firmware
+maintenance. Bounded unplug/replug discovery reinitializes and replays the
+current desired frame without an MCU reset after an observed outage. If only
+the LCD loses power too briefly for the health probe to observe it, use the
+explicit rescan action; a backpack cannot report the glass's internal reset.
+Each ordinary service performs at
+most one LCD byte (six short I2C transfers); the SDK adapter uses a5ms per-transfer
+timeout, with early stop on the first failure. Measure contention on hardware.
+
+GET `/api/display/lcd` and `status.lcd` expose detection, initialization,
+completed-frame availability, actual address, two padded rows and requested/
+presented revisions. POST form `action=present&line1=...&line2=...&hold_ms=5000`
+queues a finite ASCII presentation (each row≤16,hold1..60000ms); a202 is only
+admission. Read `pending=false` and matching presented/requested revisions.
+`action=release` restores standalone text; `action=rescan` starts explicit
+rediscovery. Normal access/board/boot fencing and maintenance guards apply.
+Desktop, Web and Flutter previews require the individual lcd capability plus
+complete initialized-frame evidence, and disappear on loss. They mirror the
+last completed driver frame, not an optical sensor. Full native/mobile LCD
+editors and USB LCD mutation contracts remain pending; no Wi-Fi fallback is
+introduced for USB mode. S3 JSON snapshots preserve read-only USB preview data.
+
+TM1637 detection continues to use actual AVR ninth-clock ACK and cached-frame/
+brightness replay. Status now distinguishes detection_known, detected and null
+Unknown on expired/missing AVR evidence; legacy tm1637_ack also becomes false
+when stale. Build/host tests are not a physically verified insertion/recovery
+gate. Deploy the candidate and commission both actual displays when ASUS access
+returns, then verify segments/characters, brightness/contrast and simultaneous
+W5500/LED traffic. No display hardware test was performed in this checkpoint.
 
 TM1637 stays on AVR A4/DIO and A5/CLK; buzzer stays on AVR D9. These are not
 I2C modules. Reserve S3 GPIO19/20 for native USB, GPIO43/44 for bridge UART;

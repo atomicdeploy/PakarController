@@ -1,5 +1,6 @@
 #include "CloudServices.h"
 #include <ArduinoJson.h>
+#include <time.h>
 #if defined(ESP32)
 #include <esp_random.h>
 #include <mbedtls/base64.h>
@@ -52,6 +53,18 @@ BearSSL::X509List trustAnchor(kIsrgRootX1);
 #endif
 }  // namespace
 
+void CloudWebSocketClient::serviceExistingConnection() {
+  // Actual WebSocketsClient::loop connected branch, deliberately without its
+  // allocation/connect branch. A TCP loss can clean up, never reconnect here.
+  if (!clientIsConnected(&_client)) return;
+  handleClientData();
+  yield();
+  if (_client.status == WSC_CONNECTED) {
+    handleHBPing();
+    handleHBTimeout(&_client);
+  }
+}
+
 CloudServices cloudServices;
 const char *pakarTrustAnchorPem() { return kIsrgRootX1; }
 #if !defined(ESP32)
@@ -59,8 +72,11 @@ BearSSL::X509List &pakarTrustAnchor() { return trustAnchor; }
 #endif
 
 void CloudServices::begin(const String &deviceId, CommandHandler handler,
-                          StatusProvider statusProvider,StatusProvider telemetryProvider) {
+                          StatusProvider statusProvider,StatusProvider telemetryProvider,
+                          const String &boardId,const String &bootId) {
   deviceId_ = deviceId;
+  boardId_=boardId;bootId_=bootId;
+  commandGuard_.setIdentity(boardId.c_str(),bootId.c_str());
   commandHandler_ = handler;
   statusProvider_ = statusProvider;
   telemetryProvider_=telemetryProvider;
@@ -92,7 +108,21 @@ void CloudServices::begin(const String &deviceId, CommandHandler handler,
 }
 void CloudServices::suspend() {
   networkReady_ = false;
-  mqtt_.disconnect();secureClient_.stop();plainClient_.stop();webSocket_.disconnect();
+  nextMqttAttemptAt_ = 0; // A later route generation must not inherit an aged retry deadline.
+  closeMqtt();webSocket_.disconnect();
+}
+
+void CloudServices::closeMqtt() {
+  if(mqtt_.connected()) {
+    // The current config/name may already have changed. Publish against the
+    // exact topic registered with this session's LWT, never the new identity.
+    const bool written=availabilityTopic_.length() &&
+        publishMqtt(availabilityTopic_,String(F("offline")),true);
+    if(written) mqtt_.disconnect();
+    // Otherwise drop TCP without MQTT DISCONNECT so the broker can emit LWT.
+    // QoS0 write acceptance is not a broker acknowledgement.
+  }
+  secureClient_.stop();plainClient_.stop();availabilityTopic_=String();
 }
 
 String CloudServices::topic(const __FlashStringHelper *suffix) const {
@@ -105,16 +135,12 @@ String CloudServices::topic(const __FlashStringHelper *suffix) const {
 
 void CloudServices::renameDevice(const String &deviceId) {
   if (deviceId_ == deviceId) return;
-  if (mqtt_.connected()) {
-    mqtt_.publish(topic(F("/availability")).c_str(), "offline", true);
-    mqtt_.disconnect();
-  }
   deviceId_ = deviceId;
   applyConfiguration();
 }
 
 void CloudServices::applyConfiguration() {
-  if (mqtt_.connected()) mqtt_.disconnect();
+  closeMqtt();
   webSocket_.disconnect();
   webSocketConfigured_ = false;
   nextMqttAttemptAt_ = 0;
@@ -155,23 +181,31 @@ void CloudServices::configureWebSocket() {
 
 void CloudServices::connectMqtt(uint32_t now) {
   if (!cloudConfig.mqttEnabled() || mqtt_.connected() ||
-      static_cast<int32_t>(now - nextMqttAttemptAt_) < 0) {
+      (nextMqttAttemptAt_ && static_cast<int32_t>(now - nextMqttAttemptAt_) < 0)) {
     return;
   }
   nextMqttAttemptAt_ = now + 10000U;
+  const char *clientId=BoardCore::PeerFence::boardValid(boardId_.c_str())?
+      boardId_.c_str():telemetryBoot_.c_str();
+  if(!clientId[0]) {lastError_=F("Unique MQTT client identity unavailable");return;}
   const String availability = topic(F("/availability"));
   bool connected = false;
   if (cloudConfig.mqttUser()[0] != '\0') {
-    connected = mqtt_.connect(deviceId_.c_str(), cloudConfig.mqttUser(),
+    connected = mqtt_.connect(clientId, cloudConfig.mqttUser(),
                               cloudConfig.mqttPassword(),
                               availability.c_str(), 0, true, "offline");
   } else {
-    connected = mqtt_.connect(deviceId_.c_str(), availability.c_str(), 0,
+    connected = mqtt_.connect(clientId, availability.c_str(), 0,
                               true, "offline");
   }
   if (!connected) {
     lastError_ = String(F("MQTT connect failed, state ")) + mqtt_.state();
     return;
+  }
+  availabilityTopic_=availability;
+  if(availabilityTopic_.length()!=availability.length()) {
+    secureClient_.stop();plainClient_.stop();availabilityTopic_=String();
+    lastError_=F("MQTT availability identity allocation failed");return;
   }
   lastError_ = String();
   mqtt_.publish(availability.c_str(), "online", true);
@@ -179,21 +213,42 @@ void CloudServices::connectMqtt(uint32_t now) {
   mqtt_.subscribe(command.c_str());
 }
 
-void CloudServices::publishTelemetry(const String &statusJson, uint32_t now) {
+bool CloudServices::publishMqtt(const String &destination,const String &json,bool retained) {
+  // PubSubClient's publish() buffers the entire payload. beginPublish streams a
+  // bounded JSON snapshot without increasing the shared 2048-byte RX buffer.
+  if (!mqtt_.connected() || json.length()>16384 || destination.length()>192) return false;
+  if (!mqtt_.beginPublish(destination.c_str(),json.length(),retained)) {
+    secureClient_.stop();plainClient_.stop();return false;
+  }
+  for(size_t offset=0;offset<json.length();offset+=256) {
+    const size_t bytes=min<size_t>(256,json.length()-offset);
+    if(mqtt_.write(reinterpret_cast<const uint8_t*>(json.c_str()+offset),bytes)!=bytes) {
+      // A partially written PUBLISH cannot be repaired with another packet or
+      // replayed. Drop TCP directly; MQTT DISCONNECT would corrupt its payload.
+      secureClient_.stop();plainClient_.stop();return false;
+    }
+    yield();
+  }
+  // Upstream endPublish() is not a broker PUBACK (QoS0); this is write evidence.
+  return mqtt_.endPublish()==1;
+}
+
+void CloudServices::publishTelemetry(const String &statusJson, uint32_t now,bool includeFullTelemetry) {
   const uint32_t interval =
       static_cast<uint32_t>(cloudConfig.telemetrySeconds()) * 1000U;
   if (static_cast<uint32_t>(now - lastTelemetryAt_) < interval) return;
   lastTelemetryAt_ = now;
+  if(statusJson.length()>16384) {lastError_=F("Status exceeds bounded snapshot size");return;}
   if (mqtt_.connected()) {
     const String statusTopic = topic(F("/status"));
-    if (!mqtt_.publish(statusTopic.c_str(), statusJson.c_str(), true)) {
+    if (!publishMqtt(statusTopic,statusJson,true)) {
       lastError_ = F("MQTT status publish failed");
     }
   }
   if (webSocket_.isConnected()) {
     webSocket_.sendTXT(statusJson.c_str());
   }
-  if(telemetryProvider_ && (mqtt_.connected() || webSocket_.isConnected())) {
+  if(includeFullTelemetry && telemetryProvider_ && (mqtt_.connected() || webSocket_.isConnected())) {
     const String full=telemetryProvider_();
     if(full.length()>16384) {lastError_=F("Telemetry exceeds bounded snapshot size");return;}
     if(webSocket_.isConnected()) webSocket_.sendTXT(full.c_str());
@@ -240,7 +295,8 @@ void CloudServices::publishTelemetry(const String &statusJson, uint32_t now) {
   }
 }
 
-void CloudServices::service(bool networkReady, bool timeReady, uint32_t now) {
+void CloudServices::service(bool networkReady, bool timeReady, uint32_t now,
+                            bool allowConnect,bool includeFullTelemetry) {
   if (!networkReady) {
     if (networkReady_) suspend(); // Drop stale cloud sessions once per link loss.
     return;
@@ -248,38 +304,82 @@ void CloudServices::service(bool networkReady, bool timeReady, uint32_t now) {
   networkReady_ = true;
   if (cloudConfig.mqttEnabled() &&
       (!cloudConfig.mqttTls() || timeReady)) {
-    connectMqtt(now);
-    mqtt_.loop();
+    if(allowConnect) connectMqtt(now);
+    if(mqtt_.connected()) mqtt_.loop();
   }
   if (webSocketConfigured_ &&
       (!cloudConfig.webSocketTls() || timeReady)) {
-    webSocket_.loop();
+    if(allowConnect) webSocket_.loop();
+    else webSocket_.serviceExistingConnection();
   }
   const uint32_t interval =
       static_cast<uint32_t>(cloudConfig.telemetrySeconds()) * 1000U;
-  if (statusProvider_ != nullptr &&
+  if (statusProvider_ != nullptr && (mqtt_.connected() || webSocket_.isConnected()) &&
       static_cast<uint32_t>(now - lastTelemetryAt_) >= interval) {
-    publishTelemetry(statusProvider_(), now);
+    publishTelemetry(statusProvider_(), now,includeFullTelemetry);
   }
 }
 
 void CloudServices::handleCommand(const uint8_t *payload, size_t length,
                                   bool fromMqtt) {
-  if (payload == nullptr || length == 0 || length > 1024) {
+  if (payload == nullptr || length == 0 || length > 1024 || memchr(payload,0,length)) {
     lastError_ = F("cloud command length is invalid");
+    commandReply(fromMqtt,"invalid_json",nullptr,false,lastError_);
     return;
   }
+  JsonDocument document;
+  if(deserializeJson(document,payload,length) || !document.is<JsonObject>() ||
+     !document["command"].is<const char*>()) {
+    lastError_=F("Cloud command must be a JSON object with a command string");
+    commandReply(fromMqtt,"invalid_json",nullptr,false,lastError_);return;
+  }
+  auto wholeString=[&document](const char *key)->const char* {
+    if(!document[key].is<const char*>())return nullptr;
+    const JsonString value=document[key].as<JsonString>();
+    return value.c_str() && strlen(value.c_str())==value.size()?value.c_str():nullptr;
+  };
+  const char *command=wholeString("command"),*requestId=wholeString("request_id");
+  const char *replyId=requestId && strlen(requestId)<=40?requestId:nullptr;
+  const bool readOnly=BoardCore::CloudCommand::Guard::readOnly(command);
+  if(!command || (!readOnly && (!wholeString("board_id") || !wholeString("boot_id") ||
+      !requestId || !document["expires_at"].is<uint32_t>()))) {
+    lastError_=F("Mutation requires typed board_id, boot_id, request_id and expires_at UTC seconds");
+    commandReply(fromMqtt,"invalid_envelope",replyId,false,lastError_);return;
+  }
+  const time_t clock=time(nullptr);
+  const uint32_t epoch=clock>=1700000000 && static_cast<uint64_t>(clock)<=UINT32_MAX?
+      static_cast<uint32_t>(clock):0;
+  const auto admission=commandGuard_.admit(command,wholeString("board_id"),wholeString("boot_id"),
+      requestId,document["expires_at"]|uint32_t(0),epoch,millis());
+  if(admission!=BoardCore::CloudCommand::Result::Allowed) {
+    lastError_=String(F("Cloud command rejected: "))+BoardCore::CloudCommand::code(admission);
+    commandReply(fromMqtt,BoardCore::CloudCommand::code(admission),replyId,false,lastError_);return;
+  }
+  // ID already consumed. A lost reply, handler rejection or duplicate arriving
+  // through the other cloud channel cannot dispatch the mutation a second time.
   String message;
-  message.reserve(length);
-  message.concat(reinterpret_cast<const char *>(payload), length);
+  const size_t normalizedBytes=measureJson(document);
+  if(serializeJson(document,message)!=normalizedBytes || message.length()!=normalizedBytes) {
+    lastError_=F("Cloud JSON normalization failed; nothing dispatched or replayed");
+    commandReply(fromMqtt,"normalization_failed",replyId,false,lastError_);return;
+  }
+  // The existing handler has lightweight string helpers. Forward the SAME
+  // parsed document, never ambiguous duplicate keys/escaped raw key spellings
+  // that those helpers could interpret differently from this admission policy.
   String result;
   const bool accepted =
       commandHandler_ != nullptr && commandHandler_(message, result);
-  JsonDocument reply;reply["accepted"]=accepted;reply["message"]=result;
+  commandReply(fromMqtt,accepted?"accepted":"handler_rejected",replyId,accepted,result);
+}
+
+void CloudServices::commandReply(bool fromMqtt,const char *code,const char *requestId,
+                                  bool accepted,const String &message) {
+  JsonDocument reply;reply["accepted"]=accepted;reply["message"]=message;
+  reply["code"]=code;reply["request_id"]=requestId;
   String response;serializeJson(reply,response);
   if (fromMqtt && mqtt_.connected()) {
     const String eventTopic = topic(F("/event"));
-    mqtt_.publish(eventTopic.c_str(), response.c_str(), false);
+    if(!publishMqtt(eventTopic,response,false))lastError_=F("MQTT command reply write failed; not replayed");
   } else if (!fromMqtt && webSocket_.isConnected()) {
     webSocket_.sendTXT(response);
   }
@@ -294,7 +394,7 @@ void CloudServices::mqttCallback(char *, uint8_t *payload,
 void CloudServices::publishEvent(const String &event) {
   if (mqtt_.connected()) {
     const String destination = topic(F("/event"));
-    mqtt_.publish(destination.c_str(), event.c_str(), false);
+    if(!publishMqtt(destination,event,false))lastError_=F("MQTT event write failed; not replayed");
   }
   if (webSocket_.isConnected()) webSocket_.sendTXT(event.c_str());
 }
@@ -303,9 +403,13 @@ void CloudServices::webSocketEvent(WStype_t type, uint8_t *payload,
                                    size_t length) {
   if (type == WStype_CONNECTED) {
     cloudServices.lastError_ = String();
-    String hello = F("{\"type\":\"hello\",\"device\":\"");
-    hello += cloudServices.deviceId_;
-    hello += F("\"}");
+    JsonDocument identity;identity["type"]="hello";identity["device"]=cloudServices.deviceId_;
+    identity["board_id"]=cloudServices.boardId_;identity["boot_id"]=cloudServices.bootId_;
+    identity["command_fencing"]=BoardCore::PeerFence::ready(cloudServices.boardId_.c_str(),cloudServices.bootId_.c_str());
+    identity["command_envelope"]=F("board_id,boot_id,request_id,expires_at");
+    identity["expires_at_unit"]=F("unix_seconds");identity["maximum_command_lifetime_seconds"]=60;
+    identity["command_capacity"]=BoardCore::CloudCommand::Guard::kCapacity;
+    String hello;serializeJson(identity,hello);
     cloudServices.webSocket_.sendTXT(hello);
   } else if (type == WStype_TEXT) {
     ++cloudServices.webSocketMessagesReceived_;

@@ -6,12 +6,13 @@ use crate::{
 };
 use eframe::egui;
 use super::dropdown::DropdownUiExt;
-pub const PAGES: [&str; 5] = [
+pub const PAGES: [&str; 6] = [
     "appearance",
     "application",
     "connection",
     "workspace",
     "notifications",
+    "board",
 ];
 pub fn page_index(name: &str) -> Option<usize> {
     PAGES.iter().position(|page| *page == name)
@@ -78,6 +79,44 @@ struct Outcome {
     discard: bool,
     test_notification: bool,
     connection_settings: bool,
+    device_settings: bool,
+    board_action: Option<Option<bool>>,
+}
+struct BoardView {
+    available: bool,
+    device_available: bool,
+    ready: bool,
+    value: Option<bool>,
+    pending: bool,
+    persisted: bool,
+    message: String,
+}
+fn board_controls(ui: &mut egui::Ui, board: &BoardView) -> Option<Option<bool>> {
+    let mut action = None;
+    dialog::section(ui, icons::SPEAKER_SLASH, "Board sound", |ui| {
+        // Donor board_info settings are board-owned, not AppConfig drafts.
+        // Unknown is a visible state, never an unchecked/false checkbox.
+        dialog::setting_row(ui, icons::SPEAKER_SLASH, "Silent mode", None, |ui| {
+            if let Some(mut value) = board.value {
+                let label = super::i18n::text(if value { "On" } else { "Off" });
+                if ui.add_enabled(board.ready && !board.pending,
+                    egui::Checkbox::new(&mut value, label)).changed() {
+                    action = Some(Some(value));
+                }
+            } else { ui.weak(super::i18n::text("Unknown")); }
+            if board.pending { ui.spinner(); }
+        });
+        ui.label(egui::RichText::new(super::i18n::text(
+            "Mutes the physical board buzzer, including welcome and menu sounds. Saved directly on the board; Windows notification sound is separate.")).small().weak());
+        if !board.ready { ui.weak(super::i18n::text("Programming safety keeps the board muted.")); }
+        if ui.add_enabled(board.ready && !board.pending,
+            egui::Button::new(format!("{}  {}", icons::ARROW_CLOCKWISE, super::i18n::text("Refresh")))).clicked() {
+            action = Some(None);
+        }
+        if !board.message.is_empty() { ui.weak(&board.message); }
+        if board.value.is_some() && !board.persisted { ui.weak(super::i18n::text("Not persisted")); }
+    });
+    action
 }
 fn connection_summary(draft: &PreferencesDraft, ui: &mut egui::Ui) -> egui::Response {
     let config = &draft.config;
@@ -91,15 +130,20 @@ fn connection_summary(draft: &PreferencesDraft, ui: &mut egui::Ui) -> egui::Resp
     ui.add_enabled(!draft.is_dirty(), egui::Button::new(format!("{}  Connection settings…", icons::GEAR)))
         .on_disabled_hover_text("Save or discard preference changes before opening connection settings.")
 }
-fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
+fn device_settings_link(draft: &PreferencesDraft, ui: &mut egui::Ui) -> egui::Response {
+    ui.weak("Board identity, network, LEDs, front panel and AVR parameters belong to the connected device, not this PC.");
+    ui.add_enabled(!draft.is_dirty(),egui::Button::new(format!("{}  Device settings…",icons::CIRCUITRY)))
+        .on_disabled_hover_text("Save or discard application preference changes before opening device settings.")
+}
+fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &BoardView) -> Outcome {
     crate::config::set_live(&draft.config);
     ui.with_layout(
         super::i18n::vertical_layout(crate::config::resolved_rtl(&draft.config)),
-        |ui| editor_contents(draft, ui),
+        |ui| editor_contents(draft, ui, board),
     )
     .inner
 }
-fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
+fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &BoardView) -> Outcome {
     let mut outcome = Outcome::default();
     ui.horizontal(|ui| {
         ui.label(icons::MAGNIFYING_GLASS);
@@ -112,7 +156,8 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
     let body_height = (ui.available_height() - 48.0).max(260.0);
     ui.allocate_ui_with_layout(egui::vec2(ui.available_width(),body_height),super::i18n::layout(crate::config::resolved_rtl(&draft.config),egui::Align::Min),|ui|{
         ui.allocate_ui_with_layout(egui::vec2(142.0,body_height),super::i18n::vertical_layout(crate::config::resolved_rtl(&draft.config)),|ui|{
-            for (tab,icon,title) in [(0,icons::PALETTE,"Appearance"),(1,icons::APP_WINDOW,"Application"),(2,icons::PLUG,"Connection"),(3,icons::TABS,"Workspace"),(4,icons::INFO,"Notifications")] {
+            for (tab,icon,title) in [(0,icons::PALETTE,"Appearance"),(1,icons::APP_WINDOW,"Application"),(2,icons::PLUG,"Connection"),(3,icons::TABS,"Workspace"),(4,icons::INFO,"Notifications"),(5,icons::CIRCUITRY,"Board")] {
+                if tab==5 && !board.device_available { continue; }
                 if dialog::navigation_button(ui,draft.tab==tab,icon,&super::i18n::text(title),138.0).clicked(){draft.tab=tab;}
             }
         });
@@ -128,6 +173,13 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui) -> Outcome {
                         if draft.matches("Language System Persian English"){dialog::setting_row(ui,icons::GLOBE,"Language",None,|ui|{super::dropdown::ComboBox::from_id_salt("language").selected_text(super::i18n::text(&format!("{:?}",draft.config.language))).show_ui(ui,|ui|{ui.dropdown_value(&mut draft.config.language,AppLanguage::System,super::i18n::text("System language"));ui.dropdown_value(&mut draft.config.language,AppLanguage::English,"English");ui.dropdown_value(&mut draft.config.language,AppLanguage::Persian,"فارسی");});});}
                         if draft.matches("Direction automatic RTL LTR"){dialog::setting_row(ui,icons::GLOBE,"Direction",None,|ui|{super::dropdown::ComboBox::from_id_salt("direction").selected_text(match draft.config.direction{AppDirection::Auto=>super::i18n::text("Automatic"),AppDirection::Ltr=>super::i18n::text("Left to right"),AppDirection::Rtl=>super::i18n::text("Right to left")}).show_ui(ui,|ui|{for(d,label)in[(AppDirection::Auto,"Automatic"),(AppDirection::Ltr,"Left to right"),(AppDirection::Rtl,"Right to left")]{ui.dropdown_value(&mut draft.config.direction,d,super::i18n::text(label));}});});}
                     });ui.add_space(8.0);
+                }
+                if board.device_available && (draft.tab==5||!draft.search.is_empty()) && draft.matches("Board settings device identity network LEDs front panel AVR silent mode buzzer sound") {
+                    dialog::section(ui,icons::CIRCUITRY,"Device settings",|ui| {
+                        outcome.device_settings=device_settings_link(draft,ui).clicked();
+                    });
+                    if board.available { outcome.board_action = board_controls(ui, board); }
+                    ui.add_space(8.0);
                 }
                 if draft.tab==1||!draft.search.is_empty(){
                     dialog::section(ui,icons::APP_WINDOW,"Application",|ui|{
@@ -226,6 +278,20 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
         return;
     };
     draft.sync_connection_owner(app.transport, app.connection_enabled, &app.base, &app.user, &app.serial_port);
+    app.board_silent.expire();
+    let status = app.live_status();
+    let available = status.is_some_and(crate::board_silent::supported);
+    let device_available = status.is_some_and(|s| s.capabilities.is_some());
+    let ready = available && status.is_some_and(|s| !s.programming_latch);
+    let peer = status.and_then(crate::peer_http::Pin::from_status);
+    if ready && app.board_silent.needs_refresh() { app.request_board_silent(None); }
+    let board = BoardView {
+        available, device_available, ready,
+        value: app.board_silent.value(peer.as_ref(), app.command_route()),
+        pending: app.board_silent.pending.is_some(), persisted: app.board_silent.persisted(),
+        message: app.board_silent.message.clone(),
+    };
+    if draft.tab == 5 && !board.device_available { draft.tab = 2; }
     if draft.tab == 4 {
         let status = app.notification_snapshot();
         draft.status = format!(
@@ -253,7 +319,7 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
                 }
                 egui::CentralPanel::default().show(child, |ui| {
                     egui::Frame::new().inner_margin(12).show(ui, |ui| {
-                        outcome = editor(&mut draft, ui);
+                        outcome = editor(&mut draft, ui, &board);
                     });
                 });
                 if dialog::escape_pressed(child) {
@@ -279,12 +345,13 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
             .frame(dialog::opaque_window_frame_from_context(ctx))
             .collapsible(false)
             .show(ctx, |ui| {
-                outcome = editor(&mut draft, ui);
+                outcome = editor(&mut draft, ui, &board);
             });
         if dialog::escape_pressed(ctx) {
             outcome.close = true;
         }
     }
+    if let Some(action) = outcome.board_action { app.request_board_silent(action); }
     if outcome.test_notification {
         app.notification_test();
     }
@@ -292,6 +359,12 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
         app.show_connection = true;
         crate::config::apply(ctx, &app.config);
         return; // Close only this clean Preferences editor; the canonical dialog owns connection edits.
+    }
+    if outcome.device_settings && !draft.is_dirty() {
+        app.device_settings.open=true;
+        app.device_settings.page=0;
+        crate::config::apply(ctx,&app.config);
+        return;
     }
     if outcome.save {
         // Layout belongs to the workspace and can change while Preferences is open.
@@ -328,6 +401,37 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn board_silent_preferences_distinguish_unknown_from_off_without_editing_app_config() {
+        let saved = AppConfig::default();
+        let draft = PreferencesDraft::new(saved.clone());
+        for value in [None, Some(false), Some(true)] {
+            let ctx = egui::Context::default();
+            let board = BoardView { available: true, device_available: true, ready: true, value, pending: false, persisted: true, message: String::new() };
+            let mut action = None;
+            let mut output = ctx.run_ui(egui::RawInput::default(), |ui| { action = board_controls(ui, &board); });
+            output.textures_delta.clear();
+            let texts: Vec<_> = output.shapes.iter().filter_map(|s| match &s.shape {
+                egui::epaint::Shape::Text(t) => Some(t.galley.job.text.as_str()), _ => None,
+            }).collect();
+            assert!(texts.contains(&super::super::i18n::text(match value { None => "Unknown", Some(false) => "Off", Some(true) => "On" }).as_str()));
+            assert!(action.is_none());
+            assert_eq!(draft.config, saved); assert!(!draft.is_dirty());
+        }
+        assert_eq!(page_index("board"), Some(5));
+    }
+    #[test]
+    fn board_settings_navigation_preserves_unsaved_application_preferences() {
+        for dirty in [false,true] {
+            let ctx=egui::Context::default();
+            let mut draft=PreferencesDraft::new(AppConfig::default());
+            if dirty { draft.config.ui_scale=1.25; }
+            let before=draft.config.clone(); let mut enabled=false;
+            let mut output=ctx.run_ui(egui::RawInput::default(),|ui| { enabled=device_settings_link(&draft,ui).enabled(); });
+            output.textures_delta.clear();
+            assert_eq!(enabled,!dirty); assert_eq!(draft.config,before);
+        }
+    }
     #[test]
     fn draft_preview_and_cancel_preserve_saved_preferences() {
         let saved = AppConfig::default();

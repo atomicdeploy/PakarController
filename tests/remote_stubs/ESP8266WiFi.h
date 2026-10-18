@@ -16,6 +16,7 @@ class WiFiClient{
 constexpr uint8_t FM_UNKNOWN=255;
 class TestEsp{
  public:std::vector<uint8_t>flash;bool crc=true;unsigned restarts=0;uint32_t heap=50000;
+ uint32_t getFlashChipSpeed()const{return 80000000;}
  uint32_t getFreeHeap()const{return heap;}uint32_t getMaxFreeBlockSize()const{return heap;}
  uint8_t getFlashChipMode()const{return 2;}uint32_t getFreeSketchSpace()const{return 1048576;}
  // Metadata-only SDK doubles. Actual flash-boundary interception is exercised

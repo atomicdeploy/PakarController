@@ -6,34 +6,36 @@ const source=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.
 const script=source.match(/<script>([\s\S]*?)<\/script>/)[1];
 // Execute the actual embedded Web application with a DOM/HTTP test double.
 // These fixtures are not hardware observations or live firmware proof.
-function element(){return {value:'',checked:false,hidden:false,textContent:'',className:'',children:[],get options(){return this.children},replaceChildren(...e){this.children=[...e]},dataset:{},style:{},listeners:{},classList:{toggle(){}},appendChild(e){this.children.push(e)},append(...e){this.children.push(...e)},setAttribute(){},addEventListener(type,handler){this.listeners[type]=handler},querySelector(){return null},querySelectorAll(){return []}}}
+function element(){return {showModal(){this.open=true},close(){this.open=false},value:'',checked:false,hidden:false,textContent:'',className:'',children:[],get options(){return this.children},replaceChildren(...e){this.children=[...e]},dataset:{},style:{},listeners:{},classList:{toggle(){}},appendChild(e){this.children.push(e)},append(...e){this.children.push(...e)},setAttribute(){},addEventListener(type,handler){const previous=this.listeners[type];this.listeners[type]=(...args)=>{previous?.(...args);return handler(...args)}},querySelector(){return null},querySelectorAll(){return []}}}
 const nodes=Object.fromEntries([...source.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],element()]));
 nodes.workspace.hidden=true;
+let authEnabled=true,failStatus=false;
 let signedIn=false,user='admin',password='pakarcontroller',socketCount=0,statusRequests=0,hostname='test-fixture',displayName='Fixture table';
 const calls=[];
 const context=vm.createContext({...nodes,Headers,AbortController,URLSearchParams,FormData,Uint8Array,TextEncoder,DataView,atob,console,
   performance,crypto:webcrypto,navigator:{platform:'fixture',hardwareConcurrency:4},screen:{width:1280,height:720},
-  document:{documentElement:{dataset:{},style:{setProperty(){}}},querySelector:s=>nodes[s.slice(1)],querySelectorAll:()=>[],createElement:element,createTextNode:text=>({textContent:text}),createElementNS:()=>({...element(),namespaceURI:'svg'})},
+  document:{getElementById:id=>nodes[id]||null,addEventListener(){},documentElement:{dataset:{},style:{setProperty(){}}},querySelector:s=>nodes[s.slice(1)],querySelectorAll:()=>[],createElement:element,createTextNode:text=>({textContent:text}),createElementNS:()=>({...element(),namespaceURI:'svg'})},
   location:{protocol:'http:',host:'pakarcontroller'},setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},
   WebSocket:class {constructor(){socketCount++;this.readyState=1;this.bufferedAmount=0}close(){this.readyState=3}send(){}},
   fetch:async(path,options={})=>{
     calls.push({path,options});let code=200,body={};
-    if(path==='/api/auth/info')body={ready:true,username:user,default_credentials:password==='pakarcontroller'};
+    if(path==='/api/auth/info')body={ready:true,enabled:authEnabled,username:user,default_credentials:authEnabled&&password==='pakarcontroller'};
     else if(path==='/login'){
       signedIn=options.body.get('username')===user&&options.body.get('password')===password;
       if(!signedIn){code=401;body='Incorrect username or password'}
-    }else if(!signedIn){code=401;body={error:'login_required'}}
+    }else if(authEnabled&&!signedIn){code=401;body={error:'login_required'}}
     else if(path==='/logout'){signedIn=false}
     else if(path==='/api/auth'){
       assert.equal(options.method,'POST');assert.equal(options.body.get('current_password'),password);
-      user=options.body.get('username');password=options.body.get('password');signedIn=false;
-      body={updated:true,reauthenticate:true};
+      authEnabled=options.body.get('enabled')==='true';
+      if(authEnabled){user=options.body.get('username');password=options.body.get('password');}signedIn=false;
+      body={updated:true,enabled:authEnabled,reauthenticate:authEnabled};
     }else if(path==='/api/device/name'){
       let changed=false;
       if(options.method==='POST'){changed=hostname!==options.body.get('hostname');hostname=options.body.get('hostname');displayName=options.body.get('display_name');}
       body={hostname,display_name:displayName,persisted:true,accepted:options.method==='POST',apply_pending:changed};
     }else if(path.split('?')[0]==='/api/status'){
-      statusRequests++;body={hostname:'test-fixture',board_id:'esp8266-aabbccddeeff',boot_id:'a'.repeat(32),http_peer_fencing:true,cells:[],tm1637_segments:[],capabilities:{name:'Fixture table',board_kind:'table',acknowledged_features:['table','leds','streaming'],table:{columns:10,rows:8,pixels_per_cell:6}}};
+      if(failStatus)throw Error('Network unreachable');statusRequests++;body={hostname:'test-fixture',board_id:'esp8266-aabbccddeeff',boot_id:'a'.repeat(32),http_peer_fencing:true,cells:[],tm1637_segments:[],capabilities:{name:'Fixture table',board_kind:'table',acknowledged_features:['table','leds','streaming'],table:{columns:10,rows:8,pixels_per_cell:6}}};
     }else if(path==='/api/cells/mapping')body={physical:[],names:[]};
     return {ok:code<400,status:code,statusText:String(code),text:async()=>typeof body==='string'?body:JSON.stringify(body)};
   }});
@@ -89,4 +91,11 @@ assert.equal(vm.runInContext('frameStream.running()',context),false,'Reboot revo
 assert.equal(vm.runInContext('selectedCells.size',context),0);assert.equal(nodes.cellSearch.value,'');assert.equal(nodes.remoteBearer.value,'');
 assert.equal(vm.runInContext('webSettings.cloud',context),null);assert.equal(nodes.boardDisplayName.value,'');
 await vm.runInContext('signOut()',context);assert.equal(nodes.workspace.hidden,true);
-console.log('Embedded Web sign-in, rotation, validated rename, acknowledged stream start, live Persian/English stream status, reboot cancellation and sign-out passed.');
+authEnabled=false;signedIn=false;await vm.runInContext('bootstrap()',context);await settle();
+assert.equal(nodes.workspace.hidden,false);assert.equal(nodes.loginPanel.hidden,true);assert.equal(nodes.signOutButton.hidden,true);assert.equal(nodes.accessCredentials.hidden,true);assert.equal(nodes.accessCurrentRow.hidden,true);
+const loginCount=calls.filter(c=>c.path==='/login').length;await vm.runInContext('signOut()',context);assert.equal(calls.filter(c=>c.path==='/login').length,loginCount);
+failStatus=true;await vm.runInContext('bootstrap()',context);await settle();assert.equal(nodes.loginPanel.hidden,true);assert.equal(nodes.connectionRetry.hidden,false);assert.match(nodes.connectionState.textContent,/unreachable/);
+nodes.appearanceOpen.listeners.click();assert.equal(nodes.appearanceDialog.open,true);assert.equal(nodes.uiHapticsRow.hidden,true);assert.equal(nodes.uiLanguage.value,'system');nodes.appearanceCancel.listeners.click();assert.equal(nodes.appearanceDialog.open,false);
+const prefs=source.slice(source.indexOf('<dialog id="appearanceDialog"'),source.indexOf('</dialog>',source.indexOf('<dialog id="appearanceDialog"')));
+for(const id of ['uiLanguage','uiDirection','uiHaptics'])assert(prefs.includes('id="'+id+'"'));
+console.log('Embedded Web auth-off login suppression, contextual Preferences, no fake login after connection failure, sign-in, rotation, validated rename, acknowledged stream start, live Persian/English stream status, reboot cancellation and sign-out passed.');

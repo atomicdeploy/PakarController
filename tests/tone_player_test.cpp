@@ -24,11 +24,17 @@ int main() {
   assert(!player.enqueue(19, 100) && !player.enqueue(20001, 100) && !player.enqueue(1000, 0));
   for(unsigned i=0;i<10;++i) assert(player.enqueue(1000,10));
   assert(!player.enqueue(1000,10)); player.update(1000); assert(TCCR1B != 0);
+  const auto beforeMute = player.revision();
   player.setMuted(true); assert((TCCR1B & (_BV(CS10)|_BV(CS11)|_BV(CS12))) == 0);
-  player.setMuted(false); assert(TCCR1B != 0);
+  assert(player.muted() && player.revision() != beforeMute);
+  const auto mutedRevision = player.revision(); player.setMuted(true);
+  assert(player.revision() == mutedRevision); // Idempotent settings refresh.
+  player.setMuted(false); assert(!player.muted());
+  assert((TCCR1B & (_BV(CS10)|_BV(CS11)|_BV(CS12))) == 0);
+  assert(player.revision() != mutedRevision); // No replay of interrupted note.
   player.update(1100); assert(!player.isBusy()); player.stop(); assert(!player.isBusy());
   using namespace BoardCore::Protocol;
-  const uint16_t durations[kCueCount] = {530,450,410,300,305,450,400,600,100,5750,300,300,520,590};
+  const uint16_t durations[kCueCount] = {530,450,410,300,305,450,400,600,100,5750,300,300,520,590,240};
   for (uint8_t cue=0;cue<kCueCount;++cue) {
     assert(playAudioCue(static_cast<AudioCue>(cue), player));
     const uint32_t begin = 20000UL + cue * 10000UL;
@@ -38,6 +44,13 @@ int main() {
     player.update(begin+durations[cue]); assert(!player.isBusy());
     uint8_t parsed=255;
     assert(BoardCore::AudioCues::parse(BoardCore::AudioCues::name(cue),parsed) && parsed==cue);
+    player.setMuted(true);
+    assert(playAudioCue(static_cast<AudioCue>(cue), player));
+    for (uint16_t ms=0;ms<=durations[cue];++ms) {
+      player.update(begin+ms);
+      assert((TCCR1B & (_BV(CS10)|_BV(CS11)|_BV(CS12))) == 0);
+    }
+    assert(!player.isBusy()); player.setMuted(false);
   }
   assert(playAudioCue(kCueWelcomePuzzleBoard,player)); player.update(0);
   player.update(70); assert(player.activeFrequencyHz()==0);
@@ -55,9 +68,10 @@ int main() {
   assert(!BoardCore::AudioCues::parse(nullptr,unchanged));
   assert(BoardCore::AudioCues::supportedCount(true,true,12)==12);
   assert(BoardCore::AudioCues::supportedCount(true,true,14)==14);
-  assert(BoardCore::AudioCues::supportedCount(true,true,255)==14);
+  assert(BoardCore::AudioCues::supportedCount(true,true,15)==15);
+  assert(BoardCore::AudioCues::supportedCount(true,true,255)==15);
   assert(BoardCore::AudioCues::supportedCount(true,true,0)==0);
   assert(BoardCore::AudioCues::supportedCount(false,true,14)==0);
   assert(BoardCore::AudioCues::supportedCount(true,false,14)==0);
-  puts("Actual TonePlayer/BootMelody: all fourteen cues and exact 530/520/590 ms donor welcome variants, deadlines, rollover, capacity, mute, identity-gated cue metadata passed (register double; not audible proof).");
+  puts("Actual TonePlayer/BootMelody: fifteen finite cues including attention and exact 530/520/590 ms donor welcome variants, deadlines, rollover, capacity, mute, identity-gated metadata passed (register double; not audible proof).");
 }

@@ -3,40 +3,53 @@ param(
     [string] $LinkMode = $(if ($env:PAKAR_LINK_MODE) { $env:PAKAR_LINK_MODE } else { 'busy-wire' }),
     [ValidatePattern('^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$')]
     [string] $DeviceName,
-    [ValidateRange(1, 32)] [int] $Jobs = 2,
+    [ValidateRange(1, 32)] [int] $Jobs = [Math]::Min(32, [Environment]::ProcessorCount),
     [ValidateSet('both', 'avr', 'esp8266', 'esp32s3')] [string] $Target = 'both',
     [ValidateSet(4, 8, 16, 32)] [int] $S3FlashMB = 4,
     [ValidateSet('disabled', 'enabled', 'opi')] [string] $S3Psram = 'disabled',
+    [ValidateSet('static', 'rmt-dma')] [string] $S3LedBackend = 'static',
     [ValidateSet(-1, 38, 48)] [int] $S3StatusRgbPin = -1,
     [switch] $InitializeFilesystem,
     [switch] $PauseAvrLink,
     [switch] $PauseLedOutput,
+    [switch] $CellChaseOnBoot,
     [switch] $S3IspElectricalVerified,
+    [switch] $S3Ethernet,
     [switch] $VerboseBuild,
     [switch] $Clean,
     [switch] $Plan
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'script-runtime.ps1')
 if ($Target -eq 'esp32s3' -and -not $PSBoundParameters.ContainsKey('LinkMode') -and -not $env:PAKAR_LINK_MODE) { $LinkMode = 'buffered' }
 if ($Target -eq 'esp32s3' -and $LinkMode -ne 'buffered') { throw 'ESP32-S3 UART integration requires the explicit paired buffered profile.' }
 if ($PauseAvrLink -and $Target -ne 'esp32s3') { throw 'Quiet AVR-link commissioning currently targets ESP32-S3 only.' }
 if ($PauseLedOutput -and $Target -ne 'esp32s3') { throw 'Quiet LED commissioning currently targets ESP32-S3 only.' }
+if ($CellChaseOnBoot -and ($Target -ne 'esp32s3' -or $PauseLedOutput)) { throw 'Cell-chase boot testing requires ESP32-S3 with LED output enabled.' }
 if ($S3IspElectricalVerified -and $Target -ne 'esp32s3') { throw 'The S3 ISP electrical acknowledgment is target-specific.' }
+if ($S3Ethernet -and $Target -ne 'esp32s3') { throw 'Native W5500 Ethernet requires ESP32-S3.' }
+if ($S3LedBackend -ne 'static' -and $Target -ne 'esp32s3') { throw 'The RMT-DMA LED backend requires ESP32-S3.' }
 if ($LinkMode -eq 'buffered' -and $Target -notin @('avr', 'esp32s3')) {
     throw 'Buffered mode currently targets the paired AVR only; ESP8266 requires busy-wire or polling.'
 }
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern api-contract -Gate | Out-Null
+& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern pu-tooling -Gate | Out-Null
 & node (Join-Path $PSScriptRoot 'check-living-contract.mjs') | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw 'Living API policy failed before firmware build.' }
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($Target -in @('both', 'avr')) {
+    & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern avr-boot-chain -Gate | Out-Null
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern cooperative-tasks -Gate | Out-Null
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern uart-flow-control -Gate | Out-Null
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern tm1637-display -Gate | Out-Null
 }
 if ($Target -eq 'esp32s3') {
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern uart-flow-control -Gate | Out-Null
+    & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern lcd-display -Gate | Out-Null
+    if ($S3Ethernet) {
+        & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern ethernet -Gate | Out-Null
+    }
 }
 if ($Target -ne 'avr') {
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern remote-ota -Gate | Out-Null
@@ -50,6 +63,8 @@ if ($Target -ne 'avr') {
     if ($LASTEXITCODE -ne 0) { throw 'Application firmware/Web artwork is stale.' }
     & node (Join-Path $PSScriptRoot 'generate-web-appearance.mjs') --check | ForEach-Object { Write-Host $_ }
     if ($LASTEXITCODE -ne 0) { throw 'Shared Web appearance is stale; regenerate before ESP build.' }
+    & node (Join-Path $PSScriptRoot 'generate-basic-ui.mjs') --check | ForEach-Object { Write-Host $_ }
+    if ($LASTEXITCODE -ne 0) { throw 'Basic cell app is stale; regenerate before ESP build.' }
 }
 $libraries = Join-Path $projectRoot 'libraries'
 $build = Join-Path $projectRoot 'build'
@@ -93,7 +108,9 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         if ($InitializeFilesystem) { $flags += ' -DPAKAR_INITIALIZE_FILESYSTEM=1' }
         if ($PauseAvrLink) { $flags += ' -DPAKAR_AVR_LINK_ENABLED=0' }
         if ($PauseLedOutput) { $flags += ' -DPAKAR_LED_START_ENABLED=0' }
+        if ($CellChaseOnBoot) { $flags += ' -DPAKAR_LED_START_CELL_CHASE=1' }
         if ($S3IspElectricalVerified) { $flags += ' -DPAKAR_S3_ISP_ELECTRICAL_VERIFIED=1' }
+        if ($S3Ethernet) { $flags += ' -DPAKAR_S3_ETHERNET_ENABLED=1' }
         "esp32:esp32:esp32s3:CDCOnBoot=cdc,USBMode=hwcdc,FlashSize=${S3FlashMB}M,PartitionScheme=$partitions,PSRAM=$S3Psram"
     } else { 'esp8266:esp8266:nodemcuv2:eesz=4M2M' }
     # One reusable cache per board/link-mode; never force a cold compile by default.
@@ -109,14 +126,39 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         $arguments += @('--build-property', 'compiler.c.elf.extra_flags=-Wl,--wrap=dns_clear_cache,--wrap=esp_partition_write,--wrap=esp_partition_write_raw,--wrap=esp_partition_erase_range,--wrap=esp_partition_read,--wrap=esp_partition_read_raw,--wrap=esp_image_verify')
     }
     if ($Clean) { $arguments += '--clean' }
+    $ledProfile = $null
+    if ($board -eq 'esp32s3') {
+        $ledProfile = [pscustomobject]@{
+            Path = Join-Path $build 'config/esp32s3/LedBackend.h'
+            Content = "#pragma once`n#define PAKAR_S3_LED_USE_DMA $(if ($S3LedBackend -eq 'rmt-dma') { 1 } else { 0 })`n"
+        }
+    }
     if ($VerboseBuild) { $arguments += '--verbose' }
     if ($Plan) {
-        [pscustomobject]@{ Board=$board; Executable=$cli; Arguments=$arguments }
+        [pscustomobject]@{ Board=$board; Executable=$cli; Arguments=$arguments; LedBackendProfile=$ledProfile }
         continue
     }
-    & $cli @arguments
-    if ($LASTEXITCODE -ne 0) { throw "$board build failed" }
+    $ledProfileLease = $null
+    try {
+        if ($ledProfile) {
+            New-Item -ItemType Directory -Force (Split-Path -Parent $ledProfile.Path) | Out-Null
+            # Hold one canonical profile/cache owner throughout compilation.
+            # Another backend build must fail, not rewrite this header mid-build.
+            $ledProfileLease = [IO.File]::Open($ledProfile.Path + '.lock',
+                [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+            if (-not (Test-Path -LiteralPath $ledProfile.Path) -or
+                [IO.File]::ReadAllText($ledProfile.Path) -cne $ledProfile.Content) {
+                [IO.File]::WriteAllText($ledProfile.Path, $ledProfile.Content, [Text.UTF8Encoding]::new($false))
+            }
+        }
+        Write-PakarStep "Firmware $board · $LinkMode · warm cache; no automatic flash"
+        Invoke-PakarNative -WorkingDirectory $projectRoot -FilePath $cli -Arguments $arguments
+    } finally {
+        if ($ledProfileLease) { $ledProfileLease.Dispose() }
+    }
     if ($board -eq 'avr') {
+        & node (Join-Path $PSScriptRoot 'prepare-avr-image.mjs') $avrOutput $cache
+        if ($LASTEXITCODE -ne 0) { throw 'AVR Urboot vector-chain packaging failed; do not deploy raw merged output.' }
         $mergedImage = Join-Path $avrOutput 'avr.ino.with_bootloader.bin'
         if ((Get-Item -LiteralPath $mergedImage).Length -ne 32768) {
             throw 'Merged AVR application plus Urboot image is not exactly 32768 bytes'

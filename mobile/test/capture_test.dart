@@ -11,6 +11,10 @@ import 'package:pakarcontroller/device_settings_page.dart';
 import 'package:pakarcontroller/firmware_page.dart';
 import 'package:pakarcontroller/bridge_page.dart';
 import 'package:pakarcontroller/mirroring.dart';
+import 'package:pakarcontroller/app_theme.dart';
+import 'package:pakarcontroller/devices_page.dart';
+
+import 'devices_page_test.dart' show directoryFixture, directoryDiscovery;
 
 import 'mirroring_test.dart' show mirroredPeer, SilentOutput;
 
@@ -35,10 +39,13 @@ void main() {
         'BridgePhone',
         'FrontPanelTablet',
         'FrontPanelPhone',
+        'DevicesTablet',
+        'DevicesPhone',
       ], contains(view));
       final firmware = view.startsWith('Firmware');
       final bridge = view.startsWith('Bridge');
       final frontPanel = view.startsWith('FrontPanel');
+      final devices = view.startsWith('Devices');
       final mirror = PeripheralMirror(output: SilentOutput())
         ..observe(mirroredPeer(), 1);
       addTearDown(mirror.dispose);
@@ -79,17 +86,20 @@ void main() {
           key: boundary,
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              fontFamily: 'Vazirmatn',
-              colorScheme: studioDark,
-              scaffoldBackgroundColor: const Color(0xff080a0e),
-              useMaterial3: true,
-            ),
+            theme: studioTheme(),
             home: Scaffold(
               appBar: AppBar(
                 title: const Text('PakarController · Simulated fixture'),
               ),
-              body: frontPanel
+              body: devices
+                  ? DevicesPage(
+                      registry: directoryFixture(),
+                      discovery: directoryDiscovery(),
+                      select: (_, _) async {
+                        fail('No device selection in capture');
+                      },
+                    )
+                  : frontPanel
                   ? FrontPanelPage(
                       status: mirroredPeer(),
                       mirror: mirror,
@@ -127,13 +137,13 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      if (settings && !firmware && !bridge && !frontPanel) {
+      if (settings && !firmware && !bridge && !frontPanel && !devices) {
         await tester.tap(
           phone
               ? find.widgetWithText(ChoiceChip, 'MQTT')
               : find.widgetWithText(ListTile, 'MQTT'),
         );
-      } else if (!firmware && !bridge && !frontPanel) {
+      } else if (!firmware && !bridge && !frontPanel && !devices) {
         await tester.enterText(find.byType(TextField).first, '1–3, 12, 80');
       }
       await tester.pumpAndSettle();

@@ -47,6 +47,21 @@ if ($LASTEXITCODE -ne 0) { throw 'Remote firmware state-machine tests failed' }
 & (Join-Path $PSScriptRoot 'test-remote-s3.ps1')
 & (Join-Path $PSScriptRoot 'test-s3-dns.ps1')
 & (Join-Path $PSScriptRoot 'test-s3-flash-guard.ps1')
+# These focused runners retain their own reviewed-slice gates and reuse the
+# canonical build/native outputs. ArduinoJson is installed by firmware CI.
+& (Join-Path $PSScriptRoot 'test-cloud-command.ps1')
+& (Join-Path $PSScriptRoot 'test-cloud-config.ps1')
+& (Join-Path $PSScriptRoot 'test-cloud-services.ps1')
+& (Join-Path $PSScriptRoot 'test-cloud-management.ps1')
+& (Join-Path $PSScriptRoot 'test-command-values.ps1')
+& (Join-Path $PSScriptRoot 'test-ethernet.ps1')
+& (Join-Path $PSScriptRoot 'test-ethernet-config.ps1')
+& (Join-Path $PSScriptRoot 'test-ethernet-management.ps1')
+& (Join-Path $PSScriptRoot 'test-network-path.ps1')
+& node (Join-Path $projectRoot 'tests/ethernet_discovery_test.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Ethernet discovery integration tests failed' }
+& node (Join-Path $projectRoot 'tests/esp_only_maintenance_test.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'ESP-only maintenance integration tests failed' }
 $shellBinary = Join-Path $outputDirectory 'telnet_shell_test.exe'
 & g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/telnet_shell_test.cpp') -o $shellBinary
 if ($LASTEXITCODE -ne 0) { throw 'Telnet shell compilation failed' }

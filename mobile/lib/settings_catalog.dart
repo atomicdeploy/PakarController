@@ -59,6 +59,7 @@ const deviceSettingsCatalog = {
       "icon": "GRID_FOUR",
       "keywords": "table LED brightness effects mapping names logical physical modes games",
       "features": [
+        "leds",
         "table"
       ]
     },
@@ -66,18 +67,19 @@ const deviceSettingsCatalog = {
       "id": "front-panel",
       "label": "Front panel",
       "icon": "GAUGE",
-      "keywords": "TM1637 display scrolling marquee once interval melodies buzzer audio",
+      "keywords": "TM1637 LCD display scrolling marquee once interval melodies buzzer audio",
       "features": [
         "display",
         "text",
-        "buzzer"
+        "buzzer",
+        "lcd"
       ]
     },
     {
       "id": "avr",
       "label": "AVR & inputs",
       "icon": "CPU",
-      "keywords": "ATmega328P shift registers outputs ADC6 ninth input UART ISP busy build flags",
+      "keywords": "ATmega328P saved settings EEPROM board name silent welcome brightness telemetry menu pages order threshold shift registers outputs ADC6 ninth input UART ISP busy build flags",
       "features": [
         "inputs",
         "outputs",

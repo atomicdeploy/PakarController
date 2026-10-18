@@ -18,6 +18,9 @@ pub struct Pin {
     boot: String,
 }
 impl Pin {
+    pub fn matches_identity(&self, board: &str, boot: &str) -> bool {
+        self.board == board && self.boot == boot
+    }
     pub fn from_status(s: &DeviceStatus) -> Option<Self> {
         (s.http_peer_fencing
             && !s.board_id.is_empty()
@@ -129,9 +132,11 @@ impl Queue {
 pub fn retired_receipt(event: &Event) -> Option<String> {
     let kind = match event {
         Event::Accepted(_) => "Command acceptance",
+        Event::CellBatchConfirmed(_) | Event::SerialBatchConfirmed(..) => "Atomic cell batch readback",
         Event::OperationFailed(_) => "Command failure",
         Event::SettingsFinished(..) => "Settings result",
         Event::MaintenanceFinished(..) => "Maintenance result",
+        Event::PixelModeFinished(..) | Event::PixelSent(..) | Event::PixelReadbackFinished(..) => "Pixel diagnostic result",
         Event::CredentialsUpdated(_) => "Credential result",
         Event::NameUpdated(..) => "Identity result",
         _ => return None,

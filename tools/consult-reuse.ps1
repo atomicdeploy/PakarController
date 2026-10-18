@@ -9,6 +9,7 @@ param(
     [string]$TargetRoot=(Join-Path $PSScriptRoot '..'),
     [hashtable]$DonorRoots=@{Pealayer='C:\Users\David\AppData\Local\Programs\Pealayer\source\Pealayer'; RayanLamp='C:\Users\David\Documents\Codex\2026-07-23\ba\outputs\RayanLamp'},
     [switch]$Gate,
+    [switch]$Summary,
     [switch]$RequireLive
 )
 $ErrorActionPreference='Stop'
@@ -70,7 +71,7 @@ $taskRows=@(foreach($taskRow in $taskSelected){
     $taskSpecialists=@($taskIndex.concerns | Where-Object {
         $_.id -ne 'donor-audit' -and $taskRow.origin -in $_.origins -and $taskRow.path -match $_.path_pattern
     })
-    $taskCurrentReview=$taskReview -and $taskReview.sha256 -eq $taskRow.sha256 -and $taskRow.availability -eq 'present'
+    $taskCurrentReview=$taskReview -and $taskReview.sha256 -eq $taskRow.sha256 -and (Test-PakarDonorSnapshot $taskRow $taskReview)
     $taskLive='unavailable'
     if($taskAvailableRoots[$taskRow.origin]){
         $taskSourceRoot=[IO.Path]::GetFullPath($DonorRoots[$taskRow.origin]).TrimEnd('\','/')
@@ -100,7 +101,7 @@ if($Gate){
     foreach($taskKey in $taskRoute.required_reviews){
         $taskSource=$taskSeen[$taskKey]; $taskReview=$taskReviewed[$taskKey]
         if(-not $taskSource -or -not $taskReview -or $taskReview.source_read -ne 'complete' -or
-            $taskSource.availability -ne 'present' -or $taskSource.sha256 -ne $taskReview.sha256 -or
+            -not (Test-PakarDonorSnapshot $taskSource $taskReview) -or $taskSource.sha256 -ne $taskReview.sha256 -or
             $taskReview.sha256 -notmatch '^[0-9a-f]{64}$' -or -not @($taskReview.targets).Count){throw "Required donor not fully reviewed/current: $taskKey"}
         $taskLiveRow=@($taskRows | Where-Object Key -eq $taskKey)
         if($taskLiveRow.Count -ne 1 -or $taskLiveRow[0].Live -in @('missing','changed')){throw "Required donor source drift: $taskKey"}
@@ -115,7 +116,7 @@ if($Gate){
         }
     }
 }
-[pscustomobject]@{Concern=$Concern;Issue=$taskRoute.issue;GateChecked=[bool]$Gate;
+$taskResult=[pscustomobject]@{Concern=$Concern;Issue=$taskRoute.issue;GateChecked=[bool]$Gate;
     Meaning='Consultation/current mapped slice only; gaps and unreviewed files are NOT accepted exclusions or full feature parity.';
     Inventoried=$taskLedger.Count;Matched=$taskRows.Count;
     Pending=@($taskRows | Where-Object Comparison -eq 'pending-comparison').Count;
@@ -124,3 +125,5 @@ if($Gate){
     OpenActions=@($taskRows | Where-Object {@($_.Remaining).Count -gt 0}).Count;
     Gaps=@($taskRows | Where-Object Comparison -eq 'parity-gap').Count;
     Rows=$taskRows}
+if($Summary){$taskResult | Select-Object Concern,Issue,GateChecked,Meaning,Inventoried,Matched,Pending,Stale,AuditOnly,OpenActions,Gaps}
+else{$taskResult}

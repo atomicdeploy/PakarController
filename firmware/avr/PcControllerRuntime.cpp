@@ -566,25 +566,10 @@ void PcControllerRuntime::service(uint32_t now, uint32_t nowUs) {
   }
   if (ring_.takeSafeStopRequest()) hardware_.safeStop();
 #endif
-  if (!connected_ || !hardware_.ready()) return;
-  uint8_t segments[5];
-  memcpy(segments, s.segments, 4);
-  segments[4] = s.brightness | 0x80U | (s.displayDetected ? 0x40U : 0U);
-  if (memcmp(segments, lastSegments_, sizeof(segments))) {
-    if (reply(PC::SegmentChanged, 0, segments, sizeof(segments)))
-      memcpy(lastSegments_, segments, sizeof(segments));
-    return; // One bounded unsolicited frame per loop; no display/audio burst.
-  }
-  if (lastAudioRevision_ != s.audioRevision || lastMuted_ != s.muted) {
-    uint8_t audio[13]; put16(audio, s.frequency); put16(audio + 2, s.duration);
-    audio[4] = s.muted;
-    put32(audio + 5, s.audioStartedMicros);
-    put32(audio + 9, nowUs);
-    if (reply(PC::BuzzerChanged, 0, audio, sizeof(audio))) {
-      lastAudioRevision_ = s.audioRevision; lastMuted_ = s.muted;
-    }
-    return;
-  }
+  const bool companion=companionKnown_ && static_cast<uint32_t>(now-companionSeenAt_)<3000U;
+  if ((!connected_ && !companion) || !hardware_.ready()) return;
+  if (mirrorOne(nowUs)) return; // One bounded changed-state frame per loop.
+  if (!connected_) return; // Companion lease never grants host automation/menu ownership.
   if (resultCount_ || eventCount_ || macroDirty_) { drainOne(); return; }
   if (settings_.values().streamPeriodMs &&
       static_cast<uint32_t>(now - lastStreamAt_) >= settings_.values().streamPeriodMs) {
@@ -594,27 +579,7 @@ void PcControllerRuntime::service(uint32_t now, uint32_t nowUs) {
 void PcControllerRuntime::drainOne(bool mirror) {
   // Polling builds have no unsolicited TX grant. A solicited status request
   // grants one bounded changed-only mirror/event frame after its own response.
-  if (mirror) {
-    const auto s = hardware_.snapshot();
-    uint8_t segments[5];
-    memcpy(segments, s.segments, 4);
-    segments[4] = s.brightness | 0x80U | (s.displayDetected ? 0x40U : 0U);
-    if (memcmp(segments, lastSegments_, sizeof(segments))) {
-      if (reply(PC::SegmentChanged, 0, segments, sizeof(segments)))
-        memcpy(lastSegments_, segments, sizeof(segments));
-      return;
-    }
-    if (lastAudioRevision_ != s.audioRevision || lastMuted_ != s.muted) {
-      uint8_t audio[13]; put16(audio, s.frequency); put16(audio + 2, s.duration);
-      audio[4] = s.muted;
-      put32(audio + 5, s.audioStartedMicros);
-      put32(audio + 9, micros());
-      if (reply(PC::BuzzerChanged, 0, audio, sizeof(audio))) {
-        lastAudioRevision_ = s.audioRevision; lastMuted_ = s.muted;
-      }
-      return;
-    }
-  }
+  if (mirror && mirrorOne(micros())) return;
   if (resultCount_) {
     const auto &r = results_[resultHead_];
     const uint8_t payload[] = {r.opcode, r.error};
@@ -631,4 +596,25 @@ void PcControllerRuntime::drainOne(bool mirror) {
     return;
   }
   if (macroDirty_) { if (macroStatus(PC::Event, 0)) macroDirty_ = false; return; }
+}
+bool PcControllerRuntime::mirrorOne(uint32_t nowUs) {
+  const auto s=hardware_.snapshot();
+  uint8_t segments[5];memcpy(segments,s.segments,4);
+  segments[4]=s.brightness|0x80U|(s.displayDetected?0x40U:0U);
+  if(memcmp(segments,lastSegments_,sizeof(segments))) {
+    if(reply(PC::SegmentChanged,0,segments,sizeof(segments)))
+      memcpy(lastSegments_,segments,sizeof(segments));
+    return true;
+  }
+  if(lastAudioRevision_!=s.audioRevision || lastMuted_!=s.muted) {
+    uint8_t audio[13];put16(audio,s.frequency);put16(audio+2,s.duration);
+    audio[4]=s.muted;
+    put32(audio + 5, s.audioStartedMicros);
+    put32(audio + 9, nowUs);
+    if(reply(PC::BuzzerChanged,0,audio,sizeof(audio))) {
+      lastAudioRevision_=s.audioRevision;lastMuted_=s.muted;
+    }
+    return true;
+  }
+  return false;
 }

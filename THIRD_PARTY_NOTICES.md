@@ -2,6 +2,19 @@
 
 PakarController is integration code built from earlier AtomicDeploy projects.
 
+- `tools/prepare-avr-image.mjs` adapts Intel HEX validation, AVR jump encoding,
+  unused-vector validation and boot-chain merging from PCController
+  `Tools/Bootloader/Urboot-Custom/build.mjs` at
+  `b0111ae0c80dc34149ea1044de7dd5488920301b`, under its MIT option;
+  see `docs/licenses/PCController-MIT.txt`. The hardware-specific custom
+  TM1637 backend and its different pins are not enabled.
+- The stock MiniCore UART0 Urboot image is GPL-3.0-only, independent of this
+  repository's MIT integration code. See `docs/licenses/Urboot-GPL-3.0.txt`,
+  the installed MiniCore package's source/notices and
+  https://github.com/stefanrueger/urboot/tree/b25d491a0b16eda79e8c5c10dd861d16396c12ae.
+  Packaging pins the exact stock HEX hash rather than silently selecting a
+  different bootloader. A build does not establish physical installation.
+
 - `firmware/avr/BoardPins.h`, `ShiftRegisters.*`, `SevenSegments.*`,
   `TonePlayer.*`, `pitches.h`, and `BootMelody.*` are imported from
   AtomicDeploy PCController commit `2a0e971e2bdaf186b4e841c64a53b516509beb37`
@@ -18,6 +31,15 @@ PakarController is integration code built from earlier AtomicDeploy projects.
   and its legacy UART payload implementation are not included. The source
   repository has no standalone license file; this reuse is recorded explicitly
   because both repositories are owner-directed AtomicDeploy work.
+- The shared script console/logger/sanitizer/exit categories, build selection,
+  scoped native runner, dependency-check/apply flow, image summaries and opt-in
+  deployment workflow adapt actual PU850 `Tool/upload.js`, `Tool/build-all.ps1`,
+  language build helpers, `build.cmd`, `build.sh`, `upgrade.sh`, `.vscode/prebuild.*`
+  and `.github` workflows/configuration at that same revision. New owners are
+  `tools/script-console.mjs`, `script-runtime.ps1`, `pakar.mjs`, `build-all.ps1`,
+  `firmware-dependencies.mjs`, `firmware-report.mjs`, `deploy-artifact.mjs` and
+  root/CI entrypoints. See `docs/SCRIPT-TOOLING.md` and the original-byte hashes,
+  source identities and concrete omissions in the existing file-comparison ledger.
 - FastLED, Arduino ESP8266 core, MiniCore, WebSockets 2.7.2 by Markus Sattler,
   PubSubClient 2.8.0 by Nick O'Leary, xcap 0.9.8, eframe/egui, reqwest, and serde are
   build/runtime dependencies under their

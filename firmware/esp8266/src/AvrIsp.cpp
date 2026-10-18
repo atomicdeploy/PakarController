@@ -188,7 +188,17 @@ bool AvrIsp::backup(fs::FS &filesystem, const char *directory) {
   return true;
 }
 
-bool AvrIsp::programFlash(File &image, File &recoveryEeprom) {
+bool AvrIsp::programFlash(File &image, File &recoveryEeprom,
+                          File *expectedFlash, File *armedEeprom) {
+  if ((expectedFlash == nullptr) != (armedEeprom == nullptr)) {
+    error_ = F("ISP recovery requires both original flash and armed EEPROM files");
+    return false;
+  }
+  if (armedEeprom == &recoveryEeprom || armedEeprom == &image ||
+      (armedEeprom != nullptr && armedEeprom == expectedFlash)) {
+    error_ = F("Armed EEPROM must be a distinct recovery file");
+    return false;
+  }
   if (!image || image.size() != kFlashBytes) {
     error_ = F("AVR image must be exactly 32768 raw bytes");
     return false;
@@ -211,6 +221,48 @@ bool AvrIsp::programFlash(File &image, File &recoveryEeprom) {
   for(uint32_t i=0;i<kFlashBytes;i+=sizeof(preflight))
     if(image.read(preflight,sizeof(preflight))!=sizeof(preflight))
       return fail(F("Flash image unreadable before erase"));
+
+  if (expectedFlash != nullptr) {
+    if (!*expectedFlash || expectedFlash->size()!=kFlashBytes ||
+        !expectedFlash->seek(0,SeekSet))
+      return fail(F("ISP recovery requires the complete original flash snapshot"));
+    for (uint32_t base=0;base<kFlashBytes;base+=sizeof(preflight)) {
+      if (expectedFlash->read(preflight,sizeof(preflight))!=sizeof(preflight))
+        return fail(F("Original flash snapshot unreadable; erase refused"));
+      for (uint16_t i=0;i<sizeof(preflight);++i)
+        if (readFlashByte(base+i)!=preflight[i])
+          return fail(F("Flash changed after recovery snapshot; erase refused"));
+      yield();
+    }
+    // MiniCore 328P uses full-swing external crystal LFUSE F7; FF selects
+    // the low-power external crystal driver. Neither enables CKDIV8. The
+    // existing 16 MHz board also requires the reset
+    // vector in the application (BOOTRST=1) and software-controlled WDTON=1.
+    // A different fuse/boot contract requires explicit recovery, never a write.
+    const uint8_t lfuse=readFuse(0x50,0x00);
+    if ((lfuse!=0xF7 && lfuse!=0xFF) || (readFuse(0x58,0x08)&0x11U)!=0x11U)
+      return fail(F("ISP recovery fuse/clock contract mismatch; erase refused"));
+    // Exact existing firmware/avr/ProgrammingLatch.cpp record at1008..1012:
+    // PK, private EEPROM layout1, active flag1, XOR checksum. Do not mutate the
+    // original recoveryEeprom file; preserve every other byte in the armed copy.
+    constexpr uint16_t kProgAddress=1008;
+    const uint8_t prog[]={0x50,0x4B,1,1,static_cast<uint8_t>(0x50^0x4B^1^1^0xA5)};
+    for(uint8_t i=0;i<sizeof(prog);++i)savedEeprom[kProgAddress+i]=prog[i];
+    if (!*armedEeprom || !armedEeprom->seek(0,SeekSet) ||
+        armedEeprom->write(savedEeprom,sizeof(savedEeprom))!=sizeof(savedEeprom))
+      return fail(F("Cannot store armed EEPROM recovery snapshot; erase refused"));
+    armedEeprom->flush();
+    if(armedEeprom->size()!=kEepromBytes || !armedEeprom->seek(0,SeekSet))
+      return fail(F("Cannot verify armed EEPROM recovery snapshot; erase refused"));
+    for(uint16_t base=0;base<kEepromBytes;base+=sizeof(preflight)) {
+      if(armedEeprom->read(preflight,sizeof(preflight))!=sizeof(preflight))
+        return fail(F("Armed EEPROM recovery snapshot unreadable; erase refused"));
+      for(uint16_t i=0;i<sizeof(preflight);++i)
+        if(preflight[i]!=savedEeprom[base+i])
+          return fail(F("Armed EEPROM recovery snapshot mismatch; erase refused"));
+      yield();
+    }
+  }
 
   transfer4(0xAC, 0x80, 0x00, 0x00);
   delay(15);

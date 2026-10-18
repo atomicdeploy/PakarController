@@ -2,8 +2,20 @@
 import {spawnSync} from 'node:child_process';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {createLogger} from './script-console.mjs';
 export const phases={
   "quality": [
+    ["pwsh", "-File", "tools/test-audio.ps1"],
+    ["node", "tests/script_tooling_test.mjs"],
+    ["pwsh", "-File", "tests/script_tooling_test.ps1"],
+    ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "pu-tooling", "-Gate"],
+    ["pwsh", "-File", "tools/test-update.ps1"],
+    ["pwsh", "-File", "tools/test-lcd.ps1"],
+    ["node", "tests/lcd_web_test.mjs"],
+    ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "ethernet", "-Gate"],
+    ["node", "tests/ethernet_live_tool_test.mjs"],
+    ["node", "tests/board_silent_test.mjs"],
+    ["node", "tests/avr_boot_image_test.mjs"],
     ["node", "tests/windows_tray_test.mjs"],
     ["node", "tests/tasks_wiring_test.mjs"],
     ["pwsh", "-File", "tests/device_discovery_script_test.ps1"],
@@ -15,6 +27,9 @@ export const phases={
     ["node", "tests/web_streaming_test.mjs"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "web-streaming", "-Gate"],
     ["node", "tests/web_peer_http_test.mjs"],
+    ["node", "tools/generate-basic-ui.mjs", "--check"],
+    ["node", "tests/basic_cells_test.mjs"],
+    ["node", "tests/led_api_benchmark_test.mjs"],
     ["node", "tests/peer_fence_test.mjs"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "peer-binding", "-Gate"],
     ["node", "tests/native_dropdown_test.mjs"],
@@ -192,6 +207,7 @@ export const phases={
       "node",
       "tests/device_cli_test.mjs"
     ],
+    ["node", "tests/access_cli_test.mjs"],
     [
       "node",
       "tests/pc_contract_cli_test.mjs"
@@ -208,7 +224,8 @@ export const phases={
 };
 export function runChecks(commands,execute=spawnSync){
 for(const [cmd,...args] of commands){
-  console.log('\n> '+cmd+' '+args.join(' '));
+  if(args.some(arg=>arg.endsWith('consult-reuse.ps1'))&&args.includes('-Gate')&&!args.includes('-Summary'))args.push('-Summary');
+  createLogger().step(cmd+' '+args.join(' '));
   const r=execute(cmd,args,{stdio:'inherit',shell:false});
   if(r.error)throw r.error;
   if(r.status!==0){const error=Error('Required check failed: '+cmd+' '+args.join(' '));error.exitCode=r.status??1;throw error;}

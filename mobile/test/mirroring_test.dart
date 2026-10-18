@@ -57,10 +57,12 @@ Map<String, dynamic> toneEvent(
   int at = 1000,
   int observed = 1000,
   int session = 1,
+  bool muted = false,
 }) {
   final bytes = ByteData(13)
     ..setUint16(0, hz, Endian.little)
     ..setUint16(2, ms, Endian.little)
+    ..setUint8(4, muted ? 1 : 0)
     ..setUint32(5, at, Endian.little)
     ..setUint32(9, observed, Endian.little);
   return {
@@ -100,6 +102,62 @@ void main() {
     expect(timeline.plan(const MirrorTone(440, 100, 0, 70000000), 0), isNull);
     expect(MirrorTone.decode('xyz'), isNull);
   });
+  test('Fresh short notes rebuffer after jitter without reviving device-expired notes', () {
+    final timeline = ToneTimeline();
+    expect(timeline.plan(const MirrorTone(880, 10, 1000, 1000), 0), (
+      50000,
+      60000,
+    ));
+    expect(timeline.plan(const MirrorTone(880, 10, 101000, 101000), 190000), (
+      240000,
+      250000,
+    ));
+    expect(timeline.plan(const MirrorTone(880, 10, 121000, 121000), 191000), (
+      260000,
+      270000,
+    ));
+    timeline.clear();
+    final expired = timeline.plan(
+      const MirrorTone(880, 10, 1000, 1001000),
+      2000000,
+    );
+    expect(expired!.$2, lessThan(2000000));
+  });
+  testWidgets(
+    'Mute follow is optional; mute/unmute notifications never restart one musical step',
+    (tester) async {
+      var time = 0;
+      final output = SilentOutput(),
+          mirror = PeripheralMirror(output: SilentOutput());
+      mirror.dispose();
+      final actual = PeripheralMirror(output: output, now: () => time);
+      actual.observe(mirroredPeer(), 1);
+      await actual.setBuzzer(true);
+      actual.event(toneEvent(1, 880, 100, muted: true));
+      time = 50000;
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(output.notes, [
+        (880, 100),
+      ]); // Deliberately independent by default.
+      actual.event(toneEvent(2, 880, 100));
+      await tester.pump();
+      expect(output.notes.length, 1);
+      actual.setFollowBoardMute(true);
+      expect(output.notes.last, (0, 0));
+      actual.event(
+        toneEvent(3, 660, 100, at: 200000, observed: 200000, muted: true),
+      );
+      actual.event(toneEvent(4, 660, 100, at: 200000, observed: 200000));
+      time = 400000;
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(output.notes.where((note) => note.$1 == 660), isEmpty);
+      actual.event(toneEvent(5, 440, 100, at: 500000, observed: 500000));
+      time = 450000;
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(output.notes.last, (440, 100));
+      actual.dispose();
+    },
+  );
   testWidgets(
     'Exact tone opt-in, duplicate/wrong peer drop, Stop flush and disconnect revoke',
     (tester) async {

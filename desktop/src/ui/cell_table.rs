@@ -1,7 +1,7 @@
 //! Fixed-geometry table interaction; selection never mutates hardware.
 //! Uses Pealayer's painted interaction targets and existing imported dialog/icons.
 use super::{dialog, icons};
-use crate::{OP_CELL_ACTION, PakarControllerApp};
+use crate::PakarControllerApp;
 use eframe::egui::{self, Color32, Key, Modifiers, Pos2, Rect, Stroke};
 use std::{
     collections::{BTreeSet, VecDeque},
@@ -120,13 +120,15 @@ pub struct TableState {
     pub manager_open: bool,
     manager_state: State,
     marquee: Option<(Pos2, BTreeSet<u8>)>,
-    queue: VecDeque<(u8, State, String)>,
+    queue: VecDeque<(Vec<u8>, State, String)>,
     peer: Option<(crate::Transport, crate::Endpoint, String)>,
     next_send: Instant,
     queued: usize,
     dispatched: usize,
     awaiting: Vec<(u8, State)>,
     verification_started: Option<Instant>,
+    acknowledged: bool,
+    expected_batch:Option<crate::cell_batch::Correlation>,
     result: String,
 }
 impl Default for TableState {
@@ -147,11 +149,22 @@ impl Default for TableState {
             dispatched: 0,
             awaiting: Vec::new(),
             verification_started: None,
+            acknowledged: false,
+            expected_batch:None,
             result: String::new(),
         }
     }
 }
 impl TableState {
+    pub(crate) fn confirm_batch_ack(&mut self,receipt:&crate::cell_batch::Correlation){
+        if self.verification_started.is_some() && self.expected_batch.as_ref()==Some(receipt) &&
+            self.awaiting.len()==receipt.request.ids.len() && self.awaiting.iter().all(|(id,state)|
+                receipt.request.ids.contains(id) && state.name()==receipt.request.state) {self.acknowledged=true;}
+    }
+    pub(crate) fn fail_pending_edits(&mut self, message:String) {
+        self.stop_pending_edits();
+        self.result=message;
+    }
     /// Revoke unsent work and old readback ownership on peer/capability loss.
     /// Sent writes are never retried or represented as rolled back.
     pub(crate) fn stop_pending_edits(&mut self) {
@@ -159,6 +172,8 @@ impl TableState {
         self.queue.clear();
         self.awaiting.clear();
         self.verification_started = None;
+        self.acknowledged=false;
+        self.expected_batch=None;
         self.peer = None;
         if pending {
             self.result = "Stopped: peer or capabilities changed. Previously sent edits may have applied; inspect device state.".into();
@@ -172,19 +187,22 @@ pub fn compact_menu(ui: &mut egui::Ui) {
     ui.spacing_mut().interact_size.y = 23.0;
 }
 pub fn navigate(id: u8, key: Key, ctrl: bool) -> u8 {
-    let id = id.clamp(1, 80);
+    let (mut row,mut col)=slot_position(id.clamp(1,80)-1);
     match key {
-        Key::ArrowLeft if (id - 1) % 10 > 0 => id - 1,
-        Key::ArrowRight if (id - 1) % 10 < 9 => id + 1,
-        Key::ArrowUp if id > 10 => id - 10,
-        Key::ArrowDown if id <= 70 => id + 10,
-        Key::Home if ctrl => 1,
-        Key::End if ctrl => 80,
-        Key::Home => ((id - 1) / 10) * 10 + 1,
-        Key::End => ((id - 1) / 10) * 10 + 10,
-        _ => id,
+        Key::ArrowLeft=>col=col.saturating_sub(1),
+        Key::ArrowRight=>col=(col+1).min(19),
+        Key::ArrowUp=>row=row.saturating_sub(1),
+        Key::ArrowDown=>row=(row+1).min(3),
+        Key::Home if ctrl=>{row=0;col=0;}
+        Key::End if ctrl=>{row=3;col=19;}
+        Key::Home=>col=0,
+        Key::End=>col=19,
+        _=>{}
     }
+    position_slot(row,col)+1
 }
+fn slot_position(slot:u8)->(u8,u8){(slot/20,2*(slot%10)+(slot/10)%2)}
+fn position_slot(row:u8,col:u8)->u8{row*20+col/2+(col%2)*10}
 pub fn normalized_order(saved: &[u8]) -> Vec<u8> {
     let mut seen = BTreeSet::new();
     saved
@@ -218,6 +236,13 @@ pub fn reorder_cell(
     order.insert(to, source);
     *order != old
 }
+fn reorder_visual_cell(order:&mut Vec<u8>,editing:bool,source:u8,target:u8,before:bool)->bool{
+    if order.len()!=80{return false;}
+    let mut visual:Vec<_>=(0..80).map(|i|order[position_slot(i/20,i%20) as usize]).collect();
+    if !reorder_cell(&mut visual,editing,source,target,before){return false;}
+    for (i,id) in visual.into_iter().enumerate(){order[position_slot(i as u8/20,i as u8%20) as usize]=id;}
+    true
+}
 fn navigate_order(order: &[u8], id: u8, key: Key, ctrl: bool) -> u8 {
     let Some(slot) = order.iter().position(|cell| *cell == id) else {
         return id;
@@ -225,16 +250,51 @@ fn navigate_order(order: &[u8], id: u8, key: Key, ctrl: bool) -> u8 {
     order[navigate(slot as u8 + 1, key, ctrl) as usize - 1]
 }
 pub fn cell_rect(origin: Pos2, pitch: f32, height: f32, id: u8) -> Rect {
-    let row = (id - 1) / 10;
-    let col = (id - 1) % 10;
+    let (row,col)=slot_position(id.clamp(1,80)-1);
     Rect::from_min_size(
         origin
             + egui::vec2(
                 col as f32 * pitch,
-                row as f32 * height + if col % 2 == 0 { height * 0.5 } else { 0.0 },
+                row as f32 * height + if col % 2 == 1 { height * 0.5 } else { 0.0 },
             ),
         egui::vec2(pitch - 7.0, height - 7.0),
     )
+}
+pub(crate) fn grid_metrics(width:f32, visible_height:f32, rounded:bool)->(f32,f32){
+    let aspect=if rounded{0.72}else{1.0};
+    // Adapt Pealayer navigation_control's minimum hit size + scroll_column
+    // overflow contract: a short dock viewport must scroll, never miniaturize
+    // eighty two-digit interaction targets to illegible postage stamps.
+    let pitch=(width/20.0).min(visible_height/(4.5*aspect)).clamp(64.0,94.0);
+    (pitch,pitch*aspect)
+}
+fn semantic_colors(base:Color32,state:Option<&str>,visuals:&egui::Visuals)->(Color32,Color32,&'static str){
+    match state {
+        Some("white") => (blend(base,visuals.strong_text_color(),0.08),visuals.strong_text_color(),"WHITE"),
+        Some("red") => (blend(base,visuals.error_fg_color,0.22),visuals.error_fg_color,"RED"),
+        Some("off") => (blend(base,Color32::BLACK,0.35),visuals.weak_text_color(),"OFF"),
+        _ => (base,visuals.weak_text_color(),"UNKNOWN"),
+    }
+}
+fn draw_semantic_cell(ui:&egui::Ui,response:&egui::Response,shape:super::cell_pixels::Shape,
+    state:Option<&str>,label:&str,selected:bool,column_id:u8,animate:bool){
+    let v=ui.visuals();let rect=response.rect;let center=rect.center();
+    let radius=(rect.width().min(rect.height())*0.5-3.0).max(1.0);
+    let (fill,state_color,caption)=semantic_colors(cell_base_fill(crate::config::live().color_palette,v.dark_mode,column_id),state,v);
+    let line=if selected{v.warn_fg_color}else if response.has_focus(){v.selection.stroke.color}
+        else if response.hovered(){v.widgets.hovered.bg_stroke.color}else{state_color.linear_multiply(0.65)};
+    let line=animated_color(ui,response.id.with("semantic-line"),line,animate);
+    let fill=animated_color(ui,response.id.with("semantic-fill"),fill,animate);
+    let width=if selected||response.has_focus(){2.0}else{1.0};
+    let stroke=Stroke::new(width,line);let painter=ui.painter().with_clip_rect(rect);
+    if shape==super::cell_pixels::Shape::Circle {
+        painter.circle_filled(center,radius,fill);painter.circle_stroke(center,radius,stroke);
+    }else{painter.add(egui::Shape::convex_polygon((0..6).map(|i|super::cell_pixels::point(center,radius,i as f32-0.5)).collect(),fill,stroke));}
+    let mut job=egui::text::LayoutJob::simple(label.into(),egui::FontId::proportional(14.0),v.text_color(),radius*1.65);
+    job.wrap.max_rows=1;let text=painter.layout_job(job);
+    painter.galley(center-egui::vec2(text.size().x*0.5,12.0),text,v.text_color());
+    painter.text(center+egui::vec2(0.0,10.0),egui::Align2::CENTER_CENTER,caption,egui::FontId::proportional(8.0),state_color);
+    // This is semantic state, not six fabricated sampled pixel RGB values.
 }
 fn blend(a: Color32, b: Color32, t: f32) -> Color32 {
     let channel =
@@ -471,7 +531,7 @@ impl PakarControllerApp {
                     Stroke::new(2.0, ui.visuals().selection.stroke.color),
                 );
                 if ui.input(|i| i.pointer.button_released(egui::PointerButton::Primary))
-                    && reorder_cell(
+                    && (if manager {reorder_cell}else{reorder_visual_cell})(
                         &mut self.config.cell_order,
                         self.table.editing_order,
                         source,
@@ -522,7 +582,7 @@ impl PakarControllerApp {
             .map(|route| (route, self.endpoint(), self.serial_port.clone()))
     }
     pub fn process_cell_queue(&mut self, ctx: &egui::Context) {
-        if !self.has_table() {
+        if !self.has_table() || !self.has_feature("cell-batch") {
             self.table.stop_pending_edits();
             return;
         }
@@ -543,26 +603,21 @@ impl PakarControllerApp {
                 return;
             }
             if Instant::now() >= self.table.next_send {
-                if let Some((id, state, effect)) = self.table.queue.pop_front() {
-                    let effect_value = match effect.as_str() {
-                        "fade" => 1,
-                        "pulse" => 2,
-                        _ => 0,
+                if self.command_route()==Some(crate::Transport::Serial) && self.serial_operations_pending>0 {
+                    ctx.request_repaint_after(Duration::from_millis(50));return;
+                }
+                if let Some((ids, state, effect)) = self.table.queue.pop_front() {
+                    let batch=match crate::cell_batch::Request::new(&ids,state.name(),&effect){
+                        Ok(batch)=>batch,Err(error)=>{self.table.fail_pending_edits(error);return;}
                     };
-                    self.action(
-                        "/api/cell",
-                        vec![
-                            ("id".into(), id.to_string()),
-                            ("state".into(), state.name().into()),
-                            ("effect".into(), effect),
-                        ],
-                        OP_CELL_ACTION,
-                        vec![id, state.value(), effect_value],
-                    );
-                    self.table.dispatched += 1;
+                    match self.dispatch_cell_batch(batch){
+                        Ok(correlation)=>self.table.expected_batch=Some(correlation),
+                        Err(error)=>{self.table.fail_pending_edits(error);return;}
+                    }
+                    self.table.dispatched += ids.len();
                     self.table.next_send = Instant::now() + Duration::from_millis(50);
                     self.table.result = format!(
-                        "Sent {} of {} edits; waiting for device readback",
+                        "Sent one atomic batch ({} of {} cells); waiting for ACK and device readback",
                         self.table.dispatched, self.table.queued
                     );
                     if self.table.queue.is_empty() {
@@ -577,11 +632,11 @@ impl PakarControllerApp {
             let fresh = match self.command_route() {
                 Some(crate::Transport::WiFi) => self.last_status_at.is_some_and(|at| at > start),
                 Some(crate::Transport::Serial) => {
-                    self.last_serial_status_at.is_some_and(|at| at > start)
+                    self.serial_operations_pending==0 && self.last_serial_status_at.is_some_and(|at| at > start)
                 }
                 _ => false,
             };
-            if fresh
+            if self.table.acknowledged && fresh
                 && self.live_status().is_some_and(|s| {
                     self.table.awaiting.iter().all(|(id, state)| {
                         s.cells
@@ -594,17 +649,19 @@ impl PakarControllerApp {
                     format!("Verified {} cell states on the device", self.table.queued);
                 self.table.verification_started = None;
                 self.table.awaiting.clear();
-            } else if start.elapsed() > Duration::from_secs(8) {
-                self.table.result="Readback did not confirm every edit. Refresh and inspect; the batch is not atomic.".into();
+                self.table.expected_batch=None;
+            } else if start.elapsed() > Duration::from_secs(24) {
+                self.table.result="ACK/readback did not confirm the atomic batch. Inspect before retrying; nothing replayed.".into();
                 self.table.verification_started = None;
                 self.table.awaiting.clear();
+                self.table.expected_batch=None;
             } else {
                 ctx.request_repaint_after(Duration::from_millis(100));
             }
         }
     }
     fn queue_selected_cells(&mut self, state: State) {
-        if self.command_route().is_none()
+        if self.command_route().is_none() || !self.has_feature("cell-batch")
             || !self.table.queue.is_empty()
             || self.table.verification_started.is_some()
         {
@@ -617,13 +674,11 @@ impl PakarControllerApp {
         self.table.queued = ids.len();
         self.table.peer = self.cell_queue_peer();
         self.table.dispatched = 0;
+        self.table.acknowledged=false;
         self.table.awaiting = ids.iter().map(|id| (*id, state)).collect();
-        self.table.queue = ids
-            .into_iter()
-            .map(|id| (id, state, self.cell_effect.clone()))
-            .collect();
+        self.table.queue = VecDeque::from([(ids,state,self.cell_effect.clone())]);
         self.table.next_send = Instant::now();
-        self.table.result = "Cell edits queued; batch is not atomic".into();
+        self.table.result = "One atomic selection batch queued; transitions run on the board".into();
     }
     pub fn cell_selection_toolbar(&mut self, ui: &mut egui::Ui) {
         ui.horizontal_wrapped(|ui| {
@@ -652,6 +707,7 @@ impl PakarControllerApp {
     fn cell_actions_menu(&mut self, ui: &mut egui::Ui) {
         compact_menu(ui);
         let enabled = self.command_route().is_some()
+            && self.has_feature("cell-batch")
             && !self.table.selection.ids.is_empty()
             && self.table.queue.is_empty()
             && self.table.verification_started.is_none();
@@ -678,6 +734,16 @@ impl PakarControllerApp {
             }
         });
     }
+    fn current_pixel_frame(&self)->Option<&super::cell_pixels::Frame>{
+        let sample=self.table.pixel_sample.as_ref().filter(|sample|sample.fresh())?;
+        let peer=self.live_status().and_then(crate::peer_http::Pin::from_status)?;
+        if self.command_route().is_none() || self.mapping_peer.as_ref()!=Some(&peer) ||
+            !crate::streaming::valid_mapping(&self.mappings) || self.mappings.iter().any(|mapping|
+                sample.frame.physical.get(usize::from(mapping.logical_id-1))!=Some(&mapping.physical_cell)) {
+            return None;
+        }
+        Some(&sample.frame)
+    }
     pub fn draw_cell_grid(
         &mut self,
         ui: &mut egui::Ui,
@@ -703,6 +769,7 @@ impl PakarControllerApp {
         let mut begin_drag = background.drag_started();
         let mut focus_target = None;
         for (slot, (id, rect)) in cells.iter().enumerate() {
+            let visual_column=slot_position(slot as u8).1+1;
             let widget_id = ui.id().with(("logical-cell", id));
             let selected = self.table.selection.ids.contains(id);
             let state = snapshot
@@ -714,7 +781,7 @@ impl PakarControllerApp {
                     ui,
                     *rect,
                     widget_id,
-                    slot as u8 + 1,
+                    visual_column,
                     state,
                     selected,
                     self.config.animate_cells,
@@ -745,16 +812,8 @@ impl PakarControllerApp {
                 v.text_color(),
             );
             if self.config.cell_shape != super::cell_pixels::Shape::Rounded {
-                let frame = self
-                    .table
-                    .pixel_sample
-                    .as_ref()
-                    .filter(|sample| {
-                        sample.fresh()
-                            && matches!(self.command_route(), Some(crate::Transport::WiFi))
-                    })
-                    .map(|sample| &sample.frame);
-                let physical = (matches!(self.command_route(), Some(crate::Transport::WiFi))
+                let frame = self.current_pixel_frame();
+                let physical = (self.command_route().is_some()
                     && crate::streaming::valid_mapping(&self.mappings))
                 .then(|| mapping.as_ref().map(|m| m.physical_cell))
                 .flatten();
@@ -764,7 +823,9 @@ impl PakarControllerApp {
                     .filter(|s| !s.is_empty())
                     .map(str::to_owned)
                     .unwrap_or_else(|| id.to_string());
-                super::cell_pixels::draw(
+                if frame.is_none(){
+                    draw_semantic_cell(ui,&response,self.config.cell_shape,state,&label,selected,visual_column,self.config.animate_cells);
+                }else{super::cell_pixels::draw(
                     ui,
                     &response,
                     self.config.cell_shape,
@@ -774,9 +835,9 @@ impl PakarControllerApp {
                     physical,
                     *id,
                     &label,
-                    cell_base_fill(self.config.color_palette, v.dark_mode, slot as u8 + 1),
+                    cell_base_fill(self.config.color_palette, v.dark_mode, visual_column),
                     self.config.animate_cells,
-                );
+                );}
             } else {
                 ui.painter().with_clip_rect(rect.shrink(9.0)).galley(
                     rect.center() - text.size() * 0.5,
@@ -944,19 +1005,13 @@ impl PakarControllerApp {
             } else {
                 "Click selects · Ctrl toggles · Shift extends · drag selects · Enter manages"
             };
-            let pixel_details = self
-                .table
-                .pixel_sample
-                .as_ref()
-                .filter(|sample| {
-                    sample.fresh() && matches!(self.command_route(), Some(crate::Transport::WiFi))
-                })
-                .and_then(|sample| {
-                    sample.frame.cell(*id).map(|(first, colors)| {
+            let pixel_details = self.current_pixel_frame()
+                .and_then(|frame| {
+                    frame.cell(*id).map(|(first, colors)| {
                         format!(
                             "\nFrame {} · pre-brightness RGB · brightness {}\n{}",
-                            sample.frame.revision,
-                            sample.frame.brightness,
+                            frame.revision,
+                            frame.brightness,
                             colors
                                 .iter()
                                 .enumerate()
@@ -976,13 +1031,13 @@ impl PakarControllerApp {
                     })
                 })
                 .unwrap_or_else(|| {
-                    "\nPixel RGB unavailable (requires Wi-Fi pixel telemetry).".into()
+                    "\nPixel RGB unavailable: awaiting a fresh published frame from this board.".into()
                 });
             response.on_hover_text(format!(
                 "Cell {id} · {} · {}\n{gesture}{pixel_details}",
                 mapping
                     .map(|m| format!("physical {}", m.physical_cell))
-                    .unwrap_or_else(|| "mapping unavailable".into()),
+                    .unwrap_or_else(|| self.mapping_status()),
                 state.unwrap_or("state unavailable")
             ));
         }
@@ -1042,6 +1097,7 @@ impl PakarControllerApp {
             ui.set_width((ctx.content_rect().width()-64.0).clamp(280.0,650.0));
             ui.heading(format!("{}  Manage cells",icons::GRID_FOUR));
             ui.label("Select table rows or individual cells, then apply one state and transition to the selection.");
+            ui.weak(self.mapping_status());
             ui.add_space(8.0);
             ui.horizontal_wrapped(|ui| {
                 ui.strong(format!("{} selected",self.table.selection.ids.len()));
@@ -1068,12 +1124,13 @@ impl PakarControllerApp {
             dialog::section(ui,icons::LIGHTBULB,"Selected cell action",|ui| {
                 ui.horizontal_wrapped(|ui|{for state in [State::White,State::Red,State::Off]{if manager_selector(ui,&format!("{} {}",state.icon(),state.name()),self.table.manager_state==state,1,104.0,self.config.animate_cells).clicked(){self.table.manager_state=state;}}});
                 ui.horizontal(|ui|{ui.label("Transition");egui::ComboBox::from_id_salt("bulk-effect").selected_text(&self.cell_effect).show_ui(ui,|ui|{for effect in ["immediate","fade","pulse"]{ui.selectable_value(&mut self.cell_effect,effect.into(),effect);}});});
-                ui.label(egui::RichText::new("Edits are paced and verified from device readback. They are not an atomic transaction.").small().weak());
+            ui.label(egui::RichText::new("One atomic board-owned batch; all selected cell states require ACK and readback.").small().weak());
+            if !self.has_feature("cell-batch"){ui.weak("This board has not acknowledged atomic cell-batch support; selection edits are unavailable.");}
             });
             if !self.table.result.is_empty(){ui.label(&self.table.result);}
             ui.separator();
             ui.horizontal_wrapped(|ui| {
-                let can_apply=self.command_route().is_some()&&!self.table.selection.ids.is_empty()&&self.table.queue.is_empty()&&self.table.verification_started.is_none();
+                let can_apply=self.command_route().is_some()&&self.has_feature("cell-batch")&&!self.table.selection.ids.is_empty()&&self.table.queue.is_empty()&&self.table.verification_started.is_none();
                 if ui.add_enabled(can_apply,egui::Button::new(format!("{} Apply to {} cells",icons::CHECK,self.table.selection.ids.len()))).clicked(){self.queue_selected_cells(self.table.manager_state);}
                 if ui.add_enabled(!self.table.queue.is_empty(),egui::Button::new(format!("{} Cancel unsent",icons::X))).clicked(){self.table.queue.clear();self.table.awaiting.clear();self.table.verification_started=None;self.table.result="Cancelled unsent edits. Previously sent edits may have applied.".into();}
                 if ui.add_enabled(self.table.selection.ids.len()==1&&!self.mappings.is_empty(),egui::Button::new(format!("{} Mapping…",icons::PENCIL_SIMPLE))).clicked(){let id=*self.table.selection.ids.first().unwrap();self.select_mapping(id);self.show_mapping=true;close=true;}
@@ -1091,6 +1148,50 @@ impl PakarControllerApp {
 mod tests {
     use super::*;
     #[test]
+    fn atomic_readback_confirmation_cannot_be_inferred_from_pending_selection(){
+        let status=crate::DeviceStatus{board_id:"esp32s3-fixture".into(),boot_id:"a".repeat(32),http_peer_fencing:true,..Default::default()};
+        let peer=crate::peer_http::Pin::from_status(&status).unwrap();
+        let request=crate::cell_batch::Request::new(&[1,80],"red","fade").unwrap();
+        let own=crate::cell_batch::Correlation::new(request.clone(),peer.clone(),crate::Transport::WiFi).unwrap();
+        let foreign=crate::cell_batch::Correlation::new(
+            crate::cell_batch::Request::new(&[2,79],"white","fade").unwrap(),peer.clone(),crate::Transport::WiFi).unwrap();
+        let mut table=TableState::default();
+        table.awaiting=vec![(1,State::Red),(80,State::Red)];
+        table.expected_batch=Some(own.clone());
+        table.confirm_batch_ack(&own);assert!(!table.acknowledged);
+        table.verification_started=Some(Instant::now());
+        assert_eq!(foreign.request.ids.len(),own.request.ids.len());
+        table.confirm_batch_ack(&foreign);assert!(!table.acknowledged,"An IPC batch of equal size must not ACK the manager's batch");
+        let identical_foreign=crate::cell_batch::Correlation::new(request,peer,crate::Transport::WiFi).unwrap();
+        table.confirm_batch_ack(&identical_foreign);assert!(!table.acknowledged,"Even identical values require the exact operation ID");
+        let mut altered=own.clone();altered.route=crate::Transport::Serial;
+        table.confirm_batch_ack(&altered);assert!(!table.acknowledged);
+        altered=own.clone();altered.request.state="white".into();table.confirm_batch_ack(&altered);assert!(!table.acknowledged);
+        table.confirm_batch_ack(&own);assert!(table.acknowledged);
+        table.stop_pending_edits();assert!(!table.acknowledged);
+        table.confirm_batch_ack(&own);assert!(!table.acknowledged);
+    }
+    #[test]
+    fn short_dock_viewports_scroll_instead_of_miniaturizing_cells(){
+        for width in [280.0,640.0,1350.0]{for visible in [120.0,230.0,700.0]{
+            let (pitch,height)=grid_metrics(width,visible,false);
+            assert!(pitch>=64.0 && pitch<=94.0);assert_eq!(height,pitch);
+            let slot=cell_rect(Pos2::ZERO,pitch,height,80);
+            assert!(slot.width()>=57.0 && slot.height()>=57.0);
+            assert!(slot.width().min(slot.height())-6.0>=51.0);
+        }}
+    }
+    #[test]
+    fn semantic_fallback_distinguishes_states_without_fabricating_rgb(){
+        let v=egui::Visuals::dark();let base=Color32::from_rgb(17,22,30);
+        let white=semantic_colors(base,Some("white"),&v);
+        let red=semantic_colors(base,Some("red"),&v);
+        let off=semantic_colors(base,Some("off"),&v);
+        assert_eq!((white.2,red.2,off.2),("WHITE","RED","OFF"));
+        assert_ne!(white.0,red.0);assert_ne!(red.0,off.0);assert_ne!(white.0,Color32::WHITE);
+        assert_eq!(semantic_colors(base,None,&v).2,"UNKNOWN");
+    }
+    #[test]
     fn context_revocation_drops_unsent_and_readback_work_without_claiming_rollback() {
         for verifying in [false, true] {
             let mut table = TableState::default();
@@ -1106,7 +1207,7 @@ mod tests {
             if verifying {
                 table.verification_started = Some(Instant::now());
             } else {
-                table.queue.push_back((4, State::Red, "fade".into()));
+                table.queue.push_back((vec![4], State::Red, "fade".into()));
             }
             table.stop_pending_edits();
             assert!(table.queue.is_empty());
@@ -1159,9 +1260,9 @@ mod tests {
                 (1..=80).collect()
             );
         }
-        assert_eq!(navigate_order(&order, 80, Key::ArrowRight, false), 1);
-        assert_eq!(navigate_order(&order, 1, Key::Home, true), 80);
-        assert_eq!(navigate_order(&order, 80, Key::End, true), 3);
+        assert_eq!(navigate_order(&order, order[0], Key::ArrowRight, false), order[10]);
+        assert_eq!(navigate_order(&order, order[37], Key::Home, true), order[0]);
+        assert_eq!(navigate_order(&order, order[0], Key::End, true), order[79]);
         let repaired = normalized_order(&[80, 80, 0, 81, 1]);
         assert_eq!(repaired.len(), 80);
         assert_eq!(&repaired[..3], &[80, 1, 2]);
@@ -1286,7 +1387,7 @@ mod tests {
                     ui,
                     rect,
                     egui::Id::new(logical_id),
-                    logical_id,
+                    slot_position(logical_id-1).1+1,
                     Some("white"),
                     false,
                     false,
@@ -1303,9 +1404,9 @@ mod tests {
             })
             .collect();
         assert_eq!(fills.len(), 4);
-        assert_ne!(fills[0], fills[1]);
-        assert_eq!(fills[0], fills[2]);
-        assert_eq!(fills[1], fills[3]);
+        assert_eq!(fills[0], fills[1]);
+        assert_ne!(fills[0], fills[2]);
+        assert_eq!(fills[2], fills[3]);
         let shell = include_str!("shell.rs");
         assert!(
             !shell.contains("let band ="),
@@ -1557,14 +1658,50 @@ mod tests {
         assert!(restored.show_cell_indicators);
     }
     #[test]
-    fn keyboard_edges_are_row_major_without_wrapping() {
-        assert_eq!(navigate(10, Key::ArrowRight, false), 10);
-        assert_eq!(navigate(11, Key::ArrowLeft, false), 11);
-        assert_eq!(navigate(11, Key::ArrowUp, false), 1);
+    fn keyboard_edges_follow_interleaved_visual_columns_without_wrapping() {
+        assert_eq!(navigate(1, Key::ArrowRight, false), 11);
+        assert_eq!(navigate(11, Key::ArrowRight, false), 2);
+        assert_eq!(navigate(10, Key::ArrowRight, false), 20);
+        assert_eq!(navigate(20, Key::ArrowRight, false), 20);
+        assert_eq!(navigate(11, Key::ArrowLeft, false), 1);
+        assert_eq!(navigate(1, Key::ArrowLeft, false), 1);
+        assert_eq!(navigate(11, Key::ArrowUp, false), 11);
+        assert_eq!(navigate(1, Key::ArrowDown, false), 21);
+        assert_eq!(navigate(11, Key::ArrowDown, false), 31);
         assert_eq!(navigate(78, Key::ArrowDown, false), 78);
-        assert_eq!(navigate(38, Key::Home, false), 31);
+        assert_eq!(navigate(38, Key::Home, false), 21);
         assert_eq!(navigate(38, Key::End, false), 40);
         assert_eq!(navigate(38, Key::End, true), 80);
+    }
+    #[test]
+    fn logical_slots_interleave_without_changing_identity() {
+        let first_row: Vec<_> = (0..20).map(|col| position_slot(0,col)+1).collect();
+        assert_eq!(first_row, [1,11,2,12,3,13,4,14,5,15,6,16,7,17,8,18,9,19,10,20]);
+        for slot in 0..80 {
+            let (row,col)=slot_position(slot);
+            assert_eq!(position_slot(row,col),slot);
+            let rect=cell_rect(Pos2::ZERO,64.0,64.0,slot+1);
+            assert_eq!(rect.min.x,col as f32*64.0);
+            assert_eq!(rect.min.y,(row as f32+if col%2==1 {0.5}else{0.0})*64.0);
+        }
+        let (pitch,height)=grid_metrics(1380.0,700.0,false);
+        assert_eq!(pitch,69.0);
+        assert_eq!(height,pitch);
+        assert!(cell_rect(Pos2::ZERO,pitch,height,80).max.y<=height*4.5);
+        let (pitch,height)=grid_metrics(1380.0,700.0,true);
+        assert_eq!(height,pitch*0.72);
+    }
+    #[test]
+    fn visual_drag_reorders_visual_neighbors_only_in_edit_mode() {
+        let original:Vec<u8>=(1..=80).collect();
+        let mut order=original.clone();
+        assert!(!reorder_visual_cell(&mut order,false,1,11,false));
+        assert_eq!(order,original);
+        assert!(reorder_visual_cell(&mut order,true,1,11,false));
+        let visual:Vec<_>=(0..80).map(|i|order[position_slot(i/20,i%20) as usize]).collect();
+        assert_eq!(&visual[..4],&[11,1,2,12]);
+        assert_eq!(order.iter().copied().collect::<BTreeSet<_>>(),(1..=80).collect());
+        assert_eq!(navigate_order(&order,11,Key::ArrowRight,false),1);
     }
     #[test]
     fn marquee_uses_staggered_centres_and_preserves_additive_base() {
@@ -1577,7 +1714,7 @@ mod tests {
             &cells,
             &BTreeSet::from([80]),
         );
-        assert_eq!(s.ids, BTreeSet::from([1, 2, 80]));
+        assert_eq!(s.ids, BTreeSet::from([1, 11, 80]));
     }
     #[test]
     fn border_states_never_change_geometry() {

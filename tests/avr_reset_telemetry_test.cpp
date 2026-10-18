@@ -25,6 +25,16 @@ int main(){
   assert(first.count()==1 && first.cause()==1 && first.persisted() && first.allowWelcome() && valid(0,1));
   for(unsigned i=0;i<1024;++i)if(i<416 || i>=800)assert(EEPROM.bytes[i]==0x5a);
   const auto writes=EEPROM.writes;first.begin();assert(first.count()==1 && EEPROM.writes==writes);
+  // A Prog-held reset is observable but cannot invalidate an ISP EEPROM backup.
+  EEPROM.reset();record(5,41);pakarTestSetResetCause(2);
+  uint8_t snapshot[1024];memcpy(snapshot,EEPROM.bytes,sizeof(snapshot));
+  const auto beforeProg=EEPROM.writes;ResetTelemetry readOnly;readOnly.begin(false);
+  assert(readOnly.count()==42 && readOnly.cause()==2 && !readOnly.persisted());
+  assert(EEPROM.writes==beforeProg && memcmp(snapshot,EEPROM.bytes,sizeof(snapshot))==0);
+  readOnly.begin();assert(!readOnly.persisted() && EEPROM.writes==beforeProg);
+  assert(memcmp(snapshot,EEPROM.bytes,sizeof(snapshot))==0);
+  EEPROM.reset();ResetTelemetry emptyReadOnly;emptyReadOnly.begin(false);
+  assert(emptyReadOnly.count()==1 && !emptyReadOnly.persisted() && EEPROM.writes==0);
   EEPROM.reset();record(5,41);record(6,42,true,true);record(7,43,false);
   ResetTelemetry recovery;recovery.begin();assert(recovery.count()==42 && recovery.persisted() && valid(6,42));
   assert(EEPROM.bytes[address(7)+5]==0);

@@ -36,8 +36,11 @@ pub enum Command {
     Disconnect,
     LedEffect { value: String },
     LedOutput { value: String },
+    PixelArm,
+    PixelShow { index: u16 },
     LedMode { value: String },
     LedCell { id: u8, state: String, effect: String },
+    LedCells { ids: String, state: String, effect: String },
     UpdateEsp { path: String, confirmed: bool },
 }
 fn parse_command(bytes: &[u8]) -> Result<Command, String> {
@@ -53,6 +56,8 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
         Some("use_usb") => &["command", "port"][..],
         Some("led_effect") | Some("led_mode") | Some("led_output") => &["command", "value"][..],
         Some("led_cell") => &["command", "id", "state", "effect"][..],
+        Some("led_cells") => &["command", "ids", "state", "effect"][..],
+        Some("pixel_show") => &["command", "index"][..],
         Some("update_esp") => &["command", "path", "confirmed"][..],
         _ => &["command"][..],
     };
@@ -77,8 +82,12 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
             return Err("Select a valid OS serial port/path".into());
         }
         Command::LedEffect { value } if !matches!(value.as_str(), "none" | "rainbow" | "fire") => return Err("Unknown LED effect".into()),
-        Command::LedOutput { value } if !matches!(value.as_str(), "on" | "off") => return Err("LED output requires on or off".into()),
+        Command::LedOutput { value } if !matches!(value.as_str(), "on" | "off" | "static" | "effects") => return Err("LED output requires on, off, static or effects".into()),
+        Command::PixelShow { index } if !(1..=480).contains(index) => return Err("Physical pixel requires 1..480".into()),
         Command::LedMode { value } if !matches!(value.as_str(), "cell" | "snake") => return Err("Unknown LED mode".into()),
+        Command::LedCells { ids,state,effect } => {
+            crate::cell_batch::Request::new(&crate::ui::cell_search::parse(ids)?,state,effect)?;
+        }
         Command::LedCell { id, state, effect } if !(1..=80).contains(id)
             || !matches!(state.as_str(), "white" | "red" | "off")
             || !matches!(effect.as_str(), "immediate" | "fade" | "pulse") => return Err("Invalid LED cell operation".into()),
@@ -283,7 +292,13 @@ mod tests {
             br#"{"command":"led_effect","value":"rainbow"}"#,
             br#"{"command":"led_output","value":"on"}"#,
             br#"{"command":"led_output","value":"off"}"#,
+            br#"{"command":"led_output","value":"static"}"#,
+            br#"{"command":"led_output","value":"effects"}"#,
+            br#"{"command":"pixel_arm"}"#,
+            br#"{"command":"pixel_show","index":1}"#,
+            br#"{"command":"pixel_show","index":480}"#,
             br#"{"command":"led_cell","id":80,"state":"red","effect":"fade"}"#,
+            br#"{"command":"led_cells","ids":"1,8-12,80","state":"red","effect":"fade"}"#,
         ] { assert!(parse_command(bytes).is_ok()); }
         for bytes in [
             br#"{"command":"use_wifi","endpoint":"http://user:secret@host"}"#.as_slice(),
@@ -291,10 +306,14 @@ mod tests {
             br#"{"command":"use_usb","port":""}"#,
             br#"{"command":"led_effect","value":"unknown"}"#,
             br#"{"command":"led_output","value":"toggle"}"#,
+            br#"{"command":"pixel_show","index":0}"#,
+            br#"{"command":"pixel_show","index":481}"#,
             br#"{"command":"led_output","value":true}"#,
             br#"{"command":"led_mode","value":"idle"}"#,
             br#"{"command":"led_cell","id":0,"state":"red","effect":"fade"}"#,
             br#"{"command":"led_cell","id":1,"state":"purple","effect":"fade"}"#,
+            br#"{"command":"led_cells","ids":"1,81","state":"red","effect":"fade"}"#,
+            br#"{"command":"led_cells","ids":"","state":"red","effect":"fade"}"#,
             br#"{"command":"update_esp","path":"relative.bin","confirmed":true}"#,
             br#"{"command":"disconnect","endpoint":"other"}"#,
         ] { assert!(parse_command(bytes).is_err()); }

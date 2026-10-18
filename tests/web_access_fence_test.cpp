@@ -12,6 +12,8 @@
 int main() {
   fs::FS filesystem;
   assert(accessConfig.begin(filesystem));
+  assert(!accessConfig.enabled());
+  assert(accessConfig.configure("", true, "admin", "pakarcontroller"));
   WebAccess access;
   const char *board = "esp8266-aabbccddeeff";
   const char *boot = "123456789abcdef0123456789abcdef0";
@@ -77,6 +79,15 @@ int main() {
   AsyncWebServerRequest bootstrap;
   bootstrap.path = "/api/auth/info"; bootstrap.basicAllowed = false;
   dispatch(bootstrap); assert(admitted == before + 1); // Public sign-in bootstrap.
+  AsyncWebServerRequest basic;
+  basic.path="/basic";basic.basicAllowed=false;before=admitted;
+  dispatch(basic);assert(admitted==before+1); // Read-only app shell, not device access.
+  AsyncWebServerRequest basicPost;
+  basicPost.path="/basic";basicPost.requestMethod=HTTP_POST;basicPost.basicAllowed=false;
+  before=admitted;dispatch(basicPost);assert(basicPost.status==401 && admitted==before);
+  AsyncWebServerRequest basicChild;
+  basicChild.path="/basic/other";basicChild.basicAllowed=false;
+  dispatch(basicChild);assert(basicChild.status==401 && admitted==before);
   // Real async queue + real fence recheck: ownership can retire after enqueue,
   // and a handler must fail before the simulated hardware call, without replay.
   AsyncHttpService server(80); unsigned hardwareCalls = 0;
@@ -171,5 +182,31 @@ int main() {
   access.revokeAll();
   assert(!access.allowed(&revoked) && !access.socketAllowed(23));
   pakarTestEntropyResult = -1; pakarTestMillis.store(0);
+  // Auth-off does not mean loss of origin/identity fencing, WS ownership or
+  // storage recovery checks. No cookie or Basic credentials are needed.
+  AsyncWebServerRequest disable;
+  disable.arguments["enabled"]="false";disable.arguments["current_password"]="pakarcontroller";
+  routes.handlers["/api/auth"](&disable);assert(disable.status==200 && !accessConfig.enabled());
+  assert(disable.body=="{\"updated\":true,\"enabled\":false,\"reauthenticate\":false}");
+  AsyncWebServerRequest open;open.basicAllowed=false;
+  assert(access.allowed(&open));assert(access.bindSocket(31,&open));
+  access.expireSockets(websocket);assert(access.socketAllowed(31));
+  AsyncWebServerRequest info;routes.handlers["/api/auth/info"](&info);
+  assert(info.body.find("\"enabled\":false")!=std::string::npos && info.body.find("\"default_credentials\":false")!=std::string::npos);
+  AsyncWebServerRequest noLogin;routes.handlers["/login"](&noLogin);
+  assert(noLogin.status==200 && noLogin.responseHeaders.count("Set-Cookie")==0);
+  AsyncWebServerRequest cross;cross.basicAllowed=false;cross.headers["Origin"].text="http://other.local";
+  before=admitted;dispatch(cross);assert(cross.status==403 && admitted==before);
+  AsyncWebServerRequest stale;stale.basicAllowed=false;stale.headers["X-Pakar-Board"].text=board;stale.headers["X-Pakar-Boot"].text=boot;
+  dispatch(stale);assert(stale.status==409 && admitted==before);
+  AsyncWebServerRequest invalid;invalid.arguments["enabled"]="maybe";
+  routes.handlers["/api/auth"](&invalid);assert(invalid.status==400 && !accessConfig.enabled());
+  AsyncWebServerRequest enable;enable.arguments["enabled"]="true";enable.arguments["username"]="David";enable.arguments["password"]="new-secret";
+  routes.handlers["/api/auth"](&enable);assert(enable.status==200 && accessConfig.enabled());
+  assert(!access.socketAllowed(31) && !access.allowed(&open));
+  assert(!accessConfig.begin(filesystem, false));
+  AsyncWebServerRequest unavailable;unavailable.basicAllowed=false;
+  before=admitted;dispatch(unavailable);assert(unavailable.status==503 && admitted==before);
+  assert(!access.allowed(&unavailable) && !access.bindSocket(32,&unavailable));
   puts("Actual WebAccess all-method epoch rejection, auth/origin ordering, explicit legacy and async admission/dispatch checks passed (transport doubles, not physical ISP).");
 }

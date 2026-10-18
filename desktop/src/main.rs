@@ -8,6 +8,7 @@ use std::{
 mod access;
 mod audio;
 mod brand_image;
+mod board_silent;
 mod branding;
 mod capabilities;
 mod client_telemetry;
@@ -22,9 +23,12 @@ mod maintenance;
 mod messaging;
 mod pc_contract;
 mod peer_http;
+mod pixel_diagnostic;
 mod platform;
 mod streaming;
 mod terminal_ui;
+mod usb_table;
+mod cell_batch;
 mod ui;
 
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
@@ -78,6 +82,12 @@ struct DeviceStatus {
     #[serde(default)]
     ip: String,
     #[serde(default)]
+    uplink: String,
+    #[serde(default)]
+    uplink_ipv4_ready: Option<bool>,
+    #[serde(default)]
+    ethernet: serde_json::Value,
+    #[serde(default)]
     mode: String,
     #[serde(default)]
     avr_online: bool,
@@ -107,6 +117,8 @@ struct DeviceStatus {
     canonical_url: String,
     #[serde(default)]
     tm1637_ack: bool,
+    #[serde(default, deserialize_with = "display::optional_lcd")]
+    lcd: Option<display::LcdObservation>,
     #[serde(default)]
     tm1637_segments: Vec<u8>,
     #[serde(default)]
@@ -167,27 +179,38 @@ struct DeviceStatus {
     pixel_frame: Option<ui::cell_pixels::Frame>,
 }
 
+fn led_output_mode(status: &DeviceStatus) -> Option<&str> {
+    status.led_output.get("mode").and_then(|v| v.as_str())
+        .filter(|mode| matches!(*mode, "static" | "effects"))
+}
+
 #[derive(Clone)]
 enum HttpCommand {
     Scoped(peer_http::Scope, Box<HttpCommand>),
     Status(Endpoint),
-    Mapping(Endpoint),
+    Mapping(Endpoint, u64),
     Configuration(Endpoint, &'static str),
+    BoardSilent(Endpoint, u64, board_silent::Change),
     Post(Endpoint, &'static str, Vec<(String, String)>),
-    AccessChange(Endpoint, Endpoint),
+    CellBatch(Endpoint,cell_batch::Correlation),
+    AccessChange(Endpoint, Endpoint, bool),
     NameChange(Endpoint, String, Option<String>),
     Settings(Endpoint, device_settings::Write),
     Maintenance(Endpoint, u64, maintenance::Operation),
+    PixelReadback(Endpoint, u64, u16, peer_http::Pin),
 }
 
 impl HttpCommand {
     fn is_status(&self) -> bool { match self {Self::Scoped(_, command) => command.is_status(),Self::Status(_) => true,_ => false} }
-    fn discoverable_read(&self) -> bool { match self {Self::Scoped(_, command) => command.discoverable_read(),Self::Status(_) | Self::Mapping(_) | Self::Configuration(..) => true,_ => false} }
+    fn discoverable_read(&self) -> bool { match self {Self::Scoped(_, command) => command.discoverable_read(),Self::Status(_) | Self::Mapping(..) | Self::Configuration(..) => true,_ => false} }
     fn failure(&self, error: String) -> Event {
         match self {
             Self::Scoped(scope, command) => Event::ForScope(scope.clone(), Box::new(command.failure(error))),
+            Self::BoardSilent(_, id, _) => Event::BoardSilentFinished(*id, Err(error)),
             Self::Settings(_, write) => Event::SettingsFinished(write.id, write.group, Err(error)),
             Self::Maintenance(_, id, _) => Event::MaintenanceFinished(*id, Err(error)),
+            Self::PixelReadback(_, id, ..) => Event::PixelReadbackFinished(*id, Err(error)),
+            Self::Mapping(_, id) => Event::MappingFailed(*id, error),
             _ if self.diagnostic_source().is_some() => Event::DiagnosticFailure(self.diagnostic_source().unwrap(), error),
             _ => Event::OperationFailed(error),
         }
@@ -196,7 +219,7 @@ impl HttpCommand {
         match self {
             Self::Scoped(_, command) => command.diagnostic_source(),
             Self::Status(_) => Some("HTTP GET /api/status".into()),
-            Self::Mapping(_) => Some("HTTP GET /api/cells/mapping".into()),
+            Self::Mapping(..) => Some("HTTP GET /api/cells/mapping".into()),
             Self::Configuration(_, path) => Some(format!("HTTP GET {path}")),
             _ => None, // Explicit operations keep their own correlated outcomes.
         }
@@ -205,13 +228,16 @@ impl HttpCommand {
         match self {
             Self::Scoped(_, command) => command.endpoint(),
             Self::Status(endpoint)
-            | Self::Mapping(endpoint)
+            | Self::Mapping(endpoint, ..)
+            | Self::BoardSilent(endpoint, ..)
             | Self::Configuration(endpoint, ..)
             | Self::AccessChange(endpoint, ..)
             | Self::NameChange(endpoint, ..)
             | Self::Settings(endpoint, ..)
             | Self::Maintenance(endpoint, ..)
+            | Self::PixelReadback(endpoint, ..)
             | Self::Post(endpoint, ..) => endpoint,
+            Self::CellBatch(endpoint, ..) => endpoint,
         }
     }
 
@@ -224,17 +250,20 @@ impl HttpCommand {
         match self {
             Self::Scoped(scope, command) => Self::Scoped(scope.clone(), Box::new(command.with_base(base.clone()))),
             Self::Status(endpoint) => Self::Status(replace(endpoint)),
-            Self::Mapping(endpoint) => Self::Mapping(replace(endpoint)),
+            Self::Mapping(endpoint, id) => Self::Mapping(replace(endpoint), *id),
             Self::Configuration(endpoint, path) => Self::Configuration(replace(endpoint), path),
+            Self::BoardSilent(endpoint, id, desired) => Self::BoardSilent(replace(endpoint), *id, *desired),
             Self::Post(endpoint, path, form) => Self::Post(replace(endpoint), path, form.clone()),
-            Self::AccessChange(endpoint, next) => {
-                Self::AccessChange(replace(endpoint), replace(next))
+            Self::CellBatch(endpoint,correlation)=>Self::CellBatch(replace(endpoint),correlation.clone()),
+            Self::AccessChange(endpoint, next, enabled) => {
+                Self::AccessChange(replace(endpoint), replace(next), *enabled)
             }
             Self::NameChange(endpoint, name, label) => Self::NameChange(replace(endpoint), name.clone(), label.clone()),
             Self::Settings(endpoint, write) => Self::Settings(replace(endpoint), write.clone()),
             Self::Maintenance(endpoint, id, operation) => {
                 Self::Maintenance(replace(endpoint), *id, operation.clone())
             }
+            Self::PixelReadback(endpoint, id, index, peer) => Self::PixelReadback(replace(endpoint), *id, *index, peer.clone()),
         }
     }
 }
@@ -248,6 +277,10 @@ struct CellMapping {
 
 #[derive(Debug, Clone, Default, Deserialize)]
 struct CellMappingResponse {
+    #[serde(default)]
+    board_id: Option<String>,
+    #[serde(default)]
+    boot_id: Option<String>,
     #[serde(default)]
     physical: Vec<u8>,
     #[serde(default)]
@@ -265,11 +298,20 @@ impl CellMappingResponse {
         Ok(mappings)
     }
 }
+struct MappingPending {
+    id: u64,
+    peer: peer_http::Pin,
+    started: Instant,
+}
 fn status_observation_fresh(last: Option<Instant>) -> bool {
     last.is_some_and(|at| at.elapsed() < Duration::from_secs(8))
 }
 fn websocket_status_ready(status: &DeviceStatus) -> bool {
     !status.hostname.is_empty() && status.capabilities.as_ref().is_some_and(|manifest| manifest.known())
+}
+fn websocket_status(text: &str) -> Option<DeviceStatus> {
+    let status = serde_json::from_str::<DeviceStatus>(text).ok()?;
+    websocket_status_ready(&status).then_some(status)
 }
 enum WsCommand {
     Connect(Endpoint, u64),
@@ -278,11 +320,14 @@ enum WsCommand {
     Mapping(Vec<CellMapping>),
     Stream(bool),
     Sample(bool),
+    Pixel(pixel_diagnostic::Request),
+    ArmPixel(pixel_diagnostic::Request),
 }
 enum SerialCommand {
     Port(String, u64),
-    Send(String, u8, Vec<u8>),
-    Identity(String, String, String),
+    Send(String, usb_table::Admission, u8, Vec<u8>),
+    Identity(String, usb_table::Admission, String, String),
+    BoardSilent(String, usb_table::Admission, u64, board_silent::Change),
 }
 enum Event {
     ForConnection(connection::Stamp, Box<Event>),
@@ -290,13 +335,21 @@ enum Event {
     ForEndpoint(Endpoint, Box<Event>),
     StreamStats(f64),
     Status(DeviceStatus),
-    Mapping(Vec<CellMapping>),
+    Mapping(u64, Vec<CellMapping>, Option<(String, String)>),
+    MappingFailed(u64, String),
     Configuration(&'static str, serde_json::Value),
     Accepted(String),
+    BoardSilentFinished(u64, Result<pc_contract::Settings, String>),
     CredentialsUpdated(Endpoint),
     NameUpdated(Endpoint, bool),
     SerialIdentity(String, serde_json::Value),
     SerialIdentitySaved(String, Result<(), String>),
+    SerialSnapshot(String, usb_table::Snapshot),
+    SerialOperation(String, Result<String, String>),
+    CellBatchConfirmed(cell_batch::Correlation),
+    SerialBatchConfirmed(String,cell_batch::Correlation),
+    SerialQueueDepth(String, usize),
+    SerialOwner(String, u64),
     DiagnosticFailure(String, String),
     DiagnosticRecovered(String),
     SerialFailure(String, String),
@@ -307,13 +360,16 @@ enum Event {
         Result<serde_json::Value, String>,
     ),
     MaintenanceFinished(u64, Result<String, String>),
+    PixelModeFinished(u64, Result<DeviceStatus, String>),
+    PixelSent(pixel_diagnostic::Request, Result<(), String>),
+    PixelReadbackFinished(u64, Result<String, String>),
     WebSocket(bool),
     Serial(String, bool, Option<DeviceStatus>),
 }
 
 impl Event {
     fn http_status(&self) -> Option<&DeviceStatus> { match self { Self::ForScope(_, inner) => inner.http_status(),Self::Status(status) => Some(status),_ => None } }
-    fn http_succeeded(&self) -> bool { match self { Self::ForScope(_, inner) => inner.http_succeeded(),Self::DiagnosticFailure(..) | Self::OperationFailed(_) | Self::SettingsFinished(_, _, Err(_)) | Self::MaintenanceFinished(_, Err(_)) => false,_ => true } }
+    fn http_succeeded(&self) -> bool { match self { Self::ForScope(_, inner) => inner.http_succeeded(),Self::MappingFailed(..) | Self::DiagnosticFailure(..) | Self::OperationFailed(_) | Self::BoardSilentFinished(_, Err(_)) | Self::SettingsFinished(_, _, Err(_)) | Self::MaintenanceFinished(_, Err(_)) | Self::PixelModeFinished(_, Err(_)) | Self::PixelReadbackFinished(_, Err(_)) => false,_ => true } }
 }
 
 fn for_endpoint(endpoint: &Endpoint, event: Event) -> Event {
@@ -333,6 +389,7 @@ fn current_event(event: Event, endpoint: &Endpoint, serial_port: &str) -> Option
         Event::ForEndpoint(..) => None,
         Event::Serial(ref port, ..) if port != serial_port => None,
         Event::SerialFailure(ref port, ..) if port != serial_port => None,
+        Event::SerialSnapshot(ref port, ..) | Event::SerialOperation(ref port, ..) | Event::SerialBatchConfirmed(ref port, ..) | Event::SerialQueueDepth(ref port, ..) | Event::SerialOwner(ref port, ..) if port != serial_port => None,
         other => Some(other),
     }
 }
@@ -340,6 +397,10 @@ fn current_event(event: Event, endpoint: &Endpoint, serial_port: &str) -> Option
 fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> {
     if let HttpCommand::Scoped(scope, command) = command {
         return scoped_http_request(client, &scope, &command).map(|result| Event::ForScope(scope, Box::new(result)));
+    }
+    let mapping_id = match &command { HttpCommand::Mapping(_, id) => *id, _ => 0 };
+    if let HttpCommand::PixelReadback(endpoint, id, index, peer) = &command {
+        return Ok(Event::PixelReadbackFinished(*id, pixel_diagnostic::verify_frame(client, endpoint, peer, *index)));
     }
     if let HttpCommand::Maintenance(endpoint, id, operation) = &command {
         return Ok(Event::MaintenanceFinished(
@@ -411,7 +472,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
         }
         return Ok(Event::NameUpdated(next, pending));
     }
-    if let HttpCommand::AccessChange(endpoint, next) = &command {
+    if let HttpCommand::AccessChange(endpoint, next, enabled) = &command {
         let response = client
             .post(format!(
                 "{}/api/auth",
@@ -419,6 +480,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
             ))
             .basic_auth(&endpoint.user, Some(&endpoint.password))
             .form(&[
+                ("enabled", &enabled.to_string()),
                 ("current_password", &endpoint.password),
                 ("username", &next.user),
                 ("password", &next.password),
@@ -436,7 +498,10 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
         if value.get("updated").and_then(|v| v.as_bool()) != Some(true) {
             return Err("Device did not confirm a saved credential change".into());
         }
-        return Ok(Event::CredentialsUpdated(next.clone()));
+        if value.get("enabled").and_then(|v|v.as_bool()) != Some(*enabled) { return Err("Device did not confirm the authentication setting".into()); }
+        let mut active = next.clone();
+        if !enabled { active.user.clear(); active.password.clear(); }
+        return Ok(Event::CredentialsUpdated(active));
     }
     if let HttpCommand::Configuration(endpoint, path) = &command {
         let response = client
@@ -465,7 +530,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
             )]);
             (endpoint, request, 1_u8)
         }
-        HttpCommand::Mapping(endpoint) => {
+        HttpCommand::Mapping(endpoint, _) => {
             let url = format!(
                 "{}/api/cells/mapping",
                 endpoint.base.trim_end_matches('/')
@@ -475,9 +540,12 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
         }
         HttpCommand::Configuration(..)
         | HttpCommand::AccessChange(..)
+        | HttpCommand::BoardSilent(..)
         | HttpCommand::NameChange(..) => unreachable!(),
         HttpCommand::Settings(..) => unreachable!(),
         HttpCommand::Maintenance(..) => unreachable!(),
+        HttpCommand::PixelReadback(..) => unreachable!(),
+        HttpCommand::CellBatch(..) => unreachable!("Cell batch requires scoped admission"),
         HttpCommand::Post(endpoint, path, form) => {
             let url = format!("{}{}", endpoint.base.trim_end_matches('/'), path);
             let request = client.post(url).form(&form);
@@ -503,7 +571,14 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
         2 => response
             .json::<CellMappingResponse>()
             .map_err(diagnostics::describe_error)
-            .and_then(|value| value.decode().map(Event::Mapping)),
+            .and_then(|value| {
+                let identity = match (&value.board_id, &value.boot_id) {
+                    (None, None) => None,
+                    (Some(board), Some(boot)) => Some((board.clone(), boot.clone())),
+                    _ => return Err("Mapping response has incomplete board/boot identity; not applied".into()),
+                };
+                value.decode().map(|cells| Event::Mapping(mapping_id, cells, identity))
+            }),
         _ => Ok(Event::Accepted(format!(
             "Device accepted the command ({code})"
         ))),
@@ -514,7 +589,13 @@ fn scoped_http_request(client: &Client, scope: &peer_http::Scope, command: &Http
     // Adapt donor acquireWrite's checks before AND after waiting/admission.
     scope.admit()?;
     if matches!(command, HttpCommand::Status(_)) { return http_request(client, command.clone()); }
-    let mutating = !matches!(command, HttpCommand::Mapping(_) | HttpCommand::Configuration(..)
+    if let HttpCommand::PixelReadback(_, _, _, peer) = command {
+        if scope.pin.as_ref() != Some(peer) { return Err("Pixel readback peer was revoked".into()); }
+        let result = http_request(&peer.client()?, command.clone())?;
+        if !scope.current() { return Err("Pixel readback belongs to a retired board; not applied".into()); }
+        return Ok(result);
+    }
+    let mutating = !matches!(command, HttpCommand::Mapping(..) | HttpCommand::Configuration(..)
         | HttpCommand::Maintenance(_, _, maintenance::Operation::RemoteStatus | maintenance::Operation::Download {..}));
     if mutating && scope.pin.is_none() { return Err("Read-only: peer has not advertised valid board/boot identity and HTTP fencing".into()); }
     let before = blocking_status(client, command.endpoint())?;
@@ -524,7 +605,9 @@ fn scoped_http_request(client: &Client, scope: &peer_http::Scope, command: &Http
     if mutating {
         let allowed = before.capabilities.as_ref().is_some_and(|c| match command {
             HttpCommand::Post(_, path, form) => c.allows(path, form),
+            HttpCommand::CellBatch(_,correlation)=>c.allows("/api/cells",&correlation.request.form()),
             HttpCommand::Settings(_, write) => c.allows(write.group.path(), &write.form),
+            HttpCommand::BoardSilent(..) => board_silent::settings_supported(&before),
             HttpCommand::NameChange(..) => c.has("identity"),
             HttpCommand::AccessChange(..) => c.has("network"),
             HttpCommand::Maintenance(_, _, operation) => c.has(match operation {
@@ -538,10 +621,57 @@ fn scoped_http_request(client: &Client, scope: &peer_http::Scope, command: &Http
         if !allowed { return Err("This board no longer acknowledges the requested capability; nothing was sent".into()); }
     }
     let pinned = scope.pin.as_ref().map(peer_http::Pin::client).transpose()?;
+    if let HttpCommand::BoardSilent(endpoint, id, desired) = command {
+        if !desired.allowed(&before) {
+            return Err("Board settings are unavailable or programming safety is active".into());
+        }
+        let client = pinned.as_ref().ok_or("Board settings require a verified peer")?;
+        let mut transaction = board_silent::Transaction::new(*desired);
+        loop {
+            scope.admit()?;
+            let (opcode, payload) = transaction.request();
+            let receipt = pc_contract::request(client, &endpoint.base, &endpoint.user, &endpoint.password, opcode, &payload)?;
+            let response = receipt["response_opcode"].as_u64().ok_or("Missing board response opcode")?;
+            let payload = pc_contract::decode_hex(receipt["payload_hex"].as_str().ok_or("Missing board response")?)?;
+            scope.admit()?;
+            if let Some(settings) = transaction.accept(u8::try_from(response).map_err(|_|"Invalid response opcode")?, &payload)? {
+                let after = blocking_status(client, endpoint)?;
+                if scope.pin != peer_http::Pin::from_status(&after) || !scope.current() {
+                    return Err("Board/session changed during settings readback; result not applied".into());
+                }
+                return Ok(Event::BoardSilentFinished(*id, Ok(settings)));
+            }
+        }
+    }
+    if let HttpCommand::CellBatch(endpoint,correlation)=command {
+        if scope.pin.as_ref()!=Some(&correlation.peer) || correlation.route!=Transport::WiFi {
+            return Err("Atomic batch admission does not belong to this peer/route".into());
+        }
+        cell_batch::send(pinned.as_ref().unwrap_or(client),endpoint,&correlation.request,Some(&correlation.peer),None,Some(&||scope.admit()))?;
+        if !scope.current(){return Err("Batch belongs to a retired board; inspect original device, no replay".into());}
+        return Ok(Event::CellBatchConfirmed(correlation.clone()));
+    }
+    if let HttpCommand::Post(endpoint,"/api/cells",form)=command {
+        let get=|name:&str|form.iter().find(|(key,_)|key==name).map(|(_,value)|value.as_str()).ok_or_else(||format!("Missing batch {name}"));
+        let request=cell_batch::Request::new(&ui::cell_search::parse(get("ids")?)?,get("state")?,get("effect")?)?;
+        let receipt=cell_batch::send(pinned.as_ref().unwrap_or(client),endpoint,&request,scope.pin.as_ref(),None,Some(&||scope.admit()))?;
+        if !scope.current(){return Err("Batch belongs to a retired board; inspect original device, no replay".into());}
+        return Ok(Event::Accepted(receipt)); // No UI intent correlation: never complete another batch.
+    }
     let result = http_request(pinned.as_ref().unwrap_or(client), command.clone())?;
     // Credential/hostname/self-update results may intentionally retire the endpoint.
     // Settings already performed readback; validate its observed epoch separately.
-    let verify_read = matches!(command, HttpCommand::Mapping(_) | HttpCommand::Configuration(..))
+    // New mapping responses identify their own producer. Validate that exact
+    // response rather than discarding valid mapping when an unrelated trailing
+    // status request fails. Older firmware retains both status fences.
+    let mapping_identified = if let Event::Mapping(_, _, Some((board, boot))) = &result {
+        if !scope.pin.as_ref().is_some_and(|pin| pin.matches_identity(board, boot)) {
+            return Err("Mapping belongs to a different board/boot; not applied".into());
+        }
+        true
+    } else { false };
+    let verify_read = (matches!(command, HttpCommand::Mapping(..)) && !mapping_identified)
+        || matches!(command, HttpCommand::Configuration(..))
         || matches!(&result, Event::SettingsFinished(_, _, Ok(_)) | Event::NameUpdated(_, false));
     if verify_read {
         let after = blocking_status(client, command.endpoint()).map_err(|_| "Result received but board/boot readback unavailable; inspect before retrying".to_string())?;
@@ -564,6 +694,7 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
         .expect("HTTP client");
     let mut discovered_base: Option<String> = None;
     let mut requested_base = String::new();
+    let mut auth_probe: Option<(u64, String)> = None;
     while let Ok(command) = commands.recv() {
         let stamp = gate.stamp(Transport::WiFi, gate.epoch());
         let lease = loop {
@@ -622,6 +753,18 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
                 endpoint.base = base.clone();
             }
             reporter.report(&pinned, &endpoint);
+        }
+        if command.is_status() && lease.current() {
+            let key = (stamp.epoch, command.endpoint().base.clone());
+            let unauthorized = result.as_ref().err().is_some_and(|error| error.starts_with("HTTP 401"));
+            if auth_probe.as_ref() != Some(&key) || unauthorized {
+                let mut endpoint = command.endpoint().clone();
+                if let Some(base) = &discovered_base { endpoint.base = base.clone(); }
+                if let Ok(info) = http_request(&client, HttpCommand::Configuration(endpoint, "/api/auth/info")) {
+                    auth_probe = Some(key);
+                    let _ = events.send(for_endpoint(command.endpoint(), info));
+                }
+            }
         }
         let source = command.diagnostic_source();
         if result.as_ref().is_ok_and(Event::http_succeeded) {
@@ -720,6 +863,11 @@ fn sampled_screen_packets(mapping: &[CellMapping]) -> Result<(Vec<u8>, Vec<u8>),
     ))
 }
 
+fn reject_pixel(events: &Sender<Event>, request: pixel_diagnostic::Request) {
+    let endpoint = request.endpoint.clone();
+    let _ = events.send(for_endpoint(&endpoint, Event::PixelSent(request,
+        Err("WebSocket is not ready; diagnostic frame was not queued or replayed".into()))));
+}
 fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui::Context, gate: connection::Gate) {
     let mut retry = diagnostics::Backoff::new(Duration::from_millis(600), Duration::from_secs(15));
     let mut endpoint: Option<Endpoint> = None;
@@ -737,6 +885,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 Ok(WsCommand::Mapping(value)) => mapping = value,
                 Ok(WsCommand::Stream(v)) => streaming = v,
                 Ok(WsCommand::Sample(v)) => sampling = v,
+                Ok(WsCommand::Pixel(request) | WsCommand::ArmPixel(request)) => reject_pixel(&events, request),
                 Err(_) => return,
             }
         }
@@ -761,6 +910,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 WsCommand::Mapping(value) => mapping = value,
                 WsCommand::Stream(v) => streaming = v,
                 WsCommand::Sample(v) => sampling = v,
+                WsCommand::Pixel(request) | WsCommand::ArmPixel(request) => reject_pixel(&events, request),
             }
         }
         let Some(current) = endpoint.clone() else {
@@ -796,6 +946,8 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
             // A successful TCP/HTTP upgrade is not recovery if the service then
             // immediately closes or never acknowledges an actual board status.
             let mut confirmed = false;
+            let mut observed_peer: Option<(peer_http::Pin, Instant, bool, bool)> = None;
+            let mut pending_arm: Option<(pixel_diagnostic::Request, bool)> = None;
             context.request_repaint();
             let mut hue = 0_u16;
             let mut last_stream = Instant::now() - Duration::from_millis(50);
@@ -803,6 +955,12 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
             let mut sent_frames = 0_u32;
             loop {
                 if !lease.current() { break; }
+                if pending_arm.as_ref().is_some_and(|(request, _)| request.at.elapsed() >= Duration::from_secs(8)) {
+                    if let Some((request, _)) = pending_arm.take() {
+                        let _ = events.send(for_endpoint(&current, Event::PixelModeFinished(request.id,
+                            Err("Effects-mode ACK/readback timed out; no frame sent or mode write replayed".into()))));
+                    }
+                }
                 match commands.try_recv() {
                     Ok(WsCommand::Connect(new_endpoint, epoch)) => {
                         mapping.clear();
@@ -831,6 +989,40 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                         if value {
                             streaming = false;
                         }
+                    }
+                    Ok(WsCommand::ArmPixel(request)) => {
+                        if request.endpoint != current || request.at.elapsed() >= Duration::from_secs(3)
+                            || pending_arm.is_some() || streaming || sampling
+                            || !observed_peer.as_ref().is_some_and(|(peer, at, _, can_arm)|
+                                peer == &request.peer && *can_arm && at.elapsed() < Duration::from_secs(8)) {
+                            let _ = events.send(for_endpoint(&current, Event::PixelModeFinished(request.id,
+                                Err("Stop streams and select the same enabled Cell board with no global effect before diagnostics".into()))));
+                        } else {
+                            socket.send(Message::Text(r#"{"command":"led-output","mode":"effects"}"#.into()))
+                                .map_err(|_| "Mode write outcome unknown; no replay")?;
+                            pending_arm = Some((request, false));
+                        }
+                        context.request_repaint();
+                    }
+                    Ok(WsCommand::Pixel(request)) => {
+                        let result = (|| -> Result<(), String> {
+                            if request.endpoint != current || request.at.elapsed() >= Duration::from_secs(3)
+                                || !lease.current() || streaming || sampling
+                                || pending_arm.is_some()
+                                || !observed_peer.as_ref().is_some_and(|(peer, at, ready, _)|
+                                    peer == &request.peer && *ready && at.elapsed() < Duration::from_secs(8)) {
+                                return Err("Diagnostic peer/mode expired or another stream is active; frame not sent".into());
+                            }
+                            let pixels = pixel_diagnostic::pixels(request.index).ok_or("Pixel index outside 0..479")?;
+                            socket.send(Message::Binary(pixel_packet(&pixels, 0, 240, false).into()))
+                                .map_err(|_| "Diagnostic write outcome unknown; no frame was replayed")?;
+                            if !lease.current() { return Err("Connection released after first chunk; frame not committed".into()); }
+                            socket.send(Message::Binary(pixel_packet(&pixels, 240, 240, true).into()))
+                                .map_err(|_| "Diagnostic commit outcome unknown; no frame was replayed")?;
+                            Ok(())
+                        })();
+                        let _ = events.send(for_endpoint(&current, Event::PixelSent(request, result)));
+                        context.request_repaint();
                     }
                     Err(TryRecvError::Disconnected) => return Ok(()),
                     Err(TryRecvError::Empty) => {}
@@ -877,7 +1069,29 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 }
                 match socket.read() {
                     Ok(Message::Text(text)) => {
-                        if let Ok(status) = serde_json::from_str::<DeviceStatus>(&text) {
+                        if pending_arm.as_ref().is_some_and(|(_, acked)| !acked) {
+                            if let Some(ack) = pixel_diagnostic::mode_ack(&text) {
+                                match ack {
+                                    Ok(()) => {
+                                        if let Some((_, acked)) = pending_arm.as_mut() { *acked = true; }
+                                        socket.send(Message::Text(r#"{"type":"status"}"#.into())).map_err(|e| e.to_string())?;
+                                    }
+                                    Err(error) => if let Some((request, _)) = pending_arm.take() {
+                                        let _ = events.send(for_endpoint(&current, Event::PixelModeFinished(request.id, Err(error))));
+                                    },
+                                }
+                            }
+                        }
+                        if let Some(status) = websocket_status(&text) {
+                            observed_peer = peer_http::Pin::from_status(&status)
+                                .map(|pin| (pin, Instant::now(), pixel_diagnostic::ready(&status), pixel_diagnostic::can_arm(&status)));
+                            if pending_arm.as_ref().is_some_and(|(request, acked)| *acked
+                                && peer_http::Pin::from_status(&status).as_ref() == Some(&request.peer)
+                                && pixel_diagnostic::ready(&status)) {
+                                if let Some((request, _)) = pending_arm.take() {
+                                    let _ = events.send(for_endpoint(&current, Event::PixelModeFinished(request.id, Ok(status.clone()))));
+                                }
+                            }
                             if !confirmed && websocket_status_ready(&status) {
                                 confirmed = true; retry.reset();
                                 let _ = events.send(for_endpoint(&current, Event::DiagnosticRecovered("WebSocket".into())));
@@ -915,6 +1129,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 Ok(WsCommand::Mapping(value)) => mapping = value,
                 Ok(WsCommand::Stream(value)) => streaming = value,
                 Ok(WsCommand::Sample(value)) => sampling = value,
+                Ok(WsCommand::Pixel(request) | WsCommand::ArmPixel(request)) => reject_pixel(&events.sender, request),
                 Err(mpsc::RecvTimeoutError::Disconnected) => return,
                 Err(mpsc::RecvTimeoutError::Timeout) => {},
             }
@@ -1014,8 +1229,13 @@ fn serial_status(payload: &[u8]) -> Option<DeviceStatus> {
         winner: payload[1],
         selected_cell: payload[2],
         brightness: payload[3],
-        led_output: payload.get(42).filter(|v| **v <= 1)
-            .map(|v| serde_json::json!({"enabled": *v != 0})).unwrap_or_default(),
+        led_output: payload.get(42).filter(|v| **v <= 1).map(|v| {
+            let mut state = serde_json::json!({"enabled": *v != 0});
+            if let Some(mode) = payload.get(43).and_then(|v| ["static", "effects"].get(*v as usize)) {
+                state["mode"] = (*mode).into();
+            }
+            state
+        }).unwrap_or_default(),
         effect: ["none", "rainbow", "fire"]
             .get(payload[4] as usize)
             .unwrap_or(&"unknown")
@@ -1064,6 +1284,7 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
     let mut generation = 0;
     let mut sequence = 1_u8;
     let mut nonce = 0_u8;
+    let mut physical_session=0_u64;
     loop {
         if port_name.is_empty() {
             match commands.recv() {
@@ -1098,6 +1319,8 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
             }
         };
         let connected_port = port_name.clone();
+        let Some(next_session)=physical_session.checked_add(1) else{return;};physical_session=next_session;
+        let _=events.send(Event::SerialOwner(connected_port.clone(),physical_session));
         let _ = events.send(Event::Serial(connected_port.clone(),true,None));
         context.request_repaint();
         let mut encoded=Vec::new();
@@ -1110,26 +1333,112 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
         let mut packets=std::collections::VecDeque::new();
         let mut write_wait: Option<(u8,Instant)>=None;
         let mut expected: Option<(String,String)>=None;
+        let mut identity_admission:Option<usb_table::Admission>=None;
+        let mut table_supported=false;
+        let mut table_read:Option<usb_table::Reader>=None;
+        let mut table_wait:Option<(u8,Instant)>=None;
+        let mut table_started=Instant::now();
+        let mut last_table=Instant::now()-Duration::from_secs(2);
+        let mut table_snapshot:Option<DeviceStatus>=None;
+        let mut table_observed=Instant::now()-Duration::from_secs(20);
+        let mut intents=std::collections::VecDeque::<usb_table::Intent>::new();
+        let mut operation:Option<(usb_table::Intent,u8,Instant,bool)>=None;
+        let mut silent: Option<(u64, usb_table::Admission, board_silent::Transaction, Option<(u8, Instant)>)> = None;
+        let mut reported_depth=0;
         'connected: loop {
             if !lease.current() { break; }
             while let Ok(c)=commands.try_recv() {
                 match c {
                     SerialCommand::Port(p, epoch)=>{port_name=p;generation=epoch;break 'connected}
-                    SerialCommand::Send(target,op,payload) if target==connected_port && lease.current()=>{
-                        let _=port.write_all(&wire_frame(op,sequence,&payload));sequence=sequence.wrapping_add(1);
+                    SerialCommand::Send(target,admission,op,payload) if target==connected_port && lease.current()=>{
+                        if !admission.current(physical_session,table_snapshot.as_ref()) {
+                            let _=events.send(Event::SerialOperation(connected_port.clone(),Err("USB command belongs to a retired UI/session/peer; nothing sent".into())));
+                        }else if payload.len()>48 || intents.len()>=32 {
+                            let _=events.send(Event::SerialOperation(connected_port.clone(),Err("USB command queue full or payload too large; nothing sent".into())));
+                        }else if usb_table::table_command(op) && table_snapshot.is_none(){
+                            let _=events.send(Event::SerialOperation(connected_port.clone(),Err("USB table snapshot not verified; nothing sent".into())));
+                        }else{intents.push_back(usb_table::Intent{opcode:op,payload,admission});}
                     }
-                    SerialCommand::Identity(target,host,label) if target==connected_port && lease.current()=>{
-                        if expected.is_some() {
+                    SerialCommand::BoardSilent(target, admission, id, desired) if target == connected_port => {
+                        if silent.is_some() || !admission.current(physical_session, table_snapshot.as_ref())
+                            || !table_snapshot.as_ref().is_some_and(|s| desired.allowed(s)) {
+                            let _ = events.send(Event::BoardSilentFinished(id, Err("USB board settings busy, unavailable or peer retired; nothing sent".into())));
+                        } else { silent = Some((id, admission, board_silent::Transaction::new(desired), None)); }
+                    }
+                    SerialCommand::Identity(target,admission,host,label) if target==connected_port && lease.current()=>{
+                        if admission.peer.is_none() || !admission.current(physical_session,table_snapshot.as_ref()) {
+                            let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err("USB identity request belongs to an unverified or retired board; nothing sent".into())));
+                        }else if expected.is_some() {
                             let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err("An identity write is already pending".into())));
                         } else {
                             match identity::usb_write(&host,&label) {
-                                Ok(next)=>{packets=next;expected=Some((identity::normalize_name(&host).unwrap(),label));read=None;read_wait=None;}
+                                Ok(next)=>{packets=next;identity_admission=Some(admission);expected=Some((identity::normalize_name(&host).unwrap(),label));read=None;read_wait=None;}
                                 Err(error)=>{let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err(error)));}
                             }
                         }
                     }
                     _=>{}
                 }
+            }
+            if operation.as_ref().is_some_and(|(_,_,at,acked)|!acked && at.elapsed()>Duration::from_secs(2)) {
+                let _=events.send(Event::SerialOperation(connected_port.clone(),Err("USB command ACK timed out; outcome unknown, nothing replayed".into())));
+                break 'connected;
+            }
+            if table_wait.is_some_and(|(_,at)|at.elapsed()>Duration::from_secs(2)) ||
+                (table_read.is_some() && table_started.elapsed()>=usb_table::MAX_SNAPSHOT_AGE) {
+                table_read=None;table_wait=None;table_snapshot=None;last_table=Instant::now();
+                let error="USB table snapshot timed out; no state assumed and no command replayed".to_string();
+                let _=events.send(Event::SerialFailure(connected_port.clone(),error.clone()));
+                if operation.take().is_some(){let _=events.send(Event::SerialOperation(connected_port.clone(),Err(error)));}
+            }
+            if silent.is_none() && operation.is_none() && table_read.is_none() && write_wait.is_none() && expected.is_none()
+                && let Some(intent)=intents.front() {
+                let is_table=usb_table::table_command(intent.opcode);
+                if !intent.admission.current(physical_session,table_snapshot.as_ref()) || (is_table && !intent.current(physical_session,table_snapshot.as_ref())) {
+                    intents.pop_front();
+                    let _=events.send(Event::SerialOperation(connected_port.clone(),Err("Queued USB command expired or peer changed; nothing sent".into())));
+                }else if !is_table || table_observed.elapsed()<usb_table::MAX_SNAPSHOT_AGE{
+                    let intent=intents.pop_front().unwrap();
+                    let packet=if is_table {usb_table::fenced(table_snapshot.as_ref().unwrap(),intent.opcode,&intent.payload)}else{Ok(intent.payload.clone())};
+                    match packet {
+                        Ok(payload)=>{
+                            if !lease.current() || !intent.admission.current(physical_session,table_snapshot.as_ref()){
+                                let _=events.send(Event::SerialOperation(connected_port.clone(),Err("USB command admission revoked before write; nothing sent".into())));continue 'connected;}
+                            if let Err(error)=port.write_all(&wire_frame(if is_table{usb_table::COMMAND}else{intent.opcode},sequence,&payload)){
+                                let _=events.send(Event::SerialOperation(connected_port.clone(),Err(format!("USB write failed; outcome unknown, no replay: {error}"))));break 'connected;
+                            }
+                            operation=Some((intent,sequence,Instant::now(),false));sequence=sequence.wrapping_add(1);
+                        }
+                        Err(error)=>{let _=events.send(Event::SerialOperation(connected_port.clone(),Err(error)));}
+                    }
+                }
+            }
+            if silent.is_none() && table_supported && table_read.is_none() && write_wait.is_none() && expected.is_none()
+                && operation.as_ref().is_none_or(|(_,_,_,acked)|*acked) && last_table.elapsed()>=Duration::from_secs(1) {
+                nonce=nonce.wrapping_add(1);table_read=Some(usb_table::Reader::new(nonce));
+                table_started=Instant::now();last_table=Instant::now();
+            }
+            if let Some((id, admission, transaction, wait)) = &silent {
+                if !admission.current(physical_session, table_snapshot.as_ref())
+                    || !table_snapshot.as_ref().is_some_and(|s| transaction.allowed(s))
+                    || wait.is_some_and(|(_, at)| at.elapsed() > Duration::from_secs(2)) {
+                    let _ = events.send(Event::BoardSilentFinished(*id, Err("USB settings timed out or peer retired; outcome unknown, no replay".into())));
+                    silent = None;
+                }
+            }
+            if operation.is_none() && table_read.is_none() && write_wait.is_none() && expected.is_none()
+                && let Some((id, admission, transaction, wait)) = &mut silent && wait.is_none() {
+                let (opcode, mut payload) = transaction.request(); payload.insert(0, opcode);
+                if !lease.current() || !admission.current(physical_session, table_snapshot.as_ref())
+                    || port.write_all(&wire_frame(0x56, sequence, &payload)).is_err() {
+                    let _ = events.send(Event::BoardSilentFinished(*id, Err("USB settings write unavailable; outcome unknown, no replay".into())));
+                    break 'connected;
+                }
+                *wait = Some((sequence, Instant::now())); sequence = sequence.wrapping_add(1);
+            }
+            if lease.current() && let Some(reader)=&table_read && table_wait.is_none(){
+                if port.write_all(&wire_frame(usb_table::READ,sequence,&reader.request())).is_err(){break 'connected;}
+                table_wait=Some((sequence,Instant::now()));sequence=sequence.wrapping_add(1);
             }
             if write_wait.is_some_and(|(_,at)|at.elapsed()>Duration::from_secs(2)) ||
                 read_wait.is_some_and(|(_,at)|at.elapsed()>Duration::from_secs(2)) ||
@@ -1142,6 +1451,10 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
             }
             if lease.current() && write_wait.is_none() {
                 if let Some(payload)=packets.pop_front() {
+                    if !identity_admission.as_ref().is_some_and(|admission|admission.current(physical_session,table_snapshot.as_ref())){
+                        packets.clear();expected=None;identity_admission=None;
+                        let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err("USB identity admission revoked before write; no replay".into())));continue 'connected;
+                    }
                     if port.write_all(&wire_frame(0x55,sequence,&payload)).is_err(){break}
                     write_wait=Some((sequence,Instant::now()));sequence=sequence.wrapping_add(1);
                 } else if let Some(reader)=&read {
@@ -1152,21 +1465,41 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
                 }
             }
             if lease.current() && last_poll.elapsed()>=Duration::from_millis(750) {
-                let _=port.write_all(&wire_frame(OP_GET_STATUS,sequence,&[]));sequence=sequence.wrapping_add(1);last_poll=Instant::now();
+                if port.write_all(&wire_frame(OP_GET_STATUS,sequence,&[])).is_err(){break 'connected;}
+                sequence=sequence.wrapping_add(1);last_poll=Instant::now();
             }
+            let depth=intents.len()+usize::from(operation.is_some());
+            if depth!=reported_depth {reported_depth=depth;let _=events.send(Event::SerialQueueDepth(connected_port.clone(),depth));context.request_repaint();}
             let mut bytes=[0_u8;128];
             match port.read(&mut bytes) {
                 Ok(n)=>for byte in &bytes[..n] {
                     if *byte==0 {
                         if let Some((op,response_sequence,payload))=decode_envelope(&encoded) {
-                            if op==OP_STATUS {
-                                if payload.len()>=38 && payload[31]&(1<<5)!=0 && packets.is_empty() && write_wait.is_none()
+                            if (op == 0xb0 || op == 0x82) && silent.as_ref().is_some_and(|(_, _, _, wait)|
+                                wait.is_some_and(|(s, _)| s == response_sequence)) {
+                                let (id, _, transaction, wait) = silent.as_mut().unwrap();
+                                *wait = None;
+                                let result = if op == 0xb0 && !payload.is_empty() { transaction.accept(payload[0], &payload[1..]) }
+                                    else { Err("ESP rejected board settings; refresh before retrying".into()) };
+                                match result {
+                                    Ok(None) => {}
+                                    Ok(Some(settings)) => { let id = *id; silent = None; let _ = events.send(Event::BoardSilentFinished(id, Ok(settings))); }
+                                    Err(error) => { let id = *id; silent = None; let _ = events.send(Event::BoardSilentFinished(id, Err(error))); }
+                                }
+                            } else if op==OP_STATUS {
+                                let next_table_supported=payload.get(44)==Some(&1);
+                                if table_supported && !next_table_supported {
+                                    table_snapshot=None;table_read=None;table_wait=None;intents.clear();
+                                    if operation.take().is_some(){let _=events.send(Event::SerialOperation(connected_port.clone(),Err("USB table capability disappeared; outcome unverified, no replay".into())));}
+                                }
+                                table_supported=next_table_supported;
+                                if !table_supported && payload.len()>=38 && payload[31]&(1<<5)!=0 && packets.is_empty() && write_wait.is_none()
                                     && read.is_none() && (stamp!=Some(payload[37]) || last_identity.elapsed()>Duration::from_secs(10)) {
                                     if stamp!=Some(payload[37]) { identity=None; }
                                     stamp=Some(payload[37]);nonce=nonce.wrapping_add(1);
                                     read=Some(identity::UsbRead{nonce,..Default::default()});last_identity=Instant::now();
                                 }
-                                if let Some(mut status)=serial_status(&payload) {
+                                if !table_supported && let Some(mut status)=serial_status(&payload) {
                                     if let (Some(value),Some(c))=(&identity,&mut status.capabilities) {
                                         c.name=value["display_name"].as_str().unwrap_or_default().into();
                                         c.hostname=value["hostname"].as_str().unwrap_or_default().into();
@@ -1175,6 +1508,44 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
                                     }
                                     let _=events.send(Event::Serial(connected_port.clone(),true,Some(status)));
                                 }
+                            } else if op==usb_table::RESPONSE && table_wait.is_some_and(|(s,_)|s==response_sequence) {
+                                table_wait=None;
+                                match table_read.as_mut().unwrap().accept(&payload){
+                                    Ok(Some(snapshot))=>{
+                                        table_read=None;table_observed=snapshot.observed_at;
+                                        let pin=peer_http::Pin::from_status(&snapshot.status);
+                                        if let Some((intent,_,_,true))=&operation{
+                                            let result=if intent.admission.peer==pin && intent.verify(&snapshot.status){Ok("USB command ACK and same-board snapshot readback verified".into())}
+                                                else{Err("USB ACK received but board/boot or applied values differ; no replay attempted".into())};
+                                            if intent.opcode==cell_batch::OPCODE && result.is_ok(){
+                                                if let Some(correlation)=intent.admission.batch.as_ref(){
+                                                    let _=events.send(Event::SerialBatchConfirmed(connected_port.clone(),correlation.clone()));
+                                                }
+                                            }
+                                            let _=events.send(Event::SerialOperation(connected_port.clone(),result));operation=None;
+                                        }
+                                        table_snapshot=Some(snapshot.status.clone());
+                                        let _=events.send(Event::SerialSnapshot(connected_port.clone(),snapshot));
+                                    }
+                                    Ok(None)=>{}
+                                    Err(error)=>{
+                                        table_read=None;table_snapshot=None;last_table=Instant::now();
+                                        let _=events.send(Event::SerialFailure(connected_port.clone(),error.clone()));
+                                        if operation.take().is_some(){let _=events.send(Event::SerialOperation(connected_port.clone(),Err(error)));}
+                                    }
+                                }
+                            } else if (op==0x80 || op==0x82) && operation.as_ref().is_some_and(|(intent,seq,_,_)|
+                                *seq==response_sequence && payload.len()==2 && (payload[0]==intent.opcode || (op==0x82 && payload[0]==usb_table::COMMAND))){
+                                if op==0x80 && payload[1]==0 {
+                                    if usb_table::table_command(operation.as_ref().unwrap().0.opcode){
+                                        operation.as_mut().unwrap().3=true;table_read=None;table_wait=None;last_table=Instant::now()-Duration::from_secs(2);
+                                    }else{operation=None;let _=events.send(Event::SerialOperation(connected_port.clone(),Ok("USB device ACK received; no table state inferred".into())));}
+                                }else{operation=None;let _=events.send(Event::SerialOperation(connected_port.clone(),Err(format!("USB command rejected (error {}); no replay",payload[1]))));}
+                            } else if op==0x82 && payload.first()==Some(&usb_table::READ) && table_wait.is_some_and(|(s,_)|s==response_sequence){
+                                table_read=None;table_wait=None;table_snapshot=None;last_table=Instant::now();
+                                let error="Board rejected USB table snapshot; no state assumed".to_string();
+                                let _=events.send(Event::SerialFailure(connected_port.clone(),error.clone()));
+                                if operation.take().is_some(){let _=events.send(Event::SerialOperation(connected_port.clone(),Err(error)));}
                             } else if op==0xb2 && read_wait.is_some_and(|(s,_)|s==response_sequence) {
                                 read_wait=None;
                                 let result=read.as_mut().unwrap().accept(&payload);
@@ -1217,6 +1588,9 @@ fn serial_worker(commands: Receiver<SerialCommand>, events: Sender<Event>, conte
             }
         }
         drop(port); // Release the real handle before the next method may acquire.
+        if let Some((id, ..)) = silent { let _ = events.send(Event::BoardSilentFinished(id, Err("USB disconnected during settings; outcome unknown, no replay".into()))); }
+        let _=events.send(Event::SerialQueueDepth(connected_port.clone(),0));
+        if operation.is_some() || !intents.is_empty(){let _=events.send(Event::SerialOperation(connected_port.clone(),Err("USB session ended; pending commands were not replayed. Inspect device state before retrying".into())));}
         if expected.is_some(){let _=events.send(Event::SerialIdentitySaved(connected_port.clone(),Err("USB disconnected during identity write; reconnect and read before retrying".into())));}
         let _=events.send(Event::Serial(connected_port,false,None));context.request_repaint();
     }
@@ -1237,6 +1611,7 @@ struct PakarControllerApp {
     context_layouts: std::collections::HashMap<String, egui_dock::DockState<ui::layout::Panel>>,
     config: config::AppConfig,
     preferences: Option<ui::preferences::PreferencesDraft>,
+    board_silent: board_silent::State,
     device_settings: device_settings::Editor,
     control: platform::instance::Control,
     dock: egui_dock::DockState<ui::layout::Panel>,
@@ -1254,6 +1629,7 @@ struct PakarControllerApp {
     selected_cell: u8,
     cell_search: String,
     table: ui::cell_table::TableState,
+    pixel_diagnostic: pixel_diagnostic::State,
     capture: ui::screenshot::State,
     screenshot_harness: bool,
     focus_cell_search: bool,
@@ -1276,10 +1652,17 @@ struct PakarControllerApp {
     access_password: String,
     access_confirm: String,
     access_info: Option<serde_json::Value>,
+    access_enabled: bool,
+    // Public requirement metadata survives Disconnect so a protected peer's
+    // credentials can be edited offline. It never grants operational access.
+    access_requirement: Option<(String, bool)>,
     serial_port: String,
     transport: Transport,
     status: Option<DeviceStatus>,
     serial_status: Option<DeviceStatus>,
+    serial_operations_pending: usize,
+    serial_session: u64,
+    serial_stamp: Option<connection::Stamp>,
     brightness: u8,
     pattern: String,
     display_value: i16,
@@ -1310,7 +1693,10 @@ struct PakarControllerApp {
     mapping_physical: u8,
     mapping_name: String,
     last_mapping_poll: Instant,
-    mapping_request_pending: bool,
+    mapping_request_pending: Option<MappingPending>,
+    mapping_request_id: u64,
+    mapping_peer: Option<peer_http::Pin>,
+    mapping_error: Option<String>,
     mapping_retry: diagnostics::Backoff,
 }
 
@@ -1378,6 +1764,7 @@ impl PakarControllerApp {
             close_panels: Vec::new(),
             open_panels: Vec::new(),
             preferences: None,
+            board_silent: Default::default(),
             show_connection: false,
             show_mapping: false,
             device_settings: device_settings::Editor::default(),
@@ -1390,6 +1777,7 @@ impl PakarControllerApp {
             selected_cell: 1,
             cell_search: String::new(),
             table: Default::default(),
+            pixel_diagnostic: Default::default(),
             capture: ui::screenshot::State::from_environment(),
             screenshot_harness,
             focus_cell_search: false,
@@ -1407,16 +1795,21 @@ impl PakarControllerApp {
             windows_desktop: windows_desktop.ok().flatten(),
             base: std::env::var("PAKAR_ENDPOINT").unwrap_or_else(|_| config.endpoint.clone()),
             user: std::env::var("PAKAR_USER").unwrap_or_else(|_| config.user.clone()),
-            password: std::env::var("PAKAR_PASSWORD").unwrap_or_else(|_| "pakarcontroller".into()),
+            password: std::env::var("PAKAR_PASSWORD").unwrap_or_default(),
             access_user: String::new(),
             access_password: String::new(),
             access_confirm: String::new(),
             access_info: None,
+            access_enabled: false,
+            access_requirement: None,
             serial_port: std::env::var("PAKAR_SERIAL")
                 .unwrap_or_else(|_| config.serial_port.clone()),
             transport: config.connection_method,
             status: None,
             serial_status: None,
+            serial_operations_pending: 0,
+            serial_session: 0,
+            serial_stamp: None,
             brightness: 255,
             pattern: "none".into(),
             display_value: 1,
@@ -1447,7 +1840,10 @@ impl PakarControllerApp {
             mapping_physical: 73,
             mapping_name: "1".into(),
             last_mapping_poll: Instant::now() - Duration::from_secs(30),
-            mapping_request_pending: false,
+            mapping_request_pending: None,
+            mapping_request_id: 0,
+            mapping_peer: None,
+            mapping_error: None,
             mapping_retry: diagnostics::Backoff::new(Duration::from_secs(2), Duration::from_secs(15)),
             config,
         }
@@ -1464,12 +1860,14 @@ impl PakarControllerApp {
             && self.status.as_ref().and_then(peer_http::Pin::from_status).is_some()
     }
     fn revoke_http_drafts(&mut self) {
+        self.board_silent.revoke();
         self.status_request_pending = false;
         self.device_settings.invalidate_peer();
         self.configuration_loaded = false;
         self.table.stop_pending_edits(); self.table.selection.ids.clear();
         self.table.editing_order = false; self.table.manager_open = false;
         self.table.pixel_sample = None; self.cell_search.clear();
+        self.pixel_diagnostic.revoke();
         self.confirm_reset = false; self.show_mapping = false;
         self.mappings.clear(); self.mapping_name.clear(); self.mapping_logical = 1; self.mapping_physical = 1;
         self.access_info = None; self.access_user.clear(); self.access_password.clear(); self.access_confirm.clear();
@@ -1477,9 +1875,29 @@ impl PakarControllerApp {
         self.identity_pending = false; self.identity_saved = None;
         self.streaming = false; self.sampling = false; self.stream_sent_fps = None;
         self.last_mapping_poll = Instant::now() - Duration::from_secs(16);
-        self.mapping_request_pending = false; self.mapping_retry.reset();
+        self.mapping_request_pending = None; self.mapping_peer = None; self.mapping_error = None; self.mapping_retry.reset();
         let _ = self.ws_tx.send(WsCommand::Mapping(Vec::new()));
         let _ = self.ws_tx.send(WsCommand::Stream(false)); let _ = self.ws_tx.send(WsCommand::Sample(false));
+    }
+    fn request_board_silent(&mut self, desired: Option<bool>) {
+        if self.live_status().is_some_and(board_silent::supported) {
+            self.request_board_settings(desired.into());
+        }
+    }
+    fn request_board_settings(&mut self, desired: board_silent::Change) -> Option<u64> {
+        let status = self.live_status()?;
+        if !desired.allowed(status) { return None; }
+        let peer = peer_http::Pin::from_status(status)?;
+        let route = self.command_route()?;
+        let id = self.board_silent.begin(peer.clone(), route)?;
+        let sent = match route {
+            Transport::WiFi => self.http_tx.send(HttpCommand::BoardSilent(self.endpoint(), id, desired)).is_ok(),
+            Transport::Serial => self.serial_admission().is_some_and(|admission|
+                self.serial_tx.send(SerialCommand::BoardSilent(self.serial_port.clone(), admission, id, desired)).is_ok()),
+        };
+        if !sent { self.board_silent.finish(id, Some(&peer), Some(route), Err("Settings worker unavailable; nothing sent".into())); }
+        else if !matches!(desired, board_silent::Change::Read) { self.board_silent.message = "Applying to board, then verifying EEPROM…".into(); }
+        sent.then_some(id)
     }
     fn post(&mut self, path: &'static str, form: Vec<(String, String)>) {
         if !self.http_writable() || !self.peer_context().is_some_and(|c| c.allows(path, &form)) {
@@ -1492,11 +1910,34 @@ impl PakarControllerApp {
                 .send(HttpCommand::Post(self.endpoint(), path, form));
         }
     }
-    fn serial(&self, op: u8, payload: Vec<u8>) {
+    fn serial_admission(&self)->Option<usb_table::Admission>{
+        let stamp=self.serial_stamp.clone()?;
+        (self.serial_session!=0 && stamp.current()).then(||usb_table::Admission{
+            stamp,session:self.serial_session,peer:self.serial_status.as_ref().and_then(peer_http::Pin::from_status),at:Instant::now(),batch:None})
+    }
+    fn dispatch_cell_batch(&mut self,batch:cell_batch::Request)->Result<cell_batch::Correlation,String>{
+        let route=self.command_route().ok_or("No selected live transport for atomic batch")?;
+        let status=self.live_status().ok_or("No current board status for atomic batch")?;
+        if !cell_batch::Request::supported(status){return Err("Atomic cell-batch capability is unavailable; nothing queued".into());}
+        let peer=peer_http::Pin::from_status(status).ok_or("Atomic batch requires a verified current peer")?;
+        let correlation=cell_batch::Correlation::new(batch,peer,route)?;
+        match route {
+            Transport::WiFi=>self.http_tx.send(HttpCommand::CellBatch(self.endpoint(),correlation.clone()))
+                .map_err(|_|"Atomic batch queue closed; nothing sent".to_string())?,
+            Transport::Serial=>{
+                let mut admission=self.serial_admission().ok_or("USB owner/session is not verified")?;
+                admission.batch=Some(correlation.clone());
+                self.serial_tx.send(SerialCommand::Send(self.serial_port.clone(),admission,cell_batch::OPCODE,correlation.request.payload()))
+                    .map_err(|_|"USB batch queue closed; nothing sent".to_string())?;
+            }
+        }
+        Ok(correlation)
+    }
+    fn serial(&mut self, op: u8, payload: Vec<u8>) {
         if self.connection_enabled && self.command_route() == Some(Transport::Serial) {
-            let _ = self
-                .serial_tx
-                .send(SerialCommand::Send(self.serial_port.clone(), op, payload));
+            if let Some(admission)=self.serial_admission(){
+                let _=self.serial_tx.send(SerialCommand::Send(self.serial_port.clone(),admission,op,payload));
+            }else{self.message="USB owner/session is not verified; nothing queued".into();}
         }
     }
     fn action(
@@ -1661,6 +2102,31 @@ impl PakarControllerApp {
                 ));
             }
         }
+        // A retired/expired queue entry may never produce an event. Its request
+        // token must expire independently, and a late result cannot settle a
+        // newer request. Preserve confirmed same-peer mapping while retrying.
+        if self.mapping_request_pending.as_ref().is_some_and(|pending| pending.started.elapsed() >= Duration::from_secs(24)) {
+            self.mapping_request_pending = None;
+            self.mapping_retry.failed();
+            self.last_mapping_poll = Instant::now();
+            self.mapping_error = Some("Mapping read timed out; retrying without changing the confirmed mapping".into());
+        }
+        let mapping_interval = if self.mapping_error.is_some() || self.mappings.is_empty() { self.mapping_retry.delay() } else { Duration::from_secs(15) };
+        if self.command_route() == Some(Transport::WiFi) && self.has_table() && self.mapping_request_pending.is_none()
+            && self.last_mapping_poll.elapsed() >= mapping_interval
+            && let Some(peer) = self.status.as_ref().and_then(peer_http::Pin::from_status) {
+            self.last_mapping_poll = Instant::now();
+            self.mapping_request_id = self.mapping_request_id.wrapping_add(1);
+            let id = self.mapping_request_id;
+            if self.http_tx.send(HttpCommand::Mapping(self.endpoint(), id)).is_ok() {
+                self.mapping_request_pending = Some(MappingPending { id, peer, started: Instant::now() });
+            } else {
+                self.mapping_retry.failed();
+                self.mapping_error = Some("Mapping request queue closed; reconnect to retry".into());
+            }
+        }
+        // Load mapping before optional settings: the four settings preflights
+        // used to queue ahead of the small mapping read on first connection.
         // Never flood an offline/bootstrap queue with settings preflights.
         // Read-only legacy peers can still load after a fresh Wi-Fi status.
         if !self.configuration_loaded && self.command_route() == Some(Transport::WiFi) {
@@ -1681,13 +2147,9 @@ impl PakarControllerApp {
                 "/api/auth/info",
             ));
         }
-        let mapping_interval = if self.mappings.is_empty() { self.mapping_retry.delay() } else { Duration::from_secs(15) };
-        if self.command_route() == Some(Transport::WiFi) && self.has_table() && !self.mapping_request_pending
-            && self.last_mapping_poll.elapsed() >= mapping_interval {
-            self.last_mapping_poll = Instant::now();
-            self.mapping_request_pending = self.http_tx.send(HttpCommand::Mapping(self.endpoint())).is_ok();
-        }
+        self.pixel_diagnostic.expire();
         while let Ok(event) = self.event_rx.try_recv() {
+            let event_stamp=match &event {Event::ForConnection(stamp,_) if stamp.current()=>Some(stamp.clone()),_=>None};
             if let Some(receipt) = peer_http::retired_envelope(&event) {
                 self.record_event("Previous board session", &receipt);
                 continue;
@@ -1725,6 +2187,7 @@ impl PakarControllerApp {
                             ui::cell_pixels::Sample::observe(&mut self.table.pixel_sample, s.pixel_frame.clone());
                         }
                         self.brightness = s.brightness;
+                        if !pixel_diagnostic::ready(&s) { self.pixel_diagnostic.armed = None; }
                         self.pattern = s.effect.clone();
                         self.output_mask = s.active_outputs;
                         self.status = Some(s);
@@ -1732,8 +2195,14 @@ impl PakarControllerApp {
                         self.message.clear();
                     }
                 }
-                Event::Mapping(mappings) => {
-                    self.mapping_request_pending = false; self.mapping_retry.reset();
+                Event::Mapping(id, mappings, _) => {
+                    let current_peer = self.status.as_ref().and_then(peer_http::Pin::from_status);
+                    if !self.mapping_request_pending.as_ref().is_some_and(|pending| pending.id == id && Some(&pending.peer) == current_peer.as_ref()) {
+                        continue;
+                    }
+                    self.mapping_request_pending = None; self.mapping_retry.reset();
+                    self.mapping_peer = current_peer;
+                    self.mapping_error = None;
                     self.last_mapping_poll = Instant::now();
                     if self.table.pixel_sample.as_ref().is_some_and(|sample|
                         mappings.iter().any(|m| sample.frame.physical.get(usize::from(m.logical_id - 1)) != Some(&m.physical_cell))) {
@@ -1745,7 +2214,17 @@ impl PakarControllerApp {
                         self.sampling = false;
                     }
                 }
+                Event::MappingFailed(id, error) => {
+                    if !self.mapping_request_pending.as_ref().is_some_and(|pending| pending.id == id) { continue; }
+                    self.mapping_request_pending = None;
+                    self.mapping_retry.failed(); self.last_mapping_poll = Instant::now();
+                    self.mapping_error = Some(error.clone());
+                    self.event_log.failure("HTTP GET /api/cells/mapping", &error);
+                }
                 Event::Configuration("/api/auth/info", value) => {
+                    self.access_enabled = value.get("enabled").and_then(|v|v.as_bool()) == Some(true);
+                    self.access_requirement = value.get("enabled").and_then(|v|v.as_bool())
+                        .map(|enabled| (self.base.clone(), enabled));
                     self.access_user = value
                         .get("username")
                         .and_then(|v| v.as_str())
@@ -1792,6 +2271,7 @@ impl PakarControllerApp {
                     );
                 }
                 Event::CredentialsUpdated(endpoint) => {
+                    self.access_requirement = Some((endpoint.base.clone(), !endpoint.password.is_empty()));
                     self.user = endpoint.user;
                     self.password = endpoint.password;
                     self.config.user = self.user.clone();
@@ -1815,6 +2295,51 @@ impl PakarControllerApp {
                         self.receive_configuration("/api/device/name",value);
                     }
                 }
+                Event::SerialSnapshot(_, snapshot) => {
+                    let peer=peer_http::Pin::from_status(&snapshot.status);
+                    let previous=self.serial_status.as_ref().and_then(peer_http::Pin::from_status);
+                    if peer!=previous {
+                        self.board_silent.revoke();
+                        self.table.stop_pending_edits();self.table.selection.clear();self.cell_search.clear();
+                        self.table.pixel_sample=None;self.pixel_diagnostic.revoke();
+                        self.show_mapping=false;self.mapping_request_pending=None;
+                    }
+                    self.mappings=snapshot.mappings;self.mapping_peer=peer;self.mapping_error=None;
+                    self.table.pixel_sample=snapshot.status.pixel_frame.as_ref().filter(|frame|frame.valid())
+                        .map(|frame|ui::cell_pixels::Sample{frame:frame.clone(),at:snapshot.observed_at});
+                    self.pattern=snapshot.status.effect.clone();
+                    self.serial_status=Some(snapshot.status);self.last_serial_status_at=Some(snapshot.observed_at);self.serial_live=true;
+                    if matches!(self.message.as_str(),"Connecting through USB"|"Connecting to PakarController") {
+                        self.message="USB connected · 80 cells confirmed".into();
+                    }
+                    self.event_log.recover(&format!("USB {}",self.serial_port));
+                }
+                Event::CellBatchConfirmed(correlation) | Event::SerialBatchConfirmed(_,correlation) => {
+                    if self.command_route()==Some(correlation.route) && self.live_status().and_then(peer_http::Pin::from_status).as_ref()==Some(&correlation.peer) {
+                        self.table.confirm_batch_ack(&correlation);
+                        self.record_event("Atomic cell batch",&format!("Acknowledged and same-board readback verified for {} cells",correlation.request.ids.len()));
+                    }else{self.record_event("Previous board session","Atomic batch result belongs to another peer/route; no current UI batch completed");}
+                }
+                Event::SerialOperation(_, result) => {
+                    match result {
+                        Ok(message)=>{self.message=message.clone();self.record_event("USB command",&message);}
+                        Err(error)=>{self.message=error.clone();self.record_event("USB command unverified",&error);
+                            self.table.fail_pending_edits(error);}
+                    }
+                }
+                Event::SerialQueueDepth(_, depth) => self.serial_operations_pending=depth,
+                Event::SerialOwner(_, session) => {
+                    self.board_silent.revoke();
+                    self.serial_session=session;self.serial_stamp=event_stamp.clone();
+                    self.serial_status=None;self.last_serial_status_at=None;self.serial_operations_pending=0;
+                    self.mappings.clear();self.mapping_peer=None;self.table.pixel_sample=None;self.table.stop_pending_edits();
+                }
+                Event::BoardSilentFinished(id, result) => {
+                    let peer = self.live_status().and_then(peer_http::Pin::from_status);
+                    let route = self.command_route();
+                    self.device_settings.finish_avr(id, peer.as_ref(), route, &result);
+                    self.board_silent.finish(id, peer.as_ref(), route, result);
+                }
                 Event::SerialIdentitySaved(port, result) => {
                     if port == self.serial_port {
                         self.identity_pending = false;
@@ -1825,12 +2350,44 @@ impl PakarControllerApp {
                         }
                     }
                 }
+                Event::PixelModeFinished(id, result) => {
+                    if self.pixel_diagnostic.matches(id) {
+                        match result {
+                            Ok(status) if peer_http::Pin::from_status(&status) == self.live_status().and_then(peer_http::Pin::from_status) => {
+                                self.pixel_diagnostic.armed = peer_http::Pin::from_status(&status);
+                                self.status = Some(status); self.last_status_at = Some(Instant::now());
+                                self.pixel_diagnostic.finish(id, "Effects mode acknowledged and read back. Select a physical pixel, then Show/Previous/Next.".into());
+                            }
+                            Ok(_) => self.pixel_diagnostic.finish(id, "Mode result belongs to another board; no frame sent".into()),
+                            Err(error) => self.pixel_diagnostic.finish(id, error),
+                        }
+                    }
+                }
+                Event::PixelSent(request, result) => {
+                    if self.pixel_diagnostic.matches(request.id) {
+                        match result {
+                            Ok(()) if Some(request.peer.clone()) == self.live_status().and_then(peer_http::Pin::from_status) => {
+                                self.pixel_diagnostic.message = format!("Pixel {} frame written once; checking RGB readback…", request.index + 1);
+                                if self.http_tx.send(HttpCommand::PixelReadback(self.endpoint(), request.id, request.index, request.peer)).is_err() {
+                                    self.pixel_diagnostic.finish(request.id, "Frame written; pixel readback unavailable. No replay.".into());
+                                }
+                            }
+                            Ok(()) => self.pixel_diagnostic.finish(request.id, "Frame write completed for a retired peer; inspect it before retrying".into()),
+                            Err(error) => self.pixel_diagnostic.finish(request.id, error),
+                        }
+                    }
+                }
+                Event::PixelReadbackFinished(id, result) => {
+                    self.pixel_diagnostic.finish(id, result.unwrap_or_else(|error|
+                        format!("Frame written; pixel readback unavailable: {error}. Nothing replayed.")));
+                }
                 Event::Accepted(m) => {
                     self.record_event("Command", &m);
                     self.notify("Command accepted", &m, messaging::Severity::Success);
                 }
                 Event::OperationFailed(error) => {
                     self.identity_pending = false;
+                    self.table.fail_pending_edits(error.clone());
                     self.record_event("Operation failed", &error);
                     self.notify_id(
                         "pakar.operation-failed",
@@ -1855,10 +2412,6 @@ impl PakarControllerApp {
                         self.status_retry.failed();
                         self.last_poll = Instant::now();
                     }
-                    if source == "HTTP GET /api/cells/mapping" {
-                        self.mapping_request_pending = false;
-                        self.mapping_retry.failed(); self.last_mapping_poll = Instant::now();
-                    }
                     if self.device_settings.scan_pending {
                         self.device_settings.scan_pending = false;
                         self.device_settings.message =
@@ -1879,6 +2432,9 @@ impl PakarControllerApp {
                     if self.websocket_live && !v { self.record_event("Connection", "WebSocket connection lost; reconnecting with bounded backoff."); }
                     self.websocket_live = v;
                     if !v {
+                        self.serial_session=0;self.serial_stamp=None;
+                        self.serial_operations_pending=0;
+                        self.pixel_diagnostic.revoke();
                         self.stream_sent_fps = None;
                         self.streaming = false;
                         self.sampling = false;
@@ -1891,8 +2447,16 @@ impl PakarControllerApp {
                     if !v {
                         self.serial_status = None;
                         self.last_serial_status_at = None;
+                        if self.transport==Transport::Serial {
+                            self.mappings.clear();self.mapping_peer=None;self.table.pixel_sample=None;
+                            self.table.stop_pending_edits();
+                        }
                     }
                     if let Some(s) = s {
+                        if self.serial_status.as_ref().and_then(peer_http::Pin::from_status)!=peer_http::Pin::from_status(&s){
+                            self.mappings.clear();self.mapping_peer=None;self.table.pixel_sample=None;
+                            self.table.stop_pending_edits();self.pixel_diagnostic.revoke();
+                        }
                         self.serial_status = Some(s);
                         self.last_serial_status_at = Some(Instant::now());
                     }
@@ -1976,7 +2540,7 @@ fn environment_endpoint() -> Endpoint {
     Endpoint {
         base: std::env::var("PAKAR_ENDPOINT").unwrap_or(saved.endpoint),
         user: std::env::var("PAKAR_USER").unwrap_or(saved.user),
-        password: std::env::var("PAKAR_PASSWORD").unwrap_or_else(|_| "pakarcontroller".into()),
+        password: std::env::var("PAKAR_PASSWORD").unwrap_or_default(),
     }
 }
 
@@ -2078,6 +2642,12 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
             use std::fmt::Write as _;
             writeln!(output, $($arg)*).map_err(|e| e.to_string())?;
         }};
+    }
+    if let ["cells",ids,state,rest @ ..]=words {
+        let effect=match rest {[]=>"immediate",[effect]=>effect,_=>return Err("cells IDS white|red|off [immediate|fade|pulse]".into())};
+        let request=cell_batch::Request::new(&ui::cell_search::parse(ids)?,state,effect)?;
+        println!("{}",cell_batch::send(client,endpoint,&request,None,None,None)?);
+        return Ok(());
     }
     if words.first() == Some(&"firmware") {
         use maintenance::Operation;
@@ -2229,8 +2799,14 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
             user: (*user).into(),
             password,
         };
-        http_request(client, HttpCommand::AccessChange(endpoint.clone(), next))?;
+        http_request(client, HttpCommand::AccessChange(endpoint.clone(), next, true))?;
         println!("Credentials saved. Update PAKAR_USER/PAKAR_PASSWORD before further commands.");
+        return Ok(());
+    }
+    if words == ["auth", "disable"] {
+        let next = Endpoint { base: endpoint.base.clone(), user: String::new(), password: String::new() };
+        http_request(client, HttpCommand::AccessChange(endpoint.clone(), next, false))?;
+        println!("Device confirmed authentication disabled and saved.");
         return Ok(());
     }
     if words.is_empty() || words[0] == "status" {
@@ -2278,13 +2854,14 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
             ["brightness", value] => ("/api/brightness", vec![("value", value)]),
             ["led-output", "on"] => ("/api/led/output", vec![("enabled", "true")]),
             ["led-output", "off"] => ("/api/led/output", vec![("enabled", "false")]),
+            ["led-output", mode @ ("static" | "effects")] => ("/api/led/output", vec![("mode", mode)]),
             ["effect", value] => ("/api/effect", vec![("value", value)]),
             ["display", value] => ("/api/display", vec![("value", value)]),
             ["audio", cue] => ("/api/audio", vec![("cue", cue)]),
             ["snake", value] => ("/api/snake/direction", vec![("value", value)]),
             ["reset"] => ("/api/game/reset", vec![]),
             _ => return Err(
-                "commands: device identity, device rename HOST[.local], device label DISPLAY NAME, device configure HOST DISPLAY NAME, auth info, auth change USER, status, mode, cell, brightness, led-output on|off, effect, display, audio, snake, reset"
+                "commands: device identity, device rename HOST[.local], device label DISPLAY NAME, device configure HOST DISPLAY NAME, auth info, auth change USER, status, mode, cell, cells IDS STATE [EFFECT], brightness, led-output on|off|static|effects, effect, display, audio, reset"
                     .into(),
             ),
         };
@@ -2355,7 +2932,7 @@ fn main() -> eframe::Result {
     let control_only = arguments
         .iter()
         .any(|arg| matches!(arg.as_str(), "--quit" | "--app-status" | "--wifi" | "--usb" | "--disconnect"
-            | "--led-effect" | "--led-mode" | "--led-cell" | "--led-output" | "--update-esp"));
+            | "--led-effect" | "--led-mode" | "--led-cell" | "--led-cells" | "--led-output" | "--update-esp" | "--pixel-arm" | "--pixel-show"));
     if control_only {
         match platform::instance::send(&command, Duration::from_secs(2)) {
             Ok(reply) => {
@@ -2656,7 +3233,7 @@ mod tests {
     fn diagnostic_sources_separate_reads_and_never_coalesce_explicit_writes() {
         let peer = Endpoint { base: "http://ledboard.local".into(), user: "fixture".into(), password: "secret".into() };
         assert_eq!(HttpCommand::Status(peer.clone()).diagnostic_source().as_deref(), Some("HTTP GET /api/status"));
-        assert_ne!(HttpCommand::Mapping(peer.clone()).diagnostic_source(), HttpCommand::Status(peer.clone()).diagnostic_source());
+        assert_ne!(HttpCommand::Mapping(peer.clone(), 1).diagnostic_source(), HttpCommand::Status(peer.clone()).diagnostic_source());
         assert!(HttpCommand::Post(peer.clone(), "/api/cell", vec![]).diagnostic_source().is_none());
         assert!(HttpCommand::NameChange(peer, "board".into(), None).diagnostic_source().is_none());
     }
@@ -2763,6 +3340,16 @@ mod tests {
         }
         payload[42] = 255;
         assert!(serial_status(&payload).unwrap().led_output.is_null());
+        payload[42] = 1;
+        assert!(led_output_mode(&serial_status(&payload).unwrap()).is_none());
+        payload.push(0);
+        assert_eq!(led_output_mode(&serial_status(&payload).unwrap()), Some("static"));
+        payload[43] = 1;
+        assert_eq!(led_output_mode(&serial_status(&payload).unwrap()), Some("effects"));
+        payload[43] = 255;
+        assert!(led_output_mode(&serial_status(&payload).unwrap()).is_none());
+        let unknown: DeviceStatus = serde_json::from_value(serde_json::json!({"led_output":{"mode":"future"}})).unwrap();
+        assert!(led_output_mode(&unknown).is_none());
         let status = DeviceStatus::default();
         assert!(format_text_status(&status, false).contains("LED output Unknown"));
     }
@@ -2775,6 +3362,10 @@ mod tests {
         let ready: DeviceStatus = serde_json::from_value(serde_json::json!({"hostname":"ledboard",
             "capabilities":{"board_kind":"table","acknowledged_features":["table"]}})).unwrap();
         assert!(websocket_status_ready(&ready));
+        for non_status in [r#"{"accepted":true,"message":"ok"}"#, r#"{"type":"pong"}"#, r#"{"error":"not a board status"}"#] {
+            assert!(websocket_status(non_status).is_none());
+        }
+        assert!(websocket_status(r#"{"hostname":"ledboard","capabilities":{"board_kind":"table","acknowledged_features":["table"]}}"#).is_some());
     }
     #[test]
     fn mapping_requires_all_unique_cells_but_optional_labels_can_be_absent() {

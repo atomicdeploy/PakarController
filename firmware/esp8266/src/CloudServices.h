@@ -12,6 +12,15 @@
 #include <WebSocketsClient.h>
 
 #include "CloudConfig.h"
+#include <CloudCommandGuard.h>
+
+// Existing-session branch of the actual WebSocketsClient loop. isConnected()
+// alone checks only WS status; calling loop() can still start a new TLS connect
+// when that status is stale. Implementation uses its protected receive branch.
+class CloudWebSocketClient : public WebSocketsClient {
+ public:
+  void serviceExistingConnection();
+};
 
 class CloudServices {
  public:
@@ -19,12 +28,14 @@ class CloudServices {
   using StatusProvider = String (*)();
 
   void begin(const String &deviceId, CommandHandler handler,
-             StatusProvider statusProvider,StatusProvider telemetryProvider=nullptr);
+             StatusProvider statusProvider,StatusProvider telemetryProvider=nullptr,
+             const String &boardId=String(),const String &bootId=String());
   void suspend();
   void requestTelemetry() {lastTelemetryAt_=millis()-static_cast<uint32_t>(cloudConfig.telemetrySeconds())*1000U;}
   void applyConfiguration();
   void renameDevice(const String &deviceId);
-  void service(bool networkReady, bool timeReady, uint32_t now);
+  void service(bool networkReady, bool timeReady, uint32_t now,
+               bool allowConnect=true,bool includeFullTelemetry=true);
   void publishEvent(const String &event);
 
   bool mqttConnected() { return networkReady_ && mqtt_.connected(); }
@@ -42,7 +53,11 @@ class CloudServices {
   void handleCommand(const uint8_t *payload, size_t length, bool fromMqtt);
   void configureWebSocket();
   void connectMqtt(uint32_t now);
-  void publishTelemetry(const String &statusJson, uint32_t now);
+  void closeMqtt();
+  void publishTelemetry(const String &statusJson, uint32_t now,bool includeFullTelemetry);
+  bool publishMqtt(const String &destination,const String &json,bool retained);
+  void commandReply(bool fromMqtt,const char *code,const char *requestId,
+                    bool accepted,const String &message);
   String topic(const __FlashStringHelper *suffix) const;
 
   WiFiClient plainClient_;
@@ -52,10 +67,13 @@ class CloudServices {
   BearSSL::WiFiClientSecure secureClient_;
 #endif
   PubSubClient mqtt_;
-  WebSocketsClient webSocket_;
+  CloudWebSocketClient webSocket_;
+  BoardCore::CloudCommand::Guard commandGuard_;
   String deviceId_;
+  String boardId_,bootId_;
   String telemetryBoot_;
   String authorizationHeader_;
+  String availabilityTopic_;
   String lastError_;
   CommandHandler commandHandler_ = nullptr;
   StatusProvider statusProvider_ = nullptr;

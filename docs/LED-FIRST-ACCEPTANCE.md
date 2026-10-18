@@ -1,16 +1,55 @@
 # LED-first delivery
 
+## Cell-selection flicker comparison (prepared, not physically accepted)
+
+Latest optical report: rainbow is smooth but cell selection flickers. RMT-DMA
+formerly retransmitted unchanged frames continuously. Both workers now consume
+only submitted complete frames; the renderer retains periodic repair refresh
+and uncapped rainbow submission. This removes redundant static transmissions,
+not a claim that DMA refill/electrical timing has been measured or fixed.
+
+The confirmed physical-group sequence is
+`80,60,40,20,10,30,50,70,79,59,39,19,9,29,49,69,...`, subtracting one from
+each member for each successive eight-group lane. Every group is six pixels.
+Thus logical80 is pixels1–6,60 is7–12,40 is13–18,20 is19–24.
+The final lane is`71,51,31,11,1,21,41,61`; logical1 is group77/pixels457–462,
+not the last cable group. A clarification was requested about that distinction.
+
+`POST /api/cells/mapping` with`preset=table-cable` applies the whole permutation
+in one saved mapping operation and preserves custom names. Ordinary valid saved
+custom mappings are not silently migrated. An explicit `-CellChaseOnBoot` S3
+test build selects the requested cable order in RAM, without overwriting names
+or flash, then boots static cell selection. Normal builds still boot white.
+
+`POST /api/effect` with`value=cell-chase` starts a board-owned diagnostic: one
+red logical cell at a time,80 down to1,750ms per cell, all others white. Both
+the departing white and arriving red group are composed before one full frame.
+It visits every cell once and stops at1; no fade, catch-up skips, loop, per-cell
+network requests, AVR action or per-tick persistence. Manual cell/effect/stream
+commands supersede it. `led_output.cell_chase` reports active, visited, current
+logical/physical group, interval and completion. These are renderer state,
+not an optical sensor or proof that the final frame reached the LEDs.
+
+Build either driver with the canonical wrapper and`-CellChaseOnBoot`:
+`-S3LedBackend rmt-dma` or`-S3LedBackend static` (non-RMT GPIO). Keep exact-image
+identities, readback and PBX/DTMF feedback separate for each driver. SDK doubles
+pass both RGB orders, immutable full frames, startup/Off black, coalescing and
+flash-boundary guards. Actual all80-cell renderer tests pass in both render
+modes, including rollover, delay/no-skip and final hold. Hardware deployment,
+visual flicker acceptance and DTMF optical responses remain pending ASUS access.
+
 ## Current priority
 
 Critical optical regression: the user observed rapid flashing on deployed
-c48201f0...; Off stopped flashing but left some latched pixels lit. Keep output
-disabled. Driver failed0/error0 did NOT establish a correct waveform. The staged
+c48201f0...; Off stopped flashing but left some latched pixels lit. The user has
+now requested deployment and operation of a static non-DMA fallback. Keep the old
+image disabled until replacement. Driver failed0/error0 did NOT establish a correct waveform. The staged
 actor-only bc624443... image was explicitly cancelled as job9, not applied.
 Read/read_raw/full image-verification guards and guarded metadata helpers are
 now required alongside write/erase guards. Quiet diagnostic builds use
 `-PauseLedOutput` (`PAKAR_LED_START_ENABLED=0`) to send black once and remain Off;
-ordinary builds retain default On. Do not re-enable visible effects or mark the
-regression fixed without controlled physical confirmation after deployment.
+ordinary builds retain default On with static white. Do not mark the regression
+fixed without controlled physical confirmation after fallback deployment.
 
 The user explicitly deferred AVR integration until the ESP32-S3 WS2811 matrix
 and Pakar LED API are operational. Do not let AVR diagnosis, ISP, buzzer,
@@ -23,7 +62,7 @@ pixels per cell. The existing image has normal AVR UART disabled. The ESP owns
 the renderer and does not need a working AVR. There is no arbitrary 20 FPS cap;
 physical LED refresh/throughput still needs measurement.
 
-## Continuous output service
+## Output service and static fallback
 
 The new source replaces the Idle presentation with an independent output service
 (On by default each boot, runtime Off is not a saved boot-black policy). Off sends
@@ -33,10 +72,35 @@ CLI/TUI/Telnet `led-output on|off`, ESP USB opcode0x5C with a boolean byte, or c
 JSON `{"command":"led-output","enabled":true}`. Status `led_output.enabled` is
 the requested setting; `led_output.driver.active/ready/transmitted/failed/error_code`
 report actual S3 driver observations, not optical acceptance. No wire refresh cap
-of20fps is imposed. Static content also refreshes rather than leaving one boot
-transmission latched indefinitely.
+of20fps is imposed on the optional effects path. The new default static mode sends
+changes immediately, without transitions; each physical group of six receives
+one color. Unchanged enabled frames are also resent once per second so delayed
+strip power or a missed frame can recover. This maintenance resend neither
+advances fire/fades nor imposes an animation FPS ceiling. The fallback worker
+still sleeps between submitted complete frames; Off remains quiet after black.
 
-S3 uses a dedicated core1 RMT-DMA output worker, immutable in-flight encoding and
+`led_output.mode` is `static` by default or explicit `effects`. An explicit
+rainbow test animates even in static mode, retaining identical six-pixel groups.
+Ordinary cell updates remain immediate and stationary. Effects mode permits the
+other animations. Runtime effects selection is not restored as a boot animation.
+
+To build the explicitly requested RMT-DMA test, use the same canonical wrapper
+with `-Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi
+-S3IspElectricalVerified -S3LedBackend rmt-dma`. Omitting `-S3LedBackend` retains
+the non-DMA fallback. Verify actual `led_output.driver.backend`/`dma` at runtime;
+`led_output.mode=effects` selects per-pixel rendering, independently of backend.
+
+The default S3 build uses `PAKAR_S3_LED_USE_DMA=0`: `gpio-static`, an internal-RAM
+payload and IRAM cycle-timed GPIO transmitter on core1. It clears black once on
+startup, then sends only submitted changes. One 480-pixel transfer masks core1
+interrupts for approximately14.4ms, followed by a300us low latch with interrupts
+enabled. Core0 Wi-Fi remains scheduled. This is a limited static fallback;
+simultaneous AVR UART reception and high-rate animation are not accepted with
+this transport. The AVR link remains disabled for this delivery. Explicit macro1
+retains the experimental RMT-DMA backend; runtime Static/Effects chooses rendering
+behavior, not the compiled transport. Diagnostics expose backend/dma/on_change_only.
+
+The prior S3 implementation uses a dedicated core1 RMT-DMA output worker, immutable in-flight encoding and
 a one-frame mailbox; old complete frames coalesce rather than building latency.
 WebSocket messages are copied into a bounded loop-owned FIFO; staging and complete
 output are separate buffers. The reviewed SDK permits at most2046 DMA symbols,
@@ -115,14 +179,16 @@ identity changes or a request outcome is uncertain; do not automatically replay.
 | Method/path | Form fields | Result |
 |---|---|---|
 | GET `/api/status?pixels=1` | none | Status plus committed480-pixel RGB frame and mapping |
-| POST `/api/effect` | `value=rainbow` | Continuous rainbow |
-| POST `/api/effect` | `value=fire` | Continuous fire |
+| POST `/api/effect` | `value=rainbow` | Animated rainbow test; six identical pixels per group in static mode |
+| POST `/api/effect` | `value=fire` | Single frame in static mode; animation in effects mode |
 | POST `/api/effect` | `value=none` | Stop pattern; does not mean all-off |
-| POST `/api/led/output` | `enabled=false` | Clear output once, then disable wire service; retain scene |
+| POST `/api/led/output` | `enabled=false` | Send complete black even when already Off, then stop; retain scene |
 | POST `/api/led/output` | `enabled=true` | Resume latest scene; default On each boot |
+| POST `/api/led/output` | `mode=static` | Immediate six-pixel cells, no animation or transitions; default |
+| POST `/api/led/output` | `mode=effects` | Explicitly allow effects and individual-pixel streaming |
 | POST `/api/mode` | `value=cell` | Reset all cells white |
 | POST `/api/cell` | `id=1&state=red&effect=immediate` | Six pixels of logical cell1 red |
-| POST `/api/cell` | `id=80&state=off&effect=fade` | Fade logical cell80 off |
+| POST `/api/cell` | `id=80&state=off&effect=fade` | Cell80 off immediately in static mode; fade in effects mode |
 | POST `/api/brightness` | `value=255` | Global brightness; current range1..255 |
 | GET `/api/cells/mapping` | none | Logical/physical mapping, labels and stagger |
 
@@ -179,6 +245,26 @@ the guard stopped before launch. Manual phone unlock is required; installation
 does not prove mobile-to-board control or production signing.
 
 ## Deferred queue: resume after the LED milestone
+
+### Earlier source-only hold (superseded by the requested USB delivery)
+
+At that checkpoint the user paused checks, tests, builds, deployments and board
+contact. The later explicit request to deliver the basic USB app and diagnose
+GPIO4 authorized that scoped work again. The current USB app confirms all80
+mappings and actual480-pixel snapshots; neither source nor driver counters alone
+establishes the visible table layout or correct wire waveform.
+
+Mapping retrieval is being separated from optional configuration reads and
+given correlated, bounded pending requests. The mapping response now carries
+its own board/boot identity so clients can validate it without relying on a
+second status response; responses without those fields retain the guarded
+status-read path. No saved physical mapping is guessed or rewritten.
+
+Physical acceptance remains open: the user reported that logical cell 1 red
+appeared across parts of labeled cells 51 and 71, and that some pixels in cell
+80 were dark. This does not establish whether mapping, grouping or transmission
+is at fault. Manual single-physical-pixel stepping is the next optical diagnostic
+when board interaction is authorized again.
 
 These remain required, not removed or checked complete:
 

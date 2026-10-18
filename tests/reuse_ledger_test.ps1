@@ -53,7 +53,25 @@ try {
     Move-Item -LiteralPath (Join-Path $donor 'source.h') -Destination (Join-Path $scratch 'saved-source.h')
     & (Join-Path $root 'tools/generate-reuse-ledger.ps1') @options | Out-Null
     Assert-State PCController missing
-    Write-Host 'Ledger tests passed: legacy hints are not reviews; hashes invalidate stale evidence; missing tracked files remain inventoried; strict release gate rejects unresolved scope.'
+    # Exact reviewed sparse blobs survive regeneration only while their current
+    # tree object/revision/raw identity agree. No checkout expansion or network.
+    $taskRevision=(& git -C $donor rev-parse HEAD).Trim()
+    $taskObject=(& git -C $donor rev-parse HEAD:source.h).Trim()
+    $taskComparison=Join-Path $scratch 'comparison.json'
+    $taskBlob=[ordered]@{repository='atomicdeploy/pu850-esp';revision=$taskRevision;git_sha=$taskObject;sha256=$hash;bytes=(Get-Item -LiteralPath (Join-Path $PSScriptRoot 'reuse_fixture/source.h')).Length}
+    $taskCompared=@{files=@(@{origin='PU850-ESP';path='source.h';sha256=$hash;source_blob=$taskBlob})}
+    function Write-BlobFixture { [IO.File]::WriteAllText($taskComparison,($taskCompared | ConvertTo-Json -Depth 10)) }
+    Write-BlobFixture;$options.ComparisonPath=$taskComparison
+    & (Join-Path $root 'tools/generate-reuse-ledger.ps1') @options | Out-Null
+    $taskPinned=Import-Csv -LiteralPath $ledger | Where-Object { $_.origin -eq 'PU850-ESP' -and $_.path -eq 'source.h' }
+    if($taskPinned.availability -ne 'pinned-blob' -or $taskPinned.sha256 -ne $hash){throw 'Reviewed immutable sparse blob lost on regeneration'}
+    $taskBlob.git_sha='0'*40;Write-BlobFixture
+    & (Join-Path $root 'tools/generate-reuse-ledger.ps1') @options | Out-Null
+    Assert-State PU850-ESP missing
+    $taskBlob.git_sha=$taskObject;$taskBlob.repository='unrelated/repository';Write-BlobFixture
+    & (Join-Path $root 'tools/generate-reuse-ledger.ps1') @options | Out-Null
+    Assert-State PU850-ESP missing
+    Write-Host 'Ledger tests passed: legacy hints are not reviews; hashes invalidate stale evidence; missing tracked files remain inventoried; exact reviewed sparse blobs require current tree/repository identity; strict release gate rejects unresolved scope.'
 } finally {
     # This tiny evidence fixture is intentionally retained for debugging.
     Write-Host "Fixture evidence: $scratch"

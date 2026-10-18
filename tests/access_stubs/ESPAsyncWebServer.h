@@ -5,12 +5,14 @@
 #include <map>
 #include <vector>
 #include <cassert>
+#include <algorithm>
 namespace AsyncSdkFixture {
 inline thread_local bool actor=false;
 struct Actor {bool before=actor;Actor(){actor=true;}~Actor(){actor=before;}};
 inline std::atomic<unsigned> liveResponses{0};
 }
 using WebRequestMethodComposite = int;
+using AwsResponseFiller=std::function<size_t(uint8_t*,size_t,size_t)>;
 constexpr int HTTP_GET = 1;
 constexpr int HTTP_POST = 2, HTTP_HEAD = 4, HTTP_PUT = 8, HTTP_DELETE = 16;
 struct AsyncWebHeader { String text; const String &value() const { return text; } };
@@ -18,17 +20,24 @@ struct AsyncWebServerResponse {
   int status; String body;
   std::map<std::string, String> headers;
   bool flash=false;
+  AwsResponseFiller filler;
+  size_t length=0,offset=0;
   unsigned polls=0;
   AsyncWebServerResponse(int code,const String &text):status(code),body(text){++AsyncSdkFixture::liveResponses;}
   virtual ~AsyncWebServerResponse(){--AsyncSdkFixture::liveResponses;}
-  virtual size_t _ack(class AsyncWebServerRequest *,size_t,size_t){assert(AsyncSdkFixture::actor);++polls;return 0;}
+  virtual size_t _ack(class AsyncWebServerRequest *,size_t,size_t);
+  void start(class AsyncWebServerRequest *);
+  size_t advance(class AsyncWebServerRequest *);
+  void setCode(int code){status=code;}
   void addHeader(const char *name, const String &value) { headers[name] = value; }
 };
 struct AsyncClient {
   struct Address {String toString()const{return "192.0.2.10";}};
   bool alive = true;
+  bool writable=true;
+  size_t chunkLimit=1024;
   bool connected() const { return alive; }
-  bool canSend()const{return alive;}
+  bool canSend()const{return alive&&writable;}
   Address remoteIP()const{return {};}
   std::function<void(void*,AsyncClient*)> pollCallback;
   void onPoll(std::function<void(void*,AsyncClient*)> fn){pollCallback=std::move(fn);}
@@ -51,7 +60,8 @@ class AsyncWebServerRequest : public std::enable_shared_from_this<AsyncWebServer
     if(sent||paused||!response_)return;
     if(strictLifecycle)assert(AsyncSdkFixture::actor);
     ++responseStarts;if(onResponseStart)onResponseStart();
-    status=response_->status;body=response_->body;responseHeaders=response_->headers;flashResponse=response_->flash;sent=true;
+    status=response_->status;responseHeaders=response_->headers;flashResponse=response_->flash;
+    response_->start(this);sent=true;
   }
   AsyncClient *client() { return &connection; }
   bool isSent() const { return sent; }
@@ -69,6 +79,9 @@ class AsyncWebServerRequest : public std::enable_shared_from_this<AsyncWebServer
   void send(int code, const char *, const String &text) {send(new AsyncWebServerResponse(code,text));}
   AsyncWebServerResponse *beginResponse(int code, const char *, const String &text) {
     return new AsyncWebServerResponse(code,text);
+  }
+  AsyncWebServerResponse *beginResponse(const char *,size_t length,AwsResponseFiller filler){
+    auto *response=new AsyncWebServerResponse(200,"");response->length=length;response->filler=std::move(filler);return response;
   }
   AsyncWebServerResponse *beginResponse(int code,const char *,const uint8_t *,size_t){
     auto* response=new AsyncWebServerResponse(code,"");response->flash=true;return response;
@@ -95,6 +108,20 @@ class AsyncWebServerRequest : public std::enable_shared_from_this<AsyncWebServer
  private:
   std::unique_ptr<AsyncWebServerResponse> response_;
 };
+inline size_t AsyncWebServerResponse::advance(AsyncWebServerRequest *request){
+  assert(AsyncSdkFixture::actor);
+  if(!filler || !request->client()->canSend() || offset>=length)return 0;
+  const size_t maximum=std::min(length-offset,request->connection.chunkLimit);
+  std::vector<uint8_t> data(maximum);const size_t bytes=filler(data.data(),maximum,offset);
+  assert(bytes<=maximum);request->body.append(reinterpret_cast<const char*>(data.data()),bytes);offset+=bytes;return bytes;
+}
+inline void AsyncWebServerResponse::start(AsyncWebServerRequest *request){
+  assert(AsyncSdkFixture::actor || !request->strictLifecycle);
+  if(filler){request->body.clear();advance(request);}else request->body=body;
+}
+inline size_t AsyncWebServerResponse::_ack(AsyncWebServerRequest *request,size_t,size_t){
+  assert(AsyncSdkFixture::actor);++polls;return advance(request);
+}
 using AsyncWebServerRequestPtr = std::weak_ptr<AsyncWebServerRequest>;
 using ArMiddlewareNext = std::function<void()>;
 class AsyncMiddleware {
@@ -128,17 +155,50 @@ struct AsyncWebSocket {
     closed.push_back(id); if (onClose) onClose(id);
   }
 };
+// Installed SDK3.12.1 WebServer.cpp: a bare string uses BackwardCompatible
+// (exact OR descendant), explicit exact() does not. Dispatch is first-match.
+class AsyncURIMatcher {
+ public:
+  AsyncURIMatcher(const char *path):path_(path){}
+  static AsyncURIMatcher exact(const String &path){return AsyncURIMatcher(path,true);}
+  bool matches(AsyncWebServerRequest *request)const{
+    const auto path=request->url();
+    return path==path_ || (!exact_ && path.startsWith((path_+"/").c_str()));
+  }
+  const String &path()const{return path_;}
+ private:
+  AsyncURIMatcher(const String &path,bool exact):path_(path),exact_(exact){}
+  String path_;bool exact_=false;
+};
 class AsyncWebServer {
  public:
   explicit AsyncWebServer(uint16_t) {}
-  void on(const char *path, int, std::function<void(AsyncWebServerRequest *)> handler) {
-    handlers[path]=[handler](AsyncWebServerRequest *request){
+  void on(const char *path, int method, std::function<void(AsyncWebServerRequest *)> handler) {
+    on(AsyncURIMatcher(path),method,std::move(handler));
+  }
+  void on(AsyncURIMatcher uri, int method, std::function<void(AsyncWebServerRequest *)> handler) {
+    auto wrapped=[handler](AsyncWebServerRequest *request){
       AsyncSdkFixture::Actor actor;handler(request);
       if(request->afterHandler)request->afterHandler();
       request->sdkSend(); // Real _onData always calls _send after middleware.
     };
+    handlers[uri.path()]=wrapped;
+    routes.push_back({std::move(uri),method,std::move(wrapped)});
+  }
+  bool dispatch(AsyncWebServerRequest *request){
+    for(const auto &route:routes)
+      if((route.method&request->method()) && route.uri.matches(request)){
+        route.handler(request);return true;
+      }
+    AsyncSdkFixture::Actor actor;request->send(404,"text/plain","Not found");return false;
   }
   void begin() {}
   void addMiddleware(AsyncMiddleware *) {}
   std::map<std::string, std::function<void(AsyncWebServerRequest *)>> handlers;
+ private:
+  struct Route {
+    AsyncURIMatcher uri;int method;
+    std::function<void(AsyncWebServerRequest *)> handler;
+  };
+  std::vector<Route> routes;
 };

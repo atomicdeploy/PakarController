@@ -2,6 +2,7 @@
 #include <ESPAsyncWebServer.h>
 #include <functional>
 #include <array>
+#include <cstring>
 #if !defined(ESP8266) && !defined(ARDUINO_ARCH_ESP8266)
 #include <mutex>
 #include <atomic>
@@ -39,7 +40,10 @@ class AsyncHttpService {
   AsyncWebServerRequest *request() { return current_.get(); }
   String remoteAddress() const { return currentMailbox_ ? currentMailbox_->remoteAddress : String(); }
   void on(const char *path, WebRequestMethodComposite method, std::function<void()> handler) {
-    native_.on(path, method, [this, handler](AsyncWebServerRequest *request) {
+    // SDK3.12.1 bare strings also match descendants (BackwardCompatible) and
+    // dispatch picks the first registered match. Literal API routes must not
+    // let /contracts swallow /contracts/result or a parent mutation own a child.
+    native_.on(AsyncURIMatcher::exact(path), method, [this, handler](AsyncWebServerRequest *request) {
       auto mailbox=std::make_shared<Mailbox>();
       mailbox->remoteAddress=request->client()->remoteIP().toString();
       request->onDisconnect([mailbox](){
@@ -103,8 +107,25 @@ class AsyncHttpService {
   }
   bool hasArg(const char *name) const { return current_ && current_->hasArg(name); }
   String arg(const char *name) const { return current_ ? current_->arg(name) : String(); }
+  AsyncWebServerResponse *beginResponse(int code,const char *type,const String &body) {
+    if(!current_)return nullptr;
+    // Retain immutable complete-message ownership, not loop/device state. Use
+    // the SDK's bounded AsyncAbstractResponse filling/backpressure path instead
+    // of AsyncBasicResponse's single large body write after header staging.
+    auto payload=std::make_shared<const String>(body);
+    if(payload->length()!=body.length())
+      return current_->beginResponse(503,"application/json","{\"error\":\"Response snapshot memory unavailable\"}");
+    auto *response=current_->beginResponse(type,payload->length(),
+        [payload](uint8_t *data,size_t maximum,size_t index)->size_t {
+          if(index>=payload->length())return 0;
+          const size_t remaining=payload->length()-index;
+          const size_t count=maximum<remaining?maximum:remaining;
+          ::memcpy(data,payload->c_str()+index,count);return count;
+        });
+    response->setCode(code);return response;
+  }
   void send(int code, const char *type, const String &body) {
-    if (open()) send(current_->beginResponse(code,type,body));
+    if (open()) send(beginResponse(code,type,body));
   }
   // Takes ownership. Loop creates an independent response; only the SDK actor
   // consumes it. Late/disconnected/duplicate responses are destroyed unsent.

@@ -1,0 +1,71 @@
+# PU850 update-dependencies.yml adapted to one reviewed pin file and guarded PRs.
+name: "📦 Firmware dependency updates"
+on:
+  schedule:
+    - cron: '19 3 * * 2'
+  workflow_dispatch:
+    inputs:
+      check_only:
+        description: Report only; do not propose pin changes
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: firmware-dependencies
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      propose: ${{ steps.mode.outputs.propose }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+      - run: node tools/firmware-dependencies.mjs --check
+      - id: mode
+        env:
+          ENABLED: ${{ vars.PAKAR_DEPENDENCY_PULL_REQUESTS }}
+          CHECK_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.check_only }}
+        run: |
+          if [[ "$ENABLED" == true && "$CHECK_ONLY" != true ]]; then
+            echo 'propose=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'propose=false' >> "$GITHUB_OUTPUT"
+          fi
+  propose:
+    needs: check
+    if: needs.check.outputs.propose == 'true' && github.repository == 'atomicdeploy/PakarController'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+      - run: node tools/firmware-dependencies.mjs --apply
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
+        with:
+          token: ${{ secrets.DEPENDENCY_BOT_TOKEN || github.token }}
+          branch: maintenance/firmware-dependencies
+          base: main
+          delete-branch: true
+          add-paths: tools/firmware-dependencies.json
+          title: 'Update pinned firmware dependencies'
+          commit-message: 'Update pinned firmware dependencies'
+          body: |
+            Stable registry candidates from the PU-derived checker; no downgrade,
+            SDK installation, board flash or automatic merge. Review the pin diff,
+            full CI and actual hardware acceptance before deployment.
+          labels: 'dependencies, domain: firmware'
+          draft: true

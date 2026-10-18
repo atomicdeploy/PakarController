@@ -24,6 +24,10 @@ class AvrUart {
       if (error != UART_NO_ERROR) hardwareErrors_.fetch_add(1, std::memory_order_relaxed);
     });
     uart_.begin(kAvrBaud, SERIAL_8N1, PAKAR_S3_AVR_RX, PAKAR_S3_AVR_TX);
+    if (!uart_) {
+      end();
+      return false;
+    }
     // Stream constructor is intentional: SerialLink::begin must NOT call
     // HardwareSerial::begin again and replace explicit pins/buffer settings.
     link_.begin(kAvrBaud, handler, context);
@@ -33,6 +37,7 @@ class AvrUart {
   void service() { if (started_) link_.service(); }
   BoardCore::SerialLink &frames() { return link_; }
   uint32_t hardwareErrors() const { return hardwareErrors_.load(std::memory_order_relaxed); }
+  bool started() const { return started_; }
   void end() {
     uart_.onReceiveError(nullptr);
     uart_.end();

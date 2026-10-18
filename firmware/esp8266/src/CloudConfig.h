@@ -56,6 +56,7 @@ class CloudConfigStore {
   } __attribute__((packed));
 
   static uint32_t checksum(const Record &record);
+  static bool validRecord(const Record &record);
   static bool copyChecked(char *target, size_t capacity, const String &value,
                           const __FlashStringHelper *name, String &error);
   void defaults();

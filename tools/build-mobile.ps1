@@ -1,18 +1,20 @@
 [CmdletBinding()]
 param(
     [ValidateSet('Analyze','Test','ApkPreview')][string]$Mode='Test',
-    [string]$FlutterPath='C:\development\flutter\bin\flutter.bat',
+    [string]$FlutterPath,
     [ValidateRange(1,1024)][int]$MinimumFreeGiB=8,
     [ValidateRange(1,1024)][int]$MaximumCacheGiB=4,
     [switch]$Restore,
     [switch]$BuildOnly,
     [ValidatePattern('^test/[A-Za-z0-9_/-]+_test\.dart$')][string]$TestPath,
     [string]$CapturePath,
-    [ValidateSet('Table','SettingsTablet','SettingsPhone','FirmwareTablet','FirmwarePhone','BridgeTablet','BridgePhone','FrontPanelTablet','FrontPanelPhone')][string]$CaptureView='Table',
+    [ValidateSet('Table','SettingsTablet','SettingsPhone','FirmwareTablet','FirmwarePhone','BridgeTablet','BridgePhone','FrontPanelTablet','FrontPanelPhone','DevicesTablet','DevicesPhone')][string]$CaptureView='Table',
     [switch]$Plan
 )
 $ErrorActionPreference='Stop'
+. (Join-Path $PSScriptRoot 'script-runtime.ps1')
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern api-contract -Gate | Out-Null
+& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern pu-tooling -Gate | Out-Null
 & node (Join-Path $PSScriptRoot 'check-living-contract.mjs') | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw 'Living API policy failed before mobile build.' }
 $taskRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -27,6 +29,13 @@ foreach($taskGenerator in @('generate-font-assets.mjs','generate-interface-contr
     $taskGeneratorOutput=& node (Join-Path $PSScriptRoot $taskGenerator) --check 2>&1
     $taskGeneratorOutput | ForEach-Object {Write-Host $_}
     if($LASTEXITCODE -ne 0){throw "Shared mobile contract/assets stale: $taskGenerator"}
+}
+if(-not $FlutterPath){
+    $taskConfiguredFlutter=[Environment]::GetEnvironmentVariable('PAKAR_FLUTTER')
+    if($taskConfiguredFlutter){$FlutterPath=$taskConfiguredFlutter}
+    elseif(Get-Command flutter -ErrorAction SilentlyContinue){$FlutterPath=(Get-Command flutter).Source}
+    elseif([Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT -and (Test-Path -LiteralPath 'C:\development\flutter\bin\flutter.bat')){$FlutterPath='C:\development\flutter\bin\flutter.bat'}
+    else{$FlutterPath='flutter'}
 }
 if(-not(Test-Path -LiteralPath $FlutterPath)){
     $taskSdk=Get-Command flutter -ErrorAction SilentlyContinue
@@ -86,6 +95,7 @@ try{
     Push-Location $taskMobile
     try{
         foreach($taskArguments in $taskCommands){
+            Write-PakarStep "Mobile $Mode · $($taskArguments[0]) · canonical cache"
             & $FlutterPath @taskArguments
             if($LASTEXITCODE -ne 0){throw "Mobile $Mode failed: $($taskArguments -join ' ')"}
         }

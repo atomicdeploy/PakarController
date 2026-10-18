@@ -30,6 +30,92 @@ fn field(ui: &mut egui::Ui, icon: &str, label: &str, value: &mut String, secret:
         );
     });
 }
+const AVR_PAGES: [&str; 6] = ["Cells", "Outputs", "Inputs", "Sound", "Display", "Run state"];
+fn avr_page(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
+    let status=app.live_status().cloned();
+    let supported=status.as_ref().is_some_and(crate::board_silent::settings_supported);
+    let owner=status.as_ref().and_then(crate::peer_http::Pin::from_status).zip(app.command_route());
+    if draft.avr_owner != owner { draft.avr=None; draft.avr_pending=None; draft.avr_owner=owner.clone(); }
+    if !supported {
+        ui.weak("Connect an AVR that acknowledges settings to configure its saved parameters.");
+        return;
+    }
+    app.board_silent.expire();
+    if draft.avr_pending.is_some() && app.board_silent.pending.is_none() {
+        draft.avr_pending=None;
+        if let Some(value)=&mut draft.avr { value.conflict=true; }
+        draft.message=app.board_silent.message.clone();
+    }
+    let ready=status.as_ref().is_some_and(|s| !s.programming_latch) && owner.is_some();
+    if ready && app.board_silent.needs_refresh() && draft.avr.as_ref().is_none_or(|d| !d.dirty()) {
+        app.request_board_settings(crate::board_silent::Change::Read);
+    }
+    if let Some((peer,route))=&owner {
+        if let Some(value)=app.board_silent.settings(Some(peer),Some(*route)) {
+            let params=crate::board_silent::Parameters::from_settings(value);
+            if let Some(editor)=&mut draft.avr { editor.observe(params); }
+            else { draft.avr=Some(crate::device_settings::Draft::new(params)); }
+        }
+    }
+    let busy=app.board_silent.pending.is_some();
+    dialog::section(ui, icons::GEAR, "Saved AVR settings", |ui| {
+        ui.weak("Read from the connected board. Save writes its EEPROM only after you apply; application preferences are separate.");
+        if !ready { ui.weak("Programming safety is active; editing is disabled."); }
+        if busy { ui.horizontal(|ui| { ui.spinner(); ui.weak(&app.board_silent.message); }); }
+        if let Some(editor)=&mut draft.avr {
+            if editor.conflict { ui.colored_label(ui.visuals().warn_fg_color,"The board changed or the result is uncertain. Discard and reload before saving."); }
+            ui.add_enabled_ui(ready && !busy && !editor.conflict, |ui| {
+                let v=&mut editor.value;
+                field(ui,icons::CPU,"AVR name",&mut v.name,false);
+                if app.has_feature("buzzer") {
+                    ui.checkbox(&mut v.silent,super::i18n::text("Silent mode"));
+                    ui.checkbox(&mut v.welcome,super::i18n::text("Play welcome melody"));
+                }
+                if app.has_feature("display") {
+                    dialog::setting_row(ui,icons::GAUGE,"Seven-segment brightness",None,|ui| {
+                        ui.add(egui::Slider::new(&mut v.brightness,0..=7));
+                    });
+                }
+                if app.has_feature("inputs") {
+                    dialog::setting_row(ui,icons::HAND_TAP,"Button 9 ADC threshold",None,|ui| {
+                        ui.add(egui::DragValue::new(&mut v.threshold).range(1..=1023));
+                    });
+                }
+                dialog::setting_row(ui,icons::BROADCAST,"Periodic AVR telemetry",Some("0 sends only changed state; otherwise 100–65535 ms."),|ui| {
+                    ui.add(egui::DragValue::new(&mut v.stream_ms).range(0..=65535).suffix(" ms"));
+                });
+                ui.checkbox(&mut v.remember_page,super::i18n::text("Remember last page"));
+                dialog::setting_row(ui,icons::GAUGE,"Start page",None,|ui| {
+                    super::dropdown::ComboBox::from_id_salt("avr-default-page")
+                    .selected_text(super::i18n::text(AVR_PAGES[v.default_page as usize]))
+                    .show_ui(ui,|ui| { for (page,label) in AVR_PAGES.iter().enumerate() {
+                        if v.visible & (1<<page)!=0 { ui.dropdown_value(&mut v.default_page,page as u8,super::i18n::text(label)); }
+                    } });
+                });
+                ui.label(egui::RichText::new(super::i18n::text("Front-panel pages")).strong());
+                for rank in 0..6 {
+                    let page=v.order[rank];
+                    ui.push_id(rank,|ui| { ui.horizontal(|ui| {
+                        let mut visible=v.visible & (1<<page)!=0;
+                        if ui.checkbox(&mut visible,super::i18n::text(AVR_PAGES[page as usize])).changed() {
+                            if visible { v.visible|=1<<page; } else { v.visible &= !(1<<page); }
+                        }
+                        if ui.add_enabled(rank>0,egui::Button::new(icons::ARROW_UP)).on_hover_text(super::i18n::text("Move page up")).clicked() { v.order.swap(rank,rank-1); }
+                        if ui.add_enabled(rank<5,egui::Button::new(icons::ARROW_DOWN)).on_hover_text(super::i18n::text("Move page down")).clicked() { v.order.swap(rank,rank+1); }
+                    }); });
+                }
+            });
+            if let Err(error)=editor.value.settings() { ui.colored_label(ui.visuals().warn_fg_color,error); }
+        } else { ui.weak("Saved settings: Unknown"); }
+        ui.horizontal(|ui| {
+            if ui.add_enabled(ready && !busy,egui::Button::new(format!("{}  {}",icons::ARROW_CLOCKWISE,super::i18n::text("Read board")))).clicked() {
+                app.request_board_settings(crate::board_silent::Change::Read);
+            }
+            if app.board_silent.persisted() { ui.weak("Readback · stored in EEPROM"); }
+        });
+        if !busy && !app.board_silent.message.is_empty() { ui.weak(&app.board_silent.message); }
+    });
+}
 fn secret(ui: &mut egui::Ui, id: &str, label: &str, stored: bool, value: &mut SecretEdit) {
     ui.push_id(id, |ui| {
         dialog::setting_row(ui, icons::LOCK, label, None, |ui| {
@@ -635,15 +721,19 @@ fn page(
             3 | 4 => cloud_page(draft, ui, ready, index == 4),
             5 => { ui.add_enabled_ui(ready, |ui| { app.draw_device_access(ui); }); }
             6 => {
-                dialog::section(ui, icons::GRID_FOUR, "Table and LED controls", |ui| {
+                app.draw_led_settings(ui);
+                ui.add_space(12.0);
+                if app.has_table() { dialog::section(ui, icons::GRID_FOUR, "Table and LED controls", |ui| {
                     ui.label("Logical cell numbers are row-major. Physical addresses and names are separate; odd columns have a half-cell stagger.");
                     if dialog::action_button(ui, icons::GRID_FOUR, "Cell mapping…").clicked() && return_to_workspace(draft,ui) { app.show_mapping = true; }
                     if dialog::action_button(ui, icons::LIGHTBULB, "Effect controls").clicked() && return_to_workspace(draft,ui) { app.reveal_panels.push(ui::layout::Panel::EffectControls); }
                     ui.label(egui::RichText::new("Brightness and effects are live device controls. Chipset/channel order and pixel count are currently build-only; no unsupported runtime editor is shown.").small().weak());
-                });
+                }); }
             }
             7 => app.draw_front_panel(ui),
             8 => {
+                avr_page(app, draft, ui);
+                ui.add_space(12.0);
                 app.draw_hardware(ui);
                 ui.add_space(12.0);
                 ui.label(egui::RichText::new("Clock, fuse, pin ownership, debounce and busy-wire/polling selection are build-time settings in the current firmware—not remotely writable parameters.").small().weak());
@@ -655,7 +745,7 @@ fn page(
     });
 }
 fn return_to_workspace(draft: &mut Editor, ui: &egui::Ui) -> bool {
-    if draft.dirty() || draft.pending.is_some() || draft.maintenance_pending.is_some() {
+    if draft.dirty() || draft.pending.is_some() || draft.avr_pending.is_some() || draft.maintenance_pending.is_some() {
         draft.message="Save or discard device edits before opening another editor. In-flight writes cannot be cancelled.".into();
         return false;
     }
@@ -679,7 +769,9 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
         );
         ui.vertical(|ui| {
             ui.heading("Device settings");
-            ui.label(egui::RichText::new(&app.base).small().weak());
+            ui.label(egui::RichText::new(if app.transport == Transport::Serial {
+                format!("USB · {}", app.serial_port)
+            } else { app.base.clone() }).small().weak());
         });
     });
     ui.add_space(10.0);
@@ -697,7 +789,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
             draft.message = "Reading device configuration…".into();
         }
     });
-    if !ready {
+    if !ready && matches!(draft.page, 2..=5 | 9) {
         ui.label(egui::RichText::new("Wi-Fi configuration is read-only until the device is connected and not programming. USB AVR controls remain available when advertised.").small().color(ui.visuals().warn_fg_color));
     }
     ui.add_space(10.0);
@@ -800,7 +892,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
     }
     let footer_status = if draft.maintenance_pending.is_some() {
         "Maintenance in progress"
-    } else if draft.pending.is_some() {
+    } else if draft.pending.is_some() || draft.avr_pending.is_some() {
         "Awaiting device readback"
     } else if draft.dirty() {
         "Unsaved device changes"
@@ -858,14 +950,25 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
                     }
                 }
             }
+            if draft.page==8 {
+                let request=draft.avr.as_ref().filter(|d| d.dirty() && !d.conflict)
+                    .and_then(|d| Some(crate::board_silent::Change::Apply {
+                        baseline:d.saved.settings().ok()?.bytes, desired:d.value.settings().ok()?.bytes }));
+                let available=app.live_status().is_some_and(|s| crate::board_silent::settings_supported(s) && !s.programming_latch);
+                if ui.add_enabled(available && app.board_silent.pending.is_none() && request.is_some(),
+                    egui::Button::new(format!("{}  {}",icons::FLOPPY_DISK,super::i18n::text("Save to AVR")))).clicked() {
+                    draft.avr_pending=app.request_board_settings(request.unwrap());
+                }
+            }
             if ui
                 .add_enabled(
-                    draft.pending.is_none() && draft.dirty(),
+                    draft.pending.is_none() && draft.avr_pending.is_none() && draft.maintenance_pending.is_none() && draft.dirty(),
                     egui::Button::new("Discard & reload"),
                 )
                 .clicked()
             {
                 draft.discard();
+                if draft.page==8 { draft.avr=None; app.request_board_settings(crate::board_silent::Change::Read); }
                 app.configuration_loaded = false;
             }
         },
@@ -934,7 +1037,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
     }
 }
 fn request_close(draft: &mut Editor) {
-    if draft.dirty() || draft.pending.is_some() || draft.maintenance_pending.is_some() {
+    if draft.dirty() || draft.pending.is_some() || draft.avr_pending.is_some() || draft.maintenance_pending.is_some() {
         draft.close_confirmation = true;
     } else {
         draft.open = false;
@@ -948,7 +1051,7 @@ fn close_modal(draft: &mut Editor, ctx: &egui::Context) {
         return;
     }
     egui::Modal::new(egui::Id::new("device-settings-close")).show(ctx,|ui| {
-        let pending=draft.pending.is_some() || draft.maintenance_pending.is_some();
+        let pending=draft.pending.is_some() || draft.avr_pending.is_some() || draft.maintenance_pending.is_some();
         ui.set_width(370.0); ui.heading(if pending { "Device operation in progress" } else { "Discard device changes?" });
         ui.label(if pending { "Wait for the result before closing. An in-flight device write cannot be safely cancelled." } else { "Unsaved edits and secret values will be cleared." });
         if !pending && ui.button("Discard and close").clicked() { draft.discard(); draft.open=false; draft.close_confirmation=false; draft.maintenance_confirmation=None; }
@@ -1030,6 +1133,11 @@ mod tests {
         request_close(&mut draft);
         assert!(draft.open && draft.close_confirmation);
         draft.maintenance_pending = None;
+        draft.avr_pending = Some(4);
+        draft.close_confirmation = false;
+        request_close(&mut draft);
+        assert!(draft.open && draft.close_confirmation);
+        draft.avr_pending = None;
         draft.close_confirmation = false;
         request_close(&mut draft);
         assert!(!draft.open && draft.wifi_password.is_empty());
@@ -1051,6 +1159,8 @@ mod tests {
             "credentials",
             "physical",
             "UART",
+            "welcome",
+            "threshold",
         ] {
             assert!((0..PAGES.len()).any(|p| matches(p, query)), "{query}");
         }

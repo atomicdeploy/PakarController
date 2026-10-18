@@ -19,9 +19,9 @@
   "{state} · {frames} frames · {rate} FPS average · {skipped} skipped · socket queued {bytes} bytes": "{state} · {frames} فریم · میانگین {rate} فریم بر ثانیه · {skipped} ردشده · {bytes} بایت در صف سوکت",
   "Dismiss {title}": "بستن {title}",
   "{count} selected": "{count} انتخاب‌شده",
-  "Sent {sent} of {total} cell edits; awaiting device readback": "{sent} از {total} ویرایش خانه ارسال شد؛ در انتظار بازخوانی دستگاه",
-  "Cancelled unsent edits. {sent} previously sent edits may have applied.": "ویرایش‌های ارسال‌نشده لغو شدند. ممکن است {sent} ویرایش ارسال‌شده اعمال شده باشند.",
-  "Verified {sent} cell states on the device": "وضعیت {sent} خانه در دستگاه تأیید شد",
-  "Readback did not confirm every edit. Refresh and inspect; batch is not atomic.": "بازخوانی همهٔ ویرایش‌ها را تأیید نکرد. تازه‌سازی و بررسی کنید؛ عملیات گروهی اتمی نیست.",
-  "Stopped after {sent} edits. Uncertain writes are not retried.": "پس از {sent} ویرایش متوقف شد. نوشته‌های نامطمئن دوباره ارسال نمی‌شوند."
+  "This board has not acknowledged atomic cell batches. No per-cell fallback was sent.": "این برد فرمان گروهی یکپارچهٔ خانه‌ها را تأیید نکرده است؛ فرمان‌های جداگانه ارسال نشدند.",
+  "Sending one board command for {total} cells; sent writes cannot be cancelled.": "یک فرمان برای {total} خانه به برد ارسال می‌شود؛ فرمان ارسال‌شده قابل لغو نیست.",
+  "Verified {total} requested cell states on the device. Inspect the actual LEDs.": "وضعیت درخواستی {total} خانه با بازخوانی دستگاه تأیید شد؛ LEDهای واقعی را بررسی کنید.",
+  "Outcome unknown. The single command may have applied; it was not retried. Refresh and inspect.": "نتیجه نامشخص است. ممکن است فرمان اعمال شده باشد؛ دوباره ارسال نشد. تازه‌سازی و بررسی کنید.",
+  "No command was sent. Refresh before a new action.": "فرمانی ارسال نشد. پیش از اقدام بعدی تازه‌سازی کنید."
 }

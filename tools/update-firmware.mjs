@@ -1,0 +1,215 @@
+// PU850 AsyncOTA/FirmwareTransfer + PCController UPDATE-PROGRESS contracts.
+// Reuses the reviewed hostname/TCP pin policy from check-ethernet-live; no
+// credentials, proxy, redirects, automatic write retry or duplicate image copy.
+import http from 'node:http';
+import https from 'node:https';
+import {readFileSync} from 'node:fs';
+import {createHash, randomBytes} from 'node:crypto';
+import {isIP} from 'node:net';
+import {pathToFileURL} from 'node:url';
+import {setTimeout as delay} from 'node:timers/promises';
+import {deviceOrigin,deviceRequest} from './check-ethernet-live.mjs';
+import {manifest as validateImage} from './create-remote-manifest.mjs';
+
+export function imageIdentity(bytes) {
+  // Existing publisher validates raw S3 application, not bootloader/merged flash.
+  validateImage(bytes,null,'https://firmware.invalid/','0.0.0','buffered','esp32s3');
+  return {size:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),
+    md5:createHash('md5').update(bytes).digest('hex')};
+}
+export function boardPeer(status,remote,previous=null,{allowReboot=false,allowAddressChange=false}={}) {
+  if(status?.http_peer_fencing!==true || !/^[a-z0-9_-]{1,64}$/.test(status.board_id??'') ||
+    !/^[a-f0-9]{32}$/.test(status.boot_id??'') || /^0{32}$/.test(status.boot_id) ||
+    typeof status.hostname!=='string' || status.capabilities?.hostname!==status.hostname ||
+    !status.capabilities?.acknowledged_features?.includes('network') || isIP(remote)!==4) {
+    throw Error('Compatible board/boot identity is unavailable');
+  }
+  if(previous && (previous.board!==status.board_id || (previous.address!==remote && !(allowReboot&&allowAddressChange)) ||
+    (!allowReboot && previous.boot!==status.boot_id))) throw Error('Device identity changed; nothing replayed');
+  return {board:status.board_id,boot:status.boot_id,address:remote,hostname:status.hostname};
+}
+export function selectPath(mode,info,hasManifest) {
+  if(!['auto','local','remote'].includes(mode))throw Error('Mode must be auto, local or remote');
+  if(mode!=='remote' && info?.upload==='/update')return 'local';
+  if(mode!=='local' && hasManifest && info?.remote_fetch==='/api/firmware/fetch' && info?.remote_apply==='/api/firmware/apply')return 'remote';
+  throw Error('No verified requested update path; no write attempted. USB requires explicit device inventory, not guessed fallback');
+}
+function requestOptions(origin,peer,headers={}) {
+  return {agent:false,family:4,
+    lookup:(_host,options,done)=>done(null,options.all?[{address:peer.address,family:4}]:peer.address,4),
+    headers:{'X-Pakar-Board':peer.board,'X-Pakar-Boot':peer.boot,...headers}};
+}
+export function uploadImage(origin,peer,bytes,identity) {
+  const boundary='Pakar'+randomBytes(16).toString('hex');
+  const start=Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="MD5"\r\n\r\n${identity.md5}\r\n--${boundary}\r\nContent-Disposition: form-data; name="firmware"; filename="esp.bin"\r\nContent-Type: application/octet-stream\r\n\r\n`);
+  const end=Buffer.from(`\r\n--${boundary}--\r\n`);
+  return new Promise((resolve,reject)=>{
+    const client=origin.protocol==='https:'?https:http;
+    const req=client.request(new URL('/update',origin),{method:'POST',...requestOptions(origin,peer,{
+      'Content-Type':'multipart/form-data; boundary='+boundary,'Content-Length':start.length+bytes.length+end.length,
+      'X-Pakar-Firmware-Size':String(bytes.length),'X-Pakar-Firmware-MD5':identity.md5})},res=>{
+      let result=Buffer.alloc(0);
+      if(res.socket.remoteAddress?.replace(/^::ffff:/,'')!==peer.address){req.destroy(Error('TCP peer changed'));return;}
+      res.on('data',chunk=>{if(result.length+chunk.length>16384){req.destroy(Error('Oversized update reply'));return;}result=Buffer.concat([result,chunk]);});
+      res.on('error',()=>reject(Error('Upload response interrupted; outcome unknown, no retry')));
+      res.on('end',()=>{let value;try{value=JSON.parse(result)}catch{}
+        if(res.statusCode!==200 || value?.updated!==true || value?.rebooting!==true)reject(Error('Update rejected or outcome unknown (HTTP '+res.statusCode+'); inspect before retry'));
+        else resolve(value);
+      });
+    });
+    const timer=setTimeout(()=>req.destroy(Error('Upload deadline; outcome unknown, no retry')),120000);
+    req.on('close',()=>clearTimeout(timer));req.on('error',()=>reject(Error('Upload failed; outcome unknown, no fallback or retry')));
+    req.write(start);req.write(bytes);req.end(end);
+  });
+}
+// Read-only WS proof pinned to the same TCP address/board/boot as HTTP. Supports
+// fragmented text and ping/pong; does not issue any board control command.
+export function checkWebSocket(origin,peer) {
+  return new Promise((resolve,reject)=>{
+    const key=randomBytes(16).toString('base64'),client=origin.protocol==='https:'?https:http;
+    let socket,buffer=Buffer.alloc(0),message=Buffer.alloc(0),fragmented=false,done=false;
+    const finish=(error)=>{if(done)return;done=true;clearTimeout(timer);socket?.destroy();req.destroy();error?reject(error):resolve({board_id:peer.board,boot_id:peer.boot});};
+    const req=client.request(new URL('/ws',origin),{...requestOptions(origin,peer,{
+      Connection:'Upgrade',Upgrade:'websocket','Sec-WebSocket-Key':key,'Sec-WebSocket-Version':'13'})});
+    const timer=setTimeout(()=>finish(Error('WebSocket status deadline')),8000);
+    req.on('response',res=>{res.resume();finish(Error('WebSocket handshake rejected (HTTP '+res.statusCode+')'));});
+    req.on('error',()=>finish(Error('WebSocket connection failed')));
+    req.on('upgrade',(res,connection,head)=>{
+      socket=connection;
+      const expected=createHash('sha1').update(key+'258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
+      if(res.statusCode!==101 || res.headers['sec-websocket-accept']!==expected ||
+        res.headers.upgrade?.toLowerCase()!=='websocket' || connection.remoteAddress?.replace(/^::ffff:/,'')!==peer.address) {
+        finish(Error('Invalid WebSocket upgrade/TCP peer'));return;
+      }
+      const receive=chunk=>{try{
+        buffer=Buffer.concat([buffer,chunk]);if(buffer.length>131072)throw Error('WebSocket frame exceeds bound');
+        while(buffer.length>=2){
+          const first=buffer[0],opcode=first&15,final=!!(first&128);let size=buffer[1]&127,offset=2;
+          if((first&112)||(buffer[1]&128))throw Error('Invalid server WebSocket frame');
+          if(size===126){if(buffer.length<4)return;size=buffer.readUInt16BE(2);offset=4;}
+          else if(size===127){if(buffer.length<10)return;if(buffer.readUInt32BE(2)!==0)throw Error('Oversized WebSocket frame');size=buffer.readUInt32BE(6);offset=10;}
+          if(size>65536 || (opcode>=8 && (!final || size>125)))throw Error('Invalid WebSocket length');
+          if(buffer.length<offset+size)return;
+          const payload=buffer.subarray(offset,offset+size);buffer=buffer.subarray(offset+size);
+          if(opcode===8)throw Error('WebSocket closed before peer status');
+          if(opcode===9){const mask=randomBytes(4),pong=Buffer.alloc(6+size);pong[0]=0x8a;pong[1]=0x80|size;mask.copy(pong,2);for(let i=0;i<size;i++)pong[6+i]=payload[i]^mask[i%4];socket.write(pong);continue;}
+          if(opcode===10)continue;
+          if(opcode!==1 && opcode!==0)throw Error('Expected WebSocket text status');
+          if((opcode===0)!==fragmented)throw Error('Invalid WebSocket fragments');
+          message=Buffer.concat([message,payload]);if(message.length>65536)throw Error('WebSocket message exceeds bound');
+          fragmented=!final;if(!final)continue;
+          let status;try{status=JSON.parse(message.toString('utf8'))}catch{throw Error('Malformed WebSocket JSON')}
+          message=Buffer.alloc(0);
+          boardPeer(status,peer.address,peer);finish();return;
+        }
+      }catch(error){finish(error);}};
+      connection.on('data',receive);connection.on('error',()=>finish(Error('WebSocket interrupted')));
+      connection.on('close',()=>{if(!done)finish(Error('WebSocket closed before status'));});
+      if(head.length)receive(head);
+    });req.end();
+  });
+}
+
+export async function updateFirmware({origin='http://ledboard.local',image,mode='auto',run=false,manifest,manifestSha,
+  timeoutSeconds=180,request=deviceRequest,upload=uploadImage,websocket=checkWebSocket,wait=delay,now=Date.now,log=()=>{}}={}) {
+  const url=deviceOrigin(origin),bytes=Buffer.isBuffer(image)?image:readFileSync(image),identity=imageIdentity(bytes);
+  if(!['auto','local','remote'].includes(mode))throw Error('Mode must be auto, local or remote');
+  if(!Number.isInteger(timeoutSeconds)||timeoutSeconds<10||timeoutSeconds>600)throw Error('Timeout must be10..600 seconds');
+  if(manifest){const source=new URL(manifest);
+    if(source.protocol!=='https:'||source.username||source.password||source.hash||/[\s\\]/.test(manifest)||!/^[a-f0-9]{64}$/.test(manifestSha??''))throw Error('Remote path needs direct HTTPS URL and pinned manifest SHA256');
+  } else if(manifestSha)throw Error('Manifest URL is missing');
+  if(!run)return {plan:true,mode,origin:url.origin,image:identity,authentication:'disabled required',avr_touched:false,
+    policy:'auto prefers local Async HTTP; remote requires pinned manifest; no write fallback/replay',device_contacted:false};
+  let peer=null;
+  const read=async(path,{unfenced=false,resolveHostname=false,...options}={})=>{
+    const response=await request(url,path,{...options,expectedAddress:resolveHostname?undefined:peer?.address,
+      headers:{...(peer&&!unfenced?{'X-Pakar-Board':peer.board,'X-Pakar-Boot':peer.boot}:{}),...options.headers}});
+    if(response.status<200||response.status>=300)throw Error('Device rejected '+path.split('?')[0]+' (HTTP '+response.status+'); no retry');
+    return response;
+  };
+  const json=async(path,options)=>{const r=await read(path,options);let value;
+    try{value=JSON.parse(r.body)}catch{throw Error('Malformed device JSON')};return {value,remote:r.remote};};
+  const first=await json('/api/status');peer=boardPeer(first.value,first.remote);
+  const auth=(await json('/api/auth')).value;if(auth.enabled!==false)throw Error('Device authentication is enabled/unknown; disable through the existing owner settings or physical recovery first');
+  const page=await read('/');if(!/<html|<!doctype html/i.test(page.body.toString('utf8')))throw Error('Device Web UI not served');
+  const info=(await json('/update/info')).value;
+  // The installed S3's existing `free` field is ESP.getFreeSketchSpace(): the
+  // next OTA partition size. The explicit field is additive, not a generation.
+  const capacity=info.ota_capacity_bytes??info.free;
+  if(info.product!=='PakarController'||info.framework!=='ESPAsyncWebServer'||!info.model?.startsWith('esp32s3')||
+    !Number.isSafeInteger(capacity)||!(identity.size<capacity))throw Error('S3 Async HTTP product/capacity not verified; use inventoried USB bootstrap if metadata is unavailable');
+  if(first.value.programming_latch!==false)throw Error('AVR programming latch is active/unknown; no ESP-only update');
+  const previous=(await json('/api/firmware/remote')).value;
+  if(previous.busy!==false||!['idle','complete','cancelled'].includes(previous.phase))throw Error('Existing firmware job requires inspection; no overwrite');
+  await websocket(url,peer);
+  const route=selectPath(mode,info,!!manifest),before={...peer};
+  // Refresh the same boot immediately before the single selected write path.
+  const fresh=await json('/api/status');boardPeer(fresh.value,fresh.remote,peer);
+  if(fresh.value.programming_latch!==false)throw Error('Programming state changed; no update');
+  log({stage:'upload',path:route,image_bytes:identity.size});const started=now();let jobId=null;
+  if(route==='local')await upload(url,peer,bytes,identity);
+  else {
+    const staged=(await json('/api/firmware/fetch',{form:{url:manifest,sha256:manifestSha,targets:'1',apply:'false'}})).value;
+    if(!Number.isSafeInteger(staged.job_id)||staged.job_id<1||staged.boot_id!==peer.boot)throw Error('Unknown fetch admission; inspect original job, no retry');
+    jobId=staged.job_id;const deadline=now()+timeoutSeconds*1000;
+    for(;;){
+      const job=(await json('/api/firmware/remote')).value;
+      if(job.job_id!==jobId||job.boot_id!==peer.boot||job.manifest_sha256!==manifestSha||job.targets!==1)throw Error('Remote job identity changed; no apply');
+      log({stage:job.phase,received_bytes:job.received_bytes,expected_bytes:job.expected_bytes});
+      if(job.phase==='ready'){
+        if(job.esp?.sha256!==identity.sha256||job.esp?.size!==identity.size)throw Error('Remote image differs from local expected image; no apply');break;
+      }
+      if(!job.busy||now()>=deadline)throw Error('Remote stage failed/deadline; no retry or cancel');await wait(1000);
+    }
+    const result=(await json('/api/firmware/apply',{form:{job_id:String(jobId),boot_id:peer.boot,sha256:manifestSha}})).value;
+    if(result.job_id!==jobId||result.boot_id!==peer.boot)throw Error('Apply outcome unknown; no retry');
+  }
+  const transferMs=now()-started,deadline=now()+timeoutSeconds*1000;let after;
+  log({stage:'reconnect',transfer_ms:transferMs});
+  for(;;){
+    if(now()>=deadline)throw Error('Reboot verification deadline; no write retry');await wait(1500);
+    // Old boot headers must NOT fence the new boot's read-only observation.
+    // TCP address remains pinned, then board identity is independently checked.
+    let response,resolved=false;
+    try{response=await json('/api/status',{unfenced:true})}catch{
+      // DHCP may change after reboot. Refresh hostname only after the cached
+      // route fails; this is read-only, then independently rebind the same board.
+      try{response=await json('/api/status',{unfenced:true,resolveHostname:true});resolved=true;}catch{continue;}
+    }
+    after=boardPeer(response.value,response.remote,before,{allowReboot:true,allowAddressChange:resolved});
+    if(after.boot===before.boot)continue;peer=after;break;
+  }
+  if((await json('/api/auth')).value.enabled!==false)throw Error('Authentication changed after reboot');
+  const telemetry=(await json('/api/telemetry')).value,e=telemetry.esp;
+  if(telemetry.board_id!==peer.board||telemetry.boot_id!==peer.boot||e?.boot_integrity_verified!==true||
+    e.sketch_bytes!==identity.size||e.sketch_md5!==identity.md5||e.ota?.running_offset!==e.ota?.boot_offset ||
+    e.ota?.running_state_code!==2)throw Error('Running image identity/integrity/selected slot not verified');
+  // Full running-image SHA, not just a POST reply or a repeated version string.
+  const hash=createHash('sha256');
+  for(let start=0;start<identity.size;start+=65536){const end=Math.min(start+65535,identity.size-1);
+    const chunk=await read('/firmware/download',{headers:{Range:`bytes=${start}-${end}`}});
+    if(chunk.status!==206||chunk.headers['content-range']!==`bytes ${start}-${end}/${identity.size}`||chunk.body.length!==end-start+1)throw Error('Running-image export incomplete; no flash retry');
+    hash.update(chunk.body);
+  }
+  if(hash.digest('hex')!==identity.sha256)throw Error('Running-image SHA256 mismatch');
+  await websocket(url,peer);
+  if(route==='remote'){
+    const result=(await json('/api/firmware/remote')).value;
+    if(result.job_id!==jobId||result.phase!=='complete'||result.manifest_sha256!==manifestSha)throw Error('Remote completion not verified');
+  }
+  return {ok:true,path:route,origin:url.origin,board_id:peer.board,boot_before:before.boot,boot_after:peer.boot,
+    image:identity,transfer_ms:transferMs,total_ms:now()-started,authentication:false,websocket:'same-peer status before/after',
+    running_image:'full SHA256 readback and VALID selected/running slot',simulated:request!==deviceRequest||upload!==uploadImage||websocket!==checkWebSocket,
+    avr_touched:false,usb_disconnect_ready:false,remaining:'External-power, Wi-Fi reconnect/AP recovery and physical matrix acceptance'};
+}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
+  try{const options={};const args=process.argv.slice(2);
+    for(let i=0;i<args.length;i++){
+      if(args[i]==='--run'){options.run=true;continue;}
+      const key={'--origin':'origin','--image':'image','--mode':'mode','--manifest':'manifest','--manifest-sha':'manifestSha','--timeout':'timeoutSeconds'}[args[i]];
+      if(!key||!args[i+1]||args[i+1].startsWith('--'))throw Error('Usage: node tools/update-firmware.mjs --image ESP_BIN [--origin http://ledboard.local] [--mode auto|local|remote] [--manifest HTTPS_URL --manifest-sha SHA256] [--run]');
+      options[key]=key==='timeoutSeconds'?Number(args[++i]):args[++i];
+    }
+    options.log=value=>console.error(JSON.stringify(value));console.log(JSON.stringify(await updateFirmware(options),null,2));
+  }catch(error){console.error(error.message);process.exitCode=1;}
+}
