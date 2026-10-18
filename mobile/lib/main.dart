@@ -2267,7 +2267,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
     seenPanelMirror |= mirror.panelAvailable;
     seenSegmentsMirror |= mirror.segmentsAvailable;
     seenBuzzerMirror |= mirror.buzzerAvailable;
-    final requested = mirror.panelPresentation;
+    final requested = mirror.segmentsAvailable ? mirror.panelPresentation : null;
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -2281,7 +2281,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
             ),
-            if (mirror.panelEnabled && mirror.segmentsAvailable)
+            if (mirror.panelEnabled && seenSegmentsMirror)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: SizedBox(

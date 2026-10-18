@@ -10,6 +10,9 @@ param(
     [ValidateSet('static', 'rmt-dma')] [string] $S3LedBackend = 'static',
     [ValidateSet('runtime', 'disabled')] [string] $S3Bluetooth = 'runtime',
     [ValidateSet(-1, 38, 48)] [int] $S3StatusRgbPin = -1,
+    [ValidateRange(1,4)] [int] $ShellSessions = 2,
+    [switch] $DisableSerialShell,
+    [switch] $DisableTelnet,
     [switch] $InitializeFilesystem,
     [switch] $PauseAvrLink,
     [switch] $PauseLedOutput,
@@ -22,6 +25,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if(($PSBoundParameters.ContainsKey('ShellSessions') -or $DisableSerialShell -or $DisableTelnet) -and $Target -ne 'esp32s3'){throw 'Shell build switches currently use the S3 application-only profile; other targets retain macro defaults.'}
 . (Join-Path $PSScriptRoot 'script-runtime.ps1')
 if ($Target -eq 'esp32s3' -and -not $PSBoundParameters.ContainsKey('LinkMode') -and -not $env:PAKAR_LINK_MODE) { $LinkMode = 'buffered' }
 if ($Target -eq 'esp32s3' -and $LinkMode -ne 'buffered') { throw 'ESP32-S3 UART integration requires the explicit paired buffered profile.' }
@@ -54,6 +58,7 @@ if ($Target -eq 'esp32s3') {
     }
 }
 if ($Target -ne 'avr') {
+    & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern device-shell -Gate | Out-Null
     # Route evidence is a separate reviewed artifact from the file ledger.
     # Fail before compiling/flashing if a changed sketch has stale route hashes.
     & node (Join-Path $PSScriptRoot '../tests/pu_routes_test.mjs') | ForEach-Object { Write-Host $_ }
@@ -129,14 +134,14 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         # Arduino's initial sketch dependency scan also uses the C recipe.
         $arguments += @('--build-property', "compiler.c.extra_flags=$flags")
         $arguments += @('--build-property', 'compiler.optimization_flags=-Os -g0')
-        $arguments += @('--build-property', 'compiler.c.elf.extra_flags=-Wl,--wrap=dns_clear_cache,--wrap=esp_partition_write,--wrap=esp_partition_write_raw,--wrap=esp_partition_erase_range,--wrap=esp_partition_read,--wrap=esp_partition_read_raw,--wrap=esp_image_verify')
+        $arguments += @('--build-property', 'compiler.c.elf.extra_flags=-Wl,--wrap=dns_clear_cache,--wrap=gdma_new_ahb_channel,--wrap=esp_partition_write,--wrap=esp_partition_write_raw,--wrap=esp_partition_erase_range,--wrap=esp_partition_read,--wrap=esp_partition_read_raw,--wrap=esp_image_verify')
     }
     if ($Clean) { $arguments += '--clean' }
     $ledProfile = $null
     if ($board -eq 'esp32s3') {
         $ledProfile = [pscustomobject]@{
             Path = Join-Path $build 'config/esp32s3/LedBackend.h'
-            Content = "#pragma once`n#define PAKAR_S3_LED_USE_DMA $(if ($S3LedBackend -eq 'rmt-dma') { 1 } else { 0 })`n#ifndef PAKAR_S3_BLE_ENABLED`n#define PAKAR_S3_BLE_ENABLED $(if ($S3Bluetooth -eq 'disabled') { 0 } else { 1 })`n#endif`n"
+            Content = "#pragma once`n#define PAKAR_S3_LED_USE_DMA $(if ($S3LedBackend -eq 'rmt-dma') { 1 } else { 0 })`n#ifndef PAKAR_S3_BLE_ENABLED`n#define PAKAR_S3_BLE_ENABLED $(if ($S3Bluetooth -eq 'disabled') { 0 } else { 1 })`n#endif`n#define PAKAR_TELNET_SESSIONS $ShellSessions`n#define PAKAR_SERIAL_SHELL_ENABLED $(if ($DisableSerialShell) { 0 } else { 1 })`n#define PAKAR_TELNET_ENABLED $(if ($DisableTelnet) { 0 } else { 1 })`n"
         }
     }
     if ($VerboseBuild) { $arguments += '--verbose' }

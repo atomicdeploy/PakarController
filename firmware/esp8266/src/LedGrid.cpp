@@ -140,6 +140,10 @@ const char *LedGrid::patternName() const {
 
 void LedGrid::changePattern(Pattern pattern,const char *reason) {
   if(pattern_==pattern)return;
+  if(pattern==kPatternRainbow){
+    rainbowBaseHue_=hue_;
+    rainbowStartedAt_=millis();
+  }
   lastEffectChange_.reason=reason;
   lastEffectChange_.previous=pattern_;
   lastEffectChange_.next=pattern;
@@ -221,7 +225,7 @@ void LedGrid::service(uint32_t now) {
   }
   const bool refresh=static_cast<uint32_t>(now-lastFrameAt_)>=250U;
   if (pattern_ != kPatternNone) {
-    renderPattern();
+    renderPattern(now);
     showStaged();
     return;
   }
@@ -249,12 +253,19 @@ void LedGrid::service(uint32_t now) {
   if (dirty_ || refresh) showStaged();
 }
 
-void LedGrid::renderPattern() {
-  if (!staticMode_ || pattern_ == kPatternRainbow) hue_ = static_cast<uint8_t>(hue_ + 3U);
+void LedGrid::renderPattern(uint32_t now) {
   switch (pattern_) {
-    case kPatternRainbow:
+    case kPatternRainbow: {
+      // Like the donor's monotonic output timeline, skip obsolete animation
+      // positions after a slow service rather than stretching its cadence.
+      // This sets speed (3 hue units/16ms), not a render/FPS ceiling. Unsigned
+      // subtraction crosses millis() rollover; widen before multiplying so
+      // long-running effects cannot overflow before modulo-256 hue conversion.
+      const uint32_t elapsed=static_cast<uint32_t>(now-rainbowStartedAt_);
+      hue_=static_cast<uint8_t>(rainbowBaseHue_+(uint64_t(elapsed)*3U)/16U);
       fill_rainbow(pixels_, kPixels, hue_, 7);
       break;
+    }
     case kPatternFire:
       for (uint16_t i = 0; i < kPixels; ++i) {
         heat_[i] = qsub8(heat_[i], random8(0, 3));

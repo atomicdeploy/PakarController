@@ -22,10 +22,13 @@ int main() {
   assert(config.change("pakarcontroller", "David", "new-password"));
   assert(!config.defaultsActive() && config.verify("David", "new-password"));
   AccessConfig reboot; assert(reboot.begin(filesystem)); assert(reboot.verify("David", "new-password"));
+  const auto security=reboot.securityRevision();
   assert(!reboot.verify("admin", "pakarcontroller"));
   assert(!reboot.configure("wrong", false));
+  assert(reboot.securityRevision()==security);
   filesystem.failWrite=true;assert(!reboot.configure("new-password", false));assert(reboot.enabled());
   filesystem.failWrite=false;assert(reboot.configure("new-password", false));assert(!reboot.enabled());
+  assert(reboot.securityRevision()!=security);
   AccessConfig offReboot;assert(offReboot.begin(filesystem) && !offReboot.enabled());
   filesystem.files["/access.bin"]->bytes[20] ^= 0x80;
   AccessConfig damaged; assert(!damaged.begin(filesystem)); assert(!damaged.ready());

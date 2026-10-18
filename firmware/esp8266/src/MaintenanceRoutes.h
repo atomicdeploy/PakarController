@@ -482,7 +482,7 @@ void registerMaintenanceRoutes() {
       server.send(400,"text/plain",accessConfig.error());return;
     }
     webAccess.revokeAll();webSocket.closeAll(1008,"Credentials changed");
-    if(telnetClient)telnetClient.stop();telnetAuthenticated=false;
+    closeDeviceShells();
     sendMaintenanceJson("{\"updated\":true,\"reauthenticate\":true}");
   });
   server.on("/random",HTTP_GET,[](){

@@ -1,10 +1,11 @@
 #include "LedOutput.h"
 #include "LedWire.h"
+#include "LedDmaGuard.h"
 #include <esp_heap_caps.h>
 #include <esp_rom_sys.h>
+#include <esp_attr.h>
 #if !PAKAR_S3_LED_USE_DMA
 #include <sdkconfig.h>
-#include <esp_attr.h>
 #include <esp_cpu.h>
 #include <driver/gpio.h>
 #include <soc/gpio_reg.h>
@@ -45,6 +46,10 @@ void IRAM_ATTR __attribute__((noinline)) writeStaticWire(const uint8_t *bytes,si
 std::mutex LedOutput::wireGate_;
 std::atomic<uint32_t> LedOutput::flashHolds_{0};
 std::atomic<bool> LedOutput::inFlight_{false};
+bool IRAM_ATTR LedOutput::onDone(rmt_channel_handle_t,const rmt_tx_done_event_data_t *event,void *context){
+  // SDK encoded-symbol accounting (not an optical or waveform receipt).
+  static_cast<LedOutput*>(context)->doneSymbols_.store(event->num_symbols,std::memory_order_relaxed);return false;
+}
 bool acquireLedFlashPause(){return LedOutput::acquireFlashPause();}
 void releaseLedFlashPause(){LedOutput::releaseFlashPause();}
 bool LedOutput::acquireFlashPause(){
@@ -129,7 +134,11 @@ void LedOutput::work(){
   config.clk_src=RMT_CLK_SRC_DEFAULT;config.resolution_hz=40000000;
   config.mem_block_symbols=2046;config.trans_queue_depth=1;config.intr_priority=3;
   config.flags.with_dma=true; // Required, never silently fall back to bit-bang/non-DMA.
-  int error=payload?rmt_new_tx_channel(&config,&channel):ESP_ERR_NO_MEM;
+  int error=payload?ESP_OK:ESP_ERR_NO_MEM;
+  if(!error){
+    error=newCacheSafeLedChannel(&config,&channel);
+    refillCacheSafe_=!error;
+  }
   rmt_bytes_encoder_config_t coding{};
   coding.bit0.level0=1;coding.bit0.duration0=zeroHigh;
   coding.bit0.level1=0;coding.bit0.duration1=zeroLow;
@@ -137,6 +146,8 @@ void LedOutput::work(){
   coding.bit1.level1=0;coding.bit1.duration1=oneLow;
   coding.flags.msb_first=1;
   if(!error)error=rmt_new_bytes_encoder(&coding,&encoder);
+  rmt_tx_event_callbacks_t callbacks{};callbacks.on_trans_done=onDone;
+  if(!error)error=rmt_tx_register_event_callbacks(channel,&callbacks,this);
   if(!error)error=rmt_enable(channel);
   if(error){
     error_.store(error);if(encoder)rmt_del_encoder(encoder);if(channel)rmt_del_channel(channel);
@@ -162,8 +173,10 @@ void LedOutput::work(){
       inFlight_.store(true);
     }
     rmt_transmit_config_t tx{};tx.loop_count=0;tx.flags.eot_level=0;tx.flags.queue_nonblocking=1;
+    doneSymbols_.store(0,std::memory_order_relaxed);
     error=rmt_transmit(channel,encoder,payload,bytes,&tx);
     if(!error)error=rmt_tx_wait_all_done(channel,100);
+    if(!error&&doneSymbols_.load(std::memory_order_relaxed)!=pixels*24+1)error=ESP_ERR_INVALID_RESPONSE;
     if(error){
       // Never reuse a possibly in-flight buffer after an uncertain deadline.
       error_.store(error);failed_.fetch_add(1);ready_.store(false);active_.store(false);
@@ -194,6 +207,10 @@ String LedOutput::json()const{
   value+=F(",\"ready\":");value+=ready_.load()?F("true"):F("false");
   value+=F(",\"active\":");value+=active_.load()?F("true"):F("false");
   value+=F(",\"on_change_only\":true");
+  value+=F(",\"timing_profile\":\"ws2811-800khz\",\"requested_t0h_ns\":250,\"requested_t1h_ns\":600,\"requested_bit_ns\":1250,\"latch_us\":300");
+  value+=F(",\"refill_cache_safe\":");value+=refillCacheSafe_?F("true"):F("false");
+  value+=F(",\"done_symbols\":");value+=doneSymbols_.load();
+  value+=F(",\"expected_symbols\":");value+=PAKAR_S3_LED_USE_DMA?11521U:0U;
   value+=F(",\"submitted\":");value+=submitted_.load();
   value+=F(",\"channel_order\":\"");value+=PAKAR_S3_LED_SWAP_RED_BLUE?F("bgr"):F("rgb");value+='"';
   value+=F(",\"transmitted\":");value+=transmitted_.load();value+=F(",\"failed\":");value+=failed_.load();

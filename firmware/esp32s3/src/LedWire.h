@@ -8,14 +8,15 @@ namespace PakarS3 {
 #endif
 static_assert(PAKAR_S3_LED_SWAP_RED_BLUE==0 || PAKAR_S3_LED_SWAP_RED_BLUE==1,"LED channel swap must be boolean");
 // API/effect buffers remain logical RGB; this board's wire order swaps R/B.
-// The explicit RMT recovery profile gives zero/one highs 100ns more margin
-// than FastLED's250/600ns legacy800 baseline, keeping the same1250ns period.
+// Classic WS2811 high-speed timing is half its500/1200ns low-speed highs:
+// 250/600ns,1250ns period. Longer 'margin' pulses can be decoded as wrong bits.
 // Static GPIO retains its existing240MHz cycle profile, NOT a hidden change
 // to its unmeasured store/loop overhead. No per-frame temporal dithering.
 inline uint8_t wireChannel(uint8_t value,uint8_t brightness,uint8_t correction) {
   return static_cast<uint8_t>((uint32_t(value)*brightness*correction+32512U)/65025U);
 }
-inline constexpr uint16_t zeroHigh=14,zeroLow=36,oneHigh=28,oneLow=22;
+inline constexpr uint16_t zeroHigh=10,zeroLow=40,oneHigh=24,oneLow=26;
+static_assert(zeroHigh+zeroLow==50 && oneHigh+oneLow==50,"WS2811 bit must be1250ns at40MHz");
 inline constexpr uint16_t resetHalf=6000; //300us low total, including latch.
 inline constexpr uint16_t resetMicros=300;
 inline constexpr uint16_t staticBitCycles=300,staticZeroHighCycles=60,staticOneHighCycles=144;

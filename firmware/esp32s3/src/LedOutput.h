@@ -37,6 +37,7 @@ class LedOutput {
   struct Frame {CRGB rgb[pixels];uint32_t revision;uint8_t brightness;bool enabled;};
   static void run(void *context){static_cast<LedOutput*>(context)->work();}
   void work();
+  static bool onDone(rmt_channel_handle_t,const rmt_tx_done_event_data_t *,void *);
   QueueHandle_t queue_=nullptr;
   StaticQueue_t queueState_{};
   alignas(4) uint8_t queueBytes_[sizeof(Frame)]{};
@@ -45,6 +46,8 @@ class LedOutput {
   std::atomic<bool> ready_{false},active_{false};
   std::atomic<uint32_t> submitted_{0},transmitted_{0},failed_{0},revision_{0};
   std::atomic<int> error_{0};
+  std::atomic<uint32_t> doneSymbols_{0};
+  std::atomic<bool> refillCacheSafe_{false};
   static std::mutex wireGate_;
   static std::atomic<uint32_t> flashHolds_;
   static std::atomic<bool> inFlight_;

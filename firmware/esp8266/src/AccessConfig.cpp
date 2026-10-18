@@ -18,6 +18,7 @@ uint32_t AccessConfig::checksum(const Record &record) {
   return digest(&record, offsetof(Record, checksum));
 }
 bool AccessConfig::begin(fs::FS &filesystem, bool mounted) {
+  ++securityRevision_; // Reload/readiness loss retires old shell authority too.
   if (!mounted) { ready_ = false; filesystem_ = nullptr; error_ = F("Access filesystem is unavailable; physical recovery is required"); return false; }
   filesystem_ = &filesystem;
   record_ = Record{}; record_.magic = 0x504b4155UL;
@@ -107,5 +108,5 @@ bool AccessConfig::save(const Record &next) {
   if (!written || !valid || !filesystem_->rename(kPending, kPath)) {
     error_ = F("Cannot commit access settings; previous credentials remain active"); return false;
   }
-  record_ = next; ready_ = true; error_ = String(); return true;
+  record_ = next; ready_ = true; ++securityRevision_; error_ = String(); return true;
 }

@@ -87,7 +87,7 @@ class LedGrid {
   void showStaged(); // Loop renderer only; external commits must validate ownership.
   static CRGB colorFor(BoardCore::Protocol::CellState state);
   void renderCell(uint8_t index);
-  void renderPattern();
+  void renderPattern(uint32_t now);
   void stopPattern(const char *reason = "stop-pattern");
   void changePattern(Pattern pattern, const char *reason);
   void renderChaseStep(uint8_t physical);
@@ -113,6 +113,8 @@ class LedGrid {
   uint8_t brightness_ = 255;
   uint32_t lastFrameAt_ = 0;
   uint8_t hue_ = 0;
+  uint8_t rainbowBaseHue_ = 0;
+  uint32_t rainbowStartedAt_ = 0;
   Pattern pattern_ = kPatternNone;
   uint8_t chaseStep_ = 0, chaseCell_ = 0;
   bool chaseFirstFrame_ = false;

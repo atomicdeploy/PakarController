@@ -14,6 +14,103 @@ same AVR UART/ISP signals at once.
 
 ## Delivered Wi-Fi-first checkpoint
 
+### Internet recovery and terminal work in progress
+
+The subsequent user-reported DMA/RMT glitches take priority over applying job19.
+Do not apply that old recovery image just to prove a reboot. Fresh LAN and
+Internet observations agree on80 semantic white cells and480 publishedffffff
+pixels, with ready/active RMT-DMA and failed0/error0. Physical glitches despite
+that stable published buffer are not an app-side optimistic-state success.
+The internal heap minimum84bytes is a separate serious headroom gate.
+
+The new candidate corrects d46's ad-hoc350/700ns highs to classic WS2811
+high-speed250/600ns (40MHz ticks10/24, full bit50ticks). The Worldsemi datasheet
+halves its low-speed500/1200ns highs in high-speed mode; making these pulses
+longer is not a safe timing margin. The1250ns bit/300us low latch, channel order,
+full480-pixel immutable mailbox and static backend remain. Requested values
+are reported explicitly, not presented as measured GPIO timings.
+
+The SDK DMA buffer is already at its2046-symbol maximum: two4092-byte
+descriptors still require refills for11520 data symbols. Increasing it past
+that limit is not a valid fix. Installed3.3.12/IDF5.5.5 has the normal refill
+graph in IRAM/internal objects but omits the channel's cache-safe allocation
+flag. `LedDmaGuard` wraps only this task's single TX allocation, requests that
+flag and requires witnessed admission plus SDK callback validation. Unrelated
+DMA callers are unchanged; unsupported prerequisites fail closed. Partition
+flash guards remain and the shared RMT completion IRQ is not globally changed.
+This is not a refill-free driver or a proof that arbitrary critical sections
+cannot starve it. SDK files and dependencies remain unmodified.
+
+The driver now checks11521 SDK-accounted symbols including EOF after completion;
+missing/short accounting stops without reusing an uncertain buffer. These are
+SDK accounting values, not waveform readback. Ten actual-worker host cases
+(RGB/BGR, static/DMA, immutable buffers, black Off, holds, timeout/failed stop and
+short completion) pass, as do supported/unsupported GNU-linked guard fixtures.
+The existing renderer pipeline passes, including elapsed-time rainbow cadence,
+no imposed FPS cap, clock rollover, unchanged static selection and atomic batches.
+Real S3 compilation, corrected-image deployment and optical/RF/cache-coexistence
+acceptance must be recorded separately; job19 stays Ready, unapplied.
+
+Independent office-host TLS MQTT observations received fresh, nonretained status
+and telemetry from ledboard and a correlated read-only firmware-status reply.
+The station uses its router, not ASUS as its gateway. Its Internet download of
+the immutable recovery manifest completed: job19 Ready,2046320 ESP bytes with
+SHA256`d46b74b74d3471215fff3ac85cc4777287a7f9718f42cfd504804e195628f88f`;
+manifest SHA256`b68a7ad22aa19dd2f8fa654d72342c523fede2109be93e7bd63487efade79ab5`.
+The image/manifest are published under the image SHA at
+`https://office.digitalogic.ir/pakarcontroller/firmware/esp32s3/`.
+No AVR image, credential, automatic retry or apply request was published.
+
+The apply preflight deliberately stopped: a fresh status showed output enabled
+and a pixel-diagnostic trace, different from the earlier disabled/all-Off scene.
+Preserve that scene and the Ready job until the user approves reboot. Internet
+download is not update completion, continued access after reboot, external-power
+survival after USB removal, or physical all-dark acceptance. Do not yet declare
+the laptop safe to disconnect. Disconnecting ASUS also removes its native UI and
+SSH/LAN proxy; the broker path is independent. Never expose auth-disabled HTTP
+or Telnet directly to the Internet.
+
+The terminal candidate adapts actual PU850 Shell/Telnet/Commands descriptors,
+session routing and IAC/NVT editor, with RayanLamp form-owned keys and terminal
+sanitization. The exact donor/target/test hashes are in the existing file ledger.
+Default: two independent LAN sessions, TCP23, colored hostname prompt, eight
+editable nonsecret history entries per session, separate watch state and a
+device/network/LED/pixel TUI. Property edits use the same validated configuration
+owners; LED actions use the existing common command router. `get led.backend`,
+`get led.rmt` and `get led.dma` distinguish output mode from the actual driver.
+The TUI cell list is explicitly logical, not a claim to reproduce physical table
+geometry. Entering a page never actuates a pixel. ESP terminal text is bounded
+ASCII; host/mobile Persian typography is not certified by this renderer.
+
+The USB terminal is COBS-encapsulated on the existing binary port, not a raw
+Ctrl-C escape that would interrupt recovery. `tools/device-shell.ps1 -Port COM22`
+opens an interactive terminal; `-Execute 'get hostname'` is a bounded query and
+`-Tui` opens the TUI. These commands require the new boot-fenced shell firmware;
+do not use a port concurrently owned by the native app. A physical USB session
+still obeys configured authentication. Current device auth remains disabled.
+Input packets cannot be replayed as commands and output remains pending until
+explicitly acknowledged; reopen before input/output sequence reuse.
+
+Configuration: GET `/api/shell`; POST form fields `enabled`, `port`, `color`;
+or `set shell.port 2323`, `set shell.enabled false`, `set shell.color true`.
+The listener applies after the response, closing existing shells. JSON command
+surfaces use `shell-config` and `configure-shell` with a `settings` object.
+Only a successfully bound listener advertises its actual DNS-SD Telnet port.
+Build controls: `-ShellSessions 1..4`, `-DisableTelnet`, `-DisableSerialShell`
+on the S3 application-only profile; no SDK-wide flag/cache rebuild is needed.
+The source candidate is not yet a delivered/physically accepted shell. Real
+multi-client terminals, USB framing and LED/network coexistence remain gates.
+
+Two applicable project-owned workarounds were submitted upstream rather than
+silently modifying the installed SDK: ESP32Async/ESPAsyncWebServer PR497
+(`4e0f94ae35e7f8541367534800cce89798173aca`) for TCP response backpressure,
+and espressif/arduino-esp32 PR12999
+(`2f2359a4cd1cc7a212650b3eec6d31da2aafcf83`) for DNS cache TCP/IP-task context
+and retry-safe failure. Extracted actual-method host fixtures passed; this is
+not upstream maintainer or SDK/hardware acceptance. Installed dependency pins
+and files are unchanged. Espressif requires the user's own CLA signature;
+no agent has signed on the user's behalf.
+
 ### Current all-off signal recovery
 
 The user reported that Rust showed C001 OFF fade but the matrix did not clear.

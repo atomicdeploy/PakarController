@@ -1,6 +1,16 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <utility>
+#include <memory>
+#include <new>
+#if defined(ARDUINO_ARCH_ESP32)
+#include <sys/socket.h>
+#include <errno.h>
+#endif
+#include "src/ShellSettings.h"
+#include "src/ShellBuild.h"
+#include "src/ShellWire.h"
+#include "src/ShellTui.h"
 #include <CommandReceipts.h>
 #if defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
@@ -158,7 +168,7 @@ AsyncWebSocket webSocket("/ws");
 WebAccess webAccess;
 WiFiUDP stream;
 WiFiServer telnetServer(23);
-WiFiClient telnetClient;
+ShellSettings shellSettings;
 #if defined(ARDUINO_ARCH_ESP32)
 PakarS3::AvrUart avrUart;
 BoardCore::SerialLink &link = avrUart.frames();
@@ -290,7 +300,6 @@ uint8_t snakeFood = 0;
 uint8_t snakeDirection = 1;
 uint32_t lastSnakeAt = 0;
 bool snakeAlive = false;
-bool telnetAuthenticated = false;
 std::atomic<bool> otaActive{false};
 BoardCore::Attention::Upload uploadAttention;
 BoardCore::Attention::Remote remoteAttention;
@@ -315,9 +324,6 @@ String pendingDisplayCloud;
 uint32_t displayCloudCoalesced=0,lastDisplayCloudAt=0;
 const char *localUpgradeSound="none";
 uint32_t otaExpectedBytes = 0;
-PakarShell::TelnetParser telnetParser;
-PakarShell::LineEditor telnetEditor;
-uint32_t telnetLastInputAt = 0;
 CellMappingRecord cellMapping{};
 
 void saveLedPreferences();
@@ -333,6 +339,14 @@ bool saveCellMapping();
 String buildStatusJson();
 String panelStatusJson();
 void serviceSemanticPanel(uint32_t now);
+void closeDeviceShells();
+void beginDeviceShells();
+void serviceDeviceShells();
+unsigned shellConnectionCount();
+uint16_t shellAdvertisedPort();
+String shellStatusJson();
+bool handleShellFrame(const BoardCore::Protocol::Frame &frame);
+bool updateShellConfiguration(JsonObjectConst patch,String &result);
 void observePanelAction(uint8_t kind,uint16_t value,uint8_t detail);
 #if defined(ARDUINO_ARCH_ESP32)
 String bleStatusJson();
@@ -366,7 +380,6 @@ bool strictU32(const String&,uint32_t&);
 void startSnake();
 bool setSnakeDirection(uint8_t direction);
 void serviceSnake(uint32_t now);
-void serviceTelnet();
 void serviceDiscovery();
 void registerAsyncOta();
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
@@ -520,10 +533,11 @@ void sendHostStatus(uint8_t requestSequence) {
 }
 
 void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
+  const bool shellPoll=frame.opcode==kShellRequest && frame.payloadLength==7 && frame.payload[0]==PakarShell::SerialChannel::Poll;
   // Cloud write progress may drain read-only USB requests, never re-enter a
   // mutation or programming operation while a cloud packet is being emitted.
   if(cloudServices.ioActive() && frame.opcode!=kGetStatus && frame.opcode!=kGetIdentity &&
-      frame.opcode!=kGetTableSnapshot && frame.opcode!=kHello && frame.opcode!=kPing) {
+      frame.opcode!=kGetTableSnapshot && frame.opcode!=kHello && frame.opcode!=kPing && !shellPoll) {
     hostLink.error(frame.sequence,frame.opcode,kBusy);return;
   }
   if (!contextAllows(frame.opcode, frame.payload, frame.payloadLength)) {
@@ -531,9 +545,10 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
     hostLink.send(kErrorResponse, frame.sequence, error, sizeof(error)); return;
   }
   static BoardCore::PcContractAssembly usbPcAssembly;
-  if ((urbootBusy.get() || remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner) && frame.opcode != kGetStatus && frame.opcode != kGetIdentity && frame.opcode != kGetTableSnapshot && frame.opcode != kHello && frame.opcode != kPing) {
-    hostLink.error(frame.sequence, frame.opcode, kBusy); return;
+  if ((urbootBusy.get() || remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner) && frame.opcode != kGetStatus && frame.opcode != kGetIdentity && frame.opcode != kGetTableSnapshot && frame.opcode != kHello && frame.opcode != kPing && !shellPoll) {
+      hostLink.error(frame.sequence, frame.opcode, kBusy); return;
   }
+  if(handleShellFrame(frame))return;
 #if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
   if (passiveAvrRx.snapshot().active && frame.opcode!=kAvrRxDiagnostic &&
       frame.opcode!=kGetStatus && frame.opcode!=kGetIdentity && frame.opcode!=kGetTableSnapshot && frame.opcode!=kHello && frame.opcode!=kPing) {
@@ -696,8 +711,7 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
         stagedAccessUser = String(); stagedAccessPassword = String();
         if (!ok) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
         webAccess.revokeAll(); webSocket.closeAll(1008, "Credentials changed");
-        if (telnetClient) telnetClient.stop();
-        telnetAuthenticated = false;
+        closeDeviceShells();
       } else { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
       hostLink.ack(frame.sequence, frame.opcode); break;
     }
@@ -709,7 +723,7 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
 #if !defined(ARDUINO_ARCH_ESP32) || PAKAR_S3_ISP_ELECTRICAL_VERIFIED
       capabilities |= kCapIsp;
 #endif
-      const uint8_t payload[] = {
+      uint8_t payload[25] = {
           0, kRoleEsp, // Reserved zero, not a protocol generation.
           static_cast<uint8_t>(capabilities),
           static_cast<uint8_t>(capabilities >> 8), LedGrid::kCells, 9,
@@ -717,6 +731,7 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
           BoardCore::BuildInfo::kVersionMinor,
           BoardCore::BuildInfo::kVersionPatch,
       };
+      for(uint8_t i=0;i<16&&pcBootId.length()==32;++i){char byte[3]={pcBootId[i*2],pcBootId[i*2+1],0};payload[9+i]=strtoul(byte,nullptr,16);}
       hostLink.send(kHelloResponse, frame.sequence, payload, sizeof(payload));
       break;
     }
@@ -1001,7 +1016,7 @@ void startDiscovery() {
 #if defined(ARDUINO_ARCH_ESP32)
   if (!NetworkPath::ready() && !apStarted) return;
   discoveryAddress = NetworkPath::ready() ? NetworkPath::localIP() : WiFi.softAPIP();
-  s3Discovery.begin(hostname.c_str(), deviceIdentity.displayName(), SystemPlatform::chipId(), kStreamPort);
+  s3Discovery.begin(hostname.c_str(), deviceIdentity.displayName(), SystemPlatform::chipId(), kStreamPort,shellAdvertisedPort());
   mdnsStarted = s3Discovery.mdnsReady();
   ssdpStarted = s3Discovery.ssdpReady();
   netbiosStarted = s3Discovery.netbiosReady();
@@ -1021,7 +1036,7 @@ void startDiscovery() {
     MDNS.addServiceTxt("pakarcontroller", "tcp", "api", "/api/status");
     MDNS.addServiceTxt("pakarcontroller", "tcp", "websocket", "/ws");
     MDNS.addService("pakar-stream", "udp", kStreamPort);
-    MDNS.addService("telnet", "tcp", 23);
+    if(shellAdvertisedPort())MDNS.addService("telnet", "tcp", shellAdvertisedPort());
   }
 
   SSDP.setSchemaURL("description.xml");
@@ -1082,8 +1097,7 @@ void applyNetworkConfig() {
     cloudServices.renameDevice(deviceIdentity.hostname());
     hostname = deviceIdentity.hostname();
     webSocket.closeAll(1012, "Device name changed");
-    if (telnetClient) telnetClient.stop();
-    telnetAuthenticated = false;
+    closeDeviceShells();
   }
   stopDiscovery();
   apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
@@ -1788,7 +1802,8 @@ String buildStatusJson() {
   body += F(",\"websocket_clients\":");
   body += webSocket.count();
   body += F(",\"telnet_connected\":");
-  body += (telnetClient && telnetClient.connected()) ? F("true") : F("false");
+  body += shellConnectionCount() ? F("true") : F("false");
+  body += F(",\"shell\":");body += shellStatusJson();
   body += F(",\"mqtt_enabled\":");
   body += cloudConfig.mqttEnabled() ? F("true") : F("false");
   body += F(",\"mqtt_connected\":");
@@ -1932,7 +1947,7 @@ String commandReply(const String &message) {
     const String command=PakarCommand::stringValue(object,"command");
     reply["request_id"]=id;
     const bool supported=command=="cells"||command=="cell"||command=="effect"||
-        command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic"||command=="panel-notice";
+        command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic"||command=="panel-notice"||command=="shell-config"||command=="configure-shell";
     if(PakarCommand::stringValue(object,"board_id")!=pcBoardId ||
        PakarCommand::stringValue(object,"boot_id")!=pcBootId || !webAccess.peerFenceReady()) {
       reply["error"]="peer_changed";
@@ -2219,6 +2234,8 @@ bool handleCloudCommand(const String &message, String &result) {
   }
   const JsonObjectConst commandRequest=commandDocument.as<JsonObjectConst>();
   const String command=PakarCommand::stringValue(commandRequest,"command");
+  if(command=="shell-config"){result=shellStatusJson();return true;}
+  if(command=="configure-shell")return updateShellConfiguration(commandRequest["settings"].as<JsonObjectConst>(),result);
   if (command=="cloud-config" || command=="network-config" || command=="ethernet-config" ||
       command=="configure-cloud" || command=="configure-network" || command=="configure-ethernet" || command=="device-identity") {
     JsonDocument request;
@@ -3530,202 +3547,6 @@ void serviceStream() {
       (1ULL<<62)|(uint64_t(static_cast<uint32_t>(stream.remoteIP()))<<16)|stream.remotePort());
 }
 
-void telnetPrompt() {
-  if (telnetClient && telnetClient.connected()) telnetClient.print(F("pakar> "));
-}
-
-void executeTelnetCommand(String line) {
-  line.trim();
-  if (line.length() == 0) {
-    telnetPrompt();
-    return;
-  }
-  if (line == F("quit") || line == F("exit")) {
-    telnetClient.println(F("Goodbye."));
-    telnetClient.stop();
-    return;
-  }
-  if (line == F("help") || line == F("?")) {
-    telnetClient.println(F("info | telemetry | firmware status | firmware fetch HTTPS_URL SHA256 [all|esp|avr] | firmware apply JOB BOOT SHA256 | firmware cancel JOB BOOT"));
-    telnetClient.println(
-        F("help | status | led-output <on|off|static|effects> | mode <advertised-mode> | "
-          "cell <1..80> <white|red|off> [immediate|fade|pulse]"));
-    telnetClient.println(F("cells <ids-or-ranges> <white|red|off> [immediate|fade|pulse] (one atomic board update)"));
-    telnetClient.println(
-        F("brightness <1..255> | effect <none|rainbow|fire|cell-chase> | "
-          "display <-999..9999> | display stop | audio <cue> | reset | quit"));
-    telnetClient.println(F("display text <once|loop|interval> <speed_ms> <hold_ms> <pause_seconds> <scroll 0|1> <TEXT>"));
-    telnetClient.println(F("device identity | device rename <HOST[.local]> | device label <DISPLAY NAME>"));
-    telnetPrompt();
-    return;
-  }
-  if (line == F("status")) {
-    telnetClient.println(buildStatusJson());
-    telnetPrompt();
-    return;
-  }
-  if(line=="led-output on" || line=="led-output off" || line=="led-output static" || line=="led-output effects"){
-    if(remoteFirmware.busy()||otaActive||programmingLatched)telnetClient.println(F("ERR device busy"));
-    else{
-      if(line=="led-output static"||line=="led-output effects")grid.setStaticMode(line=="led-output static");
-      else grid.setOutputEnabled(line=="led-output on");
-      telnetClient.println(grid.outputJson());}
-    telnetPrompt();return;
-  }
-  if (line == F("device name") || line == F("device identity")) { telnetClient.println(deviceNameJson()); telnetPrompt(); return; }
-  if (line.startsWith(F("device label "))) {
-    if (networkApplyPending || programmingLatched || remoteFirmware.busy()) telnetClient.println(F("ERR device busy"));
-    else if (scheduleDeviceIdentity(deviceIdentity.hostname(), line.substring(13))) telnetClient.println(deviceNameJson(true));
-    else telnetClient.println(deviceIdentity.error());
-    telnetPrompt(); return;
-  }
-  if(line=="info" || line=="telemetry" || line.startsWith("firmware ")) {
-    String result;handleMaintenanceShell(line,result);telnetClient.println(result);telnetPrompt();return;
-  }
-  if(remoteFirmware.busy()) {telnetClient.println(F("ERR remote firmware owns maintenance"));telnetPrompt();return;}
-  if (line.startsWith(F("device rename "))) {
-    if (networkApplyPending || programmingLatched) telnetClient.println(F("ERR device busy"));
-    else if (scheduleDeviceRename(line.substring(14))) telnetClient.println(deviceNameJson(true));
-    else telnetClient.println(deviceIdentity.error());
-    telnetPrompt(); return;
-  }
-  if (line == F("display stop")) {
-    const uint8_t payload[] = {4, 0, 0, 0};
-    sendToAvr(kDisplayText, sequence++, payload, sizeof(payload));
-    telnetClient.println(F("OK display released"));
-    telnetPrompt();
-    return;
-  }
-  if (line.startsWith(F("display text "))) {
-    String remainder = line.substring(13);
-    String values[5];
-    bool complete = true;
-    for (uint8_t i = 0; i < 5; ++i) {
-      const int space = remainder.indexOf(' ');
-      if (space < 0) { complete = false; break; }
-      values[i] = remainder.substring(0, space);
-      remainder = remainder.substring(space + 1);
-    }
-    String result;
-    bool numeric = true;
-    for (uint8_t i = 1; i < 5; ++i) {
-      if (values[i].length() == 0) numeric = false;
-      for (size_t j = 0; j < values[i].length(); ++j)
-        if (values[i][j] < '0' || values[i][j] > '9') numeric = false;
-    }
-    const bool ok = complete && numeric && (values[4] == F("0") || values[4] == F("1")) &&
-        submitDisplayText(remainder, values[1].toInt(), values[2].toInt(), values[0],
-                          values[4] == F("1"), values[3].toInt(), result);
-    telnetClient.print(ok ? F("OK ") : F("ERR "));
-    telnetClient.println(result.isEmpty() ? F("invalid display text arguments; use help") : result);
-    telnetPrompt();
-    return;
-  }
-
-  const int firstSpace = line.indexOf(' ');
-  const String command = firstSpace < 0 ? line : line.substring(0, firstSpace);
-  String arguments = firstSpace < 0 ? String() : line.substring(firstSpace + 1);
-  arguments.trim();
-  String json;
-  if (command == F("mode") || command == F("effect")) {
-    json = String(F("{\"command\":\"")) + command +
-           F("\",\"value\":\"") + arguments + F("\"}");
-  } else if(command==F("audio")) {
-    JsonDocument document;document["command"]="audio";document["cue"]=arguments;
-    serializeJson(document,json);
-  } else if(command==F("cells")) {
-    const int a=arguments.indexOf(' '),b=a<0?-1:arguments.indexOf(' ',a+1);
-    JsonDocument document;document["command"]="cells";
-    document["ids"]=a<0?String():arguments.substring(0,a);
-    document["state"]=a<0?String():(b<0?arguments.substring(a+1):arguments.substring(a+1,b));
-    document["effect"]=b<0?String(F("immediate")):arguments.substring(b+1);
-    serializeJson(document,json); // Shared strict cloud validator; never concatenate unescaped IDs.
-  } else if (command == F("brightness") || command == F("display")) {
-    json = String(F("{\"command\":\"")) + command +
-           F("\",\"value\":") + arguments + F("}");
-  } else if (command == F("reset")) {
-    json = F("{\"command\":\"reset\"}");
-  } else if (command == F("cell")) {
-    const int a = arguments.indexOf(' ');
-    const int b = a < 0 ? -1 : arguments.indexOf(' ', a + 1);
-    const String id = a < 0 ? String() : arguments.substring(0, a);
-    const String state = a < 0 ? String()
-                                      : (b < 0 ? arguments.substring(a + 1)
-                                               : arguments.substring(a + 1, b));
-    const String effect = b < 0 ? F("immediate") : arguments.substring(b + 1);
-    json = String(F("{\"command\":\"cell\",\"id\":")) + id +
-           F(",\"state\":\"") + state + F("\",\"effect\":\"") +
-           effect + F("\"}");
-  } else {
-    telnetClient.println(F("ERR unknown command; use help"));
-    telnetPrompt();
-    return;
-  }
-
-  String result;
-  const bool ok = handleCloudCommand(json, result);
-  telnetClient.print(ok ? F("OK ") : F("ERR "));
-  telnetClient.println(result);
-  telnetPrompt();
-}
-
-void serviceTelnet() {
-  auto write = [](const uint8_t* bytes, size_t length) { telnetClient.write(bytes, length); };
-  if (telnetServer.hasClient()) {
-    WiFiClient candidate = telnetServer.accept();
-    if (telnetClient && telnetClient.connected()) {
-      candidate.println(F("PakarController shell already has a client."));
-      candidate.stop();
-    } else {
-      telnetClient = candidate;
-      telnetClient.setNoDelay(true);
-      telnetAuthenticated = accessConfig.ready() && !accessConfig.enabled();
-      telnetEditor.reset();
-      telnetParser.greet(write);
-      telnetLastInputAt = millis();
-      telnetClient.println(F("PakarController shell"));
-      if (telnetAuthenticated) { telnetEditor.setEcho(true); telnetPrompt(); }
-      else telnetClient.print(F("Password: "));
-    }
-  }
-  if (!telnetClient || !telnetClient.connected()) { telnetEditor.reset(); telnetParser.reset(); return; }
-  const uint32_t idleLimit = telnetAuthenticated ? 1800000UL : 60000UL;
-  if (static_cast<uint32_t>(millis() - telnetLastInputAt) >= idleLimit) {
-    telnetClient.println(F("Session expired.")); telnetClient.stop(); telnetEditor.reset(); return;
-  }
-  uint8_t budget = 96;
-  while (budget-- != 0 && telnetClient.available() != 0) {
-    telnetLastInputAt = millis();
-    telnetParser.feed(static_cast<uint8_t>(telnetClient.read()), write, [&](uint8_t ch) {
-      const auto event = telnetEditor.feed(ch, write);
-      if (event == PakarShell::LineEditor::None) return;
-      if (event == PakarShell::LineEditor::Cancel || event == PakarShell::LineEditor::TooLong) {
-        if (event == PakarShell::LineEditor::TooLong) telnetClient.println(F("ERR line too long; discarded"));
-        telnetEditor.clear();
-        if (telnetAuthenticated) telnetPrompt(); else telnetClient.print(F("Password: "));
-        return;
-      }
-      if (!telnetAuthenticated) {
-        const bool valid = accessConfig.ready() && BoardCore::Access::equal(telnetEditor.line(), accessConfig.password());
-        telnetEditor.clear();
-        if (valid) {
-          telnetAuthenticated = true;
-          telnetEditor.setEcho(true);
-          telnetClient.println(F("Authenticated. Type help for commands."));
-          telnetPrompt();
-        } else {
-          telnetClient.println(F("Authentication failed."));
-          telnetClient.stop();
-        }
-        return;
-      }
-      const String line(telnetEditor.line());
-      telnetEditor.clear();
-      executeTelnetCommand(line);
-    });
-    if (!telnetClient.connected()) { telnetEditor.reset(); break; }
-  }
-}
 
 void serviceConsole() {
   while (Serial.available() != 0) {
@@ -3838,6 +3659,8 @@ void serviceConsole() {
 }
 
 #include "src/MaintenanceRoutes.h"
+#include "src/ShellService.h"
+#include "src/ShellTuiBinding.h"
 #include "src/UrbootRoutes.h"
 uint32_t runningImageSize() { return bootTelemetryImage.size; }
 String runningImageMd5() { return bootTelemetryImage.md5; }
@@ -3953,12 +3776,12 @@ void setup() {
   cloudServices.begin(hostname, handleCloudCommand, buildStatusJson,buildTelemetryJson,pcBoardId,pcBootId);
   cloudServices.setProgressService([](){hostLink.service();});
   stream.begin(kStreamPort);
-  telnetServer.begin();
-  telnetServer.setNoDelay(true);
+  beginDeviceShells();
 
   registerApi();
   registerLcdApi();
   registerMaintenanceRoutes();
+  registerShellApi();
   registerUrbootRoutes();
   registerArtifactDownload();
 #if defined(ARDUINO_ARCH_ESP32)
@@ -3968,8 +3791,7 @@ void setup() {
 #endif
   webAccess.registerRoutes(server.native(), []() {
     webSocket.closeAll(1008, "Sign in again");
-    if (telnetClient) telnetClient.stop();
-    telnetAuthenticated = false;
+    closeDeviceShells();
   }, []() { return urbootBusy.get() || remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched; });
   webSocket.onEvent(onWebSocketEvent);
   server.native().addHandler(&webSocket);
@@ -4048,7 +3870,7 @@ void loop() {
   webAccess.expireSockets(webSocket);
   serviceAttentionCues();
   if (otaRebootAt && static_cast<int32_t>(millis() - otaRebootAt) >= 0 && upgradeRebootReady()) ESP.restart();
-  if (!otaActive && !otaRebootAt && !uploadFile) serviceTelnet();
+  if (!uploadFile) serviceDeviceShells();
   if (!remoteFirmware.busy() && !otaActive && !otaRebootAt && networkApplyPending &&
       static_cast<int32_t>(millis() - networkApplyAt) >= 0) {
     networkApplyPending = false;

@@ -7,6 +7,7 @@
 int main(){
   using namespace PakarS3;
   assert(zeroHigh+zeroLow==50 && oneHigh+oneLow==50 && resetHalf*2==12000);
+  assert(zeroHigh==10 && zeroLow==40 && oneHigh==24 && oneLow==26); // WS2811 high-speed, not WS2812/ad-hoc longer highs.
   assert(wireChannel(255,255,255)==255 && wireChannel(255,255,176)==176);
   assert(wireChannel(255,0,255)==0 && wireChannel(255,128,255)==128);
   struct Rgb{uint8_t r,g,b;};struct Symbol{uint16_t level0,duration0,level1,duration1;};

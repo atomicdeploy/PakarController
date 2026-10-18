@@ -2,9 +2,9 @@
 
 Whole-repository superiority is **not established**. This report exposes retained code, scoped improvements, omissions and gaps; it does not turn missing reviews into exclusions.
 
-Routing: 1570 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
+Routing: 1569 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
 
-Inventory: 4673 files; 232 complete source-file comparisons; 4441 pending comparisons; 190 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
+Inventory: 4673 files; 236 complete source-file comparisons; 4437 pending comparisons; 194 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
 Every inventoried path, source revision/hash, target/proof file and line, omitted code, disposition and concrete reason is in `file-comparison.csv`. Hash-bound manual decisions are in `file-comparison-evidence.json`. Donor SHA-256 values bind original bytes; target/proof SHA-256 values bind UTF-8 without BOM with LF newlines. Anchors are recomputed into exact line numbers. Test-code presence is not test execution; execution receipts are in `FILE-COMPARISON-RECEIPTS.md`.
 
@@ -16,9 +16,9 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 | ControllerBoardMini/Puzzles | 18 | 12 | 6 | 7 |
 | PCController | 1517 | 92 | 1425 | 81 |
 | Pealayer | 639 | 52 | 587 | 40 |
-| PU850-ESP | 109 | 47 | 62 | 45 |
+| PU850-ESP | 109 | 49 | 60 | 47 |
 | PuzzleBoard | 22 | 0 | 22 | 0 |
-| RayanLamp | 2349 | 27 | 2322 | 17 |
+| RayanLamp | 2349 | 29 | 2320 | 19 |
 
 ## Exact reviewed-file mappings and omission decisions
 
@@ -185,8 +185,8 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `0f7fec7879abd26dbf2d56df28441727ea76fcb9e093f009d39f20cae77832bb`.
 
-- Target: `firmware/esp8266/src/LedGrid.cpp:26 [UTF8-LF sha256=9d7a762b1c1c2937a26450e14e75935e438f83710ae9fe18355cf190c410421a; anchor=FastLED.addLeds<WS2811]`.
-- Target: `firmware/esp8266/src/LedGrid.h:113 [UTF8-LF sha256=6e9c86561ffeafc775604ea17d67073ec463dd6cc8f601095a8b4e88733eaabf; anchor=uint8_t brightness_ = 255]`.
+- Target: `firmware/esp8266/src/LedGrid.cpp:26 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=FastLED.addLeds<WS2811]`.
+- Target: `firmware/esp8266/src/LedGrid.h:113 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=uint8_t brightness_ = 255]`.
 - Retained: Actual FastLED WS2811 setup and TypicalLEDStrip correction concept; full 255 brightness; ESP owns the final strip engine.
 - Omitted/replaced code: `AVR D6 / 11-pixel final effect buffer`. Disposition: **replaced**. Reason: Final effects remain in the shared ESP engine: ESP8266 D2 or migrated ESP32-S3 GPIO4, with 80 groups of six LEDs. A duplicate 480-pixel AVR buffer would consume 1440 bytes before protocol/game state on a 2 KiB AVR; streaming it over UART would also consume bandwidth. D6 remains a diagnostic pin, not a second full engine.
 - Omitted/replaced code: `COLOR_ORDER BRG`. Disposition: **pending**. Reason: S3 now defaults to BGR wire order per the explicit red/blue-swap request, with a build flag for RGB; actual encoder/worker fixtures cover both. Logical API colors remain RGB. Donor BRG is not assumed equivalent; other configurable orders and independent physical R/G/B tests remain pending.
@@ -197,17 +197,17 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `395096029df7c507782f40c5b32c8b1dffbf2db392cb26cd2b02c824d6a36949`.
 
-- Target: `firmware/esp8266/src/LedGrid.cpp:26 [UTF8-LF sha256=9d7a762b1c1c2937a26450e14e75935e438f83710ae9fe18355cf190c410421a; anchor=FastLED.addLeds<WS2811]`.
-- Target: `firmware/esp8266/src/LedGrid.h:113 [UTF8-LF sha256=6e9c86561ffeafc775604ea17d67073ec463dd6cc8f601095a8b4e88733eaabf; anchor=uint8_t brightness_ = 255]`.
-- Target: `firmware/esp32s3/src/LedOutput.cpp:131 [UTF8-LF sha256=a7c73c4a15d3876204d9902011e93d02b5507357d5684c1e48d12acb687236a9; anchor=config.flags.with_dma=true]`.
-- Target: `firmware/esp32s3/src/LedWire.h:34 [UTF8-LF sha256=767a834768348560dab7d9a08fd026803419c480079e4fe54c6aac683364b46b; anchor=void encodeWire(]`.
+- Target: `firmware/esp8266/src/LedGrid.cpp:26 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=FastLED.addLeds<WS2811]`.
+- Target: `firmware/esp8266/src/LedGrid.h:113 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=uint8_t brightness_ = 255]`.
+- Target: `firmware/esp32s3/src/LedOutput.cpp:136 [UTF8-LF sha256=b4e3a0a4ebe9285da6abfb98e097170aab93282d7edbad1f8c07bceaca1b9297; anchor=config.flags.with_dma=true]`.
+- Target: `firmware/esp32s3/src/LedWire.h:35 [UTF8-LF sha256=4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513; anchor=void encodeWire(]`.
 - Target: `firmware/esp8266/src/LoopMessages.h:16 [UTF8-LF sha256=02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0; anchor=class LoopMessages]`.
 - Retained: Actual FastLED WS2811 setup and TypicalLEDStrip correction concept; full 255 brightness; ESP owns the final strip engine.
 - Omitted/replaced code: `AVR D6 / 11-pixel final effect buffer`. Disposition: **replaced**. Reason: Final effects remain in the shared ESP engine: ESP8266 D2 or migrated ESP32-S3 GPIO4, with 80 groups of six LEDs. A duplicate 480-pixel AVR buffer would consume 1440 bytes before protocol/game state on a 2 KiB AVR; streaming it over UART would also consume bandwidth. D6 remains a diagnostic pin, not a second full engine.
 - Omitted/replaced code: `COLOR_ORDER BRG`. Disposition: **pending**. Reason: S3 now defaults to BGR wire order per the explicit red/blue-swap request, with a build flag for RGB; actual encoder/worker fixtures cover both. Logical API colors remain RGB. Donor BRG is not assumed equivalent; other configurable orders and independent physical R/G/B tests remain pending.
 - Omitted/replaced code: `Black initialization and second post-show loop clearing leds[]`. Disposition: **replaced**. Reason: Pakar initializes logical cells white to match the explicitly requested table mode, instead of the donor eleven-LED black scene. No claim of generic performance superiority is made for removing this loop.
-- Test-code evidence: `tests/led_worker_test.cpp:1 [UTF8-LF sha256=e27f0993c50d0c49fd1d8b2da6121b3445f8ba507b0a5f9d2a322934ad7384db; anchor=Compile the ACTUAL S3 output worker]`.
-- Test-code evidence: `tests/led_scheduler_test.cpp:7 [UTF8-LF sha256=b0d695eb6ce287be4944d42c81d719f170283f66ae7d448594d592835f2a4a04; anchor=int main()]`.
+- Test-code evidence: `tests/led_worker_test.cpp:1 [UTF8-LF sha256=aff158c2dad22ecee983edacf12b97c2e215954b40550b1db52f34fe5b5d6c25; anchor=Compile the ACTUAL S3 output worker]`.
+- Test-code evidence: `tests/led_scheduler_test.cpp:7 [UTF8-LF sha256=426daa3ad87f8aa094bf2a98562330418bdcc7a57001546bd1ded25e11fafcad; anchor=int main()]`.
 - Scoped advantage: Actual worker/mailbox tests establish source-level frame ownership and quiescence, not optical or SDK acceptance.
 - Remaining: Make chipset/channel order configurable and verify R/G/B plus all 480 pixels on hardware; expose current configuration across the control surfaces.
 
@@ -216,7 +216,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `20f907ac3426d5a9b40501ba2241a4308d0220204b8888576f1f995a3e401332`.
 
 - Target: `firmware/esp8266/src/UpdateProgress.h:33 [UTF8-LF sha256=cbf19051f9f71c1b5ff99cd024faa1a87e12a211bc6001a413cdfde6a84e8640; anchor=class Progress]`.
-- Target: `firmware/esp8266/esp8266.ino:2035 [UTF8-LF sha256=8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d; anchor=String localUpdateJson() {]`.
+- Target: `firmware/esp8266/esp8266.ino:2050 [UTF8-LF sha256=ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6; anchor=String localUpdateJson() {]`.
 - Target: `firmware/esp8266/src/RemoteFirmware.h:67 [UTF8-LF sha256=9c959a74a7d59909f38c48844e191a089cf1849663e78caa4a3fafcaff6b2251; anchor=PakarUpdate::Observation progress() const]`.
 - Target: `tools/update-firmware.mjs:198 [UTF8-LF sha256=3d57c9f57c6d76103f679cd70f410b8f5dd32db0915aa11dc5719b7bb5b2fe9b; anchor=export async function updateFirmware(]`.
 - Target: `tools/update-firmware.ps1:5 [UTF8-LF sha256=20700046643f11b914063d73c5b2232a4aac8e972f532f6ab53b14faf28b3fc0; anchor=[ValidateSet('auto','local','remote')]]`.
@@ -493,7 +493,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `7c4c3a679ede250bb44effc96ccaf8a33a49f15e3ec8a1e1f5dfca082d64c72f`.
 
 - Target: `mobile/lib/connection_preferences.dart:54 [UTF8-LF sha256=dc20e6ec07521d724c97b793b69d36613a9c0b6e980f0184105a41e844bc5318; anchor=class ConnectionPreferences]`.
-- Target: `mobile/lib/main.dart:546 [UTF8-LF sha256=902605e0fcc32943a5c3312d18585e91a827d9f8921114ffd5ab41d264fe66a4; anchor=_saveWorkspaces]`.
+- Target: `mobile/lib/main.dart:546 [UTF8-LF sha256=377a786491826bee8fee9a5b83f89da2769085772788b07d88302b549599410d; anchor=_saveWorkspaces]`.
 - Retained: Complete donor read: preserve secure password migration and last explicit connection profile; adapt nonsecret connection draft restoration and explicit Disconnect/transport intent without automatically selecting discovered paths. Pristine settings fields follow async profile loading, edited fields retain the draft.
 - Omitted/replaced code: `Mandatory/nonempty default password and restoring secret drafts`. Disposition: **replaced**. Reason: Current board authentication is optional. Existing secure credential ownership remains separate; workspace persistence excludes passwords/tokens and does not require credentials before the board does.
 - Test-code evidence: `mobile/test/workspace_lifecycle_test.dart:13 [UTF8-LF sha256=da99bd0f4eb2b7cac91106da4673cab150929a028dcc0001a675c51f8fb148a9; anchor=connection]`.
@@ -614,7 +614,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `fb4552dba17b3ec1bd999b6f43a05c2d85838fc490da4caec4d0b5316e5f9239`.
 
 - Target: `mobile/lib/pixel_diagnostic.dart:11 [UTF8-LF sha256=f5d5f5726ffa6b046d36adc5466d81b1a5570a16d0937aa79e99839e23182e6d; anchor=class PixelDiagnosticWorkspace]`.
-- Target: `mobile/lib/main.dart:546 [UTF8-LF sha256=902605e0fcc32943a5c3312d18585e91a827d9f8921114ffd5ab41d264fe66a4; anchor=_saveWorkspaces]`.
+- Target: `mobile/lib/main.dart:546 [UTF8-LF sha256=377a786491826bee8fee9a5b83f89da2769085772788b07d88302b549599410d; anchor=_saveWorkspaces]`.
 - Retained: Complete donor read: adapt bounded enum/preferences restore and separate phone mirroring options into the existing ordered snapshot writer. Preserve visual/volume/follow-mute preferences without restarting PCM sessions, tones or commands.
 - Omitted/replaced code: `Per-keystroke sequential preference writes and PC-only branding`. Disposition: **replaced**. Reason: Use one content-equal coalesced writer, preserving the requested low-write policy and Pakar identity.
 - Omitted/replaced code: `Complete donor appearance/launcher/theme options and workspace manager`. Disposition: **pending**. Reason: This task fixes lost state; unrelated useful preference surfaces require exact subsequent implementation/review, not an implicit parity claim.
@@ -678,15 +678,17 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `43417181b23cab40b8a58ec26159ca025fb41d5bdbaf52d20a46bfc926fee1b0`.
 
 - Target: `libraries/BoardCore/src/CellBatch.h:9 [UTF8-LF sha256=29e1f77c397a4c530c236aa6a05598983e556b7bfc963beea0f69233ad38c8af; anchor=struct CellBatch]`.
-- Target: `firmware/esp8266/src/LedGrid.cpp:54 [UTF8-LF sha256=9d7a762b1c1c2937a26450e14e75935e438f83710ae9fe18355cf190c410421a; anchor=bool LedGrid::setCells(]`.
-- Target: `firmware/esp8266/src/LedGrid.h:51 [UTF8-LF sha256=6e9c86561ffeafc775604ea17d67073ec463dd6cc8f601095a8b4e88733eaabf; anchor=bool setCells(]`.
+- Target: `firmware/esp8266/src/LedGrid.cpp:54 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=bool LedGrid::setCells(]`.
+- Target: `firmware/esp8266/src/LedGrid.h:51 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=bool setCells(]`.
 - Target: `libraries/BoardCore/src/TableCellMapping.h:8 [UTF8-LF sha256=8a4d0d13b7779d8a54c74bb95cafcd871814423ee42909bcd5ebbd6006213ba0; anchor=constexpr uint8_t logicalForPhysical]`.
-- Target: `firmware/esp32s3/src/LedOutput.cpp:103 [UTF8-LF sha256=a7c73c4a15d3876204d9902011e93d02b5507357d5684c1e48d12acb687236a9; anchor=bool pending=true;]`.
-- Target: `firmware/esp32s3/src/LedWire.h:18 [UTF8-LF sha256=767a834768348560dab7d9a08fd026803419c480079e4fe54c6aac683364b46b; anchor=inline constexpr uint16_t zeroHigh=14]`.
+- Target: `firmware/esp32s3/src/LedOutput.cpp:108 [UTF8-LF sha256=b4e3a0a4ebe9285da6abfb98e097170aab93282d7edbad1f8c07bceaca1b9297; anchor=bool pending=true;]`.
+- Target: `firmware/esp32s3/src/LedWire.h:18 [UTF8-LF sha256=4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513; anchor=inline constexpr uint16_t zeroHigh=10]`.
 - Target: `firmware/esp8266/src/LedRenderAdmission.h:7 [UTF8-LF sha256=a6dc69b69cba74db1fff54fd75b8940bf88958404f6c3ac971b27797d5b13c50; anchor=inline bool uartWindowReady(]`.
-- Target: `firmware/esp8266/esp8266.ino:881 [UTF8-LF sha256=8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d; anchor=uint8_t defaultPhysicalCell]`.
-- Target: `tools/build-firmware.ps1:16 [UTF8-LF sha256=92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267; anchor=CellChaseOnBoot]`.
-- Target: `firmware/esp32s3/src/LedOutput.h:12 [UTF8-LF sha256=b7f49a1a4678c8b4597fb823bd42cc32d4d5d828c6750641b3930df9bd11211a; anchor=#if !defined(PAKAR_S3_LED_USE_DMA)]`.
+- Target: `firmware/esp8266/esp8266.ino:896 [UTF8-LF sha256=ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6; anchor=uint8_t defaultPhysicalCell]`.
+- Target: `tools/build-firmware.ps1:19 [UTF8-LF sha256=a073ac3d9401331d48b2c8c820ab11421b298d7b67413fd180d98925e2e12ef0; anchor=CellChaseOnBoot]`.
+- Target: `firmware/esp32s3/src/LedOutput.h:12 [UTF8-LF sha256=434f4543225a92230765ae77a3cd8af4c0b7dbdffd1ba2cf04831a5aed718bf5; anchor=#if !defined(PAKAR_S3_LED_USE_DMA)]`.
+- Target: `firmware/esp32s3/src/LedDmaGuard.h:9 [UTF8-LF sha256=c5e50b1e3b59247d49b2b4b2033822bd5d551105ef4c899f63830736642f7b07; anchor=class LedDmaSetupScope]`.
+- Target: `firmware/esp32s3/src/LedDmaGuard.cpp:56 [UTF8-LF sha256=ca516ca4870adb8bf76a70f3f2aadff4f8067685dd6076cbb8ea1199019fcda7; anchor=newCacheSafeLedChannel]`.
 - Target: `mobile/lib/pixel_diagnostic.dart:89 [UTF8-LF sha256=f5d5f5726ffa6b046d36adc5466d81b1a5570a16d0937aa79e99839e23182e6d; anchor=class PixelProbe]`.
 - Target: `mobile/lib/pixel_diagnostic_page.dart:13 [UTF8-LF sha256=a7ebe2b575e58d8addc2653643159a0aaaa3156dc56b5e798873d55927df1515; anchor=class PixelDiagnosticPage]`.
 - Target: `mobile/lib/api.dart:206 [UTF8-LF sha256=2b190f05801777ceb091b6d17ed22c61ed1e2e1730b5345785e5577fc601671d; anchor=Future<DeviceStatus> pixelDiagnostic(]`.
@@ -701,10 +703,12 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Retained: The donor stage/show ownership and startup clear are adapted to one immutable480-pixel worker mailbox. The explicit S3 RMT-DMA recovery scales/swaps logical RGB once into1440 internal bytes; IDF5.5.5's MSB-first bytes encoder fills its bounded DMA ring instead of allocating46084 expanded-symbol bytes. Wait completion and300us low latch precede buffer release; disabled startup still sends a complete black frame. Static GPIO remains separately selectable; no optical acceptance is inferred.
 - Omitted/replaced code: `Fixed AVR D6/PORTD assembly, 16MHz interrupt masking, MacroQueue workspace and100-pixel/8-bit strip configuration`. Disposition: **replaced**. Reason: The final480-pixel renderer belongs to the ESP32-S3 GPIO4 (or ESP8266D2), not a second AVR strip. Reusing AVR registers/timing or truncating to100 pixels would conflict with confirmed hardware and memory ownership. Existing bounded PC contract remains a separate compatibility window.
 - Omitted/replaced code: `Donor native HAL showStrip and feature-profile brightness/renderedPixels buffers`. Disposition: **replaced**. Reason: The existing ESP output worker owns wire encoding/brightness and complete immutable frame copies. Host doubles test logical RGB and wire encoding separately; there is no second donor native HAL or duplicate brightness scale.
-- Omitted/replaced code: `Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness`. Disposition: **pending**. Reason: The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery uses350/700ns highs,1250ns bits and300us low; its SDK ring still requires ISR refill. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof.
-- Test-code evidence: `tests/led_grid_test.cpp:125 [UTF8-LF sha256=1d9d4d8c0af2c42a76aafed99406572c95072f4cedfd392436e3ad4ef4b158de; anchor=Entire selection validation]`.
+- Omitted/replaced code: `Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness`. Disposition: **pending**. Reason: The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery had350/700ns highs; the candidate corrects them to classic WS2811 high-speed250/600ns,1250ns bits and300us low. A witnessed task-scoped GDMA allocation requests cache-safe refill using the already-IRAM SDK graph; the ring still refills and partition flash guards remain. Incomplete SDK symbol accounting now fails closed; this is still not wire readback. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof.
+- Test-code evidence: `tests/led_grid_test.cpp:160 [UTF8-LF sha256=d620aede31dff1b39f82de0c2de468209373ab86b5e4c47cd5a9c0bc8ebaa3d3; anchor=Entire selection validation]`.
 - Test-code evidence: `tests/led_grid_stress_test.cpp:12 [UTF8-LF sha256=812517dc4c2973487d67d4cd294c149dcb66b527fc85716363f87c723fe5fa4a; anchor=constexpr unsigned iterations=10000;]`.
-- Test-code evidence: `tests/led_worker_test.cpp:164 [UTF8-LF sha256=e27f0993c50d0c49fd1d8b2da6121b3445f8ba507b0a5f9d2a322934ad7384db; anchor=void functional()]`.
+- Test-code evidence: `tests/led_worker_test.cpp:168 [UTF8-LF sha256=aff158c2dad22ecee983edacf12b97c2e215954b40550b1db52f34fe5b5d6c25; anchor=void functional()]`.
+- Test-code evidence: `tests/led_dma_guard_test.cpp:17 [UTF8-LF sha256=acb3b4050d2f75edb9a7223ef50de117c88362a21134f2635d5ac8b6251198dc; anchor=int main(]`.
+- Test-code evidence: `tools/test-led-dma-guard.ps1:14 [UTF8-LF sha256=6fb9ea8d49b85f0b02425f007dc0eec3eb0dc708fb8d20ad8f583965bae98d62; anchor=--wrap=gdma_new_ahb_channel]`.
 - Test-code evidence: `tests/cell_chase_wiring_test.mjs:8 [UTF8-LF sha256=e071f0a389df2fd27942b8b33b7b27b24d8e19a7d327c0986c930de770529790; anchor=const preset=]`.
 - Test-code evidence: `tests/build_storage_test.ps1:41 [UTF8-LF sha256=683f1926231ec42b3dacbc0ba7e2b7cb03315a375bde499bed31b2e9c1467c7a; anchor=$taskStaticS3]`.
 - Test-code evidence: `mobile/test/pixel_diagnostic_test.dart:61 [UTF8-LF sha256=ffd4ba61f030157ce0a2dbd508d266ef928b89200972f54df59df819c10ca511; anchor=Every raw position clears]`.
@@ -720,15 +724,17 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `a28009e6211056f0cdb1071e7232d6d277a27cf9dc8e3e9951be9830745f18d4`.
 
 - Target: `libraries/BoardCore/src/CellBatch.h:9 [UTF8-LF sha256=29e1f77c397a4c530c236aa6a05598983e556b7bfc963beea0f69233ad38c8af; anchor=struct CellBatch]`.
-- Target: `firmware/esp8266/src/LedGrid.cpp:54 [UTF8-LF sha256=9d7a762b1c1c2937a26450e14e75935e438f83710ae9fe18355cf190c410421a; anchor=bool LedGrid::setCells(]`.
-- Target: `firmware/esp8266/src/LedGrid.h:51 [UTF8-LF sha256=6e9c86561ffeafc775604ea17d67073ec463dd6cc8f601095a8b4e88733eaabf; anchor=bool setCells(]`.
+- Target: `firmware/esp8266/src/LedGrid.cpp:54 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=bool LedGrid::setCells(]`.
+- Target: `firmware/esp8266/src/LedGrid.h:51 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=bool setCells(]`.
 - Target: `libraries/BoardCore/src/TableCellMapping.h:8 [UTF8-LF sha256=8a4d0d13b7779d8a54c74bb95cafcd871814423ee42909bcd5ebbd6006213ba0; anchor=constexpr uint8_t logicalForPhysical]`.
-- Target: `firmware/esp32s3/src/LedOutput.cpp:103 [UTF8-LF sha256=a7c73c4a15d3876204d9902011e93d02b5507357d5684c1e48d12acb687236a9; anchor=bool pending=true;]`.
-- Target: `firmware/esp32s3/src/LedWire.h:18 [UTF8-LF sha256=767a834768348560dab7d9a08fd026803419c480079e4fe54c6aac683364b46b; anchor=inline constexpr uint16_t zeroHigh=14]`.
+- Target: `firmware/esp32s3/src/LedOutput.cpp:108 [UTF8-LF sha256=b4e3a0a4ebe9285da6abfb98e097170aab93282d7edbad1f8c07bceaca1b9297; anchor=bool pending=true;]`.
+- Target: `firmware/esp32s3/src/LedWire.h:18 [UTF8-LF sha256=4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513; anchor=inline constexpr uint16_t zeroHigh=10]`.
 - Target: `firmware/esp8266/src/LedRenderAdmission.h:7 [UTF8-LF sha256=a6dc69b69cba74db1fff54fd75b8940bf88958404f6c3ac971b27797d5b13c50; anchor=inline bool uartWindowReady(]`.
-- Target: `firmware/esp8266/esp8266.ino:881 [UTF8-LF sha256=8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d; anchor=uint8_t defaultPhysicalCell]`.
-- Target: `tools/build-firmware.ps1:16 [UTF8-LF sha256=92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267; anchor=CellChaseOnBoot]`.
-- Target: `firmware/esp32s3/src/LedOutput.h:12 [UTF8-LF sha256=b7f49a1a4678c8b4597fb823bd42cc32d4d5d828c6750641b3930df9bd11211a; anchor=#if !defined(PAKAR_S3_LED_USE_DMA)]`.
+- Target: `firmware/esp8266/esp8266.ino:896 [UTF8-LF sha256=ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6; anchor=uint8_t defaultPhysicalCell]`.
+- Target: `tools/build-firmware.ps1:19 [UTF8-LF sha256=a073ac3d9401331d48b2c8c820ab11421b298d7b67413fd180d98925e2e12ef0; anchor=CellChaseOnBoot]`.
+- Target: `firmware/esp32s3/src/LedOutput.h:12 [UTF8-LF sha256=434f4543225a92230765ae77a3cd8af4c0b7dbdffd1ba2cf04831a5aed718bf5; anchor=#if !defined(PAKAR_S3_LED_USE_DMA)]`.
+- Target: `firmware/esp32s3/src/LedDmaGuard.h:9 [UTF8-LF sha256=c5e50b1e3b59247d49b2b4b2033822bd5d551105ef4c899f63830736642f7b07; anchor=class LedDmaSetupScope]`.
+- Target: `firmware/esp32s3/src/LedDmaGuard.cpp:56 [UTF8-LF sha256=ca516ca4870adb8bf76a70f3f2aadff4f8067685dd6076cbb8ea1199019fcda7; anchor=newCacheSafeLedChannel]`.
 - Target: `mobile/lib/pixel_diagnostic.dart:89 [UTF8-LF sha256=f5d5f5726ffa6b046d36adc5466d81b1a5570a16d0937aa79e99839e23182e6d; anchor=class PixelProbe]`.
 - Target: `mobile/lib/pixel_diagnostic_page.dart:13 [UTF8-LF sha256=a7ebe2b575e58d8addc2653643159a0aaaa3156dc56b5e798873d55927df1515; anchor=class PixelDiagnosticPage]`.
 - Target: `mobile/lib/api.dart:206 [UTF8-LF sha256=2b190f05801777ceb091b6d17ed22c61ed1e2e1730b5345785e5577fc601671d; anchor=Future<DeviceStatus> pixelDiagnostic(]`.
@@ -743,10 +749,12 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Retained: The donor stage/show ownership and startup clear are adapted to one immutable480-pixel worker mailbox. The explicit S3 RMT-DMA recovery scales/swaps logical RGB once into1440 internal bytes; IDF5.5.5's MSB-first bytes encoder fills its bounded DMA ring instead of allocating46084 expanded-symbol bytes. Wait completion and300us low latch precede buffer release; disabled startup still sends a complete black frame. Static GPIO remains separately selectable; no optical acceptance is inferred.
 - Omitted/replaced code: `Fixed AVR D6/PORTD assembly, 16MHz interrupt masking, MacroQueue workspace and100-pixel/8-bit strip configuration`. Disposition: **replaced**. Reason: The final480-pixel renderer belongs to the ESP32-S3 GPIO4 (or ESP8266D2), not a second AVR strip. Reusing AVR registers/timing or truncating to100 pixels would conflict with confirmed hardware and memory ownership. Existing bounded PC contract remains a separate compatibility window.
 - Omitted/replaced code: `Donor native HAL showStrip and feature-profile brightness/renderedPixels buffers`. Disposition: **replaced**. Reason: The existing ESP output worker owns wire encoding/brightness and complete immutable frame copies. Host doubles test logical RGB and wire encoding separately; there is no second donor native HAL or duplicate brightness scale.
-- Omitted/replaced code: `Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness`. Disposition: **pending**. Reason: The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery uses350/700ns highs,1250ns bits and300us low; its SDK ring still requires ISR refill. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof.
-- Test-code evidence: `tests/led_grid_test.cpp:125 [UTF8-LF sha256=1d9d4d8c0af2c42a76aafed99406572c95072f4cedfd392436e3ad4ef4b158de; anchor=Entire selection validation]`.
+- Omitted/replaced code: `Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness`. Disposition: **pending**. Reason: The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery had350/700ns highs; the candidate corrects them to classic WS2811 high-speed250/600ns,1250ns bits and300us low. A witnessed task-scoped GDMA allocation requests cache-safe refill using the already-IRAM SDK graph; the ring still refills and partition flash guards remain. Incomplete SDK symbol accounting now fails closed; this is still not wire readback. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof.
+- Test-code evidence: `tests/led_grid_test.cpp:160 [UTF8-LF sha256=d620aede31dff1b39f82de0c2de468209373ab86b5e4c47cd5a9c0bc8ebaa3d3; anchor=Entire selection validation]`.
 - Test-code evidence: `tests/led_grid_stress_test.cpp:12 [UTF8-LF sha256=812517dc4c2973487d67d4cd294c149dcb66b527fc85716363f87c723fe5fa4a; anchor=constexpr unsigned iterations=10000;]`.
-- Test-code evidence: `tests/led_worker_test.cpp:164 [UTF8-LF sha256=e27f0993c50d0c49fd1d8b2da6121b3445f8ba507b0a5f9d2a322934ad7384db; anchor=void functional()]`.
+- Test-code evidence: `tests/led_worker_test.cpp:168 [UTF8-LF sha256=aff158c2dad22ecee983edacf12b97c2e215954b40550b1db52f34fe5b5d6c25; anchor=void functional()]`.
+- Test-code evidence: `tests/led_dma_guard_test.cpp:17 [UTF8-LF sha256=acb3b4050d2f75edb9a7223ef50de117c88362a21134f2635d5ac8b6251198dc; anchor=int main(]`.
+- Test-code evidence: `tools/test-led-dma-guard.ps1:14 [UTF8-LF sha256=6fb9ea8d49b85f0b02425f007dc0eec3eb0dc708fb8d20ad8f583965bae98d62; anchor=--wrap=gdma_new_ahb_channel]`.
 - Test-code evidence: `tests/cell_chase_wiring_test.mjs:8 [UTF8-LF sha256=e071f0a389df2fd27942b8b33b7b27b24d8e19a7d327c0986c930de770529790; anchor=const preset=]`.
 - Test-code evidence: `tests/build_storage_test.ps1:41 [UTF8-LF sha256=683f1926231ec42b3dacbc0ba7e2b7cb03315a375bde499bed31b2e9c1467c7a; anchor=$taskStaticS3]`.
 - Test-code evidence: `mobile/test/pixel_diagnostic_test.dart:61 [UTF8-LF sha256=ffd4ba61f030157ce0a2dbd508d266ef928b89200972f54df59df819c10ca511; anchor=Every raw position clears]`.
@@ -896,7 +904,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `7309fd36f0680722a4260e8f1251ae5a0fc67e99fc60f2426bb1294f789e87d4`.
 
-- Target: `firmware/esp8266/esp8266.ino:967 [UTF8-LF sha256=8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d; anchor=void serviceScenePersistence(bool flush)]`.
+- Target: `firmware/esp8266/esp8266.ino:982 [UTF8-LF sha256=ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6; anchor=void serviceScenePersistence(bool flush)]`.
 - Target: `firmware/esp8266/src/LedPreferences.h:29 [UTF8-LF sha256=303c1469003fec6fc2777ce459c1fae872c73d67241871463b7a32135bd51aac; anchor=inline bool applyLedBootPreferences(]`.
 - Target: `desktop/src/board_silent.rs:74 [UTF8-LF sha256=c043af00f09e18b54b60399ec725f41a41bb74ec405251d92b70771b00059078; anchor=pub struct Transaction]`.
 - Target: `desktop/src/ui/preferences.rs:154 [UTF8-LF sha256=ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49; anchor=fn board_controls(]`.
@@ -916,7 +924,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `Donor AVR EEPROM address/layout,14-page motion-alias normalization, relay/PWM/motion/sensor restore and temperature/name records`. Disposition: **replaced**. Reason: LED preferences live in ESP LittleFS, not the donor AVR record. Copying the address/layout or actuator settings would collide with the separate Pakar AVR owner and imply absent hardware. Applicable board settings have an independent historical manifest; this narrow mapping neither replaces it nor certifies those full current-source contracts.
 - Omitted/replaced code: `Donor EEPROM record ownership and complete unrelated settings normalization`. Disposition: **replaced**. Reason: The ESP scene now has its own validated bounded record,1500ms dirty coalescing,10s maximum delay, changed-record skipping and failure backoff. AVR peripheral/menu settings retain their separate EEPROM owner; copying relay/PWM/sensor layout would corrupt unrelated hardware contracts.
 - Omitted/replaced code: `Physical interrupted flash/power-loss durability and optical restore acceptance`. Disposition: **pending**. Reason: Actual production SceneStore fixtures now cover stage/open/short-write/close-corruption/read/rename failures, exact unchanged/frame write counts, all record-byte corruption, rollover and reboot roundtrip. These filesystem doubles and atomic LittleFS rename do not prove physical abrupt-power flash durability or emitted colors.
-- Test-code evidence: `tests/led_grid_test.cpp:51 [UTF8-LF sha256=1d9d4d8c0af2c42a76aafed99406572c95072f4cedfd392436e3ad4ef4b158de; anchor=Boot policy accepts existing files without restoring a saved animation]`.
+- Test-code evidence: `tests/led_grid_test.cpp:86 [UTF8-LF sha256=d620aede31dff1b39f82de0c2de468209373ab86b5e4c47cd5a9c0bc8ebaa3d3; anchor=Boot policy accepts existing files without restoring a saved animation]`.
 - Test-code evidence: `tests/s3_platform_wiring_test.mjs:81 [UTF8-LF sha256=e05b1c494c96a239261a4a759f1291d5c29a59b680ce6966849faa94afac5417; anchor=sceneStore.begin]`.
 - Test-code evidence: `tests/tone_player_test.cpp:27 [UTF8-LF sha256=c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6; anchor=const auto beforeMute]`.
 - Test-code evidence: `tests/pc_contract_test.cpp:115 [UTF8-LF sha256=bce8d58cf8ff4f2ef97d82aeea929443e1c25ffa2ff1be9ab37c684587e7cab7; anchor=silentRequest[22]]`.
@@ -1045,7 +1053,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `5e5607d54af43ead28eddb747e48b6e2450dd45ef7c47202203c4f5cfc8991ab`.
 
 - Target: `tools/prepare-avr-image.mjs:65 [UTF8-LF sha256=0d4e2a5a87967031393a6079e07938c7612e6fbfcb0d38c9a2a3ae419e86d525; anchor=export function mergeUrboot(]`.
-- Target: `tools/build-firmware.ps1:166 [UTF8-LF sha256=92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267; anchor='prepare-avr-image.mjs']`.
+- Target: `tools/build-firmware.ps1:171 [UTF8-LF sha256=a073ac3d9401331d48b2c8c820ab11421b298d7b67413fd180d98925e2e12ef0; anchor='prepare-avr-image.mjs']`.
 - Retained: Read the complete donor builder and README. Adapted actual Intel HEX/checksum parsing, AVR jump decoding/encoding, wrapped reset RJMP, ELF __bad_interrupt unused-vector proof, metadata-selected application trampoline, erased-gap fill, full-flash binary/HEX round trip and exact source hash validation into the canonical AVR build. No chip, fuse, EEPROM or UART operation is performed by packaging.
 - Retained: Found and corrected Pakar stock merged image reset vector bypassing its included vector Urboot. Preserve stock MiniCore UART0 autobaud, reset-register r2, EEPROM and chip-erase features with a pinned 384-byte image; never silently substitute the donor custom 512-byte backend.
 - Omitted/replaced code: `u8.0.1 custom 512-byte backend, progress hook and TM1637 D13/PB5 CLK, D11/PB3 DIO implementation`. Disposition: **pending**. Reason: This board uses A5 CLK/A4 DIO and the stock 384-byte application ceiling. Do not deploy a wrong-pin backend or silently shrink available application space. Adapt the backend/pin profile and revalidate flash budget before any optional custom bootloader installation.
@@ -1060,7 +1068,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `2ec873e7f23b56a6997a0c83de1e258ae2ce9b75cf1eb7cf08b40da5aaa68090`.
 
 - Target: `tools/prepare-avr-image.mjs:65 [UTF8-LF sha256=0d4e2a5a87967031393a6079e07938c7612e6fbfcb0d38c9a2a3ae419e86d525; anchor=export function mergeUrboot(]`.
-- Target: `tools/build-firmware.ps1:166 [UTF8-LF sha256=92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267; anchor='prepare-avr-image.mjs']`.
+- Target: `tools/build-firmware.ps1:171 [UTF8-LF sha256=a073ac3d9401331d48b2c8c820ab11421b298d7b67413fd180d98925e2e12ef0; anchor='prepare-avr-image.mjs']`.
 - Retained: Read the complete donor builder and README. Adapted actual Intel HEX/checksum parsing, AVR jump decoding/encoding, wrapped reset RJMP, ELF __bad_interrupt unused-vector proof, metadata-selected application trampoline, erased-gap fill, full-flash binary/HEX round trip and exact source hash validation into the canonical AVR build. No chip, fuse, EEPROM or UART operation is performed by packaging.
 - Retained: Found and corrected Pakar stock merged image reset vector bypassing its included vector Urboot. Preserve stock MiniCore UART0 autobaud, reset-register r2, EEPROM and chip-erase features with a pinned 384-byte image; never silently substitute the donor custom 512-byte backend.
 - Omitted/replaced code: `u8.0.1 custom 512-byte backend, progress hook and TM1637 D13/PB5 CLK, D11/PB3 DIO implementation`. Disposition: **pending**. Reason: This board uses A5 CLK/A4 DIO and the stock 384-byte application ceiling. Do not deploy a wrong-pin backend or silently shrink available application space. Adapt the backend/pin profile and revalidate flash budget before any optional custom bootloader installation.
@@ -1475,11 +1483,11 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/terminal_ui.rs:769 [UTF8-LF sha256=5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6; anchor=fn command_request(]`.
 - Target: `mobile/lib/api.dart:893 [UTF8-LF sha256=2b190f05801777ceb091b6d17ed22c61ed1e2e1730b5345785e5577fc601671d; anchor=bool _acceptIdentity(]`.
-- Target: `mobile/lib/main.dart:134 [UTF8-LF sha256=902605e0fcc32943a5c3312d18585e91a827d9f8921114ffd5ab41d264fe66a4; anchor=api.onPeerChanged = ()]`.
+- Target: `mobile/lib/main.dart:134 [UTF8-LF sha256=377a786491826bee8fee9a5b83f89da2769085772788b07d88302b549599410d; anchor=api.onPeerChanged = ()]`.
 - Target: `mobile/lib/bridge.dart:316 [UTF8-LF sha256=4fd40d999691968be1d32826a925a4bb221a5bd102c2a237ed947f6bf37b2be9; anchor=watchdog = Timer.periodic]`.
 - Target: `libraries/BoardCore/src/PeerFence.h:31 [UTF8-LF sha256=9f1ab63252bd881d2fc786e230a18db331e66708a1bd3ccd0f096d2d2b5d49d5; anchor=inline bool accepts(]`.
 - Target: `firmware/esp8266/src/WebAccess.h:68 [UTF8-LF sha256=7d5f61dd41c18aa9e74857e60f187c28be8e3902022ed4accad57f75a9384b5a; anchor=bool peerAllowed(]`.
-- Target: `firmware/esp8266/esp8266.ino:1479 [UTF8-LF sha256=8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d; anchor=bool authenticate()]`.
+- Target: `firmware/esp8266/esp8266.ino:1493 [UTF8-LF sha256=ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6; anchor=bool authenticate()]`.
 - Target: `assets/web/peer-http.js:32 [UTF8-LF sha256=a56aca0f2a159a0bdf22f1db0bde8541aa745693282167c28d3a0d08cb6c67d3; anchor=function assertOwner(peer)]`.
 - Target: `desktop/src/peer_http.rs:326 [UTF8-LF sha256=1d5a8b2c1909ef5c26858ead8490845c4d507c9bc1d338915d59c2db0b86ed5c; anchor=pub fn admit(]`.
 - Target: `desktop/src/main.rs:646 [UTF8-LF sha256=79fa06da5585572678acf18a3150d28e0879803280c2d8e5868fc536ae9ff178; anchor=fn scoped_http_request(]`.
@@ -1596,8 +1604,8 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `520de1d7431f3062d0603636b89098d1e41c7701a2f44f65b88d45cfe49a2c07`.
 
-- Target: `firmware/esp8266/src/MaintenanceRoutes.h:239 [UTF8-LF sha256=e87ed119fa144aad18dc999a4f1df8460f3f83a3ede985811b57bdb588cb2d96; anchor=bool prepareRemotePair(]`.
-- Target: `firmware/esp8266/src/UrbootRoutes.h:82 [UTF8-LF sha256=39fc7e3962e9a0806e72641b66c287630bfd043f0e208b2f9b54514931a02792; anchor=bool runUrboot(]`.
+- Target: `firmware/esp8266/src/MaintenanceRoutes.h:239 [UTF8-LF sha256=e7972e623ed27d46fd26293f1dd63af3041e4a8d9134af1cfd3b08ee77c73078; anchor=bool prepareRemotePair(]`.
+- Target: `firmware/esp8266/src/UrbootRoutes.h:82 [UTF8-LF sha256=0c0a164d0b339d78f671a879bffeb3490ab2c7177e71e356fee9d72840adcd36; anchor=bool runUrboot(]`.
 - Retained: Read entire actual donor through EOF. Preserve complete backup before production writes, cancellation before mutation and post-backup candidate reinspection. The network bridge forwards the existing guarded ESP coordinator's raw bytes/status/receipts; it does not replace the programmer or turn staging acceptance into a completed flash.
 - Retained: Adapt actual backup-before-write and candidate reinspection to the ESP-owned Urboot operation: full flash/EEPROM capture and durable hash validation before the first UART page write, then exact image digest reinspection, protected boot equality and complete flash/EEPROM readback. Existing durable Prog arm precedes this recovery capture, as in the existing integrated ISP policy; ordinary settings and boot bytes are not programmed by Urboot.
 - Omitted/replaced code: `Host Urclock/USBasp executor, backup archive manifest and development skip policy`. Disposition: **pending**. Reason: Retain the existing ESP-owned integrated ISP coordinator and mandatory production backup rather than adding a competing serial/programming owner. Host archival restore/executor parity needs a separate full dependency and hardware review; it is not claimed by transparent HTTP forwarding.
@@ -1609,7 +1617,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `6dabd79c406b49dce87866fa792bc557220b98515606041cc33099193d567abe`.
 
-- Target: `firmware/esp8266/src/MaintenanceRoutes.h:239 [UTF8-LF sha256=e87ed119fa144aad18dc999a4f1df8460f3f83a3ede985811b57bdb588cb2d96; anchor=bool prepareRemotePair(]`.
+- Target: `firmware/esp8266/src/MaintenanceRoutes.h:239 [UTF8-LF sha256=e7972e623ed27d46fd26293f1dd63af3041e4a8d9134af1cfd3b08ee77c73078; anchor=bool prepareRemotePair(]`.
 - Retained: Read complete actual donor tests. Retain failure/no-flash, unchanged candidate and EEPROM-reset raw-backup-before-arm distinctions in the existing coordinator review. New actual socket tests cover stale peer before dispatch, valid multipart/binary transfer, HEAD and truncation; these do not claim execution of the donor's Go programmer tests or physical backup acceptance.
 - Omitted/replaced code: `Host Urclock/USBasp executor, backup archive manifest and development skip policy`. Disposition: **pending**. Reason: Retain the existing ESP-owned integrated ISP coordinator and mandatory production backup rather than adding a competing serial/programming owner. Host archival restore/executor parity needs a separate full dependency and hardware review; it is not claimed by transparent HTTP forwarding.
 - Test-code evidence: `desktop/src/bridge_transfer.rs:377 [UTF8-LF sha256=365d1f7a80cab3acefe4a5374ee61078964f1adc4242a2333529b1faa3eabb0e; anchor=fn bridge_transfer_head_truncation_and_stale_mutation_preserve_truth]`.
@@ -1687,7 +1695,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/capabilities.rs:164 [UTF8-LF sha256=1eaabefe6c097088f95db3025cb6847071eaa2f5f7dd55d68d55269cff406dd6; anchor=pub fn has(]`.
 - Target: `mobile/lib/peer_context.dart:38 [UTF8-LF sha256=5f520bd21d49ac1460fd3cbd24f4713ccddce0168d78046774a19a181c68962d; anchor=static PeerContext fromStatus]`.
-- Target: `mobile/lib/main.dart:690 [UTF8-LF sha256=902605e0fcc32943a5c3312d18585e91a827d9f8921114ffd5ab41d264fe66a4; anchor=Future<bool> _command]`.
+- Target: `mobile/lib/main.dart:690 [UTF8-LF sha256=377a786491826bee8fee9a5b83f89da2769085772788b07d88302b549599410d; anchor=Future<bool> _command]`.
 - Target: `libraries/BoardCore/src/DeviceContext.h:30 [UTF8-LF sha256=3e940f4ee3d09c482486b7321648f776ae6c480e92aaa564beb5dca12d9bfbfa; anchor=inline uint16_t features(]`.
 - Target: `firmware/esp8266/src/WebUi.h:784 [UTF8-LF sha256=d63f22706640e3fa3deb416a2d9a1b1b1c4c17bbc669caf6f82c2acdb49696ab; anchor=function peerAvailability(]`.
 - Retained: Actual connected AND have_status AND advertised-capability conjunction adapted to selected-peer fresh manifests. No feature inference from hostname, pixel count, catalog, defaults or online alone.
@@ -2053,7 +2061,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `desktop/src/brand_image.rs:25 [UTF8-LF sha256=ab71607dcde16d7af14b0a292982f902186dacf6b5b78b3f4c983e37464428e9; anchor=pub fn native_icon_bytes]`.
 - Target: `docs/BRANDING-PARITY.md:60 [UTF8-LF sha256=0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3; anchor=## Explicit unfinished useful code and reasons]`.
 - Target: `desktop/src/branding.rs:8 [UTF8-LF sha256=100940d0ee954ecfeb059dba83245c37c4e1e325d9309c7c82870e4eb870870a; anchor=pub fn sync_peer]`.
-- Target: `mobile/lib/main.dart:995 [UTF8-LF sha256=902605e0fcc32943a5c3312d18585e91a827d9f8921114ffd5ab41d264fe66a4; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
+- Target: `mobile/lib/main.dart:995 [UTF8-LF sha256=377a786491826bee8fee9a5b83f89da2769085772788b07d88302b549599410d; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
 - Target: `mobile/lib/application_artwork.dart:2 [UTF8-LF sha256=a1ee8fc15b0aa9111a5c416fcf74b3d05093b22e47b76d7744837f175f7b5ef4; anchor=const applicationArtworkBase64]`.
 - Retained: Actual icon_data_from_bytes imported unchanged; one embedded PNG supplies native/Web artwork without disk caches.
 - Retained: Actual native_icon_bytes seven-frame ICO encoding/master preservation/Lanczos3 resampling and shell derivative test adapted to shared supplied bytes and PNG-only decoder.
@@ -2365,7 +2373,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `410d274f51e5e7db7ce81582d36166a97240b097e993cec5fee8707a95183e2f`.
 
 - Target: `mobile/lib/table_workspace.dart:11 [UTF8-LF sha256=fd779ea58ddb0177231840f05b69b5845a6c60ee2c2cada587fb29833309354b; anchor=class TableWorkspace]`.
-- Target: `mobile/lib/main.dart:553 [UTF8-LF sha256=902605e0fcc32943a5c3312d18585e91a827d9f8921114ffd5ab41d264fe66a4; anchor=Future<void> _saveWorkspaces()]`.
+- Target: `mobile/lib/main.dart:553 [UTF8-LF sha256=377a786491826bee8fee9a5b83f89da2769085772788b07d88302b549599410d; anchor=Future<void> _saveWorkspaces()]`.
 - Target: `desktop/src/capabilities.rs:67 [UTF8-LF sha256=1eaabefe6c097088f95db3025cb6847071eaa2f5f7dd55d68d55269cff406dd6; anchor=pub struct Presentation]`.
 - Target: `desktop/src/ui/shell.rs:561 [UTF8-LF sha256=d9e6dae651fddc679de55d861a091af1bc01def36e5954445745d1017a85ba2d; anchor=fn synchronize_context]`.
 - Target: `desktop/src/ui/layout.rs:159 [UTF8-LF sha256=d368dc9cd57542eb9ff6170853619c79fc154f6d77a74be16db9c56fb9d4782c; anchor=presentation_context()]`.
@@ -2714,7 +2722,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 - Target: `firmware/esp32s3/src/OtaStage.h:9 [UTF8-LF sha256=38f573b619915ff3c09062d4198aef6d2cc4b44a25fb72ec187edb33a8f22f9b; anchor=class S3OtaStage]`.
 - Target: `firmware/esp8266/src/RemoteFirmware.cpp:321 [UTF8-LF sha256=23136f9cf7840219a9d737f9a58742c0cd28694c3536948e9b498f2d7af5639c; anchor=bool RemoteFirmware::validateEspStage()]`.
-- Target: `firmware/esp8266/src/MaintenanceRoutes.h:245 [UTF8-LF sha256=e87ed119fa144aad18dc999a4f1df8460f3f83a3ede985811b57bdb588cb2d96; anchor=if(plan.targets==RemotePolicy::Esp && !programmingLatched) return true;]`.
+- Target: `firmware/esp8266/src/MaintenanceRoutes.h:245 [UTF8-LF sha256=e7972e623ed27d46fd26293f1dd63af3041e4a8d9134af1cfd3b08ee77c73078; anchor=if(plan.targets==RemotePolicy::Esp && !programmingLatched) return true;]`.
 - Target: `firmware/esp8266/src/ArtifactDownload.h:37 [UTF8-LF sha256=407bf97d8731516b66c90424a47e181434fe3126be34dba675c0b70ea6382961; anchor=remoteFirmware.readStagedEsp]`.
 - Target: `firmware/esp32s3/src/DnsCoreLock.cpp:13 [UTF8-LF sha256=5b4540c3bab1666c2b1da6b940f580b67a4dc66ce9e19ecddffcee9d08d30f2a; anchor=extern "C" void __wrap_dns_clear_cache]`.
 - Target: `firmware/esp8266/src/AsyncHttpService.h:123 [UTF8-LF sha256=89ce1cff79adbdbe98f44beac5aea8cc30bf72187012db6720a4c42f4be5cf73; anchor=AsyncURIMatcher::exact(path)]`.
@@ -2776,7 +2784,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `a05952f7ca3241aa840e024ff01560cea3d74226b003e2781efe95b4a533d388`.
 
-- Target: `firmware/esp8266/esp8266.ino:299 [UTF8-LF sha256=8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d; anchor=std::atomic<uint32_t> otaRebootAt{0};]`.
+- Target: `firmware/esp8266/esp8266.ino:308 [UTF8-LF sha256=ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6; anchor=std::atomic<uint32_t> otaRebootAt{0};]`.
 - Target: `firmware/esp8266/src/AsyncHttpService.h:107 [UTF8-LF sha256=89ce1cff79adbdbe98f44beac5aea8cc30bf72187012db6720a4c42f4be5cf73; anchor=explicit AsyncHttpService(uint16_t port) : native_(port) {}]`.
 - Retained: Complete original header reread through EOF. Retains authenticated chunked application-image upload, explicit update completion/reboot and shared server integration through the adapted existing Pakar /update handlers. Native W5500 uses the same lwIP listener/updater and authorization policy; no parallel Ethernet-only firmware or server.
 - Omitted/replaced code: `Global BusyOTA and InitAsyncOTA declarations / ESP8266 updater ownership`. Disposition: **replaced**. Reason: Pakar owns admission, upload lease, staged firmware and deferred reboot explicitly in its integrated main/MaintenanceRoutes. Reintroducing donor globals would create a second mutable owner and bypass paired programming/backup/peer fences. ESP32-S3 uses native OTA partitions, not ESP8266 raw linker/FS bounds.
@@ -2791,10 +2799,10 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 - Target: `firmware/esp8266/src/AsyncHttpService.h:123 [UTF8-LF sha256=89ce1cff79adbdbe98f44beac5aea8cc30bf72187012db6720a4c42f4be5cf73; anchor=AsyncURIMatcher::exact(path)]`.
 - Target: `firmware/esp8266/src/LoopMessages.h:73 [UTF8-LF sha256=02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0; anchor=Message *items_=nullptr;]`.
-- Target: `firmware/esp8266/esp8266.ino:3874 [UTF8-LF sha256=8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d; anchor=loopMessages.begin(); // PSRAM-backed S3 queue]`.
-- Target: `firmware/esp8266/src/MaintenanceRoutes.h:118 [UTF8-LF sha256=e87ed119fa144aad18dc999a4f1df8460f3f83a3ede985811b57bdb588cb2d96; anchor=internal_heap_largest_block_bytes]`.
+- Target: `firmware/esp8266/esp8266.ino:3697 [UTF8-LF sha256=ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6; anchor=loopMessages.begin(); // PSRAM-backed S3 queue]`.
+- Target: `firmware/esp8266/src/MaintenanceRoutes.h:118 [UTF8-LF sha256=e7972e623ed27d46fd26293f1dd63af3041e4a8d9134af1cfd3b08ee77c73078; anchor=internal_heap_largest_block_bytes]`.
 - Target: `tools/update-firmware.mjs:137 [UTF8-LF sha256=3d57c9f57c6d76103f679cd70f410b8f5dd32db0915aa11dc5719b7bb5b2fe9b; anchor=export function checkWebSocket(]`.
-- Target: `firmware/esp8266/esp8266.ino:2048 [UTF8-LF sha256=8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d; anchor=void onWebSocketEvent(]`.
+- Target: `firmware/esp8266/esp8266.ino:2063 [UTF8-LF sha256=ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6; anchor=void onWebSocketEvent(]`.
 - Target: `firmware/esp32s3/src/EthernetPort.h:58 [UTF8-LF sha256=3c33891e9f8d5708448d09743e333aaa164668a1822856bd965f1e1599b422ba; anchor=SPIClass spi_{HSPI};]`.
 - Retained: Complete original implementation read through EOF. Retains shared asynchronous server setup, /ws attachment, connected-client limits and per-client message dispatch. The actual AsyncTCP listener uses native lwIP interfaces, so Wi-Fi and W5500 reach identical routes. Existing Pakar bounded loop-owned dispatch and access ownership replace unsafe donor callback behavior.
 - Retained: Updater WebSocket preflight now adapts actual desktop main.rs::ws_worker read-only status acquisition: exactly one masked {type:status} is sent only after validating101/Accept/Connection:Upgrade and the actual pinned TCP peer. Only exact-board/boot recognized status-rgb/update-progress events may be skipped; neither renews the bounded full-status deadline nor satisfies readiness. The complete status must still pass boardPeer identity/capability checks. Separate measured connect/upgrade and full-status stages allow bounded cloud contention without removing the preflight or replaying any action.
@@ -2805,7 +2813,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Omitted/replaced code: `Ten-client limit and permissive handling of message/transport fragments`. Disposition: **replaced**. Reason: Pakar limits eight simultaneous sockets for finite S3/ESP8266 queue/RAM admission. It handles sequential transport chunks within one final frame and rejects oversized, fragmented-message or invalid-sequence frames explicitly instead of executing partial or unterminated commands.
 - Omitted/replaced code: `Donor PU command globals and serial business dispatch`. Disposition: **replaced**. Reason: Pakar dispatches the shared board/protocol/cell/firmware contracts under current access and programming ownership. PU business logic and its UART path do not match this AVR/S3 board.
 - Omitted/replaced code: `Implicit expectation that the first WebSocket text frame is an unsolicited full status`. Disposition: **replaced**. Reason: The integrated board/native worker supports explicit read-only status requests and can publish independent compact RGB/update events first. The updater now requests one status without credentials/control writes, validates every optional event identity before ignoring it, and refuses completion from partial/foreign/malformed frames. Both handshake and full-status waits remain finite and separately measured; retries of firmware or control messages are not added.
-- Test-code evidence: `tests/led_scheduler_test.cpp:23 [UTF8-LF sha256=b0d695eb6ce287be4944d42c81d719f170283f66ae7d448594d592835f2a4a04; anchor=S3 queue must not retain internal bulk storage]`.
+- Test-code evidence: `tests/led_scheduler_test.cpp:24 [UTF8-LF sha256=426daa3ad87f8aa094bf2a98562330418bdcc7a57001546bd1ded25e11fafcad; anchor=S3 queue must not retain internal bulk storage]`.
 - Test-code evidence: `tests/ble_storage_stubs/esp_heap_caps.h:18 [UTF8-LF sha256=f6ff5f7843125cd7e780df39fd9d31006af9ef23070641ec580288235750365c; anchor=assert(capabilities==(MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT))]`.
 - Test-code evidence: `tests/update_tool_test.mjs:163 [UTF8-LF sha256=7ff8056fd1269f616676d5c46b32ee56ed750b43954172207f21baa03b538f9c; anchor=Exactly one read-only request, no replay]`.
 - Test-code evidence: `tests/update_tool_test.mjs:174 [UTF8-LF sha256=7ff8056fd1269f616676d5c46b32ee56ed750b43954172207f21baa03b538f9c; anchor=Partial events never satisfy readiness or trigger request replay]`.
@@ -2820,7 +2828,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `db79b8de84d8f874df348b0d68b1d2056f8945ad742f172be99ddb9b1d94e218`.
 
 - Target: `firmware/esp8266/src/AsyncHttpService.h:107 [UTF8-LF sha256=89ce1cff79adbdbe98f44beac5aea8cc30bf72187012db6720a4c42f4be5cf73; anchor=explicit AsyncHttpService(uint16_t port) : native_(port) {}]`.
-- Target: `firmware/esp8266/esp8266.ino:157 [UTF8-LF sha256=8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d; anchor=AsyncWebSocket webSocket("/ws");]`.
+- Target: `firmware/esp8266/esp8266.ino:167 [UTF8-LF sha256=ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6; anchor=AsyncWebSocket webSocket("/ws");]`.
 - Retained: Complete original header read through EOF. Shared HTTP80 and /ws WebSocket composition are retained in the actual Pakar server; the native Ethernet netif uses that same existing listener, API routes and authentication rather than new WIZnet sockets.
 - Omitted/replaced code: `Public donor global server/ws symbols and InitWebServer declaration`. Disposition: **replaced**. Reason: The integrated project already owns one AsyncHttpService facade and one AsyncWebSocket. Hardware-affecting callbacks defer into the loop owner using weak request lifetimes; duplicate globals/init would introduce divergent lifecycles, auth and connection owners.
 - Test-code evidence: `tests/async_http_test.cpp:43 [UTF8-LF sha256=e14c7bdc8c0c13cfad28e05b20ea886980e1cae866a073cc2d9466ad881c3bbe; anchor=Reproduce installed SDK3.12.1]`.
@@ -2833,13 +2841,13 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **scoped-improvement**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `7009bb58fb5bc686476c6a533284f2e62564442e35c4621922c19f145ce4c491`.
 
 - Target: `firmware/esp8266/src/WebAccess.h:29 [UTF8-LF sha256=7d5f61dd41c18aa9e74857e60f187c28be8e3902022ed4accad57f75a9384b5a; anchor=class WebAccess]`.
-- Target: `firmware/esp8266/src/AccessConfig.cpp:65 [UTF8-LF sha256=08f2950651ba406265bd8e903cb247588d7facff3f30f56a2c86e405826d566a; anchor=bool AccessConfig::configure(]`.
+- Target: `firmware/esp8266/src/AccessConfig.cpp:66 [UTF8-LF sha256=6ec60a32ab5e42943ea53844a5812acc86baf7232f3cf1090c3c8b591a81d2f7; anchor=bool AccessConfig::configure(]`.
 - Target: `desktop/src/ui/connection_controls.rs:209 [UTF8-LF sha256=58eaae178af71e86725a71df606b6ed6fb142c4fe852d3d5b8dce8b980ed3440; anchor=if authentication == Some(true)]`.
 - Target: `firmware/esp8266/src/WebUi.h:1231 [UTF8-LF sha256=d63f22706640e3fa3deb416a2d9a1b1b1c4c17bbc669caf6f82c2acdb49696ab; anchor=function presentDeviceAccess(info)]`.
 - Retained: Complete exact donor source read and live SHA-256 matched the inventoried revision. Retained middleware authorization, public login, credential validation and cookie/session admission concepts in the actual shared WebAccess implementation. Added saved explicit authentication opt-in, default-off Web/native behavior, verified atomic storage migration, bounded session/WS ownership, rate limiting, origin and peer/boot fencing.
 - Omitted/replaced code: `complexAuth hardcoded user/password; doLogin password/token response and diagnostic dump; /pass PU access-level commands`. Disposition: **replaced**. Reason: Factory authentication is not an opt-in. Password/token dumps disclose secrets, and the PU access-level business commands do not describe this LED board. Use explicit saved access settings and non-disclosing session routes instead.
 - Omitted/replaced code: `Duplicated run implementation, placeholder AuthenticationHandler/getAuthToken/session access-level skeleton and role=staff sample`. Disposition: **replaced**. Reason: The donor skeleton has unresolved identifiers and no complete role-based authorization contract. Imported the applicable route/session behavior into compiling middleware rather than enabling an incomplete authorization example. No implemented Pakar role support is claimed.
-- Test-code evidence: `tests/access_config_test.cpp:8 [UTF8-LF sha256=f4bd333ad2d7e553b25a0c815f83cc37a29f42ca526d704b1552c9e4cf345013; anchor=assert(!config.enabled())]`.
+- Test-code evidence: `tests/access_config_test.cpp:8 [UTF8-LF sha256=94a3a2860c4edb316a3d24595311455b3b1b6544fbd4143f11c919549ad1b55c; anchor=assert(!config.enabled())]`.
 - Test-code evidence: `tests/web_access_fence_test.cpp:185 [UTF8-LF sha256=0142d2b4517669bbf77d2b22607223c891e0ad58e8f2555e9cffa2dab09afc0f; anchor=// Auth-off does not mean loss]`.
 - Test-code evidence: `tests/web_access_test.mjs:94 [UTF8-LF sha256=09051a763d217a94b67e064e1627b9023d315d5612a887664f7a3ba4edf1e934; anchor=authEnabled=false;signedIn=false;]`.
 - Test-code evidence: `desktop/src/ui/connection_controls.rs:337 [UTF8-LF sha256=58eaae178af71e86725a71df606b6ed6fb142c4fe852d3d5b8dce8b980ed3440; anchor=for authentication in [None, Some(false), Some(true)]]`.
@@ -2850,17 +2858,65 @@ Verdict: **scoped-improvement**. Revision: `431104072952f694a35b3a83c19f13fbb098
 Verdict: **scoped-improvement**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `d63933cf51fb09ef2ce09052fd616b8d62ca422d36c713d7705b9fb8717f287e`.
 
 - Target: `firmware/esp8266/src/WebAccess.h:29 [UTF8-LF sha256=7d5f61dd41c18aa9e74857e60f187c28be8e3902022ed4accad57f75a9384b5a; anchor=class WebAccess]`.
-- Target: `firmware/esp8266/src/AccessConfig.cpp:65 [UTF8-LF sha256=08f2950651ba406265bd8e903cb247588d7facff3f30f56a2c86e405826d566a; anchor=bool AccessConfig::configure(]`.
+- Target: `firmware/esp8266/src/AccessConfig.cpp:66 [UTF8-LF sha256=6ec60a32ab5e42943ea53844a5812acc86baf7232f3cf1090c3c8b591a81d2f7; anchor=bool AccessConfig::configure(]`.
 - Target: `desktop/src/ui/connection_controls.rs:209 [UTF8-LF sha256=58eaae178af71e86725a71df606b6ed6fb142c4fe852d3d5b8dce8b980ed3440; anchor=if authentication == Some(true)]`.
 - Target: `firmware/esp8266/src/WebUi.h:1231 [UTF8-LF sha256=d63f22706640e3fa3deb416a2d9a1b1b1c4c17bbc669caf6f82c2acdb49696ab; anchor=function presentDeviceAccess(info)]`.
 - Retained: Complete exact donor source read and live SHA-256 matched the inventoried revision. Retained middleware authorization, public login, credential validation and cookie/session admission concepts in the actual shared WebAccess implementation. Added saved explicit authentication opt-in, default-off Web/native behavior, verified atomic storage migration, bounded session/WS ownership, rate limiting, origin and peer/boot fencing.
 - Omitted/replaced code: `complexAuth hardcoded user/password; doLogin password/token response and diagnostic dump; /pass PU access-level commands`. Disposition: **replaced**. Reason: Factory authentication is not an opt-in. Password/token dumps disclose secrets, and the PU access-level business commands do not describe this LED board. Use explicit saved access settings and non-disclosing session routes instead.
 - Omitted/replaced code: `Duplicated run implementation, placeholder AuthenticationHandler/getAuthToken/session access-level skeleton and role=staff sample`. Disposition: **replaced**. Reason: The donor skeleton has unresolved identifiers and no complete role-based authorization contract. Imported the applicable route/session behavior into compiling middleware rather than enabling an incomplete authorization example. No implemented Pakar role support is claimed.
-- Test-code evidence: `tests/access_config_test.cpp:8 [UTF8-LF sha256=f4bd333ad2d7e553b25a0c815f83cc37a29f42ca526d704b1552c9e4cf345013; anchor=assert(!config.enabled())]`.
+- Test-code evidence: `tests/access_config_test.cpp:8 [UTF8-LF sha256=94a3a2860c4edb316a3d24595311455b3b1b6544fbd4143f11c919549ad1b55c; anchor=assert(!config.enabled())]`.
 - Test-code evidence: `tests/web_access_fence_test.cpp:185 [UTF8-LF sha256=0142d2b4517669bbf77d2b22607223c891e0ad58e8f2555e9cffa2dab09afc0f; anchor=// Auth-off does not mean loss]`.
 - Test-code evidence: `tests/web_access_test.mjs:94 [UTF8-LF sha256=09051a763d217a94b67e064e1627b9023d315d5612a887664f7a3ba4edf1e934; anchor=authEnabled=false;signedIn=false;]`.
 - Test-code evidence: `desktop/src/ui/connection_controls.rs:337 [UTF8-LF sha256=58eaae178af71e86725a71df606b6ed6fb142c4fe852d3d5b8dce8b980ed3440; anchor=for authentication in [None, Some(false), Some(true)]]`.
 - Scoped advantage: Executable auth-off/opt-in persistence and conditional Web/native credential UI, without weakening corruption recovery, origin or peer fencing.
+
+### PU850-ESP: `LocalLib/Commands.cpp`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `5181d7cc83efe2416a3a198ff88aad2aeffc8871ee2ef7a2a1ffdad51d31b88e`.
+
+- Target: `firmware/esp8266/src/ShellService.h:98 [UTF8-LF sha256=b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb; anchor=bool shellSet(]`.
+- Target: `firmware/esp8266/src/ShellTuiBinding.h:20 [UTF8-LF sha256=6c75b3e4440549ddd7851add400f69cff62e11e501075fe45c322795f688b5c5; anchor=shellGet(*p)]`.
+- Target: `firmware/esp8266/src/ShellSettings.h:19 [UTF8-LF sha256=edc36bb702f4304ee1eac6e2e848cf4f62b9d075bb9d6e90349029c768ae19e4; anchor=bool configure(]`.
+- Retained: DeviceParameter name/type/read-only/get/set design is adapted to ShellProperty descriptors for hostname/label, network mode/DHCP/static addressing, station SSID/write-only password, MQTT/WebSocket endpoints, telemetry interval, shell settings and LED mode/brightness/effect.
+- Retained: Read-only observations expose version, boot identity, uptime, heap, AVR presence, display ACK state, firmware phase and actual LED backend/RMT/DMA capability; no shell-specific LED engine or second configuration store is introduced.
+- Retained: Useful echo/status/connect behavior maps to echo/status and queued network reconnect; typed JSON builds route device/cell/bulk/pixel/audio/display/firmware actions through existing validators and maintenance owners instead of PU callback addresses.
+- Retained: Durable configuration owners apply validated updates rather than copying the donor manual Settings_Write/Settings_Read lifecycle or direct ESP8266 SDK network structures.
+- Omitted/replaced code: `Station_Password/AP_Password getters returning plaintext credentials`. Disposition: **replaced**. Reason: Secret descriptors are write-only and display <write-only>/[hidden]; classified secret commands and URL credentials are excluded from history. Copying plaintext getters would disclose credentials over Telnet and framed USB.
+- Omitted/replaced code: `busy/ready SendESPStatus_ToPU and Request_Beep PU protocol callbacks`. Disposition: **not-applicable**. Reason: These addresses/status opcodes belong to the removed PU850 business protocol. Pakar uses existing AVR flow/maintenance ownership and finite typed audio cues; no arbitrary PU address, busy flag or byte-to-buzzer callback is imported.
+- Omitted/replaced code: `Direct wifi_station/softap config mutation, AssignResult into the global command buffer`. Disposition: **replaced**. Reason: Shared typed JSON configuration owners validate and persist updates without truncating into the current command buffer or mutating ESP8266-only SDK structures. The generic descriptor/read-only mechanism itself is retained.
+- Omitted/replaced code: `AP_SSID/AP_Password descriptors, Firmware_Hash/Build_Date named getters and legacy save/restore aliases`. Disposition: **pending**. Reason: Current shell descriptors do not expose every donor property/alias. AP credential editing, exact firmware hash/build metadata parity and reviewed restore semantics remain useful gaps; info/telemetry are not claimed byte-for-byte substitutes.
+- Omitted/replaced code: `Commented AP_IP/AP_Gateway/AP_Subnet parameter entries`. Disposition: **pending**. Reason: The donor leaves these entries commented out. Pakar station static-address fields are implemented, but independent configurable AP address/gateway/subnet via the shell is not claimed complete.
+- Test-code evidence: `tests/shell_wire_test.cpp:29 [UTF8-LF sha256=5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9; anchor=4294967296]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:31 [UTF8-LF sha256=6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929; anchor=Readonly never emits Set.]`.
+- Test-code evidence: `tests/telnet_shell_test.cpp:71 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=!editor.remember(true)]`.
+- Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
+- Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
+- Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
+- Remaining: Review remaining AP/hash/build/restore descriptor gaps separately; generic get/set source coverage does not certify every prior PU property.
+
+### PU850-ESP: `LocalLib/Commands.h`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `48c0deb76d6105090fe1d58a2449427681a88775b1e63ddbb1b28ecff6341961`.
+
+- Target: `firmware/esp8266/src/ShellService.h:98 [UTF8-LF sha256=b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb; anchor=bool shellSet(]`.
+- Target: `firmware/esp8266/src/ShellTuiBinding.h:20 [UTF8-LF sha256=6c75b3e4440549ddd7851add400f69cff62e11e501075fe45c322795f688b5c5; anchor=shellGet(*p)]`.
+- Target: `firmware/esp8266/src/ShellSettings.h:19 [UTF8-LF sha256=edc36bb702f4304ee1eac6e2e848cf4f62b9d075bb9d6e90349029c768ae19e4; anchor=bool configure(]`.
+- Retained: DeviceParameter name/type/read-only/get/set design is adapted to ShellProperty descriptors for hostname/label, network mode/DHCP/static addressing, station SSID/write-only password, MQTT/WebSocket endpoints, telemetry interval, shell settings and LED mode/brightness/effect.
+- Retained: Read-only observations expose version, boot identity, uptime, heap, AVR presence, display ACK state, firmware phase and actual LED backend/RMT/DMA capability; no shell-specific LED engine or second configuration store is introduced.
+- Retained: Useful echo/status/connect behavior maps to echo/status and queued network reconnect; typed JSON builds route device/cell/bulk/pixel/audio/display/firmware actions through existing validators and maintenance owners instead of PU callback addresses.
+- Retained: Durable configuration owners apply validated updates rather than copying the donor manual Settings_Write/Settings_Read lifecycle or direct ESP8266 SDK network structures.
+- Omitted/replaced code: `Station_Password/AP_Password getters returning plaintext credentials`. Disposition: **replaced**. Reason: Secret descriptors are write-only and display <write-only>/[hidden]; classified secret commands and URL credentials are excluded from history. Copying plaintext getters would disclose credentials over Telnet and framed USB.
+- Omitted/replaced code: `busy/ready SendESPStatus_ToPU and Request_Beep PU protocol callbacks`. Disposition: **not-applicable**. Reason: These addresses/status opcodes belong to the removed PU850 business protocol. Pakar uses existing AVR flow/maintenance ownership and finite typed audio cues; no arbitrary PU address, busy flag or byte-to-buzzer callback is imported.
+- Omitted/replaced code: `Direct wifi_station/softap config mutation, AssignResult into the global command buffer`. Disposition: **replaced**. Reason: Shared typed JSON configuration owners validate and persist updates without truncating into the current command buffer or mutating ESP8266-only SDK structures. The generic descriptor/read-only mechanism itself is retained.
+- Omitted/replaced code: `AP_SSID/AP_Password descriptors, Firmware_Hash/Build_Date named getters and legacy save/restore aliases`. Disposition: **pending**. Reason: Current shell descriptors do not expose every donor property/alias. AP credential editing, exact firmware hash/build metadata parity and reviewed restore semantics remain useful gaps; info/telemetry are not claimed byte-for-byte substitutes.
+- Omitted/replaced code: `Commented AP_IP/AP_Gateway/AP_Subnet parameter entries`. Disposition: **pending**. Reason: The donor leaves these entries commented out. Pakar station static-address fields are implemented, but independent configurable AP address/gateway/subnet via the shell is not claimed complete.
+- Test-code evidence: `tests/shell_wire_test.cpp:29 [UTF8-LF sha256=5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9; anchor=4294967296]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:31 [UTF8-LF sha256=6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929; anchor=Readonly never emits Set.]`.
+- Test-code evidence: `tests/telnet_shell_test.cpp:71 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=!editor.remember(true)]`.
+- Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
+- Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
+- Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
+- Remaining: Review remaining AP/hash/build/restore descriptor gaps separately; generic get/set source coverage does not certify every prior PU property.
 
 ### PU850-ESP: `LocalLib/FirmwareTransfer.cpp`
 
@@ -2942,44 +2998,60 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `0113acbff973285f5af186a4857d94cc2df3c99813e0db4ba876f861e7c1083b`.
 
-- Target: `firmware/esp8266/src/TelnetShell.h:63 [UTF8-LF sha256=dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec; anchor=class LineEditor]`.
-- Target: `firmware/esp8266/esp8266.ino:3537 [UTF8-LF sha256=8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d; anchor=void executeTelnetCommand(String line)]`.
-- Retained: Actual insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL handling retained.
-- Retained: Password input is not echoed and is scrubbed; overflow discards the entire line instead of executing a truncated command; editor state is independent.
-- Omitted/replaced code: `ShellTransport_Serial, SerialShellSession and serial-shell service`. Disposition: **pending**. Reason: USB currently owns COBS-framed PC commands. Mixing raw shell bytes would corrupt that transport; provide an explicit framed shell channel or negotiated mode before claiming equivalent serial-shell support.
-- Omitted/replaced code: `DeviceParameters get/set registry, readonly behavior and commandMap callbacks`. Disposition: **pending**. Reason: Pakar's fixed game/identity/display commands are not equivalent to the useful generic parameter registry. Audit/adapt the generic registry and supply Pakar parameter descriptors; only actual PU application callbacks may be excluded after individual review.
-- Omitted/replaced code: `ShellBroadcastLine, event-line prompt erasure/redraw and active-session output routing`. Disposition: **pending**. Reason: Pakar redraws during editing but does not implement the donor's asynchronous event-broadcast/session routing contract; a WebSocket event feed is not a Telnet prompt-safe replacement.
-- Omitted/replaced code: `clear/cls, echo, hex, upper/noupper and reusable formatting helpers`. Disposition: **pending**. Reason: The current command set omits these donor shell utilities. No concrete product or hardware reason justifies blanket deletion; implement applicable utilities or provide reviewed alternatives.
-- Omitted/replaced code: `NumberFromString unchecked multiply/add and permissive embedded minus/comma parsing`. Disposition: **pending**. Reason: Do not copy signed-overflow-prone numeric parsing unchanged. The current String::toInt call sites still require a bounded strict parser plus overflow tests; avoiding this donor function alone is not a proven superior replacement.
-- Omitted/replaced code: `Mutable global command pointer and include Commands.cpp adapter`. Disposition: **replaced**. Reason: Instance-owned line/editor state and explicit command dispatch avoid the legacy global pointer/include ownership pattern. Useful command behavior itself remains pending rather than excluded with the adapter.
-- Test-code evidence: `tests/telnet_shell_test.cpp:45 [UTF8-LF sha256=f7dd91333d3aced80fdab41b146b98ecd2e9dd3896a504f8a70cfb33912f00e9; anchor=LineEditor::TooLong]`.
-- Remaining: Port generic registry and useful utilities; implement prompt-safe asynchronous events; keep serial framing explicit.
-- Remaining: Harden command JSON construction/numeric arguments and report queued versus AVR-acknowledged outcomes; current immediate OK is not proof of AVR execution.
+- Target: `firmware/esp8266/src/TelnetShell.h:95 [UTF8-LF sha256=20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281; anchor=class LineEditor]`.
+- Target: `firmware/esp8266/src/ShellService.h:48 [UTF8-LF sha256=b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb; anchor=const ShellProperty shellProperties[]]`.
+- Target: `firmware/esp8266/src/ShellWire.h:9 [UTF8-LF sha256=af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216; anchor=class SerialChannel]`.
+- Target: `firmware/esp8266/src/ShellTuiBinding.h:3 [UTF8-LF sha256=6c75b3e4440549ddd7851add400f69cff62e11e501075fe45c322795f688b5c5; anchor=struct ShellTuiSnapshot]`.
+- Target: `tools/device-shell.ps1:8 [UTF8-LF sha256=4e197e3502eb6ef40d2a3df7bdde97ed3c05140c97e06e3d07426232732a9c55; anchor=AutomaticCommandRetry=$false]`.
+- Retained: PU ShellSession transport/editor separation, insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL behavior are adapted in instance-owned TelnetParser/LineEditor.
+- Retained: Generic parameter lookup/read-only enforcement and dispatch now map to ShellProperty descriptors, typed shellSet and the existing Pakar command/configuration owners; the same descriptors feed the device TUI.
+- Retained: Session-owned prompt-safe watch summaries use redrawEvent without losing the draft/cursor. Utilities clear/cls, echo, hex and upper/noupper are present; bounded eight-entry history adds recall without retaining classified secrets.
+- Retained: Raw serial ownership is replaced by an additive boot-bound COBS shell channel: explicit token, contiguous nonwrapping input sequence, duplicate-byte ACK without redispatch, and immutable output windows consumed only by matching ACK.
+- Omitted/replaced code: `Raw ShellTransport_Serial/SerialShellSession and mutable global command/include Commands.cpp adapter`. Disposition: **replaced**. Reason: A separately boot-fenced COBS shell channel preserves USB recovery/protocol framing rather than mixing raw ASCII into the existing decoder. Instance-owned dispatch removes the donor global command/output pointer; host script never automatically replays uncertain input.
+- Omitted/replaced code: `NumberFromString permissive comma/minus parsing and unchecked signed multiply/add`. Disposition: **replaced**. Reason: Strict unsignedNumber validates full decimal input and overflow before conversion; command-specific signed display handling is explicit. Fixtures reject signs, commas, trailing junk and UINT32 overflow rather than silently normalizing a dangerous argument.
+- Omitted/replaced code: `ShellBroadcastLine unrestricted event broadcast`. Disposition: **replaced**. Reason: Opt-in per-session watch publishes changed bounded summaries with prompt erase/redraw and backpressure. This is not an ordered complete peripheral event stream; individual event delivery remains outside this shell slice.
+- Omitted/replaced code: `upper/noupper applies to all donor input echo and prompt redraw`. Disposition: **pending**. Reason: Current session upper option changes echo command output only; the original wider input-display behavior is not claimed equivalent.
+- Omitted/replaced code: `Donor printable-ASCII editor and richer Unicode terminals`. Disposition: **pending**. Reason: Arduino line editor/TUI deliberately accepts printable ASCII and sanitizes external controls. Persian/UTF-8 editing, bidi layout and font support are not supplied by this shell adaptation.
+- Test-code evidence: `tests/telnet_shell_test.cpp:88 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=editor.redrawEvent(]`.
+- Test-code evidence: `tests/shell_wire_test.cpp:11 [UTF8-LF sha256=5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9; anchor=C::Duplicate]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:22 [UTF8-LF sha256=6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929; anchor=Unchanged Enter is not a write.]`.
+- Test-code evidence: `tools/test-shell.ps1:5 [UTF8-LF sha256=415c8ede3ffc365fdef97322e47ac6ed0e667e832498df3a775e150d1a5522cc; anchor=-Concern device-shell -Gate]`.
+- Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
+- Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
+- Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
 
 ### PU850-ESP: `LocalLib/Shell.h`
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `9f8e76509ad917d8e204a82d9495e376607a159547d4eee3de6760e6bd5d7da6`.
 
-- Target: `firmware/esp8266/src/TelnetShell.h:63 [UTF8-LF sha256=dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec; anchor=class LineEditor]`.
-- Target: `firmware/esp8266/esp8266.ino:3537 [UTF8-LF sha256=8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d; anchor=void executeTelnetCommand(String line)]`.
-- Retained: Actual insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL handling retained.
-- Retained: Password input is not echoed and is scrubbed; overflow discards the entire line instead of executing a truncated command; editor state is independent.
-- Omitted/replaced code: `ShellTransport_Serial, SerialShellSession and serial-shell service`. Disposition: **pending**. Reason: USB currently owns COBS-framed PC commands. Mixing raw shell bytes would corrupt that transport; provide an explicit framed shell channel or negotiated mode before claiming equivalent serial-shell support.
-- Omitted/replaced code: `DeviceParameters get/set registry, readonly behavior and commandMap callbacks`. Disposition: **pending**. Reason: Pakar's fixed game/identity/display commands are not equivalent to the useful generic parameter registry. Audit/adapt the generic registry and supply Pakar parameter descriptors; only actual PU application callbacks may be excluded after individual review.
-- Omitted/replaced code: `ShellBroadcastLine, event-line prompt erasure/redraw and active-session output routing`. Disposition: **pending**. Reason: Pakar redraws during editing but does not implement the donor's asynchronous event-broadcast/session routing contract; a WebSocket event feed is not a Telnet prompt-safe replacement.
-- Omitted/replaced code: `clear/cls, echo, hex, upper/noupper and reusable formatting helpers`. Disposition: **pending**. Reason: The current command set omits these donor shell utilities. No concrete product or hardware reason justifies blanket deletion; implement applicable utilities or provide reviewed alternatives.
-- Omitted/replaced code: `NumberFromString unchecked multiply/add and permissive embedded minus/comma parsing`. Disposition: **pending**. Reason: Do not copy signed-overflow-prone numeric parsing unchanged. The current String::toInt call sites still require a bounded strict parser plus overflow tests; avoiding this donor function alone is not a proven superior replacement.
-- Omitted/replaced code: `Mutable global command pointer and include Commands.cpp adapter`. Disposition: **replaced**. Reason: Instance-owned line/editor state and explicit command dispatch avoid the legacy global pointer/include ownership pattern. Useful command behavior itself remains pending rather than excluded with the adapter.
-- Test-code evidence: `tests/telnet_shell_test.cpp:45 [UTF8-LF sha256=f7dd91333d3aced80fdab41b146b98ecd2e9dd3896a504f8a70cfb33912f00e9; anchor=LineEditor::TooLong]`.
-- Remaining: Port generic registry and useful utilities; implement prompt-safe asynchronous events; keep serial framing explicit.
-- Remaining: Harden command JSON construction/numeric arguments and report queued versus AVR-acknowledged outcomes; current immediate OK is not proof of AVR execution.
+- Target: `firmware/esp8266/src/TelnetShell.h:95 [UTF8-LF sha256=20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281; anchor=class LineEditor]`.
+- Target: `firmware/esp8266/src/ShellService.h:48 [UTF8-LF sha256=b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb; anchor=const ShellProperty shellProperties[]]`.
+- Target: `firmware/esp8266/src/ShellWire.h:9 [UTF8-LF sha256=af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216; anchor=class SerialChannel]`.
+- Target: `firmware/esp8266/src/ShellTuiBinding.h:3 [UTF8-LF sha256=6c75b3e4440549ddd7851add400f69cff62e11e501075fe45c322795f688b5c5; anchor=struct ShellTuiSnapshot]`.
+- Target: `tools/device-shell.ps1:8 [UTF8-LF sha256=4e197e3502eb6ef40d2a3df7bdde97ed3c05140c97e06e3d07426232732a9c55; anchor=AutomaticCommandRetry=$false]`.
+- Retained: PU ShellSession transport/editor separation, insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL behavior are adapted in instance-owned TelnetParser/LineEditor.
+- Retained: Generic parameter lookup/read-only enforcement and dispatch now map to ShellProperty descriptors, typed shellSet and the existing Pakar command/configuration owners; the same descriptors feed the device TUI.
+- Retained: Session-owned prompt-safe watch summaries use redrawEvent without losing the draft/cursor. Utilities clear/cls, echo, hex and upper/noupper are present; bounded eight-entry history adds recall without retaining classified secrets.
+- Retained: Raw serial ownership is replaced by an additive boot-bound COBS shell channel: explicit token, contiguous nonwrapping input sequence, duplicate-byte ACK without redispatch, and immutable output windows consumed only by matching ACK.
+- Omitted/replaced code: `Raw ShellTransport_Serial/SerialShellSession and mutable global command/include Commands.cpp adapter`. Disposition: **replaced**. Reason: A separately boot-fenced COBS shell channel preserves USB recovery/protocol framing rather than mixing raw ASCII into the existing decoder. Instance-owned dispatch removes the donor global command/output pointer; host script never automatically replays uncertain input.
+- Omitted/replaced code: `NumberFromString permissive comma/minus parsing and unchecked signed multiply/add`. Disposition: **replaced**. Reason: Strict unsignedNumber validates full decimal input and overflow before conversion; command-specific signed display handling is explicit. Fixtures reject signs, commas, trailing junk and UINT32 overflow rather than silently normalizing a dangerous argument.
+- Omitted/replaced code: `ShellBroadcastLine unrestricted event broadcast`. Disposition: **replaced**. Reason: Opt-in per-session watch publishes changed bounded summaries with prompt erase/redraw and backpressure. This is not an ordered complete peripheral event stream; individual event delivery remains outside this shell slice.
+- Omitted/replaced code: `upper/noupper applies to all donor input echo and prompt redraw`. Disposition: **pending**. Reason: Current session upper option changes echo command output only; the original wider input-display behavior is not claimed equivalent.
+- Omitted/replaced code: `Donor printable-ASCII editor and richer Unicode terminals`. Disposition: **pending**. Reason: Arduino line editor/TUI deliberately accepts printable ASCII and sanitizes external controls. Persian/UTF-8 editing, bidi layout and font support are not supplied by this shell adaptation.
+- Test-code evidence: `tests/telnet_shell_test.cpp:88 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=editor.redrawEvent(]`.
+- Test-code evidence: `tests/shell_wire_test.cpp:11 [UTF8-LF sha256=5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9; anchor=C::Duplicate]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:22 [UTF8-LF sha256=6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929; anchor=Unchanged Enter is not a write.]`.
+- Test-code evidence: `tools/test-shell.ps1:5 [UTF8-LF sha256=415c8ede3ffc365fdef97322e47ac6ed0e667e832498df3a775e150d1a5522cc; anchor=-Concern device-shell -Gate]`.
+- Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
+- Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
+- Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
 
 ### PU850-ESP: `LocalLib/SSDP.cpp`
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `2f9c9f8f0b613d958e8bb31920174a7d8fa9f523b3477b88d9430a71d385bf48`.
 
-- Target: `firmware/esp32s3/src/Discovery.h:10 [UTF8-LF sha256=ddd272f6906d24f37e88efacd9cf198e531a850b1ab537f1d8e2d7687c2cd298; anchor=class Discovery {]`.
-- Target: `firmware/esp32s3/src/Discovery.h:40 [UTF8-LF sha256=ddd272f6906d24f37e88efacd9cf198e531a850b1ab537f1d8e2d7687c2cd298; anchor=String xmlDescription() const {]`.
+- Target: `firmware/esp32s3/src/Discovery.h:10 [UTF8-LF sha256=808ff76211955a8cb72c0c0e8d2b771315b7cdbfe9783324685642d7bfcd23ad; anchor=class Discovery {]`.
+- Target: `firmware/esp32s3/src/Discovery.h:40 [UTF8-LF sha256=808ff76211955a8cb72c0c0e8d2b771315b7cdbfe9783324685642d7bfcd23ad; anchor=String xmlDescription() const {]`.
 - Retained: Complete donor wrapper was reread by the evidence owner, in addition to network agent's full read. Actual initSSDP metadata/schema/periodic-service ownership maps to Discovery::begin/service/xmlDescription and the imported SsdpDevice::schema XML escaper. Hostname/display name/application/version are Pakar-owned; no PU850 EEPROM business identity is retained.
 - Omitted/replaced code: `ASA0002E/E_MainVersion/E_SerialNumber globals, include-SSDPDevice.cpp pattern, server-global registration and duplicate hand-built description`. Disposition: **replaced**. Reason: Canonical main registers the description route; instance-owned Discovery uses consistent Pakar metadata and the imported escaped schema. No duplicate compiled .cpp/global service or PU serial/version state is retained.
 - Omitted/replaced code: `Optional UPnP serviceList/SOAP/GENA implementation`. Disposition: **not-applicable**. Reason: The donor intentionally does not advertise an unimplemented service. Pakar likewise leaves optional service discovery disabled; no invented control protocol is exposed. Add a real contract before enabling it.
@@ -2989,7 +3061,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `f9f7b078b6085e731f0ed42c5dd983d1ab0a3a48c2912797406fb3e0b0df3ea5`.
 
-- Target: `firmware/esp32s3/src/Discovery.h:53 [UTF8-LF sha256=ddd272f6906d24f37e88efacd9cf198e531a850b1ab537f1d8e2d7687c2cd298; anchor=SsdpDevice ssdp_;]`.
+- Target: `firmware/esp32s3/src/Discovery.h:53 [UTF8-LF sha256=808ff76211955a8cb72c0c0e8d2b771315b7cdbfe9783324685642d7bfcd23ad; anchor=SsdpDevice ssdp_;]`.
 - Retained: Complete tiny donor header was reread by the evidence owner. Its current role is only the historical SSDP-to-singleton alias; actual device declarations map separately to the imported SsdpDevice.h.
 - Omitted/replaced code: `#define SSDP SSDPDevice singleton shorthand`. Disposition: **replaced**. Reason: Explicit Discovery-owned instance avoids macro alias collisions and makes restart/teardown ownership clear; no useful implementation is silently dropped with this alias.
 - Remaining: Validate actual S3 AP/STA multicast membership, M-SEARCH responses, alive/update/byebye/rename lifecycle, interface-correct LOCATION, escaped description and router/phone interoperability. Source anchors and compilation do not prove on-LAN discovery.
@@ -3025,31 +3097,47 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `a78d88c149d19d8989c6db3dce0731189c2bf46c45fd64b73e9871a80f6c9bdd`.
 
-- Target: `firmware/esp8266/src/TelnetShell.h:13 [UTF8-LF sha256=dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec; anchor=class TelnetParser]`.
-- Target: `firmware/esp8266/esp8266.ino:3672 [UTF8-LF sha256=8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d; anchor=void serviceTelnet() {]`.
-- Retained: Actual five-state IAC/option/subnegotiation parser, escaped IAC, ECHO/SGA negotiation and greeting retained in standalone WiFiClient-based implementation.
-- Retained: Pakar tracks option state to suppress greeting-ack negotiation loops; unsupported DO/WILL options are explicitly rejected.
-- Omitted/replaced code: `ESPTelnet dependency and ESP8266WEBSERVER_H synchronous-header suppression`. Disposition: **replaced**. Reason: Native WiFiServer/WiFiClient removes the dependency which pulled a conflicting synchronous web-server header into an async server product; the actual protocol parser was retained rather than replaced by plain newline input.
-- Omitted/replaced code: `Telnet_Port and listener restart/stop on port or AP/STA availability changes; matching mDNS add/remove`. Disposition: **pending**. Reason: Pakar currently hardcodes port 23 and starts its listener at setup. Donor network lifecycle/port configurability is useful generic behavior and is not fully mapped or runtime tested.
-- Omitted/replaced code: `Product-branded ANSI greeting and legacy ShellSession callback hookup`. Disposition: **replaced**. Reason: Pakar's authenticated greeting and instance-owned parser/editor serve the new product. Plain Telnet still transmits credentials without encryption; this must be shown/configurable as a trusted-LAN-only surface.
-- Test-code evidence: `tests/telnet_shell_test.cpp:17 [UTF8-LF sha256=f7dd91333d3aced80fdab41b146b98ecd2e9dd3896a504f8a70cfb33912f00e9; anchor=assert(output.empty());]`.
-- Remaining: Expose configurable enable/port and network-aware listener/discovery lifecycle; verify reconnect, disabled port, AP and station loss on hardware.
-- Remaining: Prove actual Telnet login, command/ACK outcome and simultaneous API/WebSocket clients; source parser tests are not LAN acceptance.
+- Target: `firmware/esp8266/src/TelnetShell.h:45 [UTF8-LF sha256=20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281; anchor=class TelnetParser]`.
+- Target: `firmware/esp8266/src/ShellService.h:295 [UTF8-LF sha256=b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb; anchor=void serviceDeviceShells()]`.
+- Target: `firmware/esp8266/src/ShellSettings.h:9 [UTF8-LF sha256=edc36bb702f4304ee1eac6e2e848cf4f62b9d075bb9d6e90349029c768ae19e4; anchor=class ShellSettings]`.
+- Target: `firmware/esp8266/src/ShellBuild.h:5 [UTF8-LF sha256=a2a8a9ee528e9cb48a64ad11268ff473cfbaecc8351ab01c1d9c0d55ed8128a7; anchor=PAKAR_TELNET_SESSIONS]`.
+- Retained: Actual five-state IAC/option/subnegotiation parser, escaped IAC, server ECHO/SGA greeting and unsupported-option rejection are retained. Option state suppresses greeting-ACK negotiation loops.
+- Retained: Native WiFiServer/WiFiClient sessions use independent parser/editor/TUI/auth state, configurable bounded session count, 64-byte input budget, bounded output and nonblocking S3 socket writes; slow or overfull sessions retire rather than blocking LED/UART work.
+- Retained: ShellSettings persists enable, TCP port and color with checksum, pending write/readback/rename and unchanged-write suppression. Configuration schedules listener retirement/rebind after its response; published discovery port comes from the actual bound listener.
+- Retained: Authentication readiness/security revision fences both Telnet and framed USB; asynchronous close requests are deferred to the main loop so callbacks do not delete a live loop-owned editor/socket.
+- Omitted/replaced code: `ESPTelnet dependency and ESP8266WEBSERVER_H synchronous-header suppression`. Disposition: **replaced**. Reason: Native WiFiServer/WiFiClient avoids the conflicting synchronous web header while retaining the actual Telnet protocol/parser behavior, not merely newline input.
+- Omitted/replaced code: `Single global TelnetShellSession and legacy product greeting callbacks`. Disposition: **replaced**. Reason: Bounded independent sessions use Pakar application/hostname identity and the existing access owner. Telnet is still plaintext and is not claimed encrypted; disabling it or compile-time gating remains available.
+- Omitted/replaced code: `TelnetNetworkAvailable stop/restart and mDNS remove on every AP/station loss`. Disposition: **pending**. Reason: Source now supports durable enable/port rebind and truthful actual-listener discovery. Exact donor network-loss transition parity and multi-interface socket behavior still need explicit review/live acceptance rather than being inferred from settings tests.
+- Test-code evidence: `tests/telnet_shell_test.cpp:18 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=No negotiation loops on greeting acknowledgements.]`.
+- Test-code evidence: `tests/shell_wire_test.cpp:34 [UTF8-LF sha256=5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9; anchor=fs.failRename=true]`.
+- Test-code evidence: `tests/shell_wire_test.cpp:36 [UTF8-LF sha256=5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9; anchor=!corrupt.enabled()]`.
+- Test-code evidence: `tools/test-shell.ps1:5 [UTF8-LF sha256=415c8ede3ffc365fdef97322e47ac6ed0e667e832498df3a775e150d1a5522cc; anchor=-Concern device-shell -Gate]`.
+- Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
+- Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
+- Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
 
 ### PU850-ESP: `LocalLib/Telnet.h`
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `e85f5f1a4f2767323d9886313ddb2aabfd3acad7d781c2770bc8d2b2d2c6cb15`.
 
-- Target: `firmware/esp8266/src/TelnetShell.h:13 [UTF8-LF sha256=dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec; anchor=class TelnetParser]`.
-- Target: `firmware/esp8266/esp8266.ino:3672 [UTF8-LF sha256=8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d; anchor=void serviceTelnet() {]`.
-- Retained: Actual five-state IAC/option/subnegotiation parser, escaped IAC, ECHO/SGA negotiation and greeting retained in standalone WiFiClient-based implementation.
-- Retained: Pakar tracks option state to suppress greeting-ack negotiation loops; unsupported DO/WILL options are explicitly rejected.
-- Omitted/replaced code: `ESPTelnet dependency and ESP8266WEBSERVER_H synchronous-header suppression`. Disposition: **replaced**. Reason: Native WiFiServer/WiFiClient removes the dependency which pulled a conflicting synchronous web-server header into an async server product; the actual protocol parser was retained rather than replaced by plain newline input.
-- Omitted/replaced code: `Telnet_Port and listener restart/stop on port or AP/STA availability changes; matching mDNS add/remove`. Disposition: **pending**. Reason: Pakar currently hardcodes port 23 and starts its listener at setup. Donor network lifecycle/port configurability is useful generic behavior and is not fully mapped or runtime tested.
-- Omitted/replaced code: `Product-branded ANSI greeting and legacy ShellSession callback hookup`. Disposition: **replaced**. Reason: Pakar's authenticated greeting and instance-owned parser/editor serve the new product. Plain Telnet still transmits credentials without encryption; this must be shown/configurable as a trusted-LAN-only surface.
-- Test-code evidence: `tests/telnet_shell_test.cpp:17 [UTF8-LF sha256=f7dd91333d3aced80fdab41b146b98ecd2e9dd3896a504f8a70cfb33912f00e9; anchor=assert(output.empty());]`.
-- Remaining: Expose configurable enable/port and network-aware listener/discovery lifecycle; verify reconnect, disabled port, AP and station loss on hardware.
-- Remaining: Prove actual Telnet login, command/ACK outcome and simultaneous API/WebSocket clients; source parser tests are not LAN acceptance.
+- Target: `firmware/esp8266/src/TelnetShell.h:45 [UTF8-LF sha256=20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281; anchor=class TelnetParser]`.
+- Target: `firmware/esp8266/src/ShellService.h:295 [UTF8-LF sha256=b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb; anchor=void serviceDeviceShells()]`.
+- Target: `firmware/esp8266/src/ShellSettings.h:9 [UTF8-LF sha256=edc36bb702f4304ee1eac6e2e848cf4f62b9d075bb9d6e90349029c768ae19e4; anchor=class ShellSettings]`.
+- Target: `firmware/esp8266/src/ShellBuild.h:5 [UTF8-LF sha256=a2a8a9ee528e9cb48a64ad11268ff473cfbaecc8351ab01c1d9c0d55ed8128a7; anchor=PAKAR_TELNET_SESSIONS]`.
+- Retained: Actual five-state IAC/option/subnegotiation parser, escaped IAC, server ECHO/SGA greeting and unsupported-option rejection are retained. Option state suppresses greeting-ACK negotiation loops.
+- Retained: Native WiFiServer/WiFiClient sessions use independent parser/editor/TUI/auth state, configurable bounded session count, 64-byte input budget, bounded output and nonblocking S3 socket writes; slow or overfull sessions retire rather than blocking LED/UART work.
+- Retained: ShellSettings persists enable, TCP port and color with checksum, pending write/readback/rename and unchanged-write suppression. Configuration schedules listener retirement/rebind after its response; published discovery port comes from the actual bound listener.
+- Retained: Authentication readiness/security revision fences both Telnet and framed USB; asynchronous close requests are deferred to the main loop so callbacks do not delete a live loop-owned editor/socket.
+- Omitted/replaced code: `ESPTelnet dependency and ESP8266WEBSERVER_H synchronous-header suppression`. Disposition: **replaced**. Reason: Native WiFiServer/WiFiClient avoids the conflicting synchronous web header while retaining the actual Telnet protocol/parser behavior, not merely newline input.
+- Omitted/replaced code: `Single global TelnetShellSession and legacy product greeting callbacks`. Disposition: **replaced**. Reason: Bounded independent sessions use Pakar application/hostname identity and the existing access owner. Telnet is still plaintext and is not claimed encrypted; disabling it or compile-time gating remains available.
+- Omitted/replaced code: `TelnetNetworkAvailable stop/restart and mDNS remove on every AP/station loss`. Disposition: **pending**. Reason: Source now supports durable enable/port rebind and truthful actual-listener discovery. Exact donor network-loss transition parity and multi-interface socket behavior still need explicit review/live acceptance rather than being inferred from settings tests.
+- Test-code evidence: `tests/telnet_shell_test.cpp:18 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=No negotiation loops on greeting acknowledgements.]`.
+- Test-code evidence: `tests/shell_wire_test.cpp:34 [UTF8-LF sha256=5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9; anchor=fs.failRename=true]`.
+- Test-code evidence: `tests/shell_wire_test.cpp:36 [UTF8-LF sha256=5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9; anchor=!corrupt.enabled()]`.
+- Test-code evidence: `tools/test-shell.ps1:5 [UTF8-LF sha256=415c8ede3ffc365fdef97322e47ac6ed0e667e832498df3a775e150d1a5522cc; anchor=-Concern device-shell -Gate]`.
+- Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
+- Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
+- Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
 
 ### PU850-ESP: `pu850-esp.ino`
 
@@ -3058,21 +3146,21 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Target: `firmware/esp8266/src/NetworkConfig.cpp:230 [UTF8-LF sha256=ca7a5b310f4ad58d329cdef66050c9f746056eafe100f870156dc0074d6648ec; anchor=bool NetworkConfigStore::configure(]`.
 - Target: `firmware/esp8266/src/NetworkPath.h:55 [UTF8-LF sha256=03854f708e454c2ba60b2d7cedd1b750a826df3418335bb065451979d12032f7; anchor=inline bool service()]`.
 - Target: `firmware/esp8266/src/EspFrontPanel.h:82 [UTF8-LF sha256=373453bd3730a23b62740ebcbd672d9de15bffac40068bb2e4868b4344ef8e04; anchor=Queries report the actual current connection/settings]`.
-- Target: `firmware/esp32s3/src/Discovery.h:15 [UTF8-LF sha256=ddd272f6906d24f37e88efacd9cf198e531a850b1ab537f1d8e2d7687c2cd298; anchor=mdnsReady_ = startDiscoveryMdns(]`.
-- Target: `firmware/esp32s3/src/DiscoveryMdns.h:14 [UTF8-LF sha256=8b456d394c7cd82bc4b77fec88d44887ef8c7e1ea454060bcb76b91e1daac1a0; anchor=bool startDiscoveryMdns(]`.
+- Target: `firmware/esp32s3/src/Discovery.h:15 [UTF8-LF sha256=808ff76211955a8cb72c0c0e8d2b771315b7cdbfe9783324685642d7bfcd23ad; anchor=mdnsReady_ = startDiscoveryMdns(]`.
+- Target: `firmware/esp32s3/src/DiscoveryMdns.h:14 [UTF8-LF sha256=3d8ea49f07d291a074247228f93d8c86e52dd9c4fb892c089efd019a4b28dd5e; anchor=bool startDiscoveryMdns(]`.
 - Retained: Actual complete 65234-byte donor sketch read through EOF, not keyword-screened. WiFi_Setup, Settings_Read/Settings_Write, setNetFlags, hostname change and ConfirmSettings were compared to the integrated Pakar network/configuration owner. Persisted AP-only/STA-only/AP+STA, stable configured hostname without chip suffixes, station credentials, DHCP/static address/gateway/subnet/DNS and reconnect behavior map to NetworkConfigStore and NetworkPath; no second network service or PU business state is introduced.
 - Retained: Actual donor startup/service ownership is adapted to the S3 checked mDNS/DNS-SD registration helper and existing SSDP/MNDP interface owners. Every required service/TXT registration is checked, partial initialization is retired before bounded retry, and failed registration is not reported ready. AP SSID is explicitly bounded to32 bytes while full DNS hostname remains unchanged; a failed STA configuration preserves genuinely started AP recovery.
 - Retained: ESP settings are exposed through the same persisted network owner used by API/Web/native/mobile. The paired AVR front-panel adapter offers actual fresh mode/DHCP/connectivity/hostname preview and queues reconnect/scan; queries never replay stale snapshots or evict the previous mutation receipt. Scan admission is not misrepresented as completed SSID results.
 - Retained: Donor storage writes are adapted to checksum/exact private-layout validation, identical-write suppression, pending-file readback and rename. Invalid enabled-empty SSIDs fail closed to AP recovery; static profiles are retained while DHCP is selected. Accepted default-route and resolver changes are distinct, avoiding cloud-session teardown on DNS-only refreshes.
 - Retained: S3 latency policy adapts the actual donor WiFi_Setup wake/reconnect ownership to Arduino-ESP32 setSleep before and after interface startup: externally powered default explicitly disables modem sleep, with opt-in PAKAR_S3_WIFI_MODEM_SLEEP=1. Actual esp_wifi_get_ps readback is exposed separately from the requested policy; AP recovery is preserved even if setting latency policy fails. ESP8266 behavior and private persisted network layout are unchanged.
 - Omitted/replaced code: `ASA0002E PU-specific EEPROM/business settings and device/product globals`. Disposition: **replaced**. Reason: Pakar has a different AVR/S3 protocol, matrix/game capabilities and private flash records. The reusable network identity/settings behavior is retained through current typed owners; blindly copying PU EEPROM addresses, serial/model state or business commands would corrupt identity/settings rather than add a supported feature.
-- Omitted/replaced code: `Configurable Telnet enable/port rebind and matching discovery lifecycle`. Disposition: **pending**. Reason: A bounded authenticated Pakar shell and Telnet path exist, but the donor enable/port lifecycle is not fully exposed and verified across configuration surfaces. Fixed telnet DNS-SD advertisement is not proof that dynamic shell/service state is synchronized.
+- Omitted/replaced code: `Live configurable Telnet enable/port rebind and matching discovery lifecycle acceptance`. Disposition: **pending**. Reason: The device-shell slice now exposes durable enabled/port/color via typed API/cloud commands and shell properties, closes/rebinds sessions on the loop owner, and advertises only the actually bound port. Focused registration/settings fixtures do not establish real restart, network-loss and multi-client lifecycle acceptance across AP/STA/Ethernet or parity in every client settings UI.
 - Omitted/replaced code: `S3 NetBIOS/LLMNR compatibility and complete physical network editors`. Disposition: **pending**. Reason: Current S3 discovery honestly reports NetBIOS unavailable; mDNS/DNS-SD/SSDP/MNDP are not substitutes for unimplemented NetBIOS/LLMNR. AVR front-panel mode/DHCP/reconnect/scan does not implement full SSID/password/static-address text editors or completed scan-result navigation; those useful features remain open.
 - Omitted/replaced code: `All generic sketch routes, cloud/time diagnostics, storage/control surfaces and complete donor-wide parity outside this network/front-panel slice`. Disposition: **pending**. Reason: Dedicated AsyncWebServer/AsyncOTA/FirmwareTransfer/Authentication/SSDP/MNDP comparisons preserve their own exact mappings and remaining acceptance. A complete sketch read is not an assertion that every route, shell action, network mode or generic tool was imported, deployed or physically accepted; each remaining behavior still requires its owning row and live evidence.
 - Test-code evidence: `tests/network_config_test.cpp:94 [UTF8-LF sha256=b557ca652f70e7dcf0d98c541259dad4d37cdd37f8b1b54b4957c530b0b56a2f; anchor=AP remains genuinely available on STA apply failure]`.
 - Test-code evidence: `tests/network_path_test.cpp:69 [UTF8-LF sha256=e1e1b8c23498d6b67bc8334f4c8d4c73bf88d83f7373930d11f90d8318d8ec69; anchor=state().routeChanges==fallbackRoutes]`.
 - Test-code evidence: `tests/esp_front_panel_test.cpp:94 [UTF8-LF sha256=58220f795fcb6d16277308285f37f7cede5af7f431ceafd675ad8bfe6f3c5013; anchor=f=request(E::Scan);f.sequence=12;service.handle(f,110]`.
-- Test-code evidence: `tests/discovery_mdns_test.cpp:42 [UTF8-LF sha256=52528e82b480078f521227fac46ec0b0905c128960d8566940969b100bd882fc; anchor=for(unsigned at=1;at<=10;++at)]`.
+- Test-code evidence: `tests/discovery_mdns_test.cpp:46 [UTF8-LF sha256=8dadf3c987f45da7d4087e9e1be36d0830a16a18cb91f452ebd699b48ec8872b; anchor=for(unsigned at=1;at<=10;++at)]`.
 - Remaining: Issue #2: verify persisted AP/STA/both across reboots, actual authorized DRS Tether scan/association, hostname/DHCP/static behavior and recovery without exposing credentials. Source fixtures do not prove RF, association or user visibility.
 - Remaining: Verify real AP/STA/Ethernet mDNS/DNS-SD/SSDP/MNDP discovery/rename and HTTP/WebSocket service under concurrent matrix/cloud traffic; resolve intermittent HTTP response loss before production acceptance. Complete the useful Telnet lifecycle, NetBIOS/LLMNR and physical text/scan editors rather than certifying whole-sketch parity.
 
@@ -3081,7 +3169,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `54df8b54e56a589f85b981f15996813e447fc14245ea8048c5f87cfd1f3fdf51`.
 
 - Target: `tools/firmware-dependencies.json:2 [UTF8-LF sha256=4a7dc6ef881b1100856419608f5eceaf5c748a7a890c1834fa48250985efe3c1; anchor="platforms"]`.
-- Target: `tools/build-firmware.ps1:120 [UTF8-LF sha256=92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267; anchor=esp32:esp32:esp32s3:CDCOnBoot]`.
+- Target: `tools/build-firmware.ps1:125 [UTF8-LF sha256=a073ac3d9401331d48b2c8c820ab11421b298d7b67413fd180d98925e2e12ef0; anchor=esp32:esp32:esp32s3:CDCOnBoot]`.
 - Retained: Read complete donor board profile/platform/library locks. Retain exact ESP8266 core/ArduinoJson/ESP Async TCP pins where applicable, preserve existing reviewed Pakar dependency pins, and keep actual S3/AVR FQBN/flags in the canonical wrapper.
 - Omitted/replaced code: `PU-specific board/profile and separate dependency/config write paths`. Disposition: **replaced**. Reason: Reuse applicable exact versions/official registries in one reviewed pin owner. Preserve operator config and Pakar hardware flags; no silent downgrade, duplicate Arduino_JSON API, unsupported library additions or automatic SDK initialization.
 - Test-code evidence: `tests/script_tooling_test.mjs:100 [UTF8-LF sha256=cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1; anchor=Script tooling:]`.
@@ -3369,6 +3457,24 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 - Scoped advantage: Bounded checkpoint only; no whole-repository superiority or physical acceptance claim.
 - Remaining: Complete useful omitted behavior and actual terminal/board acceptance; issue #2 remains open.
 
+### RayanLamp: `internal/tui/form.go`
+
+Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `3a3b4f13d0c839664edc2b15bb4418254463ff4d36016cb798a799016ef2890a`.
+
+- Target: `firmware/esp8266/src/ShellTui.h:81 [UTF8-LF sha256=619d9de1094638ee9dc8878aa749bdf14cfa1610f434fb6905a1d596e43e1307; anchor=if(editing_)return edit(ch,snapshot,action);]`.
+- Target: `firmware/esp8266/src/ShellTuiBinding.h:3 [UTF8-LF sha256=6c75b3e4440549ddd7851add400f69cff62e11e501075fe45c322795f688b5c5; anchor=struct ShellTuiSnapshot]`.
+- Retained: formIsFiltering focused-field key ownership is adapted to a pure ShellTui editing state: printable input/Tab cannot invoke workspace shortcuts while a draft is active; Esc/Ctrl-C cancel without applying.
+- Retained: Readonly fields cannot emit Set, unchanged Enter is not a write, CR-LF submits once, and a draft is cancelled if its key/editable/secret authority changes. Observed refreshes do not repaint or replace an active draft.
+- Retained: One shared ShellProperty snapshot binds TUI fields to the same shell/configuration validators, rather than introducing a separate TUI business or persistence layer.
+- Omitted/replaced code: `Huh form types, Go interface assertions and Bubble Tea runtime`. Disposition: **replaced**. Reason: The microcontroller uses an allocation-free C++ editing state and explicit Action handoff. No Go/Huh/Bubble Tea runtime is ported or required, and no full Huh select-filter UI is claimed.
+- Omitted/replaced code: `Unicode/Persian input and desktop form widgets`. Disposition: **pending**. Reason: Current Arduino form accepts bounded printable ASCII only; terminal character shaping, Persian editing and richer host widgets require separate implementation and acceptance.
+- Test-code evidence: `tests/shell_tui_test.cpp:33 [UTF8-LF sha256=6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929; anchor=private\trefresh]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:27 [UTF8-LF sha256=6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929; anchor=Async observation cannot repaint draft.]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:62 [UTF8-LF sha256=6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929; anchor=rows[0].editable=false]`.
+- Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
+- Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
+- Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
+
 ### RayanLamp: `internal/tui/keys.go`
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `9db93f624f1fcc5b850993de2c6cd2ca1304bf91034849f246dd54fb70a02720`.
@@ -3416,6 +3522,29 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 - Test-code evidence: `tests/terminal_ui_test.mjs:23 [UTF8-LF sha256=3916ae657e18de899b278509cd0f8fad53886579c9af53deebc6e47cb5ff9b26; anchor=TUI must reject redirected surfaces before contacting a device]`.
 - Scoped advantage: Bounded checkpoint only; no whole-repository superiority or physical acceptance claim.
 - Remaining: Complete useful omitted behavior and actual terminal/board acceptance; issue #2 remains open.
+
+### RayanLamp: `internal/tui/terminal.go`
+
+Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `3b56b9ee2bfa2e40b02e464c7cc2cd471d6dbb2148f06091bd56dfdf2926e1b3`.
+
+- Target: `firmware/esp8266/src/ShellWire.h:31 [UTF8-LF sha256=af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216; anchor=class OutputWindow]`.
+- Target: `firmware/esp8266/src/TelnetShell.h:17 [UTF8-LF sha256=20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281; anchor=inline size_t terminalText]`.
+- Target: `firmware/esp8266/src/ShellTui.h:10 [UTF8-LF sha256=619d9de1094638ee9dc8878aa749bdf14cfa1610f434fb6905a1d596e43e1307; anchor=class ShellTui]`.
+- Target: `firmware/esp8266/src/ShellService.h:277 [UTF8-LF sha256=b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb; anchor=void closeDeviceShells()]`.
+- Target: `tools/device-shell.ps1:25 [UTF8-LF sha256=4e197e3502eb6ef40d2a3df7bdde97ed3c05140c97e06e3d07426232732a9c55; anchor=Exactly once; uncertain input is NEVER replayed.]`.
+- Retained: Session-fenced immutable input/output ownership is adapted into SerialChannel/OutputWindow and the host terminal tool: explicit Open/token, no uncertain input replay, nonwrapping sequences, output ACK before consumption and explicit close.
+- Retained: Terminal safety is adapted into bounded terminalText and TUI rendering: external CSI/OSC/DCS/control payloads cannot inject terminal actions, and only the project renderer emits ANSI; output/drafts/transcripts are bounded.
+- Retained: Independent session state, draft preservation, explicit backpressure and batched TUI draws retain the donor terminal's ownership/refresh principles without moving networking or actuator work into callbacks.
+- Omitted/replaced code: `Go terminalOverlay, Bubble Tea viewport, 512KiB scrollback and host long-poll goroutines`. Disposition: **replaced**. Reason: An MCU-owned bounded ANSI TUI and PowerShell framed terminal replace this runtime, not a wholesale Go port. The device does not retain a 512KiB transcript or spawn host long-poll workers.
+- Omitted/replaced code: `sanitizeDeviceTerminal printable UTF-8/SGR subset, bidi-aware text and scrollback viewport parity`. Disposition: **pending**. Reason: Arduino sanitization intentionally substitutes non-ASCII and removes external SGR rather than reproducing the donor Unicode viewport. Persian editing, resize/mouse/scrollback and full terminal-emulation parity are not implemented by this slice.
+- Omitted/replaced code: `Transparent raw serial and automatic uncertain write retry`. Disposition: **replaced**. Reason: An additive boot/token-fenced COBS channel preserves ordinary USB recovery. Host terminal sends input once and does not reopen/replay actions automatically after uncertainty.
+- Test-code evidence: `tests/shell_wire_test.cpp:21 [UTF8-LF sha256=5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9; anchor=Lost read reply replays same bytes]`.
+- Test-code evidence: `tests/shell_wire_test.cpp:26 [UTF8-LF sha256=5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9; anchor=output.sequence()==UINT16_MAX]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:10 [UTF8-LF sha256=6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929; anchor=never-render-this]`.
+- Test-code evidence: `tests/telnet_shell_test.cpp:98 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=Inspect the caller-owned backing bytes]`.
+- Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
+- Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
+- Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
 
 ### RayanLamp: `internal/tui/text.go`
 

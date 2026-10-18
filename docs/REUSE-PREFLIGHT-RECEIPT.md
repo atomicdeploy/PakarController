@@ -1,5 +1,66 @@
 # Donor-first preflight receipt
 
+## Current RMT correction, shell and upstream publication checkpoint
+
+User-reported RMT/DMA optical instability supersedes the old job19 recovery
+reboot. No apply/cancel or new visual pattern was sent. The current same-boot
+LAN/Internet observations showed80 white cells and480ffffff published pixels,
+RMT ready/active/failed0/error0; these cannot certify the waveform. The user's
+instruction is to fix the glitches first. Historical minimum internal heap84B
+is an additional unresolved production risk, not a healthy memory-soak result.
+
+Reconsulted led-cell-test/led-benchmark and read actual canonical PCController
+Project/AddressableLeds.cpp/.h through EOF at43417181.../a28009e6...; an older
+local donor checkout differed and was not rebound as the authoritative source.
+Read actual IDF5.5.5 DMA/channel/encoder source, installed qio_opi configuration
+and linked IRAM graph. Worldsemi classic WS2811 high-speed250/600ns, not the
+previous ad-hoc350/700ns, now defines the requested wire profile. The ring's
+two4092-byte descriptors are already maximum-sized; full11520-bit output still
+requires refill. The task-scoped GDMA allocator wrapper requests cache-safe
+refill only for this LED channel, with SDK validation and fail-closed admission.
+No SDK source, global DMA policy or shared RMT completion IRQ was changed.
+Existing complete-frame flash fences remain; short SDK symbol accounting stops
+instead of publishing success. No scope/optical guarantee is claimed.
+
+Focused proof:10 actual-worker host cases pass across RGB/BGR and static/DMA,
+including immutable frames, startup/Off black, coalescing, flash holds, timeout,
+failed stop and short completion. Actual GNU-linked DMA guard tests pass supported
+and missing-prerequisite profiles. The canonical LED pipeline passes elapsed-time
+rainbow, same-clock rendering without FPS ceiling, rollover, unanimated static
+selection, scene persistence, message queues and atomic80-cell stress. Requested
+timing/status accounting is not physical GPIO/LED readback. The earlier shell-only
+SDK compile was deliberately stopped when LED correction became the priority;
+its cancellation is not a compile result. A corrected integrated build is pending.
+
+Read PU Shell/Telnet/Commands and Rayan form/terminal actual sources completely;
+eight exact rows now bind the bounded multi-session shell, history8, VT100 TUI,
+typed settings, secret-safe output/history, loop-owned teardown, actual bound
+DNS-SD port and boot/token/sequence-fenced COBS USB shell. Five focused fixtures
+and PowerShell parsing/Plan pass; no raw USB escape or automatic command replay.
+ASCII, broader donor aliases/AP editing, full client settings UI parity and real
+multi-client/USB/RF coexistence remain explicit gaps. The authoritative ledger
+contains236 comparisons/4437 pending/194 gaps, not donor-wide completion.
+
+Current CI failure was read: Android Requested-row geometry changed40px after
+ACK loss, and6 focused contract mappings were stale. The retained row now uses
+seenSegmentsMirror while live content/mutations stay ACK-gated. Canonical mobile
+analysis and4 panel tests pass;23 exact contract mappings pass after rereviewing
+actual target/donor changes. No APK/native replacement or phone acceptance is
+claimed by those source checks.
+
+Scoped upstream submissions are published at ESP32Async/ESPAsyncWebServer#497
+(4e0f94ae35e7f8541367534800cce89798173aca) and espressif/arduino-esp32#12999
+(2f2359a4cd1cc7a212650b3eec6d31da2aafcf83). Actual-method host fixtures pass
+baseline-fail/patched-pass response credit/ACK and TCP/IP-context DNS cache/retry
+cases. Installed dependency files/pins remain unchanged. The Espressif CLA must
+be signed personally by the user; no agent signature or maintainer acceptance.
+
+Internet telemetry, correlated status command and verified ESP-only download
+are independently proved from office; job19 remains Ready, unapplied. External
+power/unplug survival and post-update independent reachability are not proved.
+Do not yet call ASUS/USB disconnection ready or expose auth-disabled HTTP/Telnet
+publicly. Immutable recovery artifacts and exact receipts are in commissioning.
+
 ## LED all-off physical regression and scoped recovery
 
 The user rejected physical all-off after an explicit80-cell Off batch. The

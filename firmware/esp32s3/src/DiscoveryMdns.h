@@ -12,7 +12,7 @@ bool discoveryTxt(Responder &responder,const char *service,const char *protocol,
 }
 template<class Responder>
 bool startDiscoveryMdns(Responder &responder,const char *hostname,const char *appName,
-    const char *appId,const char *version,uint16_t streamPort) {
+    const char *appId,const char *version,uint16_t streamPort,uint16_t shellPort=23) {
   // SDK begin() can fail AFTER mdns_init succeeds (hostname allocation/set).
   // Always retire that partial owner before the existing bounded retry path.
   if(!responder.begin(hostname)){responder.end();return false;}
@@ -25,7 +25,7 @@ bool startDiscoveryMdns(Responder &responder,const char *hostname,const char *ap
     discoveryTxt(responder,"pakarcontroller","tcp","api","/api/status") &&
     discoveryTxt(responder,"pakarcontroller","tcp","websocket","/ws") &&
     responder.addService("pakar-stream","udp",streamPort) &&
-    responder.addService("telnet","tcp",23);
+    (!shellPort||responder.addService("telnet","tcp",shellPort));
   if(!complete)responder.end();
   return complete;
 }

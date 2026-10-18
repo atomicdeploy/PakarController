@@ -31,10 +31,10 @@
       "source_sha256": "287a95a65a9b9655e64a15ece051bc792a06564b648a1b53eed4f373c564e458",
       "source_read": "complete",
       "target": "libraries/BoardCore/src/Protocol.h",
-      "target_sha256_utf8_lf": "03b4756d471f71bd03d08e2e50c20e7cebb81695c168c10e487b7dd55ed6a550",
+      "target_sha256_utf8_lf": "6cc6122b9217bd9bcbac56cd0b15032b9112aecbf28fc5b7b8fe966575136305",
       "line": 37,
       "anchor": "kPcContract = 0x56",
-      "retained": "Retains native opcode/error values in isolated tunneled dialect; existing COBS/CRC shared transport owns framing. Fully reread after additive USB snapshot, boot-fenced table command, atomic cell bitmap and post-ACK command-state additions: envelope bounds, CRC validation and 0x56/0x57 tunneled dialect remain unchanged. No second UART owner is introduced.",
+      "retained": "Retains native opcode/error values in isolated tunneled dialect; existing COBS/CRC shared transport owns framing. Fully reread after additive USB snapshot, boot-fenced table command, atomic cell bitmap and post-ACK command-state additions: envelope bounds, CRC validation and 0x56/0x57 tunneled dialect remain unchanged. Reread semantic-panel and shell additions: 0xB8 reports requested presentation, not observed segment masks; 0x60/0xB9 carry bounded shell traffic inside COBS rather than interleaving raw terminal bytes. Fixed reserved zero, 48-byte payload and CRC rejection remain unchanged. No second UART owner is introduced.",
       "omitted_code_and_reason": "Donor Stream-owning wrapper replaced by existing SerialLink; copying a second UART owner would collide. Direct donor opcode namespace cannot alias Pakar 0x11 audio."
     },
     {
@@ -75,10 +75,10 @@
       "source_sha256": "57b32c4e0b9144a77a68118aceb35bbfcd366b6098601c5a5241a7125047a011",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.h",
-      "target_sha256_utf8_lf": "69c627f2475e98970671c614d2d138968a6930b3733305b1f5ea48d5635f730a",
+      "target_sha256_utf8_lf": "8436a3626b62d089b567851b1199d0e7eb5320d868d0ca51deda1794d9c0bc7e",
       "line": 85,
       "anchor": "ControllerCore::MacroRing ring_",
-      "retained": "Same actual MacroRing owner behind Pakar hardware interface.",
+      "retained": "Same actual MacroRing owner behind Pakar hardware interface. Complete current target reread after the semantic-panel checkpoint: the only header addition is espTouchedAt_, separate from offers/ACK timestamps, so physical menu inactivity can expire without changing MacroRing ownership, feature flags or result queues.",
       "omitted_code_and_reason": "Donor UartProtocol/global relay state wrapper replaced; a second ring or relay substitute would waste RAM or lie about installed hardware."
     },
     {
@@ -86,10 +86,10 @@
       "source_sha256": "43a627c50e9908c20ea4b1d33c2eb4ef914672362ec5b9f5129604a7e5678b96",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.cpp",
-      "target_sha256_utf8_lf": "f7391e5e1bdcc26d70418963018914546079a91b2364aca3ba9a0e7c7b631ec0",
+      "target_sha256_utf8_lf": "cd62f7447553664a06de9b55bdb18371d26972b63833d80035e795d367669694",
       "line": 280,
       "anchor": "PcControllerRuntime::macro(",
-      "retained": "Ring lifecycle and result events integrated into guarded common dispatch; shift-mask recordings use real outputs.",
+      "retained": "Ring lifecycle and result events integrated into guarded common dispatch; shift-mask recordings use real outputs. Complete current target and semantic-panel diff reread: the added physical-only 15-second ESP menu lease does not modify macro append/dequeue/record/replay timing, 0xFE result accounting, programming guards or safe-stop behavior.",
       "omitted_code_and_reason": "Relay-specific recording opcode replaced by Pakar OutputMask; no relay side/safety hardware exists."
     },
     {
@@ -174,10 +174,10 @@
       "source_sha256": "1e4e69d6d3b3a8d4a159104d7c4faf97e43520ed8ba33fc48bb3be4f9f60b084",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.cpp",
-      "target_sha256_utf8_lf": "f7391e5e1bdcc26d70418963018914546079a91b2364aca3ba9a0e7c7b631ec0",
+      "target_sha256_utf8_lf": "cd62f7447553664a06de9b55bdb18371d26972b63833d80035e795d367669694",
       "line": 10,
       "anchor": "constexpr uint8_t labels",
-      "retained": "Stable page list/layout/hide/reorder and real six-page state adapted to present hardware.",
+      "retained": "Stable page list/layout/hide/reorder and real six-page state adapted to present hardware. Complete target and semantic-panel diff reread: abandoned physical ESP menus now close after 15000ms; only physical key gestures renew that lease, while state offers, ACKs and rendering do not. Stable six-page IDs, local/host ownership and captured-panel guards remain intact.",
       "omitted_code_and_reason": "Fourteen sensor/motion/RF/PWM/relay modes and related enum values are not applicable; six IDs are explicitly profile-specific, not fake donor mode IDs."
     },
     {
@@ -229,10 +229,10 @@
       "source_sha256": "54c366525142aca0103a8d58f7ce8d9cbc34c1b5884b20a1ad5ae50ddc6bb4a8",
       "source_read": "complete",
       "target": "firmware/avr/SevenSegments.cpp",
-      "target_sha256_utf8_lf": "776c190eb16a8aa72ed538a4728d35bbf7e51b4b9daddbbb81e62bfce252e74b",
+      "target_sha256_utf8_lf": "73b97393db8937820b153c4b776014e2dda672c579a179f133777b1fe5107997",
       "line": 21,
       "anchor": "bool busNack",
-      "retained": "Ninth-clock ACK, reasserted cached frame/brightness keepalive, true-off; cumulative NACK prevents final ACK hiding earlier failure. Weak pull-up after driver release prevents an unplugged floating DIO from falsely reading as ACK; actual fallback and AVR-register transaction tests cover every NACK position, reconnect, off, fade and rollover.",
+      "retained": "Ninth-clock ACK, reasserted cached frame/brightness keepalive, true-off; cumulative NACK prevents final ACK hiding earlier failure. Weak pull-up after driver release prevents an unplugged floating DIO from falsely reading as ACK; actual fallback and AVR-register transaction tests cover every NACK position, reconnect, off, fade and rollover. Complete target and semantic-panel diff reread: uppercase W deliberately uses the existing U-shaped 0x3E approximation for readable winner text; it does not change bus timing, ACK detection, brightness or the confirmed A4/A5 mapping.",
       "omitted_code_and_reason": "PB3/PB5 replaced by confirmed PC4/PC5 to preserve ISP. Donor unbiased INPUT release replaced by INPUT_PULLUP (AVR clears DDRC4 before setting PORTC4); other port bits remain unchanged and no strong driver opposes ACK. Independent probe removed because it disagreed with driver cache. Physical voltage/timing/unplug recovery and stuck-low fault discrimination remain unverified. See docs/TM1637-RECOVERY.md and the authoritative file-comparison-evidence.json mapping."
     },
     {
@@ -240,10 +240,10 @@
       "source_sha256": "b176da4a854a9b0b77c653d96a00d5359277e9c9681b47e14551d92b282b3301",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.cpp",
-      "target_sha256_utf8_lf": "f7391e5e1bdcc26d70418963018914546079a91b2364aca3ba9a0e7c7b631ec0",
+      "target_sha256_utf8_lf": "cd62f7447553664a06de9b55bdb18371d26972b63833d80035e795d367669694",
       "line": 100,
       "anchor": "PcControllerRuntime::dispatch",
-      "retained": "Entire donor dispatcher read; every registered request has an explicit current owner/response or exclusion. Actual algorithms reuse imported modules rather than duplicate engines.",
+      "retained": "Entire donor dispatcher read; every registered request has an explicit current owner/response or exclusion. Actual algorithms reuse imported modules rather than duplicate engines. Complete current target and semantic-panel diff reread: physical ESP menu activity expires independently of offer freshness, while frontPanel still sends the actual four segment bytes in the donor's bounded 47-byte snapshot. Programming/read-only dispatch guards, target-5 scheduled text ownership and host timeout release are unchanged; requested semantic events never substitute for actual segment ACK/readback.",
       "omitted_code_and_reason": "All mismatched hardware handlers fail HardwareUnavailable, preserved future guards require drivers/pin profiles; registry-only host-menu IDs Unsupported. Profile-specific settings/status/menu IDs are not stock schema-3 byte compatibility."
     },
     {

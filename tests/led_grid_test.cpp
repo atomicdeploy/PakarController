@@ -12,8 +12,43 @@ void assertPendingSnapshot(const String& previous,const String& pending){
  assert(pending.find("\"pending\":true")!=String::npos);
  assert(withoutPending(previous)==withoutPending(pending));
 }
+void rainbowClockCadence(){
+ using namespace BoardCore::Protocol;
+ const uint32_t savedNow=pixelTestNow;
+ const auto rgb=[](const LedGrid &grid){const auto f=grid.pixelFrameJson();return f.substr(f.find("\"rgb\":\"")+7,LedGrid::kPixels*6);};
+ const auto hue=[&rgb](const LedGrid &grid){return unsigned(std::stoul(rgb(grid).substr(0,2),nullptr,16));};
+ LedGrid fast,delayed;pixelTestNow=1000;fast.begin();delayed.begin();
+ fast.setStaticMode(false);delayed.setStaticMode(false);
+ fast.setPattern(LedGrid::kPatternRainbow);delayed.setPattern(LedGrid::kPatternRainbow);
+ fast.service(pixelTestNow);delayed.service(pixelTestNow);
+ assert(hue(fast)==0 && rgb(fast)==rgb(delayed)); // First frame has no synthetic +3 jump.
+ const auto initial=rgb(fast);const auto repeatedShows=FastLED.shows;
+ assert(fast.needsRender(pixelTestNow));fast.service(pixelTestNow);
+ assert(rgb(fast)==initial && FastLED.shows==repeatedShows+1); // Speed is not an FPS cap.
+ for(unsigned i=1;i<=10;++i){pixelTestNow=1000+i*16;fast.service(pixelTestNow);}
+ delayed.service(pixelTestNow);assert(rgb(fast)==rgb(delayed) && hue(fast)==30);
+ delayed.setPattern(LedGrid::kPatternRainbow);pixelTestNow+=16;delayed.service(pixelTestNow);
+ assert(hue(delayed)==33); // Re-selecting the active effect does not reset its clock.
+ delayed.setPattern(LedGrid::kPatternNone);pixelTestNow+=1000;
+ delayed.setPattern(LedGrid::kPatternRainbow);delayed.service(pixelTestNow);
+ assert(hue(delayed)==33); // A new effect continues the last hue, without a step on start.
+ pixelTestNow+=16;delayed.service(pixelTestNow);assert(hue(delayed)==36);
+ LedGrid rollover;pixelTestNow=UINT32_MAX-31U;rollover.begin();
+ rollover.setPattern(LedGrid::kPatternRainbow);rollover.service(pixelTestNow);
+ pixelTestNow+=64U;rollover.service(pixelTestNow);assert(hue(rollover)==12);
+ const auto grouped=rgb(rollover);for(unsigned i=1;i<6;++i)assert(grouped.substr(0,6)==grouped.substr(i*6,6));
+ // Large elapsed values must widen before multiplication and wrap only the hue.
+ LedGrid longRunning;pixelTestNow=17;longRunning.begin();longRunning.setPattern(LedGrid::kPatternRainbow);
+ pixelTestNow+=UINT32_MAX-1U;longRunning.service(pixelTestNow);
+ assert(hue(longRunning)==uint8_t((uint64_t(UINT32_MAX-1U)*3U)/16U));
+ LedGrid stationary;stationary.begin();stationary.setCell(1,kCellRed,kEffectImmediate);stationary.service(pixelTestNow);
+ const auto still=rgb(stationary);pixelTestNow+=2000;stationary.service(pixelTestNow);
+ assert(stationary.pattern()==LedGrid::kPatternNone && rgb(stationary)==still);
+ pixelTestNow=savedNow;
+}
 int main(){
  using namespace BoardCore::Protocol;
+ rainbowClockCadence();
  LedGrid grid;assert(grid.pixelFrameJson()=="null");grid.begin();
  assert(grid.outputCapabilitiesJson()=="{\"backend\":\"fastled\",\"rmt\":false,\"dma\":false}");
  auto frame=grid.pixelFrameJson();

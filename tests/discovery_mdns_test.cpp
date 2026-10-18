@@ -36,6 +36,10 @@ int main() {
   assert(good.initialized&&good.hostname=="ledboard"&&good.registrations==10&&good.entries.size()==10);
   assert(good.entries[5]=="pakarcontroller.tcp:80"&&good.entries[8]=="pakar-stream.udp:7890");
   good.end();assert(start(good));
+  Responder noShell;assert(PakarS3::startDiscoveryMdns(noShell,"ledboard","PakarController","pakarcontroller","0.2.7",7777,0));
+  assert(noShell.registrations==9);
+  Responder moved;assert(PakarS3::startDiscoveryMdns(moved,"ledboard","PakarController","pakarcontroller","0.2.7",7777,2323));
+  assert(moved.entries.back()=="telnet.tcp:2323");
   Responder partial;partial.failBegin=true;
   assert(!start(partial)&&!partial.initialized&&partial.stops==1&&partial.registrations==0);
   partial.failBegin=false;assert(start(partial));

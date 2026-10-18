@@ -2,6 +2,9 @@
 #include <Arduino.h>
 #include <FS.h>
 #include <AccessPolicy.h>
+#if defined(ARDUINO_ARCH_ESP32)
+#include <atomic>
+#endif
 
 class AccessConfig {
  public:
@@ -14,6 +17,7 @@ class AccessConfig {
   const char *username() const { return record_.username; }
   const char *password() const { return record_.password; }
   bool ready() const { return ready_; }
+  uint32_t securityRevision() const { return securityRevision_; }
   bool enabled() const { return ready_ && record_.enabled == 1; }
   bool defaultsActive() const {
     return ready_ && BoardCore::Access::equal(username(), "admin") &&
@@ -36,6 +40,11 @@ class AccessConfig {
   bool save(const Record &next);
   fs::FS *filesystem_ = nullptr;
   bool ready_ = false;
+#if defined(ARDUINO_ARCH_ESP32)
+  std::atomic<uint32_t> securityRevision_{1};
+#else
+  uint32_t securityRevision_ = 1;
+#endif
   String error_;
 };
 extern AccessConfig accessConfig;

@@ -71,18 +71,18 @@
     {"path":"firmware/esp8266/src/NetworkConfig.cpp","sha256":"ca7a5b310f4ad58d329cdef66050c9f746056eafe100f870156dc0074d6648ec","anchor":"bool NetworkConfigStore::configure("},
     {"path":"firmware/esp8266/src/NetworkPath.h","sha256":"03854f708e454c2ba60b2d7cedd1b750a826df3418335bb065451979d12032f7","anchor":"inline bool service()"},
     {"path":"firmware/esp8266/src/EspFrontPanel.h","sha256":"373453bd3730a23b62740ebcbd672d9de15bffac40068bb2e4868b4344ef8e04","anchor":"Queries report the actual current connection/settings"},
-    {"path":"firmware/esp32s3/src/Discovery.h","sha256":"ddd272f6906d24f37e88efacd9cf198e531a850b1ab537f1d8e2d7687c2cd298","anchor":"mdnsReady_ = startDiscoveryMdns("},
-    {"path":"firmware/esp32s3/src/DiscoveryMdns.h","sha256":"8b456d394c7cd82bc4b77fec88d44887ef8c7e1ea454060bcb76b91e1daac1a0","anchor":"bool startDiscoveryMdns("}
+    {"path":"firmware/esp32s3/src/Discovery.h","sha256":"808ff76211955a8cb72c0c0e8d2b771315b7cdbfe9783324685642d7bfcd23ad","anchor":"mdnsReady_ = startDiscoveryMdns("},
+    {"path":"firmware/esp32s3/src/DiscoveryMdns.h","sha256":"3d8ea49f07d291a074247228f93d8c86e52dd9c4fb892c089efd019a4b28dd5e","anchor":"bool startDiscoveryMdns("}
   ],
   "proof": [
     {"path":"tests/network_config_test.cpp","sha256":"b557ca652f70e7dcf0d98c541259dad4d37cdd37f8b1b54b4957c530b0b56a2f","anchor":"AP remains genuinely available on STA apply failure"},
     {"path":"tests/network_path_test.cpp","sha256":"e1e1b8c23498d6b67bc8334f4c8d4c73bf88d83f7373930d11f90d8318d8ec69","anchor":"state().routeChanges==fallbackRoutes"},
     {"path":"tests/esp_front_panel_test.cpp","sha256":"58220f795fcb6d16277308285f37f7cede5af7f431ceafd675ad8bfe6f3c5013","anchor":"f=request(E::Scan);f.sequence=12;service.handle(f,110"},
-    {"path":"tests/discovery_mdns_test.cpp","sha256":"52528e82b480078f521227fac46ec0b0905c128960d8566940969b100bd882fc","anchor":"for(unsigned at=1;at<=10;++at)"}
+    {"path":"tests/discovery_mdns_test.cpp","sha256":"8dadf3c987f45da7d4087e9e1be36d0830a16a18cb91f452ebd699b48ec8872b","anchor":"for(unsigned at=1;at<=10;++at)"}
   ],
   "omissions": [
     {"code":"ASA0002E PU-specific EEPROM/business settings and device/product globals","disposition":"replaced","reason":"Pakar has a different AVR/S3 protocol, matrix/game capabilities and private flash records. The reusable network identity/settings behavior is retained through current typed owners; blindly copying PU EEPROM addresses, serial/model state or business commands would corrupt identity/settings rather than add a supported feature."},
-    {"code":"Configurable Telnet enable/port rebind and matching discovery lifecycle","disposition":"pending","reason":"A bounded authenticated Pakar shell and Telnet path exist, but the donor enable/port lifecycle is not fully exposed and verified across configuration surfaces. Fixed telnet DNS-SD advertisement is not proof that dynamic shell/service state is synchronized."},
+    {"code":"Live configurable Telnet enable/port rebind and matching discovery lifecycle acceptance","disposition":"pending","reason":"The device-shell slice now exposes durable enabled/port/color via typed API/cloud commands and shell properties, closes/rebinds sessions on the loop owner, and advertises only the actually bound port. Focused registration/settings fixtures do not establish real restart, network-loss and multi-client lifecycle acceptance across AP/STA/Ethernet or parity in every client settings UI."},
     {"code":"S3 NetBIOS/LLMNR compatibility and complete physical network editors","disposition":"pending","reason":"Current S3 discovery honestly reports NetBIOS unavailable; mDNS/DNS-SD/SSDP/MNDP are not substitutes for unimplemented NetBIOS/LLMNR. AVR front-panel mode/DHCP/reconnect/scan does not implement full SSID/password/static-address text editors or completed scan-result navigation; those useful features remain open."},
     {"code":"All generic sketch routes, cloud/time diagnostics, storage/control surfaces and complete donor-wide parity outside this network/front-panel slice","disposition":"pending","reason":"Dedicated AsyncWebServer/AsyncOTA/FirmwareTransfer/Authentication/SSDP/MNDP comparisons preserve their own exact mappings and remaining acceptance. A complete sketch read is not an assertion that every route, shell action, network mode or generic tool was imported, deployed or physically accepted; each remaining behavior still requires its owning row and live evidence."}
   ],
@@ -1046,13 +1046,13 @@
   "targets": [
     {
       "path": "firmware/esp8266/src/MaintenanceRoutes.h",
-      "sha256": "e87ed119fa144aad18dc999a4f1df8460f3f83a3ede985811b57bdb588cb2d96",
+      "sha256": "e7972e623ed27d46fd26293f1dd63af3041e4a8d9134af1cfd3b08ee77c73078",
       "anchor": "bool prepareRemotePair("
     },
     {
       "path": "firmware/esp8266/src/UrbootRoutes.h",
       "anchor": "bool runUrboot(",
-      "sha256": "39fc7e3962e9a0806e72641b66c287630bfd043f0e208b2f9b54514931a02792"
+      "sha256": "0c0a164d0b339d78f671a879bffeb3490ab2c7177e71e356fee9d72840adcd36"
     }
   ],
   "omissions": [
@@ -1091,7 +1091,7 @@
   "targets": [
     {
       "path": "firmware/esp8266/src/MaintenanceRoutes.h",
-      "sha256": "e87ed119fa144aad18dc999a4f1df8460f3f83a3ede985811b57bdb588cb2d96",
+      "sha256": "e7972e623ed27d46fd26293f1dd63af3041e4a8d9134af1cfd3b08ee77c73078",
       "anchor": "bool prepareRemotePair("
     }
   ],
@@ -2055,7 +2055,7 @@
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267"
+          "sha256": "a073ac3d9401331d48b2c8c820ab11421b298d7b67413fd180d98925e2e12ef0"
         }
       ],
       "omissions": [
@@ -3204,7 +3204,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
+          "sha256": "ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -3696,7 +3696,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
+          "sha256": "ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -3746,7 +3746,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
+          "sha256": "ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6"
         }
       ],
       "omissions": [
@@ -3793,13 +3793,13 @@
           "sha256": "89ce1cff79adbdbe98f44beac5aea8cc30bf72187012db6720a4c42f4be5cf73"
         },
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0","anchor":"Message *items_=nullptr;"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
-        {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"e87ed119fa144aad18dc999a4f1df8460f3f83a3ede985811b57bdb588cb2d96","anchor":"internal_heap_largest_block_bytes"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
+        {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"e7972e623ed27d46fd26293f1dd63af3041e4a8d9134af1cfd3b08ee77c73078","anchor":"internal_heap_largest_block_bytes"},
         {"path":"tools/update-firmware.mjs","sha256":"3d57c9f57c6d76103f679cd70f410b8f5dd32db0915aa11dc5719b7bb5b2fe9b","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
+          "sha256": "ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -3830,7 +3830,7 @@
         }
       ],
       "proof": [
-        {"path":"tests/led_scheduler_test.cpp","sha256":"b0d695eb6ce287be4944d42c81d719f170283f66ae7d448594d592835f2a4a04","anchor":"S3 queue must not retain internal bulk storage"},
+        {"path":"tests/led_scheduler_test.cpp","sha256":"426daa3ad87f8aa094bf2a98562330418bdcc7a57001546bd1ded25e11fafcad","anchor":"S3 queue must not retain internal bulk storage"},
         {"path":"tests/ble_storage_stubs/esp_heap_caps.h","sha256":"f6ff5f7843125cd7e780df39fd9d31006af9ef23070641ec580288235750365c","anchor":"assert(capabilities==(MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT))"},
         {"path":"tests/update_tool_test.mjs","sha256":"7ff8056fd1269f616676d5c46b32ee56ed750b43954172207f21baa03b538f9c","anchor":"Exactly one read-only request, no replay"},
         {"path":"tests/update_tool_test.mjs","sha256":"7ff8056fd1269f616676d5c46b32ee56ed750b43954172207f21baa03b538f9c","anchor":"Partial events never satisfy readiness or trigger request replay"},
@@ -4047,7 +4047,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267",
+          "sha256": "a073ac3d9401331d48b2c8c820ab11421b298d7b67413fd180d98925e2e12ef0",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -4098,7 +4098,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267",
+          "sha256": "a073ac3d9401331d48b2c8c820ab11421b298d7b67413fd180d98925e2e12ef0",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -4148,7 +4148,7 @@
         },
         {
           "path": "firmware/esp8266/src/AccessConfig.cpp",
-          "sha256": "08f2950651ba406265bd8e903cb247588d7facff3f30f56a2c86e405826d566a",
+          "sha256": "6ec60a32ab5e42943ea53844a5812acc86baf7232f3cf1090c3c8b591a81d2f7",
           "anchor": "bool AccessConfig::configure("
         },
         {
@@ -4165,7 +4165,7 @@
       "proof": [
         {
           "path": "tests/access_config_test.cpp",
-          "sha256": "f4bd333ad2d7e553b25a0c815f83cc37a29f42ca526d704b1552c9e4cf345013",
+          "sha256": "94a3a2860c4edb316a3d24595311455b3b1b6544fbd4143f11c919549ad1b55c",
           "anchor": "assert(!config.enabled())"
         },
         {
@@ -4216,7 +4216,7 @@
         },
         {
           "path": "firmware/esp8266/src/AccessConfig.cpp",
-          "sha256": "08f2950651ba406265bd8e903cb247588d7facff3f30f56a2c86e405826d566a",
+          "sha256": "6ec60a32ab5e42943ea53844a5812acc86baf7232f3cf1090c3c8b591a81d2f7",
           "anchor": "bool AccessConfig::configure("
         },
         {
@@ -4233,7 +4233,7 @@
       "proof": [
         {
           "path": "tests/access_config_test.cpp",
-          "sha256": "f4bd333ad2d7e553b25a0c815f83cc37a29f42ca526d704b1552c9e4cf345013",
+          "sha256": "94a3a2860c4edb316a3d24595311455b3b1b6544fbd4143f11c919549ad1b55c",
           "anchor": "assert(!config.enabled())"
         },
         {
@@ -4664,12 +4664,12 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/Discovery.h",
-          "sha256": "ddd272f6906d24f37e88efacd9cf198e531a850b1ab537f1d8e2d7687c2cd298",
+          "sha256": "808ff76211955a8cb72c0c0e8d2b771315b7cdbfe9783324685642d7bfcd23ad",
           "anchor": "class Discovery {"
         },
         {
           "path": "firmware/esp32s3/src/Discovery.h",
-          "sha256": "ddd272f6906d24f37e88efacd9cf198e531a850b1ab537f1d8e2d7687c2cd298",
+          "sha256": "808ff76211955a8cb72c0c0e8d2b771315b7cdbfe9783324685642d7bfcd23ad",
           "anchor": "String xmlDescription() const {"
         }
       ],
@@ -4703,7 +4703,7 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/Discovery.h",
-          "sha256": "ddd272f6906d24f37e88efacd9cf198e531a850b1ab537f1d8e2d7687c2cd298",
+          "sha256": "808ff76211955a8cb72c0c0e8d2b771315b7cdbfe9783324685642d7bfcd23ad",
           "anchor": "SsdpDevice ssdp_;"
         }
       ],
@@ -5501,7 +5501,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "902605e0fcc32943a5c3312d18585e91a827d9f8921114ffd5ab41d264fe66a4",
+      "sha256": "377a786491826bee8fee9a5b83f89da2769085772788b07d88302b549599410d",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -5521,7 +5521,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d",
+      "sha256": "ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6",
       "anchor": "bool authenticate()"
     },
     {
@@ -7925,7 +7925,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "902605e0fcc32943a5c3312d18585e91a827d9f8921114ffd5ab41d264fe66a4",
+          "sha256": "377a786491826bee8fee9a5b83f89da2769085772788b07d88302b549599410d",
           "anchor": "Future<bool> _command"
         },
         {
@@ -8224,7 +8224,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "902605e0fcc32943a5c3312d18585e91a827d9f8921114ffd5ab41d264fe66a4",
+          "sha256": "377a786491826bee8fee9a5b83f89da2769085772788b07d88302b549599410d",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -10046,16 +10046,16 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "9d7a762b1c1c2937a26450e14e75935e438f83710ae9fe18355cf190c410421a",
+          "sha256": "b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "6e9c86561ffeafc775604ea17d67073ec463dd6cc8f601095a8b4e88733eaabf",
+          "sha256": "82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa",
           "anchor": "uint8_t brightness_ = 255"
         },
-        {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"a7c73c4a15d3876204d9902011e93d02b5507357d5684c1e48d12acb687236a9","anchor":"config.flags.with_dma=true"},
-        {"path":"firmware/esp32s3/src/LedWire.h","sha256":"767a834768348560dab7d9a08fd026803419c480079e4fe54c6aac683364b46b","anchor":"void encodeWire("},
+        {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"b4e3a0a4ebe9285da6abfb98e097170aab93282d7edbad1f8c07bceaca1b9297","anchor":"config.flags.with_dma=true"},
+        {"path":"firmware/esp32s3/src/LedWire.h","sha256":"4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513","anchor":"void encodeWire("},
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0","anchor":"class LoopMessages"}
       ],
       "omissions": [
@@ -10079,8 +10079,8 @@
         "Make chipset/channel order configurable and verify R/G/B plus all 480 pixels on hardware; expose current configuration across the control surfaces."
       ],
       "proof": [
-        {"path":"tests/led_worker_test.cpp","sha256":"e27f0993c50d0c49fd1d8b2da6121b3445f8ba507b0a5f9d2a322934ad7384db","anchor":"Compile the ACTUAL S3 output worker"},
-        {"path":"tests/led_scheduler_test.cpp","sha256":"b0d695eb6ce287be4944d42c81d719f170283f66ae7d448594d592835f2a4a04","anchor":"int main()"}
+        {"path":"tests/led_worker_test.cpp","sha256":"aff158c2dad22ecee983edacf12b97c2e215954b40550b1db52f34fe5b5d6c25","anchor":"Compile the ACTUAL S3 output worker"},
+        {"path":"tests/led_scheduler_test.cpp","sha256":"426daa3ad87f8aa094bf2a98562330418bdcc7a57001546bd1ded25e11fafcad","anchor":"int main()"}
       ],
       "improvement": "Actual worker/mailbox tests establish source-level frame ownership and quiescence, not optical or SDK acceptance."
     },
@@ -10096,12 +10096,12 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "9d7a762b1c1c2937a26450e14e75935e438f83710ae9fe18355cf190c410421a",
+          "sha256": "b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "6e9c86561ffeafc775604ea17d67073ec463dd6cc8f601095a8b4e88733eaabf",
+          "sha256": "82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa",
           "anchor": "uint8_t brightness_ = 255"
         }
       ],
@@ -10158,65 +10158,92 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL handling retained.",
-        "Password input is not echoed and is scrubbed; overflow discards the entire line instead of executing a truncated command; editor state is independent."
+        "PU ShellSession transport/editor separation, insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL behavior are adapted in instance-owned TelnetParser/LineEditor.",
+        "Generic parameter lookup/read-only enforcement and dispatch now map to ShellProperty descriptors, typed shellSet and the existing Pakar command/configuration owners; the same descriptors feed the device TUI.",
+        "Session-owned prompt-safe watch summaries use redrawEvent without losing the draft/cursor. Utilities clear/cls, echo, hex and upper/noupper are present; bounded eight-entry history adds recall without retaining classified secrets.",
+        "Raw serial ownership is replaced by an additive boot-bound COBS shell channel: explicit token, contiguous nonwrapping input sequence, duplicate-byte ACK without redispatch, and immutable output windows consumed only by matching ACK."
       ],
       "targets": [
         {
           "path": "firmware/esp8266/src/TelnetShell.h",
-          "anchor": "class LineEditor",
-          "sha256": "dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec"
+          "sha256": "20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281",
+          "anchor": "class LineEditor"
         },
         {
-          "path": "firmware/esp8266/esp8266.ino",
-          "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
+          "path": "firmware/esp8266/src/ShellService.h",
+          "sha256": "b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb",
+          "anchor": "const ShellProperty shellProperties[]"
+        },
+        {
+          "path": "firmware/esp8266/src/ShellWire.h",
+          "sha256": "af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216",
+          "anchor": "class SerialChannel"
+        },
+        {
+          "path": "firmware/esp8266/src/ShellTuiBinding.h",
+          "sha256": "6c75b3e4440549ddd7851add400f69cff62e11e501075fe45c322795f688b5c5",
+          "anchor": "struct ShellTuiSnapshot"
+        },
+        {
+          "path": "tools/device-shell.ps1",
+          "sha256": "4e197e3502eb6ef40d2a3df7bdde97ed3c05140c97e06e3d07426232732a9c55",
+          "anchor": "AutomaticCommandRetry=$false"
         }
       ],
       "proof": [
         {
           "path": "tests/telnet_shell_test.cpp",
-          "anchor": "LineEditor::TooLong",
-          "sha256": "f7dd91333d3aced80fdab41b146b98ecd2e9dd3896a504f8a70cfb33912f00e9"
+          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "anchor": "editor.redrawEvent("
+        },
+        {
+          "path": "tests/shell_wire_test.cpp",
+          "sha256": "5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9",
+          "anchor": "C::Duplicate"
+        },
+        {
+          "path": "tests/shell_tui_test.cpp",
+          "sha256": "6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929",
+          "anchor": "Unchanged Enter is not a write."
+        },
+        {
+          "path": "tools/test-shell.ps1",
+          "sha256": "415c8ede3ffc365fdef97322e47ac6ed0e667e832498df3a775e150d1a5522cc",
+          "anchor": "-Concern device-shell -Gate"
         }
       ],
       "omissions": [
         {
-          "code": "ShellTransport_Serial, SerialShellSession and serial-shell service",
-          "disposition": "pending",
-          "reason": "USB currently owns COBS-framed PC commands. Mixing raw shell bytes would corrupt that transport; provide an explicit framed shell channel or negotiated mode before claiming equivalent serial-shell support."
-        },
-        {
-          "code": "DeviceParameters get/set registry, readonly behavior and commandMap callbacks",
-          "disposition": "pending",
-          "reason": "Pakar's fixed game/identity/display commands are not equivalent to the useful generic parameter registry. Audit/adapt the generic registry and supply Pakar parameter descriptors; only actual PU application callbacks may be excluded after individual review."
-        },
-        {
-          "code": "ShellBroadcastLine, event-line prompt erasure/redraw and active-session output routing",
-          "disposition": "pending",
-          "reason": "Pakar redraws during editing but does not implement the donor's asynchronous event-broadcast/session routing contract; a WebSocket event feed is not a Telnet prompt-safe replacement."
-        },
-        {
-          "code": "clear/cls, echo, hex, upper/noupper and reusable formatting helpers",
-          "disposition": "pending",
-          "reason": "The current command set omits these donor shell utilities. No concrete product or hardware reason justifies blanket deletion; implement applicable utilities or provide reviewed alternatives."
-        },
-        {
-          "code": "NumberFromString unchecked multiply/add and permissive embedded minus/comma parsing",
-          "disposition": "pending",
-          "reason": "Do not copy signed-overflow-prone numeric parsing unchanged. The current String::toInt call sites still require a bounded strict parser plus overflow tests; avoiding this donor function alone is not a proven superior replacement."
-        },
-        {
-          "code": "Mutable global command pointer and include Commands.cpp adapter",
+          "code": "Raw ShellTransport_Serial/SerialShellSession and mutable global command/include Commands.cpp adapter",
           "disposition": "replaced",
-          "reason": "Instance-owned line/editor state and explicit command dispatch avoid the legacy global pointer/include ownership pattern. Useful command behavior itself remains pending rather than excluded with the adapter."
+          "reason": "A separately boot-fenced COBS shell channel preserves USB recovery/protocol framing rather than mixing raw ASCII into the existing decoder. Instance-owned dispatch removes the donor global command/output pointer; host script never automatically replays uncertain input."
+        },
+        {
+          "code": "NumberFromString permissive comma/minus parsing and unchecked signed multiply/add",
+          "disposition": "replaced",
+          "reason": "Strict unsignedNumber validates full decimal input and overflow before conversion; command-specific signed display handling is explicit. Fixtures reject signs, commas, trailing junk and UINT32 overflow rather than silently normalizing a dangerous argument."
+        },
+        {
+          "code": "ShellBroadcastLine unrestricted event broadcast",
+          "disposition": "replaced",
+          "reason": "Opt-in per-session watch publishes changed bounded summaries with prompt erase/redraw and backpressure. This is not an ordered complete peripheral event stream; individual event delivery remains outside this shell slice."
+        },
+        {
+          "code": "upper/noupper applies to all donor input echo and prompt redraw",
+          "disposition": "pending",
+          "reason": "Current session upper option changes echo command output only; the original wider input-display behavior is not claimed equivalent."
+        },
+        {
+          "code": "Donor printable-ASCII editor and richer Unicode terminals",
+          "disposition": "pending",
+          "reason": "Arduino line editor/TUI deliberately accepts printable ASCII and sanitizes external controls. Persian/UTF-8 editing, bidi layout and font support are not supplied by this shell adaptation."
         }
       ],
       "remaining": [
-        "Port generic registry and useful utilities; implement prompt-safe asynchronous events; keep serial framing explicit.",
-        "Harden command JSON construction/numeric arguments and report queued versus AVR-acknowledged outcomes; current immediate OK is not proof of AVR execution."
+        "Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.",
+        "Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success."
       ],
-      "improvement": ""
+      "improvement": "Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending."
     },
     {
       "origin": "PU850-ESP",
@@ -10225,65 +10252,92 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL handling retained.",
-        "Password input is not echoed and is scrubbed; overflow discards the entire line instead of executing a truncated command; editor state is independent."
+        "PU ShellSession transport/editor separation, insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL behavior are adapted in instance-owned TelnetParser/LineEditor.",
+        "Generic parameter lookup/read-only enforcement and dispatch now map to ShellProperty descriptors, typed shellSet and the existing Pakar command/configuration owners; the same descriptors feed the device TUI.",
+        "Session-owned prompt-safe watch summaries use redrawEvent without losing the draft/cursor. Utilities clear/cls, echo, hex and upper/noupper are present; bounded eight-entry history adds recall without retaining classified secrets.",
+        "Raw serial ownership is replaced by an additive boot-bound COBS shell channel: explicit token, contiguous nonwrapping input sequence, duplicate-byte ACK without redispatch, and immutable output windows consumed only by matching ACK."
       ],
       "targets": [
         {
           "path": "firmware/esp8266/src/TelnetShell.h",
-          "anchor": "class LineEditor",
-          "sha256": "dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec"
+          "sha256": "20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281",
+          "anchor": "class LineEditor"
         },
         {
-          "path": "firmware/esp8266/esp8266.ino",
-          "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
+          "path": "firmware/esp8266/src/ShellService.h",
+          "sha256": "b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb",
+          "anchor": "const ShellProperty shellProperties[]"
+        },
+        {
+          "path": "firmware/esp8266/src/ShellWire.h",
+          "sha256": "af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216",
+          "anchor": "class SerialChannel"
+        },
+        {
+          "path": "firmware/esp8266/src/ShellTuiBinding.h",
+          "sha256": "6c75b3e4440549ddd7851add400f69cff62e11e501075fe45c322795f688b5c5",
+          "anchor": "struct ShellTuiSnapshot"
+        },
+        {
+          "path": "tools/device-shell.ps1",
+          "sha256": "4e197e3502eb6ef40d2a3df7bdde97ed3c05140c97e06e3d07426232732a9c55",
+          "anchor": "AutomaticCommandRetry=$false"
         }
       ],
       "proof": [
         {
           "path": "tests/telnet_shell_test.cpp",
-          "anchor": "LineEditor::TooLong",
-          "sha256": "f7dd91333d3aced80fdab41b146b98ecd2e9dd3896a504f8a70cfb33912f00e9"
+          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "anchor": "editor.redrawEvent("
+        },
+        {
+          "path": "tests/shell_wire_test.cpp",
+          "sha256": "5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9",
+          "anchor": "C::Duplicate"
+        },
+        {
+          "path": "tests/shell_tui_test.cpp",
+          "sha256": "6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929",
+          "anchor": "Unchanged Enter is not a write."
+        },
+        {
+          "path": "tools/test-shell.ps1",
+          "sha256": "415c8ede3ffc365fdef97322e47ac6ed0e667e832498df3a775e150d1a5522cc",
+          "anchor": "-Concern device-shell -Gate"
         }
       ],
       "omissions": [
         {
-          "code": "ShellTransport_Serial, SerialShellSession and serial-shell service",
-          "disposition": "pending",
-          "reason": "USB currently owns COBS-framed PC commands. Mixing raw shell bytes would corrupt that transport; provide an explicit framed shell channel or negotiated mode before claiming equivalent serial-shell support."
-        },
-        {
-          "code": "DeviceParameters get/set registry, readonly behavior and commandMap callbacks",
-          "disposition": "pending",
-          "reason": "Pakar's fixed game/identity/display commands are not equivalent to the useful generic parameter registry. Audit/adapt the generic registry and supply Pakar parameter descriptors; only actual PU application callbacks may be excluded after individual review."
-        },
-        {
-          "code": "ShellBroadcastLine, event-line prompt erasure/redraw and active-session output routing",
-          "disposition": "pending",
-          "reason": "Pakar redraws during editing but does not implement the donor's asynchronous event-broadcast/session routing contract; a WebSocket event feed is not a Telnet prompt-safe replacement."
-        },
-        {
-          "code": "clear/cls, echo, hex, upper/noupper and reusable formatting helpers",
-          "disposition": "pending",
-          "reason": "The current command set omits these donor shell utilities. No concrete product or hardware reason justifies blanket deletion; implement applicable utilities or provide reviewed alternatives."
-        },
-        {
-          "code": "NumberFromString unchecked multiply/add and permissive embedded minus/comma parsing",
-          "disposition": "pending",
-          "reason": "Do not copy signed-overflow-prone numeric parsing unchanged. The current String::toInt call sites still require a bounded strict parser plus overflow tests; avoiding this donor function alone is not a proven superior replacement."
-        },
-        {
-          "code": "Mutable global command pointer and include Commands.cpp adapter",
+          "code": "Raw ShellTransport_Serial/SerialShellSession and mutable global command/include Commands.cpp adapter",
           "disposition": "replaced",
-          "reason": "Instance-owned line/editor state and explicit command dispatch avoid the legacy global pointer/include ownership pattern. Useful command behavior itself remains pending rather than excluded with the adapter."
+          "reason": "A separately boot-fenced COBS shell channel preserves USB recovery/protocol framing rather than mixing raw ASCII into the existing decoder. Instance-owned dispatch removes the donor global command/output pointer; host script never automatically replays uncertain input."
+        },
+        {
+          "code": "NumberFromString permissive comma/minus parsing and unchecked signed multiply/add",
+          "disposition": "replaced",
+          "reason": "Strict unsignedNumber validates full decimal input and overflow before conversion; command-specific signed display handling is explicit. Fixtures reject signs, commas, trailing junk and UINT32 overflow rather than silently normalizing a dangerous argument."
+        },
+        {
+          "code": "ShellBroadcastLine unrestricted event broadcast",
+          "disposition": "replaced",
+          "reason": "Opt-in per-session watch publishes changed bounded summaries with prompt erase/redraw and backpressure. This is not an ordered complete peripheral event stream; individual event delivery remains outside this shell slice."
+        },
+        {
+          "code": "upper/noupper applies to all donor input echo and prompt redraw",
+          "disposition": "pending",
+          "reason": "Current session upper option changes echo command output only; the original wider input-display behavior is not claimed equivalent."
+        },
+        {
+          "code": "Donor printable-ASCII editor and richer Unicode terminals",
+          "disposition": "pending",
+          "reason": "Arduino line editor/TUI deliberately accepts printable ASCII and sanitizes external controls. Persian/UTF-8 editing, bidi layout and font support are not supplied by this shell adaptation."
         }
       ],
       "remaining": [
-        "Port generic registry and useful utilities; implement prompt-safe asynchronous events; keep serial framing explicit.",
-        "Harden command JSON construction/numeric arguments and report queued versus AVR-acknowledged outcomes; current immediate OK is not proof of AVR execution."
+        "Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.",
+        "Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success."
       ],
-      "improvement": ""
+      "improvement": "Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending."
     },
     {
       "origin": "PU850-ESP",
@@ -10292,50 +10346,77 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual five-state IAC/option/subnegotiation parser, escaped IAC, ECHO/SGA negotiation and greeting retained in standalone WiFiClient-based implementation.",
-        "Pakar tracks option state to suppress greeting-ack negotiation loops; unsupported DO/WILL options are explicitly rejected."
+        "Actual five-state IAC/option/subnegotiation parser, escaped IAC, server ECHO/SGA greeting and unsupported-option rejection are retained. Option state suppresses greeting-ACK negotiation loops.",
+        "Native WiFiServer/WiFiClient sessions use independent parser/editor/TUI/auth state, configurable bounded session count, 64-byte input budget, bounded output and nonblocking S3 socket writes; slow or overfull sessions retire rather than blocking LED/UART work.",
+        "ShellSettings persists enable, TCP port and color with checksum, pending write/readback/rename and unchanged-write suppression. Configuration schedules listener retirement/rebind after its response; published discovery port comes from the actual bound listener.",
+        "Authentication readiness/security revision fences both Telnet and framed USB; asynchronous close requests are deferred to the main loop so callbacks do not delete a live loop-owned editor/socket."
       ],
       "targets": [
         {
           "path": "firmware/esp8266/src/TelnetShell.h",
-          "anchor": "class TelnetParser",
-          "sha256": "dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec"
+          "sha256": "20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281",
+          "anchor": "class TelnetParser"
         },
         {
-          "path": "firmware/esp8266/esp8266.ino",
-          "anchor": "void serviceTelnet() {",
-          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
+          "path": "firmware/esp8266/src/ShellService.h",
+          "sha256": "b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb",
+          "anchor": "void serviceDeviceShells()"
+        },
+        {
+          "path": "firmware/esp8266/src/ShellSettings.h",
+          "sha256": "edc36bb702f4304ee1eac6e2e848cf4f62b9d075bb9d6e90349029c768ae19e4",
+          "anchor": "class ShellSettings"
+        },
+        {
+          "path": "firmware/esp8266/src/ShellBuild.h",
+          "sha256": "a2a8a9ee528e9cb48a64ad11268ff473cfbaecc8351ab01c1d9c0d55ed8128a7",
+          "anchor": "PAKAR_TELNET_SESSIONS"
         }
       ],
       "proof": [
         {
           "path": "tests/telnet_shell_test.cpp",
-          "anchor": "assert(output.empty());",
-          "sha256": "f7dd91333d3aced80fdab41b146b98ecd2e9dd3896a504f8a70cfb33912f00e9"
+          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "anchor": "No negotiation loops on greeting acknowledgements."
+        },
+        {
+          "path": "tests/shell_wire_test.cpp",
+          "sha256": "5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9",
+          "anchor": "fs.failRename=true"
+        },
+        {
+          "path": "tests/shell_wire_test.cpp",
+          "sha256": "5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9",
+          "anchor": "!corrupt.enabled()"
+        },
+        {
+          "path": "tools/test-shell.ps1",
+          "sha256": "415c8ede3ffc365fdef97322e47ac6ed0e667e832498df3a775e150d1a5522cc",
+          "anchor": "-Concern device-shell -Gate"
         }
       ],
       "omissions": [
         {
           "code": "ESPTelnet dependency and ESP8266WEBSERVER_H synchronous-header suppression",
           "disposition": "replaced",
-          "reason": "Native WiFiServer/WiFiClient removes the dependency which pulled a conflicting synchronous web-server header into an async server product; the actual protocol parser was retained rather than replaced by plain newline input."
+          "reason": "Native WiFiServer/WiFiClient avoids the conflicting synchronous web header while retaining the actual Telnet protocol/parser behavior, not merely newline input."
         },
         {
-          "code": "Telnet_Port and listener restart/stop on port or AP/STA availability changes; matching mDNS add/remove",
-          "disposition": "pending",
-          "reason": "Pakar currently hardcodes port 23 and starts its listener at setup. Donor network lifecycle/port configurability is useful generic behavior and is not fully mapped or runtime tested."
-        },
-        {
-          "code": "Product-branded ANSI greeting and legacy ShellSession callback hookup",
+          "code": "Single global TelnetShellSession and legacy product greeting callbacks",
           "disposition": "replaced",
-          "reason": "Pakar's authenticated greeting and instance-owned parser/editor serve the new product. Plain Telnet still transmits credentials without encryption; this must be shown/configurable as a trusted-LAN-only surface."
+          "reason": "Bounded independent sessions use Pakar application/hostname identity and the existing access owner. Telnet is still plaintext and is not claimed encrypted; disabling it or compile-time gating remains available."
+        },
+        {
+          "code": "TelnetNetworkAvailable stop/restart and mDNS remove on every AP/station loss",
+          "disposition": "pending",
+          "reason": "Source now supports durable enable/port rebind and truthful actual-listener discovery. Exact donor network-loss transition parity and multi-interface socket behavior still need explicit review/live acceptance rather than being inferred from settings tests."
         }
       ],
       "remaining": [
-        "Expose configurable enable/port and network-aware listener/discovery lifecycle; verify reconnect, disabled port, AP and station loss on hardware.",
-        "Prove actual Telnet login, command/ACK outcome and simultaneous API/WebSocket clients; source parser tests are not LAN acceptance."
+        "Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.",
+        "Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success."
       ],
-      "improvement": ""
+      "improvement": "Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending."
     },
     {
       "origin": "PU850-ESP",
@@ -10344,50 +10425,378 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual five-state IAC/option/subnegotiation parser, escaped IAC, ECHO/SGA negotiation and greeting retained in standalone WiFiClient-based implementation.",
-        "Pakar tracks option state to suppress greeting-ack negotiation loops; unsupported DO/WILL options are explicitly rejected."
+        "Actual five-state IAC/option/subnegotiation parser, escaped IAC, server ECHO/SGA greeting and unsupported-option rejection are retained. Option state suppresses greeting-ACK negotiation loops.",
+        "Native WiFiServer/WiFiClient sessions use independent parser/editor/TUI/auth state, configurable bounded session count, 64-byte input budget, bounded output and nonblocking S3 socket writes; slow or overfull sessions retire rather than blocking LED/UART work.",
+        "ShellSettings persists enable, TCP port and color with checksum, pending write/readback/rename and unchanged-write suppression. Configuration schedules listener retirement/rebind after its response; published discovery port comes from the actual bound listener.",
+        "Authentication readiness/security revision fences both Telnet and framed USB; asynchronous close requests are deferred to the main loop so callbacks do not delete a live loop-owned editor/socket."
       ],
       "targets": [
         {
           "path": "firmware/esp8266/src/TelnetShell.h",
-          "anchor": "class TelnetParser",
-          "sha256": "dac714f88775ffada5fa6d706dee049b344e6d701530de9b57d53400444542ec"
+          "sha256": "20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281",
+          "anchor": "class TelnetParser"
         },
         {
-          "path": "firmware/esp8266/esp8266.ino",
-          "anchor": "void serviceTelnet() {",
-          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d"
+          "path": "firmware/esp8266/src/ShellService.h",
+          "sha256": "b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb",
+          "anchor": "void serviceDeviceShells()"
+        },
+        {
+          "path": "firmware/esp8266/src/ShellSettings.h",
+          "sha256": "edc36bb702f4304ee1eac6e2e848cf4f62b9d075bb9d6e90349029c768ae19e4",
+          "anchor": "class ShellSettings"
+        },
+        {
+          "path": "firmware/esp8266/src/ShellBuild.h",
+          "sha256": "a2a8a9ee528e9cb48a64ad11268ff473cfbaecc8351ab01c1d9c0d55ed8128a7",
+          "anchor": "PAKAR_TELNET_SESSIONS"
         }
       ],
       "proof": [
         {
           "path": "tests/telnet_shell_test.cpp",
-          "anchor": "assert(output.empty());",
-          "sha256": "f7dd91333d3aced80fdab41b146b98ecd2e9dd3896a504f8a70cfb33912f00e9"
+          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "anchor": "No negotiation loops on greeting acknowledgements."
+        },
+        {
+          "path": "tests/shell_wire_test.cpp",
+          "sha256": "5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9",
+          "anchor": "fs.failRename=true"
+        },
+        {
+          "path": "tests/shell_wire_test.cpp",
+          "sha256": "5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9",
+          "anchor": "!corrupt.enabled()"
+        },
+        {
+          "path": "tools/test-shell.ps1",
+          "sha256": "415c8ede3ffc365fdef97322e47ac6ed0e667e832498df3a775e150d1a5522cc",
+          "anchor": "-Concern device-shell -Gate"
         }
       ],
       "omissions": [
         {
           "code": "ESPTelnet dependency and ESP8266WEBSERVER_H synchronous-header suppression",
           "disposition": "replaced",
-          "reason": "Native WiFiServer/WiFiClient removes the dependency which pulled a conflicting synchronous web-server header into an async server product; the actual protocol parser was retained rather than replaced by plain newline input."
+          "reason": "Native WiFiServer/WiFiClient avoids the conflicting synchronous web header while retaining the actual Telnet protocol/parser behavior, not merely newline input."
         },
         {
-          "code": "Telnet_Port and listener restart/stop on port or AP/STA availability changes; matching mDNS add/remove",
-          "disposition": "pending",
-          "reason": "Pakar currently hardcodes port 23 and starts its listener at setup. Donor network lifecycle/port configurability is useful generic behavior and is not fully mapped or runtime tested."
-        },
-        {
-          "code": "Product-branded ANSI greeting and legacy ShellSession callback hookup",
+          "code": "Single global TelnetShellSession and legacy product greeting callbacks",
           "disposition": "replaced",
-          "reason": "Pakar's authenticated greeting and instance-owned parser/editor serve the new product. Plain Telnet still transmits credentials without encryption; this must be shown/configurable as a trusted-LAN-only surface."
+          "reason": "Bounded independent sessions use Pakar application/hostname identity and the existing access owner. Telnet is still plaintext and is not claimed encrypted; disabling it or compile-time gating remains available."
+        },
+        {
+          "code": "TelnetNetworkAvailable stop/restart and mDNS remove on every AP/station loss",
+          "disposition": "pending",
+          "reason": "Source now supports durable enable/port rebind and truthful actual-listener discovery. Exact donor network-loss transition parity and multi-interface socket behavior still need explicit review/live acceptance rather than being inferred from settings tests."
         }
       ],
       "remaining": [
-        "Expose configurable enable/port and network-aware listener/discovery lifecycle; verify reconnect, disabled port, AP and station loss on hardware.",
-        "Prove actual Telnet login, command/ACK outcome and simultaneous API/WebSocket clients; source parser tests are not LAN acceptance."
+        "Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.",
+        "Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success."
       ],
-      "improvement": ""
+      "improvement": "Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending."
+    },
+    {
+      "origin": "PU850-ESP",
+      "path": "LocalLib/Commands.cpp",
+      "sha256": "5181d7cc83efe2416a3a198ff88aad2aeffc8871ee2ef7a2a1ffdad51d31b88e",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "DeviceParameter name/type/read-only/get/set design is adapted to ShellProperty descriptors for hostname/label, network mode/DHCP/static addressing, station SSID/write-only password, MQTT/WebSocket endpoints, telemetry interval, shell settings and LED mode/brightness/effect.",
+        "Read-only observations expose version, boot identity, uptime, heap, AVR presence, display ACK state, firmware phase and actual LED backend/RMT/DMA capability; no shell-specific LED engine or second configuration store is introduced.",
+        "Useful echo/status/connect behavior maps to echo/status and queued network reconnect; typed JSON builds route device/cell/bulk/pixel/audio/display/firmware actions through existing validators and maintenance owners instead of PU callback addresses.",
+        "Durable configuration owners apply validated updates rather than copying the donor manual Settings_Write/Settings_Read lifecycle or direct ESP8266 SDK network structures."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp8266/src/ShellService.h",
+          "sha256": "b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb",
+          "anchor": "bool shellSet("
+        },
+        {
+          "path": "firmware/esp8266/src/ShellTuiBinding.h",
+          "sha256": "6c75b3e4440549ddd7851add400f69cff62e11e501075fe45c322795f688b5c5",
+          "anchor": "shellGet(*p)"
+        },
+        {
+          "path": "firmware/esp8266/src/ShellSettings.h",
+          "sha256": "edc36bb702f4304ee1eac6e2e848cf4f62b9d075bb9d6e90349029c768ae19e4",
+          "anchor": "bool configure("
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/shell_wire_test.cpp",
+          "sha256": "5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9",
+          "anchor": "4294967296"
+        },
+        {
+          "path": "tests/shell_tui_test.cpp",
+          "sha256": "6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929",
+          "anchor": "Readonly never emits Set."
+        },
+        {
+          "path": "tests/telnet_shell_test.cpp",
+          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "anchor": "!editor.remember(true)"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Station_Password/AP_Password getters returning plaintext credentials",
+          "disposition": "replaced",
+          "reason": "Secret descriptors are write-only and display <write-only>/[hidden]; classified secret commands and URL credentials are excluded from history. Copying plaintext getters would disclose credentials over Telnet and framed USB."
+        },
+        {
+          "code": "busy/ready SendESPStatus_ToPU and Request_Beep PU protocol callbacks",
+          "disposition": "not-applicable",
+          "reason": "These addresses/status opcodes belong to the removed PU850 business protocol. Pakar uses existing AVR flow/maintenance ownership and finite typed audio cues; no arbitrary PU address, busy flag or byte-to-buzzer callback is imported."
+        },
+        {
+          "code": "Direct wifi_station/softap config mutation, AssignResult into the global command buffer",
+          "disposition": "replaced",
+          "reason": "Shared typed JSON configuration owners validate and persist updates without truncating into the current command buffer or mutating ESP8266-only SDK structures. The generic descriptor/read-only mechanism itself is retained."
+        },
+        {
+          "code": "AP_SSID/AP_Password descriptors, Firmware_Hash/Build_Date named getters and legacy save/restore aliases",
+          "disposition": "pending",
+          "reason": "Current shell descriptors do not expose every donor property/alias. AP credential editing, exact firmware hash/build metadata parity and reviewed restore semantics remain useful gaps; info/telemetry are not claimed byte-for-byte substitutes."
+        },
+        {
+          "code": "Commented AP_IP/AP_Gateway/AP_Subnet parameter entries",
+          "disposition": "pending",
+          "reason": "The donor leaves these entries commented out. Pakar station static-address fields are implemented, but independent configurable AP address/gateway/subnet via the shell is not claimed complete."
+        }
+      ],
+      "remaining": [
+        "Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.",
+        "Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.",
+        "Review remaining AP/hash/build/restore descriptor gaps separately; generic get/set source coverage does not certify every prior PU property."
+      ],
+      "improvement": "Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending."
+    },
+    {
+      "origin": "PU850-ESP",
+      "path": "LocalLib/Commands.h",
+      "sha256": "48c0deb76d6105090fe1d58a2449427681a88775b1e63ddbb1b28ecff6341961",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "DeviceParameter name/type/read-only/get/set design is adapted to ShellProperty descriptors for hostname/label, network mode/DHCP/static addressing, station SSID/write-only password, MQTT/WebSocket endpoints, telemetry interval, shell settings and LED mode/brightness/effect.",
+        "Read-only observations expose version, boot identity, uptime, heap, AVR presence, display ACK state, firmware phase and actual LED backend/RMT/DMA capability; no shell-specific LED engine or second configuration store is introduced.",
+        "Useful echo/status/connect behavior maps to echo/status and queued network reconnect; typed JSON builds route device/cell/bulk/pixel/audio/display/firmware actions through existing validators and maintenance owners instead of PU callback addresses.",
+        "Durable configuration owners apply validated updates rather than copying the donor manual Settings_Write/Settings_Read lifecycle or direct ESP8266 SDK network structures."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp8266/src/ShellService.h",
+          "sha256": "b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb",
+          "anchor": "bool shellSet("
+        },
+        {
+          "path": "firmware/esp8266/src/ShellTuiBinding.h",
+          "sha256": "6c75b3e4440549ddd7851add400f69cff62e11e501075fe45c322795f688b5c5",
+          "anchor": "shellGet(*p)"
+        },
+        {
+          "path": "firmware/esp8266/src/ShellSettings.h",
+          "sha256": "edc36bb702f4304ee1eac6e2e848cf4f62b9d075bb9d6e90349029c768ae19e4",
+          "anchor": "bool configure("
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/shell_wire_test.cpp",
+          "sha256": "5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9",
+          "anchor": "4294967296"
+        },
+        {
+          "path": "tests/shell_tui_test.cpp",
+          "sha256": "6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929",
+          "anchor": "Readonly never emits Set."
+        },
+        {
+          "path": "tests/telnet_shell_test.cpp",
+          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "anchor": "!editor.remember(true)"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Station_Password/AP_Password getters returning plaintext credentials",
+          "disposition": "replaced",
+          "reason": "Secret descriptors are write-only and display <write-only>/[hidden]; classified secret commands and URL credentials are excluded from history. Copying plaintext getters would disclose credentials over Telnet and framed USB."
+        },
+        {
+          "code": "busy/ready SendESPStatus_ToPU and Request_Beep PU protocol callbacks",
+          "disposition": "not-applicable",
+          "reason": "These addresses/status opcodes belong to the removed PU850 business protocol. Pakar uses existing AVR flow/maintenance ownership and finite typed audio cues; no arbitrary PU address, busy flag or byte-to-buzzer callback is imported."
+        },
+        {
+          "code": "Direct wifi_station/softap config mutation, AssignResult into the global command buffer",
+          "disposition": "replaced",
+          "reason": "Shared typed JSON configuration owners validate and persist updates without truncating into the current command buffer or mutating ESP8266-only SDK structures. The generic descriptor/read-only mechanism itself is retained."
+        },
+        {
+          "code": "AP_SSID/AP_Password descriptors, Firmware_Hash/Build_Date named getters and legacy save/restore aliases",
+          "disposition": "pending",
+          "reason": "Current shell descriptors do not expose every donor property/alias. AP credential editing, exact firmware hash/build metadata parity and reviewed restore semantics remain useful gaps; info/telemetry are not claimed byte-for-byte substitutes."
+        },
+        {
+          "code": "Commented AP_IP/AP_Gateway/AP_Subnet parameter entries",
+          "disposition": "pending",
+          "reason": "The donor leaves these entries commented out. Pakar station static-address fields are implemented, but independent configurable AP address/gateway/subnet via the shell is not claimed complete."
+        }
+      ],
+      "remaining": [
+        "Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.",
+        "Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.",
+        "Review remaining AP/hash/build/restore descriptor gaps separately; generic get/set source coverage does not certify every prior PU property."
+      ],
+      "improvement": "Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending."
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "internal/tui/form.go",
+      "sha256": "3a3b4f13d0c839664edc2b15bb4418254463ff4d36016cb798a799016ef2890a",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "formIsFiltering focused-field key ownership is adapted to a pure ShellTui editing state: printable input/Tab cannot invoke workspace shortcuts while a draft is active; Esc/Ctrl-C cancel without applying.",
+        "Readonly fields cannot emit Set, unchanged Enter is not a write, CR-LF submits once, and a draft is cancelled if its key/editable/secret authority changes. Observed refreshes do not repaint or replace an active draft.",
+        "One shared ShellProperty snapshot binds TUI fields to the same shell/configuration validators, rather than introducing a separate TUI business or persistence layer."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp8266/src/ShellTui.h",
+          "sha256": "619d9de1094638ee9dc8878aa749bdf14cfa1610f434fb6905a1d596e43e1307",
+          "anchor": "if(editing_)return edit(ch,snapshot,action);"
+        },
+        {
+          "path": "firmware/esp8266/src/ShellTuiBinding.h",
+          "sha256": "6c75b3e4440549ddd7851add400f69cff62e11e501075fe45c322795f688b5c5",
+          "anchor": "struct ShellTuiSnapshot"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/shell_tui_test.cpp",
+          "sha256": "6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929",
+          "anchor": "private\\trefresh"
+        },
+        {
+          "path": "tests/shell_tui_test.cpp",
+          "sha256": "6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929",
+          "anchor": "Async observation cannot repaint draft."
+        },
+        {
+          "path": "tests/shell_tui_test.cpp",
+          "sha256": "6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929",
+          "anchor": "rows[0].editable=false"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Huh form types, Go interface assertions and Bubble Tea runtime",
+          "disposition": "replaced",
+          "reason": "The microcontroller uses an allocation-free C++ editing state and explicit Action handoff. No Go/Huh/Bubble Tea runtime is ported or required, and no full Huh select-filter UI is claimed."
+        },
+        {
+          "code": "Unicode/Persian input and desktop form widgets",
+          "disposition": "pending",
+          "reason": "Current Arduino form accepts bounded printable ASCII only; terminal character shaping, Persian editing and richer host widgets require separate implementation and acceptance."
+        }
+      ],
+      "remaining": [
+        "Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.",
+        "Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success."
+      ],
+      "improvement": "Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending."
+    },
+    {
+      "origin": "RayanLamp",
+      "path": "internal/tui/terminal.go",
+      "sha256": "3b56b9ee2bfa2e40b02e464c7cc2cd471d6dbb2148f06091bd56dfdf2926e1b3",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Session-fenced immutable input/output ownership is adapted into SerialChannel/OutputWindow and the host terminal tool: explicit Open/token, no uncertain input replay, nonwrapping sequences, output ACK before consumption and explicit close.",
+        "Terminal safety is adapted into bounded terminalText and TUI rendering: external CSI/OSC/DCS/control payloads cannot inject terminal actions, and only the project renderer emits ANSI; output/drafts/transcripts are bounded.",
+        "Independent session state, draft preservation, explicit backpressure and batched TUI draws retain the donor terminal's ownership/refresh principles without moving networking or actuator work into callbacks."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp8266/src/ShellWire.h",
+          "sha256": "af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216",
+          "anchor": "class OutputWindow"
+        },
+        {
+          "path": "firmware/esp8266/src/TelnetShell.h",
+          "sha256": "20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281",
+          "anchor": "inline size_t terminalText"
+        },
+        {
+          "path": "firmware/esp8266/src/ShellTui.h",
+          "sha256": "619d9de1094638ee9dc8878aa749bdf14cfa1610f434fb6905a1d596e43e1307",
+          "anchor": "class ShellTui"
+        },
+        {
+          "path": "firmware/esp8266/src/ShellService.h",
+          "sha256": "b533269768d8517a0ffd0c4fd80835d84c5b4d389146918c974fb9ae55d637fb",
+          "anchor": "void closeDeviceShells()"
+        },
+        {
+          "path": "tools/device-shell.ps1",
+          "sha256": "4e197e3502eb6ef40d2a3df7bdde97ed3c05140c97e06e3d07426232732a9c55",
+          "anchor": "Exactly once; uncertain input is NEVER replayed."
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/shell_wire_test.cpp",
+          "sha256": "5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9",
+          "anchor": "Lost read reply replays same bytes"
+        },
+        {
+          "path": "tests/shell_wire_test.cpp",
+          "sha256": "5b90c5c6eb25b7bd34d33203b7db7da0f6257ff00976b88c70c6b662ca5b48f9",
+          "anchor": "output.sequence()==UINT16_MAX"
+        },
+        {
+          "path": "tests/shell_tui_test.cpp",
+          "sha256": "6fd3966ebe7ed5567a018116a7d3ef73110a2149409dec9145da4e95f9107929",
+          "anchor": "never-render-this"
+        },
+        {
+          "path": "tests/telnet_shell_test.cpp",
+          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "anchor": "Inspect the caller-owned backing bytes"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Go terminalOverlay, Bubble Tea viewport, 512KiB scrollback and host long-poll goroutines",
+          "disposition": "replaced",
+          "reason": "An MCU-owned bounded ANSI TUI and PowerShell framed terminal replace this runtime, not a wholesale Go port. The device does not retain a 512KiB transcript or spawn host long-poll workers."
+        },
+        {
+          "code": "sanitizeDeviceTerminal printable UTF-8/SGR subset, bidi-aware text and scrollback viewport parity",
+          "disposition": "pending",
+          "reason": "Arduino sanitization intentionally substitutes non-ASCII and removes external SGR rather than reproducing the donor Unicode viewport. Persian editing, resize/mouse/scrollback and full terminal-emulation parity are not implemented by this slice."
+        },
+        {
+          "code": "Transparent raw serial and automatic uncertain write retry",
+          "disposition": "replaced",
+          "reason": "An additive boot/token-fenced COBS channel preserves ordinary USB recovery. Host terminal sends input once and does not reopen/replay actions automatically after uncertainty."
+        }
+      ],
+      "remaining": [
+        "Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.",
+        "Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success."
+      ],
+      "improvement": "Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending."
     },
     {
       "origin": "Pealayer",
@@ -11642,7 +12051,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d",
+          "sha256": "ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -11726,7 +12135,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "1d9d4d8c0af2c42a76aafed99406572c95072f4cedfd392436e3ad4ef4b158de",
+          "sha256": "d620aede31dff1b39f82de0c2de468209373ab86b5e4c47cd5a9c0bc8ebaa3d3",
           "anchor": "Boot policy accepts existing files without restoring a saved animation"
         },
         {
@@ -11813,7 +12222,7 @@
         },
         {
           "path": "firmware/esp8266/src/MaintenanceRoutes.h",
-          "sha256": "e87ed119fa144aad18dc999a4f1df8460f3f83a3ede985811b57bdb588cb2d96",
+          "sha256": "e7972e623ed27d46fd26293f1dd63af3041e4a8d9134af1cfd3b08ee77c73078",
           "anchor": "if(plan.targets==RemotePolicy::Esp && !programmingLatched) return true;"
         },
         {
@@ -12348,12 +12757,12 @@
         },
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "9d7a762b1c1c2937a26450e14e75935e438f83710ae9fe18355cf190c410421a",
+          "sha256": "b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119",
           "anchor": "bool LedGrid::setCells("
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "6e9c86561ffeafc775604ea17d67073ec463dd6cc8f601095a8b4e88733eaabf",
+          "sha256": "82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa",
           "anchor": "bool setCells("
         },
         {
@@ -12363,13 +12772,13 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "a7c73c4a15d3876204d9902011e93d02b5507357d5684c1e48d12acb687236a9",
+          "sha256": "b4e3a0a4ebe9285da6abfb98e097170aab93282d7edbad1f8c07bceaca1b9297",
           "anchor": "bool pending=true;"
         },
         {
           "path": "firmware/esp32s3/src/LedWire.h",
-          "sha256": "767a834768348560dab7d9a08fd026803419c480079e4fe54c6aac683364b46b",
-          "anchor": "inline constexpr uint16_t zeroHigh=14"
+          "sha256": "4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513",
+          "anchor": "inline constexpr uint16_t zeroHigh=10"
         },
         {
           "path": "firmware/esp8266/src/LedRenderAdmission.h",
@@ -12378,19 +12787,21 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d",
+          "sha256": "ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267",
+          "sha256": "a073ac3d9401331d48b2c8c820ab11421b298d7b67413fd180d98925e2e12ef0",
           "anchor": "CellChaseOnBoot"
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.h",
-          "sha256": "b7f49a1a4678c8b4597fb823bd42cc32d4d5d828c6750641b3930df9bd11211a",
+          "sha256": "434f4543225a92230765ae77a3cd8af4c0b7dbdffd1ba2cf04831a5aed718bf5",
           "anchor": "#if !defined(PAKAR_S3_LED_USE_DMA)"
         },
+        {"path":"firmware/esp32s3/src/LedDmaGuard.h","sha256":"c5e50b1e3b59247d49b2b4b2033822bd5d551105ef4c899f63830736642f7b07","anchor":"class LedDmaSetupScope"},
+        {"path":"firmware/esp32s3/src/LedDmaGuard.cpp","sha256":"ca516ca4870adb8bf76a70f3f2aadff4f8067685dd6076cbb8ea1199019fcda7","anchor":"newCacheSafeLedChannel"},
         {
           "path": "mobile/lib/pixel_diagnostic.dart",
           "sha256": "f5d5f5726ffa6b046d36adc5466d81b1a5570a16d0937aa79e99839e23182e6d",
@@ -12426,7 +12837,7 @@
         {
           "code": "Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness",
           "disposition": "pending",
-          "reason": "The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery uses350/700ns highs,1250ns bits and300us low; its SDK ring still requires ISR refill. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof."
+          "reason": "The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery had350/700ns highs; the candidate corrects them to classic WS2811 high-speed250/600ns,1250ns bits and300us low. A witnessed task-scoped GDMA allocation requests cache-safe refill using the already-IRAM SDK graph; the ring still refills and partition flash guards remain. Incomplete SDK symbol accounting now fails closed; this is still not wire readback. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof."
         }
       ],
       "remaining": [
@@ -12435,7 +12846,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "1d9d4d8c0af2c42a76aafed99406572c95072f4cedfd392436e3ad4ef4b158de",
+          "sha256": "d620aede31dff1b39f82de0c2de468209373ab86b5e4c47cd5a9c0bc8ebaa3d3",
           "anchor": "Entire selection validation"
         },
         {
@@ -12445,9 +12856,11 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "e27f0993c50d0c49fd1d8b2da6121b3445f8ba507b0a5f9d2a322934ad7384db",
+          "sha256": "aff158c2dad22ecee983edacf12b97c2e215954b40550b1db52f34fe5b5d6c25",
           "anchor": "void functional()"
         },
+        {"path":"tests/led_dma_guard_test.cpp","sha256":"acb3b4050d2f75edb9a7223ef50de117c88362a21134f2635d5ac8b6251198dc","anchor":"int main("},
+        {"path":"tools/test-led-dma-guard.ps1","sha256":"6fb9ea8d49b85f0b02425f007dc0eec3eb0dc708fb8d20ad8f583965bae98d62","anchor":"--wrap=gdma_new_ahb_channel"},
         {
           "path": "tests/cell_chase_wiring_test.mjs",
           "sha256": "e071f0a389df2fd27942b8b33b7b27b24d8e19a7d327c0986c930de770529790",
@@ -12510,12 +12923,12 @@
         },
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "9d7a762b1c1c2937a26450e14e75935e438f83710ae9fe18355cf190c410421a",
+          "sha256": "b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119",
           "anchor": "bool LedGrid::setCells("
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "6e9c86561ffeafc775604ea17d67073ec463dd6cc8f601095a8b4e88733eaabf",
+          "sha256": "82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa",
           "anchor": "bool setCells("
         },
         {
@@ -12525,13 +12938,13 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "a7c73c4a15d3876204d9902011e93d02b5507357d5684c1e48d12acb687236a9",
+          "sha256": "b4e3a0a4ebe9285da6abfb98e097170aab93282d7edbad1f8c07bceaca1b9297",
           "anchor": "bool pending=true;"
         },
         {
           "path": "firmware/esp32s3/src/LedWire.h",
-          "sha256": "767a834768348560dab7d9a08fd026803419c480079e4fe54c6aac683364b46b",
-          "anchor": "inline constexpr uint16_t zeroHigh=14"
+          "sha256": "4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513",
+          "anchor": "inline constexpr uint16_t zeroHigh=10"
         },
         {
           "path": "firmware/esp8266/src/LedRenderAdmission.h",
@@ -12540,19 +12953,21 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "8a2a6fdebf2f7bce35b6edfdadb5243f7bd25b5d7fca67c8b0bcb838d5f4641d",
+          "sha256": "ab8b5d467d1082bdf7f91aae86cf46be7d117a80c5b1e5d68b26386e2605c1a6",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267",
+          "sha256": "a073ac3d9401331d48b2c8c820ab11421b298d7b67413fd180d98925e2e12ef0",
           "anchor": "CellChaseOnBoot"
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.h",
-          "sha256": "b7f49a1a4678c8b4597fb823bd42cc32d4d5d828c6750641b3930df9bd11211a",
+          "sha256": "434f4543225a92230765ae77a3cd8af4c0b7dbdffd1ba2cf04831a5aed718bf5",
           "anchor": "#if !defined(PAKAR_S3_LED_USE_DMA)"
         },
+        {"path":"firmware/esp32s3/src/LedDmaGuard.h","sha256":"c5e50b1e3b59247d49b2b4b2033822bd5d551105ef4c899f63830736642f7b07","anchor":"class LedDmaSetupScope"},
+        {"path":"firmware/esp32s3/src/LedDmaGuard.cpp","sha256":"ca516ca4870adb8bf76a70f3f2aadff4f8067685dd6076cbb8ea1199019fcda7","anchor":"newCacheSafeLedChannel"},
         {
           "path": "mobile/lib/pixel_diagnostic.dart",
           "sha256": "f5d5f5726ffa6b046d36adc5466d81b1a5570a16d0937aa79e99839e23182e6d",
@@ -12588,7 +13003,7 @@
         {
           "code": "Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness",
           "disposition": "pending",
-          "reason": "The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery uses350/700ns highs,1250ns bits and300us low; its SDK ring still requires ISR refill. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof."
+          "reason": "The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery had350/700ns highs; the candidate corrects them to classic WS2811 high-speed250/600ns,1250ns bits and300us low. A witnessed task-scoped GDMA allocation requests cache-safe refill using the already-IRAM SDK graph; the ring still refills and partition flash guards remain. Incomplete SDK symbol accounting now fails closed; this is still not wire readback. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof."
         }
       ],
       "remaining": [
@@ -12597,7 +13012,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "1d9d4d8c0af2c42a76aafed99406572c95072f4cedfd392436e3ad4ef4b158de",
+          "sha256": "d620aede31dff1b39f82de0c2de468209373ab86b5e4c47cd5a9c0bc8ebaa3d3",
           "anchor": "Entire selection validation"
         },
         {
@@ -12607,9 +13022,11 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "e27f0993c50d0c49fd1d8b2da6121b3445f8ba507b0a5f9d2a322934ad7384db",
+          "sha256": "aff158c2dad22ecee983edacf12b97c2e215954b40550b1db52f34fe5b5d6c25",
           "anchor": "void functional()"
         },
+        {"path":"tests/led_dma_guard_test.cpp","sha256":"acb3b4050d2f75edb9a7223ef50de117c88362a21134f2635d5ac8b6251198dc","anchor":"int main("},
+        {"path":"tools/test-led-dma-guard.ps1","sha256":"6fb9ea8d49b85f0b02425f007dc0eec3eb0dc708fb8d20ad8f583965bae98d62","anchor":"--wrap=gdma_new_ahb_channel"},
         {
           "path": "tests/cell_chase_wiring_test.mjs",
           "sha256": "e071f0a389df2fd27942b8b33b7b27b24d8e19a7d327c0986c930de770529790",
@@ -12669,7 +13086,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "902605e0fcc32943a5c3312d18585e91a827d9f8921114ffd5ab41d264fe66a4",
+          "sha256": "377a786491826bee8fee9a5b83f89da2769085772788b07d88302b549599410d",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -12817,7 +13234,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "902605e0fcc32943a5c3312d18585e91a827d9f8921114ffd5ab41d264fe66a4"
+          "sha256": "377a786491826bee8fee9a5b83f89da2769085772788b07d88302b549599410d"
         }
       ],
       "proof": [
@@ -12857,7 +13274,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "902605e0fcc32943a5c3312d18585e91a827d9f8921114ffd5ab41d264fe66a4"
+          "sha256": "377a786491826bee8fee9a5b83f89da2769085772788b07d88302b549599410d"
         }
       ],
       "proof": [

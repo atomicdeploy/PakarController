@@ -65,10 +65,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Ethernet discovery integration tests failed' }
 & node (Join-Path $projectRoot 'tests/esp_only_maintenance_test.mjs')
 if ($LASTEXITCODE -ne 0) { throw 'ESP-only maintenance integration tests failed' }
 $shellBinary = Join-Path $outputDirectory 'telnet_shell_test.exe'
-& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/telnet_shell_test.cpp') -o $shellBinary
-if ($LASTEXITCODE -ne 0) { throw 'Telnet shell compilation failed' }
-& $shellBinary
-if ($LASTEXITCODE -ne 0) { throw 'Telnet shell tests failed' }
+& (Join-Path $PSScriptRoot 'test-shell.ps1')
 $busyBinary = Join-Path $outputDirectory 'busy_line_test.exe'
 & g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/busy_stubs') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/busy_line_test.cpp') -o $busyBinary
 if ($LASTEXITCODE -ne 0) { throw 'Busy line compilation failed' }

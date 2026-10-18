@@ -20,10 +20,11 @@ std::atomic<bool> stopping{false},finished{false};
 std::thread worker;
 std::mutex mutex;
 std::condition_variable changed;
-bool live=false,block=false,timeout=false,disableFails=false,blockDisable=false;
+bool live=false,block=false,timeout=false,disableFails=false,blockDisable=false,shortCompletion=false;
 unsigned stops=0;
 unsigned latches=0;
 rmt_bytes_encoder_config_t byteCoding{};
+rmt_tx_event_callbacks_t callbacks{};void *callbackOwner=nullptr;
 unsigned blockGeneration=0,blockedGeneration=0;
 const void* buffer=nullptr;
 std::vector<uint8_t> snapshot;
@@ -65,14 +66,16 @@ void vTaskDelete(void*){throw Fixture::Stop{};}
 void* heap_caps_malloc(size_t bytes,int caps){assert(caps==(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));assert(bytes==1440);auto* p=std::malloc(bytes);Fixture::allocations.push_back(p);return p;}
 void heap_caps_free(void* pointer){for(auto& p:Fixture::allocations)if(p==pointer)p=nullptr;std::free(pointer);}
 int rmt_new_tx_channel(const rmt_tx_channel_config_t* config,rmt_channel_handle_t* channel){assert(config->flags.with_dma&&config->mem_block_symbols==2046&&config->intr_priority==3&&config->resolution_hz==40000000&&config->trans_queue_depth==1&&config->gpio_num==4);*channel=reinterpret_cast<void*>(1);return ESP_OK;}
+namespace PakarS3 {int newCacheSafeLedChannel(const rmt_tx_channel_config_t *config,rmt_channel_handle_t *channel){return rmt_new_tx_channel(config,channel);}}
 int rmt_new_copy_encoder(const rmt_copy_encoder_config_t*,rmt_encoder_handle_t* encoder){*encoder=reinterpret_cast<void*>(2);return ESP_OK;}
 int rmt_new_bytes_encoder(const rmt_bytes_encoder_config_t* config,rmt_encoder_handle_t* encoder){
  assert(config->flags.msb_first==1);
- assert(config->bit0.level0==1&&config->bit0.level1==0&&config->bit0.duration0==14&&config->bit0.duration1==36);
- assert(config->bit1.level0==1&&config->bit1.level1==0&&config->bit1.duration0==28&&config->bit1.duration1==22);
+ assert(config->bit0.level0==1&&config->bit0.level1==0&&config->bit0.duration0==10&&config->bit0.duration1==40);
+ assert(config->bit1.level0==1&&config->bit1.level1==0&&config->bit1.duration0==24&&config->bit1.duration1==26);
  Fixture::byteCoding=*config;*encoder=reinterpret_cast<void*>(3);return ESP_OK;
 }
 int rmt_enable(rmt_channel_handle_t){return ESP_OK;}
+int rmt_tx_register_event_callbacks(rmt_channel_handle_t,const rmt_tx_event_callbacks_t *callbacks,void *owner){Fixture::callbacks=*callbacks;Fixture::callbackOwner=owner;return ESP_OK;}
 int rmt_del_channel(rmt_channel_handle_t){return ESP_OK;}
 int rmt_del_encoder(rmt_encoder_handle_t){return ESP_OK;}
 int rmt_transmit(rmt_channel_handle_t,rmt_encoder_handle_t encoder,const void* source,size_t bytes,const rmt_transmit_config_t* tx){
@@ -95,7 +98,8 @@ int rmt_tx_wait_all_done(rmt_channel_handle_t,int deadline){
  assert(std::memcmp(Fixture::buffer,Fixture::snapshot.data(),Fixture::snapshot.size())==0);
  if(Fixture::timeout)return ESP_ERR_TIMEOUT;
  lock.unlock();std::this_thread::sleep_for(std::chrono::milliseconds(2));lock.lock();
- assert(std::memcmp(Fixture::buffer,Fixture::snapshot.data(),Fixture::snapshot.size())==0);Fixture::live=false;return ESP_OK;
+ assert(std::memcmp(Fixture::buffer,Fixture::snapshot.data(),Fixture::snapshot.size())==0);Fixture::live=false;
+ rmt_tx_done_event_data_t done{Fixture::shortCompletion?480*24U:480*24U+1};assert(Fixture::callbacks.on_trans_done);Fixture::callbacks.on_trans_done(reinterpret_cast<void*>(1),&done,Fixture::callbackOwner);return ESP_OK;
 }
 int rmt_disable(rmt_channel_handle_t){
  std::unique_lock<std::mutex> lock(Fixture::mutex);++Fixture::stops;Fixture::changed.notify_all();
@@ -201,9 +205,11 @@ void functional(){
  const auto resumed=Fixture::count();std::this_thread::sleep_for(std::chrono::milliseconds(30));assert(Fixture::count()==resumed&&resumed==off+1);
  Fixture::cleanup();puts("Actual DMA worker:1440-byte internal source,SDK MSB-first bytes encoding/timing,300us post-completion latch,startup black,immutable TX,2000 mailbox submissions/coalescing,no unchanged replay,off black/sleep/on resume,boundary/nested/concurrent holds and failed-quiesce recovery passed.");
 }
-void failure(bool disableFails){
- PakarS3::LedOutput output;Fixture::timeout=true;Fixture::disableFails=disableFails;Fixture::blockDisable=true;CRGB rgb[480]{};assert(output.begin());output.submit(rgb,255,true,1);
+void failure(bool disableFails,bool shortCompletion=false){
+ PakarS3::LedOutput output;Fixture::timeout=!shortCompletion;Fixture::shortCompletion=shortCompletion;Fixture::disableFails=disableFails;Fixture::blockDisable=true;CRGB rgb[480]{};assert(output.begin());output.submit(rgb,255,true,1);
  Fixture::until([&]{return Fixture::field(output,"failed")==1;});
+ assert(Fixture::field(output,"transmitted")==0);
+ assert(Fixture::field(output,"error_code")==unsigned(shortCompletion?ESP_ERR_INVALID_RESPONSE:ESP_ERR_TIMEOUT));
  Fixture::until([&]{std::lock_guard<std::mutex> lock(Fixture::mutex);return Fixture::stops==1;});
  std::atomic<bool> answered{false},permitted{false};
  std::thread flash([&]{permitted=PakarS3::LedOutput::acquireFlashPause();answered=true;});
@@ -225,7 +231,7 @@ int main(int argc,char** argv){
 #if !PAKAR_S3_LED_USE_DMA
  assert(mode=="static");staticFunctional();
 #else
- if(mode=="functional")functional();else if(mode=="timeout")failure(false);else{assert(mode=="stop-failure");failure(true);}
+ if(mode=="functional")functional();else if(mode=="timeout")failure(false);else if(mode=="short-frame")failure(false,true);else{assert(mode=="stop-failure");failure(true);}
 #endif
  watchdog.join();
  puts("Host SDK doubles only: not physical RMT/DMA,RF,OTA or optical acceptance.");

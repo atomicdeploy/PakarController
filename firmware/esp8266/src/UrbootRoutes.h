@@ -330,8 +330,7 @@ void registerUrbootRoutes() {
     // Retire byte-oriented ingress instead of replaying buffered user intent
     // on returning to the application. The UDP listener is rebound afterward.
     stream.stop();
-    if(telnetClient)telnetClient.stop();
-    telnetEditor.reset();telnetParser.reset();telnetAuthenticated=false;
+    closeDeviceShells();
     urbootBusy.set(true);urbootQueued=true;sendMaintenanceJson(urbootJobJson(),202);
   });
 }
