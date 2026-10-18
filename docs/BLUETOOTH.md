@@ -37,7 +37,7 @@ Each value has a seven-byte header: kind (`0` data, `1` ACK), little-endian
 16-bit message ID, offset and total length. Data carries the following bytes;
 ACK carries the next expected offset. Values are bounded by `min(MTU-3,512)`.
 Only exact outstanding fragments may be retransmitted, never a new logical
-command. Requests are at most8192bytes and responses65535bytes. Partial assembly,
+command. Requests are at most 8192 bytes and responses 65535 bytes. Partial assembly,
 queued callbacks, retries and teardown are bounded; conflicting/out-of-order
 fragments are rejected. ATT write success is not device-command acceptance.
 
@@ -72,24 +72,64 @@ enabled or its configuration is damaged, BLE RPC fails closed: credentials are
 not sent over this unencrypted GATT service. Bonded/encrypted authenticated BLE
 is a separate pending acceptance item, not an implicit password bypass.
 
-Wi-Fi and BLE share the S3's2.4GHz radio. Actual phone throughput, Wi-Fi/AP
+Wi-Fi and BLE share the S3's 2.4 GHz radio. Actual phone throughput, Wi-Fi/AP
 coexistence, optical LED output and Android suspend/reconnect need physical
 acceptance. Codec tests, SDK compilation and a staged APK do not prove these.
 
 ## Verification
 
-Current source checkpoint: S3 application2207808bytes,
+Source checkpoint `a6ddc991a8d51de236f04941d52ddc90bbe37044`: S3 application 2207808 bytes,
 SHA256 `efc7b42fc29c70d47f2aab6a8a7dd3de51a0f6bfc4193b69f77de8e792383ec2`;
-SDK reports2207655program bytes and127672static-RAM bytes. Android0.2.7+10,
-57887073bytes, SHA256
+SDK reports 2207655 program bytes and 127672 static-RAM bytes. Android 0.2.7+10,
+57887073 bytes, SHA256
 `b673361d72ac498b7b6d6436ed6084e651156cc18feda7924c4032f47a5e8f87`.
 Existing preview signer/package verified with apksigner/aapt; this is not new
 production-key signing. The exact APK is hash-verified on ASUS at
 `C:\Users\David\Documents\PakarController\staging\PakarController.apk`.
-Actual Kotlin/APK compilation, analyzer,9focused BLE fixtures and the corrected
+Actual Kotlin/APK compilation, analyzer, 9 focused BLE fixtures and the corrected
 device-directory/mirroring files pass. Installed phone/radio acceptance remains
 open; the latest ADB inventory was empty. No native build/replacement is needed
 for this Android transport change.
+
+The APK is also [published through the configured app-update endpoint](https://office.digitalogic.ir/pakar/packages/b673361d72ac498b7b6d6436ed6084e651156cc18feda7924c4032f47a5e8f87/PakarController.apk).
+
+### Actual board delivery, not phone acceptance
+
+The exact candidate was SHA-verified in the inactive OTA slot by remote job 18,
+manifest SHA256 `214ecd90c1542986a609376fbd59467844871deb814063b786b4e70b9b756647`.
+After a host status reset, the reviewed updater resumed that existing ready job
+and applied once; it did not repeat fetch/upload. Boot changed from
+`d1170ed71821eda19075c19d70bad8c0` to
+`ce96e4b5f7073315aa4bad5e14e3cd0d`. Read-only USB HELLO/status and token-bound
+snapshot prefix identify `esp32s3-907069eac800`, hostname `ledboard`, BLE enabled/
+started and Wi-Fi uplink ready. The snapshot prefix is not a complete JSON/
+image-integrity attestation. USB status also acknowledged AVR online and station/
+AP active; no AVR firmware or wiring changed in this delivery.
+
+Actual ASUS Bluetooth scans receive the expected service from `907069EAC801`
+at -42/-44 dBm. This is advertisement evidence only. Windows uncached GATT
+service discovery timed out; no INFO identity or RPC acceptance is claimed.
+The probe now retains outstanding WinRT operations and their resource owners
+until terminal completion, rather than incorrectly closing them at timeout.
+The corrected bounded probe exited cleanly; the earlier unsafe teardown crashed
+its diagnostic process. No pairing, RX writes or radio settings were attempted.
+
+The postboot LAN verifier reached its deadline while ASUS's Wi-Fi was software-
+off; Ethernet could not reach the previously verified board address. No flash
+retry followed. Full running-image SHA readback, heap/LED soak, restored LAN
+reachability and actual Android installation/offline control/reconnect remain
+open in issue #20. The known running-image export short-read defect is tracked
+separately in issue #7, not reported as repaired by BLE delivery.
+
+Read-only ASUS diagnostics can use Windows PowerShell:
+
+```powershell
+./tools/probe-bluetooth-windows.ps1 -Seconds 5 -ReadInfo -ExpectedBoardId esp32s3-907069eac800
+```
+
+Omit `-ReadInfo` for advertisement-only inspection. A wait timeout does not mean
+Windows has cancelled its underlying connection operation. The diagnostic sends
+no Pakar command and is not a replacement for the Flutter acceptance test.
 
 Use `tools/test-bluetooth.ps1` for bounded C++ frame/receipt and integration
 fixtures, and `tools/build-mobile.ps1 -Mode Test -TestPath test/ble_transport_test.dart`

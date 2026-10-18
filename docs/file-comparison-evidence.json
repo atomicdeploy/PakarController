@@ -1532,7 +1532,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "const server=createServer",
-          "sha256": "a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483"
+          "sha256": "b8d7792f642a7ec3e241c2c072e204c71baec371184da0dc62eb3d64809bdd15"
         }
       ],
       "omissions": [
@@ -1561,7 +1561,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "Automatic updater plan/preflight",
-          "sha256": "a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483"
+          "sha256": "b8d7792f642a7ec3e241c2c072e204c71baec371184da0dc62eb3d64809bdd15"
         }
       ],
       "remaining": [
@@ -1594,7 +1594,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "await uploadImage(origin,peer,image,identity)",
-          "sha256": "a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483"
+          "sha256": "b8d7792f642a7ec3e241c2c072e204c71baec371184da0dc62eb3d64809bdd15"
         }
       ],
       "omissions": [
@@ -1628,7 +1628,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "Automatic updater plan/preflight",
-          "sha256": "a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483"
+          "sha256": "b8d7792f642a7ec3e241c2c072e204c71baec371184da0dc62eb3d64809bdd15"
         }
       ],
       "remaining": [
@@ -1662,7 +1662,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751"
+          "sha256": "3ee158f815c06cd0e955b14991343d630b97ca6e1c0ea8bdfe9b72410090537f"
         }
       ],
       "omissions": [
@@ -1777,7 +1777,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751"
+          "sha256": "3ee158f815c06cd0e955b14991343d630b97ca6e1c0ea8bdfe9b72410090537f"
         }
       ],
       "omissions": [
@@ -1840,7 +1840,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751"
+          "sha256": "3ee158f815c06cd0e955b14991343d630b97ca6e1c0ea8bdfe9b72410090537f"
         }
       ],
       "omissions": [
@@ -2002,7 +2002,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751"
+          "sha256": "3ee158f815c06cd0e955b14991343d630b97ca6e1c0ea8bdfe9b72410090537f"
         },
         {
           "path": "tools/deploy-artifact.mjs",
@@ -2817,7 +2817,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751"
+          "sha256": "3ee158f815c06cd0e955b14991343d630b97ca6e1c0ea8bdfe9b72410090537f"
         }
       ],
       "omissions": [
@@ -3114,12 +3114,12 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware(",
-          "sha256": "70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751"
+          "sha256": "3ee158f815c06cd0e955b14991343d630b97ca6e1c0ea8bdfe9b72410090537f"
         },
         {
           "path": "tools/update-firmware.ps1",
           "anchor": "[ValidateSet('auto','local','remote')]",
-          "sha256": "d082e39207a8c16a442d23a3c3137b495aa8b946c1f845ecbdde3044e4ea05a3"
+          "sha256": "20700046643f11b914063d73c5b2232a4aac8e972f532f6ab53b14faf28b3fc0"
         },
         {
           "path": "firmware/esp8266/src/UpgradeLifecycle.h",
@@ -3183,7 +3183,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "for(const scenario of",
-          "sha256": "a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483"
+          "sha256": "b8d7792f642a7ec3e241c2c072e204c71baec371184da0dc62eb3d64809bdd15"
         },
         {
           "path": "tools/test-update.ps1",

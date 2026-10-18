@@ -397,6 +397,8 @@ Use the guarded entry point from this checkout:
 ./tools/update-firmware.ps1 -Origin http://ledboard.local -Run
 # Explicit pinned Internet stage and separate apply; same expected local image.
 ./tools/update-firmware.ps1 -Mode remote -Manifest HTTPS_MANIFEST_URL -ManifestSha MANIFEST_SHA256 -Run
+# After inspecting an already verified ready job; never fetch again.
+./tools/update-firmware.ps1 -Mode remote -Manifest HTTPS_MANIFEST_URL -ManifestSha MANIFEST_SHA256 -ResumeJobId READY_JOB_ID -Run
 ```
 
 `auto` is the default. It prefers the advertised local Async HTTP upload path;
@@ -407,6 +409,14 @@ inventoried-device operation: no guessed COM port, reset, erase-all or automatic
 second firmware write after an uncertain network result. Direct LAN and Internet
 transfer times and total verification time are reported separately; there is no
 current-device speed benchmark while ASUS/device access is unavailable.
+
+An explicit resume requires the same ready job, current boot, manifest SHA,
+ESP-only target, image size and SHA. These are rechecked immediately before one
+apply. It neither re-fetches nor retries a mutation; interrupted/unknown applies
+are not resumable through this option. Only transport-failed GET/HEAD may retry
+once with the identical pinned address and headers. HTTP rejection, auth/identity
+failure and every upload/POST remain non-replaying. Resume timing is explicitly
+unknown for the earlier download rather than presented as a new speed result.
 
 No authentication is enabled by this workflow. It requires explicit
 `/api/auth` `enabled:false` before and after, pins board/boot/TCP identity before

@@ -46,6 +46,26 @@ subscription replaced unsupported RCW Add/Register-ObjectEvent calls. Actual
 ASUS scan starts and returns zero candidates before the new firmware. It does
 not pair, connect, change the adapter or establish board/phone BLE acceptance.
 
+BLE delivery then exposed two separate host failures. An interrupted status GET
+left fully verified remote job18 ready; reread the actual updater and canonical
+PCController UPDATE-PROGRESS/artifact downloader contracts. Add an explicit
+remote-only resume: pin existing job/boot/manifest/target/image, recheck immediately
+before one apply, never fetch again. Only transport-failed GET/HEAD with the same
+pinned address/headers may retry once; HTTP/auth/identity failures and every write
+remain non-replaying. The canonical update fixture wrapper passes both target
+publication branches, lifecycle/receipt/panel fixtures and resume/no-write cases.
+
+The exact staged image was applied once. USB confirms a new boot, BLE started,
+Wi-Fi uplink ready and AVR online; ASUS receives the BLE service at -42/-44dBm.
+LAN verification timed out while ASUS Wi-Fi was software-off, with no blind
+reflash. Windows GATT service discovery also timed out. The first INFO diagnostic
+incorrectly closed a still-running WinRT operation and crashed on exit; primary
+Microsoft IAsyncInfo.Close/owner lifetime rules required terminal-only close and
+a retained operation/resource lease. The corrected bounded INFO probe exits
+cleanly but still has no successful INFO read. These are actual partial board/
+radio observations, not phone RPC or full installed-image/optical acceptance.
+See BLUETOOTH.md and issues #20/#7 for exact hashes/boot IDs and open gates.
+
 ## Client updates, enrollment and temporary office service
 
 Reviewed the actual existing Android package/coordinator/native channel and

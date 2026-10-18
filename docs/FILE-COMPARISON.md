@@ -218,8 +218,8 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp8266/src/UpdateProgress.h:33 [UTF8-LF sha256=cbf19051f9f71c1b5ff99cd024faa1a87e12a211bc6001a413cdfde6a84e8640; anchor=class Progress]`.
 - Target: `firmware/esp8266/esp8266.ino:1958 [UTF8-LF sha256=41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba; anchor=String localUpdateJson() {]`.
 - Target: `firmware/esp8266/src/RemoteFirmware.h:67 [UTF8-LF sha256=9c959a74a7d59909f38c48844e191a089cf1849663e78caa4a3fafcaff6b2251; anchor=PakarUpdate::Observation progress() const]`.
-- Target: `tools/update-firmware.mjs:115 [UTF8-LF sha256=70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751; anchor=export async function updateFirmware(]`.
-- Target: `tools/update-firmware.ps1:5 [UTF8-LF sha256=d082e39207a8c16a442d23a3c3137b495aa8b946c1f845ecbdde3044e4ea05a3; anchor=[ValidateSet('auto','local','remote')]]`.
+- Target: `tools/update-firmware.mjs:138 [UTF8-LF sha256=3ee158f815c06cd0e955b14991343d630b97ca6e1c0ea8bdfe9b72410090537f; anchor=export async function updateFirmware(]`.
+- Target: `tools/update-firmware.ps1:5 [UTF8-LF sha256=20700046643f11b914063d73c5b2232a4aac8e972f532f6ab53b14faf28b3fc0; anchor=[ValidateSet('auto','local','remote')]]`.
 - Target: `firmware/esp8266/src/UpgradeLifecycle.h:14 [UTF8-LF sha256=cf5fd9189df181d4f23e3a80b4e219012e5aa589bd2ced02ec879e78b57908bf; anchor=class Lifecycle]`.
 - Target: `firmware/esp8266/src/LocalOtaReceipt.h:10 [UTF8-LF sha256=1611a77b4ea63137ab901eae30b0354b903bd2d8520d51b70a54e8680ccac445; anchor=class LocalOtaReceipt]`.
 - Target: `firmware/esp8266/src/AvrIsp.h:55 [UTF8-LF sha256=60905b95f0f74ede84143081d57c643a705a437c6b40bac603ec0f7b34567f1d; anchor=void report(]`.
@@ -236,7 +236,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `Automatic USB flashing fallback`. Disposition: **pending**. Reason: A missing/uncertain LAN reply must not select a guessed COM port, chip, flash profile or erase/write operation. Existing inventoried USB tooling remains separate; a future automatic path must identify the physical chip and preserve rollback/settings before selecting a write.
 - Test-code evidence: `tests/update_progress_test.cpp:24 [UTF8-LF sha256=62aecbc798946936ed78c60869ad34e9b9dc703e0c7ceb96b8241c8b8aea5a84; anchor=Concurrent reader never observes]`.
 - Test-code evidence: `tests/front_panel_test.cpp:43 [UTF8-LF sha256=34a354dc1ae87cbae160047caa99f6d627fdfaf5ff2d9b2fb0d744ca3cce835f; anchor=The ESP's actual progress encoder]`.
-- Test-code evidence: `tests/update_tool_test.mjs:19 [UTF8-LF sha256=a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483; anchor=for(const scenario of]`.
+- Test-code evidence: `tests/update_tool_test.mjs:22 [UTF8-LF sha256=b8d7792f642a7ec3e241c2c072e204c71baec371184da0dc62eb3d64809bdd15; anchor=for(const scenario of]`.
 - Test-code evidence: `tools/test-update.ps1:15 [UTF8-LF sha256=26873bf2ed2d802c9cca8ed1a428fefb275e4a975baad538fea32ecc02225725; anchor=$taskPanelOutput=]`.
 - Test-code evidence: `tests/upgrade_lifecycle_test.cpp:12 [UTF8-LF sha256=bdb7f771e595b510caddfd32a3f71a4f9522cbbf6517bd512997d454d2c57112; anchor=int main()]`.
 - Test-code evidence: `tests/local_ota_receipt_test.cpp:41 [UTF8-LF sha256=47927d52af8bd7eac6b103976e7f299b19acb068954cc8939e415cc8ee7c2904; anchor=int main()]`.
@@ -2989,7 +2989,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `0f40d6726756d86f30b82dac4fbe8fe11a5dc85ecba2cf8d68f5cb6771da0229`.
 
 - Target: `docs/SCRIPT-TOOLING.md:94 [UTF8-LF sha256=2d00287f8b0f2f657f04593550d17eee28a36238ef815264f251965b426984fc; anchor=Actual PU850 source import]`.
-- Target: `tools/update-firmware.mjs:115 [UTF8-LF sha256=70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751; anchor=export async function updateFirmware]`.
+- Target: `tools/update-firmware.mjs:138 [UTF8-LF sha256=3ee158f815c06cd0e955b14991343d630b97ca6e1c0ea8bdfe9b72410090537f; anchor=export async function updateFirmware]`.
 - Retained: Read full .NET documented upload/download/watch/backup/timeouts and platform outputs. Map one-shot preflight/identity/postboot behavior to the existing updater; document remaining download/resume/watch and package gaps rather than substituting a second client.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
 - Omitted/replaced code: `Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup`. Disposition: **pending**. Reason: One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open.
@@ -3035,7 +3035,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `92c5355d3cbb855acbb60352b9250926e94856905a7845ecaf541489db5bc2d7`.
 
 - Target: `docs/SCRIPT-TOOLING.md:94 [UTF8-LF sha256=2d00287f8b0f2f657f04593550d17eee28a36238ef815264f251965b426984fc; anchor=Actual PU850 source import]`.
-- Target: `tools/update-firmware.mjs:115 [UTF8-LF sha256=70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751; anchor=export async function updateFirmware]`.
+- Target: `tools/update-firmware.mjs:138 [UTF8-LF sha256=3ee158f815c06cd0e955b14991343d630b97ca6e1c0ea8bdfe9b72410090537f; anchor=export async function updateFirmware]`.
 - Retained: Read full WinHTTP/puff/gzip/manifest, cached DNS, no-replay, atomic resume, auth and exit contracts. Retain host identity/no-replay/integrity concepts; clearly distinguish Windows cross-builds from actual Linux-native outputs.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
 - Omitted/replaced code: `Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup`. Disposition: **pending**. Reason: One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open.
@@ -3051,14 +3051,14 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `176dabcb53d4b1db79c4493b08958e1d1b0546151f6046603e589bd534308bb9`.
 
 - Target: `tests/script_tooling_test.mjs:66 [UTF8-LF sha256=cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1; anchor=const cliPlan=]`.
-- Target: `tests/update_tool_test.mjs:79 [UTF8-LF sha256=a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483; anchor=await uploadImage(origin,peer,image,identity)]`.
+- Target: `tests/update_tool_test.mjs:109 [UTF8-LF sha256=b8d7792f642a7ec3e241c2c072e204c71baec371184da0dc62eb3d64809bdd15; anchor=await uploadImage(origin,peer,image,identity)]`.
 - Retained: Adapt loopback/subprocess fixture structure and fail-before-contact/integrity assertions without requiring a WinHTTP executable or Python test server. Existing updater fixtures exercise actual multipart bytes and fragmented WS; new CLI subprocess fixtures exercise offline/invalid argument behavior.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
 - Omitted/replaced code: `Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup`. Disposition: **pending**. Reason: One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open.
 - Omitted/replaced code: `Build and distribute parallel .NET/WinHTTP/Go ASA clients`. Disposition: **replaced**. Reason: Pakar already owns Rust and Flutter applications and the standard-library Node updater. Avoid three duplicate client stacks/SDK caches; reusable command/preflight/transfer contracts are mapped separately.
 - Test-code evidence: `tests/script_tooling_test.mjs:100 [UTF8-LF sha256=cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1; anchor=Script tooling:]`.
 - Test-code evidence: `tests/script_tooling_test.ps1:26 [UTF8-LF sha256=d3c679d8caa22177e7a5590564cd1141b84e1b194b3c3ee0bb825c26a4d46305; anchor=PowerShell utilities parse]`.
-- Test-code evidence: `tests/update_tool_test.mjs:95 [UTF8-LF sha256=a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483; anchor=Automatic updater plan/preflight]`.
+- Test-code evidence: `tests/update_tool_test.mjs:126 [UTF8-LF sha256=b8d7792f642a7ec3e241c2c072e204c71baec371184da0dc62eb3d64809bdd15; anchor=Automatic updater plan/preflight]`.
 - Remaining: Implement and exercise watch/resume/export/pre-update-backup contracts and remaining donor negative cases.
 - Remaining: Verify full native distributable/platform parity; Windows cross-build output is not Linux-native execution.
 - Remaining: No physical deployment, full client distribution or donor-wide completion is inferred from source or fixtures.
@@ -3098,7 +3098,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `d9142cd0128d3b963259c9eaaf5afc179c120d232f9d80d6e401591ecac6bb40`.
 
 - Target: `docs/SCRIPT-TOOLING.md:94 [UTF8-LF sha256=2d00287f8b0f2f657f04593550d17eee28a36238ef815264f251965b426984fc; anchor=Actual PU850 source import]`.
-- Target: `tools/update-firmware.mjs:115 [UTF8-LF sha256=70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751; anchor=export async function updateFirmware]`.
+- Target: `tools/update-firmware.mjs:138 [UTF8-LF sha256=3ee158f815c06cd0e955b14991343d630b97ca6e1c0ea8bdfe9b72410090537f; anchor=export async function updateFirmware]`.
 - Retained: Read full standard-library client, atomic verified download, backup/resume/watch, auth and multi-target build contract. Retain bounded verification and hostname caching intent in the existing updater; no claim that read-only export loops are a resumable CLI backup command.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
 - Omitted/replaced code: `Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup`. Disposition: **pending**. Reason: One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open.
@@ -3113,7 +3113,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `e90a5cc82b0f88bb9178739c02885dd4aaf49167b77cfbf8de17d8aed87c26e8`.
 
-- Target: `tools/update-firmware.mjs:115 [UTF8-LF sha256=70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751; anchor=export async function updateFirmware]`.
+- Target: `tools/update-firmware.mjs:138 [UTF8-LF sha256=3ee158f815c06cd0e955b14991343d630b97ca6e1c0ea8bdfe9b72410090537f; anchor=export async function updateFirmware]`.
 - Target: `tools/deploy-artifact.mjs:15 [UTF8-LF sha256=0710b78d5359b0d6ece4dd48f9129acebe1809c370ed4bb6b6767fd4917bf55d; anchor=export function verifiedArtifact]`.
 - Retained: Retain stable help/exit, quiet output, explicit validation and safe transfer intent. Document the Pakar updater's current contract and guarded entrypoints; do not claim documented donor watch/resume/backup behavior is already implemented.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
@@ -3168,7 +3168,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `3d3d067426480bb0a2137ffb7f8fa74d7378362c237f573b923f6dd82298d9d0`.
 
 - Target: `tools/script-console.mjs:7 [UTF8-LF sha256=07eae8bf2af2e896bd2a9655c79a8ae1b8f2224e8608d09bc6ecc4e4d9611dbd; anchor=export function sanitizeText]`.
-- Target: `tools/update-firmware.mjs:115 [UTF8-LF sha256=70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751; anchor=export async function updateFirmware]`.
+- Target: `tools/update-firmware.mjs:138 [UTF8-LF sha256=3ee158f815c06cd0e955b14991343d630b97ca6e1c0ea8bdfe9b72410090537f; anchor=export async function updateFirmware]`.
 - Retained: Import actual logger, terminal sanitizer, stable exit categories, quiet/color rules and argv/preflight concepts into script-console.mjs/pakar.mjs. Correct OSC-before-ESC regex ordering and redirected stderr coloring. Existing updater retains hostname/TCP identity pinning, no uncertain-write replay and full postboot verification.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
 - Omitted/replaced code: `Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup`. Disposition: **pending**. Reason: One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open.
@@ -3182,13 +3182,13 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `02842871c7f5c1285b57c1cc2392d655df848ef993c138f6a6c11b9779bf0778`.
 
 - Target: `tests/script_tooling_test.mjs:66 [UTF8-LF sha256=cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1; anchor=const cliPlan=]`.
-- Target: `tests/update_tool_test.mjs:63 [UTF8-LF sha256=a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483; anchor=const server=createServer]`.
+- Target: `tests/update_tool_test.mjs:93 [UTF8-LF sha256=b8d7792f642a7ec3e241c2c072e204c71baec371184da0dc62eb3d64809bdd15; anchor=const server=createServer]`.
 - Retained: Adapt actual subprocess execution and no-device-contact assertions into script_tooling_test.mjs for offline raw-image planning and invalid mode rejection. Existing real loopback multipart/WS updater fixtures retain exact byte/length/hash/admission and postboot checks, not ASA response parsing.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
 - Omitted/replaced code: `Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup`. Disposition: **pending**. Reason: One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open.
 - Test-code evidence: `tests/script_tooling_test.mjs:100 [UTF8-LF sha256=cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1; anchor=Script tooling:]`.
 - Test-code evidence: `tests/script_tooling_test.ps1:26 [UTF8-LF sha256=d3c679d8caa22177e7a5590564cd1141b84e1b194b3c3ee0bb825c26a4d46305; anchor=PowerShell utilities parse]`.
-- Test-code evidence: `tests/update_tool_test.mjs:95 [UTF8-LF sha256=a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483; anchor=Automatic updater plan/preflight]`.
+- Test-code evidence: `tests/update_tool_test.mjs:126 [UTF8-LF sha256=b8d7792f642a7ec3e241c2c072e204c71baec371184da0dc62eb3d64809bdd15; anchor=Automatic updater plan/preflight]`.
 - Remaining: Implement and exercise watch/resume/export/pre-update-backup contracts and remaining donor negative cases.
 - Remaining: No physical deployment, full client distribution or donor-wide completion is inferred from source or fixtures.
 
