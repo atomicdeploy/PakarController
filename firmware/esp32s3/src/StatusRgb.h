@@ -32,6 +32,20 @@ class StatusRgb {
     uint8_t progress = 255; // Unknown progress is not fabricated as zero.
     uint32_t revision = 0, updatedAt = 0;
   };
+  struct Observations {
+    bool fault=false, updating=false, booting=false;
+    bool stationEnabled=false, networkReady=false, accessPoint=false;
+    bool peerRequired=false, peerOnline=false;
+  };
+  static State selectState(const Observations &value) {
+    if(value.fault)return State::Fault;
+    if(value.updating)return State::Updating;
+    if(value.booting)return State::Boot;
+    if(value.stationEnabled&&!value.networkReady)return State::Connecting;
+    if(value.peerRequired&&!value.peerOnline)return State::PeerLost;
+    if(value.networkReady)return State::Ready;
+    return value.accessPoint?State::AccessPoint:State::Warning;
+  }
 
   // Common DevKit RGB positions ONLY, and neither is selected automatically.
   // A different board needs an explicit reviewed whitelist addition, not a
@@ -64,9 +78,14 @@ class StatusRgb {
         config_.pinConfirmed == next.pinConfirmed &&
         config_.brightness == next.brightness) return true;
     // Extinguish an old confirmed pin before reassigning or disabling it.
+    bool nextPinBlack=false;
     if (configured_ && config_.enabled && config_.pinConfirmed &&
-        (!next.enabled || next.pin != config_.pin) &&
-        !writer(config_.pin, 0, 0, 0)) return false;
+        (!next.enabled || next.pin != config_.pin)) {
+      if(!writer(config_.pin,0,0,0))return false;
+      nextPinBlack=next.pin==config_.pin;
+    }
+    if(!next.enabled&&next.pinConfirmed&&supportedPin(next.pin)&&!nextPinBlack&&
+        !writer(next.pin,0,0,0))return false;
     config_ = next;
     configured_ = true;
     output_.available = next.pinConfirmed && supportedPin(next.pin);

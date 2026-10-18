@@ -66,6 +66,7 @@ bool NetworkConfigStore::begin(fs::FS &filesystem) {
     if (!complete || previous.magic != kMagic || previous.schema != 2 ||
         previous.stationEnabled > 1 || previous.accessPointEnabled > 1 ||
         (!previous.stationEnabled && !previous.accessPointEnabled) ||
+        (previous.stationEnabled && !previous.stationSsid[0]) ||
         previous.stationSsid[32] != '\0' || previous.stationPassword[63] != '\0' ||
         previous.checksum != checksumBytes(reinterpret_cast<const uint8_t *>(&previous), offsetof(PreviousRecord, checksum))) {
       error_ = F("network settings checksum is invalid; AP-only defaults loaded"); return false;
@@ -83,6 +84,7 @@ bool NetworkConfigStore::begin(fs::FS &filesystem) {
     file.close();
     const bool valid =
         complete && legacy.magic == kMagic && legacy.schema == 1 && legacy.stationEnabled <= 1 &&
+        (!legacy.stationEnabled || legacy.stationSsid[0]) &&
         legacy.stationSsid[sizeof(legacy.stationSsid) - 1] == '\0' &&
         legacy.stationPassword[sizeof(legacy.stationPassword) - 1] == '\0' &&
         legacy.checksum == checksumBytes(
@@ -107,6 +109,7 @@ bool NetworkConfigStore::begin(fs::FS &filesystem) {
   if (!complete || stored.magic != kMagic || stored.schema != kSchema ||
       stored.stationEnabled > 1 || stored.accessPointEnabled > 1 || stored.dhcpEnabled > 1 ||
       (!stored.stationEnabled && !stored.accessPointEnabled) ||
+      (stored.stationEnabled && !stored.stationSsid[0]) ||
       stored.stationSsid[sizeof(stored.stationSsid) - 1] != '\0' ||
       stored.stationPassword[sizeof(stored.stationPassword) - 1] != '\0' ||
       stored.checksum != checksum(stored)) {
@@ -124,8 +127,7 @@ bool NetworkConfigStore::begin(fs::FS &filesystem) {
 bool NetworkConfigStore::setStation(const String &ssid, const String &password,
                                     bool enabled, bool replacePassword) {
   if (ssid.length() != strlen(ssid.c_str()) || password.length() != strlen(password.c_str()) ||
-      (enabled && (ssid.length() == 0 || ssid.length() > 32 ||
-                  password.length() > 63))) {
+      ssid.length() > 32 || password.length() > 63 || (enabled && ssid.length() == 0)) {
     error_ = F("station SSID must be 1..32 and password 0..63 bytes");
     return false;
   }
@@ -227,7 +229,14 @@ bool NetworkConfigStore::setAddressing(bool dhcp, const String &address,
 
 bool NetworkConfigStore::configure(const char *hostname,
                                    const char *apPassword) {
+  if (!hostname || !*hostname || strlen(hostname)>63) {
+    error_ = F("network hostname must be 1..63 bytes");return false;
+  }
   WiFi.persistent(false);
+  WiFi.setAutoReconnect(false);
+#if !defined(ESP32)
+  WiFi.setAutoConnect(false);
+#endif
   WiFi.mode(WIFI_OFF);
   WiFi.disconnect(true);
   WiFi.softAPdisconnect(true);
@@ -255,12 +264,16 @@ bool NetworkConfigStore::configure(const char *hostname,
   if (!WiFi.hostname(hostname)) { error_ = F("Cannot set station hostname"); return false; }
 #endif
   bool ap = false;
-  if (apEnabled) ap = WiFi.softAP(hostname, apPassword);
+  // DNS host labels permit63bytes, IEEE802.11 SSIDs only32. The SDK copies32
+  // but uses strlen(input) for ssid_len; pass an explicitly bounded AP name.
+  // The full persisted hostname/netif/mDNS identity is never silently renamed.
+  const String apSsid=String(hostname).substring(0,32);
+  if (apEnabled) ap = WiFi.softAP(apSsid.c_str(), apPassword);
   if (stationEnabled()) {
     const bool addressed = dhcpEnabled()
         ? WiFi.config(IPAddress(0, 0, 0, 0), IPAddress(0, 0, 0, 0), IPAddress(0, 0, 0, 0))
         : WiFi.config(stationAddress(), stationGateway(), stationSubnet(), stationDns1(), stationDns2());
-    if (!addressed) { error_ = F("station IP configuration failed"); return false; }
+    if (!addressed) { error_ = F("station IP configuration failed"); return ap; }
     WiFi.begin(record_.stationSsid, record_.stationPassword);
     WiFi.setAutoReconnect(true);
 #if !defined(ESP32)

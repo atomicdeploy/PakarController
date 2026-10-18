@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart' as crypto;
 
 import 'api.dart';
+import 'firmware_image.dart';
+export 'firmware_image.dart';
 
 // Fully read canonical desktop/src/maintenance.rs and actual firmware routes.
 const firmwarePhases = {
@@ -104,18 +106,6 @@ void validateRemote(String url, String hash, int targets, String bearer) {
   }
 }
 
-void validateFirmwareImage(bool esp, Uint8List bytes) {
-  if (esp
-      ? bytes.length < 16 ||
-            bytes.length > 2 * 1024 * 1024 ||
-            bytes.first != 0xe9
-      : bytes.length != 32768) {
-    throw FormatException(
-      esp ? 'Use an uncompressed ESP application E9 .bin, 16 bytes–2 MiB' : 'Use exactly 32768 raw AVR bytes including the intended bootloader; not partial application or HEX',
-    );
-  }
-}
-
 /// Actual /api/avr/maintenance receipt. Admission is queued, not a flash ACK.
 /// Both ISP and Urboot execute the same exclusive board-owned coordinator.
 class AvrMaintenanceJob {
@@ -191,6 +181,21 @@ class FirmwareController {
   final int owner;
   final bool Function(String feature) authorized;
   bool disposed = false;
+  int imageMaximum(bool esp) => FirmwareImagePolicy.maximum(
+    esp: esp,
+    platform: FirmwareImagePolicy.platform(api.latestStatus?.json),
+    otaCapacity: esp
+        ? FirmwareImagePolicy.capacity(api.latestStatus?.json)
+        : null,
+  );
+  void validateImage(bool esp, Uint8List bytes) => validateFirmwareImage(
+    esp,
+    bytes,
+    platform: FirmwareImagePolicy.platform(api.latestStatus?.json),
+    otaCapacity: esp
+        ? FirmwareImagePolicy.capacity(api.latestStatus?.json)
+        : null,
+  );
   void check(String feature) {
     if (disposed || owner != api.connectionRevision || !authorized(feature)) {
       throw const StaleConnection();
@@ -319,7 +324,7 @@ class FirmwareController {
       if (bytes == null) {
         throw const FormatException('Select a complete binary first');
       }
-      validateFirmwareImage(esp, bytes);
+      validateImage(esp, bytes);
       if (!esp) {
         final ack = await api.maintenanceBytes(
           path,
@@ -411,8 +416,7 @@ class FirmwareController {
       final response = await client
           .send(request)
           .timeout(const Duration(seconds: 15));
-      final maximum = esp ? 2 * 1024 * 1024 : 32768,
-          total = response.contentLength;
+      final maximum = imageMaximum(esp), total = response.contentLength;
       if (response.statusCode != 200 ||
           (total != null && (total <= 0 || total > maximum)) ||
           (response.headers['content-encoding'] != null &&
@@ -446,7 +450,7 @@ class FirmwareController {
           'Firmware length/SHA-256 mismatch; no board write',
         );
       }
-      validateFirmwareImage(esp, image);
+      validateImage(esp, image);
       check(esp ? 'ota' : 'isp');
       // Refreshes actual job ownership after downloading, before a single upload.
       return await manual(
@@ -565,12 +569,12 @@ class FirmwareController {
     check('ota');
     final bytes = await api.maintenanceBytes(
       '/firmware/download',
-      maximum: 2 * 1024 * 1024,
+      maximum: imageMaximum(true),
       verifySketch: true,
       authorize: () => allowed('ota'),
     );
     check('ota');
-    validateFirmwareImage(true, bytes);
+    validateImage(true, bytes);
     return bytes;
   }
 

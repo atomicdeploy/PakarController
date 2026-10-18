@@ -223,6 +223,7 @@ impl Manifest {
             "/api/outputs" => "outputs",
             "/api/brightness" | "/api/effect" | "/api/led/output" => "leds",
             "/api/device/name" => "identity",
+            "/api/status-rgb" => "status-rgb",
             "/api/network" | "/api/cloud" | "/api/cloud/reconnect" | "/api/auth" => "network",
             "/api/clients/report" => "telemetry",
             _ if path.starts_with("/api/avr/") => "isp",

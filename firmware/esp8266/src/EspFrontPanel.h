@@ -36,7 +36,7 @@ class EspFrontPanel {
     const uint8_t action = frame.payload[0];
     // Retransmitted exact request reuses the actual outcome, not a second save
     // or reconnect. Sequence reuse with different bytes is never a replay hit.
-    if (cached_ && uint32_t(now - at_) < 2000 && frame.sequence == sequence_ &&
+    if (action!=EspPanel::Query && cached_ && uint32_t(now - at_) < 2000 && frame.sequence == sequence_ &&
         frame.payloadLength == requestLength_ &&
         !memcmp(frame.payload, request_, requestLength_)) {
       sender.send(kEspPanelResponse, sequence_, response_, responseLength_);
@@ -63,27 +63,33 @@ class EspFrontPanel {
       default: error = kUnsupported; break;
     }
     Snapshot after;
-    response_[0] = action;
-    responseLength_ = 2;
+    uint8_t response[40]{};response[0]=action;
+    uint8_t responseLength=2;
     if (!settings.read(after)) error = kHardwareUnavailable;
     else {
       if (error == kNoError &&
           ((action == EspPanel::SetMode && after.mode != frame.payload[1]) ||
            (action == EspPanel::SetDhcp && after.dhcp != (frame.payload[1] != 0))))
         error = kHardwareUnavailable;
-      const uint8_t n = EspPanel::encodeSnapshot(after, response_ + 2);
+      const uint8_t n = EspPanel::encodeSnapshot(after, response + 2);
       Snapshot verified;
-      if (!EspPanel::decodeSnapshot(response_ + 2, n, verified)) error = kHardwareUnavailable;
-      else responseLength_ += n;
+      if (!EspPanel::decodeSnapshot(response + 2, n, verified)) error = kHardwareUnavailable;
+      else responseLength += n;
     }
-    response_[1] = error;
+    response[1] = error;
     // Cache only bounded requests. Oversized input is replied to but never
     // copied into the two-byte cache.
-    cached_ = frame.payloadLength <= sizeof(request_);
-    requestLength_ = frame.payloadLength;
-    if (cached_) memcpy(request_, frame.payload, requestLength_);
-    sequence_ = frame.sequence; at_ = now;
-    sender.send(kEspPanelResponse, sequence_, response_, responseLength_);
+    // Queries report the actual current connection/settings, not a two-second
+    // old snapshot. Only mutations need the exact outcome/no-replay receipt.
+    // A read must not evict/overwrite the previous mutation's receipt either.
+    if(action!=EspPanel::Query) {
+      cached_ = frame.payloadLength <= sizeof(request_);
+      requestLength_ = frame.payloadLength;
+      if (cached_)memcpy(request_,frame.payload,requestLength_);
+      sequence_=frame.sequence;at_=now;responseLength_=responseLength;
+      memcpy(response_,response,responseLength);
+    }
+    sender.send(kEspPanelResponse,frame.sequence,response,responseLength);
     return true;
   }
  private:

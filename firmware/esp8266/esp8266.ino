@@ -12,6 +12,7 @@
 #include <firmware/esp32s3/src/DnsRecovery.h>
 #include <firmware/esp32s3/src/StatusRgb.h>
 #include <firmware/esp32s3/src/StatusRgbConfig.h>
+#include <firmware/esp32s3/src/StatusRgbOutput.h>
 #include <firmware/esp32s3/src/LcdPort.h>
 #include <firmware/esp32s3/src/BleService.h>
 #else
@@ -118,7 +119,7 @@ PakarS3::PassiveAvrRx passiveAvrRx;
 std::atomic<bool> passiveCaptureGuard{false};
 #endif
 bool writeStatusRgb(int pin, uint8_t red, uint8_t green, uint8_t blue) {
-  rgbLedWrite(pin, red, green, blue); return true;
+  return PakarS3::writeStatusPixel(pin, red, green, blue);
 }
 #else
 constexpr uint8_t kBusyPin = D3;  // GPIO0 -> AVR D10/PB2, HIGH blocks AVR TX.
@@ -183,7 +184,15 @@ uint8_t avrMaintenanceSeenCount=0;
 uint64_t avrMaintenanceDeadline=0;
 String urbootJobJson();
 bool urbootSupported();
-unsigned artifactReaders=0;
+#if defined(ARDUINO_ARCH_ESP32)
+std::atomic<unsigned> artifactReaders{0};
+#else
+unsigned artifactReaders=0; // Cooperative single-core owner; no unsupported LX106 atomic RMW.
+#endif
+struct FirmwareReaderLease {
+  FirmwareReaderLease(){++artifactReaders;}
+  ~FirmwareReaderLease(){--artifactReaders;}
+};
 BusyLine<PAKAR_USE_BUSY_WIRE != 0> busyLine(kBusyPin);
 LedGrid grid;
 SceneStore<fs::FS> sceneStore;
@@ -330,6 +339,7 @@ void upgradeBackground();
 bool upgradeRebootReady();
 uint32_t runningImageSize();
 String runningImageMd5();
+bool runningImageIntegrity();
 String ethernetStatusJson();
 String lcdStatusJson();
 String buildUsbTableSnapshot();
@@ -367,11 +377,12 @@ uint32_t lastEspPanelOfferAt = 0;
 class EspPanelSettings : public EspFrontPanel::Settings {
  public:
   bool read(BoardCore::Protocol::EspPanel::Snapshot &state) const override {
-    if (!deviceIdentity.ready() || strlen(deviceIdentity.hostname()) > 32) return false;
+    if (!deviceIdentity.ready()) return false;
     state.mode = (networkConfig.accessPointEnabled() ? 1 : 0) | (networkConfig.stationEnabled() ? 2 : 0);
     state.dhcp = networkConfig.dhcpEnabled();
     state.stationConfigured = strlen(networkConfig.stationSsid()) != 0;
     state.stationConnected = networkConfig.stationConnected();
+    // Bounded physical-display preview only; never used as a network identity.
     strlcpy(state.hostname, deviceIdentity.hostname(), sizeof(state.hostname));
     return state.mode != 0;
   }
@@ -1292,6 +1303,41 @@ String upgradeJson(bool event,bool phaseChanged) {
     source==PakarUpdate::Source::Avr?urbootError:String(localOtaReceipt.error());
   String out;serializeJson(d,out);return out;
 }
+#if defined(ARDUINO_ARCH_ESP32)
+String statusRgbObservationJson() {
+  const auto &rgb=statusRgb.snapshot();const auto &config=statusRgbConfig.configuration();JsonDocument d;
+  d["available"]=rgb.available;d["enabled"]=rgb.enabled;d["have_output"]=rgb.haveOutput;
+  d["pin"]=rgb.pin;d["pin_confirmed"]=config.pinConfirmed;d["brightness"]=rgb.brightness;
+  d["rgb"].add(rgb.red);d["rgb"].add(rgb.green);d["rgb"].add(rgb.blue);
+  d["state"]=PakarS3::StatusRgb::name(rgb.condition);d["effect"]=rgb.effect;
+  if(rgb.progress<=100)d["progress_percent"]=rgb.progress;else d["progress_percent"]=nullptr;
+  d["persisted"]=statusRgbConfig.persisted();d["error"]=statusRgbConfig.lastError();
+  d["revision"]=rgb.revision;d["updated_uptime_ms"]=rgb.updatedAt;
+  String result;serializeJson(d,result);return result;
+}
+void serviceStatusRgb(uint32_t now) {
+  using Engine=PakarS3::StatusRgb;using Visual=PakarUpdate::Visual;
+  const auto visual=upgradeLifecycle.visual(now);Engine::Observations observed;
+  observed.fault=!accessConfig.ready()||visual==Visual::Failure;
+  observed.updating=otaActive||otaRebootAt||remoteFirmware.busy()||urbootBusy.get();
+  observed.booting=visual==Visual::Startup;
+  observed.stationEnabled=networkConfig.stationEnabled();observed.networkReady=NetworkPath::ready();
+  observed.accessPoint=apStarted;observed.peerRequired=PAKAR_AVR_LINK_ENABLED;observed.peerOnline=avrOnline;
+  statusRgb.setState(Engine::selectState(observed),now);
+  statusRgb.setProgress(observed.updating&&upgradeLifecycle.known()?upgradeLifecycle.percent():255);
+  statusRgb.service(now,writeStatusRgb);
+  // Compact latest output observation, not a synthetic client animation or a
+  // full hardware-freshness renewal. BLE retains its separately bounded feed.
+  static uint32_t sentAt=0,sentRevision=0;
+  const auto revision=statusRgb.snapshot().revision;
+  if(revision!=sentRevision && uint32_t(now-sentAt)>=50U) {
+    sentAt=now;sentRevision=revision;JsonDocument head;
+    head["type"]="status-rgb";head["board_id"]=pcBoardId;head["boot_id"]=pcBootId;head["revision"]=revision;
+    String event;serializeJson(head,event);event.remove(event.length()-1);
+    event+=F(",\"status_rgb\":");event+=statusRgbObservationJson();event+='}';webSocket.textAll(event);
+  }
+}
+#endif
 void serviceUpgrade() {
   if(servicingUpgrade)return;
   servicingUpgrade=true;
@@ -1370,6 +1416,9 @@ void serviceUpgrade() {
   if(!urbootRawOwned && pendingUpgradeCloud.length()) {
     cloudServices.publishEvent(pendingUpgradeCloud);pendingUpgradeCloud="";
   }
+#if defined(ARDUINO_ARCH_ESP32)
+  serviceStatusRgb(millis());
+#endif
   servicingUpgrade=false;
 }
 void upgradeBackground() {
@@ -1610,6 +1659,7 @@ String buildStatusJson() {
   body += F(",\"error\":");if(sceneStore.error()){body+='"';body+=sceneStore.error();body+='"';}else body+=F("null");
   body += '}';
   body += F(",\"ws_queue_rejected\":");body+=loopMessages.rejected();
+  body += F(",\"ws_queue_ready\":");body+=loopMessages.ready()?F("true"):F("false");
   body += F(",\"update\":");body+=localUpdateJson();
   body += F(",\"upgrade\":");body+=upgradeJson();
   body += F(",\"local_ota_receipt\":");body+=localOtaReceipt.json();
@@ -1617,6 +1667,11 @@ String buildStatusJson() {
   // Cheap stress/health metric; unlike maintenance metadata this never hashes
   // the running sketch or pauses the LED transmitter for flash reads.
   body += F(",\"free_heap_bytes\":");body+=ESP.getFreeHeap();
+#if defined(ARDUINO_ARCH_ESP32)
+  body += F(",\"internal_heap_free_bytes\":");body+=heap_caps_get_free_size(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
+  body += F(",\"internal_heap_largest_block_bytes\":");body+=heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
+  body += F(",\"internal_heap_minimum_free_bytes\":");body+=heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
+#endif
   body += F(",\"avr_online\":"); body += avrOnline ? F("true") : F("false");
   body += F(",\"avr_version\":");
   if (avrOnline && avrVersionKnown) {
@@ -1644,16 +1699,7 @@ String buildStatusJson() {
   body += F(",\"mndp_started\":");
 #if defined(ARDUINO_ARCH_ESP32)
   body += s3Discovery.mndpReady() ? F("true") : F("false");
-  const auto &rgb = statusRgb.snapshot();
-  body += F(",\"status_rgb\":{\"available\":"); body += rgb.available ? F("true") : F("false");
-  body += F(",\"enabled\":"); body += rgb.enabled ? F("true") : F("false");
-  body += F(",\"have_output\":"); body += rgb.haveOutput ? F("true") : F("false");
-  body += F(",\"pin\":"); body += rgb.pin;
-  body += F(",\"rgb\":["); body += rgb.red; body += ','; body += rgb.green; body += ','; body += rgb.blue;
-  body += F("],\"brightness\":"); body += rgb.brightness;
-  body += F(",\"state\":\""); body += PakarS3::StatusRgb::name(rgb.condition);
-  body += F("\",\"revision\":"); body += rgb.revision;
-  body += F(",\"updated_uptime_ms\":"); body += rgb.updatedAt; body += '}';
+  body += F(",\"status_rgb\":");body+=statusRgbObservationJson();
   body += F(",\"isp_available\":"); body += PAKAR_S3_ISP_ELECTRICAL_VERIFIED ? F("true") : F("false");
 #else
   body += mndpService.running() ? F("true") : F("false");
@@ -1768,6 +1814,9 @@ String buildStatusJson() {
   body += F("\",\"hostname\":\""); body += deviceIdentity.hostname();
   body += F("\",\"application\":"); body += applicationIdentityJson();
   body += F(",\"acknowledged_features\":[\"command-ack\",\"pixel-diagnostic\"");
+#if defined(ARDUINO_ARCH_ESP32)
+  body += F(",\"status-rgb\""); // Settings capability is distinct from a confirmed/enabled physical pixel.
+#endif
   const uint16_t available = currentFeatures();
   bool separator = true;
   for (uint8_t bit = 0; bit < 16; ++bit) if (available & (1U << bit)) {
@@ -2576,8 +2625,15 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
 }
 
 void registerAsyncOta() {
-  RegisterFirmwareTransferRoutes(&server.native(), [](AsyncWebServerRequest *request) {
+  RegisterFirmwareTransferRoutes(&server, [](AsyncWebServerRequest *request) {
     return webAccess.allowed(request) && WebAccess::sameOrigin(request) && webAccess.peerAllowed(request);
+  }, [](){return FirmwareTransferIdentity{runningImageSize(),runningImageMd5(),runningImageIntegrity()};
+  }, []()->std::shared_ptr<void>{
+    // Admission runs on the same loop owner as programming/configuration;
+    // async uploads also reject server.processing() and this live read lease.
+    if(urbootBusy.get()||remoteFirmware.busy()||otaActive||otaRebootAt||avrUploadOwner||
+        programmingLatched||networkApplyPending||cloudApplyPending||artifactReaders>=4)return {};
+    return std::make_shared<FirmwareReaderLease>();
   });
   auto info = [](AsyncWebServerRequest *request) {
     String body = F("{\"product\":\"PakarController\",\"product_id\":\"PakarController\",\"name\":\"");
@@ -2705,6 +2761,50 @@ void registerAsyncOta() {
   });
 }
 
+#if defined(ARDUINO_ARCH_ESP32)
+String statusRgbConfigurationJson() {
+  const auto &config=statusRgbConfig.configuration();JsonDocument d;
+  d["board_id"]=pcBoardId;d["boot_id"]=pcBootId;
+  d["enabled"]=config.enabled;d["pin"]=config.pin;d["pin_confirmed"]=config.pinConfirmed;
+  d["brightness"]=config.brightness;d["persisted"]=statusRgbConfig.persisted();d["error"]=statusRgbConfig.lastError();
+  String body;serializeJson(d,body);return body;
+}
+bool updateStatusRgbConfiguration(JsonObjectConst fields,String &body,int &code) {
+  code=400;
+  if(remoteFirmware.busy()||otaActive||otaRebootAt||avrUploadOwner||programmingLatched||urbootBusy.get()||artifactReaders) {
+    code=409;body="Maintenance active";return false;
+  }
+  if(!fields.size()||fields.size()>4){body="Expected RGB configuration fields";return false;}
+  auto config=statusRgbConfig.configuration();
+  for(JsonPairConst field:fields) {
+    const String key=field.key().c_str();
+    if((key!="enabled"&&key!="pin_confirmed"&&key!="pin"&&key!="brightness")||!field.value().is<const char*>()) {
+      body="Unknown or invalid RGB configuration field";return false;
+    }
+  }
+  for(const char *key:{"enabled","pin_confirmed"})if(!fields[key].isUnbound()) {
+    const String value=fields[key].as<String>();
+    if(value!="true"&&value!="false"&&value!="0"&&value!="1") {body="Boolean fields require true/false or 0/1";return false;}
+  }
+  if(!fields["pin"].isUnbound()) {
+    const String pin=fields["pin"].as<String>();
+    if(pin!="38"&&pin!="48"&&pin!="-1"){body="Reviewed onboard RGB GPIO must be 38 or 48, or -1 disabled";return false;}
+    if(config.pin!=pin.toInt())config.pinConfirmed=false;config.pin=pin.toInt();
+  }
+  if(!fields["enabled"].isUnbound())config.enabled=fields["enabled"]=="true"||fields["enabled"]=="1";
+  if(!fields["pin_confirmed"].isUnbound())config.pinConfirmed=fields["pin_confirmed"]=="true"||fields["pin_confirmed"]=="1";
+  if(!fields["brightness"].isUnbound()) {
+    uint32_t value;if(!strictU32(fields["brightness"].as<String>(),value)||value>255){body="Brightness must be 0..255";return false;}
+    config.brightness=value;
+  }
+  if(!PakarS3::StatusRgbConfig::validate(config)){body="Confirm a reviewed RGB pin before enabling";return false;}
+  if(!statusRgbConfig.save(config)){code=503;body=statusRgbConfig.lastError();return false;}
+  if(!statusRgb.configure(config,millis(),writeStatusRgb)){code=503;body="Settings saved; local RGB driver unavailable";return false;}
+  JsonDocument result;result["saved"]=true;result["board_id"]=pcBoardId;result["boot_id"]=pcBootId;
+  result["driver_submitted"]=statusRgb.snapshot().haveOutput;result["optical_verified"]=false;
+  body=String();serializeJson(result,body);code=200;return true;
+}
+#endif
 void registerApi() {
   server.on("/api/command",HTTP_POST,[](){
     if(!authenticate())return;
@@ -2717,45 +2817,15 @@ void registerApi() {
 #if defined(ARDUINO_ARCH_ESP32)
   server.on("/api/status-rgb", HTTP_GET, []() {
     if (!authenticate()) return;
-    const auto &config = statusRgbConfig.configuration();
-    JsonDocument d;
-    d["enabled"] = config.enabled; d["pin"] = config.pin;
-    d["pin_confirmed"] = config.pinConfirmed; d["brightness"] = config.brightness;
-    d["persisted"] = statusRgbConfig.persisted(); d["error"] = statusRgbConfig.lastError();
-    String body; serializeJson(d,body); server.send(200,"application/json",body);
+    server.send(200,"application/json",statusRgbConfigurationJson());
   });
   server.on("/api/status-rgb", HTTP_POST, []() {
     if (!authenticate()) return;
-    if (remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || programmingLatched) {
-      server.send(409,"text/plain","Maintenance active"); return;
-    }
-    auto config = statusRgbConfig.configuration();
-    for (const char *field : {"enabled","pin_confirmed"}) if (server.hasArg(field)) {
-      const String value = server.arg(field);
-      if (value!="true" && value!="false" && value!="0" && value!="1") {
-        server.send(400,"text/plain","Boolean fields require true/false or 0/1"); return;
-      }
-    }
-    if (server.hasArg("enabled")) config.enabled = server.arg("enabled")=="true" || server.arg("enabled")=="1";
-    if (server.hasArg("pin")) {
-      const String pin=server.arg("pin");
-      if(pin!="38" && pin!="48" && pin!="-1") {server.send(400,"text/plain","Reviewed onboard RGB GPIO must be 38 or 48, or -1 disabled");return;}
-      if(config.pin!=pin.toInt()) config.pinConfirmed=false;
-      config.pin=pin.toInt();
-    }
-    if (server.hasArg("pin_confirmed")) config.pinConfirmed = server.arg("pin_confirmed")=="true" || server.arg("pin_confirmed")=="1";
-    if (server.hasArg("brightness")) {
-      uint32_t value;
-      if (!strictU32(server.arg("brightness"),value) || value>255) {server.send(400,"text/plain","Brightness must be 0..255");return;}
-      config.brightness=value;
-    }
-    if (!PakarS3::StatusRgbConfig::validate(config) || !statusRgbConfig.save(config)) {
-      server.send(400,"text/plain",statusRgbConfig.lastError()); return;
-    }
-    if (!statusRgb.configure(config,millis(),writeStatusRgb)) {
-      server.send(503,"text/plain","Settings saved; local RGB driver unavailable"); return;
-    }
-    server.send(200,"application/json","{\"saved\":true,\"driver_submitted\":true,\"optical_verified\":false}");
+    JsonDocument form;
+    if(auto *request=server.request())for(size_t index=0;index<request->args();++index)
+      form[request->argName(index)]=request->arg(index);
+    String body;int code=400;const bool ok=updateStatusRgbConfiguration(form.as<JsonObjectConst>(),body,code);
+    server.send(code,ok?"application/json":"text/plain",body);
   });
 #endif
   server.native().on("/assets/fonts/Vazirmatn-OFL.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -3722,6 +3792,7 @@ void serviceConsole() {
 #include "src/UrbootRoutes.h"
 uint32_t runningImageSize() { return bootTelemetryImage.size; }
 String runningImageMd5() { return bootTelemetryImage.md5; }
+bool runningImageIntegrity() { return bootIntegrity; }
 #include "src/ArtifactDownload.h"
 #if defined(ARDUINO_ARCH_ESP32)
 #include "src/BleRoutes.h"
@@ -3751,6 +3822,7 @@ void setup() {
   pinMode(kAvrResetPin, INPUT);
   // Never erase damaged storage and silently restore public credentials.
   const bool filesystemMounted = SystemPlatform::mountFilesystem();
+  loopMessages.begin(); // PSRAM-backed S3 queue, before any network callback.
   accessConfig.begin(LittleFS, filesystemMounted);
   networkConfig.begin(LittleFS);
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_S3_ETHERNET_ENABLED
@@ -3879,16 +3951,6 @@ void loop() {
     cloudServices.suspend();
     ntpConfigured = false;
   }
-#if defined(ARDUINO_ARCH_ESP32)
-  using RgbState = PakarS3::StatusRgb::State;
-  const RgbState rgbState = otaActive || remoteFirmware.busy() ? RgbState::Updating :
-      !accessConfig.ready() ? RgbState::Fault :
-      networkConfig.stationEnabled() && !NetworkPath::ready() ? RgbState::Connecting :
-      !avrOnline ? RgbState::PeerLost :
-      NetworkPath::ready() ? RgbState::Ready : RgbState::AccessPoint;
-  statusRgb.setState(rgbState, now);
-  statusRgb.service(now, writeStatusRgb);
-#endif
   avrLink.service();
   hostLink.service();
   serviceUpgrade();

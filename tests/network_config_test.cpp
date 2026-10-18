@@ -33,6 +33,9 @@ int main() {
   assert(settings.save());
   assert(filesystem.files.at("/network.bin")==active); // Identical save never replaces the record.
   assert(!settings.setStation(String("bad\0ssid",8),"fixture-passphrase",true));
+  assert(!settings.setStation(String(33,'s'),"fixture-passphrase",false));
+  assert(!settings.setStation("draft",String(64,'p'),false));
+  assert(String(settings.stationSsid())=="Fixture WiFi");
   assert(!settings.setAddressing(false,"192.168.10.7","192.168.11.1","255.255.255.0"));
   assert(!settings.setAddressing(false,"192.168.10.0","192.168.10.1","255.255.255.0"));
   assert(!settings.setAddressing(false,"192.168.10.255","192.168.10.1","255.255.255.0"));
@@ -71,6 +74,7 @@ int main() {
   const char *longName="a-long-configured-hostname-with-no-random-suffix";
   assert(loaded.configure(longName,"fixture-ap-passphrase"));
   assert(WiFi.nameAtStart==longName && WiFi.STA.name==longName && WiFi.AP.name==longName);
+  assert(WiFi.apSsidValue==String(longName).substring(0,32));
   WiFi.STA.fail=true;assert(!loaded.configure("renamed-board","fixture-ap-passphrase"));
   assert(WiFi.modeValue==WIFI_OFF);WiFi.STA.fail=false;
   assert(loaded.configure("renamed-board","fixture-ap-passphrase"));
@@ -78,6 +82,13 @@ int main() {
 #endif
   assert(loaded.setStation("","",false));
   assert(loaded.configure("ledboard","fixture-ap-passphrase"));assert(WiFi.modeValue==WIFI_AP);
+  assert(!WiFi.autoReconnect);
+  assert(loaded.setStation("fixture-wifi","fixture-passphrase",true));
+  WiFi.configResult=false;
+  assert(loaded.configure("ledboard","fixture-ap-passphrase")); // AP remains genuinely available on STA apply failure.
+  assert(String(loaded.lastError())=="station IP configuration failed");
+  WiFi.configResult=true;
+  assert(!loaded.configure("","fixture-ap-passphrase"));
   assert(loaded.setAddressing(true));assert(loaded.save());
   fs::FS legacyFs;Legacy legacy{0x504b4e54U,1,1,"legacy-wifi","fixture-passphrase",0};store(legacyFs,legacy);
   NetworkConfigStore migrated;assert(migrated.begin(legacyFs));
@@ -87,6 +98,9 @@ int main() {
   NetworkConfigStore previousLoaded;assert(previousLoaded.begin(previousFs));
   assert(previousLoaded.stationEnabled()&&!previousLoaded.accessPointEnabled()&&previousLoaded.dhcpEnabled());
   assert(String(previousLoaded.stationSsid())=="previous-wifi");
+  fs::FS emptyStationFs;Previous emptyStation{0x504b4e54U,2,1,0,"","fixture-passphrase",0};store(emptyStationFs,emptyStation);
+  NetworkConfigStore rejectedEmpty;assert(!rejectedEmpty.begin(emptyStationFs));
+  assert(!rejectedEmpty.stationEnabled()&&rejectedEmpty.accessPointEnabled());
   previousFs.files.at("/network.bin")->bytes.push_back(0); // Reject truncated/extra/private-layout bytes.
   NetworkConfigStore damaged;assert(!damaged.begin(previousFs));
   assert(damaged.accessPointEnabled()&&!damaged.stationEnabled());

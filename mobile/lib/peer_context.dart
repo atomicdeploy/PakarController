@@ -157,6 +157,7 @@ class LedOutputCapability {
 }
 
 const knownFeatures = {
+  'status-rgb',
   'command-ack',
   'pixel-diagnostic',
   'network',

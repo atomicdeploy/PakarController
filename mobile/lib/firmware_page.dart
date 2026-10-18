@@ -300,12 +300,14 @@ class _FirmwarePageState extends State<FirmwarePage>
         controller.check(esp ? 'ota' : 'isp');
         FirmwareDocument? document;
         if (action == 'stage' || esp) {
-          document = await documents.pick(maximum: esp ? 2097152 : 32768);
+          document = await documents.pick(
+            maximum: controller.imageMaximum(esp),
+          );
           controller.check(esp ? 'ota' : 'isp');
           if (document == null) {
             return 'File selection cancelled; no device operation sent.';
           }
-          validateFirmwareImage(esp, document.bytes);
+          controller.validateImage(esp, document.bytes);
           if (!mounted ||
               !await confirm(
                 'Use ${document.name}?',

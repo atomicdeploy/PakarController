@@ -1,6 +1,7 @@
 #include "FirmwareTransfer.h"
 #include "FirmwareRange.h"
 #include "FirmwarePlatform.h"
+#include "FirmwareReadResponse.h"
 
 #include <BuildInfo.h>
 #include <functional>
@@ -29,39 +30,46 @@ namespace {
 
 using namespace FirmwareTransferRange;
 
-size_t readFlashRange(uint32_t address, uint8_t* output, size_t length, uint32_t totalSize) {
-	if (output == nullptr || length == 0) return 0;
-	if (static_cast<uint64_t>(address)+length>totalSize) return 0;
+FirmwareExport::ReadResult readFlashRange(uint32_t address, uint8_t* output, size_t length, uint32_t totalSize) {
+	using FirmwareExport::ReadResult;
+	if (output == nullptr || length == 0) return ReadResult::Fatal;
+	if (static_cast<uint64_t>(address)+length>totalSize) return ReadResult::Fatal;
 #if defined(ARDUINO_ARCH_ESP32)
 	// This route permits app-image downloads only. Offset zero is relative to
 	// the running OTA partition, NOT physical flash and its boot/settings area.
 	// totalSize was verified once when constructing this response. On S3 the
 	// SDK getSketchSize() hashes/verifies the full image, so never call it for
 	// every TCP chunk from the AsyncTCP task.
-	return FirmwarePlatform::readRunning(address,output,length) ? length : 0;
+	const auto *running=esp_ota_get_running_partition();
+	if(!running || static_cast<uint64_t>(address)+length>running->size) return ReadResult::Fatal;
+	// Preserve the guard's transient ESP_ERR_TIMEOUT rather than collapsing it
+	// into the AsyncWebServer end-of-file value. Invalid offsets never retry.
+	const esp_err_t error=esp_partition_read(running,address,output,length);
+	if(error==ESP_OK) return ReadResult::Complete;
+	return error==ESP_ERR_TIMEOUT ? ReadResult::Retryable : ReadResult::Fatal;
 #else
 	const uint32_t flashSize = ESP.getFlashChipSize();
 	const uint64_t requestedEnd = static_cast<uint64_t>(address) + length;
-	if (requestedEnd > flashSize) return 0;
+	if (requestedEnd > flashSize) return ReadResult::Fatal;
 
 	const uint32_t alignedAddress = address & ~static_cast<uint32_t>(0x03);
 	const size_t prefix = address - alignedAddress;
 	const size_t alignedLength = (prefix + length + 3) & ~static_cast<size_t>(0x03);
-	if (static_cast<uint64_t>(alignedAddress) + alignedLength > flashSize) return 0;
+	if (static_cast<uint64_t>(alignedAddress) + alignedLength > flashSize) return ReadResult::Fatal;
 
 	if (prefix == 0 &&
 		(length & 0x03) == 0 &&
 		(reinterpret_cast<uintptr_t>(output) & 0x03) == 0) {
-		return ESP.flashRead(alignedAddress, output, length) ? length : 0;
+		return ESP.flashRead(alignedAddress, output, length) ? ReadResult::Complete : ReadResult::Retryable;
 	}
 
 	uint8_t* alignedBuffer = static_cast<uint8_t*>(malloc(alignedLength));
-	if (alignedBuffer == nullptr) return 0;
+	if (alignedBuffer == nullptr) return ReadResult::Retryable;
 
 	const bool read = ESP.flashRead(alignedAddress, alignedBuffer, alignedLength);
 	if (read) memcpy(output, alignedBuffer + prefix, length);
 	free(alignedBuffer);
-	return read ? length : 0;
+	return read ? ReadResult::Complete : ReadResult::Retryable;
 #endif
 }
 
@@ -101,8 +109,8 @@ String sketchMd5Base64(const String& hexadecimal) {
 	return String(encoded);
 }
 
-void sendTransferError(AsyncWebServerRequest* request, int status, const char* message) {
-	request->send(
+void sendTransferError(AsyncHttpService* server, AsyncWebServerRequest* request, int status, const char* message) {
+	server->send(
 		status,
 		"text/plain",
 		request->method() == HTTP_HEAD ? "" : message);
@@ -162,27 +170,38 @@ bool FirmwareTransferAuthorize(AsyncWebServerRequest* request) {
 	return false;
 }
 
-void RegisterFirmwareTransferRoutes(AsyncWebServer* server, std::function<bool(AsyncWebServerRequest*)> authorize) {
+void RegisterFirmwareTransferRoutes(AsyncHttpService* server,
+    std::function<bool(AsyncWebServerRequest*)> authorize,
+    std::function<FirmwareTransferIdentity()> identityProvider,
+    std::function<std::shared_ptr<void>()> acquireReader) {
 	transferAuthorization = authorize;
 #if FW_ENABLE_FIRMWARE_DOWNLOAD
 	server->on(
 		"/firmware/download",
 		HTTP_HEAD | HTTP_GET,
-		[](AsyncWebServerRequest* request) {
-			if (!FirmwareTransferAuthorize(request)) return;
+		[server,identityProvider,acquireReader]() {
+			auto *request=server->request();
+			if (!request) return;
+			if (!FirmwareTransferHasAuthorization(request)) {
+				auto *response=request->beginResponse(401,"text/plain",request->method()==HTTP_HEAD ? "" : "Unauthorized");
+				response->addHeader("X-Login-Path","/login");
+				response->addHeader("Cache-Control","no-store");
+				server->send(response);return;
+			}
 
 			const bool fullFlash = wantsFullFlash(request);
 #if !FW_ENABLE_FULL_FLASH_DOWNLOAD
 			if (fullFlash) {
-				sendTransferError(request, 403, "Full-flash download is disabled by this build");
+				sendTransferError(server, request, 403, "Full-flash download is disabled by this build");
 				return;
 			}
 #endif
 
-			const uint32_t totalSize =
-				fullFlash ? ESP.getFlashChipSize() : FirmwarePlatform::sketchSize();
-			if (totalSize == 0) {
-				sendTransferError(request, 500, "Firmware size is unavailable");
+			const FirmwareTransferIdentity identity=identityProvider ? identityProvider() :
+				FirmwareTransferIdentity{FirmwarePlatform::sketchSize(),FirmwarePlatform::sketchMd5(),FirmwarePlatform::runningIntegrity()};
+			const uint32_t totalSize=fullFlash ? ESP.getFlashChipSize() : identity.size;
+			if (totalSize == 0 || !identity.integrityVerified || sketchMd5Base64(identity.md5).isEmpty()) {
+				sendTransferError(server, request, 503, "Verified firmware identity is unavailable");
 				return;
 			}
 
@@ -196,13 +215,13 @@ void RegisterFirmwareTransferRoutes(AsyncWebServer* server, std::function<bool(A
 						request->method() == HTTP_HEAD ? "" : "Invalid byte range");
 					response->addHeader("Content-Range", "bytes */" + String(totalSize));
 					response->addHeader("Cache-Control", "no-store");
-					request->send(response);
+					server->send(response);
 					return;
 				}
 			}
 
 			const uint32_t contentLength = range.end - range.start + 1;
-			const String sketchMd5 = FirmwarePlatform::sketchMd5();
+			const String sketchMd5 = identity.md5;
 			const String etag = String("\"") + sketchMd5 + "\"";
 			if (!fullFlash &&
 				!range.partial &&
@@ -210,7 +229,7 @@ void RegisterFirmwareTransferRoutes(AsyncWebServer* server, std::function<bool(A
 				request->getHeader("If-None-Match")->value() == etag) {
 				AsyncWebServerResponse* response = request->beginResponse(304);
 				addIdentityHeaders(response, sketchMd5, totalSize, false, false);
-				request->send(response);
+				server->send(response);
 				return;
 			}
 
@@ -222,18 +241,12 @@ void RegisterFirmwareTransferRoutes(AsyncWebServer* server, std::function<bool(A
 					"");
 				response->setContentLength(contentLength);
 			} else {
-				response = request->beginResponse(
-					"application/octet-stream",
-					contentLength,
-					[start = range.start, contentLength, totalSize](
-						uint8_t* output,
-						size_t maximumLength,
-						size_t offset) -> size_t {
-						if (offset >= contentLength) return 0;
-						const size_t remaining = contentLength - offset;
-						const size_t requested = min(remaining, maximumLength);
-						return readFlashRange(start + offset, output, requested, totalSize);
-					});
+				auto lease=acquireReader ? acquireReader() : std::shared_ptr<void>();
+				if(!lease) { sendTransferError(server,request,503,"Firmware reader is unavailable during maintenance");return; }
+				response = new FirmwareExport::ReadResponse(range.start,contentLength,
+					[totalSize](uint32_t address,uint8_t *output,size_t length) {
+						return readFlashRange(address,output,length,totalSize);
+					},std::move(lease));
 				if (range.partial) response->setCode(206);
 			}
 
@@ -256,7 +269,7 @@ void RegisterFirmwareTransferRoutes(AsyncWebServer* server, std::function<bool(A
 				totalSize,
 				fullFlash,
 				range.partial);
-			request->send(response);
+			server->send(response);
 		});
 #else
 	(void)server;

@@ -87,25 +87,58 @@ export function uploadImage(origin,peer,bytes,identity,{timeoutSeconds=180}={}) 
     req.write(start);req.write(bytes);req.end(end);
   });
 }
+// Native ws_worker requests this same read-only snapshot on connection. Never
+// replay it or treat optional compact presentation events as a full status.
+function maskedFrame(opcode,payload) {
+  const mask=randomBytes(4),frame=Buffer.alloc(6+payload.length);
+  frame[0]=0x80|opcode;frame[1]=0x80|payload.length;mask.copy(frame,2);
+  for(let i=0;i<payload.length;i++)frame[6+i]=payload[i]^mask[i%4];
+  return frame;
+}
+function compactWebSocketEvent(value,peer) {
+  if(!['status-rgb','update-progress'].includes(value?.type))return false;
+  if(value.board_id!==peer.board || value.boot_id!==peer.boot)
+    throw Error('Compact WebSocket event identity changed');
+  if(!Number.isSafeInteger(value.revision)||value.revision<1)throw Error('Invalid compact WebSocket revision');
+  if(value.type==='status-rgb') {
+    const rgb=value.status_rgb;
+    if(typeof rgb?.available!=='boolean'||typeof rgb.have_output!=='boolean'||
+      !Array.isArray(rgb.rgb)||rgb.rgb.length!==3||rgb.rgb.some(v=>!Number.isInteger(v)||v<0||v>255))
+      throw Error('Invalid compact WebSocket RGB');
+  } else if(!['update.phase','update.progress'].includes(value.event)||typeof value.phase!=='string'||
+    !value.phase.length||value.phase.length>64||typeof value.progress_known!=='boolean')
+      throw Error('Invalid compact WebSocket update progress');
+  return true;
+}
 // Read-only WS proof pinned to the same TCP address/board/boot as HTTP. Supports
-// fragmented text and ping/pong; does not issue any board control command.
-export function checkWebSocket(origin,peer) {
+// fragmented text and ping/pong; no actuator or firmware mutation is sent.
+export function checkWebSocket(origin,peer,{connectTimeoutMs=5000,statusTimeoutMs=12000}={}) {
+  if(!Number.isInteger(connectTimeoutMs)||connectTimeoutMs<10||connectTimeoutMs>10000||
+     !Number.isInteger(statusTimeoutMs)||statusTimeoutMs<10||statusTimeoutMs>20000)
+    throw Error('WebSocket connect/status deadlines outside bounded limits');
   return new Promise((resolve,reject)=>{
     const key=randomBytes(16).toString('base64'),client=origin.protocol==='https:'?https:http;
     let socket,buffer=Buffer.alloc(0),message=Buffer.alloc(0),fragmented=false,done=false;
-    const finish=(error)=>{if(done)return;done=true;clearTimeout(timer);socket?.destroy();req.destroy();error?reject(error):resolve({board_id:peer.board,boot_id:peer.boot});};
+    const started=Date.now();let upgradedAt=0,ignoredEvents=0,timer;
+    const finish=(error)=>{if(done)return;done=true;clearTimeout(timer);socket?.destroy();req.destroy();error?reject(error):resolve({board_id:peer.board,boot_id:peer.boot,
+      connect_ms:upgradedAt-started,status_ms:Date.now()-upgradedAt,total_ms:Date.now()-started,ignored_events:ignoredEvents,status_requests:1});};
     const req=client.request(new URL('/ws',origin),{...requestOptions(origin,peer,{
       Connection:'Upgrade',Upgrade:'websocket','Sec-WebSocket-Key':key,'Sec-WebSocket-Version':'13'})});
-    const timer=setTimeout(()=>finish(Error('WebSocket status deadline')),8000);
+    timer=setTimeout(()=>finish(Error('WebSocket connect/upgrade deadline after '+(Date.now()-started)+'ms; no status or write replay')),connectTimeoutMs);
     req.on('response',res=>{res.resume();finish(Error('WebSocket handshake rejected (HTTP '+res.statusCode+')'));});
     req.on('error',()=>finish(Error('WebSocket connection failed')));
     req.on('upgrade',(res,connection,head)=>{
       socket=connection;
       const expected=createHash('sha1').update(key+'258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
       if(res.statusCode!==101 || res.headers['sec-websocket-accept']!==expected ||
-        res.headers.upgrade?.toLowerCase()!=='websocket' || connection.remoteAddress?.replace(/^::ffff:/,'')!==peer.address) {
+        res.headers.upgrade?.toLowerCase()!=='websocket' ||
+        !res.headers.connection?.toLowerCase().split(',').map(v=>v.trim()).includes('upgrade') ||
+        connection.remoteAddress?.replace(/^::ffff:/,'')!==peer.address) {
         finish(Error('Invalid WebSocket upgrade/TCP peer'));return;
       }
+      upgradedAt=Date.now();clearTimeout(timer);
+      timer=setTimeout(()=>finish(Error('WebSocket same-peer full-status deadline after '+(Date.now()-upgradedAt)+
+        'ms (upgrade '+(upgradedAt-started)+'ms, compact events '+ignoredEvents+'); no mutation attempted')),statusTimeoutMs);
       const receive=chunk=>{try{
         buffer=Buffer.concat([buffer,chunk]);if(buffer.length>131072)throw Error('WebSocket frame exceeds bound');
         while(buffer.length>=2){
@@ -117,7 +150,7 @@ export function checkWebSocket(origin,peer) {
           if(buffer.length<offset+size)return;
           const payload=buffer.subarray(offset,offset+size);buffer=buffer.subarray(offset+size);
           if(opcode===8)throw Error('WebSocket closed before peer status');
-          if(opcode===9){const mask=randomBytes(4),pong=Buffer.alloc(6+size);pong[0]=0x8a;pong[1]=0x80|size;mask.copy(pong,2);for(let i=0;i<size;i++)pong[6+i]=payload[i]^mask[i%4];socket.write(pong);continue;}
+          if(opcode===9){socket.write(maskedFrame(10,payload));continue;}
           if(opcode===10)continue;
           if(opcode!==1 && opcode!==0)throw Error('Expected WebSocket text status');
           if((opcode===0)!==fragmented)throw Error('Invalid WebSocket fragments');
@@ -125,11 +158,16 @@ export function checkWebSocket(origin,peer) {
           fragmented=!final;if(!final)continue;
           let status;try{status=JSON.parse(message.toString('utf8'))}catch{throw Error('Malformed WebSocket JSON')}
           message=Buffer.alloc(0);
+          if(compactWebSocketEvent(status,peer)){ignoredEvents++;continue;}
           boardPeer(status,peer.address,peer);finish();return;
         }
       }catch(error){finish(error);}};
       connection.on('data',receive);connection.on('error',()=>finish(Error('WebSocket interrupted')));
       connection.on('close',()=>{if(!done)finish(Error('WebSocket closed before status'));});
+      // ONE masked read-only request, only after the HTTP upgrade and actual
+      // TCP peer have been validated. Never automatically resend any message.
+      try{connection.write(maskedFrame(1,Buffer.from('{"type":"status"}')))}
+      catch{finish(Error('WebSocket status request write failed; no retry'));return;}
       if(head.length)receive(head);
     });req.end();
   });

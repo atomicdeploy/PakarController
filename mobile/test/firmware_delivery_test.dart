@@ -103,7 +103,9 @@ void main() {
   test('HTTP file verifies hash before one upload and forwards no board credentials to source', () async {
     var writes = 0;
     final progress = <String>[];
-    final bytes = Uint8List(16384)..[0] = 0xe9;
+    final bytes = Uint8List(16384)
+      ..[0] = 0xe9
+      ..[1] = 1;
     final api = PakarApi(
       client: MaintenanceClient((r) async {
         if (r.url.path == '/api/status') {

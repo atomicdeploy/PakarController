@@ -26,11 +26,16 @@ impl Default for Items {
 pub struct PhysicalStatusRgb {
     pub available: bool,
     pub have_output: bool,
-    pub enabled: bool,
+    pub enabled: Option<bool>,
     pub rgb: Option<[u8; 3]>,
     pub brightness: Option<u8>,
     pub state: String,
     pub revision: u32,
+    pub pin:Option<i8>,
+    pub pin_confirmed:Option<bool>,
+    pub persisted:Option<bool>,
+    pub effect:Option<u8>,
+    pub progress_percent:Option<u8>,
 }
 impl PhysicalStatusRgb {
     pub fn output_color(&self) -> Option<egui::Color32> {
@@ -39,6 +44,12 @@ impl PhysicalStatusRgb {
         // never apply brightness a second time in the mirror.
         (self.available && self.have_output).then(|| egui::Color32::from_rgb(red, green, blue))
     }
+}
+pub fn optional_status_rgb<'de,D:serde::Deserializer<'de>>(d:D)->Result<Option<PhysicalStatusRgb>,D::Error>{
+    // A malformed additive LED observation is Unknown, not a reason to retire
+    // an otherwise valid board connection or invent a fallback RGB value.
+    let value=serde_json::Value::deserialize(d)?;
+    Ok(serde_json::from_value(value).ok())
 }
 pub enum Action {
     Save,
@@ -92,9 +103,12 @@ pub fn draw(ui: &mut egui::Ui, status: StatusBar<'_>, items: &mut Items) -> Vec<
                 let (rect, response) = ui.allocate_exact_size(egui::vec2(20.0, 22.0), egui::Sense::click());
                 ui.painter().circle_filled(rect.center(), 6.0, color);
                 let response = response.on_hover_text(format!(
-                    "Physical status RGB · {}\nRGB {}, {}, {} · brightness {} · revision {}",
+                    "Physical status RGB · {}\nRGB {}, {}, {} · brightness {} · revision {}\nGPIO {} · {} · progress {}",
                     led.state, color.r(), color.g(), color.b(),
-                    led.brightness.map(|v| v.to_string()).unwrap_or_else(|| "unknown".into()), led.revision));
+                    led.brightness.map(|v| v.to_string()).unwrap_or_else(|| "unknown".into()), led.revision,
+                    led.pin.map(|v|v.to_string()).unwrap_or_else(||"unknown".into()),
+                    match led.effect{Some(0)=>"steady",Some(1)=>"board-animated breathe",_=>"effect unknown"},
+                    led.progress_percent.filter(|v|*v<=100).map(|v|format!("{v}%")).unwrap_or_else(||"unknown".into())));
                 if response.clicked() { actions.push(Action::Hardware); }
                 response.context_menu(|ui| {
                     compact_menu(ui); ui.strong("Physical status RGB"); ui.separator();
@@ -205,6 +219,13 @@ mod tests {
         led.have_output = false; assert_eq!(led.output_color(), None);
         led.have_output = true; led.available = false; assert_eq!(led.output_color(), None);
         assert_eq!(PhysicalStatusRgb::default().output_color(), None);
+    }
+    #[test]
+    fn malformed_optional_rgb_does_not_disconnect_the_rest_of_status(){
+        for value in [serde_json::json!({"rgb":[0,256,1]}),serde_json::json!({"pin":"48"})]{
+            let s:crate::DeviceStatus=serde_json::from_value(serde_json::json!({"hostname":"ledboard","status_rgb":value})).unwrap();
+            assert_eq!(s.hostname,"ledboard");assert!(s.status_rgb.is_none());
+        }
     }
     #[test]
     fn status_preferences_roundtrip_and_missing_fields_default() {

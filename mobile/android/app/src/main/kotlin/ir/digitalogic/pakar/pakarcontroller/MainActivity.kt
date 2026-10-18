@@ -25,6 +25,9 @@ class MainActivity : FlutterActivity() {
     private val destinations = mutableMapOf<String, Uri>()
     private val pickCode = 3011
     private val createCode = 3012
+    // Same exclusive S3 OTA-slot ceiling as FirmwareImagePolicy. Dart narrows
+    // this by the selected platform/capacity before accepting any firmware.
+    private val firmwareMaximum = 0x330000 - 1
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -41,7 +44,7 @@ class MainActivity : FlutterActivity() {
                             check(pending == null && destinations.isEmpty() && !writing) { "Finish the current document operation first" }
                             if (call.method == "pick") {
                                 maximum = call.argument<Int>("maximum") ?: 0
-                                require(maximum in 1..2097152) { "Invalid document size bound" }
+                                require(maximum in 1..firmwareMaximum) { "Invalid document size bound" }
                                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                                     addCategory(Intent.CATEGORY_OPENABLE)
                                     type = "*/*" // Some providers mislabel .bin MIME; Dart checks extension and bytes.
@@ -69,7 +72,7 @@ class MainActivity : FlutterActivity() {
                             val uri = destinations.remove(call.argument<String>("token"))
                                 ?: error("Unknown or already consumed destination")
                             val bytes = call.argument<ByteArray>("bytes") ?: error("Missing backup bytes")
-                            require(bytes.size in 1..2097152) { "Invalid firmware export bound" }
+                            require(bytes.size in 1..firmwareMaximum) { "Invalid firmware export bound" }
                             writing = true
                             io.execute {
                                 try {

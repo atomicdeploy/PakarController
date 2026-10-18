@@ -4,6 +4,7 @@
 #include <ArduinoJson.h>
 #include <FS.h>
 #include <BleWire.h>
+#include "BleStorage.h"
 #include <BLEDevice.h>
 #if defined(CONFIG_BLUEDROID_ENABLED)
 #include <BLE2902.h>
@@ -75,14 +76,14 @@ class BleService {
   bool enabled() const { return desired_; }
   bool applyPending() const { return applyPending_; }
   uint32_t epoch() const { return epoch_.load(std::memory_order_acquire); }
-  bool owns(uint32_t epoch) const { return connected() && !retiring_.load(std::memory_order_acquire) &&
+  bool owns(uint32_t epoch) const { return bulk_ && started_ && connected() && !retiring_.load(std::memory_order_acquire) &&
     desired_ && epoch==this->epoch() && allowed_.load(std::memory_order_acquire); }
   const String &error() const { return error_; }
   uint32_t rejected() const { return rejected_.load(std::memory_order_relaxed); }
   uint32_t eventsLost() const { return eventsLost_; }
   uint8_t eventsPending() const { return eventCount_; }
   bool publish(const String &body) {
-    if(!connected()||!bootstrapped_||!allowed_.load()||retiring_.load())return false;
+    if(!bulk_||!started_||!connected()||!bootstrapped_||!allowed_.load()||retiring_.load())return false;
     if(body.isEmpty()||body.length()>2048||eventCount_==32){
       ++eventsLost_;error_="BLE ordered event loss; mirror resynchronization required";fence(true);return false;
     }
@@ -93,8 +94,8 @@ class BleService {
     ++eventCount_;return true;
   }
   bool canPush(uint32_t now) const {
-    return desired_ && started_ && connected() && !retiring_.load() && bootstrapped_ && allowed_.load(std::memory_order_acquire) &&
-      !maintenance_ && !eventCount_ && !sender_.busy() && !receiver_.ready() && static_cast<uint32_t>(now-lastPush_)>=2000U;
+    return bulk_ && desired_ && started_ && connected() && !retiring_.load() && bootstrapped_ && allowed_.load(std::memory_order_acquire) &&
+      !maintenance_ && !eventCount_ && !bulk_->sender.busy() && !bulk_->receiver.ready() && static_cast<uint32_t>(now-lastPush_)>=2000U;
   }
   bool push(const String &body,uint32_t now) {
     if(!canPush(now)||!queue(body))return false;lastPush_=now;return true;
@@ -109,10 +110,11 @@ class BleService {
       const uint16_t reject=slot.exchange(noOwner,std::memory_order_acq_rel);
       if(server_ && reject!=noOwner)server_->disconnect(reject);
     }
-    if(renamePending_ && connected() && (!sender_.busy()||static_cast<uint32_t>(now-renameAt_)>=2500U))fence(true);
+    const bool sending=bulk_ && bulk_->sender.busy();
+    if(renamePending_ && connected() && (!sending||static_cast<uint32_t>(now-renameAt_)>=2500U))fence(true);
     if(renamePending_ && !connected()) {renamePending_=false;if(started_)advertise();}
     if(applyPending_ && static_cast<int32_t>(now-applyAt_)>=0 &&
-       (!sender_.busy() || static_cast<uint32_t>(now-applyAt_)>=2500U)) {
+       (!sending || static_cast<uint32_t>(now-applyAt_)>=2500U)) {
       applyPending_=false;
       if(!desired_) {fence(true);if(advertising_)advertising_->stop();}
       else if(!started_)start();
@@ -120,9 +122,9 @@ class BleService {
     }
     // Disabling keeps its bounded reply/fragment ACK path alive until complete
     // or the explicit2500ms teardown deadline; it cannot admit another action.
-    if((!desired_&&!applyPending_) || !started_)return;
+    if((!desired_&&!applyPending_) || !started_ || !bulk_)return;
     if(restartAdvertising_.exchange(false,std::memory_order_acq_rel) && !connected() && !renamePending_)advertise();
-    receiver_.expire(now);
+    bulk_->receiver.expire(now);
     Ingress item;
     // A bounded per-loop slice prevents a large phone write burst monopolizing
     // the renderer/UART/network loop. ATT write-response is never command ACK.
@@ -130,29 +132,29 @@ class BleService {
       if(item.epoch!=epoch() || item.peer!=owner_.load(std::memory_order_acquire))continue;
       BoardCore::BleWire::Frame frame;
       if(!BoardCore::BleWire::parse(item.bytes,item.length,frame)){++rejected_;continue;}
-      if(frame.kind==BoardCore::BleWire::Ack) {sender_.acknowledge(item.bytes,item.length);continue;}
+      if(frame.kind==BoardCore::BleWire::Ack) {bulk_->sender.acknowledge(item.bytes,item.length);continue;}
       uint8_t ack[BoardCore::BleWire::kHeader];
-      const auto result=receiver_.accept(item.bytes,item.length,now,ack);
+      const auto result=bulk_->receiver.accept(item.bytes,item.length,now,ack);
       if(result==BoardCore::BleWire::Receiver::Rejected){++rejected_;continue;}
       notify(ack,sizeof(ack));
     }
     // Completion deliberately remains loop-owned, after all callback buffers
     // have been copied and the owner/deadline will be checked by the adapter.
-    if(receiver_.ready() && !sender_.busy() && !hasRejectedPeer() && !retiring_.load()) {
+    if(bulk_->receiver.ready() && !bulk_->sender.busy() && !hasRejectedPeer() && !retiring_.load()) {
       const uint32_t ownerEpoch=epoch();
-      String request;const size_t size=receiver_.size();
-      if(request.reserve(size+1))request.concat(reinterpret_cast<const char*>(receiver_.data()),size);
-      receiver_.consumed();
+      String request;const size_t size=bulk_->receiver.size();
+      if(request.reserve(size+1))request.concat(reinterpret_cast<const char*>(bulk_->receiver.data()),size);
+      bulk_->receiver.consumed();
       if(request.length()!=size){error_="BLE request memory unavailable";fence(true);return;}
       String reply=handler_?handler_(request,ownerEpoch):String();
       if(connected() && epoch()==ownerEpoch && reply.length()) {bootstrapped_=true;queue(reply);}
     }
-    if(!sender_.busy())response_=String();
+    if(!bulk_->sender.busy())response_=String();
     // Commands are admitted before queued unsolicited events. Events retain
     // order. Any gap (including a missing tone-stop) retires the stream so its
     // client immediately stops/resynchronizes mirroring; never silently skip a
     // note and continue. A slow minimum-MTU snapshot is not exact audio proof.
-    while(!sender_.busy()&&eventCount_) {
+    while(!bulk_->sender.busy()&&eventCount_) {
       auto &event=events_[eventHead_];
       if(static_cast<uint32_t>(now-event.at)>1500U){error_="BLE ordered event expired; mirror resynchronization required";fence(true);break;}
       if(!queue(event.body)){error_="BLE ordered event publication failed";fence(true);break;}
@@ -161,14 +163,14 @@ class BleService {
     if(connected() && !retiring_.load() && !hasRejectedPeer() && peerCount_.load(std::memory_order_acquire)==1) {
       size_t length=0;const uint16_t peer=owner_.load();
       const uint16_t mtu=server_?server_->getPeerMTU(peer):23;
-      if(const auto *packet=sender_.poll(now,mtu,length))notify(packet,length);
-      if(sender_.failed()){error_="BLE fragment acknowledgement timed out; outcome unknown";fence(true);}
+      if(const auto *packet=bulk_->sender.poll(now,mtu,length))notify(packet,length);
+      if(bulk_->sender.failed()){error_="BLE fragment acknowledgement timed out; outcome unknown";fence(true);}
     }
   }
  private:
   static constexpr uint16_t noOwner=0xffff;
   static constexpr const char *configPath="/ble.cfg",*pendingPath="/ble.pending";
-  struct Ingress {uint32_t epoch=0;uint16_t peer=noOwner,length=0;uint8_t bytes[512]{};};
+  using Ingress=BleIngress;
   class ServerCallbacks final : public BLEServerCallbacks {
    public: explicit ServerCallbacks(BleService &owner):owner_(owner){}
 #if defined(CONFIG_NIMBLE_ENABLED)
@@ -226,19 +228,20 @@ class BleService {
   void ingress(uint16_t peer,const uint8_t *bytes,size_t size) {
     // No JSON, FS, notification, wait, or peripheral operation in this callback.
     // Auth-enabled devices intentionally accept no RPC ingress at all.
-    if(!allowed_.load(std::memory_order_acquire)||retiring_.load(std::memory_order_acquire)||peer!=owner_.load()||!bytes||!size||size>512) {++rejected_;return;}
+    if(!bulk_||!allowed_.load(std::memory_order_acquire)||retiring_.load(std::memory_order_acquire)||peer!=owner_.load()||!bytes||!size||size>512) {++rejected_;return;}
     std::lock_guard<std::mutex> guard(mutex_);
     if(count_==8){++rejected_;return;}
-    auto &slot=ingress_[(head_+count_)%8];slot.peer=peer;slot.epoch=epoch();slot.length=size;
+    auto &slot=bulk_->ingress[(head_+count_)%8];slot.peer=peer;slot.epoch=epoch();slot.length=size;
     memcpy(slot.bytes,bytes,size);++count_;
   }
   bool pop(Ingress &item) {
-    std::lock_guard<std::mutex> guard(mutex_);if(!count_)return false;
-    item=ingress_[head_];head_=(head_+1)%8;--count_;return true;
+    std::lock_guard<std::mutex> guard(mutex_);if(!bulk_||!count_)return false;
+    item=bulk_->ingress[head_];head_=(head_+1)%8;--count_;return true;
   }
   void flush() {
     {std::lock_guard<std::mutex> guard(mutex_);head_=count_=0;}
-    receiver_.reset();sender_.reset();response_=String();bootstrapped_=false;
+    if(bulk_){bulk_->receiver.reset();bulk_->sender.reset();}
+    response_=String();bootstrapped_=false;
     eventsLost_+=eventCount_;for(auto &event:events_)event.body=String();eventHead_=eventCount_=0;
   }
   void fence(bool disconnect) {
@@ -247,10 +250,10 @@ class BleService {
     if(disconnect && server_) {const auto peer=owner_.load();if(peer!=noOwner)server_->disconnect(peer);}
   }
   bool queue(const String &body) {
-    if(sender_.busy()||body.isEmpty()||body.length()>65535)return false;
+    if(!bulk_||bulk_->sender.busy()||body.isEmpty()||body.length()>65535)return false;
     response_=body;if(response_.length()!=body.length()){error_="BLE response memory unavailable";return false;}
     if(!++nextMessage_)++nextMessage_;
-    return sender_.begin(nextMessage_,reinterpret_cast<const uint8_t*>(response_.c_str()),response_.length());
+    return bulk_->sender.begin(nextMessage_,reinterpret_cast<const uint8_t*>(response_.c_str()),response_.length());
   }
   void notify(const uint8_t *bytes,size_t length) {
     if(!tx_||!connected()||retiring_.load()||!allowed_.load()||peerCount_.load(std::memory_order_acquire)!=1||hasRejectedPeer())return;
@@ -289,6 +292,9 @@ class BleService {
   void start() {
 #if PAKAR_S3_BLE_ENABLED
     if(started_)return;
+    // App buffers must not compete with the SDK's internal-only BLE pools and
+    // Wi-Fi/OTA heap. Allocate before creating any host task or callback owner.
+    if(!bulk_.begin()){error_="BLE PSRAM storage unavailable; internal RAM retained for Wi-Fi/OTA";return;}
     if(!BLEDevice::init(name_)){error_="BLE stack initialization failed";return;}
     if(BLEDevice::setMTU(247)!=ESP_OK)error_="Preferred BLE MTU unavailable; negotiated MTU remains authoritative";
     server_=BLEDevice::createServer();
@@ -320,11 +326,10 @@ class BleService {
   std::atomic<uint16_t> owner_{noOwner};std::atomic<uint16_t> rejectPeers_[3]{{noOwner},{noOwner},{noOwner}};
   std::atomic<uint32_t> epoch_{1},rejected_{0};
   std::atomic<uint8_t> peerCount_{0};std::atomic<bool> allowed_{false},restartAdvertising_{false},retiring_{false},subscribed_{false};
-  std::mutex mutex_;Ingress ingress_[8]{};uint8_t head_=0,count_=0;
+  std::mutex mutex_;BleBulkOwner bulk_;uint8_t head_=0,count_=0;
   std::mutex infoMutex_;uint8_t infoBytes_[512]{};uint16_t infoLength_=0;
   struct Event {String body;uint32_t at=0;};Event events_[32];
   uint8_t eventHead_=0,eventCount_=0;uint32_t eventsLost_=0;
-  BoardCore::BleWire::Receiver receiver_;BoardCore::BleWire::Sender sender_;
   String name_,info_,response_,error_;uint32_t observedEpoch_=1,lastPush_=0,applyAt_=0,renameAt_=0;uint16_t nextMessage_=0;
   bool desired_=false,mounted_=false,started_=false,maintenance_=false,bootstrapped_=false,applyPending_=false,renamePending_=false;
 };

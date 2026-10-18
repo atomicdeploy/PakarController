@@ -75,15 +75,62 @@ impl Operation {
         }
     }
 }
-pub fn validate_image(esp: bool, bytes: &[u8]) -> Result<(), String> {
-    if esp {
-        if bytes.len() < 16 || bytes.len() > 2 * 1024 * 1024 || bytes[0] != 0xe9 {
-            return Err("Select an uncompressed ESP .bin (E9 header, 16 bytes–2 MiB). Confirm the exact board/module; device flash capacity is validated by the updater.".into());
+// Adapt the actual create-remote-manifest raw-image policy and SDK
+// FirmwarePlatform::otaCapacity boundary. These are application-slot bounds,
+// not the module's total flash size. The device still verifies image integrity,
+// chip revision and its actual inactive partition before committing an update.
+const S3_OTA_SLOT: u64 = 0x330000;
+const ESP8266_IMAGE_LIMIT: usize = 0x100000;
+pub fn maximum_image_bytes(esp: bool) -> u64 {
+    if esp { S3_OTA_SLOT - 1 } else { 32768 }
+}
+fn validate_esp_image(bytes: &[u8], expected_s3: Option<bool>) -> Result<(), String> {
+    if bytes.len() < 24 || bytes[0] != 0xe9 || !(1..=16).contains(&bytes[1]) {
+        return Err("Select a raw uncompressed ESP application .bin with a valid E9/segment header; merged flash images are not supported".into());
+    }
+    let chip = u16::from_le_bytes([bytes[12], bytes[13]]);
+    // An ESP8266 header has no chip/hash fields. Without a selected board,
+    // recognizable S3/large candidates must meet the S3 policy; the
+    // actual pinned board below remains authoritative before any upload.
+    let s3 = expected_s3.unwrap_or(chip == 9 || bytes.len() >= ESP8266_IMAGE_LIMIT);
+    if s3 {
+        if bytes.len() as u64 >= S3_OTA_SLOT || chip != 9 || bytes[23] != 1 {
+            return Err("ESP32-S3 requires a hashed raw application image (chip9, hash-appended flag1) smaller than its supported0x330000-byte OTA slot".into());
         }
-    } else if bytes.len() != 32768 {
-        return Err("AVR staging requires exactly 32768 bytes; Intel HEX and partial application images are not accepted".into());
+    } else if bytes.len() >= ESP8266_IMAGE_LIMIT || chip == 9 {
+        return Err("ESP8266 requires its own raw application image smaller than1MiB; an ESP32-S3 image cannot be uploaded to it".into());
     }
     Ok(())
+}
+pub fn validate_image(esp: bool, bytes: &[u8]) -> Result<(), String> {
+    if esp { validate_esp_image(bytes, None) }
+    else if bytes.len() != 32768 {
+        Err("AVR staging requires exactly 32768 bytes; Intel HEX and partial application images are not accepted".into())
+    } else { Ok(()) }
+}
+pub fn validate_image_for_board(esp: bool, bytes: &[u8], board: &crate::DeviceStatus) -> Result<(), String> {
+    if !esp { return validate_image(false, bytes); }
+    let s3 = if board.board_id.starts_with("esp32s3-") { Some(true) }
+        else if board.board_id.starts_with("esp8266-") { Some(false) } else { None };
+    validate_esp_image(bytes, s3)?;
+    if !board.ota_capacity_bytes.is_null() {
+        let capacity = board.ota_capacity_bytes.as_u64().filter(|n| *n>0)
+            .ok_or("Board advertised an invalid OTA capacity; no firmware sent")?;
+        if bytes.len() as u64 >= capacity {
+            return Err("Firmware does not fit the board's advertised inactive OTA partition; no firmware sent".into());
+        }
+    }
+    Ok(())
+}
+pub fn read_image_file(path: &std::path::Path, esp: bool) -> Result<Vec<u8>, String> {
+    let file = std::fs::File::open(path).map_err(|error| error.to_string())?;
+    let metadata = file.metadata().map_err(|error| error.to_string())?;
+    let maximum = maximum_image_bytes(esp);
+    if !metadata.is_file() || metadata.len()>maximum { return Err("Firmware file exceeds the supported image-slot bound".into()); }
+    let mut bytes = Vec::new();
+    file.take(maximum+1).read_to_end(&mut bytes).map_err(|error|error.to_string())?;
+    validate_image(esp, &bytes)?;
+    Ok(bytes)
 }
 pub fn run(client: &Client, endpoint: &Endpoint, operation: Operation) -> Result<String, String> {
     if let Operation::SourceImage {source,esp,progress}=operation {
@@ -122,6 +169,10 @@ pub fn run(client: &Client, endpoint: &Endpoint, operation: Operation) -> Result
         Operation::StageAvr(bytes) | Operation::UpdateEsp(bytes) => {
             let esp = matches!(operation, Operation::UpdateEsp(_));
             validate_image(esp, bytes)?;
+            if esp {
+                let before = crate::blocking_status(client, endpoint)?;
+                validate_image_for_board(true, bytes, &before)?;
+            }
             let part = multipart::Part::bytes(bytes.clone()).file_name(if esp {
                 "esp.bin"
             } else {
@@ -466,7 +517,51 @@ mod tests {
         assert!(validate_image(true, &vec![0; 32768]).is_err());
         let mut esp = vec![0; 1024];
         esp[0] = 0xe9;
+        esp[1] = 1;
         assert!(validate_image(true, &esp).is_ok());
         assert!(validate_image(true, &[0xe9]).is_err());
+    }
+    #[test]
+    fn s3_image_policy_accepts_actual_large_raw_image_but_not_slot_or_header_mismatch() {
+        let mut image = vec![0; 2_220_352];
+        image[0]=0xe9;image[1]=4;image[12]=9;image[23]=1;
+        assert!(image.len()>2*1024*1024);
+        assert!(validate_image(true,&image).is_ok());
+        let board = crate::DeviceStatus {board_id:"esp32s3-fixture".into(), ..Default::default()};
+        assert!(validate_image_for_board(true,&image,&board).is_ok());
+        for size in [S3_OTA_SLOT, S3_OTA_SLOT+1] {
+            let mut oversized=image.clone();oversized.resize(size as usize,0);
+            assert!(validate_image(true,&oversized).is_err());
+        }
+        for (offset,value) in [(0,0),(1,0),(1,17),(12,0),(12,5),(13,1),(23,0),(23,2)] {
+            let mut invalid=image.clone();invalid[offset]=value;
+            assert!(validate_image_for_board(true,&invalid,&board).is_err(),"Invalid S3 header byte{offset}={value}");
+        }
+        let mut wrong_small=image[..1024].to_vec();wrong_small[12]=5;
+        assert!(validate_image_for_board(true,&wrong_small,&board).is_err());
+        assert!(validate_image_for_board(true,&image,&crate::DeviceStatus{board_id:"esp8266-fixture".into(),..Default::default()}).is_err());
+        assert!(validate_image(false,&image).is_err());
+        assert!(validate_image(false,&vec![0;32768]).is_ok());
+        for size in [0,32767,32769] {assert!(validate_image(false,&vec![0;size]).is_err());}
+        assert_eq!(maximum_image_bytes(true),S3_OTA_SLOT-1);
+        assert_eq!(maximum_image_bytes(false),32768);
+    }
+    #[test]
+    fn s3_image_policy_respects_smaller_advertised_capacity_without_inventing_it() {
+        let mut image=vec![0;2_220_352];image[0]=0xe9;image[1]=1;image[12]=9;image[23]=1;
+        let mut board=crate::DeviceStatus{board_id:"esp32s3-fixture".into(),..Default::default()};
+        assert!(validate_image_for_board(true,&image,&board).is_ok());
+        board.ota_capacity_bytes=serde_json::json!(image.len());
+        assert!(validate_image_for_board(true,&image,&board).is_err());
+        board.ota_capacity_bytes=serde_json::json!(image.len()+1);
+        assert!(validate_image_for_board(true,&image,&board).is_ok());
+        for capacity in [serde_json::json!(0),serde_json::json!(-1),serde_json::json!("bad")] {
+            board.ota_capacity_bytes=capacity;
+            assert!(validate_image_for_board(true,&image,&board).is_err());
+        }
+        let mut legacy=vec![0;1024];legacy[0]=0xe9;legacy[1]=1;legacy[23]=0xfe;
+        assert!(validate_image(true,&legacy).is_ok(),"ESP8266 body byte23 is not an ESP32 hash flag");
+        legacy.resize(ESP8266_IMAGE_LIMIT,0);
+        assert!(validate_image(true,&legacy).is_err());
     }
 }

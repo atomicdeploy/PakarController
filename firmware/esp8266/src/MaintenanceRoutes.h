@@ -113,6 +113,10 @@ String buildTelemetryJson() {
   e[F("sdk_version")]=ESP.getSdkVersion();e[F("full_version")]=ESP_ARDUINO_VERSION_STR;
   e[F("flash_real_bytes")]=ESP.getFlashChipSize();
   e[F("largest_heap_block_bytes")]=ESP.getMaxAllocHeap();e[F("heap_fragmentation_percent")]=nullptr;
+  const uint32_t internalCaps=MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT;
+  e[F("internal_heap_free_bytes")]=heap_caps_get_free_size(internalCaps);
+  e[F("internal_heap_largest_block_bytes")]=heap_caps_get_largest_free_block(internalCaps);
+  e[F("internal_heap_minimum_free_bytes")]=heap_caps_get_minimum_free_size(internalCaps);
   e[F("reset_reason")]=SystemPlatform::resetReason();e[F("reset_info")]=nullptr;
   e[F("psram_bytes")]=ESP.getPsramSize();e[F("free_psram_bytes")]=ESP.getFreePsram();
   e[F("filesystem")][F("total_bytes")]=LittleFS.totalBytes();e[F("filesystem")][F("used_bytes")]=LittleFS.usedBytes();

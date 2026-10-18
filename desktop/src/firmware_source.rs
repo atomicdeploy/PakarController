@@ -80,7 +80,7 @@ fn download(source: Source, esp: bool, progress: &Transfer) -> Result<Vec<u8>, S
     let mut response = request
         .send()
         .map_err(|_| "Firmware file download failed; no board write")?;
-    let maximum = if esp { 2 * 1024 * 1024 } else { 32768 };
+    let maximum = crate::maintenance::maximum_image_bytes(esp);
     let total = response.content_length();
     if response.status() != reqwest::StatusCode::OK
         || total.is_some_and(|n| n == 0 || n > maximum)
@@ -147,6 +147,7 @@ pub fn run(
         {
             return Err("Board/boot/capability changed before upload; no firmware sent".into());
         }
+        crate::maintenance::validate_image_for_board(esp, &bytes, &before)?;
         if before.remote_firmware["busy"] == true
             || before.remote_firmware["phase"] == "ready"
             || before.update["phase"] == "receiving"
@@ -246,11 +247,11 @@ mod tests {
         use std::net::TcpListener;
         let server = TcpListener::bind("127.0.0.1:0").unwrap();
         let addr = server.local_addr().unwrap();
-        let status = serde_json::json!({"hostname":"fixture","board_id":"fixture-board","boot_id":"b".repeat(32),"http_peer_fencing":true,
+        let status = serde_json::json!({"hostname":"fixture","board_id":"esp32s3-fixture","boot_id":"b".repeat(32),"http_peer_fencing":true,"ota_capacity_bytes":0x330000,
             "capabilities":{"board_kind":"controller","acknowledged_features":["ota"]},"remote_firmware":{"busy":false,"phase":"idle"}});
         let s: DeviceStatus = serde_json::from_value(status.clone()).unwrap();
-        let mut image = vec![0; 65536];
-        image[0] = 0xe9;
+        let mut image = vec![0; 2_220_352];
+        image[0] = 0xe9;image[1]=4;image[12]=9;image[23]=1;
         let hash = digest(&image);
         let expected = image.clone();
         let worker = std::thread::spawn(move || {
@@ -288,9 +289,9 @@ mod tests {
                     serde_json::to_vec(&status).unwrap()
                 } else {
                     assert!(text.starts_with("POST /update "));
-                    assert!(lower.contains("x-pakar-firmware-size: 65536"));
+                    assert!(lower.contains(&format!("x-pakar-firmware-size: {}",expected.len())));
                     assert!(
-                        lower.contains("x-pakar-board: fixture-board")
+                        lower.contains("x-pakar-board: esp32s3-fixture")
                             && lower.contains(&format!("x-pakar-boot: {}", "b".repeat(32)))
                     );
                     assert!(request.windows(expected.len()).any(|v| v == expected));

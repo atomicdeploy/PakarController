@@ -12,6 +12,7 @@ for(const page of catalog.pages){assert(rust.includes(JSON.stringify(page.id)));
 for(const group of ['network','cloud']){const name=group==='network'?'Network':'Cloud',source=read('desktop/src/device_settings.rs'),body=source.split('pub struct '+name+' {')[1].split('}')[0];let fields=[...body.matchAll(/pub (\w+):/g)].map(m=>m[1]);if(group==='network'){assert(body.includes('#[serde(flatten)]'));assert(fields.includes('addressing'));const addressing=source.split('pub struct Addressing {')[1].split('}')[0];fields=fields.filter(v=>v!=='addressing').concat([...addressing.matchAll(/pub (\w+):/g)].map(m=>m[1]));}assert.deepEqual(fields.sort(),Object.keys(catalog[group]).sort(),'Native and Web field contract cannot drift');}
 const nodes={};const element=()=>({value:'',checked:false,disabled:false,textContent:'',className:'',open:false,close(){this.open=false},querySelectorAll(){return[]}});
 for(const id of ['settingsMessage','networkSave','cloudSave','settingsReload','wifiSsid','stationEnabled','apEnabled','wifiPassword','wifiOpen','mqttEnabled','mqttTls','mqttHost','mqttPort','mqttUser','mqttTopic','cloudWsEnabled','cloudWsTls','cloudWsHost','cloudWsPort','cloudWsPath','telemetrySeconds','mqttSecretMode','websocketSecretMode','mqttPassword','cloudWsToken','deviceSettingsDialog','wsState'])nodes[id]=element();
+for(const id of ['statusRgbSettings','rgbEnabled','rgbPin','rgbConfirmed','rgbBrightness','rgbRead','rgbSave'])nodes[id]=element();
 nodes.mqttSecretMode.value=nodes.websocketSecretMode.value='keep';
 const network={station_enabled:true,ap_enabled:true,station_ssid:'DRS Tether'};
 const cloud={mqtt_enabled:false,mqtt_tls:true,mqtt_host:'mqtt.digitalogic.ir',mqtt_port:8883,mqtt_user:'pakar',mqtt_base_topic:'pakar',mqtt_password_set:true,websocket_enabled:false,websocket_tls:true,websocket_host:'',websocket_port:443,websocket_path:'/',websocket_token_set:false,telemetry_seconds:30};
@@ -46,10 +47,67 @@ assert.deepEqual([...run('statusRgbOutput(rgbStatus,true).rgb')],[0,255,0],'Actu
 assert.equal(run('statusRgbOutput(rgbStatus,false)'),null);
 context.rgbStatus.status_rgb.have_output=false;assert.equal(run('statusRgbOutput(rgbStatus,true)'),null);
 context.rgbStatus.status_rgb.have_output=true;context.rgbStatus.status_rgb.rgb=[0,256,0];assert.equal(run('statusRgbOutput(rgbStatus,true)'),null);
+// Exercise the actual shared RGB editor, including the same pending/draft fence
+// as network/cloud, rather than a duplicate production implementation.
+const originalApi=context.api;
+context.currentPeer=()=>({known:true,has:f=>['network','status-rgb'].includes(f)});
+context.peerHttp.assertOwner=peer=>assert.equal(peer,fixturePeer);
+const rgbConfig={enabled:false,pin:48,pin_confirmed:true,brightness:32};
+let rgbSaved={...rgbConfig},rgbCalls=[],rgbBehavior='success';
+context.api=async(path,options={})=>{
+ assert.equal(path,'/api/status-rgb');assert.equal(options.peer,fixturePeer);rgbCalls.push(options);
+ if(options.method==='POST'){
+  assert(nodes.rgbPin.disabled&&nodes.mqttHost.disabled,'All device settings freeze during RGB writes');
+  if(rgbBehavior==='uncertain')throw Error('timeout');
+  if(rgbBehavior==='negative')return{saved:false};
+  if(rgbBehavior!=='mismatch')rgbSaved={enabled:options.body.get('enabled')==='true',pin:Number(options.body.get('pin')),pin_confirmed:options.body.get('pin_confirmed')==='true',brightness:Number(options.body.get('brightness'))};
+  return{saved:true};
+ }
+ return{...rgbSaved,persisted:rgbBehavior!=='not-persisted'};
+};
+assert.throws(()=>run('statusRgbConfig({})'),/Complete valid/);
+assert.throws(()=>run('statusRgbConfig({enabled:true,pin:48,pin_confirmed:false,brightness:32})'),/confirmed/);
+assert.throws(()=>run('statusRgbConfig({enabled:false,pin:4,pin_confirmed:true,brightness:32})'),/confirmed/);
+run("settingsInvalidate();settingsObserve('network',initialNetwork);settingsObserve('cloud',initialCloud)");
+await run('statusRgbSettingsLoad()');assert.equal(nodes.rgbBrightness.value,'32');assert.equal(nodes.rgbSave.disabled,true);
+nodes.rgbBrightness.value='64';run('settingsState()');assert.match(nodes.settingsMessage.textContent,/Unsaved/);
+context.confirm=()=>false;assert.equal(run('settingsCanClose()'),false,'RGB draft participates in dialog-close protection');
+rgbCalls=[];await run('settingsReload()');assert.equal(rgbCalls.length,0,'Reload cannot discard an RGB draft without confirmation');assert.equal(nodes.rgbBrightness.value,'64');
+context.confirm=()=>true;rgbCalls=[];await run('statusRgbSettingsLoad(true)');
+assert.equal(rgbCalls.filter(c=>c.method==='POST').length,1);assert.equal(rgbCalls.length,3);assert.equal(rgbSaved.brightness,64);assert.match(nodes.settingsMessage.textContent,/persisted and read back/);
+assert(!nodes.mqttHost.disabled,'Completing RGB work releases the shared pending lock');assert.equal(run('statusRgbDirty()'),false);
+for(const failure of ['negative','mismatch','uncertain','not-persisted']){
+ rgbBehavior=failure;rgbCalls=[];nodes.rgbBrightness.value=String(Number(nodes.rgbBrightness.value)+1);
+ await run('statusRgbSettingsLoad(true)');assert.equal(rgbCalls.filter(c=>c.method==='POST').length,1);assert.match(nodes.settingsMessage.textContent,/not retried/);assert(run('statusRgbDirty()'),'Failed RGB writes preserve the draft');
+ rgbBehavior='success';await run('statusRgbSettingsLoad()');
+}
+nodes.rgbBrightness.value='99';rgbSaved={...rgbSaved,brightness:100};rgbCalls=[];await run('statusRgbSettingsLoad(true)');
+assert.equal(rgbCalls.filter(c=>c.method==='POST').length,0);assert(run('webSettings.rgb.conflict'));assert.equal(nodes.rgbBrightness.value,'99');assert(nodes.rgbSave.disabled);
+await run('statusRgbSettingsLoad()');assert.equal(nodes.rgbBrightness.value,'100');
+let finishRgbRead;context.api=()=>new Promise(resolve=>{finishRgbRead=resolve});
+const oldRgbRead=run('statusRgbSettingsLoad()');run('settingsInvalidate()');finishRgbRead({...rgbSaved,persisted:true});await oldRgbRead;
+assert.equal(run('webSettings.rgb'),null,'An obsolete RGB read cannot repopulate a revoked session');
+context.api=originalApi;
+// Compact events merge only RGB and cannot renew whole-peer freshness or
+// replace unrelated cells/settings/workspace state.
+const rgbEventStart=web.indexOf('function acceptStatusRgb('),rgbEventEnd=web.indexOf('// The observed pixel',rgbEventStart);
+assert(rgbEventStart>=0&&rgbEventEnd>rgbEventStart);vm.runInContext(web.slice(rgbEventStart,rgbEventEnd),context);
+context.state={board_id:'fixture',boot_id:'a'.repeat(32),status_rgb:{revision:1},cells:[{state:'white'}]};
+context.contextReceivedAt=42;let rgbRenders=0;context.renderStatusRgb=()=>rgbRenders++;
+context.rgbEvent={type:'status-rgb',board_id:'fixture',boot_id:'a'.repeat(32),revision:2,status_rgb:{revision:2,available:true,have_output:true,rgb:[1,2,3]}};
+const cellsBefore=context.state.cells;assert(run('acceptStatusRgb(rgbEvent)'));assert.equal(rgbRenders,1);assert.equal(context.state.cells,cellsBefore);assert.equal(context.contextReceivedAt,42);
+assert(!run('acceptStatusRgb(rgbEvent)'),'Duplicate revisions are ignored');
+context.rgbEvent={...context.rgbEvent,revision:3,status_rgb:{...context.rgbEvent.status_rgb,revision:3},boot_id:'b'.repeat(32)};assert(!run('acceptStatusRgb(rgbEvent)'));
+context.rgbEvent={...context.rgbEvent,boot_id:'a'.repeat(32),status_rgb:{revision:3,rgb:[1,2,3]}};assert(!run('acceptStatusRgb(rgbEvent)'),'Missing critical output flags are ignored');
+context.nextRgbStatus={board_id:'fixture',boot_id:'a'.repeat(32),capabilities:{acknowledged_features:['status-rgb']},status_rgb:{revision:1}};
+assert.equal(run('retainStatusRgb(nextRgbStatus,state).status_rgb.revision'),2);
+context.nextRgbStatus.boot_id='b'.repeat(32);assert.equal(run('retainStatusRgb(nextRgbStatus,state).status_rgb.revision'),1,'RGB never survives a peer boot change');
+context.currentPeer=()=>({known:true,has:f=>f==='network'});
 run('settingsInvalidate()');assert.equal(nodes.cloudWsToken.value,'');assert.equal(run('webSettings.network'),null);
 let finishOldRead;context.api=()=>new Promise(resolve=>{finishOldRead=resolve});
 const oldRead=run("settingsLoad('cloud')");run('settingsInvalidate()');finishOldRead(cloud);await oldRead;assert.equal(run('webSettings.cloud'),null,'Revoked sessions must ignore late read replies');
 assert(source.includes('const epoch=++webSettings.epoch'),'Starting a write revokes older reads as well');
+assert(source.includes("webSettings.pending||['network','cloud'].some(settingsDirty)||statusRgbDirty()"),'RGB drafts participate in browser-unload protection');
 assert(web.includes('.settings-field[hidden]{display:none}'),'Hidden secret rows cannot be made visible by grid styling');
 let collapsed=false,panelStorage=null;context.panel={dataset:{panelId:'live-device',panelLabel:'Live device',capability:'network'},hidden:false,classList:{toggle(_name,value){collapsed=value}},querySelector(){return{setAttribute(){}}}};
 context.localStorage={getItem(){return panelStorage},setItem(_key,value){panelStorage=value}};

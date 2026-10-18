@@ -5,12 +5,14 @@ use serde::{Deserialize, Serialize};
 pub enum Group {
     Network,
     Cloud,
+    StatusRgb,
 }
 impl Group {
     pub fn path(self) -> &'static str {
         match self {
             Self::Network => "/api/network",
             Self::Cloud => "/api/cloud",
+            Self::StatusRgb => "/api/status-rgb",
         }
     }
 }
@@ -190,6 +192,7 @@ impl SecretEdit {
 pub enum Expected {
     Network(Network),
     Cloud(Cloud),
+    StatusRgb(crate::status_rgb::Configuration),
 }
 #[derive(Clone)]
 pub struct Write {
@@ -199,6 +202,9 @@ pub struct Write {
     pub expected: Expected,
 }
 impl Write {
+    pub fn status_rgb(id:u64,config:&crate::status_rgb::Configuration)->Result<Self,String>{
+        Ok(Self{id,group:Group::StatusRgb,form:config.form()?,expected:Expected::StatusRgb(config.clone())})
+    }
     pub fn network(id: u64, config: &Network, password: &str, open: bool) -> Result<Self, String> {
         config.validate()?;
         if !password.is_empty() && !open && !(8..=63).contains(&password.len()) {
@@ -271,11 +277,7 @@ impl Write {
         })
     }
     pub fn verify_ack(&self, value: &serde_json::Value) -> Result<(), String> {
-        let field = if self.group == Group::Network {
-            "accepted"
-        } else {
-            "updated"
-        };
+        let field = match self.group {Group::Network=>"accepted",Group::Cloud=>"updated",Group::StatusRgb=>"saved"};
         if value[field].as_bool() != Some(true) {
             return Err("Device did not confirm a saved configuration write".into());
         }
@@ -287,6 +289,8 @@ impl Write {
                 .is_ok_and(|actual| actual == *expected),
             Expected::Cloud(expected) => serde_json::from_value::<Cloud>(value.clone())
                 .is_ok_and(|actual| actual == *expected),
+            Expected::StatusRgb(expected) => crate::status_rgb::Configuration::read(value.clone())
+                .is_ok_and(|actual|actual==*expected)&&value["persisted"]==true,
         };
         if matches {
             Ok(())
@@ -331,6 +335,7 @@ pub struct Editor {
     pub search: String,
     pub network: Option<Draft<Network>>,
     pub cloud: Option<Draft<Cloud>>,
+    pub status_rgb: Option<Draft<crate::status_rgb::Configuration>>,
     pub avr: Option<Draft<crate::board_silent::Parameters>>,
     pub avr_owner: Option<(crate::peer_http::Pin, crate::Transport)>,
     pub avr_pending: Option<u64>,
@@ -376,6 +381,7 @@ impl Editor {
     }
     pub fn dirty(&self) -> bool {
         self.usb_request.is_some()
+            || self.status_rgb.as_ref().is_some_and(Draft::dirty)
             || self.firmware_feed.as_ref().is_some_and(Draft::dirty)
             || !self.feed_token.is_empty()
             || self.avr.as_ref().is_some_and(Draft::dirty)
@@ -395,6 +401,7 @@ impl Editor {
         self.websocket_token = SecretEdit::default();
     }
     pub fn discard(&mut self) {
+        if let Some(d)=&mut self.status_rgb{d.discard();}
         if let Some(d)=&mut self.firmware_feed {d.discard();}
         self.usb_request = None;
         if let Some(d) = &mut self.avr { d.discard(); }
@@ -440,6 +447,8 @@ impl Editor {
         }
     }
     pub fn observe(&mut self, path: &str, value: serde_json::Value) -> Result<(), String> {
+        if path==Group::StatusRgb.path(){let config=crate::status_rgb::Configuration::read(value)?;
+            if let Some(d)=&mut self.status_rgb{d.observe(config);}else{self.status_rgb=Some(Draft::new(config));}return Ok(());}
         if path == "/api/firmware/remote" {
             self.remote_job = Some(crate::maintenance::parse_job(value)?);
             return Ok(());
@@ -500,6 +509,7 @@ impl Editor {
         match result {
             Ok(value) => {
                 let loaded = match group {
+                    Group::StatusRgb => {self.status_rgb=None;self.observe(group.path(),value)}
                     Group::Network => {
                         self.network = None;
                         self.wifi_password.clear();

@@ -10,6 +10,7 @@ import 'icons.dart';
 import 'workspace_widgets.dart';
 import 'models.dart';
 import 'peer_context.dart';
+import 'status_rgb.dart';
 
 /// Actual Pealayer PreferencesTab contract-driven sections, grouped cards,
 /// labeled typed controls, contextual options, visible save/load status adapted
@@ -65,6 +66,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   String info = '';
   bool identityConflict = false, assigningIdentity = false;
   bool working = false;
+  bool rgbLocked = false;
   bool maintenanceActive = false;
   Timer? refresh;
   int operation = 0;
@@ -981,6 +983,28 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
                 children: [
                   if (!wide) ...[navigation, const SizedBox(height: 12)],
                   detail(fallback: !pageAvailable),
+                  Visibility(
+                    visible: page == 'overview' || page == 'leds',
+                    maintainState: true,
+                    child: StatusRgbSettings(
+                      key: const ValueKey('onboard-status-rgb'),
+                      api: widget.api,
+                      status: widget.status,
+                      authorized: widget.authorized,
+                      blocked:
+                          session.pending ||
+                          maintenanceActive ||
+                          (working && !rgbLocked),
+                      lockChanged: (value) {
+                        if (mounted) {
+                          setState(() {
+                            rgbLocked = value;
+                            working = value;
+                          });
+                        }
+                      },
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Semantics(
                     liveRegion: true,

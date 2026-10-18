@@ -2,6 +2,7 @@
 #include <ESPmDNS.h>
 #include "SsdpDevice.h"
 #include "DiscoveryInterfaces.h"
+#include "DiscoveryMdns.h"
 #include "../../esp8266/src/MndpService.h"
 #include "../../esp8266/src/ApplicationIdentity.h"
 
@@ -11,19 +12,8 @@ class Discovery {
   bool begin(const String &hostname, const String &displayName, uint32_t chipId, uint16_t streamPort = 7777) {
     end(); hostname_ = hostname;
     if (!activeDiscoveryInterfaces().count) return false;
-    mdnsReady_ = MDNS.begin(hostname.c_str());
-    if (mdnsReady_) {
-      MDNS.addService("http", "tcp", 80);
-      MDNS.addServiceTxt("http", "tcp", "path", "/");
-      MDNS.addServiceTxt("http", "tcp", "app", APP_NAME);
-      MDNS.addServiceTxt("http", "tcp", "app_id", APP_ID);
-      MDNS.addServiceTxt("http", "tcp", "version", BoardCore::BuildInfo::kVersion);
-      MDNS.addService("pakarcontroller", "tcp", 80);
-      MDNS.addServiceTxt("pakarcontroller", "tcp", "api", "/api/status");
-      MDNS.addServiceTxt("pakarcontroller", "tcp", "websocket", "/ws");
-      MDNS.addService("pakar-stream", "udp", streamPort);
-      MDNS.addService("telnet", "tcp", 23);
-    }
+    mdnsReady_ = startDiscoveryMdns(MDNS,hostname.c_str(),APP_NAME,APP_ID,
+        BoardCore::BuildInfo::kVersion,streamPort);
     ssdp_.setSchemaURL("description.xml"); ssdp_.setHTTPPort(80);
     ssdp_.setName(displayName); ssdp_.setSerialNumber(chipId); ssdp_.setURL("/");
     ssdp_.setDeviceType(FW_UPNP_DEVICE_TYPE);

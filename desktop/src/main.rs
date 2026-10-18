@@ -16,6 +16,7 @@ mod client_telemetry;
 mod client_management;
 mod client_install;
 mod client_secrets;
+mod status_rgb;
 mod cli_output;
 mod config;
 mod native_workspace;
@@ -74,7 +75,7 @@ struct Endpoint {
 struct DeviceStatus {
     #[serde(default)]
     bridge: Option<serde_json::Value>,
-    #[serde(default)]
+    #[serde(default,deserialize_with="ui::status_bar::optional_status_rgb")]
     status_rgb: Option<ui::status_bar::PhysicalStatusRgb>,
     #[serde(default)]
     board_id: String,
@@ -152,6 +153,8 @@ struct DeviceStatus {
     led_output: serde_json::Value,
     #[serde(default)]
     update: serde_json::Value,
+    #[serde(default)]
+    ota_capacity_bytes: serde_json::Value,
     #[serde(default,deserialize_with="firmware_progress::optional_upgrade")]
     upgrade:Option<firmware_progress::Upgrade>,
     #[serde(default)]
@@ -371,6 +374,7 @@ enum Event {
     StreamStats(f64),
     Status(DeviceStatus),
     UpgradeProgress(firmware_progress::Upgrade),
+    StatusRgb(status_rgb::Observation),
     Mapping(u64, Vec<CellMapping>, Option<(String, String)>),
     MappingFailed(u64, String),
     Configuration(&'static str, serde_json::Value),
@@ -642,6 +646,23 @@ fn scoped_http_request(client: &Client, scope: &peer_http::Scope, command: &Http
         let result = http_request(&peer.client()?, command.clone())?;
         if !scope.current() { return Err("Pixel readback belongs to a retired board; not applied".into()); }
         return Ok(result);
+    }
+    if matches!(command, HttpCommand::Mapping(..)) && let Some(peer) = &scope.pin {
+        // The mapping response identifies its own producer. A fresh selected
+        // WS peer must not depend on an unrelated HTTP status preflight before
+        // this small read is even sent. Headers are routing fences, not proof:
+        // validate the actual response identity and the still-current lease.
+        let result = http_request(&peer.client()?, command.clone())?;
+        scope.admit_read()?;
+        if let Event::Mapping(_, _, Some((board, boot))) = &result {
+            if !peer.matches_identity(board, boot) {
+                return Err("Mapping belongs to a different board/boot; not applied".into());
+            }
+            return Ok(result);
+        }
+        // Older firmware has no producer envelope. Discard this unbound read
+        // and perform the original status -> mapping -> status fences below;
+        // a status observed only after a mapping cannot establish its owner.
     }
     if mutating && scope.pin.is_none() { return Err("Read-only: peer has not advertised valid board/boot identity and HTTP fencing".into()); }
     let before = blocking_status(client, command.endpoint())?;
@@ -1147,6 +1168,10 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 match socket.read() {
                     Ok(Message::Text(text)) => {
                         last_received=Instant::now();
+                        if let Ok(value)=serde_json::from_str::<serde_json::Value>(&text) && value["type"]=="status-rgb" {
+                            if let Some(rgb)=status_rgb::Observation::parse(value){let _=events.send(for_endpoint(&current,Event::StatusRgb(rgb)));context.request_repaint();}
+                            continue; // Optional RGB cannot become a partial full-status packet.
+                        }
                         if let Ok(value)=serde_json::from_str::<serde_json::Value>(&text)
                             && value["type"]=="command-result"
                             && let Some(index)=controls.iter().position(|(request,_)|value["request_id"]==request.id) {
@@ -2248,10 +2273,7 @@ impl PakarControllerApp {
         }
         let path = std::path::Path::new(path);
         if !path.is_absolute() { return Err("Select an absolute firmware file path".into()); }
-        let file = std::fs::File::open(path).map_err(|error|error.to_string())?;
-        let mut bytes = Vec::new();
-        file.take(2 * 1024 * 1024 + 1).read_to_end(&mut bytes).map_err(|error|error.to_string())?;
-        maintenance::validate_image(true, &bytes)?;
+        let bytes = maintenance::read_image_file(path, true)?;
         let operation=self.source_operation(firmware_source::Source::Local(bytes),true)?;
         if let maintenance::Operation::SourceImage{progress,..}=&operation {self.firmware_transfer=Some(progress.clone());}
         let id = self.device_settings.next_id();
@@ -2389,6 +2411,11 @@ impl PakarControllerApp {
                 Event::ForScope(..) => {} // Scope envelopes are unwrapped once.
                 Event::ForEndpoint(..) => {} // Worker envelopes are unwrapped once.
                 Event::StreamStats(value) => self.stream_sent_fps = Some((value, Instant::now())),
+                Event::StatusRgb(rgb)=>{
+                    if self.connection_enabled&&self.transport==Transport::WiFi&&status_observation_fresh(self.last_status_at){
+                        if let Some(status)=self.status.as_mut(){status_rgb::observe(status,rgb);}
+                    } // Never renew full status, capability, command-clock or workspace authority.
+                }
                 Event::UpgradeProgress(upgrade)=>{
                     if self.connection_enabled && self.transport==Transport::WiFi {
                         if let Some(status)=self.status.as_mut(){firmware_progress::observe_upgrade(status,upgrade);}
@@ -2397,6 +2424,7 @@ impl PakarControllerApp {
                 Event::Status(mut s) => {
                     if realtime::older_than(&s,self.status.as_ref()) { continue; }
                     firmware_progress::retain_upgrade(&mut s,self.status.as_ref());
+                    status_rgb::retain(&mut s,self.status.as_ref());
                     if !s.hostname.is_empty() {
                         if self.status.as_ref().is_some_and(|old|old.cells!=s.cells || old.effect!=s.effect ||
                             old.mode!=s.mode || old.brightness!=s.brightness || old.led_output["enabled"]!=s.led_output["enabled"]) {

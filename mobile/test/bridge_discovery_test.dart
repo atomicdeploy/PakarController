@@ -68,7 +68,9 @@ void main() {
     await api.close();
   });
   test('Running ESP export verifies complete response and advertised digest before SAF', () async {
-    final bytes = Uint8List(16)..[0] = 0xe9;
+    final bytes = Uint8List(24)
+      ..[0] = 0xe9
+      ..[1] = 1;
     for (final digest in [md5.convert(bytes).toString(), '0' * 32, null]) {
       final api = PakarApi(
         client: MockClient(

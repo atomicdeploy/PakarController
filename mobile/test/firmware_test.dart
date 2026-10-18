@@ -103,7 +103,12 @@ void main() {
         throwsFormatException,
       );
       validateFirmwareImage(false, Uint8List(32768));
-      validateFirmwareImage(true, Uint8List(16)..[0] = 0xe9);
+      validateFirmwareImage(
+        true,
+        Uint8List(24)
+          ..[0] = 0xe9
+          ..[1] = 1,
+      );
       for (final count in [0, 32767, 32769]) {
         expect(
           () => validateFirmwareImage(false, Uint8List(count)),

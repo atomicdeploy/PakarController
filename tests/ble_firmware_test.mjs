@@ -6,6 +6,7 @@ const routes=read('firmware/esp8266/src/BleRoutes.h');
 const main=read('firmware/esp8266/esp8266.ino');
 const urboot=read('firmware/esp8266/src/UrbootRoutes.h');
 const wire=read('libraries/BoardCore/src/BleWire.h');
+const storage=read('firmware/esp32s3/src/BleStorage.h');
 
 for(const suffix of ['10','11','12','13'])assert(service.includes(`a4b68d${suffix}-5c3f-4c5a-9f12-50616b617243`));
 assert(service.includes('BLECharacteristic::PROPERTY_WRITE)'));
@@ -26,7 +27,17 @@ assert(service.includes('name_.substring(0,29)'));
 assert(service.includes('pending.write(bytes,sizeof(bytes))'));
 assert(service.includes('memcmp(bytes,readback,sizeof(bytes))'));
 assert(service.includes('fs_->rename(pendingPath,configPath)'));
-assert(service.includes('(!sender_.busy() || static_cast<uint32_t>(now-applyAt_)>=2500U)'));
+assert(service.includes('(!sending || static_cast<uint32_t>(now-applyAt_)>=2500U)'));
+assert(storage.includes('heap_caps_malloc(sizeof(BleBulkStorage),MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT)'));
+assert(storage.includes('BleIngress ingress[8]'));
+assert(storage.includes('BoardCore::BleWire::Receiver receiver;'));
+assert(storage.includes('BoardCore::BleWire::Sender sender;'));
+assert(!service.includes('Ingress ingress_[8]'));
+assert(!service.includes('BoardCore::BleWire::Receiver receiver_;'));
+assert(service.indexOf('if(!bulk_.begin())')<service.indexOf('if(!BLEDevice::init(name_)'));
+assert(service.includes('!started_ || !bulk_)return'));
+assert(service.includes('if(!bulk_||!allowed_.load'));
+assert(service.includes('if(bulk_){bulk_->receiver.reset();bulk_->sender.reset();}'));
 // Inspect callback bodies only: no parser/FS/notification/device dispatch/wait.
 const callbacks=service.slice(service.indexOf('class ServerCallbacks'),service.indexOf('bool pop('));
 for(const forbidden of ['deserializeJson','serializeJson','LittleFS','notify(', 'handler_(', 'delay(', 'yield(', 'sendToAvr'])
@@ -34,7 +45,7 @@ for(const forbidden of ['deserializeJson','serializeJson','LittleFS','notify(', 
 assert(callbacks.includes('memcpy(slot.bytes,bytes,size)'));
 assert(callbacks.includes('if(count_==8){++rejected_;return;}'));
 assert(service.includes('handler_(request,ownerEpoch)'));
-assert(service.indexOf('receiver_.ready() && !sender_.busy()')<service.indexOf('handler_(request,ownerEpoch)'));
+assert(service.indexOf('bulk_->receiver.ready() && !bulk_->sender.busy()')<service.indexOf('handler_(request,ownerEpoch)'));
 for(const route of ['GET /api/status','GET /api/table/snapshot','GET /api/cells/mapping','GET /api/ble/clock',
   'POST /api/command','POST /api/cells','POST /api/avr/contracts','POST /api/firmware/fetch',
   'POST /api/firmware/apply','POST /api/firmware/cancel','POST /api/network','POST /api/cloud','POST /api/ble'])assert(routes.includes(`"${route}"`));

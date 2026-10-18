@@ -84,6 +84,14 @@ int main() {
   f=request(E::Scan); f.sequence=12; service.handle(f,106,settings,wire);
   assert(!wire.sent.payload[1] && settings.scans==1);
   service.handle(f,107,settings,wire); assert(settings.scans==1);
+  // Query must observe live network changes even with an identical sequence;
+  // only mutating actions reuse the prior admitted outcome.
+  f=request(E::Query);f.sequence=13;settings.actual.stationConnected=false;
+  service.handle(f,108,settings,wire);
+  assert(E::decodeSnapshot(wire.sent.payload+2,wire.sent.payloadLength-2,decoded)&&!decoded.stationConnected);
+  settings.actual.stationConnected=true;service.handle(f,109,settings,wire);
+  assert(E::decodeSnapshot(wire.sent.payload+2,wire.sent.payloadLength-2,decoded)&&decoded.stationConnected);
+  f=request(E::Scan);f.sequence=12;service.handle(f,110,settings,wire);assert(settings.scans==1);
   settings.actual.stationConfigured=true; settings.actual.mode=2;
   EEPROM.reset(); Hardware hardware; PcControllerRuntime avr(hardware); avr.begin(0);
   avr.key(8,KeyEvent::HoldStart,0,1,1000);

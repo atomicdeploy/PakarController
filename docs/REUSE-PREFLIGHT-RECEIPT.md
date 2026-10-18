@@ -5922,3 +5922,64 @@ the actual Pealayer read-only capture source; no focus/restore/input workaround,
 blank-image acceptance or claim of visual QA followed. Only identity-verified
 fixtures created in this pass were stopped. UI screenshot acceptance is pending;
 this does not mean the available Win32 capture capability was removed/unavailable.
+
+## S3 integrated RGB, network and client delivery checkpoint
+
+The complete PU main sketch and actual AsyncWebServer/FirmwareTransfer/AsyncOTA
+sources were consulted, together with the indexed PCController session,
+status-LED math/controller and Pealayer status-bar sources. The authoritative
+comparison ledger contains exact source/target/test hashes and concrete remaining
+omissions; 231 comparisons do not represent completion of the 4,673-file inventory.
+
+Semantic RGB now has persisted, explicitly confirmed GPIO38/48 configuration,
+finite driver submission, peer-bound emitted-byte mirrors and native/Web/Flutter
+settings. Network fixes retain AP recovery after station configuration failure,
+strict saved credentials, hostname/AP-name limits, route fallback and checked
+mDNS service registration. Front-panel query replies are fresh and do not evict
+mutation receipts. No test result establishes visible RGB or display output.
+
+Actual firmware delivery exposed the old clients' 2MiB image limit. Both clients
+now share bounded selected-board image admission, retaining the S3 chip/hash-header
+and application-slot limits, legacy ESP8266 bounds and AVR image requirements.
+Native manual/HTTP/inbox and Android SAF/HTTP/inbox paths use that policy; a document
+selection is never an automatic flash. Native build13 is running on ASUS, hash
+5b254a909c558006cc5898edb12845f268d76da2e15f1e1711d656bdc4cd6229.
+APK13 is staged there, hash
+b89bbf60fc69bcb12e47902aefcd28bf833fa5452f7b9f614f7d583fe8b28131;
+no authorized ADB device was attached, so it is not an installed-phone result.
+Final native suite passed299 tests; mobile analyzer and287 tests passed, with2
+opt-in captures skipped. A stale invalid ESP header in a mobile fixture was
+corrected without weakening its ownership assertions or changing the APK.
+
+An actual mapping failure was an unnecessary HTTP status dependency. The native
+pinned mapping response now validates its own producer identity and live owner;
+only an absent envelope takes the original legacy status/mapping/status fences.
+Six loopback tests and an ASUS runtime with80 acknowledged mappings passed.
+Later board unavailability is recorded separately, not relabeled mapping success.
+
+Two Wi-Fi updater attempts stopped before upload at the bounded WebSocket
+preflight. The tool now requests exactly one read-only status after a validated
+upgrade; only correctly pinned compact events can precede the complete status.
+Actual loopback fragmentation/partial/deadline fixtures passed; no uncertain
+firmware write is retried. A reviewed USB bootstrap followed: read metadata,
+preserve the running image, verify its hash, then write only the selected app slot.
+The460800baud read failed short-packet;115200baud read matched the known-good image.
+PowerShell5 hashtable sorting chose an unexpected OTA record; the offset guard
+stopped before any write, and explicit highest-sequence selection replaced it.
+No partition-table, bootloader, filesystem, AVR image, EEPROM or fuse write followed.
+
+The new2220352-byte image80dcfb2155b54a2ed6fe70244d2c2779948fde0cc89196d730657b4d0849d86d
+booted with verified integrity and80 white cells, AVR0.2.7 online and individual
+display/text acknowledgements. It then exposed unsafe internal heap pressure:
+8272 free bytes /5108 largest block despite8MiB PSRAM. Consulted the actual installed
+esp32-hal-psram.c, SHA2f47f8b635de8ffb64d160576a2705b063235fb9f54e01b98e8d2bf3f48352bd,
+and reviewed precompiled NimBLE SDK allocation configuration. Do not pretend a
+compiler define can change that precompiled allocator or move cache-sensitive LED
+buffers. BLE application ingress/framing and S3 WebSocket queue now use explicit
+one-lifetime PSRAM allocations with no internal fallback; SDK handles/locks/stacks
+and LED wire/DMA buffers stay internal. Allocation failure closes admission,
+and telemetry exposes queue readiness plus free/largest/minimum INTERNAL8BIT heap.
+Actual whole8192-byte minimum-MTU framing, identical fragment retry, allocation
+failure/lifetime and cross-thread queue fixtures passed. The ESP8266 inline queue
+is unchanged. SDK build, measured live headroom and OTA acceptance of this memory
+fix must be recorded separately before claiming a Wi-Fi-only handoff.

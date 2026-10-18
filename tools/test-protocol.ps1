@@ -115,6 +115,11 @@ $rangeBinary = Join-Path $outputDirectory 'firmware_range_test.exe'
 if ($LASTEXITCODE -ne 0) { throw 'Firmware range test compilation failed' }
 & $rangeBinary
 if ($LASTEXITCODE -ne 0) { throw 'Firmware range tests failed' }
+$firmwareReadBinary=Join-Path $outputDirectory 'firmware_read_response_test.exe'
+& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/firmware_transfer_stubs') (Join-Path $projectRoot 'tests/firmware_read_response_test.cpp') -o $firmwareReadBinary
+if($LASTEXITCODE){throw 'Firmware reader response compilation failed'}
+& $firmwareReadBinary
+if($LASTEXITCODE){throw 'Firmware reader response fixtures failed'}
 $panelBinary = Join-Path $outputDirectory 'front_panel_test.exe'
 & g++ -std=c++17 -Wall -Wextra -Werror `
     -I (Join-Path $projectRoot 'tests/stubs') `

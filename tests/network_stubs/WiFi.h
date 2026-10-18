@@ -30,7 +30,7 @@ struct NetworkFixtureWiFi {
   } STA, AP;
   int modeValue=0, connection=0;
   bool persistentValue=true, apResult=true, configResult=true, autoReconnect=false;
-  String hostnameValue, ssidValue, passwordValue;
+  String hostnameValue, ssidValue, passwordValue,apSsidValue;
   IPAddress address;
   void persistent(bool value){persistentValue=value;}
   String nameAtStart;
@@ -41,7 +41,7 @@ struct NetworkFixtureWiFi {
   bool setHostname(const char *value){hostnameValue=value;return true;}
   bool softAPsetHostname(const char *value){return AP.setHostname(value);}
   const char *softAPgetHostname()const{return AP.getHostname();}
-  bool softAP(const char *,const char *){return apResult;}
+  bool softAP(const char *ssid,const char *){apSsidValue=ssid;return apResult&&apSsidValue.length()<=32;}
   bool config(IPAddress ip,IPAddress,IPAddress,IPAddress=IPAddress(),IPAddress=IPAddress()){address=ip;return configResult;}
   void begin(const char *ssid,const char *password){ssidValue=ssid;passwordValue=password;}
   void setAutoReconnect(bool value){autoReconnect=value;}

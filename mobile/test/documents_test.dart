@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pakarcontroller/documents.dart';
+import 'package:pakarcontroller/firmware_image.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -59,6 +60,26 @@ void main() {
       throwsFormatException,
     );
     expect(methods, ['create', 'abandon']);
+  });
+  test('S3 document intake above 2MiB uses one bounded slot policy', () async {
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(AndroidDocuments.channel, (call) async {
+          calls.add(call);
+          return {'name': 'esp.bin', 'bytes': Uint8List(2220352)};
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(AndroidDocuments.channel, null),
+    );
+    final documents = AndroidDocuments();
+    expect((await documents.pick())!.bytes.length, 2220352);
+    expect(calls.single.arguments['maximum'], FirmwareImagePolicy.maximumBytes);
+    await expectLater(
+      documents.pick(maximum: FirmwareImagePolicy.s3Capacity),
+      throwsFormatException,
+    );
+    expect(calls, hasLength(1));
   });
   test(
     'Export writes exact bytes once to only the newly-created token',

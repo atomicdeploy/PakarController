@@ -89,18 +89,47 @@ for(const method of ['GET','HEAD','POST']) {
   calls=0;await assert.rejects(boundedReadRequest(async()=>{calls++;throw Object.assign(Error('reset'),{code:'ECONNRESET'});},new URL('http://ledboard.local'),'/api/status',{}));assert.equal(calls,1,'Unpinned hostname read is not retried');
 }
 
-let received,wsMode='valid';const wireStatus={...base};
+let received,wsMode='valid',statusRequests=0,pongs=0;const wireStatus={...base};
 const server=createServer(async(req,res)=>{const chunks=[];for await(const chunk of req)chunks.push(chunk);
   received={path:req.url,headers:req.headers,body:Buffer.concat(chunks)};res.setHeader('Content-Type','application/json');res.end('{"updated":true,"rebooting":true}');});
 const sockets=new Set();server.on('connection',socket=>{sockets.add(socket);socket.on('close',()=>sockets.delete(socket));});
 server.on('upgrade',(req,socket)=>{
+  if(wsMode==='no-upgrade')return;
+  if(wsMode==='auth'){socket.end('HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\n\r\n');return;}
   const accept=createHash('sha1').update(req.headers['sec-websocket-key']+'258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
   socket.write('HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: '+(wsMode==='bad-upgrade'?'invalid':accept)+'\r\n\r\n');
-  const text=Buffer.from(JSON.stringify({...wireStatus,board_id:wsMode==='other-peer'?'other':base.board_id}));
   const frame=(first,payload)=>{const header=Buffer.alloc(4);header[0]=first;header[1]=126;header.writeUInt16BE(payload.length,2);return Buffer.concat([header,payload]);};
-  // Fragmented text spanning TCP chunks is accepted, not assumed atomic.
-  const split=Math.floor(text.length/2);socket.write(frame(1,text.subarray(0,split)).subarray(0,3));
-  socket.write(frame(1,text.subarray(0,split)).subarray(3));socket.write(frame(0x80,text.subarray(split)));
+  const send=value=>socket.write(frame(0x81,Buffer.from(JSON.stringify(value))));
+  let ingress=Buffer.alloc(0),finalFrame=null;
+  socket.on('data',chunk=>{
+    ingress=Buffer.concat([ingress,chunk]);
+    while(ingress.length>=2){
+      const opcode=ingress[0]&15,length=ingress[1]&127;
+      assert.equal(ingress[0]&128,128);assert.equal(ingress[1]&128,128,'Client requests/control frames must be masked');assert(length<126);
+      if(ingress.length<6+length)return;
+      const mask=ingress.subarray(2,6),payload=Buffer.from(ingress.subarray(6,6+length));
+      for(let i=0;i<length;i++)payload[i]^=mask[i%4];ingress=ingress.subarray(6+length);
+      if(opcode===10){assert.equal(payload.toString(),'p');pongs++;if(finalFrame){socket.write(finalFrame);finalFrame=null;}continue;}
+      assert.equal(opcode,1);assert.equal(payload.toString(),'{"type":"status"}');statusRequests++;
+      if(wsMode==='compact'||wsMode==='only-compact'||wsMode==='foreign-compact') {
+        send({type:'status-rgb',board_id:wsMode==='foreign-compact'?'other':base.board_id,boot_id:base.boot_id,
+          revision:2,status_rgb:{available:true,have_output:true,rgb:[1,2,3]}});
+        if(wsMode==='foreign-compact')return;
+        send({type:'update-progress',board_id:base.board_id,boot_id:base.boot_id,revision:3,
+          event:'update.phase',phase:'download',progress_known:false});
+        if(wsMode==='only-compact')return;
+      }
+      if(wsMode==='unknown-event'){send({type:'pong',board_id:base.board_id,boot_id:base.boot_id});return;}
+      if(wsMode==='bad-fragment'){socket.write(frame(0x80,Buffer.from('{}')));return;}
+      if(wsMode==='compact-wrong-boot'){send({type:'status-rgb',board_id:base.board_id,boot_id:'c'.repeat(32),revision:2,status_rgb:{available:true,have_output:true,rgb:[1,2,3]}});return;}
+      const text=Buffer.from(JSON.stringify({...wireStatus,board_id:wsMode==='other-peer'?'other':base.board_id}));
+      // Full status is request-driven, fragmented across TCP chunks, with a
+      // legal ping interleaved in the fragmented text message.
+      const split=Math.floor(text.length/2);socket.write(frame(1,text.subarray(0,split)).subarray(0,3));
+      finalFrame=frame(0x80,text.subarray(split));
+      socket.write(frame(1,text.subarray(0,split)).subarray(3));socket.write(Buffer.from([0x89,1,0x70]));
+    }
+  });
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 try{
@@ -110,8 +139,20 @@ try{
   assert.equal(received.headers['x-pakar-firmware-size'],String(image.length));assert.equal(received.headers['x-pakar-firmware-md5'],identity.md5);
   assert.equal(Number(received.headers['content-length']),received.body.length);assert.ok(received.body.includes(image));
   assert.ok(received.body.indexOf(Buffer.from('name="MD5"'))<received.body.indexOf(Buffer.from('name="firmware"')));
-  await checkWebSocket(origin,peer);
-  for(wsMode of ['bad-upgrade','other-peer'])await assert.rejects(checkWebSocket(origin,peer));
+  for(wsMode of ['valid','compact']){
+    const before=statusRequests,result=await checkWebSocket(origin,peer);
+    assert.equal(statusRequests,before+1,'Exactly one read-only request, no replay');assert.equal(result.status_requests,1);
+    assert.equal(result.ignored_events,wsMode==='compact'?2:0);assert(result.connect_ms>=0&&result.status_ms>=0&&result.total_ms>=0);
+  }
+  for(wsMode of ['bad-upgrade','auth','other-peer','foreign-compact','compact-wrong-boot','unknown-event','bad-fragment']){
+    const before=statusRequests;await assert.rejects(checkWebSocket(origin,peer));
+    assert.equal(statusRequests,before+(['bad-upgrade','auth'].includes(wsMode)?0:1));
+  }
+  wsMode='only-compact';const before=statusRequests;
+  await assert.rejects(checkWebSocket(origin,peer,{statusTimeoutMs:50}),/full-status deadline.*compact events 2/);
+  assert.equal(statusRequests,before+1,'Partial events never satisfy readiness or trigger request replay');
+  wsMode='no-upgrade';await assert.rejects(checkWebSocket(origin,peer,{connectTimeoutMs:50}),/connect\/upgrade deadline/);
+  assert(pongs>=1,'Interleaved ping receives a masked pong');
 }finally{for(const socket of sockets)socket.destroy();server.close();await once(server,'close');}
 
 const sketch=readFileSync(new URL('../firmware/esp8266/esp8266.ino',import.meta.url),'utf8');

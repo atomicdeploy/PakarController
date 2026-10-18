@@ -12,8 +12,8 @@ if($LASTEXITCODE){throw 'Actual renderer checks failed'}
 if($LASTEXITCODE){throw 'Scene persistence compilation failed'}
 & "$out/scene_store_test.exe"
 if($LASTEXITCODE){throw 'Scene persistence checks failed'}
-foreach($taskQueuePlatform in @(@(),@('-DARDUINO_ARCH_ESP8266'))){
-  & g++ -std=c++17 -Wall -Wextra -Werror -pthread @taskQueuePlatform -I "$root/firmware/esp8266/src" "$root/tests/led_scheduler_test.cpp" -o "$out/led_scheduler_test.exe"
+foreach($taskQueuePlatform in @(@(),@('-DARDUINO_ARCH_ESP8266'),@('-DARDUINO_ARCH_ESP32'))){
+  & g++ -std=c++17 -Wall -Wextra -Werror -pthread @taskQueuePlatform -I "$root/tests/ble_storage_stubs" -I "$root/firmware/esp8266/src" "$root/tests/led_scheduler_test.cpp" -o "$out/led_scheduler_test.exe"
   if($LASTEXITCODE){throw 'Actual message queue compilation failed'}
   & "$out/led_scheduler_test.exe"
   if($LASTEXITCODE){throw 'Actual message queue checks failed'}

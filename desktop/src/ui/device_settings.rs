@@ -19,6 +19,7 @@ fn matches(page: usize, search: &str) -> bool {
             .contains(&query)
 }
 pub(crate) fn available(app: &PakarControllerApp, page: usize) -> bool {
+    if page==6 && app.has_feature("status-rgb"){return true;}
     PAGE_FEATURES.get(page).is_some_and(|features| features.is_empty() ||
         features.iter().any(|feature| if *feature == "table" { app.has_table() } else { app.has_feature(feature) }))
 }
@@ -413,6 +414,7 @@ fn submit(app: &mut PakarControllerApp, draft: &mut Editor, group: Group) {
     if match group {
         Group::Network => draft.network.as_ref().is_some_and(|d| d.conflict),
         Group::Cloud => draft.cloud.as_ref().is_some_and(|d| d.conflict),
+        Group::StatusRgb => draft.status_rgb.as_ref().is_some_and(|d|d.conflict),
     } {
         draft.message = "Discard and refresh conflicting device settings before saving".into();
         return;
@@ -425,6 +427,7 @@ fn submit(app: &mut PakarControllerApp, draft: &mut Editor, group: Group) {
             .as_ref()
             .ok_or("Cloud settings unavailable".into())
             .and_then(|d| Write::cloud(id, &d.value, &draft.mqtt_password, &draft.websocket_token)),
+        Group::StatusRgb => draft.status_rgb.as_ref().ok_or("RGB settings unavailable".into()).and_then(|d|Write::status_rgb(id,&d.value)),
     };
     match result {
         Ok(write) => {
@@ -441,6 +444,39 @@ fn submit(app: &mut PakarControllerApp, draft: &mut Editor, group: Group) {
         }
         Err(error) => draft.message = error,
     }
+}
+fn status_rgb_page(app:&mut PakarControllerApp,draft:&mut Editor,ui:&mut egui::Ui,ready:bool){
+    if !app.has_feature("status-rgb"){return;}
+    // Only a fresh current peer can seed the saved baseline. Optional missing
+    // fields remain Unknown and cannot silently choose a GPIO or enabled state.
+    let observed=app.live_status().and_then(|s|s.status_rgb.as_ref()).and_then(|v|serde_json::to_value(v).ok())
+        .and_then(|v|crate::status_rgb::Configuration::read(v).ok());
+    if let Some(value)=observed{if let Some(d)=&mut draft.status_rgb{d.observe(value);}else{draft.status_rgb=Some(crate::device_settings::Draft::new(value));}}
+    dialog::section(ui,icons::LIGHTBULB,"Onboard semantic status RGB",|ui|{
+        ui.weak("Separate from the GPIO4 matrix. The board owns semantic colors, breathing and transitions; the status-bar dot mirrors its emitted RGB, not a local animation.");
+        if app.command_route()==Some(Transport::Serial){ui.weak("USB mirrors observed RGB. Saved RGB configuration is not supported by this USB contract; editing is unavailable.");return;}
+        let Some(d)=&mut draft.status_rgb else{
+            ui.weak("RGB settings: Unknown. Read the connected board before editing.");
+            if ui.add_enabled(ready,egui::Button::new("Read RGB settings")).clicked(){let _=app.http_tx.send(HttpCommand::Configuration(app.endpoint(),Group::StatusRgb.path()));}
+            return;
+        };
+        if d.conflict{ui.colored_label(ui.visuals().warn_fg_color,"RGB settings changed on the board. Discard and reload before saving.");}
+        ui.add_enabled_ui(ready&&draft.pending.is_none()&&!d.conflict,|ui|{
+            dialog::setting_row(ui,icons::CPU,"Onboard pixel GPIO",None,|ui|{
+                let previous=d.value.pin;super::dropdown::ComboBox::from_id_salt("onboard-status-pin")
+                    .selected_text(if d.value.pin==-1{"Unassigned".into()}else{format!("GPIO{}",d.value.pin)}).show_ui(ui,|ui|{
+                        ui.dropdown_value(&mut d.value.pin,-1,"Unassigned");ui.dropdown_value(&mut d.value.pin,48,"GPIO48 · common DevKit");ui.dropdown_value(&mut d.value.pin,38,"GPIO38 · alternate DevKit");
+                    });if previous!=d.value.pin{d.value.pin_confirmed=false;if d.value.pin==-1{d.value.enabled=false;}}
+            });
+            ui.checkbox(&mut d.value.pin_confirmed,"Confirm this is the onboard addressable RGB pin");
+            ui.checkbox(&mut d.value.enabled,"Enable semantic status output");
+            dialog::setting_row(ui,icons::GAUGE,"Status RGB brightness",None,|ui|{ui.add(egui::Slider::new(&mut d.value.brightness,0..=255));});
+        });
+        if let Err(error)=d.value.validate(){ui.colored_label(ui.visuals().warn_fg_color,error);}
+        let save=ready&&draft.pending.is_none()&&!d.conflict&&d.dirty()&&d.value.validate().is_ok();
+        if ui.add_enabled(save,egui::Button::new(format!("{}  Save onboard RGB",icons::FLOPPY_DISK))).clicked(){submit(app,draft,Group::StatusRgb);}
+        ui.weak("Save is one pinned write followed by same-board/boot persisted readback. Driver submission does not prove the physical LED is visible.");
+    });
 }
 fn maintenance_page(
     app: &mut PakarControllerApp,
@@ -713,15 +749,7 @@ fn maintenance_page(
                                 .pick_file()
                             {
                                 let result = (|| {
-                                    let metadata =
-                                        std::fs::metadata(&path).map_err(|e| e.to_string())?;
-                                    if !metadata.is_file() || metadata.len() > 2 * 1024 * 1024 {
-                                        return Err(
-                                            "Firmware file exceeds the supported size".to_string()
-                                        );
-                                    }
-                                    let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
-                                    crate::maintenance::validate_image(esp, &bytes)?;
+                                    let bytes = crate::maintenance::read_image_file(&path, esp)?;
                                     app.source_operation(crate::firmware_source::Source::Local(bytes),esp)
                                 })();
                                 match result {
@@ -778,6 +806,8 @@ fn page(
             3 | 4 => cloud_page(draft, ui, ready, index == 4),
             5 => { ui.add_enabled_ui(ready, |ui| { app.draw_device_access(ui); }); }
             6 => {
+                status_rgb_page(app,draft,ui,ready);
+                ui.add_space(12.0);
                 app.draw_led_settings(ui);
                 ui.add_space(12.0);
                 if app.has_table() { dialog::section(ui, icons::GRID_FOUR, "Table and LED controls", |ui| {
@@ -970,6 +1000,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
             };
             if let Some(group) = group {
                 let valid = match group {
+                    Group::StatusRgb => false, // RGB owns its contextual section save action.
                     Group::Network => draft.network.as_ref().is_some_and(|d| {
                         !d.conflict
                             && draft.network_write(0).is_ok()

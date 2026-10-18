@@ -6,6 +6,21 @@
 using Engine = PakarS3::StatusRgb;
 struct Frame { int pin; uint8_t red, green, blue; };
 int main() {
+  Engine::Observations observed;
+  observed.networkReady=true;
+  assert(Engine::selectState(observed)==Engine::State::Ready); // AVR-disabled is not peer-lost.
+  observed.peerRequired=true;
+  assert(Engine::selectState(observed)==Engine::State::PeerLost);
+  observed.peerOnline=true;observed.networkReady=false;observed.accessPoint=true;
+  assert(Engine::selectState(observed)==Engine::State::AccessPoint);
+  observed.stationEnabled=true;
+  assert(Engine::selectState(observed)==Engine::State::Connecting);
+  observed.booting=true;
+  assert(Engine::selectState(observed)==Engine::State::Boot);
+  observed.updating=true;
+  assert(Engine::selectState(observed)==Engine::State::Updating);
+  observed.fault=true;
+  assert(Engine::selectState(observed)==Engine::State::Fault);
   Engine engine;
   std::vector<Frame> frames;
   bool writable = true;
@@ -14,6 +29,12 @@ int main() {
     frames.push_back({pin, red, green, blue}); return true;
   };
   assert(!engine.snapshot().available && !engine.snapshot().haveOutput);
+  Engine initiallyOff;Engine::Configuration off;
+  off.pin=48;off.pinConfirmed=true;off.enabled=false;
+  assert(initiallyOff.configure(off,0,writer));
+  assert(frames.size()==1&&frames.back().red==0&&frames.back().green==0&&frames.back().blue==0);
+  assert(initiallyOff.snapshot().haveOutput); // Confirmed Off actually submitted black, even on first configuration.
+  frames.clear();
   assert(!engine.service(0, writer) && frames.empty());
   Engine::Configuration config;
   config.pin = 48; config.enabled = true;

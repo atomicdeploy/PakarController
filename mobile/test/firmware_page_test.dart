@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pakarcontroller/api.dart';
 import 'package:pakarcontroller/documents.dart';
 import 'package:pakarcontroller/firmware_page.dart';
+import 'package:pakarcontroller/firmware_image.dart';
 import 'package:pakarcontroller/models.dart';
 
 import 'firmware_test.dart' show firmwareJob;
@@ -59,7 +60,9 @@ class LiveFirmwareApi extends FirmwareApi {
 class CancelDocuments extends AndroidDocuments {
   int picks = 0;
   @override
-  Future<FirmwareDocument?> pick({int maximum = 2097152}) async {
+  Future<FirmwareDocument?> pick({
+    int maximum = FirmwareImagePolicy.maximumBytes,
+  }) async {
     ++picks;
     return null;
   }

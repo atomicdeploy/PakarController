@@ -2,9 +2,10 @@
 
 Status: integrated S3 source and native candidate implemented; actual SDK and
 physical acceptance are in progress, **not a completed production delivery**.
-The latest David-ASUS SSH8022 attempt refuses connections. The earlier hardware
-inventory identified the S3's CH343 bridge on COM22,16MB flash/8MB PSRAM and a
-complete private flash backup on both PCs; re-inventory ports before deployment.
+David-ASUS is currently reachable through SSH8022. Fresh inventory confirms the
+same CH343 bridge on COM22; live telemetry confirms16MB flash/8MB PSRAM and the
+identified board MAC. The complete private flash backup remains preserved on
+both PCs. See current commissioning evidence below before changing firmware.
 Existing ESP8266 firmware remains a separate target.
 See [commissioning and recovery](ESP32-S3-COMMISSIONING.md) for exact hardware,
 backup hash, guarded build and setup commands. Do not interpret old source-only

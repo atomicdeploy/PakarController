@@ -19,6 +19,15 @@ int main(){
   for(size_t i=16;i<24;++i)assert(symbols[i].duration0==oneHigh);
   assert(symbols[479*24].duration0==oneHigh); // BGR wire order, logical blue correction MSB.
   LoopMessages queue;uint8_t bytes[]={1,2,3};LoopMessages::Message message;
+#if defined(ARDUINO_ARCH_ESP32)
+  static_assert(sizeof(LoopMessages)<512,"S3 queue must not retain internal bulk storage");
+  assert(!queue.ready()&&!queue.pop(message));
+  PakarPsramFixture::fail=true;
+  assert(!queue.begin()&&!queue.ready());
+  assert(PakarPsramFixture::size==sizeof(message)*LoopMessages::kCapacity);
+  PakarPsramFixture::fail=false;
+#endif
+  assert(queue.begin()&&queue.begin()&&queue.ready());
   assert(!queue.push(1,2,nullptr,3));assert(!queue.push(1,2,bytes,1301));
   for(unsigned i=0;i<LoopMessages::kCapacity;++i){bytes[0]=i;assert(queue.push(i,2,bytes,3));}
   bytes[0]=99;assert(!queue.push(9,2,bytes,3));assert(queue.rejected()==1);

@@ -3,13 +3,13 @@
 // Allowlisted firmware/recovery artifacts only. Never serve arbitrary LittleFS
 // paths (Wi-Fi/auth/cloud settings and signed endpoint URLs are private).
 struct ArtifactReadLease {
-  File file;unsigned &readers;
-  ArtifactReadLease(File f,unsigned &count):file(f),readers(count){++readers;}
+  File file;decltype(artifactReaders) &readers;
+  ArtifactReadLease(File f,decltype(artifactReaders) &count):file(f),readers(count){++readers;}
   ~ArtifactReadLease(){file.close();--readers;}
 };
 struct ArtifactCounterLease {
-  unsigned &readers;
-  explicit ArtifactCounterLease(unsigned &count):readers(count){++readers;}
+  decltype(artifactReaders) &readers;
+  explicit ArtifactCounterLease(decltype(artifactReaders) &count):readers(count){++readers;}
   ~ArtifactCounterLease(){--readers;}
 };
 void registerArtifactDownload() {

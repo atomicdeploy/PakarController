@@ -65,22 +65,37 @@ inline bool service() {
     gateway = ethernet().gatewayIP(); resolver = ethernet().dnsIP(0);
   }
 #endif
-  if(resolver!=s.resolver && s.resolverChanges!=UINT32_MAX)++s.resolverChanges;
-  s.resolver=resolver;
+  const auto observeResolver=[&](IPAddress value) {
+    if(value!=s.resolver && s.resolverChanges!=UINT32_MAX)++s.resolverChanges;
+    s.resolver=value;
+  };
   const bool changed = next != s.selected || address != s.address ||
       gateway != s.gateway;
-  if (!changed) return false;
+  if (!changed) {observeResolver(resolver);return false;}
 #if defined(ARDUINO_ARCH_ESP32)
-  const bool routeAccepted = next == Interface::Ethernet ? ethernet().makeDefault() :
+  bool routeAccepted = next == Interface::Ethernet ? ethernet().makeDefault() :
       next == Interface::Wifi ? WiFi.STA.setDefault() : true;
+  if (!routeAccepted && next==Interface::Ethernet && wifiReady() && WiFi.STA.setDefault()) {
+    // A ready Ethernet netif that refuses default-route ownership must not
+    // strand a separately acknowledged Wi-Fi route. No interface is reconfigured
+    // and no cloud action is replayed; report only the route actually accepted.
+    next=Interface::Wifi;address=WiFi.localIP();gateway=WiFi.gatewayIP();resolver=WiFi.dnsIP(0);
+    routeAccepted=true;
+  }
   if (!routeAccepted) {
     // Never retain a stale ready route when the replacement was refused.
     const bool lost = s.selected != Interface::None;
     s.selected = Interface::None; s.address = IPAddress();
-    s.gateway = IPAddress(); s.resolver = IPAddress(); return lost;
+    s.gateway = IPAddress();observeResolver(IPAddress());
+    if(lost && s.routeChanges!=UINT32_MAX)++s.routeChanges;
+    return lost;
   }
 #endif
-  s.selected = next; s.address = address; s.gateway = gateway; s.resolver = resolver;
+  const bool acceptedChange=next!=s.selected || address!=s.address || gateway!=s.gateway;
+  s.selected = next; s.address = address; s.gateway = gateway;observeResolver(resolver);
+  // Rejected preferred-route retries can retain this same working fallback;
+  // do not repeatedly suspend its cloud sessions or count fictional changes.
+  if(!acceptedChange)return false;
   if(s.routeChanges!=UINT32_MAX)++s.routeChanges;
   return true;
 }

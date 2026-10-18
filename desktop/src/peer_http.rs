@@ -903,6 +903,93 @@ mod tests {
             .build()
             .unwrap()
     }
+    fn wire_mapping(identity: Option<(&str, char)>) -> Vec<u8> {
+        let mut value = serde_json::json!({
+            "physical":(1_u8..=80).collect::<Vec<_>>(),
+            "names":(1..=80).map(|id|id.to_string()).collect::<Vec<_>>()
+        });
+        if let Some((board, boot)) = identity {
+            value["board_id"] = board.into();
+            value["boot_id"] = boot.to_string().repeat(32).into();
+        }
+        serde_json::to_vec(&value).unwrap()
+    }
+    #[test]
+    fn gui_mapping_enveloped_read_needs_no_http_status_preflight() {
+        let (endpoint, server) = crate::tests::mock_device(vec![
+            (200, wire_mapping(Some(("esp8266-aabbccddeeff", 'a')))),
+        ]);
+        let result = crate::scoped_http_request(&client(), &scope(), &HttpCommand::Mapping(endpoint, 73)).unwrap();
+        assert!(matches!(result, Event::Mapping(73, cells, Some(_)) if cells.len()==80));
+        let requests = server.join().unwrap();
+        assert_eq!(requests.len(), 1);
+        assert!(requests[0].starts_with("GET /api/cells/mapping "));
+        let request = requests[0].to_lowercase();
+        assert!(request.contains("x-pakar-board: esp8266-aabbccddeeff"));
+        assert!(request.contains(&format!("x-pakar-boot: {}", "a".repeat(32))));
+    }
+    #[test]
+    fn gui_mapping_foreign_or_previous_boot_response_is_never_adopted() {
+        for identity in [("other-board", 'a'), ("esp8266-aabbccddeeff", 'b')] {
+            let (endpoint, server) = crate::tests::mock_device(vec![(200, wire_mapping(Some(identity)))]);
+            let error = crate::scoped_http_request(&client(), &scope(), &HttpCommand::Mapping(endpoint, 74)).err().unwrap();
+            assert!(error.contains("different board/boot"));
+            let requests = server.join().unwrap();
+            assert_eq!(requests.len(), 1, "Foreign mapping cannot trigger an optimistic fallback");
+            assert!(requests[0].starts_with("GET /api/cells/mapping "));
+        }
+    }
+    #[test]
+    fn gui_mapping_incomplete_or_invalid_envelope_is_not_legacy() {
+        for invalid in [serde_json::json!({"board_id":"esp8266-aabbccddeeff"}), serde_json::json!({"boot_id":"a".repeat(32)})] {
+            let mut value: serde_json::Value = serde_json::from_slice(&wire_mapping(None)).unwrap();
+            for (key, value_part) in invalid.as_object().unwrap() { value[key] = value_part.clone(); }
+            let (endpoint, server) = crate::tests::mock_device(vec![(200, serde_json::to_vec(&value).unwrap())]);
+            let error = crate::scoped_http_request(&client(), &scope(), &HttpCommand::Mapping(endpoint, 75)).err().unwrap();
+            assert!(error.contains("incomplete board/boot"));
+            assert_eq!(server.join().unwrap().len(), 1);
+        }
+    }
+    #[test]
+    fn gui_mapping_revoked_inflight_result_is_not_applied() {
+        let scope = scope();
+        let clock = scope.clock.clone();
+        let (endpoint, server) = crate::tests::mock_device_with_hook(
+            vec![(200, wire_mapping(Some(("esp8266-aabbccddeeff", 'a'))))],
+            Box::new(move |_| { clock.fetch_add(1, Ordering::AcqRel); }),
+        );
+        let error = crate::scoped_http_request(&client(), &scope, &HttpCommand::Mapping(endpoint, 76)).err().unwrap();
+        assert!(error.contains("revoked"));
+        assert_eq!(server.join().unwrap().len(), 1);
+    }
+    #[test]
+    fn gui_mapping_expired_queue_does_not_contact_device() {
+        let mut scope = scope();
+        scope.queued_at = Instant::now() - Duration::from_secs(25);
+        let (endpoint, server) = crate::tests::mock_device(vec![]);
+        assert!(crate::scoped_http_request(&client(), &scope, &HttpCommand::Mapping(endpoint, 77)).err().unwrap().contains("expired"));
+        assert!(server.join().unwrap().is_empty());
+    }
+    #[test]
+    fn gui_mapping_without_envelope_retains_both_legacy_status_fences() {
+        for after in ['a', 'b'] {
+            let (endpoint, server) = crate::tests::mock_device(vec![
+                (200, wire_mapping(None)), // Unbound optimistic read is discarded.
+                (200, wire_status('a', &["table"])),
+                (200, wire_mapping(None)),
+                (200, wire_status(after, &["table"])),
+            ]);
+            let result = crate::scoped_http_request(&client(), &scope(), &HttpCommand::Mapping(endpoint, 78));
+            if after=='a' { assert!(matches!(result, Ok(Event::Mapping(78, cells, None)) if cells.len()==80)); }
+            else { assert!(result.err().unwrap().contains("changed during readback")); }
+            let requests = server.join().unwrap();
+            assert_eq!(requests.len(), 4);
+            assert!(requests[0].starts_with("GET /api/cells/mapping "));
+            assert!(requests[1].starts_with("GET /api/status "));
+            assert!(requests[2].starts_with("GET /api/cells/mapping "));
+            assert!(requests[3].starts_with("GET /api/status "));
+        }
+    }
     #[test]
     fn gui_settings_pin_every_nested_request_and_verify_same_boot() {
         let network = crate::tests::fixture_network();

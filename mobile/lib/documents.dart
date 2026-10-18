@@ -1,5 +1,7 @@
 import 'package:flutter/services.dart';
 
+import 'firmware_image.dart';
+
 /// Actual Pealayer preferenceFileAllowed rule, adapted without path guessing.
 bool preferenceFileAllowed(String name, Iterable<String> extensions) =>
     extensions.any(
@@ -16,7 +18,12 @@ class FirmwareDocument {
 /// Only a user-created document token can be written, never an arbitrary URI.
 class AndroidDocuments {
   static const channel = MethodChannel('ir.digitalogic.pakar/documents');
-  Future<FirmwareDocument?> pick({int maximum = 2 * 1024 * 1024}) async {
+  Future<FirmwareDocument?> pick({
+    int maximum = FirmwareImagePolicy.maximumBytes,
+  }) async {
+    if (maximum < 1 || maximum > FirmwareImagePolicy.maximumBytes) {
+      throw const FormatException('Invalid firmware document size bound');
+    }
     final value = await channel.invokeMapMethod<String, dynamic>('pick', {
       'maximum': maximum,
     });
@@ -41,6 +48,9 @@ class AndroidDocuments {
     Uint8List bytes, {
     required bool Function() stillOwned,
   }) async {
+    if (bytes.isEmpty || bytes.length > FirmwareImagePolicy.maximumBytes) {
+      throw const FormatException('Invalid firmware export size');
+    }
     if (!stillOwned()) {
       throw const FormatException('Board changed before export');
     }

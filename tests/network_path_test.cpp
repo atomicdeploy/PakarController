@@ -63,7 +63,11 @@ int main(){
   assert(interfaces.entries[0].mac[5]==3);
   assert(interfaces.forRemote(PakarS3::discoveryAddress(IPAddress(10,20,30,7)))->mac[5]==3);
   ETH.defaultResult=false;ETH.address=IPAddress(10,20,30,42);
-  assert(service() && !ready());assert(!service() && !ready());
+  assert(service() && ready() && strcmp(interfaceName(),"wifi")==0);
+  const auto fallbackRoutes=state().routeChanges,fallbackDns=state().resolverChanges;
+  assert(!service() && ready() && strcmp(interfaceName(),"wifi")==0);
+  assert(state().routeChanges==fallbackRoutes&&state().resolverChanges==fallbackDns);
+  assert(localIP()==WiFi.localIP()&&dnsIP()==WiFi.dnsIP(0));
   ETH.defaultResult=true;assert(service() && ready());unchanged();
   ETH.dns[0]=IPAddress();ETH.dns[1]=IPAddress(10,20,30,9);
   setEthernetDhcp(false);

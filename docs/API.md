@@ -526,3 +526,27 @@ manifest/image arguments verify ESP-only Internet staging with Wi-Fi station
 disconnected, but never apply firmware. See the complete
 [Ethernet commissioning procedure](ESP32-S3-COMMISSIONING.md#w5500-ethernet-commissioning)
 for credentials, unknown-outcome handling and separate physical acceptance gates.
+
+## ESP32-S3 onboard status RGB
+
+`GET /api/status-rgb` returns the selected board/boot, persisted `enabled`,
+`pin`, `pin_confirmed` and `brightness`. POST accepts only
+those four configuration fields as form strings; the same shared owner handles
+Bluetooth RPC. Allowed GPIOs are38/48, independent from the matrix on GPIO4.
+Enabling requires an explicit confirmed pin. USB-only editing is not silently
+rerouted through Wi-Fi. An unidentified pixel stays unavailable.
+
+`status.status_rgb` and compact WebSocket `type:"status-rgb"` packets report
+actual already-scaled RGB, semantic state, effect, nullable measured progress,
+revision and output timestamp. Compact packets carry board/boot identity and do
+not renew full-device freshness or command-clock authority. Native, Web and
+Flutter reject foreign/old-boot or non-increasing revisions and never apply
+brightness twice or reconstruct their own animation. Successful driver
+submission is not optical verification. Generic custom profiles/cues remain
+pending rather than being advertised as supported.
+
+Lifecycle priority is fault, update, startup, station connection, required AVR
+loss, ready, AP-only, warning. Disabled AVR builds do not manufacture peer loss.
+Initial Off and disable/reassignment submit black to the confirmed pin. The
+writer exposes real bounded RMT completion, not unconditional success from a
+void SDK helper.

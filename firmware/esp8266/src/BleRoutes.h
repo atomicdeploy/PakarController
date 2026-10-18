@@ -6,7 +6,7 @@ namespace BleRoutes {
 bool readOnly=false,servicing=false;
 constexpr const char *routes[]={
   "GET /api/status","GET /api/table/snapshot","GET /api/cells/mapping",
-  "GET /api/telemetry","GET /api/auth/info","GET /api/device/name",
+  "GET /api/telemetry","GET /api/auth/info","GET /api/device/name","GET /api/status-rgb",
   "GET /api/network","GET /api/network/ethernet","GET /api/cloud",
   "GET /api/firmware/remote","GET /api/update/lifecycle","GET /api/display/lcd",
   "GET /api/avr/contracts","GET /api/avr/contracts/result","GET /api/ble","GET /api/ble/clock",
@@ -16,7 +16,7 @@ constexpr const char *routes[]={
   "POST /api/game/reset","POST /api/avr/contracts","POST /api/device/name",
   "POST /api/network","POST /api/network/ethernet","POST /api/cloud",
   "POST /api/cloud/reconnect","POST /api/firmware/fetch","POST /api/firmware/apply",
-  "POST /api/firmware/cancel","POST /api/ble"
+  "POST /api/firmware/cancel","POST /api/ble","POST /api/status-rgb"
 };
 bool supported(const String &method,const String &path) {
   const String key=method+" "+path;for(const char *route:routes)if(key==route)return true;return false;
@@ -91,6 +91,7 @@ String read(const String &path,JsonObjectConst form,int &status) {
   if(path=="/api/cells/mapping")return mapping();
   if(path=="/api/telemetry")return buildTelemetryJson();
   if(path=="/api/device/name")return deviceNameJson();
+  if(path=="/api/status-rgb")return statusRgbConfigurationJson();
   if(path=="/api/network")return networkConfigurationJson();
   if(path=="/api/network/ethernet")return ethernetConfigurationJson();
   if(path=="/api/cloud")return cloudConfigurationJson();
@@ -116,6 +117,7 @@ String read(const String &path,JsonObjectConst form,int &status) {
 }
 bool write(const String &path,JsonObjectConst form,String &body,int &status) {
   status=202;JsonDocument d;auto command=d.to<JsonObject>();String result;
+  if(path=="/api/status-rgb")return updateStatusRgbConfiguration(form,body,status);
   if(path=="/api/ble") {
     if(form.size()!=1||!boolean(form,"enabled",command,false)){status=400;return false;}
     if(!bleService.configure(command["enabled"].as<bool>(),result)){body=result;status=503;return false;}

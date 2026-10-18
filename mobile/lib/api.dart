@@ -157,6 +157,9 @@ class PakarApi {
   DeviceStatus? _latestStatus;
   final _statusUpdates = StreamController<DeviceStatus>.broadcast(sync: true);
   Stream<DeviceStatus> get statusUpdates => _statusUpdates.stream;
+  // RGB-only observations never drive full-status consumers/firmware policy.
+  final _rgbUpdates = StreamController<DeviceStatus>.broadcast(sync: true);
+  Stream<DeviceStatus> get rgbUpdates => _rgbUpdates.stream;
   DeviceStatus? get latestStatus => _latestStatus;
   Stopwatch? _statusAge;
   Stopwatch? _liveAge, _socketAge;
@@ -329,6 +332,7 @@ class PakarApi {
   bool _rememberStatus(DeviceStatus status) {
     if (status.olderThan(_latestStatus)) return false;
     status = status.preservingNewerUpgrade(_latestStatus);
+    status = status.preservingNewerRgb(_latestStatus);
     _latestStatus = status;
     _statusAge = Stopwatch()..start();
     if (!_statusUpdates.isClosed) _statusUpdates.add(status);
@@ -1079,6 +1083,18 @@ class PakarApi {
           }
           continue;
         }
+        if (value is Map<String, dynamic> && value['type'] == 'status-rgb') {
+          if (liveFresh &&
+              value['board_id'] == _verifiedBoard &&
+              value['boot_id'] == _verifiedBoot) {
+            final next = _latestStatus?.withStatusRgbEvent(value);
+            if (next != null) {
+              _latestStatus = next;
+              if (!_rgbUpdates.isClosed) _rgbUpdates.add(next);
+            }
+          }
+          continue; // No _statusAge/_liveAge update, full-status yield or replay.
+        }
         if (value is Map<String, dynamic> &&
             value['type'] == 'update-progress') {
           // An incremental lifecycle packet cannot establish peer identity or
@@ -1394,6 +1410,7 @@ class PakarApi {
     } finally {
       _client.close();
       unawaited(_statusUpdates.close());
+      unawaited(_rgbUpdates.close());
       _ioClient.close(force: true);
     }
   }

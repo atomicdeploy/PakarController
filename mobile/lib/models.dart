@@ -6,6 +6,57 @@ class DeviceStatus {
   DeviceStatus(this.json);
   final Map<String, dynamic> json;
   late final peer = PeerContext.fromStatus(json);
+  DeviceStatus? withStatusRgbEvent(Map<String, dynamic> event) {
+    if (event['type'] != 'status-rgb' ||
+        !peer.has('status-rgb') ||
+        event['board_id'] != json['board_id'] ||
+        event['boot_id'] != json['boot_id'] ||
+        json['board_id'] is! String ||
+        json['boot_id'] is! String) {
+      return null;
+    }
+    final revision = event['revision'], rgb = event['status_rgb'];
+    if (revision is! int ||
+        revision < 1 ||
+        revision > 0xffffffff ||
+        rgb is! Map<String, dynamic> ||
+        rgb['revision'] != revision ||
+        rgb['available'] is! bool ||
+        rgb['have_output'] is! bool ||
+        rgb['rgb'] is! List ||
+        (rgb['rgb'] as List).length != 3 ||
+        (rgb['rgb'] as List).any((v) => v is! int || v < 0 || v > 255)) {
+      return null;
+    }
+    final old = json['status_rgb'];
+    if (old is Map &&
+        old['revision'] is int &&
+        revision <= (old['revision'] as int)) {
+      return null;
+    }
+    return DeviceStatus({...json, 'status_rgb': Map<String, dynamic>.of(rgb)});
+  }
+
+  DeviceStatus preservingNewerRgb(DeviceStatus? current) {
+    if (!peer.has('status-rgb') ||
+        current?.json['board_id'] != json['board_id'] ||
+        current?.json['boot_id'] != json['boot_id']) {
+      return this;
+    }
+    final previous = current?.json['status_rgb'], incoming = json['status_rgb'];
+    if (previous is Map<String, dynamic> &&
+        previous['revision'] is int &&
+        (incoming is! Map ||
+            incoming['revision'] is! int ||
+            (incoming['revision'] as int) < (previous['revision'] as int))) {
+      return DeviceStatus({
+        ...json,
+        'status_rgb': Map<String, dynamic>.of(previous),
+      });
+    }
+    return this;
+  }
+
   UpgradeObservation? get upgrade => UpgradeObservation.read(
     json['upgrade'],
     board: json['board_id'],

@@ -44,11 +44,16 @@ setup/loop. These are source integrations, not completed hardware acceptance:
    brightness, state, pin, available/enabled/have_output, revision and
    updated_uptime_ms. Persisted configuration has its own authenticated
    `/api/status-rgb` GET/POST owner. Driver submission is not optical acceptance.
-   Publishing effect/progress metadata and revision-driven event delivery remain
-   pending; the class snapshot alone does not establish those API fields.
+   The integrated snapshot now includes effect, nullable measured progress,
+   persisted configuration and driver error. Compact `status-rgb` events carry
+   board/boot/revision and actual emitted bytes; they do not renew full-device
+   freshness or command-clock authority.
 6. Native/Web source mirrors the authoritative bytes with live-peer and
    have-output guards, without double brightness or stale-board fallback.
-   Mobile parity and rendered/physical acceptance remain pending.
+   Mobile now uses the same fresh observed bytes. Native/Web/mobile editors
+   validate and persist enable, confirmed GPIO and brightness with exact
+   post-ACK readback. Generic profile/cue editing and optical acceptance remain
+   pending; a client preview never proves an LED lit.
 
 ## ESP settings through the AVR front panel
 
@@ -136,20 +141,21 @@ No business action is executed while the ESP submenu is already active.
 Tracked durably in [optional TFT LCD and W5500 issue #19](https://github.com/atomicdeploy/PakarController/issues/19),
 under production acceptance [#2](https://github.com/atomicdeploy/PakarController/issues/2).
 Existing issue titles and bodies were checked before creating this focused
-backlog. These are reservations only: no TFT or Ethernet implementation,
-physical voltage/pin acceptance or live link is claimed.
+backlog. TFT remains a reservation. Optional W5500 native ETH/lwIP source and
+SDK build now exist; physical voltage/pin acceptance and live Ethernet tests
+remain open. See ESP32-S3-COMMISSIONING.md for the implemented adapter.
 
 - [ ] TFT LCD: identify exact controller, supply, resolution and touch hardware;
   allocate GPIOs without colliding with AVR UART/ISP, LED4, onboard RGB, USB or
   W5500 reservations. Add optional capability/driver, shared scene/settings
   model and front-panel navigation; never advertise a display that did not ACK.
-- [ ] W5500: implement independent SPI3/HSPI driver on SCK5/MISO6/MOSI7/CS8,
-  RST9/INT14. Keep AVR ISP on SPI2/FSPI, confirm module supply, and integrate
-  shared hostname/DHCP/static addressing, AP+STA coexistence, discovery,
-  link-loss/reconnect, JSON/WebSocket/MQTT, OTA and network-driven AVR flashing.
-  Pin reservation is not a running Ethernet implementation or link proof.
-- [ ] Use native ESP32 ETH/lwIP integration and the existing application network
-  services, not a second Ethernet socket/client/credential/update stack. Confirm
+- [x] Optional W5500 source/SDK adapter uses independent SPI3/HSPI on
+  SCK5/MISO6/MOSI7/CS8, RST9/INT14 and retains AVR ISP on SPI2/FSPI. It shares
+  the existing ETH/lwIP HTTP/WebSocket/cloud/OTA stack and independent persisted
+  DHCP/static profile. This is not a physically connected Ethernet link.
+- [ ] Test the actual W5500 supply/link, hostname/discovery, interface fallback,
+  AP+STA coexistence, JSON/WebSocket/MQTT, LAN serving and Internet OTA.
+  Confirm
   the exact module/supply and TFT controller before assigning any TFT GPIOs;
   protect UART17/18, matrix4, isolated ISP11/13/12/reset10, USB/bridge/strap and
   actual module flash/PSRAM/RGB exclusions. Any later shared TFT/W5500 bus needs
