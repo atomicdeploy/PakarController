@@ -134,7 +134,7 @@ pub fn reveal(dock: &mut DockState<Panel>, panel: Panel) {
 pub fn draw_workspace_tab_menu(app: &mut PakarControllerApp, ui: &mut egui::Ui) {
     super::cell_table::compact_menu(ui);
     for panel in Panel::ALL {
-        if !panel.available(app.peer_context()) { continue; }
+        if !panel.available(app.presentation_context()) { continue; }
         let is_open = app.dock.find_tab(&panel).is_some() || app.open_panels.contains(&panel);
         let mut visible = is_open;
         if ui

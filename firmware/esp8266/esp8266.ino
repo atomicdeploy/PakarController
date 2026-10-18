@@ -457,6 +457,12 @@ void sendHostStatus(uint8_t requestSequence) {
 }
 
 void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
+  // Cloud write progress may drain read-only USB requests, never re-enter a
+  // mutation or programming operation while a cloud packet is being emitted.
+  if(cloudServices.ioActive() && frame.opcode!=kGetStatus && frame.opcode!=kGetIdentity &&
+      frame.opcode!=kGetTableSnapshot && frame.opcode!=kHello && frame.opcode!=kPing) {
+    hostLink.error(frame.sequence,frame.opcode,kBusy);return;
+  }
   if (!contextAllows(frame.opcode, frame.payload, frame.payloadLength)) {
     const uint8_t error[] = {frame.opcode, kHardwareUnavailable};
     hostLink.send(kErrorResponse, frame.sequence, error, sizeof(error)); return;
@@ -1424,6 +1430,8 @@ String buildStatusJson() {
   body += F(",\"hostname\":\""); body += hostname;
   body += F("\",\"uplink\":\""); body += NetworkPath::interfaceName();
   body += F("\",\"uplink_ipv4_ready\":"); body += NetworkPath::ready() ? F("true") : F("false");
+  body += F(",\"uplink_route_changes\":");body+=NetworkPath::state().routeChanges;
+  body += F(",\"uplink_resolver_changes\":");body+=NetworkPath::state().resolverChanges;
   body += F(",\"cloud_command_fencing\":true,\"cloud_command_deadline_seconds\":60");
   body += F(",\"ethernet\":");body+=ethernetStatusJson();
   body += F(",\"ip\":\""); body += (NetworkPath::ready() ? NetworkPath::localIP() : WiFi.softAPIP()).toString();
@@ -1540,6 +1548,23 @@ String buildStatusJson() {
   body += F(",\"mqtt_connected\":");
   body += cloudServices.mqttConnected() ? F("true") : F("false");
   body += F(",\"mqtt_state\":"); body += cloudServices.mqttState();
+  const auto &mqttTiming=cloudServices.mqttConnectionStats();
+  body += F(",\"mqtt_connection\":{\"attempts\":");body += mqttTiming.attempts;
+  body += F(",\"failures\":");body += mqttTiming.failures;
+  body += F(",\"last_ms\":");body += mqttTiming.lastDurationMs;
+  body += F(",\"max_ms\":");body += mqttTiming.maxDurationMs;body += '}';
+  const auto &cloudIo=cloudServices.ioStats();
+  body += F(",\"cloud_io\":{\"services\":");body+=cloudIo.services;
+  body += F(",\"last_service_ms\":");body+=cloudIo.lastServiceMs;
+  body += F(",\"max_service_ms\":");body+=cloudIo.maxServiceMs;
+  body += F(",\"publishes\":");body+=cloudIo.publishes;
+  body += F(",\"last_publish_ms\":");body+=cloudIo.lastPublishMs;
+  body += F(",\"max_publish_ms\":");body+=cloudIo.maxPublishMs;
+  body += F(",\"suspend_closes\":");body+=cloudIo.suspendCloses;
+  body += F(",\"configuration_closes\":");body+=cloudIo.configurationCloses;
+  body += F(",\"clean_closes\":");body+=cloudIo.cleanCloses;
+  body += F(",\"unclean_closes\":");body+=cloudIo.uncleanCloses;
+  body += F(",\"write_closes\":");body+=cloudIo.writeCloses;body+='}';
   body += F(",\"mqtt_messages_received\":");
   body += cloudServices.mqttMessagesReceived();
   body += F(",\"cloud_websocket_enabled\":");
@@ -3590,6 +3615,7 @@ void setup() {
   }
   webAccess.configurePeerFence(pcBoardId, pcBootId);
   cloudServices.begin(hostname, handleCloudCommand, buildStatusJson,buildTelemetryJson,pcBoardId,pcBootId);
+  cloudServices.setProgressService([](){hostLink.service();});
   stream.begin(kStreamPort);
   telnetServer.begin();
   telnetServer.setNoDelay(true);
@@ -3723,6 +3749,11 @@ void loop() {
     setAvrTransmitBlocked(false);
   }
   if (!remoteFirmware.busy()) { serviceSnake(now);serviceStream(); }
+  // Cloud socket calls may have waited while the buffered AVR UART received
+  // valid replies. Consume those actual frames before evaluating presence;
+  // otherwise the loop reports a false peer loss, then recovery next pass.
+  // This is AFTER cloud IO, never reentrant from its progress callback.
+  avrLink.service();
   if (!remoteFirmware.busy() && avrOnline && avrVersionKnown &&
       (avrVersion[0]>0 || avrVersion[1]>2 || (avrVersion[1]==2 && avrVersion[2]>=7)) &&
       static_cast<uint32_t>(now-lastTelemetryRequestAt)>=5000U) {

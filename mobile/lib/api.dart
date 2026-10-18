@@ -25,6 +25,7 @@ class PakarApi {
     http.Client? client,
     LanResolver? resolver,
     this.discovery,
+    this.readTimeout = const Duration(seconds: 6),
   }) : resolver = resolver ?? LanResolver(),
        _baseUrl = normalizeEndpoint(baseUrl),
        // Preserve public argument names; private setters own revisions.
@@ -32,6 +33,10 @@ class PakarApi {
        _user = user,
        // ignore: prefer_initializing_formals
        _password = password {
+    if (readTimeout <= Duration.zero ||
+        readTimeout > const Duration(seconds: 30)) {
+      throw ArgumentError.value(readTimeout, 'readTimeout');
+    }
     _client = client ?? IOClient(_ioClient);
   }
 
@@ -106,6 +111,8 @@ class PakarApi {
   final LanResolver resolver;
   late final HttpClient _ioClient = resolver.createClient();
   final Future<Set<String>> Function()? discovery;
+  final Duration readTimeout;
+  final _readAborts = <Completer<void>>{};
   WebSocketChannel? _channel;
   bool _socketReady = false;
   DeviceStatus? _latestStatus;
@@ -300,6 +307,7 @@ class PakarApi {
       final pending = Completer<Map<String, dynamic>?>();
       _commandReplies[id] = pending;
       try {
+        _retireStatusRead();
         _channel!.sink.add(packet);
         reply = await pending.future.timeout(
           const Duration(milliseconds: 800),
@@ -309,6 +317,7 @@ class PakarApi {
         /* Same-ID HTTP recovery below; no second intent. */
       } finally {
         _commandReplies.remove(id);
+        _retireStatusRead();
       }
     }
     if (revision != connectionRevision || !authorize()) {
@@ -319,9 +328,14 @@ class PakarApi {
         ..headers.addAll(_writeHeaders)
         ..bodyFields = {'packet': packet}
         ..followRedirects = false;
-      final response = await http.Response.fromStream(
-        await _client.send(request),
-      ).timeout(const Duration(seconds: 4));
+      _retireStatusRead();
+      late final http.Response response;
+      try {
+        response = await http.Response.fromStream(await _client.send(request))
+            .timeout(const Duration(seconds: 4));
+      } finally {
+        _retireStatusRead();
+      }
       if (response.statusCode ~/ 100 != 2) throw const OperationUncertain();
       reply = jsonDecode(response.body) as Map<String, dynamic>;
     }
@@ -378,23 +392,105 @@ class PakarApi {
   Future<http.Response> _readResponse(
     String base,
     String path,
-    Map<String, String> headers,
-  ) {
-    final request = http.Request('GET', _uri(base, path))
-      ..headers.addAll(headers)
-      ..followRedirects = false;
-    return _client.send(request).then(http.Response.fromStream);
+    Map<String, String> headers, {
+    Duration? timeout,
+  }) async {
+    final owner = connectionRevision, limit = timeout ?? readTimeout;
+    const maximum = 64 * 1024;
+    final abort = Completer<void>();
+    _readAborts.add(abort);
+    var timedOut = false;
+    void stop() {
+      if (!abort.isCompleted) abort.complete();
+    }
+
+    final elapsed = Stopwatch()..start();
+    final timer = Timer(limit, () {
+      timedOut = true;
+      stop();
+    });
+    final request =
+        http.AbortableRequest(
+            'GET',
+            _uri(base, path),
+            abortTrigger: abort.future,
+          )
+          ..headers.addAll(headers)
+          ..followRedirects = false;
+    StreamIterator<List<int>>? reader;
+    StreamSubscription<List<int>>? rejectedBody;
+    try {
+      final response = await _client.send(request).timeout(limit);
+      if (owner != connectionRevision ||
+          (response.contentLength ?? 0) > maximum) {
+        // StreamIterator subscribes lazily at moveNext. The installed IOClient
+        // attaches its response-abort hook only when the body is listened to;
+        // cancelling an untouched iterator leaves that HTTP socket open. Start
+        // this discard listener synchronously before abort/cancel in finally.
+        // Nothing is retained or decoded, and no unbounded drain is awaited.
+        rejectedBody = response.stream.listen((_) {}, onError: (Object _) {});
+      }
+      if (owner != connectionRevision) throw const StaleConnection();
+      if ((response.contentLength ?? 0) > maximum) {
+        throw const FormatException(
+          'Device JSON response exceeds its safety limit',
+        );
+      }
+      reader = StreamIterator(response.stream);
+      final bytes = BytesBuilder(copy: false);
+      while (true) {
+        final remaining = limit - elapsed.elapsed;
+        if (remaining <= Duration.zero) {
+          throw TimeoutException('Device read deadline');
+        }
+        if (!await reader.moveNext().timeout(remaining)) break;
+        if (owner != connectionRevision) throw const StaleConnection();
+        if (bytes.length + reader.current.length > maximum) {
+          throw const FormatException(
+            'Device JSON response exceeds its safety limit',
+          );
+        }
+        bytes.add(reader.current);
+      }
+      return http.Response.bytes(
+        bytes.takeBytes(),
+        response.statusCode,
+        headers: response.headers,
+        request: request,
+        isRedirect: response.isRedirect,
+        persistentConnection: response.persistentConnection,
+        reasonPhrase: response.reasonPhrase,
+      );
+    } on http.RequestAbortedException {
+      if (owner != connectionRevision) throw const StaleConnection();
+      if (timedOut) throw TimeoutException('Device read deadline');
+      rethrow;
+    } finally {
+      timer.cancel();
+      // Future.timeout alone leaves IO and body subscriptions alive. The
+      // installed http IOClient supports AbortableRequest before/after headers.
+      stop();
+      try {
+        await reader?.cancel().timeout(const Duration(milliseconds: 500));
+        await rejectedBody?.cancel().timeout(const Duration(milliseconds: 500));
+      } on Object {
+        // An unresponsive old read cannot hold ownership retirement forever.
+      }
+      _readAborts.remove(abort);
+    }
+  }
+
+  void _abortReads() {
+    for (final abort in _readAborts.toList(growable: false)) {
+      if (!abort.isCompleted) abort.complete();
+    }
   }
 
   Future<Map<String, dynamic>> _get(String path) async {
     _requireNetwork();
     final revision = connectionRevision, headers = _headers;
     final response = await _withDiscovery(
-      (base) => _readResponse(
-        base,
-        path,
-        headers,
-      ).timeout(const Duration(seconds: 6)),
+      (base) => _readResponse(base, path, headers),
     );
     if (revision != connectionRevision) throw const StaleConnection();
     if (response.statusCode == 401) throw const AuthenticationRequired();
@@ -471,6 +567,7 @@ class PakarApi {
     final mutation = post || mayMutate;
     final elapsed = Stopwatch()..start();
     try {
+      if (mutation) _retireStatusRead();
       final response = await _client.send(request).timeout(timeout);
       if (revision != connectionRevision) {
         await response.stream.listen((_) {}).cancel();
@@ -533,6 +630,8 @@ class PakarApi {
       throw const FormatException(
         'Maintenance read failed; no operation was replayed',
       );
+    } finally {
+      if (mutation) _retireStatusRead();
     }
   }
 
@@ -584,10 +683,13 @@ class PakarApi {
         ..headers.addAll(_writeHeaders)
         ..bodyFields = values
         ..followRedirects = false;
+      _retireStatusRead();
       response = await http.Response.fromStream(await _client.send(request))
           .timeout(const Duration(seconds: 12));
     } on Exception {
       throw const OperationUncertain();
+    } finally {
+      _retireStatusRead();
     }
     if (revision != connectionRevision) throw const StaleConnection();
     if (response.statusCode ~/ 100 != 2) {
@@ -617,10 +719,13 @@ class PakarApi {
         ..headers.addAll(_writeHeaders)
         ..bodyFields = values
         ..followRedirects = false;
+      _retireStatusRead();
       response = await http.Response.fromStream(await _client.send(request))
           .timeout(const Duration(seconds: 12));
     } on Exception {
       throw const OperationUncertain();
+    } finally {
+      _retireStatusRead();
     }
     if (revision != connectionRevision) throw const StaleConnection();
     if (response.statusCode ~/ 100 != 2) {
@@ -630,8 +735,37 @@ class PakarApi {
     }
   }
 
-  Future<DeviceStatus> status() async {
+  Future<DeviceStatus>? _statusTask;
+  int? _statusTaskRevision;
+  int _statusReadSequence = 0;
+
+  void _retireStatusRead() {
+    ++_statusReadSequence;
+    _statusTask = null;
+    _statusTaskRevision = null;
+  }
+
+  /// Adapt PeerSession.refresh's single-flight ownership. Concurrent consumers
+  /// share only this read; commands and post-command readback are never queued
+  /// or replayed. A replacement connection starts a separate owned read.
+  Future<DeviceStatus> status() {
+    final owner = connectionRevision;
+    final active = _statusTask;
+    if (active != null && _statusTaskRevision == owner) return active;
+    late final Future<DeviceStatus> task;
+    task = _readStatus(_statusReadSequence).whenComplete(() {
+      if (identical(_statusTask, task)) {
+        _statusTask = null;
+        _statusTaskRevision = null;
+      }
+    });
+    _statusTaskRevision = owner;
+    return _statusTask = task;
+  }
+
+  Future<DeviceStatus> _readStatus(int sequence) async {
     final result = DeviceStatus(await _get('/api/status'));
+    if (sequence != _statusReadSequence) throw const SupersededRead();
     if (!_matchesLocalIdentity(result.json)) {
       throw const FormatException(
         'Device identity does not match the requested hostname',
@@ -785,7 +919,13 @@ class PakarApi {
     // A same-origin socket may establish identity from its first full status.
     // Do not make working real-time control depend on a slow HTTP preflight.
     if (revision != connectionRevision) throw const StaleConnection();
-    await _channel?.sink.close();
+    final previous = _channel;
+    _channel = null;
+    _socketReady = false;
+    _liveAge = _socketAge = null;
+    // A vanished peer must not hold replacement behind an unbounded close
+    // handshake. Retire ownership before awaiting it, like the donor session.
+    await _retireSocket(previous);
     if (revision != connectionRevision) throw const StaleConnection();
     final uri = webSocketUri;
     final active = IOWebSocketChannel.connect(
@@ -799,18 +939,20 @@ class PakarApi {
       customClient: _ioClient,
     );
     _channel = active;
-    await active.ready;
-    if (revision != connectionRevision) {
-      await active.sink.close();
-      return;
-    }
-    _socketReady = true;
-    _liveAge = null;
-    _socketAge = Stopwatch()..start();
-    active.sink.add('{"type":"status"}');
     try {
+      // Failed HTTP upgrades must pass through the same cleanup as a socket
+      // that was already live; otherwise each reconnect retains a dead owner.
+      await active.ready;
+      if (revision != connectionRevision || !identical(_channel, active)) {
+        return;
+      }
+      _socketReady = true;
+      _socketAge = Stopwatch()..start();
+      active.sink.add('{"type":"status"}');
       await for (final message in active.stream) {
-        if (revision != connectionRevision) return;
+        if (revision != connectionRevision || !identical(_channel, active)) {
+          return;
+        }
         if (message is! String) continue;
         final value = jsonDecode(message);
         if (value is Map<String, dynamic> &&
@@ -856,11 +998,21 @@ class PakarApi {
         _liveAge = _socketAge = null;
         _channel = null;
       }
-      unawaited(active.sink.close().then<void>((_) {}, onError: (Object _) {}));
+      unawaited(_retireSocket(active));
+    }
+  }
+
+  Future<void> _retireSocket(WebSocketChannel? socket) async {
+    if (socket == null) return;
+    try {
+      await socket.sink.close().timeout(const Duration(milliseconds: 500));
+    } on Object {
+      // Retirement is cleanup, never a reason to replay a request or clear UI.
     }
   }
 
   Future<void> close() async {
+    _abortReads();
     _socketReady = false;
     _latestStatus = null;
     _statusAge = null;
@@ -870,6 +1022,8 @@ class PakarApi {
     }
     _commandReplies.clear();
     ++_connectionRevision;
+    _statusTask = null;
+    _statusTaskRevision = null;
     final active = _channel;
     _channel = null;
     _verifiedEndpoint = null;
@@ -886,6 +1040,7 @@ class PakarApi {
   }
 
   void resetTransport() {
+    _abortReads();
     _socketReady = false;
     _latestStatus = null;
     _statusAge = null;
@@ -895,13 +1050,15 @@ class PakarApi {
     }
     _commandReplies.clear();
     ++_connectionRevision;
+    _statusTask = null;
+    _statusTaskRevision = null;
     _verifiedEndpoint = null;
     _verifiedBoard = _verifiedBoot = null;
     onTransportRetired?.call();
     final active = _channel;
     _channel = null;
     if (active != null) {
-      unawaited(active.sink.close().then<void>((_) {}, onError: (Object _) {}));
+      unawaited(_retireSocket(active));
     }
   }
 
@@ -973,7 +1130,8 @@ class PakarApi {
           candidate,
           '/api/status',
           headers,
-        ).timeout(const Duration(seconds: 2));
+          timeout: const Duration(seconds: 2),
+        );
         if (probe.statusCode ~/ 100 != 2) continue;
         if (revision != connectionRevision) throw const StaleConnection();
         final json = jsonDecode(probe.body);
@@ -1063,4 +1221,11 @@ class OperationUncertain implements Exception {
   @override
   String toString() =>
       'Command outcome unknown; it was not retried. Refresh device state before deciding whether to send again.';
+}
+
+class SupersededRead implements Exception {
+  const SupersededRead();
+  @override
+  String toString() =>
+      'Read superseded by a command; waiting for fresh device state.';
 }

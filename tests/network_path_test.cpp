@@ -34,8 +34,11 @@ int main(){
   assert(WiFi.STA.defaults==1);unchanged();
   WiFi.address=IPAddress(192,168,10,21);assert(service());unchanged();
   WiFi.gateway=IPAddress(192,168,10,2);assert(service());unchanged();
-  WiFi.dns[0]=IPAddress(192,168,10,3);assert(service());unchanged();
-  assert(WiFi.STA.defaults==4);
+  const auto wifiRoutes=state().routeChanges,wifiDns=state().resolverChanges;
+  WiFi.dns[0]=IPAddress(192,168,10,3);assert(!service());unchanged();
+  assert(state().resolver==WiFi.dns[0] && state().routeChanges==wifiRoutes);
+  assert(state().resolverChanges==wifiDns+1);
+  assert(WiFi.STA.defaults==3);
   WiFi.STA.defaultResult=false;WiFi.address=IPAddress(192,168,10,22);
   assert(service() && !ready());assert(!service() && !ready());
   WiFi.STA.defaultResult=true;assert(service() && ready());unchanged();
@@ -50,8 +53,11 @@ int main(){
   assert(service() && strcmp(interfaceName(),"ethernet")==0 && ETH.defaults==1);unchanged();
   ETH.address=IPAddress(10,20,30,41);assert(service());unchanged();
   ETH.gateway=IPAddress(10,20,30,3);assert(service());unchanged();
-  ETH.dns[0]=IPAddress(10,20,30,4);assert(service());unchanged();
-  assert(ETH.defaults==4);
+  const auto ethernetRoutes=state().routeChanges,ethernetDns=state().resolverChanges;
+  ETH.dns[0]=IPAddress(10,20,30,4);assert(!service());unchanged();
+  assert(state().resolver==ETH.dns[0] && state().routeChanges==ethernetRoutes);
+  assert(state().resolverChanges==ethernetDns+1);
+  assert(ETH.defaults==3);
   interfaces=PakarS3::activeDiscoveryInterfaces();
   assert(interfaces.count==3 && strcmp(interfaces.entries[0].kind,"ethernet")==0);
   assert(interfaces.entries[0].mac[5]==3);

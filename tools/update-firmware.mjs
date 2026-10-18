@@ -124,6 +124,7 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
     policy:'auto prefers local Async HTTP; remote requires pinned manifest; no write fallback/replay',device_contacted:false};
   let peer=null;
   const read=async(path,{unfenced=false,resolveHostname=false,...options}={})=>{
+    log({stage:'request',method:options.form?'POST':options.method||'GET',path:path.split('?')[0]});
     const response=await request(url,path,{...options,expectedAddress:resolveHostname?undefined:peer?.address,
       headers:{...(peer&&!unfenced?{'X-Pakar-Board':peer.board,'X-Pakar-Boot':peer.boot}:{}),...options.headers}});
     if(response.status<200||response.status>=300)throw Error('Device rejected '+path.split('?')[0]+' (HTTP '+response.status+'); no retry');

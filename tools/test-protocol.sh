@@ -46,7 +46,14 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/s3_dns_stubs" \
 "$root/build/s3-dns-lock-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/s3_dns_stubs" "$root/tests/s3_dns_recovery_test.cpp" -o "$root/build/s3-dns-recovery-test"
 "$root/build/s3-dns-recovery-test"
-c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/tests/s3_flash_guard_stubs" "$root/tests/s3_flash_guard_test.cpp" "$root/tests/s3_flash_guard_runtime.cpp" "$root/firmware/esp32s3/src/LedFlashGuard.cpp" -Wl,--wrap=esp_partition_write,--wrap=esp_partition_write_raw,--wrap=esp_partition_erase_range -o "$root/build/s3-flash-guard-test"
+# Match test-s3-flash-guard.ps1 and the production six-function flash boundary.
+# These must be linker wraps, not __real_* test aliases: the fixture verifies
+# that SDK-like calls actually enter the fail-closed production wrappers.
+c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/tests/s3_flash_guard_stubs" \
+  "$root/tests/s3_flash_guard_test.cpp" "$root/tests/s3_flash_guard_runtime.cpp" \
+  "$root/firmware/esp32s3/src/LedFlashGuard.cpp" \
+  -Wl,--wrap=esp_partition_write,--wrap=esp_partition_write_raw,--wrap=esp_partition_erase_range,--wrap=esp_partition_read,--wrap=esp_partition_read_raw,--wrap=esp_image_verify \
+  -o "$root/build/s3-flash-guard-test"
 "$root/build/s3-flash-guard-test"
 # The Linux equivalents of the focused PowerShell runners use the SAME gates,
 # profiles and canonical output directory. Use Arduino CLI's existing Linux

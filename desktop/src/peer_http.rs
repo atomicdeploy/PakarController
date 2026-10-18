@@ -4,13 +4,142 @@
 use crate::{DeviceStatus, Event, HttpCommand};
 use reqwest::blocking::Client;
 use std::{
+    collections::{HashSet, VecDeque},
+    net::{IpAddr, SocketAddr},
     sync::{
-        Arc,
+        Arc, Mutex, OnceLock,
         atomic::{AtomicU64, Ordering},
         mpsc::{SendError, Sender},
     },
     time::{Duration, Instant},
 };
+
+const ADDRESS_CACHE_LIMIT: usize = 32;
+
+/// Routing hints only, never board/boot ownership or permission to replay.
+/// Adapted from PCController lanresolver's successful-TCP-address cache.
+#[derive(Default)]
+struct AddressCache {
+    entries: VecDeque<(String, IpAddr)>,
+    relookup: HashSet<String>,
+}
+impl AddressCache {
+    fn remember(&mut self, domain: String, address: IpAddr) {
+        self.entries.retain(|(known, _)| *known != domain);
+        self.relookup.remove(&domain);
+        if self.entries.len() >= ADDRESS_CACHE_LIMIT
+            && let Some((evicted, _)) = self.entries.pop_front()
+        {
+            self.relookup.remove(&evicted);
+        }
+        self.entries.push_back((domain, address));
+    }
+    fn invalidate(&mut self, domain: &str) {
+        self.entries.retain(|(known, _)| known != domain);
+        self.relookup.remove(domain);
+    }
+    fn request_relookup(&mut self, domain: &str) {
+        if self.entries.iter().any(|(known, _)| known == domain) {
+            self.relookup.insert(domain.to_owned());
+        }
+    }
+}
+fn address_cache() -> &'static Mutex<AddressCache> {
+    static CACHE: OnceLock<Mutex<AddressCache>> = OnceLock::new();
+    CACHE.get_or_init(|| Mutex::new(AddressCache::default()))
+}
+
+fn local_origin(origin: &str) -> Option<(String, String, u16)> {
+    let url = reqwest::Url::parse(origin).ok()?;
+    if !matches!(url.scheme(), "http" | "https")
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.query().is_some()
+        || url.fragment().is_some()
+        || !matches!(url.path(), "" | "/")
+    {
+        return None;
+    }
+    let domain = url.host_str()?.to_ascii_lowercase();
+    let expected = domain.strip_suffix(".local")?;
+    if crate::identity::normalize_name(expected).ok().as_deref() != Some(expected) {
+        return None;
+    }
+    Some((
+        domain.clone(),
+        expected.to_owned(),
+        url.port_or_known_default()?,
+    ))
+}
+
+fn verified_address(
+    origin: &str,
+    status: &DeviceStatus,
+    remote: Option<SocketAddr>,
+) -> Option<(String, IpAddr)> {
+    let (domain, expected, port) = local_origin(origin)?;
+    let remote = remote?;
+    if remote.port() != port
+        || remote.ip().is_unspecified()
+        || remote.ip().is_multicast()
+        || Pin::from_status(status).is_none()
+        || !crate::bridge::matches_hostname(status, &expected)
+    {
+        return None;
+    }
+    Some((domain, remote.ip()))
+}
+
+/// Call only with remote_addr() from the actual successfully decoded response.
+/// Status IP/SSDP metadata is deliberately never consulted. No TTL expiration:
+/// HTTP/auth/body-timeout failures do not evict a previously verified route.
+pub fn remember_address(origin: &str, status: &DeviceStatus, remote: Option<SocketAddr>) {
+    if let Some((domain, address)) = verified_address(origin, status, remote)
+        && let Ok(mut cache) = address_cache().lock()
+    {
+        cache.remember(domain, address);
+    }
+}
+
+/// A confirmed resolution failure can explicitly remove the obsolete hint.
+pub fn invalidate_address(origin: &str) {
+    if let Some((domain, _, _)) = local_origin(origin)
+        && let Ok(mut cache) = address_cache().lock()
+    {
+        cache.invalidate(&domain);
+    }
+}
+
+/// A failed CONNECT may request a fresh lookup on the next client without
+/// discarding the last verified address. No command or body read is replayed.
+/// Marks exist only for cached keys, so they share the same 32-entry bound.
+pub fn request_relookup(origin: &str) {
+    if let Some((domain, _, _)) = local_origin(origin)
+        && let Ok(mut cache) = address_cache().lock()
+    {
+        cache.request_relookup(&domain);
+    }
+}
+
+/// Preserve the URL hostname/Host header and HTTPS SNI/certificate checks while
+/// bypassing repeated slow OS mDNS lookup for previously verified local peers.
+/// Build a fresh client after invalidation; never automatically resend a write.
+pub fn device_client_builder() -> reqwest::blocking::ClientBuilder {
+    let mut builder = Client::builder()
+        .no_proxy()
+        .redirect(reqwest::redirect::Policy::none())
+        .timeout(Duration::from_secs(4))
+        .connect_timeout(Duration::from_secs(4))
+        .pool_max_idle_per_host(0);
+    if let Ok(cache) = address_cache().lock() {
+        for (domain, address) in &cache.entries {
+            if !cache.relookup.contains(domain) {
+                builder = builder.resolve(domain, SocketAddr::new(*address, 0));
+            }
+        }
+    }
+    builder
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Pin {
@@ -48,10 +177,7 @@ impl Pin {
             "x-pakar-boot",
             self.boot.parse().map_err(|_| "Invalid boot identity")?,
         );
-        Client::builder()
-            .no_proxy()
-            .redirect(reqwest::redirect::Policy::none())
-            .timeout(Duration::from_secs(4))
+        device_client_builder()
             .default_headers(headers)
             .build()
             .map_err(crate::diagnostics::describe_error)
@@ -105,18 +231,16 @@ impl Queue {
         }
     }
     pub fn send(&self, command: HttpCommand) -> Result<(), SendError<HttpCommand>> {
-        self.inner.send(HttpCommand::Scoped(
-            self.capture(),
-            Box::new(command),
-        ))
+        self.inner
+            .send(HttpCommand::Scoped(self.capture(), Box::new(command)))
     }
-    pub fn capture(&self)->Scope {
-            Scope {
-                pin: self.pin.clone(),
-                generation: self.clock.load(Ordering::Acquire),
-                clock: self.clock.clone(),
-                queued_at: Instant::now(),
-            }
+    pub fn capture(&self) -> Scope {
+        Scope {
+            pin: self.pin.clone(),
+            generation: self.clock.load(Ordering::Acquire),
+            clock: self.clock.clone(),
+            queued_at: Instant::now(),
+        }
     }
     pub fn clear(&mut self) {
         self.pin = None;
@@ -141,11 +265,15 @@ impl Queue {
 pub fn retired_receipt(event: &Event) -> Option<String> {
     let kind = match event {
         Event::Accepted(_) => "Command acceptance",
-        Event::CellBatchConfirmed(_) | Event::SerialBatchConfirmed(..) => "Atomic cell batch readback",
+        Event::CellBatchConfirmed(_) | Event::SerialBatchConfirmed(..) => {
+            "Atomic cell batch readback"
+        }
         Event::OperationFailed(_) => "Command failure",
         Event::SettingsFinished(..) => "Settings result",
         Event::MaintenanceFinished(..) => "Maintenance result",
-        Event::PixelModeFinished(..) | Event::PixelSent(..) | Event::PixelReadbackFinished(..) => "Pixel diagnostic result",
+        Event::PixelModeFinished(..) | Event::PixelSent(..) | Event::PixelReadbackFinished(..) => {
+            "Pixel diagnostic result"
+        }
         Event::CredentialsUpdated(_) => "Credential result",
         Event::NameUpdated(..) => "Identity result",
         _ => return None,
@@ -159,7 +287,9 @@ pub fn retired_receipt(event: &Event) -> Option<String> {
 /// Never carry its response body or credentials into the new peer.
 pub fn retired_envelope(event: &Event) -> Option<String> {
     match event {
-        Event::ForConnection(stamp, inner) if !stamp.current() => retired_envelope(inner).or_else(||retired_receipt(inner)),
+        Event::ForConnection(stamp, inner) if !stamp.current() => {
+            retired_envelope(inner).or_else(|| retired_receipt(inner))
+        }
         Event::ForConnection(_, inner) => retired_envelope(inner),
         Event::ForEndpoint(_, inner) => retired_envelope(inner),
         Event::ForScope(scope, inner) if !scope.current() => retired_receipt(inner),
@@ -176,6 +306,209 @@ mod tests {
             boot_id: boot.to_string().repeat(32),
             http_peer_fencing: true,
             ..Default::default()
+        }
+    }
+    #[test]
+    fn local_address_cache_accepts_only_verified_tcp_peer_not_advertised_ip() {
+        let mut peer = status('a');
+        peer.hostname = "ledboard".into();
+        peer.ip = "203.0.113.99".into();
+        let actual: SocketAddr = "192.0.2.10:80".parse().unwrap();
+        let accepted = verified_address("http://LEDBOARD.local", &peer, Some(actual)).unwrap();
+        assert_eq!(accepted, ("ledboard.local".into(), actual.ip()));
+        assert!(verified_address("http://ledboard.local", &peer, None).is_none());
+        peer.hostname = "foreign".into();
+        assert!(verified_address("http://ledboard.local", &peer, Some(actual)).is_none());
+        peer.hostname = "ledboard".into();
+        peer.http_peer_fencing = false;
+        assert!(verified_address("http://ledboard.local", &peer, Some(actual)).is_none());
+        peer.http_peer_fencing = true;
+        for remote in ["192.0.2.10:81", "0.0.0.0:80", "239.1.1.1:80"] {
+            assert!(
+                verified_address(
+                    "http://ledboard.local",
+                    &peer,
+                    Some(remote.parse().unwrap())
+                )
+                .is_none()
+            );
+        }
+        for origin in [
+            "http://ledboard.example",
+            "http://127.0.0.1",
+            "http://user@ledboard.local",
+            "http://ledboard.local/api",
+            "http://ledboard.local?secret=x",
+            "http://ledboard.local#part",
+        ] {
+            assert!(verified_address(origin, &peer, Some(actual)).is_none());
+        }
+    }
+    #[test]
+    fn local_address_cache_bounds_replaces_and_invalidates_without_ttl_or_authority() {
+        let mut cache = AddressCache::default();
+        let first: IpAddr = "192.0.2.10".parse().unwrap();
+        let replacement: IpAddr = "192.0.2.11".parse().unwrap();
+        for n in 0..ADDRESS_CACHE_LIMIT + 4 {
+            cache.remember(format!("board-{n}.local"), first);
+        }
+        assert_eq!(cache.entries.len(), ADDRESS_CACHE_LIMIT);
+        assert!(
+            !cache
+                .entries
+                .iter()
+                .any(|(name, _)| name == "board-0.local")
+        );
+        cache.remember("board-4.local".into(), replacement);
+        assert_eq!(cache.entries.len(), ADDRESS_CACHE_LIMIT);
+        assert_eq!(
+            cache.entries.back(),
+            Some(&("board-4.local".into(), replacement))
+        );
+        assert_eq!(
+            cache
+                .entries
+                .iter()
+                .filter(|(name, _)| name == "board-4.local")
+                .count(),
+            1
+        );
+        cache.invalidate("board-4.local");
+        assert!(
+            !cache
+                .entries
+                .iter()
+                .any(|(name, _)| name == "board-4.local")
+        );
+        let mut peer = status('a');
+        peer.hostname = "new-address".into();
+        let (_, address) = verified_address(
+            "http://new-address.local:8787",
+            &peer,
+            Some(SocketAddr::new(replacement, 8787)),
+        )
+        .unwrap();
+        cache.remember("new-address.local".into(), address);
+        assert_eq!(cache.entries.back().unwrap().1, replacement);
+    }
+    #[test]
+    fn local_relookup_marks_retain_verified_hints_until_success_or_explicit_invalidation() {
+        let mut cache = AddressCache::default();
+        let old: IpAddr = "192.0.2.10".parse().unwrap();
+        let fresh: IpAddr = "192.0.2.11".parse().unwrap();
+        cache.remember("ledboard.local".into(), old);
+        cache.request_relookup("ledboard.local");
+        assert_eq!(cache.entries.back(), Some(&("ledboard.local".into(), old)));
+        assert!(cache.relookup.contains("ledboard.local"));
+        let mut status = status('a');
+        status.hostname = "ledboard".into();
+        let (domain, address) = verified_address(
+            "http://ledboard.local",
+            &status,
+            Some(SocketAddr::new(fresh, 80)),
+        )
+        .unwrap();
+        cache.remember(domain, address);
+        assert_eq!(
+            cache.entries.back(),
+            Some(&("ledboard.local".into(), fresh))
+        );
+        assert!(!cache.relookup.contains("ledboard.local"));
+        cache.request_relookup("ledboard.local");
+        cache.invalidate("ledboard.local");
+        assert!(cache.entries.is_empty() && cache.relookup.is_empty());
+        for n in 0..ADDRESS_CACHE_LIMIT * 2 {
+            let domain = format!("board-{n}.local");
+            cache.remember(domain.clone(), old);
+            cache.request_relookup(&domain);
+            cache.request_relookup(&format!("unknown-{n}.local"));
+        }
+        assert_eq!(cache.entries.len(), ADDRESS_CACHE_LIMIT);
+        assert_eq!(cache.relookup.len(), ADDRESS_CACHE_LIMIT);
+        assert!(
+            cache
+                .relookup
+                .iter()
+                .all(|name| cache.entries.iter().any(|(key, _)| key == name))
+        );
+        assert!(!cache.relookup.contains("board-0.local"));
+    }
+    #[test]
+    fn local_verified_address_override_preserves_http_hostname_and_explicit_port() {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        listener.set_nonblocking(true).unwrap();
+        let address = listener.local_addr().unwrap();
+        let origin = format!("http://cache-route-fixture.local:{}", address.port());
+        let mut peer = status('a');
+        peer.hostname = "cache-route-fixture".into();
+        let body = serde_json::to_vec(&peer).unwrap();
+        let server = std::thread::spawn(move || {
+            let mut requests = Vec::new();
+            let started = Instant::now();
+            while requests.len() < 2 {
+                let (mut socket, _) = match listener.accept() {
+                    Ok(connection) => connection,
+                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                        assert!(
+                            started.elapsed() < Duration::from_secs(6),
+                            "Expected two bounded loopback requests"
+                        );
+                        std::thread::sleep(Duration::from_millis(10));
+                        continue;
+                    }
+                    Err(error) => panic!("{error}"),
+                };
+                socket
+                    .set_read_timeout(Some(Duration::from_secs(2)))
+                    .unwrap();
+                let mut request = Vec::new();
+                while !request.windows(4).any(|v| v == b"\r\n\r\n") {
+                    let mut chunk = [0; 1024];
+                    let count = socket.read(&mut chunk).unwrap();
+                    assert!(count > 0 && request.len() + count <= 8192);
+                    request.extend_from_slice(&chunk[..count]);
+                }
+                requests.push(String::from_utf8(request).unwrap());
+                write!(
+                    socket,
+                    "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                    body.len()
+                )
+                .unwrap();
+                socket.write_all(&body).unwrap();
+            }
+            requests
+        });
+        // Bootstrap an explicit simulated name resolution. Only the actual TCP
+        // response below, not this fixture override or status.ip, seeds cache.
+        let response = Client::builder()
+            .no_proxy()
+            .timeout(Duration::from_secs(2))
+            .resolve("cache-route-fixture.local", address)
+            .build()
+            .unwrap()
+            .get(format!("{origin}/api/status"))
+            .send()
+            .unwrap();
+        let remote = response.remote_addr();
+        let observed: DeviceStatus = response.json().unwrap();
+        remember_address(&origin, &observed, remote);
+        let again: DeviceStatus = device_client_builder()
+            .build()
+            .unwrap()
+            .get(format!("{origin}/api/status"))
+            .send()
+            .unwrap()
+            .json()
+            .unwrap();
+        invalidate_address(&origin);
+        assert_eq!(again.hostname, "cache-route-fixture");
+        for request in server.join().unwrap() {
+            assert!(request.to_ascii_lowercase().contains(&format!(
+                "host: cache-route-fixture.local:{}\r\n",
+                address.port()
+            )));
         }
     }
     #[test]

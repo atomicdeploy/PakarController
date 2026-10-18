@@ -99,12 +99,23 @@ pub fn private_text(request: &ToastRequest) -> (&'static str, &'static str) {
 /// None before the first authoritative freshness observation; initial offline
 /// startup is not a disconnect event. A stale peer is not reported as online.
 #[derive(Default)]
-pub struct ConnectionNotice { previous: Option<Option<bool>> }
+pub struct ConnectionNotice {
+    previous: Option<Option<bool>>,
+    candidate: Option<(Option<bool>, std::time::Instant)>,
+}
 impl ConnectionNotice {
-    pub fn reset(&mut self) { self.previous = None; }
-    pub fn observe(&mut self, state: Option<bool>) -> Option<(&'static str, Severity)> {
-        let previous = self.previous.replace(state)?;
-        if previous == state { return None; }
+    pub fn reset(&mut self) { *self = Self::default(); }
+    pub fn observe(&mut self, state: Option<bool>, now: std::time::Instant) -> Option<(&'static str, Severity)> {
+        let Some(previous) = self.previous else { self.previous = Some(state); return None; };
+        if previous == state { self.candidate = None; return None; }
+        // Presentation/command freshness changes immediately. Only the alert
+        // waits for a stable observation: a brief AVR lease/poll gap is not a
+        // new user incident followed by another recovery toast every frame.
+        let (candidate, since) = self.candidate.get_or_insert((state, now));
+        if *candidate != state { *candidate = state; *since = now; return None; }
+        if now.saturating_duration_since(*since) < std::time::Duration::from_secs(2) { return None; }
+        self.previous = Some(state);
+        self.candidate = None;
         match state {
             None => Some(("Fresh status from the selected device was lost.", Severity::Warning)),
             Some(false) => Some(("The ESP is reachable, but it reports the AVR offline.", Severity::Warning)),
@@ -187,14 +198,31 @@ mod tests {
     #[test]
     fn connection_alerts_follow_fresh_authority_not_repeated_poll_failures() {
         let mut c = ConnectionNotice::default();
-        assert!(c.observe(None).is_none());
-        assert!(c.observe(None).is_none());
-        assert_eq!(c.observe(Some(true)).unwrap().1, Severity::Success);
-        assert!(c.observe(Some(true)).is_none());
-        assert_eq!(c.observe(Some(false)).unwrap().1, Severity::Warning);
-        assert_eq!(c.observe(None).unwrap().1, Severity::Warning);
-        assert!(c.observe(None).is_none());
+        let now = std::time::Instant::now();
+        let later = |seconds| now + std::time::Duration::from_secs(seconds);
+        assert!(c.observe(None, now).is_none());
+        assert!(c.observe(None, later(1)).is_none());
+        assert!(c.observe(Some(true), later(2)).is_none());
+        assert_eq!(c.observe(Some(true), later(4)).unwrap().1, Severity::Success);
+        assert!(c.observe(Some(true), later(5)).is_none());
+        assert!(c.observe(Some(false), later(6)).is_none());
+        assert_eq!(c.observe(Some(false), later(8)).unwrap().1, Severity::Warning);
+        assert!(c.observe(None, later(9)).is_none());
+        assert_eq!(c.observe(None, later(11)).unwrap().1, Severity::Warning);
+        assert!(c.observe(None, later(12)).is_none());
         c.reset();
-        assert!(c.observe(Some(true)).is_none());
+        assert!(c.observe(Some(true), later(13)).is_none());
+    }
+    #[test]
+    fn brief_status_and_avr_flaps_do_not_generate_disconnect_recovery_pairs() {
+        let mut c = ConnectionNotice::default();
+        let now = std::time::Instant::now();
+        assert!(c.observe(Some(true), now).is_none());
+        for second in 1..100 {
+            let state = if second % 2 == 0 { Some(true) } else if second % 3 == 0 { None } else { Some(false) };
+            assert!(c.observe(state, now + std::time::Duration::from_secs(second)).is_none());
+        }
+        assert!(c.observe(None, now + std::time::Duration::from_secs(100)).is_none());
+        assert_eq!(c.observe(None, now + std::time::Duration::from_secs(102)).unwrap().1, Severity::Warning);
     }
 }

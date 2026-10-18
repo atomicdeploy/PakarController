@@ -53,12 +53,15 @@ for(const scenario of ['success','local-only','wrong-interface','wifi-egress','b
 }
 
 // Real loopback HTTP demonstrates socket-peer capture and no redirect replay.
-const paths=[];const server=createServer((req,res)=>{paths.push(req.url);res.writeHead(req.url==='/redirect'?302:200,
+const paths=[];const server=createServer((req,res)=>{paths.push(req.url);if(req.url.startsWith('/drop?')){req.socket.destroy();return;}res.writeHead(req.url==='/redirect'?302:200,
   req.url==='/redirect'?{Location:'/unexpected'}:{'Content-Type':'application/json'});res.end('{}')});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 try{
   const origin=new URL('http://localhost:'+server.address().port);
   const result=await deviceRequest(origin,'/status');assert.equal(result.remote,'127.0.0.1');assert.equal(result.body.toString(),'{}');
   assert.equal((await deviceRequest(origin,'/redirect')).status,302);assert(!paths.includes('/unexpected'));
+  await assert.rejects(deviceRequest(origin,'/drop?secret=private'),error=>
+    error.message==='Device request GET /drop failed (ECONNRESET); no retry' &&
+    error.cause?.code==='ECONNRESET' && !error.message.includes('private'));
 }finally{await new Promise(resolve=>server.close(resolve))}
 console.log('Ethernet live-probe safety/identity/interface/HEAD-Range/staging tests passed using fixtures and loopback; no board or WAN acceptance.');

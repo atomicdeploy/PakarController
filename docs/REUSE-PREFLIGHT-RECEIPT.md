@@ -1,5 +1,85 @@
 # Donor-first preflight receipt
 
+## Connection deadlines and retained contextual panels
+
+Read the connection-resilience, error-management, network-cloud, native-lifecycle
+and capture routes plus the actual donor Session, unified mobile transport,
+workspace profiles, peripheral availability and LAN resolver/tests. Existing
+hash-bound mappings were extended, not replaced with a bulk completion claim.
+
+The actual ASUS baseline ran605.38s:112 samples,27 Windows notifications,
+27 USB and5 Wi-Fi panel-list changes. It exposed immutable USB snapshot
+timeouts, status/mapping HTTP timeouts and transient AVR-online notices. The
+first updated600.60s window retained the panels (one initial transition per
+method) but still had read failures; it was not accepted as a timeout fix.
+Read-only ASUS HTTP timings then measured2.04..2.19s per hostname lookup.
+
+Adapted read single-flight and pre/post-write retirement in Flutter; actual IO
+requests now abort on deadline/owner change. A failing real-socket oversized
+response test exposed IOClient's lazy onListen cancellation hook; subscribing
+before abort fixed it without weakening the test. Prior ACKs retain panel slots,
+not write authority. Native full USB reads use four token-bound chunks and one
+unchanged absolute8s capture/freshness deadline; command ACK deadlines/replay
+rules remain unchanged. Progress is typed IPC, not new toast identities.
+Verified TCP routing retains hostname/Host/SNI and the old hint during bounded
+relookup; HTTP/auth/body timeouts do not invalidate DNS. Same-board recovery
+retains selection/drafts, while current identity and capability ACKs gate writes.
+
+Actual pinned ESP32 connection APIs were inspected independently from TLS:
+MQTT TCP connect is bounded, retry is scheduled from completion, and measured
+attempt durations are additive telemetry. DNS remains synchronous. Existing
+cloud tests model slow20s attempts, rollover and completion-relative delay on
+both platforms; this is not proof of a fully nonblocking cloud implementation.
+
+ASUS owner replacement was graceful, hash/PID/session/draft checked, settings
+backed up and the previous executable retained. A PS5 -File Boolean-switch
+binding failed before shutdown; a read-only reviewed invocation and corrected
+binding preceded replacement. No forced kill, settings rewrite or board command
+replay was used. S3 OTA accepted the new image but its final range readback was
+interrupted. No second upload followed: read-only full export independently
+verified1,924,224bytes SHA256
+71b66e9bd43fb3fa4ff92933696428f6169562a4b508bd10c99b33e6e15a41ff
+on the same board's new boot fd454041772f20e7aeb44e4201816186.
+The AVR image/fuses/EEPROM were not changed in this pass.
+
+Focused native USB/presentation/notification/peer-HTTP tests,32 Flutter tests
+across API/panels/deadlines/realtime/workspace lifecycle, analyzer, APK preview,
+cloud fixtures and all six linked flash wrappers passed. The Linux CI failure
+was a missing three --wrap flags in its host test, not missing production guards;
+its command now matches the existing PowerShell runner. No protection or test
+was disabled. Native/firmware0.2.7 and mobile0.2.7+7 remain consistent.
+
+Final native candidate b8109cf50c209ac95c890a7c7c59ce737a6c80ff1b9cd4127445226d80978ca1
+is separately delivered for another600s live observation. Final window results
+must be reported separately; no phone was authorized on ADB, so APK build and
+widget/loopback evidence are not Android installation or human acceptance.
+
+That window still exposed USB capture expiry and HTTP/WS stalls; retaining
+panels alone is not timeout acceptance. Actual broker logs showed repeated clean
+DISCONNECTs, not duplicate-client takeover evidence. NetworkPath treated DNS-only
+refreshes as route changes and closed established sessions; it now updates DNS
+without tearing down TCP, while real interface/address/gateway changes still
+retire sessions. Actual Wi-Fi and Ethernet policy fixtures passed. Additive
+route/resolver and cloud close-cause counters distinguish the runtime causes.
+
+Large cloud telemetry wrote all packets in one loop pass; ordinary yield() did
+not drain USB. Cooperative read-only host progress now runs between payload
+writes/fragments and around socket calls, with explicit no-recursion/partial
+packet guards. USB mutations receive Busy while cloud I/O owns the loop; nothing
+is replayed. Buffered AVR replies are drained after cloud work before presence
+expiry, avoiding an unprocessed reply being reported as peer loss. Individual
+DNS/TLS/socket calls remain synchronous. Both-platform cloud fixtures exercise
+progress between real writes, timing, recursive-call refusal and partial-write
+TCP close without replay. A new actual S3 build passed; deployment and another
+live window remain separate evidence.
+
+The WebSocket worker regression initially failed because its server fixture
+mistook the new read-only liveness probe for a mutation, then mistook the probe's
+initial status for a command receipt. The fixture now answers liveness separately
+and waits for verified command completion plus its readback, preserving exact
+wire-envelope and under500ms assertions. All5 realtime tests passed. No command
+verification or production deadline was relaxed to make the test pass.
+
 ## AVR ISP and Urboot programming paths
 
 Consulted firmware-hardware, avr-boot-chain, remote-ota and exhaustive literal

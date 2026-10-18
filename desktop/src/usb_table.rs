@@ -76,11 +76,25 @@ pub struct Reader {
     started: Option<Instant>,
 }
 pub struct Snapshot { pub status: DeviceStatus, pub mappings: Vec<CellMapping>, pub observed_at: Instant }
+#[derive(Clone, serde::Serialize)]
+pub struct CaptureProgress { pub received: usize, pub total: usize, pub age_ms: u64, pub state: &'static str }
 impl Reader {
     pub fn new(nonce:u8)->Self {Self{nonce,started:Some(Instant::now()),..Default::default()}}
     pub fn request(&self) -> Vec<u8> {
         let mut out=vec![self.nonce];out.extend((self.bytes.len() as u16).to_le_bytes());
         out.extend(self.token.unwrap_or(0).to_le_bytes());out
+    }
+    /// After the first immutable token/total is verified, request up to three
+    /// following chunks without another Windows COM read-timeout round trip.
+    /// No speculative token, write or unbounded receive queue is introduced.
+    pub fn following_requests(&self)->Vec<Vec<u8>> {
+        let Some(token)=self.token else{return Vec::new();};
+        (1..4).map(|n|self.bytes.len()+39*n).take_while(|at|*at<self.total)
+            .map(|at|{let mut p=vec![self.nonce];p.extend((at as u16).to_le_bytes());p.extend(token.to_le_bytes());p}).collect()
+    }
+    pub fn progress(&self,state:&'static str)->CaptureProgress {
+        CaptureProgress{received:self.bytes.len(),total:self.total,
+            age_ms:self.started.map_or(0,|at|at.elapsed().as_millis().min(u64::MAX as u128) as u64),state}
     }
     pub fn accept(&mut self,p:&[u8])->Result<Option<Snapshot>,String>{
         if self.started.is_some_and(|at|at.elapsed()>=MAX_SNAPSHOT_AGE){return Err("USB snapshot capture expired".into());}
@@ -347,6 +361,65 @@ mod tests {
         assert!(reader.accept(&chunk(&bytes,39,9,18)).is_err());
         assert!(reader.accept(&chunk(&bytes,0,9,17)).is_err());
         let mut wrong=chunk(&bytes,39,9,17);wrong[5]^=1;assert!(reader.accept(&wrong).is_err());
+    }
+    #[test]
+    fn read_window_is_token_bound_small_and_never_requests_past_capture(){
+        let bytes=serde_json::to_vec(&fixture()).unwrap();let mut reader=Reader::new(9);
+        assert!(reader.following_requests().is_empty());
+        reader.accept(&chunk(&bytes,0,9,17)).unwrap();
+        let following=reader.following_requests();assert_eq!(following.len(),3);
+        for (i,p) in following.iter().enumerate(){
+            assert_eq!(p[0],9);assert_eq!(u16::from_le_bytes([p[1],p[2]]) as usize,78+39*i);
+            assert_eq!(&p[3..],&17_u32.to_le_bytes());
+        }
+        for at in (39..bytes.len()).step_by(39){
+            for p in reader.following_requests(){assert!((u16::from_le_bytes([p[1],p[2]]) as usize)<bytes.len());}
+            reader.accept(&chunk(&bytes,at,9,17)).unwrap();
+        }
+        assert!(reader.following_requests().is_empty());
+    }
+    #[test]
+    fn actual_usb_worker_windows_read_latency_does_not_expire_large_capture(){
+        use std::{io::{Read,Write},sync::mpsc,collections::VecDeque,thread};
+        struct Port{pending:VecDeque<u8>,capture:Vec<u8>,stall_until:Option<Instant>,delayed:bool}
+        impl Write for Port{
+            fn write(&mut self,bytes:&[u8])->std::io::Result<usize>{
+                let(op,seq,p)=crate::decode_envelope(&bytes[..bytes.len()-1]).unwrap();
+                match op{
+                    crate::OP_GET_STATUS=>{let mut s=vec![0;46];s[44]=1;s[45]=1;self.pending.extend(crate::wire_frame(crate::OP_STATUS,seq,&s));},
+                    READ=>{let at=u16::from_le_bytes([p[1],p[2]]) as usize;
+                        // Real main-loop work may pause a READ window for >2s.
+                        // The complete capture still must fit the SAME8s age.
+                        if at>300 && !self.delayed {self.delayed=true;self.stall_until=Some(Instant::now()+Duration::from_millis(2200));}
+                        self.pending.extend(crate::wire_frame(RESPONSE,seq,&chunk(&self.capture,at,p[0],17)));},
+                    _=>panic!("Unexpected mutation in background-read test"),
+                }Ok(bytes.len())
+            }
+            fn flush(&mut self)->std::io::Result<()>{Ok(())}
+        }
+        impl Read for Port{
+            fn read(&mut self,bytes:&mut[u8])->std::io::Result<usize>{
+                thread::sleep(Duration::from_millis(35));
+                if self.stall_until.is_some_and(|until|Instant::now()<until){return Err(std::io::ErrorKind::TimedOut.into());}
+                if self.pending.is_empty(){return Err(std::io::ErrorKind::TimedOut.into());}
+                let count=bytes.len().min(self.pending.len());
+                for b in &mut bytes[..count]{*b=self.pending.pop_front().unwrap();}Ok(count)
+            }
+        }
+        let mut value=fixture();value["padding"]="x".repeat(10000).into();
+        let mut port=Some(Port{pending:VecDeque::new(),capture:serde_json::to_vec(&value).unwrap(),stall_until:None,delayed:false});
+        let(tx,rx)=mpsc::channel();let(events,received)=mpsc::channel();
+        let gate=crate::connection::Gate::default();let epoch=gate.select(Some(crate::connection::Method::Serial));let owner=gate.clone();
+        let worker=thread::spawn(move||crate::serial_worker_with(rx,events,eframe::egui::Context::default(),owner,|_|port.take().ok_or("Unexpected reopen".into())));
+        tx.send(crate::SerialCommand::Port("fixture".into(),epoch)).unwrap();let start=Instant::now();
+        loop{
+            let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(7)).unwrap() else{continue;};
+            match *event{
+                crate::Event::SerialSnapshot(_,s)=>{assert_eq!(s.status.cells.len(),80);assert!(start.elapsed()<MAX_SNAPSHOT_AGE);break;},
+                crate::Event::SerialFailure(_,e)=>panic!("{e}"),_=>{},
+            }
+        }
+        gate.select(None);drop(tx);worker.join().unwrap();
     }
     #[test]
     fn table_write_is_exact_boot_fenced_and_post_ack_values_are_not_assumed(){

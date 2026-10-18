@@ -5,6 +5,99 @@
   "files": [
 {
   "origin": "PCController",
+  "path": "mobile/lib/unified/transport.dart",
+  "sha256": "5263044d7abac3865b6dcc8887fa6c11ad9a1c89b8c4e2374ffcd3bcc72014c5",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Actual PeerSession refresh single-flight and reset-before-await socket ownership adapted to shared status reads, per-socket cleanup and retained previously acknowledged layout inventory. Reads retire before and after writes; a pre/during-write result cannot settle post-ACK confirmation. Fresh individual capabilities still own actuation. The pinned http abortable GET path additionally cancels transport/body reads on deadline/retirement instead of retaining the donor Future.timeout-only limitation."
+  ],
+  "targets": [
+    {
+      "path": "mobile/lib/api.dart",
+      "anchor": "Future<DeviceStatus> status()",
+      "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
+    },
+    {
+      "path": "mobile/lib/panel_inventory.dart",
+      "anchor": "class PanelInventory",
+      "sha256": "4c192f69c1a56e893e3077b859e761f156f283f7653f681f85fea052965be6f9"
+    }
+  ],
+  "proof": [
+    {
+      "path": "mobile/test/api_test.dart",
+      "anchor": "A write retires",
+      "sha256": "2739125601e4e5e44379c742b3bc69c3550e84b4c672b18e6c4d5bda4ba3d16d"
+    },
+    {
+      "path": "mobile/test/panel_inventory_test.dart",
+      "anchor": "testWidgets",
+      "sha256": "6bed65a6581c696b49afd3c5b73613cc3603b38fdbeeaf26bf764005400d1eca"
+    },
+    {
+      "path": "mobile/test/read_deadline_transport_test.dart",
+      "anchor": "stalled",
+      "sha256": "03c62c204578c939282e0924e3b08ff986d2f742e0762251515f40f5c2533a67"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Unified media/PWM/relay/RPC/artifact/feed contracts and all donor transport tests",
+      "disposition": "pending",
+      "reason": "This scoped connection/ownership/retained-layout adaptation does not import the donor's other device domains, numbered compatibility aliases or certify all transports. Remaining useful generic contracts need individual source and hardware review."
+    }
+  ],
+  "remaining": [
+    "Issue #10: phone lifecycle/scroll/visual acceptance, all-client contention and additional donor transport contracts remain separate. Loopback cancellation is not Android radio/runtime proof."
+  ]
+},
+{
+  "origin": "PCController",
+  "path": "mobile/test/unified_transport_test.dart",
+  "sha256": "22e8e24b6c40a006d475448a9364398aef26d322e97d71809a1cc1bb102550f9",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Read complete donor tests. Adapt shared refresh and retained verified inventory expectations into actual API race and widget element/scroll-position tests. Real raw TCP stalls exercise pinned HTTP cancellation separately from widget binding."
+  ],
+  "targets": [
+    {
+      "path": "mobile/lib/api.dart",
+      "anchor": "Future<DeviceStatus> status()",
+      "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
+    }
+  ],
+  "proof": [
+    {
+      "path": "mobile/test/api_test.dart",
+      "anchor": "Concurrent status consumers",
+      "sha256": "2739125601e4e5e44379c742b3bc69c3550e84b4c672b18e6c4d5bda4ba3d16d"
+    },
+    {
+      "path": "mobile/test/panel_inventory_test.dart",
+      "anchor": "testWidgets",
+      "sha256": "6bed65a6581c696b49afd3c5b73613cc3603b38fdbeeaf26bf764005400d1eca"
+    },
+    {
+      "path": "mobile/test/read_deadline_transport_test.dart",
+      "anchor": "stalled",
+      "sha256": "03c62c204578c939282e0924e3b08ff986d2f742e0762251515f40f5c2533a67"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Full unified donor runtime/relay/firmware/PWM test matrix",
+      "disposition": "pending",
+      "reason": "Connection-specific adaptation is not execution/import of every donor test or the corresponding device-domain implementation."
+    }
+  ],
+  "remaining": [
+    "Issue #10: full donor matrix and real mobile runtime acceptance remain open."
+  ]
+},
+{
+  "origin": "PCController",
   "path": "Tools/Controller/internal/programmer/urclock_retry.go",
   "sha256": "de0a9f15fbda4ee883766be025de372ae731741f5baf161f84e5a8dad837d202",
   "source_read": "complete",
@@ -245,7 +338,7 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "f78e920a160a8ed4b2e3ae4837c0fa64a4292418febe1154a759600f4ecd16d6",
+      "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7",
       "anchor": "Stream<DeviceStatus> get statusUpdates"
     }
   ],
@@ -486,7 +579,7 @@
     {
       "path": "desktop/src/usb_table.rs",
       "anchor": "pub struct Intent",
-      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce"
+      "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7"
     }
   ],
   "omissions": [
@@ -505,7 +598,7 @@
     {
       "path": "desktop/src/usb_table.rs",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback",
-      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce"
+      "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7"
     }
   ],
   "remaining": [
@@ -569,7 +662,7 @@
     {
       "path": "desktop/src/main.rs",
       "anchor": "SerialCommand::Bridge(target",
-      "sha256": "157d8f8aebc72d10e0d317b9d64147518cb2db643ed5d14ae4481fd755b64c7f"
+      "sha256": "0fb9597cee07605b8253fde6ad409379bcd97bc5a06c3bfaf969589471ce2c45"
     }
   ],
   "omissions": [
@@ -995,7 +1088,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003"
+          "sha256": "70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751"
         }
       ],
       "omissions": [
@@ -1110,7 +1203,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003"
+          "sha256": "70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751"
         }
       ],
       "omissions": [
@@ -1173,7 +1266,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003"
+          "sha256": "70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751"
         }
       ],
       "omissions": [
@@ -1335,7 +1428,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003"
+          "sha256": "70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751"
         },
         {
           "path": "tools/deploy-artifact.mjs",
@@ -2150,7 +2243,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003"
+          "sha256": "70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751"
         }
       ],
       "omissions": [
@@ -2435,7 +2528,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
+          "sha256": "80c20f01620622d7ba312b73d9d0d3af92ebdc4346cceea9425f00a713047859"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -2445,7 +2538,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware(",
-          "sha256": "ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003"
+          "sha256": "70670ff87e746754e033ebe9c1f9179c0ea69dbbf3f351c2bbbd17ce3c80a751"
         },
         {
           "path": "tools/update-firmware.ps1",
@@ -2867,7 +2960,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
+          "sha256": "80c20f01620622d7ba312b73d9d0d3af92ebdc4346cceea9425f00a713047859"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -2891,7 +2984,7 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "01d6d7b2b91cbdabd62a49de6c2ea15aa56c54ca954f91a8191d605539e51aee"
+          "sha256": "7dc1f88d31b1a89b3dee7731560b0dbd881f005a78809484ce14dbec7f05811a"
         }
       ],
       "remaining": [
@@ -2917,7 +3010,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
+          "sha256": "80c20f01620622d7ba312b73d9d0d3af92ebdc4346cceea9425f00a713047859"
         }
       ],
       "omissions": [
@@ -2936,7 +3029,7 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "01d6d7b2b91cbdabd62a49de6c2ea15aa56c54ca954f91a8191d605539e51aee"
+          "sha256": "7dc1f88d31b1a89b3dee7731560b0dbd881f005a78809484ce14dbec7f05811a"
         }
       ],
       "remaining": [
@@ -2962,7 +3055,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
+          "sha256": "80c20f01620622d7ba312b73d9d0d3af92ebdc4346cceea9425f00a713047859"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -2996,7 +3089,7 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "01d6d7b2b91cbdabd62a49de6c2ea15aa56c54ca954f91a8191d605539e51aee"
+          "sha256": "7dc1f88d31b1a89b3dee7731560b0dbd881f005a78809484ce14dbec7f05811a"
         }
       ],
       "remaining": [
@@ -3031,7 +3124,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "f78e920a160a8ed4b2e3ae4837c0fa64a4292418febe1154a759600f4ecd16d6"
+          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -3131,7 +3224,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "f78e920a160a8ed4b2e3ae4837c0fa64a4292418febe1154a759600f4ecd16d6"
+          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -3719,7 +3812,7 @@
       "proof": [
         {
           "path": "tests/network_path_test.cpp",
-          "sha256": "dcc4a172b9b41886ef7155ce9220f6ad87452348462ca3149cc26573855a728e",
+          "sha256": "1555cbbcdf10be41ebcd6bfa51d9bd364a0f5e19f418476a748ec14e558c03e4",
           "anchor": "int main()"
         },
         {
@@ -3903,7 +3996,7 @@
         {
           "path": "tools/check-ethernet-live.mjs",
           "anchor": "export async function checkEthernet(",
-          "sha256": "d25f3ca0c7571a953cd8f2c1dd997bdc9abc50844fb8add4ffc379bf1f5d55ca"
+          "sha256": "2e56a09b67594dbcf90178eb4b86d03d48b4b4de1d9ff59c00512d401445df4c"
         },
         {
           "path": "desktop/src/bridge_transfer.rs",
@@ -3942,7 +4035,7 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "01d6d7b2b91cbdabd62a49de6c2ea15aa56c54ca954f91a8191d605539e51aee"
+          "sha256": "7dc1f88d31b1a89b3dee7731560b0dbd881f005a78809484ce14dbec7f05811a"
         },
         {
           "path": "desktop/src/bridge_transfer.rs",
@@ -3974,7 +4067,7 @@
         {
           "path": "tools/check-ethernet-live.mjs",
           "anchor": "export async function checkEthernet(",
-          "sha256": "d25f3ca0c7571a953cd8f2c1dd997bdc9abc50844fb8add4ffc379bf1f5d55ca"
+          "sha256": "2e56a09b67594dbcf90178eb4b86d03d48b4b4de1d9ff59c00512d401445df4c"
         }
       ],
       "omissions": [
@@ -3993,7 +4086,7 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "01d6d7b2b91cbdabd62a49de6c2ea15aa56c54ca954f91a8191d605539e51aee"
+          "sha256": "7dc1f88d31b1a89b3dee7731560b0dbd881f005a78809484ce14dbec7f05811a"
         }
       ]
     },
@@ -4357,7 +4450,7 @@
           },
           {
             "path": "tests/network_path_test.cpp",
-            "sha256": "dcc4a172b9b41886ef7155ce9220f6ad87452348462ca3149cc26573855a728e",
+            "sha256": "1555cbbcdf10be41ebcd6bfa51d9bd364a0f5e19f418476a748ec14e558c03e4",
             "anchor": "static void discoveryPolicy()"
           }
         ],
@@ -4595,7 +4688,8 @@
     "Reread the full current Session source for the live ASUS queue failure. Actual grantNextLocked highest-priority/strict-greater FIFO selection is now adapted to a bounded64-entry native HTTP waiting window: foreground commands overtake unsent status/mapping and optional configuration work, without preempting an in-flight request. Mutations retain8s expiry and revocable generation/board/boot fencing; read-only work has a separate24s bound. Atomic batches reuse the worker's fresh preflight rather than running it twice, retaining final admission, one POST, ACK and same-boot readback. This does not import USB sequence allocation, DTR/reset defaults or serial priority scheduling.",
     "Actual Session admission/matched-ACK/no-replay principles now guard WebSocket-first native/mobile commands. One random intent ID, bounded boot-relative deadline and exact packet digest survive same-intent HTTP recovery. The loop-owned RAM receipt cache consumes before mutation and never evicts an unexpired ID. Immediate same-board state accompanies each ACK; other clients receive immediate state pushes. Older HTTP reads cannot roll newer state back. Flutter keeps both scroll controllers and a fixed result slot through pending/completed writes without renewing expired telemetry. This scoped adaptation does not import serial sequence allocation, reset defaults or all donor contracts.",
     "Separate command authority from board-keyed Flutter user workspace state: lifecycle pauses timers, not a healthy socket; resume probes the same socket before HTTP fallback; silent sockets have independent WS freshness and bounded reconnect. Stale or foreign leases disable writes without destroying selection, search, drafts or scroll. Hidden settings no longer issue periodic network/AVR reads. No old mutation is queued or replayed.",
-    "Reread current canonical Session, fakePort and request_admission_test.go. Adapt actual control-over-background admission between unsent USB snapshot chunks, without overtaking an in-flight request or post-ACK verification. The production Rust worker now validates matching sequence/opcode ACK plus compact same-boot board-observed state, rather than delaying confirmation for all480 RGB pixels, mappings and icon metadata. Full captures still own capability/peripheral freshness and actual RGB; partial readback does not renew those observations. Missing companion uses read-only full verification, never mutation replay. Production-worker fragmented-port and wrong-boot/scalar/state fixtures cover this scoped adaptation, not all donor reset/open/750ms strip contracts."
+    "Reread current canonical Session, fakePort and request_admission_test.go. Adapt actual control-over-background admission between unsent USB snapshot chunks, without overtaking an in-flight request or post-ACK verification. The production Rust worker now validates matching sequence/opcode ACK plus compact same-boot board-observed state, rather than delaying confirmation for all480 RGB pixels, mappings and icon metadata. Full captures still own capability/peripheral freshness and actual RGB; partial readback does not renew those observations. Missing companion uses read-only full verification, never mutation replay. Production-worker fragmented-port and wrong-boot/scalar/state fixtures cover this scoped adaptation, not all donor reset/open/750ms strip contracts.",
+    "Reread actual Session admission/ACK ownership for the ten-minute ASUS failure. Native immutable reads use a verified-token four-chunk window and one absolute8s capture/freshness deadline, not a premature2s per-fragment timeout. Mutation ACK/deadline/no-replay rules are unchanged. Capture progress is a bounded typed owner-IPC observation, not toast identity; verified same-board presentation survives read failure and wire reacquisition without renewing old hardware authority."
   ],
   "targets": [
     {
@@ -4605,12 +4699,12 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "f78e920a160a8ed4b2e3ae4837c0fa64a4292418febe1154a759600f4ecd16d6",
+      "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7",
       "anchor": "bool _acceptIdentity("
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "6c4b7cac8c22c9d26555afa3abe3e81c4e9ff85b58c71c0ae46eae3be2cca5e6",
+      "sha256": "5b46d67503a19267ca4d2a9dc1fe93b70b7bb1441734098da16de81186db91d4",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -4630,7 +4724,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c",
+      "sha256": "80c20f01620622d7ba312b73d9d0d3af92ebdc4346cceea9425f00a713047859",
       "anchor": "bool authenticate()"
     },
     {
@@ -4640,17 +4734,17 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da",
+      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
       "anchor": "pub fn admit("
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "157d8f8aebc72d10e0d317b9d64147518cb2db643ed5d14ae4481fd755b64c7f",
+      "sha256": "0fb9597cee07605b8253fde6ad409379bcd97bc5a06c3bfaf969589471ce2c45",
       "anchor": "fn scoped_http_request("
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
+      "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7",
       "anchor": "pub struct Admission"
     },
     {
@@ -4665,7 +4759,7 @@
     },
     {
       "path": "desktop/src/realtime.rs",
-      "sha256": "8da360508e8835f18c8f51283fcdc2873536b6b288cce3c8418a5df63b09af0e",
+      "sha256": "441abfd5ba8acbd2cac7fbc33db66d20de2764ffa0154b7ef00d06468aad3e2c",
       "anchor": "pub struct Intent"
     },
     {
@@ -4733,12 +4827,12 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da",
+      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
       "anchor": "fn gui_revocation_during_preflight_stops_before_write()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da",
+      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
       "anchor": "fn gui_revocation_after_dispatch_reports_uncertainty_not_success()"
     },
     {
@@ -4748,7 +4842,7 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
+      "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7",
       "anchor": "fn table_write_is_exact_boot_fenced_and_post_ack_values_are_not_assumed()"
     },
     {
@@ -4763,7 +4857,7 @@
     },
     {
       "path": "desktop/src/realtime.rs",
-      "sha256": "8da360508e8835f18c8f51283fcdc2873536b6b288cce3c8418a5df63b09af0e",
+      "sha256": "441abfd5ba8acbd2cac7fbc33db66d20de2764ffa0154b7ef00d06468aad3e2c",
       "anchor": "fn realtime_actual_ws_worker_delivers_receipt_without_http_or_poll_tick()"
     },
     {
@@ -4798,13 +4892,18 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
+      "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
+      "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7",
       "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
+    },
+    {
+      "path": "desktop/src/usb_table.rs",
+      "anchor": "fn actual_usb_worker_windows_read_latency_does_not_expire_large_capture",
+      "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7"
     }
   ]
 },
@@ -4834,12 +4933,12 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da",
+      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
       "anchor": "fn gui_settings_pin_every_nested_request_and_verify_same_boot()"
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
+      "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7",
       "anchor": "pub struct Operation"
     }
   ],
@@ -4877,22 +4976,22 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da",
+      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
       "anchor": "fn gui_preflight_reboot_or_capability_loss_never_dispatches_mutation()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da",
+      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
       "anchor": "fn gui_readback_from_new_boot_is_not_applied()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da",
+      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
       "anchor": "fn gui_unfenced_mutation_fails_before_network_and_preserves_correlation()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da",
+      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
       "anchor": "fn gui_server_boot_conflict_is_not_replayed()"
     },
     {
@@ -4902,12 +5001,12 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
+      "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
+      "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7",
       "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
     }
   ]
@@ -5217,7 +5316,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "fa194d294f3a5df3cbdf9a26d0d98d0bb9ecd07655072eead672d9eaadff65b3",
+      "sha256": "55f5741093d81dac88bdcf56b5cc4cd7887b0cf519f311ba9867de1dd31aac7a",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -5380,7 +5479,7 @@
       "remaining":["Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof."],
       "proof":[
         {"path":"tools/test-display.ps1","sha256":"e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51","anchor":"foreach ($taskVariant"},
-        {"path":"tools/test-protocol.sh","sha256":"2d9ef6e7fe2b5ee83609bb3b0cc4c0a6444b83bcf62e0c71c2d1d2896321a7a4","anchor":"for display_flags"}
+        {"path":"tools/test-protocol.sh","sha256":"0e6c57cd75155b7b159abae765ed97db23dc959226c4f14f0d7ba212aec7a06d","anchor":"for display_flags"}
       ],
       "improvement":"Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified."
     },
@@ -5425,7 +5524,7 @@
         },
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "50017e368cb9c4dcc508c6bb529e6f542066f5754172b6f00f13dc4cf1a13847",
+          "sha256": "600217cec6c0afbd35c7ffc6a6e1b300586a75fc150a87693da4fb06e2d7ce2e",
           "anchor": "pub fn known("
         }
       ],
@@ -6233,7 +6332,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "f78e920a160a8ed4b2e3ae4837c0fa64a4292418febe1154a759600f4ecd16d6",
+          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -6929,7 +7028,7 @@
       "targets": [
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "50017e368cb9c4dcc508c6bb529e6f542066f5754172b6f00f13dc4cf1a13847",
+          "sha256": "600217cec6c0afbd35c7ffc6a6e1b300586a75fc150a87693da4fb06e2d7ce2e",
           "anchor": "pub fn has("
         },
         {
@@ -6939,7 +7038,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "6c4b7cac8c22c9d26555afa3abe3e81c4e9ff85b58c71c0ae46eae3be2cca5e6",
+          "sha256": "5b46d67503a19267ca4d2a9dc1fe93b70b7bb1441734098da16de81186db91d4",
           "anchor": "Future<bool> _command"
         },
         {
@@ -6986,7 +7085,7 @@
         },
         {
           "path": "mobile/test/api_test.dart",
-          "sha256": "68d3fde587b2b7c74b02f0c0a8d8b661a7c6ec930a26c9ba6c25f502f76426e3",
+          "sha256": "2739125601e4e5e44379c742b3bc69c3550e84b4c672b18e6c4d5bda4ba3d16d",
           "anchor": "Changed endpoint discards an in-flight status"
         },
         {
@@ -7030,7 +7129,7 @@
         },
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "50017e368cb9c4dcc508c6bb529e6f542066f5754172b6f00f13dc4cf1a13847",
+          "sha256": "600217cec6c0afbd35c7ffc6a6e1b300586a75fc150a87693da4fb06e2d7ce2e",
           "anchor": "fn serial_manifest_is_individual_and_table_modes_are_profile_scoped"
         }
       ],
@@ -7077,12 +7176,12 @@
       "targets": [
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "50017e368cb9c4dcc508c6bb529e6f542066f5754172b6f00f13dc4cf1a13847",
+          "sha256": "600217cec6c0afbd35c7ffc6a6e1b300586a75fc150a87693da4fb06e2d7ce2e",
           "anchor": "pub struct Manifest"
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "fa194d294f3a5df3cbdf9a26d0d98d0bb9ecd07655072eead672d9eaadff65b3",
+          "sha256": "55f5741093d81dac88bdcf56b5cc4cd7887b0cf519f311ba9867de1dd31aac7a",
           "anchor": "fn synchronize_context("
         },
         {
@@ -7108,7 +7207,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "f78e920a160a8ed4b2e3ae4837c0fa64a4292418febe1154a759600f4ecd16d6"
+          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -7171,7 +7270,7 @@
         },
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "50017e368cb9c4dcc508c6bb529e6f542066f5754172b6f00f13dc4cf1a13847",
+          "sha256": "600217cec6c0afbd35c7ffc6a6e1b300586a75fc150a87693da4fb06e2d7ce2e",
           "anchor": "fn no_profile_or_individual_ack_means_no_controls"
         },
         {
@@ -7238,7 +7337,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "6c4b7cac8c22c9d26555afa3abe3e81c4e9ff85b58c71c0ae46eae3be2cca5e6",
+          "sha256": "5b46d67503a19267ca4d2a9dc1fe93b70b7bb1441734098da16de81186db91d4",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -7495,7 +7594,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "fa194d294f3a5df3cbdf9a26d0d98d0bb9ecd07655072eead672d9eaadff65b3",
+          "sha256": "55f5741093d81dac88bdcf56b5cc4cd7887b0cf519f311ba9867de1dd31aac7a",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -7975,7 +8074,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "fa194d294f3a5df3cbdf9a26d0d98d0bb9ecd07655072eead672d9eaadff65b3",
+          "sha256": "55f5741093d81dac88bdcf56b5cc4cd7887b0cf519f311ba9867de1dd31aac7a",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -8089,7 +8188,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "f78e920a160a8ed4b2e3ae4837c0fa64a4292418febe1154a759600f4ecd16d6"
+          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -8259,7 +8358,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "f78e920a160a8ed4b2e3ae4837c0fa64a4292418febe1154a759600f4ecd16d6"
+          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -8462,13 +8561,24 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Earlier MessageHub remains byte-identical to historical source hash 471236bd7e8b1733fef743c81a9dff407816cd221a4d290d0cfa5a9fc753c573: request validation, bounded queue, expiry/upsert/dismiss/revision/source identity and both original tests. The current 226-line donor was completely reread; new detailed diagnostics remain pending, not falsely described as current file equivalence."
+        "Earlier MessageHub remains byte-identical to historical source hash 471236bd7e8b1733fef743c81a9dff407816cd221a4d290d0cfa5a9fc753c573: request validation, bounded queue, expiry/upsert/dismiss/revision/source identity and both original tests. The current 226-line donor was completely reread; new detailed diagnostics remain pending, not falsely described as current file equivalence.",
+        "The shared bounded/upsert message hub now has truthful native owner-IPC snapshot exposure for actual toast monitoring. Host connection alerts require2s stable state to avoid transient loss/recovery pairs; command freshness still changes immediately. Distinct diagnostic causes remain in the existing incident ledger. This does not import the still-pending detailed-toast payload/disclosure feature."
       ],
       "targets": [
         {
           "path": "desktop/src/messaging.rs",
           "sha256": "471236bd7e8b1733fef743c81a9dff407816cd221a4d290d0cfa5a9fc753c573",
           "anchor": "pub fn publish("
+        },
+        {
+          "path": "desktop/src/ui/shell.rs",
+          "anchor": "value[\"messages\"]",
+          "sha256": "55f5741093d81dac88bdcf56b5cc4cd7887b0cf519f311ba9867de1dd31aac7a"
+        },
+        {
+          "path": "desktop/src/platform/notifications.rs",
+          "anchor": "pub struct ConnectionNotice",
+          "sha256": "a7abb77a1a319025ffefc8a5ad94f51a59b191b04e59a2414e96b30c290f06e7"
         }
       ],
       "omissions": [
@@ -8486,6 +8596,11 @@
           "path": "desktop/src/messaging.rs",
           "sha256": "471236bd7e8b1733fef743c81a9dff407816cd221a4d290d0cfa5a9fc753c573",
           "anchor": "fn upsert_dismiss_and_expire_are_shared()"
+        },
+        {
+          "path": "desktop/src/platform/notifications.rs",
+          "anchor": "fn brief_status_and_avr_flaps_do_not_generate_disconnect_recovery_pairs",
+          "sha256": "a7abb77a1a319025ffefc8a5ad94f51a59b191b04e59a2414e96b30c290f06e7"
         }
       ],
       "improvement": ""
@@ -8542,7 +8657,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "fa194d294f3a5df3cbdf9a26d0d98d0bb9ecd07655072eead672d9eaadff65b3",
+          "sha256": "55f5741093d81dac88bdcf56b5cc4cd7887b0cf519f311ba9867de1dd31aac7a",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -9168,7 +9283,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
+          "sha256": "80c20f01620622d7ba312b73d9d0d3af92ebdc4346cceea9425f00a713047859"
         }
       ],
       "proof": [
@@ -9235,7 +9350,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
+          "sha256": "80c20f01620622d7ba312b73d9d0d3af92ebdc4346cceea9425f00a713047859"
         }
       ],
       "proof": [
@@ -9302,7 +9417,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
+          "sha256": "80c20f01620622d7ba312b73d9d0d3af92ebdc4346cceea9425f00a713047859"
         }
       ],
       "proof": [
@@ -9354,7 +9469,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
+          "sha256": "80c20f01620622d7ba312b73d9d0d3af92ebdc4346cceea9425f00a713047859"
         }
       ],
       "proof": [
@@ -10366,7 +10481,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "157d8f8aebc72d10e0d317b9d64147518cb2db643ed5d14ae4481fd755b64c7f",
+          "sha256": "0fb9597cee07605b8253fde6ad409379bcd97bc5a06c3bfaf969589471ce2c45",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -10416,7 +10531,8 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Full donor document read through EOF. Apply its concrete distinction between working IPC/service and actual shell/GUI readiness: expose tray Shell acceptance separately, retain failures and recover only after accepted synchronization, verify open drafts before graceful replacement and keep actual runtime proof separate."
+        "Full donor document read through EOF. Apply its concrete distinction between working IPC/service and actual shell/GUI readiness: expose tray Shell acceptance separately, retain failures and recover only after accepted synchronization, verify open drafts before graceful replacement and keep actual runtime proof separate.",
+        "Actual already-owned ASUS replacement/capture helpers were reread and their PID/path/hash/session/no-draft/graceful-exit/atomic-rollback checks adapted into reusable explicit-parameter replacement and600s USB/Wi-Fi observation tools. Both preserve settings and reject unknown owners; observation captures actual message-hub and Windows Shell counters, buffers samples in RAM and writes bounded progress only on changes. This imports recovery boundaries, not all donor shell features."
       ],
       "targets": [
         {
@@ -10426,8 +10542,18 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "fa194d294f3a5df3cbdf9a26d0d98d0bb9ecd07655072eead672d9eaadff65b3",
+          "sha256": "55f5741093d81dac88bdcf56b5cc4cd7887b0cf519f311ba9867de1dd31aac7a",
           "anchor": "value[\"tray_shell\"]"
+        },
+        {
+          "path": "tools/replace-desktop.ps1",
+          "anchor": "function OwnerStatus",
+          "sha256": "d2128bc8bb83cd0505cff4db9a4ff0567fe2bfc6cdd741d3b51afa057c35d646"
+        },
+        {
+          "path": "tools/observe-desktop.ps1",
+          "anchor": "function OwnerStatus",
+          "sha256": "c2adb041290e63d2190c6e807c095b9a79bf3c201d46f5ffc085636c1d4daf5e"
         }
       ],
       "omissions": [
@@ -10478,12 +10604,12 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "157d8f8aebc72d10e0d317b9d64147518cb2db643ed5d14ae4481fd755b64c7f",
+          "sha256": "0fb9597cee07605b8253fde6ad409379bcd97bc5a06c3bfaf969589471ce2c45",
           "anchor": "fn serial_worker("
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
+          "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7",
           "anchor": "pub struct Operation"
         }
       ],
@@ -10515,17 +10641,17 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "157d8f8aebc72d10e0d317b9d64147518cb2db643ed5d14ae4481fd755b64c7f",
+          "sha256": "0fb9597cee07605b8253fde6ad409379bcd97bc5a06c3bfaf969589471ce2c45",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
+          "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7",
           "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
+          "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7",
           "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
         }
       ],
@@ -10561,7 +10687,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "fa194d294f3a5df3cbdf9a26d0d98d0bb9ecd07655072eead672d9eaadff65b3"
+          "sha256": "55f5741093d81dac88bdcf56b5cc4cd7887b0cf519f311ba9867de1dd31aac7a"
         }
       ],
       "omissions": [
@@ -10628,7 +10754,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c",
+          "sha256": "80c20f01620622d7ba312b73d9d0d3af92ebdc4346cceea9425f00a713047859",
           "anchor": "const LedPreferences value = whiteBootPreferences(grid.brightness())"
         },
         {
@@ -10649,7 +10775,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "f78e920a160a8ed4b2e3ae4837c0fa64a4292418febe1154a759600f4ecd16d6"
+          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -10762,7 +10888,8 @@
         "Standalone Internet adaptation removes AVR dependence from unlatched ESP-only prepare/finish in integrated builds, retains fresh image/SHA/boot checks and every paired backup/Prog gate, and serializes deferred cloud/network/Ethernet settings with update admission. Existing MQTT/WSS sessions carry cheap job progress/cancel during staging without new TLS handshakes or full-image telemetry captures. Cloud status streams bounded chunks without increasing RX buffers; top-level typed commands, board/boot/deadline and bounded cross-channel replay admission precede dispatch. These are modern Pakar additions, not claims that the PU donor had these security contracts.",
         "Reconsulted complete donor for optional W5500. Added explicit recovery after initialization failure, without resetting a healthy driver on cable loss or retrying in the service loop. Cheap status distinguishes configured/initialized/carrier/IP with null disconnected addresses. These native ETH/lwIP additions preserve the existing shared OTA/network owner, not donor W5500 functionality.",
         "Shared local S3/8266 upload callbacks now publish atomic finite start/commit/failure intent; only the loop sends UART, without audio ACK waits or fallback replay. Remote job notices are one-shot and permit a cooperative500ms lead before Prog. Audio delivery never authorizes erase or firmware success. Physical cue/phone acceptance remains open while ASUS SSH8022 is unavailable.",
-      "Reread the actual donor updater for measured counters and completion callbacks. Adapted exact optional raw-image size headers with overflow/short-file rejection before boot commit, coherent atomic progress snapshots, read-only HTTP/WS progress during upload, boot-cached info without per-poll flash hashing, and loop-only finite TM1637/LCD progress. Added hostname-first auto local/remote tooling with auth-off pre/postflight, explicit stage/apply and full same-board new-boot image SHA readback; no unknown-write fallback."
+        "Reread the actual donor updater for measured counters and completion callbacks. Adapted exact optional raw-image size headers with overflow/short-file rejection before boot commit, coherent atomic progress snapshots, read-only HTTP/WS progress during upload, boot-cached info without per-poll flash hashing, and loop-only finite TM1637/LCD progress. Added hostname-first auto local/remote tooling with auth-off pre/postflight, explicit stage/apply and full same-board new-boot image SHA readback; no unknown-write fallback.",
+        "Failure-driven bounded hardening, not donor MQTT parity: PU has no reusable MQTT service. Pakar's actual ESP32 TCP connect limit is now independent of retained TLS/CA checks, MQTT retry starts10s AFTER connection completion, and wrap-safe measured attempt/failure/last/max counters are exposed additively. DNS remains synchronous; no claim of a fully nonblocking cloud worker. Existing host fixtures cover20s failure/backoff/wrap, not actual broker/TLS timing. Automatic updater diagnostics now identify read stage/path and transport code without publishing query secrets; no new write retries."
       ],
       "targets": [
         {
@@ -10812,12 +10939,12 @@
         },
         {
           "path": "firmware/esp8266/src/CloudServices.cpp",
-          "sha256": "3d57d1eb9f4b19c0653986f48a0c42c23a96bf0e907c2a669f7b5bc3fe92cd20",
+          "sha256": "3aba9682f8641ce2b587815c2a4247c39bddf6261eda8b43c0119bc5218a650d",
           "anchor": "void CloudServices::handleCommand("
         },
         {
           "path": "firmware/esp8266/src/CloudServices.cpp",
-          "sha256": "3d57d1eb9f4b19c0653986f48a0c42c23a96bf0e907c2a669f7b5bc3fe92cd20",
+          "sha256": "3aba9682f8641ce2b587815c2a4247c39bddf6261eda8b43c0119bc5218a650d",
           "anchor": "bool CloudServices::publishMqtt("
         },
         {
@@ -10827,7 +10954,7 @@
         },
         {
           "path": "firmware/esp8266/src/NetworkPath.h",
-          "sha256": "2559d90b2a46ce22c2f67afe7a52bb9dafbb75f227b6735fd3c0c1c9e3223be1",
+          "sha256": "24a958fb44d8c29a3101d7bfe2e8593ccc76dd9f82dc434ff993653a0ce99803",
           "anchor": "inline bool service()"
         },
         {
@@ -10863,7 +10990,12 @@
         {
           "path": "tools/check-ethernet-live.mjs",
           "anchor": "export async function checkEthernet(",
-          "sha256": "d25f3ca0c7571a953cd8f2c1dd997bdc9abc50844fb8add4ffc379bf1f5d55ca"
+          "sha256": "2e56a09b67594dbcf90178eb4b86d03d48b4b4de1d9ff59c00512d401445df4c"
+        },
+        {
+          "path": "firmware/esp8266/src/CloudServices.cpp",
+          "anchor": "const uint32_t completedAt=millis()",
+          "sha256": "3aba9682f8641ce2b587815c2a4247c39bddf6261eda8b43c0119bc5218a650d"
         }
       ],
       "omissions": [
@@ -10950,7 +11082,7 @@
         },
         {
           "path": "tests/cloud_services_test.cpp",
-          "sha256": "e753f03c8d96cedf261ffd87ee50986d8899392ca1161f6de79f319dbab806ad",
+          "sha256": "6c20d05f0f1a210259ddbe4b37d0d800c838156d4da50bb338a86aef6096c6b1",
           "anchor": "int main()"
         },
         {
@@ -10991,7 +11123,12 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "01d6d7b2b91cbdabd62a49de6c2ea15aa56c54ca954f91a8191d605539e51aee"
+          "sha256": "7dc1f88d31b1a89b3dee7731560b0dbd881f005a78809484ce14dbec7f05811a"
+        },
+        {
+          "path": "tests/cloud_services_test.cpp",
+          "anchor": "A slow failed connect must wait a full interval AFTER completion",
+          "sha256": "6c20d05f0f1a210259ddbe4b37d0d800c838156d4da50bb338a86aef6096c6b1"
         }
       ],
       "improvement": "Explicit inactive-slot staging with independent apply, instead of an image that cannot fit its filesystem or an upload that chooses boot before separate consent."
@@ -11016,7 +11153,7 @@
         {
           "path": "tools/check-ethernet-live.mjs",
           "anchor": "export async function checkEthernet(",
-          "sha256": "d25f3ca0c7571a953cd8f2c1dd997bdc9abc50844fb8add4ffc379bf1f5d55ca"
+          "sha256": "2e56a09b67594dbcf90178eb4b86d03d48b4b4de1d9ff59c00512d401445df4c"
         }
       ],
       "omissions": [
@@ -11039,7 +11176,7 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "01d6d7b2b91cbdabd62a49de6c2ea15aa56c54ca954f91a8191d605539e51aee"
+          "sha256": "7dc1f88d31b1a89b3dee7731560b0dbd881f005a78809484ce14dbec7f05811a"
         }
       ],
       "improvement": "Bounded concurrency, request deadlines, no mutation replay, strict-count/all-cell readback and explicit progress checks reject stale or frozen output."
@@ -11157,7 +11294,8 @@
       "verdict": "parity-gap",
       "preserved": [
         "Actual complete donor resolver and tests read from canonical PCController; adapted successful-address caching, retaining URL hostname/HTTP Host/TLS SNI rather than replacing the public identity with an IP.",
-        "Flutter HTTP and WebSocket share one resolver. TCP connect failures may trigger bounded read-only relookup but retain the last successful address; actual DNS SocketException/empty answer invalidates it. HTTP/auth/timeout failures do not evict or trigger discovery/replay. Cached route data never grants board/boot ownership."
+        "Flutter HTTP and WebSocket share one resolver. TCP connect failures may trigger bounded read-only relookup but retain the last successful address; actual DNS SocketException/empty answer invalidates it. HTTP/auth/timeout failures do not evict or trigger discovery/replay. Cached route data never grants board/boot ownership.",
+        "Actual complete resolver reread at unchanged source hash for measured ASUS .local latency. A separate bounded32-host native cache accepts only actual response TCP remote_addr after valid board/boot and requested-hostname checks, retains URL Host/SNI, never trusts advertised IP and never grants command ownership. Fresh no-idle-pool clients reuse verified routing. Only typed dial/resolution failures mark a retained hint for later relookup; HTTP/auth/body timeouts do not discard it. Successful verified TCP replacement clears the bounded lookup mark; no mutation is replayed."
       ],
       "targets": [
         {
@@ -11167,7 +11305,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "f78e920a160a8ed4b2e3ae4837c0fa64a4292418febe1154a759600f4ecd16d6",
+          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7",
           "anchor": "final LanResolver resolver;"
         },
         {
@@ -11179,6 +11317,16 @@
           "path": "mobile/lib/devices_page.dart",
           "sha256": "b3ff941cededcdff779f369f63c8131acf3f5776ef5af79ea33afa0401ae4a4e",
           "anchor": "catalog"
+        },
+        {
+          "path": "desktop/src/peer_http.rs",
+          "anchor": "pub fn device_client_builder",
+          "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec"
+        },
+        {
+          "path": "desktop/src/main.rs",
+          "anchor": "peer_http::remember_address",
+          "sha256": "0fb9597cee07605b8253fde6ad409379bcd97bc5a06c3bfaf969589471ce2c45"
         }
       ],
       "omissions": [
@@ -11206,6 +11354,11 @@
           "path": "mobile/test/selection_batch_network_test.dart",
           "sha256": "403edf1f3aecfd072f8afd5d4ad5956135aeee3043163f0fb1f7c4f703393937",
           "anchor": "test("
+        },
+        {
+          "path": "desktop/src/peer_http.rs",
+          "anchor": "fn local_verified_address_override_preserves_http_hostname_and_explicit_port",
+          "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec"
         }
       ],
       "improvement": "Retains the requested cache policy without treating authentication or generic HTTP failures as DNS failure."
@@ -11217,13 +11370,19 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Adapted actual cached-address reuse and changed-DHCP-address scenarios with injected lookups/dials. Added actual loopback HTTP Host identity, authentication/timeout retention, selection/batch/readback and melody fixtures."
+        "Adapted actual cached-address reuse and changed-DHCP-address scenarios with injected lookups/dials. Added actual loopback HTTP Host identity, authentication/timeout retention, selection/batch/readback and melody fixtures.",
+        "Native fixtures exercise actual reqwest loopback TCP, cached subsequent resolution, original HTTP Host and explicit port, provenance rejection, finite cache/replacement and invalidation. They are not Windows mDNS, Android DNS or DHCP physical acceptance."
       ],
       "targets": [
         {
           "path": "mobile/test/selection_batch_network_test.dart",
           "sha256": "403edf1f3aecfd072f8afd5d4ad5956135aeee3043163f0fb1f7c4f703393937",
           "anchor": "test("
+        },
+        {
+          "path": "desktop/src/peer_http.rs",
+          "anchor": "fn local_address_cache_accepts_only_verified_tcp_peer_not_advertised_ip",
+          "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec"
         }
       ],
       "omissions": [
@@ -11246,6 +11405,11 @@
           "path": "mobile/test/selection_batch_network_test.dart",
           "sha256": "403edf1f3aecfd072f8afd5d4ad5956135aeee3043163f0fb1f7c4f703393937",
           "anchor": "test("
+        },
+        {
+          "path": "desktop/src/peer_http.rs",
+          "anchor": "fn local_address_cache_bounds_replaces_and_invalidates_without_ttl_or_authority",
+          "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec"
         }
       ],
       "improvement": "Adds failed-resolution-only eviction and retains no mutation replay."
@@ -11293,7 +11457,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c",
+          "sha256": "80c20f01620622d7ba312b73d9d0d3af92ebdc4346cceea9425f00a713047859",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -11318,7 +11482,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "f78e920a160a8ed4b2e3ae4837c0fa64a4292418febe1154a759600f4ecd16d6",
+          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -11444,7 +11608,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c",
+          "sha256": "80c20f01620622d7ba312b73d9d0d3af92ebdc4346cceea9425f00a713047859",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -11469,7 +11633,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "f78e920a160a8ed4b2e3ae4837c0fa64a4292418febe1154a759600f4ecd16d6",
+          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -11560,7 +11724,8 @@
       "verdict": "parity-gap",
       "preserved": [
         "Complete live donor read through EOF at matching original-byte hash. Adapt the actual stable-ID profile_choices/draw ownership rule to board-keyed Flutter workspaces, rather than connection-attempt keys or telemetry-dependent widget lifetime. User selection/search/effect/indicator choice and both scroll axes survive transient leases, reboot, explicit reconnect and bounded background UI-cache restoration; snapshots never persist a command, authorization or observed device state.",
-        "Reread the same complete live donor at unchanged SHA256 for the Android screen-off regression. Actual user changes now notify a bounded debounced UI snapshot writer, including indicators, multiple selection, transition, Find/selection, activity and both scroll axes. One ordered coalescing writer prevents late old saves, skips identical snapshots and permits retry after failure. Reattachment uses the latest actual offsets rather than stale scroll-end PageStorage values. Healthy sockets remain open across backgrounding; a silent pre-suspend socket gets a 750 ms read-probe recovery without resetting the workspace or replaying commands. Colour actions and selection controls are separate ordered rows."
+        "Reread the same complete live donor at unchanged SHA256 for the Android screen-off regression. Actual user changes now notify a bounded debounced UI snapshot writer, including indicators, multiple selection, transition, Find/selection, activity and both scroll axes. One ordered coalescing writer prevents late old saves, skips identical snapshots and permits retry after failure. Reattachment uses the latest actual offsets rather than stale scroll-end PageStorage values. Healthy sockets remain open across backgrounding; a silent pre-suspend socket gets a 750 ms read-probe recovery without resetting the workspace or replaying commands. Colour actions and selection controls are separate ordered rows.",
+        "Actual stable-ID workspace ownership adapted to immutable board identity rather than mutable friendly names or current telemetry. Retained route/board/boot-scoped ACK-only panel inventory is presentation, never live hardware authority. Native dock, selection, menus and measured panel extent survive transient lease/capability loss; new peer/boot/explicit disconnect revalidates appropriately."
       ],
       "targets": [
         {
@@ -11570,8 +11735,23 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "6c4b7cac8c22c9d26555afa3abe3e81c4e9ff85b58c71c0ae46eae3be2cca5e6",
+          "sha256": "5b46d67503a19267ca4d2a9dc1fe93b70b7bb1441734098da16de81186db91d4",
           "anchor": "Future<void> _saveWorkspaces()"
+        },
+        {
+          "path": "desktop/src/capabilities.rs",
+          "anchor": "pub struct Presentation",
+          "sha256": "600217cec6c0afbd35c7ffc6a6e1b300586a75fc150a87693da4fb06e2d7ce2e"
+        },
+        {
+          "path": "desktop/src/ui/shell.rs",
+          "anchor": "fn synchronize_context",
+          "sha256": "55f5741093d81dac88bdcf56b5cc4cd7887b0cf519f311ba9867de1dd31aac7a"
+        },
+        {
+          "path": "desktop/src/ui/layout.rs",
+          "anchor": "presentation_context()",
+          "sha256": "404465fc0d1b9c0d8c598518336a73f68785d7ba891d4f50b7e167f6ae77043f"
         }
       ],
       "proof": [
@@ -11579,6 +11759,16 @@
           "path": "mobile/test/workspace_lifecycle_test.dart",
           "sha256": "f5ebfdad55e4dd4c47a89eb15d6919d788eac55414cff05ab351f9fb3b3e24d7",
           "anchor": "Workspace follows board identity"
+        },
+        {
+          "path": "desktop/src/capabilities.rs",
+          "anchor": "fn presentation_retains_only_prior_acks_without_reviving_live_authority",
+          "sha256": "600217cec6c0afbd35c7ffc6a6e1b300586a75fc150a87693da4fb06e2d7ce2e"
+        },
+        {
+          "path": "desktop/src/capabilities.rs",
+          "anchor": "fn measured_panel_height_preserves_scroll_only_for_same_board_panel_and_width",
+          "sha256": "600217cec6c0afbd35c7ffc6a6e1b300586a75fc150a87693da4fb06e2d7ce2e"
         }
       ],
       "omissions": [
@@ -11586,10 +11776,16 @@
           "code": "draw workspace manager metadata CRUD, icon picker, profile reordering and overwrite/restore menu commands",
           "disposition": "pending",
           "reason": "Useful generic workspace-management UI remains an open donor import. This regression repair adapts stable identity and user-state ownership only; it does not certify the native/Web workspace manager, add a replacement profile editor or copy egui widgets into Flutter."
+        },
+        {
+          "code": "All donor profile dialog/tab presets, media-specific panels and workspace action parity",
+          "disposition": "pending",
+          "reason": "Stable identity and transient-layout preservation are a scoped adaptation, not all donor profile editor/defaults/import-export UI. Media-only panels remain outside this controller; generic profile actions still need exact comparisons."
         }
       ],
       "remaining": [
-        "Actual Android installation, background/process pressure, Wi-Fi/router loss and human layout/selection acceptance remain open. The newer prior APK was staged but not installed because no authorized ADB target was available; never attribute its source checks to the running phone. Complete generic workspace-management imports separately; source fixtures are not phone deployment or donor-wide parity."
+        "Actual Android installation, background/process pressure, Wi-Fi/router loss and human layout/selection acceptance remain open. The newer prior APK was staged but not installed because no authorized ADB target was available; never attribute its source checks to the running phone. Complete generic workspace-management imports separately; source fixtures are not phone deployment or donor-wide parity.",
+        "Issue #10/#3: runtime visual/scroll acceptance and remaining generic workspace dialog/action parity remain open."
       ]
     }
   ]

@@ -16,6 +16,23 @@ static String envelope(const char *id,const char *command="cell") {
   String out;serializeJson(d,out);return out;
 }
 static JsonDocument lastReply(){JsonDocument d;assert(!deserializeJson(d,WebSocketsClient::latest->sent.back()));return d;}
+static void service(bool networkReady,bool timeReady,uint32_t now,bool allowConnect=true,bool includeFull=true){
+  cloudTestMillis=now;cloudServices.service(networkReady,timeReady,now,allowConnect,includeFull);
+}
+static std::vector<unsigned> progressWrites;
+static void progress(){
+  assert(cloudServices.ioActive());
+  auto &mqtt=*PubSubClient::latest;auto &ws=*WebSocketsClient::latest;
+  const auto services=cloudServices.ioStats().services,publishes=cloudServices.ioStats().publishes;
+  const auto packets=mqtt.packets.size(),texts=ws.sent.size();
+  progressWrites.push_back(mqtt.writes);
+  // A bad callback cannot recursively run a cloud socket or insert an MQTT
+  // event into a half-written status packet. Production callback is read-only.
+  cloudServices.service(true,true,cloudTestMillis,false,false);
+  cloudServices.publishEvent("{\"recursive\":true}");
+  assert(cloudServices.ioStats().services==services&&cloudServices.ioStats().publishes==publishes);
+  assert(mqtt.packets.size()==packets&&ws.sent.size()==texts);
+}
 int main(){
   fs::FS filesystem;assert(cloudConfig.begin(filesystem));
   assert(cloudConfig.setMqtt(true,false,"broker.local",1883,"","","pakar",true));
@@ -24,8 +41,13 @@ int main(){
   cloudServices.begin("ledboard",handler,status,full,board,boot);
   auto &mqtt=*PubSubClient::latest;auto &ws=*WebSocketsClient::latest;
   assert(mqtt.bufferSize==2048);
-  cloudServices.service(true,true,1000);
+  service(true,true,1000);
   assert(mqtt.connectAttempts==1&&ws.connectAttempts==1&&fullSnapshots==1);
+#if defined(ESP32)
+  assert(mqtt.client->connectionTimeoutMs==1000); // Plain TCP is bounded independently of TLS.
+#else
+  assert(mqtt.client->connectionTimeoutMs==0); // ESP8266 timeout policy is unchanged.
+#endif
   assert(mqtt.clientIds.back()==board); // Human hostnames are not unique broker client IDs.
   bool large=false;
   for(const auto &p:mqtt.packets)if(p.topic.endsWith("/status")){assert(p.payload==statusJson&&p.retained);large=true;}
@@ -58,47 +80,123 @@ int main(){
   assert(dispatches==3&&lastReply()["code"]=="invalid_envelope");
 
   const auto previousFull=fullSnapshots,previousMqtt=mqtt.connectAttempts,previousWs=ws.connectAttempts;
-  cloudServices.service(true,true,2000,false,false);
+  service(true,true,2000,false,false);
   assert(fullSnapshots==previousFull&&mqtt.connectAttempts==previousMqtt&&ws.connectAttempts==previousWs);
   assert(mqtt.loops>=2&&ws.receives>0&&ws.pings>0&&ws.timeouts>0);
-  ws.loseTcp();cloudServices.service(true,true,3000,false,false);
+  ws.loseTcp();service(true,true,3000,false,false);
   assert(ws.connectAttempts==previousWs&&!ws.isConnected());
-  cloudServices.suspend();cloudServices.service(true,true,4000,false,false);
+  cloudServices.suspend();service(true,true,4000,false,false);
   assert(mqtt.connectAttempts==previousMqtt&&ws.connectAttempts==previousWs);
   assert(mqtt.packets.back().topic=="pakar/ledboard/availability"&&mqtt.packets.back().payload=="offline"&&mqtt.packets.back().retained);
-  cloudServices.service(true,true,12000,true,false);
+  service(true,true,12000,true,false);
   assert(mqtt.connectAttempts==previousMqtt+1&&ws.connectAttempts==previousWs+1);
   // A short stream is closed, never finished/replayed over the damaged session.
   const auto ends=mqtt.endCalls;mqtt.shortWriteLimit=20;
-  cloudServices.service(true,true,13000,false,false);
+  service(true,true,13000,false,false);
   assert(mqtt.endCalls==ends&&!mqtt.connected());
   // A zero reconnect sentinel is immediate even after the signed-half-range of
   // millis uptime. Initial/reconfigured connections must not stall for weeks.
   mqtt.shortWriteLimit=SIZE_MAX;cloudServices.suspend();
   constexpr uint32_t highUptime=0x90000000U;
-  cloudServices.service(true,true,highUptime,true,false);
+  service(true,true,highUptime,true,false);
   assert(mqtt.connected()&&mqtt.clientIds.back()==board);
   cloudServices.applyConfiguration();
-  cloudServices.service(true,true,highUptime+1,true,false);
+  service(true,true,highUptime+1,true,false);
   assert(mqtt.connected());
   auto disconnects=mqtt.disconnects;
   cloudServices.renameDevice("renamed");
   assert(mqtt.disconnects==disconnects+1);
   assert(mqtt.packets.back().topic=="pakar/ledboard/availability"&&mqtt.packets.back().payload=="offline");
-  cloudServices.service(true,true,highUptime+1000,true,false);assert(mqtt.connected());
+  service(true,true,highUptime+1000,true,false);assert(mqtt.connected());
   assert(cloudConfig.setMqtt(true,false,"broker.local",1883,"","","changed",false));
   cloudServices.applyConfiguration();
   assert(mqtt.packets.back().topic=="pakar/renamed/availability"&&mqtt.packets.back().payload=="offline");
-  cloudServices.service(true,true,highUptime+2000,true,false);assert(mqtt.connected());
-  cloudServices.service(false,true,highUptime+3000,false,false);
+  service(true,true,highUptime+2000,true,false);assert(mqtt.connected());
+  service(false,true,highUptime+3000,false,false);
   assert(mqtt.packets.back().topic=="changed/renamed/availability"&&mqtt.packets.back().payload=="offline");
-  cloudServices.service(true,true,highUptime+20000,true,false);assert(mqtt.connected());
+  service(true,true,highUptime+20000,true,false);assert(mqtt.connected());
   disconnects=mqtt.disconnects;mqtt.shortWriteLimit=0;
   cloudServices.suspend();
   assert(!mqtt.connected()&&mqtt.disconnects==disconnects); // Failed offline write leaves LWT possible.
   mqtt.shortWriteLimit=SIZE_MAX;
   cloudServices.begin("ledboard",handler,status,full,"invalid\nboard","invalid-boot");
-  cloudServices.service(true,true,highUptime+21000,true,false);
+  service(true,true,highUptime+21000,true,false);
   assert(mqtt.connected()&&mqtt.clientIds.back()!="ledboard"&&mqtt.clientIds.back().size()==32);
-  puts("Cloud services: admission/6KB streaming, stable client identity, old-topic offline/LWT, high-uptime and no-reconnect fixtures passed (network/crypto doubles, not broker/hardware proof).");
+  // A slow failed connect must wait a full interval AFTER completion, not
+  // immediately retry because its loop-entry timestamp is twenty seconds old.
+  cloudServices.suspend();mqtt.connectResult=false;mqtt.connectDurationMs=20000;
+  const auto attempts=cloudServices.mqttConnectionStats().attempts;
+  const auto failures=cloudServices.mqttConnectionStats().failures;
+  service(true,true,100000,true,false);
+  assert(cloudTestMillis==120000);
+  auto stats=cloudServices.mqttConnectionStats();
+  assert(stats.attempts==attempts+1&&stats.failures==failures+1);
+  assert(stats.lastDurationMs==20000&&stats.maxDurationMs==20000);
+  service(true,true,120001,true,false);
+  service(true,true,119000,true,false); // An older caller timestamp cannot bypass backoff.
+  service(true,true,129999,true,false);
+  assert(cloudServices.mqttConnectionStats().attempts==attempts+1);
+  mqtt.connectResult=true;mqtt.connectDurationMs=5;
+  service(true,true,130000,true,false);
+  stats=cloudServices.mqttConnectionStats();
+  assert(mqtt.connected()&&stats.attempts==attempts+2&&stats.failures==failures+1);
+  assert(stats.lastDurationMs==5&&stats.maxDurationMs==20000);
+  // Same completion-relative delay and elapsed arithmetic across millis wrap.
+  cloudServices.suspend();mqtt.connectResult=false;mqtt.connectDurationMs=20000;
+  constexpr uint32_t wrapStart=0xfffffff0U,wrapComplete=wrapStart+20000U;
+  service(true,true,wrapStart,true,false);
+  stats=cloudServices.mqttConnectionStats();assert(stats.lastDurationMs==20000);
+  const auto wrapAttempts=stats.attempts;
+  service(true,true,wrapComplete+9999U,true,false);
+  assert(cloudServices.mqttConnectionStats().attempts==wrapAttempts);
+  mqtt.connectDurationMs=0;service(true,true,wrapComplete+10000U,true,false);
+  assert(cloudServices.mqttConnectionStats().attempts==wrapAttempts+1);
+#if defined(ESP32)
+  assert(cloudConfig.setMqtt(true,true,"broker.local",8883,"","","pakar",true));
+  cloudServices.applyConfiguration();mqtt.connectResult=true;
+  service(true,true,100000,true,false);
+  assert(mqtt.connected()&&mqtt.client->connectionTimeoutMs==1000); // TLS client's TCP limit also set.
+#endif
+  mqtt.connectResult=true;mqtt.connectDurationMs=0;mqtt.writeDurationMs=0;
+  cloudServices.suspend();service(true,true,200000,true,false);assert(mqtt.connected());
+  const auto cleanBefore=cloudServices.ioStats();
+  cloudServices.suspend();
+  auto io=cloudServices.ioStats();
+  assert(io.suspendCloses==cleanBefore.suspendCloses+1&&io.cleanCloses==cleanBefore.cleanCloses+1);
+  service(true,true,200001,true,false);assert(mqtt.connected());
+  const auto configurationBefore=cloudServices.ioStats();cloudServices.applyConfiguration();
+  io=cloudServices.ioStats();
+  assert(io.configurationCloses==configurationBefore.configurationCloses+1&&io.cleanCloses==configurationBefore.cleanCloses+1);
+  service(true,true,200002,true,false);assert(mqtt.connected());
+  // Cooperate BETWEEN every real payload write, not merely yield to a different
+  // RTOS task after sending the whole6KB document. Total duration is measured.
+  const auto writesBefore=mqtt.writes;
+  mqtt.writeDurationMs=7;cloudServices.setProgressService(progress);
+  service(true,true,201002,false,false);
+  const auto payloadWrites=mqtt.writes-writesBefore;
+  assert(payloadWrites==(statusJson.length()+255)/256);
+  assert(progressWrites.size()>payloadWrites);
+  unsigned previous=writesBefore;
+  for(const auto written:progressWrites){assert(written-previous<=1);previous=written;}
+  io=cloudServices.ioStats();
+  assert(!cloudServices.ioActive()&&io.lastPublishMs==payloadWrites*7&&io.lastServiceMs==payloadWrites*7);
+  assert(io.maxPublishMs>=io.lastPublishMs&&io.maxServiceMs>=io.lastServiceMs);
+  // A short write still closes without endPublish/replay, and services pending
+  // read-only progress on the failure path while the IO guard remains active.
+  const auto failedBefore=cloudServices.ioStats();const auto endsBefore=mqtt.endCalls;
+  const auto failedWrites=mqtt.writes;progressWrites.clear();mqtt.shortWriteLimit=20;
+  service(true,true,202002,false,false);
+  io=cloudServices.ioStats();
+  assert(!mqtt.connected()&&!cloudServices.ioActive()&&mqtt.writes==failedWrites+1&&mqtt.endCalls==endsBefore);
+  assert(io.writeCloses==failedBefore.writeCloses+1&&io.uncleanCloses==failedBefore.uncleanCloses+1);
+  assert(io.lastPublishMs==7&&progressWrites.size()>=3);
+  cloudServices.setProgressService(nullptr);mqtt.shortWriteLimit=SIZE_MAX;mqtt.writeDurationMs=0;
+  cloudServices.suspend();service(true,true,203002,true,false);assert(mqtt.connected());
+  const auto fragmentBefore=cloudServices.ioStats();mqtt.publishResult=false;
+  service(true,true,204002,false,true);
+  io=cloudServices.ioStats();
+  assert(!mqtt.connected()&&io.writeCloses==fragmentBefore.writeCloses+1);
+  assert(io.uncleanCloses==fragmentBefore.uncleanCloses+1);
+  mqtt.publishResult=true;
+  puts("Cloud services: admission/6KB streaming, identity/LWT, completion-relative reconnect, cooperative nonrecursive IO and cause/duration fixtures passed (network/crypto doubles, not broker/hardware proof).");
 }

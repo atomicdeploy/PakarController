@@ -47,7 +47,11 @@ export function deviceRequest(origin,path,{form,headers={},expectedAddress,metho
     });
     const timer=setTimeout(()=>request.destroy(Error('Device request timed out; no retry')),8000);
     request.on('close',()=>clearTimeout(timer));
-    request.on('error',()=>reject(Error('Device request failed; no retry')));
+    request.on('error',error=>{
+      const code=typeof error.code==='string'&&/^[A-Z0-9_]{1,32}$/.test(error.code)?error.code:
+        error.message==='Device request timed out; no retry'?'deadline':'transport';
+      reject(Error(`Device request ${method||(body?'POST':'GET')} ${path.split('?')[0]} failed (${code}); no retry`,{cause:error}));
+    });
     if(body)request.write(body);request.end();
   });
 }

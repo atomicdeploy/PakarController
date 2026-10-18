@@ -498,6 +498,30 @@ impl PakarControllerApp {
     pub(crate) fn peer_context(&self) -> Option<&crate::capabilities::Manifest> {
         self.live_status()?.capabilities.as_ref().filter(|c| c.known())
     }
+    /// Acknowledged layout slots only; never use this for a command or live value.
+    pub(crate) fn presentation_context(&self) -> Option<&crate::capabilities::Manifest> {
+        self.presentation.context()
+    }
+    fn presentation_has_feature(&self, feature: &str) -> bool {
+        self.presentation_context().is_some_and(|c| c.has(feature))
+    }
+    fn presentation_has_table(&self) -> bool {
+        self.presentation_context().is_some_and(|c| c.table())
+    }
+    fn panel_live(&self, panel: Panel) -> bool {
+        if panel == Panel::Events { return true; }
+        if !panel.available(self.peer_context()) { return false; }
+        let required: &[&str] = match panel {
+            Panel::Table => &["table"],
+            Panel::EffectControls => &["table", "leds", "inputs", "outputs"],
+            Panel::FrontPanel => &["display", "text", "buzzer", "lcd"],
+            Panel::Hardware => &["telemetry", "inputs", "outputs"],
+            Panel::Network => &["network"],
+            Panel::Streaming => &["table", "streaming"],
+            Panel::Events => &[],
+        };
+        required.iter().all(|feature| !self.presentation_has_feature(feature) || self.has_feature(feature))
+    }
     pub(crate) fn has_feature(&self, feature: &str) -> bool {
         self.peer_context().is_some_and(|c| c.has(feature))
     }
@@ -524,9 +548,12 @@ impl PakarControllerApp {
         }
     }
     fn synchronize_context(&mut self, ctx: &egui::Context) {
-        let available: Vec<_> = Panel::ALL.into_iter().filter(|p| p.available(self.peer_context())).collect();
-        let key = self.peer_context().map(|c| format!("{:?}:{}:{}:{}", self.command_route(),
-            if self.command_route() == Some(Transport::Serial) { &self.serial_port } else { &self.base }, c.board_kind, c.name));
+        let route = self.connection_enabled.then(|| format!("{:?}:{}", self.transport,
+            if self.transport == Transport::Serial { &self.serial_port } else { &self.base }));
+        let current = self.live_status().cloned();
+        let change = self.presentation.update(route.as_deref(), current.as_ref());
+        let available: Vec<_> = Panel::ALL.into_iter().filter(|p| p.available(self.presentation_context())).collect();
+        let key = self.presentation.workspace_key();
         if key != self.active_context {
             if let Some(previous) = self.active_context.take() {
                 layout::remember_connected(&mut self.config, &self.dock, true);
@@ -546,9 +573,8 @@ impl PakarControllerApp {
             self.table.stop_pending_edits();
             self.table.selection.ids.clear(); self.cell_search.clear();
             self.table.pixel_sample = None;
-            // A title/capability refresh can change the workspace key without
-            // changing board/boot. Do not erase its confirmed mapping merely
-            // because the next optional HTTP refresh has not completed yet.
+            // Only a genuinely different selected peer changes this key. A
+            // friendly-name refresh or expired lease cannot discard user state.
             let peer = self.live_status().and_then(peer_http::Pin::from_status);
             if peer.is_none() || peer != self.mapping_peer {
                 self.mappings.clear(); self.mapping_peer = None;
@@ -563,6 +589,13 @@ impl PakarControllerApp {
             self.streaming = false; self.sampling = false;
             self.show_mapping = false; self.table.manager_open = false;
         }
+        if change.boot_changed {
+            // Same board keeps its dock/selection, but no old command, stream or
+            // pixel sample survives a new boot's authority boundary.
+            self.table.stop_pending_edits();
+            self.table.pixel_sample = None;
+            self.show_mapping = false; self.table.manager_open = false;
+        }
         // Prune even on first restore; saved panels are preferences, never evidence.
         let removed: Vec<_> = self.dock.iter_all_tabs().filter(|(_,p)| !available.contains(p)).map(|(_,p)| *p).collect();
         for panel in removed { while let Some(path) = self.dock.find_tab(&panel) { self.dock.remove_tab(path); } }
@@ -574,7 +607,7 @@ impl PakarControllerApp {
             }
             self.context_panels = available;
         }
-        if !self.has_table() {
+        if !self.presentation_has_table() {
             self.table.stop_pending_edits();
             self.table.manager_open = false; self.table.editing_order = false;
             self.show_mapping = false; self.confirm_reset = false;
@@ -586,11 +619,10 @@ impl PakarControllerApp {
                 self.streaming = false; self.sampling = false;
             }
         }
-        let title = self.live_status().map(|s| s.capabilities.as_ref().map(|c| c.title())
-            .unwrap_or_else(|| "PakarController · Discovering capabilities".into()))
+        let title = self.presentation_context().map(|c| c.title())
             .unwrap_or_else(|| "PakarController · No board connected".into());
-        let app_name = self.peer_context().and_then(|p|p.application()).map(|a|a.name.clone()).unwrap_or_else(||"PakarController".into());
-        if let Some(icon) = crate::branding::sync_peer(ctx, self.peer_context()) {
+        let app_name = self.presentation_context().and_then(|p|p.application()).map(|a|a.name.clone()).unwrap_or_else(||"PakarController".into());
+        if let Some(icon) = crate::branding::sync_peer(ctx, self.presentation_context()) {
             if let Some(tray) = &self.tray {
                 if let Err(error) = tray.set_application(&app_name, &icon) { self.record_event("Application artwork", &error); }
             }
@@ -668,6 +700,8 @@ impl PakarControllerApp {
             value["message"] = serde_json::json!(self.message);
             value["device_settings"]["message"] = serde_json::json!(self.device_settings.message);
             value["peer_capabilities"] = serde_json::json!(self.peer_context());
+            value["presentation"] = serde_json::json!(self.presentation);
+            value["messages"] = serde_json::json!(messaging::snapshot());
             value["cell_management"] = serde_json::json!({"open":self.table.manager_open,"selection":self.table.selection.ids,"additive_selection":self.config.additive_cell_selection,"animations":self.config.animate_cells,"indicators":self.config.show_cell_indicators});
             value["screenshot"] = self.capture.status();
             value["minimized"] = serde_json::json!(ctx.input(|i| i.viewport().minimized));
@@ -680,6 +714,7 @@ impl PakarControllerApp {
             value["mapping"] = serde_json::json!({"count":self.mappings.len(),"pending":self.mapping_request_pending.is_some(),"status":self.mapping_status(),"error":self.mapping_error});
             value["usb_commands_pending"] = serde_json::json!(self.serial_operations_pending);
             value["usb_command"] = serde_json::json!(self.serial_timing);
+            value["usb_snapshot"] = serde_json::json!(self.serial_capture);
             value["notifications"] = self.notification_snapshot();
             value["tray_available"] = serde_json::json!(self.tray.is_some());
             value["tray_shell"] = self.tray.as_ref().map(|tray|tray.shell_snapshot()).unwrap_or(serde_json::Value::Null);
@@ -926,7 +961,7 @@ impl PakarControllerApp {
                             .size(19.0)
                             .color(ui.visuals().selection.bg_fill),
                     );
-                    ui.strong(self.peer_context().map(|c| c.name.as_str()).filter(|s| !s.is_empty()).unwrap_or("Controller workspace"));
+                    ui.strong(self.presentation_context().map(|c| c.name.as_str()).filter(|s| !s.is_empty()).unwrap_or("Controller workspace"));
                     ui.separator();
                     badge(
                         ui,
@@ -995,14 +1030,14 @@ impl PakarControllerApp {
             }
         }
         for panel in std::mem::take(&mut self.reveal_panels) {
-            if panel.available(self.peer_context()) { layout::reveal(&mut self.dock, panel); }
+            if panel.available(self.presentation_context()) { layout::reveal(&mut self.dock, panel); }
         }
         if layout_changed {
             self.save_workspace();
         }
         // Workspace restore/menu actions occur after discovery synchronization.
         // Apply the same gate before any tab header is painted in this frame.
-        let unavailable: Vec<_> = self.dock.iter_all_tabs().filter(|(_,p)| !p.available(self.peer_context())).map(|(_,p)| *p).collect();
+        let unavailable: Vec<_> = self.dock.iter_all_tabs().filter(|(_,p)| !p.available(self.presentation_context())).map(|(_,p)| *p).collect();
         for panel in unavailable { while let Some(path) = self.dock.find_tab(&panel) { self.dock.remove_tab(path); } }
         egui::CentralPanel::default()
             .frame(egui::Frame::new().inner_margin(0))
@@ -1013,7 +1048,7 @@ impl PakarControllerApp {
                             .button(format!("{}  {}", icons::TABS, crate::ui::i18n::text("Restore workspace")))
                             .clicked()
                         {
-                            self.dock = egui_dock::DockState::new(Panel::ALL.into_iter().filter(|p| p.available(self.peer_context())).collect());
+                            self.dock = egui_dock::DockState::new(Panel::ALL.into_iter().filter(|p| p.available(self.presentation_context())).collect());
                         }
                     });
                 } else {
@@ -1075,24 +1110,30 @@ impl PakarControllerApp {
         ui::toasts::draw(&ctx);
     }
     pub fn draw_panel(&mut self, ui: &mut egui::Ui, panel: Panel) {
-        if !panel.available(self.peer_context()) { return; }
+        if !panel.available(self.presentation_context()) { return; }
+        let live = self.panel_live(panel);
         dialog::scroll_column(
             ui,
             ("panel-body", panel),
             Some(ui.available_height()),
-            |ui| match panel {
-                Panel::Table => self.draw_table(ui),
-                Panel::EffectControls => self.draw_effects(ui),
-                Panel::FrontPanel => self.draw_front_panel(ui),
-                Panel::Hardware => self.draw_hardware(ui),
-                Panel::Network => self.draw_network(ui),
-                Panel::Streaming => self.draw_streaming(ui),
-                Panel::Events => self.draw_events(ui),
+            |ui| {
+                let width = ui.available_width();
+                let body = ui.add_enabled_ui(live, |ui| match panel {
+                    Panel::Table => self.draw_table(ui),
+                    Panel::EffectControls => self.draw_effects(ui),
+                    Panel::FrontPanel => self.draw_front_panel(ui),
+                    Panel::Hardware => self.draw_hardware(ui),
+                    Panel::Network => self.draw_network(ui),
+                    Panel::Streaming => self.draw_streaming(ui),
+                    Panel::Events => self.draw_events(ui),
+                });
+                let minimum = self.presentation.panel_min_height(panel.name(), width, body.response.rect.height(), live);
+                if minimum > 0.0 { ui.set_min_height(minimum); }
             },
         );
     }
     fn draw_table(&mut self, ui: &mut egui::Ui) {
-        if !self.has_table() { return; }
+        if !self.presentation_has_table() { return; }
         self.sync_cell_selection_search();
         let snapshot = self.live_status().cloned();
         ui.horizontal(|ui| {
@@ -1106,7 +1147,7 @@ impl PakarControllerApp {
             });
         });
         ui.add_space(8.0);
-        if self.has_feature("streaming") && self.command_route()==Some(Transport::WiFi) {
+        if self.presentation_has_feature("streaming") && self.transport==Transport::WiFi {
             egui::CollapsingHeader::new("Physical pixel diagnostic")
                 .id_salt("physical-pixel-diagnostic").default_open(true)
                 .show(ui, |ui| self.draw_pixel_diagnostic(ui));
@@ -1304,7 +1345,7 @@ impl PakarControllerApp {
     }
     fn draw_effects(&mut self, ui: &mut egui::Ui) {
         let snapshot = self.live_status().cloned();
-        let modes: Vec<_> = self.peer_context().map(|c| c.modes().filter(|mode|mode.id!="snake").cloned().collect()).unwrap_or_default();
+        let modes: Vec<_> = self.presentation_context().map(|c| c.modes().filter(|mode|mode.id!="snake").cloned().collect()).unwrap_or_default();
         if !modes.is_empty() { dialog::section(ui, icons::PLAY, "Board modes", |ui| {
             ui.add_enabled_ui(snapshot.is_some(), |ui| {
                 for mode in &modes {
@@ -1335,7 +1376,7 @@ impl PakarControllerApp {
             });
         }); }
         ui.add_space(10.0);
-        if self.has_table() {
+        if self.presentation_has_table() {
         dialog::section(
             ui,
             icons::HAND_TAP,
@@ -1407,7 +1448,8 @@ impl PakarControllerApp {
     }
     pub(super) fn draw_led_settings(&mut self, ui: &mut egui::Ui) {
         let snapshot = self.live_status().cloned();
-        if self.has_feature("leds") {
+        if self.presentation_has_feature("leds") {
+        ui.add_enabled_ui(self.has_feature("leds"), |ui| {
         dialog::section(ui, icons::SPARKLE, "Strip effect", |ui| {
             if let Some(driver) = snapshot.as_ref().and_then(|s|s.capabilities.as_ref()).and_then(|c|c.led_output()) {
                 ui.weak(format!("LED driver: {}", driver.label()));
@@ -1486,11 +1528,13 @@ impl PakarControllerApp {
                 }
             });
         });
+        });
         }
     }
     pub(super) fn draw_front_panel(&mut self, ui: &mut egui::Ui) {
         let snapshot = self.live_status().cloned();
-        if self.has_feature("lcd") {
+        ui.add_enabled_ui(self.panel_live(Panel::FrontPanel), |ui| {
+        if self.presentation_has_feature("lcd") {
             if let Some(lcd) = snapshot.as_ref().and_then(|s| s.lcd.as_ref()) {
                 if let Some(lines) = lcd.confirmed_lines() {
                     dialog::section(ui, icons::TEXT_ALIGN_LEFT, "LCD display", |ui| {
@@ -1503,7 +1547,7 @@ impl PakarControllerApp {
                 }
             }
         }
-        if self.has_feature("display") {
+        if self.presentation_has_feature("display") {
         dialog::section(ui, icons::GAUGE, "Live display", |ui| {
             if let Some(s) = &snapshot {
                 if s.tm1637_segments.len() == 4 {
@@ -1542,7 +1586,7 @@ impl PakarControllerApp {
         });
         }
         ui.add_space(10.0);
-        if self.has_feature("text") {
+        if self.presentation_has_feature("text") {
         dialog::section(ui, icons::TEXT_ALIGN_LEFT, "Text", |ui| {
             ui.add_sized(
                 [ui.available_width(), 28.0],
@@ -1630,7 +1674,7 @@ impl PakarControllerApp {
         });
         }
         ui.add_space(10.0);
-        if self.has_feature("buzzer") {
+        if self.presentation_has_feature("buzzer") {
         dialog::section(ui, icons::MUSIC_NOTE, "Melodies", |ui| {
             ui.add_enabled_ui(
                 snapshot
@@ -1691,6 +1735,7 @@ impl PakarControllerApp {
                 }
             }
         }); }
+        });
     }
     pub(super) fn draw_hardware(&mut self, ui: &mut egui::Ui) {
         let Some(s) = self.live_status().cloned() else {

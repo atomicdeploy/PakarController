@@ -24,8 +24,22 @@ class CloudWebSocketClient : public WebSocketsClient {
 
 class CloudServices {
  public:
+  struct MqttConnectionStats {
+    uint32_t attempts=0,failures=0,lastDurationMs=0,maxDurationMs=0;
+  };
+  struct IoStats {
+    uint32_t services=0,lastServiceMs=0,maxServiceMs=0;
+    uint32_t publishes=0,lastPublishMs=0,maxPublishMs=0;
+    uint32_t suspendCloses=0,configurationCloses=0,cleanCloses=0,uncleanCloses=0,writeCloses=0;
+  };
   using CommandHandler = bool (*)(const String &message, String &result);
   using StatusProvider = String (*)();
+  // Loop-owner read-only serial progress only. Never call AVR/event publishers,
+  // service(), configuration changes or any other cloud I/O from this callback.
+  using ProgressService = void (*)();
+  void setProgressService(ProgressService service) { progressService_=service; }
+  bool ioActive() const { return ioDepth_!=0; }
+  const IoStats &ioStats() const { return ioStats_; }
 
   void begin(const String &deviceId, CommandHandler handler,
              StatusProvider statusProvider,StatusProvider telemetryProvider=nullptr,
@@ -40,6 +54,7 @@ class CloudServices {
 
   bool mqttConnected() { return networkReady_ && mqtt_.connected(); }
   int mqttState() { return mqtt_.state(); }
+  const MqttConnectionStats &mqttConnectionStats() const { return mqttConnectionStats_; }
   bool webSocketConnected() { return networkReady_ && webSocket_.isConnected(); }
   uint32_t mqttMessagesReceived() const { return mqttMessagesReceived_; }
   uint32_t webSocketMessagesReceived() const {
@@ -48,12 +63,16 @@ class CloudServices {
   const String &lastError() const { return lastError_; }
 
  private:
+  class IoScope;
+  void cooperate();
+  enum class CloseReason : uint8_t { Suspend, Configuration };
   static void mqttCallback(char *topic, uint8_t *payload, unsigned int length);
   static void webSocketEvent(WStype_t type, uint8_t *payload, size_t length);
   void handleCommand(const uint8_t *payload, size_t length, bool fromMqtt);
   void configureWebSocket();
   void connectMqtt(uint32_t now);
-  void closeMqtt();
+  void closeMqtt(CloseReason reason);
+  void dropMqttWrite();
   void publishTelemetry(const String &statusJson, uint32_t now,bool includeFullTelemetry);
   bool publishMqtt(const String &destination,const String &json,bool retained);
   void commandReply(bool fromMqtt,const char *code,const char *requestId,
@@ -80,6 +99,11 @@ class CloudServices {
   StatusProvider telemetryProvider_ = nullptr;
   uint32_t snapshotSequence_=0;
   uint32_t nextMqttAttemptAt_ = 0;
+  MqttConnectionStats mqttConnectionStats_;
+  IoStats ioStats_;
+  ProgressService progressService_=nullptr;
+  uint8_t ioDepth_=0;
+  bool publishActive_=false,progressActive_=false;
   uint32_t lastTelemetryAt_ = 0;
   uint32_t mqttMessagesReceived_ = 0;
   uint32_t webSocketMessagesReceived_ = 0;

@@ -66,6 +66,33 @@ void CloudWebSocketClient::serviceExistingConnection() {
 }
 
 CloudServices cloudServices;
+class CloudServices::IoScope {
+ public:
+  IoScope(CloudServices &owner,bool publishing):owner_(owner),publishing_(publishing),startedAt_(millis()) {
+    ++owner_.ioDepth_;
+    uint32_t &count=publishing?owner_.ioStats_.publishes:owner_.ioStats_.services;
+    if(count!=UINT32_MAX)++count;
+    if(publishing_)owner_.publishActive_=true;
+  }
+  ~IoScope() {
+    const uint32_t elapsed=static_cast<uint32_t>(millis()-startedAt_);
+    uint32_t &last=publishing_?owner_.ioStats_.lastPublishMs:owner_.ioStats_.lastServiceMs;
+    uint32_t &maximum=publishing_?owner_.ioStats_.maxPublishMs:owner_.ioStats_.maxServiceMs;
+    last=elapsed;if(elapsed>maximum)maximum=elapsed;
+    if(publishing_)owner_.publishActive_=false;
+    --owner_.ioDepth_;
+  }
+ private:
+  CloudServices &owner_;bool publishing_;uint32_t startedAt_;
+};
+void CloudServices::cooperate() {
+  // yield() lets other RTOS tasks run, not this loop owner's hostLink parser.
+  // Keep the callback explicit, synchronous and nonrecursive between writes.
+  if(progressService_ && !progressActive_) {
+    progressActive_=true;progressService_();progressActive_=false;
+  }
+  yield();
+}
 const char *pakarTrustAnchorPem() { return kIsrgRootX1; }
 #if !defined(ESP32)
 BearSSL::X509List &pakarTrustAnchor() { return trustAnchor; }
@@ -91,6 +118,12 @@ void CloudServices::begin(const String &deviceId, CommandHandler handler,
     telemetryBoot_=identity;
   }
 #if defined(ESP32)
+  // Arduino ESP32 3.3.12 NetworkClient/NetworkClientSecure share this
+  // millisecond TCP-connect setting. It is separate from the TLS handshake
+  // limit below; changing neither the CA nor certificate/hostname validation.
+  // DNS resolution remains synchronous and is included in measured duration.
+  plainClient_.setConnectionTimeout(1000);
+  secureClient_.setConnectionTimeout(1000);
   secureClient_.setCACert(pakarTrustAnchorPem());
   secureClient_.setHandshakeTimeout(5);
 #else
@@ -109,20 +142,33 @@ void CloudServices::begin(const String &deviceId, CommandHandler handler,
 void CloudServices::suspend() {
   networkReady_ = false;
   nextMqttAttemptAt_ = 0; // A later route generation must not inherit an aged retry deadline.
-  closeMqtt();webSocket_.disconnect();
+  closeMqtt(CloseReason::Suspend);webSocket_.disconnect();
 }
 
-void CloudServices::closeMqtt() {
+void CloudServices::closeMqtt(CloseReason reason) {
   if(mqtt_.connected()) {
+    uint32_t &cause=reason==CloseReason::Suspend?ioStats_.suspendCloses:ioStats_.configurationCloses;
+    if(cause!=UINT32_MAX)++cause;
     // The current config/name may already have changed. Publish against the
     // exact topic registered with this session's LWT, never the new identity.
+    const uint32_t uncleanBefore=ioStats_.uncleanCloses;
     const bool written=availabilityTopic_.length() &&
         publishMqtt(availabilityTopic_,String(F("offline")),true);
-    if(written) mqtt_.disconnect();
+    if(written) {
+      if(ioStats_.cleanCloses!=UINT32_MAX)++ioStats_.cleanCloses;
+      mqtt_.disconnect();
+    } else if(ioStats_.uncleanCloses==uncleanBefore && ioStats_.uncleanCloses!=UINT32_MAX)++ioStats_.uncleanCloses;
     // Otherwise drop TCP without MQTT DISCONNECT so the broker can emit LWT.
     // QoS0 write acceptance is not a broker acknowledgement.
   }
   secureClient_.stop();plainClient_.stop();availabilityTopic_=String();
+}
+void CloudServices::dropMqttWrite() {
+  // A partially written packet must close TCP without inserting DISCONNECT
+  // into its unfinished payload. Keep this cause separate from route/config.
+  if(ioStats_.writeCloses!=UINT32_MAX)++ioStats_.writeCloses;
+  if(ioStats_.uncleanCloses!=UINT32_MAX)++ioStats_.uncleanCloses;
+  secureClient_.stop();plainClient_.stop();
 }
 
 String CloudServices::topic(const __FlashStringHelper *suffix) const {
@@ -140,7 +186,7 @@ void CloudServices::renameDevice(const String &deviceId) {
 }
 
 void CloudServices::applyConfiguration() {
-  closeMqtt();
+  closeMqtt(CloseReason::Configuration);
   webSocket_.disconnect();
   webSocketConfigured_ = false;
   nextMqttAttemptAt_ = 0;
@@ -184,11 +230,17 @@ void CloudServices::connectMqtt(uint32_t now) {
       (nextMqttAttemptAt_ && static_cast<int32_t>(now - nextMqttAttemptAt_) < 0)) {
     return;
   }
-  nextMqttAttemptAt_ = now + 10000U;
   const char *clientId=BoardCore::PeerFence::boardValid(boardId_.c_str())?
       boardId_.c_str():telemetryBoot_.c_str();
-  if(!clientId[0]) {lastError_=F("Unique MQTT client identity unavailable");return;}
+  if(!clientId[0]) {
+    lastError_=F("Unique MQTT client identity unavailable");
+    nextMqttAttemptAt_=millis()+10000U;if(!nextMqttAttemptAt_)nextMqttAttemptAt_=1;
+    return;
+  }
   const String availability = topic(F("/availability"));
+  cooperate();
+  const uint32_t startedAt=millis();
+  if(mqttConnectionStats_.attempts!=UINT32_MAX)++mqttConnectionStats_.attempts;
   bool connected = false;
   if (cloudConfig.mqttUser()[0] != '\0') {
     connected = mqtt_.connect(clientId, cloudConfig.mqttUser(),
@@ -198,10 +250,21 @@ void CloudServices::connectMqtt(uint32_t now) {
     connected = mqtt_.connect(clientId, availability.c_str(), 0,
                               true, "offline");
   }
+  const uint32_t completedAt=millis();
+  mqttConnectionStats_.lastDurationMs=static_cast<uint32_t>(completedAt-startedAt);
+  if(mqttConnectionStats_.lastDurationMs>mqttConnectionStats_.maxDurationMs)
+    mqttConnectionStats_.maxDurationMs=mqttConnectionStats_.lastDurationMs;
+  // Schedule from completion, not stale loop-entry `now`: DNS/TCP/TLS may have
+  // consumed the whole interval already. Never immediately reenter a failed
+  // blocking attempt. Reserve zero as the existing immediate/reconfigured flag.
+  nextMqttAttemptAt_=completedAt+10000U;if(!nextMqttAttemptAt_)nextMqttAttemptAt_=1;
   if (!connected) {
+    if(mqttConnectionStats_.failures!=UINT32_MAX)++mqttConnectionStats_.failures;
     lastError_ = String(F("MQTT connect failed, state ")) + mqtt_.state();
+    cooperate();
     return;
   }
+  cooperate();
   availabilityTopic_=availability;
   if(availabilityTopic_.length()!=availability.length()) {
     secureClient_.stop();plainClient_.stop();availabilityTopic_=String();
@@ -209,28 +272,34 @@ void CloudServices::connectMqtt(uint32_t now) {
   }
   lastError_ = String();
   mqtt_.publish(availability.c_str(), "online", true);
+  cooperate();
   const String command = topic(F("/command"));
   mqtt_.subscribe(command.c_str());
+  cooperate();
 }
 
 bool CloudServices::publishMqtt(const String &destination,const String &json,bool retained) {
   // PubSubClient's publish() buffers the entire payload. beginPublish streams a
   // bounded JSON snapshot without increasing the shared 2048-byte RX buffer.
-  if (!mqtt_.connected() || json.length()>16384 || destination.length()>192) return false;
+  if (publishActive_ || progressActive_ || !mqtt_.connected() || json.length()>16384 || destination.length()>192) return false;
+  IoScope io(*this,true);
+  cooperate();
   if (!mqtt_.beginPublish(destination.c_str(),json.length(),retained)) {
-    secureClient_.stop();plainClient_.stop();return false;
+    dropMqttWrite();cooperate();return false;
   }
+  cooperate();
   for(size_t offset=0;offset<json.length();offset+=256) {
     const size_t bytes=min<size_t>(256,json.length()-offset);
     if(mqtt_.write(reinterpret_cast<const uint8_t*>(json.c_str()+offset),bytes)!=bytes) {
       // A partially written PUBLISH cannot be repaired with another packet or
       // replayed. Drop TCP directly; MQTT DISCONNECT would corrupt its payload.
-      secureClient_.stop();plainClient_.stop();return false;
+      dropMqttWrite();cooperate();return false;
     }
-    yield();
+    cooperate();
   }
   // Upstream endPublish() is not a broker PUBACK (QoS0); this is write evidence.
-  return mqtt_.endPublish()==1;
+  const bool written=mqtt_.endPublish()==1;
+  cooperate();return written;
 }
 
 void CloudServices::publishTelemetry(const String &statusJson, uint32_t now,bool includeFullTelemetry) {
@@ -246,12 +315,14 @@ void CloudServices::publishTelemetry(const String &statusJson, uint32_t now,bool
     }
   }
   if (webSocket_.isConnected()) {
+    cooperate();
     webSocket_.sendTXT(statusJson.c_str());
+    cooperate();
   }
   if(includeFullTelemetry && telemetryProvider_ && (mqtt_.connected() || webSocket_.isConnected())) {
     const String full=telemetryProvider_();
     if(full.length()>16384) {lastError_=F("Telemetry exceeds bounded snapshot size");return;}
-    if(webSocket_.isConnected()) webSocket_.sendTXT(full.c_str());
+    if(webSocket_.isConnected()) {cooperate();webSocket_.sendTXT(full.c_str());cooperate();}
     if(mqtt_.connected() && telemetryBoot_.length()) {
       // Preserve donor /status consumers. Full snapshots use bounded packets,
       // not a heap-heavy enlarged MQTT buffer. Reassemble only matching complete
@@ -288,8 +359,10 @@ void CloudServices::publishTelemetry(const String &statusJson, uint32_t now,bool
         part["index"]=i;part["count"]=count;part["total_bytes"]=full.length();
         part["sha256"]=hex;part["encoding"]="base64";part["data"]=encoded;
         String packet;serializeJson(part,packet);
-        if(!mqtt_.publish(destination.c_str(),packet.c_str(),false)) {lastError_=F("Telemetry fragment publish failed");break;}
-        yield();
+        cooperate();
+        const bool written=mqtt_.publish(destination.c_str(),packet.c_str(),false);
+        if(!written) {dropMqttWrite();lastError_=F("Telemetry fragment publish failed");cooperate();break;}
+        cooperate();
       }
     }
   }
@@ -297,6 +370,8 @@ void CloudServices::publishTelemetry(const String &statusJson, uint32_t now,bool
 
 void CloudServices::service(bool networkReady, bool timeReady, uint32_t now,
                             bool allowConnect,bool includeFullTelemetry) {
+  if(ioActive() || progressActive_)return;
+  IoScope io(*this,false);
   if (!networkReady) {
     if (networkReady_) suspend(); // Drop stale cloud sessions once per link loss.
     return;
@@ -305,12 +380,14 @@ void CloudServices::service(bool networkReady, bool timeReady, uint32_t now,
   if (cloudConfig.mqttEnabled() &&
       (!cloudConfig.mqttTls() || timeReady)) {
     if(allowConnect) connectMqtt(now);
-    if(mqtt_.connected()) mqtt_.loop();
+    if(mqtt_.connected()) {cooperate();mqtt_.loop();cooperate();}
   }
   if (webSocketConfigured_ &&
       (!cloudConfig.webSocketTls() || timeReady)) {
+    cooperate();
     if(allowConnect) webSocket_.loop();
     else webSocket_.serviceExistingConnection();
+    cooperate();
   }
   const uint32_t interval =
       static_cast<uint32_t>(cloudConfig.telemetrySeconds()) * 1000U;
@@ -392,6 +469,7 @@ void CloudServices::mqttCallback(char *, uint8_t *payload,
 }
 
 void CloudServices::publishEvent(const String &event) {
+  if(progressActive_ || publishActive_) {lastError_=F("Recursive cloud event publication refused; not replayed");return;}
   if (mqtt_.connected()) {
     const String destination = topic(F("/event"));
     if(!publishMqtt(destination,event,false))lastError_=F("MQTT event write failed; not replayed");

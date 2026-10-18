@@ -13,6 +13,7 @@ enum class Interface : uint8_t { None, Wifi, Ethernet };
 struct State {
   Interface selected = Interface::None;
   IPAddress address, gateway, resolver;
+  uint32_t routeChanges=0,resolverChanges=0;
   bool ethernetDhcp = true;
 #if defined(ARDUINO_ARCH_ESP32)
   PakarS3::EthernetPort ethernet;
@@ -48,7 +49,9 @@ inline IPAddress dnsIP(uint8_t index = 0) {
 }
 // Returns a route-generation change, including ready->ready interface/address
 // changes. The loop owner then closes old cloud sessions exactly once; commands
-// are never replayed on the new route. No setting/flash write occurs here.
+// are never replayed on the new route. Resolver-only changes affect FUTURE DNS
+// lookups, not established TCP sessions: do not tear down working MQTT/WS for
+// DHCP/RDNSS DNS refreshes. No setting/flash write occurs here.
 inline bool service() {
   auto &s = state();
   Interface next = wifiReady() ? Interface::Wifi : Interface::None;
@@ -62,8 +65,10 @@ inline bool service() {
     gateway = ethernet().gatewayIP(); resolver = ethernet().dnsIP(0);
   }
 #endif
+  if(resolver!=s.resolver && s.resolverChanges!=UINT32_MAX)++s.resolverChanges;
+  s.resolver=resolver;
   const bool changed = next != s.selected || address != s.address ||
-      gateway != s.gateway || resolver != s.resolver;
+      gateway != s.gateway;
   if (!changed) return false;
 #if defined(ARDUINO_ARCH_ESP32)
   const bool routeAccepted = next == Interface::Ethernet ? ethernet().makeDefault() :
@@ -76,6 +81,7 @@ inline bool service() {
   }
 #endif
   s.selected = next; s.address = address; s.gateway = gateway; s.resolver = resolver;
+  if(s.routeChanges!=UINT32_MAX)++s.routeChanges;
   return true;
 }
 inline void serviceDns(uint32_t now, bool immediate = false) {

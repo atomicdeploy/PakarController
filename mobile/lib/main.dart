@@ -16,6 +16,7 @@ import 'table_workspace.dart';
 import 'connection_preferences.dart';
 import 'cell_search.dart';
 import 'peer_context.dart';
+import 'panel_inventory.dart';
 import 'application_artwork.dart';
 import 'device_settings_page.dart';
 import 'devices_page.dart';
@@ -69,6 +70,7 @@ class _ControlShellState extends State<ControlShell>
   final mirror = PeripheralMirror();
   DeviceStatus? status;
   DeviceStatus? presented;
+  final panelInventory = PanelInventory();
   final workspaces = <String, TableWorkspace>{};
   final pixelWorkspaces = <String, PixelDiagnosticWorkspace>{};
   String? workspaceBoard;
@@ -109,6 +111,7 @@ class _ControlShellState extends State<ControlShell>
         if (observedEndpoint != api.baseUrl) {
           setState(() {
             presented = null;
+            panelInventory.clear();
             mapping = CellMap(physical: const [], names: const []);
           });
         }
@@ -350,6 +353,7 @@ class _ControlShellState extends State<ControlShell>
       workspaces.putIfAbsent(board, () => _ownWorkspace(TableWorkspace()));
     }
     final bootChanged = presented?.json['boot_id'] != value.json['boot_id'];
+    panelInventory.observe(value);
     workspaceBoard = board;
     observedAge = Stopwatch()..start();
     observedEndpoint = api.baseUrl;
@@ -362,7 +366,7 @@ class _ControlShellState extends State<ControlShell>
       presented = value;
       if (incident != null) message = 'Live device synchronized';
       incident = null;
-      if (changed || !value.peer.table) {
+      if (changed) {
         mapping = CellMap(physical: const [], names: const []);
       }
       if (changed || bootChanged || !value.peer.table) mappingFresh = false;
@@ -468,7 +472,10 @@ class _ControlShellState extends State<ControlShell>
     liveRetry?.cancel();
     resumeRead?.cancel();
     _revoke('Disconnected');
-    setState(() => presented = null);
+    setState(() {
+      presented = null;
+      panelInventory.clear();
+    });
     final previous = live;
     live = null;
     await previous?.cancel();
@@ -731,9 +738,10 @@ class _ControlShellState extends State<ControlShell>
 
     final pages = <(String, String, IconData)>[
       ('overview', 'Overview', PakarIcons.broadcast),
-      if (peer.table) ('table', 'Table', PakarIcons.gridFour),
-      if (peer.frontPanel) ('front-panel', 'Front panel', PakarIcons.gauge),
-      if (peer.has('telemetry') || peer.has('network'))
+      if (panelInventory.has('table')) ('table', 'Table', PakarIcons.gridFour),
+      if (panelInventory.frontPanel)
+        ('front-panel', 'Front panel', PakarIcons.gauge),
+      if (panelInventory.has('telemetry') || panelInventory.has('network'))
         ('hardware', 'Hardware', PakarIcons.circuitry),
       if (peer.known) ('device-settings', 'Device settings', PakarIcons.gear),
       ('connection', 'Connection', PakarIcons.gear),
@@ -755,7 +763,8 @@ class _ControlShellState extends State<ControlShell>
             'table' => TablePage(
               key: ValueKey('table:$workspaceBoard'),
               status: presented,
-              connected: status != null && foreground,
+              connected: status?.peer.table == true && foreground,
+              layoutAcknowledged: panelInventory.has('table'),
               mappingCurrent: mappingFresh,
               workspace: workspaces[workspaceBoard],
               mapping: mapping,
@@ -768,6 +777,8 @@ class _ControlShellState extends State<ControlShell>
               ignoring: status == null || !foreground,
               child: FrontPanelPage(
                 status: presented,
+                seenFeatures: panelInventory.features,
+                connected: status != null && foreground,
                 command: scoped,
                 mirror: mirror,
               ),
@@ -775,6 +786,7 @@ class _ControlShellState extends State<ControlShell>
             'hardware' => HardwarePage(
               key: ValueKey('hardware:$workspaceBoard'),
               status: status,
+              inventory: panelInventory,
             ),
             'device-settings' => IgnorePointer(
               key: ValueKey('device-settings:$owner:$workspaceBoard'),
@@ -818,7 +830,7 @@ class _ControlShellState extends State<ControlShell>
                     ),
             _ => BoardOverview(
               key: ValueKey('overview:$workspaceBoard'),
-              status: status,
+              status: presented,
             ),
           },
       ],
@@ -999,9 +1011,17 @@ class _ControlShellState extends State<ControlShell>
               child: Column(
                 children: [
                   Expanded(child: body),
-                  if(status!=null&&(status!.peer.has('ota')||status!.peer.has('isp')))
-                  if(FirmwareProgress.observed(status!) case final progress? when progress.active)
-                    Padding(padding:const EdgeInsets.symmetric(horizontal:16,vertical:8),child:FirmwareProgressView(progress)),
+                  if (status != null &&
+                      (status!.peer.has('ota') || status!.peer.has('isp')))
+                    if (FirmwareProgress.observed(status!) case final progress?
+                        when progress.active)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: FirmwareProgressView(progress),
+                      ),
                   StatusBar(status: status, message: message),
                 ],
               ),
@@ -1064,6 +1084,7 @@ class TablePage extends StatefulWidget {
     this.workspace,
     this.connected = true,
     this.mappingCurrent = true,
+    this.layoutAcknowledged = false,
   });
   final DeviceStatus? status;
   final CellMap mapping;
@@ -1072,6 +1093,7 @@ class TablePage extends StatefulWidget {
   final TableWorkspace? workspace;
   final bool connected;
   final bool mappingCurrent;
+  final bool layoutAcknowledged;
 
   @override
   State<TablePage> createState() => _TablePageState();
@@ -1097,15 +1119,39 @@ class _TablePageState extends State<TablePage> {
   bool applying = false;
   bool outputPending = false;
   String? batchMessage;
+  final seenModes = <PeerMode>[];
+  String? seenDriver, seenOutputMode;
+  bool? seenOutputEnabled;
+
+  void _rememberLayout() {
+    for (final mode in status?.peer.modes ?? const <PeerMode>[]) {
+      final index = seenModes.indexWhere((known) => known.id == mode.id);
+      if (index < 0) {
+        seenModes.add(mode);
+      } else {
+        seenModes[index] = mode;
+      }
+    }
+    seenDriver = status?.peer.ledOutput?.label ?? seenDriver;
+    seenOutputEnabled = status?.ledOutputEnabled ?? seenOutputEnabled;
+    seenOutputMode = status?.ledOutputMode ?? seenOutputMode;
+  }
 
   @override
   void initState() {
     super.initState();
+    _rememberLayout();
     try {
       selection = parseCellSearch(query.text);
     } on FormatException catch (error) {
       searchError = error.message;
     }
+  }
+
+  @override
+  void didUpdateWidget(covariant TablePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _rememberLayout();
   }
 
   @override
@@ -1218,7 +1264,8 @@ class _TablePageState extends State<TablePage> {
   }
 
   @override
-  Widget build(BuildContext context) => status?.peer.table != true
+  Widget build(BuildContext context) =>
+      status?.peer.table != true && !widget.layoutAcknowledged
       ? const Center(child: Text('No acknowledged table'))
       : PageStorage(
           bucket: workspace.bucket,
@@ -1266,21 +1313,27 @@ class _TablePageState extends State<TablePage> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  for (final mode in status!.peer.modes)
+                  for (final mode in seenModes)
                     ChoiceChip(
                       label: Text(mode.label),
                       selected: status!.mode == mode.id,
-                      onSelected: widget.connected
+                      onSelected:
+                          widget.connected &&
+                              status!.peer.modes.any(
+                                (current) => current.id == mode.id,
+                              )
                           ? (_) => command('/api/mode', {'value': mode.id})
                           : null,
                     ),
                 ],
               ),
               const SizedBox(height: 12),
-              if (status!.peer.ledOutput != null)
-                Text('LED driver: ${status!.peer.ledOutput!.label}',
-                    style: Theme.of(context).textTheme.bodySmall),
-              if (status!.ledOutputEnabled != null)
+              if (seenDriver != null)
+                Text(
+                  'LED driver: $seenDriver',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              if (seenOutputEnabled != null)
                 SwitchListTile.adaptive(
                   title: const Text('LED output service'),
                   subtitle: SizedBox(
@@ -1292,12 +1345,15 @@ class _TablePageState extends State<TablePage> {
                       maxLines: 2,
                     ),
                   ),
-                  value: status!.ledOutputEnabled!,
-                  onChanged: !widget.connected || outputPending
+                  value: status!.ledOutputEnabled ?? seenOutputEnabled!,
+                  onChanged:
+                      !widget.connected ||
+                          outputPending ||
+                          status!.ledOutputEnabled == null
                       ? null
                       : setOutputEnabled,
                 ),
-              if (status!.ledOutputMode != null) ...[
+              if (seenOutputMode != null) ...[
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -1306,13 +1362,20 @@ class _TablePageState extends State<TablePage> {
                     for (final mode in const ['static', 'effects'])
                       ChoiceChip(
                         label: Text(mode == 'static' ? 'Static' : 'Effects'),
-                        selected: status!.ledOutputMode == mode,
-                        onSelected: !widget.connected || outputPending
+                        selected:
+                            (status!.ledOutputMode ?? seenOutputMode) == mode,
+                        onSelected:
+                            !widget.connected ||
+                                outputPending ||
+                                status!.ledOutputMode == null
                             ? null
                             : (_) => setOutputMode(mode),
                       ),
                     OutlinedButton(
-                      onPressed: !widget.connected || outputPending
+                      onPressed:
+                          !widget.connected ||
+                              outputPending ||
+                              status!.ledOutputMode == null
                           ? null
                           : rainbowTest,
                       child: const Text('Rainbow test'),
@@ -1322,7 +1385,7 @@ class _TablePageState extends State<TablePage> {
                 SizedBox(
                   height: 36,
                   child: Text(
-                    status!.ledOutputMode == 'static'
+                    (status!.ledOutputMode ?? seenOutputMode) == 'static'
                         ? 'Static cells: six matching pixels. Rainbow test animates explicitly.'
                         : 'Effects: animated output enabled explicitly.',
                     style: Theme.of(context).textTheme.bodySmall,
@@ -1681,10 +1744,14 @@ class FrontPanelPage extends StatefulWidget {
     required this.status,
     required this.command,
     this.mirror,
+    this.seenFeatures = const {},
+    this.connected = true,
   });
   final DeviceStatus? status;
   final Command command;
   final PeripheralMirror? mirror;
+  final Set<String> seenFeatures;
+  final bool connected;
   @override
   State<FrontPanelPage> createState() => _FrontPanelPageState();
 }
@@ -1696,6 +1763,33 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
   bool forceScroll = false;
   String? selectedCue;
   bool audioPending = false;
+  List<String> seenCues = const [];
+  bool seenPanelMirror = false,
+      seenSegmentsMirror = false,
+      seenBuzzerMirror = false;
+
+  bool shown(String feature) =>
+      widget.seenFeatures.contains(feature) ||
+      widget.status?.peer.has(feature) == true;
+  bool ready(String feature) =>
+      widget.connected && widget.status?.peer.has(feature) == true;
+
+  @override
+  void initState() {
+    super.initState();
+    _rememberCues();
+  }
+
+  @override
+  void didUpdateWidget(covariant FrontPanelPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _rememberCues();
+  }
+
+  void _rememberCues() {
+    final current = widget.status?.audioCues;
+    if (current != null && current.isNotEmpty) seenCues = current;
+  }
 
   Future<void> sendCue(String cue) async {
     if (audioPending || widget.status?.audioCues.contains(cue) != true) return;
@@ -1730,7 +1824,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
       ),
       const SizedBox(height: 12),
       if (widget.mirror != null) _mirrorControls(widget.mirror!),
-      if (widget.mirror?.panelEnabled == true && widget.mirror!.panelAvailable)
+      if (widget.mirror?.panelEnabled == true && seenPanelMirror)
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -1752,7 +1846,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                       : 'Board owns keys',
                 ),
                 const SizedBox(height: 12),
-                if (widget.status?.peer.has('inputs') == true)
+                if (shown('inputs'))
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -1760,7 +1854,9 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                       for (var i = 0; i < 9; i++)
                         Chip(
                           avatar: Icon(
-                            i == 8
+                            !ready('inputs')
+                                ? Icons.help_outline
+                                : i == 8
                                 ? (widget.status?.json['input_9'] == true
                                       ? Icons.radio_button_checked
                                       : Icons.radio_button_unchecked)
@@ -1773,7 +1869,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                         ),
                     ],
                   ),
-                if (widget.status?.peer.has('outputs') == true)
+                if (shown('outputs'))
                   Wrap(
                     spacing: 8,
                     children: [
@@ -1783,7 +1879,9 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                             Icons.circle,
                             size: 12,
                             color:
-                                (widget.status!.activeOutputs & (1 << i)) != 0
+                                ready('outputs') &&
+                                    (widget.status!.activeOutputs & (1 << i)) !=
+                                        0
                                 ? Theme.of(context).colorScheme.secondary
                                 : Theme.of(context).colorScheme.outline,
                           ),
@@ -1795,7 +1893,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
             ),
           ),
         ),
-      if (widget.status?.lcdLines.isNotEmpty == true)
+      if (shown('lcd'))
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -1807,7 +1905,10 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
-                for (final line in widget.status!.lcdLines)
+                for (final line
+                    in widget.status?.lcdLines.isNotEmpty == true
+                        ? widget.status!.lcdLines
+                        : const ['Display unavailable', '                '])
                   Text(
                     line,
                     textDirection: TextDirection.ltr,
@@ -1817,94 +1918,108 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
             ),
           ),
         ),
-      if (widget.status?.peer.has('display') == true &&
-          widget.mirror?.segmentsEnabled != false)
+      if (shown('display') && widget.mirror?.segmentsEnabled != false)
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child:
-                (widget.mirror?.segments ?? widget.status!.segments).length == 4
-                ? SevenSegmentPreview(
-                    segments:
-                        widget.mirror?.segments ?? widget.status!.segments,
-                    brightness:
-                        widget.mirror?.brightness ??
-                        widget.status!.segmentBrightness,
-                    active: true,
-                  )
-                : const Text('Display state unavailable'),
+            child: SizedBox(
+              height: 120,
+              child:
+                  (widget.mirror?.segments ??
+                              widget.status?.segments ??
+                              const [])
+                          .length ==
+                      4
+                  ? SevenSegmentPreview(
+                      segments:
+                          widget.mirror?.segments ?? widget.status!.segments,
+                      brightness:
+                          widget.mirror?.brightness ??
+                          widget.status!.segmentBrightness,
+                      active: ready('display'),
+                    )
+                  : const Center(child: Text('Display state unavailable')),
+            ),
           ),
         ),
-      if (widget.status?.peer.has('text') == true)
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                TextField(
-                  controller: text,
-                  maxLength: 40,
-                  decoration: const InputDecoration(labelText: 'Marquee text'),
-                ),
-                DropdownButtonFormField<String>(
-                  initialValue: repeat,
-                  decoration: const InputDecoration(labelText: 'Repeat'),
-                  items: const [
-                    DropdownMenuItem(value: 'once', child: Text('Once')),
-                    DropdownMenuItem(value: 'loop', child: Text('Loop')),
-                    DropdownMenuItem(
-                      value: 'interval',
-                      child: Text('Interval (5 seconds)'),
-                    ),
-                  ],
-                  onChanged: (value) =>
-                      setState(() => repeat = value ?? 'once'),
-                ),
-                CheckboxListTile(
-                  title: const Text('Scroll short text'),
-                  value: forceScroll,
-                  onChanged: (value) =>
-                      setState(() => forceScroll = value ?? false),
-                ),
-                Row(
+      if (shown('text'))
+        IgnorePointer(
+          ignoring: !ready('text'),
+          child: Opacity(
+            opacity: ready('text') ? 1 : .5,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
                   children: [
-                    Expanded(
-                      child: Slider(
-                        value: speed,
-                        min: 80,
-                        max: 1000,
-                        divisions: 46,
-                        label: '${speed.round()} ms',
-                        onChanged: (value) => setState(() => speed = value),
+                    TextField(
+                      controller: text,
+                      maxLength: 40,
+                      decoration: const InputDecoration(
+                        labelText: 'Marquee text',
                       ),
                     ),
-                    FilledButton.icon(
-                      onPressed: widget.status == null
-                          ? null
-                          : () => widget.command('/api/display', {
-                              'text': text.text,
-                              'speed_ms': '${speed.round()}',
-                              'hold_ms': '1500',
-                              'repeat': repeat,
-                              'force_scroll': '$forceScroll',
-                              'interval_seconds': '5',
-                            }),
-                      icon: const Icon(PakarIcons.play),
-                      label: const Text('Present'),
+                    DropdownButtonFormField<String>(
+                      initialValue: repeat,
+                      decoration: const InputDecoration(labelText: 'Repeat'),
+                      items: const [
+                        DropdownMenuItem(value: 'once', child: Text('Once')),
+                        DropdownMenuItem(value: 'loop', child: Text('Loop')),
+                        DropdownMenuItem(
+                          value: 'interval',
+                          child: Text('Interval (5 seconds)'),
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => repeat = value ?? 'once'),
+                    ),
+                    CheckboxListTile(
+                      title: const Text('Scroll short text'),
+                      value: forceScroll,
+                      onChanged: (value) =>
+                          setState(() => forceScroll = value ?? false),
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Slider(
+                            value: speed,
+                            min: 80,
+                            max: 1000,
+                            divisions: 46,
+                            label: '${speed.round()} ms',
+                            onChanged: (value) => setState(() => speed = value),
+                          ),
+                        ),
+                        FilledButton.icon(
+                          onPressed: !ready('text')
+                              ? null
+                              : () => widget.command('/api/display', {
+                                  'text': text.text,
+                                  'speed_ms': '${speed.round()}',
+                                  'hold_ms': '1500',
+                                  'repeat': repeat,
+                                  'force_scroll': '$forceScroll',
+                                  'interval_seconds': '5',
+                                }),
+                          icon: const Icon(PakarIcons.play),
+                          label: const Text('Present'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       const SizedBox(height: 12),
-      if (widget.status?.audioCues.isNotEmpty == true) _melodyControls(),
+      if (shown('buzzer') && seenCues.isNotEmpty) _melodyControls(),
     ],
   );
 
   Widget _melodyControls() {
-    final cues = widget.status!.audioCues;
+    final cues = seenCues;
     final cue = cues.contains(selectedCue) ? selectedCue! : cues.first;
     return Card(
       child: Padding(
@@ -1923,13 +2038,18 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                 for (final item in cues)
                   DropdownMenuItem(value: item, child: Text(item)),
               ],
-              onChanged: audioPending
+              onChanged: audioPending || !ready('buzzer')
                   ? null
                   : (value) => setState(() => selectedCue = value),
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: audioPending ? null : () => sendCue(cue),
+              onPressed:
+                  audioPending ||
+                      !ready('buzzer') ||
+                      widget.status?.audioCues.contains(cue) != true
+                  ? null
+                  : () => sendCue(cue),
               icon: const Icon(PakarIcons.musicNote),
               label: Text(audioPending ? 'Sending cue…' : 'Send melody'),
             ),
@@ -1939,97 +2059,102 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
     );
   }
 
-  Widget _mirrorControls(PeripheralMirror mirror) => Card(
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              'Mirror on this phone',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-          ),
-          if (mirror.panelAvailable)
-            SwitchListTile.adaptive(
-              title: const Text('Front panel'),
-              subtitle: const Text('Live menu, ownership and physical keys'),
-              value: mirror.panelEnabled,
-              onChanged: mirror.setPanel,
-            ),
-          if (mirror.segmentsAvailable)
-            SwitchListTile.adaptive(
-              title: const Text('7-segment display'),
-              subtitle: const Text(
-                'Actual segment masks, decimal points and brightness',
-              ),
-              value: mirror.segmentsEnabled,
-              onChanged: mirror.setSegments,
-            ),
-          if (mirror.buzzerAvailable) ...[
-            SwitchListTile.adaptive(
-              title: const Text('Exact-tone buzzer'),
-              subtitle: const Text(
-                'Phone speaker · live AVR frequency and cadence · foreground only',
-              ),
-              value: mirror.buzzerEnabled,
-              onChanged: mirror.setBuzzer,
-            ),
-            SwitchListTile.adaptive(
-              title: const Text('Follow board Silent mode'),
-              subtitle: const Text(
-                'Otherwise phone audio remains independent of the physical buzzer',
-              ),
-              value: mirror.followBoardMute,
-              onChanged: mirror.setFollowBoardMute,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  const Text('Phone volume'),
-                  Expanded(
-                    child: Slider(
-                      value: mirror.volume,
-                      label: '${(mirror.volume * 100).round()}%',
-                      divisions: 20,
-                      onChanged: mirror.setVolume,
-                    ),
-                  ),
-                  Text('${(mirror.volume * 100).round()}%'),
-                ],
+  Widget _mirrorControls(PeripheralMirror mirror) {
+    seenPanelMirror |= mirror.panelAvailable;
+    seenSegmentsMirror |= mirror.segmentsAvailable;
+    seenBuzzerMirror |= mirror.buzzerAvailable;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                'Mirror on this phone',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
             ),
-            if (mirror.buzzerEnabled)
+            if (seenPanelMirror)
+              SwitchListTile.adaptive(
+                title: const Text('Front panel'),
+                subtitle: const Text('Live menu, ownership and physical keys'),
+                value: mirror.panelEnabled,
+                onChanged: mirror.setPanel,
+              ),
+            if (seenSegmentsMirror)
+              SwitchListTile.adaptive(
+                title: const Text('7-segment display'),
+                subtitle: const Text(
+                  'Actual segment masks, decimal points and brightness',
+                ),
+                value: mirror.segmentsEnabled,
+                onChanged: mirror.setSegments,
+              ),
+            if (seenBuzzerMirror) ...[
+              SwitchListTile.adaptive(
+                title: const Text('Exact-tone buzzer'),
+                subtitle: const Text(
+                  'Phone speaker · live AVR frequency and cadence · foreground only',
+                ),
+                value: mirror.buzzerEnabled,
+                onChanged: mirror.setBuzzer,
+              ),
+              SwitchListTile.adaptive(
+                title: const Text('Follow board Silent mode'),
+                subtitle: const Text(
+                  'Otherwise phone audio remains independent of the physical buzzer',
+                ),
+                value: mirror.followBoardMute,
+                onChanged: mirror.setFollowBoardMute,
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TextButton.icon(
-                  onPressed: () => mirror.setBuzzer(false),
-                  icon: const Icon(Icons.volume_off_outlined),
-                  label: const Text('Stop phone audio'),
+                child: Row(
+                  children: [
+                    const Text('Phone volume'),
+                    Expanded(
+                      child: Slider(
+                        value: mirror.volume,
+                        label: '${(mirror.volume * 100).round()}%',
+                        divisions: 20,
+                        onChanged: mirror.setVolume,
+                      ),
+                    ),
+                    Text('${(mirror.volume * 100).round()}%'),
+                  ],
                 ),
               ),
-          ] else if (widget.status?.peer.has('buzzer') == true)
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'Exact-tone mirroring awaits the AVR timestamp capability acknowledgment.',
+              if (mirror.buzzerEnabled)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: TextButton.icon(
+                    onPressed: () => mirror.setBuzzer(false),
+                    icon: const Icon(Icons.volume_off_outlined),
+                    label: const Text('Stop phone audio'),
+                  ),
+                ),
+            ] else if (shown('buzzer'))
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Exact-tone mirroring awaits the AVR timestamp capability acknowledgment.',
+                ),
               ),
-            ),
-          if (mirror.failure != null)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                mirror.failure!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+            if (mirror.failure != null)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  mirror.failure!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class SevenSegmentPreview extends StatelessWidget {
@@ -2115,8 +2240,9 @@ class SegmentPainter extends CustomPainter {
 }
 
 class HardwarePage extends StatelessWidget {
-  const HardwarePage({super.key, required this.status});
+  const HardwarePage({super.key, required this.status, this.inventory});
   final DeviceStatus? status;
+  final PanelInventory? inventory;
 
   @override
   Widget build(BuildContext context) {
@@ -2130,12 +2256,15 @@ class HardwarePage extends StatelessWidget {
         ? '0x${(status!.json[key] as int).toRadixString(16).padLeft(2, '0')}'
         : 'Unavailable';
     final values = [
-      if (status?.peer.known == true &&
-          status?.json.containsKey('avr_online') == true)
+      if (inventory?.avrObserved == true ||
+          status?.peer.known == true &&
+              status?.json.containsKey('avr_online') == true)
         ('AVR', fact('avr_online', 'Online', 'Offline'), PakarIcons.cpu),
-      if (status?.peer.has('display') == true)
+      if (inventory?.has('display') == true ||
+          status?.peer.has('display') == true)
         ('TM1637', fact('tm1637_ack', 'Ready', 'No ACK'), PakarIcons.gauge),
-      if (status?.peer.has('network') == true) ...[
+      if (inventory?.has('network') == true ||
+          status?.peer.has('network') == true) ...[
         (
           'mDNS',
           fact('mdns_started', 'Started', 'Stopped'),
@@ -2153,9 +2282,11 @@ class HardwarePage extends StatelessWidget {
           PakarIcons.clock,
         ),
       ],
-      if (status?.peer.has('inputs') == true)
+      if (inventory?.has('inputs') == true ||
+          status?.peer.has('inputs') == true)
         ('Inputs', mask('active_inputs'), PakarIcons.keyboard),
-      if (status?.peer.has('outputs') == true)
+      if (inventory?.has('outputs') == true ||
+          status?.peer.has('outputs') == true)
         ('Outputs', mask('active_outputs'), PakarIcons.lightning),
     ];
     if (values.isEmpty) {

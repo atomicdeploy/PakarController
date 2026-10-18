@@ -9,6 +9,91 @@ import 'package:pakarcontroller/api.dart';
 import 'package:pakarcontroller/lan_resolver.dart';
 
 void main() {
+  test('Concurrent status consumers join one read, but a replacement owner does not', () async {
+    final replies = <Completer<http.Response>>[];
+    final api = PakarApi(
+      client: MockClient((_) {
+        final next = Completer<http.Response>();
+        replies.add(next);
+        return next.future;
+      }),
+    );
+    final first = api.status(), joined = api.status();
+    expect(identical(first, joined), true);
+    await Future<void>.delayed(Duration.zero);
+    expect(replies, hasLength(1));
+    final retired = expectLater(first, throwsA(isA<StaleConnection>()));
+    api.baseUrl = 'http://replacement.local';
+    final replacement = api.status();
+    expect(identical(first, replacement), false);
+    await Future<void>.delayed(Duration.zero);
+    expect(replies, hasLength(2));
+    replies[0].complete(http.Response('{"hostname":"ledboard"}', 200));
+    await retired;
+    replies[1].complete(http.Response('{"hostname":"replacement"}', 200));
+    expect((await replacement).hostname, 'replacement');
+    await api.close();
+  });
+  test(
+    'A write retires the pre-command shared read before post-ACK readback',
+    () async {
+      final pending = Completer<http.Response>();
+      var reads = 0;
+      final api = PakarApi(
+        client: MockClient((request) async {
+          if (request.method == 'POST') return http.Response('{}', 200);
+          if (++reads == 2) return pending.future;
+          return http.Response('{"hostname":"ledboard"}', 200);
+        }),
+      );
+      await api.status();
+      final before = api.status();
+      final retired = expectLater(before, throwsA(isA<SupersededRead>()));
+      await api.post('/api/effect', {'value': 'none'});
+      final after = api.status();
+      expect(identical(before, after), false);
+      await after;
+      expect(reads, 3);
+      pending.complete(http.Response('{"hostname":"ledboard"}', 200));
+      await retired;
+      await api.close();
+    },
+  );
+  test('A GET started during a blocked write cannot satisfy post-ACK readback or overwrite it later', () async {
+    final writeAck = Completer<http.Response>();
+    final duringWrite = Completer<http.Response>();
+    var reads = 0;
+    final api = PakarApi(
+      client: MockClient((request) async {
+        if (request.method == 'POST') return writeAck.future;
+        if (++reads == 2) return duringWrite.future;
+        return http.Response(
+          jsonEncode({
+            'hostname': 'ledboard',
+            'effect': reads == 1 ? 'rainbow' : 'none',
+          }),
+          200,
+        );
+      }),
+    );
+    await api.status();
+    final write = api.post('/api/effect', {'value': 'none'});
+    await Future<void>.delayed(Duration.zero);
+    final stale = api.status();
+    final retired = expectLater(stale, throwsA(isA<SupersededRead>()));
+    await Future<void>.delayed(Duration.zero);
+    writeAck.complete(http.Response('{}', 200));
+    await write;
+    final actual = await api.status();
+    expect(actual.effect, 'none');
+    expect(reads, 3);
+    duringWrite.complete(
+      http.Response('{"hostname":"ledboard","effect":"rainbow"}', 200),
+    );
+    await retired;
+    expect(api.latestStatus!.effect, 'none');
+    await api.close();
+  });
   test('Changed endpoint discards an in-flight status and never dispatches its queued POST', () async {
     final pending = Completer<http.Response>();
     var posts = 0;

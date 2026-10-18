@@ -363,8 +363,25 @@ mod tests {
                     serde_json::to_string(&initial).unwrap().into(),
                 ))
                 .unwrap();
-            let actual = socket.read().unwrap();
-            assert_eq!(actual.to_text().unwrap(), packet);
+            // The worker may probe liveness before it consumes the initial push.
+            // Answer that read-only request; the mutation must still arrive as the
+            // exact original envelope, without waiting for a polling tick.
+            let deadline = Instant::now() + Duration::from_secs(4);
+            loop {
+                assert!(Instant::now() < deadline, "Command did not arrive");
+                let actual = socket.read().unwrap();
+                let text = actual.to_text().unwrap();
+                if text == r#"{"type":"status"}"# {
+                    socket
+                        .send(tungstenite::Message::Text(
+                            serde_json::to_string(&initial).unwrap().into(),
+                        ))
+                        .unwrap();
+                    continue;
+                }
+                assert_eq!(text, packet);
+                break;
+            }
             socket
                 .send(tungstenite::Message::Text(expected.to_string().into()))
                 .unwrap();
@@ -395,13 +412,18 @@ mod tests {
         }
         let start = Instant::now();
         tx.send(crate::WsCommand::Control(request)).unwrap();
+        let mut readback = None;
         loop {
-            if let Event::Status(observed) =
-                unbox(event_rx.recv_timeout(Duration::from_secs(4)).unwrap())
-            {
-                assert_eq!(observed.cells[0], "red");
-                assert_eq!(observed.cells[79], "red");
-                break;
+            match unbox(event_rx.recv_timeout(Duration::from_secs(4)).unwrap()) {
+                Event::Status(observed) => readback = Some(observed),
+                Event::Accepted(_) | Event::CellBatchConfirmed(_) => {
+                    let observed = readback.as_ref().expect("Verified receipt has readback");
+                    assert_eq!(observed.cells[0], "red");
+                    assert_eq!(observed.cells[79], "red");
+                    break;
+                }
+                Event::OperationFailed(error) => panic!("Command failed: {error}"),
+                _ => {}
             }
         }
         assert!(
