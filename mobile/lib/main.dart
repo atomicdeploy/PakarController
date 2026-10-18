@@ -761,7 +761,7 @@ class _ControlShellState extends State<ControlShell>
         for (final item in pages)
           switch (item.$1) {
             'table' => TablePage(
-              key: ValueKey('table:$workspaceBoard'),
+              key: ValueKey('table:${panelInventory.ownerKey}'),
               status: presented,
               connected: status?.peer.table == true && foreground,
               layoutAcknowledged: panelInventory.has('table'),
@@ -773,7 +773,7 @@ class _ControlShellState extends State<ControlShell>
                   _command(owner, hostname, path, values),
             ),
             'front-panel' => IgnorePointer(
-              key: ValueKey('front:$workspaceBoard'),
+              key: ValueKey('front:${panelInventory.ownerKey}'),
               ignoring: status == null || !foreground,
               child: FrontPanelPage(
                 status: presented,
@@ -2038,7 +2038,10 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                 for (final item in cues)
                   DropdownMenuItem(value: item, child: Text(item)),
               ],
-              onChanged: audioPending || !ready('buzzer')
+              onChanged:
+                  audioPending ||
+                      !ready('buzzer') ||
+                      widget.status?.audioCues.isNotEmpty != true
                   ? null
                   : (value) => setState(() => selectedCue = value),
             ),

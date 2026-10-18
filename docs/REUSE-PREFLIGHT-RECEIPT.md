@@ -73,12 +73,67 @@ progress between real writes, timing, recursive-call refusal and partial-write
 TCP close without replay. A new actual S3 build passed; deployment and another
 live window remain separate evidence.
 
-The WebSocket worker regression initially failed because its server fixture
+All264 native tests passed through the canonical warm release/test cache. The
+WebSocket worker regression initially failed because its server fixture
 mistook the new read-only liveness probe for a mutation, then mistook the probe's
 initial status for a command receipt. The fixture now answers liveness separately
 and waits for verified command completion plus its readback, preserving exact
 wire-envelope and under500ms assertions. All5 realtime tests passed. No command
 verification or production deadline was relaxed to make the test pass.
+
+The third live window completed602.72s/251samples/15 notifications: USB96/125
+online and Wi-Fi123/126 online. Its persistent failures were not accepted.
+After the additional cooperative/DNS fix, one LAN upload transferred22.00s.
+The updater's final range-readback connection reset again; no upload replay.
+Independent full export verified1,925,984bytes SHA256
+b3e6ed4225111c5671e06177b8b196759a976bc4bcc99e80af5651ebb3e2017a
+on new boot03fdc1ae101783ede943ebb1e95682b2. Actual first counters showed one
+MQTT attempt/zero closes despite five resolver changes and one route generation;
+maximum measured service2163ms, publish263ms. A new600s owner observation was
+started only after that readback, with no other serial reader or device mutation.
+
+That fourth window completed601.42s/249samples: USB123/124 online with zero
+active-error samples; Wi-Fi124/125 online, but39 samples had HTTP status/mapping
+read failures or abrupt WS resets. Each method's single offline sample was its
+initial handoff. Both retained exactly Events|Front panel after acquisition,
+one unchanged boot, and USB completed captures stayed at or below2145ms.
+Windows notifications fell to2, not zero. Raw ASUS receipt SHA256
+6ca583851b649e1eb0eebdee78557e4fa2b539d7689bad85a073240713ece9cd.
+Actual stable-frame capture SHA256
+784ac899ef535b4bd96ec6b8d6edd1ed2d34e014f889c7a851859f97fa048f1f
+has clear status message and zero active diagnostics. This is panel/USB progress,
+not a clean Wi-Fi soak or proof all timeouts are fixed.
+
+Final native WS setup removes its independent DNS/HTTP bootstrap entirely:
+numeric or actually verified shared routes only, quiet interruptible startup
+waiting, selected-route checks and absolute bounded handshake, preserving
+Host/SNI/TLS validation. Final native suite268/268 and mobile analyzer plus
+209 tests passed (two opt-in capture tests skipped). Mobile producer tests also
+reject older HTTP/WS observations before renewing freshness; application changes
+retire old mode shells without clearing per-board user selection/scroll. The
+old melody test incorrectly required disappearance on AVR loss; its replacement
+checks identical bounds, disabled controls, no offline dispatch and fresh-cue
+recovery. No freshness/deadline test was weakened. Preview package SHA256
+a621a579ff3436bc3784bcf45934cbda1df7fc532fcdca350855d8f3d4933934.
+
+Remaining Wi-Fi attribution is open: pinned AsyncTCP5s ACK timeout directly
+closes WS TCP; whole status broadcasts ignore backpressure/send outcomes; HTTP
+dispatch waits for loop ownership and response attachment for AsyncTCP polls.
+These are reachable source paths, not proven causes of each observed reset.
+Queue-full does NOT force-close by default in the pinned WebSocket library.
+Per-stage HTTP and WS queue/ACK-timeout counters are the next evidence step;
+do not claim a hardware fault or hide incidents by raising read deadlines.
+
+Final native candidate SHA256
+9b0d8c01a72de24d3b994a6d8c4c8771888c04f665630bdd7ceda5f09ef27e8e
+was gracefully delivered as ASUS PID2068 with settings/rollback preserved.
+Its62.31s USB/Wi-Fi smoke had25samples, zero active-error samples and stable
+connected panels; it is not another ten-minute soak. Raw receipt SHA256
+5fdb830a25a9934099f8fdf6d156a4603e9939699de1cfd09795da57045a7a92.
+The preceding full window's two Windows notices occurred at7.48s/305.84s,
+both successful connection confirmations during deliberate transport switches.
+No disconnect notification was inferred from those counts. Android remains
+build/test-only until an authorized phone is available.
 
 ## AVR ISP and Urboot programming paths
 

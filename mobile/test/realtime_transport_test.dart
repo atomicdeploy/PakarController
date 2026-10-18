@@ -10,6 +10,67 @@ import 'peer_fixture.dart';
 
 // Real loopback transport, separate from widget binding's HTTP interception.
 void main() {
+  test('Older same-boot WS producer frame cannot revive an expired lease or publish stale state', () async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final api = PakarApi(baseUrl: 'http://127.0.0.1:${server.port}');
+    final state = {
+      ...peerFixture().json,
+      'board_id': 'fixture-board',
+      'boot_id': 'a' * 32,
+      'command_clock_ms': 200,
+    };
+    WebSocket? socket;
+    final ready = Completer<void>(),
+        recovered = Completer<void>(),
+        barrier = Completer<void>();
+    final clocks = <int>[];
+    api.onPeripheralEvent = (_) {
+      if (!barrier.isCompleted) barrier.complete();
+    };
+    final listener = server.listen((request) async {
+      socket = await WebSocketTransformer.upgrade(request);
+      socket!.listen((_) => socket!.add(jsonEncode(state)));
+    });
+    StreamSubscription<DeviceStatus>? live;
+    try {
+      live = api.liveStatus().listen((value) {
+        clocks.add(value.json['command_clock_ms'] as int);
+        if (!ready.isCompleted) {
+          ready.complete();
+        } else if (!recovered.isCompleted) {
+          recovered.complete();
+        }
+      });
+      await ready.future.timeout(const Duration(seconds: 3));
+      await Future<void>.delayed(const Duration(milliseconds: 6100));
+      expect(api.liveFresh, false);
+      socket!.add(jsonEncode({...state, 'command_clock_ms': 100}));
+      // An ordered, identity-bound event proves the preceding WS frame has been
+      // consumed, without itself granting status freshness or depending on sleep.
+      socket!.add(
+        jsonEncode({
+          'type': 'pc-contract-event',
+          'board_id': state['board_id'],
+          'boot_id': state['boot_id'],
+          'kind': 'fixture-barrier',
+        }),
+      );
+      await barrier.future.timeout(const Duration(seconds: 3));
+      expect(clocks, [200]);
+      expect(api.liveFresh, false);
+      expect(api.latestStatus!.json['command_clock_ms'], 200);
+      socket!.add(jsonEncode(state));
+      await recovered.future.timeout(const Duration(seconds: 3));
+      expect(clocks, [200, 200]);
+      expect(api.liveFresh, true);
+    } finally {
+      await api.close();
+      await live?.cancel();
+      await socket?.close();
+      await listener.cancel();
+      await server.close(force: true);
+    }
+  });
   test('HTTP refresh cannot impersonate a fresh socket; resume probe reuses the existing connection', () async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     final api = PakarApi(baseUrl: 'http://127.0.0.1:${server.port}');

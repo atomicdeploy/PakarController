@@ -975,6 +975,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
         };
         let events = SessionEvents { sender: events.clone(), stamp: lease.stamp() };
         let mut controls:Vec<(realtime::Intent,Instant)>=Vec::new();
+        let mut awaiting_route = false;
         let result = (|| -> Result<(), String> {
             let mut request = websocket_url(&current.base)?
                 .into_client_request()
@@ -990,14 +991,10 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
             request
                 .headers_mut()
                 .insert("Sec-WebSocket-Protocol", "arduino".parse().unwrap());
-            let (mut socket, _) = tungstenite::connect(request).map_err(|e| e.to_string())?;
-            if let tungstenite::stream::MaybeTlsStream::Plain(stream) = socket.get_mut() {
-                stream.set_nodelay(true).map_err(|e| e.to_string())?;
-                stream
-                    .set_read_timeout(Some(Duration::from_millis(40)))
-                    .map_err(|e| e.to_string())?;
-                stream.set_write_timeout(Some(Duration::from_secs(4))).map_err(|e| e.to_string())?;
-            }
+            let Some(mut socket) = peer_http::connect_websocket(&current, request, lease.stamp())? else {
+                awaiting_route = true;
+                return Ok(());
+            };
             let _ = events.send(for_endpoint(&current, Event::WebSocket(true)));
             // A successful TCP/HTTP upgrade is not recovery if the service then
             // immediately closes or never acknowledges an actual board status.
@@ -1137,15 +1134,8 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                     stats_at = Instant::now();
                     context.request_repaint();
                 }
-                if let tungstenite::stream::MaybeTlsStream::Plain(stream) = socket.get_mut() {
-                    stream
-                        .set_read_timeout(Some(streaming::read_budget(
-                            streaming || sampling,
-                            fps,
-                            last_stream.elapsed(),
-                        )))
-                        .map_err(|e| e.to_string())?;
-                }
+                peer_http::websocket_read_timeout(&mut socket, streaming::read_budget(
+                    streaming || sampling, fps, last_stream.elapsed()))?;
                 match socket.read() {
                     Ok(Message::Text(text)) => {
                         last_received=Instant::now();
@@ -1205,20 +1195,24 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
             }
             Ok(())
         })();
-        let _ = events.send(for_endpoint(&current, Event::WebSocket(false)));
-        context.request_repaint();
+        if !awaiting_route {
+            let _ = events.send(for_endpoint(&current, Event::WebSocket(false)));
+            context.request_repaint();
+        }
         drop(lease); // The closure dropped the socket before another method opens.
         for (request,_) in controls {recover_realtime(request,&events.sender,&gate);}
-        if let Err(error) = result {
-            streaming = false;
-            sampling = false; // Reconnect must not silently restart a stream.
-            let _ = events.send(for_endpoint(
-                &current,
-                Event::DiagnosticFailure("WebSocket".into(), error),
-            ));
+        if result.is_err() || awaiting_route {
+            if let Err(error) = result {
+                streaming = false;
+                sampling = false; // Reconnect must not silently restart a stream.
+                let _ = events.send(for_endpoint(
+                    &current,
+                    Event::DiagnosticFailure("WebSocket".into(), error),
+                ));
+            }
             // Interruptible: changing peer or stopping streaming need not wait
             // for the retry deadline. Mutations are never replayed here.
-            let delay = retry.delay(); retry.failed();
+            let delay = if awaiting_route { Duration::from_millis(250) } else { let delay = retry.delay(); retry.failed(); delay };
             match commands.recv_timeout(delay) {
                 Ok(WsCommand::Connect(e, epoch)) => { endpoint = Some(e); generation = epoch; mapping.clear(); streaming = false; sampling = false; retry.reset(); }
                 Ok(WsCommand::Disconnect) => { endpoint = None; mapping.clear(); streaming = false; sampling = false; retry.reset(); }

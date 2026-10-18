@@ -275,11 +275,12 @@ class PakarApi {
     }
   }
 
-  void _rememberStatus(DeviceStatus status) {
-    if (status.olderThan(_latestStatus)) return;
+  bool _rememberStatus(DeviceStatus status) {
+    if (status.olderThan(_latestStatus)) return false;
     _latestStatus = status;
     _statusAge = Stopwatch()..start();
     if (!_statusUpdates.isClosed) _statusUpdates.add(status);
+    return true;
   }
 
   /// A single intent, preferred WS receipt, then the SAME idempotent envelope
@@ -773,8 +774,8 @@ class PakarApi {
     }
     _acceptIdentity(result.json);
     _verifiedEndpoint = baseUrl;
-    _rememberStatus(result);
-    return result.olderThan(_latestStatus) ? _latestStatus! : result;
+    if (!_rememberStatus(result)) throw const SupersededRead();
+    return result;
   }
 
   // Adapt Session's synchronous retirement boundary: retire captured owners
@@ -987,7 +988,7 @@ class PakarApi {
             _verifiedEndpoint = baseUrl;
           }
           final status = DeviceStatus(value);
-          _rememberStatus(status);
+          if (!_rememberStatus(status)) continue;
           _liveAge = Stopwatch()..start();
           yield status;
         }

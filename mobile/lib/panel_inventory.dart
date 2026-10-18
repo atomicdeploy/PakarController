@@ -8,6 +8,7 @@ class PanelInventory {
   String? _owner;
   final _features = <String>{};
   bool known = false, avrObserved = false;
+  String? get ownerKey => _owner;
 
   bool has(String feature) => _features.contains(feature);
   Set<String> get features => Set.unmodifiable(_features);

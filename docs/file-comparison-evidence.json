@@ -10,35 +10,46 @@
   "source_read": "complete",
   "verdict": "parity-gap",
   "preserved": [
-    "Actual PeerSession refresh single-flight and reset-before-await socket ownership adapted to shared status reads, per-socket cleanup and retained previously acknowledged layout inventory. Reads retire before and after writes; a pre/during-write result cannot settle post-ACK confirmation. Fresh individual capabilities still own actuation. The pinned http abortable GET path additionally cancels transport/body reads on deadline/retirement instead of retaining the donor Future.timeout-only limitation."
+        "Actual PeerSession refresh single-flight and reset-before-await socket ownership adapted to shared status reads, per-socket cleanup and retained previously acknowledged layout inventory. Reads retire before and after writes; a pre/during-write result cannot settle post-ACK confirmation. Fresh individual capabilities still own actuation. The pinned http abortable GET path additionally cancels transport/body reads on deadline/retirement instead of retaining the donor Future.timeout-only limitation.",
+        "Failure-driven review rejects older same-boot HTTP replies as superseded rather than returning cached data as a fresh observation; older WS frames cannot reset liveAge or publish into a revoked UI lease. Ordered real-loopback producer regressions retain equal board-clock captures as valid, without inventing a sequence number. Board/application-keyed panel elements retire old application mode/cue shells while retaining the user's per-board workspace; offline melody slots keep bounds and both controls disabled until actual fresh cues return. These are scoped lifecycle adaptations, not complete donor mobile parity."
   ],
   "targets": [
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
+      "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5"
     },
     {
       "path": "mobile/lib/panel_inventory.dart",
       "anchor": "class PanelInventory",
-      "sha256": "4c192f69c1a56e893e3077b859e761f156f283f7653f681f85fea052965be6f9"
+      "sha256": "44a5b9ab096b211cff43e42c8d2d5ccd7956572ac3c740df80fa72ee5d5f4e8b"
     }
   ],
   "proof": [
     {
       "path": "mobile/test/api_test.dart",
       "anchor": "A write retires",
-      "sha256": "2739125601e4e5e44379c742b3bc69c3550e84b4c672b18e6c4d5bda4ba3d16d"
+      "sha256": "c387679dc658fad0c52391ea5f5eb17ef56cd2c464d00533b512bd66bff074da"
     },
     {
       "path": "mobile/test/panel_inventory_test.dart",
       "anchor": "testWidgets",
-      "sha256": "6bed65a6581c696b49afd3c5b73613cc3603b38fdbeeaf26bf764005400d1eca"
+      "sha256": "86f9fcd19d81e09e02191ed445c75220fa79424cd1e84314abb0283d70c1f9f0"
     },
     {
       "path": "mobile/test/read_deadline_transport_test.dart",
       "anchor": "stalled",
       "sha256": "03c62c204578c939282e0924e3b08ff986d2f742e0762251515f40f5c2533a67"
+    },
+    {
+      "path": "mobile/test/realtime_transport_test.dart",
+      "anchor": "Older same-boot WS producer",
+      "sha256": "ef8a5a39abe37c40e3393cdde5b3f012dbc5a7adfc2e2cd104571ca04cd5de7e"
+    },
+    {
+      "path": "mobile/test/selection_batch_network_test.dart",
+      "anchor": "offline slots stay stable",
+      "sha256": "b04bb9a8e38cc8ed4a5e68a2792c1a341fb437b54333beb9cfc5811081ddd839"
     }
   ],
   "omissions": [
@@ -65,24 +76,34 @@
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
+      "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5"
     }
   ],
   "proof": [
     {
       "path": "mobile/test/api_test.dart",
       "anchor": "Concurrent status consumers",
-      "sha256": "2739125601e4e5e44379c742b3bc69c3550e84b4c672b18e6c4d5bda4ba3d16d"
+      "sha256": "c387679dc658fad0c52391ea5f5eb17ef56cd2c464d00533b512bd66bff074da"
     },
     {
       "path": "mobile/test/panel_inventory_test.dart",
       "anchor": "testWidgets",
-      "sha256": "6bed65a6581c696b49afd3c5b73613cc3603b38fdbeeaf26bf764005400d1eca"
+      "sha256": "86f9fcd19d81e09e02191ed445c75220fa79424cd1e84314abb0283d70c1f9f0"
     },
     {
       "path": "mobile/test/read_deadline_transport_test.dart",
       "anchor": "stalled",
       "sha256": "03c62c204578c939282e0924e3b08ff986d2f742e0762251515f40f5c2533a67"
+    },
+    {
+      "path": "mobile/test/realtime_transport_test.dart",
+      "anchor": "Older same-boot WS producer",
+      "sha256": "ef8a5a39abe37c40e3393cdde5b3f012dbc5a7adfc2e2cd104571ca04cd5de7e"
+    },
+    {
+      "path": "mobile/test/selection_batch_network_test.dart",
+      "anchor": "offline slots stay stable",
+      "sha256": "b04bb9a8e38cc8ed4a5e68a2792c1a341fb437b54333beb9cfc5811081ddd839"
     }
   ],
   "omissions": [
@@ -338,7 +359,7 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7",
+      "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5",
       "anchor": "Stream<DeviceStatus> get statusUpdates"
     }
   ],
@@ -662,7 +683,7 @@
     {
       "path": "desktop/src/main.rs",
       "anchor": "SerialCommand::Bridge(target",
-      "sha256": "0fb9597cee07605b8253fde6ad409379bcd97bc5a06c3bfaf969589471ce2c45"
+      "sha256": "afe547dc1dea98129ee3e1a9e08553e7e8a5912d216b2f4a6976f85259f0548b"
     }
   ],
   "omissions": [
@@ -3124,7 +3145,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
+          "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -3224,7 +3245,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
+          "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -4699,12 +4720,12 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7",
+      "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5",
       "anchor": "bool _acceptIdentity("
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "5b46d67503a19267ca4d2a9dc1fe93b70b7bb1441734098da16de81186db91d4",
+      "sha256": "ad9e865bdf451eae51bdadd22078fa67b010cf19abc7d0c132d045d5a0346b20",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -4734,12 +4755,12 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
+      "sha256": "8681220b132b069915e49ea4a24e4bea7d137f4e3bf4c8f321d9a985b7eecabc",
       "anchor": "pub fn admit("
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "0fb9597cee07605b8253fde6ad409379bcd97bc5a06c3bfaf969589471ce2c45",
+      "sha256": "afe547dc1dea98129ee3e1a9e08553e7e8a5912d216b2f4a6976f85259f0548b",
       "anchor": "fn scoped_http_request("
     },
     {
@@ -4827,12 +4848,12 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
+      "sha256": "8681220b132b069915e49ea4a24e4bea7d137f4e3bf4c8f321d9a985b7eecabc",
       "anchor": "fn gui_revocation_during_preflight_stops_before_write()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
+      "sha256": "8681220b132b069915e49ea4a24e4bea7d137f4e3bf4c8f321d9a985b7eecabc",
       "anchor": "fn gui_revocation_after_dispatch_reports_uncertainty_not_success()"
     },
     {
@@ -4867,7 +4888,7 @@
     },
     {
       "path": "mobile/test/realtime_transport_test.dart",
-      "sha256": "72d79373baccec25c1fbc8d4b2f04e77df3b7e313711cb7e6d18369595d956a4",
+      "sha256": "ef8a5a39abe37c40e3393cdde5b3f012dbc5a7adfc2e2cd104571ca04cd5de7e",
       "anchor": "Real loopback transport"
     },
     {
@@ -4887,7 +4908,7 @@
     },
     {
       "path": "mobile/test/realtime_transport_test.dart",
-      "sha256": "72d79373baccec25c1fbc8d4b2f04e77df3b7e313711cb7e6d18369595d956a4",
+      "sha256": "ef8a5a39abe37c40e3393cdde5b3f012dbc5a7adfc2e2cd104571ca04cd5de7e",
       "anchor": "HTTP refresh cannot impersonate"
     },
     {
@@ -4933,7 +4954,7 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
+      "sha256": "8681220b132b069915e49ea4a24e4bea7d137f4e3bf4c8f321d9a985b7eecabc",
       "anchor": "fn gui_settings_pin_every_nested_request_and_verify_same_boot()"
     },
     {
@@ -4976,22 +4997,22 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
+      "sha256": "8681220b132b069915e49ea4a24e4bea7d137f4e3bf4c8f321d9a985b7eecabc",
       "anchor": "fn gui_preflight_reboot_or_capability_loss_never_dispatches_mutation()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
+      "sha256": "8681220b132b069915e49ea4a24e4bea7d137f4e3bf4c8f321d9a985b7eecabc",
       "anchor": "fn gui_readback_from_new_boot_is_not_applied()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
+      "sha256": "8681220b132b069915e49ea4a24e4bea7d137f4e3bf4c8f321d9a985b7eecabc",
       "anchor": "fn gui_unfenced_mutation_fails_before_network_and_preserves_correlation()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec",
+      "sha256": "8681220b132b069915e49ea4a24e4bea7d137f4e3bf4c8f321d9a985b7eecabc",
       "anchor": "fn gui_server_boot_conflict_is_not_replayed()"
     },
     {
@@ -6332,7 +6353,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7",
+          "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -7038,7 +7059,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "5b46d67503a19267ca4d2a9dc1fe93b70b7bb1441734098da16de81186db91d4",
+          "sha256": "ad9e865bdf451eae51bdadd22078fa67b010cf19abc7d0c132d045d5a0346b20",
           "anchor": "Future<bool> _command"
         },
         {
@@ -7085,7 +7106,7 @@
         },
         {
           "path": "mobile/test/api_test.dart",
-          "sha256": "2739125601e4e5e44379c742b3bc69c3550e84b4c672b18e6c4d5bda4ba3d16d",
+          "sha256": "c387679dc658fad0c52391ea5f5eb17ef56cd2c464d00533b512bd66bff074da",
           "anchor": "Changed endpoint discards an in-flight status"
         },
         {
@@ -7207,7 +7228,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
+          "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -7337,7 +7358,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "5b46d67503a19267ca4d2a9dc1fe93b70b7bb1441734098da16de81186db91d4",
+          "sha256": "ad9e865bdf451eae51bdadd22078fa67b010cf19abc7d0c132d045d5a0346b20",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -8188,7 +8209,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
+          "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -8358,7 +8379,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
+          "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -10481,7 +10502,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "0fb9597cee07605b8253fde6ad409379bcd97bc5a06c3bfaf969589471ce2c45",
+          "sha256": "afe547dc1dea98129ee3e1a9e08553e7e8a5912d216b2f4a6976f85259f0548b",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -10604,7 +10625,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "0fb9597cee07605b8253fde6ad409379bcd97bc5a06c3bfaf969589471ce2c45",
+          "sha256": "afe547dc1dea98129ee3e1a9e08553e7e8a5912d216b2f4a6976f85259f0548b",
           "anchor": "fn serial_worker("
         },
         {
@@ -10641,7 +10662,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "0fb9597cee07605b8253fde6ad409379bcd97bc5a06c3bfaf969589471ce2c45",
+          "sha256": "afe547dc1dea98129ee3e1a9e08553e7e8a5912d216b2f4a6976f85259f0548b",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
@@ -10775,7 +10796,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7"
+          "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -10889,7 +10910,8 @@
         "Reconsulted complete donor for optional W5500. Added explicit recovery after initialization failure, without resetting a healthy driver on cable loss or retrying in the service loop. Cheap status distinguishes configured/initialized/carrier/IP with null disconnected addresses. These native ETH/lwIP additions preserve the existing shared OTA/network owner, not donor W5500 functionality.",
         "Shared local S3/8266 upload callbacks now publish atomic finite start/commit/failure intent; only the loop sends UART, without audio ACK waits or fallback replay. Remote job notices are one-shot and permit a cooperative500ms lead before Prog. Audio delivery never authorizes erase or firmware success. Physical cue/phone acceptance remains open while ASUS SSH8022 is unavailable.",
         "Reread the actual donor updater for measured counters and completion callbacks. Adapted exact optional raw-image size headers with overflow/short-file rejection before boot commit, coherent atomic progress snapshots, read-only HTTP/WS progress during upload, boot-cached info without per-poll flash hashing, and loop-only finite TM1637/LCD progress. Added hostname-first auto local/remote tooling with auth-off pre/postflight, explicit stage/apply and full same-board new-boot image SHA readback; no unknown-write fallback.",
-        "Failure-driven bounded hardening, not donor MQTT parity: PU has no reusable MQTT service. Pakar's actual ESP32 TCP connect limit is now independent of retained TLS/CA checks, MQTT retry starts10s AFTER connection completion, and wrap-safe measured attempt/failure/last/max counters are exposed additively. DNS remains synchronous; no claim of a fully nonblocking cloud worker. Existing host fixtures cover20s failure/backoff/wrap, not actual broker/TLS timing. Automatic updater diagnostics now identify read stage/path and transport code without publishing query secrets; no new write retries."
+        "Failure-driven bounded hardening, not donor MQTT parity: PU has no reusable MQTT service. Pakar's actual ESP32 TCP connect limit is now independent of retained TLS/CA checks, MQTT retry starts10s AFTER connection completion, and wrap-safe measured attempt/failure/last/max counters are exposed additively. DNS remains synchronous; no claim of a fully nonblocking cloud worker. Existing host fixtures cover20s failure/backoff/wrap, not actual broker/TLS timing. Automatic updater diagnostics now identify read stage/path and transport code without publishing query secrets; no new write retries.",
+        "Actual ASUS ten-minute failures led to a further scoped scheduler correction: cloud writes cooperate between256-byte payload fragments with strictly read-only USB servicing and nonrecursive/partial-packet guards; individual socket/DNS calls remain synchronous. DNS-only refresh updates future lookup configuration without retiring established TCP, while real interface/address/gateway changes still revoke sessions. Buffered AVR replies are drained after cloud work before peer expiry. Aggregate IO/close-cause and route/resolver counters distinguish causes; actual host fixtures cover write progress/reentry/short writes and Wi-Fi/Ethernet DNS-only transitions. These are source/fixture and separately recorded runtime observations, not missing PU MQTT code imported or full production acceptance."
       ],
       "targets": [
         {
@@ -11295,7 +11317,8 @@
       "preserved": [
         "Actual complete donor resolver and tests read from canonical PCController; adapted successful-address caching, retaining URL hostname/HTTP Host/TLS SNI rather than replacing the public identity with an IP.",
         "Flutter HTTP and WebSocket share one resolver. TCP connect failures may trigger bounded read-only relookup but retain the last successful address; actual DNS SocketException/empty answer invalidates it. HTTP/auth/timeout failures do not evict or trigger discovery/replay. Cached route data never grants board/boot ownership.",
-        "Actual complete resolver reread at unchanged source hash for measured ASUS .local latency. A separate bounded32-host native cache accepts only actual response TCP remote_addr after valid board/boot and requested-hostname checks, retains URL Host/SNI, never trusts advertised IP and never grants command ownership. Fresh no-idle-pool clients reuse verified routing. Only typed dial/resolution failures mark a retained hint for later relookup; HTTP/auth/body timeouts do not discard it. Successful verified TCP replacement clears the bounded lookup mark; no mutation is replayed."
+        "Actual complete resolver reread at unchanged source hash for measured ASUS .local latency. A separate bounded32-host native cache accepts only actual response TCP remote_addr after valid board/boot and requested-hostname checks, retains URL Host/SNI, never trusts advertised IP and never grants command ownership. Fresh no-idle-pool clients reuse verified routing. Only typed dial/resolution failures mark a retained hint for later relookup; HTTP/auth/body timeouts do not discard it. Successful verified TCP replacement clears the bounded lookup mark; no mutation is replayed.",
+        "Actual pinned tungstenite0.30 TLS source was inspected for original-URI SNI and normal root verification. Native WS now dials numeric endpoints or the same actual-TCP cache (including verified configured DNS aliases; .local labels still match the board). A missing hint waits quietly for the existing selected HTTP worker: no duplicate WS HTTP/DNS runtime or resolver thread. TCP timeout and absolute TLS/HTTP-upgrade deadline precede handshake; selected-route revocation is checked on each IO. Both Plain and Rustls use bounded runtime reads. Actual loopback seeding/Host, empty-cache/no-socket, mismatch/revocation and deadline fixtures cover this adaptation; TLS validation and physical LAN remain separate proof."
       ],
       "targets": [
         {
@@ -11305,7 +11328,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7",
+          "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5",
           "anchor": "final LanResolver resolver;"
         },
         {
@@ -11321,12 +11344,12 @@
         {
           "path": "desktop/src/peer_http.rs",
           "anchor": "pub fn device_client_builder",
-          "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec"
+          "sha256": "8681220b132b069915e49ea4a24e4bea7d137f4e3bf4c8f321d9a985b7eecabc"
         },
         {
           "path": "desktop/src/main.rs",
           "anchor": "peer_http::remember_address",
-          "sha256": "0fb9597cee07605b8253fde6ad409379bcd97bc5a06c3bfaf969589471ce2c45"
+          "sha256": "afe547dc1dea98129ee3e1a9e08553e7e8a5912d216b2f4a6976f85259f0548b"
         }
       ],
       "omissions": [
@@ -11352,13 +11375,13 @@
         },
         {
           "path": "mobile/test/selection_batch_network_test.dart",
-          "sha256": "403edf1f3aecfd072f8afd5d4ad5956135aeee3043163f0fb1f7c4f703393937",
+          "sha256": "b04bb9a8e38cc8ed4a5e68a2792c1a341fb437b54333beb9cfc5811081ddd839",
           "anchor": "test("
         },
         {
           "path": "desktop/src/peer_http.rs",
           "anchor": "fn local_verified_address_override_preserves_http_hostname_and_explicit_port",
-          "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec"
+          "sha256": "8681220b132b069915e49ea4a24e4bea7d137f4e3bf4c8f321d9a985b7eecabc"
         }
       ],
       "improvement": "Retains the requested cache policy without treating authentication or generic HTTP failures as DNS failure."
@@ -11376,13 +11399,13 @@
       "targets": [
         {
           "path": "mobile/test/selection_batch_network_test.dart",
-          "sha256": "403edf1f3aecfd072f8afd5d4ad5956135aeee3043163f0fb1f7c4f703393937",
+          "sha256": "b04bb9a8e38cc8ed4a5e68a2792c1a341fb437b54333beb9cfc5811081ddd839",
           "anchor": "test("
         },
         {
           "path": "desktop/src/peer_http.rs",
           "anchor": "fn local_address_cache_accepts_only_verified_tcp_peer_not_advertised_ip",
-          "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec"
+          "sha256": "8681220b132b069915e49ea4a24e4bea7d137f4e3bf4c8f321d9a985b7eecabc"
         }
       ],
       "omissions": [
@@ -11403,13 +11426,13 @@
         },
         {
           "path": "mobile/test/selection_batch_network_test.dart",
-          "sha256": "403edf1f3aecfd072f8afd5d4ad5956135aeee3043163f0fb1f7c4f703393937",
+          "sha256": "b04bb9a8e38cc8ed4a5e68a2792c1a341fb437b54333beb9cfc5811081ddd839",
           "anchor": "test("
         },
         {
           "path": "desktop/src/peer_http.rs",
           "anchor": "fn local_address_cache_bounds_replaces_and_invalidates_without_ttl_or_authority",
-          "sha256": "301aa0979e32624a88113870be8ca5cc211e50f67e67838cb93840d08c33ddec"
+          "sha256": "8681220b132b069915e49ea4a24e4bea7d137f4e3bf4c8f321d9a985b7eecabc"
         }
       ],
       "improvement": "Adds failed-resolution-only eviction and retains no mutation replay."
@@ -11482,7 +11505,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7",
+          "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -11633,7 +11656,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "3bb7d15aff42d6d28d495c6076b7c588ca467a3700fd9ff8f55a6c0adff204e7",
+          "sha256": "b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -11735,7 +11758,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "5b46d67503a19267ca4d2a9dc1fe93b70b7bb1441734098da16de81186db91d4",
+          "sha256": "ad9e865bdf451eae51bdadd22078fa67b010cf19abc7d0c132d045d5a0346b20",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {

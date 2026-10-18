@@ -42,6 +42,7 @@ void main() {
 
   test('Retained panel identity is presentation only, never a fresh capability ACK', () {
     final inventory = PanelInventory()..observe(observation());
+    final retainedOwner = inventory.ownerKey;
     final unavailable = observation(peripherals: false);
     inventory.observe(unavailable);
     expect(inventory.frontPanel, true);
@@ -49,6 +50,11 @@ void main() {
     expect(unavailable.peer.has('display'), false);
     expect(unavailable.peer.allows('/api/audio', {'cue': 'welcome'}), false);
     inventory.observe(observation(peripherals: false, boot: 'boot-B'));
+    expect(inventory.ownerKey, retainedOwner);
+    inventory.observe(
+      DeviceStatus({...observation().json, 'capabilities': null}),
+    );
+    expect(inventory.ownerKey, retainedOwner);
     expect(
       inventory.frontPanel,
       true,
@@ -59,6 +65,82 @@ void main() {
     expect(inventory.known, false);
   });
 
+  testWidgets(
+    'A new application on the same board retires old mode shells while retaining its user-owned table workspace',
+    (tester) async {
+      tester.view.physicalSize = const Size(1200, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final initial = DeviceStatus({
+        ...peerFixture().json,
+        'board_id': 'board-A',
+        'boot_id': 'boot-A',
+      });
+      final api = LifecycleApi()
+        ..healthyWs = true
+        ..observed = initial;
+      await tester.pumpWidget(PakarControllerApp(api: api));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Table').last);
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(ChoiceChip, 'First wins'), findsOneWidget);
+      final findCell = find.widgetWithText(TextField, 'Find logical cell');
+      await tester.enterText(findCell, '1,80');
+      await tester.pumpAndSettle();
+      final oldElement = tester.element(find.byType(TablePage));
+      final workspace = tester
+          .widget<TablePage>(find.byType(TablePage))
+          .workspace!;
+      workspace.pageScroll.jumpTo(
+        workspace.pageScroll.position.maxScrollExtent.clamp(0, 100).toDouble(),
+      );
+      await tester.pumpAndSettle();
+      final vertical = workspace.pageScroll.offset;
+      api.updates.add(
+        DeviceStatus({
+          ...initial.json,
+          'boot_id': 'boot-B',
+          'capabilities': {
+            ...initial.json['capabilities'] as Map,
+            'application': {
+              'id': 'cell-only',
+              'name': 'Cells',
+              'title': 'Cells',
+            },
+            'acknowledged_features': [
+              'network',
+              'telemetry',
+              'table',
+              'cell-batch',
+              'leds',
+            ],
+            'modes': [
+              {
+                'id': 'cell',
+                'code': 1,
+                'kind': 'presentation',
+                'label': 'Cells',
+              },
+            ],
+          },
+        }),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.element(find.byType(TablePage)), isNot(same(oldElement)));
+      expect(
+        tester.widget<TablePage>(find.byType(TablePage)).workspace,
+        same(workspace),
+      );
+      expect(workspace.selection, {1, 80});
+      expect(workspace.query.text, '1,80');
+      expect(workspace.pageScroll.offset, vertical);
+      expect(find.widgetWithText(ChoiceChip, 'First wins'), findsNothing);
+      expect(api.writes, 0);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+    },
+  );
   testWidgets(
     'ESP mode and output ACK loss keeps table control bounds and selection without authorizing writes',
     (tester) async {

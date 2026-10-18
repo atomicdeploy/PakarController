@@ -5,7 +5,8 @@ use crate::{DeviceStatus, Event, HttpCommand};
 use reqwest::blocking::Client;
 use std::{
     collections::{HashSet, VecDeque},
-    net::{IpAddr, SocketAddr},
+    io::{self, Read, Write},
+    net::{IpAddr, SocketAddr, TcpStream},
     sync::{
         Arc, Mutex, OnceLock,
         atomic::{AtomicU64, Ordering},
@@ -15,6 +16,7 @@ use std::{
 };
 
 const ADDRESS_CACHE_LIMIT: usize = 32;
+const WEBSOCKET_TIMEOUT: Duration = Duration::from_secs(4);
 
 /// Routing hints only, never board/boot ownership or permission to replay.
 /// Adapted from PCController lanresolver's successful-TCP-address cache.
@@ -49,7 +51,7 @@ fn address_cache() -> &'static Mutex<AddressCache> {
     CACHE.get_or_init(|| Mutex::new(AddressCache::default()))
 }
 
-fn local_origin(origin: &str) -> Option<(String, String, u16)> {
+fn device_origin(origin: &str) -> Option<reqwest::Url> {
     let url = reqwest::Url::parse(origin).ok()?;
     if !matches!(url.scheme(), "http" | "https")
         || !url.username().is_empty()
@@ -60,6 +62,11 @@ fn local_origin(origin: &str) -> Option<(String, String, u16)> {
     {
         return None;
     }
+    url.host_str()?;
+    Some(url)
+}
+fn local_origin(origin: &str) -> Option<(String, String, u16)> {
+    let url = device_origin(origin)?;
     let domain = url.host_str()?.to_ascii_lowercase();
     let expected = domain.strip_suffix(".local")?;
     if crate::identity::normalize_name(expected).ok().as_deref() != Some(expected) {
@@ -71,21 +78,42 @@ fn local_origin(origin: &str) -> Option<(String, String, u16)> {
         url.port_or_known_default()?,
     ))
 }
+fn named_origin(origin: &str) -> Option<(String, u16)> {
+    let url = device_origin(origin)?;
+    let domain = url.host_str()?.to_ascii_lowercase();
+    if domain.len() > 253
+        || domain.parse::<IpAddr>().is_ok()
+        || !domain.split('.').all(|label| {
+            !label.is_empty() && label.len() <= 63
+                && label.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'-')
+                && label.as_bytes()[0].is_ascii_alphanumeric()
+                && label.as_bytes()[label.len() - 1].is_ascii_alphanumeric()
+        })
+    {
+        return None;
+    }
+    Some((domain, url.port_or_known_default()?))
+}
 
 fn verified_address(
     origin: &str,
     status: &DeviceStatus,
     remote: Option<SocketAddr>,
 ) -> Option<(String, IpAddr)> {
-    let (domain, expected, port) = local_origin(origin)?;
+    let (domain, port) = named_origin(origin)?;
     let remote = remote?;
     if remote.port() != port
         || remote.ip().is_unspecified()
         || remote.ip().is_multicast()
         || Pin::from_status(status).is_none()
-        || !crate::bridge::matches_hostname(status, &expected)
     {
         return None;
+    }
+    // DNS aliases need not equal the configured board name. A .local board
+    // name must still match; learning an alias never relaxes that contract.
+    if domain.ends_with(".local") {
+        let (_, expected, _) = local_origin(origin)?;
+        if !crate::bridge::matches_hostname(status, &expected) { return None; }
     }
     Some((domain, remote.ip()))
 }
@@ -103,7 +131,7 @@ pub fn remember_address(origin: &str, status: &DeviceStatus, remote: Option<Sock
 
 /// A confirmed resolution failure can explicitly remove the obsolete hint.
 pub fn invalidate_address(origin: &str) {
-    if let Some((domain, _, _)) = local_origin(origin)
+    if let Some((domain, _)) = named_origin(origin)
         && let Ok(mut cache) = address_cache().lock()
     {
         cache.invalidate(&domain);
@@ -114,7 +142,7 @@ pub fn invalidate_address(origin: &str) {
 /// discarding the last verified address. No command or body read is replayed.
 /// Marks exist only for cached keys, so they share the same 32-entry bound.
 pub fn request_relookup(origin: &str) {
-    if let Some((domain, _, _)) = local_origin(origin)
+    if let Some((domain, _)) = named_origin(origin)
         && let Ok(mut cache) = address_cache().lock()
     {
         cache.request_relookup(&domain);
@@ -122,7 +150,7 @@ pub fn request_relookup(origin: &str) {
 }
 
 /// Preserve the URL hostname/Host header and HTTPS SNI/certificate checks while
-/// bypassing repeated slow OS mDNS lookup for previously verified local peers.
+/// bypassing repeated slow OS DNS/mDNS lookup for previously verified peers.
 /// Build a fresh client after invalidation; never automatically resend a write.
 pub fn device_client_builder() -> reqwest::blocking::ClientBuilder {
     let mut builder = Client::builder()
@@ -139,6 +167,102 @@ pub fn device_client_builder() -> reqwest::blocking::ClientBuilder {
         }
     }
     builder
+}
+
+/// TCP route only. Numeric endpoints need no bootstrap. Named endpoints wait
+/// for the existing selected HTTP worker to learn the actual TCP peer; this
+/// worker performs no HTTP or OS DNS work of its own. None is normal startup,
+/// not a connection failure. Discovery metadata never chooses this dial.
+fn websocket_address(endpoint: &crate::Endpoint, stamp: &crate::connection::Stamp) -> Result<Option<SocketAddr>, String> {
+    if !stamp.current() { return Err("WebSocket connection retired before resolution".into()); }
+    let url = device_origin(&endpoint.base).ok_or("Invalid WebSocket device origin")?;
+    let port = url.port_or_known_default().ok_or("Missing WebSocket port")?;
+    // host_str() includes IPv6 brackets on some URL implementations; trim only
+    // those delimiters before parsing a numeric literal, never a DNS alias.
+    let host = url.host_str().ok_or("Missing WebSocket host")?;
+    if let Ok(address) = host.trim_start_matches('[').trim_end_matches(']').parse::<IpAddr>() {
+        if address.is_unspecified() || address.is_multicast() { return Err("Invalid WebSocket TCP address".into()); }
+        return Ok(Some(SocketAddr::new(address, port)));
+    }
+    let (domain, _) = named_origin(&endpoint.base).ok_or("Invalid WebSocket hostname")?;
+    if let Ok(cache) = address_cache().lock()
+        && !cache.relookup.contains(&domain)
+        && let Some((_, address)) = cache.entries.iter().find(|(known, _)| known == &domain)
+    {
+        return Ok(Some(SocketAddr::new(*address, port)));
+    }
+    Ok(None)
+}
+
+/// One owned socket, no resolver thread or leaked timeout worker. The absolute
+/// handshake deadline also covers a peer dripping HTTP/TLS bytes just often
+/// enough to evade a per-read timeout. Runtime reads remain briefly bounded.
+pub struct WebSocketTransport {
+    socket: TcpStream,
+    stamp: crate::connection::Stamp,
+    handshake_deadline: Option<Instant>,
+}
+impl WebSocketTransport {
+    fn prepare(&self, reading: bool) -> io::Result<()> {
+        if !self.stamp.current() { return Err(io::Error::new(io::ErrorKind::ConnectionAborted, "WebSocket route retired")); }
+        if let Some(deadline) = self.handshake_deadline {
+            let remaining = deadline.checked_duration_since(Instant::now()).filter(|d| !d.is_zero())
+                .ok_or_else(|| io::Error::new(io::ErrorKind::TimedOut, "WebSocket handshake deadline elapsed"))?;
+            if reading { self.socket.set_read_timeout(Some(remaining))?; }
+            else { self.socket.set_write_timeout(Some(remaining))?; }
+        }
+        Ok(())
+    }
+    fn established(&mut self) -> io::Result<()> {
+        self.prepare(true)?;
+        self.handshake_deadline = None;
+        self.socket.set_read_timeout(Some(Duration::from_millis(40)))?;
+        self.socket.set_write_timeout(Some(WEBSOCKET_TIMEOUT))
+    }
+}
+impl Read for WebSocketTransport {
+    fn read(&mut self, bytes: &mut [u8]) -> io::Result<usize> { self.prepare(true)?; self.socket.read(bytes) }
+}
+impl Write for WebSocketTransport {
+    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> { self.prepare(false)?; self.socket.write(bytes) }
+    fn flush(&mut self) -> io::Result<()> { self.prepare(false)?; self.socket.flush() }
+}
+pub type DeviceWebSocket = tungstenite::WebSocket<tungstenite::stream::MaybeTlsStream<WebSocketTransport>>;
+
+/// The original request retains its URL/Host/TLS SNI. The learned IP is used
+/// only by connect_timeout; upgrade success never grants board authority.
+pub fn connect_websocket(endpoint: &crate::Endpoint, request: tungstenite::handshake::client::Request,
+    stamp: crate::connection::Stamp) -> Result<Option<DeviceWebSocket>, String> {
+    if request.uri().to_string() != crate::websocket_url(&endpoint.base)? {
+        return Err("WebSocket request does not match the selected device origin".into());
+    }
+    let Some(address) = websocket_address(endpoint, &stamp)? else { return Ok(None); };
+    if !stamp.current() { return Err("WebSocket route retired before TCP connection".into()); }
+    let socket = TcpStream::connect_timeout(&address, WEBSOCKET_TIMEOUT).map_err(|error| {
+        request_relookup(&endpoint.base);
+        crate::diagnostics::describe_error(error)
+    })?;
+    socket.set_nodelay(true).map_err(crate::diagnostics::describe_error)?;
+    socket.set_read_timeout(Some(WEBSOCKET_TIMEOUT)).map_err(crate::diagnostics::describe_error)?;
+    socket.set_write_timeout(Some(WEBSOCKET_TIMEOUT)).map_err(crate::diagnostics::describe_error)?;
+    let transport = WebSocketTransport { socket, stamp,
+        handshake_deadline: Some(Instant::now() + WEBSOCKET_TIMEOUT) };
+    transport.prepare(true).map_err(crate::diagnostics::describe_error)?;
+    let (mut socket, _) = tungstenite::client_tls(request, transport).map_err(crate::diagnostics::describe_error)?;
+    match socket.get_mut() {
+        tungstenite::stream::MaybeTlsStream::Plain(stream) => stream.established(),
+        tungstenite::stream::MaybeTlsStream::Rustls(stream) => stream.sock.established(),
+        _ => return Err("Unsupported WebSocket TLS transport".into()),
+    }.map_err(crate::diagnostics::describe_error)?;
+    Ok(Some(socket))
+}
+pub fn websocket_read_timeout(socket: &mut DeviceWebSocket, timeout: Duration) -> Result<(), String> {
+    let stream = match socket.get_mut() {
+        tungstenite::stream::MaybeTlsStream::Plain(stream) => stream,
+        tungstenite::stream::MaybeTlsStream::Rustls(stream) => &mut stream.sock,
+        _ => return Err("Unsupported WebSocket TLS transport".into()),
+    };
+    stream.socket.set_read_timeout(Some(timeout)).map_err(crate::diagnostics::describe_error)
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -309,6 +433,141 @@ mod tests {
         }
     }
     #[test]
+    fn websocket_bootstrap_preserves_hostname_and_uses_only_verified_tcp_routes() {
+        use tungstenite::client::IntoClientRequest;
+        for (host, seeded) in [("ws-route-fixture.local", true), ("localhost", true), ("127.0.0.1", false)] {
+            let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+            listener.set_nonblocking(true).unwrap();
+            let address = listener.local_addr().unwrap();
+            let origin = format!("http://{host}:{}", address.port());
+            let mut peer = status('a');
+            peer.hostname = "ws-route-fixture".into();
+            peer.ip = "203.0.113.99".into(); // Never a dial target.
+            let body = serde_json::to_vec(&peer).unwrap();
+            let server = std::thread::spawn(move || {
+                let until = Instant::now() + Duration::from_secs(6);
+                let accept = || loop {
+                    match listener.accept() {
+                        Ok((stream, _)) => {
+                            stream.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+                            stream.set_write_timeout(Some(Duration::from_secs(2))).unwrap();
+                            break stream;
+                        }
+                        Err(error) if error.kind() == io::ErrorKind::WouldBlock => {
+                            assert!(Instant::now() < until, "Bounded fixture accept deadline");
+                            std::thread::sleep(Duration::from_millis(2));
+                        }
+                        Err(error) => panic!("{error}"),
+                    }
+                };
+                if seeded {
+                    let mut stream = accept();
+                    let mut request = Vec::new();
+                    while !request.windows(4).any(|v| v == b"\r\n\r\n") {
+                        let mut bytes = [0; 1024];
+                        let count = stream.read(&mut bytes).unwrap();
+                        assert!(count > 0 && request.len() + count <= 8192);
+                        request.extend_from_slice(&bytes[..count]);
+                    }
+                    assert!(request.starts_with(b"GET /api/status "));
+                    write!(stream, "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", body.len()).unwrap();
+                    stream.write_all(&body).unwrap();
+                }
+                let mut observed = String::new();
+                let socket = tungstenite::accept_hdr(accept(), |request: &tungstenite::handshake::server::Request,
+                    response: tungstenite::handshake::server::Response| {
+                    assert_eq!(request.uri().path(), "/ws");
+                    observed = request.headers()["Host"].to_str().unwrap().to_owned();
+                    Ok(response)
+                }).unwrap();
+                drop(socket);
+                observed
+            });
+            if seeded {
+                // Only a real decoded HTTP response/remote_addr seeds the cache;
+                // this isolated fixture substitutes DNS, not board authority.
+                let response = Client::builder().no_proxy().timeout(Duration::from_secs(2))
+                    .resolve(host, address).build().unwrap().get(format!("{origin}/api/status")).send().unwrap();
+                let remote = response.remote_addr();
+                let observed: DeviceStatus = response.json().unwrap();
+                remember_address(&origin, &observed, remote);
+            }
+            let endpoint = crate::Endpoint { base: origin.clone(), user: String::new(), password: String::new() };
+            let gate = crate::connection::Gate::default();
+            let epoch = gate.select(Some(crate::connection::Method::WiFi));
+            let request = crate::websocket_url(&origin).unwrap().into_client_request().unwrap();
+            let mut socket = connect_websocket(&endpoint, request, gate.stamp(crate::connection::Method::WiFi, epoch)).unwrap().unwrap();
+            websocket_read_timeout(&mut socket, Duration::from_millis(7)).unwrap();
+            if let tungstenite::stream::MaybeTlsStream::Plain(stream) = socket.get_mut() {
+                assert_eq!(stream.socket.read_timeout().unwrap(), Some(Duration::from_millis(7)));
+                assert!(stream.handshake_deadline.is_none());
+            } else { panic!("Plain loopback fixture unexpectedly selected TLS"); }
+            drop(socket);
+            assert_eq!(server.join().unwrap(), format!("{host}:{}", address.port()));
+            if host == "localhost" {
+                assert!(address_cache().lock().unwrap().entries.iter().any(|(key, _)| key == host));
+            }
+            invalidate_address(&origin);
+        }
+    }
+    #[test]
+    fn websocket_unlearned_or_relookup_named_route_waits_without_opening_socket() {
+        use tungstenite::client::IntoClientRequest;
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        listener.set_nonblocking(true).unwrap();
+        let address = listener.local_addr().unwrap();
+        for host in ["unlearned-ws-route-fixture.local", "unlearned-ws-route-fixture.example"] {
+            let origin = format!("http://{host}:{}", address.port());
+            invalidate_address(&origin);
+            let endpoint = crate::Endpoint { base: origin.clone(), user: String::new(), password: String::new() };
+            let gate = crate::connection::Gate::default();
+            let epoch = gate.select(Some(crate::connection::Method::WiFi));
+            let request = || crate::websocket_url(&origin).unwrap().into_client_request().unwrap();
+            assert!(connect_websocket(&endpoint, request(), gate.stamp(crate::connection::Method::WiFi, epoch)).unwrap().is_none());
+            // A real prior hint marked for relookup must wait, not dial its old
+            // address or start another resolver in this worker.
+            let mut peer = status('a');
+            peer.hostname = "unlearned-ws-route-fixture".into();
+            remember_address(&origin, &peer, Some(address));
+            request_relookup(&origin);
+            assert!(connect_websocket(&endpoint, request(), gate.stamp(crate::connection::Method::WiFi, epoch)).unwrap().is_none());
+            assert_eq!(listener.accept().unwrap_err().kind(), io::ErrorKind::WouldBlock);
+            invalidate_address(&origin);
+        }
+    }
+    #[test]
+    fn websocket_route_revocation_and_request_mismatch_never_open_a_socket() {
+        use tungstenite::client::IntoClientRequest;
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        listener.set_nonblocking(true).unwrap();
+        let endpoint = crate::Endpoint { base: format!("http://{}", listener.local_addr().unwrap()), user: String::new(), password: String::new() };
+        let gate = crate::connection::Gate::default();
+        let epoch = gate.select(Some(crate::connection::Method::WiFi));
+        let mismatched = "ws://127.0.0.1:9/ws".into_client_request().unwrap();
+        assert!(connect_websocket(&endpoint, mismatched, gate.stamp(crate::connection::Method::WiFi, epoch)).is_err());
+        gate.select(None);
+        let request = crate::websocket_url(&endpoint.base).unwrap().into_client_request().unwrap();
+        assert!(connect_websocket(&endpoint, request, gate.stamp(crate::connection::Method::WiFi, epoch)).is_err());
+        assert_eq!(listener.accept().unwrap_err().kind(), io::ErrorKind::WouldBlock);
+    }
+    #[test]
+    fn websocket_handshake_deadline_and_runtime_route_check_are_independent() {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let socket = TcpStream::connect_timeout(&listener.local_addr().unwrap(), Duration::from_secs(1)).unwrap();
+        let (_peer, _) = listener.accept().unwrap();
+        let gate = crate::connection::Gate::default();
+        let epoch = gate.select(Some(crate::connection::Method::WiFi));
+        let mut stream = WebSocketTransport { socket, stamp: gate.stamp(crate::connection::Method::WiFi, epoch),
+            handshake_deadline: Some(Instant::now() - Duration::from_millis(1)) };
+        assert_eq!(stream.read(&mut [0]).unwrap_err().kind(), io::ErrorKind::TimedOut);
+        stream.handshake_deadline = Some(Instant::now() + WEBSOCKET_TIMEOUT);
+        stream.established().unwrap();
+        assert!(stream.handshake_deadline.is_none());
+        gate.select(None);
+        assert_eq!(stream.read(&mut [0]).unwrap_err().kind(), io::ErrorKind::ConnectionAborted);
+        assert_eq!(stream.write(&[1]).unwrap_err().kind(), io::ErrorKind::ConnectionAborted);
+    }
+    #[test]
     fn local_address_cache_accepts_only_verified_tcp_peer_not_advertised_ip() {
         let mut peer = status('a');
         peer.hostname = "ledboard".into();
@@ -316,6 +575,8 @@ mod tests {
         let actual: SocketAddr = "192.0.2.10:80".parse().unwrap();
         let accepted = verified_address("http://LEDBOARD.local", &peer, Some(actual)).unwrap();
         assert_eq!(accepted, ("ledboard.local".into(), actual.ip()));
+        assert_eq!(verified_address("http://ledboard.example", &peer, Some(actual)), Some(("ledboard.example".into(), actual.ip())));
+        assert_eq!(verified_address("http://localhost", &peer, Some(actual)), Some(("localhost".into(), actual.ip())));
         assert!(verified_address("http://ledboard.local", &peer, None).is_none());
         peer.hostname = "foreign".into();
         assert!(verified_address("http://ledboard.local", &peer, Some(actual)).is_none());
@@ -334,8 +595,9 @@ mod tests {
             );
         }
         for origin in [
-            "http://ledboard.example",
             "http://127.0.0.1",
+            "http://[::1]",
+            "http://bad_name.example",
             "http://user@ledboard.local",
             "http://ledboard.local/api",
             "http://ledboard.local?secret=x",

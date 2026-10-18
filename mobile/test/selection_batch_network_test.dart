@@ -213,7 +213,7 @@ void main() {
     },
   );
   testWidgets(
-    'Melody list uses only live acknowledged AVR cues, including new valid names',
+    'Melody commands use only live acknowledged AVR cues; offline slots stay stable and disabled',
     (tester) async {
       final sent = <Map<String, String>>[];
       final status = DeviceStatus({
@@ -221,37 +221,66 @@ void main() {
         'audio_cues': ['fixture-melody', 'fixture-melody', '../bad'],
       });
       expect(status.audioCues, ['fixture-melody']);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: FrontPanelPage(
-              status: status,
-              command: (p, [v = const {}]) async {
-                expect(p, '/api/audio');
-                sent.add(v);
-              },
-            ),
+      Widget panel(DeviceStatus observed) => MaterialApp(
+        home: Scaffold(
+          body: FrontPanelPage(
+            status: observed,
+            command: (p, [v = const {}]) async {
+              expect(p, '/api/audio');
+              sent.add(v);
+            },
           ),
         ),
       );
+      await tester.pumpWidget(panel(status));
       await tester.ensureVisible(find.text('Send melody'));
       await tester.tap(find.text('Send melody'));
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(sent, [
         {'cue': 'fixture-melody'},
       ]);
+      final element = tester.element(find.byType(FrontPanelPage));
+      final action = find.widgetWithText(FilledButton, 'Send melody');
+      final bounds = tester.getRect(action);
       final offline = DeviceStatus({...status.json, 'avr_online': false});
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: FrontPanelPage(
-              status: offline,
-              command: (p, [v = const {}]) async {},
-            ),
-          ),
+      await tester.pumpWidget(panel(offline));
+      await tester.pumpAndSettle();
+      expect(tester.element(find.byType(FrontPanelPage)), same(element));
+      expect(tester.getRect(action), bounds);
+      expect(tester.widget<FilledButton>(action).onPressed, isNull);
+      expect(
+        tester
+            .widget<DropdownButtonFormField<String>>(
+              find.byType(DropdownButtonFormField<String>),
+            )
+            .onChanged,
+        isNull,
+      );
+      await tester.tap(action);
+      await tester.pump();
+      expect(sent, hasLength(1)); // Retained history is not fresh permission.
+      final recovered = DeviceStatus({
+        ...status.json,
+        'audio_cues': ['new-live-cue'],
+      });
+      await tester.pumpWidget(panel(recovered));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(action), bounds);
+      final current = tester.widget<DropdownButtonFormField<String>>(
+        find.byType(DropdownButtonFormField<String>),
+      );
+      expect(current.onChanged, isNotNull);
+      final choices = tester.widget<DropdownButton<String>>(
+        find.descendant(
+          of: find.byType(DropdownButtonFormField<String>),
+          matching: find.byType(DropdownButton<String>),
         ),
       );
-      expect(find.text('Send melody'), findsNothing);
+      expect(choices.items!.map((item) => item.value), ['new-live-cue']);
+      await tester.tap(action);
+      await tester.pumpAndSettle();
+      expect(sent.last, {'cue': 'new-live-cue'});
+      expect(sent, hasLength(2));
       await tester.pumpWidget(const SizedBox());
     },
   );

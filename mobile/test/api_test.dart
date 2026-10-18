@@ -9,6 +9,35 @@ import 'package:pakarcontroller/api.dart';
 import 'package:pakarcontroller/lan_resolver.dart';
 
 void main() {
+  test('Older HTTP producer reply is superseded, not a freshly returned cached observation; equal clocks remain valid', () async {
+    var reads = 0, publications = 0;
+    final api = PakarApi(
+      client: MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'hostname': 'ledboard',
+            'board_id': 'fixture-board',
+            'boot_id': 'a' * 32,
+            'command_clock_ms': ++reads == 2 ? 100 : 200,
+          }),
+          200,
+        ),
+      ),
+    );
+    final events = api.statusUpdates.listen((_) => ++publications);
+    try {
+      final first = await api.status();
+      await expectLater(api.status(), throwsA(isA<SupersededRead>()));
+      expect(api.latestStatus, same(first));
+      expect(publications, 1);
+      // An ACK and a status capture may legitimately share one board millisecond.
+      expect((await api.status()).json['command_clock_ms'], 200);
+      expect(publications, 2);
+    } finally {
+      await events.cancel();
+      await api.close();
+    }
+  });
   test('Concurrent status consumers join one read, but a replacement owner does not', () async {
     final replies = <Completer<http.Response>>[];
     final api = PakarApi(
