@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Analyze','Test','ApkPreview')][string]$Mode='Test',
+    [ValidateSet('Analyze','Test','ApkPreview','PixelProbe')][string]$Mode='Test',
     [string]$FlutterPath,
     [ValidateRange(1,1024)][int]$MinimumFreeGiB=8,
     [ValidateRange(1,1024)][int]$MaximumCacheGiB=4,
@@ -47,8 +47,17 @@ if($TestPath -and ($Mode -ne 'Test' -or -not(Test-Path -LiteralPath (Join-Path $
     throw 'TestPath requires Test mode and an existing relative mobile/test file.'
 }
 if($BuildOnly -and $Mode -ne 'ApkPreview'){throw 'BuildOnly requires ApkPreview; tests remain explicit.'}
+if($Mode -eq 'PixelProbe' -and ($Restore -or $CapturePath)){throw 'PixelProbe reuses resolved packages and does not capture a UI.'}
 if($Restore){$taskCommands.Add(@('pub','get','--offline','--enforce-lockfile'))}
-if(-not $BuildOnly){
+if($Mode -eq 'PixelProbe'){
+    # Same SDK/packages/cache budget, one small standalone diagnostic consumer
+    # of the actual mobile API; no Flutter SDK installation on the remote PC.
+    $taskDartName=if([Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT){'dart.bat'}else{'dart'}
+    $FlutterPath=Join-Path (Split-Path $FlutterPath -Parent) $taskDartName
+    $taskProbeName=if([Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT){'pixel-probe.exe'}else{'pixel-probe'}
+    $taskCommands.Add(@('compile','exe','--packages=.dart_tool/package_config.json','tool/pixel_probe.dart','--output',('build/'+$taskProbeName)))
+}
+elseif(-not $BuildOnly){
     $taskCommands.Add(@('analyze','--no-pub'))
     if($Mode -ne 'Analyze'){
         $taskTestArguments=@('test','--no-pub')
@@ -61,7 +70,7 @@ if($Plan){return [pscustomobject]@{
     Executable=$FlutterPath;WorkingDirectory=$taskMobile;Commands=$taskCommands;
     Cache=(Join-Path $taskMobile 'build');CacheBudgetGiB=$MaximumCacheGiB;
     MinimumFreeGiB=$MinimumFreeGiB;ContextGate=$taskContext.GateChecked;
-    StorageGate=$taskStorage.GateChecked;SettingsGate=$taskSettings.GateChecked;FirmwareGate=$taskFirmware.GateChecked;NetworkGate=$taskNetwork.GateChecked;CaptureView=$CaptureView;Signing='Existing debug identity: preview, not production'
+    StorageGate=$taskStorage.GateChecked;SettingsGate=$taskSettings.GateChecked;FirmwareGate=$taskFirmware.GateChecked;NetworkGate=$taskNetwork.GateChecked;CaptureView=$CaptureView;Signing=if($Mode -eq 'PixelProbe'){'Standalone transport test tool, not an Android package'}else{'Existing debug identity: preview, not production'}
 }}
 . (Join-Path $PSScriptRoot 'storage-hygiene.ps1') -FunctionsOnly
 $taskCache=Get-DirectorySummary (Join-Path $taskMobile 'build')
@@ -110,4 +119,9 @@ if($Mode -eq 'ApkPreview'){
     if(-not(Test-Path -LiteralPath $taskApk)){throw 'Successful command did not produce the expected APK.'}
     [pscustomobject]@{Path=$taskApk;SHA256=(Get-FileHash -LiteralPath $taskApk).Hash.ToLowerInvariant();
         Signing='Preview only; production signing and physical device acceptance remain required'}
+}
+if($Mode -eq 'PixelProbe'){
+    $taskProbe=Join-Path $taskMobile ('build/'+$taskProbeName)
+    if(-not(Test-Path -LiteralPath $taskProbe)){throw 'Expected compiled transport probe absent.'}
+    [pscustomobject]@{Path=$taskProbe;SHA256=(Get-FileHash -LiteralPath $taskProbe).Hash.ToLowerInvariant();Scope='Actual mobile transport, not Android UI or optical acceptance'}
 }

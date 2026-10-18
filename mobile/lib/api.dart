@@ -116,6 +116,17 @@ class PakarApi {
   bool get liveFresh =>
       _socketReady && _liveAge != null && _liveAge!.elapsedMilliseconds < 4000;
 
+  Uri get webSocketUri {
+    final source = Uri.parse(transportUrl);
+    return source.replace(
+      scheme: source.scheme == 'https' ? 'wss' : 'ws',
+      // Dart does not infer a default port for ws/wss when replacing schemes.
+      port: source.port,
+      path: '/ws',
+      query: null,
+    );
+  }
+
   /// A resume probe is a read on the existing socket, not a new connection.
   bool requestLiveStatus() {
     if (!_connectionWanted || !_socketReady || _channel == null) return false;
@@ -745,16 +756,12 @@ class PakarApi {
   Stream<DeviceStatus> liveStatus() async* {
     _requireNetwork();
     final revision = connectionRevision;
-    if (_verifiedEndpoint != baseUrl) await status();
+    // A same-origin socket may establish identity from its first full status.
+    // Do not make working real-time control depend on a slow HTTP preflight.
     if (revision != connectionRevision) throw const StaleConnection();
     await _channel?.sink.close();
     if (revision != connectionRevision) throw const StaleConnection();
-    final source = Uri.parse(transportUrl);
-    final uri = source.replace(
-      scheme: source.scheme == 'https' ? 'wss' : 'ws',
-      path: '/ws',
-      query: null,
-    );
+    final uri = webSocketUri;
     final active = IOWebSocketChannel.connect(
       uri,
       headers: _headers,
@@ -809,6 +816,9 @@ class PakarApi {
           if (_acceptIdentity(value)) {
             return; // Reconnect only reads; never replay.
           }
+          if (_verifiedBoard != null && _verifiedBoot != null) {
+            _verifiedEndpoint = baseUrl;
+          }
           final status = DeviceStatus(value);
           _rememberStatus(status);
           _liveAge = Stopwatch()..start();
@@ -839,9 +849,14 @@ class PakarApi {
     _channel = null;
     _verifiedEndpoint = null;
     _verifiedBoard = _verifiedBoot = null;
-    await active?.sink.close();
-    _client.close();
-    _ioClient.close(force: true);
+    try {
+      await active?.sink.close().timeout(const Duration(milliseconds: 500));
+    } on Exception {
+      // A vanished board cannot hold client disposal/connection retirement.
+    } finally {
+      _client.close();
+      _ioClient.close(force: true);
+    }
   }
 
   void resetTransport() {

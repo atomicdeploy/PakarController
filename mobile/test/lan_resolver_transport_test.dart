@@ -10,6 +10,103 @@ import 'package:pakarcontroller/lan_resolver.dart';
 // HttpClient with its deliberate HTTP400 stub, even for preceding plain tests.
 // This exercises real loopback HTTP; it does not prove LAN or physical output.
 void main() {
+  test(
+    'Hostname WebSocket conversion preserves default and explicit ports',
+    () async {
+      for (final entry in [
+        ('http://ledboard.local', 'ws', 80),
+        ('https://ledboard.local', 'wss', 443),
+        ('http://ledboard.local:18081', 'ws', 18081),
+      ]) {
+        final api = PakarApi(baseUrl: entry.$1);
+        expect(api.webSocketUri.scheme, entry.$2);
+        expect(api.webSocketUri.port, entry.$3);
+        expect(api.webSocketUri.hasPort, true);
+        expect(api.webSocketUri.path, '/ws');
+        await api.close();
+      }
+    },
+  );
+  test(
+    'WebSocket establishes pinned identity without any HTTP preflight',
+    () async {
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      var httpReads = 0;
+      final sockets = <WebSocket>[];
+      final serving = server.listen((request) async {
+        if (request.uri.path != '/ws') {
+          httpReads++;
+          request.response.statusCode = 503;
+          await request.response.close();
+          return;
+        }
+        final socket = await WebSocketTransformer.upgrade(request);
+        sockets.add(socket);
+        socket.listen(
+          (_) => socket.add(
+            jsonEncode({
+              'hostname': 'ledboard',
+              'board_id': 'fixture',
+              'boot_id': 'boot',
+            }),
+          ),
+        );
+      });
+      final api = PakarApi(baseUrl: 'http://127.0.0.1:${server.port}');
+      try {
+        final observed = await api.liveStatus().first.timeout(
+          const Duration(seconds: 3),
+        );
+        expect(observed.json['board_id'], 'fixture');
+        expect(httpReads, 0);
+      } finally {
+        await api.close();
+        for (final socket in sockets) {
+          await socket.close();
+        }
+        await server.close(force: true);
+        await serving.cancel();
+      }
+    },
+  );
+  test('Native hostname connection avoids a failing DNS preflight and caches its successful route', () async {
+    var lookups = 0, requests = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final serving = server.listen((request) async {
+      requests++;
+      expect(
+        request.headers.value(HttpHeaders.hostHeader),
+        'localhost:${server.port}',
+      );
+      request.response.persistentConnection = false;
+      request.response.write(
+        '{"hostname":"localhost","board_id":"fixture","boot_id":"boot"}',
+      );
+      await request.response.close();
+    });
+    final api = PakarApi(
+      baseUrl: 'http://localhost:${server.port}',
+      resolver: LanResolver(
+        nativeFirst: true,
+        lookup: (_) async {
+          lookups++;
+          throw const SocketException('mDNS preflight unavailable');
+        },
+      ),
+    );
+    try {
+      await api.status();
+      api.disconnect();
+      api.connect();
+      await api.status();
+      expect(requests, 2);
+      expect(lookups, 0);
+    } finally {
+      await api.close();
+      await server.close(force: true);
+      await serving.cancel();
+    }
+  });
   test('LAN proxy bypass matches donor ranges; remote origins keep configured proxy', () {
     final environment = {
       'http_proxy': 'http://192.0.2.90:10808',

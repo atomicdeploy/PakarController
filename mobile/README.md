@@ -145,3 +145,17 @@ The optional `pixel-diagnostic` firmware capability uses one atomic acknowledged
 board command over WebSocket with deduplicated HTTP recovery. Older firmware is
 labelled and retains its socket streaming path; no HTTP path is invented for it.
 Logical labels come only from the verified board mapping, never a guessed order.
+
+For adjacent-PC transport diagnosis without copying a Flutter SDK, build
+`./tools/build-mobile.ps1 -Mode PixelProbe`. Its standalone executable requires
+explicit `--endpoint`, `--board`, `--boot` and a new absolute `--receipt` path.
+It refuses to overwrite a nonblack raw scene, then tests first/boundary/tail,
+six-pixel and All off using the actual mobile API. Building never contacts a
+board. This tool does not certify Android UI, physical light output or signing.
+
+Default-port WebSocket URLs explicitly preserve80/443 when converting http/https
+to ws/wss; the socket connector also supplies those defaults. Initial sockets
+and HTTP refresh are independent, and a full same-origin socket status can
+establish the board/boot identity without a preceding HTTP read. Native hostname
+connection precedes any manual lookup and caches only a successfully connected
+address; Host and TLS identity remain unchanged.

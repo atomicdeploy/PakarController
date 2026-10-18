@@ -8,9 +8,12 @@ import 'dart:io';
 class LanResolver {
   LanResolver({
     Future<List<InternetAddress>> Function(String)? lookup,
+    bool? nativeFirst,
     this.securityContext,
-  }) : _lookup = lookup ?? InternetAddress.lookup;
+  }) : _lookup = lookup ?? InternetAddress.lookup,
+       _nativeFirst = nativeFirst ?? lookup == null;
   final Future<List<InternetAddress>> Function(String) _lookup;
+  final bool _nativeFirst;
   final SecurityContext? securityContext;
   final _cache = <String, InternetAddress>{};
   final _pending = <String, Future<List<InternetAddress>>>{};
@@ -88,25 +91,29 @@ class LanResolver {
     ..connectionTimeout = const Duration(seconds: 6)
     ..findProxy = controllerProxyFor
     ..connectionFactory = (uri, proxyHost, proxyPort) {
+      final secure =
+          proxyHost == null && (uri.scheme == 'https' || uri.scheme == 'wss');
+      final port = proxyPort ?? (uri.hasPort ? uri.port : (secure ? 443 : 80));
       ConnectionTask<Socket>? active;
       Socket? connected;
       var cancelled = false;
-      final result = connect(proxyHost ?? uri.host, (address) async {
+      Future<Socket> dial(Object address) async {
         if (cancelled) throw const SocketException('Connection cancelled');
-        final secure = proxyHost == null && uri.scheme == 'https';
         // SDK custom factories own direct TLS. Native DNS results preserve
         // InternetAddress.host; use them only when that name is the original
         // TLS identity. Injected bare IP metadata cannot replace SNI/cert name.
-        final tlsHost = address.host.toLowerCase() == uri.host.toLowerCase()
+        final tlsHost =
+            address is InternetAddress &&
+                address.host.toLowerCase() == uri.host.toLowerCase()
             ? address
             : uri.host;
         final ConnectionTask<Socket> task = secure
             ? await SecureSocket.startConnect(
                 tlsHost,
-                uri.port,
+                port,
                 context: securityContext,
               )
-            : await Socket.startConnect(address, proxyPort ?? uri.port);
+            : await Socket.startConnect(address, port);
         active = task;
         if (cancelled) task.cancel();
         final socket = await task.socket.timeout(
@@ -122,7 +129,45 @@ class LanResolver {
         }
         connected = socket;
         return socket;
-      }, isCancelled: () => cancelled);
+      }
+
+      final host = proxyHost ?? uri.host,
+          key = (proxyHost ?? uri.host).toLowerCase();
+      // Preserve the SDK's ConnectionTask/DNS timing and Happy Eyeballs path.
+      // Do not put a two-second manual lookup ahead of native mDNS connection.
+      if (_nativeFirst &&
+          !_cache.containsKey(key) &&
+          InternetAddress.tryParse(host) == null) {
+        final native = secure
+            ? SecureSocket.startConnect(host, port, context: securityContext)
+            : Socket.startConnect(host, port);
+        return native
+            .then(
+              (task) => ConnectionTask.fromSocket(
+                task.socket.then((socket) {
+                  if (_cache.length >= 64 && !_cache.containsKey(key)) {
+                    _cache.remove(_cache.keys.first);
+                  }
+                  _cache[key] = socket.remoteAddress;
+                  return socket;
+                }),
+                task.cancel,
+              ),
+            )
+            .onError<SocketException>((error, stack) {
+              // Classify a genuine lookup failure for SSDP read-only recovery.
+              // The request has not been sent while acquiring its socket.
+              return ConnectionTask.fromSocket(
+                connect(host, dial, isCancelled: () => cancelled),
+                () {
+                  cancelled = true;
+                  active?.cancel();
+                  connected?.destroy();
+                },
+              );
+            });
+      }
+      final result = connect(host, dial, isCancelled: () => cancelled);
       return Future.value(
         ConnectionTask.fromSocket(result, () {
           cancelled = true;

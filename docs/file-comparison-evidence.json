@@ -2278,7 +2278,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "e56a39f1bbbc42ed3c97d0ef7e05bd02c6f0dd86bd7ec1d4521ba23733f0fe5b"
+          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -2378,7 +2378,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "e56a39f1bbbc42ed3c97d0ef7e05bd02c6f0dd86bd7ec1d4521ba23733f0fe5b"
+          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -3815,12 +3815,12 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "e56a39f1bbbc42ed3c97d0ef7e05bd02c6f0dd86bd7ec1d4521ba23733f0fe5b",
+      "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88",
       "anchor": "bool _acceptIdentity("
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "cde88eec4c7730ef4704d0ce59c45208ee32f28475efe94a2fd2c057bf258036",
+      "sha256": "d69d036725361e748afc88ba6767986e72fc0be773cbea903f7358da434e8d27",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -5443,7 +5443,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "e56a39f1bbbc42ed3c97d0ef7e05bd02c6f0dd86bd7ec1d4521ba23733f0fe5b",
+          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -6148,7 +6148,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "cde88eec4c7730ef4704d0ce59c45208ee32f28475efe94a2fd2c057bf258036",
+          "sha256": "d69d036725361e748afc88ba6767986e72fc0be773cbea903f7358da434e8d27",
           "anchor": "Future<bool> _command"
         },
         {
@@ -6317,7 +6317,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "e56a39f1bbbc42ed3c97d0ef7e05bd02c6f0dd86bd7ec1d4521ba23733f0fe5b"
+          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -6447,7 +6447,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "cde88eec4c7730ef4704d0ce59c45208ee32f28475efe94a2fd2c057bf258036",
+          "sha256": "d69d036725361e748afc88ba6767986e72fc0be773cbea903f7358da434e8d27",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -7298,7 +7298,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "e56a39f1bbbc42ed3c97d0ef7e05bd02c6f0dd86bd7ec1d4521ba23733f0fe5b"
+          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -7468,7 +7468,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "e56a39f1bbbc42ed3c97d0ef7e05bd02c6f0dd86bd7ec1d4521ba23733f0fe5b"
+          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -8707,7 +8707,7 @@
         },
         {
           "path": "tools/build-mobile.ps1",
-          "sha256": "4c9b5c5db09c807fe8a259685c81dbefac50a94fd498124c50916deeaf346cec",
+          "sha256": "b12ebc0365d00d6fc95b7325f6f3027f5f7cccabb3ac1e366fa72b39bd961e6c",
           "anchor": "$taskCache=Get-DirectorySummary"
         }
       ],
@@ -9858,7 +9858,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "e56a39f1bbbc42ed3c97d0ef7e05bd02c6f0dd86bd7ec1d4521ba23733f0fe5b"
+          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -10300,7 +10300,7 @@
       "targets": [
         {
           "path": "mobile/lib/lan_resolver.dart",
-          "sha256": "9ce265e715ceb270aecbf190ef8220d42a232943a5e89684dcd66dace61f72fc",
+          "sha256": "22ae0cb79faaa7abab173bdcf8fc972bad597f1dca2170bfe0e8069c02600fe9",
           "anchor": "String controllerProxyFor"
         }
       ],
@@ -10317,7 +10317,7 @@
       "proof": [
         {
           "path": "mobile/test/lan_resolver_transport_test.dart",
-          "sha256": "195a6f7f2837f685843d3d59ca9abb90bf7533f959bcac9cbb362574d8677d6e",
+          "sha256": "c13392cb122643ed60cdc17949906a3bd03070d1896cf3a1b3dee27a6a23830e",
           "anchor": "void main()"
         }
       ],
@@ -10335,7 +10335,7 @@
       "targets": [
         {
           "path": "mobile/test/lan_resolver_transport_test.dart",
-          "sha256": "195a6f7f2837f685843d3d59ca9abb90bf7533f959bcac9cbb362574d8677d6e",
+          "sha256": "c13392cb122643ed60cdc17949906a3bd03070d1896cf3a1b3dee27a6a23830e",
           "anchor": "void main()"
         }
       ],
@@ -10352,7 +10352,7 @@
       "proof": [
         {
           "path": "mobile/test/lan_resolver_transport_test.dart",
-          "sha256": "195a6f7f2837f685843d3d59ca9abb90bf7533f959bcac9cbb362574d8677d6e",
+          "sha256": "c13392cb122643ed60cdc17949906a3bd03070d1896cf3a1b3dee27a6a23830e",
           "anchor": "void main()"
         }
       ],
@@ -10371,12 +10371,12 @@
       "targets": [
         {
           "path": "mobile/lib/lan_resolver.dart",
-          "sha256": "9ce265e715ceb270aecbf190ef8220d42a232943a5e89684dcd66dace61f72fc",
+          "sha256": "22ae0cb79faaa7abab173bdcf8fc972bad597f1dca2170bfe0e8069c02600fe9",
           "anchor": "class LanResolver"
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "e56a39f1bbbc42ed3c97d0ef7e05bd02c6f0dd86bd7ec1d4521ba23733f0fe5b",
+          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88",
           "anchor": "final LanResolver resolver;"
         },
         {
@@ -10408,7 +10408,7 @@
       "proof": [
         {
           "path": "mobile/test/lan_resolver_transport_test.dart",
-          "sha256": "195a6f7f2837f685843d3d59ca9abb90bf7533f959bcac9cbb362574d8677d6e",
+          "sha256": "c13392cb122643ed60cdc17949906a3bd03070d1896cf3a1b3dee27a6a23830e",
           "anchor": "void main()"
         },
         {
@@ -10448,7 +10448,7 @@
       "proof": [
         {
           "path": "mobile/test/lan_resolver_transport_test.dart",
-          "sha256": "195a6f7f2837f685843d3d59ca9abb90bf7533f959bcac9cbb362574d8677d6e",
+          "sha256": "c13392cb122643ed60cdc17949906a3bd03070d1896cf3a1b3dee27a6a23830e",
           "anchor": "void main()"
         },
         {
@@ -10527,8 +10527,13 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "e56a39f1bbbc42ed3c97d0ef7e05bd02c6f0dd86bd7ec1d4521ba23733f0fe5b",
+          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
+        },
+        {
+          "path": "mobile/tool/pixel_probe.dart",
+          "sha256": "b27e1a4ed0a664ef350400d452eff575463f12a975049e29ac70f3dd88d5d21a",
+          "anchor": "Future<void> main("
         }
       ],
       "omissions": [
@@ -10596,6 +10601,11 @@
           "path": "mobile/test/pixel_diagnostic_command_test.dart",
           "sha256": "fce86844092a6ddd8a86833bffe5b8b3e8c45706af49dd1772e0fb342882da23",
           "anchor": "Atomic pixel command"
+        },
+        {
+          "path": "tests/mobile_pixel_probe_plan_test.ps1",
+          "sha256": "823dd963abd25514c0557bfc351dd23d24111f6de85a17461b91a7abd7f8287d",
+          "anchor": "canonical compile-only plan"
         }
       ],
       "improvement": "One validated atomic board intent replaces client fan-out, without duplicating the effects engine or changing API generations."
@@ -10668,8 +10678,13 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "e56a39f1bbbc42ed3c97d0ef7e05bd02c6f0dd86bd7ec1d4521ba23733f0fe5b",
+          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
+        },
+        {
+          "path": "mobile/tool/pixel_probe.dart",
+          "sha256": "b27e1a4ed0a664ef350400d452eff575463f12a975049e29ac70f3dd88d5d21a",
+          "anchor": "Future<void> main("
         }
       ],
       "omissions": [
@@ -10737,6 +10752,11 @@
           "path": "mobile/test/pixel_diagnostic_command_test.dart",
           "sha256": "fce86844092a6ddd8a86833bffe5b8b3e8c45706af49dd1772e0fb342882da23",
           "anchor": "Atomic pixel command"
+        },
+        {
+          "path": "tests/mobile_pixel_probe_plan_test.ps1",
+          "sha256": "823dd963abd25514c0557bfc351dd23d24111f6de85a17461b91a7abd7f8287d",
+          "anchor": "canonical compile-only plan"
         }
       ],
       "improvement": "One validated atomic board intent replaces client fan-out, without duplicating the effects engine or changing API generations."
@@ -10758,7 +10778,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "cde88eec4c7730ef4704d0ce59c45208ee32f28475efe94a2fd2c057bf258036",
+          "sha256": "d69d036725361e748afc88ba6767986e72fc0be773cbea903f7358da434e8d27",
           "anchor": "Future<void> _saveWorkspaces()"
         }
       ],

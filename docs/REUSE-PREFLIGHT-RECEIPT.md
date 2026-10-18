@@ -28,6 +28,54 @@ use the existing shared Protocol.h kModeCellSelect, not a new alias. No cache or
 toolchain change is needed. Build/stage and device/phone installation are separate
 gates. Existing unrelated ESP8266 CI atomic-link errors remain outside this slice.
 
+ESP32-S3 16MB/OPI/static/buffered compilation passes. Initial default unverified
+ISP profile75dd9f7a was compile-only, not a production replacement; preserve the
+live board's existing ISP capability with -S3IspElectricalVerified. That exact
+profile is now recorded in AGENTS.md so future passes keep the same flags/cache.
+Correct1904976-byte candidate SHA256
+cdf162ae73fd3069498264238016588ef23ff737c424e0e79fc333287d44b183
+is staged on ASUS, NOT flashed. Final APK
+f0e9ad15effc236247d7b6513e6b33234253d4b26251246998489eccecf3b941
+is built; Android installation remains unverified. An opted-in live transport run
+through the SSH forward failed with connection closed before complete HTTP
+headers; this is NOT a passing physical check, and no mutation is replayed.
+Direct ASUS hostname HTTP works. A small compiled runner imports the real mobile
+API, requires explicit endpoint/board/boot/new receipt and a full black raw frame,
+and exercises one/six/tail/off without a remote SDK install. The canonical mobile
+wrapper retains the same cache/storage/locked-package guards in PixelProbe mode;
+its compile-only plan fixture passes. Reread actual pinned PU Tool/build-all.ps1
+and Pealayer storage-hygiene.ps1; no clean, SDK copy or extra cache was introduced.
+Standalone Dart receipt creation uses actual SDK exclusive create, not an assumed
+FileMode constant; package imports fix the analyzer's relative-lib warnings.
+
+Live scene observations changed between all-off, white and red/off while work
+continued. The one-shot OTA preflight refused before dispatch (saved receipt has
+dispatched=false, unchanged old firmware MD5, idle/zero upload). Do not retry or
+overwrite that receipt. Pause competing LED controls and obtain the user's test
+window before update/temporary clears. The phone remains unavailable; source,
+loopback, framebuffer, built packages, board update and optical acceptance remain
+separate. No AVR operation or desktop replacement was performed in this slice.
+
+Further actual Dart diagnostics found the concrete live WebSocket failure:
+custom connectionFactory used Uri.port0 for ws://ledboard.local with no explicit
+port (Windows SocketException10049). Preserve the HTTP source port on ws/wss
+conversion and use80/443 defaults in both native and cached socket paths.
+Initial native hostname connection avoids a separately timed-out mDNS preflight,
+caches only a successful TCP address, retains TLS/SNI and original Host, and
+classifies genuine lookup failure for read-only discovery. Start socket and HTTP
+reads independently; first same-origin full socket status may establish its
+board/boot fence without HTTP preflight. Socket disposal has a bounded500ms grace.
+
+Six focused real-socket/DNS/proxy/TLS cases and four workspace lifecycle cases
+pass; seven atomic diagnostic command cases still pass. Production mobile API
+compiled into the adjacent-PC runner subsequently connected by default-port
+WebSocket on ASUS, read board esp32s3-907069eac800 / boot
+360d2ef9857b3220b0c037c3ea6671e0, and rejected a deliberate foreign identity with
+zero LED commands (pixel-probe-default-port.json). Published RGB/optical tests
+remain blocked on the user's quiet test window; the running ESP remains old
+image8bc0cd92. Pure lookup still times out on ASUS while native HTTP/socket paths
+can work; general LAN/HTTP truncation reliability is not declared fixed.
+
 ## Flutter lifecycle and stable board workspace
 
 Consulted peer-binding, mobile-settings and literal Pealayer donor-audit.

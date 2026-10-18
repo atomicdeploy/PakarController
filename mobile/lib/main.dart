@@ -168,8 +168,9 @@ class _ControlShellState extends State<ControlShell>
 
   Future<void> _startConnection() async {
     _startSupervision();
+    unawaited(_connectLive());
     await _refresh();
-    if (mounted && api.connectionWanted && foreground) {
+    if (mounted && api.connectionWanted && foreground && !liveActive) {
       unawaited(_connectLive());
     }
   }
