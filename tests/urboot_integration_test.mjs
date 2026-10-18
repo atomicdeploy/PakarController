@@ -4,7 +4,7 @@ const main=readFileSync('firmware/esp8266/esp8266.ino','utf8');
 const routes=readFileSync('firmware/esp8266/src/UrbootRoutes.h','utf8');
 const uart=readFileSync('firmware/esp32s3/src/AvrUart.h','utf8');
 assert(main.includes('!PAKAR_AVR_LINK_ENABLED || urbootRawOwned'));
-assert(main.includes('if(urbootQueued) {serviceUrbootJob();return;}'));
+assert(main.includes('if(urbootQueued) {serviceUpgrade();serviceUrbootJob();serviceUpgrade();return;}'));
 assert(main.includes('body+=urbootJobJson()'));
 assert(main.includes('urbootBusy.get() || passiveCaptureActive()'));
 assert(main.includes('otaActive || otaRebootAt || urbootBusy.get()'));

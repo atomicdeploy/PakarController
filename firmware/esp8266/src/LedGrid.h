@@ -12,6 +12,7 @@
 #include <Protocol.h>
 #include <CellBatch.h>
 #include <TableCellMapping.h>
+#include "UpgradeLifecycle.h"
 
 #ifndef PAKARCONTROLLER_SECTORS_PER_CELL
 #define PAKARCONTROLLER_SECTORS_PER_CELL 6
@@ -75,6 +76,8 @@ class LedGrid {
   // A loop-thread snapshot of the last committed command RGB buffer, before
   // FastLED brightness/correction. Never expose an uncommitted streamed chunk.
   String pixelFrameJson() const;
+  void presentMaintenance(const PakarUpdate::Lifecycle &lifecycle,uint32_t now);
+  bool maintenancePresented()const;
 
  private:
   void showStaged(); // Loop renderer only; external commits must validate ownership.
@@ -126,6 +129,9 @@ class LedGrid {
   uint32_t stagingAt_ = 0;
   uint64_t stageOwner_ = 0;
   uint32_t frameRevision_ = 0;
+  bool maintenanceActive_=false,maintenanceBlack_=false;
+  PakarUpdate::Visual maintenanceVisual_=PakarUpdate::Visual::None;
+  CRGB maintenanceFrom_[kPixels];
 #ifndef PAKAR_LED_FRAME_INTERVAL_MS
 #define PAKAR_LED_FRAME_INTERVAL_MS 0
 #endif

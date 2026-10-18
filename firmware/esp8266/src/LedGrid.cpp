@@ -452,3 +452,53 @@ String LedGrid::pixelFrameJson() const {
   body += F("]}");
   return body;
 }
+
+void LedGrid::presentMaintenance(const PakarUpdate::Lifecycle &life,uint32_t now) {
+  using V=PakarUpdate::Visual;
+  const auto view=life.visual(now);
+  if(view==V::None || !outputEnabled_) {
+    if(maintenanceActive_) {maintenanceActive_=maintenanceBlack_=false;maintenanceVisual_=V::None;dirty_=true;}
+    return;
+  }
+  if(!readyToShow(now) || (maintenanceActive_ && uint32_t(now-lastFrameAt_)<25U))return;
+  const uint8_t alpha=life.sceneAlpha(now);
+  const bool black=view==V::Shutdown && !alpha;
+  if(black && maintenanceBlack_)return; // Retain the exact terminal wire receipt.
+  staging_=false; // Never resume a partial network frame after maintenance.
+  if(view==V::Shutdown && maintenanceVisual_!=view)
+    ::memcpy(maintenanceFrom_,published_,sizeof(maintenanceFrom_));
+  for(uint8_t cell=0;cell<kCells;++cell) {
+    const uint8_t physical=physicalCells_[cell];
+    if(physical<1 || physical>kCells)continue;
+    const uint16_t first=uint16_t(physical-1)*kSectorsPerCell;
+    const uint32_t rgb=life.cellRgb(cell,now);
+    const CRGB accent(rgb>>16,(rgb>>8)&255,rgb&255);
+    for(uint8_t pixel=0;pixel<kSectorsPerCell;++pixel) {
+      const CRGB scene=view==V::Shutdown?maintenanceFrom_[first+pixel]:pixels_[first+pixel];
+      const auto mix=[alpha](uint8_t a,uint8_t b){return uint8_t((uint16_t(a)*(255-alpha)+uint16_t(b)*alpha+127)/255);};
+      published_[first+pixel]=(view==V::Startup || view==V::Shutdown)?
+        CRGB(mix(0,scene.r),mix(0,scene.g),mix(0,scene.b)):
+        (view==V::Success || view==V::Failure)?
+        CRGB(mix(accent.r,scene.r),mix(accent.g,scene.g),mix(accent.b,scene.b)):accent;
+    }
+  }
+#if defined(ARDUINO_ARCH_ESP32)
+  output_.submit(published_,brightness_,true,frameRevision_+1);
+#else
+  // FastLED owns pixels_' address. Stage/show/restore without another frame RAM.
+  ::memcpy(staged_,pixels_,sizeof(pixels_));::memcpy(pixels_,published_,sizeof(pixels_));
+  FastLED.show();::memcpy(pixels_,staged_,sizeof(pixels_));
+#endif
+  ::memcpy(publishedPhysical_,physicalCells_,sizeof(physicalCells_));
+  publishedBrightness_=brightness_;++frameRevision_;lastFrameAt_=now;
+  maintenanceActive_=true;maintenanceBlack_=black;
+  maintenanceVisual_=view;
+}
+bool LedGrid::maintenancePresented()const {
+  if(!outputEnabled_)return true;
+#if defined(ARDUINO_ARCH_ESP32)
+  return maintenanceBlack_ && output_.presented(frameRevision_);
+#else
+  return maintenanceBlack_;
+#endif
+}

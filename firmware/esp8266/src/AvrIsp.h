@@ -29,6 +29,7 @@ class AvrIsp {
   bool probe(uint8_t signature[3]);
   bool backup(fs::FS &filesystem, const char *directory);
   void setServiceCallback(void (*callback)()) {service_=callback;}
+  void setProgressCallback(void (*callback)(const char *,uint32_t,uint32_t)) {progress_=callback;}
   // Recovery EEPROM must be a durable snapshot taken AFTER Prog is armed.
   // Refuse erase unless every byte matches the still-running target.
   // UART-dead recovery additionally pins the original full flash and creates a
@@ -51,6 +52,8 @@ class AvrIsp {
   bool validSignature();
   void cooperate(){if(service_)service_();yield();}
   void (*service_)()=nullptr;
+  void report(const char *stage,uint32_t done,uint32_t total){if(progress_)progress_(stage,done,total);cooperate();}
+  void (*progress_)(const char *,uint32_t,uint32_t)=nullptr;
 
   uint8_t resetPin_;
 #if defined(ARDUINO_ARCH_ESP32)

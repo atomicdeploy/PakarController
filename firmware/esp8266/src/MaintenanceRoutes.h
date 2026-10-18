@@ -234,6 +234,7 @@ String buildTelemetryJson() {
 }
 bool prepareRemotePair(const RemoteFirmware::Plan &plan,String &reason) {
   if(artifactReaders || otaActive || otaRebootAt || avrUploadOwner || networkApplyPending || cloudApplyPending) {reason=F("Another maintenance/network operation is active");return false;}
+  if(!flushUpgradeScene()) {reason=F("Scene checkpoint failed; update not applied");return false;}
   // An explicitly ESP-only update owns no AVR mutation, regardless of whether
   // UART support was compiled in or a companion is currently reachable. A
   // known recovery latch still requires all existing paired recovery gates.
@@ -369,7 +370,21 @@ bool handleMaintenanceShell(const String &line,String &result) {
 void registerMaintenanceRoutes() {
   bootIntegrity=FirmwarePlatform::runningIntegrity();
   captureBootTelemetryImage();
+  localOtaReceipt.begin(LittleFS,accessConfig.ready(),pcBootId.c_str(),runningImageSize(),
+    runningImageMd5().c_str(),bootIntegrity);
+  // A post-boot receipt and the next upload must never share an operation ID.
+  otaNextOwner=localOtaReceipt.uploadId();
+  localBootNoticePending=localOtaReceipt.known() && !localOtaReceipt.pending() &&
+    !localOtaReceipt.noticeConsumed() && localOtaReceipt.installedBoot()==pcBootId;
+  remoteFirmware.setServiceCallback(upgradeBackground);
+  remoteFirmware.setRebootReady(upgradeRebootReady);
+  avrIsp.setServiceCallback(upgradeBackground);
+  avrIsp.setProgressCallback([](const char *stage,uint32_t done,uint32_t total){
+    if(urbootBusy.get()){urbootPhase=stage;urbootDone=done;urbootTotal=total;}
+    else if(remoteFirmware.busy())remoteFirmware.reportProgress(stage,done,total);
+  });
   remoteFirmware.begin(pcBootId,prepareRemotePair,programRemoteAvr,finishRemotePair);
+  server.on("/api/update/lifecycle",HTTP_GET,[](){if(authenticate())sendMaintenanceJson(upgradeJson());});
   File locale=LittleFS.open("/locale.cfg","r");
   if(locale && locale.size()==2) {char p[3]={};locale.read(reinterpret_cast<uint8_t*>(p),2);
     if(!strcmp(p,"en")||!strcmp(p,"fa")||!strcmp(p,"ar")||!strcmp(p,"ru")) displayLocale=p;

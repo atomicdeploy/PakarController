@@ -20,10 +20,29 @@ class FirmwareProgress {
   final int? total;
   final bool active, verified;
   double? get fraction =>
-      total != null && total! > 0 && done <= total! ? done / total! : null;
+      total != null && total! > 0 && done >= 0 && done <= total!
+      ? done / total!
+      : null;
   String get label => '$source · ${phase.replaceAll('_', ' ')}';
 
   static FirmwareProgress? observed(DeviceStatus status) {
+    final lifecycle = status.upgrade;
+    if (lifecycle != null) {
+      final source = switch (lifecycle.source) {
+        'local-ota' => 'Board OTA',
+        'avr-maintenance' => 'AVR update',
+        _ => 'Board update',
+      };
+      return FirmwareProgress(
+        '$source #${lifecycle.operation}',
+        lifecycle.phase,
+        lifecycle.received,
+        lifecycle.measured ? lifecycle.expected : null,
+        active: lifecycle.active,
+        verified: lifecycle.verified,
+        error: lifecycle.error,
+      );
+    }
     final a = status.json['avr_maintenance'];
     final ota = status.json['update'], remote = status.json['remote_firmware'];
     final otherActive =
@@ -130,7 +149,10 @@ class FirmwareProgress {
             ? job.expected
             : null,
         active: job.busy,
-        verified: job.phase == 'complete',
+        verified:
+            job.phase == 'complete' &&
+            !job.busy &&
+            raw['completion_verified'] == true,
         error: job.error,
       );
     } on FormatException {

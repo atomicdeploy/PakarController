@@ -225,5 +225,35 @@ int main(){
  diagnostic.discardStaged(77);
  diagnostic.setOutputEnabled(false);
  assert(diagnostic.diagnostic(0,1,0xff0000,false)&&diagnostic.outputEnabled());
-  puts("Actual LedGrid: exact80-cell cable bijection,6-pixel atomic chase/rollover/no-skip/stop at1, bulk transitions, white boot, snapshots and partial-frame isolation passed (host doubles, not optical output).");
+ {
+   LedGrid maintenance;maintenance.begin();maintenance.setStaticMode(false);
+   maintenance.setPattern(LedGrid::kPatternRainbow);pixelTestNow+=1000;maintenance.service(pixelTestNow);
+   auto rgbOf=[](const String &f){return f.substr(f.find("\"rgb\":\"")+7,480*6);};
+   const auto original=rgbOf(maintenance.pixelFrameJson());
+   PakarUpdate::Lifecycle life;const uint32_t started=pixelTestNow;
+   assert(life.observe(PakarUpdate::Source::Local,1,"prepare",0,0,true,false,started));
+   pixelTestNow+=25;maintenance.presentMaintenance(life,pixelTestNow);
+   const auto faded=rgbOf(maintenance.pixelFrameJson());
+   assert(faded.substr(0,6)!=faded.substr(6,6)); // Preserve each pixel, not six flattened copies.
+   pixelTestNow=started+700;maintenance.presentMaintenance(life,pixelTestNow);
+   assert(maintenance.maintenancePresented());
+   assert(rgbOf(maintenance.pixelFrameJson())==String(480*6,'0'));
+   const auto shows=FastLED.shows;pixelTestNow+=100;maintenance.presentMaintenance(life,pixelTestNow);
+   assert(FastLED.shows==shows); // One terminal black, not a stream of black writes.
+   assert(maintenance.pattern()==LedGrid::kPatternRainbow && maintenance.state(1)==kCellWhite);
+   life.observe(PakarUpdate::Source::Local,1,"receiving",240,480,true,false,pixelTestNow);
+   pixelTestNow+=25;maintenance.presentMaintenance(life,pixelTestNow);
+   assert(!maintenance.maintenancePresented());
+   life.observe(PakarUpdate::Source::Local,1,"complete",480,480,false,true,pixelTestNow);
+   pixelTestNow+=1700;maintenance.presentMaintenance(life,pixelTestNow);
+   assert(maintenance.pattern()==LedGrid::kPatternRainbow && maintenance.outputEnabled());
+   maintenance.setPattern(LedGrid::kPatternNone);maintenance.fill(kCellWhite);
+   maintenance.service(++pixelTestNow);assert(rgbOf(maintenance.pixelFrameJson())==String(480*6,'f'));
+   maintenance.setOutputEnabled(false);
+   life.observe(PakarUpdate::Source::Local,2,"prepare",0,0,true,false,pixelTestNow);
+   const auto disabledShows=FastLED.shows;pixelTestNow+=800;maintenance.presentMaintenance(life,pixelTestNow);
+   assert(!maintenance.outputEnabled() && FastLED.shows==disabledShows && maintenance.maintenancePresented());
+   assert(original.size()==480*6);
+ }
+  puts("Actual LedGrid: cable mapping,6-pixel cells, full480 maintenance black, per-pixel fade, scene preservation and disabled-output isolation passed (host doubles, not optical output).");
 }

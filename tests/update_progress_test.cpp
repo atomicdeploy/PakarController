@@ -16,6 +16,7 @@ int main() {
   panelText(progress.snapshot(),text);assert(!strcmp(text,"P050"));
   progress.advance(480);assert(progress.snapshot().percent()==100);
   progress.phase(Phase::Verifying);panelText(progress.snapshot(),text);assert(!strcmp(text,"CHEC"));
+  assert(!progress.snapshot().known()); // Receiving100% is not verified100%.
   progress.phase(Phase::Rebooting);panelText(progress.snapshot(),text);assert(!strcmp(text,"boot"));
   progress.phase(Phase::Failed);panelText(progress.snapshot(),text);assert(!strcmp(text,"Err "));
   Observation overflow{Phase::Receiving,UINT32_MAX,UINT32_MAX};assert(overflow.percent()==100);
@@ -25,6 +26,15 @@ int main() {
   std::thread writer([&]{for(uint32_t i=1;i<100000;++i)progress.begin(i);done=true;});
   while(!done){const auto value=progress.snapshot();if(value.phase==Phase::Receiving)assert(value.received==0);}
   writer.join();
+  progress.begin(480,27);progress.advance(300);
+  assert(progress.snapshot().operation==27 && progress.snapshot().received==300);
+  progress.phase(Phase::Rebooting);assert(progress.snapshot().operation==27 && !progress.snapshot().known());
+  Completion completion;Completion::Intent intent;
+  assert(!completion.take(intent));
+  completion.publish(27,480,"0123456789abcdef0123456789abcdef");
+  assert(completion.take(intent) && intent.operation==27 && intent.bytes==480);
+  assert(!strcmp(intent.md5,"0123456789abcdef0123456789abcdef") && !completion.take(intent));
+  completion.publish(28,512,"x");assert(completion.take(intent) && !strcmp(intent.md5,"x"));
   Panel panel;uint8_t payload[12];
   assert(!panel.next(0,true,false,"P001",payload));
   assert(panel.next(0,true,true,"P001",payload));

@@ -24,15 +24,15 @@ inline const char *name(Phase phase) {
 }
 struct Observation {
   Phase phase = Phase::Idle;
-  uint32_t received = 0, expected = 0;
-  bool known() const { return expected && received <= expected; }
+  uint32_t received = 0, expected = 0, operation = 0;
+  bool known() const { return phase==Phase::Receiving && expected && received <= expected; }
   uint8_t percent() const {
     return known() ? static_cast<uint8_t>(static_cast<uint64_t>(received) * 100 / expected) : 0;
   }
 };
 class Progress {
  public:
-  void begin(uint32_t expected) { publish({Phase::Receiving, 0, expected}); }
+  void begin(uint32_t expected,uint32_t operation=0) { publish({Phase::Receiving, 0, expected,operation}); }
   void advance(uint32_t received) { auto next = snapshot(); next.received = received; publish(next); }
   void phase(Phase phase) { auto next = snapshot(); next.phase = phase; publish(next); }
   Observation snapshot() const {
@@ -44,6 +44,7 @@ class Progress {
       const auto before = revision_.load();
       if (before & 1U) continue;
       Observation value{static_cast<Phase>(phase_.load()), received_.load(), expected_.load()};
+      value.operation=operation_.load();
       if (before == revision_.load()) return value;
     }
 #endif
@@ -57,14 +58,36 @@ class Progress {
     revision_.fetch_add(1);
     phase_.store(static_cast<uint32_t>(value.phase));
     received_.store(value.received); expected_.store(value.expected);
+    operation_.store(value.operation);
     revision_.fetch_add(1);
 #endif
   }
 #if defined(ARDUINO_ARCH_ESP8266)
   Observation observation_;
 #else
-  std::atomic<uint32_t> revision_{0}, phase_{0}, received_{0}, expected_{0};
+  std::atomic<uint32_t> revision_{0}, phase_{0}, received_{0}, expected_{0},operation_{0};
 #endif
+};
+// One accepted upload owns admission until reboot. Async code only publishes a
+// fixed-size intent; the loop owns durable receipt FS/String objects.
+class Completion {
+ public:
+  struct Intent {uint32_t operation=0,bytes=0;char md5[33]{};};
+  void publish(uint32_t operation,uint32_t bytes,const char *md5) {
+    operation_.store(operation);bytes_.store(bytes);
+    bool ended=!md5;
+    for(unsigned i=0;i<32;++i){const uint8_t c=ended?0:uint8_t(md5[i]);ended=ended || !c;md5_[i].store(c);}
+    ready_.store(true);
+  }
+  bool take(Intent &out) {
+    if(!ready_.exchange(false))return false;
+    out.operation=operation_.load();out.bytes=bytes_.load();
+    for(unsigned i=0;i<32;++i)out.md5[i]=char(md5_[i].load());
+    out.md5[32]=0;return true;
+  }
+ private:
+  std::atomic<bool> ready_{false};
+  std::atomic<uint32_t> operation_{0},bytes_{0};std::atomic<uint8_t> md5_[32]{};
 };
 // Exact raw file size, NOT multipart Content-Length or OTA partition capacity.
 inline bool imageSize(const char *text, uint32_t capacity, uint32_t &out) {

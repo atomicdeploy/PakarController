@@ -149,6 +149,8 @@ struct DeviceStatus {
     led_output: serde_json::Value,
     #[serde(default)]
     update: serde_json::Value,
+    #[serde(default,deserialize_with="firmware_progress::optional_upgrade")]
+    upgrade:Option<firmware_progress::Upgrade>,
     #[serde(default)]
     remote_firmware: serde_json::Value,
     #[serde(default)]
@@ -365,6 +367,7 @@ enum Event {
     ForEndpoint(Endpoint, Box<Event>),
     StreamStats(f64),
     Status(DeviceStatus),
+    UpgradeProgress(firmware_progress::Upgrade),
     Mapping(u64, Vec<CellMapping>, Option<(String, String)>),
     MappingFailed(u64, String),
     Configuration(&'static str, serde_json::Value),
@@ -1148,6 +1151,10 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                             let result=request.verify(value);if result.is_ok(){last_status=Instant::now();}request.emit(&events.sender,result);
                             context.request_repaint();
                             continue;
+                        }
+                        if let Some(upgrade)=firmware_progress::websocket_upgrade(&text){
+                            let _=events.send(for_endpoint(&current,Event::UpgradeProgress(upgrade)));
+                            context.request_repaint();continue;
                         }
                         if pending_arm.as_ref().is_some_and(|(_, acked)| !acked) {
                             if let Some(ack) = pixel_diagnostic::mode_ack(&text) {
@@ -2379,8 +2386,14 @@ impl PakarControllerApp {
                 Event::ForScope(..) => {} // Scope envelopes are unwrapped once.
                 Event::ForEndpoint(..) => {} // Worker envelopes are unwrapped once.
                 Event::StreamStats(value) => self.stream_sent_fps = Some((value, Instant::now())),
-                Event::Status(s) => {
+                Event::UpgradeProgress(upgrade)=>{
+                    if self.connection_enabled && self.transport==Transport::WiFi {
+                        if let Some(status)=self.status.as_mut(){firmware_progress::observe_upgrade(status,upgrade);}
+                    } // Progress alone never renews command/status authority.
+                }
+                Event::Status(mut s) => {
                     if realtime::older_than(&s,self.status.as_ref()) { continue; }
+                    firmware_progress::retain_upgrade(&mut s,self.status.as_ref());
                     if !s.hostname.is_empty() {
                         if self.status.as_ref().is_some_and(|old|old.cells!=s.cells || old.effect!=s.effect ||
                             old.mode!=s.mode || old.brightness!=s.brightness || old.led_output["enabled"]!=s.led_output["enabled"]) {
@@ -2510,7 +2523,8 @@ impl PakarControllerApp {
                         self.receive_configuration("/api/device/name",value);
                     }
                 }
-                Event::SerialSnapshot(_, snapshot) => {
+                Event::SerialSnapshot(_, mut snapshot) => {
+                    firmware_progress::retain_upgrade(&mut snapshot.status,self.serial_status.as_ref());
                     self.device_settings.remote_job=maintenance::parse_job(snapshot.status.remote_firmware.clone()).ok();
                     let peer=peer_http::Pin::from_status(&snapshot.status);
                     let previous=self.serial_status.as_ref().and_then(peer_http::Pin::from_status);
@@ -2547,7 +2561,8 @@ impl PakarControllerApp {
                             self.table.fail_pending_edits(error);}
                     }
                 }
-                Event::SerialCommandState(_, status) => {
+                Event::SerialCommandState(_, mut status) => {
+                    firmware_progress::retain_upgrade(&mut status,self.serial_status.as_ref());
                     if peer_http::Pin::from_status(&status)==self.serial_status.as_ref().and_then(peer_http::Pin::from_status) {
                         self.pattern=status.effect.clone();self.serial_status=Some(status);
                         self.table.pixel_sample=None;

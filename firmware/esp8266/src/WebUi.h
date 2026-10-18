@@ -858,14 +858,21 @@ function renderLedOutputControl(){
     document.getElementById('rainbowTest').disabled=select.disabled;if(modeKnown){select.value=state.led_output.mode;
       setUiText(document.getElementById('ledOutputModeHint'),state.led_output.mode==='static'?'Static cells: six matching pixels. Rainbow test animates explicitly.':'Effects: animated output enabled explicitly.')}}
 }
+function upgradeObservation(u,s){
+  const phases=['queued','manifest','receiving','verifying','ready','prepare','download_esp','download_avr','backup_isp','program_isp','backup_flash','backup_eeprom','verify_flash','verify_eeprom','program_avr','program_esp','verify_esp','awaiting_application','awaiting_reboot','ready-to-reboot','verify_pair','release_pair','complete','failed','aborted','cancelled'];
+  if(!u||!s?.board_id||!s?.boot_id||u.board_id!==s.board_id||u.boot_id!==s.boot_id||!['local-ota','remote-firmware','avr-maintenance'].includes(u.source)||!Number.isInteger(u.operation_id)||u.operation_id<=0||!Number.isInteger(u.revision)||u.revision<0||typeof u.active!=='boolean'||typeof u.progress_known!=='boolean'||typeof u.completion_verified!=='boolean'||!phases.includes(u.phase)||!Number.isInteger(u.received_bytes)||u.received_bytes<0||!Number.isInteger(u.expected_bytes)||u.expected_bytes<0||(u.expected_bytes>0&&u.received_bytes>u.expected_bytes))return null;
+  const measured=['receiving','download_esp','download_avr','backup_flash','backup_eeprom','verify_flash','verify_eeprom','verify_esp','program_avr','program_esp'];
+  return {source:u.source+' #'+u.operation_id,phase:u.phase,active:u.active,fraction:u.progress_known&&measured.includes(u.phase)&&u.expected_bytes>0?u.received_bytes/u.expected_bytes:null,verified:u.phase==='complete'&&!u.active&&u.completion_verified,error:typeof u.error==='string'?u.error:''};
+}
 function firmwareUpdateObservation(s){
+  const lifecycle=upgradeObservation(s?.upgrade,s);if(lifecycle)return lifecycle;
   const a=s?.avr_maintenance;
   if(a&&s?.boot_id&&a.boot_id===s.boot_id&&(a.busy===true||(!s.remote_firmware?.busy&&!['receiving','verifying','ready-to-reboot'].includes(s.update?.phase)))&&['isp','urboot'].includes(a.method)&&Number.isInteger(a.job_id)&&a.job_id>0&&typeof a.busy==='boolean'&&['queued','prepare','backup_isp','program_isp','backup_flash','backup_eeprom','program_avr','verify_flash','verify_eeprom','awaiting_application','complete','failed'].includes(a.phase)&&Number.isInteger(a.received_bytes)&&Number.isInteger(a.expected_bytes)&&a.received_bytes>=0&&a.expected_bytes>=a.received_bytes)return {source:'AVR · '+(a.method==='isp'?'ISP':'Urboot')+' #'+a.job_id,phase:a.phase,active:a.busy,fraction:['backup_flash','backup_eeprom','program_avr','verify_flash','verify_eeprom'].includes(a.phase)&&a.expected_bytes>0?a.received_bytes/a.expected_bytes:null,verified:a.phase==='complete'&&a.verified===true&&a.application_recovered===true};
   const v=s?.update, phases=['receiving','verifying','ready-to-reboot','failed','aborted'];
   if(v&&phases.includes(v.phase)&&Number.isInteger(v.received_bytes)&&v.received_bytes>=0&&Number.isInteger(v.expected_bytes)&&v.expected_bytes>=0&&(v.expected_bytes===0||v.received_bytes<=v.expected_bytes))return {source:'Board OTA',phase:v.phase,active:!['failed','aborted'].includes(v.phase),fraction:v.phase==='receiving'&&v.progress_known===true&&v.expected_bytes>0?v.received_bytes/v.expected_bytes:null,verified:v.completion_verified===true};
   const j=s?.remote_firmware;
   if(!j||!Number.isInteger(j.job_id)||j.job_id<=0||j.boot_id!==s.boot_id||!/^([0-9a-f]{64})$/.test(j.manifest_sha256)||typeof j.busy!=='boolean'||!['manifest','download_esp','download_avr','ready','prepare','program_avr','program_esp','awaiting_reboot','verify_pair','release_pair','complete','failed','cancelled'].includes(j.phase)||!Number.isInteger(j.received_bytes)||!Number.isInteger(j.expected_bytes)||j.received_bytes<0||j.expected_bytes<j.received_bytes)return null;
-  return {source:'Board update #'+j.job_id,phase:j.phase,active:j.busy,fraction:['download_esp','download_avr'].includes(j.phase)&&j.expected_bytes>0?j.received_bytes/j.expected_bytes:null,verified:j.phase==='complete'};
+  return {source:'Board update #'+j.job_id,phase:j.phase,active:j.busy,fraction:['download_esp','download_avr'].includes(j.phase)&&j.expected_bytes>0?j.received_bytes/j.expected_bytes:null,verified:j.phase==='complete'&&j.completion_verified===true};
 }
 function renderUpdateProgress(){
   const p=currentPeer().known&&(currentPeer().has('ota')||currentPeer().has('isp'))?firmwareUpdateObservation(state):null;
@@ -1242,7 +1249,7 @@ function connectWs(){
     traceBrowserEvent('info','websocket.connected','WebSocket transport connected',{source:'websocket',endpoint:'/ws'});
     active.send('{"type":"status"}');
   };
-  active.onmessage=e=>{if(socket!==active)return;if(typeof e.data==='string'){try{const x=JSON.parse(e.data);if(x.hostname)render(x)}catch{}}};
+  active.onmessage=e=>{if(socket!==active)return;if(typeof e.data==='string'){try{const x=JSON.parse(e.data);if(x.type==='update-progress'){if(upgradeObservation(x,state)&&(!state.upgrade||x.revision>state.upgrade.revision)){state.upgrade=x;renderUpdateProgress()}return}if(x.hostname)render(x)}catch{}}};
   active.onclose=e=>{
     if(socket!==active||!authenticated||webSocketPaused)return;
     wsState.textContent='WebSocket retrying';wsState.className='warn';stopStream();

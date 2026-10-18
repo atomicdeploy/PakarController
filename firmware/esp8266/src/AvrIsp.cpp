@@ -135,14 +135,14 @@ bool AvrIsp::backup(fs::FS &filesystem, const char *directory) {
       flash.close();
       return fail(F("AVR flash backup write failed"));
     }
-    cooperate();
+    report("backup_flash",base+sizeof(block),kFlashBytes);
   }
   flash.flush(); flash.close();
   flash = filesystem.open(flashPath, "r");
   if (!flash || flash.size()!=kFlashBytes) return fail(F("Flash backup could not be reopened"));
   for (uint32_t i=0;i<kFlashBytes;++i) {
     if (flash.read()!=readFlashByte(i)) {flash.close();return fail(F("Stored flash backup mismatch"));}
-    if ((i & 127U)==0) cooperate();
+    if ((i & 127U)==127U) report("verify_flash",i+1,kFlashBytes);
   }
   flash.close();
 
@@ -156,14 +156,14 @@ bool AvrIsp::backup(fs::FS &filesystem, const char *directory) {
       eeprom.close();
       return fail(F("AVR EEPROM backup write failed"));
     }
-    cooperate();
+    report("backup_eeprom",base+count,kEepromBytes);
   }
   eeprom.flush(); eeprom.close();
   eeprom = filesystem.open(eepromPath, "r");
   if (!eeprom || eeprom.size()!=kEepromBytes) return fail(F("EEPROM backup could not be reopened"));
   for (uint16_t i=0;i<kEepromBytes;++i) {
     if (eeprom.read()!=readEepromByte(i)) {eeprom.close();return fail(F("Stored EEPROM backup mismatch"));}
-    if ((i & 127U)==0) cooperate();
+    if ((i & 127U)==127U) report("verify_eeprom",i+1,kEepromBytes);
   }
   eeprom.close();
 
@@ -213,7 +213,7 @@ bool AvrIsp::programFlash(File &image, File &recoveryEeprom,
     return fail(F("A complete durable EEPROM recovery snapshot is required"));
   for (uint16_t i=0;i<kEepromBytes;++i) {
     if (readEepromByte(i)!=savedEeprom[i]) return fail(F("EEPROM changed after recovery snapshot; erase refused"));
-    if ((i & 127U)==0) cooperate();
+    if ((i & 127U)==127U) report("verify_eeprom",i+1,kEepromBytes);
   }
   // Prove the entire source remains readable before the irreversible erase.
   if (!image.seek(0,SeekSet)) return fail(F("Cannot seek flash image"));
@@ -276,7 +276,7 @@ bool AvrIsp::programFlash(File &image, File &recoveryEeprom,
       while((transfer4(0xF0,0,0,0)&1U) && attempts++<20) delay(1);
       if(readEepromByte(i)!=savedEeprom[i]) return fail(F("EEPROM restore mismatch; retained recovery file required"));
     }
-    cooperate();
+    if((i&127U)==127U)report("verify_eeprom",i+1,kEepromBytes);else cooperate();
   }
   image.seek(0, SeekSet);
   uint8_t page[kPageBytes];
@@ -295,7 +295,7 @@ bool AvrIsp::programFlash(File &image, File &recoveryEeprom,
     transfer4(0x4C, static_cast<uint8_t>(pageWord >> 8),
               static_cast<uint8_t>(pageWord), 0x00);
     delay(6);
-    cooperate();
+    report("program_avr",base+kPageBytes,kFlashBytes);
   }
 
   image.seek(0, SeekSet);
@@ -308,10 +308,12 @@ bool AvrIsp::programFlash(File &image, File &recoveryEeprom,
         return fail(F("AVR flash verification mismatch"));
       }
     }
-    cooperate();
+    report("verify_flash",base+sizeof(page),kFlashBytes);
   }
-  for(uint16_t i=0;i<kEepromBytes;++i)
+  for(uint16_t i=0;i<kEepromBytes;++i) {
     if(readEepromByte(i)!=savedEeprom[i]) return fail(F("EEPROM final verification mismatch"));
+    if((i&127U)==127U)report("verify_eeprom",i+1,kEepromBytes);
+  }
   leave();
   return true;
 }

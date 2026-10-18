@@ -1,10 +1,40 @@
 import 'settings_catalog.dart';
 import 'peer_context.dart';
+import 'upgrade_observation.dart';
 
 class DeviceStatus {
   DeviceStatus(this.json);
   final Map<String, dynamic> json;
   late final peer = PeerContext.fromStatus(json);
+  UpgradeObservation? get upgrade => UpgradeObservation.read(
+    json['upgrade'],
+    board: json['board_id'],
+    boot: json['boot_id'],
+  );
+
+  /// A progress packet cannot invent a peer, replace full status or refresh a
+  /// hardware lease. Keep only its newer, same-boot lifecycle observation.
+  DeviceStatus? withUpgradeEvent(Map<String, dynamic> event) {
+    if (event['type'] != 'update-progress') return null;
+    final next = UpgradeObservation.read(
+      event,
+      board: json['board_id'],
+      boot: json['boot_id'],
+    );
+    if (next == null || (upgrade?.revision ?? -1) >= next.revision) return null;
+    return DeviceStatus({...json, 'upgrade': next.json});
+  }
+
+  DeviceStatus preservingNewerUpgrade(DeviceStatus? current) {
+    final previous = current?.upgrade;
+    if (previous == null ||
+        current?.json['board_id'] != json['board_id'] ||
+        current?.json['boot_id'] != json['boot_id'] ||
+        (upgrade?.revision ?? -1) >= previous.revision) {
+      return this;
+    }
+    return DeviceStatus({...json, 'upgrade': previous.json});
+  }
 
   // An older in-flight HTTP read must not undo a newer WS command receipt.
   // This comparison is only meaningful within the exact same board boot.

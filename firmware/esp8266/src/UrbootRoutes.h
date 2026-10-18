@@ -40,6 +40,7 @@ struct UrbootPort {
 // are inhibited before dispatch; no cloud/TLS reconnect or LED frame transmission
 // competes with the raw UART session. Network callbacks never own the UART.
 void urbootBackground() {
+  serviceUpgrade();
   hostLink.service();server.service();
   // Drain ingress while the maintenance fence is STILL set. Never retain a
   // user's queued cell/stream command and apply it after programming completes.
@@ -159,6 +160,22 @@ void serviceUrbootJob() {
 #if defined(ARDUINO_ARCH_ESP32)
   bool success=true;urbootPhase="prepare";
   const bool program=urbootOperation=="program";
+  // Shutdown while framed UART still belongs to the application. Never spend
+  // the bootloader watchdog window on a melody or run its bytes through AVRLink.
+  const uint32_t lead=millis();
+  while(uint32_t(millis()-lead)<PakarUpdate::Lifecycle::shutdownMs+100U) {
+    avrLink.service();urbootBackground();
+  }
+  if(!grid.maintenancePresented()) {
+    urbootError="Final black frame not confirmed; no reset or programming";success=false;
+  }
+  if(success && program && !flushUpgradeScene()) {
+    urbootError="Scene checkpoint failed; no reset or programming";success=false;
+  }
+  // A held output gate also covers an already queued/in-flight frame. A mere
+  // producer flag cannot prevent a static GPIO transfer masking UART IRQs.
+  const bool outputHeld=PakarS3::LedOutput::acquireFlashPause();
+  if(!outputHeld) {urbootError="LED output could not quiesce; no reset or programming";success=false;}
   if(commandClock()>=avrMaintenanceDeadline) {
     urbootError="Admission expired before target effects";success=false;
   }
@@ -211,7 +228,7 @@ void serviceUrbootJob() {
       }
     }
     if(!success && !urbootError.length())urbootError=avrIsp.lastError();
-    avrIsp.setServiceCallback(nullptr);
+    avrIsp.setServiceCallback(upgradeBackground);
   }
   if(raw) {
     urbootRawOwned=true;avrOnline=false;avrVersionKnown=false;avrPcSupported=false;
@@ -248,6 +265,7 @@ void serviceUrbootJob() {
     if(!urbootVerified || finishRemotePair(plan,true,reason)!=1){urbootError=reason;success=false;}
   }
   urbootPhase=success?"complete":"failed";
+  if(outputHeld)PakarS3::LedOutput::releaseFlashPause();
 #else
   urbootPhase="failed";urbootError="Urboot requires the verified S3 hardware-UART profile";
 #endif

@@ -3,6 +3,76 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
+use std::time::{Duration,Instant};
+
+/// Same board/current installed boot owns the lifecycle. source_boot_id may
+/// identify an earlier upload boot only for a verified post-reboot receipt.
+#[derive(Clone,Debug,Deserialize,Serialize)]
+pub struct Upgrade {
+    pub board_id:String,pub boot_id:String,pub source_boot_id:String,
+    pub source:String,pub operation_id:u64,pub revision:u64,pub phase:String,
+    pub active:bool,pub received_bytes:u64,pub expected_bytes:u64,
+    pub progress_known:bool,pub progress_percent:Option<f64>,
+    pub completion_verified:bool,pub error:String,
+    #[serde(skip)]
+    observed_at:Option<Instant>,
+}
+pub fn optional_upgrade<'de,D:serde::Deserializer<'de>>(deserializer:D)->Result<Option<Upgrade>,D::Error>{
+    // A malformed additive progress object must not disconnect a valid board.
+    let raw=Value::deserialize(deserializer)?;
+    Ok(serde_json::from_value::<Upgrade>(raw).ok().filter(Upgrade::valid))
+}
+impl Upgrade {
+    fn valid(&self)->bool{
+        let boot=|value:&str|value.len()==32 && value.bytes().all(|v|v.is_ascii_digit()||(b'a'..=b'f').contains(&v)) && value.bytes().any(|v|v!=b'0');
+        !self.board_id.is_empty() && self.board_id.len()<=64 && self.board_id.bytes().all(|v|v.is_ascii_lowercase()||v.is_ascii_digit()||v==b'-'||v==b'_') &&
+            boot(&self.boot_id) && boot(&self.source_boot_id) && self.source.len()<=64 && !self.source.is_empty() &&
+            !self.source.chars().any(char::is_control) && !self.phase.is_empty() && self.phase.len()<=63 && !self.phase.chars().any(char::is_control) &&
+            self.error.len()<=1024 && !self.error.chars().any(|v|v.is_control() && v!='\n' && v!='\t') &&
+            (self.expected_bytes==0 || self.received_bytes<=self.expected_bytes) && (!self.active || self.source_boot_id==self.boot_id) &&
+            self.progress_percent.is_none_or(|p|p.is_finite()&&(0.0..=100.0).contains(&p))
+    }
+    pub fn belongs(&self,status:&crate::DeviceStatus)->bool{
+        self.valid() && crate::peer_http::Pin::from_status(status).is_some_and(|peer|peer.matches_identity(&self.board_id,&self.boot_id))
+    }
+    pub fn fresh(&self)->bool{self.observed_at.is_some_and(|at|at.elapsed()<Duration::from_secs(5))}
+    fn measured_fraction(&self)->Option<f32>{
+        if !self.progress_known || self.expected_bytes==0 || self.received_bytes>self.expected_bytes ||
+            !matches!(self.phase.as_str(),"receiving"|"download_esp"|"download_avr"|"backup_flash"|"backup_eeprom"|
+                "verify_flash"|"verify_eeprom"|"verify_esp"|"program_avr"|"program_esp"){return None;}
+        let percent=(u128::from(self.received_bytes)*100/u128::from(self.expected_bytes)) as u8;
+        if self.progress_percent.is_some_and(|claimed|claimed!=f64::from(percent)){return None;}
+        Some(self.received_bytes as f32/self.expected_bytes as f32)
+    }
+    fn observation(&self,status:&crate::DeviceStatus)->Option<Observation>{
+        if !self.belongs(status) || self.operation_id==0 || self.phase=="idle" || self.source=="boot" {return None;}
+        let mut value=Observation::transfer(&self.phase,self.received_bytes,Some(self.expected_bytes));
+        value.source=format!("Board · {} #{}",self.source,self.operation_id);
+        value.fraction=self.measured_fraction();
+        value.active=self.active;
+        value.verified=!self.active && self.phase=="complete" && self.completion_verified;
+        value.error=self.error.clone();Some(value)
+    }
+}
+pub fn websocket_upgrade(text:&str)->Option<Upgrade>{
+    let raw:Value=serde_json::from_str(text).ok()?;
+    if raw["type"]!="update-progress"{return None;}
+    serde_json::from_value::<Upgrade>(raw).ok().filter(Upgrade::valid)
+}
+pub fn observe_upgrade(status:&mut crate::DeviceStatus,mut incoming:Upgrade)->bool{
+    if !incoming.belongs(status) || status.upgrade.as_ref().filter(|old|old.belongs(status))
+        .is_some_and(|old|incoming.revision<=old.revision){return false;}
+    incoming.observed_at=Some(Instant::now());status.upgrade=Some(incoming);true
+}
+pub fn retain_upgrade(status:&mut crate::DeviceStatus,previous:Option<&crate::DeviceStatus>){
+    let incoming=status.upgrade.take();
+    let old=previous.and_then(|previous|previous.upgrade.as_ref()).filter(|old|old.belongs(status)).cloned();
+    status.upgrade=old;
+    if let Some(incoming)=incoming{observe_upgrade(status,incoming);}
+}
+pub fn lifecycle_observed(status:&crate::DeviceStatus)->Option<Observation>{
+    status.upgrade.as_ref()?.observation(status)
+}
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Observation {
@@ -49,6 +119,7 @@ fn bytes(v: &Value, key: &str) -> Option<u64> {
     v.get(key)?.as_u64()
 }
 pub fn observed(status: &crate::DeviceStatus) -> Option<Observation> {
+    if let Some(progress)=lifecycle_observed(status){return Some(progress);}
     let a=&status.avr_maintenance;
     if !status.boot_id.is_empty() && a["boot_id"].as_str()==Some(status.boot_id.as_str()) && matches!(a["method"].as_str(),Some("urboot"|"isp"))
         && (a["busy"]==true || (status.remote_firmware["busy"]!=true && !matches!(status.update["phase"].as_str(),Some("receiving"|"verifying"|"ready-to-reboot"))))
@@ -96,11 +167,11 @@ pub fn observed(status: &crate::DeviceStatus) -> Option<Observation> {
         Some(u64::from(j.expected_bytes)),
     );
     p.source = format!("Board update #{}", j.job_id);
-    if !matches!(j.phase.as_str(), "download_esp" | "download_avr") {
+    if !matches!(j.phase.as_str(), "download_esp" | "download_avr") || status.remote_firmware["progress_known"]!=true {
         p.fraction = None;
     }
     p.active = j.busy;
-    p.verified = j.phase == "complete";
+    p.verified = j.phase == "complete" && !j.busy && status.remote_firmware["completion_verified"]==true;
     p.error = j.error;
     Some(p)
 }
@@ -183,6 +254,65 @@ pub fn draw(ui: &mut eframe::egui::Ui, p: &Observation) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn upgrade_status()->crate::DeviceStatus{
+        serde_json::from_value(serde_json::json!({"hostname":"ledboard","board_id":"esp32s3-fixture","boot_id":"a".repeat(32),"http_peer_fencing":true,
+            "cells":["white"],"upgrade":{"board_id":"esp32s3-fixture","boot_id":"a".repeat(32),"source_boot_id":"a".repeat(32),
+                "source":"local-ota","operation_id":7,"revision":3,"phase":"receiving","active":true,
+                "received_bytes":50,"expected_bytes":100,"progress_known":true,"progress_percent":50,
+                "completion_verified":false,"error":""}})).unwrap()
+    }
+    #[test]
+    fn lifecycle_progress_prefers_current_peer_and_never_invents_known_percentage_or_completion(){
+        let mut s=upgrade_status();s.update=serde_json::json!({"phase":"failed","received_bytes":0,"expected_bytes":0});
+        let p=observed(&s).unwrap();assert!(p.source.contains("local-ota #7"));assert_eq!(p.fraction,Some(0.5));
+        let upgrade=s.upgrade.as_mut().unwrap();upgrade.progress_known=false;upgrade.progress_percent=Some(99.0);
+        assert!(observed(&s).unwrap().fraction.is_none());
+        let upgrade=s.upgrade.as_mut().unwrap();upgrade.expected_bytes=0;upgrade.progress_known=true;
+        assert!(observed(&s).unwrap().fraction.is_none());
+        let upgrade=s.upgrade.as_mut().unwrap();upgrade.phase="complete".into();upgrade.active=false;upgrade.source_boot_id="b".repeat(32);
+        assert!(!observed(&s).unwrap().verified,"A historical complete phase is not completion proof");
+        s.upgrade.as_mut().unwrap().completion_verified=true;assert!(observed(&s).unwrap().verified);
+        s.upgrade.as_mut().unwrap().phase="ready-to-reboot".into();assert!(!observed(&s).unwrap().verified);
+        s.upgrade.as_mut().unwrap().board_id="other-board".into();assert!(lifecycle_observed(&s).is_none());
+        s.upgrade=upgrade_status().upgrade;s.boot_id="b".repeat(32);assert!(lifecycle_observed(&s).is_none());
+    }
+    #[test]
+    fn lifecycle_fraction_uses_counters_not_rounded_percent_and_prepare_stays_indeterminate(){
+        let mut status=upgrade_status();let upgrade=status.upgrade.as_mut().unwrap();
+        upgrade.received_bytes=1;upgrade.expected_bytes=3;upgrade.progress_percent=Some(33.0);
+        assert!((observed(&status).unwrap().fraction.unwrap()-1.0/3.0).abs()<0.00001);
+        status.upgrade.as_mut().unwrap().progress_percent=Some(34.0);
+        assert!(observed(&status).unwrap().fraction.is_none(),"Incoherent rounded percentage cannot become measured progress");
+        status.upgrade.as_mut().unwrap().progress_percent=None;
+        assert!((observed(&status).unwrap().fraction.unwrap()-1.0/3.0).abs()<0.00001);
+        status.upgrade.as_mut().unwrap().phase="prepare".into();
+        assert!(observed(&status).unwrap().fraction.is_none());
+    }
+    #[test]
+    fn incremental_upgrade_events_do_not_rewind_or_promote_status_authority(){
+        let mut s=upgrade_status();let original=s.clone();
+        let mut event=s.upgrade.clone().unwrap();event.revision=4;event.received_bytes=75;event.progress_percent=Some(75.0);
+        let mut wire=serde_json::to_value(&event).unwrap();wire["type"]="update-progress".into();
+        let event=websocket_upgrade(&wire.to_string()).unwrap();assert!(observe_upgrade(&mut s,event.clone()));
+        assert!(s.upgrade.as_ref().unwrap().fresh());assert_eq!(observed(&s).unwrap().fraction,Some(0.75));
+        assert_eq!(s.hostname,original.hostname);assert_eq!(s.cells,original.cells);
+        assert!(!observe_upgrade(&mut s,event));
+        let mut delayed=original.clone();retain_upgrade(&mut delayed,Some(&s));assert_eq!(delayed.upgrade.as_ref().unwrap().revision,4);
+        let mut foreign=delayed.upgrade.clone().unwrap();foreign.boot_id="b".repeat(32);foreign.revision=99;
+        assert!(!observe_upgrade(&mut s,foreign));assert_eq!(s.upgrade.as_ref().unwrap().revision,4);
+        delayed.boot_id="b".repeat(32);retain_upgrade(&mut delayed,Some(&s));assert!(delayed.upgrade.is_none());
+        wire["type"]="command-result".into();assert!(websocket_upgrade(&wire.to_string()).is_none());
+    }
+    #[test]
+    fn optional_invalid_upgrade_keeps_legacy_status_readable(){
+        for value in [Value::Null,serde_json::json!({"phase":"complete"}),serde_json::json!(17)]{
+            let s:crate::DeviceStatus=serde_json::from_value(serde_json::json!({"hostname":"ledboard","upgrade":value})).unwrap();
+            assert_eq!(s.hostname,"ledboard");assert!(s.upgrade.is_none());
+        }
+        let mut s=upgrade_status();let u=s.upgrade.as_mut().unwrap();u.source_boot_id="b".repeat(32);
+        let encoded=serde_json::to_value(&s).unwrap();
+        let parsed:crate::DeviceStatus=serde_json::from_value(encoded).unwrap();assert!(parsed.upgrade.is_none());
+    }
     #[test]
     fn firmware_progress_urboot_requires_same_boot_and_application_recovery() {
         let mut s=crate::DeviceStatus{boot_id:"boot".into(),..Default::default()};
@@ -249,7 +379,9 @@ mod tests {
         s.remote_firmware["phase"] = "complete".into();
         s.remote_firmware["busy"] = false.into();
         let p = observed(&s).unwrap();
-        assert!(p.verified && !p.active);
+        assert!(!p.verified && !p.active);
+        s.remote_firmware["completion_verified"]=true.into();
+        assert!(observed(&s).unwrap().verified);
         s.boot_id = "other".into();
         assert!(observed(&s).is_none());
     }

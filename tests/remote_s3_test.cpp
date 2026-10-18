@@ -8,6 +8,17 @@ std::map<std::string,TestResponse>testResponses;
 std::vector<TestRequest>testRequests;
 const char *pakarTrustAnchorPem(){return "fixture trust anchor";}
 unsigned prepares=0,programs=0,releases=0;
+const RemoteFirmware *observedJob=nullptr;
+unsigned verifyProgressCalls=0;uint32_t lastVerifiedBytes=0;
+bool allowReboot=false;
+bool rebootReady(){return allowReboot;}
+void observeProgress(){
+  assert(observedJob);
+  if(!strcmp(observedJob->progressStage(),"verify_esp")) {
+    const auto p=observedJob->progress();assert(p.known() && p.received>lastVerifiedBytes);
+    lastVerifiedBytes=p.received;++verifyProgressCalls;
+  }
+}
 bool prepare(const RemoteFirmware::Plan&p,String&){assert(p.targets==1);++prepares;return true;}
 bool program(const char*,const String&,String&){++programs;return false;}
 int8_t finish(const RemoteFirmware::Plan&p,bool commit,String&){assert(p.targets==1);if(commit)++releases;return 1;}
@@ -53,8 +64,17 @@ int main(){
   assert(j.json().find("secret-fixture")==String::npos);
   Fixture::apply(j);Fixture::pump(j,"awaiting_reboot");
   assert(OtaFixture::selections==1 && programs==0 && Update.commits==0 && prepares==1);
-  OtaFixture::reboot();RemoteFirmware after;after.begin("boot-B",prepare,program,finish);
+  j.setRebootReady(rebootReady);allowReboot=false;testNow+=2001;j.service();assert(ESP.restarts==0);
+  allowReboot=true;j.service();assert(ESP.restarts==1);
+  OtaFixture::reboot();RemoteFirmware after;observedJob=&after;verifyProgressCalls=lastVerifiedBytes=0;
+  after.setServiceCallback(observeProgress);after.begin("boot-B",prepare,program,finish);
+  assert(verifyProgressCalls==(f.image.size()+511)/512 && lastVerifiedBytes==f.image.size());
+  assert(!after.progress().known() && !strcmp(after.progressStage(),"verify_pair"));
   assert(!strcmp(after.phase(),"verify_pair"));after.service();assert(!strcmp(after.phase(),"complete")&&releases==1);
+  assert(after.completionVerified());
+  RemoteFirmware historical;historical.begin("boot-C",prepare,program,finish);
+  assert(!strcmp(historical.phase(),"complete") && !historical.completionVerified());
+  observedJob=nullptr;
  }
  {Fixture f;RemoteFirmware j;f.queue(j);Fixture::pump(j,"ready");
   RemoteFirmware after;after.begin("boot-B",prepare,program,finish);assert(!strcmp(after.phase(),"ready"));

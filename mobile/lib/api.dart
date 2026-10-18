@@ -277,6 +277,7 @@ class PakarApi {
 
   bool _rememberStatus(DeviceStatus status) {
     if (status.olderThan(_latestStatus)) return false;
+    status = status.preservingNewerUpgrade(_latestStatus);
     _latestStatus = status;
     _statusAge = Stopwatch()..start();
     if (!_statusUpdates.isClosed) _statusUpdates.add(status);
@@ -775,7 +776,7 @@ class PakarApi {
     _acceptIdentity(result.json);
     _verifiedEndpoint = baseUrl;
     if (!_rememberStatus(result)) throw const SupersededRead();
-    return result;
+    return _latestStatus!;
   }
 
   // Adapt Session's synchronous retirement boundary: retire captured owners
@@ -968,6 +969,24 @@ class PakarApi {
           continue;
         }
         if (value is Map<String, dynamic> &&
+            value['type'] == 'update-progress') {
+          // An incremental lifecycle packet cannot establish peer identity or
+          // renew full-status/hardware freshness. Existing progress consumers
+          // share the statusUpdates stream; the main full-status stream stays
+          // authoritative for cell state, capability and selection handling.
+          if (_verifiedBoard != null &&
+              _verifiedBoot != null &&
+              value['board_id'] == _verifiedBoard &&
+              value['boot_id'] == _verifiedBoot) {
+            final next = _latestStatus?.withUpgradeEvent(value);
+            if (next != null) {
+              _latestStatus = next;
+              if (!_statusUpdates.isClosed) _statusUpdates.add(next);
+            }
+          }
+          continue;
+        }
+        if (value is Map<String, dynamic> &&
             value['type'] == 'pc-contract-event') {
           // Events cannot establish identity or refresh an expired status lease.
           if (_verifiedBoard != null &&
@@ -990,7 +1009,7 @@ class PakarApi {
           final status = DeviceStatus(value);
           if (!_rememberStatus(status)) continue;
           _liveAge = Stopwatch()..start();
-          yield status;
+          yield _latestStatus!;
         }
       }
     } finally {

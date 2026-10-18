@@ -1,5 +1,51 @@
 # Donor-first preflight receipt
 
+## Graceful upgrade lifecycle and sound restoration
+
+Completely reread PCController TonePlayer, BootMelody, AddressableLeds source and
+headers, UPDATE-PROGRESS and hostui/update_progress.go/tests; PU850 AsyncOTA source
+and header at the inventoried hashes. Reuse the actual finite Timer1 cues, ESP
+stage/show ownership and measured/unknown progress rules. No duplicated AVR
+sender, donor watchdog disabling, PU business UART or permissive updater copied.
+Existing comparison rows bind new lifecycle/receipt helpers and client regressions;
+all4450 unread/pending files and181 known parity gaps stay pending.
+
+Read-only review caught and fixed LED/cloud activity under raw Urboot, a misplaced
+cosmetic delay after bootloader entry, inherited100% verification counters,
+per-cell flattening during fade and premature audio notice consumption. Raw UART
+now quiesces the existing worker before reset/acquisition; framed parsing and TLS
+publication cannot steal the session. New upload IDs start above the durable
+receipt ID, preventing postboot terminal/new-upload identity collisions.
+
+Canonical update, renderer/scene/worker, audio, Urboot/ISP, S3 updater and complete
+protocol checks pass. Native8 focused progress tests and Flutter analyzer plus
+5 focused model/actual-loopback transport tests pass. SDK production build passes
+without clean/profile/SDK churn. AVR firmware is unchanged; its existing450ms
+descending update cue is reused. Native/mobile source is tested, not claimed as
+newly installed host/phone binaries for this checkpoint.
+
+Failures retained: PowerShell5 stripped quoting in the first node-e settings
+attempt before any mutation; base64 evaluation of shipping Web settings code
+recovered it. GET/SET/GET verified unmute and EEPROM persistence without test sound.
+Old source guards assumed the previous callback layout; updated them to assert
+fresh capability admission, verified-only notices and raw-ownership exclusion.
+A Flutter null-aware lint in a new fixture was corrected, not disabled. Local SSH
+HTTP forwards returned empty replies; ASUS direct hostname access worked. Its
+old Node18 dynamic-import/eval path crashed before upload admission; the actual
+unchanged CLI module worked after local canonical preflight and staged hash checks.
+No runtime/SDK reinstall, write fallback or uncertain mutation replay followed.
+
+Actual S3 install then controlled same-image lifecycle OTA used the reviewed
+automatic local Async HTTP path on ASUS. First pass verified full running SHA and
+VALID slot; second produced59 ordered WS events and exact postboot size/MD5/
+integrity receipt, with completion notice consumed once and sound enqueued.
+The second readback deadline is a read failure, not permission to flash again.
+Read-only recovery subsequently exported30 exact boot-fenced ranges/all1958288
+bytes with zero retries and matching SHA256; no additional mutation was issued.
+AVR remains online, silent=false persisted, Prog clear, LED failure count0.
+Optical/audio sign-off, actual AVR programming and interrupted-power proof remain
+open; an API receipt is not physical acceptance.
+
 ## Android self-distribution and pinned board automation
 
 Read actual PCController app_upgrade.dart, peer_upgrades.dart, UpgradeChannel.kt,

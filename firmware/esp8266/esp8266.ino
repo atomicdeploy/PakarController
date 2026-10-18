@@ -31,6 +31,8 @@
 #include "src/SystemPlatform.h"
 #include "src/FirmwarePlatform.h"
 #include "src/UpdateProgress.h"
+#include "src/UpgradeLifecycle.h"
+#include "src/LocalOtaReceipt.h"
 #include "src/EspFrontPanel.h"
 
 #include <BuildInfo.h>
@@ -282,7 +284,17 @@ std::atomic<uint32_t> otaRebootAt{0};
 size_t otaUploadedBytes = 0;
 uint32_t otaOwner = 0;
 PakarUpdate::Progress otaProgress;
+PakarUpdate::Completion otaCompletion;
 PakarUpdate::Panel updatePanel;
+PakarUpdate::Lifecycle upgradeLifecycle;
+LocalOtaReceipt<fs::FS> localOtaReceipt;
+bool localBootNoticePending=false,localBootCuePending=false;
+uint32_t localBootCueUntil=0;
+uint32_t localObservedOperation=0;
+bool servicingUpgrade=false;
+uint32_t otaNextOwner=0;
+String pendingUpgradeCloud;
+const char *localUpgradeSound="none";
 uint32_t otaExpectedBytes = 0;
 PakarShell::TelnetParser telnetParser;
 PakarShell::LineEditor telnetEditor;
@@ -301,6 +313,11 @@ String deviceNameJson(bool accepted = false);
 bool saveCellMapping();
 String buildStatusJson();
 String localUpdateJson();
+String upgradeJson(bool event=false,bool phaseChanged=false);
+void serviceUpgrade();
+bool flushUpgradeScene();
+void upgradeBackground();
+bool upgradeRebootReady();
 uint32_t runningImageSize();
 String runningImageMd5();
 String ethernetStatusJson();
@@ -914,6 +931,14 @@ void serviceScenePersistence(bool flush) {
   sceneStore.service(millis(), !otaActive && !remoteFirmware.busy() &&
       !urbootBusy.get() && !uploadFile && !avrUploadOwner, flush);
 }
+bool flushUpgradeScene() {
+  // Loop-owned final semantic checkpoint, never rendered/overlay pixels.
+  if(otaActive || uploadFile || avrUploadOwner)return false;
+  const SceneState next=captureLedScene(sceneStore.state(),grid,
+    static_cast<uint8_t>(mode),selectedCell,selectedState,winner);
+  sceneStore.observe(next,millis());sceneStore.service(millis(),true,true);
+  return sceneStore.saved();
+}
 
 void stopDiscovery() {
 #if defined(ARDUINO_ARCH_ESP32)
@@ -1209,20 +1234,131 @@ bool waitForAvr(uint16_t timeoutMs = 2500) {
   return avrOnline;
 }
 
-bool playUpdateStartCue() {
-  const uint8_t cue = kCueUpdateStart;
+bool updateCueAvailable(uint8_t cue) {
   return PAKAR_AVR_LINK_ENABLED && avrOnline && avrVersionKnown && (avrCapabilities & kCapBuzzer) &&
       avrAudioCueCount>cue && !programmingLatched && !avrUploadOwner &&
-      !passiveCaptureActive() && static_cast<uint32_t>(millis()-lastAvrFrameAt)<=3000U &&
-      sendToAvr(kAudioCue, sequence++, &cue, 1);
+      !urbootRawOwned && !passiveCaptureActive() && static_cast<uint32_t>(millis()-lastAvrFrameAt)<=3000U;
 }
-
-void playUpdateSuccessCue() {
+bool playUpdateStartCue() {
+  const uint8_t cue = kCueUpdateStart;
+  return updateCueAvailable(cue) && sendToAvr(kAudioCue, sequence++, &cue, 1);
+}
+bool playUpdateSuccessCue() {
   const uint8_t cue=kCueUpdateSuccess;
-  if(PAKAR_AVR_LINK_ENABLED && avrOnline && avrVersionKnown && (avrCapabilities & kCapBuzzer) &&
-      avrAudioCueCount>cue && !programmingLatched && !avrUploadOwner &&
-      !passiveCaptureActive() && static_cast<uint32_t>(millis()-lastAvrFrameAt)<=3000U)
-    sendToAvr(kAudioCue,sequence++,&cue,1);
+  return updateCueAvailable(cue) && sendToAvr(kAudioCue,sequence++,&cue,1);
+}
+bool playUpdateFailureCue() {
+  const uint8_t cue=kCueError;
+  return updateCueAvailable(cue) && sendToAvr(kAudioCue,sequence++,&cue,1);
+}
+String upgradeJson(bool event,bool phaseChanged) {
+  JsonDocument d;
+  if(event) {d["type"]="update-progress";d["event"]=phaseChanged?"update.phase":"update.progress";}
+  d["board_id"]=pcBoardId;d["boot_id"]=pcBootId;
+  d["revision"]=upgradeLifecycle.revision();
+  d["source"]=PakarUpdate::sourceName(upgradeLifecycle.source());
+  d["operation_id"]=upgradeLifecycle.operation();d["phase"]=upgradeLifecycle.phase();
+  d["source_boot_id"]=upgradeLifecycle.source()==PakarUpdate::Source::Local &&
+    upgradeLifecycle.operation()==localOtaReceipt.uploadId()?localOtaReceipt.sourceBoot().c_str():pcBootId.c_str();
+  d["active"]=upgradeLifecycle.active();d["completion_verified"]=upgradeLifecycle.verified();
+  d["received_bytes"]=upgradeLifecycle.done();d["expected_bytes"]=upgradeLifecycle.total();
+  d["progress_known"]=upgradeLifecycle.known();
+  if(upgradeLifecycle.known())d["progress_percent"]=upgradeLifecycle.percent();else d["progress_percent"]=nullptr;
+  d["started_uptime_ms"]=upgradeLifecycle.startedAt();d["updated_uptime_ms"]=upgradeLifecycle.updatedAt();
+  using V=PakarUpdate::Visual;const auto view=upgradeLifecycle.visual(millis());
+  d["presentation"]=view==V::Startup?"startup":view==V::Shutdown?"shutdown":view==V::Progress?"progress":
+    view==V::Success?"complete":view==V::Failure?"failed":"none";
+  d["matrix_output_enabled"]=grid.outputEnabled();
+  d["black_frame_transmitted"]=grid.outputEnabled() && grid.maintenancePresented();
+  d["matrix_presentation_paused"]=urbootRawOwned;
+  d["completion_sound"]=localUpgradeSound; // Enqueue/availability, not audible proof.
+  d["scene_saved"]=sceneStore.saved();d["scene_error"]=sceneStore.error();
+  d["automatic_retry"]=false;
+  const auto source=upgradeLifecycle.source();
+  d["error"]=source==PakarUpdate::Source::Remote?remoteFirmware.error():
+    source==PakarUpdate::Source::Avr?urbootError:String(localOtaReceipt.error());
+  String out;serializeJson(d,out);return out;
+}
+void serviceUpgrade() {
+  if(servicingUpgrade)return;
+  servicingUpgrade=true;
+  using S=PakarUpdate::Source;
+  const uint32_t now=millis();
+  const auto local=otaProgress.snapshot();
+  const bool localCurrent=local.operation && (local.operation!=localObservedOperation ||
+    otaActive || otaRebootAt || upgradeLifecycle.source()==S::Local);
+  PakarUpdate::Completion::Intent accepted;
+  if(otaCompletion.take(accepted)) {
+    flushUpgradeScene();
+    localOtaReceipt.awaitingReboot(pcBootId.c_str(),accepted.operation,accepted.bytes,accepted.md5);
+  }
+  if(urbootBusy.get() || (urbootJobId && upgradeLifecycle.source()==S::Avr &&
+      !localCurrent && !otaActive && !otaRebootAt && !remoteFirmware.busy())) {
+    upgradeLifecycle.observe(S::Avr,urbootJobId,urbootPhase,urbootDone,urbootTotal,
+      urbootBusy.get(),!strcmp(urbootPhase,"complete") && urbootRecovered &&
+      (urbootOperation!="program" || urbootVerified),now);
+  } else {
+    if(localCurrent) {
+      localObservedOperation=local.operation;
+      upgradeLifecycle.observe(S::Local,local.operation,PakarUpdate::name(local.phase),local.received,local.expected,
+        otaActive || otaRebootAt,false,now,true);
+    } else if(localBootNoticePending) {
+      // Terminal notices require the durable exact-image/new-boot receipt.
+      upgradeLifecycle.observe(S::Local,localOtaReceipt.uploadId(),"verify_esp",0,0,true,false,now);
+      upgradeLifecycle.observe(S::Local,localOtaReceipt.uploadId(),localOtaReceipt.phase(),0,0,false,
+        localOtaReceipt.completionVerified(),now);
+      localBootNoticePending=false;localBootCuePending=true;localBootCueUntil=now+2500U;localUpgradeSound="pending";
+    }
+    if(!otaActive && !otaRebootAt && remoteFirmware.busy()) {
+      const auto measured=remoteFirmware.progress();
+      upgradeLifecycle.observe(S::Remote,remoteFirmware.jobId(),remoteFirmware.progressStage(),
+        measured.received,measured.expected,true,false,now);
+    } else if(upgradeLifecycle.source()==S::Remote && !otaActive && !otaRebootAt) {
+      const auto measured=remoteFirmware.progress();
+      upgradeLifecycle.observe(S::Remote,remoteFirmware.jobId(),remoteFirmware.progressStage(),
+        measured.received,measured.expected,false,remoteFirmware.completionVerified(),now);
+    }
+  }
+  if(!urbootRawOwned) {
+#if !defined(ARDUINO_ARCH_ESP32)
+    setAvrTransmitBlocked(true);serviceAvrFor(8U);
+#endif
+    grid.presentMaintenance(upgradeLifecycle,millis());
+#if !defined(ARDUINO_ARCH_ESP32)
+    setAvrTransmitBlocked(false);
+#endif
+  }
+  if(upgradeLifecycle.takeShutdownNotice(now) &&
+      (upgradeLifecycle.source()!=S::Avr || urbootOperation=="program"))playUpdateStartCue();
+  const int8_t terminalNotice=upgradeLifecycle.takeTerminalNotice();
+  if(upgradeLifecycle.source()!=S::Local &&
+      (upgradeLifecycle.source()!=S::Avr || urbootOperation=="program")) {
+    if(terminalNotice>0)playUpdateSuccessCue();else if(terminalNotice<0)playUpdateFailureCue();
+  }
+  const uint8_t completionCue=localOtaReceipt.completionVerified()?kCueUpdateSuccess:kCueError;
+  if(localBootCuePending && (updateCueAvailable(completionCue) || static_cast<int32_t>(now-localBootCueUntil)>=0)) {
+    const auto notice=localOtaReceipt.takeNotice();localBootCuePending=false;
+    bool queued=false;
+    if(notice==LocalOtaReceipt<fs::FS>::Notice::Complete)queued=playUpdateSuccessCue();
+    else if(notice==LocalOtaReceipt<fs::FS>::Notice::Failed)queued=playUpdateFailureCue();
+    localUpgradeSound=queued?"enqueued":"unavailable";
+  }
+  bool phaseChanged=false;
+  if(upgradeLifecycle.takeEvent(now,phaseChanged)) {
+    const String notice=upgradeJson(true,phaseChanged);
+    // Loop-only, finite phase/progress notices, never from async flash callbacks.
+    webSocket.textAll(notice);pendingUpgradeCloud=notice;
+  }
+  // A TLS/MQTT write may block. Never do one while Urboot owns raw UART.
+  // Coalesce its progress to the latest snapshot; do not replay stale stages.
+  if(!urbootRawOwned && pendingUpgradeCloud.length()) {
+    cloudServices.publishEvent(pendingUpgradeCloud);pendingUpgradeCloud="";
+  }
+  servicingUpgrade=false;
+}
+void upgradeBackground() {serviceUpgrade();hostLink.service();}
+bool upgradeRebootReady() {
+  serviceUpgrade();return upgradeLifecycle.readyToReboot(millis(),grid.maintenancePresented());
 }
 void serviceAttentionCues() {
   using Cue=BoardCore::Attention::Cue;
@@ -1238,19 +1374,23 @@ void serviceAttentionCues() {
       const uint8_t cue=kCueError;sendToAvr(kAudioCue,sequence++,&cue,1);
     }
   };
-  dispatch(uploadAttention.take());
+  const auto upload=uploadAttention.take();
+  // Upload completion only schedules reboot, never a verified-success cue.
+  if(upload==Cue::Failure)dispatch(upload);
   const auto remote=remoteAttention.next(remoteFirmware.jobId(),remoteFirmware.phase());
   if(remote==Cue::Start) {
     // Let the finite AVR melody finish before Prog deliberately silences it.
     // This is a cooperative lead-in, never a blocking UART/audio wait.
-    remoteCueLead=playUpdateStartCue();remoteCueUntil=millis()+500U;
-  } else dispatch(remote);
+    remoteCueLead=true;remoteCueUntil=millis()+PakarUpdate::Lifecycle::shutdownMs;
+    serviceUpgrade();
+  } // Lifecycle owns actual terminal notices, not a second melody producer.
 }
 
 bool authenticate() {
   if(urbootBusy.get() && server.request() && (server.request()->method()!=HTTP_GET ||
       (server.request()->url()!=F("/api/status") && server.request()->url()!=F("/api/telemetry") &&
        server.request()->url()!=F("/info") && server.request()->url()!=F("/api/avr/maintenance") &&
+       server.request()->url()!=F("/api/update/lifecycle") &&
        server.request()->url()!=F("/api/auth/info") && server.request()->url()!=F("/api/firmware/remote")))) {
     server.send(409,"text/plain","Urboot owns board maintenance; inspect its job, do not replay");return false;
   }
@@ -1447,6 +1587,8 @@ String buildStatusJson() {
   body += '}';
   body += F(",\"ws_queue_rejected\":");body+=loopMessages.rejected();
   body += F(",\"update\":");body+=localUpdateJson();
+  body += F(",\"upgrade\":");body+=upgradeJson();
+  body += F(",\"local_ota_receipt\":");body+=localOtaReceipt.json();
   body += F(",\"avr_maintenance\":");body+=urbootJobJson();
   // Cheap stress/health metric; unlike maintenance metadata this never hashes
   // the running sketch or pauses the LED transmitter for flash reads.
@@ -1793,6 +1935,7 @@ String localUpdateJson() {
   const auto progress=otaProgress.snapshot();
   String body=F("{\"target\":\"esp\",\"phase\":\"");body+=PakarUpdate::name(progress.phase);
   body+=F("\",\"received_bytes\":");body+=progress.received;
+  body+=F(",\"operation_id\":");body+=progress.operation;
   body+=F(",\"expected_bytes\":");body+=progress.expected;
   body+=F(",\"progress_known\":");body+=progress.known()?F("true"):F("false");
   body+=F(",\"progress_percent\":");
@@ -2429,6 +2572,7 @@ void registerAsyncOta() {
     body += F("\",\"uploaded_bytes\":"); body += progress.received;
     body += F(",\"ota_capacity_bytes\":"); body += FirmwarePlatform::otaCapacity();
     body += F(",\"exact_upload_size\":true,\"update\":");body+=localUpdateJson();
+    body += F(",\"lifecycle\":\"/api/update/lifecycle\"");
     body += F(",\"free_heap\":"); body += ESP.getFreeHeap();
     body += F(",\"upload\":\"/update\",\"download\":\"/firmware/download\",\"remote_fetch\":\"/api/firmware/fetch\",\"remote_apply\":\"/api/firmware/apply\",\"remote_status\":\"/api/firmware/remote\",\"telemetry\":\"/api/telemetry\",\"avr_full_flash_bytes\":32768,\"avr_eeprom_bytes\":1024,\"filesystem_ota\":false}");
     auto response = request->beginResponse(200, "application/json", body);
@@ -2459,25 +2603,26 @@ void registerAsyncOta() {
       }
       request->send(400, "text/plain", request->getAttribute("ota_error", String(F("No complete firmware uploaded")))); return;
     }
+    const uint32_t completedOwner=otaOwner;
     const bool complete = otaUploadedBytes &&
         (!otaExpectedBytes || otaUploadedBytes==otaExpectedBytes) && Update.end(true);
     if(!complete && Update.isRunning()) FirmwarePlatform::abortUpdate();
-    otaOwner = 0; otaActive = false;
-    if (!complete) { uploadAttention.finish(false); otaProgress.phase(PakarUpdate::Phase::Failed); request->send(400, "text/plain", FirmwarePlatform::updateError()); return; }
-    otaProgress.phase(PakarUpdate::Phase::Rebooting);
-    uploadAttention.finish(true);
-    request->send(200, "application/json", "{\"updated\":true,\"rebooting\":true}");
+    if (!complete) { otaOwner=0;otaActive=false;uploadAttention.finish(false); otaProgress.phase(PakarUpdate::Phase::Failed); request->send(400, "text/plain", FirmwarePlatform::updateError()); return; }
     otaRebootAt = millis() + 2000;
+    otaCompletion.publish(completedOwner,otaUploadedBytes,Update.md5String().c_str());
+    otaProgress.phase(PakarUpdate::Phase::Rebooting);
+    otaOwner=0;otaActive=false;
+    uploadAttention.finish(true);
+    request->send(200, "application/json", "{\"updated\":true,\"rebooting\":true,\"receipt_pending\":true,\"completion_verified\":false}");
   }, [](AsyncWebServerRequest *request, String, size_t index, uint8_t *data, size_t length, bool final) {
     // Upload callbacks run before the normal middleware pipeline: authorize before writing anything.
     if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request) || !webAccess.peerAllowed(request)) return;
-    static uint32_t nextOwner = 0;
     if (index == 0) {
       if (urbootBusy.get() || passiveCaptureActive() || artifactReaders || remoteFirmware.busy() || remoteFirmware.ownsEspStage() || otaOwner || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched || networkApplyPending || cloudApplyPending || request->hasAttribute("ota_id")) {
         request->setAttribute("ota_error", "Another operation is active or multiple files were supplied"); return;
       }
-      if (++nextOwner == 0) ++nextOwner;
-      otaOwner = nextOwner; const uint32_t id = otaOwner;
+      if (++otaNextOwner == 0) ++otaNextOwner;
+      otaOwner = otaNextOwner; const uint32_t id = otaOwner;
       request->setAttribute("ota_id", String(id).c_str());
       request->onDisconnect([id]() {
         if (otaOwner != id) return;
@@ -2486,14 +2631,14 @@ void registerAsyncOta() {
         otaOwner = 0; otaActive = false; otaProgress.phase(PakarUpdate::Phase::Aborted); uploadAttention.finish(false);
       });
       otaUploadedBytes = 0; otaExpectedBytes=0; otaActive = true;
-      otaProgress.begin(0);
+      otaProgress.begin(0,id);
       const uint32_t maximum = FirmwarePlatform::otaCapacity();
       if(request->hasHeader("X-Pakar-Firmware-Size") &&
           !PakarUpdate::imageSize(request->header("X-Pakar-Firmware-Size").c_str(),maximum,otaExpectedBytes)) {
         request->setAttribute("ota_error","Invalid raw firmware size");
         otaOwner=0;otaActive=false;otaProgress.phase(PakarUpdate::Phase::Failed);return;
       }
-      otaProgress.begin(otaExpectedBytes);
+      otaProgress.begin(otaExpectedBytes,id);
 #if !defined(ARDUINO_ARCH_ESP32)
       Update.runAsync(true);
 #endif
@@ -3604,7 +3749,8 @@ void setup() {
   grid.setStaticMode(true);
   grid.setPattern(LedGrid::kPatternCellChase);
 #endif
-  if (grid.outputEnabled()) grid.service(millis());
+  upgradeLifecycle.boot(millis());
+  if (grid.outputEnabled()) grid.presentMaintenance(upgradeLifecycle,millis());
   else grid.setOutputEnabled(false); // Explicit complete black frame.
   hostLink.begin(115200, onHostFrame);
 #if defined(ARDUINO_ARCH_ESP32)
@@ -3678,6 +3824,7 @@ void setup() {
   server.begin();
   serviceDiscovery();
   sendToAvr(kHello, sequence++);
+  upgradeLifecycle.boot(millis());
 #if PAKAR_USE_BUSY_WIRE
   setAvrTransmitBlocked(false);
 #endif
@@ -3686,7 +3833,7 @@ void setup() {
 void loop() {
   // A queued job executes outside any request handler. Its bounded background
   // callback services reads, but never framed AVR bytes during a raw session.
-  if(urbootQueued) {serviceUrbootJob();return;}
+  if(urbootQueued) {serviceUpgrade();serviceUrbootJob();serviceUpgrade();return;}
 #if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
   passiveAvrRx.service(millis());
   passiveCaptureGuard.store(passiveAvrRx.snapshot().active,std::memory_order_release);
@@ -3709,9 +3856,10 @@ void loop() {
 #endif
   avrLink.service();
   hostLink.service();
+  serviceUpgrade();
   // Render before issuing UART requests. The AVR is request/response only, so
   // its reply arrives while FastLED is not masking ESP8266 interrupts.
-  const bool ledFrameDue = !otaActive && !remoteFirmware.busy() &&
+  const bool ledFrameDue = upgradeLifecycle.visual(millis())==PakarUpdate::Visual::None && !otaActive && !remoteFirmware.busy() &&
       static_cast<int32_t>(now - ledResumeAt) >= 0 &&
       grid.needsRender(now);
   if (ledFrameDue) {
@@ -3734,6 +3882,7 @@ void loop() {
       handleWebSocketMessage(message.client,message.opcode,message.data,message.length);
   }
   serviceAttentionCues();
+  serviceUpgrade();
   if (remoteFirmware.busy()) {
     if(remoteFirmware.needsDownloadConnection())
       NetworkPath::serviceDns(millis(),true);
@@ -3742,7 +3891,7 @@ void loop() {
     cloudServices.service(NetworkPath::ready(),time(nullptr)>1700000000,now,false,false);
     setAvrTransmitBlocked(true);serviceAvrFor(18);
     if(!remoteCueLead || strcmp(remoteFirmware.phase(),"prepare") ||
-       static_cast<int32_t>(millis()-remoteCueUntil)>=0) {
+       (static_cast<int32_t>(millis()-remoteCueUntil)>=0 && upgradeRebootReady())) {
       remoteCueLead=false;remoteFirmware.service();
     }
     setAvrTransmitBlocked(false);
@@ -3750,7 +3899,7 @@ void loop() {
   webSocket.cleanupClients(8);
   webAccess.expireSockets(webSocket);
   serviceAttentionCues();
-  if (otaRebootAt && static_cast<int32_t>(millis() - otaRebootAt) >= 0) ESP.restart();
+  if (otaRebootAt && static_cast<int32_t>(millis() - otaRebootAt) >= 0 && upgradeRebootReady()) ESP.restart();
   if (!otaActive && !otaRebootAt && !uploadFile) serviceTelnet();
   if (!remoteFirmware.busy() && !otaActive && !otaRebootAt && networkApplyPending &&
       static_cast<int32_t>(millis() - networkApplyAt) >= 0) {
@@ -3790,7 +3939,7 @@ void loop() {
                           time(nullptr) > 1700000000, now);
     setAvrTransmitBlocked(false);
   }
-  if (!remoteFirmware.busy()) { serviceSnake(now);serviceStream(); }
+  if (!remoteFirmware.busy() && !otaActive && !otaRebootAt && upgradeLifecycle.visual(millis())==PakarUpdate::Visual::None) { serviceSnake(now);serviceStream(); }
   serviceScenePersistence();
   // Cloud socket calls may have waited while the buffered AVR UART received
   // valid replies. Consume those actual frames before evaluating presence;

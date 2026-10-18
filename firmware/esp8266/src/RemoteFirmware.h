@@ -41,12 +41,21 @@ class RemoteFirmware {
   bool apply(uint32_t id,const String &boot,const String &sha);
   bool cancel(uint32_t id,const String &boot);
   void service();
+  void setServiceCallback(void (*callback)()) {service_=callback;}
+  void setRebootReady(bool (*callback)()) {rebootReady_=callback;}
+  void reportProgress(const char *stage,uint32_t done,uint32_t total) {
+    progressStage_=stage;progressDone_=done;progressTotal_=total;
+  }
+  const char *progressStage()const {
+    return (phase_==PrepareApply || phase_==ProgramAvr || phase_==ProgramEsp || phase_==VerifyPair) && progressStage_?progressStage_:phase();
+  }
   bool busy() const;
   bool needsDownloadConnection() const {
     return !opened_ && (phase_==Manifest || phase_==DownloadEsp || phase_==DownloadAvr);
   }
   bool applying() const;
   bool rebooting() const { return phase_==Rebooting; }
+  bool completionVerified()const{return phase_==Complete && completedThisBoot_;}
   uint32_t jobId() const { return id_; }
   bool ownsEspStage() const { return phase_==Ready && (plan_.targets&RemotePolicy::Esp); }
 #if defined(ARDUINO_ARCH_ESP32)
@@ -57,8 +66,10 @@ class RemoteFirmware {
 #endif
   PakarUpdate::Observation progress() const {
     const bool transfer=phase_==DownloadEsp || phase_==DownloadAvr;
-    return {PakarUpdate::Phase::Receiving,transfer?transfer_.received:0,
-            transfer?transfer_.expected:0};
+    if(transfer)return {PakarUpdate::Phase::Receiving,transfer_.received,transfer_.expected};
+    if(phase_==PrepareApply || phase_==ProgramAvr || phase_==ProgramEsp || phase_==VerifyPair)
+      return {PakarUpdate::Phase::Receiving,progressDone_,progressTotal_};
+    return {};
   }
   String json() const;
   const String &error() const { return error_; }
@@ -75,6 +86,7 @@ class RemoteFirmware {
   void fail(const __FlashStringHelper *s) {const String reason(s);fail(reason.c_str());}
   void close();
   bool installEsp();
+  void cooperate(){if(service_)service_();yield();}
   bool validateEspStage();
   void verifyBoot();
   static String digest(const FirmwarePlatform::Sha256&);
@@ -83,6 +95,7 @@ class RemoteFirmware {
   String boot_,manifestSha_,bearer_,error_,credentialOrigin_;
   uint32_t id_=0,lastDataAt_=0,startedAt_=0,rebootAt_=0,verifyAt_=0;
   bool autoApply_=false,downgrade_=false,opened_=false,prepareDone_=false;
+  bool completedThisBoot_=false;
 #if defined(ARDUINO_ARCH_ESP32)
   S3OtaStage espStage_;
   bool downloadingEspStage_=false;
@@ -96,4 +109,6 @@ class RemoteFirmware {
   HTTPClient http_;
   FirmwarePlatform::Sha256 sha_;
   Prepare prepare_=nullptr; Program program_=nullptr; Finish finish_=nullptr;
+  void (*service_)()=nullptr;bool (*rebootReady_)()=nullptr;
+  const char *progressStage_=nullptr;uint32_t progressDone_=0,progressTotal_=0;
 };

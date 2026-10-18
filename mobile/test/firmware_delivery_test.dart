@@ -68,6 +68,9 @@ void main() {
       });
       expect(FirmwareProgress.observed(s)!.fraction, isNull);
       remote['phase'] = 'complete';
+      expect(FirmwareProgress.observed(s)!.verified, false);
+      remote['busy'] = false;
+      remote['completion_verified'] = true;
       expect(FirmwareProgress.observed(s)!.verified, true);
       s.json['boot_id'] = 'different';
       expect(FirmwareProgress.observed(s), isNull);

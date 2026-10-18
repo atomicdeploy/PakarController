@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const source=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
+const begin=source.indexOf('function upgradeObservation('),end=source.indexOf('function renderUpdateProgress()',begin);
+assert(begin>=0&&end>begin);
+const sandbox={};vm.runInNewContext(source.slice(begin,end),sandbox);
+const status={board_id:'board',boot_id:'boot'};
+const base={board_id:'board',boot_id:'boot',source:'local-ota',operation_id:1,revision:1,phase:'receiving',active:true,received_bytes:50,expected_bytes:100,progress_known:true,completion_verified:false};
+const observe=u=>sandbox.firmwareUpdateObservation({...status,upgrade:u});
+assert.equal(observe(base).fraction,.5);
+assert.equal(observe({...base,progress_known:false}).fraction,null);
+assert.equal(observe({...base,phase:'verify_pair'}).fraction,null);
+assert.equal(observe({...base,phase:'complete',active:false,completion_verified:true}).verified,true);
+assert.equal(observe({...base,phase:'complete',completion_verified:true}).verified,false);
+for(const patch of [{board_id:'other'},{boot_id:'old'},{operation_id:0},{revision:-1},{phase:'invented'},{received_bytes:101},{received_bytes:-1},{expected_bytes:-1},{active:1},{progress_known:1}])
+  assert.equal(sandbox.upgradeObservation({...base,...patch},status),null);
+assert.equal(observe({...base,expected_bytes:0}).fraction,null);
+const remote={job_id:2,boot_id:'boot',manifest_sha256:'a'.repeat(64),phase:'complete',busy:false,received_bytes:100,expected_bytes:100};
+assert.equal(sandbox.firmwareUpdateObservation({...status,remote_firmware:remote}).verified,false);
+assert.equal(sandbox.firmwareUpdateObservation({...status,remote_firmware:{...remote,completion_verified:true}}).verified,true);
+assert.match(source,/x\.type==='update-progress'[\s\S]*?x\.revision>state\.upgrade\.revision/);
+console.log('Actual Web progress parser: same-peer lifecycle, measured/unknown stages, verified-only completion and newer-event merge passed. No browser/device proof.');

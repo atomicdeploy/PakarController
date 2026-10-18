@@ -3,6 +3,11 @@
 #include <cstdio>
 static unsigned serviceCalls=0;
 static void service(){++serviceCalls;}
+static unsigned progressCalls=0,programProgressCalls=0;
+static void progress(const char *phase,uint32_t done,uint32_t total){
+ assert(done && done<=total && !(done%128));++progressCalls;
+ if(!strcmp(phase,"program_avr")){assert(done==SPI.flashPages*128);++programProgressCalls;}
+}
 struct Fixture {
  fs::FS fs;AvrIsp isp{5};
  Fixture(bool eesave=false){
@@ -21,9 +26,10 @@ struct Fixture {
  File armed(){return fs.open("/backup/eeprom-armed.bin","w+");}
 };
 int main(){
- {Fixture f;f.isp.setServiceCallback(service);assert(f.isp.backup(f.fs,"/callback"));assert(serviceCalls>0);
+ {Fixture f;f.isp.setServiceCallback(service);f.isp.setProgressCallback(progress);
+  assert(f.isp.backup(f.fs,"/callback"));assert(serviceCalls>0 && progressCalls==528);
   f.isp.setServiceCallback(nullptr);const auto count=serviceCalls;
-  auto image=f.image(),eep=f.recovery();assert(f.isp.programFlash(image,eep));assert(serviceCalls==count);}
+  auto image=f.image(),eep=f.recovery();assert(f.isp.programFlash(image,eep));assert(serviceCalls==count && programProgressCalls==256);}
  for(bool eesave:{false,true}){
    Fixture f(eesave);const auto before=SPI.eeprom;
    auto image=f.image(),eep=f.recovery();assert(f.isp.programFlash(image,eep));

@@ -562,3 +562,43 @@ hardware reception. Actual MQTT and LAN evidence does not close these gates.
 - [ ] Real two-board update, EEPROM/Urboot preservation, post-reboot pair/readback/Prog release, audible cues and peripherals.
 - [ ] Controlled power-loss/recovery acceptance with a known-good exported snapshot and safe electrical setup.
 - [ ] Broader donor file/UI/mobile parity remains separate and open; this route feature does not certify the whole project.
+
+## Graceful upgrade presentation
+
+`GET /api/update/lifecycle` and `status.upgrade` describe the current loop-owned
+operation. Local WebSocket/cloud `update-progress` packets carry `update.phase`
+or coalesced `update.progress`, board/boot/source identity, operation/revision,
+actual stage bytes, explicit `progress_known` and nullable `progress_percent`.
+Clients merge newer same-peer revisions without renewing hardware-state authority.
+Receiving100% is not verified installation. Prepare, verification without measured
+counts, reboot and application recovery are indeterminate, not fabricated100%.
+
+The matrix keeps its semantic scene/mapping/output preference. An enabled output
+shows measured progress, a700ms per-pixel shutdown fade and a final complete black
+frame; normal reboot waits for its wire receipt, bounded at2s if output fails.
+Startup fades back to the scene, then a finite verified/error presentation clears.
+Disabled output stays disabled. AVR programming first checkpoints the scene and
+confirms black; the output worker is held and cloud writes deferred throughout
+raw Urboot ownership. No visual animation is allowed to starve its UART deadlines.
+
+The existing AVR Timer1 update-start cue is descending G5/90ms,45ms pause,
+E5/90ms,45ms pause,C5/180ms (450ms total), sent once before reboot or Prog/reset.
+Missing buzzer/capability/available UART is not an erase-safety acknowledgement.
+Local success requires the durable `/local-ota.json` upload receipt to match the
+new boot's actual running size, computed MD5 and integrity. Notice consumption is
+persisted before one cue enqueue; a crash may omit sound, never replay it.
+`completion_sound=enqueued` is serial delivery intent, not acoustic proof.
+
+The identified S3 now runs the guarded16MB/OPI/buffered/static candidate,
+1958288bytes, SHA256`490876452384ef9bacf411df767e1b5ab4cf689f7476e2c4b8e7e210c8b88696`.
+Two local OTA passes used hostname-first ASUS access. First transfer18.205s,
+complete SHA/VALID-slot verification49.405s. Second transfer19.414s, with59 ordered
+live WS events and no repeated/reordered revisions. New boot
+`d1170ed71821eda19075c19d70bad8c0` confirms exact durable receipt, integrity,
+consumed completion notice, saved scene, AVR online, persisted silent=false and
+LED driver failure count0. The second updater's later export timed out; that is
+not erased by the successful boot receipt and must not trigger another flash.
+Subsequent read-only recovery verified the entire1958288byte running image in30
+exact ranges, zero read retries, against the same SHA and current boot. There
+was no third flash. The original updater deadline remains recorded separately.
+Physical optical/audio, interrupted-power and actual AVR-flash acceptance remain open.

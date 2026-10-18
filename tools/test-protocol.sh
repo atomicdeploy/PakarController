@@ -63,6 +63,22 @@ pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern network-cloud > /
 pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern build-storage -Gate > /dev/null
 pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern peer-binding -Gate > /dev/null
 mkdir -p "$root/build/native"
+pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern remote-ota -Gate > /dev/null
+for upgrade_case in upgrade_lifecycle_test local_ota_receipt_test; do
+  c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -DARDUINOJSON_ENABLE_ARDUINO_STRING=0 \
+    -I "$root/tests/remote_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" \
+    "$root/tests/$upgrade_case.cpp" -o "$root/build/native/$upgrade_case"
+  "$root/build/native/$upgrade_case"
+done
+for upgrade_platform in native ESP8266; do
+  upgrade_flags=()
+  if [[ "$upgrade_platform" == ESP8266 ]]; then upgrade_flags=(-DARDUINO_ARCH_ESP8266 -I "$root/tests/atomic_stubs"); fi
+  c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -pthread "${upgrade_flags[@]}" \
+    "$root/tests/update_progress_test.cpp" -o "$root/build/native/update_progress_test"
+  "$root/build/native/update_progress_test"
+done
+node "$root/tests/upgrade_web_test.mjs"
+node "$root/tests/boot_audio_test.mjs"
 for cloud_platform in ESP8266 ESP32; do
   c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror "-D$cloud_platform" \
     -I "$root/libraries/BoardCore/src" "$root/tests/cloud_command_guard_test.cpp" \

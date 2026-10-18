@@ -60,7 +60,11 @@ String RemoteFirmware::json() const {
   JsonDocument d;
   d[F("job_id")]=id_;d[F("boot_id")]=boot_;d[F("phase")]=phase();
   d[F("targets")]=plan_.targets;d[F("busy")]=busy();d[F("cancellable")]=(busy()||phase_==Ready)&&!applying()&&phase_!=VerifyPair;
-  d[F("received_bytes")]=transfer_.received;d[F("expected_bytes")]=transfer_.expected;
+  const auto measured=progress();
+  d[F("received_bytes")]=measured.received;d[F("expected_bytes")]=measured.expected;
+  d[F("stage")]=progressStage();d[F("progress_known")]=measured.known();
+  if(measured.known())d[F("progress_percent")]=measured.percent();else d[F("progress_percent")]=nullptr;
+  d[F("completion_verified")]=completionVerified();
   d[F("manifest_sha256")]=manifestSha_;d[F("error")]=error_;
   d[F("esp")][F("size")]=plan_.esp.size;d[F("esp")][F("sha256")]=plan_.esp.sha;
   d[F("esp")][F("version")]=plan_.esp.version;
@@ -94,7 +98,7 @@ bool RemoteFirmware::save() {
   return written==expected && ok && LittleFS.rename("/remote/job.pending",kJournal);
 }
 void RemoteFirmware::begin(const String &boot,Prepare p,Program program,Finish finish) {
-  boot_=boot;prepare_=p;program_=program;finish_=finish;
+  boot_=boot;prepare_=p;program_=program;finish_=finish;completedThisBoot_=false;
   if(boot_.isEmpty()) {phase_=Failed;error_=F("Boot entropy unavailable; remote apply disabled");return;}
   LittleFS.mkdir("/remote");
   File f=LittleFS.open(kJournal,"r");
@@ -136,7 +140,8 @@ bool RemoteFirmware::queue(const String &url,const String &sha,uint8_t targets,
   // Signed-query URLs and bearer credentials are never emitted in telemetry/journal.
   close();++id_;plan_=Plan{};plan_.targets=targets;
   manifestSha_=sha;bearer_=bearer;credentialOrigin_=origin(url);autoApply_=applyNow;downgrade_=downgrade;
-  prepareDone_=false;error_=String();startedAt_=millis();phase_=Manifest;
+  prepareDone_=completedThisBoot_=false;error_=String();startedAt_=millis();phase_=Manifest;
+  progressStage_=nullptr;progressDone_=progressTotal_=0;
   transfer_={}; LittleFS.mkdir("/remote");
   // Endpoint stays only in memory until the manifest download begins.
   plan_.esp.url=url;
@@ -148,6 +153,7 @@ bool RemoteFirmware::apply(uint32_t id,const String &boot,const String &sha) {
     error_=F("Stale/incorrect job identity or images not ready");return false;
   }
   phase_=PrepareApply;error_=String();
+  progressStage_=nullptr;progressDone_=progressTotal_=0;
   if(!save()) {fail(F("Cannot journal apply intent"));return false;} return true;
 }
 bool RemoteFirmware::cancel(uint32_t id,const String &boot) {
@@ -341,9 +347,10 @@ void RemoteFirmware::verifyBoot() {
   for(uint32_t offset=0;offset<plan_.esp.size;offset+=sizeof(block)) {
     const size_t n=min<uint32_t>(sizeof(block),plan_.esp.size-offset);
     if(!FirmwarePlatform::readRunning(offset,block,n)) {fail(F("Cannot verify running ESP flash"));return;}
-    c.add(block,n);yield();
+    c.add(block,n);reportProgress("verify_esp",offset+n,plan_.esp.size);cooperate();
   }
   if(digest(c)!=plan_.esp.sha) fail(F("Running ESP SHA-256 mismatch; Prog remains armed"));
+  progressStage_=nullptr;progressDone_=progressTotal_=0;
 }
 bool RemoteFirmware::installEsp() {
 #if defined(ARDUINO_ARCH_ESP32)
@@ -367,7 +374,7 @@ bool RemoteFirmware::installEsp() {
     const int n=f.read(block,sizeof(block));
     if(n<=0 || Update.write(block,n)!=static_cast<size_t>(n)) {f.close();FirmwarePlatform::abortUpdate();return false;}
     written+=n;c.add(block,n);
-    transfer_={plan_.esp.size,written};yield();
+    transfer_={plan_.esp.size,written};reportProgress("program_esp",written,plan_.esp.size);cooperate();
   }
   f.close();
   if(written!=plan_.esp.size || digest(c)!=plan_.esp.sha) {FirmwarePlatform::abortUpdate();return false;}
@@ -379,7 +386,7 @@ bool RemoteFirmware::installEsp() {
 }
 void RemoteFirmware::service() {
   if(phase_==Rebooting) {
-    if(static_cast<int32_t>(millis()-rebootAt_)>=0) ESP.restart();
+    if(static_cast<int32_t>(millis()-rebootAt_)>=0 && (!rebootReady_ || rebootReady_())) ESP.restart();
     return;
   }
   if(phase_==VerifyPair) {
@@ -394,6 +401,7 @@ void RemoteFirmware::service() {
       if(finish_(plan_,true,reason)!=1) {fail(reason.length()?reason.c_str():"Prog release outcome unknown");return;}
       phase_=Complete;error_=String();
       if(!save()) {phase_=Failed;error_=F("Pair verified but completion journal failed");}
+      completedThisBoot_=phase_==Complete;
       return;
     }
     if(static_cast<uint32_t>(millis()-verifyAt_)>15000) fail(reason.length()?reason.c_str():"Pair verification timed out; inspect Prog");
@@ -440,6 +448,7 @@ void RemoteFirmware::service() {
     String reason;
     if(!prepare_ || !prepare_(plan_,reason)) {fail(reason.length()?reason.c_str():"Prog/safety preparation failed");return;}
     prepareDone_=true;phase_=(plan_.targets&2)?ProgramAvr:ProgramEsp;
+    progressStage_=nullptr;progressDone_=progressTotal_=0;
     if(!save()) fail(F("Cannot journal prepared state; Prog remains armed"));
     return;
   }
@@ -449,6 +458,7 @@ void RemoteFirmware::service() {
       fail(reason.length()?reason.c_str():"AVR programming/verification failed; Prog remains armed");return;
     }
     phase_=(plan_.targets&1)?ProgramEsp:VerifyPair;verifyAt_=millis();
+    progressStage_=nullptr;progressDone_=progressTotal_=0;
     if(!save()) fail(F("Cannot journal AVR completion; Prog remains armed"));
     return;
   }
