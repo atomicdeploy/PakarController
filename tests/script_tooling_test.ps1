@@ -18,4 +18,9 @@ $taskBefore=(Get-Location).Path
 try{Invoke-PakarNative -WorkingDirectory $taskRoot -FilePath (Get-Command node).Source -Arguments @('-e','process.exit(7)');throw 'Expected failed child'}
 catch{if($_.Exception.Message -notmatch 'exit code 7'){throw}}
 if((Get-Location).Path -ne $taskBefore){throw 'Failed command changed caller directory'}
-Write-Host 'PowerShell utilities parse; pinned-blob source identity fails closed; actual shared native runner preserves failure and caller directory. No SDK/device contact.'
+# Exercise the successful native path too. GitHub's pwsh -Command wrapper
+# propagates LASTEXITCODE; the intentionally rejected child above must not be
+# the test script's final native status. Do not clear/ignore a production error.
+Invoke-PakarNative -WorkingDirectory $taskRoot -FilePath (Get-Command node).Source -Arguments @('-e','process.exit(0)')
+if($LASTEXITCODE -ne 0 -or (Get-Location).Path -ne $taskBefore){throw 'Successful native command did not preserve exit/caller directory'}
+Write-Host 'PowerShell utilities parse; pinned-blob source identity fails closed; actual shared native runner preserves failed/successful exits and caller directory. No SDK/device contact.'

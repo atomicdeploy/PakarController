@@ -4827,3 +4827,21 @@ fixtures exposed stale contract mapping hashes/one line anchor: reread actual
 UartProtocol.h, EepromLayout.h and AddressableLeds.h/.cpp and current adapters;
 rebound only the four changed consumer references. Donor revisions/source hashes
 remain unchanged; no unread donor row or hardware checkbox was promoted.
+
+The follow-up GPIO-static OTA is now independently verified as
+a92300d546b44e81ab5ddd3f6cf80fd1988bf44324385b0b694d1ea97b4750ef,
+1899200bytes, bootc42e6ee31bcabb93af86df14c3ad01ac. The canonical updater's
+post-upload verification lost a forwarded HTTP connection; it was not rerun.
+Direct ASUS full-image readback established the result. A fresh32KiB AVR ISP
+capture also matches4f3f00454ec913551c88da4746ea11955087835c9619e6331406c67f15034fb1;
+UART returned and Prog is clear. User reports three steady white pixels and one
+cycling color in cell80 under non-DMA too; hardware acceptance remains failed.
+
+Checkpointdbb2f0631a7052d0b1701815431feaffa8434a4f exposed a cross-platform
+CI fixture exit-status bug: script_tooling_test.ps1 intentionally rejects a
+child exit7, but left that as the last native status in GitHub's pwsh-Command
+wrapper. Reread the exact PU850 Tool/build-all.ps1 pinned Git blob and imported
+runner; production failure propagation is retained. Add an actual successful
+child case and assert caller-directory/status restoration instead of clearing
+errors or weakening CI. The exact GitHub wrapper now exits0 locally, and the
+failure case still asserts exit7. Only this fixture's28 proof references rebound.
