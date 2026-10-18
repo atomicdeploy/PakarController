@@ -199,5 +199,30 @@ int main(){
    chase.setCell(1,kCellRed,kEffectImmediate);assert(chase.pattern()==LedGrid::kPatternNone);
    chase.setPattern(LedGrid::kPatternRainbow);assert(chase.pattern()==LedGrid::kPatternRainbow);
  }
- puts("Actual LedGrid: exact80-cell cable bijection,6-pixel atomic chase/rollover/no-skip/stop at1, bulk transitions, white boot, snapshots and partial-frame isolation passed (host doubles, not optical output).");
+ // Atomic diagnostics: full clear, exact raw tail, no stale group expansion.
+ LedGrid diagnostic;diagnostic.begin();
+ for(bool off:{false,true})for(uint8_t count:{uint8_t(1),uint8_t(6)}) {
+   const uint16_t index=count==1?479:474;
+   const auto shows=FastLED.shows;
+   assert(diagnostic.diagnostic(index,count,0x1234ab,off));
+   assert(FastLED.shows==shows+1 && !diagnostic.staticMode() && diagnostic.outputEnabled());
+   const auto f=diagnostic.pixelFrameJson();const auto start=f.find("\"rgb\":\"")+7;
+   for(unsigned p=0;p<480;++p)
+     assert(f.substr(start+p*6,6)==(!off && p>=index && p<index+count?"1234ab":"000000"));
+   pixelTestNow+=1000U;diagnostic.service(pixelTestNow);
+   assert(diagnostic.pixelFrameJson().find("\"rgb\":\""+f.substr(start,2880))!=String::npos);
+ }
+ const auto unchanged=diagnostic.pixelFrameJson();
+ assert(!diagnostic.diagnostic(480,1,0xffffff,false));
+ assert(!diagnostic.diagnostic(479,6,0xffffff,false));
+ assert(!diagnostic.diagnostic(1,6,0xffffff,false));
+ assert(!diagnostic.diagnostic(0,2,0xffffff,false));
+ assert(!diagnostic.diagnostic(0,1,0x1000000,false));
+ assert(diagnostic.pixelFrameJson()==unchanged);
+ uint8_t bytes[3]={1,2,3};assert(diagnostic.stagePixels(0,bytes,1,77));
+ assert(!diagnostic.diagnostic(0,1,0xff0000,false));
+ diagnostic.discardStaged(77);
+ diagnostic.setOutputEnabled(false);
+ assert(diagnostic.diagnostic(0,1,0xff0000,false)&&diagnostic.outputEnabled());
+  puts("Actual LedGrid: exact80-cell cable bijection,6-pixel atomic chase/rollover/no-skip/stop at1, bulk transitions, white boot, snapshots and partial-frame isolation passed (host doubles, not optical output).");
 }

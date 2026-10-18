@@ -1,5 +1,33 @@
 # Donor-first preflight receipt
 
+## Operational Flutter pixel diagnostics
+
+Reread canonical PCController Project/AddressableLeds.cpp and .h at recorded
+43417181/a28009e6 hashes, peripheral-availability.ts, and Pakar's actual native
+diagnostic/frame path. Retain the donor clear/stage/show transaction on the ESP;
+do not copy AVR timing/registers or its100-pixel limit. The prior Flutter path
+required a live socket, separately switched modes, sent two unacknowledged raw
+chunks and polled large HTTP snapshots. Its UI advanced before success and hid
+All off below multiple sections. The new optional acknowledged diagnostic command
+performs the complete operation on the loop owner, returns full RGB readback and
+uses existing same-ID HTTP recovery, never a new mutation after lost WS receipt.
+Compact controls, six tappable wire indices, verified logical mapping labels,
+board-keyed cursor/colour and failure-retained cursor use the existing workspace.
+
+The first canonical mobile test stopped at the expected changed peer_context.dart
+hash gate; reread the donor availability source and rebind only reviewed affected
+targets in the same ledger. Seven real loopback command cases, seven page cases
+and six older-stream transport cases pass; the opt-in physical case remains
+skipped. Actual renderer tests include tail/group/all-off/conflicting stream and
+invalid-input no-partial-mutation. No screenshot or buffer match closes optical
+acceptance. Initial Resolve-DnsName/Win32_SerialPort inventory missed the ESP;
+direct hostname HTTP and present PnP identity subsequently confirmed ledboard
+and CH343 COM22. No authorized phone is connected, and its advertised ADB endpoint
+times out. The first ESP compile caught an incorrect local enum name kModeCell;
+use the existing shared Protocol.h kModeCellSelect, not a new alias. No cache or
+toolchain change is needed. Build/stage and device/phone installation are separate
+gates. Existing unrelated ESP8266 CI atomic-link errors remain outside this slice.
+
 ## Flutter lifecycle and stable board workspace
 
 Consulted peer-binding, mobile-settings and literal Pealayer donor-audit.

@@ -125,8 +125,9 @@ class PakarApi {
 
   bool _diagnosticPending = false;
 
-  /// One deliberate full-frame commit on the existing selected-peer socket.
-  /// No reconnect, UDP substitution, delayed write queue or mutation replay.
+  /// One deliberate full-frame commit on the selected peer. Prefer its atomic
+  /// acknowledged command; older firmware uses the existing raw socket path.
+  /// No reconnect, UDP substitution, delayed queue or new-intent replay.
   Future<DeviceStatus> pixelDiagnostic(
     PixelProbe probe, {
     bool off = false,
@@ -142,16 +143,12 @@ class PakarApi {
       _requireNetwork();
       if (board == null ||
           boot == null ||
+          !appForeground ||
           revision != connectionRevision ||
           _verifiedBoard != board ||
           _verifiedBoot != boot ||
           !authorize()) {
         throw const StaleConnection();
-      }
-      if (!_socketReady || _channel == null) {
-        throw const FormatException(
-          'Live WebSocket required; no frame was replayed',
-        );
       }
     }
 
@@ -159,13 +156,37 @@ class PakarApi {
     try {
       final frame = probe.frame(off: off);
       admit();
-      var current = liveFresh ? _latestStatus! : await status();
+      var current = _statusAge != null && _statusAge!.elapsedMilliseconds < 2000
+          ? _latestStatus!
+          : await status();
       admit();
       if (!supportsPixelDiagnostic(current) ||
           current.json['programming_latch'] == true ||
           (current.json['remote_firmware'] as Map?)?['busy'] == true) {
         throw const FormatException(
           'Pixel diagnostics unavailable during programming or updates',
+        );
+      }
+      if (current.peer.has('pixel-diagnostic')) {
+        // Board owns clear/stage/show in one transaction. Existing request IDs
+        // allow lost WS receipts to recover over HTTP without a second intent.
+        final actual = await fastCommand('/api/led/diagnostic', {
+          'index': '${probe.first}',
+          'count': '${probe.count}',
+          'rgb': '${probe.rgb}',
+          'off': '$off',
+        }, authorize: authorize);
+        admit();
+        if (actual == null ||
+            !diagnosticReady(actual) ||
+            !matchesDiagnosticFrame(actual, frame)) {
+          throw const OperationUncertain();
+        }
+        return actual;
+      }
+      if (!_socketReady || _channel == null) {
+        throw const FormatException(
+          'This firmware needs WebSocket streaming for diagnostics. Update the board for acknowledged HTTP fallback.',
         );
       }
       Future<void> configure(String path, Map<String, String> values) async {

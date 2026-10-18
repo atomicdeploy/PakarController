@@ -113,6 +113,7 @@ class PeerContext {
       '/api/audio' || '/api/buzzer' => has('buzzer'),
       '/api/outputs' => has('outputs'),
       '/api/brightness' || '/api/effect' || '/api/led/output' => has('leds'),
+      '/api/led/diagnostic' => has('leds') && has('pixel-diagnostic'),
       '/api/device/name' => has('identity'),
       '/api/network' || '/api/cloud' => has('network'),
       _ => false, // Add an explicit contract before exposing a new mutation.
@@ -126,6 +127,7 @@ class PeerContext {
 
 const knownFeatures = {
   'command-ack',
+  'pixel-diagnostic',
   'network',
   'telemetry',
   'leds',

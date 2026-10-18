@@ -1548,7 +1548,7 @@ String buildStatusJson() {
   body += F("\",\"name\":\""); appendJsonEscaped(body, deviceIdentity.displayName());
   body += F("\",\"hostname\":\""); body += deviceIdentity.hostname();
   body += F("\",\"application\":"); body += applicationIdentityJson();
-  body += F(",\"acknowledged_features\":[\"command-ack\"");
+  body += F(",\"acknowledged_features\":[\"command-ack\",\"pixel-diagnostic\"");
   const uint16_t available = currentFeatures();
   bool separator = true;
   for (uint8_t bit = 0; bit < 16; ++bit) if (available & (1U << bit)) {
@@ -1631,7 +1631,7 @@ String commandReply(const String &message) {
     const String command=PakarCommand::stringValue(object,"command");
     reply["request_id"]=id;
     const bool supported=command=="cells"||command=="cell"||command=="effect"||
-        command=="mode"||command=="brightness"||command=="led-output";
+        command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic";
     if(PakarCommand::stringValue(object,"board_id")!=pcBoardId ||
        PakarCommand::stringValue(object,"boot_id")!=pcBootId || !webAccess.peerFenceReady()) {
       reply["error"]="peer_changed";
@@ -1661,7 +1661,13 @@ String commandReply(const String &message) {
   }
   String body;serializeJson(reply,body);
   if(reply["accepted"]==true) {
-    body.remove(body.length()-1);body+=F(",\"status\":");body+=buildStatusJson();body+='}';
+    body.remove(body.length()-1);body+=F(",\"status\":");
+    String status=buildStatusJson();
+    if(request["command"]=="pixel-diagnostic") {
+      status.remove(status.length()-1);status+=F(",\"pixel_frame\":");
+      status+=grid.pixelFrameJson();status+='}';
+    }
+    body+=status;body+='}';
   }
   return body;
 }
@@ -1983,6 +1989,16 @@ bool handleCloudCommand(const String &message, String &result) {
     const uint32_t id = pcTransport.enqueue(op, p, n, millis());
     if (!id) { result = F("contract queue full"); return false; }
     result = pcReceiptJson(*pcTransport.get(id)); return true;
+  }
+  if(command=="pixel-diagnostic") {
+    const auto index=commandRequest["index"],count=commandRequest["count"],rgb=commandRequest["rgb"],off=commandRequest["off"];
+    if(!(currentFeatures()&Leds) || !index.is<uint16_t>() || !count.is<uint8_t>() ||
+       !rgb.is<uint32_t>() || !off.is<bool>() || programmingLatched || otaActive || otaRebootAt ||
+       !grid.diagnostic(index.as<uint16_t>(),count.as<uint8_t>(),rgb.as<uint32_t>(),off.as<bool>())) {
+      result=F("Invalid or busy pixel diagnostic");return false;
+    }
+    // No AVR command, EEPROM write, animation or intermediate white scene.
+    mode=kModeCellSelect;winner=0;result=F("Complete diagnostic frame published");return true;
   }
   if (command == F("status") ||
       PakarCommand::stringValue(commandRequest, "type") == F("status")) {

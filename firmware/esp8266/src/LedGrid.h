@@ -64,6 +64,8 @@ class LedGrid {
   void discardStaged(uint64_t owner){if(staging_&&stageOwner_==owner){staging_=false;dirty_=true;}}
   bool canStage(uint64_t owner=0);
   bool commitStaged(uint64_t owner=0);
+  // One loop-owned diagnostic transaction, bypassing logical cell mapping.
+  bool diagnostic(uint16_t index, uint8_t count, uint32_t rgb, bool off);
   void setOutputEnabled(bool enabled);
   bool outputEnabled()const{return outputEnabled_;}
   void setStaticMode(bool enabled);

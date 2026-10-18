@@ -83,6 +83,20 @@ one pixel count, one flags byte, then RGB triples. Bit zero of flags commits
 the staged frame. A packet is rejected unless its exact size and pixel range
 are valid.
 
+Peers advertising `pixel-diagnostic` accept one `pixel-diagnostic` command via
+the existing `/ws` or `POST /api/command` envelope. Fields are zero-based `index`
+(0..479), `count` (1 or6, six-pixel groups aligned to a multiple of6), integer
+`rgb` (0..16777215) and boolean `off`. It validates before mutation, respects
+another stream's staging lease, clears the full480-pixel frame, enables raw
+effects output and publishes exactly the requested physical pixel/group with no
+fade, logical remapping, AVR command or persistence write. `off:true` publishes
+all480 black and leaves the output service enabled. The correlated reply carries
+`status.pixel_frame` with the actual full RGB buffer. Its request ID provides
+the same deduplicated WS-to-HTTP receipt recovery as cell commands; an uncertain
+outcome never becomes a fresh write. This is buffer publication, not optical
+proof. Flutter's internal path selector `/api/led/diagnostic` names this command;
+it is not a separate REST endpoint.
+
 Normal selection edits are not streamed RGB frames. `/api/cells` validates the
 complete selection before changing anything, stages all targets together and
 returns `202 {"accepted":true,"count":N}`. Duplicate IDs count once; malformed,

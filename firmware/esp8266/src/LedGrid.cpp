@@ -326,6 +326,23 @@ bool LedGrid::commitStaged(uint64_t owner) {
   return true;
 }
 
+bool LedGrid::diagnostic(uint16_t index,uint8_t count,uint32_t rgb,bool off) {
+  // Reject completely before touching an in-progress stream or renderer.
+  if(index>=kPixels || (count!=1 && count!=kSectorsPerCell) ||
+     index+count>kPixels || (count==kSectorsPerCell && index%kSectorsPerCell) ||
+     rgb>0xffffffU || !canStage(UINT64_MAX))return false;
+  changePattern(kPatternNone,"pixel-diagnostic");
+  staticMode_=false; // Single pixels must not be replicated by grouped fallback.
+  fill_solid(staged_,kPixels,CRGB::Black);
+  if(!off)for(uint8_t i=0;i<count;++i)
+    staged_[index+i]=CRGB(rgb>>16,(rgb>>8)&255,rgb&255);
+  for(uint8_t i=0;i<kCells;++i){current_[i]=target_[i];transitioning_[i]=false;}
+  staging_=true;stageOwner_=UINT64_MAX;stagingAt_=millis();
+  outputEnabled_=true;
+  showStaged(); // Includes the black tail and exactly one immutable publication.
+  return true;
+}
+
 bool LedGrid::stagePixels(uint16_t offset, const uint8_t *rgb, uint8_t count,uint64_t owner) {
   if (offset + count > kPixels || rgb == nullptr) return false;
   if(!canStage(owner))return false;

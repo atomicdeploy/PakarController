@@ -20,11 +20,18 @@ DeviceStatus diagnosticFixture() => DeviceStatus({
   'boot_id': 'a' * 32,
   'pixels': 480,
 });
-const knownDiagnosticFeatures = ['leds', 'streaming', 'command-ack', 'table'];
+const knownDiagnosticFeatures = [
+  'leds',
+  'streaming',
+  'pixel-diagnostic',
+  'command-ack',
+  'table',
+];
 
 class DiagnosticApi extends PakarApi {
   final sent = <(PixelProbe, bool)>[];
   Completer<void>? held;
+  bool fail = false;
   @override
   Future<DeviceStatus> pixelDiagnostic(
     PixelProbe probe, {
@@ -34,6 +41,7 @@ class DiagnosticApi extends PakarApi {
     if (!authorize()) throw const StaleConnection();
     sent.add((probe, off));
     await held?.future;
+    if (fail) throw const OperationUncertain();
     if (!authorize()) throw const StaleConnection();
     return diagnosticFixture();
   }
@@ -42,6 +50,8 @@ class DiagnosticApi extends PakarApi {
 Widget diagnosticPage(
   DiagnosticApi api, {
   DeviceStatus? Function()? observed,
+  PixelDiagnosticWorkspace? workspace,
+  CellMap? mapping,
 }) => MaterialApp(
   debugShowCheckedModeBanner: false,
   theme: studioTheme(),
@@ -50,11 +60,76 @@ Widget diagnosticPage(
       api: api,
       observed: observed ?? diagnosticFixture,
       busyChanged: (_) {},
+      workspace: workspace,
+      mapping: () => mapping,
     ),
   ),
 );
 
 void main() {
+  testWidgets(
+    'Reopening keeps the physical tail cursor without replay and uses verified map',
+    (tester) async {
+      tester.view.physicalSize = const Size(600, 1100);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final api = DiagnosticApi();
+      addTearDown(api.close);
+      final workspace = PixelDiagnosticWorkspace()
+        ..probe = const PixelProbe(index: 479, group: true, rgb: 0xff0000);
+      final map = CellMap(
+        physical: List.generate(80, (i) => 80 - i),
+        names: List.generate(80, (i) => '${i + 1}'),
+      );
+      for (var reopen = 0; reopen < 2; reopen++) {
+        await tester.pumpWidget(
+          diagnosticPage(api, workspace: workspace, mapping: map),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Pixels 475–480'), findsOneWidget);
+        expect(
+          find.text('Physical group 80 of 80 · logical cell 1'),
+          findsOneWidget,
+        );
+        expect(
+          tester
+              .widget<FilledButton>(find.byKey(const Key('pixel-next')))
+              .onPressed,
+          isNull,
+        );
+        expect(api.sent, isEmpty);
+        await tester.pumpWidget(const SizedBox());
+      }
+    },
+  );
+  testWidgets(
+    'Failure keeps confirmed cursor, sector taps and off preserve position',
+    (tester) async {
+      tester.view.physicalSize = const Size(600, 1100);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final api = DiagnosticApi();
+      addTearDown(api.close);
+      await tester.pumpWidget(diagnosticPage(api));
+      await tester.tap(find.byKey(const Key('pixel-sector-5')));
+      await tester.pumpAndSettle();
+      expect(find.text('Pixel 6'), findsOneWidget);
+      api.fail = true;
+      await tester.tap(find.byKey(const Key('pixel-next')));
+      await tester.pumpAndSettle();
+      expect(find.text('Pixel 6'), findsOneWidget);
+      api.fail = false;
+      await tester.ensureVisible(find.byKey(const Key('pixel-off')));
+      await tester.tap(find.byKey(const Key('pixel-off')));
+      await tester.pumpAndSettle();
+      expect(api.sent.last.$2, true);
+      expect(api.sent.last.$1.index, 5);
+      expect(find.text('Pixel 6'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
   testWidgets('Explicit simulated pixel diagnostic screenshot, no board writes', (
     tester,
   ) async {
@@ -123,8 +198,10 @@ void main() {
         expect(api.sent.single.$1.first, 6);
         expect(api.sent.single.$1.count, 6);
         await tester.ensureVisible(find.text('Red'));
+        final beforeColour = api.sent.length;
         await tester.tap(find.text('Red'));
         await tester.pumpAndSettle();
+        expect(api.sent.length, beforeColour + 1);
         await tester.ensureVisible(find.byKey(const Key('pixel-show')));
         await tester.tap(find.byKey(const Key('pixel-show')));
         await tester.pumpAndSettle();

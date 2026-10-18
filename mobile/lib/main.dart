@@ -69,6 +69,7 @@ class _ControlShellState extends State<ControlShell>
   DeviceStatus? status;
   DeviceStatus? presented;
   final workspaces = <String, TableWorkspace>{};
+  final pixelWorkspaces = <String, PixelDiagnosticWorkspace>{};
   String? workspaceBoard;
   String savedWorkspaces = '';
   bool foreground = true, liveActive = false;
@@ -818,6 +819,18 @@ class _ControlShellState extends State<ControlShell>
                   return;
                 }
                 var locked = false;
+                final pixelBoard = status?.json['board_id'];
+                if (target == 'pixels' && pixelBoard is! String) return;
+                if (pixelWorkspaces.length >= 16 &&
+                    !pixelWorkspaces.containsKey(pixelBoard)) {
+                  pixelWorkspaces.remove(pixelWorkspaces.keys.first);
+                }
+                final pixelWorkspace = target == 'pixels'
+                    ? pixelWorkspaces.putIfAbsent(
+                        pixelBoard as String,
+                        PixelDiagnosticWorkspace.new,
+                      )
+                    : null;
                 await Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (context) => StatefulBuilder(
@@ -840,7 +853,11 @@ class _ControlShellState extends State<ControlShell>
                               ? PixelDiagnosticPage(
                                   api: api,
                                   observed: () => status,
+                                  onObserved: _observe,
+                                  mapping: () => mappingFresh ? mapping : null,
+                                  workspace: pixelWorkspace,
                                   busyChanged: (value) {
+                                    commandPending = value;
                                     if (context.mounted) {
                                       update(() => locked = value);
                                     }

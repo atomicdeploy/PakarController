@@ -11,6 +11,7 @@ const commandNames = {
   '/api/mode': 'mode',
   '/api/brightness': 'brightness',
   '/api/led/output': 'led-output',
+  '/api/led/diagnostic': 'pixel-diagnostic',
 };
 
 String commandPacket(
@@ -39,9 +40,12 @@ String commandPacket(
     'command': commandNames[path],
     for (final item in values.entries)
       item.key:
-          item.key == 'id' || path == '/api/brightness' && item.key == 'value'
+          item.key == 'id' ||
+              (path == '/api/led/diagnostic' &&
+                  ['index', 'count', 'rgb'].contains(item.key)) ||
+              path == '/api/brightness' && item.key == 'value'
           ? int.parse(item.value)
-          : item.key == 'enabled'
+          : item.key == 'enabled' || item.key == 'off'
           ? item.value == 'true'
           : item.value,
   });

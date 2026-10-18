@@ -134,3 +134,14 @@ and actual 7-segment masks are independent previews; phone-speaker mirroring
 synthesizes the advertised AVR Hz and timestamp cadence and is opt-in,
 foreground-only and peer/boot/AVR-session fenced. See
 [MOBILE-MIRRORING](../docs/MOBILE-MIRRORING.md) for contracts and live-test gates.
+
+Pixel diagnostics is in the connected board's context menu. Show isolates one
+physical pixel or aligned six-pixel group; Previous/Next step by1/6, the six
+numbered sectors jump directly, and All off publishes a complete480-pixel black
+frame without losing the cursor. Colour/group changes apply immediately after
+a successful Show. Confirmed positions advance only after matching full RGB
+readback; reopening preserves the board's draft cursor/colour without replaying.
+The optional `pixel-diagnostic` firmware capability uses one atomic acknowledged
+board command over WebSocket with deduplicated HTTP recovery. Older firmware is
+labelled and retains its socket streaming path; no HTTP path is invented for it.
+Logical labels come only from the verified board mapping, never a guessed order.

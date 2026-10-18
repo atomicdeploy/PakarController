@@ -16,16 +16,24 @@ class PixelDiagnosticPage extends StatefulWidget {
     required this.api,
     required this.observed,
     required this.busyChanged,
+    this.onObserved,
+    this.workspace,
+    this.mapping,
   });
   final PakarApi api;
   final DeviceStatus? Function() observed;
   final void Function(bool) busyChanged;
+  final void Function(DeviceStatus)? onObserved;
+  final PixelDiagnosticWorkspace? workspace;
+  final CellMap? Function()? mapping;
   @override
   State<PixelDiagnosticPage> createState() => _PixelDiagnosticPageState();
 }
 
 class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
-  PixelProbe probe = const PixelProbe();
+  late final workspace = widget.workspace ?? PixelDiagnosticWorkspace();
+  PixelProbe get probe => workspace.probe;
+  set probe(PixelProbe value) => workspace.probe = value;
   late final revision = widget.api.connectionRevision;
   late final board = widget.observed()?.json['board_id'];
   late final boot = widget.observed()?.json['boot_id'];
@@ -36,6 +44,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   String message =
       'Choose a position and colour, then Show. Nothing is sent automatically.';
   String? applied;
+  bool allOff = false;
   @override
   void initState() {
     super.initState();
@@ -43,6 +52,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
     revision;
     board;
     boot;
+    position.text = '${probe.first + 1}';
     timer = Timer.periodic(const Duration(milliseconds: 500), (_) {
       if (mounted) setState(() {});
     });
@@ -57,6 +67,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
         status?.json['board_id'] == board &&
         status?.json['boot_id'] == boot &&
         supportsPixelDiagnostic(status) &&
+        widget.api.appForeground &&
         status?.peer.has('command-ack') == true;
   }
 
@@ -73,20 +84,22 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
     FocusScope.of(context).unfocus();
     setState(() {
       working = true;
-      probe = next;
-      position.text = '${next.first + 1}';
-      message = 'Sending complete frame…';
+      message = off ? 'Clearing all 480 pixels…' : 'Showing ${next.range}…';
       applied = null;
     });
     widget.busyChanged(true);
     try {
-      await widget.api.pixelDiagnostic(
+      final actual = await widget.api.pixelDiagnostic(
         next,
         off: off,
         authorize: () => authorized,
       );
+      if (mounted) widget.onObserved?.call(actual);
       if (mounted && authorized) {
         setState(() {
+          probe = next;
+          allOff = off;
+          position.text = '${next.first + 1}';
           applied = off
               ? 'Last verified: all 480 pixels off'
               : 'Last verified: ${next.range} · #${next.hex}';
@@ -99,6 +112,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
         setState(() {
           applied = null;
           message = '$error No frame was replayed.';
+          position.text = '${probe.first + 1}';
         });
       }
     } finally {
@@ -106,6 +120,17 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
         setState(() => working = false);
         widget.busyChanged(false);
       }
+    }
+  }
+
+  void change(PixelProbe next) {
+    if (applied != null && !allOff) {
+      unawaited(send(next));
+    } else {
+      setState(() {
+        probe = next;
+        position.text = '${next.first + 1}';
+      });
     }
   }
 
@@ -198,29 +223,29 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
       ),
     );
     if (result != null && mounted) {
-      setState(
-        () => probe = PixelProbe(
-          index: probe.index,
-          group: probe.group,
-          rgb: result,
-        ),
-      );
+      change(PixelProbe(index: probe.index, group: probe.group, rgb: result));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final enabled = authorized && !working;
+    final colours = Theme.of(context).colorScheme;
+    final map = widget.mapping?.call();
+    final group = probe.first ~/ 6 + 1;
+    final logical = map?.valid == true
+        ? map!.physical.indexOf(group) + 1
+        : null;
+    final first = probe.index ~/ 6 * 6;
     return WorkspaceBody(
       children: [
         const WorkspaceHeader(
           title: 'Pixel diagnostics',
           icon: PakarIcons.circuitry,
-          subtitle:
-              'Physical wire order · 480 pixels · all other pixels cleared',
+          subtitle: 'Physical wire order · all other pixels cleared',
         ),
         WorkspaceSection(
-          title: 'Position',
+          title: probe.group ? 'Six-pixel probe' : 'Single-pixel probe',
           icon: PakarIcons.gridFour,
           children: [
             SegmentedButton<bool>(
@@ -230,28 +255,76 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
               ],
               selected: {probe.group},
               onSelectionChanged: enabled
-                  ? (choice) => setState(() {
-                      probe = PixelProbe(
+                  ? (choice) => change(
+                      PixelProbe(
                         index: probe.index,
                         group: choice.single,
                         rgb: probe.rgb,
-                      );
-                      position.text = '${probe.first + 1}';
-                    })
+                      ),
+                    )
                   : null,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Text(
               probe.range,
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             Text(
-              'Wire index ${probe.first}${probe.group ? '–${probe.last}' : ''} (zero-based) · step ${probe.count}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              'Physical group $group of 80${logical != null ? ' · logical cell $logical' : ''}',
+              style: TextStyle(color: colours.onSurfaceVariant),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            // Tap a sector to inspect any of the six physical pixels directly.
+            Row(
+              children: [
+                for (var sector = 0; sector < 6; sector++)
+                  Expanded(
+                    child: Tooltip(
+                      message: 'Physical pixel ${first + sector + 1}',
+                      child: InkWell(
+                        key: Key('pixel-sector-$sector'),
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: enabled
+                            ? () => send(
+                                PixelProbe(
+                                  index: first + sector,
+                                  rgb: probe.rgb,
+                                ),
+                              )
+                            : null,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Column(
+                            children: [
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 120),
+                                height: 25,
+                                width: 25,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color:
+                                      !allOff &&
+                                          (probe.group ||
+                                              first + sector == probe.index)
+                                      ? Color(0xff000000 | probe.rgb)
+                                      : colours.surfaceContainerHigh,
+                                  border: Border.all(color: colours.outline),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${first + sector + 1}',
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -261,7 +334,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
                         ? () => send(probe.move(-1))
                         : null,
                     icon: const Icon(Icons.arrow_back),
-                    label: const Text('Previous'),
+                    label: Text('−${probe.count}'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -272,36 +345,50 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
                         ? () => send(probe.move(1))
                         : null,
                     icon: const Icon(Icons.arrow_forward),
-                    label: const Text('Next'),
+                    label: Text('+${probe.count}'),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: position,
-              enabled: enabled,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Go to physical pixel',
-                helperText: '1–480. Groups align to 1–6, 7–12, …, 475–480.',
-              ),
-              onSubmitted: enabled
-                  ? (_) {
-                      final next = readPosition();
-                      if (next != null) send(next);
-                    }
-                  : null,
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextField(
+                    key: const Key('pixel-position'),
+                    controller: position,
+                    enabled: enabled,
+                    style: TextStyle(color: colours.onSurface),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Physical pixel · 1–480',
+                    ),
+                    onSubmitted: enabled
+                        ? (_) {
+                            final next = readPosition();
+                            if (next != null) send(next);
+                          }
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                FilledButton(
+                  key: const Key('pixel-show'),
+                  onPressed: enabled
+                      ? () {
+                          final next = readPosition();
+                          if (next != null) send(next);
+                        }
+                      : null,
+                  child: const Text('Show'),
+                ),
+              ],
             ),
-          ],
-        ),
-        WorkspaceSection(
-          title: 'Output',
-          icon: PakarIcons.lightning,
-          children: [
+            const SizedBox(height: 14),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 6,
+              runSpacing: 6,
               children: [
                 for (final item in [
                   (0xffffff, 'White'),
@@ -313,8 +400,8 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
                     label: Text(item.$2),
                     selected: probe.rgb == item.$1,
                     onSelected: enabled
-                        ? (_) => setState(
-                            () => probe = PixelProbe(
+                        ? (_) => change(
+                            PixelProbe(
                               index: probe.index,
                               group: probe.group,
                               rgb: item.$1,
@@ -331,48 +418,53 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 18),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                FilledButton.icon(
-                  key: const Key('pixel-show'),
-                  icon: const Icon(PakarIcons.play),
-                  label: const Text('Show'),
-                  onPressed: enabled
-                      ? () {
-                          final next = readPosition();
-                          if (next != null) send(next);
-                        }
-                      : null,
-                ),
-                OutlinedButton.icon(
-                  key: const Key('pixel-off'),
-                  icon: const Icon(PakarIcons.circle),
-                  label: const Text('All off'),
-                  onPressed: enabled ? () => send(probe, off: true) : null,
-                ),
-              ],
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              key: const Key('pixel-off'),
+              icon: const Icon(PakarIcons.circle),
+              label: const Text('All off · clear 480 pixels'),
+              onPressed: enabled ? () => send(probe, off: true) : null,
             ),
-            const SizedBox(height: 16),
-            if (working) const LinearProgressIndicator(),
+            const SizedBox(height: 12),
+            // Fixed height: pending/confirmed/error never shifts the controls.
+            SizedBox(
+              height: 4,
+              child: working
+                  ? const LinearProgressIndicator()
+                  : const SizedBox(),
+            ),
+            const SizedBox(height: 10),
             if (!authorized)
-              const Text(
-                'This board connection changed or is unavailable. Reopen diagnostics after reconnecting.',
+              Text(
+                'Waiting for this board connection. No command was queued.',
+                style: TextStyle(color: colours.error),
               ),
             if (applied != null && authorized)
-              Text(
-                applied!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.secondary,
-                ),
-              ),
+              Text(applied!, style: TextStyle(color: colours.secondary)),
             Text(message, style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ),
+        WorkspaceSection(
+          title: 'Wire reference',
+          icon: PakarIcons.circuitry,
+          children: [
+            Text(
+              'Zero-based index ${probe.first}${probe.group ? '–${probe.last}' : ''} · step ${probe.count}',
+            ),
+            Text(
+              'RGB #${probe.hex} · R ${probe.rgb >> 16 & 255} · G ${probe.rgb >> 8 & 255} · B ${probe.rgb & 255}',
+            ),
             const SizedBox(height: 8),
             const Text(
-              'Uses effects output without fades. Closing this page leaves the last frame on the board; use All off to clear it.',
+              'Show clears every other pixel. After Show, colour and group changes apply immediately. All off keeps your cursor. Closing leaves the last frame on the board.',
             ),
+            if (widget.observed()?.peer.has('pixel-diagnostic') != true)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'Older board firmware: WebSocket streaming is required. Update firmware for atomic diagnostics and HTTP fallback.',
+                ),
+              ),
           ],
         ),
       ],

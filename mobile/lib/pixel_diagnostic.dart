@@ -7,11 +7,16 @@ import 'models.dart';
 /// deliberate action replaces the entire frame, never patches a stale tail.
 const diagnosticPixels = 480;
 
+/// Cursor/colour are user-owned workspace state, not a claim about board output.
+class PixelDiagnosticWorkspace {
+  PixelProbe probe = const PixelProbe();
+}
+
 bool supportsPixelDiagnostic(DeviceStatus? status) =>
     status != null &&
     status.json['pixels'] == diagnosticPixels &&
     status.peer.has('leds') &&
-    status.peer.has('streaming') &&
+    (status.peer.has('streaming') || status.peer.has('pixel-diagnostic')) &&
     status.json['board_id'] is String &&
     (status.json['board_id'] as String).isNotEmpty &&
     status.json['boot_id'] is String &&
@@ -85,7 +90,10 @@ bool diagnosticReady(DeviceStatus status) =>
 
 bool matchesDiagnosticFrame(DeviceStatus status, Uint8List expected) {
   final frame = status.json['pixel_frame'];
-  if (frame is! Map || frame['revision'] is! int || frame['rgb'] is! String) {
+  if (frame is! Map ||
+      frame['revision'] is! int ||
+      frame['rgb'] is! String ||
+      frame['pending'] == true) {
     return false;
   }
   final hex = frame['rgb'] as String;
