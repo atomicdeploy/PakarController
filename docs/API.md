@@ -1,5 +1,11 @@
 # HTTP and streaming API
 
+Client self-updates, enrollment, remote operational telemetry and bounded client
+management use a separate configurable unversioned service. See
+[Client management](CLIENT-MANAGEMENT.md) for its routes, controls and live
+acceptance boundaries; these are not ESP/AVR firmware commands. Board auth is
+unchanged. Remote administrative client management requires its own enrollment.
+
 All interfaces use [one living, unversioned contract](API-POLICY.md).
 Numbered API namespaces are rejected with 404, never redirected or aliased.
 

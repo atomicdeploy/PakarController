@@ -4,6 +4,231 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
 {
+  "origin": "Pealayer",
+  "path": "src/update.rs",
+  "sha256": "909e8aa4f903d1a8a63589fd2e371d77ff7b8c6c6bcb3fc9949609ab55440652",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": "Actual download_update / prepare_self_update / run_update_helper / inspect_executable / create_update_file adapted into streamed SHA256/PE validation, explicit current-user managed marker, pinned PID/path/helper journal and graceful-exit/health receipt.",
+  "targets": [
+    {
+      "path": "desktop/src/client_management.rs",
+      "anchor": "pub fn newer(",
+      "sha256": "980fdefb18af32aac2b8bbdb5177886e12fffa22148a6143b6dc6809eda8251b"
+    },
+    {
+      "path": "desktop/src/client_install.rs",
+      "anchor": "pub fn helper(",
+      "sha256": "f3055251874225f674703a2d94ea90b26013246ff8c326275dfc7a184bdde286"
+    },
+    {
+      "path": "desktop/src/ui/preferences.rs",
+      "anchor": "fn app_management(",
+      "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49"
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/client_management.rs",
+      "anchor": "release_policy_checks_numeric_build_semver_platform_origin_and_integrity",
+      "sha256": "980fdefb18af32aac2b8bbdb5177886e12fffa22148a6143b6dc6809eda8251b"
+    },
+    {
+      "path": "desktop/src/client_install.rs",
+      "anchor": "journals_bind_all_transaction_paths_and_parent_without_shell_commands",
+      "sha256": "f3055251874225f674703a2d94ea90b26013246ff8c326275dfc7a184bdde286"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Donor-wide installer/recovery/platform acceptance outside this self EXE slice",
+      "disposition": "pending",
+      "reason": "Force-kill and automatic deletion of rollback are deliberately not copied: a live editor or unverified new process must remain recoverable. Media/libmpv, archive/GitHub extraction, interactive TUI console inheritance do not apply to this GUI raw same-origin executable. Generic signed installer/removal inventory, unattended uninstall and true two-new-version helper/Windows-session/OS acceptance remain pending. Preference UI uses actual existing Pakar donor widgets; no full donor GUI parity is claimed."
+    }
+  ],
+  "remaining": "Issue #7: live secure enrollment, release/telemetry/command receipt and safe replacement proof separated from source fixtures; Android foreground-only and self-uninstall local/OS-consent boundaries remain."
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/artifacts/selfupdate_windows.go",
+  "sha256": "f5a8272234eb32a91299203197aca85d0a147e360db768869b9a4005ff660e5f",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": "Actual finite Windows process wait adapted with one pinned process handle plus executable path validation; verified current canonical donor matches inventory, alternate donor differs only in console/journal presentation.",
+  "targets": [
+    {
+      "path": "desktop/src/client_install.rs",
+      "anchor": "pub fn helper(",
+      "sha256": "f3055251874225f674703a2d94ea90b26013246ff8c326275dfc7a184bdde286"
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/client_management.rs",
+      "anchor": "release_policy_checks_numeric_build_semver_platform_origin_and_integrity",
+      "sha256": "980fdefb18af32aac2b8bbdb5177886e12fffa22148a6143b6dc6809eda8251b"
+    },
+    {
+      "path": "desktop/src/client_install.rs",
+      "anchor": "journals_bind_all_transaction_paths_and_parent_without_shell_commands",
+      "sha256": "f3055251874225f674703a2d94ea90b26013246ff8c326275dfc7a184bdde286"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Donor-wide installer/recovery/platform acceptance outside this self EXE slice",
+      "disposition": "pending",
+      "reason": "Force-kill and automatic deletion of rollback are deliberately not copied: a live editor or unverified new process must remain recoverable. Media/libmpv, archive/GitHub extraction, interactive TUI console inheritance do not apply to this GUI raw same-origin executable. Generic signed installer/removal inventory, unattended uninstall and true two-new-version helper/Windows-session/OS acceptance remain pending. Preference UI uses actual existing Pakar donor widgets; no full donor GUI parity is claimed."
+    }
+  ],
+  "remaining": "Issue #7: live secure enrollment, release/telemetry/command receipt and safe replacement proof separated from source fixtures; Android foreground-only and self-uninstall local/OS-consent boundaries remain."
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/secretstore/backend_windows.go",
+  "sha256": "7a44ddcb48bc8823b1c3322e4eb100b082d720ab3cf83f5e95eb7b74ecd039fe",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": "Actual current-user Credential Manager Get/Set, explicit missing-vs-failure, bounded byte payload, CredFree and no plaintext fallback adapted to enrollment credentials.",
+  "targets": [
+    {
+      "path": "desktop/src/client_secrets.rs",
+      "anchor": "pub fn get(",
+      "sha256": "796f892a99cce1215097a19a7a0c05305f5befea686e2d8584e3b7c42ab366ef"
+    },
+    {
+      "path": "desktop/src/client_management.rs",
+      "anchor": "pub fn newer(",
+      "sha256": "980fdefb18af32aac2b8bbdb5177886e12fffa22148a6143b6dc6809eda8251b"
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/client_management.rs",
+      "anchor": "release_policy_checks_numeric_build_semver_platform_origin_and_integrity",
+      "sha256": "980fdefb18af32aac2b8bbdb5177886e12fffa22148a6143b6dc6809eda8251b"
+    },
+    {
+      "path": "desktop/src/client_install.rs",
+      "anchor": "journals_bind_all_transaction_paths_and_parent_without_shell_commands",
+      "sha256": "f3055251874225f674703a2d94ea90b26013246ff8c326275dfc7a184bdde286"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Donor-wide installer/recovery/platform acceptance outside this self EXE slice",
+      "disposition": "pending",
+      "reason": "Force-kill and automatic deletion of rollback are deliberately not copied: a live editor or unverified new process must remain recoverable. Media/libmpv, archive/GitHub extraction, interactive TUI console inheritance do not apply to this GUI raw same-origin executable. Generic signed installer/removal inventory, unattended uninstall and true two-new-version helper/Windows-session/OS acceptance remain pending. Preference UI uses actual existing Pakar donor widgets; no full donor GUI parity is claimed."
+    }
+  ],
+  "remaining": "Issue #7: live secure enrollment, release/telemetry/command receipt and safe replacement proof separated from source fixtures; Android foreground-only and self-uninstall local/OS-consent boundaries remain."
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/installer/desktop_ownership.go",
+  "sha256": "8bb637e17aabb002114694ea783e2631fbb2b32e12bf285a60ec840d232c75b3",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": "Actual explicit desktop installation ownership adapted to self-only canonical EXE/profile/owner UUID marker, current Windows SID checks and path-bound update journal; no discovery grants removal ownership.",
+  "targets": [
+    {
+      "path": "desktop/src/client_install.rs",
+      "anchor": "pub fn helper(",
+      "sha256": "f3055251874225f674703a2d94ea90b26013246ff8c326275dfc7a184bdde286"
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/client_management.rs",
+      "anchor": "release_policy_checks_numeric_build_semver_platform_origin_and_integrity",
+      "sha256": "980fdefb18af32aac2b8bbdb5177886e12fffa22148a6143b6dc6809eda8251b"
+    },
+    {
+      "path": "desktop/src/client_install.rs",
+      "anchor": "journals_bind_all_transaction_paths_and_parent_without_shell_commands",
+      "sha256": "f3055251874225f674703a2d94ea90b26013246ff8c326275dfc7a184bdde286"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Donor-wide installer/recovery/platform acceptance outside this self EXE slice",
+      "disposition": "pending",
+      "reason": "Force-kill and automatic deletion of rollback are deliberately not copied: a live editor or unverified new process must remain recoverable. Media/libmpv, archive/GitHub extraction, interactive TUI console inheritance do not apply to this GUI raw same-origin executable. Generic signed installer/removal inventory, unattended uninstall and true two-new-version helper/Windows-session/OS acceptance remain pending. Preference UI uses actual existing Pakar donor widgets; no full donor GUI parity is claimed."
+    }
+  ],
+  "remaining": "Issue #7: live secure enrollment, release/telemetry/command receipt and safe replacement proof separated from source fixtures; Android foreground-only and self-uninstall local/OS-consent boundaries remain."
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/artifacts/store.go",
+  "sha256": "1f167ddab14067f939649a96c57432981a2d0074ad8b7c1ada37948da8d51a39",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": "Actual streaming bounded Put, digest/type checks, fsync before immutable publication, owned path/descriptor checks adapted to the Node SQLite registry and content-addressed package route.",
+  "targets": [
+    {
+      "path": "services/client-management/service.mjs",
+      "anchor": "export async function createService",
+      "sha256": "9a87cb763dbaafd55bdfbe012b296db35b36937f2f1f6eaf41018cdf88fff793"
+    },
+    {
+      "path": "tools/publish-client-release.mjs",
+      "anchor": "const metadata=",
+      "sha256": "9a666ab8f840aee40b0db57239e73dee4eb69505813753a7435974c1a0169305"
+    }
+  ],
+  "proof": [
+    {
+      "path": "services/client-management/service.test.mjs",
+      "anchor": "actual management HTTP",
+      "sha256": "ec91b67d71fffcb3beb0013e332af88b8286def15109a09ed01333927a4ce338"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Generic donor artifact store beyond self application packages",
+      "disposition": "pending",
+      "reason": "This temporary service stores Windows self-executable and Android self-APK only; generic board artifact kinds/current pointers, resumed downloads and Go os.Root API are not copied. Node loopback-only service uses an exclusive trusted-writer directory, same-open handle and NOFOLLOW; clients always verify exact digest/bytes. Background Android services and two-installed-version acceptance remain pending."
+    }
+  ],
+  "remaining": "Issue #7: actual server/client rollout receipts and Android installed consent/multi-device acceptance; no arbitrary shell execution or uninstall of unrelated packages."
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/ipcjson/artifacts_http.go",
+  "sha256": "7110d10ee2ca3e7bf6c45041a50a5c5184b044c0014577b0e517294c95228d51",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": "Actual artifact descriptor and same-open-handle HTTP serving adapted to explicit filename/hash identity, exact bytes/ranges and no privileged public inventory.",
+  "targets": [
+    {
+      "path": "services/client-management/service.mjs",
+      "anchor": "export async function createService",
+      "sha256": "9a87cb763dbaafd55bdfbe012b296db35b36937f2f1f6eaf41018cdf88fff793"
+    },
+    {
+      "path": "tools/publish-client-release.mjs",
+      "anchor": "const metadata=",
+      "sha256": "9a666ab8f840aee40b0db57239e73dee4eb69505813753a7435974c1a0169305"
+    }
+  ],
+  "proof": [
+    {
+      "path": "services/client-management/service.test.mjs",
+      "anchor": "actual management HTTP",
+      "sha256": "ec91b67d71fffcb3beb0013e332af88b8286def15109a09ed01333927a4ce338"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Generic donor artifact store beyond self application packages",
+      "disposition": "pending",
+      "reason": "This temporary service stores Windows self-executable and Android self-APK only; generic board artifact kinds/current pointers, resumed downloads and Go os.Root API are not copied. Node loopback-only service uses an exclusive trusted-writer directory, same-open handle and NOFOLLOW; clients always verify exact digest/bytes. Background Android services and two-installed-version acceptance remain pending."
+    }
+  ],
+  "remaining": "Issue #7: actual server/client rollout receipts and Android installed consent/multi-device acceptance; no arbitrary shell execution or uninstall of unrelated packages."
+},
+{
   "origin": "PCController",
   "path": "mobile/lib/unified/app_upgrade.dart",
   "sha256": "a13fdcf3c07e79544fef87b66226cc035ffc76e9dfd3841107c6b79bd0793ec0",
@@ -11,23 +236,25 @@
   "verdict": "parity-gap",
   "preserved": "Actual bounded native-channel package RPC, 16KiB ordered chunks, manifest-pinned peer pull/push, measured progress and separate local installer consent. Coordinator adds allowlisted public preferences, exact-session/origin HTTP/WS/Socket.IO offers, serialized write-ahead digest receipts and same-manifest automatic peer pulls.",
   "targets": [
+    {"path":"mobile/lib/app_client_management.dart","anchor":"class AppClientManagement","sha256":"cbb8e04f8ea488023ca181b87ab9ee97adea7dfca20e988f2b8d2120ee391db0"},
     {
       "path": "mobile/lib/app_updates.dart",
       "anchor": "class AppUpdates",
-      "sha256": "43fecf1cc973694aaf27e61e46924a922a5e4873fdf19e98c7fa5f23ad016f4a"
+      "sha256": "c2a6e5dfdf2f681cc248cf647c3de708b86633f2a93916fffeebd757dc5e0720"
     },
     {
       "path": "mobile/lib/app_update_coordinator.dart",
       "anchor": "class AppUpdateCoordinator",
-      "sha256": "5b507d26b657948be2d852e118ead624a2c8613880e9b8e1ce33ea347a3aeeb3"
+      "sha256": "525acf6d89f95d97d20d6903682f3d6fc59200642b082ce0632bd759b48d97a0"
     },
     {
       "path": "mobile/lib/app_updates_page.dart",
       "anchor": "class AppUpdatesPage",
-      "sha256": "518f635c169f1d01c125ca07caa36213a42ab0915b64736e425b166cabceb556"
+      "sha256": "b39d5324451ac08cb54774eadabbf85b07bbce069cb1f63eef196492d2dedc4d"
     }
   ],
   "proof": [
+    {"path":"mobile/test/app_client_management_test.dart","anchor":"Enrollment credentials and command receipts","sha256":"e224a5e5395a6d45351448cf0295952eef4db12c2a17fd65af907871cc45fd0a"},
     {
       "path": "mobile/test/app_updates_test.dart",
       "anchor": "native bridge refuses oversized chunks",
@@ -36,7 +263,7 @@
     {
       "path": "mobile/test/app_update_coordinator_test.dart",
       "anchor": "Write-ahead receipt precedes download",
-      "sha256": "5959806b63bc19122791f61704ad88f2ab4a72bdddd5b9305d7622e01a0c45a1"
+      "sha256": "210cc87ecda82de047c4cd7308d099cd75e5869d823e3ccd1f7475f1a01ab6f9"
     },
     {
       "path": "mobile/test/update_pages_test.dart",
@@ -109,7 +336,7 @@
     {
       "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/AppUpdateChannel.kt",
       "anchor": "class AppUpdateChannel",
-      "sha256": "4b34633fbe7c8a4003624209c3795bfce5a871892214df32c078171752f66bbe"
+      "sha256": "207afa6d43aa866729ebe1cd580daeee9e3327000fc3abf642a52d41e5beaea5"
     }
   ],
   "proof": [
@@ -144,7 +371,7 @@
     {
       "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt",
       "anchor": "appUpdates = AppUpdateChannel",
-      "sha256": "b765ffc161790dfbe828d5e9b43275aab51899e7b9fe36fea10e1c6b0bd9e549"
+      "sha256": "14201ed8d476a5341c3d8603740f1c010de858e5dc39e418c85dc0247c6dc055"
     }
   ],
   "proof": [
@@ -269,7 +496,7 @@
     {
       "path": "mobile/lib/app_updates.dart",
       "anchor": "readAppUpdateBytes",
-      "sha256": "43fecf1cc973694aaf27e61e46924a922a5e4873fdf19e98c7fa5f23ad016f4a"
+      "sha256": "c2a6e5dfdf2f681cc248cf647c3de708b86633f2a93916fffeebd757dc5e0720"
     }
   ],
   "proof": [
@@ -973,7 +1200,7 @@
     {
       "path": "desktop/src/main.rs",
       "anchor": "SerialCommand::Bridge(target",
-      "sha256": "a5ae16cf26db1e010520bd2cabbd161938ff5809c00dffc97c715bc6bb16fd83"
+      "sha256": "d1bea8a4270a67ea4c68607068777a463052cfa19e69179b3e83cc76fd7de12c"
     }
   ],
   "omissions": [
@@ -1139,7 +1366,7 @@
     {
       "path": "desktop/src/ui/preferences.rs",
       "anchor": "Enable API bridge / repeater",
-      "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb"
+      "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49"
     }
   ],
   "omissions": [
@@ -1853,7 +2080,7 @@
         {
           "path": "tools/build-desktop.ps1",
           "anchor": "Invoke-PakarNative -WorkingDirectory",
-          "sha256": "d9ba78a7d3d55a6f455d747d5f77988b5d129ddc4a0a496b6e47b06c479328ee"
+          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -1911,7 +2138,7 @@
         {
           "path": "tools/build-desktop.ps1",
           "anchor": "Invoke-PakarNative -WorkingDirectory",
-          "sha256": "d9ba78a7d3d55a6f455d747d5f77988b5d129ddc4a0a496b6e47b06c479328ee"
+          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -2021,7 +2248,7 @@
         {
           "path": "tools/build-desktop.ps1",
           "anchor": "Invoke-PakarNative -WorkingDirectory",
-          "sha256": "d9ba78a7d3d55a6f455d747d5f77988b5d129ddc4a0a496b6e47b06c479328ee"
+          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -2079,7 +2306,7 @@
         {
           "path": "tools/build-desktop.ps1",
           "anchor": "Invoke-PakarNative -WorkingDirectory",
-          "sha256": "d9ba78a7d3d55a6f455d747d5f77988b5d129ddc4a0a496b6e47b06c479328ee"
+          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -2137,7 +2364,7 @@
         {
           "path": "tools/build-desktop.ps1",
           "anchor": "Invoke-PakarNative -WorkingDirectory",
-          "sha256": "d9ba78a7d3d55a6f455d747d5f77988b5d129ddc4a0a496b6e47b06c479328ee"
+          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -2940,7 +3167,7 @@
         {
           "path": "mobile/test/upgrade_progress_test.dart",
           "anchor": "void main()",
-          "sha256": "f3ba86fefd11ca0e04e01631664d7354f713d1050d5688a2106e15c6240c5924"
+          "sha256": "b8d6f54956a6ad8cb6b97344d7d2f32bb8a2e1bd2b99c20eb45c68959a7c9f6d"
         },
         {
           "path": "mobile/test/upgrade_transport_test.dart",
@@ -3492,7 +3719,7 @@
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_controls(",
-          "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb"
+          "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49"
         },
         {
           "path": "mobile/lib/api.dart",
@@ -3592,7 +3819,7 @@
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_controls(",
-          "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb"
+          "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49"
         },
         {
           "path": "mobile/lib/api.dart",
@@ -5112,7 +5339,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "a5ae16cf26db1e010520bd2cabbd161938ff5809c00dffc97c715bc6bb16fd83",
+      "sha256": "d1bea8a4270a67ea4c68607068777a463052cfa19e69179b3e83cc76fd7de12c",
       "anchor": "fn scoped_http_request("
     },
     {
@@ -5225,7 +5452,7 @@
     },
     {
       "path": "desktop/src/ui/cell_table.rs",
-      "sha256": "1c8f772ec5173cca67896fe73c426c27503fbfc368d750202f28eaa4f6b4f40c",
+      "sha256": "f037d9fddc939fcaba0abb258a6077419ef34272ee644cd3a30987d5eae87135",
       "anchor": "Even identical values require the exact operation ID"
     },
     {
@@ -5679,7 +5906,7 @@
       "path": "desktop/src/ui/connection_controls.rs"
     },
     {
-      "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb",
+      "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49",
       "anchor": "super::dropdown::ComboBox::from_id_salt(\"theme\")",
       "path": "desktop/src/ui/preferences.rs"
     },
@@ -5689,7 +5916,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4",
+      "sha256": "eb47352c2284389fa7bfbf6206eeabbfa0bc8cc9d1ec484018cfb172e7e0ddb2",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -5769,7 +5996,7 @@
       "path": "desktop/src/ui/color_picker.rs"
     },
     {
-      "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb",
+      "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49",
       "anchor": "super::color_picker::accent_picker",
       "path": "desktop/src/ui/preferences.rs"
     },
@@ -5822,8 +6049,8 @@
     {
       "origin":"Pealayer","path":"src/cli.rs","sha256":"412b553fcdcd4436075af6bc93c956a4b7d9ac93a552a3458f2afabb8aa1448f","source_read":"complete","verdict":"parity-gap",
       "preserved":["Actual format_help_message and PrintHelp/PrintVersion flag branches adapted with native short/long help/version assertions; terminate before config, network, GUI ownership and windows. Share device command help with existing TUI instead of duplicate stale strings."],
-      "targets":[{"path":"desktop/src/cli_output.rs","sha256":"c0b2cda7c86af5e01d38dc8ac41a0de52ea7c3351b394b66b0efc098fdeceba5","anchor":"pub fn parse_cli_output("}],
-      "proof":[{"path":"desktop/src/cli_output.rs","sha256":"c0b2cda7c86af5e01d38dc8ac41a0de52ea7c3351b394b66b0efc098fdeceba5","anchor":"fn actual_donor_short_and_long_help_version_flags()"}],
+      "targets":[{"path":"desktop/src/cli_output.rs","sha256":"712ce831a3d90b59d66cb0b4c499951c4492a34aa8c8b645368b0c667abbab54","anchor":"pub fn parse_cli_output("}],
+      "proof":[{"path":"desktop/src/cli_output.rs","sha256":"712ce831a3d90b59d66cb0b4c499951c4492a34aa8c8b645368b0c667abbab54","anchor":"fn actual_donor_short_and_long_help_version_flags()"}],
       "omissions":[
         {"code":"Media target/chapter/playlist/seek/rate/player associations","disposition":"not-applicable","reason":"User explicitly requires an mpv-free controller; media/timeline/cue business must not replace board control."},
         {"code":"Embedded build identity, scoped peer/instance routing, unified remote request fallback, automatic verified host deployment/update status, headless Web-only backend and complete shortcut/command parser tests","disposition":"pending","reason":"These generic contracts are useful but not completed by static help output. Current Pakar typed GUI IPC and board command routes do not prove full donor CLI parity."}
@@ -5892,7 +6119,7 @@
         },
         {
           "path": "tools/check-living-contract.mjs",
-          "sha256": "238b20f9f3915ea76759d303e57ad25ce9dfed9a9dc0da14fbbf89de0eae25d4",
+          "sha256": "4ef1dc289cdb7cd3a84da5e457a4db16c3a6ccda173c6bca93d4edb93c3cc34e",
           "anchor": "export function violations"
         },
         {
@@ -6690,7 +6917,7 @@
         },
         {
           "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt",
-          "sha256": "b765ffc161790dfbe828d5e9b43275aab51899e7b9fe36fea10e1c6b0bd9e549",
+          "sha256": "14201ed8d476a5341c3d8603740f1c010de858e5dc39e418c85dc0247c6dc055",
           "anchor": "Intent.ACTION_OPEN_DOCUMENT"
         },
         {
@@ -6887,7 +7114,7 @@
         },
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb",
+          "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49",
           "anchor": "AppLanguage::Persian"
         },
         {
@@ -7042,7 +7269,7 @@
       "targets": [
         {
           "path": "README.md",
-          "sha256": "5485721f026defe3a392440cd8d8ae5214b13b90fa48051d65bd1346e144f32c",
+          "sha256": "b3aef33f25e2d8c90a59c9d4e718852024d6f07bf1d169d69d6129a7d9d96e6f",
           "anchor": "Connected boards. One contextual control workspace."
         },
         {
@@ -7090,12 +7317,12 @@
         },
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "d9ba78a7d3d55a6f455d747d5f77988b5d129ddc4a0a496b6e47b06c479328ee",
+          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396",
           "anchor": "--test-threads=1"
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "214cc3b6e4306cc8049cf7f98421b5c35ee326bfed3a11a6d5c4ed294fe78a53",
+          "sha256": "aa23b6544501595eb1cb383b636e15d1da302897b5bb58c0cd686a307035b6cc",
           "anchor": "export function runChecks"
         },
         {
@@ -7554,7 +7781,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4",
+          "sha256": "eb47352c2284389fa7bfbf6206eeabbfa0bc8cc9d1ec484018cfb172e7e0ddb2",
           "anchor": "fn synchronize_context("
         },
         {
@@ -7575,7 +7802,7 @@
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_controls(",
-          "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb"
+          "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49"
         },
         {
           "path": "mobile/lib/api.dart",
@@ -7967,7 +8194,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4",
+          "sha256": "eb47352c2284389fa7bfbf6206eeabbfa0bc8cc9d1ec484018cfb172e7e0ddb2",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -8158,7 +8385,7 @@
       "targets": [
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "d9ba78a7d3d55a6f455d747d5f77988b5d129ddc4a0a496b6e47b06c479328ee",
+          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396",
           "anchor": "Get-PakarCargoTargetDirectory"
         }
       ],
@@ -8447,7 +8674,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4",
+          "sha256": "eb47352c2284389fa7bfbf6206eeabbfa0bc8cc9d1ec484018cfb172e7e0ddb2",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -8556,7 +8783,7 @@
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_controls(",
-          "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb"
+          "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49"
         },
         {
           "path": "mobile/lib/api.dart",
@@ -8726,7 +8953,7 @@
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_controls(",
-          "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb"
+          "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49"
         },
         {
           "path": "mobile/lib/api.dart",
@@ -8946,7 +9173,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "value[\"messages\"]",
-          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4"
+          "sha256": "eb47352c2284389fa7bfbf6206eeabbfa0bc8cc9d1ec484018cfb172e7e0ddb2"
         },
         {
           "path": "desktop/src/platform/notifications.rs",
@@ -9030,7 +9257,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4",
+          "sha256": "eb47352c2284389fa7bfbf6206eeabbfa0bc8cc9d1ec484018cfb172e7e0ddb2",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -10143,7 +10370,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "1c8f772ec5173cca67896fe73c426c27503fbfc368d750202f28eaa4f6b4f40c",
+          "sha256": "f037d9fddc939fcaba0abb258a6077419ef34272ee644cd3a30987d5eae87135",
           "anchor": "fn manager_selector("
         },
         {
@@ -10181,7 +10408,7 @@
       "proof": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "1c8f772ec5173cca67896fe73c426c27503fbfc368d750202f28eaa4f6b4f40c",
+          "sha256": "f037d9fddc939fcaba0abb258a6077419ef34272ee644cd3a30987d5eae87135",
           "anchor": "fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width()"
         },
         {
@@ -10854,7 +11081,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "a5ae16cf26db1e010520bd2cabbd161938ff5809c00dffc97c715bc6bb16fd83",
+          "sha256": "d1bea8a4270a67ea4c68607068777a463052cfa19e69179b3e83cc76fd7de12c",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -10915,13 +11142,13 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4",
+          "sha256": "eb47352c2284389fa7bfbf6206eeabbfa0bc8cc9d1ec484018cfb172e7e0ddb2",
           "anchor": "value[\"tray_shell\"]"
         },
         {
           "path": "tools/replace-desktop.ps1",
           "anchor": "function OwnerStatus",
-          "sha256": "d2128bc8bb83cd0505cff4db9a4ff0567fe2bfc6cdd741d3b51afa057c35d646"
+          "sha256": "59e01095bf144ea4ea76678e0730395edf3fbef2895da008610b925309cc5559"
         },
         {
           "path": "tools/observe-desktop.ps1",
@@ -10977,7 +11204,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "a5ae16cf26db1e010520bd2cabbd161938ff5809c00dffc97c715bc6bb16fd83",
+          "sha256": "d1bea8a4270a67ea4c68607068777a463052cfa19e69179b3e83cc76fd7de12c",
           "anchor": "fn serial_worker("
         },
         {
@@ -11014,7 +11241,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "a5ae16cf26db1e010520bd2cabbd161938ff5809c00dffc97c715bc6bb16fd83",
+          "sha256": "d1bea8a4270a67ea4c68607068777a463052cfa19e69179b3e83cc76fd7de12c",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
@@ -11044,12 +11271,12 @@
       "targets": [
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb",
+          "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49",
           "anchor": "fn sync_connection_owner("
         },
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb",
+          "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49",
           "anchor": "fn connection_summary("
         },
         {
@@ -11060,7 +11287,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4"
+          "sha256": "eb47352c2284389fa7bfbf6206eeabbfa0bc8cc9d1ec484018cfb172e7e0ddb2"
         }
       ],
       "omissions": [
@@ -11096,18 +11323,18 @@
       "proof": [
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb",
+          "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49",
           "anchor": "fn external_connection_owner_updates_all_baselines_without_losing_unrelated_drafts()"
         },
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb",
+          "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49",
           "anchor": "fn connection_summary_is_contextual_and_dirty_preferences_cannot_open_another_editor()"
         },
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_settings_navigation_preserves_unsaved_application_preferences()",
-          "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb"
+          "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49"
         }
       ],
       "improvement": "One connection owner instead of conflicting Preferences editors, while preserving unrelated drafts and the donor's triple-baseline merge mechanism."
@@ -11144,7 +11371,7 @@
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_controls(",
-          "sha256": "d1aeb420e90da83406e9533b898e12c78d2ef7862dc7e8743aae1e77cf385adb"
+          "sha256": "ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49"
         },
         {
           "path": "mobile/lib/api.dart",
@@ -11722,7 +11949,7 @@
         {
           "path": "desktop/src/main.rs",
           "anchor": "peer_http::remember_address",
-          "sha256": "a5ae16cf26db1e010520bd2cabbd161938ff5809c00dffc97c715bc6bb16fd83"
+          "sha256": "d1bea8a4270a67ea4c68607068777a463052cfa19e69179b3e83cc76fd7de12c"
         }
       ],
       "omissions": [
@@ -12144,7 +12371,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn synchronize_context",
-          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4"
+          "sha256": "eb47352c2284389fa7bfbf6206eeabbfa0bc8cc9d1ec484018cfb172e7e0ddb2"
         },
         {
           "path": "desktop/src/ui/layout.rs",
@@ -12159,7 +12386,7 @@
         {
           "path": "desktop/src/config.rs",
           "anchor": "pub native_workspaces",
-          "sha256": "a550801f7a2929a03b75643e7a2399c3b0107f45dd7047d44e4d79ecec1ad29f"
+          "sha256": "f141aa4b44219e89bd0a89ed2d0097acfe95bc35b692449bdb3e13be298745ae"
         },
         {
           "path": "mobile/lib/table_workspace.dart",

@@ -10,6 +10,8 @@ import 'app_updates_peer.dart';
 import 'app_update_discovery.dart';
 import 'device_registry.dart';
 import 'firmware_feed.dart';
+import 'app_client_management.dart';
+import 'connection_preferences.dart' show SecretStore;
 
 /// Foreground app-package distribution, independent of the selected board.
 /// Reuses PCController package pull/push; the OS installer is local-only.
@@ -20,12 +22,22 @@ class AppUpdateCoordinator extends ChangeNotifier {
     this.saveSnapshot,
     this.connectFeed,
     this.feedConnectTimeout = const Duration(seconds: 8),
+    SecretStore? managementSecrets,
+    ManagedRequest? managementRequest,
     required Future<bool> Function(Map<String, dynamic>) approve,
   }) : updates = updates ?? AppUpdates(),
        discovery = discovery ?? AppUpdateDiscovery() {
     peers = AppUpdatePeers(this.updates, approve: approve);
     this.updates.addListener(changed);
     this.discovery.addListener(changed);
+    management = AppClientManagement(
+      policy: () => settings,
+      package: () => package,
+      checkUpdate: checkNow,
+      cleanup: cleanup,
+      secrets: managementSecrets ?? const ManagedClientSecrets(),
+      request: managementRequest,
+    );
   }
   static const storageKey = 'pakar.app_updates';
   final AppUpdates updates;
@@ -34,13 +46,22 @@ class AppUpdateCoordinator extends ChangeNotifier {
   final Future<WebSocket> Function(String endpoint)? connectFeed;
   final Duration feedConnectTimeout;
   late final AppUpdatePeers peers;
+  late final AppClientManagement management;
   Map<String, dynamic> package = {};
   static const defaults = <String, dynamic>{
     'sharing': false,
     'discover': false,
     'auto_download': false,
-    'catalog': '',
-    'origin': '',
+    'auto_check': true,
+    'check_interval_seconds': 900,
+    'auto_install': false,
+    'auto_cleanup': false,
+    'catalog': 'https://office.digitalogic.ir/pakar/api/app-updates',
+    'origin': 'https://office.digitalogic.ir',
+    'management_base': 'https://office.digitalogic.ir/pakar',
+    'management_enabled': false,
+    'allow_remote_check': false,
+    'allow_remote_cleanup': false,
     'feed': '',
     'socket_io': false,
     'namespace': '/',
@@ -53,7 +74,9 @@ class AppUpdateCoordinator extends ChangeNotifier {
   bool foreground = true, closed = false, checking = false;
   WebSocket? socket;
   StreamSubscription<dynamic>? events;
-  Timer? timer, retry, heartbeat;
+  Timer? timer, retry, heartbeat, managementTimer;
+  String cleanupSummary = '';
+  DateTime? _lastCleanup;
   int epoch = 0, retryCount = 0;
   int _feedEpoch = 0;
   String session = '', _feedSession = '';
@@ -88,7 +111,9 @@ class AppUpdateCoordinator extends ChangeNotifier {
           (raw['consumed'] as List)
               .whereType<String>()
               .where(
-                (key) => RegExp(r'^(peer|remote):[a-f0-9]{64}$').hasMatch(key),
+                (key) =>
+                    RegExp(r'^(peer|remote|install):[a-f0-9]{64}$')
+                        .hasMatch(key),
               )
               .take(128),
         );
@@ -98,6 +123,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
           ? id
           : randomIdentifier();
       validate(settings);
+      if (settings['management_enabled'] == true) await management.load();
       await refresh();
       await reconcile();
     } on Object catch (error) {
@@ -109,11 +135,41 @@ class AppUpdateCoordinator extends ChangeNotifier {
   }
 
   static void validate(Map<String, dynamic> value) {
-    for (final key in ['sharing', 'discover', 'auto_download', 'socket_io']) {
+    for (final key in [
+      'sharing',
+      'discover',
+      'auto_download',
+      'socket_io',
+      'auto_check',
+      'auto_install',
+      'auto_cleanup',
+      'management_enabled',
+      'allow_remote_check',
+      'allow_remote_cleanup',
+    ]) {
       if (value[key] is! bool) {
         throw const FormatException('Invalid app update policy');
       }
     }
+    if (value['check_interval_seconds'] is! int ||
+        value['check_interval_seconds'] < 60 ||
+        value['check_interval_seconds'] > 86400) {
+      throw const FormatException(
+        'Update check interval must be 60–86400 seconds',
+      );
+    }
+    if (value['auto_install'] == true && value['auto_download'] != true) {
+      throw const FormatException(
+        'Automatic installation requires automatic download',
+      );
+    }
+    if (value['management_base'] is! String) {
+      throw const FormatException('Invalid management base');
+    }
+    AppClientManagement.endpoint(
+      value['management_base'],
+      '/api/clients/report',
+    );
     for (final key in ['catalog', 'origin', 'feed', 'namespace', 'event']) {
       if (value[key] is! String || (value[key] as String).length > 2048) {
         throw const FormatException('Invalid app update endpoint');
@@ -187,10 +243,13 @@ class AppUpdateCoordinator extends ChangeNotifier {
     _configuring = true;
     final before = settings;
     ++epoch;
+    management.retireRequests();
     session = '';
     pending = null;
     timer?.cancel();
     timer = null;
+    managementTimer?.cancel();
+    managementTimer = null;
     try {
       await stopFeed();
       settings = Map.of(next);
@@ -215,6 +274,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
 
   Future<void> setForeground(bool active) async {
     foreground = active;
+    management.setForeground(active);
     if (!active) {
       ++epoch;
       session = '';
@@ -224,6 +284,8 @@ class AppUpdateCoordinator extends ChangeNotifier {
       if (!active || closed) {
         timer?.cancel();
         timer = null;
+        managementTimer?.cancel();
+        managementTimer = null;
         await stopFeed();
         await discovery.stopAdvertising();
         await peers.close();
@@ -260,12 +322,43 @@ class AppUpdateCoordinator extends ChangeNotifier {
     }
     if (closed || !foreground || generation != epoch) return;
     timer?.cancel();
-    if (settings['discover'] == true ||
-        (settings['catalog'] as String).isNotEmpty) {
-      timer = Timer.periodic(const Duration(minutes: 5), (_) {
-        unawaited(checkNow().catchError(failure));
-      });
+    if (settings['auto_check'] == true &&
+        (settings['discover'] == true ||
+            (settings['catalog'] as String).isNotEmpty)) {
+      timer = Timer.periodic(
+        Duration(seconds: settings['check_interval_seconds'] as int),
+        (_) {
+          unawaited(checkNow().catchError(failure));
+        },
+      );
       unawaited(checkNow().catchError(failure));
+    }
+    if (settings['auto_cleanup'] == true && !updates.busy) {
+      await cleanup();
+    }
+    managementTimer?.cancel();
+    managementTimer = null;
+    if (settings['management_enabled'] == true) {
+      await management.load();
+      if (!foreground || closed || generation != epoch) return;
+    }
+    if (settings['management_enabled'] == true ||
+        settings['auto_cleanup'] == true) {
+      managementTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+        if (settings['management_enabled'] == true) {
+          unawaited(reportManagement().catchError(failure));
+        }
+        if (settings['auto_cleanup'] == true &&
+            !updates.busy &&
+            (_lastCleanup == null ||
+                DateTime.now().difference(_lastCleanup!) >=
+                    const Duration(minutes: 30))) {
+          unawaited(cleanup().catchError(failure));
+        }
+      });
+      if (settings['management_enabled'] == true) {
+        unawaited(reportManagement().catchError(failure));
+      }
     }
     if ((settings['feed'] as String).isNotEmpty && socket == null) {
       unawaited(startFeed().catchError(failure));
@@ -319,6 +412,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
                   peer.manifest['app_updates'] as Map,
                 ),
               );
+              await _autoInstall(generation);
             }
           }
         }
@@ -391,7 +485,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
           'Update already attempted; inspect the existing receipt',
         );
       }
-      if (!RegExp(r'^(peer|remote):[a-f0-9]{64}$').hasMatch(key)) {
+      if (!RegExp(r'^(peer|remote|install):[a-f0-9]{64}$').hasMatch(key)) {
         throw const FormatException('Invalid update receipt');
       }
       final previous = Set<String>.of(consumed);
@@ -499,10 +593,56 @@ class AppUpdateCoordinator extends ChangeNotifier {
         sha256: offer['sha256'],
         bytes: offer['bytes'],
       );
+      await _autoInstall(generation);
       changed();
     } finally {
       _downloading = false;
     }
+  }
+
+  Future<void> _autoInstall(int generation) async {
+    if (closed ||
+        !foreground ||
+        epoch != generation ||
+        settings['auto_install'] != true ||
+        updates.state['state'] != 'verified' ||
+        updates.state['transfer_id'] is! String) {
+      return;
+    }
+    final hash = updates.state['sha256'];
+    if (hash is! String || !RegExp(r'^[a-f0-9]{64}$').hasMatch(hash)) return;
+    if (consumed.contains('install:$hash')) return;
+    await remember('install:$hash');
+    if (closed ||
+        !foreground ||
+        epoch != generation ||
+        settings['auto_install'] != true) {
+      return;
+    }
+    await updates
+        .install(); // Android still verifies and requires its own consent.
+  }
+
+  Future<void> cleanup() async {
+    if (closed || !foreground || updates.busy) {
+      throw StateError('Cleanup unavailable during transfer/background');
+    }
+    final result = await updates.cleanup();
+    _lastCleanup = DateTime.now();
+    cleanupSummary =
+        '${result['removed_files'] ?? 0} abandoned APK files removed · ${result['removed_bytes'] ?? 0} bytes';
+    changed();
+  }
+
+  Future<void> reportManagement() async {
+    final received = updates.state['received'] ?? updates.state['sent'];
+    final expected = updates.state['bytes'];
+    await management.reportAndReceive(
+      '${updates.state['state'] ?? 'unknown'}',
+      receivedBytes: received is int ? received : null,
+      expectedBytes: expected is int ? expected : null,
+    );
+    changed();
   }
 
   Future<void> startFeed() async {
@@ -661,6 +801,8 @@ class AppUpdateCoordinator extends ChangeNotifier {
     session = '';
     pending = null;
     timer?.cancel();
+    managementTimer?.cancel();
+    management.dispose();
     unawaited(stopFeed());
     peers.dispose();
     updates.removeListener(changed);

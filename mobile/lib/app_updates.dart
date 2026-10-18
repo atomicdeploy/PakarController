@@ -27,6 +27,7 @@ class AppUpdates extends ChangeNotifier {
     'app.upgrade.status',
     'app.upgrade.install',
     'app.upgrade.permission',
+    'app.upgrade.cleanup',
     'app.upgrade.pull',
     'app.upgrade.push',
   };
@@ -102,6 +103,22 @@ class AppUpdates extends ChangeNotifier {
   }
 
   Future<Json> permission() => rpc('app.upgrade.permission', {});
+  Future<Json> cleanup() async {
+    if (busy) throw StateError('Finish the current transfer before cleanup');
+    return rpc('app.upgrade.cleanup', {});
+  }
+
+  Future<Json> uninstallSelf({required bool confirmed}) async {
+    if (!confirmed || busy || state['transfer_id'] != null) {
+      throw StateError(
+        'Explicit local confirmation and no staged transfer required',
+      );
+    }
+    return object(
+      await channel.invokeMethod<dynamic>('uninstall', {'confirmed': true}),
+    );
+  }
+
   Future<Json> abort() async {
     if (busy) throw StateError('Cancel the current transfer first');
     final transfer = state['transfer_id'];
@@ -265,7 +282,7 @@ class AppUpdates extends ChangeNotifier {
         throw const FormatException('Invalid APK read response');
       }
       result['data'] = base64Encode(bytes);
-    } else if (method.startsWith('app.upgrade.')) {
+    } else if (method.startsWith('app.upgrade.') && operation != 'cleanup') {
       state = result;
       _notify();
     }

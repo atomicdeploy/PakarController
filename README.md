@@ -219,6 +219,7 @@ does not certify that a current GitHub run passed or a device was updated.
 |---|---|
 | [Hardware](docs/HARDWARE.md) | Pin mapping and wiring |
 | [API](docs/API.md) | Device transport and commands |
+| [Client updates & monitoring](docs/CLIENT-MANAGEMENT.md) | Configurable release endpoint, enrollment, telemetry and safe cleanup |
 | [Architecture](docs/ARCHITECTURE.md) | Board responsibilities |
 | [Source comparison](https://github.com/atomicdeploy/PakarController/issues/3) | File-by-file reuse and justified omissions |
 | [Production checklist](https://github.com/atomicdeploy/PakarController/issues/2) | Open acceptance and delivery work |

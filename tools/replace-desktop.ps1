@@ -10,12 +10,20 @@ param(
   [Parameter(Mandatory)][ValidatePattern('^[a-fA-F0-9]{64}$')][string]$ExpectedNewHash,
   [Parameter(Mandatory)][ValidateRange(1,2147483647)][int]$ExpectedProcessId,
   [Parameter(Mandatory)][string]$LaunchTask,
+  [switch]$InitializeClientManagement,
+  [string]$ClientManagementBase='https://office.digitalogic.ir/pakar',
+  [string]$EnrollmentTokenPath,
   [ValidateRange(5,45)][int]$DeadlineSeconds=20
 )
 # Adapt actual Replace-AsusRecoveryDesktop and Run-DesktopCandidate: same-session
 # owner/draft checks, graceful IPC, atomic NTFS replacement and preserved profile.
 # No kill, settings rewrite, USB fallback, board writes or automatic rollback.
 $ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue'
+if($InitializeClientManagement){
+  $taskManagementUri=$null
+  if(-not [Uri]::TryCreate($ClientManagementBase,[UriKind]::Absolute,[ref]$taskManagementUri) -or $taskManagementUri.Scheme -ne 'https' -or $taskManagementUri.UserInfo -or $taskManagementUri.Query -or $taskManagementUri.Fragment){throw 'Use an explicit HTTPS management base without credentials'}
+  if(-not [IO.Path]::IsPathRooted($EnrollmentTokenPath) -or -not(Test-Path -LiteralPath $EnrollmentTokenPath -PathType Leaf)){throw 'An explicit existing private one-use enrollment token file is required'}
+}
 $OutputEncoding=[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false)
 foreach($value in @($ExecutablePath,$CandidatePath,$RollbackPath,$SettingsPath,$SettingsBackupPath,$ReceiptPath)){
   if(-not [IO.Path]::IsPathRooted($value)){throw 'All paths must be explicit and absolute'}
@@ -65,6 +73,22 @@ try {
   [IO.File]::Replace($CandidatePath,$ExecutablePath,$RollbackPath,$false)
   $proof.replaced=$true
   AssertHash $ExecutablePath $ExpectedNewHash;AssertHash $RollbackPath $ExpectedOldHash
+  if($InitializeClientManagement){
+    $taskSavedProfile=[Environment]::GetEnvironmentVariable('PAKAR_CONFIG_FILE','Process')
+    try{
+      $env:PAKAR_CONFIG_FILE=$SettingsPath
+      & $ExecutablePath --client-management-config $ClientManagementBase --telemetry on --remote-commands on --remote-cleanup on
+      if($LASTEXITCODE){throw 'Client management configuration failed; no enrollment was attempted'}
+      & $ExecutablePath --client-update-init
+      if($LASTEXITCODE){throw 'Managed installation initialization failed; no enrollment was attempted'}
+      $taskEnrollment=[IO.File]::ReadAllText($EnrollmentTokenPath).Trim()
+      if($taskEnrollment -notmatch '^[A-Za-z0-9_-]{43}$'){throw 'Invalid one-use token; enrollment not attempted'}
+      $taskEnrollment | & $ExecutablePath --client-enroll
+      $taskEnrollment=$null
+      if($LASTEXITCODE){throw 'Enrollment outcome uncertain; not replayed; request a new token if needed'}
+      $proof.client_management_initialized=$true
+    }finally{[Environment]::SetEnvironmentVariable('PAKAR_CONFIG_FILE',$taskSavedProfile,'Process')}
+  }
   Start-ScheduledTask -TaskName $LaunchTask
   $until=[DateTime]::UtcNow.AddSeconds($DeadlineSeconds)
   do{Start-Sleep -Milliseconds 200;$owners=@(Get-CimInstance Win32_Process -Filter "Name LIKE 'Pakar%'" | Where-Object {$_.ExecutablePath -ieq $ExecutablePath -and $_.SessionId -eq $session})}while($owners.Count -ne 1 -and [DateTime]::UtcNow -lt $until)

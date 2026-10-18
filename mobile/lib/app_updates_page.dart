@@ -16,6 +16,7 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
   final source = TextEditingController(),
       digest = TextEditingController(),
       size = TextEditingController(),
+      enrollment = TextEditingController(),
       peerAddress = TextEditingController();
   final fields = <String, TextEditingController>{};
   late Map<String, dynamic> draft = Map.of(model.settings);
@@ -24,14 +25,29 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
   @override
   void initState() {
     super.initState();
-    for (final key in ['catalog', 'origin', 'feed', 'namespace', 'event']) {
+    for (final key in [
+      'catalog',
+      'origin',
+      'feed',
+      'namespace',
+      'event',
+      'management_base',
+      'check_interval_seconds',
+    ]) {
       fields[key] = TextEditingController(text: '${draft[key]}');
     }
   }
 
   @override
   void dispose() {
-    for (final c in [source, digest, size, peerAddress, ...fields.values]) {
+    for (final c in [
+      source,
+      digest,
+      size,
+      peerAddress,
+      enrollment,
+      ...fields.values,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -50,6 +66,44 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
     } finally {
       if (mounted) setState(() => working = false);
     }
+  }
+
+  Future<void> savePreferences() async {
+    await model.configure({
+      ...draft,
+      for (final entry in fields.entries)
+        entry.key: entry.key == 'check_interval_seconds'
+            ? int.tryParse(entry.value.text.trim())
+            : entry.value.text.trim(),
+    });
+    draft = Map.of(model.settings);
+  }
+
+  Future<void> removeSelf() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('Remove PakarController?'),
+        content: const Text(
+          'Android will ask you to confirm uninstalling this app. Its local settings and enrollment may be removed. No board or other app will be uninstalled.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            child: const Text('Continue to Android'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true || !model.foreground) return;
+    await model.updates.uninstallSelf(confirmed: true);
+    model.message =
+        'Android removal confirmation requested; removal is not verified';
+    model.changed();
   }
 
   Widget action(
@@ -321,9 +375,18 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
               for (final item in [
                 ('sharing', 'Share installed app on this network'),
                 ('discover', 'Discover newer app instances automatically'),
+                ('auto_check', 'Check for newer apps automatically'),
                 (
                   'auto_download',
                   'Download compatible newer apps automatically',
+                ),
+                (
+                  'auto_install',
+                  'Request Android installation after verified automatic download',
+                ),
+                (
+                  'auto_cleanup',
+                  'Clean abandoned private APK staging automatically',
                 ),
                 ('socket_io', 'Socket.IO feed'),
               ])
@@ -336,6 +399,14 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
                       : (v) => setState(() => draft[item.$1] = v),
                 ),
               const SizedBox(height: 12),
+              field(
+                fields['check_interval_seconds']!,
+                'Automatic check interval · seconds (60–86400)',
+                number: true,
+              ),
+              const Text(
+                'Automatic installation still requires Android consent. Cleanup preserves active transfers, installed apps, settings and user files.',
+              ),
               for (final entry in [
                 ('catalog', 'HTTP(S) update catalog'),
                 ('origin', 'Trusted APK download origin'),
@@ -350,13 +421,7 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
                 runSpacing: 8,
                 children: [
                   action('Save preferences', PakarIcons.floppyDisk, () async {
-                    final next = {
-                      ...draft,
-                      for (final entry in fields.entries)
-                        entry.key: entry.value.text.trim(),
-                    };
-                    await model.configure(next);
-                    draft = Map.of(model.settings);
+                    await savePreferences();
                   }),
                   action(
                     'Check for updates',
@@ -365,6 +430,105 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
                   ),
                 ],
               ),
+            ],
+          ),
+          WorkspaceSection(
+            title: 'Advanced app management',
+            icon: PakarIcons.gear,
+            children: [
+              Text(
+                model.management.state,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              if (model.management.clientId.isNotEmpty)
+                SelectableText('Client ${model.management.clientId}'),
+              const SizedBox(height: 12),
+              field(fields['management_base']!, 'Managed HTTPS base'),
+              for (final item in [
+                (
+                  'management_enabled',
+                  'Enable enrolled app telemetry and management',
+                ),
+                ('allow_remote_check', 'Allow managed check-update requests'),
+                (
+                  'allow_remote_cleanup',
+                  'Allow managed private staging cleanup',
+                ),
+              ])
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(item.$2),
+                  value: draft[item.$1] == true,
+                  onChanged: working || busy
+                      ? null
+                      : (value) => setState(() => draft[item.$1] = value),
+                ),
+              const Text(
+                'Only allowlisted app/version/build/SDK/uptime/update-state telemetry is reported. Board credentials, device passwords and enrollment tokens are never included. Remote uninstall is not enabled.',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: enrollment,
+                enabled: !working && !busy,
+                onChanged: (_) => setState(() {}),
+                obscureText: true,
+                autocorrect: false,
+                enableSuggestions: false,
+                decoration: const InputDecoration(
+                  labelText: 'One-use enrollment token · secure storage only',
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  action(
+                    'Save management policy',
+                    PakarIcons.floppyDisk,
+                    savePreferences,
+                  ),
+                  action('Enroll this app', PakarIcons.cloud, () async {
+                    await savePreferences();
+                    await model.management.enroll(
+                      fields['management_base']!.text.trim(),
+                      enrollment.text.trim(),
+                      model.instanceId,
+                    );
+                    enrollment.clear();
+                    model.changed();
+                    await model.reconcile();
+                  }, enabled: enrollment.text.isNotEmpty),
+                  action(
+                    'Report now',
+                    PakarIcons.broadcast,
+                    model.reportManagement,
+                    enabled:
+                        model.management.enrolled &&
+                        model.settings['management_enabled'] == true,
+                  ),
+                  action('Forget enrollment', PakarIcons.warning, () async {
+                    await model.management.forget();
+                    model.changed();
+                  }, enabled: model.management.enrolled),
+                  action(
+                    'Clean abandoned staging',
+                    PakarIcons.arrowClockwise,
+                    model.cleanup,
+                  ),
+                  action(
+                    'Uninstall this app…',
+                    PakarIcons.warning,
+                    removeSelf,
+                    enabled: state['transfer_id'] == null,
+                  ),
+                ],
+              ),
+              if (model.cleanupSummary.isNotEmpty)
+                Text(
+                  model.cleanupSummary,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
             ],
           ),
         ],

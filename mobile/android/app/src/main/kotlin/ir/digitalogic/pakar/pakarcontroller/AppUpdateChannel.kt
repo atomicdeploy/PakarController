@@ -27,7 +27,8 @@ import java.util.zip.ZipFile
 
 /** Adapted from PCController mobile UpgradeChannel.kt (actual bounded transfer/installer).
  * Self-package only, bounded chunks, same signer, newer version, OS consent.
- * No shell/root installation, uninstall, third-party APKs or arbitrary paths.
+ * No shell/root installation, third-party APKs or arbitrary paths. Self-removal
+ * only opens Android's own consent screen after explicit local confirmation.
  */
 class AppUpdateChannel(private val activity: Activity, messenger: BinaryMessenger) {
     companion object { var liveChannel: MethodChannel? = null }
@@ -36,6 +37,7 @@ class AppUpdateChannel(private val activity: Activity, messenger: BinaryMessenge
     private val waiting = AtomicInteger()
     private val root = File(activity.cacheDir, "peer-upgrades")
     @Volatile private var closed = false
+    @Volatile private var foreground = false
     @Volatile private var transfer: Transfer? = null
     private var document: MethodChannel.Result? = null
     private val pickCode = 3041
@@ -48,11 +50,17 @@ class AppUpdateChannel(private val activity: Activity, messenger: BinaryMessenge
         var last: Long = SystemClock.elapsedRealtime())
     init {
         liveChannel = channel
-        // Only this module's abandoned staging files, never installed APKs/data.
-        root.listFiles()?.filter { it.name.matches(Regex("[a-f0-9-]{36}\\.apk")) &&
-            System.currentTimeMillis() - it.lastModified() > 30 * 60 * 1000 }?.forEach { it.delete() }
+        // Cleanup now follows the explicit local policy through cleanup(); do
+        // not sweep files unconditionally during activity construction.
         channel.setMethodCallHandler { call, result ->
-            if (call.method == "pick" || call.method == "export") {
+            if (call.method == "uninstall") {
+                try {
+                    check(!closed && foreground && !activity.isFinishing && document == null && waiting.get() == 0 && transfer == null) { "Finish current work before self-removal" }
+                    require(call.argument<Boolean>("confirmed") == true) { "Explicit local confirmation required" }
+                    activity.startActivity(Intent(Intent.ACTION_DELETE, Uri.parse("package:${activity.packageName}")))
+                    result.success(mapOf("requested" to true, "os_consent_required" to true, "package" to activity.packageName))
+                } catch (_: Exception) { result.error("uninstall_rejected", "Self-removal unavailable; nothing was removed", null) }
+            } else if (call.method == "pick" || call.method == "export") {
                 try {
                     check(!closed && document == null && waiting.get() == 0) { "Finish the current document operation" }
                     if (call.method == "pick") check(transfer == null) { "Discard the existing staged APK first" }
@@ -69,7 +77,7 @@ class AppUpdateChannel(private val activity: Activity, messenger: BinaryMessenge
             } else io.execute {
                 try {
                     check(!closed) { "Upgrade channel closed" }
-                    transfer?.let { if (SystemClock.elapsedRealtime() - it.last > 10 * 60 * 1000) abort() }
+                    if (call.method != "cleanup") transfer?.let { if (SystemClock.elapsedRealtime() - it.last > 10 * 60 * 1000) abort() }
                     val args = call.arguments as? Map<*, *> ?: emptyMap<String, Any>()
                     val value = when (call.method) {
                         "info" -> exportInfo()
@@ -79,6 +87,7 @@ class AppUpdateChannel(private val activity: Activity, messenger: BinaryMessenge
                         "finish" -> finish(args)
                         "abort" -> { requireTransfer(args); abort(); mapOf("aborted" to true) }
                         "status" -> status()
+                        "cleanup" -> cleanup()
                         "install" -> install(args)
                         "permission" -> {
                             activity.runOnUiThread { if (!closed && Build.VERSION.SDK_INT >= 26) {
@@ -256,6 +265,7 @@ class AppUpdateChannel(private val activity: Activity, messenger: BinaryMessenge
         } catch (error: Exception) { abort(); throw error }
     }
     private fun install(args: Map<*, *>): Map<String, Any> {
+        check(foreground && !closed) { "Android installation requires this app in the foreground" }
         val current = requireTransfer(args); require(current.ready) { "APK has not been verified" }
         finish(args) // Recheck staged bytes/identity just before Android takes ownership.
         if (Build.VERSION.SDK_INT >= 26 && !activity.packageManager.canRequestPackageInstalls())
@@ -278,6 +288,7 @@ class AppUpdateChannel(private val activity: Activity, messenger: BinaryMessenge
                     .put("sha256", current.hash).put("version_code", version(info(current.file.path)))
                 require(activity.getSharedPreferences("peer-upgrades", Context.MODE_PRIVATE).edit()
                     .putString("expected", expected.toString()).remove("receipt").commit()) { "Cannot persist installation identity" }
+                check(foreground && !closed) { "Installation request retired before Android commit" }
                 session.commit(callback.intentSender)
             }
         } catch (error: Exception) { installer.abandonSession(sessionId); throw error }
@@ -301,6 +312,26 @@ class AppUpdateChannel(private val activity: Activity, messenger: BinaryMessenge
             "install_permission" to (Build.VERSION.SDK_INT < 26 || activity.packageManager.canRequestPackageInstalls()))
     }
     private fun abort() { transfer?.file?.delete(); transfer = null }
+    private fun cleanup(): Map<String, Any> {
+        check(document == null) { "Finish the document operation before cleanup" }
+        val canonical = root.canonicalFile
+        require(canonical.parentFile == activity.cacheDir.canonicalFile && canonical.name == "peer-upgrades") { "Private staging owner mismatch" }
+        var removed = 0; var bytes = 0L; var failed = 0
+        val now = System.currentTimeMillis()
+        // Bounded, old, regular files owned by this module only. Never the live
+        // transfer, installed package, preferences, Android install copy or a symlink.
+        for (file in (root.listFiles() ?: emptyArray()).take(128)) {
+            if (file.name.matches(Regex("[a-f0-9-]{36}\\.apk")) && file.isFile &&
+                file.canonicalFile.parentFile == canonical && file.canonicalFile == File(canonical, file.name).absoluteFile &&
+                file != transfer?.file && now - file.lastModified() > 30 * 60 * 1000L) {
+                val size = file.length()
+                if (size < 0 || size > maximum - bytes) continue
+                if (file.delete()) { removed++; bytes += size } else failed++
+            }
+        }
+        return mapOf("removed_files" to removed, "removed_bytes" to bytes, "failed_files" to failed, "active_preserved" to (transfer != null))
+    }
+    fun setForeground(value: Boolean) { foreground = value }
     fun close() {
         closed = true
         document?.error("closed", "APK picker closed; no action will be replayed", null); document = null

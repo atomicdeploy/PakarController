@@ -19,7 +19,7 @@ export function violations(path, source) {
 export function check() {
   // Persisted binary layouts are deliberately not interpreted as JSON/API
   // generations. They remain checksum-validated; see API-POLICY.md.
-  const paths=execFileSync('git',['ls-files','firmware','desktop/src','mobile/lib','assets/web','assets/contracts','libraries/BoardCore/src',
+  const paths=execFileSync('git',['ls-files','firmware','desktop/src','mobile/lib','services/client-management','interfaces','assets/web','assets/contracts','libraries/BoardCore/src',
     'tools/create-remote-manifest.mjs','tools/telemetry-reassembly.mjs','tools/set-device-name.ps1','tools/set-device-access.ps1','tools/prepare-release.mjs'],{cwd:root,encoding:'utf8'}).trim().split(/\r?\n/);
   const errors=paths.filter(p=>!p.includes('/pccontroller/')&&/\.(?:ino|rs|dart|h|cpp|js|mjs|json|ps1)$/.test(p))
     .flatMap(p=>violations(p,readFileSync(resolve(root,p),'utf8')));

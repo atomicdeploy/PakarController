@@ -9,3 +9,4 @@ target/
 tools/arduino-cli.exe
 release-assets/
 release-incoming/
+services/client-management/node_modules/

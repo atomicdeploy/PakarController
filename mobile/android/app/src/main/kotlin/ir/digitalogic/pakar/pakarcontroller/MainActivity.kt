@@ -133,8 +133,14 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onPause() {
+        appUpdates?.setForeground(false)
         toneMirror?.stopAll() // Native cutoff also works if Dart stalls or loses lifecycle delivery.
         super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        appUpdates?.setForeground(true)
     }
 
     override fun onDestroy() {

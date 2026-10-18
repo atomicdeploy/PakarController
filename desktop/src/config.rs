@@ -139,6 +139,7 @@ pub struct WorkspaceProfile {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AppConfig {
+    pub client_management: crate::client_management::Settings,
     pub firmware_feed: crate::firmware_feed::Settings,
     pub bridge: crate::bridge::Settings,
     pub stream_fps: u16,
@@ -177,6 +178,7 @@ pub struct AppConfig {
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
+            client_management: Default::default(),
             firmware_feed: Default::default(),
             bridge: Default::default(),
             stream_fps: crate::streaming::DEFAULT_FPS,
@@ -236,6 +238,7 @@ impl AppConfig {
         }
     }
     pub fn save(&self) -> Result<(), String> {
+        self.client_management.validate()?;
         if self.bridge.enabled { self.bridge.validate()?; }
         if !self.ui_scale.is_finite()
             || self.stream_fps > crate::streaming::MAX_FPS

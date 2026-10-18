@@ -690,6 +690,8 @@ impl PakarControllerApp {
                     && peer_http::Pin::from_status(s) == self.pixel_diagnostic.armed),"message":self.pixel_diagnostic.message});
             value["device_status"] = serde_json::json!(snapshot);
             value["firmware_progress"] = serde_json::json!(self.firmware_observation());
+            value["client_build"] = serde_json::json!(crate::client_management::build());
+            value["app_management"] = serde_json::json!(crate::client_management::snapshot());
             value["firmware_feed"] = serde_json::json!(self.firmware_feed.as_ref().map(|f|serde_json::json!({"state":f.state,"session":f.session,"board_id":f.board,"boot_id":f.boot,"delivery_armed":f.settings.deliver})));
             value["bridge"] = self.bridge.snapshot();
             value["message"] = serde_json::json!(self.message);
@@ -723,6 +725,21 @@ impl PakarControllerApp {
     }
     fn draw_shell_contents(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
+        // App replacement uses the same supported graceful Quit lifecycle. An
+        // open editor (even clean), transfer or pending device action postpones it.
+        let can_update = self.preferences.is_none() && !self.device_settings.open
+            && !self.device_settings.dirty() && self.device_settings.pending.is_none()
+            && self.device_settings.maintenance_pending.is_none() && !self.identity_pending
+            && self.serial_operations_pending == 0 && self.board_silent.pending.is_none()
+            && !self.firmware_observation().is_some_and(|progress|progress.active) && !self.table.has_pending_edits()
+            && self.pixel_diagnostic.pending.is_none()
+            && !self.table.manager_open && !self.show_mapping && !self.show_connection
+            && !self.show_workspaces && !self.confirm_reset && !self.streaming && !self.sampling;
+        if self.config.single_instance && std::env::var_os("PAKAR_SCREENSHOT_PATH").is_none()
+            && crate::client_management::tick(&self.config.client_management, &ctx, can_update) {
+            self.dispatch(Command::Quit, &ctx);
+            return;
+        }
         let snapshot = self.live_status().cloned();
         if ctx.input_mut(|i| {
             i.consume_key(

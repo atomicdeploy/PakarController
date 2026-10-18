@@ -1,5 +1,71 @@
 # Donor-first preflight receipt
 
+## Client updates, enrollment and temporary office service
+
+Reviewed the actual existing Android package/coordinator/native channel and
+completely reread PCController app_upgrade.dart, UpgradeChannel.kt, artifacts
+download/store, ipcjson artifacts HTTP, Windows self-update/process ownership,
+desktop ownership and Credential Manager backend. Pealayer update.rs was fully
+read by the native implementation subagent; its named downloader, PE validator,
+create-new journal/helper and health mechanisms are adapted into actual native
+code, not only visual inspiration. Corrected its alternate checkout's changed
+selfupdate_windows.go hash by a complete canonical installed-donor reread: the
+retained wait function is identical, presentation changes are not source proof.
+Six new manual comparisons use the same ledger with exact source/target/test
+hashes;229/4673 compared,4444 pending,187 known gaps, not donor-wide completion.
+
+Retained HTTPS origin/redirect/length/digest bounds, exact self package/signers,
+durable write-ahead single claims, current-user secure credentials, managed
+EXE/profile/PID/helper paths, graceful Quit and startup health. Force-kill and
+automatic rollback deletion are intentionally rejected because unknown drafts
+and unhealthy new processes must remain recoverable. Generic archive/media/Go
+artifact-kind parity, approved uninstall inventory, background Android uptime,
+two-installed-new-version tests and physical acceptance remain pending issue7.
+
+Actual service is deployed on office's Node24 loopback18743 under a dedicated
+unprivileged systemd user, scoped existing Apache HTTPS include and private
+SQLite/content store. PBX/MQTT services remain active without configuration
+changes. Operator/client tokens are random, separate and hashed at rest server-
+side; only root has the operator token file, Windows client uses Credential
+Manager, Android secure storage. API is unversioned, no arbitrary execution.
+Independent full actual public EXE/APK downloads hash-match, live external WSS
+offers are session-bound, private inventory without auth returns401.
+
+Actual ASUS guarded interactive replacement succeeded, PID22880→20244/build9,
+settings and old executable preserved. Initialized exact managed installation,
+enrolled using one-use private token, received periodic real telemetry identifying
+DAVID-ASUS and completed remotely claimed check-update/cleanup. The latter found
+no obsolete pending package: no material deletion. Native automatic helper
+two-new-version exchange is implemented but is not established by this initial
+deployment wrapper. Native local launch/config was denied by host policy before
+execution; no workaround. Exact EXE staged locally and APK staged on ASUS, no ADB
+device; no Android installation or local GUI runtime acceptance claimed.
+
+Focused native7 / service9 / Flutter13 cases and analyzer pass, canonical warm
+native release and actual Kotlin/APK build0.2.7+9 succeed. No SDK upgrade, clean,
+duplicate cache, firmware build/flash, board programming/audio or PBX call.
+Existing main CI failed only stale WebUi.h PU route target hashes after additive
+upgrade progress code; reread the actual audit/test and change, refresh hashes
+and line anchors through the existing generator,50 route fixture now passes.
+
+Failures were not silently retried: fixed Rust digest formatting using the
+existing firmware_source::digest byte-to-hex mechanism without dependency change;
+fixed six fixture brace lints. Office health probe inherited a local proxy and
+received rejection; service logs + explicit no-proxy loopback showed healthy200,
+then fixed the scoped probe. Added an actual restart fixture after finding
+mkdir needed existing-directory handling. Read-only audit caught malformed
+upgrade-URL crash exposure and telemetry-off polling freshness; both fixed.
+Validated exact /usr/bin/node matching systemd. Public HTTPS/WS verification
+passed after these changes. A mistakenly assumed SDK path failed lookup; actual
+installed SDK inventory located apksigner/aapt and verified signer/package/build.
+No fallback SDK installed. Parallel comparison generation collided with my
+quality reader; serialized the owning generator/check after reader exit instead
+of disabling stale-report protection or rebuilding clients.
+
+See CLIENT-MANAGEMENT.md for exact artifacts, capabilities, limitations, service
+paths and actual receipts. Current-app remote uninstall remains disabled pending
+the user's removal-scope choice; Android local uninstall still requires OS consent.
+
 ## Graceful upgrade lifecycle and sound restoration
 
 Completely reread PCController TonePlayer, BootMelody, AddressableLeds source and

@@ -94,6 +94,36 @@ class PackageDiscovery extends AppUpdateDiscovery {
   Future<void> stopAdvertising() async {}
 }
 
+class AutomaticPackageUpdates extends PackageUpdates {
+  int installations = 0, cleanups = 0;
+  @override
+  Future<Json> download(
+    String url, {
+    required String sha256,
+    required int bytes,
+  }) async {
+    await super.download(url, sha256: sha256, bytes: bytes);
+    state = {
+      'state': 'verified',
+      'transfer_id': 'verified-fixture',
+      'sha256': sha256,
+    };
+    return state;
+  }
+
+  @override
+  Future<Json> install() async {
+    installations++;
+    return {'state': 'awaiting_android'};
+  }
+
+  @override
+  Future<Json> cleanup() async {
+    cleanups++;
+    return {'removed_files': 0, 'removed_bytes': 0};
+  }
+}
+
 void main() {
   _SocketTestBinding();
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -152,6 +182,9 @@ void main() {
       approve: (_) async => false,
       saveSnapshot: save,
     );
+    // Explicit fixture policy: never contact the new public default catalog.
+    result.settings['catalog'] = '';
+    result.settings['auto_check'] = false;
     addTearDown(result.dispose);
     return result;
   }
@@ -185,6 +218,63 @@ void main() {
         throwsFormatException,
       );
     }
+  });
+
+  test(
+    'Public defaults are configured but destructive automation is opt-in',
+    () {
+      expect(
+        AppUpdateCoordinator.defaults['catalog'],
+        'https://office.digitalogic.ir/pakar/api/app-updates',
+      );
+      expect(AppUpdateCoordinator.defaults['auto_check'], true);
+      for (final key in [
+        'auto_download',
+        'auto_install',
+        'auto_cleanup',
+        'management_enabled',
+        'allow_remote_cleanup',
+      ]) {
+        expect(AppUpdateCoordinator.defaults[key], false);
+      }
+      for (final patch in [
+        {'check_interval_seconds': 59},
+        {'check_interval_seconds': 86401},
+        {'auto_install': true, 'auto_download': false},
+        {'auto_check': 'true'},
+      ]) {
+        expect(
+          () => AppUpdateCoordinator.validate({
+            ...AppUpdateCoordinator.defaults,
+            ...patch,
+          }),
+          throwsFormatException,
+        );
+      }
+    },
+  );
+
+  test('Opt-in automatic install requests OS consent once after durable verified-package receipt', () async {
+    final updates = AutomaticPackageUpdates(), saved = <Map<String, dynamic>>[];
+    final model = coordinator(
+      updates: updates,
+      save: (text) async => saved.add(jsonDecode(text)),
+    );
+    model.package = package();
+    model.settings.addAll({
+      'origin': 'https://updates.example',
+      'auto_download': true,
+      'auto_install': true,
+    });
+    final session = model.beginCatalogSession();
+    await model.acceptOffer(offer(session), session);
+    expect(updates.installations, 1);
+    expect(saved.last['consumed'], contains('install:${'a' * 64}'));
+    await model.acceptOffer(offer(session), session);
+    expect(updates.installations, 1);
+    await model.setForeground(false);
+    await expectLater(model.cleanup(), throwsStateError);
+    expect(updates.cleanups, 0);
   });
 
   test('Offer is exact-origin, newer, digest/length pinned and active-session leased', () async {

@@ -13,6 +13,9 @@ mod branding;
 mod bridge;
 mod capabilities;
 mod client_telemetry;
+mod client_management;
+mod client_install;
+mod client_secrets;
 mod cli_output;
 mod config;
 mod native_workspace;
@@ -3175,6 +3178,20 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
 
 fn main() -> eframe::Result {
     let arguments = std::env::args().collect::<Vec<_>>();
+    if let Some(result)=client_management::cli(&arguments){
+        match result{Ok(())=>println!("Client management operation completed"),Err(error)=>{eprintln!("PakarController: {error}");std::process::exit(2);}}
+        return Ok(());
+    }
+    if arguments.get(1).is_some_and(|arg| matches!(arg.as_str(), "--client-update-init" | "--apply-client-update")) {
+        let result = match arguments.get(1).map(String::as_str) {
+            Some("--client-update-init") if arguments.len() == 2 => client_install::initialize(),
+            Some("--apply-client-update") if arguments.len() == 3 => client_install::helper(std::path::Path::new(&arguments[2])),
+            _ => Err("Invalid managed app update arguments".into()),
+        };
+        match result { Ok(()) => println!("Managed app update operation completed"),
+            Err(error) => { eprintln!("PakarController: {error}"); std::process::exit(2); } }
+        return Ok(());
+    }
     if let Some(output) = cli_output::parse_cli_output(&arguments) {
         println!("{output}");
         return Ok(());

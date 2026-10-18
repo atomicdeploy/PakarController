@@ -13,6 +13,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'script-runtime.ps1')
 if ($TestFilter -and $Mode -ne 'Test') { throw 'TestFilter requires Test mode.' }
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern api-contract -Gate | Out-Null
+& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern client-app-updates -Gate | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern pu-tooling -Gate | Out-Null
 & node (Join-Path $PSScriptRoot 'check-living-contract.mjs') | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw 'Living API policy failed before native build.' }

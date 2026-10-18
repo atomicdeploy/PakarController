@@ -167,6 +167,9 @@ impl TableState {
     }
     /// Revoke unsent work and old readback ownership on peer/capability loss.
     /// Sent writes are never retried or represented as rolled back.
+    pub(crate) fn has_pending_edits(&self) -> bool {
+        !self.queue.is_empty() || self.verification_started.is_some()
+    }
     pub(crate) fn stop_pending_edits(&mut self) {
         let pending = !self.queue.is_empty() || self.verification_started.is_some();
         self.queue.clear();

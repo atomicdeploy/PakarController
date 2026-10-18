@@ -1,0 +1,27 @@
+[Unit]
+Description=PakarController client updates and management
+After=network.target
+
+[Service]
+Type=simple
+User=pakarcontroller
+Group=pakarcontroller
+WorkingDirectory=/opt/pakarcontroller-management
+EnvironmentFile=/etc/pakarcontroller-management/service.env
+ExecStart=/usr/bin/node /opt/pakarcontroller-management/service.mjs
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/pakarcontroller-management
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+MemoryMax=384M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

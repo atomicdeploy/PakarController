@@ -6,13 +6,14 @@ use crate::{
 };
 use eframe::egui;
 use super::dropdown::DropdownUiExt;
-pub const PAGES: [&str; 6] = [
+pub const PAGES: [&str; 7] = [
     "appearance",
     "application",
     "connection",
     "workspace",
     "notifications",
     "board",
+    "updates",
 ];
 pub fn page_index(name: &str) -> Option<usize> {
     PAGES.iter().position(|page| *page == name)
@@ -27,6 +28,7 @@ pub struct PreferencesDraft {
     search: String,
     status: String,
     confirm_close: bool,
+    enrollment_token: String,
 }
 impl PreferencesDraft {
     pub fn select_page(&mut self, index: usize) {
@@ -44,6 +46,7 @@ impl PreferencesDraft {
             search: String::new(),
             status: String::new(),
             confirm_close: false,
+            enrollment_token: String::new(),
         }
     }
     pub(super) fn is_dirty(&self) -> bool {
@@ -86,6 +89,57 @@ struct Outcome {
     connection_settings: bool,
     device_settings: bool,
     board_action: Option<Option<bool>>,
+    client_action: Option<crate::client_management::Action>,
+}
+fn app_management(draft:&mut PreferencesDraft, ui:&mut egui::Ui)->Option<crate::client_management::Action>{
+    use crate::client_management::{self,Action};
+    let mut action=None;
+    dialog::section(ui,icons::ARROW_CLOCKWISE,"App updates",|ui|{
+        ui.weak(format!("PakarController {} · build {} · Windows x64",env!("CARGO_PKG_VERSION"),client_management::build()));
+        ui.weak("Updates this desktop application, not the connected board firmware.");
+        dialog::setting_row(ui,icons::GLOBE,"Management server",None,|ui|{ui.text_edit_singleline(&mut draft.config.client_management.base);});
+        let settings=&mut draft.config.client_management;
+        ui.checkbox(&mut settings.auto_check,"Automatically check for app updates");
+        ui.checkbox(&mut settings.auto_download,"Download verified newer app packages");
+        ui.checkbox(&mut settings.auto_apply,"Apply automatically when all editors and device operations are closed");
+        ui.checkbox(&mut settings.auto_cleanup,"Remove obsolete owned pending packages");
+        let status=client_management::snapshot();
+        ui.strong(if status.state.is_empty(){"Not checked"}else{&status.state});
+        if !status.detail.is_empty(){ui.weak(&status.detail);}
+        if let Some(total)=status.expected_bytes.filter(|total|*total>0){
+            ui.add(egui::ProgressBar::new((status.received_bytes as f64/total as f64).clamp(0.0,1.0) as f32)
+                .text(format!("{} / {} bytes",status.received_bytes,total)));
+        }
+        if let Some(release)=status.release.as_ref(){ui.label(format!("Available: {} · build {} · {} bytes",release.version,release.build,release.bytes));}
+        ui.weak(if status.managed_installation{"Managed installation confirmed; graceful replacement preserves settings and rollback."}
+            else{"Automatic replacement is unavailable until the approved installer initializes this installation."});
+        let ready=!draft.is_dirty()&&!status.applying;
+        ui.add_enabled_ui(ready,|ui|{ui.horizontal_wrapped(|ui|{
+            if dialog::action_button(ui,icons::ARROW_CLOCKWISE,"Check now").clicked(){action=Some(Action::Check);}
+            if ui.add_enabled(status.release.is_some(),egui::Button::new("Download package")).clicked(){action=Some(Action::Download);}
+            if ui.add_enabled(status.managed_installation&&status.package_verified,egui::Button::new("Apply and restart")).clicked(){action=Some(Action::Apply);}
+            if dialog::action_button(ui,icons::TRASH,"Clean old pending packages").clicked(){action=Some(Action::Cleanup);}
+        });});
+        if !ready{ui.weak("Save or discard preference edits before performing app management actions.");}
+    });
+    ui.add_space(8.0);
+    dialog::section(ui,icons::LOCK,"Client enrollment and local policy",|ui|{
+        let settings=&mut draft.config.client_management;
+        ui.checkbox(&mut settings.telemetry,"Send operational app telemetry");
+        ui.checkbox(&mut settings.remote_commands,"Receive management commands");
+        ui.checkbox(&mut settings.allow_remote_cleanup,"Allow remote cleanup of verified obsolete pending packages");
+        ui.checkbox(&mut settings.allow_remote_uninstall,"Opt in to remote uninstall (requires a separately approved removal inventory)");
+        ui.weak("Telemetry excludes passwords, enrollment credentials, board payloads and preference contents. Remote actions are claimed at most once; uncertain actions are never replayed.");
+        let status=client_management::snapshot();
+        ui.label(if status.enrolled{"Enrolled · credential protected by Windows"}else{"Not enrolled"});
+        if let Some(id)=status.client_id{ui.weak(format!("Client: {id}"));}
+        ui.add(egui::TextEdit::singleline(&mut draft.enrollment_token).password(true).hint_text("One-time enrollment token"));
+        if ui.add_enabled(!draft.is_dirty()&&!draft.enrollment_token.is_empty(),egui::Button::new("Enroll this client")).clicked(){
+            action=Some(Action::Enroll(std::mem::take(&mut draft.enrollment_token)));
+        }
+        ui.weak("Uninstall is not executable until an explicit local removal inventory is approved. Active app, settings, rollback and shared caches are never cleanup targets.");
+    });
+    action
 }
 struct BoardView {
     bridge: serde_json::Value,
@@ -162,7 +216,7 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &Boar
     let body_height = (ui.available_height() - 48.0).max(260.0);
     ui.allocate_ui_with_layout(egui::vec2(ui.available_width(),body_height),super::i18n::layout(crate::config::resolved_rtl(&draft.config),egui::Align::Min),|ui|{
         ui.allocate_ui_with_layout(egui::vec2(142.0,body_height),super::i18n::vertical_layout(crate::config::resolved_rtl(&draft.config)),|ui|{
-            for (tab,icon,title) in [(0,icons::PALETTE,"Appearance"),(1,icons::APP_WINDOW,"Application"),(2,icons::PLUG,"Connection"),(3,icons::TABS,"Workspace"),(4,icons::INFO,"Notifications"),(5,icons::CIRCUITRY,"Board")] {
+            for (tab,icon,title) in [(0,icons::PALETTE,"Appearance"),(1,icons::APP_WINDOW,"Application"),(2,icons::PLUG,"Connection"),(3,icons::TABS,"Workspace"),(4,icons::INFO,"Notifications"),(5,icons::CIRCUITRY,"Board"),(6,icons::ARROW_CLOCKWISE,"App updates")] {
                 if tab==5 && !board.device_available { continue; }
                 if dialog::navigation_button(ui,draft.tab==tab,icon,&super::i18n::text(title),138.0).clicked(){draft.tab=tab;}
             }
@@ -170,6 +224,9 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &Boar
         ui.separator();
         ui.allocate_ui_with_layout(egui::vec2(ui.available_width(),body_height),super::i18n::vertical_layout(crate::config::resolved_rtl(&draft.config)),|ui|{
             dialog::scroll_column(ui,"preferences-body",Some(body_height),|ui|{
+                if (draft.tab==6||!draft.search.is_empty())&&draft.matches("App updates management releases telemetry enrollment cleanup uninstall server"){
+                    outcome.client_action=app_management(draft,ui);
+                }
                 if draft.tab==0||!draft.search.is_empty(){
                     dialog::section(ui,icons::PALETTE,"Appearance",|ui|{
                         if draft.matches("Theme system light dark"){dialog::setting_row(ui,icons::SUN,"Theme",None,|ui|{super::dropdown::ComboBox::from_id_salt("theme").selected_text(super::i18n::text(&format!("{:?}",draft.config.theme))).show_ui(ui,|ui|{for t in [AppTheme::System,AppTheme::Light,AppTheme::Dark]{ui.dropdown_value(&mut draft.config.theme,t,super::i18n::text(&format!("{t:?}")));}});});}
@@ -392,6 +449,7 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
         }
     }
     if let Some(action) = outcome.board_action { app.request_board_silent(action); }
+    if let Some(action)=outcome.client_action { if !draft.is_dirty(){crate::client_management::request(action,app.config.client_management.clone(),ctx);} }
     if outcome.test_notification {
         app.notification_test();
     }

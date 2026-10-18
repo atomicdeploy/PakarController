@@ -48,6 +48,10 @@ void main() {
     raw['progress_percent'] = 99;
     expect(FirmwareProgress.observed(status)!.fraction, isNull);
     raw['progress_percent'] = 25;
+    raw['phase'] = 'prepare';
+    expect(FirmwareProgress.observed(status)!.fraction, isNull);
+    raw['phase'] = 'future-stage';
+    expect(FirmwareProgress.observed(status)!.fraction, isNull);
     raw['phase'] = 'complete';
     raw['active'] = false;
     expect(FirmwareProgress.observed(status)!.verified, false);
