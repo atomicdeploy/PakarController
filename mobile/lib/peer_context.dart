@@ -14,6 +14,7 @@ class PeerContext {
     this.table,
     this.modes,
     this.application,
+    this.ledOutput,
   );
   static final unknown = PeerContext._(
     false,
@@ -24,6 +25,7 @@ class PeerContext {
     false,
     const [],
     null,
+    null,
   );
   final bool known;
   final String kind, name, hostname;
@@ -31,6 +33,7 @@ class PeerContext {
   final bool table;
   final List<PeerMode> modes;
   final PeerApplication? application;
+  final LedOutputCapability? ledOutput;
 
   static PeerContext fromStatus(Map<String, dynamic> status) {
     final value = status['capabilities'];
@@ -94,6 +97,9 @@ class PeerContext {
       table,
       List.unmodifiable(modes),
       PeerApplication.parse(value['application']),
+      features.contains('leds')
+          ? LedOutputCapability.parse(value['led_output'])
+          : null,
     );
   }
 
@@ -123,6 +129,31 @@ class PeerContext {
   String get title => known
       ? '${application?.title ?? 'PakarController'} · $name · $hostname.local'
       : 'PakarController';
+}
+
+/// Selected board wire implementation, not animation mode or active/ready state.
+/// Missing, mistyped or contradictory metadata is unknown, never false.
+class LedOutputCapability {
+  const LedOutputCapability._(this.backend, this.rmt, this.dma);
+  final String backend;
+  final bool rmt, dma;
+  static LedOutputCapability? parse(Object? raw) {
+    if (raw is! Map || raw['rmt'] is! bool || raw['dma'] is! bool) return null;
+    final backend = raw['backend'], rmt = raw['rmt'], dma = raw['dma'];
+    if (!((backend == 'rmt-dma' && rmt == true && dma == true) ||
+        ((backend == 'gpio-static' || backend == 'fastled') &&
+            rmt == false &&
+            dma == false))) {
+      return null;
+    }
+    return LedOutputCapability._(backend as String, rmt as bool, dma as bool);
+  }
+
+  String get label => backend == 'rmt-dma'
+      ? 'RMT + DMA'
+      : backend == 'gpio-static'
+      ? 'GPIO · no RMT/DMA'
+      : 'FastLED · no RMT/DMA';
 }
 
 const knownFeatures = {

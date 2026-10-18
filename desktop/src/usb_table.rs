@@ -172,7 +172,8 @@ mod tests {
             "http_peer_fencing":true,"pixels":480,"mode":"cell","cells":vec!["white";80],
             "led_output":{"enabled":true,"mode":"static"},
             "capabilities":{"board_kind":"table","acknowledged_features":["table","leds"],
-                "table":{"columns":10,"rows":8,"pixels_per_cell":6}}},
+                "table":{"columns":10,"rows":8,"pixels_per_cell":6},
+                "led_output":{"backend":"gpio-static","rmt":false,"dma":false}}},
             "physical":(1..=80).collect::<Vec<_>>(),"names":vec!["cell";80]})
     }
     fn state_packet(opcode:u8)->Vec<u8>{
@@ -185,6 +186,7 @@ mod tests {
         previous.pixel_frame=Some(serde_json::from_value(serde_json::json!({"rgb":"000000".repeat(480),"physical":(1..=80).collect::<Vec<_>>(),"revision":9,"brightness":255})).unwrap());
         let mut p=state_packet(0x4c);p[24]=1;p[43]=2<<6;
         let next=command_state(&previous,0x4c,&p).unwrap();
+        assert!(!next.capabilities.as_ref().unwrap().led_output().unwrap().dma);
         assert_eq!(next.cells[0],"red");assert_eq!(next.cells[79],"off");assert_eq!(next.cells[1],"white");
         assert!(next.pixel_frame.is_none());assert_eq!(serde_json::to_value(&next.capabilities).unwrap(),serde_json::to_value(&previous.capabilities).unwrap());
         assert_eq!(next.board_id,previous.board_id);assert_eq!(previous.cells[0],"white");

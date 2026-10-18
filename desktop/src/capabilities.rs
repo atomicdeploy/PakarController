@@ -12,6 +12,36 @@ pub struct Manifest {
     pub acknowledged_features: Vec<String>,
     pub modes: Vec<Mode>,
     pub table: Option<Table>,
+    #[serde(deserialize_with = "read_led_output")]
+    pub led_output: Option<LedOutput>,
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct LedOutput {
+    pub backend: String,
+    pub rmt: bool,
+    pub dma: bool,
+}
+impl LedOutput {
+    fn valid(&self) -> bool {
+        matches!(
+            (self.backend.as_str(), self.rmt, self.dma),
+            ("gpio-static" | "fastled", false, false) | ("rmt-dma", true, true)
+        )
+    }
+    pub fn label(&self) -> &'static str {
+        match self.backend.as_str() {
+            "rmt-dma" => "RMT + DMA",
+            "gpio-static" => "GPIO · no RMT/DMA",
+            _ => "FastLED · no RMT/DMA",
+        }
+    }
+}
+fn read_led_output<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<LedOutput>, D::Error> {
+    // Malformed/unknown optional metadata must not reject the entire board.
+    let value = serde_json::Value::deserialize(d)?;
+    Ok(serde_json::from_value::<LedOutput>(value)
+        .ok()
+        .filter(LedOutput::valid))
 }
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 #[serde(default)]
@@ -29,8 +59,14 @@ pub struct Table {
     pub pixels_per_cell: u8,
 }
 impl Manifest {
+    pub fn led_output(&self) -> Option<&LedOutput> {
+        self.led_output
+            .as_ref()
+            .filter(|v| self.has("leds") && v.valid())
+    }
     pub fn known(&self) -> bool {
-        !self.board_kind.is_empty() && self.board_kind.len() <= 64
+        !self.board_kind.is_empty()
+            && self.board_kind.len() <= 64
             && !self.board_kind.chars().any(char::is_control)
     }
     pub fn application(&self) -> Option<&crate::identity::Application> {
@@ -83,10 +119,9 @@ impl Manifest {
     pub fn allows(&self, path: &str, form: &[(String, String)]) -> bool {
         let feature = match path {
             "/api/cells" => return self.table() && self.has("cell-batch"),
-            "/api/cell"
-            | "/api/cells/mapping"
-            | "/api/game/reset"
-            | "/api/snake/direction" => "table",
+            "/api/cell" | "/api/cells/mapping" | "/api/game/reset" | "/api/snake/direction" => {
+                "table"
+            }
             "/api/mode" => {
                 return self
                     .modes()
@@ -183,6 +218,43 @@ impl Manifest {
 mod tests {
     use super::*;
     #[test]
+    fn led_backend_capability_is_explicit_optional_and_survives_relay() {
+        for (backend, rmt, dma) in [
+            ("gpio-static", false, false),
+            ("rmt-dma", true, true),
+            ("fastled", false, false),
+        ] {
+            let json = serde_json::json!({"board_kind":"table","acknowledged_features":["leds"],
+                "led_output":{"backend":backend,"rmt":rmt,"dma":dma,"future_optional":123}});
+            let m: Manifest = serde_json::from_value(json).unwrap();
+            let output = m.led_output().unwrap();
+            assert_eq!(
+                (output.backend.as_str(), output.rmt, output.dma),
+                (backend, rmt, dma)
+            );
+            let relayed: Manifest =
+                serde_json::from_value(serde_json::to_value(m).unwrap()).unwrap();
+            assert_eq!(relayed.led_output().unwrap().dma, dma);
+        }
+        for raw in [
+            serde_json::Value::Null,
+            serde_json::json!({"backend":"rmt-dma"}),
+            serde_json::json!({"backend":"rmt-dma","rmt":false,"dma":true}),
+            serde_json::json!({"backend":"gpio-static","rmt":false,"dma":"false"}),
+        ] {
+            let m: Manifest = serde_json::from_value(serde_json::json!({"board_kind":"table",
+                "acknowledged_features":["leds"],"led_output":raw}))
+            .unwrap();
+            assert!(m.known() && m.led_output().is_none());
+        }
+        assert!(Manifest::default().led_output().is_none());
+        let old: Manifest = serde_json::from_value(
+            serde_json::json!({"board_kind":"table","acknowledged_features":["leds"]}),
+        )
+        .unwrap();
+        assert!(old.led_output().is_none());
+    }
+    #[test]
     fn no_profile_or_individual_ack_means_no_controls() {
         let mut m = Manifest::default();
         assert!(!m.has("display"));
@@ -210,14 +282,16 @@ mod tests {
         let m: Manifest = serde_json::from_value(serde_json::json!({
             "board_kind":"controller", "acknowledged_features":["buzzer","future.optional"],
             "extra_optional":{"value":true}
-        })).unwrap();
+        }))
+        .unwrap();
         assert!(m.known() && m.has("buzzer"));
         assert!(!m.has("display") && !m.table());
         assert!(m.allows("/api/buzzer", &[]));
         assert!(!m.allows("/api/not-advertised", &[]));
         assert!(serde_json::from_value::<Manifest>(serde_json::json!({
             "board_kind":"controller","acknowledged_features":false
-        })).is_err());
+        }))
+        .is_err());
     }
     #[test]
     fn serial_manifest_is_individual_and_table_modes_are_profile_scoped() {
@@ -234,9 +308,11 @@ mod tests {
         payload[34..37].copy_from_slice(&[10, 8, 6]);
         let m = Manifest::from_usb(&payload).unwrap();
         assert!(m.table());
-        assert!(!m.allows("/api/cells",&[]));
-        payload[31]|=1<<6; // CellBatch bit14, individually acknowledged.
-        assert!(Manifest::from_usb(&payload).unwrap().allows("/api/cells",&[]));
+        assert!(!m.allows("/api/cells", &[]));
+        payload[31] |= 1 << 6; // CellBatch bit14, individually acknowledged.
+        assert!(Manifest::from_usb(&payload)
+            .unwrap()
+            .allows("/api/cells", &[]));
         assert_eq!(m.modes().count(), 1); // Snake is hidden; no input/output ACK: no First wins.
         payload[31] = 3;
         assert_eq!(Manifest::from_usb(&payload).unwrap().modes().count(), 2);

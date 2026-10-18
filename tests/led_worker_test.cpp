@@ -190,6 +190,12 @@ void failure(bool disableFails){
  Fixture::cleanup();puts(disableFails?"Actual worker timeout+failed RMT stop: no buffer reuse and repeated flash refusal passed.":"Actual worker timeout: stopped driver before allowing flash, no buffer reuse passed.");
 }
 int main(int argc,char** argv){
+ PakarS3::LedOutput driver;
+ const std::string expected=PAKAR_S3_LED_USE_DMA?
+     "{\"backend\":\"rmt-dma\",\"rmt\":true,\"dma\":true}":
+     "{\"backend\":\"gpio-static\",\"rmt\":false,\"dma\":false}";
+ assert(driver.capabilitiesJson()==expected);
+ assert(driver.json().find(expected.substr(0,expected.size()-1))==0);
  assert(argc==2);std::thread watchdog([]{const auto end=Fixture::Clock::now()+std::chrono::seconds(8);while(!Fixture::finished){if(Fixture::Clock::now()>end)std::_Exit(2);std::this_thread::sleep_for(std::chrono::milliseconds(10));}});
  const std::string mode=argv[1];
 #if !PAKAR_S3_LED_USE_DMA

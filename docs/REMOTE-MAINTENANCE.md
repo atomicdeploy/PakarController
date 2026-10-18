@@ -319,7 +319,48 @@ board, with the external power and Wi-Fi/AP recovery path checked.
 
 ## Acceptance checklist
 
-### Current MQTT Internet delivery checkpoint
+### LED wire capability delivery checkpoint
+
+The existing manifest now includes optional `capabilities.led_output` with
+explicit `backend`, `rmt` and `dma`, derived from the actual compiled output
+worker. Backend selection is independent of renderer mode and live readiness.
+Missing/invalid metadata remains unknown in Rust/Flutter/Web, not inferred false.
+
+On board `esp32s3-907069eac800`, separate MQTT-requested HTTPS stage and pinned
+Apply completed job15. Image1,905,952bytes SHA256
+`3db7e927ff95e839605db74b0d0e5944d57e70423002f7fa4be4462eeb9d309c`,
+manifest SHA256
+`83b4a5fc92f549facc0c4cdf3c1f132ea68f5fa6ea9fbd93738534e42687f584`.
+Boot changed from `28d93c4bc35b065244d5426f87f17c73` to
+`b8a21cd35964daca70f09a9c5a4d3fc2`. Actual telemetry reports completed
+postboot running-image verification, MD5 `d8af5b183242d86d6ff4f7d21e1c7e5c`,
+integrity verified, app1 selected/running VALID. Full telemetry9,851bytes was
+reassembled and SHA256-checked. The first read probe missed its correlated
+reply but retained complete telemetry; no uncertain mutation was replayed.
+
+Actual MQTT telemetry, HTTP `/api/status`, WebSocket `/ws` and the native
+USB COM22 owner all report
+`{"backend":"gpio-static","rmt":false,"dma":false}`. The driver separately
+reports ready/active with zero failed frames. The deployed static/16MB/OPI
+profile, BGR order and GPIO4 are unchanged; no physical output claim or RMT-DMA
+hardware certification follows from these metadata observations. AVR remained
+online; no AVR programming, fuse/EEPROM write or explicit reset was performed.
+
+ASUS's tunnel dropped during package transfer. On reconnection, the complete
+native candidate's hash/length was checked; no Pakar owner was running. The
+installed hash was checked, settings and prior binary preserved, replacement
+was atomic, and the existing Limited/Interactive production task launched it.
+Actual PID23128/session1 owner IPC reports USB selected/online and the new
+peer-owned LED metadata. Native EXE27,875,840bytes SHA256
+`7bfb08d595e0c0cc3c7a79cfb9c936d482c32018130d3e391f13ff752598a8a3`.
+
+Flutter preview APK56,215,521bytes SHA256
+`02dd66fecac611322986172452ec1634fd831d790517e799faf18423c0a364b9`
+builds with analyzer/six focused peer-context cases passing. Its ASUS transfer
+was incomplete and authorized wireless ADB is now offline. No installation or
+mobile runtime/human acceptance is claimed. All source versions remain0.2.7.
+
+### MQTT Internet delivery checkpoint preceding LED metadata
 
 The identified `ledboard.local` (board `esp32s3-907069eac800`) now connects
 directly to `mqtt.digitalogic.ir:8883` with CA-validated TLS and separate scoped

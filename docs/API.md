@@ -62,6 +62,23 @@ unsupported USB maintenance capabilities remain suppressed. Android
 currently consumes native bridges, while its own advanced bridge remains
 foreground-only authenticated loopback/MQTT/outbound WebSocket, not a LAN server.
 
+## LED output implementation capability
+
+Peers advertising `leds` additionally report optional
+`capabilities.led_output = {"backend":"gpio-static","rmt":false,"dma":false}`.
+The S3 RMT-DMA build reports `backend:"rmt-dma", rmt:true, dma:true`;
+ESP8266 reports `backend:"fastled", rmt:false, dma:false`. This describes the
+selected wire implementation, not the independent `static`/`effects` renderer
+mode and not whether output is enabled, initialized or transmitting. Actual
+readiness/activity/faults remain under `led_output.driver`.
+
+The same manifest travels in HTTP, WebSocket, MQTT telemetry and full USB table
+snapshots, and is preserved through native bridge serialization. Rust, Flutter
+and Web show its explicit driver label only when valid and LED support is ACKed;
+old/malformed/unknown optional metadata is unknown, never inferred false from a
+missing field or the board's CPU model. No API generation or editable backend
+setting is introduced; backend selection remains a firmware build option.
+
 ## Board Silent mode
 
 Native: **Preferences → Board → Silent mode**. Flutter and Web expose **Board

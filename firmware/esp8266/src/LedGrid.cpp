@@ -402,6 +402,13 @@ void LedGrid::setStaticMode(bool enabled){
   }
   dirty_=true;
 }
+String LedGrid::outputCapabilitiesJson()const{
+#if defined(ARDUINO_ARCH_ESP32)
+  return output_.capabilitiesJson();
+#else
+  return F("{\"backend\":\"fastled\",\"rmt\":false,\"dma\":false}");
+#endif
+}
 String LedGrid::outputJson()const{
   String value=F("{\"enabled\":");value+=outputEnabled_?F("true"):F("false");
   value+=F(",\"mode\":\"");value+=staticMode_?F("static"):F("effects");value+='"';
@@ -415,7 +422,7 @@ String LedGrid::outputJson()const{
 #if defined(ARDUINO_ARCH_ESP32)
   value+=F(",\"driver\":");value+=output_.json();
 #else
-  value+=F(",\"driver\":{\"backend\":\"fastled\"}");
+  value+=F(",\"driver\":");value+=outputCapabilitiesJson();
 #endif
   if(lastEffectChange_.reason){
     value+=F(",\"last_effect_change\":{\"reason\":\"");value+=lastEffectChange_.reason;

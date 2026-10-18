@@ -29,6 +29,7 @@ class LedOutput {
   void submit(const CRGB *rgb,uint8_t brightness,bool enabled,uint32_t revision);
   bool canAccept()const{return queue_ && uxQueueMessagesWaiting(queue_)==0;}
   String json() const;
+  String capabilitiesJson() const;
   static bool acquireFlashPause();
   static void releaseFlashPause();
  private:

@@ -56,7 +56,7 @@
       "target": "firmware/esp8266/src/WebUi.h",
       "anchor": "Verified remote update",
       "reason": "Commented donor HTML placeholder replaced by real firmware settings; no second OTA engine.",
-      "target_sha256_utf8_lf": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+      "target_sha256_utf8_lf": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
       "target_line": 246
     },
     {
@@ -68,8 +68,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.native().on(\"/update\"",
       "reason": "Integrated guarded authenticated upload, owner/disconnect fencing and platform OTA capacity/abort retained beside pinned remote download. Quiet S3 passive capture rejects new upload ownership. U_FS replacement is disabled to preserve credentials/recovery; S3 compressed-image support is not certified.",
-      "target_sha256_utf8_lf": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585",
-      "target_line": 2370
+      "target_sha256_utf8_lf": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687",
+      "target_line": 2374
     },
     {
       "source": "LocalLib/AsyncWebServer.h",
@@ -80,8 +80,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "if(parsed[\"type\"]==\"telemetry\")",
       "reason": "Authenticated multiple-client WebSocket retains board state and adds read-only full telemetry and pinned remote-job commands. Incoming messages are explicitly rejected during quiet S3 passive capture, before binary streaming or command dispatch.",
-      "target_sha256_utf8_lf": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585",
-      "target_line": 1707
+      "target_sha256_utf8_lf": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687",
+      "target_line": 1711
     },
     {
       "source": "LocalLib/Authentication.cpp",
@@ -128,8 +128,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.on(\"/description.xml\"",
       "reason": "Actual product/hostname root-device XML; S3 delegates escaped description generation to the adapted donor SSDP device, ESP8266 keeps its existing description. Neither advertises nonexistent SOAP/GENA services; S3 NetBIOS remains unavailable, not true.",
-      "target_sha256_utf8_lf": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585",
-      "target_line": 2689
+      "target_sha256_utf8_lf": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687",
+      "target_line": 2693
     },
     {
       "source": "pu850-esp.ino",
@@ -596,8 +596,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.native().on(\"/update/info\"",
       "reason": "Version/profile and both-board remote maintenance URLs; no misleading build-host/time identity.",
-      "target_sha256_utf8_lf": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585",
-      "target_line": 2358
+      "target_sha256_utf8_lf": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687",
+      "target_line": 2362
     },
     {
       "source": "pu850-esp.ino",
@@ -608,8 +608,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.on(\"/info\"",
       "reason": "Authenticated full structured ESP/AVR/client/network/clock/cloud telemetry; optional format=text.",
-      "target_sha256_utf8_lf": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585",
-      "target_line": 2359
+      "target_sha256_utf8_lf": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687",
+      "target_line": 2363
     },
     {
       "source": "pu850-esp.ino",
@@ -620,7 +620,7 @@
       "target": "firmware/esp8266/src/WebUi.h",
       "anchor": "Verified remote update",
       "reason": "Real control workspace rather than donor static placeholder; access gate and actual peer state retained. Optional DHCP/static editor preserves stored station credentials and RGB preview requires fresh actual output, not a synthetic animation.",
-      "target_sha256_utf8_lf": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+      "target_sha256_utf8_lf": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
       "target_line": 246
     }
   ]

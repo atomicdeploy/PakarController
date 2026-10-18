@@ -13,6 +13,7 @@ class String:public std::string{
  public:
   using std::string::string;
   using std::string::operator+=;
+  void remove(size_t index){erase(index);}
   String& operator+=(unsigned value){append(std::to_string(value));return *this;}
   String& operator+=(int value){append(std::to_string(value));return *this;}
 };

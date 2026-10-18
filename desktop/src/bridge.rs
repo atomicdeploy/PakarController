@@ -1044,7 +1044,8 @@ mod tests {
         let (tx, rx) = mpsc::channel();
         let status:DeviceStatus=serde_json::from_value(json!({"hostname":"ledboard","board_id":"fixture-board","boot_id":"a".repeat(32),
             "http_peer_fencing":true,"command_clock_ms":1000,"cells":vec!["white";80],"pixels":480,"mode":"cell",
-            "capabilities":{"board_kind":"table","acknowledged_features":["table","leds","cell-batch","command-ack","ota"],"table":{"columns":10,"rows":8,"pixels_per_cell":6}}})).unwrap();
+            "capabilities":{"board_kind":"table","acknowledged_features":["table","leds","cell-batch","command-ack","ota"],"table":{"columns":10,"rows":8,"pixels_per_cell":6},
+                "led_output":{"backend":"gpio-static","rmt":false,"dma":false}}})).unwrap();
         let admission = usb_table::Admission {
             stamp: gate.stamp(Transport::Serial, epoch),
             session: 1,
@@ -1138,6 +1139,7 @@ mod tests {
         assert_eq!(v["board_id"], "fixture-board");
         assert_eq!(v["hostname"], "ledboard");
         assert_eq!(v["bridge"]["hostname"], "fixture-host");
+        assert_eq!(v["capabilities"]["led_output"],json!({"backend":"gpio-static","rmt":false,"dma":false}));
         assert!(
             !v["capabilities"]["acknowledged_features"]
                 .as_array()

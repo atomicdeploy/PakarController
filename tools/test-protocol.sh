@@ -7,8 +7,19 @@ c++ -std=c++17 -Wall -Wextra -pedantic \
 "$root/build/protocol-test"
 c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/firmware/esp8266/src" "$root/tests/led_scheduler_test.cpp" -o "$root/build/led-scheduler-test"
 "$root/build/led-scheduler-test"
-c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/tests/led_worker_stubs" "$root/tests/led_worker_test.cpp" "$root/firmware/esp32s3/src/LedOutput.cpp" -o "$root/build/led-worker-test"
-for scenario in functional timeout stop-failure; do "$root/build/led-worker-test" "$scenario"; done
+# Match test-led-worker.ps1: scenario names are specific to the compiled backend.
+# Retain all DMA failure cases; do not send them to the default static worker.
+for profile in static-bgr static-rgb dma-bgr dma-rgb; do
+  worker_flags=()
+  if [[ "$profile" == *-rgb ]]; then worker_flags+=(-DPAKAR_S3_LED_SWAP_RED_BLUE=0); fi
+  if [[ "$profile" == dma-* ]]; then worker_flags+=(-DPAKAR_S3_LED_USE_DMA=1); fi
+  c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -pthread "${worker_flags[@]}" \
+    -I "$root/tests/led_worker_stubs" "$root/tests/led_worker_test.cpp" \
+    "$root/firmware/esp32s3/src/LedOutput.cpp" -o "$root/build/led-worker-test"
+  printf 'Actual worker wire profile: %s\n' "$profile"
+  if [[ "$profile" == dma-* ]]; then worker_scenarios=(functional timeout stop-failure); else worker_scenarios=(static); fi
+  for scenario in "${worker_scenarios[@]}"; do "$root/build/led-worker-test" "$scenario"; done
+done
 c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/mndp_test.cpp" -o "$root/build/mndp-test"
 "$root/build/mndp-test"
 c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/remote_policy_test.cpp" -o "$root/build/remote-policy-test"

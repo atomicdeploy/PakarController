@@ -34,6 +34,15 @@ const run=s=>vm.runInContext(s,context);
 const set=s=>{context.state=s;run('contextReceivedAt=Date.now();renderContext()')};
 const visible=f=>cards.filter(n=>n.dataset.capability===f).some(n=>!n.hidden);
 const manifest=(features,kind='controller')=>({name:'Fixture board',board_kind:kind,acknowledged_features:features});
+for(const [backend,rmt,dma,label] of [['gpio-static',false,false,'GPIO · no RMT/DMA'],['rmt-dma',true,true,'RMT + DMA'],['fastled',false,false,'FastLED · no RMT/DMA']]){
+  set({capabilities:{...manifest(['leds']),led_output:{backend,rmt,dma}}});
+  assert.equal(nodes.get('ledDriverCapability').textContent,'LED driver: '+label);
+  assert.equal(nodes.get('ledDriverCapability').hidden,false);
+}
+for(const led_output of [undefined,{}, {backend:'rmt-dma',rmt:false,dma:true},{backend:'gpio-static',rmt:false,dma:'false'}]){
+  set({capabilities:{...manifest(['leds']),led_output}});
+  assert(nodes.get('ledDriverCapability').hidden,'Unknown is not inferred non-DMA');
+}
 set({hostname:'ledboard',pixels:480,cells:Array(80).fill('white'),avr_online:true,tm1637_ack:true,audio_cues:['welcome']});
 assert(cards.every(n=>n.hidden),'No inferred board kind or controls from generic status/ACK/audio metadata');
 assert(!run("contextAllows('/api/buzzer')"));

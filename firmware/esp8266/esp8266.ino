@@ -1555,7 +1555,11 @@ String buildStatusJson() {
     if (separator) body += ',';
     body += '"'; body += BoardCore::Context::name(bit); body += '"'; separator = true;
   }
-  body += F("],\"modes\":["); separator = false;
+  body += F("]");
+  if(available & BoardCore::Context::Leds) {
+    body += F(",\"led_output\":");body += grid.outputCapabilitiesJson();
+  }
+  body += F(",\"modes\":["); separator = false;
   for (uint8_t code = 0; code < 4; ++code) if (BoardCore::Context::modes(available) & (1U << code)) {
     if (separator) body += ',';
     body += F("{\"id\":\""); body += BoardCore::Context::modeName(code);

@@ -1,5 +1,40 @@
 # Donor-first preflight receipt
 
+## Board-advertised LED wire implementation
+
+Consulted device-context/led-cell-test and literal donor-audit. Fully reread
+PCController peripheral-availability.ts/tests, AddressableLeds.cpp/header and
+Pealayer board_info.rs. Preserve explicit peer-owned capability/measurement
+separation; AVR register timing and unrelated settings are not copied onto S3.
+Add backend/rmt/dma metadata from the actual selected output worker through the
+existing common status builder. Live driver JSON shares that definition, while
+readiness/active/error remain separate observations. HTTP/WS/MQTT/full USB
+snapshots therefore share one statement. Native typed serialization and USB
+compact readback preserve it; optional invalid/missing metadata is unknown.
+Rust/Flutter/Web use compact contextual read-only labels, not an editable box
+for a build flag. Existing source/proof hash references are rebound only after
+reviewing these additive changes; no broad donor-parity claim is made.
+
+Actual GPIO/RMT-DMA worker fixtures (both channel orders), renderer fixtures,
+three focused native capability/USB/bridge tests, Web context/label assertions,
+Flutter analyzer and six peer-context tests pass. A Dart brace lint was fixed
+without weakening the analyzer. Previous main CI then exposed a Linux runner
+compiling the default static worker but invoking DMA-only scenario names. The
+Linux runner now uses the same four explicit profiles/scenarios as PowerShell;
+its exact Bash worker loop passes locally without weakening assertions. This
+is not a complete Linux CI run. Same-file hash-bound proof is refreshed.
+
+Actual ESP-only MQTT/HTTPS job15 completed with a new boot and expected running
+size/MD5/integrity and postboot image SHA verification. Its capability reports
+gpio-static/rmt=false/dma=false over actual MQTT, HTTP, WebSocket and the ASUS
+app's USB COM22 path. ASUS native replacement was hash-checked and atomic after
+confirming no running owner; settings and prior executable are preserved.
+Actual owner IPC reports USB selected/online with the same backend metadata.
+Android preview builds, but its transfer was interrupted and the authorized
+phone is now offline; no installation or mobile runtime acceptance is claimed.
+See REMOTE-MAINTENANCE.md for image/boot/package evidence. No backend switch,
+AVR programming or optical success is inferred.
+
 ## MQTT, Internet delivery and opaque maintenance forwarding
 
 Consulted network-cloud, updates-telemetry, remote-ota, bridge-repeater and

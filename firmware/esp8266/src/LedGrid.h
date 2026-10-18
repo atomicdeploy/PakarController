@@ -71,6 +71,7 @@ class LedGrid {
   void setStaticMode(bool enabled);
   bool staticMode()const{return staticMode_;}
   String outputJson()const;
+  String outputCapabilitiesJson()const;
   // A loop-thread snapshot of the last committed command RGB buffer, before
   // FastLED brightness/correction. Never expose an uncommitted streamed chunk.
   String pixelFrameJson() const;

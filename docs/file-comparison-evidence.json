@@ -201,12 +201,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
+      "sha256": "8b65f85cbd6b406c03a157f20a7fc49462e99de09efb82efddd29596babc182c"
     },
     {
       "path": "desktop/src/usb_table.rs",
       "anchor": "pub struct Intent",
-      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022"
+      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce"
     }
   ],
   "omissions": [
@@ -220,12 +220,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
+      "sha256": "8b65f85cbd6b406c03a157f20a7fc49462e99de09efb82efddd29596babc182c"
     },
     {
       "path": "desktop/src/usb_table.rs",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback",
-      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022"
+      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce"
     }
   ],
   "remaining": [
@@ -245,7 +245,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
+      "sha256": "8b65f85cbd6b406c03a157f20a7fc49462e99de09efb82efddd29596babc182c"
     }
   ],
   "omissions": [
@@ -259,12 +259,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
+      "sha256": "8b65f85cbd6b406c03a157f20a7fc49462e99de09efb82efddd29596babc182c"
     },
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_http_recovery_uses_existing_packet_form_contract",
-      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
+      "sha256": "8b65f85cbd6b406c03a157f20a7fc49462e99de09efb82efddd29596babc182c"
     }
   ],
   "remaining": [
@@ -284,7 +284,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
+      "sha256": "8b65f85cbd6b406c03a157f20a7fc49462e99de09efb82efddd29596babc182c"
     },
     {
       "path": "desktop/src/main.rs",
@@ -303,7 +303,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
+      "sha256": "8b65f85cbd6b406c03a157f20a7fc49462e99de09efb82efddd29596babc182c"
     }
   ],
   "remaining": [
@@ -323,7 +323,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
+      "sha256": "8b65f85cbd6b406c03a157f20a7fc49462e99de09efb82efddd29596babc182c"
     },
     {
       "path": "desktop/src/platform/lan_discovery.rs",
@@ -342,12 +342,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
+      "sha256": "8b65f85cbd6b406c03a157f20a7fc49462e99de09efb82efddd29596babc182c"
     },
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_status_keeps_board_identity_and_only_available_route_capabilities",
-      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
+      "sha256": "8b65f85cbd6b406c03a157f20a7fc49462e99de09efb82efddd29596babc182c"
     }
   ],
   "remaining": [
@@ -367,7 +367,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
+      "sha256": "8b65f85cbd6b406c03a157f20a7fc49462e99de09efb82efddd29596babc182c"
     }
   ],
   "omissions": [
@@ -381,7 +381,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_status_keeps_board_identity_and_only_available_route_capabilities",
-      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
+      "sha256": "8b65f85cbd6b406c03a157f20a7fc49462e99de09efb82efddd29596babc182c"
     },
     {
       "path": "mobile/test/bridge_peer_test.dart",
@@ -2155,7 +2155,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585"
+          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -2250,12 +2250,12 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "c1fa07c1f069a989961b98037ac69b252fbdb6fc45bc740a42f38fdb598c4af4"
+          "sha256": "74819c9ddf613f1229a50e32eaefdb857039fd45474af639e9d5c717ea7ec9f7"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20"
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4"
         }
       ],
       "proof": [
@@ -2340,12 +2340,12 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "c1fa07c1f069a989961b98037ac69b252fbdb6fc45bc740a42f38fdb598c4af4"
+          "sha256": "74819c9ddf613f1229a50e32eaefdb857039fd45474af639e9d5c717ea7ec9f7"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20"
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4"
         }
       ],
       "proof": [
@@ -2430,12 +2430,12 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "c1fa07c1f069a989961b98037ac69b252fbdb6fc45bc740a42f38fdb598c4af4"
+          "sha256": "74819c9ddf613f1229a50e32eaefdb857039fd45474af639e9d5c717ea7ec9f7"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20"
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4"
         }
       ],
       "proof": [
@@ -2520,12 +2520,12 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "c1fa07c1f069a989961b98037ac69b252fbdb6fc45bc740a42f38fdb598c4af4"
+          "sha256": "74819c9ddf613f1229a50e32eaefdb857039fd45474af639e9d5c717ea7ec9f7"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20"
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4"
         }
       ],
       "proof": [
@@ -2587,7 +2587,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585"
+          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -2637,7 +2637,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585"
+          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
         }
       ],
       "omissions": [
@@ -2682,7 +2682,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585"
+          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -2761,7 +2761,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20"
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -2861,7 +2861,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20"
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4"
         }
       ],
       "proof": [
@@ -3031,7 +3031,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -3099,7 +3099,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -3963,7 +3963,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
+      "sha256": "8b65f85cbd6b406c03a157f20a7fc49462e99de09efb82efddd29596babc182c"
     }
   ],
   "omissions": [
@@ -4164,7 +4164,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "function readStreamPolicy"
         }
       ],
@@ -4330,7 +4330,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "ef4a2968c9799f9fddd84c5d91ae4c2c834420cc0c97ec44376326eacfc4539b",
+      "sha256": "cd6c97410257df7396bd8d1579c0c84354cd65f746d9e2ad089f8c8474d1993e",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -4350,7 +4350,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585",
+      "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687",
       "anchor": "bool authenticate()"
     },
     {
@@ -4370,7 +4370,7 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
+      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
       "anchor": "pub struct Admission"
     },
     {
@@ -4468,7 +4468,7 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
+      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
       "anchor": "fn table_write_is_exact_boot_fenced_and_post_ack_values_are_not_assumed()"
     },
     {
@@ -4518,12 +4518,12 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
+      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
+      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
       "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
     }
   ]
@@ -4559,7 +4559,7 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
+      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
       "anchor": "pub struct Operation"
     }
   ],
@@ -4622,12 +4622,12 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
+      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
+      "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
       "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
     }
   ]
@@ -4937,7 +4937,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b",
+      "sha256": "154aa4bfabee7eee5f32bb46b85923d82f659abc9865ffd70b6e4c02c8ed36e5",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -5100,7 +5100,7 @@
       "remaining":["Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof."],
       "proof":[
         {"path":"tools/test-display.ps1","sha256":"e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51","anchor":"foreach ($taskVariant"},
-        {"path":"tools/test-protocol.sh","sha256":"532c75f2354b605a3f79b094d8722dc7e73d1531afe6c5ec0e4998ed8bf09566","anchor":"for display_flags"}
+        {"path":"tools/test-protocol.sh","sha256":"ad5f08a2e7f1ed4be39e000643cce2adb68cc45dbfb4a4e73f90f376eb2287e4","anchor":"for display_flags"}
       ],
       "improvement":"Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified."
     },
@@ -5145,7 +5145,7 @@
         },
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "094ec11b7f8ae8ea378e54c300c8ff218c323b987b1f882bd2fc3da84e433810",
+          "sha256": "50017e368cb9c4dcc508c6bb529e6f542066f5754172b6f00f13dc4cf1a13847",
           "anchor": "pub fn known("
         }
       ],
@@ -5167,7 +5167,7 @@
         },
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "c3c9580bc7a0a8da71c364f8a7858503913909b2ef077de016f55bc3d4ac236e",
+          "sha256": "b989aac38661296ec4d524a52c873f934eecdf63162886a30c72daa6a944cbc2",
           "anchor": "Additive metadata does not select another generation"
         }
       ],
@@ -5236,7 +5236,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "function connectWs()"
         }
       ],
@@ -5345,7 +5345,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "async function refreshAuthenticated(options={})"
         },
         {
@@ -5437,7 +5437,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -5609,7 +5609,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "function connectWs()"
         }
       ],
@@ -5712,7 +5712,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -5808,7 +5808,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -5893,7 +5893,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -6211,7 +6211,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -6576,7 +6576,7 @@
         },
         {
           "path":"firmware/esp8266/src/WebUi.h",
-          "sha256":"3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256":"100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor":"function statusRgbOutput"
         }
       ],
@@ -6643,22 +6643,23 @@
       "preserved": [
         "Actual connected AND have_status AND advertised-capability conjunction adapted to selected-peer fresh manifests. No feature inference from hostname, pixel count, catalog, defaults or online alone.",
         "TM1637 additionally requires fresh measured ACK; Text and Buzzer have independent HELLO support. Native/Web hide unrelated controls and gate domain commands.",
-        "Flutter now adapts the same ready AND advertised schema-1 conjunction, table geometry and individual ACK policy; selected owner revisions reject old replies and retained dialogs. Unknown/stale peers have only client connection/overview navigation."
+        "Flutter now adapts the same ready AND advertised schema-1 conjunction, table geometry and individual ACK policy; selected owner revisions reject old replies and retained dialogs. Unknown/stale peers have only client connection/overview navigation.",
+        "Reread the actual availability implementation/tests and Pealayer board information UI. Add optional board-owned LED backend/RMT/DMA capability data to native, Flutter and Web without deriving it from chip model, output enabled or renderer mode. Missing/mistyped/contradictory metadata remains unknown; native serialization and USB compact readback retain the full manifest. Existing driver observation separately owns readiness/activity/faults."
       ],
       "targets": [
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "094ec11b7f8ae8ea378e54c300c8ff218c323b987b1f882bd2fc3da84e433810",
+          "sha256": "50017e368cb9c4dcc508c6bb529e6f542066f5754172b6f00f13dc4cf1a13847",
           "anchor": "pub fn has("
         },
         {
           "path": "mobile/lib/peer_context.dart",
-          "sha256": "c1fa07c1f069a989961b98037ac69b252fbdb6fc45bc740a42f38fdb598c4af4",
+          "sha256": "74819c9ddf613f1229a50e32eaefdb857039fd45474af639e9d5c717ea7ec9f7",
           "anchor": "static PeerContext fromStatus"
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "ef4a2968c9799f9fddd84c5d91ae4c2c834420cc0c97ec44376326eacfc4539b",
+          "sha256": "cd6c97410257df7396bd8d1579c0c84354cd65f746d9e2ad089f8c8474d1993e",
           "anchor": "Future<bool> _command"
         },
         {
@@ -6668,7 +6669,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "function peerAvailability("
         }
       ],
@@ -6690,12 +6691,12 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "c3c9580bc7a0a8da71c364f8a7858503913909b2ef077de016f55bc3d4ac236e",
+          "sha256": "b989aac38661296ec4d524a52c873f934eecdf63162886a30c72daa6a944cbc2",
           "anchor": "No inferred board kind or controls"
         },
         {
           "path": "mobile/test/peer_context_test.dart",
-          "sha256": "12ebc77242364bb697d2976a1419f9080d4d1ee2255fc02b00b73aae9a7f0265",
+          "sha256": "4f5aa508262f3aad124a15611cf4b4e05b3eb680f1beed9bc3fd1b3538ba0720",
           "anchor": "Independent ACKs and measured display gate"
         },
         {
@@ -6729,12 +6730,12 @@
       "targets": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "c3c9580bc7a0a8da71c364f8a7858503913909b2ef077de016f55bc3d4ac236e",
+          "sha256": "b989aac38661296ec4d524a52c873f934eecdf63162886a30c72daa6a944cbc2",
           "anchor": "const manifest="
         },
         {
           "path": "mobile/test/peer_context_test.dart",
-          "sha256": "12ebc77242364bb697d2976a1419f9080d4d1ee2255fc02b00b73aae9a7f0265",
+          "sha256": "4f5aa508262f3aad124a15611cf4b4e05b3eb680f1beed9bc3fd1b3538ba0720",
           "anchor": "No peer ACK cannot be inferred"
         },
         {
@@ -6749,7 +6750,7 @@
         },
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "094ec11b7f8ae8ea378e54c300c8ff218c323b987b1f882bd2fc3da84e433810",
+          "sha256": "50017e368cb9c4dcc508c6bb529e6f542066f5754172b6f00f13dc4cf1a13847",
           "anchor": "fn serial_manifest_is_individual_and_table_modes_are_profile_scoped"
         }
       ],
@@ -6771,7 +6772,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "c3c9580bc7a0a8da71c364f8a7858503913909b2ef077de016f55bc3d4ac236e",
+          "sha256": "b989aac38661296ec4d524a52c873f934eecdf63162886a30c72daa6a944cbc2",
           "anchor": "Unsupported geometry is not forced"
         },
         {
@@ -6796,12 +6797,12 @@
       "targets": [
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "094ec11b7f8ae8ea378e54c300c8ff218c323b987b1f882bd2fc3da84e433810",
+          "sha256": "50017e368cb9c4dcc508c6bb529e6f542066f5754172b6f00f13dc4cf1a13847",
           "anchor": "pub struct Manifest"
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b",
+          "sha256": "154aa4bfabee7eee5f32bb46b85923d82f659abc9865ffd70b6e4c02c8ed36e5",
           "anchor": "fn synchronize_context("
         },
         {
@@ -6837,7 +6838,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20"
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4"
         }
       ],
       "omissions": [
@@ -6885,12 +6886,12 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "c3c9580bc7a0a8da71c364f8a7858503913909b2ef077de016f55bc3d4ac236e",
+          "sha256": "b989aac38661296ec4d524a52c873f934eecdf63162886a30c72daa6a944cbc2",
           "anchor": "Native wiring is source-checked only"
         },
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "094ec11b7f8ae8ea378e54c300c8ff218c323b987b1f882bd2fc3da84e433810",
+          "sha256": "50017e368cb9c4dcc508c6bb529e6f542066f5754172b6f00f13dc4cf1a13847",
           "anchor": "fn no_profile_or_individual_ack_means_no_controls"
         },
         {
@@ -6957,7 +6958,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "ef4a2968c9799f9fddd84c5d91ae4c2c834420cc0c97ec44376326eacfc4539b",
+          "sha256": "cd6c97410257df7396bd8d1579c0c84354cd65f746d9e2ad089f8c8474d1993e",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -7025,7 +7026,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -7035,7 +7036,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -7106,7 +7107,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -7214,7 +7215,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b",
+          "sha256": "154aa4bfabee7eee5f32bb46b85923d82f659abc9865ffd70b6e4c02c8ed36e5",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -7694,7 +7695,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b",
+          "sha256": "154aa4bfabee7eee5f32bb46b85923d82f659abc9865ffd70b6e4c02c8ed36e5",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -7818,7 +7819,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20"
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -7988,7 +7989,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20"
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -8261,7 +8262,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b",
+          "sha256": "154aa4bfabee7eee5f32bb46b85923d82f659abc9865ffd70b6e4c02c8ed36e5",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -8763,15 +8764,15 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "1959a15407f29356fcb69b49edc7c2ac34cd88480d30b6cd44aad6e802d9cc75",
+          "sha256": "1ffbe8e21f5d4ecf857d069ed701464615a02a300eca252323d3a8ff979e116f",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "1c0dd8a68fb75e9d8e6b20d518321d2f290bbf007626ac4e02052e43474b0b7d",
+          "sha256": "f474f9c7a54adb63ba998dc72c0b3ebfdd4256d4e745f032eae557af578655db",
           "anchor": "uint8_t brightness_ = 255"
         },
-        {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"fe6e00d49e2cc91595e92c38f542e2f6fb77456375b9e4319b55b260256fb8ac","anchor":"config.flags.with_dma=true"},
+        {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"687f35d99175e9fc109bdd6a03db225cac97cd63ba0e9ffa68386ef66f6571b9","anchor":"config.flags.with_dma=true"},
         {"path":"firmware/esp32s3/src/LedWire.h","sha256":"cc11d6829c36b3390e0bef8ec407be72ceab47a25357661d5fcac90befef1495","anchor":"void encodeWire("},
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"2af8b1575c57b5ab359f0437b2a52a24a20e6b84628636a51d15a194417b75e7","anchor":"class LoopMessages"}
       ],
@@ -8796,7 +8797,7 @@
         "Make chipset/channel order configurable and verify R/G/B plus all 480 pixels on hardware; expose current configuration across the control surfaces."
       ],
       "proof": [
-        {"path":"tests/led_worker_test.cpp","sha256":"14d5d26beaece90170f70dd6bb88a12903e0793c528ccc5900ecd9e49fccdca9","anchor":"Compile the ACTUAL S3 output worker"},
+        {"path":"tests/led_worker_test.cpp","sha256":"63cde4350c895746060315aec95e59c751b8c16458995c583e54985dcaed7f89","anchor":"Compile the ACTUAL S3 output worker"},
         {"path":"tests/led_scheduler_test.cpp","sha256":"e48146ee14af07cf87d0226649896a50f2f3f3bea6b40f1b6b22a35e4f3e0a76","anchor":"int main()"}
       ],
       "improvement": "Actual worker/mailbox tests establish source-level frame ownership and quiescence, not optical or SDK acceptance."
@@ -8813,12 +8814,12 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "1959a15407f29356fcb69b49edc7c2ac34cd88480d30b6cd44aad6e802d9cc75",
+          "sha256": "1ffbe8e21f5d4ecf857d069ed701464615a02a300eca252323d3a8ff979e116f",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "1c0dd8a68fb75e9d8e6b20d518321d2f290bbf007626ac4e02052e43474b0b7d",
+          "sha256": "f474f9c7a54adb63ba998dc72c0b3ebfdd4256d4e745f032eae557af578655db",
           "anchor": "uint8_t brightness_ = 255"
         }
       ],
@@ -8887,7 +8888,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585"
+          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
         }
       ],
       "proof": [
@@ -8954,7 +8955,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585"
+          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
         }
       ],
       "proof": [
@@ -9021,7 +9022,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585"
+          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
         }
       ],
       "proof": [
@@ -9073,7 +9074,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585"
+          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
         }
       ],
       "proof": [
@@ -9283,7 +9284,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -9379,7 +9380,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -9506,7 +9507,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20",
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -10145,7 +10146,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b",
+          "sha256": "154aa4bfabee7eee5f32bb46b85923d82f659abc9865ffd70b6e4c02c8ed36e5",
           "anchor": "value[\"tray_shell\"]"
         }
       ],
@@ -10202,7 +10203,7 @@
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
+          "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
           "anchor": "pub struct Operation"
         }
       ],
@@ -10239,12 +10240,12 @@
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
+          "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
           "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
+          "sha256": "ae47cdc33ec748769c32929f07fc4e45234aeedc4e840fe3f095e38fc79ac4ce",
           "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
         }
       ],
@@ -10280,7 +10281,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b"
+          "sha256": "154aa4bfabee7eee5f32bb46b85923d82f659abc9865ffd70b6e4c02c8ed36e5"
         }
       ],
       "omissions": [
@@ -10347,7 +10348,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585",
+          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687",
           "anchor": "const LedPreferences value = whiteBootPreferences(grid.brightness())"
         },
         {
@@ -10378,7 +10379,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20"
+          "sha256": "100aa8ea5dbff899018f3bb3c57256c9f67b7f08d6f22bee779665be70e097f4"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -10416,7 +10417,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "11aa3273eff7635d6e5fd8a6b3b14b846468885cf91386b17ffd932afa5e365e",
+          "sha256": "b06325ad7a78f607351a7da554bf4b2e484e9e1b3accd726320c5d3fef3eaad6",
           "anchor": "Boot policy accepts existing files without restoring a saved animation"
         },
         {
@@ -10992,12 +10993,12 @@
         },
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "1959a15407f29356fcb69b49edc7c2ac34cd88480d30b6cd44aad6e802d9cc75",
+          "sha256": "1ffbe8e21f5d4ecf857d069ed701464615a02a300eca252323d3a8ff979e116f",
           "anchor": "bool LedGrid::setCells("
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "1c0dd8a68fb75e9d8e6b20d518321d2f290bbf007626ac4e02052e43474b0b7d",
+          "sha256": "f474f9c7a54adb63ba998dc72c0b3ebfdd4256d4e745f032eae557af578655db",
           "anchor": "bool setCells("
         },
         {
@@ -11007,12 +11008,12 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "fe6e00d49e2cc91595e92c38f542e2f6fb77456375b9e4319b55b260256fb8ac",
+          "sha256": "687f35d99175e9fc109bdd6a03db225cac97cd63ba0e9ffa68386ef66f6571b9",
           "anchor": "bool pending=true;"
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585",
+          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -11022,7 +11023,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.h",
-          "sha256": "e755187c4dc3ad6eab478503b646440bd6b89c657090bed7c8542728e1b067d7",
+          "sha256": "7ec61d8946d7d55ccd93d05f60c112c31ef16ffa5aacff0a95dab4afab27e14a",
           "anchor": "#if !defined(PAKAR_S3_LED_USE_DMA)"
         },
         {
@@ -11069,7 +11070,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "11aa3273eff7635d6e5fd8a6b3b14b846468885cf91386b17ffd932afa5e365e",
+          "sha256": "b06325ad7a78f607351a7da554bf4b2e484e9e1b3accd726320c5d3fef3eaad6",
           "anchor": "Entire selection validation"
         },
         {
@@ -11079,7 +11080,7 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "14d5d26beaece90170f70dd6bb88a12903e0793c528ccc5900ecd9e49fccdca9",
+          "sha256": "63cde4350c895746060315aec95e59c751b8c16458995c583e54985dcaed7f89",
           "anchor": "void functional()"
         },
         {
@@ -11143,12 +11144,12 @@
         },
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "1959a15407f29356fcb69b49edc7c2ac34cd88480d30b6cd44aad6e802d9cc75",
+          "sha256": "1ffbe8e21f5d4ecf857d069ed701464615a02a300eca252323d3a8ff979e116f",
           "anchor": "bool LedGrid::setCells("
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "1c0dd8a68fb75e9d8e6b20d518321d2f290bbf007626ac4e02052e43474b0b7d",
+          "sha256": "f474f9c7a54adb63ba998dc72c0b3ebfdd4256d4e745f032eae557af578655db",
           "anchor": "bool setCells("
         },
         {
@@ -11158,12 +11159,12 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "fe6e00d49e2cc91595e92c38f542e2f6fb77456375b9e4319b55b260256fb8ac",
+          "sha256": "687f35d99175e9fc109bdd6a03db225cac97cd63ba0e9ffa68386ef66f6571b9",
           "anchor": "bool pending=true;"
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585",
+          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -11173,7 +11174,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.h",
-          "sha256": "e755187c4dc3ad6eab478503b646440bd6b89c657090bed7c8542728e1b067d7",
+          "sha256": "7ec61d8946d7d55ccd93d05f60c112c31ef16ffa5aacff0a95dab4afab27e14a",
           "anchor": "#if !defined(PAKAR_S3_LED_USE_DMA)"
         },
         {
@@ -11220,7 +11221,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "11aa3273eff7635d6e5fd8a6b3b14b846468885cf91386b17ffd932afa5e365e",
+          "sha256": "b06325ad7a78f607351a7da554bf4b2e484e9e1b3accd726320c5d3fef3eaad6",
           "anchor": "Entire selection validation"
         },
         {
@@ -11230,7 +11231,7 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "14d5d26beaece90170f70dd6bb88a12903e0793c528ccc5900ecd9e49fccdca9",
+          "sha256": "63cde4350c895746060315aec95e59c751b8c16458995c583e54985dcaed7f89",
           "anchor": "void functional()"
         },
         {
@@ -11289,7 +11290,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "ef4a2968c9799f9fddd84c5d91ae4c2c834420cc0c97ec44376326eacfc4539b",
+          "sha256": "cd6c97410257df7396bd8d1579c0c84354cd65f746d9e2ad089f8c8474d1993e",
           "anchor": "Future<void> _saveWorkspaces()"
         }
       ],

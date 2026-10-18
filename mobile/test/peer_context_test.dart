@@ -8,6 +8,40 @@ import 'package:pakarcontroller/peer_context.dart';
 import 'peer_fixture.dart';
 
 void main() {
+  test('LED backend capability is explicit; omitted or invalid is unknown', () {
+    for (final item in [
+      {'backend': 'gpio-static', 'rmt': false, 'dma': false},
+      {'backend': 'rmt-dma', 'rmt': true, 'dma': true},
+      {'backend': 'fastled', 'rmt': false, 'dma': false},
+    ]) {
+      final json = peerFixture().json;
+      (json['capabilities'] as Map)['led_output'] = item;
+      final driver = DeviceStatus(json).peer.ledOutput!;
+      expect(driver.backend, item['backend']);
+      expect(driver.rmt, item['rmt']);
+      expect(driver.dma, item['dma']);
+    }
+    for (final item in [
+      null,
+      {},
+      {'backend': 'rmt-dma', 'rmt': false, 'dma': true},
+      {'backend': 'gpio-static', 'rmt': false, 'dma': 'false'},
+    ]) {
+      final json = peerFixture().json;
+      (json['capabilities'] as Map)['led_output'] = item;
+      final peer = DeviceStatus(json).peer;
+      expect(peer.known, true);
+      expect(peer.ledOutput, isNull);
+    }
+    expect(peerFixture().peer.ledOutput, isNull);
+    final noLeds = peerFixture(features: ['buzzer']).json;
+    noLeds['capabilities']['led_output'] = {
+      'backend': 'rmt-dma',
+      'rmt': true,
+      'dma': true,
+    };
+    expect(DeviceStatus(noLeds).peer.ledOutput, isNull);
+  });
   test(
     'No peer ACK cannot be inferred from live pixels, cells or AVR flags',
     () {

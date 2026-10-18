@@ -765,9 +765,20 @@ async function rainbowTest(){
   ledOutputPending=true;renderLedOutputControl();
   try{await post('/api/effect',{value:'rainbow'})}finally{ledOutputPending=false;renderLedOutputControl()}
 }
+function ledBackendLabel(capabilities){
+  const d=capabilities?.led_output;
+  if(!capabilities?.acknowledged_features?.includes('leds')||!d||typeof d.rmt!=='boolean'||typeof d.dma!=='boolean')return null;
+  if(d.backend==='rmt-dma'&&d.rmt&&d.dma)return 'RMT + DMA';
+  if(d.rmt||d.dma)return null;
+  return d.backend==='gpio-static'?'GPIO · no RMT/DMA':d.backend==='fastled'?'FastLED · no RMT/DMA':null;
+}
 function renderLedOutputControl(){
   const anchor=document.getElementById?.('pattern')?.parentElement;if(!anchor?.parentElement)return;
   const known=currentPeer().has('leds')&&typeof state.led_output?.enabled==='boolean';
+  const driverLabel=currentPeer().has('leds')?ledBackendLabel(state.capabilities):null;
+  let driverRow=document.getElementById('ledDriverCapability');
+  if(!driverRow&&driverLabel){driverRow=document.createElement('p');driverRow.id='ledDriverCapability';driverRow.className='hint';anchor.parentElement.insertBefore(driverRow,anchor);}
+  if(driverRow){driverRow.hidden=!driverLabel;if(driverLabel)setUiText(driverRow,'LED driver: '+driverLabel);}
   let row=document.getElementById('ledOutputControl');
   if(!row&&known){
     row=document.createElement('label');row.id='ledOutputControl';row.className='row';

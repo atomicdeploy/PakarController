@@ -1401,6 +1401,9 @@ impl PakarControllerApp {
         let snapshot = self.live_status().cloned();
         if self.has_feature("leds") {
         dialog::section(ui, icons::SPARKLE, "Strip effect", |ui| {
+            if let Some(driver) = snapshot.as_ref().and_then(|s|s.capabilities.as_ref()).and_then(|c|c.led_output()) {
+                ui.weak(format!("LED driver: {}", driver.label()));
+            }
             if let Some(mut enabled) = snapshot.as_ref()
                 .and_then(|s| s.led_output.get("enabled")).and_then(|v| v.as_bool()) {
                 ui.horizontal(|ui| {

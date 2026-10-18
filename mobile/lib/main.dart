@@ -1273,6 +1273,9 @@ class _TablePageState extends State<TablePage> {
                 ],
               ),
               const SizedBox(height: 12),
+              if (status!.peer.ledOutput != null)
+                Text('LED driver: ${status!.peer.ledOutput!.label}',
+                    style: Theme.of(context).textTheme.bodySmall),
               if (status!.ledOutputEnabled != null)
                 SwitchListTile.adaptive(
                   title: const Text('LED output service'),

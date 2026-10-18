@@ -13,6 +13,7 @@ void assertPendingSnapshot(const String& previous,const String& pending){
 int main(){
  using namespace BoardCore::Protocol;
  LedGrid grid;assert(grid.pixelFrameJson()=="null");grid.begin();
+ assert(grid.outputCapabilitiesJson()=="{\"backend\":\"fastled\",\"rmt\":false,\"dma\":false}");
  auto frame=grid.pixelFrameJson();
  assert(frame.find("\"revision\":1")!=String::npos);
  assert(frame.find("\"rgb\":\"ffffff")!=String::npos);

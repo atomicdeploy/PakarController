@@ -177,11 +177,17 @@ void LedOutput::work(){
   }
 #endif
 }
+String LedOutput::capabilitiesJson()const{
+  // Selected wire implementation, independent of renderer mode or output On/Off.
+  // Readiness/fault/active state remains in the live driver observation below.
+  return PAKAR_S3_LED_USE_DMA?
+      F("{\"backend\":\"rmt-dma\",\"rmt\":true,\"dma\":true}"):
+      F("{\"backend\":\"gpio-static\",\"rmt\":false,\"dma\":false}");
+}
 String LedOutput::json()const{
-  String value=F("{\"ready\":");value+=ready_.load()?F("true"):F("false");
+  String value=capabilitiesJson();value.remove(value.length()-1);
+  value+=F(",\"ready\":");value+=ready_.load()?F("true"):F("false");
   value+=F(",\"active\":");value+=active_.load()?F("true"):F("false");
-  value+=F(",\"backend\":\"");value+=PAKAR_S3_LED_USE_DMA?F("rmt-dma"):F("gpio-static");
-  value+=F("\",\"dma\":");value+=PAKAR_S3_LED_USE_DMA?F("true"):F("false");
   value+=F(",\"on_change_only\":true");
   value+=F(",\"submitted\":");value+=submitted_.load();
   value+=F(",\"channel_order\":\"");value+=PAKAR_S3_LED_SWAP_RED_BLUE?F("bgr"):F("rgb");value+='"';
