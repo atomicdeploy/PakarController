@@ -6,6 +6,7 @@
 #include <vector>
 #include <cassert>
 #include <algorithm>
+#include <deque>
 namespace AsyncSdkFixture {
 inline thread_local bool actor=false;
 struct Actor {bool before=actor;Actor(){actor=true;}~Actor(){actor=before;}};
@@ -15,29 +16,69 @@ using WebRequestMethodComposite = int;
 using AwsResponseFiller=std::function<size_t(uint8_t*,size_t,size_t)>;
 constexpr int HTTP_GET = 1;
 constexpr int HTTP_POST = 2, HTTP_HEAD = 4, HTTP_PUT = 8, HTTP_DELETE = 16;
+constexpr uint8_t ASYNC_WRITE_FLAG_COPY=1;
+enum WebResponseState {RESPONSE_SETUP,RESPONSE_HEADERS,RESPONSE_CONTENT,RESPONSE_WAIT_ACK,RESPONSE_END,RESPONSE_FAILED};
 struct AsyncWebHeader { String text; const String &value() const { return text; } };
 struct AsyncWebServerResponse {
+ protected:
+  int _code=0;String _contentType;size_t _contentLength=0;
+  bool _sendContentLength=true,_chunked=false;
+  size_t _headLength=0,_sentLength=0,_ackedLength=0,_writtenLength=0;
+  WebResponseState _state=RESPONSE_SETUP;
+ public:
   int status; String body;
   std::map<std::string, String> headers;
   bool flash=false;
   AwsResponseFiller filler;
   size_t length=0,offset=0;
   unsigned polls=0;
-  AsyncWebServerResponse(int code,const String &text):status(code),body(text){++AsyncSdkFixture::liveResponses;}
+  AsyncWebServerResponse():status(0){++AsyncSdkFixture::liveResponses;}
+  AsyncWebServerResponse(int code,const String &text):_code(code),status(code),body(text){++AsyncSdkFixture::liveResponses;}
   virtual ~AsyncWebServerResponse(){--AsyncSdkFixture::liveResponses;}
-  virtual size_t _ack(class AsyncWebServerRequest *,size_t,size_t);
+  virtual size_t _ack(class AsyncWebServerRequest *,size_t,uint32_t);
+  virtual void _respond(class AsyncWebServerRequest *);
+  virtual bool _sourceValid()const{return true;}
+  virtual bool _finished()const{return _state>RESPONSE_WAIT_ACK;}
+  bool _failed()const{return _state==RESPONSE_FAILED;}
+  int code()const{return _code;}
+  void _assembleHead(String &out,uint8_t){
+    out="HTTP/1.1 "+std::to_string(_code)+" Fixture\r\n";
+    if(_sendContentLength)out+="Content-Length: "+std::to_string(_contentLength)+"\r\n";
+    if(!_contentType.empty())out+="Content-Type: "+_contentType+"\r\n";
+    for(const auto &h:headers)out+=h.first+": "+h.second+"\r\n";
+    out+="\r\n";_headLength=out.length();
+  }
   void start(class AsyncWebServerRequest *);
   size_t advance(class AsyncWebServerRequest *);
-  void setCode(int code){status=code;}
-  void addHeader(const char *name, const String &value) { headers[name] = value; }
+  void setCode(int code){status=_code=code;}
+  void addHeader(const char *name, const String &value,bool replace=true) { if(replace||!headers.count(name))headers[name] = value; }
 };
 struct AsyncClient {
   struct Address {String toString()const{return "192.0.2.10";}};
   bool alive = true;
   bool writable=true;
   size_t chunkLimit=1024;
+  size_t windowCapacity=5744,inFlight=0,addCalls=0,sendCalls=0,acked=0;
+  std::deque<size_t> addLimits;
+  std::deque<bool> sendResults;
+  String wire,sentWire;
+  std::function<void()> onSend,onClose;
   bool connected() const { return alive; }
-  bool canSend()const{return alive&&writable;}
+  bool canSend()const{return space()!=0;}
+  size_t space()const{return alive&&writable?std::min(chunkLimit,windowCapacity-inFlight):0;}
+  size_t add(const char *bytes,size_t length,uint8_t flags=ASYNC_WRITE_FLAG_COPY){
+    assert(AsyncSdkFixture::actor&&flags==ASYNC_WRITE_FLAG_COPY);++addCalls;
+    size_t count=std::min(length,space());
+    if(!addLimits.empty()){count=std::min(count,addLimits.front());addLimits.pop_front();}
+    wire.append(bytes,count);inFlight+=count;return count;
+  }
+  bool send(){
+    assert(AsyncSdkFixture::actor);++sendCalls;
+    if(!sendResults.empty()){const bool result=sendResults.front();sendResults.pop_front();if(!result)return false;}
+    sentWire=wire;if(onSend)onSend();return true;
+  }
+  void close(){if(alive){alive=false;if(onClose)onClose();}}
+  size_t acknowledge(size_t bytes){const size_t count=std::min(bytes,inFlight);inFlight-=count;acked+=count;return count;}
   Address remoteIP()const{return {};}
   std::function<void(void*,AsyncClient*)> pollCallback;
   void onPoll(std::function<void(void*,AsyncClient*)> fn){pollCallback=std::move(fn);}
@@ -45,14 +86,18 @@ struct AsyncClient {
 };
 class AsyncWebServerRequest : public std::enable_shared_from_this<AsyncWebServerRequest> {
  public:
-  AsyncWebServerRequest()=default;
+  AsyncWebServerRequest(){
+    connection.onSend=[this](){const auto boundary=connection.sentWire.find("\r\n\r\n");
+      if(boundary!=String::npos)body=connection.sentWire.substr(boundary+4);};
+    connection.onClose=[this](){if(disconnectCallback)disconnectCallback();};
+  }
   AsyncWebServerRequest(AsyncWebServerRequest&&)=default;
   AsyncWebServerRequest&operator=(AsyncWebServerRequest&&)=default;
   std::weak_ptr<AsyncWebServerRequest> pause() { if(onPause)onPause();paused = true;strictLifecycle=true;return shared_from_this(); }
   std::function<void()> onPause;
   std::function<void()> afterHandler,onResponseStart,disconnectCallback;
   void onDisconnect(std::function<void()> fn){disconnectCallback=std::move(fn);}
-  void disconnect(){AsyncSdkFixture::Actor actor;connection.alive=false;if(disconnectCallback)disconnectCallback();}
+  void disconnect(){AsyncSdkFixture::Actor actor;connection.close();}
   AsyncWebServerResponse *getResponse()const{return response_.get();}
   // Model the real SDK's post-middleware _send tail and its late _sent write.
   // Strict paused requests may only start/advance output on the network actor.
@@ -60,10 +105,20 @@ class AsyncWebServerRequest : public std::enable_shared_from_this<AsyncWebServer
     if(sent||paused||!response_)return;
     if(strictLifecycle)assert(AsyncSdkFixture::actor);
     ++responseStarts;if(onResponseStart)onResponseStart();
-    status=response_->status;responseHeaders=response_->headers;flashResponse=response_->flash;
+    status=response_->code();responseHeaders=response_->headers;flashResponse=response_->flash;
     response_->start(this);sent=true;
   }
   AsyncClient *client() { return &connection; }
+  uint8_t version()const{return 1;}
+  // Actual SDK WebRequest.cpp248-265: close only after response completion.
+  // In particular a response that marks a FILLED final block complete is
+  // closed here before its unadmitted tail can ever be retried.
+  void sdkAck(size_t bytes){
+    AsyncSdkFixture::Actor actor;const size_t count=connection.acknowledge(bytes);
+    if(!response_)return;
+    if(!response_->_finished())response_->_ack(this,count,0);
+    if(response_->_finished())connection.close();
+  }
   bool isSent() const { return sent; }
   int method() const { return requestMethod; }
   String url() const { return path; }
@@ -117,9 +172,13 @@ inline size_t AsyncWebServerResponse::advance(AsyncWebServerRequest *request){
 }
 inline void AsyncWebServerResponse::start(AsyncWebServerRequest *request){
   assert(AsyncSdkFixture::actor || !request->strictLifecycle);
-  if(filler){request->body.clear();advance(request);}else request->body=body;
+  _respond(request);
 }
-inline size_t AsyncWebServerResponse::_ack(AsyncWebServerRequest *request,size_t,size_t){
+inline void AsyncWebServerResponse::_respond(AsyncWebServerRequest *request){
+  if(filler){request->body.clear();advance(request);}else request->body=body;
+  _state=RESPONSE_END;
+}
+inline size_t AsyncWebServerResponse::_ack(AsyncWebServerRequest *request,size_t,uint32_t){
   assert(AsyncSdkFixture::actor);++polls;return advance(request);
 }
 using AsyncWebServerRequestPtr = std::weak_ptr<AsyncWebServerRequest>;

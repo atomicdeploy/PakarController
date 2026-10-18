@@ -63,6 +63,14 @@ boot with BLE Off actually omits initialization. A pending reply/configuration
 ACK is not evidence that heap was recovered or the radio is operational.
 
 `PAKAR_S3_BLE_ENABLED=0` is the build-time exclusion. It preserves the saved
+request across firmware replacement. Use `tools/build-firmware.ps1 -Target
+esp32s3 -S3Bluetooth disabled` for that profile; `-S3Bluetooth runtime` retains
+runtime configuration (default Off). The same ignored application-only profile
+as the LED backend carries this choice, preserving SDK compiler flags/cache
+and USB CDC recovery. A compile-disabled build rejects a new On request but
+allows saving Off.
+
+The build exclusion preserves the saved
 enabled request rather than silently resetting it: `configured=false` and
 `build_required=true` distinguish that case from a reboot-only change.
 `requested_enabled` retains the saved intent while effective `enabled` is

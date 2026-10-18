@@ -113,7 +113,6 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         if ($CellChaseOnBoot) { $flags += ' -DPAKAR_LED_START_CELL_CHASE=1' }
         if ($S3IspElectricalVerified) { $flags += ' -DPAKAR_S3_ISP_ELECTRICAL_VERIFIED=1' }
         if ($S3Ethernet) { $flags += ' -DPAKAR_S3_ETHERNET_ENABLED=1' }
-        if ($S3Bluetooth -eq 'disabled') { $flags += ' -DPAKAR_S3_BLE_ENABLED=0' }
         "esp32:esp32:esp32s3:CDCOnBoot=cdc,USBMode=hwcdc,FlashSize=${S3FlashMB}M,PartitionScheme=$partitions,PSRAM=$S3Psram"
     } else { 'esp8266:esp8266:nodemcuv2:eesz=4M2M' }
     # One reusable cache per board/link-mode; never force a cold compile by default.
@@ -133,7 +132,7 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
     if ($board -eq 'esp32s3') {
         $ledProfile = [pscustomobject]@{
             Path = Join-Path $build 'config/esp32s3/LedBackend.h'
-            Content = "#pragma once`n#define PAKAR_S3_LED_USE_DMA $(if ($S3LedBackend -eq 'rmt-dma') { 1 } else { 0 })`n"
+            Content = "#pragma once`n#define PAKAR_S3_LED_USE_DMA $(if ($S3LedBackend -eq 'rmt-dma') { 1 } else { 0 })`n#ifndef PAKAR_S3_BLE_ENABLED`n#define PAKAR_S3_BLE_ENABLED $(if ($S3Bluetooth -eq 'disabled') { 0 } else { 1 })`n#endif`n"
         }
     }
     if ($VerboseBuild) { $arguments += '--verbose' }

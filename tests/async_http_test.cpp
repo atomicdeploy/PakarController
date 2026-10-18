@@ -4,7 +4,30 @@
 #include <thread>
 #include <atomic>
 #include <vector>
+// Extracted failing FINAL-FILL/SHORT-ADD branch from installed SDK3.12.1
+// WebResponses.cpp (SHA12055aa687cd0f6f719b65057c7a1d203baf6f0ef88e96b3fb4909ac68d0e6f8).
+// Executable SDK-algorithm model, not compilation of the complete LwIP stack.
+class InstalledFinalFillResponse final : public AsyncWebServerResponse {
+ public:
+  size_t pending=32;
+  InstalledFinalFillResponse(){_code=200;_contentLength=32;}
+  void _respond(AsyncWebServerRequest *request) override {
+    _sentLength+=pending; // SDK counts FILLED bytes before TCP admission.
+    if(_sentLength==_contentLength)_state=RESPONSE_END;
+    const String bytes(32,'A');const size_t added=request->client()->add(bytes.c_str(),pending);
+    pending-=added;request->client()->send();
+  }
+};
 int main() {
+  {
+    auto old=std::make_shared<AsyncWebServerRequest>();old->connection.addLimits={1};
+    {AsyncSdkFixture::Actor actor;old->send(new InstalledFinalFillResponse());}
+    auto *response=static_cast<InstalledFinalFillResponse*>(old->getResponse());
+    assert(response->_finished()&&response->pending==31&&old->connection.sentWire.length()==1);
+    old->sdkAck(1);
+    assert(!old->connection.connected()&&response->pending==31);
+    puts("Installed SDK final-fill trace reproduced:32 filled,1 admitted,31 pending, first ACK closed response.");
+  }
   {
     AsyncHttpService fenced(80);unsigned effects=0;
     fenced.on("/mutate",HTTP_POST,[&](){++effects;fenced.send(200,"text/plain","done");});
@@ -78,7 +101,7 @@ int main() {
   server.native().handlers["/hardware"](request.get()); server.service();assert(request->status==0);request->connection.poll();assert(called == 7 && request->status==200);
   server.on("/", HTTP_GET, [&]() { server.send_P(200, "text/html", "embedded UI"); });
   auto root = std::make_shared<AsyncWebServerRequest>();
-  server.native().handlers["/"](root.get()); server.service();assert(root->status==0);root->connection.poll();assert(root->status == 200 && root->flashResponse);
+  server.native().handlers["/"](root.get()); server.service();assert(root->status==0);root->connection.poll();assert(root->status == 200 && root->body=="embedded UI");
   // Deterministic old failure: service ran after callback assignment but
   // before pause returned/published its weak request, clearing that callback.
   unsigned publication=0;
@@ -96,9 +119,10 @@ int main() {
   assert(reentry->status==0 && reentry->responseStarts==0);
   reentry->connection.poll();assert(reentry->status==200 && reentry->responseStarts==1);
   auto *active=reentry->getResponse();assert(active);
-  reentry->connection.poll();assert(active->polls==1); // Preserve original SDK _onPoll backpressure progress.
-  {AsyncSdkFixture::Actor actor;active->_ack(reentry.get(),4,1);} // ACK stays on the same SDK actor.
-  assert(active->polls==2 && reentry->responseStarts==1);
+  const auto wireBefore=reentry->connection.wire;
+  reentry->connection.poll();assert(reentry->connection.wire==wireBefore);
+  reentry->sdkAck(4);
+  assert(!active->_finished()&&reentry->connection.alive&&reentry->connection.wire==wireBefore&&reentry->responseStarts==1);
   // Disconnect after loop publication destroys the unsent response exactly
   // once and prevents actor-side send; response construction alone is no ACK.
   auto cancelled=std::make_shared<AsyncWebServerRequest>();
@@ -111,28 +135,84 @@ int main() {
   auto duplicate=std::make_shared<AsyncWebServerRequest>();server.native().handlers.at("/duplicate")(duplicate.get());
   server.service();duplicate->connection.poll();assert(duplicate->status==200 && duplicate->body=="first" && duplicate->responseStarts==1);
   // Larger than the installed S3 TCP send window (5744 bytes): use actual
-  // callback factory and independently owned immutable content across polls.
-  // The transport double bounds fills/ACKs; it is not an LwIP hardware test.
+  // admitted-byte offsets and immutable content across real add/send/ACK/poll
+  // double boundaries; this is not an LwIP hardware test.
   String large;for(unsigned i=0;i<16384;++i)large+=static_cast<char>('A'+i%26);
   const String expectedLarge=large;
   server.on("/large",HTTP_GET,[&](){auto *response=server.beginResponse(206,"application/json",large);response->addHeader("Cache-Control","no-store");server.send(response);});
   auto largeRequest=std::make_shared<AsyncWebServerRequest>();
   server.native().handlers.at("/large")(largeRequest.get());server.service();large="changed after snapshot";
   assert(largeRequest->status==0);largeRequest->connection.poll();
-  assert(largeRequest->status==206 && largeRequest->getResponse()->filler && largeRequest->body.size()==1024);
+  assert(largeRequest->status==206&&!largeRequest->body.empty()&&largeRequest->body.size()<expectedLarge.size());
   assert(largeRequest->responseHeaders.at("Cache-Control")=="no-store");
-  largeRequest->connection.writable=false;largeRequest->connection.poll();assert(largeRequest->body.size()==1024);
-  {AsyncSdkFixture::Actor actor;largeRequest->getResponse()->_ack(largeRequest.get(),1024,1);}assert(largeRequest->body.size()==1024);
+  const auto firstLarge=largeRequest->body;
+  largeRequest->connection.writable=false;largeRequest->connection.poll();assert(largeRequest->body==firstLarge);
+  largeRequest->sdkAck(1024);assert(largeRequest->body==firstLarge);
   largeRequest->connection.writable=true;largeRequest->connection.chunkLimit=333;
   while(largeRequest->body.size()<expectedLarge.size()){
     largeRequest->connection.poll();
-    AsyncSdkFixture::Actor actor;largeRequest->getResponse()->_ack(largeRequest.get(),333,1);
+    largeRequest->sdkAck(largeRequest->connection.inFlight);
   }
   assert(largeRequest->body==expectedLarge && largeRequest->responseStarts==1);
   const auto completed=largeRequest->body;largeRequest->connection.poll();assert(largeRequest->body==completed);
-  auto *largeResponse=largeRequest->getResponse();uint8_t tail[4];
-  assert(largeResponse->filler(tail,sizeof(tail),expectedLarge.length())==0);
-  assert(largeResponse->filler(tail,0,0)==0);
+  largeRequest->sdkAck(largeRequest->connection.inFlight);
+  assert(largeRequest->getResponse()->_finished()&&!largeRequest->connection.connected());
+  const auto drain=[](const std::shared_ptr<AsyncWebServerRequest> &r,const String &expected){
+    for(unsigned turns=0;r->connection.alive&&turns<40000;++turns){r->connection.poll();r->sdkAck(r->connection.inFlight);}
+    assert(!r->connection.alive&&r->getResponse()->_finished()&&r->body==expected);
+    assert(r->responseStarts==1);
+  };
+  server.on("/short",HTTP_GET,[&](){server.send(200,"text/plain","partial-and-zero-add-safe");});
+  auto shortRequest=std::make_shared<AsyncWebServerRequest>();shortRequest->connection.addLimits={0,3,0,1,0,7};
+  server.native().handlers.at("/short")(shortRequest.get());server.service();shortRequest->connection.poll();
+  assert(shortRequest->connection.wire.empty()&&!shortRequest->getResponse()->_finished());
+  drain(shortRequest,"partial-and-zero-add-safe");
+  assert(shortRequest->connection.wire.find("HTTP/1.1")==0&&shortRequest->connection.wire.find("HTTP/1.1",1)==String::npos);
+  for(size_t finalLimit:{size_t(0),size_t(3)}) {
+    auto tail=std::make_shared<AsyncWebServerRequest>();tail->connection.addLimits={SIZE_MAX,finalLimit};
+    server.native().handlers.at("/short")(tail.get());server.service();tail->connection.poll();
+    assert(tail->body==String("partial-and-zero-add-safe").substr(0,finalLimit));
+    assert(!tail->getResponse()->_finished());
+    tail->sdkAck(tail->connection.inFlight); // Header/partial-body ACK is NOT completion.
+    assert(tail->connection.alive&&!tail->getResponse()->_finished()&&tail->body=="partial-and-zero-add-safe");
+    drain(tail,"partial-and-zero-add-safe");
+  }
+  // Failed send with a full TCP window: poll must retry output without adding
+  // the same header/body bytes again or falsely reporting completion.
+  auto sendFailure=std::make_shared<AsyncWebServerRequest>();sendFailure->connection.windowCapacity=32;
+  sendFailure->connection.sendResults={false,false,true};
+  server.native().handlers.at("/short")(sendFailure.get());server.service();sendFailure->connection.poll();
+  assert(sendFailure->connection.inFlight==32&&sendFailure->connection.sentWire.empty());
+  const auto heldWire=sendFailure->connection.wire;const auto heldAdds=sendFailure->connection.addCalls;
+  assert(!sendFailure->connection.canSend());
+  sendFailure->connection.poll();assert(sendFailure->connection.sentWire.empty());
+  sendFailure->connection.poll();assert(sendFailure->connection.sentWire==heldWire);
+  assert(sendFailure->connection.wire==heldWire&&sendFailure->connection.addCalls==heldAdds);
+  assert(sendFailure->connection.sendCalls==3&&!sendFailure->getResponse()->_finished());
+  drain(sendFailure,"partial-and-zero-add-safe");
+  server.on("/empty",HTTP_GET,[&](){server.send(204,"application/json","");});
+  auto empty=std::make_shared<AsyncWebServerRequest>();server.native().handlers.at("/empty")(empty.get());server.service();empty->connection.poll();
+  const auto emptySent=empty->connection.inFlight,emptySends=empty->connection.sendCalls;
+  assert(emptySent>1&&!empty->getResponse()->_finished()&&empty->body.empty());
+  empty->sdkAck(emptySent-1);assert(empty->connection.alive&&!empty->getResponse()->_finished());
+  empty->connection.poll();assert(empty->connection.sendCalls==emptySends);
+  empty->sdkAck(1);assert(!empty->connection.alive&&empty->getResponse()->_finished()&&empty->body.empty());
+  auto zeroWindow=std::make_shared<AsyncWebServerRequest>();zeroWindow->connection.windowCapacity=0;
+  server.native().handlers.at("/short")(zeroWindow.get());server.service();zeroWindow->connection.poll();
+  assert(zeroWindow->connection.wire.empty()&&!zeroWindow->getResponse()->_finished());
+  zeroWindow->connection.windowCapacity=17;drain(zeroWindow,"partial-and-zero-add-safe");
+  String flashUi;for(unsigned i=0;i<224*1024;++i)flashUi+=static_cast<char>('!'+i%90);
+  server.on("/flash",HTTP_GET,[&](){server.send_P(200,"text/html",flashUi.c_str());});
+  auto flash=std::make_shared<AsyncWebServerRequest>();flash->connection.addLimits={1,0,9,0,13};
+  server.native().handlers.at("/flash")(flash.get());server.service();drain(flash,flashUi);
+  server.on("/head",HTTP_HEAD,[&](){server.send(200,"text/plain","not-a-head-body");});
+  auto head=std::make_shared<AsyncWebServerRequest>();head->requestMethod=HTTP_HEAD;
+  server.native().handlers.at("/head")(head.get());server.service();drain(head,"");
+  assert(head->connection.sentWire.find("Content-Length: 15\r\n")!=String::npos);
+  auto midway=std::make_shared<AsyncWebServerRequest>();midway->connection.windowCapacity=127;
+  server.native().handlers.at("/flash")(midway.get());server.service();midway->connection.poll();
+  assert(!midway->getResponse()->_finished());const auto midwayWire=midway->connection.wire;
+  midway->disconnect();midway->connection.poll();assert(midway->connection.wire==midwayWire);
   // Deterministic starvation regression: refill the first free slot before
   // every dispatch while seven older requests are already waiting. A fixed
   // slot-zero scan serves newcomers forever; round-robin must serve the old
@@ -166,5 +246,5 @@ int main() {
   unsigned accepted=0,rejected=0;
   for(const auto&r:parallel){if(r->status==200)++accepted;else if(r->status==503)++rejected;else assert(false);}
   assert(accepted==served && accepted+rejected==count && !server.processing());
-  puts("Production async queue: SDK first-match descendant collision reproduced and literal routes exact; actor-only responses, outer-send tail, poll/ACK progression, response ownership, immutable peer address, bounded fairness, weak lifetime, reentrancy,20000 concurrent publications and exact accounting passed (transport doubles, not hardware soak).");
+  puts("Production async queue: SDK final-fill short-add loss and first-match collision reproduced; admitted-byte snapshots, final TCP ACK, zero/partial adds, failed-send/full-window retry, empty/HEAD/large/flash responses, disconnect, actor-only ownership, fairness and20000 publications passed (transport doubles, not hardware soak or OTA-ingress proof).");
 }

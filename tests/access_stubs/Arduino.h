@@ -5,6 +5,7 @@
 #include <atomic>
 #define F(value) value
 #define strlen_P strlen
+#define memcpy_P memcpy
 inline std::atomic<uint32_t> pakarTestMillis{0};
 inline bool pakarTestStringConcatAllowed=true;
 inline uint32_t millis() { return pakarTestMillis.load(std::memory_order_relaxed); }

@@ -2031,7 +2031,7 @@
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "9ea55e8330e1bc0b18f0c4028f0ffedb42fbb71f61bff853b2bce55d227bfe75"
+          "sha256": "fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4"
         }
       ],
       "omissions": [
@@ -3677,7 +3677,7 @@
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
           "anchor": "explicit AsyncHttpService(uint16_t port) : native_(port) {}",
-          "sha256": "22fde9b24ddc97453c105ad7f2d76070a26c74ac930b2205bdcb3f17b3edef51"
+          "sha256": "89ce1cff79adbdbe98f44beac5aea8cc30bf72187012db6720a4c42f4be5cf73"
         }
       ],
       "omissions": [
@@ -3691,7 +3691,7 @@
         {
           "path": "tests/async_http_test.cpp",
           "anchor": "Reproduce installed SDK3.12.1",
-          "sha256": "6e0d54e5b15f8b9a40f3215660dc948ea781c5f171dae5d3b3750b9b453f6ff5"
+          "sha256": "e14c7bdc8c0c13cfad28e05b20ea886980e1cae866a073cc2d9466ad881c3bbe"
         },
         {
           "path": "tests/ethernet_live_tool_test.mjs",
@@ -3717,7 +3717,7 @@
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
           "anchor": "explicit AsyncHttpService(uint16_t port) : native_(port) {}",
-          "sha256": "22fde9b24ddc97453c105ad7f2d76070a26c74ac930b2205bdcb3f17b3edef51"
+          "sha256": "89ce1cff79adbdbe98f44beac5aea8cc30bf72187012db6720a4c42f4be5cf73"
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
@@ -3736,7 +3736,7 @@
         {
           "path": "tests/async_http_test.cpp",
           "anchor": "Reproduce installed SDK3.12.1",
-          "sha256": "6e0d54e5b15f8b9a40f3215660dc948ea781c5f171dae5d3b3750b9b453f6ff5"
+          "sha256": "e14c7bdc8c0c13cfad28e05b20ea886980e1cae866a073cc2d9466ad881c3bbe"
         },
         {
           "path": "tests/ethernet_live_tool_test.mjs",
@@ -3759,13 +3759,14 @@
       "Complete original implementation read through EOF. Retains shared asynchronous server setup, /ws attachment, connected-client limits and per-client message dispatch. The actual AsyncTCP listener uses native lwIP interfaces, so Wi-Fi and W5500 reach identical routes. Existing Pakar bounded loop-owned dispatch and access ownership replace unsafe donor callback behavior.",
       "Updater WebSocket preflight now adapts actual desktop main.rs::ws_worker read-only status acquisition: exactly one masked {type:status} is sent only after validating101/Accept/Connection:Upgrade and the actual pinned TCP peer. Only exact-board/boot recognized status-rgb/update-progress events may be skipped; neither renews the bounded full-status deadline nor satisfies readiness. The complete status must still pass boardPeer identity/capability checks. Separate measured connect/upgrade and full-status stages allow bounded cloud contention without removing the preflight or replaying any action.",
       "The existing bounded callback-to-loop WebSocket queue now allocates its eight S3 complete-message slots once in explicit PSRAM before network callbacks. Allocation has no internal-DRAM fallback; ready() and ws_queue_ready expose actual queue availability, and missing storage rejects ingress rather than executing borrowed/partial data. ESP8266 retains four inline cooperative slots. Locks, message bounds/copy isolation, epochs and backpressure remain unchanged. This is a Pakar/S3 SDK memory adaptation, not a PSRAM feature attributed to the ESP8266 donor.",
-      "Internal8-bit heap free/largest/minimum metrics are reported separately from total heap and free PSRAM, so a large external-memory value cannot conceal Wi-Fi/OTA internal-memory exhaustion. BLE buffers use a separate same-policy lifetime owner; static GPIO/RMT wire buffers, driver timing, task stacks, SDK host pools and production build flags are not moved or reconfigured by this queue change."
+      "Internal8-bit heap free/largest/minimum metrics are reported separately from total heap and free PSRAM, so a large external-memory value cannot conceal Wi-Fi/OTA internal-memory exhaustion. BLE buffers use a separate same-policy lifetime owner; static GPIO/RMT wire buffers, driver timing, task stacks, SDK host pools and production build flags are not moved or reconfigured by this queue change.",
+      "Actual PU AsyncWebServer source and installed SDK3.12.1 WebResponses/WebRequest were reread for observed partial HTTP bodies. Project-owned immutable SnapshotResponse now accounts only actual add returns, retains zero/partial tails and failed sends, and waits for all admitted bytes to be acknowledged before completion. JSON owns one immutable payload; PROGMEM UI uses512-byte staging, not a whole heap copy. Existing mailbox/weak owner/actor-only attachment and headers remain. Real adapter fixtures reproduce the upstream final-fill truncation and cover partial final body, header, zero window, failed send, empty/HEAD,224KiB flash UI and disconnect. This SDK adaptation does not claim OTA ingress, WebSocket upgrade or separate firmware-export response fixes."
       ],
       "targets": [
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
           "anchor": "AsyncURIMatcher::exact(path)",
-          "sha256": "22fde9b24ddc97453c105ad7f2d76070a26c74ac930b2205bdcb3f17b3edef51"
+          "sha256": "89ce1cff79adbdbe98f44beac5aea8cc30bf72187012db6720a4c42f4be5cf73"
         },
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0","anchor":"Message *items_=nullptr;"},
         {"path":"firmware/esp8266/esp8266.ino","sha256":"046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
@@ -3812,7 +3813,7 @@
         {
           "path": "tests/async_http_test.cpp",
           "anchor": "Reproduce installed SDK3.12.1",
-          "sha256": "6e0d54e5b15f8b9a40f3215660dc948ea781c5f171dae5d3b3750b9b453f6ff5"
+          "sha256": "e14c7bdc8c0c13cfad28e05b20ea886980e1cae866a073cc2d9466ad881c3bbe"
         },
         {
           "path": "tests/ethernet_live_tool_test.mjs",
@@ -4022,7 +4023,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "9ea55e8330e1bc0b18f0c4028f0ffedb42fbb71f61bff853b2bce55d227bfe75",
+          "sha256": "fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -4073,7 +4074,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "9ea55e8330e1bc0b18f0c4028f0ffedb42fbb71f61bff853b2bce55d227bfe75",
+          "sha256": "fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -5557,7 +5558,7 @@
       {
         "path": "firmware/esp32s3/src/BleService.h",
         "anchor": "class BleService",
-        "sha256": "72aa625873277ec8798fffea22042888dd17ebfc7459181cd87301754cb7d36e"
+        "sha256": "5554293eb8f56b1f8300441ec74e63a2185a6a5ec16c39916fdb8d6ef67b8e0f"
       },
       {"path":"firmware/esp32s3/src/BleStorage.h","sha256":"1b0b11d0d1f7f398699629ccdbd32d11e3308aef5f738f5963fcfd1d176d81e8","anchor":"class BleBulkOwner"},
     {
@@ -7609,7 +7610,7 @@
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "177e74c9fc7d0f1a9d78ae4aa994344a3410c37bf43019db12b3afcff69d8d82",
+          "sha256": "683f1926231ec42b3dacbc0ba7e2b7cb03315a375bde499bed31b2e9c1467c7a",
           "anchor": "Actual donor serial test contract"
         },
         {
@@ -8679,7 +8680,7 @@
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "177e74c9fc7d0f1a9d78ae4aa994344a3410c37bf43019db12b3afcff69d8d82",
+          "sha256": "683f1926231ec42b3dacbc0ba7e2b7cb03315a375bde499bed31b2e9c1467c7a",
           "anchor": "One canonical target"
         }
       ],
@@ -11803,7 +11804,7 @@
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
-          "sha256": "22fde9b24ddc97453c105ad7f2d76070a26c74ac930b2205bdcb3f17b3edef51",
+          "sha256": "89ce1cff79adbdbe98f44beac5aea8cc30bf72187012db6720a4c42f4be5cf73",
           "anchor": "AsyncURIMatcher::exact(path)"
         },
         {
@@ -11926,12 +11927,12 @@
         },
         {
           "path": "tests/async_http_test.cpp",
-          "sha256": "6e0d54e5b15f8b9a40f3215660dc948ea781c5f171dae5d3b3750b9b453f6ff5",
+          "sha256": "e14c7bdc8c0c13cfad28e05b20ea886980e1cae866a073cc2d9466ad881c3bbe",
           "anchor": "Reproduce installed SDK3.12.1"
         },
         {
           "path": "tests/access_stubs/ESPAsyncWebServer.h",
-          "sha256": "9a7b5448817d0024477105f4b7d5c953dee973dfb17366def1b753e0c8c66f74",
+          "sha256": "ec6a84315652ac0ae11baef775be69c7ed7aeb9632acf6e7fa7519c5a6e1400f",
           "anchor": "if(onPause)onPause();"
         },
         {
@@ -12347,7 +12348,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "9ea55e8330e1bc0b18f0c4028f0ffedb42fbb71f61bff853b2bce55d227bfe75",
+          "sha256": "fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -12419,7 +12420,7 @@
         },
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "177e74c9fc7d0f1a9d78ae4aa994344a3410c37bf43019db12b3afcff69d8d82",
+          "sha256": "683f1926231ec42b3dacbc0ba7e2b7cb03315a375bde499bed31b2e9c1467c7a",
           "anchor": "$taskStaticS3"
         },
         {
@@ -12498,7 +12499,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "9ea55e8330e1bc0b18f0c4028f0ffedb42fbb71f61bff853b2bce55d227bfe75",
+          "sha256": "fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -12570,7 +12571,7 @@
         },
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "177e74c9fc7d0f1a9d78ae4aa994344a3410c37bf43019db12b3afcff69d8d82",
+          "sha256": "683f1926231ec42b3dacbc0ba7e2b7cb03315a375bde499bed31b2e9c1467c7a",
           "anchor": "$taskStaticS3"
         },
         {

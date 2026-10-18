@@ -6021,3 +6021,30 @@ The correct single-owner cloud-worker/immutable-queue redesign remains open;
 do not claim continuously serviced application USB or BLE/TLS/OTA coexistence
 from this bounded recovery slice. The hardware USB bootloader recovery path is
 independent, but no USB flash was required or performed for this incident yet.
+
+The initial c75edea runtime-capable build2222176bytes passed the real S3 SDK,
+network/default/opt-in/failure cases, BLE policy/storage and build-plan fixtures.
+One canonical Wi-Fi upload then failed at5898ms. Both independent HTTP and
+actual native USB readback found operation3 aborted at206164bytes, unchanged
+79db5ecd43872d3e64e5dbd5dea65997 boot, internal minimum31132bytes and BLE not
+started: not the prior BLE-on exhaustion and not a committed update. The exact
+old2221280-byte SHAfa1a7a9aca7427517485d1729393666c3599b2ad88078e0b19f8fc89bdc8831a
+remains preserved. No upload retry or automatic USB fallback occurred.
+
+A twelve-request uncached-hostname probe spent roughly2seconds per DNS lookup;
+its finite overall deadline included that delay, so client cancellation must not
+be mislabeled a board-generated reset. A separate already-verified cached-address
+probe preserved Host/peer identity and returned12/12 complete responses, median
+307.6ms. Subsequently Ethernet-bound HTTP200 stalled at4194/10160bytes before a
+six-second read deadline. The proposed adapter-specific route change stopped
+at its failed preflight: no route was changed. These are measured separate DNS,
+TCP and partial-body symptoms, not a successful full service soak.
+
+Reread actual PU LocalLib/AsyncWebServer.cpp and.h through EOF at unchanged
+inventory hashes and installed ESPAsyncWebServer3.12.1 WebResponses.cpp and
+WebRequest.cpp. AsyncAbstractResponse can advance to END while a final buffer is
+not fully admitted, and short-add accounting omits accepted bytes/credits.
+The existing double did not exercise actual add/send/ACK-based close behavior.
+A project-owned known-length snapshot adapter and real short-write fixtures are
+being implemented; the SDK/donor checkouts remain unchanged. Upload ingress and
+WebSocket upgrade are distinct and are not claimed fixed by that response work.

@@ -2,6 +2,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#if defined(ARDUINO_ARCH_ESP32) && __has_include(<build/config/esp32s3/LedBackend.h>)
+// Shared, ignored application-only build policy; no SDK-wide flag/cache churn.
+#include <build/config/esp32s3/LedBackend.h>
+#endif
+
 #ifndef PAKAR_S3_BLE_ENABLED
 #define PAKAR_S3_BLE_ENABLED 1
 #endif

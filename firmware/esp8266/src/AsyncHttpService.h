@@ -9,6 +9,76 @@
 #endif
 
 namespace PakarHttpDetail {
+// Installed ESPAsyncWebServer3.12.1 may mark its final fill RESPONSE_END
+// before a short AsyncClient::add has drained that buffer. Its request ACK
+// handler then closes the response. Own known-length snapshots explicitly:
+// offsets describe bytes admitted by TCP, never bytes merely filled/copied.
+class SnapshotResponse final : public AsyncWebServerResponse {
+ public:
+  using PendingOutput=std::function<void(bool)>;
+  SnapshotResponse(int code,const char *type,std::shared_ptr<const String> payload,PendingOutput pending)
+      :payload_(std::move(payload)),pending_(std::move(pending)) {
+    configure(code,type,payload_?payload_->length():0);
+  }
+  SnapshotResponse(int code,const char *type,const char *flash,size_t length,PendingOutput pending)
+      :flash_(flash),pending_(std::move(pending)) {configure(code,type,length);}
+  bool _sourceValid() const override {return payload_?payload_->length()==_contentLength:flash_||!_contentLength;}
+  void _respond(AsyncWebServerRequest *request) override {
+    headOnly_=request->method()==HTTP_HEAD;
+    _assembleHead(header_,request->version());_state=RESPONSE_HEADERS;
+    _ack(request,0,0);
+  }
+  size_t _ack(AsyncWebServerRequest *request,size_t length,uint32_t) override {
+    if(!request||!request->client()||!request->client()->connected()||_state>=RESPONSE_END)return 0;
+    _ackedLength+=length;
+    size_t admitted=0;
+    // At most eight1024-byte writes per actor pass; no whole flash-UI copy and
+    // no filling another buffer after TCP has refused the current bytes.
+    for(unsigned slice=0;slice<8;++slice) {
+      auto *client=request->client();const size_t room=client->space();
+      if(!room)break;
+      const bool header=headerOffset_<header_.length();
+      const size_t remaining=header?header_.length()-headerOffset_:
+          headOnly_?0:_contentLength-bodyOffset_;
+      if(!remaining)break;
+      size_t count=remaining<room?remaining:room;
+      if(count>1024)count=1024;
+      const char *bytes=header?header_.c_str()+headerOffset_:
+          payload_?payload_->c_str()+bodyOffset_:nullptr;
+      uint8_t flashBytes[512];
+      if(!bytes) {
+        if(count>sizeof(flashBytes))count=sizeof(flashBytes);
+        memcpy_P(flashBytes,flash_+bodyOffset_,count);bytes=reinterpret_cast<const char*>(flashBytes);
+      }
+      const size_t written=client->add(bytes,count,ASYNC_WRITE_FLAG_COPY);
+      if(written>count){_state=RESPONSE_FAILED;client->close();return admitted;}
+      if(header)headerOffset_+=written;else {bodyOffset_+=written;_sentLength+=written;}
+      admitted+=written;_writtenLength+=written;
+      if(written<count)break;
+    }
+    if(admitted||outputPending_)outputPending_=!request->client()->send();
+    if(pending_)pending_(outputPending_);
+    const bool queued=headerOffset_==header_.length()&&(headOnly_||bodyOffset_==_contentLength);
+    if(queued&&!outputPending_) {
+      // WAIT_ACK is deliberately not finished. The SDK must not close until
+      // all actually admitted header/body bytes have their real TCP ACK.
+      _state=_ackedLength>=_writtenLength?RESPONSE_END:RESPONSE_WAIT_ACK;
+    } else _state=headerOffset_<header_.length()?RESPONSE_HEADERS:RESPONSE_CONTENT;
+    return admitted;
+  }
+ private:
+  void configure(int code,const char *type,size_t length) {
+    _code=code;_contentType=type;_contentLength=length;_sendContentLength=true;_chunked=false;
+    addHeader("Connection","close",false);
+  }
+  std::shared_ptr<const String> payload_;
+  const char *flash_=nullptr;
+  PendingOutput pending_;
+  String header_;
+  size_t headerOffset_=0,bodyOffset_=0;
+  bool headOnly_=false,outputPending_=false;
+};
+
 #if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
 // ESP8266 callbacks/loop cooperate on one core. Never yield while publishing.
 struct Mutex { void lock() {} void unlock() {} };
@@ -71,7 +141,9 @@ class AsyncHttpService {
         if(response){owned->send(response.release());return;}
         // Exact behavior adapted from installed ESPAsyncWebServer3.12.1
         // WebRequest.cpp::_onPoll241-245; SDK onAck/disconnect remain intact.
-        if(auto *active=owned->getResponse();active && client->canSend())active->_ack(owned.get(),0,0);
+        bool pendingOutput=false;
+        {PakarHttpDetail::Lock lock(mailbox->mutex);pendingOutput=mailbox->pendingOutput;}
+        if(auto *active=owned->getResponse();active && (client->canSend()||pendingOutput))active->_ack(owned.get(),0,0);
       });
       {
         PakarHttpDetail::Lock lock(queueMutex_);
@@ -119,20 +191,12 @@ class AsyncHttpService {
   String arg(const char *name) const { return current_ ? current_->arg(name) : String(); }
   AsyncWebServerResponse *beginResponse(int code,const char *type,const String &body) {
     if(!current_)return nullptr;
-    // Retain immutable complete-message ownership, not loop/device state. Use
-    // the SDK's bounded AsyncAbstractResponse filling/backpressure path instead
-    // of AsyncBasicResponse's single large body write after header staging.
+    // Retain exactly one immutable complete-message snapshot. The project
+    // response, not SDK fill accounting, owns partial-add/backpressure offsets.
     auto payload=std::make_shared<const String>(body);
     if(payload->length()!=body.length())
       return current_->beginResponse(503,"application/json","{\"error\":\"Response snapshot memory unavailable\"}");
-    auto *response=current_->beginResponse(type,payload->length(),
-        [payload](uint8_t *data,size_t maximum,size_t index)->size_t {
-          if(index>=payload->length())return 0;
-          const size_t remaining=payload->length()-index;
-          const size_t count=maximum<remaining?maximum:remaining;
-          ::memcpy(data,payload->c_str()+index,count);return count;
-        });
-    response->setCode(code);return response;
+    return new PakarHttpDetail::SnapshotResponse(code,type,std::move(payload),pendingOutputObserver());
   }
   void send(int code, const char *type, const String &body) {
     if (open()) send(beginResponse(code,type,body));
@@ -148,7 +212,7 @@ class AsyncHttpService {
   }
   void send_P(int code, const char *type, const char *body) {
     // Keep the large embedded UI in flash, not a per-client heap String.
-    if (open()) send(current_->beginResponse(code,type,reinterpret_cast<const uint8_t *>(body),strlen_P(body)));
+    if (open()) send(new PakarHttpDetail::SnapshotResponse(code,type,body,strlen_P(body),pendingOutputObserver()));
   }
   void streamFile(File &file, const char *type) {
     if (open()) send(current_->beginResponse(file,file.name(),type,true));
@@ -157,10 +221,16 @@ class AsyncHttpService {
  private:
   struct Mailbox {
     PakarHttpDetail::Mutex mutex;
-    bool closed=false,published=false;
+    bool closed=false,published=false,pendingOutput=false;
     String remoteAddress;
     std::unique_ptr<AsyncWebServerResponse> response;
   };
+  PakarHttpDetail::SnapshotResponse::PendingOutput pendingOutputObserver() {
+    std::weak_ptr<Mailbox> mailbox=currentMailbox_;
+    return [mailbox](bool pending){if(auto owned=mailbox.lock()){
+      PakarHttpDetail::Lock lock(owned->mutex);owned->pendingOutput=pending;
+    }};
+  }
   bool open() const {
     if(!current_ || !currentMailbox_)return false;
     PakarHttpDetail::Lock lock(currentMailbox_->mutex);
