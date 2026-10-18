@@ -1,5 +1,72 @@
 # Donor-first preflight receipt
 
+## AVR ISP and Urboot programming paths
+
+Consulted firmware-hardware, avr-boot-chain, remote-ota and exhaustive literal
+PCController programmer inventory. Actual preflash.go and urclock_retry.go were
+read completely and match the inventoried b0111ae0 original-byte hashes. The
+existing stock Urboot builder/README were rechecked against their exact live
+hashes; its custom512-byte/wrong-pin backend remains excluded from deployment
+pending explicit profile adaptation, not silently substituted.
+
+Adapt the actual preflash source reinspection/durable-backup/no-write-replay
+boundaries into a single S3 maintenance job. The published Urboot wire
+specification, actual pinned stock source MCU IDs/feature encoding and installed
+MiniCore image were inspected: modern Urboot is NOT ordinary STK500v1. The
+small independent protocol implementation uses byte addresses,128-byte pages,
+consistent device-specific sync bytes and actual boot metadata. No copied GPL
+bootloader source or new compiler/toolchain installation. No chip erase/EEPROM
+write/boot-region write through UART; ISP remains the explicit recovery method.
+
+Actual initial signature-only ISP read returned1E950F. Existing flash, EEPROM
+and fuse metadata were exported to ASUS before reset. The legacy fresh-backup
+request lost its HTTP response; matching retained files and later UART recovery
+are NOT, alone, a positive fresh-capture completion receipt. That failure drove
+the shared queued ISP/Urboot job and cooperative existing ISP callback instead
+of a blind retry or a longer opaque script. New runtime evidence is recorded
+separately after actual deployment. No fuse change is introduced.
+
+The first Web progress test caught equal missing boot IDs causing a missing
+optional-object dereference; require the object and a real boot identity.
+One Dart braces lint was fixed without disabling analysis. Gates caught changed
+proof hashes after reviewed formatting; update only their actual target/proof
+bindings in the same ledger. The UART emulator and actual ISP callback/
+preservation tests are not electrical, flash-hardware or physical acceptance.
+
+Independent read-only review found maintenance-boundary HTTP/fragmented-WS
+ingress, expiry-before-reset and stale ISP UART recovery gaps. Corrections bind
+queued HTTP and complete/partial WS messages to an ingress epoch, close Telnet
+and its partial editor, stop/rebind UDP, and discard USB ring/partial COBS input
+at release. The same actual SerialLink fixture now exercises the discard
+boundary; async HTTP fixtures reject both pre-maintenance and maintenance-era
+queued mutations. ISP restores a clean framed parser and accepts only its newly
+requested Hello sequence. Expiry is checked before target effects, Prog arming,
+reset and first programming; no cancellation/retry is injected mid-flash.
+Urboot accepts only the reviewed e7/features20 stock profile, rejecting custom
+self-patching/dual-boot profiles. These tests are not concurrent-client soak.
+
+The canonical updater Plan exposed two PATH Node executables becoming one
+invalid command string. Read actual pinned PU850 Tool/build-all.ps1 Git blob
+through EOF; retain the imported runtime's single PATH-preferred executable
+resolution instead of installing another SDK. The root Plan now works with both
+installed Nodes and the updater fixture passes. Local OTA responses/readbacks
+can still be interrupted: inspect boot, phase and running image before another
+explicit update; an aborted5124-byte upload is not successful installation.
+
+Actual final evidence is now in REMOTE-MAINTENANCE.md: pinned Internet ESP job17
+and separate real same-image AVR Urboot job1/ISP job2 all completed, with flash/
+EEPROM verification, fresh UART/application recovery and Prog clear. Preserved
+ASUS receipts distinguish these from earlier response-loss-only attempts.
+No fuse writes, audio/PBX test or physical LED/display acceptance was performed.
+
+The existing full CI was failing a source regex requiring a removed native
+Firmware-page polling block. Reread complete actual PCController link/session.go;
+retain its owner admission/identity checks in the new assertion for selected
+network/USB observations, with negative mutations. Do not restore unnecessary
+polling. The S3 source guard likewise now requires both disabled-link and raw-
+UART exclusion instead of the obsolete single-condition spelling. No production
+guard was weakened. Rebind only reviewed test references in the existing ledger.
+
 ## Firmware subscription, file delivery and external update progress
 
 Consulted updates-telemetry, remote-ota, network-cloud and exhaustive PC donor

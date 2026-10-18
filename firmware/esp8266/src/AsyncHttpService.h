@@ -37,6 +37,13 @@ class AsyncHttpService {
   explicit AsyncHttpService(uint16_t port) : native_(port) {}
   AsyncWebServer &native() { return native_; }
   bool processing() const { return processing_.get(); }
+  uint32_t ingressEpoch() { PakarHttpDetail::Lock lock(queueMutex_);return ingressEpoch_; }
+  // Called only by loop ownership, before and after maintenance. Callback
+  // publications carry this epoch, so none can survive either boundary.
+  void setMaintenanceFence(bool active) {
+    PakarHttpDetail::Lock lock(queueMutex_);
+    if(maintenanceFence_!=active){maintenanceFence_=active;++ingressEpoch_;}
+  }
   AsyncWebServerRequest *request() { return current_.get(); }
   String remoteAddress() const { return currentMailbox_ ? currentMailbox_->remoteAddress : String(); }
   void on(const char *path, WebRequestMethodComposite method, std::function<void()> handler) {
@@ -69,7 +76,7 @@ class AsyncHttpService {
       {
         PakarHttpDetail::Lock lock(queueMutex_);
         for (auto &slot : pending_) if (slot.request.expired()) {
-          slot.handler = handler; slot.mailbox=mailbox;slot.request = paused; return;
+          slot.handler = handler; slot.mailbox=mailbox;slot.epoch=ingressEpoch_;slot.request = paused; return;
         }
       }
       request->send(503, "text/plain", "Request queue is full; retry shortly");
@@ -80,6 +87,7 @@ class AsyncHttpService {
     std::shared_ptr<AsyncWebServerRequest> request;
     std::shared_ptr<Mailbox> mailbox;
     std::function<void()> handler;
+    bool stale=false;
     {
       PakarHttpDetail::Lock lock(queueMutex_);
       // Producers reuse the first free slot. Always starting at slot zero can
@@ -92,6 +100,7 @@ class AsyncHttpService {
         request=slot.request.lock();
         if (!request) { slot.handler = nullptr;slot.mailbox.reset();continue; }
         handler=std::move(slot.handler);slot.request.reset();slot.handler=nullptr;
+        stale=slot.epoch!=ingressEpoch_;
         mailbox=std::move(slot.mailbox);
         nextSlot_=(index+1)%pending_.size();break;
       }
@@ -100,7 +109,8 @@ class AsyncHttpService {
     // No queue lock across handlers, response I/O or reentrant service calls.
     processing_.set(true);current_=request;currentMailbox_=mailbox;
     if(open()) {
-      if(handler) handler();
+      if(stale)send(409,"text/plain","Maintenance boundary changed; request not executed");
+      else if(handler) handler();
       else send(503,"text/plain","Request dispatch state invalid");
     }
     current_.reset();currentMailbox_.reset();processing_.set(false); // bounded: one request per loop
@@ -156,10 +166,11 @@ class AsyncHttpService {
     PakarHttpDetail::Lock lock(currentMailbox_->mutex);
     return !currentMailbox_->closed && !currentMailbox_->published;
   }
-  struct Pending { AsyncWebServerRequestPtr request;std::shared_ptr<Mailbox> mailbox;std::function<void()> handler; };
+  struct Pending { AsyncWebServerRequestPtr request;std::shared_ptr<Mailbox> mailbox;std::function<void()> handler;uint32_t epoch=0; };
   std::array<Pending, 8> pending_{};
   size_t nextSlot_=0; // Access only while holding queueMutex_.
   PakarHttpDetail::Mutex queueMutex_;
+  uint32_t ingressEpoch_=0;bool maintenanceFence_=false;
   PakarHttpDetail::Processing processing_;
   std::shared_ptr<AsyncWebServerRequest> current_;
   std::shared_ptr<Mailbox> currentMailbox_;

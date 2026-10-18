@@ -4,6 +4,73 @@ Version 0.2.7 contains one integrated updater for ESP8266 or ESP32-S3 and ATmega
 
 ## Owner workflow
 
+### Current integrated ISP and Urboot checkpoint
+
+Actual board `esp32s3-907069eac800`, hostname `ledboard.local`, runs the integrated
+buffered/static16MB/OPI/verified-ISP S3 image1923888bytes SHA256
+`2a6d6e88d21278ee4e7bad661b9f8eff4add4cb9e02baeb425de94c00d00acb3`,
+MD5 `69b69a4eb07422c9e8b937582004ca63`. Pinned HTTPS job17 staged the complete
+image, then a separate exact-job Apply completed. Boot changed from
+`30e3be1e99baa62a962c395187074ab7` to `2107dcd2fe50f447219b807003523b80`;
+actual telemetry reports boot integrity verified, app0 selected/running VALID,
+expected size/MD5 and completed postboot digest verification. Manifest SHA256
+`11baa360c2190c00e271d3ff23f9e2c2b8c3c5ff61f18490828f449a390787c4`.
+Local POST aborted at5124/1922976bytes, then a different-image POST aborted
+at275092/1923888bytes. Both outcomes were read before another explicit operation;
+neither was blindly replayed. A further updater attempt stopped in read-only
+preflight. LAN empty replies/timeouts remain a real open delivery limitation.
+
+On this final boot the actual [queued maintenance API](API.md#avr-programmer-paths)
+completed two separate same-image programming transactions, not fallback retries:
+
+- Urboot job1/request `urboot-program`: detected, write_attempted, programmed,
+  verified and application_recovered true; phase complete/error empty. Full
+  flash/EEPROM were backed up and compared before returning to the application;
+  all253 application pages were submitted, page0 last. The384-byte boot region
+  was compared and never written. The bootloader may skip unchanged pages:
+  this proves the same-image transaction/readback, not a changed-image trial.
+- ISP job2/request `isp-program`: write_attempted, programmed, verified and
+  application_recovered true; phase complete/error empty. Full32768-byte erase/
+  program/readback and1024-byte EEPROM preserve/restore/verify passed through
+  the existing driver. This was chosen only after Urboot terminal success.
+
+Both used complete AVR image SHA256
+`4f3f00454ec913551c88da4746ea11955087835c9619e6331406c67f15034fb1`.
+Final actual AVR is0.2.7, Prog false, UART errors0/lost events0, buzzer frequency0.
+Persisted settings fields match the pre-program observation. Signature1E950F,
+fuse snapshot F7/D7/FD and lockFF were retained; no fuse-write command exists in
+these jobs. Reset/Prog journal records legitimately change EEPROM after the
+application runs; do not claim identical post-boot whole-EEPROM hashes.
+
+Initial ISP and Urboot independent full flash exports both matched that image;
+their separate1024-byte EEPROM captures and original recovery files are preserved.
+On ASUS, `verification/avr-dual-path/urboot-program-result.json` and
+`isp-program-result.json` retain correlated terminal receipts. During both jobs
+LAN status reads failed; read-only LAN/MQTT observations recovered their outcomes
+without another program request. Full checksummed authenticated MQTT telemetry
+also confirmed the recovered AVR; an uncorrelated MQTT read event is not claimed
+as its own command ACK.
+
+The ASUS native PID21828/session1 runs EXE28463616bytes SHA256
+`890158bdac101ec206a1d4aaa18f554789b3ec68390e581f5706a0736cdfc99f`.
+No old process existed at the twice-checked replacement boundary; old executable
+and settings were preserved and the existing Limited/Interactive production task
+launched it. Saved USB COM22 remains selected/offline, not silently switched to
+Wi-Fi; these hardware tests used hostname LAN, not fabricated native USB proof.
+The native/Web/Flutter status consumers understand both programmer progress
+methods; dedicated native/mobile method-selection controls remain pending.
+Android preview APK56362977bytes SHA256
+`8a9e6e0ecf72a0d5418ba816de303352144712d3d673fc0d442329f8459e030d`
+built/analyzed, not installed on the unavailable phone. Versions remain0.2.7.
+
+Still open: changed-image UART programming, dead-UART/power-loss recovery,
+all-client ingress/concurrency soak, electrical clock/VCC margin, peripheral/
+optical/audio acceptance, reliable LAN transfers, advanced UI selectors and
+broader donor parity. A historical aborted local OTA can still mask active
+remote progress in existing client precedence; track that separately rather
+than claiming all updater display states are complete. No physical output or
+full production acceptance follows from these programming checks.
+
 ### Current application firmware-delivery checkpoint
 
 Native Device settings → Firmware & storage and Android device context menu →

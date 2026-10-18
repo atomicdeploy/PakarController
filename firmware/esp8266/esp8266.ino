@@ -163,6 +163,19 @@ BoardCore::SerialLink hostLink(Serial);
 #endif
 AvrIsp avrIsp(kAvrResetPin);
 RemoteFirmware remoteFirmware;
+PakarHttpDetail::Processing urbootBusy;
+bool avrRecoveryHelloPending=false;
+uint8_t avrRecoveryHelloSequence=0;
+bool urbootQueued=false,urbootRawOwned=false,urbootDetected=false;
+bool urbootProgrammed=false,urbootVerified=false,urbootRecovered=false,avrWriteAttempted=false;
+uint32_t urbootJobId=0,urbootDone=0,urbootTotal=0,urbootPublishedAt=0;
+const char *urbootPhase="idle";
+String urbootOperation,urbootError,urbootImageSha,avrMaintenanceMethod="urboot";
+String avrMaintenanceRequest,avrMaintenanceSeen[64];
+uint8_t avrMaintenanceSeenCount=0;
+uint64_t avrMaintenanceDeadline=0;
+String urbootJobJson();
+bool urbootSupported();
 unsigned artifactReaders=0;
 BusyLine<PAKAR_USE_BUSY_WIRE != 0> busyLine(kBusyPin);
 LedGrid grid;
@@ -349,7 +362,7 @@ class EspPanelSettings : public EspFrontPanel::Settings {
     wifiScanQueued = true; return kNoError; // Queued, never a claim that scan completed.
   }
  private:
-  static bool busy() { return remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || programmingLatched || networkApplyPending || cloudApplyPending; }
+  static bool busy() { return urbootBusy.get() || remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || programmingLatched || networkApplyPending || cloudApplyPending; }
   static Error commit(NetworkConfigStore &candidate) {
     if (!candidate.save()) return kHardwareUnavailable;
     networkConfig = candidate;
@@ -449,7 +462,7 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
     hostLink.send(kErrorResponse, frame.sequence, error, sizeof(error)); return;
   }
   static BoardCore::PcContractAssembly usbPcAssembly;
-  if ((remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner) && frame.opcode != kGetStatus && frame.opcode != kGetIdentity && frame.opcode != kGetTableSnapshot && frame.opcode != kHello && frame.opcode != kPing) {
+  if ((urbootBusy.get() || remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner) && frame.opcode != kGetStatus && frame.opcode != kGetIdentity && frame.opcode != kGetTableSnapshot && frame.opcode != kHello && frame.opcode != kPing) {
     hostLink.error(frame.sequence, frame.opcode, kBusy); return;
   }
 #if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
@@ -1055,7 +1068,7 @@ String deviceNameJson(bool accepted) {
 
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
                const uint8_t *payload, uint8_t payloadLength) {
-  if (!PAKAR_AVR_LINK_ENABLED) return false;
+  if (!PAKAR_AVR_LINK_ENABLED || urbootRawOwned) return false;
 #if defined(ARDUINO_ARCH_ESP32)
   if (!avrUart.started()) return false;
 #endif
@@ -1097,7 +1110,7 @@ void servicePcContracts() {
       pcTransport.releaseUsb(receipt);
     } else publishPcEvent(pcReceiptJson(receipt));
   });
-  if (remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner) return;
+  if (urbootBusy.get() || remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner) return;
   auto *request = pcTransport.next();
   if (!request) return;
   if (request->request[0] == ControllerProtocol::AddressableLed) {
@@ -1228,6 +1241,12 @@ void serviceAttentionCues() {
 }
 
 bool authenticate() {
+  if(urbootBusy.get() && server.request() && (server.request()->method()!=HTTP_GET ||
+      (server.request()->url()!=F("/api/status") && server.request()->url()!=F("/api/telemetry") &&
+       server.request()->url()!=F("/info") && server.request()->url()!=F("/api/avr/maintenance") &&
+       server.request()->url()!=F("/api/auth/info") && server.request()->url()!=F("/api/firmware/remote")))) {
+    server.send(409,"text/plain","Urboot owns board maintenance; inspect its job, do not replay");return false;
+  }
   if ((remoteFirmware.busy() || artifactReaders) && server.request() &&
       !server.request()->url().startsWith("/api/firmware/") &&
       server.request()->url()!=F("/file/cancel") &&
@@ -1412,6 +1431,7 @@ String buildStatusJson() {
   body += F("\",\"led_output\":");body+=grid.outputJson();
   body += F(",\"ws_queue_rejected\":");body+=loopMessages.rejected();
   body += F(",\"update\":");body+=localUpdateJson();
+  body += F(",\"avr_maintenance\":");body+=urbootJobJson();
   // Cheap stress/health metric; unlike maintenance metadata this never hashes
   // the running sketch or pauses the LED transmitter for flash reads.
   body += F(",\"free_heap_bytes\":");body+=ESP.getFreeHeap();
@@ -1606,6 +1626,7 @@ void configureNtp() {
 }
 
 bool applyStreamPacket(const uint8_t *packet, size_t length,uint64_t owner=0) {
+  if(urbootBusy.get())return false;
   if (packet == nullptr || length < 10U || length > 1300U ||
       memcmp(packet, "PKAR", 4) != 0 || packet[4] != 0 || packet[5] != 0 ||
       (packet[9] & ~1U) != 0) return false;
@@ -1684,7 +1705,7 @@ void handleWebSocketMessage(uint32_t clientId, uint8_t opcode,
   if(passiveCaptureActive()) {
     webSocket.text(clientId, "{\"accepted\":false,\"error\":\"passive_uart_capture_active\"}");return;
   }
-  if (otaActive || otaRebootAt) {
+  if (otaActive || otaRebootAt || urbootBusy.get()) {
     if (opcode==WS_TEXT && length<=1024U) {
       JsonDocument request;
       if(!deserializeJson(request,payload,length) && request.is<JsonObject>()) {
@@ -1746,7 +1767,7 @@ String localUpdateJson() {
   body+=F(",\"completion_verified\":false}"); // Reboot/readback belongs to the client.
   return body;
 }
-struct WsAssembly { size_t used; size_t length; uint8_t opcode; uint8_t data[1]; };
+struct WsAssembly { size_t used; size_t length; uint32_t epoch; uint8_t opcode; uint8_t data[1]; };
 void onWebSocketEvent(AsyncWebSocket *, AsyncWebSocketClient *client,
                       AwsEventType type, void *argument, uint8_t *payload, size_t length) {
   const auto closeSocket = [&](uint16_t code, const char *reason) {
@@ -1754,12 +1775,13 @@ void onWebSocketEvent(AsyncWebSocket *, AsyncWebSocketClient *client,
     // admission before marking the callback-owned client as closing.
     webAccess.forgetSocket(client->id()); client->close(code, reason);
   };
+  const uint32_t ingressEpoch=server.ingressEpoch();
   if (type == WS_EVT_DISCONNECT || type == WS_EVT_ERROR) {
     webAccess.forgetSocket(client->id());
     const uint8_t unused = 0;
     // A full queue may drop this advisory release; the stage-owner lease still
     // expires, and immediately revoked auth rejects already queued data.
-    loopMessages.push(client->id(), 0xfe, &unused, 0);
+    loopMessages.push(client->id(), 0xfe, &unused, 0,ingressEpoch);
     if (client->_tempObject) { free(client->_tempObject); client->_tempObject = nullptr; }
     return;
   }
@@ -1769,7 +1791,7 @@ void onWebSocketEvent(AsyncWebSocket *, AsyncWebSocketClient *client,
       closeSocket(1008, "Sign in required"); return;
     }
     const uint8_t statusRequest[]="{\"type\":\"status\"}";
-    if(!loopMessages.push(client->id(),WS_TEXT,statusRequest,sizeof(statusRequest)-1))closeSocket(1013,"Command queue full");
+    if(!loopMessages.push(client->id(),WS_TEXT,statusRequest,sizeof(statusRequest)-1,ingressEpoch))closeSocket(1013,"Command queue full");
     return;
   }
   if (type != WS_EVT_DATA) return;
@@ -1778,7 +1800,7 @@ void onWebSocketEvent(AsyncWebSocket *, AsyncWebSocketClient *client,
   if (!info || !info->final || info->num != 0 || info->len > 1300 ||
       info->index + length > info->len) { closeSocket(1009, "Message exceeds stream bounds"); return; }
   if (info->index == 0 && info->len == length) {
-    if(!loopMessages.push(client->id(),info->opcode,payload,length))closeSocket(1013,"Command queue full");return;
+    if(!loopMessages.push(client->id(),info->opcode,payload,length,ingressEpoch))closeSocket(1013,"Command queue full");return;
   }
   if (info->index == 0) {
     if (client->_tempObject) free(client->_tempObject);
@@ -1786,13 +1808,14 @@ void onWebSocketEvent(AsyncWebSocket *, AsyncWebSocketClient *client,
     client->_tempObject = assembly;
     if (!assembly) { closeSocket(1013, "Message buffer unavailable"); return; }
     assembly->used = 0; assembly->length = info->len; assembly->opcode = info->opcode;
+    assembly->epoch=ingressEpoch;
   }
   auto *assembly = static_cast<WsAssembly *>(client->_tempObject);
-  if (!assembly || assembly->used != info->index || assembly->length != info->len ||
+  if (!assembly || assembly->epoch!=ingressEpoch || assembly->used != info->index || assembly->length != info->len ||
       assembly->used + length > assembly->length) { closeSocket(1002, "Invalid message sequence"); return; }
   memcpy(assembly->data + assembly->used, payload, length); assembly->used += length;
   if (assembly->used == assembly->length) {
-    const bool queued=loopMessages.push(client->id(),assembly->opcode,assembly->data,assembly->length);
+    const bool queued=loopMessages.push(client->id(),assembly->opcode,assembly->data,assembly->length,assembly->epoch);
     free(assembly); client->_tempObject = nullptr;
     if(!queued)closeSocket(1013,"Command queue full");
   }
@@ -1909,6 +1932,7 @@ bool configurationForm(JsonDocument &document, bool cloud, String &error) {
 }
 
 bool handleCloudCommand(const String &message, String &result) {
+  if(urbootBusy.get()) {result=F("Urboot owns board maintenance; no command dispatched");return false;}
   if(passiveCaptureActive()) {result=F("Bounded passive UART capture owns diagnostics");return false;}
   JsonDocument commandDocument;
   if(message.length()>1024 || deserializeJson(commandDocument,message) || !commandDocument.is<JsonObject>()) {
@@ -2184,9 +2208,13 @@ bool handleCloudCommand(const String &message, String &result) {
 }
 
 void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
+  if(avrRecoveryHelloPending) {
+    if(frame.opcode!=kHelloResponse || frame.sequence!=avrRecoveryHelloSequence)return;
+  }
   // A random/unsupported CRC-valid packet cannot promote an unidentified AVR
   // or keep a stale session alive. Reconnect must start with an actual HELLO.
   if (!BoardCore::validAvrObservation(frame, avrOnline && avrVersionKnown)) return;
+  avrRecoveryHelloPending=false;
   if (frame.opcode == kEspPanel && avrOnline && (avrCapabilities & kCapEspPanel)) {
     espFrontPanel.handle(frame, millis(), espPanelSettings, link); return;
   }
@@ -2398,7 +2426,7 @@ void registerAsyncOta() {
     if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request) || !webAccess.peerAllowed(request)) return;
     static uint32_t nextOwner = 0;
     if (index == 0) {
-      if (passiveCaptureActive() || artifactReaders || remoteFirmware.busy() || remoteFirmware.ownsEspStage() || otaOwner || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched || networkApplyPending || cloudApplyPending || request->hasAttribute("ota_id")) {
+      if (urbootBusy.get() || passiveCaptureActive() || artifactReaders || remoteFirmware.busy() || remoteFirmware.ownsEspStage() || otaOwner || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched || networkApplyPending || cloudApplyPending || request->hasAttribute("ota_id")) {
         request->setAttribute("ota_error", "Another operation is active or multiple files were supplied"); return;
       }
       if (++nextOwner == 0) ++nextOwner;
@@ -3123,7 +3151,7 @@ void registerApi() {
       if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request) || !webAccess.peerAllowed(request)) return;
       static uint32_t nextUpload = 0;
       if (index == 0) {
-        if (passiveCaptureActive() || artifactReaders || remoteFirmware.busy() || avrUploadOwner || otaActive || otaRebootAt || server.processing() || networkApplyPending || cloudApplyPending || request->hasAttribute("upload_id")) {
+        if (urbootBusy.get() || passiveCaptureActive() || artifactReaders || remoteFirmware.busy() || avrUploadOwner || otaActive || otaRebootAt || server.processing() || networkApplyPending || cloudApplyPending || request->hasAttribute("upload_id")) {
           request->setAttribute("upload_error", "Another operation is active or multiple files were supplied"); return;
         }
         if (++nextUpload == 0) ++nextUpload;
@@ -3468,6 +3496,7 @@ void serviceConsole() {
 }
 
 #include "src/MaintenanceRoutes.h"
+#include "src/UrbootRoutes.h"
 uint32_t runningImageSize() { return bootTelemetryImage.size; }
 String runningImageMd5() { return bootTelemetryImage.md5; }
 #include "src/ArtifactDownload.h"
@@ -3568,12 +3597,13 @@ void setup() {
   registerApi();
   registerLcdApi();
   registerMaintenanceRoutes();
+  registerUrbootRoutes();
   registerArtifactDownload();
   webAccess.registerRoutes(server.native(), []() {
     webSocket.closeAll(1008, "Sign in again");
     if (telnetClient) telnetClient.stop();
     telnetAuthenticated = false;
-  }, []() { return remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched; });
+  }, []() { return urbootBusy.get() || remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || server.processing() || programmingLatched; });
   webSocket.onEvent(onWebSocketEvent);
   server.native().addHandler(&webSocket);
   registerAsyncOta();
@@ -3586,6 +3616,9 @@ void setup() {
 }
 
 void loop() {
+  // A queued job executes outside any request handler. Its bounded background
+  // callback services reads, but never framed AVR bytes during a raw session.
+  if(urbootQueued) {serviceUrbootJob();return;}
 #if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
   passiveAvrRx.service(millis());
   passiveCaptureGuard.store(passiveAvrRx.snapshot().active,std::memory_order_release);
@@ -3629,7 +3662,7 @@ void loop() {
   LoopMessages::Message message;
   if(loopMessages.pop(message)){
     if(message.opcode==0xfe) grid.discardStaged((1ULL << 63) | message.client);
-    else if(webAccess.socketAllowed(message.client))
+    else if(message.epoch==server.ingressEpoch() && webAccess.socketAllowed(message.client))
       handleWebSocketMessage(message.client,message.opcode,message.data,message.length);
   }
   serviceAttentionCues();

@@ -41,6 +41,12 @@ assert.equal(run('firmwareUpdateObservation({update:updateFixture}).verified'),f
 context.remoteFixture={job_id:7,boot_id:'boot',phase:'program_esp',busy:true,manifest_sha256:'a'.repeat(64),received_bytes:100,expected_bytes:100};
 assert.equal(run('firmwareUpdateObservation({boot_id:"boot",remote_firmware:remoteFixture}).fraction'),null);
 assert.equal(run('firmwareUpdateObservation({boot_id:"other",remote_firmware:remoteFixture})'),null);
+context.urbootFixture={job_id:1,boot_id:'boot',method:'urboot',phase:'program_avr',busy:true,received_bytes:128,expected_bytes:256};
+assert.equal(run('firmwareUpdateObservation({boot_id:"boot",avr_maintenance:urbootFixture}).fraction'),0.5);
+context.urbootFixture.phase='awaiting_application';assert.equal(run('firmwareUpdateObservation({boot_id:"boot",avr_maintenance:urbootFixture}).fraction'),null);
+context.urbootFixture.phase='complete';context.urbootFixture.verified=true;
+assert.equal(run('firmwareUpdateObservation({boot_id:"boot",avr_maintenance:urbootFixture}).verified'),false);
+context.urbootFixture.application_recovered=true;assert.equal(run('firmwareUpdateObservation({boot_id:"boot",avr_maintenance:urbootFixture}).verified'),true);
 for(const [backend,rmt,dma,label] of [['gpio-static',false,false,'GPIO · no RMT/DMA'],['rmt-dma',true,true,'RMT + DMA'],['fastled',false,false,'FastLED · no RMT/DMA']]){
   set({capabilities:{...manifest(['leds']),led_output:{backend,rmt,dma}}});
   assert.equal(nodes.get('ledDriverCapability').textContent,'LED driver: '+label);

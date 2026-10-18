@@ -69,6 +69,16 @@ int main() {
   serial.negativeAvailable = false; serial.missingRead = true; link.service();
   assert(value.frames.size() == 4); serial.missingRead = false; drain(link, serial);
   assert(value.frames.size() == 5);
+  {
+    HardwareSerial isolated;SerialLink fenced(isolated);Capture observed{&fenced,{}};
+    fenced.begin(38400,capture,&observed);
+    isolated.feed({split.begin(),split.begin()+split.size()/2});fenced.service();
+    isolated.feed(encodeFrame(kGetStatus));fenced.discardInput();
+    isolated.feed({split.begin()+split.size()/2,split.end()});drain(fenced,isolated);
+    assert(observed.frames.empty());
+    isolated.feed(encodeFrame(kGetStatus));drain(fenced,isolated);
+    assert(observed.frames.size()==1);
+  }
   // Header succeeds, then a body fragment fails. This is an unknown partial
   // packet even when that particular failing write accepted zero bytes.
   serial.failAt = serial.calls + 1; assert(!link.send(kPing, 1));

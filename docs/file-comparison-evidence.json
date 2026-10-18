@@ -5,6 +5,50 @@
   "files": [
 {
   "origin": "PCController",
+  "path": "Tools/Controller/internal/programmer/urclock_retry.go",
+  "sha256": "de0a9f15fbda4ee883766be025de372ae731741f5baf161f84e5a8dad837d202",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Fully read the actual retry policy. Preserve its strict distinction between bounded read-only synchronization and irreversible writes: only synchronization repeats; a short write, malformed page response or timeout retires the operation, never retries or falls back to ISP. The same S3 UART owner restores framed baud/parser state on all exits."
+  ],
+  "targets": [
+    {
+      "path": "firmware/esp8266/src/UrbootProtocol.h",
+      "anchor": "bool connect()",
+      "sha256": "7b70536811b4b6b6e905c5e83e47926cf342bb2aca9e95c244eb76d83fb767f9"
+    },
+    {
+      "path": "firmware/esp32s3/src/AvrUart.h",
+      "anchor": "void releaseRaw()",
+      "sha256": "8118d17ace765adfa406820740f3ac60019658ec5bce9b85eae091baf0253858"
+    }
+  ],
+  "proof": [
+    {
+      "path": "tests/urboot_protocol_test.cpp",
+      "anchor": "p.badReply=true",
+      "sha256": "7e44fd173e586163f9807bb4d335c3de86c340b53d62d1c60eaaf5397aa081a3"
+    },
+    {
+      "path": "tests/urboot_protocol_test.cpp",
+      "anchor": "p.silent=true",
+      "sha256": "7e44fd173e586163f9807bb4d335c3de86c340b53d62d1c60eaaf5397aa081a3"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Windows COM sharing-error matching and delayed backup subprocess retries",
+      "disposition": "pending",
+      "reason": "The embedded uploader owns UART1 directly, not an AVRDUDE COM handle. COM release diagnostics remain relevant to a future host Urclock/USB adapter, not this ESP hardware-UART transport. No write retry is imported."
+    }
+  ],
+  "remaining": [
+    "Issue #6: actual stock Urboot synchronization, full backup, same-image programming/readback, EEPROM preservation and application recovery passed on ledboard (docs/REMOTE-MAINTENANCE.md). Changed-image UART/interrupted-write recovery and native/mobile method selectors remain open; emulator success alone never certifies these gates."
+  ]
+},
+{
+  "origin": "PCController",
   "path": "Tools/Controller/internal/hostbridge/manager.go",
   "sha256": "b34517a1c30084d2362e951638e0039d78abd45a5128b62342bb717b6c44b1b2",
   "source_read": "complete",
@@ -39,7 +83,7 @@
     },
     {
       "path": "mobile/test/firmware_delivery_test.dart",
-      "sha256": "af00baa0fc098a77920aed8f01cc2b3bb64d23f57460d54f8c8eabc4e5df249c",
+      "sha256": "6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24",
       "anchor": "Actual WS/Socket.IO listener deduplicates offers"
     }
   ],
@@ -59,17 +103,17 @@
   "targets": [
     {
       "path": "desktop/src/firmware_progress.rs",
-      "sha256": "72ab90b69a6279e08afbc598cf34afa2e0bf495530bd8965bf1a6496873e2c51",
+      "sha256": "5269eca8e2378e09b04b2a6de0ea9ed886ada47237460b6e3b670aa42efa7fd2",
       "anchor": "pub fn observed("
     },
     {
       "path": "mobile/lib/firmware_progress.dart",
-      "sha256": "fd284893fcef041ba7f37d3f4b2151fa77f591fc70116709712ed497e4816993",
+      "sha256": "0032af6163bbcf4bd034a35d5e5660215719b68053c799b73aa48f839b4ba6c8",
       "anchor": "class FirmwareProgress"
     },
     {
       "path": "firmware/esp8266/src/WebUi.h",
-      "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+      "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
       "anchor": "function firmwareUpdateObservation(s)"
     }
   ],
@@ -83,12 +127,12 @@
   "proof": [
     {
       "path": "desktop/src/firmware_progress.rs",
-      "sha256": "72ab90b69a6279e08afbc598cf34afa2e0bf495530bd8965bf1a6496873e2c51",
+      "sha256": "5269eca8e2378e09b04b2a6de0ea9ed886ada47237460b6e3b670aa42efa7fd2",
       "anchor": "fn firmware_progress_observes_external_ota_without_inventing_completion"
     },
     {
       "path": "mobile/test/firmware_delivery_test.dart",
-      "sha256": "af00baa0fc098a77920aed8f01cc2b3bb64d23f57460d54f8c8eabc4e5df249c",
+      "sha256": "6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24",
       "anchor": "External board OTA and remote jobs"
     }
   ],
@@ -108,12 +152,12 @@
   "targets": [
     {
       "path": "desktop/src/firmware_progress.rs",
-      "sha256": "72ab90b69a6279e08afbc598cf34afa2e0bf495530bd8965bf1a6496873e2c51",
+      "sha256": "5269eca8e2378e09b04b2a6de0ea9ed886ada47237460b6e3b670aa42efa7fd2",
       "anchor": "pub struct Observation"
     },
     {
       "path": "mobile/lib/firmware_progress.dart",
-      "sha256": "fd284893fcef041ba7f37d3f4b2151fa77f591fc70116709712ed497e4816993",
+      "sha256": "0032af6163bbcf4bd034a35d5e5660215719b68053c799b73aa48f839b4ba6c8",
       "anchor": "class FirmwareProgress"
     }
   ],
@@ -127,12 +171,12 @@
   "proof": [
     {
       "path": "desktop/src/firmware_progress.rs",
-      "sha256": "72ab90b69a6279e08afbc598cf34afa2e0bf495530bd8965bf1a6496873e2c51",
+      "sha256": "5269eca8e2378e09b04b2a6de0ea9ed886ada47237460b6e3b670aa42efa7fd2",
       "anchor": "fn firmware_progress_remote_counts_are_not_flash_percentage_or_another_boot"
     },
     {
       "path": "mobile/test/firmware_delivery_test.dart",
-      "sha256": "af00baa0fc098a77920aed8f01cc2b3bb64d23f57460d54f8c8eabc4e5df249c",
+      "sha256": "6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24",
       "anchor": "Actual progress widget displays indeterminate verification"
     }
   ],
@@ -176,7 +220,7 @@
     },
     {
       "path": "mobile/test/firmware_delivery_test.dart",
-      "sha256": "af00baa0fc098a77920aed8f01cc2b3bb64d23f57460d54f8c8eabc4e5df249c",
+      "sha256": "6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24",
       "anchor": "HTTP file verifies hash before one upload"
     }
   ],
@@ -215,7 +259,7 @@
   "proof": [
     {
       "path": "mobile/test/firmware_delivery_test.dart",
-      "sha256": "af00baa0fc098a77920aed8f01cc2b3bb64d23f57460d54f8c8eabc4e5df249c",
+      "sha256": "6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24",
       "anchor": "HTTP file verifies hash before one upload"
     },
     {
@@ -237,6 +281,11 @@
       "path": "firmware/esp8266/src/MaintenanceRoutes.h",
       "sha256": "2993618abb5a8ec8eeff5c0a58f8437dfbe0c5029e002e4e0398f6d907fb0581",
       "anchor": "bool prepareRemotePair("
+    },
+    {
+      "path": "firmware/esp8266/src/UrbootRoutes.h",
+      "anchor": "bool runUrboot(",
+      "sha256": "bbbce4921b13e51e66dce78d0ab2b0ffb1255e3dfe0a8cb3d63b195224e8b781"
     }
   ],
   "omissions": [
@@ -251,15 +300,21 @@
       "path": "desktop/src/bridge_transfer.rs",
       "sha256": "365d1f7a80cab3acefe4a5374ee61078964f1adc4242a2333529b1faa3eabb0e",
       "anchor": "fn bridge_transfer_head_truncation_and_stale_mutation_preserve_truth"
+    },
+    {
+      "path": "tests/urboot_integration_test.mjs",
+      "anchor": "routes.indexOf('Image changed after backup')",
+      "sha256": "282a3506d6acdf1259be532180945448885763ee60404dc225f04a8745fc932d"
     }
   ],
   "remaining": [
-    "Issue #2: actual AVR reset/upload/program, new recovery capture, EEPROM/Urboot preservation and power-loss acceptance remain open. Stored backup downloads are not fresh physical capture or programming proof."
+    "Issue #2: real S3 ISP/Urboot same-image jobs now verify full flash/EEPROM, fresh capture, application UART return and Prog release (docs/REMOTE-MAINTENANCE.md). Changed-image UART, dead-UART/power-loss recovery and broader electrical/physical acceptance remain open; old stored files alone are not fresh capture proof."
   ],
   "path": "Tools/Controller/internal/programmer/preflash.go",
   "sha256": "520de1d7431f3062d0603636b89098d1e41c7701a2f44f65b88d45cfe49a2c07",
   "preserved": [
-    "Read entire actual donor through EOF. Preserve complete backup before production writes, cancellation before mutation and post-backup candidate reinspection. The network bridge forwards the existing guarded ESP coordinator's raw bytes/status/receipts; it does not replace the programmer or turn staging acceptance into a completed flash."
+    "Read entire actual donor through EOF. Preserve complete backup before production writes, cancellation before mutation and post-backup candidate reinspection. The network bridge forwards the existing guarded ESP coordinator's raw bytes/status/receipts; it does not replace the programmer or turn staging acceptance into a completed flash.",
+    "Adapt actual backup-before-write and candidate reinspection to the ESP-owned Urboot operation: full flash/EEPROM capture and durable hash validation before the first UART page write, then exact image digest reinspection, protected boot equality and complete flash/EEPROM readback. Existing durable Prog arm precedes this recovery capture, as in the existing integrated ISP policy; ordinary settings and boot bytes are not programmed by Urboot."
   ]
 },
 {
@@ -514,7 +569,7 @@
     {
       "path": "desktop/src/main.rs",
       "anchor": "SerialCommand::Bridge(target",
-      "sha256": "8200ad80daf3170411ae8b13220417be24915f102a19769ddb67c6c5b3849093"
+      "sha256": "157d8f8aebc72d10e0d317b9d64147518cb2db643ed5d14ae4481fd755b64c7f"
     }
   ],
   "omissions": [
@@ -810,7 +865,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "const server=createServer",
-          "sha256": "4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6"
+          "sha256": "a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483"
         }
       ],
       "omissions": [
@@ -839,7 +894,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "Automatic updater plan/preflight",
-          "sha256": "4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6"
+          "sha256": "a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483"
         }
       ],
       "remaining": [
@@ -872,7 +927,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "await uploadImage(origin,peer,image,identity)",
-          "sha256": "4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6"
+          "sha256": "a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483"
         }
       ],
       "omissions": [
@@ -906,7 +961,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "Automatic updater plan/preflight",
-          "sha256": "4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6"
+          "sha256": "a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483"
         }
       ],
       "remaining": [
@@ -2380,7 +2435,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
+          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -2395,7 +2450,7 @@
         {
           "path": "tools/update-firmware.ps1",
           "anchor": "[ValidateSet('auto','local','remote')]",
-          "sha256": "8b20589632be2c50f3097c071719eb1f0baf67fec5e331d8811f5fde74d3b8e4"
+          "sha256": "d082e39207a8c16a442d23a3c3137b495aa8b946c1f845ecbdde3044e4ea05a3"
         }
       ],
       "omissions": [
@@ -2429,7 +2484,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "for(const scenario of",
-          "sha256": "4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6"
+          "sha256": "a5c838c05a3cd11b8d91fd2f832e6abbafae5142cec47f33442d0537d4e83483"
         },
         {
           "path": "tools/test-update.ps1",
@@ -2480,7 +2535,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b"
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22"
         }
       ],
       "proof": [
@@ -2570,7 +2625,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b"
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22"
         }
       ],
       "proof": [
@@ -2660,7 +2715,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b"
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22"
         }
       ],
       "proof": [
@@ -2750,7 +2805,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b"
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22"
         }
       ],
       "proof": [
@@ -2812,12 +2867,12 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
+          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
           "anchor": "explicit AsyncHttpService(uint16_t port) : native_(port) {}",
-          "sha256": "1bc47102008ee02f349eca49312e80b45ddb3f539cf95c2cf52259b45bd072bf"
+          "sha256": "22fde9b24ddc97453c105ad7f2d76070a26c74ac930b2205bdcb3f17b3edef51"
         }
       ],
       "omissions": [
@@ -2831,7 +2886,7 @@
         {
           "path": "tests/async_http_test.cpp",
           "anchor": "Reproduce installed SDK3.12.1",
-          "sha256": "ade23063c84f60ecb4cedd84f5dc0b5ea61b330303cfaf1478ad174677856300"
+          "sha256": "6e0d54e5b15f8b9a40f3215660dc948ea781c5f171dae5d3b3750b9b453f6ff5"
         },
         {
           "path": "tests/ethernet_live_tool_test.mjs",
@@ -2857,12 +2912,12 @@
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
           "anchor": "explicit AsyncHttpService(uint16_t port) : native_(port) {}",
-          "sha256": "1bc47102008ee02f349eca49312e80b45ddb3f539cf95c2cf52259b45bd072bf"
+          "sha256": "22fde9b24ddc97453c105ad7f2d76070a26c74ac930b2205bdcb3f17b3edef51"
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
+          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
         }
       ],
       "omissions": [
@@ -2876,7 +2931,7 @@
         {
           "path": "tests/async_http_test.cpp",
           "anchor": "Reproduce installed SDK3.12.1",
-          "sha256": "ade23063c84f60ecb4cedd84f5dc0b5ea61b330303cfaf1478ad174677856300"
+          "sha256": "6e0d54e5b15f8b9a40f3215660dc948ea781c5f171dae5d3b3750b9b453f6ff5"
         },
         {
           "path": "tests/ethernet_live_tool_test.mjs",
@@ -2902,12 +2957,12 @@
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
           "anchor": "AsyncURIMatcher::exact(path)",
-          "sha256": "1bc47102008ee02f349eca49312e80b45ddb3f539cf95c2cf52259b45bd072bf"
+          "sha256": "22fde9b24ddc97453c105ad7f2d76070a26c74ac930b2205bdcb3f17b3edef51"
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
+          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -2936,7 +2991,7 @@
         {
           "path": "tests/async_http_test.cpp",
           "anchor": "Reproduce installed SDK3.12.1",
-          "sha256": "ade23063c84f60ecb4cedd84f5dc0b5ea61b330303cfaf1478ad174677856300"
+          "sha256": "6e0d54e5b15f8b9a40f3215660dc948ea781c5f171dae5d3b3750b9b453f6ff5"
         },
         {
           "path": "tests/ethernet_live_tool_test.mjs",
@@ -2986,7 +3041,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b"
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -3086,7 +3141,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b"
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22"
         }
       ],
       "proof": [
@@ -3256,7 +3311,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -3324,7 +3379,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -3608,7 +3663,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "25910c5c734a383aadf50517894a2609355dcc07d6a44f3084744b6989db2a8c",
+          "sha256": "5d21ed0057e133dc7427a8b1b65349c1ba3d47291c74021d9ee4dd7086fc1bb3",
           "anchor": "assert.match(automationStore,"
         }
       ]
@@ -3881,7 +3936,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "25910c5c734a383aadf50517894a2609355dcc07d6a44f3084744b6989db2a8c",
+          "sha256": "5d21ed0057e133dc7427a8b1b65349c1ba3d47291c74021d9ee4dd7086fc1bb3",
           "anchor": "assert.match(transfer, /FirmwarePlatform::readRunning"
         },
         {
@@ -4389,7 +4444,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "function readStreamPolicy"
         }
       ],
@@ -4575,7 +4630,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687",
+      "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c",
       "anchor": "bool authenticate()"
     },
     {
@@ -4590,7 +4645,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "8200ad80daf3170411ae8b13220417be24915f102a19769ddb67c6c5b3849093",
+      "sha256": "157d8f8aebc72d10e0d317b9d64147518cb2db643ed5d14ae4481fd755b64c7f",
       "anchor": "fn scoped_http_request("
     },
     {
@@ -4668,7 +4723,7 @@
     },
     {
       "path": "tests/peer_fence_test.mjs",
-      "sha256": "9ae51e00dc2fc4c717b5da13fe83ac1711a977ca609f209ba943083f4c803256",
+      "sha256": "4db4efb8a06dc19d850a0cf1ff45f357121b7c079dc536d025a3d7cb419f606f",
       "anchor": "Upload callbacks precede middleware"
     },
     {
@@ -4817,7 +4872,7 @@
     },
     {
       "path": "tests/peer_fence_test.mjs",
-      "sha256": "9ae51e00dc2fc4c717b5da13fe83ac1711a977ca609f209ba943083f4c803256",
+      "sha256": "4db4efb8a06dc19d850a0cf1ff45f357121b7c079dc536d025a3d7cb419f606f",
       "anchor": "Upload callbacks precede middleware"
     },
     {
@@ -5325,7 +5380,7 @@
       "remaining":["Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof."],
       "proof":[
         {"path":"tools/test-display.ps1","sha256":"e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51","anchor":"foreach ($taskVariant"},
-        {"path":"tools/test-protocol.sh","sha256":"ad5f08a2e7f1ed4be39e000643cce2adb68cc45dbfb4a4e73f90f376eb2287e4","anchor":"for display_flags"}
+        {"path":"tools/test-protocol.sh","sha256":"2d9ef6e7fe2b5ee83609bb3b0cc4c0a6444b83bcf62e0c71c2d1d2896321a7a4","anchor":"for display_flags"}
       ],
       "improvement":"Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified."
     },
@@ -5392,7 +5447,7 @@
         },
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "bd739a936c3d524f5cb05de490356118ba4cbb57a206ae2712a16b016315b786",
+          "sha256": "09ab731e89e89021a2816ecc84c2edc81bb0da438dbc67dab3083d77c94cc5ed",
           "anchor": "Additive metadata does not select another generation"
         }
       ],
@@ -5461,7 +5516,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "function connectWs()"
         }
       ],
@@ -5570,7 +5625,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "async function refreshAuthenticated(options={})"
         },
         {
@@ -5662,7 +5717,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -5834,7 +5889,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "function connectWs()"
         }
       ],
@@ -5937,7 +5992,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -6033,7 +6088,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -6118,7 +6173,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -6436,7 +6491,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -6801,7 +6856,7 @@
         },
         {
           "path":"firmware/esp8266/src/WebUi.h",
-          "sha256":"750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256":"383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor":"function statusRgbOutput"
         }
       ],
@@ -6894,7 +6949,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "function peerAvailability("
         }
       ],
@@ -6916,7 +6971,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "bd739a936c3d524f5cb05de490356118ba4cbb57a206ae2712a16b016315b786",
+          "sha256": "09ab731e89e89021a2816ecc84c2edc81bb0da438dbc67dab3083d77c94cc5ed",
           "anchor": "No inferred board kind or controls"
         },
         {
@@ -6955,7 +7010,7 @@
       "targets": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "bd739a936c3d524f5cb05de490356118ba4cbb57a206ae2712a16b016315b786",
+          "sha256": "09ab731e89e89021a2816ecc84c2edc81bb0da438dbc67dab3083d77c94cc5ed",
           "anchor": "const manifest="
         },
         {
@@ -6997,7 +7052,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "bd739a936c3d524f5cb05de490356118ba4cbb57a206ae2712a16b016315b786",
+          "sha256": "09ab731e89e89021a2816ecc84c2edc81bb0da438dbc67dab3083d77c94cc5ed",
           "anchor": "Unsupported geometry is not forced"
         },
         {
@@ -7063,7 +7118,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b"
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22"
         }
       ],
       "omissions": [
@@ -7111,7 +7166,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "bd739a936c3d524f5cb05de490356118ba4cbb57a206ae2712a16b016315b786",
+          "sha256": "09ab731e89e89021a2816ecc84c2edc81bb0da438dbc67dab3083d77c94cc5ed",
           "anchor": "Native wiring is source-checked only"
         },
         {
@@ -7251,7 +7306,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -7261,7 +7316,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -7332,7 +7387,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -8044,7 +8099,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b"
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -8214,7 +8269,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b"
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -8999,7 +9054,7 @@
         },
         {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"687f35d99175e9fc109bdd6a03db225cac97cd63ba0e9ffa68386ef66f6571b9","anchor":"config.flags.with_dma=true"},
         {"path":"firmware/esp32s3/src/LedWire.h","sha256":"cc11d6829c36b3390e0bef8ec407be72ceab47a25357661d5fcac90befef1495","anchor":"void encodeWire("},
-        {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"2af8b1575c57b5ab359f0437b2a52a24a20e6b84628636a51d15a194417b75e7","anchor":"class LoopMessages"}
+        {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"89e29ee585520673779a00e8d6c68ec1545ea4838ff09700f1fce8b266120833","anchor":"class LoopMessages"}
       ],
       "omissions": [
         {
@@ -9113,7 +9168,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
+          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
         }
       ],
       "proof": [
@@ -9180,7 +9235,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
+          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
         }
       ],
       "proof": [
@@ -9247,7 +9302,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
+          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
         }
       ],
       "proof": [
@@ -9299,7 +9354,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687"
+          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c"
         }
       ],
       "proof": [
@@ -9509,7 +9564,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -9605,7 +9660,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -9732,7 +9787,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b",
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -9917,7 +9972,7 @@
       "targets": [
         {
           "path": "libraries/BoardCore/src/SerialLink.h",
-          "sha256": "fc95966524f492c1a004738ebd12b2668617b0575181ba3200bb39a7883b7c8b",
+          "sha256": "99373bc4c090e34324cfd2ae8c94d6666c227ad7e157a47fbd85125aac6c13a0",
           "anchor": "UartFlow::receiveBudget(serial_.available())"
         },
         {
@@ -9955,7 +10010,7 @@
       "proof": [
         {
           "path": "tests/serial_link_test.cpp",
-          "sha256": "615773e0f46f7ab602f09165a7966cbdfc1fa7146cfa5da890f04d35375311eb",
+          "sha256": "c103ffb2c7530bb4c85373433b123fe072bb6649f2d97b82f70fa08d404eeae8",
           "anchor": "Actual donor split-RX/synchronous-TX isolation"
         }
       ],
@@ -9974,7 +10029,7 @@
       "targets": [
         {
           "path": "libraries/BoardCore/src/SerialLink.h",
-          "sha256": "fc95966524f492c1a004738ebd12b2668617b0575181ba3200bb39a7883b7c8b",
+          "sha256": "99373bc4c090e34324cfd2ae8c94d6666c227ad7e157a47fbd85125aac6c13a0",
           "anchor": "UartFlow::receiveBudget(serial_.available())"
         },
         {
@@ -10012,7 +10067,7 @@
       "proof": [
         {
           "path": "tests/serial_link_test.cpp",
-          "sha256": "615773e0f46f7ab602f09165a7966cbdfc1fa7146cfa5da890f04d35375311eb",
+          "sha256": "c103ffb2c7530bb4c85373433b123fe072bb6649f2d97b82f70fa08d404eeae8",
           "anchor": "Actual donor split-RX/synchronous-TX isolation"
         }
       ],
@@ -10031,7 +10086,7 @@
       "targets": [
         {
           "path": "tests/serial_link_test.cpp",
-          "sha256": "615773e0f46f7ab602f09165a7966cbdfc1fa7146cfa5da890f04d35375311eb",
+          "sha256": "c103ffb2c7530bb4c85373433b123fe072bb6649f2d97b82f70fa08d404eeae8",
           "anchor": "Adapt actual PCController Tools/VirtualBoard/tests/uart_protocol_test.cpp"
         }
       ],
@@ -10059,7 +10114,7 @@
       "proof": [
         {
           "path": "tests/serial_link_test.cpp",
-          "sha256": "615773e0f46f7ab602f09165a7966cbdfc1fa7146cfa5da890f04d35375311eb",
+          "sha256": "c103ffb2c7530bb4c85373433b123fe072bb6649f2d97b82f70fa08d404eeae8",
           "anchor": "Actual donor split-RX/synchronous-TX isolation"
         }
       ],
@@ -10311,7 +10366,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "8200ad80daf3170411ae8b13220417be24915f102a19769ddb67c6c5b3849093",
+          "sha256": "157d8f8aebc72d10e0d317b9d64147518cb2db643ed5d14ae4481fd755b64c7f",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -10423,7 +10478,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "8200ad80daf3170411ae8b13220417be24915f102a19769ddb67c6c5b3849093",
+          "sha256": "157d8f8aebc72d10e0d317b9d64147518cb2db643ed5d14ae4481fd755b64c7f",
           "anchor": "fn serial_worker("
         },
         {
@@ -10460,7 +10515,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "8200ad80daf3170411ae8b13220417be24915f102a19769ddb67c6c5b3849093",
+          "sha256": "157d8f8aebc72d10e0d317b9d64147518cb2db643ed5d14ae4481fd755b64c7f",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
@@ -10573,7 +10628,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687",
+          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c",
           "anchor": "const LedPreferences value = whiteBootPreferences(grid.brightness())"
         },
         {
@@ -10604,7 +10659,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "750aaaec73e174375ed2977f4fd4f1bb8aea540d57dfb9d058f378eecc6d9e7b"
+          "sha256": "383973b335ac19161d9e956dc0272052b5e2898147695c54858e426160804d22"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -10647,7 +10702,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "25910c5c734a383aadf50517894a2609355dcc07d6a44f3084744b6989db2a8c",
+          "sha256": "5d21ed0057e133dc7427a8b1b65349c1ba3d47291c74021d9ee4dd7086fc1bb3",
           "anchor": "whiteBootPreferences"
         },
         {
@@ -10727,7 +10782,7 @@
         },
         {
           "path": "firmware/esp8266/src/ArtifactDownload.h",
-          "sha256": "140a5db58e6fbdb7aad0797eb69d32f9794067db512b547dfcca2b4f57dec32d",
+          "sha256": "32c2b0a632db5617eb5e87864ea21243e7e027e52b0dc4acf95fd0b31405b79b",
           "anchor": "remoteFirmware.readStagedEsp"
         },
         {
@@ -10737,7 +10792,7 @@
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
-          "sha256": "1bc47102008ee02f349eca49312e80b45ddb3f539cf95c2cf52259b45bd072bf",
+          "sha256": "22fde9b24ddc97453c105ad7f2d76070a26c74ac930b2205bdcb3f17b3edef51",
           "anchor": "AsyncURIMatcher::exact(path)"
         },
         {
@@ -10845,7 +10900,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "25910c5c734a383aadf50517894a2609355dcc07d6a44f3084744b6989db2a8c",
+          "sha256": "5d21ed0057e133dc7427a8b1b65349c1ba3d47291c74021d9ee4dd7086fc1bb3",
           "anchor": "const flashRead ="
         },
         {
@@ -10855,7 +10910,7 @@
         },
         {
           "path": "tests/async_http_test.cpp",
-          "sha256": "ade23063c84f60ecb4cedd84f5dc0b5ea61b330303cfaf1478ad174677856300",
+          "sha256": "6e0d54e5b15f8b9a40f3215660dc948ea781c5f171dae5d3b3750b9b453f6ff5",
           "anchor": "Reproduce installed SDK3.12.1"
         },
         {
@@ -11238,7 +11293,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687",
+          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -11389,7 +11444,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "a3649d4116ee20619326e6e0a4d6a0b81ddb0712976a5bbea7decd922a4ad687",
+          "sha256": "e1a4206065cb502f91a53154b41d5ca50a0104af0a4905e59108b83c2fb4544c",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {

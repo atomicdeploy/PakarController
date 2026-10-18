@@ -135,14 +135,14 @@ bool AvrIsp::backup(fs::FS &filesystem, const char *directory) {
       flash.close();
       return fail(F("AVR flash backup write failed"));
     }
-    yield();
+    cooperate();
   }
   flash.flush(); flash.close();
   flash = filesystem.open(flashPath, "r");
   if (!flash || flash.size()!=kFlashBytes) return fail(F("Flash backup could not be reopened"));
   for (uint32_t i=0;i<kFlashBytes;++i) {
     if (flash.read()!=readFlashByte(i)) {flash.close();return fail(F("Stored flash backup mismatch"));}
-    if ((i & 127U)==0) yield();
+    if ((i & 127U)==0) cooperate();
   }
   flash.close();
 
@@ -156,14 +156,14 @@ bool AvrIsp::backup(fs::FS &filesystem, const char *directory) {
       eeprom.close();
       return fail(F("AVR EEPROM backup write failed"));
     }
-    yield();
+    cooperate();
   }
   eeprom.flush(); eeprom.close();
   eeprom = filesystem.open(eepromPath, "r");
   if (!eeprom || eeprom.size()!=kEepromBytes) return fail(F("EEPROM backup could not be reopened"));
   for (uint16_t i=0;i<kEepromBytes;++i) {
     if (eeprom.read()!=readEepromByte(i)) {eeprom.close();return fail(F("Stored EEPROM backup mismatch"));}
-    if ((i & 127U)==0) yield();
+    if ((i & 127U)==0) cooperate();
   }
   eeprom.close();
 
@@ -213,7 +213,7 @@ bool AvrIsp::programFlash(File &image, File &recoveryEeprom,
     return fail(F("A complete durable EEPROM recovery snapshot is required"));
   for (uint16_t i=0;i<kEepromBytes;++i) {
     if (readEepromByte(i)!=savedEeprom[i]) return fail(F("EEPROM changed after recovery snapshot; erase refused"));
-    if ((i & 127U)==0) yield();
+    if ((i & 127U)==0) cooperate();
   }
   // Prove the entire source remains readable before the irreversible erase.
   if (!image.seek(0,SeekSet)) return fail(F("Cannot seek flash image"));
@@ -232,7 +232,7 @@ bool AvrIsp::programFlash(File &image, File &recoveryEeprom,
       for (uint16_t i=0;i<sizeof(preflight);++i)
         if (readFlashByte(base+i)!=preflight[i])
           return fail(F("Flash changed after recovery snapshot; erase refused"));
-      yield();
+      cooperate();
     }
     // MiniCore 328P uses full-swing external crystal LFUSE F7; FF selects
     // the low-power external crystal driver. Neither enables CKDIV8. The
@@ -260,7 +260,7 @@ bool AvrIsp::programFlash(File &image, File &recoveryEeprom,
       for(uint16_t i=0;i<sizeof(preflight);++i)
         if(preflight[i]!=savedEeprom[base+i])
           return fail(F("Armed EEPROM recovery snapshot mismatch; erase refused"));
-      yield();
+      cooperate();
     }
   }
 
@@ -276,7 +276,7 @@ bool AvrIsp::programFlash(File &image, File &recoveryEeprom,
       while((transfer4(0xF0,0,0,0)&1U) && attempts++<20) delay(1);
       if(readEepromByte(i)!=savedEeprom[i]) return fail(F("EEPROM restore mismatch; retained recovery file required"));
     }
-    yield();
+    cooperate();
   }
   image.seek(0, SeekSet);
   uint8_t page[kPageBytes];
@@ -295,7 +295,7 @@ bool AvrIsp::programFlash(File &image, File &recoveryEeprom,
     transfer4(0x4C, static_cast<uint8_t>(pageWord >> 8),
               static_cast<uint8_t>(pageWord), 0x00);
     delay(6);
-    yield();
+    cooperate();
   }
 
   image.seek(0, SeekSet);
@@ -308,7 +308,7 @@ bool AvrIsp::programFlash(File &image, File &recoveryEeprom,
         return fail(F("AVR flash verification mismatch"));
       }
     }
-    yield();
+    cooperate();
   }
   for(uint16_t i=0;i<kEepromBytes;++i)
     if(readEepromByte(i)!=savedEeprom[i]) return fail(F("EEPROM final verification mismatch"));

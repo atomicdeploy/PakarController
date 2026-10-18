@@ -31,22 +31,45 @@ class AvrUart {
     // Stream constructor is intentional: SerialLink::begin must NOT call
     // HardwareSerial::begin again and replace explicit pins/buffer settings.
     link_.begin(kAvrBaud, handler, context);
+    handler_=handler;context_=context;
     started_ = true;
     return true;
   }
   void service() { if (started_) link_.service(); }
   BoardCore::SerialLink &frames() { return link_; }
   uint32_t hardwareErrors() const { return hardwareErrors_.load(std::memory_order_relaxed); }
-  bool started() const { return started_; }
+  bool started() const { return started_ && !raw_; }
+  // The existing UART1 owner lends its Stream, never a second HardwareSerial.
+  // Caller must inhibit framed RX/TX until releaseRaw() on EVERY exit path.
+  Stream *acquireRaw() {
+    if(!started_ || raw_)return nullptr;
+    uart_.flush();while(uart_.available()>0)uart_.read();
+    raw_=true;uart_.updateBaudRate(115200);return &uart_;
+  }
+  void releaseRaw() {
+    if(!raw_)return;
+    uart_.flush();while(uart_.available()>0)uart_.read();
+    uart_.updateBaudRate(kAvrBaud);
+    link_.begin(kAvrBaud,handler_,context_);raw_=false;
+  }
+  void resetFrames() {
+    if(!started_ || raw_)return;
+    uart_.flush();while(uart_.available()>0)uart_.read();
+    link_.begin(kAvrBaud,handler_,context_);
+  }
   void end() {
     uart_.onReceiveError(nullptr);
     uart_.end();
     started_ = false;
+    raw_ = false;
   }
  private:
   HardwareSerial uart_;
   BoardCore::SerialLink link_;
   std::atomic<uint32_t> hardwareErrors_{0};
   bool started_ = false;
+  bool raw_ = false;
+  BoardCore::FrameHandler handler_=nullptr;
+  void *context_=nullptr;
 };
 } // namespace PakarS3

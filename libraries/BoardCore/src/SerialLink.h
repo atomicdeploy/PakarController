@@ -57,6 +57,15 @@ class SerialLink {
     }
   }
 
+  // Explicit maintenance boundary, not ordinary service: retire the captured
+  // hardware-ring occupancy and any partial COBS packet without dispatching.
+  // Bound by entry occupancy; a continuous producer cannot keep us here.
+  void discardInput() {
+    int pending=serial_.available();
+    while(pending-->0)if(serial_.read()<0)break;
+    receiveLength_=0;dropping_=true;
+  }
+
   bool send(uint8_t opcode, uint8_t sequence, const uint8_t *payload = nullptr,
             uint8_t payloadLength = 0) {
     if (payloadLength > Protocol::kMaximumPayload ||

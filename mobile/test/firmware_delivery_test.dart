@@ -16,6 +16,32 @@ import 'package:pakarcontroller/models.dart';
 import 'firmware_test.dart' show MaintenanceClient, jsonResponse, firmwareJob;
 
 void main() {
+  test('Urboot progress is stage-local, boot-bound and awaits application recovery', () {
+    final a = <String, dynamic>{
+      'job_id': 1,
+      'boot_id': 'boot',
+      'method': 'urboot',
+      'phase': 'program_avr',
+      'busy': true,
+      'received_bytes': 128,
+      'expected_bytes': 256,
+    };
+    final s = DeviceStatus({'boot_id': 'boot', 'avr_maintenance': a});
+    expect(FirmwareProgress.observed(s)!.fraction, .5);
+    a['phase'] = 'awaiting_application';
+    expect(FirmwareProgress.observed(s)!.fraction, isNull);
+    a['phase'] = 'complete';
+    a['verified'] = true;
+    expect(FirmwareProgress.observed(s)!.verified, false);
+    a['application_recovered'] = true;
+    expect(FirmwareProgress.observed(s)!.verified, true);
+    a['method'] = 'isp';
+    a['phase'] = 'program_isp';
+    expect(FirmwareProgress.observed(s)!.fraction, isNull);
+    expect(FirmwareProgress.observed(s)!.source, contains('ISP'));
+    s.json['boot_id'] = 'other';
+    expect(FirmwareProgress.observed(s), isNull);
+  });
   test(
     'External board OTA and remote jobs use measured stage-only progress',
     () {

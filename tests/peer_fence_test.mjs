@@ -55,6 +55,20 @@ assert.throws(()=>checkTuiBatch(tui,batch.replace(' || !request.verify(&observed
 const native=read('desktop/src/main.rs');
 assert.match(native,/if self\.command_route\(\) == Some\(Transport::WiFi\)[\s\S]*?self\.configuration_reads.take_due\(\)/,
   'Bounded optional settings dispatch must wait for fresh selected Wi-Fi status, not add offline preflight incidents');
-assert.match(native,/self\.device_settings\.page == 9\s*&& self\.command_route\(\) == Some\(Transport::WiFi\)/,
-  'Remote-job reads must also wait for the selected Wi-Fi peer');
+// Remote progress now arrives in the ordinary, peer-bound status/snapshot.
+// Do not require the deleted Firmware-page HTTP polling condition. Check the
+// actual owner gates and both observation paths instead, including negatives.
+function checkRemoteObservation(source) {
+  const owner=source.indexOf('let Some(event) = current_event(event, &self.endpoint(), &self.serial_port)');
+  const scoped=source.indexOf('Event::ForScope(scope, inner) if scope.current() => *inner',owner);
+  const network=source.indexOf('self.device_settings.remote_job=maintenance::parse_job(s.remote_firmware.clone()).ok()',scoped);
+  const usb=source.indexOf('self.device_settings.remote_job=maintenance::parse_job(snapshot.status.remote_firmware.clone()).ok()',network);
+  assert.ok(owner>=0 && scoped>owner && network>scoped && usb>network,
+    'Remote progress must follow selected route/scope ownership on both transports');
+  assert.doesNotMatch(source,/self\.device_settings\.page\s*==\s*9[\s\S]{0,700}Operation::RemoteStatus/,
+    'Do not restore per-page remote-job polling ahead of realtime status');
+}
+checkRemoteObservation(native);
+assert.throws(()=>checkRemoteObservation(native.replace('let Some(event) = current_event(event, &self.endpoint(), &self.serial_port)','let Some(event) = unbound_event(event)')));
+assert.throws(()=>checkRemoteObservation(native.replace('snapshot.status.remote_firmware.clone()','unrelated_job.clone()')));
 console.log('Peer fence wiring guards passed (source assertions, not hardware/network acceptance).');

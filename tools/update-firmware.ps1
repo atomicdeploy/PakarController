@@ -19,7 +19,9 @@ if($Run){$taskArguments+='--run'}
 # updater deliberately writes progress there; Stop can kill an in-flight upload.
 # Keep its stdout JSON/stderr diagnostics separate and trust the real exit code.
 $taskErrorPreference=$ErrorActionPreference
-$taskNode=(Get-Command node -CommandType Application -ErrorAction Stop).Source
+# Resolve one PATH-preferred executable, not an array joined into a bogus path
+# when both a system Node and the bundled Codex runtime are available.
+$taskNode=@(Get-Command node -CommandType Application -ErrorAction Stop)[0].Source
 $taskNativeExit=$null
 try {
     $ErrorActionPreference='Continue'

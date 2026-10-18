@@ -49,6 +49,23 @@ fn bytes(v: &Value, key: &str) -> Option<u64> {
     v.get(key)?.as_u64()
 }
 pub fn observed(status: &crate::DeviceStatus) -> Option<Observation> {
+    let a=&status.avr_maintenance;
+    if !status.boot_id.is_empty() && a["boot_id"].as_str()==Some(status.boot_id.as_str()) && matches!(a["method"].as_str(),Some("urboot"|"isp"))
+        && (a["busy"]==true || (status.remote_firmware["busy"]!=true && !matches!(status.update["phase"].as_str(),Some("receiving"|"verifying"|"ready-to-reboot"))))
+        && a["job_id"].as_u64().is_some_and(|id|id>0) && a["busy"].is_boolean()
+        && a["phase"].as_str().is_some_and(|p|matches!(p,"queued"|"prepare"|"backup_isp"|"program_isp"|"backup_flash"|"backup_eeprom"|"program_avr"|"verify_flash"|"verify_eeprom"|"awaiting_application"|"complete"|"failed")) {
+        let phase=a["phase"].as_str()?;
+        let done=bytes(a,"received_bytes")?;
+        let total=bytes(a,"expected_bytes")?;
+        if done>total {return None;}
+        let mut p=Observation::transfer(phase,done,Some(total));
+        p.source=format!("AVR · {} #{}",if a["method"]=="isp" {"ISP"}else{"Urboot"},a["job_id"]);
+        p.active=a["busy"]==true;
+        p.verified=phase=="complete" && a["verified"]==true && a["application_recovered"]==true;
+        p.error=a["error"].as_str().unwrap_or_default().to_string();
+        if !matches!(phase,"backup_flash"|"backup_eeprom"|"program_avr"|"verify_flash"|"verify_eeprom"){p.fraction=None;}
+        return Some(p);
+    }
     let local = &status.update;
     if let Some(phase) = local["phase"].as_str().filter(|p| {
         matches!(
@@ -166,6 +183,22 @@ pub fn draw(ui: &mut eframe::egui::Ui, p: &Observation) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn firmware_progress_urboot_requires_same_boot_and_application_recovery() {
+        let mut s=crate::DeviceStatus{boot_id:"boot".into(),..Default::default()};
+        s.avr_maintenance=serde_json::json!({"job_id":1,"boot_id":"boot","method":"urboot","phase":"program_avr","busy":true,"received_bytes":128,"expected_bytes":256});
+        assert_eq!(observed(&s).unwrap().fraction,Some(0.5));
+        s.avr_maintenance["phase"]="awaiting_application".into();
+        assert!(observed(&s).unwrap().fraction.is_none());
+        s.avr_maintenance["phase"]="complete".into();s.avr_maintenance["verified"]=true.into();
+        assert!(!observed(&s).unwrap().verified);
+        s.avr_maintenance["application_recovered"]=true.into();
+        assert!(observed(&s).unwrap().verified);
+        s.avr_maintenance["method"]="isp".into();s.avr_maintenance["phase"]="program_isp".into();
+        assert!(observed(&s).unwrap().fraction.is_none());
+        assert!(observed(&s).unwrap().source.contains("ISP"));
+        s.boot_id="other".into();assert!(observed(&s).is_none());
+    }
     #[test]
     fn firmware_progress_rejects_expired_offer_and_retired_owner_before_upload() {
         let (tx, _) = std::sync::mpsc::channel();

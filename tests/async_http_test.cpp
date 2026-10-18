@@ -5,6 +5,18 @@
 #include <atomic>
 #include <vector>
 int main() {
+  {
+    AsyncHttpService fenced(80);unsigned effects=0;
+    fenced.on("/mutate",HTTP_POST,[&](){++effects;fenced.send(200,"text/plain","done");});
+    auto enqueue=[&](){auto r=std::make_shared<AsyncWebServerRequest>();r->path="/mutate";r->requestMethod=HTTP_POST;
+      assert(fenced.native().dispatch(r.get()));return r;};
+    auto before=enqueue();const auto epoch=fenced.ingressEpoch();
+    fenced.setMaintenanceFence(true);assert(fenced.ingressEpoch()!=epoch);
+    fenced.service();before->connection.poll();assert(before->status==409 && !effects);
+    auto during=enqueue();fenced.setMaintenanceFence(false);
+    fenced.service();during->connection.poll();assert(during->status==409 && !effects);
+    auto after=enqueue();fenced.service();after->connection.poll();assert(after->status==200 && effects==1);
+  }
   // Reproduce installed SDK3.12.1's actual bare-string/first-registration
   // collision, rather than a map lookup that always selects the exact key.
   {

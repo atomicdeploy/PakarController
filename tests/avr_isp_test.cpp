@@ -1,6 +1,8 @@
 #include "../firmware/esp8266/src/AvrIsp.h"
 #include <cassert>
 #include <cstdio>
+static unsigned serviceCalls=0;
+static void service(){++serviceCalls;}
 struct Fixture {
  fs::FS fs;AvrIsp isp{5};
  Fixture(bool eesave=false){
@@ -19,6 +21,9 @@ struct Fixture {
  File armed(){return fs.open("/backup/eeprom-armed.bin","w+");}
 };
 int main(){
+ {Fixture f;f.isp.setServiceCallback(service);assert(f.isp.backup(f.fs,"/callback"));assert(serviceCalls>0);
+  f.isp.setServiceCallback(nullptr);const auto count=serviceCalls;
+  auto image=f.image(),eep=f.recovery();assert(f.isp.programFlash(image,eep));assert(serviceCalls==count);}
  for(bool eesave:{false,true}){
    Fixture f(eesave);const auto before=SPI.eeprom;
    auto image=f.image(),eep=f.recovery();assert(f.isp.programFlash(image,eep));

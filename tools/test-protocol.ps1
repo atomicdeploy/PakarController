@@ -33,6 +33,7 @@ $ispBinary = Join-Path $outputDirectory 'avr_isp_test.exe'
 if ($LASTEXITCODE -ne 0) { throw 'ISP driver compilation failed' }
 & $ispBinary
 if ($LASTEXITCODE -ne 0) { throw 'ISP driver tests failed' }
+& (Join-Path $PSScriptRoot 'test-urboot.ps1')
 $clientBinary = Join-Path $outputDirectory 'client_telemetry_test.exe'
 $jsonInclude = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Arduino/libraries/ArduinoJson/src'
 & g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I $jsonInclude (Join-Path $projectRoot 'tests/client_telemetry_test.cpp') -o $clientBinary

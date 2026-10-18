@@ -24,6 +24,65 @@ class FirmwareProgress {
   String get label => '$source · ${phase.replaceAll('_', ' ')}';
 
   static FirmwareProgress? observed(DeviceStatus status) {
+    final a = status.json['avr_maintenance'];
+    final ota = status.json['update'], remote = status.json['remote_firmware'];
+    final otherActive =
+        (remote is Map && remote['busy'] == true) ||
+        (ota is Map &&
+            {
+              'receiving',
+              'verifying',
+              'ready-to-reboot',
+            }.contains(ota['phase']));
+    if (a is Map &&
+        status.json['boot_id'] is String &&
+        (status.json['boot_id'] as String).isNotEmpty &&
+        (a['busy'] == true || !otherActive) &&
+        a['boot_id'] == status.json['boot_id'] &&
+        {'urboot', 'isp'}.contains(a['method']) &&
+        a['job_id'] is int &&
+        a['job_id'] > 0 &&
+        a['busy'] is bool &&
+        {
+          'queued',
+          'prepare',
+          'backup_isp',
+          'program_isp',
+          'backup_flash',
+          'backup_eeprom',
+          'program_avr',
+          'verify_flash',
+          'verify_eeprom',
+          'awaiting_application',
+          'complete',
+          'failed',
+        }.contains(a['phase'])) {
+      final done = a['received_bytes'], total = a['expected_bytes'];
+      if (done is! int || total is! int || done < 0 || done > total) {
+        return null;
+      }
+      return FirmwareProgress(
+        'AVR · ${a['method'] == 'isp' ? 'ISP' : 'Urboot'} #${a['job_id']}',
+        a['phase'],
+        done,
+        {
+                  'backup_flash',
+                  'backup_eeprom',
+                  'program_avr',
+                  'verify_flash',
+                  'verify_eeprom',
+                }.contains(a['phase']) &&
+                total > 0
+            ? total
+            : null,
+        active: a['busy'],
+        verified:
+            a['phase'] == 'complete' &&
+            a['verified'] == true &&
+            a['application_recovered'] == true,
+        error: a['error'] is String ? a['error'] : '',
+      );
+    }
     final local = status.json['update'];
     if (local is Map &&
         {

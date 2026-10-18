@@ -150,6 +150,8 @@ struct DeviceStatus {
     #[serde(default)]
     remote_firmware: serde_json::Value,
     #[serde(default)]
+    avr_maintenance: serde_json::Value,
+    #[serde(default)]
     effect: String,
     #[serde(default)]
     pixels: u16,

@@ -15,7 +15,7 @@ struct ArtifactCounterLease {
 void registerArtifactDownload() {
   server.native().on("/file/download",HTTP_GET|HTTP_HEAD,[](AsyncWebServerRequest *request) {
     if(!webAccess.allowed(request) || !WebAccess::sameOrigin(request)){request->send(401);return;}
-    if(remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || server.processing() || artifactReaders>=4) {
+    if(urbootBusy.get() || remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || server.processing() || artifactReaders>=4) {
       request->send(409,"text/plain","Maintenance/storage active");return;
     }
     const String kind=request->arg("artifact");
@@ -51,6 +51,8 @@ void registerArtifactDownload() {
     }
     const char *path=nullptr;
     if(kind=="avr-flash")path="/avr/backup/flash.bin";
+    else if(kind=="urboot-flash")path="/avr/urboot-backup/flash.bin";
+    else if(kind=="urboot-eeprom")path="/avr/urboot-backup/eeprom.bin";
     else if(kind=="avr-eeprom")path="/avr/backup/eeprom.bin";
     else if(kind=="esp-staged")path="/remote/esp.bin";
     else if(kind=="avr-staged")path="/remote/avr.bin";

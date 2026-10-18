@@ -79,8 +79,8 @@ assert.match(sketch, /esp_efuse_mac_get_default\(stationMac\)/,
 assert.match(sketch, /available &= ~BoardCore::Context::Isp/,
   'Disabled ISP must not appear among acknowledged feature IDs');
 assert.match(sketch, /body \+= F\("buffered"\)/);
-assert.match(sketch, /if \(!PAKAR_AVR_LINK_ENABLED\) return false/,
-  'Quiet commissioning cannot send normal AVR UART requests');
+assert.match(sketch, /if \(!PAKAR_AVR_LINK_ENABLED \|\| urbootRawOwned\) return false/,
+  'Quiet commissioning and exclusive raw bootloader ownership cannot send framed AVR requests');
 assert.match(sketch, /avrUart\.begin\(onAvrFrame\)/);
 assert.match(sketch, /PakarS3::AvrUart avrUart/);
 const avrDrain=sketch.slice(sketch.indexOf('void serviceAvrFor(uint32_t durationMs) {'),sketch.indexOf('bool requestAndWaitForAck('));

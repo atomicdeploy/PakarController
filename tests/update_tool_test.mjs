@@ -90,4 +90,6 @@ assert.doesNotMatch(info,/FirmwarePlatform::sketch(?:Size|Md5)\(/,'Progress info
 for(const token of ['X-Pakar-Firmware-Size','X-Pakar-Firmware-MD5','otaUploadedBytes!=otaExpectedBytes','Update.end(true)','otaProgress.advance'])assert.ok(info.includes(token));
 assert.ok(sketch.indexOf('updatePanel.next')>sketch.indexOf('void loop()'));
 assert.ok(sketch.includes('!programmingLatched && !avrUploadOwner,updateText'));
+const wrapper=readFileSync(new URL('../tools/update-firmware.ps1',import.meta.url),'utf8');
+assert.ok(wrapper.includes('@(Get-Command node -CommandType Application -ErrorAction Stop)[0].Source'),'Multiple installed Node runtimes must resolve to one PATH-preferred executable');
 console.log('Automatic updater plan/preflight/admission/no-replay/new-boot/SHA/auth-off and real loopback multipart/fragmented WebSocket fixtures passed. Not physical OTA.');

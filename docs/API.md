@@ -125,6 +125,53 @@ Native CLI-triggered uploads share the tracked file uploader; TUI shows observed
 board update stages. Flutter's ordinary table connection/state is not reset by
 the firmware listener. Actual phone/endpoint/power-loss acceptance is separate.
 
+## AVR programmer paths
+
+The integrated S3 advertises the compiled methods under
+`avr_maintenance.methods`. ISP and UART Urboot share one exclusive, loop-owned
+maintenance job, not separate programmer firmware or a second serial reader.
+Urboot programs the AVR application, not the ESP. ESP self-update remains OTA.
+
+Read `GET /api/avr/maintenance`. To start, POST form fields `method=isp|urboot`,
+`operation=probe|backup|program`, a unique ASCII `request_id` (1–40 letters,
+digits, underscore/hyphen) and `expires_at_ms` from the current board's
+`command_clock_ms + 55000`. Both `X-Pakar-Board` and `X-Pakar-Boot` are
+mandatory. Program also requires the exact complete staged 32768-byte image's
+lowercase `sha256`. Upload it using the existing `/api/avr/image` first.
+Admission is HTTP202, not completion. Poll this same job or observe the normal
+status/WebSocket/USB `avr_maintenance` object. A consumed ID never writes again;
+64 accepted receipts per ESP boot is a finite session budget, not flash wear
+rotation or automatic retries. A reboot changes the required boot pin.
+
+Program first validates source/hash/vector layout and obtains the running AVR's
+durable Prog ACK. As with the existing ISP coordinator, its programming recovery
+capture includes the armed Prog record; normal settings are preserved. Urboot
+backs up and verifies all flash/EEPROM through UART before page writes, checks
+that the candidate's entire384-byte boot region matches the current bootloader,
+rechecks the source digest, writes complete128-byte application pages (page0
+last), then reads all32768 flash and1024 EEPROM bytes back before returning to
+the application and releasing Prog once. It never issues chip erase, EEPROM
+write, fuse write or a boot-region write. Only the reviewed stock MiniCore
+ATmega328P profile is accepted; custom/larger bootloaders require explicit ISP
+review. Raw UART restores38400baud and a fresh COBS parser on every exit.
+
+ISP uses the existing full recovery/EEPROM-preserving erase/program/readback
+driver. Its cooperative callback allows read-only progress requests while reset
+is asserted. No measured byte counter is invented for its indeterminate
+`backup_isp`/`program_isp` stages. ISP may replace the bootloader; no method
+silently writes fuses. Exact same-board/version/profile recovery must follow
+flash/EEPROM verification before terminal success. Failed writes never retry
+or switch methods. `write_attempted`, `programmed`, `verified` and
+`application_recovered` distinguish uncertainty and the separate gates.
+
+ISP captures retain the existing backup downloads. UART captures additionally
+use `GET /file/download?artifact=urboot-flash` or `urboot-eeprom`, with the
+existing finite read lease/Range implementation. Hardware update operations
+require the verified S3 reset/ISP profile; SoftwareSerial is not advertised as
+a reliable Urboot uploader. Dedicated native/mobile method-selection controls,
+UART-dead interrupted-write recovery and power-loss acceptance remain separate;
+the API and shared progress do not certify them.
+
 ## LED output implementation capability
 
 Peers advertising `leds` additionally report optional
