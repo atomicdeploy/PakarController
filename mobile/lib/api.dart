@@ -13,6 +13,7 @@ import 'models.dart';
 import 'board_sound.dart';
 import 'lan_resolver.dart';
 import 'command_wire.dart';
+import 'pixel_diagnostic.dart';
 
 enum ConnectionMethod { network, usb }
 
@@ -111,6 +112,116 @@ class PakarApi {
       _socketReady &&
       _statusAge != null &&
       _statusAge!.elapsedMilliseconds < 2000;
+
+  bool _diagnosticPending = false;
+
+  /// One deliberate full-frame commit on the existing selected-peer socket.
+  /// No reconnect, UDP substitution, delayed write queue or mutation replay.
+  Future<DeviceStatus> pixelDiagnostic(
+    PixelProbe probe, {
+    bool off = false,
+    required bool Function() authorize,
+  }) async {
+    _requireNetwork();
+    if (_diagnosticPending) {
+      throw const FormatException('A diagnostic frame is still pending');
+    }
+    final revision = connectionRevision;
+    final board = _verifiedBoard, boot = _verifiedBoot;
+    void admit() {
+      _requireNetwork();
+      if (board == null ||
+          boot == null ||
+          revision != connectionRevision ||
+          _verifiedBoard != board ||
+          _verifiedBoot != boot ||
+          !authorize()) {
+        throw const StaleConnection();
+      }
+      if (!_socketReady || _channel == null) {
+        throw const FormatException(
+          'Live WebSocket required; no frame was replayed',
+        );
+      }
+    }
+
+    _diagnosticPending = true;
+    try {
+      final frame = probe.frame(off: off);
+      admit();
+      var current = liveFresh ? _latestStatus! : await status();
+      admit();
+      if (!supportsPixelDiagnostic(current) ||
+          current.json['programming_latch'] == true ||
+          (current.json['remote_firmware'] as Map?)?['busy'] == true) {
+        throw const FormatException(
+          'Pixel diagnostics unavailable during programming or updates',
+        );
+      }
+      Future<void> configure(String path, Map<String, String> values) async {
+        admit();
+        current =
+            await fastCommand(path, values, authorize: authorize) ??
+            (() => throw const FormatException(
+              'Acknowledged commands required for diagnostics',
+            ))();
+        admit();
+      }
+
+      if (current.mode != 'cell') {
+        await configure('/api/mode', {'value': 'cell'});
+      }
+      if (current.effect != 'none') {
+        await configure('/api/effect', {'value': 'none'});
+      }
+      if (current.ledOutputEnabled != true ||
+          current.ledOutputMode != 'effects') {
+        await configure('/api/led/output', {
+          'enabled': 'true',
+          'mode': 'effects',
+        });
+      }
+      // Correlated command replies contain actual same-boot output state.
+      // Reuse that or the fresh WS snapshot instead of three HTTP round trips.
+      var prior =
+          (current.json['pixel_frame'] as Map?)?['revision'] ??
+          ((current.json['led_output'] as Map?)?['driver']
+              as Map?)?['revision'];
+      if (prior is! int) {
+        current = DeviceStatus(await _get('/api/status?pixels=1'));
+        admit();
+        _acceptIdentity(current.json);
+        admit();
+        prior = (current.json['pixel_frame'] as Map?)?['revision'];
+      }
+      if (!diagnosticReady(current)) {
+        throw const FormatException('Diagnostic output mode not acknowledged');
+      }
+      final socket = _channel!;
+      for (final packet in diagnosticPackets(frame)) {
+        admit();
+        if (!identical(socket, _channel)) throw const StaleConnection();
+        socket.sink.add(packet);
+      }
+      final clock = Stopwatch()..start();
+      do {
+        final actual = DeviceStatus(await _get('/api/status?pixels=1'));
+        admit();
+        _acceptIdentity(actual.json);
+        admit();
+        if (!diagnosticReady(actual)) throw const OperationUncertain();
+        final next = (actual.json['pixel_frame'] as Map?)?['revision'];
+        if (next != prior && matchesDiagnosticFrame(actual, frame)) {
+          _rememberStatus(actual);
+          return actual;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      } while (clock.elapsed < const Duration(seconds: 8));
+      throw const OperationUncertain();
+    } finally {
+      _diagnosticPending = false;
+    }
+  }
 
   void _rememberStatus(DeviceStatus status) {
     if (status.olderThan(_latestStatus)) return;

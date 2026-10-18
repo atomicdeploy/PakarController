@@ -33,6 +33,15 @@ Devices, connection preferences, device settings, firmware and Android bridge.
 The bridge uses Session/MQTT/WebSocket/Routing navigation with retained drafts.
 Renderer captures use that same application theme rather than a mock palette.
 
+For an acknowledged480-pixel streaming board, open the device context menu →
+Pixel diagnostics. Show or Previous/Next sends a complete black frame with only
+the selected physical pixel (or aligned six-pixel group) coloured. All off sends
+480 black pixels. Custom RGB, direct1–480 entry and boundary-safe1/6 stepping
+are supported. Mode/colour edits alone send nothing; readback is verified before
+reporting success. Disconnect never replays a frame. Closing leaves the last
+frame; use All off first when desired. Phone/optical acceptance remains separate
+from the simulated layout and transport tests.
+
 The Flutter control surface targets Android phones and tablets with the same
 truthful board-state contract as the native and embedded Web interfaces.
 

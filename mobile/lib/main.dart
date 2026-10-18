@@ -20,6 +20,8 @@ import 'device_settings_page.dart';
 import 'devices_page.dart';
 import 'bridge_page.dart';
 import 'firmware_page.dart';
+import 'pixel_diagnostic.dart';
+import 'pixel_diagnostic_page.dart';
 import 'mirroring.dart';
 import 'app_theme.dart';
 import 'workspace_widgets.dart';
@@ -639,12 +641,24 @@ class _ControlShellState extends State<ControlShell>
                             title: Text(
                               target == 'bridge'
                                   ? 'Advanced bridge'
+                                  : target == 'pixels'
+                                  ? 'Pixel diagnostics'
                                   : 'Firmware',
                             ),
                             automaticallyImplyLeading: !locked,
                           ),
                           body: target == 'bridge'
                               ? BridgePage(api: api, observed: () => status)
+                              : target == 'pixels'
+                              ? PixelDiagnosticPage(
+                                  api: api,
+                                  observed: () => status,
+                                  busyChanged: (value) {
+                                    if (context.mounted) {
+                                      update(() => locked = value);
+                                    }
+                                  },
+                                )
                               : FirmwarePage(
                                   api: api,
                                   authorized: (feature) =>
@@ -680,6 +694,15 @@ class _ControlShellState extends State<ControlShell>
                       dense: true,
                       leading: Icon(PakarIcons.cpu),
                       title: Text('Firmware upload / download…'),
+                    ),
+                  ),
+                if (supportsPixelDiagnostic(status) && peer.has('command-ack'))
+                  const PopupMenuItem(
+                    value: 'pixels',
+                    child: ListTile(
+                      dense: true,
+                      leading: Icon(PakarIcons.circuitry),
+                      title: Text('Pixel diagnostics…'),
                     ),
                   ),
                 const PopupMenuItem(

@@ -1,5 +1,28 @@
 # Donor-first preflight receipt
 
+## Mobile deliberate pixel diagnostics
+
+Consulted games-streaming, led-cell-test, mobile-settings and literal donor-audit
+for PCController Project/AddressableLeds.cpp. Read its complete current cpp/header
+through EOF; source hashes match the existing ledger. Reuse the existing native
+pixel_diagnostic.rs, PKAR chunk/commit format and shared Studio Flutter surfaces.
+The AVR register sender and100-pixel limit are intentionally not imported into
+this480-pixel ESP client; the existing concrete omission remains authoritative.
+The same AddressableLeds ledger rows bind mobile source and focused tests.
+
+Analyzer and new unit/widget/real-loopback tests pass. The first aggregate live
+sequence hit the runner's default30s limit after exact RGB readback for wire
+pixels1,6,7. No failed mutation was replayed. A separate explicit all80-off batch
+and static output selection cleared the published480-pixel buffer on the same
+board/boot. The live harness now has120s aggregate budget; per-command deadlines
+are unchanged. A later delayed RGB observation exposed the too-short2s
+confirmation budget: reuse fresh same-boot WS/command snapshots before sending,
+and bound read-only confirmation to8s without adding any mutation replay. A real
+loopback delayed-snapshot regression passes. The next live preflight connection
+closed before its HTTP header; this did not authorize another diagnostic write.
+Full tail/group live sequence remains unverified. Phone installation/physical
+optical acceptance remain separate; no board reset, flash or AVR cue was run.
+
 ## Native board settings and application preferences
 
 Consulted preferences and donor-audit, owning issue4 and the existing settings

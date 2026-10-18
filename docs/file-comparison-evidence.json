@@ -2278,7 +2278,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196"
+          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -2378,7 +2378,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196"
+          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -3813,12 +3813,12 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196",
+      "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052",
       "anchor": "bool _acceptIdentity("
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "f36cbf2bdbb0603d20f12459491c6d91414b7118c30b3c72c775764970e5d664",
+      "sha256": "5dbc28e10037096dfc1b43bf8cccf91fab5bb7831c3705c66f4402fa36545d5d",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -5400,7 +5400,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196",
+          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -6105,7 +6105,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "f36cbf2bdbb0603d20f12459491c6d91414b7118c30b3c72c775764970e5d664",
+          "sha256": "5dbc28e10037096dfc1b43bf8cccf91fab5bb7831c3705c66f4402fa36545d5d",
           "anchor": "Future<bool> _command"
         },
         {
@@ -6274,7 +6274,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196"
+          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -6404,7 +6404,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "f36cbf2bdbb0603d20f12459491c6d91414b7118c30b3c72c775764970e5d664",
+          "sha256": "5dbc28e10037096dfc1b43bf8cccf91fab5bb7831c3705c66f4402fa36545d5d",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -7255,7 +7255,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196"
+          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -7425,7 +7425,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196"
+          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -9769,7 +9769,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196"
+          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -10287,7 +10287,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196",
+          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052",
           "anchor": "final LanResolver resolver;"
         },
         {
@@ -10381,7 +10381,8 @@
         "ESP owns synchronized300ms wall-clock interpolation and one shared published frame. Single-cell actions use the same renderer method; static fallback remains immediate. Partial/invalid selections never reach renderer state.",
         "Stress regression reproduced/fixed unrelated committed raw pixels reverting to stale logical targets on an abandoned partial stream. Both renderer modes and10000 full80-cell host batches per mode pass; host CPU timing is not physical throughput.",
         "Complete donor reread at matching raw hash. User cable pattern has a tested80-cell bijection. Board-owned logical80-to1 chase composes one six-pixel-red frame every750ms with no skip/repeat/fades. GPIO and DMA workers sleep between submitted complete frames, with startup black and renderer-owned repair refresh. Physical acceptance remains open.",
-        "Backend selector is now a low-write application-only generated header, not a global compiler define. Plan remains read-only and both backend plans share identical SDK/compiler arguments; same canonical cache and no forced clean. SDK recompilation/cache-hit timing and physical driver acceptance remain separately measured."
+        "Backend selector is now a low-write application-only generated header, not a global compiler define. Plan remains read-only and both backend plans share identical SDK/compiler arguments; same canonical cache and no forced clean. SDK recompilation/cache-hit timing and physical driver acceptance remain separately measured.",
+        "Mobile pixel diagnostics adapts clear/stage/show through the existing desktop PKAR frame format: single pixel or six aligned pixels, arbitrary RGB, bounded previous/next/direct position, full480 black on every move and All off. Same-board/boot acknowledged effects mode, one pending write, exact published RGB/revision readback and no reconnect replay; no AVR sender/timing code copied into Flutter."
       ],
       "targets": [
         {
@@ -10423,6 +10424,21 @@
           "path": "firmware/esp32s3/src/LedOutput.h",
           "sha256": "e755187c4dc3ad6eab478503b646440bd6b89c657090bed7c8542728e1b067d7",
           "anchor": "#if !defined(PAKAR_S3_LED_USE_DMA)"
+        },
+        {
+          "path": "mobile/lib/pixel_diagnostic.dart",
+          "sha256": "d9ab48db39250b301136bdd44c12720b0b6c4183a11f74c8920447a55c07d163",
+          "anchor": "class PixelProbe"
+        },
+        {
+          "path": "mobile/lib/pixel_diagnostic_page.dart",
+          "sha256": "27d467bc29fc609c1e952385e0030f857fc21b30dbedee7b79d7c658270ac7b6",
+          "anchor": "class PixelDiagnosticPage"
+        },
+        {
+          "path": "mobile/lib/api.dart",
+          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052",
+          "anchor": "Future<DeviceStatus> pixelDiagnostic("
         }
       ],
       "omissions": [
@@ -10443,7 +10459,7 @@
         }
       ],
       "remaining": [
-        "Deploy each exact RMT-DMA and non-RMT GPIO candidate; verify board/image/boot/all480 snapshots, then obtain separate PBX/DTMF optical feedback. ASUS8022 refuses. Cable pattern puts logical1 at physical77 and final physical80 at logical61; chase logical80 down to1 visits all80 cells. Host doubles are not physical acceptance."
+        "Physical pixel/group placement and Android phone acceptance remain open. Mobile widgets and loopback transport are separate evidence from board buffer and optical correctness; no donor-wide completion is implied."
       ],
       "proof": [
         {
@@ -10470,6 +10486,21 @@
           "path": "tests/build_storage_test.ps1",
           "sha256": "e76f7b0ff6cd0155bd8c00f3f243c9e680d9e6c0e8317c285bbabbe1302cf864",
           "anchor": "$taskStaticS3"
+        },
+        {
+          "path": "mobile/test/pixel_diagnostic_test.dart",
+          "sha256": "2d205af990951f22575dc6629258b5272d662d3265542d1702590e4adc835a57",
+          "anchor": "Every raw position clears"
+        },
+        {
+          "path": "mobile/test/pixel_diagnostic_page_test.dart",
+          "sha256": "f0f1e848b75fd4f4eb99a7c43c9917d01890959e51a8a59d8b0ffa381902c25e",
+          "anchor": "Pending writes cannot repeat"
+        },
+        {
+          "path": "mobile/test/pixel_diagnostic_transport_test.dart",
+          "sha256": "253d183118520a978fbea6b6470cca2917fe6b45688bf6982601fbe86825f152",
+          "anchor": "one complete frame, no replay"
         }
       ],
       "improvement": "One validated atomic board intent replaces client fan-out, without duplicating the effects engine or changing API generations."
@@ -10485,7 +10516,8 @@
         "ESP owns synchronized300ms wall-clock interpolation and one shared published frame. Single-cell actions use the same renderer method; static fallback remains immediate. Partial/invalid selections never reach renderer state.",
         "Stress regression reproduced/fixed unrelated committed raw pixels reverting to stale logical targets on an abandoned partial stream. Both renderer modes and10000 full80-cell host batches per mode pass; host CPU timing is not physical throughput.",
         "Complete donor reread at matching raw hash. User cable pattern has a tested80-cell bijection. Board-owned logical80-to1 chase composes one six-pixel-red frame every750ms with no skip/repeat/fades. GPIO and DMA workers sleep between submitted complete frames, with startup black and renderer-owned repair refresh. Physical acceptance remains open.",
-        "Backend selector is now a low-write application-only generated header, not a global compiler define. Plan remains read-only and both backend plans share identical SDK/compiler arguments; same canonical cache and no forced clean. SDK recompilation/cache-hit timing and physical driver acceptance remain separately measured."
+        "Backend selector is now a low-write application-only generated header, not a global compiler define. Plan remains read-only and both backend plans share identical SDK/compiler arguments; same canonical cache and no forced clean. SDK recompilation/cache-hit timing and physical driver acceptance remain separately measured.",
+        "Mobile pixel diagnostics adapts clear/stage/show through the existing desktop PKAR frame format: single pixel or six aligned pixels, arbitrary RGB, bounded previous/next/direct position, full480 black on every move and All off. Same-board/boot acknowledged effects mode, one pending write, exact published RGB/revision readback and no reconnect replay; no AVR sender/timing code copied into Flutter."
       ],
       "targets": [
         {
@@ -10527,6 +10559,21 @@
           "path": "firmware/esp32s3/src/LedOutput.h",
           "sha256": "e755187c4dc3ad6eab478503b646440bd6b89c657090bed7c8542728e1b067d7",
           "anchor": "#if !defined(PAKAR_S3_LED_USE_DMA)"
+        },
+        {
+          "path": "mobile/lib/pixel_diagnostic.dart",
+          "sha256": "d9ab48db39250b301136bdd44c12720b0b6c4183a11f74c8920447a55c07d163",
+          "anchor": "class PixelProbe"
+        },
+        {
+          "path": "mobile/lib/pixel_diagnostic_page.dart",
+          "sha256": "27d467bc29fc609c1e952385e0030f857fc21b30dbedee7b79d7c658270ac7b6",
+          "anchor": "class PixelDiagnosticPage"
+        },
+        {
+          "path": "mobile/lib/api.dart",
+          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052",
+          "anchor": "Future<DeviceStatus> pixelDiagnostic("
         }
       ],
       "omissions": [
@@ -10547,7 +10594,7 @@
         }
       ],
       "remaining": [
-        "Deploy each exact RMT-DMA and non-RMT GPIO candidate; verify board/image/boot/all480 snapshots, then obtain separate PBX/DTMF optical feedback. ASUS8022 refuses. Cable pattern puts logical1 at physical77 and final physical80 at logical61; chase logical80 down to1 visits all80 cells. Host doubles are not physical acceptance."
+        "Physical pixel/group placement and Android phone acceptance remain open. Mobile widgets and loopback transport are separate evidence from board buffer and optical correctness; no donor-wide completion is implied."
       ],
       "proof": [
         {
@@ -10574,6 +10621,21 @@
           "path": "tests/build_storage_test.ps1",
           "sha256": "e76f7b0ff6cd0155bd8c00f3f243c9e680d9e6c0e8317c285bbabbe1302cf864",
           "anchor": "$taskStaticS3"
+        },
+        {
+          "path": "mobile/test/pixel_diagnostic_test.dart",
+          "sha256": "2d205af990951f22575dc6629258b5272d662d3265542d1702590e4adc835a57",
+          "anchor": "Every raw position clears"
+        },
+        {
+          "path": "mobile/test/pixel_diagnostic_page_test.dart",
+          "sha256": "f0f1e848b75fd4f4eb99a7c43c9917d01890959e51a8a59d8b0ffa381902c25e",
+          "anchor": "Pending writes cannot repeat"
+        },
+        {
+          "path": "mobile/test/pixel_diagnostic_transport_test.dart",
+          "sha256": "253d183118520a978fbea6b6470cca2917fe6b45688bf6982601fbe86825f152",
+          "anchor": "one complete frame, no replay"
         }
       ],
       "improvement": "One validated atomic board intent replaces client fan-out, without duplicating the effects engine or changing API generations."

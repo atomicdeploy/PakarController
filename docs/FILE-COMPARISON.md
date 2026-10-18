@@ -368,7 +368,7 @@ Verdict: **scoped-improvement**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920
 - Target: `firmware/avr/TonePlayer.cpp:69 [UTF8-LF sha256=0de3422d83061153abb89170ce3ef94a7acb973cc46314d0c9054b92284f5e6d; anchor=startsAt = stepEndsAt_]`.
 - Target: `desktop/src/board_silent.rs:74 [UTF8-LF sha256=c043af00f09e18b54b60399ec725f41a41bb74ec405251d92b70771b00059078; anchor=pub struct Transaction]`.
 - Target: `desktop/src/ui/preferences.rs:94 [UTF8-LF sha256=9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa; anchor=fn board_controls(]`.
-- Target: `mobile/lib/api.dart:496 [UTF8-LF sha256=9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196; anchor=Future<BoardSound> boardSound(]`.
+- Target: `mobile/lib/api.dart:607 [UTF8-LF sha256=19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052; anchor=Future<BoardSound> boardSound(]`.
 - Target: `mobile/lib/board_sound_preferences.dart:10 [UTF8-LF sha256=57fe2fa22ca55ea8c2b7b4da5a6701844775e9b98606c097acb366184d39aa42; anchor=class BoardSoundPreferences]`.
 - Target: `firmware/esp8266/src/WebUi.h:1051 [UTF8-LF sha256=3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20; anchor=async function boardSoundTransaction(]`.
 - Target: `firmware/avr/BootMelody.cpp:36 [UTF8-LF sha256=f163fcef8c0647ce0f0696c219b5d178e8815ff3df82bf2c5dec6c5c11400433; anchor=case kCueAttention:]`.
@@ -402,7 +402,7 @@ Verdict: **scoped-improvement**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920
 - Target: `firmware/avr/TonePlayer.cpp:69 [UTF8-LF sha256=0de3422d83061153abb89170ce3ef94a7acb973cc46314d0c9054b92284f5e6d; anchor=startsAt = stepEndsAt_]`.
 - Target: `desktop/src/board_silent.rs:74 [UTF8-LF sha256=c043af00f09e18b54b60399ec725f41a41bb74ec405251d92b70771b00059078; anchor=pub struct Transaction]`.
 - Target: `desktop/src/ui/preferences.rs:94 [UTF8-LF sha256=9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa; anchor=fn board_controls(]`.
-- Target: `mobile/lib/api.dart:496 [UTF8-LF sha256=9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196; anchor=Future<BoardSound> boardSound(]`.
+- Target: `mobile/lib/api.dart:607 [UTF8-LF sha256=19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052; anchor=Future<BoardSound> boardSound(]`.
 - Target: `mobile/lib/board_sound_preferences.dart:10 [UTF8-LF sha256=57fe2fa22ca55ea8c2b7b4da5a6701844775e9b98606c097acb366184d39aa42; anchor=class BoardSoundPreferences]`.
 - Target: `firmware/esp8266/src/WebUi.h:1051 [UTF8-LF sha256=3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20; anchor=async function boardSoundTransaction(]`.
 - Target: `firmware/avr/BootMelody.cpp:36 [UTF8-LF sha256=f163fcef8c0647ce0f0696c219b5d178e8815ff3df82bf2c5dec6c5c11400433; anchor=case kCueAttention:]`.
@@ -487,11 +487,15 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp8266/esp8266.ino:787 [UTF8-LF sha256=c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f; anchor=uint8_t defaultPhysicalCell]`.
 - Target: `tools/build-firmware.ps1:15 [UTF8-LF sha256=2325761e24a71b40602a48df3f8cb605f9cd25ea537bbd62a1a846bfff32e3d7; anchor=CellChaseOnBoot]`.
 - Target: `firmware/esp32s3/src/LedOutput.h:12 [UTF8-LF sha256=e755187c4dc3ad6eab478503b646440bd6b89c657090bed7c8542728e1b067d7; anchor=#if !defined(PAKAR_S3_LED_USE_DMA)]`.
+- Target: `mobile/lib/pixel_diagnostic.dart:20 [UTF8-LF sha256=d9ab48db39250b301136bdd44c12720b0b6c4183a11f74c8920447a55c07d163; anchor=class PixelProbe]`.
+- Target: `mobile/lib/pixel_diagnostic_page.dart:13 [UTF8-LF sha256=27d467bc29fc609c1e952385e0030f857fc21b30dbedee7b79d7c658270ac7b6; anchor=class PixelDiagnosticPage]`.
+- Target: `mobile/lib/api.dart:120 [UTF8-LF sha256=19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052; anchor=Future<DeviceStatus> pixelDiagnostic(]`.
 - Retained: Actual canonical complete AddressableLeds source/header read through EOF, including staged RGB versus show ownership. The selection adapter validates all80 cells before one loop-owned state mutation; no per-cell network pacing, show calls, persistence or AVR fan-out. This is a scoped adaptation of stage/show discipline, not a copied AVR timing sender.
 - Retained: ESP owns synchronized300ms wall-clock interpolation and one shared published frame. Single-cell actions use the same renderer method; static fallback remains immediate. Partial/invalid selections never reach renderer state.
 - Retained: Stress regression reproduced/fixed unrelated committed raw pixels reverting to stale logical targets on an abandoned partial stream. Both renderer modes and10000 full80-cell host batches per mode pass; host CPU timing is not physical throughput.
 - Retained: Complete donor reread at matching raw hash. User cable pattern has a tested80-cell bijection. Board-owned logical80-to1 chase composes one six-pixel-red frame every750ms with no skip/repeat/fades. GPIO and DMA workers sleep between submitted complete frames, with startup black and renderer-owned repair refresh. Physical acceptance remains open.
 - Retained: Backend selector is now a low-write application-only generated header, not a global compiler define. Plan remains read-only and both backend plans share identical SDK/compiler arguments; same canonical cache and no forced clean. SDK recompilation/cache-hit timing and physical driver acceptance remain separately measured.
+- Retained: Mobile pixel diagnostics adapts clear/stage/show through the existing desktop PKAR frame format: single pixel or six aligned pixels, arbitrary RGB, bounded previous/next/direct position, full480 black on every move and All off. Same-board/boot acknowledged effects mode, one pending write, exact published RGB/revision readback and no reconnect replay; no AVR sender/timing code copied into Flutter.
 - Omitted/replaced code: `Fixed AVR D6/PORTD assembly, 16MHz interrupt masking, MacroQueue workspace and100-pixel/8-bit strip configuration`. Disposition: **replaced**. Reason: The final480-pixel renderer belongs to the ESP32-S3 GPIO4 (or ESP8266D2), not a second AVR strip. Reusing AVR registers/timing or truncating to100 pixels would conflict with confirmed hardware and memory ownership. Existing bounded PC contract remains a separate compatibility window.
 - Omitted/replaced code: `Donor native HAL showStrip and feature-profile brightness/renderedPixels buffers`. Disposition: **replaced**. Reason: The existing ESP output worker owns wire encoding/brightness and complete immutable frame copies. Host doubles test logical RGB and wire encoding separately; there is no second donor native HAL or duplicate brightness scale.
 - Omitted/replaced code: `Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness`. Disposition: **pending**. Reason: Bulk atomicity and host tests cannot establish an electrical waveform. Actual SDK uses interrupt-refilled two-node RMT DMA; a reported completed transaction/error0 is not proof against underrun. Wi-Fi optical stress and observed white-to-red transitions remain open.
@@ -500,8 +504,11 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `tests/led_worker_test.cpp:144 [UTF8-LF sha256=14d5d26beaece90170f70dd6bb88a12903e0793c528ccc5900ecd9e49fccdca9; anchor=void functional()]`.
 - Test-code evidence: `tests/cell_chase_wiring_test.mjs:8 [UTF8-LF sha256=21be7ec602e730dbb1cac8ef00f409fd414ca8674fbf1c67d75229d887db1ae7; anchor=const preset=]`.
 - Test-code evidence: `tests/build_storage_test.ps1:41 [UTF8-LF sha256=e76f7b0ff6cd0155bd8c00f3f243c9e680d9e6c0e8317c285bbabbe1302cf864; anchor=$taskStaticS3]`.
+- Test-code evidence: `mobile/test/pixel_diagnostic_test.dart:7 [UTF8-LF sha256=2d205af990951f22575dc6629258b5272d662d3265542d1702590e4adc835a57; anchor=Every raw position clears]`.
+- Test-code evidence: `mobile/test/pixel_diagnostic_page_test.dart:142 [UTF8-LF sha256=f0f1e848b75fd4f4eb99a7c43c9917d01890959e51a8a59d8b0ffa381902c25e; anchor=Pending writes cannot repeat]`.
+- Test-code evidence: `mobile/test/pixel_diagnostic_transport_test.dart:97 [UTF8-LF sha256=253d183118520a978fbea6b6470cca2917fe6b45688bf6982601fbe86825f152; anchor=one complete frame, no replay]`.
 - Scoped advantage: One validated atomic board intent replaces client fan-out, without duplicating the effects engine or changing API generations.
-- Remaining: Deploy each exact RMT-DMA and non-RMT GPIO candidate; verify board/image/boot/all480 snapshots, then obtain separate PBX/DTMF optical feedback. ASUS8022 refuses. Cable pattern puts logical1 at physical77 and final physical80 at logical61; chase logical80 down to1 visits all80 cells. Host doubles are not physical acceptance.
+- Remaining: Physical pixel/group placement and Android phone acceptance remain open. Mobile widgets and loopback transport are separate evidence from board buffer and optical correctness; no donor-wide completion is implied.
 
 ### PCController: `Project/AddressableLeds.h`
 
@@ -515,11 +522,15 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp8266/esp8266.ino:787 [UTF8-LF sha256=c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f; anchor=uint8_t defaultPhysicalCell]`.
 - Target: `tools/build-firmware.ps1:15 [UTF8-LF sha256=2325761e24a71b40602a48df3f8cb605f9cd25ea537bbd62a1a846bfff32e3d7; anchor=CellChaseOnBoot]`.
 - Target: `firmware/esp32s3/src/LedOutput.h:12 [UTF8-LF sha256=e755187c4dc3ad6eab478503b646440bd6b89c657090bed7c8542728e1b067d7; anchor=#if !defined(PAKAR_S3_LED_USE_DMA)]`.
+- Target: `mobile/lib/pixel_diagnostic.dart:20 [UTF8-LF sha256=d9ab48db39250b301136bdd44c12720b0b6c4183a11f74c8920447a55c07d163; anchor=class PixelProbe]`.
+- Target: `mobile/lib/pixel_diagnostic_page.dart:13 [UTF8-LF sha256=27d467bc29fc609c1e952385e0030f857fc21b30dbedee7b79d7c658270ac7b6; anchor=class PixelDiagnosticPage]`.
+- Target: `mobile/lib/api.dart:120 [UTF8-LF sha256=19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052; anchor=Future<DeviceStatus> pixelDiagnostic(]`.
 - Retained: Actual canonical complete AddressableLeds source/header read through EOF, including staged RGB versus show ownership. The selection adapter validates all80 cells before one loop-owned state mutation; no per-cell network pacing, show calls, persistence or AVR fan-out. This is a scoped adaptation of stage/show discipline, not a copied AVR timing sender.
 - Retained: ESP owns synchronized300ms wall-clock interpolation and one shared published frame. Single-cell actions use the same renderer method; static fallback remains immediate. Partial/invalid selections never reach renderer state.
 - Retained: Stress regression reproduced/fixed unrelated committed raw pixels reverting to stale logical targets on an abandoned partial stream. Both renderer modes and10000 full80-cell host batches per mode pass; host CPU timing is not physical throughput.
 - Retained: Complete donor reread at matching raw hash. User cable pattern has a tested80-cell bijection. Board-owned logical80-to1 chase composes one six-pixel-red frame every750ms with no skip/repeat/fades. GPIO and DMA workers sleep between submitted complete frames, with startup black and renderer-owned repair refresh. Physical acceptance remains open.
 - Retained: Backend selector is now a low-write application-only generated header, not a global compiler define. Plan remains read-only and both backend plans share identical SDK/compiler arguments; same canonical cache and no forced clean. SDK recompilation/cache-hit timing and physical driver acceptance remain separately measured.
+- Retained: Mobile pixel diagnostics adapts clear/stage/show through the existing desktop PKAR frame format: single pixel or six aligned pixels, arbitrary RGB, bounded previous/next/direct position, full480 black on every move and All off. Same-board/boot acknowledged effects mode, one pending write, exact published RGB/revision readback and no reconnect replay; no AVR sender/timing code copied into Flutter.
 - Omitted/replaced code: `Fixed AVR D6/PORTD assembly, 16MHz interrupt masking, MacroQueue workspace and100-pixel/8-bit strip configuration`. Disposition: **replaced**. Reason: The final480-pixel renderer belongs to the ESP32-S3 GPIO4 (or ESP8266D2), not a second AVR strip. Reusing AVR registers/timing or truncating to100 pixels would conflict with confirmed hardware and memory ownership. Existing bounded PC contract remains a separate compatibility window.
 - Omitted/replaced code: `Donor native HAL showStrip and feature-profile brightness/renderedPixels buffers`. Disposition: **replaced**. Reason: The existing ESP output worker owns wire encoding/brightness and complete immutable frame copies. Host doubles test logical RGB and wire encoding separately; there is no second donor native HAL or duplicate brightness scale.
 - Omitted/replaced code: `Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness`. Disposition: **pending**. Reason: Bulk atomicity and host tests cannot establish an electrical waveform. Actual SDK uses interrupt-refilled two-node RMT DMA; a reported completed transaction/error0 is not proof against underrun. Wi-Fi optical stress and observed white-to-red transitions remain open.
@@ -528,8 +539,11 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `tests/led_worker_test.cpp:144 [UTF8-LF sha256=14d5d26beaece90170f70dd6bb88a12903e0793c528ccc5900ecd9e49fccdca9; anchor=void functional()]`.
 - Test-code evidence: `tests/cell_chase_wiring_test.mjs:8 [UTF8-LF sha256=21be7ec602e730dbb1cac8ef00f409fd414ca8674fbf1c67d75229d887db1ae7; anchor=const preset=]`.
 - Test-code evidence: `tests/build_storage_test.ps1:41 [UTF8-LF sha256=e76f7b0ff6cd0155bd8c00f3f243c9e680d9e6c0e8317c285bbabbe1302cf864; anchor=$taskStaticS3]`.
+- Test-code evidence: `mobile/test/pixel_diagnostic_test.dart:7 [UTF8-LF sha256=2d205af990951f22575dc6629258b5272d662d3265542d1702590e4adc835a57; anchor=Every raw position clears]`.
+- Test-code evidence: `mobile/test/pixel_diagnostic_page_test.dart:142 [UTF8-LF sha256=f0f1e848b75fd4f4eb99a7c43c9917d01890959e51a8a59d8b0ffa381902c25e; anchor=Pending writes cannot repeat]`.
+- Test-code evidence: `mobile/test/pixel_diagnostic_transport_test.dart:97 [UTF8-LF sha256=253d183118520a978fbea6b6470cca2917fe6b45688bf6982601fbe86825f152; anchor=one complete frame, no replay]`.
 - Scoped advantage: One validated atomic board intent replaces client fan-out, without duplicating the effects engine or changing API generations.
-- Remaining: Deploy each exact RMT-DMA and non-RMT GPIO candidate; verify board/image/boot/all480 snapshots, then obtain separate PBX/DTMF optical feedback. ASUS8022 refuses. Cable pattern puts logical1 at physical77 and final physical80 at logical61; chase logical80 down to1 visits all80 cells. Host doubles are not physical acceptance.
+- Remaining: Physical pixel/group placement and Android phone acceptance remain open. Mobile widgets and loopback transport are separate evidence from board buffer and optical correctness; no donor-wide completion is implied.
 
 ### PCController: `Project/AutomationStore.cpp`
 
@@ -657,7 +671,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp8266/src/LedPreferences.h:28 [UTF8-LF sha256=bb0a86a9b0506953270c5bf58f0fb9a49d5e6990b67f3adbd1b22d7e3a71d6cc; anchor=inline bool applyLedBootPreferences(]`.
 - Target: `desktop/src/board_silent.rs:74 [UTF8-LF sha256=c043af00f09e18b54b60399ec725f41a41bb74ec405251d92b70771b00059078; anchor=pub struct Transaction]`.
 - Target: `desktop/src/ui/preferences.rs:94 [UTF8-LF sha256=9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa; anchor=fn board_controls(]`.
-- Target: `mobile/lib/api.dart:496 [UTF8-LF sha256=9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196; anchor=Future<BoardSound> boardSound(]`.
+- Target: `mobile/lib/api.dart:607 [UTF8-LF sha256=19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052; anchor=Future<BoardSound> boardSound(]`.
 - Target: `mobile/lib/board_sound_preferences.dart:10 [UTF8-LF sha256=57fe2fa22ca55ea8c2b7b4da5a6701844775e9b98606c097acb366184d39aa42; anchor=class BoardSoundPreferences]`.
 - Target: `firmware/esp8266/src/WebUi.h:1051 [UTF8-LF sha256=3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20; anchor=async function boardSoundTransaction(]`.
 - Target: `desktop/src/ui/device_settings.rs:34 [UTF8-LF sha256=cf3341a88c16e7d50f66b6ed9d13476048ce56573c7f98ddccc230a59a31a6f7; anchor=fn avr_page(]`.
@@ -690,7 +704,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/board_silent.rs:74 [UTF8-LF sha256=c043af00f09e18b54b60399ec725f41a41bb74ec405251d92b70771b00059078; anchor=pub struct Transaction]`.
 - Target: `desktop/src/ui/preferences.rs:94 [UTF8-LF sha256=9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa; anchor=fn board_controls(]`.
-- Target: `mobile/lib/api.dart:496 [UTF8-LF sha256=9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196; anchor=Future<BoardSound> boardSound(]`.
+- Target: `mobile/lib/api.dart:607 [UTF8-LF sha256=19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052; anchor=Future<BoardSound> boardSound(]`.
 - Target: `mobile/lib/board_sound_preferences.dart:10 [UTF8-LF sha256=57fe2fa22ca55ea8c2b7b4da5a6701844775e9b98606c097acb366184d39aa42; anchor=class BoardSoundPreferences]`.
 - Target: `firmware/esp8266/src/WebUi.h:1051 [UTF8-LF sha256=3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20; anchor=async function boardSoundTransaction(]`.
 - Target: `desktop/src/ui/device_settings.rs:34 [UTF8-LF sha256=cf3341a88c16e7d50f66b6ed9d13476048ce56573c7f98ddccc230a59a31a6f7; anchor=fn avr_page(]`.
@@ -823,7 +837,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/board_silent.rs:74 [UTF8-LF sha256=c043af00f09e18b54b60399ec725f41a41bb74ec405251d92b70771b00059078; anchor=pub struct Transaction]`.
 - Target: `desktop/src/ui/preferences.rs:94 [UTF8-LF sha256=9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa; anchor=fn board_controls(]`.
-- Target: `mobile/lib/api.dart:496 [UTF8-LF sha256=9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196; anchor=Future<BoardSound> boardSound(]`.
+- Target: `mobile/lib/api.dart:607 [UTF8-LF sha256=19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052; anchor=Future<BoardSound> boardSound(]`.
 - Target: `mobile/lib/board_sound_preferences.dart:10 [UTF8-LF sha256=57fe2fa22ca55ea8c2b7b4da5a6701844775e9b98606c097acb366184d39aa42; anchor=class BoardSoundPreferences]`.
 - Target: `firmware/esp8266/src/WebUi.h:1051 [UTF8-LF sha256=3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20; anchor=async function boardSoundTransaction(]`.
 - Retained: Reread complete donor source through EOF. Adapt MCU-owned persistent Silent bit independent of host/Windows notification audio, capability-acknowledged controls, explicit unknown/pending/verified states and full-record preservation. Native Preferences Board page uses existing PCController GET/SET/GET with real AVR ACK and persistent readback over the selected fenced HTTP or USB owner only; Web and Flutter Preferences use the same living contract. No unsupported buzzer is invented, no automatic uncertain mutation replay, and unchanged persisted flags skip EEPROM writes.
@@ -929,7 +943,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `8dec2b65850f9bfecf71c510f9f29392cc09def0e9590568d61ae982707cb4d7`.
 
 - Target: `mobile/lib/lan_resolver.dart:8 [UTF8-LF sha256=9ce265e715ceb270aecbf190ef8220d42a232943a5e89684dcd66dace61f72fc; anchor=class LanResolver]`.
-- Target: `mobile/lib/api.dart:102 [UTF8-LF sha256=9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196; anchor=final LanResolver resolver;]`.
+- Target: `mobile/lib/api.dart:103 [UTF8-LF sha256=19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052; anchor=final LanResolver resolver;]`.
 - Target: `mobile/lib/discovery.dart:97 [UTF8-LF sha256=86c9dd8e8db1358a576addbf1456e2f56855bb49eea50660ae54181b04e786d3; anchor=class DiscoveryCatalog]`.
 - Target: `mobile/lib/devices_page.dart:20 [UTF8-LF sha256=b3ff941cededcdff779f369f63c8131acf3f5776ef5af79ea33afa0401ae4a4e; anchor=catalog]`.
 - Retained: Actual complete donor resolver and tests read from canonical PCController; adapted successful-address caching, retaining URL hostname/HTTP Host/TLS SNI rather than replacing the public identity with an IP.
@@ -986,8 +1000,8 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `1311fdcde94b2ef8ed06db63ff874a255c135dc1969709e6f43ff4b5c5c8235b`.
 
 - Target: `desktop/src/terminal_ui.rs:765 [UTF8-LF sha256=cde3747be84b54a5a59894b73a07fb019b45cb103c58a1a8cfa0a7b968de13d5; anchor=fn command_request(]`.
-- Target: `mobile/lib/api.dart:469 [UTF8-LF sha256=9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196; anchor=bool _acceptIdentity(]`.
-- Target: `mobile/lib/main.dart:94 [UTF8-LF sha256=f36cbf2bdbb0603d20f12459491c6d91414b7118c30b3c72c775764970e5d664; anchor=api.onPeerChanged = ()]`.
+- Target: `mobile/lib/api.dart:580 [UTF8-LF sha256=19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052; anchor=bool _acceptIdentity(]`.
+- Target: `mobile/lib/main.dart:96 [UTF8-LF sha256=5dbc28e10037096dfc1b43bf8cccf91fab5bb7831c3705c66f4402fa36545d5d; anchor=api.onPeerChanged = ()]`.
 - Target: `mobile/lib/bridge.dart:316 [UTF8-LF sha256=4fd40d999691968be1d32826a925a4bb221a5bd102c2a237ed947f6bf37b2be9; anchor=watchdog = Timer.periodic]`.
 - Target: `libraries/BoardCore/src/PeerFence.h:31 [UTF8-LF sha256=9f1ab63252bd881d2fc786e230a18db331e66708a1bd3ccd0f096d2d2b5d49d5; anchor=inline bool accepts(]`.
 - Target: `firmware/esp8266/src/WebAccess.h:68 [UTF8-LF sha256=7d5f61dd41c18aa9e74857e60f187c28be8e3902022ed4accad57f75a9384b5a; anchor=bool peerAllowed(]`.
@@ -1121,7 +1135,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/capabilities.rs:43 [UTF8-LF sha256=094ec11b7f8ae8ea378e54c300c8ff218c323b987b1f882bd2fc3da84e433810; anchor=pub fn has(]`.
 - Target: `mobile/lib/peer_context.dart:35 [UTF8-LF sha256=29034a2318fe2af639db62328637b4c37580e1d7986b8e989820069a88d1db07; anchor=static PeerContext fromStatus]`.
-- Target: `mobile/lib/main.dart:368 [UTF8-LF sha256=f36cbf2bdbb0603d20f12459491c6d91414b7118c30b3c72c775764970e5d664; anchor=Future<bool> _command]`.
+- Target: `mobile/lib/main.dart:370 [UTF8-LF sha256=5dbc28e10037096dfc1b43bf8cccf91fab5bb7831c3705c66f4402fa36545d5d; anchor=Future<bool> _command]`.
 - Target: `libraries/BoardCore/src/DeviceContext.h:30 [UTF8-LF sha256=3e940f4ee3d09c482486b7321648f776ae6c480e92aaa564beb5dca12d9bfbfa; anchor=inline uint16_t features(]`.
 - Target: `firmware/esp8266/src/WebUi.h:733 [UTF8-LF sha256=3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20; anchor=function peerAvailability(]`.
 - Retained: Actual connected AND have_status AND advertised-capability conjunction adapted to selected-peer fresh manifests. No feature inference from hostname, pixel count, catalog, defaults or online alone.
@@ -1473,7 +1487,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `desktop/src/brand_image.rs:25 [UTF8-LF sha256=ab71607dcde16d7af14b0a292982f902186dacf6b5b78b3f4c983e37464428e9; anchor=pub fn native_icon_bytes]`.
 - Target: `docs/BRANDING-PARITY.md:60 [UTF8-LF sha256=0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3; anchor=## Explicit unfinished useful code and reasons]`.
 - Target: `desktop/src/branding.rs:8 [UTF8-LF sha256=100940d0ee954ecfeb059dba83245c37c4e1e325d9309c7c82870e4eb870870a; anchor=pub fn sync_peer]`.
-- Target: `mobile/lib/main.dart:583 [UTF8-LF sha256=f36cbf2bdbb0603d20f12459491c6d91414b7118c30b3c72c775764970e5d664; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
+- Target: `mobile/lib/main.dart:585 [UTF8-LF sha256=5dbc28e10037096dfc1b43bf8cccf91fab5bb7831c3705c66f4402fa36545d5d; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
 - Target: `mobile/lib/application_artwork.dart:2 [UTF8-LF sha256=a1ee8fc15b0aa9111a5c416fcf74b3d05093b22e47b76d7744837f175f7b5ef4; anchor=const applicationArtworkBase64]`.
 - Retained: Actual icon_data_from_bytes imported unchanged; one embedded PNG supplies native/Web artwork without disk caches.
 - Retained: Actual native_icon_bytes seven-frame ICO encoding/master preservation/Lanczos3 resampling and shell derivative test adapted to shared supplied bytes and PNG-only decoder.
@@ -1539,7 +1553,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `docs/DEVICE-CONTEXT.md:71 [UTF8-LF sha256=ad4669cbe23b48b4f6ee22634c21c015cd5b9767b8006d7316ad04d4ee99648b; anchor=## Exact reuse and remaining useful code]`.
 - Target: `desktop/src/board_silent.rs:74 [UTF8-LF sha256=c043af00f09e18b54b60399ec725f41a41bb74ec405251d92b70771b00059078; anchor=pub struct Transaction]`.
 - Target: `desktop/src/ui/preferences.rs:94 [UTF8-LF sha256=9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa; anchor=fn board_controls(]`.
-- Target: `mobile/lib/api.dart:496 [UTF8-LF sha256=9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196; anchor=Future<BoardSound> boardSound(]`.
+- Target: `mobile/lib/api.dart:607 [UTF8-LF sha256=19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052; anchor=Future<BoardSound> boardSound(]`.
 - Target: `mobile/lib/board_sound_preferences.dart:10 [UTF8-LF sha256=57fe2fa22ca55ea8c2b7b4da5a6701844775e9b98606c097acb366184d39aa42; anchor=class BoardSoundPreferences]`.
 - Target: `firmware/esp8266/src/WebUi.h:1051 [UTF8-LF sha256=3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20; anchor=async function boardSoundTransaction(]`.
 - Retained: Reread all 1280 lines through EOF. Prior authoritative overview/capability/front-panel adaptation remains; shared dropdown dependency is now imported, but full typed board settings and ACK consumers remain pending.
@@ -1847,7 +1861,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt:39 [UTF8-LF sha256=a2b240972900683f5f2622bbe69f47569c0a0bfabee8f66311116f8ae0c6a61e; anchor=Intent.ACTION_OPEN_DOCUMENT]`.
 - Target: `mobile/lib/firmware_page.dart:11 [UTF8-LF sha256=e3e3b343c72164152fc46ea326f2130abd642ec44f446329c6acac67c05a9c3c; anchor=class FirmwarePage]`.
 - Target: `mobile/lib/firmware.dart:114 [UTF8-LF sha256=a9e1ecce00ae674541490e64733accdfc882dcec8ff78d1c594d0ff89d5b9c86; anchor=class FirmwareController]`.
-- Target: `mobile/lib/api.dart:256 [UTF8-LF sha256=9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196; anchor=Future<Uint8List> maintenanceBytes]`.
+- Target: `mobile/lib/api.dart:367 [UTF8-LF sha256=19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052; anchor=Future<Uint8List> maintenanceBytes]`.
 - Retained: Fully read actual typed single-file selection, disabled/unselected/loading state, extension filtering, cancellation, stale-result protection and explicit acceptance. Adapted into Flutter AndroidDocuments + native SAF; firmware imports are validated and separately confirmed before any upload. Parent navigation is locked during maintenance confirmation/picking and writes; selected bytes never automatically program either board.
 - Retained: Canonical Pakar desktop maintenance and actual firmware routes were read, not fabricated mobile endpoints. FirmwareController pins remote job/boot/hash/targets and verifies a fresh identity before apply/cancel; single-dispatch bounded HTTP refuses redirects/replay. FirmwarePage gates each ISP/OTA domain on individual live feature ACK, distinguishes stage/apply/completion, and exposes real full flash/EEPROM exports.
 - Omitted/replaced code: `React/Ant Design modal/table row handlers, server /api/fs/browse, Directory.path/parent_path and AbortController network browse`. Disposition: **replaced**. Reason: Android SAF owns user-granted document navigation, search, single selection and cancellation. ESP has no arbitrary host filesystem browse contract; inventing that endpoint or accepting Windows paths would be incorrect. The native picker reads bounded bytes on its executor; captured board ownership is checked after picker/HTTP awaits. Only a one-use user-created destination token can be exported, with no broad storage permissions.
