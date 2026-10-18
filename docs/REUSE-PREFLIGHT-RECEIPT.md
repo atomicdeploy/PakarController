@@ -4854,3 +4854,38 @@ installation from reviewed pins, but install only ArduinoJson before host tests,
 not any board SDK or the donor's unpinned fallback. The existing canonical JSON
 pin remains authoritative. Workflow-order/no-SDK regression and local LCD fixtures
 pass; CI remains asynchronous. No firmware/app rebuild or deployment for this fix.
+
+ASUS native recovery: the actual session1 owner was connected with80 confirmed
+mappings but only Events in its dock. Disconnected save/startup pruning could
+persist that temporary view as the connected workspace. Preserve the last
+connected layout, cache it before retirement, and migrate the legacy Events-only
+layout once without overriding subsequent explicit panel choices. Continue to
+gate every visible panel on the current board's acknowledged capabilities.
+
+The first live recovery checks exposed additional real failures, not success:
+optional settings transactions flooded the HTTP queue, and cell writes expired.
+Read complete current PCController session.go and Pealayer workspace_profiles.rs;
+the latter's stable user-owned profiles are retained, not replaced by a reset of
+the entire user profile. Adapt actual Session grantNextLocked priority/FIFO for
+unsent native HTTP work, serialize optional settings reads with bounded retry,
+and reuse the fresh worker preflight for atomic cell batches. Keep mutation8s
+expiry, generation revocation, server board/boot fencing and post-ACK readback.
+Separate read24s admission never extends mutation permission or replays writes.
+Only existing consumer/proof hashes were rebound; no unread donor is certified.
+
+Native release a853fbfd291dd36117d94613650400aa9645ba281aabeab1c05118262a9e4d01
+is now the ASUS deploy owner5196 in session1. Settings and the prior executable
+were preserved before graceful IPC replacement, not primary-install overwrite.
+Actual app IPC reconnect restored Table/effect/hardware/network panels and80
+mappings. Under background network-settings loading, cell80 red then white took
+1048ms and4974ms, with two Atomic cell batch ACK/same-board readback events,
+zero active incidents and zero repeated occurrences. Network and cloud settings
+both loaded. Internal framebuffer capture completed and was visually inspected:
+efae0a85f705281fd7f9799b56e540773d51d54e0279060b3a49f01015f77220.
+Private receipts remain on ASUS deploy/asus-priority-* and local outputs.
+20 focused native tests passed across layout, optional reads, HTTP fencing and
+atomic batches; the warm release build passed without rebuilding SDK libraries,
+firmware or APK. This verifies the native/LAN command path, NOT physical LED
+placement/color or production completion. Issue2 stays open. Existing main CI
+39111550290 passes quality/native/Android but fails the separate ESP8266 link
+on missing __atomic_*_4 symbols; that firmware issue is not fixed by native work.

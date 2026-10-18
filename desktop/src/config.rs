@@ -158,6 +158,8 @@ pub struct AppConfig {
     pub connection_method: crate::connection::Method,
     pub connection_enabled: bool,
     pub dock_layout: String,
+    /// One-time recovery of layouts saved by the disconnected-workspace bug.
+    pub dock_context_revision: u8,
     pub workspace_profiles: BTreeMap<String, WorkspaceProfile>,
     pub numeric_steps: BTreeMap<String, NumericInputSteps>,
     pub additive_cell_selection: bool,
@@ -190,6 +192,7 @@ impl Default for AppConfig {
             connection_method: Default::default(),
             connection_enabled: true,
             dock_layout: String::new(),
+            dock_context_revision: 0,
             workspace_profiles: BTreeMap::new(),
             numeric_steps: BTreeMap::new(),
             additive_cell_selection: false,

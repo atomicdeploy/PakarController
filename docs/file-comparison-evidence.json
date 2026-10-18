@@ -3801,7 +3801,8 @@
     "Matched opcode/sequence admission and no-replay principles now also govern actual USB table commands. UI-captured connection stamp, physical-open session, board/boot pin and enqueue time survive the queue unchanged; admission is checked before queueing and before writing. Frozen snapshot chunks validate nonce/token/offset/size, retain capture-start freshness, and a new same-peer capture after ACK verifies requested values. This is a scoped Rust adaptation, not all donor priority/reset/AVR contracts.",
     "Mobile explicit Disconnect retires polling, retries and old live callbacks. Cell/output/mode/effect/brightness mutations require fresh preflight and post-ACK readback; failed confirmation stops bulk without optimistic success. Android direct USB is not implemented or offered as a working connection.",
     "Actual last-published 480-pixel RGB now travels in the same bounded frozen USB capture through the existing Frame parser, with capture-start freshness, matching mapping and current-peer admission. USB readback also synchronizes observed effect; there is no Wi-Fi fallback or fabricated six-pixel preview. This newer source passes197 native tests but is not yet deployed because the ASUS tunnel failed.",
-    "Stress audit fixes same-count foreign receipts: immutable local operation ID, exact selection/state/effect, Pin and route survive HTTP/USB admission/result. UI compares its own correlation; USB rejects payload/admission mismatch. Full donor priority scheduling is not claimed."
+    "Stress audit fixes same-count foreign receipts: immutable local operation ID, exact selection/state/effect, Pin and route survive HTTP/USB admission/result. UI compares its own correlation; USB rejects payload/admission mismatch. Full donor priority scheduling is not claimed.",
+    "Reread the full current Session source for the live ASUS queue failure. Actual grantNextLocked highest-priority/strict-greater FIFO selection is now adapted to a bounded64-entry native HTTP waiting window: foreground commands overtake unsent status/mapping and optional configuration work, without preempting an in-flight request. Mutations retain8s expiry and revocable generation/board/boot fencing; read-only work has a separate24s bound. Atomic batches reuse the worker's fresh preflight rather than running it twice, retaining final admission, one POST, ACK and same-boot readback. This does not import USB sequence allocation, DTR/reset defaults or serial priority scheduling."
   ],
   "targets": [
     {
@@ -3846,12 +3847,12 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8d395dc0d78ea4d45b70ece191a15a727b282af780b2071cb7d2afb180a1cde7",
+      "sha256": "f89cb98caf99fb8e79e0a0478ec0e95e2f3f13d8d1778c87150dd27d853573ab",
       "anchor": "pub fn admit("
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "265a002ee20e7029aa288ce2f3661954ec5efb0051c14a2b4f2885371d6a9c98",
+      "sha256": "a38702ab206a73ecd7361989a1fd5e5d1a3087d9d63a1c087d954f977d1bbcb9",
       "anchor": "fn scoped_http_request("
     },
     {
@@ -3866,7 +3867,7 @@
     },
     {
       "path": "desktop/src/cell_batch.rs",
-      "sha256": "4517ecbed868ea2b51ef87bd33eef85f0a585c098d43cd9e728c6dd233b23cc4",
+      "sha256": "87af5e8af0232ae625f87df38dba85822edbd3d175a2556a550aa5014190adad",
       "anchor": "pub struct Correlation"
     }
   ],
@@ -3889,7 +3890,7 @@
     {
       "code": "WithRequestWriteGuard final transport admission;750ms strip ACK/background priority and active-opcode slot diagnostics",
       "disposition": "pending",
-      "reason": "Selected-method lease checks now precede normal Rust serial write calls, with old physical-owner lease retained until resource drop. Full donor request-priority scheduling, reserved macro sequence and single-inflight opcode/sequence ACK ownership are not imported by that gate; OS-inflight bytes remain non-retractable. Rust USB/PnP close/open cancellation, timing and actual no-network handoff require runtime acceptance."
+      "reason": "Selected-method lease checks precede normal Rust serial writes, retaining the old physical-owner lease until resource drop. Native HTTP now adapts donor queued priority selection, but USB request-priority scheduling, reserved macro sequence and single-inflight opcode/sequence ACK ownership remain pending; OS-inflight bytes are non-retractable. Rust USB/PnP close/open cancellation, timing and no-network handoff still require runtime acceptance."
     }
   ],
   "remaining": [
@@ -3919,12 +3920,12 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8d395dc0d78ea4d45b70ece191a15a727b282af780b2071cb7d2afb180a1cde7",
+      "sha256": "f89cb98caf99fb8e79e0a0478ec0e95e2f3f13d8d1778c87150dd27d853573ab",
       "anchor": "fn gui_revocation_during_preflight_stops_before_write()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8d395dc0d78ea4d45b70ece191a15a727b282af780b2071cb7d2afb180a1cde7",
+      "sha256": "f89cb98caf99fb8e79e0a0478ec0e95e2f3f13d8d1778c87150dd27d853573ab",
       "anchor": "fn gui_revocation_after_dispatch_reports_uncertainty_not_success()"
     },
     {
@@ -3974,7 +3975,7 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8d395dc0d78ea4d45b70ece191a15a727b282af780b2071cb7d2afb180a1cde7",
+      "sha256": "f89cb98caf99fb8e79e0a0478ec0e95e2f3f13d8d1778c87150dd27d853573ab",
       "anchor": "fn gui_settings_pin_every_nested_request_and_verify_same_boot()"
     }
   ],
@@ -4012,22 +4013,22 @@
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8d395dc0d78ea4d45b70ece191a15a727b282af780b2071cb7d2afb180a1cde7",
+      "sha256": "f89cb98caf99fb8e79e0a0478ec0e95e2f3f13d8d1778c87150dd27d853573ab",
       "anchor": "fn gui_preflight_reboot_or_capability_loss_never_dispatches_mutation()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8d395dc0d78ea4d45b70ece191a15a727b282af780b2071cb7d2afb180a1cde7",
+      "sha256": "f89cb98caf99fb8e79e0a0478ec0e95e2f3f13d8d1778c87150dd27d853573ab",
       "anchor": "fn gui_readback_from_new_boot_is_not_applied()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8d395dc0d78ea4d45b70ece191a15a727b282af780b2071cb7d2afb180a1cde7",
+      "sha256": "f89cb98caf99fb8e79e0a0478ec0e95e2f3f13d8d1778c87150dd27d853573ab",
       "anchor": "fn gui_unfenced_mutation_fails_before_network_and_preserves_correlation()"
     },
     {
       "path": "desktop/src/peer_http.rs",
-      "sha256": "8d395dc0d78ea4d45b70ece191a15a727b282af780b2071cb7d2afb180a1cde7",
+      "sha256": "f89cb98caf99fb8e79e0a0478ec0e95e2f3f13d8d1778c87150dd27d853573ab",
       "anchor": "fn gui_server_boot_conflict_is_not_replayed()"
     },
     {
@@ -4342,7 +4343,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "e3b18e258f3da5a9e39dd28059f8b9f8a1268fd9c1ca5431f2ef27c8c488de3a",
+      "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -6206,7 +6207,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "e3b18e258f3da5a9e39dd28059f8b9f8a1268fd9c1ca5431f2ef27c8c488de3a",
+          "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321",
           "anchor": "fn synchronize_context("
         },
         {
@@ -6619,7 +6620,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "e3b18e258f3da5a9e39dd28059f8b9f8a1268fd9c1ca5431f2ef27c8c488de3a",
+          "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -7099,7 +7100,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "e3b18e258f3da5a9e39dd28059f8b9f8a1268fd9c1ca5431f2ef27c8c488de3a",
+          "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -7666,7 +7667,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "e3b18e258f3da5a9e39dd28059f8b9f8a1268fd9c1ca5431f2ef27c8c488de3a",
+          "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -9490,7 +9491,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "265a002ee20e7029aa288ce2f3661954ec5efb0051c14a2b4f2885371d6a9c98",
+          "sha256": "a38702ab206a73ecd7361989a1fd5e5d1a3087d9d63a1c087d954f977d1bbcb9",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -9550,7 +9551,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "e3b18e258f3da5a9e39dd28059f8b9f8a1268fd9c1ca5431f2ef27c8c488de3a",
+          "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321",
           "anchor": "value[\"tray_shell\"]"
         }
       ],
@@ -9595,7 +9596,7 @@
       ],
       "targets": [
         {"path":"desktop/src/connection.rs","sha256":"38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6","anchor":"pub struct Gate"},
-        {"path":"desktop/src/main.rs","sha256":"265a002ee20e7029aa288ce2f3661954ec5efb0051c14a2b4f2885371d6a9c98","anchor":"fn serial_worker("}
+        {"path":"desktop/src/main.rs","sha256":"a38702ab206a73ecd7361989a1fd5e5d1a3087d9d63a1c087d954f977d1bbcb9","anchor":"fn serial_worker("}
       ],
       "omissions": [
         {"code":"Priority/background strip scheduling,750ms ACK bound, active-opcode wait diagnostics and delayed/concurrent exact ACK matching","disposition":"pending","reason":"A mutually exclusive route lease does not implement the donor's one-command-on-wire response scheduler or exact opcode/sequence ACK admission. Preserve these useful serial contracts for the hardware-matched host transport rather than declaring all session tests imported."},
@@ -9605,7 +9606,7 @@
       "proof": [
         {"path":"desktop/src/connection.rs","sha256":"38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6","anchor":"fn handoff_waits_for_all_actual_old_resources_and_rejects_stale_epoch()"},
         {"path":"desktop/src/connection.rs","sha256":"38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6","anchor":"fn usb_offline_never_admits_network_and_disconnect_revokes_everything()"},
-        {"path":"desktop/src/main.rs","sha256":"265a002ee20e7029aa288ce2f3661954ec5efb0051c14a2b4f2885371d6a9c98","anchor":"fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"}
+        {"path":"desktop/src/main.rs","sha256":"a38702ab206a73ecd7361989a1fd5e5d1a3087d9d63a1c087d954f977d1bbcb9","anchor":"fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"}
       ],
       "improvement": "User-required exclusive Wi-Fi-or-USB lifecycle replaces Both rather than silently falling back; physical resources retire before the new method opens. Source evidence only until guarded tests and runtime observations."
     },
@@ -9639,7 +9640,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "e3b18e258f3da5a9e39dd28059f8b9f8a1268fd9c1ca5431f2ef27c8c488de3a"
+          "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321"
         }
       ],
       "omissions": [

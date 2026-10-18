@@ -14,6 +14,7 @@ mod capabilities;
 mod client_telemetry;
 mod cli_output;
 mod config;
+mod configuration_reads;
 mod connection;
 mod device_settings;
 mod diagnostics;
@@ -201,6 +202,16 @@ enum HttpCommand {
 }
 
 impl HttpCommand {
+    // Adapted from PCController Session.requestAdmission.grantNextLocked:
+    // priority only reorders unsent work, never preempts/replays a wire request.
+    fn queue_priority(&self) -> u8 {
+        match self {
+            Self::Scoped(_, inner) => inner.queue_priority(),
+            Self::Configuration(..) => 0,
+            Self::Status(_) | Self::Mapping(..) => 1,
+            _ => 2,
+        }
+    }
     fn is_status(&self) -> bool { match self {Self::Scoped(_, command) => command.is_status(),Self::Status(_) => true,_ => false} }
     fn discoverable_read(&self) -> bool { match self {Self::Scoped(_, command) => command.discoverable_read(),Self::Status(_) | Self::Mapping(..) | Self::Configuration(..) => true,_ => false} }
     fn failure(&self, error: String) -> Event {
@@ -587,7 +598,11 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
 
 fn scoped_http_request(client: &Client, scope: &peer_http::Scope, command: &HttpCommand) -> Result<Event, String> {
     // Adapt donor acquireWrite's checks before AND after waiting/admission.
-    scope.admit()?;
+    let mutating = !matches!(command, HttpCommand::Status(_) | HttpCommand::Mapping(..) | HttpCommand::Configuration(..)
+        | HttpCommand::Maintenance(_, _, maintenance::Operation::RemoteStatus | maintenance::Operation::Download {..})
+        | HttpCommand::PixelReadback(..));
+    let admit = || if mutating { scope.admit() } else { scope.admit_read() };
+    admit()?;
     if matches!(command, HttpCommand::Status(_)) { return http_request(client, command.clone()); }
     if let HttpCommand::PixelReadback(_, _, _, peer) = command {
         if scope.pin.as_ref() != Some(peer) { return Err("Pixel readback peer was revoked".into()); }
@@ -595,13 +610,11 @@ fn scoped_http_request(client: &Client, scope: &peer_http::Scope, command: &Http
         if !scope.current() { return Err("Pixel readback belongs to a retired board; not applied".into()); }
         return Ok(result);
     }
-    let mutating = !matches!(command, HttpCommand::Mapping(..) | HttpCommand::Configuration(..)
-        | HttpCommand::Maintenance(_, _, maintenance::Operation::RemoteStatus | maintenance::Operation::Download {..}));
     if mutating && scope.pin.is_none() { return Err("Read-only: peer has not advertised valid board/boot identity and HTTP fencing".into()); }
     let before = blocking_status(client, command.endpoint())?;
     let observed = peer_http::Pin::from_status(&before);
     if scope.pin != observed { return Err("Board/boot identity changed before dispatch; nothing was sent".into()); }
-    scope.admit()?;
+    admit()?;
     if mutating {
         let allowed = before.capabilities.as_ref().is_some_and(|c| match command {
             HttpCommand::Post(_, path, form) => c.allows(path, form),
@@ -647,14 +660,14 @@ fn scoped_http_request(client: &Client, scope: &peer_http::Scope, command: &Http
         if scope.pin.as_ref()!=Some(&correlation.peer) || correlation.route!=Transport::WiFi {
             return Err("Atomic batch admission does not belong to this peer/route".into());
         }
-        cell_batch::send(pinned.as_ref().unwrap_or(client),endpoint,&correlation.request,Some(&correlation.peer),None,Some(&||scope.admit()))?;
+        cell_batch::send_verified(&before,endpoint,&correlation.request,Some(&correlation.peer),None,Some(&||scope.admit()))?;
         if !scope.current(){return Err("Batch belongs to a retired board; inspect original device, no replay".into());}
         return Ok(Event::CellBatchConfirmed(correlation.clone()));
     }
     if let HttpCommand::Post(endpoint,"/api/cells",form)=command {
         let get=|name:&str|form.iter().find(|(key,_)|key==name).map(|(_,value)|value.as_str()).ok_or_else(||format!("Missing batch {name}"));
         let request=cell_batch::Request::new(&ui::cell_search::parse(get("ids")?)?,get("state")?,get("effect")?)?;
-        let receipt=cell_batch::send(pinned.as_ref().unwrap_or(client),endpoint,&request,scope.pin.as_ref(),None,Some(&||scope.admit()))?;
+        let receipt=cell_batch::send_verified(&before,endpoint,&request,scope.pin.as_ref(),None,Some(&||scope.admit()))?;
         if !scope.current(){return Err("Batch belongs to a retired board; inspect original device, no replay".into());}
         return Ok(Event::Accepted(receipt)); // No UI intent correlation: never complete another batch.
     }
@@ -695,7 +708,20 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
     let mut discovered_base: Option<String> = None;
     let mut requested_base = String::new();
     let mut auth_probe: Option<(u64, String)> = None;
-    while let Ok(command) = commands.recv() {
+    let mut waiting = std::collections::VecDeque::new();
+    loop {
+        if waiting.is_empty() {
+            match commands.recv() { Ok(command) => waiting.push_back(command), Err(_) => break }
+        }
+        while waiting.len() < 64 {
+            match commands.try_recv() { Ok(command) => waiting.push_back(command), Err(_) => break }
+        }
+        // Strictly greater retains FIFO within a priority, like the donor.
+        let mut best = 0;
+        for index in 1..waiting.len() {
+            if waiting[index].queue_priority() > waiting[best].queue_priority() { best = index; }
+        }
+        let command = waiting.remove(best).expect("nonempty HTTP queue");
         let stamp = gate.stamp(Transport::WiFi, gate.epoch());
         let lease = loop {
             if !stamp.current() || matches!(&command, HttpCommand::Scoped(scope, _) if !scope.current()) { break None; }
@@ -1640,6 +1666,7 @@ struct PakarControllerApp {
     last_status_at: Option<Instant>,
     last_serial_status_at: Option<Instant>,
     configuration_loaded: bool,
+    configuration_reads: configuration_reads::Queue,
     tray: Option<platform::windows_tray::TrayController>,
     notifications: std::cell::RefCell<platform::notifications::Delivery>,
     connection_notice: platform::notifications::ConnectionNotice,
@@ -1788,6 +1815,7 @@ impl PakarControllerApp {
             last_status_at: None,
             last_serial_status_at: None,
             configuration_loaded: false,
+            configuration_reads: Default::default(),
             tray: tray.ok().flatten(),
             notifications: Default::default(),
             connection_notice: Default::default(),
@@ -2129,23 +2157,20 @@ impl PakarControllerApp {
         // used to queue ahead of the small mapping read on first connection.
         // Never flood an offline/bootstrap queue with settings preflights.
         // Read-only legacy peers can still load after a fresh Wi-Fi status.
-        if !self.configuration_loaded && self.command_route() == Some(Transport::WiFi) {
-            let _ = self.http_tx.send(HttpCommand::Configuration(
-                self.endpoint(),
-                "/api/network",
-            ));
-            let _ = self.http_tx.send(HttpCommand::Configuration(
-                self.endpoint(),
-                "/api/device/name",
-            ));
-            let _ = self
-                .http_tx
-                .send(HttpCommand::Configuration(self.endpoint(), "/api/cloud"));
+        if !self.configuration_loaded {
+            self.configuration_reads.reset();
             self.configuration_loaded = true;
-            let _ = self.http_tx.send(HttpCommand::Configuration(
-                self.endpoint(),
-                "/api/auth/info",
-            ));
+        }
+        // Auth is already probed by the HTTP worker. Optional settings must not
+        // queue four status-fenced transactions ahead of interactive controls.
+        // Keep one read outstanding, and require the table's initial mapping first.
+        if self.command_route() == Some(Transport::WiFi)
+            && (!self.has_table() || self.mapping_peer == self.live_status().and_then(peer_http::Pin::from_status))
+            && (self.device_settings.open || self.show_connection || self.dock.find_tab(&ui::layout::Panel::Network).is_some())
+            && let Some(path) = self.configuration_reads.take_due() {
+            if self.http_tx.send(HttpCommand::Configuration(self.endpoint(), path)).is_err() {
+                self.configuration_reads.finish(path, false);
+            }
         }
         self.pixel_diagnostic.expire();
         while let Ok(event) = self.event_rx.try_recv() {
@@ -2233,6 +2258,7 @@ impl PakarControllerApp {
                     self.access_info = Some(value);
                 }
                 Event::Configuration(path, value) => {
+                    self.configuration_reads.finish(path, true);
                     if path != "/api/device/name" || self.command_route() != Some(Transport::Serial) {
                         self.receive_configuration(path, value);
                     }
@@ -2398,6 +2424,7 @@ impl PakarControllerApp {
                     self.message = error;
                 }
                 Event::DiagnosticFailure(source, e) => {
+                    self.configuration_reads.failed_source(&source);
                     if source == "HTTP GET /api/status" {
                         // A recoverable HTTP read failure is not a peer change.
                         // Fresh WS/HTTP observations retain the same bound view;

@@ -56,8 +56,14 @@ impl Request {
 pub fn send(client:&reqwest::blocking::Client,endpoint:&Endpoint,request:&Request,
     expected:Option<&peer_http::Pin>,stop:Option<&AtomicBool>,admit:Option<&dyn Fn()->Result<(),String>>)->Result<String,String>{
     let current=crate::blocking_status(client,endpoint)?;
-    let pin=peer_http::Pin::from_status(&current).ok_or("Batch requires verified board/boot identity")?;
-    if expected.is_some_and(|expected|expected!=&pin) || !Request::supported(&current){
+    send_verified(&current,endpoint,request,expected,stop,admit)
+}
+/// Reuse the worker's fresh, same-scope preflight; never do a second status
+/// transaction before the one atomic POST. Admission is still checked at write.
+pub fn send_verified(current:&DeviceStatus,endpoint:&Endpoint,request:&Request,
+    expected:Option<&peer_http::Pin>,stop:Option<&AtomicBool>,admit:Option<&dyn Fn()->Result<(),String>>)->Result<String,String>{
+    let pin=peer_http::Pin::from_status(current).ok_or("Batch requires verified board/boot identity")?;
+    if expected.is_some_and(|expected|expected!=&pin) || !Request::supported(current){
         return Err("Atomic cell batch unavailable for this peer; nothing sent (no per-cell fallback)".into());
     }
     let stopped=||stop.is_some_and(|stop|stop.load(Ordering::Acquire));
@@ -113,6 +119,22 @@ mod tests{
         assert!(requests[1].starts_with("POST /api/cells "));
         assert!(requests[1].contains("ids=1%2C80&state=red&effect=fade"));
         assert!(requests[1].to_lowercase().contains(&format!("x-pakar-boot: {}","a".repeat(32))));
+    }
+    #[test]
+    fn verified_worker_preflight_needs_only_one_post_and_same_boot_readback(){
+        let current:DeviceStatus=serde_json::from_slice(&wire_status('a',true,"white")).unwrap();
+        let pin=peer_http::Pin::from_status(&current).unwrap();
+        let (endpoint,server)=crate::tests::mock_device(vec![
+            (202,br#"{"accepted":true,"count":2}"#.to_vec()),(200,wire_status('a',true,"red"))]);
+        let request=Request::new(&[1,80],"red","immediate").unwrap();
+        assert!(send_verified(&current,&endpoint,&request,Some(&pin),None,Some(&||Ok(()))).is_ok());
+        let requests=server.join().unwrap();
+        assert_eq!(requests.len(),2);
+        assert!(requests[0].starts_with("POST /api/cells "));
+        assert!(requests[1].starts_with("GET /api/status "));
+        let stopped=AtomicBool::new(true);
+        assert!(send_verified(&current,&endpoint,&request,Some(&pin),Some(&stopped),None).is_err());
+        assert!(send_verified(&current,&endpoint,&request,Some(&pin),None,Some(&||Err("revoked".into()))).is_err());
     }
     #[test]
     fn missing_capability_revoked_admission_conflict_or_new_boot_never_fans_out(){

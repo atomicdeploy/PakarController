@@ -432,7 +432,8 @@ impl PakarControllerApp {
                     if panel.available(self.peer_context()) { self.reveal_panels.push(panel); }
                 }
             }
-            Command::Show | Command::Status => {}
+            Command::Status => return, // Read-only diagnostics must never raise/focus the window.
+            Command::Show => {}
         }
         if !self.screenshot_harness {
             ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
@@ -465,9 +466,7 @@ impl PakarControllerApp {
     pub fn save_workspace(&mut self) {
         self.config.connection_method = self.transport;
         self.config.connection_enabled = self.connection_enabled;
-        if let Ok(json) = layout::serialize(&self.dock) {
-            self.config.dock_layout = json;
-        }
+        layout::remember_connected(&mut self.config, &self.dock, self.active_context.is_some());
         if config::AppConfig::load().ok().as_ref() != Some(&self.config) {
             if let Err(error) = self.config.save() {
                 self.message = error;
@@ -530,12 +529,13 @@ impl PakarControllerApp {
             if self.command_route() == Some(Transport::Serial) { &self.serial_port } else { &self.base }, c.board_kind, c.name));
         if key != self.active_context {
             if let Some(previous) = self.active_context.take() {
+                layout::remember_connected(&mut self.config, &self.dock, true);
                 // Runtime-only per-peer workspace cache. No discovery-driven SSD writes.
                 if self.context_layouts.len() >= 16 { self.context_layouts.clear(); }
                 self.context_layouts.insert(previous, self.dock.clone());
             }
             self.dock = key.as_ref().and_then(|key| self.context_layouts.get(key)).cloned()
-                .unwrap_or_else(|| if key.is_some() { layout::restore(&self.config.dock_layout) }
+                .unwrap_or_else(|| if key.is_some() { layout::restore_connected(&mut self.config) }
                     else { egui_dock::DockState::new(vec![Panel::Events]) });
             self.active_context = key;
             self.device_name = self.peer_context().and_then(|c|crate::identity::normalize_name(&c.hostname).ok());
@@ -669,6 +669,10 @@ impl PakarControllerApp {
             value["minimized"] = serde_json::json!(ctx.input(|i| i.viewport().minimized));
             value["preferences_dirty"] = serde_json::json!(self.preferences.as_ref().is_some_and(|d| d.is_dirty()));
             value["diagnostics"] = serde_json::json!({"events":self.event_log.len(),"active":self.event_log.active_count(),"repeated_occurrences":self.event_log.repeated_count(),"status_request_pending":self.status_request_pending,"status_retry_ms":self.status_retry.delay().as_millis()});
+            value["diagnostics"]["recent"] = serde_json::json!(self.event_log.iter().rev().take(12)
+                .map(|row| serde_json::json!({"kind":row.kind,"message":row.message,"active":row.active,"occurrences":row.occurrences})).collect::<Vec<_>>());
+            value["diagnostics"]["active_incidents"] = serde_json::json!(self.event_log.iter().rev().filter(|row| row.active).take(12)
+                .map(|row| serde_json::json!({"kind":row.kind,"message":row.message,"occurrences":row.occurrences})).collect::<Vec<_>>());
             value["mapping"] = serde_json::json!({"count":self.mappings.len(),"pending":self.mapping_request_pending.is_some(),"status":self.mapping_status(),"error":self.mapping_error});
             value["usb_commands_pending"] = serde_json::json!(self.serial_operations_pending);
             value["notifications"] = self.notification_snapshot();

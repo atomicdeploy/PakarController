@@ -74,10 +74,16 @@ impl Scope {
         self.clock.load(Ordering::Acquire) == self.generation
     }
     pub fn admit(&self) -> Result<(), String> {
+        self.admit_with_limit(Duration::from_secs(8))
+    }
+    pub fn admit_read(&self) -> Result<(), String> {
+        self.admit_with_limit(Duration::from_secs(24))
+    }
+    fn admit_with_limit(&self, limit: Duration) -> Result<(), String> {
         if !self.current() {
             return Err("Board session revoked before dispatch; nothing was sent".into());
         }
-        if self.queued_at.elapsed() >= Duration::from_secs(8) {
+        if self.queued_at.elapsed() >= limit {
             return Err(
                 "Queued request expired before dispatch; refresh instead of replaying".into(),
             );
@@ -223,11 +229,15 @@ mod tests {
             queued_at: Instant::now() - Duration::from_secs(9),
         };
         assert!(scope.admit().is_err());
+        assert!(scope.admit_read().is_ok()); // A queued read is not a stale mutation.
         assert!(scope.current());
+        scope.queued_at = Instant::now() - Duration::from_secs(25);
+        assert!(scope.admit_read().is_err());
         scope.queued_at = Instant::now();
         assert!(scope.admit().is_ok());
         scope.clock.store(2, Ordering::Release);
         assert!(scope.admit().is_err());
+        assert!(scope.admit_read().is_err());
     }
     #[test]
     fn retired_receipts_never_expose_another_peers_secrets() {

@@ -110,6 +110,19 @@ pub fn serialize(dock: &DockState<Panel>) -> Result<String, String> {
     sanitize_dock_rects(&mut copy);
     serde_json::to_string(&copy).map_err(|e| e.to_string())
 }
+/// The offline Events-only view is not the user's connected workspace.
+pub fn remember_connected(config: &mut crate::config::AppConfig, dock: &DockState<Panel>, connected: bool) {
+    if connected {
+        if let Ok(json) = serialize(dock) { config.dock_layout = json; }
+    }
+}
+pub fn restore_connected(config: &mut crate::config::AppConfig) -> DockState<Panel> {
+    let dock = restore(&config.dock_layout);
+    let legacy_offline = config.dock_context_revision == 0
+        && dock.iter_all_tabs().all(|(_, panel)| *panel == Panel::Events);
+    config.dock_context_revision = 1;
+    if legacy_offline { create_initial_layout() } else { dock }
+}
 pub fn reveal(dock: &mut DockState<Panel>, panel: Panel) {
     if let Some(path) = dock.find_tab(&panel) {
         let _ = dock.set_active_tab(path);
@@ -244,6 +257,30 @@ impl TabViewer for PakarTabViewer<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn disconnected_startup_and_save_do_not_destroy_connected_workspace() {
+        let mut config = crate::config::AppConfig::default();
+        let mut connected = create_initial_layout();
+        let path = connected.find_tab(&Panel::Streaming).unwrap();
+        connected.remove_tab(path); // Deliberate user choice must survive reconnect.
+        remember_connected(&mut config, &connected, true);
+        let saved = config.dock_layout.clone();
+        let offline = DockState::new(vec![Panel::Events]);
+        remember_connected(&mut config, &offline, false);
+        assert_eq!(config.dock_layout, saved);
+        let restored = restore_connected(&mut config);
+        assert!(restored.find_tab(&Panel::Table).is_some());
+        assert!(restored.find_tab(&Panel::Streaming).is_none());
+    }
+    #[test]
+    fn legacy_events_only_layout_recovers_once_not_over_explicit_later_choice() {
+        let mut config = crate::config::AppConfig::default();
+        config.dock_layout = serialize(&DockState::new(vec![Panel::Events])).unwrap();
+        assert!(restore_connected(&mut config).find_tab(&Panel::Table).is_some());
+        assert_eq!(config.dock_context_revision, 1);
+        remember_connected(&mut config, &DockState::new(vec![Panel::Events]), true);
+        assert_eq!(restore_connected(&mut config).iter_all_tabs().count(), 1);
+    }
     #[test]
     fn layouts_survive_serialization_and_closed_panel_reveal() {
         let initial = create_initial_layout();
