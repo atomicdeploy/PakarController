@@ -69,7 +69,10 @@ class DiscoveryChannel(context: Context, messenger: BinaryMessenger) {
                     if (compatible && address != null && s.port in 1..65535 && !address.contains('%')) {
                         val host = if (address.contains(':')) "[$address]" else address
                         val endpoint = "http://$host:${s.port}"
-                        found[endpoint] = mapOf("name" to s.serviceName.take(96), "endpoint" to endpoint, "address" to address)
+                        found[endpoint] = mapOf("name" to s.serviceName.take(96), "endpoint" to endpoint, "address" to address,
+                            "hostname" to (s.attributes["hostname"]?.toString(Charsets.UTF_8) ?: ""),
+                            "kind" to (s.attributes["kind"]?.toString(Charsets.UTF_8) ?: "board"),
+                            "instance_id" to (s.attributes["instance"]?.toString(Charsets.UTF_8) ?: ""))
                     }
                     resolving = false; resolve(epoch)
                 } }

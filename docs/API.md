@@ -14,6 +14,43 @@ Local HTTP and Telnet are not encrypted; never expose them directly to the Inter
 The recovery AP Wi-Fi password is independent of the device login.
 See `ACCESS.md` for persistence, CLI/TUI, native editor and physical USB recovery.
 
+## Application API bridge / repeater
+
+Native **Preferences → Connection → Share connection** enables an optional
+listener (default TCP port `8789`) and individually configurable mDNS/DNS-SD,
+SSDP and MNDP. Save to apply. It is off by default: ordinary USB operation
+remains completely offline. Choose a unique configured hostname; an mDNS name
+conflict is reported, not silently renamed. The page shows actual started
+protocols, failures and verified peer endpoints. Discovery never connects or
+changes the selected owner automatically. No firewall rules are added.
+
+For example, select USB on the owning PC and connect another native/Flutter
+client to `http://<configured-hostname>.local:8789`. The downstream board keeps
+its own board/boot identity and name. A network-connected instance can repeat
+this endpoint with its own distinct hostname. Revoking the selected connection
+revokes bridge commands too; forwarding loops, paths longer than four instances,
+stale peers and expired commands are rejected. The existing serial worker is
+the only USB reader/writer; API requests wait for ACK and actual board readback.
+
+Implemented compatible reads include `/api/status`, `/info`,
+`/api/cells/mapping`, public `/description.xml` and `/api/discovery`.
+Table cell/batch, brightness, mode, effect and LED output mutations use the same
+existing routes and require `X-Pakar-Board`/`X-Pakar-Boot` fencing. `/ws` and
+`POST /api/command` use the existing command envelope; HTTP recovery accepts
+the existing URL-encoded `packet` field. A repeated identical request ID retrieves
+its receipt rather than dispatching a second command. USB capabilities expose
+only these implemented table operations, not peripherals on a separate network
+route. Selected network routes also relay supported form/JSON reads and commands.
+
+Sharing is explicitly opt-in and permits clients on the bound network to command
+the selected board. This checkpoint does not implement TLS/authentication or a
+cross-origin browser server. Opaque firmware bytes, binary pixel streaming,
+generic PCController JSON-RPC/Socket.IO interoperability, Android LAN publishing
+and additional WS-Discovery/NetBIOS adapters remain open in issue #2. OTA/ISP/
+streaming capabilities are therefore suppressed through this bridge. Android
+currently consumes native bridges, while its own advanced bridge remains
+foreground-only authenticated loopback/MQTT/outbound WebSocket, not a LAN server.
+
 ## Board Silent mode
 
 Native: **Preferences → Board → Silent mode**. Flutter and Web expose **Board

@@ -5103,3 +5103,80 @@ actions above selection controls and no overflow. PNG SHA256
 da22502fa23accdafd6809f74607f75dc87da1e7111579200fdd72ac1c8cac1f.
 Preview signing, fixture rendering and APK staging are not Android installation
 or physical/human acceptance. No production issue checklist is closed by them.
+
+Native selected-owner bridge checkpoint: fully reread PCController discovery.go,
+discovery_test.go, mndp.go, protocols.go, hostbridge peer_response and tests,
+lifecycle.go, discovery_metadata and tests; Pealayer server/discovery.rs and
+network.rs. Exact live bytes match the inventoried b0111ae0 / 5a6961ce snapshots.
+The existing ledger binds these adaptations and concrete omissions;
+bridge-repeater routes the remaining manager/public/enrichment/adapter work.
+Generic PCController RPC, Android LAN server, opaque firmware bytes and binary
+pixel streaming are not implemented or certified by JSON table-command sharing.
+
+The native opt-in listener uses the existing selected USB worker and its matched
+ACK + observed command-state/full snapshot. No second COM handle, implicit
+network fallback, discovery actuation, auth prompt or owner acquisition is added.
+Distinct bridge instance/hostname/path metadata preserves board_id/boot_id and
+board hostname. Same-ID command receipts are consumed before dispatch; HTTP
+recovery accepts the existing packet form. Native mDNS/DNS-SD, SSDP and MNDP
+advertise/browse only when sharing is enabled. Loopback fixtures open no LAN
+discovery sockets. Active protocols and faults reflect actual startup; conflicting
+mDNS automatic suffixes are rejected instead of misreporting configured identity.
+Flutter consumes bridge endpoints and explicit MNDP API ports without
+pretending application instance IDs or virtual MACs are physical board IDs.
+
+Initial offline Cargo metadata resolution conflicted with the already-locked
+zbus/xcap dependency. Consulted build-storage and actual donor dependency slices;
+online resolution added six packages without changing any existing locked version.
+mdns-sd is pinned to the actual donor 0.21.5; socket2, httparse and network-interface
+use cached/donor APIs. Warm release cache retained; no clean, debug profile,
+donor build, SDK upgrade or alternate target directory. First compile caught
+helper visibility/parser ownership errors: reuse existing shell LED encoders,
+not duplicates. Two Dart analyzer brace findings were fixed without weakening
+the gate. A chained fixture used the nonexistent effect name instant; inspecting
+the actual encoder showed the contract is immediate, so only the fixture changed.
+Failed assertions did not trigger any production command or board contact.
+
+Thirteen focused native bridge/socket/parser tests and the actual fragmented USB
+worker test pass, as do six Flutter bridge identity/discovery tests and analyzer.
+These use explicit loopback/fake serial peers, not physical boards. LAN/router/
+firewall, installed Android, optical LED and generic peer-RPC acceptance remain
+open in issue #2. No firmware or board was contacted or changed; no PBX/audio
+test was requested or performed for this checkpoint.
+
+Sharing-off has its own revocation token on queued USB requests; it does not
+release the primary USB owner. Both pre-dispatch admission and result delivery
+observe that token. Explicit board Disconnect remains separately gate-fenced.
+
+Existing main CI failed tests/pu_routes_test.mjs before this bridge checkpoint:
+PU850 route bindings still named the ESP source hash at451dff7. Read the entire
+451dff7..f162a8c ESP delta, actual commandReply/WebSocket/OTA handlers, complete
+donor AsyncOTA.cpp and AsyncWebServer.h, and the actual audit-pu-routes.mjs.
+Donor source bytes remain unchanged. Only ESP main target bindings were stale:
+the additive USB command-state and atomic pixel diagnostic do not remove or
+weaken the50 classified route handlers. Use the existing generator to refresh
+current target hashes/line anchors, not disable its assertion. network-cloud
+did not route pu850-esp.ino; donor-audit found it, and pu-routes now keeps that
+slice and its still-pending complete-file comparison discoverable. This review
+does not certify an entire read/import of the PU main sketch or live OTA success.
+
+The specific failed route check now passes with the actual donor path configured,
+including registration enumeration. Reports were regenerated after adding the
+new reuse route and their stale-report check passes. This is not a claim that
+all CI jobs have passed; new CI is allowed to run asynchronously.
+
+Canonical release/preview builds succeed with version0.2.7 (Android+7). Native
+27,829,760 bytes, SHA2563107992850817b2829ce9787f73a804de2903792a259510b465f926d5c39f819;
+APK56,215,521 bytes, SHA256d45ae5612e484bc3ed430c42a03eea6b9445b21952a69a8368b9f9015ff6edf5.
+Stable local staging matches; native CLI/package probe passes. Existing installed
+apps, settings and rollback are untouched. Android app is built/staged, not
+installed; native is a staged candidate, not an ASUS replacement or LAN test.
+
+An isolated disconnected Preferences fixture was launched with its own config,
+no production IPC/tray hooks and sharing disabled. Internal framebuffer produced
+no image; explicit expected-PID Win32 fallback found no visible non-minimized
+window (including a second normal-launch fixture). Consulted capture and reread
+the actual Pealayer read-only capture source; no focus/restore/input workaround,
+blank-image acceptance or claim of visual QA followed. Only identity-verified
+fixtures created in this pass were stopped. UI screenshot acceptance is pending;
+this does not mean the available Win32 capture capability was removed/unavailable.

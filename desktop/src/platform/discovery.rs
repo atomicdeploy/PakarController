@@ -1,14 +1,17 @@
 //! Local controller discovery adapted from PCController's layered discovery.
 //!
 //! The human-facing endpoint remains the stable mDNS hostname. SSDP locations
-//! are short-lived transport fallbacks and are accepted only after the normal
-//! authenticated status request succeeds.
+//! are source-bound, credential-free verified hints before normal peer reads.
 
 use std::{
     collections::BTreeSet,
     net::{Ipv4Addr, SocketAddrV4, UdpSocket},
     time::{Duration, Instant},
 };
+
+#[path = "lan_discovery.rs"]
+mod lan;
+pub use lan::Advertiser;
 
 const SSDP_ADDRESS: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(239, 255, 255, 250), 1900);
 
@@ -32,34 +35,14 @@ pub fn ssdp_locations(timeout: Duration) -> Vec<String> {
     let mut buffer = [0_u8; 2048];
     let mut locations = BTreeSet::new();
     while Instant::now() < deadline {
-        let Ok((count, _source)) = socket.recv_from(&mut buffer) else {
+        let Ok((count, source)) = socket.recv_from(&mut buffer) else {
             continue;
         };
-        if let Some(location) = parse_location(&buffer[..count]) {
-            locations.insert(location);
+        if let Some(location) = lan::ssdp_origin(&buffer[..count], source) {
+            if locations.len() < 16 { locations.insert(location); }
         }
     }
-    locations.into_iter().collect()
-}
-
-fn parse_location(packet: &[u8]) -> Option<String> {
-    let text = std::str::from_utf8(packet).ok()?;
-    if !text.to_ascii_uppercase().starts_with("HTTP/1.1 200") {
-        return None;
-    }
-    let location = text.lines().find_map(|line| {
-        let (name, value) = line.split_once(':')?;
-        name.trim()
-            .eq_ignore_ascii_case("location")
-            .then(|| value.trim())
-    })?;
-    let parsed = reqwest::Url::parse(location).ok()?;
-    let host = parsed.host_str()?;
-    let authority = parsed
-        .port()
-        .map(|port| format!("{host}:{port}"))
-        .unwrap_or_else(|| host.to_owned());
-    Some(format!("{}://{authority}", parsed.scheme()))
+    locations.into_iter().filter(|v| lan::verified_origin(v)).collect()
 }
 
 #[cfg(test)]
@@ -70,13 +53,13 @@ mod tests {
     fn extracts_origin_from_ssdp_location() {
         let response = b"HTTP/1.1 200 OK\r\nLOCATION: http://192.0.2.7:80/description.xml\r\nST: upnp:rootdevice\r\n\r\n";
         assert_eq!(
-            parse_location(response).as_deref(),
-            Some("http://192.0.2.7")
+            lan::ssdp_origin(response, "192.0.2.7:1900".parse().unwrap()).as_deref(),
+            Some("http://192.0.2.7:80")
         );
     }
 
     #[test]
     fn rejects_non_responses() {
-        assert!(parse_location(b"NOTIFY * HTTP/1.1\r\nLOCATION: http://192.0.2.7/\r\n").is_none());
+        assert!(lan::ssdp_origin(b"NOTIFY * HTTP/1.1\r\nLOCATION: http://192.0.2.7/\r\n", "192.0.2.7:1900".parse().unwrap()).is_none());
     }
 }

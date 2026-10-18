@@ -10,6 +10,7 @@ mod audio;
 mod brand_image;
 mod board_silent;
 mod branding;
+mod bridge;
 mod capabilities;
 mod client_telemetry;
 mod cli_output;
@@ -63,6 +64,8 @@ struct Endpoint {
 
 #[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
 struct DeviceStatus {
+    #[serde(default)]
+    bridge: Option<serde_json::Value>,
     #[serde(default)]
     status_rgb: Option<ui::status_bar::PhysicalStatusRgb>,
     #[serde(default)]
@@ -339,6 +342,7 @@ enum WsCommand {
     ArmPixel(pixel_diagnostic::Request),
 }
 enum SerialCommand {
+    Bridge(String, usb_table::Admission, u8, Vec<u8>, bridge::Reply),
     Port(String, u64),
     Send(String, usb_table::Admission, u8, Vec<u8>),
     Identity(String, usb_table::Admission, String, String),
@@ -766,7 +770,7 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
                 let Ok(status) = blocking_status(&client, &candidate) else {
                     continue;
                 };
-                if Some(&status.hostname) != requested_name.as_ref() {
+                if !requested_name.as_ref().is_some_and(|name| bridge::matches_hostname(&status, name)) {
                     continue;
                 }
                 if let Ok(event) = http_request(&client, command.with_base(base.clone())) {
@@ -1435,7 +1439,13 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                             let _=events.send(Event::SerialOperation(connected_port.clone(),Err("USB command queue full or payload too large; nothing sent".into())));
                         }else if usb_table::table_command(op) && table_snapshot.is_none(){
                             let _=events.send(Event::SerialOperation(connected_port.clone(),Err("USB table snapshot not verified; nothing sent".into())));
-                        }else{intents.push_back(usb_table::Intent{opcode:op,payload,admission});}
+                        }else{intents.push_back(usb_table::Intent{opcode:op,payload,admission,reply:None});}
+                    }
+                    SerialCommand::Bridge(target,admission,op,payload,reply) if target==connected_port && lease.current()=>{
+                        let intent=usb_table::Intent{opcode:op,payload,admission,reply:Some(reply)};
+                        if !intent.current(physical_session,table_snapshot.as_ref()) || intents.len()>=32 || !usb_table::table_command(op){
+                            intent.reply(Err("USB bridge request expired, unsupported or owner unavailable; nothing sent".into()));
+                        }else{intents.push_back(intent);}
                     }
                     SerialCommand::BoardSilent(target, admission, id, desired) if target == connected_port => {
                         if silent.is_some() || !admission.current(physical_session, table_snapshot.as_ref())
@@ -1625,6 +1635,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                                     let _=events.send(Event::SerialBatchConfirmed(connected_port.clone(),correlation.clone()));
                                                 }
                                             }
+                                            active.intent.reply(result.as_ref().map(|_|snapshot.status.clone()).map_err(Clone::clone));
                                             if result.is_ok(){let _=events.send(Event::SerialTiming(connected_port.clone(),active.timing(physical_session,"full snapshot")));}
                                             let _=events.send(Event::SerialOperation(connected_port.clone(),result));operation=None;
                                         }
@@ -1649,14 +1660,15 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                         // Do not renew capability/peripheral freshness using this partial readback.
                                         table_snapshot=Some(status.clone());table_read=paused_table.take();table_wait=None;last_table=Instant::now();
                                         last_command_state=Some((payload.clone(),Instant::now()));
-                                        let _=events.send(Event::SerialCommandState(connected_port.clone(),status));
+                                        let _=events.send(Event::SerialCommandState(connected_port.clone(),status.clone()));
+                                        active.intent.reply(Ok(status));
                                         if let Some(correlation)=active.intent.admission.batch.as_ref(){let _=events.send(Event::SerialBatchConfirmed(connected_port.clone(),correlation.clone()));}
                                         let timing=active.timing(physical_session,"compact board readback");
                                         let message=format!("USB ACK + board readback · {:.1} ms (queue {:.1} ms)",timing.wire_confirm_ms,timing.queue_ms);
                                         let _=events.send(Event::SerialTiming(connected_port.clone(),timing));
                                         let _=events.send(Event::SerialOperation(connected_port.clone(),Ok(message)));
                                     }
-                                    Err(error)=>{table_read=paused_table.take();let _=events.send(Event::SerialOperation(connected_port.clone(),Err(error)));}
+                                    Err(error)=>{active.intent.reply(Err(error.clone()));table_read=paused_table.take();let _=events.send(Event::SerialOperation(connected_port.clone(),Err(error)));}
                                 }
                                 operation=None;
                             } else if operation.as_ref().is_some_and(|active|active.matches(op,response_sequence,&payload)){
@@ -1728,6 +1740,7 @@ fn command_route(selected: Transport, wifi_fresh: bool, usb_fresh: bool) -> Opti
     }
 }
 struct PakarControllerApp {
+    bridge: bridge::Runtime,
     connection_gate: connection::Gate,
     connection_enabled: bool,
     context_panels: Vec<ui::layout::Panel>,
@@ -1879,6 +1892,7 @@ impl PakarControllerApp {
             event_log.record("Windows desktop unavailable", error);
         }
         Self {
+            bridge: Default::default(),
             connection_gate,
             connection_enabled: config.connection_enabled,
             context_panels: Vec::new(),

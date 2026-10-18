@@ -83,6 +83,7 @@ struct Outcome {
     board_action: Option<Option<bool>>,
 }
 struct BoardView {
+    bridge: serde_json::Value,
     available: bool,
     device_available: bool,
     ready: bool,
@@ -195,6 +196,36 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &Boar
                             outcome.connection_settings = connection_summary(draft, ui).clicked();
                         }
                     });ui.add_space(8.0);
+                    if draft.matches("Share connection Bridge repeater USB TCP LAN discovery mDNS DNS-SD SSDP MNDP") {
+                        dialog::section(ui,icons::BROADCAST,"Share connection",|ui|{
+                            ui.checkbox(&mut draft.config.bridge.enabled,"Enable API bridge / repeater");
+                            dialog::setting_row(ui,icons::GLOBE,"Listen address",None,|ui|{ui.text_edit_singleline(&mut draft.config.bridge.listen);});
+                            dialog::setting_row(ui,icons::PLUG,"API port",None,|ui|{ui.add(egui::DragValue::new(&mut draft.config.bridge.port).range(1..=65535));});
+                            dialog::setting_row(ui,icons::APP_WINDOW,"Hostname",None,|ui|{ui.text_edit_singleline(&mut draft.config.bridge.hostname);});
+                            ui.horizontal_wrapped(|ui|{ui.checkbox(&mut draft.config.bridge.mdns,"mDNS / DNS-SD");ui.checkbox(&mut draft.config.bridge.ssdp,"SSDP");ui.checkbox(&mut draft.config.bridge.mndp,"MNDP");});
+                            ui.weak("Shares only the selected connection. USB ownership and explicit Disconnect are preserved.");
+                            ui.weak(if board.bridge["listening"] == true { "API listener running" } else { "API listener stopped" });
+                            if let Some(error) = board.bridge["error"].as_str().filter(|s| !s.is_empty()) {
+                                ui.colored_label(ui.visuals().error_fg_color, error);
+                            }
+                            if let Some(protocols) = board.bridge["discovery"]["active_protocols"].as_array() {
+                                ui.weak(format!("Active discovery: {}", protocols.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>().join(", ")));
+                            }
+                            if let Some(errors) = board.bridge["discovery"]["errors"].as_object() {
+                                for (protocol,error) in errors { ui.colored_label(ui.visuals().error_fg_color, format!("{protocol}: {}", error.as_str().unwrap_or("Unavailable"))); }
+                            }
+                            if let Some(peers) = board.bridge["discovery"]["peers"].as_array() {
+                                for peer in peers {
+                                    if let Some(endpoint) = peer["endpoint"].as_str() {
+                                        ui.horizontal_wrapped(|ui| {
+                                            ui.label(endpoint);
+                                            if ui.small_button(format!("{}  Copy endpoint",icons::COPY)).clicked() { ui.ctx().copy_text(endpoint.into()); }
+                                        });
+                                    }
+                                }
+                            }
+                        });ui.add_space(8.0);
+                    }
                 }
                 if draft.tab==4||!draft.search.is_empty(){
                     dialog::section(ui,icons::INFO,"Notifications",|ui|{
@@ -286,6 +317,7 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
     let peer = status.and_then(crate::peer_http::Pin::from_status);
     if ready && app.board_silent.needs_refresh() { app.request_board_silent(None); }
     let board = BoardView {
+        bridge: app.bridge.snapshot(),
         available, device_available, ready,
         value: app.board_silent.value(peer.as_ref(), app.command_route()),
         pending: app.board_silent.pending.is_some(), persisted: app.board_silent.persisted(),
@@ -407,7 +439,7 @@ mod tests {
         let draft = PreferencesDraft::new(saved.clone());
         for value in [None, Some(false), Some(true)] {
             let ctx = egui::Context::default();
-            let board = BoardView { available: true, device_available: true, ready: true, value, pending: false, persisted: true, message: String::new() };
+            let board = BoardView { bridge: serde_json::Value::Null, available: true, device_available: true, ready: true, value, pending: false, persisted: true, message: String::new() };
             let mut action = None;
             let mut output = ctx.run_ui(egui::RawInput::default(), |ui| { action = board_controls(ui, &board); });
             output.textures_delta.clear();

@@ -24,6 +24,10 @@ image = { version = "0.25.10", default-features = false, features = ["png"] }
 tray-icon = "=0.26.1"
 crossterm = "0.29.0"
 unicode-width = "0.2.2"
+mdns-sd = "=0.21.5"
+socket2 = "0.6.5"
+httparse = "1.10.1"
+network-interface = "2.0.5"
 
 [target.'cfg(windows)'.dependencies]
 raw-window-handle = "0.6.2"

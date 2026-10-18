@@ -140,10 +140,11 @@ impl Admission {
             self.batch.as_ref().is_none_or(|batch|Some(&batch.peer)==self.peer.as_ref() && batch.route==crate::Transport::Serial)
     }
 }
-pub struct Intent {pub opcode:u8,pub payload:Vec<u8>,pub admission:Admission}
+pub struct Intent {pub opcode:u8,pub payload:Vec<u8>,pub admission:Admission,pub reply:Option<crate::bridge::Reply>}
 impl Intent {
+    pub fn reply(&self,result:Result<DeviceStatus,String>){if let Some(reply)=&self.reply{let _=reply.send(result);}}
     pub fn current(&self,session:u64,status:Option<&DeviceStatus>)->bool {
-        self.admission.peer.is_some() && self.admission.current(session,status) &&
+        self.reply.as_ref().is_none_or(|r|r.current()) && self.admission.peer.is_some() && self.admission.current(session,status) &&
             (self.opcode!=crate::cell_batch::OPCODE || self.admission.batch.as_ref()
                 .is_some_and(|batch|batch.request.payload()==self.payload))
     }
@@ -202,7 +203,7 @@ mod tests {
         assert!(!yield_snapshot(false,true,true,false,false));
         let status=read(&fixture()).status;let gate=crate::connection::Gate::default();
         let epoch=gate.select(Some(crate::connection::Method::Serial));
-        let mut active=Operation{intent:Intent{opcode:0x4c,payload:vec![1,1,0],admission:Admission{
+        let mut active=Operation{intent:Intent{opcode:0x4c,payload:vec![1,1,0],reply:None,admission:Admission{
             stamp:gate.stamp(crate::connection::Method::Serial,epoch),session:1,peer:peer_http::Pin::from_status(&status),at:Instant::now(),batch:None}},
             sequence:13,sent:Instant::now(),ack:None};
         assert!(active.matches(0x80,13,&[0x4c,0]));assert!(active.matches(0x82,13,&[COMMAND,6]));
@@ -269,7 +270,8 @@ mod tests {
         let before=Instant::now();
         let admission=Admission{stamp:gate.stamp(crate::connection::Method::Serial,epoch),session,
             peer:peer_http::Pin::from_status(snapshot.as_ref().unwrap()),at:before,batch:None};
-        tx.send(crate::SerialCommand::Send("fixture".into(),admission,0x4c,vec![1,1,0])).unwrap();
+        let (reply,result)=mpsc::channel();
+        tx.send(crate::SerialCommand::Bridge("fixture".into(),admission,0x4c,vec![1,1,0],crate::bridge::Reply::new(reply,std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false))))).unwrap();
         let mut confirmed=false;
         loop {if let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(2)).unwrap(){match *event {
             crate::Event::SerialCommandState(_,s)=>{assert_eq!(s.cells[0],"red");confirmed=true;}
@@ -278,6 +280,7 @@ mod tests {
             crate::Event::SerialOperation(_,Err(error))=>panic!("{error}"),_=>{}
         }}}
         assert_eq!(captures.load(Ordering::SeqCst),2,"No post-ACK full preview is required");
+        assert_eq!(result.recv_timeout(Duration::from_secs(1)).unwrap().unwrap().cells[0],"red","Bridge receipt requires this real worker's sequence/ACK/readback");
         loop {if let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(2)).unwrap(){
             if let crate::Event::SerialSnapshot(_,s)=*event {
                 assert!(s.observed_at<before,"Resume the original immutable capture instead of starving full observations");
@@ -351,7 +354,7 @@ mod tests {
         assert!(fenced(&s,0x55,&[0]).is_err());assert!(fenced(&s,0x4c,&[0;32]).is_err());
         let gate=crate::connection::Gate::default();let epoch=gate.select(Some(crate::connection::Method::Serial));
         let admission=Admission{stamp:gate.stamp(crate::connection::Method::Serial,epoch),session:1,peer:peer_http::Pin::from_status(&s),at:Instant::now(),batch:None};
-        let intent=Intent{opcode:0x4c,payload:vec![1,1,0],admission};
+        let intent=Intent{opcode:0x4c,payload:vec![1,1,0],admission,reply:None};
         assert!(intent.current(1,Some(&s)));assert!(!intent.current(2,Some(&s)));assert!(!intent.verify(&s));
         let mut applied=s.clone();applied.cells[0]="red".into();assert!(intent.verify(&applied));
         applied.boot_id="b".repeat(32);assert!(!intent.current(1,Some(&applied)));
@@ -369,9 +372,9 @@ mod tests {
         let admission=Admission{stamp:gate.stamp(crate::connection::Method::Serial,epoch),session:1,
             peer:peer_http::Pin::from_status(&status),at:Instant::now(),
             batch:Some(crate::cell_batch::Correlation::new(request.clone(),peer_http::Pin::from_status(&status).unwrap(),crate::Transport::Serial).unwrap())};
-        let intent=Intent{opcode:0x5f,payload:request.payload(),admission};
+        let intent=Intent{opcode:0x5f,payload:request.payload(),admission,reply:None};
         assert!(intent.current(1,Some(&status)));
-        let mut changed=Intent{opcode:0x5f,payload:request.payload(),admission:intent.admission.clone()};
+        let mut changed=Intent{opcode:0x5f,payload:request.payload(),admission:intent.admission.clone(),reply:None};
         changed.payload[2]^=2;assert!(!changed.current(1,Some(&status)));
         assert!(!intent.verify(&status));status.cells[0]="red".into();assert!(!intent.verify(&status));
         status.cells[79]="red".into();assert!(intent.verify(&status));

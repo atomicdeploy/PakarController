@@ -3,6 +3,411 @@
   "target_hash_encoding": "UTF8-without-BOM-LF",
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/discovery/discovery_test.go",
+  "sha256": "41b18ac33a9eae75dbcd9ac7a20722117090e98c5a8bad6eb12114a5f955e792",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Read entire test file. Adapt actual loopback-no-network, source-bound SSDP, explicit protocol status and secret-free public metadata assertions to Rust socket/parser tests."
+  ],
+  "targets": [
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "pub struct Advertiser",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "WSDiscovery/NetBIOS/broadcast, rich TXT normalization and public enrichment test matrix",
+      "disposition": "pending",
+      "reason": "These donor tests exercise adapters not yet present in Pakar. Their behavior remains pending rather than replacing assertions with always-success fixtures."
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "fn bridge_mndp_uses_explicit_application_port_not_guessed_port80",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    },
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "fn bridge_loopback_registration_starts_no_discovery_transports",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    }
+  ],
+  "remaining": [
+    "Issue #2: WSDiscovery/NetBIOS/broadcast, rich TXT normalization and public enrichment test matrix. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open."
+  ]
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/discovery/mndp.go",
+  "sha256": "6faf511e686c83114025020a25d2da6ff0960240c969dd3872c6cf18ff20baf3",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Read through EOF. Port actual big-endian MNDP vendor product/API-port TLVs, application-scoped locally administered virtual MAC, bounded records, 30s announcement and rate-limited query response to Rust. Dart consumes explicit API port and separate instance ID."
+  ],
+  "targets": [
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "pub struct Advertiser",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    },
+    {
+      "path": "mobile/lib/discovery.dart",
+      "anchor": "DiscoveredDevice? parseMndp",
+      "sha256": "b3fa527cc087ab731150987ab2fd7a8bc21c14c6b268afb37da7d6bee2a40669"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Full multi-interface broadcast/IPv6/network-change acceptance",
+      "disposition": "pending",
+      "reason": "Parser/socket fixture is not proof that real adapters, Windows firewall and Android multicast allow discovery across the actual LAN. Rebinding after adapter changes is not yet implemented."
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "fn bridge_mndp_uses_explicit_application_port_not_guessed_port80",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    },
+    {
+      "path": "mobile/test/bridge_peer_test.dart",
+      "anchor": "MNDP application endpoints use vendor API port",
+      "sha256": "04688eaf3a76042bd60b380b7d631657828e922e9c740c55626563890800e498"
+    }
+  ],
+  "remaining": [
+    "Issue #2: Full multi-interface broadcast/IPv6/network-change acceptance. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open."
+  ]
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/discovery/protocols.go",
+  "sha256": "8566438c89961f85f6aeec3f5df237e81bea253204460b35ba41ee86b68589d3",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Entire file read for comparison. Requested SSDP/mDNS/DNS-SD/MNDP adapters now exist in native sharing; this file's additional SOAP WSDiscovery/custom UDP/NetBIOS adapters are not falsely described as ported."
+  ],
+  "targets": [
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "pub struct Advertiser",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "WSDiscovery SOAP, custom UDP broadcast and NetBIOS name service",
+      "disposition": "pending",
+      "reason": "These are useful pending adapters, not media/PU business exclusions. They need explicit service binding, bounded parsers and no-network fixtures before publication."
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "fn bridge_mndp_uses_explicit_application_port_not_guessed_port80",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    }
+  ],
+  "remaining": [
+    "Issue #2: WSDiscovery SOAP, custom UDP broadcast and NetBIOS name service. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open."
+  ]
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/hostbridge/peer_response.go",
+  "sha256": "7e711f22ce5a8e0c01f7a935e0f0091ed1d305e04a7563aae57a772059f391ef",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Read complete source. Adapt exact request-ID correlation, ambiguous/malformed result as uncertain, consume-before-dispatch and no replay. New SerialCommand::Bridge queues through the sole existing USB owner and returns actual same-sequence ACK plus readback, not queue acceptance."
+  ],
+  "targets": [
+    {
+      "path": "desktop/src/bridge.rs",
+      "anchor": "pub struct Runtime",
+      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+    },
+    {
+      "path": "desktop/src/usb_table.rs",
+      "anchor": "pub struct Intent",
+      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Generic PCController peerRPCSession JSON-RPC/WebSocket/Socket.IO response envelope",
+      "disposition": "pending",
+      "reason": "Pakar uses its existing living /api/command and board/boot/deadline contract, not an unimplemented promise of generic PCController RPC compatibility. Full manager.go route/authority/transport adapters remain pending review."
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/bridge.rs",
+      "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
+      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+    },
+    {
+      "path": "desktop/src/usb_table.rs",
+      "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback",
+      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022"
+    }
+  ],
+  "remaining": [
+    "Issue #2: Generic PCController peerRPCSession JSON-RPC/WebSocket/Socket.IO response envelope. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open."
+  ]
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/hostbridge/peer_response_test.go",
+  "sha256": "b77fb20899b6e43e3ea8bebf0b49e0ab92849eb45f7ba6fe8803508c76c03c28",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Read through EOF. Adapt malformed/foreign identity rejection, same-ID receipt retrieval and command mismatch tests to the existing Pakar packet; actual HTTP and WS tests share the same observed board."
+  ],
+  "targets": [
+    {
+      "path": "desktop/src/bridge.rs",
+      "anchor": "pub struct Runtime",
+      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Full donor JSON-RPC error/result ambiguity and pending peer-session tests",
+      "disposition": "pending",
+      "reason": "The donor IPC envelope is not exposed by this selected-owner bridge; full PCController manager interoperability and its tests are still useful pending work."
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/bridge.rs",
+      "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
+      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+    },
+    {
+      "path": "desktop/src/bridge.rs",
+      "anchor": "fn bridge_http_recovery_uses_existing_packet_form_contract",
+      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+    }
+  ],
+  "remaining": [
+    "Issue #2: Full donor JSON-RPC error/result ambiguity and pending peer-session tests. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open."
+  ]
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/hostbridge/lifecycle.go",
+  "sha256": "30454374bc87aeed2d4a536f27a24aa8c382920e9047b40d68a42faef47990c4",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Read through EOF. Preserve primary selected owner and explicit Disconnect/revocation; sharing never opens another serial handle or acquires a board from discovery. Bridge listener starts only on opt-in and closes through owned stop lifetime."
+  ],
+  "targets": [
+    {
+      "path": "desktop/src/bridge.rs",
+      "anchor": "pub struct Runtime",
+      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+    },
+    {
+      "path": "desktop/src/main.rs",
+      "anchor": "SerialCommand::Bridge(target",
+      "sha256": "ff0dc756307ff9e360cd2ec815b80c13875d1a86bda7794bd6c726891a778a69"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Complete host suspend/resume lifecycleInstruction service/Windows power-event integration",
+      "disposition": "pending",
+      "reason": "Current bridge is scoped to the existing app runtime/connection Gate, not a new always-running service. Listener suspend/resume behavior and platform power callbacks require additional integration and actual host acceptance."
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/bridge.rs",
+      "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
+      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+    }
+  ],
+  "remaining": [
+    "Issue #2: Complete host suspend/resume lifecycleInstruction service/Windows power-event integration. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open."
+  ]
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/hostbridge/discovery_metadata.go",
+  "sha256": "524f6e31069355fb8f7968e507775d4a567964aee41001722a325cc8c06e99a0",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Read entire source. Preserve instance.id vs physical board identity and push-fed nonsecret current-owner metadata: bridge path/hostname are additive, board_id/boot_id/hostname remain downstream-owned; current status is fed without independent serial acquisition."
+  ],
+  "targets": [
+    {
+      "path": "desktop/src/bridge.rs",
+      "anchor": "pub struct Runtime",
+      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+    },
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "pub struct Advertiser",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Complete discoveryMetadata rich TXT, five-second coalesced refresh and all HostIdentity fields",
+      "disposition": "pending",
+      "reason": "Fixed nonsecret listener TXT suffices for compatible endpoint discovery, while full board state is served from the selected owner. Rich changing TXT and cross-product public enrichment remain useful pending imports; no board secret is advertised."
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/bridge.rs",
+      "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
+      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+    },
+    {
+      "path": "desktop/src/bridge.rs",
+      "anchor": "fn bridge_status_keeps_board_identity_and_only_available_route_capabilities",
+      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+    }
+  ],
+  "remaining": [
+    "Issue #2: Complete discoveryMetadata rich TXT, five-second coalesced refresh and all HostIdentity fields. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open."
+  ]
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/hostbridge/discovery_metadata_test.go",
+  "sha256": "cb26b3fba521fe61d2b7bce2b1fa6a019dc6d04d72bb82df541e4ef63c1bbcd3",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Read complete tests. Port board-vs-host identity and available-route capability assertions, including suppression of unsupported OTA/ISP/streaming on the relay."
+  ],
+  "targets": [
+    {
+      "path": "desktop/src/bridge.rs",
+      "anchor": "pub struct Runtime",
+      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "All donor rich host metadata, peer caps and discovery refresh scheduling assertions",
+      "disposition": "pending",
+      "reason": "Those metadata producers and UpdateText lifecycle are not fully implemented; fixture identity and real socket tests do not close donor parity or real LAN acceptance."
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/bridge.rs",
+      "anchor": "fn bridge_status_keeps_board_identity_and_only_available_route_capabilities",
+      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+    },
+    {
+      "path": "mobile/test/bridge_peer_test.dart",
+      "anchor": "MNDP application endpoints use vendor API port",
+      "sha256": "04688eaf3a76042bd60b380b7d631657828e922e9c740c55626563890800e498"
+    }
+  ],
+  "remaining": [
+    "Issue #2: All donor rich host metadata, peer caps and discovery refresh scheduling assertions. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open."
+  ]
+},
+{
+  "origin": "Pealayer",
+  "path": "src/server/discovery.rs",
+  "sha256": "a707a76b8424353a304ec28e344e467e89823b81c1f4dca321ec3b7060069c6c",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Entire source read. Actual mdns-sd registration/browse/monitor, socket2 reusable UDP, bounded candidate queue/workers, SSDP/MNDP codecs and expiry registry adapted. Replace parked immortal lifetime with stop-owned daemon/threads; reject auto hostname suffix on NameChange and publish failure. Actual API-port metadata used in Dart too."
+  ],
+  "targets": [
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "pub struct Advertiser",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    },
+    {
+      "path": "desktop/src/platform/discovery.rs",
+      "anchor": "pub fn ssdp_locations",
+      "sha256": "f68a40de19d885838226329737eb691e7ee35a2659c20485c3d62a78ca8453e1"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Pealayer cross-product public enrichment/identity merging and full native adapter-change recovery",
+      "disposition": "pending",
+      "reason": "Do not discover unrelated media servers as compatible Pakar board APIs or claim generic Pealayer RPC. Dynamic interfaces and multi-NIC/IPv6 acceptance remain pending; source fixture is not router/firewall proof."
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "fn bridge_mndp_uses_explicit_application_port_not_guessed_port80",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    },
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "fn bridge_ssdp_requires_source_location_binding_and_unique_headers",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    }
+  ],
+  "remaining": [
+    "Issue #2: Pealayer cross-product public enrichment/identity merging and full native adapter-change recovery. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open."
+  ]
+},
+{
+  "origin": "Pealayer",
+  "path": "src/network.rs",
+  "sha256": "22abaf1ca05c64d7e694b7b1d8216904df23cb84f47a0d23c6e91e78d40b86f2",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Read through EOF. Actual NetworkInterface::show address enumeration/filtering reused for listener-bound IPv4 LAN advertisement, without guessed /24 routes."
+  ],
+  "targets": [
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "pub struct Advertiser",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    },
+    {
+      "path": "desktop/src/ui/preferences.rs",
+      "anchor": "Enable API bridge / repeater",
+      "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "discover_bind_targets rich interface chooser, address_detail/interface_presentation and parse_bind_addresses multiple binds",
+      "disposition": "pending",
+      "reason": "Preferences currently provide one explicit numeric listen address plus port; donor adapter chooser/multiple binds are useful pending UI rather than excluded media logic. No interface reconfiguration or firewall mutation is authorized implicitly."
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "fn bridge_loopback_registration_starts_no_discovery_transports",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    }
+  ],
+  "remaining": [
+    "Issue #2: discover_bind_targets rich interface chooser, address_detail/interface_presentation and parse_bind_addresses multiple binds. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open."
+  ]
+},
     {
       "origin": "PCController",
       "path": "Project/BootMelody.h",
@@ -2273,12 +2678,12 @@
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_controls(",
-          "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa"
+          "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48"
         },
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88"
+          "sha256": "cb24d762fafd76e71d00851fe9ffb787a20e79f09332a61d8a9ce58e817dd312"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -2373,12 +2778,12 @@
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_controls(",
-          "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa"
+          "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48"
         },
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88"
+          "sha256": "cb24d762fafd76e71d00851fe9ffb787a20e79f09332a61d8a9ce58e817dd312"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -2680,12 +3085,12 @@
       "targets": [
         {
           "path": "mobile/lib/discovery.dart",
-          "sha256": "86c9dd8e8db1358a576addbf1456e2f56855bb49eea50660ae54181b04e786d3",
+          "sha256": "b3fa527cc087ab731150987ab2fd7a8bc21c14c6b268afb37da7d6bee2a40669",
           "anchor": "Future<DiscoveredDevice?> verifyDiscoveredDevice("
         },
         {
           "path": "mobile/lib/discovery.dart",
-          "sha256": "86c9dd8e8db1358a576addbf1456e2f56855bb49eea50660ae54181b04e786d3",
+          "sha256": "b3fa527cc087ab731150987ab2fd7a8bc21c14c6b268afb37da7d6bee2a40669",
           "anchor": "bool sameBoard(DiscoveredDevice other)"
         }
       ],
@@ -3452,23 +3857,34 @@
   "preserved": [
     "Fully read source through EOF. Adapted actual mDNS/DNS-SD single transport intent, metadata-only discovery, bounded search lifetime/cleanup, M-SEARCH headers, validated origins and explicit authentication separation into Android discovery.",
     "Android NsdManager replaces Go zeroconf; serialized resolves, scan generation ownership, multicast-lock acquisition/release and lifecycle cleanup are real native code. Local/remote saved device types describe transport, never fabricate capabilities. Actual peer ACK remains authoritative.",
-    "Canonical discovery.go783lines fully reread through EOF. Android NSD/SSDP/MNDP mappings remain metadata-only partial adaptations; advertisements do not grant authenticated board ownership."
+    "Canonical discovery.go783lines fully reread through EOF. Android NSD/SSDP/MNDP mappings remain metadata-only partial adaptations; advertisements do not grant authenticated board ownership.",
+    "Reread all 783 lines. Native opt-in advertiser/browser adapts actual single mDNS/DNS-SD transport, per-protocol startup/failure reporting, persistent instance identity, alive/byebye and nonsecret public metadata. Android retains actual NSD discovery; a native USB owner can now publish compatible HTTP/WS APIs."
   ],
   "targets": [
     {
       "path": "mobile/lib/discovery.dart",
-      "sha256": "86c9dd8e8db1358a576addbf1456e2f56855bb49eea50660ae54181b04e786d3",
+      "sha256": "b3fa527cc087ab731150987ab2fd7a8bc21c14c6b268afb37da7d6bee2a40669",
       "anchor": "class DeviceDiscovery"
     },
     {
       "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/DiscoveryChannel.kt",
-      "sha256": "ff05a994263b661ac59373a62e8acd4026ff3bbf1a30911bc89b7c6c13b55725",
+      "sha256": "0c1215ebc188d720fe9c181a475efac7567d6b5b884de5e8d97a2d443593bd61",
       "anchor": "class DiscoveryChannel"
     },
     {
       "path": "mobile/lib/devices_page.dart",
       "sha256": "b3ff941cededcdff779f369f63c8131acf3f5776ef5af79ea33afa0401ae4a4e",
       "anchor": "class DevicesPage"
+    },
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "pub struct Advertiser",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    },
+    {
+      "path": "desktop/src/bridge.rs",
+      "anchor": "pub struct Runtime",
+      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
     }
   ],
   "omissions": [
@@ -3491,6 +3907,11 @@
       "code": "ActiveProtocols/Failures degraded startup; instance.id SSDP UUID;64-record255-byte secret-filtered TXT refresh; eight-slot enrichment and multi-product browsing",
       "disposition": "pending",
       "reason": "Phone still has no donor LAN advertiser/UpdateText lifecycle, public enrichment/identity merge or complete WSDiscovery/broadcast/NetBIOS consumers. Native USB-only mode must invoke no discovery/public HTTP enrichment. Never merge verified identity from names or claim merely configured responders started."
+    },
+    {
+      "code": "UpdateText rich board metadata and public.go/public_test.go enrichment, WSDiscovery/broadcast/NetBIOS, Android LAN advertising",
+      "disposition": "pending",
+      "reason": "Native advertises stable listener metadata and actual owner state over HTTP/WS, not the donor rich TXT update loop. public.go dependencies and whole manager.go are not fully read/imported. Android still deliberately has only its foreground loopback server. Additional adapters and Android listener ownership need real implementations and device/LAN acceptance, not a fabricated completeness claim."
     }
   ],
   "proof": [
@@ -3498,10 +3919,20 @@
       "path": "mobile/test/bridge_discovery_test.dart",
       "sha256": "bbab89f7a2066dfb60486f94fc7c3c7901c9129039dafa68dc88643580ca555b",
       "anchor": "Actual loopback bridge requires bearer"
+    },
+    {
+      "path": "desktop/src/platform/lan_discovery.rs",
+      "anchor": "fn bridge_mndp_uses_explicit_application_port_not_guessed_port80",
+      "sha256": "03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9"
+    },
+    {
+      "path": "mobile/test/bridge_peer_test.dart",
+      "anchor": "MNDP application endpoints use vendor API port",
+      "sha256": "04688eaf3a76042bd60b380b7d631657828e922e9c740c55626563890800e498"
     }
   ],
   "remaining": [
-    "Real Android multicast/router/AP-isolation, NSD failed/partial resolves and identity verification; optional authenticated LAN/TLS app advertiser; all outstanding donor discovery adapters."
+    "Issue #2: UpdateText rich board metadata and public.go/public_test.go enrichment, WSDiscovery/broadcast/NetBIOS, Android LAN advertising. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open."
   ]
 },
       {
@@ -3528,7 +3959,7 @@
           },
           {
             "path": "mobile/lib/discovery.dart",
-            "sha256": "86c9dd8e8db1358a576addbf1456e2f56855bb49eea50660ae54181b04e786d3",
+            "sha256": "b3fa527cc087ab731150987ab2fd7a8bc21c14c6b268afb37da7d6bee2a40669",
             "anchor": "DiscoveredDevice? parseMndp"
           },
           {
@@ -3599,7 +4030,7 @@
           },
           {
             "path": "mobile/lib/discovery.dart",
-            "sha256": "86c9dd8e8db1358a576addbf1456e2f56855bb49eea50660ae54181b04e786d3",
+            "sha256": "b3fa527cc087ab731150987ab2fd7a8bc21c14c6b268afb37da7d6bee2a40669",
             "anchor": "DiscoveredDevice? parseMndp"
           }
         ],
@@ -3815,7 +4246,7 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88",
+      "sha256": "cb24d762fafd76e71d00851fe9ffb787a20e79f09332a61d8a9ce58e817dd312",
       "anchor": "bool _acceptIdentity("
     },
     {
@@ -3855,12 +4286,12 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "81a2f0b4ec4c231428d0f63de118165690b9cfd849ad9cf6980d9c00c11fa35c",
+      "sha256": "ff0dc756307ff9e360cd2ec815b80c13875d1a86bda7794bd6c726891a778a69",
       "anchor": "fn scoped_http_request("
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
       "anchor": "pub struct Admission"
     },
     {
@@ -3958,7 +4389,7 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
       "anchor": "fn table_write_is_exact_boot_fenced_and_post_ack_values_are_not_assumed()"
     },
     {
@@ -4008,12 +4439,12 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
       "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
     }
   ]
@@ -4049,7 +4480,7 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
       "anchor": "pub struct Operation"
     }
   ],
@@ -4112,12 +4543,12 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+      "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
       "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
     }
   ]
@@ -4417,7 +4848,7 @@
       "path": "desktop/src/ui/connection_controls.rs"
     },
     {
-      "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa",
+      "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48",
       "anchor": "super::dropdown::ComboBox::from_id_salt(\"theme\")",
       "path": "desktop/src/ui/preferences.rs"
     },
@@ -4427,7 +4858,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0",
+      "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -4507,7 +4938,7 @@
       "path": "desktop/src/ui/color_picker.rs"
     },
     {
-      "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa",
+      "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48",
       "anchor": "super::color_picker::accent_picker",
       "path": "desktop/src/ui/preferences.rs"
     },
@@ -5443,7 +5874,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88",
+          "sha256": "cb24d762fafd76e71d00851fe9ffb787a20e79f09332a61d8a9ce58e817dd312",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -5625,7 +6056,7 @@
         },
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa",
+          "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48",
           "anchor": "AppLanguage::Persian"
         },
         {
@@ -5780,7 +6211,7 @@
       "targets": [
         {
           "path": "README.md",
-          "sha256": "bfac0da6e7f6164299af85a1970d8a69c37ef1841f837836b681fefcb28c08e8",
+          "sha256": "5485721f026defe3a392440cd8d8ae5214b13b90fa48051d65bd1346e144f32c",
           "anchor": "Connected boards. One contextual control workspace."
         },
         {
@@ -6291,7 +6722,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0",
+          "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b",
           "anchor": "fn synchronize_context("
         },
         {
@@ -6312,12 +6743,12 @@
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_controls(",
-          "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa"
+          "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48"
         },
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88"
+          "sha256": "cb24d762fafd76e71d00851fe9ffb787a20e79f09332a61d8a9ce58e817dd312"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -6704,7 +7135,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0",
+          "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -7184,7 +7615,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0",
+          "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -7293,12 +7724,12 @@
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_controls(",
-          "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa"
+          "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48"
         },
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88"
+          "sha256": "cb24d762fafd76e71d00851fe9ffb787a20e79f09332a61d8a9ce58e817dd312"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -7463,12 +7894,12 @@
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_controls(",
-          "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa"
+          "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48"
         },
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88"
+          "sha256": "cb24d762fafd76e71d00851fe9ffb787a20e79f09332a61d8a9ce58e817dd312"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -7751,7 +8182,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0",
+          "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -9575,7 +10006,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "81a2f0b4ec4c231428d0f63de118165690b9cfd849ad9cf6980d9c00c11fa35c",
+          "sha256": "ff0dc756307ff9e360cd2ec815b80c13875d1a86bda7794bd6c726891a778a69",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -9635,7 +10066,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0",
+          "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b",
           "anchor": "value[\"tray_shell\"]"
         }
       ],
@@ -9687,12 +10118,12 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "81a2f0b4ec4c231428d0f63de118165690b9cfd849ad9cf6980d9c00c11fa35c",
+          "sha256": "ff0dc756307ff9e360cd2ec815b80c13875d1a86bda7794bd6c726891a778a69",
           "anchor": "fn serial_worker("
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+          "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
           "anchor": "pub struct Operation"
         }
       ],
@@ -9724,17 +10155,17 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "81a2f0b4ec4c231428d0f63de118165690b9cfd849ad9cf6980d9c00c11fa35c",
+          "sha256": "ff0dc756307ff9e360cd2ec815b80c13875d1a86bda7794bd6c726891a778a69",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+          "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
           "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+          "sha256": "a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022",
           "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
         }
       ],
@@ -9754,12 +10185,12 @@
       "targets": [
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa",
+          "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48",
           "anchor": "fn sync_connection_owner("
         },
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa",
+          "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48",
           "anchor": "fn connection_summary("
         },
         {
@@ -9770,7 +10201,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0"
+          "sha256": "7819927fa3e1a01722e4352ed0b8946b7036e101da7df50dcfd0eb01eda7732b"
         }
       ],
       "omissions": [
@@ -9806,18 +10237,18 @@
       "proof": [
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa",
+          "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48",
           "anchor": "fn external_connection_owner_updates_all_baselines_without_losing_unrelated_drafts()"
         },
         {
           "path": "desktop/src/ui/preferences.rs",
-          "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa",
+          "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48",
           "anchor": "fn connection_summary_is_contextual_and_dirty_preferences_cannot_open_another_editor()"
         },
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_settings_navigation_preserves_unsaved_application_preferences()",
-          "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa"
+          "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48"
         }
       ],
       "improvement": "One connection owner instead of conflicting Preferences editors, while preserving unrelated drafts and the donor's triple-baseline merge mechanism."
@@ -9853,12 +10284,12 @@
         {
           "path": "desktop/src/ui/preferences.rs",
           "anchor": "fn board_controls(",
-          "sha256": "9bab775329d7c6723673f5c9a5ef5b4956c65b28a6a4f5ed918e1c94446198fa"
+          "sha256": "294483c43361c91a09667961e6b1fd256bd7d33d928b55652c1611acc2960e48"
         },
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88"
+          "sha256": "cb24d762fafd76e71d00851fe9ffb787a20e79f09332a61d8a9ce58e817dd312"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -10376,12 +10807,12 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88",
+          "sha256": "cb24d762fafd76e71d00851fe9ffb787a20e79f09332a61d8a9ce58e817dd312",
           "anchor": "final LanResolver resolver;"
         },
         {
           "path": "mobile/lib/discovery.dart",
-          "sha256": "86c9dd8e8db1358a576addbf1456e2f56855bb49eea50660ae54181b04e786d3",
+          "sha256": "b3fa527cc087ab731150987ab2fd7a8bc21c14c6b268afb37da7d6bee2a40669",
           "anchor": "class DiscoveryCatalog"
         },
         {
@@ -10527,7 +10958,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88",
+          "sha256": "cb24d762fafd76e71d00851fe9ffb787a20e79f09332a61d8a9ce58e817dd312",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -10678,7 +11109,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88",
+          "sha256": "cb24d762fafd76e71d00851fe9ffb787a20e79f09332a61d8a9ce58e817dd312",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {

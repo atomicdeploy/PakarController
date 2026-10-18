@@ -19,11 +19,14 @@ class DiscoveredDevice {
     this.aliases = const {},
     this.verified = false,
     this.authRequired = false,
+    this.instanceId = '',
+    this.kind = 'board',
   });
   final String name, endpoint, protocol;
   final String boardId, mac, udn;
   final Set<String> addresses, aliases;
   final bool verified, authRequired;
+  final String instanceId, kind;
 
   Set<String> get origins =>
       {endpoint, ...aliases}.map(PakarApi.normalizeEndpoint).toSet();
@@ -36,6 +39,9 @@ class DiscoveredDevice {
     // A reused DHCP address must not merge two explicitly different boards.
     if (boardId.isNotEmpty && other.boardId.isNotEmpty) {
       return boardId == other.boardId;
+    }
+    if (instanceId.isNotEmpty && other.instanceId.isNotEmpty) {
+      return instanceId == other.instanceId;
     }
     if (udn.isNotEmpty && other.udn.isNotEmpty && udn != other.udn) {
       return false;
@@ -65,6 +71,8 @@ class DiscoveredDevice {
     aliases: {...origins, ...other.origins},
     verified: verified || other.verified,
     authRequired: other.authRequired,
+    instanceId: other.instanceId.isNotEmpty ? other.instanceId : instanceId,
+    kind: other.kind == 'bridge' ? other.kind : kind,
   );
 }
 
@@ -111,7 +119,14 @@ DiscoveredDevice? parseMdns(Map<dynamic, dynamic> value) {
   }
   try {
     final endpoint = PakarApi.normalizeEndpoint(value['endpoint']);
-    final host = (value['name'] as String).toLowerCase();
+    final kind = value['kind'] == 'bridge' ? 'bridge' : 'board';
+    final host =
+        (value['hostname'] is String && (value['hostname'] as String).isNotEmpty
+                ? value['hostname'] as String
+                : kind == 'board'
+                ? value['name'] as String
+                : '')
+            .toLowerCase();
     // Both actual ESP firmwares register DNS-SD with MDNS.begin(hostname) and
     // no instance-name override. Preserve that hostname/IP correlation even
     // when Android's ordinary .local resolver cannot resolve a saved profile.
@@ -120,6 +135,10 @@ DiscoveredDevice? parseMdns(Map<dynamic, dynamic> value) {
       value['name'],
       endpoint,
       'mDNS / DNS-SD',
+      instanceId: value['instance_id'] is String
+          ? value['instance_id'] as String
+          : '',
+      kind: kind,
       addresses: {if (value['address'] is String) value['address'] as String},
       aliases: {
         if (validHostname(host))
@@ -310,20 +329,30 @@ DiscoveredDevice? parseMndp(Uint8List packet, String source) {
     if (name.isEmpty ||
         name.length > 96 ||
         RegExp(r'[\x00-\x1f\x7f]').hasMatch(name) ||
-        utf8.decode(fields[12] ?? []) != 'PakarController' ||
+        !(utf8.decode(fields[12] ?? []) == 'PakarController' ||
+            utf8.decode(fields[0xff01] ?? []) == 'pakarcontroller') ||
         fields[1]?.length != 6 ||
         packet[0] != 0 ||
         packet[1] != 0 ||
         normalizeAddress(source) == null) {
       return null;
     }
-    // This firmware's Pakar model advertises its fixed HTTP service on port80.
-    // Generic router MNDP records never become Pakar candidates.
+    final application = utf8.decode(fields[0xff01] ?? []) == 'pakarcontroller';
+    final portBytes = fields[0xff02];
+    if (application && (portBytes == null || portBytes.length != 2)) {
+      return null;
+    }
+    final port = application
+        ? ByteData.sublistView(portBytes!).getUint16(0)
+        : 80;
+    if (port == 0) return null;
     return DiscoveredDevice(
       name,
-      PakarApi.normalizeEndpoint('http://$source'),
+      PakarApi.normalizeEndpoint('http://$source:$port'),
       'MNDP',
-      boardId: utf8.decode(fields[11] ?? []),
+      boardId: application ? '' : utf8.decode(fields[11] ?? []),
+      instanceId: application ? utf8.decode(fields[11] ?? []) : '',
+      kind: application ? 'bridge' : 'board',
       mac: fields[1]!.map((v) => v.toRadixString(16).padLeft(2, '0')).join(),
       addresses: {source},
     );
@@ -382,6 +411,14 @@ Future<DiscoveredDevice?> verifyDiscoveredDevice(
       }
     }
     if (metadata == null && value == null) return null;
+    final instance = value?['bridge'] is Map
+        ? value!['bridge']['instance_id'] as String? ?? ''
+        : metadata?.$2.startsWith('uuid:') == true && candidate.kind == 'bridge'
+        ? metadata!.$2.substring(5)
+        : '';
+    if (candidate.instanceId.isNotEmpty && instance != candidate.instanceId) {
+      return null;
+    }
     final board = value?['board_id'] as String? ?? candidate.boardId;
     if (candidate.boardId.isNotEmpty &&
         value != null &&
@@ -399,6 +436,8 @@ Future<DiscoveredDevice?> verifyDiscoveredDevice(
       aliases: candidate.origins,
       verified: true,
       authRequired: status.$1 == 401,
+      instanceId: instance,
+      kind: value?['bridge'] is Map ? 'bridge' : candidate.kind,
     );
   }
 
@@ -440,8 +479,11 @@ Future<DiscoveredDevice?> verifyDiscoveredDevice(
               'https://github.com/atomicdeploy/PakarController') ||
       !validText(name, 96) ||
       udn == null ||
-      !RegExp(r'^uuid:38323636-4558-4dda-9188-cda0e6[0-9a-f]{6}$')
-          .hasMatch(udn)) {
+      !(tag('modelNumber') == 'bridge'
+          ? RegExp(r'^uuid:[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')
+                .hasMatch(udn)
+          : RegExp(r'^uuid:38323636-4558-4dda-9188-cda0e6[0-9a-f]{6}$')
+                .hasMatch(udn))) {
     return null;
   }
   return (name!, udn);

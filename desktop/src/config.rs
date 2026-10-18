@@ -139,6 +139,7 @@ pub struct WorkspaceProfile {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AppConfig {
+    pub bridge: crate::bridge::Settings,
     pub stream_fps: u16,
     pub display: crate::display::Settings,
     pub theme: AppTheme,
@@ -173,6 +174,7 @@ pub struct AppConfig {
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
+            bridge: Default::default(),
             stream_fps: crate::streaming::DEFAULT_FPS,
             display: crate::display::Settings::default(),
             theme: AppTheme::System,
@@ -228,6 +230,7 @@ impl AppConfig {
         }
     }
     pub fn save(&self) -> Result<(), String> {
+        if self.bridge.enabled { self.bridge.validate()?; }
         if !self.ui_scale.is_finite()
             || self.stream_fps > crate::streaming::MAX_FPS
             || !(0.75..=2.0).contains(&self.ui_scale)

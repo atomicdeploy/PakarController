@@ -605,8 +605,7 @@ class PakarApi {
 
   Future<DeviceStatus> status() async {
     final result = DeviceStatus(await _get('/api/status'));
-    final expected = _localLabel();
-    if (expected != null && result.json['hostname'] != expected) {
+    if (!_matchesLocalIdentity(result.json)) {
       throw const FormatException(
         'Device identity does not match the requested hostname',
       );
@@ -809,8 +808,7 @@ class PakarApi {
           continue;
         }
         if (value is Map<String, dynamic> && value.containsKey('hostname')) {
-          final expected = _localLabel();
-          if (expected != null && value['hostname'] != expected) {
+          if (!_matchesLocalIdentity(value)) {
             throw const StaleConnection();
           }
           if (_acceptIdentity(value)) {
@@ -888,6 +886,30 @@ class PakarApi {
         : null;
   }
 
+  bool _matchesLocalIdentity(Map<String, dynamic> value) {
+    final expected = _localLabel();
+    if (expected == null || value['hostname'] == expected) return true;
+    final bridge = value['bridge'];
+    if (bridge is! Map ||
+        bridge['product'] != 'PakarController' ||
+        bridge['hostname'] != expected ||
+        bridge['instance_id'] is! String) {
+      return false;
+    }
+    final path = bridge['path'];
+    return path is List &&
+        path.isNotEmpty &&
+        path.length <= 4 &&
+        path.toSet().length == path.length &&
+        path.last == bridge['instance_id'] &&
+        path.every(
+          (id) =>
+              id is String &&
+              RegExp(r'^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')
+                  .hasMatch(id),
+        );
+  }
+
   Future<http.Response> _withDiscovery(
     Future<http.Response> Function(String base) request,
   ) async {
@@ -927,8 +949,7 @@ class PakarApi {
         if (probe.statusCode ~/ 100 != 2) continue;
         if (revision != connectionRevision) throw const StaleConnection();
         final json = jsonDecode(probe.body);
-        if (json is! Map<String, dynamic> ||
-            json['hostname'] != _localLabel()) {
+        if (json is! Map<String, dynamic> || !_matchesLocalIdentity(json)) {
           continue;
         }
       } on Object {

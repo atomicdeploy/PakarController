@@ -57,6 +57,19 @@ flowchart LR
 
 ## Access and recovery
 
+### Share a selected connection
+
+Native **Preferences → Connection → Share connection** can publish the selected
+USB or network board through the existing HTTP/WebSocket table APIs, with opt-in
+mDNS/DNS-SD, SSDP and MNDP discovery. USB remains offline unless sharing is
+enabled. Other clients use `http://<configured-hostname>.local:8789`; downstream
+board identity and sole serial ownership are preserved. See the
+[bridge contract and remaining scope](docs/API.md#application-api-bridge--repeater).
+Opaque firmware transfer, binary streaming and full PCController peer-RPC parity
+are not yet exposed by this bridge; real LAN acceptance remains open in issue #2.
+
+### Device access
+
 Authentication defaults off in the current firmware; older installations can
 retain persisted credentials. Inspect **Device access** or use the explicit USB
 recovery utility rather than guessing a factory password.

@@ -94,20 +94,20 @@ pub fn launch_command(args: &[String]) -> Command {
     }
 }
 
-fn led_effect_code(value: &str) -> Option<u8> {
+pub(crate) fn led_effect_code(value: &str) -> Option<u8> {
     match value { "none" => Some(0), "rainbow" => Some(1), "fire" => Some(2), _ => None }
 }
-fn led_output_request(value: &str) -> Option<(Vec<(String, String)>, Vec<u8>)> {
+pub(crate) fn led_output_request(value: &str) -> Option<(Vec<(String, String)>, Vec<u8>)> {
     match value {
         "on" | "off" => Some((vec![("enabled".into(), (value == "on").to_string())], vec![u8::from(value == "on")])),
         "static" | "effects" => Some((vec![("mode".into(), value.into())], vec![2, u8::from(value == "effects")])),
         _ => None,
     }
 }
-fn led_mode_code(value: &str) -> Option<u8> {
+pub(crate) fn led_mode_code(value: &str) -> Option<u8> {
     match value { "cell" => Some(1), "snake" => Some(3), _ => None }
 }
-fn led_cell_payload(id: u8, state: &str, effect: &str) -> Option<Vec<u8>> {
+pub(crate) fn led_cell_payload(id: u8, state: &str, effect: &str) -> Option<Vec<u8>> {
     if !(1..=80).contains(&id) { return None; }
     let state = match state { "white" => 0, "red" => 1, "off" => 2, _ => return None };
     let effect = match effect { "immediate" => 0, "fade" => 1, "pulse" => 2, _ => return None };
@@ -629,6 +629,7 @@ impl PakarControllerApp {
             self.save_workspace();
         }
         self.poll();
+        self.bridge_tick();
         self.synchronize_context(ctx);
         self.process_cell_queue(ctx);
         self.deliver_notifications();
@@ -661,6 +662,7 @@ impl PakarControllerApp {
                 "armed":snapshot.as_ref().is_some_and(|s| pixel_diagnostic::ready(s)
                     && peer_http::Pin::from_status(s) == self.pixel_diagnostic.armed),"message":self.pixel_diagnostic.message});
             value["device_status"] = serde_json::json!(snapshot);
+            value["bridge"] = self.bridge.snapshot();
             value["message"] = serde_json::json!(self.message);
             value["device_settings"]["message"] = serde_json::json!(self.device_settings.message);
             value["peer_capabilities"] = serde_json::json!(self.peer_context());
