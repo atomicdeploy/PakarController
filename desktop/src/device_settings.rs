@@ -352,6 +352,11 @@ pub struct Editor {
     pub firmware_sha256: String,
     pub firmware_bearer: String,
     pub firmware_targets: u8,
+    pub image_url: String,
+    pub image_sha256: String,
+    pub image_avr: bool,
+    pub feed_token: String,
+    pub firmware_feed: Option<Draft<crate::firmware_feed::Settings>>,
     pub remote_job: Option<crate::maintenance::RemoteJob>,
     pub telemetry: Option<serde_json::Value>,
 }
@@ -371,6 +376,8 @@ impl Editor {
     }
     pub fn dirty(&self) -> bool {
         self.usb_request.is_some()
+            || self.firmware_feed.as_ref().is_some_and(Draft::dirty)
+            || !self.feed_token.is_empty()
             || self.avr.as_ref().is_some_and(Draft::dirty)
             || self.network.as_ref().is_some_and(Draft::dirty)
             || self.cloud.as_ref().is_some_and(Draft::dirty)
@@ -380,6 +387,7 @@ impl Editor {
             || self.websocket_token.mode != SecretMode::Keep
     }
     pub fn clear_secrets(&mut self) {
+        self.feed_token.clear();
         self.firmware_bearer.clear();
         self.wifi_password.clear();
         self.open_network = false;
@@ -387,6 +395,7 @@ impl Editor {
         self.websocket_token = SecretEdit::default();
     }
     pub fn discard(&mut self) {
+        if let Some(d)=&mut self.firmware_feed {d.discard();}
         self.usb_request = None;
         if let Some(d) = &mut self.avr { d.discard(); }
         if let Some(d) = &mut self.network {

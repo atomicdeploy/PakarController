@@ -1,5 +1,50 @@
 # Donor-first preflight receipt
 
+## Firmware subscription, file delivery and external update progress
+
+Consulted updates-telemetry, remote-ota, network-cloud and exhaustive PC donor
+inventory. Fully read actual canonical hostbridge/manager.go (1851lines),
+hostui/update_progress.go and its tests, artifacts/download.go and mobile
+firmware.dart; exact live bytes match the existing inventory snapshot. Add five
+bounded complete-file comparisons and firmware-delivery index route in the same
+ledger; unrelated manager/OS notification/artifact-store/USB/background-service
+parity remains explicitly pending. Reread actual PU AsyncOTA.cpp and the current
+integrated OTA callbacks; retain raw-size/stage/ACK versus completion boundaries.
+
+Native and Android adapt the real outbound WS/Socket.IO open, namespace,
+heartbeat and event tuple to a finite, explicit peer-bound firmware inbox. URL
+offers require a trusted origin, unique ID, current session/board/boot, deadline
+and SHA-256. Manual local/HTTP(S) images share guarded existing board upload
+routes. Source credentials stay separate from board auth; redirects and bad
+digest/size/format cannot write the board. No new disk artifact cache or second
+serial owner. Native feed configuration is a preserved dirty draft until valid
+Start; secrets remain memory-only. AVR/paired programming stays explicit.
+
+Fix the actual missing DTO path: native previously dropped update/remote job
+fields. Rust/USB/bridge now retain them, Android consumes existing status events,
+and Web uses its normal status stream. No redundant fresh-WS job polling or
+fake flash percentage. Transfer acceptance is informational, not completion.
+
+Focused native real WS/Socket.IO and HTTP download/upload fixtures pass; initial
+SHA2-0.11 output lacked LowerHex, corrected using explicit byte encoding rather
+than downgrading or disabling digest checks. Android analyzer and six focused
+delivery/progress/socket cases pass. Its initial24 brace lints were repaired by
+the analyzer's scoped mechanical fix; no lint was disabled. Source-hash gate
+caught formatter drift and was rebound only after reviewing the affected edits.
+Final package/ASUS/board observations and remaining actual phone/WSS endpoint
+acceptance are separate from these fixtures; do not claim those from builds.
+
+Final analyzer and six firmware-page cases pass after adding the missing
+dart:async import to the new same-board reboot fixture. That fixture proves
+fresh read-only controller rebinding and retained controls without replay.
+Canonical release/preview/production-profile SDK builds pass. Actual ASUS USB
+owner observed external Internet job16 download at38% and81%, and verified
+completion on the new boot after an explicit native CLI Apply. The earlier
+MQTT Apply had no receipt; its unchanged ready state was checked before that
+new explicit action, not blindly replayed. Native owner/settings/rollback,
+image/boot/digests/slot, final APK and remaining physical/phone/service gates
+are recorded in REMOTE-MAINTENANCE.md. No actual AVR erase/reset/audio test.
+
 ## Board-advertised LED wire implementation
 
 Consulted device-context/led-cell-test and literal donor-audit. Fully reread

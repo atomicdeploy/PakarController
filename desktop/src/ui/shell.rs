@@ -662,6 +662,8 @@ impl PakarControllerApp {
                 "armed":snapshot.as_ref().is_some_and(|s| pixel_diagnostic::ready(s)
                     && peer_http::Pin::from_status(s) == self.pixel_diagnostic.armed),"message":self.pixel_diagnostic.message});
             value["device_status"] = serde_json::json!(snapshot);
+            value["firmware_progress"] = serde_json::json!(self.firmware_observation());
+            value["firmware_feed"] = serde_json::json!(self.firmware_feed.as_ref().map(|f|serde_json::json!({"state":f.state,"session":f.session,"board_id":f.board,"boot_id":f.boot,"delivery_armed":f.settings.deliver})));
             value["bridge"] = self.bridge.snapshot();
             value["message"] = serde_json::json!(self.message);
             value["device_settings"]["message"] = serde_json::json!(self.device_settings.message);
@@ -877,6 +879,12 @@ impl PakarControllerApp {
             });
         });
         let s = snapshot.clone().unwrap_or_default();
+        if let Some(progress)=self.firmware_observation().filter(|p|p.active) {
+            egui::Panel::top("pakar-update-progress").show(ui,|ui| {
+                crate::firmware_progress::draw(ui,&progress);
+                if ui.small_button("Firmware details…").clicked(){self.device_settings.open=true;self.device_settings.page=9;}
+            });
+        }
         let status_actions = ui::status_bar::draw(
             ui,
             ui::status_bar::StatusBar {

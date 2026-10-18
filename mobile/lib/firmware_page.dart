@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'documents.dart';
 import 'firmware.dart';
+import 'firmware_progress.dart';
+import 'firmware_feed.dart';
 import 'icons.dart';
 import 'workspace_widgets.dart';
 
@@ -24,8 +26,9 @@ class FirmwarePage extends StatefulWidget {
   State<FirmwarePage> createState() => _FirmwarePageState();
 }
 
-class _FirmwarePageState extends State<FirmwarePage> {
-  late final controller = FirmwareController(
+class _FirmwarePageState extends State<FirmwarePage>
+    with WidgetsBindingObserver {
+  late FirmwareController controller = FirmwareController(
     widget.api,
     authorized: (feature) => widget.authorized(feature),
   );
@@ -33,6 +36,26 @@ class _FirmwarePageState extends State<FirmwarePage> {
   final url = TextEditingController(),
       hash = TextEditingController(),
       bearer = TextEditingController();
+  final fileUrl = TextEditingController(), fileHash = TextEditingController();
+  StreamSubscription<dynamic>? statusEvents;
+  FirmwareProgress? boardProgress, transferProgress;
+  String? observedBoard;
+  bool fileAvr = false;
+  final feed = FirmwareFeed();
+  final feedUrl = TextEditingController(),
+      feedOrigin = TextEditingController(),
+      feedToken = TextEditingController(),
+      feedNamespace = TextEditingController(text: '/'),
+      feedEvent = TextEditingController(text: 'firmware-offer');
+  bool socketIo = false, armed = false;
+  FirmwareFeedOptions get feedOptions => FirmwareFeedOptions(
+    endpoint: feedUrl.text,
+    origin: feedOrigin.text,
+    token: feedToken.text,
+    namespace: feedNamespace.text,
+    event: feedEvent.text,
+    socketIo: socketIo,
+  );
   RemoteJob? job;
   Timer? timer;
   String message = '', staged = '';
@@ -46,18 +69,69 @@ class _FirmwarePageState extends State<FirmwarePage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    feed.addListener(feedChanged);
+    observedBoard = widget.api.latestStatus?.json['board_id'] as String?;
+    statusEvents = widget.api.statusUpdates.listen((status) {
+      if (!mounted || status.json['board_id'] != observedBoard) return;
+      if (feed.running &&
+          (status.json['boot_id'] != widget.api.latestStatus?.json['boot_id'] ||
+              controller.owner != widget.api.connectionRevision)) {
+        unawaited(feed.stop());
+      }
+      if (!working && controller.owner != widget.api.connectionRevision) {
+        controller.dispose();
+        controller = FirmwareController(
+          widget.api,
+          authorized: widget.authorized,
+        );
+      }
+      setState(() {
+        boardProgress = FirmwareProgress.observed(status);
+        final raw = status.json['remote_firmware'];
+        if (raw is Map<String, dynamic>) {
+          try {
+            job = RemoteJob.parse(raw);
+          } on FormatException {
+            job = null;
+          }
+        }
+      });
+    });
+    final initial = widget.api.latestStatus;
+    if (initial != null) boardProgress = FirmwareProgress.observed(initial);
     unawaited(refresh());
-    timer = Timer.periodic(const Duration(seconds: 3), (_) => refresh());
+    timer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (feed.running && controller.owner != widget.api.connectionRevision) {
+        unawaited(feed.stop());
+      }
+      if (!widget.api.liveFresh) unawaited(refresh());
+    });
   }
 
   @override
   void dispose() {
     timer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    feed.removeListener(feedChanged);
+    feed.dispose();
+    for (final text in [
+      feedUrl,
+      feedOrigin,
+      feedToken,
+      feedNamespace,
+      feedEvent,
+    ]) {
+      text.dispose();
+    }
+    unawaited(statusEvents?.cancel());
     ++readEpoch;
     controller.dispose();
     url.dispose();
     hash.dispose();
     bearer.dispose();
+    fileUrl.dispose();
+    fileHash.dispose();
     super.dispose();
   }
 
@@ -111,6 +185,7 @@ class _FirmwarePageState extends State<FirmwarePage> {
     String warning,
     Future<String> Function() action, {
     bool mutation = true,
+    bool requireConfirmation = true,
   }) async {
     if (!mounted || working || (mutation && uncertain)) return;
     ++readEpoch;
@@ -120,7 +195,9 @@ class _FirmwarePageState extends State<FirmwarePage> {
     });
     widget.busyChanged(true);
     try {
-      if (!await confirm(title, warning) || !mounted) return;
+      if ((requireConfirmation && !await confirm(title, warning)) || !mounted) {
+        return;
+      }
       setState(() => executing = true);
       final result = await action();
       if (mounted) setState(() => message = result);
@@ -137,6 +214,7 @@ class _FirmwarePageState extends State<FirmwarePage> {
         setState(() {
           working = false;
           executing = false;
+          transferProgress = null;
         });
         widget.busyChanged(false);
       }
@@ -207,7 +285,7 @@ class _FirmwarePageState extends State<FirmwarePage> {
       'backup' => 'Read full AVR flash (32768 bytes, including Urboot) and EEPROM (1024 bytes) into ESP storage. This replaces the device’s previous backups. Keep stable power.',
       'stage' => 'Choose a complete 32768-byte raw AVR .bin including the intended bootloader. This only replaces the shared staging file; it does not program AVR. Filename/size are not authenticity checks.',
       'program' => 'Program the CURRENT shared AVR staging image. Its hash is not advertised by this legacy route and another client can replace it. Only continue if you independently know its provenance. Prefer the pinned remote pair workflow. This resets AVR and preserves/verifies EEPROM; keep stable power.',
-      'update' => 'Choose an uncompressed ESP8266 E9 binary for this exact board/profile. Direct OTA has no pinned manifest authenticity or paired-version assurance; prefer the remote pair workflow. ESP will reboot and disconnect. Keep stable power.',
+      'update' => 'Choose an uncompressed ESP application E9 binary for this exact board/profile. Direct OTA has no pinned manifest authenticity or paired-version assurance; prefer the remote pair workflow. ESP will reboot and disconnect. Keep stable power.',
       _ => '',
     };
     await run(
@@ -234,8 +312,145 @@ class _FirmwarePageState extends State<FirmwarePage> {
           }
           controller.check(esp ? 'ota' : 'isp');
         }
-        final result = await controller.manual(action, bytes: document?.bytes);
+        final result = await controller.manual(
+          action,
+          bytes: document?.bytes,
+          progress: onTransfer,
+        );
+        if (mounted) setState(() => transferProgress = null);
         if (mounted && action == 'stage') staged = document!.name;
+        return result;
+      },
+    );
+  }
+
+  void onTransfer(String stage, int done, int? total) {
+    if (!mounted) return;
+    final next = FirmwareProgress('Application', stage, done, total);
+    if (transferProgress?.phase == stage &&
+        transferProgress?.fraction != null &&
+        next.fraction != null &&
+        (transferProgress!.fraction! * 100).floor() ==
+            (next.fraction! * 100).floor()) {
+      return;
+    }
+    setState(() => transferProgress = next);
+  }
+
+  void feedChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) unawaited(feed.stop());
+  }
+
+  Future<void> startFeed() async {
+    final status = widget.api.latestStatus;
+    if (status == null ||
+        status.json['board_id'] is! String ||
+        status.json['boot_id'] is! String) {
+      return;
+    }
+    if (armed &&
+        !await confirm(
+          'Arm remote firmware delivery?',
+          'Fresh offers from this endpoint and trusted download origin may upload ESP firmware and reboot this board. Manifest/AVR offers stage only. The listener stops on backgrounding or peer change.',
+        )) {
+      return;
+    }
+    if (!mounted) return;
+    try {
+      await feed.start(
+        feedOptions,
+        status.json['board_id'],
+        status.json['boot_id'],
+        armed: armed,
+        deliver: (offer) => deliverOffer(offer, unattended: true),
+      );
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => message =
+              'Firmware listener connection failed; no operation replayed.',
+        );
+      }
+    }
+  }
+
+  Future<void> deliverOffer(
+    FirmwareOffer offer, {
+    bool unattended = false,
+  }) async {
+    if (working || uncertain) {
+      throw const FormatException(
+        'Maintenance is already owned; offer discarded',
+      );
+    }
+    final options = feedOptions, session = feed.session;
+    void admit() {
+      final s = widget.api.latestStatus;
+      if (!mounted || !feed.running || s == null) throw const StaleConnection();
+      FirmwareOffer.parse(
+        offer.json,
+        options,
+        session,
+        s.json['board_id'],
+        s.json['boot_id'],
+      );
+    }
+
+    admit();
+    await run(
+      'Deliver firmware offer?',
+      '${offer.id} · ${offer.target} · ${offer.kind}\nSHA-256 ${offer.hash}\nBinary ESP delivery reboots the board. Manifest/AVR delivery stages only.',
+      () async {
+        admit();
+        if (offer.kind == 'manifest') {
+          final target = offer.target == 'all'
+              ? 3
+              : offer.target == 'esp'
+              ? 1
+              : 2;
+          final ack = await controller.stage(offer.url, offer.hash, target, '');
+          if (mounted) setState(() => job = ack);
+          return 'Manifest accepted for stage-only download; Apply remains explicit.';
+        }
+        return controller.fileUrl(
+          offer.url,
+          offer.hash,
+          offer.target == 'esp',
+          progress: onTransfer,
+          beforeUpload: admit,
+        );
+      },
+      requireConfirmation: !unattended,
+    );
+  }
+
+  Future<void> uploadUrl() async {
+    final esp = controller.allowed('ota') && !fileAvr,
+        source = fileUrl.text,
+        digest = fileHash.text,
+        token = bearer.text;
+    await run(
+      'Download and upload firmware?',
+      '${esp ? 'ESP will reboot after upload.' : 'The complete AVR image is staged, not programmed.'} The file must match its SHA-256. No redirects or automatic retries.',
+      () async {
+        final result = await controller.fileUrl(
+          source,
+          digest,
+          esp,
+          bearer: token,
+          progress: onTransfer,
+        );
+        if (mounted) {
+          setState(() {
+            transferProgress = null;
+            bearer.clear();
+          });
+        }
         return result;
       },
     );
@@ -254,15 +469,41 @@ class _FirmwarePageState extends State<FirmwarePage> {
             ? '${bytes.length}-byte stored backup exported to the new document.'
             : 'Export cancelled; no document written.';
       }, mutation: false);
-  Widget card(String title, List<Widget> children) => WorkspaceSection(
-    title: title,
-    icon: title.startsWith('Remote')
-        ? PakarIcons.cloud
-        : title.startsWith('Observed')
-        ? PakarIcons.clock
-        : PakarIcons.cpu,
-    children: children,
-  );
+  final expandedSections = <String>{};
+  Widget card(String title, List<Widget> children) {
+    final collapsible =
+        title == 'Remote firmware subscription' || title == 'Firmware file URL';
+    final expanded =
+        !collapsible ||
+        expandedSections.contains(title) ||
+        (title == 'Remote firmware subscription' && feed.running);
+    return WorkspaceSection(
+      title: title,
+      icon: title.startsWith('Remote')
+          ? PakarIcons.cloud
+          : title.startsWith('Observed')
+          ? PakarIcons.clock
+          : PakarIcons.cpu,
+      trailing: collapsible
+          ? IconButton(
+              tooltip: expanded ? 'Collapse' : 'Expand',
+              icon: Transform.rotate(
+                angle: expanded ? 3.14159265 : 0,
+                child: const Icon(PakarIcons.caretDown),
+              ),
+              onPressed: () => setState(() {
+                if (expanded) {
+                  expandedSections.remove(title);
+                } else {
+                  expandedSections.add(title);
+                }
+              }),
+            )
+          : null,
+      children: expanded ? children : const [],
+    );
+  }
+
   Widget button(
     String text,
     IconData icon,
@@ -290,6 +531,107 @@ class _FirmwarePageState extends State<FirmwarePage> {
           icon: PakarIcons.cpu,
           subtitle: 'Updates and recovery',
         ),
+        if (transferProgress != null || boardProgress != null)
+          card('Update progress', [
+            FirmwareProgressView((transferProgress ?? boardProgress)!),
+          ]),
+        card('Remote firmware subscription', [
+          for (final entry in [
+            (feedUrl, 'WSS endpoint'),
+            (feedOrigin, 'Trusted HTTPS download origin'),
+            (feedEvent, 'Firmware event'),
+            if (socketIo) (feedNamespace, 'Namespace'),
+            (feedToken, 'Feed bearer · memory only'),
+          ]) ...[
+            TextField(
+              controller: entry.$1,
+              enabled: !working && !feed.running,
+              obscureText: entry.$1 == feedToken,
+              autocorrect: false,
+              decoration: InputDecoration(labelText: entry.$2),
+            ),
+            const SizedBox(height: 12),
+          ],
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Socket.IO'),
+            value: socketIo,
+            onChanged: working || feed.running
+                ? null
+                : (v) => setState(() => socketIo = v),
+          ),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Arm delivery for this board session'),
+            value: armed,
+            onChanged: working || feed.running
+                ? null
+                : (v) => setState(() => armed = v),
+          ),
+          Text(feed.state),
+          if (feed.running) SelectableText('Session ${feed.session}'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton(
+                onPressed: working
+                    ? null
+                    : feed.running
+                    ? () => feed.stop()
+                    : startFeed,
+                child: Text(feed.running ? 'Stop listener' : 'Start listener'),
+              ),
+              if (feed.pending case final offer?)
+                OutlinedButton(
+                  onPressed: working
+                      ? null
+                      : () {
+                          feed.pending = null;
+                          unawaited(
+                            deliverOffer(offer).catchError((Object _) {
+                              if (mounted) {
+                                setState(
+                                  () => message = 'Offer expired or owner changed; nothing replayed.',
+                                );
+                              }
+                            }),
+                          );
+                        },
+                  child: Text('Review offer ${offer.id}'),
+                ),
+            ],
+          ),
+        ]),
+        card('Firmware file URL', [
+          TextField(
+            controller: fileUrl,
+            enabled: !working,
+            autocorrect: false,
+            decoration: const InputDecoration(labelText: 'HTTP(S) binary URL'),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: fileHash,
+            enabled: !working,
+            autocorrect: false,
+            decoration: const InputDecoration(labelText: 'File SHA-256'),
+          ),
+          if (isp && ota)
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('AVR image · stage only'),
+              value: fileAvr,
+              onChanged: working ? null : (v) => setState(() => fileAvr = v),
+            ),
+          const SizedBox(height: 12),
+          button(
+            'Download and upload',
+            PakarIcons.cloud,
+            uploadUrl,
+            enabled: free,
+          ),
+        ]),
         card('Remote firmware · pinned manifest', [
           const Text(
             'HTTPS download → verified staging → explicit apply → post-boot pair verification. No automatic replay.',

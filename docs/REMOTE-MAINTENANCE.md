@@ -4,6 +4,67 @@ Version 0.2.7 contains one integrated updater for ESP8266 or ESP32-S3 and ATmega
 
 ## Owner workflow
 
+### Current application firmware-delivery checkpoint
+
+Native Device settings → Firmware & storage and Android device context menu →
+Firmware now offer local images, SHA-256-verified HTTP(S) binary files, and an
+opt-in WebSocket/Socket.IO firmware subscription. See [the inbox contract](API.md#application-firmware-inbox-file-delivery-and-observed-progress).
+Download/upload counters and actual board OTA/remote-job observations are
+separate stages. A successful transfer ACK is not verified completion. Network
+delivery still requires the explicitly selected network route; a USB owner
+never silently uses Wi-Fi. USB receives external board update progress.
+
+The actual ASUS native owner PID22736/session1 runs EXE28,425,728bytes SHA256
+`bd9318d4c01128abd83908f104342c5069be5352b7d5534297744f3cf34892fe`.
+Its old owner answered draft/pending-state IPC, then gracefully quit with exit0.
+The old executable and settings were hash-preserved; replacement was atomic.
+The existing Limited/Interactive production task launched the new owner, which
+reports USB COM22 selected/online with zero pending commands after the update.
+
+Internet stage job16 was admitted over actual CA-validated MQTT TLS, with
+manifest SHA256
+`79d0836bb7bd329566d639fe5685afcaf7b6a223fd56f15211f0050c807de636`.
+The board's download observations reached ASUS over USB:727868/1908480bytes
+(38.1%), then1543868/1908480bytes(80.9%). These are native owner IPC observations,
+not screenshot fixtures or source-side counters. The ESP independently verified
+the staged image and reported the exact job ready. MQTT Apply returned no
+correlated acknowledgment; that uncertain command was not replayed. Fresh full
+telemetry and the native hostname-based read both still showed the same boot,
+exact ready job/hash and no apply in progress. A new explicit pinned Apply via
+the ASUS native CLI then returned prepare/busy, not a completion claim.
+
+Actual new boot `a42b1105aba6938b525c416e0d63956c` replaced
+`b8a21cd35964daca70f09a9c5a4d3fc2`. Job16 reports complete after running-image
+SHA verification, image1908480bytes SHA256
+`e35d11c57de89ff99a86a66fd5ecdf0af908e1f755753ce0db1c55fbe3aee083`,
+running MD5`d8cd149da1c85eed34e2c405fa99e609`, boot integrity verified, and
+selected/running app0 VALID. MQTT reconnected. The same native USB owner now
+reports Board update#16 complete/verified with that new boot. GPIO-static,
+BGR, GPIO4,16MBflash/OPI profile is preserved; live driver reports ready/active
+with zero failures. AVR remains online0.2.7 and Prog clear; no AVR programming,
+fuse/EEPROM change, deliberate reset or audio test was performed.
+
+Final Android preview APK56,362,977bytes SHA256
+`484dbcbdf3c54758376b0cb0bfb4cef42d62677121c9b36c676998cfdff1050c`
+builds after analyzer, six actual delivery/progress/socket/HTTP fixtures and six
+firmware-page cases pass. Those include phone/tablet layout, cancellation,
+uncertain outcomes and same-board reboot rebinding without replay. A real
+Flutter renderer capture of the simulated firmware page was inspected; it is
+not phone/runtime or physical acceptance. No authorized Android ADB device is
+currently attached to ASUS, so installation remains pending. All component
+source versions remain0.2.7 (Android+7).
+
+Native has nine focused firmware tests passing, including real loopback raw
+WebSocket/Socket.IO sessions, duplicate-offer suppression and an actual HTTP
+download/hash-before-upload fixture. No external WSS service was guessed or
+connected: its endpoint and authentication remain operator configuration and
+live interoperability acceptance. Android subscription is foreground-only;
+listener reconnect is explicit. USB-only firmware forwarding, generic donor
+RPC/OS update notifications, power-loss/concurrency/soak, physical LED/display/
+audio and whole-donor parity remain open. The missing MQTT Apply ACK remains a
+recorded delivery-reliability failure even though the later explicit native
+Apply and postboot verification succeeded.
+
 Use Device settings → Firmware in the existing native application, the Web workspace's Verified remote update card, or the CLI/TUI commands below. Download & verify is stage-only. Apply is a separate confirmation tied to the observed job ID, ESP boot identity and trusted manifest SHA-256. Read actual phase/error/byte counters rather than treating an accepted request as completion.
 
 ```text

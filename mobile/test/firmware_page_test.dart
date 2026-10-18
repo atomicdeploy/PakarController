@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pakarcontroller/api.dart';
 import 'package:pakarcontroller/documents.dart';
 import 'package:pakarcontroller/firmware_page.dart';
+import 'package:pakarcontroller/models.dart';
 
 import 'firmware_test.dart' show firmwareJob;
 
@@ -20,6 +22,7 @@ class FirmwareApi extends PakarApi {
     Map<String, String> form = const {},
     Uint8List? upload,
     String? uploadField,
+    void Function(int done, int total)? uploadProgress,
     required bool Function() authorize,
   }) async {
     if (!authorize()) throw const StaleConnection();
@@ -31,6 +34,25 @@ class FirmwareApi extends PakarApi {
     if (loseProbe) throw const OperationUncertain();
     if (path == '/api/avr/probe') return {'signature': '1E950F'};
     return {};
+  }
+}
+
+class LiveFirmwareApi extends FirmwareApi {
+  DeviceStatus? current;
+  final updates = StreamController<DeviceStatus>.broadcast(sync: true);
+  @override
+  DeviceStatus? get latestStatus => current;
+  @override
+  Stream<DeviceStatus> get statusUpdates => updates.stream;
+  void observe(DeviceStatus value) {
+    current = value;
+    updates.add(value);
+  }
+
+  @override
+  Future<void> close() async {
+    await updates.close();
+    await super.close();
   }
 }
 
@@ -63,6 +85,42 @@ Widget firmwareFixture(
 );
 
 void main() {
+  testWidgets(
+    'Same-board reboot rebinds read-only firmware context without replay or vanishing controls',
+    (tester) async {
+      final api = LiveFirmwareApi();
+      api.current = DeviceStatus({
+        'hostname': 'ledboard',
+        'board_id': 'fixture-board',
+        'boot_id': 'old',
+        'capabilities': {
+          'board_kind': 'controller',
+          'acknowledged_features': ['ota'],
+        },
+      });
+      await tester.pumpWidget(firmwareFixture(api, features: ['ota']));
+      await tester.pump();
+      api.resetTransport();
+      api.observe(
+        DeviceStatus({
+          'hostname': 'ledboard',
+          'board_id': 'fixture-board',
+          'boot_id': 'new',
+          'capabilities': {
+            'board_kind': 'controller',
+            'acknowledged_features': ['ota'],
+          },
+          'remote_firmware': {...firmwareJob(), 'boot_id': 'new'},
+        }),
+      );
+      await tester.pump();
+      expect(find.text('Manual ESP OTA'), findsOneWidget);
+      expect(api.mutations, 0);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      await api.close();
+    },
+  );
   for (final size in [const Size(390, 840), const Size(1200, 900)]) {
     testWidgets(
       'Contextual real firmware layout $size has no startup mutation or overflow',

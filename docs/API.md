@@ -62,6 +62,69 @@ unsupported USB maintenance capabilities remain suppressed. Android
 currently consumes native bridges, while its own advanced bridge remains
 foreground-only authenticated loopback/MQTT/outbound WebSocket, not a LAN server.
 
+## Application firmware inbox, file delivery and observed progress
+
+Native: Device settings → Firmware & storage. Android: device context menu →
+Firmware. Both support a selected local `.bin` and a direct HTTP(S) binary URL
+with mandatory lowercase file SHA-256. Downloads use a separate client, never
+the board's credentials or identity headers; redirects/oversized/encoded or
+hash-mismatched files are refused before upload. The bounded image stays in RAM,
+not a new disk cache. ESP uploads use the existing `/update`; complete AVR
+images use `/api/avr/image` and remain stage-only until explicit programming.
+Pinned manifests retain the existing stage → exact-job Apply workflow.
+
+The advanced remote firmware subscription supports WebSocket and genuine
+Socket.IO over WebSocket (Engine.IO `EIO=4`, namespace CONNECT and heartbeat).
+Configure an explicit WSS URL, protocol, exact event, namespace and trusted
+HTTPS download origin. The optional Bearer is memory-only; Socket.IO also sends
+it in CONNECT auth. Plain WS is loopback-test only. Start is explicit, not app
+startup; Stop, Android backgrounding and board/boot/connection retirement revoke
+the listener. A disconnected listener is restarted explicitly, never a queue of
+offline firmware commands. Native saves public settings only after valid Start.
+
+The subscription carries `type:"subscribe"`, `events:["firmware-offer"]`, a new
+`session`, and actual `board_id`/`boot_id`. Socket.IO wraps it in the `subscribe`
+event. Publish a JSON WebSocket message with the configured `type`, or emit the
+configured Socket.IO event with this data:
+
+```json
+{
+  "type": "firmware-offer", "id": "unique-offer-id",
+  "session": "<issued listener session>",
+  "board_id": "<selected board>", "boot_id": "<selected boot>",
+  "expires_at_ms": 1800000000000,
+  "kind": "binary", "target": "esp",
+  "url": "https://updates.example/esp.bin", "sha256": "<file SHA-256>"
+}
+```
+
+The timestamp is illustrative: use current UTC milliseconds +30 seconds,
+maximum +60. IDs are 1–64 ASCII letters/digits/underscore/hyphen. Duplicate IDs,
+wrong session/peer/boot/origin, expired offers and full inbox/session budgets
+cannot dispatch another upload. Binary delivery rechecks expiry and actual
+board ownership after download, immediately before upload. No board credentials
+are forwarded to the source. `kind:"manifest"` uses the pinned manifest hash;
+`target` is `esp`, `avr` or manifest-only `all`. Socket binary attachments,
+arbitrary RPC and polling transport are not advertised by this firmware inbox.
+
+Default is review-before-delivery. Explicitly arming delivery permits fresh
+binary ESP offers to upload/reboot that selected board. AVR binaries and
+manifests stage only; no unattended AVR erase or paired Apply is introduced.
+Hardware firmware delivery currently requires the selected network update
+route. USB-only control does not silently open Wi-Fi; USB snapshots still carry
+the same board update observations. Direct USB firmware forwarding remains open.
+
+Rust, Android and embedded Web show `update` (local HTTP OTA) and
+`remote_firmware` (board-initiated/pinned updates), including changes initiated
+by another client or cloud source. These are consumed from normal peer status:
+WS first, bounded existing read fallback; no redundant per-tick job refresh.
+App download/upload byte counters describe that transfer stage, not flashing.
+Verification/reboot/programming without a measured denominator is indeterminate;
+an accepted request or 100% transfer is never verified update completion.
+Native CLI-triggered uploads share the tracked file uploader; TUI shows observed
+board update stages. Flutter's ordinary table connection/state is not reset by
+the firmware listener. Actual phone/endpoint/power-loss acceptance is separate.
+
 ## LED output implementation capability
 
 Peers advertising `leds` additionally report optional

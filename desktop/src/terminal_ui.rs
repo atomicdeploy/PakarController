@@ -524,6 +524,10 @@ impl Model {
                     );
                 } else if let Some(s) = &self.status {
                     lines.push(format!("Host: {}  Firmware: {}", s.hostname, s.version));
+                    if let Some(progress)=crate::firmware_progress::observed(s) {
+                        lines.push(progress.label());
+                        if let Some(total)=progress.bytes_total {lines.push(format!("{} / {} bytes · this update stage",progress.bytes_done,total));}
+                    }
                     if let Some(m) = &s.capabilities {
                         lines.push(format!("Board: {}  Name: {}", m.board_kind, m.name));
                         lines.push(format!(

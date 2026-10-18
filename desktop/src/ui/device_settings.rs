@@ -451,6 +451,67 @@ fn maintenance_page(
     use crate::maintenance::Operation;
     let isp = app.has_feature("isp");
     let ota = app.has_feature("ota");
+    if draft.firmware_feed.is_none() {draft.firmware_feed=Some(crate::device_settings::Draft::new(app.config.firmware_feed.clone()));}
+    if let Some(progress)=app.firmware_observation() {
+        dialog::section(ui,icons::CLOCK,"Update progress",|ui|crate::firmware_progress::draw(ui,&progress));
+    }
+    dialog::section(ui,icons::BROADCAST,"Remote firmware subscription",|ui| {
+        let running=app.firmware_feed.is_some();
+        ui.add_enabled_ui(!running,|ui| {
+            let settings=&mut draft.firmware_feed.as_mut().unwrap().value;
+            field(ui,icons::LINK,"WebSocket endpoint",&mut settings.endpoint,false);
+            super::dropdown::ComboBox::from_id_salt("firmware-feed-protocol")
+                .selected_text(if settings.protocol==crate::firmware_feed::Protocol::SocketIo {"Socket.IO"}else{"WebSocket"})
+                .show_ui(ui,|ui|{
+                    ui.dropdown_value(&mut settings.protocol,crate::firmware_feed::Protocol::WebSocket,"WebSocket");
+                    ui.dropdown_value(&mut settings.protocol,crate::firmware_feed::Protocol::SocketIo,"Socket.IO");
+                });
+            if settings.protocol==crate::firmware_feed::Protocol::SocketIo {
+                field(ui,icons::LINK,"Namespace",&mut settings.namespace,false);
+            }
+            field(ui,icons::BROADCAST,"Firmware event",&mut settings.event,false);
+            field(ui,icons::GLOBE,"Trusted HTTPS download origin",&mut settings.download_origin,false);
+            field(ui,icons::LOCK,"Feed bearer · memory only",&mut draft.feed_token,true);
+            ui.checkbox(&mut settings.deliver,"Arm delivery for this board session");
+            if settings.deliver {ui.colored_label(ui.visuals().warn_fg_color,"Armed binary ESP offers can upload and reboot this board. Manifest/AVR offers stage only; programming remains explicit.");}
+        });
+        if running {
+            if let Some(feed)=&app.firmware_feed {
+                ui.label(&feed.state);
+                ui.weak(format!("Session {} · {}",feed.session,feed.board));
+                if let Some(offer)=feed.pending.as_ref() {ui.label(format!("Offer {} · {} · {}",offer.id,offer.target,offer.kind));}
+            }
+            ui.horizontal(|ui| {
+                if ui.button("Stop listener").clicked() {app.firmware_feed=None;}
+                let pending=app.firmware_feed.as_ref().and_then(|f|f.pending.clone());
+                if ui.add_enabled(pending.is_some(),egui::Button::new("Deliver pending offer")).clicked() {
+                    if let Some(offer)=app.firmware_feed.as_mut().and_then(|f|f.pending.take()) {
+                        app.firmware_feed_message=app.deliver_firmware_offer(offer).err().unwrap_or_else(||"Offer dispatched once".into());
+                    }
+                }
+                if ui.button("Discard offer").clicked() {if let Some(feed)=app.firmware_feed.as_mut(){feed.pending=None;}}
+            });
+        } else if ui.add_enabled(app.live_status().is_some(),egui::Button::new("Start listener")).clicked() {
+            let settings=draft.firmware_feed.as_ref().unwrap().value.clone();
+            match app.start_firmware_feed(settings.clone(),std::mem::take(&mut draft.feed_token)) {
+                Ok(())=>draft.firmware_feed=Some(crate::device_settings::Draft::new(settings)),
+                Err(e)=>app.firmware_feed_message=e,
+            }
+        }
+        if !app.firmware_feed_message.is_empty() {ui.label(&app.firmware_feed_message);}
+    });
+    dialog::section(ui,icons::DOWNLOAD_SIMPLE,"Firmware file URL",|ui| {
+        field(ui,icons::LINK,"HTTP(S) binary URL",&mut draft.image_url,false);
+        field(ui,icons::LOCK,"File SHA-256",&mut draft.image_sha256,false);
+        field(ui,icons::LOCK,"Download bearer · memory only",&mut draft.firmware_bearer,true);
+        if isp && ota {ui.checkbox(&mut draft.image_avr,"AVR image · stage only");}
+        let esp=ota&&!draft.image_avr;
+        if ui.add_enabled(ready&&draft.maintenance_pending.is_none(),egui::Button::new("Download and upload…")).clicked() {
+            let result=crate::firmware_source::validate_remote(&draft.image_url,&draft.image_sha256,&draft.firmware_bearer)
+                .and_then(|_|app.source_operation(crate::firmware_source::Source::Http{url:draft.image_url.clone(),sha256:draft.image_sha256.clone(),bearer:std::mem::take(&mut draft.firmware_bearer)},esp));
+            match result {Ok(op)=>draft.maintenance_confirmation=Some(op),Err(e)=>draft.message=e}
+        }
+    });
     if ota {
     dialog::section(ui, icons::GLOBE, "Verified remote firmware", |ui| {
         field(
@@ -661,11 +722,7 @@ fn maintenance_page(
                                     }
                                     let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
                                     crate::maintenance::validate_image(esp, &bytes)?;
-                                    Ok(if esp {
-                                        Operation::UpdateEsp(bytes)
-                                    } else {
-                                        Operation::StageAvr(bytes)
-                                    })
+                                    app.source_operation(crate::firmware_source::Source::Local(bytes),esp)
                                 })();
                                 match result {
                                     Ok(operation) => {
@@ -1018,11 +1075,13 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
                     .clicked()
                 {
                     let id = draft.next_id();
+                    let transfer=if let crate::maintenance::Operation::SourceImage{progress,..}=&operation {Some(progress.clone())}else{None};
                     if app
                         .http_tx
                         .send(HttpCommand::Maintenance(app.endpoint(), id, operation))
                         .is_ok()
                     {
+                        if let Some(transfer)=transfer {app.firmware_transfer=Some(transfer);}
                         draft.maintenance_pending = Some(id);
                         draft.message =
                             "Maintenance submitted; waiting for the device result…".into();

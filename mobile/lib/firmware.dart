@@ -1,5 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+
+import 'package:http/http.dart' as http;
+import 'package:crypto/crypto.dart' as crypto;
 
 import 'api.dart';
 
@@ -106,7 +110,7 @@ void validateFirmwareImage(bool esp, Uint8List bytes) {
             bytes.first != 0xe9
       : bytes.length != 32768) {
     throw FormatException(
-      esp ? 'Use an uncompressed ESP8266 E9 .bin, 16 bytes–2 MiB' : 'Use exactly 32768 raw AVR bytes including the intended bootloader; not partial application or HEX',
+      esp ? 'Use an uncompressed ESP application E9 .bin, 16 bytes–2 MiB' : 'Use exactly 32768 raw AVR bytes including the intended bootloader; not partial application or HEX',
     );
   }
 }
@@ -216,7 +220,12 @@ class FirmwareController {
     return ack;
   }
 
-  Future<String> manual(String action, {Uint8List? bytes}) async {
+  Future<String> manual(
+    String action, {
+    Uint8List? bytes,
+    void Function(String stage, int done, int? total)? progress,
+    void Function()? beforeUpload,
+  }) async {
     final esp = action == 'update';
     check(esp ? 'ota' : 'isp');
     // Do not overwrite or interfere with another client's ready pinned job.
@@ -227,6 +236,7 @@ class FirmwareController {
         'Remote job owns maintenance; inspect/cancel it before a manual operation',
       );
     }
+    beforeUpload?.call();
     final path = switch (action) {
       'probe' => '/api/avr/probe',
       'backup' => '/api/avr/backup',
@@ -246,6 +256,8 @@ class FirmwareController {
           post: true,
           upload: bytes,
           uploadField: 'image',
+          uploadProgress: (done, total) =>
+              progress?.call('uploading to board', done, total),
           authorize: () => allowed('isp'),
         );
         check('isp');
@@ -263,6 +275,8 @@ class FirmwareController {
       mayMutate: true,
       upload: esp ? bytes : null,
       uploadField: esp ? 'firmware' : null,
+      uploadProgress: (done, total) =>
+          progress?.call('uploading to board', done, total),
       authorize: () => allowed(esp ? 'ota' : 'isp'),
     );
     check(esp ? 'ota' : 'isp');
@@ -290,6 +304,90 @@ class FirmwareController {
       'update' => 'ESP accepted update and scheduled reboot; reconnect to verify its running version',
       _ => '',
     };
+  }
+
+  Future<String> fileUrl(
+    String source,
+    String digest,
+    bool esp, {
+    String bearer = '',
+    http.Client? downloadClient,
+    void Function(String stage, int done, int? total)? progress,
+    void Function()? beforeUpload,
+  }) async {
+    final uri = Uri.tryParse(source);
+    if (uri == null ||
+        !{'http', 'https'}.contains(uri.scheme) ||
+        uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty ||
+        uri.hasFragment ||
+        source.length > 2048 ||
+        RegExp(r'[\x00-\x20\x7f-\uffff\\]').hasMatch(source) ||
+        !firmwareHash(digest) ||
+        bearer.length > 256 ||
+        RegExp(r'[^!-~]').hasMatch(bearer)) {
+      throw const FormatException(
+        'Use a direct HTTP(S) binary URL and its lowercase SHA-256',
+      );
+    }
+    check(esp ? 'ota' : 'isp');
+    final client = downloadClient ?? http.Client();
+    try {
+      final request = http.Request('GET', uri)..followRedirects = false;
+      if (bearer.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $bearer';
+      }
+      progress?.call('downloading file', 0, null);
+      final response = await client
+          .send(request)
+          .timeout(const Duration(seconds: 15));
+      final maximum = esp ? 2 * 1024 * 1024 : 32768,
+          total = response.contentLength;
+      if (response.statusCode != 200 ||
+          (total != null && (total <= 0 || total > maximum)) ||
+          (response.headers['content-encoding'] != null &&
+              response.headers['content-encoding'] != 'identity')) {
+        await response.stream.listen((_) {}).cancel();
+        throw const FormatException(
+          'Firmware download rejected/oversized; no board write',
+        );
+      }
+      final bytes = BytesBuilder(copy: false), elapsed = Stopwatch()..start();
+      final reader = StreamIterator(response.stream);
+      try {
+        while (await reader.moveNext().timeout(const Duration(seconds: 20))) {
+          check(esp ? 'ota' : 'isp');
+          if (elapsed.elapsed > const Duration(minutes: 3) ||
+              bytes.length + reader.current.length > maximum) {
+            throw const FormatException(
+              'Firmware download limit exceeded; no board write',
+            );
+          }
+          bytes.add(reader.current);
+          progress?.call('downloading file', bytes.length, total);
+        }
+      } finally {
+        await reader.cancel();
+      }
+      final image = bytes.takeBytes();
+      if ((total != null && total != image.length) ||
+          crypto.sha256.convert(image).toString() != digest) {
+        throw const FormatException(
+          'Firmware length/SHA-256 mismatch; no board write',
+        );
+      }
+      validateFirmwareImage(esp, image);
+      check(esp ? 'ota' : 'isp');
+      // Refreshes actual job ownership after downloading, before a single upload.
+      return await manual(
+        esp ? 'update' : 'stage',
+        bytes: image,
+        progress: progress,
+        beforeUpload: beforeUpload,
+      );
+    } finally {
+      if (downloadClient == null) client.close();
+    }
   }
 
   Future<Uint8List> backupBytes(bool eeprom) async {

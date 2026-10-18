@@ -21,6 +21,7 @@ import 'device_settings_page.dart';
 import 'devices_page.dart';
 import 'bridge_page.dart';
 import 'firmware_page.dart';
+import 'firmware_progress.dart';
 import 'pixel_diagnostic.dart';
 import 'pixel_diagnostic_page.dart';
 import 'mirroring.dart';
@@ -919,7 +920,7 @@ class _ControlShellState extends State<ControlShell>
                                   api: api,
                                   authorized: (feature) =>
                                       mounted &&
-                                      owner == api.connectionRevision &&
+                                      status?.json['board_id'] == pixelBoard &&
                                       status?.hostname == hostname &&
                                       status?.peer.has(feature) == true,
                                   busyChanged: (value) {
@@ -998,6 +999,9 @@ class _ControlShellState extends State<ControlShell>
               child: Column(
                 children: [
                   Expanded(child: body),
+                  if(status!=null&&(status!.peer.has('ota')||status!.peer.has('isp')))
+                  if(FirmwareProgress.observed(status!) case final progress? when progress.active)
+                    Padding(padding:const EdgeInsets.symmetric(horizontal:16,vertical:8),child:FirmwareProgressView(progress)),
                   StatusBar(status: status, message: message),
                 ],
               ),

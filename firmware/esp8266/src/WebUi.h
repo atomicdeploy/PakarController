@@ -807,11 +807,26 @@ function renderLedOutputControl(){
     document.getElementById('rainbowTest').disabled=select.disabled;if(modeKnown){select.value=state.led_output.mode;
       setUiText(document.getElementById('ledOutputModeHint'),state.led_output.mode==='static'?'Static cells: six matching pixels. Rainbow test animates explicitly.':'Effects: animated output enabled explicitly.')}}
 }
+function firmwareUpdateObservation(s){
+  const v=s?.update, phases=['receiving','verifying','ready-to-reboot','failed','aborted'];
+  if(v&&phases.includes(v.phase)&&Number.isInteger(v.received_bytes)&&v.received_bytes>=0&&Number.isInteger(v.expected_bytes)&&v.expected_bytes>=0&&(v.expected_bytes===0||v.received_bytes<=v.expected_bytes))return {source:'Board OTA',phase:v.phase,active:!['failed','aborted'].includes(v.phase),fraction:v.phase==='receiving'&&v.progress_known===true&&v.expected_bytes>0?v.received_bytes/v.expected_bytes:null,verified:v.completion_verified===true};
+  const j=s?.remote_firmware;
+  if(!j||!Number.isInteger(j.job_id)||j.job_id<=0||j.boot_id!==s.boot_id||!/^([0-9a-f]{64})$/.test(j.manifest_sha256)||typeof j.busy!=='boolean'||!['manifest','download_esp','download_avr','ready','prepare','program_avr','program_esp','awaiting_reboot','verify_pair','release_pair','complete','failed','cancelled'].includes(j.phase)||!Number.isInteger(j.received_bytes)||!Number.isInteger(j.expected_bytes)||j.received_bytes<0||j.expected_bytes<j.received_bytes)return null;
+  return {source:'Board update #'+j.job_id,phase:j.phase,active:j.busy,fraction:['download_esp','download_avr'].includes(j.phase)&&j.expected_bytes>0?j.received_bytes/j.expected_bytes:null,verified:j.phase==='complete'};
+}
+function renderUpdateProgress(){
+  const p=currentPeer().known&&(currentPeer().has('ota')||currentPeer().has('isp'))?firmwareUpdateObservation(state):null;
+  let root=document.getElementById('updateProgressPreview');const anchor=contextMessage?.parentElement;
+  if(!root&&p?.active&&anchor){root=document.createElement('div');root.id='updateProgressPreview';root.className='update-progress';const caption=document.createElement('span'),bar=document.createElement('progress');caption.id='updateProgressCaption';bar.id='updateProgressBar';bar.max=1;root.append(caption,bar);anchor.appendChild(root);}
+  if(root){root.hidden=!p?.active;if(p){document.getElementById('updateProgressCaption').textContent=p.source+' · '+p.phase.replaceAll('_',' ');const bar=document.getElementById('updateProgressBar');if(p.fraction===null)bar.removeAttribute('value');else bar.value=p.fraction;}}
+  if(currentPeer().known&&typeof showRemoteJob==='function'&&typeof validRemoteJob==='function'&&validRemoteJob(state.remote_firmware)&&state.remote_firmware.boot_id===state.boot_id)showRemoteJob(state.remote_firmware);
+}
 function renderContext(){
   if(typeof renderBoardSound==='function')renderBoardSound();
   const c=currentPeer();
   renderLedOutputControl();
   renderStatusRgb();
+  renderUpdateProgress();
   document.querySelectorAll('[data-capability]').forEach(node=>node.hidden=!c.has(node.dataset.capability));
   document.querySelector('.layout')?.classList.toggle('controller-only',!c.has('table'));
   renderApplicationIdentity(c.known?state.capabilities:null);
@@ -1338,7 +1353,7 @@ async function loadTelemetry(){try{telemetryView.textContent=JSON.stringify(awai
 const browserStart=performance.now(),clientBytes=crypto.getRandomValues(new Uint8Array(16)),browserId=Array.from(clientBytes,b=>b.toString(16).padStart(2,'0')).join('');
 async function reportBrowser(){if(!authenticated)return;const reportValue={id:browserId,application:'PakarController Web',version:state.version,os:navigator.platform||undefined,transport:'http',uptime_seconds:Math.floor((performance.now()-browserStart)/1000),screen_width:screen.width,screen_height:screen.height};if(Number.isInteger(navigator.hardwareConcurrency))reportValue.cpu_count=navigator.hardwareConcurrency;try{await api('/api/clients/report',{method:'POST',body:new URLSearchParams({report:JSON.stringify(reportValue)})})}catch{}}
 setInterval(()=>{if(authenticated){reportBrowser();if(remoteJob)remoteRefresh()}},30000);
-setInterval(()=>{if(authenticated&&remoteJob?.busy)remoteRefresh()},2000);
+setInterval(()=>{if(authenticated&&remoteJob?.busy&&(!socket||socket.readyState!==WebSocket.OPEN||Date.now()-contextReceivedAt>2000))remoteRefresh()},2000);
 setInterval(()=>{if(authenticated)renderContext()},500);
 // BEGIN DEVICE SETTINGS CONTRACT
 const DEVICE_SETTINGS={"pages":[{"id":"overview","label":"Overview","icon":"CIRCUITRY","keywords":"device version identity status hardware NTP time discovery build flags","features":[]},{"id":"identity","label":"Board identity","icon":"GLOBE","keywords":"identity hostname rename board name application title icon mDNS AP","features":["identity"]},{"id":"wifi","label":"Wi-Fi","icon":"WIFI_HIGH","keywords":"network station access point recovery SSID password scan","features":["network"]},{"id":"mqtt","label":"MQTT","icon":"BROADCAST","keywords":"cloud broker port topic username password TLS telemetry","features":["network"]},{"id":"websocket","label":"WebSocket","icon":"LINK","keywords":"cloud websocket host port path token TLS telemetry","features":["network"]},{"id":"access","label":"Device access","icon":"LOCK","keywords":"login authentication username password credentials security","features":["network"]},{"id":"leds","label":"LEDs & cells","icon":"GRID_FOUR","keywords":"table LED brightness effects mapping names logical physical modes games","features":["leds","table"]},{"id":"front-panel","label":"Front panel","icon":"GAUGE","keywords":"TM1637 LCD display scrolling marquee once interval melodies buzzer audio","features":["display","text","buzzer","lcd"]},{"id":"avr","label":"AVR & inputs","icon":"CPU","keywords":"ATmega328P saved settings EEPROM board name silent welcome brightness telemetry menu pages order threshold shift registers outputs ADC6 ninth input UART ISP busy build flags","features":["inputs","outputs","settings"]},{"id":"firmware","label":"Firmware & storage","icon":"FLOPPY_DISK","keywords":"OTA firmware flash EEPROM backup ISP update","features":["isp","ota"]}],"build_only":["link_mode","AVR clock and fuses","pin ownership","WS2811 chipset and channel order","pixel count"],"network":{"station_enabled":"boolean","ap_enabled":"boolean","station_ssid":"string","dhcp":"optional:boolean","address":"optional:string","gateway":"optional:string","subnet":"optional:string","dns1":"optional:string","dns2":"optional:string"},"cloud":{"mqtt_enabled":"boolean","mqtt_tls":"boolean","mqtt_host":"string","mqtt_port":"port","mqtt_user":"string","mqtt_base_topic":"string","mqtt_password_set":"boolean","websocket_enabled":"boolean","websocket_tls":"boolean","websocket_host":"string","websocket_port":"port","websocket_path":"string","websocket_token_set":"boolean","telemetry_seconds":"interval"}};

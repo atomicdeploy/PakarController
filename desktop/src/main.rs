@@ -22,6 +22,9 @@ mod diagnostics;
 mod display;
 mod identity;
 mod maintenance;
+mod firmware_progress;
+mod firmware_source;
+mod firmware_feed;
 mod messaging;
 mod pc_contract;
 mod peer_http;
@@ -142,6 +145,10 @@ struct DeviceStatus {
     brightness: u8,
     #[serde(default)]
     led_output: serde_json::Value,
+    #[serde(default)]
+    update: serde_json::Value,
+    #[serde(default)]
+    remote_firmware: serde_json::Value,
     #[serde(default)]
     effect: String,
     #[serde(default)]
@@ -636,7 +643,7 @@ fn scoped_http_request(client: &Client, scope: &peer_http::Scope, command: &Http
             HttpCommand::Maintenance(_, _, operation) => c.has(match operation {
                 maintenance::Operation::ReconnectCloud => "network",
                 maintenance::Operation::Probe | maintenance::Operation::Backup | maintenance::Operation::StageAvr(_)
-                | maintenance::Operation::ProgramAvr => "isp",
+                | maintenance::Operation::ProgramAvr | maintenance::Operation::SourceImage {esp:false,..} => "isp",
                 _ => "ota",
             }),
             _ => false,
@@ -1740,6 +1747,9 @@ fn command_route(selected: Transport, wifi_fresh: bool, usb_fresh: bool) -> Opti
     }
 }
 struct PakarControllerApp {
+    firmware_feed: Option<firmware_feed::Session>,
+    firmware_transfer: Option<firmware_progress::Transfer>,
+    firmware_feed_message: String,
     bridge: bridge::Runtime,
     connection_gate: connection::Gate,
     connection_enabled: bool,
@@ -1892,6 +1902,9 @@ impl PakarControllerApp {
             event_log.record("Windows desktop unavailable", error);
         }
         Self {
+            firmware_feed: None,
+            firmware_transfer: None,
+            firmware_feed_message: String::new(),
             bridge: Default::default(),
             connection_gate,
             connection_enabled: config.connection_enabled,
@@ -2195,8 +2208,10 @@ impl PakarControllerApp {
         let mut bytes = Vec::new();
         file.take(2 * 1024 * 1024 + 1).read_to_end(&mut bytes).map_err(|error|error.to_string())?;
         maintenance::validate_image(true, &bytes)?;
+        let operation=self.source_operation(firmware_source::Source::Local(bytes),true)?;
+        if let maintenance::Operation::SourceImage{progress,..}=&operation {self.firmware_transfer=Some(progress.clone());}
         let id = self.device_settings.next_id();
-        self.http_tx.send(HttpCommand::Maintenance(self.endpoint(), id, maintenance::Operation::UpdateEsp(bytes)))
+        self.http_tx.send(HttpCommand::Maintenance(self.endpoint(), id, operation))
             .map_err(|_|"Firmware request queue closed")?;
         self.device_settings.maintenance_pending = Some(id);
         self.device_settings.message = "ESP Wi-Fi update queued once; do not disconnect its power".into();
@@ -2250,13 +2265,8 @@ impl PakarControllerApp {
         if self.connection_enabled && self.transport == Transport::WiFi && !self.status_request_pending && self.last_poll.elapsed() >= self.status_retry.delay() {
             self.last_poll = Instant::now();
             self.status_request_pending = self.http_tx.send(HttpCommand::Status(self.endpoint())).is_ok();
-            if self.device_settings.open && self.device_settings.page == 9
-                && self.command_route() == Some(Transport::WiFi) {
-                let _ = self.http_tx.send(HttpCommand::Configuration(
-                    self.endpoint(),
-                    "/api/firmware/remote",
-                ));
-            }
+            // Firmware progress already arrives in this same status/WS stream,
+            // including external OTA. Do not queue a redundant job poll.
         }
         // A retired/expired queue entry may never produce an event. Its request
         // token must expire independently, and a late result cannot settle a
@@ -2341,6 +2351,7 @@ impl PakarControllerApp {
                             self.table.pixel_sample=None; // Old RGB must not mask a new acknowledged semantic state.
                         }
                         if self.http_tx.observe(&s) { self.revoke_http_drafts(); }
+                        self.device_settings.remote_job=maintenance::parse_job(s.remote_firmware.clone()).ok();
                         if s.pixel_preview_requested {
                             ui::cell_pixels::Sample::observe(&mut self.table.pixel_sample, s.pixel_frame.clone());
                         }
@@ -2398,6 +2409,7 @@ impl PakarControllerApp {
                 }
                 Event::MaintenanceFinished(id, result) => {
                     if self.device_settings.maintenance_pending == Some(id) {
+                        if let Some(progress)=self.firmware_transfer.as_ref() {progress.finish(&result);}
                         let severity = maintenance::result_severity(&result);
                         self.device_settings.maintenance_pending = None;
                         self.device_settings.message = result.unwrap_or_else(|e| e);
@@ -2455,6 +2467,7 @@ impl PakarControllerApp {
                     }
                 }
                 Event::SerialSnapshot(_, snapshot) => {
+                    self.device_settings.remote_job=maintenance::parse_job(snapshot.status.remote_firmware.clone()).ok();
                     let peer=peer_http::Pin::from_status(&snapshot.status);
                     let previous=self.serial_status.as_ref().and_then(peer_http::Pin::from_status);
                     if peer!=previous {
@@ -2630,6 +2643,7 @@ impl PakarControllerApp {
                 }
             }
         }
+        self.poll_firmware_feed();
         let state = self.live_status().map(|s| s.avr_online);
         if let Some((message, severity)) = self.connection_notice.observe(state) {
             self.record_event("Connection", message);

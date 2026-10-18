@@ -139,6 +139,7 @@ pub struct WorkspaceProfile {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AppConfig {
+    pub firmware_feed: crate::firmware_feed::Settings,
     pub bridge: crate::bridge::Settings,
     pub stream_fps: u16,
     pub display: crate::display::Settings,
@@ -174,6 +175,7 @@ pub struct AppConfig {
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
+            firmware_feed: Default::default(),
             bridge: Default::default(),
             stream_fps: crate::streaming::DEFAULT_FPS,
             display: crate::display::Settings::default(),

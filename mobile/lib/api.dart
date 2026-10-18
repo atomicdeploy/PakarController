@@ -109,6 +109,9 @@ class PakarApi {
   WebSocketChannel? _channel;
   bool _socketReady = false;
   DeviceStatus? _latestStatus;
+  final _statusUpdates = StreamController<DeviceStatus>.broadcast(sync: true);
+  Stream<DeviceStatus> get statusUpdates => _statusUpdates.stream;
+  DeviceStatus? get latestStatus => _latestStatus;
   Stopwatch? _statusAge;
   Stopwatch? _liveAge, _socketAge;
   Duration? get liveSilence => _liveAge?.elapsed ?? _socketAge?.elapsed;
@@ -269,6 +272,7 @@ class PakarApi {
     if (status.olderThan(_latestStatus)) return;
     _latestStatus = status;
     _statusAge = Stopwatch()..start();
+    if (!_statusUpdates.isClosed) _statusUpdates.add(status);
   }
 
   /// A single intent, preferred WS receipt, then the SAME idempotent envelope
@@ -415,6 +419,7 @@ class PakarApi {
     String? uploadField,
     int maximum = 8192,
     bool verifySketch = false,
+    void Function(int done, int total)? uploadProgress,
     Duration timeout = const Duration(seconds: 180),
     required bool Function() authorize,
   }) async {
@@ -426,22 +431,42 @@ class PakarApi {
     }
     final uri = _uri(transportUrl, path);
     final http.BaseRequest request;
+    var uploaded = 0;
     if (upload != null) {
       if (!post || !{'image', 'firmware'}.contains(uploadField)) {
         throw const FormatException('Invalid firmware upload contract');
       }
       request = http.MultipartRequest('POST', uri)
         ..files.add(
-          http.MultipartFile.fromBytes(
+          http.MultipartFile(
             uploadField!,
-            upload,
-            filename: uploadField == 'image' ? 'avr.bin' : 'esp8266.bin',
+            Stream<List<int>>.fromIterable([
+              for (var at = 0; at < upload.length; at += 16384)
+                Uint8List.sublistView(
+                  upload,
+                  at,
+                  (at + 16384).clamp(0, upload.length),
+                ),
+            ]).map((chunk) {
+              if (revision != connectionRevision || !authorize()) {
+                throw const StaleConnection();
+              }
+              uploaded += chunk.length;
+              uploadProgress?.call(uploaded, upload.length);
+              return chunk;
+            }),
+            upload.length,
+            filename: uploadField == 'image' ? 'avr.bin' : 'esp.bin',
           ),
         );
     } else {
       request = http.Request(post ? 'POST' : 'GET', uri)..bodyFields = form;
     }
     request.headers.addAll(_writeHeaders);
+    if (upload != null && uploadField == 'firmware') {
+      request.headers['X-Pakar-Firmware-Size'] = '${upload.length}';
+      request.headers['X-Pakar-Firmware-MD5'] = md5.convert(upload).toString();
+    }
     request.followRedirects = false; // No credential forwarding or POST replay.
     final mutation = post || mayMutate;
     final elapsed = Stopwatch()..start();
@@ -518,6 +543,7 @@ class PakarApi {
     Map<String, String> form = const {},
     Uint8List? upload,
     String? uploadField,
+    void Function(int done, int total)? uploadProgress,
     required bool Function() authorize,
   }) async {
     final bytes = await maintenanceBytes(
@@ -527,6 +553,7 @@ class PakarApi {
       form: form,
       upload: upload,
       uploadField: uploadField,
+      uploadProgress: uploadProgress,
       authorize: authorize,
     );
     final value = jsonDecode(utf8.decode(bytes));
@@ -853,6 +880,7 @@ class PakarApi {
       // A vanished board cannot hold client disposal/connection retirement.
     } finally {
       _client.close();
+      unawaited(_statusUpdates.close());
       _ioClient.close(force: true);
     }
   }

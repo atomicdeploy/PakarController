@@ -23,6 +23,7 @@ class SettingsFirmwareApi extends SettingsApi {
     Map<String, String> form = const {},
     Uint8List? upload,
     String? uploadField,
+    void Function(int done, int total)? uploadProgress,
     required bool Function() authorize,
   }) async {
     if (!authorize()) throw const StaleConnection();

@@ -19,6 +19,11 @@ pub enum Operation {
     StageAvr(Vec<u8>),
     ProgramAvr,
     UpdateEsp(Vec<u8>),
+    SourceImage {
+        source: crate::firmware_source::Source,
+        esp: bool,
+        progress: crate::firmware_progress::Transfer,
+    },
     RemoteStage {
         url: String,
         sha256: String,
@@ -62,6 +67,8 @@ impl Operation {
             Self::UpdateEsp(_) => {
                 "Replace ESP firmware and reboot. Confirm this binary is built for this exact ESP board/module and preserves its pin mapping. A lost connection does not prove failure; reconnect before retrying."
             }
+            Self::SourceImage {esp:true,..} => "Verify this exact local/downloaded ESP binary, upload once to the selected board and reboot it. Transfer progress is not flash completion. Reconnect and inspect running firmware; no uncertain write is replayed.",
+            Self::SourceImage {..} => "Verify and upload a complete 32768-byte AVR image to ESP storage. It is NOT programmed automatically. Existing staged image is replaced; final programming remains explicit.",
             Self::Download { .. } => {
                 "Export the existing backup. No board write is performed and existing PC files will not be overwritten."
             }
@@ -79,6 +86,9 @@ pub fn validate_image(esp: bool, bytes: &[u8]) -> Result<(), String> {
     Ok(())
 }
 pub fn run(client: &Client, endpoint: &Endpoint, operation: Operation) -> Result<String, String> {
+    if let Operation::SourceImage {source,esp,progress}=operation {
+        return crate::firmware_source::run(client,endpoint,source,esp,&progress);
+    }
     if matches!(
         operation,
         Operation::RemoteStage { .. }
@@ -239,6 +249,8 @@ pub fn parse_job(value: serde_json::Value) -> Result<RemoteJob, String> {
     if !(1..=3).contains(&job.targets)
         || job.boot_id.is_empty()
         || job.boot_id.len() > 80
+        || job.boot_id.bytes().any(|b| !(33..=126).contains(&b))
+        || job.error.len()>1024 || job.error.chars().any(|c|c.is_control() && c!='\n' && c!='\t')
         || job.received_bytes > job.expected_bytes
         || (job.job_id > 0 && !valid_hash(&job.manifest_sha256))
         || ![
@@ -266,6 +278,7 @@ pub fn parse_job(value: serde_json::Value) -> Result<RemoteJob, String> {
 pub fn result_severity(result: &Result<String,String>) -> crate::messaging::Severity {
     use crate::messaging::Severity;
     let Ok(text)=result else {return Severity::Error;};
+    if text.starts_with("ESP accepted firmware") || text.starts_with("AVR image uploaded and stored") {return Severity::Info;}
     let job=serde_json::from_str(text).ok().and_then(|v|parse_job(v).ok());
     match job.as_ref().map(|j|j.phase.as_str()) {
         Some("complete") => Severity::Success,

@@ -34,6 +34,13 @@ const run=s=>vm.runInContext(s,context);
 const set=s=>{context.state=s;run('contextReceivedAt=Date.now();renderContext()')};
 const visible=f=>cards.filter(n=>n.dataset.capability===f).some(n=>!n.hidden);
 const manifest=(features,kind='controller')=>({name:'Fixture board',board_kind:kind,acknowledged_features:features});
+context.updateFixture={phase:'receiving',received_bytes:50,expected_bytes:100,progress_known:true,completion_verified:false};
+assert.equal(run('firmwareUpdateObservation({update:updateFixture}).fraction'),0.5);
+context.updateFixture.phase='verifying';assert.equal(run('firmwareUpdateObservation({update:updateFixture}).fraction'),null);
+assert.equal(run('firmwareUpdateObservation({update:updateFixture}).verified'),false);
+context.remoteFixture={job_id:7,boot_id:'boot',phase:'program_esp',busy:true,manifest_sha256:'a'.repeat(64),received_bytes:100,expected_bytes:100};
+assert.equal(run('firmwareUpdateObservation({boot_id:"boot",remote_firmware:remoteFixture}).fraction'),null);
+assert.equal(run('firmwareUpdateObservation({boot_id:"other",remote_firmware:remoteFixture})'),null);
 for(const [backend,rmt,dma,label] of [['gpio-static',false,false,'GPIO · no RMT/DMA'],['rmt-dma',true,true,'RMT + DMA'],['fastled',false,false,'FastLED · no RMT/DMA']]){
   set({capabilities:{...manifest(['leds']),led_output:{backend,rmt,dma}}});
   assert.equal(nodes.get('ledDriverCapability').textContent,'LED driver: '+label);
