@@ -2031,7 +2031,7 @@
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4"
+          "sha256": "92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267"
         }
       ],
       "omissions": [
@@ -4023,7 +4023,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4",
+          "sha256": "92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -4074,7 +4074,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4",
+          "sha256": "92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -12348,7 +12348,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4",
+          "sha256": "92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -12499,7 +12499,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4",
+          "sha256": "92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267",
           "anchor": "CellChaseOnBoot"
         },
         {

@@ -6048,3 +6048,18 @@ The existing double did not exercise actual add/send/ACK-based close behavior.
 A project-owned known-length snapshot adapter and real short-write fixtures are
 being implemented; the SDK/donor checkouts remain unchanged. Upload ingress and
 WebSocket upgrade are distinct and are not claimed fixed by that response work.
+
+The final 802512c SDK recovery build with application-only BLE exclusion passed
+the complete protocol suite, focused network/ble/platform cases and canonical
+build-plan/storage guards. Direct guarded USB app-slot recovery then verified
+the write; complete live running-image SHA, VALID slot, auth-disabled HTTP and
+same-peer WebSocket passed. Native actual USB then Wi-Fi passed with80 mappings,
+white state, unchanged preferences and zero active incidents. See commissioning
+for exact image/boot/receipts and remaining cloud/OTA/UI/physical boundaries.
+
+CI subsequently caught a separate stale PU850 route-target binding after the
+six-line status extension. Reviewed the affected sketch diff (no route change)
+and regenerated all50 existing route hashes/anchors from the actual unchanged
+donor, then ran pu_routes_test. The firmware build wrapper now runs that same
+guard before compilation; it does not auto-certify or regenerate evidence.
+This tooling/evidence correction requires no firmware rebuild or device write.

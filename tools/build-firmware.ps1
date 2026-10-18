@@ -54,6 +54,10 @@ if ($Target -eq 'esp32s3') {
     }
 }
 if ($Target -ne 'avr') {
+    # Route evidence is a separate reviewed artifact from the file ledger.
+    # Fail before compiling/flashing if a changed sketch has stale route hashes.
+    & node (Join-Path $PSScriptRoot '../tests/pu_routes_test.mjs') | ForEach-Object { Write-Host $_ }
+    if ($LASTEXITCODE -ne 0) { throw 'PU route evidence is stale; re-review affected routes and regenerate their exact target bindings.' }
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern remote-ota -Gate | Out-Null
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern web-presentation -Gate | Out-Null
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern web-streaming -Gate | Out-Null

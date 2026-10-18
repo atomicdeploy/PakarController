@@ -14,6 +14,59 @@ same AVR UART/ISP signals at once.
 
 ## Delivered Wi-Fi-first checkpoint
 
+### Web-service recovery update
+
+Shipping firmware source802512cb6f6a24b3ae977a7f164298c913fb5016 replaces the
+earlier image below:2036080bytes, SHA256
+`f81237f48d51cff5dd94c34257134c3d243dfece824a05640736cdfff0205b16`,
+MD5`6612324b5cf9cc91c6bbe8b91d798c46`. Fresh USB metadata validated OTA
+sequence19/20 CRCs and selected app1 at0x340000. Only that app range was written;
+esptool verified its hash. Bootloader, partition table, OTA selection data,
+filesystem and AVR image/EEPROM/fuses were not written. The previous fa1a7a9a
+image remains preserved as rollback. Current boot is
+`35bed89db160d5b4c9028808df5929e4`.
+
+This stable profile uses `-S3Bluetooth disabled` and explicitly awake Wi-Fi.
+Actual status confirms BLE configured:false/started:false/startup_attempted:false
+and wifi_modem_sleep:false. The runtime-capable alternative remains available;
+missing/corrupt BLE settings default Off, first enabling requires reboot, and
+excluded builds reject On. Do not enable BLE coexistence before issue20's gate.
+
+The async response adapter now retains short writes/failed sends and waits for
+all admitted header/body bytes to be ACKed. Actual postboot verification read
+the entire running image and matched SHA256, confirmed VALID selected/running
+app1, authentication disabled and same-board/boot WebSocket status. All12 bounded
+cached-address HTTP reads completed, including the complete223213-byte Web UI
+in877ms. This ran concurrently with image export and native transport checks;
+median434ms is not claimed faster than the earlier unloaded308ms measurement.
+One TCP connection still took3.2s. ASUS DNS lookup separately takes roughly2s;
+hostname-first clients keep the verified current-address hint until failure.
+The primary-PC forwarded Web UI also returned all223213bytes in2.586s.
+
+Guarded native PID23376/build13 verified actual USB COM22 first, then Wi-Fi/WS,
+same new boot,80 mappings/80 acknowledged white states, AVR online, TM1637 ACK,
+GPIO48 semantic green and zero active incidents. Preferences hash was unchanged;
+the app remains on Wi-Fi. USB serial errors and AVR UART errors were0 at final
+readback. AP+STA, NTP synchronization and MQTT connected were observed. Internal
+heap was85164free/38900largest/59980minimum after concurrent traffic.
+
+Evidence: outputs/PakarController/verification/service-recovery-verified.json,
+service-probe-after-cached.json, http-adapter-native-final.json and
+http-adapter-native-routes.json (private runtime receipts, not shipping assets).
+The 46-second app check is not a soak or optical/audio acceptance. Some native
+table cells are clipped by the retained dock viewport, and individual-pixel RGB
+preview remains unavailable; neither is relabeled complete UI acceptance.
+
+Before USB recovery, one c75edea local OTA attempt aborted at206164/2222176bytes;
+independent HTTP and native USB verified unchanged old79db5e boot before any
+fallback. It was not replayed. OTA ingress and simultaneous BLE/TLS/OTA remain
+open; the new snapshot adapter does not replace the separate firmware-export
+response. Synchronous cloud reconnect still reached3.122s in this boot and needs
+a single-owner worker/queue redesign. These successful bounded checks do not
+claim that every long-duration outage or cloud reconnect delay is solved.
+
+### Earlier successful Wi-Fi OTA checkpoint
+
 Source8a3827a48aec5265adb6dde699c8c2a101d35fd4, version0.2.7; native/Android
 client build13. The S3 application is2221280bytes, SHA256
 `fa1a7a9aca7427517485d1729393666c3599b2ad88078e0b19f8fc89bdc8831a`,

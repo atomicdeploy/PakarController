@@ -683,7 +683,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `libraries/BoardCore/src/TableCellMapping.h:8 [UTF8-LF sha256=8a4d0d13b7779d8a54c74bb95cafcd871814423ee42909bcd5ebbd6006213ba0; anchor=constexpr uint8_t logicalForPhysical]`.
 - Target: `firmware/esp32s3/src/LedOutput.cpp:103 [UTF8-LF sha256=687f35d99175e9fc109bdd6a03db225cac97cd63ba0e9ffa68386ef66f6571b9; anchor=bool pending=true;]`.
 - Target: `firmware/esp8266/esp8266.ino:866 [UTF8-LF sha256=046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24; anchor=uint8_t defaultPhysicalCell]`.
-- Target: `tools/build-firmware.ps1:16 [UTF8-LF sha256=fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4; anchor=CellChaseOnBoot]`.
+- Target: `tools/build-firmware.ps1:16 [UTF8-LF sha256=92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267; anchor=CellChaseOnBoot]`.
 - Target: `firmware/esp32s3/src/LedOutput.h:12 [UTF8-LF sha256=b7f49a1a4678c8b4597fb823bd42cc32d4d5d828c6750641b3930df9bd11211a; anchor=#if !defined(PAKAR_S3_LED_USE_DMA)]`.
 - Target: `mobile/lib/pixel_diagnostic.dart:89 [UTF8-LF sha256=f5d5f5726ffa6b046d36adc5466d81b1a5570a16d0937aa79e99839e23182e6d; anchor=class PixelProbe]`.
 - Target: `mobile/lib/pixel_diagnostic_page.dart:13 [UTF8-LF sha256=a7ebe2b575e58d8addc2653643159a0aaaa3156dc56b5e798873d55927df1515; anchor=class PixelDiagnosticPage]`.
@@ -722,7 +722,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `libraries/BoardCore/src/TableCellMapping.h:8 [UTF8-LF sha256=8a4d0d13b7779d8a54c74bb95cafcd871814423ee42909bcd5ebbd6006213ba0; anchor=constexpr uint8_t logicalForPhysical]`.
 - Target: `firmware/esp32s3/src/LedOutput.cpp:103 [UTF8-LF sha256=687f35d99175e9fc109bdd6a03db225cac97cd63ba0e9ffa68386ef66f6571b9; anchor=bool pending=true;]`.
 - Target: `firmware/esp8266/esp8266.ino:866 [UTF8-LF sha256=046f2784b4fdf5d26d645f967bc010b5d4de00f470ff3e98005374c649d1ec24; anchor=uint8_t defaultPhysicalCell]`.
-- Target: `tools/build-firmware.ps1:16 [UTF8-LF sha256=fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4; anchor=CellChaseOnBoot]`.
+- Target: `tools/build-firmware.ps1:16 [UTF8-LF sha256=92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267; anchor=CellChaseOnBoot]`.
 - Target: `firmware/esp32s3/src/LedOutput.h:12 [UTF8-LF sha256=b7f49a1a4678c8b4597fb823bd42cc32d4d5d828c6750641b3930df9bd11211a; anchor=#if !defined(PAKAR_S3_LED_USE_DMA)]`.
 - Target: `mobile/lib/pixel_diagnostic.dart:89 [UTF8-LF sha256=f5d5f5726ffa6b046d36adc5466d81b1a5570a16d0937aa79e99839e23182e6d; anchor=class PixelProbe]`.
 - Target: `mobile/lib/pixel_diagnostic_page.dart:13 [UTF8-LF sha256=a7ebe2b575e58d8addc2653643159a0aaaa3156dc56b5e798873d55927df1515; anchor=class PixelDiagnosticPage]`.
@@ -1022,7 +1022,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `5e5607d54af43ead28eddb747e48b6e2450dd45ef7c47202203c4f5cfc8991ab`.
 
 - Target: `tools/prepare-avr-image.mjs:65 [UTF8-LF sha256=0d4e2a5a87967031393a6079e07938c7612e6fbfcb0d38c9a2a3ae419e86d525; anchor=export function mergeUrboot(]`.
-- Target: `tools/build-firmware.ps1:162 [UTF8-LF sha256=fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4; anchor='prepare-avr-image.mjs']`.
+- Target: `tools/build-firmware.ps1:166 [UTF8-LF sha256=92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267; anchor='prepare-avr-image.mjs']`.
 - Retained: Read the complete donor builder and README. Adapted actual Intel HEX/checksum parsing, AVR jump decoding/encoding, wrapped reset RJMP, ELF __bad_interrupt unused-vector proof, metadata-selected application trampoline, erased-gap fill, full-flash binary/HEX round trip and exact source hash validation into the canonical AVR build. No chip, fuse, EEPROM or UART operation is performed by packaging.
 - Retained: Found and corrected Pakar stock merged image reset vector bypassing its included vector Urboot. Preserve stock MiniCore UART0 autobaud, reset-register r2, EEPROM and chip-erase features with a pinned 384-byte image; never silently substitute the donor custom 512-byte backend.
 - Omitted/replaced code: `u8.0.1 custom 512-byte backend, progress hook and TM1637 D13/PB5 CLK, D11/PB3 DIO implementation`. Disposition: **pending**. Reason: This board uses A5 CLK/A4 DIO and the stock 384-byte application ceiling. Do not deploy a wrong-pin backend or silently shrink available application space. Adapt the backend/pin profile and revalidate flash budget before any optional custom bootloader installation.
@@ -1037,7 +1037,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `2ec873e7f23b56a6997a0c83de1e258ae2ce9b75cf1eb7cf08b40da5aaa68090`.
 
 - Target: `tools/prepare-avr-image.mjs:65 [UTF8-LF sha256=0d4e2a5a87967031393a6079e07938c7612e6fbfcb0d38c9a2a3ae419e86d525; anchor=export function mergeUrboot(]`.
-- Target: `tools/build-firmware.ps1:162 [UTF8-LF sha256=fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4; anchor='prepare-avr-image.mjs']`.
+- Target: `tools/build-firmware.ps1:166 [UTF8-LF sha256=92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267; anchor='prepare-avr-image.mjs']`.
 - Retained: Read the complete donor builder and README. Adapted actual Intel HEX/checksum parsing, AVR jump decoding/encoding, wrapped reset RJMP, ELF __bad_interrupt unused-vector proof, metadata-selected application trampoline, erased-gap fill, full-flash binary/HEX round trip and exact source hash validation into the canonical AVR build. No chip, fuse, EEPROM or UART operation is performed by packaging.
 - Retained: Found and corrected Pakar stock merged image reset vector bypassing its included vector Urboot. Preserve stock MiniCore UART0 autobaud, reset-register r2, EEPROM and chip-erase features with a pinned 384-byte image; never silently substitute the donor custom 512-byte backend.
 - Omitted/replaced code: `u8.0.1 custom 512-byte backend, progress hook and TM1637 D13/PB5 CLK, D11/PB3 DIO implementation`. Disposition: **pending**. Reason: This board uses A5 CLK/A4 DIO and the stock 384-byte application ceiling. Do not deploy a wrong-pin backend or silently shrink available application space. Adapt the backend/pin profile and revalidate flash budget before any optional custom bootloader installation.
@@ -3058,7 +3058,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `54df8b54e56a589f85b981f15996813e447fc14245ea8048c5f87cfd1f3fdf51`.
 
 - Target: `tools/firmware-dependencies.json:2 [UTF8-LF sha256=4a7dc6ef881b1100856419608f5eceaf5c748a7a890c1834fa48250985efe3c1; anchor="platforms"]`.
-- Target: `tools/build-firmware.ps1:116 [UTF8-LF sha256=fce4d570dcb9d60ae22bbb9eb9ed905af28dbbef9e89217a01294e65e54281b4; anchor=esp32:esp32:esp32s3:CDCOnBoot]`.
+- Target: `tools/build-firmware.ps1:120 [UTF8-LF sha256=92c9f4fedfa254cc1ac6c5fb39aaf6c5380f2f3d72450e02d3afbc8b64694267; anchor=esp32:esp32:esp32s3:CDCOnBoot]`.
 - Retained: Read complete donor board profile/platform/library locks. Retain exact ESP8266 core/ArduinoJson/ESP Async TCP pins where applicable, preserve existing reviewed Pakar dependency pins, and keep actual S3/AVR FQBN/flags in the canonical wrapper.
 - Omitted/replaced code: `PU-specific board/profile and separate dependency/config write paths`. Disposition: **replaced**. Reason: Reuse applicable exact versions/official registries in one reviewed pin owner. Preserve operator config and Pakar hardware flags; no silent downgrade, duplicate Arduino_JSON API, unsupported library additions or automatic SDK initialization.
 - Test-code evidence: `tests/script_tooling_test.mjs:100 [UTF8-LF sha256=cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1; anchor=Script tooling:]`.
