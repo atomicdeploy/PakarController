@@ -71,9 +71,11 @@ assert.match(output,/xQueueOverwrite\(queue_,&next\)/);
 assert.match(output,/rmt_tx_wait_all_done\(channel,100\)/);
 assert.match(sketch,/loopMessages.pop\(message\)/);
 assert.doesNotMatch(sketch,/handleWebSocketMessage\(client, info->opcode/);
-assert.match(sketch, /const LedPreferences value = whiteBootPreferences\(grid.brightness\(\)\)/);
+assert.match(sketch, /const SceneState next = captureLedScene\(sceneStore.state\(\), grid/);
 assert.match(sketch, /if \(complete\) applyLedBootPreferences\(grid, value\)/);
-assert.doesNotMatch(sketch, /grid\.setPattern\(static_cast<LedGrid::Pattern>\(value.pattern\)\)/);
+assert.match(sketch, /sceneStore.begin\(LittleFS, filesystemMounted, fallback\)/);
+assert.match(sketch, /restoreLedScene\(grid, saved\)/);
+assert.match(sketch, /grid.begin\(false\)/, 'Restore a valid scene before first LED publication');
 assert.match(sketch, /esp_efuse_mac_get_default\(stationMac\)/,
   'S3 identity must not depend on an active station interface');
 assert.match(sketch, /available &= ~BoardCore::Context::Isp/,

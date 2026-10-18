@@ -4,6 +4,60 @@ import 'package:pakarcontroller/pixel_diagnostic.dart';
 
 void main() {
   test(
+    'Workspace stores only bounded cursor, colour, grouping and position draft',
+    () {
+      final workspace = PixelDiagnosticWorkspace(
+        saved: {
+          'index': 479,
+          'group': true,
+          'rgb': 0x1234ab,
+          'position': '480',
+          'vertical': 50,
+          'applied': true,
+          'pending': true,
+          'boot_id': 'not-authority',
+        },
+      );
+      expect(workspace.probe.first, 474);
+      expect(workspace.snapshot(), {
+        'index': 479,
+        'group': true,
+        'rgb': 0x1234ab,
+        'position': '480',
+        'vertical': 50.0,
+      });
+      var changes = 0;
+      workspace.addListener(() => changes++);
+      workspace.probe = const PixelProbe(
+        index: 479,
+        group: true,
+        rgb: 0x1234ab,
+      );
+      expect(changes, 0);
+      workspace.probe = const PixelProbe(
+        index: 473,
+        group: true,
+        rgb: 0xff0000,
+      );
+      expect(changes, 1);
+      expect(workspace.position, '469');
+      final invalid = PixelDiagnosticWorkspace(
+        saved: {
+          'index': 480,
+          'rgb': -1,
+          'vertical': double.nan,
+          'position': 'x' * 9,
+        },
+      );
+      expect(invalid.probe.index, 0);
+      expect(invalid.probe.rgb, 0xffffff);
+      expect(invalid.vertical, 0);
+      expect(invalid.position, '1');
+      workspace.dispose();
+      invalid.dispose();
+    },
+  );
+  test(
     'Every raw position clears all other pixels; RGB and all-off are exact',
     () {
       for (var index = 0; index < diagnosticPixels; index++) {

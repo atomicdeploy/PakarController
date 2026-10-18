@@ -21,6 +21,8 @@ export const phases={
     ["pwsh", "-File", "tests/device_discovery_script_test.ps1"],
     ["node", "tests/s3_pin_mapping_test.mjs"],
     ["node", "tests/s3_platform_wiring_test.mjs"],
+    ["pwsh", "-File", "tools/test-led-pipeline.ps1"],
+    ["node", "tests/web_workspace_test.mjs"],
     ["node", "tests/esp_front_panel_wiring_test.mjs"],
     ["pwsh", "-NoProfile", "-File", "tests/avr_rx_script_test.ps1"],
     ["pwsh", "-File", "tools/test-network.ps1"],

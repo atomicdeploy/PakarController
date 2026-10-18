@@ -8,6 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pakarcontroller/main.dart';
 import 'package:pakarcontroller/models.dart';
 import 'package:pakarcontroller/table_workspace.dart';
+import 'package:pakarcontroller/pixel_diagnostic.dart';
+import 'package:pakarcontroller/api.dart';
+import 'package:pakarcontroller/connection_preferences.dart';
 
 import 'connection_lifecycle_test.dart' show LifecycleApi;
 import 'peer_fixture.dart';
@@ -70,6 +73,191 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     FlutterSecureStorage.setMockInitialValues({});
   });
+  testWidgets(
+    'Connection fields follow restored profile only while pristine and retain a bounded nonsecret draft',
+    (tester) async {
+      final api = LifecycleApi();
+      final draft = ConnectionDraft();
+      Widget view() => MaterialApp(
+        home: Scaffold(
+          body: SettingsPage(
+            api: api,
+            reconnect: () async {},
+            active: false,
+            draft: draft,
+          ),
+        ),
+      );
+      await tester.pumpWidget(view());
+      final host = find.widgetWithText(TextField, 'Device hostname or URL');
+      final user = find.widgetWithText(TextField, 'User');
+      final password = find.widgetWithText(TextField, 'Password (optional)');
+      api.baseUrl = 'http://saved-board.local';
+      api.user = 'saved-user';
+      api.password = 'secure-value';
+      await tester.pumpWidget(view());
+      expect(
+        tester.widget<TextField>(host).controller!.text,
+        'http://saved-board.local',
+      );
+      expect(tester.widget<TextField>(user).controller!.text, 'saved-user');
+      expect(
+        tester.widget<TextField>(password).controller!.text,
+        'secure-value',
+      );
+      await tester.enterText(host, 'my-unsubmitted-board.local');
+      await tester.enterText(password, 'unsaved-secret');
+      api.baseUrl = 'http://renamed-board.local';
+      api.password = 'new-secure-value';
+      await tester.pumpWidget(view());
+      expect(
+        tester.widget<TextField>(host).controller!.text,
+        'my-unsubmitted-board.local',
+      );
+      expect(
+        tester.widget<TextField>(password).controller!.text,
+        'unsaved-secret',
+      );
+      final encoded = jsonEncode(draft.snapshot());
+      expect(encoded, contains('my-unsubmitted-board.local'));
+      expect(encoded, isNot(contains('secret')));
+      await tester.pumpWidget(const SizedBox());
+      final restored = ConnectionDraft()..restore(jsonDecode(encoded));
+      expect(restored.endpoint, 'my-unsubmitted-board.local');
+      expect(api.baseUrl, 'http://renamed-board.local');
+      expect(api.writes, 0);
+      restored.dispose();
+      draft.dispose();
+      await api.close();
+    },
+  );
+  testWidgets(
+    'Front-panel drafts and diagnostic preferences survive disconnect, reboot and process replacement without replay',
+    (tester) async {
+      tester.view.physicalSize = const Size(1200, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final api = LifecycleApi()
+        ..healthyWs = true
+        ..observed = peer('board-A');
+      await tester.pumpWidget(PakarControllerApp(api: api));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Table').last);
+      await tester.pumpAndSettle();
+      final workspace = tester
+          .widget<TablePage>(find.byType(TablePage))
+          .workspace!;
+      workspace.pixels.probe = const PixelProbe(
+        index: 479,
+        group: true,
+        rgb: 0x1234ab,
+      );
+      workspace.pixels.position =
+          '479'; // Unsubmitted position draft is not a frame.
+      workspace.pixels.vertical = 52;
+      await tester.tap(find.text('Front panel').last);
+      await tester.pumpAndSettle();
+      final marquee = find.widgetWithText(TextField, 'Marquee text');
+      await tester.enterText(marquee, 'RESTORE MY TEXT');
+      workspace.frontPanel.repeat = 'interval';
+      workspace.frontPanel.speed = 480;
+      workspace.frontPanel.forceScroll = true;
+      workspace.frontPanel.selectedCue = 'welcome';
+      await tester.tap(find.byTooltip('Disconnect'));
+      await tester.pumpAndSettle();
+      final prefs = await SharedPreferences.getInstance();
+      final cache = jsonDecode(prefs.getString('table_workspaces')!) as Map;
+      final saved = (cache['boards'] as Map)['board-A'] as Map;
+      expect((saved['front_panel'] as Map)['text'], 'RESTORE MY TEXT');
+      expect((saved['pixel_diagnostic'] as Map)['rgb'], 0x1234ab);
+      expect(cache['connection'], {'method': 'network', 'wanted': false});
+      expect(saved.containsKey('cells'), false);
+      expect(saved.containsKey('mode'), false);
+      expect(saved.containsKey('boot_id'), false);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+      final next = LifecycleApi()
+        ..healthyWs = true
+        ..observed = peer('board-A', boot: 'reboot');
+      await tester.pumpWidget(PakarControllerApp(api: next));
+      await tester.pumpAndSettle();
+      expect(next.connectionWanted, false);
+      expect(next.reads, 0);
+      expect(
+        find.byType(FrontPanelPage),
+        findsNothing,
+      ); // Cached UI grants no capability.
+      await tester.tap(find.byTooltip('Connect'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(marquee).controller!.text,
+        'RESTORE MY TEXT',
+      );
+      expect(
+        tester
+            .widget<FrontPanelPage>(find.byType(FrontPanelPage))
+            .workspace!
+            .repeat,
+        'interval',
+      );
+      await tester.tap(find.text('Table').last);
+      await tester.pumpAndSettle();
+      final restored = tester
+          .widget<TablePage>(find.byType(TablePage))
+          .workspace!;
+      expect(restored.pixels.probe.index, 479);
+      expect(restored.pixels.probe.group, true);
+      expect(restored.pixels.probe.rgb, 0x1234ab);
+      expect(restored.pixels.position, '479');
+      expect(restored.pixels.vertical, 52);
+      expect(restored.frontPanel.speed, 480);
+      expect(restored.frontPanel.forceScroll, true);
+      expect(restored.frontPanel.selectedCue, 'welcome');
+      expect(api.writes + next.writes, 0);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+    },
+  );
+  testWidgets(
+    'Final unmount flushes edits and retained USB intent never falls back to Wi-Fi',
+    (tester) async {
+      final api = LifecycleApi()
+        ..healthyWs = true
+        ..observed = peer('board-A');
+      await tester.pumpWidget(PakarControllerApp(api: api));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Table').last);
+      await tester.pumpAndSettle();
+      final workspace = tester
+          .widget<TablePage>(find.byType(TablePage))
+          .workspace!;
+      workspace.selection = {2, 80};
+      workspace.query.text = '2,80';
+      // No 350ms debounce or pause callback before the process is replaced.
+      api.connectionMethod = ConnectionMethod.usb;
+      api.disconnect();
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+      final prefs = await SharedPreferences.getInstance();
+      final saved = jsonDecode(prefs.getString('table_workspaces')!) as Map;
+      expect((saved['connection'] as Map)['method'], 'usb');
+      expect(((saved['boards'] as Map)['board-A'] as Map)['selection'], [
+        2,
+        80,
+      ]);
+      final next = LifecycleApi();
+      await tester.pumpWidget(PakarControllerApp(api: next));
+      await tester.pumpAndSettle();
+      expect(next.connectionMethod, ConnectionMethod.usb);
+      expect(next.connectionWanted, false);
+      expect(next.reads, 0);
+      expect(next.subscriptions, 0);
+      expect(next.writes, 0);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+    },
+  );
   testWidgets(
     'Edits autosave before background and restore indicators, selection and both scroll axes after process replacement',
     (tester) async {

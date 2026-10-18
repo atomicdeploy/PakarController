@@ -41,7 +41,7 @@ class LedGrid {
   static_assert(kPixels==PakarS3::LedOutput::pixels,"S3 output profile must match the full pixel buffer");
 #endif
 
-  void begin();
+  void begin(bool publish = true);
   bool readyToShow(uint32_t now) const;
   bool needsRender(uint32_t now) const;
   void service(uint32_t now);

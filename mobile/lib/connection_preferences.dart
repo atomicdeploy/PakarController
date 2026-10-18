@@ -1,7 +1,40 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 import 'api.dart';
+
+/// Unsubmitted nonsecret connection fields. Never changes the selected target,
+/// grants a connection, or exports the password controller.
+class ConnectionDraft extends ChangeNotifier {
+  String? endpoint, user;
+  void restore(Object? saved) {
+    if (saved is! Map) return;
+    final host = saved['endpoint'], name = saved['user'];
+    endpoint ??= host is String && host.length <= 1024 ? host : null;
+    user ??= name is String && name.length <= 96 ? name : null;
+  }
+
+  void edit(String host, String name, PakarApi api) {
+    final nextHost = host != api.baseUrl && host.length <= 1024 ? host : null;
+    final nextUser = name != api.user && name.length <= 96 ? name : null;
+    if (nextHost == endpoint && nextUser == user) return;
+    endpoint = nextHost;
+    user = nextUser;
+    notifyListeners();
+  }
+
+  void clear() {
+    if (endpoint == null && user == null) return;
+    endpoint = user = null;
+    notifyListeners();
+  }
+
+  Map<String, dynamic> snapshot() => {
+    if (endpoint != null) 'endpoint': endpoint,
+    if (user != null) 'user': user,
+  };
+}
 
 abstract interface class SecretStore {
   Future<String?> read();

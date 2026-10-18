@@ -163,6 +163,8 @@ pub struct AppConfig {
     /// One-time recovery of layouts saved by the disconnected-workspace bug.
     pub dock_context_revision: u8,
     pub workspace_profiles: BTreeMap<String, WorkspaceProfile>,
+    /// Per-board/application presentation, never a live device cache.
+    pub native_workspaces: crate::native_workspace::Store,
     pub numeric_steps: BTreeMap<String, NumericInputSteps>,
     pub additive_cell_selection: bool,
     pub animate_cells: bool,
@@ -198,6 +200,7 @@ impl Default for AppConfig {
             dock_layout: String::new(),
             dock_context_revision: 0,
             workspace_profiles: BTreeMap::new(),
+            native_workspaces: Default::default(),
             numeric_steps: BTreeMap::new(),
             additive_cell_selection: false,
             animate_cells: true,
@@ -225,6 +228,7 @@ impl AppConfig {
                 let mut config: Self =
                     serde_json::from_slice(&bytes).map_err(|e| format!("Read preferences: {e}"))?;
                 config.cell_order = crate::ui::cell_table::normalized_order(&config.cell_order);
+                config.native_workspaces.normalize();
                 Ok(config)
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Self::default()),

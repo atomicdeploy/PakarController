@@ -18,7 +18,7 @@ const char *effectName(LedGrid::Pattern pattern) {
 }
 }
 
-void LedGrid::begin() {
+void LedGrid::begin(bool publish) {
   for (uint8_t i = 0; i < kCells; ++i) physicalCells_[i] = i + 1;
 #if defined(ARDUINO_ARCH_ESP32)
   output_.begin();
@@ -29,11 +29,11 @@ void LedGrid::begin() {
 #endif
   resetWhite();
   for (uint8_t i = 0; i < kCells; ++i) current_[i] = target_[i];
-  showStaged();
+  if (publish) showStaged();
 #if defined(ARDUINO_ARCH_ESP32)
   // Quiet commissioning still sends one complete black frame to clear latched
   // pixels; no white/effect output is enabled until explicitly requested.
-  if(!outputEnabled_)output_.submit(pixels_,brightness_,false,frameRevision_);
+  if(publish && !outputEnabled_)output_.submit(pixels_,brightness_,false,frameRevision_);
 #endif
 }
 

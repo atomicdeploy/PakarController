@@ -2,8 +2,9 @@
 
 #include "LedGrid.h"
 
-// Retain the existing private six-byte file format. Effects are runtime choices,
-// not boot choices: even a valid older rainbow/fire record boots a white table.
+// Read-only migration of the old brightness-only private six-byte record.
+// SceneStore now owns durable cells/modes; an installation without a scene
+// retains this legacy brightness and the safe initial white fallback.
 struct LedPreferences {
   uint8_t magic0;
   uint8_t magic1;

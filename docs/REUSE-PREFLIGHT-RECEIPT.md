@@ -1,5 +1,82 @@
 # Donor-first preflight receipt
 
+## Durable scenes and passive workspaces
+
+Completely reread matching PCController SettingsStore.cpp/header and adapted
+markDirty/service/changed-byte avoidance into SceneStore, not another AVR EEPROM
+layout. Pealayer workspace_profiles.rs/config-persistence test and complete Web
+App.tsx plus PCController mobile preferences/settings and Web quick-header
+preferences underpin the actual native/mobile/Web workspaces. The authoritative
+ledger binds exact source/target/test hashes; app.rs/config.rs function slices
+are not certified whole-file reads.216 comparisons/4673 inventory,4457 pending,
+174 known gap files is not donor-wide parity.
+
+The96-byte semantic scene stores80 logical white/red/off cells, mode/effect,
+brightness, output/static mode and cursor/winner. Stage/close/exact readback/
+atomic LittleFS rename retains the previous committed scene on failure.
+1500ms debounce,10s maximum coalescing and failed-write retry backoff avoid
+frame/unchanged write churn. Mapping and scene restore precede first LED output.
+AVR HELLO and the SetMode-induced reset revision are baselines, not new Reset/key
+actions. Snake phase, streamed/diagnostic pixel bytes and pending commands are
+not restored. Status reports pending/saved/error; explicit scene/save can flush.
+
+Native persists bounded board/application dock/active tabs, actual egui scroll/
+collapse memory, unified selection/find/cursor and safe front-panel drafts.
+Flutter extends its existing ordered writer with diagnostic/front-panel/public
+settings drafts, navigation, connection intent and phone presentation choices.
+Web retains passive board/application workspace/public drafts and conflict
+baselines. No cache grants fresh capabilities or replays a command. Native
+privileged settings drafts remain pending safe public-baseline persistence;
+secret edits and live audio sessions deliberately remain unpersisted.
+
+Verification:274 native tests;216 Flutter tests plus2 opt-in captures skipped;
+analyzer clean; actual renderer/SceneStore filesystem-fault/corruption/no-op/
+frame-write/rollover tests; Web storage/conflict/no-write tests; local quality
+runner; guarded S3 SDK build all pass. New mobile lint issues and a real late
+rename-ACK/disposed-cache regression were repaired without weakening owner
+checks or the unchanged failing widget assertion. Final preview APK SHA256
+6b47c68f95e140e4e28d2db2a6f7b3dc148425694d28637027abe068a2887175.
+No ADB device is attached on ASUS, so this is built/staged, not phone acceptance.
+
+Actual ASUS graceful replacement preserved settings/prior executable:
+native SHA2564050dfd22061fb086131d4b2b13085554c8b7cfe674b8be8f42bbd749ca32cf9.
+Process11476 later returned live selection1,21,80 after disconnect/reconnect
+and process restart. The lifecycle harness itself retained its failed startup/
+25s hostname-reconnect receipts; the later independent owner readback is the
+restart proof, not a falsely successful harness. Find-cell has plain-text IPC
+admission, unlike lifecycle commands; verify its actual readback. UTF-8 console
+handling and read-only startup retries are retained in the reusable verifier.
+
+Actual local Async HTTP OTA uploaded1939600bytes in17.716s; full running-image
+SHA2568c3f22cd4f21c0e377f1715ef1d6ba56a8c5b0ba8f0ec5a0bd867dc45b4346f5,
+VALID selected/running slot, auth Off and WebSocket before/after were verified.
+The first reset boot was5e29a2e44168c1f6f3494cfbac09f64e. The original scene
+was explicitly reapplied once through the actual ASUS app after this first
+migration, only while the new scene was still untouched white. Normal reconnect
+never runs this migration helper. Intermittent mDNS/HTTP read failures used a
+previously verified TCP hint retaining hostname/Host and fresh board/boot checks;
+only read-only attempts were bounded/retried, never an upload or cell mutation.
+The updater's injected-request seam labels simulated:true; the outer receipt
+explicitly records actual TCP and instrumentation, and separate physical image/
+new-boot readback establishes the live result. Do not relabel that seam as stock.
+
+An actual esptool5.3.1 read-mac/RTS reset on the known CH343 COM22 bridge
+identified ESP32-S3 rev0.2, MAC90:70:69:ea:c8:00. It wrote no flash/EEPROM/fuses
+and did not program AVR. New boot9a09fc22574f30deb81a2a46b9bd73b8 read back
+all80 original cells plus mode/effect/brightness/output exactly:
+restored=true,saved=true,pending=false,error=null,writes=0; AVR online, LED driver
+failed=0. Receipts on ASUS: deploy/persistence-ota.json,
+persistence-scene-restored.json,persistence-board-reboot.json and
+persistence-workspace-current.json. This is controlled reset/readback proof,
+not abrupt-power-loss, emitted-colour, Wi-Fi soak or human acceptance.
+
+Existing main CI39148355283 failed because Ubuntu's fortified glibc strlcpy
+conflicted with the Arduino host fallback. Both cloud doubles now share a
+native-libc-aware compatibility header; Windows cloud-service/management
+fixtures pass. Remote Linux confirmation remains the next CI result, not an
+assumed green build. Warm production caches/profile/versions0.2.7 were preserved;
+no clean, debug SDK rebuild, dependency upgrade, PBX or audible test was requested.
+
 ## Connection deadlines and retained contextual panels
 
 Read the connection-resilience, error-management, network-cloud, native-lifecycle

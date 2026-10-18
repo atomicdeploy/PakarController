@@ -71,6 +71,11 @@ impl PreferencesDraft {
             target.serial_port = port.to_owned();
         }
     }
+    fn sync_workspace_owner(&mut self, workspaces: &crate::native_workspace::Store) {
+        for target in [&mut self.config, &mut self.saved_config, &mut self.previewed_config] {
+            target.native_workspaces = workspaces.clone();
+        }
+    }
 }
 #[derive(Default)]
 struct Outcome {
@@ -309,6 +314,9 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
         return;
     };
     draft.sync_connection_owner(app.transport, app.connection_enabled, &app.base, &app.user, &app.serial_port);
+    // Workspace autosave is owner state, not a Preferences edit. Keep all three
+    // baselines in sync so an open editor cannot erase newer per-board sessions.
+    draft.sync_workspace_owner(&app.config.native_workspaces);
     app.board_silent.expire();
     let status = app.live_status();
     let available = status.is_some_and(crate::board_silent::supported);
@@ -502,6 +510,23 @@ mod tests {
                 assert_eq!(baseline.endpoint, "http://new-board.local");
                 assert_eq!(baseline.user, "operator");
                 assert_eq!(baseline.serial_port, "COM22");
+            }
+        }
+    }
+    #[test]
+    fn workspace_autosave_does_not_dirty_or_erase_an_open_preferences_draft() {
+        let workspaces: crate::native_workspace::Store = serde_json::from_value(serde_json::json!({
+            "entries":[{"identity":{"board":"board-a","application":"table"},
+                "snapshot":{"selection":[1,21],"find":"1, 21"}}]
+        })).unwrap();
+        for dirty in [false, true] {
+            let mut draft = PreferencesDraft::new(AppConfig::default());
+            if dirty { draft.config.close_to_tray = true; }
+            draft.sync_workspace_owner(&workspaces);
+            assert_eq!(draft.is_dirty(), dirty);
+            assert_eq!(draft.config.close_to_tray, dirty);
+            for baseline in [&draft.config, &draft.saved_config, &draft.previewed_config] {
+                assert_eq!(baseline.native_workspaces, workspaces);
             }
         }
     }

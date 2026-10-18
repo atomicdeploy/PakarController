@@ -12,6 +12,92 @@ import 'peer_fixture.dart';
 import 'settings_fixture.dart';
 
 void main() {
+  test('Retired draft cleanup cannot veto a separately owned verified identity handoff', () {
+    final workspace = DeviceSettingsWorkspace();
+    workspace.captureIdentity('ledboard', 'Board', 'renamed', 'Board');
+    var notifications = 0;
+    workspace.addListener(() => ++notifications);
+    workspace.dispose();
+    expect(workspace.discardIdentity, returnsNormally);
+    expect(notifications, 0);
+  });
+  test('Only public edits restore after a fresh read, secrets and pending writes never do', () async {
+    final cache = DeviceSettingsWorkspace();
+    final api = PakarApi(
+      client: MockClient(
+        (request) async => http.Response(jsonEncode(simulatedCloud), 200),
+      ),
+    );
+    final session = DeviceSettingsSession(
+      api,
+      authorized: () => true,
+      workspace: cache,
+    );
+    await session.load(SettingsGroup.cloud);
+    session.set(SettingsGroup.cloud, 'mqtt_user', 'my-draft');
+    session.set(SettingsGroup.cloud, 'mqtt_port', 'unfinished');
+    session.websocketToken.mode = SecretMode.replace;
+    session.websocketToken.value = 'secret-do-not-persist';
+    session.mqttPassword.mode = SecretMode.clear;
+    session.pending = true;
+    session.changed();
+    final encoded = jsonEncode(cache.snapshot());
+    expect(encoded, isNot(contains('secret-do-not-persist')));
+    expect(encoded, isNot(contains('password')));
+    expect(encoded, isNot(contains('token')));
+    expect(encoded, isNot(contains('pending')));
+    session.dispose();
+    final restored = DeviceSettingsWorkspace(
+      saved: jsonDecode(encoded) as Map<String, dynamic>,
+    );
+    final next = DeviceSettingsSession(
+      api,
+      authorized: () => true,
+      workspace: restored,
+    );
+    expect(
+      next.drafts,
+      isEmpty,
+    ); // Cache cannot fabricate a live configuration.
+    expect(next.pending, false);
+    await next.load(SettingsGroup.cloud);
+    expect(next.drafts[SettingsGroup.cloud]!.value['mqtt_user'], 'my-draft');
+    expect(next.drafts[SettingsGroup.cloud]!.value['mqtt_port'], 'unfinished');
+    expect(next.drafts[SettingsGroup.cloud]!.conflict, false);
+    expect(next.websocketToken.mode, SecretMode.keep);
+    expect(next.mqttPassword.mode, SecretMode.keep);
+    expect(next.websocketToken.value, '');
+    expect(() => next.write(SettingsGroup.cloud), throwsFormatException);
+    next.dispose();
+    cache.dispose();
+    restored.dispose();
+    await api.close();
+  });
+  test('Restored public edits retain their original conflict baseline through repeated relaunches', () {
+    final workspace = DeviceSettingsWorkspace();
+    final original = settingsSnapshot(SettingsGroup.cloud, simulatedCloud);
+    final edited = SettingsDraft(original)..value['mqtt_user'] = 'draft';
+    workspace.capture(SettingsGroup.cloud, edited);
+    var saved = workspace.snapshot();
+    for (var pass = 0; pass < 3; pass++) {
+      final restored = DeviceSettingsWorkspace(
+        saved: jsonDecode(jsonEncode(saved)) as Map<String, dynamic>,
+      );
+      final draft = restored.restore(SettingsGroup.cloud, {
+        ...original,
+        'mqtt_user': 'another-client',
+      });
+      expect(draft.value['mqtt_user'], 'draft');
+      expect(draft.saved['mqtt_user'], simulatedCloud['mqtt_user']);
+      expect(draft.conflict, true);
+      restored.capture(SettingsGroup.cloud, draft);
+      saved = restored.snapshot();
+      restored.dispose();
+    }
+    workspace.discard(SettingsGroup.cloud);
+    expect(workspace.restore(SettingsGroup.cloud, original).dirty, false);
+    workspace.dispose();
+  });
   test('Required catalog fields, UTF-8 limits and real hardware constraints fail closed', () {
     expect(
       () => settingsSnapshot(SettingsGroup.network, {}),
@@ -90,33 +176,61 @@ void main() {
       'dns1': '1.1.1.1',
       'dns2': '',
     };
-    final complete = settingsSnapshot(SettingsGroup.network, {...simulatedNetwork, ...addressing});
+    final complete = settingsSnapshot(SettingsGroup.network, {
+      ...simulatedNetwork,
+      ...addressing,
+    });
     for (final entry in addressing.entries) {
       expect(complete[entry.key], entry.value);
     }
-    expect(settingsSnapshot(SettingsGroup.network, {
-      ...simulatedNetwork, ...addressing, 'dhcp': true,
-      'address': '0.0.0.0', 'gateway': '0.0.0.0', 'subnet': '0.0.0.0',
-    })['dhcp'], true);
+    expect(
+      settingsSnapshot(SettingsGroup.network, {
+        ...simulatedNetwork,
+        ...addressing,
+        'dhcp': true,
+        'address': '0.0.0.0',
+        'gateway': '0.0.0.0',
+        'subnet': '0.0.0.0',
+      })['dhcp'],
+      true,
+    );
     for (final field in addressing.keys) {
       final incomplete = {...simulatedNetwork, ...addressing}..remove(field);
-      expect(() => settingsSnapshot(SettingsGroup.network, incomplete), throwsFormatException);
+      expect(
+        () => settingsSnapshot(SettingsGroup.network, incomplete),
+        throwsFormatException,
+      );
     }
     for (final patch in <Map<String, Object?>>[
-      {'dhcp': 'false'}, {'dhcp': null}, {'address': 123}, {'address': '999.1.1.1'},
-      {'address': '192.168.4.0'}, {'address': '192.168.4.255'},
-      {'gateway': '192.168.5.1'}, {'gateway': '192.168.4.20'},
-      {'subnet': '255.0.255.0'}, {'subnet': '255.255.255.254'},
-      {'dns1': '224.0.0.1'}, {'dns2': 'not-an-address'},
+      {'dhcp': 'false'},
+      {'dhcp': null},
+      {'address': 123},
+      {'address': '999.1.1.1'},
+      {'address': '192.168.4.0'},
+      {'address': '192.168.4.255'},
+      {'gateway': '192.168.5.1'},
+      {'gateway': '192.168.4.20'},
+      {'subnet': '255.0.255.0'},
+      {'subnet': '255.255.255.254'},
+      {'dns1': '224.0.0.1'},
+      {'dns2': 'not-an-address'},
     ]) {
-      expect(() => settingsSnapshot(SettingsGroup.network, {
-        ...simulatedNetwork, ...addressing, ...patch,
-      }), throwsFormatException);
+      expect(
+        () => settingsSnapshot(SettingsGroup.network, {
+          ...simulatedNetwork,
+          ...addressing,
+          ...patch,
+        }),
+        throwsFormatException,
+      );
     }
     final write = SettingsWrite(SettingsGroup.network, {}, complete);
     write.verifyReadback(Map.of(complete));
     expect(() => write.verifyReadback(absent), throwsFormatException);
-    expect(() => write.verifyReadback({...complete, 'dhcp': true}), throwsFormatException);
+    expect(
+      () => write.verifyReadback({...complete, 'dhcp': true}),
+      throwsFormatException,
+    );
   });
   for (final behavior in [
     'success',
@@ -219,8 +333,11 @@ void main() {
     final session = DeviceSettingsSession(api, authorized: () => true);
     await session.load(SettingsGroup.network);
     await session.load(SettingsGroup.cloud);
-    expect(session.drafts.keys, containsAll([SettingsGroup.network, SettingsGroup.cloud]),
-      reason: 'Optional catalog fields must not silently prevent loading either settings group');
+    expect(
+      session.drafts.keys,
+      containsAll([SettingsGroup.network, SettingsGroup.cloud]),
+      reason: 'Optional catalog fields must not silently prevent loading either settings group',
+    );
     final keep = session.write(SettingsGroup.cloud);
     expect(keep.form.containsKey('mqtt_password'), false);
     expect(keep.form.containsKey('websocket_token'), false);

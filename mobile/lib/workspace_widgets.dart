@@ -131,14 +131,19 @@ class WorkspaceSection extends StatelessWidget {
 }
 
 class WorkspaceBody extends StatelessWidget {
-  const WorkspaceBody({super.key, required this.children});
+  const WorkspaceBody({super.key, required this.children, this.controller});
   final List<Widget> children;
+  final ScrollController? controller;
   @override
   Widget build(BuildContext context) => Align(
     alignment: Alignment.topCenter,
     child: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 1120),
-      child: ListView(padding: const EdgeInsets.all(20), children: children),
+      child: ListView(
+        controller: controller,
+        padding: const EdgeInsets.all(20),
+        children: children,
+      ),
     ),
   );
 }

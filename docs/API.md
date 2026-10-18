@@ -233,6 +233,7 @@ mirroring is not muted by this physical-board preference.
 | POST | `/api/snake/direction` | form `value=up|right|down|left`; opposite turns are rejected |
 | POST | `/api/brightness` | form `value=1..255` |
 | POST | `/api/effect` | form `value=none|rainbow|fire|cell-chase`; chase visits logical80 down to1,750ms each, once, on white |
+| POST | `/api/scene/save` | explicitly flush the current semantic scene;200 `saved:true` confirms verified commit,503 requires inspection of status, never an automatic replay |
 | POST | `/api/buzzer` | form `frequency=20..12000`, `duration_ms=1..5000` |
 | POST | `/api/audio` | form `cue` from peer-acknowledged `audio_cues`, including `attention` and donor welcome variations; 202 means queued, not playback completion |
 | POST | `/api/display` | `value=-999..9999`, scheduled `text`, or `release=true`; see below |
@@ -266,7 +267,8 @@ the existing `/ws` or `POST /api/command` envelope. Fields are zero-based `index
 `rgb` (0..16777215) and boolean `off`. It validates before mutation, respects
 another stream's staging lease, clears the full480-pixel frame, enables raw
 effects output and publishes exactly the requested physical pixel/group with no
-fade, logical remapping, AVR command or persistence write. `off:true` publishes
+fade, logical remapping or AVR command. Diagnostic pixel bytes are not saved;
+output-mode/enable changes retain their normal coalesced scene policy. `off:true` publishes
 all480 black and leaves the output service enabled. The correlated reply carries
 `status.pixel_frame` with the actual full RGB buffer. Its request ID provides
 the same deduplicated WS-to-HTTP receipt recovery as cell commands; an uncertain
@@ -280,7 +282,27 @@ returns `202 {"accepted":true,"count":N}`. Duplicate IDs count once; malformed,
 empty or out-of-range selections are rejected without a partial edit. Fade and
 pulse timing is generated on the ESP from one common start time (300ms), not by
 client timers. Static grouped mode deliberately applies immediately. This scene
-edit does not write persistent settings or forward 80 commands to AVR.
+edit does not forward80 commands to AVR. The loop coalesces semantic scene edits
+into persistent storage rather than writing once per cell or animation frame.
+
+The ESP remembers all80 logical white/red/off states, mode/effect, brightness,
+output On/Off and static/effects selection across reboot. Its initial no-record
+fallback remains white. The old brightness-only record is read-only migration;
+validated scenes and physical mapping restore before the first LED publication.
+Animation phases, Snake progress, raw streaming frames, diagnostic pixel bytes,
+client ownership and pending commands are not saved or replayed.
+
+`/api/status.state_persistence` reports `restored`, `pending`, `saved`,
+`writes` (this boot), `save_delay_ms` and nullable `error`. Edits normally save after1500ms
+quiet, with a10s maximum coalescing delay; active maintenance defers writes.
+Wait for `saved:true` before removing power, or explicitly flush with current
+board/boot headers. Staging/readback/rename failures keep the previous committed
+record and retry no faster than10s. LittleFS atomic replacement and checksum
+fixtures are not a claim of physical abrupt-power-loss or optical acceptance.
+
+Native, Flutter and embedded Web remember passive per-board workspace choices.
+They never restore cached cells/modes as a new command; the freshly connected
+board remains authoritative. Secret edits and uncertain writes are excluded.
 
 Clients must observe `cell-batch`, pin the board/boot identity and confirm every
 selected target state through fresh same-board readback after the ACK. An ACK is

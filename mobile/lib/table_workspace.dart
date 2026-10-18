@@ -2,11 +2,24 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'device_settings.dart';
+import 'pixel_diagnostic.dart';
+
 /// User-owned UI state, independent of telemetry leases and transport sockets.
 /// Like Pealayer's stable workspace IDs, a board ID owns a workspace, not a
 /// connection attempt or boot. Nothing here authorizes or replays a command.
 class TableWorkspace extends ChangeNotifier {
   TableWorkspace({Map<String, dynamic> saved = const {}}) {
+    Map<String, dynamic> section(String key) =>
+        saved[key] is Map<String, dynamic>
+        ? saved[key] as Map<String, dynamic>
+        : const {};
+    pixels = PixelDiagnosticWorkspace(saved: section('pixel_diagnostic'))
+      ..addListener(notifyListeners);
+    frontPanel = FrontPanelWorkspace(saved: section('front_panel'))
+      ..addListener(notifyListeners);
+    settings = DeviceSettingsWorkspace(saved: section('settings'))
+      ..addListener(notifyListeners);
     final ids = saved['selection'];
     if (ids is List &&
         ids.length <= 80 &&
@@ -48,6 +61,9 @@ class TableWorkspace extends ChangeNotifier {
     });
   }
   final query = TextEditingController();
+  late final PixelDiagnosticWorkspace pixels;
+  late final FrontPanelWorkspace frontPanel;
+  late final DeviceSettingsWorkspace settings;
   final bucket = PageStorageBucket();
   late final ScrollController pageScroll, tableScroll;
   Set<int> _selection = {};
@@ -94,12 +110,107 @@ class TableWorkspace extends ChangeNotifier {
     'effect': cellEffect,
     'vertical': vertical,
     'horizontal': horizontal,
+    'pixel_diagnostic': pixels.snapshot(),
+    'front_panel': frontPanel.snapshot(),
+    'settings': settings.snapshot(),
   };
   @override
   void dispose() {
     query.dispose();
     pageScroll.dispose();
     tableScroll.dispose();
+    pixels.dispose();
+    frontPanel.dispose();
+    settings.dispose();
+    super.dispose();
+  }
+}
+
+/// A presentation draft, never an observed display or queued melody command.
+class FrontPanelWorkspace extends ChangeNotifier {
+  FrontPanelWorkspace({Map<String, dynamic> saved = const {}}) {
+    final value = saved['text'];
+    text.text = value is String && value.length <= 40
+        ? value
+        : 'PAKAR CONTROLLER';
+    _repeat = ['once', 'loop', 'interval'].contains(saved['repeat'])
+        ? saved['repeat'] as String
+        : 'once';
+    final ms = saved['speed'];
+    _speed = ms is num && ms.isFinite && ms >= 80 && ms <= 1000
+        ? ms.toDouble()
+        : 260;
+    _forceScroll = saved['force_scroll'] == true;
+    final cue = saved['cue'];
+    _selectedCue = cue is String && cue.length <= 64 ? cue : null;
+    final offset = saved['vertical'];
+    vertical = offset is num && offset.isFinite && offset >= 0
+        ? offset.toDouble().clamp(0, 100000)
+        : 0;
+    scroll = _RetainedScrollController(initialOffset: vertical)
+      ..addListener(() {
+        if (scroll.hasClients && vertical != scroll.offset) {
+          vertical = scroll.offset;
+          notifyListeners();
+        }
+      });
+    var prior = text.text;
+    text.addListener(() {
+      if (text.text == prior) return;
+      prior = text.text;
+      notifyListeners();
+    });
+  }
+  final text = TextEditingController();
+  late final ScrollController scroll;
+  double vertical = 0, _speed = 260;
+  String _repeat = 'once';
+  String? _selectedCue;
+  bool _forceScroll = false;
+  double get speed => _speed;
+  set speed(double value) {
+    if (!value.isFinite || value < 80 || value > 1000 || value == _speed) {
+      return;
+    }
+    _speed = value;
+    notifyListeners();
+  }
+
+  String get repeat => _repeat;
+  set repeat(String value) {
+    if (!['once', 'loop', 'interval'].contains(value) || value == _repeat) {
+      return;
+    }
+    _repeat = value;
+    notifyListeners();
+  }
+
+  bool get forceScroll => _forceScroll;
+  set forceScroll(bool value) {
+    if (value == _forceScroll) return;
+    _forceScroll = value;
+    notifyListeners();
+  }
+
+  String? get selectedCue => _selectedCue;
+  set selectedCue(String? value) {
+    if (value == _selectedCue || value != null && value.length > 64) return;
+    _selectedCue = value;
+    notifyListeners();
+  }
+
+  Map<String, dynamic> snapshot() => {
+    'text': text.text.length > 40 ? text.text.substring(0, 40) : text.text,
+    'repeat': repeat,
+    'speed': speed,
+    'force_scroll': forceScroll,
+    if (selectedCue != null) 'cue': selectedCue,
+    'vertical': vertical,
+  };
+  @override
+  void dispose() {
+    text.dispose();
+    scroll.dispose();
     super.dispose();
   }
 }

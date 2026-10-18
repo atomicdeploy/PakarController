@@ -72,10 +72,11 @@ class _ControlShellState extends State<ControlShell>
   DeviceStatus? presented;
   final panelInventory = PanelInventory();
   final workspaces = <String, TableWorkspace>{};
-  final pixelWorkspaces = <String, PixelDiagnosticWorkspace>{};
+  final connectionDraft = ConnectionDraft();
   String? workspaceBoard;
   WorkspaceCacheWriter? workspaceWriter;
   Timer? workspaceSave, workspaceSaveLimit;
+  (bool, bool, bool, double)? mirrorChoices;
   bool foreground = true, liveActive = false;
   int retryAttempt = 0;
   Stopwatch? observedAge;
@@ -103,6 +104,8 @@ class _ControlShellState extends State<ControlShell>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    mirror.addListener(_mirrorPreferencesChanged);
+    connectionDraft.addListener(_scheduleWorkspaceSave);
     api.onPeripheralEvent = mirror.event;
     api.onTransportRetired = () {
       mirror.observe(null, api.connectionRevision);
@@ -129,10 +132,37 @@ class _ControlShellState extends State<ControlShell>
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     final saved = prefs.getString('table_workspaces');
-    if (saved != null && saved.length < 65536) {
+    if (saved != null && saved.length < 1048576) {
       try {
         final cache = jsonDecode(saved);
         final entries = cache is Map ? cache['boards'] : null;
+        if (cache is Map) {
+          connectionDraft.restore(cache['connection_draft']);
+          final connection = cache['connection'];
+          if (connection is Map) {
+            if (connection['method'] == 'usb') {
+              api.connectionMethod = ConnectionMethod.usb;
+            }
+            if (connection['method'] == 'network') {
+              api.connectionMethod = ConnectionMethod.network;
+            }
+            if (connection['wanted'] == false) api.disconnect();
+          }
+          final phone = cache['phone'];
+          if (phone is Map) {
+            mirror.panelEnabled = phone['front_panel'] != false;
+            mirror.segmentsEnabled = phone['segments'] != false;
+            mirror.followBoardMute = phone['follow_mute'] == true;
+            final volume = phone['volume'];
+            if (volume is num &&
+                volume.isFinite &&
+                volume >= 0 &&
+                volume <= 1) {
+              mirror.volume = volume.toDouble();
+            }
+            // PCM sessions/notes are never restored or started by a UI cache.
+          }
+        }
         if (cache is Map &&
             [
               'overview',
@@ -173,7 +203,11 @@ class _ControlShellState extends State<ControlShell>
       return;
     }
     if (!mounted) return;
-    if (api.connectionWanted) await _startConnection();
+    if (api.connectionWanted) {
+      await _startConnection();
+    } else {
+      setState(() => message = 'Disconnected');
+    }
   }
 
   Future<void> _startConnection() async {
@@ -349,7 +383,7 @@ class _ControlShellState extends State<ControlShell>
       );
       workspaces.remove(retired)?.dispose();
     }
-    if (value.peer.table) {
+    if (value.peer.known) {
       workspaces.putIfAbsent(board, () => _ownWorkspace(TableWorkspace()));
     }
     final bootChanged = presented?.json['boot_id'] != value.json['boot_id'];
@@ -399,6 +433,18 @@ class _ControlShellState extends State<ControlShell>
     _scheduleWorkspaceSave();
   }
 
+  void _mirrorPreferencesChanged() {
+    final choices = (
+      mirror.panelEnabled,
+      mirror.segmentsEnabled,
+      mirror.followBoardMute,
+      mirror.volume,
+    );
+    if (choices == mirrorChoices) return;
+    mirrorChoices = choices;
+    _scheduleWorkspaceSave();
+  }
+
   void _scheduleWorkspaceSave() {
     if (!mounted || workspaceWriter == null) return;
     if (!foreground) {
@@ -433,6 +479,17 @@ class _ControlShellState extends State<ControlShell>
   Future<void> _saveWorkspaces() async {
     final encoded = jsonEncode({
       'activity': page,
+      'connection_draft': connectionDraft.snapshot(),
+      'connection': {
+        'method': api.connectionMethod.name,
+        'wanted': api.connectionWanted,
+      },
+      'phone': {
+        'front_panel': mirror.panelEnabled,
+        'segments': mirror.segmentsEnabled,
+        'follow_mute': mirror.followBoardMute,
+        'volume': mirror.volume,
+      },
       'boards': {
         for (final entry in workspaces.entries)
           entry.key: entry.value.snapshot(),
@@ -468,6 +525,7 @@ class _ControlShellState extends State<ControlShell>
     liveActive = false;
     reportedIncidents.clear();
     api.disconnect();
+    _flushWorkspaceSave();
     fallback?.cancel();
     liveRetry?.cancel();
     resumeRead?.cancel();
@@ -484,6 +542,7 @@ class _ControlShellState extends State<ControlShell>
   Future<void> _reconnect() async {
     ++liveGeneration;
     api.connect();
+    _scheduleWorkspaceSave();
     _revoke('Connecting to ${api.baseUrl}');
     liveRetry?.cancel();
     await live?.cancel();
@@ -705,10 +764,15 @@ class _ControlShellState extends State<ControlShell>
 
   @override
   void dispose() {
+    // Capture synchronously before child controllers/models are disposed; the
+    // ordered writer may finish its small platform write after unmounting.
+    _flushWorkspaceSave();
     WidgetsBinding.instance.removeObserver(this);
     api.onPeripheralEvent = null;
     api.onTransportRetired = null;
+    mirror.removeListener(_mirrorPreferencesChanged);
     mirror.dispose();
+    connectionDraft.dispose();
     api.onPeerChanged = null;
     live?.cancel();
     fallback?.cancel();
@@ -781,6 +845,7 @@ class _ControlShellState extends State<ControlShell>
                 connected: status != null && foreground,
                 command: scoped,
                 mirror: mirror,
+                workspace: workspaces[workspaceBoard]?.frontPanel,
               ),
             ),
             'hardware' => HardwarePage(
@@ -805,6 +870,7 @@ class _ControlShellState extends State<ControlShell>
                 navigate: _navigate,
                 adoptConnection: (endpoint, user, password) =>
                     _adoptConnection(owner, endpoint, user, password),
+                workspace: workspaces[workspaceBoard]?.settings,
               ),
             ),
             'connection' => SettingsPage(
@@ -812,6 +878,7 @@ class _ControlShellState extends State<ControlShell>
               api: api,
               reconnect: _reconnect,
               active: page == 'connection' && foreground,
+              draft: connectionDraft,
             ),
             'devices' =>
               page != 'devices'
@@ -886,15 +953,8 @@ class _ControlShellState extends State<ControlShell>
                 var locked = false;
                 final pixelBoard = status?.json['board_id'];
                 if (target == 'pixels' && pixelBoard is! String) return;
-                if (pixelWorkspaces.length >= 16 &&
-                    !pixelWorkspaces.containsKey(pixelBoard)) {
-                  pixelWorkspaces.remove(pixelWorkspaces.keys.first);
-                }
                 final pixelWorkspace = target == 'pixels'
-                    ? pixelWorkspaces.putIfAbsent(
-                        pixelBoard as String,
-                        PixelDiagnosticWorkspace.new,
-                      )
+                    ? workspaces[pixelBoard]?.pixels
                     : null;
                 await Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -1746,22 +1806,29 @@ class FrontPanelPage extends StatefulWidget {
     this.mirror,
     this.seenFeatures = const {},
     this.connected = true,
+    this.workspace,
   });
   final DeviceStatus? status;
   final Command command;
   final PeripheralMirror? mirror;
   final Set<String> seenFeatures;
   final bool connected;
+  final FrontPanelWorkspace? workspace;
   @override
   State<FrontPanelPage> createState() => _FrontPanelPageState();
 }
 
 class _FrontPanelPageState extends State<FrontPanelPage> {
-  final text = TextEditingController(text: 'PAKAR CONTROLLER');
-  double speed = 260;
-  String repeat = 'once';
-  bool forceScroll = false;
-  String? selectedCue;
+  late final workspace = widget.workspace ?? FrontPanelWorkspace();
+  TextEditingController get text => workspace.text;
+  double get speed => workspace.speed;
+  set speed(double value) => workspace.speed = value;
+  String get repeat => workspace.repeat;
+  set repeat(String value) => workspace.repeat = value;
+  bool get forceScroll => workspace.forceScroll;
+  set forceScroll(bool value) => workspace.forceScroll = value;
+  String? get selectedCue => workspace.selectedCue;
+  set selectedCue(String? value) => workspace.selectedCue = value;
   bool audioPending = false;
   List<String> seenCues = const [];
   bool seenPanelMirror = false,
@@ -1803,7 +1870,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
 
   @override
   void dispose() {
-    text.dispose();
+    if (widget.workspace == null) workspace.dispose();
     super.dispose();
   }
 
@@ -1816,6 +1883,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
         );
 
   Widget _contents(BuildContext context) => ListView(
+    controller: workspace.scroll,
     padding: const EdgeInsets.all(16),
     children: [
       const Text(
@@ -2344,20 +2412,55 @@ class SettingsPage extends StatefulWidget {
     required this.api,
     required this.reconnect,
     this.active = true,
+    this.draft,
   });
   final PakarApi api;
   final Future<void> Function() reconnect;
   final bool active;
+  final ConnectionDraft? draft;
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  late final endpoint = TextEditingController(text: widget.api.baseUrl);
-  late final user = TextEditingController(text: widget.api.user);
+  late final endpoint = TextEditingController(
+    text: widget.draft?.endpoint ?? widget.api.baseUrl,
+  );
+  late final user = TextEditingController(
+    text: widget.draft?.user ?? widget.api.user,
+  );
   late final password = TextEditingController(text: widget.api.password);
+  late String observedEndpoint, observedUser, observedPassword;
   bool saving = false;
   String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    observedEndpoint = widget.api.baseUrl;
+    observedUser = widget.api.user;
+    observedPassword = widget.api.password;
+  }
+
+  @override
+  void didUpdateWidget(covariant SettingsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The shell restores its profile asynchronously. Follow only pristine
+    // fields; telemetry/reconnect must never overwrite a user's draft.
+    if (endpoint.text == observedEndpoint) {
+      endpoint.text = widget.draft?.endpoint ?? widget.api.baseUrl;
+    }
+    if (user.text == observedUser) {
+      user.text = widget.draft?.user ?? widget.api.user;
+    }
+    if (password.text == observedPassword) password.text = widget.api.password;
+    observedEndpoint = widget.api.baseUrl;
+    observedUser = widget.api.user;
+    observedPassword = widget.api.password;
+  }
+
+  void edited(String _) =>
+      widget.draft?.edit(endpoint.text, user.text, widget.api);
 
   @override
   void dispose() {
@@ -2382,6 +2485,7 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           TextField(
             controller: endpoint,
+            onChanged: edited,
             decoration: const InputDecoration(
               labelText: 'Device hostname or URL',
             ),
@@ -2389,6 +2493,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 10),
           TextField(
             controller: user,
+            onChanged: edited,
             decoration: const InputDecoration(labelText: 'User'),
           ),
           const SizedBox(height: 10),
@@ -2422,6 +2527,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           password.text,
                         );
                         await settings.restore(widget.api);
+                        widget.draft?.clear();
                         await widget.reconnect();
                       } on Exception catch (failure) {
                         if (mounted) {

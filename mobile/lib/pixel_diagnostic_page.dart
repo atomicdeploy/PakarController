@@ -38,6 +38,10 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   late final board = widget.observed()?.json['board_id'];
   late final boot = widget.observed()?.json['boot_id'];
   final position = TextEditingController(text: '1');
+  late final scroll = ScrollController(
+    initialScrollOffset: workspace.vertical,
+    keepScrollOffset: false,
+  );
   final colorText = TextEditingController();
   Timer? timer;
   bool working = false;
@@ -52,7 +56,11 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
     revision;
     board;
     boot;
-    position.text = '${probe.first + 1}';
+    position.text = workspace.position;
+    position.addListener(() => workspace.position = position.text);
+    scroll.addListener(() {
+      if (scroll.hasClients) workspace.vertical = scroll.offset;
+    });
     timer = Timer.periodic(const Duration(milliseconds: 500), (_) {
       if (mounted) setState(() {});
     });
@@ -76,6 +84,8 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
     timer?.cancel();
     position.dispose();
     colorText.dispose();
+    scroll.dispose();
+    if (widget.workspace == null) workspace.dispose();
     super.dispose();
   }
 
@@ -238,6 +248,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
         : null;
     final first = probe.index ~/ 6 * 6;
     return WorkspaceBody(
+      controller: scroll,
       children: [
         const WorkspaceHeader(
           title: 'Pixel diagnostics',

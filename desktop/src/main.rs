@@ -15,6 +15,7 @@ mod capabilities;
 mod client_telemetry;
 mod cli_output;
 mod config;
+mod native_workspace;
 mod configuration_reads;
 mod connection;
 mod device_settings;
@@ -1786,6 +1787,7 @@ struct PakarControllerApp {
     active_context: Option<String>,
     context_layouts: std::collections::HashMap<String, egui_dock::DockState<ui::layout::Panel>>,
     config: config::AppConfig,
+    workspace: native_workspace::Runtime,
     preferences: Option<ui::preferences::PreferencesDraft>,
     board_silent: board_silent::State,
     device_settings: device_settings::Editor,
@@ -1942,6 +1944,7 @@ impl PakarControllerApp {
             context_panels: Vec::new(),
             active_context: None,
             context_layouts: Default::default(),
+            workspace: Default::default(),
             control: platform::instance::start(context.egui_ctx.clone(), !screenshot_harness),
             dock,
             reveal_panels: Vec::new(),
@@ -2052,14 +2055,14 @@ impl PakarControllerApp {
         self.status_request_pending = false;
         self.device_settings.invalidate_peer();
         self.configuration_loaded = false;
-        self.table.stop_pending_edits(); self.table.selection.ids.clear();
+        self.table.stop_pending_edits();
         self.table.editing_order = false; self.table.manager_open = false;
-        self.table.pixel_sample = None; self.cell_search.clear();
+        self.table.pixel_sample = None;
         self.pixel_diagnostic.revoke();
         self.confirm_reset = false; self.show_mapping = false;
         self.mappings.clear(); self.mapping_name.clear(); self.mapping_logical = 1; self.mapping_physical = 1;
         self.access_info = None; self.access_user.clear(); self.access_password.clear(); self.access_confirm.clear();
-        self.display_text.clear(); self.device_name = None; self.board_display_name = None;
+        self.device_name = None; self.board_display_name = None;
         self.identity_pending = false; self.identity_saved = None;
         self.streaming = false; self.sampling = false; self.stream_sent_fps = None;
         self.last_mapping_poll = Instant::now() - Duration::from_secs(16);
@@ -2519,9 +2522,8 @@ impl PakarControllerApp {
                         self.table.stop_pending_edits();
                         // Revoked wire ownership/boot must cancel operations,
                         // not discard this same physical board's user workspace.
-                        if self.presentation.workspace_key().as_deref()!=Some(format!("board:{}",snapshot.status.board_id).as_str()) {
-                            self.table.selection.clear();self.cell_search.clear();
-                        }
+                        // The presentation workspace owns selection/find across
+                        // sessions; fresh peer admission below never replays it.
                         self.table.pixel_sample=None;self.pixel_diagnostic.revoke();
                         self.show_mapping=false;self.mapping_request_pending=None;
                     }

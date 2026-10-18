@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const sketch=read('firmware/esp8266/esp8266.ino');
 assert.match(sketch,/uint8_t defaultPhysicalCell\(uint8_t logicalCell\)\s*{\s*return BoardCore::TableCellMapping::physicalForLogical\(logicalCell\);/);
-assert.match(sketch,/loadLedPreferences\(\);\s+loadCellMapping\(\);\s+#if PAKAR_LED_START_CELL_CHASE\s+grid.setStaticMode\(true\);\s+grid.setPattern\(LedGrid::kPatternCellChase\)/);
+assert.match(sketch,/loadLedPreferences\(\);\s+loadCellMapping\(\);[\s\S]*?sceneStore.begin[\s\S]*?#if PAKAR_LED_START_CELL_CHASE\s+grid.setStaticMode\(true\);\s+grid.setPattern\(LedGrid::kPatternCellChase\)/);
 assert.match(sketch,/value == F\("cell-chase"\)\) return LedGrid::kPatternCellChase/);
 const preset=sketch.slice(sketch.indexOf('if(server.hasArg("preset"))'),sketch.indexOf('const int logical = server.arg("logical_id")'));
 assert.match(preset,/server.arg\("preset"\)!=F\("table-cable"\)/);

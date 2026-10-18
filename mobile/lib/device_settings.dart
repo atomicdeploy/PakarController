@@ -34,7 +34,9 @@ Map<String, Object> settingsSnapshot(
   for (final entry in group.fields.entries) {
     final optional = entry.value.startsWith('optional:');
     if (optional && !json.containsKey(entry.key)) continue;
-    final type = optional ? entry.value.substring('optional:'.length) : entry.value;
+    final type = optional
+        ? entry.value.substring('optional:'.length)
+        : entry.value;
     final v = json[entry.key];
     final valid = switch (type) {
       'boolean' => v is bool,
@@ -108,6 +110,7 @@ void settingsValidateAddressing(Map<String, Object> value) {
     }
     return parts.fold(0, (address, octet) => address * 256 + octet);
   }
+
   final values = <int>[];
   for (final key in fields.skip(1)) {
     final text = value[key] as String;
@@ -116,14 +119,24 @@ void settingsValidateAddressing(Map<String, Object> value) {
   if (value['dhcp'] == true) return;
   final address = values[0], gateway = values[1], subnet = values[2];
   final host = (~subnet) & 0xffffffff;
-  if (host < 3 || host == 0xffffffff || (host & (host + 1)) != 0 ||
-      address >> 24 == 0 || address >> 24 >= 224 ||
-      (address & host) == 0 || (address & host) == host ||
-      gateway >> 24 == 0 || gateway >> 24 >= 224 ||
-      (gateway & host) == 0 || (gateway & host) == host ||
-      (address & subnet) != (gateway & subnet) || address == gateway ||
-      values[3] >> 24 >= 224 || values[4] >> 24 >= 224) {
-    throw const FormatException('Invalid static subnet, host, gateway or DNS address');
+  if (host < 3 ||
+      host == 0xffffffff ||
+      (host & (host + 1)) != 0 ||
+      address >> 24 == 0 ||
+      address >> 24 >= 224 ||
+      (address & host) == 0 ||
+      (address & host) == host ||
+      gateway >> 24 == 0 ||
+      gateway >> 24 >= 224 ||
+      (gateway & host) == 0 ||
+      (gateway & host) == host ||
+      (address & subnet) != (gateway & subnet) ||
+      address == gateway ||
+      values[3] >> 24 >= 224 ||
+      values[4] >> 24 >= 224) {
+    throw const FormatException(
+      'Invalid static subnet, host, gateway or DNS address',
+    );
   }
 }
 
@@ -170,6 +183,175 @@ class SettingsDraft {
   }
 }
 
+/// User edits only. Fresh settings must be read before these patches can be
+/// displayed in an editor, and their original values are conflict baselines,
+/// never cached live authority. Secret values and secret-clear intent are not
+/// exported. The shell's existing ordered workspace writer owns persistence.
+class DeviceSettingsWorkspace extends ChangeNotifier {
+  DeviceSettingsWorkspace({Map<String, dynamic> saved = const {}}) {
+    final pages = (deviceSettingsCatalog['pages'] as List).cast<Map>();
+    if (pages.any((p) => p['id'] == saved['page'])) {
+      _page = saved['page'] as String;
+    }
+    final find = saved['search'];
+    _search = find is String && find.length <= 256 ? find : '';
+    final offset = saved['vertical'];
+    _vertical = offset is num && offset.isFinite && offset >= 0
+        ? offset.toDouble().clamp(0, 100000)
+        : 0;
+    final edits = saved['edits'];
+    if (edits is Map) {
+      for (final group in SettingsGroup.values) {
+        final fields = edits[group.name];
+        if (fields is! Map) continue;
+        final patch = <String, Map<String, Object>>{};
+        for (final key in group.fields.keys.where(
+          (key) => _public(group, key),
+        )) {
+          final edit = fields[key];
+          if (edit is Map &&
+              _scalar(edit['before']) &&
+              _scalar(edit['after'])) {
+            patch[key] = {
+              'before': edit['before'] as Object,
+              'after': edit['after'] as Object,
+            };
+          }
+        }
+        if (patch.isNotEmpty) _edits[group] = patch;
+      }
+    }
+    final identity = saved['identity'];
+    if (identity is Map &&
+        ['before_host', 'before_name', 'host', 'name'].every(
+          (key) =>
+              identity[key] is String && (identity[key] as String).length <= 63,
+        )) {
+      _identity = {
+        for (final key in ['before_host', 'before_name', 'host', 'name'])
+          key: identity[key] as String,
+      };
+    }
+  }
+  static bool _scalar(Object? value) =>
+      value is bool || value is int || value is String && value.length <= 512;
+  static bool _public(SettingsGroup group, String key) =>
+      group.fields.containsKey(key) &&
+      !key.contains('password') &&
+      !key.contains('token');
+  final _edits = <SettingsGroup, Map<String, Map<String, Object>>>{};
+  bool _retired = false;
+  Map<String, String>? _identity;
+  String _page = 'overview', _search = '';
+  double _vertical = 0;
+  String get page => _page;
+  set page(String value) {
+    if (value == _page ||
+        !(deviceSettingsCatalog['pages'] as List).cast<Map>().any(
+          (p) => p['id'] == value,
+        )) {
+      return;
+    }
+    _page = value;
+    notifyListeners();
+  }
+
+  String get search => _search;
+  set search(String value) {
+    if (value == _search || value.length > 256) return;
+    _search = value;
+    notifyListeners();
+  }
+
+  double get vertical => _vertical;
+  set vertical(double value) {
+    if (!value.isFinite || value < 0 || value == _vertical) return;
+    _vertical = value.clamp(0, 100000);
+    notifyListeners();
+  }
+
+  void capture(SettingsGroup group, SettingsDraft draft) {
+    final patch = <String, Map<String, Object>>{};
+    for (final key in group.fields.keys.where((key) => _public(group, key))) {
+      final before = draft.saved[key], after = draft.value[key];
+      if (before != after && _scalar(before) && _scalar(after)) {
+        patch[key] = {'before': before!, 'after': after!};
+      }
+    }
+    if (jsonEncode(_edits[group]) == jsonEncode(patch.isEmpty ? null : patch)) {
+      return;
+    }
+    if (patch.isEmpty) {
+      _edits.remove(group);
+    } else {
+      _edits[group] = patch;
+    }
+    notifyListeners();
+  }
+
+  SettingsDraft restore(SettingsGroup group, Map<String, Object> actual) {
+    final draft = SettingsDraft(actual);
+    for (final entry in (_edits[group] ?? {}).entries) {
+      if (!actual.containsKey(entry.key)) continue;
+      if (actual[entry.key] != entry.value['before']) draft.conflict = true;
+      draft.value[entry.key] = entry.value['after']!;
+      // Retain the original baseline so a conflict is never silently blessed
+      // by another refresh, reconnect or process restart.
+      draft.saved[entry.key] = entry.value['before']!;
+    }
+    return draft;
+  }
+
+  void discard(SettingsGroup group) {
+    if (_edits.remove(group) != null) notifyListeners();
+  }
+
+  Map<String, String>? get identity =>
+      _identity == null ? null : Map.unmodifiable(_identity!);
+  void captureIdentity(
+    String beforeHost,
+    String beforeName,
+    String host,
+    String name,
+  ) {
+    if ([beforeHost, beforeName, host, name].any((v) => v.length > 63)) return;
+    final next = beforeHost == host && beforeName == name
+        ? null
+        : {
+            'before_host': beforeHost,
+            'before_name': beforeName,
+            'host': host,
+            'name': name,
+          };
+    if (mapEquals(_identity, next)) return;
+    _identity = next;
+    notifyListeners();
+  }
+
+  void discardIdentity() {
+    // A verified rename ACK may arrive after its old settings view closed.
+    // Retiring that view's optional cache must not prevent the owning root
+    // from following the ACK; transport revision checks still own handoff.
+    if (_retired || _identity == null) return;
+    _identity = null;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _retired = true;
+    super.dispose();
+  }
+
+  Map<String, dynamic> snapshot() => {
+    'page': page,
+    'search': search,
+    'vertical': vertical,
+    'edits': {for (final e in _edits.entries) e.key.name: e.value},
+    if (_identity != null) 'identity': _identity,
+  };
+}
+
 class SettingsWrite {
   SettingsWrite(this.group, this.form, this.expected);
   final SettingsGroup group;
@@ -193,12 +375,14 @@ class SettingsWrite {
 }
 
 /// Selected-peer owner and request epochs adapt actual Web settingsSave and
-/// native Editor pending/finish. Contains in-memory drafts; no disk export.
+/// native Editor pending/finish. Only optional public draft patches leave this
+/// session; secrets, live ownership, acknowledgments and pending writes do not.
 class DeviceSettingsSession extends ChangeNotifier {
-  DeviceSettingsSession(this.api, {required this.authorized})
+  DeviceSettingsSession(this.api, {required this.authorized, this.workspace})
     : owner = api.connectionRevision;
   final PakarApi api;
   final bool Function() authorized;
+  final DeviceSettingsWorkspace? workspace;
   final int owner;
   final drafts = <SettingsGroup, SettingsDraft>{};
   final _reads = <SettingsGroup, int>{};
@@ -219,7 +403,12 @@ class DeviceSettingsSession extends ChangeNotifier {
   }
 
   void changed() {
-    if (!disposed) notifyListeners();
+    if (!disposed) {
+      for (final entry in drafts.entries) {
+        workspace?.capture(entry.key, entry.value);
+      }
+      notifyListeners();
+    }
   }
 
   void set(SettingsGroup group, String key, Object value) {
@@ -255,7 +444,8 @@ class DeviceSettingsSession extends ChangeNotifier {
       check();
       if (captured != epoch || request != _reads[group] || pending) return;
       if (discard || drafts[group] == null) {
-        drafts[group] = SettingsDraft(next);
+        if (discard) workspace?.discard(group);
+        drafts[group] = workspace?.restore(group, next) ?? SettingsDraft(next);
         if (group == SettingsGroup.network) {
           wifiPassword = '';
           openNetwork = false;

@@ -23,10 +23,12 @@ class DeviceSettingsPage extends StatefulWidget {
     required this.navigate,
     required this.adoptConnection,
     this.active = true,
+    this.workspace,
   });
   final PakarApi api;
   final DeviceStatus status;
   final bool active;
+  final DeviceSettingsWorkspace? workspace;
   final bool Function(String feature) authorized;
   final void Function(String page) navigate;
   final Future<void> Function(String endpoint, String user, String password)
@@ -36,10 +38,17 @@ class DeviceSettingsPage extends StatefulWidget {
 }
 
 class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
+  late final workspace = widget.workspace ?? DeviceSettingsWorkspace();
   late final session = DeviceSettingsSession(
     widget.api,
     authorized: () => widget.authorized('network'),
+    workspace: workspace,
   );
+  late final scroll = ScrollController(
+    initialScrollOffset: workspace.vertical,
+    keepScrollOffset: false,
+  );
+  late final find = TextEditingController(text: workspace.search);
   final fields = <String, TextEditingController>{};
   final host = TextEditingController(), name = TextEditingController();
   final login = TextEditingController(),
@@ -49,7 +58,12 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   final ownerReads = <String, int>{};
   Map<String, dynamic>? identity, access;
   List<String> ssids = [];
-  String page = 'overview', search = '', info = '';
+  String get page => workspace.page;
+  set page(String value) => workspace.page = value;
+  String get search => workspace.search;
+  set search(String value) => workspace.search = value;
+  String info = '';
+  bool identityConflict = false, assigningIdentity = false;
   bool working = false;
   bool maintenanceActive = false;
   Timer? refresh;
@@ -57,6 +71,11 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   @override
   void initState() {
     super.initState();
+    scroll.addListener(() {
+      if (scroll.hasClients) workspace.vertical = scroll.offset;
+    });
+    host.addListener(identityEdited);
+    name.addListener(identityEdited);
     session.addListener(changed);
     refresh = Timer.periodic(const Duration(seconds: 15), (_) => load());
     unawaited(load());
@@ -64,6 +83,17 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
 
   void changed() {
     if (mounted) setState(() {});
+  }
+
+  void identityEdited() {
+    if (assigningIdentity || identity == null) return;
+    final original = workspace.identity;
+    workspace.captureIdentity(
+      original?['before_host'] ?? identity!['hostname'] as String,
+      original?['before_name'] ?? identity!['display_name'] as String,
+      host.text,
+      name.text,
+    );
   }
 
   @override
@@ -98,6 +128,9 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
     refresh?.cancel();
     session.removeListener(changed);
     session.dispose();
+    scroll.dispose();
+    find.dispose();
+    if (widget.workspace == null) workspace.dispose();
     for (final controller in [
       ...fields.values,
       host,
@@ -168,12 +201,20 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
             !validText(value['display_name'], 63)) {
           throw const FormatException('Device identity unavailable');
         }
+        final draft = workspace.identity;
+        identityConflict =
+            draft != null &&
+            (draft['before_host'] != value['hostname'] ||
+                draft['before_name'] != value['display_name']);
+        if (identityConflict) info = 'Another client changed identity. Draft retained; discard and reload before saving.';
         // Reloading observed identity must not replace a name draft.
         if (identity == null ||
             (host.text == identity!['hostname'] &&
                 name.text == identity!['display_name'])) {
-          host.text = value['hostname'];
-          name.text = value['display_name'];
+          assigningIdentity = true;
+          host.text = draft?['host'] ?? value['hostname'];
+          name.text = draft?['name'] ?? value['display_name'];
+          assigningIdentity = false;
         }
         identity = value;
       });
@@ -222,8 +263,13 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       return;
     }
     if (!mounted) return;
+    for (final group in SettingsGroup.values) {
+      workspace.discard(group);
+    }
+    workspace.discardIdentity();
     session.invalidate();
     identity = access = null;
+    identityConflict = false;
     current.clear();
     replacement.clear();
     confirmation.clear();
@@ -269,6 +315,12 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   }
 
   Future<void> saveIdentity() async {
+    if (identityConflict) {
+      setState(
+        () => info = 'Identity changed since this draft. Discard and reload before saving.',
+      );
+      return;
+    }
     final next = host.text.toLowerCase().replaceFirst(RegExp(r'\.local$'), '');
     final label = name.text;
     if (!validHostname(next) ||
@@ -315,6 +367,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
         );
       }
       if (ack['apply_pending'] == true) {
+        workspace.discardIdentity();
         await widget.adoptConnection(
           'http://$next.local',
           widget.api.user,
@@ -328,6 +381,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
         }
         identity = actual;
         host.text = next;
+        workspace.discardIdentity();
         info = 'Saved identity verified without Wi-Fi restart';
       }
     });
@@ -625,7 +679,9 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
     );
   }
 
-  Widget detail() => switch (page) {
+  Widget detail({bool fallback = false}) => switch (fallback
+      ? 'overview'
+      : page) {
     'wifi' => groupEditor(SettingsGroup.network),
     'mqtt' || 'websocket' => groupEditor(SettingsGroup.cloud),
     'identity' => card('Board identity', [
@@ -758,7 +814,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final pages = widget.status.deviceSettingsPages;
-    if (!pages.any((p) => p['id'] == page)) page = 'overview';
+    final pageAvailable = pages.any((p) => p['id'] == page);
     final visible = pages
         .where(
           (p) => '${p['label']} ${p['keywords']}'.toLowerCase().contains(
@@ -803,6 +859,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
               final navigation = Column(
                 children: [
                   TextField(
+                    controller: find,
                     decoration: const InputDecoration(
                       labelText: 'Find setting',
                       prefixIcon: Icon(PakarIcons.gear),
@@ -848,10 +905,11 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
                 ],
               );
               final body = ListView(
+                controller: scroll,
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 children: [
                   if (!wide) ...[navigation, const SizedBox(height: 12)],
-                  detail(),
+                  detail(fallback: !pageAvailable),
                   const SizedBox(height: 12),
                   Semantics(
                     liveRegion: true,

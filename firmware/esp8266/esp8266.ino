@@ -56,6 +56,9 @@
 #include "src/LedGrid.h"
 #include "src/LoopMessages.h"
 #include "src/LedPreferences.h"
+#include "src/SceneStore.h"
+#include "src/LedScene.h"
+#include "src/AvrSceneSync.h"
 #include "src/NetworkConfig.h"
 #include "src/NetworkPath.h"
 #include "src/CommandValues.h"
@@ -179,6 +182,8 @@ bool urbootSupported();
 unsigned artifactReaders=0;
 BusyLine<PAKAR_USE_BUSY_WIRE != 0> busyLine(kBusyPin);
 LedGrid grid;
+SceneStore<fs::FS> sceneStore;
+AvrSceneSync avrSceneSync;
 LoopMessages loopMessages;
 File uploadFile;
 uint32_t avrUploadOwner = 0;
@@ -285,6 +290,7 @@ uint32_t telnetLastInputAt = 0;
 CellMappingRecord cellMapping{};
 
 void saveLedPreferences();
+void serviceScenePersistence(bool flush = false);
 void loadCellMapping();
 bool scheduleDeviceRename(const String &name);
 bool scheduleDeviceIdentity(const String &name, const String &displayName);
@@ -885,26 +891,13 @@ void appendJsonEscaped(String &body, const char *value) {
 }
 
 void saveLedPreferences() {
-  const LedPreferences value = whiteBootPreferences(grid.brightness());
-  // Like PCController SettingsStore's changed-byte writes, avoid touching flash
-  // when only a transient cell/effect changed. LittleFS replaces EEPROM here.
-  File existing = LittleFS.open(kLedPreferencesPath, "r");
-  if (existing) {
-    LedPreferences saved{};
-    const bool same = existing.size() == sizeof(saved) &&
-        existing.read(reinterpret_cast<uint8_t *>(&saved), sizeof(saved)) == sizeof(saved) &&
-        memcmp(&saved, &value, sizeof(value)) == 0;
-    existing.close();
-    if (same) return;
-  }
-  File file = LittleFS.open(kLedPreferencesPath, "w");
-  if (file) {
-    file.write(reinterpret_cast<const uint8_t *>(&value), sizeof(value));
-    file.close();
-  }
+  // Admission is not a durable-save receipt. The loop coalesces all ingress
+  // paths (including USB, physical keypad and cloud), not just REST settings.
+  serviceScenePersistence();
 }
 
 void loadLedPreferences() {
+  // Read-only migration of the old brightness-only record; never rewrite it.
   File file = LittleFS.open(kLedPreferencesPath, "r");
   if (!file) return;
   LedPreferences value{};
@@ -912,6 +905,14 @@ void loadLedPreferences() {
                                   sizeof(value)) == sizeof(value);
   file.close();
   if (complete) applyLedBootPreferences(grid, value);
+}
+
+void serviceScenePersistence(bool flush) {
+  const SceneState next = captureLedScene(sceneStore.state(), grid,
+      static_cast<uint8_t>(mode), selectedCell, selectedState, winner);
+  sceneStore.observe(next, millis());
+  sceneStore.service(millis(), !otaActive && !remoteFirmware.busy() &&
+      !urbootBusy.get() && !uploadFile && !avrUploadOwner, flush);
 }
 
 void stopDiscovery() {
@@ -1437,6 +1438,13 @@ String buildStatusJson() {
   body += F(",\"ip\":\""); body += (NetworkPath::ready() ? NetworkPath::localIP() : WiFi.softAPIP()).toString();
   body += F("\",\"mode\":\""); body += modeName();
   body += F("\",\"led_output\":");body+=grid.outputJson();
+  body += F(",\"state_persistence\":{\"restored\":");body+=sceneStore.restored()?F("true"):F("false");
+  body += F(",\"pending\":");body+=sceneStore.pending()?F("true"):F("false");
+  body += F(",\"saved\":");body+=sceneStore.saved()?F("true"):F("false");
+  body += F(",\"writes\":");body+=sceneStore.writes();
+  body += F(",\"save_delay_ms\":");body+=SceneStore<fs::FS>::saveDelayMs;
+  body += F(",\"error\":");if(sceneStore.error()){body+='"';body+=sceneStore.error();body+='"';}else body+=F("null");
+  body += '}';
   body += F(",\"ws_queue_rejected\":");body+=loopMessages.rejected();
   body += F(",\"update\":");body+=localUpdateJson();
   body += F(",\"avr_maintenance\":");body+=urbootJobJson();
@@ -2307,6 +2315,9 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     avrAudioCueCount = avrVersionKnown && frame.payloadLength >= 13 ? frame.payload[12] : 0;
     avrToneTimestamps = avrVersionKnown && frame.payloadLength >= 14 && frame.payload[13] == 1;
     ++avrSession; avrPanelKnown = false;
+    // A rebooted AVR's volatile defaults cannot erase the ESP-owned scene.
+    // Synchronize only the paired mode; do not replay host commands or pixels.
+    avrSceneSync.hello(); gameStateInitialized = false;
     avrDisplayStatusKnown = false; tm1637Ack = false;
     avrPcSupported = avrVersionKnown && frame.payloadLength >= 12 && frame.payload[9] == 0x50;
     avrPcFeatures = avrPcSupported ? frame.payload[10] | static_cast<uint16_t>(frame.payload[11]) << 8 : 0;
@@ -2315,10 +2326,18 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     const uint8_t previousWinner = winner;
     const uint8_t previousInputs = activeInputs;
     const bool previousInput9 = activeInput9;
-    mode = static_cast<GameMode>(frame.payload[0]);
-    winner = frame.payload[1];
-    selectedCell = frame.payload[2];
-    selectedState = frame.payload[3];
+    const auto sceneSync = avrSceneSync.observe(frame.payload[0], static_cast<uint8_t>(mode));
+    if (sceneSync.baseline) {
+      gameStateInitialized = false;
+      if (sceneSync.sendMode) {
+        const uint8_t desiredMode[] = {static_cast<uint8_t>(mode)};
+        sendToAvr(kSetMode, sequence++, desiredMode, sizeof(desiredMode));
+      }
+    } else if (frame.payload[0] >= kModeCellSelect && frame.payload[0] <= kModeSnake) {
+      mode = static_cast<GameMode>(frame.payload[0]);
+      // A boot/default status is not a new first-wins input.
+      if (mode == kModeFirstWins && frame.payload[1]) winner = frame.payload[1];
+    }
     if (frame.payloadLength >= 7) {
       activeInputs = frame.payload[4];
       activeInput9 = frame.payload[5] != 0;
@@ -2349,10 +2368,13 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       const uint8_t currentResetRevision = frame.payload[12];
       if (gameStateInitialized) {
         if (currentResetRevision != lastResetRevision) {
+          winner = frame.payload[1];
           if (mode == kModeSnake) startSnake(); else grid.resetWhite();
         }
         if (cellRevision != lastCellActionRevision &&
-            actionEffect <= kEffectPulse) {
+            actionEffect <= kEffectPulse && frame.payload[2] >= 1 &&
+            frame.payload[2] <= LedGrid::kCells && frame.payload[3] <= kCellOff) {
+          selectedCell = frame.payload[2]; selectedState = frame.payload[3];
           grid.setCell(selectedCell, static_cast<CellState>(selectedState),
                        actionEffect);
         }
@@ -2810,6 +2832,13 @@ void registerApi() {
     sendToAvr(kSetMode, sequence++, payload, sizeof(payload));
     server.send(202, "application/json", "{\"accepted\":true}");
   });
+  server.on("/api/scene/save", HTTP_POST, []() {
+    if (!authenticate()) return;
+    serviceScenePersistence(true);
+    const bool saved = sceneStore.saved();
+    server.send(saved ? 200 : 503, "application/json",
+        saved ? "{\"saved\":true}" : "{\"saved\":false,\"pending\":true}");
+  });
   server.on("/api/led/output",HTTP_POST,[](){
     if(!authenticate())return;
     const bool enabledGiven=server.hasArg("enabled"),modeGiven=server.hasArg("mode");
@@ -2845,7 +2874,7 @@ void registerApi() {
       server.send(400,"application/json",F("{\"accepted\":false,\"error\":\"invalid_cell_set\"}"));return;
     }
     // Hardware handlers execute on the loop owner. Stage the whole selection
-    // before the next render; do not forward80 AVR actions or persist a scene.
+    // before the next render; persistence is coalesced by the loop, not per cell.
     if(!grid.setCells(selection,state,effect)){
       server.send(409,"application/json",F("{\"accepted\":false}"));return;
     }
@@ -3557,13 +3586,26 @@ void setup() {
 #endif
   deviceIdentity.begin(LittleFS, filesystemMounted);
   cloudConfig.begin(LittleFS);
-  grid.begin();
+  // Initialize the driver without sending a white frame over a restored scene.
+  grid.begin(false);
   loadLedPreferences();
   loadCellMapping();
+  SceneState fallback;
+  fallback.brightness = grid.brightness();
+  fallback.flags = (grid.outputEnabled() ? 1 : 0) | (grid.staticMode() ? 2 : 0);
+  if (sceneStore.begin(LittleFS, filesystemMounted, fallback)) {
+    const auto &saved = sceneStore.state();
+    mode = static_cast<GameMode>(saved.mode); winner = saved.winner;
+    selectedCell = saved.selectedCell; selectedState = saved.selectedState;
+    restoreLedScene(grid, saved);
+    if (mode == kModeSnake) startSnake();
+  }
 #if PAKAR_LED_START_CELL_CHASE
   grid.setStaticMode(true);
   grid.setPattern(LedGrid::kPatternCellChase);
 #endif
+  if (grid.outputEnabled()) grid.service(millis());
+  else grid.setOutputEnabled(false); // Explicit complete black frame.
   hostLink.begin(115200, onHostFrame);
 #if defined(ARDUINO_ARCH_ESP32)
 #if PAKAR_AVR_LINK_ENABLED
@@ -3749,6 +3791,7 @@ void loop() {
     setAvrTransmitBlocked(false);
   }
   if (!remoteFirmware.busy()) { serviceSnake(now);serviceStream(); }
+  serviceScenePersistence();
   // Cloud socket calls may have waited while the buffered AVR UART received
   // valid replies. Consume those actual frames before evaluating presence;
   // otherwise the loop reports a false peer loss, then recovery next pass.

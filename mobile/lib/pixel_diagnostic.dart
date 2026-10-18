@@ -9,7 +9,71 @@ const diagnosticPixels = 480;
 
 /// Cursor/colour are user-owned workspace state, not a claim about board output.
 class PixelDiagnosticWorkspace {
-  PixelProbe probe = const PixelProbe();
+  PixelDiagnosticWorkspace({Map<String, dynamic> saved = const {}}) {
+    final index = saved['index'], rgb = saved['rgb'];
+    _probe = PixelProbe(
+      index: index is int && index >= 0 && index < diagnosticPixels ? index : 0,
+      group: saved['group'] == true,
+      rgb: rgb is int && rgb >= 0 && rgb <= 0xffffff ? rgb : 0xffffff,
+    );
+    final text = saved['position'];
+    _position = text is String && text.length <= 8
+        ? text
+        : '${_probe.first + 1}';
+    final offset = saved['vertical'];
+    _vertical = offset is num && offset.isFinite && offset >= 0
+        ? offset.toDouble().clamp(0, 100000)
+        : 0;
+  }
+  PixelProbe _probe = const PixelProbe();
+  // Keep this transport module usable by the standalone Dart pixel probe;
+  // importing Flutter's ChangeNotifier here would pull dart:ui into that tool.
+  final _listeners = <void Function()>{};
+  void addListener(void Function() listener) => _listeners.add(listener);
+  void removeListener(void Function() listener) => _listeners.remove(listener);
+  void notifyListeners() {
+    for (final listener in List.of(_listeners)) {
+      listener();
+    }
+  }
+
+  void dispose() => _listeners.clear();
+  String _position = '1';
+  double _vertical = 0;
+  String get position => _position;
+  set position(String value) {
+    if (value.length > 8 || value == _position) return;
+    _position = value;
+    notifyListeners();
+  }
+
+  double get vertical => _vertical;
+  set vertical(double value) {
+    if (!value.isFinite || value < 0 || value == _vertical) return;
+    _vertical = value.clamp(0, 100000);
+    notifyListeners();
+  }
+
+  PixelProbe get probe => _probe;
+  set probe(PixelProbe value) {
+    if (!value.valid ||
+        (value.index == _probe.index &&
+            value.group == _probe.group &&
+            value.rgb == _probe.rgb)) {
+      return;
+    }
+    _probe = value;
+    _position = '${value.first + 1}';
+    notifyListeners();
+  }
+
+  Map<String, dynamic> snapshot() => {
+    'index': probe.index,
+    'group': probe.group,
+    'rgb': probe.rgb,
+    'position': position,
+    'vertical': vertical,
+  };
 }
 
 bool supportsPixelDiagnostic(DeviceStatus? status) =>

@@ -12,7 +12,7 @@ using std::min;
 inline uint32_t cloudTestMillis=0;
 inline uint32_t millis(){return cloudTestMillis;}
 inline void yield(){}
-inline size_t strlcpy(char *out,const char *value,size_t capacity){const auto n=strlen(value);if(capacity){const auto count=min(n,capacity-1);memcpy(out,value,count);out[count]=0;}return n;}
+#include "../strlcpy_compat.h"
 class String:public std::string {
  public:
   using std::string::string;using std::string::operator=;

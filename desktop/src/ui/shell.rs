@@ -464,12 +464,15 @@ impl PakarControllerApp {
         self.event_log.record(kind, message);
     }
     pub fn save_workspace(&mut self) {
+        self.remember_ui_workspace();
         self.config.connection_method = self.transport;
         self.config.connection_enabled = self.connection_enabled;
         layout::remember_connected(&mut self.config, &self.dock, self.active_context.is_some());
         if config::AppConfig::load().ok().as_ref() != Some(&self.config) {
             if let Err(error) = self.config.save() {
                 self.message = error;
+            } else {
+                self.workspace.saved();
             }
         }
     }
@@ -551,6 +554,7 @@ impl PakarControllerApp {
         let route = self.connection_enabled.then(|| format!("{:?}:{}", self.transport,
             if self.transport == Transport::Serial { &self.serial_port } else { &self.base }));
         let current = self.live_status().cloned();
+        let restore = self.prepare_ui_workspace(ctx, current.as_ref());
         let change = self.presentation.update(route.as_deref(), current.as_ref());
         let available: Vec<_> = Panel::ALL.into_iter().filter(|p| p.available(self.presentation_context())).collect();
         let key = self.presentation.workspace_key();
@@ -571,7 +575,6 @@ impl PakarControllerApp {
             self.configuration_loaded = false;
             self.context_panels = available.clone();
             self.table.stop_pending_edits();
-            self.table.selection.ids.clear(); self.cell_search.clear();
             self.table.pixel_sample = None;
             // Only a genuinely different selected peer changes this key. A
             // friendly-name refresh or expired lease cannot discard user state.
@@ -596,6 +599,7 @@ impl PakarControllerApp {
             self.table.pixel_sample = None;
             self.show_mapping = false; self.table.manager_open = false;
         }
+        if let Some(snapshot) = restore { self.apply_ui_workspace(ctx, snapshot); }
         // Prune even on first restore; saved panels are preferences, never evidence.
         let removed: Vec<_> = self.dock.iter_all_tabs().filter(|(_,p)| !available.contains(p)).map(|(_,p)| *p).collect();
         for panel in removed { while let Some(path) = self.dock.find_tab(&panel) { self.dock.remove_tab(path); } }
@@ -663,6 +667,7 @@ impl PakarControllerApp {
         self.poll();
         self.bridge_tick();
         self.synchronize_context(ctx);
+        self.checkpoint_ui_workspace(ctx);
         self.process_cell_queue(ctx);
         self.deliver_notifications();
         #[cfg(windows)]
