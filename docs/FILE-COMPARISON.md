@@ -1017,7 +1017,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/terminal_ui.rs:765 [UTF8-LF sha256=cde3747be84b54a5a59894b73a07fb019b45cb103c58a1a8cfa0a7b968de13d5; anchor=fn command_request(]`.
 - Target: `mobile/lib/api.dart:622 [UTF8-LF sha256=d0de6cc04a536de07d64133c3f25b6c5107c759eca69ee6fa2799525066e9d88; anchor=bool _acceptIdentity(]`.
-- Target: `mobile/lib/main.dart:115 [UTF8-LF sha256=d69d036725361e748afc88ba6767986e72fc0be773cbea903f7358da434e8d27; anchor=api.onPeerChanged = ()]`.
+- Target: `mobile/lib/main.dart:116 [UTF8-LF sha256=ef4a2968c9799f9fddd84c5d91ae4c2c834420cc0c97ec44376326eacfc4539b; anchor=api.onPeerChanged = ()]`.
 - Target: `mobile/lib/bridge.dart:316 [UTF8-LF sha256=4fd40d999691968be1d32826a925a4bb221a5bd102c2a237ed947f6bf37b2be9; anchor=watchdog = Timer.periodic]`.
 - Target: `libraries/BoardCore/src/PeerFence.h:31 [UTF8-LF sha256=9f1ab63252bd881d2fc786e230a18db331e66708a1bd3ccd0f096d2d2b5d49d5; anchor=inline bool accepts(]`.
 - Target: `firmware/esp8266/src/WebAccess.h:68 [UTF8-LF sha256=7d5f61dd41c18aa9e74857e60f187c28be8e3902022ed4accad57f75a9384b5a; anchor=bool peerAllowed(]`.
@@ -1031,7 +1031,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `desktop/src/realtime.rs:8 [UTF8-LF sha256=8da360508e8835f18c8f51283fcdc2873536b6b288cce3c8418a5df63b09af0e; anchor=pub struct Intent]`.
 - Target: `mobile/lib/command_wire.dart:17 [UTF8-LF sha256=a26e03f93483d07e431a35a4b1c642707c364f7dcb99f803e721820c5c91a1ff; anchor=String commandPacket(]`.
 - Target: `libraries/BoardCore/src/CommandReceipts.h:8 [UTF8-LF sha256=13bfe0feee207ee0d3c5d2d98111728e9c7ef99c5628206aa96f4b503d0ccd5c; anchor=class CommandReceipts]`.
-- Target: `mobile/lib/table_workspace.dart:6 [UTF8-LF sha256=5fe07f7cf6f3942005dfadc30d990e67c501c27d02eb7a6d5c40210eebd26983; anchor=class TableWorkspace]`.
+- Target: `mobile/lib/table_workspace.dart:8 [UTF8-LF sha256=8dde58655dd06b9e32254dd0dfdd1226ef6fca94976abdf75329a5ab9a1c445f; anchor=class TableWorkspace]`.
 - Retained: Actual Session.Request closing/context checks before and after admission adapted to TUI atomic stop checks before/after fresh preflight; no post-dispatch replay.
 - Retained: Full source read. Fail-closed identity checks strengthened with HTTP server-side board/boot fences; donor HELLO/build stamp is NOT a boot epoch.
 - Retained: Before/after admission ownership checks also adapted to Web's shared pinned HTTP preflight and post-response generation validation. Existing session.go full review/live 1bf4d52 hash remains unchanged; this is not import of Go serial acquisition or request-priority scheduling.
@@ -1066,7 +1066,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `mobile/test/realtime_transport_test.dart:11 [UTF8-LF sha256=72d79373baccec25c1fbc8d4b2f04e77df3b7e313711cb7e6d18369595d956a4; anchor=Real loopback transport]`.
 - Test-code evidence: `mobile/test/table_layout_test.dart:57 [UTF8-LF sha256=e410115e7e5dae033596efbbd47de71c7d541aa4a9ab95334e3d15f2e2c0ac8b; anchor=Cell commands and incoming state preserve both scroll axes and canvas position]`.
 - Test-code evidence: `tests/cloud_command_guard_test.cpp:28 [UTF8-LF sha256=2de44ca916fe1670eba11edeb706e88dfdafc4994d0a9d07301a279ef71c0581; anchor=Receipts::Conflict]`.
-- Test-code evidence: `mobile/test/workspace_lifecycle_test.dart:73 [UTF8-LF sha256=a2aed85c8f2cec79fd1bdc41aacbd82c782569a3cd3582f65bbd6286a18afb54; anchor=Background/resume retains selection]`.
+- Test-code evidence: `mobile/test/workspace_lifecycle_test.dart:218 [UTF8-LF sha256=f5ebfdad55e4dd4c47a89eb15d6919d788eac55414cff05ab351f9fb3b3e24d7; anchor=Background/resume retains selection]`.
 - Test-code evidence: `mobile/test/realtime_transport_test.dart:13 [UTF8-LF sha256=72d79373baccec25c1fbc8d4b2f04e77df3b7e313711cb7e6d18369595d956a4; anchor=HTTP refresh cannot impersonate]`.
 - Test-code evidence: `desktop/src/usb_table.rs:220 [UTF8-LF sha256=cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce; anchor=fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()]`.
 - Test-code evidence: `desktop/src/usb_table.rs:182 [UTF8-LF sha256=cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce; anchor=fn compact_usb_readback_validates_all_values_without_renewing_full_observations()]`.
@@ -1158,7 +1158,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/capabilities.rs:43 [UTF8-LF sha256=094ec11b7f8ae8ea378e54c300c8ff218c323b987b1f882bd2fc3da84e433810; anchor=pub fn has(]`.
 - Target: `mobile/lib/peer_context.dart:35 [UTF8-LF sha256=c1fa07c1f069a989961b98037ac69b252fbdb6fc45bc740a42f38fdb598c4af4; anchor=static PeerContext fromStatus]`.
-- Target: `mobile/lib/main.dart:493 [UTF8-LF sha256=d69d036725361e748afc88ba6767986e72fc0be773cbea903f7358da434e8d27; anchor=Future<bool> _command]`.
+- Target: `mobile/lib/main.dart:541 [UTF8-LF sha256=ef4a2968c9799f9fddd84c5d91ae4c2c834420cc0c97ec44376326eacfc4539b; anchor=Future<bool> _command]`.
 - Target: `libraries/BoardCore/src/DeviceContext.h:30 [UTF8-LF sha256=3e940f4ee3d09c482486b7321648f776ae6c480e92aaa564beb5dca12d9bfbfa; anchor=inline uint16_t features(]`.
 - Target: `firmware/esp8266/src/WebUi.h:733 [UTF8-LF sha256=3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20; anchor=function peerAvailability(]`.
 - Retained: Actual connected AND have_status AND advertised-capability conjunction adapted to selected-peer fresh manifests. No feature inference from hostname, pixel count, catalog, defaults or online alone.
@@ -1510,7 +1510,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `desktop/src/brand_image.rs:25 [UTF8-LF sha256=ab71607dcde16d7af14b0a292982f902186dacf6b5b78b3f4c983e37464428e9; anchor=pub fn native_icon_bytes]`.
 - Target: `docs/BRANDING-PARITY.md:60 [UTF8-LF sha256=0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3; anchor=## Explicit unfinished useful code and reasons]`.
 - Target: `desktop/src/branding.rs:8 [UTF8-LF sha256=100940d0ee954ecfeb059dba83245c37c4e1e325d9309c7c82870e4eb870870a; anchor=pub fn sync_peer]`.
-- Target: `mobile/lib/main.dart:774 [UTF8-LF sha256=d69d036725361e748afc88ba6767986e72fc0be773cbea903f7358da434e8d27; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
+- Target: `mobile/lib/main.dart:825 [UTF8-LF sha256=ef4a2968c9799f9fddd84c5d91ae4c2c834420cc0c97ec44376326eacfc4539b; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
 - Target: `mobile/lib/application_artwork.dart:2 [UTF8-LF sha256=a1ee8fc15b0aa9111a5c416fcf74b3d05093b22e47b76d7744837f175f7b5ef4; anchor=const applicationArtworkBase64]`.
 - Retained: Actual icon_data_from_bytes imported unchanged; one embedded PNG supplies native/Web artwork without disk caches.
 - Retained: Actual native_icon_bytes seven-frame ICO encoding/master preservation/Lanczos3 resampling and shell derivative test adapted to shared supplied bytes and PNG-only decoder.
@@ -1789,12 +1789,13 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `410d274f51e5e7db7ce81582d36166a97240b097e993cec5fee8707a95183e2f`.
 
-- Target: `mobile/lib/table_workspace.dart:6 [UTF8-LF sha256=5fe07f7cf6f3942005dfadc30d990e67c501c27d02eb7a6d5c40210eebd26983; anchor=class TableWorkspace]`.
-- Target: `mobile/lib/main.dart:376 [UTF8-LF sha256=d69d036725361e748afc88ba6767986e72fc0be773cbea903f7358da434e8d27; anchor=Future<void> _saveWorkspaces()]`.
+- Target: `mobile/lib/table_workspace.dart:8 [UTF8-LF sha256=8dde58655dd06b9e32254dd0dfdd1226ef6fca94976abdf75329a5ab9a1c445f; anchor=class TableWorkspace]`.
+- Target: `mobile/lib/main.dart:428 [UTF8-LF sha256=ef4a2968c9799f9fddd84c5d91ae4c2c834420cc0c97ec44376326eacfc4539b; anchor=Future<void> _saveWorkspaces()]`.
 - Retained: Complete live donor read through EOF at matching original-byte hash. Adapt the actual stable-ID profile_choices/draw ownership rule to board-keyed Flutter workspaces, rather than connection-attempt keys or telemetry-dependent widget lifetime. User selection/search/effect/indicator choice and both scroll axes survive transient leases, reboot, explicit reconnect and bounded background UI-cache restoration; snapshots never persist a command, authorization or observed device state.
+- Retained: Reread the same complete live donor at unchanged SHA256 for the Android screen-off regression. Actual user changes now notify a bounded debounced UI snapshot writer, including indicators, multiple selection, transition, Find/selection, activity and both scroll axes. One ordered coalescing writer prevents late old saves, skips identical snapshots and permits retry after failure. Reattachment uses the latest actual offsets rather than stale scroll-end PageStorage values. Healthy sockets remain open across backgrounding; a silent pre-suspend socket gets a 750 ms read-probe recovery without resetting the workspace or replaying commands. Colour actions and selection controls are separate ordered rows.
 - Omitted/replaced code: `draw workspace manager metadata CRUD, icon picker, profile reordering and overwrite/restore menu commands`. Disposition: **pending**. Reason: Useful generic workspace-management UI remains an open donor import. This regression repair adapts stable identity and user-state ownership only; it does not certify the native/Web workspace manager, add a replacement profile editor or copy egui widgets into Flutter.
-- Test-code evidence: `mobile/test/workspace_lifecycle_test.dart:180 [UTF8-LF sha256=a2aed85c8f2cec79fd1bdc41aacbd82c782569a3cd3582f65bbd6286a18afb54; anchor=Workspace follows board identity]`.
-- Remaining: Actual Android background/process pressure, Wi-Fi/router loss and human layout/selection acceptance remain open. Complete generic workspace-management imports separately; source fixtures are not phone deployment or donor-wide parity.
+- Test-code evidence: `mobile/test/workspace_lifecycle_test.dart:325 [UTF8-LF sha256=f5ebfdad55e4dd4c47a89eb15d6919d788eac55414cff05ab351f9fb3b3e24d7; anchor=Workspace follows board identity]`.
+- Remaining: Actual Android installation, background/process pressure, Wi-Fi/router loss and human layout/selection acceptance remain open. The newer prior APK was staged but not installed because no authorized ADB target was available; never attribute its source checks to the running phone. Complete generic workspace-management imports separately; source fixtures are not phone deployment or donor-wide parity.
 
 ### Pealayer: `tests/i18n_surface_audit_test.rs`
 

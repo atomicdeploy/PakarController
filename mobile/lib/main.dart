@@ -71,7 +71,8 @@ class _ControlShellState extends State<ControlShell>
   final workspaces = <String, TableWorkspace>{};
   final pixelWorkspaces = <String, PixelDiagnosticWorkspace>{};
   String? workspaceBoard;
-  String savedWorkspaces = '';
+  WorkspaceCacheWriter? workspaceWriter;
+  Timer? workspaceSave, workspaceSaveLimit;
   bool foreground = true, liveActive = false;
   int retryAttempt = 0;
   Stopwatch? observedAge;
@@ -122,6 +123,7 @@ class _ControlShellState extends State<ControlShell>
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     final saved = prefs.getString('table_workspaces');
     if (saved != null && saved.length < 65536) {
       try {
@@ -143,17 +145,21 @@ class _ControlShellState extends State<ControlShell>
           for (final entry in entries.entries.take(16)) {
             if (entry.key.length <= 160 &&
                 entry.value is Map<String, dynamic>) {
-              workspaces[entry.key] = TableWorkspace(
-                saved: entry.value as Map<String, dynamic>,
+              workspaces[entry.key] = _ownWorkspace(
+                TableWorkspace(saved: entry.value as Map<String, dynamic>),
               );
             }
           }
         }
-        savedWorkspaces = saved;
       } on FormatException {
         /* Ignore invalid UI cache, never device settings. */
       }
     }
+    if (!mounted) return;
+    workspaceWriter = WorkspaceCacheWriter(
+      saved: saved ?? '',
+      write: (encoded) => prefs.setString('table_workspaces', encoded),
+    );
     try {
       await ConnectionPreferences(prefs).restore(api);
     } on Exception catch (error) {
@@ -207,8 +213,10 @@ class _ControlShellState extends State<ControlShell>
     await live?.cancel();
     if (!mounted ||
         !api.connectionWanted ||
+        !foreground ||
         owner != api.connectionRevision ||
         generation != liveGeneration) {
+      if (generation == liveGeneration) liveActive = false;
       return;
     }
     var ended = false;
@@ -337,12 +345,15 @@ class _ControlShellState extends State<ControlShell>
       );
       workspaces.remove(retired)?.dispose();
     }
-    if (value.peer.table) workspaces.putIfAbsent(board, TableWorkspace.new);
+    if (value.peer.table) {
+      workspaces.putIfAbsent(board, () => _ownWorkspace(TableWorkspace()));
+    }
     final bootChanged = presented?.json['boot_id'] != value.json['boot_id'];
     workspaceBoard = board;
     observedAge = Stopwatch()..start();
     observedEndpoint = api.baseUrl;
-    resumeRead?.cancel();
+    // An HTTP fallback read is not proof the suspended WebSocket recovered.
+    if (api.liveFresh) resumeRead?.cancel();
     expiry?.cancel();
     ++observation;
     setState(() {
@@ -373,6 +384,47 @@ class _ControlShellState extends State<ControlShell>
     });
   }
 
+  TableWorkspace _ownWorkspace(TableWorkspace workspace) {
+    workspace.addListener(_scheduleWorkspaceSave);
+    return workspace;
+  }
+
+  void _navigate(String target) {
+    setState(() => page = target);
+    _scheduleWorkspaceSave();
+  }
+
+  void _scheduleWorkspaceSave() {
+    if (!mounted || workspaceWriter == null) return;
+    if (!foreground) {
+      _flushWorkspaceSave();
+      return;
+    }
+    // No preferences write/JSON encoding per telemetry frame or scroll pixel.
+    // Save after a short quiet period, or at most every 2s during a long drag.
+    workspaceSave?.cancel();
+    workspaceSave = Timer(
+      const Duration(milliseconds: 350),
+      _flushWorkspaceSave,
+    );
+    workspaceSaveLimit ??= Timer(
+      const Duration(seconds: 2),
+      _flushWorkspaceSave,
+    );
+  }
+
+  void _flushWorkspaceSave() {
+    workspaceSave?.cancel();
+    workspaceSaveLimit?.cancel();
+    workspaceSave = workspaceSaveLimit = null;
+    unawaited(
+      _saveWorkspaces().catchError((Object _) {
+        // Keep the actual workspace on storage failure; retry on the next edit
+        // or lifecycle flush. Never reset UI/device settings or replay a command.
+      }),
+    );
+  }
+
   Future<void> _saveWorkspaces() async {
     final encoded = jsonEncode({
       'activity': page,
@@ -381,11 +433,7 @@ class _ControlShellState extends State<ControlShell>
           entry.key: entry.value.snapshot(),
       },
     });
-    if (encoded == savedWorkspaces) return;
-    final prefs = await SharedPreferences.getInstance();
-    if (await prefs.setString('table_workspaces', encoded)) {
-      savedWorkspaces = encoded;
-    }
+    await workspaceWriter?.save(encoded);
   }
 
   void _revoke(String reason) {
@@ -614,11 +662,7 @@ class _ControlShellState extends State<ControlShell>
       liveRetry?.cancel();
       expiry?.cancel();
       resumeRead?.cancel();
-      unawaited(
-        _saveWorkspaces().catchError((Object _) {
-          // A UI-cache write failure never resets device settings or telemetry.
-        }),
-      );
+      _flushWorkspaceSave();
       setState(() {});
       return; // Keep the socket and workspace; Android may suspend transport.
     }
@@ -634,13 +678,18 @@ class _ControlShellState extends State<ControlShell>
     }
     _revoke('Resuming live updates…');
     resumeProbeAge = Stopwatch()..start();
-    if (!liveActive) {
+    final oldSocket = liveGeneration;
+    final probing = liveActive && api.requestLiveStatus();
+    if (!probing) {
       unawaited(_connectLive());
-    } else {
-      api.requestLiveStatus();
     }
-    resumeRead = Timer(const Duration(milliseconds: 1200), () {
+    resumeRead = Timer(const Duration(milliseconds: 750), () {
       if (mounted && foreground && api.connectionWanted && !api.liveFresh) {
+        // Replace only the unresponsive pre-suspend socket, not a replacement
+        // already connecting or a healthy socket that answered the probe.
+        if (probing && oldSocket == liveGeneration) {
+          unawaited(_connectLive());
+        }
         unawaited(_refresh(silent: true));
       }
     });
@@ -658,6 +707,8 @@ class _ControlShellState extends State<ControlShell>
     liveRetry?.cancel();
     expiry?.cancel();
     resumeRead?.cancel();
+    workspaceSave?.cancel();
+    workspaceSaveLimit?.cancel();
     for (final workspace in workspaces.values) {
       workspace.dispose();
     }
@@ -738,7 +789,7 @@ class _ControlShellState extends State<ControlShell>
                     owner == api.connectionRevision &&
                     status?.hostname == hostname &&
                     status?.peer.has(feature) == true,
-                navigate: (target) => setState(() => page = target),
+                navigate: _navigate,
                 adoptConnection: (endpoint, user, password) =>
                     _adoptConnection(owner, endpoint, user, password),
               ),
@@ -761,7 +812,7 @@ class _ControlShellState extends State<ControlShell>
                           password,
                           verifyCredentialChange: false,
                         );
-                        if (mounted) setState(() => page = 'overview');
+                        if (mounted) _navigate('overview');
                       },
                     ),
             _ => BoardOverview(
@@ -816,7 +867,7 @@ class _ControlShellState extends State<ControlShell>
               tooltip: 'Device context menu',
               onSelected: (target) async {
                 if (target == 'devices') {
-                  setState(() => page = 'devices');
+                  _navigate('devices');
                   return;
                 }
                 var locked = false;
@@ -932,8 +983,7 @@ class _ControlShellState extends State<ControlShell>
             if (wide)
               NavigationRail(
                 selectedIndex: index,
-                onDestinationSelected: (value) =>
-                    setState(() => page = pages[value].$1),
+                onDestinationSelected: (value) => _navigate(pages[value].$1),
                 labelType: NavigationRailLabelType.all,
                 destinations: destinations
                     .map(
@@ -958,8 +1008,7 @@ class _ControlShellState extends State<ControlShell>
             ? null
             : NavigationBar(
                 selectedIndex: index,
-                onDestinationSelected: (value) =>
-                    setState(() => page = pages[value].$1),
+                onDestinationSelected: (value) => _navigate(pages[value].$1),
                 destinations: destinations,
               ),
       ),
@@ -1065,7 +1114,9 @@ class _TablePageState extends State<TablePage> {
     FocusScope.of(context).unfocus();
     setState(() {
       if (multiple) {
-        if (!selection.remove(id)) selection.add(id);
+        final next = selection.toSet();
+        if (!next.remove(id)) next.add(id);
+        selection = next;
       } else {
         selection = {id};
       }
@@ -1295,6 +1346,27 @@ class _TablePageState extends State<TablePage> {
                 },
               ),
               Wrap(
+                key: const ValueKey('table-colour-actions'),
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final value in ['white', 'red', 'off'])
+                    FilledButton.tonal(
+                      onPressed:
+                          !widget.connected ||
+                              selection.isEmpty ||
+                              applying ||
+                              searchError != null ||
+                              widget.verifiedCommand == null ||
+                              !status!.peer.has('cell-batch')
+                          ? null
+                          : () => applySelection(value),
+                      child: Text('Set $value'),
+                    ),
+                ],
+              ),
+              Wrap(
+                key: const ValueKey('table-selection-actions'),
                 spacing: 8,
                 runSpacing: 4,
                 children: [
@@ -1336,19 +1408,6 @@ class _TablePageState extends State<TablePage> {
                           }),
                     child: const Text('Clear selection'),
                   ),
-                  for (final value in ['white', 'red', 'off'])
-                    FilledButton.tonal(
-                      onPressed:
-                          !widget.connected ||
-                              selection.isEmpty ||
-                              applying ||
-                              searchError != null ||
-                              widget.verifiedCommand == null ||
-                              !status!.peer.has('cell-batch')
-                          ? null
-                          : () => applySelection(value),
-                      child: Text('Set $value'),
-                    ),
                 ],
               ),
               DropdownButtonFormField<String>(

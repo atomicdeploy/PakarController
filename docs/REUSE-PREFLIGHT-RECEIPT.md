@@ -5063,3 +5063,43 @@ focused tests and is the ASUS session1 owner10908. Six additional actual app-IPC
 USB commands spaced1200ms apart confirm in32-64ms, wire readback10-12ms, zero
 active incidents, original cell/search restored, no HTTP/WebSocket fallback.
 The full source/receipt-hash and aggregate timing record is USB-LATENCY.json.
+
+Flutter screen-off retention: reread the complete live Pealayer
+src/ui/workspace_profiles.rs (410d274f51e5e7db7ce81582d36166a97240b097e993cec5fee8707a95183e2f)
+and PreferencesTab.tsx. Extend the existing stable-board workspace adaptation,
+not a new parallel preference framework. Saving only when entering background
+left a process-suspension/death window; scroll-end PageStorage could also restore
+an older offset. User edits now notify a 350 ms quiet-period/2 s maximum-wait writer,
+with immediate inactive flush, ordered/coalesced writes and identical-snapshot
+skips. No telemetry-driven or per-scroll-pixel storage writes. Selection/Find,
+indicator visibility, multi-select, transition, activity and both scroll axes
+restore from bounded UI-only snapshots, never cached device authority or commands.
+Reattached scroll controllers start at the latest actual offset. Colour actions
+now precede the separate selection-management row, with stable explicit keys.
+
+Resume retains healthy sockets; a 750 ms read probe replaces only a silent
+pre-suspend socket, with read-only HTTP fallback. HTTP success does not cancel
+that WS recovery; generation/foreground/explicit-Disconnect fencing remains.
+Seventeen focused production-widget/ownership/writer cases and analyzer pass
+through the canonical wrapper. A fixture initially tapped the navigation bar
+before the scroll layout settled; target the visible actual control instead.
+The socket fixture also needed one real event-loop turn for broadcast-cancel
+completion, not an increased production reconnect delay or disabled assertion.
+Temporary tracing was removed. One analyzer brace warning was corrected without
+weakening the gate. Existing donor omissions stay pending in the same ledger.
+
+ASUS is reachable but its authorized Samsung wireless-ADB advertisement times
+out; devices -l is empty. No install, app-data clear, shared ADB restart, firmware,
+board command or physical acceptance is claimed. Prior APK staging is not phone
+delivery. The final candidate is built/staged separately after source settles;
+actual Android screen-off/process-pressure and human acceptance remain open.
+
+The one warm release-mode preview build completed in 44.4 s; no dependency
+upgrade, new cache or clean. APK 56,215,521 bytes, SHA256
+b5df3f10904af6ce2a23e91923afb6e7b7f6032350ea586ad50f8633e019a449;
+local staging independently matches. The existing Flutter-rendered simulated
+capture also passes (18 total focused cases), visually inspected with colour
+actions above selection controls and no overflow. PNG SHA256
+da22502fa23accdafd6809f74607f75dc87da1e7111579200fdd72ac1c8cac1f.
+Preview signing, fixture rendering and APK staging are not Android installation
+or physical/human acceptance. No production issue checklist is closed by them.

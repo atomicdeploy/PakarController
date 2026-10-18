@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -68,6 +69,150 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     FlutterSecureStorage.setMockInitialValues({});
+  });
+  testWidgets(
+    'Edits autosave before background and restore indicators, selection and both scroll axes after process replacement',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 850);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final api = LifecycleApi()
+        ..healthyWs = true
+        ..observed = peer('board-A');
+      await tester.pumpWidget(PakarControllerApp(api: api));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Table').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(search, '1-3,80');
+      await tester.pumpAndSettle();
+      final workspace = tester
+          .widget<TablePage>(find.byType(TablePage))
+          .workspace!;
+      workspace.pageScroll.jumpTo(200);
+      await tester.pumpAndSettle();
+      final indicators = find.widgetWithText(FilterChip, 'LED indicators');
+      await tester.tap(indicators);
+      await tester.pumpAndSettle();
+      final multiple = find.widgetWithText(FilterChip, 'Multiple selection');
+      await tester.tap(multiple);
+      await tester.pumpAndSettle();
+      workspace.cellEffect = 'fade';
+      await showCanvas(tester);
+      workspace.pageScroll.jumpTo(
+        workspace.pageScroll.position.maxScrollExtent - 10,
+      );
+      workspace.tableScroll.jumpTo(320);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+      final y = workspace.pageScroll.offset, x = workspace.tableScroll.offset;
+      final prefs = await SharedPreferences.getInstance();
+      final cache = jsonDecode(prefs.getString('table_workspaces')!) as Map;
+      final saved = (cache['boards'] as Map)['board-A'] as Map;
+      expect(cache['activity'], 'table');
+      expect(saved['selection'], [1, 2, 3, 80]);
+      expect(saved['indicators'], true);
+      expect(saved['multiple'], false);
+      expect(saved['effect'], 'fade');
+      expect(saved['vertical'], y);
+      expect(saved['horizontal'], x);
+      // No pause callback: model an OS kill after the latest autosave.
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+      final next = LifecycleApi()
+        ..healthyWs = true
+        ..observed = peer('board-A', boot: 'after-process-death');
+      await tester.pumpWidget(PakarControllerApp(api: next));
+      await tester.pumpAndSettle();
+      final restored = tester
+          .widget<TablePage>(find.byType(TablePage))
+          .workspace!;
+      expect(restored.showIndicators, true);
+      expect(restored.multiple, false);
+      expect(restored.cellEffect, 'fade');
+      expect(restored.selection, {1, 2, 3, 80});
+      expect(queryText(tester), '1-3,80');
+      expect(restored.pageScroll.offset, y);
+      expect(restored.tableScroll.offset, x);
+      expect(selected(tester, 80), true);
+      expect(api.writes + next.writes, 0);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+    },
+  );
+  testWidgets(
+    'Resume promptly retires a silent old socket with a read-only HTTP fallback',
+    (tester) async {
+      final api = LifecycleApi()
+        ..healthyWs = true
+        ..observed = peer('board-A');
+      await tester.pumpWidget(PakarControllerApp(api: api));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Table').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(search, '4-6');
+      await tester.pumpAndSettle();
+      final workspace = tester
+          .widget<TablePage>(find.byType(TablePage))
+          .workspace!;
+      workspace.showIndicators = true;
+      final sockets = api.subscriptions;
+      final reads = api.reads;
+      addTearDown(() => resume(tester));
+      pause(tester);
+      api.healthyWs = false;
+      await tester.pump(const Duration(minutes: 2));
+      expect(api.subscriptions, sockets);
+      resume(tester);
+      await tester.pump();
+      expect(api.probes, 1);
+      await tester.pump(const Duration(milliseconds: 751));
+      // Broadcast subscription cancellation completes on the real event loop,
+      // outside the widget binding's synthetic resume clock.
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+      await tester.pumpAndSettle();
+      expect(api.subscriptions, sockets + 1);
+      expect(api.reads, reads + 1);
+      expect(workspace.selection, {4, 5, 6});
+      expect(workspace.showIndicators, true);
+      api.healthyWs = true;
+      api.updates.add(api.observed);
+      await tester.pumpAndSettle();
+      expect(red(tester).onPressed, isNotNull);
+      expect(api.writes, 0);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+    },
+  );
+  testWidgets('Colour controls precede the separate selection row on phones', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final api = LifecycleApi()..healthyWs = true;
+    await tester.pumpWidget(PakarControllerApp(api: api));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Table').last);
+    await tester.pumpAndSettle();
+    final colours = find.byKey(const ValueKey('table-colour-actions'));
+    final selection = find.byKey(const ValueKey('table-selection-actions'));
+    expect(
+      tester.getRect(colours).bottom,
+      lessThanOrEqualTo(tester.getRect(selection).top),
+    );
+    expect(
+      find.descendant(of: colours, matching: find.text('Set red')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: selection, matching: find.text('Select all')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
   });
   testWidgets(
     'Background/resume retains selection, both scroll axes and canvas without reads or reconnect',
@@ -158,13 +303,13 @@ void main() {
       expect(canvas, findsOneWidget);
       expect(tester.getRect(canvas), before);
       expect(selected(tester, 5), true);
-      expect(red(tester).onPressed, isNull);
+      expect(tester.widget<TablePage>(find.byType(TablePage)).connected, false);
       api.failReads = false;
       api.healthyWs = true;
       api.updates.add(api.observed);
       await tester.pumpAndSettle();
       expect(selected(tester, 5), true);
-      expect(red(tester).onPressed, isNotNull);
+      expect(tester.widget<TablePage>(find.byType(TablePage)).connected, true);
       await tester.tap(find.byTooltip('Disconnect'));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Connect'));
@@ -241,4 +386,101 @@ void main() {
     expect(state.snapshot().keys, isNot(contains('boot_id')));
     state.dispose();
   });
+  testWidgets(
+    'Reattaching interrupted scrolls uses current offsets, not scroll-end defaults',
+    (tester) async {
+      final state = TableWorkspace();
+      Widget view() => MaterialApp(
+        home: Scaffold(
+          body: ListView(
+            controller: state.pageScroll,
+            children: [
+              SizedBox(
+                height: 2000,
+                child: SingleChildScrollView(
+                  controller: state.tableScroll,
+                  scrollDirection: Axis.horizontal,
+                  child: const SizedBox(width: 2000),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpWidget(view());
+      state.pageScroll.jumpTo(225);
+      state.tableScroll.jumpTo(310);
+      await tester.pump();
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(view());
+      await tester.pump();
+      expect(state.pageScroll.offset, 225);
+      expect(state.tableScroll.offset, 310);
+      await tester.pumpWidget(const SizedBox());
+      state.dispose();
+    },
+  );
+  test(
+    'Workspace writer serializes and coalesces writes to the latest snapshot',
+    () async {
+      final calls = <String>[];
+      final waits = <Completer<bool>>[];
+      final writer = WorkspaceCacheWriter(
+        write: (value) {
+          calls.add(value);
+          final pending = Completer<bool>();
+          waits.add(pending);
+          return pending.future;
+        },
+      );
+      final first = writer.save('first');
+      final middle = writer.save('intermediate');
+      final last = writer.save('last');
+      expect(calls, ['first']);
+      waits[0].complete(true);
+      await Future<void>.delayed(Duration.zero);
+      expect(calls, ['first', 'last']);
+      waits[1].complete(true);
+      await Future.wait([first, middle, last]);
+      await writer.save('last');
+      expect(calls, ['first', 'last']);
+      final next = writer.save('next');
+      expect(calls, ['first', 'last', 'next']);
+      waits[2].complete(true);
+      await next;
+      expect(writer.saved, 'next');
+    },
+  );
+  test(
+    'Workspace save failure keeps retry possible and never resets user state',
+    () async {
+      var attempts = 0;
+      final writer = WorkspaceCacheWriter(write: (_) async => ++attempts > 1);
+      await expectLater(writer.save('selection'), throwsStateError);
+      expect(writer.saved, '');
+      await writer.save('selection');
+      expect(writer.saved, 'selection');
+      expect(attempts, 2);
+    },
+  );
+  test(
+    'Every user choice notifies, but caret-only edits do not dirty persistence',
+    () {
+      final state = TableWorkspace();
+      var edits = 0;
+      state.addListener(() => edits++);
+      state.selection = {1, 80};
+      state.multiple = false;
+      state.showIndicators = true;
+      state.cellEffect = 'fade';
+      state.query.text = '1,80';
+      expect(edits, 5);
+      state.query.selection = const TextSelection.collapsed(offset: 1);
+      state.showIndicators = true;
+      state.selection = {80, 1};
+      expect(edits, 5);
+      expect(() => state.selection.add(2), throwsUnsupportedError);
+      state.dispose();
+    },
+  );
 }

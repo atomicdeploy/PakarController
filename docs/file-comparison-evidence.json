@@ -3820,7 +3820,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "d69d036725361e748afc88ba6767986e72fc0be773cbea903f7358da434e8d27",
+      "sha256": "ef4a2968c9799f9fddd84c5d91ae4c2c834420cc0c97ec44376326eacfc4539b",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -3890,7 +3890,7 @@
     },
     {
       "path": "mobile/lib/table_workspace.dart",
-      "sha256": "5fe07f7cf6f3942005dfadc30d990e67c501c27d02eb7a6d5c40210eebd26983",
+      "sha256": "8dde58655dd06b9e32254dd0dfdd1226ef6fca94976abdf75329a5ab9a1c445f",
       "anchor": "class TableWorkspace"
     }
   ],
@@ -3998,7 +3998,7 @@
     },
     {
       "path": "mobile/test/workspace_lifecycle_test.dart",
-      "sha256": "a2aed85c8f2cec79fd1bdc41aacbd82c782569a3cd3582f65bbd6286a18afb54",
+      "sha256": "f5ebfdad55e4dd4c47a89eb15d6919d788eac55414cff05ab351f9fb3b3e24d7",
       "anchor": "Background/resume retains selection"
     },
     {
@@ -6148,7 +6148,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "d69d036725361e748afc88ba6767986e72fc0be773cbea903f7358da434e8d27",
+          "sha256": "ef4a2968c9799f9fddd84c5d91ae4c2c834420cc0c97ec44376326eacfc4539b",
           "anchor": "Future<bool> _command"
         },
         {
@@ -6447,7 +6447,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "d69d036725361e748afc88ba6767986e72fc0be773cbea903f7358da434e8d27",
+          "sha256": "ef4a2968c9799f9fddd84c5d91ae4c2c834420cc0c97ec44376326eacfc4539b",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -10768,24 +10768,25 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Complete live donor read through EOF at matching original-byte hash. Adapt the actual stable-ID profile_choices/draw ownership rule to board-keyed Flutter workspaces, rather than connection-attempt keys or telemetry-dependent widget lifetime. User selection/search/effect/indicator choice and both scroll axes survive transient leases, reboot, explicit reconnect and bounded background UI-cache restoration; snapshots never persist a command, authorization or observed device state."
+        "Complete live donor read through EOF at matching original-byte hash. Adapt the actual stable-ID profile_choices/draw ownership rule to board-keyed Flutter workspaces, rather than connection-attempt keys or telemetry-dependent widget lifetime. User selection/search/effect/indicator choice and both scroll axes survive transient leases, reboot, explicit reconnect and bounded background UI-cache restoration; snapshots never persist a command, authorization or observed device state.",
+        "Reread the same complete live donor at unchanged SHA256 for the Android screen-off regression. Actual user changes now notify a bounded debounced UI snapshot writer, including indicators, multiple selection, transition, Find/selection, activity and both scroll axes. One ordered coalescing writer prevents late old saves, skips identical snapshots and permits retry after failure. Reattachment uses the latest actual offsets rather than stale scroll-end PageStorage values. Healthy sockets remain open across backgrounding; a silent pre-suspend socket gets a 750 ms read-probe recovery without resetting the workspace or replaying commands. Colour actions and selection controls are separate ordered rows."
       ],
       "targets": [
         {
           "path": "mobile/lib/table_workspace.dart",
-          "sha256": "5fe07f7cf6f3942005dfadc30d990e67c501c27d02eb7a6d5c40210eebd26983",
+          "sha256": "8dde58655dd06b9e32254dd0dfdd1226ef6fca94976abdf75329a5ab9a1c445f",
           "anchor": "class TableWorkspace"
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "d69d036725361e748afc88ba6767986e72fc0be773cbea903f7358da434e8d27",
+          "sha256": "ef4a2968c9799f9fddd84c5d91ae4c2c834420cc0c97ec44376326eacfc4539b",
           "anchor": "Future<void> _saveWorkspaces()"
         }
       ],
       "proof": [
         {
           "path": "mobile/test/workspace_lifecycle_test.dart",
-          "sha256": "a2aed85c8f2cec79fd1bdc41aacbd82c782569a3cd3582f65bbd6286a18afb54",
+          "sha256": "f5ebfdad55e4dd4c47a89eb15d6919d788eac55414cff05ab351f9fb3b3e24d7",
           "anchor": "Workspace follows board identity"
         }
       ],
@@ -10797,7 +10798,7 @@
         }
       ],
       "remaining": [
-        "Actual Android background/process pressure, Wi-Fi/router loss and human layout/selection acceptance remain open. Complete generic workspace-management imports separately; source fixtures are not phone deployment or donor-wide parity."
+        "Actual Android installation, background/process pressure, Wi-Fi/router loss and human layout/selection acceptance remain open. The newer prior APK was staged but not installed because no authorized ADB target was available; never attribute its source checks to the running phone. Complete generic workspace-management imports separately; source fixtures are not phone deployment or donor-wide parity."
       ]
     }
   ]
