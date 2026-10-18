@@ -32,7 +32,7 @@ revokes bridge commands too; forwarding loops, paths longer than four instances,
 stale peers and expired commands are rejected. The existing serial worker is
 the only USB reader/writer; API requests wait for ACK and actual board readback.
 
-Implemented compatible reads include `/api/status`, `/info`,
+Implemented compatible reads include `/api/status`,
 `/api/cells/mapping`, public `/description.xml` and `/api/discovery`.
 Table cell/batch, brightness, mode, effect and LED output mutations use the same
 existing routes and require `X-Pakar-Board`/`X-Pakar-Boot` fencing. `/ws` and
@@ -41,13 +41,24 @@ the existing URL-encoded `packet` field. A repeated identical request ID retriev
 its receipt rather than dispatching a second command. USB capabilities expose
 only these implemented table operations, not peripherals on a separate network
 route. Selected network routes also relay supported form/JSON reads and commands.
+They additionally preserve the actual `/info` and `/api/telemetry` full snapshot,
+cloud configuration, guarded remote updater, `/update` multipart upload,
+`/firmware/download` and `/file/download` binary GET/HEAD/Range/ETag contracts,
+and AVR probe/backup/image/program/contracts/result routes. Upload staging,
+queued commands and verified programming retain the coordinator's distinct
+status/receipts; no second programmer is introduced. Reset is the existing
+`POST /api/avr/contracts` form `opcode=53&payload_hex=00`, followed by its
+correlated result and actual AVR reconnection/reset telemetry. It is not a
+flash or bootloader repair command. These management transfers require the
+selected network owner; USB never opens an implicit Wi-Fi fallback.
 
 Sharing is explicitly opt-in and permits clients on the bound network to command
 the selected board. This checkpoint does not implement TLS/authentication or a
-cross-origin browser server. Opaque firmware bytes, binary pixel streaming,
+cross-origin browser server. USB-only maintenance transfers, binary pixel streaming,
 generic PCController JSON-RPC/Socket.IO interoperability, Android LAN publishing
-and additional WS-Discovery/NetBIOS adapters remain open in issue #2. OTA/ISP/
-streaming capabilities are therefore suppressed through this bridge. Android
+and additional WS-Discovery/NetBIOS adapters remain open in issue #2. Network
+OTA/ISP are advertised only when the selected board ACKs them; streaming and
+unsupported USB maintenance capabilities remain suppressed. Android
 currently consumes native bridges, while its own advanced bridge remains
 foreground-only authenticated loopback/MQTT/outbound WebSocket, not a LAN server.
 
@@ -104,12 +115,14 @@ mirroring is not muted by this physical-board preference.
 | GET | `/api/cloud` | redacted MQTT and outbound-WebSocket configuration plus live connection state |
 | POST | `/api/cloud` | persist and apply MQTT/WebSocket endpoints, TLS flags, credentials/tokens, base topic, and telemetry interval |
 | POST | `/api/cloud/reconnect` | disconnect and reapply both outbound cloud clients |
-| GET | `/api/avr/probe` | read and validate ATmega328P signature through ISP |
+| GET | `/api/avr/probe` | ISP signature probe; briefly resets the AVR, requires current peer headers |
 | POST | `/api/avr/backup` | store flash, EEPROM, fuses, and lock byte in LittleFS |
 | GET | `/api/avr/backup/flash` | download the last 32 KiB raw flash backup |
 | GET | `/api/avr/backup/eeprom` | download the last 1 KiB EEPROM backup |
 | POST | `/api/avr/image` | multipart upload of one complete 32768-byte AVR+Urboot raw image |
 | POST | `/api/avr/program` | backup, erase, program, and byte-verify the staged image |
+| GET, POST | `/api/avr/contracts` | capability/contract inspection or queued PCController operation; RESET is decimal `opcode=53&payload_hex=00` |
+| GET, DELETE | `/api/avr/contracts/result` | inspect or explicitly consume the correlated terminal receipt; never replay an uncertain reset/write |
 | GET, POST | `/update` | authenticated async ESP self-OTA form/upload; optional file `MD5` preceding the firmware file |
 
 UDP port 7890 accepts bounded `PKAR` chunks **without authentication**;

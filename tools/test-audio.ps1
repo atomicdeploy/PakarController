@@ -18,6 +18,10 @@ foreach($taskCase in $taskCases){
     Write-PakarStep "Audio · $($taskCase.Name) · host doubles, no speaker/device"
     Invoke-PakarNative -WorkingDirectory $taskRoot -FilePath 'g++' -Arguments $taskArguments
     Invoke-PakarNative -WorkingDirectory $taskRoot -FilePath $taskBinary
+    if($taskCase.Name -eq 'attention_cues_test'){
+        Invoke-PakarNative -WorkingDirectory $taskRoot -FilePath 'g++' -Arguments (@('-DARDUINO_ARCH_ESP8266','-pthread','-I',(Join-Path $taskRoot 'tests/atomic_stubs'))+$taskArguments)
+        Invoke-PakarNative -WorkingDirectory $taskRoot -FilePath $taskBinary
+    }
 }
 Invoke-PakarNative -WorkingDirectory $taskRoot -FilePath 'node' -Arguments @('tests/boot_audio_test.mjs')
 Invoke-PakarNative -WorkingDirectory $taskRoot -FilePath 'node' -Arguments @('tests/esp_only_maintenance_test.mjs')

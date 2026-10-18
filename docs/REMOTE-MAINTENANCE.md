@@ -319,6 +319,63 @@ board, with the external power and Wi-Fi/AP recovery path checked.
 
 ## Acceptance checklist
 
+### Current MQTT Internet delivery checkpoint
+
+The identified `ledboard.local` (board `esp32s3-907069eac800`) now connects
+directly to `mqtt.digitalogic.ir:8883` with CA-validated TLS and separate scoped
+device/control ACLs. No anonymous broker access, passwords or bearer tokens were
+published. Operator credentials remain in a mode0600 broker file. Existing
+tenants and rollback files were preserved. `tools/provision-mqtt-device.py` is
+an explicit administrator operation, not an app startup action.
+
+`tools/mqtt-live-probe.py` publishes one non-retained command and requires its
+matching request ID and actual accepted reply. QoS0 socket write alone is not
+acceptance. It reassembles full telemetry with the existing768-byte framing,
+16KiB bound and SHA256 validation. Real ESP/AVR/network/client telemetry and a
+correlated read command were received, not just broker connectivity.
+
+MQTT-requested HTTPS stage and separate pinned Apply completed job14, image
+1,904,912bytes/SHA256
+`2b6bf27ba5b57e2419dbe8086a4757c3ef84ef14a5db8815c0fc26a48462aad6`,
+manifest SHA256
+`b7bde50c55aff03f6ec5f93dd361b00167a918d118412a8eedc8961387465380`.
+Boot changed from `360d2ef9857b3220b0c037c3ea6671e0` to
+`28d93c4bc35b065244d5426f87f17c73`. The ESP reports exact running size,
+MD5 `15f77eebf281274fe7ed740afb99ddc3`, integrity verified, app0 selected/running
+VALID, completed postboot SHA verification and MQTT reconnection. AVR remained
+online; no AVR flash, EEPROM/fuse write or deliberate reset was performed.
+An independent complete running-application export also matches that SHA256.
+The first HTTP export timed out at1,080,768bytes/35seconds; a boot-fenced Range
+resume completed the remaining bytes without a new firmware write. Reliable
+single-stream throughput remains open, not hidden by this successful checksum.
+Historical failed job12 was inspected before the new explicit job; no uncertain
+write was replayed. This is actual Internet delivery, not a USB substitute.
+
+ASUS received real mDNS A and DNS-SD PTR/SRV/TXT records, SSDP UUID/location
+responses and MNDP hardware MAC/hostname replies on its Ethernet LAN interface.
+The diagnostic now defaults to an ephemeral reply port to avoid Windows5353
+socket contention; shared5353 probing remains configurable. A separate Wi-Fi
+interface probe received no packets; universal multi-interface/router/firewall
+acceptance is not claimed. Actual stored AVR backup exports returned32768-byte
+flash (SHA256 `4f3f00454ec913551c88da4746ea11955087835c9619e6331406c67f15034fb1`),
+1024-byte EEPROM (`774819bd02bcfbb563ba20f9f905f711e27dc5e3884708ca8c0ee491a5aee89c`)
+and fuse/signature metadata. These downloads are not a fresh ISP capture.
+
+The updated ASUS native executable SHA256
+`163b9acd203de4c982e822739f5c05ee6573e3472fcea84aeb9270259cadb7da`
+is running in interactive session1, PID21244, with actual USB online.
+User explicitly discarded drafts after old-owner IPC failed. Only that verified
+old process was stopped; replacement waited for its actual exit. Settings and
+prior executable were hash-preserved. Sharing remains opt-in/off, not silently
+enabled. Network repeater opaque transfers have16 passing socket/bridge tests;
+USB-only maintenance forwarding remains unsupported rather than opening Wi-Fi.
+
+Remaining gates include intermittent empty/timed-out HTTP responses and slow
+raw export, explicit AVR reset and
+real programming/EEPROM preservation, all-client concurrency/soak, physical
+display/audio/LED acceptance, and outbound WebSocket/eight-client telemetry
+hardware reception. Actual MQTT and LAN evidence does not close these gates.
+
 - [x] Both firmware profiles compile against the locked toolchain; native protocol/policy/actual ISP driver emulation tests.
 - [x] Built desktop CLI loopback tests: authenticated staging, pinned identity, wrong ACK and no replay; 77 Rust tests, including accepted-job notifications not being marked completed.
 - [x] Production Web remote controls parse and pin exact identity; publisher and MQTT reassembly tests.

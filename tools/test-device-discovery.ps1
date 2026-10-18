@@ -3,6 +3,7 @@ param(
   [string]$DeviceHost='ledboard.local',
   [Parameter(Mandatory)][string]$LocalAddress,
   [ValidateRange(250,10000)][int]$WindowMs=2500,
+  [ValidateSet(0,5353)][int]$DnsSourcePort=0,
   [string]$OutputPath,
   [switch]$IncludeHttp,
   [switch]$NoProbe
@@ -82,7 +83,9 @@ function Invoke-PakarUdpProbe([string]$Name,[byte[]]$Request,[string]$Target,[in
   try {
     $udp.ExclusiveAddressUse=$false
     $udp.Client.SetSocketOption([Net.Sockets.SocketOptionLevel]::Socket,[Net.Sockets.SocketOptionName]::ReuseAddress,$true)
-    $bind=if($Mdns){[Net.IPEndPoint]::new([Net.IPAddress]::Any,5353)}else{[Net.IPEndPoint]::new($script:ProbeLocal,0)}
+    # RFC6762 legacy unicast replies avoid competing with Windows DNS/Bonjour
+    # for a shared5353 unicast socket.5353 remains an explicit multicast probe.
+    $bind=if($Mdns -and $DnsSourcePort -eq 5353){[Net.IPEndPoint]::new([Net.IPAddress]::Any,5353)}else{[Net.IPEndPoint]::new($script:ProbeLocal,0)}
     $udp.Client.Bind($bind);$udp.Client.ReceiveTimeout=180
     $udp.Client.SetSocketOption([Net.Sockets.SocketOptionLevel]::IP,[Net.Sockets.SocketOptionName]::MulticastInterface,$script:ProbeLocal.GetAddressBytes())
     $udp.Client.SetSocketOption([Net.Sockets.SocketOptionLevel]::IP,[Net.Sockets.SocketOptionName]::MulticastTimeToLive,$(if($Mdns){255}else{2}))

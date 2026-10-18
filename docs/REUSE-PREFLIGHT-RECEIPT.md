@@ -1,5 +1,52 @@
 # Donor-first preflight receipt
 
+## MQTT, Internet delivery and opaque maintenance forwarding
+
+Consulted network-cloud, updates-telemetry, remote-ota, bridge-repeater and
+donor-audit; fully read PU FirmwareTransfer.cpp/header and canonical PCController
+preflash.go/restore_preflash_test.go. New hash-bound comparisons retain complete
+backup/cancellation/candidate-reinspection boundaries, with concrete pending
+host archive/executor omissions. Transparent forwarding uses the existing ESP
+updater/ISP coordinator, not a second serial owner or programmer.
+
+Fixed the native bridge's JSON-only assumption: binary firmware/AVR exports,
+real multipart bodies, HEAD/Range/ETag and actual201/202/error replies survive
+without reinterpretation. Fixed allowlist, peer/boot/route lease, loop trace,
+bounded body/export sizes and no-replay semantics remain.16 focused bridge/socket
+tests pass, including valid multipart, stale boot before dispatch, HEAD and a
+truncated stream that cannot yield a successful completion receipt. Network
+capabilities are ACK-gated; unsupported USB maintenance/streaming stay hidden.
+
+Latest main CI failures were inspected, not bypassed. Fully reread Protocol.h
+and actual donor UartProtocol.h: additive USB snapshots/bitmap commands did not
+change framing or tunneled dialect. Corrected stale SOURCE-MAPPING target hash;
+23 exact mappings and the50 PU route check pass. ESP8266 SDK linking exposed
+missing atomic fetch-and, add and compare/exchange routines. The first CAS-only
+attempt was insufficient. Consulted actual SDK interrupts.h/core feature code;
+use its bounded previous-level-restoring InterruptLock only for ESP8266 state
+copies, retaining native/S3 atomics. Both production branches have host fixtures;
+real ESP8266 busy-wire SDK compile/link now succeeds. No SDK mutation, libatomic
+stub, weakened assertion, fresh cache or cold clean was used.96% RAM/IRAM on
+ESP8266 is a remaining headroom risk, not S3 production readiness evidence.
+
+Actual scoped broker provisioning, full checksummed Internet telemetry, separate
+MQTT HTTPS stage/apply/new boot, ASUS native replacement and LAN discovery are
+recorded in REMOTE-MAINTENANCE.md. Probe correlation initially accepted an
+unrelated null-ID event; corrected to unique IDs plus typed command replies.
+Paho callback API2 uses explicit reason-code equality, and socket-written versus
+accepted outcomes are distinct. Failed probes remain preserved, not reported as
+successful command round trips. Windows shared5353 contention was diagnosed
+using the actual LAN; default ephemeral-port probing receives real service
+records. ASUS helper IPC must run in its interactive session, not SSH session0.
+
+No current AVR flash/reset/fuse operation, physical display/audio/LED acceptance,
+Android installation, broad donor parity or all-green exact-head CI is claimed.
+Independent HTTP export still timed out; keep that operational defect open.
+Its explicit read-only Range resume completed with the exact full running-image
+SHA256; no firmware mutation was replayed. Single-stream reliability is still
+unaccepted. Postdeployment LAN probes again returned all four requested discovery
+protocols, and actual ASUS interactive owner IPC confirms USB selected/online.
+
 ## Operational Flutter pixel diagnostics
 
 Reread canonical PCController Project/AddressableLeds.cpp and .h at recorded

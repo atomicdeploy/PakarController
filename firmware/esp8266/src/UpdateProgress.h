@@ -2,6 +2,9 @@
 #include <atomic>
 #include <stdint.h>
 #include <stdio.h>
+#if defined(ARDUINO_ARCH_ESP8266)
+#include <interrupts.h>
+#endif
 
 // PU850 AsyncOTA's measured transfer counters, adapted to PCController's
 // UPDATE-PROGRESS.md: bytes describe one stage, never whole-update success.
@@ -33,21 +36,35 @@ class Progress {
   void advance(uint32_t received) { auto next = snapshot(); next.received = received; publish(next); }
   void phase(Phase phase) { auto next = snapshot(); next.phase = phase; publish(next); }
   Observation snapshot() const {
+#if defined(ARDUINO_ARCH_ESP8266)
+    esp8266::InterruptLock lock;
+    return observation_;
+#else
     for (;;) {
       const auto before = revision_.load();
       if (before & 1U) continue;
       Observation value{static_cast<Phase>(phase_.load()), received_.load(), expected_.load()};
       if (before == revision_.load()) return value;
     }
+#endif
   }
  private:
   void publish(Observation value) {
+#if defined(ARDUINO_ARCH_ESP8266)
+    esp8266::InterruptLock lock;
+    observation_=value;
+#else
     revision_.fetch_add(1);
     phase_.store(static_cast<uint32_t>(value.phase));
     received_.store(value.received); expected_.store(value.expected);
     revision_.fetch_add(1);
+#endif
   }
+#if defined(ARDUINO_ARCH_ESP8266)
+  Observation observation_;
+#else
   std::atomic<uint32_t> revision_{0}, phase_{0}, received_{0}, expected_{0};
+#endif
 };
 // Exact raw file size, NOT multipart Content-Length or OTA partition capacity.
 inline bool imageSize(const char *text, uint32_t capacity, uint32_t &out) {

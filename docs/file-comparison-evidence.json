@@ -5,6 +5,74 @@
   "files": [
 {
   "origin": "PCController",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "targets": [
+    {
+      "path": "firmware/esp8266/src/MaintenanceRoutes.h",
+      "sha256": "2993618abb5a8ec8eeff5c0a58f8437dfbe0c5029e002e4e0398f6d907fb0581",
+      "anchor": "bool prepareRemotePair("
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Host Urclock/USBasp executor, backup archive manifest and development skip policy",
+      "disposition": "pending",
+      "reason": "Retain the existing ESP-owned integrated ISP coordinator and mandatory production backup rather than adding a competing serial/programming owner. Host archival restore/executor parity needs a separate full dependency and hardware review; it is not claimed by transparent HTTP forwarding."
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/bridge_transfer.rs",
+      "sha256": "365d1f7a80cab3acefe4a5374ee61078964f1adc4242a2333529b1faa3eabb0e",
+      "anchor": "fn bridge_transfer_head_truncation_and_stale_mutation_preserve_truth"
+    }
+  ],
+  "remaining": [
+    "Issue #2: actual AVR reset/upload/program, new recovery capture, EEPROM/Urboot preservation and power-loss acceptance remain open. Stored backup downloads are not fresh physical capture or programming proof."
+  ],
+  "path": "Tools/Controller/internal/programmer/preflash.go",
+  "sha256": "520de1d7431f3062d0603636b89098d1e41c7701a2f44f65b88d45cfe49a2c07",
+  "preserved": [
+    "Read entire actual donor through EOF. Preserve complete backup before production writes, cancellation before mutation and post-backup candidate reinspection. The network bridge forwards the existing guarded ESP coordinator's raw bytes/status/receipts; it does not replace the programmer or turn staging acceptance into a completed flash."
+  ]
+},
+{
+  "origin": "PCController",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "targets": [
+    {
+      "path": "firmware/esp8266/src/MaintenanceRoutes.h",
+      "sha256": "2993618abb5a8ec8eeff5c0a58f8437dfbe0c5029e002e4e0398f6d907fb0581",
+      "anchor": "bool prepareRemotePair("
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Host Urclock/USBasp executor, backup archive manifest and development skip policy",
+      "disposition": "pending",
+      "reason": "Retain the existing ESP-owned integrated ISP coordinator and mandatory production backup rather than adding a competing serial/programming owner. Host archival restore/executor parity needs a separate full dependency and hardware review; it is not claimed by transparent HTTP forwarding."
+    }
+  ],
+  "proof": [
+    {
+      "path": "desktop/src/bridge_transfer.rs",
+      "sha256": "365d1f7a80cab3acefe4a5374ee61078964f1adc4242a2333529b1faa3eabb0e",
+      "anchor": "fn bridge_transfer_head_truncation_and_stale_mutation_preserve_truth"
+    }
+  ],
+  "remaining": [
+    "Issue #2: actual AVR reset/upload/program, new recovery capture, EEPROM/Urboot preservation and power-loss acceptance remain open. Stored backup downloads are not fresh physical capture or programming proof."
+  ],
+  "path": "Tools/Controller/internal/programmer/restore_preflash_test.go",
+  "sha256": "6dabd79c406b49dce87866fa792bc557220b98515606041cc33099193d567abe",
+  "preserved": [
+    "Read complete actual donor tests. Retain failure/no-flash, unchanged candidate and EEPROM-reset raw-backup-before-arm distinctions in the existing coordinator review. New actual socket tests cover stale peer before dispatch, valid multipart/binary transfer, HEAD and truncation; these do not claim execution of the donor's Go programmer tests or physical backup acceptance."
+  ]
+},
+{
+  "origin": "PCController",
   "path": "Tools/Controller/internal/discovery/discovery_test.go",
   "sha256": "41b18ac33a9eae75dbcd9ac7a20722117090e98c5a8bad6eb12114a5f955e792",
   "source_read": "complete",
@@ -133,7 +201,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
     },
     {
       "path": "desktop/src/usb_table.rs",
@@ -152,7 +220,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
     },
     {
       "path": "desktop/src/usb_table.rs",
@@ -177,7 +245,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
     }
   ],
   "omissions": [
@@ -191,12 +259,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
     },
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_http_recovery_uses_existing_packet_form_contract",
-      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
     }
   ],
   "remaining": [
@@ -216,7 +284,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
     },
     {
       "path": "desktop/src/main.rs",
@@ -235,7 +303,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
     }
   ],
   "remaining": [
@@ -255,7 +323,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
     },
     {
       "path": "desktop/src/platform/lan_discovery.rs",
@@ -274,12 +342,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
     },
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_status_keeps_board_identity_and_only_available_route_capabilities",
-      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
     }
   ],
   "remaining": [
@@ -299,7 +367,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
     }
   ],
   "omissions": [
@@ -313,7 +381,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_status_keeps_board_identity_and_only_available_route_capabilities",
-      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
     },
     {
       "path": "mobile/test/bridge_peer_test.dart",
@@ -2082,7 +2150,7 @@
         {
           "path": "firmware/esp8266/src/UpdateProgress.h",
           "anchor": "class Progress",
-          "sha256": "c55548084de7f678c4391425eb58be186bf65701768a6ed38ec6c5d9047702e3"
+          "sha256": "5ef4deab0e98bf01bb7be8fd965badf47a908110f78edf234797bcb7fb5c8ccd"
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
@@ -2141,7 +2209,7 @@
         {
           "path": "tools/test-update.ps1",
           "anchor": "$taskPanelOutput=",
-          "sha256": "d74589bdbe0b0279ca17a778332ae6680c535dc373f152c6d61d8adb697a553f"
+          "sha256": "d46336740d61c52b8117d69867693f99aa818a1c5fb1d55fc74689ebfba6ac21"
         }
       ],
       "remaining": [
@@ -3533,7 +3601,8 @@
       "preserved": [
         "Complete actual donor read through EOF and current adapted production target reviewed. Imported GET/HEAD firmware download, bounded single byte ranges/open/suffix ranges, 416 responses, ETag/304, Content-MD5/Digest/identity headers and chunked flash reads; extracted parser exercises the production implementation.",
         "ESP8266 aligned flash implementation is retained. ESP32-S3 adaptation downloads only the running application partition using bounded esp_partition_read, uses mbedtls Base64 and platform model, and shares the same endpoint/HTTP engine instead of a second flasher firmware.",
-        "Reconsulted complete donor for W5500 integration. Existing native ETH/lwIP shares the very same firmware HEAD/Range route; the hostname-first live probe checks actual TCP interface identity and exported image framing instead of assuming carrier means correct serving."
+        "Reconsulted complete donor for W5500 integration. Existing native ETH/lwIP shares the very same firmware HEAD/Range route; the hostname-first live probe checks actual TCP interface identity and exported image framing instead of assuming carrier means correct serving.",
+        "Reconsulted full FirmwareTransfer implementation/header for native network repeater. Preserve opaque binary GET/HEAD/Range/ETag and actual multipart upload status instead of JSON reparsing. Bound export/body sizes, selected route/boot/trace ownership and no-replay outcomes; USB never silently opens Wi-Fi."
       ],
       "targets": [
         {
@@ -3555,6 +3624,11 @@
           "path": "tools/check-ethernet-live.mjs",
           "anchor": "export async function checkEthernet(",
           "sha256": "d25f3ca0c7571a953cd8f2c1dd997bdc9abc50844fb8add4ffc379bf1f5d55ca"
+        },
+        {
+          "path": "desktop/src/bridge_transfer.rs",
+          "anchor": "pub(super) fn open",
+          "sha256": "365d1f7a80cab3acefe4a5374ee61078964f1adc4242a2333529b1faa3eabb0e"
         }
       ],
       "omissions": [
@@ -3589,6 +3663,11 @@
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
           "sha256": "01d6d7b2b91cbdabd62a49de6c2ea15aa56c54ca954f91a8191d605539e51aee"
+        },
+        {
+          "path": "desktop/src/bridge_transfer.rs",
+          "anchor": "fn bridge_transfer_real_binary_range_and_multipart_are_not_json_reparsed",
+          "sha256": "365d1f7a80cab3acefe4a5374ee61078964f1adc4242a2333529b1faa3eabb0e"
         }
       ]
     },
@@ -3884,7 +3963,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86"
+      "sha256": "9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752"
     }
   ],
   "omissions": [
@@ -7919,12 +7998,12 @@
         {
           "path": "libraries/BoardCore/src/AttentionCues.h",
           "anchor": "class Upload",
-          "sha256": "237bf54bdf1e24ce982d8e97827f3026e0f2f0ae10d007956417a3deba10945a"
+          "sha256": "02693199ab57f58a0531f46d8afa05ccd46dbd4c28b8db50b55bf5e4d1cff7b6"
         },
         {
           "path": "tools/test-audio.ps1",
           "anchor": "Audio ·",
-          "sha256": "cc6f3dc4a9d5e8788785aa23a00cb22140d4192da4aceeac3fc2ebb1ca4b4003"
+          "sha256": "41500a0595fe030dd36f70175b56ee6f16ff62fe3bd1b2d9bf9bb29e94f90b30"
         }
       ],
       "omissions": [

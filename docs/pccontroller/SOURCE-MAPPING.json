@@ -31,10 +31,10 @@
       "source_sha256": "287a95a65a9b9655e64a15ece051bc792a06564b648a1b53eed4f373c564e458",
       "source_read": "complete",
       "target": "libraries/BoardCore/src/Protocol.h",
-      "target_sha256_utf8_lf": "8479a1b26ca998c2ce5a26c494e1df7ebf64542bf023a447426dc9f2e3a95dea",
+      "target_sha256_utf8_lf": "03b4756d471f71bd03d08e2e50c20e7cebb81695c168c10e487b7dd55ed6a550",
       "line": 37,
       "anchor": "kPcContract = 0x56",
-      "retained": "Retains native opcode/error values in isolated tunneled dialect; existing COBS/CRC shared transport owns framing. Fully reread after contextual display capability and read-only USB identity chunk additions: envelope bounds, CRC validation and 0x56/0x57 tunneled dialect remain unchanged.",
+      "retained": "Retains native opcode/error values in isolated tunneled dialect; existing COBS/CRC shared transport owns framing. Fully reread after additive USB snapshot, boot-fenced table command, atomic cell bitmap and post-ACK command-state additions: envelope bounds, CRC validation and 0x56/0x57 tunneled dialect remain unchanged. No second UART owner is introduced.",
       "omitted_code_and_reason": "Donor Stream-owning wrapper replaced by existing SerialLink; copying a second UART owner would collide. Direct donor opcode namespace cannot alias Pakar 0x11 audio."
     },
     {

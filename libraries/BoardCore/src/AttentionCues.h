@@ -2,6 +2,9 @@
 #include <atomic>
 #include <stdint.h>
 #include <string.h>
+#if defined(ARDUINO_ARCH_ESP8266)
+#include <interrupts.h>
+#endif
 
 // Finite, coalesced notices only. Async writers publish intent; only the loop
 // may send UART. Acoustic delivery is never required to authorize an update.
@@ -9,18 +12,46 @@ namespace BoardCore { namespace Attention {
 enum class Cue : uint8_t { None, Start, Success, Failure };
 class Upload {
  public:
-  void begin() { state_.store(Active | static_cast<uint32_t>(Cue::Start)); }
+  void begin() {
+#if defined(ARDUINO_ARCH_ESP8266)
+    esp8266::InterruptLock lock;
+    state_=Active | static_cast<uint32_t>(Cue::Start);
+#else
+    state_.store(Active | static_cast<uint32_t>(Cue::Start));
+#endif
+  }
   void finish(bool success) {
+#if defined(ARDUINO_ARCH_ESP8266)
+    esp8266::InterruptLock lock;
+    if((state_&Active) && !(state_&Terminal))
+      state_=Active|Terminal|static_cast<uint32_t>(success?Cue::Success:Cue::Failure);
+#else
     uint32_t before=state_.load();
     while ((before&Active) && !(before&Terminal)) {
       const uint32_t next=Active|Terminal|static_cast<uint32_t>(success?Cue::Success:Cue::Failure);
       if(state_.compare_exchange_weak(before,next)) return;
     }
+#endif
   }
-  Cue take() { return static_cast<Cue>(state_.fetch_and(~Pending)&Pending); }
+  Cue take() {
+#if defined(ARDUINO_ARCH_ESP8266)
+    // Single-core SDK lock restores the previous interrupt level. No yielding,
+    // networking, allocation or UART work inside this bounded critical section.
+    esp8266::InterruptLock lock;
+    const uint32_t before=state_;state_=before&~Pending;
+#else
+    uint32_t before=state_.load();
+    while(!state_.compare_exchange_weak(before,before&~Pending)) {}
+#endif
+    return static_cast<Cue>(before&Pending);
+  }
  private:
   static constexpr uint32_t Pending=3,Active=4,Terminal=8;
+#if defined(ARDUINO_ARCH_ESP8266)
+  uint32_t state_=0;
+#else
   std::atomic<uint32_t> state_{0};
+#endif
 };
 class Remote {
  public:

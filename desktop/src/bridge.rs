@@ -15,6 +15,8 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
+#[path = "bridge_transfer.rs"]
+mod transfer;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -233,10 +235,9 @@ fn route(shared: &Shared) -> Result<Observation, String> {
 fn status_value(shared: &Shared, o: &Observation) -> Value {
     let mut status = o.status.clone();
     if let Some(c) = &mut status.capabilities {
-        // These require opaque/binary transfer, which this bounded command
-        // relay deliberately does not yet implement. Do not promise them.
-        c.acknowledged_features
-            .retain(|s| !matches!(s.as_str(), "ota" | "isp" | "streaming"));
+        // HTTP firmware/AVR transfers preserve upstream bytes and receipts.
+        // Binary pixel streaming is not implemented; do not advertise it.
+        c.acknowledged_features.retain(|s| s != "streaming");
     }
     if matches!(o.route, Route::Usb { .. }) {
         // Advertise only operations implemented by this route, not every
@@ -662,7 +663,7 @@ fn read_request(socket: &mut TcpStream) -> Result<Request, String> {
     socket
         .set_read_timeout(Some(Duration::from_millis(250)))
         .map_err(|e| e.to_string())?;
-    let deadline = Instant::now() + Duration::from_secs(4);
+    let mut deadline = Instant::now() + Duration::from_secs(4);
     let mut bytes = Vec::new();
     loop {
         let mut headers = [httparse::EMPTY_HEADER; 40];
@@ -697,8 +698,18 @@ fn read_request(socket: &mut TcpStream) -> Result<Request, String> {
                 .transpose()
                 .map_err(|_| "Invalid body length")?
                 .unwrap_or(0);
-            if length > 8192 {
+            let upload = parser.method == Some("POST")
+                && matches!(parser.path, Some("/update" | "/api/avr/image"));
+            let limit = if upload {
+                transfer::MAX_IMAGE_BODY
+            } else {
+                8192
+            };
+            if length > limit {
                 return Err("Request body exceeds limit".into());
+            }
+            if upload {
+                deadline = Instant::now() + Duration::from_secs(60);
             }
             let method = parser.method.ok_or("Missing HTTP method")?.to_string();
             let path = parser.path.ok_or("Missing HTTP path")?.to_string();
@@ -897,10 +908,23 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
             public.to_string().as_bytes(),
         );
     }
+    if transfer::handles(&request) {
+        return match transfer::open(shared, &request) {
+            Ok(response) => response.write(&mut socket),
+            Err(e) => write_response(
+                &mut socket,
+                409,
+                "application/json",
+                json!({"accepted":false,"error":e,"replayed":false})
+                    .to_string()
+                    .as_bytes(),
+            ),
+        };
+    }
     let result = (|| -> Result<Value, String> {
         let o = route(shared)?;
         match (request.method.as_str(), path) {
-            ("GET", "/api/status" | "/info") => Ok(status_value(shared, &o)),
+            ("GET", "/api/status") => Ok(status_value(shared, &o)),
             ("GET", "/api/cells/mapping") => {
                 if o.mapping.is_null() {
                     Err("Current peer mappings unavailable".into())
@@ -1009,7 +1033,7 @@ fn command_packet(request: &Request) -> Result<Value, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn fixture() -> (Arc<Shared>, mpsc::Receiver<SerialCommand>, connection::Gate) {
+    pub(super) fn fixture() -> (Arc<Shared>, mpsc::Receiver<SerialCommand>, connection::Gate) {
         let settings = Settings {
             hostname: "fixture-host".into(),
             listen: "127.0.0.1".into(),

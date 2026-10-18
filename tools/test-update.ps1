@@ -6,10 +6,12 @@ $ErrorActionPreference='Stop'
 $taskRoot=Split-Path -Parent $PSScriptRoot
 $taskOutput=Join-Path $taskRoot 'build/native/update_progress_test.exe'
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $taskOutput) | Out-Null
-& g++ -std=c++17 -pthread -O2 -g0 -Wall -Wextra -Werror (Join-Path $taskRoot 'tests/update_progress_test.cpp') -o $taskOutput
+foreach($taskPlatform in @(@(),@('-DARDUINO_ARCH_ESP8266','-I',(Join-Path $taskRoot 'tests/atomic_stubs')))) {
+& g++ -std=c++17 -pthread -O2 -g0 -Wall -Wextra -Werror @taskPlatform (Join-Path $taskRoot 'tests/update_progress_test.cpp') -o $taskOutput
 if($LASTEXITCODE){throw 'Update progress fixture compilation failed'}
 & $taskOutput
 if($LASTEXITCODE){throw 'Update progress fixture failed'}
+}
 $taskPanelOutput=Join-Path $taskRoot 'build/native/front_panel_test.exe'
 & g++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -I (Join-Path $taskRoot 'tests/stubs') -I (Join-Path $taskRoot 'libraries/BoardCore/src') -I (Join-Path $taskRoot 'firmware/avr') (Join-Path $taskRoot 'tests/front_panel_test.cpp') (Join-Path $taskRoot 'firmware/avr/FrontPanel.cpp') -o $taskPanelOutput
 if($LASTEXITCODE){throw 'Actual AVR progress presentation fixture compilation failed'}

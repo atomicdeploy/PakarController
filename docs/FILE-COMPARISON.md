@@ -4,7 +4,7 @@ Whole-repository superiority is **not established**. This report exposes retaine
 
 Routing: 1585 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
 
-Inventory: 4673 files; 200 complete source-file comparisons; 4473 pending comparisons; 158 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
+Inventory: 4673 files; 202 complete source-file comparisons; 4471 pending comparisons; 160 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
 Every inventoried path, source revision/hash, target/proof file and line, omitted code, disposition and concrete reason is in `file-comparison.csv`. Hash-bound manual decisions are in `file-comparison-evidence.json`. Donor SHA-256 values bind original bytes; target/proof SHA-256 values bind UTF-8 without BOM with LF newlines. Anchors are recomputed into exact line numbers. Test-code presence is not test execution; execution receipts are in `FILE-COMPARISON-RECEIPTS.md`.
 
@@ -14,7 +14,7 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 |---|---:|---:|---:|---:|
 | ControllerBoardMini | 19 | 2 | 17 | 0 |
 | ControllerBoardMini/Puzzles | 18 | 12 | 6 | 7 |
-| PCController | 1517 | 64 | 1453 | 53 |
+| PCController | 1517 | 66 | 1451 | 55 |
 | Pealayer | 639 | 49 | 590 | 37 |
 | PU850-ESP | 109 | 46 | 63 | 44 |
 | PuzzleBoard | 22 | 0 | 22 | 0 |
@@ -215,7 +215,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `20f907ac3426d5a9b40501ba2241a4308d0220204b8888576f1f995a3e401332`.
 
-- Target: `firmware/esp8266/src/UpdateProgress.h:30 [UTF8-LF sha256=c55548084de7f678c4391425eb58be186bf65701768a6ed38ec6c5d9047702e3; anchor=class Progress]`.
+- Target: `firmware/esp8266/src/UpdateProgress.h:33 [UTF8-LF sha256=5ef4deab0e98bf01bb7be8fd965badf47a908110f78edf234797bcb7fb5c8ccd; anchor=class Progress]`.
 - Target: `firmware/esp8266/esp8266.ino:1734 [UTF8-LF sha256=573bb0d0a56354c57e841f6a32c8a3560116ff600c2b9d51ce1d9b8ad6b3a585; anchor=String localUpdateJson() {]`.
 - Target: `firmware/esp8266/src/RemoteFirmware.h:58 [UTF8-LF sha256=0a8ebbdae6a70f3023d6e41fac8763944437823f40e8906296035d8676d118d8; anchor=PakarUpdate::Observation progress() const]`.
 - Target: `tools/update-firmware.mjs:115 [UTF8-LF sha256=ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003; anchor=export async function updateFirmware(]`.
@@ -229,7 +229,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `tests/update_progress_test.cpp:23 [UTF8-LF sha256=51902c5ebb3ee3fee27abe0c4326c6fe174c76a0f6863e730c2738c68fd3e145; anchor=Concurrent reader never observes]`.
 - Test-code evidence: `tests/front_panel_test.cpp:43 [UTF8-LF sha256=34a354dc1ae87cbae160047caa99f6d627fdfaf5ff2d9b2fb0d744ca3cce835f; anchor=The ESP's actual progress encoder]`.
 - Test-code evidence: `tests/update_tool_test.mjs:19 [UTF8-LF sha256=4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6; anchor=for(const scenario of]`.
-- Test-code evidence: `tools/test-update.ps1:13 [UTF8-LF sha256=d74589bdbe0b0279ca17a778332ae6680c535dc373f152c6d61d8adb697a553f; anchor=$taskPanelOutput=]`.
+- Test-code evidence: `tools/test-update.ps1:15 [UTF8-LF sha256=d46336740d61c52b8117d69867693f99aa818a1c5fb1d55fc74689ebfba6ac21; anchor=$taskPanelOutput=]`.
 - Remaining: ASUS SSH localhost:8022 refuses and ledboard.local is unresolved; no current S3/AVR contact, flash, auth setting change, current LAN/Internet speed benchmark or unplug acceptance. Test exact candidate on the identified board, compare measured transfer/reboot, verify persisted authentication off, active Async HTTP/WS and external-power/AP recovery before authorizing USB removal.
 - Remaining: Read and validate remaining donor update event/UI/native executor implementations. Host/loopback fixtures and an SDK build do not establish flash, interrupted-power, network contention, display ACK/presentation or optical acceptance.
 
@@ -372,8 +372,8 @@ Verdict: **scoped-improvement**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920
 - Target: `mobile/lib/board_sound_preferences.dart:10 [UTF8-LF sha256=abe3bc09c93503a1d3e56d138268bb27e4940a028b536a30eaa85c6f63c60509; anchor=class BoardSoundPreferences]`.
 - Target: `firmware/esp8266/src/WebUi.h:1051 [UTF8-LF sha256=3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20; anchor=async function boardSoundTransaction(]`.
 - Target: `firmware/avr/BootMelody.cpp:36 [UTF8-LF sha256=f163fcef8c0647ce0f0696c219b5d178e8815ff3df82bf2c5dec6c5c11400433; anchor=case kCueAttention:]`.
-- Target: `libraries/BoardCore/src/AttentionCues.h:10 [UTF8-LF sha256=237bf54bdf1e24ce982d8e97827f3026e0f2f0ae10d007956417a3deba10945a; anchor=class Upload]`.
-- Target: `tools/test-audio.ps1:18 [UTF8-LF sha256=cc6f3dc4a9d5e8788785aa23a00cb22140d4192da4aceeac3fc2ebb1ca4b4003; anchor=Audio ·]`.
+- Target: `libraries/BoardCore/src/AttentionCues.h:13 [UTF8-LF sha256=02693199ab57f58a0531f46d8afa05ccd46dbd4c28b8db50b55bf5e4d1cff7b6; anchor=class Upload]`.
+- Target: `tools/test-audio.ps1:18 [UTF8-LF sha256=41500a0595fe030dd36f70175b56ee6f16ff62fe3bd1b2d9bf9bb29e94f90b30; anchor=Audio ·]`.
 - Retained: Timer1 OC1A PB1/D9 hardware output without audio ISR; ten-step nonblocking ring queue; silent pauses; begin/stop/mute and active telemetry.
 - Retained: PCController already uses Timer1 hardware toggling; that is reuse, not a Pakar invention.
 - Retained: Reread complete donor source through EOF. Adapt MCU-owned persistent Silent bit independent of host/Windows notification audio, capability-acknowledged controls, explicit unknown/pending/verified states and full-record preservation. Native Preferences Board page uses existing PCController GET/SET/GET with real AVR ACK and persistent readback over the selected fenced HTTP or USB owner only; Web and Flutter Preferences use the same living contract. No unsupported buzzer is invented, no automatic uncertain mutation replay, and unchanged persisted flags skip EEPROM writes.
@@ -876,7 +876,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/DiscoveryChannel.kt:15 [UTF8-LF sha256=0c1215ebc188d720fe9c181a475efac7567d6b5b884de5e8d97a2d443593bd61; anchor=class DiscoveryChannel]`.
 - Target: `mobile/lib/devices_page.dart:38 [UTF8-LF sha256=b3ff941cededcdff779f369f63c8131acf3f5776ef5af79ea33afa0401ae4a4e; anchor=class DevicesPage]`.
 - Target: `desktop/src/platform/lan_discovery.rs:27 [UTF8-LF sha256=03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9; anchor=pub struct Advertiser]`.
-- Target: `desktop/src/bridge.rs:100 [UTF8-LF sha256=047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86; anchor=pub struct Runtime]`.
+- Target: `desktop/src/bridge.rs:102 [UTF8-LF sha256=9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752; anchor=pub struct Runtime]`.
 - Retained: Fully read source through EOF. Adapted actual mDNS/DNS-SD single transport intent, metadata-only discovery, bounded search lifetime/cleanup, M-SEARCH headers, validated origins and explicit authentication separation into Android discovery.
 - Retained: Android NsdManager replaces Go zeroconf; serialized resolves, scan generation ownership, multicast-lock acquisition/release and lifecycle cleanup are real native code. Local/remote saved device types describe transport, never fabricate capabilities. Actual peer ACK remains authoritative.
 - Retained: Canonical discovery.go783lines fully reread through EOF. Android NSD/SSDP/MNDP mappings remain metadata-only partial adaptations; advertisements do not grant authenticated board ownership.
@@ -965,10 +965,10 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `cb26b3fba521fe61d2b7bce2b1fa6a019dc6d04d72bb82df541e4ef63c1bbcd3`.
 
-- Target: `desktop/src/bridge.rs:100 [UTF8-LF sha256=047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86; anchor=pub struct Runtime]`.
+- Target: `desktop/src/bridge.rs:102 [UTF8-LF sha256=9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752; anchor=pub struct Runtime]`.
 - Retained: Read complete tests. Port board-vs-host identity and available-route capability assertions, including suppression of unsupported OTA/ISP/streaming on the relay.
 - Omitted/replaced code: `All donor rich host metadata, peer caps and discovery refresh scheduling assertions`. Disposition: **pending**. Reason: Those metadata producers and UpdateText lifecycle are not fully implemented; fixture identity and real socket tests do not close donor parity or real LAN acceptance.
-- Test-code evidence: `desktop/src/bridge.rs:1110 [UTF8-LF sha256=047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86; anchor=fn bridge_status_keeps_board_identity_and_only_available_route_capabilities]`.
+- Test-code evidence: `desktop/src/bridge.rs:1134 [UTF8-LF sha256=9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752; anchor=fn bridge_status_keeps_board_identity_and_only_available_route_capabilities]`.
 - Test-code evidence: `mobile/test/bridge_peer_test.dart:86 [UTF8-LF sha256=04688eaf3a76042bd60b380b7d631657828e922e9c740c55626563890800e498; anchor=MNDP application endpoints use vendor API port]`.
 - Remaining: Issue #2: All donor rich host metadata, peer caps and discovery refresh scheduling assertions. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open.
 
@@ -976,45 +976,45 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `524f6e31069355fb8f7968e507775d4a567964aee41001722a325cc8c06e99a0`.
 
-- Target: `desktop/src/bridge.rs:100 [UTF8-LF sha256=047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86; anchor=pub struct Runtime]`.
+- Target: `desktop/src/bridge.rs:102 [UTF8-LF sha256=9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752; anchor=pub struct Runtime]`.
 - Target: `desktop/src/platform/lan_discovery.rs:27 [UTF8-LF sha256=03ff04b76ac906edcc755a49809b437858088d5b494d02a85a92d80c572f53d9; anchor=pub struct Advertiser]`.
 - Retained: Read entire source. Preserve instance.id vs physical board identity and push-fed nonsecret current-owner metadata: bridge path/hostname are additive, board_id/boot_id/hostname remain downstream-owned; current status is fed without independent serial acquisition.
 - Omitted/replaced code: `Complete discoveryMetadata rich TXT, five-second coalesced refresh and all HostIdentity fields`. Disposition: **pending**. Reason: Fixed nonsecret listener TXT suffices for compatible endpoint discovery, while full board state is served from the selected owner. Rich changing TXT and cross-product public enrichment remain useful pending imports; no board secret is advertised.
-- Test-code evidence: `desktop/src/bridge.rs:1202 [UTF8-LF sha256=047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86; anchor=fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops]`.
-- Test-code evidence: `desktop/src/bridge.rs:1110 [UTF8-LF sha256=047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86; anchor=fn bridge_status_keeps_board_identity_and_only_available_route_capabilities]`.
+- Test-code evidence: `desktop/src/bridge.rs:1226 [UTF8-LF sha256=9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752; anchor=fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops]`.
+- Test-code evidence: `desktop/src/bridge.rs:1134 [UTF8-LF sha256=9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752; anchor=fn bridge_status_keeps_board_identity_and_only_available_route_capabilities]`.
 - Remaining: Issue #2: Complete discoveryMetadata rich TXT, five-second coalesced refresh and all HostIdentity fields. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open.
 
 ### PCController: `Tools/Controller/internal/hostbridge/lifecycle.go`
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `30454374bc87aeed2d4a536f27a24aa8c382920e9047b40d68a42faef47990c4`.
 
-- Target: `desktop/src/bridge.rs:100 [UTF8-LF sha256=047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86; anchor=pub struct Runtime]`.
+- Target: `desktop/src/bridge.rs:102 [UTF8-LF sha256=9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752; anchor=pub struct Runtime]`.
 - Target: `desktop/src/main.rs:1444 [UTF8-LF sha256=ff0dc756307ff9e360cd2ec815b80c13875d1a86bda7794bd6c726891a778a69; anchor=SerialCommand::Bridge(target]`.
 - Retained: Read through EOF. Preserve primary selected owner and explicit Disconnect/revocation; sharing never opens another serial handle or acquires a board from discovery. Bridge listener starts only on opt-in and closes through owned stop lifetime.
 - Omitted/replaced code: `Complete host suspend/resume lifecycleInstruction service/Windows power-event integration`. Disposition: **pending**. Reason: Current bridge is scoped to the existing app runtime/connection Gate, not a new always-running service. Listener suspend/resume behavior and platform power callbacks require additional integration and actual host acceptance.
-- Test-code evidence: `desktop/src/bridge.rs:1202 [UTF8-LF sha256=047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86; anchor=fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops]`.
+- Test-code evidence: `desktop/src/bridge.rs:1226 [UTF8-LF sha256=9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752; anchor=fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops]`.
 - Remaining: Issue #2: Complete host suspend/resume lifecycleInstruction service/Windows power-event integration. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open.
 
 ### PCController: `Tools/Controller/internal/hostbridge/peer_response_test.go`
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `b77fb20899b6e43e3ea8bebf0b49e0ab92849eb45f7ba6fe8803508c76c03c28`.
 
-- Target: `desktop/src/bridge.rs:100 [UTF8-LF sha256=047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86; anchor=pub struct Runtime]`.
+- Target: `desktop/src/bridge.rs:102 [UTF8-LF sha256=9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752; anchor=pub struct Runtime]`.
 - Retained: Read through EOF. Adapt malformed/foreign identity rejection, same-ID receipt retrieval and command mismatch tests to the existing Pakar packet; actual HTTP and WS tests share the same observed board.
 - Omitted/replaced code: `Full donor JSON-RPC error/result ambiguity and pending peer-session tests`. Disposition: **pending**. Reason: The donor IPC envelope is not exposed by this selected-owner bridge; full PCController manager interoperability and its tests are still useful pending work.
-- Test-code evidence: `desktop/src/bridge.rs:1202 [UTF8-LF sha256=047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86; anchor=fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops]`.
-- Test-code evidence: `desktop/src/bridge.rs:1075 [UTF8-LF sha256=047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86; anchor=fn bridge_http_recovery_uses_existing_packet_form_contract]`.
+- Test-code evidence: `desktop/src/bridge.rs:1226 [UTF8-LF sha256=9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752; anchor=fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops]`.
+- Test-code evidence: `desktop/src/bridge.rs:1099 [UTF8-LF sha256=9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752; anchor=fn bridge_http_recovery_uses_existing_packet_form_contract]`.
 - Remaining: Issue #2: Full donor JSON-RPC error/result ambiguity and pending peer-session tests. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open.
 
 ### PCController: `Tools/Controller/internal/hostbridge/peer_response.go`
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `7e711f22ce5a8e0c01f7a935e0f0091ed1d305e04a7563aae57a772059f391ef`.
 
-- Target: `desktop/src/bridge.rs:100 [UTF8-LF sha256=047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86; anchor=pub struct Runtime]`.
+- Target: `desktop/src/bridge.rs:102 [UTF8-LF sha256=9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752; anchor=pub struct Runtime]`.
 - Target: `desktop/src/usb_table.rs:143 [UTF8-LF sha256=a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022; anchor=pub struct Intent]`.
 - Retained: Read complete source. Adapt exact request-ID correlation, ambiguous/malformed result as uncertain, consume-before-dispatch and no replay. New SerialCommand::Bridge queues through the sole existing USB owner and returns actual same-sequence ACK plus readback, not queue acceptance.
 - Omitted/replaced code: `Generic PCController peerRPCSession JSON-RPC/WebSocket/Socket.IO response envelope`. Disposition: **pending**. Reason: Pakar uses its existing living /api/command and board/boot/deadline contract, not an unimplemented promise of generic PCController RPC compatibility. Full manager.go route/authority/transport adapters remain pending review.
-- Test-code evidence: `desktop/src/bridge.rs:1202 [UTF8-LF sha256=047ddffb5a65f00fb34fa05ed2665a66614e73709149ba51f49420b593469b86; anchor=fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops]`.
+- Test-code evidence: `desktop/src/bridge.rs:1226 [UTF8-LF sha256=9356a9dc5ecef80514ad0a428108f1fa380888f8d913632b2f4754c7f9cb8752; anchor=fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops]`.
 - Test-code evidence: `desktop/src/usb_table.rs:221 [UTF8-LF sha256=a114b352d572680ec0404131be4f1f52e37e490e1534ac2cc5cfcc8ff78c6022; anchor=fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback]`.
 - Remaining: Issue #2: Generic PCController peerRPCSession JSON-RPC/WebSocket/Socket.IO response envelope. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open.
 
@@ -1205,6 +1205,26 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `mobile/test/lan_resolver_transport_test.dart:12 [UTF8-LF sha256=c13392cb122643ed60cdc17949906a3bd03070d1896cf3a1b3dee27a6a23830e; anchor=void main()]`.
 - Scoped advantage: Fixes a demonstrated real HTTP timeout: ledboard.local was sent to this host's environment proxy without consulting its resolver. No global proxy setting is changed.
 - Remaining: Physical Android/local-network and remote-proxy acceptance remain open. Cached route is transport metadata, never peer authority; preserve certificate/SNI and same-board readback.
+
+### PCController: `Tools/Controller/internal/programmer/preflash.go`
+
+Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `520de1d7431f3062d0603636b89098d1e41c7701a2f44f65b88d45cfe49a2c07`.
+
+- Target: `firmware/esp8266/src/MaintenanceRoutes.h:235 [UTF8-LF sha256=2993618abb5a8ec8eeff5c0a58f8437dfbe0c5029e002e4e0398f6d907fb0581; anchor=bool prepareRemotePair(]`.
+- Retained: Read entire actual donor through EOF. Preserve complete backup before production writes, cancellation before mutation and post-backup candidate reinspection. The network bridge forwards the existing guarded ESP coordinator's raw bytes/status/receipts; it does not replace the programmer or turn staging acceptance into a completed flash.
+- Omitted/replaced code: `Host Urclock/USBasp executor, backup archive manifest and development skip policy`. Disposition: **pending**. Reason: Retain the existing ESP-owned integrated ISP coordinator and mandatory production backup rather than adding a competing serial/programming owner. Host archival restore/executor parity needs a separate full dependency and hardware review; it is not claimed by transparent HTTP forwarding.
+- Test-code evidence: `desktop/src/bridge_transfer.rs:377 [UTF8-LF sha256=365d1f7a80cab3acefe4a5374ee61078964f1adc4242a2333529b1faa3eabb0e; anchor=fn bridge_transfer_head_truncation_and_stale_mutation_preserve_truth]`.
+- Remaining: Issue #2: actual AVR reset/upload/program, new recovery capture, EEPROM/Urboot preservation and power-loss acceptance remain open. Stored backup downloads are not fresh physical capture or programming proof.
+
+### PCController: `Tools/Controller/internal/programmer/restore_preflash_test.go`
+
+Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `6dabd79c406b49dce87866fa792bc557220b98515606041cc33099193d567abe`.
+
+- Target: `firmware/esp8266/src/MaintenanceRoutes.h:235 [UTF8-LF sha256=2993618abb5a8ec8eeff5c0a58f8437dfbe0c5029e002e4e0398f6d907fb0581; anchor=bool prepareRemotePair(]`.
+- Retained: Read complete actual donor tests. Retain failure/no-flash, unchanged candidate and EEPROM-reset raw-backup-before-arm distinctions in the existing coordinator review. New actual socket tests cover stale peer before dispatch, valid multipart/binary transfer, HEAD and truncation; these do not claim execution of the donor's Go programmer tests or physical backup acceptance.
+- Omitted/replaced code: `Host Urclock/USBasp executor, backup archive manifest and development skip policy`. Disposition: **pending**. Reason: Retain the existing ESP-owned integrated ISP coordinator and mandatory production backup rather than adding a competing serial/programming owner. Host archival restore/executor parity needs a separate full dependency and hardware review; it is not claimed by transparent HTTP forwarding.
+- Test-code evidence: `desktop/src/bridge_transfer.rs:377 [UTF8-LF sha256=365d1f7a80cab3acefe4a5374ee61078964f1adc4242a2333529b1faa3eabb0e; anchor=fn bridge_transfer_head_truncation_and_stale_mutation_preserve_truth]`.
+- Remaining: Issue #2: actual AVR reset/upload/program, new recovery capture, EEPROM/Urboot preservation and power-loss acceptance remain open. Stored backup downloads are not fresh physical capture or programming proof.
 
 ### PCController: `Tools/Controller/internal/tui/table.go`
 
@@ -2342,15 +2362,18 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Target: `firmware/esp8266/src/FirmwareRange.h:26 [UTF8-LF sha256=03bf18b46233e539a84563f1eb63330d2eaf8e57b9bb73b6cfd92026bda6bef8; anchor=inline bool parseRange(]`.
 - Target: `firmware/esp8266/src/FirmwarePlatform.h:143 [UTF8-LF sha256=ad3e975a14f0f7b7d78446bf94217fbb2fc2770e984ad4979d7bcce142b75e8d; anchor=inline bool readRunning(]`.
 - Target: `tools/check-ethernet-live.mjs:55 [UTF8-LF sha256=d25f3ca0c7571a953cd8f2c1dd997bdc9abc50844fb8add4ffc379bf1f5d55ca; anchor=export async function checkEthernet(]`.
+- Target: `desktop/src/bridge_transfer.rs:54 [UTF8-LF sha256=365d1f7a80cab3acefe4a5374ee61078964f1adc4242a2333529b1faa3eabb0e; anchor=pub(super) fn open]`.
 - Retained: Complete actual donor read through EOF and current adapted production target reviewed. Imported GET/HEAD firmware download, bounded single byte ranges/open/suffix ranges, 416 responses, ETag/304, Content-MD5/Digest/identity headers and chunked flash reads; extracted parser exercises the production implementation.
 - Retained: ESP8266 aligned flash implementation is retained. ESP32-S3 adaptation downloads only the running application partition using bounded esp_partition_read, uses mbedtls Base64 and platform model, and shares the same endpoint/HTTP engine instead of a second flasher firmware.
 - Retained: Reconsulted complete donor for W5500 integration. Existing native ETH/lwIP shares the very same firmware HEAD/Range route; the hostname-first live probe checks actual TCP interface identity and exported image framing instead of assuming carrier means correct serving.
+- Retained: Reconsulted full FirmwareTransfer implementation/header for native network repeater. Preserve opaque binary GET/HEAD/Range/ETag and actual multipart upload status instead of JSON reparsing. Bound export/body sizes, selected route/boot/trace ownership and no-replay outcomes; USB never silently opens Wi-Fi.
 - Omitted/replaced code: `Optional build-time FW_OTA_BEARER_TOKEN/secureEquals and WWW-Authenticate bearer realm`. Disposition: **replaced**. Reason: Shared Pakar WebAccess callback now owns authorization and defaults to deny without an authorization provider. Credentials/session policy must not diverge between firmware download and other device endpoints. X-Login-Path links the actual login flow without provoking unexplained browser Basic authentication.
 - Omitted/replaced code: `FW_ENABLE_FULL_FLASH_DOWNLOAD full raw flash including settings`. Disposition: **replaced**. Reason: Network full-flash export remains disabled because it can expose stored Wi-Fi/cloud/access secrets. Application-partition download and separately authorized backup paths are retained. User-authorized physical full flash backup is separate, not this network route.
 - Omitted/replaced code: `ProductConfig PU model/product identity and compile date/time header`. Disposition: **replaced**. Reason: Uses Pakar product/model and consistent BuildInfo version without dates/timestamp naming; no PU850 business identity is retained.
 - Test-code evidence: `tests/firmware_range_test.cpp:7 [UTF8-LF sha256=96a79254872cd829c6e23a240225063503d0286e9fe1a477dd48aac5e05a6ed5; anchor=assert(parseRange("bytes=0-9"]`.
 - Test-code evidence: `tests/s3_platform_wiring_test.mjs:23 [UTF8-LF sha256=25910c5c734a383aadf50517894a2609355dcc07d6a44f3084744b6989db2a8c; anchor=assert.match(transfer, /FirmwarePlatform::readRunning]`.
 - Test-code evidence: `tests/ethernet_live_tool_test.mjs:17 [UTF8-LF sha256=01d6d7b2b91cbdabd62a49de6c2ea15aa56c54ca954f91a8191d605539e51aee; anchor=for(const scenario of []`.
+- Test-code evidence: `desktop/src/bridge_transfer.rs:275 [UTF8-LF sha256=365d1f7a80cab3acefe4a5374ee61078964f1adc4242a2333529b1faa3eabb0e; anchor=fn bridge_transfer_real_binary_range_and_multipart_are_not_json_reparsed]`.
 - Remaining: Real HTTP GET/HEAD/Range/auth/ETag checks against the integrated S3 and ESP8266 firmware remain separate from source/host-parser proof; verify exported application bytes against the running partition and protect credentials. Physical OTA/AVR flashing/power-loss/recovery acceptance remains open.
 
 ### PU850-ESP: `LocalLib/FirmwareTransfer.h`
