@@ -33,6 +33,7 @@ impl Identity {
 #[serde(default)]
 pub struct Snapshot {
     pub layout: String,
+    pub hidden_panels: Option<Vec<ui::layout::Panel>>,
     pub memory: Option<String>,
     pub selection: Vec<u8>,
     pub selected_cell: u8,
@@ -47,7 +48,7 @@ pub struct Snapshot {
 }
 impl Default for Snapshot {
     fn default() -> Self {
-        Self { layout: String::new(), memory: None, selection: Vec::new(), selected_cell: 1,
+        Self { layout: String::new(), hidden_panels: None, memory: None, selection: Vec::new(), selected_cell: 1,
             find: String::new(), cell_effect: "fade".into(), display_text: "PAKAR CONTROLLER".into(),
             display_value: 1, buzzer_frequency: 1032, buzzer_duration: 100, settings_page: 0,
             settings_search: String::new() }
@@ -55,6 +56,9 @@ impl Default for Snapshot {
 }
 impl Snapshot {
     fn normalize(&mut self) {
+        if let Some(hidden) = &mut self.hidden_panels {
+            *hidden = ui::layout::Panel::ALL.into_iter().filter(|p| hidden.contains(p)).collect();
+        }
         self.selection.retain(|id| (1..=80).contains(id));
         self.selection.sort_unstable(); self.selection.dedup();
         self.selected_cell = self.selected_cell.clamp(1, 80);
@@ -101,6 +105,7 @@ impl Store {
 
 #[derive(Default)]
 pub struct Runtime {
+    pub layout: crate::workspace_layout::WorkspaceLayout,
     active: Option<Identity>,
     context: Option<egui::Context>,
     checked: Option<Instant>,
@@ -118,11 +123,10 @@ impl Runtime {
 
 impl PakarControllerApp {
     fn capture_ui_workspace(&self, ctx: &egui::Context) -> Snapshot {
-        let previous = self.workspace.active.as_ref().and_then(|key| self.config.native_workspaces.get(key));
+        let (layout, hidden) = self.workspace.layout.snapshot();
         Snapshot {
-            // The offline Events-only shell must not overwrite a connected dock.
-            layout: if self.active_context.is_some() { ui::layout::serialize(&self.dock).unwrap_or_default() }
-                else { previous.map(|p| p.layout.clone()).unwrap_or_default() },
+            // Persist the full logical workspace, never its offline/partial-ACK projection.
+            layout, hidden_panels: Some(hidden),
             memory: ctx.memory(|memory| serde_json::to_string(memory).ok()).filter(|value| value.len() <= MEMORY_LIMIT),
             selection: self.table.selection.cells(), selected_cell: self.selected_cell,
             find: self.cell_search.clone(), cell_effect: self.cell_effect.clone(),
@@ -134,6 +138,7 @@ impl PakarControllerApp {
     pub(crate) fn remember_ui_workspace(&mut self) {
         let Some(identity) = self.workspace.active.clone() else { return; };
         let Some(ctx) = self.workspace.context.clone() else { return; };
+        self.workspace.layout.observe(&self.dock);
         let snapshot = self.capture_ui_workspace(&ctx);
         if self.config.native_workspaces.remember(identity, snapshot) { self.workspace.changed(Instant::now()); }
     }
@@ -151,8 +156,9 @@ impl PakarControllerApp {
     }
     pub(crate) fn apply_ui_workspace(&mut self, ctx: &egui::Context, mut snapshot: Snapshot) {
         snapshot.normalize();
-        self.dock = if snapshot.layout.is_empty() { ui::layout::create_initial_layout() }
-            else { ui::layout::restore(&snapshot.layout) };
+        self.workspace.layout = crate::workspace_layout::WorkspaceLayout::restore(&snapshot.layout, snapshot.hidden_panels);
+        let available: Vec<_> = ui::layout::Panel::ALL.into_iter().filter(|p| p.available(self.presentation_context())).collect();
+        self.workspace.layout.synchronize(&mut self.dock, &available);
         self.table.selection.group(snapshot.selection, false);
         self.selected_cell = snapshot.selected_cell;
         self.sync_cell_selection_search();

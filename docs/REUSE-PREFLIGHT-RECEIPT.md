@@ -1,5 +1,66 @@
 # Donor-first preflight receipt
 
+## Reconnect-safe native dock visibility
+
+Reread complete live Pealayer workspace_profiles.rs at the recorded matching
+hash. Read actual restore_tab_to_canonical_slot/reveal_and_focus_tab,
+create_initial_layout/sanitize_dock_rects and app capture/apply/toggle/save
+function slices too; layout.rs/app.rs remain pending complete-file comparisons.
+Adapted canonical sibling/anchor restoration and ancestor unfolding, not
+focused-leaf appending. No donor source or unrelated firmware/mobile changed.
+
+The native full dock now remains separate from its capability-filtered visible
+projection. Explicit hidden panels are durable board/application intent;
+offline/partial-ACK removal never becomes that intent. Old layouts without
+explicit visibility metadata recover missing default slots once. Explicitly
+closing every panel persists; Restore workspace deliberately resets to organized
+defaults. Unknown hardware still cannot paint a panel or authorize a command.
+The redundant per-board runtime layout cache was replaced by the existing
+durable owner store plus this single layout model.
+
+Canonical native verification:277 tests pass, including painted partial-ACK
+transitions, exact split/active-tab retention over disconnect/reboot, hidden
+streaming/close-all restart and canonical reveal/unfold. The added egui fixture
+initially used an obsolete run API and unsupported SHA formatter; actual current
+connection_controls.rs tests and firmware_source::digest supplied the correct
+existing APIs. No dependency/cache/profile changes were required. Initial
+--verbose parameter syntax failed before building; the documented wrapper was
+then invoked normally. Build and source fixtures are not installed acceptance.
+A guessed tests/preferences_test.mjs command found no file; rg confirmed there
+is no such separate suite. Actual native Preferences tests passed in the277-test
+run; native-render-lifecycle and connection-controls source checks also pass.
+
+tools/verify-desktop-layout.ps1 adapts existing same-session owner/hash/draft
+guards and checks the retained layout hash, hidden intent, panels and selection
+through an explicit application disconnect/reconnect. It never commands/reset
+boards or switches implicitly to USB. Runtime/deployment evidence follows only
+after verified replacement; pending donor-wide parity gates remain open.
+
+The first installed-layout harness stopped after disconnect because its general
+pending-operation guard also rejected the expected asynchronous transport release.
+The actual owner remained healthy with the same retained-layout SHA and no drafts.
+Reread existing verify-desktop-workspace/observe-desktop release guards; the new
+helper now waits boundedly for release, and explicit failed-receipt resume checks
+the same PID/hash/layout/selection and disconnected intent before reconnecting
+once. The failed receipt is retained; no board mutation or forced close followed.
+
+Installed ASUS evidence: executable28,605,952 bytes, SHA256
+72270d79867da8fd50baecac8b8c3b659f2dc6c75a63dba5464d0d96edddb6fc,
+version0.2.7. Graceful replacement receipt layout-replacement.json preserves the
+prior executable/settings; new PID22880/session1. Actual owner reconnect receipt
+layout-reconnected.json passes: identical retained layout SHA256
+2256740a29af0b6585967f0fa1f50fc705814f3ab671a35ff0515a50eaf4039c
+before, disconnected (Events-only projection), and reconnected. Same board
+esp32s3-907069eac800, Wi-Fi online, seven original panels restored, empty hidden
+intent and selection unchanged. This is real app/board transport evidence, not
+an AVR/ESP flash, optical LED test or all-production acceptance claim.
+Actual expected-PID egui framebuffer capture layout-after.png was copied and
+visually inspected (1920x991), SHA256
+12a12f4a38d45ad8a2176e25fa206dba6cd7050cf1b635cd7a0b503a140508a9.
+Table stays left, Effect controls/Hardware monitor right, Front panel and
+Events/Streaming/Network tabs below; live board/AVR/WebSocket remain reported.
+Image/UI evidence is not physical LED/audio or David's design acceptance.
+
 ## Durable scenes and passive workspaces
 
 Completely reread matching PCController SettingsStore.cpp/header and adapted

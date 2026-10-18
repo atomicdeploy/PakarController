@@ -16,6 +16,7 @@ mod client_telemetry;
 mod cli_output;
 mod config;
 mod native_workspace;
+mod workspace_layout;
 mod configuration_reads;
 mod connection;
 mod device_settings;
@@ -1783,9 +1784,7 @@ struct PakarControllerApp {
     bridge: bridge::Runtime,
     connection_gate: connection::Gate,
     connection_enabled: bool,
-    context_panels: Vec<ui::layout::Panel>,
     active_context: Option<String>,
-    context_layouts: std::collections::HashMap<String, egui_dock::DockState<ui::layout::Panel>>,
     config: config::AppConfig,
     workspace: native_workspace::Runtime,
     preferences: Option<ui::preferences::PreferencesDraft>,
@@ -1941,9 +1940,7 @@ impl PakarControllerApp {
             bridge: Default::default(),
             connection_gate,
             connection_enabled: config.connection_enabled,
-            context_panels: Vec::new(),
             active_context: None,
-            context_layouts: Default::default(),
             workspace: Default::default(),
             control: platform::instance::start(context.egui_ctx.clone(), !screenshot_harness),
             dock,

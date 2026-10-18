@@ -683,7 +683,7 @@
     {
       "path": "desktop/src/main.rs",
       "anchor": "SerialCommand::Bridge(target",
-      "sha256": "68867e16d96a7aff1eb49f5c3e3a042f92f7d4d06985ec43c713b45aba3e79f2"
+      "sha256": "b59d6ac8d1176d254c83b308e00225fbab080044ece442d2955189645400b3d4"
     }
   ],
   "omissions": [
@@ -4760,7 +4760,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "68867e16d96a7aff1eb49f5c3e3a042f92f7d4d06985ec43c713b45aba3e79f2",
+      "sha256": "b59d6ac8d1176d254c83b308e00225fbab080044ece442d2955189645400b3d4",
       "anchor": "fn scoped_http_request("
     },
     {
@@ -5337,7 +5337,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "b1be6f8085ea2dde3c3d1366504064d5cf6a22bc5cc3ebe17bbc70d034fd2925",
+      "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -7202,7 +7202,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b1be6f8085ea2dde3c3d1366504064d5cf6a22bc5cc3ebe17bbc70d034fd2925",
+          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4",
           "anchor": "fn synchronize_context("
         },
         {
@@ -7615,7 +7615,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b1be6f8085ea2dde3c3d1366504064d5cf6a22bc5cc3ebe17bbc70d034fd2925",
+          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -8095,7 +8095,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b1be6f8085ea2dde3c3d1366504064d5cf6a22bc5cc3ebe17bbc70d034fd2925",
+          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -8594,7 +8594,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "value[\"messages\"]",
-          "sha256": "b1be6f8085ea2dde3c3d1366504064d5cf6a22bc5cc3ebe17bbc70d034fd2925"
+          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4"
         },
         {
           "path": "desktop/src/platform/notifications.rs",
@@ -8678,7 +8678,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b1be6f8085ea2dde3c3d1366504064d5cf6a22bc5cc3ebe17bbc70d034fd2925",
+          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -10502,7 +10502,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "68867e16d96a7aff1eb49f5c3e3a042f92f7d4d06985ec43c713b45aba3e79f2",
+          "sha256": "b59d6ac8d1176d254c83b308e00225fbab080044ece442d2955189645400b3d4",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -10563,7 +10563,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b1be6f8085ea2dde3c3d1366504064d5cf6a22bc5cc3ebe17bbc70d034fd2925",
+          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4",
           "anchor": "value[\"tray_shell\"]"
         },
         {
@@ -10625,7 +10625,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "68867e16d96a7aff1eb49f5c3e3a042f92f7d4d06985ec43c713b45aba3e79f2",
+          "sha256": "b59d6ac8d1176d254c83b308e00225fbab080044ece442d2955189645400b3d4",
           "anchor": "fn serial_worker("
         },
         {
@@ -10662,7 +10662,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "68867e16d96a7aff1eb49f5c3e3a042f92f7d4d06985ec43c713b45aba3e79f2",
+          "sha256": "b59d6ac8d1176d254c83b308e00225fbab080044ece442d2955189645400b3d4",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
@@ -10708,7 +10708,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "b1be6f8085ea2dde3c3d1366504064d5cf6a22bc5cc3ebe17bbc70d034fd2925"
+          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4"
         }
       ],
       "omissions": [
@@ -11370,7 +11370,7 @@
         {
           "path": "desktop/src/main.rs",
           "anchor": "peer_http::remember_address",
-          "sha256": "68867e16d96a7aff1eb49f5c3e3a042f92f7d4d06985ec43c713b45aba3e79f2"
+          "sha256": "b59d6ac8d1176d254c83b308e00225fbab080044ece442d2955189645400b3d4"
         }
       ],
       "omissions": [
@@ -11770,7 +11770,8 @@
         "Complete live donor read through EOF at matching original-byte hash. Adapt the actual stable-ID profile_choices/draw ownership rule to board-keyed Flutter workspaces, rather than connection-attempt keys or telemetry-dependent widget lifetime. User selection/search/effect/indicator choice and both scroll axes survive transient leases, reboot, explicit reconnect and bounded background UI-cache restoration; snapshots never persist a command, authorization or observed device state.",
         "Reread the same complete live donor at unchanged SHA256 for the Android screen-off regression. Actual user changes now notify a bounded debounced UI snapshot writer, including indicators, multiple selection, transition, Find/selection, activity and both scroll axes. One ordered coalescing writer prevents late old saves, skips identical snapshots and permits retry after failure. Reattachment uses the latest actual offsets rather than stale scroll-end PageStorage values. Healthy sockets remain open across backgrounding; a silent pre-suspend socket gets a 750 ms read-probe recovery without resetting the workspace or replaying commands. Colour actions and selection controls are separate ordered rows.",
         "Actual stable-ID workspace ownership adapted to immutable board identity rather than mutable friendly names or current telemetry. Retained route/board/boot-scoped ACK-only panel inventory is presentation, never live hardware authority. Native dock, selection, menus and measured panel extent survive transient lease/capability loss; new peer/boot/explicit disconnect revalidates appropriately.",
-        "Reread complete unchanged donor. Native durable board/application sessions now store sanitized dock/active tabs, egui scroll/collapse memory, unified selection/find/cursor and safe front-panel drafts, bounded16 records, equal-snapshot skips,1s sampling/debounce and5s minimum save interval. Flutter extends its existing ordered350ms/2s writer with front-panel, diagnostic and public settings drafts; reconnect requires fresh identity/readback and never restores pending actuation. Native capture/apply_workspace_profile and config structs were additionally reviewed as function slices only, not certified whole-file reads."
+        "Reread complete unchanged donor. Native durable board/application sessions now store sanitized dock/active tabs, egui scroll/collapse memory, unified selection/find/cursor and safe front-panel drafts, bounded16 records, equal-snapshot skips,1s sampling/debounce and5s minimum save interval. Flutter extends its existing ordered350ms/2s writer with front-panel, diagnostic and public settings drafts; reconnect requires fresh identity/readback and never restores pending actuation. Native capture/apply_workspace_profile and config structs were additionally reviewed as function slices only, not certified whole-file reads.",
+        "Reread complete unchanged workspace_profiles.rs and actual canonical restore/reveal, capture/apply function slices in donor layout.rs/app.rs (those whole files remain uncertified). Native WorkspaceLayout now separates the durable full dock and explicit hidden-panel intent from its capability-filtered projection. Reconnect/partial ACK/reboot cannot save omitted panels as user closures; missing legacy defaults recover once, explicit close-all persists, reveal restores semantic sibling/split slots and unfolds ancestors. No missing ACK grants a control lease."
       ],
       "targets": [
         {
@@ -11791,17 +11792,17 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn synchronize_context",
-          "sha256": "b1be6f8085ea2dde3c3d1366504064d5cf6a22bc5cc3ebe17bbc70d034fd2925"
+          "sha256": "0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4"
         },
         {
           "path": "desktop/src/ui/layout.rs",
           "anchor": "presentation_context()",
-          "sha256": "404465fc0d1b9c0d8c598518336a73f68785d7ba891d4f50b7e167f6ae77043f"
+          "sha256": "d368dc9cd57542eb9ff6170853619c79fc154f6d77a74be16db9c56fb9d4782c"
         },
         {
           "path": "desktop/src/native_workspace.rs",
           "anchor": "pub struct Store",
-          "sha256": "e4f562b20e8a261f2bf087eb97fee114fc95e906fb61dfae036413d1f5362f76"
+          "sha256": "7d1c73fa20c184393edaf3e75b697b4747750aed6c1e2286940e7f084f03d5f1"
         },
         {
           "path": "desktop/src/config.rs",
@@ -11812,6 +11813,11 @@
           "path": "mobile/lib/table_workspace.dart",
           "anchor": "class FrontPanelWorkspace",
           "sha256": "fd779ea58ddb0177231840f05b69b5845a6c60ee2c2cada587fb29833309354b"
+        },
+        {
+          "path": "desktop/src/workspace_layout.rs",
+          "anchor": "pub struct WorkspaceLayout",
+          "sha256": "2b6ad2be7a19a61268d0ce85c87537feacb68e53586297fc4d186d17787afeec"
         }
       ],
       "proof": [
@@ -11833,12 +11839,17 @@
         {
           "path": "desktop/src/native_workspace.rs",
           "anchor": "fn workspace_roundtrip_preserves_unified_selection_drafts_and_scroll_without_authority",
-          "sha256": "e4f562b20e8a261f2bf087eb97fee114fc95e906fb61dfae036413d1f5362f76"
+          "sha256": "7d1c73fa20c184393edaf3e75b697b4747750aed6c1e2286940e7f084f03d5f1"
         },
         {
           "path": "mobile/test/workspace_lifecycle_test.dart",
           "anchor": "Front-panel",
           "sha256": "da99bd0f4eb2b7cac91106da4673cab150929a028dcc0001a675c51f8fb148a9"
+        },
+        {
+          "path": "desktop/src/workspace_layout.rs",
+          "anchor": "fn reconnect_and_reboot_restore_splits_active_tabs_and_hidden_choices",
+          "sha256": "2b6ad2be7a19a61268d0ce85c87537feacb68e53586297fc4d186d17787afeec"
         }
       ],
       "omissions": [
@@ -11878,14 +11889,14 @@
         {
           "path": "desktop/src/native_workspace.rs",
           "anchor": "pub struct Snapshot",
-          "sha256": "e4f562b20e8a261f2bf087eb97fee114fc95e906fb61dfae036413d1f5362f76"
+          "sha256": "7d1c73fa20c184393edaf3e75b697b4747750aed6c1e2286940e7f084f03d5f1"
         }
       ],
       "proof": [
         {
           "path": "desktop/src/native_workspace.rs",
           "anchor": "fn same_peer_reboot_restores_only_its_workspace_and_other_peers_cannot_inherit_it",
-          "sha256": "e4f562b20e8a261f2bf087eb97fee114fc95e906fb61dfae036413d1f5362f76"
+          "sha256": "7d1c73fa20c184393edaf3e75b697b4747750aed6c1e2286940e7f084f03d5f1"
         }
       ],
       "omissions": [

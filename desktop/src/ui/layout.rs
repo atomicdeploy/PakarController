@@ -110,26 +110,48 @@ pub fn serialize(dock: &DockState<Panel>) -> Result<String, String> {
     sanitize_dock_rects(&mut copy);
     serde_json::to_string(&copy).map_err(|e| e.to_string())
 }
-/// The offline Events-only view is not the user's connected workspace.
-pub fn remember_connected(config: &mut crate::config::AppConfig, dock: &DockState<Panel>, connected: bool) {
-    if connected {
-        if let Ok(json) = serialize(dock) { config.dock_layout = json; }
-    }
-}
-pub fn restore_connected(config: &mut crate::config::AppConfig) -> DockState<Panel> {
-    let dock = restore(&config.dock_layout);
-    let legacy_offline = config.dock_context_revision == 0
-        && dock.iter_all_tabs().all(|(_, panel)| *panel == Panel::Events);
-    config.dock_context_revision = 1;
-    if legacy_offline { create_initial_layout() } else { dock }
-}
 pub fn reveal(dock: &mut DockState<Panel>, panel: Panel) {
+    restore_canonical(dock, panel);
     if let Some(path) = dock.find_tab(&panel) {
+        let mut node = Some(path.node);
+        while let Some(index) = node {
+            if let Ok(node) = dock.node_mut(egui_dock::NodePath::new(path.surface, index)) { node.set_collapsed(false); }
+            node = index.parent();
+        }
         let _ = dock.set_active_tab(path);
         dock.set_focused_node_and_surface(path.node_path());
-    } else {
-        dock.push_to_focused_leaf(panel);
     }
+}
+/// Adapt Pealayer restore_tab_to_canonical_slot: siblings first, then semantic
+/// anchor splits. Never append a returning panel to whichever leaf has focus.
+pub fn restore_canonical(dock: &mut DockState<Panel>, panel: Panel) {
+    if dock.find_tab(&panel).is_some() { return; }
+    if dock.iter_all_tabs().count() == 0 { *dock = DockState::new(vec![panel]); return; }
+    let siblings: &[Panel] = match panel {
+        Panel::FrontPanel | Panel::Hardware => &[Panel::FrontPanel, Panel::Hardware],
+        Panel::Events | Panel::Streaming | Panel::Network => &[Panel::Events, Panel::Streaming, Panel::Network],
+        _ => &[],
+    };
+    if let Some(path) = siblings.iter().find_map(|p| dock.find_tab(p)) {
+        if let Ok(leaf) = dock.leaf_mut(path.node_path()) { leaf.tabs.push(panel); }
+    } else if let Some(path) = dock.find_tab(&Panel::Table).or_else(|| dock.iter_all_tabs().map(|(path, _)| path).next()) {
+        if path.surface != egui_dock::SurfaceIndex::main() {
+            // Floating-only workspaces have no main-surface anchor to split.
+            dock.push_to_first_leaf(panel);
+        } else {
+            match panel {
+                Panel::Table => { dock.main_surface_mut().split_left(path.node, 0.72, vec![panel]); }
+                Panel::EffectControls => { dock.main_surface_mut().split_right(path.node, 0.72, vec![panel]); }
+                Panel::FrontPanel | Panel::Hardware => {
+                    let anchor = dock.find_tab(&Panel::EffectControls).unwrap_or(path);
+                    if anchor.surface == egui_dock::SurfaceIndex::main() { dock.main_surface_mut().split_below(anchor.node, 0.48, vec![panel]); }
+                    else { dock.push_to_first_leaf(panel); }
+                }
+                _ => { dock.main_surface_mut().split_below(path.node, 0.80, vec![panel]); }
+            }
+        }
+    }
+    sanitize_dock_rects(dock);
 }
 pub fn draw_workspace_tab_menu(app: &mut PakarControllerApp, ui: &mut egui::Ui) {
     super::cell_table::compact_menu(ui);
@@ -258,28 +280,16 @@ impl TabViewer for PakarTabViewer<'_> {
 mod tests {
     use super::*;
     #[test]
-    fn disconnected_startup_and_save_do_not_destroy_connected_workspace() {
-        let mut config = crate::config::AppConfig::default();
-        let mut connected = create_initial_layout();
-        let path = connected.find_tab(&Panel::Streaming).unwrap();
-        connected.remove_tab(path); // Deliberate user choice must survive reconnect.
-        remember_connected(&mut config, &connected, true);
-        let saved = config.dock_layout.clone();
-        let offline = DockState::new(vec![Panel::Events]);
-        remember_connected(&mut config, &offline, false);
-        assert_eq!(config.dock_layout, saved);
-        let restored = restore_connected(&mut config);
-        assert!(restored.find_tab(&Panel::Table).is_some());
-        assert!(restored.find_tab(&Panel::Streaming).is_none());
-    }
-    #[test]
-    fn legacy_events_only_layout_recovers_once_not_over_explicit_later_choice() {
-        let mut config = crate::config::AppConfig::default();
-        config.dock_layout = serialize(&DockState::new(vec![Panel::Events])).unwrap();
-        assert!(restore_connected(&mut config).find_tab(&Panel::Table).is_some());
-        assert_eq!(config.dock_context_revision, 1);
-        remember_connected(&mut config, &DockState::new(vec![Panel::Events]), true);
-        assert_eq!(restore_connected(&mut config).iter_all_tabs().count(), 1);
+    fn restored_panel_returns_to_its_semantic_group_and_expands_collapsed_ancestors() {
+        let mut dock = create_initial_layout();
+        dock.remove_tab(dock.find_tab(&Panel::Hardware).unwrap());
+        let front = dock.find_tab(&Panel::FrontPanel).unwrap().node_path();
+        dock.node_mut(front).unwrap().set_collapsed(true);
+        reveal(&mut dock, Panel::Hardware);
+        let hardware = dock.find_tab(&Panel::Hardware).unwrap();
+        assert_eq!(hardware.node_path(), front);
+        assert!(!dock.node(front).unwrap().is_collapsed());
+        assert_eq!(dock.leaf(front).unwrap().active, hardware.tab);
     }
     #[test]
     fn layouts_survive_serialization_and_closed_panel_reveal() {

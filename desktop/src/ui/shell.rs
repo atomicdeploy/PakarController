@@ -467,7 +467,9 @@ impl PakarControllerApp {
         self.remember_ui_workspace();
         self.config.connection_method = self.transport;
         self.config.connection_enabled = self.connection_enabled;
-        layout::remember_connected(&mut self.config, &self.dock, self.active_context.is_some());
+        if self.active_context.is_some() {
+            self.config.dock_layout = self.workspace.layout.snapshot().0;
+        }
         if config::AppConfig::load().ok().as_ref() != Some(&self.config) {
             if let Err(error) = self.config.save() {
                 self.message = error;
@@ -475,6 +477,12 @@ impl PakarControllerApp {
                 self.workspace.saved();
             }
         }
+    }
+    fn reset_workspace_layout(&mut self) {
+        self.workspace.layout = Default::default();
+        let available: Vec<_> = Panel::ALL.into_iter().filter(|p| p.available(self.presentation_context())).collect();
+        self.workspace.layout.synchronize(&mut self.dock, &available);
+        self.save_workspace();
     }
     pub(crate) fn connection_change_guard(&mut self) -> bool {
         let blocked = connection_change_blocked(
@@ -559,21 +567,11 @@ impl PakarControllerApp {
         let available: Vec<_> = Panel::ALL.into_iter().filter(|p| p.available(self.presentation_context())).collect();
         let key = self.presentation.workspace_key();
         if key != self.active_context {
-            if let Some(previous) = self.active_context.take() {
-                layout::remember_connected(&mut self.config, &self.dock, true);
-                // Runtime-only per-peer workspace cache. No discovery-driven SSD writes.
-                if self.context_layouts.len() >= 16 { self.context_layouts.clear(); }
-                self.context_layouts.insert(previous, self.dock.clone());
-            }
-            self.dock = key.as_ref().and_then(|key| self.context_layouts.get(key)).cloned()
-                .unwrap_or_else(|| if key.is_some() { layout::restore_connected(&mut self.config) }
-                    else { egui_dock::DockState::new(vec![Panel::Events]) });
             self.active_context = key;
             self.device_name = self.peer_context().and_then(|c|crate::identity::normalize_name(&c.hostname).ok());
             self.board_display_name = self.peer_context().filter(|c|crate::identity::valid_display_name(&c.name)).map(|c|c.name.clone());
             self.identity_saved = self.device_name.clone().zip(self.board_display_name.clone());
             self.configuration_loaded = false;
-            self.context_panels = available.clone();
             self.table.stop_pending_edits();
             self.table.pixel_sample = None;
             // Only a genuinely different selected peer changes this key. A
@@ -600,17 +598,8 @@ impl PakarControllerApp {
             self.show_mapping = false; self.table.manager_open = false;
         }
         if let Some(snapshot) = restore { self.apply_ui_workspace(ctx, snapshot); }
-        // Prune even on first restore; saved panels are preferences, never evidence.
-        let removed: Vec<_> = self.dock.iter_all_tabs().filter(|(_,p)| !available.contains(p)).map(|(_,p)| *p).collect();
-        for panel in removed { while let Some(path) = self.dock.find_tab(&panel) { self.dock.remove_tab(path); } }
-        if available != self.context_panels {
-            for panel in &available {
-                if !self.context_panels.contains(panel) && self.dock.find_tab(panel).is_none() {
-                    self.dock.push_to_focused_leaf(*panel);
-                }
-            }
-            self.context_panels = available;
-        }
+        // Capability projection never mutates the durable layout or hide intent.
+        self.workspace.layout.synchronize(&mut self.dock, &available);
         if !self.presentation_has_table() {
             self.table.stop_pending_edits();
             self.table.manager_open = false; self.table.editing_order = false;
@@ -688,6 +677,7 @@ impl PakarControllerApp {
         if let Ok(mut value) = self.control.snapshot.lock() {
             *value = serde_json::json!({"application":self.peer_context().and_then(|p|p.application()).map(|a|a.name.as_str()).unwrap_or("PakarController"),"client_application":"PakarController","app_title":self.peer_context().map(|p|p.title()),"version":env!("CARGO_PKG_VERSION"),"configured_endpoint":self.base,"process_id":std::process::id(),"ready":true,"single_instance":self.config.single_instance,"panels":self.dock.iter_all_tabs().map(|(_,p)|p.name()).collect::<Vec<_>>(),"preferences_open":self.preferences.is_some(),"mapping_open":self.show_mapping,"workspaces_open":self.show_workspaces,"about_open":self.show_about,"device_online":snapshot.is_some(),"websocket_live":self.websocket_live,"serial_live":self.serial_live,"cell_search":ui::cell_search::format_selection(&self.table.selection.ids),"cell_search_draft":self.cell_search,"selected_cells":self.table.selection.cells(),"highlighted_cells":self.table.selection.cells(),"search_matches":self.table.selection.cells(),"selected_cell":self.selected_cell});
             value["device_settings"] = serde_json::json!({"open": self.device_settings.open, "page": self.device_settings.page, "network_loaded": self.device_settings.network.is_some(), "cloud_loaded": self.device_settings.cloud.is_some(), "write_pending": self.device_settings.pending.is_some(), "maintenance_pending": self.device_settings.maintenance_pending.is_some()});
+            value["workspace"] = self.workspace.layout.status();
             value["connection"] = serde_json::json!({
                 "method": self.transport.label(), "enabled": self.connection_enabled,
                 "releasing": self.connection_gate.releasing().map(|method| method.label()),
@@ -849,7 +839,7 @@ impl PakarControllerApp {
                         ))
                         .clicked()
                     {
-                        self.dock = layout::create_initial_layout();
+                        self.reset_workspace_layout();
                         ui.close();
                     }
                 });
@@ -1035,15 +1025,15 @@ impl PakarControllerApp {
             }
         }
         for panel in std::mem::take(&mut self.reveal_panels) {
-            if panel.available(self.presentation_context()) { layout::reveal(&mut self.dock, panel); }
+            if panel.available(self.presentation_context()) { self.workspace.layout.show(&mut self.dock, panel); }
         }
         if layout_changed {
             self.save_workspace();
         }
         // Workspace restore/menu actions occur after discovery synchronization.
         // Apply the same gate before any tab header is painted in this frame.
-        let unavailable: Vec<_> = self.dock.iter_all_tabs().filter(|(_,p)| !p.available(self.presentation_context())).map(|(_,p)| *p).collect();
-        for panel in unavailable { while let Some(path) = self.dock.find_tab(&panel) { self.dock.remove_tab(path); } }
+        let available: Vec<_> = Panel::ALL.into_iter().filter(|p| p.available(self.presentation_context())).collect();
+        self.workspace.layout.synchronize(&mut self.dock, &available);
         egui::CentralPanel::default()
             .frame(egui::Frame::new().inner_margin(0))
             .show(ui, |ui| {
@@ -1053,7 +1043,7 @@ impl PakarControllerApp {
                             .button(format!("{}  {}", icons::TABS, crate::ui::i18n::text("Restore workspace")))
                             .clicked()
                         {
-                            self.dock = egui_dock::DockState::new(Panel::ALL.into_iter().filter(|p| p.available(self.presentation_context())).collect());
+                            self.reset_workspace_layout();
                         }
                     });
                 } else {
@@ -2374,7 +2364,11 @@ impl PakarControllerApp {
                                             ))
                                             .clicked()
                                         {
-                                            self.dock = layout::restore(&profile.layout);
+                                                let dock = layout::restore(&profile.layout);
+                                                let hidden = Panel::ALL.into_iter().filter(|p| dock.find_tab(p).is_none()).collect();
+                                                self.workspace.layout = crate::workspace_layout::WorkspaceLayout::restore(&profile.layout, Some(hidden));
+                                                let available: Vec<_> = Panel::ALL.into_iter().filter(|p| p.available(self.presentation_context())).collect();
+                                                self.workspace.layout.synchronize(&mut self.dock, &available);
                                             self.save_workspace();
                                         }
                                         if ui
