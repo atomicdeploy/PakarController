@@ -54,6 +54,17 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '24'
+      - uses: arduino/setup-arduino-cli@81d310742121c928ea9c8bbd407b4217b432ae02 # v2
+      - name: Install pinned host-test headers only (no board SDKs)
+        shell: pwsh
+        run: |
+          $taskPins = Get-Content tools/firmware-dependencies.json -Raw | ConvertFrom-Json
+          $taskJson = @($taskPins.libraries | Where-Object name -eq 'ArduinoJson')
+          if ($taskJson.Count -ne 1 -or $taskJson[0].version -notmatch '^\d+\.\d+\.\d+$') { throw 'Missing exact ArduinoJson pin' }
+          arduino-cli lib update-index
+          if ($LASTEXITCODE -ne 0) { throw 'Host-test library index failed' }
+          arduino-cli lib install ('ArduinoJson@' + $taskJson[0].version)
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned host-test headers failed' }
       - run: node tools/ci-checks.mjs quality
   tooling:
     name: "🧰 Scripts · ${{ matrix.os }}"

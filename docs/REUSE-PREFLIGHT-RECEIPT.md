@@ -4845,3 +4845,12 @@ runner; production failure propagation is retained. Add an actual successful
 child case and assert caller-directory/status restoration instead of clearing
 errors or weakening CI. The exact GitHub wrapper now exits0 locally, and the
 failure case still asserts exit7. Only this fixture's28 proof references rebound.
+
+The next CI run passed all three tooling OS jobs, then exposed missing
+ArduinoJson.h in the clean Windows quality runner. Native LCD/cloud/management
+fixtures use real ArduinoJson; local installed headers had masked provisioning.
+Reread PU850's pinned .github/workflows/build.yml: retain explicit dependency
+installation from reviewed pins, but install only ArduinoJson before host tests,
+not any board SDK or the donor's unpinned fallback. The existing canonical JSON
+pin remains authoritative. Workflow-order/no-SDK regression and local LCD fixtures
+pass; CI remains asynchronous. No firmware/app rebuild or deployment for this fix.

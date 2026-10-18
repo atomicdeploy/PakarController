@@ -107,7 +107,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "const cliPlan=",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/update_tool_test.mjs",
@@ -131,7 +131,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -169,7 +169,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "const cliPlan=",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/update_tool_test.mjs",
@@ -198,7 +198,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -266,7 +266,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -319,7 +319,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -381,7 +381,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -444,7 +444,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -497,7 +497,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -549,7 +549,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -606,7 +606,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -663,7 +663,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -720,7 +720,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -778,7 +778,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -817,7 +817,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "node tests/script_tooling_test.mjs",
-          "sha256": "e63926e5d285d6fea845542403de81132ebb6a6c5365b31889d981ba100eb433"
+          "sha256": "ee63fcd8e68bd70a330da4000faefafe8b7f00f5bc01dfc1c27b39225ebf8d73"
         }
       ],
       "omissions": [
@@ -831,7 +831,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -888,7 +888,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -946,7 +946,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -1004,7 +1004,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -1052,7 +1052,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -1099,7 +1099,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -1146,7 +1146,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -1179,7 +1179,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🧰 Scripts · ${{ matrix.os }}\"",
-          "sha256": "e63926e5d285d6fea845542403de81132ebb6a6c5365b31889d981ba100eb433"
+          "sha256": "ee63fcd8e68bd70a330da4000faefafe8b7f00f5bc01dfc1c27b39225ebf8d73"
         },
         {
           "path": ".github/actionlint.yaml",
@@ -1198,7 +1198,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -1250,7 +1250,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -1302,7 +1302,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -1359,7 +1359,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -1416,7 +1416,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -1449,7 +1449,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🔧 ESP32-S3 + ESP8266 + AVR\"",
-          "sha256": "e63926e5d285d6fea845542403de81132ebb6a6c5365b31889d981ba100eb433"
+          "sha256": "ee63fcd8e68bd70a330da4000faefafe8b7f00f5bc01dfc1c27b39225ebf8d73"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -1468,7 +1468,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -1530,7 +1530,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -1587,7 +1587,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -1649,7 +1649,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "0df25a9a2f500ecca853c1a3d54df0f8a196d86545c825bb99b543b2326f640c"
+          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -5738,7 +5738,7 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "e63926e5d285d6fea845542403de81132ebb6a6c5365b31889d981ba100eb433",
+          "sha256": "ee63fcd8e68bd70a330da4000faefafe8b7f00f5bc01dfc1c27b39225ebf8d73",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {

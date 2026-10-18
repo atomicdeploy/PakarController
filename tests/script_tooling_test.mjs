@@ -88,6 +88,12 @@ for(const entry of ['build.sh','pakar.sh','upgrade.sh']){
   }
 }
 const workflow=read('.github/workflows/build.yml');assert.match(workflow,/os: \[windows-2025, ubuntu-24.04, macos-15\]/);
+const quality=workflow.split('  quality:')[1].split('  tooling:')[0];
+assert.match(quality,/setup-arduino-cli@[a-f0-9]{40}/);
+assert.match(quality,/Get-Content tools\/firmware-dependencies\.json/);
+assert.match(quality,/arduino-cli lib install \('ArduinoJson@' \+ \$taskJson\[0\]\.version\)/);
+assert(quality.indexOf('arduino-cli lib install')<quality.indexOf('node tools/ci-checks.mjs quality'));
+assert.doesNotMatch(quality,/core install/); // Header-only native fixtures need no board SDK.
 for(const name of ['build','update-dependencies','upload'])for(const action of read(`.github/workflows/${name}.yml`).matchAll(/uses: ([^\s#]+)/g))assert.match(action[1],/@[a-f0-9]{40}$/);
 assert.match(read('.github/workflows/upload.yml'),/PAKAR_ENABLE_DEVICE_DEPLOY == 'true'/);assert.match(read('.github/workflows/upload.yml'),/cancel-in-progress: false/);
 assert.doesNotMatch(read('build.sh'),/arduino-cli compile|--clean/);assert.doesNotMatch(read('build.cmd'),/test-protocol/);
