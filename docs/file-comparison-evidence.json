@@ -5567,7 +5567,7 @@
         },
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "09ab731e89e89021a2816ecc84c2edc81bb0da438dbc67dab3083d77c94cc5ed",
+          "sha256": "7f3136acfc0a3a43f0186fd139c0d83aa447fb33b205ab4086288bcc015d974a",
           "anchor": "Additive metadata does not select another generation"
         }
       ],
@@ -7091,7 +7091,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "09ab731e89e89021a2816ecc84c2edc81bb0da438dbc67dab3083d77c94cc5ed",
+          "sha256": "7f3136acfc0a3a43f0186fd139c0d83aa447fb33b205ab4086288bcc015d974a",
           "anchor": "No inferred board kind or controls"
         },
         {
@@ -7130,7 +7130,7 @@
       "targets": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "09ab731e89e89021a2816ecc84c2edc81bb0da438dbc67dab3083d77c94cc5ed",
+          "sha256": "7f3136acfc0a3a43f0186fd139c0d83aa447fb33b205ab4086288bcc015d974a",
           "anchor": "const manifest="
         },
         {
@@ -7172,7 +7172,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "09ab731e89e89021a2816ecc84c2edc81bb0da438dbc67dab3083d77c94cc5ed",
+          "sha256": "7f3136acfc0a3a43f0186fd139c0d83aa447fb33b205ab4086288bcc015d974a",
           "anchor": "Unsupported geometry is not forced"
         },
         {
@@ -7286,7 +7286,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "09ab731e89e89021a2816ecc84c2edc81bb0da438dbc67dab3083d77c94cc5ed",
+          "sha256": "7f3136acfc0a3a43f0186fd139c0d83aa447fb33b205ab4086288bcc015d974a",
           "anchor": "Native wiring is source-checked only"
         },
         {

@@ -125,11 +125,19 @@ const native=readFileSync(new URL('../desktop/src/ui/shell.rs',import.meta.url),
 const nativeStatus=readFileSync(new URL('../desktop/src/ui/status_bar.rs',import.meta.url),'utf8');
 for(const gate of ['status.avr_available','status.display_available','status.network_available','status.telemetry_available'])assert(nativeStatus.includes(gate));
 assert.match(source, /data-capability="display" hidden><h2>Live display<\/h2>[^\n]+id="displayValue"/,'Numeric display controls require Display, not Text');
-for(const feature of ['display','text','buzzer'])assert(native.includes(`if self.has_feature("${feature}")`));
+// Previously acknowledged slots survive a transient outage. Retained layout
+// must never become actuation authority: the enclosing live gate remains.
+for(const feature of ['display','text','buzzer'])assert(native.includes(`if self.presentation_has_feature("${feature}")`));
+const nativeFront=native.slice(native.indexOf('fn draw_front_panel('),native.indexOf('fn draw_hardware('));
+assert(nativeFront.includes('ui.add_enabled_ui(self.panel_live(Panel::FrontPanel)'), 'Retained front-panel slots are disabled without current ACKs');
+const nativePanelGate=native.slice(native.indexOf('fn panel_live('),native.indexOf('pub(crate) fn has_feature('));
+assert(nativePanelGate.includes('panel.available(self.peer_context())'), 'Current peer owns panel action availability');
+assert(nativePanelGate.includes('!self.presentation_has_feature(feature) || self.has_feature(feature)'), 'Every retained peripheral needs its own fresh capability before enabling the panel');
 const nativeLogic=native.slice(native.indexOf('pub fn native_logic('),native.indexOf('pub fn draw_shell('));
 assert(nativeLogic.includes('self.synchronize_context(ctx)'), 'Capability authority must update without painting');
 assert(!native.slice(native.indexOf('fn draw_shell_contents(')).includes('self.synchronize_context('), 'No second authority update during painting');
 assert(readFileSync(new URL('../desktop/src/main.rs',import.meta.url),'utf8').includes('self.native_logic(ctx)'));
 assert(native.includes('panel.available(self.peer_context())'));
+assert(native.includes('panel.available(self.presentation_context())'), 'Panel retention uses acknowledged presentation, not stale live values');
 assert(!native.includes('("Snake", "snake", 3)'),'Native mode UI is not a fixed table list');
 console.log('Actual Web peer context and output control: no-ACK/offline, independent ACKs, generic LED placement, pending/no-optimism/readback, live localization, mode filtering, stale revocation and cross-board rebind passed. Native wiring is source-checked only.');

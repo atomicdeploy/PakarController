@@ -135,6 +135,14 @@ both successful connection confirmations during deliberate transport switches.
 No disconnect notification was inferred from those counts. Android remains
 build/test-only until an authorized phone is available.
 
+The source checkpoint's GitHub quality job exposed an obsolete literal native
+guard in web_context_test.mjs: it demanded live-gated disappearance. The guard
+now asserts retained presentation slots AND the enclosing panel_live/fresh-peer
+gate for every retained peripheral; existing dynamic Web authority tests remain.
+The complete canonical local `ci-checks quality` phase then passed. This is a
+test/ledger-only correction, with no further app/firmware rebuild or deployment.
+Remote exact-head CI continues asynchronously; no green result is invented.
+
 ## AVR ISP and Urboot programming paths
 
 Consulted firmware-hardware, avr-boot-chain, remote-ota and exhaustive literal
