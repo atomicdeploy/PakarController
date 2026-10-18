@@ -68,8 +68,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.native().on(\"/update\"",
       "reason": "Integrated guarded authenticated upload, owner/disconnect fencing and platform OTA capacity/abort retained beside pinned remote download. Quiet S3 passive capture rejects new upload ownership. U_FS replacement is disabled to preserve credentials/recovery; S3 compressed-image support is not certified.",
-      "target_sha256_utf8_lf": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76",
-      "target_line": 2593
+      "target_sha256_utf8_lf": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba",
+      "target_line": 2617
     },
     {
       "source": "LocalLib/AsyncWebServer.h",
@@ -80,8 +80,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "if(parsed[\"type\"]==\"telemetry\")",
       "reason": "Authenticated multiple-client WebSocket retains board state and adds read-only full telemetry and pinned remote-job commands. Incoming messages are explicitly rejected during quiet S3 passive capture, before binary streaming or command dispatch.",
-      "target_sha256_utf8_lf": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76",
-      "target_line": 1907
+      "target_sha256_utf8_lf": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba",
+      "target_line": 1931
     },
     {
       "source": "LocalLib/Authentication.cpp",
@@ -128,8 +128,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.on(\"/description.xml\"",
       "reason": "Actual product/hostname root-device XML; S3 delegates escaped description generation to the adapted donor SSDP device, ESP8266 keeps its existing description. Neither advertises nonexistent SOAP/GENA services; S3 NetBIOS remains unavailable, not true.",
-      "target_sha256_utf8_lf": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76",
-      "target_line": 2913
+      "target_sha256_utf8_lf": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba",
+      "target_line": 2937
     },
     {
       "source": "pu850-esp.ino",
@@ -596,8 +596,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.native().on(\"/update/info\"",
       "reason": "Version/profile and both-board remote maintenance URLs; no misleading build-host/time identity.",
-      "target_sha256_utf8_lf": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76",
-      "target_line": 2581
+      "target_sha256_utf8_lf": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba",
+      "target_line": 2605
     },
     {
       "source": "pu850-esp.ino",
@@ -608,8 +608,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.on(\"/info\"",
       "reason": "Authenticated full structured ESP/AVR/client/network/clock/cloud telemetry; optional format=text.",
-      "target_sha256_utf8_lf": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76",
-      "target_line": 2582
+      "target_sha256_utf8_lf": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba",
+      "target_line": 2606
     },
     {
       "source": "pu850-esp.ino",

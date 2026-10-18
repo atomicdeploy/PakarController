@@ -366,12 +366,12 @@
     {
       "path": "mobile/android/app/src/main/AndroidManifest.xml",
       "anchor": "REQUEST_INSTALL_PACKAGES",
-      "sha256": "9f3906ffa76372c538f6682a30a7748c81b558cd76793e1da802b3c9c496f7c6"
+      "sha256": "5d7feefe177117b4bd37c845efec4a328fb44a6a0147b9870fa21781a6a18280"
     },
     {
       "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt",
       "anchor": "appUpdates = AppUpdateChannel",
-      "sha256": "14201ed8d476a5341c3d8603740f1c010de858e5dc39e418c85dc0247c6dc055"
+      "sha256": "cf8c9f18036da1f3147691df15e65bb5541bded2d45fb0cac42a473ffd50e2c4"
     }
   ],
   "proof": [
@@ -436,7 +436,7 @@
     {
       "path": "mobile/lib/firmware_page.dart",
       "anchor": "avrMaintenance()",
-      "sha256": "7deee750d46cc8c2837abda187cb8f163111850432f1a78beb9a6a99975b29d8"
+      "sha256": "fc1ca6be9e1666f58e5ef532f9856bfa0723172fe9fc0b5913fc7ee4155d3626"
     },
     {
       "path": "mobile/lib/firmware_automation_page.dart",
@@ -527,19 +527,45 @@
   "source_read": "complete",
   "verdict": "parity-gap",
   "preserved": [
-        "Actual PeerSession refresh single-flight and reset-before-await socket ownership adapted to shared status reads, per-socket cleanup and retained previously acknowledged layout inventory. Reads retire before and after writes; a pre/during-write result cannot settle post-ACK confirmation. Fresh individual capabilities still own actuation. The pinned http abortable GET path additionally cancels transport/body reads on deadline/retirement instead of retaining the donor Future.timeout-only limitation.",
-        "Failure-driven review rejects older same-boot HTTP replies as superseded rather than returning cached data as a fresh observation; older WS frames cannot reset liveAge or publish into a revoked UI lease. Ordered real-loopback producer regressions retain equal board-clock captures as valid, without inventing a sequence number. Board/application-keyed panel elements retire old application mode/cue shells while retaining the user's per-board workspace; offline melody slots keep bounds and both controls disabled until actual fresh cues return. These are scoped lifecycle adaptations, not complete donor mobile parity."
+    "Actual PeerSession refresh single-flight and reset-before-await socket ownership adapted to shared status reads, per-socket cleanup and retained previously acknowledged layout inventory. Reads retire before and after writes; a pre/during-write result cannot settle post-ACK confirmation. Fresh individual capabilities still own actuation. The pinned http abortable GET path additionally cancels transport/body reads on deadline/retirement instead of retaining the donor Future.timeout-only limitation.",
+    "Failure-driven review rejects older same-boot HTTP replies as superseded rather than returning cached data as a fresh observation; older WS frames cannot reset liveAge or publish into a revoked UI lease. Ordered real-loopback producer regressions retain equal board-clock captures as valid, without inventing a sequence number. Board/application-keyed panel elements retire old application mode/cue shells while retaining the user's per-board workspace; offline melody slots keep bounds and both controls disabled until actual fresh cues return. These are scoped lifecycle adaptations, not complete donor mobile parity.",
+    "Bluetooth adaptation: fully read canonical PeerSession transport source at SHA5263044d..., retain single-flight reads, generation/route identity and reset-before-await retirement in the selected BLE API. Android native GATT is an SDK implementation because no reusable BLE transport exists in these donors. Verify INFO then full status, retain stable board aliases and saved selected route, keep app updater/remote management independent, and never substitute board HTTP/DNS/WebSocket for BLE. Existing UI/workspace, command ACK, settings and mirroring consumers are reused."
   ],
   "targets": [
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129"
+      "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93"
     },
     {
       "path": "mobile/lib/panel_inventory.dart",
       "anchor": "class PanelInventory",
       "sha256": "44a5b9ab096b211cff43e42c8d2d5ccd7956572ac3c740df80fa72ee5d5f4e8b"
+    },
+    {
+      "path": "mobile/lib/ble_codec.dart",
+      "anchor": "class BleAssembler",
+      "sha256": "763b72f5db99b3b26fb7ef004807b0cb3cb924ac0b3acf184ac52e1e4f00733c"
+    },
+    {
+      "path": "mobile/lib/ble_transport.dart",
+      "anchor": "class PakarBleTransport",
+      "sha256": "62dde3541e07bf06ba3e086fa1a3a5583db1d646890d2941e86fe934836a18da"
+    },
+    {
+      "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/BleControllerChannel.kt",
+      "anchor": "class BleControllerChannel",
+      "sha256": "a0d1fb5f512da49f784d560c1f2d190adef6dd68c4ec15a5de9acd75be9d27f0"
+    },
+    {
+      "path": "mobile/lib/connection_preferences.dart",
+      "anchor": "class ConnectionPreferences",
+      "sha256": "dc20e6ec07521d724c97b793b69d36613a9c0b6e980f0184105a41e844bc5318"
+    },
+    {
+      "path": "mobile/lib/devices_page.dart",
+      "anchor": "class DevicesPage",
+      "sha256": "3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da"
     }
   ],
   "proof": [
@@ -567,6 +593,11 @@
       "path": "mobile/test/selection_batch_network_test.dart",
       "anchor": "offline slots stay stable",
       "sha256": "b04bb9a8e38cc8ed4a5e68a2792c1a341fb437b54333beb9cfc5811081ddd839"
+    },
+    {
+      "path": "mobile/test/ble_transport_test.dart",
+      "anchor": "Offline BLE status and command use GATT only",
+      "sha256": "20e59050dfd5ad7b5474cf67841654a4bcb3bcb1e83f6bc701ce10a314c8d154"
     }
   ],
   "omissions": [
@@ -574,6 +605,11 @@
       "code": "Unified media/PWM/relay/RPC/artifact/feed contracts and all donor transport tests",
       "disposition": "pending",
       "reason": "This scoped connection/ownership/retained-layout adaptation does not import the donor's other device domains, numbered compatibility aliases or certify all transports. Remaining useful generic contracts need individual source and hardware review."
+    },
+    {
+      "code": "Bluetooth physical and bulk-file acceptance",
+      "disposition": "pending",
+      "reason": "The new adapter covers actual advertised JSON routes and does not copy media/PWM/relay or numbered protocol aliases. Android GATT/permissions and S3 RF/heap/coexistence need real-device acceptance. Direct binary firmware/raw streaming and automatic board-feed policy over BLE are not yet advertised; manual pinned remote firmware jobs remain available. OS process death can still require read-only reacquisition; preserving an Activity GATT is not an Android background service guarantee."
     }
   ],
   "remaining": [
@@ -593,7 +629,7 @@
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129"
+      "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93"
     }
   ],
   "proof": [
@@ -876,7 +912,7 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129",
+      "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93",
       "anchor": "Stream<DeviceStatus> get statusUpdates"
     }
   ],
@@ -916,7 +952,7 @@
     {
       "path": "firmware/esp8266/src/UrbootRoutes.h",
       "anchor": "bool runUrboot(",
-      "sha256": "9a1c2509eadc5c79d60a313ccb06ebc51d51d321c136ba1bf1537ff54f2d15b7"
+      "sha256": "39fc7e3962e9a0806e72641b66c287630bfd043f0e208b2f9b54514931a02792"
     }
   ],
   "omissions": [
@@ -3063,12 +3099,12 @@
         {
           "path": "firmware/esp8266/src/UpdateProgress.h",
           "anchor": "class Progress",
-          "sha256": "93daf8c64f63379e3835fff7164af8caee56932370e749e68a354da8060232e8"
+          "sha256": "cbf19051f9f71c1b5ff99cd024faa1a87e12a211bc6001a413cdfde6a84e8640"
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76"
+          "sha256": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -3560,7 +3596,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76"
+          "sha256": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -3610,7 +3646,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76"
+          "sha256": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba"
         }
       ],
       "omissions": [
@@ -3655,7 +3691,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76"
+          "sha256": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -3724,7 +3760,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129"
+          "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -3824,7 +3860,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129"
+          "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -4183,12 +4219,12 @@
       "targets": [
         {
           "path": "mobile/lib/devices_page.dart",
-          "sha256": "b3ff941cededcdff779f369f63c8131acf3f5776ef5af79ea33afa0401ae4a4e",
+          "sha256": "3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da",
           "anchor": "List<DeviceListEntry> unifiedDevices("
         },
         {
           "path": "mobile/lib/devices_page.dart",
-          "sha256": "b3ff941cededcdff779f369f63c8131acf3f5776ef5af79ea33afa0401ae4a4e",
+          "sha256": "3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da",
           "anchor": "Future<void> connect(DeviceListEntry entry)"
         },
         {
@@ -4748,7 +4784,7 @@
         {
           "anchor": "class ToneTimeline",
           "path": "mobile/lib/mirroring.dart",
-          "sha256": "54397ee08572221f1d68103ddea52a77ae28ddfa8edc9edc91cd105dd1733508"
+          "sha256": "ea026d79ed40f5574787d8fd179714ee3c5c4bfeae2d38e6e7ab593b79e26228"
         },
         {
           "anchor": "class ToneMirrorChannel",
@@ -4775,7 +4811,7 @@
         {
           "anchor": "Actual donor cadence",
           "path": "mobile/test/mirroring_test.dart",
-          "sha256": "fc1faadabc47adda87f2de37fd9abd5bc059c93565f5307e87652898785064ac"
+          "sha256": "32e38d19bd9aefad76f78d921936329e12cfc1de8eed24cf704a83ea6e3f5d89"
         },
         {
           "anchor": "Appended actual musical start",
@@ -4790,7 +4826,7 @@
         {
           "path": "mobile/test/mirroring_test.dart",
           "anchor": "Mute follow is optional",
-          "sha256": "fc1faadabc47adda87f2de37fd9abd5bc059c93565f5307e87652898785064ac"
+          "sha256": "32e38d19bd9aefad76f78d921936329e12cfc1de8eed24cf704a83ea6e3f5d89"
         }
       ],
       "omissions": [
@@ -4832,7 +4868,7 @@
         {
           "anchor": "class ToneTimeline",
           "path": "mobile/lib/mirroring.dart",
-          "sha256": "54397ee08572221f1d68103ddea52a77ae28ddfa8edc9edc91cd105dd1733508"
+          "sha256": "ea026d79ed40f5574787d8fd179714ee3c5c4bfeae2d38e6e7ab593b79e26228"
         },
         {
           "anchor": "class ToneMirrorChannel",
@@ -4859,7 +4895,7 @@
         {
           "anchor": "Actual donor cadence",
           "path": "mobile/test/mirroring_test.dart",
-          "sha256": "fc1faadabc47adda87f2de37fd9abd5bc059c93565f5307e87652898785064ac"
+          "sha256": "32e38d19bd9aefad76f78d921936329e12cfc1de8eed24cf704a83ea6e3f5d89"
         },
         {
           "anchor": "Appended actual musical start",
@@ -4874,7 +4910,7 @@
         {
           "path": "mobile/test/mirroring_test.dart",
           "anchor": "Mute follow is optional",
-          "sha256": "fc1faadabc47adda87f2de37fd9abd5bc059c93565f5307e87652898785064ac"
+          "sha256": "32e38d19bd9aefad76f78d921936329e12cfc1de8eed24cf704a83ea6e3f5d89"
         }
       ],
       "omissions": [
@@ -4925,7 +4961,7 @@
     },
     {
       "path": "mobile/lib/devices_page.dart",
-      "sha256": "b3ff941cededcdff779f369f63c8131acf3f5776ef5af79ea33afa0401ae4a4e",
+      "sha256": "3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da",
       "anchor": "class DevicesPage"
     },
     {
@@ -5289,7 +5325,8 @@
     "Actual Session admission/matched-ACK/no-replay principles now guard WebSocket-first native/mobile commands. One random intent ID, bounded boot-relative deadline and exact packet digest survive same-intent HTTP recovery. The loop-owned RAM receipt cache consumes before mutation and never evicts an unexpired ID. Immediate same-board state accompanies each ACK; other clients receive immediate state pushes. Older HTTP reads cannot roll newer state back. Flutter keeps both scroll controllers and a fixed result slot through pending/completed writes without renewing expired telemetry. This scoped adaptation does not import serial sequence allocation, reset defaults or all donor contracts.",
     "Separate command authority from board-keyed Flutter user workspace state: lifecycle pauses timers, not a healthy socket; resume probes the same socket before HTTP fallback; silent sockets have independent WS freshness and bounded reconnect. Stale or foreign leases disable writes without destroying selection, search, drafts or scroll. Hidden settings no longer issue periodic network/AVR reads. No old mutation is queued or replayed.",
     "Reread current canonical Session, fakePort and request_admission_test.go. Adapt actual control-over-background admission between unsent USB snapshot chunks, without overtaking an in-flight request or post-ACK verification. The production Rust worker now validates matching sequence/opcode ACK plus compact same-boot board-observed state, rather than delaying confirmation for all480 RGB pixels, mappings and icon metadata. Full captures still own capability/peripheral freshness and actual RGB; partial readback does not renew those observations. Missing companion uses read-only full verification, never mutation replay. Production-worker fragmented-port and wrong-boot/scalar/state fixtures cover this scoped adaptation, not all donor reset/open/750ms strip contracts.",
-    "Reread actual Session admission/ACK ownership for the ten-minute ASUS failure. Native immutable reads use a verified-token four-chunk window and one absolute8s capture/freshness deadline, not a premature2s per-fragment timeout. Mutation ACK/deadline/no-replay rules are unchanged. Capture progress is a bounded typed owner-IPC observation, not toast identity; verified same-board presentation survives read failure and wire reacquisition without renewing old hardware authority."
+    "Reread actual Session admission/ACK ownership for the ten-minute ASUS failure. Native immutable reads use a verified-token four-chunk window and one absolute8s capture/freshness deadline, not a premature2s per-fragment timeout. Mutation ACK/deadline/no-replay rules are unchanged. Capture progress is a bounded typed owner-IPC observation, not toast identity; verified same-board presentation survives read failure and wire reacquisition without renewing old hardware authority.",
+    "Bluetooth slice: fully reread canonical b0111ae0 Session source (SHA1311fdcde...), not the old ../repos copy. Adapted RequestWithPriority/acquireWrite/WithRequestWriteGuard, consumed single-inflight admission and synchronous close fencing to S3 main-loop GATT ingress and targeted replies. Existing CommandReceipts and shared business/configuration/update handlers remain authoritative; fragment ACK is not a command receipt."
   ],
   "targets": [
     {
@@ -5299,12 +5336,12 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129",
+      "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93",
       "anchor": "bool _acceptIdentity("
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251",
+      "sha256": "d099cac84eee64cf2f6a3ea4316f2b49f7bd0787ecce0c56e7cfe8af33ecaef6",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -5324,7 +5361,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76",
+      "sha256": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba",
       "anchor": "bool authenticate()"
     },
     {
@@ -5376,6 +5413,21 @@
       "path": "mobile/lib/table_workspace.dart",
       "sha256": "fd779ea58ddb0177231840f05b69b5845a6c60ee2c2cada587fb29833309354b",
       "anchor": "class TableWorkspace"
+    },
+    {
+      "path": "libraries/BoardCore/src/BleWire.h",
+      "anchor": "class Receiver",
+      "sha256": "e6b8a769227fed14658e25d2f21be2773e2607902abd79cf91cd03eda22c7230"
+    },
+    {
+      "path": "firmware/esp32s3/src/BleService.h",
+      "anchor": "class BleService",
+      "sha256": "d99c61176b9d1d31618ad7dc61644321d9d82e05dd1da267f45359825e3e9fc1"
+    },
+    {
+      "path": "firmware/esp8266/src/BleRoutes.h",
+      "anchor": "String bleRequest(",
+      "sha256": "8185b47c674eb7d750e81d99519446e0c0666c2c3d59ae256f3d620577ec678d"
     }
   ],
   "omissions": [
@@ -5398,6 +5450,11 @@
       "code": "WithRequestWriteGuard final transport admission;750ms strip ACK/background priority and active-opcode slot diagnostics",
       "disposition": "pending",
       "reason": "Selected-method lease checks precede normal Rust serial writes, retaining the old physical-owner lease until resource drop. Native HTTP now adapts donor queued priority selection, but USB request-priority scheduling, reserved macro sequence and single-inflight opcode/sequence ACK ownership remain pending; OS-inflight bytes are non-retractable. Rust USB/PnP close/open cancellation, timing and no-network handoff still require runtime acceptance."
+    },
+    {
+      "code": "Bluetooth transport is not Go serial acquisition or a complete firmware-file transport",
+      "disposition": "pending",
+      "reason": "S3 has no Classic/SPP/audio hardware. UART DTR/reset/acquisition/quarantine and macro-priority mechanisms are not GATT operations; existing serial implementation is preserved, not removed. Direct BLE firmware binary transfer/raw pixel streaming, authenticated encrypted/bonded BLE, full donor serial suites and real phone/RF/coexistence/mirroring acceptance remain pending in issue #20; remote firmware jobs reuse the existing updater and require its network route."
     }
   ],
   "remaining": [
@@ -5504,6 +5561,16 @@
       "path": "desktop/src/usb_table.rs",
       "anchor": "fn actual_usb_worker_windows_read_latency_does_not_expire_large_capture",
       "sha256": "44fd958022d686a2bff33ec882866ca5dcef8f0c222b987ca35aa618e3497cc7"
+    },
+    {
+      "path": "tests/ble_wire_test.cpp",
+      "anchor": "int main()",
+      "sha256": "bf5675db9debf06160e8ef72d59e7c764bc3f88cde508cfcbb32a989f004c34e"
+    },
+    {
+      "path": "tests/ble_firmware_test.mjs",
+      "anchor": "BLE firmware integration source guards",
+      "sha256": "8f5b737298192b60b97d8612922710fbe0cbfdd73289e30eed920f09a114aff8"
     }
   ]
 },
@@ -6917,12 +6984,12 @@
         },
         {
           "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt",
-          "sha256": "14201ed8d476a5341c3d8603740f1c010de858e5dc39e418c85dc0247c6dc055",
+          "sha256": "cf8c9f18036da1f3147691df15e65bb5541bded2d45fb0cac42a473ffd50e2c4",
           "anchor": "Intent.ACTION_OPEN_DOCUMENT"
         },
         {
           "path": "mobile/lib/firmware_page.dart",
-          "sha256": "7deee750d46cc8c2837abda187cb8f163111850432f1a78beb9a6a99975b29d8",
+          "sha256": "fc1ca6be9e1666f58e5ef532f9856bfa0723172fe9fc0b5913fc7ee4155d3626",
           "anchor": "class FirmwarePage"
         },
         {
@@ -6932,7 +6999,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129",
+          "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -7028,7 +7095,7 @@
       "targets": [
         {
           "path": "mobile/lib/device_settings_page.dart",
-          "sha256": "542ea76f882534190bb46d74f70afa7092751faafdbd72e930b5b869e3ba11c4",
+          "sha256": "fa9c11f7abca9dde4e62c8e2f42e23e9dfcc2853055fb1878bad6c059997a2bc",
           "anchor": "class DeviceSettingsPage"
         },
         {
@@ -7269,7 +7336,7 @@
       "targets": [
         {
           "path": "README.md",
-          "sha256": "b3aef33f25e2d8c90a59c9d4e718852024d6f07bf1d169d69d6129a7d9d96e6f",
+          "sha256": "6403cbaf62ca42d8677b85aa74a73f7ad41d112b628883b1df777bf7a0e59722",
           "anchor": "Connected boards. One contextual control workspace."
         },
         {
@@ -7322,7 +7389,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "aa23b6544501595eb1cb383b636e15d1da302897b5bb58c0cd686a307035b6cc",
+          "sha256": "8fbe1b6d9ecbde953ce7cd46cf1390fa33458f51bc6a3bd8839f091e80f69a7a",
           "anchor": "export function runChecks"
         },
         {
@@ -7638,7 +7705,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251",
+          "sha256": "d099cac84eee64cf2f6a3ea4316f2b49f7bd0787ecce0c56e7cfe8af33ecaef6",
           "anchor": "Future<bool> _command"
         },
         {
@@ -7807,7 +7874,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129"
+          "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -7937,7 +8004,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251",
+          "sha256": "d099cac84eee64cf2f6a3ea4316f2b49f7bd0787ecce0c56e7cfe8af33ecaef6",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -8788,7 +8855,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129"
+          "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -8958,7 +9025,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129"
+          "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -9769,7 +9836,7 @@
         },
         {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"687f35d99175e9fc109bdd6a03db225cac97cd63ba0e9ffa68386ef66f6571b9","anchor":"config.flags.with_dma=true"},
         {"path":"firmware/esp32s3/src/LedWire.h","sha256":"cc11d6829c36b3390e0bef8ec407be72ceab47a25357661d5fcac90befef1495","anchor":"void encodeWire("},
-        {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"89e29ee585520673779a00e8d6c68ec1545ea4838ff09700f1fce8b266120833","anchor":"class LoopMessages"}
+        {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"e8a53fb82c468cffe3fe37216a8aff60b1f5e63796464696007ef06cbb7f1e9f","anchor":"class LoopMessages"}
       ],
       "omissions": [
         {
@@ -9793,7 +9860,7 @@
       ],
       "proof": [
         {"path":"tests/led_worker_test.cpp","sha256":"63cde4350c895746060315aec95e59c751b8c16458995c583e54985dcaed7f89","anchor":"Compile the ACTUAL S3 output worker"},
-        {"path":"tests/led_scheduler_test.cpp","sha256":"e48146ee14af07cf87d0226649896a50f2f3f3bea6b40f1b6b22a35e4f3e0a76","anchor":"int main()"}
+        {"path":"tests/led_scheduler_test.cpp","sha256":"246e3a524a8ad039f4ebef83708ea9a9ad4e2b519d2f6f7d6a008438e15644e0","anchor":"int main()"}
       ],
       "improvement": "Actual worker/mailbox tests establish source-level frame ownership and quiescence, not optical or SDK acceptance."
     },
@@ -9883,7 +9950,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76"
+          "sha256": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba"
         }
       ],
       "proof": [
@@ -9950,7 +10017,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76"
+          "sha256": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba"
         }
       ],
       "proof": [
@@ -10017,7 +10084,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76"
+          "sha256": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba"
         }
       ],
       "proof": [
@@ -10069,7 +10136,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76"
+          "sha256": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba"
         }
       ],
       "proof": [
@@ -10452,7 +10519,7 @@
         },
         {
           "path": "mobile/lib/device_settings_page.dart",
-          "sha256": "542ea76f882534190bb46d74f70afa7092751faafdbd72e930b5b869e3ba11c4",
+          "sha256": "fa9c11f7abca9dde4e62c8e2f42e23e9dfcc2853055fb1878bad6c059997a2bc",
           "anchor": "int.tryParse(latinDigits(value))"
         }
       ],
@@ -11355,7 +11422,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76",
+          "sha256": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -11376,7 +11443,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129"
+          "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -11928,7 +11995,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129",
+          "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93",
           "anchor": "final LanResolver resolver;"
         },
         {
@@ -11938,7 +12005,7 @@
         },
         {
           "path": "mobile/lib/devices_page.dart",
-          "sha256": "b3ff941cededcdff779f369f63c8131acf3f5776ef5af79ea33afa0401ae4a4e",
+          "sha256": "3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da",
           "anchor": "catalog"
         },
         {
@@ -12080,7 +12147,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76",
+          "sha256": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -12105,7 +12172,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129",
+          "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -12231,7 +12298,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "8f47f3f35af1449c6a22abd8b1c28f417135c94432a57edd6dc54e218e0d6e76",
+          "sha256": "41a7d1b9fad20b9ed0d157391770c39bd31143b8a4e6b36a720d5cf8540d10ba",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -12256,7 +12323,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "e8feb7cc65a214f19ee38b966c2382696ad8abd74d26ae0a8143748cb9a46129",
+          "sha256": "8674f732e72bdfb48933cb1d8ac09335d7daa76748ba500b33c09745645aae93",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -12360,7 +12427,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251",
+          "sha256": "d099cac84eee64cf2f6a3ea4316f2b49f7bd0787ecce0c56e7cfe8af33ecaef6",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -12503,12 +12570,12 @@
         {
           "path": "mobile/lib/connection_preferences.dart",
           "anchor": "class ConnectionPreferences",
-          "sha256": "45d6db926099edb7653a65d1a77ca16ffef69bdfe34adc117256179d804f6f7a"
+          "sha256": "dc20e6ec07521d724c97b793b69d36613a9c0b6e980f0184105a41e844bc5318"
         },
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251"
+          "sha256": "d099cac84eee64cf2f6a3ea4316f2b49f7bd0787ecce0c56e7cfe8af33ecaef6"
         }
       ],
       "proof": [
@@ -12548,7 +12615,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251"
+          "sha256": "d099cac84eee64cf2f6a3ea4316f2b49f7bd0787ecce0c56e7cfe8af33ecaef6"
         }
       ],
       "proof": [
@@ -12593,7 +12660,7 @@
         {
           "path": "mobile/lib/device_settings_page.dart",
           "anchor": "class DeviceSettingsPage",
-          "sha256": "542ea76f882534190bb46d74f70afa7092751faafdbd72e930b5b869e3ba11c4"
+          "sha256": "fa9c11f7abca9dde4e62c8e2f42e23e9dfcc2853055fb1878bad6c059997a2bc"
         }
       ],
       "proof": [

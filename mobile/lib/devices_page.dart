@@ -5,6 +5,7 @@ import 'discovery.dart';
 import 'icons.dart';
 import 'api.dart';
 import 'workspace_widgets.dart';
+import 'ble_transport.dart';
 
 class DeviceListEntry {
   const DeviceListEntry(this.peer, this.saved, this.available);
@@ -42,11 +43,13 @@ class DevicesPage extends StatefulWidget {
     this.registry,
     this.discovery,
     this.apiFactory,
+    this.api,
   });
   final Future<void> Function(SavedDevice, String) select;
   final DeviceRegistry? registry;
   final DeviceDiscovery? discovery;
   final PakarApi Function(SavedDevice, String)? apiFactory;
+  final PakarApi? api;
   @override
   State<DevicesPage> createState() => _DevicesPageState();
 }
@@ -59,6 +62,17 @@ class _DevicesPageState extends State<DevicesPage> {
   bool busy = false, connecting = false, authPromptActive = false;
   String search = '', filter = 'All';
   String message = '';
+  late ConnectionMethod method =
+      widget.api?.connectionMethod ?? ConnectionMethod.network;
+  final bluetooth = PakarBleTransport();
+  final bleCatalog = DiscoveryCatalog();
+  Map<String, dynamic> adapter = {};
+  @override
+  void dispose() {
+    bluetooth.close();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -84,20 +98,41 @@ class _DevicesPageState extends State<DevicesPage> {
     setState(() => busy = true);
     try {
       await reload();
-      final v = await discovery.scan(seeds: saved.map((d) => d.identity));
+      final List<DiscoveredDevice> v;
+      if (method == ConnectionMethod.bluetooth) {
+        adapter = await bluetooth.adapter();
+        final devices = await bluetooth.scan();
+        v = bleCatalog.merge(
+          devices.map(
+            (device) => DiscoveredDevice(
+              '${device['name'] ?? 'PakarController'}',
+              PakarBleTransport.endpoint('${device['address']}'),
+              'Bluetooth LE',
+            ),
+          ),
+        );
+      } else {
+        v = await discovery.scan(
+          seeds: saved
+              .where((d) => !d.endpoint.startsWith('ble://'))
+              .map((d) => d.identity),
+        );
+      }
       if (mounted) {
         setState(() {
           found = v;
-          message = discovery.errors.isEmpty
+          message =
+              method == ConnectionMethod.bluetooth || discovery.errors.isEmpty
               ? ''
               : 'Scan incomplete: ${discovery.errors.keys.join(', ')}';
         });
       }
-    } on Object {
+    } on Object catch (error) {
       if (mounted) {
         setState(
-          () => message =
-              'Unable to refresh devices. Saved profiles are unchanged.',
+          () => message = method == ConnectionMethod.bluetooth
+              ? 'Bluetooth scan: $error'
+              : 'Unable to refresh devices. Saved profiles are unchanged.',
         );
       }
     } finally {
@@ -139,7 +174,7 @@ class _DevicesPageState extends State<DevicesPage> {
                     TextField(
                       controller: endpoint,
                       decoration: const InputDecoration(
-                        labelText: 'Hostname / HTTP(S) origin',
+                        labelText: 'Network origin or saved Bluetooth endpoint',
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -300,16 +335,27 @@ class _DevicesPageState extends State<DevicesPage> {
       connecting = true;
       message = '';
     });
-    var device =
-        entry.saved ??
-        SavedDevice(
-          id: randomIdentifier(),
-          name: entry.name,
-          endpoint: entry.peer.endpoint,
-          location: DeviceLocation.local,
-        ).observed(entry.peer);
+    final origins = entry.peer.origins.where(
+      (value) =>
+          value.startsWith('ble://') == (method == ConnectionMethod.bluetooth),
+    );
+    if (origins.isEmpty) {
+      setState(() => connecting = false);
+      return;
+    }
+    final selected = origins.first;
+    var device = SavedDevice(
+      id: entry.saved?.id ?? randomIdentifier(),
+      name: entry.name,
+      endpoint: selected,
+      user: entry.saved?.user ?? 'admin',
+      location: entry.saved?.location ?? DeviceLocation.local,
+      boardId: entry.saved?.boardId ?? entry.peer.boardId,
+      aliases: entry.peer.origins.take(16).toSet(),
+    ).observed(entry.peer);
+    // Aliases share identity only after the live full-status verification.
     try {
-      var secret = entry.saved == null
+      var secret = method == ConnectionMethod.bluetooth || entry.saved == null
           ? ''
           : await registry.password(device) ?? '';
       for (var attempt = 0; attempt < 2; ++attempt) {
@@ -320,6 +366,8 @@ class _DevicesPageState extends State<DevicesPage> {
               user: device.user,
               password: secret,
             );
+        api.connectionMethod = method;
+        api.expectedBluetoothBoard = device.boardId;
         try {
           final status = await api.status();
           if (!status.peer.known ||
@@ -351,7 +399,13 @@ class _DevicesPageState extends State<DevicesPage> {
               verified: true,
             ),
           );
-          device = await registry.save(device, secret);
+          device = await registry.save(
+            device,
+            method == ConnectionMethod.bluetooth ? null : secret,
+          );
+          // Retire the probe before the selected API establishes its session.
+          // Closing a probe must never tear down a newly selected connection.
+          await api.close();
           if (mounted) await widget.select(device, secret);
           return;
         } on AuthenticationRequired {
@@ -423,7 +477,22 @@ class _DevicesPageState extends State<DevicesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final entries = unifiedDevices(saved, found, discovery.catalog);
+    final entries =
+        unifiedDevices(
+              saved,
+              found,
+              method == ConnectionMethod.bluetooth
+                  ? bleCatalog
+                  : discovery.catalog,
+            )
+            .where(
+              (entry) => entry.peer.origins.any(
+                (value) =>
+                    value.startsWith('ble://') ==
+                    (method == ConnectionMethod.bluetooth),
+              ),
+            )
+            .toList();
     final visible = entries.where(
       (entry) =>
           (filter != 'Saved' || entry.saved != null) &&
@@ -454,6 +523,75 @@ class _DevicesPageState extends State<DevicesPage> {
             ),
           ],
         ),
+        DropdownButtonFormField<ConnectionMethod>(
+          isExpanded: true,
+          initialValue: method == ConnectionMethod.usb ? null : method,
+          decoration: const InputDecoration(labelText: 'Find devices using'),
+          items: const [
+            DropdownMenuItem(
+              value: ConnectionMethod.network,
+              child: Text('Network'),
+            ),
+            DropdownMenuItem(
+              value: ConnectionMethod.bluetooth,
+              child: Text('Bluetooth LE'),
+            ),
+          ],
+          onChanged: busy || connecting
+              ? null
+              : (value) async {
+                  if (value == null || value == method) return;
+                  setState(() {
+                    method = value;
+                    found = [];
+                    message = '';
+                  });
+                  await scan();
+                },
+        ),
+        if (method == ConnectionMethod.bluetooth) ...[
+          const SizedBox(height: 12),
+          Text(
+            adapter['enabled'] == true
+                ? 'Bluetooth on'
+                : adapter['enabled'] == false
+                ? 'Bluetooth off'
+                : 'Bluetooth permission required',
+          ),
+          Wrap(
+            spacing: 8,
+            children: [
+              OutlinedButton.icon(
+                icon: const Icon(PakarIcons.lock),
+                label: const Text('Nearby Devices permission'),
+                onPressed: busy || connecting
+                    ? null
+                    : () async {
+                        try {
+                          await bluetooth.permission();
+                          if (mounted) await scan();
+                        } on Object catch (error) {
+                          if (mounted) setState(() => message = '$error');
+                        }
+                      },
+              ),
+              OutlinedButton.icon(
+                icon: const Icon(PakarIcons.radio),
+                label: const Text('Enable Bluetooth'),
+                onPressed: busy || connecting
+                    ? null
+                    : () async {
+                        try {
+                          await bluetooth.enable();
+                        } on Object catch (error) {
+                          if (mounted) setState(() => message = '$error');
+                        }
+                      },
+              ),
+            ],
+          ),
+        ],
+        const SizedBox(height: 12),
         TextField(
           onChanged: (v) => setState(() => search = v),
           decoration: const InputDecoration(
@@ -529,7 +667,11 @@ class _DevicesPageState extends State<DevicesPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        entry.saved?.endpoint ?? entry.peer.endpoint,
+                        entry.peer.origins.firstWhere(
+                          (value) =>
+                              value.startsWith('ble://') ==
+                              (method == ConnectionMethod.bluetooth),
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(

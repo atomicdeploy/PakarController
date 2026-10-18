@@ -1,5 +1,13 @@
 # PakarController mobile
 
+ESP32-S3 Bluetooth LE is a separate offline connection choice in Devices and
+connection settings. Android requests Nearby Devices (legacy Location) access,
+verifies INFO/full board identity, and routes normal controls/settings/live state
+through GATT without board HTTP fallback. The contextual Board Bluetooth LE
+switch persists the radio setting. Direct firmware binaries/raw streaming are
+not exposed over BLE; manual remote firmware jobs use the board updater.
+See [Bluetooth contract and acceptance](../docs/BLUETOOTH.md).
+
 The Devices page scans mDNS/DNS-SD, SSDP and MNDP into one searchable directory
 with saved local/remote profiles. Compatible observations merge by board ID,
 UDN, normalized MAC and IP/origin aliases; conflicting board IDs are not merged

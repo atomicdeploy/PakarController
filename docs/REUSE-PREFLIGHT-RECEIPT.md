@@ -1,5 +1,51 @@
 # Donor-first preflight receipt
 
+## ESP32-S3 Bluetooth LE
+
+Consulted network-cloud, mobile-network, peer-binding, donor-audit and the new
+bluetooth route. Fully read canonical PCController Session and Flutter
+PeerSession through EOF at the existing ledger hashes1311fdcde.../5263044d....
+The older ../repos Session copy has different bytes and is not substituted for
+the canonical review. Adapt actual single-inflight admission, final ownership,
+correlated receipts and synchronous retirement into main-loop GATT RPC and the
+existing Flutter API/UI. Reuse the shared command/configuration/updater and
+mirroring handlers; no duplicate LED engine or board HTTP loopback is introduced.
+Bundled Arduino-ESP323.3.12 NimBLE headers and scoped implementation blocks were
+read against primary Espressif/Android APIs. Bluetooth Classic/SPP/audio is not
+S3 hardware. Direct BLE binary firmware/raw streaming, protected/bonded BLE and
+automatic board-feed BLE policy remain explicit issue #20 gaps, not parity claims.
+
+Review fixed extra-owner notification leakage, stale queued authority, INFO
+host/loop String races, conflicting final-fragment reuse and lost tone-stop
+events. Ordered event loss revokes/resynchronizes; status alone is coalesced.
+Android retains healthy GATT on pause, blocks new background mutations, drains
+admitted protocol ACKs and preserves per-board workspace/selection. App updater
+and opt-in remote management remain independent of the selected board transport.
+
+The first focused mobile gate caught two redundant imports; analyzer and all9
+BLE cases now pass. The first wider run passed275/skipped2 but found a390px
+dropdown overflow and an old mirroring fixture skipping its own sequence after
+a foreign event. Compact expanded dropdown and correct own sequence fix those
+failures without weakening overflow or gap assertions; focused device-directory
+and mirroring files each pass7 cases. This is source/loopback proof, not phone RF.
+
+Current main CI39160022601 exposed actual ESP8266 DRAM overflow and unsupported
+byte atomic exchange in the prior completion mailbox. Reread actual PU850
+AsyncOTA.cpp, UpdateProgress, LoopMessages and fixtures. Adapt the existing
+ESP8266 InterruptLock completion publication and bound its cooperative ingress
+to4 complete messages (S3 remains8); preserve explicit overflow rejection/FIFO.
+Both host publication branches and queue fixtures pass; real ESP8266 busy-wire
+link now passes with77552/80192 DRAM and1024792/1048576 flash bytes. The margins
+are small; this is not a deployment or memory-soak claim for ESP8266.
+
+Gates correctly refused moving API/firmware hashes during concurrent source
+work; builds waited for frozen source and rereviewed bindings, not bypasses.
+The new Windows read-only BLE probe hit two real PowerShell WinRT projection
+limits. Primary Microsoft watcher APIs and installed WinMetadata/.NET event
+subscription replaced unsupported RCW Add/Register-ObjectEvent calls. Actual
+ASUS scan starts and returns zero candidates before the new firmware. It does
+not pair, connect, change the adapter or establish board/phone BLE acceptance.
+
 ## Client updates, enrollment and temporary office service
 
 Reviewed the actual existing Android package/coordinator/native channel and

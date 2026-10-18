@@ -1,5 +1,9 @@
 # HTTP and streaming API
 
+ESP32-S3 also exposes the same living command/state contract through a selected
+Bluetooth LE control transport. See [Bluetooth LE](BLUETOOTH.md) for its GATT
+attributes, exact advertised routes, ownership rules and explicit binary limits.
+
 Client self-updates, enrollment, remote operational telemetry and bounded client
 management use a separate configurable unversioned service. See
 [Client management](CLIENT-MANAGEMENT.md) for its routes, controls and live

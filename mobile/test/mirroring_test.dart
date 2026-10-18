@@ -177,15 +177,15 @@ void main() {
       time = 50000;
       await tester.pump(const Duration(milliseconds: 50));
       expect(output.notes, [(880, 125)]);
-      actual.event(toneEvent(4, 440, 100, at: 200000, observed: 200000));
-      actual.event(toneEvent(5, 0, 0));
+      actual.event(toneEvent(3, 440, 100, at: 200000, observed: 200000));
+      actual.event(toneEvent(4, 0, 0));
       time = 300000;
       await tester.pump(const Duration(milliseconds: 300));
       expect(output.notes, [(880, 125), (0, 0)]);
       actual.observe(mirroredPeer(session: 2), 1);
       expect(actual.buzzerEnabled, false);
       expect(output.stops, 1);
-      actual.event(toneEvent(6, 2000, 100));
+      actual.event(toneEvent(5, 2000, 100));
       await tester.pump(const Duration(milliseconds: 100));
       expect(output.notes.length, 2);
       actual.observe(null, 1);

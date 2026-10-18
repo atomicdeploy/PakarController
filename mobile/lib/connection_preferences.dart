@@ -58,9 +58,17 @@ class ConnectionPreferences {
   final SecretStore secrets;
 
   Future<void> restore(PakarApi api) async {
-    api.baseUrl = PakarApi.normalizeEndpoint(
+    final endpoint = PakarApi.normalizeEndpoint(
       preferences.getString('endpoint') ?? 'http://ledboard.local',
     );
+    if (endpoint.startsWith('ble://')) {
+      api.connectionMethod = ConnectionMethod.bluetooth;
+      api.expectedBluetoothBoard =
+          preferences.getString('bluetooth_board_id') ?? '';
+    } else if (preferences.getString('connection_method') == 'network') {
+      api.connectionMethod = ConnectionMethod.network;
+    }
+    api.baseUrl = endpoint;
     api.user = preferences.getString('user') ?? 'admin';
     var password = await secrets.read();
     final legacy = preferences.getString('password');
@@ -77,13 +85,31 @@ class ConnectionPreferences {
     api.resetTransport();
   }
 
-  Future<void> save(String endpoint, String user, String password) async {
+  Future<void> save(
+    String endpoint,
+    String user,
+    String password, {
+    String bluetoothBoard = '',
+  }) async {
     final normalized = PakarApi.normalizeEndpoint(endpoint);
     if (user.length > 96 || password.length > 256) {
       throw const FormatException('Credentials exceed their limits');
     }
     await secrets.write(password); // Never fall back to plaintext persistence.
     await preferences.setString('endpoint', normalized);
+    await preferences.setString(
+      'connection_method',
+      normalized.startsWith('ble://') ? 'bluetooth' : 'network',
+    );
+    await preferences.setString(
+      normalized.startsWith('ble://')
+          ? 'last_bluetooth_endpoint'
+          : 'last_network_endpoint',
+      normalized,
+    );
+    if (normalized.startsWith('ble://')) {
+      await preferences.setString('bluetooth_board_id', bluetoothBoard);
+    }
     await preferences.setString('user', user.trim());
     await preferences.remove('password');
   }

@@ -116,6 +116,8 @@ class _ControlShellState extends State<ControlShell>
     mirror.addListener(_mirrorPreferencesChanged);
     connectionDraft.addListener(_scheduleWorkspaceSave);
     api.onPeripheralEvent = mirror.event;
+    api.onPeripheralStreamLost = () =>
+        mirror.observe(null, api.connectionRevision);
     api.onTransportRetired = () {
       mirror.observe(null, api.connectionRevision);
       if (mounted) {
@@ -211,6 +213,9 @@ class _ControlShellState extends State<ControlShell>
             }
             if (connection['method'] == 'network') {
               api.connectionMethod = ConnectionMethod.network;
+            }
+            if (connection['method'] == 'bluetooth') {
+              api.connectionMethod = ConnectionMethod.bluetooth;
             }
             if (connection['wanted'] == false) api.disconnect();
           }
@@ -334,6 +339,9 @@ class _ControlShellState extends State<ControlShell>
       }
       ended = true;
       liveActive = false;
+      if (api.isBluetooth) {
+        _revoke('Bluetooth connection lost');
+      }
       // A failed WS does not invalidate a still-fresh authenticated HTTP
       // snapshot. Its own lease expires if the fallback read also fails.
       if (foreground) _retryLive();
@@ -621,6 +629,7 @@ class _ControlShellState extends State<ControlShell>
     String user,
     String password, {
     bool verifyCredentialChange = true,
+    String bluetoothBoard = '',
   }) async {
     if (!mounted || owner != api.connectionRevision) {
       throw const StaleConnection();
@@ -629,7 +638,13 @@ class _ControlShellState extends State<ControlShell>
     // A acknowledged identity/credential operation may close the old socket
     // before its HTTP ACK arrives. Connection revision, not that dead socket,
     // owns this explicit handoff. Never apply it to a replacement connection.
-    api.baseUrl = endpoint;
+    api.selectTransport(
+      endpoint.startsWith('ble://')
+          ? ConnectionMethod.bluetooth
+          : ConnectionMethod.network,
+      endpoint,
+      board: bluetoothBoard,
+    );
     api.user = user;
     api.password = password;
     final adopted = api.connectionRevision;
@@ -639,11 +654,12 @@ class _ControlShellState extends State<ControlShell>
       if (!mounted || adopted != api.connectionRevision) {
         throw const StaleConnection();
       }
-      await ConnectionPreferences(preferences).save(endpoint, user, password);
+      await ConnectionPreferences(preferences)
+          .save(endpoint, user, password, bluetoothBoard: bluetoothBoard);
       if (!mounted || adopted != api.connectionRevision) {
         throw const StaleConnection();
       }
-      if (changedLogin && verifyCredentialChange) {
+      if (changedLogin && verifyCredentialChange && !api.isBluetooth) {
         final actual = await api.getJson('/api/auth');
         if (actual['username'] != user || actual['password_set'] != true) {
           throw const FormatException(
@@ -950,18 +966,21 @@ class _ControlShellState extends State<ControlShell>
               reconnect: _reconnect,
               active: page == 'connection' && foreground,
               draft: connectionDraft,
+              openDevices: () => _navigate('devices'),
             ),
             'devices' =>
               page != 'devices'
                   ? const SizedBox.shrink(key: ValueKey('devices-hidden'))
                   : DevicesPage(
+                      api: api,
                       select: (device, password) async {
                         await _adoptConnection(
-                          owner,
+                          api.connectionRevision,
                           device.endpoint,
                           device.user,
                           password,
                           verifyCredentialChange: false,
+                          bluetoothBoard: device.boardId,
                         );
                         if (mounted) _navigate('overview');
                       },
@@ -2527,11 +2546,13 @@ class SettingsPage extends StatefulWidget {
     required this.reconnect,
     this.active = true,
     this.draft,
+    this.openDevices,
   });
   final PakarApi api;
   final Future<void> Function() reconnect;
   final bool active;
   final ConnectionDraft? draft;
+  final VoidCallback? openDevices;
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
@@ -2594,67 +2615,132 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       BoardSoundPreferences(api: widget.api, active: widget.active),
       WorkspaceSection(
-        title: 'Network connection',
+        title: 'Board connection',
         icon: PakarIcons.link,
         children: [
-          TextField(
-            controller: endpoint,
-            onChanged: edited,
+          DropdownButtonFormField<ConnectionMethod>(
+            key: ValueKey(widget.api.connectionMethod),
+            initialValue: widget.api.connectionMethod == ConnectionMethod.usb
+                ? null
+                : widget.api.connectionMethod,
             decoration: const InputDecoration(
-              labelText: 'Device hostname or URL',
+              labelText: 'One selected transport',
             ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: user,
-            onChanged: edited,
-            decoration: const InputDecoration(labelText: 'User'),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: password,
-            obscureText: true,
-            decoration: const InputDecoration(labelText: 'Password (optional)'),
+            items: const [
+              DropdownMenuItem(
+                value: ConnectionMethod.network,
+                child: Text('Network · Wi-Fi / Ethernet'),
+              ),
+              DropdownMenuItem(
+                value: ConnectionMethod.bluetooth,
+                child: Text('Bluetooth LE · offline board control'),
+              ),
+            ],
+            onChanged: saving
+                ? null
+                : (value) async {
+                    if (value == null) return;
+                    final preferences = await SharedPreferences.getInstance();
+                    if (!mounted) return;
+                    final previous =
+                        preferences.getString(
+                          value == ConnectionMethod.bluetooth
+                              ? 'last_bluetooth_endpoint'
+                              : 'last_network_endpoint',
+                        ) ??
+                        (value == ConnectionMethod.network
+                            ? 'http://ledboard.local'
+                            : null);
+                    if (previous == null) {
+                      widget.openDevices?.call();
+                      return;
+                    }
+                    widget.api.selectTransport(
+                      value,
+                      previous,
+                      board: value == ConnectionMethod.bluetooth
+                          ? preferences.getString('bluetooth_board_id') ?? ''
+                          : '',
+                    );
+                    endpoint.text = previous;
+                    if (mounted) setState(() {});
+                  },
           ),
           const SizedBox(height: 12),
-          if (error != null)
-            Text(
-              error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+          if (widget.api.isBluetooth) ...[
+            SelectableText(
+              widget.api.baseUrl.startsWith('ble://')
+                  ? widget.api.baseUrl
+                  : 'Select a Pakar Bluetooth board',
             ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.icon(
-              onPressed: saving
-                  ? null
-                  : () async {
-                      setState(() {
-                        saving = true;
-                        error = null;
-                      });
-                      try {
-                        final prefs = await SharedPreferences.getInstance();
-                        final settings = ConnectionPreferences(prefs);
-                        await settings.save(
-                          endpoint.text,
-                          user.text,
-                          password.text,
-                        );
-                        await settings.restore(widget.api);
-                        widget.draft?.clear();
-                        await widget.reconnect();
-                      } on Exception catch (failure) {
-                        if (mounted) {
-                          setState(() => error = failure.toString());
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: widget.openDevices,
+              icon: const Icon(PakarIcons.radio),
+              label: const Text('Choose Bluetooth board'),
+            ),
+          ] else ...[
+            TextField(
+              controller: endpoint,
+              onChanged: edited,
+              decoration: const InputDecoration(
+                labelText: 'Device hostname or URL',
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: user,
+              onChanged: edited,
+              decoration: const InputDecoration(labelText: 'User'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: password,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Password (optional)',
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (error != null)
+              Text(
+                error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.icon(
+                onPressed: saving
+                    ? null
+                    : () async {
+                        setState(() {
+                          saving = true;
+                          error = null;
+                        });
+                        try {
+                          final prefs = await SharedPreferences.getInstance();
+                          final settings = ConnectionPreferences(prefs);
+                          await settings.save(
+                            endpoint.text,
+                            user.text,
+                            password.text,
+                          );
+                          await settings.restore(widget.api);
+                          widget.draft?.clear();
+                          await widget.reconnect();
+                        } on Exception catch (failure) {
+                          if (mounted) {
+                            setState(() => error = failure.toString());
+                          }
+                        } finally {
+                          if (mounted) setState(() => saving = false);
                         }
-                      } finally {
-                        if (mounted) setState(() => saving = false);
-                      }
-                    },
-              icon: const Icon(PakarIcons.floppyDisk),
-              label: const Text('Save and reconnect'),
+                      },
+                icon: const Icon(PakarIcons.floppyDisk),
+                label: const Text('Save and reconnect'),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     ],

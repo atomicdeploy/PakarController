@@ -161,15 +161,24 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
         session.pending) {
       return;
     }
-    if (widget.authorized('network')) {
+    if (widget.authorized('network') &&
+        widget.api.supportsRoute('GET', '/api/network')) {
       await session.load(SettingsGroup.network);
       if (!mounted || !widget.active || !widget.authorized('network')) return;
-      await session.load(SettingsGroup.cloud);
+      if (widget.api.supportsRoute('GET', '/api/cloud')) {
+        await session.load(SettingsGroup.cloud);
+      }
     }
-    if (mounted && identity == null && widget.authorized('identity')) {
+    if (mounted &&
+        identity == null &&
+        widget.authorized('identity') &&
+        widget.api.supportsRoute('GET', '/api/device/name')) {
       await loadIdentity();
     }
-    if (mounted && access == null && widget.authorized('network')) {
+    if (mounted &&
+        access == null &&
+        widget.authorized('network') &&
+        !widget.api.isBluetooth) {
       await loadAccess();
     }
   }
@@ -227,6 +236,55 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
     if (access == null) login.text = value['username'];
     access = value;
   });
+  Future<void> configureBluetooth(bool enabled) async {
+    if (working || session.pending) return;
+    final owner = widget.api.connectionRevision;
+    final overBluetooth = widget.api.isBluetooth;
+    if (!enabled &&
+        overBluetooth &&
+        !await confirm(
+          'Disable Bluetooth?',
+          'This board will disconnect. Use Network to enable it again.',
+        )) {
+      return;
+    }
+    if (!mounted || owner != widget.api.connectionRevision) return;
+    setState(() => working = true);
+    try {
+      final actual = await widget.api.postJson(
+        '/api/ble',
+        {'enabled': '$enabled'},
+        authorize: () =>
+            mounted &&
+            owner == widget.api.connectionRevision &&
+            widget.api.connectionWanted,
+      );
+      if (actual['enabled'] != enabled ||
+          owner != widget.api.connectionRevision) {
+        throw const OperationUncertain();
+      }
+      if (!enabled && overBluetooth) {
+        widget.api.disconnect();
+      } else {
+        final observed = await widget.api.getJson('/api/ble');
+        if (observed['enabled'] != enabled ||
+            owner != widget.api.connectionRevision) {
+          throw const OperationUncertain();
+        }
+        await widget.api.status();
+      }
+      if (mounted) {
+        setState(
+          () => info = enabled ? 'Bluetooth enabled' : 'Bluetooth disabled',
+        );
+      }
+    } on Object catch (error) {
+      if (mounted) setState(() => info = '$error');
+    } finally {
+      if (mounted) setState(() => working = false);
+    }
+  }
+
   Future<bool> confirm(String title, String detail) async =>
       await showDialog<bool>(
         context: context,
@@ -577,11 +635,12 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
           publicField(group, 'ap_enabled', 'Recovery AP enabled'),
           const SizedBox(height: 8),
           publicField(group, 'station_ssid', 'Station SSID'),
-          OutlinedButton.icon(
-            onPressed: working || session.pending ? null : scan,
-            icon: const Icon(PakarIcons.wifiHigh),
-            label: const Text('Scan Wi-Fi'),
-          ),
+          if (widget.api.supportsRoute('GET', '/api/wifi/scan'))
+            OutlinedButton.icon(
+              onPressed: working || session.pending ? null : scan,
+              icon: const Icon(PakarIcons.wifiHigh),
+              label: const Text('Scan Wi-Fi'),
+            ),
           if (ssids.isNotEmpty)
             DropdownButtonFormField<String>(
               isExpanded: true,
@@ -791,6 +850,16 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
     _ => card('Observed device', [
       Text(widget.status.peer.name),
       Text('${widget.status.hostname}.local'),
+      if (widget.api.latestStatus?.json['ble'] case final Map ble
+          when ble['configured'] == true && ble['enabled'] is bool)
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Board Bluetooth LE'),
+          value: ble['enabled'] as bool,
+          onChanged: working || session.pending || !widget.api.connectionWanted
+              ? null
+              : configureBluetooth,
+        ),
       for (final entry in widget.status.observedBuildInformation.entries)
         Text('${entry.key}: ${entry.value}'),
       const SizedBox(height: 12),
@@ -813,7 +882,9 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   };
   @override
   Widget build(BuildContext context) {
-    final pages = widget.status.deviceSettingsPages;
+    final pages = widget.status.deviceSettingsPages
+        .where((entry) => !widget.api.isBluetooth || entry['id'] != 'access')
+        .toList();
     final pageAvailable = pages.any((p) => p['id'] == page);
     final visible = pages
         .where(

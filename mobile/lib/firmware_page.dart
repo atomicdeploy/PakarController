@@ -706,35 +706,38 @@ class _FirmwarePageState extends State<FirmwarePage>
             ],
           ),
         ]),
-        card('Firmware file URL', [
-          TextField(
-            controller: fileUrl,
-            enabled: !working,
-            autocorrect: false,
-            decoration: const InputDecoration(labelText: 'HTTP(S) binary URL'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: fileHash,
-            enabled: !working,
-            autocorrect: false,
-            decoration: const InputDecoration(labelText: 'File SHA-256'),
-          ),
-          if (isp && ota)
-            SwitchListTile.adaptive(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('AVR image · stage only'),
-              value: fileAvr,
-              onChanged: working ? null : (v) => setState(() => fileAvr = v),
+        if (widget.api.supportsBinaryFirmware)
+          card('Firmware file URL', [
+            TextField(
+              controller: fileUrl,
+              enabled: !working,
+              autocorrect: false,
+              decoration: const InputDecoration(
+                labelText: 'HTTP(S) binary URL',
+              ),
             ),
-          const SizedBox(height: 12),
-          button(
-            'Download and upload',
-            PakarIcons.cloud,
-            uploadUrl,
-            enabled: free,
-          ),
-        ]),
+            const SizedBox(height: 12),
+            TextField(
+              controller: fileHash,
+              enabled: !working,
+              autocorrect: false,
+              decoration: const InputDecoration(labelText: 'File SHA-256'),
+            ),
+            if (isp && ota)
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('AVR image · stage only'),
+                value: fileAvr,
+                onChanged: working ? null : (v) => setState(() => fileAvr = v),
+              ),
+            const SizedBox(height: 12),
+            button(
+              'Download and upload',
+              PakarIcons.cloud,
+              uploadUrl,
+              enabled: free,
+            ),
+          ]),
         card('Remote firmware · pinned manifest', [
           const Text(
             'HTTPS download → verified staging → explicit apply → post-boot pair verification. No automatic replay.',
@@ -865,7 +868,7 @@ class _FirmwarePageState extends State<FirmwarePage>
               'Outcome needs inspection. Only explicit Refresh unlocks a new decision; no retry is queued.',
             ),
         ]),
-        if (isp)
+        if (isp && widget.api.supportsBinaryFirmware)
           card('AVR ISP · complete flash and EEPROM', [
             const Text(
               'These maintenance actions reset AVR. Exported backups include all flash/Urboot or all EEPROM, not partial application data.',
@@ -916,7 +919,7 @@ class _FirmwarePageState extends State<FirmwarePage>
             if (staged.isNotEmpty) Text('Last local stage: $staged'),
             if (stagedDigest.isNotEmpty) SelectableText(stagedDigest),
           ]),
-        if (ota)
+        if (ota && widget.api.supportsBinaryFirmware)
           card('Manual ESP OTA', [
             const Text(
               'Import a complete application binary for this ESP. The device restarts after updating.',

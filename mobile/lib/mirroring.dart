@@ -250,6 +250,12 @@ class PeripheralMirror extends ChangeNotifier {
     }
     final id = event['event_id'];
     if (id is! int || id <= _lastEvent || id > 0xffffffff) return;
+    if (_lastEvent != 0 && id != _lastEvent + 1) {
+      // A missing ToneStop must not leave old audio running. The first event
+      // after subscription may legitimately start at any global sequence ID.
+      observe(null, 0);
+      return;
+    }
     _lastEvent = id;
     final payload = event['payload_hex'];
     if (event['response_opcode'] == 0x9c &&

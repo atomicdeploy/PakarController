@@ -74,20 +74,40 @@ class Completion {
  public:
   struct Intent {uint32_t operation=0,bytes=0;char md5[33]{};};
   void publish(uint32_t operation,uint32_t bytes,const char *md5) {
+#if defined(ARDUINO_ARCH_ESP8266)
+    // LX106 has no byte atomic exchange runtime. As with Progress, the
+    // cooperative callback/loop boundary needs only this tiny interrupt lock.
+    esp8266::InterruptLock lock;
+    intent_.operation=operation;intent_.bytes=bytes;
+    bool ended=!md5;
+    for(unsigned i=0;i<32;++i){const char c=ended?0:md5[i];ended=ended || !c;intent_.md5[i]=c;}
+    intent_.md5[32]=0;ready_=true;
+#else
     operation_.store(operation);bytes_.store(bytes);
     bool ended=!md5;
     for(unsigned i=0;i<32;++i){const uint8_t c=ended?0:uint8_t(md5[i]);ended=ended || !c;md5_[i].store(c);}
     ready_.store(true);
+#endif
   }
   bool take(Intent &out) {
+#if defined(ARDUINO_ARCH_ESP8266)
+    esp8266::InterruptLock lock;
+    if(!ready_)return false;
+    out=intent_;ready_=false;return true;
+#else
     if(!ready_.exchange(false))return false;
     out.operation=operation_.load();out.bytes=bytes_.load();
     for(unsigned i=0;i<32;++i)out.md5[i]=char(md5_[i].load());
     out.md5[32]=0;return true;
+#endif
   }
  private:
+#if defined(ARDUINO_ARCH_ESP8266)
+  Intent intent_{};bool ready_=false;
+#else
   std::atomic<bool> ready_{false};
   std::atomic<uint32_t> operation_{0},bytes_{0};std::atomic<uint8_t> md5_[32]{};
+#endif
 };
 // Exact raw file size, NOT multipart Content-Length or OTA partition capacity.
 inline bool imageSize(const char *text, uint32_t capacity, uint32_t &out) {

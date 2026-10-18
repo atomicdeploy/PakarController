@@ -14,8 +14,9 @@ import 'board_sound.dart';
 import 'lan_resolver.dart';
 import 'command_wire.dart';
 import 'pixel_diagnostic.dart';
+import 'ble_transport.dart';
 
-enum ConnectionMethod { network, usb }
+enum ConnectionMethod { network, usb, bluetooth }
 
 class PakarApi {
   PakarApi({
@@ -24,9 +25,11 @@ class PakarApi {
     String password = '',
     http.Client? client,
     LanResolver? resolver,
+    PakarBleTransport? bluetooth,
     this.discovery,
     this.readTimeout = const Duration(seconds: 6),
   }) : resolver = resolver ?? LanResolver(),
+       bluetooth = bluetooth ?? PakarBleTransport(),
        _baseUrl = normalizeEndpoint(baseUrl),
        // Preserve public argument names; private setters own revisions.
        // ignore: prefer_initializing_formals
@@ -38,6 +41,9 @@ class PakarApi {
       throw ArgumentError.value(readTimeout, 'readTimeout');
     }
     _client = client ?? IOClient(_ioClient);
+    if (_baseUrl.startsWith('ble://')) {
+      _connectionMethod = ConnectionMethod.bluetooth;
+    }
   }
 
   String _baseUrl, _user, _password;
@@ -60,7 +66,7 @@ class PakarApi {
   // HTTP/WS connection, discovery, or a remote bridge for explicit USB intent.
   void _requireNetwork() {
     if (!_connectionWanted) throw const ConnectionStopped();
-    if (_connectionMethod != ConnectionMethod.network) {
+    if (_connectionMethod == ConnectionMethod.usb) {
       throw const FormatException(
         'Direct Android USB is not available in this build; no network fallback was attempted',
       );
@@ -77,9 +83,29 @@ class PakarApi {
     resetTransport();
   }
 
+  void selectTransport(
+    ConnectionMethod method,
+    String endpoint, {
+    String board = '',
+  }) {
+    final normalized = normalizeEndpoint(endpoint);
+    if (method == ConnectionMethod.usb ||
+        (method == ConnectionMethod.bluetooth) !=
+            normalized.startsWith('ble://')) {
+      throw const FormatException('Select an endpoint for this transport');
+    }
+    _connectionWanted = false;
+    _connectionMethod = method;
+    _baseUrl = normalized;
+    expectedBluetoothBoard = board;
+    _identityRequired = false;
+    resetTransport();
+  }
+
   void Function()? onPeerChanged;
   void Function()? onTransportRetired;
   void Function(Map<String, dynamic>)? onPeripheralEvent;
+  void Function()? onPeripheralStreamLost;
   bool _identityRequired = false;
   String get baseUrl => _baseUrl;
   set baseUrl(String value) {
@@ -109,6 +135,19 @@ class PakarApi {
 
   late final http.Client _client;
   final LanResolver resolver;
+  final PakarBleTransport bluetooth;
+  String expectedBluetoothBoard = '';
+  bool get isBluetooth => connectionMethod == ConnectionMethod.bluetooth;
+  bool get supportsBinaryFirmware =>
+      connectionMethod == ConnectionMethod.network;
+  bool supportsRoute(String method, String path) {
+    if (!isBluetooth) return connectionMethod == ConnectionMethod.network;
+    final ble = _latestStatus?.json['ble'];
+    return ble is Map &&
+        ble['routes'] is List &&
+        (ble['routes'] as List).contains('$method $path');
+  }
+
   late final HttpClient _ioClient = resolver.createClient();
   final Future<Set<String>> Function()? discovery;
   final Duration readTimeout;
@@ -124,7 +163,9 @@ class PakarApi {
   Duration? get liveSilence => _liveAge?.elapsed ?? _socketAge?.elapsed;
   final _commandReplies = <String, Completer<Map<String, dynamic>?>>{};
   bool get liveFresh =>
-      _socketReady && _liveAge != null && _liveAge!.elapsedMilliseconds < 4000;
+      (isBluetooth ? bluetooth.ready : _socketReady) &&
+      _liveAge != null &&
+      _liveAge!.elapsedMilliseconds < 4000;
 
   Uri get webSocketUri {
     final source = Uri.parse(transportUrl);
@@ -139,6 +180,16 @@ class PakarApi {
 
   /// A resume probe is a read on the existing socket, not a new connection.
   bool requestLiveStatus() {
+    if (isBluetooth) {
+      if (!_connectionWanted ||
+          !bluetooth.ready ||
+          bluetooth.busy ||
+          !appForeground) {
+        return false;
+      }
+      unawaited(status().then<void>((_) {}, onError: (Object _) {}));
+      return true;
+    }
     if (!_connectionWanted || !_socketReady || _channel == null) return false;
     _channel!.sink.add('{"type":"status"}');
     return true;
@@ -302,9 +353,33 @@ class PakarApi {
     if (revision != connectionRevision || !authorize()) {
       throw const StaleConnection();
     }
+    if (isBluetooth) {
+      final clock = await _freshBluetoothClock();
+      snapshot = DeviceStatus({...snapshot!.json, 'command_clock_ms': clock});
+      if (revision != connectionRevision || !authorize()) {
+        throw const StaleConnection();
+      }
+    }
     final packet = commandPacket(snapshot!, path, values);
     final id = (jsonDecode(packet) as Map)['request_id'] as String;
     Map<String, dynamic>? reply;
+    if (isBluetooth) {
+      _retireStatusRead();
+      try {
+        reply = await _bleRequest('POST', '/api/command', {
+          'packet': packet,
+        }, authorize: authorize);
+      } finally {
+        _retireStatusRead();
+      }
+      if (revision != connectionRevision || !authorize()) {
+        throw const StaleConnection();
+      }
+      final actual = verifyCommandReply(reply, packet, path, values);
+      _acceptIdentity(actual.json);
+      _rememberStatus(actual);
+      return actual;
+    }
     if (_socketReady && _channel != null) {
       final pending = Completer<Map<String, dynamic>?>();
       _commandReplies[id] = pending;
@@ -372,6 +447,11 @@ class PakarApi {
 
   static String normalizeEndpoint(String value) {
     final text = value.trim();
+    if (text.startsWith('ble://')) {
+      return PakarBleTransport.endpoint(
+        PakarBleTransport.addressFromEndpoint(text),
+      );
+    }
     final uri = Uri.tryParse(text.contains('://') ? text : 'http://$text');
     if (uri == null ||
         !['http', 'https'].contains(uri.scheme) ||
@@ -490,6 +570,7 @@ class PakarApi {
 
   Future<Map<String, dynamic>> _get(String path) async {
     _requireNetwork();
+    if (isBluetooth) return _bleRequest('GET', path, const {});
     final revision = connectionRevision, headers = _headers;
     final response = await _withDiscovery(
       (base) => _readResponse(base, path, headers),
@@ -522,6 +603,23 @@ class PakarApi {
     required bool Function() authorize,
   }) async {
     _requireNetwork();
+    if (isBluetooth) {
+      if (upload != null ||
+          verifySketch ||
+          !supportsRoute(post ? 'POST' : 'GET', Uri.parse(path).path)) {
+        throw const FormatException(
+          'This Bluetooth peer does not advertise binary firmware transfer or this maintenance route',
+        );
+      }
+      if (!authorize()) throw const StaleConnection();
+      final value = await _bleRequest(
+        post ? 'POST' : 'GET',
+        path,
+        form,
+        authorize: authorize,
+      );
+      return Uint8List.fromList(utf8.encode(jsonEncode(value)));
+    }
     final revision = connectionRevision;
     if (_verifiedEndpoint != baseUrl) await status();
     if (revision != connectionRevision || !authorize()) {
@@ -674,6 +772,9 @@ class PakarApi {
     bool Function()? authorize,
   }) async {
     _requireNetwork();
+    if (isBluetooth) {
+      return _bleRequest('POST', path, values, authorize: authorize);
+    }
     final revision = connectionRevision;
     if (_verifiedEndpoint != baseUrl) await status();
     if (revision != connectionRevision || authorize?.call() == false) {
@@ -710,6 +811,10 @@ class PakarApi {
     Map<String, String> values = const {},
   ]) async {
     _requireNetwork();
+    if (isBluetooth) {
+      await _bleRequest('POST', path, values);
+      return;
+    }
     final revision = connectionRevision;
     // Resolve/verify through a read first; a POST must never be automatically
     // replayed after a timeout or disconnect (the board may have applied it).
@@ -869,8 +974,10 @@ class PakarApi {
                 )
                 ..headers.addAll(_writeHeaders)
                 ..followRedirects = false;
-          await http.Response.fromStream(await _client.send(request))
-              .timeout(const Duration(seconds: 4));
+          if (!isBluetooth) {
+            await http.Response.fromStream(await _client.send(request))
+                .timeout(const Duration(seconds: 4));
+          }
           admit();
           if (response == 0x82) {
             throw const FormatException(
@@ -917,6 +1024,10 @@ class PakarApi {
 
   Stream<DeviceStatus> liveStatus() async* {
     _requireNetwork();
+    if (isBluetooth) {
+      yield* _liveBluetooth();
+      return;
+    }
     final revision = connectionRevision;
     // A same-origin socket may establish identity from its first full status.
     // Do not make working real-time control depend on a slow HTTP preflight.
@@ -1022,6 +1133,233 @@ class PakarApi {
     }
   }
 
+  Future<void> _ensureBluetooth() async {
+    _requireNetwork();
+    final owner = connectionRevision, endpoint = baseUrl;
+    if (!isBluetooth) throw const StaleConnection();
+    await bluetooth.connect(
+      PakarBleTransport.addressFromEndpoint(endpoint),
+      expectedBoard: expectedBluetoothBoard,
+    );
+    if (owner != connectionRevision ||
+        !isBluetooth ||
+        endpoint != baseUrl ||
+        !connectionWanted) {
+      throw const StaleConnection();
+    }
+  }
+
+  Future<Map<String, dynamic>> _bleRequest(
+    String method,
+    String path,
+    Map<String, String> values, {
+    bool Function()? authorize,
+  }) async {
+    final owner = connectionRevision;
+    if (method == 'POST' && !appForeground) throw const ConnectionStopped();
+    await _ensureBluetooth();
+    final uri = Uri.parse(path);
+    final bootstrap = method == 'GET' && uri.path == '/api/status';
+    if (!bootstrap &&
+        (_latestStatus == null ||
+            method == 'POST' &&
+                (_statusAge?.elapsedMilliseconds ?? 9999) >= 2000)) {
+      await status();
+    }
+    if (owner != connectionRevision ||
+        !isBluetooth ||
+        !connectionWanted ||
+        authorize?.call() == false) {
+      throw const StaleConnection();
+    }
+    if (!bootstrap && !supportsRoute(method, uri.path)) {
+      throw const FormatException(
+        'This Bluetooth board does not advertise that operation',
+      );
+    }
+    var clock = _latestStatus?.json['command_clock_ms'];
+    if (method == 'POST' &&
+        (_verifiedBoard == null ||
+            _verifiedBoot == null ||
+            clock is! int ||
+            clock < 0)) {
+      throw const StaleConnection();
+    }
+    if (method == 'POST') clock = await _freshBluetoothClock();
+    if (owner != connectionRevision ||
+        authorize?.call() == false ||
+        method == 'POST' && !appForeground) {
+      throw const StaleConnection();
+    }
+    try {
+      final response = await bluetooth.request(
+        method,
+        uri.path,
+        {...uri.queryParameters, ...values},
+        board: _verifiedBoard ?? '',
+        boot: _verifiedBoot ?? '',
+        expires: method == 'POST' ? (clock as int) + 8000 : 0,
+      );
+      if (owner != connectionRevision ||
+          !isBluetooth ||
+          authorize?.call() == false) {
+        throw const StaleConnection();
+      }
+      if (response.status == 401) throw const AuthenticationRequired();
+      if (response.status ~/ 100 != 2) {
+        throw FormatException(
+          'Bluetooth device $method rejected (${response.status}); not retried',
+        );
+      }
+      if (bootstrap) {
+        final status = DeviceStatus(response.body);
+        if (!status.peer.known ||
+            response.body['board_id'] != bluetooth.boardId ||
+            response.body['boot_id'] != bluetooth.bootId) {
+          throw const FormatException(
+            'Bluetooth full board/application identity is not verified',
+          );
+        }
+      }
+      return response.body;
+    } on StaleConnection {
+      rethrow;
+    } on AuthenticationRequired {
+      rethrow;
+    } on FormatException {
+      rethrow;
+    } on BleBusy {
+      rethrow;
+    } on Exception {
+      if (method == 'POST') throw const OperationUncertain();
+      rethrow;
+    } finally {
+      if (owner == connectionRevision && isBluetooth && !bluetooth.ready) {
+        onPeripheralStreamLost?.call();
+      }
+    }
+  }
+
+  Future<int> _freshBluetoothClock() async {
+    final value = await _bleRequest('GET', '/api/ble/clock', const {});
+    final clock = value['command_clock_ms'];
+    if (value['board_id'] != _verifiedBoard ||
+        value['boot_id'] != _verifiedBoot ||
+        clock is! int ||
+        clock < 0 ||
+        clock > 0x1fffffffffffff - 8000) {
+      throw const StaleConnection();
+    }
+    return clock;
+  }
+
+  Stream<DeviceStatus> _liveBluetooth() async* {
+    final owner = connectionRevision;
+    await _ensureBluetooth();
+    final updates = StreamController<DeviceStatus>();
+    Timer? poll;
+    bool retired = false;
+    void accept(Map<String, dynamic> value) {
+      if (retired ||
+          owner != connectionRevision ||
+          !isBluetooth ||
+          !connectionWanted) {
+        return;
+      }
+      if (value['board_id'] != bluetooth.boardId ||
+          value['boot_id'] != bluetooth.bootId) {
+        return;
+      }
+      final event = value['type'] == 'ble-event'
+          ? value['event']
+          : value['type'];
+      final body = value['type'] == 'ble-event' ? value['body'] : value;
+      if (body is! Map<String, dynamic>) return;
+      if (event == 'update-progress') {
+        final next = _latestStatus?.withUpgradeEvent(body);
+        if (next != null) {
+          _latestStatus = next;
+          if (!_statusUpdates.isClosed) _statusUpdates.add(next);
+        }
+        return;
+      }
+      if (event == 'pc-contract-event' || event == 'pc-contract-result') {
+        onPeripheralEvent?.call(body);
+        return;
+      }
+      final raw = event == 'status' || value['type'] != 'ble-event'
+          ? body
+          : null;
+      if (raw is! Map<String, dynamic> ||
+          raw['hostname'] is! String ||
+          raw['board_id'] != bluetooth.boardId ||
+          raw['boot_id'] != bluetooth.bootId) {
+        return;
+      }
+      try {
+        if (_acceptIdentity(raw)) return;
+        final actual = DeviceStatus(raw);
+        if (!actual.peer.known || !_rememberStatus(actual)) return;
+        _verifiedEndpoint = baseUrl;
+        _liveAge = Stopwatch()..start();
+        updates.add(_latestStatus!);
+      } on Object catch (error) {
+        updates.addError(error);
+      }
+    }
+
+    final subscription = bluetooth.events.stream.listen(
+      accept,
+      onError: (Object error) {
+        if (!retired && owner == connectionRevision && isBluetooth) {
+          onPeripheralStreamLost?.call();
+          updates.addError(error);
+        }
+      },
+    );
+    try {
+      final initial = await status();
+      if (owner != connectionRevision) return;
+      _socketAge = Stopwatch()..start();
+      _liveAge = Stopwatch()..start();
+      updates.add(initial);
+      final ble = initial.json['ble'];
+      final push =
+          ble is Map &&
+          ble['push'] is List &&
+          (ble['push'] as List).contains('status');
+      if (!push) {
+        poll = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (retired ||
+              owner != connectionRevision ||
+              !appForeground ||
+              bluetooth.busy) {
+            return;
+          }
+          unawaited(
+            status().then<void>(
+              (value) {
+                if (!retired) {
+                  _liveAge = Stopwatch()..start();
+                  updates.add(value);
+                }
+              },
+              onError: (Object error) {
+                if (!retired) updates.addError(error);
+              },
+            ),
+          );
+        });
+      }
+      yield* updates.stream;
+    } finally {
+      retired = true;
+      poll?.cancel();
+      await subscription.cancel();
+      await updates.close();
+    }
+  }
+
   Future<void> _retireSocket(WebSocketChannel? socket) async {
     if (socket == null) return;
     try {
@@ -1032,6 +1370,7 @@ class PakarApi {
   }
 
   Future<void> close() async {
+    await bluetooth.close();
     _abortReads();
     _socketReady = false;
     _latestStatus = null;
@@ -1060,6 +1399,7 @@ class PakarApi {
   }
 
   void resetTransport() {
+    unawaited(bluetooth.disconnect());
     _abortReads();
     _socketReady = false;
     _latestStatus = null;

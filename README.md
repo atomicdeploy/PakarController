@@ -45,9 +45,9 @@ claim that every requested native/mobile setting is complete.
 
 ```mermaid
 flowchart LR
-    Desktop[Windows · egui / CLI / TUI] <-->|JSON / WebSocket / USB| ESP[ESP8266]
+    Desktop[Windows · egui / CLI / TUI] <-->|JSON / WebSocket / USB| ESP[ESP32-S3 · retained ESP8266 target]
     Web[Embedded Web interface] <-->|Shared API state| ESP
-    Mobile[Android preview] <-->|Wi-Fi API| ESP
+    Mobile[Android preview] <-->|Wi-Fi API / BLE on S3| ESP
     ESP --> LEDs[Addressable LED cells]
     ESP <-->|COBS + CRC · UART| AVR[ATmega328P]
     ESP -->|ISP recovery / updates| AVR
@@ -87,10 +87,12 @@ and Pealayer work.
 
 - The ATmega328P owns deterministic keys, shift-register outputs, the ninth
   ADC6 button, TM1637 display, buzzer, melodies, and winner arbitration.
-- The ESP8266 owns the MT16703/WS2811-compatible LED field, Wi-Fi/API/UI,
+- The ESP32-S3 owns the MT16703/WS2811-compatible LED field, Wi-Fi/API/UI,
   streaming, self-OTA, AVR ISP recovery, and LittleFS firmware backups.
+- The retained ESP8266 target shares the integrated firmware; Bluetooth is S3-only.
 - Both use the PCController COBS + CRC-8/ATM UART envelope at 38400 baud. The
-  AVR uses its hardware UART; the ESP uses SoftwareSerial, while its USB UART
+  AVR uses its hardware UART; S3 uses a separate hardware UART (ESP8266 uses
+  SoftwareSerial), while the USB UART
   is a second framed 115200-baud PC transport.
 - The Windows controller uses Pealayer's eframe/egui design approach without
   linking or loading mpv.
@@ -219,6 +221,7 @@ does not certify that a current GitHub run passed or a device was updated.
 |---|---|
 | [Hardware](docs/HARDWARE.md) | Pin mapping and wiring |
 | [API](docs/API.md) | Device transport and commands |
+| [Bluetooth LE](docs/BLUETOOTH.md) | S3 offline Android control, identity, settings and transport limits |
 | [Client updates & monitoring](docs/CLIENT-MANAGEMENT.md) | Configurable release endpoint, enrollment, telemetry and safe cleanup |
 | [Architecture](docs/ARCHITECTURE.md) | Board responsibilities |
 | [Source comparison](https://github.com/atomicdeploy/PakarController/issues/3) | File-by-file reuse and justified omissions |

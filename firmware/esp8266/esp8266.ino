@@ -13,6 +13,7 @@
 #include <firmware/esp32s3/src/StatusRgb.h>
 #include <firmware/esp32s3/src/StatusRgbConfig.h>
 #include <firmware/esp32s3/src/LcdPort.h>
+#include <firmware/esp32s3/src/BleService.h>
 #else
 #include <ESP8266SSDP.h>
 #include <ESP8266NetBIOS.h>
@@ -111,6 +112,7 @@ PakarS3::Discovery s3Discovery;
 PakarS3::StatusRgb statusRgb;
 PakarS3::StatusRgbConfig statusRgbConfig;
 PakarS3::LcdPort lcdPort;
+PakarS3::BleService bleService;
 #if !PAKAR_AVR_LINK_ENABLED
 PakarS3::PassiveAvrRx passiveAvrRx;
 std::atomic<bool> passiveCaptureGuard{false};
@@ -312,6 +314,14 @@ void appendJsonEscaped(String &body, const char *text);
 String deviceNameJson(bool accepted = false);
 bool saveCellMapping();
 String buildStatusJson();
+#if defined(ARDUINO_ARCH_ESP32)
+String bleStatusJson();
+String bleRequest(const String &message,uint32_t epoch);
+void serviceBle();
+void serviceBleReadOnly();
+void registerBleApi();
+void publishBleEvent(const String &event);
+#endif
 String localUpdateJson();
 String upgradeJson(bool event=false,bool phaseChanged=false);
 void serviceUpgrade();
@@ -342,6 +352,9 @@ bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
                const uint8_t *payload = nullptr, uint8_t payloadLength = 0);
 String pcReceiptJson(const BoardCore::PcContractTransport::Receipt &receipt);
 void publishPcEvent(const String &event) {
+#if defined(ARDUINO_ARCH_ESP32)
+  publishBleEvent(event);
+#endif
   webSocket.textAll(event);
   cloudServices.publishEvent(event);
 }
@@ -1348,6 +1361,9 @@ void serviceUpgrade() {
     const String notice=upgradeJson(true,phaseChanged);
     // Loop-only, finite phase/progress notices, never from async flash callbacks.
     webSocket.textAll(notice);pendingUpgradeCloud=notice;
+#if defined(ARDUINO_ARCH_ESP32)
+    publishBleEvent(notice);
+#endif
   }
   // A TLS/MQTT write may block. Never do one while Urboot owns raw UART.
   // Coalesce its progress to the latest snapshot; do not replay stale stages.
@@ -1356,7 +1372,12 @@ void serviceUpgrade() {
   }
   servicingUpgrade=false;
 }
-void upgradeBackground() {serviceUpgrade();hostLink.service();}
+void upgradeBackground() {
+  serviceUpgrade();hostLink.service();
+#if defined(ARDUINO_ARCH_ESP32)
+  serviceBleReadOnly();
+#endif
+}
 bool upgradeRebootReady() {
   serviceUpgrade();return upgradeLifecycle.readyToReboot(millis(),grid.maintenancePresented());
 }
@@ -1575,6 +1596,9 @@ String buildStatusJson() {
   body += F(",\"uplink_resolver_changes\":");body+=NetworkPath::state().resolverChanges;
   body += F(",\"cloud_command_fencing\":true,\"cloud_command_deadline_seconds\":60");
   body += F(",\"ethernet\":");body+=ethernetStatusJson();
+#if defined(ARDUINO_ARCH_ESP32)
+  body += F(",\"ble\":");body+=bleStatusJson();
+#endif
   body += F(",\"ip\":\""); body += (NetworkPath::ready() ? NetworkPath::localIP() : WiFi.softAPIP()).toString();
   body += F("\",\"mode\":\""); body += modeName();
   body += F("\",\"led_output\":");body+=grid.outputJson();
@@ -3699,6 +3723,9 @@ void serviceConsole() {
 uint32_t runningImageSize() { return bootTelemetryImage.size; }
 String runningImageMd5() { return bootTelemetryImage.md5; }
 #include "src/ArtifactDownload.h"
+#if defined(ARDUINO_ARCH_ESP32)
+#include "src/BleRoutes.h"
+#endif
 }  // namespace
 
 void setup() {
@@ -3813,6 +3840,11 @@ void setup() {
   registerMaintenanceRoutes();
   registerUrbootRoutes();
   registerArtifactDownload();
+#if defined(ARDUINO_ARCH_ESP32)
+  bleService.begin(LittleFS,filesystemMounted,hostname,bleRequest);
+  serviceBle();
+  registerBleApi();
+#endif
   webAccess.registerRoutes(server.native(), []() {
     webSocket.closeAll(1008, "Sign in again");
     if (telnetClient) telnetClient.stop();
@@ -3831,6 +3863,9 @@ void setup() {
 }
 
 void loop() {
+#if defined(ARDUINO_ARCH_ESP32)
+  serviceBle();
+#endif
   // A queued job executes outside any request handler. Its bounded background
   // callback services reads, but never framed AVR bytes during a raw session.
   if(urbootQueued) {serviceUpgrade();serviceUrbootJob();serviceUpgrade();return;}

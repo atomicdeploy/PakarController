@@ -41,6 +41,9 @@ struct UrbootPort {
 // competes with the raw UART session. Network callbacks never own the UART.
 void urbootBackground() {
   serviceUpgrade();
+#if defined(ARDUINO_ARCH_ESP32)
+  serviceBleReadOnly();
+#endif
   hostLink.service();server.service();
   // Drain ingress while the maintenance fence is STILL set. Never retain a
   // user's queued cell/stream command and apply it after programming completes.

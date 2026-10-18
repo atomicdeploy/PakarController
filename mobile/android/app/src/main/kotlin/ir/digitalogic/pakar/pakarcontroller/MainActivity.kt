@@ -13,6 +13,7 @@ import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
     private var discovery: DiscoveryChannel? = null
+    private var ble: BleControllerChannel? = null
     private var toneMirror: ToneMirrorChannel? = null
     private var appUpdates: AppUpdateChannel? = null
     private var appUpdateDiscovery: AppUpdateDiscoveryChannel? = null
@@ -28,6 +29,7 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         discovery = DiscoveryChannel(this, flutterEngine.dartExecutor.binaryMessenger)
+        ble = BleControllerChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         toneMirror = ToneMirrorChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         appUpdates = AppUpdateChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         appUpdateDiscovery = AppUpdateDiscoveryChannel(this, flutterEngine.dartExecutor.binaryMessenger)
@@ -133,6 +135,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onPause() {
+        ble?.setForeground(false)
         appUpdates?.setForeground(false)
         toneMirror?.stopAll() // Native cutoff also works if Dart stalls or loses lifecycle delivery.
         super.onPause()
@@ -140,10 +143,17 @@ class MainActivity : FlutterActivity() {
 
     override fun onResume() {
         super.onResume()
+        ble?.setForeground(true)
         appUpdates?.setForeground(true)
     }
 
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        ble?.onRequestPermissionsResult(requestCode)
+    }
+
     override fun onDestroy() {
+        ble?.close(); ble = null
         toneMirror?.close(); toneMirror = null
         discovery?.close(); discovery = null
         appUpdates?.close(); appUpdates = null
