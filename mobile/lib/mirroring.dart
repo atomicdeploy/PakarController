@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import 'device_registry.dart';
 import 'models.dart';
+import 'panel_event.dart';
 
 abstract class ToneOutput {
   Future<void> open(String session, double volume);
@@ -111,6 +112,21 @@ class PeripheralMirror extends ChangeNotifier {
   DeviceStatus? status;
   List<int> segments = const [];
   int brightness = 0;
+  final List<PanelEvent> _panelHistory = [];
+  List<PanelEvent> get panelHistory => List.unmodifiable(_panelHistory);
+  int? _lastPanelEvent, _panelAt;
+  Timer? _panelExpiry;
+  PanelEvent? get panelPresentation {
+    if (status == null || _panelHistory.isEmpty || _panelAt == null) {
+      return null;
+    }
+    final event = _panelHistory.last;
+    return event.lifetimeMs > 0 &&
+            elapsedUs - _panelAt! < event.lifetimeMs * 1000
+        ? event
+        : null;
+  }
+
   bool segmentsEnabled = true, panelEnabled = true, buzzerEnabled = false;
   bool followBoardMute = false;
   MirrorTone? _lastTone;
@@ -149,6 +165,9 @@ class PeripheralMirror extends ChangeNotifier {
     final owner = valid ? '$revision:$board:$boot:$avr' : null;
     if (owner != _owner || owner == null) {
       _silence();
+      _panelHistory.clear();
+      _lastPanelEvent = _panelAt = null;
+      _panelExpiry?.cancel();
       _lastEvent = 0;
       _owner = owner;
     }
@@ -239,6 +258,33 @@ class PeripheralMirror extends ChangeNotifier {
 
   void event(Map<String, dynamic> event) {
     final raw = status?.json, manifest = raw?['mirroring'];
+    if (event['type'] == 'panel-event') {
+      if (_closed ||
+          _owner == null ||
+          raw == null ||
+          event['board_id'] != raw['board_id'] ||
+          event['boot_id'] != raw['boot_id']) {
+        return;
+      }
+      final next = PanelEvent.decode(event);
+      if (next == null) return;
+      final delta = _lastPanelEvent == null
+          ? 1
+          : (next.id - _lastPanelEvent!) & 0xffffffff;
+      if (delta == 0 || delta > 0x7fffffff) return;
+      _lastPanelEvent = next.id;
+      if (_panelHistory.length == 32) _panelHistory.removeAt(0);
+      _panelHistory.add(next);
+      _panelAt = elapsedUs;
+      _panelExpiry?.cancel();
+      if (next.lifetimeMs > 0) {
+        _panelExpiry = Timer(Duration(milliseconds: next.lifetimeMs), () {
+          if (!_closed) notifyListeners();
+        });
+      }
+      notifyListeners();
+      return; // Separate sequence; never affects AVR tone gap/Stop handling.
+    }
     if (_closed ||
         _owner == null ||
         raw == null ||
@@ -366,6 +412,7 @@ class PeripheralMirror extends ChangeNotifier {
     if (_closed) return;
     _closed = true;
     _expiry?.cancel();
+    _panelExpiry?.cancel();
     _silence();
     clock.stop();
     super.dispose();

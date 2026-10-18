@@ -303,6 +303,7 @@ uint8_t SevenSegments::encodeCharacter(char value) {
   case 'T':
     return 0x78;
   case 'U':
+  case 'W': // Seven segments have no true W; the readable U-shaped approximation.
   case 'V':
     return 0x3E;
   case 'Y':

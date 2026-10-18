@@ -72,10 +72,13 @@ bool LedGrid::setCells(const BoardCore::CellBatch &selection,
     }else current_[index]=target_[index];
     renderCell(index);
   }
+  diagnosticActive_=false;
+  if(panelObserver_)panelObserver_(1,selection.first(),uint8_t(state)|(uint8_t(effect)<<2));
   dirty_=true;return true;
 }
 
 void LedGrid::fill(BoardCore::Protocol::CellState state) {
+  diagnosticActive_=false;
   staging_ = false;
   changePattern(kPatternNone,"fill");
   for (uint8_t i = 0; i < kCells; ++i) {
@@ -86,6 +89,7 @@ void LedGrid::fill(BoardCore::Protocol::CellState state) {
     renderCell(i);
   }
   dirty_ = true;
+  if(panelObserver_)panelObserver_(12,state,0);
 }
 
 void LedGrid::resetWhite() {
@@ -111,6 +115,8 @@ void LedGrid::showWinner(uint8_t winner) {
 }
 
 void LedGrid::setPattern(Pattern pattern) {
+  diagnosticActive_=false;
+  if(panelObserver_)panelObserver_(3,pattern,0);
   if (pattern == kPatternNone) {
     stopPattern("explicit-none");
     dirty_ = true;
@@ -340,12 +346,15 @@ bool LedGrid::diagnostic(uint16_t index,uint8_t count,uint32_t rgb,bool off) {
   staging_=true;stageOwner_=UINT64_MAX;stagingAt_=millis();
   outputEnabled_=true;
   showStaged(); // Includes the black tail and exactly one immutable publication.
+  diagnosticActive_=true;diagnosticPixel_=index+1;
+  if(panelObserver_)panelObserver_(4,index+1,off?0:count);
   return true;
 }
 
 bool LedGrid::stagePixels(uint16_t offset, const uint8_t *rgb, uint8_t count,uint64_t owner) {
   if (offset + count > kPixels || rgb == nullptr) return false;
   if(!canStage(owner))return false;
+  if(owner!=UINT64_MAX)diagnosticActive_=false;
   if(!staging_)::memcpy(staged_,pixels_,sizeof(staged_));
   staging_ = true;
   stageOwner_=owner;
@@ -385,6 +394,7 @@ void LedGrid::setOutputEnabled(bool enabled){
   // values until it receives a valid replacement frame.
   if(outputEnabled_==enabled && enabled)return;
   outputEnabled_=enabled;
+  if(panelObserver_)panelObserver_(9,enabled,0);
   if(enabled && pattern_==kPatternCellChase)chaseAt_=millis();
 #if defined(ARDUINO_ARCH_ESP32)
   output_.submit(pixels_,brightness_,enabled,frameRevision_);

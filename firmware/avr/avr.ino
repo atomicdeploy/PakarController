@@ -210,6 +210,7 @@ void sendHello(uint8_t sequence = 0) {
       static_cast<uint8_t>(BoardCore::Features::enabled >> 8),
       kCueCount, // Append-only explicit stable audio IDs [0, count).
       1, // Explicit timestamped tone telemetry acknowledgement, not an API generation.
+      1, // Explicit finite maintenance-panel priority acknowledgement.
   };
   link.send(kHelloResponse, sequence, payload, sizeof(payload));
 }

@@ -22,6 +22,13 @@ constexpr uint8_t kSegmentF = 0x20;
 uint16_t readU16(const uint8_t *value) {
   return static_cast<uint16_t>(value[0] | value[1] << 8);
 }
+
+void showTaggedNumber(char tag, uint8_t value) {
+  const char text[5] = {tag, static_cast<char>('0' + value / 100),
+      static_cast<char>('0' + (value / 10) % 10),
+      static_cast<char>('0' + value % 10), '\0'};
+  display.showText(text);
+}
 }  // namespace
 
 FrontPanel frontPanel;
@@ -43,7 +50,9 @@ void FrontPanel::showEspMenu(uint32_t now) {
     return; // Scan/reconnect ACK means queued, never completed scan/link success.
   }
   const uint32_t elapsed = now - espPageAt_;
-  if (elapsed < 650) {
+  // Match the donor's short label dwell and alternating channel/value pages.
+  // Periodic ESP offers update values, never restart this presentation clock.
+  if (elapsed % 1800U < 650U) {
     switch (espPage_) {
       case 0: display.showText(F("nEt ")); break;
       case 1: display.showText(F("rECn")); break;
@@ -55,12 +64,12 @@ void FrontPanel::showEspMenu(uint32_t now) {
     return;
   }
   if (espPage_ == 0) {
-    display.showText(espValue_ == 1 ? F("AP  ") : espValue_ == 2 ? F("CL  ") : F("both"));
+    display.showText(espValue_ == 1 ? F("AP  ") : espValue_ == 2 ? F("CL  ") : F("APCL"));
   } else if (espPage_ == 3) display.showText(espValue_ ? F("Auto") : F("StAt"));
   else if (espPage_ == 4 && espHostname_) {
     // One pass only; do not resume the annoying perpetual default marquee.
     const uint8_t length = strlen(espHostname_);
-    const uint32_t step = (elapsed - 650) / 350;
+    const uint32_t step = elapsed > 650U ? (elapsed - 650U) / 350U : 0;
     const uint8_t offset = length > 4 && step < static_cast<uint32_t>(length - 3) ? step
         : length > 4 ? length - 4 : 0;
     char text[5] = {};
@@ -68,6 +77,22 @@ void FrontPanel::showEspMenu(uint32_t now) {
       text[i] = espHostname_[offset + i];
     display.showText(text);
   } else display.showText(F("SEL "));
+}
+
+void FrontPanel::showMenu(uint32_t now) {
+  if (menuRestart_) { menuPageAt_ = now; menuRestart_ = false; }
+  if (static_cast<uint32_t>(now - menuPageAt_) % 1800U < 650U) {
+    switch (menuPage_) {
+      case 0: display.showText(F("CELL")); break;
+      case 1: display.showText(F("OUT ")); break;
+      case 2: display.showText(F("KEYS")); break;
+      case 3: display.showText(F("SND ")); break;
+      case 4: display.showText(F("DISP")); break;
+      default: display.showText(F("HOST")); break;
+    }
+  } else if (menuPage_ == 3) display.showText(menuValue_ ? F("MutE") : F("bEEP"));
+  else if (menuPage_ == 5) display.showText(menuValue_ ? F("run ") : F("StOP"));
+  else display.showInteger(menuValue_);
 }
 
 void FrontPanel::begin(uint32_t now) {
@@ -81,6 +106,7 @@ void FrontPanel::release() {
   transientActive_ = false;
   options_ = 0;
   captured_ = false;
+  maintenance_ = false;
   capturedMeta_ = 0;
 }
 
@@ -116,7 +142,7 @@ bool FrontPanel::acceptDisplayPayload(const uint8_t *payload, uint8_t length,
       (scheduled &&
        (length < 8 || length < static_cast<uint8_t>(8 + textLength) ||
         (payload[4] & kRepeatMask) > 2 ||
-        (payload[4] & 0x5CU) != 0 ||
+        (payload[4] & 0x58U) != 0 ||
         ((payload[4] & kRepeatMask) == 2 && payload[7] == 0)))) {
     return false;
   }
@@ -137,6 +163,7 @@ bool FrontPanel::acceptDisplayPayload(const uint8_t *payload, uint8_t length,
   // explicit scheduled request; long text alone must not capture the panel.
   options_ = scheduled ? payload[4] : 0;
   captured_ = capture;
+  maintenance_ = scheduled && (payload[4] & 0x04U) != 0;
   capturedMeta_ = capture ? readU16(payload + 1) : 0;
   stepMs_ = readU16(payload + 1);
   if (stepMs_ == 0) stepMs_ = 260;
@@ -211,15 +238,14 @@ bool FrontPanel::showHostText(uint32_t now) {
 void FrontPanel::showLocal(BoardCore::Protocol::GameMode mode,
                            uint8_t selectedCell, uint8_t winner) {
   if (mode == BoardCore::Protocol::kModeFirstWins) {
-    if (winner != 0) display.showInteger(winner);
+    if (winner != 0) showTaggedNumber('W', winner);
     else display.showText(F("rEAd"));
   } else if (mode == BoardCore::Protocol::kModeCellSelect) {
-    (void)selectedCell;
-    display.showText(F("PAKr"));
+    showTaggedNumber('C', selectedCell);
   } else if (mode == BoardCore::Protocol::kModeSnake) {
     display.showText(F("SnAk"));
   } else {
-    display.showText(F("IdLE"));
+    display.showText(F("    "));
   }
 }
 
@@ -232,7 +258,15 @@ void FrontPanel::service(uint32_t now, BoardCore::Protocol::GameMode mode,
     display.showText(F("Prog"));
     return;
   }
+  // Explicit host capture owns the physical panel, unlike short automatic
+  // notices. Ordinary ESP/AVR menu interaction must not hide behind a renewed
+  // scheduled host lease. Programming remains above every presenter.
+  if (captured_ && hostTextActive_ && showHostText(now)) return;
+  // Explicitly acknowledged maintenance notices can temporarily cover menus,
+  // but never durable Prog or an explicit host capture. The lease is finite.
+  if (maintenance_ && hostTextActive_ && showHostText(now)) return;
   if (espActive_) { showEspMenu(now); return; }
+  if (menuActive_) { showMenu(now); return; }
   if (animationActive_) {
     // Imported from ControllerBoardMini/Puzzles::animation(): the lit segment
     // traces the exact twelve-step perimeter at the original 75 ms cadence.
@@ -266,12 +300,6 @@ void FrontPanel::service(uint32_t now, BoardCore::Protocol::GameMode mode,
       return;
     }
     transientActive_ = false;
-  }
-  if (menuActive_) {
-    if (menuPage_ == 3) display.showText(menuValue_ ? F("MutE") : F("bEEP"));
-    else if (menuPage_ == 5) display.showText(menuValue_ ? F("run ") : F("IdLE"));
-    else display.showInteger(menuValue_);
-    return;
   }
   showLocal(mode, selectedCell, winner);
 }

@@ -67,6 +67,10 @@ class LedGrid {
   bool commitStaged(uint64_t owner=0);
   // One loop-owned diagnostic transaction, bypassing logical cell mapping.
   bool diagnostic(uint16_t index, uint8_t count, uint32_t rgb, bool off);
+  using PanelObserver=void (*)(uint8_t kind,uint16_t value,uint8_t detail);
+  void setPanelObserver(PanelObserver observer){panelObserver_=observer;}
+  bool diagnosticActive()const{return diagnosticActive_;}
+  uint16_t diagnosticPixel()const{return diagnosticPixel_;}
   void setOutputEnabled(bool enabled);
   bool outputEnabled()const{return outputEnabled_;}
   void setStaticMode(bool enabled);
@@ -123,6 +127,9 @@ class LedGrid {
     uint32_t at = 0, revision = 0;
   } lastEffectChange_;
   bool dirty_ = true;
+  PanelObserver panelObserver_=nullptr;
+  bool diagnosticActive_=false;
+  uint16_t diagnosticPixel_=0;
   bool staticMode_ = true;
   bool staging_ = false;
   bool outputEnabled_ = PAKAR_LED_START_ENABLED != 0;

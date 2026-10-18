@@ -2267,6 +2267,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
     seenPanelMirror |= mirror.panelAvailable;
     seenSegmentsMirror |= mirror.segmentsAvailable;
     seenBuzzerMirror |= mirror.buzzerAvailable;
+    final requested = mirror.panelPresentation;
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -2280,6 +2281,40 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
             ),
+            if (mirror.panelEnabled && mirror.segmentsAvailable)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  height: 40,
+                  child: Row(
+                    children: [
+                      Text(
+                        'Requested',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Tooltip(
+                          message: requested == null
+                              ? '—'
+                              : '${requested.text}\n${requested.kind} · ${requested.blink} · ${requested.marquee}',
+                          child: Text(
+                            requested?.preview ?? '—',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 22,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             if (seenPanelMirror)
               SwitchListTile.adaptive(
                 title: const Text('Front panel'),

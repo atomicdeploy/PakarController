@@ -37,6 +37,7 @@
 #include "src/UpgradeLifecycle.h"
 #include "src/LocalOtaReceipt.h"
 #include "src/EspFrontPanel.h"
+#include "src/SemanticPanel.h"
 
 #include <BuildInfo.h>
 #include <AudioCues.h>
@@ -231,6 +232,7 @@ bool tm1637Ack = false;
 uint8_t tm1637Segments[4] = {};
 uint8_t tm1637Brightness = 0;
 bool tm1637HostActive = false;
+bool avrMaintenancePanel = false;
 bool avrToneTimestamps = false, avrPanelKnown = false;
 uint32_t avrSession = 0, mirrorSequence = 0;
 uint8_t avrMenuPage = 0;
@@ -297,7 +299,8 @@ size_t otaUploadedBytes = 0;
 uint32_t otaOwner = 0;
 PakarUpdate::Progress otaProgress;
 PakarUpdate::Completion otaCompletion;
-PakarUpdate::Panel updatePanel;
+PakarPanel::Presenter semanticPanel;
+bool semanticPanelSending=false;
 PakarUpdate::Lifecycle upgradeLifecycle;
 LocalOtaReceipt<fs::FS> localOtaReceipt;
 bool localBootNoticePending=false,localBootCuePending=false;
@@ -324,6 +327,9 @@ void appendJsonEscaped(String &body, const char *text);
 String deviceNameJson(bool accepted = false);
 bool saveCellMapping();
 String buildStatusJson();
+String panelStatusJson();
+void serviceSemanticPanel(uint32_t now);
+void observePanelAction(uint8_t kind,uint16_t value,uint8_t detail);
 #if defined(ARDUINO_ARCH_ESP32)
 String bleStatusJson();
 String bleRequest(const String &message,uint32_t epoch);
@@ -1131,6 +1137,7 @@ bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
 #endif
   const bool sent = link.send(opcode, requestSequence, payload, payloadLength);
   if (sent) {
+    if(opcode==kDisplayText && !semanticPanelSending)semanticPanel.manual(payload,payloadLength,millis());
     // The longest routine response is below 6 ms at 38400 baud. Keep a full
     // margin so FastLED cannot mask interrupts after only part of it arrived.
     ledResumeAt = millis() + (opcode == kPcContract || opcode == kGetTelemetry ? 32U : 12U);
@@ -1200,6 +1207,8 @@ void servicePcContracts() {
   } else sent = sendToAvr(kPcContract, request->wireSequence,
                           request->request, request->requestLength);
   pcTransport.sent(*request, sent, millis());
+  if(sent && request->requestLength>1 && request->request[0]==ControllerProtocol::DisplayText)
+    semanticPanel.manual(request->request+1,request->requestLength-1,millis());
   if (!sent && !request->usb) publishPcEvent(pcReceiptJson(*request));
 }
 
@@ -1424,6 +1433,7 @@ void serviceUpgrade() {
 }
 void upgradeBackground() {
   serviceUpgrade();hostLink.service();
+  serviceSemanticPanel(millis());
 #if defined(ARDUINO_ARCH_ESP32)
   serviceBleReadOnly();
 #endif
@@ -1628,6 +1638,7 @@ uint64_t commandClock() {
   const uint32_t now=millis();if(now<previous)high+=1ULL<<32;previous=now;
   return high|now; // Queried every telemetry tick; old intents cannot revive at millis wrap.
 }
+#include "src/SemanticPanelService.h"
 String buildStatusJson() {
   String body;
   // Reserve the complete document before TLS/WebSocket activity fragments the
@@ -1819,7 +1830,7 @@ String buildStatusJson() {
   body += F("\",\"name\":\""); appendJsonEscaped(body, deviceIdentity.displayName());
   body += F("\",\"hostname\":\""); body += deviceIdentity.hostname();
   body += F("\",\"application\":"); body += applicationIdentityJson();
-  body += F(",\"acknowledged_features\":[\"command-ack\",\"pixel-diagnostic\"");
+  body += F(",\"acknowledged_features\":[\"command-ack\",\"pixel-diagnostic\",\"panel-events\"");
 #if defined(ARDUINO_ARCH_ESP32)
   body += F(",\"status-rgb\""); // Settings capability is distinct from a confirmed/enabled physical pixel.
 #endif
@@ -1851,7 +1862,9 @@ String buildStatusJson() {
     if (cell != 1) body += ',';
     body += '\"'; body += cellName(grid.state(cell)); body += '\"';
   }
-  body += F("]}");
+  char panelText[5];semanticPanel.view(millis(),panelText);
+  body += F("],\"panel_presentation\":{\"requested_text\":\"");appendJsonEscaped(body,panelText);
+  body += F("\",\"event_id\":");body+=semanticPanel.revision();body+=F(",\"hardware_confirmed\":false}}");
   return body;
 }
 
@@ -2141,7 +2154,9 @@ bool submitDisplayText(const String &text, long speed, long hold,
   payload[6] = static_cast<uint8_t>(hold >> 8);
   payload[7] = static_cast<uint8_t>(interval);
   memcpy(payload + 8, text.c_str(), text.length());
-  sendToAvr(kDisplayText, sequence++, payload, static_cast<uint8_t>(8 + text.length()));
+  if(!sendToAvr(kDisplayText, sequence++, payload, static_cast<uint8_t>(8 + text.length()))) {
+    result=F("display transport unavailable; not submitted");return false;
+  }
   result = F("display text submitted");
   return true;
 }
@@ -2227,9 +2242,22 @@ bool handleCloudCommand(const String &message, String &result) {
   if (command == F("cell") || command == F("reset") || command == F("snake-direction") || command == F("mode")) required = Table;
   if(command==F("cells"))required=BoardCore::Context::CellBatch;
   if (command == F("display")) required = !commandRequest["text"].isUnbound() ? Text : Display;
+  if (command == F("panel-notice")) required = Display;
   if (command == F("audio") || command == F("buzzer")) required = Buzzer;
   if (command == F("outputs")) required = Outputs;
   if (required && !(currentFeatures() & required)) { result = F("Capability not acknowledged by this board"); return false; }
+  if(command==F("panel-notice")) {
+    const String text=PakarCommand::stringValue(commandRequest,"text");
+    const String blink=commandRequest["blink"].isNull()?String("steady"):PakarCommand::stringValue(commandRequest,"blink");
+    const auto duration=commandRequest["duration_ms"];
+    if(!text.length()||text.length()>32 || (!duration.isNull()&&(!duration.is<uint16_t>() || duration.as<uint16_t>()<100 || duration.as<uint16_t>()>10000)) ||
+      (blink!="steady"&&blink!="slow"&&blink!="double-fast")) {result=F("Invalid panel notice");return false;}
+    for(size_t i=0;i<text.length();++i)if(text[i]<32||text[i]>126){result=F("Printable ASCII required");return false;}
+    semanticPanel.post(PakarPanel::State,text.c_str(),0,millis(),60,
+      blink=="slow"?PakarPanel::Slow:blink=="double-fast"?PakarPanel::DoubleFast:PakarPanel::Steady,
+      duration.isNull()?2000:duration.as<uint16_t>());
+    result=F("panel notice queued; segment observation remains separate");return true;
+  }
   if (command == F("mode")) {
     const String value = PakarCommand::stringValue(commandRequest, "value");
     bool allowed = false;
@@ -2536,6 +2564,7 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     avrCapabilities = avrVersionKnown ? frame.payload[2] | static_cast<uint16_t>(frame.payload[3]) << 8 : 0;
     avrAudioCueCount = avrVersionKnown && frame.payloadLength >= 13 ? frame.payload[12] : 0;
     avrToneTimestamps = avrVersionKnown && frame.payloadLength >= 14 && frame.payload[13] == 1;
+    avrMaintenancePanel = avrVersionKnown && frame.payloadLength >= 15 && frame.payload[14] == 1;
     ++avrSession; avrPanelKnown = false;
     // A rebooted AVR's volatile defaults cannot erase the ESP-owned scene.
     // Synchronize only the paired mode; do not replay host commands or pixels.
@@ -2812,6 +2841,10 @@ bool updateStatusRgbConfiguration(JsonObjectConst fields,String &body,int &code)
 }
 #endif
 void registerApi() {
+  server.on("/api/panel",HTTP_GET,[](){
+    if(!authenticate())return;
+    server.send(200,"application/json",panelStatusJson());
+  });
   server.on("/api/command",HTTP_POST,[](){
     if(!authenticate())return;
     // Match the existing form transport: the async SDK does not retain an
@@ -3932,6 +3965,7 @@ void setup() {
   server.native().addHandler(&webSocket);
   registerAsyncOta();
   server.begin();
+  grid.setPanelObserver(observePanelAction);
   serviceDiscovery();
   sendToAvr(kHello, sequence++);
   upgradeLifecycle.boot(millis());
@@ -4099,11 +4133,8 @@ void loop() {
     if(stage.known())snprintf(updateText,sizeof(updateText),"P%03u",stage.percent());
     else snprintf(updateText,sizeof(updateText),"UPdt");
   }
-  uint8_t progressPayload[12];
   const bool showUpdate=otaActive || otaRebootAt || remoteFirmware.busy();
-  if(updatePanel.next(millis(),showUpdate,tm1637DetectionKnown() && tm1637Ack &&
-      !programmingLatched && !avrUploadOwner,updateText,progressPayload))
-    sendToAvr(kDisplayText,sequence++,progressPayload,sizeof(progressPayload));
+  serviceSemanticPanel(millis());
   // Single loop-owner I2C writer, independent of AVR TM1637 and LED RMT/DMA.
 #if defined(ARDUINO_ARCH_ESP32)
   char lcdLine[17];

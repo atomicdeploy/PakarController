@@ -1113,6 +1113,14 @@ class PakarApi {
           }
           continue;
         }
+        if (value is Map<String, dynamic> && value['type'] == 'panel-event') {
+          if (liveFresh &&
+              value['board_id'] == _verifiedBoard &&
+              value['boot_id'] == _verifiedBoot) {
+            onPeripheralEvent?.call(value);
+          }
+          continue; // Does not refresh any full-status or hardware lease.
+        }
         if (value is Map<String, dynamic> &&
             value['type'] == 'pc-contract-event') {
           // Events cannot establish identity or refresh an expired status lease.
@@ -1301,6 +1309,14 @@ class PakarApi {
       }
       if (event == 'pc-contract-event' || event == 'pc-contract-result') {
         onPeripheralEvent?.call(body);
+        return;
+      }
+      if (event == 'panel-event') {
+        if (liveFresh &&
+            body['board_id'] == _verifiedBoard &&
+            body['boot_id'] == _verifiedBoot) {
+          onPeripheralEvent?.call(body);
+        }
         return;
       }
       final raw = event == 'status' || value['type'] != 'ble-event'

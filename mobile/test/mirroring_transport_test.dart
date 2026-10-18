@@ -7,10 +7,54 @@ import 'package:pakarcontroller/api.dart';
 import 'package:pakarcontroller/models.dart';
 
 import 'mirroring_test.dart' show mirroredPeer, toneEvent;
+import 'panel_event_test.dart' show panelEvent;
 
 // Pure transport test, deliberately isolated from TestWidgetsFlutterBinding's
 // blocked HTTP client. It is a real loopback socket, not a physical board.
 void main() {
+  test('Semantic WebSocket events require current full-status ownership and never become full status', () async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final observed = <Map<String, dynamic>>[], done = Completer<void>();
+    final api = PakarApi(baseUrl: 'http://127.0.0.1:${server.port}');
+    StreamSubscription<DeviceStatus>? subscription;
+    var statuses = 0;
+    final requests = server.listen((request) async {
+      expect(request.method, 'GET');
+      if (request.uri.path == '/ws') {
+        final socket = await WebSocketTransformer.upgrade(request);
+        socket.listen((_) {
+          socket.add(
+            jsonEncode(panelEvent(1)),
+          ); // HTTP identity is not a live WS lease.
+          socket.add(jsonEncode(mirroredPeer().json));
+          socket.add(jsonEncode({...panelEvent(2), 'boot_id': 'other'}));
+          socket.add(jsonEncode(panelEvent(3)));
+          socket.add(jsonEncode(mirroredPeer().json));
+        });
+      } else {
+        expect(request.uri.path, '/api/status');
+        request.response.headers.contentType = ContentType.json;
+        request.response.write(jsonEncode(mirroredPeer().json));
+        await request.response.close();
+      }
+    });
+    try {
+      api.onPeripheralEvent = observed.add;
+      await api.status();
+      subscription = api.liveStatus().listen((_) {
+        if (++statuses == 2 && !done.isCompleted) done.complete();
+      });
+      await done.future.timeout(const Duration(seconds: 5));
+      expect(observed.length, 1);
+      expect(observed.single['event_id'], 3);
+      expect(statuses, 2);
+    } finally {
+      await api.close();
+      await subscription?.cancel();
+      await requests.cancel();
+      await server.close(force: true);
+    }
+  });
   test('Actual authenticated WebSocket routes only verified-owner peripheral events', () async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     final observed = <Map<String, dynamic>>[], done = Completer<void>();

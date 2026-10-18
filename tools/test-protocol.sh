@@ -5,6 +5,8 @@ c++ -std=c++17 -Wall -Wextra -pedantic \
   -I "$root/libraries/BoardCore/src" \
   "$root/tests/protocol_test.cpp" -o "$root/build/protocol-test"
 "$root/build/protocol-test"
+c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/semantic_panel_test.cpp" -o "$root/build/semantic-panel-test"
+"$root/build/semantic-panel-test"
 c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/firmware/esp8266/src" "$root/tests/led_scheduler_test.cpp" -o "$root/build/led-scheduler-test"
 "$root/build/led-scheduler-test"
 # Match test-led-worker.ps1: scenario names are specific to the compiled backend.

@@ -17,6 +17,8 @@ mod client_management;
 mod client_install;
 mod client_secrets;
 mod status_rgb;
+mod panel_event;
+mod peripheral_events;
 mod cli_output;
 mod config;
 mod native_workspace;
@@ -141,6 +143,8 @@ struct DeviceStatus {
     tm1637_brightness: u8,
     #[serde(default)]
     tm1637_host_active: bool,
+    #[serde(default)]
+    mirroring: serde_json::Value,
     #[serde(default)]
     programming_latch: bool,
     #[serde(default)]
@@ -375,6 +379,10 @@ enum Event {
     Status(DeviceStatus),
     UpgradeProgress(firmware_progress::Upgrade),
     StatusRgb(status_rgb::Observation),
+    PanelEvent(panel_event::Observation),
+    SerialPanelEvent(String, u64, panel_event::Observation),
+    PeripheralEvent(peripheral_events::Observation),
+    SerialSegments(String, u64, peripheral_events::Segments),
     Mapping(u64, Vec<CellMapping>, Option<(String, String)>),
     MappingFailed(u64, String),
     Configuration(&'static str, serde_json::Value),
@@ -432,6 +440,8 @@ fn current_event(event: Event, endpoint: &Endpoint, serial_port: &str) -> Option
         Event::ForEndpoint(..) => None,
         Event::Serial(ref port, ..) if port != serial_port => None,
         Event::SerialFailure(ref port, ..) if port != serial_port => None,
+        Event::SerialPanelEvent(ref port, ..) if port != serial_port => None,
+        Event::SerialSegments(ref port, ..) if port != serial_port => None,
         Event::SerialSnapshot(ref port, ..) | Event::SerialOperation(ref port, ..) | Event::SerialTiming(ref port, ..) | Event::SerialCapture(ref port, ..) | Event::SerialCommandState(ref port, ..) | Event::SerialBatchConfirmed(ref port, ..) | Event::SerialQueueDepth(ref port, ..) | Event::SerialOwner(ref port, ..) if port != serial_port => None,
         other => Some(other),
     }
@@ -1168,6 +1178,14 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 match socket.read() {
                     Ok(Message::Text(text)) => {
                         last_received=Instant::now();
+                        if let Ok(value)=serde_json::from_str::<serde_json::Value>(&text) && value["type"]=="panel-event" {
+                            if let Some(event)=panel_event::Observation::parse(value){let _=events.send(for_endpoint(&current,Event::PanelEvent(event)));context.request_repaint();}
+                            continue; // Requested presentation cannot become a status/capability packet.
+                        }
+                        if let Ok(value)=serde_json::from_str::<serde_json::Value>(&text) && value["type"]=="pc-contract-event" {
+                            if let Some(event)=peripheral_events::Observation::parse(value){let _=events.send(for_endpoint(&current,Event::PeripheralEvent(event)));context.request_repaint();}
+                            continue;
+                        }
                         if let Ok(value)=serde_json::from_str::<serde_json::Value>(&text) && value["type"]=="status-rgb" {
                             if let Some(rgb)=status_rgb::Observation::parse(value){let _=events.send(for_endpoint(&current,Event::StatusRgb(rgb)));context.request_repaint();}
                             continue; // Optional RGB cannot become a partial full-status packet.
@@ -1652,7 +1670,18 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                 Ok(n)=>for byte in &bytes[..n] {
                     if *byte==0 {
                         if let Some((op,response_sequence,payload))=decode_envelope(&encoded) {
-                            if (op == 0xb0 || op == 0x82) && silent.as_ref().is_some_and(|(_, _, _, wait)|
+                            if op==panel_event::USB_OPCODE {
+                                if table_observed.elapsed()<Duration::from_secs(8) && let Some(status)=table_snapshot.as_ref()
+                                    && let Some(event)=panel_event::Observation::usb(&payload,status) {
+                                    let _=events.send(Event::SerialPanelEvent(connected_port.clone(),physical_session,event));
+                                } // No full snapshot/command ACK lease is refreshed by this event.
+                            } else if op==0xb0 && matches!(response_sequence,0|0xfe) && payload.first()==Some(&0x9c) {
+                                if table_observed.elapsed()<Duration::from_secs(8) && let Some(status)=table_snapshot.as_mut()
+                                    && let Some(frame)=peripheral_events::Segments::usb(&payload,status) {
+                                    frame.clone().apply(status);
+                                    let _=events.send(Event::SerialSegments(connected_port.clone(),physical_session,frame));
+                                }
+                            } else if (op == 0xb0 || op == 0x82) && silent.as_ref().is_some_and(|(_, _, _, wait)|
                                 wait.is_some_and(|(s, _)| s == response_sequence)) {
                                 let (id, _, transaction, wait) = silent.as_mut().unwrap();
                                 *wait = None;
@@ -1847,6 +1876,8 @@ struct PakarControllerApp {
     focus_cell_search: bool,
     cell_effect: String,
     event_log: diagnostics::EventLog,
+    panel_events: panel_event::State,
+    peripheral_events: peripheral_events::State,
     status_request_pending: bool,
     status_retry: diagnostics::Backoff,
     last_status_at: Option<Instant>,
@@ -2002,6 +2033,8 @@ impl PakarControllerApp {
             focus_cell_search: false,
             cell_effect: "fade".into(),
             event_log,
+            panel_events: Default::default(),
+            peripheral_events: Default::default(),
             status_request_pending: false,
             status_retry: diagnostics::Backoff::new(Duration::from_secs(2), Duration::from_secs(30)),
             last_status_at: None,
@@ -2233,6 +2266,8 @@ impl PakarControllerApp {
     fn restart_connection(&mut self) {
         self.connection_gate.select(self.connection_enabled.then_some(self.transport));
         self.http_tx.clear();
+        self.panel_events.clear();
+        self.peripheral_events.clear();
         self.revoke_http_drafts();
         self.status = None; self.serial_status = None;
         self.last_status_at = None; self.last_serial_status_at = None;
@@ -2411,6 +2446,32 @@ impl PakarControllerApp {
                 Event::ForScope(..) => {} // Scope envelopes are unwrapped once.
                 Event::ForEndpoint(..) => {} // Worker envelopes are unwrapped once.
                 Event::StreamStats(value) => self.stream_sent_fps = Some((value, Instant::now())),
+                Event::PanelEvent(event)=>{
+                    if self.connection_enabled&&self.transport==Transport::WiFi&&status_observation_fresh(self.last_status_at)
+                        && let Some(peer)=self.status.as_ref().and_then(peer_http::Pin::from_status) {
+                        self.panel_events.observe(event,&peer);
+                    }
+                }
+                Event::SerialPanelEvent(_,session,event)=>{
+                    if self.connection_enabled&&self.transport==Transport::Serial&&session==self.serial_session
+                        && status_observation_fresh(self.last_serial_status_at)
+                        && let Some(peer)=self.serial_status.as_ref().and_then(peer_http::Pin::from_status) {
+                        self.panel_events.observe(event,&peer);
+                    }
+                }
+                Event::PeripheralEvent(event)=>{
+                    if self.connection_enabled&&self.transport==Transport::WiFi&&status_observation_fresh(self.last_status_at)
+                        && let Some(status)=self.status.as_mut() {
+                        self.peripheral_events.observe(event,status);
+                    }
+                }
+                Event::SerialSegments(_,session,frame)=>{
+                    if self.connection_enabled&&self.transport==Transport::Serial&&session==self.serial_session
+                        && status_observation_fresh(self.last_serial_status_at)
+                        && let Some(status)=self.serial_status.as_mut() {
+                        frame.apply(status);
+                    }
+                }
                 Event::StatusRgb(rgb)=>{
                     if self.connection_enabled&&self.transport==Transport::WiFi&&status_observation_fresh(self.last_status_at){
                         if let Some(status)=self.status.as_mut(){status_rgb::observe(status,rgb);}
@@ -2603,6 +2664,8 @@ impl PakarControllerApp {
                 Event::SerialCapture(_, progress) => self.serial_capture=Some(progress),
                 Event::SerialQueueDepth(_, depth) => self.serial_operations_pending=depth,
                 Event::SerialOwner(_, session) => {
+                    self.panel_events.clear();
+                    self.peripheral_events.clear();
                     self.board_silent.revoke();
                     self.serial_session=session;self.serial_stamp=event_stamp.clone();
                     self.serial_status=None;self.last_serial_status_at=None;self.serial_operations_pending=0;self.serial_timing=None;

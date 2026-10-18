@@ -1,5 +1,44 @@
 # Donor-first preflight receipt
 
+## Semantic TM1637 and live client events
+
+Read actual PCController Project/Runtime/FrontPanelRuntime.inc.h through all1379
+lines at b0111ae0 / SHA4b613488..., plus the existing SevenSegments adapter and
+control/display.go finite-message contract. Adapt its650ms label dwell,
+label/value alternation, menu/programming priority, finite notices and one-pass
+terminal-blank marquee; retain A4/A5, explicit captures and deliberate repeats.
+The donor row is now hash-bound and routed by tm1637-display rather than left
+as an inventory-only promise. Hardware-specific actuator/sensor pages and full
+generic transaction/menu-hierarchy parity remain explicit omissions, issue6.
+
+The ESP owns allocation-free event admission, priority, resting context,
+two-second notices, once-only long messages, slow/double-fast blink and finite
+AVR leases. It sends separate requested events through WS and USB0xB8. Actual
+AVR segment/brightness/ACK events remain the observed mirror; native now consumes
+those immediate events rather than waiting only for a full status snapshot.
+Clients retain independent, bounded semantic history and reject foreign peers,
+duplicates and stale owners without manufacturing capabilities or ACKs. Their
+compact requested row reserves its height, avoiding expiry-induced layout jumps.
+
+Focused semantic/AVR presentation/inactivity and both TM bus variants passed.
+Native panel3/raw-segment2 and Flutter panel3/real WS2 fixtures passed; Flutter
+analyzer clean. The first real S3 compile exposed Effect/Network name collisions
+with existing protocol/SDK owners; explicit PakarPanel qualification fixes them,
+and the same cached profile now builds. No dependency changes or clean rebuild.
+S3 image2045120bytes SHA f513b4fe4adc18874b9fce6735a179120adfac68e49dbe3bb766013f0d061202;
+AVR application32168/32384bytes, SRAM1477/2048 (571bytes stack/local budget),
+full-image SHA f5bfbe7c9019229dcf8c3b71304bda085869e729b443cf5884ce24a47b60601b.
+The small AVR headroom is not a soak/stack certification; keep new policy on ESP.
+
+Actual Urboot backup job1 completed without writes, then program job2 completed
+full flash/preserved EEPROM verification and application recovery. Bootloader,
+EEPROM and fuse writes were false; no ISP fallback. Final actual raw masks
+[57,63,63,6] show C001, TM ACKtrue, AVRonline0.2.7/Progclear. Internal backup hashes
+are verified by the current programmer but not exported by its API. ESP UART
+hardware error57 was unchanged across final checks; AVR protocol errors0.
+Physical readability, blink appearance and all production acceptance remain
+separate from source, API/readback, raw masks and compile proof.
+
 ## ESP32-S3 Bluetooth LE
 
 Consulted network-cloud, mobile-network, peer-binding, donor-audit and the new

@@ -109,7 +109,7 @@ class PcControllerRuntime : public ControllerEventSink {
   bool espKey(uint8_t bit, KeyEvent gesture, uint8_t source, uint32_t now);
   void requestEspAction(uint32_t now);
   BoardCore::Protocol::EspPanel::Snapshot espState_{};
-  uint32_t espSeenAt_ = 0, espSentAt_ = 0, espNoticeAt_ = 0;
+  uint32_t espSeenAt_ = 0, espSentAt_ = 0, espNoticeAt_ = 0, espTouchedAt_ = 0;
   uint8_t espPage_ = 0, espDraft_ = 1, espSequence_ = 0;
   uint8_t espPendingAction_ = 0, espNotice_ = 0;
   bool espKnown_ = false, espMenuActive_ = false, espPending_ = false;

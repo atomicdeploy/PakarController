@@ -129,5 +129,29 @@ int main() {
   hardware.live.programming=true;
   avr.key(8,KeyEvent::HoldStart,0,6011,6011000);
   assert(!avr.espMenuActive());
-  puts("Paired ESP front panel: actual offer, physical keys, drafts, persistence/readback, replay, correlation, timeout, stale and Prog gates pass; not physical acceptance.");
+
+  Hardware idleHardware; PcControllerRuntime idle(idleHardware); idle.begin(20000);
+  service.offer(settings,wire,0); assert(idle.observeEspPanel(wire.sent,20000));
+  idle.key(8,KeyEvent::HoldStart,0,20010,20010000);
+  assert(idle.espMenuActive());
+  // Fresh offers keep the ESP available, not the physical menu interaction
+  // alive. The renderer also runs repeatedly without renewing inactivity.
+  for(uint32_t now=21010;now<=34010;now+=1000) {
+    service.offer(settings,wire,0); assert(idle.observeEspPanel(wire.sent,now));
+    idle.service(now,now*1000); assert(idle.espMenuActive());
+  }
+  idle.service(35009,35009000); assert(idle.espMenuActive());
+  idle.service(35010,35010000); assert(!idle.espMenuActive() && !idleHardware.active);
+  // Closing is real runtime ownership release; a fresh user entry can reopen
+  // it and another physical action renews the full 15-second interval.
+  idle.key(8,KeyEvent::HoldStart,0,36000,36000000);
+  assert(idle.espMenuActive());
+  idle.key(1,KeyEvent::Down,0,37000,37000000);
+  for(uint32_t now=38000;now<=51000;now+=1000) {
+    service.offer(settings,wire,0); assert(idle.observeEspPanel(wire.sent,now));
+    idle.service(now,now*1000);
+  }
+  idle.service(51999,51999000); assert(idle.espMenuActive());
+  idle.service(52000,52000000); assert(!idle.espMenuActive());
+  puts("Paired ESP front panel: actual offer, physical keys, drafts, persistence/readback, replay, correlation, inactivity timeout, stale and Prog gates pass; not physical acceptance.");
 }

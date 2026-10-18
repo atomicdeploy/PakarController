@@ -443,10 +443,16 @@ bool PcControllerRuntime::espKey(uint8_t bit, KeyEvent gesture, uint8_t source,
   if (bit == 8 && gesture == KeyEvent::HoldStart && espMenuAvailable(now) &&
       !hardware_.snapshot().programming && !hardware_.snapshot().hostCaptured) {
     espMenuActive_ = !espMenuActive_;
+    espTouchedAt_ = now;
     espPage_ = 0; espDraft_ = espState_.mode; espNotice_ = P::EspPanel::Current;
     hardware_.menuNavigationCue(true); showEspPanel(now); return true;
   }
   if (!espMenuActive_) return false;
+  // Only physical actions renew the menu lease. State offers, ACKs and the
+  // per-loop renderer must not turn an abandoned menu into permanent capture.
+  if (gesture == KeyEvent::Down || gesture == KeyEvent::Click ||
+      gesture == KeyEvent::DoubleClick || gesture == KeyEvent::HoldStart ||
+      gesture == KeyEvent::HoldRepeat) espTouchedAt_ = now;
   if (hardware_.snapshot().programming) { espMenuActive_ = false; showEspPanel(now); return true; }
   if (bit == 8 && gesture == KeyEvent::DoubleClick && !espPending_) {
     espMenuActive_ = false; showEspPanel(now); return true; // Discard draft.
@@ -523,7 +529,8 @@ void PcControllerRuntime::service(uint32_t now, uint32_t nowUs) {
   if (espPending_ && static_cast<uint32_t>(now - espSentAt_) >= 1500) {
     espPending_ = false; espNotice_ = P::EspPanel::TimedOut; espNoticeAt_ = now;
   }
-  if (espMenuActive_ && (!espMenuAvailable(now) || s.programming)) {
+  if (espMenuActive_ && (!espMenuAvailable(now) || s.programming ||
+      static_cast<uint32_t>(now - espTouchedAt_) >= 15000U)) {
     espMenuActive_ = false;
   }
   if (!espPending_ && espNotice_ >= P::EspPanel::Saved &&

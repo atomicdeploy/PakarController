@@ -11,6 +11,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Protocol test compilation failed' }
 & $testBinary
 if ($LASTEXITCODE -ne 0) { throw 'Protocol tests failed' }
 Write-Host 'Protocol round-trip, bounds, and corruption tests passed.'
+& (Join-Path $PSScriptRoot 'test-panel.ps1')
 & (Join-Path $PSScriptRoot 'test-led-pipeline.ps1')
 & (Join-Path $PSScriptRoot 'test-led-worker.ps1')
 $mndpBinary = Join-Path $outputDirectory 'mndp_test.exe'

@@ -46,6 +46,7 @@ enum Opcode : uint8_t {
   kCellsAction = 0x5F, // ESP only: [state,effect,10-byte logical-cell bitmap], one atomic loop-owner update.
   kTableSnapshotResponse = 0xB6, // [nonce,token32,total16,offset16,<=39 immutable JSON bytes].
   kTableCommandState = 0xB7, // Post-ACK readback: inner opcode, boot16, 7 scalar fields, 80 packed two-bit cell states.
+  kPanelEvent = 0xB8, // ESP semantic presentation event; requested, NOT confirmed segment rendering.
   kAvrRxDiagnosticResponse = 0xB4, // Action/error + actual capture/pad observations; never AVR ACK.
   kResetTelemetryResponse = 0xB5, // [MCUSR cause,countLE32,journal_verified]; optional GET_TELEMETRY companion.
   kEspPanelResponse = 0xB3, // Correlated action, error and authoritative ESP readback.

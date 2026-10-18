@@ -1545,6 +1545,8 @@ impl PakarControllerApp {
     }
     pub(super) fn draw_front_panel(&mut self, ui: &mut egui::Ui) {
         let snapshot = self.live_status().cloned();
+        let requested = snapshot.as_ref().and_then(peer_http::Pin::from_status)
+            .and_then(|peer| self.panel_events.current(&peer)).cloned();
         ui.add_enabled_ui(self.panel_live(Panel::FrontPanel), |ui| {
         if self.presentation_has_feature("lcd") {
             if let Some(lcd) = snapshot.as_ref().and_then(|s| s.lcd.as_ref()) {
@@ -1584,6 +1586,16 @@ impl PakarControllerApp {
             } else {
                 ui.label(egui::RichText::new(crate::ui::i18n::text("Display state unavailable")).weak());
             }
+            // Keep the two compact rows stable when a short notice expires;
+            // requested text never replaces the actual acknowledged segments.
+            ui.allocate_ui_with_layout(egui::vec2(ui.available_width(), 44.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+                ui.weak("Requested");
+                let value = requested.as_ref().map_or("—", |event| event.presentation.text.as_str());
+                let response = ui.add(egui::Label::new(egui::RichText::new(value).monospace()).truncate());
+                if let Some(event) = &requested {
+                    response.on_hover_text(format!("{}\n{} · {} · {} · priority {} · value {} · uptime {} ms", event.text, event.kind, event.presentation.blink, event.presentation.marquee, event.presentation.priority, event.value, event.uptime_ms));
+                }
+            });
             ui.horizontal(|ui| {
                 ui.add(egui::DragValue::new(&mut self.display_value).range(-999..=9999));
                 if ui.button(crate::ui::i18n::text("Show number")).clicked() {
