@@ -10,6 +10,53 @@ import 'peer_fixture.dart';
 
 // Real loopback transport, separate from widget binding's HTTP interception.
 void main() {
+  test('HTTP refresh cannot impersonate a fresh socket; resume probe reuses the existing connection', () async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final api = PakarApi(baseUrl: 'http://127.0.0.1:${server.port}');
+    final base = peerFixture();
+    final state = {...base.json, 'board_id': 'fixture', 'boot_id': 'a' * 32};
+    WebSocket? socket;
+    var probes = 0, connections = 0;
+    final listener = server.listen((request) async {
+      if (request.uri.path == '/ws') {
+        connections++;
+        socket = await WebSocketTransformer.upgrade(request);
+        socket!.listen((_) {
+          if (++probes == 1) socket!.add(jsonEncode(state));
+        });
+      } else {
+        request.response.headers.contentType = ContentType.json;
+        request.response.write(jsonEncode(state));
+        await request.response.close();
+      }
+    });
+    StreamSubscription<DeviceStatus>? live;
+    try {
+      await api.status();
+      final ready = Completer<void>();
+      live = api.liveStatus().listen((_) {
+        if (!ready.isCompleted) ready.complete();
+      });
+      await ready.future.timeout(const Duration(seconds: 3));
+      expect(api.liveFresh, true);
+      await Future<void>.delayed(const Duration(milliseconds: 4100));
+      expect(api.liveFresh, false);
+      await api.status();
+      expect(api.liveFresh, false);
+      expect(api.requestLiveStatus(), true);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(probes, 2);
+      expect(connections, 1);
+      api.disconnect();
+      expect(api.requestLiveStatus(), false);
+    } finally {
+      await api.close();
+      await live?.cancel();
+      await socket?.close();
+      await listener.cancel();
+      await server.close(force: true);
+    }
+  });
   test('An older HTTP read cannot undo newer same-boot WS state', () {
     DeviceStatus state(int clock, String boot) => DeviceStatus({
       'board_id': 'esp32s3-fixture',

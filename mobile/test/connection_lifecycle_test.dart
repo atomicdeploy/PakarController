@@ -19,6 +19,9 @@ class LifecycleApi extends PakarApi {
   int reads = 0, writes = 0;
   int mappingReads = 0;
   bool healthyWs = false;
+  bool failReads = false;
+  int subscriptions = 0, probes = 0;
+  DeviceStatus observed = peerFixture();
   @override
   bool get liveFresh => healthyWs;
   bool failAfterWrite = false;
@@ -26,10 +29,10 @@ class LifecycleApi extends PakarApi {
   @override
   Future<DeviceStatus> status() async {
     ++reads;
-    if (writes > 0 && failAfterWrite) {
+    if (failReads || writes > 0 && failAfterWrite) {
       throw const FormatException('Readback unavailable');
     }
-    return peerFixture();
+    return observed;
   }
 
   @override
@@ -39,7 +42,17 @@ class LifecycleApi extends PakarApi {
   }
 
   @override
-  Stream<DeviceStatus> liveStatus() => updates.stream;
+  Stream<DeviceStatus> liveStatus() {
+    subscriptions++;
+    return updates.stream;
+  }
+
+  @override
+  bool requestLiveStatus() {
+    probes++;
+    return true;
+  }
+
   @override
   Future<void> post(
     String path, [
@@ -71,7 +84,7 @@ class LifecycleApi extends PakarApi {
 
 void main() {
   testWidgets(
-    'Healthy WS avoids status polling but retains bounded mapping refresh',
+    'Healthy WS avoids hidden settings/status polling and needless map reads',
     (tester) async {
       final api = LifecycleApi()..healthyWs = true;
       await tester.pumpWidget(PakarControllerApp(api: api));
@@ -85,11 +98,8 @@ void main() {
         await tester.pump(const Duration(seconds: 3));
         await tester.pump();
       }
-      // IndexedStack retains Connection preferences' independent five-second
-      // BoardSound capability probe. The root's six three-second status polls
-      // must be absent; optional settings reads are not a command preflight.
-      expect(api.reads, reads + 3);
-      expect(api.mappingReads, greaterThan(maps));
+      expect(api.reads, reads);
+      expect(api.mappingReads, maps);
       expect(find.text('No acknowledged board'), findsNothing);
       await tester.pumpWidget(const SizedBox());
       await tester.pump();
@@ -258,7 +268,7 @@ void main() {
       expect(find.textContaining('Readback unavailable'), findsOneWidget);
       expect(find.text('No acknowledged board'), findsNothing);
       expect(find.byKey(const ValueKey('table-cell-canvas')), findsOneWidget);
-      // No optimistic cell success, and actual state expiry still revokes.
+      // Expiry revokes actuation, never the user-owned table workspace.
       expect(
         tester.widget<CellButton>(find.byKey(const ValueKey('cell-1'))).state,
         'white',
@@ -266,7 +276,14 @@ void main() {
       await tester.pump(const Duration(seconds: 7));
       await tester.pumpAndSettle();
       expect(api.writes, 1);
-      expect(find.text('No acknowledged board'), findsOneWidget);
+      expect(find.text('No acknowledged board'), findsNothing);
+      expect(find.byKey(const ValueKey('table-cell-canvas')), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Set red'))
+            .onPressed,
+        isNull,
+      );
       await tester.pumpWidget(const SizedBox());
       await tester.pump();
     },

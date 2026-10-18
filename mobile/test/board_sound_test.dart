@@ -13,17 +13,22 @@ import 'package:pakarcontroller/models.dart';
 class SoundFixture extends PakarApi {
   bool acknowledged = true;
   bool muted = false;
+  int reads = 0;
   Completer<void>? hold;
   @override
-  Future<DeviceStatus> status() async => DeviceStatus({
-    'hostname': 'ledboard',
-    'avr_online': true,
-    'capabilities': {
+  Future<DeviceStatus> status() async {
+    reads++;
+    return DeviceStatus({
       'hostname': 'ledboard',
-      'board_kind': 'controller',
-      'acknowledged_features': acknowledged ? ['settings', 'buzzer'] : [],
-    },
-  });
+      'avr_online': true,
+      'capabilities': {
+        'hostname': 'ledboard',
+        'board_kind': 'controller',
+        'acknowledged_features': acknowledged ? ['settings', 'buzzer'] : [],
+      },
+    });
+  }
+
   @override
   Future<BoardSound> boardSound({bool? silent}) async {
     if (silent != null) {
@@ -53,6 +58,24 @@ class SoundFixture extends PakarApi {
 }
 
 void main() {
+  testWidgets(
+    'A backgrounded preferences timer cannot read before the next UI frame',
+    (tester) async {
+      final api = SoundFixture();
+      addTearDown(api.close);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: BoardSoundPreferences(api: api)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final reads = api.reads;
+      api.appForeground = false; // Deliberately no didUpdateWidget/rebuild yet.
+      await tester.pump(const Duration(seconds: 16));
+      expect(api.reads, reads);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
   testWidgets(
     'Board Preferences stay contextual and do not optimistically switch before readback',
     (tester) async {

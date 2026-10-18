@@ -33,6 +33,14 @@ Devices, connection preferences, device settings, firmware and Android bridge.
 The bridge uses Session/MQTT/WebSocket/Routing navigation with retained drafts.
 Renderer captures use that same application theme rather than a mock palette.
 
+Selection/highlighting, Find text, effect choice and both table scroll axes are
+user-owned board-ID workspaces, not telemetry or socket state. Transient loss
+keeps the last acknowledged layout with hardware writes disabled. Backgrounding
+pauses optional reads/reconnect timers without closing a healthy socket; resume
+probes it before HTTP fallback. Small UI-only state is saved when changed on
+backgrounding, never per telemetry frame. Explicit Disconnect still stops access;
+neither reconnect nor cache restoration replays a command.
+
 For an acknowledged480-pixel streaming board, open the device context menu →
 Pixel diagnostics. Show or Previous/Next sends a complete black frame with only
 the selected physical pixel (or aligned six-pixel group) coloured. All off sends

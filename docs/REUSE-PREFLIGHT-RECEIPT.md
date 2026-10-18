@@ -1,5 +1,31 @@
 # Donor-first preflight receipt
 
+## Flutter lifecycle and stable board workspace
+
+Consulted peer-binding, mobile-settings and literal Pealayer donor-audit.
+Reread canonical Session retirement/admission and complete live
+src/ui/workspace_profiles.rs at matching410d274f source hash. Adapt its stable
+user-owned IDs into board-keyed Flutter UI state; retain the existing command
+owner fences separately. The same comparison ledger now binds workspace source,
+consumer and lifecycle/transport proof. Generic workspace-manager CRUD/icons
+remain an explicit pending donor import, not an accepted exclusion.
+
+Telemetry expiry previously removed Table from the IndexedStack and changed
+connection-revision keys. Background timers and hidden settings also issued
+reads, and HTTP refreshed the socket-health clock. Retain the last acknowledged
+layout while disabling expired writes, preserve local selection/query/effect/
+scroll by board ID, and save bounded UI-only cache once on changed background
+state. No device snapshot, command or authorization is restored from that cache.
+Pause foreground supervision without closing a healthy socket; resume with one
+read probe, independent WS freshness, quiet bounded reconnect and HTTP fallback.
+Hidden/inactive optional readers stop before another rendered frame is needed.
+
+Focused widget fixtures use the actual Flutter inactive/hidden/paused sequence;
+their initial missing lazy canvas and invalid lifecycle transitions were harness
+issues, corrected without relaxing production checks. Real socket tests remain
+isolated from TestWidgetsFlutterBinding. Source/fixture acceptance does not
+establish Android/Doze/router-loss or physical LED acceptance.
+
 ## Mobile deliberate pixel diagnostics
 
 Consulted games-streaming, led-cell-test, mobile-settings and literal donor-audit

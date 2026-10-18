@@ -11,6 +11,49 @@ import 'peer_fixture.dart';
 
 void main() {
   testWidgets(
+    'Touch selection releases Find focus without dragging the viewport back to its caret',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TablePage(
+              status: peerFixture(),
+              mapping: CellMap.defaults(),
+              command: (_, [values = const {}]) async {},
+            ),
+          ),
+        ),
+      );
+      final search = find.widgetWithText(TextField, 'Find logical cell');
+      await tester.enterText(search, '1-3');
+      await tester.pumpAndSettle();
+      final vertical = tester
+          .widget<ListView>(
+            find.byKey(const PageStorageKey('table-page-scroll')),
+          )
+          .controller!;
+      vertical.jumpTo(vertical.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+      final y = vertical.offset;
+      tester
+          .widget<CellButton>(find.byKey(const ValueKey('cell-5')))
+          .onPressed!();
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<CellButton>(find.byKey(const ValueKey('cell-5')))
+            .highlighted,
+        true,
+      );
+      expect(
+        FocusManager.instance.primaryFocus?.context?.widget,
+        isNot(isA<EditableText>()),
+      );
+      expect(vertical.offset, y);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+  testWidgets(
     'Cell commands and incoming state preserve both scroll axes and canvas position',
     (tester) async {
       tester.view.physicalSize = const Size(380, 820);

@@ -8,15 +8,20 @@ import 'workspace_widgets.dart';
 import 'icons.dart';
 
 class BoardSoundPreferences extends StatefulWidget {
-  const BoardSoundPreferences({super.key, required this.api});
+  const BoardSoundPreferences({
+    super.key,
+    required this.api,
+    this.active = true,
+  });
   final PakarApi api;
+  final bool active;
   @override
   State<BoardSoundPreferences> createState() => _BoardSoundPreferencesState();
 }
 
 class _BoardSoundPreferencesState extends State<BoardSoundPreferences> {
   BoardSound? observed;
-  bool available = false, busy = false, programming = false;
+  bool available = false, busy = false, programming = false, fresh = false;
   int? owner;
   String? message;
   Timer? refresh;
@@ -25,8 +30,14 @@ class _BoardSoundPreferencesState extends State<BoardSoundPreferences> {
     super.initState();
     unawaited(load());
     refresh = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (message == null && !busy) unawaited(load());
+      if (widget.active && message == null && !busy) unawaited(load());
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant BoardSoundPreferences oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) unawaited(load());
   }
 
   @override
@@ -36,7 +47,10 @@ class _BoardSoundPreferencesState extends State<BoardSoundPreferences> {
   }
 
   Future<void> load({bool? silent}) async {
-    if (busy || !widget.api.connectionWanted ||
+    if (!widget.active ||
+        !widget.api.appForeground ||
+        busy ||
+        !widget.api.connectionWanted ||
         widget.api.connectionMethod != ConnectionMethod.network) {
       return;
     }
@@ -47,7 +61,12 @@ class _BoardSoundPreferencesState extends State<BoardSoundPreferences> {
     final revision = widget.api.connectionRevision;
     try {
       final status = await widget.api.status();
-      if (!mounted || revision != widget.api.connectionRevision) return;
+      if (!mounted ||
+          !widget.active ||
+          !widget.api.appForeground ||
+          revision != widget.api.connectionRevision) {
+        return;
+      }
       final supported =
           status.json['avr_online'] == true &&
           status.peer.has('settings') &&
@@ -61,11 +80,14 @@ class _BoardSoundPreferencesState extends State<BoardSoundPreferences> {
       if (!supported) return;
       final value = await widget.api.boardSound(silent: silent);
       if (!mounted || revision != widget.api.connectionRevision) return;
-      setState(() => observed = value);
+      setState(() {
+        observed = value;
+        fresh = true;
+      });
     } on Exception catch (error) {
       if (mounted) {
         setState(() {
-          observed = null;
+          fresh = false;
           message = error.toString();
         });
       }
@@ -93,8 +115,10 @@ class _BoardSoundPreferencesState extends State<BoardSoundPreferences> {
             contentPadding: EdgeInsets.zero,
             title: const Text('Silent mode'),
             value: value.silent,
-            subtitle: Text(value.silent ? 'On' : 'Off'),
-            onChanged: busy || programming
+            subtitle: Text(
+              '${fresh ? '' : 'Last observed · '}${value.silent ? 'On' : 'Off'}',
+            ),
+            onChanged: busy || programming || !fresh
                 ? null
                 : (value) => unawaited(load(silent: value)),
           ),
@@ -103,7 +127,10 @@ class _BoardSoundPreferencesState extends State<BoardSoundPreferences> {
         ),
         if (programming)
           const Text('Programming safety keeps the board muted.'),
-        if (busy) const LinearProgressIndicator(),
+        SizedBox(
+          height: 4,
+          child: busy ? const LinearProgressIndicator() : null,
+        ),
         if (message != null)
           Text(
             message!,

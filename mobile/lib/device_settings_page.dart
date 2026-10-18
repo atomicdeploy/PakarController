@@ -22,9 +22,11 @@ class DeviceSettingsPage extends StatefulWidget {
     required this.authorized,
     required this.navigate,
     required this.adoptConnection,
+    this.active = true,
   });
   final PakarApi api;
   final DeviceStatus status;
+  final bool active;
   final bool Function(String feature) authorized;
   final void Function(String page) navigate;
   final Future<void> Function(String endpoint, String user, String password)
@@ -67,6 +69,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   @override
   void didUpdateWidget(covariant DeviceSettingsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) unawaited(load());
     if (maintenanceActive &&
         !widget.status.deviceSettingsPages.any(
           (entry) => entry['id'] == 'firmware',
@@ -75,14 +78,14 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       // settings behind its confirmation lock; no firmware action is resumed.
       working = maintenanceActive = false;
     }
-    if (!widget.authorized('network') && oldWidget.status.peer.has('network')) {
+    if (widget.api.connectionRevision != session.owner) {
       session.invalidate();
       access = null;
       current.clear();
       replacement.clear();
       confirmation.clear();
     }
-    if (!widget.authorized('identity')) {
+    if (widget.api.connectionRevision != session.owner) {
       identity = null;
       host.clear();
       name.clear();
@@ -118,10 +121,16 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   }
 
   Future<void> load() async {
-    if (!mounted || working || session.pending) return;
+    if (!mounted ||
+        !widget.active ||
+        !widget.api.appForeground ||
+        working ||
+        session.pending) {
+      return;
+    }
     if (widget.authorized('network')) {
       await session.load(SettingsGroup.network);
-      if (!mounted || !widget.authorized('network')) return;
+      if (!mounted || !widget.active || !widget.authorized('network')) return;
       await session.load(SettingsGroup.cloud);
     }
     if (mounted && identity == null && widget.authorized('identity')) {

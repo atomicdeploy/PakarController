@@ -39,6 +39,9 @@ class PakarApi {
   int _connectionRevision = 0;
   int get connectionRevision => _connectionRevision;
   bool _connectionWanted = true;
+  // Optional UI reads must stop synchronously, even before Android renders the
+  // frame that propagates inactive page properties to hidden widgets.
+  bool appForeground = true;
   bool get connectionWanted => _connectionWanted;
   ConnectionMethod _connectionMethod = ConnectionMethod.network;
   ConnectionMethod get connectionMethod => _connectionMethod;
@@ -107,11 +110,18 @@ class PakarApi {
   bool _socketReady = false;
   DeviceStatus? _latestStatus;
   Stopwatch? _statusAge;
+  Stopwatch? _liveAge, _socketAge;
+  Duration? get liveSilence => _liveAge?.elapsed ?? _socketAge?.elapsed;
   final _commandReplies = <String, Completer<Map<String, dynamic>?>>{};
   bool get liveFresh =>
-      _socketReady &&
-      _statusAge != null &&
-      _statusAge!.elapsedMilliseconds < 2000;
+      _socketReady && _liveAge != null && _liveAge!.elapsedMilliseconds < 4000;
+
+  /// A resume probe is a read on the existing socket, not a new connection.
+  bool requestLiveStatus() {
+    if (!_connectionWanted || !_socketReady || _channel == null) return false;
+    _channel!.sink.add('{"type":"status"}');
+    return true;
+  }
 
   bool _diagnosticPending = false;
 
@@ -727,7 +737,10 @@ class PakarApi {
     final active = IOWebSocketChannel.connect(
       uri,
       headers: _headers,
-      pingInterval: const Duration(seconds: 20),
+      // Android may pause Dart timers/network while backgrounded. A built-in
+      // ping timeout would turn that suspension into a needless disconnect.
+      // Foreground supervision owns read probes and bounded silent-socket reset.
+      pingInterval: null,
       connectTimeout: const Duration(seconds: 6),
       customClient: _ioClient,
     );
@@ -738,6 +751,8 @@ class PakarApi {
       return;
     }
     _socketReady = true;
+    _liveAge = null;
+    _socketAge = Stopwatch()..start();
     active.sink.add('{"type":"status"}');
     try {
       await for (final message in active.stream) {
@@ -775,11 +790,17 @@ class PakarApi {
           }
           final status = DeviceStatus(value);
           _rememberStatus(status);
+          _liveAge = Stopwatch()..start();
           yield status;
         }
       }
     } finally {
-      if (identical(_channel, active)) _socketReady = false;
+      if (identical(_channel, active)) {
+        _socketReady = false;
+        _liveAge = _socketAge = null;
+        _channel = null;
+      }
+      unawaited(active.sink.close().then<void>((_) {}, onError: (Object _) {}));
     }
   }
 
@@ -787,6 +808,7 @@ class PakarApi {
     _socketReady = false;
     _latestStatus = null;
     _statusAge = null;
+    _liveAge = _socketAge = null;
     for (final pending in _commandReplies.values) {
       if (!pending.isCompleted) pending.complete(null);
     }
@@ -805,6 +827,7 @@ class PakarApi {
     _socketReady = false;
     _latestStatus = null;
     _statusAge = null;
+    _liveAge = _socketAge = null;
     for (final pending in _commandReplies.values) {
       if (!pending.isCompleted) pending.complete(null);
     }

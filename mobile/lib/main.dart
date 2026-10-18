@@ -12,6 +12,7 @@ import 'board_sound_preferences.dart';
 import 'models.dart';
 import 'command_readback.dart';
 import 'table_layout.dart';
+import 'table_workspace.dart';
 import 'connection_preferences.dart';
 import 'cell_search.dart';
 import 'peer_context.dart';
@@ -66,7 +67,18 @@ class _ControlShellState extends State<ControlShell>
   late final api = widget.api ?? PakarApi();
   final mirror = PeripheralMirror();
   DeviceStatus? status;
+  DeviceStatus? presented;
+  final workspaces = <String, TableWorkspace>{};
+  String? workspaceBoard;
+  String savedWorkspaces = '';
+  bool foreground = true, liveActive = false;
+  int retryAttempt = 0;
+  Stopwatch? observedAge;
+  Stopwatch? resumeProbeAge;
+  String? observedEndpoint;
+  Timer? resumeRead;
   CellMap mapping = CellMap(physical: const [], names: const []);
+  bool mappingFresh = false;
   StreamSubscription<DeviceStatus>? live;
   Timer? fallback;
   Timer? liveRetry;
@@ -91,6 +103,12 @@ class _ControlShellState extends State<ControlShell>
       mirror.observe(null, api.connectionRevision);
       if (mounted) {
         _revoke('Connection changed; waiting for fresh device state');
+        if (observedEndpoint != api.baseUrl) {
+          setState(() {
+            presented = null;
+            mapping = CellMap(physical: const [], names: const []);
+          });
+        }
       }
     };
     api.onPeerChanged = () {
@@ -103,6 +121,38 @@ class _ControlShellState extends State<ControlShell>
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString('table_workspaces');
+    if (saved != null && saved.length < 65536) {
+      try {
+        final cache = jsonDecode(saved);
+        final entries = cache is Map ? cache['boards'] : null;
+        if (cache is Map &&
+            [
+              'overview',
+              'table',
+              'front-panel',
+              'hardware',
+              'device-settings',
+              'connection',
+              'devices',
+            ].contains(cache['activity'])) {
+          page = cache['activity'] as String;
+        }
+        if (entries is Map<String, dynamic>) {
+          for (final entry in entries.entries.take(16)) {
+            if (entry.key.length <= 160 &&
+                entry.value is Map<String, dynamic>) {
+              workspaces[entry.key] = TableWorkspace(
+                saved: entry.value as Map<String, dynamic>,
+              );
+            }
+          }
+        }
+        savedWorkspaces = saved;
+      } on FormatException {
+        /* Ignore invalid UI cache, never device settings. */
+      }
+    }
     try {
       await ConnectionPreferences(prefs).restore(api);
     } on Exception catch (error) {
@@ -116,26 +166,41 @@ class _ControlShellState extends State<ControlShell>
   }
 
   Future<void> _startConnection() async {
+    _startSupervision();
+    await _refresh();
+    if (mounted && api.connectionWanted && foreground) {
+      unawaited(_connectLive());
+    }
+  }
+
+  void _startSupervision() {
     fallback?.cancel();
     fallback = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (api.connectionWanted && !api.liveFresh) {
+      if (!foreground || !api.connectionWanted) return;
+      if (!api.liveFresh) {
+        if (liveActive &&
+            (api.liveSilence ?? Duration.zero) >= const Duration(seconds: 8) &&
+            (resumeProbeAge?.elapsed ?? const Duration(seconds: 8)) >=
+                const Duration(seconds: 8)) {
+          unawaited(_connectLive());
+        } else if (liveActive) {
+          api.requestLiveStatus();
+        }
         unawaited(_refresh(silent: true));
-      } else if (api.connectionWanted &&
-          !commandPending &&
-          (!mapping.valid || ++mappingTicks >= 5)) {
+      } else if (!commandPending &&
+          (!mappingFresh || !mapping.valid || ++mappingTicks >= 20)) {
         unawaited(_syncMapping());
       }
     });
-    await _refresh();
-    if (mounted && api.connectionWanted) unawaited(_connectLive());
   }
 
   Future<void> _connectLive() async {
-    if (!mounted || !api.connectionWanted) return;
+    if (!mounted || !api.connectionWanted || !foreground) return;
     final owner = api.connectionRevision;
     // Adapt donor StatusFrameBatcher's generation retirement: an old socket's
     // error/done callbacks cannot revoke or schedule work for its replacement.
     final generation = ++liveGeneration;
+    liveActive = true;
     liveRetry?.cancel();
     await live?.cancel();
     if (!mounted ||
@@ -154,13 +219,10 @@ class _ControlShellState extends State<ControlShell>
         return;
       }
       ended = true;
+      liveActive = false;
       // A failed WS does not invalidate a still-fresh authenticated HTTP
       // snapshot. Its own lease expires if the fallback read also fails.
-      _reportIncident(
-        'live-disconnected',
-        'Live updates disconnected; checking device state',
-      );
-      _retryLive();
+      if (foreground) _retryLive();
     }
 
     live = api.liveStatus().listen(
@@ -169,25 +231,29 @@ class _ControlShellState extends State<ControlShell>
             api.connectionWanted &&
             owner == api.connectionRevision &&
             generation == liveGeneration) {
-          reportedIncidents.remove('live-disconnected');
+          retryAttempt = 0;
           _observe(value);
         }
       },
       onError: (Object _) => disconnected(),
       onDone: disconnected,
+      cancelOnError: true,
     );
   }
 
   void _retryLive() {
-    if (!mounted || !api.connectionWanted) return;
+    if (!mounted || !api.connectionWanted || !foreground) return;
     liveRetry?.cancel();
-    liveRetry = Timer(const Duration(seconds: 2), _connectLive);
+    final seconds = [1, 2, 4, 8, 15][retryAttempt.clamp(0, 4)];
+    retryAttempt++;
+    liveRetry = Timer(Duration(seconds: seconds), _connectLive);
   }
 
   Future<void> _refresh({bool silent = false}) async {
     final owner = api.connectionRevision, started = observation;
     if (!mounted ||
         !api.connectionWanted ||
+        !foreground ||
         commandPending ||
         refreshingRevision == owner) {
       return;
@@ -201,8 +267,8 @@ class _ControlShellState extends State<ControlShell>
         return;
       }
       _observe(value);
-      if (value.peer.table && (!mapping.valid || !silent)) {
-        await _syncMapping();
+      if (value.peer.table && (!mappingFresh || !mapping.valid || !silent)) {
+        unawaited(_syncMapping());
       }
       if (!mounted || owner != api.connectionRevision) return;
       setState(() {
@@ -212,7 +278,12 @@ class _ControlShellState extends State<ControlShell>
       if (mounted &&
           owner == api.connectionRevision &&
           started == observation) {
-        _revoke(error.toString());
+        if (error is AuthenticationRequired ||
+            error is StaleConnection ||
+            observedAge == null ||
+            observedAge!.elapsed >= const Duration(seconds: 6)) {
+          _revoke(error.toString());
+        }
       }
     } finally {
       if (refreshingRevision == owner) refreshingRevision = null;
@@ -223,6 +294,7 @@ class _ControlShellState extends State<ControlShell>
     final owner = api.connectionRevision, peer = status;
     if (!mounted ||
         !api.connectionWanted ||
+        !foreground ||
         peer?.peer.table != true ||
         mappingRevision == owner) {
       return;
@@ -238,7 +310,10 @@ class _ControlShellState extends State<ControlShell>
           peer.json['board_id'] == status?.json['board_id'] &&
           peer.json['boot_id'] == status?.json['boot_id']) {
         // Fresh same-peer WS ticks must not invalidate an in-flight map read.
-        setState(() => mapping = next);
+        setState(() {
+          mapping = next;
+          mappingFresh = true;
+        });
       }
     } on Exception {
       // Optional read failures do not erase this same boot's confirmed map.
@@ -251,20 +326,64 @@ class _ControlShellState extends State<ControlShell>
     if (!mounted || !api.connectionWanted) return;
     if (value.olderThan(status)) return;
     mirror.observe(value, api.connectionRevision);
-    final changed = status?.hostname != value.hostname;
+    final board =
+        value.json['board_id'] as String? ?? '${api.baseUrl}|${value.hostname}';
+    final changed = workspaceBoard != board;
+    if (changed && workspaces.length >= 16 && !workspaces.containsKey(board)) {
+      final retired = workspaces.keys.firstWhere(
+        (key) => key != workspaceBoard,
+      );
+      workspaces.remove(retired)?.dispose();
+    }
+    if (value.peer.table) workspaces.putIfAbsent(board, TableWorkspace.new);
+    final bootChanged = presented?.json['boot_id'] != value.json['boot_id'];
+    workspaceBoard = board;
+    observedAge = Stopwatch()..start();
+    observedEndpoint = api.baseUrl;
+    resumeRead?.cancel();
     expiry?.cancel();
     ++observation;
     setState(() {
       status = value;
+      presented = value;
       if (incident != null) message = 'Live device synchronized';
       incident = null;
       if (changed || !value.peer.table) {
         mapping = CellMap(physical: const [], names: const []);
       }
+      if (changed || bootChanged || !value.peer.table) mappingFresh = false;
     });
-    expiry = Timer(const Duration(seconds: 6), () {
-      if (mounted) _revoke('Device state expired');
+    _armExpiry();
+    if (value.peer.table && (!mappingFresh || !mapping.valid) && foreground) {
+      unawaited(_syncMapping());
+    }
+  }
+
+  void _armExpiry() {
+    expiry?.cancel();
+    if (!foreground || !api.connectionWanted || status == null) return;
+    final remaining =
+        const Duration(seconds: 6) - (observedAge?.elapsed ?? Duration.zero);
+    expiry = Timer(remaining.isNegative ? Duration.zero : remaining, () {
+      if (mounted && foreground) {
+        _revoke('Live state unavailable; reconnecting…');
+      }
     });
+  }
+
+  Future<void> _saveWorkspaces() async {
+    final encoded = jsonEncode({
+      'activity': page,
+      'boards': {
+        for (final entry in workspaces.entries)
+          entry.key: entry.value.snapshot(),
+      },
+    });
+    if (encoded == savedWorkspaces) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (await prefs.setString('table_workspaces', encoded)) {
+      savedWorkspaces = encoded;
+    }
   }
 
   void _revoke(String reason) {
@@ -275,7 +394,6 @@ class _ControlShellState extends State<ControlShell>
     if (status == null && incident == reason) return;
     setState(() {
       status = null;
-      mapping = CellMap(physical: const [], names: const []);
       message = reason;
       incident = reason;
     });
@@ -292,11 +410,14 @@ class _ControlShellState extends State<ControlShell>
   Future<void> _disconnect() async {
     // Retire before awaiting cancellation: no callback may reconnect afterward.
     ++liveGeneration;
+    liveActive = false;
     reportedIncidents.clear();
     api.disconnect();
     fallback?.cancel();
     liveRetry?.cancel();
+    resumeRead?.cancel();
     _revoke('Disconnected');
+    setState(() => presented = null);
     final previous = live;
     live = null;
     await previous?.cancel();
@@ -375,7 +496,8 @@ class _ControlShellState extends State<ControlShell>
   ) async {
     if (commandPending) return false;
     try {
-      if (!api.connectionWanted ||
+      if (!foreground ||
+          !api.connectionWanted ||
           owner != api.connectionRevision ||
           peer != status?.hostname ||
           status?.peer.allows(path, values) != true) {
@@ -452,7 +574,10 @@ class _ControlShellState extends State<ControlShell>
             actualMap.names[id - 1] != values['name']) {
           throw const FormatException('Mapping readback differs; not retried');
         }
-        setState(() => mapping = actualMap);
+        setState(() {
+          mapping = actualMap;
+          mappingFresh = true;
+        });
       }
       setState(
         () => message = 'Device acknowledged; fresh state read back (not physical output proof)',
@@ -477,7 +602,46 @@ class _ControlShellState extends State<ControlShell>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    mirror.foreground(state == AppLifecycleState.resumed);
+    final active = state == AppLifecycleState.resumed;
+    api.appForeground = active;
+    mirror.foreground(active);
+    if (foreground == active) return;
+    foreground = active;
+    if (!active) {
+      fallback?.cancel();
+      liveRetry?.cancel();
+      expiry?.cancel();
+      resumeRead?.cancel();
+      unawaited(
+        _saveWorkspaces().catchError((Object _) {
+          // A UI-cache write failure never resets device settings or telemetry.
+        }),
+      );
+      setState(() {});
+      return; // Keep the socket and workspace; Android may suspend transport.
+    }
+    if (!api.connectionWanted) {
+      setState(() {});
+      return;
+    }
+    _startSupervision();
+    if (api.liveFresh && status != null) {
+      _armExpiry();
+      setState(() {});
+      return;
+    }
+    _revoke('Resuming live updates…');
+    resumeProbeAge = Stopwatch()..start();
+    if (!liveActive) {
+      unawaited(_connectLive());
+    } else {
+      api.requestLiveStatus();
+    }
+    resumeRead = Timer(const Duration(milliseconds: 1200), () {
+      if (mounted && foreground && api.connectionWanted && !api.liveFresh) {
+        unawaited(_refresh(silent: true));
+      }
+    });
   }
 
   @override
@@ -491,13 +655,17 @@ class _ControlShellState extends State<ControlShell>
     fallback?.cancel();
     liveRetry?.cancel();
     expiry?.cancel();
+    resumeRead?.cancel();
+    for (final workspace in workspaces.values) {
+      workspace.dispose();
+    }
     api.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final peer = status?.peer ?? PeerContext.unknown;
+    final peer = presented?.peer ?? PeerContext.unknown;
     final owner = api.connectionRevision, hostname = status?.hostname;
     // Retained dialogs hold this owner: they cannot write to a replacement peer.
     Future<void> scoped(
@@ -531,41 +699,57 @@ class _ControlShellState extends State<ControlShell>
         for (final item in pages)
           switch (item.$1) {
             'table' => TablePage(
-              key: ValueKey('table:$owner:${hostname ?? ''}'),
-              status: status,
+              key: ValueKey('table:$workspaceBoard'),
+              status: presented,
+              connected: status != null && foreground,
+              mappingCurrent: mappingFresh,
+              workspace: workspaces[workspaceBoard],
               mapping: mapping,
               command: scoped,
               verifiedCommand: (path, values) =>
                   _command(owner, hostname, path, values),
             ),
-            'front-panel' => FrontPanelPage(
-              key: ValueKey('front:$owner:${hostname ?? ''}'),
-              status: status,
-              command: scoped,
-              mirror: mirror,
+            'front-panel' => IgnorePointer(
+              key: ValueKey('front:$workspaceBoard'),
+              ignoring: status == null || !foreground,
+              child: FrontPanelPage(
+                status: presented,
+                command: scoped,
+                mirror: mirror,
+              ),
             ),
-            'hardware' => HardwarePage(status: status),
-            'device-settings' => DeviceSettingsPage(
-              key: ValueKey('device-settings:$owner:${hostname ?? ''}'),
-              api: api,
-              status: status!,
-              authorized: (feature) =>
-                  mounted &&
-                  owner == api.connectionRevision &&
-                  status?.hostname == hostname &&
-                  status?.peer.has(feature) == true,
-              navigate: (target) => setState(() => page = target),
-              adoptConnection: (endpoint, user, password) =>
-                  _adoptConnection(owner, endpoint, user, password),
+            'hardware' => HardwarePage(
+              key: ValueKey('hardware:$workspaceBoard'),
+              status: status,
+            ),
+            'device-settings' => IgnorePointer(
+              key: ValueKey('device-settings:$owner:$workspaceBoard'),
+              ignoring: status == null || !foreground,
+              child: DeviceSettingsPage(
+                api: api,
+                status: presented!,
+                active:
+                    page == 'device-settings' && foreground && status != null,
+                authorized: (feature) =>
+                    mounted &&
+                    foreground &&
+                    owner == api.connectionRevision &&
+                    status?.hostname == hostname &&
+                    status?.peer.has(feature) == true,
+                navigate: (target) => setState(() => page = target),
+                adoptConnection: (endpoint, user, password) =>
+                    _adoptConnection(owner, endpoint, user, password),
+              ),
             ),
             'connection' => SettingsPage(
               key: const ValueKey('connection-preferences'),
               api: api,
               reconnect: _reconnect,
+              active: page == 'connection' && foreground,
             ),
             'devices' =>
               page != 'devices'
-                  ? const SizedBox.shrink()
+                  ? const SizedBox.shrink(key: ValueKey('devices-hidden'))
                   : DevicesPage(
                       select: (device, password) async {
                         await _adoptConnection(
@@ -578,7 +762,10 @@ class _ControlShellState extends State<ControlShell>
                         if (mounted) setState(() => page = 'overview');
                       },
                     ),
-            _ => BoardOverview(status: status),
+            _ => BoardOverview(
+              key: ValueKey('overview:$workspaceBoard'),
+              status: status,
+            ),
           },
       ],
     );
@@ -803,11 +990,17 @@ class TablePage extends StatefulWidget {
     required this.mapping,
     required this.command,
     this.verifiedCommand,
+    this.workspace,
+    this.connected = true,
+    this.mappingCurrent = true,
   });
   final DeviceStatus? status;
   final CellMap mapping;
   final Command command;
   final VerifiedCommand? verifiedCommand;
+  final TableWorkspace? workspace;
+  final bool connected;
+  final bool mappingCurrent;
 
   @override
   State<TablePage> createState() => _TablePageState();
@@ -817,42 +1010,67 @@ class _TablePageState extends State<TablePage> {
   DeviceStatus? get status => widget.status;
   CellMap get mapping => widget.mapping;
   Command get command => widget.command;
-  final query = TextEditingController();
-  final tableScroll = ScrollController();
-  final pageScroll = ScrollController();
-  Set<int> selection = {};
+  late final workspace = widget.workspace ?? TableWorkspace();
+  TextEditingController get query => workspace.query;
+  ScrollController get tableScroll => workspace.tableScroll;
+  ScrollController get pageScroll => workspace.pageScroll;
+  Set<int> get selection => workspace.selection;
+  set selection(Set<int> value) => workspace.selection = value;
   String? searchError;
-  bool multiple = true, showIndicators = false, applying = false;
-  String cellEffect = 'immediate';
+  bool get multiple => workspace.multiple;
+  set multiple(bool value) => workspace.multiple = value;
+  bool get showIndicators => workspace.showIndicators;
+  set showIndicators(bool value) => workspace.showIndicators = value;
+  String get cellEffect => workspace.cellEffect;
+  set cellEffect(String value) => workspace.cellEffect = value;
+  bool applying = false;
   bool outputPending = false;
   String? batchMessage;
 
   @override
+  void initState() {
+    super.initState();
+    try {
+      selection = parseCellSearch(query.text);
+    } on FormatException catch (error) {
+      searchError = error.message;
+    }
+  }
+
+  @override
   void dispose() {
-    query.dispose();
-    tableScroll.dispose();
-    pageScroll.dispose();
+    if (widget.workspace == null) workspace.dispose();
     super.dispose();
   }
 
-  void select(int id) => setState(() {
-    if (multiple) {
-      if (!selection.remove(id)) selection.add(id);
-    } else {
-      selection = {id};
-    }
-    query.text = formatCellSelection(selection);
-    searchError = null;
-  });
+  void select(int id) {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      if (multiple) {
+        if (!selection.remove(id)) selection.add(id);
+      } else {
+        selection = {id};
+      }
+      query.text = formatCellSelection(selection);
+      searchError = null;
+    });
+  }
 
-  void replaceSelection(Set<int> ids) => setState(() {
-    selection = ids;
-    query.text = formatCellSelection(selection);
-    searchError = null;
-  });
+  void replaceSelection(Set<int> ids) {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      selection = ids;
+      query.text = formatCellSelection(selection);
+      searchError = null;
+    });
+  }
 
   Future<void> setOutputEnabled(bool enabled) async {
-    if (outputPending || status?.ledOutputEnabled == null) return;
+    if (!widget.connected ||
+        outputPending ||
+        status?.ledOutputEnabled == null) {
+      return;
+    }
     setState(() => outputPending = true);
     try {
       await command('/api/led/output', {'enabled': '$enabled'});
@@ -863,7 +1081,8 @@ class _TablePageState extends State<TablePage> {
   }
 
   Future<void> setOutputMode(String mode) async {
-    if (outputPending ||
+    if (!widget.connected ||
+        outputPending ||
         status?.ledOutputMode == null ||
         !const ['static', 'effects'].contains(mode)) {
       return;
@@ -877,7 +1096,9 @@ class _TablePageState extends State<TablePage> {
   }
 
   Future<void> rainbowTest() async {
-    if (outputPending || status?.ledOutputMode == null) return;
+    if (!widget.connected || outputPending || status?.ledOutputMode == null) {
+      return;
+    }
     setState(() => outputPending = true);
     try {
       // Only a pattern command: keep observed output On/Off and mode unchanged.
@@ -890,6 +1111,7 @@ class _TablePageState extends State<TablePage> {
   Future<void> applySelection(String state) async {
     final send = widget.verifiedCommand;
     if (send == null ||
+        !widget.connected ||
         applying ||
         selection.isEmpty ||
         searchError != null ||
@@ -925,268 +1147,295 @@ class _TablePageState extends State<TablePage> {
   @override
   Widget build(BuildContext context) => status?.peer.table != true
       ? const Center(child: Text('No acknowledged table'))
-      : ListView(
-          key: const PageStorageKey('table-page-scroll'),
-          controller: pageScroll,
-          primary: false,
-          padding: const EdgeInsets.all(16),
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '80-cell table',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        'Display: 1, 11, 2, 12… · logical IDs and physical mapping unchanged',
-                      ),
-                    ],
-                  ),
-                ),
-                FilledButton.icon(
-                  onPressed:
-                      status?.peer.modes.any(
-                            (mode) => mode.id == 'first-wins',
-                          ) !=
-                          true
-                      ? null
-                      : () => command('/api/game/reset'),
-                  icon: const Icon(PakarIcons.arrowCounterClockwise),
-                  label: const Text('Reset'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final mode in status!.peer.modes)
-                  ChoiceChip(
-                    label: Text(mode.label),
-                    selected: status!.mode == mode.id,
-                    onSelected: (_) => command('/api/mode', {'value': mode.id}),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (status!.ledOutputEnabled != null)
-              SwitchListTile.adaptive(
-                title: const Text('LED output service'),
-                subtitle: Text(
-                  outputPending
-                      ? 'Waiting for device; showing last observed state.'
-                      : 'Off clears the strip; modes and settings stay available.',
-                ),
-                value: status!.ledOutputEnabled!,
-                onChanged: outputPending ? null : setOutputEnabled,
-              ),
-            if (status!.ledOutputMode != null) ...[
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
+      : PageStorage(
+          bucket: workspace.bucket,
+          child: ListView(
+            key: const PageStorageKey('table-page-scroll'),
+            controller: pageScroll,
+            primary: false,
+            padding: const EdgeInsets.all(16),
+            children: [
+              Row(
                 children: [
-                  for (final mode in const ['static', 'effects'])
-                    ChoiceChip(
-                      label: Text(mode == 'static' ? 'Static' : 'Effects'),
-                      selected: status!.ledOutputMode == mode,
-                      onSelected: outputPending
-                          ? null
-                          : (_) => setOutputMode(mode),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '80-cell table',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'Display: 1, 11, 2, 12… · logical IDs and physical mapping unchanged',
+                        ),
+                      ],
                     ),
-                  OutlinedButton(
-                    onPressed: outputPending ? null : rainbowTest,
-                    child: const Text('Rainbow test'),
+                  ),
+                  FilledButton.icon(
+                    onPressed:
+                        !widget.connected ||
+                            status?.peer.modes.any(
+                                  (mode) => mode.id == 'first-wins',
+                                ) !=
+                                true
+                        ? null
+                        : () => command('/api/game/reset'),
+                    icon: const Icon(PakarIcons.arrowCounterClockwise),
+                    label: const Text('Reset'),
                   ),
                 ],
               ),
-              Text(
-                status!.ledOutputMode == 'static'
-                    ? 'Static cells: six matching pixels. Rainbow test animates explicitly.'
-                    : 'Effects: animated output enabled explicitly.',
-                style: Theme.of(context).textTheme.bodySmall,
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final mode in status!.peer.modes)
+                    ChoiceChip(
+                      label: Text(mode.label),
+                      selected: status!.mode == mode.id,
+                      onSelected: widget.connected
+                          ? (_) => command('/api/mode', {'value': mode.id})
+                          : null,
+                    ),
+                ],
               ),
               const SizedBox(height: 12),
-            ],
-            TextField(
-              controller: query,
-              decoration: InputDecoration(
-                labelText: 'Find logical cell',
-                hintText: '12, 3–8',
-                errorText: searchError,
-              ),
-              onChanged: (text) => setState(() {
-                try {
-                  selection = parseCellSearch(text);
-                  searchError = null;
-                } on FormatException catch (error) {
-                  searchError = error.message;
-                }
-              }),
-              onSubmitted: (_) {
-                if (searchError == null) {
-                  setState(() => query.text = formatCellSelection(selection));
-                }
-              },
-            ),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                FilterChip(
-                  label: const Text('Multiple selection'),
-                  selected: multiple,
-                  onSelected: (value) => setState(() => multiple = value),
-                ),
-                FilterChip(
-                  label: const Text('LED indicators'),
-                  selected: showIndicators,
-                  onSelected: (value) => setState(() => showIndicators = value),
-                ),
-                TextButton(
-                  onPressed: applying
-                      ? null
-                      : () => replaceSelection({
-                          for (var id = 1; id <= 80; id++) id,
-                        }),
-                  child: const Text('Select all'),
-                ),
-                TextButton(
-                  onPressed: applying
-                      ? null
-                      : () => replaceSelection({
-                          for (var id = 1; id <= 80; id++)
-                            if (!selection.contains(id)) id,
-                        }),
-                  child: const Text('Invert selection'),
-                ),
-                TextButton(
-                  onPressed: applying
-                      ? null
-                      : () => setState(() {
-                          selection = {};
-                          query.clear();
-                          searchError = null;
-                        }),
-                  child: const Text('Clear selection'),
-                ),
-                for (final value in ['white', 'red', 'off'])
-                  FilledButton.tonal(
-                    onPressed:
-                        selection.isEmpty ||
-                            applying ||
-                            searchError != null ||
-                            widget.verifiedCommand == null ||
-                            !status!.peer.has('cell-batch')
-                        ? null
-                        : () => applySelection(value),
-                    child: Text('Set $value'),
+              if (status!.ledOutputEnabled != null)
+                SwitchListTile.adaptive(
+                  title: const Text('LED output service'),
+                  subtitle: SizedBox(
+                    height: 40,
+                    child: Text(
+                      outputPending
+                          ? 'Waiting for device; showing last observed state.'
+                          : 'Off clears the strip; modes and settings stay available.',
+                      maxLines: 2,
+                    ),
                   ),
+                  value: status!.ledOutputEnabled!,
+                  onChanged: !widget.connected || outputPending
+                      ? null
+                      : setOutputEnabled,
+                ),
+              if (status!.ledOutputMode != null) ...[
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    for (final mode in const ['static', 'effects'])
+                      ChoiceChip(
+                        label: Text(mode == 'static' ? 'Static' : 'Effects'),
+                        selected: status!.ledOutputMode == mode,
+                        onSelected: !widget.connected || outputPending
+                            ? null
+                            : (_) => setOutputMode(mode),
+                      ),
+                    OutlinedButton(
+                      onPressed: !widget.connected || outputPending
+                          ? null
+                          : rainbowTest,
+                      child: const Text('Rainbow test'),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 36,
+                  child: Text(
+                    status!.ledOutputMode == 'static'
+                        ? 'Static cells: six matching pixels. Rainbow test animates explicitly.'
+                        : 'Effects: animated output enabled explicitly.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                    maxLines: 2,
+                  ),
+                ),
+                const SizedBox(height: 12),
               ],
-            ),
-            DropdownButtonFormField<String>(
-              initialValue: cellEffect,
-              decoration: const InputDecoration(
-                labelText: 'Cell transition · board-side',
+              TextField(
+                controller: query,
+                decoration: InputDecoration(
+                  labelText: 'Find logical cell',
+                  hintText: '12, 3–8',
+                  errorText: searchError,
+                ),
+                onChanged: (text) => setState(() {
+                  try {
+                    selection = parseCellSearch(text);
+                    searchError = null;
+                  } on FormatException catch (error) {
+                    searchError = error.message;
+                  }
+                }),
+                onSubmitted: (_) {
+                  if (searchError == null) {
+                    setState(() => query.text = formatCellSelection(selection));
+                  }
+                },
               ),
-              items: [
-                for (final effect in const ['immediate', 'fade', 'pulse'])
-                  DropdownMenuItem(value: effect, child: Text(effect)),
-              ],
-              onChanged: applying
-                  ? null
-                  : (value) => setState(() => cellEffect = value!),
-            ),
-            if (!status!.peer.has('cell-batch'))
-              const Text(
-                'This board has not acknowledged atomic cell updates. Update its firmware to enable selection actions.',
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  FilterChip(
+                    label: const Text('Multiple selection'),
+                    selected: multiple,
+                    onSelected: (value) => setState(() => multiple = value),
+                  ),
+                  FilterChip(
+                    label: const Text('LED indicators'),
+                    selected: showIndicators,
+                    onSelected: (value) =>
+                        setState(() => showIndicators = value),
+                  ),
+                  TextButton(
+                    onPressed: applying
+                        ? null
+                        : () => replaceSelection({
+                            for (var id = 1; id <= 80; id++) id,
+                          }),
+                    child: const Text('Select all'),
+                  ),
+                  TextButton(
+                    onPressed: applying
+                        ? null
+                        : () => replaceSelection({
+                            for (var id = 1; id <= 80; id++)
+                              if (!selection.contains(id)) id,
+                          }),
+                    child: const Text('Invert selection'),
+                  ),
+                  TextButton(
+                    onPressed: applying
+                        ? null
+                        : () => setState(() {
+                            selection = {};
+                            query.clear();
+                            searchError = null;
+                          }),
+                    child: const Text('Clear selection'),
+                  ),
+                  for (final value in ['white', 'red', 'off'])
+                    FilledButton.tonal(
+                      onPressed:
+                          !widget.connected ||
+                              selection.isEmpty ||
+                              applying ||
+                              searchError != null ||
+                              widget.verifiedCommand == null ||
+                              !status!.peer.has('cell-batch')
+                          ? null
+                          : () => applySelection(value),
+                      child: Text('Set $value'),
+                    ),
+                ],
               ),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: LayoutBuilder(
-                  builder: (context, bounds) {
-                    // Keep 44px cell targets rather than squeezing 20 columns
-                    // onto a phone. Horizontal panning owns its own gestures.
-                    final minimumWidth = 48.0 * tableDisplayWidth;
-                    final width = bounds.maxWidth < minimumWidth
-                        ? minimumWidth
-                        : bounds.maxWidth;
-                    final pitch = width / tableDisplayWidth;
-                    return Scrollbar(
-                      controller: tableScroll,
-                      thumbVisibility: true,
-                      child: SingleChildScrollView(
-                        key: const ValueKey('table-cell-scroll'),
+              DropdownButtonFormField<String>(
+                initialValue: cellEffect,
+                decoration: const InputDecoration(
+                  labelText: 'Cell transition · board-side',
+                ),
+                items: [
+                  for (final effect in const ['immediate', 'fade', 'pulse'])
+                    DropdownMenuItem(value: effect, child: Text(effect)),
+                ],
+                onChanged: applying
+                    ? null
+                    : (value) => setState(() => cellEffect = value!),
+              ),
+              if (!status!.peer.has('cell-batch'))
+                const Text(
+                  'This board has not acknowledged atomic cell updates. Update its firmware to enable selection actions.',
+                ),
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: LayoutBuilder(
+                    builder: (context, bounds) {
+                      // Keep 44px cell targets rather than squeezing 20 columns
+                      // onto a phone. Horizontal panning owns its own gestures.
+                      final minimumWidth = 48.0 * tableDisplayWidth;
+                      final width = bounds.maxWidth < minimumWidth
+                          ? minimumWidth
+                          : bounds.maxWidth;
+                      final pitch = width / tableDisplayWidth;
+                      return Scrollbar(
                         controller: tableScroll,
-                        primary: false,
-                        scrollDirection: Axis.horizontal,
-                        // Physical cell order is left-to-right even when the
-                        // surrounding application is displayed in RTL.
-                        reverse:
-                            Directionality.of(context) == TextDirection.rtl,
-                        child: SizedBox(
-                          key: const ValueKey('table-cell-canvas'),
-                          width: width,
-                          height: pitch * tableDisplayHeight + 12,
-                          child: Stack(
-                            children: [
-                              for (var id = 1; id <= 80; id++)
-                                Positioned(
-                                  left: tableCellPosition(id).x * pitch + 2,
-                                  top: tableCellPosition(id).y * pitch + 2,
-                                  width: pitch - 4,
-                                  height: pitch - 4,
-                                  child: CellButton(
-                                    key: ValueKey('cell-$id'),
-                                    id: id,
-                                    highlighted: selection.contains(id),
-                                    showIndicator: showIndicators,
-                                    name:
-                                        mapping.names.elementAtOrNull(id - 1) ??
-                                        '$id',
-                                    physical:
-                                        mapping.physical.elementAtOrNull(
-                                          id - 1,
-                                        ) ??
-                                        0,
-                                    state:
-                                        status?.cells.elementAtOrNull(id - 1) ??
-                                        'unknown',
-                                    onPressed: () => select(id),
-                                    onLongPress: !mapping.valid
-                                        ? null
-                                        : () => _editMapping(context, id),
+                        thumbVisibility: true,
+                        child: SingleChildScrollView(
+                          key: const ValueKey('table-cell-scroll'),
+                          controller: tableScroll,
+                          primary: false,
+                          scrollDirection: Axis.horizontal,
+                          // Physical cell order is left-to-right even when the
+                          // surrounding application is displayed in RTL.
+                          reverse:
+                              Directionality.of(context) == TextDirection.rtl,
+                          child: SizedBox(
+                            key: const ValueKey('table-cell-canvas'),
+                            width: width,
+                            height: pitch * tableDisplayHeight + 12,
+                            child: Stack(
+                              children: [
+                                for (var id = 1; id <= 80; id++)
+                                  Positioned(
+                                    left: tableCellPosition(id).x * pitch + 2,
+                                    top: tableCellPosition(id).y * pitch + 2,
+                                    width: pitch - 4,
+                                    height: pitch - 4,
+                                    child: CellButton(
+                                      key: ValueKey('cell-$id'),
+                                      id: id,
+                                      highlighted: selection.contains(id),
+                                      showIndicator: showIndicators,
+                                      name:
+                                          mapping.names.elementAtOrNull(
+                                            id - 1,
+                                          ) ??
+                                          '$id',
+                                      physical:
+                                          mapping.physical.elementAtOrNull(
+                                            id - 1,
+                                          ) ??
+                                          0,
+                                      state:
+                                          status?.cells.elementAtOrNull(
+                                            id - 1,
+                                          ) ??
+                                          'unknown',
+                                      onPressed: () => select(id),
+                                      onLongPress:
+                                          !widget.connected ||
+                                              !widget.mappingCurrent ||
+                                              !mapping.valid
+                                          ? null
+                                          : () => _editMapping(context, id),
+                                    ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-            // Command feedback never inserts content above the cell canvas.
-            SizedBox(
-              height: 48,
-              child: Text(
-                batchMessage ?? '',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              // Command feedback never inserts content above the cell canvas.
+              SizedBox(
+                height: 48,
+                child: Text(
+                  batchMessage ?? '',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
 
   Future<void> _editMapping(BuildContext context, int id) async {
@@ -1872,9 +2121,15 @@ class HardwarePage extends StatelessWidget {
 }
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key, required this.api, required this.reconnect});
+  const SettingsPage({
+    super.key,
+    required this.api,
+    required this.reconnect,
+    this.active = true,
+  });
   final PakarApi api;
   final Future<void> Function() reconnect;
+  final bool active;
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
@@ -1902,7 +2157,7 @@ class _SettingsPageState extends State<SettingsPage> {
         icon: PakarIcons.gear,
         subtitle: 'Application connection',
       ),
-      BoardSoundPreferences(api: widget.api),
+      BoardSoundPreferences(api: widget.api, active: widget.active),
       WorkspaceSection(
         title: 'Network connection',
         icon: PakarIcons.link,

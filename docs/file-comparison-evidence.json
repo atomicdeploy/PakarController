@@ -2278,12 +2278,12 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052"
+          "sha256": "45d342e6a99972165ea1d54be631870385a35c99f07a5cdf033b870e084e56f6"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
           "anchor": "class BoardSoundPreferences",
-          "sha256": "57fe2fa22ca55ea8c2b7b4da5a6701844775e9b98606c097acb366184d39aa42"
+          "sha256": "abe3bc09c93503a1d3e56d138268bb27e4940a028b536a30eaa85c6f63c60509"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
@@ -2320,7 +2320,7 @@
         {
           "path": "mobile/test/board_sound_test.dart",
           "anchor": "Silent API uses actual AVR ACK/readback",
-          "sha256": "19fae44bf929eb017c39da1ab98091f2d72afc2ca24f91d33d23611730ab9ba1"
+          "sha256": "4a4dff0a65ecff9b2264d86e6872a6b7d9e934d8e98957f316922582580c1414"
         },
         {
           "path": "tests/board_silent_test.mjs",
@@ -2378,12 +2378,12 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052"
+          "sha256": "45d342e6a99972165ea1d54be631870385a35c99f07a5cdf033b870e084e56f6"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
           "anchor": "class BoardSoundPreferences",
-          "sha256": "57fe2fa22ca55ea8c2b7b4da5a6701844775e9b98606c097acb366184d39aa42"
+          "sha256": "abe3bc09c93503a1d3e56d138268bb27e4940a028b536a30eaa85c6f63c60509"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
@@ -2410,7 +2410,7 @@
         {
           "path": "mobile/test/board_sound_test.dart",
           "anchor": "Silent API uses actual AVR ACK/readback",
-          "sha256": "19fae44bf929eb017c39da1ab98091f2d72afc2ca24f91d33d23611730ab9ba1"
+          "sha256": "4a4dff0a65ecff9b2264d86e6872a6b7d9e934d8e98957f316922582580c1414"
         },
         {
           "path": "tests/board_silent_test.mjs",
@@ -2806,11 +2806,11 @@
         "Pakar tests exercise all 80 cell bounds at phone/tablet widths in both LTR and RTL, cell1 at the upper-left origin, cell11 half below/right, alternate half-cell row offsets, no overlapping hit targets, horizontal panning, selection and preservation of an independently reversed physical LED mapping."
       ],
       "targets": [
-        {"path":"mobile/test/table_layout_test.dart","sha256":"bb025bba766e3f31949039fc9f92867e9bb223b065e4f50ef41193c52dae6907","anchor":"for (final size in [const Size(380, 1100), const Size(1400, 1100)])"},
+        {"path":"mobile/test/table_layout_test.dart","sha256":"e410115e7e5dae033596efbbd47de71c7d541aa4a9ab95334e3d15f2e2c0ac8b","anchor":"for (final size in [const Size(380, 1100), const Size(1400, 1100)])"},
         {"path":"mobile/lib/table_layout.dart","sha256":"8146736d5eefd60002468faaf321d4771a60df58b6b74ccd8f2894d313e7fcf9","anchor":"({int column, int row, double x, double y}) tableCellPosition(int id)"}
       ],
       "proof": [
-        {"path":"mobile/test/table_layout_test.dart","sha256":"bb025bba766e3f31949039fc9f92867e9bb223b065e4f50ef41193c52dae6907","anchor":"reason: 'Cell $id must not cover cell $other or steal its taps'"}
+        {"path":"mobile/test/table_layout_test.dart","sha256":"e410115e7e5dae033596efbbd47de71c7d541aa4a9ab95334e3d15f2e2c0ac8b","anchor":"reason: 'Cell $id must not cover cell $other or steal its taps'"}
       ],
       "omissions": [
         {"code":"Appearance preference persistence, telemetry compact/roomy layout and connection toggle cases","disposition":"pending","reason":"The new fixture covers the user's physical table geometry, not donor-wide appearance or connection parity. Those independent behavior cases require their own applicable Pakar tests; this review does not certify them by analogy."},
@@ -3803,7 +3803,8 @@
     "Actual last-published 480-pixel RGB now travels in the same bounded frozen USB capture through the existing Frame parser, with capture-start freshness, matching mapping and current-peer admission. USB readback also synchronizes observed effect; there is no Wi-Fi fallback or fabricated six-pixel preview. This newer source passes197 native tests but is not yet deployed because the ASUS tunnel failed.",
     "Stress audit fixes same-count foreign receipts: immutable local operation ID, exact selection/state/effect, Pin and route survive HTTP/USB admission/result. UI compares its own correlation; USB rejects payload/admission mismatch. Full donor priority scheduling is not claimed.",
     "Reread the full current Session source for the live ASUS queue failure. Actual grantNextLocked highest-priority/strict-greater FIFO selection is now adapted to a bounded64-entry native HTTP waiting window: foreground commands overtake unsent status/mapping and optional configuration work, without preempting an in-flight request. Mutations retain8s expiry and revocable generation/board/boot fencing; read-only work has a separate24s bound. Atomic batches reuse the worker's fresh preflight rather than running it twice, retaining final admission, one POST, ACK and same-boot readback. This does not import USB sequence allocation, DTR/reset defaults or serial priority scheduling.",
-    "Actual Session admission/matched-ACK/no-replay principles now guard WebSocket-first native/mobile commands. One random intent ID, bounded boot-relative deadline and exact packet digest survive same-intent HTTP recovery. The loop-owned RAM receipt cache consumes before mutation and never evicts an unexpired ID. Immediate same-board state accompanies each ACK; other clients receive immediate state pushes. Older HTTP reads cannot roll newer state back. Flutter keeps both scroll controllers and a fixed result slot through pending/completed writes without renewing expired telemetry. This scoped adaptation does not import serial sequence allocation, reset defaults or all donor contracts."
+    "Actual Session admission/matched-ACK/no-replay principles now guard WebSocket-first native/mobile commands. One random intent ID, bounded boot-relative deadline and exact packet digest survive same-intent HTTP recovery. The loop-owned RAM receipt cache consumes before mutation and never evicts an unexpired ID. Immediate same-board state accompanies each ACK; other clients receive immediate state pushes. Older HTTP reads cannot roll newer state back. Flutter keeps both scroll controllers and a fixed result slot through pending/completed writes without renewing expired telemetry. This scoped adaptation does not import serial sequence allocation, reset defaults or all donor contracts.",
+    "Separate command authority from board-keyed Flutter user workspace state: lifecycle pauses timers, not a healthy socket; resume probes the same socket before HTTP fallback; silent sockets have independent WS freshness and bounded reconnect. Stale or foreign leases disable writes without destroying selection, search, drafts or scroll. Hidden settings no longer issue periodic network/AVR reads. No old mutation is queued or replayed."
   ],
   "targets": [
     {
@@ -3813,12 +3814,12 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052",
+      "sha256": "45d342e6a99972165ea1d54be631870385a35c99f07a5cdf033b870e084e56f6",
       "anchor": "bool _acceptIdentity("
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "5dbc28e10037096dfc1b43bf8cccf91fab5bb7831c3705c66f4402fa36545d5d",
+      "sha256": "b9c504222a8dbed4efd5f62ac3f7e30ae10016db3b164c7f32f83193fbe7af18",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -3885,6 +3886,11 @@
       "path": "libraries/BoardCore/src/CommandReceipts.h",
       "sha256": "13bfe0feee207ee0d3c5d2d98111728e9c7ef99c5628206aa96f4b503d0ccd5c",
       "anchor": "class CommandReceipts"
+    },
+    {
+      "path": "mobile/lib/table_workspace.dart",
+      "sha256": "5fe07f7cf6f3942005dfadc30d990e67c501c27d02eb7a6d5c40210eebd26983",
+      "anchor": "class TableWorkspace"
     }
   ],
   "omissions": [
@@ -3956,7 +3962,7 @@
     },
     {
       "path": "mobile/test/connection_lifecycle_test.dart",
-      "sha256": "db14570ff2c7bb93dc76839ca7f202c9e74b61e372bafc14a2c1533f0ca81e3d",
+      "sha256": "2896ed62d141b10e9915d0483af33660097b395f3f864becd4eaee8bf03d7d54",
       "anchor": "Lost post-ACK readback stops bulk without discarding a fresh workspace"
     },
     {
@@ -3976,18 +3982,28 @@
     },
     {
       "path": "mobile/test/realtime_transport_test.dart",
-      "sha256": "60c76f3162bac93dd5789991338e25c3329efd4467aeec83fc355c9a50fee79f",
+      "sha256": "72d79373baccec25c1fbc8d4b2f04e77df3b7e313711cb7e6d18369595d956a4",
       "anchor": "Real loopback transport"
     },
     {
       "path": "mobile/test/table_layout_test.dart",
-      "sha256": "bb025bba766e3f31949039fc9f92867e9bb223b065e4f50ef41193c52dae6907",
+      "sha256": "e410115e7e5dae033596efbbd47de71c7d541aa4a9ab95334e3d15f2e2c0ac8b",
       "anchor": "Cell commands and incoming state preserve both scroll axes and canvas position"
     },
     {
       "path": "tests/cloud_command_guard_test.cpp",
       "sha256": "2de44ca916fe1670eba11edeb706e88dfdafc4994d0a9d07301a279ef71c0581",
       "anchor": "Receipts::Conflict"
+    },
+    {
+      "path": "mobile/test/workspace_lifecycle_test.dart",
+      "sha256": "a2aed85c8f2cec79fd1bdc41aacbd82c782569a3cd3582f65bbd6286a18afb54",
+      "anchor": "Background/resume retains selection"
+    },
+    {
+      "path": "mobile/test/realtime_transport_test.dart",
+      "sha256": "72d79373baccec25c1fbc8d4b2f04e77df3b7e313711cb7e6d18369595d956a4",
+      "anchor": "HTTP refresh cannot impersonate"
     }
   ]
 },
@@ -5400,7 +5416,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052",
+          "sha256": "45d342e6a99972165ea1d54be631870385a35c99f07a5cdf033b870e084e56f6",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -5496,7 +5512,7 @@
       "targets": [
         {
           "path": "mobile/lib/device_settings_page.dart",
-          "sha256": "3e3eb5c4639a6f910b3ae7655d342e9c48eddc74111be200223bcb32fb427813",
+          "sha256": "97437d0aaf270eb668eb662ce0a90a22367e5344fba7c901b77b92d077b49138",
           "anchor": "class DeviceSettingsPage"
         },
         {
@@ -6105,7 +6121,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "5dbc28e10037096dfc1b43bf8cccf91fab5bb7831c3705c66f4402fa36545d5d",
+          "sha256": "b9c504222a8dbed4efd5f62ac3f7e30ae10016db3b164c7f32f83193fbe7af18",
           "anchor": "Future<bool> _command"
         },
         {
@@ -6274,12 +6290,12 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052"
+          "sha256": "45d342e6a99972165ea1d54be631870385a35c99f07a5cdf033b870e084e56f6"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
           "anchor": "class BoardSoundPreferences",
-          "sha256": "57fe2fa22ca55ea8c2b7b4da5a6701844775e9b98606c097acb366184d39aa42"
+          "sha256": "abe3bc09c93503a1d3e56d138268bb27e4940a028b536a30eaa85c6f63c60509"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
@@ -6358,7 +6374,7 @@
         {
           "path": "mobile/test/board_sound_test.dart",
           "anchor": "Silent API uses actual AVR ACK/readback",
-          "sha256": "19fae44bf929eb017c39da1ab98091f2d72afc2ca24f91d33d23611730ab9ba1"
+          "sha256": "4a4dff0a65ecff9b2264d86e6872a6b7d9e934d8e98957f316922582580c1414"
         },
         {
           "path": "tests/board_silent_test.mjs",
@@ -6404,7 +6420,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "5dbc28e10037096dfc1b43bf8cccf91fab5bb7831c3705c66f4402fa36545d5d",
+          "sha256": "b9c504222a8dbed4efd5f62ac3f7e30ae10016db3b164c7f32f83193fbe7af18",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -7255,12 +7271,12 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052"
+          "sha256": "45d342e6a99972165ea1d54be631870385a35c99f07a5cdf033b870e084e56f6"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
           "anchor": "class BoardSoundPreferences",
-          "sha256": "57fe2fa22ca55ea8c2b7b4da5a6701844775e9b98606c097acb366184d39aa42"
+          "sha256": "abe3bc09c93503a1d3e56d138268bb27e4940a028b536a30eaa85c6f63c60509"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
@@ -7318,7 +7334,7 @@
         {
           "path": "mobile/test/board_sound_test.dart",
           "anchor": "Silent API uses actual AVR ACK/readback",
-          "sha256": "19fae44bf929eb017c39da1ab98091f2d72afc2ca24f91d33d23611730ab9ba1"
+          "sha256": "4a4dff0a65ecff9b2264d86e6872a6b7d9e934d8e98957f316922582580c1414"
         },
         {
           "path": "tests/board_silent_test.mjs",
@@ -7425,12 +7441,12 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052"
+          "sha256": "45d342e6a99972165ea1d54be631870385a35c99f07a5cdf033b870e084e56f6"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
           "anchor": "class BoardSoundPreferences",
-          "sha256": "57fe2fa22ca55ea8c2b7b4da5a6701844775e9b98606c097acb366184d39aa42"
+          "sha256": "abe3bc09c93503a1d3e56d138268bb27e4940a028b536a30eaa85c6f63c60509"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
@@ -7498,7 +7514,7 @@
         {
           "path": "mobile/test/board_sound_test.dart",
           "anchor": "Silent API uses actual AVR ACK/readback",
-          "sha256": "19fae44bf929eb017c39da1ab98091f2d72afc2ca24f91d33d23611730ab9ba1"
+          "sha256": "4a4dff0a65ecff9b2264d86e6872a6b7d9e934d8e98957f316922582580c1414"
         },
         {
           "path": "tests/board_silent_test.mjs",
@@ -8903,7 +8919,7 @@
         },
         {
           "path": "mobile/lib/device_settings_page.dart",
-          "sha256": "3e3eb5c4639a6f910b3ae7655d342e9c48eddc74111be200223bcb32fb427813",
+          "sha256": "97437d0aaf270eb668eb662ce0a90a22367e5344fba7c901b77b92d077b49138",
           "anchor": "int.tryParse(latinDigits(value))"
         }
       ],
@@ -9769,12 +9785,12 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052"
+          "sha256": "45d342e6a99972165ea1d54be631870385a35c99f07a5cdf033b870e084e56f6"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
           "anchor": "class BoardSoundPreferences",
-          "sha256": "57fe2fa22ca55ea8c2b7b4da5a6701844775e9b98606c097acb366184d39aa42"
+          "sha256": "abe3bc09c93503a1d3e56d138268bb27e4940a028b536a30eaa85c6f63c60509"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
@@ -9843,7 +9859,7 @@
         {
           "path": "mobile/test/board_sound_test.dart",
           "anchor": "Silent API uses actual AVR ACK/readback",
-          "sha256": "19fae44bf929eb017c39da1ab98091f2d72afc2ca24f91d33d23611730ab9ba1"
+          "sha256": "4a4dff0a65ecff9b2264d86e6872a6b7d9e934d8e98957f316922582580c1414"
         },
         {
           "path": "tests/board_silent_test.mjs",
@@ -10287,7 +10303,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052",
+          "sha256": "45d342e6a99972165ea1d54be631870385a35c99f07a5cdf033b870e084e56f6",
           "anchor": "final LanResolver resolver;"
         },
         {
@@ -10437,7 +10453,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052",
+          "sha256": "45d342e6a99972165ea1d54be631870385a35c99f07a5cdf033b870e084e56f6",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         }
       ],
@@ -10572,7 +10588,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "19fae7b6f2f95b88bb9e84af5b7a960bdb9bcb6c5420530b49a6d75a99d62052",
+          "sha256": "45d342e6a99972165ea1d54be631870385a35c99f07a5cdf033b870e084e56f6",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         }
       ],
@@ -10639,6 +10655,45 @@
         }
       ],
       "improvement": "One validated atomic board intent replaces client fan-out, without duplicating the effects engine or changing API generations."
+    },
+    {
+      "origin": "Pealayer",
+      "path": "src/ui/workspace_profiles.rs",
+      "sha256": "410d274f51e5e7db7ce81582d36166a97240b097e993cec5fee8707a95183e2f",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Complete live donor read through EOF at matching original-byte hash. Adapt the actual stable-ID profile_choices/draw ownership rule to board-keyed Flutter workspaces, rather than connection-attempt keys or telemetry-dependent widget lifetime. User selection/search/effect/indicator choice and both scroll axes survive transient leases, reboot, explicit reconnect and bounded background UI-cache restoration; snapshots never persist a command, authorization or observed device state."
+      ],
+      "targets": [
+        {
+          "path": "mobile/lib/table_workspace.dart",
+          "sha256": "5fe07f7cf6f3942005dfadc30d990e67c501c27d02eb7a6d5c40210eebd26983",
+          "anchor": "class TableWorkspace"
+        },
+        {
+          "path": "mobile/lib/main.dart",
+          "sha256": "b9c504222a8dbed4efd5f62ac3f7e30ae10016db3b164c7f32f83193fbe7af18",
+          "anchor": "Future<void> _saveWorkspaces()"
+        }
+      ],
+      "proof": [
+        {
+          "path": "mobile/test/workspace_lifecycle_test.dart",
+          "sha256": "a2aed85c8f2cec79fd1bdc41aacbd82c782569a3cd3582f65bbd6286a18afb54",
+          "anchor": "Workspace follows board identity"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "draw workspace manager metadata CRUD, icon picker, profile reordering and overwrite/restore menu commands",
+          "disposition": "pending",
+          "reason": "Useful generic workspace-management UI remains an open donor import. This regression repair adapts stable identity and user-state ownership only; it does not certify the native/Web workspace manager, add a replacement profile editor or copy egui widgets into Flutter."
+        }
+      ],
+      "remaining": [
+        "Actual Android background/process pressure, Wi-Fi/router loss and human layout/selection acceptance remain open. Complete generic workspace-management imports separately; source fixtures are not phone deployment or donor-wide parity."
+      ]
     }
   ]
 }
