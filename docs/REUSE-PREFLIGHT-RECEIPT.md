@@ -4938,3 +4938,52 @@ firmware or APK. This verifies the native/LAN command path, NOT physical LED
 placement/color or production completion. Issue2 stays open. Existing main CI
 39111550290 passes quality/native/Android but fails the separate ESP8266 link
 on missing __atomic_*_4 symbols; that firmware issue is not fixed by native work.
+
+USB control latency: reread the complete current canonical PCController
+Session, session_test.go and request_admission_test.go (live hashes match the
+existing b0111ae0 ledger). Adapt actual control-over-background admission and
+fragmented fakePort/opcode-sequence assertions into the production Rust worker.
+The new optional same-sequence0xB7 packet contains observed post-dispatch board
+state, not request-derived success. Boot/session/intent/value checks remain;
+missing companions use read-only verification without replay, including when
+another command is queued. Background captures pause only between chunks and
+resume, retain capture-start freshness, overlay newer actual command state and
+discard pre-command RGB. Partial receipts do not renew peripheral observations.
+
+Measured through the actual ASUS session1 app IPC, COM22, Wi-Fi/WebSocket
+inactive: old630459cb had2440-4031ms confirmed completion (four commands), while
+e897e313 plus the new ESP had29-63ms (six immediate and twelve commands spaced
+1200ms apart); wire ACK+board readback10-12ms, zero active incidents, original
+cell/search restored. Original full scene also matched after the ESP update;
+the restoration helper refused to overwrite its non-white values, then direct
+comparison established that no restoration write was needed. Internal app
+framebuffer captured/inspected with exact PID13368. No optical LED proof inferred.
+
+Native eight focused tests pass, including the actual worker under a slow,
+fragmented preview and prevention of older-capture state rollback. Additional
+admission assertions cover lost-companion/legacy readback with queued writes.
+The first test compilation used PartialEq on a donor manifest lacking that
+trait; compare serialized observations in the fixture, not change the public
+model just for a test. ESP32-S3 16MB/OPI/static/buffered warm build passes.
+
+OTA preflight failed before dispatch; later hostname resolution and curl reads
+worked. Internet job12 failed TLS before staging image bytes; no mutation was
+replayed. The first USB pass read chip MAC/partition table but failed its next
+bootloader handoff before any flash write. Reconciled that no-write receipt,
+then reused the fully read Install-S3SlotRecovery per-operation default-reset/
+hard-reset recipe rather than retrying a held-stub sequence blindly. Actual
+partition table plus CRC-valid VALID OTA records selected0x340000; full prior
+1903312-byte running backup matches481ef136bb6cecb50a85a610abd31fc7ec8db06231fc75a0dadb4e35cb8a59f2.
+New1903488-byte ESP image8bc0cd92dd00e8b78f5ce40187d549095859470f32d95ea372521b45a9f75558
+was written/verified; the same MAC returned with a new boot and80 USB mappings.
+AVR was not programmed. Private stage/flash/IPC receipts remain under the
+existing outputs/PakarController/verification and ASUS deploy directories.
+LAN/TLS/update reliability and the unrelated existing ESP8266 CI failure are
+not fixed or accepted by this USB checkpoint. Production issue2 remains open.
+
+Final nativef74e21addd521852ef9ec37cae40b2475d8f042264e0a11be98648f4dae58d3b
+adds the queued-write/missing-companion fallback safeguard, passes the same eight
+focused tests and is the ASUS session1 owner10908. Six additional actual app-IPC
+USB commands spaced1200ms apart confirm in32-64ms, wire readback10-12ms, zero
+active incidents, original cell/search restored, no HTTP/WebSocket fallback.
+The full source/receipt-hash and aggregate timing record is USB-LATENCY.json.

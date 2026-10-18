@@ -675,6 +675,7 @@ impl PakarControllerApp {
                 .map(|row| serde_json::json!({"kind":row.kind,"message":row.message,"occurrences":row.occurrences})).collect::<Vec<_>>());
             value["mapping"] = serde_json::json!({"count":self.mappings.len(),"pending":self.mapping_request_pending.is_some(),"status":self.mapping_status(),"error":self.mapping_error});
             value["usb_commands_pending"] = serde_json::json!(self.serial_operations_pending);
+            value["usb_command"] = serde_json::json!(self.serial_timing);
             value["notifications"] = self.notification_snapshot();
             value["tray_available"] = serde_json::json!(self.tray.is_some());
             value["tray_shell"] = self.tray.as_ref().map(|tray|tray.shell_snapshot()).unwrap_or(serde_json::Value::Null);

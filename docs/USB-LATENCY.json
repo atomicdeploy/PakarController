@@ -1,0 +1,193 @@
+{
+  "scope": "Actual selected-USB Rust GUI IPC to ESP and back on David-ASUS; not optical or production acceptance.",
+  "version": "0.2.7",
+  "baseline": {
+    "receipt": "usb-roundtrip-before.json",
+    "receipt_sha256": "b03d828b01cd8e9e7f33abf54fb634a5f64b3c541e3441dbd52759e0f122cbf9",
+    "native_sha256": "630459cb6b9fd38fb4a6c79c42791a23cd431d84109dcdb4ef89d59a553ca3e9",
+    "process_id": 18544,
+    "count": 4,
+    "error": null,
+    "cell_restored": true,
+    "connection": {
+      "enabled": true,
+      "method": "USB",
+      "online": true,
+      "releasing": null
+    },
+    "websocket_live": false,
+    "active_incidents": 0,
+    "ipc_accept_ms": {
+      "min": 0.659,
+      "max": 3.33,
+      "mean": 1.563
+    },
+    "ipc_to_confirmed_ms": {
+      "min": 2440.228,
+      "max": 4030.518,
+      "mean": 3625.217
+    }
+  },
+  "intermediate_immediate": {
+    "receipt": "usb-roundtrip-after.json",
+    "receipt_sha256": "c612771bb178760f1784909b993bd813e37066dbe4ef32702058ce8d06b3eb52",
+    "native_sha256": "e897e3136e0015d499dc0e49bb9e8b15b85a2beb08c24b4f00fb7126d1a8100c",
+    "process_id": 13368,
+    "count": 6,
+    "error": null,
+    "cell_restored": true,
+    "connection": {
+      "enabled": true,
+      "method": "USB",
+      "online": true,
+      "releasing": null
+    },
+    "websocket_live": false,
+    "active_incidents": 0,
+    "ipc_accept_ms": {
+      "min": 1.09,
+      "max": 3.669,
+      "mean": 1.776
+    },
+    "ipc_to_confirmed_ms": {
+      "min": 29.125,
+      "max": 62.102,
+      "mean": 53.279
+    },
+    "wire_ack_ms": {
+      "min": 9.926,
+      "max": 10.957,
+      "mean": 10.459
+    },
+    "wire_confirm_ms": {
+      "min": 10.003,
+      "max": 11.292,
+      "mean": 10.605
+    },
+    "queue_ms": {
+      "min": 0.333,
+      "max": 7.19,
+      "mean": 4.708
+    }
+  },
+  "intermediate_background_1200ms": {
+    "receipt": "usb-roundtrip-background.json",
+    "receipt_sha256": "d4f70698228383dc0160038ac5e4c9709b391306f4864029b659c2d7c7de0bb2",
+    "native_sha256": "e897e3136e0015d499dc0e49bb9e8b15b85a2beb08c24b4f00fb7126d1a8100c",
+    "process_id": 13368,
+    "count": 12,
+    "error": null,
+    "cell_restored": true,
+    "connection": {
+      "enabled": true,
+      "method": "USB",
+      "online": true,
+      "releasing": null
+    },
+    "websocket_live": false,
+    "active_incidents": 0,
+    "ipc_accept_ms": {
+      "min": 1.037,
+      "max": 3.984,
+      "mean": 2.014
+    },
+    "ipc_to_confirmed_ms": {
+      "min": 28.377,
+      "max": 62.319,
+      "mean": 49.131
+    },
+    "wire_ack_ms": {
+      "min": 9.915,
+      "max": 11.357,
+      "mean": 10.361
+    },
+    "wire_confirm_ms": {
+      "min": 10.034,
+      "max": 11.476,
+      "mean": 10.556
+    },
+    "queue_ms": {
+      "min": 0.53,
+      "max": 6.783,
+      "mean": 4.732
+    }
+  },
+  "final_background_1200ms": {
+    "receipt": "usb-roundtrip-final.json",
+    "receipt_sha256": "d0a1ae7759e5e4d8509203b1ae5782209ebba6d271b963fa0bfeff6b4274b9a6",
+    "native_sha256": "f74e21addd521852ef9ec37cae40b2475d8f042264e0a11be98648f4dae58d3b",
+    "process_id": 10908,
+    "count": 6,
+    "error": null,
+    "cell_restored": true,
+    "connection": {
+      "enabled": true,
+      "method": "USB",
+      "online": true,
+      "releasing": null
+    },
+    "websocket_live": false,
+    "active_incidents": 0,
+    "ipc_accept_ms": {
+      "min": 1.378,
+      "max": 3.617,
+      "mean": 2.161
+    },
+    "ipc_to_confirmed_ms": {
+      "min": 31.865,
+      "max": 63.798,
+      "mean": 53.822
+    },
+    "wire_ack_ms": {
+      "min": 9.856,
+      "max": 10.945,
+      "mean": 10.225
+    },
+    "wire_confirm_ms": {
+      "min": 9.977,
+      "max": 11.178,
+      "mean": 10.397
+    },
+    "queue_ms": {
+      "min": 1.224,
+      "max": 7.035,
+      "mean": 3.62
+    }
+  },
+  "firmware": {
+    "image_sha256": "8bc0cd92dd00e8b78f5ce40187d549095859470f32d95ea372521b45a9f75558",
+    "bytes": 1903488,
+    "target": "ESP32-S3 DevKit,16MB,OPI PSRAM,buffered UART,static LED backend",
+    "selected_offset": 3407872,
+    "mac_verified": true,
+    "rollback_sha256": "481ef136bb6cecb50a85a610abd31fc7ec8db06231fc75a0dadb4e35cb8a59f2",
+    "flash_verified": true,
+    "post_boot_full_image_export_verified": false,
+    "new_boot_seen": true,
+    "same_board_seen": true,
+    "avr_programmed": false,
+    "receipt_sha256": "467c1040a523c6f143280ad5a2bd1af7de71734c9a7a8ddbfceaab86c903d449"
+  },
+  "capture": {
+    "native_sha256": "f74e21addd521852ef9ec37cae40b2475d8f042264e0a11be98648f4dae58d3b",
+    "process_id": 10908,
+    "backend": "egui framebuffer",
+    "completed": true,
+    "image_sha256": "bde56b6a89d20498ce1e84f284303bc3d836e495676fd8dae7fee2c96d2f5046"
+  },
+  "verification": {
+    "native_filter": "usb_table",
+    "tests_passed": 8,
+    "native_release_and_stage_probe_passed": true,
+    "esp32s3_build_passed": true,
+    "donor_gate": "peer-binding,all3current source hashes/target references valid",
+    "full_ci_waited": false
+  },
+  "limitations": [
+    "Physical LED placement and optical transitions are not proved by these receipts.",
+    "No AVR firmware/fuse/EEPROM or physical-peripheral acceptance in this task.",
+    "LAN reads stalled and Internet update job12 failed TLS before image staging; USB deployment used the reconciled no-write recovery.",
+    "Pre-existing main CI39121653669 fails ESP8266 linking on missing __atomic_*_4 symbols; this USB checkpoint does not resolve that separate issue.",
+    "Full production acceptance remains open in GitHub issue2."
+  ]
+}

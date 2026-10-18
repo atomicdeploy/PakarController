@@ -6,6 +6,63 @@ use std::time::{Duration, Instant};
 pub const READ: u8 = 0x5d;
 pub const RESPONSE: u8 = 0xb6;
 pub const COMMAND: u8 = 0x5e;
+pub const COMMAND_STATE: u8 = 0xb7;
+// A command can overtake the next unsent background chunk, never bytes already
+// on wire. Adapted from PCController Session.grantNextLocked request priority.
+pub fn yield_snapshot(pending:bool,verified:bool,reading:bool,waiting:bool,operating:bool)->bool {
+    pending && verified && reading && !waiting && !operating
+}
+/// Actual board readback, not request-derived values. Identity, mappings and
+/// peripheral observations remain owned by the full capture; this must NOT
+/// renew their freshness or fabricate published pixel RGB.
+pub fn command_state(previous:&DeviceStatus,opcode:u8,p:&[u8])->Result<DeviceStatus,String>{
+    if p.len()!=44 || p[0]!=opcode || !table_command(opcode) || peer_http::Pin::from_status(previous).is_none(){return Err("Invalid USB command-state readback".into());}
+    let boot=p[1..17].iter().map(|b|format!("{b:02x}")).collect::<String>();
+    if boot!=previous.boot_id || p[17]>3 || p[18]>9 || !(1..=80).contains(&p[19]) || p[20]==0 || p[21]>3 || p[22]>1 || p[23]>1 {
+        return Err("USB command-state peer/values invalid; no state assumed".into());
+    }
+    let mut cells=Vec::with_capacity(80);
+    for i in 0..80 {cells.push(["white","red","off"].get(((p[24+i/4]>>((i%4)*2))&3) as usize)
+        .ok_or("Invalid USB cell state")?.to_string());}
+    let mut status=previous.clone();status.cells=cells;
+    status.mode=["unknown","cell","first-wins","snake"][p[17] as usize].into();
+    status.winner=p[18];status.selected_cell=p[19];status.brightness=p[20];
+    status.effect=["none","rainbow","fire","cell-chase"][p[21] as usize].into();
+    status.led_output["enabled"]=(p[22]!=0).into();
+    status.led_output["mode"]=if p[23]==0{"static"}else{"effects"}.into();
+    status.pixel_frame=None;status.pixel_preview_requested=false;
+    Ok(status)
+}
+#[derive(Clone,serde::Serialize)]
+pub struct Timing {
+    pub session:u64,pub sequence:u8,pub opcode:u8,
+    pub queue_ms:f64,pub wire_ack_ms:f64,pub wire_confirm_ms:f64,pub total_ms:f64,
+    pub confirmation:&'static str,
+}
+pub struct Operation {pub intent:Intent,pub sequence:u8,pub sent:Instant,pub ack:Option<Instant>}
+impl Operation {
+    pub fn matches(&self,op:u8,seq:u8,p:&[u8])->bool {
+        matches!(op,0x80|0x82) && self.sequence==seq && p.len()==2 &&
+            (p[0]==self.intent.opcode || (op==0x82 && p[0]==COMMAND))
+    }
+    pub fn timing(&self,session:u64,confirmation:&'static str)->Timing {
+        let now=Instant::now();Timing{session,sequence:self.sequence,opcode:self.intent.opcode,
+            queue_ms:self.sent.saturating_duration_since(self.intent.admission.at).as_secs_f64()*1000.,
+            wire_ack_ms:self.ack.unwrap_or(now).saturating_duration_since(self.sent).as_secs_f64()*1000.,
+            wire_confirm_ms:now.saturating_duration_since(self.sent).as_secs_f64()*1000.,
+            total_ms:now.saturating_duration_since(self.intent.admission.at).as_secs_f64()*1000.,confirmation}
+    }
+}
+/// Verification belongs to the active command, ahead of any queued command.
+/// Otherwise a lost compact companion plus a second click would deadlock the
+/// fallback: the next write needs verification, while verification waits for
+/// an empty write queue. Never replay either write to recover that condition.
+pub fn snapshot_admitted(queued:bool,operation:Option<&Operation>,compact:bool)->bool {
+    match operation {
+        None=>!queued,
+        Some(active)=>active.ack.is_some_and(|at|!compact || at.elapsed()>=Duration::from_millis(100)),
+    }
+}
 // Match the native current-peer authority window; capture time, not the final
 // chunk's arrival, owns freshness. Slow captures expire rather than masquerade
 // as new state. Windows first-byte COM timeout is not a per-chunk sleep.
@@ -116,6 +173,119 @@ mod tests {
             "capabilities":{"board_kind":"table","acknowledged_features":["table","leds"],
                 "table":{"columns":10,"rows":8,"pixels_per_cell":6}}},
             "physical":(1..=80).collect::<Vec<_>>(),"names":vec!["cell";80]})
+    }
+    fn state_packet(opcode:u8)->Vec<u8>{
+        let mut p=vec![opcode];p.extend([0xaa;16]);
+        p.extend([1,0,1,255,0,1,0]);p.extend([0;20]);p
+    }
+    #[test]
+    fn compact_usb_readback_validates_all_values_without_renewing_full_observations(){
+        let mut previous=read(&fixture()).status;
+        previous.pixel_frame=Some(serde_json::from_value(serde_json::json!({"rgb":"000000".repeat(480),"physical":(1..=80).collect::<Vec<_>>(),"revision":9,"brightness":255})).unwrap());
+        let mut p=state_packet(0x4c);p[24]=1;p[43]=2<<6;
+        let next=command_state(&previous,0x4c,&p).unwrap();
+        assert_eq!(next.cells[0],"red");assert_eq!(next.cells[79],"off");assert_eq!(next.cells[1],"white");
+        assert!(next.pixel_frame.is_none());assert_eq!(serde_json::to_value(&next.capabilities).unwrap(),serde_json::to_value(&previous.capabilities).unwrap());
+        assert_eq!(next.board_id,previous.board_id);assert_eq!(previous.cells[0],"white");
+        for (index,value) in [(0,0x4d),(1,0xbb),(17,4),(18,10),(19,81),(20,0),(21,4),(22,2),(23,2),(24,3)]{
+            let mut bad=p.clone();bad[index]=value;assert!(command_state(&previous,0x4c,&bad).is_err(),"{index}");
+        }
+        assert!(command_state(&previous,0x4c,&p[..43]).is_err());
+        assert!(command_state(&previous,0x55,&p).is_err());
+    }
+    #[test]
+    fn usb_priority_yields_only_unsent_background_chunks_and_matches_ack_opcode_sequence(){
+        assert!(yield_snapshot(true,true,true,false,false));
+        assert!(!yield_snapshot(true,true,true,true,false)); // In flight.
+        assert!(!yield_snapshot(true,true,true,false,true)); // Post-ACK verification.
+        assert!(!yield_snapshot(true,false,true,false,false)); // Initial identity.
+        assert!(!yield_snapshot(false,true,true,false,false));
+        let status=read(&fixture()).status;let gate=crate::connection::Gate::default();
+        let epoch=gate.select(Some(crate::connection::Method::Serial));
+        let mut active=Operation{intent:Intent{opcode:0x4c,payload:vec![1,1,0],admission:Admission{
+            stamp:gate.stamp(crate::connection::Method::Serial,epoch),session:1,peer:peer_http::Pin::from_status(&status),at:Instant::now(),batch:None}},
+            sequence:13,sent:Instant::now(),ack:None};
+        assert!(active.matches(0x80,13,&[0x4c,0]));assert!(active.matches(0x82,13,&[COMMAND,6]));
+        assert!(!active.matches(0x80,12,&[0x4c,0]));assert!(!active.matches(0x80,13,&[0x4d,0]));
+        assert!(!active.matches(0x90,13,&[0x4c,0]));assert!(!active.matches(0x80,13,&[COMMAND,0]));
+        assert!(snapshot_admitted(false,None,true));assert!(!snapshot_admitted(true,None,true));
+        assert!(!snapshot_admitted(false,Some(&active),true));
+        active.ack=Some(Instant::now());
+        assert!(!snapshot_admitted(true,Some(&active),true));
+        assert!(snapshot_admitted(true,Some(&active),false),"Legacy post-ACK readback cannot wait behind queued mutations");
+        active.ack=Some(Instant::now()-Duration::from_millis(101));
+        assert!(snapshot_admitted(true,Some(&active),true),"Missing companion fallback must progress with another command queued");
+    }
+    #[test]
+    fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback(){
+        use std::{io::{Read,Write},sync::{Arc,atomic::{AtomicUsize,Ordering},mpsc},collections::VecDeque,thread};
+        struct Port{pending:VecDeque<u8>,capture:Vec<u8>,captures:Arc<AtomicUsize>}
+        impl Write for Port {
+            fn write(&mut self,bytes:&[u8])->std::io::Result<usize>{
+                let (op,seq,p)=crate::decode_envelope(&bytes[..bytes.len()-1]).unwrap();
+                match op {
+                    crate::OP_GET_STATUS=>{let mut s=vec![0;46];s[44]=1;s[45]=1;
+                        self.pending.extend(crate::wire_frame(crate::OP_STATUS,seq,&s));}
+                    READ=>{let offset=u16::from_le_bytes([p[1],p[2]]) as usize;
+                        if offset==0{self.captures.fetch_add(1,Ordering::SeqCst);}
+                        // A deliberately slow large preview, not a fake fast scheduler.
+                        thread::sleep(Duration::from_millis(2));
+                        self.pending.extend(crate::wire_frame(RESPONSE,seq,&chunk(&self.capture,offset,p[0],17)));}
+                    COMMAND=>{
+                        assert_eq!(&p[..16],&[0xaa;16]);assert_eq!(&p[16..],&[0x4c,1,1,0]);
+                        // Unexpected same-sequence status/error do not satisfy ACK.
+                        self.pending.extend(crate::wire_frame(0x82,seq,&[0x4d,5]));
+                        self.pending.extend(crate::wire_frame(0x80,seq,&[0x4c,0]));
+                        let mut state=state_packet(0x4c);state[24]=1;
+                        self.pending.extend(crate::wire_frame(COMMAND_STATE,seq,&state));
+                    }
+                    _=>panic!("unexpected opcode {op:x}"),
+                }
+                Ok(bytes.len())
+            }
+            fn flush(&mut self)->std::io::Result<()>{Ok(())}
+        }
+        impl Read for Port {
+            fn read(&mut self,bytes:&mut [u8])->std::io::Result<usize>{
+                if self.pending.is_empty(){thread::sleep(Duration::from_millis(1));return Err(std::io::ErrorKind::TimedOut.into());}
+                // Fragment packets; exercise the real framing/ACK decoder.
+                let n=bytes.len().min(13).min(self.pending.len());
+                for value in &mut bytes[..n]{*value=self.pending.pop_front().unwrap();}Ok(n)
+            }
+        }
+        let mut value=fixture();value["status"]["mode"]="cell".into();
+        value["padding"]="x".repeat(6000).into();let captures=Arc::new(AtomicUsize::new(0));
+        let mut port=Some(Port{pending:VecDeque::new(),capture:serde_json::to_vec(&value).unwrap(),captures:captures.clone()});
+        let (tx,rx)=mpsc::channel();let (events,received)=mpsc::channel();let gate=crate::connection::Gate::default();
+        let epoch=gate.select(Some(crate::connection::Method::Serial));let owner=gate.clone();
+        let worker=thread::spawn(move||crate::serial_worker_with(rx,events,eframe::egui::Context::default(),owner,|_|port.take().ok_or("unexpected reopen".into())));
+        tx.send(crate::SerialCommand::Port("fixture".into(),epoch)).unwrap();
+        let mut snapshot=None;let mut session=0;
+        while snapshot.is_none(){match received.recv_timeout(Duration::from_secs(4)).unwrap(){
+            crate::Event::ForConnection(_,event)=>match *event{
+                crate::Event::SerialSnapshot(_,s)=>snapshot=Some(s.status),crate::Event::SerialOwner(_,s)=>session=s,_=>{}},_=>{}}}
+        let until=Instant::now()+Duration::from_secs(3);
+        while captures.load(Ordering::SeqCst)<2{assert!(Instant::now()<until);thread::sleep(Duration::from_millis(1));}
+        let before=Instant::now();
+        let admission=Admission{stamp:gate.stamp(crate::connection::Method::Serial,epoch),session,
+            peer:peer_http::Pin::from_status(snapshot.as_ref().unwrap()),at:before,batch:None};
+        tx.send(crate::SerialCommand::Send("fixture".into(),admission,0x4c,vec![1,1,0])).unwrap();
+        let mut confirmed=false;
+        loop {if let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(2)).unwrap(){match *event {
+            crate::Event::SerialCommandState(_,s)=>{assert_eq!(s.cells[0],"red");confirmed=true;}
+            crate::Event::SerialTiming(_,timing)=>{assert!(confirmed);assert_eq!(timing.confirmation,"compact board readback");
+                assert!(timing.total_ms<250.,"{}",timing.total_ms);break;}
+            crate::Event::SerialOperation(_,Err(error))=>panic!("{error}"),_=>{}
+        }}}
+        assert_eq!(captures.load(Ordering::SeqCst),2,"No post-ACK full preview is required");
+        loop {if let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(2)).unwrap(){
+            if let crate::Event::SerialSnapshot(_,s)=*event {
+                assert!(s.observed_at<before,"Resume the original immutable capture instead of starving full observations");
+                assert_eq!(s.status.cells[0],"red","Old background data must not roll command state back");
+                assert!(s.status.pixel_frame.is_none());break;
+            }
+        }}
+        gate.select(None);drop(tx);worker.join().unwrap();
     }
     fn chunk(bytes:&[u8],offset:usize,nonce:u8,token:u32)->Vec<u8>{
         let mut p=vec![nonce];p.extend(token.to_le_bytes());p.extend((bytes.len() as u16).to_le_bytes());

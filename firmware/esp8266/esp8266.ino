@@ -438,6 +438,7 @@ void sendHostStatus(uint8_t requestSequence) {
       static_cast<uint8_t>(grid.outputEnabled()),
       static_cast<uint8_t>(grid.staticMode()?0:1), // Optional byte43; absent means unknown.
       static_cast<uint8_t>(PAKAR_TABLE_ENABLED), // Optional byte44: frozen USB table snapshot/boot-fenced commands.
+      static_cast<uint8_t>(PAKAR_TABLE_ENABLED), // Optional byte45: immediate same-sequence post-ACK table state.
   };
   hostLink.send(kStatusResponse, requestSequence, payload, sizeof(payload));
 }
@@ -495,7 +496,18 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       if(!matches || !allowed){hostLink.error(frame.sequence,frame.opcode,kUnsafe);break;}
       BoardCore::Protocol::Frame command{};command.opcode=inner;command.sequence=frame.sequence;
       command.payloadLength=frame.payloadLength-17;memcpy(command.payload,frame.payload+17,command.payloadLength);
-      onHostFrame(command,nullptr);break;
+      onHostFrame(command,nullptr);
+      // Keep the original ACK/error unchanged for all existing clients. This
+      // additive readback is observed AFTER dispatch on the same loop owner;
+      // it is not an optimistic copy of the request or a physical LED receipt.
+      // A rejected inner command may still report state; without its matching
+      // success ACK clients must not complete that operation.
+      uint8_t state[44]={inner};memcpy(state+1,frame.payload,16);
+      state[17]=static_cast<uint8_t>(mode);state[18]=winner;state[19]=selectedCell;
+      state[20]=grid.brightness();state[21]=static_cast<uint8_t>(grid.pattern());
+      state[22]=grid.outputEnabled();state[23]=grid.staticMode()?0:1;
+      for(uint8_t i=0;i<LedGrid::kCells;++i)state[24+i/4]|=static_cast<uint8_t>(grid.state(i+1))<<((i%4)*2);
+      hostLink.send(kTableCommandState,frame.sequence,state,sizeof(state));break;
     }
     case kGetIdentity: {
       if (frame.payloadLength != 3) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }

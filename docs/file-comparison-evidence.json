@@ -1682,7 +1682,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f"
+          "sha256": "3ad7d022a45629bad72e74d667f8bbf141452060e37a85ca8f21658674384b07"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -2114,7 +2114,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f"
+          "sha256": "3ad7d022a45629bad72e74d667f8bbf141452060e37a85ca8f21658674384b07"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -2164,7 +2164,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f"
+          "sha256": "3ad7d022a45629bad72e74d667f8bbf141452060e37a85ca8f21658674384b07"
         }
       ],
       "omissions": [
@@ -2209,7 +2209,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f"
+          "sha256": "3ad7d022a45629bad72e74d667f8bbf141452060e37a85ca8f21658674384b07"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -3804,7 +3804,8 @@
     "Stress audit fixes same-count foreign receipts: immutable local operation ID, exact selection/state/effect, Pin and route survive HTTP/USB admission/result. UI compares its own correlation; USB rejects payload/admission mismatch. Full donor priority scheduling is not claimed.",
     "Reread the full current Session source for the live ASUS queue failure. Actual grantNextLocked highest-priority/strict-greater FIFO selection is now adapted to a bounded64-entry native HTTP waiting window: foreground commands overtake unsent status/mapping and optional configuration work, without preempting an in-flight request. Mutations retain8s expiry and revocable generation/board/boot fencing; read-only work has a separate24s bound. Atomic batches reuse the worker's fresh preflight rather than running it twice, retaining final admission, one POST, ACK and same-boot readback. This does not import USB sequence allocation, DTR/reset defaults or serial priority scheduling.",
     "Actual Session admission/matched-ACK/no-replay principles now guard WebSocket-first native/mobile commands. One random intent ID, bounded boot-relative deadline and exact packet digest survive same-intent HTTP recovery. The loop-owned RAM receipt cache consumes before mutation and never evicts an unexpired ID. Immediate same-board state accompanies each ACK; other clients receive immediate state pushes. Older HTTP reads cannot roll newer state back. Flutter keeps both scroll controllers and a fixed result slot through pending/completed writes without renewing expired telemetry. This scoped adaptation does not import serial sequence allocation, reset defaults or all donor contracts.",
-    "Separate command authority from board-keyed Flutter user workspace state: lifecycle pauses timers, not a healthy socket; resume probes the same socket before HTTP fallback; silent sockets have independent WS freshness and bounded reconnect. Stale or foreign leases disable writes without destroying selection, search, drafts or scroll. Hidden settings no longer issue periodic network/AVR reads. No old mutation is queued or replayed."
+    "Separate command authority from board-keyed Flutter user workspace state: lifecycle pauses timers, not a healthy socket; resume probes the same socket before HTTP fallback; silent sockets have independent WS freshness and bounded reconnect. Stale or foreign leases disable writes without destroying selection, search, drafts or scroll. Hidden settings no longer issue periodic network/AVR reads. No old mutation is queued or replayed.",
+    "Reread current canonical Session, fakePort and request_admission_test.go. Adapt actual control-over-background admission between unsent USB snapshot chunks, without overtaking an in-flight request or post-ACK verification. The production Rust worker now validates matching sequence/opcode ACK plus compact same-boot board-observed state, rather than delaying confirmation for all480 RGB pixels, mappings and icon metadata. Full captures still own capability/peripheral freshness and actual RGB; partial readback does not renew those observations. Missing companion uses read-only full verification, never mutation replay. Production-worker fragmented-port and wrong-boot/scalar/state fixtures cover this scoped adaptation, not all donor reset/open/750ms strip contracts."
   ],
   "targets": [
     {
@@ -3839,7 +3840,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f",
+      "sha256": "3ad7d022a45629bad72e74d667f8bbf141452060e37a85ca8f21658674384b07",
       "anchor": "bool authenticate()"
     },
     {
@@ -3854,12 +3855,12 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "53b36463d1289e472e7ec036368dbee0d450beaeb0a6989544246f799b9c864c",
+      "sha256": "81a2f0b4ec4c231428d0f63de118165690b9cfd849ad9cf6980d9c00c11fa35c",
       "anchor": "fn scoped_http_request("
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "5bb7a20e6da3326eb32ec0777fa12a264a059f68e5fc24ac2bf79984b3c0cab8",
+      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
       "anchor": "pub struct Admission"
     },
     {
@@ -3957,7 +3958,7 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "5bb7a20e6da3326eb32ec0777fa12a264a059f68e5fc24ac2bf79984b3c0cab8",
+      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
       "anchor": "fn table_write_is_exact_boot_fenced_and_post_ack_values_are_not_assumed()"
     },
     {
@@ -4004,6 +4005,16 @@
       "path": "mobile/test/realtime_transport_test.dart",
       "sha256": "72d79373baccec25c1fbc8d4b2f04e77df3b7e313711cb7e6d18369595d956a4",
       "anchor": "HTTP refresh cannot impersonate"
+    },
+    {
+      "path": "desktop/src/usb_table.rs",
+      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+      "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
+    },
+    {
+      "path": "desktop/src/usb_table.rs",
+      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+      "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
     }
   ]
 },
@@ -4017,7 +4028,8 @@
     "Actual fakePort matching/mismatched request and identity scenarios read fully and adapted to C++ peer validation and native same-host reboot/pinned-header/409 no-replay HTTP fixtures.",
     "Old receipts stay in Events, not new peer's confirmed output.",
     "Full session_test.go reread through EOF and live hash reverified. Admission revocation, peer mismatch and no-replay assertions adapted to actual native GUI HTTP loopback fixtures, not claims of importing Go fakePort acquisition/reset/ACK routing.",
-    "Reread complete donor at unchanged live hash; mismatch/admission assertions now also execute real WebAccess middleware and AsyncHttpService with SDK/transport/auth doubles. Retired queued probe never reaches the simulated hardware call or replays. This does not validate Basic-auth parsing, physical ISP or downstream AVR epoch."
+    "Reread complete donor at unchanged live hash; mismatch/admission assertions now also execute real WebAccess middleware and AsyncHttpService with SDK/transport/auth doubles. Retired queued probe never reaches the simulated hardware call or replays. This does not validate Basic-auth parsing, physical ISP or downstream AVR epoch.",
+    "Reread current canonical Session, fakePort and request_admission_test.go. Adapt actual control-over-background admission between unsent USB snapshot chunks, without overtaking an in-flight request or post-ACK verification. The production Rust worker now validates matching sequence/opcode ACK plus compact same-boot board-observed state, rather than delaying confirmation for all480 RGB pixels, mappings and icon metadata. Full captures still own capability/peripheral freshness and actual RGB; partial readback does not renew those observations. Missing companion uses read-only full verification, never mutation replay. Production-worker fragmented-port and wrong-boot/scalar/state fixtures cover this scoped adaptation, not all donor reset/open/750ms strip contracts."
   ],
   "targets": [
     {
@@ -4034,6 +4046,11 @@
       "path": "desktop/src/peer_http.rs",
       "sha256": "c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da",
       "anchor": "fn gui_settings_pin_every_nested_request_and_verify_same_boot()"
+    },
+    {
+      "path": "desktop/src/usb_table.rs",
+      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+      "anchor": "pub struct Operation"
     }
   ],
   "omissions": [
@@ -4092,6 +4109,16 @@
       "path": "tests/web_access_fence_test.cpp",
       "sha256": "0142d2b4517669bbf77d2b22607223c891e0ad58e8f2555e9cffa2dab09afc0f",
       "anchor": "Real async queue + real fence recheck"
+    },
+    {
+      "path": "desktop/src/usb_table.rs",
+      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+      "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
+    },
+    {
+      "path": "desktop/src/usb_table.rs",
+      "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+      "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
     }
   ]
 },
@@ -4400,7 +4427,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321",
+      "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -6264,7 +6291,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321",
+          "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0",
           "anchor": "fn synchronize_context("
         },
         {
@@ -6677,7 +6704,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321",
+          "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -7157,7 +7184,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321",
+          "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -7724,7 +7751,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321",
+          "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -8350,7 +8377,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f"
+          "sha256": "3ad7d022a45629bad72e74d667f8bbf141452060e37a85ca8f21658674384b07"
         }
       ],
       "proof": [
@@ -8417,7 +8444,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void executeTelnetCommand(String line)",
-          "sha256": "c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f"
+          "sha256": "3ad7d022a45629bad72e74d667f8bbf141452060e37a85ca8f21658674384b07"
         }
       ],
       "proof": [
@@ -8484,7 +8511,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f"
+          "sha256": "3ad7d022a45629bad72e74d667f8bbf141452060e37a85ca8f21658674384b07"
         }
       ],
       "proof": [
@@ -8536,7 +8563,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void serviceTelnet() {",
-          "sha256": "c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f"
+          "sha256": "3ad7d022a45629bad72e74d667f8bbf141452060e37a85ca8f21658674384b07"
         }
       ],
       "proof": [
@@ -9548,7 +9575,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "53b36463d1289e472e7ec036368dbee0d450beaeb0a6989544246f799b9c864c",
+          "sha256": "81a2f0b4ec4c231428d0f63de118165690b9cfd849ad9cf6980d9c00c11fa35c",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -9608,7 +9635,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321",
+          "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0",
           "anchor": "value[\"tray_shell\"]"
         }
       ],
@@ -9649,21 +9676,67 @@
       "verdict": "parity-gap",
       "preserved": [
         "Fully read all489lines through EOF. Adapted queued-intent revocation/no-late-write and ownership-before/after admission assertions as Rust selected-method epoch tests. The production Gate keeps revoked owners until their resource leases drop and never admits a competing route or a second USB handle.",
-        "New main fixture invokes the actual HTTP worker against a live loopback listener while USB is selected, asserting zero accepted connections and zero failure events. This is an unexecuted source fixture reference until the guarded owner runs tests, not live USB or electrical proof."
+        "New main fixture invokes the actual HTTP worker against a live loopback listener while USB is selected, asserting zero accepted connections and zero failure events. This is an unexecuted source fixture reference until the guarded owner runs tests, not live USB or electrical proof.",
+        "Reread current canonical Session, fakePort and request_admission_test.go. Adapt actual control-over-background admission between unsent USB snapshot chunks, without overtaking an in-flight request or post-ACK verification. The production Rust worker now validates matching sequence/opcode ACK plus compact same-boot board-observed state, rather than delaying confirmation for all480 RGB pixels, mappings and icon metadata. Full captures still own capability/peripheral freshness and actual RGB; partial readback does not renew those observations. Missing companion uses read-only full verification, never mutation replay. Production-worker fragmented-port and wrong-boot/scalar/state fixtures cover this scoped adaptation, not all donor reset/open/750ms strip contracts."
       ],
       "targets": [
-        {"path":"desktop/src/connection.rs","sha256":"38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6","anchor":"pub struct Gate"},
-        {"path":"desktop/src/main.rs","sha256":"53b36463d1289e472e7ec036368dbee0d450beaeb0a6989544246f799b9c864c","anchor":"fn serial_worker("}
+        {
+          "path": "desktop/src/connection.rs",
+          "sha256": "38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6",
+          "anchor": "pub struct Gate"
+        },
+        {
+          "path": "desktop/src/main.rs",
+          "sha256": "81a2f0b4ec4c231428d0f63de118165690b9cfd849ad9cf6980d9c00c11fa35c",
+          "anchor": "fn serial_worker("
+        },
+        {
+          "path": "desktop/src/usb_table.rs",
+          "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+          "anchor": "pub struct Operation"
+        }
       ],
       "omissions": [
-        {"code":"Priority/background strip scheduling,750ms ACK bound, active-opcode wait diagnostics and delayed/concurrent exact ACK matching","disposition":"pending","reason":"A mutually exclusive route lease does not implement the donor's one-command-on-wire response scheduler or exact opcode/sequence ACK admission. Preserve these useful serial contracts for the hardware-matched host transport rather than declaring all session tests imported."},
-        {"code":"PulseDTR cancellation/restoration/write exclusion and live physical port acquisition/late-close tests","disposition":"pending","reason":"This pass intentionally adds no automatic reset and keeps AVR/ISP/audio deferred. Inactive DTR on Rust open is source configuration, not measured electrical behavior; OS acquisition/cancellation/retryable-close ownership still needs dedicated fake-handle and real-host acceptance."}
+        {
+          "code": "Priority/background strip scheduling,750ms ACK bound, active-opcode wait diagnostics and delayed/concurrent exact ACK matching",
+          "disposition": "pending",
+          "reason": "USB control priority, correlated ACK and compact board readback now have production-worker fakePort coverage. Full donor750ms strip-specific deadline, delayed/concurrent request matrix and OS acquisition/close/reset ownership still require dedicated adaptation and acceptance."
+        },
+        {
+          "code": "PulseDTR cancellation/restoration/write exclusion and live physical port acquisition/late-close tests",
+          "disposition": "pending",
+          "reason": "This pass intentionally adds no automatic reset and keeps AVR/ISP/audio deferred. Inactive DTR on Rust open is source configuration, not measured electrical behavior; OS acquisition/cancellation/retryable-close ownership still needs dedicated fake-handle and real-host acceptance."
+        }
       ],
-      "remaining": ["Run guarded native tests and verify selected USB causes no HTTP/DNS/SSDP/telemetry or second physical connection; validate bounded route retirement, dirty-draft protection and retired outcomes in actual runtime. Do not infer whole donor parity or electrical acceptance from Gate tests."],
+      "remaining": [
+        "Run guarded native tests and verify selected USB causes no HTTP/DNS/SSDP/telemetry or second physical connection; validate bounded route retirement, dirty-draft protection and retired outcomes in actual runtime. Do not infer whole donor parity or electrical acceptance from Gate tests."
+      ],
       "proof": [
-        {"path":"desktop/src/connection.rs","sha256":"38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6","anchor":"fn handoff_waits_for_all_actual_old_resources_and_rejects_stale_epoch()"},
-        {"path":"desktop/src/connection.rs","sha256":"38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6","anchor":"fn usb_offline_never_admits_network_and_disconnect_revokes_everything()"},
-        {"path":"desktop/src/main.rs","sha256":"53b36463d1289e472e7ec036368dbee0d450beaeb0a6989544246f799b9c864c","anchor":"fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"}
+        {
+          "path": "desktop/src/connection.rs",
+          "sha256": "38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6",
+          "anchor": "fn handoff_waits_for_all_actual_old_resources_and_rejects_stale_epoch()"
+        },
+        {
+          "path": "desktop/src/connection.rs",
+          "sha256": "38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6",
+          "anchor": "fn usb_offline_never_admits_network_and_disconnect_revokes_everything()"
+        },
+        {
+          "path": "desktop/src/main.rs",
+          "sha256": "81a2f0b4ec4c231428d0f63de118165690b9cfd849ad9cf6980d9c00c11fa35c",
+          "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
+        },
+        {
+          "path": "desktop/src/usb_table.rs",
+          "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+          "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
+        },
+        {
+          "path": "desktop/src/usb_table.rs",
+          "sha256": "cd9434d98a838d51cb610298da397499b4c301a08ef411ca695275c6aa6107ce",
+          "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
+        }
       ],
       "improvement": "User-required exclusive Wi-Fi-or-USB lifecycle replaces Both rather than silently falling back; physical resources retire before the new method opens. Source evidence only until guarded tests and runtime observations."
     },
@@ -9697,7 +9770,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "44600b330f40ad13a17a945dfed978cc1d50d18509f5404243aa6d13f12f9321"
+          "sha256": "0f74d7bab23cc670a1f4ce66e4c602741bcdf0822ad63e379730e7d8deff2ae0"
         }
       ],
       "omissions": [
@@ -9764,7 +9837,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f",
+          "sha256": "3ad7d022a45629bad72e74d667f8bbf141452060e37a85ca8f21658674384b07",
           "anchor": "const LedPreferences value = whiteBootPreferences(grid.brightness())"
         },
         {
@@ -10428,7 +10501,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f",
+          "sha256": "3ad7d022a45629bad72e74d667f8bbf141452060e37a85ca8f21658674384b07",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -10563,7 +10636,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f",
+          "sha256": "3ad7d022a45629bad72e74d667f8bbf141452060e37a85ca8f21658674384b07",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {

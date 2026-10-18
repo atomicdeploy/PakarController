@@ -101,6 +101,27 @@ boot-fenced opcode `0x5F`: state byte, effect byte and ten-byte 80-cell bitmap
 works offline without a network fallback. MQTT/outbound WebSocket use
 `{"command":"cells","ids":"1-80","state":"red","effect":"fade"}`.
 
+USB status byte45 optionally advertises immediate command-state readback.
+After dispatching a boot-fenced table command, the ESP retains the original
+opcode/sequence ACK/error and appends `0xB7` with the same sequence: inner opcode,
+16-byte boot identity, mode, winner, selected cell, brightness, pattern, output
+enabled, output mode, then twenty bytes packing four two-bit cell states each
+(low bits first). The 44-byte payload is observed board state after dispatch,
+not an echo of requested values. A matching success ACK, current serial owner,
+boot and verified requested values are all required for completion. Older
+firmware and a missing companion use a new full readback, never mutation replay.
+Full metadata/pixel reads yield between chunks and resume afterward; older
+captures cannot overwrite newer command state or masquerade as current RGB.
+Partial readback never renews full peripheral/capability observations.
+
+Native `--app-status` exposes the last successful `usb_command` timing, including
+physical session, sequence, opcode, queue, wire ACK, board confirmation and total
+milliseconds. IPC `accepted:true` alone only means the GUI queued the action.
+`tools/measure-usb-roundtrip.ps1 -Run` measures actual IPC-to-confirmed-USB changes
+on the verified running owner and restores its original cell/search state;
+`-DelayMilliseconds` exercises background reads between commands. No second
+serial handle, HTTP command fallback or inferred physical LED result is used.
+
 Display text accepts `text` (0..40 printable ASCII bytes), `speed_ms=80..5000`
 (default 260), `hold_ms=0..60000` (default 1500),
 `repeat=once|loop|interval` (**default once**), `force_scroll=true|false`
