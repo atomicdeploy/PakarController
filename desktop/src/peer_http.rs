@@ -106,14 +106,17 @@ impl Queue {
     }
     pub fn send(&self, command: HttpCommand) -> Result<(), SendError<HttpCommand>> {
         self.inner.send(HttpCommand::Scoped(
+            self.capture(),
+            Box::new(command),
+        ))
+    }
+    pub fn capture(&self)->Scope {
             Scope {
                 pin: self.pin.clone(),
                 generation: self.clock.load(Ordering::Acquire),
                 clock: self.clock.clone(),
                 queued_at: Instant::now(),
-            },
-            Box::new(command),
-        ))
+            }
     }
     pub fn clear(&mut self) {
         self.pin = None;

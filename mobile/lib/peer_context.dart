@@ -125,6 +125,7 @@ class PeerContext {
 }
 
 const knownFeatures = {
+  'command-ack',
   'network',
   'telemetry',
   'leds',

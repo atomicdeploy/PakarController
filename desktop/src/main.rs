@@ -24,6 +24,7 @@ mod maintenance;
 mod messaging;
 mod pc_contract;
 mod peer_http;
+mod realtime;
 mod pixel_diagnostic;
 mod platform;
 mod streaming;
@@ -70,6 +71,8 @@ struct DeviceStatus {
     boot_id: String,
     #[serde(default)]
     http_peer_fencing: bool,
+    #[serde(default)]
+    command_clock_ms: Option<u64>,
     #[serde(default)]
     capabilities: Option<capabilities::Manifest>,
     #[serde(default)]
@@ -325,6 +328,7 @@ fn websocket_status(text: &str) -> Option<DeviceStatus> {
     websocket_status_ready(&status).then_some(status)
 }
 enum WsCommand {
+    Control(realtime::Intent),
     Connect(Endpoint, u64),
     Disconnect,
     Rate(u16),
@@ -894,6 +898,11 @@ fn reject_pixel(events: &Sender<Event>, request: pixel_diagnostic::Request) {
     let _ = events.send(for_endpoint(&endpoint, Event::PixelSent(request,
         Err("WebSocket is not ready; diagnostic frame was not queued or replayed".into()))));
 }
+fn recover_realtime(request:realtime::Intent,events:&Sender<Event>,gate:&connection::Gate) {
+    let result=if let Some(_lease)=gate.acquire(Transport::WiFi,request.stamp.epoch){request.http()}
+        else{Err("Realtime connection retired; no fallback sent".into())};
+    request.emit(events,result);
+}
 fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui::Context, gate: connection::Gate) {
     let mut retry = diagnostics::Backoff::new(Duration::from_millis(600), Duration::from_secs(15));
     let mut endpoint: Option<Endpoint> = None;
@@ -912,6 +921,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 Ok(WsCommand::Stream(v)) => streaming = v,
                 Ok(WsCommand::Sample(v)) => sampling = v,
                 Ok(WsCommand::Pixel(request) | WsCommand::ArmPixel(request)) => reject_pixel(&events, request),
+                Ok(WsCommand::Control(request))=>{recover_realtime(request,&events,&gate);context.request_repaint();},
                 Err(_) => return,
             }
         }
@@ -937,6 +947,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 WsCommand::Stream(v) => streaming = v,
                 WsCommand::Sample(v) => sampling = v,
                 WsCommand::Pixel(request) | WsCommand::ArmPixel(request) => reject_pixel(&events, request),
+                WsCommand::Control(request)=>{recover_realtime(request,&events,&gate);context.request_repaint();},
             }
         }
         let Some(current) = endpoint.clone() else {
@@ -946,6 +957,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
             thread::sleep(Duration::from_millis(20)); continue;
         };
         let events = SessionEvents { sender: events.clone(), stamp: lease.stamp() };
+        let mut controls:Vec<(realtime::Intent,Instant)>=Vec::new();
         let result = (|| -> Result<(), String> {
             let mut request = websocket_url(&current.base)?
                 .into_client_request()
@@ -988,6 +1000,16 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                     }
                 }
                 match commands.try_recv() {
+                    Ok(WsCommand::Control(request))=>{
+                        if let Err(error)=request.admit(){request.emit(&events.sender,Err(error));}
+                        else if controls.len()>=8 {request.emit(&events.sender,Err("Realtime command queue full; nothing sent".into()));}
+                        else {
+                            let sent=socket.send(Message::Text(request.packet.clone().into())).is_ok();
+                            if sent {controls.push((request,Instant::now()));}
+                            else {recover_realtime(request,&events.sender,&gate);}
+                        }
+                        context.request_repaint();
+                    }
                     Ok(WsCommand::Connect(new_endpoint, epoch)) => {
                         mapping.clear();
                         sampling = false;
@@ -1095,6 +1117,14 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 }
                 match socket.read() {
                     Ok(Message::Text(text)) => {
+                        if let Ok(value)=serde_json::from_str::<serde_json::Value>(&text)
+                            && value["type"]=="command-result"
+                            && let Some(index)=controls.iter().position(|(request,_)|value["request_id"]==request.id) {
+                            let (request,_)=controls.remove(index);
+                            let result=request.verify(value);request.emit(&events.sender,result);
+                            context.request_repaint();
+                            continue;
+                        }
                         if pending_arm.as_ref().is_some_and(|(_, acked)| !acked) {
                             if let Some(ack) = pixel_diagnostic::mode_ack(&text) {
                                 match ack {
@@ -1132,12 +1162,20 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                         if matches!(e.kind(), ErrorKind::WouldBlock | ErrorKind::TimedOut) => {}
                     Err(e) => return Err(e.to_string()),
                 }
+                let mut index=0;
+                while index<controls.len() {
+                    if controls[index].1.elapsed()>=Duration::from_millis(800) {
+                        let (request,_)=controls.remove(index);
+                        recover_realtime(request,&events.sender,&gate);context.request_repaint();
+                    }else{index+=1;}
+                }
             }
             Ok(())
         })();
         let _ = events.send(for_endpoint(&current, Event::WebSocket(false)));
         context.request_repaint();
         drop(lease); // The closure dropped the socket before another method opens.
+        for (request,_) in controls {recover_realtime(request,&events.sender,&gate);}
         if let Err(error) = result {
             streaming = false;
             sampling = false; // Reconnect must not silently restart a stream.
@@ -1156,6 +1194,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 Ok(WsCommand::Stream(value)) => streaming = value,
                 Ok(WsCommand::Sample(value)) => sampling = value,
                 Ok(WsCommand::Pixel(request) | WsCommand::ArmPixel(request)) => reject_pixel(&events.sender, request),
+                Ok(WsCommand::Control(request))=>{recover_realtime(request,&events.sender,&gate);context.request_repaint();},
                 Err(mpsc::RecvTimeoutError::Disconnected) => return,
                 Err(mpsc::RecvTimeoutError::Timeout) => {},
             }
@@ -1933,10 +1972,20 @@ impl PakarControllerApp {
             return;
         }
         if self.transport != Transport::Serial {
+            if self.status.as_ref().is_some_and(|s|realtime::supported(s,path)) {
+                if let Err(error)=self.queue_realtime(path,form,None){self.message=error;}
+                return;
+            }
             let _ = self
                 .http_tx
                 .send(HttpCommand::Post(self.endpoint(), path, form));
         }
+    }
+    fn queue_realtime(&self,path:&'static str,form:Vec<(String,String)>,batch:Option<cell_batch::Correlation>)->Result<(),String> {
+        let status=self.live_status().ok_or("No fresh board status")?;
+        let request=realtime::Intent::new(self.endpoint(),status,path,form,self.http_tx.capture(),
+            self.connection_gate.stamp(Transport::WiFi,self.connection_gate.epoch()),batch)?;
+        self.ws_tx.send(WsCommand::Control(request)).map_err(|_|"Realtime worker closed; nothing sent".into())
     }
     fn serial_admission(&self)->Option<usb_table::Admission>{
         let stamp=self.serial_stamp.clone()?;
@@ -1950,8 +1999,12 @@ impl PakarControllerApp {
         let peer=peer_http::Pin::from_status(status).ok_or("Atomic batch requires a verified current peer")?;
         let correlation=cell_batch::Correlation::new(batch,peer,route)?;
         match route {
-            Transport::WiFi=>self.http_tx.send(HttpCommand::CellBatch(self.endpoint(),correlation.clone()))
-                .map_err(|_|"Atomic batch queue closed; nothing sent".to_string())?,
+            Transport::WiFi=>{
+                if realtime::supported(status,"/api/cells") {
+                    self.queue_realtime("/api/cells",correlation.request.form(),Some(correlation.clone()))?;
+                } else {self.http_tx.send(HttpCommand::CellBatch(self.endpoint(),correlation.clone()))
+                    .map_err(|_|"Atomic batch queue closed; nothing sent".to_string())?;}
+            },
             Transport::Serial=>{
                 let mut admission=self.serial_admission().ok_or("USB owner/session is not verified")?;
                 admission.batch=Some(correlation.clone());
@@ -2206,7 +2259,11 @@ impl PakarControllerApp {
                 Event::ForEndpoint(..) => {} // Worker envelopes are unwrapped once.
                 Event::StreamStats(value) => self.stream_sent_fps = Some((value, Instant::now())),
                 Event::Status(s) => {
+                    if realtime::older_than(&s,self.status.as_ref()) { continue; }
                     if !s.hostname.is_empty() {
+                        if self.status.as_ref().is_some_and(|old|old.cells!=s.cells) {
+                            self.table.pixel_sample=None; // Old RGB must not mask a new acknowledged semantic state.
+                        }
                         if self.http_tx.observe(&s) { self.revoke_http_drafts(); }
                         if s.pixel_preview_requested {
                             ui::cell_pixels::Sample::observe(&mut self.table.pixel_sample, s.pixel_frame.clone());

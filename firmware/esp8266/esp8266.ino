@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <CommandReceipts.h>
 #if defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
 #include <ESPmDNS.h>
@@ -1373,6 +1374,11 @@ const char *cellName(CellState state) {
   }
 }
 
+uint64_t commandClock() {
+  static uint32_t previous=0;static uint64_t high=0;
+  const uint32_t now=millis();if(now<previous)high+=1ULL<<32;previous=now;
+  return high|now; // Queried every telemetry tick; old intents cannot revive at millis wrap.
+}
 String buildStatusJson() {
   String body;
   // Reserve the complete document before TLS/WebSocket activity fragments the
@@ -1382,6 +1388,8 @@ String buildStatusJson() {
   body += F("\",\"board_id\":\""); body += pcBoardId;
   body += F("\",\"boot_id\":\""); body += pcBootId;
   body += F("\",\"http_peer_fencing\":"); body += webAccess.peerFenceReady() ? F("true") : F("false");
+  char commandTime[24];snprintf(commandTime,sizeof(commandTime),"%llu",static_cast<unsigned long long>(commandClock()));
+  body += F(",\"command_clock_ms\":"); body += commandTime;
   body += F(",\"hostname\":\""); body += hostname;
   body += F("\",\"uplink\":\""); body += NetworkPath::interfaceName();
   body += F("\",\"uplink_ipv4_ready\":"); body += NetworkPath::ready() ? F("true") : F("false");
@@ -1528,9 +1536,9 @@ String buildStatusJson() {
   body += F("\",\"name\":\""); appendJsonEscaped(body, deviceIdentity.displayName());
   body += F("\",\"hostname\":\""); body += deviceIdentity.hostname();
   body += F("\",\"application\":"); body += applicationIdentityJson();
-  body += F(",\"acknowledged_features\":[");
+  body += F(",\"acknowledged_features\":[\"command-ack\"");
   const uint16_t available = currentFeatures();
-  bool separator = false;
+  bool separator = true;
   for (uint8_t bit = 0; bit < 16; ++bit) if (available & (1U << bit)) {
     if (separator) body += ',';
     body += '"'; body += BoardCore::Context::name(bit); body += '"'; separator = true;
@@ -1597,6 +1605,55 @@ bool applyStreamPacket(const uint8_t *packet, size_t length,uint64_t owner=0) {
   return true;
 }
 
+BoardCore::CommandReceipts commandReceipts;
+bool parseCellsAction(const String &,const String &,const String &,BoardCore::CellBatch &,CellState &,Effect &);
+String commandReply(const String &message) {
+  JsonDocument request, reply;
+  reply["type"]="command-result";reply["board_id"]=pcBoardId;reply["boot_id"]=pcBootId;
+  reply["accepted"]=false;
+  if(message.length()>1024 || deserializeJson(request,message) || !request.is<JsonObject>()) {
+    reply["error"]="invalid_command";
+  } else {
+    const JsonObjectConst object=request.as<JsonObjectConst>();
+    const String id=PakarCommand::stringValue(object,"request_id");
+    const String command=PakarCommand::stringValue(object,"command");
+    reply["request_id"]=id;
+    const bool supported=command=="cells"||command=="cell"||command=="effect"||
+        command=="mode"||command=="brightness"||command=="led-output";
+    if(PakarCommand::stringValue(object,"board_id")!=pcBoardId ||
+       PakarCommand::stringValue(object,"boot_id")!=pcBootId || !webAccess.peerFenceReady()) {
+      reply["error"]="peer_changed";
+    } else if(!supported || !request["expires_at_ms"].is<uint64_t>()) {
+      reply["error"]="unsupported_command";
+    } else {
+      FirmwarePlatform::Sha256 hash;hash.add(message.c_str(),message.length());
+      const String digest=hash.hex();BoardCore::CommandReceipts::Entry *entry=nullptr;
+      const auto admission=commandReceipts.reserve(id.c_str(),digest.c_str(),request["expires_at_ms"],commandClock(),entry);
+      if(admission==BoardCore::CommandReceipts::Fresh) {
+        String result;
+        entry->accepted=!programmingLatched && !otaActive && !otaRebootAt && !avrUploadOwner &&
+            !remoteFirmware.busy() && !networkApplyPending && !cloudApplyPending && handleCloudCommand(message,result);
+        if(entry->accepted && command=="cells") {
+          BoardCore::CellBatch cells;CellState state;Effect effect;
+          if(parseCellsAction(request["ids"].as<String>(),request["state"].as<String>(),request["effect"].as<String>(),cells,state,effect))entry->count=cells.count();
+        }
+      }
+      if(admission==BoardCore::CommandReceipts::Fresh || admission==BoardCore::CommandReceipts::Cached) {
+        reply["accepted"]=entry->accepted;reply["count"]=entry->count;
+        reply["cached"]=admission==BoardCore::CommandReceipts::Cached;
+        if(!entry->accepted)reply["error"]="command_rejected";
+      } else reply["error"]=admission==BoardCore::CommandReceipts::Conflict?"request_id_conflict":
+          admission==BoardCore::CommandReceipts::Full?"command_capacity":
+          admission==BoardCore::CommandReceipts::Expired?"command_expired":"invalid_request_id";
+    }
+  }
+  String body;serializeJson(reply,body);
+  if(reply["accepted"]==true) {
+    body.remove(body.length()-1);body+=F(",\"status\":");body+=buildStatusJson();body+='}';
+  }
+  return body;
+}
+
 void handleWebSocketMessage(uint32_t clientId, uint8_t opcode,
                            const uint8_t *payload, size_t length) {
   // Only an immutable ID crosses the async -> loop boundary. SDK lookup/use
@@ -1623,6 +1680,12 @@ void handleWebSocketMessage(uint32_t clientId, uint8_t opcode,
   message.concat(reinterpret_cast<const char *>(payload), length);
   JsonDocument parsed;
   if(deserializeJson(parsed,message) || !parsed.is<JsonObject>()) return;
+  if(parsed["type"]=="command") {
+    webSocket.text(clientId,commandReply(message));
+    // Other connected clients see the changed state immediately too.
+    webSocket.textAll(buildStatusJson());
+    return;
+  }
   if(parsed["type"]=="telemetry") {webSocket.text(clientId, buildTelemetryJson());return;}
   if(parsed["command"].as<String>().startsWith("firmware-") || parsed["command"]=="telemetry") {
     String result;const bool accepted=remoteCommand(parsed,result);
@@ -2367,6 +2430,14 @@ void registerAsyncOta() {
 }
 
 void registerApi() {
+  server.on("/api/command",HTTP_POST,[](){
+    if(!authenticate())return;
+    // Match the existing form transport: the async SDK does not retain an
+    // arbitrary JSON body as arg("plain"). URL decoding preserves the exact
+    // original WS packet bytes, so its receipt digest is identical on recovery.
+    server.send(200,"application/json",commandReply(server.arg("packet")));
+    webSocket.textAll(buildStatusJson());
+  });
 #if defined(ARDUINO_ARCH_ESP32)
   server.on("/api/status-rgb", HTTP_GET, []() {
     if (!authenticate()) return;

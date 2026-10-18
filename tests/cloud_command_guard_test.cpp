@@ -3,6 +3,7 @@
 #include <string.h>
 #include <string>
 #include "CloudCommandGuard.h"
+#include "CommandReceipts.h"
 
 using namespace BoardCore::CloudCommand;
 static constexpr const char *board = "esp32s3-907069eac800";
@@ -14,6 +15,30 @@ static Result call(Guard &g, const char *id, uint32_t now = epoch,
   return g.admit(command, board, boot, id, expiry, now, ticks);
 }
 int main() {
+  {
+    BoardCore::CommandReceipts cache;
+    BoardCore::CommandReceipts::Entry *entry=nullptr;
+    const char *id="0123456789abcdef0123456789abcdef";
+    const std::string digest(64,'a'),other(64,'b');
+    using Receipts=BoardCore::CommandReceipts;
+    assert(cache.reserve(id,digest.c_str(),5000,100,entry)==Receipts::Fresh);
+    entry->accepted=true;entry->count=80;
+    assert(cache.reserve(id,digest.c_str(),5000,200,entry)==Receipts::Cached);
+    assert(entry->accepted && entry->count==80);
+    assert(cache.reserve(id,other.c_str(),5000,200,entry)==Receipts::Conflict);
+    assert(cache.reserve(id,digest.c_str(),5000,5001,entry)==Receipts::Expired);
+    assert(cache.reserve(id,digest.c_str(),0x100000064ULL,0xfffffff0ULL,entry)==Receipts::Fresh);
+    assert(cache.reserve(id,digest.c_str(),5000,0x100000001ULL,entry)==Receipts::Expired);
+    assert(cache.reserve("bad",digest.c_str(),5000,0,entry)==Receipts::Invalid);
+    Receipts full;
+    char key[33];
+    for(size_t i=0;i<Receipts::kCapacity;++i) {
+      snprintf(key,sizeof(key),"%032x",static_cast<unsigned>(i));
+      assert(full.reserve(key,digest.c_str(),5000,100,entry)==Receipts::Fresh);
+    }
+    assert(full.reserve("ffffffffffffffffffffffffffffffff",digest.c_str(),5000,100,entry)==Receipts::Full);
+    assert(full.reserve("00000000000000000000000000000000",digest.c_str(),5000,200,entry)==Receipts::Cached);
+  }
   Guard g;
   for (const auto *name : {"status", "telemetry", "firmware-status"})
     assert(g.admit(name, nullptr, nullptr, nullptr, 0, 0, UINT32_MAX) == Result::Allowed);

@@ -12,6 +12,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'models.dart';
 import 'board_sound.dart';
 import 'lan_resolver.dart';
+import 'command_wire.dart';
 
 enum ConnectionMethod { network, usb }
 
@@ -102,6 +103,80 @@ class PakarApi {
   late final HttpClient _ioClient = resolver.createClient();
   final Future<Set<String>> Function()? discovery;
   WebSocketChannel? _channel;
+  bool _socketReady = false;
+  DeviceStatus? _latestStatus;
+  Stopwatch? _statusAge;
+  final _commandReplies = <String, Completer<Map<String, dynamic>?>>{};
+  bool get liveFresh =>
+      _socketReady &&
+      _statusAge != null &&
+      _statusAge!.elapsedMilliseconds < 2000;
+
+  void _rememberStatus(DeviceStatus status) {
+    if (status.olderThan(_latestStatus)) return;
+    _latestStatus = status;
+    _statusAge = Stopwatch()..start();
+  }
+
+  /// A single intent, preferred WS receipt, then the SAME idempotent envelope
+  /// over HTTP if its reply is lost. Never fall back to a second legacy write.
+  Future<DeviceStatus?> fastCommand(
+    String path,
+    Map<String, String> values, {
+    required bool Function() authorize,
+  }) async {
+    if (!commandNames.containsKey(path)) return null;
+    var snapshot = _latestStatus;
+    if (snapshot?.peer.has('command-ack') != true) return null;
+    final revision = connectionRevision;
+    if (_statusAge == null || _statusAge!.elapsedMilliseconds >= 2000) {
+      snapshot = await status();
+    }
+    _requireNetwork();
+    if (revision != connectionRevision || !authorize()) {
+      throw const StaleConnection();
+    }
+    final packet = commandPacket(snapshot!, path, values);
+    final id = (jsonDecode(packet) as Map)['request_id'] as String;
+    Map<String, dynamic>? reply;
+    if (_socketReady && _channel != null) {
+      final pending = Completer<Map<String, dynamic>?>();
+      _commandReplies[id] = pending;
+      try {
+        _channel!.sink.add(packet);
+        reply = await pending.future.timeout(
+          const Duration(milliseconds: 800),
+          onTimeout: () => null,
+        );
+      } on Exception {
+        /* Same-ID HTTP recovery below; no second intent. */
+      } finally {
+        _commandReplies.remove(id);
+      }
+    }
+    if (revision != connectionRevision || !authorize()) {
+      throw const StaleConnection();
+    }
+    if (reply == null) {
+      final request = http.Request('POST', _uri(transportUrl, '/api/command'))
+        ..headers.addAll(_writeHeaders)
+        ..bodyFields = {'packet': packet}
+        ..followRedirects = false;
+      final response = await http.Response.fromStream(
+        await _client.send(request),
+      ).timeout(const Duration(seconds: 4));
+      if (response.statusCode ~/ 100 != 2) throw const OperationUncertain();
+      reply = jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    if (revision != connectionRevision || !authorize()) {
+      throw const StaleConnection();
+    }
+    final actual = verifyCommandReply(reply, packet, path, values);
+    _acceptIdentity(actual.json);
+    _rememberStatus(actual);
+    return actual;
+  }
+
   String? _discoveredBaseUrl;
   String? _transportOwner;
   String? _verifiedEndpoint;
@@ -385,7 +460,8 @@ class PakarApi {
     }
     _acceptIdentity(result.json);
     _verifiedEndpoint = baseUrl;
-    return result;
+    _rememberStatus(result);
+    return result.olderThan(_latestStatus) ? _latestStatus! : result;
   }
 
   // Adapt Session's synchronous retirement boundary: retire captured owners
@@ -550,35 +626,60 @@ class PakarApi {
       await active.sink.close();
       return;
     }
+    _socketReady = true;
     active.sink.add('{"type":"status"}');
-    await for (final message in active.stream) {
-      if (revision != connectionRevision) return;
-      if (message is! String) continue;
-      final value = jsonDecode(message);
-      if (value is Map<String, dynamic> &&
-          value['type'] == 'pc-contract-event') {
-        // Events cannot establish identity or refresh an expired status lease.
-        if (_verifiedBoard != null &&
-            value['board_id'] == _verifiedBoard &&
-            value['boot_id'] == _verifiedBoot) {
-          onPeripheralEvent?.call(value);
+    try {
+      await for (final message in active.stream) {
+        if (revision != connectionRevision) return;
+        if (message is! String) continue;
+        final value = jsonDecode(message);
+        if (value is Map<String, dynamic> &&
+            value['type'] == 'command-result') {
+          if (value['board_id'] == _verifiedBoard &&
+              value['boot_id'] == _verifiedBoot) {
+            final pending = _commandReplies[value['request_id']];
+            if (pending != null && !pending.isCompleted) {
+              pending.complete(value);
+            }
+          }
+          continue;
         }
-        continue;
+        if (value is Map<String, dynamic> &&
+            value['type'] == 'pc-contract-event') {
+          // Events cannot establish identity or refresh an expired status lease.
+          if (_verifiedBoard != null &&
+              value['board_id'] == _verifiedBoard &&
+              value['boot_id'] == _verifiedBoot) {
+            onPeripheralEvent?.call(value);
+          }
+          continue;
+        }
+        if (value is Map<String, dynamic> && value.containsKey('hostname')) {
+          final expected = _localLabel();
+          if (expected != null && value['hostname'] != expected) {
+            throw const StaleConnection();
+          }
+          if (_acceptIdentity(value)) {
+            return; // Reconnect only reads; never replay.
+          }
+          final status = DeviceStatus(value);
+          _rememberStatus(status);
+          yield status;
+        }
       }
-      if (value is Map<String, dynamic> && value.containsKey('hostname')) {
-        final expected = _localLabel();
-        if (expected != null && value['hostname'] != expected) {
-          throw const StaleConnection();
-        }
-        if (_acceptIdentity(value)) {
-          return; // Reconnect only reads; never replay.
-        }
-        yield DeviceStatus(value);
-      }
+    } finally {
+      if (identical(_channel, active)) _socketReady = false;
     }
   }
 
   Future<void> close() async {
+    _socketReady = false;
+    _latestStatus = null;
+    _statusAge = null;
+    for (final pending in _commandReplies.values) {
+      if (!pending.isCompleted) pending.complete(null);
+    }
+    _commandReplies.clear();
     ++_connectionRevision;
     final active = _channel;
     _channel = null;
@@ -590,6 +691,13 @@ class PakarApi {
   }
 
   void resetTransport() {
+    _socketReady = false;
+    _latestStatus = null;
+    _statusAge = null;
+    for (final pending in _commandReplies.values) {
+      if (!pending.isCompleted) pending.complete(null);
+    }
+    _commandReplies.clear();
     ++_connectionRevision;
     _verifiedEndpoint = null;
     _verifiedBoard = _verifiedBoot = null;

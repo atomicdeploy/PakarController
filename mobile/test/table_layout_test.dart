@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pakarcontroller/main.dart';
 import 'package:pakarcontroller/models.dart';
@@ -7,6 +10,75 @@ import 'package:pakarcontroller/table_layout.dart';
 import 'peer_fixture.dart';
 
 void main() {
+  testWidgets(
+    'Cell commands and incoming state preserve both scroll axes and canvas position',
+    (tester) async {
+      tester.view.physicalSize = const Size(380, 820);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      var status = peerFixture();
+      late StateSetter update;
+      final reply = Completer<bool>();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                update = setState;
+                return TablePage(
+                  key: const ValueKey('stable-peer'),
+                  status: status,
+                  mapping: CellMap.defaults(),
+                  command: (_, [values = const {}]) async {},
+                  verifiedCommand: (_, _) => reply.future,
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      final vertical = tester
+          .widget<ListView>(
+            find.byKey(const PageStorageKey('table-page-scroll')),
+          )
+          .controller!;
+      final horizontal = tester
+          .widget<SingleChildScrollView>(
+            find.byKey(const ValueKey('table-cell-scroll')),
+          )
+          .controller!;
+      vertical.jumpTo(vertical.position.maxScrollExtent - 20);
+      horizontal.jumpTo(400);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('cell-7')));
+      await tester.pumpAndSettle();
+      final y = vertical.offset, x = horizontal.offset;
+      final canvas = tester.getRect(
+        find.byKey(const ValueKey('table-cell-canvas')),
+      );
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Set red'))
+          .onPressed!();
+      await tester.pump();
+      update(
+        () => status = DeviceStatus({
+          ...status.json,
+          'cells': List.filled(80, 'red'),
+        }),
+      );
+      await tester.pump();
+      reply.complete(true);
+      await tester.pumpAndSettle();
+      expect(vertical.offset, y);
+      expect(horizontal.offset, x);
+      expect(
+        tester.getRect(find.byKey(const ValueKey('table-cell-canvas'))),
+        canvas,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
   test('Physical columns align all four cells with cell 1 at the origin', () {
     final occupied = <(double, double)>{};
     for (var row = 0; row < 4; row++) {
@@ -31,11 +103,18 @@ void main() {
     expect(tableCellPosition(1).y, 0);
     for (var column = 0; column < 20; column++) {
       final top = column ~/ 2 + (column.isOdd ? 11 : 1);
-      expect([for (var row = 0; row < 4; row++) tableCellPosition(top + row * 20).x],
-          List.filled(4, column.toDouble()));
+      expect([
+        for (var row = 0; row < 4; row++) tableCellPosition(top + row * 20).x,
+      ], List.filled(4, column.toDouble()));
     }
-    expect([1, 21, 41, 61].map((id) => tableCellPosition(id).column), everyElement(0));
-    expect([11, 31, 51, 71].map((id) => tableCellPosition(id).column), everyElement(1));
+    expect(
+      [1, 21, 41, 61].map((id) => tableCellPosition(id).column),
+      everyElement(0),
+    );
+    expect(
+      [11, 31, 51, 71].map((id) => tableCellPosition(id).column),
+      everyElement(1),
+    );
     expect(() => tableCellPosition(0), throwsRangeError);
     expect(() => tableCellPosition(81), throwsRangeError);
   });
@@ -93,66 +172,64 @@ void main() {
   );
   for (final size in [const Size(380, 1100), const Size(1400, 1100)]) {
     for (final direction in TextDirection.values) {
-      testWidgets('Aligned columns and vertical stagger at $size in $direction', (
-        tester,
-      ) async {
-        tester.view.physicalSize = size;
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-        var writes = 0;
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Directionality(
-              textDirection: direction,
-              child: Scaffold(
-                body: TablePage(
-                  status: peerFixture(),
-                  mapping: CellMap.defaults(),
-                  command: (_, [values = const {}]) async {
-                    ++writes;
-                  },
+      testWidgets(
+        'Aligned columns and vertical stagger at $size in $direction',
+        (tester) async {
+          tester.view.physicalSize = size;
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          var writes = 0;
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Directionality(
+                textDirection: direction,
+                child: Scaffold(
+                  body: TablePage(
+                    status: peerFixture(),
+                    mapping: CellMap.defaults(),
+                    command: (_, [values = const {}]) async {
+                      ++writes;
+                    },
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-        final canvas = tester.getRect(
-          find.byKey(const ValueKey('table-cell-canvas')),
-        );
-        Rect cell(int id) => tester.getRect(find.byKey(ValueKey('cell-$id')));
-        final first = cell(1), pitch = cell(11).left - first.left;
-        expect(first.top, canvas.top + 2);
-        expect(first.left, canvas.left + 2);
-        expect(cell(11).top - first.top, closeTo(pitch / 2, .001));
-        expect(cell(2).top, first.top);
-        for (var row = 0; row < 4; ++row) {
-          final start = cell(1 + row * 20);
-          expect(
-            start.left - first.left,
-            closeTo(0, .001),
           );
-          expect(
-            start.top - first.top,
-            closeTo(row * tableDisplayRowPitch * pitch, .001),
+          final canvas = tester.getRect(
+            find.byKey(const ValueKey('table-cell-canvas')),
           );
-        }
-        for (var id = 1; id <= 80; ++id) {
-          final bounds = cell(id);
-          expect(bounds.right, lessThanOrEqualTo(canvas.right));
-          expect(bounds.bottom, lessThanOrEqualTo(canvas.bottom));
-          for (var other = id + 1; other <= 80; ++other) {
+          Rect cell(int id) => tester.getRect(find.byKey(ValueKey('cell-$id')));
+          final first = cell(1), pitch = cell(11).left - first.left;
+          expect(first.top, canvas.top + 2);
+          expect(first.left, canvas.left + 2);
+          expect(cell(11).top - first.top, closeTo(pitch / 2, .001));
+          expect(cell(2).top, first.top);
+          for (var row = 0; row < 4; ++row) {
+            final start = cell(1 + row * 20);
+            expect(start.left - first.left, closeTo(0, .001));
             expect(
-              bounds.overlaps(cell(other)),
-              false,
-              reason: 'Cell $id must not cover cell $other or steal its taps',
+              start.top - first.top,
+              closeTo(row * tableDisplayRowPitch * pitch, .001),
             );
           }
-        }
-        expect(writes, 0);
-        expect(tester.takeException(), isNull);
-        await tester.pumpWidget(const SizedBox());
-      });
+          for (var id = 1; id <= 80; ++id) {
+            final bounds = cell(id);
+            expect(bounds.right, lessThanOrEqualTo(canvas.right));
+            expect(bounds.bottom, lessThanOrEqualTo(canvas.bottom));
+            for (var other = id + 1; other <= 80; ++other) {
+              expect(
+                bounds.overlaps(cell(other)),
+                false,
+                reason: 'Cell $id must not cover cell $other or steal its taps',
+              );
+            }
+          }
+          expect(writes, 0);
+          expect(tester.takeException(), isNull);
+          await tester.pumpWidget(const SizedBox());
+        },
+      );
     }
   }
 }

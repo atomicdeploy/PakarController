@@ -6,6 +6,20 @@ class DeviceStatus {
   final Map<String, dynamic> json;
   late final peer = PeerContext.fromStatus(json);
 
+  // An older in-flight HTTP read must not undo a newer WS command receipt.
+  // This comparison is only meaningful within the exact same board boot.
+  bool olderThan(DeviceStatus? current) {
+    final clock = json['command_clock_ms'];
+    final previous = current?.json['command_clock_ms'];
+    return json['board_id'] != null &&
+        json['boot_id'] != null &&
+        json['board_id'] == current?.json['board_id'] &&
+        json['boot_id'] == current?.json['boot_id'] &&
+        clock is int &&
+        previous is int &&
+        clock < previous;
+  }
+
   /// Shared catalog, filtered by this peer's explicit ACKs. The caller still
   /// owns freshness; this DTO never infers capabilities from pin/pixel counts.
   List<Map<String, dynamic>> get deviceSettingsPages {

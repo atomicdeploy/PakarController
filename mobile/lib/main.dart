@@ -114,7 +114,9 @@ class _ControlShellState extends State<ControlShell>
   Future<void> _startConnection() async {
     fallback?.cancel();
     fallback = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (api.connectionWanted) unawaited(_refresh(silent: true));
+      if (api.connectionWanted && !api.liveFresh) {
+        unawaited(_refresh(silent: true));
+      }
     });
     await _refresh();
     if (mounted && api.connectionWanted) unawaited(_connectLive());
@@ -192,7 +194,7 @@ class _ControlShellState extends State<ControlShell>
       }
       _observe(value);
       final accepted = observation;
-      if (value.peer.table) {
+      if (value.peer.table && (!mapping.valid || !silent)) {
         try {
           final next = await api.mapping();
           if (mounted &&
@@ -204,9 +206,7 @@ class _ControlShellState extends State<ControlShell>
           if (mounted &&
               owner == api.connectionRevision &&
               accepted == observation) {
-            setState(
-              () => mapping = CellMap(physical: const [], names: const []),
-            );
+            // A failed optional refresh does not erase this peer's confirmed map.
           }
         }
       }
@@ -227,6 +227,7 @@ class _ControlShellState extends State<ControlShell>
 
   void _observe(DeviceStatus value) {
     if (!mounted || !api.connectionWanted) return;
+    if (value.olderThan(status)) return;
     mirror.observe(value, api.connectionRevision);
     final changed = status?.hostname != value.hostname;
     expiry?.cancel();
@@ -361,33 +362,47 @@ class _ControlShellState extends State<ControlShell>
         );
       }
       commandPending = true;
-      // Fresh preflight may discover a reboot, retiring the original intent.
-      final before = await api.status();
-      if (!mounted ||
-          !api.connectionWanted ||
-          owner != api.connectionRevision ||
-          peer != before.hostname ||
-          !before.peer.allows(path, values)) {
-        throw const StaleConnection();
-      }
-      if (path == '/api/cells') {
-        final count = parseCellSearch(values['ids'] ?? '').length;
-        final ack = await api.postJson(
-          path,
-          values,
-          authorize: () =>
-              mounted &&
-              owner == api.connectionRevision &&
-              status?.peer.allows(path, values) == true,
-        );
-        if (count == 0 || ack['accepted'] != true || ack['count'] != count) {
-          throw const OperationUncertain();
-        }
+      final fast = await api.fastCommand(
+        path,
+        values,
+        authorize: () =>
+            mounted &&
+            owner == api.connectionRevision &&
+            peer == status?.hostname &&
+            status?.peer.allows(path, values) == true,
+      );
+      late final DeviceStatus actual;
+      if (fast != null) {
+        actual = fast;
       } else {
-        await api.post(path, values);
+        // Fresh preflight may discover a reboot, retiring the original intent.
+        final before = await api.status();
+        if (!mounted ||
+            !api.connectionWanted ||
+            owner != api.connectionRevision ||
+            peer != before.hostname ||
+            !before.peer.allows(path, values)) {
+          throw const StaleConnection();
+        }
+        if (path == '/api/cells') {
+          final count = parseCellSearch(values['ids'] ?? '').length;
+          final ack = await api.postJson(
+            path,
+            values,
+            authorize: () =>
+                mounted &&
+                owner == api.connectionRevision &&
+                status?.peer.allows(path, values) == true,
+          );
+          if (count == 0 || ack['accepted'] != true || ack['count'] != count) {
+            throw const OperationUncertain();
+          }
+        } else {
+          await api.post(path, values);
+        }
+        if (!mounted || owner != api.connectionRevision) return false;
+        actual = await api.status();
       }
-      if (!mounted || owner != api.connectionRevision) return false;
-      final actual = await api.status();
       if (!mounted ||
           !api.connectionWanted ||
           owner != api.connectionRevision ||
@@ -423,7 +438,14 @@ class _ControlShellState extends State<ControlShell>
       return true;
     } catch (error) {
       if (mounted && owner == api.connectionRevision) {
-        _revoke(error.toString());
+        if (error is StaleConnection) {
+          _revoke(error.toString());
+        } else {
+          _reportIncident(
+            'command:${error.runtimeType}:$error',
+            error.toString(),
+          );
+        }
       }
       return false;
     } finally {
@@ -754,6 +776,7 @@ class _TablePageState extends State<TablePage> {
   Command get command => widget.command;
   final query = TextEditingController();
   final tableScroll = ScrollController();
+  final pageScroll = ScrollController();
   Set<int> selection = {};
   String? searchError;
   bool multiple = true, showIndicators = false, applying = false;
@@ -765,6 +788,7 @@ class _TablePageState extends State<TablePage> {
   void dispose() {
     query.dispose();
     tableScroll.dispose();
+    pageScroll.dispose();
     super.dispose();
   }
 
@@ -859,6 +883,9 @@ class _TablePageState extends State<TablePage> {
   Widget build(BuildContext context) => status?.peer.table != true
       ? const Center(child: Text('No acknowledged table'))
       : ListView(
+          key: const PageStorageKey('table-page-scroll'),
+          controller: pageScroll,
+          primary: false,
           padding: const EdgeInsets.all(16),
           children: [
             Row(
@@ -1039,7 +1066,6 @@ class _TablePageState extends State<TablePage> {
               const Text(
                 'This board has not acknowledged atomic cell updates. Update its firmware to enable selection actions.',
               ),
-            if (batchMessage != null) Text(batchMessage!),
             const SizedBox(height: 12),
             Card(
               child: Padding(
@@ -1059,6 +1085,7 @@ class _TablePageState extends State<TablePage> {
                       child: SingleChildScrollView(
                         key: const ValueKey('table-cell-scroll'),
                         controller: tableScroll,
+                        primary: false,
                         scrollDirection: Axis.horizontal,
                         // Physical cell order is left-to-right even when the
                         // surrounding application is displayed in RTL.
@@ -1092,9 +1119,7 @@ class _TablePageState extends State<TablePage> {
                                     state:
                                         status?.cells.elementAtOrNull(id - 1) ??
                                         'unknown',
-                                    onPressed: applying
-                                        ? null
-                                        : () => select(id),
+                                    onPressed: () => select(id),
                                     onLongPress: !mapping.valid
                                         ? null
                                         : () => _editMapping(context, id),
@@ -1107,6 +1132,15 @@ class _TablePageState extends State<TablePage> {
                     );
                   },
                 ),
+              ),
+            ),
+            // Command feedback never inserts content above the cell canvas.
+            SizedBox(
+              height: 48,
+              child: Text(
+                batchMessage ?? '',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

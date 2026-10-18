@@ -206,7 +206,7 @@ void main() {
     },
   );
   testWidgets(
-    'Lost post-ACK readback stops bulk after one write and revokes controls',
+    'Lost post-ACK readback stops bulk without discarding a fresh workspace',
     (tester) async {
       final api = LifecycleApi()..failAfterWrite = true;
       await tester.pumpWidget(PakarControllerApp(api: api));
@@ -223,6 +223,16 @@ void main() {
       await tester.pumpAndSettle();
       expect(api.writes, 1);
       expect(find.textContaining('Readback unavailable'), findsOneWidget);
+      expect(find.text('No acknowledged board'), findsNothing);
+      expect(find.byKey(const ValueKey('table-cell-canvas')), findsOneWidget);
+      // No optimistic cell success, and actual state expiry still revokes.
+      expect(
+        tester.widget<CellButton>(find.byKey(const ValueKey('cell-1'))).state,
+        'white',
+      );
+      await tester.pump(const Duration(seconds: 7));
+      await tester.pumpAndSettle();
+      expect(api.writes, 1);
       expect(find.text('No acknowledged board'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await tester.pump();
