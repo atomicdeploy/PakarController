@@ -324,4 +324,84 @@ void main() {
       await server.close(force: true);
     }
   });
+
+  test('Retired feed delivery cannot overwrite a replacement session or dispatch concurrently', () async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final sockets = <WebSocket>[];
+    final subscriptions = <Map<String, dynamic>>[];
+    final subscribedOne = Completer<void>(), subscribedTwo = Completer<void>();
+    final firstDelivered = Completer<void>(), oldDelivery = Completer<void>();
+    final serving = server.listen((request) async {
+      final ws = await WebSocketTransformer.upgrade(request);
+      sockets.add(ws);
+      ws.listen((raw) {
+        subscriptions.add(jsonDecode(raw as String) as Map<String, dynamic>);
+        if (subscriptions.length == 1) subscribedOne.complete();
+        if (subscriptions.length == 2) subscribedTwo.complete();
+      });
+    });
+    final feed = FirmwareFeed();
+    var deliveries = 0;
+    Future<void> start() => feed.start(
+      FirmwareFeedOptions(
+        endpoint: 'ws://127.0.0.1:${server.port}/events',
+        origin: 'https://updates.example/',
+      ),
+      'board',
+      'boot',
+      armed: true,
+      deliver: (_) async {
+        ++deliveries;
+        if (!firstDelivered.isCompleted) firstDelivered.complete();
+        await oldDelivery.future;
+      },
+    );
+    void offer(int socket, String id) {
+      final subscription = subscriptions[socket];
+      sockets[socket].add(
+        jsonEncode({
+          'type': 'firmware-offer',
+          'id': id,
+          'session': subscription['session'],
+          'board_id': 'board',
+          'boot_id': 'boot',
+          'expires_at_ms': DateTime.now().millisecondsSinceEpoch + 30000,
+          'url': 'https://updates.example/image.bin',
+          'sha256': 'a' * 64,
+          'kind': 'binary',
+          'target': 'esp',
+        }),
+      );
+    }
+
+    try {
+      await start();
+      await subscribedOne.future.timeout(const Duration(seconds: 3));
+      offer(0, 'first');
+      await firstDelivered.future.timeout(const Duration(seconds: 3));
+      await feed.stop();
+      await start();
+      await subscribedTwo.future.timeout(const Duration(seconds: 3));
+      offer(1, 'second');
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(deliveries, 1);
+      expect(feed.dispatching, true);
+      final state = feed.state;
+      oldDelivery.completeError(const FormatException('old session retired'));
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(feed.state, state);
+      expect(feed.running, true);
+      expect(feed.dispatching, false);
+      expect(subscriptions[0]['session'], isNot(subscriptions[1]['session']));
+    } finally {
+      if (!oldDelivery.isCompleted) oldDelivery.complete();
+      await feed.stop();
+      feed.dispose();
+      for (final socket in sockets) {
+        await socket.close();
+      }
+      await serving.cancel();
+      await server.close(force: true);
+    }
+  });
 }

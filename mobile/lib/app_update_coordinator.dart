@@ -1,0 +1,672 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'app_updates.dart';
+import 'app_updates_peer.dart';
+import 'app_update_discovery.dart';
+import 'device_registry.dart';
+import 'firmware_feed.dart';
+
+/// Foreground app-package distribution, independent of the selected board.
+/// Reuses PCController package pull/push; the OS installer is local-only.
+class AppUpdateCoordinator extends ChangeNotifier {
+  AppUpdateCoordinator({
+    AppUpdates? updates,
+    AppUpdateDiscovery? discovery,
+    this.saveSnapshot,
+    this.connectFeed,
+    this.feedConnectTimeout = const Duration(seconds: 8),
+    required Future<bool> Function(Map<String, dynamic>) approve,
+  }) : updates = updates ?? AppUpdates(),
+       discovery = discovery ?? AppUpdateDiscovery() {
+    peers = AppUpdatePeers(this.updates, approve: approve);
+    this.updates.addListener(changed);
+    this.discovery.addListener(changed);
+  }
+  static const storageKey = 'pakar.app_updates';
+  final AppUpdates updates;
+  final AppUpdateDiscovery discovery;
+  final Future<void> Function(String)? saveSnapshot;
+  final Future<WebSocket> Function(String endpoint)? connectFeed;
+  final Duration feedConnectTimeout;
+  late final AppUpdatePeers peers;
+  Map<String, dynamic> package = {};
+  static const defaults = <String, dynamic>{
+    'sharing': false,
+    'discover': false,
+    'auto_download': false,
+    'catalog': '',
+    'origin': '',
+    'feed': '',
+    'socket_io': false,
+    'namespace': '/',
+    'event': 'app-update-offer',
+  };
+  Map<String, dynamic> settings = Map.of(defaults);
+  final consumed = <String>{};
+  Map<String, dynamic>? pending;
+  String instanceId = randomIdentifier(), message = '', feedState = 'Stopped';
+  bool foreground = true, closed = false, checking = false;
+  WebSocket? socket;
+  StreamSubscription<dynamic>? events;
+  Timer? timer, retry, heartbeat;
+  int epoch = 0, retryCount = 0;
+  int _feedEpoch = 0;
+  String session = '', _feedSession = '';
+  bool _feedStarting = false, _configuring = false, _downloading = false;
+  Future<void> _saving = Future<void>.value();
+  Future<void> _lifecycle = Future<void>.value();
+  Future<void> _receipts = Future<void>.value();
+  bool get sharing => peers.running;
+  void changed() {
+    if (!closed) notifyListeners();
+  }
+
+  void failure(Object error) {
+    message = '$error';
+    changed();
+  }
+
+  Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      final raw = jsonDecode(prefs.getString(storageKey) ?? '{}');
+      if (raw is Map && raw['settings'] is Map) {
+        settings = {
+          for (final key in defaults.keys)
+            key: (raw['settings'] as Map).containsKey(key)
+                ? raw['settings'][key]
+                : defaults[key],
+        };
+      }
+      if (raw is Map && raw['consumed'] is List) {
+        consumed.addAll(
+          (raw['consumed'] as List)
+              .whereType<String>()
+              .where(
+                (key) => RegExp(r'^(peer|remote):[a-f0-9]{64}$').hasMatch(key),
+              )
+              .take(128),
+        );
+      }
+      final id = raw is Map ? raw['instance_id'] : null;
+      instanceId = id is String && RegExp(r'^[a-f0-9]{32}$').hasMatch(id)
+          ? id
+          : randomIdentifier();
+      validate(settings);
+      await refresh();
+      await reconcile();
+    } on Object catch (error) {
+      settings = Map.of(
+        defaults,
+      ); // Corrupt saved policy must never enable sharing.
+      failure(error);
+    }
+  }
+
+  static void validate(Map<String, dynamic> value) {
+    for (final key in ['sharing', 'discover', 'auto_download', 'socket_io']) {
+      if (value[key] is! bool) {
+        throw const FormatException('Invalid app update policy');
+      }
+    }
+    for (final key in ['catalog', 'origin', 'feed', 'namespace', 'event']) {
+      if (value[key] is! String || (value[key] as String).length > 2048) {
+        throw const FormatException('Invalid app update endpoint');
+      }
+    }
+    for (final key in ['catalog', 'origin']) {
+      final text = value[key] as String;
+      if (text.isEmpty) continue;
+      final uri = Uri.tryParse(text);
+      if (uri == null ||
+          !{'http', 'https'}.contains(uri.scheme) ||
+          uri.host.isEmpty ||
+          uri.userInfo.isNotEmpty ||
+          uri.hasFragment ||
+          uri.hasQuery ||
+          RegExp(r'[\x00-\x20\x7f-\uffff\\]').hasMatch(text) ||
+          (key == 'origin' &&
+              (uri.hasQuery || !(uri.path.isEmpty || uri.path == '/')))) {
+        throw const FormatException(
+          'Use a direct HTTP(S) source without embedded credentials',
+        );
+      }
+      validateAppUpdateUrl(
+        text,
+      ); // Local HTTP or remote HTTPS, shared with APK transfer.
+    }
+    if ((value['feed'] as String).isNotEmpty) {
+      FirmwareFeedOptions(
+        endpoint: value['feed'],
+        origin: value['origin'],
+        socketIo: value['socket_io'],
+        namespace: value['namespace'],
+        event: value['event'],
+      ).validate();
+    }
+    if ((value['catalog'] as String).isNotEmpty &&
+        (value['origin'] as String).isEmpty) {
+      throw const FormatException('Set the trusted APK download origin');
+    }
+  }
+
+  Future<void> persist() {
+    final snapshot = jsonEncode({
+      'settings': {for (final key in defaults.keys) key: settings[key]},
+      'consumed': consumed.toList(),
+      'instance_id': instanceId,
+    });
+    final task = _saving.catchError((Object _) {}).then((_) async {
+      if (saveSnapshot != null) {
+        await saveSnapshot!(snapshot);
+        return;
+      }
+      final prefs = await SharedPreferences.getInstance();
+      if (!await prefs.setString(storageKey, snapshot)) {
+        throw StateError('Update policy was not saved');
+      }
+    });
+    _saving = task;
+    return task;
+  }
+
+  Future<void> configure(Map<String, dynamic> next) async {
+    if (_configuring || closed) {
+      throw StateError('Update policy is unavailable');
+    }
+    next = {
+      for (final key in defaults.keys)
+        key: next.containsKey(key) ? next[key] : settings[key],
+    };
+    validate(next);
+    _configuring = true;
+    final before = settings;
+    ++epoch;
+    session = '';
+    pending = null;
+    timer?.cancel();
+    timer = null;
+    try {
+      await stopFeed();
+      settings = Map.of(next);
+      try {
+        await persist();
+      } on Object {
+        settings = before;
+        rethrow;
+      }
+      await reconcile();
+      changed();
+    } finally {
+      _configuring = false;
+    }
+  }
+
+  Future<void> refresh() async {
+    package = await updates.rpc('app.package.info', {});
+    await updates.refresh();
+    changed();
+  }
+
+  Future<void> setForeground(bool active) async {
+    foreground = active;
+    if (!active) {
+      ++epoch;
+      session = '';
+      pending = null;
+    }
+    final task = _lifecycle.catchError((Object _) {}).then((_) async {
+      if (!active || closed) {
+        timer?.cancel();
+        timer = null;
+        await stopFeed();
+        await discovery.stopAdvertising();
+        await peers.close();
+      } else {
+        await _reconcile();
+      }
+      changed();
+    });
+    _lifecycle = task;
+    return task;
+  }
+
+  Future<void> reconcile() {
+    final task = _lifecycle.catchError((Object _) {}).then((_) => _reconcile());
+    _lifecycle = task;
+    return task;
+  }
+
+  Future<void> _reconcile() async {
+    if (closed || !foreground || package.isEmpty) return;
+    final generation = epoch;
+    if (settings['sharing'] == true) {
+      if (!peers.running) await peers.start();
+      final port = peers.port;
+      if (port == null || !foreground || closed || generation != epoch) return;
+      await discovery.advertise(
+        port: port,
+        name: 'PakarController',
+        instanceId: peers.instanceId,
+      );
+    } else {
+      await discovery.stopAdvertising();
+      await peers.close();
+    }
+    if (closed || !foreground || generation != epoch) return;
+    timer?.cancel();
+    if (settings['discover'] == true ||
+        (settings['catalog'] as String).isNotEmpty) {
+      timer = Timer.periodic(const Duration(minutes: 5), (_) {
+        unawaited(checkNow().catchError(failure));
+      });
+      unawaited(checkNow().catchError(failure));
+    }
+    if ((settings['feed'] as String).isNotEmpty && socket == null) {
+      unawaited(startFeed().catchError(failure));
+    }
+  }
+
+  Future<void> checkNow() async {
+    if (closed ||
+        !foreground ||
+        checking ||
+        updates.busy ||
+        updates.state['transfer_id'] != null) {
+      return;
+    }
+    final generation = epoch;
+    checking = true;
+    changed();
+    try {
+      if (settings['discover'] == true) {
+        await discovery.scan();
+        if (!foreground || closed || generation != epoch) return;
+        final eligible =
+            discovery.peers.where((peer) {
+              if (!peer.verified || peer.manifest['app_updates'] is! Map) {
+                return false;
+              }
+              try {
+                validateAppUpdateManifest(
+                  Map<String, dynamic>.from(
+                    peer.manifest['app_updates'] as Map,
+                  ),
+                  package,
+                );
+                return true;
+              } on Object {
+                return false;
+              }
+            }).toList()..sort(
+              (a, b) => (b.manifest['app_updates']['version_code'] as int)
+                  .compareTo(a.manifest['app_updates']['version_code'] as int),
+            );
+        if (eligible.isNotEmpty && settings['auto_download'] == true) {
+          final peer = eligible.first,
+              key = 'peer:${eligible.first.manifest['app_updates']['sha256']}';
+          if (!consumed.contains(key)) {
+            await remember(key);
+            if (foreground && !closed && generation == epoch) {
+              await updates.pullPeer(
+                peer.origin,
+                expectedManifest: Map<String, dynamic>.from(
+                  peer.manifest['app_updates'] as Map,
+                ),
+              );
+            }
+          }
+        }
+      }
+      final catalog = settings['catalog'] as String;
+      if (catalog.isNotEmpty && foreground && !updates.busy) {
+        final catalogSession = beginCatalogSession();
+        final client = HttpClient()
+          ..findProxy = ((_) => 'DIRECT')
+          ..connectionTimeout = const Duration(seconds: 5);
+        try {
+          final request = await client
+              .getUrl(Uri.parse(catalog))
+              .timeout(const Duration(seconds: 8));
+          request.followRedirects = false;
+          request.headers.set('X-Pakar-App-Session', catalogSession);
+          request.headers.set('X-Pakar-App-Package', '${package['package']}');
+          final response = await request.close().timeout(
+            const Duration(seconds: 8),
+          );
+          if (response.statusCode != 200 || response.contentLength > 65536) {
+            throw const FormatException('App update catalog rejected');
+          }
+          final bytes = <int>[];
+          final reader = StreamIterator(response);
+          final watch = Stopwatch()..start();
+          try {
+            while (true) {
+              final remaining = const Duration(seconds: 12) - watch.elapsed;
+              if (remaining <= Duration.zero) {
+                throw TimeoutException('Catalog deadline');
+              }
+              if (!await reader.moveNext().timeout(remaining)) break;
+              if (closed ||
+                  !foreground ||
+                  generation != epoch ||
+                  bytes.length + reader.current.length > 65536) {
+                throw const FormatException('Catalog limit or owner changed');
+              }
+              bytes.addAll(reader.current);
+            }
+          } finally {
+            await reader.cancel();
+          }
+          if (!foreground || closed || generation != epoch) return;
+          final raw = jsonDecode(utf8.decode(bytes));
+          final offers = raw is Map && raw['offers'] is List
+              ? raw['offers'] as List
+              : [raw];
+          if (offers.length > 16) {
+            throw const FormatException('Too many app update offers');
+          }
+          for (final offer in offers) {
+            await acceptOffer(offer, catalogSession);
+          }
+        } finally {
+          client.close(force: true);
+        }
+      }
+    } finally {
+      checking = false;
+      changed();
+    }
+  }
+
+  Future<void> remember(String key) {
+    final task = _receipts.catchError((Object _) {}).then((_) async {
+      if (consumed.contains(key)) {
+        throw const FormatException(
+          'Update already attempted; inspect the existing receipt',
+        );
+      }
+      if (!RegExp(r'^(peer|remote):[a-f0-9]{64}$').hasMatch(key)) {
+        throw const FormatException('Invalid update receipt');
+      }
+      final previous = Set<String>.of(consumed);
+      if (consumed.length >= 128) consumed.remove(consumed.first);
+      consumed.add(key);
+      // Write-ahead receipt: process restarts must never replay a transfer/install.
+      try {
+        await persist();
+      } on Object {
+        consumed
+          ..clear()
+          ..addAll(previous);
+        rethrow;
+      }
+    });
+    _receipts = task;
+    return task;
+  }
+
+  /// Fresh read-only catalog ownership; tests and HTTP use the same API. Creating
+  /// a session does not authorize a transfer or install anything.
+  String beginCatalogSession() {
+    if (closed || !foreground) {
+      throw StateError('App update catalog is not active');
+    }
+    session = randomIdentifier();
+    if (pending?['session'] != _feedSession) pending = null;
+    return session;
+  }
+
+  Map<String, dynamic> parseOffer(Object? raw, String expectedSession) {
+    if (raw is! Map<String, dynamic>) {
+      throw const FormatException('Invalid app update offer');
+    }
+    final uri = raw['url'] is String ? Uri.tryParse(raw['url']) : null;
+    final origin = Uri.tryParse(settings['origin'] as String);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (closed ||
+        !foreground ||
+        expectedSession.isEmpty ||
+        (expectedSession != session && expectedSession != _feedSession) ||
+        raw['session'] != expectedSession ||
+        raw['package'] != package['package'] ||
+        raw['version_code'] is! int ||
+        package['version_code'] is! int ||
+        raw['version_code'] <= package['version_code'] ||
+        raw['expires_at_ms'] is! int ||
+        raw['expires_at_ms'] <= now ||
+        raw['expires_at_ms'] > now + 60000 ||
+        raw['bytes'] is! int ||
+        raw['bytes'] < 1 ||
+        raw['bytes'] > AppUpdates.maximum ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch('${raw['sha256']}') ||
+        uri == null ||
+        origin == null ||
+        !{'http', 'https'}.contains(uri.scheme) ||
+        uri.scheme != origin.scheme ||
+        uri.host != origin.host ||
+        uri.port != origin.port ||
+        uri.userInfo.isNotEmpty ||
+        uri.hasFragment ||
+        '${raw['url']}'.length > 2048 ||
+        RegExp(r'[\x00-\x20\x7f-\uffff\\]').hasMatch('${raw['url']}')) {
+      throw const FormatException(
+        'Rejected stale, incompatible or wrong-origin APK offer',
+      );
+    }
+    return Map.unmodifiable(raw);
+  }
+
+  Future<void> acceptOffer(Object? raw, String expectedSession) async {
+    final offer = parseOffer(raw, expectedSession);
+    if (consumed.contains('remote:${offer['sha256']}')) return;
+    if (settings['auto_download'] == true) {
+      await downloadOffer(offer, expectedSession);
+    } else {
+      pending = offer;
+      changed();
+    }
+  }
+
+  Future<void> downloadPending() async {
+    final offer = pending;
+    if (offer != null) await downloadOffer(offer, offer['session']);
+  }
+
+  Future<void> downloadOffer(
+    Map<String, dynamic> value,
+    String expectedSession,
+  ) async {
+    if (closed || !foreground || updates.busy || _downloading) return;
+    final generation = epoch;
+    final offer = parseOffer(value, expectedSession);
+    _downloading = true;
+    try {
+      await remember('remote:${offer['sha256']}');
+      if (closed || !foreground || generation != epoch) return;
+      parseOffer(
+        offer,
+        expectedSession,
+      ); // Save latency cannot extend an offer's lease.
+      pending = null;
+      await updates.download(
+        offer['url'],
+        sha256: offer['sha256'],
+        bytes: offer['bytes'],
+      );
+      changed();
+    } finally {
+      _downloading = false;
+    }
+  }
+
+  Future<void> startFeed() async {
+    if (_feedStarting || closed || !foreground || socket != null) return;
+    final selected = Map<String, dynamic>.of(settings),
+        generation = ++_feedEpoch;
+    final options = FirmwareFeedOptions(
+      endpoint: selected['feed'],
+      origin: selected['origin'],
+      socketIo: selected['socket_io'],
+      namespace: selected['namespace'],
+      event: selected['event'],
+    );
+    options.validate();
+    _feedStarting = true;
+    _feedSession = randomIdentifier();
+    final feedSession = _feedSession;
+    feedState = 'Connecting';
+    changed();
+    try {
+      final uri = Uri.parse(options.endpoint);
+      final connecting = (connectFeed ?? WebSocket.connect)(
+        options.socketIo
+            ? uri
+                  .replace(
+                    queryParameters: {'EIO': '4', 'transport': 'websocket'},
+                  )
+                  .toString()
+            : options.endpoint,
+      );
+      final ws = await connecting.timeout(
+        feedConnectTimeout,
+        onTimeout: () {
+          // Match FirmwareFeed: timeout retires the dial, not its eventual socket.
+          unawaited(
+            connecting
+                .then<void>((late) async {
+                  await late.close();
+                })
+                .catchError((Object _) {}),
+          );
+          throw TimeoutException('App update feed connection deadline');
+        },
+      );
+      if (generation != _feedEpoch || closed || !foreground) {
+        await ws.close();
+        return;
+      }
+      socket = ws;
+      final wire = FirmwareFeedWire(options);
+      var last = DateTime.now();
+      final subscription = {
+        'type': 'subscribe',
+        'events': [options.event],
+        'session': feedSession,
+        'package': package['package'],
+        'instance_id': instanceId,
+      };
+      void ready() {
+        ws.add(
+          options.socketIo
+              ? wire.event('subscribe', subscription)
+              : jsonEncode(subscription),
+        );
+        feedState = 'Listening';
+        retryCount = 0;
+        changed();
+      }
+
+      if (!options.socketIo) {
+        ws.pingInterval = const Duration(seconds: 20);
+        ready();
+      }
+      events = ws.listen(
+        (raw) {
+          if (generation != _feedEpoch || closed || !foreground) return;
+          try {
+            if (raw is! String) {
+              throw const FormatException('Expected a bounded APK offer');
+            }
+            final packet = wire.receive(raw);
+            last = DateTime.now();
+            if (packet.$1 == 'reply') ws.add(packet.$2 as String);
+            if (packet.$1 == 'ready') ready();
+            if (packet.$1 == 'offer') {
+              unawaited(
+                acceptOffer(packet.$2, feedSession).catchError(failure),
+              );
+            }
+          } on Object catch (error) {
+            failure(error);
+            unawaited(reconnectFeed(generation));
+          }
+        },
+        onError: (Object error) {
+          failure(error);
+          unawaited(reconnectFeed(generation));
+        },
+        onDone: () {
+          unawaited(reconnectFeed(generation));
+        },
+      );
+      heartbeat = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (options.socketIo &&
+            DateTime.now().difference(last) > wire.heartbeat) {
+          unawaited(reconnectFeed(generation));
+        }
+      });
+    } on Object {
+      await reconnectFeed(generation);
+      rethrow;
+    } finally {
+      _feedStarting = false;
+    }
+  }
+
+  Future<void> reconnectFeed(int generation) async {
+    if (generation != _feedEpoch || closed) return;
+    await stopFeed();
+    if (!foreground || (settings['feed'] as String).isEmpty) return;
+    feedState = 'Reconnecting';
+    changed();
+    final delay = [1, 2, 4, 8, 30][retryCount.clamp(0, 4)];
+    retryCount++;
+    retry = Timer(Duration(seconds: delay), () {
+      unawaited(startFeed().catchError(failure));
+    });
+  }
+
+  Future<void> stopFeed() async {
+    ++_feedEpoch;
+    if (pending?['session'] == _feedSession) pending = null;
+    _feedSession = '';
+    retry?.cancel();
+    heartbeat?.cancel();
+    retry = null;
+    heartbeat = null;
+    final old = socket;
+    socket = null;
+    await events?.cancel();
+    events = null;
+    if (old != null) {
+      try {
+        await old.close().timeout(const Duration(milliseconds: 500));
+      } on Object {
+        /* bounded */
+      }
+    }
+    feedState = 'Stopped';
+  }
+
+  @override
+  void dispose() {
+    closed = true;
+    ++epoch;
+    session = '';
+    pending = null;
+    timer?.cancel();
+    unawaited(stopFeed());
+    peers.dispose();
+    updates.removeListener(changed);
+    discovery.removeListener(changed);
+    discovery.dispose();
+    updates.dispose();
+    super.dispose();
+  }
+}

@@ -176,7 +176,9 @@ class FirmwareFeed extends ChangeNotifier {
   String session = '', state = 'Stopped';
   final seen = <String>{};
   FirmwareOffer? pending;
-  bool running = false, dispatching = false, closed = false;
+  bool running = false, closed = false;
+  int _deliveries = 0;
+  bool get dispatching => _deliveries > 0;
   int epoch = 0;
   Future<void> start(
     FirmwareFeedOptions options,
@@ -184,11 +186,16 @@ class FirmwareFeed extends ChangeNotifier {
     String boot, {
     required bool armed,
     required Future<void> Function(FirmwareOffer) deliver,
+    String? sessionId,
   }) async {
     options.validate();
+    if (sessionId != null &&
+        !RegExp(r'^[A-Za-z0-9_-]{1,80}$').hasMatch(sessionId)) {
+      throw const FormatException('Invalid firmware subscription session');
+    }
     await stop();
     if (closed) return;
-    session = randomIdentifier();
+    session = sessionId ?? randomIdentifier();
     seen.clear();
     pending = null;
     running = true;
@@ -197,7 +204,7 @@ class FirmwareFeed extends ChangeNotifier {
     final generation = ++epoch;
     try {
       final uri = Uri.parse(options.endpoint);
-      final ws = await WebSocket.connect(
+      final connecting = WebSocket.connect(
         options.socketIo
             ? uri
                   .replace(
@@ -208,7 +215,22 @@ class FirmwareFeed extends ChangeNotifier {
         headers: options.token.isEmpty
             ? {}
             : {'Authorization': 'Bearer ${options.token}'},
-      ).timeout(const Duration(seconds: 8));
+      );
+      final ws = await connecting.timeout(
+        const Duration(seconds: 8),
+        onTimeout: () {
+          // Future.timeout does not cancel a socket dial. Retire its late result
+          // too, otherwise repeated reconnects leak unowned connections.
+          unawaited(
+            connecting
+                .then<void>((late) async {
+                  await late.close();
+                })
+                .catchError((Object _) {}),
+          );
+          throw TimeoutException('Firmware feed connection deadline');
+        },
+      );
       if (generation != epoch || closed) {
         await ws.close();
         return;
@@ -270,16 +292,16 @@ class FirmwareFeed extends ChangeNotifier {
                     notifyListeners();
                     return;
                   }
-                  dispatching = true;
+                  ++_deliveries;
                   unawaited(
                     deliver(offer)
                         .catchError((Object _) {
-                          if (!closed) {
+                          if (!closed && generation == epoch) {
                             state = 'Delivery outcome needs inspection; not replayed';
                             notifyListeners();
                           }
                         })
-                        .whenComplete(() => dispatching = false),
+                        .whenComplete(() => --_deliveries),
                   );
                 } else if (pending == null) {
                   pending = offer;
@@ -295,6 +317,7 @@ class FirmwareFeed extends ChangeNotifier {
           }
         },
         onError: (Object _) {
+          if (generation != epoch || closed) return;
           state = 'Remote feed disconnected; not replayed';
           unawaited(stop(keepState: true));
         },
@@ -314,8 +337,10 @@ class FirmwareFeed extends ChangeNotifier {
         }
       });
     } on Object {
-      state = 'Feed connection failed; no insecure fallback';
-      await stop(keepState: true);
+      if (generation == epoch && !closed) {
+        state = 'Feed connection failed; no insecure fallback';
+        await stop(keepState: true);
+      }
       rethrow;
     }
   }

@@ -5,6 +5,296 @@
   "files": [
 {
   "origin": "PCController",
+  "path": "mobile/lib/unified/app_upgrade.dart",
+  "sha256": "a13fdcf3c07e79544fef87b66226cc035ffc76e9dfd3841107c6b79bd0793ec0",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": "Actual bounded native-channel package RPC, 16KiB ordered chunks, manifest-pinned peer pull/push, measured progress and separate local installer consent. Coordinator adds allowlisted public preferences, exact-session/origin HTTP/WS/Socket.IO offers, serialized write-ahead digest receipts and same-manifest automatic peer pulls.",
+  "targets": [
+    {
+      "path": "mobile/lib/app_updates.dart",
+      "anchor": "class AppUpdates",
+      "sha256": "43fecf1cc973694aaf27e61e46924a922a5e4873fdf19e98c7fa5f23ad016f4a"
+    },
+    {
+      "path": "mobile/lib/app_update_coordinator.dart",
+      "anchor": "class AppUpdateCoordinator",
+      "sha256": "5b507d26b657948be2d852e118ead624a2c8613880e9b8e1ce33ea347a3aeeb3"
+    },
+    {
+      "path": "mobile/lib/app_updates_page.dart",
+      "anchor": "class AppUpdatesPage",
+      "sha256": "518f635c169f1d01c125ca07caa36213a42ab0915b64736e425b166cabceb556"
+    }
+  ],
+  "proof": [
+    {
+      "path": "mobile/test/app_updates_test.dart",
+      "anchor": "native bridge refuses oversized chunks",
+      "sha256": "39fcf4ed9a6b04cb174c008b851705ff50f35b5c5df89f4b5216c255812eb85e"
+    },
+    {
+      "path": "mobile/test/app_update_coordinator_test.dart",
+      "anchor": "Write-ahead receipt precedes download",
+      "sha256": "5959806b63bc19122791f61704ad88f2ab4a72bdddd5b9305d7622e01a0c45a1"
+    },
+    {
+      "path": "mobile/test/update_pages_test.dart",
+      "anchor": "App updates are usable offline",
+      "sha256": "334245f38e72a42fffc88404c612225ebf9e3be67bb17307c558dbb5e9e578ec"
+    },
+    {
+      "path": "mobile/test/capture_test.dart",
+      "anchor": "Explicit simulated renderer capture",
+      "sha256": "c62fe3c9f6e73a0f4e0fae84925332c5dde99822f6e5680e95dc8c5dcb0cb06c"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Remaining generic donor/platform acceptance outside this bounded update slice",
+      "disposition": "pending",
+      "reason": "Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay."
+    }
+  ],
+  "remaining": "Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment."
+},
+{
+  "origin": "PCController",
+  "path": "mobile/lib/unified/peer_upgrades.dart",
+  "sha256": "97ca9e2cc9a29b2277279c4ad1ed286f959c96886c6778be2293f6f651ad9521",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": "Actual approved short-lived capability package-only HTTP service and foreground advertisement lifecycle, adapted to /api/rpc and verified self-package discovery. No browser-origin writes or remote install method. Same installed APK can replicate to multiple peers; each receiver stages/verifies and locally consents to installation.",
+  "targets": [
+    {
+      "path": "mobile/lib/app_updates_peer.dart",
+      "anchor": "class AppUpdatePeers",
+      "sha256": "a23c27acfcb3501f546712bdb3ba1379f48de7c5c8303ac2c4663ef614c2bee8"
+    },
+    {
+      "path": "mobile/lib/app_update_discovery.dart",
+      "anchor": "class AppUpdateDiscovery",
+      "sha256": "709af98419a6ac2a25d13df8989072b344822e5e068f6dbb0804a1303e4e281d"
+    }
+  ],
+  "proof": [
+    {
+      "path": "mobile/test/app_updates_test.dart",
+      "anchor": "peer",
+      "sha256": "39fcf4ed9a6b04cb174c008b851705ff50f35b5c5df89f4b5216c255812eb85e"
+    },
+    {
+      "path": "mobile/test/app_update_discovery_test.dart",
+      "anchor": "Verified same-instance routes coalesce",
+      "sha256": "202d5265b03db20e13768806bf617a944ddd3a70f7241d17e559c3c319bdede9"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Remaining generic donor/platform acceptance outside this bounded update slice",
+      "disposition": "pending",
+      "reason": "Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay."
+    }
+  ],
+  "remaining": "Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment."
+},
+{
+  "origin": "PCController",
+  "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/UpgradeChannel.kt",
+  "sha256": "c35459e58af7b325f450aa54e20a797efadde5006da1683f370500b2ffea3cc4",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": "Actual private staging/storage/size/hash/self-package/signer/newer-version/minSDK/ABI validation and Android PackageInstaller user-consent/receipt flow. Added SAF import/export, bounded native queue, same digest immediately before install and actual installed SHA/version verification after restart; pending-user-action is never success.",
+  "targets": [
+    {
+      "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/AppUpdateChannel.kt",
+      "anchor": "class AppUpdateChannel",
+      "sha256": "4b34633fbe7c8a4003624209c3795bfce5a871892214df32c078171752f66bbe"
+    }
+  ],
+  "proof": [
+    {
+      "path": "mobile/test/app_updates_test.dart",
+      "anchor": "verified",
+      "sha256": "39fcf4ed9a6b04cb174c008b851705ff50f35b5c5df89f4b5216c255812eb85e"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Remaining generic donor/platform acceptance outside this bounded update slice",
+      "disposition": "pending",
+      "reason": "Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay."
+    }
+  ],
+  "remaining": "Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment."
+},
+{
+  "origin": "PCController",
+  "path": "mobile/android/app/src/main/AndroidManifest.xml",
+  "sha256": "728e6808793b9ad82baf19d6e4c98a8fec68bce6b83d0fff0da5c7f31d48b9c4",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": "Actual REQUEST_INSTALL_PACKAGES and nonexported installer result receiver registration adapted to Pakar application identity. Existing app package and launcher artwork remain unchanged.",
+  "targets": [
+    {
+      "path": "mobile/android/app/src/main/AndroidManifest.xml",
+      "anchor": "REQUEST_INSTALL_PACKAGES",
+      "sha256": "9f3906ffa76372c538f6682a30a7748c81b558cd76793e1da802b3c9c496f7c6"
+    },
+    {
+      "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt",
+      "anchor": "appUpdates = AppUpdateChannel",
+      "sha256": "b765ffc161790dfbe828d5e9b43275aab51899e7b9fe36fea10e1c6b0bd9e549"
+    }
+  ],
+  "proof": [
+    {
+      "path": "mobile/test/app_updates_test.dart",
+      "anchor": "native bridge",
+      "sha256": "39fcf4ed9a6b04cb174c008b851705ff50f35b5c5df89f4b5216c255812eb85e"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Remaining generic donor/platform acceptance outside this bounded update slice",
+      "disposition": "pending",
+      "reason": "Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay."
+    }
+  ],
+  "remaining": "Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment."
+},
+{
+  "origin": "PCController",
+  "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/DiscoveryChannel.kt",
+  "sha256": "b4b829b34dfd99d1cadcd05b4d15b23e1277d6d8ffa82090f2abfd4843d48c5c",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": "Actual Android NSD browse/resolve/registration and multicast lock lifecycle adapted to app-package-only service. Dart uses bounded SSDP/MNDP messages plus exact package manifests; raw advertisements never grant install or board control.",
+  "targets": [
+    {
+      "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/AppUpdateDiscoveryChannel.kt",
+      "anchor": "class AppUpdateDiscoveryChannel",
+      "sha256": "e4cf3fb671d491c790dbc883aa6c5a87d271fb82068ddd92434e527871142613"
+    },
+    {
+      "path": "mobile/lib/app_update_discovery.dart",
+      "anchor": "verifyAppUpdatePeer",
+      "sha256": "709af98419a6ac2a25d13df8989072b344822e5e068f6dbb0804a1303e4e281d"
+    }
+  ],
+  "proof": [
+    {
+      "path": "mobile/test/app_update_discovery_test.dart",
+      "anchor": "Actual manifest GET",
+      "sha256": "202d5265b03db20e13768806bf617a944ddd3a70f7241d17e559c3c319bdede9"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Remaining generic donor/platform acceptance outside this bounded update slice",
+      "disposition": "pending",
+      "reason": "Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay."
+    }
+  ],
+  "remaining": "Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment."
+},
+{
+  "origin": "PCController",
+  "path": "mobile/lib/firmware_page.dart",
+  "sha256": "40b64996112f85e7acfb3f5c7db19c473cbfc0a018c72387f1447a4e386be626",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": "Actual run/confirmation/file-pick/cancel/no-uncertain-replay ownership adapted to FirmwarePage. New hash-bound ISP/Urboot maintenance dialog replaces unpinned shared-image programming. Persistent exact-board/application foreground automation owns source feeds outside page lifetime; automatic Apply is an explicit policy on the existing verified manifest transaction, not raw shared AVR staging.",
+  "targets": [
+    {
+      "path": "mobile/lib/firmware_page.dart",
+      "anchor": "avrMaintenance()",
+      "sha256": "7deee750d46cc8c2837abda187cb8f163111850432f1a78beb9a6a99975b29d8"
+    },
+    {
+      "path": "mobile/lib/firmware_automation_page.dart",
+      "anchor": "class FirmwareAutomationPage",
+      "sha256": "b0e65486832e9c4d72c846626444a819d3a76ff5d7456986ef168c384a25db67"
+    },
+    {
+      "path": "mobile/lib/firmware_automation.dart",
+      "anchor": "class FirmwareAutomation",
+      "sha256": "2218b88474f1bfc3d773729306ec65ad510b16a7ecab5759caa2cf6a48417e56"
+    }
+  ],
+  "proof": [
+    {
+      "path": "mobile/test/firmware_automation_test.dart",
+      "anchor": "Lost update ACK persists consumed digest",
+      "sha256": "2046ae0d8c835d0dbd598890f28fe965f0227dcfc8cc0323ab3009f618453f01"
+    },
+    {
+      "path": "mobile/test/firmware_page_test.dart",
+      "anchor": "Contextual real firmware layout",
+      "sha256": "69692243824e210bcc7002ad9e756a0c8bb830f08cef4b93ceda4688d451b82a"
+    },
+    {
+      "path": "mobile/test/update_pages_test.dart",
+      "anchor": "Raw ESP offer exposes immediate upload",
+      "sha256": "334245f38e72a42fffc88404c612225ebf9e3be67bb17307c558dbb5e9e578ec"
+    },
+    {
+      "path": "mobile/test/capture_test.dart",
+      "anchor": "Explicit simulated renderer capture",
+      "sha256": "c62fe3c9f6e73a0f4e0fae84925332c5dde99822f6e5680e95dc8c5dcb0cb06c"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Remaining generic donor/platform acceptance outside this bounded update slice",
+      "disposition": "pending",
+      "reason": "Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay."
+    }
+  ],
+  "remaining": "Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment."
+},
+{
+  "origin": "PCController",
+  "path": "Tools/Controller/internal/artifacts/download_test.go",
+  "sha256": "9640f5646f2de3adec801157e2cad162632d7a9af3e249a5b8cb30715289992e",
+  "source_read": "complete",
+  "verdict": "parity-gap",
+  "preserved": "Actual finite body/length/failure download fixtures adapted to real Dart HTTP listeners and bounded catalog/transfer streams, plus no write on failed pin/receipt save. Not a Go runtime or production TLS/flash proof.",
+  "targets": [
+    {
+      "path": "mobile/lib/firmware_automation.dart",
+      "anchor": "class FirmwareAutomation",
+      "sha256": "2218b88474f1bfc3d773729306ec65ad510b16a7ecab5759caa2cf6a48417e56"
+    },
+    {
+      "path": "mobile/lib/app_updates.dart",
+      "anchor": "readAppUpdateBytes",
+      "sha256": "43fecf1cc973694aaf27e61e46924a922a5e4873fdf19e98c7fa5f23ad016f4a"
+    }
+  ],
+  "proof": [
+    {
+      "path": "mobile/test/firmware_automation_test.dart",
+      "anchor": "Cannot save consumed receipt",
+      "sha256": "2046ae0d8c835d0dbd598890f28fe965f0227dcfc8cc0323ab3009f618453f01"
+    },
+    {
+      "path": "mobile/test/app_updates_test.dart",
+      "anchor": "absolute response deadline",
+      "sha256": "39fcf4ed9a6b04cb174c008b851705ff50f35b5c5df89f4b5216c255812eb85e"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "Remaining generic donor/platform acceptance outside this bounded update slice",
+      "disposition": "pending",
+      "reason": "Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay."
+    }
+  ],
+  "remaining": "Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment."
+},
+{
+  "origin": "PCController",
   "path": "mobile/lib/unified/transport.dart",
   "sha256": "5263044d7abac3865b6dcc8887fa6c11ad9a1c89b8c4e2374ffcd3bcc72014c5",
   "source_read": "complete",
@@ -178,7 +468,7 @@
     },
     {
       "path": "mobile/lib/firmware_feed.dart",
-      "sha256": "b1f95da5d70a88a24b924cba03cfe0953c6f7bbfb8f13a04958decbfd10c0070",
+      "sha256": "c52d37fdbede367d12025c843a35403b4e9ca9c1df6ee26cb2961ea1c131453d",
       "anchor": "class FirmwareFeedWire"
     }
   ],
@@ -186,7 +476,7 @@
     {
       "code": "Remaining donor mechanisms outside this delivery slice",
       "disposition": "pending",
-      "reason": "Generic reciprocal JSON-RPC/Socket.IO command routing, board mirroring, hotkeys/webhooks, durable queues, auto-reconnect and the rest of this host integration manager are NOT imported by a firmware-specific inbox. Existing paired-host parity remains open; explicit listener restart and finite inbox avoid replaying flash commands."
+      "reason": "Generic reciprocal JSON-RPC/Socket.IO command routing, board mirroring, hotkeys/webhooks, durable generic command queues and the rest of this host integration manager remain pending. Foreground firmware automation now supports bounded read-only feed reconnect with fresh sessions and persisted consumed digests; that is not generic command replay or full host-manager parity."
     }
   ],
   "proof": [
@@ -197,7 +487,7 @@
     },
     {
       "path": "mobile/test/firmware_delivery_test.dart",
-      "sha256": "6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24",
+      "sha256": "b3cb732339d296e5f119c3d4beecc9db1a97e60f4b74240d333bf91ec761a81d",
       "anchor": "Actual WS/Socket.IO listener deduplicates offers"
     }
   ],
@@ -246,7 +536,7 @@
     },
     {
       "path": "mobile/test/firmware_delivery_test.dart",
-      "sha256": "6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24",
+      "sha256": "b3cb732339d296e5f119c3d4beecc9db1a97e60f4b74240d333bf91ec761a81d",
       "anchor": "External board OTA and remote jobs"
     }
   ],
@@ -290,7 +580,7 @@
     },
     {
       "path": "mobile/test/firmware_delivery_test.dart",
-      "sha256": "6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24",
+      "sha256": "b3cb732339d296e5f119c3d4beecc9db1a97e60f4b74240d333bf91ec761a81d",
       "anchor": "Actual progress widget displays indeterminate verification"
     }
   ],
@@ -315,7 +605,7 @@
     },
     {
       "path": "mobile/lib/firmware.dart",
-      "sha256": "aaaf52e9639217a757c60ea74d851cedbe349f5f4a302f7d5358bee1cc74d4e2",
+      "sha256": "bf3fc51f76679db0dd73d5103864347beb61ca1dedcc26cc9ef991fa8586eb99",
       "anchor": "Future<String> fileUrl("
     }
   ],
@@ -334,7 +624,7 @@
     },
     {
       "path": "mobile/test/firmware_delivery_test.dart",
-      "sha256": "6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24",
+      "sha256": "b3cb732339d296e5f119c3d4beecc9db1a97e60f4b74240d333bf91ec761a81d",
       "anchor": "HTTP file verifies hash before one upload"
     }
   ],
@@ -354,7 +644,7 @@
   "targets": [
     {
       "path": "mobile/lib/firmware.dart",
-      "sha256": "aaaf52e9639217a757c60ea74d851cedbe349f5f4a302f7d5358bee1cc74d4e2",
+      "sha256": "bf3fc51f76679db0dd73d5103864347beb61ca1dedcc26cc9ef991fa8586eb99",
       "anchor": "class FirmwareController"
     },
     {
@@ -367,13 +657,13 @@
     {
       "code": "Remaining donor mechanisms outside this delivery slice",
       "disposition": "pending",
-      "reason": "Direct Android USB-host flashing and a production Android background firmware service remain unsupported, not silently replaced by Wi-Fi. AVR staging is not programming; paired manifest Apply remains explicit."
+      "reason": "Direct Android USB-host flashing and a production Android background firmware service remain unsupported, not silently replaced by Wi-Fi. AVR raw staging is not programming. Automatic verified-manifest Apply now requires an explicit persisted exact-board/application policy and a durable consumed-digest receipt; this does not provide an unguarded raw-image auto-program path."
     }
   ],
   "proof": [
     {
       "path": "mobile/test/firmware_delivery_test.dart",
-      "sha256": "6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24",
+      "sha256": "b3cb732339d296e5f119c3d4beecc9db1a97e60f4b74240d333bf91ec761a81d",
       "anchor": "HTTP file verifies hash before one upload"
     },
     {
@@ -4725,7 +5015,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "d704cda5dadc957f7abdabd37659bd15e2d071bd50fd7cbb1caf7631b04e8c52",
+      "sha256": "6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -6338,17 +6628,17 @@
         },
         {
           "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt",
-          "sha256": "a2b240972900683f5f2622bbe69f47569c0a0bfabee8f66311116f8ae0c6a61e",
+          "sha256": "b765ffc161790dfbe828d5e9b43275aab51899e7b9fe36fea10e1c6b0bd9e549",
           "anchor": "Intent.ACTION_OPEN_DOCUMENT"
         },
         {
           "path": "mobile/lib/firmware_page.dart",
-          "sha256": "f82112ea0042e14efce70c86ca6a52ffbf0a152b6245b4ba3f69d3813f7fad37",
+          "sha256": "7deee750d46cc8c2837abda187cb8f163111850432f1a78beb9a6a99975b29d8",
           "anchor": "class FirmwarePage"
         },
         {
           "path": "mobile/lib/firmware.dart",
-          "sha256": "aaaf52e9639217a757c60ea74d851cedbe349f5f4a302f7d5358bee1cc74d4e2",
+          "sha256": "bf3fc51f76679db0dd73d5103864347beb61ca1dedcc26cc9ef991fa8586eb99",
           "anchor": "class FirmwareController"
         },
         {
@@ -6395,7 +6685,7 @@
         },
         {
           "path": "mobile/test/capture_test.dart",
-          "sha256": "a155c2a666f4276463f2fbf8c785472f89ceadb911a9b519b2e7e9a45deaea59",
+          "sha256": "c62fe3c9f6e73a0f4e0fae84925332c5dde99822f6e5680e95dc8c5dcb0cb06c",
           "anchor": "Firmware capture must never issue a device mutation"
         }
       ],
@@ -6506,7 +6796,7 @@
         },
         {
           "path": "mobile/test/capture_test.dart",
-          "sha256": "a155c2a666f4276463f2fbf8c785472f89ceadb911a9b519b2e7e9a45deaea59",
+          "sha256": "c62fe3c9f6e73a0f4e0fae84925332c5dde99822f6e5680e95dc8c5dcb0cb06c",
           "anchor": "Capture must never issue a device mutation"
         }
       ],
@@ -7059,7 +7349,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "d704cda5dadc957f7abdabd37659bd15e2d071bd50fd7cbb1caf7631b04e8c52",
+          "sha256": "6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251",
           "anchor": "Future<bool> _command"
         },
         {
@@ -7358,7 +7648,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "d704cda5dadc957f7abdabd37659bd15e2d071bd50fd7cbb1caf7631b04e8c52",
+          "sha256": "6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -9634,7 +9924,7 @@
         },
         {
           "path": "tools/build-mobile.ps1",
-          "sha256": "b12ebc0365d00d6fc95b7325f6f3027f5f7cccabb3ac1e366fa72b39bd961e6c",
+          "sha256": "405db43e52403211188139c442b4be0dac7f2b3181523102f7a5b3da5fa471c8",
           "anchor": "$taskCache=Get-DirectorySummary"
         }
       ],
@@ -11781,7 +12071,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "d704cda5dadc957f7abdabd37659bd15e2d071bd50fd7cbb1caf7631b04e8c52",
+          "sha256": "6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -11929,7 +12219,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "d704cda5dadc957f7abdabd37659bd15e2d071bd50fd7cbb1caf7631b04e8c52"
+          "sha256": "6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251"
         }
       ],
       "proof": [
@@ -11969,7 +12259,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "d704cda5dadc957f7abdabd37659bd15e2d071bd50fd7cbb1caf7631b04e8c52"
+          "sha256": "6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251"
         }
       ],
       "proof": [

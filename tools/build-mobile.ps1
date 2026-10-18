@@ -8,7 +8,7 @@ param(
     [switch]$BuildOnly,
     [ValidatePattern('^test/[A-Za-z0-9_/-]+_test\.dart$')][string]$TestPath,
     [string]$CapturePath,
-    [ValidateSet('Table','SettingsTablet','SettingsPhone','FirmwareTablet','FirmwarePhone','BridgeTablet','BridgePhone','FrontPanelTablet','FrontPanelPhone','DevicesTablet','DevicesPhone')][string]$CaptureView='Table',
+    [ValidateSet('Table','SettingsTablet','SettingsPhone','FirmwareTablet','FirmwarePhone','BridgeTablet','BridgePhone','FrontPanelTablet','FrontPanelPhone','DevicesTablet','DevicesPhone','AppUpdatesTablet','AppUpdatesPhone','AutomationTablet','AutomationPhone')][string]$CaptureView='Table',
     [switch]$Plan
 )
 $ErrorActionPreference='Stop'
@@ -22,6 +22,7 @@ $taskMobile=Join-Path $taskRoot 'mobile'
 $taskContext=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern device-context -Gate
 $taskSettings=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-settings -Gate
 $taskFirmware=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-firmware -Gate
+& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-app-updates -Gate | Out-Null
 $taskNetwork=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-network -Gate
 $taskMirror=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-mirroring -Gate
 $taskStorage=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate

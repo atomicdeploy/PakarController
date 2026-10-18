@@ -23,6 +23,10 @@ import 'devices_page.dart';
 import 'bridge_page.dart';
 import 'firmware_page.dart';
 import 'firmware_progress.dart';
+import 'firmware_automation.dart';
+import 'firmware_automation_page.dart';
+import 'app_update_coordinator.dart';
+import 'app_updates_page.dart';
 import 'pixel_diagnostic.dart';
 import 'pixel_diagnostic_page.dart';
 import 'mirroring.dart';
@@ -68,6 +72,9 @@ class _ControlShellState extends State<ControlShell>
     with WidgetsBindingObserver {
   late final api = widget.api ?? PakarApi();
   final mirror = PeripheralMirror();
+  late final appUpdates = AppUpdateCoordinator(approve: _approveAppUpdate);
+  FirmwareAutomation? firmwareAutomation;
+  bool manualMaintenanceBusy = false;
   DeviceStatus? status;
   DeviceStatus? presented;
   final panelInventory = PanelInventory();
@@ -104,6 +111,8 @@ class _ControlShellState extends State<ControlShell>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    unawaited(appUpdates.load());
+    unawaited(_restoreFirmwareAutomation());
     mirror.addListener(_mirrorPreferencesChanged);
     connectionDraft.addListener(_scheduleWorkspaceSave);
     api.onPeripheralEvent = mirror.event;
@@ -126,6 +135,63 @@ class _ControlShellState extends State<ControlShell>
       unawaited(_connectLive());
     };
     _restore();
+  }
+
+  Future<bool> _approveAppUpdate(Map<String, dynamic> manifest) async {
+    if (!mounted || !foreground) return false;
+    return await showDialog<bool>(
+          context: context,
+          builder: (dialog) => AlertDialog(
+            title: const Text('Receive app update?'),
+            content: Text(
+              'Build ${manifest['version_code']} · ${manifest['bytes']} bytes',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialog, false),
+                child: const Text('Decline'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialog, true),
+                child: const Text('Receive'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _restoreFirmwareAutomation() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    Map<String, dynamic>? initial;
+    try {
+      final raw = jsonDecode(
+        prefs.getString('pakar.firmware_automation') ?? '{}',
+      );
+      if (raw is Map<String, dynamic>) initial = raw;
+    } on Object {
+      /* A corrupt policy never authorizes a firmware update. */
+    }
+    final service = FirmwareAutomation(
+      api,
+      initial: initial,
+      authorized: (feature) =>
+          mounted &&
+          !manualMaintenanceBusy &&
+          api.connectionWanted &&
+          api.latestStatus?.peer.has(feature) == true,
+      save: (value) async {
+        if (!await prefs.setString(
+          'pakar.firmware_automation',
+          jsonEncode(value),
+        )) {
+          throw StateError('Firmware preferences could not be saved');
+        }
+      },
+    );
+    setState(() => firmwareAutomation = service);
+    await service.setForeground(foreground);
   }
 
   Future<void> _restore() async {
@@ -722,6 +788,9 @@ class _ControlShellState extends State<ControlShell>
     final active = state == AppLifecycleState.resumed;
     api.appForeground = active;
     mirror.foreground(active);
+    unawaited(appUpdates.setForeground(active).catchError(appUpdates.failure));
+    final automation = firmwareAutomation;
+    if (automation != null) unawaited(automation.setForeground(active));
     if (foreground == active) return;
     foreground = active;
     if (!active) {
@@ -772,6 +841,8 @@ class _ControlShellState extends State<ControlShell>
     api.onTransportRetired = null;
     mirror.removeListener(_mirrorPreferencesChanged);
     mirror.dispose();
+    appUpdates.dispose();
+    firmwareAutomation?.dispose();
     connectionDraft.dispose();
     api.onPeerChanged = null;
     live?.cancel();
@@ -950,6 +1021,30 @@ class _ControlShellState extends State<ControlShell>
                   _navigate('devices');
                   return;
                 }
+                if (target == 'app-updates' || target == 'firmware-policy') {
+                  final automation = firmwareAutomation;
+                  if (target == 'firmware-policy' && automation == null) return;
+                  await Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => Scaffold(
+                        appBar: AppBar(
+                          title: Text(
+                            target == 'app-updates'
+                                ? 'App updates'
+                                : 'Automatic firmware updates',
+                          ),
+                        ),
+                        body: target == 'app-updates'
+                            ? AppUpdatesPage(coordinator: appUpdates)
+                            : FirmwareAutomationPage(
+                                automation: automation!,
+                                api: api,
+                              ),
+                      ),
+                    ),
+                  );
+                  return;
+                }
                 var locked = false;
                 final pixelBoard = status?.json['board_id'];
                 if (target == 'pixels' && pixelBoard is! String) return;
@@ -992,10 +1087,12 @@ class _ControlShellState extends State<ControlShell>
                                   api: api,
                                   authorized: (feature) =>
                                       mounted &&
+                                      firmwareAutomation?.busy != true &&
                                       status?.json['board_id'] == pixelBoard &&
                                       status?.hostname == hostname &&
                                       status?.peer.has(feature) == true,
                                   busyChanged: (value) {
+                                    manualMaintenanceBusy = value;
                                     if (context.mounted) {
                                       update(() => locked = value);
                                     }
@@ -1008,6 +1105,23 @@ class _ControlShellState extends State<ControlShell>
                 );
               },
               itemBuilder: (_) => [
+                const PopupMenuItem(
+                  value: 'app-updates',
+                  child: ListTile(
+                    dense: true,
+                    leading: Icon(PakarIcons.cloud),
+                    title: Text('App updates / replication…'),
+                  ),
+                ),
+                if (firmwareAutomation != null)
+                  const PopupMenuItem(
+                    value: 'firmware-policy',
+                    child: ListTile(
+                      dense: true,
+                      leading: Icon(PakarIcons.cpu),
+                      title: Text('Automatic firmware updates…'),
+                    ),
+                  ),
                 const PopupMenuItem(
                   value: 'devices',
                   child: ListTile(

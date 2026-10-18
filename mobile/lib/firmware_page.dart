@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:crypto/crypto.dart' as crypto;
+
 import 'package:flutter/material.dart';
 
 import 'api.dart';
@@ -59,6 +61,7 @@ class _FirmwarePageState extends State<FirmwarePage>
   RemoteJob? job;
   Timer? timer;
   String message = '', staged = '';
+  String stagedDigest = '';
   bool working = false,
       executing = false,
       loading = false,
@@ -318,11 +321,111 @@ class _FirmwarePageState extends State<FirmwarePage>
           progress: onTransfer,
         );
         if (mounted) setState(() => transferProgress = null);
-        if (mounted && action == 'stage') staged = document!.name;
+        if (mounted && action == 'stage') {
+          staged = document!.name;
+          stagedDigest = crypto.sha256.convert(document.bytes).toString();
+        }
         return result;
       },
     );
   }
+
+  Future<void> avrMaintenance() => run('AVR maintenance', '', () async {
+    final current = await controller.avrMaintenance();
+    if (!mounted || current.busy || current.methods.isEmpty) {
+      throw const FormatException(
+        'AVR maintenance is busy or no programming path is acknowledged',
+      );
+    }
+    final digest = TextEditingController(text: stagedDigest);
+    var method = current.methods.first, operation = 'program';
+    final selected = await showDialog<(String, String, String)>(
+      context: context,
+      builder: (dialog) => StatefulBuilder(
+        builder: (dialog, update) => AlertDialog(
+          title: const Text('AVR maintenance'),
+          content: SizedBox(
+            width: 440,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: method,
+                    decoration: const InputDecoration(
+                      labelText: 'Acknowledged programming path',
+                    ),
+                    items: [
+                      for (final path in current.methods)
+                        DropdownMenuItem(
+                          value: path,
+                          child: Text(
+                            path == 'isp' ? 'ISP' : 'Urboot · hardware UART',
+                          ),
+                        ),
+                    ],
+                    onChanged: (v) => update(() => method = v!),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: operation,
+                    decoration: const InputDecoration(labelText: 'Operation'),
+                    items: [
+                      for (final op in ['program', 'backup', 'probe'])
+                        DropdownMenuItem(value: op, child: Text(op)),
+                    ],
+                    onChanged: (v) => update(() => operation = v!),
+                  ),
+                  if (operation == 'program') ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: digest,
+                      autocorrect: false,
+                      decoration: const InputDecoration(
+                        labelText: 'Exact staged image SHA-256',
+                      ),
+                      onChanged: (_) => update(() {}),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  const Text(
+                    'This interrupts AVR. Programming requires the full flash image, including its intended bootloader. Keep stable power.',
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialog),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed:
+                  operation == 'program' && !firmwareHash(digest.text.trim())
+                  ? null
+                  : () => Navigator.pop(dialog, (
+                      method,
+                      operation,
+                      digest.text.trim(),
+                    )),
+              child: const Text('Start maintenance'),
+            ),
+          ],
+        ),
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    digest.dispose();
+    if (selected == null || !mounted) return 'Maintenance cancelled';
+    final job = await controller.maintainAvr(
+      method: selected.$1,
+      operation: selected.$2,
+      sha256: selected.$2 == 'program' ? selected.$3 : '',
+    );
+    return 'AVR ${job.method} job ${job.id} queued; follow board progress for verified completion.';
+  }, requireConfirmation: false);
 
   void onTransfer(String stage, int done, int? total) {
     if (!mounted) return;
@@ -803,17 +906,15 @@ class _FirmwarePageState extends State<FirmwarePage>
                   enabled: free,
                 ),
                 button(
-                  'Program shared image',
+                  'ISP / Urboot maintenance',
                   PakarIcons.warning,
-                  () => manual('program'),
+                  avrMaintenance,
                   enabled: free,
                 ),
               ],
             ),
-            if (staged.isNotEmpty)
-              Text(
-                'Last local stage: $staged · NOT a verified current shared-image hash',
-              ),
+            if (staged.isNotEmpty) Text('Last local stage: $staged'),
+            if (stagedDigest.isNotEmpty) SelectableText(stagedDigest),
           ]),
         if (ota)
           card('Manual ESP OTA', [

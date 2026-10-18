@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -115,6 +116,74 @@ void validateFirmwareImage(bool esp, Uint8List bytes) {
   }
 }
 
+/// Actual /api/avr/maintenance receipt. Admission is queued, not a flash ACK.
+/// Both ISP and Urboot execute the same exclusive board-owned coordinator.
+class AvrMaintenanceJob {
+  AvrMaintenanceJob._(this.json);
+  final Map<String, dynamic> json;
+  int get id => json['job_id'];
+  String get boot => json['boot_id'];
+  String get requestId => json['request_id'];
+  String get method => json['method'];
+  String get operation => json['operation'];
+  String get phase => json['phase'];
+  String get hash => json['sha256'];
+  String get error => json['error'];
+  int get done => json['received_bytes'];
+  int get total => json['expected_bytes'];
+  bool get busy => json['busy'];
+  List<String> get methods => List<String>.from(json['methods']);
+  bool get complete => phase == 'complete' && !busy;
+  bool get verified =>
+      complete &&
+      json['verified'] == true &&
+      json['application_recovered'] == true;
+
+  static AvrMaintenanceJob parse(Map<String, dynamic> raw) {
+    bool uint(String k) => raw[k] is int && raw[k] >= 0 && raw[k] <= 0xffffffff;
+    bool text(Object? value, int maximum, {bool empty = false}) =>
+        value is String &&
+        value.length <= maximum &&
+        (empty && value.isEmpty || RegExp(r'^[!-~]+$').hasMatch(value));
+    if (!uint('job_id') ||
+        !uint('received_bytes') ||
+        !uint('expected_bytes') ||
+        raw['received_bytes'] > raw['expected_bytes'] ||
+        !text(raw['boot_id'], 80) ||
+        !text(raw['request_id'], 40, empty: raw['job_id'] == 0) ||
+        !{'isp', 'urboot'}.contains(raw['method']) ||
+        !{'', 'probe', 'backup', 'program'}.contains(raw['operation']) ||
+        !{
+          'idle',
+          'queued',
+          'prepare',
+          'backup_isp',
+          'program_isp',
+          'backup_flash',
+          'backup_eeprom',
+          'program_avr',
+          'verify_flash',
+          'verify_eeprom',
+          'awaiting_application',
+          'complete',
+          'failed',
+        }.contains(raw['phase']) ||
+        raw['busy'] is! bool ||
+        raw['verified'] is! bool ||
+        raw['application_recovered'] is! bool ||
+        raw['sha256'] is! String ||
+        (raw['sha256'] != '' && !firmwareHash(raw['sha256'])) ||
+        raw['error'] is! String ||
+        utf8.encode(raw['error']).length > 1024 ||
+        raw['methods'] is! List ||
+        (raw['methods'] as List).length > 2 ||
+        (raw['methods'] as List).any((m) => !{'isp', 'urboot'}.contains(m))) {
+      throw const FormatException('Malformed AVR maintenance receipt');
+    }
+    return AvrMaintenanceJob._(Map.unmodifiable(raw));
+  }
+}
+
 class FirmwareController {
   FirmwareController(this.api, {required this.authorized})
     : owner = api.connectionRevision;
@@ -157,6 +226,7 @@ class FirmwareController {
     int targets,
     String bearer, {
     bool allowDowngrade = false,
+    bool autoApply = false,
   }) async {
     validateRemote(url, hash, targets, bearer);
     checkTargets(targets);
@@ -168,7 +238,7 @@ class FirmwareController {
           'url': url,
           'sha256': hash,
           'targets': '$targets',
-          'apply': 'false',
+          'apply': '$autoApply',
           'bearer': bearer,
           'allow_downgrade': '$allowDowngrade',
         },
@@ -405,6 +475,90 @@ class FirmwareController {
       );
     }
     return bytes;
+  }
+
+  Future<AvrMaintenanceJob> avrMaintenance() async {
+    check('isp');
+    final raw = await api.maintenanceJson(
+      '/api/avr/maintenance',
+      authorize: () => allowed('isp'),
+    );
+    check('isp');
+    return AvrMaintenanceJob.parse(raw);
+  }
+
+  /// Source digest is checked again by the board before any page write/erase.
+  /// Unlike legacy shared-image programming this cannot program a replaced file.
+  Future<AvrMaintenanceJob> maintainAvr({
+    required String method,
+    required String operation,
+    String sha256 = '',
+    String? requestId,
+  }) async {
+    if (!{'isp', 'urboot'}.contains(method) ||
+        !{'probe', 'backup', 'program'}.contains(operation) ||
+        (operation == 'program' ? !firmwareHash(sha256) : sha256.isNotEmpty)) {
+      throw const FormatException(
+        'Select an AVR method, operation and exact program SHA-256',
+      );
+    }
+    check('isp');
+    final prior = await avrMaintenance();
+    check('isp');
+    if (prior.busy || !prior.methods.contains(method)) {
+      throw const FormatException(
+        'AVR method unacknowledged or maintenance already active',
+      );
+    }
+    final status = await api.status();
+    check('isp');
+    final clock = status.json['command_clock_ms'];
+    if (clock is! int ||
+        clock < 0 ||
+        clock > 0x1fffffffffffff - 55000 ||
+        status.json['boot_id'] != prior.boot) {
+      throw const FormatException(
+        'Fresh board clock and unchanged boot required',
+      );
+    }
+    final random = Random.secure();
+    final id =
+        requestId ??
+        List.generate(
+          16,
+          (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+        ).join();
+    if (!RegExp(r'^[A-Za-z0-9_-]{1,40}$').hasMatch(id)) {
+      throw const FormatException('Invalid maintenance request ID');
+    }
+    final ack = AvrMaintenanceJob.parse(
+      await api.maintenanceJson(
+        '/api/avr/maintenance',
+        post: true,
+        form: {
+          'method': method,
+          'operation': operation,
+          'request_id': id,
+          'expires_at_ms': '${clock + 55000}',
+          if (operation == 'program') 'sha256': sha256,
+        },
+        authorize: () => allowed('isp'),
+      ),
+    );
+    check('isp');
+    if (ack.id <= prior.id ||
+        ack.boot != prior.boot ||
+        ack.requestId != id ||
+        ack.method != method ||
+        ack.operation != operation ||
+        ack.hash != sha256 ||
+        ack.phase != 'queued' ||
+        !ack.busy) {
+      throw const FormatException(
+        'AVR admission did not match the exact request; inspect, never replay',
+      );
+    }
+    return ack;
   }
 
   Future<Uint8List> espBytes() async {

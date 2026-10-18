@@ -14,6 +14,8 @@ import java.util.concurrent.Executors
 class MainActivity : FlutterActivity() {
     private var discovery: DiscoveryChannel? = null
     private var toneMirror: ToneMirrorChannel? = null
+    private var appUpdates: AppUpdateChannel? = null
+    private var appUpdateDiscovery: AppUpdateDiscoveryChannel? = null
     private val io = Executors.newSingleThreadExecutor()
     private var pending: MethodChannel.Result? = null
     private var maximum = 0
@@ -27,6 +29,8 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         discovery = DiscoveryChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         toneMirror = ToneMirrorChannel(this, flutterEngine.dartExecutor.binaryMessenger)
+        appUpdates = AppUpdateChannel(this, flutterEngine.dartExecutor.binaryMessenger)
+        appUpdateDiscovery = AppUpdateDiscoveryChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ir.digitalogic.pakar/documents")
             .setMethodCallHandler { call, result ->
                 try {
@@ -86,6 +90,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (appUpdates?.onActivityResult(requestCode, resultCode, data) == true) return
         if (requestCode != pickCode && requestCode != createCode) return
         val result = pending ?: return
         val uri = data?.data
@@ -135,6 +140,8 @@ class MainActivity : FlutterActivity() {
     override fun onDestroy() {
         toneMirror?.close(); toneMirror = null
         discovery?.close(); discovery = null
+        appUpdates?.close(); appUpdates = null
+        appUpdateDiscovery?.close(); appUpdateDiscovery = null
         closed = true
         pending?.error("closed", "Document picker closed; no operation will be reopened automatically", null)
         pending = null

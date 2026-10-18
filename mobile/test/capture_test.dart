@@ -13,6 +13,10 @@ import 'package:pakarcontroller/bridge_page.dart';
 import 'package:pakarcontroller/mirroring.dart';
 import 'package:pakarcontroller/app_theme.dart';
 import 'package:pakarcontroller/devices_page.dart';
+import 'package:pakarcontroller/app_updates_page.dart';
+import 'package:pakarcontroller/firmware_automation_page.dart';
+
+import 'update_pages_test.dart' show updatePageFixture, automationPageFixture;
 
 import 'devices_page_test.dart' show directoryFixture, directoryDiscovery;
 
@@ -41,17 +45,27 @@ void main() {
         'FrontPanelPhone',
         'DevicesTablet',
         'DevicesPhone',
+        'AppUpdatesTablet',
+        'AppUpdatesPhone',
+        'AutomationTablet',
+        'AutomationPhone',
       ], contains(view));
       final firmware = view.startsWith('Firmware');
       final bridge = view.startsWith('Bridge');
       final frontPanel = view.startsWith('FrontPanel');
       final devices = view.startsWith('Devices');
+      final appUpdates = view.startsWith('AppUpdates');
+      final automation = view.startsWith('Automation');
+      final updatesModel = updatePageFixture();
+      addTearDown(updatesModel.dispose);
       final mirror = PeripheralMirror(output: SilentOutput())
         ..observe(mirroredPeer(), 1);
       addTearDown(mirror.dispose);
       final settings = view != 'Table', phone = view.endsWith('Phone');
       final api = SettingsApi();
       final firmwareApi = FirmwareApi();
+      final automationModel = automationPageFixture(firmwareApi);
+      addTearDown(automationModel.dispose);
       addTearDown(api.close);
       addTearDown(firmwareApi.close);
       final output = File(path);
@@ -91,7 +105,14 @@ void main() {
               appBar: AppBar(
                 title: const Text('PakarController · Simulated fixture'),
               ),
-              body: devices
+              body: appUpdates
+                  ? AppUpdatesPage(coordinator: updatesModel)
+                  : automation
+                  ? FirmwareAutomationPage(
+                      automation: automationModel,
+                      api: firmwareApi,
+                    )
+                  : devices
                   ? DevicesPage(
                       registry: directoryFixture(),
                       discovery: directoryDiscovery(),
@@ -137,13 +158,19 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      if (settings && !firmware && !bridge && !frontPanel && !devices) {
+      if (settings &&
+          !firmware &&
+          !bridge &&
+          !frontPanel &&
+          !devices &&
+          !appUpdates &&
+          !automation) {
         await tester.tap(
           phone
               ? find.widgetWithText(ChoiceChip, 'MQTT')
               : find.widgetWithText(ListTile, 'MQTT'),
         );
-      } else if (!firmware && !bridge && !frontPanel && !devices) {
+      } else if (!settings) {
         await tester.enterText(find.byType(TextField).first, '1–3, 12, 80');
       }
       await tester.pumpAndSettle();

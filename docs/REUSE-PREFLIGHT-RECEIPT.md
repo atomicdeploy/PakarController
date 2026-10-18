@@ -1,5 +1,94 @@
 # Donor-first preflight receipt
 
+## Android self-distribution and pinned board automation
+
+Read actual PCController app_upgrade.dart, peer_upgrades.dart, UpgradeChannel.kt,
+AndroidManifest.xml, DiscoveryChannel.kt, firmware_page.dart and downloader test
+at the recorded b0111ae0 inventory identity; the existing complete discovery,
+firmware/downloader/hostbridge/progress rows were consulted too. Seven new
+complete-read comparisons bind actual Dart/Kotlin implementations and fixtures;
+donors remain read-only. App/package transport is separate from board discovery
+and never acquires board command authority. Android's installer confirmation,
+not an RPC or advertised package, owns installation. The new mobile-app-updates
+index route is a mandatory build gate, not a whole-project parity certificate.
+
+AppUpdates/Peers adapt bounded ordered package transfer and expiring receiver
+approval; native staging rechecks exact hash, installed package/signer/newer
+version/minSDK/CPU, then uses PackageInstaller with required user action. SAF
+import/export, digest-pinned HTTP, verified discovery (DNS-SD/mDNS, SSDP, MNDP),
+read-only offer-feed reconnect and durable consumed receipts compose under one
+app-lifetime coordinator. HTTP catalogs and WSS/real Socket.IO accept only the
+active session, exact source origin and finite offers. A timed-out dial now
+closes its eventual socket, using the existing actual FirmwareFeed mechanism.
+Android permission-required retries retain the same verified package identity.
+No incoming remote installer method or generic command relay was exposed.
+
+FirmwareAutomation persists exact board/application assignment and independent
+opt-in stage/apply policy. Explicit automatic Apply uses the actual full pinned
+manifest transaction for ESP/AVR/both; raw AVR remains stage-only, raw ESP is a
+confirmed immediate upload. The latter initially had a model-level explicit
+Apply gate but no usable page action; review added its correctly labelled,
+confirmed Upload ESP image action and a cancel/accept widget regression. Manual
+and automatic maintenance exclude each other. Hash-bound ISP/Urboot maintenance
+replaces the unpinned shared-image Program UI; queued is not verified complete.
+The page does not own the feed, so navigation no longer destroys configured
+automation. Foreground retirement still pauses delivery and never replays an
+uncertain write. No Android background-service promise or direct USB-host
+programmer was added; these, split APKs, key rotation and full donor parity remain
+concrete pending omissions in the authoritative ledger and issue #7/#2/#3.
+
+Final canonical analyzer is clean;257 Flutter tests pass,2 opt-in captures skip.
+Focused actual HTTP/WS tests exercise bounded chunks, receiver capability,
+manifest/origin/identity/deadline checks, write-ahead storage failure, no replay,
+owner/background retirement and late-socket cleanup. Phone/tablet real widgets
+assert no writes, offline availability, opt-in defaults and installer-permission
+actions. The first real HTTP fixtures encountered Flutter's default HTTP400
+stub; actual existing socket-fixture binding patterns were inspected and the
+fixture binding now retains the messenger without intercepting loopback HTTP.
+New widget scrolling initially matched inner TextField scrollables, then the
+raw-upload button was partially outside the600px viewport: actual existing
+firmware_page_test ensureVisible and the outer ListView now drive the fixture.
+Assertions and production guards were not weakened. A JSON evidence patch
+initially omitted the enclosing array comma; no ledger mutation occurred and
+the exact row patch was corrected before regeneration. Initial lint/syntax
+errors were repaired through the pinned formatter/fix tooling, not ignored.
+
+Actual renderer PNGs (simulated, no device writes) were inspected:
+mobile-app-updates-phone.png SHA256
+80e2301433a0922e381650c03ee47b9dfa01d6570d4a4af82bf6916f8294e192;
+mobile-firmware-automation-tablet.png SHA256
+02f2750cc6a52910c7806a0b1d326ca10b8c3a59aeaa55e65d20ab8a3af306b2.
+They use actual Workspace widgets, theme, Vazirmatn and Phosphor/MaterialIcons.
+
+Canonical preview assembleRelease compiled both actual new Kotlin channels and
+installer receiver. APK0.2.7+8 is57,346,153 bytes, SHA256
+a60d7f968276d81ca3bd792ba9ad8911d6463ab635491f27d41846e7ff06b6fe.
+apksigner verification passes; the existing preview's debug signer is retained:
+cb2620ad0c885fffd5e1ee7df0bbef8ff3262729e4e880888e9001fbbfb83e26.
+This is not production signing. All four software source versions stay0.2.7;
+Android's monotonic build code increments7→8 so a newer package can be accepted.
+One warm mobile cache1.116GiB/4392 files; no new SDK/cache/clean or unrelated
+native/firmware build. Final small UI changes required one incremental APK
+rebuild, not a dependency/profile change. Local staging hash matches and the
+existing rollback is preserved. Fresh trusted ASUS hostname is David-ASUS;
+ADB lists no attached devices. Phone installation, two-device multicast/replica/
+OS consent, real configured remote WSS/Socket.IO/TLS, both-board flash/EEPROM/
+Urboot/power-loss and human acceptance remain open. No board reset, flash,
+EEPROM/fuse write, sound or PBX call occurred in this mobile slice.
+
+ASUS transfer completed through the trusted8022 tunnel; checksum and length were
+verified before promoting the pending APK to
+C:\Users\David\Documents\PakarController\staging\PakarController.apk.
+Actual host DAVID-ASUS readback matches the same57,346,153 bytes and
+a60d7f968276d81ca3bd792ba9ad8911d6463ab635491f27d41846e7ff06b6fe SHA256.
+Its existing Android rollback is preserved. This is staged, installed=false;
+ADB was empty. Existing desktop owner/settings and both boards were untouched.
+
+PowerShell tooling/preflight, versions and generated comparison checks pass.
+223 hash-bound comparisons/4673 inventory,4450 pending and181 known parity-gap
+files is not donor-wide completion. Fresh GitHub/installed staging receipts
+follow the checkpoint; no all-green CI or installed Android claim is inferred.
+
 ## Reconnect-safe native dock visibility
 
 Reread complete live Pealayer workspace_profiles.rs at the recorded matching

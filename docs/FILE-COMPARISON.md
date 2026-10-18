@@ -2,9 +2,9 @@
 
 Whole-repository superiority is **not established**. This report exposes retained code, scoped improvements, omissions and gaps; it does not turn missing reviews into exclusions.
 
-Routing: 1581 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
+Routing: 1578 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
 
-Inventory: 4673 files; 216 complete source-file comparisons; 4457 pending comparisons; 174 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
+Inventory: 4673 files; 223 complete source-file comparisons; 4450 pending comparisons; 181 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
 Every inventoried path, source revision/hash, target/proof file and line, omitted code, disposition and concrete reason is in `file-comparison.csv`. Hash-bound manual decisions are in `file-comparison-evidence.json`. Donor SHA-256 values bind original bytes; target/proof SHA-256 values bind UTF-8 without BOM with LF newlines. Anchors are recomputed into exact line numbers. Test-code presence is not test execution; execution receipts are in `FILE-COMPARISON-RECEIPTS.md`.
 
@@ -14,7 +14,7 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 |---|---:|---:|---:|---:|
 | ControllerBoardMini | 19 | 2 | 17 | 0 |
 | ControllerBoardMini/Puzzles | 18 | 12 | 6 | 7 |
-| PCController | 1517 | 78 | 1439 | 67 |
+| PCController | 1517 | 85 | 1432 | 74 |
 | Pealayer | 639 | 51 | 588 | 39 |
 | PU850-ESP | 109 | 46 | 63 | 44 |
 | PuzzleBoard | 22 | 0 | 22 | 0 |
@@ -425,12 +425,44 @@ Verdict: **scoped-improvement**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920
 - Remaining: Physical timing, mute/unmute acoustics and supply/clock validity remain issue #2 gates.
 - Remaining: Focused fixtures/builds are source evidence only. Physical ASUS USB/Wi-Fi, reboot persistence, muted welcome/menu/cue audio and subsequent unmute require the actual AVR; SSH8022 is currently unavailable. Full donor host routing/backend/configuration parity is not established.
 
+### PCController: `mobile/android/app/src/main/AndroidManifest.xml`
+
+Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `728e6808793b9ad82baf19d6e4c98a8fec68bce6b83d0fff0da5c7f31d48b9c4`.
+
+- Target: `mobile/android/app/src/main/AndroidManifest.xml:5 [UTF8-LF sha256=9f3906ffa76372c538f6682a30a7748c81b558cd76793e1da802b3c9c496f7c6; anchor=REQUEST_INSTALL_PACKAGES]`.
+- Target: `mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt:32 [UTF8-LF sha256=b765ffc161790dfbe828d5e9b43275aab51899e7b9fe36fea10e1c6b0bd9e549; anchor=appUpdates = AppUpdateChannel]`.
+- Retained: Actual REQUEST_INSTALL_PACKAGES and nonexported installer result receiver registration adapted to Pakar application identity. Existing app package and launcher artwork remain unchanged.
+- Omitted/replaced code: `Remaining generic donor/platform acceptance outside this bounded update slice`. Disposition: **pending**. Reason: Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay.
+- Test-code evidence: `mobile/test/app_updates_test.dart:190 [UTF8-LF sha256=39fcf4ed9a6b04cb174c008b851705ff50f35b5c5df89f4b5216c255812eb85e; anchor=native bridge]`.
+- Remaining: Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment.
+
+### PCController: `mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/DiscoveryChannel.kt`
+
+Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `b4b829b34dfd99d1cadcd05b4d15b23e1277d6d8ffa82090f2abfd4843d48c5c`.
+
+- Target: `mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/AppUpdateDiscoveryChannel.kt:16 [UTF8-LF sha256=e4cf3fb671d491c790dbc883aa6c5a87d271fb82068ddd92434e527871142613; anchor=class AppUpdateDiscoveryChannel]`.
+- Target: `mobile/lib/app_update_discovery.dart:56 [UTF8-LF sha256=709af98419a6ac2a25d13df8989072b344822e5e068f6dbb0804a1303e4e281d; anchor=verifyAppUpdatePeer]`.
+- Retained: Actual Android NSD browse/resolve/registration and multicast lock lifecycle adapted to app-package-only service. Dart uses bounded SSDP/MNDP messages plus exact package manifests; raw advertisements never grant install or board control.
+- Omitted/replaced code: `Remaining generic donor/platform acceptance outside this bounded update slice`. Disposition: **pending**. Reason: Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay.
+- Test-code evidence: `mobile/test/app_update_discovery_test.dart:37 [UTF8-LF sha256=202d5265b03db20e13768806bf617a944ddd3a70f7241d17e559c3c319bdede9; anchor=Actual manifest GET]`.
+- Remaining: Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment.
+
+### PCController: `mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/UpgradeChannel.kt`
+
+Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `c35459e58af7b325f450aa54e20a797efadde5006da1683f370500b2ffea3cc4`.
+
+- Target: `mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/AppUpdateChannel.kt:32 [UTF8-LF sha256=4b34633fbe7c8a4003624209c3795bfce5a871892214df32c078171752f66bbe; anchor=class AppUpdateChannel]`.
+- Retained: Actual private staging/storage/size/hash/self-package/signer/newer-version/minSDK/ABI validation and Android PackageInstaller user-consent/receipt flow. Added SAF import/export, bounded native queue, same digest immediately before install and actual installed SHA/version verification after restart; pending-user-action is never success.
+- Omitted/replaced code: `Remaining generic donor/platform acceptance outside this bounded update slice`. Disposition: **pending**. Reason: Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay.
+- Test-code evidence: `mobile/test/app_updates_test.dart:81 [UTF8-LF sha256=39fcf4ed9a6b04cb174c008b851705ff50f35b5c5df89f4b5216c255812eb85e; anchor=verified]`.
+- Remaining: Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment.
+
 ### PCController: `mobile/lib/connection_preferences.dart`
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `7c4c3a679ede250bb44effc96ccaf8a33a49f15e3ec8a1e1f5dfca082d64c72f`.
 
 - Target: `mobile/lib/connection_preferences.dart:54 [UTF8-LF sha256=45d6db926099edb7653a65d1a77ca16ffef69bdfe34adc117256179d804f6f7a; anchor=class ConnectionPreferences]`.
-- Target: `mobile/lib/main.dart:472 [UTF8-LF sha256=d704cda5dadc957f7abdabd37659bd15e2d071bd50fd7cbb1caf7631b04e8c52; anchor=_saveWorkspaces]`.
+- Target: `mobile/lib/main.dart:538 [UTF8-LF sha256=6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251; anchor=_saveWorkspaces]`.
 - Retained: Complete donor read: preserve secure password migration and last explicit connection profile; adapt nonsecret connection draft restoration and explicit Disconnect/transport intent without automatically selecting discovered paths. Pristine settings fields follow async profile loading, edited fields retain the draft.
 - Omitted/replaced code: `Mandatory/nonempty default password and restoring secret drafts`. Disposition: **replaced**. Reason: Current board authentication is optional. Existing secure credential ownership remains separate; workspace persistence excludes passwords/tokens and does not require credentials before the board does.
 - Test-code evidence: `mobile/test/workspace_lifecycle_test.dart:13 [UTF8-LF sha256=da99bd0f4eb2b7cac91106da4673cab150929a028dcc0001a675c51f8fb148a9; anchor=connection]`.
@@ -483,24 +515,66 @@ Verdict: **scoped-improvement**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920
 - Scoped advantage: One verified compatible-device catalog across discovery protocols, bounded secret-free probes, stale availability retirement and conflict-aware IP/MAC identity coalescing, with real HTTP and UI fixtures.
 - Remaining: Verify actual Android multicast/NSD, AP+STA/W5500 aliases, DHCP moves and routers; public XML is compatibility metadata, not cryptographic identity or command authorization. On-device installation and human acceptance remain open in issue2.
 
+### PCController: `mobile/lib/firmware_page.dart`
+
+Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `40b64996112f85e7acfb3f5c7db19c473cbfc0a018c72387f1447a4e386be626`.
+
+- Target: `mobile/lib/firmware_page.dart:333 [UTF8-LF sha256=7deee750d46cc8c2837abda187cb8f163111850432f1a78beb9a6a99975b29d8; anchor=avrMaintenance()]`.
+- Target: `mobile/lib/firmware_automation_page.dart:9 [UTF8-LF sha256=b0e65486832e9c4d72c846626444a819d3a76ff5d7456986ef168c384a25db67; anchor=class FirmwareAutomationPage]`.
+- Target: `mobile/lib/firmware_automation.dart:17 [UTF8-LF sha256=2218b88474f1bfc3d773729306ec65ad510b16a7ecab5759caa2cf6a48417e56; anchor=class FirmwareAutomation]`.
+- Retained: Actual run/confirmation/file-pick/cancel/no-uncertain-replay ownership adapted to FirmwarePage. New hash-bound ISP/Urboot maintenance dialog replaces unpinned shared-image programming. Persistent exact-board/application foreground automation owns source feeds outside page lifetime; automatic Apply is an explicit policy on the existing verified manifest transaction, not raw shared AVR staging.
+- Omitted/replaced code: `Remaining generic donor/platform acceptance outside this bounded update slice`. Disposition: **pending**. Reason: Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay.
+- Test-code evidence: `mobile/test/firmware_automation_test.dart:301 [UTF8-LF sha256=2046ae0d8c835d0dbd598890f28fe965f0227dcfc8cc0323ab3009f618453f01; anchor=Lost update ACK persists consumed digest]`.
+- Test-code evidence: `mobile/test/firmware_page_test.dart:126 [UTF8-LF sha256=69692243824e210bcc7002ad9e756a0c8bb830f08cef4b93ceda4688d451b82a; anchor=Contextual real firmware layout]`.
+- Test-code evidence: `mobile/test/update_pages_test.dart:45 [UTF8-LF sha256=334245f38e72a42fffc88404c612225ebf9e3be67bb17307c558dbb5e9e578ec; anchor=Raw ESP offer exposes immediate upload]`.
+- Test-code evidence: `mobile/test/capture_test.dart:33 [UTF8-LF sha256=c62fe3c9f6e73a0f4e0fae84925332c5dde99822f6e5680e95dc8c5dcb0cb06c; anchor=Explicit simulated renderer capture]`.
+- Remaining: Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment.
+
 ### PCController: `mobile/lib/firmware.dart`
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `a9e1ecce00ae674541490e64733accdfc882dcec8ff78d1c594d0ff89d5b9c86`.
 
-- Target: `mobile/lib/firmware.dart:118 [UTF8-LF sha256=aaaf52e9639217a757c60ea74d851cedbe349f5f4a302f7d5358bee1cc74d4e2; anchor=class FirmwareController]`.
+- Target: `mobile/lib/firmware.dart:187 [UTF8-LF sha256=bf3fc51f76679db0dd73d5103864347beb61ca1dedcc26cc9ef991fa8586eb99; anchor=class FirmwareController]`.
 - Target: `mobile/lib/api.dart:120 [UTF8-LF sha256=b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5; anchor=Stream<DeviceStatus> get statusUpdates]`.
 - Retained: Completely read the current canonical donor. Retain exact full AVR image/Urboot staging, explicit remote stage/apply/job pinning, capability/connection ownership and no uncertain write replay. Extend its actual manual updater with independently verified HTTP(S) file download, upload byte callbacks and raw-length/MD5 OTA headers; progress uses the existing peer event stream.
-- Omitted/replaced code: `Remaining donor mechanisms outside this delivery slice`. Disposition: **pending**. Reason: Direct Android USB-host flashing and a production Android background firmware service remain unsupported, not silently replaced by Wi-Fi. AVR staging is not programming; paired manifest Apply remains explicit.
-- Test-code evidence: `mobile/test/firmware_delivery_test.dart:100 [UTF8-LF sha256=6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24; anchor=HTTP file verifies hash before one upload]`.
+- Omitted/replaced code: `Remaining donor mechanisms outside this delivery slice`. Disposition: **pending**. Reason: Direct Android USB-host flashing and a production Android background firmware service remain unsupported, not silently replaced by Wi-Fi. AVR raw staging is not programming. Automatic verified-manifest Apply now requires an explicit persisted exact-board/application policy and a durable consumed-digest receipt; this does not provide an unguarded raw-image auto-program path.
+- Test-code evidence: `mobile/test/firmware_delivery_test.dart:100 [UTF8-LF sha256=b3cb732339d296e5f119c3d4beecc9db1a97e60f4b74240d333bf91ec761a81d; anchor=HTTP file verifies hash before one upload]`.
 - Test-code evidence: `mobile/test/firmware_page_test.dart:126 [UTF8-LF sha256=69692243824e210bcc7002ad9e756a0c8bb830f08cef4b93ceda4688d451b82a; anchor=Contextual real firmware layout]`.
 - Remaining: Issue #7: install on the authorized phone and verify actual upload/download/external OTA and OS background/reboot behavior. Package/fixture evidence is not human acceptance.
+
+### PCController: `mobile/lib/unified/app_upgrade.dart`
+
+Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `a13fdcf3c07e79544fef87b66226cc035ffc76e9dfd3841107c6b79bd0793ec0`.
+
+- Target: `mobile/lib/app_updates.dart:17 [UTF8-LF sha256=43fecf1cc973694aaf27e61e46924a922a5e4873fdf19e98c7fa5f23ad016f4a; anchor=class AppUpdates]`.
+- Target: `mobile/lib/app_update_coordinator.dart:16 [UTF8-LF sha256=5b507d26b657948be2d852e118ead624a2c8613880e9b8e1ce33ea347a3aeeb3; anchor=class AppUpdateCoordinator]`.
+- Target: `mobile/lib/app_updates_page.dart:7 [UTF8-LF sha256=518f635c169f1d01c125ca07caa36213a42ab0915b64736e425b166cabceb556; anchor=class AppUpdatesPage]`.
+- Retained: Actual bounded native-channel package RPC, 16KiB ordered chunks, manifest-pinned peer pull/push, measured progress and separate local installer consent. Coordinator adds allowlisted public preferences, exact-session/origin HTTP/WS/Socket.IO offers, serialized write-ahead digest receipts and same-manifest automatic peer pulls.
+- Omitted/replaced code: `Remaining generic donor/platform acceptance outside this bounded update slice`. Disposition: **pending**. Reason: Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay.
+- Test-code evidence: `mobile/test/app_updates_test.dart:190 [UTF8-LF sha256=39fcf4ed9a6b04cb174c008b851705ff50f35b5c5df89f4b5216c255812eb85e; anchor=native bridge refuses oversized chunks]`.
+- Test-code evidence: `mobile/test/app_update_coordinator_test.dart:225 [UTF8-LF sha256=5959806b63bc19122791f61704ad88f2ab4a72bdddd5b9305d7622e01a0c45a1; anchor=Write-ahead receipt precedes download]`.
+- Test-code evidence: `mobile/test/update_pages_test.dart:93 [UTF8-LF sha256=334245f38e72a42fffc88404c612225ebf9e3be67bb17307c558dbb5e9e578ec; anchor=App updates are usable offline]`.
+- Test-code evidence: `mobile/test/capture_test.dart:33 [UTF8-LF sha256=c62fe3c9f6e73a0f4e0fae84925332c5dde99822f6e5680e95dc8c5dcb0cb06c; anchor=Explicit simulated renderer capture]`.
+- Remaining: Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment.
+
+### PCController: `mobile/lib/unified/peer_upgrades.dart`
+
+Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `97ca9e2cc9a29b2277279c4ad1ed286f959c96886c6778be2293f6f651ad9521`.
+
+- Target: `mobile/lib/app_updates_peer.dart:30 [UTF8-LF sha256=a23c27acfcb3501f546712bdb3ba1379f48de7c5c8303ac2c4663ef614c2bee8; anchor=class AppUpdatePeers]`.
+- Target: `mobile/lib/app_update_discovery.dart:206 [UTF8-LF sha256=709af98419a6ac2a25d13df8989072b344822e5e068f6dbb0804a1303e4e281d; anchor=class AppUpdateDiscovery]`.
+- Retained: Actual approved short-lived capability package-only HTTP service and foreground advertisement lifecycle, adapted to /api/rpc and verified self-package discovery. No browser-origin writes or remote install method. Same installed APK can replicate to multiple peers; each receiver stages/verifies and locally consents to installation.
+- Omitted/replaced code: `Remaining generic donor/platform acceptance outside this bounded update slice`. Disposition: **pending**. Reason: Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay.
+- Test-code evidence: `mobile/test/app_updates_test.dart:9 [UTF8-LF sha256=39fcf4ed9a6b04cb174c008b851705ff50f35b5c5df89f4b5216c255812eb85e; anchor=peer]`.
+- Test-code evidence: `mobile/test/app_update_discovery_test.dart:168 [UTF8-LF sha256=202d5265b03db20e13768806bf617a944ddd3a70f7241d17e559c3c319bdede9; anchor=Verified same-instance routes coalesce]`.
+- Remaining: Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment.
 
 ### PCController: `mobile/lib/unified/preferences.dart`
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `fb4552dba17b3ec1bd999b6f43a05c2d85838fc490da4caec4d0b5316e5f9239`.
 
 - Target: `mobile/lib/pixel_diagnostic.dart:11 [UTF8-LF sha256=f5d5f5726ffa6b046d36adc5466d81b1a5570a16d0937aa79e99839e23182e6d; anchor=class PixelDiagnosticWorkspace]`.
-- Target: `mobile/lib/main.dart:472 [UTF8-LF sha256=d704cda5dadc957f7abdabd37659bd15e2d071bd50fd7cbb1caf7631b04e8c52; anchor=_saveWorkspaces]`.
+- Target: `mobile/lib/main.dart:538 [UTF8-LF sha256=6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251; anchor=_saveWorkspaces]`.
 - Retained: Complete donor read: adapt bounded enum/preferences restore and separate phone mirroring options into the existing ordered snapshot writer. Preserve visual/volume/follow-mute preferences without restarting PCM sessions, tones or commands.
 - Omitted/replaced code: `Per-keystroke sequential preference writes and PC-only branding`. Disposition: **replaced**. Reason: Use one content-equal coalesced writer, preserving the requested low-write policy and Pakar identity.
 - Omitted/replaced code: `Complete donor appearance/launcher/theme options and workspace manager`. Disposition: **pending**. Reason: This task fixes lost state; unrelated useful preference surfaces require exact subsequent implementation/review, not an implicit parity claim.
@@ -938,16 +1012,28 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `tests/board_silent_test.mjs:9 [UTF8-LF sha256=08cc93dd72639af64eed0d8d29c179393d6c363d411dff42618d7557cd048579; anchor=for (const mode of []`.
 - Remaining: Focused fixtures/builds are source evidence only. Physical ASUS USB/Wi-Fi, reboot persistence, muted welcome/menu/cue audio and subsequent unmute require the actual AVR; SSH8022 is currently unavailable. Full donor host routing/backend/configuration parity is not established.
 
+### PCController: `Tools/Controller/internal/artifacts/download_test.go`
+
+Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `9640f5646f2de3adec801157e2cad162632d7a9af3e249a5b8cb30715289992e`.
+
+- Target: `mobile/lib/firmware_automation.dart:17 [UTF8-LF sha256=2218b88474f1bfc3d773729306ec65ad510b16a7ecab5759caa2cf6a48417e56; anchor=class FirmwareAutomation]`.
+- Target: `mobile/lib/app_updates.dart:559 [UTF8-LF sha256=43fecf1cc973694aaf27e61e46924a922a5e4873fdf19e98c7fa5f23ad016f4a; anchor=readAppUpdateBytes]`.
+- Retained: Actual finite body/length/failure download fixtures adapted to real Dart HTTP listeners and bounded catalog/transfer streams, plus no write on failed pin/receipt save. Not a Go runtime or production TLS/flash proof.
+- Omitted/replaced code: `Remaining generic donor/platform acceptance outside this bounded update slice`. Disposition: **pending**. Reason: Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay.
+- Test-code evidence: `mobile/test/firmware_automation_test.dart:270 [UTF8-LF sha256=2046ae0d8c835d0dbd598890f28fe965f0227dcfc8cc0323ab3009f618453f01; anchor=Cannot save consumed receipt]`.
+- Test-code evidence: `mobile/test/app_updates_test.dart:418 [UTF8-LF sha256=39fcf4ed9a6b04cb174c008b851705ff50f35b5c5df89f4b5216c255812eb85e; anchor=absolute response deadline]`.
+- Remaining: Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment.
+
 ### PCController: `Tools/Controller/internal/artifacts/download.go`
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `13c3aa60d33cc41276c2c7a44312562043e4ffb647a485954dddfd6d6ecc6088`.
 
 - Target: `desktop/src/firmware_source.rs:54 [UTF8-LF sha256=a722b2cdaffc24ad5d17b2d94ac0fc63ab9739d07c4f747a40f15791520a2811; anchor=fn download(]`.
-- Target: `mobile/lib/firmware.dart:309 [UTF8-LF sha256=aaaf52e9639217a757c60ea74d851cedbe349f5f4a302f7d5358bee1cc74d4e2; anchor=Future<String> fileUrl(]`.
+- Target: `mobile/lib/firmware.dart:379 [UTF8-LF sha256=bf3fc51f76679db0dd73d5103864347beb61ca1dedcc26cc9ef991fa8586eb99; anchor=Future<String> fileUrl(]`.
 - Retained: Read the full downloader and preserve finite timeout, independent source credentials, bounded byte reader, real Content-Length/unknown denominator, redirect refusal, SHA-256 verification and image validation before any upload. Small firmware images remain in bounded RAM rather than creating a new disk artifact cache.
 - Omitted/replaced code: `Remaining donor mechanisms outside this delivery slice`. Disposition: **pending**. Reason: Persisted multi-kind artifact store, automatic resume/redirects and donor public-only DNS destination policy are not transplanted into explicit user-selected local/LAN file downloads. Remote offers instead require an operator-configured exact HTTPS origin. Generic remote public artifact browsing/storage and resumed-transfer parity remain pending.
 - Test-code evidence: `desktop/src/firmware_source.rs:243 [UTF8-LF sha256=a722b2cdaffc24ad5d17b2d94ac0fc63ab9739d07c4f747a40f15791520a2811; anchor=fn firmware_source_real_http_download_is_verified_before_one_pinned_upload]`.
-- Test-code evidence: `mobile/test/firmware_delivery_test.dart:100 [UTF8-LF sha256=6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24; anchor=HTTP file verifies hash before one upload]`.
+- Test-code evidence: `mobile/test/firmware_delivery_test.dart:100 [UTF8-LF sha256=b3cb732339d296e5f119c3d4beecc9db1a97e60f4b74240d333bf91ec761a81d; anchor=HTTP file verifies hash before one upload]`.
 - Remaining: Issue #7: real endpoint TLS/throughput/loss and malformed image tests on hardware; host tests cannot establish flash/power-loss success.
 
 ### PCController: `Tools/Controller/internal/discovery/discovery_test.go`
@@ -1093,11 +1179,11 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `b34517a1c30084d2362e951638e0039d78abd45a5128b62342bb717b6c44b1b2`.
 
 - Target: `desktop/src/firmware_feed.rs:228 [UTF8-LF sha256=4861ce73400a8a45ccca57193976b6a80b1ff9a031bb1cb5e703f1d31f6fbcfd; anchor=pub struct Wire]`.
-- Target: `mobile/lib/firmware_feed.dart:105 [UTF8-LF sha256=b1f95da5d70a88a24b924cba03cfe0953c6f7bbfb8f13a04958decbfd10c0070; anchor=class FirmwareFeedWire]`.
+- Target: `mobile/lib/firmware_feed.dart:105 [UTF8-LF sha256=c52d37fdbede367d12025c843a35403b4e9ca9c1df6ee26cb2961ea1c131453d; anchor=class FirmwareFeedWire]`.
 - Retained: Adapt the fully read actual outbound WebSocket and genuine Socket.IO client paths: explicit protocol, Bearer header, Engine.IO open, namespace connect, ping/pong, exact event tuple, bounded sessions and no command replay. Native and Android accept only fresh session/board/boot-bound SHA-pinned offers from the configured download origin, not generic remote RPC.
-- Omitted/replaced code: `Remaining donor mechanisms outside this delivery slice`. Disposition: **pending**. Reason: Generic reciprocal JSON-RPC/Socket.IO command routing, board mirroring, hotkeys/webhooks, durable queues, auto-reconnect and the rest of this host integration manager are NOT imported by a firmware-specific inbox. Existing paired-host parity remains open; explicit listener restart and finite inbox avoid replaying flash commands.
+- Omitted/replaced code: `Remaining donor mechanisms outside this delivery slice`. Disposition: **pending**. Reason: Generic reciprocal JSON-RPC/Socket.IO command routing, board mirroring, hotkeys/webhooks, durable generic command queues and the rest of this host integration manager remain pending. Foreground firmware automation now supports bounded read-only feed reconnect with fresh sessions and persisted consumed digests; that is not generic command replay or full host-manager parity.
 - Test-code evidence: `desktop/src/firmware_feed.rs:711 [UTF8-LF sha256=4861ce73400a8a45ccca57193976b6a80b1ff9a031bb1cb5e703f1d31f6fbcfd; anchor=fn firmware_feed_actual_websocket_and_socketio_sessions_deliver_once]`.
-- Test-code evidence: `mobile/test/firmware_delivery_test.dart:263 [UTF8-LF sha256=6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24; anchor=Actual WS/Socket.IO listener deduplicates offers]`.
+- Test-code evidence: `mobile/test/firmware_delivery_test.dart:263 [UTF8-LF sha256=b3cb732339d296e5f119c3d4beecc9db1a97e60f4b74240d333bf91ec761a81d; anchor=Actual WS/Socket.IO listener deduplicates offers]`.
 - Remaining: Issue #2/#7: verify the owner's actual authenticated WSS/Socket.IO endpoint and emitted firmware event. Loopback protocol fixtures are not Internet/TLS server interoperability or Android background uptime.
 
 ### PCController: `Tools/Controller/internal/hostbridge/peer_response_test.go`
@@ -1132,7 +1218,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Retained: Read the complete actual donor tests; preserve measured-only percentage, terminal state and not-conflating transfer with flash completion assertions in native/Dart/Web fixtures. Existing notification tests are not represented as ported.
 - Omitted/replaced code: `Remaining donor mechanisms outside this delivery slice`. Disposition: **pending**. Reason: Donor notification title/milestone coalescing and OS taskbar tests remain pending until their actual native presentation adapter is integrated.
 - Test-code evidence: `desktop/src/firmware_progress.rs:240 [UTF8-LF sha256=5269eca8e2378e09b04b2a6de0ea9ed886ada47237460b6e3b670aa42efa7fd2; anchor=fn firmware_progress_remote_counts_are_not_flash_percentage_or_another_boot]`.
-- Test-code evidence: `mobile/test/firmware_delivery_test.dart:77 [UTF8-LF sha256=6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24; anchor=Actual progress widget displays indeterminate verification]`.
+- Test-code evidence: `mobile/test/firmware_delivery_test.dart:77 [UTF8-LF sha256=b3cb732339d296e5f119c3d4beecc9db1a97e60f4b74240d333bf91ec761a81d; anchor=Actual progress widget displays indeterminate verification]`.
 - Remaining: Issue #7: complete actual OS notification/taskbar adapter and corresponding fixtures; no broad donor test-suite parity.
 
 ### PCController: `Tools/Controller/internal/hostui/update_progress.go`
@@ -1145,7 +1231,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Retained: Adapt actual explicit measured stage counters, indeterminate non-transfer stages, separate verification/completion and terminal state handling. Rust retains external board update/local OTA state in HTTP/WS/USB DTOs; Flutter consumes the existing status stream, and Web renders that same source. No transfer 100 percent is treated as completed flashing.
 - Omitted/replaced code: `Remaining donor mechanisms outside this delivery slice`. Disposition: **pending**. Reason: This slice does not port the donor's per-operation milestone toast tracker, Windows taskbar COM ordering or terminal OSC progress presenter. Existing native notifications remain, but complete progress-notification/OS presentation parity is pending.
 - Test-code evidence: `desktop/src/firmware_progress.rs:222 [UTF8-LF sha256=5269eca8e2378e09b04b2a6de0ea9ed886ada47237460b6e3b670aa42efa7fd2; anchor=fn firmware_progress_observes_external_ota_without_inventing_completion]`.
-- Test-code evidence: `mobile/test/firmware_delivery_test.dart:46 [UTF8-LF sha256=6486d9946a24d41b476189a9b048f0567446b6b7ea517c929c0502dbb792bb24; anchor=External board OTA and remote jobs]`.
+- Test-code evidence: `mobile/test/firmware_delivery_test.dart:46 [UTF8-LF sha256=b3cb732339d296e5f119c3d4beecc9db1a97e60f4b74240d333bf91ec761a81d; anchor=External board OTA and remote jobs]`.
 - Remaining: Issue #7: verify live external OTA progress, reboot/readback and error/cancellation presentation on both native and Android; source/fixtures are not physical update or display acceptance.
 
 ### PCController: `Tools/Controller/internal/ipcjson/rest_routes_test.go`
@@ -1251,7 +1337,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/terminal_ui.rs:769 [UTF8-LF sha256=5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6; anchor=fn command_request(]`.
 - Target: `mobile/lib/api.dart:783 [UTF8-LF sha256=b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5; anchor=bool _acceptIdentity(]`.
-- Target: `mobile/lib/main.dart:123 [UTF8-LF sha256=d704cda5dadc957f7abdabd37659bd15e2d071bd50fd7cbb1caf7631b04e8c52; anchor=api.onPeerChanged = ()]`.
+- Target: `mobile/lib/main.dart:132 [UTF8-LF sha256=6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251; anchor=api.onPeerChanged = ()]`.
 - Target: `mobile/lib/bridge.dart:316 [UTF8-LF sha256=4fd40d999691968be1d32826a925a4bb221a5bd102c2a237ed947f6bf37b2be9; anchor=watchdog = Timer.periodic]`.
 - Target: `libraries/BoardCore/src/PeerFence.h:31 [UTF8-LF sha256=9f1ab63252bd881d2fc786e230a18db331e66708a1bd3ccd0f096d2d2b5d49d5; anchor=inline bool accepts(]`.
 - Target: `firmware/esp8266/src/WebAccess.h:68 [UTF8-LF sha256=7d5f61dd41c18aa9e74857e60f187c28be8e3902022ed4accad57f75a9384b5a; anchor=bool peerAllowed(]`.
@@ -1429,7 +1515,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/capabilities.rs:164 [UTF8-LF sha256=600217cec6c0afbd35c7ffc6a6e1b300586a75fc150a87693da4fb06e2d7ce2e; anchor=pub fn has(]`.
 - Target: `mobile/lib/peer_context.dart:38 [UTF8-LF sha256=74819c9ddf613f1229a50e32eaefdb857039fd45474af639e9d5c717ea7ec9f7; anchor=static PeerContext fromStatus]`.
-- Target: `mobile/lib/main.dart:608 [UTF8-LF sha256=d704cda5dadc957f7abdabd37659bd15e2d071bd50fd7cbb1caf7631b04e8c52; anchor=Future<bool> _command]`.
+- Target: `mobile/lib/main.dart:674 [UTF8-LF sha256=6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251; anchor=Future<bool> _command]`.
 - Target: `libraries/BoardCore/src/DeviceContext.h:30 [UTF8-LF sha256=3e940f4ee3d09c482486b7321648f776ae6c480e92aaa564beb5dca12d9bfbfa; anchor=inline uint16_t features(]`.
 - Target: `firmware/esp8266/src/WebUi.h:784 [UTF8-LF sha256=17b616730ed741006efc114721e6e2b8a6207be2ea1adb5da7fa58605814b5ae; anchor=function peerAvailability(]`.
 - Retained: Actual connected AND have_status AND advertised-capability conjunction adapted to selected-peer fresh manifests. No feature inference from hostname, pixel count, catalog, defaults or online alone.
@@ -1750,7 +1836,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `0d8fdeb3e15fb52b917784d4cb3875c68bc12c6c6ed78cd16f2ff8ee3561d89c`.
 
 - Target: `tools/storage-hygiene.ps1:11 [UTF8-LF sha256=0d1af57a83775e2670a5ac222973970dfc3bfc2c2e1bde1a1753523b444bdb5c; anchor=function Get-DirectorySummary]`.
-- Target: `tools/build-mobile.ps1:76 [UTF8-LF sha256=b12ebc0365d00d6fc95b7325f6f3027f5f7cccabb3ac1e366fa72b39bd961e6c; anchor=$taskCache=Get-DirectorySummary]`.
+- Target: `tools/build-mobile.ps1:77 [UTF8-LF sha256=405db43e52403211188139c442b4be0dac7f2b3181523102f7a5b3da5fa471c8; anchor=$taskCache=Get-DirectorySummary]`.
 - Retained: Actual Get-DirectorySummary imported into tools/storage-hygiene.ps1 with Pakar canonical cache, board cache, mobile build and stable staging paths. Read-only by default and warns at the existing 8 GiB budget; logical sizes explicitly distinguished from disk allocation or wear.
 - Retained: build-mobile.ps1 now calls the actual imported summary for its sole mobile/build cache and verifies free space before compilation. Existing SDK path comes from mobile README; no auto-install, dependency upgrade, cache relocation or clean.
 - Omitted/replaced code: `PruneRepositoryTarget exact-child/git-ignore/allowed-child/running-process checks and recursive deletion`. Disposition: **replaced**. Reason: New explicit user authorization permits obsolete debug-only deletion. Adapt the actual donor exact-child, ignore, allowed-content, reparse and writer checks to the owned desktop/target/debug; add tracked-file refusal and Plan. Never remove the target root, release cache, settings or rollback. The verified 10.408 GiB debug tree was pruned; stronger guards keep the read-only default intact.
@@ -1795,7 +1881,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `desktop/src/brand_image.rs:25 [UTF8-LF sha256=ab71607dcde16d7af14b0a292982f902186dacf6b5b78b3f4c983e37464428e9; anchor=pub fn native_icon_bytes]`.
 - Target: `docs/BRANDING-PARITY.md:60 [UTF8-LF sha256=0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3; anchor=## Explicit unfinished useful code and reasons]`.
 - Target: `desktop/src/branding.rs:8 [UTF8-LF sha256=100940d0ee954ecfeb059dba83245c37c4e1e325d9309c7c82870e4eb870870a; anchor=pub fn sync_peer]`.
-- Target: `mobile/lib/main.dart:905 [UTF8-LF sha256=d704cda5dadc957f7abdabd37659bd15e2d071bd50fd7cbb1caf7631b04e8c52; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
+- Target: `mobile/lib/main.dart:976 [UTF8-LF sha256=6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
 - Target: `mobile/lib/application_artwork.dart:2 [UTF8-LF sha256=a1ee8fc15b0aa9111a5c416fcf74b3d05093b22e47b76d7744837f175f7b5ef4; anchor=const applicationArtworkBase64]`.
 - Retained: Actual icon_data_from_bytes imported unchanged; one embedded PNG supplies native/Web artwork without disk caches.
 - Retained: Actual native_icon_bytes seven-frame ICO encoding/master preservation/Lanczos3 resampling and shell derivative test adapted to shared supplied bytes and PNG-only decoder.
@@ -2102,7 +2188,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `410d274f51e5e7db7ce81582d36166a97240b097e993cec5fee8707a95183e2f`.
 
 - Target: `mobile/lib/table_workspace.dart:11 [UTF8-LF sha256=fd779ea58ddb0177231840f05b69b5845a6c60ee2c2cada587fb29833309354b; anchor=class TableWorkspace]`.
-- Target: `mobile/lib/main.dart:479 [UTF8-LF sha256=d704cda5dadc957f7abdabd37659bd15e2d071bd50fd7cbb1caf7631b04e8c52; anchor=Future<void> _saveWorkspaces()]`.
+- Target: `mobile/lib/main.dart:545 [UTF8-LF sha256=6efebbf515b11ea4efae98a3534074680ba9e8c02d57d3984ab21659ba10e251; anchor=Future<void> _saveWorkspaces()]`.
 - Target: `desktop/src/capabilities.rs:67 [UTF8-LF sha256=600217cec6c0afbd35c7ffc6a6e1b300586a75fc150a87693da4fb06e2d7ce2e; anchor=pub struct Presentation]`.
 - Target: `desktop/src/ui/shell.rs:561 [UTF8-LF sha256=0d782b02fd7d78fbb3103cdddd5127cba0eb673937fa8f832ec7893d02a34bd4; anchor=fn synchronize_context]`.
 - Target: `desktop/src/ui/layout.rs:159 [UTF8-LF sha256=d368dc9cd57542eb9ff6170853619c79fc154f6d77a74be16db9c56fb9d4782c; anchor=presentation_context()]`.
@@ -2238,7 +2324,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Omitted/replaced code: `Current ColorDropdown custom/accent popup, discrete choice_slider indexed preview/commit and NumericValueControl persisted per-field adjustment steps`. Disposition: **pending**. Reason: Current 563-line donor was completely reread. These generic typed controls are not in the mobile device settings implementation; shared appearance controls, structured batch changes and keyboard/locale acceptance must be imported with their dependencies instead of claiming the earlier section/group adaptation covers them.
 - Test-code evidence: `mobile/test/device_settings_test.dart:243 [UTF8-LF sha256=8e68e0e7189eb5d310c21f3d1618940ba17b56f30c121ca3289485d161a359bf; anchor=Settings write $behavior: one POST]`.
 - Test-code evidence: `mobile/test/device_settings_page_test.dart:249 [UTF8-LF sha256=100ca0942762441114bc904f679805324247163fed93eb9b96f1cd6241cebf0b; anchor=Acknowledged $route handoff after old view closes]`.
-- Test-code evidence: `mobile/test/capture_test.dart:154 [UTF8-LF sha256=a155c2a666f4276463f2fbf8c785472f89ceadb911a9b519b2e7e9a45deaea59; anchor=Capture must never issue a device mutation]`.
+- Test-code evidence: `mobile/test/capture_test.dart:181 [UTF8-LF sha256=c62fe3c9f6e73a0f4e0fae84925332c5dde99822f6e5680e95dc8c5dcb0cb06c; anchor=Capture must never issue a device mutation]`.
 - Remaining: Mobile firmware/update/backup and Android picker workflows are implemented in the separate ServerFilePicker row; physical acceptance remains. Complete connection/discovery controls, unsaved Android-back/quit protection, client appearance/localization, generic typed preference controls and applicable donor dependencies. Verify physical phone/tablet configuration readback and hostname/credential handoffs; current API lacks transactional compare-and-set and encrypted HTTP transport.
 
 ### Pealayer: `web_ui/src/components/ServerFilePicker.tsx`
@@ -2246,9 +2332,9 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `df5b59007e0b726c815bed0eafcce87e4f5a6e4a59e8c79a1414f2cc7be89316`.
 
 - Target: `mobile/lib/documents.dart:17 [UTF8-LF sha256=9cd92317a5407799c79882fb1aef15dca128adf6291887a3a12ce6ee1fabc5a3; anchor=class AndroidDocuments]`.
-- Target: `mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt:39 [UTF8-LF sha256=a2b240972900683f5f2622bbe69f47569c0a0bfabee8f66311116f8ae0c6a61e; anchor=Intent.ACTION_OPEN_DOCUMENT]`.
-- Target: `mobile/lib/firmware_page.dart:13 [UTF8-LF sha256=f82112ea0042e14efce70c86ca6a52ffbf0a152b6245b4ba3f69d3813f7fad37; anchor=class FirmwarePage]`.
-- Target: `mobile/lib/firmware.dart:118 [UTF8-LF sha256=aaaf52e9639217a757c60ea74d851cedbe349f5f4a302f7d5358bee1cc74d4e2; anchor=class FirmwareController]`.
+- Target: `mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt:43 [UTF8-LF sha256=b765ffc161790dfbe828d5e9b43275aab51899e7b9fe36fea10e1c6b0bd9e549; anchor=Intent.ACTION_OPEN_DOCUMENT]`.
+- Target: `mobile/lib/firmware_page.dart:15 [UTF8-LF sha256=7deee750d46cc8c2837abda187cb8f163111850432f1a78beb9a6a99975b29d8; anchor=class FirmwarePage]`.
+- Target: `mobile/lib/firmware.dart:187 [UTF8-LF sha256=bf3fc51f76679db0dd73d5103864347beb61ca1dedcc26cc9ef991fa8586eb99; anchor=class FirmwareController]`.
 - Target: `mobile/lib/api.dart:510 [UTF8-LF sha256=b0135fa87fb059cad4bc470e22c6ee3982421639e9e71c9284d840cc3ba506c5; anchor=Future<Uint8List> maintenanceBytes]`.
 - Retained: Fully read actual typed single-file selection, disabled/unselected/loading state, extension filtering, cancellation, stale-result protection and explicit acceptance. Adapted into Flutter AndroidDocuments + native SAF; firmware imports are validated and separately confirmed before any upload. Parent navigation is locked during maintenance confirmation/picking and writes; selected bytes never automatically program either board.
 - Retained: Canonical Pakar desktop maintenance and actual firmware routes were read, not fabricated mobile endpoints. FirmwareController pins remote job/boot/hash/targets and verifies a fresh identity before apply/cancel; single-dispatch bounded HTTP refuses redirects/replay. FirmwarePage gates each ISP/OTA domain on individual live feature ACK, distinguishes stage/apply/completion, and exposes real full flash/EEPROM exports.
@@ -2258,7 +2344,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Test-code evidence: `mobile/test/documents_test.dart:37 [UTF8-LF sha256=2d9de6807621a79e043b1e1240afb639e26ea30dc0e0084f42f232e5e4025c8c; anchor=Changed owner while choosing export]`.
 - Test-code evidence: `mobile/test/firmware_test.dart:234 [UTF8-LF sha256=db7cedb2cc81cfb0e9a7d2294c4da4370c833899c6b42727f6788c8403508b41; anchor=Lost mutating GET probe]`.
 - Test-code evidence: `mobile/test/firmware_page_test.dart:161 [UTF8-LF sha256=69692243824e210bcc7002ad9e756a0c8bb830f08cef4b93ceda4688d451b82a; anchor=Cancelled file selection]`.
-- Test-code evidence: `mobile/test/capture_test.dart:159 [UTF8-LF sha256=a155c2a666f4276463f2fbf8c785472f89ceadb911a9b519b2e7e9a45deaea59; anchor=Firmware capture must never issue a device mutation]`.
+- Test-code evidence: `mobile/test/capture_test.dart:186 [UTF8-LF sha256=c62fe3c9f6e73a0f4e0fae84925332c5dde99822f6e5680e95dc8c5dcb0cb06c; anchor=Firmware capture must never issue a device mutation]`.
 - Remaining: Verify Android provider cancellation/rotation/process death and real import/export; actual board update/readback/power-loss acceptance and production APK signing remain open. Generic donor file-browser consumers and full locale/direction still require review. Shared manual AVR staging has no advertised hash/CAS; pinned remote job is preferred and manual limitation is explicit.
 
 ### Pealayer: `web_ui/src/i18n.ts`
