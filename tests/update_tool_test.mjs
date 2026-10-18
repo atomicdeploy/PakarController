@@ -37,7 +37,7 @@ for(const scenario of ['local','remote','auth','unknown-auth','bad-product','bus
       {busy:scenario==='busy',phase:'idle'});
     throw Error('unexpected path '+path);
   };
-  const upload=async(_origin,peer,bytes,hash)=>{writes++;assert.equal(peer.boot,base.boot_id);assert.deepEqual(bytes,image);assert.equal(hash.sha256,identity.sha256);
+  const upload=async(_origin,peer,bytes,hash,settings)=>{writes++;assert.equal(settings.timeoutSeconds,10);assert.equal(peer.boot,base.boot_id);assert.deepEqual(bytes,image);assert.equal(hash.sha256,identity.sha256);
     if(scenario==='lost-upload')throw Error('outcome unknown');rebooted=true;};
   const websocket=async()=>{ws++;if(scenario==='bad-ws')throw Error('bad socket');};
   const remote=['remote','lost-fetch','wrong-stage'].includes(scenario);
@@ -75,6 +75,7 @@ server.on('upgrade',(req,socket)=>{
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 try{
   const origin=new URL('http://localhost:'+server.address().port),peer={board:base.board_id,boot:base.boot_id,address:'127.0.0.1'};
+  for(const timeoutSeconds of [0,9,601,NaN])assert.throws(()=>uploadImage(origin,peer,image,identity,{timeoutSeconds}));
   await uploadImage(origin,peer,image,identity);assert.equal(received.headers.authorization,undefined);
   assert.equal(received.headers['x-pakar-firmware-size'],String(image.length));assert.equal(received.headers['x-pakar-firmware-md5'],identity.md5);
   assert.equal(Number(received.headers['content-length']),received.body.length);assert.ok(received.body.includes(image));

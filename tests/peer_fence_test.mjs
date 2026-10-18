@@ -41,7 +41,7 @@ function checkTuiBatch(source,batchSource) {
   assert.match(cells,/crate::cell_batch::Request::new\(ids,state,"fade"\)\?/);
   assert.match(cells,/crate::cell_batch::send\(client,endpoint,&request,Some\(&pin\),Some\(stop\),None\)/);
   assert.doesNotMatch(cells,/\.post\(|for .*\bids\b/,'No unfenced scalar fallback');
-  assert.match(batchSource,/expected.is_some_and\(\|expected\|expected!=&pin\) \|\| !Request::supported\(&current\)/);
+  assert.match(batchSource,/expected.is_some_and\(\|expected\|expected!=&pin\) \|\| !Request::supported\(&?current\)/);
   assert.match(batchSource,/let pinned=pin.client\(\)\?/);
   assert.match(batchSource,/let response=pinned.post\(format!\("\{\}\/api\/cells"/);
   assert.match(batchSource,/receipt\["accepted"\].as_bool\(\)!=Some\(true\) \|\| receipt\["count"\].as_u64\(\)!=Some\(request.ids.len\(\) as u64\)/);
@@ -53,8 +53,8 @@ assert.throws(()=>checkTuiBatch(tui.replace('send(client,endpoint,&request,Some(
 assert.throws(()=>checkTuiBatch(tui,batch.replace('let response=pinned.post','let response=client.post')));
 assert.throws(()=>checkTuiBatch(tui,batch.replace(' || !request.verify(&observed)','')));
 const native=read('desktop/src/main.rs');
-assert.match(native,/if !self\.configuration_loaded && self\.command_route\(\) == Some\(Transport::WiFi\)/,
-  'Settings bootstrap must wait for fresh selected Wi-Fi status, not add offline preflight incidents');
+assert.match(native,/if self\.command_route\(\) == Some\(Transport::WiFi\)[\s\S]*?self\.configuration_reads.take_due\(\)/,
+  'Bounded optional settings dispatch must wait for fresh selected Wi-Fi status, not add offline preflight incidents');
 assert.match(native,/self\.device_settings\.page == 9\s*&& self\.command_route\(\) == Some\(Transport::WiFi\)/,
   'Remote-job reads must also wait for the selected Wi-Fi peer');
 console.log('Peer fence wiring guards passed (source assertions, not hardware/network acceptance).');

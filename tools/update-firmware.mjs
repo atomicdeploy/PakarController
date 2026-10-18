@@ -39,7 +39,8 @@ function requestOptions(origin,peer,headers={}) {
     lookup:(_host,options,done)=>done(null,options.all?[{address:peer.address,family:4}]:peer.address,4),
     headers:{'X-Pakar-Board':peer.board,'X-Pakar-Boot':peer.boot,...headers}};
 }
-export function uploadImage(origin,peer,bytes,identity) {
+export function uploadImage(origin,peer,bytes,identity,{timeoutSeconds=180}={}) {
+  if(!Number.isInteger(timeoutSeconds)||timeoutSeconds<10||timeoutSeconds>600)throw Error('Upload timeout must be10..600 seconds');
   const boundary='Pakar'+randomBytes(16).toString('hex');
   const start=Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="MD5"\r\n\r\n${identity.md5}\r\n--${boundary}\r\nContent-Disposition: form-data; name="firmware"; filename="esp.bin"\r\nContent-Type: application/octet-stream\r\n\r\n`);
   const end=Buffer.from(`\r\n--${boundary}--\r\n`);
@@ -57,8 +58,9 @@ export function uploadImage(origin,peer,bytes,identity) {
         else resolve(value);
       });
     });
-    const timer=setTimeout(()=>req.destroy(Error('Upload deadline; outcome unknown, no retry')),120000);
-    req.on('close',()=>clearTimeout(timer));req.on('error',()=>reject(Error('Upload failed; outcome unknown, no fallback or retry')));
+    const started=Date.now();
+    const timer=setTimeout(()=>req.destroy(Error('Upload deadline; outcome unknown, no retry')),timeoutSeconds*1000);
+    req.on('close',()=>clearTimeout(timer));req.on('error',error=>reject(Error('Upload failed after '+(Date.now()-started)+'ms: '+(error.code??error.message)+'; outcome unknown, no fallback or retry')));
     req.write(start);req.write(bytes);req.end(end);
   });
 }
@@ -147,7 +149,7 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
   const fresh=await json('/api/status');boardPeer(fresh.value,fresh.remote,peer);
   if(fresh.value.programming_latch!==false)throw Error('Programming state changed; no update');
   log({stage:'upload',path:route,image_bytes:identity.size});const started=now();let jobId=null;
-  if(route==='local')await upload(url,peer,bytes,identity);
+  if(route==='local')await upload(url,peer,bytes,identity,{timeoutSeconds});
   else {
     const staged=(await json('/api/firmware/fetch',{form:{url:manifest,sha256:manifestSha,targets:'1',apply:'false'}})).value;
     if(!Number.isSafeInteger(staged.job_id)||staged.job_id<1||staged.boot_id!==peer.boot)throw Error('Unknown fetch admission; inspect original job, no retry');

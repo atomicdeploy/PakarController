@@ -17,6 +17,10 @@ import 'peer_fixture.dart';
 
 class LifecycleApi extends PakarApi {
   int reads = 0, writes = 0;
+  int mappingReads = 0;
+  bool healthyWs = false;
+  @override
+  bool get liveFresh => healthyWs;
   bool failAfterWrite = false;
   final updates = StreamController<DeviceStatus>.broadcast();
   @override
@@ -29,7 +33,11 @@ class LifecycleApi extends PakarApi {
   }
 
   @override
-  Future<CellMap> mapping() async => CellMap.defaults();
+  Future<CellMap> mapping() async {
+    ++mappingReads;
+    return CellMap.defaults();
+  }
+
   @override
   Stream<DeviceStatus> liveStatus() => updates.stream;
   @override
@@ -62,6 +70,31 @@ class LifecycleApi extends PakarApi {
 }
 
 void main() {
+  testWidgets(
+    'Healthy WS avoids status polling but retains bounded mapping refresh',
+    (tester) async {
+      final api = LifecycleApi()..healthyWs = true;
+      await tester.pumpWidget(PakarControllerApp(api: api));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Table').last);
+      await tester.pumpAndSettle();
+      final reads = api.reads, maps = api.mappingReads;
+      for (var tick = 0; tick < 6; tick++) {
+        api.updates.add(peerFixture());
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pump();
+      }
+      // IndexedStack retains Connection preferences' independent five-second
+      // BoardSound capability probe. The root's six three-second status polls
+      // must be absent; optional settings reads are not a command preflight.
+      expect(api.reads, reads + 3);
+      expect(api.mappingReads, greaterThan(maps));
+      expect(find.text('No acknowledged board'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+    },
+  );
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     FlutterSecureStorage.setMockInitialValues({});

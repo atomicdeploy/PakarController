@@ -112,7 +112,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "const server=createServer",
-          "sha256": "6ad51c6e12c6be89f52ce31ab749309c40ee8411f919792ceb051a5c8944b068"
+          "sha256": "4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6"
         }
       ],
       "omissions": [
@@ -141,7 +141,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "Automatic updater plan/preflight",
-          "sha256": "6ad51c6e12c6be89f52ce31ab749309c40ee8411f919792ceb051a5c8944b068"
+          "sha256": "4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6"
         }
       ],
       "remaining": [
@@ -174,7 +174,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "await uploadImage(origin,peer,image,identity)",
-          "sha256": "6ad51c6e12c6be89f52ce31ab749309c40ee8411f919792ceb051a5c8944b068"
+          "sha256": "4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6"
         }
       ],
       "omissions": [
@@ -208,7 +208,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "Automatic updater plan/preflight",
-          "sha256": "6ad51c6e12c6be89f52ce31ab749309c40ee8411f919792ceb051a5c8944b068"
+          "sha256": "4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6"
         }
       ],
       "remaining": [
@@ -242,7 +242,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "13a93c7a67806f152c6337d20ad0cf022129678193edb06c20897e4fb3db4581"
+          "sha256": "ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003"
         }
       ],
       "omissions": [
@@ -357,7 +357,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "13a93c7a67806f152c6337d20ad0cf022129678193edb06c20897e4fb3db4581"
+          "sha256": "ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003"
         }
       ],
       "omissions": [
@@ -420,7 +420,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "13a93c7a67806f152c6337d20ad0cf022129678193edb06c20897e4fb3db4581"
+          "sha256": "ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003"
         }
       ],
       "omissions": [
@@ -582,7 +582,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "13a93c7a67806f152c6337d20ad0cf022129678193edb06c20897e4fb3db4581"
+          "sha256": "ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003"
         },
         {
           "path": "tools/deploy-artifact.mjs",
@@ -1397,7 +1397,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "13a93c7a67806f152c6337d20ad0cf022129678193edb06c20897e4fb3db4581"
+          "sha256": "ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003"
         }
       ],
       "omissions": [
@@ -1692,12 +1692,12 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware(",
-          "sha256": "13a93c7a67806f152c6337d20ad0cf022129678193edb06c20897e4fb3db4581"
+          "sha256": "ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003"
         },
         {
           "path": "tools/update-firmware.ps1",
           "anchor": "[ValidateSet('auto','local','remote')]",
-          "sha256": "1283c1277d91db96d5f62e500ca0d545b4eaca4416bdc62c5798f9826fba310d"
+          "sha256": "8b20589632be2c50f3097c071719eb1f0baf67fec5e331d8811f5fde74d3b8e4"
         }
       ],
       "omissions": [
@@ -1731,7 +1731,7 @@
         {
           "path": "tests/update_tool_test.mjs",
           "anchor": "for(const scenario of",
-          "sha256": "6ad51c6e12c6be89f52ce31ab749309c40ee8411f919792ceb051a5c8944b068"
+          "sha256": "4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6"
         },
         {
           "path": "tools/test-update.ps1",
@@ -3818,7 +3818,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "76d5a908f03fde73b50581dad79797556a52f4a14ca1b7d2177cf672fa8cb61a",
+      "sha256": "f36cbf2bdbb0603d20f12459491c6d91414b7118c30b3c72c775764970e5d664",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -3853,7 +3853,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "ff7cfa8f922697f0444df6c64753911fd13c12cc02fb7183839c979676f672cd",
+      "sha256": "53b36463d1289e472e7ec036368dbee0d450beaeb0a6989544246f799b9c864c",
       "anchor": "fn scoped_http_request("
     },
     {
@@ -3926,7 +3926,7 @@
     },
     {
       "path": "tests/peer_fence_test.mjs",
-      "sha256": "9b2c960f0bdb10d2a51dd9ad796607292cb32d1d5c645fa55e8ee60369111b0b",
+      "sha256": "9ae51e00dc2fc4c717b5da13fe83ac1711a977ca609f209ba943083f4c803256",
       "anchor": "Upload callbacks precede middleware"
     },
     {
@@ -3956,7 +3956,7 @@
     },
     {
       "path": "mobile/test/connection_lifecycle_test.dart",
-      "sha256": "6553ada29011f10be46293a2203180b8a1acbb3417108873ee45053eb4fad670",
+      "sha256": "db14570ff2c7bb93dc76839ca7f202c9e74b61e372bafc14a2c1533f0ca81e3d",
       "anchor": "Lost post-ACK readback stops bulk without discarding a fresh workspace"
     },
     {
@@ -3968,6 +3968,11 @@
       "path": "desktop/src/realtime.rs",
       "sha256": "8da360508e8835f18c8f51283fcdc2873536b6b288cce3c8418a5df63b09af0e",
       "anchor": "fn realtime_actual_ws_worker_delivers_receipt_without_http_or_poll_tick()"
+    },
+    {
+      "path": "mobile/test/live_realtime_test.dart",
+      "sha256": "6af0113cf86b6f20fc9e28405bf7fbeb26a66805b5cd12f9bdb4ba39571a00f8",
+      "anchor": "Explicit opt-in, real board mutation"
     },
     {
       "path": "mobile/test/realtime_transport_test.dart",
@@ -4044,7 +4049,7 @@
     },
     {
       "path": "tests/peer_fence_test.mjs",
-      "sha256": "9b2c960f0bdb10d2a51dd9ad796607292cb32d1d5c645fa55e8ee60369111b0b",
+      "sha256": "9ae51e00dc2fc4c717b5da13fe83ac1711a977ca609f209ba943083f4c803256",
       "anchor": "Upload callbacks precede middleware"
     },
     {
@@ -6100,7 +6105,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "76d5a908f03fde73b50581dad79797556a52f4a14ca1b7d2177cf672fa8cb61a",
+          "sha256": "f36cbf2bdbb0603d20f12459491c6d91414b7118c30b3c72c775764970e5d664",
           "anchor": "Future<bool> _command"
         },
         {
@@ -6399,7 +6404,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "76d5a908f03fde73b50581dad79797556a52f4a14ca1b7d2177cf672fa8cb61a",
+          "sha256": "f36cbf2bdbb0603d20f12459491c6d91414b7118c30b3c72c775764970e5d664",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -9527,7 +9532,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "ff7cfa8f922697f0444df6c64753911fd13c12cc02fb7183839c979676f672cd",
+          "sha256": "53b36463d1289e472e7ec036368dbee0d450beaeb0a6989544246f799b9c864c",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -9632,7 +9637,7 @@
       ],
       "targets": [
         {"path":"desktop/src/connection.rs","sha256":"38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6","anchor":"pub struct Gate"},
-        {"path":"desktop/src/main.rs","sha256":"ff7cfa8f922697f0444df6c64753911fd13c12cc02fb7183839c979676f672cd","anchor":"fn serial_worker("}
+        {"path":"desktop/src/main.rs","sha256":"53b36463d1289e472e7ec036368dbee0d450beaeb0a6989544246f799b9c864c","anchor":"fn serial_worker("}
       ],
       "omissions": [
         {"code":"Priority/background strip scheduling,750ms ACK bound, active-opcode wait diagnostics and delayed/concurrent exact ACK matching","disposition":"pending","reason":"A mutually exclusive route lease does not implement the donor's one-command-on-wire response scheduler or exact opcode/sequence ACK admission. Preserve these useful serial contracts for the hardware-matched host transport rather than declaring all session tests imported."},
@@ -9642,7 +9647,7 @@
       "proof": [
         {"path":"desktop/src/connection.rs","sha256":"38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6","anchor":"fn handoff_waits_for_all_actual_old_resources_and_rejects_stale_epoch()"},
         {"path":"desktop/src/connection.rs","sha256":"38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6","anchor":"fn usb_offline_never_admits_network_and_disconnect_revokes_everything()"},
-        {"path":"desktop/src/main.rs","sha256":"ff7cfa8f922697f0444df6c64753911fd13c12cc02fb7183839c979676f672cd","anchor":"fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"}
+        {"path":"desktop/src/main.rs","sha256":"53b36463d1289e472e7ec036368dbee0d450beaeb0a6989544246f799b9c864c","anchor":"fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"}
       ],
       "improvement": "User-required exclusive Wi-Fi-or-USB lifecycle replaces Both rather than silently falling back; physical resources retire before the new method opens. Source evidence only until guarded tests and runtime observations."
     },

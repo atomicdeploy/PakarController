@@ -218,8 +218,8 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp8266/src/UpdateProgress.h:30 [UTF8-LF sha256=c55548084de7f678c4391425eb58be186bf65701768a6ed38ec6c5d9047702e3; anchor=class Progress]`.
 - Target: `firmware/esp8266/esp8266.ino:1716 [UTF8-LF sha256=c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f; anchor=String localUpdateJson() {]`.
 - Target: `firmware/esp8266/src/RemoteFirmware.h:58 [UTF8-LF sha256=0a8ebbdae6a70f3023d6e41fac8763944437823f40e8906296035d8676d118d8; anchor=PakarUpdate::Observation progress() const]`.
-- Target: `tools/update-firmware.mjs:113 [UTF8-LF sha256=13a93c7a67806f152c6337d20ad0cf022129678193edb06c20897e4fb3db4581; anchor=export async function updateFirmware(]`.
-- Target: `tools/update-firmware.ps1:5 [UTF8-LF sha256=1283c1277d91db96d5f62e500ca0d545b4eaca4416bdc62c5798f9826fba310d; anchor=[ValidateSet('auto','local','remote')]]`.
+- Target: `tools/update-firmware.mjs:115 [UTF8-LF sha256=ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003; anchor=export async function updateFirmware(]`.
+- Target: `tools/update-firmware.ps1:5 [UTF8-LF sha256=8b20589632be2c50f3097c071719eb1f0baf67fec5e331d8811f5fde74d3b8e4; anchor=[ValidateSet('auto','local','remote')]]`.
 - Retained: Complete canonical donor documentation read through EOF and original-byte SHA matched the inventory. Adapted the actual measured-stage/unknown-denominator/verified-completion/no-write-replay contract, not the donor's AVRDUDE parser: local HTTP raw file bytes, remote download stage bytes, coherent async-to-loop snapshots, finite AVR scheduled text leases and separate client reboot/readback verification.
 - Retained: Local /update/info now uses boot-captured immutable image metadata rather than whole-image hashing on every progress poll. Status and WebSocket status/ping remain readable during local OTA; mutating commands remain inhibited. No authentication is enabled by the updater; it requires explicit auth-off readback before and after.
 - Retained: Automatic network tooling prefers verified local Async HTTP POST, otherwise advertised pinned Internet stage/separate apply before any write. Full new-boot running-image SHA256, same-peer WebSocket, auth-off and selected/running VALID slot are checked. No automatic fallback/replay after uncertain writes, no random IP/factory credentials or duplicate image files.
@@ -228,7 +228,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `Automatic USB flashing fallback`. Disposition: **pending**. Reason: A missing/uncertain LAN reply must not select a guessed COM port, chip, flash profile or erase/write operation. Existing inventoried USB tooling remains separate; a future automatic path must identify the physical chip and preserve rollback/settings before selecting a write.
 - Test-code evidence: `tests/update_progress_test.cpp:23 [UTF8-LF sha256=51902c5ebb3ee3fee27abe0c4326c6fe174c76a0f6863e730c2738c68fd3e145; anchor=Concurrent reader never observes]`.
 - Test-code evidence: `tests/front_panel_test.cpp:43 [UTF8-LF sha256=34a354dc1ae87cbae160047caa99f6d627fdfaf5ff2d9b2fb0d744ca3cce835f; anchor=The ESP's actual progress encoder]`.
-- Test-code evidence: `tests/update_tool_test.mjs:19 [UTF8-LF sha256=6ad51c6e12c6be89f52ce31ab749309c40ee8411f919792ceb051a5c8944b068; anchor=for(const scenario of]`.
+- Test-code evidence: `tests/update_tool_test.mjs:19 [UTF8-LF sha256=4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6; anchor=for(const scenario of]`.
 - Test-code evidence: `tools/test-update.ps1:13 [UTF8-LF sha256=d74589bdbe0b0279ca17a778332ae6680c535dc373f152c6d61d8adb697a553f; anchor=$taskPanelOutput=]`.
 - Remaining: ASUS SSH localhost:8022 refuses and ledboard.local is unresolved; no current S3/AVR contact, flash, auth setting change, current LAN/Internet speed benchmark or unplug acceptance. Test exact candidate on the identified board, compare measured transfer/reboot, verify persisted authentication off, active Async HTTP/WS and external-power/AP recovery before authorizing USB removal.
 - Remaining: Read and validate remaining donor update event/UI/native executor implementations. Host/loopback fixtures and an SDK build do not establish flash, interrupted-power, network contention, display ACK/presentation or optical acceptance.
@@ -946,14 +946,14 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `0148ea4aac3cf230050045756a4308157adf786a2b6ca2d4fd99bcf665a622c1`.
 
 - Target: `desktop/src/connection.rs:25 [UTF8-LF sha256=38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6; anchor=pub struct Gate]`.
-- Target: `desktop/src/main.rs:1347 [UTF8-LF sha256=ff7cfa8f922697f0444df6c64753911fd13c12cc02fb7183839c979676f672cd; anchor=fn serial_worker(]`.
+- Target: `desktop/src/main.rs:1348 [UTF8-LF sha256=53b36463d1289e472e7ec036368dbee0d450beaeb0a6989544246f799b9c864c; anchor=fn serial_worker(]`.
 - Retained: Fully read all489lines through EOF. Adapted queued-intent revocation/no-late-write and ownership-before/after admission assertions as Rust selected-method epoch tests. The production Gate keeps revoked owners until their resource leases drop and never admits a competing route or a second USB handle.
 - Retained: New main fixture invokes the actual HTTP worker against a live loopback listener while USB is selected, asserting zero accepted connections and zero failure events. This is an unexecuted source fixture reference until the guarded owner runs tests, not live USB or electrical proof.
 - Omitted/replaced code: `Priority/background strip scheduling,750ms ACK bound, active-opcode wait diagnostics and delayed/concurrent exact ACK matching`. Disposition: **pending**. Reason: A mutually exclusive route lease does not implement the donor's one-command-on-wire response scheduler or exact opcode/sequence ACK admission. Preserve these useful serial contracts for the hardware-matched host transport rather than declaring all session tests imported.
 - Omitted/replaced code: `PulseDTR cancellation/restoration/write exclusion and live physical port acquisition/late-close tests`. Disposition: **pending**. Reason: This pass intentionally adds no automatic reset and keeps AVR/ISP/audio deferred. Inactive DTR on Rust open is source configuration, not measured electrical behavior; OS acquisition/cancellation/retryable-close ownership still needs dedicated fake-handle and real-host acceptance.
 - Test-code evidence: `desktop/src/connection.rs:95 [UTF8-LF sha256=38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6; anchor=fn handoff_waits_for_all_actual_old_resources_and_rejects_stale_epoch()]`.
 - Test-code evidence: `desktop/src/connection.rs:83 [UTF8-LF sha256=38778812b8bf03975198808c672421f808a1486c402452473af3e63a83b0eda6; anchor=fn usb_offline_never_admits_network_and_disconnect_revokes_everything()]`.
-- Test-code evidence: `desktop/src/main.rs:3340 [UTF8-LF sha256=ff7cfa8f922697f0444df6c64753911fd13c12cc02fb7183839c979676f672cd; anchor=fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()]`.
+- Test-code evidence: `desktop/src/main.rs:3342 [UTF8-LF sha256=53b36463d1289e472e7ec036368dbee0d450beaeb0a6989544246f799b9c864c; anchor=fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()]`.
 - Scoped advantage: User-required exclusive Wi-Fi-or-USB lifecycle replaces Both rather than silently falling back; physical resources retire before the new method opens. Source evidence only until guarded tests and runtime observations.
 - Remaining: Run guarded native tests and verify selected USB causes no HTTP/DNS/SSDP/telemetry or second physical connection; validate bounded route retirement, dirty-draft protection and retired outcomes in actual runtime. Do not infer whole donor parity or electrical acceptance from Gate tests.
 
@@ -972,7 +972,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `priority requestAdmission, sequence/opcode-matched ACK/Error/events, reserved macro sequence, boot HELLO retry and recoverable decoder overflow tests`. Disposition: **pending**. Reason: HTTP fencing is not downstream AVR ACK/decoder ownership. These production behaviors and exact tests remain pending with USB/UART host integration.
 - Omitted/replaced code: `compact HELLO schemas/build stamp and DTR reset/inactive control-line tests`. Disposition: **pending**. Reason: Build stamp is not board/boot identity; numbered public generation negotiation conflicts with living API. Adapt additive identity and explicit one-shot reset policy with serial owner, without schema selectors/reset-on-connect.
 - Test-code evidence: `desktop/src/terminal_ui.rs:1373 [UTF8-LF sha256=cde3747be84b54a5a59894b73a07fb019b45cb103c58a1a8cfa0a7b968de13d5; anchor=fn shared_cli_mutation_inherits_pinned_epoch_headers()]`.
-- Test-code evidence: `tests/peer_fence_test.mjs:20 [UTF8-LF sha256=9b2c960f0bdb10d2a51dd9ad796607292cb32d1d5c645fa55e8ee60369111b0b; anchor=Upload callbacks precede middleware]`.
+- Test-code evidence: `tests/peer_fence_test.mjs:20 [UTF8-LF sha256=9ae51e00dc2fc4c717b5da13fe83ac1711a977ca609f209ba943083f4c803256; anchor=Upload callbacks precede middleware]`.
 - Test-code evidence: `desktop/src/peer_http.rs:341 [UTF8-LF sha256=c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da; anchor=fn gui_preflight_reboot_or_capability_loss_never_dispatches_mutation()]`.
 - Test-code evidence: `desktop/src/peer_http.rs:374 [UTF8-LF sha256=c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da; anchor=fn gui_readback_from_new_boot_is_not_applied()]`.
 - Test-code evidence: `desktop/src/peer_http.rs:433 [UTF8-LF sha256=c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da; anchor=fn gui_unfenced_mutation_fails_before_network_and_preserves_correlation()]`.
@@ -987,14 +987,14 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/terminal_ui.rs:765 [UTF8-LF sha256=cde3747be84b54a5a59894b73a07fb019b45cb103c58a1a8cfa0a7b968de13d5; anchor=fn command_request(]`.
 - Target: `mobile/lib/api.dart:469 [UTF8-LF sha256=9d00f5d27f48813c05ef9f777e347c6750537797d51a93c29352967577b4b196; anchor=bool _acceptIdentity(]`.
-- Target: `mobile/lib/main.dart:92 [UTF8-LF sha256=76d5a908f03fde73b50581dad79797556a52f4a14ca1b7d2177cf672fa8cb61a; anchor=api.onPeerChanged = ()]`.
+- Target: `mobile/lib/main.dart:94 [UTF8-LF sha256=f36cbf2bdbb0603d20f12459491c6d91414b7118c30b3c72c775764970e5d664; anchor=api.onPeerChanged = ()]`.
 - Target: `mobile/lib/bridge.dart:316 [UTF8-LF sha256=4fd40d999691968be1d32826a925a4bb221a5bd102c2a237ed947f6bf37b2be9; anchor=watchdog = Timer.periodic]`.
 - Target: `libraries/BoardCore/src/PeerFence.h:31 [UTF8-LF sha256=9f1ab63252bd881d2fc786e230a18db331e66708a1bd3ccd0f096d2d2b5d49d5; anchor=inline bool accepts(]`.
 - Target: `firmware/esp8266/src/WebAccess.h:68 [UTF8-LF sha256=7d5f61dd41c18aa9e74857e60f187c28be8e3902022ed4accad57f75a9384b5a; anchor=bool peerAllowed(]`.
 - Target: `firmware/esp8266/esp8266.ino:1218 [UTF8-LF sha256=c53f5d62e0264fc3db51e2de4b4de68e5a59257479bc0777cbd6f00809ac430f; anchor=bool authenticate()]`.
 - Target: `assets/web/peer-http.js:32 [UTF8-LF sha256=a56aca0f2a159a0bdf22f1db0bde8541aa745693282167c28d3a0d08cb6c67d3; anchor=function assertOwner(peer)]`.
 - Target: `desktop/src/peer_http.rs:76 [UTF8-LF sha256=c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da; anchor=pub fn admit(]`.
-- Target: `desktop/src/main.rs:603 [UTF8-LF sha256=ff7cfa8f922697f0444df6c64753911fd13c12cc02fb7183839c979676f672cd; anchor=fn scoped_http_request(]`.
+- Target: `desktop/src/main.rs:603 [UTF8-LF sha256=53b36463d1289e472e7ec036368dbee0d450beaeb0a6989544246f799b9c864c; anchor=fn scoped_http_request(]`.
 - Target: `desktop/src/usb_table.rs:72 [UTF8-LF sha256=5bb7a20e6da3326eb32ec0777fa12a264a059f68e5fc24ac2bf79984b3c0cab8; anchor=pub struct Admission]`.
 - Target: `mobile/lib/command_readback.dart:6 [UTF8-LF sha256=385f0a578be88fa4c2d5fccbcff8871f02d794b26d96f566e3146e7931414615; anchor=bool commandReadbackMatches(]`.
 - Target: `desktop/src/cell_batch.rs:11 [UTF8-LF sha256=87af5e8af0232ae625f87df38dba85822edbd3d175a2556a550aa5014190adad; anchor=pub struct Correlation]`.
@@ -1020,15 +1020,16 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `WithRequestWriteGuard final transport admission;750ms strip ACK/background priority and active-opcode slot diagnostics`. Disposition: **pending**. Reason: Selected-method lease checks precede normal Rust serial writes, retaining the old physical-owner lease until resource drop. Native HTTP now adapts donor queued priority selection, but USB request-priority scheduling, reserved macro sequence and single-inflight opcode/sequence ACK ownership remain pending; OS-inflight bytes are non-retractable. Rust USB/PnP close/open cancellation, timing and no-network handoff still require runtime acceptance.
 - Test-code evidence: `desktop/src/terminal_ui.rs:1064 [UTF8-LF sha256=cde3747be84b54a5a59894b73a07fb019b45cb103c58a1a8cfa0a7b968de13d5; anchor=fn same_hostname_reboot_revokes_drafts_and_old_receipts()]`.
 - Test-code evidence: `mobile/test/bridge_discovery_test.dart:36 [UTF8-LF sha256=bbab89f7a2066dfb60486f94fc7c3c7901c9129039dafa68dc88643580ca555b; anchor=Same-host board/boot replacement retires firmware owners synchronously]`.
-- Test-code evidence: `tests/peer_fence_test.mjs:20 [UTF8-LF sha256=9b2c960f0bdb10d2a51dd9ad796607292cb32d1d5c645fa55e8ee60369111b0b; anchor=Upload callbacks precede middleware]`.
+- Test-code evidence: `tests/peer_fence_test.mjs:20 [UTF8-LF sha256=9ae51e00dc2fc4c717b5da13fe83ac1711a977ca609f209ba943083f4c803256; anchor=Upload callbacks precede middleware]`.
 - Test-code evidence: `tests/web_peer_http_test.mjs:22 [UTF8-LF sha256=22781c401bb4eada048653ed6ab267b4d4daaeb04fd08e8acf839c41541faed2; anchor=Same-host reboot between draft creation and preflight]`.
 - Test-code evidence: `desktop/src/peer_http.rs:391 [UTF8-LF sha256=c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da; anchor=fn gui_revocation_during_preflight_stops_before_write()]`.
 - Test-code evidence: `desktop/src/peer_http.rs:411 [UTF8-LF sha256=c36cedacc8dd6748403f28e06e29e439ab88d6f331b384bad725f3325ceb07da; anchor=fn gui_revocation_after_dispatch_reports_uncertainty_not_success()]`.
 - Test-code evidence: `tests/web_access_fence_test.cpp:91 [UTF8-LF sha256=0142d2b4517669bbf77d2b22607223c891e0ad58e8f2555e9cffa2dab09afc0f; anchor=Real async queue + real fence recheck]`.
 - Test-code evidence: `desktop/src/usb_table.rs:177 [UTF8-LF sha256=5bb7a20e6da3326eb32ec0777fa12a264a059f68e5fc24ac2bf79984b3c0cab8; anchor=fn table_write_is_exact_boot_fenced_and_post_ack_values_are_not_assumed()]`.
-- Test-code evidence: `mobile/test/connection_lifecycle_test.dart:209 [UTF8-LF sha256=6553ada29011f10be46293a2203180b8a1acbb3417108873ee45053eb4fad670; anchor=Lost post-ACK readback stops bulk without discarding a fresh workspace]`.
+- Test-code evidence: `mobile/test/connection_lifecycle_test.dart:242 [UTF8-LF sha256=db14570ff2c7bb93dc76839ca7f202c9e74b61e372bafc14a2c1533f0ca81e3d; anchor=Lost post-ACK readback stops bulk without discarding a fresh workspace]`.
 - Test-code evidence: `desktop/src/ui/cell_table.rs:1166 [UTF8-LF sha256=1c8f772ec5173cca67896fe73c426c27503fbfc368d750202f28eaa4f6b4f40c; anchor=Even identical values require the exact operation ID]`.
 - Test-code evidence: `desktop/src/realtime.rs:333 [UTF8-LF sha256=8da360508e8835f18c8f51283fcdc2873536b6b288cce3c8418a5df63b09af0e; anchor=fn realtime_actual_ws_worker_delivers_receipt_without_http_or_poll_tick()]`.
+- Test-code evidence: `mobile/test/live_realtime_test.dart:8 [UTF8-LF sha256=6af0113cf86b6f20fc9e28405bf7fbeb26a66805b5cd12f9bdb4ba39571a00f8; anchor=Explicit opt-in, real board mutation]`.
 - Test-code evidence: `mobile/test/realtime_transport_test.dart:11 [UTF8-LF sha256=60c76f3162bac93dd5789991338e25c3329efd4467aeec83fc355c9a50fee79f; anchor=Real loopback transport]`.
 - Test-code evidence: `mobile/test/table_layout_test.dart:14 [UTF8-LF sha256=bb025bba766e3f31949039fc9f92867e9bb223b065e4f50ef41193c52dae6907; anchor=Cell commands and incoming state preserve both scroll axes and canvas position]`.
 - Test-code evidence: `tests/cloud_command_guard_test.cpp:28 [UTF8-LF sha256=2de44ca916fe1670eba11edeb706e88dfdafc4994d0a9d07301a279ef71c0581; anchor=Receipts::Conflict]`.
@@ -1120,7 +1121,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/capabilities.rs:43 [UTF8-LF sha256=094ec11b7f8ae8ea378e54c300c8ff218c323b987b1f882bd2fc3da84e433810; anchor=pub fn has(]`.
 - Target: `mobile/lib/peer_context.dart:35 [UTF8-LF sha256=29034a2318fe2af639db62328637b4c37580e1d7986b8e989820069a88d1db07; anchor=static PeerContext fromStatus]`.
-- Target: `mobile/lib/main.dart:348 [UTF8-LF sha256=76d5a908f03fde73b50581dad79797556a52f4a14ca1b7d2177cf672fa8cb61a; anchor=Future<bool> _command]`.
+- Target: `mobile/lib/main.dart:368 [UTF8-LF sha256=f36cbf2bdbb0603d20f12459491c6d91414b7118c30b3c72c775764970e5d664; anchor=Future<bool> _command]`.
 - Target: `libraries/BoardCore/src/DeviceContext.h:30 [UTF8-LF sha256=3e940f4ee3d09c482486b7321648f776ae6c480e92aaa564beb5dca12d9bfbfa; anchor=inline uint16_t features(]`.
 - Target: `firmware/esp8266/src/WebUi.h:733 [UTF8-LF sha256=3fe3b9ee36c2025be6ed746c60897d7e826658fbcdc77f72c5da3e58ec6a6b20; anchor=function peerAvailability(]`.
 - Retained: Actual connected AND have_status AND advertised-capability conjunction adapted to selected-peer fresh manifests. No feature inference from hostname, pixel count, catalog, defaults or online alone.
@@ -1296,7 +1297,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 
 - Target: `desktop/src/platform/windows_tray.rs:17 [UTF8-LF sha256=5f847993b6177d97f3b5fa6930f6b1acfd6e6e26dfb4fb51c58730f0d8a4ed2d; anchor=struct TooltipSync]`.
 - Target: `desktop/src/platform/windows_notifications.rs:103 [UTF8-LF sha256=0b39032fd9b88d51514b9cb39f0def7377016a6f073247404c1b1ccb67dcf550; anchor=fn tooltip_data(]`.
-- Target: `desktop/src/main.rs:2567 [UTF8-LF sha256=ff7cfa8f922697f0444df6c64753911fd13c12cc02fb7183839c979676f672cd; anchor=event_log.failure("Windows tray tooltip", &error)]`.
+- Target: `desktop/src/main.rs:2569 [UTF8-LF sha256=53b36463d1289e472e7ec036368dbee0d450beaeb0a6989544246f799b9c864c; anchor=event_log.failure("Windows tray tooltip", &error)]`.
 - Retained: Full donor plan read through EOF as source requirements, not trusted commands. Generic existing tray lifecycle/menu/disposal retained; actual windows.rs NIM_MODIFY/TIP sections read and adapted to the owned GUID rather than duplicate registration. Tooltip Shell acceptance is separated from object presence; failed writes retain pending latest state with bounded retry/incident recovery and observed restart epoch invalidation.
 - Omitted/replaced code: `Playback percent/error/paused inputs, media thumbnail toolbar Previous/Play/Next/Mute and video-only iconic clipping`. Disposition: **not-applicable**. Reason: Pakar is explicitly mpv-free and owns controller operations, not playback/chapter/video. No synthetic media percentages or nonexistent actions are imported; actual pending-operation activity remains.
 - Omitted/replaced code: `Full root taskbar initialization/retry, thumbnail toolbar lifecycle, visible tray/menu/notification clicks and all Windows shell suite acceptance`. Disposition: **pending**. Reason: This fixes only GUID-bound tooltip synchronization on an already owned tray object. Mock clocks, NOTIFYICONDATA assertions and observed restart messages cannot certify complete root shell readiness or user-visible action delivery.
@@ -1472,7 +1473,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `desktop/src/brand_image.rs:25 [UTF8-LF sha256=ab71607dcde16d7af14b0a292982f902186dacf6b5b78b3f4c983e37464428e9; anchor=pub fn native_icon_bytes]`.
 - Target: `docs/BRANDING-PARITY.md:60 [UTF8-LF sha256=0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3; anchor=## Explicit unfinished useful code and reasons]`.
 - Target: `desktop/src/branding.rs:8 [UTF8-LF sha256=100940d0ee954ecfeb059dba83245c37c4e1e325d9309c7c82870e4eb870870a; anchor=pub fn sync_peer]`.
-- Target: `mobile/lib/main.dart:563 [UTF8-LF sha256=76d5a908f03fde73b50581dad79797556a52f4a14ca1b7d2177cf672fa8cb61a; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
+- Target: `mobile/lib/main.dart:583 [UTF8-LF sha256=f36cbf2bdbb0603d20f12459491c6d91414b7118c30b3c72c775764970e5d664; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
 - Target: `mobile/lib/application_artwork.dart:2 [UTF8-LF sha256=a1ee8fc15b0aa9111a5c416fcf74b3d05093b22e47b76d7744837f175f7b5ef4; anchor=const applicationArtworkBase64]`.
 - Retained: Actual icon_data_from_bytes imported unchanged; one embedded PNG supplies native/Web artwork without disk caches.
 - Retained: Actual native_icon_bytes seven-frame ICO encoding/master preservation/Lanczos3 resampling and shell derivative test adapted to shared supplied bytes and PNG-only decoder.
@@ -2393,7 +2394,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `0f40d6726756d86f30b82dac4fbe8fe11a5dc85ecba2cf8d68f5cb6771da0229`.
 
 - Target: `docs/SCRIPT-TOOLING.md:94 [UTF8-LF sha256=2d00287f8b0f2f657f04593550d17eee28a36238ef815264f251965b426984fc; anchor=Actual PU850 source import]`.
-- Target: `tools/update-firmware.mjs:113 [UTF8-LF sha256=13a93c7a67806f152c6337d20ad0cf022129678193edb06c20897e4fb3db4581; anchor=export async function updateFirmware]`.
+- Target: `tools/update-firmware.mjs:115 [UTF8-LF sha256=ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003; anchor=export async function updateFirmware]`.
 - Retained: Read full .NET documented upload/download/watch/backup/timeouts and platform outputs. Map one-shot preflight/identity/postboot behavior to the existing updater; document remaining download/resume/watch and package gaps rather than substituting a second client.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
 - Omitted/replaced code: `Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup`. Disposition: **pending**. Reason: One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open.
@@ -2439,7 +2440,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `92c5355d3cbb855acbb60352b9250926e94856905a7845ecaf541489db5bc2d7`.
 
 - Target: `docs/SCRIPT-TOOLING.md:94 [UTF8-LF sha256=2d00287f8b0f2f657f04593550d17eee28a36238ef815264f251965b426984fc; anchor=Actual PU850 source import]`.
-- Target: `tools/update-firmware.mjs:113 [UTF8-LF sha256=13a93c7a67806f152c6337d20ad0cf022129678193edb06c20897e4fb3db4581; anchor=export async function updateFirmware]`.
+- Target: `tools/update-firmware.mjs:115 [UTF8-LF sha256=ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003; anchor=export async function updateFirmware]`.
 - Retained: Read full WinHTTP/puff/gzip/manifest, cached DNS, no-replay, atomic resume, auth and exit contracts. Retain host identity/no-replay/integrity concepts; clearly distinguish Windows cross-builds from actual Linux-native outputs.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
 - Omitted/replaced code: `Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup`. Disposition: **pending**. Reason: One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open.
@@ -2455,14 +2456,14 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `176dabcb53d4b1db79c4493b08958e1d1b0546151f6046603e589bd534308bb9`.
 
 - Target: `tests/script_tooling_test.mjs:66 [UTF8-LF sha256=cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1; anchor=const cliPlan=]`.
-- Target: `tests/update_tool_test.mjs:78 [UTF8-LF sha256=6ad51c6e12c6be89f52ce31ab749309c40ee8411f919792ceb051a5c8944b068; anchor=await uploadImage(origin,peer,image,identity)]`.
+- Target: `tests/update_tool_test.mjs:79 [UTF8-LF sha256=4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6; anchor=await uploadImage(origin,peer,image,identity)]`.
 - Retained: Adapt loopback/subprocess fixture structure and fail-before-contact/integrity assertions without requiring a WinHTTP executable or Python test server. Existing updater fixtures exercise actual multipart bytes and fragmented WS; new CLI subprocess fixtures exercise offline/invalid argument behavior.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
 - Omitted/replaced code: `Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup`. Disposition: **pending**. Reason: One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open.
 - Omitted/replaced code: `Build and distribute parallel .NET/WinHTTP/Go ASA clients`. Disposition: **replaced**. Reason: Pakar already owns Rust and Flutter applications and the standard-library Node updater. Avoid three duplicate client stacks/SDK caches; reusable command/preflight/transfer contracts are mapped separately.
 - Test-code evidence: `tests/script_tooling_test.mjs:100 [UTF8-LF sha256=cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1; anchor=Script tooling:]`.
 - Test-code evidence: `tests/script_tooling_test.ps1:26 [UTF8-LF sha256=d3c679d8caa22177e7a5590564cd1141b84e1b194b3c3ee0bb825c26a4d46305; anchor=PowerShell utilities parse]`.
-- Test-code evidence: `tests/update_tool_test.mjs:92 [UTF8-LF sha256=6ad51c6e12c6be89f52ce31ab749309c40ee8411f919792ceb051a5c8944b068; anchor=Automatic updater plan/preflight]`.
+- Test-code evidence: `tests/update_tool_test.mjs:93 [UTF8-LF sha256=4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6; anchor=Automatic updater plan/preflight]`.
 - Remaining: Implement and exercise watch/resume/export/pre-update-backup contracts and remaining donor negative cases.
 - Remaining: Verify full native distributable/platform parity; Windows cross-build output is not Linux-native execution.
 - Remaining: No physical deployment, full client distribution or donor-wide completion is inferred from source or fixtures.
@@ -2502,7 +2503,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `d9142cd0128d3b963259c9eaaf5afc179c120d232f9d80d6e401591ecac6bb40`.
 
 - Target: `docs/SCRIPT-TOOLING.md:94 [UTF8-LF sha256=2d00287f8b0f2f657f04593550d17eee28a36238ef815264f251965b426984fc; anchor=Actual PU850 source import]`.
-- Target: `tools/update-firmware.mjs:113 [UTF8-LF sha256=13a93c7a67806f152c6337d20ad0cf022129678193edb06c20897e4fb3db4581; anchor=export async function updateFirmware]`.
+- Target: `tools/update-firmware.mjs:115 [UTF8-LF sha256=ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003; anchor=export async function updateFirmware]`.
 - Retained: Read full standard-library client, atomic verified download, backup/resume/watch, auth and multi-target build contract. Retain bounded verification and hostname caching intent in the existing updater; no claim that read-only export loops are a resumable CLI backup command.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
 - Omitted/replaced code: `Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup`. Disposition: **pending**. Reason: One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open.
@@ -2517,7 +2518,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `e90a5cc82b0f88bb9178739c02885dd4aaf49167b77cfbf8de17d8aed87c26e8`.
 
-- Target: `tools/update-firmware.mjs:113 [UTF8-LF sha256=13a93c7a67806f152c6337d20ad0cf022129678193edb06c20897e4fb3db4581; anchor=export async function updateFirmware]`.
+- Target: `tools/update-firmware.mjs:115 [UTF8-LF sha256=ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003; anchor=export async function updateFirmware]`.
 - Target: `tools/deploy-artifact.mjs:15 [UTF8-LF sha256=0710b78d5359b0d6ece4dd48f9129acebe1809c370ed4bb6b6767fd4917bf55d; anchor=export function verifiedArtifact]`.
 - Retained: Retain stable help/exit, quiet output, explicit validation and safe transfer intent. Document the Pakar updater's current contract and guarded entrypoints; do not claim documented donor watch/resume/backup behavior is already implemented.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
@@ -2572,7 +2573,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `3d3d067426480bb0a2137ffb7f8fa74d7378362c237f573b923f6dd82298d9d0`.
 
 - Target: `tools/script-console.mjs:7 [UTF8-LF sha256=07eae8bf2af2e896bd2a9655c79a8ae1b8f2224e8608d09bc6ecc4e4d9611dbd; anchor=export function sanitizeText]`.
-- Target: `tools/update-firmware.mjs:113 [UTF8-LF sha256=13a93c7a67806f152c6337d20ad0cf022129678193edb06c20897e4fb3db4581; anchor=export async function updateFirmware]`.
+- Target: `tools/update-firmware.mjs:115 [UTF8-LF sha256=ee50c98f7082508c63f9e9570639a704b9a04a15b468825f7b0d124f5b710003; anchor=export async function updateFirmware]`.
 - Retained: Import actual logger, terminal sanitizer, stable exit categories, quiet/color rules and argv/preflight concepts into script-console.mjs/pakar.mjs. Correct OSC-before-ESC regex ordering and redirected stderr coloring. Existing updater retains hostname/TCP identity pinning, no uncertain-write replay and full postboot verification.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
 - Omitted/replaced code: `Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup`. Disposition: **pending**. Reason: One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open.
@@ -2586,13 +2587,13 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `02842871c7f5c1285b57c1cc2392d655df848ef993c138f6a6c11b9779bf0778`.
 
 - Target: `tests/script_tooling_test.mjs:66 [UTF8-LF sha256=cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1; anchor=const cliPlan=]`.
-- Target: `tests/update_tool_test.mjs:63 [UTF8-LF sha256=6ad51c6e12c6be89f52ce31ab749309c40ee8411f919792ceb051a5c8944b068; anchor=const server=createServer]`.
+- Target: `tests/update_tool_test.mjs:63 [UTF8-LF sha256=4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6; anchor=const server=createServer]`.
 - Retained: Adapt actual subprocess execution and no-device-contact assertions into script_tooling_test.mjs for offline raw-image planning and invalid mode rejection. Existing real loopback multipart/WS updater fixtures retain exact byte/length/hash/admission and postboot checks, not ASA response parsing.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
 - Omitted/replaced code: `Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup`. Disposition: **pending**. Reason: One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open.
 - Test-code evidence: `tests/script_tooling_test.mjs:100 [UTF8-LF sha256=cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1; anchor=Script tooling:]`.
 - Test-code evidence: `tests/script_tooling_test.ps1:26 [UTF8-LF sha256=d3c679d8caa22177e7a5590564cd1141b84e1b194b3c3ee0bb825c26a4d46305; anchor=PowerShell utilities parse]`.
-- Test-code evidence: `tests/update_tool_test.mjs:92 [UTF8-LF sha256=6ad51c6e12c6be89f52ce31ab749309c40ee8411f919792ceb051a5c8944b068; anchor=Automatic updater plan/preflight]`.
+- Test-code evidence: `tests/update_tool_test.mjs:93 [UTF8-LF sha256=4977ede6780cbab0e684c9d103a496f27d595648998a85cf3d2bdfd99007cff6; anchor=Automatic updater plan/preflight]`.
 - Remaining: Implement and exercise watch/resume/export/pre-update-backup contracts and remaining donor negative cases.
 - Remaining: No physical deployment, full client distribution or donor-wide completion is inferred from source or fixtures.
 

@@ -70,6 +70,8 @@ class _ControlShellState extends State<ControlShell>
   Timer? liveRetry;
   Timer? expiry;
   int? refreshingRevision;
+  int? mappingRevision;
+  int mappingTicks = 0;
   int observation = 0;
   int liveGeneration = 0;
   String? incident;
@@ -116,6 +118,10 @@ class _ControlShellState extends State<ControlShell>
     fallback = Timer.periodic(const Duration(seconds: 3), (_) {
       if (api.connectionWanted && !api.liveFresh) {
         unawaited(_refresh(silent: true));
+      } else if (api.connectionWanted &&
+          !commandPending &&
+          (!mapping.valid || ++mappingTicks >= 5)) {
+        unawaited(_syncMapping());
       }
     });
     await _refresh();
@@ -193,22 +199,8 @@ class _ControlShellState extends State<ControlShell>
         return;
       }
       _observe(value);
-      final accepted = observation;
       if (value.peer.table && (!mapping.valid || !silent)) {
-        try {
-          final next = await api.mapping();
-          if (mounted &&
-              owner == api.connectionRevision &&
-              accepted == observation) {
-            setState(() => mapping = next);
-          }
-        } on Exception {
-          if (mounted &&
-              owner == api.connectionRevision &&
-              accepted == observation) {
-            // A failed optional refresh does not erase this peer's confirmed map.
-          }
-        }
+        await _syncMapping();
       }
       if (!mounted || owner != api.connectionRevision) return;
       setState(() {
@@ -222,6 +214,34 @@ class _ControlShellState extends State<ControlShell>
       }
     } finally {
       if (refreshingRevision == owner) refreshingRevision = null;
+    }
+  }
+
+  Future<void> _syncMapping() async {
+    final owner = api.connectionRevision, peer = status;
+    if (!mounted ||
+        !api.connectionWanted ||
+        peer?.peer.table != true ||
+        mappingRevision == owner) {
+      return;
+    }
+    mappingRevision = owner;
+    mappingTicks = 0;
+    try {
+      final next = await api.mapping();
+      if (mounted &&
+          owner == api.connectionRevision &&
+          status?.peer.table == true &&
+          peer!.hostname == status?.hostname &&
+          peer.json['board_id'] == status?.json['board_id'] &&
+          peer.json['boot_id'] == status?.json['boot_id']) {
+        // Fresh same-peer WS ticks must not invalidate an in-flight map read.
+        setState(() => mapping = next);
+      }
+    } on Exception {
+      // Optional read failures do not erase this same boot's confirmed map.
+    } finally {
+      if (mappingRevision == owner) mappingRevision = null;
     }
   }
 

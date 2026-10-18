@@ -975,6 +975,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 .insert("Sec-WebSocket-Protocol", "arduino".parse().unwrap());
             let (mut socket, _) = tungstenite::connect(request).map_err(|e| e.to_string())?;
             if let tungstenite::stream::MaybeTlsStream::Plain(stream) = socket.get_mut() {
+                stream.set_nodelay(true).map_err(|e| e.to_string())?;
                 stream
                     .set_read_timeout(Some(Duration::from_millis(40)))
                     .map_err(|e| e.to_string())?;
@@ -2261,7 +2262,8 @@ impl PakarControllerApp {
                 Event::Status(s) => {
                     if realtime::older_than(&s,self.status.as_ref()) { continue; }
                     if !s.hostname.is_empty() {
-                        if self.status.as_ref().is_some_and(|old|old.cells!=s.cells) {
+                        if self.status.as_ref().is_some_and(|old|old.cells!=s.cells || old.effect!=s.effect ||
+                            old.mode!=s.mode || old.brightness!=s.brightness || old.led_output["enabled"]!=s.led_output["enabled"]) {
                             self.table.pixel_sample=None; // Old RGB must not mask a new acknowledged semantic state.
                         }
                         if self.http_tx.observe(&s) { self.revoke_http_drafts(); }
