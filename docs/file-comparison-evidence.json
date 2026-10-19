@@ -41,7 +41,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C++ transfer and UART, 2026-10-19"
       }
     ],
@@ -115,7 +115,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C++ transfer and UART, 2026-10-19"
       }
     ],
@@ -185,7 +185,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C++ transfer and UART, 2026-10-19"
       }
     ],
@@ -248,25 +248,31 @@
     "targets": [
       {
         "path": "tools/script-console.mjs",
-        "sha256": "07eae8bf2af2e896bd2a9655c79a8ae1b8f2224e8608d09bc6ecc4e4d9611dbd",
+        "sha256": "2243be58e4dce21a7592865121e94ebdb64f21286f3333358c8259bb2bdedafb",
         "anchor": "export function createLogger("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
-    "proof": [],
+    "proof": [
+      {
+        "path": "tests/script_tooling_test.mjs",
+        "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498",
+        "anchor": "const independent=createLogger("
+      }
+    ],
     "omissions": [
       {
         "code": "TransferProgress independent streams/redirected10percent/bar; PollProgress spinner",
         "disposition": "pending",
-        "reason": "Independent stderr colors, redirected progress buckets/bar/spinner refinements remain useful pending; current stronger control/OSC sanitation and per-stream logger are retained."
+        "reason": "Redirected progress buckets/bar/spinner remain useful pending. Actual C# independent stdout/stderr color policy is now imported into current Node logger with both redirection directions and NO_COLOR/TERM=dumb/JSON fixtures; stronger control/OSC sanitation retained."
       }
     ],
     "remaining": [
-      "Independent stderr colors, redirected progress buckets/bar/spinner refinements remain useful pending; current stronger control/OSC sanitation and per-stream logger are retained."
+      "Redirected progress buckets/bar/spinner remain useful pending. Actual C# independent stdout/stderr color policy is now imported into current Node logger with both redirection directions and NO_COLOR/TERM=dumb/JSON fixtures; stronger control/OSC sanitation retained."
     ],
     "source_blob": {
       "repository": "atomicdeploy/pu850-esp",
@@ -305,7 +311,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -369,7 +375,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -427,7 +433,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -476,7 +482,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -527,7 +533,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -597,7 +603,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -670,7 +676,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -723,7 +729,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -783,7 +789,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -856,7 +862,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -942,7 +948,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -995,7 +1001,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1040,7 +1046,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1080,7 +1086,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1122,7 +1128,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1164,7 +1170,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1211,7 +1217,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1264,7 +1270,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1317,7 +1323,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1359,7 +1365,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1411,7 +1417,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1453,7 +1459,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1486,7 +1492,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1534,7 +1540,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1580,7 +1586,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1628,7 +1634,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1674,7 +1680,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1721,7 +1727,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1780,7 +1786,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1847,7 +1853,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1912,7 +1918,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1976,7 +1982,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -2063,7 +2069,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       },
       {
@@ -2124,7 +2130,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -2177,7 +2183,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2214,7 +2220,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2248,7 +2254,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2283,7 +2289,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2340,7 +2346,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2385,7 +2391,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2422,7 +2428,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2459,7 +2465,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2494,7 +2500,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2531,7 +2537,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2575,7 +2581,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2609,7 +2615,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2643,7 +2649,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2684,7 +2690,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2731,7 +2737,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2773,7 +2779,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2808,7 +2814,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2850,7 +2856,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2891,7 +2897,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2934,7 +2940,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -5511,6 +5517,11 @@
       "path": "Tool/upload.test.js",
       "sha256": "02842871c7f5c1285b57c1cc2392d655df848ef993c138f6a6c11b9779bf0778",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 568,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["All14 tests, all fixture/server/subprocess/cleanup/multipart/hash helpers and every callback/error/timeout/assertion","md5","fixture","readBody","parseMultipart","infoResponse","firmwareHeaders","startServer","runCli","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -5526,7 +5537,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "const cliPlan=",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/update_tool_test.mjs",
@@ -5550,7 +5561,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -5573,6 +5584,11 @@
       "path": "Tool/C++/tests/integration_test.py",
       "sha256": "176dabcb53d4b1db79c4493b08958e1d1b0546151f6046603e589bd534308bb9",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 424,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["All MockServer/MockHandler properties/auth/header/HTTP methods; every server/process/build/check/manifest/backup/skip/ACK/posthash/fallback/resume/corrupt assertion","md5","__init__","mock","log_message","authenticated","reply","firmware_headers","send_info","do_HEAD","do_GET","do_POST","start_server","stop_server","run","write_build","main","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -5588,7 +5604,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "const cliPlan=",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/update_tool_test.mjs",
@@ -5617,7 +5633,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -5641,6 +5657,11 @@
       "path": "Tool/Go/README.md",
       "sha256": "d9142cd0128d3b963259c9eaaf5afc179c120d232f9d80d6e401591ecac6bb40",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 120,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every README selection/wire/upload/download/watch/auth/timeout/exit/build/test/license section","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -5685,7 +5706,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -5704,6 +5725,11 @@
       "path": "Tool/package-lock.json",
       "sha256": "8d20a728050e85d69d3291c04beb0002056384782a795dc954b4fe8fe3355237",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 58,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every root/Chalk5.6.2/Chokidar5.0.0/readdirp5.0.0 version/integrity/engine/license/funding record","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -5719,7 +5745,7 @@
         {
           "path": "tools/script-console.mjs",
           "anchor": "export function createLogger",
-          "sha256": "07eae8bf2af2e896bd2a9655c79a8ae1b8f2224e8608d09bc6ecc4e4d9611dbd"
+          "sha256": "2243be58e4dce21a7592865121e94ebdb64f21286f3333358c8259bb2bdedafb"
         },
         {
           "path": "tools/pakar.mjs",
@@ -5738,7 +5764,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -5756,6 +5782,11 @@
       "path": "Tool/C#/README.md",
       "sha256": "0f40d6726756d86f30b82dac4fbe8fe11a5dc85ecba2cf8d68f5cb6771da0229",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 114,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every README selection/wire/upload/download/watch/auth/timeout/exit/build/test/license section","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -5800,7 +5831,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -5819,6 +5850,11 @@
       "path": "Tool/C++/README.md",
       "sha256": "92c5355d3cbb855acbb60352b9250926e94856905a7845ecaf541489db5bc2d7",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 141,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every README selection/wire/upload/download/watch/auth/timeout/exit/build/test/license section","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -5863,7 +5899,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -5882,6 +5918,11 @@
       "path": ".vscode/arduino-cli.yaml",
       "sha256": "862e8979a82f1ecf8226b1762e72c265b15bb126275db3fabb8563c7473e6320",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 4,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Complete ESP8266 board-manager index configuration","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -5916,7 +5957,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -5934,6 +5975,11 @@
       "path": "sketch.yaml",
       "sha256": "54df8b54e56a589f85b981f15996813e447fc14245ea8048c5f87cfd1f3fdf51",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 17,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every profile/FQBN/core/index/library pin/LocalLib record","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -5968,7 +6014,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -5986,6 +6032,11 @@
       "path": "Tool/NODE-UPLOADER.md",
       "sha256": "e90a5cc82b0f88bb9178739c02885dd4aaf49167b77cfbf8de17d8aed87c26e8",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 109,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every README selection/wire/upload/download/watch/auth/timeout/exit/build/test/license section","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6025,7 +6076,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6043,6 +6094,11 @@
       "path": "Tool/README.md",
       "sha256": "02d192de780df4199c722c8b314aabdb68a67f1a4cf8790f83f687f5e3ae7985",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 87,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every README selection/wire/upload/download/watch/auth/timeout/exit/build/test/license section","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6082,7 +6138,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6100,6 +6156,11 @@
       "path": "Tool/Go/build.ps1",
       "sha256": "7a7d58167051cdfa2bab660a4128d0b29400c17a653bdf751226f86607da246a",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 76,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every helper/option/default/preflight/environment/CI/clean containment/build/test/stage/checksum/report/error/cleanup branch; see exact per-file function table","Invoke","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6139,7 +6200,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6158,6 +6219,11 @@
       "path": "Tool/Go/build.sh",
       "sha256": "746e6667fba804bce07d90acf6bf370e0f7b62100c83d806cf057ef77f600ff7",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 30,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every helper/option/default/preflight/environment/CI/clean containment/build/test/stage/checksum/report/error/cleanup branch; see exact per-file function table","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6197,7 +6263,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6216,6 +6282,11 @@
       "path": "Tool/package.json",
       "sha256": "60754d1116254eeac6b10e626c2e2b4506e60ad3ecd0296ce59645d63858e540",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 18,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every engine/module/name/private/lint/test/check/Chalk/Chokidar record","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6231,7 +6302,7 @@
         {
           "path": "tools/script-console.mjs",
           "anchor": "export const EXIT",
-          "sha256": "07eae8bf2af2e896bd2a9655c79a8ae1b8f2224e8608d09bc6ecc4e4d9611dbd"
+          "sha256": "2243be58e4dce21a7592865121e94ebdb64f21286f3333358c8259bb2bdedafb"
         },
         {
           "path": ".github/workflows/build.yml",
@@ -6250,7 +6321,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6268,6 +6339,11 @@
       "path": "Tool/C#/build.ps1",
       "sha256": "f3e6a8ed2eae52c8ab7f1f178b85c3a1fe4ad2a85bce2a27a67a0b1c07a24d6c",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 70,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every helper/option/default/preflight/environment/CI/clean containment/build/test/stage/checksum/report/error/cleanup branch; see exact per-file function table","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6307,7 +6383,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6326,6 +6402,11 @@
       "path": "Tool/C++/build.ps1",
       "sha256": "7379ae908f01676ed3db145f11579bb2bf07b79a7b5da2bdfe3cc8baa172e297",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 44,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every helper/option/default/preflight/environment/CI/clean containment/build/test/stage/checksum/report/error/cleanup branch; see exact per-file function table","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6365,7 +6446,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6384,6 +6465,11 @@
       "path": "Tool/C++/build.sh",
       "sha256": "0af1f4b0ba2a7014d7f0938f69885b7d7a46763513408058cffeab4772d5827d",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 109,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every helper/option/default/preflight/environment/CI/clean containment/build/test/stage/checksum/report/error/cleanup branch; see exact per-file function table","usage","build_one","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6423,7 +6509,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6442,6 +6528,11 @@
       "path": ".github/dependabot.yml",
       "sha256": "f418e551baccfcd1b21210c0c45fd5d4e75de0906e4e9aef8977e1a6368b9265",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 27,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every daily Actions/weekly Tool npm schedule, prefix, label and PR limit","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6471,7 +6562,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6489,6 +6580,11 @@
       "path": ".vscode/prebuild.cmd",
       "sha256": "c4473c19a749ee6e70d5f321959524162806e7a2456175966ccf3ae918a14afc",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 65,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every helper/option/default/preflight/environment/CI/clean containment/build/test/stage/checksum/report/error/cleanup branch; see exact per-file function table","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6518,7 +6614,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6536,6 +6632,11 @@
       "path": ".vscode/prebuild.sh",
       "sha256": "d2c1857bd842c3219b50a858b4a6331afdc9018eadc7c610c7bf1e87f9ae076a",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 67,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every helper/option/default/preflight/environment/CI/clean containment/build/test/stage/checksum/report/error/cleanup branch; see exact per-file function table","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6565,7 +6666,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6583,6 +6684,11 @@
       "path": ".github/workflows/tooling.yml",
       "sha256": "06b31df1731e5ab45fb0f1c714f95c46470cf1006f6c50150dc9a461d95a52d0",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 170,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every trigger/permission/concurrency/Node/Go/.NET/Windows C++/MinGW job and step","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6617,7 +6723,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6635,6 +6741,11 @@
       "path": ".github/workflows/update-dependencies.yml",
       "sha256": "b157e47dc961e437bdf4aa22c1f95a31f38a99cff01b6544edff4563c011e16a",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 385,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every schedule/input/permission/check/apply/parse/output/dynamic PR title/labels/body/table/createPR/summary/cleanup/disabled legacy summary","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6669,7 +6780,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6687,6 +6798,11 @@
       "path": ".github/workflows/upload.yml",
       "sha256": "478acaff966c65549cd691c160dee24a635136b87f082b0cd3477710bf3ca8b7",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 197,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every trigger/manual/wait/input/permission/enable/secret/checkout/run selection/artifact/install/upload/summary branch","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6721,7 +6837,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6739,6 +6855,11 @@
       "path": "Tool/build-all.ps1",
       "sha256": "441ecba0c01223a1b91679cb531fccb37bb339b1938f196524489afdc53fa5b2",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 239,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every selection/HashSet/preflight/argv/working-directory/clean containment/Node/Go/CSharp/Cpp/elapsed branch","Write","Assert","Invoke","Remove","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6778,7 +6899,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6796,6 +6917,11 @@
       "path": "Tool/upload.js",
       "sha256": "3d3d067426480bb0a2137ffb7f8fa74d7378362c237f573b923f6dd82298d9d0",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 1114,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["All constants/options/errors/classes, EndpointResolver methods, logger/parser, manifest/gzip, HTTP/TLS/body/retry, metadata/multipart/verify, strict hash/range/part/publication, performUpload/Download/redact/watch/signal/main/entrypoint branches","createLogger","usage","optionValue","parseArguments","normalizeManifestName","parseStrictManifest","md5Hex","readFileAsInput","prepareFirmware","sanitizeDeviceText","isRetryableNetworkError","commonHeaders","requestAttempt","requestBuffer","endpoint","statusBody","parseHashCandidate","parseInfoHash","fetchFirmwareInfo","multipartBody","uploadCompressedFirmware","delay","verifyAfterReboot","parseContentLength","parseHeaderMd5","collectDownloadHashes","pathSize","writePart","removePart","verifiedDownload","initializeResolver","performUpload","performDownload","redactSecrets","runWatch","main","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6811,7 +6937,7 @@
         {
           "path": "tools/script-console.mjs",
           "anchor": "export function sanitizeText",
-          "sha256": "07eae8bf2af2e896bd2a9655c79a8ae1b8f2224e8608d09bc6ecc4e4d9611dbd"
+          "sha256": "2243be58e4dce21a7592865121e94ebdb64f21286f3333358c8259bb2bdedafb"
         },
         {
           "path": "tools/update-firmware.mjs",
@@ -6835,7 +6961,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6853,6 +6979,11 @@
       "path": ".github/workflows/build.yml",
       "sha256": "49d608184ca52242cc845026d05384081669eec57007733f43ede09539c79cb6",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 304,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every trigger/checkout/config/platform/library fallback/build/artifact/metadata/hash/size/config/URL retry/flash bars/report/verification instruction","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6887,7 +7018,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6905,13 +7036,21 @@
       "path": "build.cmd",
       "sha256": "a2361ded706871a3f67f25ef572cb73cdf025e98c838185fb1346f589f4b4f72",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 400,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every helper/option/default/preflight/environment/CI/clean containment/build/test/stage/checksum/report/error/cleanup branch; see exact per-file function table","rejectSecretFlag","ensureCommandExists","parseVersion","compareVersions","ensureArduinoCliVersion","elapsedTime","displayError","displayWarning","displayInfo","displaySuccess","parseArgs","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
         "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
         "git_sha": "3fc49f073c81a2b3a02ccf1f38ce0920aa7d9897",
-        "sha256": "a2361ded706871a3f67f25ef572cb73cdf025e98c838185fb1346f589f4b4f72",
-        "bytes": 13809
+        "sha256": "87cca41c65336039a92ed8dc0de40b898f7a445a6472fcbd92347ed1b84ea696",
+        "bytes": 13410,
+        "working_sha256": "a2361ded706871a3f67f25ef572cb73cdf025e98c838185fb1346f589f4b4f72",
+        "working_bytes": 13809,
+        "working_difference": "CRLF checkout vs LF Git blob only; normalized complete source equality freshly verified. Source certificate SHA retains the original checkout bytes."
       },
       "preserved": [
         "Retain actual PU argument/help/preflight/build-stage semantics behind a small Windows launcher. Firmware mode/target validation and diagnostics now share tools/pakar.mjs with Bash instead of maintaining a second compiler implementation."
@@ -6930,7 +7069,7 @@
         {
           "path": "tools/script-console.mjs",
           "anchor": "export function createLogger",
-          "sha256": "07eae8bf2af2e896bd2a9655c79a8ae1b8f2224e8608d09bc6ecc4e4d9611dbd"
+          "sha256": "2243be58e4dce21a7592865121e94ebdb64f21286f3333358c8259bb2bdedafb"
         },
         {
           "path": "pakar.cmd",
@@ -6949,7 +7088,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -6967,6 +7106,11 @@
       "path": "build.sh",
       "sha256": "56af585e0239c59a74c5ba580b00195c2131f96cdf88394e8c93e3824d4d48f8",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 600,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every helper/option/default/preflight/environment/CI/clean containment/build/test/stage/checksum/report/error/cleanup branch; see exact per-file function table","displayError","displayWarning","displayInfo","displaySuccess","ensureCommandExists","parseVersion","compareVersions","ensureArduinoCliVersion","elapsedTime","prebuild","parseArgs","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -7006,7 +7150,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -7024,6 +7168,11 @@
       "path": "upgrade.sh",
       "sha256": "2e1870cb90db3459eb4abb2e991605409621021fb33b5e61cb38efc82e30d75b",
       "source_read": "complete",
+      "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+      "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "source_line_count": 266,
+      "section_review_date": "2026-10-19",
+      "reviewed_sections": ["Every helper/option/default/preflight/environment/CI/clean containment/build/test/stage/checksum/report/error/cleanup branch; see exact per-file function table","cleanup","displayInfo","displaySuccess","displayWarning","displayError","get_latest_library_version","get_latest_platform_version","extract_libraries","extract_platform_version","version_gte","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -7068,7 +7217,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1"
+          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -14620,7 +14769,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+          "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
           "anchor": "## Fresh runtime and shell section review, 2026-10-19"
         }
       ],
@@ -14715,7 +14864,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "6fd5e2253e32e96826d1af31860423436eaa362cc85bdbdf50f6ef98cbfa0882",
+          "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
           "anchor": "## Fresh runtime and shell section review, 2026-10-19"
         }
       ],

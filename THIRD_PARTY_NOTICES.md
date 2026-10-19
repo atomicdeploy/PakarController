@@ -70,6 +70,9 @@ PakarController is integration code built from earlier AtomicDeploy projects.
   `LocalLib/Commands.cpp` Firmware_Hash and Build_Date at the same PU850 revision.
   They report SDK sketch MD5 and compiler build date/time, not installation time
   or an independent running-image integrity/slot/release certificate.
+- `tools/script-console.mjs` also adapts PU850 C# `ConsoleUi`'s independent
+  stdout/stderr terminal-color policy at that same revision. Existing Node
+  rendering/sanitation remains the owner; no .NET/Chalk runtime is added.
 - FastLED, Arduino ESP8266 core, MiniCore, WebSockets 2.7.2 by Markus Sattler,
   PubSubClient 2.8.0 by Nick O'Leary, xcap 0.9.8, eframe/egui, reqwest, and serde are
   build/runtime dependencies under their

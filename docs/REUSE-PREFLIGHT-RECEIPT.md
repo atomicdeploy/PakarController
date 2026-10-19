@@ -1,5 +1,44 @@
 # Donor-first preflight receipt
 
+## PU850 fresh complete-tree coverage and final tooling reread
+
+2026-10-19 after5eb45d1: final28 earlier tooling/CI/dependency/docs certificates
+freshly read EOF, every helper/function/test/job/manifest section mapped in the
+existing PU850-PARITY/evidence. All109 PU files now have fresh section records
+and current revision, not only historical certificates. Fresh GitHub main/tree
+still431104072952f694a35b3a83c19f13fbb098ca5b:121 entries/109 blobs, untruncated,
+0submodules/0symlinks. All46 present sources match original working hashes and
+normalized Git bytes; all63 sparse-absent sources read from exact immutable
+blobs. All67 explicit blob records verified against actual SHA1/object bytes,
+SHA256 and length. No standalone license or binary asset hidden outside the tree;
+embedded assets/configs/test/dependency/tooling files are included.
+
+That byte audit found one historical metadata defect: build.cmd source_blob
+incorrectly recorded its13809-byte CRLF checkout identity as the13410-byte LF
+Git object. Actual Git blob SHA25687cca41c65336039a92ed8dc0de40b898f7a445a6472fcbd92347ed1b84ea696
+and SHA1/length now recorded; original source certificate/working SHA256
+a2361ded706871a3f67f25ef572cb73cdf025e98c838185fb1346f589f4b4f72 retained separately
+with exact line-ending-only equality. No donor file was rewritten. Initial
+source-prefix lookup collided with another target path and safely refused;
+anchored it to the actual source SHA before adding review fields. No blind hash
+acceptance or read exclusion was used to pass this check.
+
+Actual C# ConsoleUi independent stdout/stderr terminal policy imported into
+existing script-console, with independent redirect direction, NO_COLOR, dumb
+terminal and existing JSON/quiet/sanitization/exit fixtures. Node and PowerShell
+script-tooling source fixtures pass; pu-tooling/pu-client-manifest gates pass.
+No extra Chalk/Chokidar/.NET/Go/WinHTTP runtime, donor build, SDK rebuild, CI wait,
+cache/worktree, dependency install, workflow dispatch or real device/service
+contact. No deployment/network/settings/reboot/LED/audio/PBX, policy bypass,
+relay or rainbow change.
+
+Read coverage109/109 is complete; implementation/parity is NOT. Existing PU96
+gap files remain; all314/4697 comparisons,4383 pending other-donor files,253 gaps.
+Generic watcher/coalescing/graceful stop, verified backup-before-upload, stream
+progress, AP/restore/panel/clock/file/tracing, Unicode/platform/distribution,
+gzip corpus and exact ledger omissions remain open. Source/CI/package/live/
+physical/human/soak gates are separate; #2/#3 stay open and root owns live work.
+
 ## PU850 fresh runtime reread and actual shell metadata import
 
 2026-10-19 afterb3647b5: freshly read all23 earlier runtime/auth/shell/discovery/

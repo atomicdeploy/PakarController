@@ -12,10 +12,11 @@ export function sanitizeText(value,maxLength=8192) {
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g,'').slice(0,maxLength);
 }
 export function createLogger({quiet=false,json=false,env=process.env,out=process.stdout,err=process.stderr}={}) {
-  const color=!!out.isTTY&&!json&&env.NO_COLOR===undefined&&env.TERM!=='dumb';
   const emit=(kind,message,details={})=>{
     if(quiet&&!['error','warn','result'].includes(kind))return;
     const stream=kind==='error'||kind==='warn'?err:out,text=sanitizeText(message);
+    // PU850 C# ConsoleUi keeps stdout/stderr terminal policy independent.
+    const color=!!stream.isTTY&&!json&&env.NO_COLOR===undefined&&env.TERM!=='dumb';
     if(json){stream.write(JSON.stringify({tool:'PakarController',kind,message:text,...details})+'\n');return;}
     const colors={info:96,step:96,detail:90,success:92,warn:93,error:91,result:92};
     const label=kind==='detail'?'  ':`[${kind.toUpperCase()}] `;

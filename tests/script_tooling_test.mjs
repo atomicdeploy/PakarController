@@ -17,6 +17,13 @@ assert.equal(sanitizeText('\x1b]0;title\x07valid'),'valid');
 assert.ok(!out.value.includes('\x1b'));const quietOut=memory(),quietErr=memory();
 const redirectedErr=memory(),ttyOut={...memory(),isTTY:true};
 createLogger({out:ttyOut,err:redirectedErr,env:{}}).error('plain redirected error');assert.ok(!redirectedErr.value.includes('\x1b'));
+const redirectedOut=memory(),ttyErr={...memory(),isTTY:true};
+const independent=createLogger({out:redirectedOut,err:ttyErr,env:{}});
+independent.info('plain redirected info');independent.error('interactive error');
+assert.ok(!redirectedOut.value.includes('\x1b'));assert.ok(ttyErr.value.includes('\x1b[91m'));
+for(const env of [{NO_COLOR:''},{TERM:'dumb'}]){
+  const stderr={...memory(),isTTY:true};createLogger({out:memory(),err:stderr,env}).error('plain by policy');assert.ok(!stderr.value.includes('\x1b'));
+}
 const quiet=createLogger({out:quietOut,err:quietErr,quiet:true});quiet.info('hidden');quiet.error('retained');assert.equal(quietOut.value,'');assert.match(quietErr.value,/retained/);
 assert.deepEqual(portableArguments(['--s3-flash-mb','16','--link-mode=buffered','-Plan']),['-S3FlashMb','16','-LinkMode','buffered','-Plan']);
 assert.deepEqual(legacyBuildArguments(['buffered','esp32s3','--plan']),['-LinkMode','buffered','-Target','esp32s3','-Plan']);

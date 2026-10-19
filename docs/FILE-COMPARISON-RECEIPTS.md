@@ -1,5 +1,22 @@
 # PakarController comparison receipts
 
+## PU850 complete fresh EOF/function inventory, not full parity
+
+2026-10-19: fresh109/109 donor files fully read and section/function/job-bound at
+current GitHub431104072952f694a35b3a83c19f13fbb098ca5b, including46 original
+working files and63 immutable sparse-absent blobs.121 tree entries/109 blobs,
+untruncated, no submodule/symlink; all67 explicit blob identities also rechecked.
+Historical build.cmd CRLF-vs-LF metadata repaired without changing original
+working hash or donor bytes. Existing ledger/evidence/report remains authority.
+
+Actual C# independent stdout/stderr color policy imported into shared logger;
+Node/PowerShell tooling fixtures and both affected reuse gates pass. Earlier
+actual diagnostics, safe verified backup, paired gzip manifest and read-only
+shell metadata imports remain published. No extra runtime/cache/build/deploy/
+network/board/service/policy/relay/scene changes. PU96 gap files remain open;
+total314/4697 compared,4383 other-donor pending,253 gaps. Fresh read completion
+is not implementation/CI/runtime/physical/human acceptance or issue closure.
+
 ## PU850 fresh runtime/function review and shell observations
 
 2026-10-19: all23 prior runtime/auth/shell/discovery/sketch certificates freshly
