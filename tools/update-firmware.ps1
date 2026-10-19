@@ -6,6 +6,8 @@ param(
     [string]$Manifest,
     [string]$ManifestSha,
     [ValidateRange(1,4294967295)][long]$ResumeJobId,
+    [ValidateRange(1,4294967295)][long]$AckFailedJobId,
+    [string]$AckFailedImage,
     [ValidateRange(10,600)][int]$TimeoutSeconds=180,
     [switch]$Run
 )
@@ -16,6 +18,8 @@ $taskArguments=@((Join-Path $PSScriptRoot 'update-firmware.mjs'),'--image',$Imag
 if($Manifest){$taskArguments+=@('--manifest',$Manifest)}
 if($ManifestSha){$taskArguments+=@('--manifest-sha',$ManifestSha)}
 if($PSBoundParameters.ContainsKey('ResumeJobId')){$taskArguments+=@('--resume-job',"$ResumeJobId")}
+if($PSBoundParameters.ContainsKey('AckFailedJobId')){$taskArguments+=@('--ack-failed-job',"$AckFailedJobId")}
+if($PSBoundParameters.ContainsKey('AckFailedImage')){$taskArguments+=@('--ack-failed-image',$AckFailedImage)}
 if($Run){$taskArguments+='--run'}
 # Windows PowerShell treats redirected native stderr as ErrorRecords. The
 # updater deliberately writes progress there; Stop can kill an in-flight upload.

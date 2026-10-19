@@ -28,3 +28,5 @@ if($LASTEXITCODE){throw 'Shell authority persistence fixture failed'}
 if($LASTEXITCODE){throw 'Shell mDNS fixture compilation failed'}
 & $taskDiscovery
 if($LASTEXITCODE){throw 'Shell mDNS fixture failed'}
+& node (Join-Path $taskRoot 'tests/shell_service_test.mjs')
+if($LASTEXITCODE){throw 'Actual shell service lease fixture failed'}

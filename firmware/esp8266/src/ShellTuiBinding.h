@@ -17,7 +17,8 @@ struct ShellTuiSnapshot {
     else if(session.tui.page()==T::Led){list=led;count=sizeof(led)/sizeof(*led);}
     else if(session.tui.page()==T::Pixel){list=pixel;count=sizeof(pixel)/sizeof(*pixel);}
     view.rowCount=count;
-    for(size_t i=0;i<count;++i){const auto *p=shellProperty(list[i]);values[i]=shellGet(*p);rows[i]={p->key,p->key,values[i].c_str(),p->writable&&!shellBusy(),p->secret};}
+    for(size_t i=0;i<count;++i){ShellProperty property;const bool known=shellProperty(list[i],property);
+      values[i]=known?shellGet(property):String("unknown");rows[i]={list[i],list[i],values[i].c_str(),known&&property.writable&&!shellBusy(),known&&property.secret};}
     for(uint8_t i=0;i<80;++i)cells[i]=grid.state(i+1);
   }
 };

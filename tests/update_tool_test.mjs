@@ -16,19 +16,35 @@ assert.throws(()=>boardPeer({...base,boot_id:'0'.repeat(32)},address));
 assert.throws(()=>boardPeer(base,address,{board:base.board_id,boot:base.boot_id,address:'192.168.4.1'}));
 assert.throws(()=>imageIdentity(Buffer.alloc(96)));
 const plan=await updateFirmware({image});assert.equal(plan.device_contacted,false);assert.equal(plan.mode,'auto');
+for(const ackFailedJobId of [0,-1,1.5,0x100000000,NaN])await assert.rejects(updateFirmware({image,ackFailedJobId}));
+await assert.rejects(updateFirmware({image,mode:'remote',manifest:'https://office.example/manifest.json',manifestSha,resumeJobId:18,ackFailedJobId:20}));
+const failedPlan=await updateFirmware({image,mode:'local',ackFailedJobId:20});
+assert.equal(failedPlan.device_contacted,false);assert.equal(failedPlan.ack_failed_job,20);
+const priorImage=Buffer.from(image);priorImage[25]=42;const priorIdentity=imageIdentity(priorImage);
+await assert.rejects(updateFirmware({image,ackFailedImage:priorImage}));
+await assert.rejects(updateFirmware({image,ackFailedJobId:20,ackFailedImage:Buffer.alloc(96)}));
+const priorPlan=await updateFirmware({image,ackFailedJobId:20,ackFailedImage:priorImage});
+assert.equal(priorPlan.ack_failed_image.sha256,priorIdentity.sha256);assert.equal(priorPlan.image.sha256,identity.sha256);
 for(const resumeJobId of [0,-1,1.5,0x100000000,NaN])await assert.rejects(updateFirmware({image,mode:'remote',manifest:'https://office.example/manifest.json',manifestSha,resumeJobId}));
 await assert.rejects(updateFirmware({image,resumeJobId:18}));
 await assert.rejects(updateFirmware({image,mode:'auto',manifest:'https://office.example/manifest.json',manifestSha,resumeJobId:18}));
 for(const scenario of ['local','remote','auth','unknown-auth','bad-product','busy','latch','lost-upload','lost-fetch','wrong-stage','reboot-peer','bad-range','bad-sha','bad-ws','wrong-boot-headers','existing-capacity','dhcp',
-  'resume','resume-wrong-job','resume-wrong-boot','resume-wrong-sha','resume-wrong-targets','resume-wrong-size','resume-not-ready','resume-busy','resume-changed-before-apply']) {
-  const resume=scenario.startsWith('resume');let jobReads=0;
-  let clock=0,rebooted=false,writes=0,fetches=0,applies=0,ws=0;const calls=[];
+  'resume','resume-wrong-job','resume-wrong-boot','resume-wrong-sha','resume-wrong-targets','resume-wrong-size','resume-not-ready','resume-busy','resume-changed-before-apply',
+  'ack','ack-local','ack-remote','ack-no-explicit','ack-wrong-job','ack-wrong-boot','ack-wrong-sha','ack-wrong-size','ack-avr','ack-pair','ack-busy','ack-cancellable',
+  'ack-ready','ack-applying','ack-no-error','ack-bad-manifest','ack-latch','ack-latch-late','ack-peer-change','ack-boot-change','ack-changed-before-write','ack-error-changed',
+  'ack-new-image','ack-new-image-wrong-prior','ack-new-image-changed-prior']) {
+  const resume=scenario.startsWith('resume'),ack=scenario.startsWith('ack');let jobReads=0,statusReads=0;
+  const newImage=scenario.startsWith('ack-new-image');
+  let clock=0,rebooted=false,writes=0,fetches=0,applies=0,ws=0;const calls=[],events=[];
   const request=async(_url,path,options={})=>{
     calls.push({path,options});if(rebooted&&options.headers?.['X-Pakar-Boot']===base.boot_id)throw Error('old boot fenced');
     if(rebooted&&scenario==='dhcp'&&options.expectedAddress===address)throw Error('cached address unreachable');
     const remoteAddress=rebooted&&scenario==='dhcp'?'192.168.50.21':address;
     const value=v=>({status:200,remote:remoteAddress,headers:{},body:Buffer.from(JSON.stringify(v))});
-    if(path==='/api/status')return value({...base,board_id:rebooted&&scenario==='reboot-peer'?'other':base.board_id,boot_id:rebooted?'b'.repeat(32):base.boot_id});
+    if(path==='/api/status'){statusReads++;return value({...base,
+      board_id:(rebooted&&scenario==='reboot-peer')||(scenario==='ack-peer-change'&&statusReads>1)?'other':base.board_id,
+      boot_id:rebooted?'b'.repeat(32):scenario==='ack-boot-change'&&statusReads>1?'c'.repeat(32):base.boot_id,
+      programming_latch:scenario==='ack-latch'||(scenario==='ack-latch-late'&&statusReads>1)});}
     if(path==='/api/auth')return value(scenario==='unknown-auth'?{}:{enabled:scenario==='auth'});
     if(path==='/')return {status:200,remote:address,headers:{},body:Buffer.from('<!doctype html><html>fixture</html>')};
     if(path==='/update/info')return value({product:scenario==='bad-product'?'other':'PakarController',framework:'ESPAsyncWebServer',model:'esp32s3 + ATmega328P',...(scenario==='existing-capacity'?{free:0x330000}:{ota_capacity_bytes:0x330000}),
@@ -37,7 +53,18 @@ for(const scenario of ['local','remote','auth','unknown-auth','bad-product','bus
     if(path==='/firmware/download')return {status:scenario==='bad-range'?200:206,remote:address,headers:{'content-range':`bytes 0-${image.length-1}/${image.length}`},body:scenario==='bad-sha'?Buffer.alloc(image.length):image};
     if(path==='/api/firmware/fetch'){fetches++;writes++;assert.equal(options.form.apply,'false');assert.equal(options.form.targets,'1');if(scenario==='lost-fetch')throw Error('lost fetch');return value({job_id:7,boot_id:base.boot_id});}
     if(path==='/api/firmware/apply'){applies++;writes++;assert.equal(options.form.job_id,String(resume?18:7));rebooted=true;return value({job_id:resume?18:7,boot_id:base.boot_id});}
-    if(path==='/api/firmware/remote'){jobReads++;return value(fetches||resume?{
+    if(path==='/api/firmware/remote'){jobReads++;
+      if(ack&&!fetches&&!rebooted)return value({
+        job_id:scenario==='ack-wrong-job'||(scenario==='ack-changed-before-write'&&jobReads>1)?21:20,
+        boot_id:scenario==='ack-wrong-boot'?'c'.repeat(32):base.boot_id,
+        manifest_sha256:scenario==='ack-bad-manifest'?'':manifestSha,
+        targets:scenario==='ack-avr'?2:scenario==='ack-pair'?3:1,
+        busy:scenario==='ack-busy',cancellable:scenario==='ack-cancellable',
+        phase:scenario==='ack-ready'?'ready':scenario==='ack-applying'?'program_esp':'failed',
+        error:scenario==='ack-no-error'?'':scenario==='ack-error-changed'&&jobReads>1?'Different failure':'Download HTTP status -1; TLS error -32512',
+        esp:{sha256:scenario==='ack-wrong-sha'||scenario==='ack-new-image-wrong-prior'||(scenario==='ack-new-image-changed-prior'&&jobReads>1)?'4'.repeat(64):newImage?priorIdentity.sha256:identity.sha256,size:scenario==='ack-wrong-size'?image.length+1:image.length},
+        received_bytes:0,expected_bytes:0});
+      return value(fetches||resume?{
       job_id:scenario==='resume-wrong-job'?19:resume?18:7,
       boot_id:scenario==='resume-wrong-boot'?'c'.repeat(32):rebooted?'b'.repeat(32):base.boot_id,
       manifest_sha256:scenario==='resume-wrong-sha'?'3'.repeat(64):manifestSha,
@@ -52,18 +79,25 @@ for(const scenario of ['local','remote','auth','unknown-auth','bad-product','bus
   const upload=async(_origin,peer,bytes,hash,settings)=>{writes++;assert.equal(settings.timeoutSeconds,10);assert.equal(peer.boot,base.boot_id);assert.deepEqual(bytes,image);assert.equal(hash.sha256,identity.sha256);
     if(scenario==='lost-upload')throw Error('outcome unknown');rebooted=true;};
   const websocket=async()=>{ws++;if(scenario==='bad-ws')throw Error('bad socket');};
-  const remote=resume||['remote','lost-fetch','wrong-stage'].includes(scenario);
-  const options={image,run:true,mode:remote?'remote':'auto',...(remote?{manifest:'https://office.example/manifest.json',manifestSha}:{}),
-    ...(resume?{resumeJobId:18}:{}),request:async(url,path,options)=>{
+  const remote=resume||['remote','lost-fetch','wrong-stage','ack-remote'].includes(scenario);
+  const options={image,run:true,mode:remote?'remote':scenario==='ack-local'?'local':'auto',...(remote?{manifest:'https://office.example/manifest.json',manifestSha}:{}),
+    ...(resume?{resumeJobId:18}:{}),...(ack&&scenario!=='ack-no-explicit'?{ackFailedJobId:20}:{}),...(newImage?{ackFailedImage:priorImage}:{}),request:async(url,path,options)=>{
       const response=await request(url,path,options);
       if(scenario==='latch'&&path==='/api/status')return {...response,body:Buffer.from(JSON.stringify({...base,programming_latch:true}))};
       return response;
-    },upload,websocket,wait:async ms=>{clock+=ms;},now:()=>clock,timeoutSeconds:10};
-  if(['local','remote','wrong-boot-headers','existing-capacity','dhcp','resume'].includes(scenario)){
+    },upload,websocket,wait:async ms=>{clock+=ms;},now:()=>clock,timeoutSeconds:10,log:event=>events.push(event)};
+  if(['local','remote','wrong-boot-headers','existing-capacity','dhcp','resume','ack','ack-local','ack-remote','ack-new-image'].includes(scenario)){
     const result=await updateFirmware(options);assert.equal(result.ok,true);assert.equal(result.authentication,false);
     assert.equal(result.simulated,true);assert.equal(result.usb_disconnect_ready,false);assert.equal(ws,2);
     assert.equal(result.boot_after,'b'.repeat(32));assert.equal(writes,resume?1:remote?2:1);
     if(resume){assert.equal(fetches,0);assert.equal(applies,1);assert.equal(result.resume_job,18);assert.equal(result.transfer_ms,null);assert.equal(result.download_timing,'previous invocation; not measured here');}
+    if(ack){
+      const receipt=result.acknowledged_failed_job;assert.equal(receipt.job_id,20);assert.equal(receipt.boot_id,base.boot_id);
+      assert.equal(receipt.error,'Download HTTP status -1; TLS error -32512');assert.equal(receipt.esp.sha256,newImage?priorIdentity.sha256:identity.sha256);
+      assert.equal(receipt.received_bytes,0);assert.equal(receipt.expected_bytes,0);
+      assert.deepEqual(events.find(e=>e.stage==='ack-failed-job')?.acknowledged_failed_job,receipt);
+      assert.equal(fetches,remote?1:0);assert.equal(applies,remote?1:0,'Explicit local recovery never applies or cancels the old remote job');
+    }
     const firstPostBootStatus=calls.find(c=>rebooted&&c.path==='/api/status'&&!c.options.headers['X-Pakar-Boot']&&c.options.expectedAddress);
     assert.ok(firstPostBootStatus,'Reboot observation must pin TCP but not send stale boot headers');
   }else await assert.rejects(updateFirmware(options));
@@ -71,6 +105,8 @@ for(const scenario of ['local','remote','auth','unknown-auth','bad-product','bus
   if(['lost-upload','bad-range','bad-sha','reboot-peer'].includes(scenario))assert.equal(writes,1,'No retry/fallback after mutation');
   if(['lost-fetch','wrong-stage'].includes(scenario)){assert.equal(fetches,1);assert.equal(applies,0);}
   if(resume&&scenario!=='resume'){assert.equal(writes,0);assert.equal(fetches,0);assert.equal(applies,0);}
+  if(ack&&!['ack','ack-local','ack-remote','ack-new-image'].includes(scenario)){assert.equal(writes,0);assert.equal(fetches,0);assert.equal(applies,0);assert(!events.some(e=>e.stage==='ack-failed-job'));}
+  assert(!calls.some(c=>c.path==='/api/firmware/cancel'),'Failed receipt acknowledgement never clears or cancels a board job');
 }
 
 // Only one additional read attempt; exact address and headers stay pinned.
@@ -205,4 +241,6 @@ assert.doesNotMatch(frame,/sent_\s*=\s*true/,'Only acknowledged transport admiss
 const wrapper=readFileSync(new URL('../tools/update-firmware.ps1',import.meta.url),'utf8');
 assert.ok(wrapper.includes('@(Get-Command node -CommandType Application -ErrorAction Stop)[0].Source'),'Multiple installed Node runtimes must resolve to one PATH-preferred executable');
 assert.ok(wrapper.includes('[long]$ResumeJobId')&&wrapper.includes("'--resume-job'"));
+assert.ok(wrapper.includes('[long]$AckFailedJobId')&&wrapper.includes("'--ack-failed-job'"));
+assert.ok(wrapper.includes('[string]$AckFailedImage')&&wrapper.includes("'--ack-failed-image'"));
 console.log('Automatic updater plan/preflight/admission/no-replay/new-boot/SHA/auth-off and real loopback multipart/fragmented WebSocket fixtures passed. Not physical OTA.');

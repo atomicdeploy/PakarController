@@ -399,6 +399,10 @@ Use the guarded entry point from this checkout:
 ./tools/update-firmware.ps1 -Mode remote -Manifest HTTPS_MANIFEST_URL -ManifestSha MANIFEST_SHA256 -Run
 # After inspecting an already verified ready job; never fetch again.
 ./tools/update-firmware.ps1 -Mode remote -Manifest HTTPS_MANIFEST_URL -ManifestSha MANIFEST_SHA256 -ResumeJobId READY_JOB_ID -Run
+# After inspecting a terminal ESP-only failure; explicitly acknowledge its ID.
+./tools/update-firmware.ps1 -Mode local -AckFailedJobId FAILED_JOB_ID -Run
+# If the next candidate differs, validate the ORIGINAL failed image separately.
+./tools/update-firmware.ps1 -Mode local -Image NEW_BIN -AckFailedJobId FAILED_JOB_ID -AckFailedImage ORIGINAL_FAILED_BIN -Run
 ```
 
 `auto` is the default. It prefers the advertised local Async HTTP upload path;
@@ -417,6 +421,15 @@ are not resumable through this option. Only transport-failed GET/HEAD may retry
 once with the identical pinned address and headers. HTTP rejection, auth/identity
 failure and every upload/POST remain non-replaying. Resume timing is explicitly
 unknown for the earlier download rather than presented as a new speed result.
+
+A failed job is never implicitly cancelled, cleared or retried. Explicit
+acknowledgement requires the terminal failed ESP-only job, exact current boot,
+manifest, error and original image size/SHA; the receipt is retained in the result
+and re-observed before the single selected write. By default that original image
+is the candidate. `-AckFailedImage` validates a separate original raw S3 image
+when a later candidate differs; it requires `-AckFailedJobId`. Any changed job,
+peer, boot, image or error rejects before upload. It cannot resume a failed apply
+or bypass active maintenance, authentication, integrity or post-boot verification.
 
 No authentication is enabled by this workflow. It requires explicit
 `/api/auth` `enabled:false` before and after, pins board/boot/TCP identity before

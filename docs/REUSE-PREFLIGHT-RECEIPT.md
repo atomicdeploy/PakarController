@@ -1,5 +1,65 @@
 # Donor-first preflight receipt
 
+## Latest deployment and bounded CI recovery
+
+The corrected RMT image from f6d3fce was actually deployed over the guarded
+Async LAN path:2073872bytes, SHA256
+0532332175ea496216ab8a125e21a6ea442f98acc2e316cbc1379ddc9d190fc8.
+New boot37992b7973b2501b3bccde7292b7c96d, full ranged running-image SHA,
+selected/running VALID slot, auth-off and same-peer WebSocket passed. Transfer
+23158ms/total48719ms. LED output remained disabled and80 saved cell colors were
+preserved; AVR flash/EEPROM/fuses were not touched. The private immutable receipt
+hashes to fe51bc5887bde31c5bdaba100ebb95f747b4fa2f5323d00081ca2d25fc43dff4.
+This is not physical all-dark or RF/timing acceptance.
+
+The preceding Internet job20 failed before image bytes with TLS-32512, the
+installed SDK's SSL allocation failure. Its diagnostic remains intact; old Ready
+job19 was explicitly cancelled rather than applied. Read complete actual donor
+PU850 LocalLib/AsyncOTA.cpp and the canonical updater. Added explicit exact-job
+failure acknowledgement, preserving the receipt and re-observing identity/error
+before ONE write; distinct later candidates may pin the original failed image.
+Loopback/preflight negative fixtures pass. No uncertain upload was replayed.
+Temporarily pausing ONLY MQTT freed internal heap from roughly70KB to114236B;
+the original setting was restored and TLS MQTT reconnected with credentials,
+network and other cloud fields unchanged. Independent server telemetry15607B
+and correlated accepted reply passed; checksum588bb3c9f7f3bec5e0e67f384ad8b841d5ab37d48e0e33f4304a218505907ea3.
+
+Actual ASUS LAN packets establish mDNS/DNS-SD PTR/A/SRV/TXT, SSDP multicast and
+unicast, and MNDP90:70:69:ea:c8:00/ledboard. Private wire receipt SHA
+f933f74a5423fb3330ba5cdec1d0fc974084e290b7152b8b421e4c6fd34d6776.
+ASUS native owner20976/hash23ac25... recovered itself: exact new boot, Wi-Fi/WS,
+confirmed80 mappings, no active incidents/toasts, closed drafts/no pending writes.
+Status receipt5db51aac97fdf144ab3cbb378771001149ba24501d51f47d2a981e19eab7f5ec.
+The shell listener advertised correctly but new real sessions closed before
+answer. Actual source captures its lease clock BEFORE accept/greeting, then
+subtracts later activity timestamps unsigned. Fresh per-session/serial clocks
+preserve genuine idle/login/backpressure/fault/authentication retirement.
+Actual-function clock/socket fixtures cover this edge separately from real
+Telnet acceptance; no terminal success is inferred from configuration alone.
+
+New Android preview0.2.7/build14 was built once in the warm canonical cache,
+SHAf1013c0e08716393fbd5974046c63245f8b76d2b3b98729137944f3153013257,
+57919841B, and staged/hash-verified on both PCs. Both ADB inventories were empty;
+no phone installation or production-signing acceptance is claimed.
+
+Windows CI's WSA10035 came from accepted fixture sockets inheriting nonblocking
+mode. Explicit blocking+bounded read/write timeouts and a delayed-input regression
+fix only tests; canonical terminal_ui::tests:: passed14/14. No production native
+rebuild was required for that fixture change. Legacy8266's complete223213B WebUI
+is compressed to66056 portable-gzip bytes, served through the existing ACK-owned
+snapshot actor; NUL/short-add/failed-send fixtures pass. The44 immutable shell
+descriptors use8266 PROGMEM with by-value reads; both metadata profiles pass.
+One canonical8266 polling link now fits:907104B flash, binary SHA
+240d044641ccfa6aa93e69365a98d8d07090ac68b206e797470ebcfe1650f727.
+RAM81376/80192B remains101% of the core's recommended static budget: this is NOT
+a healthy legacy runtime. Larger remaining owners are live queues/state, not
+accepted feature omissions; no buffers/features/SDK/cache were stripped.
+
+Short checks found NTP not yet observed on this new boot and a historical
+HTTP timeout that later recovered. Memory/cloud coexistence, physical LEDs,
+actual phone, W5500/TFT/BLE, external-power restart and full donor parity remain
+open. No broad suite/CI wait or long soak substitutes for those gates.
+
 ## Native Windows identity and console correction
 
 Confirmed the missed import from actual Pealayer5a6961ce: its complete six-line

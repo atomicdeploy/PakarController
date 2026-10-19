@@ -205,6 +205,16 @@ int main() {
   server.on("/flash",HTTP_GET,[&](){server.send_P(200,"text/html",flashUi.c_str());});
   auto flash=std::make_shared<AsyncWebServerRequest>();flash->connection.addLimits={1,0,9,0,13};
   server.native().handlers.at("/flash")(flash.get());server.service();drain(flash,flashUi);
+  // Compressed flash assets are binary and can contain NULs. They retain the
+  // same admitted-byte/ACK lifecycle, including zero/short adds and failed send.
+  std::vector<uint8_t> compressed(66056);for(size_t i=0;i<compressed.size();++i)compressed[i]=static_cast<uint8_t>(i);
+  const String expectedCompressed(std::string(reinterpret_cast<const char*>(compressed.data()),compressed.size()));
+  server.on("/gzip",HTTP_GET,[&](){server.send_P(200,"text/html",compressed.data(),compressed.size(),"gzip");});
+  auto gzip=std::make_shared<AsyncWebServerRequest>();gzip->connection.addLimits={1,0,3,0,9};
+  gzip->connection.sendResults={false,true};
+  server.native().handlers.at("/gzip")(gzip.get());server.service();drain(gzip,expectedCompressed);
+  assert(gzip->responseHeaders.at("Content-Encoding")=="gzip");
+  assert(gzip->connection.sentWire.find("Content-Length: 66056\r\n")!=String::npos);
   server.on("/head",HTTP_HEAD,[&](){server.send(200,"text/plain","not-a-head-body");});
   auto head=std::make_shared<AsyncWebServerRequest>();head->requestMethod=HTTP_HEAD;
   server.native().handlers.at("/head")(head.get());server.service();drain(head,"");

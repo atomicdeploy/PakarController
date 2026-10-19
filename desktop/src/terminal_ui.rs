@@ -1188,6 +1188,37 @@ mod tests {
             panic!("missing command")
         }
     }
+    fn fixture_blocking_stream(stream: &std::net::TcpStream) {
+        // Winsock accept inherits the listener's nonblocking mode. A read
+        // timeout alone does not restore blocking reads, so delayed request
+        // bytes otherwise make the fixture panic with WSAEWOULDBLOCK.
+        stream.set_nonblocking(false).unwrap();
+        stream.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+        stream.set_write_timeout(Some(Duration::from_secs(2))).unwrap();
+    }
+    #[test]
+    fn fixture_reads_delayed_input_after_nonblocking_accept() {
+        use std::io::{BufRead, BufReader};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let (ready, wait) = mpsc::channel();
+        let worker = thread::spawn(move || {
+            let mut client = std::net::TcpStream::connect(address).unwrap();
+            wait.recv_timeout(Duration::from_secs(2)).unwrap();
+            thread::sleep(Duration::from_millis(20));
+            client.write_all(b"GET /api/status HTTP/1.1\r\n").unwrap();
+        });
+        let (stream, _) = listener.accept().unwrap();
+        // Force the Windows-inherited mode on every host so this regression
+        // also exercises a real WouldBlock boundary on Linux/macOS runners.
+        stream.set_nonblocking(true).unwrap();
+        fixture_blocking_stream(&stream);
+        ready.send(()).unwrap();
+        let mut line = String::new();
+        BufReader::new(stream).read_line(&mut line).unwrap();
+        assert_eq!(line, "GET /api/status HTTP/1.1\r\n");
+        worker.join().unwrap();
+    }
     fn fixture(
         replies: Vec<serde_json::Value>,
     ) -> (Endpoint, mpsc::Receiver<String>, thread::JoinHandle<()>) {
@@ -1214,9 +1245,7 @@ mod tests {
                         Err(e) => panic!("fixture accept: {e}"),
                     }
                 };
-                stream
-                    .set_read_timeout(Some(Duration::from_secs(2)))
-                    .unwrap();
+                fixture_blocking_stream(&stream);
                 let mut reader = BufReader::new(stream.try_clone().unwrap());
                 let mut first = String::new();
                 reader.read_line(&mut first).unwrap();

@@ -62,6 +62,18 @@ function readyJob(job,id,peer,manifestSha,identity) {
     job.phase!=='ready'||job.busy!==false||job.esp?.sha256!==identity.sha256||job.esp?.size!==identity.size)
     throw Error('Existing ready job/boot/manifest/target/image does not match; no apply or fetch');
 }
+function failedJobReceipt(job,id,peer,identity) {
+  if(job?.job_id!==id||job.boot_id!==peer.boot||job.targets!==1||job.phase!=='failed'||
+    job.busy!==false||job.cancellable!==false||job.esp?.sha256!==identity.sha256||job.esp?.size!==identity.size||
+    !/^[a-f0-9]{64}$/.test(job.manifest_sha256??'')||typeof job.error!=='string'||!job.error.length||job.error.length>4096)
+    throw Error('Failed job acknowledgement does not match terminal ESP-only job/boot/image; no write');
+  // Acknowledgement is local operator intent, not a cancel/clear request. Keep
+  // the diagnostic in the result/log even if a later explicit fetch replaces it.
+  return {job_id:job.job_id,boot_id:job.boot_id,phase:job.phase,targets:job.targets,
+    busy:job.busy,cancellable:job.cancellable,manifest_sha256:job.manifest_sha256,error:job.error,
+    esp:{size:job.esp.size,sha256:job.esp.sha256},
+    received_bytes:job.received_bytes??null,expected_bytes:job.expected_bytes??null};
+}
 export function uploadImage(origin,peer,bytes,identity,{timeoutSeconds=180}={}) {
   if(!Number.isInteger(timeoutSeconds)||timeoutSeconds<10||timeoutSeconds>600)throw Error('Upload timeout must be10..600 seconds');
   const boundary='Pakar'+randomBytes(16).toString('hex');
@@ -195,7 +207,7 @@ export function checkWebSocket(origin,peer,{connectTimeoutMs=5000,statusTimeoutM
   });
 }
 
-export async function updateFirmware({origin='http://ledboard.local',image,mode='auto',run=false,manifest,manifestSha,resumeJobId=null,
+export async function updateFirmware({origin='http://ledboard.local',image,mode='auto',run=false,manifest,manifestSha,resumeJobId=null,ackFailedJobId=null,ackFailedImage=null,
   timeoutSeconds=180,request=deviceRequest,upload=uploadImage,websocket=checkWebSocket,wait=delay,now=Date.now,log=()=>{}}={}) {
   const url=deviceOrigin(origin),bytes=Buffer.isBuffer(image)?image:readFileSync(image),identity=imageIdentity(bytes);
   if(!['auto','local','remote'].includes(mode))throw Error('Mode must be auto, local or remote');
@@ -205,7 +217,14 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
   } else if(manifestSha)throw Error('Manifest URL is missing');
   if(resumeJobId!==null && (!Number.isSafeInteger(resumeJobId)||resumeJobId<1||resumeJobId>0xffffffff||mode!=='remote'||!manifest||!manifestSha))
     throw Error('Resume requires a positive job ID, explicit remote mode, HTTPS manifest and pinned SHA256');
-  if(!run)return {plan:true,mode,resume_job:resumeJobId,origin:url.origin,image:identity,authentication:'disabled required',avr_touched:false,
+  if(ackFailedJobId!==null && (!Number.isSafeInteger(ackFailedJobId)||ackFailedJobId<1||ackFailedJobId>0xffffffff||resumeJobId!==null))
+    throw Error('Failed-job acknowledgement requires a positive job ID and cannot be combined with resume');
+  if(ackFailedImage!==null&&ackFailedJobId===null)throw Error('Prior failed image requires an explicit failed-job acknowledgement');
+  // A terminal failure can outlive a successful local recovery. A subsequent
+  // candidate must acknowledge the ORIGINAL failed image, never forge its
+  // receipt to match the new upload. Both application images are validated.
+  const failedIdentity=ackFailedImage===null?identity:imageIdentity(Buffer.isBuffer(ackFailedImage)?ackFailedImage:readFileSync(ackFailedImage));
+  if(!run)return {plan:true,mode,resume_job:resumeJobId,ack_failed_job:ackFailedJobId,ack_failed_image:ackFailedJobId===null?null:failedIdentity,origin:url.origin,image:identity,authentication:'disabled required',avr_touched:false,
     policy:'auto prefers local Async HTTP; remote requires pinned manifest; no write fallback/replay',device_contacted:false};
   let peer=null;
   const read=async(path,{unfenced=false,resolveHostname=false,...options}={})=>{
@@ -228,13 +247,20 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
     !Number.isSafeInteger(capacity)||!(identity.size<capacity))throw Error('S3 Async HTTP product/capacity not verified; use inventoried USB bootstrap if metadata is unavailable');
   if(first.value.programming_latch!==false)throw Error('AVR programming latch is active/unknown; no ESP-only update');
   const previous=(await json('/api/firmware/remote')).value;
+  let acknowledgedFailure=null;
   if(resumeJobId!==null)readyJob(previous,resumeJobId,peer,manifestSha,identity);
+  else if(ackFailedJobId!==null)acknowledgedFailure=failedJobReceipt(previous,ackFailedJobId,peer,failedIdentity);
   else if(previous.busy!==false||!['idle','complete','cancelled'].includes(previous.phase))throw Error('Existing firmware job requires inspection; no overwrite');
   await websocket(url,peer);
   const route=selectPath(mode,info,!!manifest),before={...peer};
   // Refresh the same boot immediately before the single selected write path.
   const fresh=await json('/api/status');boardPeer(fresh.value,fresh.remote,peer);
   if(fresh.value.programming_latch!==false)throw Error('Programming state changed; no update');
+  if(acknowledgedFailure){
+    const observed=failedJobReceipt((await json('/api/firmware/remote')).value,ackFailedJobId,peer,failedIdentity);
+    if(JSON.stringify(observed)!==JSON.stringify(acknowledgedFailure))throw Error('Failed job changed before acknowledgement; no write');
+    log({stage:'ack-failed-job',acknowledged_failed_job:acknowledgedFailure});
+  }
   log({stage:resumeJobId===null?'upload':'resume-apply',path:route,image_bytes:identity.size,resume_job:resumeJobId});
   const started=now();let jobId=null,applyRequestMs=null;
   if(route==='local')await upload(url,peer,bytes,identity,{timeoutSeconds});
@@ -296,7 +322,7 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
     if(result.job_id!==jobId||result.phase!=='complete'||result.manifest_sha256!==manifestSha)throw Error('Remote completion not verified');
   }
   return {ok:true,path:route,origin:url.origin,board_id:peer.board,boot_before:before.boot,boot_after:peer.boot,
-    image:identity,resume_job:resumeJobId,transfer_ms:transferMs,
+    image:identity,resume_job:resumeJobId,acknowledged_failed_job:acknowledgedFailure,transfer_ms:transferMs,
     ...(resumeJobId===null?{}:{apply_request_ms:applyRequestMs,download_timing:'previous invocation; not measured here'}),
     total_ms:now()-started,authentication:false,websocket:'same-peer status before/after',
     running_image:'full SHA256 readback and VALID selected/running slot',simulated:request!==deviceRequest||upload!==uploadImage||websocket!==checkWebSocket,
@@ -306,9 +332,9 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   try{const options={};const args=process.argv.slice(2);
     for(let i=0;i<args.length;i++){
       if(args[i]==='--run'){options.run=true;continue;}
-      const key={'--origin':'origin','--image':'image','--mode':'mode','--manifest':'manifest','--manifest-sha':'manifestSha','--timeout':'timeoutSeconds','--resume-job':'resumeJobId'}[args[i]];
-      if(!key||!args[i+1]||args[i+1].startsWith('--'))throw Error('Usage: node tools/update-firmware.mjs --image ESP_BIN [--origin http://ledboard.local] [--mode auto|local|remote] [--manifest HTTPS_URL --manifest-sha SHA256] [--resume-job POSITIVE_ID (remote only)] [--run]');
-      options[key]=['timeoutSeconds','resumeJobId'].includes(key)?Number(args[++i]):args[++i];
+      const key={'--origin':'origin','--image':'image','--mode':'mode','--manifest':'manifest','--manifest-sha':'manifestSha','--timeout':'timeoutSeconds','--resume-job':'resumeJobId','--ack-failed-job':'ackFailedJobId','--ack-failed-image':'ackFailedImage'}[args[i]];
+      if(!key||!args[i+1]||args[i+1].startsWith('--'))throw Error('Usage: node tools/update-firmware.mjs --image ESP_BIN [--origin http://ledboard.local] [--mode auto|local|remote] [--manifest HTTPS_URL --manifest-sha SHA256] [--resume-job POSITIVE_ID (remote only) | --ack-failed-job POSITIVE_ID [--ack-failed-image ORIGINAL_FAILED_BIN]] [--run]');
+      options[key]=['timeoutSeconds','resumeJobId','ackFailedJobId'].includes(key)?Number(args[++i]):args[++i];
     }
     options.log=value=>console.error(JSON.stringify(value));console.log(JSON.stringify(await updateFirmware(options),null,2));
   }catch(error){console.error(error.message);process.exitCode=1;}

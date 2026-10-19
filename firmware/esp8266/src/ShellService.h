@@ -43,36 +43,7 @@ std::atomic<bool> shellCloseRequested{false};
 bool shellCloseRequested=false;
 #endif
 
-struct ShellProperty {const char *key,*domain,*field;char type;bool writable,secret;};
-// Descriptor-driven get/set and TUI share the same typed configuration owners.
-const ShellProperty shellProperties[]={
- {"hostname","device","hostname",'s',true,false},{"label","device","display_name",'s',true,false},
- {"version","device","version",'s',false,false},{"boot_id","device","boot_id",'s',false,false},
- {"uptime","device","uptime",'n',false,false},{"heap","device","heap",'n',false,false},
- {"avr.online","device","avr",'b',false,false},{"display.ack","device","display",'b',false,false},
- {"firmware.phase","device","phase",'s',false,false},
- {"network.mode","network","mode",'s',true,false},
- {"network.dhcp","network","dhcp",'b',true,false},{"network.ssid","network","ssid",'s',true,false},
- {"network.password","network","password",'s',true,true},
- {"network.address","network","address",'s',true,false},{"network.gateway","network","gateway",'s',true,false},
- {"network.subnet","network","subnet",'s',true,false},{"network.dns1","network","dns1",'s',true,false},
- {"network.dns2","network","dns2",'s',true,false},{"network.ip","network","station_ip",'s',false,false},
- {"network.ap_ip","network","ap_ip",'s',false,false},
- {"led.enabled","led","enabled",'b',true,false},{"led.mode","led","mode",'s',true,false},
- {"led.brightness","led","brightness",'n',true,false},{"led.effect","led","effect",'s',true,false},
- {"led.backend","driver","backend",'s',false,false},{"led.rmt","driver","rmt",'b',false,false},{"led.dma","driver","dma",'b',false,false},
- {"mqtt.enabled","cloud","mqtt_enabled",'b',true,false},{"mqtt.tls","cloud","mqtt_tls",'b',true,false},
- {"mqtt.host","cloud","mqtt_host",'s',true,false},{"mqtt.port","cloud","mqtt_port",'n',true,false},
- {"mqtt.user","cloud","mqtt_user",'s',true,false},{"mqtt.password","cloud","mqtt_password",'s',true,true},
- {"mqtt.topic","cloud","mqtt_base_topic",'s',true,false},
- {"websocket.enabled","cloud","websocket_enabled",'b',true,false},{"websocket.tls","cloud","websocket_tls",'b',true,false},
- {"websocket.host","cloud","websocket_host",'s',true,false},{"websocket.port","cloud","websocket_port",'n',true,false},
- {"websocket.path","cloud","websocket_path",'s',true,false},{"websocket.token","cloud","websocket_token",'s',true,true},
- {"telemetry.seconds","cloud","telemetry_seconds",'n',true,false},
- {"shell.enabled","shell","enabled",'b',true,false},{"shell.port","shell","port",'n',true,false},
- {"shell.color","shell","color",'b',true,false}
-};
-const ShellProperty *shellProperty(const String &key){for(const auto &p:shellProperties)if(key==p.key)return &p;return nullptr;}
+#include "ShellProperties.h"
 String shellGet(const ShellProperty &p){
   const String key(p.key);
   if(p.secret)return F("<write-only>");
@@ -96,7 +67,8 @@ String shellGet(const ShellProperty &p){
 }
 bool shellBusy(){return urbootBusy.get()||remoteFirmware.busy()||otaActive||otaRebootAt||avrUploadOwner||programmingLatched||cloudServices.ioActive();}
 bool shellSet(const String &key,const String &value,String &result){
-  const auto *p=shellProperty(key);if(!p||!p->writable){result=F("Unknown or read-only property");return false;}
+  ShellProperty property;if(!shellProperty(key.c_str(),property)||!property.writable){result=F("Unknown or read-only property");return false;}
+  const auto *p=&property;
   if(shellBusy()){result=F("Maintenance active; nothing changed");return false;}
   uint32_t number=0;bool boolean=false;
   if(p->type=='b'){
@@ -171,8 +143,8 @@ void executeDeviceShell(DeviceShellSession &s,String line){
     s.println(F("Editing: arrows/Home/End/Delete, Ctrl-A/E/U/W/L/C; Up/Down recall8 commands. TUI: Tab/Arrows/Enter/Esc."));
   }else if(verb=="properties"||verb=="get"){
     if(args.length()){
-      const auto *p=shellProperty(args);if(p){shellSafePrint(s,shellGet(*p));s.println();}else shellResult(s,false,F("Unknown property"));
-    }else for(const auto &p:shellProperties){s.print(p.writable?F("rw "):F("ro "));s.print(p.key);s.print(F(" = "));shellSafePrint(s,shellGet(p));s.println();}
+      ShellProperty property;if(shellProperty(args.c_str(),property)){shellSafePrint(s,shellGet(property));s.println();}else shellResult(s,false,F("Unknown property"));
+    }else for(size_t index=0;index<shellPropertyCount;++index){const auto p=shellPropertyAt(index);s.print(p.writable?F("rw "):F("ro "));s.print(p.key);s.print(F(" = "));shellSafePrint(s,shellGet(p));s.println();}
   }else if(verb=="set"){
     const int at=args.indexOf(' ');String result;
     if(at<1)shellResult(s,false,F("Use set KEY VALUE"));
@@ -270,7 +242,7 @@ void inputDeviceShell(DeviceShellSession &s,uint8_t ch){
     s.authenticated=true;s.editor.setEcho(true);shellPrompt(s);return;
   }
   String line(s.editor.line());bool historySafe=true;
-  if(line.startsWith("set ")){const int at=line.indexOf(' ',4);const auto *property=at>4?shellProperty(line.substring(4,at)):nullptr;historySafe=property&&!property->secret;}
+  if(line.startsWith("set ")){const int at=line.indexOf(' ',4);ShellProperty property;historySafe=at>4&&shellProperty(line.substring(4,at).c_str(),property)&&!property.secret;}
   if(line.indexOf("://")>=0)historySafe=false;
   s.editor.remember(historySafe);s.editor.clear();executeDeviceShell(s,line);
 }
@@ -322,8 +294,12 @@ void serviceDeviceShells(){
   }
   for(unsigned i=0;i<PAKAR_TELNET_SESSIONS;++i){
     if(!telnetSessions[i])continue;auto &s=*telnetSessions[i];auto &peer=shellPeers[i];
-    if(!peer.connected()||s.fault||!accessConfig.ready()||s.accessRevision!=accessConfig.securityRevision()||uint32_t(now-s.lastInput)>(s.authenticated?1800000U:60000U)||
-        (s.output.length()&&uint32_t(now-s.lastDrain)>30000U)){peer.stop();telnetSessions[i].reset();continue;}
+    // Accept/greeting and earlier session work can stamp a time later than the
+    // loop-entry snapshot. Sample AFTER them; unsigned stale-now subtraction
+    // otherwise looks like a 49-day idle lease and immediately drops a peer.
+    const uint32_t leaseNow=millis();
+    if(!peer.connected()||s.fault||!accessConfig.ready()||s.accessRevision!=accessConfig.securityRevision()||uint32_t(leaseNow-s.lastInput)>(s.authenticated?1800000U:60000U)||
+        (s.output.length()&&uint32_t(leaseNow-s.lastDrain)>30000U)){peer.stop();telnetSessions[i].reset();continue;}
     if(s.output.length()){
       const size_t count=min<size_t>(192,s.output.length());int sent=0;
 #if defined(ARDUINO_ARCH_ESP32)
@@ -333,7 +309,7 @@ void serviceDeviceShells(){
 #else
       const size_t available=peer.availableForWrite();if(available)sent=peer.write(reinterpret_cast<const uint8_t*>(s.output.c_str()),min(count,available));
 #endif
-      if(sent>0){s.output.remove(0,sent);s.lastDrain=now;}
+      if(sent>0){s.output.remove(0,sent);s.lastDrain=millis();}
     }
     if(s.closing){if(!s.output.length()){peer.stop();telnetSessions[i].reset();}continue;}
     // Backpressure before consuming more commands; no truncation or replay.
@@ -347,7 +323,8 @@ void serviceDeviceShells(){
     if(s.tui.active()&&s.tui.escapePending()&&uint32_t(millis()-s.escapeAt)>60){shellTuiInput(s,0,true);terminalInput=true;}
     if(terminalInput&&s.tui.active()&&s.output.length()<4096U)shellTuiDraw(s);
   }
-  if(serialShell&&(!accessConfig.ready()||serialShell->accessRevision!=accessConfig.securityRevision()||uint32_t(now-serialShell->lastInput)>30000U)){serialShell.reset();shellChannel.close();}
+  const uint32_t serialNow=millis();
+  if(serialShell&&(!accessConfig.ready()||serialShell->accessRevision!=accessConfig.securityRevision()||uint32_t(serialNow-serialShell->lastInput)>30000U)){serialShell.reset();shellChannel.close();}
   if(uint32_t(now-lastShellObserve)>=500U){
     lastShellObserve=now;
     String observed=String("event STA ")+(networkConfig.stationConnected()?"up":"down")+" AP "+(apStarted?"up":"down")+" AVR "+(avrOnline?"up":"down")+" update "+(remoteFirmware.busy()?String(remoteFirmware.phase()):String(PakarUpdate::name(otaProgress.snapshot().phase)));

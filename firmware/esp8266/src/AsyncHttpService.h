@@ -214,6 +214,14 @@ class AsyncHttpService {
     // Keep the large embedded UI in flash, not a per-client heap String.
     if (open()) send(new PakarHttpDetail::SnapshotResponse(code,type,body,strlen_P(body),pendingOutputObserver()));
   }
+  void send_P(int code,const char *type,const uint8_t *body,size_t length,const char *encoding) {
+    // Binary gzip contains NUL bytes: retain its exact length and the same
+    // short-write/ACK ownership as other immutable flash snapshots.
+    if(!open())return;
+    auto *response=new PakarHttpDetail::SnapshotResponse(code,type,reinterpret_cast<const char*>(body),length,pendingOutputObserver());
+    if(encoding&&*encoding)response->addHeader("Content-Encoding",encoding);
+    send(response);
+  }
   void streamFile(File &file, const char *type) {
     if (open()) send(current_->beginResponse(file,file.name(),type,true));
   }

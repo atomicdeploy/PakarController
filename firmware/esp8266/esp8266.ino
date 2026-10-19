@@ -87,7 +87,11 @@
 #include "src/ApplicationIdentity.h"
 #include "src/BusyLine.h"
 #include "src/TelnetShell.h"
+#if defined(ARDUINO_ARCH_ESP8266)
+#include "src/WebUiCompressed.h"
+#else
 #include "src/WebUi.h"
+#endif
 #include "src/BasicUi.h"
 #include "src/FontAssets.h"
 
@@ -2914,7 +2918,11 @@ void registerApi() {
                   reinterpret_cast<const uint8_t *>(kBasicUi), sizeof(kBasicUi) - 1);
   });
   server.on("/", HTTP_GET, []() {
+#if defined(ARDUINO_ARCH_ESP8266)
+    server.send_P(200,"text/html; charset=utf-8",kWebUiGzip,sizeof(kWebUiGzip),"gzip");
+#else
     server.send_P(200, "text/html; charset=utf-8", kWebUi);
+#endif
   });
   server.on("/api/status", HTTP_GET, []() {
     if (!authenticate()) return;

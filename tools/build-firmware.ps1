@@ -76,6 +76,8 @@ if ($Target -ne 'avr') {
     if ($LASTEXITCODE -ne 0) { throw 'Shared Web appearance is stale; regenerate before ESP build.' }
     & node (Join-Path $PSScriptRoot 'generate-basic-ui.mjs') --check | ForEach-Object { Write-Host $_ }
     if ($LASTEXITCODE -ne 0) { throw 'Basic cell app is stale; regenerate before ESP build.' }
+    & node (Join-Path $PSScriptRoot 'generate-web-compressed.mjs') --check | ForEach-Object { Write-Host $_ }
+    if ($LASTEXITCODE -ne 0) { throw 'Compressed ESP8266 Web UI is stale; regenerate before ESP build.' }
 }
 $libraries = Join-Path $projectRoot 'libraries'
 $build = Join-Path $projectRoot 'build'
