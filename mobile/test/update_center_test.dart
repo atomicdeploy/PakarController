@@ -11,6 +11,10 @@ void main() {
   testWidgets(
     'One update workspace retains app support without an attached board',
     (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       final api = PakarApi();
       final apps = updatePageFixture();
       final support = AppSupportSession(
@@ -27,6 +31,7 @@ void main() {
             api: api,
             apps: apps,
             support: support,
+            boardProductionHold: true,
             authorized: (_) => false,
             busyChanged: (_) {},
           ),
@@ -35,13 +40,19 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Updates & support'), findsOneWidget);
       expect(find.text('ESP / AVR'), findsNothing);
+      expect(
+        find.byTooltip('Board auto-updates paused for production'),
+        findsOneWidget,
+      );
       await tester.scrollUntilVisible(
         find.text('Start support session'),
         450,
-        scrollable: find.descendant(
-          of: find.byType(AppUpdatesPage),
-          matching: find.byType(Scrollable),
-        ).first,
+        scrollable: find
+            .descendant(
+              of: find.byType(AppUpdatesPage),
+              matching: find.byType(Scrollable),
+            )
+            .first,
       );
       expect(support.running, false);
       expect(tester.takeException(), isNull);

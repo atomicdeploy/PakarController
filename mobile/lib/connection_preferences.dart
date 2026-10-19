@@ -58,6 +58,8 @@ class ConnectionPreferences {
   final SecretStore secrets;
 
   Future<void> restore(PakarApi api) async {
+    api.commandHttpFallback =
+        preferences.getBool('command_http_fallback') ?? true;
     final endpoint = PakarApi.normalizeEndpoint(
       preferences.getString('endpoint') ?? 'http://ledboard.local',
     );
@@ -83,6 +85,13 @@ class ConnectionPreferences {
     }
     api.password = password ?? '';
     api.resetTransport();
+  }
+
+  /// Local command policy only; do not reconnect or write to a board.
+  Future<void> saveCommandHttpFallback(bool enabled) async {
+    if (!await preferences.setBool('command_http_fallback', enabled)) {
+      throw StateError('Command transport preference could not be saved');
+    }
   }
 
   Future<void> save(

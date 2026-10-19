@@ -17,6 +17,28 @@ class TestSecrets implements SecretStore {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'Command fallback persists without selecting a target or reconnecting',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final settings = ConnectionPreferences(prefs, secrets: TestSecrets());
+      final api = PakarApi();
+      addTearDown(api.close);
+      await settings.restore(api);
+      expect(api.commandHttpFallback, true);
+      final revision = api.connectionRevision;
+      await settings.saveCommandHttpFallback(false);
+      expect(api.connectionRevision, revision);
+      expect(prefs.getString('endpoint'), isNull);
+      await settings.restore(api);
+      expect(api.commandHttpFallback, false);
+      expect(api.baseUrl, 'http://ledboard.local');
+      await settings.saveCommandHttpFallback(true);
+      await settings.restore(api);
+      expect(api.commandHttpFallback, true);
+    },
+  );
   test('Plaintext is removed only after secure migration succeeds', () async {
     SharedPreferences.setMockInitialValues({'password': 'fixture-password'});
     final prefs = await SharedPreferences.getInstance();

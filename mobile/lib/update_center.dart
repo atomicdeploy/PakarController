@@ -21,6 +21,7 @@ class UpdateCenter extends StatefulWidget {
     required this.busyChanged,
     this.automation,
     this.boardAvailable = false,
+    this.boardProductionHold = false,
   });
   final PakarApi api;
   final AppUpdateCoordinator apps;
@@ -29,6 +30,7 @@ class UpdateCenter extends StatefulWidget {
   final bool Function(String) authorized;
   final ValueChanged<bool> busyChanged;
   final bool boardAvailable;
+  final bool boardProductionHold;
   @override
   State<UpdateCenter> createState() => _UpdateCenterState();
 }
@@ -43,6 +45,16 @@ class _UpdateCenterState extends State<UpdateCenter> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Updates & support'),
+          actions: [
+            if (widget.boardProductionHold)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Tooltip(
+                  message: 'Board auto-updates paused for production',
+                  child: Icon(PakarIcons.lock),
+                ),
+              ),
+          ],
           automaticallyImplyLeading: !busy,
           bottom: widget.boardAvailable
               ? const TabBar(

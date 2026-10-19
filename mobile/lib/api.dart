@@ -32,6 +32,7 @@ class PakarApi {
     this.discovery,
     this.readTimeout = const Duration(seconds: 6),
     this.enforcePeerVersions = peerVersionChecksEnabled,
+    this.commandHttpFallback = true,
   }) : resolver = resolver ?? LanResolver(),
        bluetooth = bluetooth ?? PakarBleTransport(),
        _baseUrl = normalizeEndpoint(baseUrl),
@@ -51,6 +52,10 @@ class PakarApi {
   }
 
   String _baseUrl, _user, _password;
+
+  /// WebSocket remains preferred. Disable only command HTTP recovery, not
+  /// independent read-only status/identity or the explicit Bluetooth transport.
+  bool commandHttpFallback;
   int _connectionRevision = 0;
   int get connectionRevision => _connectionRevision;
   bool _connectionWanted = true;
@@ -509,6 +514,17 @@ class PakarApi {
     var snapshot = _latestStatus;
     if (snapshot?.peer.has('command-ack') != true) return null;
     final revision = connectionRevision;
+    final allowHttp = commandHttpFallback;
+    void requireSelectedCommandPath() {
+      if (!isBluetooth && !allowHttp && (!_socketReady || _channel == null)) {
+        throw const FormatException(
+          'WebSocket command connection is unavailable. HTTP command fallback is disabled; no command was sent.',
+        );
+      }
+    }
+
+    _requireNetwork();
+    requireSelectedCommandPath();
     snapshot = await _commandStatus(authorize);
     _requireNetwork();
     if (revision != connectionRevision || !authorize()) {
@@ -543,6 +559,7 @@ class PakarApi {
     }
     Completer<Map<String, dynamic>?>? pending;
     try {
+      requireSelectedCommandPath();
       if (_socketReady && _channel != null) {
         pending = Completer<Map<String, dynamic>?>();
         _commandReplies[id] = pending;
@@ -562,7 +579,22 @@ class PakarApi {
       if (revision != connectionRevision || !authorize()) {
         throw const StaleConnection();
       }
-      if (reply == null) {
+      if (reply == null && !allowHttp) {
+        if (pending == null) {
+          throw const FormatException(
+            'WebSocket command connection is unavailable. HTTP command fallback is disabled; no command was sent.',
+          );
+        }
+        try {
+          // Keep the original combined 800ms preferred + four-second recovery
+          // budget, but wait only for this WS intent instead of sending HTTP.
+          reply = await pending.future.timeout(const Duration(seconds: 4));
+        } on TimeoutException {
+          throw const OperationUncertain(
+            'The board did not confirm this WebSocket command within 4.8 seconds. It may have been applied; refresh board state before trying again. HTTP command fallback is disabled.',
+          );
+        }
+      } else if (reply == null) {
         final request = http.Request('POST', _uri(transportUrl, '/api/command'))
           ..headers.addAll(_writeHeaders)
           ..bodyFields = {'packet': packet}

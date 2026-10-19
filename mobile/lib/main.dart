@@ -213,6 +213,9 @@ class _ControlShellState extends State<ControlShell>
   }
 
   Future<void> _restoreFirmwareAutomation() async {
+    // Maintenance client delivery must not start a saved board update job
+    // while this installation is serving an active production board.
+    if (const bool.fromEnvironment('PAKAR_BOARD_PRODUCTION_HOLD')) return;
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     Map<String, dynamic>? initial;
@@ -1201,6 +1204,9 @@ class _ControlShellState extends State<ControlShell>
                         apps: appUpdates,
                         support: support,
                         automation: firmwareAutomation,
+                        boardProductionHold: const bool.fromEnvironment(
+                          'PAKAR_BOARD_PRODUCTION_HOLD',
+                        ),
                         boardAvailable: peer.has('isp') || peer.has('ota'),
                         authorized: (feature) =>
                             mounted &&
@@ -2709,6 +2715,37 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
           ),
           const SizedBox(height: 12),
+          if (widget.api.connectionMethod == ConnectionMethod.network)
+            SwitchListTile.adaptive(
+              key: const Key('command-http-fallback'),
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Allow HTTP fallback for commands'),
+              subtitle: const Text(
+                'Prefer WebSocket for cells and pixels. When off, commands require WebSocket. Applies to the next command without reconnecting.',
+              ),
+              value: widget.api.commandHttpFallback,
+              onChanged: saving || !widget.active
+                  ? null
+                  : (enabled) async {
+                      final api = widget.api;
+                      setState(() {
+                        saving = true;
+                        error = null;
+                      });
+                      try {
+                        final prefs = await SharedPreferences.getInstance();
+                        await ConnectionPreferences(prefs)
+                            .saveCommandHttpFallback(enabled);
+                        if (mounted && identical(api, widget.api)) {
+                          setState(() => api.commandHttpFallback = enabled);
+                        }
+                      } on Object catch (failure) {
+                        if (mounted) setState(() => error = '$failure');
+                      } finally {
+                        if (mounted) setState(() => saving = false);
+                      }
+                    },
+            ),
           if (widget.api.isBluetooth) ...[
             SelectableText(
               widget.api.baseUrl.startsWith('ble://')

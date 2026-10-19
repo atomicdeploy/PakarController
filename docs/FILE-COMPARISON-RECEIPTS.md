@@ -1191,3 +1191,29 @@ New data-only palette updates are limited to four validated RGB roles, not
 executable hot patches. Native changes still require a verified APK and Android
 installer consent; notification denial never claims delivery. Support remains
 explicit opt-in foreground LAN with revocable credentials, not an ADB bypass.
+
+Build17 adds persisted command HTTP fallback in Preferences, enabled by default.
+When disabled, real loopback cell, bulk-cell and diagnostic requests send one WS
+intent and no HTTP mutation; late receipts still work, missing WS rejects before
+dispatch, and changing the preference cannot change a pending intent's policy.
+All13 focused transport/preference tests passed, as did the compact production
+hold update-workspace fixture and canonical analysis. Source CI's stale global
+client build15 was aligned to17; verify-versions now also runs before every
+canonical mobile build/test so this mismatch fails before an expensive APK build.
+
+Canonical build17 used -BoardProductionHold, suppressing restored automatic
+board-firmware jobs without modifying their saved policy. Build passed in56.2s.
+Office static HTTPS publication did not announce to the management update feed.
+HEAD200, Range206, whole server/ASUS hashes and resumable aria2 transfer verified.
+The per-download Windows resolver fixed c-ares failure resolving the configured
+localhost proxy; global proxy/network settings were not changed.
+
+Actual SM_X906B tablet R52T60C6V9B install-r returned Success; Android reports
+0.2.8/code17. Staged and actual installed base.apk both have58771885bytes and
+SHA256a5ada26cb2ac71df52640efc856c94e33d4204d1246e263c240b85f93645c641.
+No app-data clear or storage offload. UI launch/capture awaits manual unlock
+after the one authorized unsecured swipe did not dismiss keyguard; no retry loop
+or credential input. Read-only ESP status retains the same boot, 480pixels and
+user-selected rainbow. No board write/update/reset or LED test after the user
+declared production. PBX DTMF approval for a specific disruptive action is required;
+tablet-unlock confirmation is NOT board-test approval.

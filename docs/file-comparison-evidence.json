@@ -15,11 +15,11 @@
   ],
   "targets": [
     { "path": "mobile/lib/app_support.dart", "anchor": "class AppSupportSession", "sha256": "af00a7436acd4f52808cd01757dca1ff962e8429db164486253c9061a0d6ef97" },
-    { "path": "mobile/lib/update_center.dart", "anchor": "class SupportSection", "sha256": "8b08a54e1502bcdf323b7477e76458775bc78fa658d0768d69229907b3383b6c" }
+    { "path": "mobile/lib/update_center.dart", "anchor": "class SupportSection", "sha256": "af02585e98578a1edc02737c89ef84a7dcfebf9d4d98af4cb2bc331319d995ef" }
   ],
   "proof": [
     { "path": "mobile/test/app_support_test.dart", "anchor": "void main()", "sha256": "67d32afdc9bcc7af9b57e415ae28ada62c869ad4d9129828d49c310772b94817" },
-    { "path": "mobile/test/update_center_test.dart", "anchor": "One update workspace", "sha256": "87be6c6384aa874eadf46520c03c21b06da81f307a8dd2f58e2394d4466e8e80" }
+    { "path": "mobile/test/update_center_test.dart", "anchor": "One update workspace", "sha256": "749dd5dce19b59d86ea50e9e6a9af0d445e1fd562c2d0e2cb46d07151a225989" }
   ],
   "omissions": [
     { "code": "MQTT/outbound WebSocket bridge and firmware staging/export", "disposition": "pending", "reason": "These remain in the existing separate advanced bridge/firmware surfaces and are not claimed newly integrated or physically accepted by this bounded troubleshooting import. Arbitrary firmware apply, shell, OS execution and token export are intentionally not support RPC operations." },
@@ -45,7 +45,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b",
+      "sha256": "2028ed2b169ed779ef0f01253c98f181349aafec3d31c5d4b682e9546d748af8",
       "anchor": ": WorkspaceActivityStrip("
     }
   ],
@@ -4679,7 +4679,7 @@
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
+      "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108"
     },
     {
       "path": "mobile/lib/panel_inventory.dart",
@@ -4704,7 +4704,7 @@
     {
       "path": "mobile/lib/connection_preferences.dart",
       "anchor": "class ConnectionPreferences",
-      "sha256": "dc20e6ec07521d724c97b793b69d36613a9c0b6e980f0184105a41e844bc5318"
+      "sha256": "51172875b90ae6e8239ad76d8a8dd2a6e4ca9d0929e7717400b33d00e00e1a0f"
     },
     {
       "path": "mobile/lib/devices_page.dart",
@@ -4796,7 +4796,7 @@
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
+      "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108"
     }
   ],
   "proof": [
@@ -4809,6 +4809,16 @@
       "path": "mobile/test/command_admission_transport_test.dart",
       "anchor": "Late WS receipt settles same-ID HTTP recovery",
       "sha256": "2c53969b0ed1f881ebea20b760e58125d6c6a574b6fbb722edc5073d1bec6fb4"
+    },
+    {
+      "path": "mobile/test/command_fallback_transport_test.dart",
+      "anchor": "void main()",
+      "sha256": "c05c6aaa794202ddde9051e37513062464264ae34bdd83d70f5917a6509238bb"
+    },
+    {
+      "path": "mobile/test/command_preferences_widget_test.dart",
+      "anchor": "Command fallback saves offline",
+      "sha256": "d4830d63f8497a2778a3e54a6bb7fce776d9d014a2765081141c92adaecfa7a3"
     },
     {
       "path": "mobile/test/panel_inventory_test.dart",
@@ -5094,7 +5104,7 @@
     {"path":"mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt","sha256":"b6623d6be8e23e57532a5afc210a32ad4ca787cd40fb7d66d5796147917a322a","anchor":"private val firmwareMaximum = 0x330000 - 1"},
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7",
+      "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108",
       "anchor": "Stream<DeviceStatus> get statusUpdates"
     }
   ],
@@ -5480,7 +5490,7 @@
     {
       "path": "mobile/lib/peer_identity.dart",
       "anchor": "class PeerIdentity",
-      "sha256": "c987fd77cf01249337024c7ff48ff2baeaa1f58869d51f5dace50052578f14f8"
+      "sha256": "0002d6ec470e830af6dc94e383252f63e20577c7d5a873d948d4390aef64a793"
     }
   ],
   "omissions": [
@@ -8281,7 +8291,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
+          "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -8381,7 +8391,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
+          "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -9968,12 +9978,12 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7",
+      "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108",
       "anchor": "bool _acceptIdentity("
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b",
+      "sha256": "2028ed2b169ed779ef0f01253c98f181349aafec3d31c5d4b682e9546d748af8",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -11675,7 +11685,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7",
+          "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -12409,7 +12419,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b",
+          "sha256": "2028ed2b169ed779ef0f01253c98f181349aafec3d31c5d4b682e9546d748af8",
           "anchor": "Future<bool> _command"
         },
         {
@@ -12589,7 +12599,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
+          "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -12719,7 +12729,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b",
+          "sha256": "2028ed2b169ed779ef0f01253c98f181349aafec3d31c5d4b682e9546d748af8",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -13576,7 +13586,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
+          "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -13746,7 +13756,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
+          "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -15510,7 +15520,7 @@
         },
         {
           "path": "tools/build-mobile.ps1",
-          "sha256": "4939c6bec5ca62b8d188d258f8a56f8c337a7f16b75ffa0b59d379b890bf535a",
+          "sha256": "3b799a82bd8e2d32ce1291c23f1af2c7f5fbe3668f0a25e898dcafc72f46e86b",
           "anchor": "$taskCache=Get-DirectorySummary"
         }
       ],
@@ -16673,7 +16683,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
+          "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -17246,7 +17256,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7",
+          "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108",
           "anchor": "final LanResolver resolver;"
         },
         {
@@ -17446,7 +17456,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7",
+          "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -17685,7 +17695,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7",
+          "sha256": "069cded2ace6201aff79c0f1e3d8b5e19e4689dc7b34e5b98ae1e5528754b108",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -17840,7 +17850,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b",
+          "sha256": "2028ed2b169ed779ef0f01253c98f181349aafec3d31c5d4b682e9546d748af8",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -17983,12 +17993,12 @@
         {
           "path": "mobile/lib/connection_preferences.dart",
           "anchor": "class ConnectionPreferences",
-          "sha256": "dc20e6ec07521d724c97b793b69d36613a9c0b6e980f0184105a41e844bc5318"
+          "sha256": "51172875b90ae6e8239ad76d8a8dd2a6e4ca9d0929e7717400b33d00e00e1a0f"
         },
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b"
+          "sha256": "2028ed2b169ed779ef0f01253c98f181349aafec3d31c5d4b682e9546d748af8"
         }
       ],
       "proof": [
@@ -18028,7 +18038,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b"
+          "sha256": "2028ed2b169ed779ef0f01253c98f181349aafec3d31c5d4b682e9546d748af8"
         }
       ],
       "proof": [

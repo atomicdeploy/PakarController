@@ -6,6 +6,7 @@ param(
     [ValidateRange(1,1024)][int]$MaximumCacheGiB=4,
     [switch]$Restore,
     [switch]$BuildOnly,
+    [switch]$BoardProductionHold,
     [switch]$DisablePeerVersionChecks,
     [ValidatePattern('^test/[A-Za-z0-9_/-]+_test\.dart$')][string]$TestPath,
     [string]$CapturePath,
@@ -14,6 +15,7 @@ param(
 )
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'script-runtime.ps1')
+& (Join-Path $PSScriptRoot 'verify-versions.ps1')
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern api-contract -Gate | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern pu-tooling -Gate | Out-Null
 & node (Join-Path $PSScriptRoot 'check-living-contract.mjs') | ForEach-Object { Write-Host $_ }
@@ -69,6 +71,7 @@ elseif(-not $BuildOnly){
 }
 if($Mode -eq 'ApkPreview'){
     $taskApkArguments=@('build','apk','--release','--no-pub')
+    if($BoardProductionHold){$taskApkArguments+='--dart-define=PAKAR_BOARD_PRODUCTION_HOLD=true'}
     if($DisablePeerVersionChecks){$taskApkArguments+='--dart-define=PAKAR_ENFORCE_PEER_VERSIONS=false'}
     $taskCommands.Add($taskApkArguments)
 }
