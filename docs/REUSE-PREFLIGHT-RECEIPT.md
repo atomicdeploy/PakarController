@@ -7345,3 +7345,36 @@ not an answered/DTMF result. Future separately authorized query calls must use
 the configured external-route target (`9` plus the national mobile number).
 No answer, board approval or user refusal is inferred, and no repeat call was
 made after the user requested automatic wake/swipe instead.
+
+## Tablet wireless handoff routing recovery
+
+Actual SM_X906B R52T60C6V9B/code19: classic TCP5555 and modern TLS both stalled
+over ASUS Ethernet, while the same TLS endpoint/key immediately worked through
+a temporary USB TCP forward. ICMP including1472-byte no-fragment probes passed,
+so successful ping was not accepted as ADB proof. ASUS Ethernet43/.123 and
+Wi-Fi9/.240 share192.168.1.0/24. An explicit ActiveStore-only host route for
+192.168.1.115/32 through Wi-Fi9, on-link/metric1, immediately made actual wireless
+TLS ADB succeed at192.168.1.115:37939 with matching hardware serial. This proves
+the path-specific recovery, not the precise router/driver filtering cause.
+Default Internet routes, shared ADB server and production boards were unchanged.
+
+Modern wireless debugging was enabled through Android's own trusted-network
+dialog; existing host keys were retained. The failed classic listener was
+disabled, owned test connections/SSH forwards were stopped, the temporary USB
+forward15557 removed, and the owned temporary pairing XML deleted. All following
+shell/capture/screen-off/resume checks explicitly used the wireless target, not
+the attached USB serial. Process5431 survived screen-off/resume and the captured
+app recovered fresh board state with cell22, indicators on and multiselect off.
+Android graphics-buffer format probe errors were observed in logcat; no claim
+of zero errors/all bugs solved, physical command acceptance or long soak is made.
+The scoped route is temporary until ASUS reboot; Wi-Fi/IP changes require fresh
+discovery and route verification. Actual donor process helper and existing
+android-device.ps1/viewport safety were consulted; no new toolchain/cache/build.
+PBX handoff query17924181358883596 requires separate completed spool/CDR and DTMF
+verification; a queued call is not user acceptance or permission for any board
+firmware/output change.
+The call subsequently completed: matching outgoing_done Status:Completed,
+CDR ANSWERED/43 connected seconds and zero remaining active channels. DTMF3 was
+received as not_tested, not physical/client acceptance. No redial or reschedule
+was inferred. Both USB and verified TLS wireless ADB remained listed after the
+call; actual USB removal is not yet observed. No production board mutation.
