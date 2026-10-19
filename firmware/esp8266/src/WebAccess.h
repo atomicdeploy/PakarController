@@ -119,7 +119,7 @@ class WebAccess {
   uint8_t sessionCount() const {
     PakarAccessDetail::Guard lock(mutex_); return sessions_.count(millis());
   }
-  bool bindSocket(uint32_t id, AsyncWebServerRequest *request) {
+  bool bindSocket(uint32_t id, AsyncWebServerRequest *request, const String &address = String()) {
     if (!id || !request || !sameOrigin(request) || !versionAllowed(request)) return false;
     const String token = cookieToken(request);
     PakarAccessDetail::Guard lock(mutex_);
@@ -130,7 +130,9 @@ class WebAccess {
     for (const auto &slot : sockets_) if (slot.id == id) return false;
     for (auto &slot : sockets_) if (slot.id == 0) {
       slot.id = id; slot.basic = basic; slot.open = open;
-      slot.address=request->client()->remoteIP().toString();slot.version=clientVersion(request);
+      // The upgrade has already transferred request->client() to the socket.
+      // Only headers/auth remain owned by request during WS_EVT_CONNECT.
+      slot.address=address;slot.version=clientVersion(request);
       const auto *agent=request->getHeader("User-Agent");
       slot.agent=agent?agent->value():String();
       if(slot.agent.length()>192)slot.agent=String();

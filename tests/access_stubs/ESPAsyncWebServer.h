@@ -85,7 +85,7 @@ struct AsyncClient {
   }
   void close(){if(alive){alive=false;if(onClose)onClose();}}
   size_t acknowledge(size_t bytes){const size_t count=std::min(bytes,inFlight);inFlight-=count;acked+=count;return count;}
-  Address remoteIP()const{return {};}
+  Address remoteIP()const{assert(alive);return {};}
   std::function<void(void*,AsyncClient*)> pollCallback;
   void onPoll(std::function<void(void*,AsyncClient*)> fn){pollCallback=std::move(fn);}
   void poll(){AsyncSdkFixture::Actor actor;if(alive&&pollCallback)pollCallback(nullptr,this);}
@@ -117,7 +117,8 @@ class AsyncWebServerRequest : public std::enable_shared_from_this<AsyncWebServer
     status=response_->code();responseHeaders=response_->headers;flashResponse=response_->flash;
     response_->start(this);sent=true;
   }
-  AsyncClient *client() { return &connection; }
+  bool clientReleased=false;
+  AsyncClient *client() { return clientReleased ? nullptr : &connection; }
   uint8_t version()const{return 1;}
   // Actual SDK WebRequest.cpp248-265: close only after response completion.
   // In particular a response that marks a FILLED final block complete is

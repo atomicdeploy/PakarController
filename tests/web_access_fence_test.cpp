@@ -35,7 +35,12 @@ int main() {
   unsigned count=admitted;dispatch(releaseBootstrap);assert(admitted==count+1);
   AsyncWebServerRequest query;query.path="/ws";query.headers.erase("X-Pakar-Version");query.arguments["version"]="0.2.8";
   count=admitted;dispatch(query);assert(admitted==count+1);
-  assert(access.bindSocket(99,&query));assert(access.socketVersion(99)=="0.2.8");access.forgetSocket(99);
+  // Actual SDK _newClient releases the request transport BEFORE CONNECT.
+  // The live WebSocket supplies the address; request retains only metadata.
+  query.clientReleased=true;assert(query.client()==nullptr);
+  assert(access.bindSocket(99,&query,"192.0.2.42"));
+  assert(access.socketAddress(99)=="192.0.2.42");
+  assert(access.socketVersion(99)=="0.2.8");access.forgetSocket(99);
   AsyncWebServerRequest conflict;conflict.path="/ws";conflict.arguments["version"]="0.2.9";
   dispatch(conflict);assert(conflict.status==426);
   for (int method : {HTTP_GET, HTTP_HEAD, HTTP_POST, HTTP_PUT, HTTP_DELETE}) {

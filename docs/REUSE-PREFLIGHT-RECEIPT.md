@@ -1,5 +1,22 @@
 # Donor-first preflight receipt
 
+## WebSocket upgrade panic recovery
+
+The physical S3 crash partition was read through ASUS COM22 and its ELF/CRC
+validated. Its embedded ELF hash prefix `4632c31c7` matches the preserved
+`a593f6d3...` application ELF. The fault stack is AsyncClient::remoteIP ->
+WebAccess::bindSocket -> onWebSocketEvent -> AsyncWebSocket::_newClient.
+The installed SDK transfers request->clientRelease() before WS_EVT_CONNECT;
+dereferencing request->client() there is invalid. Consulted network-cloud and
+the exact PU850 LocalLib/AsyncWebServer.cpp donor, read through EOF; its connect
+handler correctly uses client->remoteIP(). Pakar now passes that live socket
+address to admission while keeping request metadata/auth checks. The actual
+WebAccess fixture models the released request client and retains address/version.
+The first flash read at460800 was corrupt; a bounded115200 read completed with
+valid core CRC. No inference of optical LED, phone or long-soak acceptance follows
+from the crash decode or host regression test. Deployment and live tests require
+their own receipts before this incident is considered recovered.
+
 ## Release reconciliation: browser fixture and live inventory
 
 Fresh GitHub enumeration found zero open Pakar PRs and only main locally/remotely;

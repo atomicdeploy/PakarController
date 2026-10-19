@@ -54,7 +54,7 @@ Normal builds retain AVR hardware UART. Optional PAKAR_AVR_LINK_ENABLED=0 quiet 
 | pu850-esp.ino:1217 | /config/ap GET | adapted | firmware/esp8266/src/MaintenanceRoutes.h:489 — Actual AP configuration, passwords redacted. Writes remain /api/network. |
 | pu850-esp.ino:1244 | /config/st GET | adapted | firmware/esp8266/src/MaintenanceRoutes.h:489 — Actual station configuration, passwords redacted. Writes remain /api/network. |
 | pu850-esp.ino:1277 | /hostname/check GET|POST | adapted | firmware/esp8266/src/MaintenanceRoutes.h:506 — Validated DNS hostname and SDK lookup; refuses during remote firmware maintenance. ESP8266 has an explicit 3-second timeout; S3 uses the SDK default, not an asserted identical latency bound. |
-| pu850-esp.ino:1307 | /login POST | commented-replaced | firmware/esp8266/src/WebAccess.h:207 — Commented donor stub replaced by existing authenticated expiring cookie/session login with same-origin validation. |
+| pu850-esp.ino:1307 | /login POST | commented-replaced | firmware/esp8266/src/WebAccess.h:209 — Commented donor stub replaced by existing authenticated expiring cookie/session login with same-origin validation. |
 | pu850-esp.ino:1311 | /auth_dump GET | adapted | firmware/esp8266/src/MaintenanceRoutes.h:519 — Authenticated username/readiness only; raw password/token dumping deliberately removed. |
 | pu850-esp.ino:1325 | /sessions_dump GET | adapted | firmware/esp8266/src/MaintenanceRoutes.h:519 — Authenticated bounded session count, never bearer/cookie values. |
 | pu850-esp.ino:1343 | /random GET | adapted | firmware/esp8266/src/MaintenanceRoutes.h:535 — Fresh hardware-entropy random bytes, not a live authorization token. |

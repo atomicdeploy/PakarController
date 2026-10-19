@@ -2433,7 +2433,7 @@
       },
       {
         "path": "firmware/esp8266/src/WebAccess.h",
-        "sha256": "da17515e8f09c0d74152e22a5da1534a9b8121a84c500b5ed23cdafa822e1c3f",
+        "sha256": "7c87b0f4e3f4cc849da343e7da39fa946ee68716a7181b0a2ee1241cb4579cab",
         "anchor": "BoardCore::DiagnosticText::encodeHex(bytes"
       },
       {
@@ -7480,7 +7480,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631"
+          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -7982,7 +7982,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631"
+          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -8037,7 +8037,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631"
+          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2"
         }
       ],
       "omissions": [
@@ -8076,7 +8076,7 @@
       "origin": "PU850-ESP",
     "path": "LocalLib/AsyncWebServer.cpp",
     "preserved": [
-      "Complete original implementation read through EOF. Retains shared asynchronous server setup, /ws attachment, connected-client limits and per-client message dispatch. The actual AsyncTCP listener uses native lwIP interfaces, so Wi-Fi and W5500 reach identical routes. Existing Pakar bounded loop-owned dispatch and access ownership replace unsafe donor callback behavior.",
+      "Complete original implementation read through EOF. Retains shared asynchronous server setup, /ws attachment, connected-client limits and per-client message dispatch. The actual AsyncTCP listener uses native lwIP interfaces, so Wi-Fi and W5500 reach identical routes. Existing Pakar bounded loop-owned dispatch and access ownership replace unsafe donor callback behavior. Reread for the exact-image S3 panic in WebAccess::bindSocket: reuse donor onWebSocketEvent's client->remoteIP(), passing its copied address into admission. Installed SDK _newClient transfers request->clientRelease() before CONNECT, leaving request headers valid but its TCP client null. The regression fixture explicitly releases that request client and checks retained peer address/version; no auth, origin or release-policy bypass.",
       "Updater WebSocket preflight now adapts actual desktop main.rs::ws_worker read-only status acquisition: exactly one masked {type:status} is sent only after validating101/Accept/Connection:Upgrade and the actual pinned TCP peer. Only exact-board/boot recognized status-rgb/update-progress events may be skipped; neither renews the bounded full-status deadline nor satisfies readiness. The complete status must still pass boardPeer identity/capability checks. Separate measured connect/upgrade and full-status stages allow bounded cloud contention without removing the preflight or replaying any action.",
       "The existing bounded callback-to-loop WebSocket queue now allocates its eight S3 complete-message slots once in explicit PSRAM before network callbacks. Allocation has no internal-DRAM fallback; ready() and ws_queue_ready expose actual queue availability, and missing storage rejects ingress rather than executing borrowed/partial data. ESP8266 retains four inline cooperative slots. Locks, message bounds/copy isolation, epochs and backpressure remain unchanged. This is a Pakar/S3 SDK memory adaptation, not a PSRAM feature attributed to the ESP8266 donor.",
       "Internal8-bit heap free/largest/minimum metrics are reported separately from total heap and free PSRAM, so a large external-memory value cannot conceal Wi-Fi/OTA internal-memory exhaustion. BLE buffers use a separate same-policy lifetime owner; static GPIO/RMT wire buffers, driver timing, task stacks, SDK host pools and production build flags are not moved or reconfigured by this queue change.",
@@ -8089,13 +8089,13 @@
           "sha256": "4adbe46485571c92c0061e008ef3044d71a580f7f62d3cb1a1b3c19117eee40b"
         },
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"0539837793778de69839ea205fce43bda14f1734866dee5c158389f48e3837ab","anchor":"Message *items_=nullptr;"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
         {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"9f486926615fdec3d6e7c6ad32e384816e66811674aec2a9f6b34697233e83cf","anchor":"internal_heap_largest_block_bytes"},
         {"path":"tools/update-firmware.mjs","sha256":"489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631"
+          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -8449,7 +8449,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/WebAccess.h",
-          "sha256": "da17515e8f09c0d74152e22a5da1534a9b8121a84c500b5ed23cdafa822e1c3f",
+          "sha256": "7c87b0f4e3f4cc849da343e7da39fa946ee68716a7181b0a2ee1241cb4579cab",
           "anchor": "class WebAccess"
         },
         {
@@ -8476,7 +8476,7 @@
         },
         {
           "path": "tests/web_access_fence_test.cpp",
-          "sha256": "1bbf9caa0392b0f616aaa833d0515af743b617b51def4dd8c264f498aa433470",
+          "sha256": "224df11ea7e8a2198e172337822b8d0843398e751458e754c69f0accf807a019",
           "anchor": "// Auth-off does not mean loss"
         },
         {
@@ -8522,7 +8522,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/WebAccess.h",
-          "sha256": "da17515e8f09c0d74152e22a5da1534a9b8121a84c500b5ed23cdafa822e1c3f",
+          "sha256": "7c87b0f4e3f4cc849da343e7da39fa946ee68716a7181b0a2ee1241cb4579cab",
           "anchor": "class WebAccess"
         },
         {
@@ -8549,7 +8549,7 @@
         },
         {
           "path": "tests/web_access_fence_test.cpp",
-          "sha256": "1bbf9caa0392b0f616aaa833d0515af743b617b51def4dd8c264f498aa433470",
+          "sha256": "224df11ea7e8a2198e172337822b8d0843398e751458e754c69f0accf807a019",
           "anchor": "// Auth-off does not mean loss"
         },
         {
@@ -9240,7 +9240,7 @@
       "preserved": ["Full header/implementation read through EOF. Adapted nonblocking lifecycle state, absolute elapsed/period animation, repeat-state phase preservation, brightness-scaled rendered-byte reporting and explicit board-owned configuration into PakarS3::StatusRgb. Fixed descriptors now add donor flash/cycle/one-shot transition plus pulse/double-blink: fault and shutdown preempt routine states, verified success expires with the existing update lifecycle, offline USB is healthy and simultaneous AP/network availability is distinct."],
       "targets": [
         {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b","anchor":"class StatusRgb"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631","anchor":"void serviceStatusRgb(uint32_t now)"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2","anchor":"void serviceStatusRgb(uint32_t now)"},
         {"path":"firmware/esp32s3/src/StatusRgbConfig.h","sha256":"8ae7dd8a7868db38ff2a31c7034c3c9674c8bf860ee4b9aae4f559d2f125ed29","anchor":"class StatusRgbConfig"},
         {"path":"desktop/src/status_rgb.rs","sha256":"3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e","anchor":"pub struct Configuration"},
         {"path":"mobile/lib/status_rgb.dart","sha256":"5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8","anchor":"class StatusRgbSettings"}
@@ -9885,12 +9885,12 @@
     },
     {
       "path": "firmware/esp8266/src/WebAccess.h",
-      "sha256": "da17515e8f09c0d74152e22a5da1534a9b8121a84c500b5ed23cdafa822e1c3f",
+      "sha256": "7c87b0f4e3f4cc849da343e7da39fa946ee68716a7181b0a2ee1241cb4579cab",
       "anchor": "bool peerAllowed("
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631",
+      "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2",
       "anchor": "bool authenticate()"
     },
     {
@@ -10062,7 +10062,7 @@
     },
     {
       "path": "tests/web_access_fence_test.cpp",
-      "sha256": "1bbf9caa0392b0f616aaa833d0515af743b617b51def4dd8c264f498aa433470",
+      "sha256": "224df11ea7e8a2198e172337822b8d0843398e751458e754c69f0accf807a019",
       "anchor": "Real async queue + real fence recheck"
     },
     {
@@ -10234,7 +10234,7 @@
     },
     {
       "path": "tests/web_access_fence_test.cpp",
-      "sha256": "1bbf9caa0392b0f616aaa833d0515af743b617b51def4dd8c264f498aa433470",
+      "sha256": "224df11ea7e8a2198e172337822b8d0843398e751458e754c69f0accf807a019",
       "anchor": "Real async queue + real fence recheck"
     },
     {
@@ -10807,7 +10807,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebAccess.h",
-          "sha256": "da17515e8f09c0d74152e22a5da1534a9b8121a84c500b5ed23cdafa822e1c3f",
+          "sha256": "7c87b0f4e3f4cc849da343e7da39fa946ee68716a7181b0a2ee1241cb4579cab",
           "anchor": "ApiPolicy::numberedRoute"
         }
       ],
@@ -16530,7 +16530,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631",
+          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -16855,7 +16855,7 @@
         },
         {
           "path": "tests/access_stubs/ESPAsyncWebServer.h",
-          "sha256": "879f7af727f5fb12dea4ec51c0a5525836b1e2fd14b0f5a680db784ea9a1679f",
+          "sha256": "0d11c69100d4101b8e0f26997e71760077b212d30827ddbbfcff222b4649b120",
           "anchor": "if(onPause)onPause();"
         },
         {
@@ -17289,7 +17289,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631",
+          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -17528,7 +17528,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631",
+          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {

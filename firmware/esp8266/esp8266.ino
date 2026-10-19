@@ -2209,7 +2209,7 @@ void onWebSocketEvent(AsyncWebSocket *, AsyncWebSocketClient *client,
   }
   if (type == WS_EVT_CONNECT) {
     if (webSocket.count() > 8) { closeSocket(1013, "Client limit reached"); return; }
-    if (!webAccess.bindSocket(client->id(), static_cast<AsyncWebServerRequest *>(argument))) {
+    if (!webAccess.bindSocket(client->id(), static_cast<AsyncWebServerRequest *>(argument), client->remoteIP().toString())) {
       closeSocket(1008, "Sign in required"); return;
     }
     const uint8_t statusRequest[]="{\"type\":\"status\"}";
