@@ -1,5 +1,58 @@
 # Donor-first preflight receipt
 
+## Automatic selected-board discovery and route continuity
+
+Consulted mobile-network, peer-binding and exhaustive exact donor-audit routes;
+added the missing automatic-connection index route instead of treating a keyword
+miss as an accepted omission. Root and native specialist read actual PCController
+Tools/Controller/internal/link/discovery.go and lanresolver/resolver.go plus
+resolver_test.go through EOF at their ledger hashes. Mobile specialist also read
+the actual donor mobile discovery.dart and unified/transport.dart completely.
+Firmware specialist reread PU850 LocalLib/MNDP.cpp and MNDP.h through EOF and
+ConfirmSettings/loopMNDP sketch sections. This section review is not a new claim
+that root completely read the whole sketch or the sparse-missing mndp.go file.
+
+Adapted actual preferred-target ownership, successful TCP cache and ambiguity
+rules into the existing Rust/Flutter selected connection owners. One completed,
+bounded read-only scan may choose exactly one compatible physical board after
+the saved target fails; multiple interface routes count once. No discovered
+credentials, serial auto-open, automatic auth dialog, mutation replay or second
+connection owner is introduced. Runtime Disconnect, USB/BLE selection, disabled
+automatic preference and dirty editor/maintenance ownership remain authoritative.
+Persisted last-IP data is only a same-board endpoint/scheme/port-bound recovery
+hint. Both clients retain original Host/TLS SNI and certificate verification;
+loopback ASUS forwarded ports and remote DNS aliases are not rewritten into a
+board.local endpoint. Verified active renames retain the board workspace/drafts.
+
+Firmware imports ConfirmSettings' durable-save versus subsequent application
+distinction without its blocking delay or private credential broadcasts. A tiny
+phase journal coalesces typed nonsecret configuration notifications; status and
+USB's existing identity/status hints refresh current state through existing
+owners. MNDP relevant-change announcements coalesce at250ms instead of waiting
+for30 seconds. A local applied event is not physical association/LAN acceptance.
+The mutable hostname MQTT topic/ACL limitation remains explicit in
+CONNECTION-LIFECYCLE.md, rather than widening broker authority silently.
+
+Focused verification exposed a native saved-route fixture rejecting localhost
+aliases by configured-label equality despite a correct persisted board binding,
+plus Flutter analyzer style issues and immediate asynchronous socket failure
+ownership in the new trusted-CA recovery fixture. Corrections retain identity,
+release, explicit connection generation and normal TLS admission. Startup UI
+checks also exposed a real handoff stall: the new endpoint and
+connection intent existed, but no selected-board status read occurred while
+old subscription cancellation waited. Closing the old WebSocket owner before
+bounded cancellation, clearing its shell pointer first and fencing generations
+restores the actual HTTP observation and acknowledged-board UI without a fabricated
+WS status. A separate real silent-WebSocket fixture checks retirement/replacement.
+Native rename review caught another delay: a retired HTTP scope left an optional
+configuration-read slot occupied until24 seconds. Rename now retires that slot
+with its request generation; ordinary external events still coalesce behind a
+valid pending read. These fixes do not establish Android radio/soak acceptance.
+Canonical wrappers and existing source-hash gates remain mandatory; stale hashes observed
+while a specialist completed its source freeze were rebound centrally, not
+bypassed. Final source/fixture and SDK results are recorded in issue#2; no current
+production/client deployment, router/DHCP rename or physical acceptance follows.
+
 ## Duplex selected-owner commands and events
 
 Consulted network-cloud, peer-identity, bridge-repeater and exact donor-audit

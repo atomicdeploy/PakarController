@@ -1,4 +1,5 @@
 #include "AccessConfig.h"
+#include "ConfigurationChanges.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -10,6 +11,7 @@ int main() {
   AccessConfig disabled; assert(disabled.begin(filesystem) && !disabled.enabled());
   assert(!config.configure("", true)); // Enabling requires explicit credentials.
   assert(config.configure("", true, "admin", "pakarcontroller"));
+  PakarConfiguration::changes().reset();PakarConfiguration::Journal::Event change;
   assert(!config.change("wrong", "David", "new-password"));
   assert(!config.change("pakarcontroller", "bad:user", "new-password"));
   filesystem.failWrite = true;
@@ -18,8 +20,11 @@ int main() {
   filesystem.failWrite = false; filesystem.failRename = true;
   assert(!config.change("pakarcontroller", "David", "new-password"));
   assert(config.verify("admin", "pakarcontroller"));
+  assert(!PakarConfiguration::changes().peek(change));
   filesystem.failRename = false;
   assert(config.change("pakarcontroller", "David", "new-password"));
+  assert(PakarConfiguration::changes().peek(change)&&change.scopes==PakarConfiguration::Auth);
+  assert(PakarConfiguration::changes().retire(change));
   assert(!config.defaultsActive() && config.verify("David", "new-password"));
   AccessConfig reboot; assert(reboot.begin(filesystem)); assert(reboot.verify("David", "new-password"));
   const auto security=reboot.securityRevision();

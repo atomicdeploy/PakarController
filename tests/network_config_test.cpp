@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstddef>
 #include "../firmware/esp8266/src/NetworkConfig.h"
+#include "../firmware/esp8266/src/ConfigurationChanges.h"
 NetworkFixtureWiFi WiFi;
 
 namespace {
@@ -22,6 +23,18 @@ struct Previous {
 } __attribute__((packed));
 }
 int main() {
+  using namespace PakarConfiguration;
+  Journal queue;Journal::Event change;
+  assert(!queue.peek(change));queue.saved(Network);queue.saved(Identity);queue.saved(Network);
+  queue.applied(Network);queue.failed(Ethernet);
+  assert(queue.peek(change)&&change.revision==1&&change.scopes==(Network|Identity)&&change.phase==Phase::Saved);
+  auto wrong=change;wrong.revision=9;assert(!queue.retire(wrong));
+  assert(queue.retire(change)&&!queue.retire(change));
+  assert(queue.peek(change)&&change.revision==2&&change.scopes==Network&&change.phase==Phase::Applied);
+  assert(queue.retire(change));assert(queue.peek(change)&&change.revision==3&&change.scopes==Ethernet&&change.phase==Phase::Failed);
+  assert(queue.retire(change)&&!queue.peek(change));
+  queue.reset();assert(queue.revision()==0&&!queue.peek(change));
+  changes().reset();
   fs::FS filesystem;NetworkConfigStore settings;
   assert(settings.begin(filesystem));
   assert(settings.accessPointEnabled()&&!settings.stationEnabled()&&settings.dhcpEnabled());
@@ -30,8 +43,11 @@ int main() {
   assert(settings.setStation("Fixture WiFi","fixture-passphrase",true));
   assert(settings.setAccessPointEnabled(false));
   assert(settings.save());
+  assert(changes().peek(change)&&change.scopes==Network&&change.phase==Phase::Saved);
+  assert(changes().retire(change));
   const auto active=filesystem.files.at("/network.bin");
   assert(settings.save());
+  assert(!changes().peek(change)); // No-op durable save is not a change event.
   assert(filesystem.files.at("/network.bin")==active); // Identical save never replaces the record.
   assert(!settings.setStation(String("bad\0ssid",8),"fixture-passphrase",true));
   assert(!settings.setStation(String(33,'s'),"fixture-passphrase",false));
@@ -45,10 +61,14 @@ int main() {
   assert(settings.setAddressing(false,"192.168.10.7","192.168.10.1","255.255.255.0","192.168.10.1","1.1.1.1"));
   assert(!settings.dhcpEnabled()&&settings.stationAddress().toString()=="192.168.10.7");
   filesystem.failWrite=true;assert(!settings.save());
+  assert(!changes().peek(change)); // Draft/failed commit cannot advertise a saved change.
   assert(filesystem.files.at("/network.bin")==active);
   filesystem.failWrite=false;filesystem.failRename=true;assert(!settings.save());
+  assert(!changes().peek(change));
   assert(filesystem.files.at("/network.bin")==active);
   filesystem.failRename=false;assert(settings.save());
+  assert(changes().peek(change)&&change.revision==2&&change.scopes==Network);
+  assert(changes().retire(change));
   NetworkConfigStore loaded;assert(loaded.begin(filesystem));
   assert(!loaded.dhcpEnabled()&&loaded.stationAddress().toString()=="192.168.10.7");
   assert(loaded.setAddressing(true));

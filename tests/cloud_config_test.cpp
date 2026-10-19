@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <iostream>
 #include "../firmware/esp8266/src/CloudConfig.h"
+#include "../firmware/esp8266/src/ConfigurationChanges.h"
 
 namespace {
 struct Stored {
@@ -44,6 +45,7 @@ void assertOld(fs::FS &filesystem,const std::vector<uint8_t> &bytes) {
 }
 
 int main() {
+  PakarConfiguration::changes().reset();PakarConfiguration::Journal::Event change;
   fs::FS filesystem; CloudConfigStore settings;
   assert(settings.begin(filesystem));
   assert(!settings.mqttEnabled()&&!settings.webSocketEnabled());
@@ -51,10 +53,13 @@ int main() {
   assert(settings.setMqtt(true,true,"mqtt.fixture.invalid",8883,u8"کاربر",u8"رمز fixture\npassword","fixture/base",true));
   assert(settings.setWebSocket(true,true,"ws.fixture.invalid",443,"/ws?fixture=1",u8"توکن-fixture",true));
   assert(settings.setTelemetrySeconds(17)); assert(settings.save());
+  assert(PakarConfiguration::changes().peek(change)&&change.scopes==PakarConfiguration::Cloud);
+  assert(PakarConfiguration::changes().retire(change));
   const auto active = filesystem.files.at("/cloud.bin")->bytes;
   const auto opens=filesystem.faults->writeOpens, writes=filesystem.faults->writes,
       bytes=filesystem.faults->bytesWritten, renames=filesystem.faults->renames;
   assert(settings.save()); assert(settings.save());
+  assert(!PakarConfiguration::changes().peek(change));
   assert(filesystem.faults->writeOpens==opens&&filesystem.faults->writes==writes&&
       filesystem.faults->bytesWritten==bytes&&filesystem.faults->renames==renames);
   assertOld(filesystem,active);
@@ -72,6 +77,7 @@ int main() {
   filesystem.faults->corruptVerify=false; filesystem.faults->failRename=true;
   assert(!candidate.save()); assertOld(filesystem,active);
   assert(settings.telemetrySeconds()==17); // Publish only a committed copy.
+  assert(!PakarConfiguration::changes().peek(change)); // All six failure paths remain silent.
   filesystem.faults->failRename=false; assert(candidate.save());
   CloudConfigStore committed; assert(committed.begin(filesystem));
   assert(committed.telemetrySeconds()==23);

@@ -1,4 +1,5 @@
 #include "DeviceIdentity.h"
+#include "ConfigurationChanges.h"
 #include <assert.h>
 #include <stdio.h>
 int main() {
@@ -11,15 +12,19 @@ int main() {
   fs::FS filesystem; DeviceIdentity config;
   assert(config.begin(filesystem)); assert(config.ready());
   assert(filesystem.exists("/identity.bin")); assert(strcmp(config.hostname(), PAKAR_DEFAULT_HOSTNAME) == 0);
+  PakarConfiguration::changes().reset();PakarConfiguration::Journal::Event change;
   filesystem.files["/network.bin"] = std::make_shared<File::Data>();
   filesystem.files["/network.bin"]->bytes = {1, 2, 3, 4};
   const auto wifiBefore = filesystem.files["/network.bin"]->bytes;
   filesystem.failWrite = true; assert(!config.rename("ledboard"));
   assert(strcmp(config.hostname(), PAKAR_DEFAULT_HOSTNAME) == 0);
   filesystem.failWrite = false; filesystem.failRename = true; assert(!config.rename("ledboard"));
+  assert(!PakarConfiguration::changes().peek(change));
   DeviceIdentity previous; assert(previous.begin(filesystem)); assert(strcmp(previous.hostname(), PAKAR_DEFAULT_HOSTNAME) == 0);
   filesystem.failRename = false;
   assert(config.rename("LEDBOARD.local")); assert(strcmp(config.hostname(), "ledboard") == 0);
+  assert(PakarConfiguration::changes().peek(change)&&change.scopes==PakarConfiguration::Identity);
+  assert(PakarConfiguration::changes().retire(change));
   assert(filesystem.files["/network.bin"]->bytes == wifiBefore);
   DeviceIdentity reboot; assert(reboot.begin(filesystem)); assert(strcmp(reboot.hostname(), "ledboard") == 0);
   assert(config.configure("LEDBOARD.local", "David’s table"));

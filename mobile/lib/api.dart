@@ -56,6 +56,9 @@ class PakarApi {
   /// WebSocket remains preferred. Disable only command HTTP recovery, not
   /// independent read-only status/identity or the explicit Bluetooth transport.
   bool commandHttpFallback;
+
+  /// Network discovery policy, independent of the explicit transport choice.
+  bool automaticDiscovery = true;
   int _connectionRevision = 0;
   int get connectionRevision => _connectionRevision;
   bool _connectionWanted = true;
@@ -116,12 +119,22 @@ class PakarApi {
     _connectionWanted = false;
     _connectionMethod = method;
     _baseUrl = normalized;
+    _knownNetworkEndpoint = normalized;
+    _knownNetworkBoard = method == ConnectionMethod.network && board.isNotEmpty
+        ? board
+        : null;
+    _lastVerifiedNetworkOrigin = null;
     expectedBluetoothBoard = board;
     _identityRequired = false;
     resetTransport();
   }
 
   void Function()? onPeerChanged;
+  void Function()? onConfigurationChanged;
+  Timer? _configurationRefresh;
+  int _configurationRevision = 0;
+  final _configurationUpdates = StreamController<int>.broadcast(sync: true);
+  Stream<int> get configurationUpdates => _configurationUpdates.stream;
   void Function()? onTransportRetired;
   void Function(Map<String, dynamic>)? onPeripheralEvent;
   void Function()? onPeripheralStreamLost;
@@ -131,6 +144,8 @@ class PakarApi {
     final normalized = normalizeEndpoint(value);
     if (_baseUrl != normalized) {
       _baseUrl = normalized;
+      _knownNetworkEndpoint = _knownNetworkBoard = _lastVerifiedNetworkOrigin =
+          null;
       _identityRequired = false;
       resetTransport();
     }
@@ -835,6 +850,66 @@ class PakarApi {
   String? _transportOwner;
   String? _verifiedEndpoint;
   String? _verifiedBoard, _verifiedBoot;
+  String? _knownNetworkEndpoint, _knownNetworkBoard, _lastVerifiedNetworkOrigin;
+
+  /// Saved route metadata is only a read-probe hint, never peer authority.
+  void restoreNetworkRecovery(Object? saved) {
+    if (saved is! Map ||
+        saved['endpoint'] != baseUrl ||
+        saved['board_id'] is! String ||
+        !RegExp(r'^[!-~]{1,80}$').hasMatch(saved['board_id'])) {
+      return;
+    }
+    try {
+      final origin = normalizeEndpoint('${saved['origin']}');
+      final uri = Uri.parse(origin), selected = Uri.parse(baseUrl);
+      if (InternetAddress.tryParse(uri.host) == null ||
+          uri.scheme != selected.scheme ||
+          uri.port != selected.port) {
+        return;
+      }
+      _knownNetworkEndpoint = baseUrl;
+      _knownNetworkBoard = saved['board_id'];
+      _lastVerifiedNetworkOrigin = origin;
+    } on FormatException {
+      /* Invalid metadata never changes selected intent. */
+    }
+  }
+
+  Map<String, String>? get networkRecovery =>
+      _knownNetworkEndpoint == baseUrl &&
+          _knownNetworkBoard != null &&
+          _lastVerifiedNetworkOrigin != null
+      ? {
+          'endpoint': baseUrl,
+          'board_id': _knownNetworkBoard!,
+          'origin': _lastVerifiedNetworkOrigin!,
+        }
+      : null;
+
+  void _rememberNetworkRoute(Map<String, dynamic> value) {
+    if (isBluetooth || _verifiedBoard == null || _verifiedBoot == null) return;
+    final uri = Uri.parse(transportUrl);
+    final ip = resolver.connectedAddressFor(uri);
+    final hostname = value['hostname'];
+    if (_knownNetworkEndpoint == baseUrl &&
+        _knownNetworkBoard == _verifiedBoard &&
+        _localLabel() != null &&
+        hostname is String &&
+        RegExp(r'^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$').hasMatch(hostname) &&
+        hostname != _localLabel()) {
+      // A same-board verified rename updates the canonical label, retaining
+      // the current numeric route for this session instead of resolving per tick.
+      _baseUrl = Uri.parse(baseUrl).replace(host: '$hostname.local').toString();
+      _transportOwner = baseUrl;
+      _discoveredBaseUrl = ip == null ? null : uri.replace(host: ip).toString();
+    }
+    _knownNetworkEndpoint = baseUrl;
+    _knownNetworkBoard = _verifiedBoard;
+    if (ip != null) {
+      _lastVerifiedNetworkOrigin = uri.replace(host: ip).toString();
+    }
+  }
 
   Map<String, String> get _headers => {
     ...PeerIdentity.current.headers,
@@ -883,6 +958,8 @@ class PakarApi {
     String path,
     Map<String, String> headers, {
     Duration? timeout,
+    http.Client? readClient,
+    bool recordHeaders = true,
   }) async {
     final owner = connectionRevision, limit = timeout ?? readTimeout;
     const maximum = 64 * 1024;
@@ -910,8 +987,10 @@ class PakarApi {
     StreamIterator<List<int>>? reader;
     StreamSubscription<List<int>>? rejectedBody;
     try {
-      final response = await _client.send(request).timeout(limit);
-      if (owner == connectionRevision) {
+      final response = await (readClient ?? _client)
+          .send(request)
+          .timeout(limit);
+      if (recordHeaders && owner == connectionRevision) {
         receivedServerHeaders = Map.unmodifiable({
           for (final key in [
             'server',
@@ -1347,6 +1426,8 @@ class PakarApi {
     }
     _acceptIdentity(result.json);
     _verifiedEndpoint = baseUrl;
+    _rememberNetworkRoute(result.json);
+    _verifiedEndpoint = baseUrl;
     if (!_rememberStatus(result)) throw const SupersededRead();
     return _latestStatus!;
   }
@@ -1547,6 +1628,32 @@ class PakarApi {
         if (message is! String) continue;
         final value = jsonDecode(message);
         if (value is Map<String, dynamic> &&
+            value['type'] == 'configuration-changed') {
+          final changed = value['revision'];
+          if (value['board_id'] == _verifiedBoard &&
+              value['boot_id'] == _verifiedBoot &&
+              _verifiedBoard != null &&
+              changed is int &&
+              changed > _configurationRevision) {
+            _configurationRevision = changed;
+            _configurationRefresh ??= Timer(
+              const Duration(milliseconds: 250),
+              () {
+                _configurationRefresh = null;
+                if (revision == connectionRevision &&
+                    connectionWanted &&
+                    appForeground) {
+                  if (!_configurationUpdates.isClosed) {
+                    _configurationUpdates.add(_configurationRevision);
+                  }
+                  onConfigurationChanged?.call();
+                }
+              },
+            );
+          }
+          continue; // A settings edge never renews the full-status lease.
+        }
+        if (value is Map<String, dynamic> &&
             value['type'] == 'command-result') {
           if (value['board_id'] == _verifiedBoard &&
               value['boot_id'] == _verifiedBoot) {
@@ -1613,6 +1720,8 @@ class PakarApi {
             return; // Reconnect only reads; never replay.
           }
           if (_verifiedBoard != null && _verifiedBoot != null) {
+            _verifiedEndpoint = baseUrl;
+            _rememberNetworkRoute(value);
             _verifiedEndpoint = baseUrl;
           }
           final status = DeviceStatus(value);
@@ -1875,7 +1984,25 @@ class PakarApi {
     }
   }
 
+  /// Retire only the live stream owner before awaiting its subscription's
+  /// cancellation. Keep HTTP, address cache, peer revision and fresh UI intact.
+  Future<void> retireLiveSocket() async {
+    final active = _channel;
+    _channel = null;
+    _socketReady = false;
+    _liveAge = _socketAge = null;
+    for (final pending in _commandReplies.values) {
+      if (!pending.isCompleted) pending.complete(null);
+    }
+    _commandReplies.clear();
+    if (active != null) onPeripheralStreamLost?.call();
+    await _retireSocket(active);
+  }
+
   Future<void> close() async {
+    _configurationRefresh?.cancel();
+    _configurationRefresh = null;
+    unawaited(_configurationUpdates.close());
     await bluetooth.close();
     _abortReads();
     _socketReady = false;
@@ -1907,6 +2034,9 @@ class PakarApi {
   }
 
   void resetTransport({UnsupportedPeerVersion? unsupported}) {
+    _configurationRefresh?.cancel();
+    _configurationRefresh = null;
+    _configurationRevision = 0;
     _unsupportedPeer = unsupported;
     _introducedPeer = null;
     _introductionAge = null;
@@ -1945,8 +2075,19 @@ class PakarApi {
   }
 
   bool _matchesLocalIdentity(Map<String, dynamic> value) {
+    if (_knownNetworkEndpoint == baseUrl &&
+        _knownNetworkBoard != null &&
+        value['board_id'] != _knownNetworkBoard) {
+      return false;
+    }
     final expected = _localLabel();
     if (expected == null || value['hostname'] == expected) return true;
+    // A confirmed board may rename itself without becoming another peer.
+    if (_knownNetworkEndpoint == baseUrl &&
+        _knownNetworkBoard != null &&
+        value['board_id'] == _knownNetworkBoard) {
+      return true;
+    }
     final bridge = value['bridge'];
     if (bridge is! Map ||
         bridge['product'] != 'PakarController' ||
@@ -1972,56 +2113,145 @@ class PakarApi {
     Future<http.Response> Function(String base) request,
   ) async {
     final revision = connectionRevision, headers = _headers;
-    final lookupBefore = resolver.lookupFailureRevision(
-      Uri.parse(baseUrl).host,
-    );
     try {
       return await request(transportUrl);
     } on Exception catch (error) {
       if (revision != connectionRevision) throw const StaleConnection();
-      if (_localLabel() == null ||
-          (error is! HostLookupFailure &&
-              (error is! SocketException ||
-                  resolver.lookupFailureRevision(Uri.parse(baseUrl).host) ==
-                      lookupBefore))) {
+      final knownHostname =
+          _knownNetworkEndpoint == baseUrl &&
+          _knownNetworkBoard != null &&
+          InternetAddress.tryParse(Uri.parse(baseUrl).host) == null;
+      if ((_localLabel() == null && !knownHostname) ||
+          (error is! SocketException &&
+              !(error is TimeoutException && transportUrl == baseUrl))) {
         rethrow;
       }
     }
 
-    _discoveredBaseUrl = null;
-    _transportOwner = baseUrl;
-    for (final candidate in await (discovery?.call() ?? _discoverSsdp())) {
+    final verifiedTlsAddresses = <String, InternetAddress>{};
+    final verifiedBoardIds = <String, String>{};
+    Future<bool> verified(String candidate) async {
       if (revision != connectionRevision) throw const StaleConnection();
       final origin = Uri.tryParse(candidate);
       if (origin == null ||
           !['http', 'https'].contains(origin.scheme) ||
+          origin.scheme != Uri.parse(baseUrl).scheme ||
           origin.userInfo.isNotEmpty) {
-        continue;
+        return false;
       }
+      http.Client? isolated;
       try {
+        final probeHeaders = {...headers}..remove('authorization');
+        final numeric = InternetAddress.tryParse(origin.host);
+        var probeOrigin = candidate;
+        if (origin.scheme == 'https' &&
+            numeric != null &&
+            InternetAddress.tryParse(Uri.parse(baseUrl).host) == null) {
+          if (origin.port != Uri.parse(baseUrl).port) return false;
+          // A saved IP is NOT certificate identity. Probe that TCP address in
+          // isolation while retaining the selected URL/Host/SNI. No credential
+          // or shared resolver cache is touched before board+boot validation.
+          final probeResolver = LanResolver(
+            nativeFirst: false,
+            securityContext: resolver.securityContext,
+            lookup: (_) async => [numeric],
+          );
+          final io = probeResolver.createClient()
+            ..findProxy = ((_) => 'DIRECT');
+          isolated = IOClient(io);
+          probeOrigin = baseUrl;
+        }
         final probe = await _readResponse(
-          candidate,
+          probeOrigin,
           '/api/status',
-          headers,
+          probeHeaders,
           timeout: const Duration(seconds: 2),
+          readClient: isolated,
+          recordHeaders: false,
         );
-        if (probe.statusCode ~/ 100 != 2) continue;
+        if (probe.statusCode ~/ 100 != 2) return false;
         if (revision != connectionRevision) throw const StaleConnection();
         final json = jsonDecode(probe.body);
         if (json is! Map<String, dynamic> || !_matchesLocalIdentity(json)) {
-          continue;
+          return false;
+        }
+        validatePeerBoard(
+          json,
+          appVersion: PeerIdentity.current.version,
+          enabled: enforcePeerVersions,
+        );
+        final board = json['board_id'], boot = json['boot_id'];
+        if (board is! String ||
+            boot is! String ||
+            !RegExp(r'^[!-~]{1,80}$').hasMatch(board) ||
+            !RegExp(r'^[!-~]{1,80}$').hasMatch(boot)) {
+          return false;
+        }
+        verifiedBoardIds[candidate] = board;
+        if (isolated != null && numeric != null) {
+          verifiedTlsAddresses[candidate] = numeric;
         }
       } on Object {
         if (revision != connectionRevision) throw const StaleConnection();
-        continue;
+        return false;
+      } finally {
+        isolated?.close();
       }
-      _discoveredBaseUrl = candidate;
+      return true;
+    }
+
+    // Saved hostname remains first. Only its failed read permits the last
+    // same-board numeric route; this is never used to retry a mutation.
+    final remembered = _knownNetworkEndpoint == baseUrl
+        ? _lastVerifiedNetworkOrigin
+        : null;
+    String? selected;
+    if (transportUrl != baseUrl && await verified(baseUrl)) {
+      selected = baseUrl;
+    } else if (remembered != null &&
+        remembered != transportUrl &&
+        await verified(remembered)) {
+      selected = remembered;
+    } else {
+      final candidates = (await (discovery?.call() ?? _discoverSsdp()))
+          .take(32)
+          .toList();
+      final good = <String>{};
+      var next = 0;
+      final deadline = DateTime.now().add(const Duration(seconds: 12));
+      await Future.wait(
+        List.generate(4, (_) async {
+          while (next < candidates.length &&
+              DateTime.now().isBefore(deadline)) {
+            final candidate = candidates[next++];
+            if (await verified(candidate)) good.add(candidate);
+          }
+        }),
+      );
+      // A first-open hostname can collide. Count physical identities after
+      // the whole bounded sweep, not whichever response happened to win.
+      final ids = good.map((origin) => verifiedBoardIds[origin]).toSet();
+      if (ids.length == 1 && next >= candidates.length) {
+        selected = candidates.where(good.contains).firstOrNull;
+      }
+    }
+    if (selected != null) {
+      final candidate = selected;
+      if (revision != connectionRevision) throw const StaleConnection();
+      _transportOwner = baseUrl;
+      final tlsAddress = verifiedTlsAddresses[candidate];
+      if (tlsAddress != null) {
+        resolver.rememberVerifiedAddress(Uri.parse(baseUrl), tlsAddress);
+        _discoveredBaseUrl = null;
+      } else {
+        _discoveredBaseUrl = candidate;
+      }
       // Only the read probe can advance to another candidate. Do not swallow
       // an error from the selected request and silently choose another board.
-      return await request(candidate);
+      return await request(tlsAddress == null ? candidate : baseUrl);
     }
     throw SocketException(
-      '${Uri.parse(baseUrl).host} did not resolve and no matching authenticated SSDP device replied',
+      '${Uri.parse(baseUrl).host} is unreachable and no matching verified route replied',
     );
   }
 

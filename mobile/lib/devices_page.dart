@@ -86,12 +86,14 @@ class DevicesPage extends StatefulWidget {
     this.discovery,
     this.apiFactory,
     this.api,
+    this.onDiscovered,
   });
   final Future<void> Function(SavedDevice, String) select;
   final DeviceRegistry? registry;
   final DeviceDiscovery? discovery;
   final PakarApi Function(SavedDevice, String)? apiFactory;
   final PakarApi? api;
+  final VoidCallback? onDiscovered;
   @override
   State<DevicesPage> createState() => _DevicesPageState();
 }
@@ -176,6 +178,7 @@ class _DevicesPageState extends State<DevicesPage> {
               ? ''
               : 'Scan incomplete: ${discovery.errors.keys.join(', ')}';
         });
+        if (method == ConnectionMethod.network) widget.onDiscovered?.call();
       }
     } on Object catch (error) {
       if (mounted) {

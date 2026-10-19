@@ -16,7 +16,7 @@ import 'package:pakarcontroller/models.dart';
 import 'peer_fixture.dart';
 
 void main() {
-  test('Sticky resolver retains cache through TCP and lookup timeouts; DNS failure alone evicts', () async {
+  test('Sticky resolver re-resolves only after its cached TCP route becomes unreachable', () async {
     var lookups = 0, behavior = 'ok';
     final resolver = LanResolver(
       lookup: (_) async {
@@ -40,8 +40,12 @@ void main() {
       ),
       throwsA(isA<TimeoutException>()),
     );
+    behavior = 'ok';
     expect(await resolver.connect('ledboard.local', good), '192.0.2.1');
-    expect(lookups, 2); // Timeout retained the old successful route.
+    expect(
+      lookups,
+      3,
+    ); // Failed cached TCP route was retired, not timer-expired.
     behavior = 'dns';
     await expectLater(
       resolver.connect<String>(
@@ -53,7 +57,7 @@ void main() {
     expect(resolver.lookupFailureRevision('ledboard.local'), 1);
     behavior = 'ok';
     await resolver.connect('ledboard.local', good);
-    expect(lookups, 4); // Actual lookup failure removed the cached route.
+    expect(lookups, 5);
   });
   test(
     'A failed cached TCP address can recover a DHCP change by read-only lookup',
@@ -86,7 +90,14 @@ void main() {
         if (state == 'timeout') {
           throw TimeoutException('fixture response timeout');
         }
-        return http.Response(jsonEncode(peerFixture().json), 200);
+        return http.Response(
+          jsonEncode({
+            ...peerFixture().json,
+            'board_id': 'fixture-board',
+            'boot_id': 'fixture-boot',
+          }),
+          200,
+        );
       }),
       discovery: () async {
         ++discover;

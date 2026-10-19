@@ -1,4 +1,5 @@
 #include "DeviceIdentity.h"
+#include "ConfigurationChanges.h"
 #include <stddef.h>
 DeviceIdentity deviceIdentity;
 namespace { constexpr char kPath[] = "/identity.bin"; constexpr char kPending[] = "/identity.pending"; }
@@ -74,5 +75,6 @@ bool DeviceIdentity::configure(const String &name, const String &displayName) {
   if (!written || !valid || !filesystem_->rename(kPending, kPath)) {
     error_ = F("Cannot commit device name; previous name remains active"); return false;
   }
-  record_ = next; ready_ = true; error_ = String(); return true;
+  record_ = next; ready_ = true; error_ = String();
+  PakarConfiguration::changes().saved(PakarConfiguration::Identity);return true;
 }

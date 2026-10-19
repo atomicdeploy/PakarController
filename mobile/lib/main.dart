@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 
@@ -14,6 +15,9 @@ import 'command_readback.dart';
 import 'table_layout.dart';
 import 'table_workspace.dart';
 import 'connection_preferences.dart';
+import 'automatic_board_connection.dart';
+import 'discovery.dart';
+import 'device_registry.dart';
 import 'cell_search.dart';
 import 'cell_assignments_actions.dart';
 import 'peer_context.dart';
@@ -85,8 +89,9 @@ typedef VerifiedCommand = Future<bool> Function(
 );
 
 class ControlShell extends StatefulWidget {
-  const ControlShell({super.key, this.api});
+  const ControlShell({super.key, this.api, this.discovery});
   final PakarApi? api;
+  final DeviceDiscovery? discovery;
   @override
   State<ControlShell> createState() => _ControlShellState();
 }
@@ -94,6 +99,13 @@ class ControlShell extends StatefulWidget {
 class _ControlShellState extends State<ControlShell>
     with WidgetsBindingObserver {
   late final api = widget.api ?? PakarApi();
+  late final discovery =
+      widget.discovery ?? DeviceDiscovery(catalog: DiscoveryCatalog());
+  late final automatic = AutomaticBoardConnector(api, discovery);
+  bool automaticSelecting = false;
+  DateTime? lastAutomaticAttempt;
+  bool restoredWanted = true;
+  String? lastSavedNetworkRoute;
   final mirror = PeripheralMirror();
   late final AppUpdateCoordinator appUpdates = AppUpdateCoordinator(
     approve: _approveAppUpdate,
@@ -186,6 +198,7 @@ class _ControlShellState extends State<ControlShell>
       _revoke('Board/boot identity changed; previous operations retired');
       unawaited(_connectLive());
     };
+    api.onConfigurationChanged = () => unawaited(_refresh(silent: true));
     _restore();
   }
 
@@ -270,7 +283,7 @@ class _ControlShellState extends State<ControlShell>
             if (connection['method'] == 'bluetooth') {
               api.connectionMethod = ConnectionMethod.bluetooth;
             }
-            if (connection['wanted'] == false) api.disconnect();
+            restoredWanted = connection['wanted'] != false;
           }
           final phone = cache['phone'];
           if (phone is Map) {
@@ -321,6 +334,9 @@ class _ControlShellState extends State<ControlShell>
     );
     try {
       await ConnectionPreferences(prefs).restore(api);
+      // Explicit Disconnect remains latched in this live session. A previous
+      // session's incidental disconnected state does not disable startup auto.
+      if (!restoredWanted && !api.automaticDiscovery) api.disconnect();
     } on Exception catch (error) {
       if (mounted) {
         setState(() => message = 'Preferences could not be restored: $error');
@@ -380,7 +396,16 @@ class _ControlShellState extends State<ControlShell>
     final generation = ++liveGeneration;
     liveActive = true;
     liveRetry?.cancel();
-    await live?.cancel();
+    final previous = live;
+    live = null;
+    // Closing the underlying socket first breaks the async-generator stream
+    // cancellation handshake. A dead peer must not stall a replacement read.
+    await api.retireLiveSocket();
+    try {
+      await previous?.cancel().timeout(const Duration(seconds: 1));
+    } on TimeoutException {
+      // The old generation has no socket or authority and cannot revoke us.
+    }
     if (!mounted ||
         !api.connectionWanted ||
         !foreground ||
@@ -477,9 +502,91 @@ class _ControlShellState extends State<ControlShell>
             observedAge!.elapsed >= const Duration(seconds: 6)) {
           _revoke(error.toString());
         }
+        if (error is SocketException || error is TimeoutException) {
+          unawaited(_tryAutomaticConnection());
+        }
       }
     } finally {
       if (refreshingRevision == owner) refreshingRevision = null;
+    }
+  }
+
+  bool get automaticHandoffBlocked {
+    // Automatic discovery never retires an editor/import/maintenance dialog.
+    if (page == 'connection' ||
+        page == 'device-settings' ||
+        connectionDraft.endpoint != null ||
+        connectionDraft.user != null ||
+        Navigator.of(context).canPop()) {
+      return true;
+    }
+    final owner = workspaceBoard ?? api.networkRecovery?['board_id'];
+    final settings = workspaces[owner]?.settings.snapshot();
+    return settings?['identity'] != null ||
+        (settings?['edits'] is Map && (settings!['edits'] as Map).isNotEmpty);
+  }
+
+  Future<void> _tryAutomaticConnection({bool fromScan = false}) async {
+    if (!mounted ||
+        !foreground ||
+        automaticSelecting ||
+        !automatic.allowed ||
+        automaticHandoffBlocked ||
+        commandPending ||
+        manualMaintenanceBusy ||
+        firmwareAutomation?.busy == true) {
+      return;
+    }
+    final now = DateTime.now();
+    if (!fromScan &&
+        lastAutomaticAttempt != null &&
+        now.difference(lastAutomaticAttempt!) < const Duration(seconds: 30)) {
+      return;
+    }
+    lastAutomaticAttempt = now;
+    automaticSelecting = true;
+    final owner = api.connectionRevision;
+    try {
+      final saved = await DeviceRegistry().load();
+      if (!mounted ||
+          owner != api.connectionRevision ||
+          !automatic.allowed ||
+          automaticHandoffBlocked) {
+        return;
+      }
+      final choice = fromScan
+          ? automatic.currentChoice()
+          : await automatic.discover(
+              seeds: saved
+                  .where(
+                    (d) =>
+                        d.location == DeviceLocation.local &&
+                        !d.endpoint.startsWith('ble://'),
+                  )
+                  .map((d) => d.identity),
+            );
+      if (!mounted ||
+          choice == null ||
+          owner != api.connectionRevision ||
+          !automatic.allowed ||
+          automaticHandoffBlocked) {
+        return;
+      }
+      // Discovery never transfers credentials from the previous board. Only a
+      // public full-status compatible board may be selected automatically.
+      await _adoptConnection(
+        owner,
+        choice.endpoint,
+        'admin',
+        '',
+        verifyCredentialChange: false,
+        bluetoothBoard: choice.peer.boardId,
+        networkOrigin: choice.route,
+      );
+    } on Object {
+      // A missed/ambiguous sweep never revokes healthy UI or retries commands.
+    } finally {
+      automaticSelecting = false;
     }
   }
 
@@ -519,6 +626,22 @@ class _ControlShellState extends State<ControlShell>
     if (!mounted || !api.connectionWanted) return;
     if (value.olderThan(status)) return;
     mirror.observe(value, api.connectionRevision);
+    final route = api.networkRecovery;
+    final routeSignature = route == null ? null : jsonEncode(route);
+    if (routeSignature != null && routeSignature != lastSavedNetworkRoute) {
+      lastSavedNetworkRoute = routeSignature;
+      unawaited(
+        SharedPreferences.getInstance()
+            .then(
+              (prefs) => ConnectionPreferences(prefs).saveNetworkRecovery(api),
+            )
+            .catchError((Object _) {
+              if (lastSavedNetworkRoute == routeSignature) {
+                lastSavedNetworkRoute = null;
+              }
+            }),
+      );
+    }
     final board =
         value.json['board_id'] as String? ?? '${api.baseUrl}|${value.hostname}';
     final changed = workspaceBoard != board;
@@ -677,7 +800,12 @@ class _ControlShellState extends State<ControlShell>
     });
     final previous = live;
     live = null;
-    await previous?.cancel();
+    await api.retireLiveSocket();
+    try {
+      await previous?.cancel().timeout(const Duration(seconds: 1));
+    } on TimeoutException {
+      /* Explicit Disconnect already retired its owner. */
+    }
   }
 
   Future<void> _reconnect() async {
@@ -686,7 +814,14 @@ class _ControlShellState extends State<ControlShell>
     _scheduleWorkspaceSave();
     _revoke('Connecting to ${api.baseUrl}');
     liveRetry?.cancel();
-    await live?.cancel();
+    final previous = live;
+    live = null;
+    await api.retireLiveSocket();
+    try {
+      await previous?.cancel().timeout(const Duration(seconds: 1));
+    } on TimeoutException {
+      /* The previous generation cannot block Connect. */
+    }
     if (mounted) await _startConnection();
   }
 
@@ -697,6 +832,7 @@ class _ControlShellState extends State<ControlShell>
     String password, {
     bool verifyCredentialChange = true,
     String bluetoothBoard = '',
+    String networkOrigin = '',
   }) async {
     if (!mounted || owner != api.connectionRevision) {
       throw const StaleConnection();
@@ -714,6 +850,13 @@ class _ControlShellState extends State<ControlShell>
     );
     api.user = user;
     api.password = password;
+    if (networkOrigin.isNotEmpty && bluetoothBoard.isNotEmpty) {
+      api.restoreNetworkRecovery({
+        'endpoint': endpoint,
+        'board_id': bluetoothBoard,
+        'origin': networkOrigin,
+      });
+    }
     final adopted = api.connectionRevision;
     _revoke('Following acknowledged device configuration');
     try {
@@ -965,6 +1108,7 @@ class _ControlShellState extends State<ControlShell>
     firmwareAutomation?.dispose();
     connectionDraft.dispose();
     api.onPeerChanged = null;
+    api.onConfigurationChanged = null;
     live?.cancel();
     fallback?.cancel();
     liveRetry?.cancel();
@@ -1146,6 +1290,9 @@ class _ControlShellState extends State<ControlShell>
                   ? const SizedBox.shrink(key: ValueKey('devices-hidden'))
                   : DevicesPage(
                       api: api,
+                      discovery: discovery,
+                      onDiscovered: () =>
+                          unawaited(_tryAutomaticConnection(fromScan: true)),
                       select: (device, password) async {
                         await _adoptConnection(
                           api.connectionRevision,
@@ -2809,6 +2956,38 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
           ),
           const SizedBox(height: 12),
+          if (widget.api.connectionMethod == ConnectionMethod.network)
+            SwitchListTile.adaptive(
+              key: const Key('automatic-board-connection'),
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Automatically connect to one available board'),
+              subtitle: const Text(
+                'Keep the selected healthy board. Choose automatically only when one compatible board is available; turn off for manual connections.',
+              ),
+              value: widget.api.automaticDiscovery,
+              onChanged: saving || !widget.active
+                  ? null
+                  : (enabled) async {
+                      setState(() {
+                        saving = true;
+                        error = null;
+                      });
+                      try {
+                        final prefs = await SharedPreferences.getInstance();
+                        await ConnectionPreferences(prefs)
+                            .saveAutomaticDiscovery(enabled);
+                        if (mounted) {
+                          setState(
+                            () => widget.api.automaticDiscovery = enabled,
+                          );
+                        }
+                      } on Object catch (failure) {
+                        if (mounted) setState(() => error = '$failure');
+                      } finally {
+                        if (mounted) setState(() => saving = false);
+                      }
+                    },
+            ),
           if (widget.api.connectionMethod == ConnectionMethod.network)
             SwitchListTile.adaptive(
               key: const Key('command-http-fallback'),

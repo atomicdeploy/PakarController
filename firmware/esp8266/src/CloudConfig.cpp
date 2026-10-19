@@ -1,4 +1,5 @@
 #include "CloudConfig.h"
+#include "ConfigurationChanges.h"
 
 #include <stddef.h>
 #include <string.h>
@@ -170,7 +171,7 @@ bool CloudConfigStore::save() {
   if (!complete || !verified || !filesystem_->rename(kPending, kPath)) {
     error_ = F("cloud settings commit failed; previous settings preserved"); return false;
   }
-  error_ = String(); return true;
+  error_ = String(); PakarConfiguration::changes().saved(PakarConfiguration::Cloud); return true;
 }
 
 bool CloudConfigStore::setMqtt(bool enabled, bool tls, const String &host,

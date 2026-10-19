@@ -24,7 +24,7 @@ class MndpService {
 #endif
   }
   bool begin() {
-    stop();last_=millis()-30000UL;
+    stop();announcements_.begin(millis());
 #if defined(ESP32)
     refreshInterfaces();
 #else
@@ -33,6 +33,7 @@ class MndpService {
     return running_;
   }
   bool running() const {return running_;}
+  void requestAnnouncement(){announcements_.request();}
   void service(const char *hostname,const char *boardId) {
 #if defined(ESP32)
     refreshInterfaces();
@@ -54,8 +55,8 @@ class MndpService {
         replyAt_=millis();send(hostname,boardId,source,port,false);
       }
     }
-    if(static_cast<uint32_t>(millis()-last_)>=30000) {
-      last_=millis();send(hostname,boardId,IPAddress(224,0,0,88),5678,true);
+    if(announcements_.due(millis())) {
+      send(hostname,boardId,IPAddress(224,0,0,88),5678,true);
     }
   }
  private:
@@ -103,6 +104,7 @@ class MndpService {
     for (uint8_t i=0;i<interfaces.count;++i)
       if (seen_[i]!=interfaces.entries[i].address) changed=true;
     if (changed) {
+      requestAnnouncement();
       udp_.stop();running_=false;seenCount_=interfaces.count;retryAt_=0;
       for (uint8_t i=0;i<3;++i) {seen_[i]=i<interfaces.count?interfaces.entries[i].address:0;joined_[i]=false;}
     }
@@ -146,5 +148,6 @@ class MndpService {
 #else
   WiFiUDP udp_;
 #endif
-  bool running_=false;uint16_t sequence_=0;uint32_t last_=0,replyAt_=0;
+  bool running_=false;uint16_t sequence_=0;uint32_t replyAt_=0;
+  PakarMndp::AnnouncementSchedule announcements_;
 };

@@ -4,7 +4,7 @@
 use crate::{DeviceStatus, Event, HttpCommand};
 use reqwest::blocking::Client;
 use std::{
-    collections::{HashSet, VecDeque},
+    collections::{BTreeMap,HashSet, VecDeque},
     io::{self, Read, Write},
     net::{IpAddr, SocketAddr, TcpStream},
     sync::{
@@ -24,6 +24,18 @@ const WEBSOCKET_TIMEOUT: Duration = Duration::from_secs(4);
 struct AddressCache {
     entries: VecDeque<(String, IpAddr)>,
     relookup: HashSet<String>,
+    verified_routes:BTreeMap<String,SavedRoute>,
+    restored_routes:BTreeMap<String,SavedRoute>,
+}
+#[derive(Clone,Debug,PartialEq,Eq,serde::Serialize,serde::Deserialize)]
+pub struct SavedRoute {pub endpoint:String,pub numeric_origin:String,pub board_id:String}
+impl SavedRoute {
+    pub fn valid(&self)->bool {
+        let (Some(logical),Some(numeric))=(device_origin(&self.endpoint),device_origin(&self.numeric_origin))else{return false;};
+        numeric.host_str().is_some_and(|host|host.trim_matches(['[',']']).parse::<IpAddr>().is_ok_and(|ip|!ip.is_unspecified()&&!ip.is_multicast()))
+            &&logical.scheme()==numeric.scheme()&&logical.port_or_known_default()==numeric.port_or_known_default()
+            &&Pin::from_identity(&self.board_id,&"a".repeat(32)).is_some()
+    }
 }
 impl AddressCache {
     fn remember(&mut self, domain: String, address: IpAddr) {
@@ -39,6 +51,8 @@ impl AddressCache {
     fn invalidate(&mut self, domain: &str) {
         self.entries.retain(|(known, _)| known != domain);
         self.relookup.remove(domain);
+        self.verified_routes.retain(|origin,_|named_origin(origin).is_none_or(|(name,_)|name!=domain));
+        self.restored_routes.retain(|origin,_|named_origin(origin).is_none_or(|(name,_)|name!=domain));
     }
     fn request_relookup(&mut self, domain: &str) {
         if self.entries.iter().any(|(known, _)| known == domain) {
@@ -126,7 +140,71 @@ pub fn remember_address(origin: &str, status: &DeviceStatus, remote: Option<Sock
         && let Ok(mut cache) = address_cache().lock()
     {
         cache.remember(domain, address);
+        let mut numeric=device_origin(origin).unwrap();
+        if numeric.set_host(Some(&address.to_string())).is_ok(){
+            if cache.verified_routes.len()>=32&&!cache.verified_routes.contains_key(origin.trim_end_matches('/')){if let Some(first)=cache.verified_routes.keys().next().cloned(){cache.verified_routes.remove(&first);}}
+            cache.verified_routes.insert(origin.trim_end_matches('/').into(),SavedRoute{endpoint:origin.trim_end_matches('/').into(),numeric_origin:numeric.to_string().trim_end_matches('/').into(),board_id:status.board_id.clone()});
+        }
     }
+    // An IP-only fallback learns the board's actual configured hostname from
+    // this same verified HTTP/TCP response, never from a claimed status IP or
+    // multicast packet. Future HTTP and WS requests retain Host/SNI ownership.
+    if let Some(preferred)=configured_origin(origin,status)
+        && preferred.trim_end_matches('/')!=origin.trim_end_matches('/')
+        && let Some((domain,address))=verified_address(&preferred,status,remote)
+        && let Ok(mut cache)=address_cache().lock(){
+            cache.remember(domain,address);
+            let mut numeric=device_origin(&preferred).unwrap();
+            if numeric.set_host(Some(&address.to_string())).is_ok(){
+                if cache.verified_routes.len()>=32&&!cache.verified_routes.contains_key(&preferred){if let Some(first)=cache.verified_routes.keys().next().cloned(){cache.verified_routes.remove(&first);}}
+                cache.verified_routes.insert(preferred.clone(),SavedRoute{endpoint:preferred,numeric_origin:numeric.to_string().trim_end_matches('/').into(),board_id:status.board_id.clone()});
+            }
+        }
+}
+pub fn configured_origin(origin:&str,status:&DeviceStatus)->Option<String> {
+    let mut url=device_origin(origin)?;
+    let name=if let Some(bridge)=&status.bridge {bridge["hostname"].as_str()?}else{status.hostname.as_str()};
+    let name=crate::identity::normalize_name(name).ok()?;
+    // A remote DNS alias is deliberately retained. Only literal LAN addresses
+    // and existing local names become the configured mDNS board name.
+    let host=url.host_str()?;
+    if host.trim_matches(['[',']']).parse::<IpAddr>().is_ok_and(|ip|ip.is_loopback()) {
+        return Some(origin.trim_end_matches('/').into());
+    }
+    if host.trim_matches(['[',']']).parse::<IpAddr>().is_err()&&!host.ends_with(".local") {return Some(origin.trim_end_matches('/').into());}
+    url.set_host(Some(&format!("{name}.local"))).ok()?;
+    Some(url.to_string().trim_end_matches('/').into())
+}
+/// A fresh same-peer WS status may report a completed rename before HTTP can
+/// accept the old Host header. Reuse only the selected session's real TCP hint.
+pub fn rebind_verified_name(origin:&str,previous:&DeviceStatus,status:&DeviceStatus) {
+    if Pin::from_status(previous).is_none()||Pin::from_status(previous)!=Pin::from_status(status){return;}
+    let Some((domain,port))=named_origin(origin)else{return;};
+    let remote=address_cache().lock().ok().and_then(|cache|cache.entries.iter().find(|(name,_)|name==&domain).map(|(_,ip)|SocketAddr::new(*ip,port)));
+    if let Some(preferred)=configured_origin(origin,status){remember_address(&preferred,status,remote);}
+}
+/// Read-only recovery candidate, never a direct mutation destination. Even a
+/// cached address must pass a fresh public identity/status probe after failure.
+pub fn cached_origin(origin:&str)->Option<String> {
+    let cache=address_cache().lock().ok()?;
+    cache.verified_routes.get(origin.trim_end_matches('/')).or_else(||cache.restored_routes.get(origin.trim_end_matches('/'))).map(|route|route.numeric_origin.clone())
+}
+pub fn restore_route(route:&SavedRoute,endpoint:&str){
+    if !route.valid()||route.endpoint!=endpoint.trim_end_matches('/'){return;}
+    if let Ok(mut cache)=address_cache().lock(){
+        if cache.restored_routes.len()>=32&&!cache.restored_routes.contains_key(&route.endpoint){if let Some(first)=cache.restored_routes.keys().next().cloned(){cache.restored_routes.remove(&first);}}
+        cache.restored_routes.insert(route.endpoint.clone(),route.clone());
+    }
+}
+pub fn recovery_matches(origin:&str,status:&DeviceStatus)->bool {
+    address_cache().lock().ok().and_then(|cache|cache.verified_routes.get(origin.trim_end_matches('/')).or_else(||cache.restored_routes.get(origin.trim_end_matches('/'))).cloned())
+        .is_some_and(|route|route.board_id==status.board_id)
+}
+pub fn remembered_board(origin:&str)->Option<String>{
+    address_cache().lock().ok().and_then(|cache|cache.verified_routes.get(origin.trim_end_matches('/')).or_else(||cache.restored_routes.get(origin.trim_end_matches('/'))).map(|route|route.board_id.clone()))
+}
+pub fn verified_route(origin:&str,status:&DeviceStatus)->Option<SavedRoute>{
+    address_cache().lock().ok()?.verified_routes.get(origin.trim_end_matches('/')).filter(|route|route.board_id==status.board_id).cloned()
 }
 
 /// A confirmed resolution failure can explicitly remove the obsolete hint.
@@ -276,6 +354,7 @@ pub struct Pin {
     boot: String,
 }
 impl Pin {
+    pub fn board_id(&self)->&str{&self.board}
     pub fn matches_identity(&self, board: &str, boot: &str) -> bool {
         self.board == board && self.boot == boot
     }
@@ -326,6 +405,7 @@ pub fn pinned_client(status: &DeviceStatus) -> Result<Client, String> {
 }
 #[derive(Clone)]
 pub struct Scope {
+    pub auto_discovery: bool,
     pub pin: Option<Pin>,
     generation: u64,
     clock: Arc<AtomicU64>,
@@ -357,6 +437,7 @@ pub struct Queue {
     inner: Sender<HttpCommand>,
     clock: Arc<AtomicU64>,
     pin: Option<Pin>,
+    auto_discovery: bool,
 }
 impl Queue {
     pub fn new(inner: Sender<HttpCommand>) -> Self {
@@ -364,6 +445,7 @@ impl Queue {
             inner,
             clock: Arc::new(AtomicU64::new(0)),
             pin: None,
+            auto_discovery: true,
         }
     }
     pub fn send(&self, command: HttpCommand) -> Result<(), SendError<HttpCommand>> {
@@ -372,6 +454,7 @@ impl Queue {
     }
     pub fn capture(&self) -> Scope {
         Scope {
+            auto_discovery: self.auto_discovery,
             pin: self.pin.clone(),
             generation: self.clock.load(Ordering::Acquire),
             clock: self.clock.clone(),
@@ -382,6 +465,7 @@ impl Queue {
         self.pin = None;
         self.clock.fetch_add(1, Ordering::AcqRel);
     }
+    pub fn set_auto_discovery(&mut self,enabled:bool){self.auto_discovery=enabled;}
     pub fn observe(&mut self, status: &DeviceStatus) -> bool {
         let next = Pin::from_status(status);
         if next == self.pin {
@@ -619,6 +703,47 @@ mod tests {
         }
     }
     #[test]
+    fn discovery_numeric_fallback_and_same_peer_rename_share_actual_session_tcp_cache(){
+        let mut observed=status('a');observed.hostname="discovery-cache-old".into();observed.ip="203.0.113.99".into();
+        let source="http://192.0.2.55:8080";let remote:SocketAddr="192.0.2.55:8080".parse().unwrap();
+        remember_address(source,&observed,Some(remote));
+        let old="http://discovery-cache-old.local:8080";
+        assert_eq!(cached_origin(old).as_deref(),Some(source));
+        let mut renamed=observed.clone();renamed.hostname="discovery-cache-new".into();
+        rebind_verified_name(old,&observed,&renamed);
+        let new="http://discovery-cache-new.local:8080";
+        assert_eq!(cached_origin(new).as_deref(),Some(source));
+        let mut foreign=renamed.clone();foreign.hostname="discovery-cache-foreign".into();foreign.board_id="different-board".into();
+        rebind_verified_name(old,&observed,&foreign);assert!(cached_origin("http://discovery-cache-foreign.local:8080").is_none());
+        assert_eq!(configured_origin("https://remote.example:8443",&renamed).as_deref(),Some("https://remote.example:8443"));
+        for alias in ["http://127.0.0.1:18082","http://[::1]:18082","http://localhost:18082"] {
+            assert_eq!(configured_origin(alias,&renamed).as_deref(),Some(alias),"A forwarded port is not a board LAN port");
+        }
+        let mut forwarded=observed.clone();forwarded.hostname="forwarded-not-dns".into();
+        remember_address("http://127.0.0.1:18082",&forwarded,Some("127.0.0.1:18082".parse().unwrap()));
+        assert!(cached_origin("http://forwarded-not-dns.local:18082").is_none());
+        invalidate_address(old);invalidate_address(new);assert!(cached_origin(old).is_none());assert!(cached_origin(new).is_none());
+    }
+    #[test]
+    fn discovery_saved_route_roundtrip_stays_readonly_endpoint_board_and_port_bound(){
+        let route=SavedRoute{endpoint:"http://saved-discovery.local:8081".into(),numeric_origin:"http://192.0.2.44:8081".into(),board_id:"saved-board".into()};
+        assert!(route.valid());
+        let mut config=crate::config::AppConfig::default();config.endpoint=route.endpoint.clone();config.last_network_route=Some(route.clone());
+        let decoded:crate::config::AppConfig=serde_json::from_slice(&serde_json::to_vec(&config).unwrap()).unwrap();assert_eq!(decoded.last_network_route,Some(route.clone()));
+        invalidate_address(&route.endpoint);restore_route(&route,"http://different-discovery.local:8081");assert!(cached_origin(&route.endpoint).is_none());
+        restore_route(&route,&route.endpoint);assert_eq!(cached_origin(&route.endpoint),Some(route.numeric_origin.clone()));
+        let mut observed=status('a');observed.board_id=route.board_id.clone();observed.hostname="saved-discovery".into();
+        assert!(verified_route(&route.endpoint,&observed).is_none());assert!(recovery_matches(&route.endpoint,&observed));
+        assert!(websocket_address(&crate::Endpoint{base:route.endpoint.clone(),user:String::new(),password:String::new()},&{
+            let gate=crate::connection::Gate::default();let epoch=gate.select(Some(crate::Transport::WiFi));gate.stamp(crate::Transport::WiFi,epoch)
+        }).unwrap().is_none(),"A saved profile is not an admitted WS dial hint");
+        observed.board_id="another-board".into();assert!(!recovery_matches(&route.endpoint,&observed));
+        let mut invalid=route.clone();invalid.numeric_origin="https://192.0.2.44:8081".into();assert!(!invalid.valid());
+        invalid=route.clone();invalid.numeric_origin="http://192.0.2.44:8082".into();assert!(!invalid.valid());
+        invalid=route.clone();invalid.numeric_origin="http://unverified-discovery.local:8081".into();assert!(!invalid.valid());
+        invalidate_address(&route.endpoint);assert!(cached_origin(&route.endpoint).is_none());
+    }
+    #[test]
     fn local_address_cache_bounds_replaces_and_invalidates_without_ttl_or_authority() {
         let mut cache = AddressCache::default();
         let first: IpAddr = "192.0.2.10".parse().unwrap();
@@ -846,6 +971,7 @@ mod tests {
     #[test]
     fn stale_queued_work_expires_but_inflight_receipts_do_not_expire() {
         let mut scope = Scope {
+            auto_discovery: true,
             pin: Pin::from_status(&status('a')),
             generation: 1,
             clock: Arc::new(AtomicU64::new(1)),
@@ -907,6 +1033,7 @@ mod tests {
     }
     fn scope() -> Scope {
         Scope {
+            auto_discovery: true,
             pin: Pin::from_status(&status('a')),
             generation: 0,
             clock: Arc::new(AtomicU64::new(0)),

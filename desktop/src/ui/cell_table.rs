@@ -174,6 +174,7 @@ impl TableState {
     pub(crate) fn has_pending_edits(&self) -> bool {
         !self.queue.is_empty() || self.verification_started.is_some()
     }
+    pub(crate) fn has_assignment_draft(&self)->bool {self.assignment_import.is_some()}
     pub(crate) fn stop_pending_edits(&mut self) {
         let pending = !self.queue.is_empty() || self.verification_started.is_some();
         self.queue.clear();

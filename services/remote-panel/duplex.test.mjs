@@ -81,6 +81,31 @@ test('Event journal bounds, cursor gaps, retained and foreign events',()=>{
   assert.equal(gateway.eventPage().events.length,0);
 });
 
+test('Configuration events reach remote WS immediately; saved hostname is not mistaken for applied identity',async()=>{
+  const client=new Client(),origin='http://127.0.0.1',password='fixture';
+  const panel=createPanel({client,html:'fixture',basic:'fixture',font:Buffer.alloc(0),release,
+    config:{origin,board,topic:'fixture',username:'fixture',password_sha256:createHash('sha256').update(password).digest('hex')}});
+  await new Promise(resolve=>panel.server.listen(0,'127.0.0.1',resolve));
+  const base='http://127.0.0.1:'+panel.server.address().port,authorization='Basic '+Buffer.from('fixture:'+password).toString('base64');
+  let ws;
+  try{
+    client.emit('connect');incoming(client,'status',{...snapshot(),hostname:'before'});
+    ws=new WebSocket(base.replace('http:','ws:')+'/ws',{headers:{Origin:origin,Authorization:authorization}});
+    await once(ws,'message');
+    const notice=once(ws,'message');
+    const saved={type:'configuration-changed',board_id:board,boot_id:boot,revision:1,phase:'saved',scopes:['identity'],hostname:'before',configured_hostname:'after',apply_pending:true,addresses:[{interface:'station',ip:'192.0.2.10'}]};
+    incoming(client,'event',saved);
+    assert.deepEqual(JSON.parse((await notice)[0]),saved);
+    assert.equal((await (await fetch(base+'/api/device/name',{headers:{authorization}})).json()).hostname,'before');
+    incoming(client,'status',{...snapshot(),hostname:'after',configuration_revision:2});
+    const applied=await (await fetch(base+'/api/status',{headers:{authorization}})).json();
+    assert.equal(applied.hostname,'after');assert.equal(applied.configuration_revision,2);
+    const history=await (await fetch(base+'/api/events',{headers:{authorization}})).json();
+    assert.equal(history.events[0].event.configured_hostname,'after');
+    assert.equal(client.sent.filter(p=>p.value.command!=='telemetry').length,0);
+  }finally{ws?.terminate();await panel.close()}
+});
+
 test('Real HTTP + two WebSocket clients exchange commands and board events concurrently',async()=>{
   const client=new Client(),origin='http://127.0.0.1',password='isolated-fixture';
   const panel=createPanel({client,html:'fixture',basic:'fixture',font:Buffer.alloc(0),release,timeout:300,

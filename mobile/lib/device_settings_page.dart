@@ -69,6 +69,8 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   bool rgbLocked = false;
   bool maintenanceActive = false;
   Timer? refresh;
+  StreamSubscription<int>? configurationEvents;
+  bool configurationDirty = false;
   int operation = 0;
   @override
   void initState() {
@@ -79,6 +81,10 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
     host.addListener(identityEdited);
     name.addListener(identityEdited);
     session.addListener(changed);
+    configurationEvents = widget.api.configurationUpdates.listen((_) {
+      configurationDirty = true;
+      unawaited(load());
+    });
     refresh = Timer.periodic(const Duration(seconds: 15), (_) => load());
     unawaited(load());
   }
@@ -128,6 +134,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   void dispose() {
     ++operation;
     refresh?.cancel();
+    unawaited(configurationEvents?.cancel());
     session.removeListener(changed);
     session.dispose();
     scroll.dispose();
@@ -163,6 +170,8 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
         session.pending) {
       return;
     }
+    final settingsChanged = configurationDirty;
+    configurationDirty = false;
     if (widget.authorized('network') &&
         widget.api.supportsRoute('GET', '/api/network')) {
       await session.load(SettingsGroup.network);
@@ -178,13 +187,13 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       }
     }
     if (mounted &&
-        identity == null &&
+        (identity == null || settingsChanged) &&
         widget.authorized('identity') &&
         widget.api.supportsRoute('GET', '/api/device/name')) {
       await loadIdentity();
     }
     if (mounted &&
-        access == null &&
+        (access == null || settingsChanged) &&
         widget.authorized('network') &&
         !widget.api.isBluetooth) {
       await loadAccess();
@@ -241,7 +250,9 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
         value['username'] is! String) {
       throw const FormatException('Device access information unavailable');
     }
-    if (access == null) login.text = value['username'];
+    if (access == null || login.text == access!['username']) {
+      login.text = value['username'];
+    }
     access = value;
   });
   Future<void> configureBluetooth(bool enabled) async {

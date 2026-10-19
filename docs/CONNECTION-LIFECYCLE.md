@@ -3,10 +3,68 @@
 The native application has one connection selector and one Connect/Disconnect
 action. Choose **USB serial** or **Wi-Fi**. Changing the method disconnects; it
 does not silently connect the other method. The selected method, enabled intent,
-endpoint and serial port are saved. There is no automatic fallback or Both mode.
+endpoint and serial port are saved. There is no automatic cross-method fallback
+or Both mode.
 Preferences shows only the selected method's summary and opens this same
 connection dialog. Unrelated Preferences saves preserve the live connection
 owner; external changes update all draft baselines without discarding other edits.
+
+## Automatic LAN selection and sticky routes
+
+Automatic connection is a default-on **client preference**, not permission to
+switch connection methods or send commands. On startup, try the previous network
+target first. If it is unreachable, a completed, bounded discovery sweep may
+select exactly one verified, compatible physical board. Multiple interfaces of
+the same verified board count once; two boards, authentication requirements or
+an incomplete verification sweep do not authorize picking an arbitrary reply.
+Discovery history, an XML description, a hostname or an MNDP advertisement alone
+does not verify a board. A healthy selected board is never replaced by discovery.
+
+Explicit Disconnect suppresses automatic selection for the current session until
+Connect. On the next app open, the automatic-connection preference governs startup;
+disable it for persistent manual connection. USB/BLE selection remains authoritative:
+automatic LAN selection never starts Wi-Fi on an offline USB route. No uncertain
+mutation is replayed during discovery, route replacement or reconnection.
+
+The logical endpoint remains a hostname. A new session prefers that name and
+retains the last verified numeric address as a recovery hint. After connecting,
+HTTP and WebSocket reuse the successful numeric route without an idle DNS expiry.
+Cached hostname requests retain HTTP Host and TLS SNI/certificate identity;
+Flutter's unencrypted HTTP recovery may use the verified numeric origin internally,
+while its saved logical endpoint stays named. HTTPS recovery always retains the
+original logical hostname for certificate validation. A transport failure
+permits bounded read-only name/address recovery; HTTP rejection or authentication
+failure is not permission to replay a write. The cache follows the selected-board
+session, not each short-lived HTTP socket. Raw discovery data never seeds command
+authority or overwrites a verified route.
+
+Active hostname changes are adopted only from verified same-board state, not a
+pending requested name. Durable hostname/IP metadata updates after verified
+recovery, while aliases preserve distinct interface addresses. Unsaved settings
+drafts stay drafts when another client changes the board.
+
+## Configuration notifications
+
+Firmware coalesces successful durable commits into `configuration-changed`
+WebSocket/cloud/BLE events with board/boot identity, boot-scoped revision, scopes,
+and saved/applied/failed phase. Active and configured hostname are distinct;
+addresses describe only currently ready interfaces. Credentials are never included.
+`applied` means the local stack/driver accepted configuration, not association,
+Internet, optical or hardware acceptance. Status carries `configuration_revision`;
+`/api/configuration` provides authenticated nonsecret metadata. USB uses its existing
+binary status/identity refresh hint, not a new unframed JSON event.
+
+Apps coalesce read-only refresh after a new same-peer revision; clean settings can
+reload, while dirty drafts retain their external-change/conflict ownership. MNDP
+refreshes relevant identity/interface changes promptly with a 250ms coalescing
+limit rather than waiting for the normal 30-second announcement. Lost events are
+not replayed as commands; reconnect reads current state.
+
+The existing MQTT topic suffix still follows firmware hostname. A remote gateway
+pinned to the old exact topic and broker ACL must be reconfigured for that rename;
+these LAN recovery changes do not silently widen tenant subscriptions/ACLs.
+Production firmware/client deployment and actual rename/DHCP/router acceptance
+remain separate from source/fixture proof under the production hold.
 
 USB uses only the selected serial port and the board's framed protocol. It does
 not require a valid Wi-Fi endpoint, network access, discovery, HTTP status or a

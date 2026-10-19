@@ -3,8 +3,8 @@ import 'dart:io';
 
 /// Adapted from PCController internal/lanresolver/resolver.go: retain URL host,
 /// Host header and TLS/SNI while dialing a cached successful address. Unlike
-/// the donor, TCP/HTTP/auth/timeouts never evict an address. A failed reconnect
-/// may perform one read-only lookup; only an actual lookup failure evicts it.
+/// the donor, HTTP/auth errors never evict an address. An unreachable cached
+/// socket does: re-resolve only after that route fails, never on a timer.
 class LanResolver {
   LanResolver({
     Future<List<InternetAddress>> Function(String)? lookup,
@@ -28,6 +28,20 @@ class LanResolver {
   /// Actual recent successful direct socket, never a preferred-interface guess.
   /// This observational cache cannot grant identity or command ownership.
   String? localAddressFor(Uri uri) => _localRoutes[_routeKey(uri)]?.address;
+  String? connectedAddressFor(Uri uri) =>
+      _cache[uri.host.toLowerCase()]?.address ??
+      InternetAddress.tryParse(uri.host)?.address;
+
+  /// Import only after an isolated same-board HTTP/TLS read probe succeeded.
+  /// This affects TCP routing, never board/boot, credentials or capabilities.
+  void rememberVerifiedAddress(Uri logical, InternetAddress address) {
+    final key = logical.host.toLowerCase();
+    if (_cache.length >= 64 && !_cache.containsKey(key)) {
+      _cache.remove(_cache.keys.first);
+    }
+    _cache[key] = address;
+  }
+
   void _rememberLocalAddress(Uri uri, Socket socket) {
     final key = _routeKey(uri);
     if (_localRoutes.length >= 64 && !_localRoutes.containsKey(key)) {
@@ -74,9 +88,10 @@ class LanResolver {
     if (cached != null) {
       try {
         return await dial(cached);
-      } on Exception {
-        // Keep the previous route on timeout/refused/reset. DNS metadata never
-        // grants board identity, and no HTTP request has been dispatched here.
+      } on SocketException {
+        if (_cache[key] == cached) _cache.remove(key);
+      } on TimeoutException {
+        if (_cache[key] == cached) _cache.remove(key);
       }
     }
     if (isCancelled?.call() == true) {
@@ -113,26 +128,29 @@ class LanResolver {
       ConnectionTask<Socket>? active;
       Socket? connected;
       var cancelled = false;
+      ConnectionTask<Socket> observedTask(
+        Future<Socket> socket,
+        void Function() cancel,
+      ) {
+        // HttpClient obtains the task asynchronously. Observe an immediate DNS
+        // failure now so it cannot escape as an unhandled zone error before
+        // HttpClient attaches. The ORIGINAL future still delivers that exact
+        // failure to HttpClient; this is not fallback or error suppression.
+        unawaited(
+          socket.then<void>((_) {}, onError: (Object _, StackTrace _) {}),
+        );
+        return ConnectionTask.fromSocket(socket, cancel);
+      }
+
       Future<Socket> dial(Object address) async {
         if (cancelled) throw const SocketException('Connection cancelled');
-        // SDK custom factories own direct TLS. Native DNS results preserve
-        // InternetAddress.host; use them only when that name is the original
-        // TLS identity. Injected bare IP metadata cannot replace SNI/cert name.
-        final tlsHost =
-            address is InternetAddress &&
-                address.host.toLowerCase() == uri.host.toLowerCase()
-            ? address
-            : uri.host;
-        final ConnectionTask<Socket> task = secure
-            ? await SecureSocket.startConnect(
-                tlsHost,
-                port,
-                context: securityContext,
-              )
-            : await Socket.startConnect(address, port);
+        // Dial the sticky numeric TCP route, then upgrade with the ORIGINAL
+        // hostname. This preserves SNI/certificate checks without another DNS
+        // lookup on every HTTPS/WSS connection. Never accept bad certificates.
+        final task = await Socket.startConnect(address, port);
         active = task;
         if (cancelled) task.cancel();
-        final socket = await task.socket.timeout(
+        var socket = await task.socket.timeout(
           Duration(seconds: secure ? 5 : 2),
           onTimeout: () {
             task.cancel();
@@ -144,6 +162,23 @@ class LanResolver {
           throw const SocketException('Connection cancelled');
         }
         connected = socket;
+        if (secure) {
+          try {
+            socket = await SecureSocket.secure(
+              socket,
+              host: uri.host,
+              context: securityContext,
+            ).timeout(const Duration(seconds: 5));
+            connected = socket;
+          } on Object {
+            socket.destroy();
+            rethrow;
+          }
+          if (cancelled) {
+            socket.destroy();
+            throw const SocketException('Connection cancelled');
+          }
+        }
         if (proxyHost == null) _rememberLocalAddress(uri, socket);
         return socket;
       }
@@ -160,7 +195,7 @@ class LanResolver {
             : Socket.startConnect(host, port);
         return native
             .then(
-              (task) => ConnectionTask.fromSocket(
+              (task) => observedTask(
                 task.socket.then((socket) {
                   if (_cache.length >= 64 && !_cache.containsKey(key)) {
                     _cache.remove(_cache.keys.first);
@@ -175,7 +210,7 @@ class LanResolver {
             .onError<SocketException>((error, stack) {
               // Classify a genuine lookup failure for SSDP read-only recovery.
               // The request has not been sent while acquiring its socket.
-              return ConnectionTask.fromSocket(
+              return observedTask(
                 connect(host, dial, isCancelled: () => cancelled),
                 () {
                   cancelled = true;
@@ -187,7 +222,7 @@ class LanResolver {
       }
       final result = connect(host, dial, isCancelled: () => cancelled);
       return Future.value(
-        ConnectionTask.fromSocket(result, () {
+        observedTask(result, () {
           cancelled = true;
           active?.cancel();
           connected?.destroy();

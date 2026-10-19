@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'api.dart';
 import 'peer_context.dart';
 import 'peer_identity.dart';
+import 'peer_policy.dart';
 
 class DiscoveredDevice {
   const DiscoveredDevice(
@@ -22,11 +23,14 @@ class DiscoveredDevice {
     this.authRequired = false,
     this.instanceId = '',
     this.kind = 'board',
+    this.compatible = false,
+    this.hostname = '',
   });
   final String name, endpoint, protocol;
   final String boardId, mac, udn;
   final Set<String> addresses, aliases;
-  final bool verified, authRequired;
+  final bool verified, authRequired, compatible;
+  final String hostname;
   final String instanceId, kind;
 
   Set<String> get origins =>
@@ -74,6 +78,8 @@ class DiscoveredDevice {
     authRequired: other.authRequired,
     instanceId: other.instanceId.isNotEmpty ? other.instanceId : instanceId,
     kind: other.kind == 'bridge' ? other.kind : kind,
+    compatible: other.verified ? other.compatible : compatible,
+    hostname: other.hostname.isNotEmpty ? other.hostname : hostname,
   );
 }
 
@@ -106,6 +112,8 @@ List<DiscoveredDevice> coalesceDevices(Iterable<DiscoveredDevice> values) {
 class DiscoveryCatalog {
   List<DiscoveredDevice> _known = [], _recent = [];
   bool seenThisScan(DiscoveredDevice value) => _recent.any(value.sameBoard);
+  List<DiscoveredDevice> get currentVerified =>
+      _recent.where((p) => p.verified).toList(growable: false);
 
   /// Only the exact origins observed/probed this sweep, NOT every alias of a
   /// merged board. One reachable interface does not verify its other routes.
@@ -171,17 +179,35 @@ class DeviceDiscovery {
   final Future<DiscoveredDevice?> Function(DiscoveredDevice)? verify;
   static const channel = MethodChannel('ir.digitalogic.pakar/discovery');
   final errors = <String, String>{};
+  bool verificationComplete = false;
   bool _scanning = false;
+  bool _overflow = false;
+
+  void _addFound(List<DiscoveredDevice> found, DiscoveredDevice peer) {
+    final index = found.indexWhere((p) => p.endpoint == peer.endpoint);
+    if (index >= 0) {
+      found[index] = found[index].merged(peer);
+    } else if (found.length < 128) {
+      found.add(peer);
+    } else {
+      _overflow = true;
+    }
+  }
+
   Future<List<DiscoveredDevice>> scan({
     Iterable<DiscoveredDevice> seeds = const [],
   }) async {
     if (_scanning) throw StateError('Discovery already running');
     _scanning = true;
+    verificationComplete = false;
+    _overflow = false;
     errors.clear();
     final found = <DiscoveredDevice>[];
     try {
       if (advertisements != null) {
-        found.addAll(await advertisements!());
+        for (final peer in await advertisements!()) {
+          _addFound(found, peer);
+        }
       } else {
         await Future.wait([
           _guard('mDNS / DNS-SD', () async {
@@ -189,7 +215,7 @@ class DeviceDiscovery {
             for (final v in raw ?? []) {
               if (v is Map) {
                 final peer = parseMdns(v);
-                if (peer != null && found.length < 128) found.add(peer);
+                if (peer != null) _addFound(found, peer);
               }
             }
           }),
@@ -202,13 +228,16 @@ class DeviceDiscovery {
       // Probe each distinct origin before cross-channel merging: a saved
       // hostname failing Android DNS must not hide a working SSDP IP alias.
       final candidates = <String, DiscoveredDevice>{};
-      for (final peer in [...found, ...seeds].take(128)) {
+      for (final peer in found.followedBy(seeds)) {
         // A saved/merged board may have AP, station, Ethernet and hostname
         // routes. Verify each exact origin; never manufacture an interface IP
         // or inherit another alias's successful probe.
         for (final origin in peer.origins) {
-          if (!{'http', 'https'}.contains(Uri.parse(origin).scheme) ||
-              candidates.length >= 128 && !candidates.containsKey(origin)) {
+          if (!{'http', 'https'}.contains(Uri.parse(origin).scheme)) {
+            continue;
+          }
+          if (candidates.length >= 128 && !candidates.containsKey(origin)) {
+            _overflow = true;
             continue;
           }
           final candidate = origin == peer.endpoint
@@ -243,6 +272,8 @@ class DeviceDiscovery {
           }
         }),
       );
+      verificationComplete =
+          !_overflow && errors.isEmpty && next >= queue.length;
       return catalog.merge(verified);
     } on Object {
       catalog.merge(
@@ -276,12 +307,11 @@ class DeviceDiscovery {
         if (event != RawSocketEvent.read) return;
         Datagram? packet;
         while ((packet = socket.receive()) != null) {
-          if (found.length >= 128) continue;
           final p = packet!;
           final d = mndp
               ? parseMndp(p.data, p.address.address)
               : parseSsdp(p.data, source: p.address.address);
-          if (d != null) found.add(d);
+          if (d != null) _addFound(found, d);
         }
       });
       if (mndp) {
@@ -459,6 +489,15 @@ Future<DiscoveredDevice?> verifyDiscoveredDevice(
         candidate.boardId != board) {
       return null;
     }
+    var compatible = false;
+    if (value != null) {
+      try {
+        validatePeerBoard(value, appVersion: PeerIdentity.current.version);
+        compatible = true;
+      } on UnsupportedPeerVersion {
+        /* Visible, but never auto-selected. */
+      }
+    }
     return DiscoveredDevice(
       value == null ? metadata!.$1 : PeerContext.fromStatus(value).name,
       candidate.endpoint,
@@ -472,6 +511,10 @@ Future<DiscoveredDevice?> verifyDiscoveredDevice(
       authRequired: status.$1 == 401,
       instanceId: instance,
       kind: value?['bridge'] is Map ? 'bridge' : candidate.kind,
+      compatible: compatible,
+      hostname: value?['hostname'] is String
+          ? value!['hostname'] as String
+          : '',
     );
   }
 

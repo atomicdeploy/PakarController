@@ -6,6 +6,18 @@
 // Actual PU850 LocalLib/MNDP.cpp TLV layout; bounds enforced before each copy.
 // Standard four-byte header: reserved/version bytes then big-endian sequence.
 namespace PakarMndp {
+class AnnouncementSchedule {
+ public:
+  void begin(uint32_t now){last_=now-30000U;requested_=true;}
+  void request(){requested_=true;}
+  bool due(uint32_t now) {
+    const uint32_t elapsed=now-last_;
+    if(elapsed<(requested_?250U:30000U))return false;
+    last_=now;requested_=false;return true;
+  }
+ private:
+  uint32_t last_=0;bool requested_=false;
+};
 class Packet {
  public:
   explicit Packet(uint16_t sequence) { bytes_[2]=sequence>>8; bytes_[3]=sequence; }

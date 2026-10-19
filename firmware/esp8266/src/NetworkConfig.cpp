@@ -1,4 +1,5 @@
 #include "NetworkConfig.h"
+#include "ConfigurationChanges.h"
 
 #include <stddef.h>
 #include <string.h>
@@ -190,7 +191,7 @@ bool NetworkConfigStore::save() {
   if (!complete || !verified || !filesystem_->rename(kPending, kPath)) {
     error_ = F("network settings commit failed; previous settings preserved"); return false;
   }
-  error_ = String(); return true;
+  error_ = String(); PakarConfiguration::changes().saved(PakarConfiguration::Network); return true;
 }
 
 bool NetworkConfigStore::setAddressing(bool dhcp, const String &address,

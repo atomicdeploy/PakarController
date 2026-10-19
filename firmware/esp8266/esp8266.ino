@@ -1199,23 +1199,38 @@ void serviceDiscovery() {
 #endif
 }
 
+void requestDiscoveryAnnouncement() {
+#if defined(ARDUINO_ARCH_ESP32)
+  s3Discovery.requestAnnouncement();
+#else
+  mndpService.requestAnnouncement();
+#endif
+}
+
 void applyEthernetConfig() {
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_S3_ETHERNET_ENABLED
   cloudServices.suspend();
   NetworkPath::setEthernetDhcp(ethernetConfig.dhcpEnabled());
   if(!ethernetConfig.enabled()) {
-    NetworkPath::ethernet().end();NetworkPath::service();ntpConfigured=false;return;
+    NetworkPath::ethernet().end();NetworkPath::service();ntpConfigured=false;
+    PakarConfiguration::changes().applied(PakarConfiguration::Ethernet);return;
   }
-  if(!NetworkPath::ethernet().ensureInitialized(hostname.c_str()))return;
+  if(!NetworkPath::ethernet().ensureInitialized(hostname.c_str())) {
+    PakarConfiguration::changes().failed(PakarConfiguration::Ethernet);return;
+  }
   if(!NetworkPath::ethernet().configureAddressing(ethernetConfig.dhcpEnabled(),
       ethernetConfig.address(),ethernetConfig.gateway(),ethernetConfig.subnet(),
-      ethernetConfig.dns1(),ethernetConfig.dns2()))return;
+      ethernetConfig.dns1(),ethernetConfig.dns2())) {
+    PakarConfiguration::changes().failed(PakarConfiguration::Ethernet);return;
+  }
   NetworkPath::ethernet().setLldp(ethernetConfig.lldpEnabled(),ethernetConfig.lldpReceive());
   NetworkPath::service();ntpConfigured=false;
+  PakarConfiguration::changes().applied(PakarConfiguration::Ethernet);
 #endif
 }
 
 void applyNetworkConfig() {
+  const bool renamed=hostname!=deviceIdentity.hostname();
   cloudServices.suspend();
   if (hostname != deviceIdentity.hostname()) {
     cloudServices.renameDevice(deviceIdentity.hostname());
@@ -1232,6 +1247,9 @@ void applyNetworkConfig() {
 #endif
   NetworkPath::service();
   ntpConfigured = false;
+  const uint16_t scopes=PakarConfiguration::Network|(renamed?PakarConfiguration::Identity:0);
+  if(networkConfig.lastError()[0])PakarConfiguration::changes().failed(scopes);
+  else PakarConfiguration::changes().applied(scopes);
 }
 
 bool scheduleDeviceRename(const String &name) {
@@ -1242,7 +1260,9 @@ bool scheduleDeviceIdentity(const String &name, const String &displayName) {
   if (!deviceIdentity.configure(name, displayName)) return false;
   if (hostname != deviceIdentity.hostname()) {
     networkApplyAt = millis() + 1000U; networkApplyPending = true;
-  } else if (previousLabel != deviceIdentity.displayName()) startDiscovery();
+  } else if (previousLabel != deviceIdentity.displayName()) {
+    startDiscovery();PakarConfiguration::changes().applied(PakarConfiguration::Identity);
+  }
   return true;
 }
 
@@ -1262,6 +1282,8 @@ uint32_t identityRevision() {
   }
   const size_t length = strlen_P(APP_ICON_PNG_BASE64);
   for (size_t i = 0; i < length; ++i) hash = (hash ^ pgm_read_byte(APP_ICON_PNG_BASE64 + i)) * 16777619UL;
+  const uint32_t configuration=PakarConfiguration::changes().revision();
+  for(uint8_t shift=0;shift<32;shift+=8)hash=(hash^static_cast<uint8_t>(configuration>>shift))*16777619UL;
   return hash;
 }
 String deviceNameJson(bool accepted) {
@@ -1848,6 +1870,7 @@ String buildStatusJson(bool compact) {
   body += F("\",\"http_peer_fencing\":"); body += webAccess.peerFenceReady() ? F("true") : F("false");
   char commandTime[24];snprintf(commandTime,sizeof(commandTime),"%llu",static_cast<unsigned long long>(commandClock()));
   body += F(",\"command_clock_ms\":"); body += commandTime;
+  body += F(",\"configuration_revision\":");body+=PakarConfiguration::changes().revision();
   body += F(",\"hostname\":\""); body += hostname;
   body += F("\",\"uplink\":\""); body += NetworkPath::interfaceName();
   body += F("\",\"uplink_ipv4_ready\":"); body += NetworkPath::ready() ? F("true") : F("false");
@@ -2106,6 +2129,80 @@ String buildCloudStatusJson() {
   return body;
 }
 #endif
+
+String configurationStateJson(const PakarConfiguration::Journal::Event *event) {
+  JsonDocument d;
+  d["type"]=event?"configuration-changed":"configuration";
+  d["board_id"]=pcBoardId;d["boot_id"]=pcBootId;
+  d["revision"]=event?event->revision:PakarConfiguration::changes().revision();
+  d["hostname"]=hostname;d["fqdn"]=hostname+F(".local");
+  d["configured_hostname"]=deviceIdentity.hostname();d["display_name"]=deviceIdentity.displayName();
+  d["apply_pending"]=networkApplyPending||cloudApplyPending;
+  d["network_ready"]=NetworkPath::ready();
+  if(event) {
+    d["phase"]=PakarConfiguration::phaseName(event->phase);
+    auto scopes=d["scopes"].to<JsonArray>();
+    for(uint16_t scope=1;scope<=128;scope<<=1)
+      if(event->scopes&scope)scopes.add(PakarConfiguration::scopeName(scope));
+  }
+  auto addresses=d["addresses"].to<JsonArray>();
+#if defined(ARDUINO_ARCH_ESP32)
+  const auto interfaces=PakarS3::activeDiscoveryInterfaces();
+  for(uint8_t i=0;i<interfaces.count;++i) {
+    auto address=addresses.add<JsonObject>();address["interface"]=interfaces.entries[i].kind;
+    address["ip"]=PakarS3::discoveryAddress(interfaces.entries[i].address).toString();
+  }
+#else
+  if(networkConfig.stationConnected()&&WiFi.localIP()!=IPAddress()) {
+    auto address=addresses.add<JsonObject>();address["interface"]="station";address["ip"]=WiFi.localIP().toString();
+  }
+  if(apStarted&&WiFi.softAPIP()!=IPAddress()) {
+    auto address=addresses.add<JsonObject>();address["interface"]="access-point";address["ip"]=WiFi.softAPIP().toString();
+  }
+#endif
+  const size_t bytes=measureJson(d);String body;
+  if(d.overflowed()||bytes>1536U||!body.reserve(bytes)||serializeJson(d,body)!=bytes||body.length()!=bytes)return String();
+  return body;
+}
+
+void serviceConfigurationChanges() {
+  if(cloudServices.ioActive() || !webAccess.peerFenceReady())return;
+  auto &changes=PakarConfiguration::changes();bool emitted=false;
+  // Track every live interface, not just the preferred default route. A Wi-Fi
+  // DHCP change while Ethernet is preferred still needs a discovery refresh.
+  uint32_t addressSignature=2166136261UL;
+  const auto observeAddress=[&](uint32_t address){
+    for(uint8_t shift=0;shift<32;shift+=8)
+      addressSignature=(addressSignature^static_cast<uint8_t>(address>>shift))*16777619UL;
+  };
+#if defined(ARDUINO_ARCH_ESP32)
+  const auto interfaces=PakarS3::activeDiscoveryInterfaces();
+  for(uint8_t i=0;i<interfaces.count;++i){observeAddress(interfaces.entries[i].address);observeAddress(interfaces.entries[i].mask);}
+#else
+  observeAddress(networkConfig.stationConnected()?static_cast<uint32_t>(WiFi.localIP()):0);
+  observeAddress(apStarted?static_cast<uint32_t>(WiFi.softAPIP()):0);
+#endif
+  static bool addressesKnown=false;static uint32_t previousAddresses=0;
+  if(addressesKnown&&previousAddresses!=addressSignature) {
+    changes.applied(PakarConfiguration::Network);requestDiscoveryAnnouncement();
+  }
+  addressesKnown=true;previousAddresses=addressSignature;
+  // At most one coalesced event per phase; no unbounded list or flash journal.
+  for(uint8_t n=0;n<3;++n) {
+    PakarConfiguration::Journal::Event event;if(!changes.peek(event))break;
+    const String body=configurationStateJson(&event);
+    if(!body.length()||!changes.retire(event))break;
+    publishPcEvent(body);emitted=true;
+    if(event.scopes&(PakarConfiguration::Identity|PakarConfiguration::Network|PakarConfiguration::Ethernet))
+      requestDiscoveryAnnouncement();
+  }
+  if(emitted) {
+    // Existing transport owners: a USB status is a refresh hint, not an invented
+    // JSON/AVR receipt. identityRevision changes make its normal chunk read fresh.
+    sendHostStatus(0);
+    webSocket.textAll(buildStatusJson());cloudServices.requestTelemetry();
+  }
+}
 
 void sendStatusJson() {
   server.send(200, "application/json", buildStatusJson());
@@ -3115,7 +3212,11 @@ bool updateStatusRgbConfiguration(JsonObjectConst fields,String &body,int &code)
   }
   if(!PakarS3::StatusRgbConfig::validate(config)){body="Confirm a reviewed RGB pin before enabling";return false;}
   if(!statusRgbConfig.save(config)){code=503;body=statusRgbConfig.lastError();return false;}
-  if(!statusRgb.configure(config,millis(),writeStatusRgb)){code=503;body="Settings saved; local RGB driver unavailable";return false;}
+  if(!statusRgb.configure(config,millis(),writeStatusRgb)){
+    PakarConfiguration::changes().failed(PakarConfiguration::StatusRgb);
+    code=503;body="Settings saved; local RGB driver unavailable";return false;
+  }
+  PakarConfiguration::changes().applied(PakarConfiguration::StatusRgb);
   JsonDocument result;result["saved"]=true;result["board_id"]=pcBoardId;result["boot_id"]=pcBootId;
   result["driver_submitted"]=statusRgb.snapshot().haveOutput;result["optical_verified"]=false;
   body=String();serializeJson(result,body);code=200;return true;
@@ -3625,6 +3726,12 @@ void registerApi() {
     if (!authenticate()) return;
     server.send(200, "application/json", deviceNameJson());
   });
+  server.on("/api/configuration",HTTP_GET,[](){
+    if(!authenticate())return;
+    const String body=configurationStateJson(nullptr);
+    if(!body.length()){server.send(503,"application/json",F("{\"error\":\"configuration_snapshot_unavailable\"}"));return;}
+    server.send(200,"application/json",body);
+  });
   server.on("/api/device/name", HTTP_POST, []() {
     if (!authenticate()) return;
     if (remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || programmingLatched || networkApplyPending || cloudApplyPending) {
@@ -4090,6 +4197,7 @@ void setup() {
   grid.setPattern(LedGrid::kPatternCellChase);
 #endif
   upgradeLifecycle.boot(millis());
+  PakarConfiguration::changes().reset(); // Initial load/migration is not a user settings event.
   if (grid.outputEnabled()) grid.presentMaintenance(upgradeLifecycle,millis());
   else grid.setOutputEnabled(false); // Explicit complete black frame.
   hostFrameIngress.begin(onHostFrame,rejectHostFrame,revokeHostAdmission);
@@ -4228,6 +4336,8 @@ void loop() {
   if (NetworkPath::service()) {
     cloudServices.suspend();
     ntpConfigured = false;
+    PakarConfiguration::changes().applied(PakarConfiguration::Network);
+    requestDiscoveryAnnouncement();
   }
   avrLink.service();
   serviceHostLink();
@@ -4282,7 +4392,10 @@ void loop() {
       static_cast<int32_t>(millis() - cloudApplyAt) >= 0) {
     cloudApplyPending = false;
     cloudServices.applyConfiguration();
+    if(cloudServices.lastError().length())PakarConfiguration::changes().failed(PakarConfiguration::Cloud);
+    else PakarConfiguration::changes().applied(PakarConfiguration::Cloud);
   }
+  serviceConfigurationChanges();
   serviceDiscovery();
   configureNtp();
   if (wifiScanQueued && !remoteFirmware.busy() && !otaActive && !networkApplyPending) {

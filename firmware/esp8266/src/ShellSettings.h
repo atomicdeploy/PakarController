@@ -3,6 +3,7 @@
 #include <FS.h>
 #include <stddef.h>
 #include <string.h>
+#include "ConfigurationChanges.h"
 
 // Adapt NetworkConfigStore/CloudConfigStore's exact-layout, checksum,
 // identical-save suppression and pending/readback/rename transaction.
@@ -31,7 +32,7 @@ class ShellSettings {
       verify.read(reinterpret_cast<uint8_t*>(&observed),sizeof(observed))==sizeof(observed)&&!memcmp(&next,&observed,sizeof(next));
     if(verify){verify.close();}
     if(!written||!readback||!fs_->rename("/shell.pending","/shell.bin"))return false;
-    record_=next;return true;
+    record_=next;PakarConfiguration::changes().saved(PakarConfiguration::Shell);return true;
   }
  private:
   struct Record {uint32_t magic;uint8_t layout,enabled;uint16_t port;uint8_t color;uint32_t check;} __attribute__((packed));

@@ -315,6 +315,7 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         "Search settings" => "جست‌وجوی تنظیمات",
         "Device endpoint" => "نشانی دستگاه",
         "Connection defaults" => "پیش‌فرض‌های اتصال",
+        "Automatically connect to a single discovered board" => "اتصال خودکار به تنها برد پیداشده",
         "Username" => "نام کاربری",
         "Password" => "گذرواژه",
         "USB serial port" => "درگاه سریال USB",

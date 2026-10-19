@@ -55,6 +55,7 @@ class BleLifecyclePolicy {
 #include <FS.h>
 #include <BleWire.h>
 #include "BleStorage.h"
+#include "../../esp8266/src/ConfigurationChanges.h"
 #include <BLEDevice.h>
 #if defined(CONFIG_BLUEDROID_ENABLED)
 #include <BLE2902.h>
@@ -107,6 +108,7 @@ class BleService {
     if(check)check.close();
     if(!ok || !fs_->rename(pendingPath,configPath)){error="BLE configuration verification failed";return false;}
     lifecycle_.request(enabled);applyAt_=millis()+250U;applyPending_=true;
+    PakarConfiguration::changes().saved(PakarConfiguration::Bluetooth);
     error_=lifecycle_.buildRequired()?String("BLE is excluded from this build; saved preference retained"):String();return true;
   }
   void setInfo(const String &info) {

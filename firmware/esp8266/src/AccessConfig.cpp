@@ -1,4 +1,5 @@
 #include "AccessConfig.h"
+#include "ConfigurationChanges.h"
 #include <stddef.h>
 
 AccessConfig accessConfig;
@@ -108,5 +109,6 @@ bool AccessConfig::save(const Record &next) {
   if (!written || !valid || !filesystem_->rename(kPending, kPath)) {
     error_ = F("Cannot commit access settings; previous credentials remain active"); return false;
   }
-  record_ = next; ready_ = true; ++securityRevision_; error_ = String(); return true;
+  record_ = next; ready_ = true; ++securityRevision_; error_ = String();
+  PakarConfiguration::changes().saved(PakarConfiguration::Auth);return true;
 }

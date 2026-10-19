@@ -254,6 +254,9 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &Boar
                 }
                 if draft.tab==2||!draft.search.is_empty(){
                     dialog::section(ui,icons::PLUG,"Connection",|ui|{
+                        if draft.matches("Automatically connect startup discover board") {
+                            ui.checkbox(&mut draft.config.auto_connect,crate::ui::i18n::text("Automatically connect to a single discovered board"));
+                        }
                         if draft.matches("Connection settings Endpoint hostname URL Username user USB serial port COM") {
                             outcome.connection_settings = connection_summary(draft, ui).clicked();
                         }

@@ -160,6 +160,8 @@ pub struct AppConfig {
     pub serial_port: String,
     pub connection_method: crate::connection::Method,
     pub connection_enabled: bool,
+    pub auto_connect: bool,
+    pub last_network_route:Option<crate::peer_http::SavedRoute>,
     pub dock_layout: String,
     /// One-time recovery of layouts saved by the disconnected-workspace bug.
     pub dock_context_revision: u8,
@@ -199,6 +201,8 @@ impl Default for AppConfig {
             serial_port: String::new(),
             connection_method: Default::default(),
             connection_enabled: true,
+            auto_connect: true,
+            last_network_route:None,
             dock_layout: String::new(),
             dock_context_revision: 0,
             workspace_profiles: BTreeMap::new(),
@@ -215,6 +219,10 @@ impl Default for AppConfig {
     }
 }
 impl AppConfig {
+    pub fn startup_connection_enabled(&self,fixture:bool)->bool {
+        if fixture{return self.connection_enabled;}
+        self.auto_connect&&(self.connection_method==crate::connection::Method::WiFi||!self.serial_port.trim().is_empty())
+    }
     pub fn path() -> PathBuf {
         if let Some(path) = std::env::var_os("PAKAR_CONFIG_FILE") {
             return path.into();

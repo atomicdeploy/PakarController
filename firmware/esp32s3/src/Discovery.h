@@ -35,6 +35,7 @@ class Discovery {
   void service(const char *boardId = "") {
     ssdp_.handleClient(); mndp_.service(hostname_.c_str(), boardId); nbns_.service();
   }
+  void requestAnnouncement(){mndp_.requestAnnouncement();}
   bool mdnsReady() const { return mdnsReady_; }
   bool ssdpReady() const { return ssdp_.running(); }
   bool mndpReady() const { return mndp_.running(); }

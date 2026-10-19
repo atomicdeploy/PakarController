@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pakarcontroller/api.dart';
 import 'package:pakarcontroller/connection_preferences.dart';
 
+import 'dart:convert';
+
 class TestSecrets implements SecretStore {
   String? value;
   bool fail = false;
@@ -17,6 +19,41 @@ class TestSecrets implements SecretStore {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test('Automatic preference defaults on, manual override persists and USB remains explicit', () async {
+    SharedPreferences.setMockInitialValues({'connection_method': 'network'});
+    final prefs = await SharedPreferences.getInstance();
+    final settings = ConnectionPreferences(prefs, secrets: TestSecrets());
+    final api = PakarApi()..connectionMethod = ConnectionMethod.usb;
+    addTearDown(api.close);
+    await settings.restore(api);
+    expect(api.connectionMethod, ConnectionMethod.usb);
+    expect(api.automaticDiscovery, true);
+    await settings.saveAutomaticDiscovery(false);
+    await settings.restore(api);
+    expect(api.automaticDiscovery, false);
+    expect(api.connectionMethod, ConnectionMethod.usb);
+  });
+  test('Verified recovery restores only as same-board read metadata, never as transport selection', () async {
+    final route = {
+      'endpoint': 'http://ledboard.local',
+      'board_id': 'board',
+      'origin': 'http://192.0.2.2',
+    };
+    SharedPreferences.setMockInitialValues({
+      'verified_network_route': jsonEncode(route),
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final settings = ConnectionPreferences(prefs, secrets: TestSecrets());
+    final api = PakarApi();
+    addTearDown(api.close);
+    await settings.restore(api);
+    expect(api.networkRecovery, route);
+    expect(api.transportUrl, 'http://ledboard.local');
+    final owner = api.connectionRevision;
+    await settings.saveNetworkRecovery(api);
+    expect(api.connectionRevision, owner);
+    expect(prefs.getString('password'), isNull);
+  });
   test(
     'Command fallback persists without selecting a target or reconnecting',
     () async {

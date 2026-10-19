@@ -472,6 +472,10 @@ impl PakarControllerApp {
         self.remember_ui_workspace();
         self.config.connection_method = self.transport;
         self.config.connection_enabled = self.connection_enabled;
+        if self.config.last_network_route.as_ref().is_some_and(|route|route.endpoint!=self.base.trim_end_matches('/')){
+            if let Some(route)=&self.config.last_network_route{crate::peer_http::invalidate_address(&route.endpoint);}
+            self.config.last_network_route=None;
+        }
         if self.active_context.is_some() {
             self.config.dock_layout = self.workspace.layout.snapshot().0;
         }
@@ -490,9 +494,11 @@ impl PakarControllerApp {
         self.save_workspace();
     }
     pub(crate) fn connection_change_guard(&mut self) -> bool {
+        let mapping_dirty=self.show_mapping&&!self.mappings.iter().find(|m|m.logical_id==self.mapping_logical)
+            .is_some_and(|m|m.physical_cell==self.mapping_physical&&m.name==self.mapping_name);
         let blocked = connection_change_blocked(
             self.preferences.as_ref().is_some_and(|draft| draft.is_dirty()),
-            self.device_settings.dirty(), self.device_settings.pending.is_some(),
+            self.device_settings.dirty(), self.device_settings.pending.is_some()||self.table.has_pending_edits()||self.table.has_assignment_draft()||mapping_dirty,
             self.device_settings.maintenance_pending.is_some(), self.identity_pending);
         if blocked {
             self.message = "Save or discard settings drafts and wait for pending operations before changing connection".into();

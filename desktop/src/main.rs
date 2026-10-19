@@ -402,6 +402,8 @@ enum Event {
     BoardSilentFinished(u64, Result<pc_contract::Settings, String>),
     CredentialsUpdated(Endpoint),
     NameUpdated(Endpoint, bool),
+    DiscoveredBoard(Endpoint, DeviceStatus),
+    ConfigurationChanged(String,String),
     SerialIdentity(String, serde_json::Value),
     SerialIdentitySaved(String, Result<(), String>),
     SerialSnapshot(String, usb_table::Snapshot),
@@ -798,12 +800,16 @@ fn scoped_http_request(client: &Client, scope: &peer_http::Scope, command: &Http
 }
 
 fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: egui::Context, gate: connection::Gate) {
+    http_worker_with_discovery(commands,events,context,gate,platform::discovery::board_locations)
+}
+fn http_worker_with_discovery(commands:Receiver<HttpCommand>,events:Sender<Event>,context:egui::Context,gate:connection::Gate,discover:impl Fn(Duration)->Vec<String>) {
     let mut reporter = client_telemetry::Reporter::new();
     let mut discovered_base: Option<String> = None;
     let mut requested_base = String::new();
     let mut auth_probe: Option<(u64, String)> = None;
     let mut waiting = std::collections::VecDeque::new();
     let mut rejected_peer: Option<(u64, String, String)> = None;
+    let mut last_discovery=Instant::now()-Duration::from_secs(30);
     loop {
         if waiting.is_empty() {
             match commands.recv() { Ok(command) => waiting.push_back(command), Err(_) => break }
@@ -834,12 +840,6 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
             discovered_base = None;
             requested_base = command.endpoint().base.clone();
         }
-        let requested_name = reqwest::Url::parse(&command.endpoint().base)
-            .ok()
-            .and_then(|url| {
-                url.host_str()
-                    .and_then(|host| identity::normalize_name(host).ok())
-            });
         let first = discovered_base
             .as_ref()
             .map(|base| command.with_base(base.clone()))
@@ -851,29 +851,53 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
         if let Some(error)=result.as_ref().err().filter(|e|peer_identity::unsupported(e)) {
             rejected_peer=Some((key.0,key.1,error.clone()));
         }
+        if result.is_err()&&command.is_status()&&lease.current()
+            &&!result.as_ref().err().is_some_and(|e|peer_identity::unsupported(e)||e.starts_with("HTTP 401"))
+            &&let Some(origin)=peer_http::cached_origin(&command.endpoint().base)
+            &&let Some(board)=platform::discovery::probe_recovery(&command.endpoint().base,&origin)
+            &&lease.current()
+            &&match &command{HttpCommand::Scoped(scope,_)=>scope.current(),_=>true}
+            &&peer_http::recovery_matches(&command.endpoint().base,&board.status) {
+            // A saved route is already bound to the exact logical endpoint
+            // and board ID. Requiring its DNS alias to equal the configured
+            // board label would wrongly reject localhost/Internet aliases
+            // and completed renames on first open (where no boot pin exists).
+            board.remember_route();
+            discovered_base=Some(board.endpoint.base);
+            let event=Event::Status(board.status);result=Ok(match &command{HttpCommand::Scoped(scope,_)=>Event::ForScope(scope.clone(),Box::new(event)),_=>event});
+        }
         if result.is_err()
             && !result.as_ref().err().is_some_and(|e|peer_identity::unsupported(e))
             && lease.current()
-            && requested_name.is_some()
             && command.discoverable_read()
+            && last_discovery.elapsed()>=Duration::from_secs(5)
+            && !result.as_ref().err().is_some_and(|e|e.starts_with("HTTP 401"))
         {
+            last_discovery=Instant::now();
             discovered_base = None;
-            for base in platform::discovery::ssdp_locations(Duration::from_millis(1200)) {
-                if !lease.current() { break; }
-                let mut candidate = command.endpoint().clone();
-                candidate.base = base.clone();
-                // A rename must not make fallback select some other controller
-                // merely because it shares credentials. Read/verify its label first.
-                let Ok(status) = blocking_status(&client, &candidate) else {
-                    continue;
-                };
-                if !requested_name.as_ref().is_some_and(|name| bridge::matches_hostname(&status, name)) {
-                    continue;
-                }
-                if let Ok(event) = http_request(&client, command.with_base(base.clone())) {
-                    discovered_base = Some(base);
-                    result = Ok(event);
-                    break;
+            let origins=discover(Duration::from_millis(1200));
+            let available=platform::discovery::probe_boards(origins,&lease.stamp());
+            let expected=match &command{HttpCommand::Scoped(scope,_)=>scope.pin.as_ref().map(|pin|pin.board_id().to_owned()),_=>None}
+                .or_else(||peer_http::remembered_board(&command.endpoint().base));
+            if lease.current()&&match &command{HttpCommand::Scoped(scope,_)=>scope.current(),_=>true}
+                &&let Some(choice)=platform::discovery::choose_board(available,expected.as_deref(),auto_discovery_allowed(&command)) {
+                use platform::discovery::BoardChoice;
+                match choice {
+                    BoardChoice::Known(board)=>{
+                        board.remember_route();let preferred=board.endpoint.base.clone();
+                        let event=if command.is_status(){
+                            let event=Event::Status(board.status);
+                            Ok(match &command{HttpCommand::Scoped(scope,_)=>Event::ForScope(scope.clone(),Box::new(event)),_=>event})
+                        }else{
+                            let verified=peer_http::device_client_builder().build().expect("Verified fallback HTTP client");
+                            http_request(&verified,command.with_base(preferred.clone()))
+                        };
+                        if let Ok(event)=event{discovered_base=Some(preferred);result=Ok(event);}
+                    }
+                    BoardChoice::New(board)=>{
+                        board.remember_route();let event=Event::DiscoveredBoard(board.endpoint,board.status);
+                        result=Ok(match &command{HttpCommand::Scoped(scope,_)=>Event::ForScope(scope.clone(),Box::new(event)),_=>event});
+                    }
                 }
             }
         }
@@ -893,7 +917,8 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
             if auth_probe.as_ref() != Some(&key) || unauthorized {
                 let mut endpoint = command.endpoint().clone();
                 if let Some(base) = &discovered_base { endpoint.base = base.clone(); }
-                if let Ok(info) = http_request(&client, HttpCommand::Configuration(endpoint, "/api/auth/info")) {
+                let refreshed=peer_http::device_client_builder().build().expect("Current route HTTP client");
+                if let Ok(info) = http_request(&refreshed, HttpCommand::Configuration(endpoint, "/api/auth/info")) {
                     auth_probe = Some(key);
                     let _ = events.send(for_endpoint(command.endpoint(), info));
                 }
@@ -917,6 +942,9 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
         context.request_repaint();
     }
 }
+fn auto_discovery_allowed(command:&HttpCommand)->bool {
+    command.is_status()&&matches!(command,HttpCommand::Scoped(scope,_) if scope.current()&&scope.pin.is_none()&&scope.auto_discovery)
+}
 
 fn websocket_url(base: &str) -> Result<String, String> {
     let parsed = reqwest::Url::parse(base).map_err(|e| e.to_string())?;
@@ -931,6 +959,13 @@ fn websocket_url(base: &str) -> Result<String, String> {
         None => host.into(),
     };
     Ok(format!("{scheme}://{authority}/ws"))
+}
+fn configuration_event_notice(value:&serde_json::Value,pin:&peer_http::Pin)->Option<(String,String,u64,String)> {
+    if value["type"]!="configuration-changed"{return None;}
+    let board=value["board_id"].as_str()?;let boot=value["boot_id"].as_str()?;
+    let phase=value["phase"].as_str()?;let revision=value["revision"].as_u64()?;
+    (pin.matches_identity(board,boot)&&matches!(phase,"saved"|"applied"|"failed"))
+        .then(||(board.into(),boot.into(),revision,phase.into()))
 }
 
 fn rainbow_packet(offset: u16, count: u8, commit: bool, hue: u16) -> Vec<u8> {
@@ -1090,6 +1125,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
             let mut last_status=Instant::now()-Duration::from_secs(2);
             let mut last_status_request=Instant::now()-Duration::from_secs(2);
             let mut observed_peer: Option<(peer_http::Pin, Instant, bool, bool)> = None;
+            let mut configuration_notice:Option<(String,String,u64,String)>=None;
             let mut pending_arm: Option<(pixel_diagnostic::Request, bool)> = None;
             context.request_repaint();
             let mut hue = 0_u16;
@@ -1238,6 +1274,20 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                         if let Ok(value)=serde_json::from_str::<serde_json::Value>(&text) && value["type"]=="status-rgb" {
                             if let Some(rgb)=status_rgb::Observation::parse(value){let _=events.send(for_endpoint(&current,Event::StatusRgb(rgb)));context.request_repaint();}
                             continue; // Optional RGB cannot become a partial full-status packet.
+                        }
+                        if let Ok(value)=serde_json::from_str::<serde_json::Value>(&text)&&value["type"]=="configuration-changed" {
+                            if let Some((pin,_,_,_))=&observed_peer
+                                && let Some(notice)=configuration_event_notice(&value,pin)
+                                &&configuration_notice.as_ref()!=Some(&notice) {
+                                configuration_notice=Some(notice);
+                                // Ask on the existing socket, not the possibly
+                                // retired HTTP Host name. Never seed an address
+                                // or actuation directly from event metadata.
+                                socket.send(Message::Text(r#"{"type":"status"}"#.into())).map_err(|e|e.to_string())?;
+                                let _=events.send(for_endpoint(&current,Event::ConfigurationChanged(value["board_id"].as_str().unwrap_or_default().into(),value["boot_id"].as_str().unwrap_or_default().into())));
+                                context.request_repaint();
+                            }
+                            continue;
                         }
                         if let Ok(value)=serde_json::from_str::<serde_json::Value>(&text)
                             && value["type"]=="command-result"
@@ -1788,6 +1838,8 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                     Err(error) => { let id = *id; silent = None; let _ = events.send(Event::BoardSilentFinished(id, Err(error))); }
                                 }
                             } else if op==OP_STATUS {
+                                if serial_status(&payload).is_none(){encoded.clear();continue;}
+                                if matches!(response_sequence,0|0xfe){last_table=Instant::now()-Duration::from_secs(2);}
                                 let next_table_supported=payload.get(44)==Some(&1);
                                 if table_supported && !next_table_supported {
                                     table_snapshot=None;table_read=None;paused_table=None;table_wait=None;table_following.clear();intents.clear();
@@ -2087,7 +2139,9 @@ impl PakarControllerApp {
         let (serial_tx, serial_rx) = mpsc::channel();
         let (event_tx, event_rx) = mpsc::channel();
         let connection_gate = connection::Gate::default();
-        connection_gate.select(config.connection_enabled.then_some(config.connection_method));
+        let startup_enabled=config.startup_connection_enabled(screenshot_harness);
+        if !screenshot_harness&&let Some(route)=&config.last_network_route{peer_http::restore_route(route,&config.endpoint);}
+        connection_gate.select(startup_enabled.then_some(config.connection_method));
         let ctx = context.egui_ctx.clone();
         let events = event_tx.clone();
         let gate = connection_gate.clone();
@@ -2125,7 +2179,7 @@ impl PakarControllerApp {
             firmware_feed_message: String::new(),
             bridge: Default::default(),
             connection_gate,
-            connection_enabled: config.connection_enabled,
+            connection_enabled: startup_enabled,
             active_context: None,
             workspace: Default::default(),
             control: platform::instance::start(context.egui_ctx.clone(), !screenshot_harness),
@@ -2425,6 +2479,10 @@ impl PakarControllerApp {
     pub(crate) fn set_connection(&mut self, method: Transport, enabled: bool) {
         if self.connection_change_guard() { return; }
         if !enabled {self.presentation.update(None,None);}
+        if !enabled||method!=self.transport {
+            peer_http::invalidate_address(&self.base);
+            if let Some(origin)=self.status.as_ref().and_then(|status|peer_http::configured_origin(&self.base,status)){peer_http::invalidate_address(&origin);}
+        }
         if enabled && method == Transport::Serial && self.serial_port.trim().is_empty() {
             self.message = "Select a USB serial port before connecting".into(); return;
         }
@@ -2435,6 +2493,7 @@ impl PakarControllerApp {
         self.config.endpoint = self.base.clone();
         self.config.user = self.user.clone();
         self.config.serial_port = self.serial_port.clone();
+        if enabled&&method==Transport::WiFi&&let Some(route)=&self.config.last_network_route{peer_http::restore_route(route,&self.base);}
         self.restart_connection();
         self.save_workspace();
         self.message = if enabled {format!("Connecting through {}", method.label())}
@@ -2460,6 +2519,7 @@ impl PakarControllerApp {
         Ok(())
     }
     fn poll(&mut self) {
+        self.http_tx.set_auto_discovery(self.config.auto_connect);
         let endpoint = self.endpoint();
         if self.connection_enabled && self.transport == Transport::WiFi && self.last_ws_endpoint.as_ref() != Some(&endpoint) {
             self.restart_connection();
@@ -2540,15 +2600,16 @@ impl PakarControllerApp {
         // Never flood an offline/bootstrap queue with settings preflights.
         // Read-only legacy peers can still load after a fresh Wi-Fi status.
         if !self.configuration_loaded {
-            self.configuration_reads.reset();
+            self.configuration_reads.reset_all(
+                self.status.as_ref().is_some_and(|s|s.ethernet["configured"]==true),self.has_feature("status-rgb"));
             self.configuration_loaded = true;
         }
         // Auth is already probed by the HTTP worker. Optional settings must not
         // queue four status-fenced transactions ahead of interactive controls.
         // Keep one read outstanding, and require the table's initial mapping first.
         if self.command_route() == Some(Transport::WiFi)
-            && (!self.has_table() || self.mapping_peer == self.live_status().and_then(peer_http::Pin::from_status))
-            && (self.device_settings.open || self.show_connection || self.dock.find_tab(&ui::layout::Panel::Network).is_some())
+            && (self.configuration_reads.urgent()||((!self.has_table() || self.mapping_peer == self.live_status().and_then(peer_http::Pin::from_status))
+                && (self.device_settings.open || self.show_connection || self.dock.find_tab(&ui::layout::Panel::Network).is_some())))
             && let Some(path) = self.configuration_reads.take_due() {
             if self.http_tx.send(HttpCommand::Configuration(self.endpoint(), path)).is_err() {
                 self.configuration_reads.finish(path, false);
@@ -2630,6 +2691,24 @@ impl PakarControllerApp {
                     if realtime::older_than(&s,self.status.as_ref()) { continue; }
                     firmware_progress::retain_upgrade(&mut s,self.status.as_ref());
                     status_rgb::retain(&mut s,self.status.as_ref());
+                    if let Some(previous)=&self.status {peer_http::rebind_verified_name(&self.base,previous,&s);}
+                    if let Some(origin)=peer_http::configured_origin(&self.base,&s)&&origin!=self.base.trim_end_matches('/')
+                        && self.status.as_ref().is_none_or(|previous|previous.board_id==s.board_id) {
+                        // Actual decoded status, not a pending saved rename or
+                        // raw discovery hint, owns an active hostname change.
+                        self.http_tx.clear();self.configuration_reads.reset();
+                        self.base=origin;self.config.endpoint=self.base.clone();
+                        let endpoint=self.endpoint();
+                        // This is the SAME physical peer, not a manual target
+                        // switch. Avoid poll's generic endpoint-reset path:
+                        // retain user drafts/layout/mappings, retire only old
+                        // request scopes and reopen the socket at the new name.
+                        self.last_ws_endpoint=Some(endpoint.clone());
+                        let _=self.ws_tx.send(WsCommand::Connect(endpoint,self.connection_gate.epoch()));
+                        let _=self.ws_tx.send(WsCommand::Mapping(self.mappings.clone()));
+                        self.configuration_loaded=false;self.status_request_pending=false;
+                        self.save_workspace();
+                    }
                     if !s.hostname.is_empty() {
                         if ui::cell_pixels::semantic_changed(&s,self.status.as_ref()) {
                             self.table.pixel_sample=None; // Old RGB must not mask a new acknowledged semantic state.
@@ -2653,8 +2732,26 @@ impl PakarControllerApp {
                         self.pattern = s.effect.clone();
                         self.output_mask = s.active_outputs;
                         self.status = Some(s);
+                        if let Some(route)=self.status.as_ref().and_then(|s|peer_http::verified_route(&self.base,s))
+                            &&self.config.last_network_route.as_ref()!=Some(&route) {
+                            self.config.last_network_route=Some(route);self.save_workspace();
+                        }
                         self.last_status_at = Some(Instant::now());
                         self.message.clear();
+                    }
+                }
+                Event::DiscoveredBoard(endpoint,status)=>{
+                    if !self.config.auto_connect||!self.connection_enabled||self.transport!=Transport::WiFi||status_observation_fresh(self.last_status_at){continue;}
+                    if self.connection_change_guard(){continue;}
+                    self.base=endpoint.base;self.user=endpoint.user;self.password=endpoint.password;
+                    self.config.endpoint=self.base.clone();self.config.user=self.user.clone();
+                    self.restart_connection();self.save_workspace();
+                    self.message=format!("Discovered {} — connecting at {}",status.hostname,self.base);
+                }
+                Event::ConfigurationChanged(board,boot)=>{
+                    if self.connection_enabled&&self.transport==Transport::WiFi
+                        &&self.status.as_ref().and_then(peer_http::Pin::from_status).is_some_and(|pin|pin.matches_identity(&board,&boot)) {
+                        self.configuration_loaded=false;self.last_poll=Instant::now()-Duration::from_secs(30);
                     }
                 }
                 Event::Mapping(id, mappings, _) => {
@@ -2684,6 +2781,7 @@ impl PakarControllerApp {
                     self.event_log.failure("HTTP GET /api/cells/mapping", &error);
                 }
                 Event::Configuration("/api/auth/info", value) => {
+                    self.configuration_reads.finish("/api/auth/info",true);
                     self.access_enabled = value.get("enabled").and_then(|v|v.as_bool()) == Some(true);
                     self.access_requirement = value.get("enabled").and_then(|v|v.as_bool())
                         .map(|enabled| (self.base.clone(), enabled));
@@ -3829,6 +3927,85 @@ mod tests {
         worker.join().unwrap();
         assert!(matches!(listener.accept(), Err(error) if error.kind()==ErrorKind::WouldBlock));
         assert!(output.try_recv().is_err(), "inactive network must not emit failure noise");
+    }
+    #[test]
+    fn discovery_cached_read_fallback_is_credential_free_and_never_replays_a_mutation(){
+        fn wire()->Vec<u8>{serde_json::to_vec(&serde_json::json!({"version":peer_identity::VERSION,"hostname":"cached-discovery-fixture","board_id":"esp32s3-discovery","boot_id":"a".repeat(32),"http_peer_fencing":true,
+            "capabilities":{"board_kind":"table","acknowledged_features":["table","leds"],"table":{"columns":10,"rows":8,"pixels_per_cell":6}}})).unwrap()}
+        let responses=vec![(500,vec![]),(200,wire()),(200,br#"{"enabled":false}"#.to_vec())];
+        let (numeric,server)=mock_device(responses);let socket=reqwest::Url::parse(&numeric.base).unwrap().socket_addrs(||None).unwrap()[0];
+        let mut endpoint=numeric.clone();endpoint.base=format!("http://localhost:{}",socket.port());endpoint.user="saved".into();endpoint.password="private-fixture".into();
+        let status:DeviceStatus=serde_json::from_slice(&wire()).unwrap();peer_http::invalidate_address(&endpoint.base);
+        let saved=peer_http::SavedRoute{endpoint:endpoint.base.clone(),numeric_origin:numeric.base.clone(),board_id:status.board_id.clone()};
+        peer_http::restore_route(&saved,&endpoint.base);assert!(peer_http::verified_route(&endpoint.base,&status).is_none(),"Restoring a profile must not seed a verified DNS route");
+        let gate=connection::Gate::default();gate.select(Some(Transport::WiFi));let (commands,rx)=mpsc::channel();let (events,output)=mpsc::channel();
+        let queue=peer_http::Queue::new(commands);queue.send(HttpCommand::Status(endpoint.clone())).unwrap();drop(queue);
+        let worker=thread::spawn(move||http_worker(rx,events,egui::Context::default(),gate));worker.join().unwrap();
+        fn unwrap(event:Event)->Event{match event{Event::ForScope(_,inner)|Event::ForConnection(_,inner)|Event::ForEndpoint(_,inner)=>unwrap(*inner),other=>other}}
+        assert!(output.try_iter().map(unwrap).any(|event|matches!(event,Event::Status(s) if s.board_id=="esp32s3-discovery")));
+        let requests=server.join().unwrap();assert_eq!(requests.len(),3);assert!(requests.iter().all(|r|r.starts_with("GET ")));
+        assert!(!requests[1].to_ascii_lowercase().contains("authorization:"),"Public fallback must not send selected credentials to a candidate IP");
+        peer_http::invalidate_address(&endpoint.base);
+        let (numeric,server)=mock_device(vec![(500,vec![])]);let socket=reqwest::Url::parse(&numeric.base).unwrap().socket_addrs(||None).unwrap()[0];
+        endpoint.base=format!("http://cached-discovery-fixture.local:{}",socket.port());peer_http::remember_address(&endpoint.base,&status,Some(socket));
+        let gate=connection::Gate::default();gate.select(Some(Transport::WiFi));let (commands,rx)=mpsc::channel();let(events,_)=mpsc::channel();
+        commands.send(HttpCommand::Post(endpoint.clone(),"/api/cell",vec![("id".into(),"1".into()),("state".into(),"red".into())])).unwrap();drop(commands);
+        http_worker(rx,events,egui::Context::default(),gate);let requests=server.join().unwrap();assert_eq!(requests.len(),1);assert!(requests[0].starts_with("POST /api/cell "));peer_http::invalidate_address(&endpoint.base);
+        // A reused saved IP with another compatible board is still rejected,
+        // even though it serves the same hostname and a successful status.
+        let mut foreign:serde_json::Value=serde_json::from_slice(&wire()).unwrap();foreign["board_id"]="unexpected-board".into();
+        let(numeric,server)=mock_device(vec![(500,vec![]),(200,serde_json::to_vec(&foreign).unwrap()),(200,br#"{"enabled":false}"#.to_vec())]);
+        let socket=reqwest::Url::parse(&numeric.base).unwrap().socket_addrs(||None).unwrap()[0];endpoint.base=format!("http://localhost:{}",socket.port());
+        peer_http::invalidate_address(&endpoint.base);peer_http::restore_route(&peer_http::SavedRoute{endpoint:endpoint.base.clone(),numeric_origin:numeric.base,board_id:status.board_id.clone()},&endpoint.base);
+        let gate=connection::Gate::default();gate.select(Some(Transport::WiFi));let(commands,rx)=mpsc::channel();let(events,output)=mpsc::channel();
+        let queue=peer_http::Queue::new(commands);queue.send(HttpCommand::Status(endpoint.clone())).unwrap();drop(queue);
+        http_worker_with_discovery(rx,events,egui::Context::default(),gate,|_|Vec::new());
+        assert!(!output.try_iter().map(unwrap).any(|event|matches!(event,Event::Status(_)|Event::DiscoveredBoard(..))),"A saved IP must not silently acquire another board");
+        assert!(peer_http::verified_route(&endpoint.base,&status).is_none());assert_eq!(server.join().unwrap().len(),3);peer_http::invalidate_address(&endpoint.base);
+    }
+    #[test]
+    fn discovery_startup_preference_is_separate_from_current_session_disconnect(){
+        let mut config=config::AppConfig::default();config.connection_enabled=false;
+        assert!(config.startup_connection_enabled(false));assert!(!config.startup_connection_enabled(true));
+        config.auto_connect=false;assert!(!config.startup_connection_enabled(false));
+        config.auto_connect=true;config.connection_method=Transport::Serial;assert!(!config.startup_connection_enabled(false));
+        config.serial_port="COM22".into();assert!(config.startup_connection_enabled(false));
+        let (tx,_)=mpsc::channel();let mut queue=peer_http::Queue::new(tx);queue.set_auto_discovery(false);assert!(!queue.capture().auto_discovery);
+        let before=queue.capture();queue.clear();assert!(!before.current(),"Explicit owner retirement must reject a late discovered board");
+    }
+    #[test]
+    fn discovery_new_target_policy_does_not_depend_on_previous_origin_spelling(){
+        for origin in ["http://192.0.2.99","http://localhost:18082","https://previous.example"] {
+            let(tx,_)=mpsc::channel();let mut queue=peer_http::Queue::new(tx);
+            let endpoint=Endpoint{base:origin.into(),user:String::new(),password:String::new()};
+            let read=HttpCommand::Scoped(queue.capture(),Box::new(HttpCommand::Status(endpoint.clone())));
+            assert!(auto_discovery_allowed(&read));
+            queue.clear();assert!(!auto_discovery_allowed(&read),"A late scope is not permission to reconnect");
+            queue.set_auto_discovery(false);
+            assert!(!auto_discovery_allowed(&HttpCommand::Scoped(queue.capture(),Box::new(HttpCommand::Status(endpoint.clone())))));
+            assert!(!auto_discovery_allowed(&HttpCommand::Scoped(queue.capture(),Box::new(HttpCommand::Post(endpoint,"/api/cell",vec![])))));
+        }
+    }
+    #[test]
+    fn discovery_configuration_events_require_current_peer_and_complete_typed_notice(){
+        let pin=peer_http::Pin::from_identity("board-a",&"a".repeat(32)).unwrap();
+        let value=serde_json::json!({"type":"configuration-changed","board_id":"board-a","boot_id":"a".repeat(32),"revision":3,"phase":"saved","configured_hostname":"not-active-yet"});
+        let saved=configuration_event_notice(&value,&pin).unwrap();assert_eq!(saved.2,3);
+        let mut applied=value.clone();applied["phase"]="applied".into();assert_ne!(configuration_event_notice(&applied,&pin),Some(saved));
+        for field in ["board_id","boot_id","revision","phase"] {let mut bad=value.clone();bad[field]=serde_json::Value::Null;assert!(configuration_event_notice(&bad,&pin).is_none());}
+        let mut foreign=value;foreign["boot_id"]="b".repeat(32).into();assert!(configuration_event_notice(&foreign,&pin).is_none());
+    }
+    #[test]
+    fn discovery_verified_rename_retires_pending_configuration_slot_without_waiting_for_timeout(){
+        let(tx,_)=mpsc::channel();let mut owner=peer_http::Queue::new(tx);
+        let mut reads=configuration_reads::Queue::default();let old_scope=owner.capture();
+        assert_eq!(reads.take_due(),Some("/api/network"));
+        // Same two owner retirements as the admitted active-rename branch.
+        owner.clear();reads.reset();reads.reset_all(true,true);
+        assert!(!old_scope.current(),"The old response cannot reach a new settings owner");
+        assert_eq!(reads.take_due(),Some("/api/auth/info"),"New-host refresh must not wait 24 seconds for the retired read");
+        reads.finish("/api/network",true);assert!(reads.take_due().is_none(),"An unrelated old result cannot release the current slot");
+        reads.finish("/api/auth/info",true);assert_eq!(reads.take_due(),Some("/api/network"));
     }
     #[test]
     fn offline_usb_preferences_do_not_need_a_valid_network_endpoint() {

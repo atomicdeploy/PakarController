@@ -4,6 +4,7 @@
 #include <IPAddress.h>
 #include <stddef.h>
 #include <string.h>
+#include "ConfigurationChanges.h"
 
 // Independent optional Ethernet profile. No hardware is initialized here.
 // IPv4 validation adapts NetworkConfigStore::setAddressing; durable storage
@@ -56,7 +57,7 @@ class EthernetConfigStore {
     if(!complete||!verified||!filesystem_->rename(kPending,kPath)) {
       error_=F("Ethernet settings commit failed; previous profile preserved");return false;
     }
-    error_=String();return true;
+    error_=String();PakarConfiguration::changes().saved(PakarConfiguration::Ethernet);return true;
   }
   bool setAddressing(bool dhcp,const String &address=String(),const String &gateway=String(),
       const String &subnet=String(),const String &dns1=String(),const String &dns2=String()) {

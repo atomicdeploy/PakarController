@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include "StatusRgb.h"
+#include "../../esp8266/src/ConfigurationChanges.h"
 
 namespace PakarS3 {
 // Persistent OWNER of onboard RGB configuration. Adapted from the actual
@@ -55,6 +56,7 @@ class StatusRgbConfig {
     }
     active_ = candidate;
     persisted_ = true; error_ = "";
+    PakarConfiguration::changes().saved(PakarConfiguration::StatusRgb);
     return true;
   }
   const Configuration &configuration() const { return active_; }

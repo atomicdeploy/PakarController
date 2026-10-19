@@ -10,6 +10,157 @@ import 'package:pakarcontroller/lan_resolver.dart';
 // HttpClient with its deliberate HTTP400 stub, even for preceding plain tests.
 // This exercises real loopback HTTP; it does not prove LAN or physical output.
 void main() {
+  test('Saved numeric HTTPS recovery probes original hostname certificate without credentials before promoting one same-board route', () async {
+    final trusted = SecurityContext(withTrustedRoots: false)
+      ..setTrustedCertificatesBytes(
+        await File('test/fixtures/lan_tls_cert.pem').readAsBytes(),
+      );
+    final context = SecurityContext()
+      ..useCertificateChain('test/fixtures/lan_tls_cert.pem')
+      ..usePrivateKey('test/fixtures/lan_tls_key.pem');
+    final server = await HttpServer.bindSecure(
+      InternetAddress.loopbackIPv4,
+      0,
+      context,
+    );
+    final authorizations = <String?>[], hosts = <String>[];
+    final sockets = <WebSocket>[];
+    var lookups = 0, wrongPeer = true;
+    final serving = server.listen((request) async {
+      authorizations.add(request.headers.value('authorization'));
+      hosts.add(request.headers.value('host')!);
+      final status = jsonEncode({
+        'version': '0.2.8',
+        'hostname': 'ledboard',
+        'board_id': wrongPeer ? 'foreign' : 'fixture',
+        'boot_id': 'boot',
+      });
+      if (request.uri.path == '/ws') {
+        final socket = await WebSocketTransformer.upgrade(request);
+        sockets.add(socket);
+        socket.listen((_) => socket.add(status));
+      } else {
+        request.response.persistentConnection = false;
+        request.response.write(status);
+        await request.response.close();
+      }
+    });
+    final resolver = LanResolver(
+      securityContext: trusted,
+      lookup: (_) async {
+        lookups++;
+        throw const SocketException('Fixture DNS failure');
+      },
+    );
+    final logical = 'https://localhost:${server.port}';
+    final api = PakarApi(
+      baseUrl: logical,
+      password: 'fixture-secret',
+      resolver: resolver,
+      discovery: () async => {},
+    );
+    api.restoreNetworkRecovery({
+      'endpoint': logical,
+      'board_id': 'fixture',
+      'origin': 'https://127.0.0.1:${server.port}',
+    });
+    try {
+      expect(resolver.connectedAddressFor(Uri.parse(logical)), isNull);
+      await expectLater(api.status(), throwsA(isA<SocketException>()));
+      expect(resolver.connectedAddressFor(Uri.parse(logical)), isNull);
+      expect(authorizations, everyElement(isNull));
+      wrongPeer = false;
+      expect((await api.status()).json['board_id'], 'fixture');
+      expect(authorizations.first, isNull);
+      expect(authorizations.last, startsWith('Basic '));
+      expect(api.transportUrl, logical);
+      expect(api.webSocketUri.host, 'localhost');
+      expect(resolver.connectedAddressFor(Uri.parse(logical)), '127.0.0.1');
+      await api.status();
+      expect(
+        (await api.liveStatus().first.timeout(const Duration(seconds: 3)))
+            .json['board_id'],
+        'fixture',
+      );
+      expect(lookups, 2);
+      expect(hosts, everyElement('localhost:${server.port}'));
+    } finally {
+      await api.close();
+      for (final socket in sockets) {
+        await socket.close();
+      }
+      await server.close(force: true);
+      await serving.cancel();
+    }
+  });
+  test('HTTPS and WSS share one successful numeric route without repeating DNS; original Host and TLS name remain validated', () async {
+    final trusted = SecurityContext(withTrustedRoots: false)
+      ..setTrustedCertificatesBytes(
+        await File('test/fixtures/lan_tls_cert.pem').readAsBytes(),
+      );
+    final serverContext = SecurityContext()
+      ..useCertificateChain('test/fixtures/lan_tls_cert.pem')
+      ..usePrivateKey('test/fixtures/lan_tls_key.pem');
+    final server = await HttpServer.bindSecure(
+      InternetAddress.loopbackIPv4,
+      0,
+      serverContext,
+    );
+    final sockets = <WebSocket>[];
+    var lookups = 0, requests = 0;
+    final serving = server.listen((request) async {
+      requests++;
+      expect(request.headers.value('host'), 'localhost:${server.port}');
+      final status = jsonEncode({
+        'version': '0.2.8',
+        'hostname': 'ledboard',
+        'board_id': 'fixture',
+        'boot_id': 'boot',
+      });
+      if (request.uri.path == '/ws') {
+        final socket = await WebSocketTransformer.upgrade(request);
+        sockets.add(socket);
+        socket.listen((_) => socket.add(status));
+      } else {
+        request.response.persistentConnection = false;
+        request.response.write(status);
+        await request.response.close();
+      }
+    });
+    final resolver = LanResolver(
+      securityContext: trusted,
+      lookup: (_) async {
+        if (++lookups > 1) {
+          throw const SocketException(
+            'DNS unavailable after initial resolution',
+          );
+        }
+        return [InternetAddress.loopbackIPv4];
+      },
+    );
+    final api = PakarApi(
+      baseUrl: 'https://localhost:${server.port}',
+      resolver: resolver,
+    );
+    try {
+      await api.status();
+      await api.status();
+      expect(
+        (await api.liveStatus().first.timeout(const Duration(seconds: 3)))
+            .json['board_id'],
+        'fixture',
+      );
+      expect(lookups, 1);
+      expect(requests, 3);
+    } finally {
+      await api.close();
+      for (final socket in sockets) {
+        await socket.close();
+      }
+      await server.close(force: true);
+      await serving.cancel();
+    }
+  });
   test(
     'Hostname WebSocket conversion preserves default and explicit ports',
     () async {

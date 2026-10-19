@@ -2,6 +2,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 
+import 'dart:convert';
+
 import 'api.dart';
 
 /// Unsubmitted nonsecret connection fields. Never changes the selected target,
@@ -60,14 +62,18 @@ class ConnectionPreferences {
   Future<void> restore(PakarApi api) async {
     api.commandHttpFallback =
         preferences.getBool('command_http_fallback') ?? true;
+    api.automaticDiscovery =
+        preferences.getBool('automatic_board_connection') ?? true;
     final endpoint = PakarApi.normalizeEndpoint(
       preferences.getString('endpoint') ?? 'http://ledboard.local',
     );
-    if (endpoint.startsWith('ble://')) {
+    if (api.connectionMethod != ConnectionMethod.usb &&
+        endpoint.startsWith('ble://')) {
       api.connectionMethod = ConnectionMethod.bluetooth;
       api.expectedBluetoothBoard =
           preferences.getString('bluetooth_board_id') ?? '';
-    } else if (preferences.getString('connection_method') == 'network') {
+    } else if (api.connectionMethod != ConnectionMethod.usb &&
+        preferences.getString('connection_method') == 'network') {
       api.connectionMethod = ConnectionMethod.network;
     }
     api.baseUrl = endpoint;
@@ -85,6 +91,35 @@ class ConnectionPreferences {
     }
     api.password = password ?? '';
     api.resetTransport();
+    try {
+      api.restoreNetworkRecovery(
+        jsonDecode(preferences.getString('verified_network_route') ?? 'null'),
+      );
+    } on FormatException {
+      /* Corrupt hints never replace hostname intent. */
+    }
+  }
+
+  Future<void> saveAutomaticDiscovery(bool enabled) async {
+    if (!await preferences.setBool('automatic_board_connection', enabled)) {
+      throw StateError('Automatic connection preference could not be saved');
+    }
+  }
+
+  /// Low-write same-board observations only. Never persists unverified UDP or
+  /// an arbitrary reply IP, and never rewrites a user's in-progress UI draft.
+  Future<void> saveNetworkRecovery(PakarApi api) async {
+    final recovery = api.networkRecovery;
+    if (recovery == null) return;
+    final encoded = jsonEncode(recovery);
+    if (preferences.getString('verified_network_route') == encoded) return;
+    if (!await preferences.setString('verified_network_route', encoded)) {
+      throw StateError('Verified network route could not be saved');
+    }
+    if (preferences.getString('endpoint') != api.baseUrl) {
+      await preferences.setString('endpoint', api.baseUrl);
+      await preferences.setString('last_network_endpoint', api.baseUrl);
+    }
   }
 
   /// Local command policy only; do not reconnect or write to a board.

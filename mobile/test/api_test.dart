@@ -243,6 +243,8 @@ void main() {
           jsonEncode({
             'version': '0.2.8',
             'hostname': request.url.host == '192.0.2.1' ? 'other' : 'renamed',
+            'board_id': 'fixture-board',
+            'boot_id': 'fixture-boot',
           }),
           200,
         );

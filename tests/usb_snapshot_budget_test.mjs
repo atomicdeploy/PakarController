@@ -7,6 +7,16 @@ const ethernet=read('firmware/esp8266/src/EthernetManagement.h');
 const status=main.slice(main.indexOf('String buildStatusJson(bool compact) {'),main.indexOf('void sendStatusJson()'));
 const snapshot=main.slice(main.indexOf('String buildUsbTableSnapshot() {'),main.indexOf('void configureNtp()'));
 assert(main.includes('String buildStatusJson() { return buildStatusJson(false); }'));
+const configChange=main.slice(main.indexOf('String configurationStateJson('),main.indexOf('void sendStatusJson()'));
+for(const field of ['configuration-changed','board_id','boot_id','revision','phase','scopes','hostname','configured_hostname','fqdn','addresses','apply_pending'])
+  assert(configChange.includes(`"${field}"`));
+for(const secret of ['password','token','stationSsid','mqttUser'])assert(!configChange.includes(secret));
+assert(configChange.includes('bytes>1536U')&&configChange.includes('serializeJson(d,body)!=bytes'));
+assert(configChange.includes('for(uint8_t n=0;n<3;++n)'));
+assert(configChange.indexOf('configurationStateJson(&event)')<configChange.indexOf('changes.retire(event)'));
+assert(configChange.includes('publishPcEvent(body)')&&configChange.includes('sendHostStatus(0)'));
+assert(configChange.includes('webSocket.textAll(buildStatusJson())')&&configChange.includes('cloudServices.requestTelemetry()'));
+assert(main.includes('server.on("/api/configuration",HTTP_GET'));
 const cloudStatus=main.slice(main.indexOf('String buildCloudStatusJson() {'),main.indexOf('void sendStatusJson()'));
 assert(main.includes('#if defined(ARDUINO_ARCH_ESP32)\nString buildCloudStatusJson()'));
 assert(cloudStatus.includes('const bool diagnostic=grid.diagnosticActive();'));
