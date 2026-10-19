@@ -14,6 +14,40 @@ same AVR UART/ISP signals at once.
 
 ## Current rainbow and LAN recovery
 
+### Critical first22-cell report: recovery prepared, NOT deployed
+
+David directly authorized immediate LED-regression updates without another PBX
+permission round-trip. Fresh observation still identifies boot
+`0c5cbe8456b1082d8d29f9abeab2561c`, RMT-DMA/rainbow, running2265952B application,
+MD5`d2504fcb4539cf41464875cf051a6cb0`. One explicitly requested on-pad capture
+completed at frame334886: all11520bits matched, timing_errors0, high300..625ns,
+maximum dataLOW950ns. This is one digital GPIO frame, NOT analogue strip-DIN,
+downstream-controller, power or optical acceptance; intermittent faults remain
+possible. The reported first22-cell defect is NOT resolved by this observation.
+
+Canonical16MB/OPI/buffered/verified-ISP/BLE-disabled/optional-Ethernet build with
+the existing separately selectable static GPIO worker passed. Same integrated
+services/mapping/effects, but no RMT/DMA refill dependency. Raw app2261536B,
+SHA256`885f2384208f3af11c3eec439b240850656d943354115e81a54d8b78d84b0648`.
+The existing focused worker fixtures passed. This is a controlled alternative,
+not a diagnosed root cause or guarantee against every firmware/electrical bug.
+
+Canonical update inspected and acknowledged terminal remote job23 against its
+original2258272B image SHA45410ada...; the requested prewrite running backup then
+failed on a GET Range deadline through the Internet SSH tunnel. Owned589824B
+partial backup is retained; there was no upload stage or firmware write. The
+subsequent proposed local-ASUS updater launch was explicitly rejected by host
+execution policy before running; it was NOT retried through a different path.
+Independent readback afterward retains the same boot, MD5, RMT backend and idle
+update phase. Actual deployment is blocked pending an approved execution path
+or user-operated update. AVR untouched; no physical success is claimed.
+
+The immutable recovery candidate and manifest are on office under
+`/pakarcontroller/firmware/esp32s3/885f2384208f3af11c3eec439b240850656d943354115e81a54d8b78d84b0648/`.
+Manifest SHA256`fb227ecefb38f0eea24ff39557bafde1f2bd200bcd5c7e41ff1ad2f45d028b95`.
+Publishing files did not apply or announce an automatic firmware job. Manual
+application and all80-cell optical feedback remain pending.
+
 ### Current ESP0.2.8 Internet update and remote panel
 
 User authorized the prepared0.2.8 image and temporary panel access change.
