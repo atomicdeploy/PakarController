@@ -93,10 +93,19 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
       setState(() => applied = null);
       return;
     }
-    if (workspace.observe(status)) {
+    final changed = workspace.observe(status);
+    final observation = workspace.observation;
+    final observedOff = observation != null
+        ? observation.active && observation.off
+        : changed
+        ? false
+        : allOff;
+    // A retained workspace may already contain this exact revision. A newly
+    // opened page still needs its off state, without replaying any action.
+    if (changed || allOff != observedOff) {
       setState(() {
-        applied = null;
-        allOff = workspace.observation?.off == true;
+        if (changed) applied = null;
+        allOff = observedOff;
       });
     }
   }

@@ -4628,9 +4628,25 @@
     "Actual PeerSession refresh single-flight and reset-before-await socket ownership adapted to shared status reads, per-socket cleanup and retained previously acknowledged layout inventory. Reads retire before and after writes; a pre/during-write result cannot settle post-ACK confirmation. Fresh individual capabilities still own actuation. The pinned http abortable GET path additionally cancels transport/body reads on deadline/retirement instead of retaining the donor Future.timeout-only limitation.",
     "Failure-driven review rejects older same-boot HTTP replies as superseded rather than returning cached data as a fresh observation; older WS frames cannot reset liveAge or publish into a revoked UI lease. Ordered real-loopback producer regressions retain equal board-clock captures as valid, without inventing a sequence number. Board/application-keyed panel elements retire old application mode/cue shells while retaining the user's per-board workspace; offline melody slots keep bounds and both controls disabled until actual fresh cues return. These are scoped lifecycle adaptations, not complete donor mobile parity.",
     "Bluetooth adaptation: fully read canonical PeerSession transport source at SHA5263044d..., retain single-flight reads, generation/route identity and reset-before-await retirement in the selected BLE API. Android native GATT is an SDK implementation because no reusable BLE transport exists in these donors. Verify INFO then full status, retain stable board aliases and saved selected route, keep app updater/remote management independent, and never substitute board HTTP/DNS/WebSocket for BLE. Existing UI/workspace, command ACK, settings and mirroring consumers are reused.",
-    "Reread the complete current donor Rejected/Uncertain and generation-bound PeerSession through EOF. Adapt its explicit rejection versus missing-confirmation distinction to Pakar's unversioned commands: sanitized public reasons, negative2xx receipt rejection, no new-intent replay, persistent attempt-owned command failure independent of status reads, and explicit pixel-owner rebind after reconnect. This is a scoped error/lifecycle adaptation, not donor RPC/media/PWM parity."
+    "Reread the complete current donor Rejected/Uncertain and generation-bound PeerSession through EOF. Adapt its explicit rejection versus missing-confirmation distinction to Pakar's unversioned commands: sanitized public reasons, negative2xx receipt rejection, no new-intent replay, persistent attempt-owned command failure independent of status reads, and explicit pixel-owner rebind after reconnect. This is a scoped error/lifecycle adaptation, not donor RPC/media/PWM parity.",
+    "Reread complete donor transport through EOF, especially PeerSession._install generation-owned output invalidation. PixelDiagnosticWorkspace now retires previous board/boot observations before parsing replacement metadata while preserving cursor, colour and scroll drafts. PixelDiagnosticPage restores retained all-off presentation even when the initial semantic revision is deduplicated; colour edits after reopening all-off remain drafts until explicit Show. No main/API transport changes, command replay or new simulated product path."
   ],
   "targets": [
+    {
+      "path": "mobile/lib/pixel_diagnostic.dart",
+      "anchor": "previous.board != board || previous.boot != boot",
+      "sha256": "49b37ca6d6a14472da189800dd846acdebed7816fadb0ac22230c11d0cb2c3c6"
+    },
+    {
+      "path": "mobile/lib/pixel_diagnostic_page.dart",
+      "anchor": "final observedOff = observation != null",
+      "sha256": "7dee854f79664e26284a634ae400ef64177d16afd31b1e20fcd499861b1f1dc1"
+    },
+    {
+      "path": "mobile/test/pixel_diagnostic_page_test.dart",
+      "anchor": "Reopening an all-off observation keeps colour edits as drafts",
+      "sha256": "a232eae17d69673ba4200a3d38507e6e9d5791a2d93b7ca64c27f97c1e380550"
+    },
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
@@ -17359,12 +17375,12 @@
         },
         {
           "path": "mobile/lib/pixel_diagnostic.dart",
-          "sha256": "321385b56203647f872f89016deaaef551b3aaa7fcf39abbf9f0b4dd270efb61",
+          "sha256": "49b37ca6d6a14472da189800dd846acdebed7816fadb0ac22230c11d0cb2c3c6",
           "anchor": "class PixelProbe"
         },
         {
           "path": "mobile/lib/pixel_diagnostic_page.dart",
-          "sha256": "f6beb60f550f1cb28e6b45c256022b36860d67997715cec375bbe37da1c131f7",
+          "sha256": "7dee854f79664e26284a634ae400ef64177d16afd31b1e20fcd499861b1f1dc1",
           "anchor": "class PixelDiagnosticPage"
         },
         {
@@ -17462,7 +17478,7 @@
         },
         {
           "path": "mobile/test/pixel_diagnostic_page_test.dart",
-          "sha256": "b784f40b804f78213d6e27d179c02ecd87492e96778e607b3b248a8247932fc9",
+          "sha256": "a232eae17d69673ba4200a3d38507e6e9d5791a2d93b7ca64c27f97c1e380550",
           "anchor": "Pending writes cannot repeat"
         },
         {
@@ -17598,12 +17614,12 @@
         },
         {
           "path": "mobile/lib/pixel_diagnostic.dart",
-          "sha256": "321385b56203647f872f89016deaaef551b3aaa7fcf39abbf9f0b4dd270efb61",
+          "sha256": "49b37ca6d6a14472da189800dd846acdebed7816fadb0ac22230c11d0cb2c3c6",
           "anchor": "class PixelProbe"
         },
         {
           "path": "mobile/lib/pixel_diagnostic_page.dart",
-          "sha256": "f6beb60f550f1cb28e6b45c256022b36860d67997715cec375bbe37da1c131f7",
+          "sha256": "7dee854f79664e26284a634ae400ef64177d16afd31b1e20fcd499861b1f1dc1",
           "anchor": "class PixelDiagnosticPage"
         },
         {
@@ -17695,7 +17711,7 @@
         },
         {
           "path": "mobile/test/pixel_diagnostic_page_test.dart",
-          "sha256": "b784f40b804f78213d6e27d179c02ecd87492e96778e607b3b248a8247932fc9",
+          "sha256": "a232eae17d69673ba4200a3d38507e6e9d5791a2d93b7ca64c27f97c1e380550",
           "anchor": "Pending writes cannot repeat"
         },
         {
@@ -17946,7 +17962,7 @@
         {
           "path": "mobile/lib/pixel_diagnostic.dart",
           "anchor": "class PixelDiagnosticWorkspace",
-          "sha256": "321385b56203647f872f89016deaaef551b3aaa7fcf39abbf9f0b4dd270efb61"
+          "sha256": "49b37ca6d6a14472da189800dd846acdebed7816fadb0ac22230c11d0cb2c3c6"
         },
         {
           "path": "mobile/lib/main.dart",

@@ -76,6 +76,84 @@ Widget diagnosticPage(
 );
 
 void main() {
+  testWidgets('Reopening an all-off observation keeps colour edits as drafts', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(600, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final api = DiagnosticApi();
+    addTearDown(api.close);
+    final workspace = PixelDiagnosticWorkspace();
+    addTearDown(workspace.dispose);
+    final off = DeviceStatus({
+      ...diagnosticFixture().json,
+      'led_output': {
+        'enabled': true,
+        'mode': 'effects',
+        'diagnostic': {
+          'revision': 3,
+          'active': true,
+          'index': 0,
+          'count': 1,
+          'rgb': 0xffffff,
+          'off': true,
+        },
+      },
+    });
+    workspace.observe(off);
+    await tester.pumpWidget(
+      diagnosticPage(api, workspace: workspace, observed: () => off),
+    );
+    await tester.ensureVisible(find.text('Red'));
+    await tester.tap(find.text('Red'));
+    await tester.pumpAndSettle();
+    expect(api.sent, isEmpty);
+    expect(workspace.probe.rgb, 0xff0000);
+    expect(find.text('Board reports: all 480 pixels off'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('pixel-show')));
+    await tester.tap(find.byKey(const Key('pixel-show')));
+    await tester.pumpAndSettle();
+    expect(api.sent, hasLength(1));
+    expect(api.sent.single.$1.rgb, 0xff0000);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  test('Changed boot retires old diagnostic observation even without replacement metadata', () {
+    final workspace = PixelDiagnosticWorkspace();
+    final previous = DeviceStatus({
+      ...diagnosticFixture().json,
+      'led_output': {
+        'diagnostic': {
+          'revision': 8,
+          'active': true,
+          'index': 474,
+          'count': 6,
+          'rgb': 0xff0000,
+          'off': false,
+        },
+      },
+    });
+    expect(workspace.observe(previous), true);
+    workspace.position = '200';
+    workspace.vertical = 120;
+    var notifications = 0;
+    workspace.addListener(() => notifications++);
+    final current = DeviceStatus({
+      ...diagnosticFixture().json,
+      'boot_id': 'b' * 32,
+    });
+    expect(workspace.observe(current), true);
+    expect(workspace.observation, isNull);
+    expect(workspace.position, '200');
+    expect(workspace.probe.first, 474);
+    expect(workspace.vertical, 120);
+    expect(notifications, 1);
+    expect(workspace.observe(current), false);
+    expect(notifications, 1);
+    workspace.dispose();
+  });
   testWidgets('Reconnecting can explicitly rebind without replaying a pixel', (
     tester,
   ) async {

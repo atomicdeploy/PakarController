@@ -87,6 +87,19 @@ class PixelDiagnosticWorkspace {
   PixelProbe _probe = const PixelProbe();
   PixelDiagnosticObservation? observation;
   bool observe(DeviceStatus status) {
+    // PCController PeerSession._install retires output observations when the
+    // selected host/board generation changes, independently of whether the new
+    // snapshot contains that peripheral. Keep the user's cursor/draft intact.
+    final previous = observation;
+    final board = status.json['board_id'], boot = status.json['boot_id'];
+    final retired =
+        previous != null &&
+        board is String &&
+        board.isNotEmpty &&
+        boot is String &&
+        boot.isNotEmpty &&
+        (previous.board != board || previous.boot != boot);
+    if (retired) observation = null;
     final next = PixelDiagnosticObservation.read(status);
     final old = observation;
     if (next == null ||
@@ -94,7 +107,8 @@ class PixelDiagnosticWorkspace {
             old.board == next.board &&
             old.boot == next.boot &&
             next.revision <= old.revision)) {
-      return false;
+      if (retired) notifyListeners();
+      return retired;
     }
     observation = next;
     if (next.active && !next.off) {
