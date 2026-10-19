@@ -47,7 +47,9 @@ class CloudServices {
              StatusProvider statusProvider,StatusProvider telemetryProvider=nullptr,
              const String &boardId=String(),const String &bootId=String());
   void suspend();
-  void requestTelemetry() {lastTelemetryAt_=millis()-static_cast<uint32_t>(cloudConfig.telemetrySeconds())*1000U;}
+  // Coalesce a fresh readback on the loop owner, never build/send a large
+  // snapshot on a command/connection callback's stack.
+  void requestTelemetry() {telemetryRequested_=true;}
   void applyConfiguration();
   void renameDevice(const String &deviceId);
   void service(bool networkReady, bool timeReady, uint32_t now,
@@ -115,6 +117,7 @@ class CloudServices {
   bool webSocketConfigured_ = false;
   bool networkReady_ = false;
   bool mqttBufferReady_ = false;
+  bool telemetryRequested_ = false;
 };
 
 extern CloudServices cloudServices;

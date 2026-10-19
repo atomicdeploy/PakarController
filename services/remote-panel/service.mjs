@@ -6,7 +6,7 @@ import {createHash,randomBytes,timingSafeEqual} from 'node:crypto';
 import mqtt from 'mqtt';
 import {WebSocketServer} from 'ws';
 import {Gateway,commandFor,failure} from './gateway.mjs';
-import {toolRelease} from '../../tools/peer-identity.mjs';
+import {toolRelease,toolPolicy,peerVersionAllowed} from '../../tools/peer-identity.mjs';
 
 const digest=v=>createHash('sha256').update(v).digest();
 const equal=(a,b)=>a.length===b.length&&timingSafeEqual(a,b);
@@ -35,7 +35,16 @@ export function createPanel({config,client,html,basic,font,release,now=Date.now,
     return true;
   }
   const challenge=res=>{headers(res);res.writeHead(401,{'WWW-Authenticate':'Basic realm="PakarController remote panel", charset="UTF-8"','Content-Type':'text/plain;charset=utf-8'});res.end('Sign in to the private remote panel. Device/broker credentials are not used here.')};
-  async function body(req){const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>2048)throw failure(413,'request_too_large');chunks.push(chunk)}return Buffer.concat(chunks).toString('utf8')}
+  const clientAllowed=req=>{
+    if(config.enforce_peer_versions===false||toolPolicy.enforce===false)return true;
+    const policy=gateway.status?.compatibility;
+    if(policy?.enforced===false)return true;
+    // Same-origin browsers run the exact served Web package. Native callers
+    // identify themselves; Origin absence must not be mistaken for a browser.
+    const version=req.headers['x-pakar-version']??(req.headers.origin===origin.origin?release.version:undefined);
+    return peerVersionAllowed(version,policy?.minimum_app??toolPolicy.minimum_app,policy?.maximum_app??toolPolicy.maximum_app);
+  };
+  async function body(req){const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>8192)throw failure(413,'request_too_large');chunks.push(chunk)}return Buffer.concat(chunks).toString('utf8')}
   const server=http.createServer(async(req,res)=>{
     try{
       if(!auth(req,res)){challenge(res);return}
@@ -45,6 +54,8 @@ export function createPanel({config,client,html,basic,font,release,now=Date.now,
       if(req.method==='GET'&&path==='/assets/fonts/Vazirmatn-Regular.ttf'){headers(res);res.writeHead(200,{'Content-Type':'font/ttf'});res.end(font);return}
       if(req.method==='GET'&&path==='/api/auth/info'){json(res,200,{ready:true,enabled:false,default_credentials:false,username:'',remote_panel_authenticated:true});return}
       if(req.method==='GET'&&path==='/api/status'){json(res,200,await gateway.read());return}
+      if(req.method==='GET'&&path==='/api/events'){json(res,200,gateway.eventPage(url.searchParams.has('after')?url.searchParams.get('after'):undefined));return}
+      if(req.method==='GET'&&path==='/api/cells/assignments'){const s=await gateway.read();if(s.cells?.length!==80||s.cells.some(v=>!['red','white','off'].includes(v)))throw failure(503,'cell_states_unavailable');json(res,200,{board_id:s.board_id,boot_id:s.boot_id,red_lock:s.red_lock,assignments:s.cells.map((state,i)=>({cell:i+1,state}))});return}
       if(req.method==='GET'&&path==='/api/device/name'){const s=await gateway.read();json(res,200,{hostname:s.hostname,display_name:s.capabilities.name,application:s.capabilities.application});return}
       if(req.method==='GET'&&path==='/api/cells/mapping'){
         // MQTT has no physical-map read operation. Never manufacture a default
@@ -57,14 +68,21 @@ export function createPanel({config,client,html,basic,font,release,now=Date.now,
       if(req.method==='POST'){
         if(req.headers.origin!==undefined&&req.headers.origin!==origin.origin)throw failure(403,'foreign_origin');
         if(req.headers.origin===undefined&&!req.headers.authorization)throw failure(403,'explicit_origin_required');
+        if(!clientAllowed(req))throw failure(426,'unsupported_app_version');
         const text=await body(req);
+        if(path==='/api/command'){
+          let packet;try{packet=JSON.parse(req.headers['content-type']?.includes('application/json')?text:new URLSearchParams(text).get('packet')??'null')}catch{throw failure(400,'invalid_command')}
+          const reply=await gateway.commandPacket(packet);json(res,200,reply);return;
+        }
         if(path==='/api/clients/report'){
           const p=JSON.parse(req.headers['content-type']?.includes('application/json')?text:new URLSearchParams(text).get('report')??'null');if(typeof p?.id!=='string'||p.id.length>80)throw failure(400,'invalid_report');
           // Indirect reports remain relay-local; never call them MCU-observed.
           if(reports.size>=8&&!reports.has(p.id))reports.delete(reports.keys().next().value);
           reports.set(p.id,{application:String(p.application??'').slice(0,64),version:String(p.version??'').slice(0,64),at:now(),indirect:true});json(res,200,{accepted:true,indirect:true,scope:'relay-only'});return;
         }
-        const form=new URLSearchParams(url.search);for(const [key,value]of new URLSearchParams(text)){if(form.has(key))throw failure(400,'duplicate_parameter');form.append(key,value)}
+        let fields;
+        if(req.headers['content-type']?.includes('application/json')){let p;try{p=JSON.parse(text)}catch{throw failure(400,'invalid_json')}if(!p||Array.isArray(p)||typeof p!=='object')throw failure(400,'invalid_json');fields=Object.entries(p).map(([k,v])=>[k,typeof v==='object'?JSON.stringify(v):String(v)]);}else fields=new URLSearchParams(text);
+        const form=new URLSearchParams(url.search);for(const [key,value]of fields){if(form.has(key))throw failure(400,'duplicate_parameter');form.append(key,value)}
         const [command,values,count]=commandFor(path,form),pin={board:req.headers['x-pakar-board'],boot:req.headers['x-pakar-boot']};
         const reply=await gateway.command(command,values,pin);
         let result;try{result=JSON.parse(reply.message)}catch{}
@@ -72,20 +90,39 @@ export function createPanel({config,client,html,basic,font,release,now=Date.now,
         json(res,200,{accepted:true,request_id:reply.request_id,...(count===undefined?{}:{count}),receipt:reply.message});return;
       }
       throw failure(404,'route_unavailable_over_mqtt');
-    }catch(error){if(!res.headersSent)json(res,error.status??500,{error:error.code??'remote_panel_failed',outcome_known:error.outcome_known??!(error.status===504||error.code==='connection_lost_outcome_unknown')});else res.destroy()}
+    }catch(error){if(!res.headersSent)json(res,error.status??500,{error:error.code??'remote_panel_failed',outcome_known:error.outcome_known??(Number.isInteger(error.status)&&error.status<500&&!String(error.code).includes('outcome_unknown'))});else res.destroy()}
   });
   server.headersTimeout=15000;server.requestTimeout=15000;server.maxRequestsPerSocket=500;
-  const ws=new WebSocketServer({noServer:true,maxPayload:2048,perMessageDeflate:false});
+  const ws=new WebSocketServer({noServer:true,maxPayload:4096,perMessageDeflate:false});
   server.on('upgrade',(req,socket,head)=>{
-    if(new URL(req.url,config.origin).pathname!=='/ws'||req.headers.origin!==origin.origin||!auth(req)||ws.clients.size>=8){socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');return}
+    const allowedOrigin=req.headers.origin===origin.origin||(req.headers.origin===undefined&&Boolean(req.headers.authorization));
+    if(new URL(req.url,config.origin).pathname!=='/ws'||!allowedOrigin||!clientAllowed(req)||!auth(req)||ws.clients.size>=8){socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');return}
     ws.handleUpgrade(req,socket,head,connection=>ws.emit('connection',connection,req));
   });
   ws.on('connection',connection=>{
+    let inFlight=0;
+    const send=value=>{if(connection.bufferedAmount>65536){connection.close(1013,'Slow client');return}if(connection.readyState===1)connection.send(JSON.stringify(value))};
     if(gateway.fresh())connection.send(JSON.stringify(gateway.project()));
     connection.on('error',()=>{});
-    connection.on('message',(bytes,binary)=>{if(binary){connection.close(1003,'Pixel streaming unavailable over this relay');return}try{const p=JSON.parse(bytes.toString());if(p.type==='status')gateway.read().then(s=>{if(connection.readyState===1)connection.send(JSON.stringify(s))}).catch(()=>connection.close(1013,'Board unavailable'))}catch{connection.close(1008,'Invalid message')}});
+    connection.on('message',async(bytes,binary)=>{
+      if(binary){connection.close(1003,'Pixel streaming unavailable over this relay');return}
+      let p;try{p=JSON.parse(bytes.toString())}catch{connection.close(1008,'Invalid message');return}
+      if(!p||Array.isArray(p)||typeof p!=='object'){connection.close(1008,'Invalid message');return}
+      if(inFlight>=4){send({type:'command-result',request_id:p.request_id,accepted:false,error:'command_capacity',outcome_known:true});return}
+      ++inFlight;
+      try{
+        if(p.type==='status')send(await gateway.read());
+        else if(p.type==='ping')send({type:'pong'});
+        else if(p.type==='events')send({type:'events',...gateway.eventPage(p.after)});
+        else if(p.type==='command')send(await gateway.commandPacket(p));
+        else send({type:'error',error:'unsupported_message'});
+      }catch(error){send({type:'command-result',request_id:p.request_id,board_id:p.board_id,boot_id:p.boot_id,accepted:false,error:error.code??'relay_failed',outcome_known:error.outcome_known??(Number.isInteger(error.status)&&error.status<500&&!String(error.code).includes('outcome_unknown'))})}
+      finally{--inFlight}
+    });
   });
   gateway.on('status',s=>{const bytes=JSON.stringify(s);for(const connection of ws.clients){if(connection.bufferedAmount>65536){connection.close(1013,'Slow client');continue}if(connection.readyState===1)connection.send(bytes)}});
+  gateway.on('event',event=>{const bytes=JSON.stringify(event);for(const connection of ws.clients){if(connection.bufferedAmount>65536){connection.close(1013,'Slow client');continue}if(connection.readyState===1)connection.send(bytes)}});
+  gateway.on('telemetry',event=>{const bytes=JSON.stringify(event);for(const connection of ws.clients){if(connection.bufferedAmount>65536){connection.close(1013,'Slow client');continue}if(connection.readyState===1)connection.send(bytes)}});
   gateway.on('offline',()=>{for(const c of ws.clients)c.close(1013,'Board connection lost')});
   const stale=setInterval(()=>{if(!gateway.fresh())for(const c of ws.clients)c.close(1013,'Fresh board status unavailable')},2000);stale.unref();
   async function close(){clearInterval(stale);for(const c of ws.clients)c.terminate();await new Promise(resolve=>ws.close(resolve));await new Promise(resolve=>server.close(resolve));gateway.disconnect();client.end(true)}

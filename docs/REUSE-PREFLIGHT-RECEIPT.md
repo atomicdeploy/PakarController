@@ -1,5 +1,48 @@
 # Donor-first preflight receipt
 
+## Duplex selected-owner commands and events
+
+Consulted network-cloud, peer-identity, bridge-repeater and exact donor-audit
+PCController Tools/Controller/internal/localdevice/events.go before implementation.
+Root and native specialist read events.go completely (09edc7514d6a499445e0cb76554daf02698366071b50f7c5f47dafd019991c4d),
+plus actual hostbridge/peer_response.go and peer_response_test.go through EOF.
+Mobile specialist reread mobile/lib/bridge.dart and hostbridge/lifecycle.go;
+firmware specialist reread PU850 LocalLib/AsyncWebServer.cpp/.h completely.
+Their actual code supplies bounded typed events, exact receipt correlation,
+generation retirement and no replay. The donor fixed ContractID/product payload
+is replaced by Pakar's existing living packet, not copied as another API selector.
+The authoritative ledger now routes and binds the new event source and affected
+native/mobile/Internet relay proof files; other unread donors remain pending.
+
+Concrete defects corrected: Internet WS previously ignored commands and dropped
+non-status MQTT events; native network repetition discarded the original request
+ID and synchronously blocked its event loop; Android advanced bridge only emitted
+heartbeat snapshots. The shared selected-owner boundaries now fan out live events
+and correlate outcomes without opening another serial/board owner. HTTP consumers
+get bounded cursor history; cloud ACKs never masquerade as status-bearing WS success.
+
+Focused verification also exposed and fixed three implementation/test defects:
+an unrelated WS reconnect cleared MQTT subscription failure; a byte-budget fixture
+counted45 instead of46 bytes; and mobile analyzer rejected two style/type warnings.
+The first Node run caught a duplicate local variable before tests; after a fresh
+source read it was renamed, with no relaxation of parsing or receipt admission.
+A ledger anchor incorrectly said pub struct instead of actual pub(super) struct;
+the exact anchor was corrected without weakening the hash gate.
+
+Fresh prior-head CI failed because tests/access_stubs/ESPAsyncWebServer.h lacked
+new JSON body callback/contentType/_tempObject behavior used by AsyncHttpService.
+Reread PU donor and installed SDK body/destructor/content-type sections, then
+adapted semantic fragmented-body callbacks and malloc ownership, including moves.
+Actual split/overlap/gap/NUL/size/disconnect/move fixtures pass; no empty methods
+were added to make a compile artificially green. SDK section reads are not claimed
+as whole-SDK reads, nor are transport doubles hardware or TLS implementation proof.
+
+See DUPLEX-CONTROL.md for exact supported paths, protocol boundaries, real isolated
+broker proof and remaining release gates. No production firmware/relay deployment
+or LED changes occurred. The live board's older cloud ACK lacks the new identity
+fields, so its strict relay and firmware must be deployed together only with the
+required production approval; no exact-version adapter or silent downgrade added.
+
 ## Single-role builds and semantic cell documents
 
 Consulted games-streaming, ui-shell and the exhaustive Pealayer donor inventory.

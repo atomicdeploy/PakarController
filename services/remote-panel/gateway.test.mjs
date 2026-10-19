@@ -5,9 +5,11 @@ import {createHash} from 'node:crypto';
 import {Gateway,commandFor} from './gateway.mjs';
 import {createPanel} from './service.mjs';
 import {WebSocket} from 'ws';
+// Keep the established CI/npm entrypoint exhaustive without a second job/cache.
+import './duplex.test.mjs';
 const board='esp32s3-fixture',boot='123456789abcdef0123456789abcdef0';
 const release={version:'0.2.8',minimum_board:'0.2.8',maximum_board:null};
-const snapshot=()=>({version:'0.2.8',board_id:board,boot_id:boot,hostname:'fixture',http_peer_fencing:true,
+const snapshot=()=>({version:'0.2.8',board_id:board,boot_id:boot,hostname:'fixture',http_peer_fencing:true,command_clock_ms:1000,
   cells:Array(80).fill('white'),capabilities:{board_kind:'table',acknowledged_features:['table','leds','cell-batch','network','streaming'],table:{columns:10,rows:8,pixels_per_cell:6}}});
 class Client extends EventEmitter{
   connected=true;sent=[];
@@ -16,7 +18,7 @@ class Client extends EventEmitter{
   end(){}
 }
 function fixture(options={}){const client=new Client(),g=new Gateway({client,topic:'test/board',board,release,timeout:60,...options});client.emit('connect');client.emit('message','test/board/status',Buffer.from(JSON.stringify(snapshot())),{retain:false});return {client,g}}
-const packet=(client,leaf,value,retain=false)=>client.emit('message','test/board/'+leaf,Buffer.from(JSON.stringify(value)),{retain});
+const packet=(client,leaf,value,retain=false)=>client.emit('message','test/board/'+leaf,Buffer.from(JSON.stringify(leaf==='event'?{type:'command-result',board_id:board,boot_id:boot,...value}:value)),{retain});
 test('Freshness comes from live same-board status, not retained packets/online claims',()=>{
   let now=100;const {client,g}=fixture({now:()=>now});assert(g.fresh());now+=9000;
   packet(client,'status',snapshot(),true);assert.equal(g.fresh(),false);
@@ -77,7 +79,7 @@ test('HTTP panel is private, never returns credentials, and rejects cross-origin
     const status=await fetch(base+'/api/status',{headers:{authorization}});assert.equal(status.status,200);assert.equal((await status.json()).board_id,board);
     const before=client.sent.length;
     const bad=await fetch(base+'/api/cells',{method:'POST',headers:{authorization,Origin:'https://foreign.invalid'},body:'ids=1&state=red'});assert.equal(bad.status,403);assert.equal(client.sent.length,before);
-    const missingPin=await fetch(base+'/api/cells',{method:'POST',headers:{authorization},body:'ids=1&state=red'});assert.equal(missingPin.status,409);
+    const missingPin=await fetch(base+'/api/cells',{method:'POST',headers:{authorization,'X-Pakar-Version':release.version},body:'ids=1&state=red'});assert.equal(missingPin.status,409);
     const map=await (await fetch(base+'/api/cells/mapping',{headers:{authorization}})).json();assert.deepEqual(map.physical,[]);assert.equal(map.available,false);
   }finally{await panel.close()}
 });

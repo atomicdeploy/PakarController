@@ -7,6 +7,7 @@ import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 
 import 'api.dart';
+import 'command_failure.dart';
 import 'device_registry.dart';
 import 'firmware.dart';
 import 'models.dart';
@@ -109,6 +110,36 @@ class BridgeOptions {
   }
 }
 
+/// A bounded, session-local event cursor, not a durable command queue. A gap
+/// requires a fresh snapshot; it never authorizes replaying a mutation.
+class BridgeEventJournal {
+  static const capacity = 64;
+  final _events = <Map<String, dynamic>>[];
+  int cursor = 0;
+
+  Map<String, dynamic> add(Map<String, dynamic> value) {
+    // Freeze nested values too: later UI/status updates cannot rewrite history.
+    final frozen = jsonDecode(jsonEncode(value)) as Map<String, dynamic>;
+    frozen['cursor'] = ++cursor;
+    _events.add(frozen);
+    if (_events.length > capacity) _events.removeAt(0);
+    return frozen;
+  }
+
+  Map<String, dynamic> since(int after) {
+    if (after < 0) throw const FormatException('Invalid event cursor');
+    final oldest = _events.isEmpty
+        ? cursor + 1
+        : _events.first['cursor'] as int;
+    return {
+      'cursor': cursor,
+      'oldest_cursor': oldest,
+      'gap': after < oldest - 1 || after > cursor,
+      'events': _events.where((e) => (e['cursor'] as int) > after).toList(),
+    };
+  }
+}
+
 /// Foreground-only bridge. Never promises Android background/lockscreen uptime.
 /// No remote peer receives the ESP password, Wi-Fi settings or arbitrary status JSON.
 class AndroidBridge extends ChangeNotifier {
@@ -129,7 +160,11 @@ class AndroidBridge extends ChangeNotifier {
   WebSocket? remote;
   final localSockets = <WebSocket>{};
   StreamSubscription<dynamic>? mqttEvents, remoteEvents;
-  Timer? timer, watchdog;
+  StreamSubscription<DeviceStatus>? boardEvents, rgbEvents;
+  Timer? timer, watchdog, liveFlush;
+  DeviceStatus? pendingStatus;
+  String? lastBoardSnapshot;
+  BridgeEventJournal journal = BridgeEventJournal();
   String token = '', state = 'Stopped', error = '';
   final incidents = <String, int>{};
   String? peerBoard, peerBoot;
@@ -180,6 +215,8 @@ class AndroidBridge extends ChangeNotifier {
     state = 'Starting';
     error = '';
     incidents.clear();
+    journal = BridgeEventJournal();
+    lastBoardSnapshot = null;
     notifyListeners();
     try {
       if (selected.local) {
@@ -218,7 +255,14 @@ class AndroidBridge extends ChangeNotifier {
               'pakar-${admission!.session.substring(0, 16)}',
             )
             .withWillTopic('${selected.topic}/availability')
-            .withWillMessage('{"online":false}')
+            .withWillMessage(
+              jsonEncode({
+                'online': false,
+                'bridge_session': admission!.session,
+                'board_id': peerBoard,
+                'boot_id': peerBoot,
+              }),
+            )
             .withWillQos(MqttQos.atMostOnce)
             .withWillRetain()
             .startClean();
@@ -266,11 +310,7 @@ class AndroidBridge extends ChangeNotifier {
                 utf8.decode(publish.payload.message, allowMalformed: true),
                 retained: publish.header?.retain == true,
                 generation: generation,
-              ).then((v) {
-                if (generation == epoch && running && !closed) {
-                  _publish('${selected.topic}/reply', v);
-                }
-              }),
+              ),
             );
           }
         });
@@ -295,13 +335,7 @@ class AndroidBridge extends ChangeNotifier {
         remoteEvents = active.listen(
           (message) {
             if (message is String && message.length <= 8192) {
-              unawaited(
-                _incoming(message, generation: generation).then((v) {
-                  if (active.readyState == WebSocket.open) {
-                    active.add(jsonEncode(v));
-                  }
-                }),
-              );
+              unawaited(_incoming(message, generation: generation));
             }
           },
           onError: (Object _) => _failure('Remote WebSocket disconnected'),
@@ -316,9 +350,19 @@ class AndroidBridge extends ChangeNotifier {
       _publish('${selected.topic}/availability', {
         'online': true,
         'bridge_session': admission!.session,
+        'board_id': peerBoard,
+        'boot_id': peerBoot,
       }, retain: true);
       notifyListeners();
       telemetry();
+      // Subscribe to the existing board event owner, never open a competing
+      // socket/poller. Coalesce one event-loop turn, not the heartbeat interval.
+      boardEvents = api.statusUpdates.listen(
+        (status) => _boardChanged(status, generation),
+      );
+      rgbEvents = api.rgbUpdates.listen(
+        (status) => _boardChanged(status, generation),
+      );
       timer = Timer.periodic(
         Duration(seconds: selected.telemetrySeconds),
         (_) => telemetry(),
@@ -349,11 +393,17 @@ class AndroidBridge extends ChangeNotifier {
     notifyListeners();
   }
 
-  Map<String, dynamic> snapshot() {
-    final s = current();
+  Map<String, dynamic> snapshot([DeviceStatus? eventStatus]) {
+    final currentStatus = current();
+    final s = eventStatus ?? currentStatus;
+    if (s.json['board_id'] != peerBoard || s.json['boot_id'] != peerBoot) {
+      throw const StaleConnection();
+    }
     return {
       'type': 'telemetry',
       'bridge_session': admission!.session,
+      'board_id': peerBoard,
+      'boot_id': peerBoot,
       'observed_at_ms': DateTime.now().millisecondsSinceEpoch,
       'client': {
         ...PeerIdentity.current.report(enforce: enforceVersions),
@@ -378,27 +428,165 @@ class AndroidBridge extends ChangeNotifier {
           'active_outputs',
           'ntp_synced',
           'station_rssi',
+          'selected_cell',
+          'red_lock',
+          'command_clock_ms',
         ])
-          if (s.json.containsKey(key)) key: s.json[key],
+          if (s.json[key] is bool ||
+              s.json[key] is num ||
+              (s.json[key] is String && (s.json[key] as String).length <= 128))
+            key: s.json[key],
+        if (s.cells.length == 80 &&
+            s.cells.every((cell) => {'red', 'white', 'off'}.contains(cell)))
+          'cells': s.cells,
+        if (s.segments.length == 4) 'tm1637_segments': s.segments,
+        'tm1637_brightness': s.segmentBrightness,
+        if (s.json['led_output'] is Map)
+          'led_output': {
+            ..._safeFields(s.json['led_output'] as Map, [
+              'enabled',
+              'mode',
+              'backend',
+              'rmt',
+              'dma',
+            ]),
+            if ((s.json['led_output'] as Map)['diagnostic'] is Map)
+              'diagnostic': _safeFields(
+                (s.json['led_output'] as Map)['diagnostic'] as Map,
+                ['revision', 'index', 'count', 'rgb', 'active', 'off'],
+              ),
+          },
+        if (s.upgrade != null)
+          'upgrade': _safeFields(s.upgrade!.json, [
+            'revision',
+            'operation_id',
+            'source',
+            'phase',
+            'received_bytes',
+            'expected_bytes',
+            'active',
+            'progress_known',
+            'progress_percent',
+            'completion_verified',
+          ]),
+        if (s.json['status_rgb'] is Map)
+          'status_rgb': {
+            ..._safeFields(s.json['status_rgb'] as Map, [
+              'revision',
+              'available',
+              'have_output',
+              'effect',
+              'brightness',
+            ]),
+            if ((s.json['status_rgb'] as Map)['rgb'] is List &&
+                ((s.json['status_rgb'] as Map)['rgb'] as List).length == 3 &&
+                ((s.json['status_rgb'] as Map)['rgb'] as List).every(
+                  (v) => v is int && v >= 0 && v <= 255,
+                ))
+              'rgb': (s.json['status_rgb'] as Map)['rgb'],
+          },
       },
     };
   }
 
-  void telemetry() {
+  static Map<String, dynamic> _safeFields(Map value, List<String> keys) => {
+    for (final key in keys)
+      if (value[key] is bool ||
+          value[key] is num ||
+          (value[key] is String && (value[key] as String).length <= 128))
+        key: value[key],
+  };
+
+  void _boardChanged(DeviceStatus value, int generation) {
+    if (!running || closed || generation != epoch) return;
+    if (value.json['board_id'] != peerBoard ||
+        value.json['boot_id'] != peerBoot) {
+      unawaited(stop());
+      _failure('Peer changed; bridge stopped and requests discarded');
+      return;
+    }
+    pendingStatus = value;
+    liveFlush ??= Timer(Duration.zero, () {
+      liveFlush = null;
+      final latest = pendingStatus;
+      pendingStatus = null;
+      if (latest != null && generation == epoch && running && !closed) {
+        telemetry(latest, true);
+      }
+    });
+  }
+
+  void telemetry([DeviceStatus? value, bool changesOnly = false]) {
     if (!running || closed) return;
     try {
-      final value = snapshot();
-      _publish('${options!.topic}/telemetry', value);
-      if (webSocketConnected) remote!.add(jsonEncode(value));
-      for (final socket in localSockets) {
-        if (socket.readyState == WebSocket.open) socket.add(jsonEncode(value));
-      }
-      sent++;
-      notifyListeners();
+      final observation = snapshot(value);
+      final signature = jsonEncode(observation['board']);
+      if (changesOnly && signature == lastBoardSnapshot) return;
+      lastBoardSnapshot = signature;
+      _emit(observation);
     } on Object {
       unawaited(stop());
       _failure('Peer expired/changed; bridge stopped and requests discarded');
     }
+  }
+
+  Map<String, dynamic> _emit(Map<String, dynamic> value) {
+    final event = journal.add(value);
+    final encoded = jsonEncode(event);
+    _publish(
+      '${options!.topic}/${value['type'] == 'command-result' ? 'reply' : 'telemetry'}',
+      event,
+    );
+    if (webSocketConnected) {
+      try {
+        remote!.add(encoded);
+      } on Object {
+        _failure('Remote WebSocket publish failed; nothing queued or replayed');
+      }
+    }
+    for (final socket in localSockets.toList()) {
+      if (socket.readyState == WebSocket.open) {
+        try {
+          socket.add(encoded);
+        } on Object {
+          localSockets.remove(socket);
+          unawaited(socket.close());
+        }
+      }
+    }
+    sent++;
+    if (!closed) notifyListeners();
+    return event;
+  }
+
+  Map<String, dynamic> _result(
+    int generation,
+    String? id,
+    bool accepted,
+    String outcome, {
+    Map<String, dynamic> extra = const {},
+    required String? session,
+    required String? board,
+    required String? boot,
+  }) {
+    final value = <String, dynamic>{
+      'type': 'command-result',
+      'id': id,
+      'request_id': id, // Correlation alias, not a second dispatch identifier.
+      'bridge_session': session,
+      'board_id': board,
+      'boot_id': boot,
+      'accepted': accepted,
+      'code': accepted
+          ? 'accepted'
+          : outcome.startsWith('uncertain')
+          ? 'outcome_uncertain'
+          : 'rejected',
+      'outcome': outcome,
+      'replayed': false,
+      ...extra,
+    };
+    return generation == epoch && running && !closed ? _emit(value) : value;
   }
 
   void _publish(
@@ -428,19 +616,40 @@ class AndroidBridge extends ChangeNotifier {
   }) async {
     received++;
     String? id;
+    var dispatched = false;
+    final requestSession = admission?.session,
+        requestBoard = peerBoard,
+        requestBoot = peerBoot;
+    Map<String, dynamic> result(
+      bool accepted,
+      String outcome, {
+      Map<String, dynamic> extra = const {},
+    }) => _result(
+      generation,
+      id != null && id.length <= 64 ? id : null,
+      accepted,
+      outcome,
+      extra: extra,
+      session: requestSession,
+      board: requestBoard,
+      boot: requestBoot,
+    );
     try {
-      if (!running ||
-          closed ||
-          generation != epoch ||
-          raw.length > 8192 ||
-          busy ||
-          uncertain) {
+      if (!running || closed || generation != epoch || raw.length > 8192) {
         throw const StaleConnection();
       }
       final decoded = jsonDecode(raw);
       if (decoded is! Map<String, dynamic>) {
         throw const FormatException('Invalid request');
       }
+      // A remote repeater may reflect observations; they are never commands
+      // and must not produce another result that could circulate indefinitely.
+      if (decoded['type'] == 'telemetry' ||
+          decoded['type'] == 'command-result') {
+        return {'accepted': false, 'code': 'observation_not_command'};
+      }
+      id = decoded['id'] is String ? decoded['id'] : null;
+      if (busy || uncertain) throw const StaleConnection();
       final peer = decoded['peer'];
       validatePeerApp(
         peer is Map
@@ -448,7 +657,6 @@ class AndroidBridge extends ChangeNotifier {
             : decoded['client_version'] ?? clientVersion,
         enabled: enforceVersions,
       );
-      id = decoded['id'] is String ? decoded['id'] : null;
       final s = current();
       admission!.admit(decoded, s, retained: retained);
       if (peer != null) peerRegistry.observe(peer);
@@ -467,13 +675,19 @@ class AndroidBridge extends ChangeNotifier {
           if (!s.peer.allows(path, values)) {
             throw const FormatException('Unacknowledged capability or path');
           }
+          dispatched = true;
           await api.post(path, values);
+          if (generation != epoch) {
+            return result(
+              false,
+              'uncertain: bridge session retired after dispatch',
+            );
+          }
           current();
-          return {
-            'id': id,
-            'accepted': true,
-            'outcome': 'HTTP acknowledged; peripheral completion is separate',
-          };
+          return result(
+            true,
+            'HTTP acknowledged; peripheral completion is separate',
+          );
         }
         if (decoded['type'] == 'firmware-stage' && options!.firmwareStage) {
           if (decoded['url'] is! String ||
@@ -486,19 +700,37 @@ class AndroidBridge extends ChangeNotifier {
             authorized: (f) => current().peer.has(f),
           );
           try {
+            dispatched = true;
             final job = await controller.stage(
               decoded['url'],
               decoded['sha256'],
               decoded['targets'],
               '',
             );
+            if (generation != epoch) {
+              return result(
+                false,
+                'uncertain: bridge session retired after dispatch',
+              );
+            }
             current();
-            return {
-              'id': id,
-              'accepted': true,
-              'job': job.json,
-              'outcome': 'Staging only. Apply requires the firmware page confirmation.',
-            };
+            return result(
+              true,
+              'Staging only. Apply requires the firmware page confirmation.',
+              extra: {
+                'job': _safeFields(job.json, [
+                  'job_id',
+                  'boot_id',
+                  'manifest_sha256',
+                  'phase',
+                  'targets',
+                  'busy',
+                  'cancellable',
+                  'received_bytes',
+                  'expected_bytes',
+                ]),
+              },
+            );
           } finally {
             controller.dispose();
           }
@@ -514,20 +746,24 @@ class AndroidBridge extends ChangeNotifier {
       _failure(
         'Command outcome uncertain. Inspect board before restarting bridge.',
       );
-      return {
-        'id': id,
-        'accepted': false,
-        'outcome': 'uncertain',
-        'replayed': false,
-      };
+      return result(false, 'uncertain');
+    } on DeviceCommandRejected {
+      rejected++;
+      return result(false, 'Board rejected command; nothing replayed');
     } on Object {
+      if (dispatched) {
+        uncertain = true;
+        _failure(
+          'Command outcome uncertain. Inspect board before restarting bridge.',
+        );
+        return result(false, 'uncertain');
+      }
       rejected++;
       if (!closed) notifyListeners();
-      return {
-        'id': id != null && id.length <= 64 ? id : null,
-        'accepted': false,
-        'outcome': 'Rejected by session/identity/deadline/capability policy; nothing replayed',
-      };
+      return result(
+        false,
+        'Rejected by session/identity/deadline/capability policy; nothing replayed',
+      );
     }
   }
 
@@ -590,9 +826,7 @@ class AndroidBridge extends ChangeNotifier {
                   m,
                   generation: generation,
                   clientVersion: r.headers.value('x-pakar-version'),
-                ).then((v) {
-                  if (s.readyState == WebSocket.open) s.add(jsonEncode(v));
-                }),
+                ),
               );
             }
           },
@@ -635,6 +869,21 @@ class AndroidBridge extends ChangeNotifier {
       Map<String, dynamic> value;
       if (r.method == 'GET' && r.uri.path == '/api/status') {
         value = snapshot();
+      } else if (r.method == 'GET' && r.uri.path == '/api/events') {
+        current();
+        final cursor = int.tryParse(r.uri.queryParameters['after'] ?? '0');
+        if (cursor == null ||
+            r.uri.queryParameters['bridge_session'] != admission!.session) {
+          throw const FormatException(
+            'Current bridge session and cursor required',
+          );
+        }
+        value = {
+          'board_id': peerBoard,
+          'boot_id': peerBoot,
+          'bridge_session': admission!.session,
+          ...journal.since(cursor),
+        };
       } else if (r.method == 'POST' && r.uri.path == '/api/request') {
         final elapsed = Stopwatch()..start();
         final chunks = <int>[];
@@ -678,12 +927,18 @@ class AndroidBridge extends ChangeNotifier {
     if (running && options != null) {
       _publish('${options!.topic}/availability', {
         'online': false,
+        'bridge_session': admission?.session,
+        'board_id': peerBoard,
+        'boot_id': peerBoot,
       }, retain: true);
     }
     ++epoch;
     running = false;
     timer?.cancel();
     watchdog?.cancel();
+    liveFlush?.cancel();
+    liveFlush = null;
+    pendingStatus = null;
     watchdog = null;
     timer = null;
     final m = mqtt, w = remote, h = server;
@@ -694,6 +949,9 @@ class AndroidBridge extends ChangeNotifier {
     m?.disconnect();
     await mqttEvents?.cancel();
     await remoteEvents?.cancel();
+    await boardEvents?.cancel();
+    await rgbEvents?.cancel();
+    boardEvents = rgbEvents = null;
     mqttEvents = remoteEvents = null;
     for (final s in localSockets.toList()) {
       await s.close();

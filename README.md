@@ -82,8 +82,9 @@ mDNS/DNS-SD, SSDP and MNDP discovery. USB remains offline unless sharing is
 enabled. Other clients use `http://<configured-hostname>.local:8789`; downstream
 board identity and sole serial ownership are preserved. See the
 [bridge contract and remaining scope](docs/API.md#application-api-bridge--repeater).
-Opaque firmware transfer, binary streaming and full PCController peer-RPC parity
-are not yet exposed by this bridge; real LAN acceptance remains open in issue #2.
+The native network bridge forwards guarded upstream firmware transfers; a USB-only
+route never silently starts network management. Binary pixel streaming and full
+PCController peer-RPC parity remain pending; real LAN acceptance stays open in issue #2.
 
 ### Device access
 
@@ -116,6 +117,8 @@ and Pealayer work.
 - Optional outbound cloud links provide TLS MQTT telemetry/commands and a
   configurable WebSocket client. MQTT and WebSocket secrets are write-only and
   stored in checksum-backed LittleFS configuration.
+  See [bidirectional commands, events and integration contract](docs/DUPLEX-CONTROL.md)
+  for LAN/Internet HTTP, WebSocket and MQTT paths and their verification limits.
 - The PU850-derived network toolbox also includes mDNS discovery and a
   password-authenticated Telnet command shell without taking over either UART.
 

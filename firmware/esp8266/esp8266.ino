@@ -2086,6 +2086,27 @@ String buildStatusJson(bool compact) {
   return body;
 }
 
+#if defined(ARDUINO_ARCH_ESP32)
+String buildCloudStatusJson() {
+  // Diagnostics need the exact published frame, not a locally inferred color.
+  // Keep routine cloud traffic unchanged; only this S3 diagnostic path allocates
+  // the additional frame. Compact status retains peer/capability/driver receipts.
+  const bool diagnostic=grid.diagnosticActive();
+  String body=buildStatusJson(diagnostic);
+  if(!diagnostic || !body.endsWith("}"))return body;
+  const String frame=grid.pixelFrameJson();
+  if(!frame.length() || frame[0]!='{' || !frame.endsWith("}"))return body;
+  constexpr char fields[]=",\"pixel_preview_requested\":true,\"pixel_frame\":";
+  const size_t bytes=body.length()+sizeof(fields)-1U+frame.length();
+  // Failure leaves a valid ordinary status, without claiming a pixel preview.
+  if(bytes>16384U || !body.reserve(bytes))return body;
+  body.remove(body.length()-1U);
+  body+=fields;body+=frame;body+='}';
+  if(body.length()!=bytes)return String(); // Never publish truncated JSON.
+  return body;
+}
+#endif
+
 void sendStatusJson() {
   server.send(200, "application/json", buildStatusJson());
 }
@@ -4122,7 +4143,11 @@ void setup() {
     pcBoardId = board;
   }
   webAccess.configurePeerFence(pcBoardId, pcBootId,hostname);
+#if defined(ARDUINO_ARCH_ESP32)
+  cloudServices.begin(hostname, handleCloudCommand, buildCloudStatusJson,buildTelemetryJson,pcBoardId,pcBootId);
+#else
   cloudServices.begin(hostname, handleCloudCommand, buildStatusJson,buildTelemetryJson,pcBoardId,pcBootId);
+#endif
   cloudServices.setProgressService([](){
     serviceHostLink(); // Capture/queue only while cloud IO owns its stack.
 #if defined(ARDUINO_ARCH_ESP32)

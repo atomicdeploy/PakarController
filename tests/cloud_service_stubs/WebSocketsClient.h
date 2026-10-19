@@ -8,6 +8,7 @@ class WebSocketsClient {
   inline static WebSocketsClient *latest=nullptr;
   WebSocketsClient(){latest=this;_client.tcp=&socket_;}
   unsigned connectAttempts=0,receives=0,pings=0,timeouts=0;
+  bool sendResult=true;
   std::vector<String> sent;
   void (*callback)(WStype_t,uint8_t*,size_t)=nullptr;
   void onEvent(decltype(callback) f){callback=f;}
@@ -18,7 +19,7 @@ class WebSocketsClient {
   void disconnect(){socket_.stop();_client.status=WSC_NOT_CONNECTED;}
   bool isConnected(){return _client.status==WSC_CONNECTED;}
   void loop(){if(!clientIsConnected(&_client)){++connectAttempts;socket_.live=true;_client.status=WSC_CONNECTED;if(callback)callback(WStype_CONNECTED,nullptr,0);}else ++receives;}
-  bool sendTXT(const char *s){if(!isConnected())return false;sent.emplace_back(s);return true;}
+  bool sendTXT(const char *s){if(!isConnected()||!sendResult)return false;sent.emplace_back(s);return true;}
   bool sendTXT(const String &s){return sendTXT(s.c_str());}
   void inject(const String &s){std::vector<uint8_t> p(s.begin(),s.end());callback(WStype_TEXT,p.data(),p.size());}
   void loseTcp(){socket_.stop();} // Deliberately leave stale WS_CONNECTED status.

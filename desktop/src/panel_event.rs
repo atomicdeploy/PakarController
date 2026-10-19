@@ -3,7 +3,7 @@
 //! deadlines and no-replay semantics from hostbridge/buzzer_mirror.go. The
 //! donor's motion/relay/menu-page IDs do not describe this board and are not
 //! imported as capability authority (Project/FrontPanelModel.h).
-use serde::Deserialize;
+use serde::{Deserialize,Serialize};
 use std::{
     collections::VecDeque,
     time::{Duration, Instant},
@@ -15,7 +15,7 @@ const KINDS: [&str; 13] = [
     "output", "menu", "scan", "state",
 ];
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Presentation {
     pub text: String,
     pub lifetime_ms: u16,
@@ -23,7 +23,7 @@ pub struct Presentation {
     pub marquee: String,
     pub priority: u8,
 }
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Observation {
     pub board_id: String,
     pub boot_id: String,

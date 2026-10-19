@@ -67,12 +67,13 @@ int main(){
   fs::FS filesystem;assert(cloudConfig.begin(filesystem));
   assert(cloudConfig.setMqtt(true,false,"broker.local",1883,"","","pakar",true));
   assert(cloudConfig.setWebSocket(true,false,"cloud.local",80,"/ws","",true));
-  assert(cloudConfig.setTelemetrySeconds(1));
+  assert(cloudConfig.setTelemetrySeconds(3600)); // First snapshot must not wait an hour.
   cloudServices.begin("ledboard",handler,status,full,board,boot);
   auto &mqtt=*PubSubClient::latest;auto &ws=*WebSocketsClient::latest;
   assert(mqtt.bufferSize==CloudServices::kMqttBufferBytes);
   service(true,true,1000);
   assert(mqtt.connectAttempts==1&&ws.connectAttempts==1&&fullSnapshots==1);
+  assert(cloudConfig.setTelemetrySeconds(1));
 #if defined(ESP32)
   assert(mqtt.client->connectionTimeoutMs==1000); // Plain TCP is bounded independently of TLS.
 #else
@@ -88,9 +89,13 @@ int main(){
 
   ws.inject("{\"command\":\"cell\"}");assert(dispatches==0);
   assert(lastReply()["code"]=="invalid_envelope");
+  assert(lastReply()["type"]=="command-result"&&lastReply()["board_id"]==board&&lastReply()["boot_id"]==boot);
+  assert(lastReply()["error"]=="invalid_envelope");
   ws.inject("{\"command\":\"status\"}");assert(dispatches==1&&lastReply()["accepted"]==true);
   auto command=envelope("once");ws.inject(command);assert(dispatches==2);
   assert(lastReply()["request_id"]=="once");
+  assert(lastReply()["type"]=="command-result"&&lastReply()["board_id"]==board&&lastReply()["boot_id"]==boot);
+  assert(lastReply()["error"].isNull());
   JsonDocument unsupported;assert(!deserializeJson(unsupported,envelope("unsupported-app")));
   unsupported["client_version"]="0.2.6";String invalidRelease;serializeJson(unsupported,invalidRelease);
   const unsigned beforeUnsupported=dispatches;ws.inject(invalidRelease);
@@ -98,6 +103,7 @@ int main(){
   mqtt.inject(command);assert(dispatches==2); // One cache for both channels.
   JsonDocument duplicate;assert(!deserializeJson(duplicate,mqtt.packets.back().payload));
   assert(duplicate["accepted"]==false&&duplicate["code"]=="duplicate"&&duplicate["request_id"]=="once");
+  assert(duplicate["type"]=="command-result"&&duplicate["board_id"]==board&&duplicate["boot_id"]==boot&&duplicate["error"]=="duplicate");
   JsonDocument bad;assert(!deserializeJson(bad,envelope("bad-type")));bad["expires_at"]="9999999999";
   String encoded;serializeJson(bad,encoded);ws.inject(encoded);assert(dispatches==2);
   assert(lastReply()["code"]=="invalid_envelope");
@@ -112,6 +118,15 @@ int main(){
   assert(dispatches==3&&lastReply()["code"]=="invalid_envelope");
   ws.inject("{\"command\":\"status\\u0000cell\"}");
   assert(dispatches==3&&lastReply()["code"]=="invalid_envelope");
+
+  // Admission ACK is small/correlated; its owner-state readback is coalesced
+  // and built only after the receive callback returns, before the timer is due.
+  const auto readbacks=fullSnapshots;
+  service(true,true,1001,false,true);
+  assert(fullSnapshots==readbacks+1&&ws.sent.back()==fullJson);
+  const auto writtenStatus=mqtt.packets.size();
+  service(true,true,1002,false,false);
+  assert(mqtt.packets.size()==writtenStatus); // No per-loop refresh storm.
 
   const auto previousFull=fullSnapshots,previousMqtt=mqtt.connectAttempts,previousWs=ws.connectAttempts;
   service(true,true,2000,false,false);
@@ -259,6 +274,29 @@ int main(){
   for(unsigned cell=1;cell<=80;++cell){auto row=assignmentEnvelope["assignments"].add<JsonObject>();row["cell"]=cell;row["state"]="white";}
   String import;serializeJson(assignmentEnvelope,import);assert(import.length()>2048&&import.length()<CloudServices::kCommandBytes);
   const auto importDispatches=dispatches;mqtt.inject(import);assert(dispatches==importDispatches+1);
+  // Outbound events and inbound commands share the same live session. No
+  // mutation is replayed after a failed result/event write or reconnect.
+  const String event="{\"type\":\"panel-event\",\"board_id\":\"esp32s3-907069eac800\",\"boot_id\":\"123456789abcdef0123456789abcdef0\"}";
+  cloudServices.publishEvent(event);
+  assert(mqtt.packets.back().payload==event&&!mqtt.packets.back().retained&&ws.sent.back()==event);
+  const auto eventDispatches=dispatches;
+  ws.inject(envelope("after-live-event"));assert(dispatches==eventDispatches+1);
+  assert(lastReply()["request_id"]=="after-live-event");
+  ws.sendResult=false;cloudServices.publishEvent(event);
+  assert(cloudServices.lastError().find("WebSocket event write failed")!=String::npos);
+  ws.inject(envelope("lost-result"));assert(dispatches==eventDispatches+2);
+  assert(cloudServices.lastError().find("WebSocket command reply write failed")!=String::npos);
+  ws.sendResult=true;ws.inject(envelope("lost-result"));
+  assert(dispatches==eventDispatches+2&&lastReply()["code"]=="duplicate");
+  // A failed command-subscription write cannot advertise an online receiver.
+  cloudServices.suspend();mqtt.subscribeResult=false;
+  const auto subscriptionPackets=mqtt.packets.size();
+  service(true,true,260000,true,false);
+  assert(ws.isConnected()); // Healthy WS must not hide the independent MQTT failure.
+  assert(!mqtt.connected()&&cloudServices.lastError().find("subscription write failed")!=String::npos);
+  for(size_t i=subscriptionPackets;i<mqtt.packets.size();++i)
+    assert(!mqtt.packets[i].topic.endsWith("/availability")||mqtt.packets[i].payload!="online");
+  mqtt.subscribeResult=true;
   mqtt.bufferResult=false;cloudServices.applyConfiguration();const auto blockedAttempts=mqtt.connectAttempts;
   assert(cloudServices.lastError().find("buffer unavailable")!=String::npos);
   service(true,true,300000,true,false);assert(mqtt.connectAttempts==blockedAttempts&&!mqtt.connected());

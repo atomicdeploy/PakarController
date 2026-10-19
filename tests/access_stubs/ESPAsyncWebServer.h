@@ -7,6 +7,8 @@
 #include <cassert>
 #include <algorithm>
 #include <deque>
+#include <cstdlib>
+#include <utility>
 namespace AsyncSdkFixture {
 inline thread_local bool actor=false;
 struct Actor {bool before=actor;Actor(){actor=true;}~Actor(){actor=before;}};
@@ -100,8 +102,26 @@ class AsyncWebServerRequest : public std::enable_shared_from_this<AsyncWebServer
       if(boundary!=String::npos)body=connection.sentWire.substr(boundary+4);};
     connection.onClose=[this](){if(disconnectCallback)disconnectCallback();};
   }
-  AsyncWebServerRequest(AsyncWebServerRequest&&)=default;
-  AsyncWebServerRequest&operator=(AsyncWebServerRequest&&)=default;
+  AsyncWebServerRequest(AsyncWebServerRequest&&other):AsyncWebServerRequest(){*this=std::move(other);}
+  AsyncWebServerRequest&operator=(AsyncWebServerRequest&&other){
+    if(this==&other)return *this;
+    free(_tempObject);_tempObject=std::exchange(other._tempObject,nullptr);
+    onPause=std::move(other.onPause);afterHandler=std::move(other.afterHandler);
+    onResponseStart=std::move(other.onResponseStart);disconnectCallback=std::move(other.disconnectCallback);
+    clientReleased=other.clientReleased;connection=std::move(other.connection);requestMethod=other.requestMethod;
+    path=std::move(other.path);body=std::move(other.body);basicAllowed=other.basicAllowed;
+    headers=std::move(other.headers);arguments=std::move(other.arguments);responseHeaders=std::move(other.responseHeaders);
+    status=other.status;paused=other.paused;sent=other.sent;flashResponse=other.flashResponse;
+    strictLifecycle=other.strictLifecycle;responseStarts=other.responseStarts;response_=std::move(other.response_);
+    connection.onSend=[this](){const auto boundary=connection.sentWire.find("\r\n\r\n");if(boundary!=String::npos)body=connection.sentWire.substr(boundary+4);};
+    connection.onClose=[this](){if(disconnectCallback)disconnectCallback();};
+    return *this;
+  }
+  // Installed SDK3.12.1 WebRequest.cpp95-110 owns malloc-backed body storage
+  // until request destruction, including disconnects. Fixture moves explicitly
+  // transfer the pointer, rather than double-free the SDK-owned allocation.
+  ~AsyncWebServerRequest(){free(_tempObject);}
+  void *_tempObject=nullptr;
   std::weak_ptr<AsyncWebServerRequest> pause() { if(onPause)onPause();paused = true;strictLifecycle=true;return shared_from_this(); }
   std::function<void()> onPause;
   std::function<void()> afterHandler,onResponseStart,disconnectCallback;
@@ -133,6 +153,12 @@ class AsyncWebServerRequest : public std::enable_shared_from_this<AsyncWebServer
   int method() const { return requestMethod; }
   String url() const { return path; }
   String host() const { return "ledboard.local"; }
+  String contentType() const {
+    auto found=headers.find("Content-Type");if(found==headers.end())return String();
+    String value=found->second.text;const auto end=value.find(';');if(end!=String::npos)value=value.substr(0,end);
+    const auto first=value.find_first_not_of(" \t"),last=value.find_last_not_of(" \t");
+    return first==String::npos?String():String(value.substr(first,last-first+1));
+  }
   bool hasHeader(const char *name) const { return headers.count(name); }
   const AsyncWebHeader *getHeader(const char *name) const {
     auto found = headers.find(name); return found == headers.end() ? nullptr : &found->second;
@@ -241,18 +267,29 @@ class AsyncURIMatcher {
 };
 class AsyncWebServer {
  public:
+  using BodyHandler=std::function<void(AsyncWebServerRequest*,uint8_t*,size_t,size_t,size_t)>;
+  using UploadHandler=std::function<void(AsyncWebServerRequest*,const String&,size_t,uint8_t*,size_t,bool)>;
   explicit AsyncWebServer(uint16_t) {}
   void on(const char *path, int method, std::function<void(AsyncWebServerRequest *)> handler) {
     on(AsyncURIMatcher(path),method,std::move(handler));
   }
   void on(AsyncURIMatcher uri, int method, std::function<void(AsyncWebServerRequest *)> handler) {
+    on(std::move(uri),method,std::move(handler),nullptr,nullptr);
+  }
+  void on(AsyncURIMatcher uri,int method,std::function<void(AsyncWebServerRequest*)> handler,UploadHandler,BodyHandler body) {
     auto wrapped=[handler](AsyncWebServerRequest *request){
       AsyncSdkFixture::Actor actor;handler(request);
       if(request->afterHandler)request->afterHandler();
       request->sdkSend(); // Real _onData always calls _send after middleware.
     };
     handlers[uri.path()]=wrapped;
-    routes.push_back({std::move(uri),method,std::move(wrapped)});
+    routes.push_back({std::move(uri),method,std::move(wrapped),std::move(body)});
+  }
+  bool dispatchBody(AsyncWebServerRequest *request,uint8_t *data,size_t length,size_t index,size_t total){
+    for(const auto &route:routes)if((route.method&request->method())&&route.uri.matches(request)){
+      AsyncSdkFixture::Actor actor;if(route.body)route.body(request,data,length,index,total);return true;
+    }
+    return false;
   }
   bool dispatch(AsyncWebServerRequest *request){
     for(const auto &route:routes)
@@ -268,6 +305,7 @@ class AsyncWebServer {
   struct Route {
     AsyncURIMatcher uri;int method;
     std::function<void(AsyncWebServerRequest *)> handler;
+    BodyHandler body;
   };
   std::vector<Route> routes;
 };

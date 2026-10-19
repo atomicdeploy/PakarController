@@ -2590,20 +2590,23 @@ impl PakarControllerApp {
                 Event::PanelEvent(event)=>{
                     if self.connection_enabled&&self.transport==Transport::WiFi&&status_observation_fresh(self.last_status_at)
                         && let Some(peer)=self.status.as_ref().and_then(peer_http::Pin::from_status) {
-                        self.panel_events.observe(event,&peer);
+                        let mut value=serde_json::to_value(&event).unwrap_or_default();value["type"]="panel-event".into();
+                        if self.panel_events.observe(event,&peer){self.bridge.publish_event(value);}
                     }
                 }
                 Event::SerialPanelEvent(_,session,event)=>{
                     if self.connection_enabled&&self.transport==Transport::Serial&&session==self.serial_session
                         && status_observation_fresh(self.last_serial_status_at)
                         && let Some(peer)=self.serial_status.as_ref().and_then(peer_http::Pin::from_status) {
-                        self.panel_events.observe(event,&peer);
+                        let mut value=serde_json::to_value(&event).unwrap_or_default();value["type"]="panel-event".into();
+                        if self.panel_events.observe(event,&peer){self.bridge.publish_event(value);}
                     }
                 }
                 Event::PeripheralEvent(event)=>{
                     if self.connection_enabled&&self.transport==Transport::WiFi&&status_observation_fresh(self.last_status_at)
                         && let Some(status)=self.status.as_mut() {
-                        self.peripheral_events.observe(event,status);
+                        let mut value=serde_json::to_value(&event).unwrap_or_default();value["type"]="pc-contract-event".into();
+                        if self.peripheral_events.observe(event,status){self.bridge.publish_event(value);}
                     }
                 }
                 Event::SerialSegments(_,session,frame)=>{

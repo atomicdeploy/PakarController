@@ -4,6 +4,28 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
 {
+  "origin":"PCController",
+  "path":"Tools/Controller/internal/localdevice/events.go",
+  "sha256":"09edc7514d6a499445e0cb76554daf02698366071b50f7c5f47dafd019991c4d",
+  "source_revision":"b0111ae0c80dc34149ea1044de7dd5488920301b",
+  "source_read":"complete",
+  "verdict":"parity-gap",
+  "preserved":["Native specialist and root read the entire actual donor through EOF. Adapt bounded typed admitted event publication, separate action outcomes from snapshots, and reject foreign ownership before fanout. Native journal retains64 entries with cursor/gap recovery for HTTP and concurrent WebSocket consumers; remote gateway uses the same no-replay owner discipline across MQTT and HTTP/WS."],
+  "targets":[
+    {"path":"desktop/src/bridge_events.rs","anchor":"pub(super) struct Journal","sha256":"cb6174c5ab4c2e34c6bd86639e07fbe776120e98d20e76c34f48df7d8137fb89"},
+    {"path":"services/remote-panel/gateway.mjs","anchor":"record(event)","sha256":"6092a0b79c3277ef171d25e4228b42831eb06990689b84f40101b9b898ac872a"}
+  ],
+  "proof":[
+    {"path":"desktop/src/bridge_events.rs","anchor":"fn journal_is_bounded_reports_gaps_and_never_replays_other_peer","sha256":"cb6174c5ab4c2e34c6bd86639e07fbe776120e98d20e76c34f48df7d8137fb89"},
+    {"path":"services/remote-panel/duplex.test.mjs","anchor":"Real isolated MQTT broker","sha256":"084f61aa93258f2bbef5d7fcce1f06e23e9464b5d8338b9cb5bf25846ff9d26c"}
+  ],
+  "omissions":[
+    {"code":"ContractID selector and fixed donor snapshot/action payload","disposition":"replaced","reason":"Pakar retains its living unversioned command-result, typed board/boot events and selected-owner status. Copying a second contract selector would violate API policy; identity, bounded admission and separate outcomes are adapted instead."},
+    {"code":"Complete PCController Local Device interoperability and Android background service","disposition":"pending","reason":"These are separate authority/lifecycle contracts. This import does not claim an unattended Android daemon, arbitrary RPC or all donor event producers; foreground bridge retirement remains intentional."}
+  ],
+  "remaining":["Issue #2/#10: approved board/client deployment and real LAN/Internet multi-client acceptance remain open. An isolated real broker with a simulated board proves transport wiring, not physical MCU, RF or LED completion."]
+},
+{
   "origin": "ControllerBoardMini/Puzzles",
   "path": "Puzzles.ino",
   "sha256": "ec9eacb6a94a0c1841722520141cfb5f645d87db92654a88041489f5dd74bc3a",
@@ -35,13 +57,16 @@
   "source_revision": "b0111ae0c80dc34149ea1044de7dd5488920301b",
   "verdict": "parity-gap",
   "preserved": [
-    "Read complete actual donor bridge through EOF. Adapted generation retirement, token/Origin admission, bounded HTTP body reader, same-board/boot deadline and duplicate-ID admission, serialized commands, uncertainty latch and redacted health into an independently opt-in foreground LAN troubleshooting session. Command execution uses the existing acknowledged same-ID transport, not an arbitrary proxy."
+    "Read complete actual donor bridge through EOF. Adapted generation retirement, token/Origin admission, bounded HTTP body reader, same-board/boot deadline and duplicate-ID admission, serialized commands, uncertainty latch and redacted health into an independently opt-in foreground LAN troubleshooting session. Command execution uses the existing acknowledged same-ID transport, not an arbitrary proxy.",
+    "Mobile specialist reread the same complete donor for duplex control. Adapt live selected-owner event subscriptions, coalesced status projection, identity-bound availability/LWT and one correlated result fanout across the existing foreground MQTT, outbound/local WebSocket and HTTP bridge. Sanitized bounded64 event journal enables HTTP cursor recovery; reflected observations cannot start command loops and retired sessions cannot publish late outcomes."
   ],
   "targets": [
+    { "path": "mobile/lib/bridge.dart", "anchor": "class BridgeEventJournal", "sha256": "09645e418d8f0dec6c6467418c0e09ff1afc14fd8461da5c3dcaaa04b8a9667a" },
     { "path": "mobile/lib/app_support.dart", "anchor": "class AppSupportSession", "sha256": "af00a7436acd4f52808cd01757dca1ff962e8429db164486253c9061a0d6ef97" },
     { "path": "mobile/lib/update_center.dart", "anchor": "class SupportSection", "sha256": "af02585e98578a1edc02737c89ef84a7dcfebf9d4d98af4cb2bc331319d995ef" }
   ],
   "proof": [
+    { "path": "mobile/test/bridge_duplex_test.dart", "anchor": "HTTP commands fan out one correlated result", "sha256": "3fb5bdddf8e0a942ab7bd32000b2daf8bed7575428cc230c6ff4bc72fc4e4802" },
     { "path": "mobile/test/app_support_test.dart", "anchor": "void main()", "sha256": "67d32afdc9bcc7af9b57e415ae28ada62c869ad4d9129828d49c310772b94817" },
     { "path": "mobile/test/update_center_test.dart", "anchor": "One update workspace", "sha256": "749dd5dce19b59d86ea50e9e6a9af0d445e1fd562c2d0e2cb46d07151a225989" }
   ],
@@ -3945,7 +3970,7 @@
     "targets": [
       {
         "path": "desktop/src/main.rs",
-        "sha256": "d9f8c6098d590d2c00599799808a1729ea9fef1057c18902aebfafe9d1e18432",
+        "sha256": "0fac700224af89d3c3406a3f7f9102f941aa8b4ffbbf567a631dfc61a650122e",
         "anchor": "#![cfg_attr(windows, windows_subsystem = \"windows\")]"
       },
       {
@@ -4008,7 +4033,7 @@
       },
       {
         "path": "desktop/src/main.rs",
-        "sha256": "d9f8c6098d590d2c00599799808a1729ea9fef1057c18902aebfafe9d1e18432",
+        "sha256": "0fac700224af89d3c3406a3f7f9102f941aa8b4ffbbf567a631dfc61a650122e",
         "anchor": "cli_println!(\"{reply}\")"
       },
       {
@@ -5366,7 +5391,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "0d858e4e731e52b109d86b11b8f760028ff5ab78a2661fbc336b85c7fe3bf87c"
+      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
     },
     {
       "path": "desktop/src/usb_table.rs",
@@ -5385,7 +5410,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "0d858e4e731e52b109d86b11b8f760028ff5ab78a2661fbc336b85c7fe3bf87c"
+      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
     },
     {
       "path": "desktop/src/usb_table.rs",
@@ -5410,7 +5435,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "0d858e4e731e52b109d86b11b8f760028ff5ab78a2661fbc336b85c7fe3bf87c"
+      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
     }
   ],
   "omissions": [
@@ -5424,12 +5449,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "0d858e4e731e52b109d86b11b8f760028ff5ab78a2661fbc336b85c7fe3bf87c"
+      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
     },
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_http_recovery_uses_existing_packet_form_contract",
-      "sha256": "0d858e4e731e52b109d86b11b8f760028ff5ab78a2661fbc336b85c7fe3bf87c"
+      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
     }
   ],
   "remaining": [
@@ -5449,12 +5474,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "0d858e4e731e52b109d86b11b8f760028ff5ab78a2661fbc336b85c7fe3bf87c"
+      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
     },
     {
       "path": "desktop/src/main.rs",
       "anchor": "SerialCommand::Bridge(target",
-      "sha256": "d9f8c6098d590d2c00599799808a1729ea9fef1057c18902aebfafe9d1e18432"
+      "sha256": "0fac700224af89d3c3406a3f7f9102f941aa8b4ffbbf567a631dfc61a650122e"
     }
   ],
   "omissions": [
@@ -5468,7 +5493,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "0d858e4e731e52b109d86b11b8f760028ff5ab78a2661fbc336b85c7fe3bf87c"
+      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
     }
   ],
   "remaining": [
@@ -5489,7 +5514,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "0d858e4e731e52b109d86b11b8f760028ff5ab78a2661fbc336b85c7fe3bf87c"
+      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
     },
     {
       "path": "desktop/src/platform/lan_discovery.rs",
@@ -5528,12 +5553,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "0d858e4e731e52b109d86b11b8f760028ff5ab78a2661fbc336b85c7fe3bf87c"
+      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
     },
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_status_keeps_board_identity_and_only_available_route_capabilities",
-      "sha256": "0d858e4e731e52b109d86b11b8f760028ff5ab78a2661fbc336b85c7fe3bf87c"
+      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
     },
     {
       "path": "tests/peer_compatibility_test.cpp",
@@ -5569,7 +5594,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "0d858e4e731e52b109d86b11b8f760028ff5ab78a2661fbc336b85c7fe3bf87c"
+      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
     }
   ],
   "omissions": [
@@ -5583,7 +5608,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_status_keeps_board_identity_and_only_available_route_capabilities",
-      "sha256": "0d858e4e731e52b109d86b11b8f760028ff5ab78a2661fbc336b85c7fe3bf87c"
+      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
     },
     {
       "path": "mobile/test/bridge_peer_test.dart",
@@ -7616,7 +7641,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "b1ac27275660bce550d9d90e666e176056f06f19b716ee33f0d5537b704c8afd"
+          "sha256": "130a091d737703b6a823735391fbb029dde1c9ec0b910ea243fc41e0d459dd2f"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -8118,7 +8143,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "b1ac27275660bce550d9d90e666e176056f06f19b716ee33f0d5537b704c8afd"
+          "sha256": "130a091d737703b6a823735391fbb029dde1c9ec0b910ea243fc41e0d459dd2f"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -8173,7 +8198,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "b1ac27275660bce550d9d90e666e176056f06f19b716ee33f0d5537b704c8afd"
+          "sha256": "130a091d737703b6a823735391fbb029dde1c9ec0b910ea243fc41e0d459dd2f"
         }
       ],
       "omissions": [
@@ -8225,13 +8250,13 @@
           "sha256": "aaf42db7b80897296f10eb2125b0aaf92ad1df5d2b5e6c61ededd8665efed3b7"
         },
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"76b28eea3997400953a97ad530fc7d58d85f54af6a128fbbadeb06439263bf89","anchor":"Message *items_=nullptr;"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"b1ac27275660bce550d9d90e666e176056f06f19b716ee33f0d5537b704c8afd","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"130a091d737703b6a823735391fbb029dde1c9ec0b910ea243fc41e0d459dd2f","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
         {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"9f486926615fdec3d6e7c6ad32e384816e66811674aec2a9f6b34697233e83cf","anchor":"internal_heap_largest_block_bytes"},
         {"path":"tools/update-firmware.mjs","sha256":"489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "b1ac27275660bce550d9d90e666e176056f06f19b716ee33f0d5537b704c8afd"
+          "sha256": "130a091d737703b6a823735391fbb029dde1c9ec0b910ea243fc41e0d459dd2f"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -8612,7 +8637,7 @@
         },
         {
           "path": "tests/web_access_fence_test.cpp",
-          "sha256": "224df11ea7e8a2198e172337822b8d0843398e751458e754c69f0accf807a019",
+          "sha256": "2d966d132c58906dc8188b8a374a6a2b4c5f2d1678907628a84ec7808beda6c9",
           "anchor": "// Auth-off does not mean loss"
         },
         {
@@ -8685,7 +8710,7 @@
         },
         {
           "path": "tests/web_access_fence_test.cpp",
-          "sha256": "224df11ea7e8a2198e172337822b8d0843398e751458e754c69f0accf807a019",
+          "sha256": "2d966d132c58906dc8188b8a374a6a2b4c5f2d1678907628a84ec7808beda6c9",
           "anchor": "// Auth-off does not mean loss"
         },
         {
@@ -9376,7 +9401,7 @@
       "preserved": ["Full header/implementation read through EOF. Adapted nonblocking lifecycle state, absolute elapsed/period animation, repeat-state phase preservation, brightness-scaled rendered-byte reporting and explicit board-owned configuration into PakarS3::StatusRgb. Fixed descriptors now add donor flash/cycle/one-shot transition plus pulse/double-blink: fault and shutdown preempt routine states, verified success expires with the existing update lifecycle, offline USB is healthy and simultaneous AP/network availability is distinct."],
       "targets": [
         {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b","anchor":"class StatusRgb"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"b1ac27275660bce550d9d90e666e176056f06f19b716ee33f0d5537b704c8afd","anchor":"void serviceStatusRgb(uint32_t now)"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"130a091d737703b6a823735391fbb029dde1c9ec0b910ea243fc41e0d459dd2f","anchor":"void serviceStatusRgb(uint32_t now)"},
         {"path":"firmware/esp32s3/src/StatusRgbConfig.h","sha256":"8ae7dd8a7868db38ff2a31c7034c3c9674c8bf860ee4b9aae4f559d2f125ed29","anchor":"class StatusRgbConfig"},
         {"path":"desktop/src/status_rgb.rs","sha256":"3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e","anchor":"pub struct Configuration"},
         {"path":"mobile/lib/status_rgb.dart","sha256":"5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8","anchor":"class StatusRgbSettings"}
@@ -9622,7 +9647,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "0d858e4e731e52b109d86b11b8f760028ff5ab78a2661fbc336b85c7fe3bf87c"
+      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
     }
   ],
   "omissions": [
@@ -10012,7 +10037,7 @@
     },
     {
       "path": "mobile/lib/bridge.dart",
-      "sha256": "14bc9c91fb4dd852ab7ef52e2ab7d79c83ad3607a463a8fb72e667faaff7fc57",
+      "sha256": "09645e418d8f0dec6c6467418c0e09ff1afc14fd8461da5c3dcaaa04b8a9667a",
       "anchor": "watchdog = Timer.periodic"
     },
     {
@@ -10027,7 +10052,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "b1ac27275660bce550d9d90e666e176056f06f19b716ee33f0d5537b704c8afd",
+      "sha256": "130a091d737703b6a823735391fbb029dde1c9ec0b910ea243fc41e0d459dd2f",
       "anchor": "bool authenticate()"
     },
     {
@@ -10042,7 +10067,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "d9f8c6098d590d2c00599799808a1729ea9fef1057c18902aebfafe9d1e18432",
+      "sha256": "0fac700224af89d3c3406a3f7f9102f941aa8b4ffbbf567a631dfc61a650122e",
       "anchor": "fn scoped_http_request("
     },
     {
@@ -10096,8 +10121,8 @@
       "anchor": "String bleRequest(",
       "sha256": "161323906c2582d04c4fcada27cae9402cd69fc9f225b57e5defaf02e4d7b26d"
     },
-    {"path":"services/remote-panel/gateway.mjs","sha256":"38caebfa7b6f923b9214f0e83f069f88bf401f9abde8a165ee4c7f42357ec3f6","anchor":"export class Gateway"},
-    {"path":"services/remote-panel/service.mjs","sha256":"7999fa23d55db9a7760350308356bb90c4133d1ea670e064ef38f4c5f1c8adce","anchor":"export function createPanel"},
+    {"path":"services/remote-panel/gateway.mjs","sha256":"6092a0b79c3277ef171d25e4228b42831eb06990689b84f40101b9b898ac872a","anchor":"export class Gateway"},
+    {"path":"services/remote-panel/service.mjs","sha256":"e3843ca4a413ded2c67b14b7efdcbe48693b600b77a3d40e40ddc943db64ad92","anchor":"export function createPanel"},
     {"path":"desktop/src/peer_identity.rs","sha256":"4895d4ce1dc5f77e1e866600349baef3ba131e24d23970e254a968442e663dfe","anchor":"pub fn usb_introduction_error("}
   ],
   "omissions": [
@@ -10166,7 +10191,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "d9f8c6098d590d2c00599799808a1729ea9fef1057c18902aebfafe9d1e18432",
+      "sha256": "0fac700224af89d3c3406a3f7f9102f941aa8b4ffbbf567a631dfc61a650122e",
       "anchor": "// The mapping response identifies its own producer."
     },
     {
@@ -10201,7 +10226,7 @@
     },
     {
       "path": "tests/web_access_fence_test.cpp",
-      "sha256": "224df11ea7e8a2198e172337822b8d0843398e751458e754c69f0accf807a019",
+      "sha256": "2d966d132c58906dc8188b8a374a6a2b4c5f2d1678907628a84ec7808beda6c9",
       "anchor": "Real async queue + real fence recheck"
     },
     {
@@ -10281,7 +10306,7 @@
       },
       {"path":"tests/ble_storage_test.cpp","sha256":"22f4c0e4fc0846492ddaa6c04a01e113ace607d86e9edeac1d2c69b8ee46a349","anchor":"Do not retain an internal bulk-buffer fallback"},
       {"path":"tests/ble_storage_stubs/esp_heap_caps.h","sha256":"f6ff5f7843125cd7e780df39fd9d31006af9ef23070641ec580288235750365c","anchor":"assert(capabilities==(MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT))"},
-    {"path":"services/remote-panel/gateway.test.mjs","sha256":"20609006ef509c878a6dcc32305c65496f0a8681b0cb011a2e86483f57d3502d","anchor":"Real HTTP mutation receives one board ACK/readback"}
+    {"path":"services/remote-panel/gateway.test.mjs","sha256":"2fdbab7b76e05249f07d126b9f655a4ff909a59291ec924d8eb2b6ec4f8455f6","anchor":"Real HTTP mutation receives one board ACK/readback"}
   ]
 },
 {
@@ -10373,7 +10398,7 @@
     },
     {
       "path": "tests/web_access_fence_test.cpp",
-      "sha256": "224df11ea7e8a2198e172337822b8d0843398e751458e754c69f0accf807a019",
+      "sha256": "2d966d132c58906dc8188b8a374a6a2b4c5f2d1678907628a84ec7808beda6c9",
       "anchor": "Real async queue + real fence recheck"
     },
     {
@@ -12058,7 +12083,7 @@
       "targets": [
         {
           "path": "README.md",
-          "sha256": "e09788a0d7281090ee2e7bed1c5dd24cba4825ee7a76084c60c57cd06d67b1e5",
+          "sha256": "bbfa2af7b3df1c4aaa67bf2577758cd6404dc9cd7dc80cf3a4879f3e4876077b",
           "anchor": "Connected boards. One contextual control workspace."
         },
         {
@@ -16428,7 +16453,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "d9f8c6098d590d2c00599799808a1729ea9fef1057c18902aebfafe9d1e18432",
+          "sha256": "0fac700224af89d3c3406a3f7f9102f941aa8b4ffbbf567a631dfc61a650122e",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -16551,7 +16576,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "d9f8c6098d590d2c00599799808a1729ea9fef1057c18902aebfafe9d1e18432",
+          "sha256": "0fac700224af89d3c3406a3f7f9102f941aa8b4ffbbf567a631dfc61a650122e",
           "anchor": "fn serial_worker("
         },
         {
@@ -16588,7 +16613,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "d9f8c6098d590d2c00599799808a1729ea9fef1057c18902aebfafe9d1e18432",
+          "sha256": "0fac700224af89d3c3406a3f7f9102f941aa8b4ffbbf567a631dfc61a650122e",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
@@ -16702,7 +16727,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "b1ac27275660bce550d9d90e666e176056f06f19b716ee33f0d5537b704c8afd",
+          "sha256": "130a091d737703b6a823735391fbb029dde1c9ec0b910ea243fc41e0d459dd2f",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -16914,12 +16939,12 @@
         },
         {
           "path": "firmware/esp8266/src/CloudServices.cpp",
-          "sha256": "7b21c524945eb8ef95316ac19c2500b1a51ac3b30499fe5b9f50812e51b82ddd",
+          "sha256": "88444770a73ac1ed410cdddce847603bf961d30bc7585da1c35bf128766b4901",
           "anchor": "void CloudServices::handleCommand("
         },
         {
           "path": "firmware/esp8266/src/CloudServices.cpp",
-          "sha256": "7b21c524945eb8ef95316ac19c2500b1a51ac3b30499fe5b9f50812e51b82ddd",
+          "sha256": "88444770a73ac1ed410cdddce847603bf961d30bc7585da1c35bf128766b4901",
           "anchor": "bool CloudServices::publishMqtt("
         },
         {
@@ -16970,7 +16995,7 @@
         {
           "path": "firmware/esp8266/src/CloudServices.cpp",
           "anchor": "const uint32_t completedAt=millis()",
-          "sha256": "7b21c524945eb8ef95316ac19c2500b1a51ac3b30499fe5b9f50812e51b82ddd"
+          "sha256": "88444770a73ac1ed410cdddce847603bf961d30bc7585da1c35bf128766b4901"
         },
         {
           "path": "firmware/esp8266/src/FilesystemTelemetry.h",
@@ -17027,7 +17052,7 @@
         },
         {
           "path": "tests/access_stubs/ESPAsyncWebServer.h",
-          "sha256": "0d11c69100d4101b8e0f26997e71760077b212d30827ddbbfcff222b4649b120",
+          "sha256": "7ae9dace972d3bb2384ce0b08bac1870938968e1aa271f2b9d839df3cd8794eb",
           "anchor": "if(onPause)onPause();"
         },
         {
@@ -17062,7 +17087,7 @@
         },
         {
           "path": "tests/cloud_services_test.cpp",
-          "sha256": "a43408e4030ca62e28f4579e474b5ddd80d88ba6d0ee2d096541682c56059947",
+          "sha256": "a60b91419f9e1194dd591be43653fdf24b7d06b6d439007ba19e76b8831b8193",
           "anchor": "int main()"
         },
         {
@@ -17108,7 +17133,7 @@
         {
           "path": "tests/cloud_services_test.cpp",
           "anchor": "A slow failed connect must wait a full interval AFTER completion",
-          "sha256": "a43408e4030ca62e28f4579e474b5ddd80d88ba6d0ee2d096541682c56059947"
+          "sha256": "a60b91419f9e1194dd591be43653fdf24b7d06b6d439007ba19e76b8831b8193"
         },
         {
           "path": "tests/filesystem_telemetry_test.cpp",
@@ -17317,7 +17342,7 @@
         {
           "path": "desktop/src/main.rs",
           "anchor": "peer_http::remember_address",
-          "sha256": "d9f8c6098d590d2c00599799808a1729ea9fef1057c18902aebfafe9d1e18432"
+          "sha256": "0fac700224af89d3c3406a3f7f9102f941aa8b4ffbbf567a631dfc61a650122e"
         }
       ],
       "omissions": [
@@ -17461,7 +17486,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "b1ac27275660bce550d9d90e666e176056f06f19b716ee33f0d5537b704c8afd",
+          "sha256": "130a091d737703b6a823735391fbb029dde1c9ec0b910ea243fc41e0d459dd2f",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -17700,7 +17725,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "b1ac27275660bce550d9d90e666e176056f06f19b716ee33f0d5537b704c8afd",
+          "sha256": "130a091d737703b6a823735391fbb029dde1c9ec0b910ea243fc41e0d459dd2f",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {

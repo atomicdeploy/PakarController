@@ -9,7 +9,7 @@ class PubSubClient {
   Client *client=nullptr;
   void (*callback)(char*,uint8_t*,unsigned)=nullptr;
   unsigned connectAttempts=0,loops=0,beginCalls=0,endCalls=0,disconnects=0;
-  bool connectResult=true,publishResult=true,bufferResult=true;uint32_t connectDurationMs=0,writeDurationMs=0;unsigned writes=0;
+  bool connectResult=true,publishResult=true,bufferResult=true,subscribeResult=true;uint32_t connectDurationMs=0,writeDurationMs=0;unsigned writes=0;
   std::vector<String> clientIds;
   uint16_t bufferSize=0;size_t largestWrite=0,shortWriteLimit=SIZE_MAX;
   std::vector<Packet> packets;Packet pending{};size_t expected=0;
@@ -20,7 +20,7 @@ class PubSubClient {
   bool connected(){return client&&client->live;}int state(){return connected()?0:-1;}
   template<class...Args>bool connect(const char *id,Args...){clientIds.emplace_back(id);++connectAttempts;cloudTestMillis+=connectDurationMs;client->live=connectResult;return connectResult;}
   void disconnect(){++disconnects;if(client)client->stop();}
-  bool subscribe(const char*){return connected();}
+  bool subscribe(const char*){return connected()&&subscribeResult;}
   bool loop(){++loops;return connected();}
   bool publish(const char *topic,const char *payload,bool retained){if(!connected()||!publishResult)return false;packets.push_back({topic,payload,retained});return true;}
   bool beginPublish(const char *topic,unsigned n,bool retained){++beginCalls;if(!connected())return false;pending={topic,"",retained};expected=n;return true;}

@@ -192,6 +192,7 @@ void CloudServices::applyConfiguration() {
   webSocketConfigured_ = false;
   nextMqttAttemptAt_ = 0;
   lastTelemetryAt_ = 0;
+  telemetryRequested_ = false;
   lastError_ = String();
   // No enlarged permanent RX buffer on an unused MQTT interface. A configured
   // broker fails closed if the complete atomic-command capacity cannot allocate.
@@ -277,10 +278,17 @@ void CloudServices::connectMqtt(uint32_t now) {
     lastError_=F("MQTT availability identity allocation failed");return;
   }
   lastError_ = String();
-  mqtt_.publish(availability.c_str(), "online", true);
-  cooperate();
   const String command = topic(F("/command"));
-  mqtt_.subscribe(command.c_str());
+  if(!mqtt_.subscribe(command.c_str())) {
+    lastError_=F("MQTT command subscription write failed; connection closed");
+    dropMqttWrite();cooperate();return;
+  }
+  // PubSubClient exposes write acceptance, not SUBACK/PUBACK confirmation.
+  // Publish availability only after the subscription packet has been written.
+  if(!publishMqtt(availability,String(F("online")),true)) {
+    lastError_=F("MQTT availability write failed; connection closed");return;
+  }
+  requestTelemetry();
   cooperate();
 }
 
@@ -311,7 +319,8 @@ bool CloudServices::publishMqtt(const String &destination,const String &json,boo
 void CloudServices::publishTelemetry(const String &statusJson, uint32_t now,bool includeFullTelemetry) {
   const uint32_t interval =
       static_cast<uint32_t>(cloudConfig.telemetrySeconds()) * 1000U;
-  if (static_cast<uint32_t>(now - lastTelemetryAt_) < interval) return;
+  if (!telemetryRequested_ && static_cast<uint32_t>(now - lastTelemetryAt_) < interval) return;
+  telemetryRequested_=false;
   lastTelemetryAt_ = now;
   if(statusJson.length()>16384) {lastError_=F("Status exceeds bounded snapshot size");return;}
   if (mqtt_.connected()) {
@@ -400,7 +409,7 @@ void CloudServices::service(bool networkReady, bool timeReady, uint32_t now,
   const uint32_t interval =
       static_cast<uint32_t>(cloudConfig.telemetrySeconds()) * 1000U;
   if (statusProvider_ != nullptr && (mqtt_.connected() || webSocket_.isConnected()) &&
-      static_cast<uint32_t>(now - lastTelemetryAt_) >= interval) {
+      (telemetryRequested_ || static_cast<uint32_t>(now - lastTelemetryAt_) >= interval)) {
     publishTelemetry(statusProvider_(), now,includeFullTelemetry);
   }
 }
@@ -462,18 +471,24 @@ void CloudServices::handleCommand(const uint8_t *payload, size_t length,
   const char *failure=result==F("red_cells_locked")?"red_cells_locked":result==F("invalid_cell_assignments")?
     "invalid_cell_assignments":result==F("unsupported_board_role")?"unsupported_board_role":"handler_rejected";
   commandReply(fromMqtt,accepted?"accepted":failure,replyId,accepted,result);
+  // The result acknowledges handler admission, not optical/peripheral success.
+  // A following status reflects the actual owner state, not a request echo.
+  if(accepted)requestTelemetry();
 }
 
 void CloudServices::commandReply(bool fromMqtt,const char *code,const char *requestId,
                                   bool accepted,const String &message) {
-  JsonDocument reply;reply["accepted"]=accepted;reply["message"]=message;
+  JsonDocument reply;reply["type"]="command-result";
+  reply["board_id"]=boardId_;reply["boot_id"]=bootId_;
+  reply["accepted"]=accepted;reply["message"]=message;
   reply["code"]=code;reply["request_id"]=requestId;
+  if(!accepted)reply["error"]=code;
   String response;serializeJson(reply,response);
   if (fromMqtt && mqtt_.connected()) {
     const String eventTopic = topic(F("/event"));
     if(!publishMqtt(eventTopic,response,false))lastError_=F("MQTT command reply write failed; not replayed");
   } else if (!fromMqtt && webSocket_.isConnected()) {
-    webSocket_.sendTXT(response);
+    if(!webSocket_.sendTXT(response))lastError_=F("WebSocket command reply write failed; not replayed");
   }
 }
 
@@ -489,13 +504,18 @@ void CloudServices::publishEvent(const String &event) {
     const String destination = topic(F("/event"));
     if(!publishMqtt(destination,event,false))lastError_=F("MQTT event write failed; not replayed");
   }
-  if (webSocket_.isConnected()) webSocket_.sendTXT(event.c_str());
+  if (webSocket_.isConnected() && !webSocket_.sendTXT(event.c_str()))
+    lastError_=F("WebSocket event write failed; not replayed");
 }
 
 void CloudServices::webSocketEvent(WStype_t type, uint8_t *payload,
                                    size_t length) {
   if (type == WStype_CONNECTED) {
-    cloudServices.lastError_ = String();
+    // A healthy second transport must not erase a failed MQTT subscription or
+    // status write from this same service pass. Clear only this route's fault.
+    if(cloudServices.lastError_==F("outbound WebSocket error") ||
+        strncmp(cloudServices.lastError_.c_str(),"WebSocket ",10)==0)
+      cloudServices.lastError_=String();
     JsonDocument identity;identity["type"]="hello";identity["device"]=cloudServices.deviceId_;
     identity["board_id"]=cloudServices.boardId_;identity["boot_id"]=cloudServices.bootId_;
     identity["command_fencing"]=BoardCore::PeerFence::ready(cloudServices.boardId_.c_str(),cloudServices.bootId_.c_str());
@@ -504,6 +524,7 @@ void CloudServices::webSocketEvent(WStype_t type, uint8_t *payload,
     identity["command_capacity"]=BoardCore::CloudCommand::Guard::kCapacity;
     String hello;serializeJson(identity,hello);
     cloudServices.webSocket_.sendTXT(hello);
+    cloudServices.requestTelemetry();
   } else if (type == WStype_TEXT) {
     ++cloudServices.webSocketMessagesReceived_;
     cloudServices.handleCommand(payload, length, false);

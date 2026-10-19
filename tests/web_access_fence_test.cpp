@@ -129,6 +129,39 @@ int main() {
   server.service(); server.service();
   current->connection.poll();
   assert(current->status == 200 && hardwareCalls == 1);
+  // Actual SDK body callbacks may split JSON arbitrarily, before the request
+  // handler pauses and defers to loop. The service must own every byte, reject
+  // gaps/overlap/NUL/oversize and release its SDK-owned object on disconnect.
+  AsyncHttpService jsonServer(80);unsigned jsonCalls=0;String capturedJson;
+  jsonServer.on("/api/cells/assignments",HTTP_POST,[&](){
+    ++jsonCalls;capturedJson=jsonServer.jsonBody();jsonServer.send(200,"text/plain",capturedJson);
+  });
+  const String assignment="{\"assignments\":[{\"cell\":1,\"state\":\"red\"}]}";
+  auto jsonRequest=[](){auto request=std::make_shared<AsyncWebServerRequest>();request->path="/api/cells/assignments";request->requestMethod=HTTP_POST;request->headers["Content-Type"].text=" application/json; charset=utf-8";return request;};
+  auto fragmented=jsonRequest();
+  String first=assignment.substr(0,7),second=assignment.substr(7);
+  assert(jsonServer.native().dispatchBody(fragmented.get(),reinterpret_cast<uint8_t*>(&first[0]),first.size(),0,assignment.size()));
+  assert(jsonServer.native().dispatchBody(fragmented.get(),reinterpret_cast<uint8_t*>(&second[0]),second.size(),7,assignment.size()));
+  std::fill(first.begin(),first.end(),'x');std::fill(second.begin(),second.end(),'x');
+  assert(jsonServer.native().dispatch(fragmented.get()));assert(fragmented->paused&&jsonCalls==0);
+  jsonServer.service();fragmented->connection.poll();assert(jsonCalls==1&&capturedJson==assignment);
+  auto corrupt=[&](size_t next,size_t total,const String &body){
+    auto request=jsonRequest();String chunk=body;
+    jsonServer.native().dispatchBody(request.get(),reinterpret_cast<uint8_t*>(&chunk[0]),4,0,total);
+    jsonServer.native().dispatchBody(request.get(),reinterpret_cast<uint8_t*>(&chunk[4]),chunk.size()-4,next,total);
+    jsonServer.native().dispatch(request.get());jsonServer.service();request->connection.poll();assert(capturedJson.empty());
+  };
+  corrupt(3,assignment.size(),assignment); // overlapping body fragments
+  corrupt(5,assignment.size(),assignment); // missing byte
+  corrupt(4,4097,assignment);             // bounded maximum
+  String nul=assignment;nul[6]='\0';corrupt(4,nul.size(),nul);
+  auto dropped=jsonRequest();String part=assignment.substr(0,4);
+  jsonServer.native().dispatchBody(dropped.get(),reinterpret_cast<uint8_t*>(&part[0]),4,0,assignment.size());
+  assert(dropped->_tempObject);jsonServer.native().dispatch(dropped.get());const unsigned beforeDrop=jsonCalls;
+  dropped->disconnect();dropped.reset();jsonServer.service();assert(jsonCalls==beforeDrop);
+  auto moveBody=jsonRequest();jsonServer.native().dispatchBody(moveBody.get(),reinterpret_cast<uint8_t*>(&part[0]),4,0,assignment.size());
+  void *allocation=moveBody->_tempObject;assert(allocation);
+  AsyncWebServerRequest movedBody(std::move(*moveBody));assert(movedBody._tempObject==allocation&&!moveBody->_tempObject);
   // An immutable socket ID does not grant authorization after logout or a
   // credential reset. Admission is rechecked when a queued operation dispatches.
   AsyncWebServer routes(80); unsigned transportsClosed = 0;

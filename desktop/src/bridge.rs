@@ -17,6 +17,8 @@ use std::{
 };
 #[path = "bridge_transfer.rs"]
 mod transfer;
+#[path = "bridge_events.rs"]
+mod events;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -99,6 +101,8 @@ struct Shared {
     receipts: Mutex<BTreeMap<String, (Instant, Value, Option<Value>)>>,
     last_input: Mutex<Value>,
     peers: Mutex<BTreeMap<String,(Instant,Value)>>,
+    events: Mutex<events::Journal>,
+    active_commands: AtomicUsize,
 }
 pub struct Runtime {
     settings: Option<Settings>,
@@ -141,6 +145,8 @@ impl Runtime {
                     receipts: Mutex::new(BTreeMap::new()),
                     last_input: Mutex::new(Value::Null),
                     peers: Mutex::new(BTreeMap::new()),
+                    events: Mutex::new(events::Journal::default()),
+                    active_commands: AtomicUsize::new(0),
                 });
                 let owner = shared.clone();
                 thread::spawn(move || {
@@ -189,11 +195,22 @@ impl Runtime {
         "tracked_peers":self.shared.as_ref().and_then(|s|s.peers.lock().ok().map(|v|v.len())).unwrap_or(0),
         "error":self.error,"discovery":self.discovery.as_ref().map(|d|d.snapshot())})
     }
+    /// Only call after the selected source's typed event admission succeeds.
+    pub fn publish_event(&self,event:Value) {
+        if let Some(shared)=&self.shared {publish_event(shared,event);}
+    }
     pub fn stop(&mut self) {
         if let Some(shared) = self.shared.take() {
             shared.stop.store(true, Ordering::Release);
         }
         self.discovery = None;
+    }
+}
+fn publish_event(shared:&Shared,event:Value) {
+    if let Ok(o)=route(shared) {
+        if event["board_id"]==o.status.board_id&&event["boot_id"]==o.status.boot_id {
+            shared.events.lock().unwrap().push(event);
+        }
     }
 }
 impl Drop for Runtime {
@@ -262,7 +279,7 @@ fn status_value(shared: &Shared, o: &Observation) -> Value {
         .unwrap_or_default();
     path.push(json!(shared.settings.instance_id));
     v["bridge"] = json!({"instance_id":shared.settings.instance_id,"hostname":shared.settings.hostname,"product":"PakarController","version":crate::peer_identity::VERSION,"session_id":crate::peer_identity::session_id(),"compatibility":crate::peer_identity::advertised_policy(),"path":path,
-        "transport":if matches!(o.route,Route::Usb{..}){"usb"}else{"network"},"max_hops":4});
+        "transport":if matches!(o.route,Route::Usb{..}){"usb"}else{"network"},"max_hops":4,"events":"/api/events","websocket":"/ws","http_command":"/api/command"});
     v["command_clock_ms"] = clock(o).map_or(Value::Null, |v| json!(v));
     v
 }
@@ -633,10 +650,11 @@ fn command(shared: &Shared, request: Value, headers: &BTreeMap<String, String>) 
             Some("mode") => "/api/mode",
             Some("brightness") => "/api/brightness",
             Some("led-output") => "/api/led/output",
+            Some("pixel-diagnostic") => "/api/led/diagnostic",
             _ => return Err("Unsupported command on bridge".into()),
         };
         let mut form = Vec::new();
-        for key in ["id", "ids", "state", "effect", "value", "enabled", "mode", "assignments"] {
+        for key in ["id", "ids", "state", "effect", "value", "enabled", "mode", "assignments", "index", "count", "rgb", "off"] {
             if let Some(v) = request.get(key) {
                 form.push((
                     key.into(),
@@ -647,6 +665,48 @@ fn command(shared: &Shared, request: Value, headers: &BTreeMap<String, String>) 
                     },
                 ));
             }
+        }
+        // Preserve the original intent across every network hop. Unwrapping it
+        // into a raw mutation loses the receiver's same-ID deduplication.
+        if let Route::Network{endpoint,stamp,gate}=&o.route {
+            if o.status.programming_latch||!o.status.capabilities.as_ref().is_some_and(|c|c.allows(path,&form)) {
+                return Err("Capability unavailable or board programming active".into());
+            }
+            let _lease=gate.acquire(Transport::WiFi,stamp.epoch).ok_or("Network owner revoked")?;
+            let pin=peer_http::Pin::from_status(&o.status).ok_or("Peer unavailable")?;
+            let response=pin.client()?.post(format!("{}/api/command",endpoint.base.trim_end_matches('/')))
+                .timeout(Duration::from_millis(deadline-now).min(Duration::from_secs(4)))
+                .basic_auth(&endpoint.user,Some(&endpoint.password))
+                .header("X-Pakar-Route",trace(headers.get("x-pakar-route").map(String::as_str),&shared.settings.instance_id)?)
+                .form(&[("packet",request.to_string())]).send().map_err(|_|"Network outcome uncertain; not replayed")?;
+            if !stamp.current()||shared.stop.load(Ordering::Acquire){return Err("Network owner retired; not replayed".into());}
+            if !response.status().is_success(){return Err(format!("Upstream rejected command ({})",response.status()));}
+            if response.content_length().is_some_and(|n|n>65536){return Err("Upstream receipt exceeds limit; not replayed".into());}
+            let mut bytes=Vec::new();response.take(65537).read_to_end(&mut bytes).map_err(|_|"Upstream receipt unavailable; not replayed")?;
+            if bytes.len()>65536{return Err("Upstream receipt exceeds limit; not replayed".into());}
+            let mut result:Value=serde_json::from_slice(&bytes).map_err(|_|"Invalid upstream receipt; not replayed")?;
+            if !stamp.current()||shared.stop.load(Ordering::Acquire){return Err("Network owner retired while receiving receipt; not replayed".into());}
+            if result["type"]!="command-result"||result["request_id"]!=id||result["board_id"]!=o.status.board_id||result["boot_id"]!=o.status.boot_id {
+                return Err("Foreign upstream receipt; not replayed".into());
+            }
+            // Actual PCController decodePeerResponse rejects ambiguous ACKs
+            // while tolerating unrelated future metadata. Apply that rule to
+            // this living command-result shape, not its JSON-RPC selector.
+            let accepted=result["accepted"].as_bool().ok_or("Ambiguous upstream receipt: accepted boolean required; not replayed")?;
+            if accepted&&result.get("error").is_some()
+                || !accepted&&!result["error"].as_str().is_some_and(|error|!error.trim().is_empty()) {
+                return Err("Ambiguous upstream result/error; not replayed".into());
+            }
+            if accepted {
+                let status:DeviceStatus=serde_json::from_value(result["status"].clone()).map_err(|_|"Upstream receipt has no readback")?;
+                if peer_http::Pin::from_status(&status).as_ref()!=Some(&pin){return Err("Upstream readback peer changed; not replayed".into());}
+                if status.compatibility.is_some(){crate::peer_identity::validate_board(&status)?;}
+                if !command_readback(&request,&result,&status)? {return Err("Upstream ACK differs from command readback; not replayed".into());}
+                let next=Observation{status,mapping:o.mapping.clone(),route:o.route.clone(),at:Instant::now()};
+                result["status"]=status_value(shared,&next);
+                *shared.observation.lock().unwrap()=Some(next);
+            }
+            return Ok(result);
         }
         let mut pin = headers.clone();
         pin.insert("x-pakar-board".into(), o.status.board_id.clone());
@@ -676,8 +736,32 @@ fn command(shared: &Shared, request: Value, headers: &BTreeMap<String, String>) 
                 entry.2 = Some(reply.clone());
             }
         }
+        // Other observers receive the outcome, not another command execution.
+        // The complete authoritative readback remains in the private receipt.
+        publish_event(shared,json!({"type":"command-observed","request_id":id,"board_id":reply["board_id"],"boot_id":reply["boot_id"],"accepted":reply["accepted"],"error":reply["error"],"command":request["command"]}));
     }
     reply
+}
+fn command_readback(request:&Value,reply:&Value,status:&DeviceStatus)->Result<bool,String> {
+    let text=|key:&str|request[key].as_str().unwrap_or("");
+    Ok(match text("command") {
+        "cell"=>request["id"].as_u64().filter(|v|(1..=80).contains(v)).is_some_and(|id|status.cells.get(id as usize-1).is_some_and(|s|s==text("state"))),
+        "cells"=>{let batch=crate::cell_batch::Request::new(&crate::ui::cell_search::parse(text("ids"))?,text("state"),request["effect"].as_str().unwrap_or("immediate"))?;reply["count"].as_u64()==Some(batch.ids.len() as u64)&&batch.verify(status)},
+        "cell-assignments"=>{let doc=crate::cell_assignments::Document::new(serde_json::from_value(request["assignments"].clone()).map_err(|_|"Invalid assignments")?)?;reply["count"].as_u64()==Some(doc.assignments.len() as u64)&&doc.verify(status)},
+        "cell-lock"=>request["enabled"].as_bool().is_some_and(|v|status.red_lock==Some(v)),
+        "mode"=>status.mode==text("value"),
+        "effect"=>status.effect==text("value"),
+        "brightness"=>request["value"].as_u64()==Some(u64::from(status.brightness)),
+        "led-output"=>(!request.get("enabled").is_some()||request["enabled"].as_bool().is_some_and(|v|status.led_output["enabled"]==v))&&(!request.get("mode").is_some()||status.led_output["mode"]==request["mode"]),
+        "pixel-diagnostic"=>{
+            let index=request["index"].as_u64().and_then(|v|u16::try_from(v).ok()).ok_or("Invalid pixel index")?;
+            let rgb=request["rgb"].as_u64().and_then(|v|u32::try_from(v).ok()).ok_or("Invalid pixel RGB")?;
+            let count=request["count"].as_u64().ok_or("Invalid pixel count")?;
+            let probe=crate::pixel_diagnostic::Probe{index,group:count==6,rgb};
+            matches!(count,1|6)&&probe.valid()&&probe.first()==index&&crate::pixel_diagnostic::ready(status)&&probe.matches(status,request["off"]==true)
+        },
+        _=>false,
+    })
 }
 struct Request {
     method: String,
@@ -792,7 +876,7 @@ fn remember_peer(shared:&Shared,value:Value){
     let mut peers=shared.peers.lock().unwrap();peers.retain(|_,(at,_)|at.elapsed()<Duration::from_secs(120));
     if peers.contains_key(&id)||peers.len()<32{peers.insert(id,(Instant::now(),value));}
 }
-fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
+fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
     // Peek leaves the complete handshake for tungstenite's reviewed parser.
     socket
         .set_read_timeout(Some(Duration::from_secs(2)))
@@ -823,6 +907,7 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
         limits.max_frame_size = Some(8192);
         let observed_ip=socket.peer_addr().map(|a|a.ip().to_string()).unwrap_or_default();
         let mut ws_peer=None;
+        let mut ws_forwarding=BTreeMap::new();
         let mut ws = tungstenite::accept_hdr_with_config(
             socket,
             |r: &tungstenite::handshake::server::Request,
@@ -839,6 +924,7 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
                     .is_ok()
                     && compatible.is_ok();
                 if allowed {
+                    if let Some(value)=r.headers().get("x-pakar-route").and_then(|v|v.to_str().ok()){ws_forwarding.insert("x-pakar-route".to_owned(),value.to_owned());}
                     ws_peer=Some((r.headers().get("x-pakar-client-id").and_then(|v|v.to_str().ok()).unwrap_or_default().to_owned(),r.headers().get("x-pakar-version").and_then(|v|v.to_str().ok()).unwrap_or_default().to_owned()));
                     response.headers_mut().insert("server",format!("PakarController/{}",crate::peer_identity::VERSION).parse().unwrap());
                     response.headers_mut().insert("x-pakar-version",crate::peer_identity::VERSION.parse().unwrap());
@@ -863,7 +949,23 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
             .map_err(|e| e.to_string())?;
         let mut previous = Value::Null;
         let mut pushed = Instant::now() - Duration::from_secs(3);
+        let mut cursor=shared.events.lock().unwrap().cursor();
+        let (results_tx,results_rx)=mpsc::sync_channel(1);
+        let mut pending=false;
         while !shared.stop.load(Ordering::Acquire) {
+            if let Ok(result)=results_rx.try_recv(){
+                pending=false;
+                ws.send(tungstenite::Message::Text(Value::to_string(&result).into())).map_err(|e|e.to_string())?;
+            }
+            if let Ok(o)=route(shared) {
+                let journal=shared.events.lock().unwrap().read(Some(&cursor),&o.status.board_id,&o.status.boot_id)?;
+                cursor=journal["cursor"].as_str().unwrap().to_owned();
+                if journal["gap"]==true {ws.send(tungstenite::Message::Text(json!({"type":"event-gap","cursor":cursor}).to_string().into())).map_err(|e|e.to_string())?;}
+                for entry in journal["events"].as_array().unwrap(){
+                    let mut event=entry["event"].clone();event["bridge_cursor"]=entry["cursor"].clone();
+                    ws.send(tungstenite::Message::Text(event.to_string().into())).map_err(|e|e.to_string())?;
+                }
+            }
             let value=route(shared).map(|o|status_value(shared,&o)).unwrap_or_else(|_|json!({"type":"bridge-offline","bridge":{"instance_id":shared.settings.instance_id}}));
             let mut comparison = value.clone();
             comparison["command_clock_ms"] = Value::Null;
@@ -881,12 +983,12 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
                         let response=match accepted{Ok(value)=>{remember_peer(shared,value);json!({"type":"peer-introduction","accepted":true,"version":crate::peer_identity::VERSION,"compatibility":crate::peer_identity::advertised_policy()})},Err(error)=>json!({"type":"peer-introduction","accepted":false,"error":error})};
                         ws.send(tungstenite::Message::Text(response.to_string().into())).map_err(|e|e.to_string())?;
                     }else if request["type"] == "command" {
-                        ws.send(tungstenite::Message::Text(
-                            command(shared, request, &BTreeMap::new())
-                                .to_string()
-                                .into(),
-                        ))
-                        .map_err(|e| e.to_string())?;
+                        if pending||shared.active_commands.fetch_update(Ordering::AcqRel,Ordering::Acquire,|n|(n<16).then_some(n+1)).is_err(){
+                            ws.send(tungstenite::Message::Text(json!({"type":"command-result","request_id":request["request_id"],"board_id":request["board_id"],"boot_id":request["boot_id"],"accepted":false,"error":"Bridge command busy; nothing sent"}).to_string().into())).map_err(|e|e.to_string())?;
+                        }else{
+                            pending=true;let owner=shared.clone();let tx=results_tx.clone();let forwarding=ws_forwarding.clone();
+                            thread::spawn(move||{let result=command(&owner,request,&forwarding);owner.active_commands.fetch_sub(1,Ordering::AcqRel);let _=tx.try_send(result);});
+                        }
                     } else if request["type"] == "status" {
                         previous = Value::Null;
                     }
@@ -1005,6 +1107,12 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
     let result = (|| -> Result<Value, String> {
         let o = route(shared)?;
         match (request.method.as_str(), path) {
+            ("GET", "/api/events") => {
+                let query=reqwest::Url::parse(&format!("http://bridge{}",request.path)).map_err(|_|"Invalid event query")?;
+                let values:Vec<_>=query.query_pairs().collect();
+                if values.len()>1||values.iter().any(|(key,_)|key!="after"){return Err("Expected only after event cursor".into());}
+                shared.events.lock().unwrap().read(values.first().map(|(_,v)|v.as_ref()),&o.status.board_id,&o.status.boot_id)
+            }
             ("GET", "/api/status") => Ok(status_value(shared, &o)),
             ("GET", "/api/cells/assignments") => {
                 let doc=crate::cell_assignments::Document::from_status(&o.status)?;
@@ -1202,6 +1310,8 @@ mod tests {
                 receipts: Mutex::new(BTreeMap::new()),
                 last_input: Mutex::new(Value::Null),
                 peers: Mutex::new(BTreeMap::new()),
+                events: Mutex::new(events::Journal::default()),
+                active_commands: AtomicUsize::new(0),
             }),
             rx,
             gate,
@@ -1363,7 +1473,7 @@ mod tests {
         let address = listener.local_addr().unwrap();
         let peer = upstream.clone();
         let server = thread::spawn(move || {
-            for _ in 0..2 {
+            for _ in 0..1 {
                 serve(listener.accept().unwrap().0, &peer).unwrap();
             }
         });
@@ -1406,6 +1516,84 @@ mod tests {
         assert!(route(&downstream).is_err());
         usb.join().unwrap();
         server.join().unwrap();
+    }
+    #[test]
+    fn bridge_duplex_events_continue_while_usb_ack_pending_and_http_recovers_cursor(){
+        use tungstenite::client::IntoClientRequest;
+        let (shared,rx,_gate)=fixture();
+        let listener=TcpListener::bind("127.0.0.1:0").unwrap();let address=listener.local_addr().unwrap();
+        let owner=shared.clone();let server=thread::spawn(move||{
+            let (stream,_)=listener.accept().unwrap();let first=owner.clone();
+            let ws=thread::spawn(move||serve(stream,&first).unwrap());
+            let (stream,_)=listener.accept().unwrap();serve(stream,&owner).unwrap();ws.join().unwrap();
+        });
+        let mut handshake=format!("ws://{address}/ws").into_client_request().unwrap();crate::peer_identity::websocket_headers(&mut handshake);
+        let (mut ws,_)=tungstenite::connect(handshake).unwrap();
+        let _:Value=serde_json::from_str(ws.read().unwrap().to_text().unwrap()).unwrap();
+        let before=shared.events.lock().unwrap().cursor();
+        let packet=json!({"type":"command","request_id":"duplex-command","board_id":"fixture-board","boot_id":"a".repeat(32),"expires_at_ms":7500,"command":"cell","id":1,"state":"red","effect":"immediate"});
+        ws.send(tungstenite::Message::Text(packet.clone().to_string().into())).unwrap();
+        let SerialCommand::Bridge(_,_,_,_,reply)=rx.recv_timeout(Duration::from_secs(2)).unwrap() else{panic!("Expected USB dispatch")};
+        publish_event(&shared,json!({"type":"panel-event","board_id":"fixture-board","boot_id":"b".repeat(32),"event_id":9}));
+        publish_event(&shared,json!({"type":"panel-event","board_id":"fixture-board","boot_id":"a".repeat(32),"event_id":10,"text":"working"}));
+        let started=Instant::now();
+        loop{let event:Value=serde_json::from_str(ws.read().unwrap().to_text().unwrap()).unwrap();if event["type"]=="panel-event"{assert_eq!(event["event_id"],10);assert!(event["bridge_cursor"].is_string());break;}}
+        assert!(started.elapsed()<Duration::from_millis(500),"Event must not wait for command ACK");
+        let mut actual=route(&shared).unwrap().status;actual.cells[0]="red".into();reply.send(Ok(actual)).unwrap();
+        let receipt=loop{let value:Value=serde_json::from_str(ws.read().unwrap().to_text().unwrap()).unwrap();if value["type"]=="command-result"{break value;}};
+        assert_eq!(receipt["accepted"],true);assert_eq!(command(&shared,packet,&BTreeMap::new()),receipt);assert!(rx.try_recv().is_err());
+        let client=crate::peer_identity::client_builder().no_proxy().build().unwrap();
+        let journal:Value=client.get(format!("http://{address}/api/events")).query(&[("after",before)]).send().unwrap().error_for_status().unwrap().json().unwrap();
+        assert_eq!(journal["events"].as_array().unwrap().len(),2);assert_eq!(journal["gap"],false);assert_eq!(journal["events"][0]["event"]["event_id"],10);assert_eq!(journal["events"][1]["event"]["type"],"command-observed");
+        ws.close(None).unwrap();drop(ws);server.join().unwrap();
+    }
+    #[test]
+    fn bridge_network_correlation_rejects_foreign_or_inconsistent_ack_without_extra_get(){
+        for bad in ["id","boot","readback","missing-accepted","null-accepted","string-accepted","success-error","success-null-error","rejected-no-error","rejected-empty-error","rejected-object-error","valid-rejection"] {
+            let (shared,_,_)=fixture();let old=route(&shared).unwrap().status;
+            let mut status=old.clone();status.cells[0]="red".into();
+            let mut result=json!({"type":"command-result","request_id":"forwarded","board_id":old.board_id,"boot_id":old.boot_id,"accepted":true,"status":status});
+            match bad{
+                "id"=>result["request_id"]="other".into(),"boot"=>result["status"]["boot_id"]="b".repeat(32).into(),
+                "readback"=>result["status"]["cells"][0]="white".into(),
+                "missing-accepted"=>{result.as_object_mut().unwrap().remove("accepted");},
+                "null-accepted"=>result["accepted"]=Value::Null,"string-accepted"=>result["accepted"]="true".into(),
+                "success-error"=>result["error"]="denied".into(),"success-null-error"=>result["error"]=Value::Null,
+                "rejected-no-error"=>result["accepted"]=false.into(),
+                "rejected-empty-error"=>{result["accepted"]=false.into();result["error"]=" \t".into();},
+                "rejected-object-error"=>{result["accepted"]=false.into();result["error"]=json!({"message":"denied"});},
+                _=>{result["accepted"]=false.into();result["error"]="denied".into();}
+            };
+            let (endpoint,server)=crate::tests::mock_device(vec![(200,serde_json::to_vec(&result).unwrap())]);
+            let gate=connection::Gate::default();let epoch=gate.select(Some(Transport::WiFi));
+            shared.observation.lock().unwrap().as_mut().unwrap().route=Route::Network{endpoint,stamp:gate.stamp(Transport::WiFi,epoch),gate:gate.clone()};
+            let packet=json!({"type":"command","request_id":"forwarded","board_id":"fixture-board","boot_id":"a".repeat(32),"expires_at_ms":7500,"command":"cell","id":1,"state":"red","effect":"immediate"});
+            let receipt=command(&shared,packet.clone(),&BTreeMap::new());assert_eq!(receipt["accepted"],false,"{bad}");
+            if bad=="valid-rejection"{assert_eq!(receipt["error"],"denied");}
+            assert_eq!(route(&shared).unwrap().status.cells[0],"white","Rejected/ambiguous ACK must not update observed state");
+            assert_eq!(command(&shared,packet.clone(),&BTreeMap::new()),receipt);
+            let requests=server.join().unwrap();assert_eq!(requests.len(),1);assert!(requests[0].starts_with("POST /api/command "));
+            let form=reqwest::Url::parse(&format!("http://bridge/?{}",requests[0].split_once("\r\n\r\n").unwrap().1)).unwrap();
+            let fields:Vec<_>=form.query_pairs().collect();assert_eq!(fields.len(),1);assert_eq!(fields[0].0,"packet");assert_eq!(serde_json::from_str::<Value>(&fields[0].1).unwrap(),packet);
+        }
+    }
+    #[test]
+    fn bridge_readback_covers_pixel_groups_and_optional_batch_effect(){
+        let (shared,_,_)=fixture();let mut status=route(&shared).unwrap().status;
+        status.cells[0]="red".into();
+        assert!(command_readback(&json!({"command":"cells","ids":"1","state":"red"}),&json!({"count":1}),&status).unwrap());
+        status.effect="none".into();status.led_output=json!({"enabled":true,"mode":"effects"});
+        status.capabilities.as_mut().unwrap().acknowledged_features.push("pixel-diagnostic".into());
+        for count in [1,6] {
+            let probe=crate::pixel_diagnostic::Probe{index:474,group:count==6,rgb:0x12ab34};
+            status.pixel_frame=Some(serde_json::from_value(json!({"revision":1,"pending":false,"brightness":255,"physical":(1..=80).collect::<Vec<_>>(),"rgb":probe.frame(false).unwrap().iter().map(|v|format!("{v:02x}")).collect::<String>()})).unwrap());
+            let packet=json!({"command":"pixel-diagnostic","index":474,"count":count,"rgb":probe.rgb,"off":false});
+            assert!(command_readback(&packet,&json!({}),&status).unwrap());
+            status.pixel_frame.as_mut().unwrap().pending=true;
+            assert!(!command_readback(&packet,&json!({}),&status).unwrap(),"Pending frames are not confirmed output");
+        }
+        status.pixel_frame=None;
+        assert!(!command_readback(&json!({"command":"pixel-diagnostic","index":474,"count":6,"rgb":0x12ab34,"off":false}),&json!({}),&status).unwrap());
     }
     #[test]
     fn bridge_real_http_and_websocket_share_the_same_board_snapshot() {
