@@ -480,6 +480,14 @@ impl PakarControllerApp {
             crate::config::set_live(&self.config);
             self.save_workspace();
         }
+        if self.config.cell_shape != super::cell_pixels::Shape::Rounded {
+            let sample=self.current_pixel_frame().and(self.table.pixel_sample.as_ref());
+            let color=sample.map_or(ui.visuals().weak_text_color(),|sample|
+                if sample.fresh(){ui.visuals().text_color()}else{ui.visuals().warn_fg_color});
+            let detail=sample.map_or_else(||"Awaiting pixel frame".into(),|sample|
+                format!("Frame {} · received {:.1}s ago",sample.frame.revision,sample.at.elapsed().as_secs_f32()));
+            ui.label(egui::RichText::new("RGB preview").small().color(color)).on_hover_text(detail);
+        }
         if ui
             .checkbox(&mut self.table.editing_order, "Edit order")
             .changed()
@@ -737,8 +745,11 @@ impl PakarControllerApp {
             }
         });
     }
-    fn current_pixel_frame(&self)->Option<&super::cell_pixels::Frame>{
-        let sample=self.table.pixel_sample.as_ref().filter(|sample|sample.fresh())?;
+    pub(super) fn current_pixel_frame(&self)->Option<&super::cell_pixels::Frame>{
+        // The last observed pixels remain present while this exact live peer,
+        // mapping and semantic state own them. Their age is shown separately;
+        // this presentation path never acknowledges a command.
+        let sample=self.table.pixel_sample.as_ref()?;
         let peer=self.live_status().and_then(crate::peer_http::Pin::from_status)?;
         if self.command_route().is_none() || self.mapping_peer.as_ref()!=Some(&peer) ||
             !crate::streaming::valid_mapping(&self.mappings) || self.mappings.iter().any(|mapping|

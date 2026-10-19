@@ -2594,8 +2594,7 @@ impl PakarControllerApp {
                     firmware_progress::retain_upgrade(&mut s,self.status.as_ref());
                     status_rgb::retain(&mut s,self.status.as_ref());
                     if !s.hostname.is_empty() {
-                        if self.status.as_ref().is_some_and(|old|old.cells!=s.cells || old.effect!=s.effect ||
-                            old.mode!=s.mode || old.brightness!=s.brightness || old.led_output["enabled"]!=s.led_output["enabled"]) {
+                        if ui::cell_pixels::semantic_changed(&s,self.status.as_ref()) {
                             self.table.pixel_sample=None; // Old RGB must not mask a new acknowledged semantic state.
                         }
                         if self.http_tx.observe(&s) {
@@ -2739,8 +2738,15 @@ impl PakarControllerApp {
                         self.show_mapping=false;self.mapping_request_pending=None;
                     }
                     self.mappings=snapshot.mappings;self.mapping_peer=peer;self.mapping_error=None;
-                    self.table.pixel_sample=snapshot.status.pixel_frame.as_ref().filter(|frame|frame.valid())
-                        .map(|frame|ui::cell_pixels::Sample{frame:frame.clone(),at:snapshot.observed_at});
+                    if ui::cell_pixels::semantic_changed(&snapshot.status,self.serial_status.as_ref()) {
+                        self.table.pixel_sample=None;
+                    }
+                    if self.table.pixel_sample.as_ref().is_some_and(|sample|self.mappings.iter().any(|mapping|
+                        sample.frame.physical.get(usize::from(mapping.logical_id-1))!=Some(&mapping.physical_cell))) {
+                        self.table.pixel_sample=None;
+                    }
+                    ui::cell_pixels::Sample::observe_at(&mut self.table.pixel_sample,
+                        snapshot.status.pixel_frame.clone(),snapshot.observed_at);
                     self.pattern=snapshot.status.effect.clone();
                     self.serial_status=Some(snapshot.status);self.last_serial_status_at=Some(snapshot.observed_at);self.serial_live=true;
                     if matches!(self.message.as_str(),"Connecting through USB"|"Connecting to PakarController") {

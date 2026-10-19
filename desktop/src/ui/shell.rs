@@ -722,6 +722,12 @@ impl PakarControllerApp {
             value["usb_commands_pending"] = serde_json::json!(self.serial_operations_pending);
             value["usb_command"] = serde_json::json!(self.serial_timing);
             value["usb_snapshot"] = serde_json::json!(self.serial_capture);
+            value["pixel_preview"] = serde_json::json!({
+                "available":self.current_pixel_frame().is_some(),
+                "frame_revision":self.table.pixel_sample.as_ref().map(|sample|sample.frame.revision),
+                "age_ms":self.table.pixel_sample.as_ref().map(|sample|sample.at.elapsed().as_millis()),
+                "recent":self.table.pixel_sample.as_ref().is_some_and(|sample|sample.fresh()),
+            });
             value["notifications"] = self.notification_snapshot();
             value["tray_available"] = serde_json::json!(self.tray.is_some());
             value["tray_shell"] = self.tray.as_ref().map(|tray|tray.shell_snapshot()).unwrap_or(serde_json::Value::Null);

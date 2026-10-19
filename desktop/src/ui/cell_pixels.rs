@@ -66,19 +66,37 @@ impl Sample {
     pub fn fresh(&self) -> bool {
         self.at.elapsed() < Duration::from_secs(5)
     }
-    /// A transient no-frame observation is not a new RGB sample. Keep only the
-    /// existing same-peer sample for its original freshness window; never renew
-    /// its clock from null/invalid telemetry. Peer/map revocation clears outside.
+    /// Last-observed RGB is presentation only. The selected peer/map owner
+    /// revokes it separately; callers must use current telemetry for actuation.
     pub fn observe(slot: &mut Option<Self>, frame: Option<Frame>) {
+        Self::observe_at(slot, frame, Instant::now());
+    }
+    /// Retain capture-start time when a slow immutable USB snapshot completes.
+    /// Null/staging observations neither erase the last presented frame nor
+    /// renew its freshness. Malformed data still revokes the presentation.
+    pub fn observe_at(slot: &mut Option<Self>, frame: Option<Frame>, at: Instant) {
         match frame {
-            Some(frame) if frame.valid() => *slot = Some(Self { frame, at: Instant::now() }),
+            Some(frame) if frame.valid() => *slot = Some(Self { frame, at }),
             Some(frame) if !frame.structurally_valid() => *slot = None,
-            // A queued/staging frame is not a new presented RGB observation.
-            // Like null, it cannot renew the previous sample's clock.
-            _ if slot.as_ref().is_some_and(|sample| !sample.fresh()) => *slot = None,
             _ => {},
         }
     }
+}
+/// A new semantic output invalidates the old RGB presentation, even if its
+/// optional pixel frame has not arrived yet. Missing optional observations do
+/// not invent an output change. Command verification still reads DeviceStatus.
+pub fn semantic_changed(next: &crate::DeviceStatus, previous: Option<&crate::DeviceStatus>) -> bool {
+    let Some(previous) = previous else { return true; };
+    crate::peer_http::Pin::from_identity(&next.board_id, &next.boot_id)
+        != crate::peer_http::Pin::from_identity(&previous.board_id, &previous.boot_id)
+        || (!next.cells.is_empty() && next.cells != previous.cells)
+        || (!next.mode.is_empty() && next.mode != previous.mode)
+        || (!next.effect.is_empty() && next.effect != previous.effect)
+        || (next.brightness != 0 && next.brightness != previous.brightness)
+        || next.led_output["enabled"].as_bool().is_some_and(|enabled|
+            Some(enabled) != previous.led_output["enabled"].as_bool())
+        || next.led_output["diagnostic"]["revision"].as_u64().is_some_and(|revision|
+            Some(revision) != previous.led_output["diagnostic"]["revision"].as_u64())
 }
 /// Screen Y increases downward: subtracting angle gives CCW. Sector 0 is top.
 pub fn point(center: Pos2, radius: f32, sector: f32) -> Pos2 {
@@ -208,7 +226,7 @@ pub fn draw(
 mod tests {
     use super::*;
     #[test]
-    fn transient_null_preserves_only_original_fresh_same_peer_sample() {
+    fn transient_null_preserves_last_observed_sample_without_renewing_freshness() {
         let frame = Frame { rgb: "00ff00".repeat(480), physical: (1..=80).collect(), revision: 7, brightness: 255, pending:false };
         let mut slot = None;
         Sample::observe(&mut slot, Some(frame.clone()));
@@ -216,11 +234,52 @@ mod tests {
         Sample::observe(&mut slot, None);
         assert_eq!(slot.as_ref().unwrap().at, observed);
         assert_eq!(slot.as_ref().unwrap().frame.revision, 7);
-        slot.as_mut().unwrap().at = Instant::now() - Duration::from_secs(6);
-        Sample::observe(&mut slot, None); assert!(slot.is_none());
+        let old = Instant::now() - Duration::from_secs(6);
+        slot.as_mut().unwrap().at = old;
+        Sample::observe(&mut slot, None);
+        assert_eq!(slot.as_ref().unwrap().at, old);
+        assert!(!slot.as_ref().unwrap().fresh());
         Sample::observe(&mut slot, Some(frame.clone()));
         let mut invalid = frame; invalid.physical[1] = 1;
         Sample::observe(&mut slot, Some(invalid)); assert!(slot.is_none());
+    }
+    #[test]
+    fn usb_capture_time_is_not_replaced_by_chunk_completion_time() {
+        let frame = Frame { rgb: "00ff00".repeat(480), physical: (1..=80).collect(), revision: 7, brightness: 255, pending:false };
+        let captured = Instant::now() - Duration::from_secs(6);
+        let mut slot = None;
+        Sample::observe_at(&mut slot, Some(frame), captured);
+        assert_eq!(slot.as_ref().unwrap().at, captured);
+        assert!(!slot.as_ref().unwrap().fresh());
+        Sample::observe_at(&mut slot, None, Instant::now());
+        assert_eq!(slot.as_ref().unwrap().at, captured);
+    }
+    #[test]
+    fn semantic_changes_invalidate_rgb_but_omitted_optional_metadata_does_not() {
+        let previous: crate::DeviceStatus = serde_json::from_value(serde_json::json!({
+            "board_id":"board-a","boot_id":"a".repeat(32),"mode":"cell","effect":"none",
+            "brightness":255,"cells":["white","red"],
+            "led_output":{"enabled":true,"diagnostic":{"revision":7}}
+        })).unwrap();
+        assert!(semantic_changed(&previous, None));
+        assert!(!semantic_changed(&previous, Some(&previous)));
+        for field in ["cells","mode","effect","brightness","enabled","diagnostic","boot","board"] {
+            let mut next=previous.clone();
+            match field {
+                "cells"=>next.cells[0]="off".into(),
+                "mode"=>next.mode="first-wins".into(),
+                "effect"=>next.effect="rainbow".into(),
+                "brightness"=>next.brightness=64,
+                "enabled"=>next.led_output["enabled"]=false.into(),
+                "diagnostic"=>next.led_output["diagnostic"]["revision"]=8.into(),
+                "boot"=>next.boot_id="b".repeat(32),
+                "board"=>next.board_id="board-b".into(),
+                _=>unreachable!(),
+            }
+            assert!(semantic_changed(&next,Some(&previous)),"{field}");
+        }
+        let mut omitted=previous.clone();omitted.led_output=serde_json::Value::Null;
+        assert!(!semantic_changed(&omitted,Some(&previous)));
     }
     #[test]
     fn pending_rgb_never_renews_sample_or_acknowledges_a_matching_probe() {
@@ -236,8 +295,11 @@ mod tests {
         status.pixel_frame = Some(frame.clone()); assert!(!probe.matches(&status, false));
         Sample::observe(&mut slot, Some(frame.clone()));
         assert_eq!(slot.as_ref().unwrap().at, observed);
-        slot.as_mut().unwrap().at = Instant::now() - Duration::from_secs(6);
-        Sample::observe(&mut slot, Some(frame.clone())); assert!(slot.is_none());
+        let old = Instant::now() - Duration::from_secs(6);
+        slot.as_mut().unwrap().at = old;
+        Sample::observe(&mut slot, Some(frame.clone()));
+        assert_eq!(slot.as_ref().unwrap().at, old);
+        assert!(!slot.as_ref().unwrap().fresh());
         frame.rgb.replace_range(..2, "zz"); assert!(!frame.structurally_valid());
         let mut fresh = status.pixel_frame.unwrap(); fresh.pending = false;
         Sample::observe(&mut slot, Some(fresh)); assert!(slot.is_some());

@@ -3897,7 +3897,7 @@
     "targets": [
       {
         "path": "desktop/src/main.rs",
-        "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
+        "sha256": "d086310a68ee04885d573c290e36bd5b0f7992509d9339129652647f1760285f",
         "anchor": "#![cfg_attr(windows, windows_subsystem = \"windows\")]"
       },
       {
@@ -3960,7 +3960,7 @@
       },
       {
         "path": "desktop/src/main.rs",
-        "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
+        "sha256": "d086310a68ee04885d573c290e36bd5b0f7992509d9339129652647f1760285f",
         "anchor": "cli_println!(\"{reply}\")"
       },
       {
@@ -4629,7 +4629,8 @@
     "Failure-driven review rejects older same-boot HTTP replies as superseded rather than returning cached data as a fresh observation; older WS frames cannot reset liveAge or publish into a revoked UI lease. Ordered real-loopback producer regressions retain equal board-clock captures as valid, without inventing a sequence number. Board/application-keyed panel elements retire old application mode/cue shells while retaining the user's per-board workspace; offline melody slots keep bounds and both controls disabled until actual fresh cues return. These are scoped lifecycle adaptations, not complete donor mobile parity.",
     "Bluetooth adaptation: fully read canonical PeerSession transport source at SHA5263044d..., retain single-flight reads, generation/route identity and reset-before-await retirement in the selected BLE API. Android native GATT is an SDK implementation because no reusable BLE transport exists in these donors. Verify INFO then full status, retain stable board aliases and saved selected route, keep app updater/remote management independent, and never substitute board HTTP/DNS/WebSocket for BLE. Existing UI/workspace, command ACK, settings and mirroring consumers are reused.",
     "Reread the complete current donor Rejected/Uncertain and generation-bound PeerSession through EOF. Adapt its explicit rejection versus missing-confirmation distinction to Pakar's unversioned commands: sanitized public reasons, negative2xx receipt rejection, no new-intent replay, persistent attempt-owned command failure independent of status reads, and explicit pixel-owner rebind after reconnect. This is a scoped error/lifecycle adaptation, not donor RPC/media/PWM parity.",
-    "Reread complete donor transport through EOF, especially PeerSession._install generation-owned output invalidation. PixelDiagnosticWorkspace now retires previous board/boot observations before parsing replacement metadata while preserving cursor, colour and scroll drafts. PixelDiagnosticPage restores retained all-off presentation even when the initial semantic revision is deduplicated; colour edits after reopening all-off remain drafts until explicit Show. No main/API transport changes, command replay or new simulated product path."
+    "Reread complete donor transport through EOF, especially PeerSession._install generation-owned output invalidation. PixelDiagnosticWorkspace now retires previous board/boot observations before parsing replacement metadata while preserving cursor, colour and scroll drafts. PixelDiagnosticPage restores retained all-off presentation even when the initial semantic revision is deduplicated; colour edits after reopening all-off remain drafts until explicit Show. No main/API transport changes, command replay or new simulated product path.",
+    "PeerSession._install same-generation presentation retention and pwmReadbackFresh live-owner conjunction reviewed for native RGB flicker. Rust now retains the last actual RGB across null/pending USB captures without renewing its timestamp; present semantic/diagnostic changes, malformed pixels, peer/boot/route and mapping changes still revoke it. Rendering depends on the current live peer rather than a shorter five-second pixel timer; command confirmation still requires fresh raw readback. A fixed RGB preview label/age tooltip and IPC diagnostics make sample age/availability observable. This adapts observation ownership, not donor PWM actuation."
   ],
   "targets": [
     {
@@ -4637,6 +4638,9 @@
       "anchor": "previous.board != board || previous.boot != boot",
       "sha256": "49b37ca6d6a14472da189800dd846acdebed7816fadb0ac22230c11d0cb2c3c6"
     },
+    {"path":"desktop/src/ui/cell_pixels.rs","sha256":"def5207ed7e8a9824fdb03968af731b572956a285ec0b8ff607d8329d1073aa9","anchor":"pub fn observe_at("},
+    {"path":"desktop/src/ui/cell_table.rs","sha256":"c9369637a2243a44bdc458a96b5edd738a61a63cbc929c1f25fd57241e89f241","anchor":"pub(super) fn current_pixel_frame("},
+    {"path":"desktop/src/ui/shell.rs","sha256":"bb07c8adf22c32a151560813bcf63e8c68b0a23e12f1048764adf78e231d20e8","anchor":"value[\"pixel_preview\"]"},
     {
       "path": "mobile/lib/pixel_diagnostic_page.dart",
       "anchor": "final observedOff = observation != null",
@@ -4689,6 +4693,7 @@
       "anchor": "A write retires",
       "sha256": "7a8f6830d333e3458b3fbdbf7ff680549f58dc2955366d2aea1b1640d0052201"
     },
+    {"path":"desktop/src/ui/cell_pixels.rs","sha256":"def5207ed7e8a9824fdb03968af731b572956a285ec0b8ff607d8329d1073aa9","anchor":"fn usb_capture_time_is_not_replaced_by_chunk_completion_time()"},
     {
       "path": "mobile/test/panel_inventory_test.dart",
       "anchor": "testWidgets",
@@ -5379,7 +5384,7 @@
     {
       "path": "desktop/src/main.rs",
       "anchor": "SerialCommand::Bridge(target",
-      "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1"
+      "sha256": "d086310a68ee04885d573c290e36bd5b0f7992509d9339129652647f1760285f"
     }
   ],
   "omissions": [
@@ -9967,7 +9972,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
+      "sha256": "d086310a68ee04885d573c290e36bd5b0f7992509d9339129652647f1760285f",
       "anchor": "fn scoped_http_request("
     },
     {
@@ -10091,7 +10096,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
+      "sha256": "d086310a68ee04885d573c290e36bd5b0f7992509d9339129652647f1760285f",
       "anchor": "// The mapping response identifies its own producer."
     },
     {
@@ -10141,7 +10146,7 @@
     },
     {
       "path": "desktop/src/ui/cell_table.rs",
-      "sha256": "f037d9fddc939fcaba0abb258a6077419ef34272ee644cd3a30987d5eae87135",
+      "sha256": "c9369637a2243a44bdc458a96b5edd738a61a63cbc929c1f25fd57241e89f241",
       "anchor": "Even identical values require the exact operation ID"
     },
     {
@@ -10618,7 +10623,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "7c573a8377a88ed698e4df3de122bdf88e4853061a86b59273ef8e569c229b8e",
+      "sha256": "bb07c8adf22c32a151560813bcf63e8c68b0a23e12f1048764adf78e231d20e8",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -12511,7 +12516,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7c573a8377a88ed698e4df3de122bdf88e4853061a86b59273ef8e569c229b8e",
+          "sha256": "bb07c8adf22c32a151560813bcf63e8c68b0a23e12f1048764adf78e231d20e8",
           "anchor": "fn synchronize_context("
         },
         {
@@ -12924,7 +12929,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7c573a8377a88ed698e4df3de122bdf88e4853061a86b59273ef8e569c229b8e",
+          "sha256": "bb07c8adf22c32a151560813bcf63e8c68b0a23e12f1048764adf78e231d20e8",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -13410,7 +13415,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7c573a8377a88ed698e4df3de122bdf88e4853061a86b59273ef8e569c229b8e",
+          "sha256": "bb07c8adf22c32a151560813bcf63e8c68b0a23e12f1048764adf78e231d20e8",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -13909,7 +13914,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "value[\"messages\"]",
-          "sha256": "7c573a8377a88ed698e4df3de122bdf88e4853061a86b59273ef8e569c229b8e"
+          "sha256": "bb07c8adf22c32a151560813bcf63e8c68b0a23e12f1048764adf78e231d20e8"
         },
         {
           "path": "desktop/src/platform/notifications.rs",
@@ -13993,7 +13998,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7c573a8377a88ed698e4df3de122bdf88e4853061a86b59273ef8e569c229b8e",
+          "sha256": "bb07c8adf22c32a151560813bcf63e8c68b0a23e12f1048764adf78e231d20e8",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -15615,7 +15620,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "f037d9fddc939fcaba0abb258a6077419ef34272ee644cd3a30987d5eae87135",
+          "sha256": "c9369637a2243a44bdc458a96b5edd738a61a63cbc929c1f25fd57241e89f241",
           "anchor": "fn manager_selector("
         },
         {
@@ -15653,7 +15658,7 @@
       "proof": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "f037d9fddc939fcaba0abb258a6077419ef34272ee644cd3a30987d5eae87135",
+          "sha256": "c9369637a2243a44bdc458a96b5edd738a61a63cbc929c1f25fd57241e89f241",
           "anchor": "fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width()"
         },
         {
@@ -16326,7 +16331,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
+          "sha256": "d086310a68ee04885d573c290e36bd5b0f7992509d9339129652647f1760285f",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -16387,7 +16392,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7c573a8377a88ed698e4df3de122bdf88e4853061a86b59273ef8e569c229b8e",
+          "sha256": "bb07c8adf22c32a151560813bcf63e8c68b0a23e12f1048764adf78e231d20e8",
           "anchor": "value[\"tray_shell\"]"
         },
         {
@@ -16449,7 +16454,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
+          "sha256": "d086310a68ee04885d573c290e36bd5b0f7992509d9339129652647f1760285f",
           "anchor": "fn serial_worker("
         },
         {
@@ -16486,7 +16491,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
+          "sha256": "d086310a68ee04885d573c290e36bd5b0f7992509d9339129652647f1760285f",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
@@ -16532,7 +16537,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "7c573a8377a88ed698e4df3de122bdf88e4853061a86b59273ef8e569c229b8e"
+          "sha256": "bb07c8adf22c32a151560813bcf63e8c68b0a23e12f1048764adf78e231d20e8"
         }
       ],
       "omissions": [
@@ -17215,7 +17220,7 @@
         {
           "path": "desktop/src/main.rs",
           "anchor": "peer_http::remember_address",
-          "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1"
+          "sha256": "d086310a68ee04885d573c290e36bd5b0f7992509d9339129652647f1760285f"
         }
       ],
       "omissions": [
@@ -17419,7 +17424,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7c573a8377a88ed698e4df3de122bdf88e4853061a86b59273ef8e569c229b8e",
+          "sha256": "bb07c8adf22c32a151560813bcf63e8c68b0a23e12f1048764adf78e231d20e8",
           "anchor": "fn send_pixel_probe("
         }
       ],
@@ -17653,7 +17658,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "7c573a8377a88ed698e4df3de122bdf88e4853061a86b59273ef8e569c229b8e",
+          "sha256": "bb07c8adf22c32a151560813bcf63e8c68b0a23e12f1048764adf78e231d20e8",
           "anchor": "fn send_pixel_probe("
         }
       ],
@@ -17799,7 +17804,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn synchronize_context",
-          "sha256": "7c573a8377a88ed698e4df3de122bdf88e4853061a86b59273ef8e569c229b8e"
+          "sha256": "bb07c8adf22c32a151560813bcf63e8c68b0a23e12f1048764adf78e231d20e8"
         },
         {
           "path": "desktop/src/ui/layout.rs",
