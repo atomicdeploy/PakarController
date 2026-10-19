@@ -23,6 +23,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
     this.saveSnapshot,
     this.connectFeed,
     this.feedConnectTimeout = const Duration(seconds: 8),
+    this.presentationOffer,
     SecretStore? managementSecrets,
     ManagedRequest? managementRequest,
     Map<String, dynamic> Function()? supportInfo,
@@ -80,6 +81,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
   final Future<void> Function(String)? saveSnapshot;
   final Future<WebSocket> Function(String endpoint)? connectFeed;
   final Duration feedConnectTimeout;
+  final Future<void> Function(Map<String, dynamic>)? presentationOffer;
   late final AppUpdatePeers peers;
   late final AppClientManagement management;
   Map<String, dynamic> package = {};
@@ -98,7 +100,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
     'management_enabled': false,
     'allow_remote_check': false,
     'allow_remote_cleanup': false,
-    'feed': '',
+    'feed': 'wss://office.digitalogic.ir/pakar/api/events',
     'socket_io': false,
     'namespace': '/',
     'event': 'app-update-offer',
@@ -416,7 +418,10 @@ class AppUpdateCoordinator extends ChangeNotifier {
         unawaited(reportManagement().catchError(failure));
       }
     }
-    if ((settings['feed'] as String).isNotEmpty && socket == null) {
+    if (settings['auto_check'] == true &&
+        settings['notify_updates'] == true &&
+        (settings['feed'] as String).isNotEmpty &&
+        socket == null) {
       unawaited(startFeed().catchError(failure));
     }
   }
@@ -493,6 +498,9 @@ class AppUpdateCoordinator extends ChangeNotifier {
           identifyRequest(request);
           request.headers.set('X-Pakar-App-Session', catalogSession);
           request.headers.set('X-Pakar-App-Package', '${package['package']}');
+          if (presentationOffer != null) {
+            request.headers.set('X-Pakar-Presentation', 'true');
+          }
           final response = await request.close().timeout(
             const Duration(seconds: 8),
           );
@@ -529,7 +537,9 @@ class AppUpdateCoordinator extends ChangeNotifier {
             throw const FormatException('Too many app update offers');
           }
           int version(Object? value) =>
-              value is Map && value['version_code'] is int
+              value is Map && value['kind'] == 'presentation'
+              ? 0x7fffffff
+              : value is Map && value['version_code'] is int
               ? value['version_code'] as int
               : -1;
           final sorted = offers.toList()
@@ -685,6 +695,45 @@ class AppUpdateCoordinator extends ChangeNotifier {
   }
 
   Future<void> acceptOffer(Object? raw, String expectedSession) async {
+    if (raw is Map<String, dynamic> && raw['kind'] == 'presentation') {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      if (closed ||
+          !foreground ||
+          expectedSession.isEmpty ||
+          (expectedSession != session && expectedSession != _feedSession) ||
+          raw['session'] != expectedSession ||
+          raw['package'] != package['package'] ||
+          raw['expires_at_ms'] is! int ||
+          raw['expires_at_ms'] <= now ||
+          raw['expires_at_ms'] > now + 60000) {
+        throw const FormatException(
+          'Stale or wrong-session presentation notice',
+        );
+      }
+      if (settings['auto_download'] == true && presentationOffer != null) {
+        await presentationOffer!(raw);
+      }
+      return;
+    }
+    // A catalog/feed can advertise the installed release (or an older one).
+    // That is normal "up to date", not a rejected command or failed update.
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (!closed &&
+        foreground &&
+        raw is Map<String, dynamic> &&
+        expectedSession.isNotEmpty &&
+        (expectedSession == session || expectedSession == _feedSession) &&
+        raw['session'] == expectedSession &&
+        raw['package'] == package['package'] &&
+        raw['expires_at_ms'] is int &&
+        raw['expires_at_ms'] > now &&
+        raw['expires_at_ms'] <= now + 60000 &&
+        raw['version_code'] is int &&
+        raw['version_code'] >= 1 &&
+        package['version_code'] is int &&
+        raw['version_code'] <= package['version_code']) {
+      return; // No transfer, installer request, notification or mutation replay.
+    }
     final offer = parseOffer(raw, expectedSession);
     if (consumed.contains('remote:${offer['sha256']}')) return;
     if (!await announce(offer, sourceKind: 'remote', source: offer['url'])) {
@@ -854,6 +903,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
         'session': feedSession,
         'package': package['package'],
         'instance_id': instanceId,
+        'presentation': presentationOffer != null,
       };
       void ready() {
         ws.add(

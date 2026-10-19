@@ -9,9 +9,11 @@ class AppUpdatesPage extends StatefulWidget {
     super.key,
     required this.coordinator,
     this.extensions = const [],
+    this.extensionsFirst = false,
   });
   final AppUpdateCoordinator coordinator;
   final List<Widget> extensions;
+  final bool extensionsFirst;
   @override
   State<AppUpdatesPage> createState() => _AppUpdatesPageState();
 }
@@ -161,6 +163,7 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
               ),
             ],
           ),
+          if (widget.extensionsFirst) ...widget.extensions,
           WorkspaceSection(
             title: 'This Android app',
             icon: PakarIcons.circuitry,
@@ -468,7 +471,7 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
               ),
             ],
           ),
-          ...widget.extensions,
+          if (!widget.extensionsFirst) ...widget.extensions,
           WorkspaceSection(
             title: 'Advanced app management',
             icon: PakarIcons.gear,

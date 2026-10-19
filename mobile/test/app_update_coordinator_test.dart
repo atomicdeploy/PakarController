@@ -171,6 +171,66 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   test(
+    'Session-bound presentation notices never invoke APK download or install',
+    () async {
+      final updates = PackageUpdates();
+      var hints = 0;
+      final model = AppUpdateCoordinator(
+        updates: updates,
+        discovery: PackageDiscovery(),
+        saveSnapshot: (_) async {},
+        approve: (_) async => false,
+        presentationOffer: (_) async => hints++,
+      );
+      addTearDown(model.dispose);
+      model.package = package();
+      final session = model.beginCatalogSession();
+      final notice = {
+        ...offer(session),
+        'kind': 'presentation',
+        'revision': 2,
+        'manifest_url': 'https://updates.example/api/presentation',
+      };
+      await model.acceptOffer(notice, session);
+      expect(hints, 1);
+      expect(updates.downloads, isEmpty);
+      expect(updates.native, isEmpty);
+      await expectLater(
+        model.acceptOffer({...notice, 'session': 'foreign'}, session),
+        throwsFormatException,
+      );
+      model.settings['auto_download'] = false;
+      await model.acceptOffer(notice, session);
+      expect(hints, 1);
+    },
+  );
+
+  test('Same and older package notices are quiet; wrong-session notices still fail closed', () async {
+    final updates = PackageUpdates();
+    final model = AppUpdateCoordinator(
+      updates: updates,
+      discovery: PackageDiscovery(),
+      saveSnapshot: (_) async {},
+      approve: (_) async => false,
+    );
+    addTearDown(model.dispose);
+    model.package = package();
+    final session = model.beginCatalogSession();
+    for (final version in [7, 6]) {
+      final notice = {...offer(session), 'version_code': version};
+      await model.acceptOffer(notice, session);
+      await expectLater(
+        model.acceptOffer({...notice, 'session': 'foreign'}, session),
+        throwsFormatException,
+      );
+    }
+    expect(updates.downloads, isEmpty);
+    expect(updates.notifications, isEmpty);
+    expect(updates.native, isEmpty);
+    expect(model.message, '');
+  });
+
+  test(
     'Timed-out feed dial closes a late actual WebSocket without subscribing',
     () async {
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
@@ -237,6 +297,8 @@ void main() {
     ]) {
       result.settings[key] = false;
     }
+    result.settings['feed'] =
+        ''; // Fixture has no external notification endpoint.
     addTearDown(result.dispose);
     return result;
   }

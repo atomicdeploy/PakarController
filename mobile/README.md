@@ -195,3 +195,30 @@ and HTTP refresh are independent, and a full same-origin socket status can
 establish the board/boot identity without a preceding HTTP read. Native hostname
 connection precedes any manual lookup and caches only a successfully connected
 address; Host and TLS identity remain unchanged.
+
+## Updates and support without ADB
+
+Use the single **Updates & support** menu entry. Data-only presentation updates
+are shown first; package transfer, automatic policy and troubleshooting share
+that workspace. The default presentation source is
+`https://office.digitalogic.ir/pakar/api/presentation`; the default live feed is
+`wss://office.digitalogic.ir/pakar/api/events`. Existing explicitly saved sources
+are retained. Checks/downloads/install requests are default-on; Android still
+requires its installer consent. Same/older releases are quietly ignored.
+
+Presentation updates currently contain validated palette roles only, not Dart,
+HTML, executable patches or arbitrary files. They apply atomically without an
+APK. Compiled Flutter/native behavior needs a newer same-signer APK; this project
+does not claim a hot-code patch runtime or a silent Android installer.
+
+Start a foreground, 15-minute support session to use authenticated
+`/api/support/health`, `/api/support/request` or `/api/support/ws`. Session/deadline
+envelopes support `health`, read-only `board.status` and `board.mapping`;
+`assets.check`/`assets.apply` and board `command` require their separate session
+options. Secrets, arbitrary shell execution and remote installer calls are not
+exposed. Stop/background revokes the token; ADB is recovery, not this API's transport.
+
+Operators publish a newer data bundle with
+`node /opt/pakarcontroller-management/services/client-management/operator.mjs presentation JSON_FILE`
+on the office host. `node tools/verify-presentation-service.mjs` verifies actual
+HTTPS digest/bytes and the WSS session-bound notice without contacting a device.

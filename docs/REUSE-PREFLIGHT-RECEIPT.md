@@ -7609,3 +7609,48 @@ content hash. Server-side full hash/size and HTTPS200/Content-Length/range suppo
 verified. No automatic-update feed changed and no installation requested through
 the management service. This is a downloadable candidate, NOT installed-tablet,
 production-signing, touch/radio, physical LED or zero-bug acceptance.
+
+## App update and support delivery without primary ADB dependence
+
+Reread actual PCController unified/app_upgrade.dart and peer_upgrades.dart through
+EOF at their unchanged SHAa13fdcf3.../SHA97ca9e2c.... Reuse manifest-pinned bounded
+transfer, foreground retirement, separate installer consent and capability-owned
+support. New palette-data notices share the configured WS/Socket.IO package feed
+but only trigger the configured trusted manifest read, never a payload-selected
+URL or executable code. Coalesced checks now join their actual read rather than
+returning while an automatic check is pending. Existing explicit sources remain
+preserved; new installs default to the working office data source and WSS feed.
+
+Server publication now supplies the missing app-update-offer type expected by
+FirmwareFeedWire. Opted-in presentation notices are additive; APK-only consumers
+receive no new data offers. Root-authenticated SQLite publication enforces digest,
+size, increasing revisions and immutable palette bytes; no arbitrary file paths
+or execution. Support adds token/session/deadline-fenced read-only board status
+and mapping, redacts unrelated fields and separately permits assets.check. One
+UpdateCenter contains data/support/manual/automatic settings. Same/older package
+notices no longer report a spurious failure; explicit wrong-session input still
+fails closed. Compiled Flutter/native code changes still need an APK/OS consent.
+
+Analyzer and focused checks: presentation transport1, coordinator15, support6,
+presentation activation/rollback3 and update-center1 passed; service10 passed.
+Initial analyzer errors (helper declared below its first reference and missing
+braces) were fixed before these passing runs. No broad test/CI wait substituted
+for device acceptance. The unused first21 candidate was rebuilt after the older
+notice fix, reusing the canonical release cache, not another debug cache.
+
+The actual office management service was upgraded to build21 through the guarded
+deployer, preserving its existing data and root-only administrator credential.
+Old flat application source remains; the previous systemd unit and environment
+were copied to systemd.before-tablet-updates/service.env.before-tablet-updates.
+Apache syntax and service health passed; PBX/MQTT were not restarted. Published
+108-byte Studio palette revision1/SHAaf51f425...; actual HTTPS full bytes/hash and
+WSS session/expiry/source notice verified by verify-presentation-service.mjs.
+
+Final maintenance APK0.2.8+21:60754697bytes/SHA256
+4aff174e7f5ebfa5d59366b81fb4357ca20787628c9c66c9027f87e8822f22f3;
+apksigner verifies the existing cb2620ad... Android-debug preview signer and aapt
+verifies code21/minSDK24/three ABIs. BoardProductionHold remains compiled in.
+ASUS8022 still refuses SSH, this PC has no authorized ADB target and the service
+has no enrolled Android client. Installed tablet, touch/radio, OS consent and
+human/physical command acceptance remain pending, not certified by the endpoint
+or package checks. No production board was contacted or changed.

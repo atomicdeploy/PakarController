@@ -15,6 +15,8 @@ class PresentationAssets extends ValueNotifier<Map<String, int>> {
   PresentationAssets({this.save}) : super(const {});
   final Future<void> Function(String)? save;
   static const maximum = 24576;
+  static const defaultSource =
+      'https://office.digitalogic.ir/pakar/api/presentation';
   int revision = 0;
   String digest = '', source = '', message = '';
   bool enabled = true, foreground = true, busy = false;
@@ -23,10 +25,11 @@ class PresentationAssets extends ValueNotifier<Map<String, int>> {
   bool _applying = false;
   String _stored = '';
   Timer? _timer;
+  Future<void>? _checkTask;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
-    source = prefs.getString('pakar.presentation.source') ?? '';
+    source = prefs.getString('pakar.presentation.source') ?? defaultSource;
     enabled = prefs.getBool('pakar.presentation.enabled') ?? true;
     try {
       final raw = prefs.getString('pakar.presentation.bundle');
@@ -178,7 +181,42 @@ class PresentationAssets extends ValueNotifier<Map<String, int>> {
     );
   }
 
-  Future<void> checkNow() async {
+  Future<void> checkNow() {
+    final active = _checkTask;
+    if (active != null) return active;
+    late final Future<void> task;
+    task = _checkNow().whenComplete(() {
+      if (identical(_checkTask, task)) _checkTask = null;
+    });
+    return _checkTask = task;
+  }
+
+  /// A notification is only a hint to read the configured trusted manifest.
+  /// It cannot inject another URL, executable code or bypass disabled updates.
+  Future<void> acceptNotice(Map<String, dynamic> notice) async {
+    if (!enabled || !foreground || _closed) return;
+    if (notice['manifest_url'] != source ||
+        notice['revision'] is! int ||
+        notice['revision'] < 1 ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch('${notice['sha256']}')) {
+      throw const FormatException(
+        'Presentation notice does not match the configured source',
+      );
+    }
+    if (notice['revision'] <= revision) return;
+    final owner = _epoch;
+    final active = _checkTask;
+    if (active != null) await active;
+    if (owner == _epoch &&
+        enabled &&
+        foreground &&
+        !_closed &&
+        notice['revision'] > revision) {
+      await checkNow();
+    }
+  }
+
+  Future<void> _checkNow() async {
     if (busy || source.isEmpty || !foreground || _closed) return;
     final epoch = _epoch;
     busy = true;

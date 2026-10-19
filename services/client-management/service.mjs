@@ -101,7 +101,8 @@ export async function createService({directory,publicBase,adminTokenHash,now=Dat
     CREATE TABLE IF NOT EXISTS releases(sha TEXT PRIMARY KEY,platform TEXT,build INTEGER,metadata TEXT,published INTEGER,UNIQUE(platform,build));
     CREATE TABLE IF NOT EXISTS enrollments(hash TEXT PRIMARY KEY,platform TEXT,expires INTEGER,used INTEGER DEFAULT 0);
     CREATE TABLE IF NOT EXISTS clients(id TEXT PRIMARY KEY,platform TEXT,token_hash TEXT UNIQUE,created INTEGER,last_seen INTEGER,telemetry TEXT DEFAULT '{}',revoked INTEGER DEFAULT 0);
-    CREATE TABLE IF NOT EXISTS commands(id TEXT PRIMARY KEY,client TEXT,action TEXT,created INTEGER,expires INTEGER,claimed INTEGER DEFAULT 0,result TEXT);`);
+    CREATE TABLE IF NOT EXISTS commands(id TEXT PRIMARY KEY,client TEXT,action TEXT,created INTEGER,expires INTEGER,claimed INTEGER DEFAULT 0,result TEXT);
+    CREATE TABLE IF NOT EXISTS presentation(revision INTEGER PRIMARY KEY,sha TEXT UNIQUE,bundle TEXT,bytes INTEGER);`);
   const sql=(s,...args)=>db.prepare(s).get(...args);
   const run=(s,...args)=>db.prepare(s).run(...args);
   const all=(s,...args)=>db.prepare(s).all(...args);
@@ -111,11 +112,18 @@ export async function createService({directory,publicBase,adminTokenHash,now=Dat
   function client(req){const v=sql('SELECT * FROM clients WHERE token_hash=? AND revoked=0',sha256(bearer(req)));if(!v)throw fail(401,'Enrolled client authentication required');return v;}
   function descriptor(row){const v=JSON.parse(row.metadata);return {...v,url:`${publicBase}/packages/${v.sha256}/${v.platform==='android'?'PakarController.apk':'PakarController.exe'}`};}
   function releases(platform){return all('SELECT * FROM releases WHERE platform=? ORDER BY build DESC LIMIT 3',platform).map(descriptor);}
-  function offers(session,pkg){
-    if(!identity(session)||pkg!=='ir.digitalogic.pakar.pakarcontroller')throw fail(400,'Valid app session and self package required');
-    return {offers:releases('android').slice(0,1).map(v=>({...v,session,expires_at_ms:now()+55000,service:serviceIdentity()}))};
+  function presentationManifest(){
+    const row=sql('SELECT revision,sha,bytes FROM presentation ORDER BY revision DESC LIMIT 1');
+    return row?{revision:row.revision,sha256:row.sha,bytes:row.bytes,url:`${publicBase}/presentation/${row.sha}.json`}:{revision:0};
   }
-  function announce(){for(const socket of sockets.clients){if(socket.readyState===1&&socket.subscription)for(const offer of offers(socket.subscription.session,socket.subscription.package).offers)socket.send(JSON.stringify(offer));}}
+  function offers(session,pkg,presentation=false){
+    if(!identity(session)||pkg!=='ir.digitalogic.pakar.pakarcontroller')throw fail(400,'Valid app session and self package required');
+    const envelope={type:'app-update-offer',session,expires_at_ms:now()+55000};
+    const data=presentationManifest();
+    return {offers:[...(presentation&&data.revision>0?[{...envelope,kind:'presentation',package:pkg,...data,manifest_url:`${publicBase}/api/presentation`}]:[]),
+      ...releases('android').slice(0,1).map(v=>({...v,...envelope,service:serviceIdentity()}))]};
+  }
+  function announce(){for(const socket of sockets.clients){if(socket.readyState===1&&socket.subscription)for(const offer of offers(socket.subscription.session,socket.subscription.package,socket.subscription.presentation).offers)socket.send(JSON.stringify(offer));}}
   async function publish(req){
     if(publishing)throw fail(409,'Publication already active');
     let raw;try{raw=JSON.parse(Buffer.from(req.headers['x-pakar-release']??'','base64').toString('utf8'));}catch{throw fail(400,'Missing release metadata');}
@@ -201,7 +209,13 @@ export async function createService({directory,publicBase,adminTokenHash,now=Dat
           'Content-Security-Policy':"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'",'Referrer-Policy':'no-referrer'});return res.end(page);}
       if(req.method==='GET'&&path==='/api/releases'){
         const p=new URL(req.url,'http://localhost').searchParams.get('platform');if(!platforms.has(p))throw fail(400,'Unsupported platform');return json(res,200,{releases:releases(p)});}
-      if(req.method==='GET'&&path==='/api/app-updates')return json(res,200,offers(req.headers['x-pakar-app-session'],req.headers['x-pakar-app-package']));
+      if(req.method==='GET'&&path==='/api/app-updates')return json(res,200,offers(req.headers['x-pakar-app-session'],req.headers['x-pakar-app-package'],req.headers['x-pakar-presentation']==='true'));
+      if(req.method==='GET'&&path==='/api/presentation')return json(res,200,presentationManifest());
+      const dataAsset=/^\/presentation\/([a-f0-9]{64})\.json$/.exec(path);
+      if(req.method==='GET'&&dataAsset){
+        const row=sql('SELECT bundle,bytes FROM presentation WHERE sha=?',dataAsset[1]);if(!row)throw fail(404,'Presentation not found');
+        res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Content-Length':row.bytes,'X-Checksum-SHA256':dataAsset[1],'Cache-Control':'public, max-age=31536000, immutable'});return res.end(row.bundle);
+      }
       const artifact=/^\/packages\/([a-f0-9]{64})\/(PakarController\.(?:exe|apk))$/.exec(path);
       if(artifact&&['GET','HEAD'].includes(req.method))return await packageRead(req,res,artifact[1],artifact[2]);
       if(req.method==='POST'&&path==='/api/clients/enroll'){
@@ -216,6 +230,18 @@ export async function createService({directory,publicBase,adminTokenHash,now=Dat
       }
       if(path.startsWith('/api/admin/')){
         admin(req);
+        if(req.method==='POST'&&path==='/api/admin/presentation'){
+          const b=await body(req,32768),text=b.bundle;let data;
+          if(typeof text!=='string'||Buffer.byteLength(text)>24576||!hash(b.sha256)||sha256(text)!==b.sha256)throw fail(400,'Presentation digest or size invalid');
+          try{data=JSON.parse(text);}catch{throw fail(400,'Expected presentation JSON');}
+          if(!data||Array.isArray(data)||Object.keys(data).some(k=>!['revision','palette'].includes(k))||!Number.isSafeInteger(data.revision)||data.revision<1||data.revision>2147483647||
+            !data.palette||Array.isArray(data.palette)||typeof data.palette!=='object'||Object.keys(data.palette).length<1||Object.keys(data.palette).length>4||
+            Object.entries(data.palette).some(([k,v])=>!['primary','secondary','surface','on_surface'].includes(k)||typeof v!=='string'||!/^[a-fA-F0-9]{6}$/.test(v)))throw fail(400,'Only validated data palette bundles may be published');
+          if(data.revision<=presentationManifest().revision)throw fail(409,'Presentation revision must increase');
+          if(sql('SELECT COUNT(*) AS n FROM presentation').n>=64)throw fail(507,'Presentation history limit; inspect retention');
+          run('INSERT INTO presentation VALUES(?,?,?,?)',data.revision,b.sha256,text,Buffer.byteLength(text));
+          announce();return json(res,201,presentationManifest());
+        }
         if(req.method==='POST'&&path==='/api/admin/enrollments'){
           const b=await body(req);if(!platforms.has(b.platform))throw fail(400,'Unsupported platform');
           const ttl=b.ttl_seconds??600;if(!Number.isInteger(ttl)||ttl<60||ttl>86400)throw fail(400,'Invalid enrollment lifetime');
@@ -276,7 +302,7 @@ export async function createService({directory,publicBase,adminTokenHash,now=Dat
     ws.alive=true;ws.on('pong',()=>{ws.alive=true;});
     const timer=setTimeout(()=>{if(!ws.subscription)ws.close(1008);},8000);timer.unref();
     ws.on('message',wire=>{try{const s=JSON.parse(wire.toString());if(ws.subscription||s.type!=='subscribe'||!identity(s.session)||s.package!=='ir.digitalogic.pakar.pakarcontroller')throw Error();
-      ws.subscription={session:s.session,package:s.package};clearTimeout(timer);for(const offer of offers(s.session,s.package).offers)ws.send(JSON.stringify(offer));}catch{ws.close(1008);}});
+      ws.subscription={session:s.session,package:s.package,presentation:s.presentation===true};clearTimeout(timer);for(const offer of offers(s.session,s.package,s.presentation===true).offers)ws.send(JSON.stringify(offer));}catch{ws.close(1008);}});
     ws.on('close',()=>clearTimeout(timer));ws.on('error',()=>{});
   });
   const heartbeat=setInterval(()=>{for(const ws of sockets.clients)if(ws.readyState===1){if(!ws.alive){ws.terminate();continue;}ws.alive=false;ws.ping();}},25000);heartbeat.unref();

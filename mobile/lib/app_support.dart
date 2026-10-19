@@ -28,6 +28,7 @@ class AppSupportSession extends ChangeNotifier with WidgetsBindingObserver {
     required this.observed,
     required this.health,
     this.applyAssets,
+    this.checkAssets,
   });
   final PakarApi? Function() api;
   final DeviceStatus? Function() observed;
@@ -38,6 +39,7 @@ class AppSupportSession extends ChangeNotifier with WidgetsBindingObserver {
     bool Function() authorize,
   )?
   applyAssets;
+  final Future<void> Function()? checkAssets;
   HttpServer? _server;
   final _sockets = <WebSocket>{};
   final _seen = <String>{};
@@ -136,6 +138,14 @@ class AppSupportSession extends ChangeNotifier with WidgetsBindingObserver {
       'foreground': _foreground,
       'commands_enabled': commandsEnabled,
       'assets_enabled': assetsEnabled,
+      'operations': [
+        'health',
+        'board.status',
+        'board.mapping',
+        if (assetsEnabled) 'assets.apply',
+        if (assetsEnabled && checkAssets != null) 'assets.check',
+        if (commandsEnabled) 'command',
+      ],
       'uncertain': _uncertain,
       'board_available': current?.peer.known == true,
       'board_id': _identity(current?.json['board_id']),
@@ -191,6 +201,78 @@ class AppSupportSession extends ChangeNotifier with WidgetsBindingObserver {
       id = candidate;
       if (value['operation'] == 'health') {
         return {'id': id, 'accepted': true, 'health': snapshot()};
+      }
+      if (value['operation'] == 'board.status' ||
+          value['operation'] == 'board.mapping') {
+        if (_busy || !_peerCurrent()) throw const StaleConnection();
+        _busy = true;
+        try {
+          final remaining = Duration(
+            milliseconds: (deadline - DateTime.now().millisecondsSinceEpoch)
+                .clamp(1, 8000),
+          );
+          final Map<String, dynamic> readback;
+          if (value['operation'] == 'board.status') {
+            final actual = await _owner!.status().timeout(remaining);
+            readback = {
+              for (final key in [
+                'board_id',
+                'boot_id',
+                'hostname',
+                'version',
+                'mode',
+                'effect',
+                'brightness',
+                'cells',
+                'led_output',
+                'capabilities',
+                'avr_online',
+                'programming_latch',
+              ])
+                if (actual.json.containsKey(key)) key: actual.json[key],
+            };
+          } else {
+            final mapping = await _owner!.mapping().timeout(remaining);
+            readback = {'physical': mapping.physical, 'names': mapping.names};
+          }
+          if (!_active(generation) ||
+              !_peerCurrent() ||
+              DateTime.now().millisecondsSinceEpoch >= deadline ||
+              (value['operation'] == 'board.status' &&
+                  (readback['board_id'] != _board ||
+                      readback['boot_id'] != _boot))) {
+            throw const StaleConnection();
+          }
+          return {
+            'id': id,
+            'accepted': true,
+            'board_id': _board,
+            'boot_id': _boot,
+            'readback': readback,
+          };
+        } finally {
+          _busy = false;
+        }
+      }
+      if (value['operation'] == 'assets.check') {
+        if (!assetsEnabled || checkAssets == null || _busy) {
+          throw const FormatException();
+        }
+        _busy = true;
+        try {
+          await checkAssets!();
+          if (!_active(generation) ||
+              DateTime.now().millisecondsSinceEpoch >= deadline) {
+            throw const StaleConnection();
+          }
+          return {
+            'id': id,
+            'accepted': true,
+            'outcome': 'presentation_source_checked',
+          };
+        } finally {
+          _busy = false;
+        }
       }
       if (value['operation'] == 'assets.apply') {
         final bundle = value['bundle'], digest = value['sha256'];

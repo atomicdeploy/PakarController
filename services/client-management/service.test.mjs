@@ -21,6 +21,26 @@ test('actual management HTTP, durable enrollment, immutable packages and one-use
     return {status:r.status,headers:r.headers,body:await r.json()};
   }
   const administrate=(path,body)=>request('/api/admin'+path,{method:'POST',token:admin,body});
+  await t.test('Data-only presentation publication notifies opted-in peers and preserves APK-only consumers',async()=>{
+    const bundle=JSON.stringify({revision:1,palette:{primary:'68a7ff'}}),digest=sha256(bundle);
+    assert.equal((await request('/api/admin/presentation',{method:'POST',body:{bundle,sha256:digest}})).status,401);
+    const socket=new WebSocket(base.replace('http:','ws:')+'/pakar/api/events');
+    await new Promise((ok,fail)=>{socket.once('open',ok);socket.once('error',fail);});
+    socket.send(JSON.stringify({type:'subscribe',session:'presentation-test-session',package:'ir.digitalogic.pakar.pakarcontroller',presentation:true}));
+    const notice=new Promise((ok,fail)=>{const timeout=setTimeout(()=>fail(Error('Presentation notification missing')),3000);socket.once('message',wire=>{clearTimeout(timeout);ok(JSON.parse(wire));});});
+    assert.equal((await administrate('/presentation',{bundle,sha256:digest})).status,201);
+    const event=await notice;assert.equal(event.type,'app-update-offer');assert.equal(event.kind,'presentation');assert.equal(event.sha256,digest);assert.equal(event.session,'presentation-test-session');
+    assert.equal(event.manifest_url,'http://localhost/pakar/api/presentation');
+    const manifest=(await request('/api/presentation')).body;
+    assert.equal(manifest.sha256,digest);assert.equal(manifest.bytes,Buffer.byteLength(bundle));
+    const data=await fetch(base+new URL(manifest.url).pathname);assert.equal(sha256(await data.text()),digest);
+    assert.equal((await administrate('/presentation',{bundle,sha256:digest})).status,409);
+    const script=JSON.stringify({revision:2,palette:{primary:'ffffff'},code:'execute'});
+    assert.equal((await administrate('/presentation',{bundle:script,sha256:sha256(script)})).status,400);
+    const old=(await request('/api/app-updates',{headers:{'X-Pakar-App-Session':'old-client-session','X-Pakar-App-Package':'ir.digitalogic.pakar.pakarcontroller'}})).body;
+    assert.deepEqual(old.offers,[]);
+    socket.terminate();
+  });
   await t.test('private inventory, cross-origin and unsafe commands fail closed',async()=>{
     assert.equal((await request('/api/admin/clients')).status,401);
     assert.equal((await request('/api/health',{headers:{Origin:'https://foreign.invalid'}})).status,403);

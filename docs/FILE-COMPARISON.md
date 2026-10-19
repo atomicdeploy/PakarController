@@ -449,7 +449,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp8266/src/AvrIsp.h:63 [UTF8-LF sha256=d817ff9373fd1dc6a0612d2ce9e5a5f93cdc974e2c95ecb32767eb8404fa8da4; anchor=void report(]`.
 - Target: `mobile/lib/upgrade_observation.dart:3 [UTF8-LF sha256=8feabc680770f062a09ec3a5e7e72d1e9aad814335f630ddc00be3770790e8d7; anchor=class UpgradeObservation]`.
 - Target: `desktop/src/firmware_progress.rs:11 [UTF8-LF sha256=a35d8ed50dbd2b657138e4a0eca981ad9098e604a36857282b87568f9a781996; anchor=pub struct Upgrade]`.
-- Target: `firmware/esp8266/src/WebUi.h:958 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function upgradeObservation(]`.
+- Target: `firmware/esp8266/src/WebUi.h:958 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function upgradeObservation(]`.
 - Retained: Complete canonical donor documentation read through EOF and original-byte SHA matched the inventory. Adapted the actual measured-stage/unknown-denominator/verified-completion/no-write-replay contract, not the donor's AVRDUDE parser: local HTTP raw file bytes, remote download stage bytes, coherent async-to-loop snapshots, finite AVR scheduled text leases and separate client reboot/readback verification.
 - Retained: Reread the complete canonical update-progress document for actual0.2.8 migration. Explicit exact-board maintenance admits only the older producer's update/backup observations, never ordinary controls; the new boot still passes the default release policy. Missing BOTH newer producer headers is confined to that selected recovery and retains same-address, whole MD5 and before/after board/boot checks. Failed manifest admission can preserve zero image metadata only with the exact pinned manifest/job/boot/target/zero bytes. Added backpressure-aware multipart chunks and explicit upload pacing; no automatic mutation retry. Real fixtures cover these boundaries. Actual HTTPS stage22/new boot/full running SHA and separate Internet control/WSS passed; final direct LAN WS interruption and the false completion_verified bit remain open, not fabricated success.
 - Retained: Local /update/info now uses boot-captured immutable image metadata rather than whole-image hashing on every progress poll. Status and WebSocket status/ping remain readable during local OTA; mutating commands remain inhibited. No authentication is enabled by the updater; it requires explicit auth-off readback before and after.
@@ -484,7 +484,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp8266/src/LcdManagement.h:3 [UTF8-LF sha256=eb800ee4c334b22504f37bd841bda58a7562052df2c7226ff19bc23a454e652d; anchor=String lcdStatusJson()]`.
 - Target: `desktop/src/display.rs:7 [UTF8-LF sha256=e623569692f080bb41e7dbd148fc657217d387853d1a0c28280a812f37af819c; anchor=pub struct LcdObservation]`.
 - Target: `mobile/lib/peer_context.dart:205 [UTF8-LF sha256=1272fca8d51e9fee79d3ac7d430450c555f14f01f8f73aed824c0098f7daae57; anchor=bool lcdObservationReady(]`.
-- Target: `firmware/esp8266/src/WebUi.h:877 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function lcdObservation(]`.
+- Target: `firmware/esp8266/src/WebUi.h:877 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function lcdObservation(]`.
 - Retained: Complete actual donor source read through EOF. Adapted common PCF8574 0x27/0x3F discovery, 4-bit HD44780 wake/control bytes,16x2 ASCII row normalization/padding, desired frame cache and backlight bit mapping into a transport-independent production class. S3 owns dedicated GPIO15/16 hardware I2C so the confirmed AVR A4/A5 TM1637 and ISP pins remain untouched.
 - Omitted/replaced code: `Blocking50ms/4.5ms initialization, ignored expander return values and cache validity after failed writes`. Disposition: **replaced**. Reason: Initialization is a paced loop-owned state machine. Every expander write must ACK; no full frame/available status until all initialization and both rows complete. NACK revokes readiness, bounded retry reinitializes/replays current desired text. Missing modules cannot become initialized merely because initialize() returned.
 - Omitted/replaced code: `Flash-string overload and LCD clear/backlight/generic bus controls on all client surfaces; host-owned LCD prompt/priority/offline policy`. Disposition: **pending**. Reason: This slice implements standalone physical discovery/init/default cell/update text, finite REST presentation and exact completed-frame previews. It does not claim the full donor host presenter, raw I2C bridge, every app editor or USB LCD mutation parity. CompactI2c remains available for a future explicit nonconflicting AVR wiring/build profile after flash/RAM review.
@@ -506,7 +506,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp8266/src/LcdManagement.h:3 [UTF8-LF sha256=eb800ee4c334b22504f37bd841bda58a7562052df2c7226ff19bc23a454e652d; anchor=String lcdStatusJson()]`.
 - Target: `desktop/src/display.rs:7 [UTF8-LF sha256=e623569692f080bb41e7dbd148fc657217d387853d1a0c28280a812f37af819c; anchor=pub struct LcdObservation]`.
 - Target: `mobile/lib/peer_context.dart:205 [UTF8-LF sha256=1272fca8d51e9fee79d3ac7d430450c555f14f01f8f73aed824c0098f7daae57; anchor=bool lcdObservationReady(]`.
-- Target: `firmware/esp8266/src/WebUi.h:877 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function lcdObservation(]`.
+- Target: `firmware/esp8266/src/WebUi.h:877 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function lcdObservation(]`.
 - Retained: Complete actual donor source read through EOF. Adapted common PCF8574 0x27/0x3F discovery, 4-bit HD44780 wake/control bytes,16x2 ASCII row normalization/padding, desired frame cache and backlight bit mapping into a transport-independent production class. S3 owns dedicated GPIO15/16 hardware I2C so the confirmed AVR A4/A5 TM1637 and ISP pins remain untouched.
 - Omitted/replaced code: `Blocking50ms/4.5ms initialization, ignored expander return values and cache validity after failed writes`. Disposition: **replaced**. Reason: Initialization is a paced loop-owned state machine. Every expander write must ACK; no full frame/available status until all initialization and both rows complete. NACK revokes readiness, bounded retry reinitializes/replays current desired text. Missing modules cannot become initialized merely because initialize() returned.
 - Omitted/replaced code: `Flash-string overload and LCD clear/backlight/generic bus controls on all client surfaces; host-owned LCD prompt/priority/offline policy`. Disposition: **pending**. Reason: This slice implements standalone physical discovery/init/default cell/update text, finite REST presentation and exact completed-frame previews. It does not claim the full donor host presenter, raw I2C bridge, every app editor or USB LCD mutation parity. CompactI2c remains available for a future explicit nonconflicting AVR wiring/build profile after flash/RAM review.
@@ -612,7 +612,7 @@ Verdict: **scoped-improvement**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920
 - Target: `desktop/src/ui/preferences.rs:154 [UTF8-LF sha256=470f9c141ddc5f86cc059b63c5c6d2e2ef55e64176077f003ef68e6e8556a9dc; anchor=fn board_controls(]`.
 - Target: `mobile/lib/api.dart:1591 [UTF8-LF sha256=40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f; anchor=Future<BoardSound> boardSound(]`.
 - Target: `mobile/lib/board_sound_preferences.dart:10 [UTF8-LF sha256=888e518c1a85ff594b6c4c778f2eb770a4cbcad3a1d53d3defea19b5e226dc5d; anchor=class BoardSoundPreferences]`.
-- Target: `firmware/esp8266/src/WebUi.h:1407 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=async function boardSoundTransaction(]`.
+- Target: `firmware/esp8266/src/WebUi.h:1407 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=async function boardSoundTransaction(]`.
 - Target: `firmware/avr/BootMelody.cpp:36 [UTF8-LF sha256=f163fcef8c0647ce0f0696c219b5d178e8815ff3df82bf2c5dec6c5c11400433; anchor=case kCueAttention:]`.
 - Target: `libraries/BoardCore/src/AttentionCues.h:13 [UTF8-LF sha256=02693199ab57f58a0531f46d8afa05ccd46dbd4c28b8db50b55bf5e4d1cff7b6; anchor=class Upload]`.
 - Target: `tools/test-audio.ps1:18 [UTF8-LF sha256=41500a0595fe030dd36f70175b56ee6f16ff62fe3bd1b2d9bf9bb29e94f90b30; anchor=Audio ·]`.
@@ -646,7 +646,7 @@ Verdict: **scoped-improvement**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920
 - Target: `desktop/src/ui/preferences.rs:154 [UTF8-LF sha256=470f9c141ddc5f86cc059b63c5c6d2e2ef55e64176077f003ef68e6e8556a9dc; anchor=fn board_controls(]`.
 - Target: `mobile/lib/api.dart:1591 [UTF8-LF sha256=40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f; anchor=Future<BoardSound> boardSound(]`.
 - Target: `mobile/lib/board_sound_preferences.dart:10 [UTF8-LF sha256=888e518c1a85ff594b6c4c778f2eb770a4cbcad3a1d53d3defea19b5e226dc5d; anchor=class BoardSoundPreferences]`.
-- Target: `firmware/esp8266/src/WebUi.h:1407 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=async function boardSoundTransaction(]`.
+- Target: `firmware/esp8266/src/WebUi.h:1407 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=async function boardSoundTransaction(]`.
 - Target: `firmware/avr/BootMelody.cpp:36 [UTF8-LF sha256=f163fcef8c0647ce0f0696c219b5d178e8815ff3df82bf2c5dec6c5c11400433; anchor=case kCueAttention:]`.
 - Retained: Timer1 OC1A PB1/D9 hardware output without audio ISR; ten-step nonblocking ring queue; silent pauses; begin/stop/mute and active telemetry.
 - Retained: PCController already uses Timer1 hardware toggling; that is reuse, not a Pakar invention.
@@ -724,14 +724,14 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `4fd40d999691968be1d32826a925a4bb221a5bd102c2a237ed947f6bf37b2be9`.
 
 - Target: `mobile/lib/bridge.dart:115 [UTF8-LF sha256=09645e418d8f0dec6c6467418c0e09ff1afc14fd8461da5c3dcaaa04b8a9667a; anchor=class BridgeEventJournal]`.
-- Target: `mobile/lib/app_support.dart:25 [UTF8-LF sha256=af00a7436acd4f52808cd01757dca1ff962e8429db164486253c9061a0d6ef97; anchor=class AppSupportSession]`.
-- Target: `mobile/lib/update_center.dart:98 [UTF8-LF sha256=af02585e98578a1edc02737c89ef84a7dcfebf9d4d98af4cb2bc331319d995ef; anchor=class SupportSection]`.
+- Target: `mobile/lib/app_support.dart:25 [UTF8-LF sha256=2bcc050bad8334631877f92aa4060efa2543f83c2e4f0b6bb55c0660c6c9761e; anchor=class AppSupportSession]`.
+- Target: `mobile/lib/update_center.dart:101 [UTF8-LF sha256=ad4a027cda341c299d47455abe3e4b783d54b711dbcb913e586ce13ceff7e342; anchor=class SupportSection]`.
 - Retained: Read complete actual donor bridge through EOF. Adapted generation retirement, token/Origin admission, bounded HTTP body reader, same-board/boot deadline and duplicate-ID admission, serialized commands, uncertainty latch and redacted health into an independently opt-in foreground LAN troubleshooting session. Command execution uses the existing acknowledged same-ID transport, not an arbitrary proxy.
 - Retained: Mobile specialist reread the same complete donor for duplex control. Adapt live selected-owner event subscriptions, coalesced status projection, identity-bound availability/LWT and one correlated result fanout across the existing foreground MQTT, outbound/local WebSocket and HTTP bridge. Sanitized bounded64 event journal enables HTTP cursor recovery; reflected observations cannot start command loops and retired sessions cannot publish late outcomes.
 - Omitted/replaced code: `MQTT/outbound WebSocket bridge and firmware staging/export`. Disposition: **pending**. Reason: These remain in the existing separate advanced bridge/firmware surfaces and are not claimed newly integrated or physically accepted by this bounded troubleshooting import. Arbitrary firmware apply, shell, OS execution and token export are intentionally not support RPC operations.
 - Omitted/replaced code: `Android background service and unattended Internet exposure`. Disposition: **pending**. Reason: This explicitly enabled LAN session expires after fifteen minutes and revokes on background/dispose. It does not claim background uptime, port forwarding, TLS termination or remote Android control without consent.
 - Test-code evidence: `mobile/test/bridge_duplex_test.dart:58 [UTF8-LF sha256=3fb5bdddf8e0a942ab7bd32000b2daf8bed7575428cc230c6ff4bc72fc4e4802; anchor=HTTP commands fan out one correlated result]`.
-- Test-code evidence: `mobile/test/app_support_test.dart:33 [UTF8-LF sha256=67d32afdc9bcc7af9b57e415ae28ada62c869ad4d9129828d49c310772b94817; anchor=void main()]`.
+- Test-code evidence: `mobile/test/app_support_test.dart:74 [UTF8-LF sha256=331b86e1c20950c090cec67e90943c425b663824c8ba8798b2036f6cc5f71569; anchor=void main()]`.
 - Test-code evidence: `mobile/test/update_center_test.dart:12 [UTF8-LF sha256=749dd5dce19b59d86ea50e9e6a9af0d445e1fd562c2d0e2cb46d07151a225989; anchor=One update workspace]`.
 - Remaining: Issue #7/#10/#2: installed Android support-session acceptance, remote endpoint and background-service delivery remain separate. Five real loopback HTTP/WS tests are not Android runtime or physical board acceptance.
 
@@ -740,7 +740,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `7c4c3a679ede250bb44effc96ccaf8a33a49f15e3ec8a1e1f5dfca082d64c72f`.
 
 - Target: `mobile/lib/connection_preferences.dart:56 [UTF8-LF sha256=9b4b4d787f7169a31f09717118c63ec7f88476df0568a84eb04909a0bd547d54; anchor=class ConnectionPreferences]`.
-- Target: `mobile/lib/main.dart:751 [UTF8-LF sha256=91041c40d4383b2e41ba9b707a0fc1982645229f913a6b74824cb027138debf7; anchor=_saveWorkspaces]`.
+- Target: `mobile/lib/main.dart:753 [UTF8-LF sha256=9bc176417573adae2f604c9b23b3e8081f95b2da4775417adeee46bced1aeda1; anchor=_saveWorkspaces]`.
 - Retained: Complete donor read: preserve secure password migration and last explicit connection profile; adapt nonsecret connection draft restoration and explicit Disconnect/transport intent without automatically selecting discovered paths. Pristine settings fields follow async profile loading, edited fields retain the draft.
 - Omitted/replaced code: `Mandatory/nonempty default password and restoring secret drafts`. Disposition: **replaced**. Reason: Current board authentication is optional. Existing secure credential ownership remains separate; workspace persistence excludes passwords/tokens and does not require credentials before the board does.
 - Test-code evidence: `mobile/test/workspace_lifecycle_test.dart:13 [UTF8-LF sha256=479e0285bf8de0d5015a0827edbe6fc9e835408faa48ba11d7ebd994f329a993; anchor=connection]`.
@@ -835,15 +835,22 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `a13fdcf3c07e79544fef87b66226cc035ffc76e9dfd3841107c6b79bd0793ec0`.
 
+- Target: `mobile/lib/presentation_assets.dart:196 [UTF8-LF sha256=722bf170eae5f2eb2f2f2a365afc489e64693a7445c5a4997e52bf31e306b12f; anchor=Future<void> acceptNotice]`.
+- Target: `mobile/lib/app_support.dart:205 [UTF8-LF sha256=2bcc050bad8334631877f92aa4060efa2543f83c2e4f0b6bb55c0660c6c9761e; anchor=value['operation'] == 'board.status']`.
+- Target: `mobile/lib/update_center.dart:79 [UTF8-LF sha256=ad4a027cda341c299d47455abe3e4b783d54b711dbcb913e586ce13ceff7e342; anchor=extensionsFirst: true]`.
+- Target: `assets/presentation/studio.json:1 [UTF8-LF sha256=af51f425b62330f25b0e83601e418cf7663668c744d0b68af29722c91fb55e45; anchor="revision":1]`.
 - Target: `mobile/lib/app_client_management.dart:30 [UTF8-LF sha256=482a7add2e30ee6f7d4939f2d74002449721e1d0c2f86018fb19ce59c9a0ae9c; anchor=class AppClientManagement]`.
 - Target: `mobile/lib/app_updates.dart:20 [UTF8-LF sha256=f35b215ca5942761edc259efca486eed11f75ed9e320be70d35df4793d7e9e9b; anchor=class AppUpdates]`.
-- Target: `mobile/lib/app_update_coordinator.dart:19 [UTF8-LF sha256=3fb1cb1c909c0b29c37a8e47954f4bf8711a9c2f6119e8d8e2f767da97c6bb94; anchor=class AppUpdateCoordinator]`.
-- Target: `mobile/lib/app_updates_page.dart:7 [UTF8-LF sha256=1d38f38d9e4aba98def2aa799a5dd8f40ad4d98413e6b377bf8604a866b5334f; anchor=class AppUpdatesPage]`.
-- Retained: Actual bounded native-channel package RPC, 16KiB ordered chunks, manifest-pinned peer pull/push, measured progress and separate local installer consent. Coordinator adds allowlisted public preferences, exact-session/origin HTTP/WS/Socket.IO offers, serialized write-ahead digest receipts and same-manifest automatic peer pulls.
+- Target: `mobile/lib/app_update_coordinator.dart:19 [UTF8-LF sha256=0ce126ea93151b2d2303a88a5dc942f94a3a00f765d6f56cd7ffbba28aa970d1; anchor=class AppUpdateCoordinator]`.
+- Target: `mobile/lib/app_updates_page.dart:7 [UTF8-LF sha256=1b9d9e207ed6ad423f31509de77d9eb4ef9193e9efd049dc9e5a716a03672fa9; anchor=class AppUpdatesPage]`.
+- Retained: Actual bounded native-channel package RPC, 16KiB ordered chunks, manifest-pinned peer pull/push, measured progress and separate local installer consent. Coordinator adds allowlisted public preferences, exact-session/origin HTTP/WS/Socket.IO offers, serialized write-ahead digest receipts and same-manifest automatic peer pulls. Reread actual app_upgrade.dart and peer_upgrades.dart through EOF at unchanged donor hashes. Extend the same digest/size/origin and generation discipline to a data-only presentation lane: default trusted source, coalesced HTTP fetch, session/deadline-bound WebSocket/Socket.IO hints and atomic activation without APK. Office SQLite publication validates only palette data, preserves immutable digests/history and explicitly opts clients into new notices; add the previously missing event type so actual app-package WSS offers are consumable. One UpdateCenter renders data/support and package/automatic settings together, not duplicate menu paths. Authenticated support adds allowlisted read-only board status/map and trusted asset-check RPCs; commands remain separately opted in and no arbitrary shell/code is accepted. Compiled Flutter/native behavior still needs a signed APK and Android consent; no hot Dart patch runtime, background support, actual tablet delivery or whole-donor parity claimed.
 - Omitted/replaced code: `Remaining generic donor/platform acceptance outside this bounded update slice`. Disposition: **pending**. Reason: Android foreground services/background uptime, split APKs and signing-key rotation, direct Android USB-host firmware programming, generic host RPC parity and actual Android/LAN/TLS/ESP/AVR physical acceptance remain separate. Exact self-package signer sets and newer version codes fail closed; no silent installer or uncertain programming replay.
+- Test-code evidence: `mobile/test/presentation_assets_transport_test.dart:10 [UTF8-LF sha256=a03c8860867774170308991d5266bda052163235b25d69912d365dfeb4c31152; anchor=Actual HTTP data updates coalesce]`.
+- Test-code evidence: `mobile/test/app_support_test.dart:89 [UTF8-LF sha256=331b86e1c20950c090cec67e90943c425b663824c8ba8798b2036f6cc5f71569; anchor=Authenticated support reads status and mapping]`.
+- Test-code evidence: `mobile/test/update_center_test.dart:12 [UTF8-LF sha256=749dd5dce19b59d86ea50e9e6a9af0d445e1fd562c2d0e2cb46d07151a225989; anchor=One update workspace retains app support]`.
 - Test-code evidence: `mobile/test/app_client_management_test.dart:41 [UTF8-LF sha256=8822963db7cc2832e639691f2e62b1d30b43d9ce0a1eeede5a10b4c91b613baf; anchor=Enrollment credentials and command receipts]`.
 - Test-code evidence: `mobile/test/app_updates_test.dart:190 [UTF8-LF sha256=1aabfe844bf8cb7e159fc7adfe3a061aa8cee02e14391f21b4f858ff7612bdfe; anchor=native bridge refuses oversized chunks]`.
-- Test-code evidence: `mobile/test/app_update_coordinator_test.dart:446 [UTF8-LF sha256=65c21bd2b5445a57079191e1be4751e86ab53c3f7d47faab974a3b6e62e77a45; anchor=Write-ahead receipt precedes download]`.
+- Test-code evidence: `mobile/test/app_update_coordinator_test.dart:508 [UTF8-LF sha256=9e34ce92f5306cfa91ab1d82fdbd7d811a63b68b2635b5654858057f3f5d2d81; anchor=Write-ahead receipt precedes download]`.
 - Test-code evidence: `mobile/test/update_pages_test.dart:93 [UTF8-LF sha256=8c55706b750787137f8ff0a61a83f650f86ec19a3e1a1a8d86231044014bea74; anchor=App updates are usable offline]`.
 - Test-code evidence: `mobile/test/capture_test.dart:33 [UTF8-LF sha256=c62fe3c9f6e73a0f4e0fae84925332c5dde99822f6e5680e95dc8c5dcb0cb06c; anchor=Explicit simulated renderer capture]`.
 - Remaining: Issue #7/#2/#3: actual installed Android peer transfer/OS consent/remote endpoint/board flash and human acceptance; source tests and staged APK are not deployment.
@@ -865,7 +872,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `fb4552dba17b3ec1bd999b6f43a05c2d85838fc490da4caec4d0b5316e5f9239`.
 
 - Target: `mobile/lib/pixel_diagnostic.dart:70 [UTF8-LF sha256=49b37ca6d6a14472da189800dd846acdebed7816fadb0ac22230c11d0cb2c3c6; anchor=class PixelDiagnosticWorkspace]`.
-- Target: `mobile/lib/main.dart:751 [UTF8-LF sha256=91041c40d4383b2e41ba9b707a0fc1982645229f913a6b74824cb027138debf7; anchor=_saveWorkspaces]`.
+- Target: `mobile/lib/main.dart:753 [UTF8-LF sha256=9bc176417573adae2f604c9b23b3e8081f95b2da4775417adeee46bced1aeda1; anchor=_saveWorkspaces]`.
 - Retained: Complete donor read: adapt bounded enum/preferences restore and separate phone mirroring options into the existing ordered snapshot writer. Preserve visual/volume/follow-mute preferences without restarting PCM sessions, tones or commands.
 - Omitted/replaced code: `Per-keystroke sequential preference writes and PC-only branding`. Disposition: **replaced**. Reason: Use one content-equal coalesced writer, preserving the requested low-write policy and Pakar identity.
 - Omitted/replaced code: `Complete donor appearance/launcher/theme options and workspace manager`. Disposition: **pending**. Reason: This task fixes lost state; unrelated useful preference surfaces require exact subsequent implementation/review, not an implicit parity claim.
@@ -919,7 +926,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `f00ed672c1f72f1a66fb65cff1cfe0a89dea5f7b6222f154db00a7c52c2e1a82`.
 
 - Target: `mobile/lib/workspace_activity_strip.dart:8 [UTF8-LF sha256=fccaa432c6ff25855405fab28b9ebcddd5de82ae967a8c4246354a75ef593924; anchor=class WorkspaceActivityStrip]`.
-- Target: `mobile/lib/main.dart:1532 [UTF8-LF sha256=91041c40d4383b2e41ba9b707a0fc1982645229f913a6b74824cb027138debf7; anchor=: WorkspaceActivityStrip(]`.
+- Target: `mobile/lib/main.dart:1534 [UTF8-LF sha256=9bc176417573adae2f604c9b23b3e8081f95b2da4775417adeee46bced1aeda1; anchor=: WorkspaceActivityStrip(]`.
 - Retained: Fully read actual ActivityStrip through EOF. Adapted stable GlobalKey targets, post-frame selected activity reveal (180ms after selection), minimum48px touch controls, semantic selected state, tooltip, reserved one-pixel border and horizontal scrolling phone navigation. Pakar uses discovered string IDs rather than fixed donor indices; the current per-board palette replaces donor per-activity hardcoded colors.
 - Retained: Reread the same complete canonical donor and verified its recorded hash for footer preservation. The original Pakar NavigationBar from a7d69ce's parent is retained for two-to-five destinations whose selected/unselected labels actually fit at current width, safe insets and text scale. More/longer destinations retain the donor overflow strip without hiding pages; selected IDs survive count/width changes and post-frame reveal callbacks coalesce. Wide tablets keep the existing rail, now scrollable for shorter landscape screens. No contextual destination is removed or fabricated by this layout policy.
 - Omitted/replaced code: `vertical activity layout and muted/per-activity color treatment`. Disposition: **pending**. Reason: Wide Pakar currently retains its existing NavigationRail. New phone navigation imports the donor horizontal implementation; a separate wide navigation adaptation is still required for full chrome parity.
@@ -1134,7 +1141,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp8266/src/LcdManagement.h:3 [UTF8-LF sha256=eb800ee4c334b22504f37bd841bda58a7562052df2c7226ff19bc23a454e652d; anchor=String lcdStatusJson()]`.
 - Target: `desktop/src/display.rs:7 [UTF8-LF sha256=e623569692f080bb41e7dbd148fc657217d387853d1a0c28280a812f37af819c; anchor=pub struct LcdObservation]`.
 - Target: `mobile/lib/peer_context.dart:205 [UTF8-LF sha256=1272fca8d51e9fee79d3ac7d430450c555f14f01f8f73aed824c0098f7daae57; anchor=bool lcdObservationReady(]`.
-- Target: `firmware/esp8266/src/WebUi.h:877 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function lcdObservation(]`.
+- Target: `firmware/esp8266/src/WebUi.h:877 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function lcdObservation(]`.
 - Retained: Complete actual donor source read through EOF. Preserved bounded transaction results, explicit master setup and timeout policy through the real S3 Wire1 adapter at100kHz/5ms transaction timeout. Transport interface isolates controller-specific registers instead of pretending AVR TWI can control an ESP32-S3 bus.
 - Omitted/replaced code: `AVR TWI register implementation, native AVR bridge receive buffer and host-proxied arbitrary I2C operations`. Disposition: **replaced**. Reason: The S3 uses actual native hardware I2C on separate pins, not the AVR connector already carrying non-I2C TM1637. A private adapter has no public arbitrary-bus mutation path. Copying AVR registers or enabling Wire on AVR A4/A5 would steal the display pins.
 - Omitted/replaced code: `Flash-string overload and LCD clear/backlight/generic bus controls on all client surfaces; host-owned LCD prompt/priority/offline policy`. Disposition: **pending**. Reason: This slice implements standalone physical discovery/init/default cell/update text, finite REST presentation and exact completed-frame previews. It does not claim the full donor host presenter, raw I2C bridge, every app editor or USB LCD mutation parity. CompactI2c remains available for a future explicit nonconflicting AVR wiring/build profile after flash/RAM review.
@@ -1156,7 +1163,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp8266/src/LcdManagement.h:3 [UTF8-LF sha256=eb800ee4c334b22504f37bd841bda58a7562052df2c7226ff19bc23a454e652d; anchor=String lcdStatusJson()]`.
 - Target: `desktop/src/display.rs:7 [UTF8-LF sha256=e623569692f080bb41e7dbd148fc657217d387853d1a0c28280a812f37af819c; anchor=pub struct LcdObservation]`.
 - Target: `mobile/lib/peer_context.dart:205 [UTF8-LF sha256=1272fca8d51e9fee79d3ac7d430450c555f14f01f8f73aed824c0098f7daae57; anchor=bool lcdObservationReady(]`.
-- Target: `firmware/esp8266/src/WebUi.h:877 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function lcdObservation(]`.
+- Target: `firmware/esp8266/src/WebUi.h:877 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function lcdObservation(]`.
 - Retained: Complete actual donor source read through EOF. Preserved bounded transaction results, explicit master setup and timeout policy through the real S3 Wire1 adapter at100kHz/5ms transaction timeout. Transport interface isolates controller-specific registers instead of pretending AVR TWI can control an ESP32-S3 bus.
 - Omitted/replaced code: `AVR TWI register implementation, native AVR bridge receive buffer and host-proxied arbitrary I2C operations`. Disposition: **replaced**. Reason: The S3 uses actual native hardware I2C on separate pins, not the AVR connector already carrying non-I2C TM1637. A private adapter has no public arbitrary-bus mutation path. Copying AVR registers or enabling Wire on AVR A4/A5 would steal the display pins.
 - Omitted/replaced code: `Flash-string overload and LCD clear/backlight/generic bus controls on all client surfaces; host-owned LCD prompt/priority/offline policy`. Disposition: **pending**. Reason: This slice implements standalone physical discovery/init/default cell/update text, finite REST presentation and exact completed-frame previews. It does not claim the full donor host presenter, raw I2C bridge, every app editor or USB LCD mutation parity. CompactI2c remains available for a future explicit nonconflicting AVR wiring/build profile after flash/RAM review.
@@ -1218,7 +1225,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `desktop/src/ui/preferences.rs:154 [UTF8-LF sha256=470f9c141ddc5f86cc059b63c5c6d2e2ef55e64176077f003ef68e6e8556a9dc; anchor=fn board_controls(]`.
 - Target: `mobile/lib/api.dart:1591 [UTF8-LF sha256=40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f; anchor=Future<BoardSound> boardSound(]`.
 - Target: `mobile/lib/board_sound_preferences.dart:10 [UTF8-LF sha256=888e518c1a85ff594b6c4c778f2eb770a4cbcad3a1d53d3defea19b5e226dc5d; anchor=class BoardSoundPreferences]`.
-- Target: `firmware/esp8266/src/WebUi.h:1407 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=async function boardSoundTransaction(]`.
+- Target: `firmware/esp8266/src/WebUi.h:1407 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=async function boardSoundTransaction(]`.
 - Target: `desktop/src/ui/device_settings.rs:35 [UTF8-LF sha256=43c0eb207de03c597ad69d10671655569ee1bc25ba16298869bc65c742d710db; anchor=fn avr_page(]`.
 - Target: `desktop/src/device_settings.rs:498 [UTF8-LF sha256=9e62958ec6114027601efe1f4a4ea045d1fb665ce7ab96b8bf78a3fc744f065b; anchor=pub fn finish_avr(]`.
 - Target: `firmware/esp8266/src/SceneStore.h:17 [UTF8-LF sha256=591338b076a27eac0b4a5c5d7ee18a4c062675c980dd1c8daef0adf1c5478145; anchor=template <class Filesystem> class SceneStore]`.
@@ -1256,7 +1263,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `desktop/src/ui/preferences.rs:154 [UTF8-LF sha256=470f9c141ddc5f86cc059b63c5c6d2e2ef55e64176077f003ef68e6e8556a9dc; anchor=fn board_controls(]`.
 - Target: `mobile/lib/api.dart:1591 [UTF8-LF sha256=40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f; anchor=Future<BoardSound> boardSound(]`.
 - Target: `mobile/lib/board_sound_preferences.dart:10 [UTF8-LF sha256=888e518c1a85ff594b6c4c778f2eb770a4cbcad3a1d53d3defea19b5e226dc5d; anchor=class BoardSoundPreferences]`.
-- Target: `firmware/esp8266/src/WebUi.h:1407 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=async function boardSoundTransaction(]`.
+- Target: `firmware/esp8266/src/WebUi.h:1407 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=async function boardSoundTransaction(]`.
 - Target: `desktop/src/ui/device_settings.rs:35 [UTF8-LF sha256=43c0eb207de03c597ad69d10671655569ee1bc25ba16298869bc65c742d710db; anchor=fn avr_page(]`.
 - Target: `desktop/src/device_settings.rs:498 [UTF8-LF sha256=9e62958ec6114027601efe1f4a4ea045d1fb665ce7ab96b8bf78a3fc744f065b; anchor=pub fn finish_avr(]`.
 - Retained: Reread complete donor source through EOF. Adapt MCU-owned persistent Silent bit independent of host/Windows notification audio, capability-acknowledged controls, explicit unknown/pending/verified states and full-record preservation. Native Preferences Board page uses existing PCController GET/SET/GET with real AVR ACK and persistent readback over the selected fenced HTTP or USB owner only; Web and Flutter Preferences use the same living contract. No unsupported buzzer is invented, no automatic uncertain mutation replay, and unchanged persisted flags skip EEPROM writes.
@@ -1280,7 +1287,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp32s3/src/StatusRgb.h:154 [UTF8-LF sha256=2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b; anchor=bool service(uint32_t now, Writer writer)]`.
 - Target: `desktop/src/status_rgb.rs:29 [UTF8-LF sha256=3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e; anchor=pub fn observe(]`.
 - Target: `mobile/lib/status_rgb.dart:52 [UTF8-LF sha256=5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8; anchor=class StatusRgbPreview]`.
-- Target: `firmware/esp8266/src/WebUi.h:895 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function acceptStatusRgb(]`.
+- Target: `firmware/esp8266/src/WebUi.h:895 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function acceptStatusRgb(]`.
 - Retained: Full header/implementation read through EOF. Actual absolute elapsed/period evaluation, idempotent state ownership and already-scaled rendered RGB reporting adapted into the S3's board-owned semantic engine. Added bounded 300ms eased state transitions, explicit pin safety and driver-accepted output revision; no independent client-side animation reconstruction.
 - Retained: Native/Web/mobile now merge compact observed RGB revisions only for the selected exact board/boot. Duplicate/older/foreign revisions cannot overwrite newer RGB, renew command/hardware freshness or replace cells/layout. Complete status snapshots retain only newer same-peer RGB; peer changes discard it. Selected transport capabilities gate settings with no silent Wi-Fi fallback, and writes require saved ACK plus exact persisted readback rather than a local preview.
 - Omitted/replaced code: `PwmController/EEPROM/StatusProfileAddress dependencies and sixteen-bit phase clock`. Disposition: **replaced**. Reason: Those target AVR RGB PWM wiring and EEPROM allocation, not the identified S3 addressable pixel. Existing S3 persisted configuration owns enable/brightness, writer acceptance owns reported output, and the 32-bit elapsed timer advances without per-loop phase drift.
@@ -1316,7 +1323,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp32s3/src/StatusRgb.h:234 [UTF8-LF sha256=2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b; anchor=static uint8_t scale(]`.
 - Target: `desktop/src/status_rgb.rs:2 [UTF8-LF sha256=3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e; anchor=clients never synthesize]`.
 - Target: `mobile/lib/status_rgb.dart:9 [UTF8-LF sha256=5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8; anchor=Color? statusRgbColor(]`.
-- Target: `firmware/esp8266/src/WebUi.h:894 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function statusRgbOutput]`.
+- Target: `firmware/esp8266/src/WebUi.h:894 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function statusRgbOutput]`.
 - Retained: Full original source read through EOF. Actual unsigned byte-exact scale(value, level) and interpolate(from, to, phase) arithmetic copied into the S3 semantic onboard-pixel engine, independent of the GPIO4 matrix.
 - Omitted/replaced code: `phaseDeadline distributing 64 phases in a modulo-16-bit AVR clock`. Disposition: **replaced**. Reason: S3 evaluates the present phase directly from uint32 elapsed milliseconds rather than scheduling 64 deadline steps. Late service does not slow the animation; native tests cover real production arithmetic and millis wrap, not optical output.
 - Test-code evidence: `tests/s3_status_rgb_test.cpp:69 [UTF8-LF sha256=f48af12963f643feca43b77ed5edd181e22981afb761305cf947d5ad053fa6f7; anchor=Already-scaled output bytes]`.
@@ -1416,7 +1423,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `desktop/src/ui/preferences.rs:154 [UTF8-LF sha256=470f9c141ddc5f86cc059b63c5c6d2e2ef55e64176077f003ef68e6e8556a9dc; anchor=fn board_controls(]`.
 - Target: `mobile/lib/api.dart:1591 [UTF8-LF sha256=40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f; anchor=Future<BoardSound> boardSound(]`.
 - Target: `mobile/lib/board_sound_preferences.dart:10 [UTF8-LF sha256=888e518c1a85ff594b6c4c778f2eb770a4cbcad3a1d53d3defea19b5e226dc5d; anchor=class BoardSoundPreferences]`.
-- Target: `firmware/esp8266/src/WebUi.h:1407 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=async function boardSoundTransaction(]`.
+- Target: `firmware/esp8266/src/WebUi.h:1407 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=async function boardSoundTransaction(]`.
 - Retained: Reread complete donor source through EOF. Adapt MCU-owned persistent Silent bit independent of host/Windows notification audio, capability-acknowledged controls, explicit unknown/pending/verified states and full-record preservation. Native Preferences Board page uses existing PCController GET/SET/GET with real AVR ACK and persistent readback over the selected fenced HTTP or USB owner only; Web and Flutter Preferences use the same living contract. No unsupported buzzer is invented, no automatic uncertain mutation replay, and unchanged persisted flags skip EEPROM writes.
 - Omitted/replaced code: `Full board/host/both/none mirroring routes, runtime overrides, OS backend/executable resolution and watched app configuration`. Disposition: **pending**. Reason: Reuse the known/unknown/pending/verified board-setting ownership, not an unimplemented host audio backend. Actual host routing parity needs independent implementation and acoustic acceptance; this change must not mute Windows notifications by accident.
 - Test-code evidence: `tests/tone_player_test.cpp:45 [UTF8-LF sha256=09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb; anchor=const auto beforeMute]`.
@@ -1470,11 +1477,11 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `1f167ddab14067f939649a96c57432981a2d0074ad8b7c1ada37948da8d51a39`.
 
-- Target: `services/client-management/service.mjs:90 [UTF8-LF sha256=279a7a9d9e699831b0d19128ab89aac1610d1c8cdc3994c99f8f9c12e8baa795; anchor=export async function createService]`.
+- Target: `services/client-management/service.mjs:90 [UTF8-LF sha256=74ff614ccca11d8f3d63ab24e295bd688bcca7eba9e4d6bd990ad3a39c7dd4ea; anchor=export async function createService]`.
 - Target: `tools/publish-client-release.mjs:24 [UTF8-LF sha256=30d707b4032dae9d2ab01b8ea6bc322658ef6eee314647af02f90e42fb8d4b37; anchor=const metadata=]`.
 - Retained: Actual streaming bounded Put, digest/type checks, fsync before immutable publication, owned path/descriptor checks adapted to the Node SQLite registry and content-addressed package route.
 - Omitted/replaced code: `Generic donor artifact store beyond self application packages`. Disposition: **pending**. Reason: This temporary service stores Windows self-executable and Android self-APK only; generic board artifact kinds/current pointers, resumed downloads and Go os.Root API are not copied. Node loopback-only service uses an exclusive trusted-writer directory, same-open handle and NOFOLLOW; clients always verify exact digest/bytes. Background Android services and two-installed-version acceptance remain pending.
-- Test-code evidence: `services/client-management/service.test.mjs:10 [UTF8-LF sha256=a8f7d7976b732ef66fc3be887e7d657254409a1b94e9620c329b53ad8067feb5; anchor=actual management HTTP]`.
+- Test-code evidence: `services/client-management/service.test.mjs:10 [UTF8-LF sha256=bcf2f619193879593158a521340c17b66a9f61fd4e3217cb21faf3cd0e71cb41; anchor=actual management HTTP]`.
 - Remaining: Issue #7: actual server/client rollout receipts and Android installed consent/multi-device acceptance; no arbitrary shell execution or uninstall of unrelated packages.
 
 ### PCController: `Tools/Controller/internal/discovery/discovery_test.go`
@@ -1601,7 +1608,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `libraries/BoardCore/src/PeerCompatibility.h:27 [UTF8-LF sha256=530d8de10f3715db8cb3404dc511634152bcea12c14d9e6ebb578645307fd26b; anchor=namespace BoardCore { namespace PeerCompatibility {]`.
 - Target: `firmware/esp8266/src/ClientTelemetry.h:18 [UTF8-LF sha256=71f78fe48b0208aabe6505d9cf5986484ee8d5e77c1fea8a7b2737afecfb112a; anchor=class ClientTelemetry {]`.
 - Target: `desktop/src/peer_identity.rs:379 [UTF8-LF sha256=4895d4ce1dc5f77e1e866600349baef3ba131e24d23970e254a968442e663dfe; anchor=pub fn sanitize_report(]`.
-- Target: `mobile/lib/peer_identity.dart:28 [UTF8-LF sha256=d54f6f4a154e412fd5677a8fa250e62c25b3a542fcc62e4810524d0ca5079a87; anchor=class PeerIdentity]`.
+- Target: `mobile/lib/peer_identity.dart:28 [UTF8-LF sha256=dfa82c3393937d726360d6ee13f5c965f02f30c3a938d024f00106c61bd48eba; anchor=class PeerIdentity]`.
 - Retained: Read entire source. Preserve instance.id vs physical board identity and push-fed nonsecret current-owner metadata: bridge path/hostname are additive, board_id/boot_id/hostname remain downstream-owned; current status is fed without independent serial acquisition.
 - Retained: Adapt the donor's observed-vs-declared metadata separation and bounded nonsecret push reports across the board, native and mobile peer registries. Shared release-range admission is a new user requirement, not copied donor version negotiation; no exact-build adapter or numbered route is introduced.
 - Omitted/replaced code: `Complete discoveryMetadata rich TXT, five-second coalesced refresh and all HostIdentity fields`. Disposition: **pending**. Reason: Fixed nonsecret listener TXT suffices for compatible endpoint discovery, while full board state is served from the selected owner. Rich changing TXT and cross-product public enrichment remain useful pending imports; no board secret is advertised.
@@ -1677,7 +1684,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/firmware_progress.rs:121 [UTF8-LF sha256=a35d8ed50dbd2b657138e4a0eca981ad9098e604a36857282b87568f9a781996; anchor=pub fn observed(]`.
 - Target: `mobile/lib/firmware_progress.dart:8 [UTF8-LF sha256=51631d76da67f123c5419eb44d4d688c11ee162bf602ba6769e366a840d7348d; anchor=class FirmwareProgress]`.
-- Target: `firmware/esp8266/src/WebUi.h:964 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function firmwareUpdateObservation(s)]`.
+- Target: `firmware/esp8266/src/WebUi.h:964 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function firmwareUpdateObservation(s)]`.
 - Retained: Adapt actual explicit measured stage counters, indeterminate non-transfer stages, separate verification/completion and terminal state handling. Rust retains external board update/local OTA state in HTTP/WS/USB DTOs; Flutter consumes the existing status stream, and Web renders that same source. No transfer 100 percent is treated as completed flashing.
 - Omitted/replaced code: `Remaining donor mechanisms outside this delivery slice`. Disposition: **pending**. Reason: This slice does not port the donor's per-operation milestone toast tracker, Windows taskbar COM ordering or terminal OSC progress presenter. Existing native notifications remain, but complete progress-notification/OS presentation parity is pending.
 - Test-code evidence: `desktop/src/firmware_progress.rs:352 [UTF8-LF sha256=a35d8ed50dbd2b657138e4a0eca981ad9098e604a36857282b87568f9a781996; anchor=fn firmware_progress_observes_external_ota_without_inventing_completion]`.
@@ -1699,11 +1706,11 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `7110d10ee2ca3e7bf6c45041a50a5c5184b044c0014577b0e517294c95228d51`.
 
-- Target: `services/client-management/service.mjs:90 [UTF8-LF sha256=279a7a9d9e699831b0d19128ab89aac1610d1c8cdc3994c99f8f9c12e8baa795; anchor=export async function createService]`.
+- Target: `services/client-management/service.mjs:90 [UTF8-LF sha256=74ff614ccca11d8f3d63ab24e295bd688bcca7eba9e4d6bd990ad3a39c7dd4ea; anchor=export async function createService]`.
 - Target: `tools/publish-client-release.mjs:24 [UTF8-LF sha256=30d707b4032dae9d2ab01b8ea6bc322658ef6eee314647af02f90e42fb8d4b37; anchor=const metadata=]`.
 - Retained: Actual artifact descriptor and same-open-handle HTTP serving adapted to explicit filename/hash identity, exact bytes/ranges and no privileged public inventory.
 - Omitted/replaced code: `Generic donor artifact store beyond self application packages`. Disposition: **pending**. Reason: This temporary service stores Windows self-executable and Android self-APK only; generic board artifact kinds/current pointers, resumed downloads and Go os.Root API are not copied. Node loopback-only service uses an exclusive trusted-writer directory, same-open handle and NOFOLLOW; clients always verify exact digest/bytes. Background Android services and two-installed-version acceptance remain pending.
-- Test-code evidence: `services/client-management/service.test.mjs:10 [UTF8-LF sha256=a8f7d7976b732ef66fc3be887e7d657254409a1b94e9620c329b53ad8067feb5; anchor=actual management HTTP]`.
+- Test-code evidence: `services/client-management/service.test.mjs:10 [UTF8-LF sha256=bcf2f619193879593158a521340c17b66a9f61fd4e3217cb21faf3cd0e71cb41; anchor=actual management HTTP]`.
 - Remaining: Issue #7: actual server/client rollout receipts and Android installed consent/multi-device acceptance; no arbitrary shell execution or uninstall of unrelated packages.
 
 ### PCController: `Tools/Controller/internal/ipcjson/rest_routes_test.go`
@@ -1827,7 +1834,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/terminal_ui.rs:773 [UTF8-LF sha256=ef66e4c5f115d6b128525c8c06d9b8b23e6ece6c962399673800d6b765af04b3; anchor=fn command_request(]`.
 - Target: `mobile/lib/api.dart:1563 [UTF8-LF sha256=40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f; anchor=bool _acceptIdentity(]`.
-- Target: `mobile/lib/main.dart:196 [UTF8-LF sha256=91041c40d4383b2e41ba9b707a0fc1982645229f913a6b74824cb027138debf7; anchor=api.onPeerChanged = ()]`.
+- Target: `mobile/lib/main.dart:198 [UTF8-LF sha256=9bc176417573adae2f604c9b23b3e8081f95b2da4775417adeee46bced1aeda1; anchor=api.onPeerChanged = ()]`.
 - Target: `mobile/lib/bridge.dart:371 [UTF8-LF sha256=09645e418d8f0dec6c6467418c0e09ff1afc14fd8461da5c3dcaaa04b8a9667a; anchor=watchdog = Timer.periodic]`.
 - Target: `libraries/BoardCore/src/PeerFence.h:31 [UTF8-LF sha256=9f1ab63252bd881d2fc786e230a18db331e66708a1bd3ccd0f096d2d2b5d49d5; anchor=inline bool accepts(]`.
 - Target: `firmware/esp8266/src/WebAccess.h:91 [UTF8-LF sha256=7c87b0f4e3f4cc849da343e7da39fa946ee68716a7181b0a2ee1241cb4579cab; anchor=bool peerAllowed(]`.
@@ -2062,9 +2069,9 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `desktop/src/capabilities.rs:168 [UTF8-LF sha256=961f8715b1a77ab0edecb5c933914281e1af15cea183938c020bd8fc58b7c490; anchor=pub fn has(]`.
 - Target: `mobile/lib/peer_context.dart:45 [UTF8-LF sha256=1272fca8d51e9fee79d3ac7d430450c555f14f01f8f73aed824c0098f7daae57; anchor=static PeerContext fromStatus]`.
 - Target: `mobile/lib/cell_pixel_preview.dart:12 [UTF8-LF sha256=5cc0f113cc45f19ad523fb1ea99f07ad4f4097ae7412dbbebe6a0fffd9e063f4; anchor=CellPixelPreview? cellPixelPreview]`.
-- Target: `mobile/lib/main.dart:912 [UTF8-LF sha256=91041c40d4383b2e41ba9b707a0fc1982645229f913a6b74824cb027138debf7; anchor=Future<bool> _command]`.
+- Target: `mobile/lib/main.dart:914 [UTF8-LF sha256=9bc176417573adae2f604c9b23b3e8081f95b2da4775417adeee46bced1aeda1; anchor=Future<bool> _command]`.
 - Target: `libraries/BoardCore/src/DeviceContext.h:25 [UTF8-LF sha256=23d4f80efe969176398e2bedc66dbfc851afa3064c2ef8db2153167cf2ded451; anchor=inline uint16_t features(]`.
-- Target: `firmware/esp8266/src/WebUi.h:868 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function peerAvailability(]`.
+- Target: `firmware/esp8266/src/WebUi.h:868 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function peerAvailability(]`.
 - Retained: Actual connected AND have_status AND advertised-capability conjunction adapted to selected-peer fresh manifests. No feature inference from hostname, pixel count, catalog, defaults or online alone.
 - Retained: TM1637 additionally requires fresh measured ACK; Text and Buzzer have independent HELLO support. Native/Web hide unrelated controls and gate domain commands.
 - Retained: Reread peripheral-availability.ts completely for Flutter recovery: the existing freshness deadline still owns commands; resuming a suspended socket preserves only a still-fresh observation and stale resume starts its recovery read immediately. Six fixed pixel indicator slots use the published frame map or explicitly labelled board diagnostic state; rainbow without sampled RGB never reuses old semantic white. This adapts availability/unknown semantics, not donor hardware-specific sensor layouts.
@@ -2084,7 +2091,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `7a3e955ddc771cf27f9e545c11ea992a1342a7ed5eaeba9d9a5b95d00dacd2bc`.
 
-- Target: `firmware/esp8266/src/WebUi.h:832 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function workspaceSettingsRecord]`.
+- Target: `firmware/esp8266/src/WebUi.h:832 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function workspaceSettingsRecord]`.
 - Retained: Completely read actual allowlisted normalized local-preferences and unavailable-storage behavior; adapt bounds/type validation and storage-disabled retention to passive board/application Web workspaces.
 - Omitted/replaced code: `Full donor quick-header action/catalog UI`. Disposition: **pending**. Reason: This reuses normalization/persistence, not every quick-header control; individual capability-gated donor controls need separate mapping.
 - Test-code evidence: `tests/web_workspace_test.mjs:115 [UTF8-LF sha256=0c36a09e6b43cbb54286356f82778393b44d70fb7e608ce2eaa8633125ef7145; anchor=Disabled browser storage still retains this session workspace]`.
@@ -2108,7 +2115,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `f600267bf09d925eaf9e5cc3d752574a0a3fbc46350782c614440300c08799e4`.
 
 - Target: `assets/web/frame-stream.js:9 [UTF8-LF sha256=3d0ab90616b173570e5618be76aded339754caa92961868a1d9b43a02e3c6d90; anchor=function createFrameStream]`.
-- Target: `firmware/esp8266/src/WebUi.h:1623 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function readStreamPolicy]`.
+- Target: `firmware/esp8266/src/WebUi.h:1623 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function readStreamPolicy]`.
 - Retained: Full source read through EOF. Actual injected clock, generation admission, one scheduled callback, cancellation and disposal structure adapted to the mechanically embedded latest-frame Web stream.
 - Retained: Stale callbacks check generation before clearing the timer handle, strengthening the donor against disarming a replacement owner. Observed board/boot and exact socket ownership replace build/name-only identity for this bounded slice.
 - Omitted/replaced code: `pendingStatus history queue and applyStatusFrameBatch ordered metrics/error reducer`. Disposition: **pending**. Reason: All status arrivals are useful for telemetry/history, but stale LED actuations must not be replayed. This latest-only send scheduler does not implement the donor telemetry reducer; retain it as separate useful work.
@@ -2432,7 +2439,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `desktop/src/brand_image.rs:25 [UTF8-LF sha256=ab71607dcde16d7af14b0a292982f902186dacf6b5b78b3f4c983e37464428e9; anchor=pub fn native_icon_bytes]`.
 - Target: `docs/BRANDING-PARITY.md:60 [UTF8-LF sha256=0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3; anchor=## Explicit unfinished useful code and reasons]`.
 - Target: `desktop/src/branding.rs:8 [UTF8-LF sha256=100940d0ee954ecfeb059dba83245c37c4e1e325d9309c7c82870e4eb870870a; anchor=pub fn sync_peer]`.
-- Target: `mobile/lib/main.dart:1327 [UTF8-LF sha256=91041c40d4383b2e41ba9b707a0fc1982645229f913a6b74824cb027138debf7; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
+- Target: `mobile/lib/main.dart:1329 [UTF8-LF sha256=9bc176417573adae2f604c9b23b3e8081f95b2da4775417adeee46bced1aeda1; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
 - Target: `mobile/lib/application_artwork.dart:2 [UTF8-LF sha256=a1ee8fc15b0aa9111a5c416fcf74b3d05093b22e47b76d7744837f175f7b5ef4; anchor=const applicationArtworkBase64]`.
 - Retained: Actual icon_data_from_bytes imported unchanged; one embedded PNG supplies native/Web artwork without disk caches.
 - Retained: Actual native_icon_bytes seven-frame ICO encoding/master preservation/Lanczos3 resampling and shell derivative test adapted to shared supplied bytes and PNG-only decoder.
@@ -2559,7 +2566,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `desktop/src/ui/preferences.rs:154 [UTF8-LF sha256=470f9c141ddc5f86cc059b63c5c6d2e2ef55e64176077f003ef68e6e8556a9dc; anchor=fn board_controls(]`.
 - Target: `mobile/lib/api.dart:1591 [UTF8-LF sha256=40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f; anchor=Future<BoardSound> boardSound(]`.
 - Target: `mobile/lib/board_sound_preferences.dart:10 [UTF8-LF sha256=888e518c1a85ff594b6c4c778f2eb770a4cbcad3a1d53d3defea19b5e226dc5d; anchor=class BoardSoundPreferences]`.
-- Target: `firmware/esp8266/src/WebUi.h:1407 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=async function boardSoundTransaction(]`.
+- Target: `firmware/esp8266/src/WebUi.h:1407 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=async function boardSoundTransaction(]`.
 - Retained: Reread all 1280 lines through EOF. Prior authoritative overview/capability/front-panel adaptation remains; shared dropdown dependency is now imported, but full typed board settings and ACK consumers remain pending.
 - Retained: Numeric display controls are independent of Text; peer title follows acknowledged name and lost capabilities cancel Table work.
 - Retained: Reread complete donor source through EOF. Adapt MCU-owned persistent Silent bit independent of host/Windows notification audio, capability-acknowledged controls, explicit unknown/pending/verified states and full-record preservation. Native Preferences Board page uses existing PCController GET/SET/GET with real AVR ACK and persistent readback over the selected fenced HTTP or USB owner only; Web and Flutter Preferences use the same living contract. No unsupported buzzer is invented, no automatic uncertain mutation replay, and unchanged persisted flags skip EEPROM writes.
@@ -2602,7 +2609,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `8a396d67862578f8727e43a952e82120b20c9c582ebcc5366ab0968ba8f704d8`.
 
 - Target: `desktop/src/ui/cell_table.rs:431 [UTF8-LF sha256=169a289f74149b1bdd19c517f7ecfce31013cc617d0925c0eacdcb1e01fd6bdd; anchor=fn manager_selector(]`.
-- Target: `firmware/esp8266/src/WebUi.h:179 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=/* Fixed manager slots:]`.
+- Target: `firmware/esp8266/src/WebUi.h:179 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=/* Fixed manager slots:]`.
 - Retained: Read all 952 donor lines through EOF. navigation_control's fixed allocation, clipped centered text and inside-stroke painting are adapted to manager_selector. Compact cell/row/state slots use the existing shared neutral animated cell_surface; state-dependent Button Frames cannot resize their text/content geometry. Selected widget metadata is retained explicitly.
 - Retained: Current complete 1236-line donor and complete mapped Pakar dialog.rs were reread by the status/front-panel agent; historical bounded geometry, inside-stroke navigation, equal action sizing, RTL adjustments, numeric modifier/clipboard/wheel and scrolling mappings remain intact. This is source comparison, not native test execution.
 - Omitted/replaced code: `navigation_control's 80px minimum, left-aligned icon/title/metadata slots and selected bg_fill tint`. Disposition: **replaced**. Reason: A compact cell needs a centered number in 32x28; row/action slots are 96/104x28. The user requires neutral shared selection, not a tinted navigation side rail. Fixed text positions and inside strokes are preserved; existing side-rail helper remains unchanged.
@@ -2741,7 +2748,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `desktop/src/ui/status_bar.rs:77 [UTF8-LF sha256=35ce96f77e9f79608efe62881c2c32409a6d3cbdf809e4b1d0f3c4bca0f17dd5; anchor=fn hide_menu(]`.
 - Target: `desktop/src/ui/connection_controls.rs:84 [UTF8-LF sha256=58eaae178af71e86725a71df606b6ed6fb142c4fe852d3d5b8dce8b980ed3440; anchor=pub fn draw(]`.
 - Target: `docs/CONNECTION-CONTROLS.md:1 [UTF8-LF sha256=002ee046e9c206a4cc241ad2b9033971b4933959d8e14f43958848403879f21d; anchor=# Front-panel transport dropdowns]`.
-- Target: `firmware/esp8266/src/WebUi.h:894 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function statusRgbOutput]`.
+- Target: `firmware/esp8266/src/WebUi.h:894 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function statusRgbOutput]`.
 - Target: `desktop/src/status_rgb.rs:46 [UTF8-LF sha256=3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e; anchor=pub fn retain(]`.
 - Target: `mobile/lib/status_rgb.dart:52 [UTF8-LF sha256=5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8; anchor=class StatusRgbPreview]`.
 - Retained: Current complete source read through EOF independently by the status/front-panel and network/UI agents; selected target changes reviewed again during evidence integration. Actual per-item hide context menus, persistent visibility choices, bar-level restore menu and small truncating message labels remain adapted. Transport controls remain usable offline without claiming hardware readiness.
@@ -2778,7 +2785,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `mobile/lib/output_panel.dart:14 [UTF8-LF sha256=4c238f93fc3fc58ee8ff40e21eab31e01becc524be7f8a35c8ba7eaf0574d326; anchor=class OutputPanel]`.
 - Target: `mobile/test/output_panel_test.dart:93 [UTF8-LF sha256=1b7a3034588aeaa3e575881e902a1564a46c675fe2574ca38e88896a6d22e188; anchor=Output order is bounded, durable and independent of table selection]`.
 - Target: `mobile/lib/table_workspace.dart:11 [UTF8-LF sha256=7a5deee08e0277ea316fdd04d9a3a1ffdc9896ff5f13745e751bdccde1544d91; anchor=class TableWorkspace]`.
-- Target: `mobile/lib/main.dart:758 [UTF8-LF sha256=91041c40d4383b2e41ba9b707a0fc1982645229f913a6b74824cb027138debf7; anchor=Future<void> _saveWorkspaces()]`.
+- Target: `mobile/lib/main.dart:760 [UTF8-LF sha256=9bc176417573adae2f604c9b23b3e8081f95b2da4775417adeee46bced1aeda1; anchor=Future<void> _saveWorkspaces()]`.
 - Target: `desktop/src/capabilities.rs:68 [UTF8-LF sha256=961f8715b1a77ab0edecb5c933914281e1af15cea183938c020bd8fc58b7c490; anchor=pub struct Presentation]`.
 - Target: `desktop/src/ui/shell.rs:573 [UTF8-LF sha256=694e4e9a49fff19e63ce73cf63294fe222dee6b16f27283529a5ad3de71988d9; anchor=fn synchronize_context]`.
 - Target: `desktop/src/ui/layout.rs:159 [UTF8-LF sha256=d368dc9cd57542eb9ff6170853619c79fc154f6d77a74be16db9c56fb9d4782c; anchor=presentation_context()]`.
@@ -2866,7 +2873,7 @@ Verdict: **equivalent-behavior**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1c
 
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `ba2d7a35e2f887ec556b681cca24aaa6f263295208cbc80678bc248b61949845`.
 
-- Target: `firmware/esp8266/src/WebUi.h:817 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function createWorkspaceStorage]`.
+- Target: `firmware/esp8266/src/WebUi.h:817 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function createWorkspaceStorage]`.
 - Target: `assets/web/device-settings.js:93 [UTF8-LF sha256=d71e9797948b19a436210332ce17b9dab783076145dd695c4798d0de078515b4; anchor=function settingsObserve]`.
 - Retained: Completely reread matching actual donor. Import/adapt readStoredJson/persistJson pending-map/timer/pagehide and per-surface scroll patterns into immutable board_id+application.id workspace storage. Selection/find/focus, presentation/panels, public drafts, settings navigation and scroll restore passively; equal writes skip, blocked storage retains in-memory state, and changed fresh settings keep their conflict baseline.
 - Omitted/replaced code: `Cached player/runtime state, media navigation and React/Ant Design surface ownership`. Disposition: **replaced**. Reason: Adapt generic persistence to embedded DOM ownership with a workspace-only allowlist; no playback engine, stale live authority, modes/cells, notifications, boot identities or pending command replay.
@@ -2880,7 +2887,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 
 - Target: `assets/themes/appearance.js:4 [UTF8-LF sha256=62a7ebba994ad44f4e2d647bb97684aac9b563104f3f707b43573289e514ecdd; anchor=export function mergeAppearance]`.
 - Target: `tools/generate-web-appearance.mjs:33 [UTF8-LF sha256=bbe9f8be945c24add3f2d57bf2cfc5c644af06f5da310412d9e8b5cdf7ba024f; anchor=replaceBlock('// BEGIN SHARED APPEARANCE']`.
-- Target: `firmware/esp8266/src/WebUi.h:9 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=// BEGIN SHARED APPEARANCE]`.
+- Target: `firmware/esp8266/src/WebUi.h:9 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=// BEGIN SHARED APPEARANCE]`.
 - Retained: Fully reread current source through EOF. The five previously adapted helpers remain in the target: mergeAppearance, resolvedAccent, resolvedAppearanceTheme, accentForeground and paletteName. Existing theme/palette/accent host resolution and luminance semantics remain; newer animation/density/font preference fields and font CSS helpers are explicitly pending, not claimed imported.
 - Retained: Generated into the shipped WebUi.h with the shared palette asset; --check rejects stale embedding. Browser preferences dialog validates theme/palette/accent, protects drafts, handles storage failure and cross-tab/System events without device writes or repetitive identical storage writes.
 - Omitted/replaced code: `ui_animation_mode, ui_control_density, ui_font_family, monospace_font_family merge fields; ControlDensity/controlDensityHeight 24/28/32/36 geometry; uiFontCss and monoFontCss`. Disposition: **pending**. Reason: New current donor behavior was fully read during mobile-network build preflight. Existing embedded target does not consume these client preferences and does not bundle PealayerUbuntu/PealayerHack; copying their font names would imply unavailable assets. Add actual shared settings/asset support and cross-client tests before claiming parity.
@@ -2895,9 +2902,9 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `ad53ee284d969054f69b65e8447a313498b5928eae0aed2564e95f8c71e70d04`.
 
 - Target: `tools/generate-branding.mjs:3 [UTF8-LF sha256=b59b6a8fd73dad45d4015492d44460e9d4d3b78137aa567bebf13c3798f38ffc; anchor=Pakar embeds it for the standalone ESP surface]`.
-- Target: `firmware/esp8266/src/WebUi.h:228 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=<!-- BEGIN SHARED BRAND HEADER -->]`.
+- Target: `firmware/esp8266/src/WebUi.h:228 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=<!-- BEGIN SHARED BRAND HEADER -->]`.
 - Target: `docs/BRANDING-PARITY.md:60 [UTF8-LF sha256=0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3; anchor=## Explicit unfinished useful code and reasons]`.
-- Target: `firmware/esp8266/src/WebUi.h:1019 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function renderApplicationIdentity]`.
+- Target: `firmware/esp8266/src/WebUi.h:1019 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function renderApplicationIdentity]`.
 - Target: `assets/web/device-settings.js:120 [UTF8-LF sha256=d71e9797948b19a436210332ce17b9dab783076145dd695c4798d0de078515b4; anchor=function settingsCanClose()]`.
 - Target: `docs/INTERFACE-CONTRACT.md:8 [UTF8-LF sha256=bd8de673cab2e9d0c9d8948bedb0637dce7e8da10911f9a481bea0171f52ce47; anchor=## One catalog, distinct transport and platform adapters]`.
 - Retained: Actual resolved-artwork img/alt binding adapted to standalone header/login, replacing diamond and font fallback.
@@ -2957,7 +2964,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 
 - Target: `assets/web/localization.js:19 [UTF8-LF sha256=2979e21e189e307e85d49df2ff002e3b39bd1f5caf81a7472049cce811aa7b52; anchor=function uiTr(text,values)]`.
 - Target: `tools/generate-font-assets.mjs:43 [UTF8-LF sha256=4c283d08fdf37cca888c768252b351b3ac4692c0ff0c6f8e7e436b52382102c5; anchor=const dictionary={}]`.
-- Target: `firmware/esp8266/src/WebUi.h:614 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=// BEGIN SHARED LOCALIZATION]`.
+- Target: `firmware/esp8266/src/WebUi.h:614 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=// BEGIN SHARED LOCALIZATION]`.
 - Retained: Fully reread all 630 current donor lines through EOF. Actual fa-dictionary fallback semantics remain reused for application copy, rather than translating arbitrary runtime data. Applicable native dictionary subset generates into the canonical Web module and actual firmware HTML; the new generic hardware/status/font/control vocabulary is useful pending consumer work, not an automatic dictionary import.
 - Retained: Added system/explicit language and Auto/LTR/RTL preferences, owned-template text/placeholder/accessibility snapshots, per-browser low-write persistence, shared font route and immutable peer-name boundary.
 - Retained: Persian Web regression slice: controller captions now include preferences, network/cloud/access/firmware and cell dialogs; capability mode labels participate in dictionary generation. Live telemetry and dynamic accessibility labels refresh in the selected language, real addresses release stale caption ownership, option values remain protocol-stable, and Persian text omits Latin letter spacing. Read-only actual HTML browser inspection verified mobile-width preferences/settings and reversible persistent locale switching; this is not live board acceptance.
@@ -2985,7 +2992,7 @@ Verdict: **equivalent-behavior**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1c
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `d6ee8217c05e96be2e20f9a40ab4c46249d57f58871c661a31c33e2310a92f0e`.
 
 - Target: `tools/generate-branding.mjs:17 [UTF8-LF sha256=b59b6a8fd73dad45d4015492d44460e9d4d3b78137aa567bebf13c3798f38ffc; anchor='FAVICON':]`.
-- Target: `firmware/esp8266/src/WebUi.h:140 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=<!-- BEGIN SHARED BRAND FAVICON -->]`.
+- Target: `firmware/esp8266/src/WebUi.h:140 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=<!-- BEGIN SHARED BRAND FAVICON -->]`.
 - Target: `docs/BRANDING-PARITY.md:60 [UTF8-LF sha256=0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3; anchor=## Explicit unfinished useful code and reasons]`.
 - Retained: Same resolved artwork binds favicon/touch/header before login; ESP embeds data instead of requesting a protected host filesystem icon.
 - Retained: Current 383-line donor was completely reread. Existing favicon/header/touch artwork mapping remains valid; this is not browser-platform parity.
@@ -3363,7 +3370,7 @@ Verdict: **scoped-improvement**. Revision: `431104072952f694a35b3a83c19f13fbb098
 - Target: `firmware/esp8266/src/WebAccess.h:31 [UTF8-LF sha256=7c87b0f4e3f4cc849da343e7da39fa946ee68716a7181b0a2ee1241cb4579cab; anchor=class WebAccess]`.
 - Target: `firmware/esp8266/src/AccessConfig.cpp:67 [UTF8-LF sha256=aba76ed621e1e107ecea9a44ab32cb077fa7d08c0422b3631b3afeadc4e8d198; anchor=bool AccessConfig::configure(]`.
 - Target: `desktop/src/ui/connection_controls.rs:209 [UTF8-LF sha256=58eaae178af71e86725a71df606b6ed6fb142c4fe852d3d5b8dce8b980ed3440; anchor=if authentication == Some(true)]`.
-- Target: `firmware/esp8266/src/WebUi.h:1491 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function presentDeviceAccess(info)]`.
+- Target: `firmware/esp8266/src/WebUi.h:1491 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function presentDeviceAccess(info)]`.
 - Retained: Complete exact donor source read and live SHA-256 matched the inventoried revision. Retained middleware authorization, public login, credential validation and cookie/session admission concepts in the actual shared WebAccess implementation. Added saved explicit authentication opt-in, default-off Web/native behavior, verified atomic storage migration, bounded session/WS ownership, rate limiting, origin and peer/boot fencing.
 - Omitted/replaced code: `complexAuth hardcoded user/password; doLogin password/token response and diagnostic dump; /pass PU access-level commands`. Disposition: **replaced**. Reason: Factory authentication is not an opt-in. Password/token dumps disclose secrets, and the PU access-level business commands do not describe this LED board. Use explicit saved access settings and non-disclosing session routes instead.
 - Omitted/replaced code: `Duplicated run implementation, placeholder AuthenticationHandler/getAuthToken/session access-level skeleton and role=staff sample`. Disposition: **replaced**. Reason: The donor skeleton has unresolved identifiers and no complete role-based authorization contract. Imported the applicable route/session behavior into compiling middleware rather than enabling an incomplete authorization example. No implemented Pakar role support is claimed.
@@ -3380,7 +3387,7 @@ Verdict: **scoped-improvement**. Revision: `431104072952f694a35b3a83c19f13fbb098
 - Target: `firmware/esp8266/src/WebAccess.h:31 [UTF8-LF sha256=7c87b0f4e3f4cc849da343e7da39fa946ee68716a7181b0a2ee1241cb4579cab; anchor=class WebAccess]`.
 - Target: `firmware/esp8266/src/AccessConfig.cpp:67 [UTF8-LF sha256=aba76ed621e1e107ecea9a44ab32cb077fa7d08c0422b3631b3afeadc4e8d198; anchor=bool AccessConfig::configure(]`.
 - Target: `desktop/src/ui/connection_controls.rs:209 [UTF8-LF sha256=58eaae178af71e86725a71df606b6ed6fb142c4fe852d3d5b8dce8b980ed3440; anchor=if authentication == Some(true)]`.
-- Target: `firmware/esp8266/src/WebUi.h:1491 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function presentDeviceAccess(info)]`.
+- Target: `firmware/esp8266/src/WebUi.h:1491 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function presentDeviceAccess(info)]`.
 - Retained: Complete exact donor source read and live SHA-256 matched the inventoried revision. Retained middleware authorization, public login, credential validation and cookie/session admission concepts in the actual shared WebAccess implementation. Added saved explicit authentication opt-in, default-off Web/native behavior, verified atomic storage migration, bounded session/WS ownership, rate limiting, origin and peer/boot fencing.
 - Omitted/replaced code: `complexAuth hardcoded user/password; doLogin password/token response and diagnostic dump; /pass PU access-level commands`. Disposition: **replaced**. Reason: Factory authentication is not an opt-in. Password/token dumps disclose secrets, and the PU access-level business commands do not describe this LED board. Use explicit saved access settings and non-disclosing session routes instead.
 - Omitted/replaced code: `Duplicated run implementation, placeholder AuthenticationHandler/getAuthToken/session access-level skeleton and role=staff sample`. Disposition: **replaced**. Reason: The donor skeleton has unresolved identifiers and no complete role-based authorization contract. Imported the applicable route/session behavior into compiling middleware rather than enabling an incomplete authorization example. No implemented Pakar role support is claimed.
@@ -4725,7 +4732,7 @@ Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Origin
 
 - Target: `assets/themes/browser-appearance.js:69 [UTF8-LF sha256=a3cfd720a376fc399dd8abfef91a172180b583b828516f4d1198e4be7bd34dae; anchor=function applyPrepaintLocale()]`.
 - Target: `tools/generate-web-appearance.mjs:35 [UTF8-LF sha256=bbe9f8be945c24add3f2d57bf2cfc5c644af06f5da310412d9e8b5cdf7ba024f; anchor=replaceBlock('// BEGIN BROWSER CONTROLLER']`.
-- Target: `firmware/esp8266/src/WebUi.h:8 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=<script data-pakar-presentation>]`.
+- Target: `firmware/esp8266/src/WebUi.h:8 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=<script data-pakar-presentation>]`.
 - Retained: Actual safe validated storage read, requested/OS theme resolution, root color-scheme and chrome metadata, locale/direction and resolved-locale pre-paint behavior are adapted into the single head bootstrap. It runs without dialog/body nodes, requests, preference writes or application/peer title mutation; generator checks canonical equality.
 - Omitted/replaced code: `Separate same-origin /theme-init.js, duplicated theme resolver, lamp colors and rayanlamp.web.locale auto/language-list some(fa) selection`. Disposition: **replaced**. Reason: Inline canonical bootstrap shares the existing Pealayer helpers and palette once, before CSS, saving an ESP endpoint and extra request. Existing Pakar locale keys use system/en/fa, primary browser language and explicit Auto/LTR/RTL override, consistent with current runtime resolver. Supporting a secondary Persian language must not unexpectedly override an English primary choice. Existing dark/Studio defaults are retained rather than silently changing user appearance.
 - Test-code evidence: `tests/rayanlamp_theme_test.mjs:55 [UTF8-LF sha256=f1ca3a14805c3b186d52918164fe968a6da07319dba15299a10deee658480783; anchor=Pre-paint survives blocked storage]`.
@@ -4751,7 +4758,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `1b201ac38c3ca4f45dea639d198204f294c83f7e07fb511be99b3d54154fc741`.
 
 - Target: `assets/web/realtime-retry.js:6 [UTF8-LF sha256=255036e79060b6d348944e5f1d1edc90ac1c79f20dc1a095a4384b38d85d15f0; anchor=function createRealtimeRetry]`.
-- Target: `firmware/esp8266/src/WebUi.h:1494 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=async function refreshAuthenticated(options={})]`.
+- Target: `firmware/esp8266/src/WebUi.h:1494 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=async function refreshAuthenticated(options={})]`.
 - Target: `assets/web/peer-http.js:51 [UTF8-LF sha256=04dd5da95667de82bc556e005db5fc72b7d31ebafbda7b605590e8b80b120aa6; anchor=function createPeerHttp(]`.
 - Target: `assets/web/basic-cells.js:3 [UTF8-LF sha256=cbb690183a0faac7131f568a02fded76d2184790579391f0de6b89c5df5e1147; anchor=function createBasicCells(]`.
 - Target: `assets/web/basic.html:15 [UTF8-LF sha256=f7b0c5c1231549923f8ba3440f5a342d4b24225480ed26782dcacc91ae54eeec; anchor={{PEER_HTTP}}]`.
@@ -4785,7 +4792,7 @@ Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Origin
 Verdict: **scoped-improvement**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `5584e97f745eadd5fa52dd1cbec91813dd4f0638da0ca4cf7ca986658f730165`.
 
 - Target: `assets/web/browser-console.js:77 [UTF8-LF sha256=7789b2a4baae93afdd45a0a803f8567722ef0b9ea776c1051fc8482be93e0b60; anchor=class StyledBrowserConsole]`.
-- Target: `firmware/esp8266/src/WebUi.h:1510 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function connectWs()]`.
+- Target: `firmware/esp8266/src/WebUi.h:1510 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function connectWs()]`.
 - Retained: Actual five-level styled sink/startup, operational event vocabulary, allowlisted metadata, recursive sanitizer, safe Error-code projection and keyed quiet-window deduplication imported into canonical browser module. Real HTTP and WebSocket lifecycle consumers execute it; routine successful polling, telemetry and binary frames stay quiet.
 - Retained: Actual URL/Bearer/JWT/query, single-line/control-character protection, depth/array/object bounds and cycle handling retained; no interception, secret/raw-response trace or persistent writes.
 - Omitted/replaced code: `Lamp-only lamp.state/lamp.command vocabulary and RAYAN LAMP startup brand`. Disposition: **replaced**. Reason: Pakar uses device.event/device.command and its controller identity, not another device's lamp protocol. Generic operational semantics are retained.
@@ -4815,7 +4822,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 Verdict: **scoped-improvement**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `81a5d6f6d1d77bc6466a6ee98770d4f248a7b195078ed029f1c39bd8f1724b36`.
 
 - Target: `assets/web/toasts.js:5 [UTF8-LF sha256=c416d19144ed962376079bf4aeed116ccd5aaed6c4ddc4bf63a846796f2e8d2e; anchor=function createToastController]`.
-- Target: `firmware/esp8266/src/WebUi.h:1501 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function report(e,tone)]`.
+- Target: `firmware/esp8266/src/WebUi.h:1501 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function report(e,tone)]`.
 - Retained: Actual ToastRegion polite/nonatomic live region, per-ID status rows, tone icon selection, title/message and localized dismiss button adapted to shipped DOM queue. All real Web reports and saved-identity notices use this queue outside authenticated workspace.
 - Retained: Status SVG geometry and keyed store lifetimes imported from actual dependencies; bounded timers, hover/focus holds, safe text nodes, keyboard dismissal and teardown added without storage or network writes.
 - Omitted/replaced code: `Preact signal-driven JSX/ToastRegion and Icon framework dependency`. Disposition: **replaced**. Reason: ESP embeds classic scripts and existing DOM controls. Actual row, live-region, keyed queue and SVG semantics are adapted without a second UI framework; store/Icon get separate full-read comparisons with remaining generic contracts.
@@ -4861,7 +4868,7 @@ Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Origin
 Verdict: **scoped-improvement**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `26b14208309628ea7eca9a05eb0f7e0d8206f2b59cd0c6a226e2389d7fde89a1`.
 
 - Target: `assets/web/rayanlamp.js:15 [UTF8-LF sha256=56c1f07d95c20925773552af89e6a768b2abf15796fb4911568854b10c6180ac; anchor=class WebHaptics]`.
-- Target: `firmware/esp8266/src/WebUi.h:248 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=id="uiHaptics"]`.
+- Target: `firmware/esp8266/src/WebUi.h:248 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=id="uiHaptics"]`.
 - Retained: Actual pulse constants, bounded audio cues, optional vibration API, fail-closed visibility/reduced-motion conditions, copied pattern arrays and host-error containment adapted into embedded JavaScript. Opt-in Touch feedback defaults off, disabled when unsupported; only explicit command HTTP results trigger it, never polling/telemetry/frames.
 - Omitted/replaced code: `TypeScript interfaces/private/type annotations`. Disposition: **replaced**. Reason: ESP serves dependency-free JavaScript. Actual runtime bodies are retained; explicit own-property cue validation replaces a compile-time-only guarantee.
 - Test-code evidence: `tests/rayanlamp_reuse_test.mjs:24 [UTF8-LF sha256=8b10200e63b30f5b73c36986971c52438fa0f21858c6da74110d868149a30a5d; anchor=h.trigger('arbitrary raw frame')]`.
@@ -4884,7 +4891,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `9a4843ade326c1ee323c3f60d6b0d6ac41cab9d2dcd50affed276fdd8096ff0a`.
 
 - Target: `assets/web/localization.js:65 [UTF8-LF sha256=2979e21e189e307e85d49df2ff002e3b39bd1f5caf81a7472049cce811aa7b52; anchor=function startUiLocaleController()]`.
-- Target: `firmware/esp8266/src/WebUi.h:1035 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function renderSelectionSummary()]`.
+- Target: `firmware/esp8266/src/WebUi.h:1035 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function renderSelectionSummary()]`.
 - Retained: Actual normalization/detection, t placeholder fallback, visual digits, Intl.NumberFormat and languagechange lifecycle adapted into the real embedded localization module. Selection counts and batch readback messages are real consumers. Restart ownership, idempotent cleanup, missing/inherited placeholder handling, blocked storage and no OS-triggered preference writes are added.
 - Retained: Dynamic network/cloud labels and panel menus retranslate reversibly without replacing board identity, hostnames, mapping IDs, protocol strings or unsaved secrets.
 - Retained: Actual BidiLtr bdi/dir=ltr isolation and formatDateTime Persian/Gregorian calendar rules now serve the real hostname/URL summary and observed NTP time. TextContent-only rendering never parses peer HTML or rewrites protocol values.
@@ -4929,7 +4936,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `bd849cbef1ee67ac97cca9e0c6e00ed69acf725d805ad986ae58f11513546d73`.
 
 - Target: `assets/web/realtime-retry.js:6 [UTF8-LF sha256=255036e79060b6d348944e5f1d1edc90ac1c79f20dc1a095a4384b38d85d15f0; anchor=function createRealtimeRetry]`.
-- Target: `firmware/esp8266/src/WebUi.h:1510 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=function connectWs()]`.
+- Target: `firmware/esp8266/src/WebUi.h:1510 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=function connectWs()]`.
 - Retained: Actual scheduleReconnect 500 ms exponential base, 10-second cap and 0.8..1.2 jitter, prepareReconnect-before-open, reset-on-open and stop cleanup adapted to actual Pakar WebSocket/status GET consumers.
 - Retained: Added one pending owner, bounded exponent, late timer/promise generation checks, login/pause/pagehide cancellation and constructor-failure recovery; no device command is replayed.
 - Omitted/replaced code: `start/electLeader/acquireLeadership/releaseLeadership and BroadcastChannel/Web Locks fallback lease election/heartbeats/watchdogs/connectionSyncNames`. Disposition: **pending**. Reason: Generic per-origin leadership is useful but not imported. Pakar supports independent authenticated streaming clients; a shared socket requires validated command/stream ownership and follower readback. Compare full client/contracts/store dependencies and port actual multi-tab/takeover tests before enabling.
@@ -4955,7 +4962,7 @@ Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Origin
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `b4a927e80577f163257b62a28b6df2148d10ee506f2cdeeb51e6b1666b9ce54e`.
 
 - Target: `assets/themes/browser-appearance.js:40 [UTF8-LF sha256=a3cfd720a376fc399dd8abfef91a172180b583b828516f4d1198e4be7bd34dae; anchor=function startBrowserAppearanceController()]`.
-- Target: `firmware/esp8266/src/WebUi.h:8 [UTF8-LF sha256=efbbd53999df0746f9021e5b9bc69a13e2b252de82671ceaa899185454dec610; anchor=<script data-pakar-presentation>]`.
+- Target: `firmware/esp8266/src/WebUi.h:8 [UTF8-LF sha256=97471160112fc46d94847ebe97f29e7dc0c6993ea79653eb474f9401b833334d; anchor=<script data-pakar-presentation>]`.
 - Retained: Actual startWebThemeController detach/restart ownership, idempotent stop, captured listener cleanup, System-only OS reconciliation, safe stored selection and browser color-scheme/theme-color metadata adapted into startBrowserAppearanceController/applyBrowserAppearance. Used by actual pre-paint embedded Web UI, with storage-event reset handling and no hardware writes.
 - Retained: Pealayer appearance helpers and four shared palettes remain the only color engine; requested theme and resolved theme are distinct root metadata. Existing form persistence skips identical writes and retains session selection on storage failure.
 - Omitted/replaced code: `Preact signal state, RayanLamp storage key/default System, root.dataset.theme as requested mode, fixed lamp theme colors and applyWebTheme persistence entrypoint`. Disposition: **replaced**. Reason: Dependency-free ESP HTML uses existing browserAppearance state and pakar-appearance object with explicit Pakar dark/Studio defaults. Existing resolved root.dataset.theme is preserved for CSS; themePreference and resolvedTheme retain both states. Shared palette canvas drives browser chrome, not lamp colors. Existing form is the persistence owner; rendering and OS events never rewrite preferences.

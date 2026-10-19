@@ -15,6 +15,19 @@ class SupportApi extends PakarApi {
   DeviceStatus current;
   int calls = 0;
   bool fail = false;
+  int reads = 0;
+  @override
+  Future<DeviceStatus> status() async {
+    reads++;
+    return current;
+  }
+
+  @override
+  Future<CellMap> mapping() async {
+    reads++;
+    return CellMap.defaults();
+  }
+
   @override
   Future<DeviceStatus?> fastCommand(
     String path,
@@ -27,6 +40,34 @@ class SupportApi extends PakarApi {
       throw const OperationUncertain('secret URL must never be returned');
     }
     return current;
+  }
+}
+
+Future<(int, Map<String, dynamic>)> request(
+  AppSupportSession service, {
+  String? token,
+  Map<String, dynamic>? body,
+  String? origin,
+}) async {
+  final client = HttpClient();
+  try {
+    final uri = Uri.parse(
+      'http://127.0.0.1:${service.port}/api/support/${body == null ? 'health' : 'request'}',
+    );
+    final r = await client.openUrl(body == null ? 'GET' : 'POST', uri);
+    if (token != null) r.headers.set('Authorization', 'Bearer $token');
+    if (origin != null) r.headers.set('Origin', origin);
+    if (body != null) r.write(jsonEncode(body));
+    final response = await r.close().timeout(const Duration(seconds: 3));
+    final raw = await utf8.decoder.bind(response).join();
+    return (
+      response.statusCode,
+      raw.isEmpty
+          ? <String, dynamic>{}
+          : jsonDecode(raw) as Map<String, dynamic>,
+    );
+  } finally {
+    client.close(force: true);
   }
 }
 
@@ -44,34 +85,55 @@ void main() {
     'operation': operation,
     'expires_at_ms': DateTime.now().millisecondsSinceEpoch + 10000,
   };
-  Future<(int, Map<String, dynamic>)> request(
-    AppSupportSession service, {
-    String? token,
-    Map<String, dynamic>? body,
-    String? origin,
-  }) async {
-    final client = HttpClient();
+
+  test('Authenticated support reads status and mapping without enabling commands or exposing secrets', () async {
+    final current = DeviceStatus({
+      ...peerFixture().json,
+      'board_id': 'board',
+      'boot_id': 'boot',
+      'password': 'private-secret',
+    });
+    final api = SupportApi(current);
+    final service = AppSupportSession(
+      api: () => api,
+      observed: () => current,
+      health: () => {},
+    );
     try {
-      final uri = Uri.parse(
-        'http://127.0.0.1:${service.port}/api/support/${body == null ? 'health' : 'request'}',
-      );
-      final r = await client.openUrl(body == null ? 'GET' : 'POST', uri);
-      if (token != null) r.headers.set('Authorization', 'Bearer $token');
-      if (origin != null) r.headers.set('Origin', origin);
-      if (body != null) r.write(jsonEncode(body));
-      final response = await r.close().timeout(const Duration(seconds: 3));
-      final raw = await utf8.decoder.bind(response).join();
-      return (
-        response.statusCode,
-        raw.isEmpty
-            ? <String, dynamic>{}
-            : jsonDecode(raw) as Map<String, dynamic>,
+      await service.start();
+      final status = (await request(
+        service,
+        token: service.token,
+        body: envelope(service, 'status', 'board.status'),
+      )).$2;
+      expect(status['accepted'], true);
+      expect(status['readback']['board_id'], 'board');
+      expect(jsonEncode(status), isNot(contains('private-secret')));
+      final mapping = (await request(
+        service,
+        token: service.token,
+        body: envelope(service, 'mapping', 'board.mapping'),
+      )).$2;
+      expect(mapping['accepted'], true);
+      expect(mapping['readback']['physical'], hasLength(80));
+      expect(api.reads, 2);
+      expect(api.calls, 0);
+      expect(service.commandsEnabled, false);
+      api.current = DeviceStatus({...current.json, 'boot_id': 'replacement'});
+      expect(
+        (await request(
+          service,
+          token: service.token,
+          body: envelope(service, 'stale', 'board.status'),
+        )).$2['accepted'],
+        false,
       );
     } finally {
-      client.close(force: true);
+      await service.stop();
+      service.dispose();
+      await api.close();
     }
-  }
-
+  });
   test(
     'Opt-in support health works without board, authenticates and redacts',
     () async {
@@ -277,11 +339,14 @@ void main() {
   test(
     'Assets reject disabled/mismatched hashes and apply exactly once',
     () async {
-      var applies = 0;
+      var applies = 0, checks = 0;
       final service = AppSupportSession(
         api: () => null,
         observed: () => null,
         health: () => {},
+        checkAssets: () async {
+          checks++;
+        },
         applyAssets: (bundle, hash, authorize) async {
           if (authorize()) applies++;
         },
@@ -304,6 +369,24 @@ void main() {
           false,
         );
         await service.start(assets: true);
+        final check = envelope(service, 'check', 'assets.check');
+        expect(
+          (await request(
+            service,
+            token: service.token,
+            body: check,
+          )).$2['accepted'],
+          true,
+        );
+        expect(
+          (await request(
+            service,
+            token: service.token,
+            body: check,
+          )).$2['accepted'],
+          false,
+        );
+        expect(checks, 1);
         final bad = packet('bad')..['sha256'] = '0' * 64;
         expect(
           (await request(

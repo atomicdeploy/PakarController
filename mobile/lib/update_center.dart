@@ -74,6 +74,9 @@ class _UpdateCenterState extends State<UpdateCenter> {
                 const PresentationUpdatesSection(),
                 SupportSection(session: widget.support),
               ],
+              // Data-only updates are the lightweight path; APK transfer stays
+              // here for compiled Flutter/native changes, not another menu.
+              extensionsFirst: true,
             ),
             if (widget.boardAvailable)
               SingleChildScrollView(
@@ -161,7 +164,7 @@ class _SupportSectionState extends State<SupportSection> {
             'LAN port ${widget.session.port} · session ${widget.session.session}',
           ),
           const Text(
-            'HTTP /api/support/health · /api/support/request · WebSocket /api/support/ws',
+            'HTTP /api/support/health · /api/support/request · WebSocket /api/support/ws\nhealth · board.status · board.mapping · assets.check · assets.apply',
           ),
           TextButton(
             onPressed: () => setState(() => reveal = !reveal),

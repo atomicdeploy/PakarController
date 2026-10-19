@@ -109,6 +109,7 @@ class _ControlShellState extends State<ControlShell>
   final mirror = PeripheralMirror();
   late final AppUpdateCoordinator appUpdates = AppUpdateCoordinator(
     approve: _approveAppUpdate,
+    presentationOffer: presentationAssets.acceptNotice,
     supportInfo: () => {
       'enabled': support.running,
       if (support.running) 'port': support.port,
@@ -123,6 +124,7 @@ class _ControlShellState extends State<ControlShell>
         ? null
         : status,
     applyAssets: presentationAssets.applyText,
+    checkAssets: presentationAssets.checkNow,
     health: () => {
       'connected': status != null,
       'websocket_live': api.liveFresh,

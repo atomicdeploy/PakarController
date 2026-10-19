@@ -1,6 +1,7 @@
 // Root-local operator for the dedicated office service. Credentials never appear
 // in process arguments, telemetry or normal inventory. Enrollment output is secret.
-import {readFile} from 'node:fs/promises';
+import {readFile,lstat} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {toolHeaders} from '../../tools/peer-identity.mjs';
 const token=(await readFile('/etc/pakarcontroller-management/admin-token','utf8')).trim();
 if(!/^[A-Za-z0-9_-]{43}$/.test(token))throw Error('Private operator credential unavailable');
@@ -10,10 +11,14 @@ if(action==='clients')path='/api/admin/clients';
 else if(action==='commands')path='/api/admin/commands';
 else if(action==='enroll'&&['android','windows-x64'].includes(client)){method='POST';path='/api/admin/enrollments';body={platform:client};}
 else if(action==='cleanup'){method='POST';path='/api/admin/cleanup';body={};}
+else if(action==='presentation'&&client){
+  const stat=await lstat(client);if(!stat.isFile()||stat.isSymbolicLink()||stat.size<1||stat.size>24576)throw Error('Bounded regular presentation JSON required');
+  const bundle=await readFile(client,'utf8');method='POST';path='/api/admin/presentation';body={bundle,sha256:createHash('sha256').update(bundle).digest('hex')};
+}
 else if(['command','revoke'].includes(action)&&/^[A-Za-z0-9_-]{16,80}$/.test(client??'')){
   method='POST';path='/api/admin/clients/'+client+(action==='command'?'/commands':'/revoke');
   if(action==='command'&&!['check-update','cleanup'].includes(command))throw Error('Only check-update and cleanup may be queued by this tool');body=action==='command'?{action:command}:{};
-}else throw Error('Usage: operator.mjs clients|commands|enroll android|windows-x64|cleanup|command CLIENT check-update|cleanup|revoke CLIENT');
+}else throw Error('Usage: operator.mjs clients|commands|enroll android|windows-x64|cleanup|presentation JSON_FILE|command CLIENT check-update|cleanup|revoke CLIENT');
 const r=await fetch('http://127.0.0.1:18743/pakar'+path,{method,headers:toolHeaders({Authorization:'Bearer '+token,...(body?{'Content-Type':'application/json'}:{})}),body:body?JSON.stringify(body):undefined,redirect:'error',signal:AbortSignal.timeout(10000)});
 const value=await r.json();if(!r.ok)throw Error('Management request rejected: HTTP '+r.status);
 process.stdout.write(JSON.stringify(value)+'\n');
