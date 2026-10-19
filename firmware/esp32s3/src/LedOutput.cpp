@@ -182,9 +182,15 @@ void LedOutput::work(){
     }
     rmt_transmit_config_t tx{};tx.loop_count=0;tx.flags.eot_level=0;tx.flags.queue_nonblocking=1;
     doneSymbols_.store(0,std::memory_order_relaxed);
+    capture_.start(payload,bytes); // RX arms before THIS immutable frame, never mid-frame.
     error=rmt_transmit(channel,encoder,payload,bytes,&tx);
     if(!error)error=rmt_tx_wait_all_done(channel,100);
     if(!error&&doneSymbols_.load(std::memory_order_relaxed)!=pixels*24+1)error=ESP_ERR_INVALID_RESPONSE;
+    if(!capture_.finish(current_.revision,!error)) {
+      error_.store(ESP_ERR_INVALID_STATE);failed_.fetch_add(1);ready_.store(false);active_.store(false);
+      rmt_disable(channel); // RX not quiesced: retain buffers and flash refusal.
+      vTaskDelete(nullptr);return;
+    }
     if(error){
       // Never reuse a possibly in-flight buffer after an uncertain deadline.
       error_.store(error);failed_.fetch_add(1);ready_.store(false);active_.store(false);
@@ -207,7 +213,7 @@ String LedOutput::capabilitiesJson()const{
   // Selected wire implementation, independent of renderer mode or output On/Off.
   // Readiness/fault/active state remains in the live driver observation below.
   return PAKAR_S3_LED_USE_DMA?
-      F("{\"backend\":\"rmt-dma\",\"rmt\":true,\"dma\":true}"):
+      F("{\"backend\":\"rmt-dma\",\"rmt\":true,\"dma\":true,\"signal_capture_supported\":true}"):
       F("{\"backend\":\"gpio-static\",\"rmt\":false,\"dma\":false}");
 }
 String LedOutput::json()const{
@@ -215,7 +221,12 @@ String LedOutput::json()const{
   value+=F(",\"ready\":");value+=ready_.load()?F("true"):F("false");
   value+=F(",\"active\":");value+=active_.load()?F("true"):F("false");
   value+=F(",\"on_change_only\":true");
-  value+=F(",\"timing_profile\":\"ws2811-800khz\",\"requested_t0h_ns\":250,\"requested_t1h_ns\":600,\"requested_bit_ns\":1250,\"latch_us\":300");
+  value+=F(",\"timing_profile\":\"ws2811-800khz\",\"requested_t0h_ns\":");value+=PAKAR_S3_LED_USE_DMA?300U:250U;
+  value+=F(",\"requested_t1h_ns\":");value+=PAKAR_S3_LED_USE_DMA?625U:600U;
+  value+=F(",\"requested_bit_ns\":1250,\"latch_us\":300");
+#if PAKAR_S3_LED_USE_DMA
+  value+=F(",\"signal_capture\":");value+=capture_.json();
+#endif
   value+=F(",\"refill_cache_safe\":");value+=refillCacheSafe_?F("true"):F("false");
   const auto refillIrq=ledDmaIrqReceipt();
   value+=F(",\"refill_irq\":{\"witnessed\":");value+=refillIrq.witnessed?F("true"):F("false");

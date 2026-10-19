@@ -20,6 +20,9 @@
 #define PAKAR_S3_LED_USE_DMA 0
 #endif
 static_assert(PAKAR_S3_LED_USE_DMA==0 || PAKAR_S3_LED_USE_DMA==1,"LED DMA selection must be boolean");
+#if PAKAR_S3_LED_USE_DMA
+#include "LedSignalCapture.h"
+#endif
 
 namespace PakarS3 {
 class LedOutput {
@@ -33,6 +36,13 @@ class LedOutput {
   String capabilitiesJson() const;
   static bool acquireFlashPause();
   static void releaseFlashPause();
+  bool requestSignalCapture(){
+#if PAKAR_S3_LED_USE_DMA
+    return ready_.load() && active_.load() && capture_.request();
+#else
+    return false;
+#endif
+  }
  private:
   struct Frame {CRGB rgb[pixels];uint32_t revision;uint8_t brightness;bool enabled;};
   static void run(void *context){static_cast<LedOutput*>(context)->work();}
@@ -52,6 +62,9 @@ class LedOutput {
   std::atomic<int> error_{0};
   std::atomic<uint32_t> doneSymbols_{0};
   std::atomic<bool> refillCacheSafe_{false};
+#if PAKAR_S3_LED_USE_DMA
+  LedSignalCapture capture_;
+#endif
   static std::mutex wireGate_;
   static std::atomic<uint32_t> flashHolds_;
   static std::atomic<bool> inFlight_;

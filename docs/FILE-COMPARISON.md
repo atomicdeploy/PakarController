@@ -4,7 +4,7 @@ Whole-repository superiority is **not established**. This report exposes retaine
 
 Routing: 1566 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
 
-Inventory: 4697 files; 255 complete source-file comparisons; 4442 pending comparisons; 205 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
+Inventory: 4697 files; 256 complete source-file comparisons; 4441 pending comparisons; 206 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
 Every inventoried path, source revision/hash, target/proof file and line, omitted code, disposition and concrete reason is in `file-comparison.csv`. Hash-bound manual decisions are in `file-comparison-evidence.json`. Donor SHA-256 values bind original bytes; target/proof SHA-256 values bind UTF-8 without BOM with LF newlines. Anchors are recomputed into exact line numbers. Test-code presence is not test execution; execution receipts are in `FILE-COMPARISON-RECEIPTS.md`.
 
@@ -14,7 +14,7 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 |---|---:|---:|---:|---:|
 | ControllerBoardMini | 19 | 2 | 17 | 0 |
 | ControllerBoardMini/Puzzles | 18 | 12 | 6 | 7 |
-| esp32WS2811 | 24 | 15 | 9 | 8 |
+| esp32WS2811 | 24 | 16 | 8 | 9 |
 | PCController | 1517 | 92 | 1425 | 81 |
 | Pealayer | 639 | 54 | 585 | 41 |
 | PU850-ESP | 109 | 51 | 58 | 49 |
@@ -187,7 +187,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `0f7fec7879abd26dbf2d56df28441727ea76fcb9e093f009d39f20cae77832bb`.
 
 - Target: `firmware/esp8266/src/LedGrid.cpp:26 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=FastLED.addLeds<WS2811]`.
-- Target: `firmware/esp8266/src/LedGrid.h:113 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=uint8_t brightness_ = 255]`.
+- Target: `firmware/esp8266/src/LedGrid.h:120 [UTF8-LF sha256=d551020f660434b4687e52888e3c7ae6132ccbf889604424b078b30eb83f175f; anchor=uint8_t brightness_ = 255]`.
 - Retained: Actual FastLED WS2811 setup and TypicalLEDStrip correction concept; full 255 brightness; ESP owns the final strip engine.
 - Omitted/replaced code: `AVR D6 / 11-pixel final effect buffer`. Disposition: **replaced**. Reason: Final effects remain in the shared ESP engine: ESP8266 D2 or migrated ESP32-S3 GPIO4, with 80 groups of six LEDs. A duplicate 480-pixel AVR buffer would consume 1440 bytes before protocol/game state on a 2 KiB AVR; streaming it over UART would also consume bandwidth. D6 remains a diagnostic pin, not a second full engine.
 - Omitted/replaced code: `COLOR_ORDER BRG`. Disposition: **pending**. Reason: S3 now defaults to BGR wire order per the explicit red/blue-swap request, with a build flag for RGB; actual encoder/worker fixtures cover both. Logical API colors remain RGB. Donor BRG is not assumed equivalent; other configurable orders and independent physical R/G/B tests remain pending.
@@ -199,18 +199,33 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `395096029df7c507782f40c5b32c8b1dffbf2db392cb26cd2b02c824d6a36949`.
 
 - Target: `firmware/esp8266/src/LedGrid.cpp:26 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=FastLED.addLeds<WS2811]`.
-- Target: `firmware/esp8266/src/LedGrid.h:113 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=uint8_t brightness_ = 255]`.
-- Target: `firmware/esp32s3/src/LedOutput.cpp:144 [UTF8-LF sha256=b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462; anchor=config.flags.with_dma=true]`.
-- Target: `firmware/esp32s3/src/LedWire.h:35 [UTF8-LF sha256=4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513; anchor=void encodeWire(]`.
+- Target: `firmware/esp8266/src/LedGrid.h:120 [UTF8-LF sha256=d551020f660434b4687e52888e3c7ae6132ccbf889604424b078b30eb83f175f; anchor=uint8_t brightness_ = 255]`.
+- Target: `firmware/esp32s3/src/LedOutput.cpp:144 [UTF8-LF sha256=073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08; anchor=config.flags.with_dma=true]`.
+- Target: `firmware/esp32s3/src/LedWire.h:36 [UTF8-LF sha256=de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996; anchor=void encodeWire(]`.
 - Target: `firmware/esp8266/src/LoopMessages.h:16 [UTF8-LF sha256=02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0; anchor=class LoopMessages]`.
 - Retained: Actual FastLED WS2811 setup and TypicalLEDStrip correction concept; full 255 brightness; ESP owns the final strip engine.
 - Omitted/replaced code: `AVR D6 / 11-pixel final effect buffer`. Disposition: **replaced**. Reason: Final effects remain in the shared ESP engine: ESP8266 D2 or migrated ESP32-S3 GPIO4, with 80 groups of six LEDs. A duplicate 480-pixel AVR buffer would consume 1440 bytes before protocol/game state on a 2 KiB AVR; streaming it over UART would also consume bandwidth. D6 remains a diagnostic pin, not a second full engine.
 - Omitted/replaced code: `COLOR_ORDER BRG`. Disposition: **pending**. Reason: S3 now defaults to BGR wire order per the explicit red/blue-swap request, with a build flag for RGB; actual encoder/worker fixtures cover both. Logical API colors remain RGB. Donor BRG is not assumed equivalent; other configurable orders and independent physical R/G/B tests remain pending.
 - Omitted/replaced code: `Black initialization and second post-show loop clearing leds[]`. Disposition: **replaced**. Reason: Pakar initializes logical cells white to match the explicitly requested table mode, instead of the donor eleven-LED black scene. No claim of generic performance superiority is made for removing this loop.
-- Test-code evidence: `tests/led_worker_test.cpp:1 [UTF8-LF sha256=9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273; anchor=Compile the ACTUAL S3 output worker]`.
-- Test-code evidence: `tests/led_scheduler_test.cpp:7 [UTF8-LF sha256=426daa3ad87f8aa094bf2a98562330418bdcc7a57001546bd1ded25e11fafcad; anchor=int main()]`.
+- Test-code evidence: `tests/led_worker_test.cpp:1 [UTF8-LF sha256=9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a; anchor=Compile the ACTUAL S3 output worker]`.
+- Test-code evidence: `tests/led_scheduler_test.cpp:7 [UTF8-LF sha256=ec866f57cfaa1109b7e97ae6ff011c8ac2fbf3f59d3d49ffe07fa966e22092c3; anchor=int main()]`.
 - Scoped advantage: Actual worker/mailbox tests establish source-level frame ownership and quiescence, not optical or SDK acceptance.
 - Remaining: Make chipset/channel order configurable and verify R/G/B plus all 480 pixels on hardware; expose current configuration across the control surfaces.
+
+### esp32WS2811: `docs/WS2811__V1.4_EN_18112019092521.pdf`
+
+Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `44ba93102860081868a5a547f0d6fc85e67b0807297caffbe6ab8b9595fc2bdd`.
+
+- Target: `firmware/esp32s3/src/LedWire.h:19 [UTF8-LF sha256=de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996; anchor=inline constexpr uint16_t zeroHigh=12]`.
+- Target: `firmware/esp32s3/src/LedSignal.h:52 [UTF8-LF sha256=e48205a8a5f00fdc78cc02748ae8d1297c8f22621d2f1152da206f723244f6e3; anchor=LedSignalReport inspectLedSignal(]`.
+- Target: `firmware/esp32s3/src/LedSignalCapture.h:17 [UTF8-LF sha256=377642675c28d6cf624a3e1c5690c5dff90bf46799fce628aa6eadb2217db86c; anchor=class LedSignalCapture]`.
+- Retained: All eight pages read as text and rendered/visually inspected, including the electrical/timing tables, cascade/bit-order diagrams, 5V/12V circuits, package tables and revision history. Page3 timing drives the 40MHz RMT profile: zero300/950ns, one625/625ns, period1250ns; retain300us reset and the user's explicit R/B swap. Do not copy a divider from the older donor driver.
+- Retained: Added optional whole-frame RX-DMA digital-pad capture on existing GPIO4. Compare all11520 bits to this immutable TX frame using an8128B partial ring and stateful comparison with no ISR heap/copy; reject the contiguous46112B design against the actual31732B largest free block. Report first mismatch/short frame/timing errors. Allocate only on explicit request and release after bounded completion; capture errors remain Unknown, and failed RX quiesce prevents buffer reuse/flash. RX uses the ordinary SDK GDMA allocator rather than the TX-only witnessed priority3 override (intr_priority is unused for DMA RX); observation can itself overrun, so a mismatch alone is not proof of transmitter fault. No additional wire, effect, matrix mapping, automatic capture cadence or second renderer.
+- Omitted/replaced code: `Mechanical SOP8/MSOP8 footprint dimensions and complete application circuit drawings`. Disposition: **not-applicable**. Reason: Reference documentation was fully reviewed, but this firmware/client repository does not design or manufacture the existing strip's PCB/package footprint. Original donor PDF is preserved; do not invent a board-identification or power-circuit configuration API from those dimensions.
+- Omitted/replaced code: `Electrical input threshold, signal conditioning, downstream power and actual controller/LED grouping verification`. Disposition: **pending**. Reason: The datasheet specifies VIH>=0.7VDD and shows both one-LED and three-series-LED outputs. Digital GPIO loopback cannot validate voltage at strip DIN, cable/reflection margin, downstream reset/reshaping, exact chip revision or physical address count. User optical first23-cell failure remains authoritative; require deployed pad captures plus physical/analogue measurements as needed.
+- Test-code evidence: `tests/idf_rmt_ring_test.cpp:210 [UTF8-LF sha256=67b7f1107160e49db96f06907edb16dc540095bf4aaf6555041d49f47362cf00; anchor=void signalCaptureChecks()]`.
+- Test-code evidence: `tests/led_worker_test.cpp:347 [UTF8-LF sha256=9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a; anchor=Fixture::rxCorruptBit=23*6*24]`.
+- Remaining: Deploy the version-consistent candidate, capture full-frame output under real Wi-Fi load, verify all480 addressed pixels and obtain user optical feedback. Timing margin adjustment is a candidate fix, not a proven root cause or physical completion.
 
 ### esp32WS2811: `LICENSE`
 
@@ -225,7 +240,7 @@ Verdict: **equivalent-file**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad57
 Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `7f169ec9c5b57f858d9d79c5059e97b3be4130930f52257691c7940f39a49dea`.
 
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
-- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=enum Pattern : uint8_t]`.
+- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=d551020f660434b4687e52888e3c7ae6132ccbf889604424b078b30eb83f175f; anchor=enum Pattern : uint8_t]`.
 - Retained: Complete source/header read through EOF; useful Aurora visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board.
 - Omitted/replaced code: `Aurora painting algorithm and all-surface capability exposure`. Disposition: **pending**. Reason: Useful six weighted moving waves remain unported. Original allocates Colour per wave/pixel, frees scalar new Colour with delete[], repeatedly replaces heap waves and delays20ms. Port into bounded loop-owned wave state and shared effect capabilities/API/USB/persistence/all-client selectors; no allocator bug, heap churn or hidden50fps cap.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:35 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])]`.
@@ -236,7 +251,7 @@ Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. O
 Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `d175558be657cb27501c5687ad56b5f9f37dd6cb7490ba0de42298a628fb7aff`.
 
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
-- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=enum Pattern : uint8_t]`.
+- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=d551020f660434b4687e52888e3c7ae6132ccbf889604424b078b30eb83f175f; anchor=enum Pattern : uint8_t]`.
 - Retained: Complete source/header read through EOF; useful Aurora visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board.
 - Omitted/replaced code: `Aurora painting algorithm and all-surface capability exposure`. Disposition: **pending**. Reason: Useful six weighted moving waves remain unported. Original allocates Colour per wave/pixel, frees scalar new Colour with delete[], repeatedly replaces heap waves and delays20ms. Port into bounded loop-owned wave state and shared effect capabilities/API/USB/persistence/all-client selectors; no allocator bug, heap churn or hidden50fps cap.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:35 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])]`.
@@ -247,7 +262,7 @@ Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. O
 Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `45e281ccc376bc13033723bc0b5258c399bd92043ae68db4ce376103ebe83876`.
 
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
-- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=enum Pattern : uint8_t]`.
+- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=d551020f660434b4687e52888e3c7ae6132ccbf889604424b078b30eb83f175f; anchor=enum Pattern : uint8_t]`.
 - Retained: Complete source/header read through EOF; useful Autumn visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board.
 - Omitted/replaced code: `Autumn painting algorithm and all-surface capability exposure`. Disposition: **pending**. Reason: Useful random-origin palette-spread interpolation remains unported. Original origin can be read before first initialization, divides by steps/numLeds/2 without positive bounds and advances by loop count. Port validated dimensions/positive durations and elapsed-time interpolation into the existing renderer/catalog.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:35 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])]`.
@@ -258,7 +273,7 @@ Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. O
 Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `16d75c16e482c44b52feae753ec1ccdf3ab35fc50707e7f6a713462059ac544f`.
 
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
-- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=enum Pattern : uint8_t]`.
+- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=d551020f660434b4687e52888e3c7ae6132ccbf889604424b078b30eb83f175f; anchor=enum Pattern : uint8_t]`.
 - Retained: Complete source/header read through EOF; useful Autumn visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board.
 - Omitted/replaced code: `Autumn painting algorithm and all-surface capability exposure`. Disposition: **pending**. Reason: Useful random-origin palette-spread interpolation remains unported. Original origin can be read before first initialization, divides by steps/numLeds/2 without positive bounds and advances by loop count. Port validated dimensions/positive durations and elapsed-time interpolation into the existing renderer/catalog.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:35 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])]`.
@@ -269,7 +284,7 @@ Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. O
 Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `039da26c04c5a6cf2438d42372f1f9d9d03748db1aee5b21fc8a0dedd0085c5b`.
 
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
-- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=enum Pattern : uint8_t]`.
+- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=d551020f660434b4687e52888e3c7ae6132ccbf889604424b078b30eb83f175f; anchor=enum Pattern : uint8_t]`.
 - Retained: Complete source/header read through EOF; useful Circus visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board.
 - Omitted/replaced code: `Circus painting algorithm and all-surface capability exposure`. Disposition: **pending**. Reason: Useful random twelve-colour repaint remains unported. Adapt requested repaint interval as a monotonic deadline, not delay(interval) or another effect task, and expose through the shared acknowledged effect catalog; not a new default or automatic flashing diagnostic.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:35 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])]`.
@@ -280,7 +295,7 @@ Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. O
 Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `50e04e72e5fac9ab5130d83178a9962397f8634418dc6d8a25dee2327ba6e454`.
 
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
-- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=enum Pattern : uint8_t]`.
+- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=d551020f660434b4687e52888e3c7ae6132ccbf889604424b078b30eb83f175f; anchor=enum Pattern : uint8_t]`.
 - Retained: Complete source/header read through EOF; useful Circus visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board.
 - Omitted/replaced code: `Circus painting algorithm and all-surface capability exposure`. Disposition: **pending**. Reason: Useful random twelve-colour repaint remains unported. Adapt requested repaint interval as a monotonic deadline, not delay(interval) or another effect task, and expose through the shared acknowledged effect catalog; not a new default or automatic flashing diagnostic.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:35 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])]`.
@@ -290,14 +305,14 @@ Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. O
 
 Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `6bf0bac344bd60971564e66252e5d23b964606c6b4ec67c77e68d1186a313f58`.
 
-- Target: `firmware/esp32s3/src/LedOutput.cpp:86 [UTF8-LF sha256=b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462; anchor=void LedOutput::work(){]`.
-- Target: `firmware/esp32s3/src/LedOutput.h:47 [UTF8-LF sha256=2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7; anchor=Frame producer_{};]`.
+- Target: `firmware/esp32s3/src/LedOutput.cpp:86 [UTF8-LF sha256=073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08; anchor=void LedOutput::work(){]`.
+- Target: `firmware/esp32s3/src/LedOutput.h:57 [UTF8-LF sha256=f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83; anchor=Frame producer_{};]`.
 - Target: `firmware/esp8266/src/LedGrid.cpp:383 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=void LedGrid::showStaged() {]`.
-- Target: `firmware/esp32s3/src/LedWire.h:21 [UTF8-LF sha256=4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513; anchor=inline constexpr uint16_t resetMicros=300;]`.
+- Target: `firmware/esp32s3/src/LedWire.h:22 [UTF8-LF sha256=de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996; anchor=inline constexpr uint16_t resetMicros=300;]`.
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
 - Retained: Complete RGB/HSV implementation/header and palette read through EOF. Canonical RGB/FastLED rendering retains byte colours, saturated arithmetic and HSV rainbow without a second colour engine. No old class-level API or exact palette parity is falsely promised.
 - Omitted/replaced code: `colour legacy implementation/classes`. Disposition: **replaced**. Reason: Duplicate Colour/ColourHSV object and degree/percent float API, basic-colour wrapper names and custom saturated addition are replaced by existing FastLED CRGB/HSV/rainbow/qadd8 and validated canonical RGB bytes. Do not claim donor class/API drop-in or copy a second colour representation. Exact hue/palette aesthetics belong with the separately pending optional effects.
-- Test-code evidence: `tests/led_worker_test.cpp:142 [UTF8-LF sha256=9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273; anchor=void pinSetupFailure(unsigned step)]`.
+- Test-code evidence: `tests/led_worker_test.cpp:204 [UTF8-LF sha256=9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a; anchor=void pinSetupFailure(unsigned step)]`.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:8 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=function driverContract(source)]`.
 - Scoped advantage: Retain modern IDF5 compact immutable DMA source and explicit failures/LOW/latch, one renderer and bounded memory instead of legacy driver globals, per-effect tasks, blocking delays or duplicate colour ownership.
 - Remaining: Current480-pixel waveform/RF/refill/optical acceptance remains open; source hashes/fixtures are not current hardware proof.
@@ -306,14 +321,14 @@ Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98a
 
 Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `f77e8491309317965731d826b1d20033185807f0f411f888bbb38958e1ad59b3`.
 
-- Target: `firmware/esp32s3/src/LedOutput.cpp:86 [UTF8-LF sha256=b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462; anchor=void LedOutput::work(){]`.
-- Target: `firmware/esp32s3/src/LedOutput.h:47 [UTF8-LF sha256=2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7; anchor=Frame producer_{};]`.
+- Target: `firmware/esp32s3/src/LedOutput.cpp:86 [UTF8-LF sha256=073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08; anchor=void LedOutput::work(){]`.
+- Target: `firmware/esp32s3/src/LedOutput.h:57 [UTF8-LF sha256=f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83; anchor=Frame producer_{};]`.
 - Target: `firmware/esp8266/src/LedGrid.cpp:383 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=void LedGrid::showStaged() {]`.
-- Target: `firmware/esp32s3/src/LedWire.h:21 [UTF8-LF sha256=4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513; anchor=inline constexpr uint16_t resetMicros=300;]`.
+- Target: `firmware/esp32s3/src/LedWire.h:22 [UTF8-LF sha256=de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996; anchor=inline constexpr uint16_t resetMicros=300;]`.
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
 - Retained: Complete RGB/HSV implementation/header and palette read through EOF. Canonical RGB/FastLED rendering retains byte colours, saturated arithmetic and HSV rainbow without a second colour engine. No old class-level API or exact palette parity is falsely promised.
 - Omitted/replaced code: `colour legacy implementation/classes`. Disposition: **replaced**. Reason: Duplicate Colour/ColourHSV object and degree/percent float API, basic-colour wrapper names and custom saturated addition are replaced by existing FastLED CRGB/HSV/rainbow/qadd8 and validated canonical RGB bytes. Do not claim donor class/API drop-in or copy a second colour representation. Exact hue/palette aesthetics belong with the separately pending optional effects.
-- Test-code evidence: `tests/led_worker_test.cpp:142 [UTF8-LF sha256=9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273; anchor=void pinSetupFailure(unsigned step)]`.
+- Test-code evidence: `tests/led_worker_test.cpp:204 [UTF8-LF sha256=9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a; anchor=void pinSetupFailure(unsigned step)]`.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:8 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=function driverContract(source)]`.
 - Scoped advantage: Retain modern IDF5 compact immutable DMA source and explicit failures/LOW/latch, one renderer and bounded memory instead of legacy driver globals, per-effect tasks, blocking delays or duplicate colour ownership.
 - Remaining: Current480-pixel waveform/RF/refill/optical acceptance remains open; source hashes/fixtures are not current hardware proof.
@@ -322,14 +337,14 @@ Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98a
 
 Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `2c27fa91967898ba4f4234c53889adfea11f3bd14a62147d64fdcb01837e6c2d`.
 
-- Target: `firmware/esp32s3/src/LedOutput.cpp:86 [UTF8-LF sha256=b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462; anchor=void LedOutput::work(){]`.
-- Target: `firmware/esp32s3/src/LedOutput.h:47 [UTF8-LF sha256=2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7; anchor=Frame producer_{};]`.
+- Target: `firmware/esp32s3/src/LedOutput.cpp:86 [UTF8-LF sha256=073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08; anchor=void LedOutput::work(){]`.
+- Target: `firmware/esp32s3/src/LedOutput.h:57 [UTF8-LF sha256=f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83; anchor=Frame producer_{};]`.
 - Target: `firmware/esp8266/src/LedGrid.cpp:383 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=void LedGrid::showStaged() {]`.
-- Target: `firmware/esp32s3/src/LedWire.h:21 [UTF8-LF sha256=4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513; anchor=inline constexpr uint16_t resetMicros=300;]`.
+- Target: `firmware/esp32s3/src/LedWire.h:22 [UTF8-LF sha256=de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996; anchor=inline constexpr uint16_t resetMicros=300;]`.
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
 - Retained: Complete base-class/task source read through EOF. Existing pattern start/replace/stop remains one loop renderer, no per-effect task or blocking sleeps; waveform driver remains independently owned.
 - Omitted/replaced code: `lifecycle legacy implementation/classes`. Disposition: **replaced**. Reason: Per-effect FreeRTOS task creation/deletion, repeated cleanup of a non-cleared task handle and endless effect loops are replaced by existing loop-owned setPattern/stopPattern/service. Preserve single renderer and explicit frame publication without sleeping or a second engine; this is not an ABI-compatible installation of the old library.
-- Test-code evidence: `tests/led_worker_test.cpp:142 [UTF8-LF sha256=9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273; anchor=void pinSetupFailure(unsigned step)]`.
+- Test-code evidence: `tests/led_worker_test.cpp:204 [UTF8-LF sha256=9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a; anchor=void pinSetupFailure(unsigned step)]`.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:8 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=function driverContract(source)]`.
 - Scoped advantage: Retain modern IDF5 compact immutable DMA source and explicit failures/LOW/latch, one renderer and bounded memory instead of legacy driver globals, per-effect tasks, blocking delays or duplicate colour ownership.
 - Remaining: Current480-pixel waveform/RF/refill/optical acceptance remains open; source hashes/fixtures are not current hardware proof.
@@ -338,14 +353,14 @@ Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98a
 
 Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `d8b948d7d5ddef65ee40f162b5cd1f52e7aff7a525c94dfa11f1846b053aed71`.
 
-- Target: `firmware/esp32s3/src/LedOutput.cpp:86 [UTF8-LF sha256=b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462; anchor=void LedOutput::work(){]`.
-- Target: `firmware/esp32s3/src/LedOutput.h:47 [UTF8-LF sha256=2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7; anchor=Frame producer_{};]`.
+- Target: `firmware/esp32s3/src/LedOutput.cpp:86 [UTF8-LF sha256=073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08; anchor=void LedOutput::work(){]`.
+- Target: `firmware/esp32s3/src/LedOutput.h:57 [UTF8-LF sha256=f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83; anchor=Frame producer_{};]`.
 - Target: `firmware/esp8266/src/LedGrid.cpp:383 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=void LedGrid::showStaged() {]`.
-- Target: `firmware/esp32s3/src/LedWire.h:21 [UTF8-LF sha256=4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513; anchor=inline constexpr uint16_t resetMicros=300;]`.
+- Target: `firmware/esp32s3/src/LedWire.h:22 [UTF8-LF sha256=de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996; anchor=inline constexpr uint16_t resetMicros=300;]`.
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
 - Retained: Complete base-class/task source read through EOF. Existing pattern start/replace/stop remains one loop renderer, no per-effect task or blocking sleeps; waveform driver remains independently owned.
 - Omitted/replaced code: `lifecycle legacy implementation/classes`. Disposition: **replaced**. Reason: Per-effect FreeRTOS task creation/deletion, repeated cleanup of a non-cleared task handle and endless effect loops are replaced by existing loop-owned setPattern/stopPattern/service. Preserve single renderer and explicit frame publication without sleeping or a second engine; this is not an ABI-compatible installation of the old library.
-- Test-code evidence: `tests/led_worker_test.cpp:142 [UTF8-LF sha256=9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273; anchor=void pinSetupFailure(unsigned step)]`.
+- Test-code evidence: `tests/led_worker_test.cpp:204 [UTF8-LF sha256=9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a; anchor=void pinSetupFailure(unsigned step)]`.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:8 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=function driverContract(source)]`.
 - Scoped advantage: Retain modern IDF5 compact immutable DMA source and explicit failures/LOW/latch, one renderer and bounded memory instead of legacy driver globals, per-effect tasks, blocking delays or duplicate colour ownership.
 - Remaining: Current480-pixel waveform/RF/refill/optical acceptance remains open; source hashes/fixtures are not current hardware proof.
@@ -355,7 +370,7 @@ Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98a
 Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `c70e8d8c7a43b87c4932dd57adb952278670df136f6a7a5349e7df1586dc8ed7`.
 
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
-- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=enum Pattern : uint8_t]`.
+- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=d551020f660434b4687e52888e3c7ae6132ccbf889604424b078b30eb83f175f; anchor=enum Pattern : uint8_t]`.
 - Retained: Complete source/header read through EOF; useful SnowSparkle visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board.
 - Omitted/replaced code: `SnowSparkle painting algorithm and all-surface capability exposure`. Disposition: **pending**. Reason: Useful background/white sparkle/fade remains unported. Replace dynamic Sparkle pointer array and per-sparkle new/delete with fixed slots, wall-clock fades and shared acknowledged effect catalog, not delay(10) or another task.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:35 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])]`.
@@ -366,7 +381,7 @@ Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. O
 Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `a86ecaaf9b2e9a41fdb53aa047883ed1f72acabc9909c164aab10bade3aab4ce`.
 
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
-- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=enum Pattern : uint8_t]`.
+- Target: `firmware/esp8266/src/LedGrid.h:31 [UTF8-LF sha256=d551020f660434b4687e52888e3c7ae6132ccbf889604424b078b30eb83f175f; anchor=enum Pattern : uint8_t]`.
 - Retained: Complete source/header read through EOF; useful SnowSparkle visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board.
 - Omitted/replaced code: `SnowSparkle painting algorithm and all-surface capability exposure`. Disposition: **pending**. Reason: Useful background/white sparkle/fade remains unported. Replace dynamic Sparkle pointer array and per-sparkle new/delete with fixed slots, wall-clock fades and shared acknowledged effect catalog, not delay(10) or another task.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:35 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])]`.
@@ -376,14 +391,14 @@ Verdict: **parity-gap**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. O
 
 Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `79fd1b8141cc8eb1473dcb1c25f754b0fbe71cab76af7a311fd10db0269e6511`.
 
-- Target: `firmware/esp32s3/src/LedOutput.cpp:86 [UTF8-LF sha256=b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462; anchor=void LedOutput::work(){]`.
-- Target: `firmware/esp32s3/src/LedOutput.h:47 [UTF8-LF sha256=2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7; anchor=Frame producer_{};]`.
+- Target: `firmware/esp32s3/src/LedOutput.cpp:86 [UTF8-LF sha256=073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08; anchor=void LedOutput::work(){]`.
+- Target: `firmware/esp32s3/src/LedOutput.h:57 [UTF8-LF sha256=f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83; anchor=Frame producer_{};]`.
 - Target: `firmware/esp8266/src/LedGrid.cpp:383 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=void LedGrid::showStaged() {]`.
-- Target: `firmware/esp32s3/src/LedWire.h:21 [UTF8-LF sha256=4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513; anchor=inline constexpr uint16_t resetMicros=300;]`.
+- Target: `firmware/esp32s3/src/LedWire.h:22 [UTF8-LF sha256=de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996; anchor=inline constexpr uint16_t resetMicros=300;]`.
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
 - Retained: Complete original driver/API read through EOF. Existing stage/show/get-published-frame, full480 RGB, dedicated worker, coalescing and immutable TX ownership mapped function by function. Newly adapt explicit idle-LOW policy to both backends: reset, preload LOW, enable output, then allocate/init; each failed GPIO step stops before RMT/heap/TX with no false ready/black receipt.
 - Omitted/replaced code: `driver legacy implementation/classes`. Disposition: **replaced**. Reason: Legacy driver/rmt.h configuration, original-ESP32 channel-memory topology, task-static 24-symbol-per-pixel expanded buffer, hardcoded GRB and ESP_ERROR_CHECK bodies are replaced, not installed alongside IDF5. Existing compact internal1440-byte bytes-encoder/SDK ring, scoped IRQ ownership, full-frame mailbox and recoverable failures retain the useful transport discipline. The donor's extra terminator is allocated but excluded from its write count; keep our explicit300us low latch instead.
-- Test-code evidence: `tests/led_worker_test.cpp:142 [UTF8-LF sha256=9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273; anchor=void pinSetupFailure(unsigned step)]`.
+- Test-code evidence: `tests/led_worker_test.cpp:204 [UTF8-LF sha256=9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a; anchor=void pinSetupFailure(unsigned step)]`.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:8 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=function driverContract(source)]`.
 - Scoped advantage: Retain modern IDF5 compact immutable DMA source and explicit failures/LOW/latch, one renderer and bounded memory instead of legacy driver globals, per-effect tasks, blocking delays or duplicate colour ownership.
 - Remaining: Current480-pixel waveform/RF/refill/optical acceptance remains open; source hashes/fixtures are not current hardware proof.
@@ -392,14 +407,14 @@ Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98a
 
 Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98ad579`. Original-byte SHA-256: `f74e535287f38aee87bb9108fb85ebabb99f2421cd2828ecaef757b52ebb119e`.
 
-- Target: `firmware/esp32s3/src/LedOutput.cpp:86 [UTF8-LF sha256=b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462; anchor=void LedOutput::work(){]`.
-- Target: `firmware/esp32s3/src/LedOutput.h:47 [UTF8-LF sha256=2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7; anchor=Frame producer_{};]`.
+- Target: `firmware/esp32s3/src/LedOutput.cpp:86 [UTF8-LF sha256=073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08; anchor=void LedOutput::work(){]`.
+- Target: `firmware/esp32s3/src/LedOutput.h:57 [UTF8-LF sha256=f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83; anchor=Frame producer_{};]`.
 - Target: `firmware/esp8266/src/LedGrid.cpp:383 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=void LedGrid::showStaged() {]`.
-- Target: `firmware/esp32s3/src/LedWire.h:21 [UTF8-LF sha256=4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513; anchor=inline constexpr uint16_t resetMicros=300;]`.
+- Target: `firmware/esp32s3/src/LedWire.h:22 [UTF8-LF sha256=de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996; anchor=inline constexpr uint16_t resetMicros=300;]`.
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
 - Retained: Complete original driver/API read through EOF. Existing stage/show/get-published-frame, full480 RGB, dedicated worker, coalescing and immutable TX ownership mapped function by function. Newly adapt explicit idle-LOW policy to both backends: reset, preload LOW, enable output, then allocate/init; each failed GPIO step stops before RMT/heap/TX with no false ready/black receipt.
 - Omitted/replaced code: `driver legacy implementation/classes`. Disposition: **replaced**. Reason: Legacy driver/rmt.h configuration, original-ESP32 channel-memory topology, task-static 24-symbol-per-pixel expanded buffer, hardcoded GRB and ESP_ERROR_CHECK bodies are replaced, not installed alongside IDF5. Existing compact internal1440-byte bytes-encoder/SDK ring, scoped IRQ ownership, full-frame mailbox and recoverable failures retain the useful transport discipline. The donor's extra terminator is allocated but excluded from its write count; keep our explicit300us low latch instead.
-- Test-code evidence: `tests/led_worker_test.cpp:142 [UTF8-LF sha256=9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273; anchor=void pinSetupFailure(unsigned step)]`.
+- Test-code evidence: `tests/led_worker_test.cpp:204 [UTF8-LF sha256=9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a; anchor=void pinSetupFailure(unsigned step)]`.
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:8 [UTF8-LF sha256=7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b; anchor=function driverContract(source)]`.
 - Scoped advantage: Retain modern IDF5 compact immutable DMA source and explicit failures/LOW/latch, one renderer and bounded memory instead of legacy driver globals, per-effect tasks, blocking delays or duplicate colour ownership.
 - Remaining: Current480-pixel waveform/RF/refill/optical acceptance remains open; source hashes/fixtures are not current hardware proof.
@@ -409,7 +424,7 @@ Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98a
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `20f907ac3426d5a9b40501ba2241a4308d0220204b8888576f1f995a3e401332`.
 
 - Target: `firmware/esp8266/src/UpdateProgress.h:33 [UTF8-LF sha256=cbf19051f9f71c1b5ff99cd024faa1a87e12a211bc6001a413cdfde6a84e8640; anchor=class Progress]`.
-- Target: `firmware/esp8266/esp8266.ino:2139 [UTF8-LF sha256=f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5; anchor=String localUpdateJson() {]`.
+- Target: `firmware/esp8266/esp8266.ino:2139 [UTF8-LF sha256=5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614; anchor=String localUpdateJson() {]`.
 - Target: `firmware/esp8266/src/RemoteFirmware.h:67 [UTF8-LF sha256=9c959a74a7d59909f38c48844e191a089cf1849663e78caa4a3fafcaff6b2251; anchor=PakarUpdate::Observation progress() const]`.
 - Target: `tools/update-firmware.mjs:212 [UTF8-LF sha256=7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874; anchor=export async function updateFirmware(]`.
 - Target: `tools/update-firmware.ps1:5 [UTF8-LF sha256=540fe374db6a5c6797474e48f12991dbc33f900e54e5cff9b4d7443a40c436bb; anchor=[ValidateSet('auto','local','remote')]]`.
@@ -872,14 +887,14 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `libraries/BoardCore/src/CellBatch.h:9 [UTF8-LF sha256=29e1f77c397a4c530c236aa6a05598983e556b7bfc963beea0f69233ad38c8af; anchor=struct CellBatch]`.
 - Target: `firmware/esp8266/src/LedGrid.cpp:54 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=bool LedGrid::setCells(]`.
-- Target: `firmware/esp8266/src/LedGrid.h:51 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=bool setCells(]`.
+- Target: `firmware/esp8266/src/LedGrid.h:51 [UTF8-LF sha256=d551020f660434b4687e52888e3c7ae6132ccbf889604424b078b30eb83f175f; anchor=bool setCells(]`.
 - Target: `libraries/BoardCore/src/TableCellMapping.h:8 [UTF8-LF sha256=8a4d0d13b7779d8a54c74bb95cafcd871814423ee42909bcd5ebbd6006213ba0; anchor=constexpr uint8_t logicalForPhysical]`.
-- Target: `firmware/esp32s3/src/LedOutput.cpp:116 [UTF8-LF sha256=b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462; anchor=bool pending=true;]`.
-- Target: `firmware/esp32s3/src/LedWire.h:18 [UTF8-LF sha256=4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513; anchor=inline constexpr uint16_t zeroHigh=10]`.
+- Target: `firmware/esp32s3/src/LedOutput.cpp:116 [UTF8-LF sha256=073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08; anchor=bool pending=true;]`.
+- Target: `firmware/esp32s3/src/LedWire.h:19 [UTF8-LF sha256=de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996; anchor=inline constexpr uint16_t zeroHigh=12]`.
 - Target: `firmware/esp8266/src/LedRenderAdmission.h:7 [UTF8-LF sha256=a6dc69b69cba74db1fff54fd75b8940bf88958404f6c3ac971b27797d5b13c50; anchor=inline bool uartWindowReady(]`.
-- Target: `firmware/esp8266/esp8266.ino:950 [UTF8-LF sha256=f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5; anchor=uint8_t defaultPhysicalCell]`.
+- Target: `firmware/esp8266/esp8266.ino:950 [UTF8-LF sha256=5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614; anchor=uint8_t defaultPhysicalCell]`.
 - Target: `tools/build-firmware.ps1:20 [UTF8-LF sha256=24584210e1f306e53c78f1db8b52ed0d7765d0950eb67b4034ff41f284bb39e7; anchor=CellChaseOnBoot]`.
-- Target: `firmware/esp32s3/src/LedOutput.h:12 [UTF8-LF sha256=2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7; anchor=#if !defined(PAKAR_S3_LED_USE_DMA)]`.
+- Target: `firmware/esp32s3/src/LedOutput.h:12 [UTF8-LF sha256=f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83; anchor=#if !defined(PAKAR_S3_LED_USE_DMA)]`.
 - Target: `firmware/esp32s3/src/LedDmaGuard.h:16 [UTF8-LF sha256=6418b38a2773c592ccd48dd9c2cbfaaa1ff0a8f0aab99437e68c1a7c419a2a65; anchor=class LedDmaSetupScope]`.
 - Target: `firmware/esp32s3/src/LedDmaGuard.cpp:68 [UTF8-LF sha256=c2c2b90ee34d7919d22c0e4dc6c651c077b9acc0ed833090aab57e2c335e1d7e; anchor=newCacheSafeLedChannel]`.
 - Target: `mobile/lib/pixel_diagnostic.dart:89 [UTF8-LF sha256=f5d5f5726ffa6b046d36adc5466d81b1a5570a16d0937aa79e99839e23182e6d; anchor=class PixelProbe]`.
@@ -898,10 +913,10 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Retained: Audited all1440 output bytes and the actual pinned IDF ring. RMT priority3 covers completion only; a scoped GDMA adapter now derives its exact TX source and requires measured IRQ3/core1. Same-owner rendering advances between cloud writes, without a second effects engine or optical-success claim.
 - Omitted/replaced code: `Fixed AVR D6/PORTD assembly, 16MHz interrupt masking, MacroQueue workspace and100-pixel/8-bit strip configuration`. Disposition: **replaced**. Reason: The final480-pixel renderer belongs to the ESP32-S3 GPIO4 (or ESP8266D2), not a second AVR strip. Reusing AVR registers/timing or truncating to100 pixels would conflict with confirmed hardware and memory ownership. Existing bounded PC contract remains a separate compatibility window.
 - Omitted/replaced code: `Donor native HAL showStrip and feature-profile brightness/renderedPixels buffers`. Disposition: **replaced**. Reason: The existing ESP output worker owns wire encoding/brightness and complete immutable frame copies. Host doubles test logical RGB and wire encoding separately; there is no second donor native HAL or duplicate brightness scale.
-- Omitted/replaced code: `Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness`. Disposition: **pending**. Reason: The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery had350/700ns highs; the candidate corrects them to classic WS2811 high-speed250/600ns,1250ns bits and300us low. A witnessed task-scoped GDMA allocation requests cache-safe refill using the already-IRAM SDK graph; the ring still refills and partition flash guards remain. Incomplete SDK symbol accounting now fails closed; this is still not wire readback. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof.
+- Omitted/replaced code: `Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness`. Disposition: **pending**. Reason: The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery had350/700ns highs; the earlier candidate used250/600ns highs. After reading all eight WS2811V1.4 pages, the current RMT profile uses300/625ns highs and950/625ns LOW,1250ns bits and300us reset. New optional whole-frame GPIO4 RX-DMA digital capture remains undeployed/unverified and cannot measure strip DIN voltage. A witnessed task-scoped GDMA allocation requests cache-safe refill using the already-IRAM SDK graph; the ring still refills and partition flash guards remain. Incomplete SDK symbol accounting now fails closed; this is still not wire readback. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof.
 - Test-code evidence: `tests/led_grid_test.cpp:179 [UTF8-LF sha256=975e51fe253e3b48a5a0d6cc2b8baa6b772bb9b6f5b041ef26e66de81ee0e190; anchor=Entire selection validation]`.
 - Test-code evidence: `tests/led_grid_stress_test.cpp:12 [UTF8-LF sha256=812517dc4c2973487d67d4cd294c149dcb66b527fc85716363f87c723fe5fa4a; anchor=constexpr unsigned iterations=10000;]`.
-- Test-code evidence: `tests/led_worker_test.cpp:241 [UTF8-LF sha256=9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273; anchor=void functional()]`.
+- Test-code evidence: `tests/led_worker_test.cpp:303 [UTF8-LF sha256=9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a; anchor=void functional()]`.
 - Test-code evidence: `tests/led_dma_guard_test.cpp:38 [UTF8-LF sha256=d69b5b0bd26348aabd176350120d11199748f2aceada1d39c113078719fa80c0; anchor=int main(]`.
 - Test-code evidence: `tools/test-led-dma-guard.ps1:14 [UTF8-LF sha256=f35494c76825ab2deccfe40759e9a7853142dc30875ffaa813f648d67de1b2e5; anchor=--wrap=gdma_new_ahb_channel]`.
 - Test-code evidence: `tests/cell_chase_wiring_test.mjs:8 [UTF8-LF sha256=e071f0a389df2fd27942b8b33b7b27b24d8e19a7d327c0986c930de770529790; anchor=const preset=]`.
@@ -911,7 +926,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `mobile/test/pixel_diagnostic_transport_test.dart:97 [UTF8-LF sha256=253d183118520a978fbea6b6470cca2917fe6b45688bf6982601fbe86825f152; anchor=one complete frame, no replay]`.
 - Test-code evidence: `mobile/test/pixel_diagnostic_command_test.dart:25 [UTF8-LF sha256=fce86844092a6ddd8a86833bffe5b8b3e8c45706af49dd1772e0fb342882da23; anchor=Atomic pixel command]`.
 - Test-code evidence: `tests/mobile_pixel_probe_plan_test.ps1:8 [UTF8-LF sha256=823dd963abd25514c0557bfc351dd23d24111f6de85a17461b91a7abd7f8287d; anchor=canonical compile-only plan]`.
-- Test-code evidence: `tests/idf_rmt_ring_test.cpp:146 [UTF8-LF sha256=0649b8c2fc987ba746933bd3b7f84037c0422ebcc75d579283287e8bcf01caf2; anchor=void complete(]`.
+- Test-code evidence: `tests/idf_rmt_ring_test.cpp:147 [UTF8-LF sha256=67b7f1107160e49db96f06907edb16dc540095bf4aaf6555041d49f47362cf00; anchor=void complete(]`.
 - Test-code evidence: `tests/idf_rmt_ring_sdk.inc:30 [UTF8-LF sha256=21407218c9fef3c223d298d4fc2084d9ab07b15a4de77a4cb43bd25c75c43d91; anchor=static size_t rmt_encode_bytes(]`.
 - Test-code evidence: `tests/idf_rmt_ring_provenance.json:2 [UTF8-LF sha256=882d1ef64d39ff9d99e303b7f997c1b7e6f11db82ae52f11c0a8b56a1075736f; anchor="sdk":]`.
 - Test-code evidence: `tests/led_grid_test.cpp:50 [UTF8-LF sha256=975e51fe253e3b48a5a0d6cc2b8baa6b772bb9b6f5b041ef26e66de81ee0e190; anchor=void cloudAnimationProgress(]`.
@@ -925,14 +940,14 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `libraries/BoardCore/src/CellBatch.h:9 [UTF8-LF sha256=29e1f77c397a4c530c236aa6a05598983e556b7bfc963beea0f69233ad38c8af; anchor=struct CellBatch]`.
 - Target: `firmware/esp8266/src/LedGrid.cpp:54 [UTF8-LF sha256=b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119; anchor=bool LedGrid::setCells(]`.
-- Target: `firmware/esp8266/src/LedGrid.h:51 [UTF8-LF sha256=82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa; anchor=bool setCells(]`.
+- Target: `firmware/esp8266/src/LedGrid.h:51 [UTF8-LF sha256=d551020f660434b4687e52888e3c7ae6132ccbf889604424b078b30eb83f175f; anchor=bool setCells(]`.
 - Target: `libraries/BoardCore/src/TableCellMapping.h:8 [UTF8-LF sha256=8a4d0d13b7779d8a54c74bb95cafcd871814423ee42909bcd5ebbd6006213ba0; anchor=constexpr uint8_t logicalForPhysical]`.
-- Target: `firmware/esp32s3/src/LedOutput.cpp:116 [UTF8-LF sha256=b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462; anchor=bool pending=true;]`.
-- Target: `firmware/esp32s3/src/LedWire.h:18 [UTF8-LF sha256=4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513; anchor=inline constexpr uint16_t zeroHigh=10]`.
+- Target: `firmware/esp32s3/src/LedOutput.cpp:116 [UTF8-LF sha256=073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08; anchor=bool pending=true;]`.
+- Target: `firmware/esp32s3/src/LedWire.h:19 [UTF8-LF sha256=de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996; anchor=inline constexpr uint16_t zeroHigh=12]`.
 - Target: `firmware/esp8266/src/LedRenderAdmission.h:7 [UTF8-LF sha256=a6dc69b69cba74db1fff54fd75b8940bf88958404f6c3ac971b27797d5b13c50; anchor=inline bool uartWindowReady(]`.
-- Target: `firmware/esp8266/esp8266.ino:950 [UTF8-LF sha256=f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5; anchor=uint8_t defaultPhysicalCell]`.
+- Target: `firmware/esp8266/esp8266.ino:950 [UTF8-LF sha256=5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614; anchor=uint8_t defaultPhysicalCell]`.
 - Target: `tools/build-firmware.ps1:20 [UTF8-LF sha256=24584210e1f306e53c78f1db8b52ed0d7765d0950eb67b4034ff41f284bb39e7; anchor=CellChaseOnBoot]`.
-- Target: `firmware/esp32s3/src/LedOutput.h:12 [UTF8-LF sha256=2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7; anchor=#if !defined(PAKAR_S3_LED_USE_DMA)]`.
+- Target: `firmware/esp32s3/src/LedOutput.h:12 [UTF8-LF sha256=f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83; anchor=#if !defined(PAKAR_S3_LED_USE_DMA)]`.
 - Target: `firmware/esp32s3/src/LedDmaGuard.h:16 [UTF8-LF sha256=6418b38a2773c592ccd48dd9c2cbfaaa1ff0a8f0aab99437e68c1a7c419a2a65; anchor=class LedDmaSetupScope]`.
 - Target: `firmware/esp32s3/src/LedDmaGuard.cpp:68 [UTF8-LF sha256=c2c2b90ee34d7919d22c0e4dc6c651c077b9acc0ed833090aab57e2c335e1d7e; anchor=newCacheSafeLedChannel]`.
 - Target: `mobile/lib/pixel_diagnostic.dart:89 [UTF8-LF sha256=f5d5f5726ffa6b046d36adc5466d81b1a5570a16d0937aa79e99839e23182e6d; anchor=class PixelProbe]`.
@@ -949,10 +964,10 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Retained: The donor stage/show ownership and startup clear are adapted to one immutable480-pixel worker mailbox. The explicit S3 RMT-DMA recovery scales/swaps logical RGB once into1440 internal bytes; IDF5.5.5's MSB-first bytes encoder fills its bounded DMA ring instead of allocating46084 expanded-symbol bytes. Wait completion and300us low latch precede buffer release; disabled startup still sends a complete black frame. Static GPIO remains separately selectable; no optical acceptance is inferred.
 - Omitted/replaced code: `Fixed AVR D6/PORTD assembly, 16MHz interrupt masking, MacroQueue workspace and100-pixel/8-bit strip configuration`. Disposition: **replaced**. Reason: The final480-pixel renderer belongs to the ESP32-S3 GPIO4 (or ESP8266D2), not a second AVR strip. Reusing AVR registers/timing or truncating to100 pixels would conflict with confirmed hardware and memory ownership. Existing bounded PC contract remains a separate compatibility window.
 - Omitted/replaced code: `Donor native HAL showStrip and feature-profile brightness/renderedPixels buffers`. Disposition: **replaced**. Reason: The existing ESP output worker owns wire encoding/brightness and complete immutable frame copies. Host doubles test logical RGB and wire encoding separately; there is no second donor native HAL or duplicate brightness scale.
-- Omitted/replaced code: `Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness`. Disposition: **pending**. Reason: The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery had350/700ns highs; the candidate corrects them to classic WS2811 high-speed250/600ns,1250ns bits and300us low. A witnessed task-scoped GDMA allocation requests cache-safe refill using the already-IRAM SDK graph; the ring still refills and partition flash guards remain. Incomplete SDK symbol accounting now fails closed; this is still not wire readback. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof.
+- Omitted/replaced code: `Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness`. Disposition: **pending**. Reason: The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery had350/700ns highs; the earlier candidate used250/600ns highs. After reading all eight WS2811V1.4 pages, the current RMT profile uses300/625ns highs and950/625ns LOW,1250ns bits and300us reset. New optional whole-frame GPIO4 RX-DMA digital capture remains undeployed/unverified and cannot measure strip DIN voltage. A witnessed task-scoped GDMA allocation requests cache-safe refill using the already-IRAM SDK graph; the ring still refills and partition flash guards remain. Incomplete SDK symbol accounting now fails closed; this is still not wire readback. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof.
 - Test-code evidence: `tests/led_grid_test.cpp:179 [UTF8-LF sha256=975e51fe253e3b48a5a0d6cc2b8baa6b772bb9b6f5b041ef26e66de81ee0e190; anchor=Entire selection validation]`.
 - Test-code evidence: `tests/led_grid_stress_test.cpp:12 [UTF8-LF sha256=812517dc4c2973487d67d4cd294c149dcb66b527fc85716363f87c723fe5fa4a; anchor=constexpr unsigned iterations=10000;]`.
-- Test-code evidence: `tests/led_worker_test.cpp:241 [UTF8-LF sha256=9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273; anchor=void functional()]`.
+- Test-code evidence: `tests/led_worker_test.cpp:303 [UTF8-LF sha256=9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a; anchor=void functional()]`.
 - Test-code evidence: `tests/led_dma_guard_test.cpp:38 [UTF8-LF sha256=d69b5b0bd26348aabd176350120d11199748f2aceada1d39c113078719fa80c0; anchor=int main(]`.
 - Test-code evidence: `tools/test-led-dma-guard.ps1:14 [UTF8-LF sha256=f35494c76825ab2deccfe40759e9a7853142dc30875ffaa813f648d67de1b2e5; anchor=--wrap=gdma_new_ahb_channel]`.
 - Test-code evidence: `tests/cell_chase_wiring_test.mjs:8 [UTF8-LF sha256=e071f0a389df2fd27942b8b33b7b27b24d8e19a7d327c0986c930de770529790; anchor=const preset=]`.
@@ -1104,7 +1119,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `7309fd36f0680722a4260e8f1251ae5a0fc67e99fc60f2426bb1294f789e87d4`.
 
-- Target: `firmware/esp8266/esp8266.ino:1036 [UTF8-LF sha256=f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5; anchor=void serviceScenePersistence(bool flush)]`.
+- Target: `firmware/esp8266/esp8266.ino:1036 [UTF8-LF sha256=5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614; anchor=void serviceScenePersistence(bool flush)]`.
 - Target: `firmware/esp8266/src/LedPreferences.h:29 [UTF8-LF sha256=303c1469003fec6fc2777ce459c1fae872c73d67241871463b7a32135bd51aac; anchor=inline bool applyLedBootPreferences(]`.
 - Target: `desktop/src/board_silent.rs:74 [UTF8-LF sha256=c043af00f09e18b54b60399ec725f41a41bb74ec405251d92b70771b00059078; anchor=pub struct Transaction]`.
 - Target: `desktop/src/ui/preferences.rs:154 [UTF8-LF sha256=ce0d5b61d484880803203cf8cd9342314f4b20d297c5c0935b56b174e4607d49; anchor=fn board_controls(]`.
@@ -1188,7 +1203,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `afbc70e3e8674c80d779168c37dc7430ab058e35baf2705b4b45cc11dd4e22ca`.
 
 - Target: `firmware/esp32s3/src/StatusRgb.h:12 [UTF8-LF sha256=2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b; anchor=class StatusRgb]`.
-- Target: `firmware/esp8266/esp8266.ino:1424 [UTF8-LF sha256=f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5; anchor=void serviceStatusRgb(uint32_t now)]`.
+- Target: `firmware/esp8266/esp8266.ino:1424 [UTF8-LF sha256=5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614; anchor=void serviceStatusRgb(uint32_t now)]`.
 - Target: `firmware/esp32s3/src/StatusRgbConfig.h:13 [UTF8-LF sha256=8ae7dd8a7868db38ff2a31c7034c3c9674c8bf860ee4b9aae4f559d2f125ed29; anchor=class StatusRgbConfig]`.
 - Target: `desktop/src/status_rgb.rs:68 [UTF8-LF sha256=3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e; anchor=pub struct Configuration]`.
 - Target: `mobile/lib/status_rgb.dart:116 [UTF8-LF sha256=5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8; anchor=class StatusRgbSettings]`.
@@ -1697,7 +1712,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `mobile/lib/bridge.dart:327 [UTF8-LF sha256=14bc9c91fb4dd852ab7ef52e2ab7d79c83ad3607a463a8fb72e667faaff7fc57; anchor=watchdog = Timer.periodic]`.
 - Target: `libraries/BoardCore/src/PeerFence.h:31 [UTF8-LF sha256=9f1ab63252bd881d2fc786e230a18db331e66708a1bd3ccd0f096d2d2b5d49d5; anchor=inline bool accepts(]`.
 - Target: `firmware/esp8266/src/WebAccess.h:90 [UTF8-LF sha256=534fb9f39fbcc530725e3c50584050927bb3ef6bea17abddaaee457481aaa5c8; anchor=bool peerAllowed(]`.
-- Target: `firmware/esp8266/esp8266.ino:1568 [UTF8-LF sha256=f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5; anchor=bool authenticate()]`.
+- Target: `firmware/esp8266/esp8266.ino:1568 [UTF8-LF sha256=5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614; anchor=bool authenticate()]`.
 - Target: `assets/web/peer-http.js:90 [UTF8-LF sha256=04dd5da95667de82bc556e005db5fc72b7d31ebafbda7b605590e8b80b120aa6; anchor=function assertOwner(peer)]`.
 - Target: `desktop/src/peer_http.rs:338 [UTF8-LF sha256=91cc8c623f63d712d9cbd12ce0cf18e4badb66c6a17490d73e8549af10d92bcd; anchor=pub fn admit(]`.
 - Target: `desktop/src/main.rs:658 [UTF8-LF sha256=dcc88d477b8f72f4999b507e96646b59fcc0c54a80368f95477b6a235adae2fd; anchor=fn scoped_http_request(]`.
@@ -3030,7 +3045,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `a05952f7ca3241aa840e024ff01560cea3d74226b003e2781efe95b4a533d388`.
 
-- Target: `firmware/esp8266/esp8266.ino:314 [UTF8-LF sha256=f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5; anchor=std::atomic<uint32_t> otaRebootAt{0};]`.
+- Target: `firmware/esp8266/esp8266.ino:314 [UTF8-LF sha256=5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614; anchor=std::atomic<uint32_t> otaRebootAt{0};]`.
 - Target: `firmware/esp8266/src/AsyncHttpService.h:107 [UTF8-LF sha256=9647c380a1ed67d5b5eb2feb4fe35295b6db1fc3dfbbf843951a69d91f41ebcc; anchor=explicit AsyncHttpService(uint16_t port) : native_(port) {}]`.
 - Retained: Complete original header reread through EOF. Retains authenticated chunked application-image upload, explicit update completion/reboot and shared server integration through the adapted existing Pakar /update handlers. Native W5500 uses the same lwIP listener/updater and authorization policy; no parallel Ethernet-only firmware or server.
 - Omitted/replaced code: `Global BusyOTA and InitAsyncOTA declarations / ESP8266 updater ownership`. Disposition: **replaced**. Reason: Pakar owns admission, upload lease, staged firmware and deferred reboot explicitly in its integrated main/MaintenanceRoutes. Reintroducing donor globals would create a second mutable owner and bypass paired programming/backup/peer fences. ESP32-S3 uses native OTA partitions, not ESP8266 raw linker/FS bounds.
@@ -3045,10 +3060,10 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 - Target: `firmware/esp8266/src/AsyncHttpService.h:123 [UTF8-LF sha256=9647c380a1ed67d5b5eb2feb4fe35295b6db1fc3dfbbf843951a69d91f41ebcc; anchor=AsyncURIMatcher::exact(path)]`.
 - Target: `firmware/esp8266/src/LoopMessages.h:73 [UTF8-LF sha256=02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0; anchor=Message *items_=nullptr;]`.
-- Target: `firmware/esp8266/esp8266.ino:3797 [UTF8-LF sha256=f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5; anchor=loopMessages.begin(); // PSRAM-backed S3 queue]`.
+- Target: `firmware/esp8266/esp8266.ino:3804 [UTF8-LF sha256=5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614; anchor=loopMessages.begin(); // PSRAM-backed S3 queue]`.
 - Target: `firmware/esp8266/src/MaintenanceRoutes.h:158 [UTF8-LF sha256=2e9eccc4581646b2797a80bade0523a775d4df64c4de657d357a95b1ba18fc03; anchor=internal_heap_largest_block_bytes]`.
 - Target: `tools/update-firmware.mjs:151 [UTF8-LF sha256=7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874; anchor=export function checkWebSocket(]`.
-- Target: `firmware/esp8266/esp8266.ino:2152 [UTF8-LF sha256=f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5; anchor=void onWebSocketEvent(]`.
+- Target: `firmware/esp8266/esp8266.ino:2152 [UTF8-LF sha256=5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614; anchor=void onWebSocketEvent(]`.
 - Target: `firmware/esp32s3/src/EthernetPort.h:63 [UTF8-LF sha256=9504a3f71b4c0998277764d6c5f39f66e7b8c3b49cfb294fb5e5869138e1a930; anchor=SPIClass spi_{HSPI};]`.
 - Retained: Complete original implementation read through EOF. Retains shared asynchronous server setup, /ws attachment, connected-client limits and per-client message dispatch. The actual AsyncTCP listener uses native lwIP interfaces, so Wi-Fi and W5500 reach identical routes. Existing Pakar bounded loop-owned dispatch and access ownership replace unsafe donor callback behavior.
 - Retained: Updater WebSocket preflight now adapts actual desktop main.rs::ws_worker read-only status acquisition: exactly one masked {type:status} is sent only after validating101/Accept/Connection:Upgrade and the actual pinned TCP peer. Only exact-board/boot recognized status-rgb/update-progress events may be skipped; neither renews the bounded full-status deadline nor satisfies readiness. The complete status must still pass boardPeer identity/capability checks. Separate measured connect/upgrade and full-status stages allow bounded cloud contention without removing the preflight or replaying any action.
@@ -3059,7 +3074,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Omitted/replaced code: `Ten-client limit and permissive handling of message/transport fragments`. Disposition: **replaced**. Reason: Pakar limits eight simultaneous sockets for finite S3/ESP8266 queue/RAM admission. It handles sequential transport chunks within one final frame and rejects oversized, fragmented-message or invalid-sequence frames explicitly instead of executing partial or unterminated commands.
 - Omitted/replaced code: `Donor PU command globals and serial business dispatch`. Disposition: **replaced**. Reason: Pakar dispatches the shared board/protocol/cell/firmware contracts under current access and programming ownership. PU business logic and its UART path do not match this AVR/S3 board.
 - Omitted/replaced code: `Implicit expectation that the first WebSocket text frame is an unsolicited full status`. Disposition: **replaced**. Reason: The integrated board/native worker supports explicit read-only status requests and can publish independent compact RGB/update events first. The updater now requests one status without credentials/control writes, validates every optional event identity before ignoring it, and refuses completion from partial/foreign/malformed frames. Both handshake and full-status waits remain finite and separately measured; retries of firmware or control messages are not added.
-- Test-code evidence: `tests/led_scheduler_test.cpp:24 [UTF8-LF sha256=426daa3ad87f8aa094bf2a98562330418bdcc7a57001546bd1ded25e11fafcad; anchor=S3 queue must not retain internal bulk storage]`.
+- Test-code evidence: `tests/led_scheduler_test.cpp:24 [UTF8-LF sha256=ec866f57cfaa1109b7e97ae6ff011c8ac2fbf3f59d3d49ffe07fa966e22092c3; anchor=S3 queue must not retain internal bulk storage]`.
 - Test-code evidence: `tests/ble_storage_stubs/esp_heap_caps.h:18 [UTF8-LF sha256=f6ff5f7843125cd7e780df39fd9d31006af9ef23070641ec580288235750365c; anchor=assert(capabilities==(MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT))]`.
 - Test-code evidence: `tests/update_tool_test.mjs:199 [UTF8-LF sha256=8c3e3df8db7d7fe46fdca6e1b03958f812f22521e7efb795ee5c54074273b66d; anchor=Exactly one read-only request, no replay]`.
 - Test-code evidence: `tests/update_tool_test.mjs:210 [UTF8-LF sha256=8c3e3df8db7d7fe46fdca6e1b03958f812f22521e7efb795ee5c54074273b66d; anchor=Partial events never satisfy readiness or trigger request replay]`.
@@ -3074,7 +3089,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `db79b8de84d8f874df348b0d68b1d2056f8945ad742f172be99ddb9b1d94e218`.
 
 - Target: `firmware/esp8266/src/AsyncHttpService.h:107 [UTF8-LF sha256=9647c380a1ed67d5b5eb2feb4fe35295b6db1fc3dfbbf843951a69d91f41ebcc; anchor=explicit AsyncHttpService(uint16_t port) : native_(port) {}]`.
-- Target: `firmware/esp8266/esp8266.ino:173 [UTF8-LF sha256=f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5; anchor=AsyncWebSocket webSocket("/ws");]`.
+- Target: `firmware/esp8266/esp8266.ino:173 [UTF8-LF sha256=5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614; anchor=AsyncWebSocket webSocket("/ws");]`.
 - Retained: Complete original header read through EOF. Shared HTTP80 and /ws WebSocket composition are retained in the actual Pakar server; the native Ethernet netif uses that same existing listener, API routes and authentication rather than new WIZnet sockets.
 - Omitted/replaced code: `Public donor global server/ws symbols and InitWebServer declaration`. Disposition: **replaced**. Reason: The integrated project already owns one AsyncHttpService facade and one AsyncWebSocket. Hardware-affecting callbacks defer into the loop owner using weak request lifetimes; duplicate globals/init would introduce divergent lifecycles, auth and connection owners.
 - Test-code evidence: `tests/async_http_test.cpp:43 [UTF8-LF sha256=aa31ba27f15b74ba5cd1f61133bc261776c09637b22a4f7d6365b9208867fc97; anchor=Reproduce installed SDK3.12.1]`.

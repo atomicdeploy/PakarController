@@ -10,6 +10,9 @@
 #include <thread>
 #include <vector>
 #include <driver/gpio.h>
+#if PAKAR_S3_LED_USE_DMA
+#include <driver/rmt_rx.h>
+#endif
 #if !PAKAR_S3_LED_USE_DMA
 #include <soc/gpio_reg.h>
 #endif
@@ -37,6 +40,11 @@ PakarS3::LedOutput* owner=nullptr;
 std::atomic<unsigned> producerCopies{0};
 std::atomic<unsigned> pinCalls{0},channelCreates{0},allocationCalls{0};
 unsigned pinFailure=0;
+#if PAKAR_S3_LED_USE_DMA
+rmt_rx_event_callbacks_t rxCallbacks{};void* rxOwner=nullptr;void* rxBuffer=nullptr;
+size_t rxCapacity=0;unsigned rxCorruptBit=UINT32_MAX;
+bool rxNoMemory=false,rxNeverDone=false,rxDisableFails=false,rxMalformed=false;
+#endif
 std::atomic<bool> validateProducers{false};
 std::vector<uint8_t> staticBytes;
 template<class Predicate>void until(Predicate predicate){
@@ -48,7 +56,9 @@ bool isLive(){std::lock_guard<std::mutex> lock(mutex);return live;}
 void setBlock(bool value){std::lock_guard<std::mutex> lock(mutex);block=value;if(value)++blockGeneration;changed.notify_all();}
 void waitBlocked(){until([]{std::lock_guard<std::mutex> lock(mutex);return live&&block&&blockedGeneration==blockGeneration;});}
 uint32_t field(const PakarS3::LedOutput& output,const char* name){
- const auto json=output.json();const auto pos=json.find(std::string("\"")+name+"\":");assert(pos!=std::string::npos);
+ // Driver counters follow the optional nested signal-capture observation.
+ // Read the driver error, not that capture's separately reported error code.
+ const auto json=output.json();const auto pos=json.rfind(std::string("\"")+name+"\":");assert(pos!=std::string::npos);
  return static_cast<uint32_t>(std::stoul(json.substr(json.find(':',pos)+1)));
 }
 void cleanup(){stopping=true;changed.notify_all();if(worker.joinable())worker.join();for(auto* p:allocations)std::free(p);allocations.clear();finished=true;}
@@ -80,6 +90,14 @@ int xTaskCreatePinnedToCore(void(*run)(void*),const char*,unsigned bytes,void* c
 void vTaskDelay(TickType_t delay){if(Fixture::stopping)throw Fixture::Stop{};std::this_thread::sleep_for(std::chrono::milliseconds(delay));if(Fixture::stopping)throw Fixture::Stop{};}
 void vTaskDelete(void*){throw Fixture::Stop{};}
 void* heap_caps_malloc(size_t bytes,int caps){++Fixture::allocationCalls;assert(caps==(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));assert(bytes==1440);auto* p=std::malloc(bytes);Fixture::allocations.push_back(p);return p;}
+void* heap_caps_aligned_alloc(size_t align,size_t bytes,int caps){
+ assert(align==32 && bytes==2032*sizeof(rmt_symbol_word_t));
+ assert(caps==(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT|MALLOC_CAP_DMA));
+#if PAKAR_S3_LED_USE_DMA
+ if(Fixture::rxNoMemory)return nullptr;
+#endif
+ auto* p=std::malloc(bytes);Fixture::allocations.push_back(p);return p;
+}
 void heap_caps_free(void* pointer){for(auto& p:Fixture::allocations)if(p==pointer)p=nullptr;std::free(pointer);}
 int rmt_new_tx_channel(const rmt_tx_channel_config_t* config,rmt_channel_handle_t* channel){assert(Fixture::pinCalls==3);++Fixture::channelCreates;assert(config->flags.with_dma&&config->mem_block_symbols==2046&&config->intr_priority==3&&config->resolution_hz==40000000&&config->trans_queue_depth==1&&config->gpio_num==4);*channel=reinterpret_cast<void*>(1);return ESP_OK;}
 namespace PakarS3 {
@@ -89,14 +107,28 @@ LedDmaIrqReceipt ledDmaIrqReceipt(){return {PAKAR_S3_LED_USE_DMA!=0,42,1,23,3};}
 int rmt_new_copy_encoder(const rmt_copy_encoder_config_t*,rmt_encoder_handle_t* encoder){*encoder=reinterpret_cast<void*>(2);return ESP_OK;}
 int rmt_new_bytes_encoder(const rmt_bytes_encoder_config_t* config,rmt_encoder_handle_t* encoder){
  assert(config->flags.msb_first==1);
- assert(config->bit0.level0==1&&config->bit0.level1==0&&config->bit0.duration0==10&&config->bit0.duration1==40);
- assert(config->bit1.level0==1&&config->bit1.level1==0&&config->bit1.duration0==24&&config->bit1.duration1==26);
+ assert(config->bit0.level0==1&&config->bit0.level1==0&&config->bit0.duration0==12&&config->bit0.duration1==38);
+ assert(config->bit1.level0==1&&config->bit1.level1==0&&config->bit1.duration0==25&&config->bit1.duration1==25);
  Fixture::byteCoding=*config;*encoder=reinterpret_cast<void*>(3);return ESP_OK;
 }
 int rmt_enable(rmt_channel_handle_t){return ESP_OK;}
 int rmt_tx_register_event_callbacks(rmt_channel_handle_t,const rmt_tx_event_callbacks_t *callbacks,void *owner){Fixture::callbacks=*callbacks;Fixture::callbackOwner=owner;return ESP_OK;}
 int rmt_del_channel(rmt_channel_handle_t){return ESP_OK;}
 int rmt_del_encoder(rmt_encoder_handle_t){return ESP_OK;}
+#if PAKAR_S3_LED_USE_DMA
+int rmt_new_rx_channel(const rmt_rx_channel_config_t* config,rmt_channel_handle_t* channel){
+ assert(config->gpio_num==4&&config->flags.with_dma&&config->flags.io_loop_back);
+ assert(config->resolution_hz==40000000&&config->mem_block_symbols==2032&&config->intr_priority==0);
+ *channel=reinterpret_cast<void*>(4);return ESP_OK;
+}
+int rmt_rx_register_event_callbacks(rmt_channel_handle_t,const rmt_rx_event_callbacks_t* callbacks,void* owner){
+ Fixture::rxCallbacks=*callbacks;Fixture::rxOwner=owner;return ESP_OK;
+}
+int rmt_receive(rmt_channel_handle_t,void* buffer,size_t size,const rmt_receive_config_t* config){
+ assert(config->signal_range_min_ns==100&&config->signal_range_max_ns==100000&&config->flags.en_partial_rx);
+ Fixture::rxBuffer=buffer;Fixture::rxCapacity=size;return ESP_OK;
+}
+#endif
 int rmt_transmit(rmt_channel_handle_t,rmt_encoder_handle_t encoder,const void* source,size_t bytes,const rmt_transmit_config_t* tx){
  std::lock_guard<std::mutex> lock(Fixture::mutex);assert(!Fixture::live&&tx->loop_count==0&&tx->flags.eot_level==0&&tx->flags.queue_nonblocking);
  assert(encoder==reinterpret_cast<void*>(3)&&bytes==480*3);Fixture::live=true;Fixture::buffer=source;
@@ -118,9 +150,39 @@ int rmt_tx_wait_all_done(rmt_channel_handle_t,int deadline){
  if(Fixture::timeout)return ESP_ERR_TIMEOUT;
  lock.unlock();std::this_thread::sleep_for(std::chrono::milliseconds(2));lock.lock();
  assert(std::memcmp(Fixture::buffer,Fixture::snapshot.data(),Fixture::snapshot.size())==0);Fixture::live=false;
+#if PAKAR_S3_LED_USE_DMA
+ if(Fixture::rxBuffer && !Fixture::rxNeverDone){
+  const auto& frame=Fixture::frames.back();
+  const size_t total=frame.size()/sizeof(rmt_symbol_word_t),half=Fixture::rxCapacity/sizeof(rmt_symbol_word_t)/2;
+  assert(half==1016 && total>half*2); // Whole frame must wrap this small ring repeatedly.
+  for(size_t at=0,window=0;at<total;at+=half,++window){
+   const auto count=std::min(half,total-at);
+   auto* chunk=static_cast<rmt_symbol_word_t*>(Fixture::rxBuffer)+(window%2)*half;
+   std::memcpy(chunk,frame.data()+at*sizeof(*chunk),count*sizeof(*chunk));
+   if(Fixture::rxCorruptBit>=at && Fixture::rxCorruptBit<at+count){
+    auto& symbol=chunk[Fixture::rxCorruptBit-at];
+    symbol=symbol.duration0==PakarS3::zeroHigh?Fixture::byteCoding.bit1:Fixture::byteCoding.bit0;
+   }
+   rmt_rx_done_event_data_t received{};received.received_symbols=chunk;received.num_symbols=count;
+   received.flags.is_last=at+count==total;
+   if(Fixture::rxMalformed){received.num_symbols=2033;received.flags.is_last=true;}
+   Fixture::rxCallbacks.on_recv_done(reinterpret_cast<void*>(4),&received,Fixture::rxOwner);
+   if(Fixture::rxMalformed)break;
+  }
+  Fixture::rxBuffer=nullptr;
+ }
+#endif
  rmt_tx_done_event_data_t done{Fixture::shortCompletion?480*24U:480*24U+1};assert(Fixture::callbacks.on_trans_done);Fixture::callbacks.on_trans_done(reinterpret_cast<void*>(1),&done,Fixture::callbackOwner);return ESP_OK;
 }
-int rmt_disable(rmt_channel_handle_t){
+int rmt_disable(rmt_channel_handle_t channel){
+#if PAKAR_S3_LED_USE_DMA
+ if(channel==reinterpret_cast<void*>(4)){
+  if(Fixture::rxDisableFails)return ESP_ERR_TIMEOUT;
+  Fixture::rxBuffer=nullptr;return ESP_OK;
+ }
+#else
+ (void)channel;
+#endif
  std::unique_lock<std::mutex> lock(Fixture::mutex);++Fixture::stops;Fixture::changed.notify_all();
  Fixture::changed.wait_for(lock,std::chrono::milliseconds(500),[]{return !Fixture::blockDisable||Fixture::stopping.load();});
  assert(!Fixture::blockDisable||Fixture::stopping);
@@ -277,6 +339,32 @@ void functional(){
  output.submit(rgb,255,true,2003);Fixture::until([&]{return Fixture::field(output,"revision")==2003;});
  const auto resumed=Fixture::count();std::this_thread::sleep_for(std::chrono::milliseconds(30));assert(Fixture::count()==resumed&&resumed==off+1);
  concurrentProducers(output);asymmetricChannels(output);
+ #if PAKAR_S3_LED_USE_DMA
+ assert(output.requestSignalCapture());assert(!output.requestSignalCapture());
+ output.submit(rgb,255,true,11000);Fixture::until([&]{return Fixture::field(output,"frame_revision")==11000;});
+ assert(output.json().find("\"match\":true")!=std::string::npos);
+ assert(Fixture::field(output,"observed_bits")==11520);
+ Fixture::rxCorruptBit=23*6*24;assert(output.requestSignalCapture());
+ output.submit(rgb,255,true,11001);Fixture::until([&]{return Fixture::field(output,"frame_revision")==11001;});
+ assert(output.json().find("\"match\":false")!=std::string::npos);
+ assert(Fixture::field(output,"first_mismatch_bit")==23*6*24);
+ Fixture::rxCorruptBit=UINT32_MAX;Fixture::rxNeverDone=true;assert(output.requestSignalCapture());
+ output.submit(rgb,255,true,11002);Fixture::until([&]{return Fixture::field(output,"revision")==11002;});
+ assert(output.json().find("\"ready\":true")!=std::string::npos);
+ assert(output.json().find("\"match\":null")!=std::string::npos);
+ Fixture::rxNeverDone=false;Fixture::rxNoMemory=true;assert(output.requestSignalCapture());
+ output.submit(rgb,255,true,11003);Fixture::until([&]{return Fixture::field(output,"revision")==11003;});
+ assert(output.json().find("\"ready\":true")!=std::string::npos);
+ assert(output.json().find("\"match\":null")!=std::string::npos);
+ Fixture::rxNoMemory=false;Fixture::rxMalformed=true;assert(output.requestSignalCapture());
+ output.submit(rgb,255,true,11004);Fixture::until([&]{return Fixture::field(output,"revision")==11004;});
+ assert(output.json().find("\"ready\":true")!=std::string::npos);
+ assert(output.json().find("\"match\":null")!=std::string::npos);
+ Fixture::rxMalformed=false;Fixture::rxDisableFails=true;assert(output.requestSignalCapture());
+ output.submit(rgb,255,true,11005);Fixture::until([&]{return Fixture::field(output,"failed")==1;});
+ assert(Fixture::field(output,"error_code")==ESP_ERR_INVALID_STATE);
+ assert(!output.requestSignalCapture());assert(!PakarS3::LedOutput::acquireFlashPause());
+ #endif
  Fixture::cleanup();puts("Actual DMA worker: stackless serialized member submission,1440-byte internal source,SDK MSB-first bytes encoding/timing,300us post-completion latch,startup black,immutable TX,2000 mailbox submissions/coalescing,no unchanged replay,off black/sleep/on resume,boundary/nested/concurrent holds and failed-quiesce recovery passed.");
 }
 void failure(bool disableFails,bool shortCompletion=false){
@@ -296,7 +384,7 @@ void failure(bool disableFails,bool shortCompletion=false){
 int main(int argc,char** argv){
  PakarS3::LedOutput driver;
  const std::string expected=PAKAR_S3_LED_USE_DMA?
-     "{\"backend\":\"rmt-dma\",\"rmt\":true,\"dma\":true}":
+     "{\"backend\":\"rmt-dma\",\"rmt\":true,\"dma\":true,\"signal_capture_supported\":true}":
      "{\"backend\":\"gpio-static\",\"rmt\":false,\"dma\":false}";
  assert(driver.capabilitiesJson()==expected);
  assert(driver.json().find(expected.substr(0,expected.size()-1))==0);

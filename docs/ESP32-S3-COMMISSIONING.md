@@ -14,6 +14,61 @@ same AVR UART/ISP signals at once.
 
 ## Current rainbow and LAN recovery
 
+### Unresolved partial rainbow: timing candidate and pad capture
+
+The user still reports only the first23 cells working. This is NOT fixed or
+physically accepted. Fresh hostname-first ASUS readback still identifies the
+same0.2.7/ff6da73... boot and advancing RMT-DMA counters, not later-pixel success.
+Whether "first23" means cable order or logical IDs was explicitly asked.
+
+Two fresh `status?pixels=1` snapshots contained all480 non-black RGB values,
+including changing pixels139 and480, with80 cell mappings. Thus the published
+RAM frame has no missing/black tail; this is not evidence of correct wire output.
+Internal heap was67532..68228B free but its largest block only31732B.
+
+The complete eight-page WS2811V1.4 donor datasheet was extracted AND visually
+reviewed. Current source moves RMT from250/1000ns zero and600/650ns one to
+300/950ns and625/625ns respectively; both retain1250ns bits/300us reset.
+This removes exact/near timing-limit choices, not a proven root-cause diagnosis.
+The separately selectable static backend keeps its existing cycle profile.
+
+`POST /api/led/output` with only `capture=true` arms one on-demand digital GPIO4
+RX-DMA capture of the next existing immutable matrix frame. No extra wire,
+pattern change, output toggle, mapping change, persistent write or automatic
+capture loop. Admission still uses the ordinary auth/release/board/boot gates.
+Read `led_output.driver.signal_capture` in ordinary status: state0 idle/1 pending/
+2 capturing/3 complete/4 failed quiesce; match remains null on pending/error.
+Compare all11520 data bits, first mismatch bit (zero-based), pulse ranges and
+data-LOW gaps to the actual TX payload. Initial idle/final reset LOW are excluded
+from data timing checks; this does NOT verify280us reset duration, analogue
+voltage at strip DIN, downstream reshaping, power, physical controller count or
+optical output. SDK encoded-symbol totals alone remain insufficient.
+
+Capture allocates an8128B internal RX-DMA ring only on request and compares
+recycled1016-symbol chunks incrementally without copying/allocating in the ISR.
+A contiguous46112B capture was rejected against the actual31732B largest block;
+PSRAM is not substituted for unsupported RX-DMA storage. TX refill retains its
+witnessed priority3; RX uses the SDK GDMA allocator without that TX-only override
+(`intr_priority` is not used by the SDK's DMA RX allocation). Capture adds IRQ load:
+an incomplete/mismatched observation can include capture overrun, so it is NOT
+automatically a TX-fault diagnosis. Buffer bounds/partial EOF are validated.
+The ring is freed after bounded capture/stop. Allocation/receive failure is reported without stopping
+healthy output; failure to quiesce RX retains memory, stops output and refuses
+flash rather than risk DMA use-after-free. Worker fixtures exercise full capture,
+corruption after23 six-pixel groups, malformed chunks, timeout, no-memory and
+failed-stop behavior; the independent decoder tests recycled chunks, short
+frames, internal gaps, LOW-first symbols and idle handling.
+Host worker/static/RMT/RGB/BGR, exact-IDF ring and renderer/persistence checks
+pass. Final canonical16MB/OPI/RMT-DMA/verified-ISP/BLE-disabled/optional-Ethernet/
+status-GPIO48 SDK build passed:2231680B application, sketch2231535/3342336B,
+globals116436/327680B; SHA256
+`95cc8740d8c5289dd4553438c8cf9560d3b046eb549ba542808a03c445d2b8fa`,
+MD5`ee0cf2d7daa40596c8dc624cdb900742`. The actual image contains
+`partial-rx-dma`, `gpio-digital-not-optical` and the capture admission error;
+it is not the superseded contiguous-buffer candidate or a failed link output.
+Deployment and real capture/optical acceptance remain separate and unperformed.
+No ESP, AVR, app or wiring was changed during these read-only observations.
+
 ### Onboard status pixel source checkpoint
 
 This board's existing persisted configuration is GPIO48, confirmed/enabled,

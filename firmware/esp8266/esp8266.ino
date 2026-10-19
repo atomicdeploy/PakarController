@@ -3243,6 +3243,13 @@ void registerApi() {
   });
   server.on("/api/led/output",HTTP_POST,[](){
     if(!authenticate())return;
+    if(server.hasArg("capture")) {
+      if((server.arg("capture")!="true" && server.arg("capture")!="1") || server.hasArg("enabled") || server.hasArg("mode")) {
+        server.send(400,"text/plain","Capture must be requested separately; it does not change LED mode/output");return;
+      }
+      const bool accepted=grid.requestSignalCapture();
+      server.send(accepted?202:409,"application/json",accepted?"{\"accepted\":true,\"optical_verified\":false}":"{\"accepted\":false,\"error\":\"capture_unavailable_or_busy\"}");return;
+    }
     const bool enabledGiven=server.hasArg("enabled"),modeGiven=server.hasArg("mode");
     const String value=server.arg("enabled"),outputMode=server.arg("mode");
     if((!enabledGiven&&!modeGiven)||(enabledGiven&&value!="true"&&value!="false"&&value!="1"&&value!="0")||

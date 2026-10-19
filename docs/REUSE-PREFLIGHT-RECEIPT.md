@@ -1,5 +1,58 @@
 # Donor-first preflight receipt
 
+## Partial rainbow remains a physical failure
+
+Fresh read-only trusted ASUS/ledboard.local still reports ESP/AVR0.2.7, same
+ff6da73... boot, rainbow/RMT-DMA enabled and advancing counters. The user's
+first23-cell failure remains authoritative; no RGB/OTA checkpoint closed it.
+Reread actual esp32WS2811 driver/header/README, exact-IDF ring/worker tests and
+reviewed RMT TX/RX allocation/receive/disable/DMA/EOF implementation. Read all
+eight WS2811V1.4 PDF pages as text plus rendered visuals: timings, cascade/bit
+order, power/level thresholds, application circuits and packages, not keywords.
+The same ledger now binds the PDF timing and still-pending electrical acceptance.
+
+Source centers the RMT pulse widths within that datasheet's ranges and adds an
+explicit whole-frame digital-pad capture, not another renderer/driver fallback.
+The ring remains bounded2046 symbols and still refills; neither SDK accounting
+nor pad readback proves strip input voltage or physical light. Existing static
+cycle timing, matrix scene/mapping/BGR, cloud features and AVR memory are intact.
+No new RMT SDK-wide flags, dependencies, alternate cache or clean build.
+
+Fresh480-pixel RAM snapshots include changing139/480 and no black tail, not
+physical success. Actual internal largest block31732B rejects the initial
+46112B contiguous capture design. Read the pinned SDK partial-RX descriptor
+mount/callback behavior: use an8128B ring (two4064B halves), stateful incremental
+comparison and bounded callback-span checks. TX retains witnessed priority3;
+RX uses the ordinary SDK GDMA allocator, not the TX-only override. Verified
+`intr_priority` does not control SDK DMA RX allocation; no invented RX receipt.
+No ISR heap/copy or permanent ring reservation; RX explicitly does not use
+PSRAM. Observation adds IRQ load and may itself overrun; mismatch alone cannot
+blame the transmitter, and digital matching cannot prove strip voltage/light.
+
+Final SDK link caught Xtensa `dangerous relocation: l32r` in the header-defined
+IRAM RX callback. Reread the pinned SDK RX callback/cache contract and existing
+donor/output ISR placement. Stock RX cache-safe support is off, so retain its
+ordinary callback contract rather than forcing a weak header function into
+IRAM or changing global compiler/SDK flags. TX's cache-safe refill remains
+unchanged; a custom cache-safe RX SDK is not certified by this checkpoint.
+
+First fixture failure was its naive first-match error counter parser reading
+the NEW nested capture error instead of the existing final driver error. Checked
+the actual worker/capture JSON and corrected the fixture's counter lookup; no
+production error was hidden. Both static/DMA RGB/BGR profiles, injected capture
+corruption/malformed-chunk/timeout/no-memory/failed quiesce, exact-IDF ring/decoder and existing
+renderer/persistence checks pass. Full physical failure and coordinated-release
+rollout gate remain open; do not label a timing candidate as the confirmed fix.
+
+Prior main run39194759112 is red independently of this candidate: native's WS
+fixture expected a control frame but received the new peer introduction; mobile
+has six failing network/settings/bridge/update fixtures (including missing peer
+release metadata and null/widget lookups); ESP8266 exceeds its DRAM `.bss` region.
+These were read from the actual failed job logs, not inferred from a red badge.
+No tests/checks were disabled or broad unrelated client/ESP8266 changes attempted
+while prioritizing the physically failing S3 matrix. CI and coordinated release
+remain open gates; focused LED passes are not a full production-green claim.
+
 ## Semantic onboard RGB integration
 
 Reread the actual PCController Project/StatusLedMath.h and

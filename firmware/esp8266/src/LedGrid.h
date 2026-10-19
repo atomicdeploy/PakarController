@@ -77,6 +77,13 @@ class LedGrid {
   bool staticMode()const{return staticMode_;}
   String outputJson()const;
   String outputCapabilitiesJson()const;
+  bool requestSignalCapture(){
+#if defined(ARDUINO_ARCH_ESP32)
+    return outputEnabled_ && output_.requestSignalCapture();
+#else
+    return false;
+#endif
+  }
   // A loop-thread snapshot of the last committed command RGB buffer, before
   // FastLED brightness/correction. Never expose an uncommitted streamed chunk.
   String pixelFrameJson() const;

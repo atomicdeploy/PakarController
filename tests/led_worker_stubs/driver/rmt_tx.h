@@ -7,6 +7,7 @@ using rmt_encoder_handle_t=void*;
 using esp_err_t=int;
 constexpr int ESP_OK=0,ESP_ERR_NO_MEM=0x101,ESP_ERR_TIMEOUT=0x107,RMT_CLK_SRC_DEFAULT=0;
 constexpr int ESP_ERR_INVALID_RESPONSE=0x108;
+constexpr int ESP_ERR_INVALID_STATE=0x103,ESP_ERR_INVALID_SIZE=0x104;
 struct rmt_tx_done_event_data_t{size_t num_symbols=0;};
 using rmt_tx_done_callback_t=bool(*)(rmt_channel_handle_t,const rmt_tx_done_event_data_t*,void*);
 struct rmt_tx_event_callbacks_t{rmt_tx_done_callback_t on_trans_done=nullptr;};

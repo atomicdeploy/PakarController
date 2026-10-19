@@ -1,6 +1,7 @@
 // Actual pinned IDF encoders and EOF handler, bounded host DMA descriptor model.
 // This cannot measure RF, ISR latency, waveform quality or physical LED output.
 #include "../firmware/esp32s3/src/LedWire.h"
+#include "../firmware/esp32s3/src/LedSignal.h"
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -206,9 +207,47 @@ void boundaries(){
   }
 }
 }
+void signalCaptureChecks(){
+  std::array<Rgb,kPixels> rgb{};for(size_t i=0;i<rgb.size();++i)rgb[i]={uint8_t(i),uint8_t(i*7),uint8_t(i*31)};
+  std::vector<uint8_t> expected(kPixels*3);PakarS3::encodeWireBytes(rgb.data(),rgb.size(),255,true,expected.data());
+  std::vector<rmt_symbol_word_t> wire(kDataSymbols+1);PakarS3::encodeWire(rgb.data(),rgb.size(),255,true,wire.data());
+  assert(PakarS3::inspectLedSignal(wire.data(),wire.size(),expected.data(),expected.size()).match);
+  auto shortFrame=PakarS3::inspectLedSignal(wire.data(),23*6*24,expected.data(),expected.size());
+  assert(!shortFrame.match && shortFrame.bits==23*6*24 && shortFrame.firstMismatch==23*6*24);
+  const auto bit=23*6*24;auto saved=wire[bit];
+  wire[bit].duration0=saved.duration0==PakarS3::zeroHigh?PakarS3::oneHigh:PakarS3::zeroHigh;
+  wire[bit].duration1=50-wire[bit].duration0;
+  auto corrupt=PakarS3::inspectLedSignal(wire.data(),wire.size(),expected.data(),expected.size());
+  assert(!corrupt.match && corrupt.bits==11520 && corrupt.firstMismatch==bit);
+  wire[bit]=saved;wire[bit].duration1=150;
+  auto gap=PakarS3::inspectLedSignal(wire.data(),wire.size(),expected.data(),expected.size());
+  assert(!gap.match && gap.timingErrors==1 && gap.maxDataLowNs==3750);
+  wire[bit]=saved;wire.back()={};wire[kDataSymbols-1].duration1=4000; // Last low includes reset, not corrupt data.
+  assert(PakarS3::inspectLedSignal(wire.data(),wire.size(),expected.data(),expected.size()).match);
+  wire.insert(wire.begin(),{4000,0,0,0}); // Idle before first high is harmless.
+  assert(PakarS3::inspectLedSignal(wire.data(),wire.size(),expected.data(),expected.size()).match);
+  // RX callbacks recycle a two-half ring. Comparison state must survive every
+  // chunk, including a symbol with LOW first and HIGH second at the boundary.
+  for(size_t window:{size_t(1),size_t(1016)}){
+    PakarS3::LedSignalInspector incremental;incremental.reset(expected.data(),expected.size());
+    for(size_t at=0;at<wire.size();at+=window)
+      incremental.feed(wire.data()+at,std::min(window,wire.size()-at));
+    assert(incremental.report().match && incremental.report().bits==11520);
+  }
+  std::vector<rmt_symbol_word_t> shifted(wire.size()-1);
+  for(size_t i=0;i<shifted.size();++i){
+    shifted[i]={i?wire[i].duration1:4000U,0,wire[i+1].duration0,1};
+  }
+  PakarS3::LedSignalInspector shiftedInspector;shiftedInspector.reset(expected.data(),expected.size());
+  for(size_t at=0;at<shifted.size();at+=1016)
+    shiftedInspector.feed(shifted.data()+at,std::min(size_t(1016),shifted.size()-at));
+  assert(shiftedInspector.report().match);
+  puts("Digital capture decoder: complete480 pixels, recycled partial ring, first23-cell cutoff, full-length corruption, inter-bit gap and initial/final idle checked; no analogue/optical proof.");
+}
 int main(){
   for(unsigned pattern=0;pattern<3;++pattern)scenarios(pattern);
   boundaries();
+  signalCaptureChecks();
   puts("Actual IDF5.5.5 bytes/copy + EOF functions: full480 varied/black/white frame,12 DMA windows/10 refills, half/full boundary EOF, initial completion, timely delayed ISR and injected late/duplicate/owner/length faults checked.");
   puts("SOFTWARE MODEL ONLY: duplicate EOF can leave encoded_count11521 despite corrupted modeled stream; no physical/RF/ISR deadline/OTA/optical acceptance.");
 }
