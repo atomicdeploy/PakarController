@@ -14,7 +14,20 @@ class SoundFixture extends PakarApi {
   bool acknowledged = true;
   bool muted = false;
   int reads = 0;
+  bool fail = false;
   Completer<void>? hold;
+  DeviceStatus get observation => DeviceStatus({
+    'hostname': 'ledboard',
+    'avr_online': true,
+    'capabilities': {
+      'hostname': 'ledboard',
+      'board_kind': 'controller',
+      'acknowledged_features': acknowledged ? ['settings', 'buzzer'] : [],
+    },
+  });
+  @override
+  DeviceStatus? get freshStatus =>
+      connectionWanted && appForeground ? observation : null;
   @override
   Future<DeviceStatus> status() async {
     reads++;
@@ -31,6 +44,9 @@ class SoundFixture extends PakarApi {
 
   @override
   Future<BoardSound> boardSound({bool? silent}) async {
+    if (fail) {
+      throw TimeoutException('Detailed AVR read timeout from actual contract');
+    }
     if (silent != null) {
       await hold?.future;
       muted = silent;
@@ -58,6 +74,46 @@ class SoundFixture extends PakarApi {
 }
 
 void main() {
+  testWidgets(
+    'Board sound keeps geometry through loading and errors and marks old EEPROM readback',
+    (tester) async {
+      final api = SoundFixture();
+      addTearDown(api.close);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: BoardSoundPreferences(api: api)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final card = tester.getRect(find.byType(Card));
+      final control = tester.getRect(find.byType(SwitchListTile));
+      expect(find.text('Verified · saved in EEPROM'), findsOneWidget);
+      api.hold = Completer<void>();
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pump();
+      expect(tester.getRect(find.byType(Card)), card);
+      expect(tester.getRect(find.byType(SwitchListTile)), control);
+      expect(find.text('Verified · saved in EEPROM'), findsNothing);
+      expect(find.text('Last verified · saved in EEPROM'), findsOneWidget);
+      api.hold!.complete();
+      await tester.pumpAndSettle();
+      api.fail = true;
+      await tester.tap(find.text('Refresh'));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(find.byType(Card)), card);
+      expect(tester.getRect(find.byType(SwitchListTile)), control);
+      expect(find.text('Board sound could not be confirmed.'), findsOneWidget);
+      expect(find.text('Last verified · saved in EEPROM'), findsOneWidget);
+      expect(
+        tester.widget<SwitchListTile>(find.byType(SwitchListTile)).onChanged,
+        isNull,
+      );
+      await tester.tap(find.text('Details'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Detailed AVR read timeout'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
   testWidgets(
     'A backgrounded preferences timer cannot read before the next UI frame',
     (tester) async {
@@ -172,12 +228,13 @@ void main() {
     test(
       'Silent API uses actual AVR ACK/readback; mismatch=$failure',
       () async {
-        var settings = raw(2), writes = 0, id = 0;
+        var settings = raw(2), writes = 0, id = 0, statusReads = 0;
         Map<String, dynamic>? receipt;
         final client = MockClient((request) async {
           final path = request.url.path;
           Map<String, dynamic> json;
           if (path == '/api/status') {
+            statusReads++;
             json = {
               'version': '0.2.8',
               'hostname': 'ledboard',
@@ -239,6 +296,11 @@ void main() {
           writes,
           1,
           reason: 'Do not replay a write or rewrite identical EEPROM settings',
+        );
+        expect(
+          statusReads,
+          1,
+          reason: 'Fresh validated full status is reused before and after AVR ACK/readback, without redundant HTTP snapshots',
         );
         await api.close();
       },

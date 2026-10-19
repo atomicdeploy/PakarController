@@ -26,7 +26,7 @@ class PeerAPIError extends Error {
 }
 // Build identity belongs to this shipped client, never to the board it reads.
 // Generators replace this one literal from interfaces/client-release.json.
-const PAKAR_WEB_BUILD = {"application":"pakarcontroller-web","version":"0.2.8","build":15,"minimum_board":"0.2.8","maximum_board":null,"enforcePeerVersions":true};
+const PAKAR_WEB_BUILD = {"application":"pakarcontroller-web","version":"0.2.8","build":18,"minimum_board":"0.2.8","maximum_board":null,"enforcePeerVersions":true};
 function peerSemver(value) {
   if(typeof value!=='string'||value.length>63)return null;
   const m=/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.exec(value);

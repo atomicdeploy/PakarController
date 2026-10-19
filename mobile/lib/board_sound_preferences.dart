@@ -56,11 +56,12 @@ class _BoardSoundPreferencesState extends State<BoardSoundPreferences> {
     }
     setState(() {
       busy = true;
+      fresh = false;
       message = null;
     });
     final revision = widget.api.connectionRevision;
     try {
-      final status = await widget.api.status();
+      final status = widget.api.freshStatus ?? await widget.api.status();
       if (!mounted ||
           !widget.active ||
           !widget.api.appForeground ||
@@ -79,13 +80,18 @@ class _BoardSoundPreferencesState extends State<BoardSoundPreferences> {
       });
       if (!supported) return;
       final value = await widget.api.boardSound(silent: silent);
-      if (!mounted || revision != widget.api.connectionRevision) return;
+      if (!mounted ||
+          !widget.active ||
+          !widget.api.appForeground ||
+          revision != widget.api.connectionRevision) {
+        return;
+      }
       setState(() {
         observed = value;
         fresh = true;
       });
     } on Exception catch (error) {
-      if (mounted) {
+      if (mounted && revision == widget.api.connectionRevision) {
         setState(() {
           fresh = false;
           message = error.toString();
@@ -96,6 +102,20 @@ class _BoardSoundPreferencesState extends State<BoardSoundPreferences> {
     }
   }
 
+  Future<void> showDetails() => showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Board sound details'),
+      content: SelectableText(message ?? ''),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     if (!available ||
@@ -104,42 +124,80 @@ class _BoardSoundPreferencesState extends State<BoardSoundPreferences> {
       return const SizedBox.shrink();
     }
     final value = owner == widget.api.connectionRevision ? observed : null;
+    final verified = fresh && value != null && widget.api.freshStatus != null;
     return WorkspaceSection(
       title: 'Board sound',
       icon: PakarIcons.musicNote,
       children: [
-        if (value == null)
-          const ListTile(title: Text('Silent mode'), trailing: Text('Unknown'))
-        else
-          SwitchListTile.adaptive(
+        SizedBox(
+          height: 80,
+          child: SwitchListTile.adaptive(
             contentPadding: EdgeInsets.zero,
             title: const Text('Silent mode'),
-            value: value.silent,
+            value: value?.silent ?? false,
             subtitle: Text(
-              '${fresh ? '' : 'Last observed · '}${value.silent ? 'On' : 'Off'}',
+              value == null
+                  ? 'Unknown'
+                  : '${verified ? '' : 'Last observed · '}${value.silent ? 'On' : 'Off'}',
             ),
-            onChanged: busy || programming || !fresh
+            onChanged: busy || programming || !verified || !widget.active
                 ? null
                 : (value) => unawaited(load(silent: value)),
           ),
+        ),
         const Text(
           'Mutes the physical board buzzer, including welcome and menu sounds. Saved on the board, not on this phone.',
         ),
-        if (programming)
-          const Text('Programming safety keeps the board muted.'),
+        SizedBox(
+          height: 20,
+          child: Text(
+            programming ? 'Programming safety keeps the board muted.' : '',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
         SizedBox(
           height: 4,
           child: busy ? const LinearProgressIndicator() : null,
         ),
-        if (message != null)
-          Text(
-            message!,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
+        SizedBox(
+          height: 48,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  message == null
+                      ? (busy ? 'Reading board sound…' : '')
+                      : 'Board sound could not be confirmed.',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: message == null
+                        ? Theme.of(context).colorScheme.onSurfaceVariant
+                        : Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
+              if (message != null)
+                TextButton(
+                  onPressed: showDetails,
+                  child: const Text('Details'),
+                ),
+            ],
           ),
-        if (value != null)
-          Text(
-            value.persisted ? 'Verified · saved in EEPROM' : 'Not persisted',
+        ),
+        SizedBox(
+          height: 20,
+          child: Text(
+            value == null
+                ? 'EEPROM state unknown'
+                : value.persisted
+                ? '${verified ? 'Verified' : 'Last verified'} · saved in EEPROM'
+                : 'Not persisted',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
+        ),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton.icon(

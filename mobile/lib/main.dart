@@ -2661,7 +2661,6 @@ class _SettingsPageState extends State<SettingsPage> {
         icon: PakarIcons.gear,
         subtitle: 'Application connection',
       ),
-      BoardSoundPreferences(api: widget.api, active: widget.active),
       WorkspaceSection(
         title: 'Board connection',
         icon: PakarIcons.link,
@@ -2822,6 +2821,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ],
       ),
+      BoardSoundPreferences(api: widget.api, active: widget.active),
     ],
   );
 }

@@ -29,7 +29,7 @@ $taskFirmware=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-fi
 $taskNetwork=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-network -Gate
 $taskMirror=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern mobile-mirroring -Gate
 $taskStorage=& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate
-foreach($taskGenerator in @('generate-font-assets.mjs','generate-interface-contract.mjs','generate-branding.mjs')){
+foreach($taskGenerator in @('generate-font-assets.mjs','generate-interface-contract.mjs','generate-branding.mjs','generate-web-appearance.mjs','generate-basic-ui.mjs','generate-web-compressed.mjs')){
     $taskGeneratorOutput=& node (Join-Path $PSScriptRoot $taskGenerator) --check 2>&1
     $taskGeneratorOutput | ForEach-Object {Write-Host $_}
     if($LASTEXITCODE -ne 0){throw "Shared mobile contract/assets stale: $taskGenerator"}

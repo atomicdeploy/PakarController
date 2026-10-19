@@ -1383,10 +1383,16 @@ class PakarApi {
 
   Future<BoardSound> boardSound({bool? silent}) async {
     final revision = connectionRevision;
-    final before = await status();
+    final before = freshStatus ?? await status();
+    final board = before.json['board_id'], boot = before.json['boot_id'];
     void admit() {
       _requireNetwork();
-      if (revision != connectionRevision) throw const StaleConnection();
+      if (!appForeground ||
+          revision != connectionRevision ||
+          board != _verifiedBoard ||
+          boot != _verifiedBoot) {
+        throw const StaleConnection();
+      }
     }
 
     admit();
@@ -1396,7 +1402,6 @@ class PakarApi {
         (silent != null && before.json['programming_latch'] == true)) {
       throw const FormatException('Board sound settings unavailable');
     }
-    final boot = before.json['boot_id'];
     if (_verifiedBoard == null || _verifiedBoot == null) {
       throw const StaleConnection();
     }
@@ -1475,8 +1480,13 @@ class PakarApi {
         );
       }
     }
-    await status();
+    // An existing validated full WS/status observation keeps its original
+    // lease. Do not add a redundant HTTP snapshot after actual AVR readback.
+    final after = freshStatus ?? await status();
     admit();
+    if (after.json['board_id'] != board || after.json['boot_id'] != boot) {
+      throw const StaleConnection();
+    }
     return value;
   }
 

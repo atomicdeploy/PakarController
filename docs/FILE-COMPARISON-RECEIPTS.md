@@ -1217,3 +1217,26 @@ or credential input. Read-only ESP status retains the same boot, 480pixels and
 user-selected rainbow. No board write/update/reset or LED test after the user
 declared production. PBX DTMF approval for a specific disruptive action is required;
 tablet-unlock confirmation is NOT board-test approval.
+
+Build18 follow-through: sound preferences reuse the original validated full-status
+lease rather than three redundant HTTP snapshots; actual AVR ACK and EEPROM
+readback remain mandatory. Loading/error/EEPROM slots keep stable geometry and
+the sound card follows connection controls. Six sound tests, the connection
+preference fixture and canonical analysis passed. Shared Web identity headers
+were regenerated to18; canonical mobile now checks these generators before SDK
+work. Firmware/native/mobile Plan gates passed, not deployed firmware acceptance.
+
+The canonical maintenance APK built in52.1s, 58788269bytes,
+SHA2566871f87b341d184ec5efdd801a97b34d4c6713440002bd140cf4637b707d9818.
+Resumable static HTTPS delivery and install-r succeeded. Actual tablet Android
+reports0.2.8/code18 and its installed base.apk hash matches. App data and17rollback
+are preserved. On renewed explicit authorization, the helper observed secure=false,
+used the rotated2960x1848 viewport and dismissed keyguard with one swipe.
+MainActivity is foreground. Initial stale/reconnecting state recovered to live
+status; output controls and the diagnostics page became enabled. Diagnostics
+retained physical cursor7, green and six-pixel grouping. Root opened only the
+page: no Show, shift, color, Off, mute or other output-changing control was sent.
+Read-only captures: outputs/PakarController/verification/tablet-unsecured-settled.png
+and tablet-build18-diagnostics.png (outside Git). Hostname resolution works on
+tablet; one of two ping probes answered, so initial reacquisition/loss remains an
+observed issue, not a claimed sustained-connection or physical acceptance pass.
