@@ -7654,3 +7654,14 @@ ASUS8022 still refuses SSH, this PC has no authorized ADB target and the service
 has no enrolled Android client. Installed tablet, touch/radio, OS consent and
 human/physical command acceptance remain pending, not certified by the endpoint
 or package checks. No production board was contacted or changed.
+
+Publication completed from source ca50045f0d618dca146b127deb148b6d33719fbd:
+the canonical publisher registered Android build21 at the immutable /pakar/packages/
+4aff174e7f5ebfa5d59366b81fb4357ca20787628c9c66c9027f87e8822f22f3/PakarController.apk.
+verify-client-service.mjs downloaded and hashed the full60754697bytes through
+actual public HTTPS and received the exact package/session-bound WSS offer.
+Presentation HTTPS/WSS verification passed independently. Public Windows artifact
+build13 was merely read/verified, not updated or claimed current. The temporary
+root upload copy was byte-compared to the immutable registered package and removed;
+the registered package and local canonical build remain recoverable. Final ASUS
+and local ADB probes are unchanged/unavailable; no actual tablet install claimed.
