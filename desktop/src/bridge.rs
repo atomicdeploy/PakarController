@@ -94,6 +94,7 @@ pub struct Observation {
     pub at: Instant,
 }
 struct Shared {
+    demand: crate::usb_demand::Watchers,
     settings: Settings,
     observation: Mutex<Option<Observation>>,
     stop: Arc<AtomicBool>,
@@ -121,6 +122,7 @@ impl Default for Runtime {
     }
 }
 impl Runtime {
+    pub fn demand(&self)->crate::usb_demand::Demand{self.shared.as_ref().map(|s|s.demand.demand()).unwrap_or_default()}
     pub fn reconcile(&mut self, settings: &Settings, fixture: bool) {
         if self.settings.as_ref() == Some(settings) {
             return;
@@ -138,6 +140,7 @@ impl Runtime {
             Ok(listener) => {
                 let _ = listener.set_nonblocking(true);
                 let shared = Arc::new(Shared {
+                    demand: Default::default(),
                     settings: settings.clone(),
                     observation: Mutex::new(None),
                     stop: Arc::new(AtomicBool::new(false)),
@@ -381,6 +384,16 @@ pub(crate) fn usb_request(
             .ok_or_else(|| format!("Missing {key}"))
     };
     Ok(match path {
+        "/api/led/diagnostic"=>{
+            if !crate::pixel_diagnostic::usb_supported(status){return Err("USB pixel diagnostics unavailable".into());}
+            let index=get("index")?.parse().map_err(|_|"Invalid pixel index")?;
+            let count:u8=get("count")?.parse().map_err(|_|"Invalid pixel count")?;
+            let rgb=get("rgb")?.parse().map_err(|_|"Invalid RGB")?;
+            let off=match get("off")?{"true"=>true,"false"=>false,_=>return Err("Invalid off boolean".into())};
+            let probe=crate::pixel_diagnostic::Probe{index,group:count==6,rgb};
+            if !matches!(count,1|6)||probe.first()!=index{return Err("Invalid pixel group".into());}
+            (0x65,probe.usb(off).ok_or("Invalid pixel diagnostic")?,None)
+        }
         "/api/cells/assignments" => {
             let doc=crate::cell_assignments::Document::new(serde_json::from_str(get("assignments")?).map_err(|_|"Invalid assignments")?)?;
             (0x62,doc.payload(),None)
@@ -952,7 +965,9 @@ fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
         let mut cursor=shared.events.lock().unwrap().cursor();
         let (results_tx,results_rx)=mpsc::sync_channel(1);
         let mut pending=false;
+        let mut pixels=false;
         while !shared.stop.load(Ordering::Acquire) {
+            shared.demand.touch(crate::usb_demand::Demand{flags:crate::usb_demand::STATUS|crate::usb_demand::PANEL|crate::usb_demand::PERIPHERAL|if pixels{crate::usb_demand::PIXELS}else{0},table:true});
             if let Ok(result)=results_rx.try_recv(){
                 pending=false;
                 ws.send(tungstenite::Message::Text(Value::to_string(&result).into())).map_err(|e|e.to_string())?;
@@ -990,6 +1005,7 @@ fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
                             thread::spawn(move||{let result=command(&owner,request,&forwarding);owner.active_commands.fetch_sub(1,Ordering::AcqRel);let _=tx.try_send(result);});
                         }
                     } else if request["type"] == "status" {
+                        if let Some(value)=request["pixels"].as_bool(){pixels=value;}
                         previous = Value::Null;
                     }
                 }
@@ -1017,6 +1033,10 @@ fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
         }
     };
     let path = request.path.split('?').next().unwrap_or("");
+    if request.method=="GET" && matches!(path,"/api/status"|"/api/cells/mapping"|"/api/events") {
+        let pixels=request.path.split_once('?').is_some_and(|(_,query)|query.split('&').any(|v|matches!(v,"pixels=true"|"pixels=1")));
+        shared.demand.touch(crate::usb_demand::Demand{flags:crate::usb_demand::STATUS|if pixels{crate::usb_demand::PIXELS}else{0},table:true});
+    }
     // Public identity/status bootstrap stays discoverable before admission;
     // all control/config/export paths require a supported app release.
     let bootstrap=request.method=="GET" && matches!(path,"/description.xml"|"/upnp/device.xml"|"/api/discovery"|"/upnp/public.json"|"/healthz"|"/api/status"|"/api/auth/info"|"/api/peer/info");
@@ -1294,6 +1314,7 @@ mod tests {
         };
         (
             Arc::new(Shared {
+                demand: Default::default(),
                 settings,
                 observation: Mutex::new(Some(Observation {
                     status,
@@ -1337,6 +1358,20 @@ mod tests {
         assert!(!intent.current(1, Some(&o.status)));
         intent.reply(Ok(o.status));
         assert!(rx.recv().unwrap().is_err());
+    }
+    #[test]
+    fn usb_demand_bridge_listener_is_not_a_reader_and_http_rgb_is_explicit(){
+        let(shared,_rx,_gate)=fixture();assert_eq!(shared.demand.demand(),crate::usb_demand::Demand::default());
+        shared.clients.store(4,Ordering::Release);assert_eq!(shared.demand.demand(),crate::usb_demand::Demand::default(),"Open sockets alone are not subscribers");
+        let listener=TcpListener::bind("127.0.0.1:0").unwrap();let base=format!("http://{}",listener.local_addr().unwrap());
+        let owner=shared.clone();let server=thread::spawn(move||{for _ in 0..2{let(socket,_)=listener.accept().unwrap();serve(socket,&owner).unwrap();}});
+        // This fixture serves one request per socket and closes it; consume
+        // each response and never race a pooled Windows socket's final close.
+        let client=reqwest::blocking::Client::builder().pool_max_idle_per_host(0).build().unwrap();
+        let _:Value=client.get(format!("{base}/api/status")).send().unwrap().error_for_status().unwrap().json().unwrap();
+        assert_eq!(shared.demand.demand(),crate::usb_demand::Demand::metadata());
+        let _:Value=client.get(format!("{base}/api/status?pixels=1")).send().unwrap().error_for_status().unwrap().json().unwrap();
+        assert_eq!(shared.demand.demand().flags,crate::usb_demand::STATUS|crate::usb_demand::PIXELS);server.join().unwrap();
     }
     #[test]
     fn bridge_http_recovery_uses_existing_packet_form_contract() {

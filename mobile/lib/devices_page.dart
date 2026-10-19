@@ -6,6 +6,7 @@ import 'icons.dart';
 import 'api.dart';
 import 'workspace_widgets.dart';
 import 'ble_transport.dart';
+import 'usb_transport.dart';
 
 class DeviceListEntry {
   const DeviceListEntry(
@@ -28,9 +29,11 @@ class DeviceListEntry {
   List<String> routes(ConnectionMethod method) {
     final values = peer.origins
         .where(
-          (origin) =>
-              origin.startsWith('ble://') ==
-              (method == ConnectionMethod.bluetooth),
+          (origin) => method == ConnectionMethod.usb
+              ? origin.startsWith('usb://')
+              : !origin.startsWith('usb://') &&
+                    origin.startsWith('ble://') ==
+                        (method == ConnectionMethod.bluetooth),
         )
         .toList();
     values.sort((a, b) {
@@ -117,11 +120,13 @@ class _DevicesPageState extends State<DevicesPage> {
   late ConnectionMethod method =
       widget.api?.connectionMethod ?? ConnectionMethod.network;
   final bluetooth = PakarBleTransport();
+  final usb = PakarUsbTransport();
   final bleCatalog = DiscoveryCatalog();
   Map<String, dynamic> adapter = {};
   @override
   void dispose() {
     bluetooth.close();
+    usb.close();
     super.dispose();
   }
 
@@ -151,7 +156,21 @@ class _DevicesPageState extends State<DevicesPage> {
     try {
       await reload();
       final List<DiscoveredDevice> v;
-      if (method == ConnectionMethod.bluetooth) {
+      if (method == ConnectionMethod.usb) {
+        final attached = await usb.devices();
+        v = bleCatalog.merge(
+          attached.map(
+            (d) => DiscoveredDevice(
+              '${d['name']} · USB ${d['device_id']}',
+              PakarUsbTransport.endpoint(
+                d['device_id'] as int,
+                d['interface'] as int,
+              ),
+              'USB OTG',
+            ),
+          ),
+        );
+      } else if (method == ConnectionMethod.bluetooth) {
         adapter = await bluetooth.adapter();
         final devices = await bluetooth.scan();
         v = bleCatalog.merge(
@@ -166,7 +185,11 @@ class _DevicesPageState extends State<DevicesPage> {
       } else {
         v = await discovery.scan(
           seeds: saved
-              .where((d) => !d.endpoint.startsWith('ble://'))
+              .where(
+                (d) =>
+                    !d.endpoint.startsWith('ble://') &&
+                    !d.endpoint.startsWith('usb://'),
+              )
               .map((d) => d.identity),
         );
       }
@@ -174,7 +197,7 @@ class _DevicesPageState extends State<DevicesPage> {
         setState(() {
           found = v;
           message =
-              method == ConnectionMethod.bluetooth || discovery.errors.isEmpty
+              method != ConnectionMethod.network || discovery.errors.isEmpty
               ? ''
               : 'Scan incomplete: ${discovery.errors.keys.join(', ')}';
         });
@@ -404,7 +427,7 @@ class _DevicesPageState extends State<DevicesPage> {
     ).observed(entry.peer);
     // Aliases share identity only after the live full-status verification.
     try {
-      var secret = method == ConnectionMethod.bluetooth || entry.saved == null
+      var secret = method != ConnectionMethod.network || entry.saved == null
           ? ''
           : await registry.password(device) ?? '';
       for (var attempt = 0; attempt < 2; ++attempt) {
@@ -450,7 +473,7 @@ class _DevicesPageState extends State<DevicesPage> {
           );
           device = await registry.save(
             device,
-            method == ConnectionMethod.bluetooth ? null : secret,
+            method != ConnectionMethod.network ? null : secret,
           );
           // Retire the probe before the selected API establishes its session.
           // Closing a probe must never tear down a newly selected connection.
@@ -530,15 +553,17 @@ class _DevicesPageState extends State<DevicesPage> {
         unifiedDevices(
               saved,
               found,
-              method == ConnectionMethod.bluetooth
+              method != ConnectionMethod.network
                   ? bleCatalog
                   : discovery.catalog,
             )
             .where(
               (entry) => entry.peer.origins.any(
-                (value) =>
-                    value.startsWith('ble://') ==
-                    (method == ConnectionMethod.bluetooth),
+                (value) => method == ConnectionMethod.usb
+                    ? value.startsWith('usb://')
+                    : !value.startsWith('usb://') &&
+                          value.startsWith('ble://') ==
+                              (method == ConnectionMethod.bluetooth),
               ),
             )
             .toList();
@@ -574,9 +599,13 @@ class _DevicesPageState extends State<DevicesPage> {
         ),
         DropdownButtonFormField<ConnectionMethod>(
           isExpanded: true,
-          initialValue: method == ConnectionMethod.usb ? null : method,
+          initialValue: method,
           decoration: const InputDecoration(labelText: 'Find devices using'),
           items: const [
+            DropdownMenuItem(
+              value: ConnectionMethod.usb,
+              child: Text('USB OTG · direct offline control'),
+            ),
             DropdownMenuItem(
               value: ConnectionMethod.network,
               child: Text('Network'),
@@ -598,6 +627,13 @@ class _DevicesPageState extends State<DevicesPage> {
                   await scan();
                 },
         ),
+        if (method == ConnectionMethod.usb)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              'Connect the ESP32-S3 native USB port using an OTG cable. Requires the PakarController TinyUSB CDC build. UART bridges and USB-JTAG recovery ports are not controlled or reset.',
+            ),
+          ),
         if (method == ConnectionMethod.bluetooth) ...[
           const SizedBox(height: 12),
           Text(

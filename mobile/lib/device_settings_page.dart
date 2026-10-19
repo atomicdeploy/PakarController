@@ -195,7 +195,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
     if (mounted &&
         (access == null || settingsChanged) &&
         widget.authorized('network') &&
-        !widget.api.isBluetooth) {
+        widget.api.connectionMethod == ConnectionMethod.network) {
       await loadAccess();
     }
   }
@@ -1029,6 +1029,11 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   Widget build(BuildContext context) {
     final pages = widget.status.deviceSettingsPages
         .where((entry) => !widget.api.isBluetooth || entry['id'] != 'access')
+        .where(
+          (entry) =>
+              !widget.api.isUsb ||
+              {'overview', 'leds', 'front-panel', 'avr'}.contains(entry['id']),
+        )
         .toList();
     final pageAvailable = pages.any((p) => p['id'] == page);
     final visible = pages

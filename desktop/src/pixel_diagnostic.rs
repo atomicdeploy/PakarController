@@ -8,6 +8,8 @@ use std::time::{Duration, Instant};
 pub struct Probe { pub index: u16, pub group: bool, pub rgb: u32 }
 impl Default for Probe { fn default()->Self { Self{index:0,group:false,rgb:0xffffff} } }
 impl Probe {
+    pub fn usb(self,off:bool)->Option<Vec<u8>>{if !self.valid(){return None;}let mut p=self.first().to_le_bytes().to_vec();p.extend([self.count()as u8,(self.rgb>>16)as u8,(self.rgb>>8)as u8,self.rgb as u8,u8::from(off)]);Some(p)}
+    pub fn from_usb(p:&[u8])->Option<(Self,bool)>{if p.len()!=7||!matches!(p[2],1|6)||p[6]>1{return None;}let probe=Self{index:u16::from_le_bytes([p[0],p[1]]),group:p[2]==6,rgb:u32::from(p[3])<<16|u32::from(p[4])<<8|u32::from(p[5])};(probe.valid()&&probe.first()==probe.index&&probe.first()+probe.count()<=480).then_some((probe,p[6]!=0))}
     pub fn count(self)->u16 {if self.group {6}else{1}}
     pub fn first(self)->u16 {if self.group {self.index/6*6}else{self.index}}
     pub fn valid(self)->bool {self.index<480 && self.rgb<=0xffffff}
@@ -95,6 +97,12 @@ pub fn supported(s: &DeviceStatus) -> bool {
     s.pixels == 480 && Pin::from_status(s).is_some()
         && s.capabilities.as_ref().is_some_and(|m| m.has("leds") && (m.has("streaming") || m.has("pixel-diagnostic")))
 }
+pub fn usb_supported(s:&DeviceStatus)->bool{supported(s)&&s.capabilities.as_ref().is_some_and(|c|c.has("usb-pixel-diagnostic")&&c.has("usb-demand")&&c.has("pixel-diagnostic"))}
+pub fn usb_verify(s:&DeviceStatus,p:&[u8])->bool{
+    let Some((probe,off))=Probe::from_usb(p)else{return false;};
+    let Some(observed)=Observation::read(s)else{return false;};
+    usb_supported(s)&&observed.active&&observed.revision>0&&observed.probe==probe&&observed.off==off&&probe.matches(s,off)
+}
 pub fn ready(s: &DeviceStatus) -> bool {
     can_arm(s) && crate::led_output_mode(s) == Some("effects")
 }
@@ -157,6 +165,17 @@ mod tests {
         assert!(Probe::default().moved(-1).is_none());assert!(Probe::default().moved(0).is_none());
         assert!(Probe{index:479,group:true,..Default::default()}.moved(1).is_none());
         assert!(Probe{index:480,..Default::default()}.frame(false).is_none());
+    }
+    #[test]
+    fn usb_demand_pixel_command_validates_tail_group_and_exact_published_rgb(){
+        let probe=Probe{index:474,group:true,rgb:0x1234ab};let payload=probe.usb(false).unwrap();assert_eq!(payload,vec![0xda,1,6,0x12,0x34,0xab,0]);assert_eq!(Probe::from_usb(&payload),Some((probe,false)));
+        for p in [vec![0xdf,1,6,1,2,3,0],vec![0,0,2,1,2,3,0],vec![0,0,1,1,2,3,2]]{assert!(Probe::from_usb(&p).is_none());}
+        let mut status=observation(3);status.capabilities.as_mut().unwrap().acknowledged_features.extend(["usb-demand".into(),"usb-pixel-diagnostic".into()]);
+        assert!(!usb_verify(&status,&payload),"An ACK/metadata-only observation is not RGB verification");
+        let hex=probe.frame(false).unwrap().iter().map(|v|format!("{v:02x}")).collect::<String>();
+        status.pixel_frame=Some(serde_json::from_value(serde_json::json!({"rgb":hex,"physical":(1..=80).collect::<Vec<_>>(),"revision":12,"brightness":255})).unwrap());
+        assert!(usb_verify(&status,&payload));status.pixel_frame.as_mut().unwrap().pending=true;assert!(!usb_verify(&status,&payload));
+        status.pixel_frame.as_mut().unwrap().pending=false;status.pixel_frame.as_mut().unwrap().rgb.replace_range(0..2,"ff");assert!(!usb_verify(&status,&payload));
     }
     #[test]
     fn pixel_diagnostic_remote_observation_is_ordered_and_never_actuates() {

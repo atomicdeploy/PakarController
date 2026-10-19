@@ -13,6 +13,7 @@ import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
     private var discovery: DiscoveryChannel? = null
+    private var usb: UsbControllerChannel? = null
     private var ble: BleControllerChannel? = null
     private var toneMirror: ToneMirrorChannel? = null
     private var appUpdates: AppUpdateChannel? = null
@@ -31,6 +32,7 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        usb = UsbControllerChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         discovery = DiscoveryChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         ble = BleControllerChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         toneMirror = ToneMirrorChannel(this, flutterEngine.dartExecutor.binaryMessenger)
@@ -161,6 +163,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        usb?.close()
         ble?.close(); ble = null
         toneMirror?.close(); toneMirror = null
         discovery?.close(); discovery = null

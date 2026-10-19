@@ -29,7 +29,7 @@ pub enum Command {
     CellManager,
     Screenshot { path: String },
     Quit,
-    Status,
+    Status { #[serde(default)] pixels: bool },
     NotificationTest,
     UseWifi { endpoint: Option<String> },
     UseUsb { port: Option<String> },
@@ -47,6 +47,7 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
     let value: serde_json::Value = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
     let object = value.as_object().ok_or("Expected a command object")?;
     let allowed = match object.get("command").and_then(|v| v.as_str()) {
+        Some("status") => &["command", "pixels"][..],
         Some("panel") => &["command", "name"][..],
         Some("find_cell") => &["command", "query"][..],
         Some("screenshot") => &["command", "path"][..],
@@ -114,6 +115,7 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
 pub struct Control {
     pub rx: Receiver<Command>,
     pub snapshot: Arc<Mutex<serde_json::Value>>,
+    pub demand: Arc<crate::usb_demand::Watchers>,
 }
 #[cfg(windows)]
 pub struct GuiOwnershipGuard(windows::Win32::Foundation::HANDLE);
@@ -225,17 +227,19 @@ pub fn start(ctx: eframe::egui::Context, enable_listener: bool) -> Control {
     let snapshot = Arc::new(Mutex::new(
         serde_json::json!({"process_id":std::process::id(),"application":"PakarController","ready":true}),
     ));
+    let demand=Arc::new(crate::usb_demand::Watchers::default());
     #[cfg(windows)]
-    if enable_listener {listener(tx, ctx, snapshot.clone());}
+    if enable_listener {listener(tx, ctx, snapshot.clone(),demand.clone());}
     #[cfg(not(windows))]
     let _ = (tx, ctx, enable_listener);
-    Control { rx, snapshot }
+    Control { rx, snapshot, demand }
 }
 #[cfg(windows)]
 fn listener(
     tx: Sender<Command>,
     ctx: eframe::egui::Context,
     snapshot: Arc<Mutex<serde_json::Value>>,
+    demand: Arc<crate::usb_demand::Watchers>,
 ) {
     use windows::{
         Win32::{
@@ -263,7 +267,7 @@ fn listener(
             if same_session && unsafe {ReadFile(handle,Some(&mut bytes),Some(&mut read),None)}.is_ok() {
                 let result=parse_command(&bytes[..read as usize]);
                 let response=match result {
-                    Ok(Command::Status)=>snapshot.lock().map(|s|s.clone()).unwrap_or_default(),
+                    Ok(Command::Status{pixels})=>{demand.touch(crate::usb_demand::Demand{flags:crate::usb_demand::STATUS|if pixels{crate::usb_demand::PIXELS}else{0},table:true});ctx.request_repaint();snapshot.lock().map(|s|s.clone()).unwrap_or_default()},
                     Ok(command)=>{
                         let valid=!matches!(&command,Command::Panel{name} if crate::ui::layout::Panel::from_name(name).is_none());
                         if valid && tx.send(command).is_ok(){ctx.request_repaint();serde_json::json!({"accepted":true,"process_id":std::process::id()})}
@@ -285,6 +289,9 @@ mod tests {
     use super::*;
     #[test]
     fn connection_and_led_ipc_are_explicit_typed_and_bounded() {
+        assert!(matches!(parse_command(br#"{"command":"status"}"#),Ok(Command::Status{pixels:false})));
+        assert!(matches!(parse_command(br#"{"command":"status","pixels":true}"#),Ok(Command::Status{pixels:true})));
+        assert!(parse_command(br#"{"command":"status","pixels":"true"}"#).is_err());
         for bytes in [
             br#"{"command":"disconnect"}"#.as_slice(),
             br#"{"command":"use_usb","port":"COM22"}"#,

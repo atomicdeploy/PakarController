@@ -74,7 +74,7 @@ pub fn launch_command(args: &[String]) -> Command {
     } else if args.iter().any(|v| v == "--quit") {
         Command::Quit
     } else if args.iter().any(|v| v == "--app-status") {
-        Command::Status
+        Command::Status { pixels: false }
     } else if args.iter().any(|v| v == "--preferences") {
         Command::Preferences
     } else if args.iter().any(|v| v == "--about") {
@@ -432,7 +432,7 @@ impl PakarControllerApp {
                     if panel.available(self.peer_context()) { self.reveal_panels.push(panel); }
                 }
             }
-            Command::Status => return, // Read-only diagnostics must never raise/focus the window.
+            Command::Status { .. } => return, // Read-only diagnostics must never raise/focus the window.
             Command::Show => {
                 // eframe starts hidden until its first rendered frame. Its
                 // hidden-window logic-only path otherwise prevents an isolated
@@ -441,6 +441,7 @@ impl PakarControllerApp {
             }
         }
         if !self.screenshot_harness {
+            self.usb_ui_visible=true;
             ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
             ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
@@ -663,10 +664,20 @@ impl PakarControllerApp {
         {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+            self.usb_ui_visible=false;
             self.save_workspace();
         }
         self.poll();
         self.bridge_tick();
+        let (minimized,occluded)=ctx.input(|i|(i.viewport().minimized.unwrap_or(false),i.viewport().occluded.unwrap_or(false)));
+        let ui_demand=crate::usb_demand::visible_demand(self.usb_ui_demand,self.usb_ui_visible,minimized,occluded,self.exiting);
+        let demand=if self.connection_enabled && self.transport==Transport::Serial && !self.exiting {
+            ui_demand.merge(self.control.demand.demand()).merge(self.bridge.demand())
+        }else{Default::default()};
+        let next=(self.serial_port.clone(),self.connection_gate.epoch(),demand);
+        if self.usb_sent_demand.as_ref()!=Some(&next){
+            let _=self.serial_tx.send(crate::SerialCommand::Demand(next.0.clone(),next.1,next.2));self.usb_sent_demand=Some(next);
+        }
         self.synchronize_context(ctx);
         self.checkpoint_ui_workspace(ctx);
         self.process_cell_queue(ctx);
@@ -1145,6 +1156,13 @@ impl PakarControllerApp {
     }
     pub fn draw_panel(&mut self, ui: &mut egui::Ui, panel: Panel) {
         if !panel.available(self.presentation_context()) { return; }
+        let flags=match panel {
+            Panel::Table if self.config.cell_shape!=super::cell_pixels::Shape::Rounded=>crate::usb_demand::PIXELS,
+            Panel::FrontPanel=>crate::usb_demand::PANEL|crate::usb_demand::PERIPHERAL,
+            Panel::Events=>crate::usb_demand::PANEL,
+            _=>0,
+        };
+        self.usb_ui_demand.0=self.usb_ui_demand.0.merge(crate::usb_demand::Demand{flags,table:panel!=Panel::Events});
         let live = self.panel_live(panel);
         dialog::scroll_column(
             ui,
@@ -1181,7 +1199,7 @@ impl PakarControllerApp {
             });
         });
         ui.add_space(8.0);
-        if self.presentation_has_feature("streaming") && self.transport==Transport::WiFi {
+        if self.presentation_has_feature("streaming") && (self.transport==Transport::WiFi || snapshot.as_ref().is_some_and(pixel_diagnostic::usb_supported)) {
             egui::CollapsingHeader::new("Physical pixel diagnostic")
                 .id_salt("physical-pixel-diagnostic").default_open(true)
                 .show(ui, |ui| self.draw_pixel_diagnostic(ui));
@@ -1280,10 +1298,6 @@ impl PakarControllerApp {
         });
     }
     fn draw_pixel_diagnostic(&mut self, ui: &mut egui::Ui) {
-        if self.transport != Transport::WiFi {
-            ui.weak("Individual-pixel diagnostics currently require the selected Wi-Fi raw-frame path. USB controls remain offline; no network fallback.");
-            return;
-        }
         let Some(status) = self.live_status().cloned().filter(pixel_diagnostic::supported) else {
             ui.weak("Connect to an acknowledged 480-pixel streaming board first."); return;
         };
@@ -1291,7 +1305,7 @@ impl PakarControllerApp {
         let busy = self.pixel_diagnostic.pending.is_some();
         let atomic=status.capabilities.as_ref().is_some_and(|c|c.has("pixel-diagnostic"));
         let ready=!busy && atomic && !self.streaming && !self.sampling && !status.programming_latch
-            && self.command_route()==Some(Transport::WiFi) && realtime::supported(&status,"/api/led/diagnostic");
+            && self.command_route()==Some(self.transport) && match self.transport {Transport::Serial=>pixel_diagnostic::usb_supported(&status),Transport::WiFi=>realtime::supported(&status,"/api/led/diagnostic")};
         ui.weak("Physical wire order · all other pixels cleared");
         ui.horizontal_wrapped(|ui| {
             if self.streaming || self.sampling {
@@ -1351,9 +1365,19 @@ impl PakarControllerApp {
     }
     fn send_pixel_probe(&mut self,probe:pixel_diagnostic::Probe,off:bool) {
         let result=(||->Result<(),String>{
-            if !probe.valid() || self.command_route()!=Some(Transport::WiFi) || self.streaming || self.sampling
+            if !probe.valid() || self.command_route()!=Some(self.transport) || self.streaming || self.sampling
                 || self.pixel_diagnostic.pending.is_some(){return Err("Diagnostic owner unavailable; nothing queued".into())}
             let status=self.live_status().ok_or("No fresh board status")?;
+            if self.transport==Transport::Serial {
+                if !pixel_diagnostic::usb_supported(status){return Err("This board has not acknowledged USB pixel diagnostics; no network fallback".into());}
+                let admission=self.serial_admission().ok_or("USB owner unavailable")?;
+                let payload=probe.usb(off).ok_or("Invalid pixel group")?;
+                let (reply,receiver)=std::sync::mpsc::channel();let cancel=std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+                let id=self.pixel_diagnostic.begin();
+                if self.serial_tx.send(crate::SerialCommand::Bridge(self.serial_port.clone(),admission,0x65,payload,crate::bridge::Reply::new(reply,cancel.clone()))).is_err(){self.pixel_diagnostic.finish(id,"USB worker unavailable; nothing sent".into());}
+                else{self.pixel_usb_reply=Some((id,receiver,cancel));self.pixel_diagnostic.message="Sending one USB diagnostic and verifying published RGB…".into();}
+                return Ok(());
+            }
             let mut request=realtime::Intent::new(self.endpoint(),status,"/api/led/diagnostic",probe.form(off),
                 self.http_tx.capture(),self.connection_gate.stamp(Transport::WiFi,self.connection_gate.epoch()),None)?;
             let id=self.pixel_diagnostic.begin();request.pixel_request=Some(id);

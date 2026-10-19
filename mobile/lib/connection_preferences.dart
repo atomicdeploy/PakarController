@@ -67,7 +67,10 @@ class ConnectionPreferences {
     final endpoint = PakarApi.normalizeEndpoint(
       preferences.getString('endpoint') ?? 'http://ledboard.local',
     );
-    if (api.connectionMethod != ConnectionMethod.usb &&
+    if (endpoint.startsWith('usb://')) {
+      api.connectionMethod = ConnectionMethod.usb;
+      api.expectedBluetoothBoard = preferences.getString('usb_board_id') ?? '';
+    } else if (api.connectionMethod != ConnectionMethod.usb &&
         endpoint.startsWith('ble://')) {
       api.connectionMethod = ConnectionMethod.bluetooth;
       api.expectedBluetoothBoard =
@@ -143,16 +146,25 @@ class ConnectionPreferences {
     await preferences.setString('endpoint', normalized);
     await preferences.setString(
       'connection_method',
-      normalized.startsWith('ble://') ? 'bluetooth' : 'network',
+      normalized.startsWith('usb://')
+          ? 'usb'
+          : normalized.startsWith('ble://')
+          ? 'bluetooth'
+          : 'network',
     );
     await preferences.setString(
-      normalized.startsWith('ble://')
+      normalized.startsWith('usb://')
+          ? 'last_usb_endpoint'
+          : normalized.startsWith('ble://')
           ? 'last_bluetooth_endpoint'
           : 'last_network_endpoint',
       normalized,
     );
     if (normalized.startsWith('ble://')) {
       await preferences.setString('bluetooth_board_id', bluetoothBoard);
+    }
+    if (normalized.startsWith('usb://')) {
+      await preferences.setString('usb_board_id', bluetoothBoard);
     }
     await preferences.setString('user', user.trim());
     await preferences.remove('password');

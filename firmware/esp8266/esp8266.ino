@@ -3,6 +3,7 @@
 #include <utility>
 #include <memory>
 #include <new>
+#include <type_traits>
 #if defined(ARDUINO_ARCH_ESP32)
 #include <sys/socket.h>
 #include <errno.h>
@@ -77,6 +78,7 @@
 #include "src/LedRenderAdmission.h"
 #include "src/LoopMessages.h"
 #include "src/HostFrameIngress.h"
+#include "src/HostSerial.h"
 #include "src/LedPreferences.h"
 #include "src/SceneStore.h"
 #include "src/LedScene.h"
@@ -185,12 +187,13 @@ SoftwareSerial avrSerial(D4, D0);
 BoardCore::SerialLink link(static_cast<Stream &>(avrSerial));
 #endif
 BoardCore::SerialLink &avrLink = link; // Unambiguous outside namespace vs POSIX link().
-#if defined(ARDUINO_ARCH_ESP32) && !defined(PAKAR_S3_HOST_NATIVE_USB)
-// CH343/UART socket remains a real independent PC path on UART0; UART1 is AVR.
-BoardCore::SerialLink hostLink(Serial0);
-#else
-BoardCore::SerialLink hostLink(Serial);
-#endif
+HostDemand hostDemand;
+struct UsbTableCapture {
+  String body;uint32_t token=0,at=0;uint8_t nonce=0;bool pixels=false;
+  void clear(){body=String();at=0;pixels=false;}
+} usbTableCapture;
+HostSerialAdapter<typename std::remove_reference<decltype(PakarHost::port())>::type> hostSerial(PakarHost::port(),hostDemand);
+BoardCore::SerialLink hostLink(static_cast<Stream &>(hostSerial));
 HostFrameIngress hostFrameIngress;
 bool hostCallerAdmitted=false;
 AvrIsp avrIsp(kAvrResetPin);
@@ -385,7 +388,7 @@ String runningImageMd5();
 bool runningImageIntegrity();
 String ethernetStatusJson(bool compact);
 String lcdStatusJson();
-String buildUsbTableSnapshot();
+String buildUsbTableSnapshot(bool includePixels=false);
 String buildTelemetryJson();
 String avrVersionText();
 bool recordClientReport(const String &report,const String &peer,const String &agent=String(),const String &version=String());
@@ -517,6 +520,13 @@ bool contextAllows(uint8_t opcode, const uint8_t *payload, uint8_t length) {
   }
 }
 
+bool applyPixelDiagnostic(uint16_t index,uint8_t count,uint32_t rgb,bool off) {
+  if(!(currentFeatures()&BoardCore::Context::Leds)||programmingLatched||otaActive||otaRebootAt||
+      urbootBusy.get()||avrUploadOwner||remoteFirmware.busy()||networkApplyPending||cloudApplyPending)return false;
+  if(!grid.diagnostic(index,count,rgb,off))return false;
+  winner=0;return true;
+}
+
 void sendHostStatus(uint8_t requestSequence) {
   const time_t currentTime = time(nullptr);
   const uint16_t errors = link.errors();
@@ -550,6 +560,8 @@ void sendHostStatus(uint8_t requestSequence) {
       static_cast<uint8_t>(grid.staticMode()?0:1), // Optional byte43; absent means unknown.
       static_cast<uint8_t>(PAKAR_TABLE_ENABLED), // Optional byte44: frozen USB table snapshot/boot-fenced commands.
       static_cast<uint8_t>(PAKAR_TABLE_ENABLED), // Optional byte45: immediate same-sequence post-ACK table state.
+      1, // Optional byte46: finite USB demand lease, explicitly advertised.
+      PAKAR_S3_HOST_TRANSPORT, // Optional byte47: UART0=0, hardware CDC=1, TinyUSB CDC=2.
   };
   hostLink.send(kStatusResponse, requestSequence, payload, sizeof(payload));
 }
@@ -561,7 +573,7 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
   if(frame.opcode==kHello) {
     // Every new caller resets admission. An empty HELLO may inspect identity,
     // but is never permission for an unintroduced/unsupported app to control.
-    hostCallerAdmitted=false;introduction=String();introductionTotal=0;
+    hostCallerAdmitted=false;hostDemand.clear();usbTableCapture.clear();introduction=String();introductionTotal=0;
     if(frame.payloadLength) {
       if(frame.payloadLength!=4 || frame.payload[0]!=kRoleHost) {
         hostLink.error(frame.sequence,kHello,kBadPayload);return;
@@ -574,6 +586,19 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
   const bool bootstrap=frame.opcode==kHello || frame.opcode==kGetStatus || frame.opcode==kGetIdentity || frame.opcode==kPing;
   if(BoardCore::PeerCompatibility::enforced && !hostCallerAdmitted && !bootstrap) {
     hostLink.error(frame.sequence,frame.opcode,kUnsupported);return;
+  }
+  if(frame.opcode==kHostDemand) {
+    const uint16_t flags=frame.payloadLength==4?uint16_t(frame.payload[0])|(uint16_t(frame.payload[1])<<8):0;
+    const uint16_t lease=frame.payloadLength==4?uint16_t(frame.payload[2])|(uint16_t(frame.payload[3])<<8):0;
+    if(frame.payloadLength!=4 || !hostDemand.configure(flags,lease,millis())) {
+      usbTableCapture.clear();
+      hostDemand.clear();hostLink.error(frame.sequence,kHostDemand,kBadPayload);return;
+    }
+    if(usbTableCapture.pixels&&!hostDemand.wants(UsbDemand::Pixels,millis()))usbTableCapture.clear();
+    uint8_t response[4];const uint16_t effective=hostDemand.flags(millis()),remaining=hostDemand.remaining(millis());
+    response[0]=effective;response[1]=effective>>8;response[2]=remaining;response[3]=remaining>>8;
+    if(!hostLink.send(kHostDemandResponse,frame.sequence,response,sizeof(response)))hostDemand.clear();
+    return;
   }
   if(frame.opcode==kPeerReport) {
     if(frame.payloadLength<=4){hostLink.error(frame.sequence,frame.opcode,kBadPayload);return;}
@@ -621,25 +646,29 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
 #endif
   switch (frame.opcode) {
     case kGetTableSnapshot: {
-      static String captured;
-      static uint32_t token=0,capturedAt=0;
-      static uint8_t capturedNonce=0;
+      String &captured=usbTableCapture.body;
+      auto &token=usbTableCapture.token;auto &capturedAt=usbTableCapture.at;
+      auto &capturedNonce=usbTableCapture.nonce;auto &capturedPixels=usbTableCapture.pixels;
       if(!PAKAR_TABLE_ENABLED || frame.payloadLength!=7){hostLink.error(frame.sequence,frame.opcode,kBadPayload);break;}
       const uint8_t nonce=frame.payload[0];
       const uint16_t offset=frame.payload[1]|static_cast<uint16_t>(frame.payload[2])<<8;
       uint32_t requested=0;memcpy(&requested,frame.payload+3,4);
       if(!requested && !offset){
-        captured=buildUsbTableSnapshot();
+        capturedPixels=hostDemand.wants(UsbDemand::Pixels,millis());
+        captured=buildUsbTableSnapshot(capturedPixels);
         if(!captured.length() || captured.length()>16384){captured=String();hostLink.error(frame.sequence,frame.opcode,kHardwareUnavailable);break;}
         if(++token==0)++token;capturedNonce=nonce;capturedAt=millis();
       }else if(!requested || requested!=token || nonce!=capturedNonce || !captured.length() ||
+          (capturedPixels&&!hostDemand.wants(UsbDemand::Pixels,millis())) ||
           static_cast<uint32_t>(millis()-capturedAt)>=15000U){hostLink.error(frame.sequence,frame.opcode,kUnsafe);break;}
       if(offset>=captured.length()){hostLink.error(frame.sequence,frame.opcode,kBadPayload);break;}
       const uint16_t total=captured.length();
       const uint8_t count=min<unsigned>(39,total-offset);
       uint8_t response[48]={nonce};memcpy(response+1,&token,4);memcpy(response+5,&total,2);
       memcpy(response+7,&offset,2);memcpy(response+9,captured.c_str()+offset,count);
-      hostLink.send(kTableSnapshotResponse,frame.sequence,response,count+9);break;
+      if(!hostLink.send(kTableSnapshotResponse,frame.sequence,response,count+9) || offset+count==total)
+        usbTableCapture.clear();
+      break;
     }
     case kTableCommand: {
       if(frame.payloadLength<17 || pcBootId.length()!=32 || !webAccess.peerFenceReady()){
@@ -653,11 +682,18 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       }
       const uint8_t inner=frame.payload[16];
       const bool allowed=inner==kSetMode || inner==kCellAction || inner==kCellsAction || inner==kCellAssignments || inner==kCellLock || inner==kGameReset ||
-          inner==kSetBrightness || inner==kSetLedPattern || inner==kSetLedOutput;
+          inner==kSetBrightness || inner==kSetLedPattern || inner==kSetLedOutput || inner==kPixelDiagnostic;
       if(!matches || !allowed){hostLink.error(frame.sequence,frame.opcode,kUnsafe);break;}
       BoardCore::Protocol::Frame command{};command.opcode=inner;command.sequence=frame.sequence;
       command.payloadLength=frame.payloadLength-17;memcpy(command.payload,frame.payload+17,command.payloadLength);
-      onHostFrame(command,nullptr);
+      if(inner==kPixelDiagnostic) {
+        const auto *p=command.payload;
+        const uint16_t index=uint16_t(p[0])|(uint16_t(p[1])<<8);
+        const uint32_t rgb=(uint32_t(p[3])<<16)|(uint32_t(p[4])<<8)|p[5];
+        if(command.payloadLength!=7 || p[6]>1 || !applyPixelDiagnostic(index,p[2],rgb,p[6]!=0))
+          hostLink.error(frame.sequence,kPixelDiagnostic,kBadPayload);
+        else hostLink.ack(frame.sequence,kPixelDiagnostic);
+      } else onHostFrame(command,nullptr);
       // Keep the original ACK/error unchanged for all existing clients. This
       // additive readback is observed AFTER dispatch on the same loop owner;
       // it is not an optimistic copy of the request or a physical LED receipt.
@@ -678,7 +714,8 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       json += F("\",\"boot_id\":\"");json+=pcBootId;json+='"';
       json += F(",\"hostname\":\""); json += deviceIdentity.hostname();
       json += F("\",\"display_name\":\""); appendJsonEscaped(json, deviceIdentity.displayName());
-      json += F("\",\"application\":"); json += applicationIdentityJson();
+      json += F("\",\"features\":[\"usb-demand\",\"usb-pixel-diagnostic\"],\"usb_transport\":\"");json+=PakarHost::transport();json+='"';
+      json += F(",\"application\":"); json += applicationIdentityJson();
       json += F(",\"version\":\"");json+=BoardCore::BuildInfo::kVersion;
       json += F("\",\"compatibility\":");json+=PakarPeer::policyJson();json+='}';
       const uint16_t offset = frame.payload[1] | static_cast<uint16_t>(frame.payload[2]) << 8;
@@ -961,7 +998,7 @@ void rejectHostFrame(const BoardCore::Protocol::Frame& frame,
                      BoardCore::Protocol::Error error,void*) {
   hostLink.error(frame.sequence,frame.opcode,error);
 }
-void revokeHostAdmission(void*) {hostCallerAdmitted=false;}
+void revokeHostAdmission(void*) {hostCallerAdmitted=false;hostDemand.clear();usbTableCapture.clear();}
 void observeHostIngressFence() {
   // Job identities catch a maintenance operation that began and ended between
   // two services, including async OTA. Only this loop owner mutates the FIFO.
@@ -984,6 +1021,16 @@ void serviceHostLink() {
   // SerialLink's callback runs before its RX scratch is retired. A command
   // that publishes cloud output must not recursively enter that same parser.
   static bool servicing=false;if(servicing)return;servicing=true;
+  if(!PakarHost::connected()) {
+    hostDemand.clear();usbTableCapture.clear();hostCallerAdmitted=false;hostFrameIngress.discard();
+    // Retire both queued transport bytes and the previous caller's partial COBS.
+    // Stream-backed begin resets only framing/callbacks, not USB/UART hardware.
+    hostLink.discardInput();hostLink.begin(115200,onHostFrameIngress);
+    servicing=false;return;
+  }
+  hostDemand.remaining(millis());
+  if(usbTableCapture.body.length() && (uint32_t(millis()-usbTableCapture.at)>=15000U ||
+      (usbTableCapture.pixels&&!hostDemand.wants(UsbDemand::Pixels,millis()))))usbTableCapture.clear();
   observeHostIngressFence();
   hostFrameIngress.service(millis(),cloudServices.ioActive());
   hostLink.service();
@@ -2057,6 +2104,10 @@ String buildStatusJson(bool compact) {
   body += F(",\"usb_serial_frames_received\":"); body += hostLink.framesReceived();
   }
   body += F(",\"usb_serial_errors\":"); body += hostLink.errors();
+  body += F(",\"usb\":{\"transport\":\"");body+=PakarHost::transport();
+  body += F("\",\"host_open\":");body+=PakarHost::native()?(PakarHost::connected()?F("true"):F("false")):F("null");
+  body += F(",\"demand_flags\":");body+=hostDemand.flags(millis());
+  body += F(",\"lease_remaining_ms\":");body+=hostDemand.remaining(millis());body+='}';
   body += F(",\"pc_contract_supported\":");
   body += avrOnline && avrPcSupported ? F("true") : F("false");
   body += F(",\"pc_contract_features\":");
@@ -2068,7 +2119,7 @@ String buildStatusJson(bool compact) {
   body += F("\",\"name\":\""); appendJsonEscaped(body, deviceIdentity.displayName());
   body += F("\",\"hostname\":\""); body += deviceIdentity.hostname();
   body += F("\",\"application\":"); body += applicationIdentityJson();
-  body += F(",\"acknowledged_features\":[\"command-ack\",\"pixel-diagnostic\",\"panel-events\"");
+  body += F(",\"acknowledged_features\":[\"command-ack\",\"pixel-diagnostic\",\"panel-events\",\"usb-demand\",\"usb-pixel-diagnostic\"");
 #if PAKAR_TABLE_SELECTION
   body += F(",\"cell-assignments\",\"cell-lock\"");
 #endif
@@ -2199,7 +2250,7 @@ void serviceConfigurationChanges() {
   if(emitted) {
     // Existing transport owners: a USB status is a refresh hint, not an invented
     // JSON/AVR receipt. identityRevision changes make its normal chunk read fresh.
-    sendHostStatus(0);
+    if(hostDemand.wants(UsbDemand::Status,millis())&&hostSerial.availableForWrite()>=kMaximumEncoded)sendHostStatus(0);
     webSocket.textAll(buildStatusJson());cloudServices.requestTelemetry();
   }
 }
@@ -2210,21 +2261,24 @@ void sendStatusJson() {
 
 // A capture is assembled once on the loop owner. Its chunks never rebuild
 // mutable cell state or reuse identityRevision() as a scene revision.
-String buildUsbTableSnapshot() {
+String buildUsbTableSnapshot(bool includePixels) {
   // PCController sessionsnapshot's explicit projection/bounded-encode pattern:
   // keep live identity, controls and receipts, not unbounded diagnostic detail.
   // 10240 + 6104 worst-case escaped mappings/published frame = 16344 bytes.
   // Never truncate identity, names or pixels to fit the transport's 16384 cap.
   String status=buildStatusJson(true);
   if(!status.length() || status.length()>10240)return String();
-  String body;if(!body.reserve(16384))return String();
+  const size_t budget=includePixels?16384U:13200U;
+  String body;if(!body.reserve(budget))return String();
   body=F("{\"status\":");body+=status;status=String();body+=F(",\"physical\":[");
   for(uint8_t i=0;i<LedGrid::kCells;++i){if(i)body+=',';body+=cellMapping.physical[i];}
   body+=F("],\"names\":[");
   for(uint8_t i=0;i<LedGrid::kCells;++i){if(i)body+=',';body+='\"';
     if(cellMapping.names[i][0])appendJsonEscaped(body,cellMapping.names[i]);else body+=i+1;
     body+='\"';}
-  body+=F("],\"pixels\":");body+=grid.pixelFrameJson();body+='}';
+  body+=F("],\"pixels\":");
+  if(includePixels)body+=grid.pixelFrameJson();else body+=F("null");
+  body+='}';
   if(body.length()>16384)return String();
   return body;
 }
@@ -2671,8 +2725,8 @@ bool handleCloudCommand(const String &message, String &result) {
   if(command=="pixel-diagnostic") {
     const auto index=commandRequest["index"],count=commandRequest["count"],rgb=commandRequest["rgb"],off=commandRequest["off"];
     if(!(currentFeatures()&Leds) || !index.is<uint16_t>() || !count.is<uint8_t>() ||
-       !rgb.is<uint32_t>() || !off.is<bool>() || programmingLatched || otaActive || otaRebootAt ||
-       !grid.diagnostic(index.as<uint16_t>(),count.as<uint8_t>(),rgb.as<uint32_t>(),off.as<bool>())) {
+       !rgb.is<uint32_t>() || !off.is<bool>() ||
+       !applyPixelDiagnostic(index.as<uint16_t>(),count.as<uint8_t>(),rgb.as<uint32_t>(),off.as<bool>())) {
       result=F("Invalid or busy pixel diagnostic");return false;
     }
     // No AVR command, EEPROM write, animation or intermediate white scene.
@@ -2906,7 +2960,8 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       }
       event += F("\"}"); publishPcEvent(event,
         frame.payloadLength==6 && frame.payload[0]==ControllerProtocol::SegmentChanged);
-      hostLink.send(kPcContractResponse, frame.sequence, frame.payload, frame.payloadLength);
+      if(hostDemand.wants(UsbDemand::Peripheral,millis())&&hostSerial.availableForWrite()>=kMaximumEncoded)
+        hostLink.send(kPcContractResponse, frame.sequence, frame.payload, frame.payloadLength);
     }
     if (frame.payloadLength == 6 && frame.payload[0] == ControllerProtocol::SegmentChanged) {
       memcpy(tm1637Segments, frame.payload + 1, 4);
@@ -4201,6 +4256,7 @@ void setup() {
   if (grid.outputEnabled()) grid.presentMaintenance(upgradeLifecycle,millis());
   else grid.setOutputEnabled(false); // Explicit complete black frame.
   hostFrameIngress.begin(onHostFrame,rejectHostFrame,revokeHostAdmission);
+  PakarHost::begin();
   hostLink.begin(115200, onHostFrameIngress);
 #if defined(ARDUINO_ARCH_ESP32)
 #if PAKAR_AVR_LINK_ENABLED

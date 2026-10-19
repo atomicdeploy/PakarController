@@ -4,7 +4,7 @@ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const main=read('firmware/esp8266/esp8266.ino'),routes=read('firmware/esp8266/src/UrbootRoutes.h');
 function wiring(source,routes) {
   assert.match(source,/hostFrameIngress\.begin\(onHostFrame,rejectHostFrame,revokeHostAdmission\)/);
-  assert.match(source,/void revokeHostAdmission\(void\*\) \{hostCallerAdmitted=false;\}/);
+  assert.match(source,/void revokeHostAdmission\(void\*\) \{hostCallerAdmitted=false;hostDemand\.clear\(\);usbTableCapture\.clear\(\);\}/);
   assert.match(source,/hostLink\.begin\(115200, onHostFrameIngress\)/);
   const ingress=source.slice(source.indexOf('void onHostFrameIngress('),source.indexOf('void serviceHostLink('));
   assert.match(ingress,/observeHostIngressFence\(\)/);
@@ -36,4 +36,8 @@ wiring(main,routes);
 assert.throws(()=>wiring(main.replace('hostLink.begin(115200, onHostFrameIngress)','hostLink.begin(115200, onHostFrame)'),routes));
 assert.throws(()=>wiring(main.replace('serviceHostLink(); // Capture/queue only','hostLink.service(); // Capture/queue only'),routes));
 assert.throws(()=>wiring(main.replace('if(cloudServices.ioActive()','if(false'),routes));
+for(const retired of ['hostCallerAdmitted=false;','hostDemand.clear();','usbTableCapture.clear();']) {
+  const complete='void revokeHostAdmission(void*) {hostCallerAdmitted=false;hostDemand.clear();usbTableCapture.clear();}';
+  assert.throws(()=>wiring(main.replace(complete,complete.replace(retired,'')),routes),retired+' must remain in session retirement');
+}
 console.log('USB ingress wiring: actual callback, nonrecursive RX wrapper, cloud-only deferral, bounded before/after drain, maintenance/job fences and unchanged boot/admission/OTA/raw-UART guards; source proof only.');

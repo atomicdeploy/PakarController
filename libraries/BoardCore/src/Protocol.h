@@ -48,6 +48,9 @@ enum Opcode : uint8_t {
   kPeerReport = 0x61, // USB: [totalLE16,offsetLE16,<=44 JSON bytes], bounded sequential peer introduction.
   kCellAssignments = 0x62, // ESP table-selection: selection bitmap10 + two-bit states20; one atomic transaction.
   kCellLock = 0x63, // ESP table-selection: enabled boolean; persistent red-to-white guard.
+  kHostDemand = 0x64, // ESP USB: [flagsLE16,leaseMsLE16]; zero pair releases optional observations.
+  kPixelDiagnostic = 0x65, // Boot-fenced table inner: [indexLE16,count,R,G,B,off]; one pixel or six aligned pixels.
+  kHostDemandResponse = 0xBA, // Correlated [effectiveFlagsLE16,remainingMsLE16], not an actuator ACK.
   kShellResponse = 0xB9, // Encapsulated terminal output; no raw bytes interleaved with COBS.
   kTableSnapshotResponse = 0xB6, // [nonce,token32,total16,offset16,<=39 immutable JSON bytes].
   kTableCommandState = 0xB7, // Post-ACK readback: inner opcode, boot16, 7 scalar fields, 80 packed two-bit cell states.
@@ -83,6 +86,16 @@ enum Error : uint8_t {
 };
 
 enum DeviceRole : uint8_t { kRoleAvr = 1, kRoleEsp = 2, kRoleHost = 3 };
+
+namespace UsbDemand {
+// Explicit command/read replies never depend on these optional stream flags.
+// Pixels only enriches a requested immutable table capture, never starts a push.
+enum Flag : uint16_t { Status = 1, Panel = 2, Peripheral = 4, Pixels = 8 };
+constexpr uint16_t kAllowedFlags = Status | Panel | Peripheral | Pixels;
+constexpr uint16_t kMinimumLeaseMs = 250;
+constexpr uint16_t kMaximumLeaseMs = 5000;
+} // namespace UsbDemand
+
 enum GameMode : uint8_t {
   kModeIdle = 0,
   kModeCellSelect = 1,

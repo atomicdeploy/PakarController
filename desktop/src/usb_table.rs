@@ -114,7 +114,7 @@ impl Reader {
             !status.capabilities.as_ref().is_some_and(|c|c.table()) {return Err("USB table identity/capabilities/state incomplete".into());}
         // Optional on older firmware. The frame is actual last-published RGB,
         // captured once with this token; never derive six pixels from cell state.
-        status.pixel_preview_requested=true;
+        status.pixel_preview_requested=value.get("pixels").is_some_and(|v|!v.is_null());
         status.pixel_frame=match value.get("pixels").filter(|v|!v.is_null()) {
             Some(value)=>{
                 let frame:crate::ui::cell_pixels::Frame=serde_json::from_value(value.clone()).map_err(|_|"Invalid USB pixel snapshot")?;
@@ -130,7 +130,7 @@ impl Reader {
         Ok(Some(Snapshot{status,mappings:mapping.decode()?,observed_at:self.started.unwrap_or_else(Instant::now)}))
     }
 }
-pub fn table_command(op:u8)->bool {matches!(op,0x4b|0x4c|0x4d|0x51|0x52|0x5c|0x5f|0x62|0x63)}
+pub fn table_command(op:u8)->bool {matches!(op,0x4b|0x4c|0x4d|0x51|0x52|0x5c|0x5f|0x62|0x63|0x65)}
 pub fn fenced(status:&DeviceStatus,op:u8,payload:&[u8])->Result<Vec<u8>,String>{
     if !table_command(op) || payload.len()>31 || peer_http::Pin::from_status(status).is_none(){return Err("USB table command lacks a verified peer".into());}
     if op==crate::cell_batch::OPCODE && (!crate::cell_batch::Request::supported(status) || crate::cell_batch::Request::from_payload(payload).is_none()){
@@ -138,6 +138,7 @@ pub fn fenced(status:&DeviceStatus,op:u8,payload:&[u8])->Result<Vec<u8>,String>{
     }
     if op==0x62 && (!crate::cell_assignments::supported(status) || crate::cell_assignments::Document::from_payload(payload).is_err()){return Err("Invalid or unavailable atomic assignments".into());}
     if op==0x63 && (!matches!(payload,[0]|[1]) || !status.capabilities.as_ref().is_some_and(|c|c.table_selection()&&c.has("cell-lock"))){return Err("Invalid or unavailable red lock".into());}
+    if op==0x65 && (!crate::pixel_diagnostic::usb_supported(status)||crate::pixel_diagnostic::Probe::from_usb(payload).is_none()){return Err("Invalid or unavailable USB pixel diagnostic; nothing sent".into());}
     let mut out=Vec::with_capacity(17+payload.len());
     for pair in status.boot_id.as_bytes().chunks_exact(2){
         let nibble=|v:u8|if v.is_ascii_digit(){v-b'0'}else{v-b'a'+10};
@@ -170,6 +171,7 @@ impl Intent {
     }
     pub fn verify(&self,s:&DeviceStatus)->bool {
         match (self.opcode,self.payload.as_slice()) {
+            (0x65,payload)=>crate::pixel_diagnostic::usb_verify(s,payload),
             (0x62,payload)=>crate::cell_assignments::Document::from_payload(payload).is_ok_and(|d|d.verify(s)),
             (0x63,[value]) if *value<=1=>s.red_lock==Some(*value!=0),
             (0x5f,payload)=>self.admission.batch.as_ref().is_some_and(|batch|
@@ -287,6 +289,7 @@ mod tests {
         let epoch=gate.select(Some(crate::connection::Method::Serial));let owner=gate.clone();
         let worker=thread::spawn(move||crate::serial_worker_with(rx,events,eframe::egui::Context::default(),owner,|_|port.take().ok_or("unexpected reopen".into())));
         tx.send(crate::SerialCommand::Port("fixture".into(),epoch)).unwrap();
+        tx.send(crate::SerialCommand::Demand("fixture".into(),epoch,crate::usb_demand::Demand::metadata())).unwrap();
         let mut snapshot=None;let mut session=0;
         while snapshot.is_none(){match received.recv_timeout(Duration::from_secs(4)).unwrap(){
             crate::Event::ForConnection(_,event)=>match *event{
@@ -319,6 +322,40 @@ mod tests {
     fn chunk(bytes:&[u8],offset:usize,nonce:u8,token:u32)->Vec<u8>{
         let mut p=vec![nonce];p.extend(token.to_le_bytes());p.extend((bytes.len() as u16).to_le_bytes());
         p.extend((offset as u16).to_le_bytes());p.extend_from_slice(&bytes[offset..(offset+39).min(bytes.len())]);p
+    }
+    #[test]
+    fn usb_demand_actual_worker_has_no_full_capture_without_reader_and_releases_lease(){
+        use std::{collections::VecDeque,io::{Read,Write},sync::{Arc,Mutex,mpsc},thread};
+        struct Port{pending:VecDeque<u8>,capture:Vec<u8>,writes:Arc<Mutex<Vec<(u8,Vec<u8>)>>>}
+        impl Write for Port {
+            fn write(&mut self,b:&[u8])->std::io::Result<usize>{
+                let(op,seq,p)=crate::decode_envelope(&b[..b.len()-1]).unwrap();self.writes.lock().unwrap().push((op,p.clone()));
+                match op {
+                    1=>{let mut hello=vec![0,2,0,0,80,9];hello.extend_from_slice(&crate::peer_identity::hello()[1..]);hello.extend([0xaa;16]);self.pending.extend(crate::wire_frame(0x81,seq,&hello));},
+                    crate::peer_identity::USB_REPORT=>self.pending.extend(crate::wire_frame(0x80,seq,&[crate::peer_identity::USB_REPORT,0])),
+                    crate::OP_GET_STATUS=>{let mut status=vec![0;47];status[44..47].fill(1);self.pending.extend(crate::wire_frame(crate::OP_STATUS,seq,&status));},
+                    crate::usb_demand::REQUEST=>self.pending.extend(crate::wire_frame(crate::usb_demand::RESPONSE,seq,&p)),
+                    READ=>{let offset=u16::from_le_bytes([p[1],p[2]])as usize;self.pending.extend(crate::wire_frame(RESPONSE,seq,&chunk(&self.capture,offset,p[0],17)));},
+                    _=>panic!("unexpected {op:x}"),
+                }Ok(b.len())
+            }
+            fn flush(&mut self)->std::io::Result<()>{Ok(())}
+        }
+        impl Read for Port{fn read(&mut self,b:&mut[u8])->std::io::Result<usize>{if self.pending.is_empty(){thread::sleep(Duration::from_millis(1));return Err(std::io::ErrorKind::TimedOut.into());}let n=b.len().min(self.pending.len());for v in &mut b[..n]{*v=self.pending.pop_front().unwrap();}Ok(n)}}
+        let writes=Arc::new(Mutex::new(Vec::new()));let mut port=Some(Port{pending:VecDeque::new(),capture:serde_json::to_vec(&fixture()).unwrap(),writes:writes.clone()});
+        let(tx,rx)=mpsc::channel();let(events,received)=mpsc::channel();let gate=crate::connection::Gate::default();let epoch=gate.select(Some(crate::Transport::Serial));let owner=gate.clone();
+        let worker=thread::spawn(move||crate::serial_worker_with(rx,events,eframe::egui::Context::default(),owner,|_|port.take().ok_or("unexpected reopen".into())));
+        tx.send(crate::SerialCommand::Port("fixture".into(),epoch)).unwrap();
+        thread::sleep(Duration::from_millis(1100));
+        assert!(!writes.lock().unwrap().iter().any(|(op,_)|*op==READ),"Connecting alone is not a high-bandwidth consumer");
+        tx.send(crate::SerialCommand::Demand("fixture".into(),epoch,crate::usb_demand::Demand{flags:crate::usb_demand::STATUS|crate::usb_demand::PIXELS,table:true})).unwrap();
+        loop{if let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(3)).unwrap(){if matches!(*event,crate::Event::SerialSnapshot(..)){break;}}}
+        tx.send(crate::SerialCommand::Demand("fixture".into(),epoch,Default::default())).unwrap();
+        thread::sleep(Duration::from_millis(100));let count=writes.lock().unwrap().iter().filter(|(op,_)|*op==READ).count();
+        thread::sleep(Duration::from_millis(1150));assert_eq!(count,writes.lock().unwrap().iter().filter(|(op,_)|*op==READ).count(),"No cyclic capture after reader hides/closes");
+        assert!(writes.lock().unwrap().iter().any(|(op,p)|*op==crate::usb_demand::REQUEST&&p==&[9,0,0xb8,0x0b]));
+        assert!(writes.lock().unwrap().iter().any(|(op,p)|*op==crate::usb_demand::REQUEST&&p==&[0,0,0,0]));
+        gate.select(None);drop(tx);worker.join().unwrap();
     }
     fn read(value:&serde_json::Value)->Snapshot{
         let bytes=serde_json::to_vec(value).unwrap();let mut reader=Reader::new(9);let mut result=None;
@@ -433,7 +470,8 @@ mod tests {
         let(tx,rx)=mpsc::channel();let(events,received)=mpsc::channel();
         let gate=crate::connection::Gate::default();let epoch=gate.select(Some(crate::connection::Method::Serial));let owner=gate.clone();
         let worker=thread::spawn(move||crate::serial_worker_with(rx,events,eframe::egui::Context::default(),owner,|_|port.take().ok_or("Unexpected reopen".into())));
-        tx.send(crate::SerialCommand::Port("fixture".into(),epoch)).unwrap();let start=Instant::now();
+        tx.send(crate::SerialCommand::Port("fixture".into(),epoch)).unwrap();
+        tx.send(crate::SerialCommand::Demand("fixture".into(),epoch,crate::usb_demand::Demand::metadata())).unwrap();let start=Instant::now();
         loop{
             let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(7)).unwrap() else{continue;};
             match *event{
@@ -474,6 +512,7 @@ mod tests {
         let(tx,rx)=mpsc::channel();let(events,received)=mpsc::channel();let gate=crate::connection::Gate::default();let epoch=gate.select(Some(crate::Transport::Serial));let owner=gate.clone();
         let task=thread::spawn(move||crate::serial_worker_with(rx,events,eframe::egui::Context::default(),owner,|_|port.take().ok_or("Must not retry an unsupported peer".into())));
         tx.send(crate::SerialCommand::Port("fixture".into(),epoch)).unwrap();
+        tx.send(crate::SerialCommand::Demand("fixture".into(),epoch,crate::usb_demand::Demand::metadata())).unwrap();
         loop{if let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(2)).unwrap(){match *event{crate::Event::SerialFailure(_,error)=>{assert!(crate::peer_identity::unsupported(&error));break;},crate::Event::Serial(_,true,_)|crate::Event::SerialSnapshot(..)=>panic!("Unsupported peer became live"),_=>{}}}}
         drop(tx);task.join().unwrap();assert_eq!(writes.load(Ordering::SeqCst),1);
     }
@@ -531,6 +570,7 @@ mod tests {
             let worker=thread::spawn(move||crate::serial_worker_with(rx,events,eframe::egui::Context::default(),owner,
                 |_|port.take().ok_or("No implicit reopen or retry after introduction failure".into())));
             tx.send(crate::SerialCommand::Port("fixture".into(),epoch)).unwrap();
+            tx.send(crate::SerialCommand::Demand("fixture".into(),epoch,crate::usb_demand::Demand::metadata())).unwrap();
             let may_connect=!crate::peer_identity::enforced() && unsupported_report && valid_identity;
             loop{
                 let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(6)).unwrap() else{continue;};
@@ -603,6 +643,7 @@ mod tests {
             let worker=thread::spawn(move||crate::serial_worker_with(rx,events,eframe::egui::Context::default(),owner,
                 |_|port.take().ok_or("Invalid identity must not implicitly reopen the physical port".into())));
             tx.send(crate::SerialCommand::Port("fixture".into(),epoch)).unwrap();
+            tx.send(crate::SerialCommand::Demand("fixture".into(),epoch,crate::usb_demand::Demand::metadata())).unwrap();
             loop{
                 let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(3)).unwrap() else{continue;};
                 match *event{

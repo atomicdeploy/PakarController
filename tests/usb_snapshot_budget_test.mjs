@@ -5,7 +5,7 @@ const main=read('firmware/esp8266/esp8266.ino');
 const driver=read('firmware/esp32s3/src/LedOutput.cpp');
 const ethernet=read('firmware/esp8266/src/EthernetManagement.h');
 const status=main.slice(main.indexOf('String buildStatusJson(bool compact) {'),main.indexOf('void sendStatusJson()'));
-const snapshot=main.slice(main.indexOf('String buildUsbTableSnapshot() {'),main.indexOf('void configureNtp()'));
+const snapshot=main.slice(main.indexOf('String buildUsbTableSnapshot(bool includePixels) {'),main.indexOf('void configureNtp()'));
 assert(main.includes('String buildStatusJson() { return buildStatusJson(false); }'));
 const configChange=main.slice(main.indexOf('String configurationStateJson('),main.indexOf('void sendStatusJson()'));
 for(const field of ['configuration-changed','board_id','boot_id','revision','phase','scopes','hostname','configured_hostname','fqdn','addresses','apply_pending'])
@@ -41,6 +41,9 @@ assert(status.includes('applicationIdentityJson()'));
 assert(main.includes('body += FPSTR(APP_ICON_PNG_BASE64)'));
 assert(snapshot.includes('appendJsonEscaped(body,cellMapping.names[i])'));
 assert(snapshot.includes('grid.pixelFrameJson()'));
+assert(snapshot.includes('if(includePixels)body+=grid.pixelFrameJson();else body+=F("null")'));
+assert(snapshot.indexOf('if(includePixels)')<snapshot.indexOf('grid.pixelFrameJson()'));
+assert(snapshot.includes('budget=includePixels?16384U:13200U'));
 assert(driver.includes('String LedOutput::json(bool compact)const'));
 const detail=driver.slice(driver.indexOf('  if(!compact) {',driver.indexOf('String LedOutput::json')),driver.indexOf('  value+=F(",\\"submitted'));
 for(const field of ['signal_capture','frame_timing','refill_irq','done_symbols'])assert(detail.includes(field));
@@ -62,6 +65,9 @@ assert.equal(size(physical),232);
 const envelope=size({status:{},physical,names,pixels})-2;
 assert.equal(envelope,6104);
 assert.equal(envelope+10240,16344);
+const coreEnvelope=size({status:{},physical,names,pixels:null})-2;
+assert.equal(coreEnvelope+10240,13159);
+assert(coreEnvelope+10240<=13200,'Core-only capture has its own smaller bounded allocation');
 assert(envelope+10240<16384,'Worst accepted status plus escaped names must fit');
 assert(envelope+10281>16384,'Fixture must exercise the transport boundary');
 

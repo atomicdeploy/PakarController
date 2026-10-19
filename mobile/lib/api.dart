@@ -18,6 +18,7 @@ import 'pixel_diagnostic.dart';
 import 'ble_transport.dart';
 import 'peer_identity.dart';
 import 'peer_policy.dart';
+import 'usb_transport.dart';
 
 enum ConnectionMethod { network, usb, bluetooth }
 
@@ -29,12 +30,14 @@ class PakarApi {
     http.Client? client,
     LanResolver? resolver,
     PakarBleTransport? bluetooth,
+    PakarUsbTransport? usb,
     this.discovery,
     this.readTimeout = const Duration(seconds: 6),
     this.enforcePeerVersions = peerVersionChecksEnabled,
     this.commandHttpFallback = true,
   }) : resolver = resolver ?? LanResolver(),
        bluetooth = bluetooth ?? PakarBleTransport(),
+       usb = usb ?? PakarUsbTransport(),
        _baseUrl = normalizeEndpoint(baseUrl),
        // Preserve public argument names; private setters own revisions.
        // ignore: prefer_initializing_formals
@@ -48,6 +51,8 @@ class PakarApi {
     _client = client ?? IOClient(_ioClient);
     if (_baseUrl.startsWith('ble://')) {
       _connectionMethod = ConnectionMethod.bluetooth;
+    } else if (_baseUrl.startsWith('usb://')) {
+      _connectionMethod = ConnectionMethod.usb;
     }
   }
 
@@ -69,6 +74,7 @@ class PakarApi {
   set appForeground(bool value) {
     if (value == _appForeground) return;
     _appForeground = value;
+    usb.demand(_effectiveUsbDemand, foreground: value);
     if (!_connectionUpdates.isClosed) _connectionUpdates.add(null);
   }
 
@@ -83,16 +89,10 @@ class PakarApi {
     resetTransport();
   }
 
-  // Android USB-host transport is not implemented yet. Never substitute an
-  // HTTP/WS connection, discovery, or a remote bridge for explicit USB intent.
+  // All transports share admission; USB branches precede every network path.
   void _requireNetwork() {
     if (_unsupportedPeer != null) throw _unsupportedPeer!;
     if (!_connectionWanted) throw const ConnectionStopped();
-    if (_connectionMethod == ConnectionMethod.usb) {
-      throw const FormatException(
-        'Direct Android USB is not available in this build; no network fallback was attempted',
-      );
-    }
   }
 
   void disconnect() {
@@ -111,7 +111,7 @@ class PakarApi {
     String board = '',
   }) {
     final normalized = normalizeEndpoint(endpoint);
-    if (method == ConnectionMethod.usb ||
+    if ((method == ConnectionMethod.usb) != normalized.startsWith('usb://') ||
         (method == ConnectionMethod.bluetooth) !=
             normalized.startsWith('ble://')) {
       throw const FormatException('Select an endpoint for this transport');
@@ -170,11 +170,59 @@ class PakarApi {
   late final http.Client _client;
   final LanResolver resolver;
   final PakarBleTransport bluetooth;
+  final PakarUsbTransport usb;
+  bool get isUsb => connectionMethod == ConnectionMethod.usb;
+  int _usbDemandFlags = 1;
+  int _usbPixelConsumers = 0;
+  int get _effectiveUsbDemand =>
+      _usbDemandFlags | (_usbPixelConsumers > 0 ? 8 : 0);
+  void Function() retainUsbPixels() {
+    ++_usbPixelConsumers;
+    usb.demand(_effectiveUsbDemand, foreground: appForeground);
+    var active = true;
+    return () {
+      if (!active) return;
+      active = false;
+      --_usbPixelConsumers;
+      usb.demand(_effectiveUsbDemand, foreground: appForeground);
+    };
+  }
+
+  /// Visible UI consumers own their optional observations; no animation push
+  /// starts merely because a USB handle is open. Board leases expire in 3s.
+  void setUsbObservations({
+    bool panel = false,
+    bool peripheral = false,
+    bool pixels = false,
+  }) {
+    _usbDemandFlags =
+        1 | (panel ? 2 : 0) | (peripheral ? 4 : 0) | (pixels ? 8 : 0);
+    usb.demand(_effectiveUsbDemand, foreground: appForeground);
+  }
+
   String expectedBluetoothBoard = '';
   bool get isBluetooth => connectionMethod == ConnectionMethod.bluetooth;
   bool get supportsBinaryFirmware =>
       connectionMethod == ConnectionMethod.network;
   bool supportsRoute(String method, String path) {
+    if (isUsb) {
+      return method == 'GET'
+          ? {'/api/status', '/api/cells/mapping'}.contains(path)
+          : {
+                  '/api/cell',
+                  '/api/cells',
+                  '/api/cells/assignments',
+                  '/api/cells/lock',
+                  '/api/mode',
+                  '/api/effect',
+                  '/api/brightness',
+                  '/api/led/output',
+                  '/api/audio',
+                  '/api/display',
+                }.contains(path) ||
+                path == '/api/led/diagnostic' &&
+                    _latestStatus?.peer.has('usb-pixel-diagnostic') == true;
+    }
     if (!isBluetooth) return connectionMethod == ConnectionMethod.network;
     final ble = _latestStatus?.json['ble'];
     return ble is Map &&
@@ -195,7 +243,7 @@ class PakarApi {
       _verifiedEndpoint == baseUrl &&
           _verifiedBoard != null &&
           _verifiedBoot != null &&
-          !isBluetooth
+          connectionMethod == ConnectionMethod.network
       ? resolver.localAddressFor(Uri.parse(transportUrl))
       : null;
   Stopwatch? _introductionAge;
@@ -236,7 +284,11 @@ class PakarApi {
   Duration? get liveSilence => _liveAge?.elapsed ?? _socketAge?.elapsed;
   final _commandReplies = <String, Completer<Map<String, dynamic>?>>{};
   bool get liveFresh =>
-      (isBluetooth ? bluetooth.ready : _socketReady) &&
+      (isUsb
+          ? usb.ready
+          : isBluetooth
+          ? bluetooth.ready
+          : _socketReady) &&
       _liveAge != null &&
       _liveAge!.elapsedMilliseconds < 4000;
 
@@ -253,6 +305,13 @@ class PakarApi {
 
   /// A resume probe is a read on the existing socket, not a new connection.
   bool requestLiveStatus() {
+    if (isUsb) {
+      if (!connectionWanted || !appForeground || !usb.ready || usb.busy) {
+        return false;
+      }
+      unawaited(status().then<void>((_) {}, onError: (Object _) {}));
+      return true;
+    }
     if (isBluetooth) {
       if (!_connectionWanted ||
           !bluetooth.ready ||
@@ -278,6 +337,15 @@ class PakarApi {
     bool off = false,
     required bool Function() authorize,
   }) async {
+    if (isUsb) {
+      final actual = await _usbCommand('/api/led/diagnostic', {
+        'index': '${probe.first}',
+        'count': '${probe.count}',
+        'rgb': '${probe.rgb}',
+        'off': '$off',
+      }, authorize);
+      return actual;
+    }
     _requireNetwork();
     if (_diagnosticPending) {
       throw const FormatException('A diagnostic frame is still pending');
@@ -460,6 +528,10 @@ class PakarApi {
   // at most once a minute on normal foreground observations for the board's
   // 120s registry lease. No timer, per-frame metadata or blocking readback.
   void _introducePeer() {
+    // The USB actor has already completed its correlated HELLO and peer-report
+    // chunks before publishing the first snapshot. Never use the HTTP report
+    // fallback (or advertise its periodic refresh) for a physical USB owner.
+    if (isUsb) return;
     if (_verifiedBoard == null ||
         _verifiedBoot == null ||
         _latestStatus == null ||
@@ -526,6 +598,7 @@ class PakarApi {
     required bool Function() authorize,
   }) async {
     if (!commandNames.containsKey(path)) return null;
+    if (isUsb) return _usbCommand(path, values, authorize);
     var snapshot = _latestStatus;
     if (snapshot?.peer.has('command-ack') != true) return null;
     final revision = connectionRevision;
@@ -782,6 +855,11 @@ class PakarApi {
     Duration limit, {
     Future<void>? cancel,
   }) async {
+    if (isUsb) {
+      throw const FormatException(
+        'HTTP transport is disabled while USB is selected',
+      );
+    }
     final abort = Completer<void>();
     final request =
         http.AbortableRequest(
@@ -929,6 +1007,10 @@ class PakarApi {
 
   static String normalizeEndpoint(String value) {
     final text = value.trim();
+    if (text.startsWith('usb://')) {
+      final selected = PakarUsbTransport.address(text);
+      return PakarUsbTransport.endpoint(selected.$1, selected.$2);
+    }
     if (text.startsWith('ble://')) {
       return PakarBleTransport.endpoint(
         PakarBleTransport.addressFromEndpoint(text),
@@ -961,6 +1043,11 @@ class PakarApi {
     http.Client? readClient,
     bool recordHeaders = true,
   }) async {
+    if (isUsb) {
+      throw const FormatException(
+        'HTTP transport is disabled while USB is selected',
+      );
+    }
     final owner = connectionRevision, limit = timeout ?? readTimeout;
     const maximum = 64 * 1024;
     final abort = Completer<void>();
@@ -1071,6 +1158,17 @@ class PakarApi {
 
   Future<Map<String, dynamic>> _get(String path) async {
     _requireNetwork();
+    if (isUsb) {
+      await _ensureUsb();
+      if (path == '/api/status') return (await usb.status()).json;
+      if (path == '/api/cells/mapping') {
+        await usb.status();
+        return usb.table!;
+      }
+      throw const FormatException(
+        'This read is unavailable through USB; no network fallback attempted',
+      );
+    }
     if (isBluetooth) return _bleRequest('GET', path, const {});
     if (path != '/api/status' &&
         _verifiedEndpoint != baseUrl &&
@@ -1110,6 +1208,11 @@ class PakarApi {
     required bool Function() authorize,
   }) async {
     _requireNetwork();
+    if (isUsb) {
+      throw const FormatException(
+        'USB firmware/maintenance is not implemented; no HTTP, Wi-Fi or DNS fallback attempted',
+      );
+    }
     if (isBluetooth) {
       if (upload != null ||
           verifySketch ||
@@ -1279,6 +1382,15 @@ class PakarApi {
     bool Function()? authorize,
   }) async {
     _requireNetwork();
+    if (isUsb) {
+      final actual = await _usbCommand(path, values, authorize ?? () => true);
+      return {
+        'accepted': true,
+        'board_id': actual.json['board_id'],
+        'boot_id': actual.json['boot_id'],
+        'status': actual.json,
+      };
+    }
     if (isBluetooth) {
       return _bleRequest('POST', path, values, authorize: authorize);
     }
@@ -1328,6 +1440,20 @@ class PakarApi {
     Map<String, String> values = const {},
   ]) async {
     _requireNetwork();
+    if (isUsb) {
+      await _ensureUsb();
+      if (freshStatus == null && !usb.busy) await status();
+      if (path == '/api/audio') {
+        await usb.cue(values['cue'] ?? '');
+        return;
+      }
+      if (path == '/api/display') {
+        await usb.display(values);
+        return;
+      }
+      await _usbCommand(path, values, () => true);
+      return;
+    }
     if (isBluetooth) {
       await _bleRequest('POST', path, values);
       return;
@@ -1463,6 +1589,10 @@ class PakarApi {
   }
 
   Future<BoardSound> boardSound({bool? silent}) async {
+    if (isUsb) {
+      await _ensureUsb();
+      return usb.boardSound(silent: silent);
+    }
     final revision = connectionRevision;
     final before = freshStatus ?? await status();
     final board = before.json['board_id'], boot = before.json['boot_id'];
@@ -1583,6 +1713,10 @@ class PakarApi {
 
   Stream<DeviceStatus> liveStatus() async* {
     _requireNetwork();
+    if (isUsb) {
+      yield* _liveUsb();
+      return;
+    }
     if (isBluetooth) {
       yield* _liveBluetooth();
       return;
@@ -1753,6 +1887,100 @@ class PakarApi {
         endpoint != baseUrl ||
         !connectionWanted) {
       throw const StaleConnection();
+    }
+  }
+
+  Future<void> _ensureUsb() async {
+    _requireNetwork();
+    if (!isUsb) throw const StaleConnection();
+    final owner = connectionRevision;
+    await usb.connect(
+      baseUrl,
+      expectedBoard: expectedBluetoothBoard,
+      enforce: enforcePeerVersions && peerVersionChecksEnabled,
+    );
+    if (owner != connectionRevision || !connectionWanted || !isUsb) {
+      throw const StaleConnection();
+    }
+    usb.demand(_effectiveUsbDemand, foreground: appForeground);
+  }
+
+  Future<DeviceStatus> _usbCommand(
+    String path,
+    Map<String, String> values,
+    bool Function() authorize,
+  ) async {
+    _requireNetwork();
+    final owner = connectionRevision;
+    await _ensureUsb();
+    if (freshStatus == null && !usb.busy) await status();
+    bool admitted() =>
+        owner == connectionRevision &&
+        isUsb &&
+        connectionWanted &&
+        appForeground &&
+        authorize();
+    if (!admitted()) throw const StaleConnection();
+    final actual = await usb.command(path, values, authorize: admitted);
+    if (!admitted()) throw const StaleConnection();
+    _acceptIdentity(actual.json);
+    _verifiedEndpoint = baseUrl;
+    _rememberStatus(actual);
+    _liveAge = Stopwatch()..start();
+    return actual;
+  }
+
+  Stream<DeviceStatus> _liveUsb() async* {
+    final owner = connectionRevision;
+    await _ensureUsb();
+    final updates = StreamController<DeviceStatus>();
+    bool retired = false, reading = false;
+    Future<void> refresh() async {
+      if (retired ||
+          reading ||
+          usb.busy ||
+          !appForeground ||
+          owner != connectionRevision) {
+        return;
+      }
+      reading = true;
+      try {
+        final actual = await status();
+        if (!retired && owner == connectionRevision) {
+          _liveAge = Stopwatch()..start();
+          updates.add(actual);
+        }
+      } on Object catch (error) {
+        if (!retired) updates.addError(error);
+      } finally {
+        reading = false;
+      }
+    }
+
+    final subscription = usb.events.stream.listen(
+      (event) {
+        if (event['type'] == 'changed') {
+          unawaited(refresh());
+        } else if (!retired && owner == connectionRevision) {
+          onPeripheralEvent?.call(event);
+        }
+      },
+      onError: (Object e) {
+        if (!retired) updates.addError(e);
+      },
+    );
+    final timer = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) => unawaited(refresh()),
+    );
+    try {
+      await refresh();
+      yield* updates.stream;
+    } finally {
+      retired = true;
+      timer.cancel();
+      await subscription.cancel();
+      unawaited(updates.close());
     }
   }
 
@@ -2004,6 +2232,7 @@ class PakarApi {
     _configurationRefresh = null;
     unawaited(_configurationUpdates.close());
     await bluetooth.close();
+    await usb.close();
     _abortReads();
     _socketReady = false;
     _latestStatus = null;
@@ -2042,6 +2271,7 @@ class PakarApi {
     _introductionAge = null;
     receivedServerHeaders = const {};
     unawaited(bluetooth.disconnect());
+    unawaited(usb.disconnect());
     _abortReads();
     _socketReady = false;
     _latestStatus = null;

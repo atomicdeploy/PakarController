@@ -10,6 +10,7 @@ param(
     [ValidateSet('disabled', 'enabled', 'opi')] [string] $S3Psram = 'disabled',
     [ValidateSet('static', 'rmt-dma')] [string] $S3LedBackend = 'static',
     [ValidateSet('runtime', 'disabled')] [string] $S3Bluetooth = 'runtime',
+    [ValidateSet('uart0','hwcdc','otg')] [string] $S3HostTransport = 'uart0',
     [ValidateSet(-1, 38, 48)] [int] $S3StatusRgbPin = -1,
     [ValidateRange(1,4)] [int] $ShellSessions = 2,
     [switch] $DisableSerialShell,
@@ -37,6 +38,7 @@ if ($CellChaseOnBoot -and ($Target -ne 'esp32s3' -or $PauseLedOutput)) { throw '
 if ($S3IspElectricalVerified -and $Target -ne 'esp32s3') { throw 'The S3 ISP electrical acknowledgment is target-specific.' }
 if ($S3Ethernet -and $Target -ne 'esp32s3') { throw 'Native W5500 Ethernet requires ESP32-S3.' }
 if ($S3Bluetooth -ne 'runtime' -and $Target -ne 'esp32s3') { throw 'Bluetooth build selection requires ESP32-S3.' }
+if ($PSBoundParameters.ContainsKey('S3HostTransport') -and $Target -ne 'esp32s3') { throw 'Host USB transport selection requires ESP32-S3.' }
 if ($S3LedBackend -ne 'static' -and $Target -ne 'esp32s3') { throw 'The RMT-DMA LED backend requires ESP32-S3.' }
 if ($LinkMode -eq 'buffered' -and $Target -notin @('avr', 'esp32s3')) {
     throw 'Buffered mode currently targets the paired AVR only; ESP8266 requires busy-wire or polling.'
@@ -112,6 +114,11 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
     if ($board -eq 'esp32s3' -and $Target -ne 'esp32s3') { continue }
     if ($Target -ne 'both' -and $Target -ne $board) { continue }
     $output = if ($board -eq 'avr') { $avrOutput } elseif ($board -eq 'esp32s3') { Join-Path $build 'esp32s3-buffered' } else { $espOutput }
+    if($board -eq 'esp32s3' -and $S3HostTransport -ne 'uart0') {
+        # Keep explicit connector variants out of the updater's default UART0
+        # candidate path. Outputs differ; the existing warm compiler cache does not.
+        $output=Join-Path $build ("esp32s3-buffered-$S3HostTransport")
+    }
     $flags = if ($board -eq 'avr') { $extraFlags } else { $espFlags }
     $fqbn = if ($board -eq 'avr') {
         'MiniCore:avr:328:bootloader=uart0,eeprom=keep,baudrate=115200,variant=modelP,BOD=2v7,LTO=Os_flto,clock=16MHz_external'
@@ -122,7 +129,11 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         # The CLI expands this property to argv: embedded literal quotes become
         # part of GCC's search path. The canonical build roots contain no spaces.
         if ($projectRoot -match '\s') { throw 'S3 shared-source include root requires a whitespace-free checkout path.' }
-        $flags += " -I$($projectRoot.Replace('\','/')) -DARDUINO_USB_CDC_ON_BOOT=1 -DARDUINO_USB_MODE=1"
+        $hostCode=if($S3HostTransport -eq 'otg'){2}elseif($S3HostTransport -eq 'hwcdc'){1}else{0}
+        $usbMode=if($S3HostTransport -eq 'otg'){'default'}else{'hwcdc'}
+        $cdcBoot=if($S3HostTransport -eq 'otg'){'default'}else{'cdc'}
+        # Manual OTG startup disables DTR/1200-baud reboot before USB.begin.
+        $flags += " -I$($projectRoot.Replace('\','/')) -DPAKAR_S3_HOST_TRANSPORT=$hostCode"
         if ($S3StatusRgbPin -ne -1) { $flags += " -DPAKAR_S3_STATUS_RGB_PIN=$S3StatusRgbPin" }
         if ($InitializeFilesystem) { $flags += ' -DPAKAR_INITIALIZE_FILESYSTEM=1' }
         if ($PauseAvrLink) { $flags += ' -DPAKAR_AVR_LINK_ENABLED=0' }
@@ -130,7 +141,7 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         if ($CellChaseOnBoot) { $flags += ' -DPAKAR_LED_START_CELL_CHASE=1' }
         if ($S3IspElectricalVerified) { $flags += ' -DPAKAR_S3_ISP_ELECTRICAL_VERIFIED=1' }
         if ($S3Ethernet) { $flags += ' -DPAKAR_S3_ETHERNET_ENABLED=1' }
-        "esp32:esp32:esp32s3:CDCOnBoot=cdc,USBMode=hwcdc,FlashSize=${S3FlashMB}M,PartitionScheme=$partitions,PSRAM=$S3Psram"
+        "esp32:esp32:esp32s3:CDCOnBoot=$cdcBoot,USBMode=$usbMode,FlashSize=${S3FlashMB}M,PartitionScheme=$partitions,PSRAM=$S3Psram"
     } else { 'esp8266:esp8266:nodemcuv2:eesz=4M2M' }
     # One reusable cache per board/link-mode; never force a cold compile by default.
     $cache = Join-Path $build "cache/$board$suffix"

@@ -49,6 +49,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   StreamSubscription<DeviceStatus>? statusSubscription;
   StreamSubscription<void>? connectionSubscription;
   Timer? authorityExpiry;
+  void Function()? releaseUsbPixels;
   bool working = false;
   String message =
       'Choose a position and colour, then Show. Nothing is sent automatically.';
@@ -57,6 +58,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   @override
   void initState() {
     super.initState();
+    releaseUsbPixels = widget.api.retainUsbPixels();
     // Eagerly capture the owner before navigation or network state can change.
     revision;
     board;
@@ -191,6 +193,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
 
   @override
   void dispose() {
+    releaseUsbPixels?.call();
     unawaited(statusSubscription?.cancel());
     unawaited(connectionSubscription?.cancel());
     authorityExpiry?.cancel();

@@ -21,3 +21,4 @@ if($LASTEXITCODE){throw 'BLE PSRAM storage fixture compilation failed'}
 if($LASTEXITCODE){throw 'BLE PSRAM storage fixture failed'}
 & node (Join-Path $taskRoot 'tests/usb_snapshot_budget_test.mjs')
 if($LASTEXITCODE){throw 'USB snapshot projection/budget assertions failed'}
+& (Join-Path $PSScriptRoot 'test-host-demand.ps1')

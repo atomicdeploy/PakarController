@@ -122,14 +122,10 @@ void serviceSemanticPanel(uint32_t now) {
   // ACKs/command replies take precedence. Do not wait for USB space or emit
   // unframed JSON to the binary serial port. One event always fits one frame.
   for(unsigned budget=0;budget<2;++budget) {
-    const bool usb=hostLink.framesReceived()!=0;
-#if defined(ARDUINO_ARCH_ESP32)
-    if(usb && Serial0.availableForWrite()<kMaximumEncoded)break;
-#else
-    if(usb && Serial.availableForWrite()<kMaximumEncoded)break;
-#endif
+    const bool usb=hostDemand.wants(BoardCore::Protocol::UsbDemand::Panel,now);
+    if(usb && hostSerial.availableForWrite()<kMaximumEncoded)break;
     Event event;if(!semanticPanel.pop(event))break;
-    webSocket.textAll(panelEventJson(event));
+    if(webSocket.count())webSocket.textAll(panelEventJson(event));
     if(usb){uint8_t wire[48];const auto length=encode(event,wire);hostLink.send(kPanelEvent,event.id,wire,length);}
   }
 }

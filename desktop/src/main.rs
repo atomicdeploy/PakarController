@@ -49,6 +49,7 @@ mod platform;
 mod streaming;
 mod terminal_ui;
 mod usb_table;
+mod usb_demand;
 mod cell_batch;
 mod cell_assignments;
 mod ui;
@@ -377,6 +378,7 @@ enum WsCommand {
     ArmPixel(pixel_diagnostic::Request),
 }
 enum SerialCommand {
+    Demand(String, u64, usb_demand::Demand),
     Bridge(String, usb_table::Admission, u8, Vec<u8>, bridge::Reply),
     Port(String, u64),
     Send(String, usb_table::Admission, u8, Vec<u8>),
@@ -1541,6 +1543,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
     let mut sequence = 1_u8;
     let mut nonce = 0_u8;
     let mut physical_session=0_u64;
+    let mut demand=usb_demand::Demand::default();
     loop {
         if port_name.is_empty() {
             match commands.recv() {
@@ -1556,7 +1559,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                 Err(TryRecvError::Empty) => break,
                 Err(TryRecvError::Disconnected) => return,
             };
-            if let SerialCommand::Port(p, epoch) = c { port_name = p; generation = epoch; }
+            match c {SerialCommand::Port(p,epoch)=>{port_name=p;generation=epoch;demand=Default::default();},SerialCommand::Demand(p,epoch,next) if p==port_name&&epoch==generation=>demand=next,_=>{}}
         }
         if port_name.is_empty() { continue; }
         let Some(lease) = gate.acquire(Transport::Serial, generation) else {
@@ -1592,6 +1595,8 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
         let mut identity_admission:Option<usb_table::Admission>=None;
         let mut table_supported=false;
         let mut compact_supported=false;
+        let mut demand_supported=false;
+        let mut demand_lease=usb_demand::Lease::default();
         let mut table_read:Option<usb_table::Reader>=None;
         let mut paused_table:Option<usb_table::Reader>=None;
         let mut last_command_state:Option<(Vec<u8>,Instant)>=None;
@@ -1618,6 +1623,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
             if !lease.current() { break; }
             while let Ok(c)=commands.try_recv() {
                 match c {
+                    SerialCommand::Demand(target,epoch,next) if target==connected_port && epoch==generation=>{demand=next;demand_lease.desired(next.flags);}
                     SerialCommand::Port(p, epoch)=>{port_name=p;generation=epoch;break 'connected}
                     SerialCommand::Send(target,admission,op,payload) if target==connected_port && lease.current()=>{
                         if !admission.current(physical_session,table_snapshot.as_ref()) {
@@ -1682,7 +1688,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                 table_read=None;paused_table=None;table_wait=None;table_following.clear();last_table=Instant::now();
                 let error="USB table snapshot timed out; no state assumed and no command replayed".to_string();
                 let _=events.send(Event::SerialFailure(connected_port.clone(),error.clone()));
-                if operation.take().is_some(){let _=events.send(Event::SerialOperation(connected_port.clone(),Err(error)));}
+                if let Some(active)=operation.take(){active.intent.reply(Err(error.clone()));let _=events.send(Event::SerialOperation(connected_port.clone(),Err(error)));}
             }
             // Yield only BETWEEN correlated chunks. Never preempt an in-flight
             // request or a post-ACK verification. A compact-capable peer can
@@ -1697,7 +1703,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                 && let Some(intent)=intents.front() {
                 let is_table=usb_table::table_command(intent.opcode);
                 if !intent.admission.current(physical_session,table_snapshot.as_ref()) || (is_table && !intent.current(physical_session,table_snapshot.as_ref())) {
-                    intents.pop_front();
+                    if let Some(intent)=intents.pop_front(){intent.reply(Err("Queued USB command expired or peer changed; nothing sent".into()));}
                     let _=events.send(Event::SerialOperation(connected_port.clone(),Err("Queued USB command expired or peer changed; nothing sent".into())));
                 }else if !is_table || table_observed.elapsed()<usb_table::MAX_SNAPSHOT_AGE{
                     let intent=intents.pop_front().unwrap();
@@ -1712,7 +1718,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                             }
                             operation=Some(usb_table::Operation{intent,sequence,sent,ack:None});sequence=sequence.wrapping_add(1);
                         }
-                        Err(error)=>{let _=events.send(Event::SerialOperation(connected_port.clone(),Err(error)));}
+                        Err(error)=>{intent.reply(Err(error.clone()));let _=events.send(Event::SerialOperation(connected_port.clone(),Err(error)));}
                     }
                 }
             }
@@ -1723,7 +1729,8 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                 table_read=paused_table.take();
             }
             if silent.is_none() && table_supported && table_read.is_none() && paused_table.is_none() && write_wait.is_none() && expected.is_none()
-                && usb_table::snapshot_admitted(!intents.is_empty(),operation.as_ref(),compact_supported)
+                && (demand.table || operation.as_ref().is_some_and(|op|op.ack.is_some()) || !intents.is_empty())
+                && usb_table::snapshot_admitted(!intents.is_empty() && table_observed.elapsed()<usb_table::MAX_SNAPSHOT_AGE,operation.as_ref(),compact_supported)
                 && last_table.elapsed()>=Duration::from_secs(1) {
                 nonce=nonce.wrapping_add(1);table_read=Some(usb_table::Reader::new(nonce));
                 table_started=Instant::now();last_table=Instant::now();
@@ -1786,6 +1793,16 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                 if port.write_all(&wire_frame(OP_GET_STATUS,sequence,&[])).is_err(){break 'connected;}
                 sequence=sequence.wrapping_add(1);last_poll=Instant::now();
             }
+            // Never serialize lease ACKs ahead of commands or snapshot chunks.
+            // One small best-effort packet uses the same physical writer/sequence.
+            if introduced && demand_supported && lease.current() && intro_wait.is_none() && write_wait.is_none() {
+                let pixel_command=operation.as_ref().is_some_and(|op|op.intent.opcode==0x65)||intents.iter().any(|op|op.opcode==0x65);
+                demand_lease.desired(demand.flags|if pixel_command{usb_demand::PIXELS}else{0});
+                if let Some(payload)=demand_lease.request(sequence){
+                    if port.write_all(&wire_frame(usb_demand::REQUEST,sequence,&payload)).is_err(){break 'connected;}
+                    sequence=sequence.wrapping_add(1);
+                }
+            }
             let depth=intents.len()+usize::from(operation.is_some());
             if depth!=reported_depth {reported_depth=depth;let _=events.send(Event::SerialQueueDepth(connected_port.clone(),depth));context.request_repaint();}
             let mut bytes=[0_u8;128];
@@ -1837,6 +1854,8 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                     Ok(Some(settings)) => { let id = *id; silent = None; let _ = events.send(Event::BoardSilentFinished(id, Ok(settings))); }
                                     Err(error) => { let id = *id; silent = None; let _ = events.send(Event::BoardSilentFinished(id, Err(error))); }
                                 }
+                            } else if op==usb_demand::RESPONSE {
+                                let _=demand_lease.accept(response_sequence,&payload);
                             } else if op==OP_STATUS {
                                 if serial_status(&payload).is_none(){encoded.clear();continue;}
                                 if matches!(response_sequence,0|0xfe){last_table=Instant::now()-Duration::from_secs(2);}
@@ -1847,6 +1866,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                 }
                                 table_supported=next_table_supported;
                                 compact_supported=table_supported && payload.get(45)==Some(&1);
+                                demand_supported=payload.get(46)==Some(&1);
                                 if !table_supported && payload.len()>=38 && payload[31]&(1<<5)!=0 && packets.is_empty() && write_wait.is_none()
                                     && read.is_none() && (stamp!=Some(payload[37]) || last_identity.elapsed()>Duration::from_secs(10)) {
                                     if stamp!=Some(payload[37]) { identity=None; }
@@ -1891,7 +1911,9 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                         let pin=peer_http::Pin::from_status(&snapshot.status);
                                         if let Some(active)=operation.as_ref().filter(|op|op.ack.is_some()){
                                             let intent=&active.intent;
-                                            let result=if intent.admission.peer==pin && intent.verify(&snapshot.status){Ok("USB command ACK and same-board snapshot readback verified".into())}
+                                            let pixel_revision=intent.opcode!=0x65 || (snapshot.status.led_output["diagnostic"]["revision"].as_u64().unwrap_or(0)>table_snapshot.as_ref().and_then(|s|s.led_output["diagnostic"]["revision"].as_u64()).unwrap_or(0)
+                                                && snapshot.status.pixel_frame.as_ref().is_some_and(|frame|frame.revision>table_snapshot.as_ref().and_then(|s|s.pixel_frame.as_ref()).map_or(0,|f|f.revision)));
+                                            let result=if intent.admission.peer==pin && intent.verify(&snapshot.status) && pixel_revision {Ok("USB command ACK and same-board snapshot readback verified".into())}
                                                 else{Err("USB ACK received but board/boot or applied values differ; no replay attempted".into())};
                                             if intent.opcode==cell_batch::OPCODE && result.is_ok(){
                                                 if let Some(correlation)=intent.admission.batch.as_ref(){
@@ -1909,10 +1931,11 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                     Err(error)=>{
                                         table_read=None;table_wait=None;table_following.clear();last_table=Instant::now();
                                         let _=events.send(Event::SerialFailure(connected_port.clone(),error.clone()));
-                                        if operation.take().is_some(){let _=events.send(Event::SerialOperation(connected_port.clone(),Err(error)));}
+                                        if let Some(active)=operation.take(){active.intent.reply(Err(error.clone()));let _=events.send(Event::SerialOperation(connected_port.clone(),Err(error)));}
                                     }
                                 }
                             } else if op==usb_table::COMMAND_STATE && compact_supported && operation.as_ref().is_some_and(|active|
+                                active.intent.opcode!=0x65 &&
                                 active.sequence==response_sequence && active.ack.is_some() && payload.first()==Some(&active.intent.opcode)) {
                                 let active=operation.as_ref().unwrap();
                                 let result=table_snapshot.as_ref().ok_or_else(||"USB table owner unavailable".to_string())
@@ -1939,7 +1962,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                     if usb_table::table_command(operation.as_ref().unwrap().intent.opcode){
                                         operation.as_mut().unwrap().ack=Some(Instant::now());table_read=None;table_wait=None;table_following.clear();last_table=Instant::now()-Duration::from_secs(2);
                                     }else{operation=None;table_read=paused_table.take();let _=events.send(Event::SerialOperation(connected_port.clone(),Ok("USB device ACK received; no table state inferred".into())));}
-                                }else{operation=None;table_read=paused_table.take();let _=events.send(Event::SerialOperation(connected_port.clone(),Err(cell_assignments::usb_rejection(payload[1]))));}
+                                }else{if let Some(active)=operation.take(){active.intent.reply(Err(cell_assignments::usb_rejection(payload[1])));}table_read=paused_table.take();let _=events.send(Event::SerialOperation(connected_port.clone(),Err(cell_assignments::usb_rejection(payload[1]))));}
                             } else if op==0x82 && payload.first()==Some(&usb_table::READ) && table_wait.is_some_and(|(s,_)|s==response_sequence){
                                 table_read=None;table_wait=None;table_following.clear();last_table=Instant::now();
                                 if payload.get(1)==Some(&2) && reintroductions<2 {
@@ -1947,6 +1970,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                     // losing caller admission. Reintroduce metadata only;
                                     // retire every uncertain/unsent mutation, never replay it.
                                     reintroductions+=1;introduced=false;table_supported=false;compact_supported=false;
+                                    demand_supported=false;demand_lease=Default::default();
                                     table_snapshot=None;paused_table=None;last_command_state=None;intro_chunks.clear();
                                     if let Some(active)=operation.take(){active.intent.reply(Err("USB board restarted; command outcome unknown, no replay".into()));let _=events.send(Event::SerialOperation(connected_port.clone(),Err("USB board restarted; command outcome unknown, no replay".into())));}
                                     for intent in intents.drain(..){intent.reply(Err("USB board admission changed; queued command discarded, no replay".into()));}
@@ -2000,7 +2024,10 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                 },
             }
         }
+        if introduced && demand_supported {let _=port.write_all(&wire_frame(usb_demand::REQUEST,sequence,&[0,0,0,0]));sequence=sequence.wrapping_add(1);}
         drop(port); // Release the real handle before the next method may acquire.
+        if let Some(active)=operation.as_ref(){active.intent.reply(Err("USB session ended; command outcome unverified, no replay".into()));}
+        for intent in &intents{intent.reply(Err("USB session ended; queued command not replayed".into()));}
         if let Some((id, ..)) = silent { let _ = events.send(Event::BoardSilentFinished(id, Err("USB disconnected during settings; outcome unknown, no replay".into()))); }
         let _=events.send(Event::SerialQueueDepth(connected_port.clone(),0));
         if operation.is_some() || !intents.is_empty(){let _=events.send(Event::SerialOperation(connected_port.clone(),Err("USB session ended; pending commands were not replayed. Inspect device state before retrying".into())));}
@@ -2040,12 +2067,16 @@ struct PakarControllerApp {
     show_about: bool,
     confirm_reset: bool,
     exiting: bool,
+    usb_ui_visible: bool,
+    usb_ui_demand: (usb_demand::Demand, Option<Instant>),
+    usb_sent_demand: Option<(String,u64,usb_demand::Demand)>,
     workspace_name: String,
     workspace_icon: String,
     selected_cell: u8,
     cell_search: String,
     table: ui::cell_table::TableState,
     pixel_diagnostic: pixel_diagnostic::State,
+    pixel_usb_reply: Option<(u64,Receiver<Result<DeviceStatus,String>>,std::sync::Arc<std::sync::atomic::AtomicBool>)>,
     capture: ui::screenshot::State,
     screenshot_harness: bool,
     window_startup: ui::window_geometry::Startup,
@@ -2123,6 +2154,14 @@ struct PakarControllerApp {
     mapping_retry: diagnostics::Backoff,
 }
 
+impl Drop for PakarControllerApp {
+    fn drop(&mut self){
+        // The sole owner sends the final zero lease before closing its handle.
+        // A crashed process is bounded by the firmware's 3s expiry instead.
+        let _=self.serial_tx.send(SerialCommand::Port(String::new(),self.connection_gate.epoch()));
+    }
+}
+
 impl PakarControllerApp {
     fn new(context: &eframe::CreationContext<'_>) -> Self {
         let config = config::AppConfig::load().unwrap_or_else(|error| {
@@ -2196,12 +2235,16 @@ impl PakarControllerApp {
             show_about: false,
             confirm_reset: false,
             exiting: false,
+            usb_ui_visible: true,
+            usb_ui_demand: (Default::default(),None),
+            usb_sent_demand: None,
             workspace_name: String::new(),
             workspace_icon: "hardware".into(),
             selected_cell: 1,
             cell_search: String::new(),
             table: Default::default(),
             pixel_diagnostic: Default::default(),
+            pixel_usb_reply: None,
             capture: ui::screenshot::State::from_environment(),
             screenshot_harness,
             window_startup: Default::default(),
@@ -2519,6 +2562,14 @@ impl PakarControllerApp {
         Ok(())
     }
     fn poll(&mut self) {
+        if let Some((id,receiver,cancel))=&self.pixel_usb_reply {
+            if !self.pixel_diagnostic.matches(*id){cancel.store(true,std::sync::atomic::Ordering::Release);self.pixel_usb_reply=None;}
+            else {match receiver.try_recv(){
+                Ok(result)=>{let id=*id;self.pixel_diagnostic.finish(id,result.map(|_|"USB diagnostic ACK and exact RGB readback verified; not optical proof.".into()).unwrap_or_else(|e|e));self.pixel_usb_reply=None;},
+                Err(TryRecvError::Disconnected)=>{let id=*id;self.pixel_diagnostic.finish(id,"USB diagnostic ended without verified readback; nothing replayed.".into());self.pixel_usb_reply=None;},
+                Err(TryRecvError::Empty)=>{},
+            }}
+        }
         self.http_tx.set_auto_discovery(self.config.auto_connect);
         let endpoint = self.endpoint();
         if self.connection_enabled && self.transport == Transport::WiFi && self.last_ws_endpoint.as_ref() != Some(&endpoint) {
@@ -3134,6 +3185,9 @@ impl eframe::App for PakarControllerApp {
         self.native_logic(ctx);
     }
     fn ui(&mut self, ui: &mut egui::Ui, _: &mut eframe::Frame) {
+        // Bootstrap identity once; thereafter only actually rendered consumers
+        // request full table data. A visible empty shell is not an RGB reader.
+        self.usb_ui_demand=(usb_demand::Demand{flags:usb_demand::STATUS,table:self.serial_status.is_none()},Some(Instant::now()));
         self.draw_shell(ui);
         self.capture.after_frame(ui.ctx());
     }

@@ -717,6 +717,14 @@ class _ControlShellState extends State<ControlShell>
   }
 
   void _scheduleWorkspaceSave() {
+    final activeWorkspace = workspaces[workspaceBoard];
+    api.setUsbObservations(
+      panel: page == 'front-panel' && mirror.panelEnabled,
+      peripheral:
+          page == 'front-panel' &&
+          (mirror.segmentsEnabled || mirror.buzzerEnabled),
+      pixels: page == 'table' && activeWorkspace?.showIndicators == true,
+    );
     if (!mounted || workspaceWriter == null) return;
     if (!foreground) {
       _flushWorkspaceSave();
@@ -844,6 +852,8 @@ class _ControlShellState extends State<ControlShell>
     api.selectTransport(
       endpoint.startsWith('ble://')
           ? ConnectionMethod.bluetooth
+          : endpoint.startsWith('usb://')
+          ? ConnectionMethod.usb
           : ConnectionMethod.network,
       endpoint,
       board: bluetoothBoard,
@@ -869,7 +879,9 @@ class _ControlShellState extends State<ControlShell>
       if (!mounted || adopted != api.connectionRevision) {
         throw const StaleConnection();
       }
-      if (changedLogin && verifyCredentialChange && !api.isBluetooth) {
+      if (changedLogin &&
+          verifyCredentialChange &&
+          api.connectionMethod == ConnectionMethod.network) {
         final actual = await api.getJson('/api/auth');
         if (actual['username'] != user || actual['password_set'] != true) {
           throw const FormatException(
@@ -2909,13 +2921,15 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           DropdownButtonFormField<ConnectionMethod>(
             key: ValueKey(widget.api.connectionMethod),
-            initialValue: widget.api.connectionMethod == ConnectionMethod.usb
-                ? null
-                : widget.api.connectionMethod,
+            initialValue: widget.api.connectionMethod,
             decoration: const InputDecoration(
               labelText: 'One selected transport',
             ),
             items: const [
+              DropdownMenuItem(
+                value: ConnectionMethod.usb,
+                child: Text('USB OTG · offline direct board'),
+              ),
               DropdownMenuItem(
                 value: ConnectionMethod.network,
                 child: Text('Network · Wi-Fi / Ethernet'),
@@ -2929,6 +2943,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 ? null
                 : (value) async {
                     if (value == null) return;
+                    if (value == ConnectionMethod.usb) {
+                      widget.openDevices?.call();
+                      return;
+                    }
                     final preferences = await SharedPreferences.getInstance();
                     if (!mounted) return;
                     final previous =

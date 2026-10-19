@@ -1,5 +1,53 @@
 # Donor-first preflight receipt
 
+## USB demand and Android native OTG
+
+Consulted peer-binding, exact donor-audit and the new usb-otg route. Root reread
+the complete actual PCController Project/UartProtocol.h/.cpp; mobile reread the
+canonical MainActivity.kt at SHA256 5bf90a090b5975f5dc3b7e09ed47ba09e9dad8bf812515902b24cacc35e9a618.
+Adapt synchronous bounded framing, split RX/TX, session retirement and owned
+platform-channel cleanup. There is no Android USB driver in the donor inventory;
+the Android UsbManager CDC adapter is a new platform binding to the existing
+living protocol, not a claimed missing import. The unrelated automation,
+preferences and firmware/ISP contracts remain separately pending.
+
+Reviewed the pinned Espressif 3.3.12 USB.h/USBCDC.h completely and main.cpp startup,
+USBCDC.cpp line-state/line-coding/write sections plus boards.txt USB mode menus.
+CDC-on-boot would expose reboot hooks before setup; the OTG build therefore owns
+initialization, disables reboot first and preserves UART0 as the default profile.
+No production board update/contact or physical acceptance is authorized by these
+source changes. Default quiet finite observation leases, actual client demand,
+exact post-ACK RGB verification and Android attach/permission/retirement need
+focused fixture and SDK verification followed by approved physical testing.
+
+Central verification passed 50 distinct focused native tests and 22 Flutter
+transport/API/preferences tests with clean analysis. The final production-hold
+Android APK compiled at 60541629 bytes, SHA256
+4b8ebb1de1cf4fc07294a7759d744ad36185eb6124201ffb8d94c125250ab10d.
+Host lease/three CDC initialization profiles, snapshot budgets and UART ingress
+fixtures are exercised through their canonical wrappers. An initial fixture
+relative-include error and a Windows pooled closed-socket test race were fixed,
+not bypassed. The aggregate protocol runner stopped at an obsolete exact source
+guard; that guard now requires admission, lease and capture retirement, with
+negative fixtures for each. Its canonical UART-flow rerun and the aggregate's
+remaining Web-access/task runners pass separately; this is not a claim that the
+original aggregate invocation exited successfully.
+
+Review also fixed USB publication accidentally entering HTTP peer reporting when
+real compatibility metadata exists, compiled version-disable propagation,
+semantic panel event sequence handling, Android worker exception settlement and
+observed native disconnect RX/parser retirement. Actual peer/control authority
+still requires fresh HELLO, identity and post-ACK readback. USB firmware/ISP and
+multi-role Android coverage, preempting an active Android snapshot, full USB
+peripheral mirror adaptation, and rapid unobserved detach/reconnect detection
+remain useful unfinished work. Source/fixture success is not physical OTG,
+power-isolation, permission, phone lifecycle or optical acceptance.
+
+The nondefault OTG/hardware-CDC image outputs are separate from UART0's existing
+default updater path, while retaining one shared warm compiler cache. An OTG
+candidate must not masquerade as a UART0 recovery image. Changing the actual USB
+core/FQBN invalidates SDK objects once; ordinary source passes keep that profile.
+
 ## Automatic selected-board discovery and route continuity
 
 Consulted mobile-network, peer-binding and exhaustive exact donor-audit routes;

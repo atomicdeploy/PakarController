@@ -77,6 +77,11 @@ int main() {
                 "host LED control opcodes changed");
   static_assert(kNetworkConfig == 0x53,
                 "USB network recovery opcode changed");
+  static_assert(kHostDemand == 0x64 && kHostDemandResponse == 0xBA && kPixelDiagnostic == 0x65,
+                "USB observation demand opcodes changed");
+  static_assert(UsbDemand::kAllowedFlags == 15 && UsbDemand::Pixels == 8 &&
+                UsbDemand::kMinimumLeaseMs == 250 && UsbDemand::kMaximumLeaseMs == 5000,
+                "USB expiring optional observation contract changed");
   static_assert((kCapWebSocket | kCapNtp | kCapBusyWire | kCapHostSerial) ==
                     0x3C00,
                 "ESP transport capability layout changed");
@@ -118,6 +123,16 @@ int main() {
   Frame oversize = {};
   oversize.payloadLength = kMaximumPayload + 1;
   assert(encode(oversize, encoded, sizeof(encoded)) == 0);
+
+  // A lease is an ordinary bounded correlated COBS/CRC request, not a stream
+  // of raw terminal text or an API generation selector. Include embedded zeros.
+  Frame demand{}; demand.opcode=kHostDemand; demand.sequence=217;
+  demand.payloadLength=4; demand.payload[0]=UsbDemand::Status|UsbDemand::Pixels;
+  demand.payload[2]=0xB8; demand.payload[3]=0x0B; // 3000ms LE.
+  const uint8_t demandLength=encode(demand,encoded,sizeof(encoded));
+  assert(demandLength>1 && decode(encoded,demandLength-1,decoded));
+  assert(decoded.opcode==kHostDemand && decoded.sequence==217 && decoded.payloadLength==4);
+  assert(memcmp(demand.payload,decoded.payload,4)==0);
 
   return 0;
 }

@@ -117,7 +117,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "1ea53962d8d8dc6fbcb3fc7225dc69e12541b8383e373544b1517f79f0356f50",
+      "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360",
       "anchor": ": WorkspaceActivityStrip("
     }
   ],
@@ -272,7 +272,7 @@
       },
       {
         "path": "libraries/BoardCore/src/Protocol.h",
-        "sha256": "173eaddd6556783c7069d8a9c7d434eb15da78bc6c0d9324150773af03a73f21",
+        "sha256": "c314a3c80a2066233c6a101c574f092b8dab0928c99545c9d349167addcdb659",
         "anchor": "inline bool decode("
       },
       {
@@ -342,7 +342,7 @@
       },
       {
         "path": "libraries/BoardCore/src/Protocol.h",
-        "sha256": "173eaddd6556783c7069d8a9c7d434eb15da78bc6c0d9324150773af03a73f21",
+        "sha256": "c314a3c80a2066233c6a101c574f092b8dab0928c99545c9d349167addcdb659",
         "anchor": "inline bool decode("
       },
       {
@@ -3993,7 +3993,7 @@
     "targets": [
       {
         "path": "desktop/src/main.rs",
-        "sha256": "d4fb0dccbc4aeb8b17cc5b7068db3a79eb12c72fcf780d82c539f34d4d91c135",
+        "sha256": "9cbbad5694e8ebd337c407dae5df81637c23c87df70be0c531ad45b260f593a1",
         "anchor": "#![cfg_attr(windows, windows_subsystem = \"windows\")]"
       },
       {
@@ -4056,7 +4056,7 @@
       },
       {
         "path": "desktop/src/main.rs",
-        "sha256": "d4fb0dccbc4aeb8b17cc5b7068db3a79eb12c72fcf780d82c539f34d4d91c135",
+        "sha256": "9cbbad5694e8ebd337c407dae5df81637c23c87df70be0c531ad45b260f593a1",
         "anchor": "cli_println!(\"{reply}\")"
       },
       {
@@ -4115,7 +4115,7 @@
     {"path":"firmware/avr/FrontPanel.cpp","sha256":"d90acc624b6d9e9248238eb5015a573bb3081bde5546b9bdc3d1e14661f3dea4","anchor":"void FrontPanel::service("},
     {"path":"firmware/avr/PcControllerRuntime.cpp","sha256":"cd62f7447553664a06de9b55bdb18371d26972b63833d80035e795d367669694","anchor":"espTouchedAt_"},
     {"path":"firmware/esp8266/src/SemanticPanel.h","sha256":"8cd5384e86c8201e42d6d80b96eacd84668bcb3a7ee88bacef5addb4be1bc958","anchor":"class Presenter"},
-    {"path":"firmware/esp8266/src/SemanticPanelService.h","sha256":"eb57a4681c9238663102707b17c1005ba2479e359bde8e4c544b6ccfee02abd2","anchor":"void serviceSemanticPanel("}
+    {"path":"firmware/esp8266/src/SemanticPanelService.h","sha256":"4ca620dd032ec408d841284a408b866c4c3313bfb7eef594db2f4ad672e93ffd","anchor":"void serviceSemanticPanel("}
   ],
   "proof":[
     {"path":"tests/front_panel_test.cpp","sha256":"318ba761cdc2548b25e45b9114480ff761b6e994f21e0ca3a15ce19c20e2533a","anchor":"int main()"},
@@ -4135,17 +4135,20 @@
   "source_read":"complete",
   "verdict":"parity-gap",
   "preserved":[
-    "Actual canonical 8269-byte MainActivity read completely through EOF by the mobile owner and evidence owner. Retains real ACTION_OPEN_DOCUMENT/ACTION_CREATE_DOCUMENT, single selection, bounded executor-based input reads, cancellation, one outstanding document operation, one-use random destination token consumed before write, explicit abandon without deletion, finite byte export and close-time token/pending cleanup. Pakar package/channel names replace PCController identity, not its document ownership contract.",
+      "Actual canonical 8269-byte MainActivity read completely through EOF by the mobile owner and evidence owner. Retains real ACTION_OPEN_DOCUMENT/ACTION_CREATE_DOCUMENT, single selection, bounded executor-based input reads, cancellation, one outstanding document operation, one-use random destination token consumed before write, explicit abandon without deletion, finite byte export and close-time token/pending cleanup. Pakar package/channel names replace PCController identity, not its document ownership contract.",
+      "USB-OTG review reread the complete canonical MainActivity through EOF at the recorded donor hash. Reuse its owned platform-channel/executor/close-time retirement pattern for UsbControllerChannel. No Android USB driver exists in the inventoried donor: Android UsbManager is a new bounded CDC ACM adapter, not a claimed wholesale donor import. Native USB enumeration, permission and external-power safety remain physical acceptance gates.",
     "The obsolete generic2097152-byte intake/export ceiling is replaced by the same exclusive0x330000 S3 application-slot ceiling used by Dart firmware admission. Native SAF remains only a bounded byte/document provider: selected-board chip/hash-header/capacity/SHA checks happen in the firmware owner before upload. A selected or exported document never automatically programs ESP or AVR."
   ],
   "targets":[
-    {"path":"mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt","sha256":"e4581d9566d8b4ade94f2280b665090a3bb499123c0aee3433a5d61adceb273d","anchor":"private val firmwareMaximum = 0x330000 - 1"},
+    {"path":"mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt","sha256":"8988cab4eac7a2f1a831cb0e0ab1179fd7e194030feafaf3ccaef57d3f13fdfe","anchor":"private val firmwareMaximum = 0x330000 - 1"},
+    {"path":"mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/UsbControllerChannel.kt","sha256":"9261161c45322fdd1b277b4deb13dbefd10a31d112e610e04490314f83e0af57","anchor":"class UsbControllerChannel"},
     {"path":"mobile/lib/documents.dart","sha256":"9b447b248f21e855c2481e28c6c31e66969af5ab837fd32e4d57eb76164b9ff5","anchor":"class AndroidDocuments"},
     {"path":"mobile/lib/firmware_image.dart","sha256":"274b96b95c959594b8720f40d4998dc6e307ed8fe31e82093c19b581ea4a0654","anchor":"abstract final class FirmwareImagePolicy"}
   ],
   "proof":[
     {"path":"mobile/test/documents_test.dart","sha256":"641aee7d7a005c5c309683cf98154f571c1e3c398dd5674fc68b020807807df0","anchor":"S3 document intake above 2MiB uses one bounded slot policy"},
     {"path":"mobile/test/documents_test.dart","sha256":"641aee7d7a005c5c309683cf98154f571c1e3c398dd5674fc68b020807807df0","anchor":"Changed owner while choosing export abandons token; never writes or deletes"},
+    {"path":"mobile/test/usb_transport_test.dart","sha256":"f6055b69f12ef39671c0cc950687042c384ef28249e200f326fcbf52e0b8a955","anchor":"Real channel session performs HELLO introduction snapshot and atomic batch without HTTP or DNS"},
     {"path":"mobile/test/firmware_image_test.dart","sha256":"81f47d2e4a07740c1dab37cf55849a8a5c91eddf47631e7b631da5dad7b6ca4b","anchor":"Wrong chip or observed small slot cannot reach manual mutation"}
   ],
   "omissions":[
@@ -4560,12 +4563,12 @@
     {
       "path": "mobile/android/app/src/main/AndroidManifest.xml",
       "anchor": "REQUEST_INSTALL_PACKAGES",
-      "sha256": "807c29aba6f81d4407fd42dd0e21089cbe2e0df630104955d98b4ad4e5074ccc"
+      "sha256": "d6b34f69c5fccf910172119ad972a479a8d48a2ba7861d351f79e440d156ca0b"
     },
     {
       "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt",
       "anchor": "appUpdates = AppUpdateChannel",
-      "sha256": "e4581d9566d8b4ade94f2280b665090a3bb499123c0aee3433a5d61adceb273d"
+      "sha256": "8988cab4eac7a2f1a831cb0e0ab1179fd7e194030feafaf3ccaef57d3f13fdfe"
     }
   ],
   "proof": [
@@ -4737,11 +4740,11 @@
     },
     {"path":"desktop/src/ui/cell_pixels.rs","sha256":"def5207ed7e8a9824fdb03968af731b572956a285ec0b8ff607d8329d1073aa9","anchor":"pub fn observe_at("},
     {"path":"desktop/src/ui/cell_table.rs","sha256":"169a289f74149b1bdd19c517f7ecfce31013cc617d0925c0eacdcb1e01fd6bdd","anchor":"pub(super) fn current_pixel_frame("},
-    {"path":"desktop/src/ui/shell.rs","sha256":"40981983e0df80c8d5cae6a4d4ff6b74ee2cebfffefbfc5016a735955064c75c","anchor":"value[\"pixel_preview\"]"},
+    {"path":"desktop/src/ui/shell.rs","sha256":"694e4e9a49fff19e63ce73cf63294fe222dee6b16f27283529a5ad3de71988d9","anchor":"value[\"pixel_preview\"]"},
     {
       "path": "mobile/lib/pixel_diagnostic_page.dart",
       "anchor": "final observedOff = observation != null",
-      "sha256": "a453adc51e97058291301bd1ca2fc49fd2d0a99bddb1f8998c87d45a1318a0d4"
+      "sha256": "7dff812c48e81ed732a38d75a06248aaf99f90d6e8b197f7d191be487d0c1225"
     },
     {
       "path": "mobile/test/pixel_diagnostic_page_test.dart",
@@ -4751,7 +4754,7 @@
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12"
+      "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f"
     },
     {
       "path": "mobile/lib/panel_inventory.dart",
@@ -4776,12 +4779,12 @@
     {
       "path": "mobile/lib/connection_preferences.dart",
       "anchor": "class ConnectionPreferences",
-      "sha256": "87187fc5b82a18addf801e4bb71180f670dbb38fd07c9f6647e1312366b6b211"
+      "sha256": "9b4b4d787f7169a31f09717118c63ec7f88476df0568a84eb04909a0bd547d54"
     },
     {
       "path": "mobile/lib/devices_page.dart",
       "anchor": "class DevicesPage",
-      "sha256": "750a3cc6b12f9a3ab7e8590125ee5ed88ab2467e22728deb5052d9ba3f754495"
+      "sha256": "a5fedaca2cdd9a37d27b5a618d5f68a80d0497e5abc705a9dff35187dc746acf"
     }
   ],
   "proof": [
@@ -4868,7 +4871,7 @@
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12"
+      "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f"
     }
   ],
   "proof": [
@@ -5173,10 +5176,10 @@
     {"path":"mobile/lib/firmware_image.dart","sha256":"274b96b95c959594b8720f40d4998dc6e307ed8fe31e82093c19b581ea4a0654","anchor":"abstract final class FirmwareImagePolicy"},
     {"path":"mobile/lib/documents.dart","sha256":"9b447b248f21e855c2481e28c6c31e66969af5ab837fd32e4d57eb76164b9ff5","anchor":"int maximum = FirmwareImagePolicy.maximumBytes"},
     {"path":"mobile/lib/firmware_page.dart","sha256":"c33c2df6dfc69b5f3b69f1a4f77b8feb5497e90ed3458a5e84f1bb2cc3c7d319","anchor":"maximum: controller.imageMaximum(esp),"},
-    {"path":"mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt","sha256":"e4581d9566d8b4ade94f2280b665090a3bb499123c0aee3433a5d61adceb273d","anchor":"private val firmwareMaximum = 0x330000 - 1"},
+    {"path":"mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt","sha256":"8988cab4eac7a2f1a831cb0e0ab1179fd7e194030feafaf3ccaef57d3f13fdfe","anchor":"private val firmwareMaximum = 0x330000 - 1"},
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12",
+      "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f",
       "anchor": "Stream<DeviceStatus> get statusUpdates"
     }
   ],
@@ -5414,12 +5417,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
+      "sha256": "fa60bed14a647a11d8ffe84d576695d955ce3bdc13aa817f7d3bbb0ccab053fd"
     },
     {
       "path": "desktop/src/usb_table.rs",
       "anchor": "pub struct Intent",
-      "sha256": "af6c2a830cba1c39ad327d2ba2187de931b2dc85fd9877d896e841d6dfb17758"
+      "sha256": "cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0"
     }
   ],
   "omissions": [
@@ -5433,12 +5436,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
+      "sha256": "fa60bed14a647a11d8ffe84d576695d955ce3bdc13aa817f7d3bbb0ccab053fd"
     },
     {
       "path": "desktop/src/usb_table.rs",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback",
-      "sha256": "af6c2a830cba1c39ad327d2ba2187de931b2dc85fd9877d896e841d6dfb17758"
+      "sha256": "cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0"
     }
   ],
   "remaining": [
@@ -5458,7 +5461,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
+      "sha256": "fa60bed14a647a11d8ffe84d576695d955ce3bdc13aa817f7d3bbb0ccab053fd"
     }
   ],
   "omissions": [
@@ -5472,12 +5475,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
+      "sha256": "fa60bed14a647a11d8ffe84d576695d955ce3bdc13aa817f7d3bbb0ccab053fd"
     },
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_http_recovery_uses_existing_packet_form_contract",
-      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
+      "sha256": "fa60bed14a647a11d8ffe84d576695d955ce3bdc13aa817f7d3bbb0ccab053fd"
     }
   ],
   "remaining": [
@@ -5497,12 +5500,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
+      "sha256": "fa60bed14a647a11d8ffe84d576695d955ce3bdc13aa817f7d3bbb0ccab053fd"
     },
     {
       "path": "desktop/src/main.rs",
       "anchor": "SerialCommand::Bridge(target",
-      "sha256": "d4fb0dccbc4aeb8b17cc5b7068db3a79eb12c72fcf780d82c539f34d4d91c135"
+      "sha256": "9cbbad5694e8ebd337c407dae5df81637c23c87df70be0c531ad45b260f593a1"
     }
   ],
   "omissions": [
@@ -5516,7 +5519,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
+      "sha256": "fa60bed14a647a11d8ffe84d576695d955ce3bdc13aa817f7d3bbb0ccab053fd"
     }
   ],
   "remaining": [
@@ -5537,7 +5540,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
+      "sha256": "fa60bed14a647a11d8ffe84d576695d955ce3bdc13aa817f7d3bbb0ccab053fd"
     },
     {
       "path": "desktop/src/platform/lan_discovery.rs",
@@ -5576,12 +5579,12 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops",
-      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
+      "sha256": "fa60bed14a647a11d8ffe84d576695d955ce3bdc13aa817f7d3bbb0ccab053fd"
     },
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_status_keeps_board_identity_and_only_available_route_capabilities",
-      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
+      "sha256": "fa60bed14a647a11d8ffe84d576695d955ce3bdc13aa817f7d3bbb0ccab053fd"
     },
     {
       "path": "tests/peer_compatibility_test.cpp",
@@ -5617,7 +5620,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
+      "sha256": "fa60bed14a647a11d8ffe84d576695d955ce3bdc13aa817f7d3bbb0ccab053fd"
     }
   ],
   "omissions": [
@@ -5631,7 +5634,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "fn bridge_status_keeps_board_identity_and_only_available_route_capabilities",
-      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
+      "sha256": "fa60bed14a647a11d8ffe84d576695d955ce3bdc13aa817f7d3bbb0ccab053fd"
     },
     {
       "path": "mobile/test/bridge_peer_test.dart",
@@ -6330,7 +6333,7 @@
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "37007d87aefaec20d0c4e9e6c85105549e83e2a04cb25ceb31dfdcebdc6ce86d"
+          "sha256": "565e225fe5f742eb526f65a4e63e4525f351f5c8f26de2af324ff47e902e6532"
         }
       ],
       "omissions": [
@@ -7664,7 +7667,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "16788b0f6cb89b8f5a572407bebf408c5090bbbd526625c65f3d372258f1f802"
+          "sha256": "47585429e49d5386a61b8643940a49a3d72c768f6d0c5f9f94fde04239107566"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -7829,7 +7832,7 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "db08b3df429312e5e6a6b2722c8f09d5263549126e7a75a1a3fccf1d586e5c70"
+          "sha256": "1272fca8d51e9fee79d3ac7d430450c555f14f01f8f73aed824c0098f7daae57"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
@@ -7919,7 +7922,7 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "db08b3df429312e5e6a6b2722c8f09d5263549126e7a75a1a3fccf1d586e5c70"
+          "sha256": "1272fca8d51e9fee79d3ac7d430450c555f14f01f8f73aed824c0098f7daae57"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
@@ -8009,7 +8012,7 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "db08b3df429312e5e6a6b2722c8f09d5263549126e7a75a1a3fccf1d586e5c70"
+          "sha256": "1272fca8d51e9fee79d3ac7d430450c555f14f01f8f73aed824c0098f7daae57"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
@@ -8099,7 +8102,7 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "db08b3df429312e5e6a6b2722c8f09d5263549126e7a75a1a3fccf1d586e5c70"
+          "sha256": "1272fca8d51e9fee79d3ac7d430450c555f14f01f8f73aed824c0098f7daae57"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
@@ -8166,7 +8169,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "16788b0f6cb89b8f5a572407bebf408c5090bbbd526625c65f3d372258f1f802"
+          "sha256": "47585429e49d5386a61b8643940a49a3d72c768f6d0c5f9f94fde04239107566"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -8221,7 +8224,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "16788b0f6cb89b8f5a572407bebf408c5090bbbd526625c65f3d372258f1f802"
+          "sha256": "47585429e49d5386a61b8643940a49a3d72c768f6d0c5f9f94fde04239107566"
         }
       ],
       "omissions": [
@@ -8273,13 +8276,13 @@
           "sha256": "aaf42db7b80897296f10eb2125b0aaf92ad1df5d2b5e6c61ededd8665efed3b7"
         },
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"76b28eea3997400953a97ad530fc7d58d85f54af6a128fbbadeb06439263bf89","anchor":"Message *items_=nullptr;"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"16788b0f6cb89b8f5a572407bebf408c5090bbbd526625c65f3d372258f1f802","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"47585429e49d5386a61b8643940a49a3d72c768f6d0c5f9f94fde04239107566","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
         {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"9f486926615fdec3d6e7c6ad32e384816e66811674aec2a9f6b34697233e83cf","anchor":"internal_heap_largest_block_bytes"},
         {"path":"tools/update-firmware.mjs","sha256":"489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "16788b0f6cb89b8f5a572407bebf408c5090bbbd526625c65f3d372258f1f802"
+          "sha256": "47585429e49d5386a61b8643940a49a3d72c768f6d0c5f9f94fde04239107566"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -8363,7 +8366,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12"
+          "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -8463,7 +8466,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12"
+          "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -8532,7 +8535,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "37007d87aefaec20d0c4e9e6c85105549e83e2a04cb25ceb31dfdcebdc6ce86d",
+          "sha256": "565e225fe5f742eb526f65a4e63e4525f351f5c8f26de2af324ff47e902e6532",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -8583,7 +8586,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "37007d87aefaec20d0c4e9e6c85105549e83e2a04cb25ceb31dfdcebdc6ce86d",
+          "sha256": "565e225fe5f742eb526f65a4e63e4525f351f5c8f26de2af324ff47e902e6532",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -8786,7 +8789,7 @@
         },
         {
           "path": "mobile/lib/devices_page.dart",
-          "sha256": "750a3cc6b12f9a3ab7e8590125ee5ed88ab2467e22728deb5052d9ba3f754495",
+          "sha256": "a5fedaca2cdd9a37d27b5a618d5f68a80d0497e5abc705a9dff35187dc746acf",
           "anchor": "String? preferredOrigin(ConnectionMethod method)"
         }
       ],
@@ -8848,12 +8851,12 @@
       "targets": [
         {
           "path": "mobile/lib/devices_page.dart",
-          "sha256": "750a3cc6b12f9a3ab7e8590125ee5ed88ab2467e22728deb5052d9ba3f754495",
+          "sha256": "a5fedaca2cdd9a37d27b5a618d5f68a80d0497e5abc705a9dff35187dc746acf",
           "anchor": "List<DeviceListEntry> unifiedDevices("
         },
         {
           "path": "mobile/lib/devices_page.dart",
-          "sha256": "750a3cc6b12f9a3ab7e8590125ee5ed88ab2467e22728deb5052d9ba3f754495",
+          "sha256": "a5fedaca2cdd9a37d27b5a618d5f68a80d0497e5abc705a9dff35187dc746acf",
           "anchor": "Future<void> connect(DeviceListEntry entry)"
         },
         {
@@ -9424,7 +9427,7 @@
       "preserved": ["Full header/implementation read through EOF. Adapted nonblocking lifecycle state, absolute elapsed/period animation, repeat-state phase preservation, brightness-scaled rendered-byte reporting and explicit board-owned configuration into PakarS3::StatusRgb. Fixed descriptors now add donor flash/cycle/one-shot transition plus pulse/double-blink: fault and shutdown preempt routine states, verified success expires with the existing update lifecycle, offline USB is healthy and simultaneous AP/network availability is distinct."],
       "targets": [
         {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b","anchor":"class StatusRgb"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"16788b0f6cb89b8f5a572407bebf408c5090bbbd526625c65f3d372258f1f802","anchor":"void serviceStatusRgb(uint32_t now)"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"47585429e49d5386a61b8643940a49a3d72c768f6d0c5f9f94fde04239107566","anchor":"void serviceStatusRgb(uint32_t now)"},
         {"path":"firmware/esp32s3/src/StatusRgbConfig.h","sha256":"d7b534dfb0a7c45fbeca10432172e7129fdae2ce1afb31fb63e963a589aa62e9","anchor":"class StatusRgbConfig"},
         {"path":"desktop/src/status_rgb.rs","sha256":"3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e","anchor":"pub struct Configuration"},
         {"path":"mobile/lib/status_rgb.dart","sha256":"5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8","anchor":"class StatusRgbSettings"}
@@ -9659,7 +9662,7 @@
     },
     {
       "path": "mobile/lib/devices_page.dart",
-      "sha256": "750a3cc6b12f9a3ab7e8590125ee5ed88ab2467e22728deb5052d9ba3f754495",
+      "sha256": "a5fedaca2cdd9a37d27b5a618d5f68a80d0497e5abc705a9dff35187dc746acf",
       "anchor": "class DevicesPage"
     },
     {
@@ -9670,7 +9673,7 @@
     {
       "path": "desktop/src/bridge.rs",
       "anchor": "pub struct Runtime",
-      "sha256": "bd2bb2eeaacfe2ec8dab2fe5fe1f27e004803c2fd953dc970b5721ecbe645050"
+      "sha256": "fa60bed14a647a11d8ffe84d576695d955ce3bdc13aa817f7d3bbb0ccab053fd"
     }
   ],
   "omissions": [
@@ -9766,7 +9769,7 @@
           },
           {
             "path": "firmware/esp8266/esp8266.ino",
-            "sha256": "16788b0f6cb89b8f5a572407bebf408c5090bbbd526625c65f3d372258f1f802",
+            "sha256": "47585429e49d5386a61b8643940a49a3d72c768f6d0c5f9f94fde04239107566",
             "anchor": "void serviceConfigurationChanges()"
           }
         ],
@@ -10061,12 +10064,12 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12",
+      "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f",
       "anchor": "bool _acceptIdentity("
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "1ea53962d8d8dc6fbcb3fc7225dc69e12541b8383e373544b1517f79f0356f50",
+      "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -10086,7 +10089,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "16788b0f6cb89b8f5a572407bebf408c5090bbbd526625c65f3d372258f1f802",
+      "sha256": "47585429e49d5386a61b8643940a49a3d72c768f6d0c5f9f94fde04239107566",
       "anchor": "bool authenticate()"
     },
     {
@@ -10101,12 +10104,12 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "d4fb0dccbc4aeb8b17cc5b7068db3a79eb12c72fcf780d82c539f34d4d91c135",
+      "sha256": "9cbbad5694e8ebd337c407dae5df81637c23c87df70be0c531ad45b260f593a1",
       "anchor": "fn scoped_http_request("
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "af6c2a830cba1c39ad327d2ba2187de931b2dc85fd9877d896e841d6dfb17758",
+      "sha256": "cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0",
       "anchor": "pub struct Admission"
     },
     {
@@ -10153,7 +10156,7 @@
     {
       "path": "firmware/esp8266/src/BleRoutes.h",
       "anchor": "String bleRequest(",
-      "sha256": "161323906c2582d04c4fcada27cae9402cd69fc9f225b57e5defaf02e4d7b26d"
+      "sha256": "b89a7a050b6f1f4121d8de0809dfce67cca404170e40a252cce66e95e5aa7b5d"
     },
     {"path":"services/remote-panel/gateway.mjs","sha256":"6092a0b79c3277ef171d25e4228b42831eb06990689b84f40101b9b898ac872a","anchor":"export class Gateway"},
     {"path":"services/remote-panel/service.mjs","sha256":"e3843ca4a413ded2c67b14b7efdcbe48693b600b77a3d40e40ddc943db64ad92","anchor":"export function createPanel"},
@@ -10225,7 +10228,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "d4fb0dccbc4aeb8b17cc5b7068db3a79eb12c72fcf780d82c539f34d4d91c135",
+      "sha256": "9cbbad5694e8ebd337c407dae5df81637c23c87df70be0c531ad45b260f593a1",
       "anchor": "// The mapping response identifies its own producer."
     },
     {
@@ -10265,7 +10268,7 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "af6c2a830cba1c39ad327d2ba2187de931b2dc85fd9877d896e841d6dfb17758",
+      "sha256": "cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0",
       "anchor": "fn table_write_is_exact_boot_fenced_and_post_ack_values_are_not_assumed()"
     },
     {
@@ -10315,18 +10318,18 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "af6c2a830cba1c39ad327d2ba2187de931b2dc85fd9877d896e841d6dfb17758",
+      "sha256": "cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "af6c2a830cba1c39ad327d2ba2187de931b2dc85fd9877d896e841d6dfb17758",
+      "sha256": "cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0",
       "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
     },
     {
       "path": "desktop/src/usb_table.rs",
       "anchor": "fn actual_usb_worker_windows_read_latency_does_not_expire_large_capture",
-      "sha256": "af6c2a830cba1c39ad327d2ba2187de931b2dc85fd9877d896e841d6dfb17758"
+      "sha256": "cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0"
     },
     {
       "path": "tests/ble_wire_test.cpp",
@@ -10359,7 +10362,7 @@
   "targets": [
     {
       "path": "tests/protocol_test.cpp",
-      "sha256": "a63655790934d54477020e7efd81217fb07678df58fdde5307ecb865978d2e27",
+      "sha256": "4e447b0c3a9d7ab188cdf16b063b45a3b7edd6302d044630cf79612b62987fad",
       "anchor": "Adapt donor matching-identity/request assertions"
     },
     {
@@ -10374,7 +10377,7 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "af6c2a830cba1c39ad327d2ba2187de931b2dc85fd9877d896e841d6dfb17758",
+      "sha256": "cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0",
       "anchor": "pub struct Operation"
     }
   ],
@@ -10437,12 +10440,12 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "af6c2a830cba1c39ad327d2ba2187de931b2dc85fd9877d896e841d6dfb17758",
+      "sha256": "cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "af6c2a830cba1c39ad327d2ba2187de931b2dc85fd9877d896e841d6dfb17758",
+      "sha256": "cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0",
       "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
     }
   ]
@@ -10752,7 +10755,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "40981983e0df80c8d5cae6a4d4ff6b74ee2cebfffefbfc5016a735955064c75c",
+      "sha256": "694e4e9a49fff19e63ce73cf63294fe222dee6b16f27283529a5ad3de71988d9",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -11022,7 +11025,7 @@
       "proof": [
         {
           "path": "tests/protocol_test.cpp",
-          "sha256": "a63655790934d54477020e7efd81217fb07678df58fdde5307ecb865978d2e27",
+          "sha256": "4e447b0c3a9d7ab188cdf16b063b45a3b7edd6302d044630cf79612b62987fad",
           "anchor": "Actual donor TestVersionedCoreAPIRoutesAreRejected cases"
         },
         {
@@ -11753,7 +11756,7 @@
         },
         {
           "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt",
-          "sha256": "e4581d9566d8b4ade94f2280b665090a3bb499123c0aee3433a5d61adceb273d",
+          "sha256": "8988cab4eac7a2f1a831cb0e0ab1179fd7e194030feafaf3ccaef57d3f13fdfe",
           "anchor": "Intent.ACTION_OPEN_DOCUMENT"
         },
         {
@@ -11768,7 +11771,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12",
+          "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -11875,7 +11878,7 @@
       "targets": [
         {
           "path": "mobile/lib/device_settings_page.dart",
-          "sha256": "1cd9f8fdf27dbb81ec4b6d6651d13d20f7da44df5f7ea45d2ef2c33704ddf4a0",
+          "sha256": "bd7cc5e53a182e0df8f6528b13a75201c8ef06add9b55efbec068343c5f50db8",
           "anchor": "class DeviceSettingsPage"
         },
         {
@@ -12503,7 +12506,7 @@
         },
         {
           "path": "mobile/lib/peer_context.dart",
-          "sha256": "db08b3df429312e5e6a6b2722c8f09d5263549126e7a75a1a3fccf1d586e5c70",
+          "sha256": "1272fca8d51e9fee79d3ac7d430450c555f14f01f8f73aed824c0098f7daae57",
           "anchor": "static PeerContext fromStatus"
         },
         {
@@ -12513,7 +12516,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "1ea53962d8d8dc6fbcb3fc7225dc69e12541b8383e373544b1517f79f0356f50",
+          "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360",
           "anchor": "Future<bool> _command"
         },
         {
@@ -12667,7 +12670,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "40981983e0df80c8d5cae6a4d4ff6b74ee2cebfffefbfc5016a735955064c75c",
+          "sha256": "694e4e9a49fff19e63ce73cf63294fe222dee6b16f27283529a5ad3de71988d9",
           "anchor": "fn synchronize_context("
         },
         {
@@ -12693,7 +12696,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12"
+          "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -12823,7 +12826,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "1ea53962d8d8dc6fbcb3fc7225dc69e12541b8383e373544b1517f79f0356f50",
+          "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -13080,7 +13083,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "40981983e0df80c8d5cae6a4d4ff6b74ee2cebfffefbfc5016a735955064c75c",
+          "sha256": "694e4e9a49fff19e63ce73cf63294fe222dee6b16f27283529a5ad3de71988d9",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -13566,7 +13569,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "40981983e0df80c8d5cae6a4d4ff6b74ee2cebfffefbfc5016a735955064c75c",
+          "sha256": "694e4e9a49fff19e63ce73cf63294fe222dee6b16f27283529a5ad3de71988d9",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -13680,7 +13683,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12"
+          "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -13850,7 +13853,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12"
+          "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -14065,7 +14068,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "value[\"messages\"]",
-          "sha256": "40981983e0df80c8d5cae6a4d4ff6b74ee2cebfffefbfc5016a735955064c75c"
+          "sha256": "694e4e9a49fff19e63ce73cf63294fe222dee6b16f27283529a5ad3de71988d9"
         },
         {
           "path": "desktop/src/platform/notifications.rs",
@@ -14149,7 +14152,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "40981983e0df80c8d5cae6a4d4ff6b74ee2cebfffefbfc5016a735955064c75c",
+          "sha256": "694e4e9a49fff19e63ce73cf63294fe222dee6b16f27283529a5ad3de71988d9",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -15853,7 +15856,7 @@
         },
         {
           "path": "mobile/lib/device_settings_page.dart",
-          "sha256": "1cd9f8fdf27dbb81ec4b6d6651d13d20f7da44df5f7ea45d2ef2c33704ddf4a0",
+          "sha256": "bd7cc5e53a182e0df8f6528b13a75201c8ef06add9b55efbec068343c5f50db8",
           "anchor": "int.tryParse(latinDigits(value))"
         }
       ],
@@ -16088,9 +16091,14 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Fully read actual UART API and synchronous payload lifetime contract. Shared SerialLink keeps AVR HardwareSerial ownership, separate RX/TX frame storage and handler/opaque context; Stream constructor preserves the S3 explicit pins/buffers."
+      "Fully read actual UART API and synchronous payload lifetime contract. Shared SerialLink keeps AVR HardwareSerial ownership, separate RX/TX frame storage and handler/opaque context; Stream constructor preserves the S3 explicit pins/buffers.",
+      "USB-OTG task reread this complete actual donor header and implementation. Retain the established Pakar COBS/CRC envelope and synchronous frame lifetime across UART0, hardware CDC and owned TinyUSB CDC, rather than add a second public protocol or copy incompatible donor operation identifiers. Finite observation demand is separate from command ownership and explicit replies."
       ],
       "targets": [
+      {"path":"firmware/esp8266/src/HostDemand.h","sha256":"ed625496269aacbfc22ee281879893a58d9695cad2e2338c24934a6d1018e1b8","anchor":"class HostDemand"},
+      {"path":"firmware/esp8266/src/HostSerial.h","sha256":"d7dee1d9329e3959d2e362783295de00e6345dfd66cdde3f2ee1def0856fc1da","anchor":"serial.enableReboot(false)"},
+      {"path":"desktop/src/usb_demand.rs","sha256":"3895f08e44dd7c2d3c1baba74bcace3b7098cc9345665b0f1f6cee6a8570cc5d","anchor":"pub struct Lease"},
+      {"path":"mobile/lib/usb_transport.dart","sha256":"441f34892d7be313dde7e4f5c057eb41c3b54ed6037f5d3daabcf425b818ff56","anchor":"class PakarUsbTransport"},
         {
           "path": "libraries/BoardCore/src/SerialLink.h",
           "sha256": "99373bc4c090e34324cfd2ae8c94d6666c227ad7e157a47fbd85125aac6c13a0",
@@ -16129,6 +16137,9 @@
         "Finish separate counters and timestamped event contracts, and physical UART/LED/OTA contention acceptance."
       ],
       "proof": [
+      {"path":"tests/host_demand_test.cpp","sha256":"3a8394d49a8482e58be3708f52a6dac6e76441b3ee320f089428b660b200e6b8","anchor":"int main()"},
+      {"path":"tests/host_usb_test.cpp","sha256":"5e2355df59ecc81739683884751b0f59c8e315c2f6f81d90320896ba1918ef49","anchor":"int main()"},
+      {"path":"desktop/src/usb_table.rs","sha256":"cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0","anchor":"fn usb_demand_actual_worker_has_no_full_capture_without_reader_and_releases_lease"},
         {
           "path": "tests/serial_link_test.cpp",
           "sha256": "c103ffb2c7530bb4c85373433b123fe072bb6649f2d97b82f70fa08d404eeae8",
@@ -16487,7 +16498,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "d4fb0dccbc4aeb8b17cc5b7068db3a79eb12c72fcf780d82c539f34d4d91c135",
+          "sha256": "9cbbad5694e8ebd337c407dae5df81637c23c87df70be0c531ad45b260f593a1",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -16548,7 +16559,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "40981983e0df80c8d5cae6a4d4ff6b74ee2cebfffefbfc5016a735955064c75c",
+          "sha256": "694e4e9a49fff19e63ce73cf63294fe222dee6b16f27283529a5ad3de71988d9",
           "anchor": "value[\"tray_shell\"]"
         },
         {
@@ -16610,12 +16621,12 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "d4fb0dccbc4aeb8b17cc5b7068db3a79eb12c72fcf780d82c539f34d4d91c135",
+          "sha256": "9cbbad5694e8ebd337c407dae5df81637c23c87df70be0c531ad45b260f593a1",
           "anchor": "fn serial_worker("
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "af6c2a830cba1c39ad327d2ba2187de931b2dc85fd9877d896e841d6dfb17758",
+          "sha256": "cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0",
           "anchor": "pub struct Operation"
         }
       ],
@@ -16647,17 +16658,17 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "d4fb0dccbc4aeb8b17cc5b7068db3a79eb12c72fcf780d82c539f34d4d91c135",
+          "sha256": "9cbbad5694e8ebd337c407dae5df81637c23c87df70be0c531ad45b260f593a1",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "af6c2a830cba1c39ad327d2ba2187de931b2dc85fd9877d896e841d6dfb17758",
+          "sha256": "cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0",
           "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "af6c2a830cba1c39ad327d2ba2187de931b2dc85fd9877d896e841d6dfb17758",
+          "sha256": "cc8e20089fdb86b2f46cc311844a6f4288fc34b0726410272af4bf5922a088a0",
           "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
         }
       ],
@@ -16693,7 +16704,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "40981983e0df80c8d5cae6a4d4ff6b74ee2cebfffefbfc5016a735955064c75c"
+          "sha256": "694e4e9a49fff19e63ce73cf63294fe222dee6b16f27283529a5ad3de71988d9"
         }
       ],
       "omissions": [
@@ -16761,7 +16772,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "16788b0f6cb89b8f5a572407bebf408c5090bbbd526625c65f3d372258f1f802",
+          "sha256": "47585429e49d5386a61b8643940a49a3d72c768f6d0c5f9f94fde04239107566",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -16782,7 +16793,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12"
+          "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -17356,7 +17367,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12",
+          "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f",
           "anchor": "final LanResolver resolver;"
         },
         {
@@ -17366,7 +17377,7 @@
         },
         {
           "path": "mobile/lib/devices_page.dart",
-          "sha256": "750a3cc6b12f9a3ab7e8590125ee5ed88ab2467e22728deb5052d9ba3f754495",
+          "sha256": "a5fedaca2cdd9a37d27b5a618d5f68a80d0497e5abc705a9dff35187dc746acf",
           "anchor": "catalog"
         },
         {
@@ -17377,7 +17388,7 @@
         {
           "path": "desktop/src/main.rs",
           "anchor": "peer_http::remember_address",
-          "sha256": "d4fb0dccbc4aeb8b17cc5b7068db3a79eb12c72fcf780d82c539f34d4d91c135"
+          "sha256": "9cbbad5694e8ebd337c407dae5df81637c23c87df70be0c531ad45b260f593a1"
         }
       ],
       "omissions": [
@@ -17532,12 +17543,12 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "16788b0f6cb89b8f5a572407bebf408c5090bbbd526625c65f3d372258f1f802",
+          "sha256": "47585429e49d5386a61b8643940a49a3d72c768f6d0c5f9f94fde04239107566",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "37007d87aefaec20d0c4e9e6c85105549e83e2a04cb25ceb31dfdcebdc6ce86d",
+          "sha256": "565e225fe5f742eb526f65a4e63e4525f351f5c8f26de2af324ff47e902e6532",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -17562,12 +17573,12 @@
         },
         {
           "path": "mobile/lib/pixel_diagnostic_page.dart",
-          "sha256": "a453adc51e97058291301bd1ca2fc49fd2d0a99bddb1f8998c87d45a1318a0d4",
+          "sha256": "7dff812c48e81ed732a38d75a06248aaf99f90d6e8b197f7d191be487d0c1225",
           "anchor": "class PixelDiagnosticPage"
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12",
+          "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -17582,7 +17593,7 @@
         },
         {
           "path": "desktop/src/pixel_diagnostic.rs",
-          "sha256": "a2df3dfb52a8ebc19091060a3a8671b92ddfcf9a9da37b0b631561232e555c98",
+          "sha256": "169514de8b5123bed38171d1d170314ca6602dea9f3388cd6e5e47020a85e5ba",
           "anchor": "pub struct Probe"
         },
         {
@@ -17592,7 +17603,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "40981983e0df80c8d5cae6a4d4ff6b74ee2cebfffefbfc5016a735955064c75c",
+          "sha256": "694e4e9a49fff19e63ce73cf63294fe222dee6b16f27283529a5ad3de71988d9",
           "anchor": "fn send_pixel_probe("
         }
       ],
@@ -17700,7 +17711,7 @@
         },
         {
           "path": "desktop/src/pixel_diagnostic.rs",
-          "sha256": "a2df3dfb52a8ebc19091060a3a8671b92ddfcf9a9da37b0b631561232e555c98",
+          "sha256": "169514de8b5123bed38171d1d170314ca6602dea9f3388cd6e5e47020a85e5ba",
           "anchor": "fn pixel_diagnostic_remote_observation_is_ordered_and_never_actuates()"
         },
         {
@@ -17771,12 +17782,12 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "16788b0f6cb89b8f5a572407bebf408c5090bbbd526625c65f3d372258f1f802",
+          "sha256": "47585429e49d5386a61b8643940a49a3d72c768f6d0c5f9f94fde04239107566",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "37007d87aefaec20d0c4e9e6c85105549e83e2a04cb25ceb31dfdcebdc6ce86d",
+          "sha256": "565e225fe5f742eb526f65a4e63e4525f351f5c8f26de2af324ff47e902e6532",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -17801,12 +17812,12 @@
         },
         {
           "path": "mobile/lib/pixel_diagnostic_page.dart",
-          "sha256": "a453adc51e97058291301bd1ca2fc49fd2d0a99bddb1f8998c87d45a1318a0d4",
+          "sha256": "7dff812c48e81ed732a38d75a06248aaf99f90d6e8b197f7d191be487d0c1225",
           "anchor": "class PixelDiagnosticPage"
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "c105ab22b0bdee9cbad2a3582cb9616066874e3057d539d7e876726f239e0b12",
+          "sha256": "40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -17816,7 +17827,7 @@
         },
         {
           "path": "desktop/src/pixel_diagnostic.rs",
-          "sha256": "a2df3dfb52a8ebc19091060a3a8671b92ddfcf9a9da37b0b631561232e555c98",
+          "sha256": "169514de8b5123bed38171d1d170314ca6602dea9f3388cd6e5e47020a85e5ba",
           "anchor": "pub struct Probe"
         },
         {
@@ -17826,7 +17837,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "40981983e0df80c8d5cae6a4d4ff6b74ee2cebfffefbfc5016a735955064c75c",
+          "sha256": "694e4e9a49fff19e63ce73cf63294fe222dee6b16f27283529a5ad3de71988d9",
           "anchor": "fn send_pixel_probe("
         }
       ],
@@ -17913,7 +17924,7 @@
         },
         {
           "path": "desktop/src/pixel_diagnostic.rs",
-          "sha256": "a2df3dfb52a8ebc19091060a3a8671b92ddfcf9a9da37b0b631561232e555c98",
+          "sha256": "169514de8b5123bed38171d1d170314ca6602dea9f3388cd6e5e47020a85e5ba",
           "anchor": "fn pixel_diagnostic_remote_observation_is_ordered_and_never_actuates()"
         },
         {
@@ -17961,7 +17972,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "1ea53962d8d8dc6fbcb3fc7225dc69e12541b8383e373544b1517f79f0356f50",
+          "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -17972,7 +17983,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn synchronize_context",
-          "sha256": "40981983e0df80c8d5cae6a4d4ff6b74ee2cebfffefbfc5016a735955064c75c"
+          "sha256": "694e4e9a49fff19e63ce73cf63294fe222dee6b16f27283529a5ad3de71988d9"
         },
         {
           "path": "desktop/src/ui/layout.rs",
@@ -18104,12 +18115,12 @@
         {
           "path": "mobile/lib/connection_preferences.dart",
           "anchor": "class ConnectionPreferences",
-          "sha256": "87187fc5b82a18addf801e4bb71180f670dbb38fd07c9f6647e1312366b6b211"
+          "sha256": "9b4b4d787f7169a31f09717118c63ec7f88476df0568a84eb04909a0bd547d54"
         },
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "1ea53962d8d8dc6fbcb3fc7225dc69e12541b8383e373544b1517f79f0356f50"
+          "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360"
         }
       ],
       "proof": [
@@ -18149,7 +18160,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "1ea53962d8d8dc6fbcb3fc7225dc69e12541b8383e373544b1517f79f0356f50"
+          "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360"
         }
       ],
       "proof": [
@@ -18194,7 +18205,7 @@
         {
           "path": "mobile/lib/device_settings_page.dart",
           "anchor": "class DeviceSettingsPage",
-          "sha256": "1cd9f8fdf27dbb81ec4b6d6651d13d20f7da44df5f7ea45d2ef2c33704ddf4a0"
+          "sha256": "bd7cc5e53a182e0df8f6528b13a75201c8ef06add9b55efbec068343c5f50db8"
         }
       ],
       "proof": [

@@ -89,7 +89,7 @@ String read(const String &path,JsonObjectConst form,int &status) {
     if(form["pixels"]=="1") {body.remove(body.length()-1);body+=F(",\"pixel_preview_requested\":true,\"pixel_frame\":");body+=grid.pixelFrameJson();body+='}';}
     return body;
   }
-  if(path=="/api/table/snapshot")return buildUsbTableSnapshot();
+  if(path=="/api/table/snapshot")return buildUsbTableSnapshot(form["pixels"]=="1");
   if(path=="/api/cells/mapping")return mapping();
   if(path=="/api/cells/assignments") {
     if(!PAKAR_TABLE_SELECTION){status=409;return "{\"error\":\"unsupported_board_role\"}";}

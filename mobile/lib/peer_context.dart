@@ -178,6 +178,8 @@ class LedOutputCapability {
 }
 
 const knownFeatures = {
+  'usb-demand',
+  'usb-pixel-diagnostic',
   'status-rgb',
   'command-ack',
   'pixel-diagnostic',
