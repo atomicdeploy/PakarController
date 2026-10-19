@@ -5,6 +5,30 @@
   "files": [
 {
   "origin": "PCController",
+  "path": "mobile/lib/bridge.dart",
+  "sha256": "4fd40d999691968be1d32826a925a4bb221a5bd102c2a237ed947f6bf37b2be9",
+  "source_read": "complete",
+  "source_revision": "b0111ae0c80dc34149ea1044de7dd5488920301b",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Read complete actual donor bridge through EOF. Adapted generation retirement, token/Origin admission, bounded HTTP body reader, same-board/boot deadline and duplicate-ID admission, serialized commands, uncertainty latch and redacted health into an independently opt-in foreground LAN troubleshooting session. Command execution uses the existing acknowledged same-ID transport, not an arbitrary proxy."
+  ],
+  "targets": [
+    { "path": "mobile/lib/app_support.dart", "anchor": "class AppSupportSession", "sha256": "af00a7436acd4f52808cd01757dca1ff962e8429db164486253c9061a0d6ef97" },
+    { "path": "mobile/lib/update_center.dart", "anchor": "class SupportSection", "sha256": "8b08a54e1502bcdf323b7477e76458775bc78fa658d0768d69229907b3383b6c" }
+  ],
+  "proof": [
+    { "path": "mobile/test/app_support_test.dart", "anchor": "void main()", "sha256": "67d32afdc9bcc7af9b57e415ae28ada62c869ad4d9129828d49c310772b94817" },
+    { "path": "mobile/test/update_center_test.dart", "anchor": "One update workspace", "sha256": "87be6c6384aa874eadf46520c03c21b06da81f307a8dd2f58e2394d4466e8e80" }
+  ],
+  "omissions": [
+    { "code": "MQTT/outbound WebSocket bridge and firmware staging/export", "disposition": "pending", "reason": "These remain in the existing separate advanced bridge/firmware surfaces and are not claimed newly integrated or physically accepted by this bounded troubleshooting import. Arbitrary firmware apply, shell, OS execution and token export are intentionally not support RPC operations." },
+    { "code": "Android background service and unattended Internet exposure", "disposition": "pending", "reason": "This explicitly enabled LAN session expires after fifteen minutes and revokes on background/dispose. It does not claim background uptime, port forwarding, TLS termination or remote Android control without consent." }
+  ],
+  "remaining": ["Issue #7/#10/#2: installed Android support-session acceptance, remote endpoint and background-service delivery remain separate. Five real loopback HTTP/WS tests are not Android runtime or physical board acceptance."]
+},
+{
+  "origin": "PCController",
   "path": "mobile/lib/unified/workspace_chrome.dart",
   "sha256": "f00ed672c1f72f1a66fb65cff1cfe0a89dea5f7b6222f154db00a7c52c2e1a82",
   "source_read": "complete",
@@ -21,7 +45,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a",
+      "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b",
       "anchor": ": WorkspaceActivityStrip("
     }
   ],
@@ -4338,17 +4362,17 @@
     {
       "path": "mobile/lib/app_updates.dart",
       "anchor": "class AppUpdates",
-      "sha256": "9e530545db419ac781b94329a940bb4e02fcd9f421405ec2766a0f520f6346e4"
+      "sha256": "f35b215ca5942761edc259efca486eed11f75ed9e320be70d35df4793d7e9e9b"
     },
     {
       "path": "mobile/lib/app_update_coordinator.dart",
       "anchor": "class AppUpdateCoordinator",
-      "sha256": "91d78cccce1be01f0d6622519a562e78311d58128a29a79958e25fcaf590cd37"
+      "sha256": "3fb1cb1c909c0b29c37a8e47954f4bf8711a9c2f6119e8d8e2f767da97c6bb94"
     },
     {
       "path": "mobile/lib/app_updates_page.dart",
       "anchor": "class AppUpdatesPage",
-      "sha256": "b39d5324451ac08cb54774eadabbf85b07bbce069cb1f63eef196492d2dedc4d"
+      "sha256": "1d38f38d9e4aba98def2aa799a5dd8f40ad4d98413e6b377bf8604a866b5334f"
     }
   ],
   "proof": [
@@ -4356,17 +4380,17 @@
     {
       "path": "mobile/test/app_updates_test.dart",
       "anchor": "native bridge refuses oversized chunks",
-      "sha256": "847413faf38f07ad3da23ed127fcf41ff796ee576430babe588c06a53a1c2a94"
+      "sha256": "1aabfe844bf8cb7e159fc7adfe3a061aa8cee02e14391f21b4f858ff7612bdfe"
     },
     {
       "path": "mobile/test/app_update_coordinator_test.dart",
       "anchor": "Write-ahead receipt precedes download",
-      "sha256": "210cc87ecda82de047c4cd7308d099cd75e5869d823e3ccd1f7475f1a01ab6f9"
+      "sha256": "65c21bd2b5445a57079191e1be4751e86ab53c3f7d47faab974a3b6e62e77a45"
     },
     {
       "path": "mobile/test/update_pages_test.dart",
       "anchor": "App updates are usable offline",
-      "sha256": "f79717fe73ad600a6ad04b6191f6ae986a26d6e9d89ea61f26c99205421b76d3"
+      "sha256": "8c55706b750787137f8ff0a61a83f650f86ec19a3e1a1a8d86231044014bea74"
     },
     {
       "path": "mobile/test/capture_test.dart",
@@ -4394,7 +4418,7 @@
     {
       "path": "mobile/lib/app_updates_peer.dart",
       "anchor": "class AppUpdatePeers",
-      "sha256": "7c2ad80e5bd0cc6de7f5053096b207c0424d7ba43f739e742ba219afc2a5de5e"
+      "sha256": "799e8da2a5875c6a21519e2d273fe40de5695f080ea0330956ecbd1769530cb3"
     },
     {
       "path": "mobile/lib/app_update_discovery.dart",
@@ -4406,7 +4430,7 @@
     {
       "path": "mobile/test/app_updates_test.dart",
       "anchor": "peer",
-      "sha256": "847413faf38f07ad3da23ed127fcf41ff796ee576430babe588c06a53a1c2a94"
+      "sha256": "1aabfe844bf8cb7e159fc7adfe3a061aa8cee02e14391f21b4f858ff7612bdfe"
     },
     {
       "path": "mobile/test/app_update_discovery_test.dart",
@@ -4434,14 +4458,14 @@
     {
       "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/AppUpdateChannel.kt",
       "anchor": "class AppUpdateChannel",
-      "sha256": "27841afb11ebc904de95f1c2ad1f40363a707d2f8bee5a9868b7f0a45a0cef6f"
+      "sha256": "2a9844c3b879deac14ef05f3b2dbf808e2d9e8ede93a818d951a84c9d82804b8"
     }
   ],
   "proof": [
     {
       "path": "mobile/test/app_updates_test.dart",
       "anchor": "verified",
-      "sha256": "847413faf38f07ad3da23ed127fcf41ff796ee576430babe588c06a53a1c2a94"
+      "sha256": "1aabfe844bf8cb7e159fc7adfe3a061aa8cee02e14391f21b4f858ff7612bdfe"
     }
   ],
   "omissions": [
@@ -4464,7 +4488,7 @@
     {
       "path": "mobile/android/app/src/main/AndroidManifest.xml",
       "anchor": "REQUEST_INSTALL_PACKAGES",
-      "sha256": "5d7feefe177117b4bd37c845efec4a328fb44a6a0147b9870fa21781a6a18280"
+      "sha256": "807c29aba6f81d4407fd42dd0e21089cbe2e0df630104955d98b4ad4e5074ccc"
     },
     {
       "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt",
@@ -4476,7 +4500,7 @@
     {
       "path": "mobile/test/app_updates_test.dart",
       "anchor": "native bridge",
-      "sha256": "847413faf38f07ad3da23ed127fcf41ff796ee576430babe588c06a53a1c2a94"
+      "sha256": "1aabfe844bf8cb7e159fc7adfe3a061aa8cee02e14391f21b4f858ff7612bdfe"
     }
   ],
   "omissions": [
@@ -4534,12 +4558,12 @@
     {
       "path": "mobile/lib/firmware_page.dart",
       "anchor": "avrMaintenance()",
-      "sha256": "47062a176a76c93de964e710682b19b28c6fd1f3fd8f5ebaee525244f0dc681b"
+      "sha256": "c33c2df6dfc69b5f3b69f1a4f77b8feb5497e90ed3458a5e84f1bb2cc3c7d319"
     },
     {
       "path": "mobile/lib/firmware_automation_page.dart",
       "anchor": "class FirmwareAutomationPage",
-      "sha256": "b0e65486832e9c4d72c846626444a819d3a76ff5d7456986ef168c384a25db67"
+      "sha256": "b8b5e3bf4d3674c9089fa731b8e28bf1b7c766be020c53f0734bbd266be85305"
     },
     {
       "path": "mobile/lib/firmware_automation.dart",
@@ -4561,7 +4585,7 @@
     {
       "path": "mobile/test/update_pages_test.dart",
       "anchor": "Raw ESP offer exposes immediate upload",
-      "sha256": "f79717fe73ad600a6ad04b6191f6ae986a26d6e9d89ea61f26c99205421b76d3"
+      "sha256": "8c55706b750787137f8ff0a61a83f650f86ec19a3e1a1a8d86231044014bea74"
     },
     {
       "path": "mobile/test/capture_test.dart",
@@ -4594,7 +4618,7 @@
     {
       "path": "mobile/lib/app_updates.dart",
       "anchor": "readAppUpdateBytes",
-      "sha256": "9e530545db419ac781b94329a940bb4e02fcd9f421405ec2766a0f520f6346e4"
+      "sha256": "f35b215ca5942761edc259efca486eed11f75ed9e320be70d35df4793d7e9e9b"
     }
   ],
   "proof": [
@@ -4606,7 +4630,7 @@
     {
       "path": "mobile/test/app_updates_test.dart",
       "anchor": "absolute response deadline",
-      "sha256": "847413faf38f07ad3da23ed127fcf41ff796ee576430babe588c06a53a1c2a94"
+      "sha256": "1aabfe844bf8cb7e159fc7adfe3a061aa8cee02e14391f21b4f858ff7612bdfe"
     }
   ],
   "omissions": [
@@ -4645,17 +4669,17 @@
     {
       "path": "mobile/lib/pixel_diagnostic_page.dart",
       "anchor": "final observedOff = observation != null",
-      "sha256": "7dee854f79664e26284a634ae400ef64177d16afd31b1e20fcd499861b1f1dc1"
+      "sha256": "a453adc51e97058291301bd1ca2fc49fd2d0a99bddb1f8998c87d45a1318a0d4"
     },
     {
       "path": "mobile/test/pixel_diagnostic_page_test.dart",
       "anchor": "Reopening an all-off observation keeps colour edits as drafts",
-      "sha256": "a232eae17d69673ba4200a3d38507e6e9d5791a2d93b7ca64c27f97c1e380550"
+      "sha256": "96ba468774597ea05217b791fd3b7cc270ca6b8de8b9e1cadfed3c8cd1abe319"
     },
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
+      "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
     },
     {
       "path": "mobile/lib/panel_inventory.dart",
@@ -4692,7 +4716,7 @@
     {
       "path": "mobile/test/command_admission_transport_test.dart",
       "anchor": "Fresh same-boot WS admission overtakes a stalled background HTTP read",
-      "sha256": "f12cd6d07ea7da513d0b7779a8a694b6fbb54780d6e2a1f20972c89bd93b9b4a"
+      "sha256": "2c53969b0ed1f881ebea20b760e58125d6c6a574b6fbb722edc5073d1bec6fb4"
     },
     {
       "path": "mobile/test/api_test.dart",
@@ -4765,13 +4789,14 @@
   "source_read": "complete",
   "verdict": "parity-gap",
   "preserved": [
-    "Read complete donor tests. Adapt shared refresh and retained verified inventory expectations into actual API race and widget element/scroll-position tests. Real raw TCP stalls exercise pinned HTTP cancellation separately from widget binding."
+    "Read complete donor tests. Adapt shared refresh and retained verified inventory expectations into actual API race and widget element/scroll-position tests. Real raw TCP stalls exercise pinned HTTP cancellation separately from widget binding.",
+    "Keep a pending command ID registered through same-ID HTTP recovery so a 950ms delayed WS receipt wins over stalled HTTP without a second intent. Full-status freshness is independent of diagnostic revision and a covered parent route; unchanged genuine status restores controls while the original six-second authority lease remains enforced."
   ],
   "targets": [
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
+      "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
     }
   ],
   "proof": [
@@ -4779,6 +4804,11 @@
       "path": "mobile/test/api_test.dart",
       "anchor": "Concurrent status consumers",
       "sha256": "7a8f6830d333e3458b3fbdbf7ff680549f58dc2955366d2aea1b1640d0052201"
+    },
+    {
+      "path": "mobile/test/command_admission_transport_test.dart",
+      "anchor": "Late WS receipt settles same-ID HTTP recovery",
+      "sha256": "2c53969b0ed1f881ebea20b760e58125d6c6a574b6fbb722edc5073d1bec6fb4"
     },
     {
       "path": "mobile/test/panel_inventory_test.dart",
@@ -5060,11 +5090,11 @@
     },
     {"path":"mobile/lib/firmware_image.dart","sha256":"274b96b95c959594b8720f40d4998dc6e307ed8fe31e82093c19b581ea4a0654","anchor":"abstract final class FirmwareImagePolicy"},
     {"path":"mobile/lib/documents.dart","sha256":"205c298afff227e61f4ddea3b071f65012e3ccc118cbd62f1de5dea8452eab1e","anchor":"int maximum = FirmwareImagePolicy.maximumBytes"},
-    {"path":"mobile/lib/firmware_page.dart","sha256":"47062a176a76c93de964e710682b19b28c6fd1f3fd8f5ebaee525244f0dc681b","anchor":"maximum: controller.imageMaximum(esp),"},
+    {"path":"mobile/lib/firmware_page.dart","sha256":"c33c2df6dfc69b5f3b69f1a4f77b8feb5497e90ed3458a5e84f1bb2cc3c7d319","anchor":"maximum: controller.imageMaximum(esp),"},
     {"path":"mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt","sha256":"b6623d6be8e23e57532a5afc210a32ad4ca787cd40fb7d66d5796147917a322a","anchor":"private val firmwareMaximum = 0x330000 - 1"},
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2",
+      "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7",
       "anchor": "Stream<DeviceStatus> get statusUpdates"
     }
   ],
@@ -5450,7 +5480,7 @@
     {
       "path": "mobile/lib/peer_identity.dart",
       "anchor": "class PeerIdentity",
-      "sha256": "615bc3e694748a9260d5df7359f27f6573731e1397d8b549fb45d11d4c4843c4"
+      "sha256": "c987fd77cf01249337024c7ff48ff2baeaa1f58869d51f5dace50052578f14f8"
     }
   ],
   "omissions": [
@@ -8251,7 +8281,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
+          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -8351,7 +8381,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
+          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -8756,8 +8786,8 @@
         },
         {
           "path": "mobile/lib/app_theme.dart",
-          "sha256": "f414102bbefe21dc4f42cdec4a41176192c3409e4595af4c97e2e96a40aac956",
-          "anchor": "ThemeData studioTheme()"
+          "sha256": "e81456daa9aa7e4361055e4d4681f2c6cadea4ec7c4d056df69feb141bcaa3d3",
+          "anchor": "ThemeData studioTheme({Map<String, int> palette"
         }
       ],
       "proof": [
@@ -9938,12 +9968,12 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2",
+      "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7",
       "anchor": "bool _acceptIdentity("
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a",
+      "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -11635,7 +11665,7 @@
         },
         {
           "path": "mobile/lib/firmware_page.dart",
-          "sha256": "47062a176a76c93de964e710682b19b28c6fd1f3fd8f5ebaee525244f0dc681b",
+          "sha256": "c33c2df6dfc69b5f3b69f1a4f77b8feb5497e90ed3458a5e84f1bb2cc3c7d319",
           "anchor": "class FirmwarePage"
         },
         {
@@ -11645,7 +11675,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2",
+          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -12379,7 +12409,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a",
+          "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b",
           "anchor": "Future<bool> _command"
         },
         {
@@ -12559,7 +12589,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
+          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -12689,7 +12719,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a",
+          "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -13546,7 +13576,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
+          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -13716,7 +13746,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
+          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -16643,7 +16673,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
+          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -17216,7 +17246,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2",
+          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7",
           "anchor": "final LanResolver resolver;"
         },
         {
@@ -17411,12 +17441,12 @@
         },
         {
           "path": "mobile/lib/pixel_diagnostic_page.dart",
-          "sha256": "7dee854f79664e26284a634ae400ef64177d16afd31b1e20fcd499861b1f1dc1",
+          "sha256": "a453adc51e97058291301bd1ca2fc49fd2d0a99bddb1f8998c87d45a1318a0d4",
           "anchor": "class PixelDiagnosticPage"
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2",
+          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -17509,7 +17539,7 @@
         },
         {
           "path": "mobile/test/pixel_diagnostic_page_test.dart",
-          "sha256": "a232eae17d69673ba4200a3d38507e6e9d5791a2d93b7ca64c27f97c1e380550",
+          "sha256": "96ba468774597ea05217b791fd3b7cc270ca6b8de8b9e1cadfed3c8cd1abe319",
           "anchor": "Pending writes cannot repeat"
         },
         {
@@ -17650,12 +17680,12 @@
         },
         {
           "path": "mobile/lib/pixel_diagnostic_page.dart",
-          "sha256": "7dee854f79664e26284a634ae400ef64177d16afd31b1e20fcd499861b1f1dc1",
+          "sha256": "a453adc51e97058291301bd1ca2fc49fd2d0a99bddb1f8998c87d45a1318a0d4",
           "anchor": "class PixelDiagnosticPage"
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2",
+          "sha256": "f0dd8bdeacec1a10268196b0319902283c97bad25efead41646c47488e02dfd7",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -17742,7 +17772,7 @@
         },
         {
           "path": "mobile/test/pixel_diagnostic_page_test.dart",
-          "sha256": "a232eae17d69673ba4200a3d38507e6e9d5791a2d93b7ca64c27f97c1e380550",
+          "sha256": "96ba468774597ea05217b791fd3b7cc270ca6b8de8b9e1cadfed3c8cd1abe319",
           "anchor": "Pending writes cannot repeat"
         },
         {
@@ -17810,7 +17840,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a",
+          "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -17958,7 +17988,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a"
+          "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b"
         }
       ],
       "proof": [
@@ -17998,7 +18028,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a"
+          "sha256": "d09a8c66c5472d3f3992a403b061c8aefff8f2e7ad764e39e41887290e8b5a5b"
         }
       ],
       "proof": [

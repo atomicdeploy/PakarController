@@ -1164,3 +1164,30 @@ PowerShell null-string binding; source/old/pending hashes remained intact.
 Reconsulted build-storage, reread actual stage-desktop.ps1 and used its verified
 pending-copy/Move-Item pattern with the preserved published rollback. No recopy,
 cleanup workaround or running-process replacement.
+
+## Mobile command recovery and unified update support
+
+Canonical analysis and 54 focused tests passed: update coordinator13, update
+channel11, support HTTP/WS5, presentation assets3, update pages6, diagnostic
+page12, real command transport3, unified update workspace1. The new transport
+fixture delays the same-ID WS receipt to950ms while HTTP headers stall; one
+intent completes without increasing the four-second true-no-receipt deadline.
+The diagnostic fixture reproduces six-second expiry followed by unchanged fresh
+full status while the covered parent stays absent; controls recover without
+renewing authority from RGB/progress events.
+
+Warm canonical APK build passed in72seconds, 0.2.8/build16, 59099561bytes,
+SHA2569b28bfeea66a03509a07241bf8692f64be4e231e8282a186ef12f22d953c9d8c.
+The tablet still has verified build15 from359f0a2. ASUS tunnel8022 stopped
+completing SSH banners during the build16 copy; that partial candidate was NOT
+installed. Only the exact owned stuck SCP process was stopped. No app data,
+running app, rollback, shared tunnel or board firmware was deleted/reset.
+Actual installed build16 and tablet command acceptance remain pending reconnection.
+
+Before tunnel loss, actual same-boot ESP diagnostic HTTP returned200 in437ms
+with the matching request ID and all2880 RGB hex characters. This is board
+readback, not physical all480 acceptance. No recurring chase publisher restarted.
+New data-only palette updates are limited to four validated RGB roles, not
+executable hot patches. Native changes still require a verified APK and Android
+installer consent; notification denial never claims delivery. Support remains
+explicit opt-in foreground LAN with revocable credentials, not an ADB bypass.

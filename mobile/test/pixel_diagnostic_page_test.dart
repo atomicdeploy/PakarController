@@ -30,8 +30,25 @@ const knownDiagnosticFeatures = [
 
 class DiagnosticApi extends PakarApi {
   final pushes = StreamController<DeviceStatus>.broadcast(sync: true);
+  DeviceStatus? current;
+  DateTime? observedAt;
   @override
-  Stream<DeviceStatus> get statusUpdates => pushes.stream;
+  Duration? get statusObservationAge =>
+      observedAt == null ? null : DateTime.now().difference(observedAt!);
+  @override
+  DeviceStatus? get freshStatus =>
+      connectionWanted &&
+          appForeground &&
+          statusObservationAge != null &&
+          statusObservationAge! < const Duration(seconds: 6)
+      ? current
+      : null;
+  @override
+  Stream<DeviceStatus> get statusUpdates => pushes.stream.map((value) {
+    current = value;
+    observedAt = DateTime.now();
+    return value;
+  });
   @override
   Future<void> close() async {
     await pushes.close();
@@ -61,21 +78,60 @@ Widget diagnosticPage(
   DeviceStatus? Function()? observed,
   PixelDiagnosticWorkspace? workspace,
   CellMap? mapping,
-}) => MaterialApp(
-  debugShowCheckedModeBanner: false,
-  theme: studioTheme(),
-  home: Scaffold(
-    body: PixelDiagnosticPage(
-      api: api,
-      observed: observed ?? diagnosticFixture,
-      busyChanged: (_) {},
-      workspace: workspace,
-      mapping: () => mapping,
+}) {
+  api.current = observed == null ? diagnosticFixture() : observed();
+  api.observedAt = DateTime.now();
+  return MaterialApp(
+    debugShowCheckedModeBanner: false,
+    theme: studioTheme(),
+    home: Scaffold(
+      body: PixelDiagnosticPage(
+        api: api,
+        observed: observed ?? diagnosticFixture,
+        busyChanged: (_) {},
+        workspace: workspace,
+        mapping: () => mapping,
+      ),
     ),
-  ),
-);
+  );
+}
 
 void main() {
+  testWidgets(
+    'Unchanged fresh status restores diagnostics after expiry even when parent observation stays absent',
+    (tester) async {
+      tester.view.physicalSize = const Size(600, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final api = DiagnosticApi();
+      addTearDown(api.close);
+      DeviceStatus? parent = diagnosticFixture();
+      final workspace = PixelDiagnosticWorkspace()..position = '200';
+      await tester.pumpWidget(
+        diagnosticPage(api, observed: () => parent, workspace: workspace),
+      );
+      await tester.pump();
+      final show = find.byKey(const Key('pixel-show'));
+      expect(tester.widget<FilledButton>(show).onPressed, isNotNull);
+      parent = null;
+      api.observedAt = DateTime.now().subtract(const Duration(seconds: 6));
+      await tester.pump(const Duration(seconds: 6));
+      expect(tester.widget<FilledButton>(show).onPressed, isNull);
+      expect(
+        find.textContaining('Waiting for fresh board state'),
+        findsOneWidget,
+      );
+      api.pushes.add(diagnosticFixture());
+      await tester.pump();
+      expect(parent, isNull);
+      expect(tester.widget<FilledButton>(show).onPressed, isNotNull);
+      expect(workspace.position, '200');
+      expect(api.sent, isEmpty);
+      await tester.pumpWidget(const SizedBox());
+      workspace.dispose();
+    },
+  );
   testWidgets('Reopening an all-off observation keeps colour edits as drafts', (
     tester,
   ) async {

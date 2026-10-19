@@ -33,12 +33,16 @@ class AppUpdatePeers extends ChangeNotifier {
   AppUpdatePeers(
     this.updates, {
     required this.approve,
+    this.onVerified,
+    this.supportInfo,
     this.enforceVersions = enforcePeerVersions,
   });
   final bool enforceVersions;
   final peerRegistry = PeerRegistry();
   final AppUpdates updates;
   final AppUpdateApproval approve;
+  final Future<void> Function(Map<String, dynamic>)? onVerified;
+  final Map<String, dynamic> Function()? supportInfo;
   String get instanceId => PeerIdentity.current.installationId;
   HttpServer? _server;
   Timer? _expiry;
@@ -75,24 +79,45 @@ class AppUpdatePeers extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Map<String, dynamic>> manifest() async => {
-    'product': 'PakarController',
-    'kind': 'android-app',
-    'name': 'PakarController Android',
-    'instance_id': instanceId,
-    'version': PeerIdentity.current.version,
-    'build': PeerIdentity.current.build,
-    'compatibility': peerCompatibility(enabled: enforceVersions),
-    'peer': PeerIdentity.current.report(),
-    'package_sharing': true,
-    'app_updates': await updates.rpc('app.package.info', {}),
-    'rpc': '/api/rpc',
-    'capabilities': [
-      'app.package.info',
-      'app.package.read',
-      'app.upgrade.offer',
-    ],
-  };
+  Map<String, dynamic>? _publicSupport() {
+    if (supportInfo == null) return null;
+    try {
+      final value = supportInfo!(), port = value['port'];
+      if (value['enabled'] != true) return {'enabled': false};
+      if (port is! int || port < 1 || port > 65535) return {'enabled': false};
+      return {
+        'enabled': true,
+        'port': port,
+        'http': '/api/support/request',
+        'websocket': '/api/support/ws',
+      };
+    } on Object {
+      return {'enabled': false};
+    }
+  }
+
+  Future<Map<String, dynamic>> manifest() async {
+    final support = _publicSupport();
+    return {
+      'product': 'PakarController',
+      'kind': 'android-app',
+      'name': 'PakarController Android',
+      'instance_id': instanceId,
+      'version': PeerIdentity.current.version,
+      'build': PeerIdentity.current.build,
+      'compatibility': peerCompatibility(enabled: enforceVersions),
+      'peer': PeerIdentity.current.report(),
+      'package_sharing': true,
+      'app_updates': await updates.rpc('app.package.info', {}),
+      'rpc': '/api/rpc',
+      'support': ?support,
+      'capabilities': [
+        'app.package.info',
+        'app.package.read',
+        'app.upgrade.offer',
+      ],
+    };
+  }
 
   Future<void> _request(HttpRequest request, int epoch) async {
     final response = request.response;
@@ -299,6 +324,11 @@ class AppUpdatePeers extends ChangeNotifier {
       _capability = null;
       _transfer = null;
       _expires = null;
+    }
+    if (method == 'app.upgrade.finish' && result['state'] == 'verified') {
+      // The transfer receipt remains independent of the receiver's local
+      // installation policy. Sender never gains installer authority.
+      unawaited(onVerified?.call(result));
     }
     return result;
   }

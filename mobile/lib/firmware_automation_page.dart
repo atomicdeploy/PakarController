@@ -11,9 +11,11 @@ class FirmwareAutomationPage extends StatefulWidget {
     super.key,
     required this.automation,
     required this.api,
+    this.embedded = false,
   });
   final FirmwareAutomation automation;
   final PakarApi api;
+  final bool embedded;
   @override
   State<FirmwareAutomationPage> createState() => _FirmwareAutomationPageState();
 }
@@ -142,171 +144,173 @@ class _FirmwareAutomationPageState extends State<FirmwareAutomationPage> {
           widget.api.liveFresh &&
           peer?.json['board_id'] is String &&
           app != null;
-      return WorkspaceBody(
-        children: [
-          const WorkspaceHeader(
-            title: 'Automatic firmware updates',
-            icon: PakarIcons.cpu,
-          ),
-          WorkspaceSection(
-            title: 'Board assignment',
-            icon: PakarIcons.circuitry,
-            children: [
-              if (board.isNotEmpty) SelectableText(board),
-              if (application.isNotEmpty)
-                Text(application, style: Theme.of(context).textTheme.bodySmall),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: OutlinedButton.icon(
-                  onPressed: working || model.busy || !selectable
-                      ? null
-                      : () => setState(() {
-                          board = peer!.json['board_id'];
-                          application = app.id;
-                        }),
-                  icon: const Icon(PakarIcons.link),
-                  label: const Text('Use connected board'),
-                ),
-              ),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Enable automatic source checks'),
-                value: enabled,
-                onChanged: working || model.busy
+      final children = <Widget>[
+        const WorkspaceHeader(
+          title: 'Automatic firmware updates',
+          icon: PakarIcons.cpu,
+        ),
+        WorkspaceSection(
+          title: 'Board assignment',
+          icon: PakarIcons.circuitry,
+          children: [
+            if (board.isNotEmpty) SelectableText(board),
+            if (application.isNotEmpty)
+              Text(application, style: Theme.of(context).textTheme.bodySmall),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: working || model.busy || !selectable
                     ? null
-                    : (v) => setState(() => enabled = v),
-              ),
-            ],
-          ),
-          WorkspaceSection(
-            title: 'Firmware sources',
-            icon: PakarIcons.cloud,
-            children: [
-              field(catalog, 'HTTP(S) offer catalog'),
-              field(origin, 'Trusted HTTPS firmware origin'),
-              field(feed, 'WSS firmware feed'),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Socket.IO'),
-                value: socketIo,
-                onChanged: working || model.busy
-                    ? null
-                    : (v) => setState(() => socketIo = v),
-              ),
-              if (socketIo) field(namespace, 'Socket.IO namespace'),
-              field(event, 'Firmware event'),
-              field(interval, 'Catalog interval in seconds'),
-              field(token, 'Feed bearer · this session', secret: true),
-              field(bearer, 'Download bearer · this session', secret: true),
-            ],
-          ),
-          WorkspaceSection(
-            title: 'Upgrade policy',
-            icon: PakarIcons.gear,
-            children: [
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Stage verified offers automatically'),
-                value: autoStage,
-                onChanged: working || model.busy
-                    ? null
-                    : (v) => setState(() {
-                        autoStage = v;
-                        if (!v) autoApply = false;
+                    : () => setState(() {
+                        board = peer!.json['board_id'];
+                        application = app.id;
                       }),
+                icon: const Icon(PakarIcons.link),
+                label: const Text('Use connected board'),
               ),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Apply verified manifests automatically'),
-                value: autoApply,
-                onChanged: working || model.busy || !autoStage
-                    ? null
-                    : (v) => setState(() => autoApply = v),
-              ),
+            ),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Enable automatic source checks'),
+              value: enabled,
+              onChanged: working || model.busy
+                  ? null
+                  : (v) => setState(() => enabled = v),
+            ),
+          ],
+        ),
+        WorkspaceSection(
+          title: 'Firmware sources',
+          icon: PakarIcons.cloud,
+          children: [
+            field(catalog, 'HTTP(S) offer catalog'),
+            field(origin, 'Trusted HTTPS firmware origin'),
+            field(feed, 'WSS firmware feed'),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Socket.IO'),
+              value: socketIo,
+              onChanged: working || model.busy
+                  ? null
+                  : (v) => setState(() => socketIo = v),
+            ),
+            if (socketIo) field(namespace, 'Socket.IO namespace'),
+            field(event, 'Firmware event'),
+            field(interval, 'Catalog interval in seconds'),
+            field(token, 'Feed bearer · this session', secret: true),
+            field(bearer, 'Download bearer · this session', secret: true),
+          ],
+        ),
+        WorkspaceSection(
+          title: 'Upgrade policy',
+          icon: PakarIcons.gear,
+          children: [
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Stage verified offers automatically'),
+              value: autoStage,
+              onChanged: working || model.busy
+                  ? null
+                  : (v) => setState(() {
+                      autoStage = v;
+                      if (!v) autoApply = false;
+                    }),
+            ),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Apply verified manifests automatically'),
+              value: autoApply,
+              onChanged: working || model.busy || !autoStage
+                  ? null
+                  : (v) => setState(() => autoApply = v),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  onPressed: working || model.busy ? null : () => run(save),
+                  icon: const Icon(PakarIcons.floppyDisk),
+                  label: const Text('Save preferences'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: working || model.busy || !model.running
+                      ? null
+                      : () => run(model.checkNow),
+                  icon: const Icon(PakarIcons.arrowClockwise),
+                  label: const Text('Check now'),
+                ),
+              ],
+            ),
+          ],
+        ),
+        WorkspaceSection(
+          title: 'Update activity',
+          icon: PakarIcons.clock,
+          children: [
+            WorkspaceBadge(model.state, active: model.running),
+            if (model.progress != null) ...[
               const SizedBox(height: 12),
+              FirmwareProgressView(model.progress!),
+            ],
+            if (model.pending case final offer?) ...[
+              const SizedBox(height: 12),
+              Text('${offer.target} · ${offer.kind}'),
+              SelectableText(offer.hash),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  FilledButton.icon(
-                    onPressed: working || model.busy ? null : () => run(save),
-                    icon: const Icon(PakarIcons.floppyDisk),
-                    label: const Text('Save preferences'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: working || model.busy || !model.running
-                        ? null
-                        : () => run(model.checkNow),
-                    icon: const Icon(PakarIcons.arrowClockwise),
-                    label: const Text('Check now'),
-                  ),
+                  if (offer.kind != 'binary' || offer.target != 'esp')
+                    OutlinedButton(
+                      onPressed: working || model.busy
+                          ? null
+                          : () => run(() => model.reviewPending()),
+                      child: const Text('Stage offer'),
+                    ),
+                  if (offer.kind == 'manifest' || offer.target == 'esp')
+                    OutlinedButton(
+                      onPressed: working || model.busy
+                          ? null
+                          : () => run(() async {
+                              if (await confirm(
+                                offer.kind == 'manifest'
+                                    ? 'Apply this manifest?'
+                                    : 'Upload this ESP image?',
+                                offer.kind == 'manifest'
+                                    ? 'This upgrades the selected board targets and may reboot the pair.'
+                                    : 'This uploads the verified image immediately and reboots the ESP. Keep stable power; a transfer ACK is not postboot verification.',
+                              )) {
+                                await model.reviewPending(apply: true);
+                              }
+                            }),
+                      child: Text(
+                        offer.kind == 'manifest'
+                            ? 'Apply offered manifest'
+                            : 'Upload ESP image',
+                      ),
+                    ),
                 ],
               ),
             ],
-          ),
-          WorkspaceSection(
-            title: 'Update activity',
-            icon: PakarIcons.clock,
-            children: [
-              WorkspaceBadge(model.state, active: model.running),
-              if (model.progress != null) ...[
-                const SizedBox(height: 12),
-                FirmwareProgressView(model.progress!),
-              ],
-              if (model.pending case final offer?) ...[
-                const SizedBox(height: 12),
-                Text('${offer.target} · ${offer.kind}'),
-                SelectableText(offer.hash),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (offer.kind != 'binary' || offer.target != 'esp')
-                      OutlinedButton(
-                        onPressed: working || model.busy
-                            ? null
-                            : () => run(() => model.reviewPending()),
-                        child: const Text('Stage offer'),
-                      ),
-                    if (offer.kind == 'manifest' || offer.target == 'esp')
-                      OutlinedButton(
-                        onPressed: working || model.busy
-                            ? null
-                            : () => run(() async {
-                                if (await confirm(
-                                  offer.kind == 'manifest'
-                                      ? 'Apply this manifest?'
-                                      : 'Upload this ESP image?',
-                                  offer.kind == 'manifest'
-                                      ? 'This upgrades the selected board targets and may reboot the pair.'
-                                      : 'This uploads the verified image immediately and reboots the ESP. Keep stable power; a transfer ACK is not postboot verification.',
-                                )) {
-                                  await model.reviewPending(apply: true);
-                                }
-                              }),
-                        child: Text(
-                          offer.kind == 'manifest'
-                              ? 'Apply offered manifest'
-                              : 'Upload ESP image',
-                        ),
-                      ),
-                  ],
+            if (error.isNotEmpty || model.error.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  error.isNotEmpty ? error : model.error,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
-              ],
-              if (error.isNotEmpty || model.error.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(
-                    error.isNotEmpty ? error : model.error,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      );
+              ),
+          ],
+        ),
+      ];
+      return widget.embedded
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: children,
+            )
+          : WorkspaceBody(children: children);
     },
   );
 }

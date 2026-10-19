@@ -25,10 +25,44 @@ class AppUpdateCoordinator extends ChangeNotifier {
     this.feedConnectTimeout = const Duration(seconds: 8),
     SecretStore? managementSecrets,
     ManagedRequest? managementRequest,
+    Map<String, dynamic> Function()? supportInfo,
     required Future<bool> Function(Map<String, dynamic>) approve,
   }) : updates = updates ?? AppUpdates(),
        discovery = discovery ?? AppUpdateDiscovery() {
-    peers = AppUpdatePeers(this.updates, approve: approve);
+    peers = AppUpdatePeers(
+      this.updates,
+      supportInfo: supportInfo,
+      approve: (manifest) async {
+        final generation = epoch;
+        if (closed || !foreground || settings['sharing'] != true) return false;
+        if (!await announce(
+          manifest,
+          sourceKind: 'incoming',
+          source: '${manifest['source'] ?? ''}',
+        )) {
+          return false;
+        }
+        if (settings['auto_download'] != true && !await approve(manifest)) {
+          return false;
+        }
+        if (closed || !foreground || generation != epoch) return false;
+        final key = 'peer:${manifest['sha256']}';
+        if (consumed.contains(key)) return false;
+        await remember(key);
+        return !closed &&
+            foreground &&
+            generation == epoch &&
+            settings['sharing'] == true;
+      },
+      onVerified: (_) async {
+        try {
+          await _autoInstall(epoch);
+        } on Object catch (error) {
+          failure(error);
+        }
+        changed();
+      },
+    );
     this.updates.addListener(changed);
     this.discovery.addListener(changed);
     management = AppClientManagement(
@@ -50,13 +84,14 @@ class AppUpdateCoordinator extends ChangeNotifier {
   late final AppClientManagement management;
   Map<String, dynamic> package = {};
   static const defaults = <String, dynamic>{
-    'sharing': false,
-    'discover': false,
-    'auto_download': false,
+    'sharing': true,
+    'discover': true,
+    'auto_download': true,
     'auto_check': true,
     'check_interval_seconds': 900,
-    'auto_install': false,
-    'auto_cleanup': false,
+    'auto_install': true,
+    'auto_cleanup': true,
+    'notify_updates': true,
     'catalog': 'https://office.digitalogic.ir/pakar/api/app-updates',
     'origin': 'https://office.digitalogic.ir',
     'management_base': 'https://office.digitalogic.ir/pakar',
@@ -70,6 +105,9 @@ class AppUpdateCoordinator extends ChangeNotifier {
   };
   Map<String, dynamic> settings = Map.of(defaults);
   final consumed = <String>{};
+  final notified = <String>{};
+  Map<String, dynamic>? available;
+  DateTime? _availableAt;
   Map<String, dynamic>? pending;
   String get instanceId => PeerIdentity.current.installationId;
   String message = '', feedState = 'Stopped';
@@ -82,7 +120,10 @@ class AppUpdateCoordinator extends ChangeNotifier {
   int epoch = 0, retryCount = 0;
   int _feedEpoch = 0;
   String session = '', _feedSession = '';
-  bool _feedStarting = false, _configuring = false, _downloading = false;
+  bool _feedStarting = false,
+      _configuring = false,
+      _downloading = false,
+      _installing = false;
   Future<void> _saving = Future<void>.value();
   Future<void> _lifecycle = Future<void>.value();
   Future<void> _receipts = Future<void>.value();
@@ -121,14 +162,27 @@ class AppUpdateCoordinator extends ChangeNotifier {
               .take(128),
         );
       }
+      if (raw is Map && raw['notified'] is List) {
+        notified.addAll(
+          (raw['notified'] as List)
+              .whereType<String>()
+              .where((hash) => RegExp(r'^[a-f0-9]{64}$').hasMatch(hash))
+              .take(32),
+        );
+      }
       validate(settings);
       if (settings['management_enabled'] == true) await management.load();
       await refresh();
       await reconcile();
     } on Object catch (error) {
-      settings = Map.of(
-        defaults,
-      ); // Corrupt saved policy must never enable sharing.
+      settings = {
+        ...defaults,
+        'sharing': false,
+        'discover': false,
+        'auto_download': false,
+        'auto_install': false,
+        'auto_check': false,
+      };
       failure(error);
     }
   }
@@ -142,6 +196,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
       'auto_check',
       'auto_install',
       'auto_cleanup',
+      'notify_updates',
       'management_enabled',
       'allow_remote_check',
       'allow_remote_cleanup',
@@ -214,6 +269,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
     final snapshot = jsonEncode({
       'settings': {for (final key in defaults.keys) key: settings[key]},
       'consumed': consumed.toList(),
+      'notified': notified.toList(),
       'instance_id': instanceId,
     });
     final task = _saving.catchError((Object _) {}).then((_) async {
@@ -245,6 +301,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
     management.retireRequests();
     session = '';
     pending = null;
+    available = null;
     timer?.cancel();
     timer = null;
     managementTimer?.cancel();
@@ -365,11 +422,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
   }
 
   Future<void> checkNow() async {
-    if (closed ||
-        !foreground ||
-        checking ||
-        updates.busy ||
-        updates.state['transfer_id'] != null) {
+    if (closed || !foreground || checking || transferBlocked) {
       return;
     }
     final generation = epoch;
@@ -399,7 +452,17 @@ class AppUpdateCoordinator extends ChangeNotifier {
               (a, b) => (b.manifest['app_updates']['version_code'] as int)
                   .compareTo(a.manifest['app_updates']['version_code'] as int),
             );
-        if (eligible.isNotEmpty && settings['auto_download'] == true) {
+        var selected = false;
+        if (eligible.isNotEmpty) {
+          selected = await announce(
+            Map<String, dynamic>.from(
+              eligible.first.manifest['app_updates'] as Map,
+            ),
+            sourceKind: 'peer',
+            source: eligible.first.origin,
+          );
+        }
+        if (selected && settings['auto_download'] == true) {
           final peer = eligible.first,
               key = 'peer:${eligible.first.manifest['app_updates']['sha256']}';
           if (!consumed.contains(key)) {
@@ -417,7 +480,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
         }
       }
       final catalog = settings['catalog'] as String;
-      if (catalog.isNotEmpty && foreground && !updates.busy) {
+      if (catalog.isNotEmpty && foreground && !transferBlocked) {
         final catalogSession = beginCatalogSession();
         final client = HttpClient()
           ..findProxy = ((_) => 'DIRECT')
@@ -465,8 +528,15 @@ class AppUpdateCoordinator extends ChangeNotifier {
           if (offers.length > 16) {
             throw const FormatException('Too many app update offers');
           }
-          for (final offer in offers) {
+          int version(Object? value) =>
+              value is Map && value['version_code'] is int
+              ? value['version_code'] as int
+              : -1;
+          final sorted = offers.toList()
+            ..sort((a, b) => version(b).compareTo(version(a)));
+          for (final offer in sorted) {
             await acceptOffer(offer, catalogSession);
+            if (transferBlocked) break;
           }
         } finally {
           client.close(force: true);
@@ -553,12 +623,73 @@ class AppUpdateCoordinator extends ChangeNotifier {
         'Rejected stale, incompatible or wrong-origin APK offer',
       );
     }
+    validateAppUpdateManifest(raw, package);
     return Map.unmodifiable(raw);
+  }
+
+  bool get transferBlocked =>
+      updates.busy ||
+      updates.state['transfer_id'] != null ||
+      updates.state['state'] == 'awaiting_android' ||
+      _installing;
+
+  /// One visible offer and one OS notification per compatible digest. The
+  /// actual staged APK is independently verified by Android before install.
+  Future<bool> announce(
+    Map<String, dynamic> manifest, {
+    required String sourceKind,
+    required String source,
+  }) async {
+    validateAppUpdateManifest(manifest, package);
+    if (closed || !foreground) return false;
+    if (available != null &&
+        _availableAt != null &&
+        DateTime.now().difference(_availableAt!) < const Duration(minutes: 1) &&
+        (available!['version_code'] as int) >
+            (manifest['version_code'] as int)) {
+      return false;
+    }
+    final same = available?['sha256'] == manifest['sha256'];
+    available = {...manifest, 'source_kind': sourceKind, 'source': source};
+    _availableAt = DateTime.now();
+    if (!same) {
+      message =
+          'PakarController ${manifest['version_name'] ?? manifest['version_code']} is available';
+    }
+    changed();
+    final hash = manifest['sha256'] as String;
+    if (settings['notify_updates'] == true && !notified.contains(hash)) {
+      notified.add(hash);
+      if (notified.length > 32) notified.remove(notified.first);
+      try {
+        await persist();
+      } on Object {
+        notified.remove(hash);
+        rethrow;
+      }
+      if (closed || !foreground || settings['notify_updates'] != true) {
+        return true;
+      }
+      try {
+        final receipt = await updates.notifyUpdate(manifest);
+        if (receipt['permission_required'] == true) {
+          message =
+              'Update available; allow Android notifications in App updates';
+        }
+      } on Object {
+        message = 'Update available; Android notification could not be posted';
+      }
+      changed();
+    }
+    return true;
   }
 
   Future<void> acceptOffer(Object? raw, String expectedSession) async {
     final offer = parseOffer(raw, expectedSession);
     if (consumed.contains('remote:${offer['sha256']}')) return;
+    if (!await announce(offer, sourceKind: 'remote', source: offer['url'])) {
+      return;
+    }
     if (settings['auto_download'] == true) {
       await downloadOffer(offer, expectedSession);
     } else {
@@ -569,14 +700,24 @@ class AppUpdateCoordinator extends ChangeNotifier {
 
   Future<void> downloadPending() async {
     final offer = pending;
-    if (offer != null) await downloadOffer(offer, offer['session']);
+    if (offer != null) {
+      await downloadOffer(offer, offer['session']);
+    } else if (available?['source_kind'] == 'peer' && !transferBlocked) {
+      final manifest = available!, generation = epoch;
+      final key = 'peer:${manifest['sha256']}';
+      if (consumed.contains(key)) return;
+      await remember(key);
+      if (closed || !foreground || generation != epoch) return;
+      await updates.pullPeer(manifest['source'], expectedManifest: manifest);
+      await _autoInstall(generation);
+    }
   }
 
   Future<void> downloadOffer(
     Map<String, dynamic> value,
     String expectedSession,
   ) async {
-    if (closed || !foreground || updates.busy || _downloading) return;
+    if (closed || !foreground || transferBlocked || _downloading) return;
     final generation = epoch;
     final offer = parseOffer(value, expectedSession);
     _downloading = true;
@@ -605,6 +746,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
         !foreground ||
         epoch != generation ||
         settings['auto_install'] != true ||
+        _installing ||
         updates.state['state'] != 'verified' ||
         updates.state['transfer_id'] is! String) {
       return;
@@ -612,15 +754,20 @@ class AppUpdateCoordinator extends ChangeNotifier {
     final hash = updates.state['sha256'];
     if (hash is! String || !RegExp(r'^[a-f0-9]{64}$').hasMatch(hash)) return;
     if (consumed.contains('install:$hash')) return;
-    await remember('install:$hash');
-    if (closed ||
-        !foreground ||
-        epoch != generation ||
-        settings['auto_install'] != true) {
-      return;
+    _installing = true;
+    try {
+      await remember('install:$hash');
+      if (closed ||
+          !foreground ||
+          epoch != generation ||
+          settings['auto_install'] != true) {
+        return;
+      }
+      await updates
+          .install(); // Android still verifies and requires its own consent.
+    } finally {
+      _installing = false;
     }
-    await updates
-        .install(); // Android still verifies and requires its own consent.
   }
 
   Future<void> cleanup() async {

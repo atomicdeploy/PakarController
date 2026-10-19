@@ -26,9 +26,10 @@ import 'bridge_page.dart';
 import 'firmware_page.dart';
 import 'firmware_progress.dart';
 import 'firmware_automation.dart';
-import 'firmware_automation_page.dart';
 import 'app_update_coordinator.dart';
-import 'app_updates_page.dart';
+import 'update_center.dart';
+import 'app_support.dart';
+import 'presentation_assets.dart';
 import 'pixel_diagnostic.dart';
 import 'cell_pixel_preview.dart';
 import 'pixel_diagnostic_page.dart';
@@ -44,6 +45,7 @@ final bundledApplicationArtwork = base64Decode(applicationArtworkBase64);
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await PeerIdentity.current.initialize();
+  await presentationAssets.load();
   final view = WidgetsBinding.instance.platformDispatcher.views.firstOrNull;
   if (view != null) {
     PeerIdentity.current.hardware.addAll({
@@ -59,13 +61,17 @@ class PakarControllerApp extends StatelessWidget {
   final PakarApi? api;
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'PakarController',
-    debugShowCheckedModeBanner: false,
-    themeMode: ThemeMode.dark,
-    darkTheme: studioTheme(),
-    home: ControlShell(api: api),
-  );
+  Widget build(BuildContext context) =>
+      ValueListenableBuilder<Map<String, int>>(
+        valueListenable: presentationAssets,
+        builder: (context, palette, _) => MaterialApp(
+          title: 'PakarController',
+          debugShowCheckedModeBanner: false,
+          themeMode: ThemeMode.dark,
+          darkTheme: studioTheme(palette: palette),
+          home: ControlShell(api: api),
+        ),
+      );
 }
 
 typedef Command = Future<void> Function(
@@ -88,7 +94,30 @@ class _ControlShellState extends State<ControlShell>
     with WidgetsBindingObserver {
   late final api = widget.api ?? PakarApi();
   final mirror = PeripheralMirror();
-  late final appUpdates = AppUpdateCoordinator(approve: _approveAppUpdate);
+  late final AppUpdateCoordinator appUpdates = AppUpdateCoordinator(
+    approve: _approveAppUpdate,
+    supportInfo: () => {
+      'enabled': support.running,
+      if (support.running) 'port': support.port,
+    },
+  );
+  late final AppSupportSession support = AppSupportSession(
+    api: () => api,
+    observed: () =>
+        commandPending ||
+            manualMaintenanceBusy ||
+            firmwareAutomation?.busy == true
+        ? null
+        : status,
+    applyAssets: presentationAssets.applyText,
+    health: () => {
+      'connected': status != null,
+      'websocket_live': api.liveFresh,
+      'busy': commandPending || manualMaintenanceBusy,
+      'updating': appUpdates.updates.busy,
+      'selection_count': workspaces[workspaceBoard]?.selection.length ?? 0,
+    },
+  );
   FirmwareAutomation? firmwareAutomation;
   bool manualMaintenanceBusy = false;
   DeviceStatus? status;
@@ -614,6 +643,7 @@ class _ControlShellState extends State<ControlShell>
   }
 
   void _revoke(String reason) {
+    if (status != null) support.recordIncident(SupportIncident.connectionLost);
     mirror.observe(null, api.connectionRevision);
     expiry?.cancel();
     if (status != null) ++observation;
@@ -837,6 +867,11 @@ class _ControlShellState extends State<ControlShell>
       return true;
     } catch (error) {
       if (mounted && owner == api.connectionRevision) {
+        support.recordIncident(
+          error is OperationUncertain
+              ? SupportIncident.commandUncertain
+              : SupportIncident.commandRejected,
+        );
         if (attempt == commandAttempt) {
           setState(() => commandFailure = error.toString());
         }
@@ -855,6 +890,8 @@ class _ControlShellState extends State<ControlShell>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final active = state == AppLifecycleState.resumed;
     api.appForeground = active;
+    support.setForeground(active);
+    presentationAssets.setForeground(active);
     mirror.foreground(active);
     unawaited(appUpdates.setForeground(active).catchError(appUpdates.failure));
     final automation = firmwareAutomation;
@@ -920,6 +957,7 @@ class _ControlShellState extends State<ControlShell>
     mirror.removeListener(_mirrorPreferencesChanged);
     mirror.dispose();
     appUpdates.dispose();
+    support.dispose();
     firmwareAutomation?.dispose();
     connectionDraft.dispose();
     api.onPeerChanged = null;
@@ -1154,25 +1192,23 @@ class _ControlShellState extends State<ControlShell>
                   _navigate('devices');
                   return;
                 }
-                if (target == 'app-updates' || target == 'firmware-policy') {
-                  final automation = firmwareAutomation;
-                  if (target == 'firmware-policy' && automation == null) return;
+                if (target == 'updates') {
+                  final updateBoard = status?.json['board_id'];
                   await Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) => Scaffold(
-                        appBar: AppBar(
-                          title: Text(
-                            target == 'app-updates'
-                                ? 'App updates'
-                                : 'Automatic firmware updates',
-                          ),
-                        ),
-                        body: target == 'app-updates'
-                            ? AppUpdatesPage(coordinator: appUpdates)
-                            : FirmwareAutomationPage(
-                                automation: automation!,
-                                api: api,
-                              ),
+                      builder: (_) => UpdateCenter(
+                        api: api,
+                        apps: appUpdates,
+                        support: support,
+                        automation: firmwareAutomation,
+                        boardAvailable: peer.has('isp') || peer.has('ota'),
+                        authorized: (feature) =>
+                            mounted &&
+                            firmwareAutomation?.busy != true &&
+                            status?.json['board_id'] == updateBoard &&
+                            status?.hostname == hostname &&
+                            status?.peer.has(feature) == true,
+                        busyChanged: (value) => manualMaintenanceBusy = value,
                       ),
                     ),
                   );
@@ -1223,22 +1259,13 @@ class _ControlShellState extends State<ControlShell>
               },
               itemBuilder: (_) => [
                 const PopupMenuItem(
-                  value: 'app-updates',
+                  value: 'updates',
                   child: ListTile(
                     dense: true,
                     leading: Icon(PakarIcons.cloud),
-                    title: Text('App updates / replication…'),
+                    title: Text('Updates & support…'),
                   ),
                 ),
-                if (firmwareAutomation != null)
-                  const PopupMenuItem(
-                    value: 'firmware-policy',
-                    child: ListTile(
-                      dense: true,
-                      leading: Icon(PakarIcons.cpu),
-                      title: Text('Automatic firmware updates…'),
-                    ),
-                  ),
                 const PopupMenuItem(
                   value: 'devices',
                   child: ListTile(
@@ -1247,15 +1274,6 @@ class _ControlShellState extends State<ControlShell>
                     title: Text('Devices…'),
                   ),
                 ),
-                if (peer.has('isp') || peer.has('ota'))
-                  const PopupMenuItem(
-                    value: 'firmware',
-                    child: ListTile(
-                      dense: true,
-                      leading: Icon(PakarIcons.cpu),
-                      title: Text('Firmware upload / download…'),
-                    ),
-                  ),
                 if (supportsPixelDiagnostic(status) && peer.has('command-ack'))
                   const PopupMenuItem(
                     value: 'pixels',
@@ -1640,8 +1658,12 @@ class _TablePageState extends State<TablePage> {
                                       id: id,
                                       highlighted: selection.contains(id),
                                       showIndicator: showIndicators,
-                                      pixels: cellPixelPreview(status, mapping, id,
-                                          mappingCurrent: widget.mappingCurrent),
+                                      pixels: cellPixelPreview(
+                                        status,
+                                        mapping,
+                                        id,
+                                        mappingCurrent: widget.mappingCurrent,
+                                      ),
                                       name:
                                           mapping.names.elementAtOrNull(
                                             id - 1,
@@ -1829,13 +1851,21 @@ class _CellButtonState extends State<CellButton> {
                             child: Container(
                               key: ValueKey('cell-${widget.id}-pixel-$pixel'),
                               height: 5,
-                              margin: const EdgeInsets.symmetric(horizontal: .5),
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: .5,
+                              ),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(2),
                                 color: widget.pixels == null
                                     ? studioDark.outline
-                                    : Color(0xff000000 | widget.pixels!.colors[pixel]),
-                                border: Border.all(color: studioDark.outline, width: .5),
+                                    : Color(
+                                        0xff000000 |
+                                            widget.pixels!.colors[pixel],
+                                      ),
+                                border: Border.all(
+                                  color: studioDark.outline,
+                                  width: .5,
+                                ),
                               ),
                             ),
                           ),
@@ -2059,7 +2089,9 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                           widget.status!.segmentBrightness,
                       active: ready('display'),
                     )
-                  : const Center(child: Text('Waiting for a seven-segment frame')),
+                  : const Center(
+                      child: Text('Waiting for a seven-segment frame'),
+                    ),
             ),
           ),
         ),

@@ -9,6 +9,8 @@ import 'documents.dart';
 import 'firmware.dart';
 import 'firmware_progress.dart';
 import 'firmware_feed.dart';
+import 'firmware_automation.dart';
+import 'firmware_automation_page.dart';
 import 'icons.dart';
 import 'workspace_widgets.dart';
 
@@ -19,11 +21,13 @@ class FirmwarePage extends StatefulWidget {
     required this.authorized,
     required this.busyChanged,
     this.documents,
+    this.automation,
   });
   final PakarApi api;
   final bool Function(String) authorized;
   final void Function(bool) busyChanged;
   final AndroidDocuments? documents;
+  final FirmwareAutomation? automation;
   @override
   State<FirmwarePage> createState() => _FirmwarePageState();
 }
@@ -636,6 +640,12 @@ class _FirmwarePageState extends State<FirmwarePage>
           icon: PakarIcons.cpu,
           subtitle: 'Updates and recovery',
         ),
+        if (widget.automation != null)
+          FirmwareAutomationPage(
+            automation: widget.automation!,
+            api: widget.api,
+            embedded: true,
+          ),
         if (transferProgress != null || boardProgress != null)
           card('Update progress', [
             FirmwareProgressView((transferProgress ?? boardProgress)!),
@@ -806,7 +816,11 @@ class _FirmwarePageState extends State<FirmwarePage>
         card('Observed job', [
           Row(
             children: [
-              Expanded(child: Text(observed?.phase ?? 'Waiting for firmware job progress')),
+              Expanded(
+                child: Text(
+                  observed?.phase ?? 'Waiting for firmware job progress',
+                ),
+              ),
               IconButton(
                 tooltip: 'Refresh and inspect current state',
                 onPressed: working ? null : () => refresh(explicit: true),

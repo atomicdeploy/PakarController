@@ -305,12 +305,22 @@ void main() {
   test('peer approval stages one pinned APK; bearer expires at finish and installer is never shared', () async {
     final updates = AppUpdates();
     addTearDown(updates.dispose);
-    var approved = 0;
+    var approved = 0, verified = 0;
     final peers = AppUpdatePeers(
       updates,
       approve: (m) async {
         approved++;
         return true;
+      },
+      onVerified: (receipt) async {
+        expect(receipt['state'], 'verified');
+        verified++;
+      },
+      supportInfo: () => {
+        'enabled': true,
+        'port': 23456,
+        'token': 'never-public',
+        'session_id': 'private-session',
       },
     );
     addTearDown(peers.dispose);
@@ -323,6 +333,13 @@ void main() {
       origin.resolve('/api/app-updates'),
     );
     expect(observed['kind'], 'android-app');
+    expect(observed['support'], {
+      'enabled': true,
+      'port': 23456,
+      'http': '/api/support/request',
+      'websocket': '/api/support/ws',
+    });
+    expect(jsonEncode(observed), isNot(contains('never-public')));
     expect(object(observed['app_updates'])['version_code'], 7);
     final offer = await peerRpc(
       client,
@@ -353,6 +370,7 @@ void main() {
       'transfer_id': 'fixture',
     }, capability: offer['capability']);
     expect(result['state'], 'verified');
+    expect(verified, 1);
     await expectLater(
       peerRpc(client, origin, 'app.upgrade.status', {
         'transfer_id': 'fixture',

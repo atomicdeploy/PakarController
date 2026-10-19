@@ -12,9 +12,22 @@ const studioDark = ColorScheme.dark(
   surfaceContainerHigh: Color(0xff1b2330),
 );
 
-ThemeData studioTheme() => ThemeData(
+ThemeData studioTheme({Map<String, int> palette = const {}}) => ThemeData(
   fontFamily: 'Vazirmatn',
-  colorScheme: studioDark,
+  colorScheme: studioDark.copyWith(
+    primary: palette['primary'] == null
+        ? null
+        : Color(0xff000000 | palette['primary']!),
+    secondary: palette['secondary'] == null
+        ? null
+        : Color(0xff000000 | palette['secondary']!),
+    surface: palette['surface'] == null
+        ? null
+        : Color(0xff000000 | palette['surface']!),
+    onSurface: palette['on_surface'] == null
+        ? null
+        : Color(0xff000000 | palette['on_surface']!),
+  ),
   useMaterial3: true,
   scaffoldBackgroundColor: const Color(0xff080a0e),
   appBarTheme: const AppBarTheme(

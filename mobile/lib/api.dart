@@ -189,6 +189,28 @@ class PakarApi {
   final _rgbUpdates = StreamController<DeviceStatus>.broadcast(sync: true);
   Stream<DeviceStatus> get rgbUpdates => _rgbUpdates.stream;
   DeviceStatus? get latestStatus => _latestStatus;
+  Duration? get statusObservationAge => _statusAge?.elapsed;
+
+  /// Current full status authority, independent of a route's last rebuild or
+  /// the diagnostic value's revision. RGB/progress-only events do not renew it.
+  DeviceStatus? get freshStatus {
+    final value = _latestStatus, age = statusObservationAge;
+    if (!_connectionWanted ||
+        !_appForeground ||
+        _unsupportedPeer != null ||
+        value == null ||
+        age == null ||
+        age >= const Duration(seconds: 6) ||
+        _verifiedEndpoint != baseUrl ||
+        _verifiedBoard == null ||
+        _verifiedBoot == null ||
+        value.json['board_id'] != _verifiedBoard ||
+        value.json['boot_id'] != _verifiedBoot) {
+      return null;
+    }
+    return value;
+  }
+
   Stopwatch? _statusAge;
   Stopwatch? _liveAge, _socketAge;
   Duration? get liveSilence => _liveAge?.elapsed ?? _socketAge?.elapsed;
@@ -519,87 +541,121 @@ class PakarApi {
       _rememberStatus(actual);
       return actual;
     }
-    if (_socketReady && _channel != null) {
-      final pending = Completer<Map<String, dynamic>?>();
-      _commandReplies[id] = pending;
-      try {
-        _retireStatusRead();
-        _channel!.sink.add(packet);
-        reply = await pending.future.timeout(
-          const Duration(milliseconds: 800),
-          onTimeout: () => null,
-        );
-      } on Exception {
-        /* Same-ID HTTP recovery below; no second intent. */
-      } finally {
-        _commandReplies.remove(id);
-        _retireStatusRead();
-      }
-    }
-    if (revision != connectionRevision || !authorize()) {
-      throw const StaleConnection();
-    }
-    if (reply == null) {
-      final request = http.Request('POST', _uri(transportUrl, '/api/command'))
-        ..headers.addAll(_writeHeaders)
-        ..bodyFields = {'packet': packet}
-        ..followRedirects = false;
-      _retireStatusRead();
-      late final http.Response response;
-      try {
-        response = await _writeResponse(request, const Duration(seconds: 4));
-      } on TimeoutException {
-        throw const OperationUncertain(
-          'No correlated HTTP command receipt arrived within 4 seconds.',
-        );
-      } on SocketException {
-        throw const OperationUncertain(
-          'The connection was lost while waiting for a command receipt.',
-        );
-      } on http.ClientException {
-        throw const OperationUncertain(
-          'The connection was lost while waiting for a command receipt.',
-        );
-      } finally {
-        _retireStatusRead();
-      }
-      _rejectWriteResponse(response);
-      try {
-        final decoded = jsonDecode(response.body);
-        if (decoded is! Map<String, dynamic>) {
-          throw const OperationUncertain(
-            'The board returned a malformed command receipt.',
+    Completer<Map<String, dynamic>?>? pending;
+    try {
+      if (_socketReady && _channel != null) {
+        pending = Completer<Map<String, dynamic>?>();
+        _commandReplies[id] = pending;
+        try {
+          _retireStatusRead();
+          _channel!.sink.add(packet);
+          reply = await pending.future.timeout(
+            const Duration(milliseconds: 800),
+            onTimeout: () => null,
           );
+        } on Exception {
+          /* Same-ID HTTP recovery below; no second intent. */
+        } finally {
+          _retireStatusRead();
         }
-        reply = decoded;
-      } on FormatException {
+      }
+      if (revision != connectionRevision || !authorize()) {
+        throw const StaleConnection();
+      }
+      if (reply == null) {
+        final request = http.Request('POST', _uri(transportUrl, '/api/command'))
+          ..headers.addAll(_writeHeaders)
+          ..bodyFields = {'packet': packet}
+          ..followRedirects = false;
+        _retireStatusRead();
+        final cancel = Completer<void>();
+        Future<Map<String, dynamic>> receipt() async {
+          final response = await _writeResponse(
+            request,
+            const Duration(seconds: 4),
+            cancel: cancel.future,
+          );
+          _rejectWriteResponse(response);
+          try {
+            final decoded = jsonDecode(response.body);
+            if (decoded is! Map<String, dynamic>) {
+              throw const OperationUncertain(
+                'The board returned a malformed command receipt.',
+              );
+            }
+            return decoded;
+          } on FormatException {
+            throw const OperationUncertain(
+              'The board returned a malformed command receipt.',
+            );
+          }
+        }
+
+        try {
+          // The same request ID remains registered throughout HTTP recovery.
+          // A delayed valid WS receipt can settle it and cancel only this HTTP
+          // request; Future.any observes the losing transport's eventual error.
+          reply = pending == null
+              ? await receipt()
+              : await Future.any([receipt(), pending.future]);
+        } on TimeoutException {
+          throw const OperationUncertain(
+            'The board did not confirm this command within 4 seconds. It may have been applied; refresh board state before trying again.',
+          );
+        } on SocketException {
+          throw const OperationUncertain(
+            'The connection was lost while waiting for a command receipt.',
+          );
+        } on http.ClientException {
+          throw const OperationUncertain(
+            'The connection was lost while waiting for a command receipt.',
+          );
+        } finally {
+          if (!cancel.isCompleted) cancel.complete();
+          _retireStatusRead();
+        }
+      }
+      if (revision != connectionRevision || !authorize()) {
+        throw const StaleConnection();
+      }
+      if (reply == null) {
         throw const OperationUncertain(
-          'The board returned a malformed command receipt.',
+          'The command owner retired before a receipt arrived.',
         );
       }
+      final actual = verifyCommandReply(reply, packet, path, values);
+      _acceptIdentity(actual.json);
+      _rememberStatus(actual);
+      return actual;
+    } finally {
+      if (pending != null) {
+        _commandReplies.remove(id);
+        if (!pending.isCompleted) pending.complete(null);
+      }
     }
-    if (revision != connectionRevision || !authorize()) {
-      throw const StaleConnection();
-    }
-    final actual = verifyCommandReply(reply, packet, path, values);
-    _acceptIdentity(actual.json);
-    _rememberStatus(actual);
-    return actual;
   }
 
   /// A current full WS observation can satisfy command admission while an
   /// older background GET is stalled. Preserve the same two-second clock and
   /// peer/owner checks; neither source may revive a retired command owner.
   Future<DeviceStatus> _commandStatus(bool Function() authorize) async {
-    final owner = connectionRevision, board = _verifiedBoard, boot = _verifiedBoot;
+    final owner = connectionRevision,
+        board = _verifiedBoard,
+        boot = _verifiedBoot;
     void admit() {
       _requireNetwork();
-      if (owner != connectionRevision || !appForeground || !authorize() ||
-          board != _verifiedBoard || boot != _verifiedBoot) {
+      if (owner != connectionRevision ||
+          !appForeground ||
+          !authorize() ||
+          board != _verifiedBoard ||
+          boot != _verifiedBoot) {
         throw const StaleConnection();
       }
     }
-    bool fresh() => _latestStatus != null && _statusAge != null &&
+
+    bool fresh() =>
+        _latestStatus != null &&
+        _statusAge != null &&
         _statusAge!.elapsedMilliseconds < 2000;
     admit();
     if (fresh()) return _latestStatus!;
@@ -620,24 +676,44 @@ class PakarApi {
     });
     final connection = connectionUpdates.listen((_) {
       if (result.isCompleted) return;
-      try { admit(); }
-      on Object catch (error, stack) { result.completeError(error, stack); }
-    });
-    unawaited(status().then<void>((value) {
-      if (!result.isCompleted) result.complete(value);
-    }, onError: (Object error, StackTrace stack) {
-      if (!result.isCompleted) {
-        result.completeError(error is TimeoutException
-            ? TimeoutException('Fresh board status unavailable; command was not sent.', readTimeout)
-            : error, stack);
+      try {
+        admit();
+      } on Object catch (error, stack) {
+        result.completeError(error, stack);
       }
-    }));
+    });
+    unawaited(
+      status().then<void>(
+        (value) {
+          if (!result.isCompleted) result.complete(value);
+        },
+        onError: (Object error, StackTrace stack) {
+          if (!result.isCompleted) {
+            result.completeError(
+              error is TimeoutException
+                  ? TimeoutException(
+                      'Fresh board status unavailable; command was not sent.',
+                      readTimeout,
+                    )
+                  : error,
+              stack,
+            );
+          }
+        },
+      ),
+    );
     requestLiveStatus();
     var admitted = false;
     try {
-      final value = await result.future.timeout(readTimeout, onTimeout: () {
-        throw TimeoutException('Fresh board status unavailable; command was not sent.', readTimeout);
-      });
+      final value = await result.future.timeout(
+        readTimeout,
+        onTimeout: () {
+          throw TimeoutException(
+            'Fresh board status unavailable; command was not sent.',
+            readTimeout,
+          );
+        },
+      );
       admit();
       admitted = true;
       return value;
@@ -654,17 +730,34 @@ class PakarApi {
 
   /// One deadline owns both connection/headers and body. Aborting the socket
   /// after that deadline never implies the board rolled a command back.
-  Future<http.Response> _writeResponse(http.Request source, Duration limit) async {
+  Future<http.Response> _writeResponse(
+    http.Request source,
+    Duration limit, {
+    Future<void>? cancel,
+  }) async {
     final abort = Completer<void>();
-    final request = http.AbortableRequest(source.method, source.url,
-        abortTrigger: abort.future)
-      ..headers.addAll(source.headers)
-      ..followRedirects = source.followRedirects
-      ..bodyBytes = source.bodyBytes;
+    final request =
+        http.AbortableRequest(
+            source.method,
+            source.url,
+            abortTrigger: abort.future,
+          )
+          ..headers.addAll(source.headers)
+          ..followRedirects = source.followRedirects
+          ..bodyBytes = source.bodyBytes;
     final elapsed = Stopwatch()..start();
     var timedOut = false;
-    void stop() { if (!abort.isCompleted) abort.complete(); }
-    final timer = Timer(limit, () { timedOut = true; stop(); });
+    void stop() {
+      if (!abort.isCompleted) abort.complete();
+    }
+
+    if (cancel != null) {
+      unawaited(cancel.then((_) => stop(), onError: (Object _) => stop()));
+    }
+    final timer = Timer(limit, () {
+      timedOut = true;
+      stop();
+    });
     StreamIterator<List<int>>? reader;
     try {
       final response = await _client.send(request).timeout(limit);
@@ -672,26 +765,37 @@ class PakarApi {
       final bytes = BytesBuilder(copy: false);
       while (true) {
         final remaining = limit - elapsed.elapsed;
-        if (remaining <= Duration.zero) throw TimeoutException('Command receipt deadline');
+        if (remaining <= Duration.zero) {
+          throw TimeoutException('Command receipt deadline');
+        }
         if (!await reader.moveNext().timeout(remaining)) break;
         if (bytes.length + reader.current.length > 64 * 1024) {
-          throw const OperationUncertain('The command receipt exceeds its size limit.');
+          throw const OperationUncertain(
+            'The command receipt exceeds its size limit.',
+          );
         }
         bytes.add(reader.current);
       }
-      return http.Response.bytes(bytes.takeBytes(), response.statusCode,
-          headers: response.headers, request: request,
-          isRedirect: response.isRedirect,
-          persistentConnection: response.persistentConnection,
-          reasonPhrase: response.reasonPhrase);
+      return http.Response.bytes(
+        bytes.takeBytes(),
+        response.statusCode,
+        headers: response.headers,
+        request: request,
+        isRedirect: response.isRedirect,
+        persistentConnection: response.persistentConnection,
+        reasonPhrase: response.reasonPhrase,
+      );
     } on http.RequestAbortedException {
       if (timedOut) throw TimeoutException('Command receipt deadline');
       rethrow;
     } finally {
       timer.cancel();
       stop();
-      try { await reader?.cancel().timeout(const Duration(milliseconds: 500)); }
-      on Object { /* Cleanup cannot keep a timed-out command pending. */ }
+      try {
+        await reader?.cancel().timeout(const Duration(milliseconds: 500));
+      } on Object {
+        /* Cleanup cannot keep a timed-out command pending. */
+      }
     }
   }
 
@@ -1197,8 +1301,9 @@ class PakarApi {
 
   Future<DeviceStatus> _readStatus(int sequence) async {
     late final DeviceStatus result;
-    try { result = DeviceStatus(await _get('/api/status')); }
-    on Object {
+    try {
+      result = DeviceStatus(await _get('/api/status'));
+    } on Object {
       if (sequence != _statusReadSequence) throw const SupersededRead();
       rethrow;
     }

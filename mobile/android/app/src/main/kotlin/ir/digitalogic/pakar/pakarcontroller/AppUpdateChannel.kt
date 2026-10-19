@@ -2,6 +2,9 @@ package ir.digitalogic.pakar.pakarcontroller
 
 import android.app.Activity
 import android.app.ActivityManager
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -54,7 +57,41 @@ class AppUpdateChannel(private val activity: Activity, messenger: BinaryMessenge
         // Cleanup now follows the explicit local policy through cleanup(); do
         // not sweep files unconditionally during activity construction.
         channel.setMethodCallHandler { call, result ->
-            if (call.method == "uninstall") {
+            if (call.method == "notify") {
+                try {
+                    val code = call.argument<Number>("version_code")?.toLong() ?: 0L
+                    val name = call.argument<String>("version_name") ?: ""
+                    val hash = call.argument<String>("sha256") ?: ""
+                    require(code > 0 && name.length <= 96 && hash.matches(Regex("[a-f0-9]{64}")))
+                    val manager = activity.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    val permitted = (Build.VERSION.SDK_INT < 33 || activity.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) && manager.areNotificationsEnabled()
+                    if (permitted) {
+                        val channelId = "pakar_updates"
+                        if (Build.VERSION.SDK_INT >= 26) manager.createNotificationChannel(NotificationChannel(channelId, "App updates", NotificationManager.IMPORTANCE_DEFAULT))
+                        val intent = Intent(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        val open = PendingIntent.getActivity(activity, 3043, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                        @Suppress("DEPRECATION")
+                        val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(activity, channelId) else Notification.Builder(activity)
+                        val notice = builder
+                            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                            .setContentTitle("PakarController update available")
+                            .setContentText("${name.ifEmpty { "New version" }} · build $code")
+                            .setContentIntent(open).setAutoCancel(true).build()
+                        manager.notify(3043, notice)
+                    }
+                    result.success(mapOf("posted" to permitted, "permission_required" to !permitted))
+                } catch (_: Exception) { result.error("notification_rejected", "Update notification unavailable", null) }
+            } else if (call.method == "notificationPermission") {
+                try {
+                    check(!closed && foreground) { "Return to the app first" }
+                    if (Build.VERSION.SDK_INT >= 33 && activity.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                        activity.requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 3044)
+                    } else {
+                        activity.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName))
+                    }
+                    result.success(mapOf("requested" to true))
+                } catch (_: Exception) { result.error("notification_rejected", "Notification settings unavailable", null) }
+            } else if (call.method == "uninstall") {
                 try {
                     check(!closed && foreground && !activity.isFinishing && document == null && waiting.get() == 0 && transfer == null) { "Finish current work before self-removal" }
                     require(call.argument<Boolean>("confirmed") == true) { "Explicit local confirmation required" }

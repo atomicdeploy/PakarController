@@ -106,6 +106,17 @@ class AppUpdates extends ChangeNotifier {
   }
 
   Future<Json> permission() => rpc('app.upgrade.permission', {});
+  Future<Json> notificationPermission() async =>
+      object(await channel.invokeMethod<dynamic>('notificationPermission'));
+
+  /// Local notification only; peer RPC never exposes this or the installer.
+  Future<Json> notifyUpdate(Json manifest) async => object(
+    await channel.invokeMethod<dynamic>('notify', {
+      'version_code': manifest['version_code'],
+      'version_name': manifest['version_name'] ?? '',
+      'sha256': manifest['sha256'],
+    }),
+  );
   Future<Json> cleanup() async {
     if (busy) throw StateError('Finish the current transfer before cleanup');
     return rpc('app.upgrade.cleanup', {});

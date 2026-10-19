@@ -5,8 +5,13 @@ import 'icons.dart';
 import 'workspace_widgets.dart';
 
 class AppUpdatesPage extends StatefulWidget {
-  const AppUpdatesPage({super.key, required this.coordinator});
+  const AppUpdatesPage({
+    super.key,
+    required this.coordinator,
+    this.extensions = const [],
+  });
   final AppUpdateCoordinator coordinator;
+  final List<Widget> extensions;
   @override
   State<AppUpdatesPage> createState() => _AppUpdatesPageState();
 }
@@ -190,6 +195,20 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
                 height: 4,
                 child: busy ? LinearProgressIndicator(value: fraction) : null,
               ),
+              if (model.available != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Build ${model.available!['version_code']} available · ${model.available!['source_kind']}',
+                ),
+                if (!busy &&
+                    state['transfer_id'] == null &&
+                    model.available!['source_kind'] != 'incoming')
+                  action(
+                    'Receive update',
+                    PakarIcons.cloud,
+                    model.downloadPending,
+                  ),
+              ],
               if (count is int && total is int)
                 Text(
                   '$count / $total bytes',
@@ -339,7 +358,7 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
             ],
           ),
           WorkspaceSection(
-            title: 'APK file URL',
+            title: 'Manual package source',
             icon: PakarIcons.cloud,
             children: [
               field(source, 'HTTP(S) APK URL'),
@@ -373,6 +392,10 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
             icon: PakarIcons.gear,
             children: [
               for (final item in [
+                (
+                  'notify_updates',
+                  'Notify when a compatible update is available',
+                ),
                 ('sharing', 'Share installed app on this network'),
                 ('discover', 'Discover newer app instances automatically'),
                 ('auto_check', 'Check for newer apps automatically'),
@@ -396,7 +419,15 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
                   value: draft[item.$1] == true,
                   onChanged: working || busy
                       ? null
-                      : (v) => setState(() => draft[item.$1] = v),
+                      : (v) => setState(() {
+                          draft[item.$1] = v;
+                          if (item.$1 == 'auto_download' && !v) {
+                            draft['auto_install'] = false;
+                          }
+                          if (item.$1 == 'auto_install' && v) {
+                            draft['auto_download'] = true;
+                          }
+                        }),
                 ),
               const SizedBox(height: 12),
               field(
@@ -428,10 +459,16 @@ class _AppUpdatesPageState extends State<AppUpdatesPage> {
                     PakarIcons.arrowClockwise,
                     model.checkNow,
                   ),
+                  action(
+                    'Enable update notifications',
+                    PakarIcons.gear,
+                    model.updates.notificationPermission,
+                  ),
                 ],
               ),
             ],
           ),
+          ...widget.extensions,
           WorkspaceSection(
             title: 'Advanced app management',
             icon: PakarIcons.gear,

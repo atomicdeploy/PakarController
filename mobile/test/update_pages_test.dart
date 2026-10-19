@@ -117,7 +117,7 @@ void main() {
         expect(tester.takeException(), isNull);
         expect((model.updates as PackageUpdates).native, isEmpty);
         expect(model.sharing, false);
-        expect(model.settings['auto_download'], false);
+        expect(model.settings['auto_download'], true);
       },
     );
 

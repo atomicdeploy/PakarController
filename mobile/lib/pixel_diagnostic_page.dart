@@ -35,8 +35,10 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   PixelProbe get probe => workspace.probe;
   set probe(PixelProbe value) => workspace.probe = value;
   late int revision = widget.api.connectionRevision;
-  late Object? board = widget.observed()?.json['board_id'];
-  late Object? boot = widget.observed()?.json['boot_id'];
+  late Object? board =
+      (widget.api.freshStatus ?? widget.observed())?.json['board_id'];
+  late Object? boot =
+      (widget.api.freshStatus ?? widget.observed())?.json['boot_id'];
   final position = TextEditingController(text: '1');
   late final scroll = ScrollController(
     initialScrollOffset: workspace.vertical,
@@ -46,6 +48,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   final positionFocus = FocusNode();
   StreamSubscription<DeviceStatus>? statusSubscription;
   StreamSubscription<void>? connectionSubscription;
+  Timer? authorityExpiry;
   bool working = false;
   String message =
       'Choose a position and colour, then Show. Nothing is sent automatically.';
@@ -64,7 +67,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
       if (scroll.hasClients) workspace.vertical = scroll.offset;
     });
     workspace.addListener(workspaceChanged);
-    final initial = widget.api.latestStatus ?? widget.observed();
+    final initial = widget.api.freshStatus ?? widget.observed();
     if (initial != null) observe(initial);
     statusSubscription = widget.api.statusUpdates.listen(observe);
     connectionSubscription = widget.api.connectionUpdates.listen((_) {
@@ -72,8 +75,22 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
         setState(() {
           applied = null;
         });
+        armAuthorityExpiry();
       }
     });
+  }
+
+  void armAuthorityExpiry() {
+    authorityExpiry?.cancel();
+    final age = widget.api.statusObservationAge;
+    if (widget.api.freshStatus == null || age == null) return;
+    final remaining = const Duration(seconds: 6) - age;
+    authorityExpiry = Timer(
+      remaining.isNegative ? Duration.zero : remaining,
+      () {
+        if (mounted) setState(() => applied = null);
+      },
+    );
   }
 
   void workspaceChanged() {
@@ -91,6 +108,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
         status.json['board_id'] != board ||
         status.json['boot_id'] != boot) {
       setState(() => applied = null);
+      armAuthorityExpiry();
       return;
     }
     final changed = workspace.observe(status);
@@ -102,16 +120,18 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
         : allOff;
     // A retained workspace may already contain this exact revision. A newly
     // opened page still needs its off state, without replaying any action.
-    if (changed || allOff != observedOff) {
-      setState(() {
-        if (changed) applied = null;
-        allOff = observedOff;
-      });
-    }
+    // Every full status can restore/retire command authority even when the
+    // diagnostic revision is unchanged. A covered parent route is not the
+    // authority source and need not rebuild this page for recovery.
+    setState(() {
+      if (changed) applied = null;
+      allOff = observedOff;
+    });
+    armAuthorityExpiry();
   }
 
   String? get blockedReason {
-    final status = widget.observed();
+    final status = widget.api.freshStatus;
     if (!widget.api.connectionWanted) {
       return 'Disconnected. Connect a board first.';
     }
@@ -142,7 +162,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   bool get authorized => mounted && blockedReason == null;
 
   bool get canUseCurrentConnection {
-    final current = widget.observed();
+    final current = widget.api.freshStatus;
     return !working &&
         widget.api.connectionWanted &&
         widget.api.appForeground &&
@@ -157,7 +177,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
 
   void useCurrentConnection() {
     if (!canUseCurrentConnection) return;
-    final current = widget.observed()!;
+    final current = widget.api.freshStatus!;
     setState(() {
       revision = widget.api.connectionRevision;
       board = current.json['board_id'];
@@ -173,6 +193,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   void dispose() {
     unawaited(statusSubscription?.cancel());
     unawaited(connectionSubscription?.cancel());
+    authorityExpiry?.cancel();
     workspace.removeListener(workspaceChanged);
     positionFocus.dispose();
     position.dispose();

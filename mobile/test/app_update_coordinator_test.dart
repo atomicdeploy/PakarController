@@ -40,6 +40,17 @@ Map<String, dynamic> offer(
 class PackageUpdates extends AppUpdates {
   final downloads = <Map<String, dynamic>>[], pulls = <Map<String, dynamic>>[];
   final native = <String>[];
+  final notifications = <Map<String, dynamic>>[];
+  bool notificationPermissionRequired = false;
+  @override
+  Future<Json> notifyUpdate(Json manifest) async {
+    notifications.add(manifest);
+    return {
+      'posted': !notificationPermissionRequired,
+      'permission_required': notificationPermissionRequired,
+    };
+  }
+
   void Function()? beforeTransfer;
   @override
   Future<Json> rpc(String method, Json params) async {
@@ -124,6 +135,37 @@ class AutomaticPackageUpdates extends PackageUpdates {
   }
 }
 
+class IncomingPackageUpdates extends AutomaticPackageUpdates {
+  final installed = Completer<void>();
+  String digest = '';
+  @override
+  Future<Json> rpc(String method, Json params) async {
+    if (method == 'app.upgrade.begin') {
+      digest = params['sha256'];
+      return state = {
+        'state': 'receiving',
+        'transfer_id': 'incoming',
+        ...params,
+      };
+    }
+    if (method == 'app.upgrade.finish') {
+      return state = {
+        'state': 'verified',
+        'transfer_id': 'incoming',
+        'sha256': digest,
+      };
+    }
+    return super.rpc(method, params);
+  }
+
+  @override
+  Future<Json> install() async {
+    final result = await super.install();
+    if (!installed.isCompleted) installed.complete();
+    return result;
+  }
+}
+
 void main() {
   _SocketTestBinding();
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -185,6 +227,16 @@ void main() {
     // Explicit fixture policy: never contact the new public default catalog.
     result.settings['catalog'] = '';
     result.settings['auto_check'] = false;
+    for (final key in [
+      'sharing',
+      'discover',
+      'auto_download',
+      'auto_install',
+      'auto_cleanup',
+      'notify_updates',
+    ]) {
+      result.settings[key] = false;
+    }
     addTearDown(result.dispose);
     return result;
   }
@@ -220,39 +272,40 @@ void main() {
     }
   });
 
-  test(
-    'Public defaults are configured but destructive automation is opt-in',
-    () {
+  test('Compatible app update defaults are enabled; remote management remains opt-in', () {
+    expect(
+      AppUpdateCoordinator.defaults['catalog'],
+      'https://office.digitalogic.ir/pakar/api/app-updates',
+    );
+    expect(AppUpdateCoordinator.defaults['auto_check'], true);
+    for (final key in [
+      'sharing',
+      'discover',
+      'auto_download',
+      'auto_install',
+      'auto_cleanup',
+      'notify_updates',
+    ]) {
+      expect(AppUpdateCoordinator.defaults[key], true);
+    }
+    for (final key in ['management_enabled', 'allow_remote_cleanup']) {
+      expect(AppUpdateCoordinator.defaults[key], false);
+    }
+    for (final patch in [
+      {'check_interval_seconds': 59},
+      {'check_interval_seconds': 86401},
+      {'auto_install': true, 'auto_download': false},
+      {'auto_check': 'true'},
+    ]) {
       expect(
-        AppUpdateCoordinator.defaults['catalog'],
-        'https://office.digitalogic.ir/pakar/api/app-updates',
+        () => AppUpdateCoordinator.validate({
+          ...AppUpdateCoordinator.defaults,
+          ...patch,
+        }),
+        throwsFormatException,
       );
-      expect(AppUpdateCoordinator.defaults['auto_check'], true);
-      for (final key in [
-        'auto_download',
-        'auto_install',
-        'auto_cleanup',
-        'management_enabled',
-        'allow_remote_cleanup',
-      ]) {
-        expect(AppUpdateCoordinator.defaults[key], false);
-      }
-      for (final patch in [
-        {'check_interval_seconds': 59},
-        {'check_interval_seconds': 86401},
-        {'auto_install': true, 'auto_download': false},
-        {'auto_check': 'true'},
-      ]) {
-        expect(
-          () => AppUpdateCoordinator.validate({
-            ...AppUpdateCoordinator.defaults,
-            ...patch,
-          }),
-          throwsFormatException,
-        );
-      }
-    },
-  );
+    }
+  });
 
   test('Opt-in automatic install requests OS consent once after durable verified-package receipt', () async {
     final updates = AutomaticPackageUpdates(), saved = <Map<String, dynamic>>[];
@@ -277,6 +330,42 @@ void main() {
     expect(updates.cleanups, 0);
   });
 
+  test('Automatic peer push stages a compatible signer and asks Android only after verified finish', () async {
+    final updates = IncomingPackageUpdates();
+    final model = coordinator(updates: updates, save: (_) async {});
+    model.package = package();
+    model.settings.addAll({
+      'sharing': true,
+      'auto_download': true,
+      'auto_install': true,
+    });
+    await model.peers.start(port: 0);
+    await expectLater(
+      model.peers.handleRpc(
+        'app.upgrade.offer',
+        package(version: 8, signer: 'c' * 64),
+      ),
+      throwsFormatException,
+    );
+    expect(updates.state['transfer_id'], isNull);
+    final receipt = await model.peers.handleRpc(
+      'app.upgrade.offer',
+      package(version: 8),
+    );
+    expect(updates.installations, 0);
+    expect(model.consumed, contains('peer:${'a' * 64}'));
+    await model.peers.handleRpc('app.upgrade.finish', {
+      'transfer_id': 'incoming',
+    }, authorization: 'Bearer ${receipt['capability']}');
+    await updates.installed.future.timeout(const Duration(seconds: 2));
+    expect(updates.installations, 1);
+    expect(model.consumed, contains('install:${'a' * 64}'));
+    await expectLater(
+      model.peers.handleRpc('app.upgrade.install', {'transfer_id': 'incoming'}),
+      throwsFormatException,
+    );
+  });
+
   test('Offer is exact-origin, newer, digest/length pinned and active-session leased', () async {
     final model = coordinator();
     model.package = package();
@@ -291,6 +380,9 @@ void main() {
       {'bytes': 0},
       {'bytes': AppUpdates.maximum + 1},
       {'sha256': 'bad'},
+      {
+        'signers': ['c' * 64],
+      },
       {'url': 'https://updates.example:444/PakarController.apk'},
       {'url': 'https://other.example/PakarController.apk'},
       {'url': 'https://user:secret@updates.example/PakarController.apk'},
@@ -311,6 +403,45 @@ void main() {
     await model.setForeground(false);
     expect(() => model.beginCatalogSession(), throwsStateError);
   });
+
+  test(
+    'Compatible announcements notify once and retain Android permission truth',
+    () async {
+      final updates = PackageUpdates()..notificationPermissionRequired = true;
+      final saved = <Map<String, dynamic>>[];
+      final model = coordinator(
+        updates: updates,
+        save: (text) async => saved.add(jsonDecode(text)),
+      );
+      model.package = package();
+      model.settings['notify_updates'] = true;
+      final newer = package(version: 8);
+      await model.announce(
+        newer,
+        sourceKind: 'peer',
+        source: 'http://phone.local:18992',
+      );
+      await model.announce(
+        newer,
+        sourceKind: 'peer',
+        source: 'http://phone.local:18992',
+      );
+      expect(updates.notifications, hasLength(1));
+      expect(saved.last['notified'], ['a' * 64]);
+      expect(model.message, contains('allow Android notifications'));
+      expect(model.available?['version_code'], 8);
+      await expectLater(
+        model.announce(
+          package(version: 9, signer: 'c' * 64),
+          sourceKind: 'peer',
+          source: 'http://other.local:18992',
+        ),
+        throwsFormatException,
+      );
+      expect(updates.notifications, hasLength(1));
+      expect(updates.downloads, isEmpty);
+    },
+  );
 
   test('Write-ahead receipt precedes download and duplicate offers never install or replay', () async {
     final updates = PackageUpdates(), saved = <Map<String, dynamic>>[];
@@ -411,6 +542,62 @@ void main() {
     ]);
     expect(model.consumed, {'peer:${'a' * 64}'});
     expect(updates.native, isEmpty);
+  });
+
+  test('A reviewed discovered offer remains actionable when automatic download is disabled', () async {
+    final updates = PackageUpdates(), discovery = PackageDiscovery();
+    final model = coordinator(
+      updates: updates,
+      discovery: discovery,
+      save: (_) async {},
+    );
+    model.package = package();
+    model.settings['discover'] = true;
+    final remote = package(version: 8);
+    discovery.results = [
+      AppUpdatePeer(
+        name: 'New app',
+        origin: 'http://new.local:18992',
+        instanceId: 'new',
+        verified: true,
+        manifest: {'app_updates': remote},
+      ),
+    ];
+    await model.checkNow();
+    expect(model.available?['source_kind'], 'peer');
+    expect(updates.pulls, isEmpty);
+    await model.downloadPending();
+    await model.downloadPending();
+    expect(updates.pulls, hasLength(1));
+    expect(updates.pulls.single['expected']['sha256'], remote['sha256']);
+  });
+
+  test('A known newer compatible offer prevents automatic pull of an older peer build', () async {
+    final updates = PackageUpdates(), discovery = PackageDiscovery();
+    final model = coordinator(
+      updates: updates,
+      discovery: discovery,
+      save: (_) async {},
+    );
+    model.package = package();
+    model.settings.addAll({'discover': true, 'auto_download': true});
+    await model.announce(
+      package(version: 10, digest: 'd' * 64),
+      sourceKind: 'remote',
+      source: 'https://updates.example/new.apk',
+    );
+    discovery.results = [
+      AppUpdatePeer(
+        name: 'Older app',
+        origin: 'http://old.local:18992',
+        instanceId: 'old',
+        verified: true,
+        manifest: {'app_updates': package(version: 8)},
+      ),
+    ];
+    await model.checkNow();
+    expect(model.available?['version_code'], 10);
+    expect(updates.pulls, isEmpty);
   });
 
   test('Actual read-only HTTP catalog echoes fresh session; review policy does not download', () async {
