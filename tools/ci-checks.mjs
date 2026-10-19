@@ -33,6 +33,7 @@ export const phases={
     ["pwsh", "-NoProfile", "-File", "tests/avr_rx_script_test.ps1"],
     ["pwsh", "-File", "tools/test-network.ps1"],
     ["pwsh", "-File", "tools/test-filesystem-telemetry.ps1"],
+    ["node", "tests/loop_stack_test.mjs"],
     ["pwsh", "-File", "tests/router_upnp_test.ps1"],
     ["node", "tests/web_streaming_test.mjs"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "web-streaming", "-Gate"],

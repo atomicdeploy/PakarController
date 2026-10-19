@@ -75,12 +75,13 @@ bool LedOutput::begin(){
   return true;
 }
 void LedOutput::submit(const CRGB *rgb,uint8_t brightness,bool enabled,uint32_t revision){
-  if(!queue_)return;
-  Frame next;::memcpy(next.rgb,rgb,sizeof(next.rgb));next.brightness=brightness;
-  next.enabled=enabled;next.revision=revision;
+  if(!queue_ || !rgb)return;
+  std::lock_guard<std::mutex> lock(producerGate_);
+  ::memcpy(producer_.rgb,rgb,sizeof(producer_.rgb));producer_.brightness=brightness;
+  producer_.enabled=enabled;producer_.revision=revision;
   // Capacity one: coalesce obsolete complete frames instead of replaying a
   // latency-growing animation backlog. An in-flight DMA buffer is never edited.
-  xQueueOverwrite(queue_,&next);submitted_.fetch_add(1);
+  xQueueOverwrite(queue_,&producer_);submitted_.fetch_add(1);
 }
 void LedOutput::work(){
 #if !PAKAR_S3_LED_USE_DMA

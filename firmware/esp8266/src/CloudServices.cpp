@@ -323,48 +323,50 @@ void CloudServices::publishTelemetry(const String &statusJson, uint32_t now,bool
     const String full=telemetryProvider_();
     if(full.length()>16384) {lastError_=F("Telemetry exceeds bounded snapshot size");return;}
     if(webSocket_.isConnected()) {cooperate();webSocket_.sendTXT(full.c_str());cooperate();}
-    if(mqtt_.connected() && telemetryBoot_.length()) {
-      // Preserve donor /status consumers. Full snapshots use bounded packets,
-      // not a heap-heavy enlarged MQTT buffer. Reassemble only matching complete
-      // snapshot IDs, then verify SHA-256 before parsing the JSON.
-      uint8_t bytes[32];char hex[65];
+    if(mqtt_.connected() && telemetryBoot_.length()) publishTelemetryFragments(full);
+  }
+}
+
+void __attribute__((noinline)) CloudServices::publishTelemetryFragments(const String &full) {
+  // Preserve donor /status consumers. Full snapshots use bounded packets,
+  // not a heap-heavy enlarged MQTT buffer. Reassemble only matching complete
+  // snapshot IDs, then verify SHA-256 before parsing the JSON.
+  uint8_t bytes[32];char hex[65];
 #if defined(ESP32)
-      if (mbedtls_sha256(reinterpret_cast<const unsigned char *>(full.c_str()), full.length(), bytes, 0) != 0) {
-        lastError_ = F("Telemetry integrity hashing failed"); return;
-      }
+  if (mbedtls_sha256(reinterpret_cast<const unsigned char *>(full.c_str()), full.length(), bytes, 0) != 0) {
+    lastError_ = F("Telemetry integrity hashing failed"); return;
+  }
 #else
-      br_sha256_context hash;br_sha256_init(&hash);br_sha256_update(&hash,full.c_str(),full.length());
-      br_sha256_out(&hash,bytes);
+  br_sha256_context hash;br_sha256_init(&hash);br_sha256_update(&hash,full.c_str(),full.length());
+  br_sha256_out(&hash,bytes);
 #endif
-      for(unsigned i=0;i<32;++i)snprintf(hex+i*2,3,"%02x",bytes[i]);
-      const unsigned count=(full.length()+767)/768;
-      const String id=telemetryBoot_+"-"+String(++snapshotSequence_);
-      const String destination=topic(F("/telemetry/part"));
-      for(unsigned i=0;i<count;++i) {
-        const unsigned n=min<unsigned>(768,full.length()-i*768);
-        char encoded[1060];
+  for(unsigned i=0;i<32;++i)snprintf(hex+i*2,3,"%02x",bytes[i]);
+  const unsigned count=(full.length()+767)/768;
+  const String id=telemetryBoot_+"-"+String(++snapshotSequence_);
+  const String destination=topic(F("/telemetry/part"));
+  char encoded[1060]; // Reused only after the full snapshot builder has returned.
+  for(unsigned i=0;i<count;++i) {
+    const unsigned n=min<unsigned>(768,full.length()-i*768);
 #if defined(ESP32)
-        size_t size = 0;
-        if (mbedtls_base64_encode(reinterpret_cast<unsigned char *>(encoded), sizeof(encoded), &size,
-            reinterpret_cast<const unsigned char *>(full.c_str() + i * 768), n) != 0) {
-          lastError_ = F("Telemetry encoding failed"); break;
-        }
-        encoded[size] = 0;
-#else
-        base64_encodestate state;base64_init_encodestate(&state);
-        int size=base64_encode_block(full.c_str()+i*768,n,encoded,&state);
-        size+=base64_encode_blockend(encoded+size,&state);encoded[size]=0;
-#endif
-        JsonDocument part;part["type"]="telemetry-fragment";part["snapshot_id"]=id;
-        part["index"]=i;part["count"]=count;part["total_bytes"]=full.length();
-        part["sha256"]=hex;part["encoding"]="base64";part["data"]=encoded;
-        String packet;serializeJson(part,packet);
-        cooperate();
-        const bool written=mqtt_.publish(destination.c_str(),packet.c_str(),false);
-        if(!written) {dropMqttWrite();lastError_=F("Telemetry fragment publish failed");cooperate();break;}
-        cooperate();
-      }
+    size_t size = 0;
+    if (mbedtls_base64_encode(reinterpret_cast<unsigned char *>(encoded), sizeof(encoded), &size,
+        reinterpret_cast<const unsigned char *>(full.c_str() + i * 768), n) != 0) {
+      lastError_ = F("Telemetry encoding failed"); break;
     }
+    encoded[size] = 0;
+#else
+    base64_encodestate state;base64_init_encodestate(&state);
+    int size=base64_encode_block(full.c_str()+i*768,n,encoded,&state);
+    size+=base64_encode_blockend(encoded+size,&state);encoded[size]=0;
+#endif
+    JsonDocument part;part["type"]="telemetry-fragment";part["snapshot_id"]=id;
+    part["index"]=i;part["count"]=count;part["total_bytes"]=full.length();
+    part["sha256"]=hex;part["encoding"]="base64";part["data"]=encoded;
+    String packet;serializeJson(part,packet);
+    cooperate();
+    const bool written=mqtt_.publish(destination.c_str(),packet.c_str(),false);
+    if(!written) {dropMqttWrite();lastError_=F("Telemetry fragment publish failed");cooperate();break;}
+    cooperate();
   }
 }
 

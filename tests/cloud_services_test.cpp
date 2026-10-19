@@ -2,13 +2,17 @@
 #include <time.h>
 #include <ArduinoJson.h>
 #include "CloudServices.h"
+#include <filesystem>
+#include <fstream>
+#include <iterator>
 
 static unsigned dispatches=0,fullSnapshots=0;
 static String dispatched;
 static String statusJson=String("{\"data\":\"")+std::string(6000,'x')+"\"}";
+static String fullJson="{\"full\":true}";
 static bool handler(const String &message,String &out){++dispatches;dispatched=message;out="submitted";return true;}
 static String status(){return statusJson;}
-static String full(){++fullSnapshots;return "{\"full\":true}";}
+static String full(){++fullSnapshots;return fullJson;}
 static const char *board="esp32s3-907069eac800",*boot="123456789abcdef0123456789abcdef0";
 static String envelope(const char *id,const char *command="cell") {
   JsonDocument d;d["command"]=command;d["board_id"]=board;d["boot_id"]=boot;
@@ -33,7 +37,32 @@ static void progress(){
   assert(cloudServices.ioStats().services==services&&cloudServices.ioStats().publishes==publishes);
   assert(mqtt.packets.size()==packets&&ws.sent.size()==texts);
 }
+static void fragmentStackBoundary(){
+  // Prevent accidentally merging the1KB scratch back into the full telemetry
+  // builder's call chain. This guards source placement; real S3 stack frames
+  // must still be checked in the compiled ELF and on the actual loop task.
+  const auto root=std::filesystem::path(__FILE__).parent_path().parent_path();
+  const auto read=[&](const char* path){
+    std::ifstream input(root/path);assert(input.good());
+    return std::string(std::istreambuf_iterator<char>(input),std::istreambuf_iterator<char>());
+  };
+  const auto source=read("firmware/esp8266/src/CloudServices.cpp");
+  const auto header=read("firmware/esp8266/src/CloudServices.h");
+  const auto caller=source.find("void CloudServices::publishTelemetry(");
+  const auto helper=source.find("void __attribute__((noinline)) CloudServices::publishTelemetryFragments(");
+  const auto serviceAt=source.find("void CloudServices::service(",helper);
+  assert(caller!=std::string::npos&&helper>caller&&serviceAt>helper);
+  const auto buildScope=source.substr(caller,helper-caller),fragmentScope=source.substr(helper,serviceAt-helper);
+  assert(buildScope.find("telemetryProvider_()")!=std::string::npos);
+  assert(buildScope.find("publishTelemetryFragments(full)")!=std::string::npos);
+  assert(buildScope.find("char encoded[1060]")==std::string::npos);
+  assert(buildScope.find("uint8_t bytes[32]")==std::string::npos);
+  assert(fragmentScope.find("char encoded[1060]")!=std::string::npos);
+  assert(fragmentScope.find("telemetryProvider_()")==std::string::npos);
+  assert(header.find("publishTelemetryFragments(const String &full) __attribute__((noinline))")!=std::string::npos);
+}
 int main(){
+  fragmentStackBoundary();
   fs::FS filesystem;assert(cloudConfig.begin(filesystem));
   assert(cloudConfig.setMqtt(true,false,"broker.local",1883,"","","pakar",true));
   assert(cloudConfig.setWebSocket(true,false,"cloud.local",80,"/ws","",true));
@@ -198,5 +227,28 @@ int main(){
   assert(!mqtt.connected()&&io.writeCloses==fragmentBefore.writeCloses+1);
   assert(io.uncleanCloses==fragmentBefore.uncleanCloses+1);
   mqtt.publishResult=true;
+  // Fragment helper preserves the exact serialized envelope and reuses the
+  // same bounded scratch for two full chunks and the short tail. Primitive
+  // doubles output 'A'/zero digest; this is not crypto/base64 implementation proof.
+  fullJson=String("{\"data\":\"")+std::string(2101,'z')+"\"}";
+  cloudServices.suspend();service(true,true,205002,true,false);assert(mqtt.connected());
+  const auto packetStart=mqtt.packets.size();
+  service(true,true,206002,false,true);
+  unsigned fragments=0;String snapshotId;
+  for(size_t i=packetStart;i<mqtt.packets.size();++i){
+    const auto& packet=mqtt.packets[i];if(!packet.topic.endsWith("/telemetry/part"))continue;
+    JsonDocument part;assert(!deserializeJson(part,packet.payload));
+    if(!fragments)snapshotId=part["snapshot_id"].as<const char*>();
+    const size_t bytes=min<size_t>(768,fullJson.length()-fragments*768);
+    JsonDocument expected;
+    expected["type"]="telemetry-fragment";expected["snapshot_id"]=snapshotId;
+    expected["index"]=fragments;expected["count"]=3;expected["total_bytes"]=fullJson.length();
+    expected["sha256"]=String(std::string(64,'0'));expected["encoding"]="base64";
+    expected["data"]=String(std::string((bytes+2)/3*4,'A'));
+    String wire;serializeJson(expected,wire);
+    assert(packet.payload==wire&&!packet.retained);++fragments;
+  }
+  assert(fragments==3);
   puts("Cloud services: admission/6KB streaming, identity/LWT, completion-relative reconnect, cooperative nonrecursive IO and cause/duration fixtures passed (network/crypto doubles, not broker/hardware proof).");
+  puts("Noinline fragment-stack boundary and byte-exact3-fragment envelope/short-tail reuse passed; compiled/physical loop-stack acceptance remains separate.");
 }

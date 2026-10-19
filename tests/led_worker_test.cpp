@@ -33,6 +33,9 @@ std::vector<std::vector<uint8_t>> frames;
 std::vector<void*> allocations;
 uint32_t cycle=0xfffffff0U,highAt=0,lastRise=0;
 unsigned bitCount=0;
+PakarS3::LedOutput* owner=nullptr;
+std::atomic<unsigned> producerCopies{0};
+std::atomic<bool> validateProducers{false};
 std::vector<uint8_t> staticBytes;
 template<class Predicate>void until(Predicate predicate){
  const auto deadline=Clock::now()+std::chrono::seconds(2);
@@ -49,7 +52,16 @@ uint32_t field(const PakarS3::LedOutput& output,const char* name){
 void cleanup(){stopping=true;changed.notify_all();if(worker.joinable())worker.join();for(auto* p:allocations)std::free(p);allocations.clear();finished=true;}
 }
 QueueHandle_t xQueueCreateStatic(unsigned capacity,size_t bytes,uint8_t*,StaticQueue_t* state){assert(capacity==1);state->bytes.resize(bytes);return state;}
-int xQueueOverwrite(QueueHandle_t queue,const void* frame){std::lock_guard<std::mutex> lock(queue->mutex);std::memcpy(queue->bytes.data(),frame,queue->bytes.size());queue->full=true;queue->changed.notify_one();return pdTRUE;}
+int xQueueOverwrite(QueueHandle_t queue,const void* frame){
+ const auto base=reinterpret_cast<uintptr_t>(Fixture::owner),source=reinterpret_cast<uintptr_t>(frame);
+ assert(Fixture::owner&&source>=base&&source+queue->bytes.size()<=base+sizeof(PakarS3::LedOutput));
+ if(Fixture::validateProducers){const auto* pixels=static_cast<const CRGB*>(frame);const auto value=pixels[0].r;
+  assert(value==17||value==93);std::this_thread::yield();
+  for(size_t i=0;i<480;++i)assert(pixels[i].r==value&&pixels[i].g==value&&pixels[i].b==value);
+ }
+ ++Fixture::producerCopies; // Actual submit must pass owned member storage, never a local Frame.
+ std::lock_guard<std::mutex> lock(queue->mutex);std::memcpy(queue->bytes.data(),frame,queue->bytes.size());queue->full=true;queue->changed.notify_one();return pdTRUE;
+}
 int xQueueReceive(QueueHandle_t queue,void* frame,TickType_t delay){
  std::unique_lock<std::mutex> lock(queue->mutex);
  if(!queue->full&&delay)queue->changed.wait_for(lock,std::chrono::milliseconds(delay),[&]{return queue->full||Fixture::stopping.load();});
@@ -60,6 +72,7 @@ int xQueueReceive(QueueHandle_t queue,void* frame,TickType_t delay){
 unsigned uxQueueMessagesWaiting(QueueHandle_t queue){std::lock_guard<std::mutex> lock(queue->mutex);return queue->full?1:0;}
 int xTaskCreatePinnedToCore(void(*run)(void*),const char*,unsigned bytes,void* context,unsigned priority,void*,int core){
  assert(core==1&&bytes==4096&&priority>=2);assert(!Fixture::worker.joinable());
+ Fixture::owner=static_cast<PakarS3::LedOutput*>(context);
  Fixture::worker=std::thread([=]{try{run(context);}catch(const Fixture::Stop&){} });return pdPASS;
 }
 void vTaskDelay(TickType_t delay){if(Fixture::stopping)throw Fixture::Stop{};std::this_thread::sleep_for(std::chrono::milliseconds(delay));if(Fixture::stopping)throw Fixture::Stop{};}
@@ -118,6 +131,7 @@ void esp_rom_delay_us(unsigned micros){
  std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
+void concurrentProducers(PakarS3::LedOutput& output);
 #if !PAKAR_S3_LED_USE_DMA
 int gpio_reset_pin(gpio_num_t pin){assert(pin==4);return ESP_OK;}
 int gpio_set_direction(gpio_num_t pin,int mode){assert(pin==4&&mode==GPIO_MODE_OUTPUT);return ESP_OK;}
@@ -165,9 +179,24 @@ void staticFunctional(){
  output.submit(rgb,255,false,2002);Fixture::until([&]{return Fixture::field(output,"revision")==2002;});
  const auto off=Fixture::count();std::this_thread::sleep_for(std::chrono::milliseconds(30));assert(Fixture::count()==off);
  {std::lock_guard<std::mutex> lock(Fixture::mutex);for(auto b:Fixture::frames.back())assert(b==0);}
- Fixture::cleanup();puts("Actual static worker: startup black, full480 RGB encoding/cycle-wrap timing,2000 mailbox coalescing, no unchanged refresh, Off black, frame-boundary/nested holds and timeout rejection passed.");
+ concurrentProducers(output);
+ Fixture::cleanup();puts("Actual static worker: stackless serialized member submission,startup black, full480 RGB encoding/cycle-wrap timing,2000 mailbox coalescing, no unchanged refresh, Off black, frame-boundary/nested holds and timeout rejection passed.");
 }
 #endif
+
+void concurrentProducers(PakarS3::LedOutput& output){
+ assert(PakarS3::LedOutput::acquireFlashPause());
+ std::atomic<bool> start{false};
+ auto producer=[&](uint8_t channel){CRGB frame[480];for(auto& pixel:frame)pixel={channel,channel,channel};
+  while(!start.load())std::this_thread::yield();
+  for(uint32_t i=0;i<100;++i)output.submit(frame,channel,true,4000U+uint32_t(channel)*100U+i);
+ };
+ Fixture::validateProducers=true;
+ std::thread a(producer,17),b(producer,93);start=true;a.join();b.join();Fixture::validateProducers=false;
+ CRGB final[480]{};output.submit(final,255,false,9999);
+ PakarS3::LedOutput::releaseFlashPause();Fixture::until([&]{return Fixture::field(output,"revision")==9999;});
+ assert(Fixture::producerCopies.load()>=2200);
+}
 
 void functional(){
  PakarS3::LedOutput output;assert(output.begin());CRGB rgb[480];for(auto& p:rgb)p={255,0,0};
@@ -207,7 +236,8 @@ void functional(){
  {std::lock_guard<std::mutex> lock(Fixture::mutex);const auto& bytes=Fixture::frames.back();for(size_t i=0;i<480*24;++i){rmt_symbol_word_t symbol;std::memcpy(&symbol,bytes.data()+i*sizeof(symbol),sizeof(symbol));assert(symbol.duration0==PakarS3::zeroHigh&&symbol.duration1==PakarS3::zeroLow);}}
  output.submit(rgb,255,true,2003);Fixture::until([&]{return Fixture::field(output,"revision")==2003;});
  const auto resumed=Fixture::count();std::this_thread::sleep_for(std::chrono::milliseconds(30));assert(Fixture::count()==resumed&&resumed==off+1);
- Fixture::cleanup();puts("Actual DMA worker:1440-byte internal source,SDK MSB-first bytes encoding/timing,300us post-completion latch,startup black,immutable TX,2000 mailbox submissions/coalescing,no unchanged replay,off black/sleep/on resume,boundary/nested/concurrent holds and failed-quiesce recovery passed.");
+ concurrentProducers(output);
+ Fixture::cleanup();puts("Actual DMA worker: stackless serialized member submission,1440-byte internal source,SDK MSB-first bytes encoding/timing,300us post-completion latch,startup black,immutable TX,2000 mailbox submissions/coalescing,no unchanged replay,off black/sleep/on resume,boundary/nested/concurrent holds and failed-quiesce recovery passed.");
 }
 void failure(bool disableFails,bool shortCompletion=false){
  PakarS3::LedOutput output;Fixture::timeout=!shortCompletion;Fixture::shortCompletion=shortCompletion;Fixture::disableFails=disableFails;Fixture::blockDisable=true;CRGB rgb[480]{};assert(output.begin());output.submit(rgb,255,true,1);

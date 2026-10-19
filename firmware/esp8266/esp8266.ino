@@ -3560,7 +3560,9 @@ void registerApi() {
     });
 }
 
-void serviceStream() {
+// The 1300-byte packet exists only during stream processing, not under cloud
+// snapshots/TLS after GCC inlining into the loop owner's fixed 8KiB stack.
+__attribute__((noinline)) void serviceStream() {
   const int packetSize = stream.parsePacket();
   if (packetSize < 10 || packetSize > 1300) return;
   uint8_t packet[1300];
@@ -3839,6 +3841,20 @@ void setup() {
 #endif
 }
 
+namespace {
+// Keep the bounded 1300-byte message workspace out of the loop owner's stack
+// while cloud telemetry builds its own nested snapshots. This separate call
+// completes before cloud service; no message or command is moved to a new task.
+__attribute__((noinline)) void serviceQueuedWebSocketMessage() {
+  LoopMessages::Message message;
+  if(loopMessages.pop(message)){
+    if(message.opcode==0xfe) grid.discardStaged((1ULL << 63) | message.client);
+    else if(message.epoch==server.ingressEpoch() && webAccess.socketAllowed(message.client))
+      handleWebSocketMessage(message.client,message.opcode,message.data,message.length);
+  }
+}
+}
+
 void loop() {
 #if defined(ARDUINO_ARCH_ESP32)
   serviceBle();
@@ -3878,12 +3894,7 @@ void loop() {
     setAvrTransmitBlocked(false);
   }
   server.service();
-  LoopMessages::Message message;
-  if(loopMessages.pop(message)){
-    if(message.opcode==0xfe) grid.discardStaged((1ULL << 63) | message.client);
-    else if(message.epoch==server.ingressEpoch() && webAccess.socketAllowed(message.client))
-      handleWebSocketMessage(message.client,message.opcode,message.data,message.length);
-  }
+  serviceQueuedWebSocketMessage();
   serviceAttentionCues();
   serviceUpgrade();
   if (remoteFirmware.busy()) {

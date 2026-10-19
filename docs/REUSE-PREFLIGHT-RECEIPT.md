@@ -2,6 +2,22 @@
 
 ## Rainbow pause / DMA refill and optional LAN checkpoint
 
+The first candidate2194352B/SHA ec2d49733d5f8160127fdc4a971c96992f98fb327031bbde80451944befb8a70
+was actually installed by LAN OTA and full running-image readback, but is NOT
+accepted: restoring MQTT exposed a repeatable loopTask stack-canary panic.
+Actual exclusive read-only COM22 capture and exact-ELF address decoding locate
+buildStatusJson under buildTelemetryJson/publishTelemetry/loop. This is an actual
+new failure, not a brownout or a successful delivery disguised by counters.
+Cloud reentry was inspected; the measured caller frames instead exceeded safe
+headroom. The corrected source separates noinline message/stream/fragment scratch
+lifetimes and uses a serialized producer-owned LED mailbox, retaining queue1 and
+immutable worker/DMA storage. It does not increase the SDK loop stack or change
+SDK flags. Actual-source worker concurrency and both-platform cloud wire-format
+fixtures pass. The corrected warm SDK build passes; live recovery remains open.
+ASUS ROM inventory confirms the same MAC, CRC-bound selected VALID seq23/app0;
+the application is held in download mode pending the corrected application-only
+USB recovery. Bootloader, partitions, saved settings and rollback app1 stay intact.
+
 The user now reports active rainbow with only about23 cells reliable and a
 two-second pause every five seconds. Fresh ASUS reads confirm the same running
 647bbf boot, active rainbow and cloud maximum service2552ms. Submission/completion

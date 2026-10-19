@@ -41,6 +41,10 @@ class LedOutput {
   QueueHandle_t queue_=nullptr;
   StaticQueue_t queueState_{};
   alignas(4) uint8_t queueBytes_[sizeof(Frame)]{};
+  // Persistent producer scratch, never a ~1.5 KiB frame on the loop/TLS stack.
+  // Serialize complete copies until xQueueOverwrite has copied the mailbox.
+  std::mutex producerGate_;
+  Frame producer_{};
   // Worker-owned frame: producers can only overwrite the separate mailbox.
   Frame current_{};
   std::atomic<bool> ready_{false},active_{false};

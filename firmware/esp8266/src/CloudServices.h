@@ -74,6 +74,9 @@ class CloudServices {
   void closeMqtt(CloseReason reason);
   void dropMqttWrite();
   void publishTelemetry(const String &statusJson, uint32_t now,bool includeFullTelemetry);
+  // Keep fragment/hash/base64 scratch OFF the telemetryProvider/buildStatus
+  // call chain. noinline is part of the S3 loop-task stack budget, not style.
+  void publishTelemetryFragments(const String &full) __attribute__((noinline));
   bool publishMqtt(const String &destination,const String &json,bool retained);
   void commandReply(bool fromMqtt,const char *code,const char *requestId,
                     bool accepted,const String &message);
