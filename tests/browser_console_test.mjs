@@ -13,6 +13,9 @@ let clock=100;
 const context=vm.createContext({console:sink,clock:()=>clock,
   document:{documentElement:{dataset:{palette:'studio',theme:'dark'}}},
   PEALAYER_PALETTES:JSON.parse(read('assets/themes/palettes.json'))});
+// Exercise the shipped localized text owner too, not a test-only setUiText
+// stub. WebSocket state labels must remain live when language changes.
+vm.runInContext(read('assets/web/rayanlamp.js')+'\n'+read('assets/web/localization.js'),context);
 vm.runInContext(module+'\nglobalThis.output=new StyledBrowserConsole(console,clock);',context);
 const run=code=>vm.runInContext(code,context);
 const clear=()=>{calls.length=0};
@@ -123,6 +126,12 @@ Object.assign(context,{location:{protocol:'http:',host:'ledboard.local'},wsState
 context.refreshAuthenticated=async()=>{};
 vm.runInContext('let authenticated=true,webSocketPaused=false,socket=null;\n'+read('assets/web/realtime-retry.js')+'\n'+web.slice(web.indexOf('function connectWs()'),web.indexOf('async function post(')),context);
 clear();run('connectWs()');const first=sockets[0];first.onopen();
+assert.equal(context.wsState.textContent,'WebSocket live');
+run("uiLanguagePreference='fa';applyLocalization()");
+assert.equal(context.wsState.textContent,run("uiTr('WebSocket live')"));
+assert.notEqual(context.wsState.textContent,'WebSocket live');
+run("uiLanguagePreference='en';applyLocalization()");
+assert.equal(context.wsState.textContent,'WebSocket live');
 assert.equal(new URL(first.url).origin,'ws://ledboard.local');assert.equal(new URL(first.url).pathname,'/ws');
 assert.equal(new URL(first.url).searchParams.get('version'),'0.2.8');assert.equal(events()[0].args[4].event,'websocket.connected');
 assert.deepEqual(first.sent,['{"type":"status"}']);
@@ -132,6 +141,7 @@ const staleOpen=first.onopen,staleClose=first.onclose;
 run('connectWs()');staleOpen();staleClose({code:1006});first.onerror();
 assert.equal(events().length,1);assert.equal(timers.length,0);
 sockets[1].onclose({code:1006,reason:'raw-secret'});
+assert.equal(context.wsState.textContent,'WebSocket retrying');
 assert.equal(events().at(-1).args[4].error_code,1006);assert.equal(timers.length,1);assert.equal(stops,1);
 assert.doesNotMatch(JSON.stringify(calls),/raw-secret/);
 run('webSocketPaused=true');sockets[1].onclose({code:1006});assert.equal(timers.length,1);

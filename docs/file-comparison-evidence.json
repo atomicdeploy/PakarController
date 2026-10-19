@@ -11241,12 +11241,12 @@
       "proof": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "95f21949024b134ebedb74fddc77b88891848a54bdfd53832b73f517f63657c9",
+          "sha256": "a8277aae5b51218dae4eaf625d2e05a6cd9817e25057c46976a2ae6e67f61916",
           "anchor": "Actual allowlist + recursive redaction"
         },
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "95f21949024b134ebedb74fddc77b88891848a54bdfd53832b73f517f63657c9",
+          "sha256": "a8277aae5b51218dae4eaf625d2e05a6cd9817e25057c46976a2ae6e67f61916",
           "anchor": "Actual WebSocket ownership"
         }
       ],
@@ -11264,7 +11264,7 @@
       "targets": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "95f21949024b134ebedb74fddc77b88891848a54bdfd53832b73f517f63657c9",
+          "sha256": "a8277aae5b51218dae4eaf625d2e05a6cd9817e25057c46976a2ae6e67f61916",
           "anchor": "Actual RayanLamp browser-console.test.ts scenarios"
         }
       ],
@@ -11286,7 +11286,7 @@
       "proof": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "95f21949024b134ebedb74fddc77b88891848a54bdfd53832b73f517f63657c9",
+          "sha256": "a8277aae5b51218dae4eaf625d2e05a6cd9817e25057c46976a2ae6e67f61916",
           "anchor": "Real HTTP adapter"
         }
       ],

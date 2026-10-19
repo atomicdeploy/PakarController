@@ -4635,11 +4635,11 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `024ed161c6c71655ef67cdbed8cf743fd33864118604737a5f44f533bf9f48f5`.
 
-- Target: `tests/browser_console_test.mjs:1 [UTF8-LF sha256=95f21949024b134ebedb74fddc77b88891848a54bdfd53832b73f517f63657c9; anchor=Actual RayanLamp browser-console.test.ts scenarios]`.
+- Target: `tests/browser_console_test.mjs:1 [UTF8-LF sha256=a8277aae5b51218dae4eaf625d2e05a6cd9817e25057c46976a2ae6e67f61916; anchor=Actual RayanLamp browser-console.test.ts scenarios]`.
 - Retained: All actual donor startup, five-level dispatch, allowlist/redaction, keyed dedupe, Error-code-only and control/Bidi scenarios ported against shipped code. Added bounds/cycles/prototype, invalid sink/date, current palette, real HTTP secret/no-replay/quiet-poll, stale WebSocket ownership and canonical embedding checks.
 - Omitted/replaced code: `Vitest describe/it.each/vi sink mocks`. Disposition: **replaced**. Reason: Built-in Node assertions/VM sink and controlled time run the same scenarios plus real production adapter code without adding dependencies or build caches.
 - Omitted/replaced code: `Lamp state names and fixed brand color expectations`. Disposition: **replaced**. Reason: Tests assert adapted device vocabulary and actual shared Pealayer colors rather than claiming the lamp identity/colors apply to Pakar.
-- Test-code evidence: `tests/browser_console_test.mjs:76 [UTF8-LF sha256=95f21949024b134ebedb74fddc77b88891848a54bdfd53832b73f517f63657c9; anchor=Real HTTP adapter]`.
+- Test-code evidence: `tests/browser_console_test.mjs:79 [UTF8-LF sha256=a8277aae5b51218dae4eaf625d2e05a6cd9817e25057c46976a2ae6e67f61916; anchor=Real HTTP adapter]`.
 - Remaining: VM execution is not pixels, deployment, LAN or physical board acceptance.
 
 ### RayanLamp: `webui/src/browser-console.ts`
@@ -4654,8 +4654,8 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot-no-git`. Origina
 - Omitted/replaced code: `Hardcoded lamp palettes/gradient and monospace badge typography`. Disposition: **replaced**. Reason: Current shared Pealayer palette and controller typography are resolved on each emission; no second fixed color engine or unwanted tint.
 - Omitted/replaced code: `Unbounded recent Map, boundary-only sensitiveKey, caller-controlled percent format, raw DOM id/function name and throwing host sink`. Disposition: **replaced**. Reason: 256-key/60-second bounds, camelCase redaction, percent escaping, minimal DOM/function summaries and fail-closed sink protect long-lived firmware clients and secret-bearing host data.
 - Omitted/replaced code: `Vitest/TypeScript runtime packaging`. Disposition: **replaced**. Reason: ESP's existing classic-script embedding and Node VM tests require no React/Vitest dependency, donor build or duplicate firmware copy.
-- Test-code evidence: `tests/browser_console_test.mjs:32 [UTF8-LF sha256=95f21949024b134ebedb74fddc77b88891848a54bdfd53832b73f517f63657c9; anchor=Actual allowlist + recursive redaction]`.
-- Test-code evidence: `tests/browser_console_test.mjs:118 [UTF8-LF sha256=95f21949024b134ebedb74fddc77b88891848a54bdfd53832b73f517f63657c9; anchor=Actual WebSocket ownership]`.
+- Test-code evidence: `tests/browser_console_test.mjs:35 [UTF8-LF sha256=a8277aae5b51218dae4eaf625d2e05a6cd9817e25057c46976a2ae6e67f61916; anchor=Actual allowlist + recursive redaction]`.
+- Test-code evidence: `tests/browser_console_test.mjs:121 [UTF8-LF sha256=a8277aae5b51218dae4eaf625d2e05a6cd9817e25057c46976a2ae6e67f61916; anchor=Actual WebSocket ownership]`.
 - Scoped advantage: Adds bounded dedupe lifetime, camelCase/prototype/format protection, newest-socket ownership and diagnostic failure containment. Source-specific continuing incidents coalesce interleaved GET/WS failures until recovery while different error codes and every explicit write outcome remain visible; recovery reports occurrence counts. Executable production-module/API/socket fixtures cover these adaptations.
 - Remaining: Actual LAN/physical firmware runtime remains separate. Other donor app-level settings/audio/diagnostics consumers are independently inventoried and pending, not certified by this utility import.
 

@@ -1,5 +1,23 @@
 # Donor-first preflight receipt
 
+## Release reconciliation: browser fixture and live inventory
+
+Fresh GitHub enumeration found zero open Pakar PRs and only main locally/remotely;
+no unique local commits, stashes or extra worktrees were discarded. Complete
+conversation enumeration was refreshed, with new bodies still pending review.
+Exact-head CI39216691834 failed in browser_console_test: the actual WebSocket
+handler now calls setUiText, but its isolated VM omitted the localization owner.
+Consulted error-management/web-presentation and the exact RayanLamp test path,
+reread browser-console.ts and browser-console.test.ts through EOF, and loaded
+the real Pakar rayanlamp/localization modules instead of adding a no-op stub.
+English/Persian/language-switch and reconnect-label assertions pass alongside
+all existing incident, redaction, owner and no-replay assertions. Rebound only
+this reviewed test's four existing hashes; no production behavior was changed
+to satisfy the fixture. A mistaken browser-console concern lookup was rejected;
+the existing error-management index supplies the actual matching route.
+Builds and deployments have separate receipts; this correction is not hardware
+or full donor-parity acceptance.
+
 ## ESP0.2.8 Internet migration and temporary panel access
 
 User authorized ESP update and panel password replacement. Changed only the
