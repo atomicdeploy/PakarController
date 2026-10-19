@@ -1,8 +1,44 @@
 #pragma once
+#include "FilesystemTelemetry.h"
+#if defined(ARDUINO_ARCH_ESP32)
+#include <esp_littlefs.h>
+#endif
 // Included inside the application's namespace after peripheral/transport code.
 // PU850 route adaptation owns no duplicate UART/peripheral implementation.
 ClientTelemetry clientTelemetry;
 bool bootIntegrity=false;
+PakarFilesystem::Observation filesystemTelemetry;
+bool readFilesystemTelemetry(uint32_t &total,uint32_t &used) {
+#if defined(ARDUINO_ARCH_ESP32)
+  // Exactly one paired query of the partition mounted by LittleFS.begin(false).
+  // Unlike separate totalBytes()/usedBytes(), this never duplicates that query.
+  size_t capacity=0,occupied=0;
+  if(esp_littlefs_info("spiffs",&capacity,&occupied)!=ESP_OK||
+      capacity>UINT32_MAX||occupied>UINT32_MAX)return false;
+  total=static_cast<uint32_t>(capacity);used=static_cast<uint32_t>(occupied);return true;
+#else
+  FSInfo info;if(!LittleFS.info(info))return false;
+  total=info.totalBytes;used=info.usedBytes;return true;
+#endif
+}
+void captureBootFilesystemTelemetry(bool mounted) {
+  // Setup calls this BEFORE grid.begin: no normal renderer/network service may
+  // inherit a full-filesystem traversal. Failed mount/probe stays unknown.
+  filesystemTelemetry.capture(mounted,true,commandClock,readFilesystemTelemetry);
+}
+bool refreshFilesystemTelemetry(String &reason) {
+  // Optional EXPLICIT maintenance call only. Never automatically called by
+  // telemetry/status, and never scan even a static enabled output's repair loop.
+  const PakarFilesystem::RefreshSafety safety{grid.outputEnabled(),otaActive,
+      otaRebootAt!=0,remoteFirmware.busy(),artifactReaders!=0,bool(uploadFile),
+      avrUploadOwner!=0,urbootBusy.get(),networkApplyPending,cloudApplyPending,cloudServices.ioActive()};
+  const bool accepted=filesystemTelemetry.capture(filesystemTelemetry.mounted(),safety.idle(),
+      commandClock,readFilesystemTelemetry);
+  const auto state=filesystemTelemetry.snapshot(commandClock());
+  if(accepted)reason=F("Filesystem observation refreshed");
+  else reason=PakarFilesystem::code(state.error);
+  return accepted;
+}
 // Running-image identity is immutable until reboot. Capture once before cloud
 // servicing, not a whole-image verification/LED flash hold on every telemetry
 // interval. Update admission still performs its independent fresh checks.
@@ -119,7 +155,6 @@ String buildTelemetryJson() {
   e[F("internal_heap_minimum_free_bytes")]=heap_caps_get_minimum_free_size(internalCaps);
   e[F("reset_reason")]=SystemPlatform::resetReason();e[F("reset_info")]=nullptr;
   e[F("psram_bytes")]=ESP.getPsramSize();e[F("free_psram_bytes")]=ESP.getFreePsram();
-  e[F("filesystem")][F("total_bytes")]=LittleFS.totalBytes();e[F("filesystem")][F("used_bytes")]=LittleFS.usedBytes();
   const auto *runningPartition=esp_ota_get_running_partition();
   const auto *bootPartition=esp_ota_get_boot_partition();
   if(runningPartition)e[F("ota")][F("running_offset")]=runningPartition->address;
@@ -136,8 +171,8 @@ String buildTelemetryJson() {
   e[F("flash_real_bytes")]=ESP.getFlashChipRealSize();
   e[F("largest_heap_block_bytes")]=ESP.getMaxFreeBlockSize();e[F("heap_fragmentation_percent")]=ESP.getHeapFragmentation();
   e[F("reset_reason")]=ESP.getResetReason();e[F("reset_info")]=ESP.getResetInfo();
-  FSInfo fs;if(LittleFS.info(fs)) {e[F("filesystem")][F("total_bytes")]=fs.totalBytes;e[F("filesystem")][F("used_bytes")]=fs.usedBytes;}
 #endif
+  PakarFilesystem::append(e[F("filesystem")].to<JsonObject>(),filesystemTelemetry.snapshot(commandClock()));
   e[F("cpu_mhz")]=ESP.getCpuFreqMHz();e[F("flash_bytes")]=ESP.getFlashChipSize();
   e[F("flash_hz")]=bootTelemetryImage.flashHz;
   e[F("flash_mode")]=bootTelemetryImage.flashMode;

@@ -14,6 +14,7 @@ Write-Host 'Protocol round-trip, bounds, and corruption tests passed.'
 & (Join-Path $PSScriptRoot 'test-panel.ps1')
 & (Join-Path $PSScriptRoot 'test-led-pipeline.ps1')
 & (Join-Path $PSScriptRoot 'test-led-worker.ps1')
+& (Join-Path $PSScriptRoot 'test-led-rmt-ring.ps1')
 $mndpBinary = Join-Path $outputDirectory 'mndp_test.exe'
 & g++ -std=c++17 -Wall -Wextra -Werror (Join-Path $projectRoot 'tests/mndp_test.cpp') -o $mndpBinary
 if ($LASTEXITCODE -ne 0) { throw 'MNDP packet compilation failed' }
@@ -57,6 +58,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Remote firmware state-machine tests failed' }
 & (Join-Path $PSScriptRoot 'test-cloud-management.ps1')
 & (Join-Path $PSScriptRoot 'test-command-values.ps1')
 & (Join-Path $PSScriptRoot 'test-ethernet.ps1')
+& (Join-Path $PSScriptRoot 'test-lldp.ps1')
 & (Join-Path $PSScriptRoot 'test-ethernet-config.ps1')
 & (Join-Path $PSScriptRoot 'test-ethernet-management.ps1')
 & (Join-Path $PSScriptRoot 'test-network-path.ps1')

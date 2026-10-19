@@ -2827,6 +2827,10 @@ class StatusBar extends StatelessWidget {
                 ? 'State unavailable'
                 : [
                     if (status!.hostname.isNotEmpty) status!.hostname,
+                    if (status!.json['ethernet'] is Map &&
+                        status!.json['ethernet']['ipv4_ready'] == true &&
+                        status!.json['ethernet']['ip'] is String)
+                      'Ethernet ${status!.json['ethernet']['ip']}',
                     if (status!.json['station_connected'] == true &&
                         status!.stationIp.isNotEmpty)
                       status!.stationIp,

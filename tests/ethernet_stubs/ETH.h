@@ -5,6 +5,7 @@
 #include "Arduino.h"
 #include "IPAddress.h"
 #include "SPI.h"
+#include "esp_eth_driver.h"
 #include <functional>
 using network_event_handle_t = size_t;
 enum arduino_event_id_t { ARDUINO_EVENT_ETH_START };
@@ -33,6 +34,7 @@ struct EthernetFixtureDevice {
   bool begin(int type, int phy, int cs, int irq, int rst, SPIClass &spi, uint8_t mhz) {
     ++begins; usedType=type; usedPhy=phy; usedCs=cs; usedIrq=irq; usedReset=rst; usedBus=spi.bus; usedMhz=mhz;
     driver = this; interface = this;
+    esp_eth_update_input_path_info(driver,ethernetFixtureInput,interface);
     if (Network.callback) Network.callback(ARDUINO_EVENT_ETH_START, {driver});
     return beginResult;
   }
@@ -58,5 +60,7 @@ struct EthernetFixtureDevice {
   IPAddress subnetMask() const { return mask; }
   IPAddress dnsIP(uint8_t) const { return dns; }
   String macAddress() const { return "02:00:00:00:00:01"; }
+  uint16_t linkSpeed()const{return 100;}
+  bool fullDuplex()const{return true;}
 };
 inline EthernetFixtureDevice ETH;

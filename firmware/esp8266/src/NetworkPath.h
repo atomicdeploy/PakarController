@@ -23,11 +23,12 @@ inline State &state() { static State value; return value; }
 #if defined(ARDUINO_ARCH_ESP32)
 inline PakarS3::EthernetPort &ethernet() { return state().ethernet; }
 #endif
-inline void begin(const char *hostname) {
+inline void begin(const char *hostname,bool ethernetEnabled=true) {
 #if defined(ARDUINO_ARCH_ESP32)
-  if (ethernet().configured()) ethernet().begin(hostname);
+  if (ethernet().configured()&&ethernetEnabled) ethernet().begin(hostname);
+  else if(ethernet().configured())ethernet().end();
 #else
-  (void)hostname;
+  (void)hostname;(void)ethernetEnabled;
 #endif
 }
 inline bool wifiReady() {

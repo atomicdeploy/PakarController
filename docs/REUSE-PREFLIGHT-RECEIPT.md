@@ -1,5 +1,41 @@
 # Donor-first preflight receipt
 
+## Rainbow pause / DMA refill and optional LAN checkpoint
+
+The user now reports active rainbow with only about23 cells reliable and a
+two-second pause every five seconds. Fresh ASUS reads confirm the same running
+647bbf boot, active rainbow and cloud maximum service2552ms. Submission/completion
+counters cannot prove the waveform or the remaining cells are correct. Preserve
+the current scene; the older output-disabled instructions below are historical.
+
+Actual pinned IDF5.5.5 RMT/GDMA allocation, bytes/copy encoders and EOF handling
+were read, not inferred from the completion counter. The scoped GDMA adapter now
+requests/measures level3 on core1 for this channel only; changed prerequisites,
+source/flags or measured ownership fail closed. The native two-half DMA ring
+still requires timely refills. The actual-source RGB/BGR ring regression model
+passes but is explicitly not physical timing proof. Donor PCController
+AddressableLeds files were reread and the concrete replacement/omissions are in
+the existing hash-bound ledger.
+
+Actual LittleFS info calls were walking storage during full telemetry. That
+diagnostic is now a boot-cached, age/known/null observation; storage admission
+retains its separate fresh check. The same renderer also advances between cloud
+writes, without a second effects engine or unsafe reentry. Focused filesystem,
+LED pipeline/worker and IRQ guard fixtures pass. Synchronous individual cloud
+calls remain a measured limitation, not a completed nonblocking-I/O claim.
+
+Optional native ETH/lwIP W5500, bounded per-interface NBNS/NBSTAT and gated LLDP
+have source/host fixtures. Fresh Ethernet is disabled by default. Native/Web/
+mobile addressing editors have ACK/readback fixtures and built packages, not
+installed-client or W5500 acceptance. Actual PU NetDiscovery and SSDPDevice
+sources were read; the ledger remains240 comparisons/4433 pending/197 gaps.
+
+Read-only ASUS LAN/IGD inventory found ledboard SSDP but no router IGD descriptor.
+No router login, port mapping, firewall change or Ethernet enable was made.
+Router credentials and physical W5500 confirmation remain external gates. The
+integrated S3 SDK build/approved LAN OTA are not yet deployment evidence at this
+source checkpoint; record the eventual image/boot/readback separately.
+
 ## Latest deployment and bounded CI recovery
 
 Final follow-up cc8e711 is also actually deployed:2074112B/SHA

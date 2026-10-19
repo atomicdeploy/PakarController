@@ -77,6 +77,30 @@ function ConvertFrom-PakarMndp([byte[]]$Packet) {
   }
   return $fields
 }
+function New-PakarNbnsQuery([string]$Name,[bool]$Status=$false) {
+  $label=$Name.ToUpperInvariant()
+  if($Status){$label='*'}elseif($label -notmatch '^[A-Z0-9](?:[A-Z0-9-]{0,13}[A-Z0-9])?$'){throw 'NBNS requires an exact 1..15 character hostname, not a truncated alias'}
+  $bytes=[byte[]]::new(50);$bytes[0]=75;$bytes[1]=$(if($Status){81}else{80});$bytes[2]=1;$bytes[3]=16;$bytes[5]=1;$bytes[12]=32
+  $raw=[byte[]]::new(16)
+  if($Status){$raw[0]=42}else{for($i=0;$i -lt 15;$i++){$raw[$i]=32};$nameBytes=[Text.Encoding]::ASCII.GetBytes($label);[Array]::Copy($nameBytes,$raw,$nameBytes.Length)}
+  for($i=0;$i -lt 16;$i++){$bytes[13+2*$i]=[byte](65+($raw[$i] -shr 4));$bytes[14+2*$i]=[byte](65+($raw[$i] -band 15))}
+  $bytes[47]=$(if($Status){33}else{32});$bytes[49]=1;return ,$bytes
+}
+function ConvertFrom-PakarNbns([byte[]]$Packet,[int]$ExpectedId,[int]$ExpectedType) {
+  if($Packet.Length -lt 56 -or $Packet.Length -gt 4096 -or (Read-PakarU16 $Packet 0) -ne $ExpectedId -or
+      ((Read-PakarU16 $Packet 2) -band 64015) -ne 32768 -or (Read-PakarU16 $Packet 4) -ne 0 -or
+      (Read-PakarU16 $Packet 6) -ne 1 -or (Read-PakarU16 $Packet 8) -ne 0 -or (Read-PakarU16 $Packet 10) -ne 0){throw 'Unexpected NBNS reply identity/flags/counts'}
+  $at=12;$encoded=Read-PakarDnsName $Packet ([ref]$at)
+  if($encoded -notmatch '^[A-P]{32}$'){throw 'Invalid first-level NBNS name'}
+  $type=Read-PakarU16 $Packet $at;$class=Read-PakarU16 $Packet ($at+2);$size=Read-PakarU16 $Packet ($at+8);$at+=10
+  if($type -ne $ExpectedType -or $class -ne 1 -or $at+$size -ne $Packet.Length){throw 'Unexpected NBNS record type/length'}
+  if($type -eq 32){if($size -ne 6){throw 'Invalid NB name record'};return @{type='name';address=([Net.IPAddress]::new([byte[]]$Packet[($at+2)..($at+5)])).ToString()}}
+  if($type -ne 33 -or $size -lt 47){throw 'Invalid NBSTAT record'}
+  $count=[int]$Packet[$at];if($count -gt 16 -or $size -ne 1+18*$count+46){throw 'Invalid NBSTAT statistics size'}
+  $names=@();$at++
+  for($i=0;$i -lt $count;$i++){$names+=@{name=[Text.Encoding]::ASCII.GetString($Packet,$at,15).TrimEnd();suffix=[int]$Packet[$at+15];flags=(Read-PakarU16 $Packet ($at+16))};$at+=18}
+  return @{type='node-status';names=$names;mac=(($Packet[$at..($at+5)]|ForEach-Object {$_.ToString('x2')}) -join ':')}
+}
 function Invoke-PakarUdpProbe([string]$Name,[byte[]]$Request,[string]$Target,[int]$Port,[bool]$Mdns=$false) {
   $udp=[Net.Sockets.UdpClient]::new([Net.Sockets.AddressFamily]::InterNetwork)
   $packets=[Collections.Generic.List[object]]::new();$errorText=$null
@@ -100,6 +124,7 @@ function Invoke-PakarUdpProbe([string]$Name,[byte[]]$Request,[string]$Target,[in
       try {
         if($Mdns){$packet.records=@(ConvertFrom-PakarDns $data)}
         elseif($Port -eq 5678){$packet.fields=ConvertFrom-PakarMndp $data}
+        elseif($Port -eq 137){$packet.fields=ConvertFrom-PakarNbns $data (Read-PakarU16 $Request 0) (Read-PakarU16 $Request 46)}
         else{$packet.text=[Text.Encoding]::UTF8.GetString($data);$packet.valid_response=$packet.text.StartsWith('HTTP/1.1 200')}
       }catch{$packet.parse_error=$_.Exception.Message}
       $packets.Add($packet)
@@ -150,6 +175,11 @@ $follow=$null
 if($instances.Count){$next=@();foreach($instance in $instances){$next+=@{name=$instance;type=33};$next+=@{name=$instance;type=16}};$follow=Invoke-PakarUdpProbe 'dns-sd-srv-txt' (New-PakarDnsQuery $next) '224.0.0.251' 5353 $true}
 $search=[Text.Encoding]::ASCII.GetBytes("M-SEARCH * HTTP/1.1`r`nHOST: 239.255.255.250:1900`r`nMAN: `"ssdp:discover`"`r`nMX: 1`r`nST: ssdp:all`r`n`r`n")
 $result=[ordered]@{device_host=$DeviceHost;device_address=$script:ProbeDevice.ToString();local_address=$LocalAddress;meaning='Actual bounded wire observations on this interface, not routed-VPN multicast or physical peripheral acceptance';dns_sd=$dns;dns_sd_followup=$follow;ssdp_multicast=(Invoke-PakarUdpProbe 'ssdp-multicast' $search '239.255.255.250' 1900);ssdp_unicast=(Invoke-PakarUdpProbe 'ssdp-unicast' $search $script:ProbeDevice.ToString() 1900);mndp=(Invoke-PakarUdpProbe 'mndp-query' ([byte[]](0,0,0,0)) $script:ProbeDevice.ToString() 5678)}
+$nbnsName=$DeviceHost.Split('.')[0]
+if($nbnsName.Length -le 15){
+  $result.netbios_name=Invoke-PakarUdpProbe 'nbns-name' (New-PakarNbnsQuery $nbnsName) $script:ProbeDevice.ToString() 137
+  $result.netbios_status=Invoke-PakarUdpProbe 'nbns-node-status' (New-PakarNbnsQuery $nbnsName $true) $script:ProbeDevice.ToString() 137
+}else{$result.netbios=@{skipped='Hostname exceeds15 characters; no alias guessed'}}
 if($IncludeHttp){$result.http=Invoke-PakarReadOnlyHttp}
 $json=$result|ConvertTo-Json -Depth 16
 if($OutputPath){$json|Set-Content -LiteralPath $OutputPath -Encoding UTF8}

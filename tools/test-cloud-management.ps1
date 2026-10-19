@@ -14,7 +14,7 @@ $taskArguments=@('-std=c++17','-Wall','-Wextra','-Werror','-DARDUINOJSON_ENABLE_
   (Join-Path $taskRoot 'firmware/esp8266/src/NetworkConfig.cpp'),'-o',$taskOutput)
 if($Plan){[pscustomobject]@{Executable='g++';Arguments=$taskArguments;Scope='Actual shared configuration handler/store fixture; not SDK/cloud/hardware acceptance'};return}
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $taskOutput) | Out-Null
-foreach($taskPlatform in @(@('-DESP8266'),@('-DESP32','-DARDUINO_ARCH_ESP32'))) {
+foreach($taskPlatform in @(@('-DESP8266'),@('-DESP32','-DARDUINO_ARCH_ESP32'),@('-DESP32','-DARDUINO_ARCH_ESP32','-DPAKAR_S3_ETHERNET_ENABLED=1'))) {
   & g++ @taskPlatform @taskArguments
   if($LASTEXITCODE){throw 'Shared configuration fixture compilation failed'}
   & $taskOutput

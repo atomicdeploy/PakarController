@@ -10,7 +10,9 @@ $taskArguments=@('-std=c++17','-O2','-g0','-Wall','-Wextra','-Werror',
   '-DARDUINO_ARCH_ESP32','-DCONFIG_IDF_TARGET_ESP32S3',
   '-I',(Join-Path $taskRoot 'tests/ethernet_stubs'),
   (Join-Path $taskRoot 'tests/s3_ethernet_port_test.cpp'),
-  (Join-Path $taskRoot 'firmware/esp32s3/src/EthernetPort.cpp'),'-o',$taskOutput)
+  (Join-Path $taskRoot 'tests/ethernet_lldp_runtime.cpp'),
+  (Join-Path $taskRoot 'firmware/esp32s3/src/EthernetLldp.cpp'),
+  (Join-Path $taskRoot 'firmware/esp32s3/src/EthernetPort.cpp'),'-Wl,--wrap=esp_eth_update_input_path_info','-o',$taskOutput)
 if($Plan){return [pscustomobject]@{
   Executable='g++';Arguments=$taskArguments;Profiles=@(0,1);
   Scope='Optional native W5500 adapter lifecycle and IPv4 contracts using SDK doubles, not actual SDK/lwIP or hardware'

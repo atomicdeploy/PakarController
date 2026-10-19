@@ -3,6 +3,7 @@
 #include "SsdpDevice.h"
 #include "DiscoveryInterfaces.h"
 #include "DiscoveryMdns.h"
+#include "NbnsService.h"
 #include "../../esp8266/src/MndpService.h"
 #include "../../esp8266/src/ApplicationIdentity.h"
 
@@ -24,19 +25,22 @@ class Discovery {
     snprintf(uuid, sizeof(uuid), "38323636-4558-4dda-9188-cda0e6%06x", chipId & 0x00ffffffU);
     ssdp_.setUUID(uuid); ssdp_.begin(); ssdp_.handleClient();
     mndpReady_ = mndp_.begin();
-    return mdnsReady_ || ssdpReady() || mndpReady_;
+    nbns_.begin(hostname.c_str());
+    return mdnsReady_ || ssdpReady() || mndpReady_ || netbiosReady();
   }
   void end() {
     if (mdnsReady_) MDNS.end();
-    ssdp_.end(); mndp_.stop(); mdnsReady_ = mndpReady_ = false;
+    ssdp_.end(); mndp_.stop(); nbns_.end(); mdnsReady_ = mndpReady_ = false;
   }
   void service(const char *boardId = "") {
-    ssdp_.handleClient(); mndp_.service(hostname_.c_str(), boardId);
+    ssdp_.handleClient(); mndp_.service(hostname_.c_str(), boardId); nbns_.service();
   }
   bool mdnsReady() const { return mdnsReady_; }
   bool ssdpReady() const { return ssdp_.running(); }
   bool mndpReady() const { return mndp_.running(); }
-  bool netbiosReady() const { return false; } // Not provided by the installed S3 core.
+  bool netbiosReady() const { return nbns_.running(); }
+  const char* netbiosState() const { return nbns_.state(); }
+  uint8_t netbiosInterfaces() const { return nbns_.boundInterfaces(); }
   String xmlDescription() const {
     // Reuse the donor's complete XML escaping/description rather than maintaining
     // a separate, inconsistent hand-built discovery identity.
@@ -52,6 +56,7 @@ class Discovery {
  private:
   SsdpDevice ssdp_;
   MndpService mndp_;
+  NbnsService nbns_;
   String hostname_;
   bool mdnsReady_ = false, mndpReady_ = false;
 };

@@ -6,6 +6,7 @@ pub enum Group {
     Network,
     Cloud,
     StatusRgb,
+    Ethernet,
 }
 impl Group {
     pub fn path(self) -> &'static str {
@@ -13,6 +14,7 @@ impl Group {
             Self::Network => "/api/network",
             Self::Cloud => "/api/cloud",
             Self::StatusRgb => "/api/status-rgb",
+            Self::Ethernet => "/api/network/ethernet",
         }
     }
 }
@@ -23,6 +25,25 @@ pub struct Network {
     pub station_ssid: String,
     #[serde(flatten)]
     pub addressing: Addressing,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+pub struct Ethernet {
+    #[serde(default, skip_serializing_if="Option::is_none")]
+    pub enabled: Option<bool>,
+    #[serde(default, skip_serializing_if="Option::is_none")]
+    pub lldp_enabled: Option<bool>,
+    #[serde(default, skip_serializing_if="Option::is_none")]
+    pub lldp_receive: Option<bool>,
+    #[serde(flatten)]
+    pub addressing: Addressing,
+}
+impl Ethernet {
+    fn read(value: serde_json::Value) -> Result<Self,String> {
+        if value["configured"] != true { return Err("Ethernet is not supported by this firmware".into()); }
+        let config: Self=serde_json::from_value(value).map_err(|e|format!("Invalid Ethernet configuration: {e}"))?;
+        if !config.addressing.observed(){return Err("Complete Ethernet addressing settings are required".into());}
+        config.addressing.validate()?; Ok(config)
+    }
 }
 #[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Addressing {
@@ -112,9 +133,12 @@ fn host(value: &str, enabled: bool, label: &str) -> Result<(), String> {
 }
 impl Network {
     pub fn validate(&self) -> Result<(), String> {
+        self.validate_with_ethernet(false)
+    }
+    fn validate_with_ethernet(&self, ethernet_ready:bool) -> Result<(), String> {
         bounded(&self.station_ssid, 32, "SSID")?;
-        if !self.station_enabled && !self.ap_enabled {
-            return Err("Keep station or recovery AP enabled".into());
+        if !self.station_enabled && !self.ap_enabled && !ethernet_ready {
+            return Err("Keep station or recovery AP enabled until Ethernet has a working IPv4 link".into());
         }
         if self.station_enabled && self.station_ssid.is_empty() {
             return Err("Select or enter the station SSID".into());
@@ -193,6 +217,7 @@ pub enum Expected {
     Network(Network),
     Cloud(Cloud),
     StatusRgb(crate::status_rgb::Configuration),
+    Ethernet(Ethernet),
 }
 #[derive(Clone)]
 pub struct Write {
@@ -202,11 +227,25 @@ pub struct Write {
     pub expected: Expected,
 }
 impl Write {
+    pub fn ethernet(id:u64,config:&Ethernet)->Result<Self,String>{
+        if !config.addressing.observed(){return Err("Read complete Ethernet settings first".into());}
+        config.addressing.validate()?;
+        let mut expected=config.clone();
+        if expected.addressing.dhcp==Some(false){for value in [&mut expected.addressing.dns1,&mut expected.addressing.dns2]{if value.as_deref()==Some(""){*value=Some("0.0.0.0".into());}}}
+        let mut form=expected.addressing.form();
+        if let Some(enabled)=expected.enabled{form.push(("enabled".into(),enabled.to_string()));}
+        if let Some(enabled)=expected.lldp_enabled{form.push(("lldp_enabled".into(),enabled.to_string()));}
+        if let Some(enabled)=expected.lldp_receive{form.push(("lldp_receive".into(),enabled.to_string()));}
+        Ok(Self{id,group:Group::Ethernet,form,expected:Expected::Ethernet(expected)})
+    }
     pub fn status_rgb(id:u64,config:&crate::status_rgb::Configuration)->Result<Self,String>{
         Ok(Self{id,group:Group::StatusRgb,form:config.form()?,expected:Expected::StatusRgb(config.clone())})
     }
     pub fn network(id: u64, config: &Network, password: &str, open: bool) -> Result<Self, String> {
-        config.validate()?;
+        Self::network_with_ethernet(id,config,password,open,false)
+    }
+    fn network_with_ethernet(id:u64,config:&Network,password:&str,open:bool,ethernet_ready:bool)->Result<Self,String>{
+        config.validate_with_ethernet(ethernet_ready)?;
         if !password.is_empty() && !open && !(8..=63).contains(&password.len()) {
             return Err("Enter an 8–63 byte replacement Wi-Fi password, or keep the existing secret by leaving this blank.".into());
         }
@@ -277,7 +316,7 @@ impl Write {
         })
     }
     pub fn verify_ack(&self, value: &serde_json::Value) -> Result<(), String> {
-        let field = match self.group {Group::Network=>"accepted",Group::Cloud=>"updated",Group::StatusRgb=>"saved"};
+        let field = match self.group {Group::Network|Group::Ethernet=>"accepted",Group::Cloud=>"updated",Group::StatusRgb=>"saved"};
         if value[field].as_bool() != Some(true) {
             return Err("Device did not confirm a saved configuration write".into());
         }
@@ -291,6 +330,7 @@ impl Write {
                 .is_ok_and(|actual| actual == *expected),
             Expected::StatusRgb(expected) => crate::status_rgb::Configuration::read(value.clone())
                 .is_ok_and(|actual|actual==*expected)&&value["persisted"]==true,
+            Expected::Ethernet(expected) => Ethernet::read(value.clone()).is_ok_and(|actual|actual==*expected),
         };
         if matches {
             Ok(())
@@ -334,6 +374,8 @@ pub struct Editor {
     pub page: usize,
     pub search: String,
     pub network: Option<Draft<Network>>,
+    pub ethernet: Option<Draft<Ethernet>>,
+    pub ethernet_ready: bool,
     pub cloud: Option<Draft<Cloud>>,
     pub status_rgb: Option<Draft<crate::status_rgb::Configuration>>,
     pub avr: Option<Draft<crate::board_silent::Parameters>>,
@@ -377,7 +419,7 @@ impl Editor {
             config.addressing = draft.saved.addressing.clone();
             config.addressing.dhcp = Some(true);
         }
-        Write::network(id, &config, &self.wifi_password, self.open_network)
+        Write::network_with_ethernet(id, &config, &self.wifi_password, self.open_network,self.ethernet_ready)
     }
     pub fn dirty(&self) -> bool {
         self.usb_request.is_some()
@@ -386,6 +428,7 @@ impl Editor {
             || !self.feed_token.is_empty()
             || self.avr.as_ref().is_some_and(Draft::dirty)
             || self.network.as_ref().is_some_and(Draft::dirty)
+            || self.ethernet.as_ref().is_some_and(Draft::dirty)
             || self.cloud.as_ref().is_some_and(Draft::dirty)
             || !self.wifi_password.is_empty()
             || self.open_network
@@ -408,6 +451,7 @@ impl Editor {
         if let Some(d) = &mut self.network {
             d.discard();
         }
+        if let Some(d)=&mut self.ethernet{d.discard();}
         if let Some(d) = &mut self.cloud {
             d.discard();
         }
@@ -447,6 +491,7 @@ impl Editor {
         }
     }
     pub fn observe(&mut self, path: &str, value: serde_json::Value) -> Result<(), String> {
+        if path==Group::Ethernet.path(){let config=Ethernet::read(value)?;if let Some(d)=&mut self.ethernet{d.observe(config);}else{self.ethernet=Some(Draft::new(config));}return Ok(());}
         if path==Group::StatusRgb.path(){let config=crate::status_rgb::Configuration::read(value)?;
             if let Some(d)=&mut self.status_rgb{d.observe(config);}else{self.status_rgb=Some(Draft::new(config));}return Ok(());}
         if path == "/api/firmware/remote" {
@@ -477,9 +522,10 @@ impl Editor {
             self.ssids.dedup();
         }
         if path == Group::Network.path() {
+            self.ethernet_ready=value["ethernet_ready"]==true;
             let config: Network = serde_json::from_value(value)
                 .map_err(|e| format!("Invalid network response: {e}"))?;
-            config.validate()?;
+            config.validate_with_ethernet(self.ethernet_ready)?;
             if let Some(d) = &mut self.network {
                 d.observe(config);
             } else {
@@ -509,6 +555,7 @@ impl Editor {
         match result {
             Ok(value) => {
                 let loaded = match group {
+                    Group::Ethernet => {self.ethernet=None;self.observe(group.path(),value)}
                     Group::StatusRgb => {self.status_rgb=None;self.observe(group.path(),value)}
                     Group::Network => {
                         self.network = None;
@@ -556,6 +603,31 @@ pub fn usb_payloads(config: &Network, password: &str, open: bool) -> Result<Vec<
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn ethernet_settings_require_actual_support_validate_addressing_and_confirm_readback(){
+        let raw=serde_json::json!({"configured":true,"enabled":true,"lldp_enabled":true,"lldp_receive":false,
+            "dhcp":false,"address":"192.168.9.2","gateway":"192.168.9.1","subnet":"255.255.255.0","dns1":"0.0.0.0","dns2":"0.0.0.0"});
+        let config=Ethernet::read(raw.clone()).unwrap();let write=Write::ethernet(1,&config).unwrap();
+        assert_eq!(write.group.path(),"/api/network/ethernet");
+        assert!(write.verify_ack(&serde_json::json!({"accepted":true,"apply_pending":true})).is_ok());
+        assert!(write.verify_readback(&raw).is_ok());
+        let mut foreign=raw.clone();foreign["address"]=serde_json::json!("192.168.9.3");assert!(write.verify_readback(&foreign).is_err());
+        foreign=raw.clone();foreign["configured"]=false.into();assert!(Ethernet::read(foreign).is_err());
+        foreign=raw.clone();foreign["subnet"]="255.0.255.0".into();assert!(Ethernet::read(foreign).is_err());
+        assert!(!write.form.iter().any(|(key,_)|["configured","ipv4_ready","apply_pending"].contains(&key.as_str())));
+        let mut editor=Editor::default();editor.observe(Group::Ethernet.path(),raw).unwrap();
+        editor.ethernet.as_mut().unwrap().value.enabled=Some(false);assert!(editor.dirty());editor.invalidate_peer();assert!(editor.ethernet.is_none());
+    }
+    #[test]
+    fn wifi_off_requires_observed_ethernet_ready_not_configured_or_cached_peer(){
+        let mut raw=serde_json::json!({"station_enabled":true,"ap_enabled":true,"station_ssid":"Fixture","ethernet_ready":false});
+        let mut editor=Editor::default();editor.observe(Group::Network.path(),raw.clone()).unwrap();
+        let network=&mut editor.network.as_mut().unwrap().value;network.station_enabled=false;network.ap_enabled=false;
+        assert!(editor.network_write(1).is_err());
+        raw["ethernet_ready"]=true.into();editor.observe(Group::Network.path(),raw).unwrap();assert!(editor.network_write(1).is_ok());
+        assert!(!editor.network_write(1).unwrap().form.iter().any(|(key,_)|key=="ethernet_ready"));
+        editor.invalidate_peer();assert!(!editor.ethernet_ready);
+    }
     #[test]
     fn avr_editor_owns_dirty_draft_pending_receipt_and_same_peer_readback() {
         let peer=|boot:char| crate::peer_http::Pin::from_status(&crate::DeviceStatus {

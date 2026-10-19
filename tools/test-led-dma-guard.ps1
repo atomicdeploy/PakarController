@@ -11,7 +11,7 @@ foreach($taskProfile in @('supported','unsupported')){
     (Join-Path $taskRoot 'tests/led_dma_guard_test.cpp'),
     (Join-Path $taskRoot 'tests/led_dma_guard_runtime.cpp'),
     (Join-Path $taskRoot 'firmware/esp32s3/src/LedDmaGuard.cpp'),
-    '-Wl,--wrap=gdma_new_ahb_channel','-o',$taskOutput)
+    '-Wl,--wrap=gdma_new_ahb_channel,--wrap=esp_intr_alloc_intrstatus','-o',$taskOutput)
   if($Plan){[pscustomobject]@{Profile=$taskProfile;Executable='g++';Arguments=$taskArgs};continue}
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $taskOutput) | Out-Null
   & g++ @taskArgs

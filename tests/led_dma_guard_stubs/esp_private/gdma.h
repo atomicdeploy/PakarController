@@ -8,6 +8,7 @@ struct gdma_channel_alloc_config_t{
  struct{unsigned reserve_sibling:1;unsigned isr_cache_safe:1;}flags{};
 };
 extern "C" esp_err_t gdma_new_ahb_channel(const gdma_channel_alloc_config_t*,gdma_channel_handle_t*);
+extern "C" esp_err_t gdma_get_group_channel_id(gdma_channel_handle_t,int*,int*);
 namespace DmaFixture {
  extern thread_local void* task;
  extern thread_local bool isr,canYield;

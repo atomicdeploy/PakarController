@@ -12,6 +12,63 @@ import 'peer_fixture.dart';
 import 'settings_fixture.dart';
 
 void main() {
+  test('Ethernet settings are contextual and saved readback is exact', () {
+    final raw = <String, dynamic>{
+      'configured': true,
+      'enabled': true,
+      'lldp_enabled': true,
+      'lldp_receive': false,
+      'dhcp': false,
+      'address': '192.168.9.2',
+      'gateway': '192.168.9.1',
+      'subnet': '255.255.255.0',
+      'dns1': '0.0.0.0',
+      'dns2': '0.0.0.0',
+    };
+    final saved = settingsSnapshot(SettingsGroup.ethernet, raw);
+    expect(SettingsGroup.ethernet.path, '/api/network/ethernet');
+    expect(saved.containsKey('configured'), false);
+    final write = SettingsWrite(SettingsGroup.ethernet, {}, saved);
+    expect(() => write.verifyAck({'accepted': true}), returnsNormally);
+    expect(
+      () => write.verifyReadback({...saved, 'address': '192.168.9.3'}),
+      throwsFormatException,
+    );
+    expect(
+      () => settingsSnapshot(SettingsGroup.ethernet, {
+        ...raw,
+        'configured': false,
+      }),
+      throwsFormatException,
+    );
+    expect(
+      () => settingsSnapshot(SettingsGroup.ethernet, {
+        ...raw,
+        'subnet': '255.0.255.0',
+      }),
+      throwsFormatException,
+    );
+  });
+  test('Wi-Fi off requires actual Ethernet readiness and never exports that observation', () {
+    final raw = <String, dynamic>{
+      'station_enabled': false,
+      'ap_enabled': false,
+      'station_ssid': 'Fixture',
+    };
+    expect(
+      () => settingsSnapshot(SettingsGroup.network, raw),
+      throwsFormatException,
+    );
+    final saved = settingsSnapshot(SettingsGroup.network, {
+      ...raw,
+      'ethernet_ready': true,
+    });
+    expect(saved.containsKey('ethernet_ready'), false);
+    expect(
+      () => settingsSnapshot(SettingsGroup.network, saved),
+      throwsFormatException,
+    );
+  });
   test('Retired draft cleanup cannot veto a separately owned verified identity handoff', () {
     final workspace = DeviceSettingsWorkspace();
     workspace.captureIdentity('ledboard', 'Board', 'renamed', 'Board');
@@ -343,6 +400,11 @@ void main() {
     expect(keep.form.containsKey('websocket_token'), false);
     session.mqttPassword.mode = SecretMode.replace;
     expect(() => session.write(SettingsGroup.cloud), throwsFormatException);
+    expect(
+      session.write(SettingsGroup.network).form.containsKey('password'),
+      false,
+    );
+    session.set(SettingsGroup.network, 'station_ssid', 'Changed fixture');
     expect(() => session.write(SettingsGroup.network), throwsFormatException);
     session.openNetwork = true;
     expect(session.write(SettingsGroup.network).form['password'], '');

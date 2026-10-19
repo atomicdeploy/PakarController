@@ -136,7 +136,9 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         # Arduino's initial sketch dependency scan also uses the C recipe.
         $arguments += @('--build-property', "compiler.c.extra_flags=$flags")
         $arguments += @('--build-property', 'compiler.optimization_flags=-Os -g0')
-        $arguments += @('--build-property', 'compiler.c.elf.extra_flags=-Wl,--wrap=dns_clear_cache,--wrap=gdma_new_ahb_channel,--wrap=esp_partition_write,--wrap=esp_partition_write_raw,--wrap=esp_partition_erase_range,--wrap=esp_partition_read,--wrap=esp_partition_read_raw,--wrap=esp_image_verify')
+        $taskLinkFlags='compiler.c.elf.extra_flags=-Wl,--wrap=dns_clear_cache,--wrap=gdma_new_ahb_channel,--wrap=esp_intr_alloc_intrstatus,--wrap=esp_partition_write,--wrap=esp_partition_write_raw,--wrap=esp_partition_erase_range,--wrap=esp_partition_read,--wrap=esp_partition_read_raw,--wrap=esp_image_verify'
+        if($S3Ethernet){$taskLinkFlags+=',--wrap=esp_eth_update_input_path_info'}
+        $arguments += @('--build-property',$taskLinkFlags)
     }
     if ($Clean) { $arguments += '--clean' }
     $ledProfile = $null

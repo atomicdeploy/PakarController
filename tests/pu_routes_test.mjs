@@ -12,8 +12,10 @@ assert.deepEqual(value.migration.platforms,['ESP8266','ESP32-S3']);
 assert.match(value.migration.review,/registration slice 560-1554/);
 assert.match(value.migration.diagnostic_build,/USB-only passive UART2 RX18 capture/);
 assert.match(value.migration.diagnostic_build,/not a compatible AVR protocol/);
-for(const gap of [/LAN GET\/HEAD\/Range/,/ISP.*disabled/,/NetBIOS\/LLMNR/,/TUI DHCP\/static/,/translated=false/,/SDK default blocking deadline/])
+for(const gap of [/LAN GET\/HEAD\/Range/,/ISP.*disabled/,/WINS registration.*LLMNR/,/TUI addressing editing/,/translated=false/,/SDK default blocking deadline/])
  assert(value.migration.remaining.some(text=>gap.test(text)),'Migration omission needs a concrete remaining acceptance step: '+gap);
+assert.match(read('firmware/esp32s3/src/Discovery.h'),/bool netbiosReady\(\) const \{ return nbns_\.running\(\); \}/);
+assert.match(value.migration.remaining.join('\n'),/S3 NBNS name\/node-status queries are implemented/);
 assert.equal(value.routes.length,50);const identities=new Set();
 for(const row of value.routes){
  const id=row.source+':'+row.line;assert(!identities.has(id));identities.add(id);

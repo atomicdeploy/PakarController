@@ -4,6 +4,7 @@
 #include "../firmware/esp8266/src/CloudConfig.h"
 #include "../firmware/esp8266/src/NetworkConfig.h"
 #include "../firmware/esp8266/src/EthernetConfig.h"
+#include "../firmware/esp32s3/src/Lldp.h"
 #include <cassert>
 #include <iostream>
 NetworkFixtureWiFi WiFi;
@@ -11,6 +12,7 @@ EthernetConfigStore ethernetConfig;
 struct RemoteFixture {bool active=false;bool busy()const{return active;}} remoteFirmware;
 bool otaActive=false,avrUploadOwner=false,programmingLatched=false;
 bool networkApplyPending=false,cloudApplyPending=false,ethernetApplyOnly=false;
+bool apStarted=true;
 uint32_t otaRebootAt=0,networkApplyAt=0,cloudApplyAt=0;
 struct CloudFixture {
   bool mqttConnected()const{return false;}
@@ -33,6 +35,9 @@ struct Ethernet {
   IPAddress subnetMask()const{return IPAddress(255,255,255,0);}
   IPAddress dnsIP(uint8_t index)const{return index?IPAddress():gatewayIP();}
   String macAddress()const{return "02:00:00:00:00:01";}
+  uint16_t linkSpeedMbps()const{return 100;}
+  bool fullDuplex()const{return true;}
+  void lldpStatus(PakarS3::LldpStatus &out)const{out=PakarS3::LldpStatus{};out.transmitSupported=true;out.receiveSupported=true;}
   const char* lastError()const{return "fixture apply \"not connected\"";}
 } port;
 Ethernet& ethernet(){return port;}
@@ -63,10 +68,13 @@ int main() {
   auto offline=snapshot(ethernetStatusJson());
   assert(offline["configured"]==true && offline["started"]==true && offline["ipv4_ready"]==false);
   assert(offline["ip"].isNull() && offline["dns1"].isNull());
+  assert(offline["speed_mbps"].isNull()&&offline["full_duplex"].isNull());
+  assert(offline["lldp"]["receive_requested"]==false&&offline["lldp"]["receive_active"]==false);
   NetworkPath::port.up=true;
   auto online=snapshot(ethernetStatusJson());
   assert(online["link_up"]==true && online["ipv4_ready"]==true && online["ip"]=="198.51.100.7");
   assert(online["gateway"]=="198.51.100.1" && online["mac"]=="02:00:00:00:00:01");
+  assert(online["speed_mbps"]==100&&online["full_duplex"]==true);
   NetworkPath::port.up=false;
   assert(snapshot(ethernetStatusJson())["ip"].isNull()); // Never stale old IP.
   assert(initial["configured"]==true&&initial["dhcp"]==true&&initial["ipv4_ready"]==false);
@@ -102,6 +110,17 @@ int main() {
   }
   otaRebootAt=1;assert(!update("{\"dhcp\":false}",result));otaRebootAt=0;
   assert(!ethernetApplyOnly);
+  assert(update("{\"enabled\":false,\"lldp_enabled\":false,\"lldp_receive\":true}",result));applyReceiptConsumed();
+  auto services=snapshot(ethernetConfigurationJson());
+  assert(services["enabled"]==false&&services["lldp_enabled"]==false&&services["lldp_receive"]==true);
+  assert(update("{\"enabled\":true}",result));applyReceiptConsumed();
+  apStarted=false;assert(!update("{\"enabled\":false}",result));assert(ethernetConfig.enabled());
+  apStarted=true;
+  assert(networkConfig.setAccessPointEnabled(false));
+  WiFi.connection=0;assert(!update("{\"enabled\":false}",result));assert(ethernetConfig.enabled());
+  WiFi.connection=WL_CONNECTED;assert(!update("{\"enabled\":false}",result)); // No assigned Wi-Fi IPv4 yet.
+  WiFi.address=IPAddress(198,51,100,9);assert(update("{\"enabled\":false}",result));applyReceiptConsumed();
+  WiFi.connection=0;assert(networkConfig.setAccessPointEnabled(true));
   auto status=snapshot(ethernetConfigurationJson());
   assert(status["dhcp"]==true&&status["address"]=="198.51.100.7"&&status["ipv4_ready"]==false);
 #else

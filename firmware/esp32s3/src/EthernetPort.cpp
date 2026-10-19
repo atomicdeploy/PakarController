@@ -1,4 +1,7 @@
 #include "EthernetPort.h"
+#if PAKAR_S3_ETHERNET_ENABLED
+#include "EthernetLldp.h"
+#endif
 
 namespace PakarS3 {
 #if PAKAR_S3_ETHERNET_ENABLED
@@ -41,7 +44,7 @@ bool EthernetPort::begin(const char *hostname) {
   if (!validHostname(hostname)) { error_ = F("Invalid Ethernet hostname"); return false; }
   if (owned_) {
     if (!initialized_) { error_ = F("Ethernet driver requires explicit recovery before restart"); return false; }
-    if (ETH.setHostname(hostname)) return true;
+    if (ETH.setHostname(hostname)) {renameEthernetLldp(this,hostname);return true;}
     error_ = F("Cannot update Ethernet hostname"); return false;
   }
   if (ETH.handle() || ETH.netif()) {
@@ -52,6 +55,7 @@ bool EthernetPort::begin(const char *hostname) {
   }
   busStarted_ = true;
   owned_ = true; // Also own cleanup of a partially initialized SDK driver.
+  EthernetLldpSetup observer(this);
   if (!ETH.begin(ETH_PHY_W5500, 1, PAKAR_S3_W5500_CS, PAKAR_S3_W5500_IRQ,
                  PAKAR_S3_W5500_RESET, spi_, 20)) {
     const bool released = end();
@@ -69,6 +73,7 @@ bool EthernetPort::begin(const char *hostname) {
     return false;
   }
   initialized_ = addressingReady_ = true;
+  attachEthernetLldp(this,ETH.handle(),hostname,observer.admitted(ETH.handle()));
   return true; // Driver initialized, not link/IP/Internet acceptance.
 #else
   (void)hostname;
@@ -87,7 +92,7 @@ bool EthernetPort::initialized() const {
 
 bool EthernetPort::ensureInitialized(const char *hostname) {
 #if PAKAR_S3_ETHERNET_ENABLED
-  if (initialized()) return true; // Cable loss must not reset a healthy SPI driver.
+  if (initialized()) return begin(hostname); // Rename only; never reset a healthy SPI driver.
   if (!end()) return false; // Never steal a driver whose cleanup was refused.
 #endif
   return begin(hostname);
@@ -112,6 +117,7 @@ bool EthernetPort::configureAddressing(bool dhcp, IPAddress address,
 bool EthernetPort::end() {
 #if PAKAR_S3_ETHERNET_ENABLED
   if (!owned_ && !busStarted_) return true;
+  detachEthernetLldp(this);
   initialized_ = addressingReady_ = false;
   if (owned_) {
     // SDK end() owns its task/PHY/netif teardown. If it retains a handle on
@@ -122,6 +128,7 @@ bool EthernetPort::end() {
     }
   }
   owned_ = false;
+  releaseEthernetLldp(this);
   if (busStarted_) spi_.end();
   busStarted_ = false;
 #endif
@@ -131,6 +138,30 @@ bool EthernetPort::end() {
 void EthernetPort::service() {
   // SDK maintains link and DHCP asynchronously. Queries below read its current
   // status, never a synthetic connected flag or a loop-driven retry schedule.
+#if PAKAR_S3_ETHERNET_ENABLED
+  if(owned_&&initialized_&&ETH.handle()) {
+    uint8_t mac[6]{};
+    if(esp_eth_ioctl(ETH.handle(),ETH_CMD_G_MAC_ADDR,mac)!=ESP_OK)return;
+    serviceEthernetLldp(this,linkUp(),mac,millis());
+  }
+#endif
+}
+bool EthernetPort::setLldp(bool enabled,bool receive) {
+#if PAKAR_S3_ETHERNET_ENABLED
+  if(owned_&&initialized_&&configureEthernetLldp(this,enabled,receive))return true;
+  error_=F("LLDP receive hook unavailable or Ethernet uninitialized");
+#else
+  (void)enabled;(void)receive;
+  error_=F("W5500 Ethernet is not compiled into this firmware");
+#endif
+  return false;
+}
+void EthernetPort::lldpStatus(LldpStatus &status)const {
+  status=LldpStatus{};
+#if PAKAR_S3_ETHERNET_ENABLED
+  snapshotEthernetLldp(this,status,millis());
+  if(!linkUp()){status.receiveActive=false;status.neighborCount=0;}
+#endif
 }
 bool EthernetPort::started() const {
 #if PAKAR_S3_ETHERNET_ENABLED
@@ -191,5 +222,18 @@ String EthernetPort::macAddress() const {
   if (owned_ && ETH.netif()) return ETH.macAddress();
 #endif
   return String();
+}
+uint16_t EthernetPort::linkSpeedMbps()const {
+#if PAKAR_S3_ETHERNET_ENABLED
+  if(linkUp())return ETH.linkSpeed();
+#endif
+  return 0;
+}
+bool EthernetPort::fullDuplex()const {
+#if PAKAR_S3_ETHERNET_ENABLED
+  return linkUp()&&ETH.fullDuplex();
+#else
+  return false;
+#endif
 }
 } // namespace PakarS3

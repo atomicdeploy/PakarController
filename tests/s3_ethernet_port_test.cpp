@@ -37,6 +37,8 @@ int main() {
     assert(port.gatewayIP().toString()=="192.168.1.1" && port.dnsIP().toString()=="1.1.1.1");
     assert(port.dnsIP(2).toString()=="0.0.0.0" && !port.macAddress().isEmpty());
     assert(port.begin("renamed-board") && ETH.begins==1 && ETH.hostname=="renamed-board");
+    assert(port.ensureInitialized("latest-name")&&ETH.hostname=="latest-name"&&ETH.begins==1&&SPIClass::starts==1);
+    assert(port.linkSpeedMbps()==100&&port.fullDuplex());
     const auto beforeInvalid=ETH.configs;
     assert(!port.configureAddressing(false, IPAddress(192,168,1,0), IPAddress(192,168,1,1), IPAddress(255,255,255,0)));
     assert(!port.configureAddressing(false, IPAddress(192,168,1,20), IPAddress(192,168,2,1), IPAddress(255,255,255,0)));
@@ -48,7 +50,15 @@ int main() {
     assert(port.connected() && port.localIP().toString()=="192.168.1.21");
     ETH.configResult=false; assert(!port.configureAddressing(true) && !port.connected());
     ETH.configResult=true; assert(port.configureAddressing(true));
+    assert(port.setLldp(true,true));pakarTestMillis=1000;port.service();ethernetSdk.drain();
+    uint8_t bytes[192],peerMac[]={2,0,0,0,0,7};
+    const auto length=PakarS3::Lldp::frame(bytes,sizeof(bytes),peerMac,"fixture-switch");
+    const auto input=ethernetSdk.inputs.at(ETH.handle());pakarTestMillis=1100;
+    assert(input.callback(ETH.handle(),bytes,length,input.priv,nullptr)==77);
+    PakarS3::LldpStatus lldp;port.lldpStatus(lldp);assert(lldp.receiveActive&&lldp.neighborCount==1);
+    ETH.carrier=false;port.lldpStatus(lldp);assert(!lldp.receiveActive&&lldp.neighborCount==0); // Live link masks before service clears.
     ETH.carrier=false; port.service();
+    assert(port.linkSpeedMbps()==0&&!port.fullDuplex());
     assert(!port.connected() && port.localIP().toString()=="0.0.0.0");
     assert(port.end() && SPIClass::stops==1 && Network.removals==0);
     assert(port.end() && SPIClass::stops==1); // No double-release.

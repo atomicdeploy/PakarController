@@ -70,6 +70,7 @@
 #include "src/FirmwareTransfer.h"
 #include "src/CloudConfig.h"
 #include "src/CloudServices.h"
+#include "src/CloudAnimationProgress.h"
 #include "src/LedGrid.h"
 #include "src/LedRenderAdmission.h"
 #include "src/LoopMessages.h"
@@ -1077,6 +1078,7 @@ void serviceDiscovery() {
 #if defined(ARDUINO_ARCH_ESP32)
   s3Discovery.service(pcBoardId.c_str());
   mdnsStarted = s3Discovery.mdnsReady(); ssdpStarted = s3Discovery.ssdpReady();
+  netbiosStarted = s3Discovery.netbiosReady();
 #else
   if (mdnsStarted) MDNS.update();
   mndpService.service(hostname.c_str(),pcBoardId.c_str());
@@ -1087,10 +1089,14 @@ void applyEthernetConfig() {
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_S3_ETHERNET_ENABLED
   cloudServices.suspend();
   NetworkPath::setEthernetDhcp(ethernetConfig.dhcpEnabled());
+  if(!ethernetConfig.enabled()) {
+    NetworkPath::ethernet().end();NetworkPath::service();ntpConfigured=false;return;
+  }
   if(!NetworkPath::ethernet().ensureInitialized(hostname.c_str()))return;
-  NetworkPath::ethernet().configureAddressing(ethernetConfig.dhcpEnabled(),
+  if(!NetworkPath::ethernet().configureAddressing(ethernetConfig.dhcpEnabled(),
       ethernetConfig.address(),ethernetConfig.gateway(),ethernetConfig.subnet(),
-      ethernetConfig.dns1(),ethernetConfig.dns2());
+      ethernetConfig.dns1(),ethernetConfig.dns2()))return;
+  NetworkPath::ethernet().setLldp(ethernetConfig.lldpEnabled(),ethernetConfig.lldpReceive());
   NetworkPath::service();ntpConfigured=false;
 #endif
 }
@@ -1105,7 +1111,11 @@ void applyNetworkConfig() {
   }
   stopDiscovery();
   apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
+#if defined(ARDUINO_ARCH_ESP32) && PAKAR_S3_ETHERNET_ENABLED
+  NetworkPath::begin(hostname.c_str(),ethernetConfig.enabled());
+#else
   NetworkPath::begin(hostname.c_str());
+#endif
   NetworkPath::service();
   ntpConfigured = false;
 }
@@ -1749,6 +1759,10 @@ String buildStatusJson() {
   body += mndpService.running() ? F("true") : F("false");
 #endif
   body += F(",\"netbios_started\":"); body += netbiosStarted ? F("true") : F("false");
+#if defined(ARDUINO_ARCH_ESP32)
+  body += F(",\"netbios_state\":\"");body += s3Discovery.netbiosState();body += '"';
+  body += F(",\"netbios_interfaces\":");body += s3Discovery.netbiosInterfaces();
+#endif
   body += F(",\"canonical_url\":\"http://"); body += hostname; body += F(".local\"");
   body += F(",\"mdns_url\":\"http://"); body += hostname; body += F(".local\"");
   body += F(",\"winner\":"); body += winner;
@@ -3702,6 +3716,7 @@ void setup() {
   pinMode(kAvrResetPin, INPUT);
   // Never erase damaged storage and silently restore public credentials.
   const bool filesystemMounted = SystemPlatform::mountFilesystem();
+  captureBootFilesystemTelemetry(filesystemMounted);
   loopMessages.begin(); // PSRAM-backed S3 queue, before any network callback.
   accessConfig.begin(LittleFS, filesystemMounted);
   networkConfig.begin(LittleFS);
@@ -3782,7 +3797,17 @@ void setup() {
   }
   webAccess.configurePeerFence(pcBoardId, pcBootId);
   cloudServices.begin(hostname, handleCloudCommand, buildStatusJson,buildTelemetryJson,pcBoardId,pcBootId);
-  cloudServices.setProgressService([](){hostLink.service();});
+  cloudServices.setProgressService([](){
+    hostLink.service();
+#if defined(ARDUINO_ARCH_ESP32)
+    // Same loop owner; advance animation between cloud writes, without nested
+    // network service, UART commands, storage scans or a duplicate FX engine.
+    const uint32_t at=millis();
+    PakarLed::serviceDuringCloud(grid,at,otaActive||otaRebootAt||remoteFirmware.busy(),
+        upgradeLifecycle.visual(at)!=PakarUpdate::Visual::None,
+        PakarLed::uartWindowReady(PAKAR_UART_BUFFERED,at,ledResumeAt));
+#endif
+  });
   stream.begin(kStreamPort);
   beginDeviceShells();
 

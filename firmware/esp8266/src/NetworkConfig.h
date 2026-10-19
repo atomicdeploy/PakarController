@@ -20,7 +20,8 @@
 
 // PU850-derived AP+station policy with PakarController-owned, checksum-backed
 // LittleFS storage. AP, station and simultaneous mode never block boot while
-// infrastructure is absent. At least one interface must remain enabled.
+// infrastructure is absent. Wi-Fi may be fully off in a native Ethernet build;
+// the shared mutation owner separately requires an actually ready Ethernet path.
 class NetworkConfigStore {
  public:
   bool begin(fs::FS &filesystem);
@@ -31,6 +32,13 @@ class NetworkConfigStore {
                      const String &gateway = String(), const String &subnet = String(),
                      const String &dns1 = String(), const String &dns2 = String());
   bool save();
+  static constexpr bool ethernetBuild() {
+#if defined(ESP32) && defined(PAKAR_S3_ETHERNET_ENABLED) && PAKAR_S3_ETHERNET_ENABLED
+    return true;
+#else
+    return false;
+#endif
+  }
 
   bool accessPointEnabled() const { return record_.accessPointEnabled != 0; }
   bool stationEnabled() const { return record_.stationEnabled != 0; }

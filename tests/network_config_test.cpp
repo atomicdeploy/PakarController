@@ -25,7 +25,8 @@ int main() {
   fs::FS filesystem;NetworkConfigStore settings;
   assert(settings.begin(filesystem));
   assert(settings.accessPointEnabled()&&!settings.stationEnabled()&&settings.dhcpEnabled());
-  assert(!settings.setAccessPointEnabled(false));
+  assert(settings.setAccessPointEnabled(false)==NetworkConfigStore::ethernetBuild());
+  if(NetworkConfigStore::ethernetBuild())assert(settings.setAccessPointEnabled(true));
   assert(settings.setStation("Fixture WiFi","fixture-passphrase",true));
   assert(settings.setAccessPointEnabled(false));
   assert(settings.save());
@@ -110,4 +111,17 @@ int main() {
   previousFs.files.at("/network.bin")->bytes.push_back(0); // Reject truncated/extra/private-layout bytes.
   NetworkConfigStore damaged;assert(!damaged.begin(previousFs));
   assert(damaged.accessPointEnabled()&&!damaged.stationEnabled());
+  fs::FS ethernetOnlyFs;NetworkConfigStore ethernetOnly;
+  assert(ethernetOnly.begin(ethernetOnlyFs));
+  if(NetworkConfigStore::ethernetBuild()) {
+    assert(ethernetOnly.setAccessPointEnabled(false));assert(ethernetOnly.save());
+    NetworkConfigStore restart;assert(restart.begin(ethernetOnlyFs));
+    assert(!restart.accessPointEnabled()&&!restart.stationEnabled());
+    assert(!restart.configure("ledboard","fixture-ap-passphrase"));
+    assert(WiFi.modeValue==WIFI_OFF&&!WiFi.autoReconnect);
+    assert(String(restart.lastError()).empty());
+  } else {
+    assert(!ethernetOnly.setAccessPointEnabled(false));
+    assert(ethernetOnly.accessPointEnabled());
+  }
 }

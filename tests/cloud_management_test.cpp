@@ -20,7 +20,7 @@ struct CloudFixture {
 namespace NetworkPath {
 bool ready(){return false;}
 const char* interfaceName(){return "none";}
-struct Ethernet { bool configured()const{return false;} } port;
+struct Ethernet { bool live=false;bool configured()const{return NetworkConfigStore::ethernetBuild();}bool connected()const{return live;} } port;
 Ethernet& ethernet(){return port;}
 }
 #include "../firmware/esp8266/src/CloudManagement.h"
@@ -88,7 +88,24 @@ int main() {
   auto net=snapshot(networkConfigurationJson());
   assert(net["station_ssid"]=="fixture-ssid"&&net["password"].isNull());
   assert(net["uplink"]["interface"]=="none"&&net["uplink"]["ipv4_ready"]==false);
-  assert(net["ethernet"]["configured"]==false);
+  assert(net["ethernet"]["configured"]==NetworkConfigStore::ethernetBuild());
+  assert(net["ethernet_ready"]==false);
+  // Compiling Ethernet or forging a client field is never handoff evidence.
+  assert(!network("{\"station_enabled\":false,\"ap_enabled\":false,\"ethernet_ready\":true}",result));
+  assert(networkConfig.stationEnabled()&&networkConfig.accessPointEnabled()&&!networkApplyPending);
+  NetworkPath::port.live=true;
+#if defined(ARDUINO_ARCH_ESP32)
+  assert(snapshot(networkConfigurationJson())["ethernet_ready"]==true);
+#endif
+  if(NetworkConfigStore::ethernetBuild()) {
+    assert(network("{\"station_enabled\":false,\"ap_enabled\":false}",result));applied();
+    assert(!networkConfig.stationEnabled()&&!networkConfig.accessPointEnabled());
+    NetworkPath::port.live=false;
+    assert(!network("{\"dhcp\":true}",result)); // Actual lost Ethernet, not cached readiness.
+    assert(network("{\"ap_enabled\":true}",result));applied(); // Recovery remains reachable.
+    assert(networkConfig.accessPointEnabled());
+  } else assert(!network("{\"station_enabled\":false,\"ap_enabled\":false}",result));
+  NetworkPath::port.live=false;
   for(bool* busy:{&otaActive,&avrUploadOwner,&programmingLatched,&networkApplyPending,&cloudApplyPending,&remoteFirmware.active}) {
     *busy=true;assert(!cloud("{\"telemetry_seconds\":19}",result));assert(!network("{\"dhcp\":true}",result));*busy=false;
   }

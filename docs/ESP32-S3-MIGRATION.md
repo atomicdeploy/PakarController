@@ -195,7 +195,12 @@ are now captured in the commissioning checkpoint. This does not establish a
 complete all-client browsable catalog or AP/rename/reconnect matrix.
 S3 platform adapters now exist, including the actual adapted PU SSDP engine and
 AP/STA interface handling; live LAN/phone discovery acceptance remains pending.
-S3 NetBIOS is explicitly unavailable, not falsely advertised as implemented.
+S3 now has bounded interface-bound NBNS name/node-status replies, including
+Ethernet/STA/AP ownership and explicit15-character-name limits. Readiness is
+observed, not inferred from compilation; Windows/live-W5500 validation remains
+open. WINS registration/conflict arbitration, SMB sessions and LLMNR are not
+implemented. See issue#19 and the NetDiscovery source decisions in the existing
+file-comparison ledger; donor's experimental blocking ND protocol is not NBNS.
 
 ## LED and protocol decisions
 

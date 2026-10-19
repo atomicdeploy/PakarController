@@ -108,7 +108,7 @@ bool NetworkConfigStore::begin(fs::FS &filesystem) {
   file.close();
   if (!complete || stored.magic != kMagic || stored.schema != kSchema ||
       stored.stationEnabled > 1 || stored.accessPointEnabled > 1 || stored.dhcpEnabled > 1 ||
-      (!stored.stationEnabled && !stored.accessPointEnabled) ||
+      (!stored.stationEnabled && !stored.accessPointEnabled && !ethernetBuild()) ||
       (stored.stationEnabled && !stored.stationSsid[0]) ||
       stored.stationSsid[sizeof(stored.stationSsid) - 1] != '\0' ||
       stored.stationPassword[sizeof(stored.stationPassword) - 1] != '\0' ||
@@ -147,7 +147,7 @@ bool NetworkConfigStore::setStation(const String &ssid, const String &password,
 }
 
 bool NetworkConfigStore::setAccessPointEnabled(bool enabled) {
-  if (!enabled && !stationEnabled()) {
+  if (!enabled && !stationEnabled() && !ethernetBuild()) {
     error_ = F("AP and station cannot both be disabled");
     return false;
   }
@@ -158,7 +158,7 @@ bool NetworkConfigStore::setAccessPointEnabled(bool enabled) {
 }
 
 bool NetworkConfigStore::save() {
-  if (!stationEnabled() && !accessPointEnabled()) {
+  if (!stationEnabled() && !accessPointEnabled() && !ethernetBuild()) {
     error_ = F("AP and station cannot both be disabled"); return false;
   }
   if (filesystem_ == nullptr) {
@@ -242,6 +242,12 @@ bool NetworkConfigStore::configure(const char *hostname,
   WiFi.softAPdisconnect(true);
   delay(10);
   const bool apEnabled = accessPointEnabled();
+  if (!apEnabled && !stationEnabled()) {
+    // Do not accidentally select WIFI_STA for a persisted Ethernet-only mode.
+    // A build without Ethernet cannot load/save such a record in the first place.
+    error_ = String();
+    return false; // AP is genuinely not running, not a network failure.
+  }
 #if defined(ESP32)
   // ASA0002E WiFi_Setup applies its persisted identity BEFORE enabling Wi-Fi.
   // Arduino-ESP32 mode() copies Network's default into the new STA netif.

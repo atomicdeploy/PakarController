@@ -5,12 +5,13 @@ import 'package:flutter/foundation.dart';
 import 'api.dart';
 import 'settings_catalog.dart';
 
-enum SettingsGroup { network, cloud }
+enum SettingsGroup { network, cloud, ethernet }
 
 extension SettingsGroupContract on SettingsGroup {
-  String get path => '/api/$name';
+  String get path =>
+      this == SettingsGroup.ethernet ? '/api/network/ethernet' : '/api/$name';
   String get acknowledgment =>
-      this == SettingsGroup.network ? 'accepted' : 'updated';
+      this == SettingsGroup.cloud ? 'updated' : 'accepted';
   Map<String, String> get fields =>
       (deviceSettingsCatalog[name] as Map).cast<String, String>();
 }
@@ -28,8 +29,12 @@ void settingsBounded(String text, int maximum, String label) {
 /// Required fields never fall back to placeholder defaults or coerced values.
 Map<String, Object> settingsSnapshot(
   SettingsGroup group,
-  Map<String, dynamic> json,
-) {
+  Map<String, dynamic> json, {
+  bool ethernetReady = false,
+}) {
+  if (group == SettingsGroup.ethernet && json['configured'] != true) {
+    throw const FormatException('Ethernet is not supported by this firmware');
+  }
   final result = <String, Object>{};
   for (final entry in group.fields.entries) {
     final optional = entry.value.startsWith('optional:');
@@ -50,12 +55,19 @@ Map<String, Object> settingsSnapshot(
   }
   if (group == SettingsGroup.network) {
     settingsBounded(result['station_ssid'] as String, 32, 'SSID');
-    if (result['station_enabled'] == false && result['ap_enabled'] == false) {
-      throw const FormatException('Keep station or recovery AP enabled');
+    if (result['station_enabled'] == false &&
+        result['ap_enabled'] == false &&
+        !ethernetReady &&
+        json['ethernet_ready'] != true) {
+      throw const FormatException(
+        'Keep station or recovery AP enabled until Ethernet has a working IPv4 link',
+      );
     }
     if (result['station_enabled'] == true && result['station_ssid'] == '') {
       throw const FormatException('Enter the station SSID');
     }
+    settingsValidateAddressing(result);
+  } else if (group == SettingsGroup.ethernet) {
     settingsValidateAddressing(result);
   } else {
     for (final prefix in ['mqtt', 'websocket']) {
@@ -390,12 +402,14 @@ class DeviceSettingsSession extends ChangeNotifier {
   String wifiPassword = '',
       message = 'Read the actual saved device settings first';
   bool openNetwork = false, pending = false, disposed = false;
+  bool ethernetReady = false;
   int epoch = 0;
   bool get live => !disposed && owner == api.connectionRevision && authorized();
   bool secretsDirty(SettingsGroup group) => group == SettingsGroup.network
       ? wifiPassword.isNotEmpty || openNetwork
-      : mqttPassword.mode != SecretMode.keep ||
-            websocketToken.mode != SecretMode.keep;
+      : group == SettingsGroup.cloud &&
+            (mqttPassword.mode != SecretMode.keep ||
+                websocketToken.mode != SecretMode.keep);
   bool get dirty =>
       drafts.entries.any((e) => e.value.dirty || secretsDirty(e.key));
   void check() {
@@ -428,6 +442,7 @@ class DeviceSettingsSession extends ChangeNotifier {
   void invalidate() {
     ++epoch;
     drafts.clear();
+    ethernetReady = false;
     clearSecrets();
     pending = false;
     message = 'Device context lost; read this peer again';
@@ -440,16 +455,20 @@ class DeviceSettingsSession extends ChangeNotifier {
     final request = (_reads[group] ?? 0) + 1, captured = epoch;
     _reads[group] = request;
     try {
-      final next = settingsSnapshot(group, await api.getJson(group.path));
+      final raw = await api.getJson(group.path);
       check();
       if (captured != epoch || request != _reads[group] || pending) return;
+      if (group == SettingsGroup.network) {
+        ethernetReady = raw['ethernet_ready'] == true;
+      }
+      final next = settingsSnapshot(group, raw);
       if (discard || drafts[group] == null) {
         if (discard) workspace?.discard(group);
         drafts[group] = workspace?.restore(group, next) ?? SettingsDraft(next);
         if (group == SettingsGroup.network) {
           wifiPassword = '';
           openNetwork = false;
-        } else {
+        } else if (group == SettingsGroup.cloud) {
           mqttPassword.clear();
           websocketToken.clear();
         }
@@ -475,22 +494,45 @@ class DeviceSettingsSession extends ChangeNotifier {
         'Reload the current saved settings before saving',
       );
     }
-    final expected = settingsSnapshot(group, draft.value);
+    final expected = settingsSnapshot(group, {
+      ...draft.value,
+      if (group == SettingsGroup.ethernet) 'configured': true,
+    }, ethernetReady: ethernetReady);
+    if (expected.containsKey('dhcp')) {
+      for (final key in ['address', 'gateway', 'subnet', 'dns1', 'dns2']) {
+        final text =
+            (expected['dhcp'] == true ? draft.saved[key] : expected[key])
+                as String;
+        expected[key] = text.isEmpty
+            ? '0.0.0.0'
+            : text.split('.').map(int.parse).join('.');
+      }
+    }
     final form = <String, String>{
       for (final entry in expected.entries) entry.key: '${entry.value}',
     };
     if (group == SettingsGroup.network) {
       settingsBounded(wifiPassword, 63, 'Wi-Fi password');
-      if (expected['station_enabled'] == true &&
-          !openNetwork &&
+      if (!openNetwork &&
+          wifiPassword.isNotEmpty &&
           utf8.encode(wifiPassword).length < 8) {
         throw const FormatException(
           'Enter an 8–63 byte Wi-Fi password or explicitly select an open network',
         );
       }
       form['ssid'] = form.remove('station_ssid')!;
-      form['password'] = openNetwork ? '' : wifiPassword;
-    } else {
+      if (expected['station_enabled'] == true &&
+          expected['station_ssid'] != draft.saved['station_ssid'] &&
+          !openNetwork &&
+          wifiPassword.isEmpty) {
+        throw const FormatException(
+          'Enter a password or explicitly choose Open when changing the SSID',
+        );
+      }
+      if (openNetwork || wifiPassword.isNotEmpty) {
+        form['password'] = openNetwork ? '' : wifiPassword;
+      }
+    } else if (group == SettingsGroup.cloud) {
       for (final entry in {
         'mqtt_password': mqttPassword,
         'websocket_token': websocketToken,
@@ -544,7 +586,7 @@ class DeviceSettingsSession extends ChangeNotifier {
       if (group == SettingsGroup.network) {
         wifiPassword = '';
         openNetwork = false;
-      } else {
+      } else if (group == SettingsGroup.cloud) {
         mqttPassword.clear();
         websocketToken.clear();
       }

@@ -2,7 +2,7 @@
 const PAGES: [(&str, &str, &str); 10] = [
     ("Overview", icons::CIRCUITRY, "device version identity status hardware NTP time discovery build flags"),
     ("Board identity", icons::GLOBE, "identity hostname rename board name application title icon mDNS AP"),
-    ("Wi-Fi", icons::WIFI_HIGH, "network station access point recovery SSID password scan"),
+    ("Wi-Fi & Ethernet", icons::WIFI_HIGH, "network Ethernet W5500 wired DHCP static IPv4 gateway DNS station access point recovery SSID password scan"),
     ("MQTT", icons::BROADCAST, "cloud broker port topic username password TLS telemetry"),
     ("WebSocket", icons::LINK, "cloud websocket host port path token TLS telemetry"),
     ("Device access", icons::LOCK, "login authentication username password credentials security"),

@@ -19,9 +19,9 @@ const deviceSettingsCatalog = {
     },
     {
       "id": "wifi",
-      "label": "Wi-Fi",
+      "label": "Wi-Fi & Ethernet",
       "icon": "WIFI_HIGH",
-      "keywords": "network station access point recovery SSID password scan",
+      "keywords": "network Ethernet W5500 wired DHCP static IPv4 gateway DNS station access point recovery SSID password scan",
       "features": [
         "network"
       ]
@@ -114,6 +114,17 @@ const deviceSettingsCatalog = {
     "subnet": "optional:string",
     "dns1": "optional:string",
     "dns2": "optional:string"
+  },
+  "ethernet": {
+    "enabled": "optional:boolean",
+    "lldp_enabled": "optional:boolean",
+    "lldp_receive": "optional:boolean",
+    "dhcp": "boolean",
+    "address": "string",
+    "gateway": "string",
+    "subnet": "string",
+    "dns1": "string",
+    "dns2": "string"
   },
   "cloud": {
     "mqtt_enabled": "boolean",

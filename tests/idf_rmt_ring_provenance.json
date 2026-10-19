@@ -1,0 +1,46 @@
+{
+  "sdk": "ESP-IDF v5.5.5 (Arduino-ESP32 3.3.12 dependency)",
+  "license": "Apache-2.0",
+  "excerpt_sha256": "6f462d1e71660a8741a251c4bd4e242df281a23e88597a09deb7634999c7ba17",
+  "sources": [
+    {
+      "path": "components/esp_driver_rmt/src/rmt_encoder_bytes.c",
+      "sha256": "2121a939f3ba699e7fa1def9ad7d6ac2d9be7228ca510f14b90773cf5a2ede15",
+      "blob": "cd04a3c9f14456fd4a8c6d5ecde407b608976278",
+      "bytes": 6401,
+      "url": "https://github.com/espressif/esp-idf/blob/v5.5.5/components/esp_driver_rmt/src/rmt_encoder_bytes.c",
+      "scope": [
+        "rmt_bytes_encoder_t",
+        "rmt_bytes_encoder_reset",
+        "rmt_encode_bytes"
+      ]
+    },
+    {
+      "path": "components/esp_driver_rmt/src/rmt_encoder_copy.c",
+      "sha256": "1e20d507bda5ca22b1770a2dff8a915bd43aeed5aac453ee7277705e01d1bb69",
+      "blob": "a28abbb3031239180e2d4f8d6577a0c0c843a152",
+      "bytes": 4735,
+      "url": "https://github.com/espressif/esp-idf/blob/v5.5.5/components/esp_driver_rmt/src/rmt_encoder_copy.c",
+      "scope": [
+        "rmt_copy_encoder_t",
+        "rmt_copy_encoder_reset",
+        "rmt_encode_copy"
+      ]
+    },
+    {
+      "path": "components/esp_driver_rmt/src/rmt_tx.c",
+      "sha256": "a8413610fb7f729e50a517980a24925fbfb1a28620999a1ad8f34bb71419e4c6",
+      "blob": "8911a957caf7a3cd143f7b5ff63164eaa5750308",
+      "bytes": 53528,
+      "url": "https://github.com/espressif/esp-idf/blob/v5.5.5/components/esp_driver_rmt/src/rmt_tx.c",
+      "scope": [
+        "rmt_tx_mark_eof",
+        "rmt_encode_check_result",
+        "rmt_dma_tx_eof_cb"
+      ]
+    }
+  ],
+  "adaptation": "Unchanged function bodies and encoder structs; SDK includes, attributes and unexercised factories are excluded. Pakar supplies host structs, allocation-free descriptor consumer and peripheral doubles. Native transaction start sequencing is modeled from fully read rmt_tx_do_transaction.",
+  "meaning": "Software model only; injected EOF faults demonstrate limitations of encoded symbol accounting, not observed device root cause or physical/RF/cache/latency/optical acceptance."
+}
+

@@ -125,8 +125,10 @@ String networkConfigurationJson() {
   d[F("uplink")][F("ipv4_ready")]=NetworkPath::ready();
 #if defined(ARDUINO_ARCH_ESP32)
   d[F("ethernet")][F("configured")]=NetworkPath::ethernet().configured();
+  d[F("ethernet_ready")]=NetworkPath::ethernet().connected();
 #else
   d[F("ethernet")][F("configured")]=false;
+  d[F("ethernet_ready")]=false;
 #endif
   d[F("apply_pending")]=networkApplyPending;
   return ConfigurationManagement::json(d);
@@ -145,6 +147,17 @@ bool updateNetworkConfiguration(JsonObjectConst patch,String &result) {
       !read.text("address",address,15)||!read.text("gateway",gateway,15)||
       !read.text("subnet",subnet,15)||!read.text("dns1",dns1,15)||!read.text("dns2",dns2,15))return false;
   if(!read.supplied) {result=F("No network configuration fields supplied");return false;}
+  // Disabling the final Wi-Fi path is an explicit Ethernet-only handoff, never
+  // justified by a compiled driver or a client-provided readiness boolean.
+  if(!station&&!ap) {
+#if defined(ARDUINO_ARCH_ESP32)
+    if(!NetworkConfigStore::ethernetBuild()||!NetworkPath::ethernet().connected()) {
+      result=F("Ethernet must have a live IPv4 path before Wi-Fi can be disabled");return false;
+    }
+#else
+    result=F("AP and station cannot both be disabled without native Ethernet");return false;
+#endif
+  }
   const bool changedAddress=address!=candidate.stationAddress().toString() ||
       gateway!=candidate.stationGateway().toString() || subnet!=candidate.stationSubnet().toString() ||
       dns1!=candidate.stationDns1().toString() || dns2!=candidate.stationDns2().toString();

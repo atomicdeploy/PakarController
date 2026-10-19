@@ -119,6 +119,9 @@ jobs:
           # Compile the optional RX-only SDK adapter, then restore the canonical
           # normal image in the SAME cache/output before any artifact upload.
           pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -PauseAvrLink -Jobs 2
+          # Exercise the optional native W5500/LLDP input-hook linkage before
+          # restoring the generic image in that same canonical cache.
+          pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3Ethernet -Jobs 2
           bash build.sh buffered esp32s3 --s3-flash-mb 16 --s3-psram opi
           bash tools/test-protocol.sh
           bash tools/test-pc-flags.sh

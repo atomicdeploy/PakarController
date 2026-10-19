@@ -1,5 +1,6 @@
 #include "LedGrid.h"
 #include "LedPreferences.h"
+#include "CloudAnimationProgress.h"
 #include <cassert>
 #include <cstdio>
 unsigned panelNotifications=0;uint8_t panelKind=0;uint16_t panelValue=0;
@@ -46,9 +47,27 @@ void rainbowClockCadence(){
  assert(stationary.pattern()==LedGrid::kPatternNone && rgb(stationary)==still);
  pixelTestNow=savedNow;
 }
+void cloudAnimationProgress(){
+ const auto savedNow=pixelTestNow;
+ LedGrid grid;pixelTestNow=10;grid.begin();grid.setPattern(LedGrid::kPatternRainbow);
+ const auto initial=grid.pixelFrameJson();const auto before=FastLED.shows;
+ // Simulate a two-second cloud burst which calls progress between its writes:
+ // the real renderer advances throughout it, not once after returning to loop.
+ for(unsigned i=1;i<=20;++i){pixelTestNow=10+i*100;assert(PakarLed::serviceDuringCloud(grid,pixelTestNow,false,false,true));}
+ assert(FastLED.shows==before+20&&grid.pixelFrameJson()!=initial);
+ const auto shown=FastLED.shows;
+ assert(!PakarLed::serviceDuringCloud(grid,++pixelTestNow,true,false,true));
+ assert(!PakarLed::serviceDuringCloud(grid,++pixelTestNow,false,true,true));
+ assert(!PakarLed::serviceDuringCloud(grid,++pixelTestNow,false,false,false));
+ assert(FastLED.shows==shown);
+ grid.setOutputEnabled(false);const auto disabled=FastLED.shows;
+ assert(!PakarLed::serviceDuringCloud(grid,++pixelTestNow,false,false,true));
+ assert(FastLED.shows==disabled);pixelTestNow=savedNow;
+}
 int main(){
  using namespace BoardCore::Protocol;
  rainbowClockCadence();
+ cloudAnimationProgress();
  LedGrid grid;assert(grid.pixelFrameJson()=="null");grid.begin();
  assert(grid.outputCapabilitiesJson()=="{\"backend\":\"fastled\",\"rmt\":false,\"dma\":false}");
  auto frame=grid.pixelFrameJson();

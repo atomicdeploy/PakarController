@@ -103,6 +103,13 @@ context.nextRgbStatus={board_id:'fixture',boot_id:'a'.repeat(32),capabilities:{a
 assert.equal(run('retainStatusRgb(nextRgbStatus,state).status_rgb.revision'),2);
 context.nextRgbStatus.boot_id='b'.repeat(32);assert.equal(run('retainStatusRgb(nextRgbStatus,state).status_rgb.revision'),1,'RGB never survives a peer boot change');
 context.currentPeer=()=>({known:true,has:f=>f==='network'});
+context.ethernetFixture={configured:true,enabled:true,lldp_enabled:true,lldp_receive:false,dhcp:false,address:'192.168.9.2',gateway:'192.168.9.1',subnet:'255.255.255.0',dns1:'0.0.0.0',dns2:'0.0.0.0'};
+assert.equal(run('ethernetConfig(ethernetFixture).address'),'192.168.9.2');
+assert(!Object.hasOwn(run('ethernetConfig(ethernetFixture)'),'configured'));
+assert.throws(()=>run('ethernetConfig({...ethernetFixture,configured:false})'),/not supported/);
+assert.throws(()=>run("ethernetConfig({...ethernetFixture,subnet:'255.0.255.0'})"),/Invalid static/);
+assert.throws(()=>run("settingsSnapshot('network',{station_enabled:false,ap_enabled:false,station_ssid:'Fixture'})"),/Ethernet/);
+assert.equal(run("settingsSnapshot('network',{station_enabled:false,ap_enabled:false,station_ssid:'Fixture',ethernet_ready:true}).station_enabled"),false);
 run('settingsInvalidate()');assert.equal(nodes.cloudWsToken.value,'');assert.equal(run('webSettings.network'),null);
 let finishOldRead;context.api=()=>new Promise(resolve=>{finishOldRead=resolve});
 const oldRead=run("settingsLoad('cloud')");run('settingsInvalidate()');finishOldRead(cloud);await oldRead;assert.equal(run('webSettings.cloud'),null,'Revoked sessions must ignore late read replies');

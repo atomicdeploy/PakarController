@@ -299,6 +299,34 @@ fn network_page(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui:
         }
     });
 }
+fn ethernet_page(app:&mut PakarControllerApp,draft:&mut Editor,ui:&mut egui::Ui,ready:bool){
+    if app.command_route()==Some(Transport::Serial){return;}
+    let Some(observed)=app.live_status().filter(|s|s.ethernet["configured"]==true) else{return;};
+    let runtime=observed.ethernet.clone();
+    dialog::section(ui,icons::PLUG,"Wired Ethernet",|ui|{
+        let state=if runtime["ipv4_ready"]==true{"IPv4 ready"}else if runtime["link_up"]==true{"Link up · waiting for IPv4"}else{"Link down"};
+        ui.label(format!("{} · {}",state,runtime["ip"].as_str().unwrap_or("No address")));
+        if let Some(speed)=runtime["speed_mbps"].as_u64(){ui.weak(format!("{speed} Mbps · {}",match runtime["full_duplex"].as_bool(){Some(true)=>"full duplex",Some(false)=>"half duplex",None=>"duplex unknown"}));}
+        if draft.ethernet.is_none(){
+            if ui.add_enabled(ready&&draft.pending.is_none(),egui::Button::new("Read Ethernet settings")).clicked(){let _=app.http_tx.send(HttpCommand::Configuration(app.endpoint(),Group::Ethernet.path()));}
+            return;
+        }
+        let d=draft.ethernet.as_mut().unwrap();
+        ui.add_enabled_ui(ready&&draft.pending.is_none()&&!d.conflict,|ui|{
+            if let Some(enabled)=&mut d.value.enabled{ui.checkbox(enabled,"Enable Ethernet");}
+            let a=&mut d.value.addressing;
+            if let Some(dhcp)=&mut a.dhcp{ui.checkbox(dhcp,"Automatic Ethernet addressing (DHCP)");}
+            if a.dhcp==Some(false){for(label,value)in[("IPv4 address",&mut a.address),("Gateway",&mut a.gateway),("Subnet mask",&mut a.subnet),("Primary DNS",&mut a.dns1),("Secondary DNS",&mut a.dns2)]{if let Some(value)=value{field(ui,icons::GLOBE,label,value,false);}}}
+            if let Some(enabled)=&mut d.value.lldp_enabled{ui.checkbox(enabled,"Advertise Ethernet link identity (LLDP)");}
+            if let Some(receive)=&mut d.value.lldp_receive{ui.checkbox(receive,"Advanced: receive LLDP neighbors (promiscuous Ethernet)");}
+        });
+        if d.conflict{ui.colored_label(ui.visuals().warn_fg_color,"Ethernet settings changed remotely. Discard and reload before saving.");}
+        let valid=Write::ethernet(0,&d.value);
+        if let Err(error)=&valid{ui.colored_label(ui.visuals().warn_fg_color,error);}
+        if ui.add_enabled(ready&&draft.pending.is_none()&&!d.conflict&&d.dirty()&&valid.is_ok(),egui::Button::new("Save Ethernet and verify")).clicked(){submit(app,draft,Group::Ethernet);}
+        ui.weak("Changing addressing may disconnect this route. No uncertain write is replayed or moved to another interface. Wi-Fi can be disabled only after Ethernet has a working IPv4 link.");
+    });
+}
 fn cloud_page(draft: &mut Editor, ui: &mut egui::Ui, ready: bool, websocket: bool) {
     let Some(cloud) = &mut draft.cloud else {
         ui.label("Connect and refresh to read the device's cloud settings.");
@@ -415,6 +443,7 @@ fn submit(app: &mut PakarControllerApp, draft: &mut Editor, group: Group) {
         Group::Network => draft.network.as_ref().is_some_and(|d| d.conflict),
         Group::Cloud => draft.cloud.as_ref().is_some_and(|d| d.conflict),
         Group::StatusRgb => draft.status_rgb.as_ref().is_some_and(|d|d.conflict),
+        Group::Ethernet => draft.ethernet.as_ref().is_some_and(|d|d.conflict),
     } {
         draft.message = "Discard and refresh conflicting device settings before saving".into();
         return;
@@ -428,6 +457,7 @@ fn submit(app: &mut PakarControllerApp, draft: &mut Editor, group: Group) {
             .ok_or("Cloud settings unavailable".into())
             .and_then(|d| Write::cloud(id, &d.value, &draft.mqtt_password, &draft.websocket_token)),
         Group::StatusRgb => draft.status_rgb.as_ref().ok_or("RGB settings unavailable".into()).and_then(|d|Write::status_rgb(id,&d.value)),
+        Group::Ethernet => draft.ethernet.as_ref().ok_or("Ethernet settings unavailable".into()).and_then(|d|Write::ethernet(id,&d.value)),
     };
     match result {
         Ok(write) => {
@@ -802,7 +832,7 @@ fn page(
                 });
             }
             1 => { ui.add_enabled_ui((ready || app.command_route()==Some(Transport::Serial)) && !app.identity_pending, |ui| { app.draw_device_identity(ui); }); }
-            2 => network_page(app, draft, ui, ready),
+            2 => {network_page(app, draft, ui, ready);ethernet_page(app,draft,ui,ready);},
             3 | 4 => cloud_page(draft, ui, ready, index == 4),
             5 => { ui.add_enabled_ui(ready, |ui| { app.draw_device_access(ui); }); }
             6 => {
@@ -1001,6 +1031,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
             if let Some(group) = group {
                 let valid = match group {
                     Group::StatusRgb => false, // RGB owns its contextual section save action.
+                    Group::Ethernet => false, // Ethernet has its own explicit save action.
                     Group::Network => draft.network.as_ref().is_some_and(|d| {
                         !d.conflict
                             && draft.network_write(0).is_ok()

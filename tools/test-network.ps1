@@ -11,8 +11,8 @@ $taskArguments=@('-std=c++17','-Wall','-Wextra','-Werror',
   (Join-Path $taskRoot 'firmware/esp8266/src/NetworkConfig.cpp'),'-o',$taskOutput)
 if($Plan){[pscustomobject]@{Executable='g++';Arguments=$taskArguments;Scope='Shared network persistence/validation fixture, not ESP32 SDK or Wi-Fi acceptance'};return}
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $taskOutput) | Out-Null
-foreach($taskPlatform in @('-DESP8266','-DESP32')) {
-  & g++ $taskPlatform @taskArguments
+foreach($taskPlatform in @(@('-DESP8266'),@('-DESP32'),@('-DESP32','-DPAKAR_S3_ETHERNET_ENABLED=1'))) {
+  & g++ @taskPlatform @taskArguments
   if($LASTEXITCODE){throw 'Network contract compilation failed'}
   & $taskOutput
   if($LASTEXITCODE){throw 'Network contract assertions failed'}
@@ -26,3 +26,8 @@ $taskDiscovery=Join-Path $taskRoot 'build/native/discovery_mdns_test.exe'
 if($LASTEXITCODE){throw 'mDNS registration fixture compilation failed'}
 & $taskDiscovery
 if($LASTEXITCODE){throw 'mDNS registration fixture failed'}
+$taskNbns=Join-Path $taskRoot 'build/native/nbns_test.exe'
+& g++ -std=c++17 -Wall -Wextra -Werror -DPAKAR_S3_ETHERNET_ENABLED=1 -I (Join-Path $taskRoot 'tests/nbns_stubs') (Join-Path $taskRoot 'tests/nbns_test.cpp') -o $taskNbns
+if($LASTEXITCODE){throw 'NBNS production codec/socket fixture compilation failed'}
+& $taskNbns
+if($LASTEXITCODE){throw 'NBNS production codec/socket fixture failed'}

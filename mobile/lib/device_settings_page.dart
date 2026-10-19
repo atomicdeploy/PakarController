@@ -170,6 +170,12 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       if (widget.api.supportsRoute('GET', '/api/cloud')) {
         await session.load(SettingsGroup.cloud);
       }
+      if (mounted &&
+          widget.status.json['ethernet'] is Map &&
+          widget.status.json['ethernet']['configured'] == true &&
+          widget.api.supportsRoute('GET', '/api/network/ethernet')) {
+        await session.load(SettingsGroup.ethernet);
+      }
     }
     if (mounted &&
         identity == null &&
@@ -344,10 +350,10 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       setState(() => info = error.toString());
       return;
     }
-    if (group == SettingsGroup.network &&
+    if (group != SettingsGroup.cloud &&
         !await confirm(
-          'Save Wi-Fi policy?',
-          'Connectivity may change. The station password is replaced on every save. Keep a recovery path enabled.',
+          'Save network policy?',
+          'Connectivity may change. No uncertain write is retried on another route. Keep a working recovery path.',
         )) {
       return;
     }
@@ -552,7 +558,9 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       WorkspaceSection(title: title, icon: PakarIcons.gear, children: children);
   Widget publicField(SettingsGroup group, String key, String label) {
     final draft = session.drafts[group]!;
-    if (group.fields[key] == 'boolean') {
+    if (!draft.value.containsKey(key)) return const SizedBox.shrink();
+    final type = group.fields[key]?.replaceFirst('optional:', '');
+    if (type == 'boolean') {
       return SwitchListTile.adaptive(
         contentPadding: EdgeInsets.zero,
         title: Text(label),
@@ -562,7 +570,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
             : (value) => session.set(group, key, value),
       );
     }
-    final numeric = ['port', 'interval'].contains(group.fields[key]);
+    final numeric = ['port', 'interval'].contains(type);
     return textField('$group:$key', label, '${draft.value[key]}', (value) {
       session.set(
         group,
@@ -617,6 +625,78 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
         }, secret: true),
     ],
   );
+  List<Widget> addressFields(SettingsGroup group) {
+    final draft = session.drafts[group];
+    if (draft == null || !draft.value.containsKey('dhcp')) return const [];
+    return [
+      publicField(group, 'dhcp', 'Automatic IPv4 addressing (DHCP)'),
+      if (draft.value['dhcp'] == false)
+        for (final entry in const {
+          'address': 'IPv4 address',
+          'gateway': 'Gateway',
+          'subnet': 'Subnet mask',
+          'dns1': 'Primary DNS',
+          'dns2': 'Secondary DNS',
+        }.entries)
+          publicField(group, entry.key, entry.value),
+    ];
+  }
+
+  Widget ethernetEditor() {
+    const group = SettingsGroup.ethernet;
+    final draft = session.drafts[group];
+    final runtime = widget.status.json['ethernet'] as Map;
+    return card('Wired Ethernet', [
+      Text(
+        runtime['ipv4_ready'] == true
+            ? 'IPv4 ready · ${runtime['ip'] ?? 'Address unknown'}'
+            : runtime['link_up'] == true
+            ? 'Link up · waiting for IPv4'
+            : 'Link down',
+      ),
+      if (runtime['speed_mbps'] is num)
+        Text(
+          '${runtime['speed_mbps']} Mbps · ${runtime['full_duplex'] == true
+              ? 'full duplex'
+              : runtime['full_duplex'] == false
+              ? 'half duplex'
+              : 'duplex unknown'}',
+        ),
+      if (draft == null)
+        OutlinedButton(
+          onPressed: working || session.pending
+              ? null
+              : () => session.load(group),
+          child: const Text('Read Ethernet settings'),
+        )
+      else ...[
+        publicField(group, 'enabled', 'Enable Ethernet'),
+        ...addressFields(group),
+        publicField(group, 'lldp_enabled', 'Advertise link identity (LLDP)'),
+        publicField(
+          group,
+          'lldp_receive',
+          'Advanced: receive LLDP neighbors · promiscuous Ethernet',
+        ),
+        if (draft.conflict)
+          const Text(
+            'Ethernet settings changed remotely. Discard and reload before saving.',
+          ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton.icon(
+            onPressed:
+                working || session.pending || draft.conflict || !draft.dirty
+                ? null
+                : () => saveGroup(group),
+            icon: const Icon(PakarIcons.floppyDisk),
+            label: const Text('Save Ethernet and verify'),
+          ),
+        ),
+      ],
+    ]);
+  }
+
   Widget groupEditor(SettingsGroup group) {
     final draft = session.drafts[group];
     if (draft == null) {
@@ -663,7 +743,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
           const SizedBox(height: 12),
           textField(
             'wifi-password',
-            'Station password · re-enter on save',
+            'Replacement password · blank keeps stored',
             session.wifiPassword,
             (value) {
               session.wifiPassword = value;
@@ -681,8 +761,9 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
                 : (value) => setState(() => session.openNetwork = value),
           ),
           const Text(
-            'The station password is write-only and replaced on every save. Keep at least one network path enabled.',
+            'Blank keeps the stored password for the unchanged SSID. Wi-Fi can be fully disabled only after Ethernet has a working IPv4 link.',
           ),
+          ...addressFields(group),
         ] else ...[
           publicField(
             group,
@@ -743,7 +824,15 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   Widget detail({bool fallback = false}) => switch (fallback
       ? 'overview'
       : page) {
-    'wifi' => groupEditor(SettingsGroup.network),
+    'wifi' => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        groupEditor(SettingsGroup.network),
+        if (widget.status.json['ethernet'] is Map &&
+            widget.status.json['ethernet']['configured'] == true)
+          ethernetEditor(),
+      ],
+    ),
     'mqtt' || 'websocket' => groupEditor(SettingsGroup.cloud),
     'identity' => card('Board identity', [
       TextField(

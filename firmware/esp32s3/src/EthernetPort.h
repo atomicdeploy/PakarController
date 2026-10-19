@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <IPAddress.h>
+#include "Lldp.h"
 
 // Optional native ESP-IDF/lwIP interface, not a separate WIZnet socket stack.
 // A disabled build includes neither ETH.h nor a driver/SPI allocation.
@@ -39,6 +40,8 @@ class EthernetPort {
       IPAddress gateway = IPAddress(), IPAddress subnet = IPAddress(),
       IPAddress dns1 = IPAddress(), IPAddress dns2 = IPAddress());
   bool end();
+  bool setLldp(bool enabled,bool receive=false);
+  void lldpStatus(LldpStatus &status)const;
   void service();
   bool started() const;
   bool linkUp() const;
@@ -50,6 +53,8 @@ class EthernetPort {
   IPAddress subnetMask() const;
   IPAddress dnsIP(uint8_t index = 0) const;
   String macAddress() const;
+  uint16_t linkSpeedMbps()const;
+  bool fullDuplex()const;
   const String &lastError() const { return error_; }
  private:
   String error_;

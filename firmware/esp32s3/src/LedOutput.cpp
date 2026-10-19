@@ -4,6 +4,7 @@
 #include <esp_heap_caps.h>
 #include <esp_rom_sys.h>
 #include <esp_attr.h>
+#include <utility>
 #if !PAKAR_S3_LED_USE_DMA
 #include <sdkconfig.h>
 #include <esp_cpu.h>
@@ -209,6 +210,13 @@ String LedOutput::json()const{
   value+=F(",\"on_change_only\":true");
   value+=F(",\"timing_profile\":\"ws2811-800khz\",\"requested_t0h_ns\":250,\"requested_t1h_ns\":600,\"requested_bit_ns\":1250,\"latch_us\":300");
   value+=F(",\"refill_cache_safe\":");value+=refillCacheSafe_?F("true"):F("false");
+  const auto refillIrq=ledDmaIrqReceipt();
+  value+=F(",\"refill_irq\":{\"witnessed\":");value+=refillIrq.witnessed?F("true"):F("false");
+  for(const auto &field:{std::pair<const char*,int>{"source",refillIrq.source},{"cpu",refillIrq.cpu},{"vector",refillIrq.vector},{"level",refillIrq.level}}){
+    value+=F(",\"");value+=field.first;value+=F("\":");
+    if(refillIrq.witnessed)value+=field.second;else value+=F("null");
+  }
+  value+='}';
   value+=F(",\"done_symbols\":");value+=doneSymbols_.load();
   value+=F(",\"expected_symbols\":");value+=PAKAR_S3_LED_USE_DMA?11521U:0U;
   value+=F(",\"submitted\":");value+=submitted_.load();

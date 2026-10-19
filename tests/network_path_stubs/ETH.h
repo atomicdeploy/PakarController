@@ -3,13 +3,14 @@
 #define CONFIG_ETH_SPI_ETHERNET_W5500 1
 #include "WiFi.h"
 #include "SPI.h"
+#include "../ethernet_stubs/esp_eth_driver.h"
 constexpr int ETH_PHY_W5500=7;
 struct PathFixtureEthernet {
   bool start=false,carrier=false,up=false,ipKnown=false,defaultResult=true;
   void *driver=nullptr,*interface=nullptr;
   IPAddress address,gateway,mask{255,255,255,0},dns[2];
   unsigned begins=0,ends=0,configs=0,defaults=0,dnsWrites=0;
-  bool begin(int,int,int,int,int,SPIClass&,uint8_t){++begins;driver=interface=this;return true;}
+  bool begin(int,int,int,int,int,SPIClass&,uint8_t){++begins;driver=interface=this;esp_eth_update_input_path_info(driver,ethernetFixtureInput,interface);return true;}
   void end(){++ends;driver=interface=nullptr;start=carrier=up=ipKnown=false;}
   void *handle()const{return driver;}
   void *netif()const{return interface;}
@@ -29,6 +30,8 @@ struct PathFixtureEthernet {
   IPAddress dnsIP(uint8_t index)const{return index<2?dns[index]:IPAddress();}
   bool dnsIP(uint8_t index,IPAddress value){++dnsWrites;if(index>=2)return false;dns[index]=value;return true;}
   String macAddress()const{return "02:00:00:00:00:03";}
+  uint16_t linkSpeed()const{return 100;}
+  bool fullDuplex()const{return true;}
   void macAddress(uint8_t *out)const{const uint8_t value[6]={2,0,0,0,0,3};memcpy(out,value,6);}
 };
 inline PathFixtureEthernet ETH;

@@ -735,8 +735,10 @@ Remaining physical checklist (GitHub issue2 stays open):
 - [ ] mDNS/DNS-SD, SSDP and MNDP discovery work on the wired LAN; XML serving
   alone is not multicast proof. Observe LED timing under concurrent traffic.
 
-The latest ASUS SSH8022 attempt refuses connections. No W5500 board deployment,
-Ethernet connection or Internet download was attempted in this source checkpoint.
-Dedicated graphical Ethernet DHCP/static editors remain pending; settings are
-available through the shared API/cloud path. TFT LCD remains in the separate
+That earlier source checkpoint had no ASUS SSH access. ASUS SSH8022 now works;
+its Ethernet and Wi-Fi interfaces were inventoried without changing either.
+Native/Web/mobile Ethernet DHCP/static editors have peer-bound ACK/readback
+fixtures and built client packages. Actual W5500 wiring/link, installed-editor
+interaction and Ethernet-only Internet acceptance are still unverified. No
+optional Ethernet GPIOs are driven by a fresh disabled profile. TFT LCD remains in the separate
 [hardware backlog](S3-STATUS-FRONTPANEL-INTEGRATION.md#additional-hardware-backlog).

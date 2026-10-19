@@ -5,10 +5,39 @@ This supersedes the earlier provisional reversed pair. ISP remains MOSI11,
 MISO13, SCK12, RESET-control10 through a voltage-safe driver; see the migration
 document for electrical protection and the exact module confirmation gate.
 
-Optional W5500 is reserved on a separate SPI3/HSPI bus: SCK5, MISO6, MOSI7, CS8,
-RSTn9, INTn14. It must not share the AVR ISP bus/object. This is wiring/pin
-ownership preparation only; core ETH/lwIP integration and physical tests remain
-pending. Confirm the module supply input before powering it.
+Optional W5500 uses a separate SPI3/HSPI bus: SCK5, MISO6, MOSI7, CS8,
+RSTn9, INTn14. It must not share the AVR ISP bus/object. `-S3Ethernet` enables
+the native ETH/lwIP adapter; without that build flag no W5500 bus is allocated.
+New profiles leave Ethernet disabled until explicit commissioning; existing old
+active Ethernet profiles migrate without being disabled or rewritten at boot.
+Confirm module supply input before powering it. Actual wiring/link and Ethernet
+acceptance remain open in issue#19; compiling the driver is not a cable test.
+
+The saved Ethernet profile has independent enable/DHCP/static/DNS settings at
+`GET/POST /api/network/ethernet`, contextual Native/Web/Flutter editors, observed
+link/IP/speed/duplex and bounded LLDP diagnostics. `POST /api/network` can disable
+both station and AP only when Ethernet actually has an IPv4 link. Disabling
+Ethernet requires a connected Wi-Fi station or an actually started recovery AP.
+USB recovery remains independent. No uncertain command is replayed onto a
+different route. Serving, WebSocket, OTA, TLS, MQTT and remote firmware use the
+same native IP stack and existing owners, not a separate WIZnet socket stack.
+
+LLDP advertises link identity every30s (TTL120s). Receiving neighbors is an
+explicit `lldp_receive` opt-in: the pinned W5500 driver filters non-IP multicast
+in normal MAC-filter mode, so reception requires promiscuous Ethernet. At most
+four sanitized neighbors are retained; no raw-frame capture API or layer2 bridge
+is exposed. TX/filter changes run on the TCPIP thread, and the application-only
+input hook preserves the SDK's original buffer/length/private-info ownership.
+Actual peer/switch visibility and simultaneous Wi-Fi/Ethernet tests remain open.
+
+S3 NBNS answers local UDP137 name and node-status queries on exact ready netifs
+with bounded nonblocking service, rather than the SDK's global AsyncUDP task.
+Hostnames longer than15 characters are not silently truncated; readiness and
+bind state are reported in status. This is not SMB/WINS/LLMNR support. Existing
+mDNS/DNS-SD, SSDP description/lifecycle and MNDP use the same stable hostname.
+`tools/check-router-upnp.ps1` performs bounded read-only IGD discovery/status;
+router port-forwarding acceptance is separate from board SSDP discovery and is
+not inferred from WAN reachability or a successful host fixture.
 
 The shared production application currently lives in `../esp8266` and the AVR
 application in `../avr`. These S3-specific adapters start the hardware boundary;
@@ -37,7 +66,8 @@ No second effects engine or 20 FPS software cap. Runtime DMA status, shared GPIO
 selection, UART stress under Wi-Fi, and channel timing/color-order acceptance
 remain required before a release claim.
 
-Port before enabling the production build target: network/mDNS/SSDP/NetBIOS;
+The original migration checklist (not a claim these are still unported):
+network/mDNS/SSDP/NetBIOS;
 ESP8266 flash-image validation and partition-aware OTA/rollback; ESP flash read
 and integrity APIs; BearSSL TLS to S3 trust validation; LittleFS partition sizing;
 shared ISR/task ownership for AsyncTCP; telemetry hardware fields; USB CDC framing;

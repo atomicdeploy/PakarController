@@ -1,6 +1,7 @@
 // Compile the ACTUAL S3 output worker; only SDK/FreeRTOS peripherals are doubled.
 #include "../firmware/esp32s3/src/LedOutput.h"
 #include "../firmware/esp32s3/src/LedWire.h"
+#include "../firmware/esp32s3/src/LedDmaGuard.h"
 #include <esp_heap_caps.h>
 #include <cassert>
 #include <condition_variable>
@@ -66,7 +67,10 @@ void vTaskDelete(void*){throw Fixture::Stop{};}
 void* heap_caps_malloc(size_t bytes,int caps){assert(caps==(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));assert(bytes==1440);auto* p=std::malloc(bytes);Fixture::allocations.push_back(p);return p;}
 void heap_caps_free(void* pointer){for(auto& p:Fixture::allocations)if(p==pointer)p=nullptr;std::free(pointer);}
 int rmt_new_tx_channel(const rmt_tx_channel_config_t* config,rmt_channel_handle_t* channel){assert(config->flags.with_dma&&config->mem_block_symbols==2046&&config->intr_priority==3&&config->resolution_hz==40000000&&config->trans_queue_depth==1&&config->gpio_num==4);*channel=reinterpret_cast<void*>(1);return ESP_OK;}
-namespace PakarS3 {int newCacheSafeLedChannel(const rmt_tx_channel_config_t *config,rmt_channel_handle_t *channel){return rmt_new_tx_channel(config,channel);}}
+namespace PakarS3 {
+int newCacheSafeLedChannel(const rmt_tx_channel_config_t *config,rmt_channel_handle_t *channel){return rmt_new_tx_channel(config,channel);}
+LedDmaIrqReceipt ledDmaIrqReceipt(){return {PAKAR_S3_LED_USE_DMA!=0,42,1,23,3};} // Actual allocator is tested separately.
+}
 int rmt_new_copy_encoder(const rmt_copy_encoder_config_t*,rmt_encoder_handle_t* encoder){*encoder=reinterpret_cast<void*>(2);return ESP_OK;}
 int rmt_new_bytes_encoder(const rmt_bytes_encoder_config_t* config,rmt_encoder_handle_t* encoder){
  assert(config->flags.msb_first==1);
