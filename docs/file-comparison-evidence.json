@@ -2401,7 +2401,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const uint16_t durations[kCueCount]",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6"
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb"
         },
         {
           "path": "tests/attention_cues_test.cpp",
@@ -2440,7 +2440,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const uint16_t durations[kCueCount]",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6"
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb"
         },
         {
           "path": "tests/attention_cues_test.cpp",
@@ -4751,7 +4751,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6"
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -4841,7 +4841,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6"
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -9009,7 +9009,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6"
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -9958,18 +9958,18 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6",
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6",
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb",
           "anchor": "player.setMuted(false)"
         },
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6"
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -9994,7 +9994,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "fifteen finite cues",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6"
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb"
         }
       ],
       "improvement": "Tested late-loop and wraparound timing without cumulative melody-length drift; initialized default construction; validation at enqueue; mute changes publish immediately; unmute no longer restarts an interrupted note."
@@ -10043,12 +10043,12 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6",
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6",
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -10138,18 +10138,18 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6",
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6",
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb",
           "anchor": "player.setMuted(false)"
         },
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6"
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -10174,7 +10174,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "fifteen finite cues",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6"
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb"
         },
         {
           "path": "tests/attention_cues_test.cpp",
@@ -10228,12 +10228,12 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6",
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6",
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -13042,7 +13042,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "c4513f2c6a524630379529b9b47e164b6fc4b798fcac9abf885e4d670ee25db6"
+          "sha256": "09451f69a27d36472ebc99d13158d3989733373297dd7b4f3e54adb55ff7aeeb"
         },
         {
           "path": "tests/pc_contract_test.cpp",
