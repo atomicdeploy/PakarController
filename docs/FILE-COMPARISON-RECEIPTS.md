@@ -1,5 +1,23 @@
 # PakarController comparison receipts
 
+## PU850 C++ header integrity and UART function review
+
+2026-10-19: final3 previously uncertified files completely read through EOF:
+C++ upload.cpp, UART.h and UART.cpp at431104072952f694a35b3a83c19f13fbb098ca5b.
+Actual C++ duplicate-header and canonical Digest-MD5 code imported into existing
+backup/request owners with executable bad/duplicate hash and peer fixtures plus
+real loopback duplicate ETag transport evidence. Existing updater fixtures pass.
+UART generic capabilities remain pending where unmapped; only exact PU weight/
+tare/receipt/report business payloads are inapplicable. Exact function/defect
+decisions and original source/blob/target/proof bindings extend the SAME ledger.
+
+PU109/109 compared,96 gap files,0 pending/unrouted; total314/4697 compared,
+4383 pending,253 gaps. These totals include earlier certificates. The requested
+fresh pass still has49 previous-certificate files to reread; all58 formerly
+uncertified files plus two Authentication files are freshly read this run.
+No full parity/runtime/physical acceptance claim. No board/service/network/
+policy/relay/rainbow change, SDK or donor build, deployment or extra cache.
+
 ## PU850 C# manifest and complete deflate review
 
 2026-10-19: nineteen full EOF reads covering every C# implementation/config/test,

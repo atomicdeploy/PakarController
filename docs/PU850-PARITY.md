@@ -1,5 +1,60 @@
 # PU850 / ASA0002E reuse audit
 
+## Exhaustive continuation: C++ transfer and UART, 2026-10-19
+
+The complete 113 KB C++ uploader and both UART files were read through EOF in
+bounded overlapping chunks at 431104072952f694a35b3a83c19f13fbb098ca5b. That
+completes the 58 files previously lacking comparison certificates. The existing
+51 certificates are not a substitute for this request's fresh section review:
+Authentication.cpp/.h have been reread; the other 49 still need fresh reads and
+updated section notes. 109 compared files therefore does NOT mean this new
+exhaustive pass or all generic functionality is complete.
+
+Actual C++ parse_header_md5/collect_download_hashes/single_header behavior now
+serves the existing backup owner: strict canonical Digest md5= base64 agrees
+with the whole-image hash, and duplicate critical length/range/hash/peer headers
+are refused using Node's actual headersDistinct. Content-MD5 on a range remains
+the range-body hash, not the whole-image hash. Fixtures include bad Digest,
+duplicate Digest/boot, and a real loopback duplicate ETag response proving the
+shared request transport preserves duplicate evidence. Nothing contacts a board.
+
+| Complete C++ source section/functions | Actual reuse, stronger current owner, or exact pending behavior |
+|---|---|
+| platform/constants; utf8_to_wide/wide_to_utf8/error formatting, trim/lower, sanitize_console, MD5/name helpers | Existing Node platform APIs and script-console replace Win32-only conversions and control filtering. Windows legacy terminal compatibility and display-only diagnostics remain pending; no process-wide codepage mutation. |
+| AppError/WinHttpHandle/Winsock RAII; configure_console/UI/progress; Options/parse/help/all validation | Existing single Node request/signal/logger/CLI owners retain bounded cleanup and explicit plan. Optional Windows Terminal progress and redirected 10% buckets remain useful pending; no no-verify/no-hash path, credential aliases, arbitrary protected headers or automatic mutation. |
+| WatchConsoleHandler/wait_interruptibly; FileIdentity/BuildIdentity/WatchDebouncer; run_watch/coalescing/attempt history | Actual stronger unchanged-file guard was already adapted from Go. Generic multi-file watch/coalescing/graceful-stop/progress remains pending. Donor metadata-only identity and unbounded attempted vector are not copied; no watcher is started. |
+| read_firmware/BCrypt MD5, read_little_u32/crc32_bytes/gunzip_firmware; manifest read/parse/select | Actual paired-manifest validation already imported from C# into bounded ESP8266 artifact packaging. Existing Node crypto/zlib replaces Windows BCrypt/puff. Donor gzip bounds/CRC/deflate input-consumption tests remain useful pending corpus work; its FHCRC field is skipped without validation. S3 remains raw. |
+| ParsedEndpoint/parse/resolve_hostname_once/resolve_endpoint; apply_request_policy; HttpClient/request_buffer; query_status/query_response_headers/read_response_body/printable_response | Existing hostname-preserving pinned TCP/TLS/current auth and release admission retain fixed paths, no redirect/replay and bounded bodies. C++ preserves duplicate headers: that implementation is now adapted via headersDistinct. Its blanket HTTPS-hostname refusal is unnecessary with current hostname-preserving TLS. IPv6/resolver/platform compatibility remains pending. |
+| multipart_boundary/write_http_data/upload_firmware; all send/body/read/error branches | Existing raw-S3 updater owns one write and exact ACK/new-boot/slot/full-SHA verification. Donor partial-write-aware bounded multipart streaming/progress is useful pending work, not a second HTTP stack. No retry after ambiguous body start, ok!-only acceptance or same-boot hash acceptance is copied. |
+| AsyncInfoContext/complete_async_info/begin_async_info_data_query/async_info_callback/get_info; retryable_network_error | All callback states, locks and close handling read. Current finite Node request owner is retained. Donor final condition_variable wait for HANDLE_CLOSING has no timeout; its apparent info deadline is not a fully bounded cancellation guarantee. No DNS-refresh/retry authority is inferred. |
+| parse_info_lines/clean_reported_md5/hash_candidate/parse_info_hash; fetch_firmware_info_once/fetch_firmware_info | Exact typed JSON metadata replaces substring hash selection, arbitrary nearby JSON candidate and legacy endpoint fallback. Generic display-only scalar/text inspection remains pending and cannot authorize transfer. |
+| single_header/parse_content_length/decode_base64/hex_bytes/parse_header_md5/add_expected_hash/collect_download_hashes | Actual duplicate-critical-header and Digest-MD5 validation imported, alongside existing Go all-hash checks. Strict strong ETag and exact canonical 16-byte base64 retained; conflicting full/section/peer evidence fails closed. Weak ETag fallback is not imported. |
+| safe_request_buffer/regular_file_size_or_zero/truncate_file/write_download_part/remove_invalid_part/publish_download_atomically; verified_download | Existing explicit resume, exclusive non-truncating part, unchanged descriptor/file identity and no-replace atomic hard-link publication are stronger than automatic resume, silent truncation/range-200 restart, delete-on-integrity-error and replace-existing publication. Preserve rejected partials and old backups. Full filesystem/platform acceptance remains pending. |
+| verify_rebooted_firmware/validate_inputs/upload_current_build/run dispatch/wmain; run_self_test and every assertion | Actual offline paired validation and focused parser/duplicate fixtures are ported. Existing updater rejects same-boot/hash-only verification and unsafe write retry. Backup-before-upload, skip-identical source/backup ownership, full watcher/runtime/distribution and platform tests remain pending. Native selftests were read, not built or executed. |
+
+UART is mixed transport, generic panel/config/file/diagnostic code and PU
+business, not a blanket business exclusion. Existing SerialLink/UartFlow/
+WireCodec/Protocol were read completely for the replacement decisions below.
+They provide bounded 64-byte RX service, capacity-checked COBS/CRC, delimiter
+recovery, explicit sequence and no partial-write replay, but do not alone prove
+all high-level generic semantics or physical UART/AVR acceptance.
+
+| Complete UART.h/.cpp sections/functions | Exact disposition and remaining acceptance |
+|---|---|
+| Header: baud/buffer/framing/errors/timeouts/pins; RevisionMatch/topology/RSSI/ping; numeric/string/file/message/user endpoints; all enum/substate/global/bulk/debug declarations | Existing capability/opcode living contract replaces revision equality selection and second SOH/EOT ABI. No ESP8266 SDK structs, donor GPIO5/16 or secret-bearing globals transplanted. Generic topology/ping/panel/file/language/diagnostic semantics remain explicitly pending where not mapped. |
+| SendESPStatus_ToPU/Request_GivePUStatus/SendResponseCode_ToPU/Request_GiveBasicData/Request_GoToChart/SendMultiSettings | Existing HELLO/status/telemetry/EspPanel offer/query and semantic notices replace numeric chart aliases; capability and post-ACK readback remain authoritative. Generic multisettings/subscription/LCD/key ownership parity is pending, not excluded. |
+| Request_Beep/Request_GivePower/Request_SendMessage_ToPU/Request_SetSystemLanguage/SendNetStatus_ToPU | Existing capability-gated buzzer, read-only telemetry and semantic display/network messages map applicable behavior. Unwired voltage remains Unknown; full cross-UI language/title/button/icon and generic power reporting remain pending. No beep, LED, language, network or power operation is executed here. |
+| Request_GiveFileMetadata/Request_GiveFile/Cancel_FileReceiveOperation; wholly commented Request_ReceiveFile; FileOrderProcessor | Actual generic metadata/ranged read/pause/cancel/download intent is retained as pending paired-file capability. Current verified HTTP backup does not prove AVR bulk flow. Cancel drain/timeout extension and commented receive TODO are not working file-write acceptance. |
+| WriteEPtoPU_Num overloads/WriteEPtoPU_Str/CheckAccessPass_PU/WriteEPtoPU_DateTime; ReadEPfromPU_Num/Str/DateTime | Current typed settings/physical USB credential ownership replace unauthenticated raw EEPROM/password commands. Generic clock/date/readback semantics still need mapping. No EEPROM write or exposed access-pass channel is added. |
+| PushToNumEndPoint/PopFromNumEndPoint: every mode/AP/STA/address/baud/RSSI/scan/ping/revision/session/client branch | Current network adapter owns persistent desired/applied state and exact SDK interface. Donor AP setters incorrectly call wifi_set_ip_info(STATION_IF,ap); no SDK ABI transplant. Applicable missing DNS/diagnostic/numeric endpoint behavior remains pending, not waived. |
+| PushToStrEndPoint/PopFromStrEndPoint: every AP/STA SSID/password/host/version/message/filename/user/pointer/scratch branch | Current bounded typed fields and hidden-secret semantics replace raw password reads and arbitrary pointer endpoint. Donor strncpy length15 into ten-byte eDatStr rows overflows; SketchMD5 truncated to15 is not identity. Generic label/filename/user/display behaviors remain pending; never export credentials. |
+| BulkReset/WriteBulkTerminator/WriteToBulk/ReadFromBulk/GetBulkRemain/BulkWriteStringTo/BulkIsBusy | Keep bounded ownership-aware COBS transport; generic bulk/backpressure/file streaming remains pending. Donor modulo happens before zero-size check, terminator uses sizeof(pointer), U16 totals wrap for U32 file lengths, empty reads are unchecked and reserve-one ring can never reach its Busy threshold. Do not copy these defects or declare the entire capability unnecessary. |
+| InitializeUARTService/Request_RebootPU/GetBaudRateIndex/SetBaudRateIndex | Existing explicit begin and board-maintenance owners are retained. Donor baud switch falls through and Serial.begin receives index rather than computed BAUD_RATE; handshake loops can extend their own timeout. Generic negotiated baud/restart/handshake acceptance remains pending; no reboot or baud change. |
+| SendCommand/SerialPortReceiveProcess/CanInterruptSerialProcessing/WaitForSerialProcessing/WaitForBulkDataComplete/WaitForPU_Ready/IsSerialIdle; SOH_Processor/PrefixProcessor/x4NumProcessor/BulkDataProcessor/FileDataProcessor/EOT_Processor | Capacity/CRC/sequence/budget/COBS parser and bounded maintenance discard are stronger current low-level owners. Legacy frame has no CRC/boot/sequence and blocking drains do not establish reliable bulk ownership. Higher-level bulk/congestion/cancel/timeout and actual electrical acceptance remain pending. |
+| OrderProcessor/ResponseCodeProcessor/DiagProcessor; all order/session/language/message/confirmation/programming cases | Existing correlated ACK/error/capability and boot-fenced setting owners replace prefix/suffix-only reply matching. Empty SessionCommand and no-op LED/programmer diagnostic cases are placeholders, not implemented features. Generic session/clock/message/diagnostic semantics remain pending. |
+| Request_IsWeightHidden/Request_ShowHideWeight/Request_SendingWeight/Request_GiveWeight/Request_GiveReceipt/Request_SendReportParams/Request_GiveReport/Request_Tare plus weighing/report OrderProcessor cases | These exact scale/tare/receipt/report business payloads are not applicable to PakarController. This is not an exclusion of transport, generic file/config/UI/diagnostics or clock behavior. |
+| _ResetReceiveProcess overloads/WriteHexToDebug/WriteToDebug overloads/ReceiveCommandDebug/WriteToDebugSerialReceive/Transmit/onBulkOverflow/_LogMessageInFile/LogTimestamp | Current bounded RX counters and sanitized tool diagnostics remain. Donor raw traffic logging can expose credentials; DebugData may fill without a terminator. _LogMessageInFile only appends a debug buffer, not durable logging. Secret-safe serial trace/ring counters/crash capture/log rotation remain pending. |
+
 ## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19
 
 All fourteen C# uploader files, CMakeLists and both toolchains, puff.h and the

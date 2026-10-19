@@ -13,6 +13,7 @@ export const phases={
     ["pwsh", "-File", "tools/test-audio.ps1"],
     ["pwsh", "-File", "tools/test-diagnostic-text.ps1"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "pu-client-download", "-Gate"],
+    ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "pu-cpp-transfer", "-Gate"],
     ["node", "tests/download_firmware_test.mjs"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "pu-client-manifest", "-Gate"],
     ["node", "tests/firmware_manifest_test.mjs"],

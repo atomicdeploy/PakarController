@@ -16,6 +16,13 @@ export function parseContentMD5(value) {
   if(bytes.length!==16||bytes.toString('base64')!==value)throw Error('Invalid Content-MD5');
   return bytes.toString('hex');
 }
+// Actual C++ parse_header_md5/collect_download_hashes: Digest describes the
+// complete representation; Content-MD5 on a partial response describes its body.
+export function parseDigestMD5(value) {
+  const match=typeof value==='string'&&/^md5=(.+)$/i.exec(value);
+  if(!match||!/^[A-Za-z0-9+/]{22}==$/.test(match[1]))throw Error('Invalid firmware Digest header');
+  return parseContentMD5(match[1]);
+}
 export function validateDownloadResponse(response,start,end,total) {
   if(response.status!==206||response.headers['content-range']!==`bytes ${start}-${end}/${total}`||
     response.headers['content-length']!==String(end-start+1)||response.body.length!==end-start+1)
@@ -29,6 +36,7 @@ function validateWholeHashes(headers,expected,{section=false}={}) {
   if(headers.etag!==undefined&&(!/^"[a-f0-9]{32}"$/i.test(headers.etag)||headers.etag.slice(1,-1).toLowerCase()!==expected))throw Error('Firmware ETag changed');
   if(!section&&headers['content-md5']!==undefined&&parseContentMD5(headers['content-md5'])!==expected)
     throw Error('Firmware Content-MD5 conflicts with metadata');
+  if(headers.digest!==undefined&&parseDigestMD5(headers.digest)!==expected)throw Error('Firmware Digest conflicts with metadata');
 }
 async function regularFile(path) {
   try {const value=await lstat(path);if(!value.isFile()||value.isSymbolicLink())throw Error('Output/partial path must be a regular non-symlink file');return value;}
@@ -61,6 +69,10 @@ export async function downloadFirmware({origin='http://ledboard.local',output,re
   const read=async(path,options={})=>{
     check();const r=await request(url,path,{...options,expectedAddress:peer?.address,
       headers:{...auth,...(peer?{'X-Pakar-Board':peer.board,'X-Pakar-Boot':peer.boot}:{}),...options.headers}});check();
+    // C++ single_header rejects duplicate authority/integrity values even when
+    // a transport might otherwise discard or coalesce identical duplicates.
+    for(const name of ['content-length','content-range','content-md5','digest','x-firmware-md5','etag','x-pakar-board','x-pakar-boot'])
+      if(r.distinctHeaders?.[name]&&r.distinctHeaders[name].length!==1)throw Error('Duplicate critical firmware header');
     if(r.status<200||r.status>=300)throw Error('Download read rejected (HTTP '+r.status+'); no retry');
     if(peer&&(r.remote!==peer.address||r.headers['x-pakar-board']!==peer.board||r.headers['x-pakar-boot']!==peer.boot))throw Error('Download peer/boot changed; partial file retained');
     return r;

@@ -61,6 +61,11 @@ PakarController is integration code built from earlier AtomicDeploy projects.
   C++ puff.h/puff.c were read with Mark Adler's original notice, retained in the
   unchanged donor. Their implementation is not redistributed here: the existing
   Node zlib runtime supplies bounded gzip decoding rather than another decoder.
+- The same backup implementation also adapts PU850 `Tool/C++/upload.cpp`
+  `single_header`, `parse_header_md5` and `collect_download_hashes`: canonical
+  Digest-MD5 validation and rejection of duplicate critical response headers.
+  Node headersDistinct preserves the original duplicate evidence; no Windows
+  WinHTTP/BCrypt stack, unsafe replacement/deletion behavior or puff code is copied.
 - FastLED, Arduino ESP8266 core, MiniCore, WebSockets 2.7.2 by Markus Sattler,
   PubSubClient 2.8.0 by Nick O'Leary, xcap 0.9.8, eframe/egui, reqwest, and serde are
   build/runtime dependencies under their

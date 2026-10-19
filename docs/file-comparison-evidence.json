@@ -5,6 +5,214 @@
   "files": [
   {
     "origin": "PU850-ESP",
+    "path": "Tool/C++/upload.cpp",
+    "sha256": "b5f810636d9acbbe8df4079acf10f00cf7aa71d0130023bb558205d146e69fa2",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 3113,
+    "reviewed_sections": [
+      "All platform constants, UTF8/Win32 error/trim/lower/sanitize/hash/filename helpers and AppError/WinHttpHandle/Winsock lifecycle",
+      "Console configuration/UI/progress and Options parse/help/validation; WatchConsoleHandler/wait_interruptibly/FileIdentity/BuildIdentity/WatchDebouncer",
+      "read_firmware/BCrypt hashing; read_little_u32/crc32_bytes/gunzip_firmware; text and two-record manifest parse/select",
+      "ParsedEndpoint/URL/hostname resolution/apply_request_policy/HttpClient; synchronous request/status/raw-header/bounded-body helpers",
+      "multipart_boundary/write_http_data/upload_firmware every partial-send/error/read/progress branch",
+      "AsyncInfoContext/complete_async_info/begin_async_info_data_query/async_info_callback/get_info all callback/cancellation/close branches",
+      "parse_info_lines/clean_reported_md5/hash_candidate/parse_info_hash/fetch_firmware_info_once/fetch_firmware_info/retryable_network_error",
+      "single_header/parse_content_length/decode_base64/hex_bytes/parse_header_md5/add_expected_hash/collect_download_hashes",
+      "safe_request_buffer/regular_file_size_or_zero/truncate_file/write_download_part/remove_invalid_part/publish_download_atomically/verified_download",
+      "verify_rebooted_firmware/validate_inputs/upload_current_build/run_watch/run/wmain and every run_self_test assertion"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Actual single_header/parse_header_md5/collect_download_hashes implementation adapted for critical duplicate rejection and canonical full Digest-MD5; range Content-MD5 remains section integrity.",
+      "Complete section/function decisions and concrete unsafe legacy defects recorded in the C++ transfer and UART section of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "tools/download-firmware.mjs",
+        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
+        "anchor": "export function parseDigestMD5("
+      },
+      {
+        "path": "tools/check-ethernet-live.mjs",
+        "sha256": "33e72a4a0a29bbbaba321485b5c98bb1936e2c1e2f58fed1e66d22e2a83905c1",
+        "anchor": "distinctHeaders:response.headersDistinct"
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
+        "anchor": "## Exhaustive continuation: C++ transfer and UART, 2026-10-19"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/download_firmware_test.mjs",
+        "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
+        "anchor": "assert.equal(observed.distinctHeaders.etag.length,2);"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "WinHTTP/BCrypt/UTF8/console/metadata selection and async close lifecycle",
+        "disposition": "replaced",
+        "reason": "Existing Node request/crypto/logger and exact typed identity owner retain finite deadlines, hostname-preserving pinned TLS and stronger sanitation. Donor final HANDLE_CLOSING wait is unbounded; do not copy it."
+      },
+      {
+        "code": "verified_download/replace/truncate/delete/retry/no-verify branches",
+        "disposition": "replaced",
+        "reason": "Mandatory integrity, explicit resume, exclusive stable partial descriptor and no-replace atomic publication retain failures and existing backups; no ambiguous retry or no-hash success."
+      },
+      {
+        "code": "Multipart streaming/progress/watch/coalescing/backup-before-upload/IPv6/native console and complete gzip corpus",
+        "disposition": "pending",
+        "reason": "Useful generic behavior remains pending integration and actual filesystem/transport/platform acceptance; no donor/native build or live operation performed."
+      }
+    ],
+    "remaining": [
+      "Useful generic behavior remains pending integration and actual filesystem/transport/platform acceptance; no donor/native build or live operation performed."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "dcebb1d54c34cbe827fb2890945439f02e17e774",
+      "sha256": "b5f810636d9acbbe8df4079acf10f00cf7aa71d0130023bb558205d146e69fa2",
+      "bytes": 113293
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "LocalLib/UART.h",
+    "sha256": "13d3ec4617363d32ba58595a9e24137c45501cbda4f923b5e08e561e066e50fc",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 247,
+    "reviewed_sections": [
+      "All baud/buffer/framing/errors/timeouts/pin constants; RevisionMatch/topology/ping/RSSI/weight/access/clock/language/version/message/file/user globals",
+      "Every prefix/suffix/substate/endpoint enum, bulk counters/timeout/ready/power/weight state, prototypes and debug buffer flags"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every transport and endpoint function read through EOF; current bounded COBS/CRC/sequence/explicit ownership remains, with exact generic pending and business-only omissions.",
+      "Complete section/function decisions and concrete unsafe legacy defects recorded in the C++ transfer and UART section of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "libraries/BoardCore/src/SerialLink.h",
+        "sha256": "99373bc4c090e34324cfd2ae8c94d6666c227ad7e157a47fbd85125aac6c13a0",
+        "anchor": "class SerialLink {"
+      },
+      {
+        "path": "libraries/BoardCore/src/UartFlow.h",
+        "sha256": "44f8638f725c9cf83a6f53639144f107aace1556dd254d6dcebcaed4853c6469",
+        "anchor": "inline uint16_t receiveBudget("
+      },
+      {
+        "path": "libraries/BoardCore/src/Protocol.h",
+        "sha256": "a525972fb3364a20efb8cfa7d611d19aed3b2850dd6069b78efc446ff9daaf36",
+        "anchor": "inline bool decode("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
+        "anchor": "## Exhaustive continuation: C++ transfer and UART, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "SOH/EOT framing/RevisionMatch/bulk ring/string endpoints/baud/drain/response match",
+        "disposition": "replaced",
+        "reason": "Bounded COBS/CRC/sequence/current capability owner replaces unframed legacy ABI. Exact modulo-zero, sizeof(pointer), U16 wrapping, ten-byte string overflow, AP wrong-interface and baud fallthrough defects are recorded in PU850-PARITY."
+      },
+      {
+        "code": "Generic panel/title/buttons/icons/language/clock/voltage/topology/file bulk/backpressure/cancel/session/diagnostic/logging",
+        "disposition": "pending",
+        "reason": "Not business exclusions. Current low-level transport and HTTP backup do not prove these high-level paired capabilities; unwired power is Unknown, raw credential traces prohibited, file receive and diagnostic placeholders not claimed implemented."
+      },
+      {
+        "code": "Weight/hidden-weight/tare/receipt/report payloads only",
+        "disposition": "not-applicable",
+        "reason": "Exact PU weighing/report business operations have no PakarController consumer; this does not exclude generic settings, file, UI or diagnostic code."
+      }
+    ],
+    "remaining": [
+      "Not business exclusions. Current low-level transport and HTTP backup do not prove these high-level paired capabilities; unwired power is Unknown, raw credential traces prohibited, file receive and diagnostic placeholders not claimed implemented."
+    ]
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "LocalLib/UART.cpp",
+    "sha256": "8c8201cad39550cffb8567b279447a093061bba7b9a188dbe2f47dbd22ef9a45",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 2314,
+    "reviewed_sections": [
+      "SendESPStatus_ToPU/Request_GivePUStatus/SendResponseCode_ToPU/Request_Beep/Request_GiveBasicData/Request_GoToChart",
+      "Cancel_FileReceiveOperation/Request_GiveFileMetadata/Request_GiveFile and wholly commented Request_ReceiveFile TODO",
+      "Every weight/hidden/receipt/report/tare business request and generic power/message/language request",
+      "WriteEPtoPU_Num overloads/WriteEPtoPU_Str/CheckAccessPass_PU/WriteEPtoPU_DateTime/ReadEPfromPU_Num/Str/DateTime/SendNetStatus_ToPU",
+      "PushToNumEndPoint/PopFromNumEndPoint every AP/STA/mode/IP/subnet/gateway/DNS/baud/RSSI/scan/ping/identity/session/client branch",
+      "PushToStrEndPoint/PopFromStrEndPoint every SSID/password/hostname/version/message/filename/user/pointer/scratch branch; SendMultiSettings",
+      "BulkReset/WriteBulkTerminator/WriteToBulk/ReadFromBulk/GetBulkRemain/BulkWriteStringTo/BulkIsBusy",
+      "InitializeUARTService/Request_RebootPU/GetBaudRateIndex/SetBaudRateIndex/SendCommand",
+      "SerialPortReceiveProcess/CanInterruptSerialProcessing/WaitForSerialProcessing/WaitForBulkDataComplete/WaitForPU_Ready/IsSerialIdle",
+      "SOH_Processor/PrefixProcessor/x4NumProcessor/BulkDataProcessor/FileDataProcessor/EOT_Processor/OrderProcessor/FileOrderProcessor/ResponseCodeProcessor/DiagProcessor",
+      "_ResetReceiveProcess overloads/WriteHexToDebug/WriteToDebug overloads/ReceiveCommandDebug/WriteToDebugSerialReceive/Transmit/onBulkOverflow/_LogMessageInFile/LogTimestamp"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every transport and endpoint function read through EOF; current bounded COBS/CRC/sequence/explicit ownership remains, with exact generic pending and business-only omissions.",
+      "Complete section/function decisions and concrete unsafe legacy defects recorded in the C++ transfer and UART section of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "libraries/BoardCore/src/SerialLink.h",
+        "sha256": "99373bc4c090e34324cfd2ae8c94d6666c227ad7e157a47fbd85125aac6c13a0",
+        "anchor": "class SerialLink {"
+      },
+      {
+        "path": "libraries/BoardCore/src/UartFlow.h",
+        "sha256": "44f8638f725c9cf83a6f53639144f107aace1556dd254d6dcebcaed4853c6469",
+        "anchor": "inline uint16_t receiveBudget("
+      },
+      {
+        "path": "libraries/BoardCore/src/Protocol.h",
+        "sha256": "a525972fb3364a20efb8cfa7d611d19aed3b2850dd6069b78efc446ff9daaf36",
+        "anchor": "inline bool decode("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
+        "anchor": "## Exhaustive continuation: C++ transfer and UART, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "SOH/EOT framing/RevisionMatch/bulk ring/string endpoints/baud/drain/response match",
+        "disposition": "replaced",
+        "reason": "Bounded COBS/CRC/sequence/current capability owner replaces unframed legacy ABI. Exact modulo-zero, sizeof(pointer), U16 wrapping, ten-byte string overflow, AP wrong-interface and baud fallthrough defects are recorded in PU850-PARITY."
+      },
+      {
+        "code": "Generic panel/title/buttons/icons/language/clock/voltage/topology/file bulk/backpressure/cancel/session/diagnostic/logging",
+        "disposition": "pending",
+        "reason": "Not business exclusions. Current low-level transport and HTTP backup do not prove these high-level paired capabilities; unwired power is Unknown, raw credential traces prohibited, file receive and diagnostic placeholders not claimed implemented."
+      },
+      {
+        "code": "Weight/hidden-weight/tare/receipt/report payloads only",
+        "disposition": "not-applicable",
+        "reason": "Exact PU weighing/report business operations have no PakarController consumer; this does not exclude generic settings, file, UI or diagnostic code."
+      }
+    ],
+    "remaining": [
+      "Not business exclusions. Current low-level transport and HTTP backup do not prove these high-level paired capabilities; unwired power is Unknown, raw credential traces prohibited, file receive and diagnostic placeholders not claimed implemented."
+    ]
+  },
+  {
+    "origin": "PU850-ESP",
     "path": "Tool/C#/Uploader/ConsoleUi.cs",
     "sha256": "727fcb1631802567cabff2c5212bc649496bfcbf39e344015653a40629705c9b",
     "source_read": "complete",
@@ -45,7 +253,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -92,12 +300,12 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "41f7134addf2c03f0b10c5f6ecbcbaf9db24332e7de9250d6caba073de635700",
+        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -161,7 +369,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -214,12 +422,12 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "41f7134addf2c03f0b10c5f6ecbcbaf9db24332e7de9250d6caba073de635700",
+        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -268,7 +476,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -314,19 +522,19 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "41f7134addf2c03f0b10c5f6ecbcbaf9db24332e7de9250d6caba073de635700",
+        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
     "proof": [
       {
         "path": "tests/download_firmware_test.mjs",
-        "sha256": "cb610891372d11d73c02765ac0d2038e99e728a1fc62eb5cc9c552daf7ffef1a",
+        "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
         "anchor": "for(const scenario of ["
       }
     ],
@@ -384,19 +592,19 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "41f7134addf2c03f0b10c5f6ecbcbaf9db24332e7de9250d6caba073de635700",
+        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
     "proof": [
       {
         "path": "tests/download_firmware_test.mjs",
-        "sha256": "cb610891372d11d73c02765ac0d2038e99e728a1fc62eb5cc9c552daf7ffef1a",
+        "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
         "anchor": "for(const scenario of ["
       }
     ],
@@ -462,7 +670,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -515,7 +723,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -575,7 +783,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -643,12 +851,12 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "41f7134addf2c03f0b10c5f6ecbcbaf9db24332e7de9250d6caba073de635700",
+        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -734,7 +942,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -787,7 +995,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -832,7 +1040,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -872,7 +1080,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -914,7 +1122,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -956,7 +1164,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1003,7 +1211,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1056,7 +1264,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1109,7 +1317,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1151,7 +1359,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1203,7 +1411,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1245,7 +1453,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1278,7 +1486,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1326,7 +1534,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1372,7 +1580,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1415,12 +1623,12 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "41f7134addf2c03f0b10c5f6ecbcbaf9db24332e7de9250d6caba073de635700",
+        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1461,12 +1669,12 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "41f7134addf2c03f0b10c5f6ecbcbaf9db24332e7de9250d6caba073de635700",
+        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1513,7 +1721,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1567,19 +1775,19 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "41f7134addf2c03f0b10c5f6ecbcbaf9db24332e7de9250d6caba073de635700",
+        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
     "proof": [
       {
         "path": "tests/download_firmware_test.mjs",
-        "sha256": "cb610891372d11d73c02765ac0d2038e99e728a1fc62eb5cc9c552daf7ffef1a",
+        "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
         "anchor": "for(const scenario of ["
       }
     ],
@@ -1639,14 +1847,14 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
     "proof": [
       {
         "path": "tests/download_firmware_test.mjs",
-        "sha256": "cb610891372d11d73c02765ac0d2038e99e728a1fc62eb5cc9c552daf7ffef1a",
+        "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
         "anchor": "for(const scenario of ["
       }
     ],
@@ -1699,19 +1907,19 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "41f7134addf2c03f0b10c5f6ecbcbaf9db24332e7de9250d6caba073de635700",
+        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
     "proof": [
       {
         "path": "tests/download_firmware_test.mjs",
-        "sha256": "cb610891372d11d73c02765ac0d2038e99e728a1fc62eb5cc9c552daf7ffef1a",
+        "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
         "anchor": "for(const scenario of ["
       }
     ],
@@ -1768,14 +1976,14 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
     "proof": [
       {
         "path": "tests/download_firmware_test.mjs",
-        "sha256": "cb610891372d11d73c02765ac0d2038e99e728a1fc62eb5cc9c552daf7ffef1a",
+        "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
         "anchor": "for(const scenario of ["
       }
     ],
@@ -1855,7 +2063,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       },
       {
@@ -1916,14 +2124,14 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
     "proof": [
       {
         "path": "tests/download_firmware_test.mjs",
-        "sha256": "cb610891372d11d73c02765ac0d2038e99e728a1fc62eb5cc9c552daf7ffef1a",
+        "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
         "anchor": "for(const scenario of ["
       }
     ],
@@ -1969,7 +2177,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2006,7 +2214,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2040,7 +2248,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2075,7 +2283,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2132,7 +2340,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2177,7 +2385,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2214,7 +2422,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2251,7 +2459,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2286,7 +2494,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2323,7 +2531,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2367,7 +2575,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2401,7 +2609,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2435,7 +2643,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2476,7 +2684,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2523,7 +2731,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2565,7 +2773,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2600,7 +2808,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2642,7 +2850,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2683,7 +2891,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2726,7 +2934,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "b0f99c09d1675757163c0ce9d38bbb01ac37e41b13d8a6e83092253df92bd04a",
+        "sha256": "f8d66af4beacc7d7fabb3180562cae14e54033d144c2e8256f2d739a011d54e5",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -8481,7 +8689,7 @@
         {
           "path": "tools/check-ethernet-live.mjs",
           "anchor": "export async function checkEthernet(",
-          "sha256": "3222127db641cc362e8238d7e6099d71ca58dbfa37a5614d7e2af02b93c1ea7a"
+          "sha256": "33e72a4a0a29bbbaba321485b5c98bb1936e2c1e2f58fed1e66d22e2a83905c1"
         },
         {
           "path": "desktop/src/bridge_transfer.rs",
@@ -8558,7 +8766,7 @@
         {
           "path": "tools/check-ethernet-live.mjs",
           "anchor": "export async function checkEthernet(",
-          "sha256": "3222127db641cc362e8238d7e6099d71ca58dbfa37a5614d7e2af02b93c1ea7a"
+          "sha256": "33e72a4a0a29bbbaba321485b5c98bb1936e2c1e2f58fed1e66d22e2a83905c1"
         }
       ],
       "omissions": [
@@ -11322,7 +11530,7 @@
         },
         {
         "path": "tools/ci-checks.mjs",
-        "sha256": "47e521f8f6bb4e2a78c3411b9737baeb2eb49b46e085660bdca629701dbe2dba",
+        "sha256": "88a8b98496f861cb0a7fb885b1649d4f561d872b77086a59904a729c51c2842b",
         "anchor": "export function runChecks"
         },
         {
@@ -16099,7 +16307,7 @@
         {
           "path": "tools/check-ethernet-live.mjs",
           "anchor": "export async function checkEthernet(",
-          "sha256": "3222127db641cc362e8238d7e6099d71ca58dbfa37a5614d7e2af02b93c1ea7a"
+          "sha256": "33e72a4a0a29bbbaba321485b5c98bb1936e2c1e2f58fed1e66d22e2a83905c1"
         },
         {
           "path": "firmware/esp8266/src/CloudServices.cpp",
@@ -16277,7 +16485,7 @@
         {
           "path": "tools/check-ethernet-live.mjs",
           "anchor": "export async function checkEthernet(",
-          "sha256": "3222127db641cc362e8238d7e6099d71ca58dbfa37a5614d7e2af02b93c1ea7a"
+          "sha256": "33e72a4a0a29bbbaba321485b5c98bb1936e2c1e2f58fed1e66d22e2a83905c1"
         }
       ],
       "omissions": [

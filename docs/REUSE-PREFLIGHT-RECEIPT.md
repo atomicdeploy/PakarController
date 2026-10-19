@@ -1,5 +1,42 @@
 # Donor-first preflight receipt
 
+## PU850 C++ integrity and complete UART source checkpoint
+
+2026-10-19 continuation after25eb318: complete C++ upload.cpp and UART.h/.cpp
+read through EOF in bounded chunks at unchanged pinned/current431104072952f694a35b3a83c19f13fbb098ca5b.
+Exact function groups, dependencies, concrete memory/timeout/baud/credential
+defects, actual import and generic pending vs exact business-only decisions
+extend PU850-PARITY and existing evidence, not a second checklist. Current
+SerialLink/UartFlow/WireCodec/Protocol read completely for replacement decisions.
+Consulted uart-flow-control and literal donor-audit entries; added pu-uart and
+pu-cpp-transfer specialist routes. An initially guessed donor-audit script name
+did not exist; reread the documented consult-reuse entrypoint and used its
+donor-audit concern. No missing script or sparse path was treated as exclusion.
+
+Actual C++ single_header/parse_header_md5/collect_download_hashes now serve the
+existing backup owner: canonical full Digest-MD5 and duplicate-critical-header
+refusal. Shared request response adds in-memory headersDistinct evidence only.
+Focused backup, actual request and existing updater fixtures pass; a real local
+HTTP fixture proves duplicate ETag preservation, with wrong Digest/duplicate
+Digest and boot rejection. No board/WAN contact, write replay or admission change.
+
+Comparison generation and read-only Check bind all109 PU files (96 gap files,
+0 pending,0 specialist-unrouted); all donors314/4697,4383 pending,253 gaps.
+THIS IS NOT whole-project fresh-review completion:58 previously uncertified
+files plus Authentication.cpp/.h are freshly read in this run, while49 earlier
+certificate files still need fresh per-section review. Their certificates are
+historical coverage, not fresh execution evidence or accepted missing behavior.
+
+The first evidence patch assumed all historical reference properties had one
+ordering and safely failed before edits. Inspected the real differing proof
+layout and rebound exact existing hash fields; no source hashes or anchors were
+invented. A PowerShell brace-expansion typo similarly failed before execution;
+explicit paths replaced it. Donor and unrelated files remain untouched.
+No SDK/donor rebuild, CI wait, cache/worktree, deployment/reboot/network/settings,
+LED/audio/PBX operation, live relay change or version-policy downgrade. Generic
+UART file/panel/language/clock/tracing, watcher/platform and all live/physical/
+human acceptance remain open.
+
 ## PU850 C# manifest and deflate source checkpoint
 
 2026-10-19 continuation after ac60a1a: all fourteen C# uploader files, all three

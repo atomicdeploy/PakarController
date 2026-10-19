@@ -45,7 +45,7 @@ export function deviceRequest(origin,path,{form,headers={},expectedAddress,metho
       if(expectedAddress&&remote!==expectedAddress){response.destroy();reject(Error('TCP peer changed; no retry'));return;}
       response.on('data',chunk=>{bytes+=chunk.length;if(bytes>512*1024){request.destroy(Error('Response exceeds bounded probe size'));return;}chunks.push(chunk)});
       response.on('error',()=>reject(Error('Device response interrupted; no retry')));
-      response.on('end',()=>resolve({status:response.statusCode,headers:response.headers,body:Buffer.concat(chunks),remote}));
+      response.on('end',()=>resolve({status:response.statusCode,headers:response.headers,distinctHeaders:response.headersDistinct,body:Buffer.concat(chunks),remote}));
     });
     const timer=setTimeout(()=>request.destroy(Error('Device request timed out; no retry')),8000);
     request.on('close',()=>clearTimeout(timer));
