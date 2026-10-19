@@ -13117,12 +13117,12 @@
         {
           "path": "tests/idf_rmt_ring_sdk.inc",
           "anchor": "static size_t rmt_encode_bytes(",
-          "sha256": "6f462d1e71660a8741a251c4bd4e242df281a23e88597a09deb7634999c7ba17"
+          "sha256": "21407218c9fef3c223d298d4fc2084d9ab07b15a4de77a4cb43bd25c75c43d91"
         },
         {
           "path": "tests/idf_rmt_ring_provenance.json",
           "anchor": "\"sdk\":",
-          "sha256": "f8438f34d32fd52d8dbbdf202bf851687cafa44eb4ed686ac496cdb8b8aaaeb9"
+          "sha256": "882d1ef64d39ff9d99e303b7f997c1b7e6f11db82ae52f11c0a8b56a1075736f"
         },
         {
           "path": "tests/led_grid_test.cpp",

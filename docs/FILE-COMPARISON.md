@@ -719,8 +719,8 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `mobile/test/pixel_diagnostic_command_test.dart:25 [UTF8-LF sha256=fce86844092a6ddd8a86833bffe5b8b3e8c45706af49dd1772e0fb342882da23; anchor=Atomic pixel command]`.
 - Test-code evidence: `tests/mobile_pixel_probe_plan_test.ps1:8 [UTF8-LF sha256=823dd963abd25514c0557bfc351dd23d24111f6de85a17461b91a7abd7f8287d; anchor=canonical compile-only plan]`.
 - Test-code evidence: `tests/idf_rmt_ring_test.cpp:146 [UTF8-LF sha256=0649b8c2fc987ba746933bd3b7f84037c0422ebcc75d579283287e8bcf01caf2; anchor=void complete(]`.
-- Test-code evidence: `tests/idf_rmt_ring_sdk.inc:30 [UTF8-LF sha256=6f462d1e71660a8741a251c4bd4e242df281a23e88597a09deb7634999c7ba17; anchor=static size_t rmt_encode_bytes(]`.
-- Test-code evidence: `tests/idf_rmt_ring_provenance.json:2 [UTF8-LF sha256=f8438f34d32fd52d8dbbdf202bf851687cafa44eb4ed686ac496cdb8b8aaaeb9; anchor="sdk":]`.
+- Test-code evidence: `tests/idf_rmt_ring_sdk.inc:30 [UTF8-LF sha256=21407218c9fef3c223d298d4fc2084d9ab07b15a4de77a4cb43bd25c75c43d91; anchor=static size_t rmt_encode_bytes(]`.
+- Test-code evidence: `tests/idf_rmt_ring_provenance.json:2 [UTF8-LF sha256=882d1ef64d39ff9d99e303b7f997c1b7e6f11db82ae52f11c0a8b56a1075736f; anchor="sdk":]`.
 - Test-code evidence: `tests/led_grid_test.cpp:50 [UTF8-LF sha256=975e51fe253e3b48a5a0d6cc2b8baa6b772bb9b6f5b041ef26e66de81ee0e190; anchor=void cloudAnimationProgress(]`.
 - Scoped advantage: One validated atomic board intent replaces client fan-out, without duplicating the effects engine or changing API generations.
 - Remaining: Physical pixel/group placement and Android phone acceptance remain open. Mobile widgets and loopback transport are separate evidence from board buffer and optical correctness; no donor-wide completion is implied.

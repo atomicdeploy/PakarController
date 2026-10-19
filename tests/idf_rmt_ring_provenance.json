@@ -1,7 +1,7 @@
 {
   "sdk": "ESP-IDF v5.5.5 (Arduino-ESP32 3.3.12 dependency)",
   "license": "Apache-2.0",
-  "excerpt_sha256": "6f462d1e71660a8741a251c4bd4e242df281a23e88597a09deb7634999c7ba17",
+  "excerpt_sha256": "21407218c9fef3c223d298d4fc2084d9ab07b15a4de77a4cb43bd25c75c43d91",
   "sources": [
     {
       "path": "components/esp_driver_rmt/src/rmt_encoder_bytes.c",
@@ -40,7 +40,6 @@
       ]
     }
   ],
-  "adaptation": "Unchanged function bodies and encoder structs; SDK includes, attributes and unexercised factories are excluded. Pakar supplies host structs, allocation-free descriptor consumer and peripheral doubles. Native transaction start sequencing is modeled from fully read rmt_tx_do_transaction.",
+  "adaptation": "Unchanged function bodies and encoder structs; SDK includes, attributes and unexercised factories are excluded. Pakar supplies host structs, allocation-free descriptor consumer and peripheral doubles. Native transaction start sequencing is modeled from fully read rmt_tx_do_transaction. Only surplus final blank lines in the assembled excerpt and accompanying license were removed for repository whitespace checks.",
   "meaning": "Software model only; injected EOF faults demonstrate limitations of encoded symbol accounting, not observed device root cause or physical/RF/cache/latency/optical acceptance."
 }
-

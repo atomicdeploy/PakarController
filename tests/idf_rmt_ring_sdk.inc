@@ -340,5 +340,3 @@ static bool rmt_dma_tx_eof_cb(gdma_channel_handle_t dma_chan, gdma_event_data_t 
     gdma_append(dma_chan);
     return false;
 }
-
-
