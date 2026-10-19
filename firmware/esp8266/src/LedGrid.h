@@ -75,7 +75,7 @@ class LedGrid {
   bool outputEnabled()const{return outputEnabled_;}
   void setStaticMode(bool enabled);
   bool staticMode()const{return staticMode_;}
-  String outputJson()const;
+  String outputJson(bool compact=false)const;
   String outputCapabilitiesJson()const;
   bool requestSignalCapture(){
 #if defined(ARDUINO_ARCH_ESP32)

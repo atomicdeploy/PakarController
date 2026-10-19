@@ -347,6 +347,7 @@ void appendJsonEscaped(String &body, const char *text);
 String deviceNameJson(bool accepted = false);
 bool saveCellMapping();
 String buildStatusJson();
+String buildStatusJson(bool compact);
 String panelStatusJson();
 void serviceSemanticPanel(uint32_t now);
 void closeDeviceShells();
@@ -375,7 +376,7 @@ bool upgradeRebootReady();
 uint32_t runningImageSize();
 String runningImageMd5();
 bool runningImageIntegrity();
-String ethernetStatusJson();
+String ethernetStatusJson(bool compact);
 String lcdStatusJson();
 String buildUsbTableSnapshot();
 String buildTelemetryJson();
@@ -1778,11 +1779,12 @@ uint64_t commandClock() {
   return high|now; // Queried every telemetry tick; old intents cannot revive at millis wrap.
 }
 #include "src/SemanticPanelService.h"
-String buildStatusJson() {
+String buildStatusJson() { return buildStatusJson(false); }
+String buildStatusJson(bool compact) {
   String body;
   // Reserve the complete document before TLS/WebSocket activity fragments the
   // ESP8266 heap. Arduino String otherwise fails mid-JSON without an error.
-  body.reserve(2600);
+  if(!body.reserve(compact ? 10240 : 2600))return String();
   body += F("{\"version\":\""); body += BoardCore::BuildInfo::kVersion;
   body += F("\",\"compatibility\":");body+=PakarPeer::policyJson();
   body += F(",\"board_id\":\""); body += pcBoardId;
@@ -1793,12 +1795,14 @@ String buildStatusJson() {
   body += F(",\"hostname\":\""); body += hostname;
   body += F("\",\"uplink\":\""); body += NetworkPath::interfaceName();
   body += F("\",\"uplink_ipv4_ready\":"); body += NetworkPath::ready() ? F("true") : F("false");
+  if(!compact) {
   body += F(",\"uplink_route_changes\":");body+=NetworkPath::state().routeChanges;
   body += F(",\"uplink_resolver_changes\":");body+=NetworkPath::state().resolverChanges;
+  }
   body += F(",\"cloud_command_fencing\":true,\"cloud_command_deadline_seconds\":60");
-  body += F(",\"ethernet\":");body+=ethernetStatusJson();
+  body += F(",\"ethernet\":");body+=ethernetStatusJson(compact);
 #if defined(ARDUINO_ARCH_ESP32)
-  body += F(",\"ble\":");body+=bleStatusJson();
+  if(!compact) {body += F(",\"ble\":");body+=bleStatusJson();}
   wifi_ps_type_t observedSleep=WIFI_PS_NONE;
   const bool sleepKnown=esp_wifi_get_ps(&observedSleep)==ESP_OK;
   body += F(",\"wifi_modem_sleep\":");
@@ -1807,7 +1811,8 @@ String buildStatusJson() {
 #endif
   body += F(",\"ip\":\""); body += (NetworkPath::ready() ? NetworkPath::localIP() : WiFi.softAPIP()).toString();
   body += F("\",\"mode\":\""); body += modeName();
-  body += F("\",\"led_output\":");body+=grid.outputJson();
+  body += F("\",\"led_output\":");body+=grid.outputJson(compact);
+  if(!compact) {
   body += F(",\"state_persistence\":{\"restored\":");body+=sceneStore.restored()?F("true"):F("false");
   body += F(",\"pending\":");body+=sceneStore.pending()?F("true"):F("false");
   body += F(",\"saved\":");body+=sceneStore.saved()?F("true"):F("false");
@@ -1817,9 +1822,10 @@ String buildStatusJson() {
   body += '}';
   body += F(",\"ws_queue_rejected\":");body+=loopMessages.rejected();
   body += F(",\"ws_queue_ready\":");body+=loopMessages.ready()?F("true"):F("false");
+  }
   body += F(",\"update\":");body+=localUpdateJson();
   body += F(",\"upgrade\":");body+=upgradeJson();
-  body += F(",\"local_ota_receipt\":");body+=localOtaReceipt.json();
+  if(!compact) {body += F(",\"local_ota_receipt\":");body+=localOtaReceipt.json();}
   body += F(",\"avr_maintenance\":");body+=urbootJobJson();
   // Cheap stress/health metric; unlike maintenance metadata this never hashes
   // the running sketch or pauses the LED transmitter for flash reads.
@@ -1924,12 +1930,13 @@ String buildStatusJson() {
   body += webSocket.count();
   body += F(",\"telnet_connected\":");
   body += shellConnectionCount() ? F("true") : F("false");
-  body += F(",\"shell\":");body += shellStatusJson();
+  if(!compact) {body += F(",\"shell\":");body += shellStatusJson();}
   body += F(",\"mqtt_enabled\":");
   body += cloudConfig.mqttEnabled() ? F("true") : F("false");
   body += F(",\"mqtt_connected\":");
   body += cloudServices.mqttConnected() ? F("true") : F("false");
   body += F(",\"mqtt_state\":"); body += cloudServices.mqttState();
+  if(!compact) {
   const auto &mqttTiming=cloudServices.mqttConnectionStats();
   body += F(",\"mqtt_connection\":{\"attempts\":");body += mqttTiming.attempts;
   body += F(",\"failures\":");body += mqttTiming.failures;
@@ -1949,21 +1956,24 @@ String buildStatusJson() {
   body += F(",\"write_closes\":");body+=cloudIo.writeCloses;body+='}';
   body += F(",\"mqtt_messages_received\":");
   body += cloudServices.mqttMessagesReceived();
+  }
   body += F(",\"cloud_websocket_enabled\":");
   body += cloudConfig.webSocketEnabled() ? F("true") : F("false");
   body += F(",\"cloud_websocket_connected\":");
   body += cloudServices.webSocketConnected() ? F("true") : F("false");
-  body += F(",\"cloud_websocket_messages_received\":");
-  body += cloudServices.webSocketMessagesReceived();
+  if(!compact) {body += F(",\"cloud_websocket_messages_received\":");
+  body += cloudServices.webSocketMessagesReceived();}
   body += F(",\"remote_firmware\":"); body += remoteFirmware.json();
   String cloudError = cloudServices.lastError();
   cloudError.replace("\\", "\\\\");
   cloudError.replace("\"", "\\\"");
   body += F(",\"cloud_error\":\""); body += cloudError; body += '"';
+  if(!compact) {
   body += F(",\"uart_bytes_received\":"); body += link.bytesReceived();
   body += F(",\"uart_frames_received\":"); body += link.framesReceived();
   body += F(",\"usb_serial_bytes_received\":"); body += hostLink.bytesReceived();
   body += F(",\"usb_serial_frames_received\":"); body += hostLink.framesReceived();
+  }
   body += F(",\"usb_serial_errors\":"); body += hostLink.errors();
   body += F(",\"pc_contract_supported\":");
   body += avrOnline && avrPcSupported ? F("true") : F("false");
@@ -2020,14 +2030,22 @@ void sendStatusJson() {
 // A capture is assembled once on the loop owner. Its chunks never rebuild
 // mutable cell state or reuse identityRevision() as a scene revision.
 String buildUsbTableSnapshot() {
+  // PCController sessionsnapshot's explicit projection/bounded-encode pattern:
+  // keep live identity, controls and receipts, not unbounded diagnostic detail.
+  // 10240 + 6104 worst-case escaped mappings/published frame = 16344 bytes.
+  // Never truncate identity, names or pixels to fit the transport's 16384 cap.
+  String status=buildStatusJson(true);
+  if(!status.length() || status.length()>10240)return String();
   String body;if(!body.reserve(16384))return String();
-  body=F("{\"status\":");body+=buildStatusJson();body+=F(",\"physical\":[");
+  body=F("{\"status\":");body+=status;status=String();body+=F(",\"physical\":[");
   for(uint8_t i=0;i<LedGrid::kCells;++i){if(i)body+=',';body+=cellMapping.physical[i];}
   body+=F("],\"names\":[");
   for(uint8_t i=0;i<LedGrid::kCells;++i){if(i)body+=',';body+='\"';
     if(cellMapping.names[i][0])appendJsonEscaped(body,cellMapping.names[i]);else body+=i+1;
     body+='\"';}
-  body+=F("],\"pixels\":");body+=grid.pixelFrameJson();body+='}';return body;
+  body+=F("],\"pixels\":");body+=grid.pixelFrameJson();body+='}';
+  if(body.length()>16384)return String();
+  return body;
 }
 
 void configureNtp() {

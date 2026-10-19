@@ -438,7 +438,10 @@ String LedGrid::outputCapabilitiesJson()const{
   return F("{\"backend\":\"fastled\",\"rmt\":false,\"dma\":false}");
 #endif
 }
-String LedGrid::outputJson()const{
+String LedGrid::outputJson(bool compact)const{
+#if !defined(ARDUINO_ARCH_ESP32)
+  (void)compact;
+#endif
   String value=F("{\"enabled\":");value+=outputEnabled_?F("true"):F("false");
   value+=F(",\"mode\":\"");value+=staticMode_?F("static"):F("effects");value+='"';
   // Small authoritative observation on normal REST/WS/USB status, not a full
@@ -457,7 +460,7 @@ String LedGrid::outputJson()const{
   value+=F(",\"interval_ms\":");value+=kChaseIntervalMs;
   value+=F(",\"complete\":");value+=(pattern_==kPatternCellChase&&chaseStep_==kCells)?F("true"):F("false");value+='}';
 #if defined(ARDUINO_ARCH_ESP32)
-  value+=F(",\"driver\":");value+=output_.json();
+  value+=F(",\"driver\":");value+=output_.json(compact);
 #else
   value+=F(",\"driver\":");value+=outputCapabilitiesJson();
 #endif

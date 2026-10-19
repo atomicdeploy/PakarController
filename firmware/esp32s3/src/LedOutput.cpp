@@ -232,11 +232,12 @@ String LedOutput::capabilitiesJson()const{
       F("{\"backend\":\"rmt-dma\",\"rmt\":true,\"dma\":true,\"signal_capture_supported\":true}"):
       F("{\"backend\":\"gpio-static\",\"rmt\":false,\"dma\":false}");
 }
-String LedOutput::json()const{
+String LedOutput::json(bool compact)const{
   String value=capabilitiesJson();value.remove(value.length()-1);
   value+=F(",\"ready\":");value+=ready_.load()?F("true"):F("false");
   value+=F(",\"active\":");value+=active_.load()?F("true"):F("false");
   value+=F(",\"on_change_only\":true");
+  if(!compact) {
   value+=F(",\"timing_profile\":\"ws2811-800khz\",\"requested_t0h_ns\":");value+=PAKAR_S3_LED_USE_DMA?300U:250U;
   value+=F(",\"requested_t1h_ns\":");value+=PAKAR_S3_LED_USE_DMA?625U:600U;
   value+=F(",\"requested_bit_ns\":1250,\"latch_us\":300");
@@ -265,6 +266,7 @@ String LedOutput::json()const{
   value+='}';
   value+=F(",\"done_symbols\":");value+=doneSymbols_.load();
   value+=F(",\"expected_symbols\":");value+=PAKAR_S3_LED_USE_DMA?dataSymbols+1:0U;
+  }
   value+=F(",\"submitted\":");value+=submitted_.load();
   value+=F(",\"channel_order\":\"");value+=PAKAR_S3_LED_SWAP_RED_BLUE?F("bgr"):F("rgb");value+='"';
   value+=F(",\"rgb_gains\":");value+=rgbGains;

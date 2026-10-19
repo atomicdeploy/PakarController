@@ -83,6 +83,12 @@ int main() {
   assert(online["link_up"]==true && online["ipv4_ready"]==true && online["ip"]=="198.51.100.7");
   assert(online["gateway"]=="198.51.100.1" && online["mac"]=="02:00:00:00:00:01");
   assert(online["speed_mbps"]==100&&online["full_duplex"]==true);
+  auto compact=snapshot(ethernetStatusJson(true));
+  assert(compact["lldp"].isNull());
+  for(const char* key:{"configured","initialized","enabled","started","link_up","ipv4_ready",
+      "dhcp","ip","gateway","subnet","dns1","dns2","mac","speed_mbps","full_duplex","last_error"})
+    assert(compact[key]==online[key]); // Compact capture retains operational interface truth.
+  assert(!snapshot(ethernetStatusJson())["lldp"].isNull()); // Default remains full.
   NetworkPath::port.up=false;
   assert(snapshot(ethernetStatusJson())["ip"].isNull()); // Never stale old IP.
   assert(initial["configured"]==true&&initial["dhcp"]==true&&initial["ipv4_ready"]==false);

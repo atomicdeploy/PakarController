@@ -19,3 +19,5 @@ $taskBleStorage=Join-Path $taskRoot 'build/native/ble_storage_test.exe'
 if($LASTEXITCODE){throw 'BLE PSRAM storage fixture compilation failed'}
 & $taskBleStorage
 if($LASTEXITCODE){throw 'BLE PSRAM storage fixture failed'}
+& node (Join-Path $taskRoot 'tests/usb_snapshot_budget_test.mjs')
+if($LASTEXITCODE){throw 'USB snapshot projection/budget assertions failed'}

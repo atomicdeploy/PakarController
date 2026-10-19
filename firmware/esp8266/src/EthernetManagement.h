@@ -1,6 +1,6 @@
 #pragma once
 // Included after CloudManagement inside the loop owner's namespace.
-String ethernetStatusJson() {
+String ethernetStatusJson(bool compact=false) {
   JsonDocument d;
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_S3_ETHERNET_ENABLED
   const auto &port=NetworkPath::ethernet();
@@ -19,6 +19,7 @@ String ethernetStatusJson() {
   if(mac.length())d["mac"]=mac;else d["mac"]=nullptr;
   if(port.linkUp()){d["speed_mbps"]=port.linkSpeedMbps();d["full_duplex"]=port.fullDuplex();}
   else {d["speed_mbps"]=nullptr;d["full_duplex"]=nullptr;}
+  if(!compact) {
   PakarS3::LldpStatus lldp;port.lldpStatus(lldp);
   auto info=d["lldp"].to<JsonObject>();
   info["enabled"]=ethernetConfig.lldpEnabled();info["receive_requested"]=ethernetConfig.lldpReceive();
@@ -38,8 +39,10 @@ String ethernetStatusJson() {
     row["system_name"]=source.systemName;row["description"]=source.description;
     row["ttl_seconds"]=source.ttl;row["age_ms"]=uint32_t(millis()-source.observedAt);
   }
+  }
   d["last_error"]=port.lastError();
 #else
+  (void)compact;
   d["configured"]=false;
 #endif
   // Cheap live observations only: never sketch hashing, flash reads or probes.

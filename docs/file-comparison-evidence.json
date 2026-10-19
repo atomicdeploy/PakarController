@@ -3176,17 +3176,17 @@
     "targets": [
       {
         "path": "firmware/esp32s3/src/LedOutput.cpp",
-        "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
+        "sha256": "f362d4843264517e7b4e533cf843cde77ef5d3d6cbd1b74ff1859b8ba63be587",
         "anchor": "void LedOutput::work(){"
       },
       {
         "path": "firmware/esp32s3/src/LedOutput.h",
-        "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
+        "sha256": "57b7df755cce7404b0add0f2ebd2eeac99239e1aec9a08a1d4bb3f07ef78fb80",
         "anchor": "Frame producer_{};"
       },
       {
         "path": "firmware/esp8266/src/LedGrid.cpp",
-        "sha256": "ed16aaa800ba2f26a9e239b70005e2907ce59d5a8026a64507356bb84a1c961d",
+        "sha256": "6dac8cda402c30e122b31fa2dad370ba80a5c0c71a0e4ecf6a3cf786b9aceaad",
         "anchor": "void LedGrid::showStaged() {"
       },
       {
@@ -3238,17 +3238,17 @@
     "targets": [
       {
         "path": "firmware/esp32s3/src/LedOutput.cpp",
-        "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
+        "sha256": "f362d4843264517e7b4e533cf843cde77ef5d3d6cbd1b74ff1859b8ba63be587",
         "anchor": "void LedOutput::work(){"
       },
       {
         "path": "firmware/esp32s3/src/LedOutput.h",
-        "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
+        "sha256": "57b7df755cce7404b0add0f2ebd2eeac99239e1aec9a08a1d4bb3f07ef78fb80",
         "anchor": "Frame producer_{};"
       },
       {
         "path": "firmware/esp8266/src/LedGrid.cpp",
-        "sha256": "ed16aaa800ba2f26a9e239b70005e2907ce59d5a8026a64507356bb84a1c961d",
+        "sha256": "6dac8cda402c30e122b31fa2dad370ba80a5c0c71a0e4ecf6a3cf786b9aceaad",
         "anchor": "void LedGrid::showStaged() {"
       },
       {
@@ -3300,17 +3300,17 @@
     "targets": [
       {
         "path": "firmware/esp32s3/src/LedOutput.cpp",
-        "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
+        "sha256": "f362d4843264517e7b4e533cf843cde77ef5d3d6cbd1b74ff1859b8ba63be587",
         "anchor": "void LedOutput::work(){"
       },
       {
         "path": "firmware/esp32s3/src/LedOutput.h",
-        "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
+        "sha256": "57b7df755cce7404b0add0f2ebd2eeac99239e1aec9a08a1d4bb3f07ef78fb80",
         "anchor": "Frame producer_{};"
       },
       {
         "path": "firmware/esp8266/src/LedGrid.cpp",
-        "sha256": "ed16aaa800ba2f26a9e239b70005e2907ce59d5a8026a64507356bb84a1c961d",
+        "sha256": "6dac8cda402c30e122b31fa2dad370ba80a5c0c71a0e4ecf6a3cf786b9aceaad",
         "anchor": "void LedGrid::showStaged() {"
       },
       {
@@ -3362,17 +3362,17 @@
     "targets": [
       {
         "path": "firmware/esp32s3/src/LedOutput.cpp",
-        "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
+        "sha256": "f362d4843264517e7b4e533cf843cde77ef5d3d6cbd1b74ff1859b8ba63be587",
         "anchor": "void LedOutput::work(){"
       },
       {
         "path": "firmware/esp32s3/src/LedOutput.h",
-        "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
+        "sha256": "57b7df755cce7404b0add0f2ebd2eeac99239e1aec9a08a1d4bb3f07ef78fb80",
         "anchor": "Frame producer_{};"
       },
       {
         "path": "firmware/esp8266/src/LedGrid.cpp",
-        "sha256": "ed16aaa800ba2f26a9e239b70005e2907ce59d5a8026a64507356bb84a1c961d",
+        "sha256": "6dac8cda402c30e122b31fa2dad370ba80a5c0c71a0e4ecf6a3cf786b9aceaad",
         "anchor": "void LedGrid::showStaged() {"
       },
       {
@@ -3424,17 +3424,17 @@
     "targets": [
       {
         "path": "firmware/esp32s3/src/LedOutput.cpp",
-        "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
+        "sha256": "f362d4843264517e7b4e533cf843cde77ef5d3d6cbd1b74ff1859b8ba63be587",
         "anchor": "void LedOutput::work(){"
       },
       {
         "path": "firmware/esp32s3/src/LedOutput.h",
-        "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
+        "sha256": "57b7df755cce7404b0add0f2ebd2eeac99239e1aec9a08a1d4bb3f07ef78fb80",
         "anchor": "Frame producer_{};"
       },
       {
         "path": "firmware/esp8266/src/LedGrid.cpp",
-        "sha256": "ed16aaa800ba2f26a9e239b70005e2907ce59d5a8026a64507356bb84a1c961d",
+        "sha256": "6dac8cda402c30e122b31fa2dad370ba80a5c0c71a0e4ecf6a3cf786b9aceaad",
         "anchor": "void LedGrid::showStaged() {"
       },
       {
@@ -3486,17 +3486,17 @@
     "targets": [
       {
         "path": "firmware/esp32s3/src/LedOutput.cpp",
-        "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
+        "sha256": "f362d4843264517e7b4e533cf843cde77ef5d3d6cbd1b74ff1859b8ba63be587",
         "anchor": "void LedOutput::work(){"
       },
       {
         "path": "firmware/esp32s3/src/LedOutput.h",
-        "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
+        "sha256": "57b7df755cce7404b0add0f2ebd2eeac99239e1aec9a08a1d4bb3f07ef78fb80",
         "anchor": "Frame producer_{};"
       },
       {
         "path": "firmware/esp8266/src/LedGrid.cpp",
-        "sha256": "ed16aaa800ba2f26a9e239b70005e2907ce59d5a8026a64507356bb84a1c961d",
+        "sha256": "6dac8cda402c30e122b31fa2dad370ba80a5c0c71a0e4ecf6a3cf786b9aceaad",
         "anchor": "void LedGrid::showStaged() {"
       },
       {
@@ -3553,7 +3553,7 @@
       },
       {
         "path": "firmware/esp8266/src/LedGrid.h",
-        "sha256": "0b9b9c7c866ca61abb485e3b03a00435ab412b966163e4d51f5cafffb837db2b",
+        "sha256": "449ebd6c7a4f0422dd7d724e86c02bf5ab5df649ab05099049eb82aaf3017392",
         "anchor": "enum Pattern : uint8_t"
       }
     ],
@@ -3594,7 +3594,7 @@
       },
       {
         "path": "firmware/esp8266/src/LedGrid.h",
-        "sha256": "0b9b9c7c866ca61abb485e3b03a00435ab412b966163e4d51f5cafffb837db2b",
+        "sha256": "449ebd6c7a4f0422dd7d724e86c02bf5ab5df649ab05099049eb82aaf3017392",
         "anchor": "enum Pattern : uint8_t"
       }
     ],
@@ -3635,7 +3635,7 @@
       },
       {
         "path": "firmware/esp8266/src/LedGrid.h",
-        "sha256": "0b9b9c7c866ca61abb485e3b03a00435ab412b966163e4d51f5cafffb837db2b",
+        "sha256": "449ebd6c7a4f0422dd7d724e86c02bf5ab5df649ab05099049eb82aaf3017392",
         "anchor": "enum Pattern : uint8_t"
       }
     ],
@@ -3676,7 +3676,7 @@
       },
       {
         "path": "firmware/esp8266/src/LedGrid.h",
-        "sha256": "0b9b9c7c866ca61abb485e3b03a00435ab412b966163e4d51f5cafffb837db2b",
+        "sha256": "449ebd6c7a4f0422dd7d724e86c02bf5ab5df649ab05099049eb82aaf3017392",
         "anchor": "enum Pattern : uint8_t"
       }
     ],
@@ -3717,7 +3717,7 @@
       },
       {
         "path": "firmware/esp8266/src/LedGrid.h",
-        "sha256": "0b9b9c7c866ca61abb485e3b03a00435ab412b966163e4d51f5cafffb837db2b",
+        "sha256": "449ebd6c7a4f0422dd7d724e86c02bf5ab5df649ab05099049eb82aaf3017392",
         "anchor": "enum Pattern : uint8_t"
       }
     ],
@@ -3758,7 +3758,7 @@
       },
       {
         "path": "firmware/esp8266/src/LedGrid.h",
-        "sha256": "0b9b9c7c866ca61abb485e3b03a00435ab412b966163e4d51f5cafffb837db2b",
+        "sha256": "449ebd6c7a4f0422dd7d724e86c02bf5ab5df649ab05099049eb82aaf3017392",
         "anchor": "enum Pattern : uint8_t"
       }
     ],
@@ -3799,7 +3799,7 @@
       },
       {
         "path": "firmware/esp8266/src/LedGrid.h",
-        "sha256": "0b9b9c7c866ca61abb485e3b03a00435ab412b966163e4d51f5cafffb837db2b",
+        "sha256": "449ebd6c7a4f0422dd7d724e86c02bf5ab5df649ab05099049eb82aaf3017392",
         "anchor": "enum Pattern : uint8_t"
       }
     ],
@@ -3840,7 +3840,7 @@
       },
       {
         "path": "firmware/esp8266/src/LedGrid.h",
-        "sha256": "0b9b9c7c866ca61abb485e3b03a00435ab412b966163e4d51f5cafffb837db2b",
+        "sha256": "449ebd6c7a4f0422dd7d724e86c02bf5ab5df649ab05099049eb82aaf3017392",
         "anchor": "enum Pattern : uint8_t"
       }
     ],
@@ -7546,7 +7546,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2"
+          "sha256": "a45fee5a8ebbc7cea6d7c84532f5e7217b6117427928796c47989fb14958f985"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -8048,7 +8048,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2"
+          "sha256": "a45fee5a8ebbc7cea6d7c84532f5e7217b6117427928796c47989fb14958f985"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -8103,7 +8103,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2"
+          "sha256": "a45fee5a8ebbc7cea6d7c84532f5e7217b6117427928796c47989fb14958f985"
         }
       ],
       "omissions": [
@@ -8155,13 +8155,13 @@
           "sha256": "4adbe46485571c92c0061e008ef3044d71a580f7f62d3cb1a1b3c19117eee40b"
         },
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"0539837793778de69839ea205fce43bda14f1734866dee5c158389f48e3837ab","anchor":"Message *items_=nullptr;"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"a45fee5a8ebbc7cea6d7c84532f5e7217b6117427928796c47989fb14958f985","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
         {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"9f486926615fdec3d6e7c6ad32e384816e66811674aec2a9f6b34697233e83cf","anchor":"internal_heap_largest_block_bytes"},
         {"path":"tools/update-firmware.mjs","sha256":"489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2"
+          "sha256": "a45fee5a8ebbc7cea6d7c84532f5e7217b6117427928796c47989fb14958f985"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -9306,7 +9306,7 @@
       "preserved": ["Full header/implementation read through EOF. Adapted nonblocking lifecycle state, absolute elapsed/period animation, repeat-state phase preservation, brightness-scaled rendered-byte reporting and explicit board-owned configuration into PakarS3::StatusRgb. Fixed descriptors now add donor flash/cycle/one-shot transition plus pulse/double-blink: fault and shutdown preempt routine states, verified success expires with the existing update lifecycle, offline USB is healthy and simultaneous AP/network availability is distinct."],
       "targets": [
         {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b","anchor":"class StatusRgb"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2","anchor":"void serviceStatusRgb(uint32_t now)"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"a45fee5a8ebbc7cea6d7c84532f5e7217b6117427928796c47989fb14958f985","anchor":"void serviceStatusRgb(uint32_t now)"},
         {"path":"firmware/esp32s3/src/StatusRgbConfig.h","sha256":"8ae7dd8a7868db38ff2a31c7034c3c9674c8bf860ee4b9aae4f559d2f125ed29","anchor":"class StatusRgbConfig"},
         {"path":"desktop/src/status_rgb.rs","sha256":"3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e","anchor":"pub struct Configuration"},
         {"path":"mobile/lib/status_rgb.dart","sha256":"5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8","anchor":"class StatusRgbSettings"}
@@ -9957,7 +9957,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2",
+      "sha256": "a45fee5a8ebbc7cea6d7c84532f5e7217b6117427928796c47989fb14958f985",
       "anchor": "bool authenticate()"
     },
     {
@@ -14500,15 +14500,15 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "ed16aaa800ba2f26a9e239b70005e2907ce59d5a8026a64507356bb84a1c961d",
+          "sha256": "6dac8cda402c30e122b31fa2dad370ba80a5c0c71a0e4ecf6a3cf786b9aceaad",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "0b9b9c7c866ca61abb485e3b03a00435ab412b966163e4d51f5cafffb837db2b",
+          "sha256": "449ebd6c7a4f0422dd7d724e86c02bf5ab5df649ab05099049eb82aaf3017392",
           "anchor": "uint8_t brightness_ = 255"
         },
-        {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f","anchor":"config.flags.with_dma=true"},
+        {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"f362d4843264517e7b4e533cf843cde77ef5d3d6cbd1b74ff1859b8ba63be587","anchor":"config.flags.with_dma=true"},
         {"path":"firmware/esp32s3/src/LedWire.h","sha256":"502971b3109cf654ca0d8c657250a40d16548d676d1fd7ae176d5436b993d4ad","anchor":"void encodeWire("},
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"0539837793778de69839ea205fce43bda14f1734866dee5c158389f48e3837ab","anchor":"class LoopMessages"}
       ],
@@ -14550,12 +14550,12 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "ed16aaa800ba2f26a9e239b70005e2907ce59d5a8026a64507356bb84a1c961d",
+          "sha256": "6dac8cda402c30e122b31fa2dad370ba80a5c0c71a0e4ecf6a3cf786b9aceaad",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "0b9b9c7c866ca61abb485e3b03a00435ab412b966163e4d51f5cafffb837db2b",
+          "sha256": "449ebd6c7a4f0422dd7d724e86c02bf5ab5df649ab05099049eb82aaf3017392",
           "anchor": "uint8_t brightness_ = 255"
         }
       ],
@@ -16605,7 +16605,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2",
+          "sha256": "a45fee5a8ebbc7cea6d7c84532f5e7217b6117427928796c47989fb14958f985",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -16852,7 +16852,7 @@
         },
         {
           "path": "firmware/esp8266/src/EthernetManagement.h",
-          "sha256": "006c089a31b46567d4ee63d2bdc86db43d7956b7d6a6f38238e218a2f41bbca1",
+          "sha256": "3e8ad92323184f1cbf1a6fb0a0d0c873ee46a7be710dc638fe82ada3362d45bf",
           "anchor": "bool updateEthernetConfiguration("
         },
         {
@@ -16862,8 +16862,8 @@
         },
         {
           "path": "firmware/esp8266/src/EthernetManagement.h",
-          "anchor": "String ethernetStatusJson() {",
-          "sha256": "006c089a31b46567d4ee63d2bdc86db43d7956b7d6a6f38238e218a2f41bbca1"
+          "anchor": "String ethernetStatusJson(bool compact=false) {",
+          "sha256": "3e8ad92323184f1cbf1a6fb0a0d0c873ee46a7be710dc638fe82ada3362d45bf"
         },
         {
           "path": "tools/check-ethernet-live.mjs",
@@ -16990,7 +16990,7 @@
         },
         {
           "path": "tests/ethernet_management_test.cpp",
-          "sha256": "b99503059054436d2daeee31192c6e6b6314441604d77f36a3de67786563931d",
+          "sha256": "c1d6ede0956e7ff1e1b43e5a0e15b4819f84d33afc7a6d8e83ed6fda8fa942a6",
           "anchor": "int main()"
         },
         {
@@ -17001,7 +17001,7 @@
         {
           "path": "tests/ethernet_management_test.cpp",
           "anchor": "auto offline=snapshot(ethernetStatusJson());",
-          "sha256": "b99503059054436d2daeee31192c6e6b6314441604d77f36a3de67786563931d"
+          "sha256": "c1d6ede0956e7ff1e1b43e5a0e15b4819f84d33afc7a6d8e83ed6fda8fa942a6"
         },
         {
           "path": "tests/ethernet_live_tool_test.mjs",
@@ -17334,12 +17334,12 @@
         },
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "ed16aaa800ba2f26a9e239b70005e2907ce59d5a8026a64507356bb84a1c961d",
+          "sha256": "6dac8cda402c30e122b31fa2dad370ba80a5c0c71a0e4ecf6a3cf786b9aceaad",
           "anchor": "bool LedGrid::setCells("
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "0b9b9c7c866ca61abb485e3b03a00435ab412b966163e4d51f5cafffb837db2b",
+          "sha256": "449ebd6c7a4f0422dd7d724e86c02bf5ab5df649ab05099049eb82aaf3017392",
           "anchor": "bool setCells("
         },
         {
@@ -17349,7 +17349,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
+          "sha256": "f362d4843264517e7b4e533cf843cde77ef5d3d6cbd1b74ff1859b8ba63be587",
           "anchor": "bool pending=true;"
         },
         {
@@ -17364,7 +17364,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2",
+          "sha256": "a45fee5a8ebbc7cea6d7c84532f5e7217b6117427928796c47989fb14958f985",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -17374,7 +17374,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.h",
-          "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
+          "sha256": "57b7df755cce7404b0add0f2ebd2eeac99239e1aec9a08a1d4bb3f07ef78fb80",
           "anchor": "#if !defined(PAKAR_S3_LED_USE_DMA)"
         },
         {
@@ -17573,12 +17573,12 @@
         },
         {
           "path": "firmware/esp8266/src/LedGrid.cpp",
-          "sha256": "ed16aaa800ba2f26a9e239b70005e2907ce59d5a8026a64507356bb84a1c961d",
+          "sha256": "6dac8cda402c30e122b31fa2dad370ba80a5c0c71a0e4ecf6a3cf786b9aceaad",
           "anchor": "bool LedGrid::setCells("
         },
         {
           "path": "firmware/esp8266/src/LedGrid.h",
-          "sha256": "0b9b9c7c866ca61abb485e3b03a00435ab412b966163e4d51f5cafffb837db2b",
+          "sha256": "449ebd6c7a4f0422dd7d724e86c02bf5ab5df649ab05099049eb82aaf3017392",
           "anchor": "bool setCells("
         },
         {
@@ -17588,7 +17588,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
+          "sha256": "f362d4843264517e7b4e533cf843cde77ef5d3d6cbd1b74ff1859b8ba63be587",
           "anchor": "bool pending=true;"
         },
         {
@@ -17603,7 +17603,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "accd21b92f953ec90db84a8d7c71bfaff64a89c267ebccc125f1a875cd397af2",
+          "sha256": "a45fee5a8ebbc7cea6d7c84532f5e7217b6117427928796c47989fb14958f985",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -17613,7 +17613,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.h",
-          "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
+          "sha256": "57b7df755cce7404b0add0f2ebd2eeac99239e1aec9a08a1d4bb3f07ef78fb80",
           "anchor": "#if !defined(PAKAR_S3_LED_USE_DMA)"
         },
         {
