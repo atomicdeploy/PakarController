@@ -28,8 +28,8 @@ class TableWorkspace extends ChangeNotifier {
     }
     final text = saved['query'];
     query.text = text is String && text.length <= 512 ? text : '';
-    _multiple = saved['multiple'] != false;
-    _showIndicators = saved['indicators'] == true;
+    _multiple = saved['multiple'] == true;
+    _showIndicators = saved['indicators'] != false;
     final order = saved['output_cards'];
     if (order is List) {
       _outputCards = [
@@ -99,7 +99,7 @@ class TableWorkspace extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool _multiple = true, _showIndicators = false;
+  bool _multiple = false, _showIndicators = true;
   bool get multiple => _multiple;
   set multiple(bool value) {
     if (_multiple == value) return;

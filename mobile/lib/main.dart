@@ -1419,6 +1419,7 @@ class _TablePageState extends State<TablePage> {
   Set<int> get selection => workspace.selection;
   set selection(Set<int> value) => workspace.selection = value;
   String? searchError;
+  final searchFocus = FocusNode();
   bool get multiple => workspace.multiple;
   set multiple(bool value) => workspace.multiple = value;
   bool get showIndicators => workspace.showIndicators;
@@ -1431,6 +1432,9 @@ class _TablePageState extends State<TablePage> {
   @override
   void initState() {
     super.initState();
+    searchFocus.addListener(() {
+      if (!searchFocus.hasFocus) canonicalizeSearch();
+    });
     try {
       selection = parseCellSearch(query.text);
     } on FormatException catch (error) {
@@ -1440,9 +1444,51 @@ class _TablePageState extends State<TablePage> {
 
   @override
   void dispose() {
+    searchFocus.dispose();
     if (widget.workspace == null) workspace.dispose();
     super.dispose();
   }
+
+  void canonicalizeSearch() {
+    if (!mounted) return;
+    setState(() {
+      try {
+        selection = parseCellSearch(query.text);
+        query.text = formatCellSelection(selection);
+        searchError = null;
+      } on FormatException catch (error) {
+        searchError = error.message;
+      }
+    });
+  }
+
+  void insertSearchSeparator(String separator) {
+    final value = query.value;
+    final range = value.selection.isValid
+        ? value.selection
+        : TextSelection.collapsed(offset: value.text.length);
+    final next = const CellSearchInputFormatter().formatEditUpdate(
+      value,
+      TextEditingValue(
+        text: value.text.replaceRange(range.start, range.end, separator),
+        selection: TextSelection.collapsed(
+          offset: range.start + separator.length,
+        ),
+      ),
+    );
+    query.value = next;
+    searchFocus.requestFocus();
+    updateSearch(next.text);
+  }
+
+  void updateSearch(String text) => setState(() {
+    try {
+      selection = parseCellSearch(text);
+      searchError = null;
+    } on FormatException catch (error) {
+      searchError = error.message;
+    }
+  });
 
   void select(int id) {
     FocusScope.of(context).unfocus();
@@ -1521,24 +1567,34 @@ class _TablePageState extends State<TablePage> {
               const WorkspaceHeader(title: 'Table', icon: PakarIcons.gridFour),
               TextField(
                 controller: query,
+                focusNode: searchFocus,
+                keyboardType: const TextInputType.numberWithOptions(
+                  signed: true,
+                ),
+                textInputAction: TextInputAction.done,
+                autocorrect: false,
+                enableSuggestions: false,
+                inputFormatters: const [CellSearchInputFormatter()],
                 decoration: InputDecoration(
                   labelText: 'Find logical cell',
-                  hintText: '12, 3–8',
+                  hintText: '12, 3-8',
                   errorText: searchError,
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final separator in ['-', ','])
+                        IconButton(
+                          tooltip: separator == '-'
+                              ? 'Insert range dash'
+                              : 'Insert list comma',
+                          onPressed: () => insertSearchSeparator(separator),
+                          icon: Text(separator),
+                        ),
+                    ],
+                  ),
                 ),
-                onChanged: (text) => setState(() {
-                  try {
-                    selection = parseCellSearch(text);
-                    searchError = null;
-                  } on FormatException catch (error) {
-                    searchError = error.message;
-                  }
-                }),
-                onSubmitted: (_) {
-                  if (searchError == null) {
-                    setState(() => query.text = formatCellSelection(selection));
-                  }
-                },
+                onChanged: updateSearch,
+                onSubmitted: (_) => canonicalizeSearch(),
               ),
               Wrap(
                 key: const ValueKey('table-colour-actions'),

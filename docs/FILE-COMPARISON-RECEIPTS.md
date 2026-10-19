@@ -1240,3 +1240,17 @@ Read-only captures: outputs/PakarController/verification/tablet-unsecured-settle
 and tablet-build18-diagnostics.png (outside Git). Hostname resolution works on
 tablet; one of two ping probes answered, so initial reacquisition/loss remains an
 observed issue, not a claimed sustained-connection or physical acceptance pass.
+
+Flutter cell-input refinement reuses the fully reread native cell_search.rs
+parse/range-compaction contract and RayanLamp internal/i18n/digits.go maps.
+Persian/Arabic/fullwidth digits, dash variants and list separators normalize
+through a bounded input formatter. Invalid edits are rejected whole rather
+than deleting text into a different valid cell. Numeric IME hints plus explicit
+dash/comma buttons avoid requiring QWERTY. Completion/focus loss sorts,
+deduplicates and compacts to ASCII ranges (1,2,3 becomes1-3); partial input
+remains editable and never actuates LEDs. Fresh workspace defaults are indicators
+on/multiple-selection off; explicit saved booleans are preserved. Actual
+Pealayer workspace_profiles.rs stable-ID ownership was reread at matching hash;
+no migration erases prior workspace choices. Five input/parser tests, two focused
+keyboard/default widget tests and14 lifecycle tests passed. Physical commands
+remain untested under the production hold.

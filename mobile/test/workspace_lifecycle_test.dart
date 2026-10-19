@@ -299,8 +299,8 @@ void main() {
       final saved = (cache['boards'] as Map)['board-A'] as Map;
       expect(cache['activity'], 'table');
       expect(saved['selection'], [1, 2, 3, 80]);
-      expect(saved['indicators'], true);
-      expect(saved['multiple'], false);
+      expect(saved['indicators'], false);
+      expect(saved['multiple'], true);
       expect(saved['effect'], 'fade');
       expect(saved['vertical'], y);
       expect(saved['horizontal'], x);
@@ -315,8 +315,8 @@ void main() {
       final restored = tester
           .widget<TablePage>(find.byType(TablePage))
           .workspace!;
-      expect(restored.showIndicators, true);
-      expect(restored.multiple, false);
+      expect(restored.showIndicators, false);
+      expect(restored.multiple, true);
       expect(restored.cellEffect, 'fade');
       expect(restored.selection, {1, 2, 3, 80});
       expect(queryText(tester), '1-3,80');
@@ -658,13 +658,13 @@ void main() {
       var edits = 0;
       state.addListener(() => edits++);
       state.selection = {1, 80};
-      state.multiple = false;
-      state.showIndicators = true;
+      state.multiple = true;
+      state.showIndicators = false;
       state.cellEffect = 'fade';
       state.query.text = '1,80';
       expect(edits, 5);
       state.query.selection = const TextSelection.collapsed(offset: 1);
-      state.showIndicators = true;
+      state.showIndicators = false;
       state.selection = {80, 1};
       expect(edits, 5);
       expect(() => state.selection.add(2), throwsUnsupportedError);

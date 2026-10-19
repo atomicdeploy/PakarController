@@ -183,7 +183,7 @@ void main() {
       await tester.pump();
       expect(
         tester.widget<TextField>(find.byType(TextField).first).controller!.text,
-        '1–80',
+        '1-80',
       );
       await tester.tap(find.text('Invert selection'));
       await tester.pump();
@@ -201,7 +201,7 @@ void main() {
       await tester.pump();
       expect(
         tester.widget<TextField>(find.byType(TextField).first).controller!.text,
-        '4–80',
+        '4-80',
       );
       await tester.ensureVisible(find.text('Set red'));
       await tester.tap(find.text('Set red'));
@@ -209,7 +209,7 @@ void main() {
       expect(sent, hasLength(1));
       expect(sent.single['ids']!.split(','), hasLength(77));
       expect(sent.single['effect'], 'immediate');
-      expect(find.textContaining('No per-cell fallback'), findsOneWidget);
+      expect(find.textContaining('Nothing was retried.'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     },
   );
