@@ -1,5 +1,41 @@
 # Donor-first preflight receipt
 
+## PU850 editor and actual Go download source checkpoint
+
+2026-10-19 continuation after e159b5d: all eleven Go source/test/module blobs,
+three editor JSON blobs, secret example and WebSocket sample fully read through
+EOF at unchanged donor431104072952f694a35b3a83c19f13fbb098ca5b. Exact sections/
+functions, sparse Git objects, original bytes and adapted consumers extend the
+same ledger. PU coverage is 87/109 complete, 22 pending, 76 gap files and 18 paths
+without a specialist route; overall 292/4697 complete, 4405 pending, 233 gaps.
+
+Actual Go download/resume/range/all-hash/part/commit source and unchanged-file
+guard are ported into tools/download-firmware.mjs, its guarded PowerShell wrapper
+and existing pakar dispatcher. Default is a no-contact plan. Explicit operation
+reads same-peer running firmware into a new backup; existing backup is never
+replaced. Partial/full length, all advertised hash metadata, full MD5/SHA256,
+same board/boot/TCP address, final status, release admission, changed partial,
+deadline/cancel and atomic no-overwrite commit have executable local fixtures.
+Optional Basic credentials stay environment-only; no bearer bypass, policy
+downgrade, write retry, flash or remote updater is added/invoked.
+
+First fixture exposed EBADF from new exclusive write-only creation followed by
+same-descriptor hash verification. Consulted pu-client-download/exact download.go
+and reread actual donor close/reopen/hash flow; corrected exclusive creation to
+wx+ and retained descriptor identity through verification. Added size/time/mode
+checks from actual watch.go so a same-length partial edit during final metadata
+read is rejected too. Focused fixtures passed after those material corrections.
+Donor tests were read and selectively ported, not built/executed as target proof.
+
+Actual editor associations/vocabulary/generated-output filters now exist in
+.vscode/settings.json. Three process tasks call existing firmware/desktop/mobile
+guarded Plan entrypoints, with no autonomous build or deployment. JSON/plan
+ownership validation passes. Full compile-database/S3 IntelliSense, generic
+watcher, gzip/paired manifest/backup-before-upload, remaining client/UART and
+fresh previous-certificate rereads remain open. No donor/SDK build, new cache,
+live board/app/server/relay/network mutation, reboot, LED/audio/PBX action or
+physical/human acceptance occurred. Current policy/rainbow/relay are untouched.
+
 ## PU850 exhaustive continuation: foundation source checkpoint
 
 2026-10-19: AGENTS/preflight and owning issues #2/#3 read. Target started clean

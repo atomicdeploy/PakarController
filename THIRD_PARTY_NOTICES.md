@@ -46,6 +46,13 @@ PakarController is integration code built from earlier AtomicDeploy projects.
   Fixed caller buffers and unsigned bytes replace growing Strings; original
   author/repository provenance is retained here. No separate donor license
   exists in its complete Git tree; the same owner-directed reuse applies.
+- `tools/download-firmware.mjs` and its executable fixture adapt actual PU850
+  `Tool/Go/download.go`, `download_test.go`, `watch.go` and `watch_test.go` at
+  the same revision: exact Range/length and all advertised hash checks, resumable
+  verified partials, commit only after verification and unchanged-file guards.
+  Current Pakar peer/auth/release admission and bounded chunked reads remain
+  authoritative. `.vscode/settings.json` adapts donor workspace/settings file
+  associations and generated-output filters; tasks invoke existing guarded plans.
 - FastLED, Arduino ESP8266 core, MiniCore, WebSockets 2.7.2 by Markus Sattler,
   PubSubClient 2.8.0 by Nick O'Leary, xcap 0.9.8, eframe/egui, reqwest, and serde are
   build/runtime dependencies under their

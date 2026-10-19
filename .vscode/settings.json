@@ -1,0 +1,23 @@
+{
+  "files.associations": {
+    "*.embeddedhtml": "html",
+    "*.h": "cpp",
+    "*.ino": "cpp",
+    "*.cpp": "cpp",
+    "*.c": "c"
+  },
+  "cSpell.words": ["ASYNCWEBSERVER", "BSSID", "COBS", "ESP32S3", "LLMNR", "MDNS", "MNDP", "NBNS", "PROGMEM", "RSSI", "SSDP", "Urboot"],
+  "files.exclude": {
+    "build": true,
+    "desktop/target": true,
+    "mobile/build": true,
+    "mobile/.dart_tool": true
+  },
+  "search.exclude": {
+    "build": true,
+    "desktop/target": true,
+    "mobile/build": true,
+    "mobile/.dart_tool": true,
+    "**/node_modules": true
+  }
+}

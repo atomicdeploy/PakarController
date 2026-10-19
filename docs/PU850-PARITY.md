@@ -1,5 +1,68 @@
 # PU850 / ASA0002E reuse audit
 
+## Exhaustive continuation: editor and Go client slice, 2026-10-19
+
+All eleven previously unread Go files plus the three editor JSON blobs, ignored
+secret example and WebSocket sample were fully read through EOF at unchanged
+donor `431104072952f694a35b3a83c19f13fbb098ca5b`. All sixteen were obtained by
+immutable blobs where sparse files are absent. These augment the existing ledger,
+not a competing completion checklist; the earlier foundation slice is historical.
+
+Actual `downloadFirmware` / `startDownloadRequest` / `validateDownloadResponse` /
+`parseContentMD5` hash/length/resume flow and `digestUnchangedFile` stability
+checks are ported into `tools/download-firmware.mjs`, invoked by the guarded
+PowerShell wrapper and `pakar download`. Default invocation only plans. Explicit
+`--run` reads one current peer into a new local backup; it cannot update firmware,
+overwrite an existing destination or replay a failed request. A resumed prefix
+must pass the final whole-image MD5; a SHA256 receipt is also computed. Each
+64 KiB response must match exact Content-Range/Length and same address/board/boot;
+all advertised MD5/ETag values must agree. HEAD metadata and final same-peer
+status are independently read. Current centralized release admission remains
+default-on with no downgrade, bypass or donor version-selected adapter.
+
+The donor's replace-existing rename is adapted to an atomic no-overwrite hard
+link of this tool's verified `.part`, followed by unlinking only that partial
+name. It never links a mutable executable/compiler cache or removes another
+backup. Filesystems that cannot create this link fail with the partial retained;
+there is no delete/copy fallback. Authentication uses optional environment-only
+Basic credentials with current server admission, never a Bearer bypass. Errors
+do not include headers/bodies/secret values. Cancel stops new reads; an in-flight
+existing request remains bounded by the shared eight-second request deadline.
+
+| Complete donor file / every function or section | Actual disposition / unfinished behavior |
+|---|---|
+| `.vscode/arduino.json`: full board/configuration/port/sketch/output/prebuild/postbuild/preferences | Existing shared firmware wrapper owns real profiles and SDK/cache gates. New process tasks invoke it in Plan mode. Do not copy COM13, exception/stack-check disabling, old sketch name, forced gzip replacement or deleting `~local.h`. Editor compile-database generation remains pending. |
+| `.vscode/c_cpp_properties.json`: version/configurations, compiler/args/mode/includes/forced includes/standards and every exported define | Complete 19 KB blob read. Hundreds of compiler-predefined macros contradict flags (`__cplusplus`, exceptions/RTTI), freeze an ESP8266 ABI and hardcode host/library paths. Use an actual current build compilation database before claiming S3 IntelliSense parity; this generic editor capability remains pending, no fake configuration copied. |
+| `.vscode/settings.json`: every editor/folding/language/spelling/association/exclude/search/error/formatting setting | Actual relevant `.ino/.h/.cpp/.c/embeddedhtml` mappings, protocol vocabulary and bounded generated-output filters imported in `.vscode/settings.json`. Preserve user's editor indentation/theme/formatting; donor's broad dotfile/tilde/assembly/hex exclusions would hide policy/private examples/boot source, so only current generated directories are filtered. |
+| `~secrets.h.example`: pragma/comment/token placeholder | Existing AccessConfig/physical USB recovery and environment-only client credentials own real auth. Do not introduce another compile-time Bearer secret or copy a placeholder into production. Private-header ignore rules already imported. |
+| `Tool/Websocket Client.html`: all HTML/styles; initWebSocket/onOpen/onClose/onMessage/onLoad/initButton/toggle | Current Web UI socket, cancellation/reconnect, safe text and event ownership replace hardcoded PU host, innerHTML injection, unbounded dots, fixed retry and unguarded send. Generic standalone endpoint/message inspector remains useful and pending; the sample is not certified equivalent to the full UI. |
+| `Tool/Go/go.mod`: module/go version, no third-party dependencies | One existing Node runtime/tool dispatcher replaces a duplicate Go application/runtime. No module/Golang install or donor build. |
+| `Tool/Go/console_other.go`: enableVirtualTerminal | Existing Node TTY/NO_COLOR/TERM ownership replaces isCharacterDevice-only decision; no system terminal state mutation. |
+| `Tool/Go/console_windows.go`: constants/kernel32 procedures/enableVirtualTerminal | Full GetConsoleMode/SetConsoleMode flow read. Current native CLI terminal owns Windows setup and script logger uses actual TTY state. Prove equivalent legacy-Windows console VT behavior before closing that generic compatibility gap. |
+| `Tool/Go/replace_other.go`: atomicReplace | Current backup commit guarantees no overwrite rather than os.Rename replacement. It fails without deleting a prior destination. |
+| `Tool/Go/replace_windows.go`: flags/MoveFileExW/atomicReplace | Current atomic hard-link creation retains no-overwrite on Windows/POSIX; unsupported filesystems fail with verified partial retained. WRITE_THROUGH rename durability has no equivalent proof yet; power-loss/storage acceptance remains open. |
+| `Tool/Go/download.go`: constants/regex/remoteFirmwareInfo; firstEnvironment/validateBearer/deriveAPIFromDownloadURL/absoluteOutputPath/setRequestHeaders | Current strict hostname/peer/release/auth owners plus explicit output path replace HTTP-only endpoint derivation and bearer aliases. Parent/output/partial are checked; arbitrary external download origins and replace-existing are not added. |
+| `Tool/Go/download.go`: fetchRemoteFirmwareInfo/downloadFirmware/startDownloadRequest/validateDownloadResponse/parseContentMD5/normalizeMD5/md5FromETag/canRefreshDownloadEndpoint | Actual verification/resume/partial flow imported. Current exact JSON metadata replaces fuzzy `/info` fallback; strict strong ETag, current MD5 metadata and same-peer headers are required. No DNS retry or full-flash download; bounded range reads reuse the current request owner. Redirect/auth/identity errors fail closed. |
+| `Tool/Go/watch.go`: constants/error/action/observation/tracker/deduper/path-state; observe/markHandled/shouldReport/setSilent/watchFirmware/processWatchScan | Read every state and branch. Generic stable-change/coalesce/once-only semantics remain useful and pending. Automatic repeated deployment is not enabled by this source task; no watcher background process or automation created. |
+| `Tool/Go/watch.go`: inspectWatchFiles/inspectWatchPath/digestUnchangedFile/validateWatchCandidate/watchBuildMarkerPath | Actual hash-plus-size/time/mode stability adopted around download verification/commit. Paired raw/compressed build marker/manifest validation remains pending in applicable packaging consumers; legacy sibling `~local.h` marker is not assumed a Pakar build lock. |
+| `Tool/Go/main.go`: imports/constants/regex/error/options/manifest/resolvedEndpoint/consoleUI/progressReader; main/run/parseOptions/usage | Existing pakar dispatcher/check-only plans/logger/error categories remain the one owner. Added real download command. Generic download resume is imported; watch/force/backup-before-upload and gzip manifest options remain explicitly pending where applicable, not business exclusions. |
+| `Tool/Go/main.go`: resolveEndpoint/resolveConfiguredEndpoint/resolveHTTPURL/newHTTPClient/canRefreshEndpoint/isDialFailure | Existing hostname/URL/IPv4 pinning/no proxy/no redirect owner is retained. No write retry after dial failure, fuzzy API aliases or bearer credentials. Reviewed read-only hostname recovery remains separate; this backup command never changes peer mid-operation. |
+| `Tool/Go/main.go`: uploadFirmware/postFirmware/readManifest/hashFile/validatedFirmware/validateFirmware/buildMultipart/verifyReboot | Existing raw-S3 image validator, one-path upload, JSON acceptance, new-boot/readback and full SHA verification are retained. Donor continues upload on unreadable preflight and accepts same-boot matching MD5: not retained. Generic paired gzip/raw manifests, bounded decompression, backup-before-upload and 16 MiB pack validation remain useful pending imports; no donor gzip claim on S3. |
+| `Tool/Go/main.go`: readLimited/parseInfo/flattenInfoJSON/findInfoValue/normalizeInfoKey/sanitizeConsole/isCharacterDevice; progressReader.Read; consoleUI style/line/info/success/warn/fail/progress/clearProgress/valueOr | Current bounded requests, exact structured identity/metadata and stronger script-console terminal sanitation/logging replace fuzzy suffix key selection and raw response diagnostics. Progress means host bytes only. Generic grouped scalar metadata display/terminal progress refinements remain pending where unmapped. |
+| `Tool/Go/download_test.go`: all seven tests plus testNetworkOptions/writeTransferBuild/gzipBytes/setFirmwareHeaders/contentMD5/md5Hex/strconvItoa | Actual successful byte verification/atomic destination, exact resume and mismatch-preservation cases ported to shipped Node consumer. Added multi-range/all headers/same-peer/release/changed partial/deadline/cancel/destination race/complete partial/no-contact plan fixtures. Backup-before-upload/raw skip/metadata-fallback tests remain pending or superseded by strict current admission as above. Donor tests were read, not executed as Pakar proof. |
+| `Tool/Go/main_test.go`: all nine test functions including help/cold mDNS/manifest/multipart+reboot/gzip/bearer/plain+JSON metadata/console/filename; all HTTP fixture branches | Existing script/update fixtures cover current help/plan/multipart/new-boot/error/secret boundaries. Donor-specific gzip/manifest/filename and environment-priority scenarios need applicable porting; hardcoded 20-second DNS and bearer aliases do not become public compatibility promises. |
+| `Tool/Go/watch_test.go`: all nine tests; writeWatchBuild/rewriteWatchBuild | Read stable-window/no replay/coalesced newest-during-upload/deletion+recreation/sentinels/content-vs-metadata/mismatch/consecutive dedupe/missing-only-watch scenarios. Changed-file verification is exercised in actual download fixture. Remaining generic watcher tests stay pending until that real optional capability exists. |
+
+The first download fixture failed with EBADF because exclusive creation was
+write-only while the port deliberately verifies through the held descriptor.
+Reconsulted exact donor download and reread its write/close/reopen/hash sequence;
+changed creation to `wx+`, retaining exclusive/no-truncate ownership. Focused
+fixtures then passed, including same-length partial mutation after hashing.
+No real device/server/relay request, updater invocation, policy change, SDK build
+or deployment was performed. Remaining unread files are C# uploader, C++ uploader/
+puff/CMake and UART; previously certified source still needs its requested fresh
+full-function reread. These source passes do not establish physical acceptance.
+
 ## Exhaustive continuation: foundation slice, 2026-10-19
 
 Fresh GitHub `main` and local sparse HEAD both resolve to

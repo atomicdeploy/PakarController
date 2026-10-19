@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Pakar: firmware plan (ESP32-S3)",
+      "type": "process",
+      "command": "node",
+      "args": ["${workspaceFolder}/tools/pakar.mjs", "firmware", "--target", "esp32s3", "--plan"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
+      "label": "Pakar: desktop check plan",
+      "type": "process",
+      "command": "node",
+      "args": ["${workspaceFolder}/tools/pakar.mjs", "desktop", "--mode", "Check", "--plan"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
+      "label": "Pakar: mobile analyze plan",
+      "type": "process",
+      "command": "node",
+      "args": ["${workspaceFolder}/tools/pakar.mjs", "mobile", "--mode", "Analyze", "--plan"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    }
+  ]
+}

@@ -13,6 +13,7 @@ export const commands=Object.freeze({
   desktop:['build-desktop.ps1','Check/test/build native client in its warm cache'],
   mobile:['build-mobile.ps1','Analyze/test/build Android preview'],
   update:['update-firmware.ps1','Plan by default; --run authorizes one verified update'],
+  download:['download-firmware.ps1','Plan or save one verified running-image backup; explicit --run'],
   discovery:['test-device-discovery.ps1','Explicit discovery checks'],
   network:['set-device-network.ps1','Configure an explicitly selected USB peer'],
   name:['set-device-name.ps1','Rename an explicitly selected USB peer'],

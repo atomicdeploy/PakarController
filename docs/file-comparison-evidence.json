@@ -5,6 +5,866 @@
   "files": [
   {
     "origin": "PU850-ESP",
+    "path": ".vscode/arduino.json",
+    "sha256": "d350ffb36676dca266ae2bb3eca20620f9eabca922ff7d5d271ba8617c3acca4",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 15,
+    "reviewed_sections": [
+      "configuration/board/sketch/port/output/prebuild/postbuild/buildPreferences"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete EOF read: configuration/board/sketch/port/output/prebuild/postbuild/buildPreferences",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": ".vscode/tasks.json",
+        "sha256": "2681847c279d80dc8b8f0683feb126746498f73e1cd2eed4b9e9071c0ebf846d",
+        "anchor": "Pakar: firmware plan"
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Old host/profile/postbuild commands",
+        "disposition": "pending",
+        "reason": "Actual shared wrapper/tasks preserve profiles/cache gates; no COM13, disabled exception/stack guards, forced gzip/clean or deletion. Current compiler-database/editor execution remains pending."
+      }
+    ],
+    "remaining": [
+      "Actual shared wrapper/tasks preserve profiles/cache gates; no COM13, disabled exception/stack guards, forced gzip/clean or deletion. Current compiler-database/editor execution remains pending."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "135141467d0215956f483a02644b125d6a586465",
+      "sha256": "d350ffb36676dca266ae2bb3eca20620f9eabca922ff7d5d271ba8617c3acca4",
+      "bytes": 953
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": ".vscode/c_cpp_properties.json",
+    "sha256": "264b32b11c64efad4d8198700184d40806e8ec7a60ad7e41c0aab9f91b48d661",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 386,
+    "reviewed_sections": [
+      "version/configurations; compilerPath/compilerArgs/intelliSenseMode; every includePath/forcedInclude/cStandard/cppStandard/exported define"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete EOF read: version/configurations; compilerPath/compilerArgs/intelliSenseMode; every includePath/forcedInclude/cStandard/cppStandard/exported define",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Current compilation database and S3 IntelliSense",
+        "disposition": "pending",
+        "reason": "Full 19KB blob read; donor hardcodes host SDK/ABI and contradictory compiler macros. Derive actual current compile flags/database before claiming this generic capability."
+      }
+    ],
+    "remaining": [
+      "Full 19KB blob read; donor hardcodes host SDK/ABI and contradictory compiler macros. Derive actual current compile flags/database before claiming this generic capability."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "812a493d84fd7ef5c063775afa32a8ca30c332b9",
+      "sha256": "264b32b11c64efad4d8198700184d40806e8ec7a60ad7e41c0aab9f91b48d661",
+      "bytes": 19074
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": ".vscode/settings.json",
+    "sha256": "416ebf8eacc1ee229f1f76cd2830b58520e0c44d04977bfab3cfb474cc0e32db",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 225,
+    "reviewed_sections": [
+      "every editor indentation/folding/default language/spelling/association/exclude/search/error/formatting setting"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete EOF read: every editor indentation/folding/default language/spelling/association/exclude/search/error/formatting setting",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": ".vscode/settings.json",
+        "sha256": "2373a0d9d9a7af54872b0ae854ccf1ff95116ef8f80aebfad513fe3031914d5f",
+        "anchor": "\"*.ino\": \"cpp\""
+      },
+      {
+        "path": ".vscode/tasks.json",
+        "sha256": "2681847c279d80dc8b8f0683feb126746498f73e1cd2eed4b9e9071c0ebf846d",
+        "anchor": "Pakar: firmware plan"
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Full current editor integration/acceptance",
+        "disposition": "pending",
+        "reason": "Actual relevant associations/vocabulary/generated-path filters imported. Preserve personal indentation/theme/format settings; broad dotfile/assembly/hex hiding would conceal current source/policy. Actual editor acceptance remains open."
+      }
+    ],
+    "remaining": [
+      "Actual relevant associations/vocabulary/generated-path filters imported. Preserve personal indentation/theme/format settings; broad dotfile/assembly/hex hiding would conceal current source/policy. Actual editor acceptance remains open."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "0525b4cc27f1fca37071adafa66c02819c675b41",
+      "sha256": "416ebf8eacc1ee229f1f76cd2830b58520e0c44d04977bfab3cfb474cc0e32db",
+      "bytes": 5029
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "~secrets.h.example",
+    "sha256": "46ffefb855ae7f6c22d6b78ea7cebffe627a0ddae89cbf7918b4c80dcc9cda2a",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 9,
+    "reviewed_sections": [
+      "pragma, provisioning comments and token placeholder"
+    ],
+    "verdict": "equivalent-behavior",
+    "preserved": [
+      "Complete EOF read: pragma, provisioning comments and token placeholder",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Separate compile-time Bearer credential owner",
+        "disposition": "replaced",
+        "reason": "Use existing physical-USB AccessConfig and environment-only client credentials, no additional bearer bypass or copied placeholder. Ignore patterns are imported."
+      }
+    ],
+    "remaining": []
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Tool/Websocket Client.html",
+    "sha256": "cb1e505e9fd5df220e976b3a42e5baedeeef8d8c6e8e0f17fd4c6a6b58f26206",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 150,
+    "reviewed_sections": [
+      "complete HTML/CSS and initWebSocket/onOpen/onClose/onMessage/onLoad/initButton/toggle"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete EOF read: complete HTML/CSS and initWebSocket/onOpen/onClose/onMessage/onLoad/initButton/toggle",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Standalone generic endpoint/message inspector",
+        "disposition": "pending",
+        "reason": "Current Web socket/reconnect/safe text ownership replaces hardcoded PU hostname, innerHTML injection, unbounded dots/fixed retry/unguarded sends. Standalone inspector remains useful pending real auth/identity design."
+      }
+    ],
+    "remaining": [
+      "Current Web socket/reconnect/safe text ownership replaces hardcoded PU hostname, innerHTML injection, unbounded dots/fixed retry/unguarded sends. Standalone inspector remains useful pending real auth/identity design."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "8c369fd119b2869000aa11806c0d91babfa16520",
+      "sha256": "cb1e505e9fd5df220e976b3a42e5baedeeef8d8c6e8e0f17fd4c6a6b58f26206",
+      "bytes": 3184
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Tool/Go/console_other.go",
+    "sha256": "c6d5b649d1ff9ceb7469a7dad0f1020e6fb0e085fed9b94dda438660f5c451b6",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 10,
+    "reviewed_sections": [
+      "enableVirtualTerminal/isCharacterDevice call",
+      "enableVirtualTerminal(file *os.File) bool"
+    ],
+    "verdict": "equivalent-behavior",
+    "preserved": [
+      "Complete EOF read: enableVirtualTerminal/isCharacterDevice call",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "tools/pakar.mjs",
+        "sha256": "0875bb298a832a275d62e3595c2e2691c38eef442ac5246a85fb4445c3715bd3",
+        "anchor": "export async function main("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Go terminal runtime copy",
+        "disposition": "replaced",
+        "reason": "Existing Node TTY/NO_COLOR/TERM ownership serves script terminal detection without a duplicate Go runtime or terminal mutation."
+      }
+    ],
+    "remaining": [],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "474f68025f875648e7b89da4902aef29ddfe18af",
+      "sha256": "c6d5b649d1ff9ceb7469a7dad0f1020e6fb0e085fed9b94dda438660f5c451b6",
+      "bytes": 131
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Tool/Go/console_windows.go",
+    "sha256": "fb558b089a87dd62ba560db249402d424428c45f50c1286c656de4b8f8a9b440",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 38,
+    "reviewed_sections": [
+      "VT flag/kernel32 procedures; complete enableVirtualTerminal GetConsoleMode/SetConsoleMode flow",
+      "enableVirtualTerminal(file *os.File) bool"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete EOF read: VT flag/kernel32 procedures; complete enableVirtualTerminal GetConsoleMode/SetConsoleMode flow",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "tools/pakar.mjs",
+        "sha256": "0875bb298a832a275d62e3595c2e2691c38eef442ac5246a85fb4445c3715bd3",
+        "anchor": "export async function main("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Legacy Windows console VT acceptance",
+        "disposition": "pending",
+        "reason": "Current script logger and native CLI own terminal setup; prove actual older Windows VT behavior before closing this generic gap."
+      }
+    ],
+    "remaining": [
+      "Current script logger and native CLI own terminal setup; prove actual older Windows VT behavior before closing this generic gap."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "a5c1f7a2e5ab50ccdc085b3989a0934f188b5379",
+      "sha256": "fb558b089a87dd62ba560db249402d424428c45f50c1286c656de4b8f8a9b440",
+      "bytes": 685
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Tool/Go/replace_other.go",
+    "sha256": "b9c6d47bb4072251c72002984676b420794a4e05c3c056a19afb4b4b3b2557b5",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 10,
+    "reviewed_sections": [
+      "atomicReplace/os.Rename",
+      "atomicReplace(source string, destination string) error"
+    ],
+    "verdict": "equivalent-behavior",
+    "preserved": [
+      "Complete EOF read: atomicReplace/os.Rename",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "tools/download-firmware.mjs",
+        "sha256": "41f7134addf2c03f0b10c5f6ecbcbaf9db24332e7de9250d6caba073de635700",
+        "anchor": "export async function downloadFirmware("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Replace-existing rename",
+        "disposition": "replaced",
+        "reason": "Actual download commit uses atomic no-overwrite link+unlink on its verified private partial; existing destination and failed partial are preserved. No delete fallback."
+      }
+    ],
+    "remaining": [],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "cdff3717d6eeded7a6e92fbc3c585946c2302f75",
+      "sha256": "b9c6d47bb4072251c72002984676b420794a4e05c3c056a19afb4b4b3b2557b5",
+      "bytes": 151
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Tool/Go/replace_windows.go",
+    "sha256": "892dbd97703bb64d5c2ff3b6916a808350085eb034b5a7583ae5416e04a698bf",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 37,
+    "reviewed_sections": [
+      "MoveFileExW flags/procedure/UTF16 conversion/atomicReplace",
+      "atomicReplace(source string, destination string) error"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete EOF read: MoveFileExW flags/procedure/UTF16 conversion/atomicReplace",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "tools/download-firmware.mjs",
+        "sha256": "41f7134addf2c03f0b10c5f6ecbcbaf9db24332e7de9250d6caba073de635700",
+        "anchor": "export async function downloadFirmware("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "WRITE_THROUGH durability and unsupported filesystem acceptance",
+        "disposition": "pending",
+        "reason": "Current atomic no-overwrite commit avoids replacing another backup. Hard-link unsupported filesystems fail retaining partial; power-loss/write-through durability is not certified."
+      }
+    ],
+    "remaining": [
+      "Current atomic no-overwrite commit avoids replacing another backup. Hard-link unsupported filesystems fail retaining partial; power-loss/write-through durability is not certified."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "282881e6d6d0471463fb59e1d7d7ae60ad5ec9db",
+      "sha256": "892dbd97703bb64d5c2ff3b6916a808350085eb034b5a7583ae5416e04a698bf",
+      "bytes": 742
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Tool/Go/go.mod",
+    "sha256": "0a7dadd87990be9f31ff22f3c056e96f8210540cd2bf1c637c84bbc756f63ed8",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 4,
+    "reviewed_sections": [
+      "module path and go1.22; no third-party dependencies"
+    ],
+    "verdict": "equivalent-behavior",
+    "preserved": [
+      "Complete EOF read: module path and go1.22; no third-party dependencies",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "tools/pakar.mjs",
+        "sha256": "0875bb298a832a275d62e3595c2e2691c38eef442ac5246a85fb4445c3715bd3",
+        "anchor": "export async function main("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Additional Go application module/runtime",
+        "disposition": "replaced",
+        "reason": "Use the existing Node/PowerShell client dispatcher for actual ported code; no donor build or new toolchain/dependency/cache."
+      }
+    ],
+    "remaining": [],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "485fa470714f1f3fa5346c18c9562f9fcccef58e",
+      "sha256": "0a7dadd87990be9f31ff22f3c056e96f8210540cd2bf1c637c84bbc756f63ed8",
+      "bytes": 62
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Tool/Go/download.go",
+    "sha256": "06cd1dd3150f7b0bd7f9b57f90a1ae3731767374d43527de296bdf91be3b1185",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 608,
+    "reviewed_sections": [
+      "all constants/regex/types/functions",
+      "firstEnvironment(names ...string) string",
+      "validateBearer(value string) error",
+      "deriveAPIFromDownloadURL(raw string) (string, error)",
+      "absoluteOutputPath(path string) (string, error)",
+      "setRequestHeaders(",
+      "fetchRemoteFirmwareInfo(",
+      "downloadFirmware(",
+      "startDownloadRequest(",
+      "validateDownloadResponse(",
+      "parseContentMD5(value string) (string, error)",
+      "normalizeMD5(value string) (string, error)",
+      "md5FromETag(value string) (string, bool)",
+      "canRefreshDownloadEndpoint(endpoint resolvedEndpoint) bool"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Actual Range/length/hash/resume/partial/commit flow adapted into tools/download-firmware.mjs and invoked by guarded wrapper/pakar download.",
+      "Complete EOF read: all constants/regex/types/functions",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "tools/download-firmware.mjs",
+        "sha256": "41f7134addf2c03f0b10c5f6ecbcbaf9db24332e7de9250d6caba073de635700",
+        "anchor": "export async function downloadFirmware("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/download_firmware_test.mjs",
+        "sha256": "cb610891372d11d73c02765ac0d2038e99e728a1fc62eb5cc9c552daf7ffef1a",
+        "anchor": "for(const scenario of ["
+      }
+    ],
+    "omissions": [
+      {
+        "code": "Other generic client transfer modes/real network acceptance",
+        "disposition": "pending",
+        "reason": "Actual metadata/hash/range/resume/part/verification flow ported to shipped backup tool. Current exact metadata, Basic auth, release/board/boot/TCP fencing replace fuzzy aliases, arbitrary second origin and bearer override; live authenticated LAN/Windows/storage acceptance remains open."
+      }
+    ],
+    "remaining": [
+      "Actual metadata/hash/range/resume/part/verification flow ported to shipped backup tool. Current exact metadata, Basic auth, release/board/boot/TCP fencing replace fuzzy aliases, arbitrary second origin and bearer override; live authenticated LAN/Windows/storage acceptance remains open."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "e8d59901bfeba39ecb7f98342cbeaebe1ee164be",
+      "sha256": "06cd1dd3150f7b0bd7f9b57f90a1ae3731767374d43527de296bdf91be3b1185",
+      "bytes": 14278
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Tool/Go/download_test.go",
+    "sha256": "c33bfe1e8ebfabbf03db06a96ced7e08045599cbc1bda7592b04cdd5a3942fc7",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 553,
+    "reviewed_sections": [
+      "every test function/helper and all HTTP branches",
+      "TestDownloadFirmwareVerifiesHeadersAndAtomicallyReplaces(t *testing.T)",
+      "TestDownloadFirmwareResumesExactlyOnce(t *testing.T)",
+      "TestDownloadFirmwareFallsBackToPlainInfo(t *testing.T)",
+      "TestDownloadMismatchKeepsPartAndExistingDestination(t *testing.T)",
+      "TestUploadPreflightSkipsIdenticalRawFirmware(t *testing.T)",
+      "TestUploadCreatesVerifiedBackupBeforePosting(t *testing.T)",
+      "TestParseDownloadOptionsDerivesAPI(t *testing.T)",
+      "testNetworkOptions(api string) options",
+      "writeTransferBuild(",
+      "gzipBytes(t *testing.T, raw []byte) []byte",
+      "setFirmwareHeaders(",
+      "contentMD5(value []byte) string",
+      "md5Hex(value []byte) string",
+      "strconvItoa(value int) string"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete EOF read: every test function/helper and all HTTP branches",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "tools/pakar.mjs",
+        "sha256": "0875bb298a832a275d62e3595c2e2691c38eef442ac5246a85fb4445c3715bd3",
+        "anchor": "export async function main("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/download_firmware_test.mjs",
+        "sha256": "cb610891372d11d73c02765ac0d2038e99e728a1fc62eb5cc9c552daf7ffef1a",
+        "anchor": "for(const scenario of ["
+      }
+    ],
+    "omissions": [
+      {
+        "code": "Backup-before-upload/raw skip/fallback-specific applicable fixtures",
+        "disposition": "pending",
+        "reason": "Actual byte verification, exact resume and mismatch/atomic preservation scenarios ported into shipped Node fixture plus multi-range/peer/release/cancel/time/stale partial/no-overwrite cases. Remaining uploader/gzip behaviors await real implementation; donor tests are not claimed executed."
+      }
+    ],
+    "remaining": [
+      "Actual byte verification, exact resume and mismatch/atomic preservation scenarios ported into shipped Node fixture plus multi-range/peer/release/cancel/time/stale partial/no-overwrite cases. Remaining uploader/gzip behaviors await real implementation; donor tests are not claimed executed."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "84788a0f67f4659ad40aa412e60be24ddd31d6a4",
+      "sha256": "c33bfe1e8ebfabbf03db06a96ced7e08045599cbc1bda7592b04cdd5a3942fc7",
+      "bytes": 12480
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Tool/Go/watch.go",
+    "sha256": "46468b3f00791504df0b62d58adfbf6f416b840875febecf7a46868ae7051d40",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 432,
+    "reviewed_sections": [
+      "all constants/errors/types/state branches/functions/methods",
+      "(tracker *watchTracker) observe(",
+      "(tracker *watchTracker) markHandled(signature string)",
+      "(deduper *watchNoticeDeduper) shouldReport(key string) bool",
+      "(deduper *watchNoticeDeduper) setSilent(key string)",
+      "watchFirmware(",
+      "processWatchScan(",
+      "inspectWatchFiles(firmwarePath string) watchObservation",
+      "inspectWatchPath(path string) watchPathState",
+      "digestUnchangedFile(path string, before fs.FileInfo) (string, error)",
+      "validateWatchCandidate(",
+      "watchBuildMarkerPath(firmwarePath string) string"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Actual digestUnchangedFile size/time/mode stability checks adapted around the held backup file hash and final commit.",
+      "Complete EOF read: all constants/errors/types/state branches/functions/methods",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "tools/download-firmware.mjs",
+        "sha256": "41f7134addf2c03f0b10c5f6ecbcbaf9db24332e7de9250d6caba073de635700",
+        "anchor": "export async function downloadFirmware("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/download_firmware_test.mjs",
+        "sha256": "cb610891372d11d73c02765ac0d2038e99e728a1fc62eb5cc9c552daf7ffef1a",
+        "anchor": "for(const scenario of ["
+      }
+    ],
+    "omissions": [
+      {
+        "code": "Optional generic stable-build watcher/coalescing/manifest capability",
+        "disposition": "pending",
+        "reason": "Actual digestUnchangedFile size/time/mode stability is imported around backup verification/commit. Optional stable-window/newest-coalesce/once-only deployment and raw/compressed marker contracts remain useful pending explicit ownership; no watcher started or automatic device mutation enabled."
+      }
+    ],
+    "remaining": [
+      "Actual digestUnchangedFile size/time/mode stability is imported around backup verification/commit. Optional stable-window/newest-coalesce/once-only deployment and raw/compressed marker contracts remain useful pending explicit ownership; no watcher started or automatic device mutation enabled."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "61bdc4e0554059a142d83daec5f33b4993ebafa5",
+      "sha256": "46468b3f00791504df0b62d58adfbf6f416b840875febecf7a46868ae7051d40",
+      "bytes": 9960
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Tool/Go/watch_test.go",
+    "sha256": "ed25ba3b659d148914bc58ef87cf5fa5d63cb68966ce26b3d40108965888fd91",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 355,
+    "reviewed_sections": [
+      "all nine tests plus writeWatchBuild/rewriteWatchBuild and each file/sentinel branch",
+      "TestWatchTrackerRequiresStableWindowAndDoesNotReplay(t *testing.T)",
+      "TestWatchTrackerCoalescesNewestChangeAfterUpload(t *testing.T)",
+      "TestProcessWatchScanQueuesOnlyNewestBuildChangedDuringUpload(",
+      "TestWatchTrackerHandlesDeletionAndRecreation(t *testing.T)",
+      "TestInspectWatchFilesHonorsBuildSentinels(t *testing.T)",
+      "TestInspectWatchFilesHashesContentNotOnlyMetadata(t *testing.T)",
+      "TestValidateWatchCandidateRejectsMismatch(t *testing.T)",
+      "TestWatchNoticeDeduperSuppressesOnlyConsecutiveState(t *testing.T)",
+      "TestParseOptionsAllowsMissingFirmwareOnlyInWatchMode(t *testing.T)",
+      "writeWatchBuild(",
+      "rewriteWatchBuild("
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete EOF read: all nine tests plus writeWatchBuild/rewriteWatchBuild and each file/sentinel branch",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "tools/pakar.mjs",
+        "sha256": "0875bb298a832a275d62e3595c2e2691c38eef442ac5246a85fb4445c3715bd3",
+        "anchor": "export async function main("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/download_firmware_test.mjs",
+        "sha256": "cb610891372d11d73c02765ac0d2038e99e728a1fc62eb5cc9c552daf7ffef1a",
+        "anchor": "for(const scenario of ["
+      }
+    ],
+    "omissions": [
+      {
+        "code": "Remaining generic stable-watch scenarios",
+        "disposition": "pending",
+        "reason": "Actual changed-content guard is exercised in backup fixture. Stable-window/no replay/newest-during-upload/deletion/sentinels/content-vs-metadata/mismatch/dedupe/missing-watch tests must follow actual optional watcher implementation."
+      }
+    ],
+    "remaining": [
+      "Actual changed-content guard is exercised in backup fixture. Stable-window/no replay/newest-during-upload/deletion/sentinels/content-vs-metadata/mismatch/dedupe/missing-watch tests must follow actual optional watcher implementation."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "41ef6662495cfb5d4c9892dd5929d45cf7176734",
+      "sha256": "ed25ba3b659d148914bc58ef87cf5fa5d63cb68966ce26b3d40108965888fd91",
+      "bytes": 9136
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Tool/Go/main.go",
+    "sha256": "d44049897ca5c86fb3748c42f1871a9f066ae2f665951393b2502250249f7229",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 1306,
+    "reviewed_sections": [
+      "all imports/constants/types/options and every main/CLI/endpoint/HTTP/upload/manifest/hash/gzip/multipart/reboot/info/console/progress function",
+      "main()",
+      "run(args []string) int",
+      "parseOptions(args []string) (options, error)",
+      "usage() string",
+      "resolveEndpoint(",
+      "resolveConfiguredEndpoint(",
+      "resolveHTTPURL(",
+      "newHTTPClient() *http.Client",
+      "uploadFirmware(",
+      "postFirmware(",
+      "readManifest(path string) (manifest, error)",
+      "hashFile(path string) (string, int64, error)",
+      "validateFirmware(",
+      "buildMultipart(",
+      "verifyReboot(",
+      "readLimited(body io.Reader) (string, error)",
+      "parseInfo(body string) map[string]string",
+      "flattenInfoJSON(",
+      "findInfoValue(values map[string]string, candidates ...string) string",
+      "normalizeInfoKey(value string) string",
+      "sanitizeConsole(value string) string",
+      "canRefreshEndpoint(endpoint resolvedEndpoint) bool",
+      "isDialFailure(err error) bool",
+      "isCharacterDevice(file *os.File) bool",
+      "(reader *progressReader) Read(buffer []byte) (int, error)",
+      "(ui *consoleUI) style(code, value string) string",
+      "(ui *consoleUI) line(icon, label, message, color string)",
+      "(ui *consoleUI) info(label, message string)",
+      "(ui *consoleUI) success(label, message string)",
+      "(ui *consoleUI) warn(label, message string)",
+      "(ui *consoleUI) fail(label string, err error)",
+      "(ui *consoleUI) progress(message string)",
+      "(ui *consoleUI) clearProgress()",
+      "valueOr(value, fallback string) string"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete EOF read: all imports/constants/types/options and every main/CLI/endpoint/HTTP/upload/manifest/hash/gzip/multipart/reboot/info/console/progress function",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "tools/pakar.mjs",
+        "sha256": "0875bb298a832a275d62e3595c2e2691c38eef442ac5246a85fb4445c3715bd3",
+        "anchor": "export async function main("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      },
+      {
+        "path": "tools/update-firmware.mjs",
+        "sha256": "7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874",
+        "anchor": "export async function updateFirmware("
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Applicable generic gzip/paired manifests/backup-before-upload/watch/progress refinements",
+        "disposition": "pending",
+        "reason": "Current dispatcher/raw-S3 validation/pinned no-retry upload/new-boot/full-SHA verification remain the owners; downloaded actual code is integrated. Donor continues on failed preflight and accepts same-boot hash, so those are replaced. Generic gzip/manifest/backup/watch features remain pending, not business exclusions."
+      }
+    ],
+    "remaining": [
+      "Current dispatcher/raw-S3 validation/pinned no-retry upload/new-boot/full-SHA verification remain the owners; downloaded actual code is integrated. Donor continues on failed preflight and accepts same-boot hash, so those are replaced. Generic gzip/manifest/backup/watch features remain pending, not business exclusions."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "dedaa278a19faa39e3811d44a0d37bc8b186e90a",
+      "sha256": "d44049897ca5c86fb3748c42f1871a9f066ae2f665951393b2502250249f7229",
+      "bytes": 30909
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Tool/Go/main_test.go",
+    "sha256": "c3efa93383cc376123f500e279bc16686d611229141157162e750b44813cf79e",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "source_line_count": 268,
+    "reviewed_sections": [
+      "all nine tests/all HTTP branches",
+      "TestParseOptionsHelp(t *testing.T)",
+      "TestLookupTimeoutAllowsColdMDNS(t *testing.T)",
+      "TestReadManifest(t *testing.T)",
+      "TestUploadFirmwareValidatesMultipartAndRebootHash(t *testing.T)",
+      "TestValidateFirmwareRejectsInvalidGzipAndRawMismatch(t *testing.T)",
+      "TestParseOptionsReadsUpdateBearerToken(t *testing.T)",
+      "TestParseInfo(t *testing.T)",
+      "TestParseInfoJSONAndSanitizeConsole(t *testing.T)",
+      "TestBuildMultipartOmitsFilenameButPreservesFields(t *testing.T)"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete EOF read: all nine tests/all HTTP branches",
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+    ],
+    "targets": [
+      {
+        "path": "tools/pakar.mjs",
+        "sha256": "0875bb298a832a275d62e3595c2e2691c38eef442ac5246a85fb4445c3715bd3",
+        "anchor": "export async function main("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
+        "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/download_firmware_test.mjs",
+        "sha256": "cb610891372d11d73c02765ac0d2038e99e728a1fc62eb5cc9c552daf7ffef1a",
+        "anchor": "for(const scenario of ["
+      }
+    ],
+    "omissions": [
+      {
+        "code": "Applicable gzip/manifest/env-priority/filename tests",
+        "disposition": "pending",
+        "reason": "Existing script/update fixtures cover current help/plan/multipart/new-boot/secret/exit behavior; port remaining scenarios with actual generic implementation. Bearer aliases/fuzzy scalar suffixes are replaced by exact current admission; no donor test execution claim."
+      }
+    ],
+    "remaining": [
+      "Existing script/update fixtures cover current help/plan/multipart/new-boot/secret/exit behavior; port remaining scenarios with actual generic implementation. Bearer aliases/fuzzy scalar suffixes are replaced by exact current admission; no donor test execution claim."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "f003224ba4a61a67aaf9972c3906f7523a75111d",
+      "sha256": "c3efa93383cc376123f500e279bc16686d611229141157162e750b44813cf79e",
+      "bytes": 6890
+    }
+  },
+  {
+    "origin": "PU850-ESP",
     "path": ".gitattributes",
     "sha256": "d7fdbf0bc704830296234f2143889503714b9798941d52de7d8c4de593862fcc",
     "source_read": "complete",
@@ -27,7 +887,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -64,7 +924,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -98,7 +958,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -133,7 +993,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -190,7 +1050,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -235,7 +1095,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -272,7 +1132,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -309,7 +1169,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -344,7 +1204,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -381,7 +1241,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -425,7 +1285,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -459,7 +1319,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -493,7 +1353,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -534,7 +1394,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -581,7 +1441,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -623,7 +1483,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -658,7 +1518,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -700,7 +1560,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -741,7 +1601,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -784,7 +1644,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "sha256": "7950ac8f742c4b17eaaf77dc720280ab75694ebc985bb1cf89565acdbd75b045",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -3569,7 +4429,7 @@
         {
           "path": "tools/pakar.mjs",
           "anchor": "Node.js20.19",
-          "sha256": "2452338c743687c910030fde2b23c70cb5cd59bfa268437ea5a6a436b9134b81"
+          "sha256": "0875bb298a832a275d62e3595c2e2691c38eef442ac5246a85fb4445c3715bd3"
         }
       ],
       "omissions": [
@@ -3903,7 +4763,7 @@
         {
           "path": "tools/pakar.mjs",
           "anchor": "export const commands",
-          "sha256": "2452338c743687c910030fde2b23c70cb5cd59bfa268437ea5a6a436b9134b81"
+          "sha256": "0875bb298a832a275d62e3595c2e2691c38eef442ac5246a85fb4445c3715bd3"
         },
         {
           "path": "tools/script-runtime.ps1",
@@ -4604,7 +5464,7 @@
         {
           "path": "tools/pakar.mjs",
           "anchor": "export const commands",
-          "sha256": "2452338c743687c910030fde2b23c70cb5cd59bfa268437ea5a6a436b9134b81"
+          "sha256": "0875bb298a832a275d62e3595c2e2691c38eef442ac5246a85fb4445c3715bd3"
         },
         {
           "path": "tools/build-all.ps1",
@@ -4770,7 +5630,7 @@
         {
           "path": "tools/pakar.mjs",
           "anchor": "export function legacyBuildArguments",
-          "sha256": "2452338c743687c910030fde2b23c70cb5cd59bfa268437ea5a6a436b9134b81"
+          "sha256": "0875bb298a832a275d62e3595c2e2691c38eef442ac5246a85fb4445c3715bd3"
         },
         {
           "path": "tools/script-console.mjs",
@@ -4832,7 +5692,7 @@
         {
           "path": "tools/pakar.mjs",
           "anchor": "export function legacyBuildArguments",
-          "sha256": "2452338c743687c910030fde2b23c70cb5cd59bfa268437ea5a6a436b9134b81"
+          "sha256": "0875bb298a832a275d62e3595c2e2691c38eef442ac5246a85fb4445c3715bd3"
         },
         {
           "path": "pakar.sh",
@@ -9380,7 +10240,7 @@
         },
         {
         "path": "tools/ci-checks.mjs",
-        "sha256": "0b0642d43476d242dc1b94eb6d764cbc2e8ea9184c713efa8092f546338974c9",
+        "sha256": "ba313efac6a7fe45c7ca3f83ea272ad475c8bcb935844be883e324b701f9edbf",
         "anchor": "export function runChecks"
         },
         {

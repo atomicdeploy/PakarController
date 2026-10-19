@@ -1,5 +1,23 @@
 # PakarController comparison receipts
 
+## PU850 editor and Go download actual-source slice
+
+2026-10-19: sixteen further complete EOF reads (all eleven Go files, editor JSON,
+secret example and WebSocket sample). Same pinned current donor; exact function
+map and source/blob/target/proof hashes remain in the existing authorities.
+Actual download range/resume/all-hash/verified-part commit and file-stability
+code is ported to the shipped Node/PowerShell/pakar consumer. Actual editor
+associations/exclusions and guarded process-plan tasks are imported too.
+
+Executable local fixtures pass multi-range, 13-byte resume, complete partial,
+wrong range/section/whole/HEAD hashes or lengths, changed peer/release/final boot/
+same-length partial, deadline/cancel, destination appearance, preserved old
+backup and no-contact plan. Default release/auth/identity admission is retained.
+The initial EBADF and exact donor recovery are recorded in the preflight receipt.
+No donor build, SDK/CI execution, real service contact, deployment or hardware
+acceptance. PU 87/109 complete, 22 pending, 76 gaps; total 292/4697, 4405 pending,
+233 gaps. Whole-project review and actual production acceptance remain open.
+
 ## PU850 foundation full-read and actual-source import
 
 2026-10-19:20new complete EOF reads, including all4Temp dependency blobs, at
