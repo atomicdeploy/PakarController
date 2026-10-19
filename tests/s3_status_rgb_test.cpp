@@ -1,12 +1,14 @@
 #include "StatusRgb.h"
 #include <cassert>
 #include <cstdio>
+#include <cstring>
 #include <vector>
 
 using Engine = PakarS3::StatusRgb;
 struct Frame { int pin; uint8_t red, green, blue; };
 int main() {
   Engine::Observations observed;
+  assert(Engine::selectState(observed)==Engine::State::LocalReady);
   observed.networkReady=true;
   assert(Engine::selectState(observed)==Engine::State::Ready); // AVR-disabled is not peer-lost.
   observed.peerRequired=true;
@@ -21,6 +23,17 @@ int main() {
   assert(Engine::selectState(observed)==Engine::State::Updating);
   observed.fault=true;
   assert(Engine::selectState(observed)==Engine::State::Fault);
+  observed.fault=false;observed.shutdown=true;
+  assert(Engine::selectState(observed)==Engine::State::Shutdown);
+  observed={};observed.networkReady=true;observed.accessPoint=true;
+  assert(Engine::selectState(observed)==Engine::State::AccessPointNetwork);
+  assert(!strcmp(Engine::name(Engine::selectState(observed)),"access-point-network")); // Ethernet need not imply a station link.
+  observed.success=true;
+  assert(Engine::selectState(observed)==Engine::State::Success);
+  observed.peerRequired=true;
+  assert(Engine::selectState(observed)==Engine::State::PeerLost); // No success masks a lost required AVR.
+  observed.warning=true;
+  assert(Engine::selectState(observed)==Engine::State::Warning);
   Engine engine;
   std::vector<Frame> frames;
   bool writable = true;
@@ -61,11 +74,13 @@ int main() {
   engine.setState(Engine::State::Fault, 400);
   engine.service(400, writer);
   assert(engine.snapshot().green == 64); // New mode cross-fades from actual frame.
+  engine.service(700, writer);
+  assert(engine.snapshot().red == 64 && engine.snapshot().green == 0);
+  assert(engine.snapshot().effect == static_cast<uint8_t>(Engine::Effect::DoubleBlink));
   engine.service(900, writer);
-  assert(engine.snapshot().red > 0 && engine.snapshot().green == 0);
-  const auto peak = engine.snapshot().red;
-  engine.service(1400, writer);
-  assert(engine.snapshot().red < peak); // No slow-time catch-up/counter engine.
+  assert(engine.snapshot().red == 0); // Real black between fault blink pairs.
+  engine.service(1600, writer);
+  assert(engine.snapshot().red == 64); // Late service jumps to current period, never catches up slowly.
   engine.setState(Engine::State::Updating, 2000);
   engine.setProgress(100);
   engine.service(2300, writer);
@@ -93,5 +108,30 @@ int main() {
   engine.service(100, writer);
   assert(engine.snapshot().condition == Engine::State::AccessPoint);
   assert(engine.snapshot().updatedAt == 100);
-  puts("S3 status RGB: explicit pin safety, separate matrix, semantic transitions, authoritative output, deduplication, driver failure, disable and wrap pass; not optical acceptance.");
+  engine.setState(Engine::State::Shutdown,1000);
+  engine.service(1350,writer);
+  assert(engine.snapshot().blue > 0 && engine.snapshot().blue < 64);
+  engine.service(1700,writer);
+  assert(engine.snapshot().red==0 && engine.snapshot().green==0 && engine.snapshot().blue==0);
+  const auto blackRevision=engine.snapshot().revision;
+  assert(!engine.service(2400,writer) && engine.snapshot().revision==blackRevision); // No repeating shutdown fade.
+  engine.setState(Engine::State::Warning,2500);
+  engine.service(2800,writer);assert(engine.snapshot().red==64);
+  engine.service(3000,writer);assert(engine.snapshot().red==0);
+  engine.setState(Engine::State::Connecting,3500);
+  engine.service(3950,writer);const auto pulseFloor=engine.snapshot().red;
+  engine.service(4900,writer);assert(engine.snapshot().red>pulseFloor);
+  assert(engine.snapshot().effect==static_cast<uint8_t>(Engine::Effect::Pulse));
+  engine.setState(Engine::State::AccessPointNetwork,5000);
+  engine.service(8200,writer);const auto startBlue=engine.snapshot().blue;
+  engine.service(9800,writer);assert(engine.snapshot().blue>startBlue);
+  assert(engine.snapshot().effect==static_cast<uint8_t>(Engine::Effect::Cycle));
+  writable=false;engine.setState(Engine::State::Fault,10000);
+  assert(!engine.service(10000,writer));
+  writable=true;engine.setProgress(1);
+  assert(!engine.service(10016,writer)); // Metadata changes cannot hammer a failing RMT driver.
+  assert(engine.service(10250,writer));
+  for(uint8_t effect=0;effect<=6;++effect)assert(Engine::effectName(effect)[0]!='u');
+  assert(Engine::effectName(255)[0]=='u');
+  puts("S3 status RGB: safe pins, static/breathe/pulse/blink/double-blink/color-fade/shutdown, state priority, offline USB, progress, wrap, dedup, bounded failure recovery and real black pass; not optical acceptance.");
 }

@@ -1,5 +1,33 @@
 # Donor-first preflight receipt
 
+## Semantic onboard RGB integration
+
+Reread the actual PCController Project/StatusLedMath.h and
+StatusLedController.h/.cpp, plus the complete Pealayer src/ui/status_bar.rs.
+All four live source hashes match the existing comparison ledger. Adapted the
+donor's absolute-time Flash/Cycle/Transition mechanisms into fixed S3 profiles,
+adding pulse/double-blink without a second matrix or client animation engine.
+Generic editable profiles/manual cue ownership remain explicitly pending.
+
+Focused production-engine/configuration tests pass for static/breathing/pulse,
+real-black blinking, color fades, held-black shutdown, exact repeated states,
+priority, progress, timer wrap, pin safety, persisted settings and driver failure
+retry throttling. The existing Web emitted-RGB/fresh-peer/settings tests pass;
+native Check passes. These are not optical or deployment acceptance.
+The earlier CI peer-fence guard was stale after the reviewed configured-hostname
+argument was added; it now checks all three actual identity arguments and rejects
+hostname replacing board identity. No fence was weakened. A report-check output
+formatting error was caused by piping its Format-Table objects to Select-Object;
+the unpiped canonical -Check succeeds with no script change or bypass.
+
+Fresh trusted ASUS access (HostKeyAlias david-asus, existing matching key) and
+hostname-first /api/status show ESP/AVR0.2.7, onboard GPIO48 confirmed/enabled,
+brightness64 persisted, accepted Ready RGB[0,64,10], and the matrix still rainbow.
+No board mutation or optical confirmation is implied. The candidate0.2.8 has
+default-on release admission requiring a coordinated AVR/client update; asked
+the user before broadening this RGB task into that rollout. Do not silently
+disable admission or replace the saved matrix scene.
+
 ## Peer identity and supported-release admission
 
 Source checkpoint moves the coordinated package identity to0.2.8/build15 and

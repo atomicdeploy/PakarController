@@ -4087,7 +4087,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "52750a89b9610ab30fc2ec90fc454db96cb6cd94b05de0e2a3f220e5ebe331b8"
+          "sha256": "f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -4579,7 +4579,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "52750a89b9610ab30fc2ec90fc454db96cb6cd94b05de0e2a3f220e5ebe331b8"
+          "sha256": "f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -4629,7 +4629,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "52750a89b9610ab30fc2ec90fc454db96cb6cd94b05de0e2a3f220e5ebe331b8"
+          "sha256": "f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5"
         }
       ],
       "omissions": [
@@ -4676,13 +4676,13 @@
           "sha256": "9647c380a1ed67d5b5eb2feb4fe35295b6db1fc3dfbbf843951a69d91f41ebcc"
         },
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0","anchor":"Message *items_=nullptr;"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"52750a89b9610ab30fc2ec90fc454db96cb6cd94b05de0e2a3f220e5ebe331b8","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
         {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"2e9eccc4581646b2797a80bade0523a775d4df64c4de657d357a95b1ba18fc03","anchor":"internal_heap_largest_block_bytes"},
         {"path":"tools/update-firmware.mjs","sha256":"7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "52750a89b9610ab30fc2ec90fc454db96cb6cd94b05de0e2a3f220e5ebe331b8"
+          "sha256": "f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -5744,13 +5744,13 @@
       "verdict": "parity-gap",
       "preserved": ["Full original source read through EOF. Actual unsigned byte-exact scale(value, level) and interpolate(from, to, phase) arithmetic copied into the S3 semantic onboard-pixel engine, independent of the GPIO4 matrix."],
       "targets": [
-        {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"1aea14b2e7247495b16c5428017e69a78a9ac56f1eb08881782d432d42e896b4","anchor":"static uint8_t scale("},
+        {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b","anchor":"static uint8_t scale("},
         {"path":"desktop/src/status_rgb.rs","sha256":"3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e","anchor":"clients never synthesize"},
         {"path":"mobile/lib/status_rgb.dart","sha256":"5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8","anchor":"Color? statusRgbColor("},
         {"path":"firmware/esp8266/src/WebUi.h","sha256":"0e02b86efd9984a3ffa6bc8fe5601d4a9f7c07265ac30d0ae6a12034cf06bac8","anchor":"function statusRgbOutput"}
       ],
       "proof": [
-        {"path":"tests/s3_status_rgb_test.cpp","sha256":"272ccdc92f9cd8c6bc503afaffcf17a4d62f79cc37aefd3c9ff4fbb8c2011a00","anchor":"Already-scaled output bytes"},
+        {"path":"tests/s3_status_rgb_test.cpp","sha256":"f48af12963f643feca43b77ed5edd181e22981afb761305cf947d5ad053fa6f7","anchor":"Already-scaled output bytes"},
         {"path":"mobile/test/status_rgb_test.dart","sha256":"908b1d6f4f4832dea297e0e36b9ab87500754569b595938d3cecfb95870bb61f","anchor":"physical RGB is observed not synthesized or double dimmed"},
         {"path":"tests/interface_settings_test.mjs","sha256":"eb2f66f95832b201345fcd77f9fa9a3c08c8681de38e53b4717853f5cbc25523","anchor":"Actual emitted RGB is not brightness-scaled again"}
       ],
@@ -5763,22 +5763,23 @@
       "sha256": "afbc70e3e8674c80d779168c37dc7430ab058e35baf2705b4b45cc11dd4e22ca",
       "source_read": "complete",
       "verdict": "parity-gap",
-      "preserved": ["Full header/implementation read through EOF. Adapted nonblocking lifecycle state, absolute elapsed/period animation, repeat-state phase preservation, brightness-scaled rendered-byte reporting and explicit board-owned configuration into PakarS3::StatusRgb."],
+      "preserved": ["Full header/implementation read through EOF. Adapted nonblocking lifecycle state, absolute elapsed/period animation, repeat-state phase preservation, brightness-scaled rendered-byte reporting and explicit board-owned configuration into PakarS3::StatusRgb. Fixed descriptors now add donor flash/cycle/one-shot transition plus pulse/double-blink: fault and shutdown preempt routine states, verified success expires with the existing update lifecycle, offline USB is healthy and simultaneous AP/network availability is distinct."],
       "targets": [
-        {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"1aea14b2e7247495b16c5428017e69a78a9ac56f1eb08881782d432d42e896b4","anchor":"class StatusRgb"},
+        {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b","anchor":"class StatusRgb"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5","anchor":"void serviceStatusRgb(uint32_t now)"},
         {"path":"firmware/esp32s3/src/StatusRgbConfig.h","sha256":"8ae7dd8a7868db38ff2a31c7034c3c9674c8bf860ee4b9aae4f559d2f125ed29","anchor":"class StatusRgbConfig"},
         {"path":"desktop/src/status_rgb.rs","sha256":"3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e","anchor":"pub struct Configuration"},
         {"path":"mobile/lib/status_rgb.dart","sha256":"5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8","anchor":"class StatusRgbSettings"}
       ],
       "proof": [
-        {"path":"tests/s3_status_rgb_test.cpp","sha256":"272ccdc92f9cd8c6bc503afaffcf17a4d62f79cc37aefd3c9ff4fbb8c2011a00","anchor":"New mode cross-fades from actual frame"},
+        {"path":"tests/s3_status_rgb_test.cpp","sha256":"f48af12963f643feca43b77ed5edd181e22981afb761305cf947d5ad053fa6f7","anchor":"New mode cross-fades from actual frame"},
         {"path":"tests/s3_status_rgb_config_test.cpp","sha256":"f7b011a64d197ff17f1184fd50ceb6ab1eb91c4bef590ad7fe6e0490cfc06517","anchor":"No identical write"},
         {"path":"desktop/src/status_rgb.rs","sha256":"3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e","anchor":"fn saved_ack_requires_exact_persisted_config_readback_not_optimistic_preview"},
         {"path":"mobile/test/status_rgb_test.dart","sha256":"908b1d6f4f4832dea297e0e36b9ab87500754569b595938d3cecfb95870bb61f","anchor":"RGB settings require explicit complete observations and safe GPIO"}
       ],
       "omissions": [
         {"code":"AVR PwmController channels13..15/Power signal driver, EEPROM profile records and uint16 clock","disposition":"replaced","reason":"The S3 owns a separate explicitly confirmed addressable pixel, not PCController PWM channels or the AVR EEPROM map. StatusRgbConfig now persists enable/pin/confirmation/brightness with pending readback/rename and identical-write suppression; uint32 elapsed arithmetic avoids the AVR clock restriction. Native/Web/mobile require complete board readback and explicit GPIO38/48 confirmation; no electrical pin probing or optimistic persisted success is performed."},
-        {"code":"19-condition editable profile catalog, temporary cue composition/priority, retained manual descriptors and Flash/Cycle/Transition effects","disposition":"pending","reason":"Current semantic states use smooth transitions and breathe, not the full generic donor manual/profile/cue contract. Custom descriptors, priorities, persistence and native/Web/mobile/front-panel editors remain useful work; fixed semantic profiles do not certify full donor parity."}
+        {"code":"19-condition editable profile catalog, temporary cue composition/priority and retained manual descriptors","disposition":"pending","reason":"Static, breathe, flash, color-cycle and one-shot transition now exist in fixed semantic profiles, with additive pulse and double-blink. User-editable descriptors, cue composition, manual ownership, profile persistence and native/Web/mobile/front-panel editors remain useful work; fixed profiles do not certify full donor parity."}
       ],
       "remaining": ["Finish generic manual/profile/cue capabilities with persisted ACK/readback across all clients; verify physical onboard output and safety/error/update state priorities under real peer loss."]
     },
@@ -5790,20 +5791,20 @@
       "verdict": "parity-gap",
       "preserved": ["Full header/implementation read through EOF. Actual absolute elapsed/period evaluation, idempotent state ownership and already-scaled rendered RGB reporting adapted into the S3's board-owned semantic engine. Added bounded 300ms eased state transitions, explicit pin safety and driver-accepted output revision; no independent client-side animation reconstruction.","Native/Web/mobile now merge compact observed RGB revisions only for the selected exact board/boot. Duplicate/older/foreign revisions cannot overwrite newer RGB, renew command/hardware freshness or replace cells/layout. Complete status snapshots retain only newer same-peer RGB; peer changes discard it. Selected transport capabilities gate settings with no silent Wi-Fi fallback, and writes require saved ACK plus exact persisted readback rather than a local preview."],
       "targets": [
-        {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"1aea14b2e7247495b16c5428017e69a78a9ac56f1eb08881782d432d42e896b4","anchor":"bool service(uint32_t now, Writer writer)"},
+        {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b","anchor":"bool service(uint32_t now, Writer writer)"},
         {"path":"desktop/src/status_rgb.rs","sha256":"3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e","anchor":"pub fn observe("},
         {"path":"mobile/lib/status_rgb.dart","sha256":"5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8","anchor":"class StatusRgbPreview"},
         {"path":"firmware/esp8266/src/WebUi.h","sha256":"0e02b86efd9984a3ffa6bc8fe5601d4a9f7c07265ac30d0ae6a12034cf06bac8","anchor":"function acceptStatusRgb("}
       ],
       "proof": [
-        {"path":"tests/s3_status_rgb_test.cpp","sha256":"272ccdc92f9cd8c6bc503afaffcf17a4d62f79cc37aefd3c9ff4fbb8c2011a00","anchor":"No duplicate state events"},
+        {"path":"tests/s3_status_rgb_test.cpp","sha256":"f48af12963f643feca43b77ed5edd181e22981afb761305cf947d5ad053fa6f7","anchor":"No duplicate state events"},
         {"path":"desktop/src/status_rgb.rs","sha256":"3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e","anchor":"fn compact_rgb_updates_only_the_matching_peer_and_newer_rgb_not_hardware_clock"},
         {"path":"mobile/test/status_rgb_test.dart","sha256":"908b1d6f4f4832dea297e0e36b9ab87500754569b595938d3cecfb95870bb61f","anchor":"compact RGB event changes only fresh matching RGB"},
         {"path":"tests/interface_settings_test.mjs","sha256":"eb2f66f95832b201345fcd77f9fa9a3c08c8681de38e53b4717853f5cbc25523","anchor":"Compact events merge only RGB"}
       ],
       "omissions": [
         {"code":"PwmController/EEPROM/StatusProfileAddress dependencies and sixteen-bit phase clock","disposition":"replaced","reason":"Those target AVR RGB PWM wiring and EEPROM allocation, not the identified S3 addressable pixel. Existing S3 persisted configuration owns enable/brightness, writer acceptance owns reported output, and the 32-bit elapsed timer advances without per-loop phase drift."},
-        {"code":"profile/setProfile/defaultProfile, applyRequested/cancelEffect, playCue priority and finite Flash/Cycle/Transition descriptors","disposition":"pending","reason":"This source slice implements lifecycle semantic light, not every manually controllable donor RGB behavior. Preserve pending custom profiles/cues/descriptors and their exact owner tests rather than replacing them with optimistic UI controls."}
+        {"code":"profile/setProfile/defaultProfile, applyRequested/cancelEffect and generic playCue descriptors","disposition":"pending","reason":"Fixed semantic Flash/Cycle/Transition patterns and state priorities are now adapted, including real black blink intervals, held-black shutdown and bounded driver-failure retries. This does not implement every manually controllable donor RGB behavior. Preserve pending custom profiles/cues/descriptors and their exact owner tests rather than replacing them with optimistic UI controls."}
       ],
       "remaining": ["Implement useful generic omitted RGB profile/manual/cue contracts; measure physical GPIO/RGB order and latency under simultaneous matrix/network/AVR work. Native writer doubles are not optical acceptance."]
     },
@@ -6404,7 +6405,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "52750a89b9610ab30fc2ec90fc454db96cb6cd94b05de0e2a3f220e5ebe331b8",
+      "sha256": "f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5",
       "anchor": "bool authenticate()"
     },
     {
@@ -6519,7 +6520,7 @@
     },
     {
       "path": "tests/peer_fence_test.mjs",
-      "sha256": "4db4efb8a06dc19d850a0cf1ff45f357121b7c079dc536d025a3d7cb419f606f",
+      "sha256": "b5ebf8bad8769de3f9c8b22c9d4e0815644266e30a4e64c600f09dafd505f973",
       "anchor": "Upload callbacks precede middleware"
     },
     {
@@ -6720,7 +6721,7 @@
     },
     {
       "path": "tests/peer_fence_test.mjs",
-      "sha256": "4db4efb8a06dc19d850a0cf1ff45f357121b7c079dc536d025a3d7cb419f606f",
+      "sha256": "b5ebf8bad8769de3f9c8b22c9d4e0815644266e30a4e64c600f09dafd505f973",
       "anchor": "Upload callbacks precede middleware"
     },
     {
@@ -8690,7 +8691,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "f33ad196f653fa854a49941e625915c930c27112f72ff33851b9a49582b71437",
+          "sha256": "35ce96f77e9f79608efe62881c2c32409a6d3cbdf809e4b1d0f3c4bca0f17dd5",
           "anchor": "fn hide_menu("
         },
         {
@@ -8753,7 +8754,7 @@
       "proof": [
         {
           "path":"desktop/src/ui/status_bar.rs",
-          "sha256":"f33ad196f653fa854a49941e625915c930c27112f72ff33851b9a49582b71437",
+          "sha256":"35ce96f77e9f79608efe62881c2c32409a6d3cbdf809e4b1d0f3c4bca0f17dd5",
           "anchor":"fn rgb_requires_observed_output_and_does_not_double_dim"
         },
         {
@@ -12984,7 +12985,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "52750a89b9610ab30fc2ec90fc454db96cb6cd94b05de0e2a3f220e5ebe331b8",
+          "sha256": "f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -13737,7 +13738,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "52750a89b9610ab30fc2ec90fc454db96cb6cd94b05de0e2a3f220e5ebe331b8",
+          "sha256": "f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -13945,7 +13946,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "52750a89b9610ab30fc2ec90fc454db96cb6cd94b05de0e2a3f220e5ebe331b8",
+          "sha256": "f2ccaa1ab6e74a335b39872eb0e3ae408ef8828aed4ac772b37aac706d8a09f5",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {

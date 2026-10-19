@@ -9,7 +9,10 @@ const admission = access.slice(access.indexOf('bool peerAllowed('),access.indexO
 assert.doesNotMatch(admission,/HTTP_GET|HTTP_HEAD|request->method/,
   'Pinned GET/HEAD are not exempt: ISP probe affects hardware and readback is boot-bound');
 const firmware=read('firmware/esp8266/esp8266.ino');
-assert.match(firmware,/webAccess.configurePeerFence\(pcBoardId, pcBootId\)/);
+assert.match(firmware,/webAccess.configurePeerFence\(pcBoardId,\s*pcBootId,\s*hostname\)/,
+  'Peer fences keep exact board/boot identity while HTTP identity receives the configured hostname');
+assert.doesNotMatch(firmware,/webAccess.configurePeerFence\(hostname,/,
+  'A configurable hostname must not replace the stable board identity');
 assert.match(firmware,/http_peer_fencing/);
 const dispatchAuth = firmware.slice(firmware.indexOf('bool authenticate()'),firmware.indexOf('uint8_t snakeCell('));
 assert.match(dispatchAuth,/!webAccess.peerAllowed\(server.request\(\)\)/,

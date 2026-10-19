@@ -1415,6 +1415,7 @@ String statusRgbObservationJson() {
   d["pin"]=rgb.pin;d["pin_confirmed"]=config.pinConfirmed;d["brightness"]=rgb.brightness;
   d["rgb"].add(rgb.red);d["rgb"].add(rgb.green);d["rgb"].add(rgb.blue);
   d["state"]=PakarS3::StatusRgb::name(rgb.condition);d["effect"]=rgb.effect;
+  d["effect_name"]=PakarS3::StatusRgb::effectName(rgb.effect);
   if(rgb.progress<=100)d["progress_percent"]=rgb.progress;else d["progress_percent"]=nullptr;
   d["persisted"]=statusRgbConfig.persisted();d["error"]=statusRgbConfig.lastError();
   d["revision"]=rgb.revision;d["updated_uptime_ms"]=rgb.updatedAt;
@@ -1426,6 +1427,8 @@ void serviceStatusRgb(uint32_t now) {
   observed.fault=!accessConfig.ready()||visual==Visual::Failure;
   observed.updating=otaActive||otaRebootAt||remoteFirmware.busy()||urbootBusy.get();
   observed.booting=visual==Visual::Startup;
+  observed.shutdown=visual==Visual::Shutdown;observed.success=visual==Visual::Success;
+  observed.warning=statusRgbConfig.lastError()[0]!=0;
   observed.stationEnabled=networkConfig.stationEnabled();observed.networkReady=NetworkPath::ready();
   observed.accessPoint=apStarted;observed.peerRequired=PAKAR_AVR_LINK_ENABLED;observed.peerOnline=avrOnline;
   statusRgb.setState(Engine::selectState(observed),now);

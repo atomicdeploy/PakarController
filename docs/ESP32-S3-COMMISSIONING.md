@@ -14,6 +14,45 @@ same AVR UART/ISP signals at once.
 
 ## Current rainbow and LAN recovery
 
+### Onboard status pixel source checkpoint
+
+This board's existing persisted configuration is GPIO48, confirmed/enabled,
+brightness64; it was freshly read through trusted David-ASUS and ledboard.local.
+No external wiring is needed for that onboard pixel. GPIO4 remains exclusively
+the matrix data output; no AVR, ISP or matrix settings were changed.
+
+The new semantic profiles retain the actual PCController renderer arithmetic
+and Pealayer direct-output mirroring (no client double dimming):
+
+| Observation | Onboard indication |
+|---|---|
+| Startup | Blue breathing, eased state transition |
+| Ready on a network | Steady green |
+| Intentionally offline / USB | Steady teal; not a network warning |
+| AP only | Cyan breathing |
+| AP plus an available network path | Slow green/cyan color fade |
+| Station connection pending | Amber pulse |
+| Required AVR unavailable | Amber double blink |
+| Update/programming | Purple pulse; measured progress raises the brightness floor |
+| Verified update success | Brief green pulse, bounded by the existing lifecycle |
+| Shutdown/reboot preparation | One-shot purple fade to held black |
+| Configuration warning | Slow amber blink |
+| Access/update fault | Red double blink, highest priority |
+| User disables status output | Driver-accepted black |
+
+Priority is fault, shutdown, active update, startup, warning, required-peer loss,
+verified success, then connectivity. Static/breathing/blinking/color-fade/
+fade-out/pulse/double-blink effect IDs are 0..6; `effect_name` is additive in
+status/API/WebSocket observations. Existing settings remain `/api/status-rgb`
+(enable, brightness, confirmed pin), independently of matrix brightness/output.
+Exact repeated states preserve phase; failed driver writes do not advance output
+revision and are retried no more often than250ms. No animation writes settings.
+
+Engine/config host tests and native Check pass, not physical light/load proof.
+The live ESP and AVR remain0.2.7. The candidate0.2.8 requires coordinated peers
+under the default-on admission policy; rollout confirmation was requested rather
+than disabling that policy or silently making the AVR incompatible.
+
 Source20a242bf38c8a5d2b70dfbde6c9460574a2bc845 is actually installed:
 2193760B, SHA256`cb1f18f16c62e369e52120ec0986bd30d1b5d38e71204216c47aded721a6de0f`,
 MD5`a3c0e540730958c561d4da6ac8dd686b`, boot`ff6da73b47d6fd790fc1eb36c491d6ef`.

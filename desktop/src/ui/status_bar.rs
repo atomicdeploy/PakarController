@@ -107,7 +107,9 @@ pub fn draw(ui: &mut egui::Ui, status: StatusBar<'_>, items: &mut Items) -> Vec<
                     led.state, color.r(), color.g(), color.b(),
                     led.brightness.map(|v| v.to_string()).unwrap_or_else(|| "unknown".into()), led.revision,
                     led.pin.map(|v|v.to_string()).unwrap_or_else(||"unknown".into()),
-                    match led.effect{Some(0)=>"steady",Some(1)=>"board-animated breathe",_=>"effect unknown"},
+                    match led.effect{Some(0)=>"steady",Some(1)=>"board-animated breathe",Some(2)=>"board-animated blink",
+                        Some(3)=>"board-animated color fade",Some(4)=>"board-animated fade out",Some(5)=>"board-animated pulse",
+                        Some(6)=>"board-animated double blink",_=>"effect unknown"},
                     led.progress_percent.filter(|v|*v<=100).map(|v|format!("{v}%")).unwrap_or_else(||"unknown".into())));
                 if response.clicked() { actions.push(Action::Hardware); }
                 response.context_menu(|ui| {
