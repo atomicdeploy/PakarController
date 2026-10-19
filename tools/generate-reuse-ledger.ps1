@@ -7,11 +7,12 @@ param(
     [string]$ControllerBoardMiniRoot = 'C:\Users\David\Desktop\Projects\ControllerBoardMini',
     [string]$Pu850Root = (Join-Path $PSScriptRoot '..\..\repos\pu850-esp'),
     [string]$RayanLampRoot = 'C:\Users\David\Documents\Codex\2026-07-23\ba\outputs\RayanLamp',
+    [string]$Esp32Ws2811Root = (Join-Path $PSScriptRoot '../../repos/esp32WS2811'),
     [string]$DecisionsPath,
     [string]$EvidencePath,
     [string]$ComparisonPath=(Join-Path $PSScriptRoot '../docs/file-comparison-evidence.json'),
     [string]$OutputPath,
-    [ValidateSet('Pealayer','PCController','ControllerBoardMini/Puzzles','PuzzleBoard','ControllerBoardMini','PU850-ESP','RayanLamp')]
+    [ValidateSet('Pealayer','PCController','ControllerBoardMini/Puzzles','PuzzleBoard','ControllerBoardMini','PU850-ESP','RayanLamp','esp32WS2811')]
     [string]$OnlyOrigin
 )
 
@@ -161,6 +162,10 @@ Add-LedgerRows -Rows $rows -Origin 'ControllerBoardMini/Puzzles' -Root $PuzzlesR
 if (-not $OnlyOrigin -or $OnlyOrigin -eq 'PU850-ESP') {
 $pu850 = Get-GitFiles -Root $Pu850Root
 Add-LedgerRows -Rows $rows -Origin 'PU850-ESP' -Root $Pu850Root -Revision $pu850.Commit -RelativePaths $pu850.Files
+}
+if (-not $OnlyOrigin -or $OnlyOrigin -eq 'esp32WS2811') {
+    $ws2811 = Get-GitFiles -Root $Esp32Ws2811Root
+    Add-LedgerRows -Rows $rows -Origin 'esp32WS2811' -Root $Esp32Ws2811Root -Revision $ws2811.Commit -RelativePaths $ws2811.Files
 }
 foreach ($source in @(
     @{Origin='PuzzleBoard'; Root=$PuzzleBoardRoot},

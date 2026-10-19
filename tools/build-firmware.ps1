@@ -51,6 +51,7 @@ if ($Target -in @('both', 'avr')) {
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern tm1637-display -Gate | Out-Null
 }
 if ($Target -eq 'esp32s3') {
+    & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern esp32-ws2811 -Gate | Out-Null
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern uart-flow-control -Gate | Out-Null
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern lcd-display -Gate | Out-Null
     if ($S3Ethernet) {

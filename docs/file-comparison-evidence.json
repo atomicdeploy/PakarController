@@ -4,6 +4,728 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
   {
+    "origin": "esp32WS2811",
+    "path": "src/esp32WS2811.cpp",
+    "sha256": "79fd1b8141cc8eb1473dcb1c25f754b0fbe71cab76af7a311fd10db0269e6511",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "scoped-improvement",
+    "preserved": [
+      "Complete original driver/API read through EOF. Existing stage/show/get-published-frame, full480 RGB, dedicated worker, coalescing and immutable TX ownership mapped function by function. Newly adapt explicit idle-LOW policy to both backends: reset, preload LOW, enable output, then allocate/init; each failed GPIO step stops before RMT/heap/TX with no false ready/black receipt."
+    ],
+    "targets": [
+      {
+        "path": "firmware/esp32s3/src/LedOutput.cpp",
+        "sha256": "b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462",
+        "anchor": "void LedOutput::work(){"
+      },
+      {
+        "path": "firmware/esp32s3/src/LedOutput.h",
+        "sha256": "2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7",
+        "anchor": "Frame producer_{};"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.cpp",
+        "sha256": "b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119",
+        "anchor": "void LedGrid::showStaged() {"
+      },
+      {
+        "path": "firmware/esp32s3/src/LedWire.h",
+        "sha256": "4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513",
+        "anchor": "inline constexpr uint16_t resetMicros=300;"
+      },
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/led_worker_test.cpp",
+        "sha256": "9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273",
+        "anchor": "void pinSetupFailure(unsigned step)"
+      },
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "function driverContract(source)"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "driver legacy implementation/classes",
+        "disposition": "replaced",
+        "reason": "Legacy driver/rmt.h configuration, original-ESP32 channel-memory topology, task-static 24-symbol-per-pixel expanded buffer, hardcoded GRB and ESP_ERROR_CHECK bodies are replaced, not installed alongside IDF5. Existing compact internal1440-byte bytes-encoder/SDK ring, scoped IRQ ownership, full-frame mailbox and recoverable failures retain the useful transport discipline. The donor's extra terminator is allocated but excluded from its write count; keep our explicit300us low latch instead."
+      }
+    ],
+    "remaining": [
+      "Current480-pixel waveform/RF/refill/optical acceptance remains open; source hashes/fixtures are not current hardware proof."
+    ],
+    "improvement": "Retain modern IDF5 compact immutable DMA source and explicit failures/LOW/latch, one renderer and bounded memory instead of legacy driver globals, per-effect tasks, blocking delays or duplicate colour ownership."
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "src/esp32WS2811.h",
+    "sha256": "f74e535287f38aee87bb9108fb85ebabb99f2421cd2828ecaef757b52ebb119e",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "scoped-improvement",
+    "preserved": [
+      "Complete original driver/API read through EOF. Existing stage/show/get-published-frame, full480 RGB, dedicated worker, coalescing and immutable TX ownership mapped function by function. Newly adapt explicit idle-LOW policy to both backends: reset, preload LOW, enable output, then allocate/init; each failed GPIO step stops before RMT/heap/TX with no false ready/black receipt."
+    ],
+    "targets": [
+      {
+        "path": "firmware/esp32s3/src/LedOutput.cpp",
+        "sha256": "b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462",
+        "anchor": "void LedOutput::work(){"
+      },
+      {
+        "path": "firmware/esp32s3/src/LedOutput.h",
+        "sha256": "2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7",
+        "anchor": "Frame producer_{};"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.cpp",
+        "sha256": "b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119",
+        "anchor": "void LedGrid::showStaged() {"
+      },
+      {
+        "path": "firmware/esp32s3/src/LedWire.h",
+        "sha256": "4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513",
+        "anchor": "inline constexpr uint16_t resetMicros=300;"
+      },
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/led_worker_test.cpp",
+        "sha256": "9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273",
+        "anchor": "void pinSetupFailure(unsigned step)"
+      },
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "function driverContract(source)"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "driver legacy implementation/classes",
+        "disposition": "replaced",
+        "reason": "Legacy driver/rmt.h configuration, original-ESP32 channel-memory topology, task-static 24-symbol-per-pixel expanded buffer, hardcoded GRB and ESP_ERROR_CHECK bodies are replaced, not installed alongside IDF5. Existing compact internal1440-byte bytes-encoder/SDK ring, scoped IRQ ownership, full-frame mailbox and recoverable failures retain the useful transport discipline. The donor's extra terminator is allocated but excluded from its write count; keep our explicit300us low latch instead."
+      }
+    ],
+    "remaining": [
+      "Current480-pixel waveform/RF/refill/optical acceptance remains open; source hashes/fixtures are not current hardware proof."
+    ],
+    "improvement": "Retain modern IDF5 compact immutable DMA source and explicit failures/LOW/latch, one renderer and bounded memory instead of legacy driver globals, per-effect tasks, blocking delays or duplicate colour ownership."
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "src/Effects/Effect.cpp",
+    "sha256": "2c27fa91967898ba4f4234c53889adfea11f3bd14a62147d64fdcb01837e6c2d",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "scoped-improvement",
+    "preserved": [
+      "Complete base-class/task source read through EOF. Existing pattern start/replace/stop remains one loop renderer, no per-effect task or blocking sleeps; waveform driver remains independently owned."
+    ],
+    "targets": [
+      {
+        "path": "firmware/esp32s3/src/LedOutput.cpp",
+        "sha256": "b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462",
+        "anchor": "void LedOutput::work(){"
+      },
+      {
+        "path": "firmware/esp32s3/src/LedOutput.h",
+        "sha256": "2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7",
+        "anchor": "Frame producer_{};"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.cpp",
+        "sha256": "b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119",
+        "anchor": "void LedGrid::showStaged() {"
+      },
+      {
+        "path": "firmware/esp32s3/src/LedWire.h",
+        "sha256": "4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513",
+        "anchor": "inline constexpr uint16_t resetMicros=300;"
+      },
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/led_worker_test.cpp",
+        "sha256": "9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273",
+        "anchor": "void pinSetupFailure(unsigned step)"
+      },
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "function driverContract(source)"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "lifecycle legacy implementation/classes",
+        "disposition": "replaced",
+        "reason": "Per-effect FreeRTOS task creation/deletion, repeated cleanup of a non-cleared task handle and endless effect loops are replaced by existing loop-owned setPattern/stopPattern/service. Preserve single renderer and explicit frame publication without sleeping or a second engine; this is not an ABI-compatible installation of the old library."
+      }
+    ],
+    "remaining": [
+      "Current480-pixel waveform/RF/refill/optical acceptance remains open; source hashes/fixtures are not current hardware proof."
+    ],
+    "improvement": "Retain modern IDF5 compact immutable DMA source and explicit failures/LOW/latch, one renderer and bounded memory instead of legacy driver globals, per-effect tasks, blocking delays or duplicate colour ownership."
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "src/Effects/Effect.h",
+    "sha256": "d8b948d7d5ddef65ee40f162b5cd1f52e7aff7a525c94dfa11f1846b053aed71",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "scoped-improvement",
+    "preserved": [
+      "Complete base-class/task source read through EOF. Existing pattern start/replace/stop remains one loop renderer, no per-effect task or blocking sleeps; waveform driver remains independently owned."
+    ],
+    "targets": [
+      {
+        "path": "firmware/esp32s3/src/LedOutput.cpp",
+        "sha256": "b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462",
+        "anchor": "void LedOutput::work(){"
+      },
+      {
+        "path": "firmware/esp32s3/src/LedOutput.h",
+        "sha256": "2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7",
+        "anchor": "Frame producer_{};"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.cpp",
+        "sha256": "b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119",
+        "anchor": "void LedGrid::showStaged() {"
+      },
+      {
+        "path": "firmware/esp32s3/src/LedWire.h",
+        "sha256": "4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513",
+        "anchor": "inline constexpr uint16_t resetMicros=300;"
+      },
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/led_worker_test.cpp",
+        "sha256": "9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273",
+        "anchor": "void pinSetupFailure(unsigned step)"
+      },
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "function driverContract(source)"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "lifecycle legacy implementation/classes",
+        "disposition": "replaced",
+        "reason": "Per-effect FreeRTOS task creation/deletion, repeated cleanup of a non-cleared task handle and endless effect loops are replaced by existing loop-owned setPattern/stopPattern/service. Preserve single renderer and explicit frame publication without sleeping or a second engine; this is not an ABI-compatible installation of the old library."
+      }
+    ],
+    "remaining": [
+      "Current480-pixel waveform/RF/refill/optical acceptance remains open; source hashes/fixtures are not current hardware proof."
+    ],
+    "improvement": "Retain modern IDF5 compact immutable DMA source and explicit failures/LOW/latch, one renderer and bounded memory instead of legacy driver globals, per-effect tasks, blocking delays or duplicate colour ownership."
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "src/Effects/Colour.cpp",
+    "sha256": "6bf0bac344bd60971564e66252e5d23b964606c6b4ec67c77e68d1186a313f58",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "scoped-improvement",
+    "preserved": [
+      "Complete RGB/HSV implementation/header and palette read through EOF. Canonical RGB/FastLED rendering retains byte colours, saturated arithmetic and HSV rainbow without a second colour engine. No old class-level API or exact palette parity is falsely promised."
+    ],
+    "targets": [
+      {
+        "path": "firmware/esp32s3/src/LedOutput.cpp",
+        "sha256": "b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462",
+        "anchor": "void LedOutput::work(){"
+      },
+      {
+        "path": "firmware/esp32s3/src/LedOutput.h",
+        "sha256": "2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7",
+        "anchor": "Frame producer_{};"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.cpp",
+        "sha256": "b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119",
+        "anchor": "void LedGrid::showStaged() {"
+      },
+      {
+        "path": "firmware/esp32s3/src/LedWire.h",
+        "sha256": "4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513",
+        "anchor": "inline constexpr uint16_t resetMicros=300;"
+      },
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/led_worker_test.cpp",
+        "sha256": "9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273",
+        "anchor": "void pinSetupFailure(unsigned step)"
+      },
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "function driverContract(source)"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "colour legacy implementation/classes",
+        "disposition": "replaced",
+        "reason": "Duplicate Colour/ColourHSV object and degree/percent float API, basic-colour wrapper names and custom saturated addition are replaced by existing FastLED CRGB/HSV/rainbow/qadd8 and validated canonical RGB bytes. Do not claim donor class/API drop-in or copy a second colour representation. Exact hue/palette aesthetics belong with the separately pending optional effects."
+      }
+    ],
+    "remaining": [
+      "Current480-pixel waveform/RF/refill/optical acceptance remains open; source hashes/fixtures are not current hardware proof."
+    ],
+    "improvement": "Retain modern IDF5 compact immutable DMA source and explicit failures/LOW/latch, one renderer and bounded memory instead of legacy driver globals, per-effect tasks, blocking delays or duplicate colour ownership."
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "src/Effects/Colour.h",
+    "sha256": "f77e8491309317965731d826b1d20033185807f0f411f888bbb38958e1ad59b3",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "scoped-improvement",
+    "preserved": [
+      "Complete RGB/HSV implementation/header and palette read through EOF. Canonical RGB/FastLED rendering retains byte colours, saturated arithmetic and HSV rainbow without a second colour engine. No old class-level API or exact palette parity is falsely promised."
+    ],
+    "targets": [
+      {
+        "path": "firmware/esp32s3/src/LedOutput.cpp",
+        "sha256": "b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462",
+        "anchor": "void LedOutput::work(){"
+      },
+      {
+        "path": "firmware/esp32s3/src/LedOutput.h",
+        "sha256": "2ab9b8464393210fcd647d515c8efc6a8021d1277a5db5493d7d631669f8f3f7",
+        "anchor": "Frame producer_{};"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.cpp",
+        "sha256": "b5d8c718f3d169bbcdc508fa682f56197c6766bfb18fb947daf1fea49fa7e119",
+        "anchor": "void LedGrid::showStaged() {"
+      },
+      {
+        "path": "firmware/esp32s3/src/LedWire.h",
+        "sha256": "4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513",
+        "anchor": "inline constexpr uint16_t resetMicros=300;"
+      },
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/led_worker_test.cpp",
+        "sha256": "9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273",
+        "anchor": "void pinSetupFailure(unsigned step)"
+      },
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "function driverContract(source)"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "colour legacy implementation/classes",
+        "disposition": "replaced",
+        "reason": "Duplicate Colour/ColourHSV object and degree/percent float API, basic-colour wrapper names and custom saturated addition are replaced by existing FastLED CRGB/HSV/rainbow/qadd8 and validated canonical RGB bytes. Do not claim donor class/API drop-in or copy a second colour representation. Exact hue/palette aesthetics belong with the separately pending optional effects."
+      }
+    ],
+    "remaining": [
+      "Current480-pixel waveform/RF/refill/optical acceptance remains open; source hashes/fixtures are not current hardware proof."
+    ],
+    "improvement": "Retain modern IDF5 compact immutable DMA source and explicit failures/LOW/latch, one renderer and bounded memory instead of legacy driver globals, per-effect tasks, blocking delays or duplicate colour ownership."
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "src/Effects/Aurora.cpp",
+    "sha256": "7f169ec9c5b57f858d9d79c5059e97b3be4130930f52257691c7940f39a49dea",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete source/header read through EOF; useful Aurora visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board."
+    ],
+    "targets": [
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.h",
+        "sha256": "82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa",
+        "anchor": "enum Pattern : uint8_t"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "Aurora painting algorithm and all-surface capability exposure",
+        "disposition": "pending",
+        "reason": "Useful six weighted moving waves remain unported. Original allocates Colour per wave/pixel, frees scalar new Colour with delete[], repeatedly replaces heap waves and delays20ms. Port into bounded loop-owned wave state and shared effect capabilities/API/USB/persistence/all-client selectors; no allocator bug, heap churn or hidden50fps cap."
+      }
+    ],
+    "remaining": [
+      "Implement Aurora with bounded nonblocking state in the one renderer and shared discovery/API/USB/persistence/all-client catalog; verify source, SDK and physical behavior separately."
+    ]
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "src/Effects/Aurora.h",
+    "sha256": "d175558be657cb27501c5687ad56b5f9f37dd6cb7490ba0de42298a628fb7aff",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete source/header read through EOF; useful Aurora visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board."
+    ],
+    "targets": [
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.h",
+        "sha256": "82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa",
+        "anchor": "enum Pattern : uint8_t"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "Aurora painting algorithm and all-surface capability exposure",
+        "disposition": "pending",
+        "reason": "Useful six weighted moving waves remain unported. Original allocates Colour per wave/pixel, frees scalar new Colour with delete[], repeatedly replaces heap waves and delays20ms. Port into bounded loop-owned wave state and shared effect capabilities/API/USB/persistence/all-client selectors; no allocator bug, heap churn or hidden50fps cap."
+      }
+    ],
+    "remaining": [
+      "Implement Aurora with bounded nonblocking state in the one renderer and shared discovery/API/USB/persistence/all-client catalog; verify source, SDK and physical behavior separately."
+    ]
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "src/Effects/Autumn.cpp",
+    "sha256": "45e281ccc376bc13033723bc0b5258c399bd92043ae68db4ce376103ebe83876",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete source/header read through EOF; useful Autumn visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board."
+    ],
+    "targets": [
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.h",
+        "sha256": "82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa",
+        "anchor": "enum Pattern : uint8_t"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "Autumn painting algorithm and all-surface capability exposure",
+        "disposition": "pending",
+        "reason": "Useful random-origin palette-spread interpolation remains unported. Original origin can be read before first initialization, divides by steps/numLeds/2 without positive bounds and advances by loop count. Port validated dimensions/positive durations and elapsed-time interpolation into the existing renderer/catalog."
+      }
+    ],
+    "remaining": [
+      "Implement Autumn with bounded nonblocking state in the one renderer and shared discovery/API/USB/persistence/all-client catalog; verify source, SDK and physical behavior separately."
+    ]
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "src/Effects/Autumn.h",
+    "sha256": "16d75c16e482c44b52feae753ec1ccdf3ab35fc50707e7f6a713462059ac544f",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete source/header read through EOF; useful Autumn visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board."
+    ],
+    "targets": [
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.h",
+        "sha256": "82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa",
+        "anchor": "enum Pattern : uint8_t"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "Autumn painting algorithm and all-surface capability exposure",
+        "disposition": "pending",
+        "reason": "Useful random-origin palette-spread interpolation remains unported. Original origin can be read before first initialization, divides by steps/numLeds/2 without positive bounds and advances by loop count. Port validated dimensions/positive durations and elapsed-time interpolation into the existing renderer/catalog."
+      }
+    ],
+    "remaining": [
+      "Implement Autumn with bounded nonblocking state in the one renderer and shared discovery/API/USB/persistence/all-client catalog; verify source, SDK and physical behavior separately."
+    ]
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "src/Effects/Circus.cpp",
+    "sha256": "039da26c04c5a6cf2438d42372f1f9d9d03748db1aee5b21fc8a0dedd0085c5b",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete source/header read through EOF; useful Circus visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board."
+    ],
+    "targets": [
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.h",
+        "sha256": "82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa",
+        "anchor": "enum Pattern : uint8_t"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "Circus painting algorithm and all-surface capability exposure",
+        "disposition": "pending",
+        "reason": "Useful random twelve-colour repaint remains unported. Adapt requested repaint interval as a monotonic deadline, not delay(interval) or another effect task, and expose through the shared acknowledged effect catalog; not a new default or automatic flashing diagnostic."
+      }
+    ],
+    "remaining": [
+      "Implement Circus with bounded nonblocking state in the one renderer and shared discovery/API/USB/persistence/all-client catalog; verify source, SDK and physical behavior separately."
+    ]
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "src/Effects/Circus.h",
+    "sha256": "50e04e72e5fac9ab5130d83178a9962397f8634418dc6d8a25dee2327ba6e454",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete source/header read through EOF; useful Circus visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board."
+    ],
+    "targets": [
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.h",
+        "sha256": "82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa",
+        "anchor": "enum Pattern : uint8_t"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "Circus painting algorithm and all-surface capability exposure",
+        "disposition": "pending",
+        "reason": "Useful random twelve-colour repaint remains unported. Adapt requested repaint interval as a monotonic deadline, not delay(interval) or another effect task, and expose through the shared acknowledged effect catalog; not a new default or automatic flashing diagnostic."
+      }
+    ],
+    "remaining": [
+      "Implement Circus with bounded nonblocking state in the one renderer and shared discovery/API/USB/persistence/all-client catalog; verify source, SDK and physical behavior separately."
+    ]
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "src/Effects/SnowSparkle.cpp",
+    "sha256": "c70e8d8c7a43b87c4932dd57adb952278670df136f6a7a5349e7df1586dc8ed7",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete source/header read through EOF; useful SnowSparkle visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board."
+    ],
+    "targets": [
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.h",
+        "sha256": "82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa",
+        "anchor": "enum Pattern : uint8_t"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "SnowSparkle painting algorithm and all-surface capability exposure",
+        "disposition": "pending",
+        "reason": "Useful background/white sparkle/fade remains unported. Replace dynamic Sparkle pointer array and per-sparkle new/delete with fixed slots, wall-clock fades and shared acknowledged effect catalog, not delay(10) or another task."
+      }
+    ],
+    "remaining": [
+      "Implement SnowSparkle with bounded nonblocking state in the one renderer and shared discovery/API/USB/persistence/all-client catalog; verify source, SDK and physical behavior separately."
+    ]
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "src/Effects/SnowSparkle.h",
+    "sha256": "a86ecaaf9b2e9a41fdb53aa047883ed1f72acabc9909c164aab10bade3aab4ce",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "parity-gap",
+    "preserved": [
+      "Complete source/header read through EOF; useful SnowSparkle visual algorithm retained as an explicit unimplemented parity gap, NOT claimed imported or advertised by a board."
+    ],
+    "targets": [
+      {
+        "path": "docs/ESP32-WS2811-REUSE.md",
+        "sha256": "56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1",
+        "anchor": "# esp32WS2811 source comparison"
+      },
+      {
+        "path": "firmware/esp8266/src/LedGrid.h",
+        "sha256": "82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa",
+        "anchor": "enum Pattern : uint8_t"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/esp32_ws2811_reuse_test.mjs",
+        "sha256": "7ffe888d46cab74523687561e3ad104e21e400960615a358e3338cd3db149c5b",
+        "anchor": "for(const effect of ['Aurora','Autumn','Circus','SnowSparkle'])"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "SnowSparkle painting algorithm and all-surface capability exposure",
+        "disposition": "pending",
+        "reason": "Useful background/white sparkle/fade remains unported. Replace dynamic Sparkle pointer array and per-sparkle new/delete with fixed slots, wall-clock fades and shared acknowledged effect catalog, not delay(10) or another task."
+      }
+    ],
+    "remaining": [
+      "Implement SnowSparkle with bounded nonblocking state in the one renderer and shared discovery/API/USB/persistence/all-client catalog; verify source, SDK and physical behavior separately."
+    ]
+  },
+  {
+    "origin": "esp32WS2811",
+    "path": "LICENSE",
+    "sha256": "66b37e608859c67bf93a0821f4636c4289a2cd64f5c0858db0b8e02f7a5d1284",
+    "source_read": "complete",
+    "source_repository": "https://github.com/bertmelis/esp32WS2811",
+    "source_revision": "0222ef025f2b8e03f8c8aef35d63c545a98ad579",
+    "verdict": "equivalent-file",
+    "preserved": [
+      "Actual MIT license notice copied, including Bert Melis copyright and complete permission/warranty text. No legacy RMT function body is copied; separate Neil Kolban/Matthias Folte attribution is recorded in the comparison."
+    ],
+    "targets": [
+      {
+        "path": "docs/licenses/esp32WS2811-MIT.txt",
+        "sha256": "66b37e608859c67bf93a0821f4636c4289a2cd64f5c0858db0b8e02f7a5d1284",
+        "anchor": "Copyright (c) 2017 Bert Melis"
+      }
+    ],
+    "proof": [],
+    "omissions": [],
+    "remaining": []
+  },
+  {
     "origin": "Pealayer",
     "path": "src/main.rs",
     "sha256": "452eb004c52bdcff6936de5602cfdddf5c925d58db9e1e48220fc9a21075b696",
@@ -2179,7 +2901,7 @@
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "249b92a90453939492b4479784fac0a6d8da161ae0c390a69f3ae37b13533b35"
+          "sha256": "a7a8e89fb1270bb249bf515eaea637eb3590b2de3eadb50cfe14d9981981e384"
         }
       ],
       "omissions": [
@@ -4171,7 +4893,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "249b92a90453939492b4479784fac0a6d8da161ae0c390a69f3ae37b13533b35",
+          "sha256": "a7a8e89fb1270bb249bf515eaea637eb3590b2de3eadb50cfe14d9981981e384",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -4222,7 +4944,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "249b92a90453939492b4479784fac0a6d8da161ae0c390a69f3ae37b13533b35",
+          "sha256": "a7a8e89fb1270bb249bf515eaea637eb3590b2de3eadb50cfe14d9981981e384",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -7712,7 +8434,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "e16895a59896acdb81e80fa352c7a7119f3dd84c944864dd78104f7d03a15ac5",
+          "sha256": "7b03d2810e0b44c0fd095218c151394f95a3252d374245bb761babe51a846f0b",
           "anchor": "export function runChecks"
         },
         {
@@ -10178,7 +10900,7 @@
           "sha256": "82901797139bd120b249f2003c26c82bbc5c9001b9ca0e57929c7fc17a1946fa",
           "anchor": "uint8_t brightness_ = 255"
         },
-        {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"8678271cd9dcda637a9e468593a4cc3fcf9ba370454a6693c59d924a201ae257","anchor":"config.flags.with_dma=true"},
+        {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462","anchor":"config.flags.with_dma=true"},
         {"path":"firmware/esp32s3/src/LedWire.h","sha256":"4d9f50231f349502a17ae7a152d099c5ed197f554d65d2172772ca6e04366513","anchor":"void encodeWire("},
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0","anchor":"class LoopMessages"}
       ],
@@ -10203,7 +10925,7 @@
         "Make chipset/channel order configurable and verify R/G/B plus all 480 pixels on hardware; expose current configuration across the control surfaces."
       ],
       "proof": [
-        {"path":"tests/led_worker_test.cpp","sha256":"841c2dbf15e8e19dccc5006a432cf6f792378b3e167dddff4f41224b2d152988","anchor":"Compile the ACTUAL S3 output worker"},
+        {"path":"tests/led_worker_test.cpp","sha256":"9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273","anchor":"Compile the ACTUAL S3 output worker"},
         {"path":"tests/led_scheduler_test.cpp","sha256":"426daa3ad87f8aa094bf2a98562330418bdcc7a57001546bd1ded25e11fafcad","anchor":"int main()"}
       ],
       "improvement": "Actual worker/mailbox tests establish source-level frame ownership and quiescence, not optical or SDK acceptance."
@@ -12963,7 +13685,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "8678271cd9dcda637a9e468593a4cc3fcf9ba370454a6693c59d924a201ae257",
+          "sha256": "b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462",
           "anchor": "bool pending=true;"
         },
         {
@@ -12983,7 +13705,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "249b92a90453939492b4479784fac0a6d8da161ae0c390a69f3ae37b13533b35",
+          "sha256": "a7a8e89fb1270bb249bf515eaea637eb3590b2de3eadb50cfe14d9981981e384",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -13061,7 +13783,7 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "841c2dbf15e8e19dccc5006a432cf6f792378b3e167dddff4f41224b2d152988",
+          "sha256": "9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273",
           "anchor": "void functional()"
         },
         {
@@ -13171,7 +13893,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "8678271cd9dcda637a9e468593a4cc3fcf9ba370454a6693c59d924a201ae257",
+          "sha256": "b2de95ed21b12ce82df89dc0167c84ddf9fde37e23a6baf57d384f3c60fe9462",
           "anchor": "bool pending=true;"
         },
         {
@@ -13191,7 +13913,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "249b92a90453939492b4479784fac0a6d8da161ae0c390a69f3ae37b13533b35",
+          "sha256": "a7a8e89fb1270bb249bf515eaea637eb3590b2de3eadb50cfe14d9981981e384",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -13255,7 +13977,7 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "841c2dbf15e8e19dccc5006a432cf6f792378b3e167dddff4f41224b2d152988",
+          "sha256": "9a008388cf8b4857a8e72854c6fcd38ffa820ad6e15ad4c780c0b415c9255273",
           "anchor": "void functional()"
         },
         {"path":"tests/led_dma_guard_test.cpp","sha256":"d69b5b0bd26348aabd176350120d11199748f2aceada1d39c113078719fa80c0","anchor":"int main("},

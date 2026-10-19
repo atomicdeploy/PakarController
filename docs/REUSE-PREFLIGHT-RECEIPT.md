@@ -1,5 +1,33 @@
 # Donor-first preflight receipt
 
+## Source-only esp32WS2811 review and startup hardening
+
+User-requested bertmelis/esp32WS2811 pinned0222ef025f2b8e03f8c8aef35d63c545a98ad579:
+all14 C++ files read through EOF;24 tracked paths inventoried in the existing
+ledger. Actual upstream issue2/5 and open PR6 patch/conversations were read;
+PR6 has no comments/reviews/threads and fixes GRB->RGB. Keep our logical RGB and
+explicit board R/B swap, not an unreviewed channel-order change.
+
+Existing worker/stage/show/immutable frame/coalescing/clear/readback/colour/latch
+ownership is mapped in ESP32-WS2811-REUSE.md. The actual missing idle-LOW setup
+is now adapted before either backend allocates/initializes: reset/preload LOW/
+enable output; failure at each step stops before heap/RMT/TX. Canonical worker
+fixture passes22 cases across GPIO/DMA and RGB/BGR, including asymmetric channels
+through pixel480, GPIO failures, full black/immutable TX and existing faults.
+Source guard, live donor gate, inventory fixture and S3 SDK build pass. Candidate
+2193824B/SHA2a4e0d3e66c0523e5b930746125a4966092143c762f021feb8fcaffe97f14705
+is BUILT ONLY. No device/app deployment, live scene change or board contact.
+
+All four extra effect algorithms remain explicit useful parity gaps, not falsely
+imported: bounded nonblocking Aurora/Autumn/Circus/SnowSparkle plus shared effect
+capability/API/USB/persistence/all-client exposure. Concrete unsafe/obsolete
+bodies and hardware/package omissions are recorded by exact donor file. Fifteen
+new hash-bound comparisons (including retained MIT license) give255/4697 total,
+4442 still pending,205 known parity gaps. Required source gates run before S3
+builds and actual-worker tests, and the normal LED lookup now routes this donor.
+Previously deployed20a242b/ff6da73... remains the last verified running firmware;
+these source changes do not establish optical acceptance of the user's23-cell fault.
+
 ## Current actually recovered firmware
 
 Corrected20a242b is installed by verified application-only USB recovery:

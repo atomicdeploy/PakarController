@@ -9,8 +9,8 @@
 #include <cstdlib>
 #include <thread>
 #include <vector>
-#if !PAKAR_S3_LED_USE_DMA
 #include <driver/gpio.h>
+#if !PAKAR_S3_LED_USE_DMA
 #include <soc/gpio_reg.h>
 #endif
 
@@ -35,6 +35,8 @@ uint32_t cycle=0xfffffff0U,highAt=0,lastRise=0;
 unsigned bitCount=0;
 PakarS3::LedOutput* owner=nullptr;
 std::atomic<unsigned> producerCopies{0};
+std::atomic<unsigned> pinCalls{0},channelCreates{0},allocationCalls{0};
+unsigned pinFailure=0;
 std::atomic<bool> validateProducers{false};
 std::vector<uint8_t> staticBytes;
 template<class Predicate>void until(Predicate predicate){
@@ -77,9 +79,9 @@ int xTaskCreatePinnedToCore(void(*run)(void*),const char*,unsigned bytes,void* c
 }
 void vTaskDelay(TickType_t delay){if(Fixture::stopping)throw Fixture::Stop{};std::this_thread::sleep_for(std::chrono::milliseconds(delay));if(Fixture::stopping)throw Fixture::Stop{};}
 void vTaskDelete(void*){throw Fixture::Stop{};}
-void* heap_caps_malloc(size_t bytes,int caps){assert(caps==(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));assert(bytes==1440);auto* p=std::malloc(bytes);Fixture::allocations.push_back(p);return p;}
+void* heap_caps_malloc(size_t bytes,int caps){++Fixture::allocationCalls;assert(caps==(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));assert(bytes==1440);auto* p=std::malloc(bytes);Fixture::allocations.push_back(p);return p;}
 void heap_caps_free(void* pointer){for(auto& p:Fixture::allocations)if(p==pointer)p=nullptr;std::free(pointer);}
-int rmt_new_tx_channel(const rmt_tx_channel_config_t* config,rmt_channel_handle_t* channel){assert(config->flags.with_dma&&config->mem_block_symbols==2046&&config->intr_priority==3&&config->resolution_hz==40000000&&config->trans_queue_depth==1&&config->gpio_num==4);*channel=reinterpret_cast<void*>(1);return ESP_OK;}
+int rmt_new_tx_channel(const rmt_tx_channel_config_t* config,rmt_channel_handle_t* channel){assert(Fixture::pinCalls==3);++Fixture::channelCreates;assert(config->flags.with_dma&&config->mem_block_symbols==2046&&config->intr_priority==3&&config->resolution_hz==40000000&&config->trans_queue_depth==1&&config->gpio_num==4);*channel=reinterpret_cast<void*>(1);return ESP_OK;}
 namespace PakarS3 {
 int newCacheSafeLedChannel(const rmt_tx_channel_config_t *config,rmt_channel_handle_t *channel){return rmt_new_tx_channel(config,channel);}
 LedDmaIrqReceipt ledDmaIrqReceipt(){return {PAKAR_S3_LED_USE_DMA!=0,42,1,23,3};} // Actual allocator is tested separately.
@@ -132,11 +134,24 @@ void esp_rom_delay_us(unsigned micros){
 }
 
 void concurrentProducers(PakarS3::LedOutput& output);
+void asymmetricChannels(PakarS3::LedOutput& output);
+int pinStep(unsigned expected){assert(Fixture::pinCalls.load()==expected);const auto step=++Fixture::pinCalls;return step==Fixture::pinFailure?ESP_ERR_TIMEOUT:ESP_OK;}
+int gpio_reset_pin(gpio_num_t pin){assert(pin==4);return pinStep(0);}
+int gpio_set_level(gpio_num_t pin,int value){assert(pin==4&&value==0);return pinStep(1);}
+int gpio_set_direction(gpio_num_t pin,int mode){assert(pin==4&&mode==GPIO_MODE_OUTPUT);return pinStep(2);}
+void pinSetupFailure(unsigned step){
+ Fixture::pinFailure=step;PakarS3::LedOutput output;assert(output.begin());
+ Fixture::until([&]{return Fixture::field(output,"error_code")==ESP_ERR_TIMEOUT;});
+ Fixture::cleanup();
+ assert(Fixture::pinCalls==step&&Fixture::channelCreates==0&&Fixture::allocationCalls==0&&Fixture::frames.empty());
+ assert(output.json().find("\"ready\":false")!=std::string::npos);
+ assert(Fixture::field(output,"transmitted")==0&&Fixture::field(output,"failed")==0);
+ assert(PakarS3::LedOutput::acquireFlashPause());PakarS3::LedOutput::releaseFlashPause();
+ puts("Actual worker GPIO initialization: reset/LOW preload/output order; each failed step stops before allocation/RMT/TX; no false black-frame or ready receipt.");
+}
 #if !PAKAR_S3_LED_USE_DMA
-int gpio_reset_pin(gpio_num_t pin){assert(pin==4);return ESP_OK;}
-int gpio_set_direction(gpio_num_t pin,int mode){assert(pin==4&&mode==GPIO_MODE_OUTPUT);return ESP_OK;}
-int gpio_set_level(gpio_num_t pin,int value){assert(pin==4&&value==0);return ESP_OK;}
 void fixtureCriticalEnter(){
+ assert(Fixture::pinCalls==3);
  std::unique_lock<std::mutex> lock(Fixture::mutex);assert(!Fixture::live);Fixture::live=true;
  if(Fixture::block){Fixture::blockedGeneration=Fixture::blockGeneration;Fixture::changed.notify_all();}
  Fixture::changed.wait_for(lock,std::chrono::milliseconds(500),[]{return !Fixture::block||Fixture::stopping.load();});
@@ -179,7 +194,7 @@ void staticFunctional(){
  output.submit(rgb,255,false,2002);Fixture::until([&]{return Fixture::field(output,"revision")==2002;});
  const auto off=Fixture::count();std::this_thread::sleep_for(std::chrono::milliseconds(30));assert(Fixture::count()==off);
  {std::lock_guard<std::mutex> lock(Fixture::mutex);for(auto b:Fixture::frames.back())assert(b==0);}
- concurrentProducers(output);
+ concurrentProducers(output);asymmetricChannels(output);
  Fixture::cleanup();puts("Actual static worker: stackless serialized member submission,startup black, full480 RGB encoding/cycle-wrap timing,2000 mailbox coalescing, no unchanged refresh, Off black, frame-boundary/nested holds and timeout rejection passed.");
 }
 #endif
@@ -196,6 +211,31 @@ void concurrentProducers(PakarS3::LedOutput& output){
  CRGB final[480]{};output.submit(final,255,false,9999);
  PakarS3::LedOutput::releaseFlashPause();Fixture::until([&]{return Fixture::field(output,"revision")==9999;});
  assert(Fixture::producerCopies.load()>=2200);
+}
+
+// Upstream PR6 corrects accidental GRB packing. Exercise ACTUAL workers using
+// all three unequal channels through physical pixel480, preserving our explicit
+// RGB/BGR build selection and exactly-once brightness/correction.
+void asymmetricChannels(PakarS3::LedOutput& output){
+ CRGB rgb[480];for(size_t i=0;i<480;++i)rgb[i]={uint8_t(17*i+1),uint8_t(37*i+23),uint8_t(71*i+127)};
+ output.submit(rgb,211,true,10000);Fixture::until([&]{return Fixture::field(output,"revision")==10000;});
+ std::lock_guard<std::mutex> lock(Fixture::mutex);const auto& bytes=Fixture::frames.back();
+ const uint8_t correction[]={255,176,240};
+ for(size_t p=0;p<480;++p)for(size_t c=0;c<3;++c){
+  const uint8_t logical[]={rgb[p].r,rgb[p].g,rgb[p].b};const size_t index=PAKAR_S3_LED_SWAP_RED_BLUE?2-c:c;
+  const uint8_t expected=uint8_t((uint32_t(logical[index])*211*correction[index]+32512U)/65025U);
+#if PAKAR_S3_LED_USE_DMA
+  for(size_t bit=0;bit<8;++bit){rmt_symbol_word_t symbol;
+   std::memcpy(&symbol,bytes.data()+((p*3+c)*8+bit)*sizeof(symbol),sizeof(symbol));
+   const bool one=expected&(0x80U>>bit);
+   assert(symbol.duration0==(one?PakarS3::oneHigh:PakarS3::zeroHigh));
+   assert(symbol.duration1==(one?PakarS3::oneLow:PakarS3::zeroLow));
+   assert(symbol.level0==1&&symbol.level1==0);
+  }
+#else
+  assert(bytes.at(p*3+c)==expected);
+#endif
+ }
 }
 
 void functional(){
@@ -236,7 +276,7 @@ void functional(){
  {std::lock_guard<std::mutex> lock(Fixture::mutex);const auto& bytes=Fixture::frames.back();for(size_t i=0;i<480*24;++i){rmt_symbol_word_t symbol;std::memcpy(&symbol,bytes.data()+i*sizeof(symbol),sizeof(symbol));assert(symbol.duration0==PakarS3::zeroHigh&&symbol.duration1==PakarS3::zeroLow);}}
  output.submit(rgb,255,true,2003);Fixture::until([&]{return Fixture::field(output,"revision")==2003;});
  const auto resumed=Fixture::count();std::this_thread::sleep_for(std::chrono::milliseconds(30));assert(Fixture::count()==resumed&&resumed==off+1);
- concurrentProducers(output);
+ concurrentProducers(output);asymmetricChannels(output);
  Fixture::cleanup();puts("Actual DMA worker: stackless serialized member submission,1440-byte internal source,SDK MSB-first bytes encoding/timing,300us post-completion latch,startup black,immutable TX,2000 mailbox submissions/coalescing,no unchanged replay,off black/sleep/on resume,boundary/nested/concurrent holds and failed-quiesce recovery passed.");
 }
 void failure(bool disableFails,bool shortCompletion=false){
@@ -262,11 +302,14 @@ int main(int argc,char** argv){
  assert(driver.json().find(expected.substr(0,expected.size()-1))==0);
  assert(argc==2);std::thread watchdog([]{const auto end=Fixture::Clock::now()+std::chrono::seconds(8);while(!Fixture::finished){if(Fixture::Clock::now()>end)std::_Exit(2);std::this_thread::sleep_for(std::chrono::milliseconds(10));}});
  const std::string mode=argv[1];
+ if(mode.rfind("pin-failure-",0)==0){const auto step=unsigned(std::stoul(mode.substr(12)));assert(step>=1&&step<=3);pinSetupFailure(step);}
+ else {
 #if !PAKAR_S3_LED_USE_DMA
  assert(mode=="static");staticFunctional();
 #else
  if(mode=="functional")functional();else if(mode=="timeout")failure(false);else if(mode=="short-frame")failure(false,true);else{assert(mode=="stop-failure");failure(true);}
 #endif
+ }
  watchdog.join();
  puts("Host SDK doubles only: not physical RMT/DMA,RF,OTA or optical acceptance.");
 }

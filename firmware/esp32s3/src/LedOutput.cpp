@@ -4,11 +4,11 @@
 #include <esp_heap_caps.h>
 #include <esp_rom_sys.h>
 #include <esp_attr.h>
+#include <driver/gpio.h>
 #include <utility>
 #if !PAKAR_S3_LED_USE_DMA
 #include <sdkconfig.h>
 #include <esp_cpu.h>
-#include <driver/gpio.h>
 #include <soc/gpio_reg.h>
 #include <soc/soc.h>
 #if CONFIG_PM_ENABLE
@@ -84,12 +84,18 @@ void LedOutput::submit(const CRGB *rgb,uint8_t brightness,bool enabled,uint32_t 
   xQueueOverwrite(queue_,&producer_);submitted_.fetch_add(1);
 }
 void LedOutput::work(){
+  // esp32WS2811::_setupRMT explicitly keeps the wire idle LOW. Apply that
+  // requirement before allocation/channel setup on both of our backends.
+  // Preload LOW before enabling output so startup cannot expose a stale HIGH
+  // GPIO latch. This is not an all-off LED frame or level-shifter guarantee.
+  int pinError=gpio_reset_pin(static_cast<gpio_num_t>(PAKAR_S3_LED_DATA));
+  if(!pinError)pinError=gpio_set_level(static_cast<gpio_num_t>(PAKAR_S3_LED_DATA),0);
+  if(!pinError)pinError=gpio_set_direction(static_cast<gpio_num_t>(PAKAR_S3_LED_DATA),GPIO_MODE_OUTPUT);
+  if(pinError){error_.store(pinError);vTaskDelete(nullptr);return;}
 #if !PAKAR_S3_LED_USE_DMA
   constexpr size_t bytes=pixels*3;
   auto *payload=static_cast<uint8_t*>(heap_caps_malloc(bytes,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));
-  int error=payload?gpio_reset_pin(static_cast<gpio_num_t>(PAKAR_S3_LED_DATA)):ESP_ERR_NO_MEM;
-  if(!error)error=gpio_set_direction(static_cast<gpio_num_t>(PAKAR_S3_LED_DATA),GPIO_MODE_OUTPUT);
-  if(!error)error=gpio_set_level(static_cast<gpio_num_t>(PAKAR_S3_LED_DATA),0);
+  int error=payload?ESP_OK:ESP_ERR_NO_MEM;
 #if CONFIG_PM_ENABLE
   esp_pm_lock_handle_t frequencyLock=nullptr;
   if(!error)error=esp_pm_lock_create(ESP_PM_CPU_FREQ_MAX,0,"pakar-led",&frequencyLock);

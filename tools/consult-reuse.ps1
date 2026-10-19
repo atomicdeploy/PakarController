@@ -7,7 +7,7 @@ param(
     [string]$EvidencePath=(Join-Path $PSScriptRoot '../docs/file-comparison-evidence.json'),
     [string]$IndexPath=(Join-Path $PSScriptRoot '../docs/reuse-capabilities.json'),
     [string]$TargetRoot=(Join-Path $PSScriptRoot '..'),
-    [hashtable]$DonorRoots=@{Pealayer='C:\Users\David\AppData\Local\Programs\Pealayer\source\Pealayer'; RayanLamp='C:\Users\David\Documents\Codex\2026-07-23\ba\outputs\RayanLamp'},
+    [hashtable]$DonorRoots=@{Pealayer='C:\Users\David\AppData\Local\Programs\Pealayer\source\Pealayer'; RayanLamp='C:\Users\David\Documents\Codex\2026-07-23\ba\outputs\RayanLamp'; esp32WS2811=(Join-Path $PSScriptRoot '../../repos/esp32WS2811')},
     [switch]$Gate,
     [switch]$Summary,
     [switch]$RequireLive

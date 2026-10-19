@@ -1,5 +1,27 @@
 # PakarController comparison receipts
 
+## esp32WS2811 pinned donor comparison
+
+Pin0222ef025f2b8e03f8c8aef35d63c545a98ad579, complete14 C++ reads plus MIT
+license copy, all24 tracked paths inventoried. Open PR6/head3960ca... packing
+correction and all discussion/thread pages reviewed; no unreviewed merge.
+Actual idle-LOW policy now applies before GPIO and RMT worker initialization,
+with reset/LOW/output ordering and per-step failure rejection. Existing compact
+IDF5 payload/immutable frame/one engine retained instead of legacy driver APIs.
+
+Executed: test-led-worker.ps1 all22 cases, including asymmetric all480-pixel
+RGB/BGR GPIO/DMA data; esp32_ws2811_reuse_test.mjs; live required-donor gate;
+reuse_ledger_test.ps1; canonical S3 SDK16MB/OPI/buffered/rmt-dma/verified ISP/
+BLE-off/optional Ethernet build. Sketch2193671B; globals107564B; application
+2193824B/SHA2562a4e0d3e66c0523e5b930746125a4966092143c762f021feb8fcaffe97f14705,
+MD5fab2c00424722ad9c1d61f38f28707fd. Warm cache retained, no clean, no desktop/
+mobile rebuild or device contact. This candidate is NOT deployed/optically tested.
+
+Four optional effect algorithms remain openly pending, with exact-file reasons,
+not an all-feature parity claim. See ESP32-WS2811-REUSE.md and issue#2. Current
+ledger255 comparisons/4697 paths,4442 pending/205 gaps; no production checkbox
+closed from host/source evidence.
+
 ## Native saved board preferences
 
 Same SettingsStore.h/.cpp and Pealayer Preferences rows now map the actual native
