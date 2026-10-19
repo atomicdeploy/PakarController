@@ -70,6 +70,26 @@ Map<String, Object> settingsSnapshot(
   } else if (group == SettingsGroup.ethernet) {
     settingsValidateAddressing(result);
   } else {
+    final ntfyKeys = [
+      'ntfy_enabled',
+      'ntfy_host',
+      'ntfy_topic',
+      'ntfy_token_set',
+    ];
+    if (ntfyKeys.any(result.containsKey)) {
+      if (!ntfyKeys.every(result.containsKey) ||
+          !RegExp(r'^[A-Za-z0-9.-]+$')
+              .hasMatch(result['ntfy_host'] as String) ||
+          !RegExp(r'^[A-Za-z0-9_-]*$')
+              .hasMatch(result['ntfy_topic'] as String) ||
+          (result['ntfy_enabled'] == true && result['ntfy_topic'] == '')) {
+        throw const FormatException(
+          'Read complete ntfy settings; use a hostname and a single topic',
+        );
+      }
+      settingsBounded(result['ntfy_host'] as String, 63, 'ntfy host');
+      settingsBounded(result['ntfy_topic'] as String, 64, 'ntfy topic');
+    }
     for (final prefix in ['mqtt', 'websocket']) {
       final host = result['${prefix}_host'] as String;
       settingsBounded(host, 63, 'Host');
@@ -250,7 +270,8 @@ class DeviceSettingsWorkspace extends ChangeNotifier {
   static bool _public(SettingsGroup group, String key) =>
       group.fields.containsKey(key) &&
       !key.contains('password') &&
-      !key.contains('token');
+      !key.contains('token') &&
+      key != 'ntfy_topic';
   final _edits = <SettingsGroup, Map<String, Map<String, Object>>>{};
   bool _retired = false;
   Map<String, String>? _identity;
@@ -398,7 +419,9 @@ class DeviceSettingsSession extends ChangeNotifier {
   final int owner;
   final drafts = <SettingsGroup, SettingsDraft>{};
   final _reads = <SettingsGroup, int>{};
-  final mqttPassword = SecretEdit(), websocketToken = SecretEdit();
+  final mqttPassword = SecretEdit(),
+      websocketToken = SecretEdit(),
+      ntfyToken = SecretEdit();
   String wifiPassword = '',
       message = 'Read the actual saved device settings first';
   bool openNetwork = false, pending = false, disposed = false;
@@ -409,7 +432,8 @@ class DeviceSettingsSession extends ChangeNotifier {
       ? wifiPassword.isNotEmpty || openNetwork
       : group == SettingsGroup.cloud &&
             (mqttPassword.mode != SecretMode.keep ||
-                websocketToken.mode != SecretMode.keep);
+                websocketToken.mode != SecretMode.keep ||
+                ntfyToken.mode != SecretMode.keep);
   bool get dirty =>
       drafts.entries.any((e) => e.value.dirty || secretsDirty(e.key));
   void check() {
@@ -437,6 +461,7 @@ class DeviceSettingsSession extends ChangeNotifier {
     openNetwork = false;
     mqttPassword.clear();
     websocketToken.clear();
+    ntfyToken.clear();
   }
 
   void invalidate() {
@@ -471,6 +496,7 @@ class DeviceSettingsSession extends ChangeNotifier {
         } else if (group == SettingsGroup.cloud) {
           mqttPassword.clear();
           websocketToken.clear();
+          ntfyToken.clear();
         }
       } else {
         drafts[group]!.observe(next, secretsDirty: secretsDirty(group));
@@ -536,6 +562,7 @@ class DeviceSettingsSession extends ChangeNotifier {
       for (final entry in {
         'mqtt_password': mqttPassword,
         'websocket_token': websocketToken,
+        if (expected.containsKey('ntfy_token_set')) 'ntfy_token': ntfyToken,
       }.entries) {
         final key = '${entry.key}_set', value = entry.value.wireValue();
         if (value != null) form[entry.key] = value;
@@ -589,6 +616,7 @@ class DeviceSettingsSession extends ChangeNotifier {
       } else if (group == SettingsGroup.cloud) {
         mqttPassword.clear();
         websocketToken.clear();
+        ntfyToken.clear();
       }
       message = 'Saved public settings verified by device readback. Secrets remain write-only.';
       return true;

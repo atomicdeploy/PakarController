@@ -10,6 +10,8 @@ const remote = read('RemoteFirmware.cpp');
 const remoteHeader = read('RemoteFirmware.h');
 const automationStore = readFileSync(new URL('../libraries/BoardCore/src/pccontroller/AutomationStore.cpp', import.meta.url), 'utf8');
 const sketch = readFileSync(new URL('../firmware/esp8266/esp8266.ino', import.meta.url), 'utf8');
+assert.match(readFileSync(new URL('../firmware/esp32s3/src/SharedNtfyService.cpp',import.meta.url),'utf8'),
+  /#include <firmware\/esp8266\/src\/NtfyService.cpp>/,'The shared ntfy service must actually link on S3');
 
 assert.match(ispHeader, /SPIClass spi_\{FSPI\}/);
 assert.match(ispHeader, /#define PAKAR_S3_ISP_ELECTRICAL_VERIFIED 0/);

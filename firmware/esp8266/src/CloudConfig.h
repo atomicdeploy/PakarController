@@ -14,6 +14,13 @@ class CloudConfigStore {
                     const String &path, const String &token,
                     bool replaceToken);
   bool setTelemetrySeconds(uint16_t seconds);
+  bool setNtfy(bool enabled, const String &host, const String &topic,
+               const String &token, bool replaceToken);
+  bool ntfyEnabled() const { return record_.ntfyEnabled != 0; }
+  const char *ntfyHost() const { return record_.ntfyHost; }
+  const char *ntfyTopic() const { return record_.ntfyTopic; }
+  const char *ntfyToken() const { return record_.ntfyToken; }
+  bool ntfyTokenSet() const { return record_.ntfyToken[0] != '\0'; }
 
   bool mqttEnabled() const { return record_.mqttEnabled != 0; }
   bool mqttTls() const { return record_.mqttTls != 0; }
@@ -53,6 +60,12 @@ class CloudConfigStore {
     char webSocketToken[65];
     uint16_t telemetrySeconds;
     uint32_t checksum;
+    // Keep the original prefix intact for read-only migration of saved MQTT/WS.
+    uint8_t ntfyEnabled;
+    char ntfyHost[64];
+    char ntfyTopic[65];
+    char ntfyToken[65];
+    uint32_t fullChecksum;
   } __attribute__((packed));
 
   static uint32_t checksum(const Record &record);

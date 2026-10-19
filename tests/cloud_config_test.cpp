@@ -14,11 +14,14 @@ struct Stored {
   char webSocketHost[64], webSocketPath[97], webSocketToken[65];
   uint16_t telemetrySeconds;
   uint32_t checksum;
+  uint8_t ntfyEnabled;
+  char ntfyHost[64],ntfyTopic[65],ntfyToken[65];
+  uint32_t fullChecksum;
 } __attribute__((packed));
 void digest(Stored &r) {
-  r.checksum = 2166136261U;
+  r.fullChecksum = 2166136261U;
   const auto *bytes = reinterpret_cast<const uint8_t *>(&r);
-  for (size_t i=0;i<offsetof(Stored,checksum);++i) r.checksum=(r.checksum^bytes[i])*16777619U;
+  for (size_t i=0;i<offsetof(Stored,fullChecksum);++i) r.fullChecksum=(r.fullChecksum^bytes[i])*16777619U;
 }
 void writeRecord(fs::FS &filesystem, Stored r) {
   digest(r);
@@ -44,6 +47,7 @@ int main() {
   fs::FS filesystem; CloudConfigStore settings;
   assert(settings.begin(filesystem));
   assert(!settings.mqttEnabled()&&!settings.webSocketEnabled());
+  assert(!settings.ntfyEnabled() && String(settings.ntfyHost())=="ntfy.sh" && !settings.ntfyTokenSet());
   assert(settings.setMqtt(true,true,"mqtt.fixture.invalid",8883,u8"کاربر",u8"رمز fixture\npassword","fixture/base",true));
   assert(settings.setWebSocket(true,true,"ws.fixture.invalid",443,"/ws?fixture=1",u8"توکن-fixture",true));
   assert(settings.setTelemetrySeconds(17)); assert(settings.save());
@@ -95,6 +99,27 @@ int main() {
 
   // Valid checksums cannot make malformed bools/strings/ports authoritative.
   const Stored good=record(active);
+  // Old-layout migration is read-only until the next explicit save, preserves
+  // all existing credentials, and cannot opt a board in to notifications.
+  {
+    Stored old=good;old.schema=1;old.checksum=2166136261U;
+    auto *raw=reinterpret_cast<uint8_t*>(&old);
+    for(size_t i=0;i<offsetof(Stored,checksum);++i)old.checksum=(old.checksum^raw[i])*16777619U;
+    fs::FS legacy;auto data=std::make_shared<File::Data>();
+    data->bytes.assign(raw,raw+offsetof(Stored,ntfyEnabled));legacy.files["/cloud.bin"]=data;
+    CloudConfigStore loaded;assert(loaded.begin(legacy));
+    assert(!loaded.ntfyEnabled() && legacy.faults->writes==0);
+    assert(String(loaded.mqttPassword())==u8"رمز fixture\npassword" && String(loaded.webSocketToken())==u8"توکن-fixture");
+    assert(loaded.setNtfy(true,"ntfy.sh","fixture-private","tk_fixture",true));assert(loaded.save());
+    CloudConfigStore restored;assert(restored.begin(legacy));assert(restored.ntfyEnabled() && restored.ntfyTokenSet());
+    assert(restored.setNtfy(false,"ntfy.sh","fixture-private","",false));assert(restored.ntfyTokenSet());
+    assert(restored.setNtfy(false,"ntfy.sh","fixture-private","",true));assert(!restored.ntfyTokenSet());
+  }
+  for(const char *bad:{"a/b","bad?x","with space","bad\r\nHeader:x"})
+    assert(!settings.setNtfy(true,"ntfy.sh",bad,"",false));
+  assert(!settings.setNtfy(true,"https://ntfy.sh","ok","",false));
+  assert(!settings.setNtfy(true,"ntfy.sh","","",false));
+  assert(!settings.setNtfy(true,"ntfy.sh","ok","bad\r\nHeader",true));
   for (unsigned fault=0;fault<14;++fault) {
     Stored damaged=good;
     switch(fault) {

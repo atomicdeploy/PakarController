@@ -571,13 +571,20 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       );
     }
     final numeric = ['port', 'interval'].contains(type);
-    return textField('$group:$key', label, '${draft.value[key]}', (value) {
-      session.set(
-        group,
-        key,
-        numeric ? int.tryParse(latinDigits(value)) ?? value : value,
-      );
-    }, number: numeric);
+    return textField(
+      '$group:$key',
+      label,
+      '${draft.value[key]}',
+      (value) {
+        session.set(
+          group,
+          key,
+          numeric ? int.tryParse(latinDigits(value)) ?? value : value,
+        );
+      },
+      number: numeric,
+      secret: key == 'ntfy_topic',
+    );
   }
 
   Widget secretField(
@@ -926,17 +933,53 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
         label: const Text('Open live controls'),
       ),
     ]),
-    'firmware' => FirmwarePage(
-      api: widget.api,
-      authorized: widget.authorized,
-      busyChanged: (value) {
-        if (mounted) {
-          setState(() {
-            working = value;
-            maintenanceActive = value;
-          });
-        }
-      },
+    'firmware' => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (session.drafts[SettingsGroup.cloud]?.value.containsKey(
+              'ntfy_enabled',
+            ) ==
+            true)
+          card('Firmware notifications · ntfy', [
+            publicField(
+              SettingsGroup.cloud,
+              'ntfy_enabled',
+              'Send firmware-update notifications (opt in)',
+            ),
+            publicField(SettingsGroup.cloud, 'ntfy_host', 'HTTPS server'),
+            publicField(SettingsGroup.cloud, 'ntfy_topic', 'Private topic'),
+            secretField(
+              'ntfy-token',
+              'token',
+              session.ntfyToken,
+              session.drafts[SettingsGroup.cloud]!.value['ntfy_token_set'] ==
+                  true,
+            ),
+            const Text(
+              'Disabled by default. Major stages and results only; flashing never waits for delivery. No ntfy message can trigger an update.',
+            ),
+            FilledButton.icon(
+              onPressed: working || session.pending
+                  ? null
+                  : () => saveGroup(SettingsGroup.cloud),
+              icon: const Icon(PakarIcons.floppyDisk),
+              label: const Text('Save notifications and verify'),
+            ),
+          ]),
+        FirmwarePage(
+          key: const ValueKey('board-firmware-settings'),
+          api: widget.api,
+          authorized: widget.authorized,
+          busyChanged: (value) {
+            if (mounted) {
+              setState(() {
+                working = value;
+                maintenanceActive = value;
+              });
+            }
+          },
+        ),
+      ],
     ),
     _ => card('Observed device', [
       Text(widget.status.peer.name),

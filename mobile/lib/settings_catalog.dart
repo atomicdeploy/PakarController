@@ -90,7 +90,7 @@ const deviceSettingsCatalog = {
       "id": "firmware",
       "label": "Firmware & storage",
       "icon": "FLOPPY_DISK",
-      "keywords": "OTA firmware flash EEPROM backup ISP update",
+      "keywords": "OTA firmware flash EEPROM backup ISP update ntfy notifications topic",
       "features": [
         "isp",
         "ota"
@@ -140,6 +140,10 @@ const deviceSettingsCatalog = {
     "websocket_port": "port",
     "websocket_path": "string",
     "websocket_token_set": "boolean",
-    "telemetry_seconds": "interval"
+    "telemetry_seconds": "interval",
+    "ntfy_enabled": "optional:boolean",
+    "ntfy_host": "optional:string",
+    "ntfy_topic": "optional:string",
+    "ntfy_token_set": "optional:boolean"
   }
 };

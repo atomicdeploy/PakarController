@@ -73,6 +73,13 @@ String cloudConfigurationJson() {
   d[F("websocket_connected")]=cloudServices.webSocketConnected();
   d[F("telemetry_seconds")]=cloudConfig.telemetrySeconds();d[F("last_error")]=cloudServices.lastError();
   d[F("apply_pending")]=cloudApplyPending;
+  if(NtfyService::supported()) {
+    d["ntfy_enabled"]=cloudConfig.ntfyEnabled();d["ntfy_host"]=cloudConfig.ntfyHost();
+    d["ntfy_topic"]=cloudConfig.ntfyTopic();d["ntfy_token_set"]=cloudConfig.ntfyTokenSet();
+    d["ntfy_delivery"]["pending"]=ntfyService.pending();
+    d["ntfy_delivery"]["http_status"]=ntfyService.status();
+    d["ntfy_delivery"]["accepted"]=ntfyService.accepted();d["ntfy_delivery"]["failed"]=ntfyService.failed();
+  }
   return ConfigurationManagement::json(d);
 }
 
@@ -84,6 +91,8 @@ bool updateCloudConfiguration(JsonObjectConst patch,String &result,bool internet
   uint16_t mqttPort=candidate.mqttPort(),wsPort=candidate.webSocketPort(),seconds=candidate.telemetrySeconds();
   String host=candidate.mqttHost(),user=candidate.mqttUser(),password,topic=candidate.mqttBaseTopic();
   String wsHost=candidate.webSocketHost(),path=candidate.webSocketPath(),token;
+  bool ntfy=candidate.ntfyEnabled();
+  String ntfyHost=candidate.ntfyHost(),ntfyTopic=candidate.ntfyTopic(),ntfyToken;
   ConfigurationManagement::Patch read{patch,result};
   if(!read.boolean("mqtt_enabled",mqtt) || !read.boolean("mqtt_tls",mqttTls) ||
       !read.boolean("websocket_enabled",ws) || !read.boolean("websocket_tls",wsTls) ||
@@ -92,7 +101,10 @@ bool updateCloudConfiguration(JsonObjectConst patch,String &result,bool internet
       !read.text("mqtt_host",host,63) || !read.text("mqtt_user",user,32) ||
       !read.text("mqtt_password",password,64) || !read.text("mqtt_base_topic",topic,64) ||
       !read.text("websocket_host",wsHost,63) || !read.text("websocket_path",path,96) ||
-      !read.text("websocket_token",token,64))return false;
+      !read.text("websocket_token",token,64) || !read.boolean("ntfy_enabled",ntfy) ||
+      !read.text("ntfy_host",ntfyHost,63) || !read.text("ntfy_topic",ntfyTopic,64) ||
+      !read.text("ntfy_token",ntfyToken,64))return false;
+  if(ntfy && !NtfyService::supported()) {result=F("ntfy HTTPS worker is unavailable on this build");return false;}
   if(!read.supplied) {result=F("No cloud configuration fields supplied");return false;}
   if(internetCommand && ((mqtt&&!mqttTls)||(ws&&!wsTls))) {
     result=F("Internet configuration requires TLS for every enabled cloud service");return false;
@@ -100,7 +112,8 @@ bool updateCloudConfiguration(JsonObjectConst patch,String &result,bool internet
   if(!candidate.setMqtt(mqtt,mqttTls,host,mqttPort,user,password,topic,
           !patch["mqtt_password"].isUnbound()) ||
       !candidate.setWebSocket(ws,wsTls,wsHost,wsPort,path,token,
-          !patch["websocket_token"].isUnbound()) || !candidate.setTelemetrySeconds(seconds)) {
+          !patch["websocket_token"].isUnbound()) || !candidate.setTelemetrySeconds(seconds) ||
+      !candidate.setNtfy(ntfy,ntfyHost,ntfyTopic,ntfyToken,!patch["ntfy_token"].isUnbound())) {
     result=candidate.lastError();return false;
   }
   // Prepare a bounded response before the irreversible durable commit. Never
@@ -108,6 +121,7 @@ bool updateCloudConfiguration(JsonObjectConst patch,String &result,bool internet
   if(!ConfigurationManagement::acknowledgement(result))return false;
   if(!candidate.save()) {result=candidate.lastError();return false;}
   cloudConfig=candidate;
+  ntfyService.configurationChanged();
   cloudApplyAt=millis()+1000U;cloudApplyPending=true;
   return true;
 }

@@ -109,6 +109,10 @@ pub struct Cloud {
     pub websocket_path: String,
     pub websocket_token_set: bool,
     pub telemetry_seconds: u16,
+    pub ntfy_enabled: Option<bool>,
+    pub ntfy_host: Option<String>,
+    pub ntfy_topic: Option<String>,
+    pub ntfy_token_set: Option<bool>,
 }
 fn bounded(value: &str, max: usize, label: &str) -> Result<(), String> {
     if value.len() > max || value.chars().any(char::is_control) {
@@ -148,6 +152,16 @@ impl Network {
 }
 impl Cloud {
     pub fn validate(&self) -> Result<(), String> {
+        if self.ntfy_enabled.is_some() || self.ntfy_host.is_some() || self.ntfy_topic.is_some() || self.ntfy_token_set.is_some() {
+            let (Some(enabled),Some(server),Some(topic),Some(_)) = (self.ntfy_enabled,self.ntfy_host.as_ref(),self.ntfy_topic.as_ref(),self.ntfy_token_set) else {
+                return Err("Read complete ntfy settings first".into());
+            };
+            host(server,true,"ntfy server")?;
+            bounded(topic,64,"ntfy topic")?;
+            if (enabled && topic.is_empty()) || !topic.bytes().all(|c| c.is_ascii_alphanumeric() || b"_-".contains(&c)) {
+                return Err("ntfy needs a single topic using letters, numbers, - or _".into());
+            }
+        }
         host(&self.mqtt_host, self.mqtt_enabled, "MQTT broker")?;
         host(
             &self.websocket_host,
@@ -277,11 +291,13 @@ impl Write {
         config: &Cloud,
         password: &SecretEdit,
         token: &SecretEdit,
+        ntfy_token: &SecretEdit,
     ) -> Result<Self, String> {
         config.validate()?;
         let mut expected = config.clone();
         expected.mqtt_password_set = password.expected_presence(config.mqtt_password_set);
         expected.websocket_token_set = token.expected_presence(config.websocket_token_set);
+        if let Some(present)=config.ntfy_token_set { expected.ntfy_token_set=Some(ntfy_token.expected_presence(present)); }
         let mut form = vec![
             ("mqtt_enabled".into(), config.mqtt_enabled.to_string()),
             ("mqtt_tls".into(), config.mqtt_tls.to_string()),
@@ -307,6 +323,12 @@ impl Write {
         }
         if let Some(value) = token.form_value()? {
             form.push(("websocket_token".into(), value));
+        }
+        if let Some(enabled)=config.ntfy_enabled {
+            form.push(("ntfy_enabled".into(),enabled.to_string()));
+            form.push(("ntfy_host".into(),config.ntfy_host.clone().unwrap_or_default()));
+            form.push(("ntfy_topic".into(),config.ntfy_topic.clone().unwrap_or_default()));
+            if let Some(value)=ntfy_token.form_value()? {form.push(("ntfy_token".into(),value));}
         }
         Ok(Self {
             id,
@@ -385,6 +407,7 @@ pub struct Editor {
     pub open_network: bool,
     pub mqtt_password: SecretEdit,
     pub websocket_token: SecretEdit,
+    pub ntfy_token: SecretEdit,
     pub pending: Option<(u64, Group)>,
     pub serial: u64,
     pub message: String,
@@ -434,6 +457,7 @@ impl Editor {
             || self.open_network
             || self.mqtt_password.mode != SecretMode::Keep
             || self.websocket_token.mode != SecretMode::Keep
+            || self.ntfy_token.mode != SecretMode::Keep
     }
     pub fn clear_secrets(&mut self) {
         self.feed_token.clear();
@@ -442,6 +466,7 @@ impl Editor {
         self.open_network = false;
         self.mqtt_password = SecretEdit::default();
         self.websocket_token = SecretEdit::default();
+        self.ntfy_token = SecretEdit::default();
     }
     pub fn discard(&mut self) {
         if let Some(d)=&mut self.status_rgb{d.discard();}
@@ -567,6 +592,7 @@ impl Editor {
                         self.cloud = None;
                         self.mqtt_password = SecretEdit::default();
                         self.websocket_token = SecretEdit::default();
+                        self.ntfy_token = SecretEdit::default();
                         self.observe(group.path(), value)
                     }
                 };
@@ -698,7 +724,22 @@ mod tests {
             websocket_path: "/controller".into(),
             websocket_token_set: false,
             telemetry_seconds: 30,
+            ntfy_enabled:None,ntfy_host:None,ntfy_topic:None,ntfy_token_set:None,
         }
+    }
+    #[test]
+    fn ntfy_opt_in_validation_secret_presence_and_optional_support() {
+        let mut c=cloud();let keep=SecretEdit::default();
+        assert!(!Write::cloud(1,&c,&keep,&keep,&keep).unwrap().form.iter().any(|(k,_)|k.starts_with("ntfy")));
+        c.ntfy_enabled=Some(false);c.ntfy_host=Some("ntfy.sh".into());
+        c.ntfy_topic=Some("fixture-private".into());c.ntfy_token_set=Some(false);
+        c.validate().unwrap();c.ntfy_enabled=Some(true);
+        let token=SecretEdit{mode:SecretMode::Replace,value:"tk_fixture".into()};
+        let w=Write::cloud(1,&c,&keep,&keep,&token).unwrap();
+        assert!(w.form.contains(&("ntfy_enabled".into(),"true".into())));
+        assert!(w.form.contains(&("ntfy_token".into(),"tk_fixture".into())));
+        let Expected::Cloud(saved)=w.expected else {panic!()};assert_eq!(saved.ntfy_token_set,Some(true));
+        for topic in ["","bad/path","bad\r\nheader"] {c.ntfy_topic=Some(topic.into());assert!(c.validate().is_err());}
     }
     #[test]
     fn missing_required_fields_are_not_defaults() {
@@ -786,7 +827,7 @@ mod tests {
     #[test]
     fn all_cloud_fields_and_secret_presence_are_verified() {
         let write =
-            Write::cloud(2, &cloud(), &SecretEdit::default(), &SecretEdit::default()).unwrap();
+            Write::cloud(2, &cloud(), &SecretEdit::default(), &SecretEdit::default(), &SecretEdit::default()).unwrap();
         assert!(
             write
                 .verify_readback(&serde_json::to_value(cloud()).unwrap())
@@ -818,14 +859,14 @@ mod tests {
             mode: SecretMode::Clear,
             value: String::new(),
         };
-        let write = Write::cloud(1, &cloud(), &keep, &keep).unwrap();
+        let write = Write::cloud(1, &cloud(), &keep, &keep, &keep).unwrap();
         assert!(
             write
                 .form
                 .iter()
                 .all(|(k, _)| k != "mqtt_password" && k != "websocket_token")
         );
-        let write = Write::cloud(2, &cloud(), &replace, &clear).unwrap();
+        let write = Write::cloud(2, &cloud(), &replace, &clear, &keep).unwrap();
         assert!(
             write
                 .form

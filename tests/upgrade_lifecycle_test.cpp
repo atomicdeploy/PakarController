@@ -1,4 +1,5 @@
 #include "../firmware/esp8266/src/UpgradeLifecycle.h"
+#include "../firmware/esp8266/src/NtfyNotice.h"
 #include <cassert>
 #include <cstdio>
 #include <initializer_list>
@@ -10,6 +11,31 @@ using PakarUpdate::Visual;
 static uint32_t after(uint32_t start, uint32_t elapsed) { return start + elapsed; }
 
 int main() {
+  {
+    Lifecycle l;PakarUpdate::NtfyNotice notices;PakarUpdate::NtfyNotice::Notice n;
+    assert(!notices.observe(l,1) && !notices.take(n,1));
+    assert(l.observe(Source::Local,1,"receiving",0,100,true,false,10));
+    assert(notices.observe(l,10) && !notices.observe(l,11));
+    assert(l.observe(Source::Local,1,"receiving",80,100,true,false,20));
+    assert(!notices.observe(l,20)); // No notification per chunk/percentage.
+    assert(notices.observe(l,30010));
+    assert(l.observe(Source::Local,1,"ready-to-reboot",100,100,true,false,30011));
+    assert(notices.observe(l,30011) && notices.take(n,30011));
+    assert(!n.verified && !strcmp(n.phase,"ready-to-reboot"));
+    assert(!notices.take(n,30012)); // Latest only, not a replay spool.
+    assert(l.observe(Source::Local,1,"complete",0,0,false,false,30013));
+    assert(!notices.observe(l,30013)); // An unverified complete is never success.
+    assert(l.observe(Source::Local,1,"complete",0,0,false,true,30014));
+    assert(notices.observe(l,30014) && notices.take(n,30014) && n.verified);
+    assert(!notices.observe(l,30015));
+    assert(l.observe(Source::Remote,2,"download_esp",0,100,true,false,40000));
+    assert(notices.observe(l,40000));
+    assert(l.observe(Source::Remote,2,"failed",0,0,false,false,40001));
+    assert(notices.observe(l,40001) && notices.take(n,40001) && !strcmp(n.phase,"failed"));
+    notices.clear();assert(!notices.pending());
+    assert(notices.observe(l,UINT32_MAX-10));
+    assert(!notices.take(n,300000U)); // TTL and uptime rollover.
+  }
   // A normal boot fades the restored scene, but is not an update operation or
   // a synthesized completion/event. Startup expires without another observe.
   {

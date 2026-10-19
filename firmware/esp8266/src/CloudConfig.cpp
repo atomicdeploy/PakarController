@@ -7,7 +7,7 @@ namespace {
 constexpr char kPath[] = "/cloud.bin";
 constexpr char kPending[] = "/cloud.pending";
 constexpr uint32_t kMagic = 0x504B434CUL;  // PKCL
-constexpr uint8_t kSchema = 1;
+constexpr uint8_t kSchema = 2; // Private file layout only, not an API selector.
 
 uint32_t checksumBytes(const uint8_t *bytes, size_t length) {
   uint32_t value = 2166136261UL;
@@ -52,21 +52,30 @@ CloudConfigStore cloudConfig;
 
 uint32_t CloudConfigStore::checksum(const Record &record) {
   return checksumBytes(reinterpret_cast<const uint8_t *>(&record),
-                       offsetof(Record, checksum));
+                       offsetof(Record, fullChecksum));
 }
 
 bool CloudConfigStore::validRecord(const Record &r) {
   if (r.magic != kMagic || r.schema != kSchema || r.mqttEnabled > 1 ||
       r.mqttTls > 1 || r.webSocketEnabled > 1 || r.webSocketTls > 1 ||
       r.mqttPort == 0 || r.webSocketPort == 0 || r.telemetrySeconds < 1 ||
-      r.telemetrySeconds > 3600 || r.checksum != checksum(r)) return false;
+      r.telemetrySeconds > 3600 || r.fullChecksum != checksum(r) || r.ntfyEnabled > 1) return false;
   if (!canonicalString(r.mqttHost, sizeof(r.mqttHost)) ||
       !canonicalString(r.mqttUser, sizeof(r.mqttUser)) ||
       !canonicalString(r.mqttPassword, sizeof(r.mqttPassword)) ||
       !canonicalString(r.mqttBaseTopic, sizeof(r.mqttBaseTopic)) ||
       !canonicalString(r.webSocketHost, sizeof(r.webSocketHost)) ||
       !canonicalString(r.webSocketPath, sizeof(r.webSocketPath)) ||
-      !canonicalString(r.webSocketToken, sizeof(r.webSocketToken))) return false;
+      !canonicalString(r.webSocketToken, sizeof(r.webSocketToken)) ||
+      !canonicalString(r.ntfyHost, sizeof(r.ntfyHost)) ||
+      !canonicalString(r.ntfyTopic, sizeof(r.ntfyTopic)) ||
+      !canonicalString(r.ntfyToken, sizeof(r.ntfyToken))) return false;
+  if (!r.ntfyHost[0] || !validHost(r.ntfyHost) || strchr(r.ntfyHost, ':') ||
+      (r.ntfyEnabled && !r.ntfyTopic[0])) return false;
+  for (const char *p=r.ntfyTopic; *p; ++p)
+    if (!(isalnum(static_cast<unsigned char>(*p)) || *p=='_' || *p=='-')) return false;
+  for (const char *p=r.ntfyToken; *p; ++p)
+    if (static_cast<unsigned char>(*p)<33 || static_cast<unsigned char>(*p)>126) return false;
   return (!r.mqttEnabled || r.mqttHost[0]) && validHost(r.mqttHost) &&
       r.mqttBaseTopic[0] && validText(r.mqttBaseTopic, false, true) &&
       (!r.webSocketEnabled || r.webSocketHost[0]) && validHost(r.webSocketHost) &&
@@ -98,7 +107,8 @@ void CloudConfigStore::defaults() {
   record_.webSocketPort = 443;
   strlcpy(record_.webSocketPath, "/", sizeof(record_.webSocketPath));
   record_.telemetrySeconds = 5;
-  record_.checksum = checksum(record_);
+  strlcpy(record_.ntfyHost, "ntfy.sh", sizeof(record_.ntfyHost));
+  record_.fullChecksum = checksum(record_);
 }
 
 bool CloudConfigStore::begin(fs::FS &filesystem) {
@@ -107,12 +117,17 @@ bool CloudConfigStore::begin(fs::FS &filesystem) {
   error_ = String();
   File file = filesystem.open(kPath, "r");
   if (!file) return true;
-  Record stored{};
+  Record stored=record_;
+  const bool legacy=file.size()==offsetof(Record, ntfyEnabled);
+  const size_t bytes=legacy?offsetof(Record, ntfyEnabled):sizeof(stored);
   const bool complete =
-      file.size() == sizeof(stored) &&
-      file.read(reinterpret_cast<uint8_t *>(&stored), sizeof(stored)) ==
-          sizeof(stored);
+      file.size() == bytes &&
+      file.read(reinterpret_cast<uint8_t *>(&stored), bytes) == bytes;
   file.close();
+  if (complete && legacy && stored.schema==1 && stored.checksum==checksumBytes(
+      reinterpret_cast<const uint8_t *>(&stored), offsetof(Record, checksum))) {
+    stored.schema=kSchema; stored.checksum=0; stored.fullChecksum=checksum(stored);
+  }
   if (!complete || !validRecord(stored)) {
     error_ = F("cloud settings checksum is invalid; safe disabled defaults loaded");
     return false;
@@ -126,7 +141,7 @@ bool CloudConfigStore::save() {
     error_ = F("LittleFS is not mounted");
     return false;
   }
-  record_.checksum = checksum(record_);
+  record_.fullChecksum = checksum(record_);
   if (!validRecord(record_)) {
     error_ = F("invalid cloud settings; previous settings preserved"); return false;
   }
@@ -187,7 +202,7 @@ bool CloudConfigStore::setMqtt(bool enabled, bool tls, const String &host,
   candidate.mqttEnabled = enabled ? 1 : 0;
   candidate.mqttTls = tls ? 1 : 0;
   candidate.mqttPort = port;
-  candidate.checksum = checksum(candidate);
+  candidate.fullChecksum = checksum(candidate);
   if (!validRecord(candidate)) {
     error_ = F("invalid MQTT host or base topic"); return false;
   }
@@ -223,7 +238,7 @@ bool CloudConfigStore::setWebSocket(bool enabled, bool tls,
   candidate.webSocketEnabled = enabled ? 1 : 0;
   candidate.webSocketTls = tls ? 1 : 0;
   candidate.webSocketPort = port;
-  candidate.checksum = checksum(candidate);
+  candidate.fullChecksum = checksum(candidate);
   if (!validRecord(candidate)) {
     error_ = F("invalid WebSocket host, path or token"); return false;
   }
@@ -238,7 +253,20 @@ bool CloudConfigStore::setTelemetrySeconds(uint16_t seconds) {
     return false;
   }
   record_.telemetrySeconds = seconds;
-  record_.checksum = checksum(record_);
+  record_.fullChecksum = checksum(record_);
   error_ = String();
   return true;
+}
+
+bool CloudConfigStore::setNtfy(bool enabled, const String &host, const String &topic,
+                              const String &token, bool replaceToken) {
+  Record candidate=record_;
+  if (!copyChecked(candidate.ntfyHost,sizeof(candidate.ntfyHost),host,F("ntfy host"),error_) ||
+      !copyChecked(candidate.ntfyTopic,sizeof(candidate.ntfyTopic),topic,F("ntfy topic"),error_) ||
+      (replaceToken && !copyChecked(candidate.ntfyToken,sizeof(candidate.ntfyToken),token,F("ntfy token"),error_))) return false;
+  candidate.ntfyEnabled=enabled?1:0; candidate.fullChecksum=checksum(candidate);
+  if (!validRecord(candidate)) {
+    error_=F("ntfy requires a hostname, a single alphanumeric/-/_ topic and an optional printable bearer token"); return false;
+  }
+  record_=candidate;error_=String();return true;
 }

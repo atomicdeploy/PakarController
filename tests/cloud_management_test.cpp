@@ -17,6 +17,12 @@ struct CloudFixture {
   bool webSocketConnected()const{return false;}
   const char* lastError()const{return "fixture \"quoted\"\nerror";}
 } cloudServices;
+struct NtfyService {
+  static constexpr bool supported(){return true;}
+  bool pending()const{return false;}int status()const{return 0;}
+  uint32_t accepted()const{return 0;}uint32_t failed()const{return 0;}
+  void configurationChanged(){}
+} ntfyService;
 namespace NetworkPath {
 bool ready(){return false;}
 const char* interfaceName(){return "none";}
@@ -53,6 +59,7 @@ int main() {
   auto info=snapshot(cloudConfigurationJson());
   assert(info["mqtt_password_set"]==true&&info["mqtt_password"].isNull());
   assert(info["last_error"]=="fixture \"quoted\"\nerror"&&info["mqtt_state"]==-1);
+  assert(info["ntfy_enabled"]==false && info["ntfy_host"]=="ntfy.sh" && info["ntfy_token"].isNull());
   for(const char* invalid:{"{\"mqtt_enabled\":1}","{\"mqtt_tls\":null}","{\"mqtt_port\":0}",
       "{\"mqtt_port\":65536}","{\"telemetry_seconds\":1.5}","{\"telemetry_seconds\":-1}",
       "{\"telemetry_seconds\":3601}","{\"mqtt_host\":false}","{\"mqtt_host\":\"a\\u0000b\"}","{\"unknown\":1}"}) {
@@ -70,6 +77,13 @@ int main() {
   assert(cloud("{\"telemetry_seconds\":18}",result));applied();
   assert(filesystem.faults->writes==writes);
   assert(cloud("{\"mqtt_tls\":false}",result));applied(); // Authorized local plain service.
+  assert(cloud("{\"ntfy_enabled\":true,\"ntfy_topic\":\"fixture-private\",\"ntfy_token\":\"tk_fixture\"}",result));applied();
+  info=snapshot(cloudConfigurationJson());
+  assert(info["ntfy_enabled"]==true && info["ntfy_token_set"]==true && info["ntfy_token"].isNull());
+  assert(!cloud("{\"ntfy_topic\":\"bad/path\"}",result));
+  assert(!cloud("{\"ntfy_enabled\":1}",result));
+  assert(cloud("{\"ntfy_enabled\":false}",result));applied();
+  assert(cloudConfig.ntfyTokenSet());
 
   assert(network("{\"station_enabled\":true,\"ssid\":\"fixture-ssid\",\"password\":\"fixture-password\"}",result));
   assert(networkApplyPending&&networkApplyAt==1123);applied();

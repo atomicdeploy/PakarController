@@ -1,5 +1,65 @@
 # Donor-first preflight receipt
 
+## Opt-in board firmware notifications
+
+Consulted remote-ota and read the complete actual PCController
+docs/UPDATE-PROGRESS.md and PU850 LocalLib/AsyncOTA.{cpp,h} and
+FirmwareTransfer.{cpp,h}. Reuse the measured-stage, finite notification and
+verified-new-boot lifecycle already adapted here. No donor ntfy publisher was
+found in the searched PCController mobile, Pealayer src or RayanLamp internal/Web
+sources; this is not an exhaustive exclusion of their remaining files.
+
+Board cloud configuration adds optional ntfy_enabled/host/topic/token_set and
+write-only ntfy_token under the same unversioned /api/cloud and typed cloud
+command settings. Default off, default host ntfy.sh, no default topic. Web,
+native and mobile firmware settings use existing pinned ACK/readback/draft
+contracts, not independent client notification preferences. Old cloud.bin
+credentials migrate without writing on boot; explicit saves retain the pending,
+readback and rename transaction and identical saves cause no flash writes.
+
+NtfyNotice consumes loop-owned lifecycle events, coalesces measured progress
+and never labels receiving100% or reboot-pending as success. One volatile latest
+notice expires after five minutes, not a durable replay spool. HTTPS runs on an
+opt-in S3 worker outside the LED loop/OTA callbacks; dispatch defers during
+maintenance. Progress during flash may therefore collapse into the verified
+post-boot result. Certificate/hostname validation, valid clock, bounded HTTP,
+no redirects and numeric-only status adapt RemoteFirmware. No POST retry after
+ambiguous failure and no incoming ntfy command/auto-flash authority. Token is
+never returned, topic/token are absent from telemetry and public draft export.
+An already dispatched POST cannot be retracted when opt-out is saved.
+
+ESP8266 has no nonblocking HTTPS worker in this slice: optional settings are not
+advertised and enable is rejected, rather than adding another blocking call to
+its LED/UART loop. Public ntfy delivery, real update/reboot notification, phone
+receipt and TLS/OTA/LED coexistence remain pending opt-in live acceptance. No
+topic is invented, no firmware deployment or external notification is implied.
+
+The same PU Commands.h typed property/get/set owner exposes ntfy.enabled,
+ntfy.host, ntfy.topic and ntfy.token on S3 Telnet/framed serial; topic/token are
+write-only and excluded from shell history. Read Commands.{h,cpp} completely;
+do not import its readable Wi-Fi passwords. Existing TUI network view has a
+bounded sixteen-row layout; ntfy remains available through its get/set shell,
+not a fictitious added TUI page. A dedicated TUI cloud page remains follow-up.
+
+Build preflight caught newly stale generated translations/compressed Web assets:
+consulted localization and its Pealayer Web i18n mapping plus the actual
+generate-font-assets/portable-gzip pipeline; regenerate deterministic outputs,
+then rebind the reviewed Web/route hashes, without replacing the shared font or
+clearing caches. An invalid Select-Object pipeline over the comparison generator's
+formatted output was removed, not worked around by skipping its gate. The S3
+linker then caught a missing translation-unit wrapper: reuse the actual
+SharedCloudServices.cpp include pattern as SharedNtfyService.cpp. Native tests
+passed; the first new mobile fixture incorrectly supplied cloud data for its
+required status/version read. Fix the fixture with peerFixture(), not a disabled
+release check. These failures are not device/network/notification evidence.
+
+Focused verification: nineteen native device-settings/UI tests, clean mobile
+analyzer and two new ntfy settings/session tests; actual cloud file migration,
+transactional fault/no-op tests on both host profiles and handler tests on three
+profiles; lifecycle/receipt/tool/panel fixtures; Web settings/workspace/gzip and
+S3 wiring guards; all three ordinary/ESP8266/S3 shell descriptor profiles passed.
+No installed app, board, ntfy server or phone was contacted for these tests.
+
 ## Flutter board identity versus interface-route normalization
 
 Read the complete actual PCController mobile/lib/discovery.dart and

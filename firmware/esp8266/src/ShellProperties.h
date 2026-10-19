@@ -36,6 +36,10 @@ static const ShellProperty shellProperties[] PAKAR_SHELL_METADATA_STORAGE={
  {"websocket.host","cloud","websocket_host",'s',true,false},{"websocket.port","cloud","websocket_port",'n',true,false},
  {"websocket.path","cloud","websocket_path",'s',true,false},{"websocket.token","cloud","websocket_token",'s',true,true},
  {"telemetry.seconds","cloud","telemetry_seconds",'n',true,false},
+#if defined(ARDUINO_ARCH_ESP32)
+ {"ntfy.enabled","cloud","ntfy_enabled",'b',true,false},{"ntfy.host","cloud","ntfy_host",'s',true,false},
+ {"ntfy.topic","cloud","ntfy_topic",'s',true,true},{"ntfy.token","cloud","ntfy_token",'s',true,true},
+#endif
  {"shell.enabled","shell","enabled",'b',true,false},{"shell.port","shell","port",'n',true,false},
  {"shell.color","shell","color",'b',true,false}
 };

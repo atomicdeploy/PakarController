@@ -435,6 +435,23 @@ fn cloud_page(draft: &mut Editor, ui: &mut egui::Ui, ready: bool, websocket: boo
         },
     );
 }
+fn ntfy_page(app:&mut PakarControllerApp,draft:&mut Editor,ui:&mut egui::Ui,ready:bool) {
+    let Some(cloud)=&mut draft.cloud else {return;};
+    let config=&mut cloud.value;
+    let (Some(enabled),Some(host),Some(topic),Some(token_set))=(config.ntfy_enabled.as_mut(),config.ntfy_host.as_mut(),config.ntfy_topic.as_mut(),config.ntfy_token_set) else {return;};
+    let mut save=false;
+    dialog::section(ui,icons::BROADCAST,"Firmware notifications · ntfy",|ui| {
+        ui.add_enabled_ui(ready && draft.pending.is_none() && !cloud.conflict,|ui| {
+            ui.checkbox(enabled,"Send firmware-update notifications (opt in)");
+            field(ui,icons::GLOBE,"HTTPS server",host,false);
+            field(ui,icons::LIST,"Private topic",topic,true);
+            secret(ui,"ntfy-token","Optional bearer token",token_set,&mut draft.ntfy_token);
+            ui.weak("Disabled by default. Major measured stages and results only; flashing never waits for delivery. A topic is private information. No ntfy message can trigger an update.");
+            save=ui.button("Save notifications and verify").clicked();
+        });
+    });
+    if save {submit(app,draft,Group::Cloud);}
+}
 fn submit(app: &mut PakarControllerApp, draft: &mut Editor, group: Group) {
     if draft.pending.is_some() || draft.maintenance_pending.is_some() {
         return;
@@ -455,7 +472,7 @@ fn submit(app: &mut PakarControllerApp, draft: &mut Editor, group: Group) {
             .cloud
             .as_ref()
             .ok_or("Cloud settings unavailable".into())
-            .and_then(|d| Write::cloud(id, &d.value, &draft.mqtt_password, &draft.websocket_token)),
+            .and_then(|d| Write::cloud(id, &d.value, &draft.mqtt_password, &draft.websocket_token, &draft.ntfy_token)),
         Group::StatusRgb => draft.status_rgb.as_ref().ok_or("RGB settings unavailable".into()).and_then(|d|Write::status_rgb(id,&d.value)),
         Group::Ethernet => draft.ethernet.as_ref().ok_or("Ethernet settings unavailable".into()).and_then(|d|Write::ethernet(id,&d.value)),
     };
@@ -855,7 +872,7 @@ fn page(
                 ui.add_space(12.0);
                 ui.label(egui::RichText::new("Clock, fuse, pin ownership, debounce and busy-wire/polling selection are build-time settings in the current firmware—not remotely writable parameters.").small().weak());
             }
-            9 => maintenance_page(app, draft, ui, ready),
+            9 => { ntfy_page(app,draft,ui,ready); maintenance_page(app, draft, ui, ready); },
             _ => {}
         }
         ui.add_space(16.0);
@@ -996,7 +1013,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
     let validation = match draft.page {
         2 => draft.network.as_ref().and_then(|_| draft.network_write(0).err()),
         3 | 4 => draft.cloud.as_ref().and_then(|d| {
-            Write::cloud(0, &d.value, &draft.mqtt_password, &draft.websocket_token).err()
+            Write::cloud(0, &d.value, &draft.mqtt_password, &draft.websocket_token, &draft.ntfy_token).err()
         }),
         _ => None,
     };
@@ -1043,6 +1060,7 @@ fn editor(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui) {
                                 &d.value,
                                 &draft.mqtt_password,
                                 &draft.websocket_token,
+                                &draft.ntfy_token,
                             )
                             .is_ok()
                     }),

@@ -71,6 +71,7 @@
 #include "src/FirmwareTransfer.h"
 #include "src/CloudConfig.h"
 #include "src/CloudServices.h"
+#include "src/NtfyService.h"
 #include "src/CloudAnimationProgress.h"
 #include "src/LedGrid.h"
 #include "src/LedRenderAdmission.h"
@@ -1512,6 +1513,8 @@ void serviceUpgrade() {
   }
   bool phaseChanged=false;
   if(upgradeLifecycle.takeEvent(now,phaseChanged)) {
+    if(upgradeLifecycle.source()!=S::Avr || urbootOperation=="program")
+      ntfyService.observe(upgradeLifecycle,now);
     const String notice=upgradeJson(true,phaseChanged);
     // Loop-only, finite phase/progress notices, never from async flash callbacks.
     webSocket.textAll(notice);pendingUpgradeCloud=notice;
@@ -2283,16 +2286,16 @@ bool submitDisplayText(const String &text, long speed, long hold,
 bool configurationForm(JsonDocument &document, bool cloud, String &error) {
   auto patch = document.to<JsonObject>();
   const char *cloudText[] = {"mqtt_host","mqtt_user","mqtt_password","mqtt_base_topic",
-      "websocket_host","websocket_path","websocket_token"};
+      "websocket_host","websocket_path","websocket_token","ntfy_host","ntfy_topic","ntfy_token"};
   const char *networkText[] = {"ssid","password","address","gateway","subnet","dns1","dns2"};
-  const char *cloudBool[] = {"mqtt_enabled","mqtt_tls","websocket_enabled","websocket_tls"};
+  const char *cloudBool[] = {"mqtt_enabled","mqtt_tls","websocket_enabled","websocket_tls","ntfy_enabled"};
   const char *networkBool[] = {"station_enabled","ap_enabled","dhcp"};
   const char *numbers[] = {"mqtt_port","websocket_port","telemetry_seconds"};
-  for (unsigned i=0; i<7; ++i) {
+  for (unsigned i=0; i<(cloud?10U:7U); ++i) {
     const char *key = cloud ? cloudText[i] : networkText[i];
     if (server.hasArg(key)) patch[key] = server.arg(key);
   }
-  for (unsigned i=0; i<(cloud?4U:3U); ++i) {
+  for (unsigned i=0; i<(cloud?5U:3U); ++i) {
     const char *key = cloud ? cloudBool[i] : networkBool[i];
     if (!server.hasArg(key)) continue;
     const String value = server.arg(key);
@@ -4037,6 +4040,9 @@ void loop() {
   }
   if (!remoteFirmware.busy() && !otaActive && !otaRebootAt && upgradeLifecycle.visual(millis())==PakarUpdate::Visual::None) { serviceSnake(now);serviceStream(); }
   serviceScenePersistence();
+  ntfyService.service(NetworkPath::ready(),time(nullptr)>1700000000,
+      remoteFirmware.busy() || otaActive || otaRebootAt || urbootBusy.get() || avrUploadOwner || urbootRawOwned,
+      deviceIdentity.hostname(),millis());
   // Cloud socket calls may have waited while the buffered AVR UART received
   // valid replies. Consume those actual frames before evaluating presence;
   // otherwise the loop reports a false peer loss, then recovery next pass.

@@ -56,7 +56,7 @@
       "target": "firmware/esp8266/src/WebUi.h",
       "anchor": "Verified remote update",
       "reason": "Commented donor HTML placeholder replaced by real firmware settings; no second OTA engine.",
-      "target_sha256_utf8_lf": "0e02b86efd9984a3ffa6bc8fe5601d4a9f7c07265ac30d0ae6a12034cf06bac8",
+      "target_sha256_utf8_lf": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
       "target_line": 246
     },
     {
@@ -68,8 +68,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.native().on(\"/update\"",
       "reason": "Integrated guarded authenticated upload, owner/disconnect fencing and platform OTA capacity/abort retained beside pinned remote download. Quiet S3 passive capture rejects new upload ownership. U_FS replacement is disabled to preserve credentials/recovery; S3 compressed-image support is not certified.",
-      "target_sha256_utf8_lf": "5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614",
-      "target_line": 2828
+      "target_sha256_utf8_lf": "8780b01a9187614813b7e6a3ea83f2ba0fae0866f3524ea1f745d33353f5a1a3",
+      "target_line": 2831
     },
     {
       "source": "LocalLib/AsyncWebServer.h",
@@ -80,8 +80,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "if(parsed[\"type\"]==\"telemetry\")",
       "reason": "Authenticated multiple-client WebSocket retains board state and adds read-only full telemetry and pinned remote-job commands. Incoming messages are explicitly rejected during quiet S3 passive capture, before binary streaming or command dispatch.",
-      "target_sha256_utf8_lf": "5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614",
-      "target_line": 2112
+      "target_sha256_utf8_lf": "8780b01a9187614813b7e6a3ea83f2ba0fae0866f3524ea1f745d33353f5a1a3",
+      "target_line": 2115
     },
     {
       "source": "LocalLib/Authentication.cpp",
@@ -128,8 +128,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.on(\"/description.xml\"",
       "reason": "Actual product/hostname root-device XML; S3 delegates escaped description generation to the adapted donor SSDP device, ESP8266 keeps its existing description. Neither advertises nonexistent SOAP/GENA services. S3 NBNS readiness is independently observed from exact interface-bound UDP137 sockets, not inferred from SSDP.",
-      "target_sha256_utf8_lf": "5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614",
-      "target_line": 3170
+      "target_sha256_utf8_lf": "8780b01a9187614813b7e6a3ea83f2ba0fae0866f3524ea1f745d33353f5a1a3",
+      "target_line": 3173
     },
     {
       "source": "pu850-esp.ino",
@@ -596,8 +596,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.native().on(\"/update/info\"",
       "reason": "Version/profile and both-board remote maintenance URLs; no misleading build-host/time identity.",
-      "target_sha256_utf8_lf": "5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614",
-      "target_line": 2816
+      "target_sha256_utf8_lf": "8780b01a9187614813b7e6a3ea83f2ba0fae0866f3524ea1f745d33353f5a1a3",
+      "target_line": 2819
     },
     {
       "source": "pu850-esp.ino",
@@ -608,8 +608,8 @@
       "target": "firmware/esp8266/esp8266.ino",
       "anchor": "server.on(\"/info\"",
       "reason": "Authenticated full structured ESP/AVR/client/network/clock/cloud telemetry; optional format=text.",
-      "target_sha256_utf8_lf": "5a2428ecd7546f4186e94829597f4e548723a0e36a975e45a51b0c5e8ef81614",
-      "target_line": 2817
+      "target_sha256_utf8_lf": "8780b01a9187614813b7e6a3ea83f2ba0fae0866f3524ea1f745d33353f5a1a3",
+      "target_line": 2820
     },
     {
       "source": "pu850-esp.ino",
@@ -620,7 +620,7 @@
       "target": "firmware/esp8266/src/WebUi.h",
       "anchor": "Verified remote update",
       "reason": "Real control workspace rather than donor static placeholder; access gate and actual peer state retained. Optional DHCP/static editor preserves stored station credentials and RGB preview requires fresh actual output, not a synthetic animation.",
-      "target_sha256_utf8_lf": "0e02b86efd9984a3ffa6bc8fe5601d4a9f7c07265ac30d0ae6a12034cf06bac8",
+      "target_sha256_utf8_lf": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
       "target_line": 246
     }
   ]

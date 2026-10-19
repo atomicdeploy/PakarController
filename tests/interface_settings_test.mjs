@@ -122,3 +122,18 @@ run("workspacePanels.push(panel);panelToggle('live-device','hidden')");assert(co
 run("panelToggle('live-device','hidden');panelToggle('live-device','collapsed')");assert(!context.panel.hidden);assert(collapsed);
 context.currentPeer=()=>({known:false,has:()=>false});run('applyPanelVisibility()');assert(context.panel.hidden,'Capability loss must override stored panel visibility');
 console.log('Shared settings catalog, strict required fields, secrets, dirty/conflict guards, ACK/readback, no replay, and session revocation passed (actual module / HTTP doubles, not hardware).');
+for(const id of ['ntfyEnabled','ntfyHost','ntfyTopic','ntfyToken','ntfySecretMode'])nodes[id]=element();
+nodes.ntfySecretMode.value='keep';context.currentPeer=()=>({has:()=>true});
+context.ntfyCloud={...cloud,ntfy_enabled:false,ntfy_host:'ntfy.sh',ntfy_topic:'fixture-private',ntfy_token_set:false};
+run("settingsInvalidate();settingsObserve('cloud',ntfyCloud)");
+assert.equal(run("settingsWrite('cloud').form.ntfy_enabled"),false);
+assert(!Object.hasOwn(run("settingsWrite('cloud').form"),'ntfy_token'));
+nodes.ntfyEnabled.checked=true;nodes.ntfySecretMode.value='replace';nodes.ntfyToken.value='tk_fixture';
+write=run("settingsWrite('cloud')");assert.equal(write.form.ntfy_token,'tk_fixture');assert.equal(write.expected.ntfy_token_set,true);
+assert(!Object.hasOwn(write.form,'ntfy_token_set'));
+nodes.ntfyTopic.value='bad/path';assert.throws(()=>run("settingsWrite('cloud')"),/single topic/);
+nodes.ntfyTopic.value='';assert.throws(()=>run("settingsWrite('cloud')"),/single topic/);
+nodes.ntfyTopic.value='fixture-private';nodes.ntfySecretMode.value='clear';
+assert.equal(run("settingsWrite('cloud').form.ntfy_token"),'');
+run('settingsClearSecrets()');assert.equal(nodes.ntfyToken.value,'');assert.equal(nodes.ntfySecretMode.value,'keep');
+console.log('ntfy settings: opt-in, optional support, topic validation and write-only token keep/replace/clear passed. No real publish.');

@@ -2,7 +2,13 @@
 #include <cassert>
 #include <cstdio>
 int main(){
- assert(shellPropertyCount==44);
+ constexpr unsigned added=
+#if defined(ARDUINO_ARCH_ESP32)
+ 4;
+#else
+ 0;
+#endif
+ assert(shellPropertyCount==44+added);
  unsigned secrets=0,writable=0;
  for(size_t index=0;index<shellPropertyCount;++index){
   const auto property=shellPropertyAt(index);ShellProperty found{};
@@ -13,7 +19,15 @@ int main(){
   for(size_t earlier=0;earlier<index;++earlier)assert(strcmp(property.key,shellPropertyAt(earlier).key));
   secrets+=property.secret;writable+=property.writable;
  }
- assert(secrets==3&&writable==32);
+ assert(secrets==3+added/2&&writable==32+added);
+ ShellProperty ntfy{};
+#if defined(ARDUINO_ARCH_ESP32)
+ assert(shellProperty("ntfy.enabled",ntfy)&&ntfy.writable&&!ntfy.secret);
+ assert(shellProperty("ntfy.topic",ntfy)&&ntfy.secret);
+ assert(shellProperty("ntfy.token",ntfy)&&ntfy.secret);
+#else
+ assert(!shellProperty("ntfy.enabled",ntfy));
+#endif
  ShellProperty hostname{},password{},other{};
  assert(shellProperty("hostname",hostname)&&hostname.writable&&!hostname.secret);
  assert(shellProperty("network.password",password)&&password.secret&&password.writable);
@@ -24,8 +38,8 @@ int main(){
  assert(!shellPropertyAt(shellPropertyCount).key&&!shellPropertyAt(static_cast<size_t>(-1)).key);
 #if defined(ARDUINO_ARCH_ESP8266)
  assert(pakarPropertyFlashReads>shellPropertyCount*2);
- puts("All44 shell descriptors read through copied PROGMEM records; secret/read-only flags and lookup ownership retained.");
+ puts("All shell descriptors read through copied PROGMEM records; secret/read-only flags and lookup ownership retained.");
 #else
- puts("All44 shell descriptors retain identical ordinary-memory S3/host semantics.");
+ puts("All shell descriptors retain ordinary-memory S3/host semantics; ntfy is S3-only and topic/token are private.");
 #endif
 }
