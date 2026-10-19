@@ -2,9 +2,9 @@
 
 Whole-repository superiority is **not established**. This report exposes retained code, scoped improvements, omissions and gaps; it does not turn missing reviews into exclusions.
 
-Routing: 1566 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
+Routing: 1546 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
 
-Inventory: 4697 files; 256 complete source-file comparisons; 4441 pending comparisons; 206 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
+Inventory: 4697 files; 276 complete source-file comparisons; 4421 pending comparisons; 221 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
 Every inventoried path, source revision/hash, target/proof file and line, omitted code, disposition and concrete reason is in `file-comparison.csv`. Hash-bound manual decisions are in `file-comparison-evidence.json`. Donor SHA-256 values bind original bytes; target/proof SHA-256 values bind UTF-8 without BOM with LF newlines. Anchors are recomputed into exact line numbers. Test-code presence is not test execution; execution receipts are in `FILE-COMPARISON-RECEIPTS.md`.
 
@@ -17,7 +17,7 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 | esp32WS2811 | 24 | 16 | 8 | 9 |
 | PCController | 1517 | 92 | 1425 | 81 |
 | Pealayer | 639 | 54 | 585 | 41 |
-| PU850-ESP | 109 | 51 | 58 | 49 |
+| PU850-ESP | 109 | 71 | 38 | 64 |
 | PuzzleBoard | 22 | 0 | 22 | 0 |
 | RayanLamp | 2349 | 29 | 2320 | 19 |
 
@@ -1620,7 +1620,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `729b980122ce5e3b3024544c9229d52ce03647bf195d62958fa388304d44fbe8`.
 
 - Target: `libraries/BoardCore/src/ApiPolicy.h:8 [UTF8-LF sha256=ee7dcf1c76d2d1703ae2d8d11ab0feff19650f08e8cfddfa03faac17ba6a163c; anchor=inline bool numberedRoute]`.
-- Target: `firmware/esp8266/src/WebAccess.h:35 [UTF8-LF sha256=534fb9f39fbcc530725e3c50584050927bb3ef6bea17abddaaee457481aaa5c8; anchor=ApiPolicy::numberedRoute]`.
+- Target: `firmware/esp8266/src/WebAccess.h:36 [UTF8-LF sha256=bd6c7ba60dc12a4fd8e8d2389b94e753f7eda0ab4552eb4f0195a3137613e992; anchor=ApiPolicy::numberedRoute]`.
 - Retained: Actual TestVersionedCoreAPIRoutesAreRejected test cases adapted into the C++ helper exercised by ESP async middleware; generalized to all numbered API roots and pre-auth rejection.
 - Omitted/replaced code: `TestCanonicalRESTRouteInventory, TestRESTAppActionCannotInjectCoordinatorNavigationMetadata, typed app launch/action outcome lifecycle`. Disposition: **pending**. Reason: These exercise the full PCController Go host coordinator, not the ESP handlers. Applicable generic typed action/outcome/auth ownership and full real multiplexer route inventory still need explicit Pakar contracts and tests. The narrower source/wire tests here do not claim end-to-end async server acceptance.
 - Test-code evidence: `tests/protocol_test.cpp:64 [UTF8-LF sha256=a63655790934d54477020e7efd81217fb07678df58fdde5307ecb865978d2e27; anchor=Actual donor TestVersionedCoreAPIRoutesAreRejected cases]`.
@@ -1721,7 +1721,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `mobile/lib/main.dart:150 [UTF8-LF sha256=4c7f4a0111536e0c32d5d8e4e6427655f297b4264009c79c94d99ed64e859cf1; anchor=api.onPeerChanged = ()]`.
 - Target: `mobile/lib/bridge.dart:327 [UTF8-LF sha256=14bc9c91fb4dd852ab7ef52e2ab7d79c83ad3607a463a8fb72e667faaff7fc57; anchor=watchdog = Timer.periodic]`.
 - Target: `libraries/BoardCore/src/PeerFence.h:31 [UTF8-LF sha256=9f1ab63252bd881d2fc786e230a18db331e66708a1bd3ccd0f096d2d2b5d49d5; anchor=inline bool accepts(]`.
-- Target: `firmware/esp8266/src/WebAccess.h:90 [UTF8-LF sha256=534fb9f39fbcc530725e3c50584050927bb3ef6bea17abddaaee457481aaa5c8; anchor=bool peerAllowed(]`.
+- Target: `firmware/esp8266/src/WebAccess.h:91 [UTF8-LF sha256=bd6c7ba60dc12a4fd8e8d2389b94e753f7eda0ab4552eb4f0195a3137613e992; anchor=bool peerAllowed(]`.
 - Target: `firmware/esp8266/esp8266.ino:1571 [UTF8-LF sha256=8780b01a9187614813b7e6a3ea83f2ba0fae0866f3524ea1f745d33353f5a1a3; anchor=bool authenticate()]`.
 - Target: `assets/web/peer-http.js:90 [UTF8-LF sha256=04dd5da95667de82bc556e005db5fc72b7d31ebafbda7b605590e8b80b120aa6; anchor=function assertOwner(peer)]`.
 - Target: `desktop/src/peer_http.rs:338 [UTF8-LF sha256=91cc8c623f63d712d9cbd12ce0cf18e4badb66c6a17490d73e8549af10d92bcd; anchor=pub fn admit(]`.
@@ -1843,7 +1843,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `520de1d7431f3062d0603636b89098d1e41c7701a2f44f65b88d45cfe49a2c07`.
 
-- Target: `firmware/esp8266/src/MaintenanceRoutes.h:278 [UTF8-LF sha256=2e9eccc4581646b2797a80bade0523a775d4df64c4de657d357a95b1ba18fc03; anchor=bool prepareRemotePair(]`.
+- Target: `firmware/esp8266/src/MaintenanceRoutes.h:284 [UTF8-LF sha256=8717e11a85931686ba6673b6b42406ad5f4362586732cb1d7dea1332c9c85585; anchor=bool prepareRemotePair(]`.
 - Target: `firmware/esp8266/src/UrbootRoutes.h:82 [UTF8-LF sha256=0c0a164d0b339d78f671a879bffeb3490ab2c7177e71e356fee9d72840adcd36; anchor=bool runUrboot(]`.
 - Retained: Read entire actual donor through EOF. Preserve complete backup before production writes, cancellation before mutation and post-backup candidate reinspection. The network bridge forwards the existing guarded ESP coordinator's raw bytes/status/receipts; it does not replace the programmer or turn staging acceptance into a completed flash.
 - Retained: Adapt actual backup-before-write and candidate reinspection to the ESP-owned Urboot operation: full flash/EEPROM capture and durable hash validation before the first UART page write, then exact image digest reinspection, protected boot equality and complete flash/EEPROM readback. Existing durable Prog arm precedes this recovery capture, as in the existing integrated ISP policy; ordinary settings and boot bytes are not programmed by Urboot.
@@ -1856,7 +1856,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `6dabd79c406b49dce87866fa792bc557220b98515606041cc33099193d567abe`.
 
-- Target: `firmware/esp8266/src/MaintenanceRoutes.h:278 [UTF8-LF sha256=2e9eccc4581646b2797a80bade0523a775d4df64c4de657d357a95b1ba18fc03; anchor=bool prepareRemotePair(]`.
+- Target: `firmware/esp8266/src/MaintenanceRoutes.h:284 [UTF8-LF sha256=8717e11a85931686ba6673b6b42406ad5f4362586732cb1d7dea1332c9c85585; anchor=bool prepareRemotePair(]`.
 - Retained: Read complete actual donor tests. Retain failure/no-flash, unchanged candidate and EEPROM-reset raw-backup-before-arm distinctions in the existing coordinator review. New actual socket tests cover stale peer before dispatch, valid multipart/binary transfer, HEAD and truncation; these do not claim execution of the donor's Go programmer tests or physical backup acceptance.
 - Omitted/replaced code: `Host Urclock/USBasp executor, backup archive manifest and development skip policy`. Disposition: **pending**. Reason: Retain the existing ESP-owned integrated ISP coordinator and mandatory production backup rather than adding a competing serial/programming owner. Host archival restore/executor parity needs a separate full dependency and hardware review; it is not claimed by transparent HTTP forwarding.
 - Test-code evidence: `desktop/src/bridge_transfer.rs:377 [UTF8-LF sha256=fbb13202d86296f1766d0e20bcd9e4a520a8b13d4988890e5a5273a20a5469fe; anchor=fn bridge_transfer_head_truncation_and_stale_mutation_preserve_truth]`.
@@ -2051,7 +2051,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 
 - Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=b352090f2790ff875580ed2b985667accb7a6dcc1e9a675c8c551f430438e2f1; anchor=name: "🚀 Build · Test · Release"]`.
 - Target: `tools/build-desktop.ps1:47 [UTF8-LF sha256=8ebd02ebcd5556bd70f97216faed6ea3c03ec8e92950514118e1b9901132e037; anchor=--test-threads=1]`.
-- Target: `tools/ci-checks.mjs:241 [UTF8-LF sha256=1526a8c628bc00ba425114137635f7092fa9e1ccd35ae4ddb2b3210b6bc2cf83; anchor=export function runChecks]`.
+- Target: `tools/ci-checks.mjs:242 [UTF8-LF sha256=0b0642d43476d242dc1b94eb6d764cbc2e8ea9184c713efa8092f546338974c9; anchor=export function runChecks]`.
 - Target: `tools/prepare-release.mjs:16 [UTF8-LF sha256=c5dcb698c397b30ca0ed076437a695838366aa0a82ed3c580df3cf6380d03306; anchor=export function firmwareManifest]`.
 - Retained: Actual donor branch/PR/tag/dispatch/merge-group triggers, concurrency policy, pinned actions without checkout credentials, health-before-build jobs, timeouts, Rust cache reuse, locked tests/builds, packaging, curated notes, manifest/checksums/provenance and aggregate results adapted to current Windows/ESP/AVR/Android targets.
 - Retained: Release content is gated on all builds, created as an immutable draft prerelease, with two correctly matched board pairs and raw HTTPS update manifests. Untrusted PRs do not execute publishing code with a write token.
@@ -2860,6 +2860,16 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Test-code evidence: `tests/branding_test.mjs:12 [UTF8-LF sha256=c956b89b2363c8770bc345f7132822c383a8329b76375556caf71da48d39fe24; anchor=actual Pealayer icon_data_from_bytes import]`.
 - Remaining: Complete named generic omissions with preference/endpoint/runtime tests; source checks are not deployed acceptance. See BRANDING-PARITY.md.
 
+### PU850-ESP: `.gitattributes`
+
+Verdict: **equivalent-behavior**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `d7fdbf0bc704830296234f2143889503714b9798941d52de7d8c4de593862fcc`.
+
+- Target: `.gitattributes:1 [UTF8-LF sha256=613bba2c932de973fc1d5d117b0ea5d59d338fd0e9c9cd37b5b8afc37b05ec39; anchor=* text=auto eol=lf]`.
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: cmd/bat/ps1 CRLF; sh/yml/yaml LF
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Donor script-specific CRLF policy`. Disposition: **replaced**. Reason: Current LF text/binary rules work with the actual cross-platform interpreters; no CRLF runtime requirement.
+
 ### PU850-ESP: `.github/dependabot.yml`
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `f418e551baccfcd1b21210c0c45fd5d4e75de0906e4e9aef8977e1a6368b9265`.
@@ -2924,6 +2934,16 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Remaining: Execute actual new GitHub jobs; verify bot policy and authorized runner/environment before activation.
 - Remaining: No physical deployment, full client distribution or donor-wide completion is inferred from source or fixtures.
 
+### PU850-ESP: `.gitignore`
+
+Verdict: **equivalent-behavior**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `4e8df980915336db111442a9099dfefd1e01287b7925073f804e1726012e2059`.
+
+- Target: `.gitignore:10 [UTF8-LF sha256=9bb316be389a528f2ed74afc2ab6c63e4cb33a30364b21a00c074af12df9262f; anchor=~secrets.h]`.
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: logs/prerequisites/objects/link/PCH/library/executable/debug/kernel/IDE/build/SDK/private-header/Node/uploader/workflow rules
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Donor product uploader output directories`. Disposition: **replaced**. Reason: Current target build/target and service node_modules exclusions apply; actual ~local.h/~secrets.h patterns are imported.
+
 ### PU850-ESP: `.vscode/arduino-cli.yaml`
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `862e8979a82f1ecf8226b1762e72c265b15bb126275db3fabb8563c7473e6320`.
@@ -2961,6 +2981,40 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Remaining: Run configured OS-matrix command plans and affected real SDK builds on their matching hosts.
 - Remaining: No physical deployment, full client distribution or donor-wide completion is inferred from source or fixtures.
 
+### PU850-ESP: `ASA0002E.code-workspace`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `d90e55ab89ecdc3052d1a5863472e6b6524d343ddbda4ff4e15b95b88ab256b4`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: folder declaration; every files.associations entry; cSpell words
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Editor associations and vocabulary`. Disposition: **pending**. Reason: Import applicable Pakar associations/shared build ergonomics in a later editor slice; no foreign machine paths.
+- Remaining: Import applicable Pakar associations/shared build ergonomics in a later editor slice; no foreign machine paths.
+
+### PU850-ESP: `ASA0002E.h`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `773bfaf35ae5099f4676653fbf0ed326b508e1107828ac72337e0b0f2db8a93b`.
+
+- Target: `libraries/BoardCore/src/DiagnosticText.h:11 [UTF8-LF sha256=70fc9b47f889046b09b97e70bc07c24e5a9c3e7b1fc4e3c0e4626c03ce63afb5; anchor=inline bool encodeHex(]`.
+- Target: `firmware/esp8266/src/WebAccess.h:290 [UTF8-LF sha256=bd6c7ba60dc12a4fd8e8d2389b94e753f7eda0ab4552eb4f0195a3137613e992; anchor=BoardCore::DiagnosticText::encodeHex(bytes]`.
+- Target: `firmware/esp8266/src/MaintenanceRoutes.h:192 [UTF8-LF sha256=8717e11a85931686ba6673b6b42406ad5f4362586732cb1d7dea1332c9c85585; anchor=e[F("uptime_text")]=uptimeText]`.
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Actual convertToHexString/getFormattedUptime/humanReadableBytes loops/decomposition/scaling imported as fixed-buffer DiagnosticText and invoked by live session, /random and telemetry owners.
+- Retained: Every section/function read through EOF: include/debug graph; flashSettings/state/callbacks/mode/count/range/hex macros; convertToHexString/parseHexString; reflectU32/calculateCRC32/calculateReflectedCRC32; calculateMD5/getRandomMD5/stringMD5; isValidHostName/urlEncode/getBasename/getFileExtension/extractFileName/startsWith/endsWith/startsWithIgnoreCase; isLeapYear/isValidDate/isValidTime/monthNames/dayNames/monthStringToInt/dayOfWeek; TimeStamp constructors/set/toEpoch/fromEpoch/adjusted/isValid/toString/PU_DateTime/parseDateTime overloads; getFormattedUptime/humanReadableBytes; compiler/debug/serial tail
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Remaining hex decode/checksum/hostname/URL/path/string/calendar utilities`. Disposition: **pending**. Reason: Every function decision is detailed in the foundation table. Generic consumers remain useful and pending; fix destination bounds, four-bit reflect loop, UTF-8/path issues, impossible-date validation, parse widths, conversion failures and millis rollover before reuse.
+- Test-code evidence: `tests/diagnostic_text_test.cpp:8 [UTF8-LF sha256=7483fd51656227b54d835d9c9430a605c1d7828d44fc302bd76bec45341033f5; anchor=uint8_t all[256]]`.
+- Remaining: Every function decision is detailed in the foundation table. Generic consumers remain useful and pending; fix destination bounds, four-bit reflect loop, UTF-8/path issues, impossible-date validation, parse widths, conversion failures and millis rollover before reuse.
+
+### PU850-ESP: `ASA0002E.ino.globals.h`
+
+Verdict: **equivalent-behavior**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `733c09461007e10e55de248dffd1eecf6e8e615b6d5be57de59cd00cb859444f`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: pragma once and early Arduino CLI options documentation; no declarations
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Empty product-named globals header`. Disposition: **replaced**. Reason: Current generated build identity and explicit build flags own options; the donor file has no implementation.
+
 ### PU850-ESP: `build.cmd`
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `a2361ded706871a3f67f25ef572cb73cdf025e98c838185fb1346f589f4b4f72`.
@@ -2990,13 +3044,23 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Remaining: Run configured OS-matrix command plans and affected real SDK builds on their matching hosts.
 - Remaining: No physical deployment, full client distribution or donor-wide completion is inferred from source or fixtures.
 
+### PU850-ESP: `defines.h`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `d04aedb14faa7caa7b47d438605ec82da2b8281ce62bc6cfd0a4dd8db0d715cf`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: Arduino; USE_LOCALH; ignored secret inclusion; ProductConfig; serial-shell alias; every Temp dependency
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Generic Temp network/file/date/session/UI/programmer contracts`. Disposition: **pending**. Reason: All four dependency blobs are fully read; reconcile actual UART functions and current owners without copying macro protocol, secret or serial alias.
+- Remaining: All four dependency blobs are fully read; reconcile actual UART functions and current owners without copying macro protocol, secret or serial alias.
+
 ### PU850-ESP: `LocalLib/AsyncOTA.cpp`
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `3d681d678b58e5e615448acddc52fd623914c8ec4a76f80f5bbb75cd34c3aaec`.
 
 - Target: `firmware/esp32s3/src/OtaStage.h:9 [UTF8-LF sha256=38f573b619915ff3c09062d4198aef6d2cc4b44a25fb72ec187edb33a8f22f9b; anchor=class S3OtaStage]`.
 - Target: `firmware/esp8266/src/RemoteFirmware.cpp:325 [UTF8-LF sha256=ad02224ab50dde4e3f34367003d9c9ddad3198722cb5aac7bcb51bd935f81f4a; anchor=bool RemoteFirmware::validateEspStage()]`.
-- Target: `firmware/esp8266/src/MaintenanceRoutes.h:284 [UTF8-LF sha256=2e9eccc4581646b2797a80bade0523a775d4df64c4de657d357a95b1ba18fc03; anchor=if(plan.targets==RemotePolicy::Esp && !programmingLatched) return true;]`.
+- Target: `firmware/esp8266/src/MaintenanceRoutes.h:290 [UTF8-LF sha256=8717e11a85931686ba6673b6b42406ad5f4362586732cb1d7dea1332c9c85585; anchor=if(plan.targets==RemotePolicy::Esp && !programmingLatched) return true;]`.
 - Target: `firmware/esp8266/src/ArtifactDownload.h:37 [UTF8-LF sha256=407bf97d8731516b66c90424a47e181434fe3126be34dba675c0b70ea6382961; anchor=remoteFirmware.readStagedEsp]`.
 - Target: `firmware/esp32s3/src/DnsCoreLock.cpp:13 [UTF8-LF sha256=5b4540c3bab1666c2b1da6b940f580b67a4dc66ce9e19ecddffcee9d08d30f2a; anchor=extern "C" void __wrap_dns_clear_cache]`.
 - Target: `firmware/esp8266/src/AsyncHttpService.h:123 [UTF8-LF sha256=9647c380a1ed67d5b5eb2feb4fe35295b6db1fc3dfbbf843951a69d91f41ebcc; anchor=AsyncURIMatcher::exact(path)]`.
@@ -3078,7 +3142,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Target: `firmware/esp8266/src/AsyncHttpService.h:123 [UTF8-LF sha256=9647c380a1ed67d5b5eb2feb4fe35295b6db1fc3dfbbf843951a69d91f41ebcc; anchor=AsyncURIMatcher::exact(path)]`.
 - Target: `firmware/esp8266/src/LoopMessages.h:73 [UTF8-LF sha256=02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0; anchor=Message *items_=nullptr;]`.
 - Target: `firmware/esp8266/esp8266.ino:3807 [UTF8-LF sha256=8780b01a9187614813b7e6a3ea83f2ba0fae0866f3524ea1f745d33353f5a1a3; anchor=loopMessages.begin(); // PSRAM-backed S3 queue]`.
-- Target: `firmware/esp8266/src/MaintenanceRoutes.h:158 [UTF8-LF sha256=2e9eccc4581646b2797a80bade0523a775d4df64c4de657d357a95b1ba18fc03; anchor=internal_heap_largest_block_bytes]`.
+- Target: `firmware/esp8266/src/MaintenanceRoutes.h:159 [UTF8-LF sha256=8717e11a85931686ba6673b6b42406ad5f4362586732cb1d7dea1332c9c85585; anchor=internal_heap_largest_block_bytes]`.
 - Target: `tools/update-firmware.mjs:151 [UTF8-LF sha256=7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874; anchor=export function checkWebSocket(]`.
 - Target: `firmware/esp8266/esp8266.ino:2155 [UTF8-LF sha256=8780b01a9187614813b7e6a3ea83f2ba0fae0866f3524ea1f745d33353f5a1a3; anchor=void onWebSocketEvent(]`.
 - Target: `firmware/esp32s3/src/EthernetPort.h:63 [UTF8-LF sha256=9504a3f71b4c0998277764d6c5f39f66e7b8c3b49cfb294fb5e5869138e1a930; anchor=SPIClass spi_{HSPI};]`.
@@ -3118,7 +3182,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **scoped-improvement**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `7009bb58fb5bc686476c6a533284f2e62564442e35c4621922c19f145ce4c491`.
 
-- Target: `firmware/esp8266/src/WebAccess.h:30 [UTF8-LF sha256=534fb9f39fbcc530725e3c50584050927bb3ef6bea17abddaaee457481aaa5c8; anchor=class WebAccess]`.
+- Target: `firmware/esp8266/src/WebAccess.h:31 [UTF8-LF sha256=bd6c7ba60dc12a4fd8e8d2389b94e753f7eda0ab4552eb4f0195a3137613e992; anchor=class WebAccess]`.
 - Target: `firmware/esp8266/src/AccessConfig.cpp:66 [UTF8-LF sha256=6ec60a32ab5e42943ea53844a5812acc86baf7232f3cf1090c3c8b591a81d2f7; anchor=bool AccessConfig::configure(]`.
 - Target: `desktop/src/ui/connection_controls.rs:209 [UTF8-LF sha256=58eaae178af71e86725a71df606b6ed6fb142c4fe852d3d5b8dce8b980ed3440; anchor=if authentication == Some(true)]`.
 - Target: `firmware/esp8266/src/WebUi.h:1338 [UTF8-LF sha256=0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6; anchor=function presentDeviceAccess(info)]`.
@@ -3135,7 +3199,7 @@ Verdict: **scoped-improvement**. Revision: `431104072952f694a35b3a83c19f13fbb098
 
 Verdict: **scoped-improvement**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `d63933cf51fb09ef2ce09052fd616b8d62ca422d36c713d7705b9fb8717f287e`.
 
-- Target: `firmware/esp8266/src/WebAccess.h:30 [UTF8-LF sha256=534fb9f39fbcc530725e3c50584050927bb3ef6bea17abddaaee457481aaa5c8; anchor=class WebAccess]`.
+- Target: `firmware/esp8266/src/WebAccess.h:31 [UTF8-LF sha256=bd6c7ba60dc12a4fd8e8d2389b94e753f7eda0ab4552eb4f0195a3137613e992; anchor=class WebAccess]`.
 - Target: `firmware/esp8266/src/AccessConfig.cpp:66 [UTF8-LF sha256=6ec60a32ab5e42943ea53844a5812acc86baf7232f3cf1090c3c8b591a81d2f7; anchor=bool AccessConfig::configure(]`.
 - Target: `desktop/src/ui/connection_controls.rs:209 [UTF8-LF sha256=58eaae178af71e86725a71df606b6ed6fb142c4fe852d3d5b8dce8b980ed3440; anchor=if authentication == Some(true)]`.
 - Target: `firmware/esp8266/src/WebUi.h:1338 [UTF8-LF sha256=0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6; anchor=function presentDeviceAccess(info)]`.
@@ -3196,6 +3260,26 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
 - Remaining: Review remaining AP/hash/build/restore descriptor gaps separately; generic get/set source coverage does not certify every prior PU property.
 
+### PU850-ESP: `LocalLib/CrashHandler.cpp`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `be001f01f3467950ec27b578a16c391d4d680e1bb562e3d8c06fb422d28cc5c9`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: active crash_ets_uart_putc1; complete commented custom_crash_callback timestamp/reset/register offsets/counter/cursor/stack heuristic
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `commented crash persistence/stack-capture sketch`. Disposition: **pending**. Reason: No active donor persistence implementation exists. Design bounded secret-safe platform capture/rotation and fault proof; keep S3 SDK panic/reset evidence rather than importing ESP8266 suppression.
+- Remaining: No active donor persistence implementation exists. Design bounded secret-safe platform capture/rotation and fault proof; keep S3 SDK panic/reset evidence rather than importing ESP8266 suppression.
+
+### PU850-ESP: `LocalLib/CrashHandler.h`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `d958445204e65686693ab766a3b090095585ed538c374139b7baf5f61c91785a`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: pragma/include; NO_CUT_HERE; crash printer declaration; commented custom callback declaration
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Generic durable crash capture contract`. Disposition: **pending**. Reason: Do not transplant ESP8266 callback structs/cont registers into S3; safe storage/rotation and fault acceptance remain open.
+- Remaining: Do not transplant ESP8266 callback structs/cont registers into S3; safe storage/rotation and fault acceptance remain open.
+
 ### PU850-ESP: `LocalLib/FirmwareTransfer.cpp`
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `1dada0f284ba4c81a6185f1aeb34dbd299752a7b48b0ba56336d1dfdc9e2ac3c`.
@@ -3235,6 +3319,17 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Test-code evidence: `firmware/esp8266/src/FirmwareTransfer.cpp:157 [UTF8-LF sha256=98dff31984a81dcfb769fb036664e711c4312b257baefbdcbbac92168799d4de; anchor=return transferAuthorization && transferAuthorization(request);]`.
 - Test-code evidence: `tests/ethernet_live_tool_test.mjs:17 [UTF8-LF sha256=6a0c0fcb764500ba41a918169306e417cbb94548a872dcccdbc424237bbcf9d9; anchor=for(const scenario of []`.
 - Remaining: Real HTTP GET/HEAD/Range/auth/ETag checks against the integrated S3 and ESP8266 firmware remain separate from source/host-parser proof; verify exported application bytes against the running partition and protect credentials. Physical OTA/AVR flashing/power-loss/recovery acceptance remains open.
+
+### PU850-ESP: `LocalLib/FS.cpp`
+
+Verdict: **equivalent-behavior**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `7ee3832b2ef679d21013f7a06da0e885c7d53c954f5a9fde88dde1ee65e76dd7`.
+
+- Target: `firmware/esp8266/src/SystemPlatform.h:21 [UTF8-LF sha256=679c04ccfc3310e68c4116f52fc2a450f6343795246444102ab98768b704990d; anchor=inline bool mountFilesystem()]`.
+- Target: `firmware/esp8266/src/FilesystemTelemetry.h:31 [UTF8-LF sha256=6e0cdf19a541d7b60eb682729f5cc4436cde5d8ce3dfd2322077708dee3f0d9a; anchor=class Observation]`.
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: entire commented initFS mount and Serial result logger
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `inactive mount/logger example`. Disposition: **replaced**. Reason: Actual SystemPlatform disables automatic format; FilesystemTelemetry reports mounted/unknown/error without protocol UART injection. Physical persistence/full-storage/power-loss acceptance stays open.
 
 ### PU850-ESP: `LocalLib/MNDP.cpp`
 
@@ -3313,6 +3408,59 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Test-code evidence: `tests/router_upnp_test.ps1:18 [UTF8-LF sha256=3fadc7e454cb0bbac934eb0363073044eb7e61ee861833eb9d1fcf5c1b7b3a4f; anchor=foreach($action]`.
 - Remaining: Actual Windows NBNS name/node-status and all-netif overlap/rename tests require deployment. Actual W5500 wiring/link/LLDP-switch visibility, Ethernet-only API/WebSocket/OTA/cloud and unplug/replug acceptance remain open; host doubles and an SDK build are not physical proof.
 - Remaining: Source provenance for the LLDP shim is the installed Arduino3.3.12/IDF5.5.5 native glue and W5500 driver: standard input callback preserved exactly, TCPIP-thread TX, explicit opt-in promiscuous RX because hardware MAC filtering rejects LLDP multicast. No arbitrary raw-frame API, layer2 bridge or router capability is advertised.
+
+### PU850-ESP: `LocalLib/Public.cpp`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `9cda4aa1a1d02d3a7f8042173e049d326788952b7a05438a57b91d6e7d381303`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: UnPack32 four MSB-first shifts; eExpandDateTime/eCompressDateTime; CompressDate/ShamsiU16toU8/GregorianU16toU8
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Generic compressed Gregorian/Shamsi date/time and year offsets`. Disposition: **pending**. Reason: Preserve useful calendar capability with validated real consumers/ranges/months/tests, not shared mutable ePart/year globals or PU payload compatibility.
+- Remaining: Preserve useful calendar capability with validated real consumers/ranges/months/tests, not shared mutable ePart/year globals or PU payload compatibility.
+
+### PU850-ESP: `LocalLib/Public.h`
+
+Verdict: **equivalent-behavior**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `a5e504e4b33c8b1e26d41a7e5a8196fc1f7e7ae7a41be6209dc5617e484a83af`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: stdbool include and bool-to-boolean/true/false replacement macros
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `C++ boolean token replacement`. Disposition: **replaced**. Reason: The supported toolchains natively implement bool/true/false; global macro substitution can corrupt SDK/system headers.
+
+### PU850-ESP: `LocalLib/RemoteCommand.cpp`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `9ca2a3d6be55cc5d0271d0e036e28fbc6a25ed71c276f53128262a03d30e9e52`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: all UDP state/ports; initUdpDebug/UdpService/udpSend/handleUdpReceive/executeCommand; all ServiceEvent cases
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Generic bounded UDP diagnostic/network-event lifecycle`. Disposition: **pending**. Reason: File is disabled in donor sketch, input truncates at254 bytes, no auth/identity, and UdpService tests a function pointer. Define capability/ownership/fixtures before adding any listener or SDK event adapter.
+- Remaining: File is disabled in donor sketch, input truncates at254 bytes, no auth/identity, and UdpService tests a function pointer. Define capability/ownership/fixtures before adding any listener or SDK event adapter.
+
+### PU850-ESP: `LocalLib/Sessions.cpp`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `6186f9861e8ee3dcb093f260e25311a1e3952b5c6c2a7fa764de05b8a45e7f55`.
+
+- Target: `libraries/BoardCore/src/AccessPolicy.h:39 [UTF8-LF sha256=3524ee6acd036d7ef30e266d55fd71045628abe2c57243383162dea8e90c55d0; anchor=class Sessions]`.
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: initSessions; addSession free-slot and unused-oldest scan; destroySession; validateSession; empty SessionCommand
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `SessionCommand authenticated protocol-origin revoke semantics`. Disposition: **pending**. Reason: Existing bounded 8-slot AccessPolicy imports the pool with expiry, unsigned elapsed time, strict hex and constant-work compare. Donor SessionCommand is empty; review actual UART-origin authority before implementing a new command.
+- Test-code evidence: `tests/access_policy_test.cpp:13 [UTF8-LF sha256=96b2ca0669e125a08354779919684c192e71e7a2a6e760202eda653f5824c737; anchor=Sessions sessions;]`.
+- Remaining: Existing bounded 8-slot AccessPolicy imports the pool with expiry, unsigned elapsed time, strict hex and constant-work compare. Donor SessionCommand is empty; review actual UART-origin authority before implementing a new command.
+
+### PU850-ESP: `LocalLib/Sessions.h`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `1ab8ea8f32ce56d64b976eb1c6922fa5476a3fd0498526bbf453a4254726862c`.
+
+- Target: `libraries/BoardCore/src/AccessPolicy.h:39 [UTF8-LF sha256=3524ee6acd036d7ef30e266d55fd71045628abe2c57243383162dea8e90c55d0; anchor=class Sessions]`.
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: MAX_SESSIONS/TOKEN_LENGTH; raw token/accessLevel/lastActive/lastIP/isLoggedIn struct/global array; SessionCommand declaration
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `SessionCommand lifecycle declaration`. Disposition: **pending**. Reason: Existing encapsulated AccessPolicy/WebAccess owns roles/address/expiry/mutex admission; exact authenticated UART session lifecycle is still pending.
+- Test-code evidence: `tests/access_policy_test.cpp:13 [UTF8-LF sha256=96b2ca0669e125a08354779919684c192e71e7a2a6e760202eda653f5824c737; anchor=Sessions sessions;]`.
+- Remaining: Existing encapsulated AccessPolicy/WebAccess owns roles/address/expiry/mutex admission; exact authenticated UART session lifecycle is still pending.
 
 ### PU850-ESP: `LocalLib/Shell.cpp`
 
@@ -3469,6 +3617,26 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
 - Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
 
+### PU850-ESP: `PRODUCT-PROFILES.md`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `b396143fd17590b35455f91fc17fc15bfb52862d3419198df10da62b86340aaa`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: identity/overrides; secret-safe flags; all unversioned transfer routes; range/ETag/hash-pair/downstream/redaction contracts
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Full cross-language uploader/download/resume/gzip/manifest compatibility`. Disposition: **pending**. Reason: Read and adapt every actual client/test; strict current auth/identity/integrity and supported-release policy remain authoritative. PU weighing/report identity is specifically out of scope.
+- Remaining: Read and adapt every actual client/test; strict current auth/identity/integrity and supported-release policy remain authoritative. PU weighing/report identity is specifically out of scope.
+
+### PU850-ESP: `ProductConfig.h`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `61ad4d13aa9416ac0dc2008722f2c092eceed521fd980407a23beff2258e684a`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: both profile IDs; every product/manufacturer/HTTP/WS/MNDP override; UPnP schema/service/cache/TTL/server; firmware/full-flash/bearer/redaction flags
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Unmapped generic compile-default and override knobs`. Disposition: **pending**. Reason: Reconcile actual discovery/transfer consumers individually. Preserve centralized Pakar identity, no absent SOAP/GENA advertisement or bearer bypass.
+- Remaining: Reconcile actual discovery/transfer consumers individually. Preserve centralized Pakar identity, no absent SOAP/GENA advertisement or bearer bypass.
+
 ### PU850-ESP: `pu850-esp.ino`
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `75d5492a67cc754e7e6617354016e549856aa015f93016460eed024534f4f3b1`.
@@ -3506,6 +3674,46 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Test-code evidence: `tests/script_tooling_test.ps1:26 [UTF8-LF sha256=d3c679d8caa22177e7a5590564cd1141b84e1b194b3c3ee0bb825c26a4d46305; anchor=PowerShell utilities parse]`.
 - Remaining: Run live registry check and review any candidate version changes with full build/hardware acceptance; pins were not upgraded by this slice.
 - Remaining: No physical deployment, full client distribution or donor-wide completion is inferred from source or fixtures.
+
+### PU850-ESP: `Temp/Always.h`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `08fc271ee313bced76acf687e782aacd8eb03517e440910ff591c62aaedd0adf`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: all scalar/pointer/flash/BOOL aliases/sentinels; High/Low/IsHigh/IsLow/byte/word/Pack/ReverseOrder/Null macros
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Generic byte packing reconciliation`. Disposition: **pending**. Reason: Use existing stdint/typed COBS owners instead of width-dependent aliases and repeated-evaluation/token-fragment macros; full UART function review still required.
+- Remaining: Use existing stdint/typed COBS owners instead of width-dependent aliases and repeated-evaluation/token-fragment macros; full UART function review still required.
+
+### PU850-ESP: `Temp/ChartIndex.h`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `f7b7cf3dd40a64c4de41420a0bdd7ce8aa4685ed895b30e7f7b838cb009069c7`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: all access roles/chart classes/menu/form/list/page/reserved indices
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Generic Wi-Fi/settings/diagnostics/terminal/password/clock screen behavior`. Disposition: **pending**. Reason: Reconcile actual UI/session/runtime owners; only exact weighing/report/printer/calibration charts are PU business. Do not copy donor role credential hints.
+- Remaining: Reconcile actual UI/session/runtime owners; only exact weighing/report/printer/calibration charts are PU business. Do not copy donor role credential hints.
+
+### PU850-ESP: `Temp/CommonDefine.h`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `e78774e8b164205479d73ec5bee1651160140d3fc3e5f0e204e6ff127fb958ca`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: all generic readiness/result/calendar/toggle/comparison/format constants; ADC/weigh/calibration/DLC commands/limits/brands/status/factors
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Generic readiness/result/calendar/format semantics`. Disposition: **pending**. Reason: Map real typed consumers in UART/clock review; only exact load-cell/calibration/weighing command groups are PU business exclusions.
+- Remaining: Map real typed consumers in UART/clock review; only exact load-cell/calibration/weighing command groups are PU business exclusions.
+
+### PU850-ESP: `Temp/ESP_Master_Common.h`
+
+Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `33789905b19368d1f35d133fc38e16e8530e8841500ddfab5a0e5dcc2de421cf`.
+
+- Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
+- Retained: Every section/function read through EOF: revision/icons/network/internet/control tables; every prefix/numeric/string/request/order/bulk/file/LCD/diagnostic/programming suffix; groups/HTTP/results/baud/ResultPack
+- Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
+- Omitted/replaced code: `Generic network/clock/message/file/LCD/session/diagnostic/programming semantics`. Disposition: **pending**. Reason: Complete UART function review and import useful current authenticated behavior; a second legacy parser/version selector is replaced by living COBS/capability/ACK. Only weight/tare/receipt/report payloads are business exclusions.
+- Remaining: Complete UART function review and import useful current authenticated behavior; a second legacy parser/version selector is replaced by living COBS/capability/ACK. Only weight/tare/receipt/report payloads are business exclusions.
 
 ### PU850-ESP: `Tool/build-all.ps1`
 

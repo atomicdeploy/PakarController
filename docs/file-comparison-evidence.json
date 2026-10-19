@@ -4,6 +4,810 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
   {
+    "origin": "PU850-ESP",
+    "path": ".gitattributes",
+    "sha256": "d7fdbf0bc704830296234f2143889503714b9798941d52de7d8c4de593862fcc",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "cmd/bat/ps1 CRLF",
+      "sh/yml/yaml LF"
+    ],
+    "verdict": "equivalent-behavior",
+    "preserved": [
+      "Every section/function read through EOF: cmd/bat/ps1 CRLF; sh/yml/yaml LF",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": ".gitattributes",
+        "sha256": "613bba2c932de973fc1d5d117b0ea5d59d338fd0e9c9cd37b5b8afc37b05ec39",
+        "anchor": "* text=auto eol=lf"
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Donor script-specific CRLF policy",
+        "disposition": "replaced",
+        "reason": "Current LF text/binary rules work with the actual cross-platform interpreters; no CRLF runtime requirement."
+      }
+    ],
+    "remaining": []
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": ".gitignore",
+    "sha256": "4e8df980915336db111442a9099dfefd1e01287b7925073f804e1726012e2059",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "logs/prerequisites/objects/link/PCH/library/executable/debug/kernel/IDE/build/SDK/private-header/Node/uploader/workflow rules"
+    ],
+    "verdict": "equivalent-behavior",
+    "preserved": [
+      "Every section/function read through EOF: logs/prerequisites/objects/link/PCH/library/executable/debug/kernel/IDE/build/SDK/private-header/Node/uploader/workflow rules",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": ".gitignore",
+        "sha256": "9bb316be389a528f2ed74afc2ab6c63e4cb33a30364b21a00c074af12df9262f",
+        "anchor": "~secrets.h"
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Donor product uploader output directories",
+        "disposition": "replaced",
+        "reason": "Current target build/target and service node_modules exclusions apply; actual ~local.h/~secrets.h patterns are imported."
+      }
+    ],
+    "remaining": []
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "ASA0002E.code-workspace",
+    "sha256": "d90e55ab89ecdc3052d1a5863472e6b6524d343ddbda4ff4e15b95b88ab256b4",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "folder declaration",
+      "every files.associations entry",
+      "cSpell words"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: folder declaration; every files.associations entry; cSpell words",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Editor associations and vocabulary",
+        "disposition": "pending",
+        "reason": "Import applicable Pakar associations/shared build ergonomics in a later editor slice; no foreign machine paths."
+      }
+    ],
+    "remaining": [
+      "Import applicable Pakar associations/shared build ergonomics in a later editor slice; no foreign machine paths."
+    ]
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "ASA0002E.ino.globals.h",
+    "sha256": "733c09461007e10e55de248dffd1eecf6e8e615b6d5be57de59cd00cb859444f",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "pragma once and early Arduino CLI options documentation",
+      "no declarations"
+    ],
+    "verdict": "equivalent-behavior",
+    "preserved": [
+      "Every section/function read through EOF: pragma once and early Arduino CLI options documentation; no declarations",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Empty product-named globals header",
+        "disposition": "replaced",
+        "reason": "Current generated build identity and explicit build flags own options; the donor file has no implementation."
+      }
+    ],
+    "remaining": []
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "ASA0002E.h",
+    "sha256": "773bfaf35ae5099f4676653fbf0ed326b508e1107828ac72337e0b0f2db8a93b",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "include/debug graph",
+      "flashSettings/state/callbacks/mode/count/range/hex macros",
+      "convertToHexString/parseHexString",
+      "reflectU32/calculateCRC32/calculateReflectedCRC32",
+      "calculateMD5/getRandomMD5/stringMD5",
+      "isValidHostName/urlEncode/getBasename/getFileExtension/extractFileName/startsWith/endsWith/startsWithIgnoreCase",
+      "isLeapYear/isValidDate/isValidTime/monthNames/dayNames/monthStringToInt/dayOfWeek",
+      "TimeStamp constructors/set/toEpoch/fromEpoch/adjusted/isValid/toString/PU_DateTime/parseDateTime overloads",
+      "getFormattedUptime/humanReadableBytes",
+      "compiler/debug/serial tail"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Actual convertToHexString/getFormattedUptime/humanReadableBytes loops/decomposition/scaling imported as fixed-buffer DiagnosticText and invoked by live session, /random and telemetry owners.",
+      "Every section/function read through EOF: include/debug graph; flashSettings/state/callbacks/mode/count/range/hex macros; convertToHexString/parseHexString; reflectU32/calculateCRC32/calculateReflectedCRC32; calculateMD5/getRandomMD5/stringMD5; isValidHostName/urlEncode/getBasename/getFileExtension/extractFileName/startsWith/endsWith/startsWithIgnoreCase; isLeapYear/isValidDate/isValidTime/monthNames/dayNames/monthStringToInt/dayOfWeek; TimeStamp constructors/set/toEpoch/fromEpoch/adjusted/isValid/toString/PU_DateTime/parseDateTime overloads; getFormattedUptime/humanReadableBytes; compiler/debug/serial tail",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "libraries/BoardCore/src/DiagnosticText.h",
+        "sha256": "70fc9b47f889046b09b97e70bc07c24e5a9c3e7b1fc4e3c0e4626c03ce63afb5",
+        "anchor": "inline bool encodeHex("
+      },
+      {
+        "path": "firmware/esp8266/src/WebAccess.h",
+        "sha256": "bd6c7ba60dc12a4fd8e8d2389b94e753f7eda0ab4552eb4f0195a3137613e992",
+        "anchor": "BoardCore::DiagnosticText::encodeHex(bytes"
+      },
+      {
+        "path": "firmware/esp8266/src/MaintenanceRoutes.h",
+        "sha256": "8717e11a85931686ba6673b6b42406ad5f4362586732cb1d7dea1332c9c85585",
+        "anchor": "e[F(\"uptime_text\")]=uptimeText"
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/diagnostic_text_test.cpp",
+        "sha256": "7483fd51656227b54d835d9c9430a605c1d7828d44fc302bd76bec45341033f5",
+        "anchor": "uint8_t all[256]"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "Remaining hex decode/checksum/hostname/URL/path/string/calendar utilities",
+        "disposition": "pending",
+        "reason": "Every function decision is detailed in the foundation table. Generic consumers remain useful and pending; fix destination bounds, four-bit reflect loop, UTF-8/path issues, impossible-date validation, parse widths, conversion failures and millis rollover before reuse."
+      }
+    ],
+    "remaining": [
+      "Every function decision is detailed in the foundation table. Generic consumers remain useful and pending; fix destination bounds, four-bit reflect loop, UTF-8/path issues, impossible-date validation, parse widths, conversion failures and millis rollover before reuse."
+    ]
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "defines.h",
+    "sha256": "d04aedb14faa7caa7b47d438605ec82da2b8281ce62bc6cfd0a4dd8db0d715cf",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "Arduino",
+      "USE_LOCALH",
+      "ignored secret inclusion",
+      "ProductConfig",
+      "serial-shell alias",
+      "every Temp dependency"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: Arduino; USE_LOCALH; ignored secret inclusion; ProductConfig; serial-shell alias; every Temp dependency",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Generic Temp network/file/date/session/UI/programmer contracts",
+        "disposition": "pending",
+        "reason": "All four dependency blobs are fully read; reconcile actual UART functions and current owners without copying macro protocol, secret or serial alias."
+      }
+    ],
+    "remaining": [
+      "All four dependency blobs are fully read; reconcile actual UART functions and current owners without copying macro protocol, secret or serial alias."
+    ]
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "ProductConfig.h",
+    "sha256": "61ad4d13aa9416ac0dc2008722f2c092eceed521fd980407a23beff2258e684a",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "both profile IDs",
+      "every product/manufacturer/HTTP/WS/MNDP override",
+      "UPnP schema/service/cache/TTL/server",
+      "firmware/full-flash/bearer/redaction flags"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: both profile IDs; every product/manufacturer/HTTP/WS/MNDP override; UPnP schema/service/cache/TTL/server; firmware/full-flash/bearer/redaction flags",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Unmapped generic compile-default and override knobs",
+        "disposition": "pending",
+        "reason": "Reconcile actual discovery/transfer consumers individually. Preserve centralized Pakar identity, no absent SOAP/GENA advertisement or bearer bypass."
+      }
+    ],
+    "remaining": [
+      "Reconcile actual discovery/transfer consumers individually. Preserve centralized Pakar identity, no absent SOAP/GENA advertisement or bearer bypass."
+    ]
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "PRODUCT-PROFILES.md",
+    "sha256": "b396143fd17590b35455f91fc17fc15bfb52862d3419198df10da62b86340aaa",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "identity/overrides",
+      "secret-safe flags",
+      "all unversioned transfer routes",
+      "range/ETag/hash-pair/downstream/redaction contracts"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: identity/overrides; secret-safe flags; all unversioned transfer routes; range/ETag/hash-pair/downstream/redaction contracts",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Full cross-language uploader/download/resume/gzip/manifest compatibility",
+        "disposition": "pending",
+        "reason": "Read and adapt every actual client/test; strict current auth/identity/integrity and supported-release policy remain authoritative. PU weighing/report identity is specifically out of scope."
+      }
+    ],
+    "remaining": [
+      "Read and adapt every actual client/test; strict current auth/identity/integrity and supported-release policy remain authoritative. PU weighing/report identity is specifically out of scope."
+    ]
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "LocalLib/CrashHandler.cpp",
+    "sha256": "be001f01f3467950ec27b578a16c391d4d680e1bb562e3d8c06fb422d28cc5c9",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "active crash_ets_uart_putc1",
+      "complete commented custom_crash_callback timestamp/reset/register offsets/counter/cursor/stack heuristic"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: active crash_ets_uart_putc1; complete commented custom_crash_callback timestamp/reset/register offsets/counter/cursor/stack heuristic",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "commented crash persistence/stack-capture sketch",
+        "disposition": "pending",
+        "reason": "No active donor persistence implementation exists. Design bounded secret-safe platform capture/rotation and fault proof; keep S3 SDK panic/reset evidence rather than importing ESP8266 suppression."
+      }
+    ],
+    "remaining": [
+      "No active donor persistence implementation exists. Design bounded secret-safe platform capture/rotation and fault proof; keep S3 SDK panic/reset evidence rather than importing ESP8266 suppression."
+    ]
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "LocalLib/CrashHandler.h",
+    "sha256": "d958445204e65686693ab766a3b090095585ed538c374139b7baf5f61c91785a",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "pragma/include",
+      "NO_CUT_HERE",
+      "crash printer declaration",
+      "commented custom callback declaration"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: pragma/include; NO_CUT_HERE; crash printer declaration; commented custom callback declaration",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Generic durable crash capture contract",
+        "disposition": "pending",
+        "reason": "Do not transplant ESP8266 callback structs/cont registers into S3; safe storage/rotation and fault acceptance remain open."
+      }
+    ],
+    "remaining": [
+      "Do not transplant ESP8266 callback structs/cont registers into S3; safe storage/rotation and fault acceptance remain open."
+    ]
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "LocalLib/FS.cpp",
+    "sha256": "7ee3832b2ef679d21013f7a06da0e885c7d53c954f5a9fde88dde1ee65e76dd7",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "entire commented initFS mount and Serial result logger"
+    ],
+    "verdict": "equivalent-behavior",
+    "preserved": [
+      "Every section/function read through EOF: entire commented initFS mount and Serial result logger",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "firmware/esp8266/src/SystemPlatform.h",
+        "sha256": "679c04ccfc3310e68c4116f52fc2a450f6343795246444102ab98768b704990d",
+        "anchor": "inline bool mountFilesystem()"
+      },
+      {
+        "path": "firmware/esp8266/src/FilesystemTelemetry.h",
+        "sha256": "6e0cdf19a541d7b60eb682729f5cc4436cde5d8ce3dfd2322077708dee3f0d9a",
+        "anchor": "class Observation"
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "inactive mount/logger example",
+        "disposition": "replaced",
+        "reason": "Actual SystemPlatform disables automatic format; FilesystemTelemetry reports mounted/unknown/error without protocol UART injection. Physical persistence/full-storage/power-loss acceptance stays open."
+      }
+    ],
+    "remaining": []
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "LocalLib/Public.cpp",
+    "sha256": "9cda4aa1a1d02d3a7f8042173e049d326788952b7a05438a57b91d6e7d381303",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "UnPack32 four MSB-first shifts",
+      "eExpandDateTime/eCompressDateTime",
+      "CompressDate/ShamsiU16toU8/GregorianU16toU8"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: UnPack32 four MSB-first shifts; eExpandDateTime/eCompressDateTime; CompressDate/ShamsiU16toU8/GregorianU16toU8",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Generic compressed Gregorian/Shamsi date/time and year offsets",
+        "disposition": "pending",
+        "reason": "Preserve useful calendar capability with validated real consumers/ranges/months/tests, not shared mutable ePart/year globals or PU payload compatibility."
+      }
+    ],
+    "remaining": [
+      "Preserve useful calendar capability with validated real consumers/ranges/months/tests, not shared mutable ePart/year globals or PU payload compatibility."
+    ]
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "LocalLib/Public.h",
+    "sha256": "a5e504e4b33c8b1e26d41a7e5a8196fc1f7e7ae7a41be6209dc5617e484a83af",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "stdbool include and bool-to-boolean/true/false replacement macros"
+    ],
+    "verdict": "equivalent-behavior",
+    "preserved": [
+      "Every section/function read through EOF: stdbool include and bool-to-boolean/true/false replacement macros",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "C++ boolean token replacement",
+        "disposition": "replaced",
+        "reason": "The supported toolchains natively implement bool/true/false; global macro substitution can corrupt SDK/system headers."
+      }
+    ],
+    "remaining": []
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "LocalLib/Sessions.cpp",
+    "sha256": "6186f9861e8ee3dcb093f260e25311a1e3952b5c6c2a7fa764de05b8a45e7f55",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "initSessions",
+      "addSession free-slot and unused-oldest scan",
+      "destroySession",
+      "validateSession",
+      "empty SessionCommand"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: initSessions; addSession free-slot and unused-oldest scan; destroySession; validateSession; empty SessionCommand",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "libraries/BoardCore/src/AccessPolicy.h",
+        "sha256": "3524ee6acd036d7ef30e266d55fd71045628abe2c57243383162dea8e90c55d0",
+        "anchor": "class Sessions"
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/access_policy_test.cpp",
+        "sha256": "96b2ca0669e125a08354779919684c192e71e7a2a6e760202eda653f5824c737",
+        "anchor": "Sessions sessions;"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "SessionCommand authenticated protocol-origin revoke semantics",
+        "disposition": "pending",
+        "reason": "Existing bounded 8-slot AccessPolicy imports the pool with expiry, unsigned elapsed time, strict hex and constant-work compare. Donor SessionCommand is empty; review actual UART-origin authority before implementing a new command."
+      }
+    ],
+    "remaining": [
+      "Existing bounded 8-slot AccessPolicy imports the pool with expiry, unsigned elapsed time, strict hex and constant-work compare. Donor SessionCommand is empty; review actual UART-origin authority before implementing a new command."
+    ]
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "LocalLib/Sessions.h",
+    "sha256": "1ab8ea8f32ce56d64b976eb1c6922fa5476a3fd0498526bbf453a4254726862c",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "MAX_SESSIONS/TOKEN_LENGTH",
+      "raw token/accessLevel/lastActive/lastIP/isLoggedIn struct/global array",
+      "SessionCommand declaration"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: MAX_SESSIONS/TOKEN_LENGTH; raw token/accessLevel/lastActive/lastIP/isLoggedIn struct/global array; SessionCommand declaration",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "libraries/BoardCore/src/AccessPolicy.h",
+        "sha256": "3524ee6acd036d7ef30e266d55fd71045628abe2c57243383162dea8e90c55d0",
+        "anchor": "class Sessions"
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [
+      {
+        "path": "tests/access_policy_test.cpp",
+        "sha256": "96b2ca0669e125a08354779919684c192e71e7a2a6e760202eda653f5824c737",
+        "anchor": "Sessions sessions;"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "SessionCommand lifecycle declaration",
+        "disposition": "pending",
+        "reason": "Existing encapsulated AccessPolicy/WebAccess owns roles/address/expiry/mutex admission; exact authenticated UART session lifecycle is still pending."
+      }
+    ],
+    "remaining": [
+      "Existing encapsulated AccessPolicy/WebAccess owns roles/address/expiry/mutex admission; exact authenticated UART session lifecycle is still pending."
+    ]
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "LocalLib/RemoteCommand.cpp",
+    "sha256": "9ca2a3d6be55cc5d0271d0e036e28fbc6a25ed71c276f53128262a03d30e9e52",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "all UDP state/ports",
+      "initUdpDebug/UdpService/udpSend/handleUdpReceive/executeCommand",
+      "all ServiceEvent cases"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: all UDP state/ports; initUdpDebug/UdpService/udpSend/handleUdpReceive/executeCommand; all ServiceEvent cases",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Generic bounded UDP diagnostic/network-event lifecycle",
+        "disposition": "pending",
+        "reason": "File is disabled in donor sketch, input truncates at254 bytes, no auth/identity, and UdpService tests a function pointer. Define capability/ownership/fixtures before adding any listener or SDK event adapter."
+      }
+    ],
+    "remaining": [
+      "File is disabled in donor sketch, input truncates at254 bytes, no auth/identity, and UdpService tests a function pointer. Define capability/ownership/fixtures before adding any listener or SDK event adapter."
+    ]
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Temp/Always.h",
+    "sha256": "08fc271ee313bced76acf687e782aacd8eb03517e440910ff591c62aaedd0adf",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "all scalar/pointer/flash/BOOL aliases/sentinels",
+      "High/Low/IsHigh/IsLow/byte/word/Pack/ReverseOrder/Null macros"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: all scalar/pointer/flash/BOOL aliases/sentinels; High/Low/IsHigh/IsLow/byte/word/Pack/ReverseOrder/Null macros",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Generic byte packing reconciliation",
+        "disposition": "pending",
+        "reason": "Use existing stdint/typed COBS owners instead of width-dependent aliases and repeated-evaluation/token-fragment macros; full UART function review still required."
+      }
+    ],
+    "remaining": [
+      "Use existing stdint/typed COBS owners instead of width-dependent aliases and repeated-evaluation/token-fragment macros; full UART function review still required."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "eeb2f89cf8ab89257e99fc2968f0f95e9dfac87c",
+      "sha256": "08fc271ee313bced76acf687e782aacd8eb03517e440910ff591c62aaedd0adf",
+      "bytes": 3113
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Temp/CommonDefine.h",
+    "sha256": "e78774e8b164205479d73ec5bee1651160140d3fc3e5f0e204e6ff127fb958ca",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "all generic readiness/result/calendar/toggle/comparison/format constants",
+      "ADC/weigh/calibration/DLC commands/limits/brands/status/factors"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: all generic readiness/result/calendar/toggle/comparison/format constants; ADC/weigh/calibration/DLC commands/limits/brands/status/factors",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Generic readiness/result/calendar/format semantics",
+        "disposition": "pending",
+        "reason": "Map real typed consumers in UART/clock review; only exact load-cell/calibration/weighing command groups are PU business exclusions."
+      }
+    ],
+    "remaining": [
+      "Map real typed consumers in UART/clock review; only exact load-cell/calibration/weighing command groups are PU business exclusions."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "e870cf04d97b2c47a1f4d93d6350708aab3e177b",
+      "sha256": "e78774e8b164205479d73ec5bee1651160140d3fc3e5f0e204e6ff127fb958ca",
+      "bytes": 3247
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Temp/ChartIndex.h",
+    "sha256": "f7b7cf3dd40a64c4de41420a0bdd7ce8aa4685ed895b30e7f7b838cb009069c7",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "all access roles/chart classes/menu/form/list/page/reserved indices"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: all access roles/chart classes/menu/form/list/page/reserved indices",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Generic Wi-Fi/settings/diagnostics/terminal/password/clock screen behavior",
+        "disposition": "pending",
+        "reason": "Reconcile actual UI/session/runtime owners; only exact weighing/report/printer/calibration charts are PU business. Do not copy donor role credential hints."
+      }
+    ],
+    "remaining": [
+      "Reconcile actual UI/session/runtime owners; only exact weighing/report/printer/calibration charts are PU business. Do not copy donor role credential hints."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "dbb6d606d0387aae1c1a17670988a5c499afa10c",
+      "sha256": "f7b7cf3dd40a64c4de41420a0bdd7ce8aa4685ed895b30e7f7b838cb009069c7",
+      "bytes": 5436
+    }
+  },
+  {
+    "origin": "PU850-ESP",
+    "path": "Temp/ESP_Master_Common.h",
+    "sha256": "33789905b19368d1f35d133fc38e16e8530e8841500ddfab5a0e5dcc2de421cf",
+    "source_read": "complete",
+    "source_repository": "https://github.com/atomicdeploy/pu850-esp",
+    "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+    "reviewed_sections": [
+      "revision/icons/network/internet/control tables",
+      "every prefix/numeric/string/request/order/bulk/file/LCD/diagnostic/programming suffix",
+      "groups/HTTP/results/baud/ResultPack"
+    ],
+    "verdict": "parity-gap",
+    "preserved": [
+      "Every section/function read through EOF: revision/icons/network/internet/control tables; every prefix/numeric/string/request/order/bulk/file/LCD/diagnostic/programming suffix; groups/HTTP/results/baud/ResultPack",
+      "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+    ],
+    "targets": [
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "c4da5a1b7d2882ebf6f411308b92f2f40c24c0ac5563919be6a044fce72be3e2",
+        "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+      }
+    ],
+    "proof": [],
+    "omissions": [
+      {
+        "code": "Generic network/clock/message/file/LCD/session/diagnostic/programming semantics",
+        "disposition": "pending",
+        "reason": "Complete UART function review and import useful current authenticated behavior; a second legacy parser/version selector is replaced by living COBS/capability/ACK. Only weight/tare/receipt/report payloads are business exclusions."
+      }
+    ],
+    "remaining": [
+      "Complete UART function review and import useful current authenticated behavior; a second legacy parser/version selector is replaced by living COBS/capability/ACK. Only weight/tare/receipt/report payloads are business exclusions."
+    ],
+    "source_blob": {
+      "repository": "atomicdeploy/pu850-esp",
+      "revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
+      "git_sha": "f0007f29ee395e5aaceea6f8585a165763232678",
+      "sha256": "33789905b19368d1f35d133fc38e16e8530e8841500ddfab5a0e5dcc2de421cf",
+      "bytes": 13849
+    }
+  },
+  {
     "origin": "esp32WS2811",
     "path": "docs/WS2811__V1.4_EN_18112019092521.pdf",
     "sha256": "44ba93102860081868a5a547f0d6fc85e67b0807297caffbe6ab8b9595fc2bdd",
@@ -1949,7 +2753,7 @@
   "targets": [
     {
       "path": "firmware/esp8266/src/MaintenanceRoutes.h",
-      "sha256": "2e9eccc4581646b2797a80bade0523a775d4df64c4de657d357a95b1ba18fc03",
+      "sha256": "8717e11a85931686ba6673b6b42406ad5f4362586732cb1d7dea1332c9c85585",
       "anchor": "bool prepareRemotePair("
     },
     {
@@ -1994,7 +2798,7 @@
   "targets": [
     {
       "path": "firmware/esp8266/src/MaintenanceRoutes.h",
-      "sha256": "2e9eccc4581646b2797a80bade0523a775d4df64c4de657d357a95b1ba18fc03",
+      "sha256": "8717e11a85931686ba6673b6b42406ad5f4362586732cb1d7dea1332c9c85585",
       "anchor": "bool prepareRemotePair("
     }
   ],
@@ -4760,7 +5564,7 @@
         },
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0","anchor":"Message *items_=nullptr;"},
         {"path":"firmware/esp8266/esp8266.ino","sha256":"8780b01a9187614813b7e6a3ea83f2ba0fae0866f3524ea1f745d33353f5a1a3","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
-        {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"2e9eccc4581646b2797a80bade0523a775d4df64c4de657d357a95b1ba18fc03","anchor":"internal_heap_largest_block_bytes"},
+        {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"8717e11a85931686ba6673b6b42406ad5f4362586732cb1d7dea1332c9c85585","anchor":"internal_heap_largest_block_bytes"},
         {"path":"tools/update-firmware.mjs","sha256":"7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
@@ -5109,7 +5913,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/WebAccess.h",
-          "sha256": "534fb9f39fbcc530725e3c50584050927bb3ef6bea17abddaaee457481aaa5c8",
+          "sha256": "bd6c7ba60dc12a4fd8e8d2389b94e753f7eda0ab4552eb4f0195a3137613e992",
           "anchor": "class WebAccess"
         },
         {
@@ -5177,7 +5981,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/src/WebAccess.h",
-          "sha256": "534fb9f39fbcc530725e3c50584050927bb3ef6bea17abddaaee457481aaa5c8",
+          "sha256": "bd6c7ba60dc12a4fd8e8d2389b94e753f7eda0ab4552eb4f0195a3137613e992",
           "anchor": "class WebAccess"
         },
         {
@@ -6500,7 +7304,7 @@
     },
     {
       "path": "firmware/esp8266/src/WebAccess.h",
-      "sha256": "534fb9f39fbcc530725e3c50584050927bb3ef6bea17abddaaee457481aaa5c8",
+      "sha256": "bd6c7ba60dc12a4fd8e8d2389b94e753f7eda0ab4552eb4f0195a3137613e992",
       "anchor": "bool peerAllowed("
     },
     {
@@ -7422,7 +8226,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebAccess.h",
-          "sha256": "534fb9f39fbcc530725e3c50584050927bb3ef6bea17abddaaee457481aaa5c8",
+          "sha256": "bd6c7ba60dc12a4fd8e8d2389b94e753f7eda0ab4552eb4f0195a3137613e992",
           "anchor": "ApiPolicy::numberedRoute"
         }
       ],
@@ -8575,9 +9379,9 @@
           "anchor": "--test-threads=1"
         },
         {
-          "path": "tools/ci-checks.mjs",
-          "sha256": "1526a8c628bc00ba425114137635f7092fa9e1ccd35ae4ddb2b3210b6bc2cf83",
-          "anchor": "export function runChecks"
+        "path": "tools/ci-checks.mjs",
+        "sha256": "0b0642d43476d242dc1b94eb6d764cbc2e8ea9184c713efa8092f546338974c9",
+        "anchor": "export function runChecks"
         },
         {
           "path": "tools/prepare-release.mjs",
@@ -13267,7 +14071,7 @@
         },
         {
           "path": "firmware/esp8266/src/MaintenanceRoutes.h",
-          "sha256": "2e9eccc4581646b2797a80bade0523a775d4df64c4de657d357a95b1ba18fc03",
+          "sha256": "8717e11a85931686ba6673b6b42406ad5f4362586732cb1d7dea1332c9c85585",
           "anchor": "if(plan.targets==RemotePolicy::Esp && !programmingLatched) return true;"
         },
         {

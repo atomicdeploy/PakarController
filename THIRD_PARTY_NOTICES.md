@@ -40,6 +40,12 @@ PakarController is integration code built from earlier AtomicDeploy projects.
   `firmware-dependencies.mjs`, `firmware-report.mjs`, `deploy-artifact.mjs` and
   root/CI entrypoints. See `docs/SCRIPT-TOOLING.md` and the original-byte hashes,
   source identities and concrete omissions in the existing file-comparison ledger.
+- `libraries/BoardCore/src/DiagnosticText.h` adapts ASA0002E.h's actual
+  `convertToHexString`, `getFormattedUptime` and `humanReadableBytes` at the
+  same PU850 revision for live session/random encoding and telemetry display.
+  Fixed caller buffers and unsigned bytes replace growing Strings; original
+  author/repository provenance is retained here. No separate donor license
+  exists in its complete Git tree; the same owner-directed reuse applies.
 - FastLED, Arduino ESP8266 core, MiniCore, WebSockets 2.7.2 by Markus Sattler,
   PubSubClient 2.8.0 by Nick O'Leary, xcap 0.9.8, eframe/egui, reqwest, and serde are
   build/runtime dependencies under their

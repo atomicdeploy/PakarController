@@ -2,6 +2,7 @@
 #include "AccessConfig.h"
 #include <ApiPolicy.h>
 #include <PeerFence.h>
+#include <DiagnosticText.h>
 #include <ESPAsyncWebServer.h>
 #include "SystemPlatform.h"
 #include "PeerIdentity.h"
@@ -286,9 +287,9 @@ class WebAccess {
     failures_ = 0;
     uint8_t bytes[16];
     if (SystemPlatform::randomBytes(bytes, sizeof(bytes)) != 0) { error = F("Session entropy unavailable"); return 503; }
-    const char hex[] = "0123456789abcdef";
-    for (size_t i = 0; i < sizeof(bytes); ++i) { token[i * 2] = hex[bytes[i] >> 4]; token[i * 2 + 1] = hex[bytes[i] & 15]; }
-    token[32] = 0;
+    if (!BoardCore::DiagnosticText::encodeHex(bytes, sizeof(bytes), token, sizeof(token))) {
+      error = F("Session encoding failed"); return 503;
+    }
     if (!sessions_.add(token, now)) { error = F("Session limit reached; sign out another client"); return 503; }
     return 200;
   }

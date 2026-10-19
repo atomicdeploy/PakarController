@@ -2,6 +2,7 @@
   "schema": 1,
   "authority": "docs/file-comparison-evidence.json",
   "concerns": [
+    {"id":"pu-foundation","origins":["PU850-ESP"],"path_pattern":"(^ASA0002E(?:\\.h|\\.ino\\.globals\\.h|\\.code-workspace)$|^defines\\.h$|^ProductConfig\\.h$|^PRODUCT-PROFILES\\.md$|^LocalLib/(Public|Sessions|CrashHandler|FS|RemoteCommand)\\.(cpp|h)$|^\\.(gitignore|gitattributes)$|^Temp/)","required_reviews":["PU850-ESP|ASA0002E.h"],"issue":3},
     {"id":"peer-identity","origins":["PCController","RayanLamp","PU850-ESP"],"path_pattern":"(^Tools/Controller/internal/hostbridge/discovery_metadata\\.go$|^webui/src/api\\.ts$|^LocalLib/Authentication\\.(cpp|h)$)","required_reviews":["PCController|Tools/Controller/internal/hostbridge/discovery_metadata.go","RayanLamp|webui/src/api.ts"],"issue":2},
     {"id":"windows-startup","origins":["Pealayer"],"path_pattern":"^src/(main|diagnostics|process_control|startup)\\.rs$","required_reviews":["Pealayer|src/main.rs","Pealayer|src/diagnostics.rs"],"issue":5},
     {"id":"device-shell","origins":["PU850-ESP","RayanLamp"],"path_pattern":"(^LocalLib/(Shell|Telnet|Commands)\\.(cpp|h)$|^internal/tui/(form|terminal)\\.go$)","required_reviews":["PU850-ESP|LocalLib/Shell.cpp","PU850-ESP|LocalLib/Shell.h","PU850-ESP|LocalLib/Telnet.cpp","PU850-ESP|LocalLib/Telnet.h","PU850-ESP|LocalLib/Commands.cpp","PU850-ESP|LocalLib/Commands.h","RayanLamp|internal/tui/form.go","RayanLamp|internal/tui/terminal.go"],"issue":2},

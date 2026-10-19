@@ -1,5 +1,52 @@
 # Donor-first preflight receipt
 
+## PU850 exhaustive continuation: foundation source checkpoint
+
+2026-10-19: AGENTS/preflight and owning issues #2/#3 read. Target started clean
+at feefd9d299a710f0be4945b90d4e23695d8668ac. Fresh GitHub main, ls-remote and
+local sparse HEAD all match donor431104072952f694a35b3a83c19f13fbb098ca5b.
+Untruncated recursive GitHub tree121entries/109files/no submodules agrees with
+the existing inventory. Sparse files were read by immutable git show, never by
+expanding/advancing/resetting the shared donor checkout.
+
+The initial preferences lookup with PU origin correctly refused because no PU
+route existed. Read actual foundation sources/dependencies and added the missing
+pu-foundation route; donor-audit remains exhaustive. Complete EOF reads of20
+previously pending files (including all four Temp dependencies), with exact
+section/function decisions, are recorded in the SAME comparison evidence and
+PU850-PARITY.md. No screened/unread file became an accepted exclusion.
+
+Actual ASA0002E.h convertToHexString/getFormattedUptime/humanReadableBytes source
+is adapted into BoardCore/DiagnosticText.h and invoked by live WebAccess session
+creation, /random and telemetry uptime/heap text. Fixed buffers, unsigned bytes,
+capacity/overflow/truncation checks replace unchecked dynamic/signed formatting.
+Real16-byte system entropy, numeric telemetry, auth/identity/ownership and default
+supported-release admission remain the current owners. Imported donor ignore
+patterns protect ~local.h/~secrets.h; no donor secrets or credential hints copied.
+
+Focused execution passed: all256byte encodings; capacity/SIZE_MAX/null cases;
+seconds/day/UINT32_MAX uptime and B/KB/MB/GB boundaries; actual WebAccess
+all-method epoch/auth/origin/async dispatch double; access persistence/wrong
+password/failed commit/restart/corruption/physical-USB-only recovery double;
+all50donor route source/target hash+line anchors; cached-filesystem telemetry
+source guard; git check-ignore for both private-header names. Runner is wired
+into existing CI quality checks and shares build/native output.
+
+The comparison generator correctly refused the changed CI runner binding before
+report generation. Inspected the one-command quality-list extension and unchanged
+runChecks owner, then selectively rebound that single Pealayer CI reference;
+all existing affected WebAccess/MaintenanceRoutes and50route mappings were
+rechecked for surviving anchors and rebound to the inspected source. Rejected
+patch-generation/context attempts made no source changes; no gate was bypassed.
+
+PU coverage is71/109complete,38pending,64gap files,31specialist-unrouted. Overall
+276/4697comparisons,4421pending,221gap files. Generic calendar/hex decode/path/
+URL/checksum/crash/UDP/editor/UART/client behavior remains explicitly pending.
+No donor build, firmware SDK rebuild, CI wait, network/app/server mutation,
+deployment, reboot, LED/audio/PBX action or physical/human acceptance occurred.
+Current rainbow/production settings and live relay remain untouched. Continue
+the remaining files and fresh function rereads in bounded source checkpoints.
+
 ## Temporary private Internet panel
 
 The scoped office service now serves the actual project Web UI and basic panel

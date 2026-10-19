@@ -1,5 +1,6 @@
 #pragma once
 #include "FilesystemTelemetry.h"
+#include <DiagnosticText.h>
 #if defined(ARDUINO_ARCH_ESP32)
 #include <esp_littlefs.h>
 #endif
@@ -187,6 +188,11 @@ String buildTelemetryJson() {
   e[F("image_identity_captured_uptime_ms")]=bootTelemetryImage.capturedAt;
   e[F("boot_integrity_verified")]=bootIntegrity;e[F("ota_free_bytes")]=ESP.getFreeSketchSpace();
   e[F("free_heap_bytes")]=ESP.getFreeHeap();e[F("uptime_ms")]=now;
+  char uptimeText[40], heapText[32];
+  if(BoardCore::DiagnosticText::formatUptime(now/1000U,uptimeText,sizeof(uptimeText)))e[F("uptime_text")]=uptimeText;
+  else e[F("uptime_text")]=nullptr;
+  if(BoardCore::DiagnosticText::formatBytes(e[F("free_heap_bytes")].as<uint32_t>(),heapText,sizeof(heapText)))e[F("free_heap_text")]=heapText;
+  else e[F("free_heap_text")]=nullptr;
   e[F("uart_errors")]=link.errors();e[F("usb_errors")]=hostLink.errors();
 #if defined(ARDUINO_ARCH_ESP32)
   e[F("hardware")][F("ws2811_pin")]=PAKAR_S3_LED_DATA;
@@ -529,7 +535,7 @@ void registerMaintenanceRoutes() {
   server.on("/random",HTTP_GET,[](){
     if(!authenticate())return;uint8_t bytes[32];char hex[65];
     if(SystemPlatform::randomBytes(bytes,sizeof(bytes))) {server.send(503,"text/plain","Entropy unavailable");return;}
-    for(unsigned i=0;i<32;++i)snprintf(hex+i*2,3,"%02x",bytes[i]);
+    if(!BoardCore::DiagnosticText::encodeHex(bytes,sizeof(bytes),hex,sizeof(hex))) {server.send(503,"text/plain","Random encoding failed");return;}
     JsonDocument d;d[F("random_hex")]=hex;sendMaintenanceJson(encodedJson(d));
   });
   server.on("/lang",HTTP_GET,[](){if(authenticate()){JsonDocument d;d[F("locale")]=displayLocale;d[F("translated")]=false;sendMaintenanceJson(encodedJson(d));}});

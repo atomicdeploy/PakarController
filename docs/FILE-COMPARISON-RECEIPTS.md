@@ -1,5 +1,22 @@
 # PakarController comparison receipts
 
+## PU850 foundation full-read and actual-source import
+
+2026-10-19:20new complete EOF reads, including all4Temp dependency blobs, at
+fresh GitHub/local431104072952f694a35b3a83c19f13fbb098ca5b. Complete tree109files;
+no absent sparse path was excluded. Exact function sections, generic omissions
+and source/target/proof hashes are in the existing evidence/PU850-PARITY report.
+DiagnosticText imports actual hex/uptime/byte-format code into real session,
+random and telemetry consumers; private-header ignore patterns also imported.
+
+Passed once for this material slice: test-diagnostic-text (all256byte values,
+bounds/overflow, uptime/unit boundaries), test-web-access (actual epoch/auth/
+origin and persistent credential doubles), pu_routes_test (all50hash/anchor
+bindings), filesystem_telemetry_test and actual git check-ignore. Source fixtures
+are not SDK/CI execution, device/GUI/phone, network or physical acceptance. No
+repetitive full suites or donor/SDK rebuild; no live service/policy/scene changes.
+Current PU71/109compared,38pending,64gaps; all donors276/4697,4421pending,221gaps.
+
 ## Supported peer releases and operational introductions
 
 Coordinated source0.2.8/client build15, support floor0.2.8; no exact-build
