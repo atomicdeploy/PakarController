@@ -21,7 +21,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62",
+      "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52",
       "anchor": ": WorkspaceActivityStrip("
     }
   ],
@@ -9937,7 +9937,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62",
+      "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -12351,6 +12351,7 @@
       "preserved": [
         "Actual connected AND have_status AND advertised-capability conjunction adapted to selected-peer fresh manifests. No feature inference from hostname, pixel count, catalog, defaults or online alone.",
         "TM1637 additionally requires fresh measured ACK; Text and Buzzer have independent HELLO support. Native/Web hide unrelated controls and gate domain commands.",
+        "Reread peripheral-availability.ts completely for Flutter recovery: the existing freshness deadline still owns commands; resuming a suspended socket preserves only a still-fresh observation and stale resume starts its recovery read immediately. Six fixed pixel indicator slots use the published frame map or explicitly labelled board diagnostic state; rainbow without sampled RGB never reuses old semantic white. This adapts availability/unknown semantics, not donor hardware-specific sensor layouts.",
         "Flutter now adapts the same ready AND advertised schema-1 conjunction, table geometry and individual ACK policy; selected owner revisions reject old replies and retained dialogs. Unknown/stale peers have only client connection/overview navigation.",
         "Reread the actual availability implementation/tests and Pealayer board information UI. Add optional board-owned LED backend/RMT/DMA capability data to native, Flutter and Web without deriving it from chip model, output enabled or renderer mode. Missing/mistyped/contradictory metadata remains unknown; native serialization and USB compact readback retain the full manifest. Existing driver observation separately owns readiness/activity/faults."
       ],
@@ -12366,8 +12367,13 @@
           "anchor": "static PeerContext fromStatus"
         },
         {
+          "path": "mobile/lib/cell_pixel_preview.dart",
+          "sha256": "179ed64caf50fd71c88b9686165439eabd28da80ca4a70d7437fa460b3b821cf",
+          "anchor": "CellPixelPreview? cellPixelPreview"
+        },
+        {
           "path": "mobile/lib/main.dart",
-          "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62",
+          "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52",
           "anchor": "Future<bool> _command"
         },
         {
@@ -12401,6 +12407,11 @@
           "path": "tests/web_context_test.mjs",
           "sha256": "69e5d441087ed22663b727aab6c76eb26501545c3e9d49c291486e8426397c79",
           "anchor": "No inferred board kind or controls"
+        },
+        {
+          "path": "mobile/test/cell_pixel_preview_test.dart",
+          "sha256": "843689ae67d3eb939d0eb0dbdaa4240f1af312a97db7488c8c843379fb285057",
+          "anchor": "Board diagnostic overrides stale white semantics using physical mapping"
         },
         {
           "path": "mobile/test/peer_context_test.dart",
@@ -12672,7 +12683,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62",
+          "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -17793,7 +17804,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62",
+          "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -17941,7 +17952,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62"
+          "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52"
         }
       ],
       "proof": [
@@ -17981,7 +17992,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62"
+          "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52"
         }
       ],
       "proof": [

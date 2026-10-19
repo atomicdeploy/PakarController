@@ -7275,3 +7275,26 @@ because the older direct GUI executable invocation produced false IPC failures.
 PowerShell parsing, package probing and the actual graceful replacement passed;
 no forced close was needed. The new tool is not evidence of unrelated full
 Pealayer scripting or UI parity.
+
+## Flutter recovery and six-pixel indicators
+
+The actual PCController `Tools/Controller/web/src/peripheral-availability.ts`
+was reread completely (SHA256 `fcf2e397564c843711fd64db2bd2d820552180ac4f5abdf0d44ccbbb86be7a84`).
+Retain its ready/advertised/valid-value distinction: a backgrounded socket alone
+does not revoke an HTTP observation whose original six-second lease remains
+valid. When that lease expired during suspension, resume starts its HTTP read
+immediately while the independent socket recovery proceeds. No command replay,
+renewed cached lease or synthetic acknowledgment is introduced.
+
+Flutter's indicator previously painted semantic white/red regardless of active
+diagnostics, demonstrably wrong for the live board's green six-pixel probe. The
+new `cell_pixel_preview.dart` adapts the existing Rust `Frame::cell` physical-map
+and six-sector semantics into six fixed indicator slots. Published RGB uses the
+sample's own mapping; diagnostic state uses the acknowledged map and is labelled
+as board diagnostic state. An animated mode without RGB stays unknown instead
+of manufacturing white or an app-side rainbow. These are presentation values,
+not optical success. Canonical analysis, four focused preview/widget tests and
+all fourteen existing workspace lifecycle tests passed. Installed phone
+acceptance remains separate. The earlier six-second handshake hypothesis was not reproduced:
+a real stalled WebSocket upgrade reports one handled timeout under the app's
+cancel-on-error lifecycle; no speculative API timeout change was made.

@@ -30,6 +30,7 @@ import 'firmware_automation_page.dart';
 import 'app_update_coordinator.dart';
 import 'app_updates_page.dart';
 import 'pixel_diagnostic.dart';
+import 'cell_pixel_preview.dart';
 import 'pixel_diagnostic_page.dart';
 import 'mirroring.dart';
 import 'app_theme.dart';
@@ -879,7 +880,17 @@ class _ControlShellState extends State<ControlShell>
       setState(() {});
       return;
     }
-    _revoke('Resuming live updates…');
+    // A suspended socket does not invalidate a still-fresh HTTP observation.
+    // Its original deadline remains in force while an immediate read recovers.
+    if (status != null &&
+        observedAge != null &&
+        observedAge!.elapsed < const Duration(seconds: 6)) {
+      _armExpiry();
+      setState(() => message = 'Checking the board connection…');
+    } else {
+      _revoke('Checking the board connection…');
+      unawaited(_refresh(silent: true));
+    }
     resumeProbeAge = Stopwatch()..start();
     final oldSocket = liveGeneration;
     final probing = liveActive && api.requestLiveStatus();
@@ -1304,6 +1315,8 @@ class _ControlShellState extends State<ControlShell>
                       ),
                   StatusBar(
                     status: status,
+                    retained: presented,
+                    endpoint: api.baseUrl,
                     message: commandFailure ?? message,
                     commandFailed: commandFailure != null,
                   ),
@@ -1627,6 +1640,7 @@ class _TablePageState extends State<TablePage> {
                                       id: id,
                                       highlighted: selection.contains(id),
                                       showIndicator: showIndicators,
+                                      pixels: cellPixelPreview(status, mapping, id),
                                       name:
                                           mapping.names.elementAtOrNull(
                                             id - 1,
@@ -1736,6 +1750,7 @@ class CellButton extends StatefulWidget {
     required this.onLongPress,
     this.highlighted = false,
     this.showIndicator = false,
+    this.pixels,
   });
   final int id;
   final int physical;
@@ -1745,6 +1760,7 @@ class CellButton extends StatefulWidget {
   final VoidCallback? onLongPress;
   final bool highlighted;
   final bool showIndicator;
+  final CellPixelPreview? pixels;
 
   @override
   State<CellButton> createState() => _CellButtonState();
@@ -1770,7 +1786,7 @@ class _CellButtonState extends State<CellButton> {
         : studioDark.outline;
     return Tooltip(
       message:
-          'Logical ${widget.id} · physical ${widget.physical > 0 ? widget.physical : 'unknown'} · ${widget.state}',
+          'Logical ${widget.id} · physical ${widget.physical > 0 ? widget.physical : 'unknown'} · ${widget.pixels?.description ?? widget.state}',
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
         decoration: BoxDecoration(
@@ -1802,19 +1818,27 @@ class _CellButtonState extends State<CellButton> {
                 ),
                 if (widget.showIndicator)
                   Positioned(
+                    left: 4,
                     right: 4,
                     bottom: 4,
-                    child: Container(
-                      width: 5,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: widget.state == 'white'
-                            ? Colors.white
-                            : widget.state == 'red'
-                            ? studioDark.error
-                            : studioDark.outline,
-                      ),
+                    child: Row(
+                      children: [
+                        for (var pixel = 0; pixel < 6; ++pixel)
+                          Expanded(
+                            child: Container(
+                              key: ValueKey('cell-${widget.id}-pixel-$pixel'),
+                              height: 5,
+                              margin: const EdgeInsets.symmetric(horizontal: .5),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(2),
+                                color: widget.pixels == null
+                                    ? studioDark.outline
+                                    : Color(0xff000000 | widget.pixels!.colors[pixel]),
+                                border: Border.all(color: studioDark.outline, width: .5),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
               ],
@@ -2755,9 +2779,13 @@ class StatusBar extends StatelessWidget {
     super.key,
     required this.status,
     required this.message,
+    this.retained,
+    this.endpoint = '',
     this.commandFailed = false,
   });
   final DeviceStatus? status;
+  final DeviceStatus? retained;
+  final String endpoint;
   final String message;
   final bool commandFailed;
   @override
@@ -2811,7 +2839,9 @@ class StatusBar extends StatelessWidget {
         Flexible(
           child: Text(
             status == null
-                ? 'State unavailable'
+                ? (retained?.hostname.isNotEmpty == true
+                      ? '${retained!.hostname} · awaiting fresh state'
+                      : Uri.tryParse(endpoint)?.host ?? '')
                 : [
                     if (status!.hostname.isNotEmpty) status!.hostname,
                     if (status!.json['ethernet'] is Map &&
