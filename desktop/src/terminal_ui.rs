@@ -937,7 +937,7 @@ pub fn run(endpoint: Endpoint) -> Result<(), String> {
     drop(worker);
     drop(_terminal);
     if mutation_in_flight {
-        eprintln!(
+        cli_eprintln!(
             "Terminal closed during an operation: unsent work stopped. An in-flight write may have applied; refresh before retrying."
         );
     }

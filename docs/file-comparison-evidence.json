@@ -3,6 +3,130 @@
   "target_hash_encoding": "UTF8-without-BOM-LF",
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
+  {
+    "origin": "Pealayer",
+    "path": "src/main.rs",
+    "sha256": "452eb004c52bdcff6936de5602cfdddf5c925d58db9e1e48220fc9a21075b696",
+    "source_read": "complete",
+    "verdict": "equivalent-behavior",
+    "preserved": [
+      "Actual complete six-line entrypoint read through EOF at5a6961ce. Import windows_subsystem=windows into the Pakar executable, preventing the OS from creating an empty console on ordinary GUI launches. GUI, shortcuts and updater helpers never allocate or attach a console. Explicit CLI/TUI commands may attach only to an existing parent console; inherited file/pipe handles are preserved.",
+      "Use one prefix-free PakarController native identity for window startup, process AppUserModelID, Jump List and executable FileDescription/ProductName/CompanyName/InternalName. Existing updater child CREATE_NO_WINDOW flags remain. This row certifies the tiny entrypoint adaptation, not whole-file Windows Shell parity."
+    ],
+    "targets": [
+      {
+        "path": "desktop/src/main.rs",
+        "sha256": "66d1a3ab57439000a0b088b5ee985ce9dcc3a0c8f97ab51e8b9893fc2cb2ec50",
+        "anchor": "#![cfg_attr(windows, windows_subsystem = \"windows\")]"
+      },
+      {
+        "path": "desktop/src/cli_console.rs",
+        "sha256": "3019c88d40d96574b6d72eace694ac69f8aaceb1477c3a08e9698a54da04ab25",
+        "anchor": "pub fn prepare("
+      },
+      {
+        "path": "desktop/src/application_identity.rs",
+        "sha256": "c37a32df5c00a1cc559c58d226b87d6e9756e7d837b56488646bd0ecc54f26bb",
+        "anchor": "pub const WINDOWS_APP_ID"
+      },
+      {
+        "path": "desktop/src/platform/windows_jump_list.rs",
+        "sha256": "d8009f9017e829ad9d3b7d4563acd8604ec92262d3ef2e4b6dac73c90bee20d9",
+        "anchor": "wide_null(crate::application_identity::WINDOWS_APP_ID)"
+      },
+      {
+        "path": "desktop/build.rs",
+        "sha256": "09d1974db4ba85ea98d6d5814cb73ce31b22cc9c99af2dbd77b5f1ca039c68d1",
+        "anchor": ".set(\"CompanyName\", application_identity::APP_NAME)"
+      }
+    ],
+    "proof": [
+      {"path":"tests/windows_startup_test.ps1","sha256":"3ab90d3410719896189b93df4358a00602aefca8cc948f3ebfdd079ba707433c","anchor":"Reject $taskBytes"},
+      {
+        "path": "tests/windows_tray_test.mjs",
+        "sha256": "541da356a3c3e376e2eacfa10dbaf068925074ca5c77a005ccf71121eb5639cb",
+        "anchor": "const consolePolicy"
+      },
+      {
+        "path": "tools/package-probe-windows.ps1",
+        "sha256": "71604ab464776891dbc95db7123218c22b3ede09ce2835fe4659d75c6d0b9d5e",
+        "anchor": "function Assert-PakarWindowsGuiExecutable"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "pealayer::startup::run() library delegation",
+        "disposition": "replaced",
+        "reason": "Pakar currently has a single authoritative binary, not the donor media library. Keep its existing main runtime and no duplicate process globals. The imported crate-boundary guard enforces library delegation if a lib.rs is later introduced; creating a second runtime solely to copy a six-line entrypoint would violate ownership."
+      }
+    ],
+    "remaining": []
+  },
+  {
+    "origin": "Pealayer",
+    "path": "src/diagnostics.rs",
+    "sha256": "92b065a4d8ff01ae3b4a81fa11fb6e5b671f85bb1f667be6af389e692fef9f71",
+    "source_read": "complete",
+    "verdict": "parity-gap",
+    "preserved": [
+      "Read complete152-line6485-byte donor through EOF. Actual cli_println/cli_eprintln, cli_output, write_cli_line and disconnected_cli_output_returns_an_error_without_panicking are adapted into cli_console. All primary native stdout/stderr call sites use fallible writes, including IPC, help/version, shell errors, management and TUI startup. Partial print support retains the existing table text interface without adding newline artifacts."
+    ],
+    "targets": [
+      {
+        "path": "desktop/src/cli_console.rs",
+        "sha256": "3019c88d40d96574b6d72eace694ac69f8aaceb1477c3a08e9698a54da04ab25",
+        "anchor": "fn write_output("
+      },
+      {
+        "path": "desktop/src/main.rs",
+        "sha256": "66d1a3ab57439000a0b088b5ee985ce9dcc3a0c8f97ab51e8b9893fc2cb2ec50",
+        "anchor": "cli_println!(\"{reply}\")"
+      },
+      {
+        "path": "desktop/src/terminal_ui.rs",
+        "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
+        "anchor": "cli_eprintln!("
+      }
+    ],
+    "proof": [
+      {
+        "path": "desktop/src/cli_console.rs",
+        "sha256": "3019c88d40d96574b6d72eace694ac69f8aaceb1477c3a08e9698a54da04ab25",
+        "anchor": "fn disconnected_pipe_returns_an_error_without_panicking"
+      },
+      {
+        "path": "desktop/src/cli_console.rs",
+        "sha256": "3019c88d40d96574b6d72eace694ac69f8aaceb1477c3a08e9698a54da04ab25",
+        "anchor": "fn inherited_output_and_partial_tui_lines_are_preserved"
+      },
+      {
+        "path": "tests/windows_tray_test.mjs",
+        "sha256": "541da356a3c3e376e2eacfa10dbaf068925074ca5c77a005ccf71121eb5639cb",
+        "anchor": "assert.doesNotMatch(app,"
+      }
+    ],
+    "omissions": [
+      {
+        "code": "record_shell_action / append_shell_event bounded diagnostic journal",
+        "disposition": "pending",
+        "reason": "Useful shell action provenance is separate from console output. Integrate a bounded privacy-safe journal with current app-management ownership before certifying the entire donor; do not log command payloads, credentials or media URLs."
+      },
+      {
+        "code": "panic_report_path / write_report / install_panic_reporter and bounded UTF8 panic-report test",
+        "disposition": "pending",
+        "reason": "Pakar incident deduplication is not a crash reporter. Adapt safe profile resolution, process/thread/build identity and bounded latest-report retention separately; do not claim generic runtime diagnostics restored by a console fix."
+      },
+      {
+        "code": "peer-active thumbnail-cache path selection",
+        "disposition": "replaced",
+        "reason": "No mpv or media-thumbnail cache exists in this controller. Future crash/shell journals must use the Pakar profile diagnostic directory and selected process identity, never a donor media cache."
+      }
+    ],
+    "remaining": [
+      "Finish bounded panic and shell-action reporting. Actual CLI/IPC pipes, detached GUI console absence and destination replacement must be verified separately from source assertions."
+    ]
+  }
+,
 {
   "origin":"PCController",
   "path":"Project/Runtime/FrontPanelRuntime.inc.h",
@@ -1336,7 +1460,7 @@
     {
       "path": "desktop/src/main.rs",
       "anchor": "SerialCommand::Bridge(target",
-      "sha256": "79fa06da5585572678acf18a3150d28e0879803280c2d8e5868fc536ae9ff178"
+      "sha256": "66d1a3ab57439000a0b088b5ee985ce9dcc3a0c8f97ab51e8b9893fc2cb2ec50"
     }
   ],
   "omissions": [
@@ -2216,7 +2340,7 @@
         {
           "path": "tools/build-desktop.ps1",
           "anchor": "Invoke-PakarNative -WorkingDirectory",
-          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396"
+          "sha256": "9b1862995b3cd604506d3e48351874a3a637491599055f822b71e43456b789f5"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -2274,7 +2398,7 @@
         {
           "path": "tools/build-desktop.ps1",
           "anchor": "Invoke-PakarNative -WorkingDirectory",
-          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396"
+          "sha256": "9b1862995b3cd604506d3e48351874a3a637491599055f822b71e43456b789f5"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -2384,7 +2508,7 @@
         {
           "path": "tools/build-desktop.ps1",
           "anchor": "Invoke-PakarNative -WorkingDirectory",
-          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396"
+          "sha256": "9b1862995b3cd604506d3e48351874a3a637491599055f822b71e43456b789f5"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -2442,7 +2566,7 @@
         {
           "path": "tools/build-desktop.ps1",
           "anchor": "Invoke-PakarNative -WorkingDirectory",
-          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396"
+          "sha256": "9b1862995b3cd604506d3e48351874a3a637491599055f822b71e43456b789f5"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -2500,7 +2624,7 @@
         {
           "path": "tools/build-desktop.ps1",
           "anchor": "Invoke-PakarNative -WorkingDirectory",
-          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396"
+          "sha256": "9b1862995b3cd604506d3e48351874a3a637491599055f822b71e43456b789f5"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -5491,7 +5615,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn command_request("
     },
     {
@@ -5536,7 +5660,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "79fa06da5585572678acf18a3150d28e0879803280c2d8e5868fc536ae9ff178",
+      "sha256": "66d1a3ab57439000a0b088b5ee985ce9dcc3a0c8f97ab51e8b9893fc2cb2ec50",
       "anchor": "fn scoped_http_request("
     },
     {
@@ -5626,7 +5750,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn same_hostname_reboot_revokes_drafts_and_old_receipts()"
     },
     {
@@ -5656,7 +5780,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "79fa06da5585572678acf18a3150d28e0879803280c2d8e5868fc536ae9ff178",
+      "sha256": "66d1a3ab57439000a0b088b5ee985ce9dcc3a0c8f97ab51e8b9893fc2cb2ec50",
       "anchor": "// The mapping response identifies its own producer."
     },
     {
@@ -5794,7 +5918,7 @@
     },
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn server_reboot_between_preflight_and_post_stops_without_replay()"
     },
     {
@@ -5832,7 +5956,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn shared_cli_mutation_inherits_pinned_epoch_headers()"
     },
     {
@@ -5886,7 +6010,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "pub fn run(endpoint: Endpoint)"
     }
   ],
@@ -5906,7 +6030,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn offline_and_unacknowledged_peers_have_no_table_actions()"
     },
     {
@@ -5926,7 +6050,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn enter()"
     }
   ],
@@ -5946,7 +6070,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn offline_and_unacknowledged_peers_have_no_table_actions()"
     },
     {
@@ -5966,7 +6090,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "pub fn safe_line(value: &str)"
     }
   ],
@@ -5986,7 +6110,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn donor_text_safety_preserves_unicode_not_peer_terminal_commands()"
     },
     {
@@ -6006,7 +6130,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn color_allowed()"
     }
   ],
@@ -6026,7 +6150,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn donor_text_safety_preserves_unicode_not_peer_terminal_commands()"
     },
     {
@@ -6046,7 +6170,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn key(&mut self, key: KeyEvent)"
     }
   ],
@@ -6066,7 +6190,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn shared_find_selection_and_arrow_navigation_never_write()"
     },
     {
@@ -6086,7 +6210,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "let worker = thread::spawn(move ||"
     }
   ],
@@ -6106,7 +6230,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn loss_and_peer_change_revoke_controls_without_false_recovery()"
     },
     {
@@ -6126,7 +6250,7 @@
   "targets": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn window(total: usize, visible: usize, cursor: usize)"
     }
   ],
@@ -6146,7 +6270,7 @@
   "proof": [
     {
       "path": "desktop/src/terminal_ui.rs",
-      "sha256": "5f51f1752c49d9cc134bf6de3892f8321eff29a3cec09893e92a6fda0e2ddce6",
+      "sha256": "5a3bfa5b4dc3642825ff4fad784b72e42359f2288d87cb68f8f7a7d0a2058653",
       "anchor": "fn actual_donor_table_window_keeps_cursor_in_resized_viewport()"
     },
     {
@@ -7583,12 +7707,12 @@
         },
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396",
+          "sha256": "9b1862995b3cd604506d3e48351874a3a637491599055f822b71e43456b789f5",
           "anchor": "--test-threads=1"
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "8fbe1b6d9ecbde953ce7cd46cf1390fa33458f51bc6a3bd8839f091e80f69a7a",
+          "sha256": "3e0b54f8de1ca8215520ccca220d8e27443ec8d57306259952c6992752dbccbb",
           "anchor": "export function runChecks"
         },
         {
@@ -8428,7 +8552,7 @@
       "targets": [
         {
           "path": "desktop/build.rs",
-          "sha256": "02a9422df8169a9f9795df83c0a990d07a2f74bf2dff314828a3c402f816f3bd",
+          "sha256": "09d1974db4ba85ea98d6d5814cb73ce31b22cc9c99af2dbd77b5f1ca039c68d1",
           "anchor": "brand_image::native_icon_bytes(brand_image::icon_bytes())"
         },
         {
@@ -8577,7 +8701,7 @@
       "targets": [
         {
           "path": "tools/package-probe-windows.ps1",
-          "sha256": "f4516884990ad76c020fbc6534d902c4949abae0b48da8ea40c008afa44dfd4f",
+          "sha256": "71604ab464776891dbc95db7123218c22b3ede09ce2835fe4659d75c6d0b9d5e",
           "anchor": "function Invoke-PackageProbe"
         }
       ],
@@ -8672,7 +8796,7 @@
       "targets": [
         {
           "path": "tools/build-desktop.ps1",
-          "sha256": "f1c0cebf8f63b848807be32326baff5660682e10a02874760c19c4ebe9723396",
+          "sha256": "9b1862995b3cd604506d3e48351874a3a637491599055f822b71e43456b789f5",
           "anchor": "Get-PakarCargoTargetDirectory"
         }
       ],
@@ -8727,7 +8851,7 @@
         },
         {
           "path": "tools/stage-desktop.ps1",
-          "sha256": "bb1995575486751f88833de244be46b1d6c92727514c2acf81e9e516bccd9b2d",
+          "sha256": "1bbfe87fe8c9e6936e140c7911c5493f5937eceac1402ca386661dcabb40c4bd",
           "anchor": "Invoke-PackageProbe"
         }
       ],
@@ -11777,7 +11901,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "79fa06da5585572678acf18a3150d28e0879803280c2d8e5868fc536ae9ff178",
+          "sha256": "66d1a3ab57439000a0b088b5ee985ce9dcc3a0c8f97ab51e8b9893fc2cb2ec50",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -11814,7 +11938,7 @@
         },
         {
           "path": "tests/windows_tray_test.mjs",
-          "sha256": "a478534b0a00bc19b19b0e0eb3260a669615608914a485761db1006315ffc13a",
+          "sha256": "541da356a3c3e376e2eacfa10dbaf068925074ca5c77a005ccf71121eb5639cb",
           "anchor": "Actual GUID-bound tooltip"
         }
       ],
@@ -11875,7 +11999,7 @@
       "proof": [
         {
           "path": "tests/windows_tray_test.mjs",
-          "sha256": "a478534b0a00bc19b19b0e0eb3260a669615608914a485761db1006315ffc13a",
+          "sha256": "541da356a3c3e376e2eacfa10dbaf068925074ca5c77a005ccf71121eb5639cb",
           "anchor": "Actual GUID-bound tooltip"
         }
       ],
@@ -11900,7 +12024,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "79fa06da5585572678acf18a3150d28e0879803280c2d8e5868fc536ae9ff178",
+          "sha256": "66d1a3ab57439000a0b088b5ee985ce9dcc3a0c8f97ab51e8b9893fc2cb2ec50",
           "anchor": "fn serial_worker("
         },
         {
@@ -11937,7 +12061,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "79fa06da5585572678acf18a3150d28e0879803280c2d8e5868fc536ae9ff178",
+          "sha256": "66d1a3ab57439000a0b088b5ee985ce9dcc3a0c8f97ab51e8b9893fc2cb2ec50",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
@@ -12645,7 +12769,7 @@
         {
           "path": "desktop/src/main.rs",
           "anchor": "peer_http::remember_address",
-          "sha256": "79fa06da5585572678acf18a3150d28e0879803280c2d8e5868fc536ae9ff178"
+          "sha256": "66d1a3ab57439000a0b088b5ee985ce9dcc3a0c8f97ab51e8b9893fc2cb2ec50"
         }
       ],
       "omissions": [

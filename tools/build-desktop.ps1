@@ -21,6 +21,7 @@ $taskReuse = & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-stor
 $taskLocaleReuse = & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern localization -Gate
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern native-dropdowns -Gate | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern peer-binding -Gate | Out-Null
+& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern windows-startup -Gate | Out-Null
 & node (Join-Path $PSScriptRoot 'generate-interface-contract.mjs') --check | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw 'Shared interface catalog is stale.' }
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))

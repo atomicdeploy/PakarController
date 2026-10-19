@@ -19,6 +19,7 @@ export const phases={
     ["node", "tests/board_silent_test.mjs"],
     ["node", "tests/avr_boot_image_test.mjs"],
     ["node", "tests/windows_tray_test.mjs"],
+    ["pwsh", "-NoProfile", "-File", "tests/windows_startup_test.ps1"],
     ["node", "tests/tasks_wiring_test.mjs"],
     ["pwsh", "-File", "tests/device_discovery_script_test.ps1"],
     ["node", "tests/s3_pin_mapping_test.mjs"],
@@ -203,6 +204,7 @@ export const phases={
       "-Mode",
       "Release"
     ],
+    ["pwsh", "-NoProfile", "-File", "tests/windows_startup_test.ps1", "-Executable", "desktop/target/release/pakarcontroller.exe"],
     [
       "node",
       "tests/terminal_ui_test.mjs"

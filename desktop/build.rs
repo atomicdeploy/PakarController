@@ -1,3 +1,5 @@
+#[path = "src/application_identity.rs"]
+mod application_identity;
 #[path = "src/platform/windows_quick_actions.rs"]
 mod windows_quick_actions;
 #[path = "src/platform/windows_shell_icons.rs"]
@@ -26,9 +28,10 @@ fn main() {
     {
         let mut resources = winres::WindowsResource::new();
         resources
-            .set("FileDescription", "PakarController")
-            .set("ProductName", "PakarController")
-            .set("CompanyName", "Digitalogic")
+            .set("FileDescription", application_identity::APP_NAME)
+            .set("ProductName", application_identity::APP_NAME)
+            .set("InternalName", application_identity::WINDOWS_APP_ID)
+            .set("CompanyName", application_identity::APP_NAME)
             .set_icon(out.join("pakarcontroller.ico").to_str().unwrap());
         for action in windows_quick_actions::WINDOWS_QUICK_ACTIONS {
             let file = out.join(format!("quick-action-{}.ico", action.icon_resource_id));
@@ -44,6 +47,7 @@ fn main() {
             .compile()
             .expect("PakarController executable resources");
     }
+    println!("cargo:rerun-if-changed=src/application_identity.rs");
     println!("cargo:rerun-if-changed=src/platform/windows_shell_icons.rs");
     println!("cargo:rerun-if-changed=src/platform/windows_quick_actions.rs");
     println!("cargo:rerun-if-changed=src/brand_image.rs");

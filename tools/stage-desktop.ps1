@@ -8,6 +8,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $taskReuse = & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate
+& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern windows-startup -Gate | Out-Null
 . (Join-Path $PSScriptRoot 'windows-build-host.ps1')
 . (Join-Path $PSScriptRoot 'package-probe-windows.ps1')
 $taskSource = [IO.Path]::GetFullPath($Source)
@@ -23,6 +24,7 @@ $taskDestination = Join-Path $taskStage 'PakarController.exe'
 if ((Split-Path $taskStage -Leaf) -eq 'production') { throw 'Do not use staging to replace a running production app.' }
 if ($taskSource -eq $taskDestination) { throw 'Source and stage must be different paths.' }
 $taskIdentity = Get-PakarFileIdentity -Path $taskSource
+Assert-PakarWindowsGuiExecutable $taskSource
 $taskHash = $taskIdentity.sha256
 $taskSame = Test-PakarFileContentEqual -Left $taskSource -Right $taskDestination
 if ($Plan) {

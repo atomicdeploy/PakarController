@@ -1,5 +1,53 @@
 # Donor-first preflight receipt
 
+## Native Windows identity and console correction
+
+Confirmed the missed import from actual Pealayer5a6961ce: its complete six-line
+src/main.rs declares the Windows GUI subsystem, whereas Pakar's entrypoint did
+not. The previous installed local executable really has PE subsystem3 and
+CompanyName=Digitalogic; this was not merely a screenshot or naming assumption.
+Read the complete152-line6485-byte src/diagnostics.rs and actual process-control
+child-spawn policy. Import GUI subsystem and fallible stdout/stderr writers;
+keep updater CREATE_NO_WINDOW, explicit existing-terminal-only CLI/TUI attachment,
+inherited pipe/file handles and buffered TUI output. No console is allocated.
+
+One PakarController constant now supplies native resources, initial GUI name,
+AppUserModelID and Jump List; install the shell identity before the first HWND.
+The new windows-startup route reaches previously unrouted main.rs, diagnostics,
+startup and process_control. Required reviewed entrypoint/output slices gate
+native build/stage, and staging validates the actual PE/resources. Bounded panic
+and shell journals remain explicitly pending in the SAME file ledger.
+
+Guarded final release and five focused native tests pass. Real PE/resources,
+redirected help/version/helper stderr, invalid-PE/console/wrong-brand rejection,
+loopback TUI rejection and remote CLI/no-replay fixtures pass. No broad local
+suite, firmware/APK build, SDK clean or board command was run for this fix.
+Actual isolated GUI PID205048/session1 had title PakarController · No board
+connected; an independent Windows AttachConsole probe returned INVALID_HANDLE6,
+confirming no attached console. Protected settings and fixture profile remained
+byte-identical. Internal capture did not complete; actual imported Win32 fallback
+found no visible non-minimized window. NO screenshot/visible-window acceptance
+is claimed. The owned fixture was stopped; no unrelated console was killed.
+
+Delivered SHA256:23ac25fcf7f36fa4258e4e1ebbdd253f9c4721f9a145df27b16269ccc80f1297.
+The inactive local installed executable was atomically replaced with verified
+settings backup and old-executable rollback; no local production app was killed
+or unexpectedly launched. Its settings stayed byte-identical.
+
+ASUS localhost:8022 initially reset SSH, then returned with the trusted identity.
+Actual same-session draft/pending-operation checks passed, old PID15928 exited
+through IPC, and the verified existing production task launched PID20976/session1.
+All four native resource fields equal PakarController and the independent
+same-session console probe returned detached:6. Settings stayed byte-identical;
+old executable and settings rollback remain. A real egui1920x991 framebuffer
+was retrieved and visually inspected; SHA256
+7c5bfdf9ad8e405c5060fbb6222191e56055e0398622f0a4e2d96983d2efb10d.
+The private replacement/runtime receipts hash to d5b8f5027aa4de998188aa0f18f58e4a76522675e26d83d639575107de2bddb5
+and25bb0cb7a931acfc0dcd1d801e3e2fe467639ce23eda88eecae652e902ecdc11.
+Wi-Fi was offline before and immediately after replacement; this is native
+delivery/capture proof, not device or network acceptance. The earlier RMT
+candidate remains unapplied; no recovery apply or color-test command was sent.
+
 ## Current RMT correction, shell and upstream publication checkpoint
 
 User-reported RMT/DMA optical instability supersedes the old job19 recovery

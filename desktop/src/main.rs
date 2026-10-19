@@ -1,3 +1,6 @@
+// Actual Pealayer src/main.rs entrypoint policy: Explorer launches are GUI-only.
+#![cfg_attr(windows, windows_subsystem = "windows")]
+
 use std::{
     io::{ErrorKind, Read, Write},
     sync::mpsc::{self, Receiver, Sender, TryRecvError},
@@ -6,6 +9,7 @@ use std::{
 };
 
 mod access;
+mod application_identity;
 mod audio;
 mod brand_image;
 mod board_silent;
@@ -20,6 +24,8 @@ mod status_rgb;
 mod panel_event;
 mod peripheral_events;
 mod cli_output;
+#[macro_use]
+mod cli_console;
 mod config;
 mod native_workspace;
 mod workspace_layout;
@@ -1950,7 +1956,7 @@ struct PakarControllerApp {
 impl PakarControllerApp {
     fn new(context: &eframe::CreationContext<'_>) -> Self {
         let config = config::AppConfig::load().unwrap_or_else(|error| {
-            eprintln!("{error}");
+            cli_eprintln!("{error}");
             config::AppConfig::default()
         });
         // apply resolves system/override locale and owns the initial font install.
@@ -1958,10 +1964,6 @@ impl PakarControllerApp {
         let dock = ui::layout::restore(&config.dock_layout);
         let screenshot_harness = std::env::var_os("PAKAR_SCREENSHOT_PATH").is_some()
             && std::env::var_os("PAKAR_CONFIG_FILE").is_some() && !config.single_instance;
-        #[cfg(windows)]
-        if !screenshot_harness && let Err(error) = platform::windows_jump_list::install() {
-            eprintln!("Windows quick actions: {error}");
-        }
         let (http_tx, http_rx) = mpsc::channel();
         let (ws_tx, ws_rx) = mpsc::channel();
         let (serial_tx, serial_rx) = mpsc::channel();
@@ -2919,9 +2921,9 @@ fn blocking_status(client: &Client, endpoint: &Endpoint) -> Result<DeviceStatus,
 
 fn format_text_status(status: &DeviceStatus, table: bool) -> String {
     let mut output = String::new();
-    macro_rules! println { ($($arg:tt)*) => {{ use std::fmt::Write as _; let _ = writeln!(output, $($arg)*); }}; }
-    macro_rules! print { ($($arg:tt)*) => {{ use std::fmt::Write as _; let _ = write!(output, $($arg)*); }}; }
-    println!(
+    macro_rules! buffer_println { ($($arg:tt)*) => {{ use std::fmt::Write as _; let _ = writeln!(output, $($arg)*); }}; }
+    macro_rules! buffer_print { ($($arg:tt)*) => {{ use std::fmt::Write as _; let _ = write!(output, $($arg)*); }}; }
+    buffer_println!(
         "{} {} | AVR {} | TM1637 {} | {} | MQTT {} | NTP {} | brightness {} | effect {} | LED output {}",
         status.hostname,
         status.station_ip,
@@ -2952,7 +2954,7 @@ fn format_text_status(status: &DeviceStatus, table: bool) -> String {
             Some(true) => "On", Some(false) => "Off", None => "Unknown",
         }
     );
-    println!(
+    buffer_println!(
         "inputs {:02X}+{} outputs {:02X} winner {} link {} UART {}/{}/{}",
         status.active_inputs,
         u8::from(status.input_9),
@@ -2974,9 +2976,9 @@ fn format_text_status(status: &DeviceStatus, table: bool) -> String {
                 Some("red") => 'R',
                 _ => '.',
             };
-            print!("{id:02}{mark}  ");
+            buffer_print!("{id:02}{mark}  ");
         }
-        println!();
+        buffer_println!();
     }
     output
 }
@@ -2984,14 +2986,14 @@ fn format_text_status(status: &DeviceStatus, table: bool) -> String {
 fn text_command(client: &Client, endpoint: &Endpoint, words: &[&str]) -> Result<(), String> {
     let mut output = String::new();
     text_command_output(client, endpoint, words, &mut output)?;
-    print!("{output}");
+    cli_print!("{output}");
     Ok(())
 }
 
 // One command parser for CLI and the TUI command palette. Capturing output must
 // never replace a peer operation with a second invocation or stdout redirection.
 fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], output: &mut String) -> Result<(), String> {
-    macro_rules! println {
+    macro_rules! buffer_println {
         ($($arg:tt)*) => {{
             use std::fmt::Write as _;
             writeln!(output, $($arg)*).map_err(|e| e.to_string())?;
@@ -3000,7 +3002,7 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
     if let ["cells",ids,state,rest @ ..]=words {
         let effect=match rest {[]=>"immediate",[effect]=>effect,_=>return Err("cells IDS white|red|off [immediate|fade|pulse]".into())};
         let request=cell_batch::Request::new(&ui::cell_search::parse(ids)?,state,effect)?;
-        println!("{}",cell_batch::send(client,endpoint,&request,None,None,None)?);
+        buffer_println!("{}",cell_batch::send(client,endpoint,&request,None,None,None)?);
         return Ok(());
     }
     if words.first() == Some(&"firmware") {
@@ -3021,7 +3023,7 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
             }
             _=>return Err("firmware status | fetch HTTPS_URL MANIFEST_SHA256 [all|esp|avr] | apply JOB BOOT SHA256 | cancel JOB BOOT SHA256".into()),
         };
-        println!("{}", maintenance::run(client, endpoint, operation)?);
+        buffer_println!("{}", maintenance::run(client, endpoint, operation)?);
         return Ok(());
     }
     if words == ["info"] || words == ["telemetry"] {
@@ -3032,7 +3034,7 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
             &endpoint.password,
             "/api/telemetry",
         )?;
-        println!(
+        buffer_println!(
             "{}",
             serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?
         );
@@ -3077,7 +3079,7 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
             ["avr","command",op,payload] => fetch(pc_contract::opcode(op)?,&pc_contract::decode_hex(payload)?)?,
             _ => return Err("avr contracts | settings | set PARAMETER VALUE | status | panel | command OPCODE [HEX]".into())
         };
-        println!(
+        buffer_println!(
             "{}",
             serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?
         );
@@ -3088,7 +3090,7 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
             client,
             HttpCommand::Configuration(endpoint.clone(), "/api/device/name"),
         )? {
-            println!(
+            buffer_println!(
                 "{}",
                 serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?
             );
@@ -3101,14 +3103,14 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
         let Event::Configuration(_, value) = http_request(client,HttpCommand::Configuration(endpoint.clone(),"/api/device/name"))? else { return Err("Identity unavailable".into()) };
         let host = value["hostname"].as_str().ok_or("Hostname unavailable")?;
         let _ = http_request(client,HttpCommand::NameChange(endpoint.clone(),host.into(),Some(label)))?;
-        println!("Board display name saved and verified; Wi-Fi was not restarted.");
+        buffer_println!("Board display name saved and verified; Wi-Fi was not restarted.");
         return Ok(());
     }
     if let ["device", "configure", host, rest @ ..] = words {
         let label = rest.join(" ");
         if !identity::valid_display_name(&label) { return Err("Invalid board display name".into()); }
         if let Event::NameUpdated(next,pending) = http_request(client,HttpCommand::NameChange(endpoint.clone(),(*host).into(),Some(label)))? {
-            println!("Board identity saved. Endpoint: {}. Network apply pending: {pending}",next.base);
+            buffer_println!("Board identity saved. Endpoint: {}. Network apply pending: {pending}",next.base);
         }
         return Ok(());
     }
@@ -3117,11 +3119,11 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
             client,
             HttpCommand::NameChange(endpoint.clone(), (*name).into(), None),
         )? {
-            println!(
+            buffer_println!(
                 "Device confirmed persistent name saved. Reconnect at {} after Wi-Fi reassociates. Set PAKAR_ENDPOINT to this URL for subsequent CLI calls.",
                 next.base
             );
-            if !pending { println!("No Wi-Fi restart was required."); }
+            if !pending { buffer_println!("No Wi-Fi restart was required."); }
         }
         return Ok(());
     }
@@ -3137,7 +3139,7 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
             .map_err(|e| e.to_string())?
             .json()
             .map_err(|e| e.to_string())?;
-        println!(
+        buffer_println!(
             "{}",
             serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?
         );
@@ -3154,13 +3156,13 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
             password,
         };
         http_request(client, HttpCommand::AccessChange(endpoint.clone(), next, true))?;
-        println!("Credentials saved. Update PAKAR_USER/PAKAR_PASSWORD before further commands.");
+        buffer_println!("Credentials saved. Update PAKAR_USER/PAKAR_PASSWORD before further commands.");
         return Ok(());
     }
     if words == ["auth", "disable"] {
         let next = Endpoint { base: endpoint.base.clone(), user: String::new(), password: String::new() };
         http_request(client, HttpCommand::AccessChange(endpoint.clone(), next, false))?;
-        println!("Device confirmed authentication disabled and saved.");
+        buffer_println!("Device confirmed authentication disabled and saved.");
         return Ok(());
     }
     if words.is_empty() || words[0] == "status" {
@@ -3191,7 +3193,7 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
                 response.text().unwrap_or_default()
             ));
         }
-        println!("accepted");
+        buffer_println!("accepted");
         return Ok(());
     }
     let (path, form): (&str, Vec<(&str, &str)>) =
@@ -3232,7 +3234,7 @@ fn text_command_output(client: &Client, endpoint: &Endpoint, words: &[&str], out
             response.text().unwrap_or_default()
         ));
     }
-    println!("accepted");
+    buffer_println!("accepted");
     Ok(())
 }
 
@@ -3269,8 +3271,9 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
 
 fn main() -> eframe::Result {
     let arguments = std::env::args().collect::<Vec<_>>();
+    cli_console::prepare(&arguments);
     if let Some(result)=client_management::cli(&arguments){
-        match result{Ok(())=>println!("Client management operation completed"),Err(error)=>{eprintln!("PakarController: {error}");std::process::exit(2);}}
+        match result{Ok(())=>cli_println!("Client management operation completed"),Err(error)=>{cli_eprintln!("PakarController: {error}");std::process::exit(2);}}
         return Ok(());
     }
     if arguments.get(1).is_some_and(|arg| matches!(arg.as_str(), "--client-update-init" | "--apply-client-update")) {
@@ -3279,19 +3282,19 @@ fn main() -> eframe::Result {
             Some("--apply-client-update") if arguments.len() == 3 => client_install::helper(std::path::Path::new(&arguments[2])),
             _ => Err("Invalid managed app update arguments".into()),
         };
-        match result { Ok(()) => println!("Managed app update operation completed"),
-            Err(error) => { eprintln!("PakarController: {error}"); std::process::exit(2); } }
+        match result { Ok(()) => cli_println!("Managed app update operation completed"),
+            Err(error) => { cli_eprintln!("PakarController: {error}"); std::process::exit(2); } }
         return Ok(());
     }
     if let Some(output) = cli_output::parse_cli_output(&arguments) {
-        println!("{output}");
+        cli_println!("{output}");
         return Ok(());
     }
     match run_text_interface(&arguments) {
         Ok(true) => return Ok(()),
         Ok(false) => {}
         Err(error) => {
-            eprintln!("PakarController: {error}");
+            cli_eprintln!("PakarController: {error}");
             std::process::exit(2);
         }
     }
@@ -3304,11 +3307,11 @@ fn main() -> eframe::Result {
     if control_only {
         match platform::instance::send(&command, Duration::from_secs(2)) {
             Ok(reply) => {
-                println!("{reply}");
+                cli_println!("{reply}");
                 return Ok(());
             }
             Err(error) => {
-                eprintln!("{error}");
+                cli_eprintln!("{error}");
                 std::process::exit(3);
             }
         }
@@ -3323,25 +3326,33 @@ fn main() -> eframe::Result {
                         platform::instance::send(&command, Duration::from_millis(300))
                     {
                         if reply["accepted"] == true {
-                            println!("Forwarded to active PakarController");
+                            cli_println!("Forwarded to active PakarController");
                             return Ok(());
                         }
                     }
                     if Instant::now() >= deadline {
-                        eprintln!("The active instance did not accept the launch request");
+                        cli_eprintln!("The active instance did not accept the launch request");
                         std::process::exit(3);
                     }
                     thread::sleep(Duration::from_millis(100));
                 }
             }
             Err(error) => {
-                eprintln!("{error}");
+                cli_eprintln!("{error}");
                 std::process::exit(3);
             }
         }
     } else {
         None
     };
+    // Set the process/shell identity before eframe creates its first HWND.
+    // Isolated framebuffer fixtures retain their no-production-shell policy.
+    #[cfg(windows)]
+    if !(std::env::var_os("PAKAR_SCREENSHOT_PATH").is_some()
+        && std::env::var_os("PAKAR_CONFIG_FILE").is_some() && !config.single_instance)
+        && let Err(error) = platform::windows_jump_list::install() {
+        cli_eprintln!("Windows quick actions: {error}");
+    }
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_active(std::env::var_os("PAKAR_SCREENSHOT_PATH").is_none())
@@ -3352,7 +3363,7 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
     eframe::run_native(
-        "PakarController",
+        application_identity::APP_NAME,
         options,
         Box::new(move |c| {
             let mut app = PakarControllerApp::new(c);
@@ -3364,6 +3375,12 @@ fn main() -> eframe::Result {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn cli_console_buffered_status_stays_in_memory() {
+        let output = super::format_text_status(&super::DeviceStatus::default(), false);
+        assert!(output.contains("LED output Unknown"));
+        assert!(output.contains("inputs 00+0 outputs 00"));
+    }
     pub(super) fn mock_device(
         responses: Vec<(u16, Vec<u8>)>,
     ) -> (super::Endpoint, std::thread::JoinHandle<Vec<String>>) {

@@ -2,6 +2,7 @@
   "schema": 1,
   "authority": "docs/file-comparison-evidence.json",
   "concerns": [
+    {"id":"windows-startup","origins":["Pealayer"],"path_pattern":"^src/(main|diagnostics|process_control|startup)\\.rs$","required_reviews":["Pealayer|src/main.rs","Pealayer|src/diagnostics.rs"],"issue":5},
     {"id":"device-shell","origins":["PU850-ESP","RayanLamp"],"path_pattern":"(^LocalLib/(Shell|Telnet|Commands)\\.(cpp|h)$|^internal/tui/(form|terminal)\\.go$)","required_reviews":["PU850-ESP|LocalLib/Shell.cpp","PU850-ESP|LocalLib/Shell.h","PU850-ESP|LocalLib/Telnet.cpp","PU850-ESP|LocalLib/Telnet.h","PU850-ESP|LocalLib/Commands.cpp","PU850-ESP|LocalLib/Commands.h","RayanLamp|internal/tui/form.go","RayanLamp|internal/tui/terminal.go"],"issue":2},
     {"id":"status-rgb","origins":["PCController","Pealayer"],"path_pattern":"(^Project/StatusLed(Math\\.h|Controller\\.(h|cpp))$|^src/ui/status_bar\\.rs$)","required_reviews":["PCController|Project/StatusLedMath.h","PCController|Project/StatusLedController.h","PCController|Project/StatusLedController.cpp","Pealayer|src/ui/status_bar.rs"],"issue":2},
     {"id":"bluetooth","origins":["PCController"],"path_pattern":"(^Tools/Controller/internal/link/session\\.go$|^mobile/lib/unified/transport\\.dart$)","required_reviews":["PCController|Tools/Controller/internal/link/session.go","PCController|mobile/lib/unified/transport.dart"],"issue":20},

@@ -10,7 +10,7 @@ fn wide_null_path(path: &std::path::Path) -> Vec<u16> {
 }
 pub fn install() -> Result<(), String> {
     use windows::{Win32::UI::Shell::SetCurrentProcessExplicitAppUserModelID, core::PCWSTR};
-    let id = wide_null("Digitalogic.PakarController");
+    let id = wide_null(crate::application_identity::WINDOWS_APP_ID);
     unsafe { SetCurrentProcessExplicitAppUserModelID(PCWSTR(id.as_ptr())) }
         .map_err(|e| e.to_string())?;
     build_windows_jump_list(true)
@@ -46,7 +46,7 @@ fn build_windows_jump_list(include_quick_actions: bool) -> Result<(), String> {
         let destination_list: ICustomDestinationList =
             CoCreateInstance(&DestinationList, None, CLSCTX_INPROC_SERVER)
                 .map_err(|error| format!("create Windows Jump List: {error}"))?;
-        let app_id = wide_null("Digitalogic.PakarController");
+        let app_id = wide_null(crate::application_identity::WINDOWS_APP_ID);
         destination_list
             .SetAppID(PCWSTR(app_id.as_ptr()))
             .map_err(|e| e.to_string())?;
