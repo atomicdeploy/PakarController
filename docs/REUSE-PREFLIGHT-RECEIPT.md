@@ -1,5 +1,18 @@
 # Donor-first preflight receipt
 
+## Flutter batch error disclosure
+
+The table's verified-command bool wrapper swallowed the command exception and
+replaced it with "Batch outcome unverified". Consulted error-management and
+reread Pealayer src/messaging.rs through EOF, including publish_with_details
+and its retained-original-diagnostic test. The table now requests propagation
+of its own command exception and displays that reason; other command callers
+retain their existing lifecycle behavior. An already-pending command reports
+that this action was not sent. No mutation replay or per-cell fallback was added.
+The actual table widget fixture checks the reason and exactly one dispatch;
+mobile analyzer and all11 widget tests pass. This source correction is not an
+installed-phone fix or proof of the reported command's transport failure.
+
 ## WebSocket upgrade panic recovery
 
 The physical S3 crash partition was read through ASUS COM22 and its ELF/CRC

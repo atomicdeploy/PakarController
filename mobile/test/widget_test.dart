@@ -254,7 +254,31 @@ void main() {
       await tester.tap(find.text('Set red'));
       await tester.pump();
       expect(sent, ['1,2,3']);
-      expect(find.textContaining('No per-cell fallback'), findsOneWidget);
+      expect(find.textContaining('did not return a verified result'), findsOneWidget);
+    },
+  );
+  testWidgets(
+    'Batch controls retain the actual command failure without replay',
+    (tester) async {
+      var writes = 0;
+      await tester.pumpWidget(MaterialApp(home: Scaffold(body: TablePage(
+        status: peerFixture(),
+        mapping: CellMap.defaults(),
+        command: (path, [values = const {}]) async {},
+        verifiedCommand: (path, values) async {
+          writes++;
+          throw const FormatException('The board rebooted before command readback.');
+        },
+      ))));
+      await tester.enterText(find.byType(TextField).first, '1-3');
+      await tester.pump();
+      await tester.ensureVisible(find.text('Set red'));
+      await tester.tap(find.text('Set red'));
+      await tester.pump();
+      expect(writes, 1);
+      expect(find.textContaining('The board rebooted before command readback.'), findsOneWidget);
+      expect(find.textContaining('Batch outcome unverified'), findsNothing);
+      expect(tester.takeException(), isNull);
     },
   );
   testWidgets(

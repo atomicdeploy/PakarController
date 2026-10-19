@@ -9870,7 +9870,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "d5896f7587d45f25ec9ecf7cc367d83ce8323bcc31c299152f5894896e8ca163",
+      "sha256": "e6315e9a8f4749b3a374802e0c717add0b81d8685f4e7ee55e195576d976be1b",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -12298,7 +12298,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "d5896f7587d45f25ec9ecf7cc367d83ce8323bcc31c299152f5894896e8ca163",
+          "sha256": "e6315e9a8f4749b3a374802e0c717add0b81d8685f4e7ee55e195576d976be1b",
           "anchor": "Future<bool> _command"
         },
         {
@@ -12340,7 +12340,7 @@
         },
         {
           "path": "mobile/test/widget_test.dart",
-          "sha256": "c31349ce91824d5eee6c8ff57a8dddd67d70e5dadee659bb237ecf31b0d591cd",
+          "sha256": "5956761df52915c53e5a4b4375a4d5837d3d6c0d0342aaa23e786675d23d87cc",
           "anchor": "Peer ACK loss removes table and independent cards"
         },
         {
@@ -12380,7 +12380,7 @@
         },
         {
           "path": "mobile/test/widget_test.dart",
-          "sha256": "c31349ce91824d5eee6c8ff57a8dddd67d70e5dadee659bb237ecf31b0d591cd",
+          "sha256": "5956761df52915c53e5a4b4375a4d5837d3d6c0d0342aaa23e786675d23d87cc",
           "anchor": "Unacknowledged board has no Table"
         },
         {
@@ -12603,7 +12603,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "d5896f7587d45f25ec9ecf7cc367d83ce8323bcc31c299152f5894896e8ca163",
+          "sha256": "e6315e9a8f4749b3a374802e0c717add0b81d8685f4e7ee55e195576d976be1b",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -17707,7 +17707,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "d5896f7587d45f25ec9ecf7cc367d83ce8323bcc31c299152f5894896e8ca163",
+          "sha256": "e6315e9a8f4749b3a374802e0c717add0b81d8685f4e7ee55e195576d976be1b",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -17855,7 +17855,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "d5896f7587d45f25ec9ecf7cc367d83ce8323bcc31c299152f5894896e8ca163"
+          "sha256": "e6315e9a8f4749b3a374802e0c717add0b81d8685f4e7ee55e195576d976be1b"
         }
       ],
       "proof": [
@@ -17895,7 +17895,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "d5896f7587d45f25ec9ecf7cc367d83ce8323bcc31c299152f5894896e8ca163"
+          "sha256": "e6315e9a8f4749b3a374802e0c717add0b81d8685f4e7ee55e195576d976be1b"
         }
       ],
       "proof": [

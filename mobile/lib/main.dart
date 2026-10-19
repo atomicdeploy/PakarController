@@ -720,14 +720,20 @@ class _ControlShellState extends State<ControlShell>
     int owner,
     String? peer,
     String path,
-    Map<String, String> values,
-  ) async {
+    Map<String, String> values, {
+    bool propagateFailure = false,
+  }) async {
     final attempt = ++commandAttempt;
     if (commandPending) {
       setState(
         () => commandFailure =
             'Another command is still pending. This command was not sent.',
       );
+      if (propagateFailure) {
+        throw const FormatException(
+          'Another command is still pending. This command was not sent.',
+        );
+      }
       return false;
     }
     setState(() {
@@ -834,6 +840,7 @@ class _ControlShellState extends State<ControlShell>
           _revoke(error.toString());
         }
       }
+      if (propagateFailure) rethrow;
       return false;
     } finally {
       commandPending = false;
@@ -963,7 +970,7 @@ class _ControlShellState extends State<ControlShell>
               mapping: mapping,
               command: scoped,
               verifiedCommand: (path, values) =>
-                  _command(owner, hostname, path, values),
+                  _command(owner, hostname, path, values, propagateFailure: true),
             ),
             'front-panel' => IgnorePointer(
               key: ValueKey('front:${panelInventory.ownerKey}'),
@@ -1470,13 +1477,15 @@ class _TablePageState extends State<TablePage> {
       batchMessage = null;
     });
     var applied = false;
+    String? failure;
     try {
       applied = await send('/api/cells', {
         'ids': ids.join(','),
         'state': state,
         'effect': cellEffect,
       });
-    } on Exception {
+    } catch (error) {
+      failure = error.toString();
       // A transport failure may happen after the atomic mutation. Never fan
       // out/replay; require a fresh peer observation before another intent.
     }
@@ -1485,7 +1494,7 @@ class _TablePageState extends State<TablePage> {
         applying = false;
         batchMessage = applied
             ? '${ids.length} cell states read back after one board-side update; physical output not verified.'
-            : 'Batch outcome unverified. No per-cell fallback or retry was sent.';
+            : failure ?? 'The command did not return a verified result. Nothing was retried.';
       });
     }
   }
