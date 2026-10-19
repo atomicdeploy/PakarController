@@ -77,6 +77,30 @@ void main() {
     expect(cellPixelPreview(noFrame, CellMap.defaults(), 1), isNull);
   });
 
+  test(
+    'Unconfirmed diagnostic mapping and disabled output do not invent white',
+    () {
+      expect(
+        cellPixelPreview(
+          diagnostic(),
+          CellMap.defaults(),
+          2,
+          mappingCurrent: false,
+        ),
+        isNull,
+      );
+      expect(
+        cellPixelPreview(diagnostic(), CellMap(physical: [], names: []), 2),
+        isNull,
+      );
+      final disabled = DeviceStatus({
+        ...diagnostic().json,
+        'led_output': {'enabled': false},
+      });
+      expect(cellPixelPreview(disabled, CellMap.defaults(), 2), isNull);
+    },
+  );
+
   testWidgets(
     'Cell shows all six actual diagnostic colors in fixed indicator slots',
     (tester) async {

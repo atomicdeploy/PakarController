@@ -21,7 +21,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52",
+      "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a",
       "anchor": ": WorkspaceActivityStrip("
     }
   ],
@@ -4534,7 +4534,7 @@
     {
       "path": "mobile/lib/firmware_page.dart",
       "anchor": "avrMaintenance()",
-      "sha256": "903032a31bed592155fac27a639798e6b6af35dababbc55c9028974064d0cdf2"
+      "sha256": "47062a176a76c93de964e710682b19b28c6fd1f3fd8f5ebaee525244f0dc681b"
     },
     {
       "path": "mobile/lib/firmware_automation_page.dart",
@@ -4630,7 +4630,8 @@
     "Bluetooth adaptation: fully read canonical PeerSession transport source at SHA5263044d..., retain single-flight reads, generation/route identity and reset-before-await retirement in the selected BLE API. Android native GATT is an SDK implementation because no reusable BLE transport exists in these donors. Verify INFO then full status, retain stable board aliases and saved selected route, keep app updater/remote management independent, and never substitute board HTTP/DNS/WebSocket for BLE. Existing UI/workspace, command ACK, settings and mirroring consumers are reused.",
     "Reread the complete current donor Rejected/Uncertain and generation-bound PeerSession through EOF. Adapt its explicit rejection versus missing-confirmation distinction to Pakar's unversioned commands: sanitized public reasons, negative2xx receipt rejection, no new-intent replay, persistent attempt-owned command failure independent of status reads, and explicit pixel-owner rebind after reconnect. This is a scoped error/lifecycle adaptation, not donor RPC/media/PWM parity.",
     "Reread complete donor transport through EOF, especially PeerSession._install generation-owned output invalidation. PixelDiagnosticWorkspace now retires previous board/boot observations before parsing replacement metadata while preserving cursor, colour and scroll drafts. PixelDiagnosticPage restores retained all-off presentation even when the initial semantic revision is deduplicated; colour edits after reopening all-off remain drafts until explicit Show. No main/API transport changes, command replay or new simulated product path.",
-    "PeerSession._install same-generation presentation retention and pwmReadbackFresh live-owner conjunction reviewed for native RGB flicker. Rust now retains the last actual RGB across null/pending USB captures without renewing its timestamp; present semantic/diagnostic changes, malformed pixels, peer/boot/route and mapping changes still revoke it. Rendering depends on the current live peer rather than a shorter five-second pixel timer; command confirmation still requires fresh raw readback. A fixed RGB preview label/age tooltip and IPC diagnostics make sample age/availability observable. This adapts observation ownership, not donor PWM actuation."
+    "PeerSession._install same-generation presentation retention and pwmReadbackFresh live-owner conjunction reviewed for native RGB flicker. Rust now retains the last actual RGB across null/pending USB captures without renewing its timestamp; present semantic/diagnostic changes, malformed pixels, peer/boot/route and mapping changes still revoke it. Rendering depends on the current live peer rather than a shorter five-second pixel timer; command confirmation still requires fresh raw readback. A fixed RGB preview label/age tooltip and IPC diagnostics make sample age/availability observable. This adapts observation ownership, not donor PWM actuation.",
+    "Reread canonical transport.dart through EOF at unchanged SHA5263044d. Adapt PeerSession generation-bound full-state acceptance and single-flight ownership into command admission that accepts a fresh same-board/boot WebSocket status while the joined background HTTP GET stalls. The original two-second command-clock freshness and foreground/authorization checks remain; the superseded real read socket is aborted without replay. Correct a donor limitation rather than copying it: command HTTP connection/headers and body now share the existing four-second receipt deadline, with AbortableRequest cancellation on timeout. Pre-dispatch status timeout explicitly states that no control command was sent; a dispatched write timeout remains uncertain. Twelve-second ordinary write deadlines use the same bounded helper. This is not all donor RPC/PWM/artifact or Android runtime acceptance."
   ],
   "targets": [
     {
@@ -4654,7 +4655,7 @@
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
+      "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
     },
     {
       "path": "mobile/lib/panel_inventory.dart",
@@ -4688,6 +4689,11 @@
     }
   ],
   "proof": [
+    {
+      "path": "mobile/test/command_admission_transport_test.dart",
+      "anchor": "Fresh same-boot WS admission overtakes a stalled background HTTP read",
+      "sha256": "f12cd6d07ea7da513d0b7779a8a694b6fbb54780d6e2a1f20972c89bd93b9b4a"
+    },
     {
       "path": "mobile/test/api_test.dart",
       "anchor": "A write retires",
@@ -4765,7 +4771,7 @@
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
+      "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
     }
   ],
   "proof": [
@@ -5054,11 +5060,11 @@
     },
     {"path":"mobile/lib/firmware_image.dart","sha256":"274b96b95c959594b8720f40d4998dc6e307ed8fe31e82093c19b581ea4a0654","anchor":"abstract final class FirmwareImagePolicy"},
     {"path":"mobile/lib/documents.dart","sha256":"205c298afff227e61f4ddea3b071f65012e3ccc118cbd62f1de5dea8452eab1e","anchor":"int maximum = FirmwareImagePolicy.maximumBytes"},
-    {"path":"mobile/lib/firmware_page.dart","sha256":"903032a31bed592155fac27a639798e6b6af35dababbc55c9028974064d0cdf2","anchor":"maximum: controller.imageMaximum(esp),"},
+    {"path":"mobile/lib/firmware_page.dart","sha256":"47062a176a76c93de964e710682b19b28c6fd1f3fd8f5ebaee525244f0dc681b","anchor":"maximum: controller.imageMaximum(esp),"},
     {"path":"mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt","sha256":"b6623d6be8e23e57532a5afc210a32ad4ca787cd40fb7d66d5796147917a322a","anchor":"private val firmwareMaximum = 0x330000 - 1"},
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4",
+      "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2",
       "anchor": "Stream<DeviceStatus> get statusUpdates"
     }
   ],
@@ -8245,7 +8251,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
+          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -8345,7 +8351,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
+          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -9932,12 +9938,12 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4",
+      "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2",
       "anchor": "bool _acceptIdentity("
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52",
+      "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -11629,7 +11635,7 @@
         },
         {
           "path": "mobile/lib/firmware_page.dart",
-          "sha256": "903032a31bed592155fac27a639798e6b6af35dababbc55c9028974064d0cdf2",
+          "sha256": "47062a176a76c93de964e710682b19b28c6fd1f3fd8f5ebaee525244f0dc681b",
           "anchor": "class FirmwarePage"
         },
         {
@@ -11639,7 +11645,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4",
+          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -12368,12 +12374,12 @@
         },
         {
           "path": "mobile/lib/cell_pixel_preview.dart",
-          "sha256": "179ed64caf50fd71c88b9686165439eabd28da80ca4a70d7437fa460b3b821cf",
+          "sha256": "5cc0f113cc45f19ad523fb1ea99f07ad4f4097ae7412dbbebe6a0fffd9e063f4",
           "anchor": "CellPixelPreview? cellPixelPreview"
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52",
+          "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a",
           "anchor": "Future<bool> _command"
         },
         {
@@ -12410,7 +12416,7 @@
         },
         {
           "path": "mobile/test/cell_pixel_preview_test.dart",
-          "sha256": "843689ae67d3eb939d0eb0dbdaa4240f1af312a97db7488c8c843379fb285057",
+          "sha256": "6a77394bb38b4411e526ee1a9c0468158e2a7664d574a9bd6fea29ad20c0f5be",
           "anchor": "Board diagnostic overrides stale white semantics using physical mapping"
         },
         {
@@ -12553,7 +12559,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
+          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -12683,7 +12689,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52",
+          "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -13540,7 +13546,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
+          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -13710,7 +13716,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
+          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -16637,7 +16643,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
+          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -17210,7 +17216,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4",
+          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2",
           "anchor": "final LanResolver resolver;"
         },
         {
@@ -17410,7 +17416,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4",
+          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -17649,7 +17655,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4",
+          "sha256": "b7e7a2d629a7023cd429d4833f8a8c962826b4ffebc80eecfb600d0ac0cf6cc2",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -17804,7 +17810,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52",
+          "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -17952,7 +17958,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52"
+          "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a"
         }
       ],
       "proof": [
@@ -17992,7 +17998,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "522ac660c5480d2bee42f8d6da309b30907a62af2a5c3e15915a3259e36e2a52"
+          "sha256": "91ec67982b4d85fe7d5360c0dee66c8857571aad4e602a990f44d833f4fb272a"
         }
       ],
       "proof": [

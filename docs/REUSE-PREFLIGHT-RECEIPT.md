@@ -7298,3 +7298,31 @@ all fourteen existing workspace lifecycle tests passed. Installed phone
 acceptance remains separate. The earlier six-second handshake hypothesis was not reproduced:
 a real stalled WebSocket upgrade reports one handled timeout under the app's
 cancel-on-error lifecycle; no speculative API timeout change was made.
+Follow-up presentation guards reject unconfirmed diagnostic mapping and disabled
+output as sources for semantic-white RGB. Remaining generic state-unavailable
+copy now names the missing board update, display frame or firmware job progress.
+
+## Flutter command admission and HTTP receipt deadlines
+
+Reread canonical PCController `mobile/lib/unified/transport.dart` through EOF,
+SHA256 `5263044d7abac3865b6dcc8887fa6c11ad9a1c89b8c4e2374ffcd3bcc72014c5`.
+Its generation-bound full-state acceptance and single-flight refresh are retained.
+Pakar previously joined a stalled background HTTP status read even after fresh
+same-boot WebSocket status arrived; the command could wait for a six-second read
+failure without dispatch. Command admission now accepts that fresh live status,
+retains the original two-second clock/identity/foreground/authorization gates,
+and aborts only the superseded status read. A preflight timeout explicitly says
+the command was not sent. No cached lease is renewed and no mutation is replayed.
+
+The HTTP receipt timeout previously started after awaiting response headers.
+The existing four-second command and twelve-second ordinary-write limits now
+cover connection, headers and bounded body together, using the installed http
+AbortableRequest transport to close stalled sockets. A dispatched write with no
+receipt remains uncertain, including IOClient connection errors. The donor's
+Future.timeout-only transport is not treated as a complete cancellation solution.
+
+Canonical analysis and both new real TCP/HTTP/WebSocket tests passed: live status
+overtakes a deliberately stalled GET, and stalled POST headers end within the
+four-second receipt budget with one command and observed socket closure. These
+local regressions identify actual code defects; they do not establish which path
+caused the earlier phone screenshot or prove installed Android/physical output.

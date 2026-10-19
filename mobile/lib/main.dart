@@ -533,7 +533,7 @@ class _ControlShellState extends State<ControlShell>
         const Duration(seconds: 6) - (observedAge?.elapsed ?? Duration.zero);
     expiry = Timer(remaining.isNegative ? Duration.zero : remaining, () {
       if (mounted && foreground) {
-        _revoke('Live state unavailable; reconnecting…');
+        _revoke('Board updates timed out; reconnecting…');
       }
     });
   }
@@ -1640,7 +1640,8 @@ class _TablePageState extends State<TablePage> {
                                       id: id,
                                       highlighted: selection.contains(id),
                                       showIndicator: showIndicators,
-                                      pixels: cellPixelPreview(status, mapping, id),
+                                      pixels: cellPixelPreview(status, mapping, id,
+                                          mappingCurrent: widget.mappingCurrent),
                                       name:
                                           mapping.names.elementAtOrNull(
                                             id - 1,
@@ -2058,7 +2059,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                           widget.status!.segmentBrightness,
                       active: ready('display'),
                     )
-                  : const Center(child: Text('Display state unavailable')),
+                  : const Center(child: Text('Waiting for a seven-segment frame')),
             ),
           ),
         ),

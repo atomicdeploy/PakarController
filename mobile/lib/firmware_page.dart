@@ -806,7 +806,7 @@ class _FirmwarePageState extends State<FirmwarePage>
         card('Observed job', [
           Row(
             children: [
-              Expanded(child: Text(observed?.phase ?? 'Job state unavailable')),
+              Expanded(child: Text(observed?.phase ?? 'Waiting for firmware job progress')),
               IconButton(
                 tooltip: 'Refresh and inspect current state',
                 onPressed: working ? null : () => refresh(explicit: true),

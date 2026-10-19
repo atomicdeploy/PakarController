@@ -12,8 +12,9 @@ class CellPixelPreview {
 CellPixelPreview? cellPixelPreview(
   DeviceStatus? status,
   CellMap mapping,
-  int id,
-) {
+  int id, {
+  bool mappingCurrent = true,
+}) {
   if (status == null || !status.peer.table || id < 1 || id > 80) return null;
   final frame = status.json['pixel_frame'];
   if (frame is Map && frame['pending'] != true) {
@@ -35,7 +36,8 @@ CellPixelPreview? cellPixelPreview(
   // Diagnostics override semantic cell colours. This is explicitly labelled
   // board diagnostic state, rather than claiming an optical/output readback.
   final diagnostic = PixelDiagnosticObservation.read(status);
-  if (diagnostic?.active == true && mapping.valid) {
+  if (diagnostic?.active == true) {
+    if (!mappingCurrent || !mapping.valid) return null;
     final first = (mapping.physical[id - 1] - 1) * 6;
     return CellPixelPreview([
       for (var pixel = first; pixel < first + 6; ++pixel)
@@ -48,7 +50,11 @@ CellPixelPreview? cellPixelPreview(
   }
   // A rainbow/stream/fade is not six copies of the old semantic white cell.
   // Wait for sampled RGB instead of manufacturing an animated preview.
-  if (status.mode != 'cell' || status.effect != 'none') return null;
+  if (status.mode != 'cell' ||
+      status.effect != 'none' ||
+      status.ledOutputEnabled == false) {
+    return null;
+  }
   final color = switch (status.cells.elementAtOrNull(id - 1)) {
     'white' => 0xffffff,
     'red' => 0xff0000,
