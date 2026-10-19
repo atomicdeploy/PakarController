@@ -2,6 +2,20 @@
 
 ## Latest deployment and bounded CI recovery
 
+Final follow-up cc8e711 is also actually deployed:2074112B/SHA
+2909fdb06411d3ea935a29d16889a13cd1b1fa6065061da66741cf965cd49e36;
+boot647bbf1e7608295ec5ce6de2e97ba20e. Local transfer19515ms/full verification60022ms,
+VALID slot/full running SHA/auth-off/WS checked. Both real Telnet sessions now
+answer independently. Seven HTTP reads387..732ms/WebSocket53ms/NTP/MQTT/AVR/TM
+passed. ASUS owner20976 recovered with80 mappings/zero active incidents. Actual
+egui1920x991 image inspected; capture runner adapted the actual Pealayer Process
+handle/wait/output mechanism rather than mislabel its shell-launch discrepancy
+as a production IPC outage. Private settings/drafts/layout/rollbacks preserved.
+No optical LED or unavailable-phone acceptance. Full current identities and
+receipts are in ESP32-S3-COMMISSIONING.md; the earlier checkpoint below remains
+historical evidence, not the final running boot. Source/test gates passed without
+a broad local suite or waiting for remote CI.
+
 The corrected RMT image from f6d3fce was actually deployed over the guarded
 Async LAN path:2073872bytes, SHA256
 0532332175ea496216ab8a125e21a6ea442f98acc2e316cbc1379ddc9d190fc8.

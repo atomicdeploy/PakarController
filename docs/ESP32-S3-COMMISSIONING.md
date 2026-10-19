@@ -14,7 +14,84 @@ same AVR UART/ISP signals at once.
 
 ## Delivered Wi-Fi-first checkpoint
 
-### Internet recovery and terminal work in progress
+### Current final image and short runtime checks
+
+Follow-up source`cc8e71112053e227810cc14f154b2db78b8d05c2` is now deployed:
+2074112bytes, SHA256`2909fdb06411d3ea935a29d16889a13cd1b1fa6065061da66741cf965cd49e36`,
+MD5`2bddfa05605eaee7f9028befa4aedba3`, boot`647bbf1e7608295ec5ce6de2e97ba20e`.
+The canonical S3 build retains buffered UART/16MB/OPI/rmt-dma/verified ISP/BLE-off;
+sketch2073971/3342336B, globals104016/327680B. One new local Async OTA transferred
+in19515ms; full actual running SHA/VALID selected-running slot/new boot/auth-off/
+WebSocket verification completed in60022ms. Failed Internet job20 was explicitly
+acknowledged against its ORIGINAL053233... image, not overwritten or applied.
+MQTT alone was temporarily paused/restored, credentials and settings preserved;
+cells unchanged/output disabled/AVR memory untouched. Private delivery receipt
+SHA256`98547aaf9d9d1e44dccba8846e24d4c7cb36849e659b20e14d5f3abc5b62cdca`.
+
+Actual concurrent Telnet queries now return `rmt-dma` and `ledboard`, with ANSI
+prompt and negotiation, after the stale-clock lease fix. Seven bounded HTTP reads
+passed: status387/523/489ms, telemetry497ms, shell480ms, full223213B WebUI732ms,
+description XML684ms; same-peer WebSocket53ms. NTP is now observed synced, MQTT
+connected, station+AP active, AVR online and TM1637 ACKtrue. RMT admission/accounting
+is healthy11521/11521/failed0, but output is disabled: this is not an LED-load soak
+or a physical waveform/color result. Service receipt SHA256
+`1b0e5c3598fa6b983b2132d610a041185fcc9a3a9d864a48093f7057632466fa`.
+
+The unchanged ASUS native owner20976 recovered onto THIS final boot: Wi-Fi live,
+80 mappings confirmed, AVR/TM acknowledged, zero active incidents and no pending
+mapping. Final status receipt SHA256
+`93f630410b5625e963617979e544cb6eff6f10af9d3dc30dbdbe9d1c5dbb46bb`.
+An earlier same-app online checkpoint has an inspected1920x991 actual egui PNG
+SHA256`80cdaa2ccc2b1e2fcdfca1be0ca6e2ea3bca5131841571f56a1dca0ef782f4b5`.
+The private capture runner was corrected using the actual Pealayer retained-
+Process/async-output/bounded-wait mechanism; earlier ampersand-launch failures
+were not proven production IPC outages. No GUI input, forced restart or reconnect
+mutation was needed. Settings, selection, saved layout and rollbacks remain.
+
+The final raw image and manifest are published atomically without replacing any
+prior release at `https://office.digitalogic.ir/pakarcontroller/firmware/esp32s3/2909fdb06411d3ea935a29d16889a13cd1b1fa6065061da66741cf965cd49e36/manifest.json`.
+Public HTTPS independently verifies419 manifest bytes/SHA256
+`228c7cba39527aec134849f6412020057e90d05f910e2690626d8e47356a4ea5`
+and the complete image SHA. Publication is not a new ESP Internet fetch/apply
+test. TLS allocation/cloud coexistence and power-removed restart remain open.
+Android APK is staged, not phone-installed; no new physical LED confirmation or
+AVR flash/fuse test was inferred. Production issue2 remains open.
+
+### Guarded LAN deployment checkpoint
+
+The user authorized latest deployment and short checks. The corrected RMT image
+from f6d3fce is now actually running, not merely compiled:2073872bytes,
+SHA256`0532332175ea496216ab8a125e21a6ea442f98acc2e316cbc1379ddc9d190fc8`,
+boot`37992b7973b2501b3bccde7292b7c96d`. Guarded LAN Async OTA took23158ms;
+total48719ms includes new-boot/full ranged SHA256/VALID selected-running slot,
+auth-off and same-peer WebSocket verification. Saved80 cell states remain;
+output stays disabled pending physical all-dark feedback. Actual driver reports
+250/600/1250ns, cache-safe refill admitted,11521/11521 accounted symbols and
+failed0; those are NOT scope or optical measurements. AVR memory/fuses untouched.
+
+Old job19 was explicitly cancelled rather than applied. Its replacement Internet
+job20 failed before image bytes with TLS-32512 (installed SDK SSL allocation
+failure). That failed diagnostic is preserved. For the separate LAN recovery,
+MQTT alone was temporarily paused, internal free heap rose to114236B, then its
+original setting and TLS connection were restored; no credentials/network fields
+changed. Fresh independent Internet telemetry and a correlated accepted reply
+passed. Current Internet firmware-fetch coexistence remains a production gate.
+
+Actual ASUS wire replies verify mDNS/DNS-SD A/PTR/SRV/TXT, multicast and unicast
+SSDP, and MNDP for the same MAC/hostname. Native PID20976/hash23ac25... recovered
+itself onto this new boot with live WebSocket,80 confirmed mappings, no active
+incidents/toasts or pending writes. Web/API reads were observed, not a long soak.
+NTP was not yet observed after this reboot. New real Telnet connections closed
+before answering; the stale-clock lease edge is fixed and regression-tested in
+the next checkpoint, with actual deployment/readback recorded separately below.
+
+Android preview0.2.7/build14 SHA`f1013c0e08716393fbd5974046c63245f8b76d2b3b98729137944f3153013257`
+is built and staged on both PCs. No ADB device was available, so it is NOT newly
+phone-installed or production-signed. External-power restart, physical all-dark/
+white/red/mapping and coexistence remain open. Do not yet declare safe USB/laptop
+removal from this bounded checkpoint alone.
+
+### Superseded Internet recovery and terminal preparation
 
 The subsequent user-reported DMA/RMT glitches take priority over applying job19.
 Do not apply that old recovery image just to prove a reboot. Fresh LAN and
