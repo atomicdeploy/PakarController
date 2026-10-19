@@ -20,9 +20,9 @@ const document={title:'PakarController',documentElement:{dataset:{}},createEleme
 let writable=true;
 const context=vm.createContext({Date:{now:()=>now},state:{cells:[]},document,boardModes,snakeControls,contextMessage,
   cellManager:{open:false,close(){closed++;this.open=false}},cellBatchCancelled:false,
-  ownedCopy:[],ownedAttributes:[],ownedDynamicCopy:new Map(),uiLanguagePreference:'en',uiDirectionPreference:'auto',
+  ownedCopy:[],ownedAttributes:[],ownedDynamicCopy:new Map(),ownedDynamicAttributes:new Map(),uiLanguage:'en',uiLanguagePreference:'en',uiDirectionPreference:'auto',
   resolveUiLanguage:value=>value,resolveUiDirection:(_preference,language)=>language==='fa'?'rtl':'ltr',uiNumber:String,
-  uiTr:text=>context.uiLanguage==='fa'?(persian[text]??text):text,
+  uiTr:(text,values)=>{const translated=context.uiLanguage==='fa'?(persian[text]??text):text;return values?translated.replace(/\{(\w+)\}/g,(match,key)=>Object.hasOwn(values,key)?String(values[key]):match):translated},
   peerHttp:{writable:()=>writable},
   TextEncoder,DataView,Uint8Array,atob,
   stopStream(){stops++},closeCellMenu(){},setEditingOrder(v){if(!v)cancelledOrders++}});

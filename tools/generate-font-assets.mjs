@@ -27,6 +27,8 @@ const consoleModule=await readFile(new URL('assets/web/browser-console.js',root)
 const toastModule=await readFile(new URL('assets/web/toasts.js',root),'utf8');
 const toastStyles=await readFile(new URL('assets/web/toasts.css',root),'utf8');
 const retryModule=await readFile(new URL('assets/web/realtime-retry.js',root),'utf8');
+// Mode captions arrive through capabilities, not as Web template literals.
+const deviceContext=await readFile(new URL('libraries/BoardCore/src/DeviceContext.h',root),'utf8');
 assert(!retryModule.includes('</script>')&&!retryModule.includes(')HTML"'),'Realtime retry cannot break the container');
 assert(!toastModule.includes('</script>')&&!toastModule.includes(')HTML"'),'Toasts cannot break the container');
 assert(!toastStyles.includes('</style>'),'Toast CSS cannot break the container');
@@ -36,7 +38,7 @@ assert(!consoleModule.includes('</script>')&&!consoleModule.includes(')HTML"'),'
 const withoutGenerated=decodeHtmlSourceText(web.replace(/\/\/ BEGIN SHARED LOCALIZATION[\s\S]*?\/\/ END SHARED LOCALIZATION/,'')
   .replace(/\/\/ BEGIN BROWSER DIAGNOSTICS[\s\S]*?\/\/ END BROWSER DIAGNOSTICS/,'')
   .replace(/\/\/ BEGIN RAYANLAMP TOASTS[\s\S]*?\/\/ END RAYANLAMP TOASTS/,'')
-  .replace(/\/\/ BEGIN RAYANLAMP REALTIME RETRY[\s\S]*?\/\/ END RAYANLAMP REALTIME RETRY/,'')+'\n'+consoleModule+'\n'+toastModule+'\n'+retryModule);
+  .replace(/\/\/ BEGIN RAYANLAMP REALTIME RETRY[\s\S]*?\/\/ END RAYANLAMP REALTIME RETRY/,'')+'\n'+consoleModule+'\n'+toastModule+'\n'+retryModule+'\n'+deviceContext);
 let js=await readFile(new URL('assets/web/localization.js',root),'utf8');
 const dictionary={};
 const controllerCopy=JSON.parse(await readFile(new URL('assets/web/controller-copy.json',root),'utf8'));

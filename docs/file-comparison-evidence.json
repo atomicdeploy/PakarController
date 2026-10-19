@@ -1771,7 +1771,7 @@
     },
     {
       "path": "firmware/esp8266/src/WebUi.h",
-      "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+      "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
       "anchor": "function firmwareUpdateObservation(s)"
     }
   ],
@@ -4210,7 +4210,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function upgradeObservation(",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37"
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6"
         }
       ],
       "omissions": [
@@ -4330,7 +4330,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37"
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6"
         }
       ],
       "proof": [
@@ -4420,7 +4420,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37"
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6"
         }
       ],
       "proof": [
@@ -4510,7 +4510,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37"
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6"
         }
       ],
       "proof": [
@@ -4600,7 +4600,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37"
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6"
         }
       ],
       "proof": [
@@ -4854,7 +4854,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37"
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -4954,7 +4954,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37"
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6"
         }
       ],
       "proof": [
@@ -5124,7 +5124,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -5192,7 +5192,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -5846,7 +5846,7 @@
         {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b","anchor":"static uint8_t scale("},
         {"path":"desktop/src/status_rgb.rs","sha256":"3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e","anchor":"clients never synthesize"},
         {"path":"mobile/lib/status_rgb.dart","sha256":"5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8","anchor":"Color? statusRgbColor("},
-        {"path":"firmware/esp8266/src/WebUi.h","sha256":"1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37","anchor":"function statusRgbOutput"}
+        {"path":"firmware/esp8266/src/WebUi.h","sha256":"0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6","anchor":"function statusRgbOutput"}
       ],
       "proof": [
         {"path":"tests/s3_status_rgb_test.cpp","sha256":"f48af12963f643feca43b77ed5edd181e22981afb761305cf947d5ad053fa6f7","anchor":"Already-scaled output bytes"},
@@ -5893,7 +5893,7 @@
         {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b","anchor":"bool service(uint32_t now, Writer writer)"},
         {"path":"desktop/src/status_rgb.rs","sha256":"3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e","anchor":"pub fn observe("},
         {"path":"mobile/lib/status_rgb.dart","sha256":"5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8","anchor":"class StatusRgbPreview"},
-        {"path":"firmware/esp8266/src/WebUi.h","sha256":"1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37","anchor":"function acceptStatusRgb("}
+        {"path":"firmware/esp8266/src/WebUi.h","sha256":"0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6","anchor":"function acceptStatusRgb("}
       ],
       "proof": [
         {"path":"tests/s3_status_rgb_test.cpp","sha256":"f48af12963f643feca43b77ed5edd181e22981afb761305cf947d5ad053fa6f7","anchor":"No duplicate state events"},
@@ -6312,7 +6312,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "function readStreamPolicy"
         }
       ],
@@ -7395,7 +7395,7 @@
         },
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "7f3136acfc0a3a43f0186fd139c0d83aa447fb33b205ab4086288bcc015d974a",
+          "sha256": "69e5d441087ed22663b727aab6c76eb26501545c3e9d49c291486e8426397c79",
           "anchor": "Additive metadata does not select another generation"
         }
       ],
@@ -7464,7 +7464,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "function connectWs()"
         }
       ],
@@ -7573,7 +7573,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "async function refreshAuthenticated(options={})"
         },
         {
@@ -7665,7 +7665,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -7837,7 +7837,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "function connectWs()"
         }
       ],
@@ -7935,12 +7935,12 @@
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "b6f72114c6aa1558a6605011eda0bd6a4ee448a004ca72943f845e19f434e562",
+          "sha256": "75db2917045580ed8dfd63eb2ecd42e54511b33e337f9855e50def8742259e6e",
           "anchor": "function startUiLocaleController()"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -8036,7 +8036,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -8121,7 +8121,7 @@
           },
           {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "<script data-pakar-presentation>"
           }
         ],
@@ -8410,7 +8410,7 @@
         },
         {
           "path": "tests/localization_test.mjs",
-          "sha256": "c410cf90ffb005bd7a62735ca70711407f643bca9c81411e00e04e98fbcabcab",
+          "sha256": "f4daf6129230087ad05ba906b6bb777586dc10a432d395064adbd4f967bac0c5",
           "anchor": "Peer text identical to a dictionary key"
         }
       ],
@@ -8424,22 +8424,23 @@
       "verdict": "parity-gap",
       "preserved": [
         "Fully reread all 630 current donor lines through EOF. Actual fa-dictionary fallback semantics remain reused for application copy, rather than translating arbitrary runtime data. Applicable native dictionary subset generates into the canonical Web module and actual firmware HTML; the new generic hardware/status/font/control vocabulary is useful pending consumer work, not an automatic dictionary import.",
-        "Added system/explicit language and Auto/LTR/RTL preferences, owned-template text/placeholder/accessibility snapshots, per-browser low-write persistence, shared font route and immutable peer-name boundary."
+        "Added system/explicit language and Auto/LTR/RTL preferences, owned-template text/placeholder/accessibility snapshots, per-browser low-write persistence, shared font route and immutable peer-name boundary.",
+        "Persian Web regression slice: controller captions now include preferences, network/cloud/access/firmware and cell dialogs; capability mode labels participate in dictionary generation. Live telemetry and dynamic accessibility labels refresh in the selected language, real addresses release stale caption ownership, option values remain protocol-stable, and Persian text omits Latin letter spacing. Read-only actual HTML browser inspection verified mobile-width preferences/settings and reversible persistent locale switching; this is not live board acceptance."
       ],
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "b6f72114c6aa1558a6605011eda0bd6a4ee448a004ca72943f845e19f434e562",
+          "sha256": "75db2917045580ed8dfd63eb2ecd42e54511b33e337f9855e50def8742259e6e",
           "anchor": "function uiTr(text,values)"
         },
         {
           "path": "tools/generate-font-assets.mjs",
-          "sha256": "729da9321a12ee07e1ed0433f8a401b8c20d2d0281dc32deba1072f46f69540e",
+          "sha256": "4c283d08fdf37cca888c768252b351b3ac4692c0ff0c6f8e7e436b52382102c5",
           "anchor": "const dictionary={}"
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -8452,21 +8453,21 @@
         {
           "code": "Remaining generic Web copy and native/Web/mobile preference synchronization",
           "disposition": "pending",
-          "reason": "The actual controller subset is integrated, not the entire donor Web feature set. Dynamic errors/confirmations/status/menu attributes and narrow/mobile runtime acceptance remain; browser locale is not silently written to another client or firmware."
+          "reason": "The controller subset is integrated, not the entire donor Web feature set. Preferences/settings/cell captions and live status now have focused regression and read-only mobile-width browser evidence. Other dynamic errors, confirmations and advanced diagnostics, live-board and Android locale acceptance remain; browser locale is not silently written to another client or firmware."
         }
       ],
       "remaining": [
-        "Finish all dynamic application-copy surfaces and controller-safe shared preference contracts; execute live-device and mobile-width/Android locale tests."
+        "Finish remaining dynamic errors/confirmations/advanced diagnostic copy and controller-safe shared preference contracts; execute live-device and Android locale tests. Mobile-width actual Web fixture inspection is complete for preferences/settings, not hardware or exhaustive translation acceptance."
       ],
       "proof": [
         {
           "path": "tests/localization_test.mjs",
-          "sha256": "c410cf90ffb005bd7a62735ca70711407f643bca9c81411e00e04e98fbcabcab",
+          "sha256": "f4daf6129230087ad05ba906b6bb777586dc10a432d395064adbd4f967bac0c5",
           "anchor": "No identical storage writes"
         },
         {
           "path": "tests/localization_test.mjs",
-          "sha256": "c410cf90ffb005bd7a62735ca70711407f643bca9c81411e00e04e98fbcabcab",
+          "sha256": "f4daf6129230087ad05ba906b6bb777586dc10a432d395064adbd4f967bac0c5",
           "anchor": "assert.equal(attrs.placeholder"
         }
       ],
@@ -8484,7 +8485,7 @@
       "targets": [
         {
           "path": "tests/localization_test.mjs",
-          "sha256": "c410cf90ffb005bd7a62735ca70711407f643bca9c81411e00e04e98fbcabcab",
+          "sha256": "f4daf6129230087ad05ba906b6bb777586dc10a432d395064adbd4f967bac0c5",
           "anchor": "Adapt Pealayer tests/i18n_surface_audit_test.rs"
         }
       ],
@@ -8506,7 +8507,7 @@
       "proof": [
         {
           "path": "tests/localization_test.mjs",
-          "sha256": "c410cf90ffb005bd7a62735ca70711407f643bca9c81411e00e04e98fbcabcab",
+          "sha256": "f4daf6129230087ad05ba906b6bb777586dc10a432d395064adbd4f967bac0c5",
           "anchor": "for(const key of"
         }
       ],
@@ -8738,7 +8739,7 @@
       "targets": [
         {
           "path": "assets/web/device-settings.js",
-          "sha256": "ed81542b7ba0eeb7ad69a5d2efb9d84515086b37afd625563dcfdbb93012bfb4",
+          "sha256": "d71e9797948b19a436210332ce17b9dab783076145dd695c4798d0de078515b4",
           "anchor": "function panelToggle("
         },
         {
@@ -8805,7 +8806,7 @@
         },
         {
           "path":"firmware/esp8266/src/WebUi.h",
-          "sha256":"1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256":"0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor":"function statusRgbOutput"
         },
         {
@@ -8918,7 +8919,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "function peerAvailability("
         }
       ],
@@ -8940,7 +8941,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "7f3136acfc0a3a43f0186fd139c0d83aa447fb33b205ab4086288bcc015d974a",
+          "sha256": "69e5d441087ed22663b727aab6c76eb26501545c3e9d49c291486e8426397c79",
           "anchor": "No inferred board kind or controls"
         },
         {
@@ -8979,7 +8980,7 @@
       "targets": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "7f3136acfc0a3a43f0186fd139c0d83aa447fb33b205ab4086288bcc015d974a",
+          "sha256": "69e5d441087ed22663b727aab6c76eb26501545c3e9d49c291486e8426397c79",
           "anchor": "const manifest="
         },
         {
@@ -9021,7 +9022,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "7f3136acfc0a3a43f0186fd139c0d83aa447fb33b205ab4086288bcc015d974a",
+          "sha256": "69e5d441087ed22663b727aab6c76eb26501545c3e9d49c291486e8426397c79",
           "anchor": "Unsupported geometry is not forced"
         },
         {
@@ -9087,7 +9088,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37"
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6"
         }
       ],
       "omissions": [
@@ -9135,7 +9136,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "7f3136acfc0a3a43f0186fd139c0d83aa447fb33b205ab4086288bcc015d974a",
+          "sha256": "69e5d441087ed22663b727aab6c76eb26501545c3e9d49c291486e8426397c79",
           "anchor": "Native wiring is source-checked only"
         },
         {
@@ -9275,7 +9276,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -9285,12 +9286,12 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "function renderApplicationIdentity"
         },
         {
           "path": "assets/web/device-settings.js",
-          "sha256": "ed81542b7ba0eeb7ad69a5d2efb9d84515086b37afd625563dcfdbb93012bfb4",
+          "sha256": "d71e9797948b19a436210332ce17b9dab783076145dd695c4798d0de078515b4",
           "anchor": "function settingsCanClose()"
         },
         {
@@ -9356,7 +9357,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -10068,7 +10069,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37"
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -10238,7 +10239,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37"
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -12008,7 +12009,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -12104,7 +12105,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "/* Fixed manager slots:"
         }
       ],
@@ -12231,7 +12232,7 @@
         },
         {
           "path": "firmware/esp8266/src/WebUi.h",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37",
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -12306,7 +12307,7 @@
         },
         {
           "path": "assets/web/localization.js",
-          "sha256": "b6f72114c6aa1558a6605011eda0bd6a4ee448a004ca72943f845e19f434e562",
+          "sha256": "75db2917045580ed8dfd63eb2ecd42e54511b33e337f9855e50def8742259e6e",
           "anchor": "subscribeLocalePreferences(value=>"
         }
       ],
@@ -13115,7 +13116,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37"
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -14446,12 +14447,12 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function createWorkspaceStorage",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37"
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6"
         },
         {
           "path": "assets/web/device-settings.js",
           "anchor": "function settingsObserve",
-          "sha256": "ed81542b7ba0eeb7ad69a5d2efb9d84515086b37afd625563dcfdbb93012bfb4"
+          "sha256": "d71e9797948b19a436210332ce17b9dab783076145dd695c4798d0de078515b4"
         }
       ],
       "proof": [
@@ -14491,7 +14492,7 @@
         {
           "path": "firmware/esp8266/src/WebUi.h",
           "anchor": "function workspaceSettingsRecord",
-          "sha256": "1310d5d1495f6de591ac252a3dbe57bcf43c09f371db58be41804d90922c3c37"
+          "sha256": "0727cd7f407642d24bc72841b3613123601cde834c881f7c2dfae89d3656bde6"
         }
       ],
       "proof": [
