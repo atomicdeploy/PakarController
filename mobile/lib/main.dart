@@ -925,7 +925,8 @@ class _ControlShellState extends State<ControlShell>
       if (panelInventory.has('table')) ('table', 'Table', PakarIcons.gridFour),
       if (panelInventory.frontPanel)
         ('front-panel', 'Front panel', PakarIcons.gauge),
-      if (panelInventory.has('telemetry') || panelInventory.has('network'))
+      if (panelInventory.known &&
+          (panelInventory.features.isNotEmpty || panelInventory.avrObserved))
         ('hardware', 'Hardware', PakarIcons.circuitry),
       if (peer.known) ('device-settings', 'Device settings', PakarIcons.gear),
       ('connection', 'Connection', PakarIcons.gear),
@@ -1283,18 +1284,6 @@ class BoardOverview extends StatelessWidget {
         Text(
           peer.known ? '${peer.hostname}.local' : 'Use Connection to choose the hostname and credentials. Controls appear only after individual capability acknowledgment.',
         ),
-        if (peer.known) ...[
-          const SizedBox(height: 20),
-          const Text('Acknowledged capabilities'),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final feature in peer.features) Chip(label: Text(feature)),
-            ],
-          ),
-        ],
       ],
     );
   }
@@ -2520,6 +2509,9 @@ class HardwarePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final peer = status?.peer ?? PeerContext.unknown;
+    final features = {...?inventory?.features, ...peer.features}.toList()
+      ..sort();
     String fact(String key, String yes, String no) =>
         status?.json.containsKey(key) == true
         ? status!.json[key] == true
@@ -2563,46 +2555,96 @@ class HardwarePage extends StatelessWidget {
           status?.peer.has('outputs') == true)
         ('Outputs', mask('active_outputs'), PakarIcons.lightning),
     ];
-    if (values.isEmpty) {
+    if (values.isEmpty && features.isEmpty) {
       return const Center(child: Text('No acknowledged hardware measurements'));
     }
-    return GridView.extent(
+    return ListView(
+      key: PageStorageKey('hardware:${inventory?.ownerKey ?? peer.hostname}'),
       padding: const EdgeInsets.all(16),
-      maxCrossAxisExtent: 280,
-      childAspectRatio: 1.8,
       children: [
-        for (final value in values)
+        if (features.isNotEmpty)
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(value.$3, size: 30),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          value.$1,
-                          style: const TextStyle(color: Color(0xff909baa)),
+                  Text(
+                    'Capabilities',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final feature in features)
+                        Tooltip(
+                          message: peer.has(feature)
+                              ? 'Currently acknowledged'
+                              : 'Previously acknowledged; currently unavailable',
+                          child: Opacity(
+                            opacity: peer.has(feature) ? 1 : 0.45,
+                            child: Chip(
+                              key: ValueKey('capability:$feature'),
+                              label: Text(feature),
+                            ),
+                          ),
                         ),
-                        Text(
-                          value.$2,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (values.isNotEmpty)
+          GridView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 280,
+              mainAxisExtent:
+                  56 + MediaQuery.textScalerOf(context).scale(18) * 4,
+            ),
+            children: [
+              for (final value in values)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(value.$3, size: 30),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                value.$1,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Color(0xff909baa),
+                                ),
+                              ),
+                              Text(
+                                value.$2,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
+                ),
+            ],
           ),
       ],
     );

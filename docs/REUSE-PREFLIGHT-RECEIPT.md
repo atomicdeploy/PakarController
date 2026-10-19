@@ -1,5 +1,27 @@
 # Donor-first preflight receipt
 
+## Flutter capabilities belong to Hardware
+
+Consulted preferences, device-context and exact donor-audit entries. Read the
+actual Pealayer hardwareAvailability.ts and installed PCController mobile
+peer_context.dart; the latter is not the ledger's unavailable legacy checkout,
+so its pending comparison is not promoted. Reuse the existing imported
+PeerContext and board-scoped PanelInventory rather than creating another
+capability source or inferring hardware from measurements.
+
+Move the remaining Overview badges into Hardware alongside its measurements.
+All acknowledged profiles can reach Hardware, including boards without network
+or telemetry. Retained badges dim on lost ACK/disconnect and clear for another
+board; they remain presentation only, not mutation authority. Overview retains
+identity/connection information. Focused hardware-page tests cover navigation,
+unknown peers, disconnect/reconnect, replacement ownership and phone/tablet
+layout. Installed Android and human acceptance remain separate.
+
+The focused phone test caught overflow in the inherited fixed-aspect measurement
+cards. Consulted the actual installed Flutter GridView/delegate implementation;
+use a text-scale-aware card extent instead of shrinking or clipping the labels.
+The regression covers normal and double-size text on phone/tablet widths.
+
 ## Persian Web UI regression
 
 Consulted localization and donor-audit for Pealayer web_ui/src/i18n.ts and

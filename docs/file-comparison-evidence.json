@@ -6484,7 +6484,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "dccf96c4359c61838d3f2a0ed6dd3537994a96694684059b49d0b99cf474c82c",
+      "sha256": "4c7f4a0111536e0c32d5d8e4e6427655f297b4264009c79c94d99ed64e859cf1",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -8909,7 +8909,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "dccf96c4359c61838d3f2a0ed6dd3537994a96694684059b49d0b99cf474c82c",
+          "sha256": "4c7f4a0111536e0c32d5d8e4e6427655f297b4264009c79c94d99ed64e859cf1",
           "anchor": "Future<bool> _command"
         },
         {
@@ -8975,7 +8975,8 @@
       "verdict": "parity-gap",
       "preserved": [
         "Actual disconnected, missing status and capability-free cases adapted into shipped-Web tests. Independent peripheral ACKs, expiry, cross-kind and malformed geometry/schema cases added. C++ tests execute actual HELLO/display-ACK policy.",
-        "Equivalent Flutter fixture cases execute actual capability parsing, unsupported schema/geometry, display measured ACK, per-feature cards, identity change and phone/tablet navigation; API fixtures reject pending reads/queued writes after owner or credential changes."
+        "Equivalent Flutter fixture cases execute actual capability parsing, unsupported schema/geometry, display measured ACK, per-feature cards, identity change and phone/tablet navigation; API fixtures reject pending reads/queued writes after owner or credential changes.",
+        "Flutter hardware-page regressions move capabilities from Overview into Hardware, retain dimmed board-scoped badges without granting fresh ACK authority, expose capability-only profiles without requiring network telemetry, and cover phone/tablet text scaling. Existing selected-peer parsing and PanelInventory remain the sole data owners."
       ],
       "targets": [
         {
@@ -8992,6 +8993,11 @@
           "path": "mobile/test/widget_test.dart",
           "sha256": "c31349ce91824d5eee6c8ff57a8dddd67d70e5dadee659bb237ecf31b0d591cd",
           "anchor": "Unacknowledged board has no Table"
+        },
+        {
+          "path": "mobile/test/hardware_page_test.dart",
+          "sha256": "ab9a188243999b3c114156d5558428c4a568cd33495f7bc7bed9933a134ba884",
+          "anchor": "Hardware owns every acknowledged capability exactly once"
         },
         {
           "path": "tests/device_context_test.cpp",
@@ -9208,7 +9214,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "dccf96c4359c61838d3f2a0ed6dd3537994a96694684059b49d0b99cf474c82c",
+          "sha256": "4c7f4a0111536e0c32d5d8e4e6427655f297b4264009c79c94d99ed64e859cf1",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -14179,7 +14185,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "dccf96c4359c61838d3f2a0ed6dd3537994a96694684059b49d0b99cf474c82c",
+          "sha256": "4c7f4a0111536e0c32d5d8e4e6427655f297b4264009c79c94d99ed64e859cf1",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -14327,7 +14333,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "dccf96c4359c61838d3f2a0ed6dd3537994a96694684059b49d0b99cf474c82c"
+          "sha256": "4c7f4a0111536e0c32d5d8e4e6427655f297b4264009c79c94d99ed64e859cf1"
         }
       ],
       "proof": [
@@ -14367,7 +14373,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "dccf96c4359c61838d3f2a0ed6dd3537994a96694684059b49d0b99cf474c82c"
+          "sha256": "4c7f4a0111536e0c32d5d8e4e6427655f297b4264009c79c94d99ed64e859cf1"
         }
       ],
       "proof": [
