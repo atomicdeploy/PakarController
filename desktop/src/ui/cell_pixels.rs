@@ -31,11 +31,14 @@ pub struct Frame {
     pub pending: bool,
 }
 impl Frame {
-    pub fn valid(&self) -> bool {
-        !self.pending && self.rgb.len() == 480 * 6
+    pub fn structurally_valid(&self) -> bool {
+        self.rgb.len() == 480 * 6
             && self.rgb.bytes().all(|b| b.is_ascii_hexdigit())
             && self.physical.len() == 80
             && (1..=80).all(|id| self.physical.iter().filter(|p| **p == id).count() == 1)
+    }
+    pub fn valid(&self) -> bool {
+        !self.pending && self.structurally_valid()
     }
     pub fn cell(&self, id: u8) -> Option<(u16, [Color32; 6])> {
         if !(1..=80).contains(&id) || !self.valid() {
@@ -69,9 +72,11 @@ impl Sample {
     pub fn observe(slot: &mut Option<Self>, frame: Option<Frame>) {
         match frame {
             Some(frame) if frame.valid() => *slot = Some(Self { frame, at: Instant::now() }),
-            Some(_) => *slot = None,
-            None if slot.as_ref().is_some_and(|sample| !sample.fresh()) => *slot = None,
-            None => {},
+            Some(frame) if !frame.structurally_valid() => *slot = None,
+            // A queued/staging frame is not a new presented RGB observation.
+            // Like null, it cannot renew the previous sample's clock.
+            _ if slot.as_ref().is_some_and(|sample| !sample.fresh()) => *slot = None,
+            _ => {},
         }
     }
 }
@@ -216,6 +221,27 @@ mod tests {
         Sample::observe(&mut slot, Some(frame.clone()));
         let mut invalid = frame; invalid.physical[1] = 1;
         Sample::observe(&mut slot, Some(invalid)); assert!(slot.is_none());
+    }
+    #[test]
+    fn pending_rgb_never_renews_sample_or_acknowledges_a_matching_probe() {
+        let probe = crate::pixel_diagnostic::Probe { index: 474, group: true, rgb: 0x1234ab };
+        let mut frame = Frame { rgb: probe.frame(false).unwrap().iter().map(|b| format!("{b:02x}")).collect(),
+            physical: (1..=80).collect(), revision: 9, brightness: 255, pending: false };
+        let mut status: crate::DeviceStatus = serde_json::from_value(serde_json::json!({})).unwrap();
+        status.pixel_frame = Some(frame.clone());
+        assert!(probe.matches(&status, false));
+        let mut slot = None; Sample::observe(&mut slot, Some(frame.clone()));
+        let observed = slot.as_ref().unwrap().at;
+        frame.pending = true; assert!(frame.structurally_valid()); assert!(!frame.valid());
+        status.pixel_frame = Some(frame.clone()); assert!(!probe.matches(&status, false));
+        Sample::observe(&mut slot, Some(frame.clone()));
+        assert_eq!(slot.as_ref().unwrap().at, observed);
+        slot.as_mut().unwrap().at = Instant::now() - Duration::from_secs(6);
+        Sample::observe(&mut slot, Some(frame.clone())); assert!(slot.is_none());
+        frame.rgb.replace_range(..2, "zz"); assert!(!frame.structurally_valid());
+        let mut fresh = status.pixel_frame.unwrap(); fresh.pending = false;
+        Sample::observe(&mut slot, Some(fresh)); assert!(slot.is_some());
+        Sample::observe(&mut slot, Some(frame)); assert!(slot.is_none());
     }
     #[test]
     fn top_origin_counter_clockwise_and_physical_mapping() {

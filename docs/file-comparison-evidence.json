@@ -3075,7 +3075,7 @@
     "targets": [
       {
         "path": "firmware/esp32s3/src/LedWire.h",
-        "sha256": "de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996",
+        "sha256": "502971b3109cf654ca0d8c657250a40d16548d676d1fd7ae176d5436b993d4ad",
         "anchor": "inline constexpr uint16_t zeroHigh=12"
       },
       {
@@ -3097,7 +3097,7 @@
       },
       {
         "path": "tests/led_worker_test.cpp",
-        "sha256": "9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a",
+        "sha256": "878091cb9945be9030df4da9b48b7135e5e3c39ed0c0db6dbfcf5e062fa9ea85",
         "anchor": "Fixture::rxCorruptBit=23*6*24"
       }
     ],
@@ -3131,12 +3131,12 @@
     "targets": [
       {
         "path": "firmware/esp32s3/src/LedOutput.cpp",
-        "sha256": "073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08",
+        "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
         "anchor": "void LedOutput::work(){"
       },
       {
         "path": "firmware/esp32s3/src/LedOutput.h",
-        "sha256": "f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83",
+        "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
         "anchor": "Frame producer_{};"
       },
       {
@@ -3146,7 +3146,7 @@
       },
       {
         "path": "firmware/esp32s3/src/LedWire.h",
-        "sha256": "de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996",
+        "sha256": "502971b3109cf654ca0d8c657250a40d16548d676d1fd7ae176d5436b993d4ad",
         "anchor": "inline constexpr uint16_t resetMicros=300;"
       },
       {
@@ -3158,7 +3158,7 @@
     "proof": [
       {
         "path": "tests/led_worker_test.cpp",
-        "sha256": "9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a",
+        "sha256": "878091cb9945be9030df4da9b48b7135e5e3c39ed0c0db6dbfcf5e062fa9ea85",
         "anchor": "void pinSetupFailure(unsigned step)"
       },
       {
@@ -3193,12 +3193,12 @@
     "targets": [
       {
         "path": "firmware/esp32s3/src/LedOutput.cpp",
-        "sha256": "073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08",
+        "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
         "anchor": "void LedOutput::work(){"
       },
       {
         "path": "firmware/esp32s3/src/LedOutput.h",
-        "sha256": "f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83",
+        "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
         "anchor": "Frame producer_{};"
       },
       {
@@ -3208,7 +3208,7 @@
       },
       {
         "path": "firmware/esp32s3/src/LedWire.h",
-        "sha256": "de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996",
+        "sha256": "502971b3109cf654ca0d8c657250a40d16548d676d1fd7ae176d5436b993d4ad",
         "anchor": "inline constexpr uint16_t resetMicros=300;"
       },
       {
@@ -3220,7 +3220,7 @@
     "proof": [
       {
         "path": "tests/led_worker_test.cpp",
-        "sha256": "9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a",
+        "sha256": "878091cb9945be9030df4da9b48b7135e5e3c39ed0c0db6dbfcf5e062fa9ea85",
         "anchor": "void pinSetupFailure(unsigned step)"
       },
       {
@@ -3255,12 +3255,12 @@
     "targets": [
       {
         "path": "firmware/esp32s3/src/LedOutput.cpp",
-        "sha256": "073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08",
+        "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
         "anchor": "void LedOutput::work(){"
       },
       {
         "path": "firmware/esp32s3/src/LedOutput.h",
-        "sha256": "f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83",
+        "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
         "anchor": "Frame producer_{};"
       },
       {
@@ -3270,7 +3270,7 @@
       },
       {
         "path": "firmware/esp32s3/src/LedWire.h",
-        "sha256": "de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996",
+        "sha256": "502971b3109cf654ca0d8c657250a40d16548d676d1fd7ae176d5436b993d4ad",
         "anchor": "inline constexpr uint16_t resetMicros=300;"
       },
       {
@@ -3282,7 +3282,7 @@
     "proof": [
       {
         "path": "tests/led_worker_test.cpp",
-        "sha256": "9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a",
+        "sha256": "878091cb9945be9030df4da9b48b7135e5e3c39ed0c0db6dbfcf5e062fa9ea85",
         "anchor": "void pinSetupFailure(unsigned step)"
       },
       {
@@ -3317,12 +3317,12 @@
     "targets": [
       {
         "path": "firmware/esp32s3/src/LedOutput.cpp",
-        "sha256": "073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08",
+        "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
         "anchor": "void LedOutput::work(){"
       },
       {
         "path": "firmware/esp32s3/src/LedOutput.h",
-        "sha256": "f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83",
+        "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
         "anchor": "Frame producer_{};"
       },
       {
@@ -3332,7 +3332,7 @@
       },
       {
         "path": "firmware/esp32s3/src/LedWire.h",
-        "sha256": "de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996",
+        "sha256": "502971b3109cf654ca0d8c657250a40d16548d676d1fd7ae176d5436b993d4ad",
         "anchor": "inline constexpr uint16_t resetMicros=300;"
       },
       {
@@ -3344,7 +3344,7 @@
     "proof": [
       {
         "path": "tests/led_worker_test.cpp",
-        "sha256": "9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a",
+        "sha256": "878091cb9945be9030df4da9b48b7135e5e3c39ed0c0db6dbfcf5e062fa9ea85",
         "anchor": "void pinSetupFailure(unsigned step)"
       },
       {
@@ -3379,12 +3379,12 @@
     "targets": [
       {
         "path": "firmware/esp32s3/src/LedOutput.cpp",
-        "sha256": "073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08",
+        "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
         "anchor": "void LedOutput::work(){"
       },
       {
         "path": "firmware/esp32s3/src/LedOutput.h",
-        "sha256": "f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83",
+        "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
         "anchor": "Frame producer_{};"
       },
       {
@@ -3394,7 +3394,7 @@
       },
       {
         "path": "firmware/esp32s3/src/LedWire.h",
-        "sha256": "de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996",
+        "sha256": "502971b3109cf654ca0d8c657250a40d16548d676d1fd7ae176d5436b993d4ad",
         "anchor": "inline constexpr uint16_t resetMicros=300;"
       },
       {
@@ -3406,7 +3406,7 @@
     "proof": [
       {
         "path": "tests/led_worker_test.cpp",
-        "sha256": "9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a",
+        "sha256": "878091cb9945be9030df4da9b48b7135e5e3c39ed0c0db6dbfcf5e062fa9ea85",
         "anchor": "void pinSetupFailure(unsigned step)"
       },
       {
@@ -3441,12 +3441,12 @@
     "targets": [
       {
         "path": "firmware/esp32s3/src/LedOutput.cpp",
-        "sha256": "073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08",
+        "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
         "anchor": "void LedOutput::work(){"
       },
       {
         "path": "firmware/esp32s3/src/LedOutput.h",
-        "sha256": "f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83",
+        "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
         "anchor": "Frame producer_{};"
       },
       {
@@ -3456,7 +3456,7 @@
       },
       {
         "path": "firmware/esp32s3/src/LedWire.h",
-        "sha256": "de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996",
+        "sha256": "502971b3109cf654ca0d8c657250a40d16548d676d1fd7ae176d5436b993d4ad",
         "anchor": "inline constexpr uint16_t resetMicros=300;"
       },
       {
@@ -3468,7 +3468,7 @@
     "proof": [
       {
         "path": "tests/led_worker_test.cpp",
-        "sha256": "9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a",
+        "sha256": "878091cb9945be9030df4da9b48b7135e5e3c39ed0c0db6dbfcf5e062fa9ea85",
         "anchor": "void pinSetupFailure(unsigned step)"
       },
       {
@@ -5036,7 +5036,7 @@
     {
       "path": "tests/urboot_integration_test.mjs",
       "anchor": "routes.indexOf('Image changed after backup')",
-      "sha256": "5a40667a418718e339ae205ab9597b0d7662169529a278e76ba1965d7c30eb10"
+      "sha256": "3f4501099cd3f7a3d00e220dc731131d5e550bbf68e4f8f7934783b4fb5475cd"
     }
   ],
   "remaining": [
@@ -5218,7 +5218,7 @@
     {
       "path": "desktop/src/usb_table.rs",
       "anchor": "pub struct Intent",
-      "sha256": "5bd38167d9df6f43393550bc64f2469b27da6bb8e139c8348a96f972582bc04b"
+      "sha256": "49918e95eeed6198a5b387a38596ad54118b8d405cd9b5d930d7b6d5f2fd0186"
     }
   ],
   "omissions": [
@@ -5237,7 +5237,7 @@
     {
       "path": "desktop/src/usb_table.rs",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback",
-      "sha256": "5bd38167d9df6f43393550bc64f2469b27da6bb8e139c8348a96f972582bc04b"
+      "sha256": "49918e95eeed6198a5b387a38596ad54118b8d405cd9b5d930d7b6d5f2fd0186"
     }
   ],
   "remaining": [
@@ -7463,7 +7463,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "8860af42e352bd0591d905e57d35bce17665a40f907924291ebdabdb5a6f1250"
+          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -7493,7 +7493,7 @@
         {
           "path": "firmware/esp8266/src/AvrIsp.h",
           "anchor": "void report(",
-          "sha256": "60905b95f0f74ede84143081d57c643a705a437c6b40bac603ec0f7b34567f1d"
+          "sha256": "d817ff9373fd1dc6a0612d2ce9e5a5f93cdc974e2c95ecb32767eb8404fa8da4"
         },
         {
           "path": "mobile/lib/upgrade_observation.dart",
@@ -7587,7 +7587,7 @@
     {
       "path": "tools/test-protocol.sh",
       "anchor": "for upgrade_case in",
-          "sha256": "5bfc6d7c08c1dbb57c1b79a881f62c8ab13ca7d9514f720a9c68275f49236675"
+          "sha256": "f28c11e234eda8b71ec4dfea0362eb4d02651fabf4323738203c4451e9afed41"
         }
       ],
       "remaining": [
@@ -7965,7 +7965,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "8860af42e352bd0591d905e57d35bce17665a40f907924291ebdabdb5a6f1250"
+          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -8020,7 +8020,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "8860af42e352bd0591d905e57d35bce17665a40f907924291ebdabdb5a6f1250"
+          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2"
         }
       ],
       "omissions": [
@@ -8072,13 +8072,13 @@
           "sha256": "4adbe46485571c92c0061e008ef3044d71a580f7f62d3cb1a1b3c19117eee40b"
         },
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"0539837793778de69839ea205fce43bda14f1734866dee5c158389f48e3837ab","anchor":"Message *items_=nullptr;"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"8860af42e352bd0591d905e57d35bce17665a40f907924291ebdabdb5a6f1250","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
         {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"9f486926615fdec3d6e7c6ad32e384816e66811674aec2a9f6b34697233e83cf","anchor":"internal_heap_largest_block_bytes"},
         {"path":"tools/update-firmware.mjs","sha256":"489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "8860af42e352bd0591d905e57d35bce17665a40f907924291ebdabdb5a6f1250"
+          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -8109,7 +8109,7 @@
         }
       ],
       "proof": [
-        {"path":"tests/led_scheduler_test.cpp","sha256":"bf178532b50db2d288582b2f1c2c53fa52bc6d0f5abf657d849c5adb7df74095","anchor":"S3 queue must not retain internal bulk storage"},
+        {"path":"tests/led_scheduler_test.cpp","sha256":"e3967d3e77a7073dc002bf476f1b628e022ac6c32cab87387da9dfb529d29a07","anchor":"S3 queue must not retain internal bulk storage"},
         {"path":"tests/ble_storage_stubs/esp_heap_caps.h","sha256":"f6ff5f7843125cd7e780df39fd9d31006af9ef23070641ec580288235750365c","anchor":"assert(capabilities==(MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT))"},
         {"path":"tests/update_tool_test.mjs","sha256":"8c3e3df8db7d7fe46fdca6e1b03958f812f22521e7efb795ee5c54074273b66d","anchor":"Exactly one read-only request, no replay"},
         {"path":"tests/update_tool_test.mjs","sha256":"8c3e3df8db7d7fe46fdca6e1b03958f812f22521e7efb795ee5c54074273b66d","anchor":"Partial events never satisfy readiness or trigger request replay"},
@@ -9223,7 +9223,7 @@
       "preserved": ["Full header/implementation read through EOF. Adapted nonblocking lifecycle state, absolute elapsed/period animation, repeat-state phase preservation, brightness-scaled rendered-byte reporting and explicit board-owned configuration into PakarS3::StatusRgb. Fixed descriptors now add donor flash/cycle/one-shot transition plus pulse/double-blink: fault and shutdown preempt routine states, verified success expires with the existing update lifecycle, offline USB is healthy and simultaneous AP/network availability is distinct."],
       "targets": [
         {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b","anchor":"class StatusRgb"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"8860af42e352bd0591d905e57d35bce17665a40f907924291ebdabdb5a6f1250","anchor":"void serviceStatusRgb(uint32_t now)"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2","anchor":"void serviceStatusRgb(uint32_t now)"},
         {"path":"firmware/esp32s3/src/StatusRgbConfig.h","sha256":"8ae7dd8a7868db38ff2a31c7034c3c9674c8bf860ee4b9aae4f559d2f125ed29","anchor":"class StatusRgbConfig"},
         {"path":"desktop/src/status_rgb.rs","sha256":"3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e","anchor":"pub struct Configuration"},
         {"path":"mobile/lib/status_rgb.dart","sha256":"5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8","anchor":"class StatusRgbSettings"}
@@ -9873,7 +9873,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "8860af42e352bd0591d905e57d35bce17665a40f907924291ebdabdb5a6f1250",
+      "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2",
       "anchor": "bool authenticate()"
     },
     {
@@ -9893,7 +9893,7 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "5bd38167d9df6f43393550bc64f2469b27da6bb8e139c8348a96f972582bc04b",
+      "sha256": "49918e95eeed6198a5b387a38596ad54118b8d405cd9b5d930d7b6d5f2fd0186",
       "anchor": "pub struct Admission"
     },
     {
@@ -10050,7 +10050,7 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "5bd38167d9df6f43393550bc64f2469b27da6bb8e139c8348a96f972582bc04b",
+      "sha256": "49918e95eeed6198a5b387a38596ad54118b8d405cd9b5d930d7b6d5f2fd0186",
       "anchor": "fn table_write_is_exact_boot_fenced_and_post_ack_values_are_not_assumed()"
     },
     {
@@ -10100,18 +10100,18 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "5bd38167d9df6f43393550bc64f2469b27da6bb8e139c8348a96f972582bc04b",
+      "sha256": "49918e95eeed6198a5b387a38596ad54118b8d405cd9b5d930d7b6d5f2fd0186",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "5bd38167d9df6f43393550bc64f2469b27da6bb8e139c8348a96f972582bc04b",
+      "sha256": "49918e95eeed6198a5b387a38596ad54118b8d405cd9b5d930d7b6d5f2fd0186",
       "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
     },
     {
       "path": "desktop/src/usb_table.rs",
       "anchor": "fn actual_usb_worker_windows_read_latency_does_not_expire_large_capture",
-      "sha256": "5bd38167d9df6f43393550bc64f2469b27da6bb8e139c8348a96f972582bc04b"
+      "sha256": "49918e95eeed6198a5b387a38596ad54118b8d405cd9b5d930d7b6d5f2fd0186"
     },
     {
       "path": "tests/ble_wire_test.cpp",
@@ -10159,7 +10159,7 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "5bd38167d9df6f43393550bc64f2469b27da6bb8e139c8348a96f972582bc04b",
+      "sha256": "49918e95eeed6198a5b387a38596ad54118b8d405cd9b5d930d7b6d5f2fd0186",
       "anchor": "pub struct Operation"
     }
   ],
@@ -10222,12 +10222,12 @@
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "5bd38167d9df6f43393550bc64f2469b27da6bb8e139c8348a96f972582bc04b",
+      "sha256": "49918e95eeed6198a5b387a38596ad54118b8d405cd9b5d930d7b6d5f2fd0186",
       "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
     },
     {
       "path": "desktop/src/usb_table.rs",
-      "sha256": "5bd38167d9df6f43393550bc64f2469b27da6bb8e139c8348a96f972582bc04b",
+      "sha256": "49918e95eeed6198a5b387a38596ad54118b8d405cd9b5d930d7b6d5f2fd0186",
       "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
     }
   ]
@@ -10700,7 +10700,7 @@
       "remaining":["Import/compare the remaining generic donor key/transition/menu/tone assertions against actual hardware-matched consumers. Physically validate display disconnect/reconnect and supply/timing; register/GPIO doubles are not electrical proof."],
       "proof":[
         {"path":"tools/test-display.ps1","sha256":"e3c3a230cb93757edfaac1e2ea208695a9cfdfb6b4cd613c657c632b8fb25e51","anchor":"foreach ($taskVariant"},
-        {"path":"tools/test-protocol.sh","sha256":"5bfc6d7c08c1dbb57c1b79a881f62c8ab13ca7d9514f720a9c68275f49236675","anchor":"for display_flags"}
+        {"path":"tools/test-protocol.sh","sha256":"f28c11e234eda8b71ec4dfea0362eb4d02651fabf4323738203c4451e9afed41","anchor":"for display_flags"}
       ],
       "improvement":"Exercise both actual AVR register and Arduino fallback branches; assert ninth-slot input/pull-up, preserved other port bits, exact replay, each NACK byte, display-off restoration and 32-bit rollover. Physical/stuck-low line diagnosis remains unverified."
     },
@@ -14035,7 +14035,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "5c7cb4cddb6f09684f980a1f33724938b42f21077bbd72221dc9b04ded985894",
+          "sha256": "bc8d17a6f841b9cfb7103d13569dbea932db8ec57174b44af8fe5064de9542da",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -14086,7 +14086,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "5c7cb4cddb6f09684f980a1f33724938b42f21077bbd72221dc9b04ded985894",
+          "sha256": "bc8d17a6f841b9cfb7103d13569dbea932db8ec57174b44af8fe5064de9542da",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -14139,12 +14139,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "5c7cb4cddb6f09684f980a1f33724938b42f21077bbd72221dc9b04ded985894",
+          "sha256": "bc8d17a6f841b9cfb7103d13569dbea932db8ec57174b44af8fe5064de9542da",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "5c7cb4cddb6f09684f980a1f33724938b42f21077bbd72221dc9b04ded985894",
+          "sha256": "bc8d17a6f841b9cfb7103d13569dbea932db8ec57174b44af8fe5064de9542da",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -14184,12 +14184,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "5c7cb4cddb6f09684f980a1f33724938b42f21077bbd72221dc9b04ded985894",
+          "sha256": "bc8d17a6f841b9cfb7103d13569dbea932db8ec57174b44af8fe5064de9542da",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "5c7cb4cddb6f09684f980a1f33724938b42f21077bbd72221dc9b04ded985894",
+          "sha256": "bc8d17a6f841b9cfb7103d13569dbea932db8ec57174b44af8fe5064de9542da",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -14239,7 +14239,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "5c7cb4cddb6f09684f980a1f33724938b42f21077bbd72221dc9b04ded985894",
+          "sha256": "bc8d17a6f841b9cfb7103d13569dbea932db8ec57174b44af8fe5064de9542da",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -14295,7 +14295,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "5c7cb4cddb6f09684f980a1f33724938b42f21077bbd72221dc9b04ded985894",
+          "sha256": "bc8d17a6f841b9cfb7103d13569dbea932db8ec57174b44af8fe5064de9542da",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -14416,8 +14416,8 @@
           "sha256": "0b9b9c7c866ca61abb485e3b03a00435ab412b966163e4d51f5cafffb837db2b",
           "anchor": "uint8_t brightness_ = 255"
         },
-        {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08","anchor":"config.flags.with_dma=true"},
-        {"path":"firmware/esp32s3/src/LedWire.h","sha256":"de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996","anchor":"void encodeWire("},
+        {"path":"firmware/esp32s3/src/LedOutput.cpp","sha256":"8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f","anchor":"config.flags.with_dma=true"},
+        {"path":"firmware/esp32s3/src/LedWire.h","sha256":"502971b3109cf654ca0d8c657250a40d16548d676d1fd7ae176d5436b993d4ad","anchor":"void encodeWire("},
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"0539837793778de69839ea205fce43bda14f1734866dee5c158389f48e3837ab","anchor":"class LoopMessages"}
       ],
       "omissions": [
@@ -14441,8 +14441,8 @@
         "Make chipset/channel order configurable and verify R/G/B plus all 480 pixels on hardware; expose current configuration across the control surfaces."
       ],
       "proof": [
-        {"path":"tests/led_worker_test.cpp","sha256":"9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a","anchor":"Compile the ACTUAL S3 output worker"},
-        {"path":"tests/led_scheduler_test.cpp","sha256":"bf178532b50db2d288582b2f1c2c53fa52bc6d0f5abf657d849c5adb7df74095","anchor":"int main()"}
+        {"path":"tests/led_worker_test.cpp","sha256":"878091cb9945be9030df4da9b48b7135e5e3c39ed0c0db6dbfcf5e062fa9ea85","anchor":"Compile the ACTUAL S3 output worker"},
+        {"path":"tests/led_scheduler_test.cpp","sha256":"e3967d3e77a7073dc002bf476f1b628e022ac6c32cab87387da9dfb529d29a07","anchor":"int main()"}
       ],
       "improvement": "Actual worker/mailbox tests establish source-level frame ownership and quiescence, not optical or SDK acceptance."
     },
@@ -16016,7 +16016,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "5c7cb4cddb6f09684f980a1f33724938b42f21077bbd72221dc9b04ded985894",
+          "sha256": "bc8d17a6f841b9cfb7103d13569dbea932db8ec57174b44af8fe5064de9542da",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -16072,7 +16072,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "5c7cb4cddb6f09684f980a1f33724938b42f21077bbd72221dc9b04ded985894",
+          "sha256": "bc8d17a6f841b9cfb7103d13569dbea932db8ec57174b44af8fe5064de9542da",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -16128,7 +16128,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "5c7cb4cddb6f09684f980a1f33724938b42f21077bbd72221dc9b04ded985894",
+          "sha256": "bc8d17a6f841b9cfb7103d13569dbea932db8ec57174b44af8fe5064de9542da",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -16184,7 +16184,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "5c7cb4cddb6f09684f980a1f33724938b42f21077bbd72221dc9b04ded985894",
+          "sha256": "bc8d17a6f841b9cfb7103d13569dbea932db8ec57174b44af8fe5064de9542da",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -16367,7 +16367,7 @@
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "5bd38167d9df6f43393550bc64f2469b27da6bb8e139c8348a96f972582bc04b",
+          "sha256": "49918e95eeed6198a5b387a38596ad54118b8d405cd9b5d930d7b6d5f2fd0186",
           "anchor": "pub struct Operation"
         }
       ],
@@ -16404,12 +16404,12 @@
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "5bd38167d9df6f43393550bc64f2469b27da6bb8e139c8348a96f972582bc04b",
+          "sha256": "49918e95eeed6198a5b387a38596ad54118b8d405cd9b5d930d7b6d5f2fd0186",
           "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()"
         },
         {
           "path": "desktop/src/usb_table.rs",
-          "sha256": "5bd38167d9df6f43393550bc64f2469b27da6bb8e139c8348a96f972582bc04b",
+          "sha256": "49918e95eeed6198a5b387a38596ad54118b8d405cd9b5d930d7b6d5f2fd0186",
           "anchor": "fn compact_usb_readback_validates_all_values_without_renewing_full_observations()"
         }
       ],
@@ -16513,7 +16513,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "8860af42e352bd0591d905e57d35bce17665a40f907924291ebdabdb5a6f1250",
+          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -17257,12 +17257,12 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08",
+          "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
           "anchor": "bool pending=true;"
         },
         {
           "path": "firmware/esp32s3/src/LedWire.h",
-          "sha256": "de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996",
+          "sha256": "502971b3109cf654ca0d8c657250a40d16548d676d1fd7ae176d5436b993d4ad",
           "anchor": "inline constexpr uint16_t zeroHigh=12"
         },
         {
@@ -17272,7 +17272,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "8860af42e352bd0591d905e57d35bce17665a40f907924291ebdabdb5a6f1250",
+          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -17282,7 +17282,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.h",
-          "sha256": "f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83",
+          "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
           "anchor": "#if !defined(PAKAR_S3_LED_USE_DMA)"
         },
         {
@@ -17370,7 +17370,7 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a",
+          "sha256": "878091cb9945be9030df4da9b48b7135e5e3c39ed0c0db6dbfcf5e062fa9ea85",
           "anchor": "void functional()"
         },
         {
@@ -17496,12 +17496,12 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "073182205f761a0747912532218f9b175d39925f7ab94a38c0cfa09c793cec08",
+          "sha256": "8208a1200c28e15b7587c58151240109fe52773c8f14206ba34eed3ef65ae29f",
           "anchor": "bool pending=true;"
         },
         {
           "path": "firmware/esp32s3/src/LedWire.h",
-          "sha256": "de13e4f51ee9fb11377946e5e265527409da8c7a0905c464b6dd17b1bdeac996",
+          "sha256": "502971b3109cf654ca0d8c657250a40d16548d676d1fd7ae176d5436b993d4ad",
           "anchor": "inline constexpr uint16_t zeroHigh=12"
         },
         {
@@ -17511,7 +17511,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "8860af42e352bd0591d905e57d35bce17665a40f907924291ebdabdb5a6f1250",
+          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -17521,7 +17521,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.h",
-          "sha256": "f06411850c84a8fa51165c499571d57af97e1df794d3487eecd61bca03d77a83",
+          "sha256": "9dcdfb0e2d03b489b3db590db1fb0f824d0d76ba887eb646ebc644a64854f684",
           "anchor": "#if !defined(PAKAR_S3_LED_USE_DMA)"
         },
         {
@@ -17603,7 +17603,7 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "9d506abc994186b51005d0b7dab0d5516bb52f1c71fca34fb3c686772e88221a",
+          "sha256": "878091cb9945be9030df4da9b48b7135e5e3c39ed0c0db6dbfcf5e062fa9ea85",
           "anchor": "void functional()"
         },
         {

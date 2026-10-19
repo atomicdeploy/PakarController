@@ -8,10 +8,13 @@ exclusion needs a concrete donor path, reason and hardware/business scope;
 
 Master tracking issue: https://github.com/atomicdeploy/PakarController/issues/2
 
-Current source checkpoint: version `0.2.7` on main; no open Pakar PRs observed.
-Exact commit/CI receipts are posted to the issue. ASUS localhost:1022 refuses
-connections and ledboard.local does not resolve here. Physical acceptance is
-deferred during the user's ESP32-S3 migration; continue offline source/UI work.
+Current source checkpoint: version `0.2.8` on main; exact delivered hashes and
+remaining gates are in ESP32-S3-COMMISSIONING.md. ASUS is reachable through the
+trusted localhost:8022 tunnel and resolves ledboard.local. ESP USB recovery and
+both native deliveries completed; the latest neutral-gain image has human
+acceptance for a steady, correct, entirely white table. Per-cell mapping,
+animation cadence, AVR recovery, phone installation and Wi-Fi-only handoff are
+still open. Historical observations below do not replace fresh acceptance.
 No Wi-Fi password or other deployment secret belongs in GitHub.
 
 ## Existing source/test checkpoints (not release acceptance)

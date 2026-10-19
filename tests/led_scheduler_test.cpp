@@ -8,10 +8,18 @@ int main(){
   using namespace PakarS3;
   assert(zeroHigh+zeroLow==50 && oneHigh+oneLow==50 && resetHalf*2==12000);
   assert(zeroHigh==12 && zeroLow==38 && oneHigh==25 && oneLow==25); // WS2811 V1.4:300/950 and625/625ns, away from the previous timing boundaries.
+  assert(outputPixels==480 && outputBytes==1440 && dataSymbols==11520);
+  assert(dataMicros==14400 && minimumFrameMicros==14700 && maximumWireFpsMilli==68027);
+  assert(dmaRingSymbols==2046 && (dmaRingSymbols/2)*4==4092);
   assert(wireChannel(255,255,255)==255 && wireChannel(255,255,176)==176);
   assert(wireChannel(255,0,255)==0 && wireChannel(255,128,255)==128);
   struct Rgb{uint8_t r,g,b;};struct Symbol{uint16_t level0,duration0,level1,duration1;};
   Rgb rgb[480];Symbol symbols[480*24+1];memset(rgb,255,sizeof(rgb));memset(symbols,255,sizeof(symbols));
+  static_assert(rgbGains==0xffffff,"Neutral default must preserve full-white API values");
+  uint8_t fullBytes[480*3];encodeWireBytes(rgb,480,255,true,fullBytes);
+  for(uint8_t value:fullBytes)assert(value==255);
+  encodeWire(rgb,480,255,true,symbols);
+  for(size_t i=0;i<480*24;++i)assert(symbols[i].duration0==oneHigh&&symbols[i].duration1==oneLow);
   encodeWire(rgb,480,255,false,symbols);
   for(size_t i=0;i<480*24;++i)assert(symbols[i].level0==1&&symbols[i].duration0==zeroHigh&&symbols[i].duration1==zeroLow&&symbols[i].level1==0);
   assert(symbols[480*24].level0==0&&symbols[480*24].duration0==resetHalf);

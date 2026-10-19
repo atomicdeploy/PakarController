@@ -57,4 +57,21 @@ assert(routes.indexOf('hostLink.discardInput()')>routes.indexOf('urbootBusy.set(
 assert(routes.includes('loopMessages.pop(message)'));
 assert(routes.includes('if(stream.parsePacket()>0)'));
 assert(routes.indexOf('for(unsigned i=0;i<8;++i)urbootBackground()')<routes.indexOf('urbootBusy.set(false)'));
+// The explicit unsupported-application ISP repair retains every old pin and
+// comparison, but can capture a separate current snapshot under one RESET.
+const recovery=main.slice(main.indexOf('if(recovery=="isp")'),main.indexOf('// Manual uploads retain compatibility'));
+assert(recovery.includes('matches(source,server.arg("sha256"),32768)'));
+assert(recovery.includes('matches(flash,server.arg("flash_sha256"),32768)'));
+assert(recovery.includes('matches(eeprom,server.arg("eeprom_sha256"),1024)'));
+assert(recovery.includes('server.arg("fresh_snapshot")=="1"'));
+assert(recovery.includes('LittleFS.exists(directory)'));
+assert(recovery.includes('avrIsp.recoverFlash(LittleFS,directory.c_str(),source,flash)'));
+assert(recovery.includes('avrIsp.programFlash(source,eeprom,&flash,&armed)'));
+assert(recovery.indexOf('server.setMaintenanceFence(true)')<recovery.indexOf('avrIsp.recoverFlash'));
+assert(recovery.includes('~RecoveryFence()') && recovery.includes('hostLink.discardInput()'));
+assert(recovery.includes('PakarS3::LedOutput::acquireFlashPause()'));
+assert(recovery.includes('PakarS3::LedOutput::releaseFlashPause()'));
+assert(recovery.includes('addHash("eeprom_sha256","/eeprom.bin")'));
+assert(recovery.includes('addHash("metadata_sha256","/metadata.txt")'));
+assert(main.includes('server.hasArg("recovery_id")?avrRecoveryDirectory'));
 console.log('Urboot integration wiring: deferred job, raw/framed UART exclusion, peer/multipart/WS guards, independent backup, exact source/boot checks and no ISP/audio fallback bound. Static guard, not runtime/hardware proof.');

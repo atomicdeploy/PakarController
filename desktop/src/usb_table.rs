@@ -117,8 +117,11 @@ impl Reader {
         status.pixel_frame=match value.get("pixels").filter(|v|!v.is_null()) {
             Some(value)=>{
                 let frame:crate::ui::cell_pixels::Frame=serde_json::from_value(value.clone()).map_err(|_|"Invalid USB pixel snapshot")?;
-                if !frame.valid(){return Err("Invalid USB pixel snapshot".into());}
-                Some(frame)
+                if !frame.structurally_valid(){return Err("Invalid USB pixel snapshot".into());}
+                // dirty/staging is normal during animation. It cannot promote
+                // RGB as a fresh presented sample, but must not discard the
+                // independently valid board identity, state and 80 mappings.
+                (!frame.pending).then_some(frame)
             }
             None=>None,
         };
@@ -343,11 +346,21 @@ mod tests {
         let mut reader=Reader::new(9);let captured_at=reader.started.unwrap();let mut snapshot=None;
         for offset in (0..bytes.len()).step_by(39){snapshot=reader.accept(&chunk(&bytes,offset,9,17)).unwrap();}
         let snapshot=snapshot.unwrap();assert_eq!(snapshot.observed_at,captured_at);
-        let frame=snapshot.status.pixel_frame.unwrap();
-        assert!(snapshot.status.pixel_preview_requested);assert_eq!(frame.revision,7);assert_eq!(frame.brightness,203);
+        assert_eq!(snapshot.status.cells.len(),80);assert_eq!(snapshot.mappings.len(),80);
+        assert!(peer_http::Pin::from_status(&snapshot.status).is_some());
+        assert!(snapshot.status.pixel_preview_requested);assert!(snapshot.status.pixel_frame.is_none());
+        value["pixels"]["pending"]=false.into();
+        let published=read(&value);let frame=published.status.pixel_frame.unwrap();
+        assert_eq!(frame.revision,7);assert_eq!(frame.brightness,203);
         let (first,colors)=frame.cell(1).unwrap();assert_eq!(first,474);
         assert!(colors.iter().all(|color|*color==eframe::egui::Color32::from_rgb(17,34,51)));
+        // Pending cannot excuse malformed RGB or a corrupt physical mapping.
+        value["pixels"]["pending"]=true.into();
         value["pixels"]["rgb"]="zz0000".repeat(480).into();
+        let bytes=serde_json::to_vec(&value).unwrap();let mut reader=Reader::new(9);
+        assert!((0..bytes.len()).step_by(39).any(|offset|reader.accept(&chunk(&bytes,offset,9,17)).is_err()));
+        value["pixels"]["rgb"]="112233".repeat(480).into();
+        value["pixels"]["physical"]=serde_json::json!(vec![1;80]);
         let bytes=serde_json::to_vec(&value).unwrap();let mut reader=Reader::new(9);
         assert!((0..bytes.len()).step_by(39).any(|offset|reader.accept(&chunk(&bytes,offset,9,17)).is_err()));
         let mut reader=Reader::new(9);let mut oversized=chunk(&bytes,0,9,17);

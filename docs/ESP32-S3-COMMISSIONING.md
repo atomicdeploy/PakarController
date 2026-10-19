@@ -1011,3 +1011,59 @@ recovery connected. Internet job23 remains failed/interrupted, not retried.
 AVR0.2.7 remains untouched because the EEPROM backup/reset lifecycle guard
 rejects before erase; it needs a continuous reset lease, not a relaxed checksum
 or fuse change. Optional W5500/BLE and all480 optical acceptance remain open.
+
+## Neutral white acceptance and 480-pixel timing checkpoint
+
+The next guarded COM22 recovery wrote only VALID app1/0x340000 and verified
+the2264864-byte image SHA256
+`a593f6d39e7a0099de1eb718ac4179dd2b68d7c62e5f27b79d0fc20a1d782bd0`.
+Boot `e47047c0f182fe7703630f5db572a567` independently returned through the ASUS
+native USB path with80 mappings, all80 white states and zero active incidents.
+Partition data, NVS, LittleFS, AVR, fuses, settings and previous image remain
+preserved. Native PID1852 still uses the previously recorded f0bd867... package;
+the pending-frame correction below is not yet installed in that package.
+
+The implicit RGB255/176/240 attenuation is replaced with neutral255/255/255;
+the old calibration remains an explicit build option. RMT retains800kHz,
+300/950ns zero,625/625ns one and300us reset. Exactly480 RGB pixels need14.7ms
+on the wire (theoretical68.027FPS); the unconditional post-DMA RTOS tick is
+removed, and a frame held by flash work adopts the newest complete mailbox
+before admission rather than replaying an older colour before Off. Live
+complete-frame measurements were14959us, maximum15031us, failed0/error0,
+11521 completed/expected symbols. These are driver measurements, not optical
+FPS. A requested native rainbow benchmark was rejected with Busy/error5 and
+not replayed; it produced no animation-FPS result. Explicit HTTP none restored
+the steady white scene. Cloud-progress USB ingress scheduling is under review.
+
+Before this flash, the explicit GPIO loopback diagnostic captured11520/11520
+data bits, zero timing errors and an exact digital match. That proves the S3
+pad stream, not DIN analogue levels, strip supply, colours or optical behaviour.
+The actual WS2811 V1.4 datasheet and pinned IDF5.5.5 ring/encoder implementation
+were read. With5V IC supply its minimum VIH is3.5V; a3.3V GPIO alone is not a
+guaranteed analogue margin. No overclock or blind drive-strength change was used.
+
+The earlier all-Off test received DTMF1, entire table dark. Initial all-White
+received DTMF2 and a wrong-colour-or-flicker classification; it was NOT accepted.
+After the neutral-gain image, the detailed Farsi symptom menu received DTMF1,
+**entire table correctly white and steady**, at13:13:52 Tehran. Query
+17924029853669649 has a completed spool receipt and ANSWERED CDR,36 connected
+seconds; it thanked and hung up after the answer. This is human optical white
+acceptance, not pixel-index/mapping, colour-primary, animation or long-soak proof.
+The lunch-readiness callback was paused when the user directly confirmed ready;
+no duplicate readiness call remains scheduled.
+
+Focused native regression tests pass: USB table13, pixel diagnostics6 and
+pixel presentation/freshness3. A structurally valid pending animation frame
+retains identity/state/mappings without promoting its RGB to presented data,
+acknowledging a diagnostic command or renewing an old sample. Malformed RGB and
+duplicate physical maps still fail closed. AVR busy-wire source now fits32278
+of32384 application bytes; buffered remains32284. Its fixed PB2 read preserves
+INPUT_PULLUP and LOW-ready semantics, tested against all256 register values.
+No AVR programming has occurred in this checkpoint.
+
+Continuous-RESET ISP recovery is present in the deployed ESP: a new immutable
+full flash/EEPROM/fuse-metadata snapshot is flushed and reread before erase,
+without letting the old boot journal invalidate EEPROM. Original pinned flash
+comparison remains mandatory; only the five Prog bytes may change, no fuses.
+Host failure/EESAVE/readback tests pass. Actual AVR programming, UART recovery
+and peripherals remain open; do not infer them from this implementation.

@@ -18,7 +18,8 @@ class String:public std::string {
  public:using std::string::string;String()=default;
  String(const std::string &s):std::string(s){}
 };
+inline void (*pakarTestPinWrite)(uint8_t,int)=nullptr;
 inline void pinMode(uint8_t,int){}
-inline void digitalWrite(uint8_t,int){}
+inline void digitalWrite(uint8_t pin,int level){if(pakarTestPinWrite)pakarTestPinWrite(pin,level);}
 inline void delay(unsigned){}
 inline void yield(){}

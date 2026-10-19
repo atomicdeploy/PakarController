@@ -28,6 +28,13 @@ class AvrIsp {
 
   bool probe(uint8_t signature[3]);
   bool backup(fs::FS &filesystem, const char *directory);
+  // Explicit dead-UART repair. Capture a NEW immutable full recovery snapshot
+  // and program under the same asserted RESET: a boot journal cannot invalidate
+  // EEPROM between capture and the unchanged byte-for-byte pre-erase checks.
+  // Existing archival files are never overwritten; pinnedFlash must still match
+  // every target flash byte. The distinct armed EEPROM changes only Prog.
+  bool recoverFlash(fs::FS &filesystem, const char *freshDirectory,
+                    File &image, File &pinnedFlash);
   void setServiceCallback(void (*callback)()) {service_=callback;}
   void setProgressCallback(void (*callback)(const char *,uint32_t,uint32_t)) {progress_=callback;}
   // Recovery EEPROM must be a durable snapshot taken AFTER Prog is armed.
@@ -41,6 +48,7 @@ class AvrIsp {
 
  private:
   bool enter();
+  bool captureBackup(fs::FS &filesystem, const char *directory, bool holdReset);
   void leave();
   uint8_t transfer4(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
                     uint8_t *third = nullptr);

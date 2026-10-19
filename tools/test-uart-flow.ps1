@@ -13,3 +13,12 @@ foreach($taskFlags in @(@('-DPAKAR_USE_BUSY_WIRE=1','-DPAKAR_UART_BUFFERED=0'),
   & $taskOutput
   if($LASTEXITCODE){throw 'SerialLink profile assertions failed'}
 }
+$taskOutput=Join-Path $taskRoot 'build/native/avr_busy_input_test.exe'
+foreach($taskPlatform in @('generic','avr-registers')){
+  $taskFlags=@()
+  if($taskPlatform -eq 'avr-registers'){$taskFlags=@('-D__AVR__')}
+  & g++ -std=c++17 -Wall -Wextra -Werror @taskFlags -I (Join-Path $taskRoot 'tests/pc_stubs') (Join-Path $taskRoot 'tests/avr_busy_input_test.cpp') -o $taskOutput
+  if($LASTEXITCODE){throw "AVR busy input compilation failed ($taskPlatform)"}
+  & $taskOutput
+  if($LASTEXITCODE){throw "AVR busy input assertions failed ($taskPlatform)"}
+}

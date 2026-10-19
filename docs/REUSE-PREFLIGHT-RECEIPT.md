@@ -7162,3 +7162,19 @@ removed after rereading callback order; it is not presented as a proven cause.
 Original failed captures remain outside the repo; only the inspected successful
 SIMULATED native/mobile captures are committed. Donor inventory totals remain
 314/4697 compared,4383 pending and253 known gap files, not complete parity.
+
+The next real S3 recovery and detailed PBX white acceptance are recorded in
+ESP32-S3-COMMISSIONING.md#neutral-white-acceptance-and-480-pixel-timing-checkpoint.
+Actual pinned IDF5.5.5 RMT sources and all eight WS2811 V1.4 datasheet pages
+were consulted; no SDK/donor patch or speculative overclock was applied.
+The native pending-frame CI failure exposed a production bug, not merely a
+fixture typo: pending RGB must not invalidate independent identity/mappings.
+Corrected structural/presented validation passes USB13/diagnostic6/pixel3 tests.
+The first native release attempt with ExpectedCommit stopped before compilation
+because reviewed work was still dirty. Preserve that source-stability guard:
+checkpoint the reviewed sources before packaging, never bypass the gate.
+The attempted live animation benchmark received Busy/error5 during USB command
+dispatch. No mutation replay or animation-FPS claim followed; actual cloud I/O
+and PCController bounded-parser sources identify nested progress dispatch as
+the next ingress-scheduling correction. Physical steady-white acceptance does
+not close that USB, Wi-Fi service, AVR, animation, phone or full donor gate.

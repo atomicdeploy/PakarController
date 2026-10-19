@@ -10,6 +10,7 @@
 #include "BootMelody.h"
 #include <PeerCompatibility.h>
 #include "BoardPins.h"
+#include "BusyInput.h"
 #include "FrontPanel.h"
 #include "PakarBoardConfig.h"
 #include "PcControllerRuntime.h"
@@ -238,7 +239,7 @@ bool sendGameState(uint8_t sequence = 0) {
 
 bool espReadyForUnsolicitedFrame() {
 #if PAKAR_USE_BUSY_WIRE
-  return digitalRead(BoardPins::EspBusy) == LOW;
+  return AvrBusyInput::ready();
 #elif PAKAR_UART_BUFFERED
   // Admit a whole bounded frame without blocking autonomous peripherals.
   // A failed send leaves stateDirty armed; do not mistake a queue attempt for

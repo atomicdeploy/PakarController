@@ -139,8 +139,8 @@ void LedOutput::work(){
   // symbols. PSRAM/flash payloads are deliberately not an ISR fallback.
   auto *payload=static_cast<uint8_t*>(heap_caps_malloc(bytes,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));
   rmt_tx_channel_config_t config{};config.gpio_num=static_cast<gpio_num_t>(PAKAR_S3_LED_DATA);
-  config.clk_src=RMT_CLK_SRC_DEFAULT;config.resolution_hz=40000000;
-  config.mem_block_symbols=2046;config.trans_queue_depth=1;config.intr_priority=3;
+  config.clk_src=RMT_CLK_SRC_DEFAULT;config.resolution_hz=rmtResolutionHz;
+  config.mem_block_symbols=dmaRingSymbols;config.trans_queue_depth=1;config.intr_priority=3;
   config.flags.with_dma=true; // Required, never silently fall back to bit-bang/non-DMA.
   int error=payload?ESP_OK:ESP_ERR_NO_MEM;
   if(!error){
@@ -167,6 +167,8 @@ void LedOutput::work(){
   // needlessly exercises DMA refill under RF load. The renderer still sends
   // periodic repair frames and uncapped animation frames as needed.
   bool pending=true;
+  bool initialBlack=true,previousStartKnown=false;
+  uint32_t previousStartedAt=0;
   ::memset(payload,0,bytes); // One startup black frame.
   for(;;){
     if(flashHolds_.load()){vTaskDelay(1);continue;}
@@ -178,14 +180,22 @@ void LedOutput::work(){
     {
       std::lock_guard<std::mutex> lock(wireGate_);
       if(flashHolds_.load())continue;
+      // A flash hold may have interrupted this pending frame before admission.
+      // Adopt the latest complete mailbox now rather than replay a stale color
+      // before an already-queued Off/newer command. Never replace startup black.
+      if(!initialBlack && xQueueReceive(queue_,&current_,0)==pdTRUE)
+        encodeWireBytes(current_.rgb,pixels,current_.brightness,current_.enabled,payload);
       inFlight_.store(true);
     }
+    const uint32_t startedAt=micros();
+    if(previousStartKnown)lastStartIntervalMicros_.store(startedAt-previousStartedAt);
+    previousStartedAt=startedAt;previousStartKnown=true;
     rmt_transmit_config_t tx{};tx.loop_count=0;tx.flags.eot_level=0;tx.flags.queue_nonblocking=1;
     doneSymbols_.store(0,std::memory_order_relaxed);
     capture_.start(payload,bytes); // RX arms before THIS immutable frame, never mid-frame.
     error=rmt_transmit(channel,encoder,payload,bytes,&tx);
     if(!error)error=rmt_tx_wait_all_done(channel,100);
-    if(!error&&doneSymbols_.load(std::memory_order_relaxed)!=pixels*24+1)error=ESP_ERR_INVALID_RESPONSE;
+    if(!error&&doneSymbols_.load(std::memory_order_relaxed)!=dataSymbols+1)error=ESP_ERR_INVALID_RESPONSE;
     if(!capture_.finish(current_.revision,!error)) {
       error_.store(ESP_ERR_INVALID_STATE);failed_.fetch_add(1);ready_.store(false);active_.store(false);
       rmt_disable(channel); // RX not quiesced: retain buffers and flash refusal.
@@ -202,10 +212,16 @@ void LedOutput::work(){
     // EOT keeps the pad LOW after the final data bit. Hold the frame/flash
     // ownership until the full reset interval, not merely descriptor admission.
     esp_rom_delay_us(resetMicros);
+    const uint32_t completedAt=micros(),frameMicros=completedAt-startedAt;
+    lastFrameMicros_.store(frameMicros);lastCompletedAtMicros_.store(completedAt);
+    if(frameMicros>maxFrameMicros_.load())maxFrameMicros_.store(frameMicros);
     inFlight_.store(false);
     transmitted_.fetch_add(1);revision_.store(current_.revision);active_.store(current_.enabled);
-    pending=false;
-    vTaskDelay(1); // Yield to other services, not a20fps/application rate cap.
+    pending=false;initialBlack=false;
+    // rmt_tx_wait_all_done already blocks this task while DMA runs, and the
+    // mailbox receive blocks when idle. Do not add a whole RTOS tick after
+    // every14.7ms frame: it consumes part of the small60FPS scheduling margin.
+    // No busy-wait/frame replay or faster-than800kHz wire clock is introduced.
   }
 #endif
 }
@@ -224,6 +240,18 @@ String LedOutput::json()const{
   value+=F(",\"timing_profile\":\"ws2811-800khz\",\"requested_t0h_ns\":");value+=PAKAR_S3_LED_USE_DMA?300U:250U;
   value+=F(",\"requested_t1h_ns\":");value+=PAKAR_S3_LED_USE_DMA?625U:600U;
   value+=F(",\"requested_bit_ns\":1250,\"latch_us\":300");
+  value+=F(",\"pixels\":");value+=uint32_t(pixels);
+  value+=F(",\"minimum_frame_us\":");value+=minimumFrameMicros;
+  value+=F(",\"maximum_wire_fps_milli\":");value+=maximumWireFpsMilli;
+#if PAKAR_S3_LED_USE_DMA
+  value+=F(",\"dma_ring_symbols\":");value+=uint32_t(dmaRingSymbols);
+  value+=F(",\"frame_timing\":{\"scope\":\"driver-completion-not-optical\",\"last_us\":");value+=lastFrameMicros_.load();
+  value+=F(",\"maximum_us\":");value+=maxFrameMicros_.load();
+  value+=F(",\"start_interval_us\":");value+=lastStartIntervalMicros_.load();
+  value+=F(",\"completion_age_us\":");
+  if(transmitted_.load())value+=uint32_t(micros()-lastCompletedAtMicros_.load());else value+=F("null");
+  value+='}';
+#endif
 #if PAKAR_S3_LED_USE_DMA
   value+=F(",\"signal_capture\":");value+=capture_.json();
 #endif
@@ -236,9 +264,13 @@ String LedOutput::json()const{
   }
   value+='}';
   value+=F(",\"done_symbols\":");value+=doneSymbols_.load();
-  value+=F(",\"expected_symbols\":");value+=PAKAR_S3_LED_USE_DMA?11521U:0U;
+  value+=F(",\"expected_symbols\":");value+=PAKAR_S3_LED_USE_DMA?dataSymbols+1:0U;
   value+=F(",\"submitted\":");value+=submitted_.load();
   value+=F(",\"channel_order\":\"");value+=PAKAR_S3_LED_SWAP_RED_BLUE?F("bgr"):F("rgb");value+='"';
+  value+=F(",\"rgb_gains\":");value+=rgbGains;
+  value+=F(",\"rgb_gain_channels\":[");
+  for(unsigned channel=0;channel<3;++channel){if(channel)value+=',';value+=unsigned(channelGains[channel]);}
+  value+=']';
   value+=F(",\"transmitted\":");value+=transmitted_.load();value+=F(",\"failed\":");value+=failed_.load();
   value+=F(",\"flash_paused\":");value+=(flashHolds_.load()&&!inFlight_.load())?F("true"):F("false");
   value+=F(",\"revision\":");value+=revision_.load();value+=F(",\"error_code\":");value+=error_.load();value+='}';return value;

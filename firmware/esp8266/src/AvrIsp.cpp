@@ -119,6 +119,10 @@ uint8_t AvrIsp::readFuse(uint8_t a, uint8_t b) {
 }
 
 bool AvrIsp::backup(fs::FS &filesystem, const char *directory) {
+  return captureBackup(filesystem,directory,false);
+}
+
+bool AvrIsp::captureBackup(fs::FS &filesystem, const char *directory, bool holdReset) {
   if (!enter()) return false;
   if (!validSignature()) return false;
   if ((readFuse(0x58, 0x00) & 0x3F) != 0x3F)
@@ -174,18 +178,49 @@ bool AvrIsp::backup(fs::FS &filesystem, const char *directory) {
   const String metadataPath=String(directory)+F("/metadata.pending");
   File metadata = filesystem.open(metadataPath, "w");
   if (!metadata) return fail(F("Cannot create AVR backup metadata"));
-  const size_t written=metadata.printf("signature=1E950F\nlfuse=%02X\nhfuse=%02X\nefuse=%02X\nlock=%02X\n",
-                  lfuse,hfuse,efuse,lock);
+  char expectedMetadata[96];
+  const int expectedSize=snprintf(expectedMetadata,sizeof(expectedMetadata),
+      "signature=1E950F\nlfuse=%02X\nhfuse=%02X\nefuse=%02X\nlock=%02X\n",lfuse,hfuse,efuse,lock);
+  if(expectedSize<=0 || static_cast<size_t>(expectedSize)>=sizeof(expectedMetadata))
+    return fail(F("Recovery metadata formatting failed"));
+  const size_t written=metadata.write(reinterpret_cast<const uint8_t *>(expectedMetadata),expectedSize);
   metadata.flush();metadata.close();
   metadata=filesystem.open(metadataPath,"r");
-  if(!written || !metadata || metadata.size()!=written) return fail(F("Recovery metadata write failed"));
+  if(written!=static_cast<size_t>(expectedSize) || !metadata || metadata.size()!=written)
+    return fail(F("Recovery metadata write failed"));
+  for(size_t i=0;i<written;++i)
+    if(metadata.read()!=static_cast<uint8_t>(expectedMetadata[i]))
+      return fail(F("Recovery fuse metadata readback mismatch; no erase"));
   metadata.close();
   if(!filesystem.rename(flashPath,String(directory)+F("/flash.bin")) ||
      !filesystem.rename(eepromPath,String(directory)+F("/eeprom.bin")) ||
      !filesystem.rename(metadataPath,String(directory)+F("/metadata.txt")))
     return fail(F("Recovery backup commit failed; no erase performed"));
-  leave();
+  if(!holdReset)leave();
   return true;
+}
+
+bool AvrIsp::recoverFlash(fs::FS &filesystem, const char *freshDirectory,
+                          File &image, File &pinnedFlash) {
+  if(!image || image.size()!=kFlashBytes || !pinnedFlash || pinnedFlash.size()!=kFlashBytes) {
+    error_=F("Complete candidate and pinned original flash required; no reset or erase");
+    return false;
+  }
+  // Do not turn a failed/interrupted capture into an overwrite on retry.
+  if(!freshDirectory || !*freshDirectory || filesystem.exists(freshDirectory)) {
+    error_=F("Fresh recovery directory already exists or is invalid; no erase");
+    return false;
+  }
+  if(!captureBackup(filesystem,freshDirectory,true))return false;
+  // captureBackup flushed, reopened and compared all flash/EEPROM bytes and
+  // committed fuse metadata. RESET stays asserted across file open and every
+  // preflight. programFlash retains the exact same comparison/erase guards.
+  File eeprom=filesystem.open(String(freshDirectory)+F("/eeprom.bin"),"r");
+  File armed=filesystem.open(String(freshDirectory)+F("/eeprom-armed.bin"),"w+");
+  const bool ok=programFlash(image,eeprom,&pinnedFlash,&armed);
+  eeprom.close();armed.close();
+  leave(); // Also releases on early image/file validation failures.
+  return ok;
 }
 
 bool AvrIsp::programFlash(File &image, File &recoveryEeprom,
@@ -203,7 +238,9 @@ bool AvrIsp::programFlash(File &image, File &recoveryEeprom,
     error_ = F("AVR image must be exactly 32768 raw bytes");
     return false;
   }
-  if (!enter()) return false;
+  // recoverFlash is the sole held-session owner; never pulse RESET between its
+  // durable snapshot and validation. Ordinary callers still enter normally.
+  if (!active_ && !enter()) return false;
   if (!validSignature()) return false;
   if ((readFuse(0x58, 0x00) & 0x3F) != 0x3F)
     return fail(F("Locked target: refusing erase without readable recovery state"));

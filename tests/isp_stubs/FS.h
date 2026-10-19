@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <set>
 enum SeekMode {SeekSet};
 class File {
  public:
@@ -43,14 +44,19 @@ class File {
 namespace fs {
 class FS {
  public:
-  bool failWrite=false;
+  bool failWrite=false,corruptMetadata=false;
   std::map<std::string,std::shared_ptr<File::Data>>files;
-  void mkdir(const char*){}
+  std::set<std::string> directories;
+  bool exists(const char *path){return directories.count(path) || files.count(path);}
+  void mkdir(const char *path){directories.insert(path);}
   bool rename(const String &a,const String &b) {
     auto it=files.find(a);if(it==files.end())return false;files[b]=it->second;files.erase(it);return true;
   }
   File open(const String &path,const char*mode){
-    if(mode[0]=='w') files[path]=std::make_shared<File::Data>();
+    if(mode[0]=='w') {
+      files[path]=std::make_shared<File::Data>();
+      if(corruptMetadata && path.find("metadata.pending")!=std::string::npos)files[path]->corruptOnFlush=true;
+    }
     auto it=files.find(path);return it==files.end()?File():File(it->second,failWrite);
   }
 };

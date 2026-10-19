@@ -2963,6 +2963,17 @@ bool updateStatusRgbConfiguration(JsonObjectConst fields,String &body,int &code)
   body=String();serializeJson(result,body);code=200;return true;
 }
 #endif
+String avrRecoveryDirectory(const String &id) {
+  if(!id.length() || id.length()>32)return String();
+  for(size_t i=0;i<id.length();++i) {
+    const char c=id[i];
+    if(!((c>='a'&&c<='z') || (c>='A'&&c<='Z') || (c>='0'&&c<='9') || c=='_' || c=='-'))return String();
+  }
+  return String(F("/avr/recovery-"))+id;
+}
+String avrBackupReadDirectory() {
+  return server.hasArg("recovery_id")?avrRecoveryDirectory(server.arg("recovery_id")):String(kBackupDirectory);
+}
 void registerApi() {
   server.on("/api/panel",HTTP_GET,[](){
     if(!authenticate())return;
@@ -3512,21 +3523,27 @@ void registerApi() {
   });
   server.on("/api/avr/backup/flash", HTTP_GET, []() {
     if (!authenticate()) return;
-    File file = LittleFS.open(String(kBackupDirectory) + F("/flash.bin"), "r");
+    const String directory=avrBackupReadDirectory();
+    if(!directory.length()){server.send(400,"text/plain",F("Invalid recovery_id"));return;}
+    File file = LittleFS.open(directory + F("/flash.bin"), "r");
     if (!file) { server.send(404, "text/plain", F("no flash backup")); return; }
     server.streamFile(file, "application/octet-stream");
     // Response owns a File copy; explicit close would close its shared handle.
   });
   server.on("/api/avr/backup/eeprom", HTTP_GET, []() {
     if (!authenticate()) return;
-    File file = LittleFS.open(String(kBackupDirectory) + F("/eeprom.bin"), "r");
+    const String directory=avrBackupReadDirectory();
+    if(!directory.length()){server.send(400,"text/plain",F("Invalid recovery_id"));return;}
+    File file = LittleFS.open(directory + F("/eeprom.bin"), "r");
     if (!file) { server.send(404, "text/plain", F("no EEPROM backup")); return; }
     server.streamFile(file, "application/octet-stream");
     // Let the local wrapper release its reference, not close the response's file.
   });
   server.on("/api/avr/backup/metadata", HTTP_GET, []() {
     if (!authenticate()) return;
-    File file=LittleFS.open(String(kBackupDirectory)+F("/metadata.txt"),"r");
+    const String directory=avrBackupReadDirectory();
+    if(!directory.length()){server.send(400,"text/plain",F("Invalid recovery_id"));return;}
+    File file=LittleFS.open(directory+F("/metadata.txt"),"r");
     if(!file){server.send(404,"text/plain",F("no AVR backup metadata"));return;}
     server.streamFile(file,"text/plain");
   });
@@ -3543,7 +3560,7 @@ void registerApi() {
       // Explicit repair for a non-speaking application. Ordinary updates still
       // require UART Prog admission; this branch binds all three operator-held
       // artifacts and proves target bytes before any erase, without fuse writes.
-      if(avrOnline || artifactReaders || remoteFirmware.busy() || otaActive ||
+      if(avrOnline || urbootBusy.get() || passiveCaptureActive() || artifactReaders || remoteFirmware.busy() || otaActive ||
           otaRebootAt || avrUploadOwner || networkApplyPending || cloudApplyPending) {
         server.send(409,"text/plain",F("Recovery requires an offline AVR and exclusive maintenance"));return;
       }
@@ -3565,25 +3582,79 @@ void registerApi() {
           !matches(eeprom,server.arg("eeprom_sha256"),1024)) {
         server.send(409,"text/plain",F("Candidate or original backup hash mismatch; no erase"));return;
       }
+      const bool fresh=server.arg("fresh_snapshot")=="1";
+      const String recoveryId=server.arg("recovery_id");
+      const String directory=fresh?avrRecoveryDirectory(recoveryId):String();
+      if(fresh && (!directory.length() || LittleFS.exists(directory))) {
+        server.send(409,"text/plain",F("A new nonexisting recovery_id is required; no erase"));return;
+      }
+      // Fence all competing producers for the bounded, loop-owned transaction.
+      // No reset lease is held across an HTTP round trip or caller timeout.
+      server.setMaintenanceFence(true);closeDeviceShells();stream.stop();urbootBusy.set(true);
+      struct RecoveryFence {
+#if defined(ARDUINO_ARCH_ESP32)
+        bool ledHeld=false;
+#endif
+        ~RecoveryFence(){
+          urbootRawOwned=false;
+#if defined(ARDUINO_ARCH_ESP32)
+          if(ledHeld)PakarS3::LedOutput::releaseFlashPause();
+#endif
+          urbootBusy.set(false);server.setMaintenanceFence(false);hostLink.discardInput();stream.begin(kStreamPort);
+        }
+      } fence;
+#if defined(ARDUINO_ARCH_ESP32)
+      fence.ledHeld=PakarS3::LedOutput::acquireFlashPause();
+      if(!fence.ledHeld){server.send(503,"text/plain",F("LED output cannot quiesce; no reset or erase"));return;}
+#endif
+      urbootRawOwned=true;
       // This is a distinct durable file: never rewrite the original snapshot.
-      File armed=LittleFS.open("/avr/recovery-eeprom.bin","w+");
-      const bool programmed=avrIsp.programFlash(source,eeprom,&flash,&armed);
+      File armed;
+      if(!fresh)armed=LittleFS.open("/avr/recovery-eeprom.bin","w+");
+      const bool programmed=fresh?avrIsp.recoverFlash(LittleFS,directory.c_str(),source,flash):
+          avrIsp.programFlash(source,eeprom,&flash,&armed);
       source.close();flash.close();eeprom.close();armed.close();
-      if(!programmed){server.send(500,"text/plain",avrIsp.lastError());return;}
+      urbootRawOwned=false;
+      auto sendFreshResult=[&](int code,const String &error,bool recovered) {
+        JsonDocument result;result["programmed"]=programmed;result["verified"]=programmed;
+        result["fresh_snapshot"]=true;result["recovery_id"]=recoveryId;result["backup_directory"]=directory;
+        result["settings_eeprom_preserved"]=programmed;result["programming_latch_updated"]=programmed;
+        result["uart_recovered"]=recovered;result["fuse_write"]=false;result["error"]=error;
+        auto addHash=[&](const char *name,const char *fileName) {
+          File saved=LittleFS.open(directory+fileName,"r");FirmwarePlatform::Sha256 hash;uint8_t block[128];
+          if(!saved)return;
+          const size_t size=saved.size();
+          for(size_t at=0;at<size;at+=sizeof(block)) {
+            const size_t count=min<size_t>(sizeof(block),size-at);
+            if(saved.read(block,count)!=count)return;
+            hash.add(block,count);yield();
+          }
+          result[name]=hash.hex();
+        };
+        addHash("flash_sha256","/flash.bin");addHash("eeprom_sha256","/eeprom.bin");
+        addHash("armed_eeprom_sha256","/eeprom-armed.bin");addHash("metadata_sha256","/metadata.txt");
+        String body;serializeJson(result,body);server.send(code,"application/json",body);
+      };
+      if(!programmed){if(fresh)sendFreshResult(500,avrIsp.lastError(),false);else server.send(500,"text/plain",avrIsp.lastError());return;}
       programmingLatched=true;
       if(!waitForAvr() || !avrVersionKnown || !avrPcSupported ||
           avrVersion[0]!=BoardCore::BuildInfo::kVersionMajor ||
           avrVersion[1]!=BoardCore::BuildInfo::kVersionMinor ||
           avrVersion[2]!=BoardCore::BuildInfo::kVersionPatch) {
-        server.send(503,"text/plain",F("ISP flash verified; UART not recovered, Prog remains armed"));return;
+        if(fresh)sendFreshResult(503,F("ISP flash verified; UART not recovered, Prog remains armed"),false);
+        else server.send(503,"text/plain",F("ISP flash verified; UART not recovered, Prog remains armed"));
+        return;
       }
       const uint8_t released[]={0};
       if(!requestAndWaitForAck(kProgrammingState,released,1)) {
-        server.send(503,"text/plain",F("ISP flash verified; Prog release outcome unknown, inspect status"));return;
+        if(fresh)sendFreshResult(503,F("ISP flash verified; Prog release outcome unknown, inspect status"),false);
+        else server.send(503,"text/plain",F("ISP flash verified; Prog release outcome unknown, inspect status"));
+        return;
       }
       programmingLatched=false;
       sendToAvr(kGetStatus,sequence++);
       sendToAvr(kGetTelemetry,sequence++);
+      if(fresh){sendFreshResult(200,String(),true);return;}
       server.send(200,"application/json",F("{\"programmed\":true,\"verified\":true,\"settings_eeprom_preserved\":true,\"programming_latch_updated\":true,\"uart_recovered\":true}"));return;
     }
     // Manual uploads retain compatibility, but no longer bypass durable Prog

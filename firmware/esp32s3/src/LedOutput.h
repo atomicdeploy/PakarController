@@ -9,6 +9,7 @@
 #include <driver/rmt_tx.h>
 #include <driver/rmt_encoder.h>
 #include "BoardPins.h"
+#include "LedWire.h"
 #if !defined(PAKAR_S3_LED_USE_DMA) && defined(ARDUINO_ARCH_ESP32)
 // Only LED application units depend on this canonical, ignored build profile.
 // Changing the backend must not invalidate unrelated SDK/FastLED objects.
@@ -27,7 +28,7 @@ static_assert(PAKAR_S3_LED_USE_DMA==0 || PAKAR_S3_LED_USE_DMA==1,"LED DMA select
 namespace PakarS3 {
 class LedOutput {
  public:
-  static constexpr size_t pixels=480;
+  static constexpr size_t pixels=outputPixels;
   bool begin();
   void submit(const CRGB *rgb,uint8_t brightness,bool enabled,uint32_t revision);
   bool canAccept()const{return queue_ && uxQueueMessagesWaiting(queue_)==0;}
@@ -61,6 +62,10 @@ class LedOutput {
   std::atomic<uint32_t> submitted_{0},transmitted_{0},failed_{0},revision_{0};
   std::atomic<int> error_{0};
   std::atomic<uint32_t> doneSymbols_{0};
+  // Task-context measurements around real complete-frame transmissions, not
+  // host writes/encoded-symbol accounting or physical/optical verification.
+  std::atomic<uint32_t> lastFrameMicros_{0},maxFrameMicros_{0};
+  std::atomic<uint32_t> lastStartIntervalMicros_{0},lastCompletedAtMicros_{0};
   std::atomic<bool> refillCacheSafe_{false};
 #if PAKAR_S3_LED_USE_DMA
   LedSignalCapture capture_;
