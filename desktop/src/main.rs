@@ -1735,7 +1735,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                     // this capability result only for the current physical handle.
                                     intro_chunks.clear();introduced=true;last_peer_report=Instant::now();
                                     Ok(())
-                                }else{Err("Peer compatibility: board rejected this app introduction; update board/app or use explicit build override".into())};
+                                }else{Err(peer_identity::usb_introduction_error(expected,op,&payload))};
                                 if let Err(error)=result {let _=events.send(Event::SerialFailure(connected_port.clone(),error));port_name.clear();break 'connected;}
                             } else if !introduced {
                                 // Stale boot/status data cannot bypass the correlated introduction.

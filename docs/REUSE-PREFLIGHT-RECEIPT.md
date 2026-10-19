@@ -7232,3 +7232,33 @@ additional identity check prevent old board capabilities leaking into a new peer
 Generic profile CRUD, arbitrary docking and full donor card/action parity remain
 pending. Firmware, settings and advanced bridge retain their existing dedicated
 pages. This is executable source work, not an installed-phone or physical claim.
+
+## Current application health checkpoint
+
+Canonical PCController `Tools/Controller/internal/link/session.go` was fully
+reread at SHA256 `1311fdcde94b2ef8ed06db63ff874a255c135dc1969709e6f43ff4b5c5c8235b`.
+Its actual RemoteError/decodeRemoteError behavior is adapted in the Rust USB
+introduction path: preserve correlated opcode/error code, distinguish Busy,
+invalid report/capacity and safety rejection, and reserve release mismatch for
+Unsupported. No policy override or retry is introduced. The focused canonical
+native test passed. The earlier admission rejection was not reproduced: actual
+ASUS app PID6244 reconnected over COM22 and stayed online through twelve bounded
+samples with no active incidents. Internal framebuffer capture completed and
+showed the real current board, full mapping and green logical cell15.
+
+The ESP recovery image SHA256
+`abde3c024d6ad5956689aa61f8d1dad06685d936d20b54616d37433d5683334a`
+was actually written/verified to app1 only. USB ACK/readback and ten fresh
+WebSocket connections passed on boot `0c5cbe8456b1082d8d29f9abeab2561c`.
+The user's newer request supersedes rainbow: the current published frame has
+only physical pixels258-263 green (logical15 mapped to physical cell44), with
+all other pixels black. This is readback/capture evidence, not optical proof.
+
+Flutter5497e19 fixes retained all-off and cross-boot diagnostic observations;
+analysis and eleven focused tests passed. APK SHA256
+`3ed702e5008332b08b4b3807fa44d4dade66d530112204e1170894a060e08329`
+was built and transferred to ASUS. Actual Android installation was rejected
+for insufficient storage (290MiB free). The authorized USB phone still reports
+0.2.7, below the board's0.2.8 admission floor. Existing app data was preserved;
+the user is freeing space before installation. Package/source success is not
+installed-phone acceptance, and no downgrade or blind install retry was used.

@@ -353,6 +353,27 @@ pub fn report_chunks(
         })
         .collect())
 }
+/// Preserve the device's actual error as PCController Session.RemoteError does.
+/// Rejection is not necessarily a release-policy mismatch: report validation,
+/// capacity, maintenance and malformed responses must remain distinguishable.
+pub fn usb_introduction_error(request: u8, response: u8, payload: &[u8]) -> String {
+    if response == 0x82 && payload.len() == 2 && payload[0] == request {
+        let reason = match payload[1] {
+            1 => "bad envelope",
+            2 => "unsupported caller or introduction",
+            3 if request == USB_REPORT => "invalid report or unavailable peer-registry capacity",
+            3 => "invalid introduction payload",
+            4 => "hardware unavailable",
+            5 => "board busy",
+            6 => "request rejected by board safety fence",
+            _ => "unknown board error",
+        };
+        let category = if payload[1] == 2 { "Peer compatibility:" } else { "USB introduction:" };
+        return format!("{category} board rejected request 0x{request:02X}: {reason} (code 0x{:02X}); no control command sent or retried", payload[1]);
+    }
+    let detail = payload.iter().take(8).map(|value| format!("{value:02X}")).collect::<Vec<_>>().join(" ");
+    format!("USB introduction: unexpected response 0x{response:02X} to request 0x{request:02X} (payload {detail}, {} bytes); no control command sent or retried", payload.len())
+}
 /// Peer reports are observations, not authority. Keep only bounded nonsecret
 /// operational values; a report cannot change app settings or board ownership.
 pub fn sanitize_report(
@@ -464,6 +485,22 @@ pub fn sanitize_report(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn usb_introduction_error_preserves_actual_board_reason_without_suggesting_policy_bypass() {
+        for (code, expected) in [(2,"unsupported caller"),(3,"invalid report"),(5,"board busy"),(6,"safety fence"),(255,"unknown board error")] {
+            let message=usb_introduction_error(USB_REPORT,0x82,&[USB_REPORT,code]);
+            assert!(message.contains(expected),"{message}");
+            assert!(message.contains("0x61"));
+            assert_eq!(unsupported(&message),code==2);
+            assert!(!message.contains("override"));
+        }
+        for (response,payload) in [(0x80,vec![USB_REPORT,3]),(0x82,vec![0x55,2]),(0x82,vec![USB_REPORT]),(0x82,vec![USB_REPORT,2,0])] {
+            let message=usb_introduction_error(USB_REPORT,response,&payload);
+            assert!(message.contains("unexpected response"));
+            assert!(!unsupported(&message));
+        }
+        assert!(usb_introduction_error(0x01,0x82,&[0x01,3]).contains("invalid introduction payload"));
+    }
     #[test]
     fn semver_minimum_not_exact_build_selectors() {
         for value in ["0.2.7", "0.2.8", "1.0.0+source.hash", "0.2.8-alpha.2"] {

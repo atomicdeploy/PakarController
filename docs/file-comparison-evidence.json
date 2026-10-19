@@ -3897,7 +3897,7 @@
     "targets": [
       {
         "path": "desktop/src/main.rs",
-        "sha256": "c9fc1f6534c8261d767116f0eaac2c5ba5cc2a1de0e3e3df6d6852faec495075",
+        "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
         "anchor": "#![cfg_attr(windows, windows_subsystem = \"windows\")]"
       },
       {
@@ -3960,7 +3960,7 @@
       },
       {
         "path": "desktop/src/main.rs",
-        "sha256": "c9fc1f6534c8261d767116f0eaac2c5ba5cc2a1de0e3e3df6d6852faec495075",
+        "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
         "anchor": "cli_println!(\"{reply}\")"
       },
       {
@@ -5379,7 +5379,7 @@
     {
       "path": "desktop/src/main.rs",
       "anchor": "SerialCommand::Bridge(target",
-      "sha256": "c9fc1f6534c8261d767116f0eaac2c5ba5cc2a1de0e3e3df6d6852faec495075"
+      "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1"
     }
   ],
   "omissions": [
@@ -5434,7 +5434,7 @@
     {
       "path": "desktop/src/peer_identity.rs",
       "anchor": "pub fn sanitize_report(",
-      "sha256": "1c10c8e3ffa1919c863793e2c4f1f389310fe5e72b0ab3dbd08ca8aafd448eee"
+      "sha256": "4895d4ce1dc5f77e1e866600349baef3ba131e24d23970e254a968442e663dfe"
     },
     {
       "path": "mobile/lib/peer_identity.dart",
@@ -5473,7 +5473,7 @@
     {
       "path": "desktop/src/peer_identity.rs",
       "anchor": "fn reports_drop_secrets_and_never_replace_observed_ip()",
-      "sha256": "1c10c8e3ffa1919c863793e2c4f1f389310fe5e72b0ab3dbd08ca8aafd448eee"
+      "sha256": "4895d4ce1dc5f77e1e866600349baef3ba131e24d23970e254a968442e663dfe"
     }
   ],
   "remaining": [
@@ -9916,7 +9916,8 @@
       "Actual Arduino-ESP32 3.3.12 cores/esp32/esp32-hal-psram.c was read through EOF (original-byte SHA2562f47f8b635de8ffb64d160576a2705b063235fb9f54e01b98e8d2bf3f48352bd). Its explicit MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT allocation/no-internal-fallback boundary is used by the new Pakar owner. The Go donor does not implement S3 PSRAM or NimBLE allocation; this platform adaptation does not transplant or relabel serial buffers, and does not override the prebuilt SDK's internal-only NimBLE pool/host-stack settings.",
     "Reread canonical Session source at SHA1311fdcde94b2ef8ed06db63ff874a255c135dc1969709e6f43ff4b5c5c8235b for the native mapping failure. Adapt its before/after admission and matched-response ownership principles: a current pinned mapping GET validates the response producer board/boot plus the unexpired, still-current scope, without an unrelated HTTP status preflight. Foreign or incomplete producer envelopes reject without fallback. An absent envelope is discarded before the original status -> mapping -> status legacy fences run; no stale mapping survives a changed board/boot. Six actual loopback HTTP fixtures passed via the canonical native gui_mapping filter. ASUS build12 runtime separately confirmed80 mappings with no active incidents on the selected current peer; that is not a long-soak, pixel RGB, or physical cell-order acceptance.",
     "BLE lifecycle remains a scoped S3 SDK adaptation, not an unreviewed donor feature: missing/corrupt settings default Off; runtime enable persists intent without entering unbounded SDK initialization in the loop; disable retires late owners and honestly requires reboot to release retained SDK pools. Compile exclusion preserves loaded intent and rejects enabling unavailable hardware. Pure real-owner fixtures cover missing/corrupt records, reboot state, exclusion and request admission; no claim of SDK init timeout or BLE/TLS/OTA coexistence.",
-    "Temporary Internet panel: canonical b0111ae0 Session source reread through EOF and blob SHA1311fdcde reverified, distinct from older ../repos checkout SHAe171bf35. Adapted matched-request/ACK ownership, pre-dispatch board/boot admission and synchronous disconnect retirement to existing MQTT CloudCommandGuard. Each QoS0/non-retained mutation is sent once and requires correlated ACK plus fresh same-boot readback. Retained data grants no control lease. Real HTTP/WebSocket auth and Origin tests cover this slice, not serial/AVR/physical LED acceptance."
+    "Temporary Internet panel: canonical b0111ae0 Session source reread through EOF and blob SHA1311fdcde reverified, distinct from older ../repos checkout SHAe171bf35. Adapted matched-request/ACK ownership, pre-dispatch board/boot admission and synchronous disconnect retirement to existing MQTT CloudCommandGuard. Each QoS0/non-retained mutation is sent once and requires correlated ACK plus fresh same-boot readback. Retained data grants no control lease. Real HTTP/WebSocket auth and Origin tests cover this slice, not serial/AVR/physical LED acceptance.",
+    "Canonical Session source reread fully for USB health; RemoteError/decodeRemoteError preserve actual correlated opcode and device code. Rust USB introduction now distinguishes invalid report/capacity, Busy, safety rejection and Unsupported instead of classifying all failures as release mismatch. Malformed replies remain explicit; no admission override or retry added. Actual ASUS reconnect passed on the current ESP; this change does not claim the historical rejection cause was reproduced."
   ],
   "targets": [
     {
@@ -9966,7 +9967,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "c9fc1f6534c8261d767116f0eaac2c5ba5cc2a1de0e3e3df6d6852faec495075",
+      "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
       "anchor": "fn scoped_http_request("
     },
     {
@@ -10021,7 +10022,8 @@
       "sha256": "33c4470a196f59016b86d39a25015579bff5f02401c1c7d791b44370a285e91f"
     },
     {"path":"services/remote-panel/gateway.mjs","sha256":"38caebfa7b6f923b9214f0e83f069f88bf401f9abde8a165ee4c7f42357ec3f6","anchor":"export class Gateway"},
-    {"path":"services/remote-panel/service.mjs","sha256":"7999fa23d55db9a7760350308356bb90c4133d1ea670e064ef38f4c5f1c8adce","anchor":"export function createPanel"}
+    {"path":"services/remote-panel/service.mjs","sha256":"7999fa23d55db9a7760350308356bb90c4133d1ea670e064ef38f4c5f1c8adce","anchor":"export function createPanel"},
+    {"path":"desktop/src/peer_identity.rs","sha256":"4895d4ce1dc5f77e1e866600349baef3ba131e24d23970e254a968442e663dfe","anchor":"pub fn usb_introduction_error("}
   ],
   "omissions": [
     {
@@ -10061,6 +10063,7 @@
       "sha256": "ef66e4c5f115d6b128525c8c06d9b8b23e6ece6c962399673800d6b765af04b3",
       "anchor": "fn same_hostname_reboot_revokes_drafts_and_old_receipts()"
     },
+    {"path":"desktop/src/peer_identity.rs","sha256":"4895d4ce1dc5f77e1e866600349baef3ba131e24d23970e254a968442e663dfe","anchor":"fn usb_introduction_error_preserves_actual_board_reason_without_suggesting_policy_bypass()"},
     {
       "path": "mobile/test/bridge_discovery_test.dart",
       "sha256": "1e650a1f6897c67ce9e87de864ff28ed98e0a818ca95ba6b413897b5cd99a905",
@@ -10088,7 +10091,7 @@
     },
     {
       "path": "desktop/src/main.rs",
-      "sha256": "c9fc1f6534c8261d767116f0eaac2c5ba5cc2a1de0e3e3df6d6852faec495075",
+      "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
       "anchor": "// The mapping response identifies its own producer."
     },
     {
@@ -16317,7 +16320,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "c9fc1f6534c8261d767116f0eaac2c5ba5cc2a1de0e3e3df6d6852faec495075",
+          "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -16440,7 +16443,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "c9fc1f6534c8261d767116f0eaac2c5ba5cc2a1de0e3e3df6d6852faec495075",
+          "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
           "anchor": "fn serial_worker("
         },
         {
@@ -16477,7 +16480,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "c9fc1f6534c8261d767116f0eaac2c5ba5cc2a1de0e3e3df6d6852faec495075",
+          "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
@@ -17206,7 +17209,7 @@
         {
           "path": "desktop/src/main.rs",
           "anchor": "peer_http::remember_address",
-          "sha256": "c9fc1f6534c8261d767116f0eaac2c5ba5cc2a1de0e3e3df6d6852faec495075"
+          "sha256": "59ff291009ddbb0359a4362c3eb2136f18ccd5d2fc9c5f3e700923d83c81ade1"
         }
       ],
       "omissions": [
