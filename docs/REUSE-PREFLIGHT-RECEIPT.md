@@ -1,5 +1,40 @@
 # Donor-first preflight receipt
 
+## PU850 fresh runtime reread and actual shell metadata import
+
+2026-10-19 afterb3647b5: freshly read all23 earlier runtime/auth/shell/discovery/
+sketch certificate files completely through EOF, including complete2394-line
+sketch and850-line SSDPDevice. Recovered clipped SSDP middle with explicit
+overlapping chunk. Same pinned/current431104072952f694a35b3a83c19f13fbb098ca5b;
+original-byte hashes and normalized working/blob equality verified, exact
+section/function decisions now in existing evidence/PU850-PARITY. Fresh pass
+is81/109; remaining28 earlier tooling/CI/dependency/docs certificates still need
+fresh read. Historical comparison totals remain109PU/96gaps and314all/4383pending/
+253gaps; unchanged certificates are not new proof.
+
+Actual Commands.cpp Firmware_Hash/Build_Date descriptor/getter code now serves
+read-only firmware.hash/build.date through current ShellProperties/shellGet/TUI.
+SDK sketch MD5 and compiler time are observations, not full-image integrity,
+slot, release, installation or deployment proof. Secret-first guard stays ahead
+of getters; auth/current release policy unchanged. Classified generic busy/ready/
+audio callbacks as replaced by current owner, not excluded as business.
+
+Passed focused source tests: property descriptors in ordinary/ESP8266 PROGMEM/
+S3 profiles; actual getter prefix in both platform profiles; actual production
+session/initializer/service loop fixtures in both profiles. Includes read-only,
+secret-first, metadata source, two clients, late clocks/rollover, deadlines,
+backpressure and auth retirement. No SDK build, donor build, CI wait or live
+terminal/device operation. Continued using existing stable build/native cache.
+
+Evidence formatting was heterogeneous: whole-block patch safely rejected;
+inspected exact layouts and used narrow descriptor/proof contexts. Diff audit
+caught an over-broad disposition hunk touching one unrelated AVR-display
+exclusion; immediately restored that exact original field, retaining only the
+two intended generic shell callback corrections. Source identities untouched;
+no generic pending work or physical acceptance was waived.
+No network/settings/deployment/reboot/LED/audio/PBX/relay/rainbow operation or
+supported-release bypass; all such acceptance remains open with root.
+
 ## PU850 C++ integrity and complete UART source checkpoint
 
 2026-10-19 continuation after25eb318: complete C++ upload.cpp and UART.h/.cpp

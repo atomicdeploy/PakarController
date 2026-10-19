@@ -8,7 +8,7 @@ int main(){
 #else
  0;
 #endif
- assert(shellPropertyCount==44+added);
+ assert(shellPropertyCount==46+added);
  unsigned secrets=0,writable=0;
  for(size_t index=0;index<shellPropertyCount;++index){
   const auto property=shellPropertyAt(index);ShellProperty found{};
@@ -32,6 +32,8 @@ int main(){
  assert(shellProperty("hostname",hostname)&&hostname.writable&&!hostname.secret);
  assert(shellProperty("network.password",password)&&password.secret&&password.writable);
  assert(shellProperty("websocket.token",other)&&other.secret);
+ assert(shellProperty("firmware.hash",other)&&!other.writable&&!other.secret&&other.type=='s');
+ assert(shellProperty("build.date",other)&&!other.writable&&!other.secret&&other.type=='s');
  assert(!strcmp(hostname.key,"hostname")&&!strcmp(password.key,"network.password")); // Owned copies survive another lookup.
  assert(!shellProperty("missing",other)&&!other.key&&!other.secret);
  assert(!shellProperty(nullptr,other)&&!other.key);

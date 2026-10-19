@@ -1,5 +1,20 @@
 # PakarController comparison receipts
 
+## PU850 fresh runtime/function review and shell observations
+
+2026-10-19: all23 prior runtime/auth/shell/discovery/sketch certificates freshly
+reread EOF and section-bound in the SAME authority. Fresh81/109;28 earlier
+tooling/CI/docs/dependency files remain. Total comparison coverage stays314/4697,
+4383 pending,253 gap files; PU109/109 compared/96 gap files. No parity closure.
+
+Actual donor read-only Firmware_Hash/Build_Date descriptors/getters imported as
+firmware.hash/build.date, retaining current owner/TUI/auth and secret-first
+handling. Actual getter source and descriptor fixtures pass both platform
+profiles/PROGMEM, along with actual session/service lease regression fixtures.
+These are SDK sketch MD5/compiler time observations, not installation time,
+full-image SHA/slot/integrity, SDK compilation, live terminal or physical proof.
+No board/server/network/relay/settings/policy/scene change or deployment.
+
 ## PU850 C++ header integrity and UART function review
 
 2026-10-19: final3 previously uncertified files completely read through EOF:

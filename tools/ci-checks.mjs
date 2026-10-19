@@ -30,6 +30,7 @@ export const phases={
     ["node", "tests/windows_tray_test.mjs"],
     ["node", "tests/web_compressed_test.mjs"],
     ["pwsh", "-NoProfile", "-File", "tools/test-shell-properties.ps1"],
+    ["node", "tests/shell_metadata_test.mjs"],
     ["pwsh", "-NoProfile", "-File", "tests/windows_startup_test.ps1"],
     ["node", "tests/tasks_wiring_test.mjs"],
     ["pwsh", "-File", "tests/device_discovery_script_test.ps1"],

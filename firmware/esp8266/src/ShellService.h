@@ -47,6 +47,9 @@ bool shellCloseRequested=false;
 String shellGet(const ShellProperty &p){
   const String key(p.key);
   if(p.secret)return F("<write-only>");
+  // PU850 Commands.cpp Firmware_Hash/Build_Date read-only parameter getters.
+  if(key=="firmware.hash")return ESP.getSketchMD5();
+  if(key=="build.date")return F(__DATE__ " " __TIME__);
   if(key=="hostname")return deviceIdentity.hostname();if(key=="label")return deviceIdentity.displayName();
   if(key=="version")return BoardCore::BuildInfo::kVersion;if(key=="boot_id")return pcBootId;
   if(key=="uptime")return String(millis()/1000U);if(key=="heap")return String(ESP.getFreeHeap());

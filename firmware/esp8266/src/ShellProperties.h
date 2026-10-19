@@ -15,6 +15,7 @@ struct ShellProperty {const char *key,*domain,*field;char type;bool writable,sec
 static const ShellProperty shellProperties[] PAKAR_SHELL_METADATA_STORAGE={
  {"hostname","device","hostname",'s',true,false},{"label","device","display_name",'s',true,false},
  {"version","device","version",'s',false,false},{"boot_id","device","boot_id",'s',false,false},
+ {"firmware.hash","device","firmware_hash",'s',false,false},{"build.date","device","build_date",'s',false,false},
  {"uptime","device","uptime",'n',false,false},{"heap","device","heap",'n',false,false},
  {"avr.online","device","avr",'b',false,false},{"display.ack","device","display",'b',false,false},
  {"firmware.phase","device","phase",'s',false,false},
