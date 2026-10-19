@@ -11,6 +11,7 @@ $ErrorActionPreference='Stop'
 # Reuse the actual imported Pealayer process-handle/stdout/exit/timeout helper.
 # No install, settings change, credential entry or global ADB-server restart.
 . (Join-Path $PSScriptRoot 'package-probe-windows.ps1')
+. (Join-Path $PSScriptRoot 'android-viewport.ps1')
 $taskAdb=(Resolve-Path -LiteralPath $AdbPath).Path
 function Invoke-DeviceAdb([string]$Arguments) {
     Invoke-PackageProbe $taskAdb "-s $Serial $Arguments" $PSScriptRoot
@@ -46,11 +47,18 @@ if($Wake -or $DismissSwipeLock) {
 }
 $taskLock=Get-DeviceLock
 $taskSwiped=$false
+$taskViewport=$null
 if($DismissSwipeLock -and $taskLock.Showing) {
     if($taskLock.Secure){throw 'PIN/password/pattern-protected lock: manual unlock required; no swipe sent.'}
-    $taskX=[int]($taskWidth*0.5)
-    $taskFrom=[int]($taskHeight*0.84)
-    $taskTo=[int]($taskHeight*0.38)
+    # wm size describes the natural orientation, not necessarily today's touch
+    # coordinates. Read the active logical viewport AFTER wake, immediately
+    # before this single authorized gesture; reject missing/ambiguous geometry.
+    $taskViewport=Get-AndroidSwipeViewport -InputDump (Invoke-DeviceAdb 'shell dumpsys input')
+    $taskWidth=$taskViewport.Width
+    $taskHeight=$taskViewport.Height
+    $taskX=$taskViewport.Left+[int]($taskWidth*0.5)
+    $taskFrom=$taskViewport.Top+[int]($taskHeight*0.84)
+    $taskTo=$taskViewport.Top+[int]($taskHeight*0.38)
     Invoke-DeviceAdb "shell input swipe $taskX $taskFrom $taskX $taskTo 450" | Out-Null
     $taskSwiped=$true
     $taskDeadline=[DateTime]::UtcNow.AddSeconds(5)
@@ -96,4 +104,5 @@ if($Screenshot) {
 $taskFocus=Invoke-DeviceAdb 'shell dumpsys window'
 [pscustomobject]@{Serial=$Serial;Width=$taskWidth;Height=$taskHeight;SecureLock=$taskLock.Secure;
     Locked=$taskLock.Showing;Swiped=$taskSwiped;Launched=[bool]$Launch;Screenshot=$Screenshot;
+    SwipeViewport=$taskViewport;
     Focus=(@($taskFocus -split "`n" | Where-Object {$_ -match 'mCurrentFocus='}) -join '').Trim()}

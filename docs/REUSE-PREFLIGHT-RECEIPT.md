@@ -7326,3 +7326,22 @@ overtakes a deliberately stalled GET, and stalled POST headers end within the
 four-second receipt budget with one command and observed socket closure. These
 local regressions identify actual code defects; they do not establish which path
 caused the earlier phone screenshot or prove installed Android/physical output.
+
+## Android wake coordinates and PBX routing observation
+
+The tablet reports natural `wm size` 1848x2960 but its active rotated input
+viewport is 2960x1848. The Android helper now reads the active logical viewport
+after waking, immediately before its one authorized unsecured-lock swipe. It
+deduplicates identical records and refuses ambiguous/missing geometry or another
+display instead of guessing. Secure locks still require manual unlock. Pure
+parse fixtures are source evidence, not proof that a live lock was dismissed.
+The retained process probe was reread from Pealayer's actual
+`scripts/package-probe-windows.ps1`; its bounded retained-process behavior stays.
+
+PBX query `17924153254544402` expired without reaching David's mobile: the
+query CLI does not insert the external trunk selector for a national `09...`
+target, unlike its plain announcement path. The archived call has `Expired`,
+not an answered/DTMF result. Future separately authorized query calls must use
+the configured external-route target (`9` plus the national mobile number).
+No answer, board approval or user refusal is inferred, and no repeat call was
+made after the user requested automatic wake/swipe instead.
