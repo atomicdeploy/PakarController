@@ -32,6 +32,15 @@ timing/status accounting is not physical GPIO/LED readback. The earlier shell-on
 SDK compile was deliberately stopped when LED correction became the priority;
 its cancellation is not a compile result. A corrected integrated build is pending.
 
+That corrected canonical real S3 build subsequently passed at sourcef6d3fce:
+2073872bytes/SHA2560532332175ea496216ab8a125e21a6ea442f98acc2e316cbc1379ddc9d190fc8,
+MD5070edbac497b46c65265be7d5cccbfb3, sketch2073727/3342336,
+static globals104016/327680. Actual new object disassembly proves the cache-safe
+allocation path is present and the18-byte completion callback has no flash call;
+the final map places it in IRAM at0x4037a174. Static memory totals do not dismiss
+the observed live minimum84B. Board deployment/physical checks remain pending
+the corrected-image reboot question. The old Ready job was not applied/cancelled.
+
 Read PU Shell/Telnet/Commands and Rayan form/terminal actual sources completely;
 eight exact rows now bind the bounded multi-session shell, history8, VT100 TUI,
 typed settings, secret-safe output/history, loop-owned teardown, actual bound

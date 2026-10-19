@@ -51,6 +51,19 @@ no imposed FPS cap, clock rollover, unchanged static selection and atomic batche
 Real S3 compilation, corrected-image deployment and optical/RF/cache-coexistence
 acceptance must be recorded separately; job19 stays Ready, unapplied.
 
+Canonical corrected S3 build passed at source
+`f6d3fce29005bb218ae6b9bb476d25edd6270b00`, using the same16MB/OPI,
+buffered/rmt-dma, electrically verified ISP and BLE-disabled profile. Image size
+2073872bytes, SHA256`0532332175ea496216ab8a125e21a6ea442f98acc2e316cbc1379ddc9d190fc8`,
+MD5`070edbac497b46c65265be7d5cccbfb3`. Sketch storage2073727/3342336,
+static globals104016/327680; linker/static free space is NOT live heap headroom.
+Actual new objects and final map contain the witnessed allocation path; the
+completion callback is an18-byte IRAM load/store/barrier/return function at
+0x4037a174 with no call/flash dependency. No SDK file/dependency was modified.
+This is compiled-candidate evidence, not deployment or optical acceptance.
+The corrected-image deployment question remains pending; do not substitute
+the old Ready job19 for this image or start new color/chase tests.
+
 Independent office-host TLS MQTT observations received fresh, nonretained status
 and telemetry from ledboard and a correlated read-only firmware-status reply.
 The station uses its router, not ASUS as its gateway. Its Internet download of
