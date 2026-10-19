@@ -7208,3 +7208,27 @@ dispatch. No mutation replay or animation-FPS claim followed; actual cloud I/O
 and PCController bounded-parser sources identify nested progress dispatch as
 the next ingress-scheduling correction. Physical steady-white acceptance does
 not close that USB, Wi-Fi service, AVR, animation, phone or full donor gate.
+
+## Flutter Output panel extraction
+
+Read actual Pealayer `src/ui/workspace_profiles.rs` completely at source
+`5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`, SHA256
+`410d274f51e5e7db7ce81582d36166a97240b097e993cec5fee8707a95183e2f`.
+Also read complete generic function sections in `src/ui/layout.rs`:
+`hardware_channel_drag_handle`, `finish_hardware_channel_card`,
+`hardware_channel_drop_target`, `effect_library_card_header`, `effect_card`,
+`hardware_card_header`, stable tab/menu registry and canonical tab restoration.
+That large file remains whole-file pending, SHA256
+`d60b1913e9f5beb1417ef0951ccaadcdf89cd555a32279c3e6c70f14a94a3e17`.
+
+Adapted stable IDs, reserved header action space and handle-owned ordering into
+Flutter OutputPanel: Scene, LED output and Pixel diagnostics cards. Arrangement
+is explicit and persisted in the existing board-owned UI snapshot; it sends no
+device commands. The Table now owns selection, transition, mapping and canvas.
+Output service, mode, rainbow and game reset retain their actual existing APIs;
+diagnostics opens the one existing guarded page from either Output or its menu.
+Retained panels are not control authorization. Production panel keys and an
+additional identity check prevent old board capabilities leaking into a new peer.
+Generic profile CRUD, arbitrary docking and full donor card/action parity remain
+pending. Firmware, settings and advanced bridge retain their existing dedicated
+pages. This is executable source work, not an installed-phone or physical claim.

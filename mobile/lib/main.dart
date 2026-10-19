@@ -17,6 +17,8 @@ import 'connection_preferences.dart';
 import 'cell_search.dart';
 import 'peer_context.dart';
 import 'panel_inventory.dart';
+import 'output_panel.dart';
+import 'workspace_activity_strip.dart';
 import 'application_artwork.dart';
 import 'device_settings_page.dart';
 import 'devices_page.dart';
@@ -255,6 +257,7 @@ class _ControlShellState extends State<ControlShell>
             [
               'overview',
               'table',
+              'output',
               'front-panel',
               'hardware',
               'device-settings',
@@ -923,6 +926,43 @@ class _ControlShellState extends State<ControlShell>
     super.dispose();
   }
 
+  Future<void> _openPixelDiagnostics() async {
+    final board = status?.json['board_id'];
+    if (!supportsPixelDiagnostic(status) ||
+        status?.peer.has('command-ack') != true ||
+        board is! String ||
+        commandPending) {
+      return;
+    }
+    var locked = false;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => StatefulBuilder(
+          builder: (context, update) => PopScope(
+            canPop: !locked,
+            child: Scaffold(
+              appBar: AppBar(
+                title: const Text('Pixel diagnostics'),
+                automaticallyImplyLeading: !locked,
+              ),
+              body: PixelDiagnosticPage(
+                api: api,
+                observed: () => status,
+                onObserved: _observe,
+                mapping: () => mappingFresh ? mapping : null,
+                workspace: workspaces[board]?.pixels,
+                busyChanged: (value) {
+                  commandPending = value;
+                  if (context.mounted) update(() => locked = value);
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final peer = presented?.peer ?? PeerContext.unknown;
@@ -938,6 +978,7 @@ class _ControlShellState extends State<ControlShell>
     final pages = <(String, String, IconData)>[
       ('overview', 'Overview', PakarIcons.broadcast),
       if (panelInventory.has('table')) ('table', 'Table', PakarIcons.gridFour),
+      if (panelInventory.has('table')) ('output', 'Output', PakarIcons.gauge),
       if (panelInventory.frontPanel)
         ('front-panel', 'Front panel', PakarIcons.gauge),
       if (panelInventory.known &&
@@ -969,8 +1010,21 @@ class _ControlShellState extends State<ControlShell>
               workspace: workspaces[workspaceBoard],
               mapping: mapping,
               command: scoped,
-              verifiedCommand: (path, values) =>
-                  _command(owner, hostname, path, values, propagateFailure: true),
+              verifiedCommand: (path, values) => _command(
+                owner,
+                hostname,
+                path,
+                values,
+                propagateFailure: true,
+              ),
+            ),
+            'output' => OutputPanel(
+              key: ValueKey('output:${panelInventory.ownerKey}'),
+              status: presented,
+              connected: status != null && foreground,
+              workspace: workspaces[workspaceBoard],
+              command: scoped,
+              openDiagnostics: () => _openPixelDiagnostics(),
             ),
             'front-panel' => IgnorePointer(
               key: ValueKey('front:${panelInventory.ownerKey}'),
@@ -1113,12 +1167,12 @@ class _ControlShellState extends State<ControlShell>
                   );
                   return;
                 }
+                if (target == 'pixels') {
+                  await _openPixelDiagnostics();
+                  return;
+                }
                 var locked = false;
                 final pixelBoard = status?.json['board_id'];
-                if (target == 'pixels' && pixelBoard is! String) return;
-                final pixelWorkspace = target == 'pixels'
-                    ? workspaces[pixelBoard]?.pixels
-                    : null;
                 await Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (context) => StatefulBuilder(
@@ -1129,28 +1183,12 @@ class _ControlShellState extends State<ControlShell>
                             title: Text(
                               target == 'bridge'
                                   ? 'Advanced bridge'
-                                  : target == 'pixels'
-                                  ? 'Pixel diagnostics'
                                   : 'Firmware',
                             ),
                             automaticallyImplyLeading: !locked,
                           ),
                           body: target == 'bridge'
                               ? BridgePage(api: api, observed: () => status)
-                              : target == 'pixels'
-                              ? PixelDiagnosticPage(
-                                  api: api,
-                                  observed: () => status,
-                                  onObserved: _observe,
-                                  mapping: () => mappingFresh ? mapping : null,
-                                  workspace: pixelWorkspace,
-                                  busyChanged: (value) {
-                                    commandPending = value;
-                                    if (context.mounted) {
-                                      update(() => locked = value);
-                                    }
-                                  },
-                                )
                               : FirmwarePage(
                                   api: api,
                                   authorized: (feature) =>
@@ -1276,10 +1314,10 @@ class _ControlShellState extends State<ControlShell>
         ),
         bottomNavigationBar: wide
             ? null
-            : NavigationBar(
-                selectedIndex: index,
-                onDestinationSelected: (value) => _navigate(pages[value].$1),
-                destinations: destinations,
+            : WorkspaceActivityStrip(
+                pages: pages,
+                selected: pages[index].$1,
+                changed: _navigate,
               ),
       ),
     );
@@ -1351,41 +1389,16 @@ class _TablePageState extends State<TablePage> {
   String get cellEffect => workspace.cellEffect;
   set cellEffect(String value) => workspace.cellEffect = value;
   bool applying = false;
-  bool outputPending = false;
   String? batchMessage;
-  final seenModes = <PeerMode>[];
-  String? seenDriver, seenOutputMode;
-  bool? seenOutputEnabled;
-
-  void _rememberLayout() {
-    for (final mode in status?.peer.modes ?? const <PeerMode>[]) {
-      final index = seenModes.indexWhere((known) => known.id == mode.id);
-      if (index < 0) {
-        seenModes.add(mode);
-      } else {
-        seenModes[index] = mode;
-      }
-    }
-    seenDriver = status?.peer.ledOutput?.label ?? seenDriver;
-    seenOutputEnabled = status?.ledOutputEnabled ?? seenOutputEnabled;
-    seenOutputMode = status?.ledOutputMode ?? seenOutputMode;
-  }
 
   @override
   void initState() {
     super.initState();
-    _rememberLayout();
     try {
       selection = parseCellSearch(query.text);
     } on FormatException catch (error) {
       searchError = error.message;
     }
-  }
-
-  @override
-  void didUpdateWidget(covariant TablePage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _rememberLayout();
   }
 
   @override
@@ -1416,49 +1429,6 @@ class _TablePageState extends State<TablePage> {
       query.text = formatCellSelection(selection);
       searchError = null;
     });
-  }
-
-  Future<void> setOutputEnabled(bool enabled) async {
-    if (!widget.connected ||
-        outputPending ||
-        status?.ledOutputEnabled == null) {
-      return;
-    }
-    setState(() => outputPending = true);
-    try {
-      await command('/api/led/output', {'enabled': '$enabled'});
-      // Only a fresh peer observation changes the switch, never the request.
-    } finally {
-      if (mounted) setState(() => outputPending = false);
-    }
-  }
-
-  Future<void> setOutputMode(String mode) async {
-    if (!widget.connected ||
-        outputPending ||
-        status?.ledOutputMode == null ||
-        !const ['static', 'effects'].contains(mode)) {
-      return;
-    }
-    setState(() => outputPending = true);
-    try {
-      await command('/api/led/output', {'mode': mode});
-    } finally {
-      if (mounted) setState(() => outputPending = false);
-    }
-  }
-
-  Future<void> rainbowTest() async {
-    if (!widget.connected || outputPending || status?.ledOutputMode == null) {
-      return;
-    }
-    setState(() => outputPending = true);
-    try {
-      // Only a pattern command: keep observed output On/Off and mode unchanged.
-      await command('/api/effect', {'value': 'rainbow'});
-    } finally {
-      if (mounted) setState(() => outputPending = false);
-    }
   }
 
   Future<void> applySelection(String state) async {
@@ -1511,125 +1481,7 @@ class _TablePageState extends State<TablePage> {
             primary: false,
             padding: const EdgeInsets.all(16),
             children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '80-cell table',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          'Display: 1, 11, 2, 12… · logical IDs and physical mapping unchanged',
-                        ),
-                      ],
-                    ),
-                  ),
-                  FilledButton.icon(
-                    onPressed:
-                        !widget.connected ||
-                            status?.peer.modes.any(
-                                  (mode) => mode.id == 'first-wins',
-                                ) !=
-                                true
-                        ? null
-                        : () => command('/api/game/reset'),
-                    icon: const Icon(PakarIcons.arrowCounterClockwise),
-                    label: const Text('Reset'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final mode in seenModes)
-                    ChoiceChip(
-                      label: Text(mode.label),
-                      selected: status!.mode == mode.id,
-                      onSelected:
-                          widget.connected &&
-                              status!.peer.modes.any(
-                                (current) => current.id == mode.id,
-                              )
-                          ? (_) => command('/api/mode', {'value': mode.id})
-                          : null,
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (seenDriver != null)
-                Text(
-                  'LED driver: $seenDriver',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              if (seenOutputEnabled != null)
-                SwitchListTile.adaptive(
-                  title: const Text('LED output service'),
-                  subtitle: SizedBox(
-                    height: 40,
-                    child: Text(
-                      outputPending
-                          ? 'Waiting for device; showing last observed state.'
-                          : 'Off clears the strip; modes and settings stay available.',
-                      maxLines: 2,
-                    ),
-                  ),
-                  value: status!.ledOutputEnabled ?? seenOutputEnabled!,
-                  onChanged:
-                      !widget.connected ||
-                          outputPending ||
-                          status!.ledOutputEnabled == null
-                      ? null
-                      : setOutputEnabled,
-                ),
-              if (seenOutputMode != null) ...[
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    for (final mode in const ['static', 'effects'])
-                      ChoiceChip(
-                        label: Text(mode == 'static' ? 'Static' : 'Effects'),
-                        selected:
-                            (status!.ledOutputMode ?? seenOutputMode) == mode,
-                        onSelected:
-                            !widget.connected ||
-                                outputPending ||
-                                status!.ledOutputMode == null
-                            ? null
-                            : (_) => setOutputMode(mode),
-                      ),
-                    OutlinedButton(
-                      onPressed:
-                          !widget.connected ||
-                              outputPending ||
-                              status!.ledOutputMode == null
-                          ? null
-                          : rainbowTest,
-                      child: const Text('Rainbow test'),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: 36,
-                  child: Text(
-                    (status!.ledOutputMode ?? seenOutputMode) == 'static'
-                        ? 'Static cells: six matching pixels. Rainbow test animates explicitly.'
-                        : 'Effects: animated output enabled explicitly.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                    maxLines: 2,
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
+              const WorkspaceHeader(title: 'Table', icon: PakarIcons.gridFour),
               TextField(
                 controller: query,
                 decoration: InputDecoration(

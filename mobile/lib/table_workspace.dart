@@ -30,6 +30,13 @@ class TableWorkspace extends ChangeNotifier {
     query.text = text is String && text.length <= 512 ? text : '';
     _multiple = saved['multiple'] != false;
     _showIndicators = saved['indicators'] == true;
+    final order = saved['output_cards'];
+    if (order is List) {
+      _outputCards = [
+        ...order.whereType<String>().where(outputCardIds.contains).toSet(),
+        ...outputCardIds.where((id) => !order.contains(id)),
+      ];
+    }
     final effect = saved['effect'];
     _cellEffect = ['immediate', 'fade', 'pulse'].contains(effect)
         ? effect as String
@@ -65,6 +72,22 @@ class TableWorkspace extends ChangeNotifier {
   late final FrontPanelWorkspace frontPanel;
   late final DeviceSettingsWorkspace settings;
   final bucket = PageStorageBucket();
+  static const outputCardIds = ['scene', 'output', 'diagnostics'];
+  List<String> _outputCards = List.of(outputCardIds);
+  List<String> get outputCards => List.unmodifiable(_outputCards);
+  void reorderOutputCard(int oldIndex, int newIndex) {
+    if (oldIndex < 0 ||
+        oldIndex >= _outputCards.length ||
+        newIndex < 0 ||
+        newIndex >= _outputCards.length) {
+      return;
+    }
+    if (oldIndex == newIndex) return;
+    final item = _outputCards.removeAt(oldIndex);
+    _outputCards.insert(newIndex, item);
+    notifyListeners();
+  }
+
   late final ScrollController pageScroll, tableScroll;
   Set<int> _selection = {};
   Set<int> get selection => Set.unmodifiable(_selection);
@@ -108,6 +131,7 @@ class TableWorkspace extends ChangeNotifier {
     'multiple': multiple,
     'indicators': showIndicators,
     'effect': cellEffect,
+    'output_cards': outputCards,
     'vertical': vertical,
     'horizontal': horizontal,
     'pixel_diagnostic': pixels.snapshot(),

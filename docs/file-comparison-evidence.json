@@ -3,6 +3,51 @@
   "target_hash_encoding": "UTF8-without-BOM-LF",
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
+{
+  "origin": "PCController",
+  "path": "mobile/lib/unified/workspace_chrome.dart",
+  "sha256": "f00ed672c1f72f1a66fb65cff1cfe0a89dea5f7b6222f154db00a7c52c2e1a82",
+  "source_read": "complete",
+  "source_revision": "b0111ae0c80dc34149ea1044de7dd5488920301b",
+  "verdict": "parity-gap",
+  "preserved": [
+    "Fully read actual ActivityStrip through EOF. Adapted stable GlobalKey targets, post-frame selected activity reveal (180ms after selection), minimum48px touch controls, semantic selected state, tooltip, reserved one-pixel border and horizontal scrolling phone navigation. Pakar uses discovered string IDs rather than fixed donor indices; the current per-board palette replaces donor per-activity hardcoded colors."
+  ],
+  "targets": [
+    {
+      "path": "mobile/lib/workspace_activity_strip.dart",
+      "sha256": "58f77deeef8c0ca5eea12a6124e39af7d46ba1543e1c9705b033f9fae6fc50e4",
+      "anchor": "class WorkspaceActivityStrip"
+    },
+    {
+      "path": "mobile/lib/main.dart",
+      "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62",
+      "anchor": ": WorkspaceActivityStrip("
+    }
+  ],
+  "proof": [
+    {
+      "path": "mobile/test/output_panel_test.dart",
+      "sha256": "1b7a3034588aeaa3e575881e902a1564a46c675fe2574ca38e88896a6d22e188",
+      "anchor": "Phone activity navigation keeps eight panels reachable without squeezing"
+    }
+  ],
+  "omissions": [
+    {
+      "code": "vertical activity layout and muted/per-activity color treatment",
+      "disposition": "pending",
+      "reason": "Wide Pakar currently retains its existing NavigationRail. New phone navigation imports the donor horizontal implementation; a separate wide navigation adaptation is still required for full chrome parity."
+    },
+    {
+      "code": "Fixed Live/Channels/Panel/Studio/Devices/Firmware/Events indices",
+      "disposition": "replaced",
+      "reason": "Pakar's acknowledged contextual pages use stable string IDs, including Table and Output; copying unrelated media/controller pages would invent unavailable controls."
+    }
+  ],
+  "remaining": [
+    "Verify deployed phone navigation and selected activity reveal; complete contextual wide navigation and other workspace chrome parity separately. Source widget tests are not installed or physical acceptance."
+  ]
+},
   {
     "origin": "PU850-ESP",
     "path": "Tool/C++/upload.cpp",
@@ -9870,7 +9915,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "e6315e9a8f4749b3a374802e0c717add0b81d8685f4e7ee55e195576d976be1b",
+      "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -9940,7 +9985,7 @@
     },
     {
       "path": "mobile/lib/table_workspace.dart",
-      "sha256": "fd779ea58ddb0177231840f05b69b5845a6c60ee2c2cada587fb29833309354b",
+      "sha256": "7167553e1f06bd93e60d6403ee6ac6268af8b2b72a840368902b99f698786149",
       "anchor": "class TableWorkspace"
     },
     {
@@ -12298,7 +12343,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "e6315e9a8f4749b3a374802e0c717add0b81d8685f4e7ee55e195576d976be1b",
+          "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62",
           "anchor": "Future<bool> _command"
         },
         {
@@ -12603,7 +12648,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "e6315e9a8f4749b3a374802e0c717add0b81d8685f4e7ee55e195576d976be1b",
+          "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -17697,17 +17742,28 @@
         "Reread the same complete live donor at unchanged SHA256 for the Android screen-off regression. Actual user changes now notify a bounded debounced UI snapshot writer, including indicators, multiple selection, transition, Find/selection, activity and both scroll axes. One ordered coalescing writer prevents late old saves, skips identical snapshots and permits retry after failure. Reattachment uses the latest actual offsets rather than stale scroll-end PageStorage values. Healthy sockets remain open across backgrounding; a silent pre-suspend socket gets a 750 ms read-probe recovery without resetting the workspace or replaying commands. Colour actions and selection controls are separate ordered rows.",
         "Actual stable-ID workspace ownership adapted to immutable board identity rather than mutable friendly names or current telemetry. Retained route/board/boot-scoped ACK-only panel inventory is presentation, never live hardware authority. Native dock, selection, menus and measured panel extent survive transient lease/capability loss; new peer/boot/explicit disconnect revalidates appropriately.",
         "Reread complete unchanged donor. Native durable board/application sessions now store sanitized dock/active tabs, egui scroll/collapse memory, unified selection/find/cursor and safe front-panel drafts, bounded16 records, equal-snapshot skips,1s sampling/debounce and5s minimum save interval. Flutter extends its existing ordered350ms/2s writer with front-panel, diagnostic and public settings drafts; reconnect requires fresh identity/readback and never restores pending actuation. Native capture/apply_workspace_profile and config structs were additionally reviewed as function slices only, not certified whole-file reads.",
-        "Reread complete unchanged workspace_profiles.rs and actual canonical restore/reveal, capture/apply function slices in donor layout.rs/app.rs (those whole files remain uncertified). Native WorkspaceLayout now separates the durable full dock and explicit hidden-panel intent from its capability-filtered projection. Reconnect/partial ACK/reboot cannot save omitted panels as user closures; missing legacy defaults recover once, explicit close-all persists, reveal restores semantic sibling/split slots and unfolds ancestors. No missing ACK grants a control lease."
+        "Reread complete unchanged workspace_profiles.rs and actual canonical restore/reveal, capture/apply function slices in donor layout.rs/app.rs (those whole files remain uncertified). Native WorkspaceLayout now separates the durable full dock and explicit hidden-panel intent from its capability-filtered projection. Reconnect/partial ACK/reboot cannot save omitted panels as user closures; missing legacy defaults recover once, explicit close-all persists, reveal restores semantic sibling/split slots and unfolds ancestors. No missing ACK grants a control lease.",
+        "Reread complete workspace_profiles.rs and scoped layout.rs card/drag/tab sections (whole layout.rs remains pending). OutputPanel extracts scene, LED output and rainbow from TablePage using the same live callbacks. Stable scene/output/diagnostics card IDs and explicit handle-only Arrange reordering persist through the existing board-owned workspace writer. Diagnostics opens the existing guarded PixelDiagnosticPage; no duplicated command engine or startup actuation. Table selection, cell transitions, mapping and scroll ownership remain unchanged."
       ],
       "targets": [
         {
+          "path": "mobile/lib/output_panel.dart",
+          "sha256": "2ac6dae78e14f1b965de658ac94f7da466c1269c795c011c6ca407fdf7e7142f",
+          "anchor": "class OutputPanel"
+        },
+        {
+          "path": "mobile/test/output_panel_test.dart",
+          "sha256": "1b7a3034588aeaa3e575881e902a1564a46c675fe2574ca38e88896a6d22e188",
+          "anchor": "Output order is bounded, durable and independent of table selection"
+        },
+        {
           "path": "mobile/lib/table_workspace.dart",
-          "sha256": "fd779ea58ddb0177231840f05b69b5845a6c60ee2c2cada587fb29833309354b",
+          "sha256": "7167553e1f06bd93e60d6403ee6ac6268af8b2b72a840368902b99f698786149",
           "anchor": "class TableWorkspace"
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "e6315e9a8f4749b3a374802e0c717add0b81d8685f4e7ee55e195576d976be1b",
+          "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -17738,7 +17794,7 @@
         {
           "path": "mobile/lib/table_workspace.dart",
           "anchor": "class FrontPanelWorkspace",
-          "sha256": "fd779ea58ddb0177231840f05b69b5845a6c60ee2c2cada587fb29833309354b"
+          "sha256": "7167553e1f06bd93e60d6403ee6ac6268af8b2b72a840368902b99f698786149"
         },
         {
           "path": "desktop/src/workspace_layout.rs",
@@ -17855,7 +17911,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "e6315e9a8f4749b3a374802e0c717add0b81d8685f4e7ee55e195576d976be1b"
+          "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62"
         }
       ],
       "proof": [
@@ -17895,7 +17951,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "e6315e9a8f4749b3a374802e0c717add0b81d8685f4e7ee55e195576d976be1b"
+          "sha256": "0834090e0412c9f422f66443696f245064d92094b6ed615b1baaf8315f578b62"
         }
       ],
       "proof": [
