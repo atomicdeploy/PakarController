@@ -1,9 +1,9 @@
 # ESP32-S3 migration and commissioning
 
-**Current request:** restore AVR hardware UART and ESP-mediated ISP. The user
-has explicitly resumed this work after the LED-first interval. Keep the existing
-LED renderer and saved mapping intact during recovery. Historical commissioning
-observations below do not establish the current board's health.
+**Current priority:** fix the partial/glitchy RMT-DMA rainbow and periodic pause,
+retaining the integrated services, saved scene and AVR UART/ISP. Physical matrix
+feedback remains required. Historical observations below do not establish the
+current board's health.
 
 The ESP32-S3 target builds the **same integrated application** as the ESP8266:
 Web/API/WebSocket, table effects, cloud clients, storage, self-OTA and AVR ISP.
@@ -12,9 +12,58 @@ wrappers retain separate translation units. The ESP8266 target remains available
 for a later, separately configured device. Do not attach two controllers to the
 same AVR UART/ISP signals at once.
 
-## Delivered Wi-Fi-first checkpoint
+## Current rainbow and LAN recovery
 
-### Current final image and short runtime checks
+Source20a242bf38c8a5d2b70dfbde6c9460574a2bc845 is actually installed:
+2193760B, SHA256`cb1f18f16c62e369e52120ec0986bd30d1b5d38e71204216c47aded721a6de0f`,
+MD5`a3c0e540730958c561d4da6ac8dd686b`, boot`ff6da73b47d6fd790fc1eb36c491d6ef`.
+Actual ROM MAC/CRC-bound seq23 VALID app0 were reread before a33.8s USB write
+of application0x10000 only. Saved settings, rollback app1, partition table,
+bootloader, otadata and AVR flash/EEPROM/fuses were not written by recovery.
+The subsequent hostname-first Wi-Fi check verified all34 exact running-image
+ranges/SHA, VALID selected/running app0 and same-peer WebSocket49ms.
+
+The preceding ec2d497... candidate WAS delivered over LAN OTA22.779s, but failed
+acceptance when MQTT exposed repeated loopTask stack-canary panics. Read-only
+COM22 panic capture plus exact-ELF address decoding identified nested status/
+full-telemetry stack exhaustion. This failure is retained in the private original
+network-delivery receipt and cloud-panic capture; do not call it a successful stable
+network deployment. The corrected stack-readback verifies image/WS but separately
+fails MQTT readiness before host clock setting; the final timing receipt establishes
+the later connected observation. Recovery keeps the same renderer and queue1, with producer-
+owned serialized storage and isolated scratch lifetimes instead of raising SDK
+stack limits. Actual Xtensa frames: loop2976->592B, LED submit1488->48B,
+publishTelemetry1408->80B; fragment/stream/message helpers own only their respective
+1392/1376/1360B frames. Focused worker and both-platform cloud fixtures pass.
+
+Actual refill receipt is source71/core1/vector27/level3. In the final16.418s
+read-only observation all26 samples retained the same boot and connected MQTT;
+publishes10->13,775 transmitted-frame increments, error/failed0, no zero-frame
+sample intervals, longest inter-sample gap516ms (previous1086ms). Read median244ms;
+the3651ms first read includes hostname resolution and is NOT an LED pause. Global
+cloud maximum2166ms includes initial TLS connection; individual blocking socket
+calls are still a limitation, not a completed nonblocking-worker claim. No
+two-second counter pause appeared in this bounded window; optical waveform/
+all80-cell/long-soak acceptance remains open.
+
+MQTT is restored/enabled and was actually connected during the final observation.
+NTP had not synchronized after the cold USB restart, so the existing UTC setter
+was explicitly used with ASUS host time to exercise TLS. This is NOT autonomous
+NTP acceptance; investigate resolver/UDP123 before a standalone handoff.
+
+Actual ASUS LAN wire replies verified mDNS A, DNS-SD PTR/SRV/TXT, SSDP root/basic
+responses, MNDP identity/MAC/IP, NB name and full121B NBSTAT. Windows nbtstat also
+lists LEDBOARD<00>/90-70-69-EA-C8-00 on ASUS Ethernet and Wi-Fi interfaces. ESP
+itself remains on Wi-Fi+AP; optional W5500 is built/configured but DISABLED,
+uninitialized, with no claimed wired/LLDP acceptance. Router probes found no IGD
+descriptor; no router login/mapping/firewall changes were made. TFT stays backlog.
+Native/Flutter addressing packages were built, not deployed this pass. Read-only
+native IPC from SSH session0 was unavailable; that is not an authoritative owner
+health result and no GUI fallback/replacement was attempted.
+
+## Historical Wi-Fi-first checkpoint
+
+### Earlier image and short runtime checks
 
 Follow-up source`cc8e71112053e227810cc14f154b2db78b8d05c2` is now deployed:
 2074112bytes, SHA256`2909fdb06411d3ea935a29d16889a13cd1b1fa6065061da66741cf965cd49e36`,

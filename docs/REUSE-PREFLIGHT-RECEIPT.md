@@ -1,5 +1,21 @@
 # Donor-first preflight receipt
 
+## Current actually recovered firmware
+
+Corrected20a242b is installed by verified application-only USB recovery:
+2193760B/SHA cb1f18f16c62e369e52120ec0986bd30d1b5d38e71204216c47aded721a6de0f,
+boot ff6da73b47d6fd790fc1eb36c491d6ef. Full34-range running SHA/VALID app0 and
+WebSocket49ms pass. Loop/submit/publishTelemetry compiled stack frames fell
+2976->592/1488->48/1408->80B. Actual fixed IRQ level3/core1 is observed. Following
+explicit host UTC synchronization (autonomous NTP remains open), all26 samples
+across16.418s retain this boot and connected MQTT,3 publish cycles,775 transmitted
+increments/failed0/no zero-frame intervals, max sampled gap516ms. This is bounded
+runtime evidence, NOT proof all80 physical cells/waveform/long soak are fixed.
+Actual LAN mDNS/DNS-SD/SSDP/MNDP/NBNS/NBSTAT and Windows nbtstat passed; router IGD
+and actual W5500/LLDP hardware remain open. Current complete evidence/limitations
+are in ESP32-S3-COMMISSIONING.md. First failed candidate and panic receipts stay
+preserved rather than overwritten; older output-disabled checkpoints are historical.
+
 ## Rainbow pause / DMA refill and optional LAN checkpoint
 
 The first candidate2194352B/SHA ec2d49733d5f8160127fdc4a971c96992f98fb327031bbde80451944befb8a70
