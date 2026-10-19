@@ -2,6 +2,7 @@
   "schema": 1,
   "authority": "docs/file-comparison-evidence.json",
   "concerns": [
+    {"id":"pu-client-manifest","origins":["PU850-ESP"],"path_pattern":"(^Tool/C#/Uploader/|^Tool/C\\+\\+/(CMakeLists\\.txt|cmake/|puff\\.))","required_reviews":["PU850-ESP|Tool/C#/Uploader/FirmwareManifest.cs","PU850-ESP|Tool/C#/Uploader/SelfTests.cs"],"issue":11},
     {"id":"pu-client-download","origins":["PU850-ESP"],"path_pattern":"^Tool/Go/","required_reviews":["PU850-ESP|Tool/Go/download.go","PU850-ESP|Tool/Go/download_test.go","PU850-ESP|Tool/Go/watch.go","PU850-ESP|Tool/Go/watch_test.go"],"issue":7},
     {"id":"pu-editor","origins":["PU850-ESP"],"path_pattern":"(^\\.vscode/|^ASA0002E\\.code-workspace$|^~secrets\\.h\\.example$|^Tool/Websocket Client\\.html$)","required_reviews":[],"issue":3},
     {"id":"pu-foundation","origins":["PU850-ESP"],"path_pattern":"(^ASA0002E(?:\\.h|\\.ino\\.globals\\.h|\\.code-workspace)$|^defines\\.h$|^ProductConfig\\.h$|^PRODUCT-PROFILES\\.md$|^LocalLib/(Public|Sessions|CrashHandler|FS|RemoteCommand)\\.(cpp|h)$|^\\.(gitignore|gitattributes)$|^Temp/)","required_reviews":["PU850-ESP|ASA0002E.h"],"issue":3},

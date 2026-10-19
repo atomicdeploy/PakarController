@@ -7,6 +7,7 @@ import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {portableGzip} from './portable-gzip.mjs';
+import {createFirmwareManifest} from './firmware-manifest.mjs';
 export const expectedArtifacts=[
   ...['','-busy-wire','-buffered'].map(mode=>`avr${mode}/avr.ino.with_bootloader.bin`),
   ...['','-busy-wire'].map(mode=>`esp8266${mode}/esp8266.ino.bin`),
@@ -30,8 +31,9 @@ export function collectArtifacts(directory,{required=false,compress=false}={}) {
     if(name.startsWith('esp')&&bytes[0]!==0xe9)throw Error('ESP application must remain raw; do not rename gzip to .bin');
     artifacts.push({path:name,size:bytes.length,sha256:digest('sha256',bytes),md5:digest('md5',bytes),format:'raw'});
     if(compress&&name.startsWith('esp8266')){
-      const gz=portableGzip(bytes);unchangedWrite(path+'.gz',gz);
-      artifacts.push({path:name+'.gz',size:gz.length,sha256:digest('sha256',gz),md5:digest('md5',gz),format:'gzip',raw_sha256:digest('sha256',bytes),raw_size:bytes.length});
+      const gz=portableGzip(bytes),manifest=createFirmwareManifest(bytes,gz,name.split('/').at(-1)+'.gz');
+      unchangedWrite(path+'.gz',gz);unchangedWrite(path+'.gz.md5',manifest.content);
+      artifacts.push({path:name+'.gz',size:gz.length,sha256:digest('sha256',gz),md5:manifest.identity.compressed_md5,format:'gzip',raw_sha256:digest('sha256',bytes),raw_md5:manifest.identity.raw_md5,raw_size:manifest.identity.raw_size,manifest:name+'.gz.md5'});
     }
   }return artifacts;
 }

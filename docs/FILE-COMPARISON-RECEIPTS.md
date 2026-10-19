@@ -1,5 +1,22 @@
 # PakarController comparison receipts
 
+## PU850 C# manifest and complete deflate review
+
+2026-10-19: nineteen full EOF reads covering every C# implementation/config/test,
+CMake/toolchains and both puff sources. Exact blob/hash/method notes and concrete
+omissions extend the existing authorities. Actual C# two-record/portable-name/
+raw+compressed hash/bounded-gzip code and original manifest cases now run in the
+existing explicit ESP8266 artifact compression owner. No duplicate decoder or
+S3 gzip path is introduced.
+
+Manifest pure-source and real artifact-consumer fixtures pass records/paths/both
+hashes, corrupt/empty/bounded gzip, exact generated sidecar and unchanged raw/S3
+bytes. Existing script-tooling fixtures pass. No donor or SDK builds, network/
+service/device operation, policy downgrade, relay/scene change or deployment.
+PU 106/109 compared, 3 unread, 93 gap files; total 311/4697, 4386 pending,
+250 gaps. Previously certified sources still need the requested fresh reread;
+full-source parity/runtime/physical/human acceptance are not claimed.
+
 ## PU850 editor and Go download actual-source slice
 
 2026-10-19: sixteen further complete EOF reads (all eleven Go files, editor JSON,

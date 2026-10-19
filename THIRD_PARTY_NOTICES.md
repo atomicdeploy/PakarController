@@ -53,6 +53,14 @@ PakarController is integration code built from earlier AtomicDeploy projects.
   Current Pakar peer/auth/release admission and bounded chunked reads remain
   authoritative. `.vscode/settings.json` adapts donor workspace/settings file
   associations and generated-output filters; tasks invoke existing guarded plans.
+- `tools/firmware-manifest.mjs` and its fixture adapt PU850 C#
+  `FirmwareManifest.cs` and `SelfTests.TestManifestAsync` at the same revision:
+  portable filename selection, exact raw/compressed records, bounded gzip and
+  verification of both hashes. Existing explicit ESP8266 artifact compression
+  invokes it and emits a separate `.gz.md5`; S3 application bytes remain raw.
+  C++ puff.h/puff.c were read with Mark Adler's original notice, retained in the
+  unchanged donor. Their implementation is not redistributed here: the existing
+  Node zlib runtime supplies bounded gzip decoding rather than another decoder.
 - FastLED, Arduino ESP8266 core, MiniCore, WebSockets 2.7.2 by Markus Sattler,
   PubSubClient 2.8.0 by Nick O'Leary, xcap 0.9.8, eframe/egui, reqwest, and serde are
   build/runtime dependencies under their

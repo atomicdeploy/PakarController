@@ -1,5 +1,45 @@
 # Donor-first preflight receipt
 
+## PU850 C# manifest and deflate source checkpoint
+
+2026-10-19 continuation after ac60a1a: all fourteen C# uploader files, all three
+CMake files and complete puff.h/puff.c read through EOF at donor
+431104072952f694a35b3a83c19f13fbb098ca5b. A truncated UploadClient result was
+completed with overlapping bounded chunks before certifying it. All nineteen
+new comparisons include original bytes, immutable Git objects and exact method/
+section decisions in the SAME evidence/ledger/report. PU is 106/109 complete,
+3 pending, 93 gap files, 3 specialist-unrouted. All donors: 311/4697 complete,
+4386 pending, 250 gap files. A complete comparison still records useful gaps;
+it is not production parity.
+
+Actual C# FirmwareManifest parsing/portable-name/paired-hash/bounded-gzip code
+and TestManifestAsync cases now serve tools/firmware-manifest.mjs and the real
+explicit ESP8266 compression branch in firmware-report. Separate .gz/.gz.md5
+outputs preserve raw image names and bytes; S3 stays raw. Existing Node zlib
+owns bounded decoding instead of another puff implementation. Mark Adler's
+license was read and retained in the unchanged donor; no puff code redistributed.
+
+Executed focused manifest tests: exact two records, portable names, duplicate/
+extra/mismatched records, invalid/empty/corrupt/oversized gzip, both hash failures,
+generated sidecar, actual artifact-report consumer, unchanged ESP8266/S3 raw bytes
+and no S3 compressed output. Existing script-tooling fixtures also pass. No
+donor/.NET/C++/SDK build, installation, extra cache, device/service contact or
+release/deployment/relay/policy/rainbow change. Existing raw-S3 updater and its
+identity/auth/ownership/integrity/release-admission rules remain unchanged.
+
+Entirely unread sources remain Tool/C++/upload.cpp and LocalLib/UART.cpp/.h;
+previously certified async/OTA/auth/shell/discovery/main/tooling still needs the
+requested fresh function reread. Generic watcher, platform/runtime distribution,
+IPv6, editor database, backup-before-upload/progress, stream transport and full
+gzip/deflate corpus plus live/physical/human acceptance remain explicitly open.
+
+One read-only verification invocation piped the ledger's Format-Table records
+through Select-Object -Last, producing an invalid FormatEndData output sequence
+after the ledger itself passed. Reconsulted pu-tooling/Tool/build-all.ps1 and its
+actual formatted-host output ownership, then consumed the complete formatter
+stream with Out-Null. Ledger and whitespace checks passed; no source guard,
+comparison data, compiler or device operation was bypassed to fix presentation.
+
 ## PU850 editor and actual Go download source checkpoint
 
 2026-10-19 continuation after e159b5d: all eleven Go source/test/module blobs,
