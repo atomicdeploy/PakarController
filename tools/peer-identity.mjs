@@ -51,8 +51,12 @@ export function assertToolPeerCompatible(peer,{enforce=toolVersionEnforced()}={}
 }
 // Shared unchanged updater/download identity admission. Release policy above
 // remains separate; neither transport chooses an API generation or a downgrade.
-export function boardPeer(status,remote,previous=null,{allowReboot=false,allowAddressChange=false}={}) {
-  assertToolPeerCompatible(status);
+export function boardPeer(status,remote,previous=null,{allowReboot=false,allowAddressChange=false,maintenanceBoard=null}={}) {
+  // Explicit identity-pinned updater/backup recovery only. Ordinary controls
+  // retain the default release gate; the NEW boot must pass it again.
+  if(maintenanceBoard===null)assertToolPeerCompatible(status);
+  else if(!/^[a-z0-9_-]{1,64}$/.test(maintenanceBoard)||status?.board_id!==maintenanceBoard||!toolSemver(status.version))
+    throw Error('Explicit maintenance board/version identity does not match');
   if(status?.http_peer_fencing!==true || !/^[a-z0-9_-]{1,64}$/.test(status.board_id??'') ||
     !/^[a-f0-9]{32}$/.test(status.boot_id??'') || /^0{32}$/.test(status.boot_id) ||
     typeof status.hostname!=='string' || status.capabilities?.hostname!==status.hostname ||

@@ -32,7 +32,7 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
+        "sha256": "5017cbbe3e774b0ac049512fe09eed446758a498ba9ffbbe8baa5028b292e0b7",
         "anchor": "export function parseDigestMD5("
       },
       {
@@ -47,12 +47,12 @@
       },
       {
         "path": "tools/update-firmware.mjs",
-        "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
+        "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90",
         "anchor": "export async function updateFirmware("
       },
       {
         "path": "tools/peer-identity.mjs",
-        "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+        "sha256": "869e9ea5db1887dde58b170c66d4c2b379aa6fb7d3c123adc5c023e1b8db1ce7",
         "anchor": "export function boardPeer("
       },
       {
@@ -69,7 +69,7 @@
       },
       {
         "path": "tests/update_backup_test.mjs",
-        "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+        "sha256": "9fad7b056864a821193c642fbc8739ca60f6b490fc358853906564fd242b75cc",
         "anchor": "Backup must precede even remote staging"
       }
     ],
@@ -327,7 +327,7 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
+        "sha256": "5017cbbe3e774b0ac049512fe09eed446758a498ba9ffbbe8baa5028b292e0b7",
         "anchor": "export async function downloadFirmware("
       },
       {
@@ -449,7 +449,7 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
+        "sha256": "5017cbbe3e774b0ac049512fe09eed446758a498ba9ffbbe8baa5028b292e0b7",
         "anchor": "export async function downloadFirmware("
       },
       {
@@ -550,7 +550,7 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
+        "sha256": "5017cbbe3e774b0ac049512fe09eed446758a498ba9ffbbe8baa5028b292e0b7",
         "anchor": "export async function downloadFirmware("
       },
       {
@@ -560,12 +560,12 @@
       },
       {
         "path": "tools/update-firmware.mjs",
-        "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
+        "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90",
         "anchor": "export async function updateFirmware("
       },
       {
         "path": "tools/peer-identity.mjs",
-        "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+        "sha256": "869e9ea5db1887dde58b170c66d4c2b379aa6fb7d3c123adc5c023e1b8db1ce7",
         "anchor": "export function boardPeer("
       },
       {
@@ -582,7 +582,7 @@
       },
       {
         "path": "tests/update_backup_test.mjs",
-        "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+        "sha256": "9fad7b056864a821193c642fbc8739ca60f6b490fc358853906564fd242b75cc",
         "anchor": "Backup must precede even remote staging"
       }
     ],
@@ -640,7 +640,7 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
+        "sha256": "5017cbbe3e774b0ac049512fe09eed446758a498ba9ffbbe8baa5028b292e0b7",
         "anchor": "export async function downloadFirmware("
       },
       {
@@ -713,7 +713,7 @@
     "targets": [
       {
         "path": "tools/update-firmware.mjs",
-        "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
+        "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90",
         "anchor": "export async function updateFirmware("
       },
       {
@@ -767,7 +767,7 @@
     "targets": [
       {
         "path": "tools/update-firmware.mjs",
-        "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
+        "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90",
         "anchor": "export async function updateFirmware("
       },
       {
@@ -777,7 +777,7 @@
       },
       {
         "path": "tools/peer-identity.mjs",
-        "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+        "sha256": "869e9ea5db1887dde58b170c66d4c2b379aa6fb7d3c123adc5c023e1b8db1ce7",
         "anchor": "export function boardPeer("
       },
       {
@@ -789,7 +789,7 @@
     "proof": [
       {
         "path": "tests/update_backup_test.mjs",
-        "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+        "sha256": "9fad7b056864a821193c642fbc8739ca60f6b490fc358853906564fd242b75cc",
         "anchor": "Backup must precede even remote staging"
       }
     ],
@@ -916,7 +916,7 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
+        "sha256": "5017cbbe3e774b0ac049512fe09eed446758a498ba9ffbbe8baa5028b292e0b7",
         "anchor": "export async function downloadFirmware("
       },
       {
@@ -1688,7 +1688,7 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
+        "sha256": "5017cbbe3e774b0ac049512fe09eed446758a498ba9ffbbe8baa5028b292e0b7",
         "anchor": "export async function downloadFirmware("
       },
       {
@@ -1734,7 +1734,7 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
+        "sha256": "5017cbbe3e774b0ac049512fe09eed446758a498ba9ffbbe8baa5028b292e0b7",
         "anchor": "export async function downloadFirmware("
       },
       {
@@ -1840,7 +1840,7 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
+        "sha256": "5017cbbe3e774b0ac049512fe09eed446758a498ba9ffbbe8baa5028b292e0b7",
         "anchor": "export async function downloadFirmware("
       },
       {
@@ -1918,12 +1918,12 @@
       },
       {
         "path": "tools/update-firmware.mjs",
-        "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
+        "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90",
         "anchor": "export async function updateFirmware("
       },
       {
         "path": "tools/peer-identity.mjs",
-        "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+        "sha256": "869e9ea5db1887dde58b170c66d4c2b379aa6fb7d3c123adc5c023e1b8db1ce7",
         "anchor": "export function boardPeer("
       },
       {
@@ -1940,7 +1940,7 @@
       },
       {
         "path": "tests/update_backup_test.mjs",
-        "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+        "sha256": "9fad7b056864a821193c642fbc8739ca60f6b490fc358853906564fd242b75cc",
         "anchor": "Backup must precede even remote staging"
       }
     ],
@@ -1993,7 +1993,7 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
+        "sha256": "5017cbbe3e774b0ac049512fe09eed446758a498ba9ffbbe8baa5028b292e0b7",
         "anchor": "export async function downloadFirmware("
       },
       {
@@ -2155,12 +2155,12 @@
       },
       {
         "path": "tools/update-firmware.mjs",
-        "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
+        "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90",
         "anchor": "export async function updateFirmware("
       },
       {
         "path": "tools/peer-identity.mjs",
-        "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+        "sha256": "869e9ea5db1887dde58b170c66d4c2b379aa6fb7d3c123adc5c023e1b8db1ce7",
         "anchor": "export function boardPeer("
       },
       {
@@ -2172,7 +2172,7 @@
     "proof": [
       {
         "path": "tests/update_backup_test.mjs",
-        "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+        "sha256": "9fad7b056864a821193c642fbc8739ca60f6b490fc358853906564fd242b75cc",
         "anchor": "Backup must precede even remote staging"
       }
     ],
@@ -5655,12 +5655,12 @@
         },
         {
           "path": "tools/update-firmware.mjs",
-          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
+          "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90",
           "anchor": "export async function updateFirmware("
         },
         {
           "path": "tools/peer-identity.mjs",
-          "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+          "sha256": "869e9ea5db1887dde58b170c66d4c2b379aa6fb7d3c123adc5c023e1b8db1ce7",
           "anchor": "export function boardPeer("
         },
         {
@@ -5699,7 +5699,7 @@
         },
         {
           "path": "tests/update_backup_test.mjs",
-          "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+          "sha256": "9fad7b056864a821193c642fbc8739ca60f6b490fc358853906564fd242b75cc",
           "anchor": "Backup must precede even remote staging"
         }
       ],
@@ -5811,7 +5811,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840"
+          "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90"
         }
       ],
       "omissions": [
@@ -5936,7 +5936,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840"
+          "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90"
         }
       ],
       "omissions": [
@@ -6004,7 +6004,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840"
+          "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90"
         }
       ],
       "omissions": [
@@ -6181,7 +6181,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840"
+          "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90"
         },
         {
           "path": "tools/deploy-artifact.mjs",
@@ -7111,16 +7111,16 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840"
+          "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90"
         },
         {
           "path": "tools/update-firmware.mjs",
-          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
+          "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90",
           "anchor": "export async function updateFirmware("
         },
         {
           "path": "tools/peer-identity.mjs",
-          "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+          "sha256": "869e9ea5db1887dde58b170c66d4c2b379aa6fb7d3c123adc5c023e1b8db1ce7",
           "anchor": "export function boardPeer("
         },
         {
@@ -7154,7 +7154,7 @@
         },
         {
           "path": "tests/update_backup_test.mjs",
-          "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+          "sha256": "9fad7b056864a821193c642fbc8739ca60f6b490fc358853906564fd242b75cc",
           "anchor": "Backup must precede even remote staging"
         }
       ],
@@ -7426,7 +7426,8 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Complete canonical donor documentation read through EOF and original-byte SHA matched the inventory. Adapted the actual measured-stage/unknown-denominator/verified-completion/no-write-replay contract, not the donor's AVRDUDE parser: local HTTP raw file bytes, remote download stage bytes, coherent async-to-loop snapshots, finite AVR scheduled text leases and separate client reboot/readback verification.",
+    "Complete canonical donor documentation read through EOF and original-byte SHA matched the inventory. Adapted the actual measured-stage/unknown-denominator/verified-completion/no-write-replay contract, not the donor's AVRDUDE parser: local HTTP raw file bytes, remote download stage bytes, coherent async-to-loop snapshots, finite AVR scheduled text leases and separate client reboot/readback verification.",
+    "Reread the complete canonical update-progress document for actual0.2.8 migration. Explicit exact-board maintenance admits only the older producer's update/backup observations, never ordinary controls; the new boot still passes the default release policy. Missing BOTH newer producer headers is confined to that selected recovery and retains same-address, whole MD5 and before/after board/boot checks. Failed manifest admission can preserve zero image metadata only with the exact pinned manifest/job/boot/target/zero bytes. Added backpressure-aware multipart chunks and explicit upload pacing; no automatic mutation retry. Real fixtures cover these boundaries. Actual HTTPS stage22/new boot/full running SHA and separate Internet control/WSS passed; final direct LAN WS interruption and the false completion_verified bit remain open, not fabricated success.",
         "Local /update/info now uses boot-captured immutable image metadata rather than whole-image hashing on every progress poll. Status and WebSocket status/ping remain readable during local OTA; mutating commands remain inhibited. No authentication is enabled by the updater; it requires explicit auth-off readback before and after.",
         "Automatic network tooling prefers verified local Async HTTP POST, otherwise advertised pinned Internet stage/separate apply before any write. Full new-boot running-image SHA256, same-peer WebSocket, auth-off and selected/running VALID slot are checked. No automatic fallback/replay after uncertain writes, no random IP/factory credentials or duplicate image files.",
         "Loop-owned upgrade phases/byte counters are coalesced without duplicate notices. Receiving100% is not completion: local OTA commits a readback/rename checksum receipt, then another boot verifies image size/MD5/integrity before write-ahead once-only terminal notice. ISP backup/program/readback advance counters only after actual work. Silent=false was persisted and read back on the live AVR without test playback.",
@@ -7472,12 +7473,12 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware(",
-          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840"
+          "sha256": "489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90"
         },
         {
           "path": "tools/update-firmware.ps1",
           "anchor": "[ValidateSet('auto','local','remote')]",
-          "sha256": "46cc5b7977b1b6cca703aeab555a6a4537cbfae10f403103c954a65d4a8ce9e8"
+          "sha256": "76718dc025e115ce85ef86ae1014e875b9fcbc7c629276ff07a893868f75a56f"
         },
         {
           "path": "firmware/esp8266/src/UpgradeLifecycle.h",
@@ -7551,7 +7552,7 @@
         {
           "path": "tools/test-update.ps1",
           "anchor": "$taskPanelOutput=",
-          "sha256": "26873bf2ed2d802c9cca8ed1a428fefb275e4a975baad538fea32ecc02225725"
+          "sha256": "a666f20d3c0d9cd2b7bef2a2c0d31adc25c6dd29255f28c582cbe7a31aa8a8d9"
         },
         {
           "path": "tests/upgrade_lifecycle_test.cpp",
@@ -7579,8 +7580,13 @@
           "sha256": "fb6ee4f1497ef9c1f7e0a54780ed047744d4b2bd7635a096f5f290bf48c8b5b8"
         },
         {
-          "path": "tools/test-protocol.sh",
-          "anchor": "for upgrade_case in",
+      "path": "tests/update_recovery_test.mjs",
+      "anchor": "Explicit maintenance bootstrap",
+      "sha256": "4ae889ba4d73c63aaa378cbd5769dd0118ca064aed44b56928ae4a074da37a74"
+    },
+    {
+      "path": "tools/test-protocol.sh",
+      "anchor": "for upgrade_case in",
           "sha256": "2b12f1ef83e95da636cd8028975513a2c9d22e524a85f8b80ca0ea394a70655b"
         }
       ],
@@ -8068,7 +8074,7 @@
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0","anchor":"Message *items_=nullptr;"},
         {"path":"firmware/esp8266/esp8266.ino","sha256":"8780b01a9187614813b7e6a3ea83f2ba0fae0866f3524ea1f745d33353f5a1a3","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
         {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"8717e11a85931686ba6673b6b42406ad5f4362586732cb1d7dea1332c9c85585","anchor":"internal_heap_largest_block_bytes"},
-        {"path":"tools/update-firmware.mjs","sha256":"c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840","anchor":"export function checkWebSocket("},
+        {"path":"tools/update-firmware.mjs","sha256":"489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",

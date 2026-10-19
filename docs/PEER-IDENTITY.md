@@ -108,10 +108,16 @@ rejection. The version header is a release claim, not a password or authenticati
 The release floor intentionally excludes the previous `0.2.7` products: they do
 not implement this admission/reporting contract. Build all paired products as
 `0.2.8` before replacement. A new default-enforcing client will not control the
-old running board. For the one deliberate migration, the current update tool's
-client-side `PAKAR_ENFORCE_PEER_VERSIONS=0` override can admit the old board while
-retaining its normal identity, image, digest and update-safety checks; restore
-the default after the verified firmware update. USB ROM/ISP recovery is also
+old running board. For deliberate migration, the update tool accepts an explicit
+`--recovery-board ACTUAL_BOARD_ID` (`-RecoveryBoard` in PowerShell). This admits
+only identity-pinned maintenance and verified backup reads of that exact board;
+it does not change the global policy or authorize ordinary controls. Missing
+producer headers may be tolerated only together, with pinned address, whole-image
+integrity and before/after status/boot checks. Conflicting/partial identities
+remain errors. The NEW boot must pass ordinary supported-release admission.
+Authentication, image/capacity/digest/latch/job gates remain. Optional
+`--upload-rate BYTES_PER_SECOND` (`-UploadRate`) adds explicit pacing to the
+backpressure-aware uploader;0 has no rate cap. USB ROM/ISP recovery is also
 independent of application release admission. No tool automatically disables
 policy on rejection or replays an uncertain update.
 

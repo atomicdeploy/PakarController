@@ -27,5 +27,7 @@ if($LASTEXITCODE){throw 'Actual AVR progress presentation fixture compilation fa
 if($LASTEXITCODE){throw 'Actual AVR progress presentation fixture failed'}
 & node (Join-Path $taskRoot 'tests/update_tool_test.mjs')
 if($LASTEXITCODE){throw 'Automatic updater fixture failed'}
+& node (Join-Path $taskRoot 'tests/update_recovery_test.mjs')
+if($LASTEXITCODE){throw 'Explicit maintenance recovery fixture failed'}
 & node (Join-Path $taskRoot 'tests/upgrade_web_test.mjs')
 if($LASTEXITCODE){throw 'Actual Web lifecycle parser fixture failed'}

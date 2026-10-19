@@ -16,7 +16,7 @@ const peer={board:'esp32s3-fixture',boot:'a'.repeat(32),address:'192.0.2.8'};
 const base={version:toolRelease.version,board_id:peer.board,boot_id:peer.boot,hostname:'fixture',
   http_peer_fencing:true,programming_latch:false,capabilities:{hostname:'fixture',acknowledged_features:['network']}};
 try{
- for(const scenario of ['success','resume','complete','remote','remote-resume','bad-section','bad-section-remote','bad-peer','bad-final-boot','metadata-changed',
+ for(const scenario of ['success','recovery-noheaders','resume','complete','remote','remote-resume','bad-section','bad-section-remote','bad-peer','bad-final-boot','metadata-changed',
    'auth-changed','job-changed','peer-after-backup','old-release','deadline','destination-race','existing-output','existing-part','plan']){
   const output=resolve(directory,scenario+'.bin'),part=output+'.part';
   for(const p of [output,part]){assert(await absent(p),'Unknown retained fixture; inspect '+p);owned.add(p);}
@@ -27,13 +27,13 @@ try{
   const events=[];
   const request=async(_origin,path,options={})=>{
    requests++;const boot=rebooted?'b'.repeat(32):peer.boot;
-   const headers={'x-pakar-board':peer.board,'x-pakar-boot':boot,'x-firmware-md5':md5};
+   const headers=scenario==='recovery-noheaders'?{'x-firmware-md5':md5}:{'x-pakar-board':peer.board,'x-pakar-boot':boot,'x-firmware-md5':md5};
    const response=(value,extra={})=>({status:200,remote:peer.address,headers,body:Buffer.from(JSON.stringify(value)),...extra});
    if(path==='/api/status'){
     statusReads++;
     if(statusReads===2){assert.equal(options.expectedAddress,peer.address);assert.equal(options.headers['X-Pakar-Board'],peer.board);assert.equal(options.headers['X-Pakar-Boot'],peer.boot);}
     if(scenario==='destination-race'&&statusReads===3)await writeFile(output,'occupied fixture',{flag:'wx'});
-    return response({...base,version:scenario==='old-release'&&statusReads===2?'0.2.7':base.version,
+    return response({...base,version:!rebooted&&scenario==='recovery-noheaders'||scenario==='old-release'&&statusReads===2?'0.2.7':base.version,
       board_id:(scenario==='bad-peer'&&statusReads===2)||(scenario==='peer-after-backup'&&statusReads===4)?'another-board':peer.board,
       boot_id:scenario==='bad-final-boot'&&statusReads===3?'c'.repeat(32):boot});
    }
@@ -68,12 +68,13 @@ try{
    throw Error('Unexpected fixture request '+path);
   };
   const options={image,origin:'http://fixture.local',backup:output,resumeBackup:['resume','complete'].includes(scenario),
+    ...(scenario==='recovery-noheaders'?{recoveryBoard:peer.board}:{}),
    ...(remote?{mode:'remote',manifest:'https://fixture.invalid/manifest.json',manifestSha}:{}),...(resumeJob?{resumeJobId:18}:{}),now:()=>clock,
    run:scenario!=='plan',request,websocket:async()=>{sockets++;},wait:async()=>{},timeoutSeconds:10,log:event=>events.push(event),
    upload:async(_origin,admitted)=>{mutations++;assert.equal(admitted.boot,peer.boot);
     assert.deepEqual(await readFile(output),old,'Verified backup must exist BEFORE the one write');
     assert(events.some(e=>e.stage==='backup-verified'));rebooted=true;}};
-  if(['success','resume','complete','remote','remote-resume'].includes(scenario)){
+  if(['success','recovery-noheaders','resume','complete','remote','remote-resume'].includes(scenario)){
    const result=await updateFirmware(options);assert.equal(result.ok,true);assert.equal(mutations,1);assert.equal(sockets,2);
    assert.equal(result.backup.output,output);assert.equal(result.backup.md5,md5);assert.equal(result.backup.boot_id,peer.boot);
    assert.equal(result.backup.firmware_written,false);assert.equal(result.backup.resumed_bytes,scenario==='resume'?13:scenario==='complete'?old.length:0);

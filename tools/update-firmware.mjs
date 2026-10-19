@@ -53,9 +53,11 @@ function readyJob(job,id,peer,manifestSha,identity) {
     job.phase!=='ready'||job.busy!==false||job.esp?.sha256!==identity.sha256||job.esp?.size!==identity.size)
     throw Error('Existing ready job/boot/manifest/target/image does not match; no apply or fetch');
 }
-function failedJobReceipt(job,id,peer,identity) {
+function failedJobReceipt(job,id,peer,identity,expectedManifest) {
+  const unparsed=job?.esp?.size===0&&job.esp.sha256===''&&job.esp.version===''&&
+    job.received_bytes===0&&job.expected_bytes===0&&/^[a-f0-9]{64}$/.test(expectedManifest??'')&&job.manifest_sha256===expectedManifest;
   if(job?.job_id!==id||job.boot_id!==peer.boot||job.targets!==1||job.phase!=='failed'||
-    job.busy!==false||job.cancellable!==false||job.esp?.sha256!==identity.sha256||job.esp?.size!==identity.size||
+    job.busy!==false||job.cancellable!==false||(!unparsed&&(job.esp?.sha256!==identity.sha256||job.esp?.size!==identity.size))||
     !/^[a-f0-9]{64}$/.test(job.manifest_sha256??'')||typeof job.error!=='string'||!job.error.length||job.error.length>4096)
     throw Error('Failed job acknowledgement does not match terminal ESP-only job/boot/image; no write');
   // Acknowledgement is local operator intent, not a cancel/clear request. Keep
@@ -65,8 +67,9 @@ function failedJobReceipt(job,id,peer,identity) {
     esp:{size:job.esp.size,sha256:job.esp.sha256},
     received_bytes:job.received_bytes??null,expected_bytes:job.expected_bytes??null};
 }
-export function uploadImage(origin,peer,bytes,identity,{timeoutSeconds=180}={}) {
+export function uploadImage(origin,peer,bytes,identity,{timeoutSeconds=180,uploadRate=0}={}) {
   if(!Number.isInteger(timeoutSeconds)||timeoutSeconds<10||timeoutSeconds>600)throw Error('Upload timeout must be10..600 seconds');
+  if(!Number.isSafeInteger(uploadRate)||uploadRate<0||uploadRate>16*1024*1024)throw Error('Upload rate must be0..16777216 bytes/second');
   const boundary='Pakar'+randomBytes(16).toString('hex');
   const start=Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="MD5"\r\n\r\n${identity.md5}\r\n--${boundary}\r\nContent-Disposition: form-data; name="firmware"; filename="esp.bin"\r\nContent-Type: application/octet-stream\r\n\r\n`);
   const end=Buffer.from(`\r\n--${boundary}--\r\n`);
@@ -87,7 +90,18 @@ export function uploadImage(origin,peer,bytes,identity,{timeoutSeconds=180}={}) 
     const started=Date.now();
     const timer=setTimeout(()=>req.destroy(Error('Upload deadline; outcome unknown, no retry')),timeoutSeconds*1000);
     req.on('close',()=>clearTimeout(timer));req.on('error',error=>reject(Error('Upload failed after '+(Date.now()-started)+'ms: '+(error.code??error.message)+'; outcome unknown, no fallback or retry')));
-    req.write(start);req.write(bytes);req.end(end);
+    // Respect transport backpressure instead of queueing the complete image.
+    // Optional explicit pacing helps constrained flash receivers; never retry.
+    (async()=>{
+      const write=chunk=>new Promise((resolve,reject)=>req.write(chunk,error=>error?reject(error):resolve()));
+      await write(start);
+      for(let at=0;at<bytes.length;at+=16384){
+        const chunk=bytes.subarray(at,Math.min(at+16384,bytes.length));await write(chunk);
+        if(uploadRate)await delay(Math.ceil(chunk.length*1000/uploadRate));
+        if(req.destroyed)throw Error('Upload transport closed; no replay');
+      }
+      req.end(end);
+    })().catch(error=>{req.destroy(error);reject(error)});
   });
 }
 // Native ws_worker requests this same read-only snapshot on connection. Never
@@ -137,7 +151,7 @@ function compactWebSocketEvent(value,peer) {
 }
 // Read-only WS proof pinned to the same TCP address/board/boot as HTTP. Supports
 // fragmented text and ping/pong; no actuator or firmware mutation is sent.
-export function checkWebSocket(origin,peer,{connectTimeoutMs=5000,statusTimeoutMs=12000}={}) {
+export function checkWebSocket(origin,peer,{connectTimeoutMs=5000,statusTimeoutMs=12000,maintenanceBoard=null}={}) {
   if(!Number.isInteger(connectTimeoutMs)||connectTimeoutMs<10||connectTimeoutMs>10000||
      !Number.isInteger(statusTimeoutMs)||statusTimeoutMs<10||statusTimeoutMs>20000)
     throw Error('WebSocket connect/status deadlines outside bounded limits');
@@ -184,7 +198,7 @@ export function checkWebSocket(origin,peer,{connectTimeoutMs=5000,statusTimeoutM
           let status;try{status=JSON.parse(message.toString('utf8'))}catch{throw Error('Malformed WebSocket JSON')}
           message=Buffer.alloc(0);
           if(compactWebSocketEvent(status,peer)){ignoredEvents++;continue;}
-          boardPeer(status,peer.address,peer);finish();return;
+          boardPeer(status,peer.address,peer,{maintenanceBoard});finish();return;
         }
       }catch(error){finish(error);}};
       connection.on('data',receive);connection.on('error',()=>finish(Error('WebSocket interrupted')));
@@ -198,9 +212,11 @@ export function checkWebSocket(origin,peer,{connectTimeoutMs=5000,statusTimeoutM
   });
 }
 
-export async function updateFirmware({origin='http://ledboard.local',image,mode='auto',run=false,manifest,manifestSha,resumeJobId=null,ackFailedJobId=null,ackFailedImage=null,
-  backup=null,resumeBackup=false,timeoutSeconds=180,request=deviceRequest,upload=uploadImage,websocket=checkWebSocket,wait=delay,now=Date.now,log=()=>{}}={}) {
+export async function updateFirmware({origin='http://ledboard.local',image,mode='auto',run=false,manifest,manifestSha,resumeJobId=null,ackFailedJobId=null,ackFailedImage=null,recoveryBoard=null,
+  backup=null,resumeBackup=false,uploadRate=0,timeoutSeconds=180,request=deviceRequest,upload=uploadImage,websocket=checkWebSocket,wait=delay,now=Date.now,log=()=>{}}={}) {
   const url=deviceOrigin(origin),bytes=Buffer.isBuffer(image)?image:readFileSync(image),identity=imageIdentity(bytes);
+  if(recoveryBoard!==null&&!/^[a-z0-9_-]{1,64}$/.test(recoveryBoard))throw Error('Recovery requires the explicitly inventoried board ID');
+  if(!Number.isSafeInteger(uploadRate)||uploadRate<0||uploadRate>16*1024*1024)throw Error('Invalid explicit upload rate');
   if(!['auto','local','remote'].includes(mode))throw Error('Mode must be auto, local or remote');
   if(!Number.isInteger(timeoutSeconds)||timeoutSeconds<10||timeoutSeconds>600)throw Error('Timeout must be10..600 seconds');
   if(manifest){const source=new URL(manifest);
@@ -221,9 +237,9 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
     // Actual PU performUpload/BackupInstalledFirmwareAsync sequencing, using
     // our existing verified downloader, not a second transfer implementation.
     ({downloadFirmware:download}=await import('./download-firmware.mjs'));
-    backupPlan=await download({origin:url.origin,output:backup,resume:resumeBackup,timeoutSeconds,run:false});
+    backupPlan=await download({origin:url.origin,output:backup,resume:resumeBackup,timeoutSeconds,run:false,maintenanceBoard:recoveryBoard});
   }else if(resumeBackup)throw Error('Resume backup requires an explicit backup path');
-  if(!run)return {plan:true,mode,resume_job:resumeJobId,ack_failed_job:ackFailedJobId,ack_failed_image:ackFailedJobId===null?null:failedIdentity,origin:url.origin,image:identity,authentication:'disabled required',avr_touched:false,
+  if(!run)return {plan:true,mode,upload_rate_bytes_per_second:uploadRate,recovery_board:recoveryBoard,resume_job:resumeJobId,ack_failed_job:ackFailedJobId,ack_failed_image:ackFailedJobId===null?null:failedIdentity,origin:url.origin,image:identity,authentication:'disabled required',avr_touched:false,
     backup:backupPlan,policy:'auto prefers local Async HTTP; remote requires pinned manifest; no write fallback/replay',device_contacted:false};
   let peer=null;
   const read=async(path,{unfenced=false,resolveHostname=false,...options}={})=>{
@@ -235,7 +251,7 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
   };
   const json=async(path,options)=>{const r=await read(path,options);let value;
     try{value=JSON.parse(r.body)}catch{throw Error('Malformed device JSON')};return {value,remote:r.remote};};
-  const first=await json('/api/status');peer=boardPeer(first.value,first.remote);
+  const first=await json('/api/status');peer=boardPeer(first.value,first.remote,null,{maintenanceBoard:recoveryBoard});
   const auth=(await json('/api/auth')).value;if(auth.enabled!==false)throw Error('Device authentication is enabled/unknown; disable through the existing owner settings or physical recovery first');
   const page=await read('/');if(!/<html|<!doctype html/i.test(page.body.toString('utf8')))throw Error('Device Web UI not served');
   const info=(await json('/update/info')).value;
@@ -248,9 +264,9 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
   const previous=(await json('/api/firmware/remote')).value;
   let acknowledgedFailure=null;
   if(resumeJobId!==null)readyJob(previous,resumeJobId,peer,manifestSha,identity);
-  else if(ackFailedJobId!==null)acknowledgedFailure=failedJobReceipt(previous,ackFailedJobId,peer,failedIdentity);
+  else if(ackFailedJobId!==null)acknowledgedFailure=failedJobReceipt(previous,ackFailedJobId,peer,failedIdentity,manifestSha);
   else if(previous.busy!==false||!['idle','complete','cancelled'].includes(previous.phase))throw Error('Existing firmware job requires inspection; no overwrite');
-  await websocket(url,peer);
+  await websocket(url,peer,{maintenanceBoard:recoveryBoard});
   const route=selectPath(mode,info,!!manifest),before={...peer};
   let backupReceipt=null,backupMs=null;
   if(backupPlan){
@@ -258,7 +274,7 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
       throw Error('Verified running image metadata required before backup/update; no write');
     log({stage:'backup',image_bytes:info.size});const backupStarted=now();
     backupReceipt=await download({origin:url.origin,output:backupPlan.output,resume:resumeBackup,
-      timeoutSeconds,run:true,expectedPeer:{...peer},environment:{},request,now});
+      timeoutSeconds,run:true,expectedPeer:{...peer},maintenanceBoard:recoveryBoard,environment:{},request,now});
     if(backupReceipt.ok!==true||backupReceipt.board_id!==peer.board||backupReceipt.boot_id!==peer.boot||
        backupReceipt.origin!==url.origin||backupReceipt.size!==info.size||backupReceipt.md5!==info.hash.toLowerCase())
       throw Error('Backup does not match admitted running image; no update');
@@ -274,16 +290,16 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
     log({stage:'backup-verified',image_bytes:backupReceipt.size,sha256:backupReceipt.sha256});
   }
   // Refresh the same boot immediately before the single selected write path.
-  const fresh=await json('/api/status');boardPeer(fresh.value,fresh.remote,peer);
+  const fresh=await json('/api/status');boardPeer(fresh.value,fresh.remote,peer,{maintenanceBoard:recoveryBoard});
   if(fresh.value.programming_latch!==false)throw Error('Programming state changed; no update');
   if(acknowledgedFailure){
-    const observed=failedJobReceipt((await json('/api/firmware/remote')).value,ackFailedJobId,peer,failedIdentity);
+    const observed=failedJobReceipt((await json('/api/firmware/remote')).value,ackFailedJobId,peer,failedIdentity,manifestSha);
     if(JSON.stringify(observed)!==JSON.stringify(acknowledgedFailure))throw Error('Failed job changed before acknowledgement; no write');
     log({stage:'ack-failed-job',acknowledged_failed_job:acknowledgedFailure});
   }
   log({stage:resumeJobId===null?'upload':'resume-apply',path:route,image_bytes:identity.size,resume_job:resumeJobId});
   const started=now();let jobId=null,applyRequestMs=null;
-  if(route==='local')await upload(url,peer,bytes,identity,{timeoutSeconds});
+  if(route==='local')await upload(url,peer,bytes,identity,{timeoutSeconds,uploadRate});
   else {
     if(resumeJobId!==null) {
       jobId=resumeJobId;
@@ -320,7 +336,8 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
       // route fails; this is read-only, then independently rebind the same board.
       try{response=await json('/api/status',{unfenced:true,resolveHostname:true});resolved=true;}catch{continue;}
     }
-    after=boardPeer(response.value,response.remote,before,{allowReboot:true,allowAddressChange:resolved});
+    after=boardPeer(response.value,response.remote,before,{allowReboot:true,allowAddressChange:resolved,
+      maintenanceBoard:response.value.boot_id===before.boot?recoveryBoard:null});
     if(after.boot===before.boot)continue;peer=after;break;
   }
   if((await json('/api/auth')).value.enabled!==false)throw Error('Authentication changed after reboot');
@@ -342,7 +359,7 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
     if(result.job_id!==jobId||result.phase!=='complete'||result.manifest_sha256!==manifestSha)throw Error('Remote completion not verified');
   }
   return {ok:true,path:route,origin:url.origin,board_id:peer.board,boot_before:before.boot,boot_after:peer.boot,
-    image:identity,resume_job:resumeJobId,acknowledged_failed_job:acknowledgedFailure,transfer_ms:transferMs,
+    image:identity,recovery_board:recoveryBoard,resume_job:resumeJobId,acknowledged_failed_job:acknowledgedFailure,transfer_ms:transferMs,
     ...(backupReceipt?{backup:backupReceipt,backup_ms:backupMs}:{}),
     ...(resumeJobId===null?{}:{apply_request_ms:applyRequestMs,download_timing:'previous invocation; not measured here'}),
     total_ms:now()-started,authentication:false,websocket:'same-peer status before/after',
@@ -354,9 +371,9 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
     for(let i=0;i<args.length;i++){
       if(args[i]==='--run'){options.run=true;continue;}
       if(args[i]==='--resume-backup'){options.resumeBackup=true;continue;}
-      const key={'--origin':'origin','--image':'image','--mode':'mode','--manifest':'manifest','--manifest-sha':'manifestSha','--timeout':'timeoutSeconds','--resume-job':'resumeJobId','--ack-failed-job':'ackFailedJobId','--ack-failed-image':'ackFailedImage','--backup':'backup'}[args[i]];
+      const key={'--origin':'origin','--image':'image','--mode':'mode','--manifest':'manifest','--manifest-sha':'manifestSha','--timeout':'timeoutSeconds','--resume-job':'resumeJobId','--ack-failed-job':'ackFailedJobId','--ack-failed-image':'ackFailedImage','--backup':'backup','--recovery-board':'recoveryBoard','--upload-rate':'uploadRate'}[args[i]];
       if(!key||!args[i+1]||args[i+1].startsWith('--'))throw Error('Usage: node tools/update-firmware.mjs --image ESP_BIN [--origin http://ledboard.local] [--mode auto|local|remote] [--manifest HTTPS_URL --manifest-sha SHA256] [--backup NEW_PATH [--resume-backup]] [--resume-job POSITIVE_ID (remote only) | --ack-failed-job POSITIVE_ID [--ack-failed-image ORIGINAL_FAILED_BIN]] [--run]');
-      options[key]=['timeoutSeconds','resumeJobId','ackFailedJobId'].includes(key)?Number(args[++i]):args[++i];
+      options[key]=['timeoutSeconds','resumeJobId','ackFailedJobId','uploadRate'].includes(key)?Number(args[++i]):args[++i];
     }
     options.log=value=>console.error(JSON.stringify(value));console.log(JSON.stringify(await updateFirmware(options),null,2));
   }catch(error){console.error(error.message);process.exitCode=1;}

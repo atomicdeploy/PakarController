@@ -1,5 +1,56 @@
 # Donor-first preflight receipt
 
+## ESP0.2.8 Internet migration and temporary panel access
+
+User authorized ESP update and panel password replacement. Changed only the
+private panel access/config hash and restarted its dedicated service; device
+authentication and broker credentials remain unchanged. Private local access
+file updated. No password was added to source or GitHub.
+
+Reverified prepared S3 image2239504B/SHA23e660ec.../MD53ac8bff1...,16MB/OPI,
+buffered/RMT-DMA/verified-ISP/BLE-disabled/optional-Ethernet/status-GPIO48 profile.
+Published immutable HTTPS manifest SHA ff49acbf... and verified419B manifest and
+full image externally. MQTT fetch21 failed before receiving image bytes with
+TLS-32512; not replayed. ASUS8022 key conflicted with its port record, but exactly
+matched already-trusted david-asus/david-asus.local/1022 keys. HostKeyAlias used
+that existing trust; no key checking disabled or known-host records overwritten.
+
+The old producer lacked newer response identity headers. Reused actual reviewed
+boardPeer/updater/download owners, not an alternate wire API: explicit exact-board
+maintenance admission preserves normal default release checks and requires the
+new boot to pass them. Backup may lack BOTH response identity headers only during
+that explicit recovery; same address, whole MD5 and before/after board/boot remain.
+Partial/conflicting headers still reject. A manifest-TLS failure with no parsed
+image requires exact job/boot/target/manifest and zero bytes, never a fabricated
+staged image. Added real multipart chunk/backpressure and optional pacing.
+
+Actual old image backup2193760B/SHA cb1f18f16c62e369e52120ec0986bd30d1b5d38e71204216c47aded721a6de0f
+was verified on ASUS before upload. One fast and one explicitly paced local
+upload aborted737292B/1188264B respectively; each unchanged boot and terminal
+abort was independently inspected. No uncertain write was replayed automatically.
+Initial backup stopped read-only on missing headers; first recovery fixture
+mistakenly removed the required MD5 too and was corrected to the observed wire.
+Focused real HTTP/upload/download/recovery fixtures then passed. Source gates
+caught changed target hashes and were rebound only after reviewing the diffs.
+
+Temporarily disabling only MQTT freed about43KB; HTTPS stage22 then downloaded
+and checksum-verified the full image. Restored MQTT Enabled/Connected BEFORE the
+separate exact-job Apply. New actual boot a193c8d230f0bd24efb97f4c57cb35fb runs0.2.8.
+Independent35-range full running-image SHA/MD5, integrity and selected/running
+VALID app1/0x340000 matched exactly. Canonical updater's final LAN WebSocket read
+was interrupted after its hash stage, so its exit1 is retained, not relabeled a
+successful tool receipt. Separate Internet WSS received two same-boot live states;
+remote HTTPS cell1=its existing white received matching ACK/readback in294ms.
+Saved80-cell scene/mode/effect/brightness/output were compared unchanged. No
+physical LED success or long soak follows. Remote phase is complete but its
+completion_verified field remains false; keep that reporting defect open.
+
+AVR flash/fuses/EEPROM untouched. Actual AVR0.2.7 is now intentionally unadmitted
+by the ESP0.2.8 floor, so AVR-backed capabilities remain unavailable pending a
+separately coordinated companion update. This deployment uses the already-built
+candidate, not the subsequent PU source imports. Production/physical acceptance,
+automatic low-memory TLS coordination and reliable LAN upload/WS remain open.
+
 ## PU850 actual verified backup before update
 
 2026-10-19 afterf6e0bb3: consulted pu-client-download/remote-ota and actual Node

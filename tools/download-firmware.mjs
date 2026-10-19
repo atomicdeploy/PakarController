@@ -50,7 +50,7 @@ async function digest(file,size) {
   return {md5:md5.digest('hex'),sha256:sha.digest('hex')};
 }
 export async function downloadFirmware({origin='http://ledboard.local',output,resume=false,run=false,timeoutSeconds=180,
-  environment=process.env,request=deviceRequest,now=Date.now,signal,expectedPeer=null}={}) {
+  environment=process.env,request=deviceRequest,now=Date.now,signal,expectedPeer=null,maintenanceBoard=null}={}) {
   const url=deviceOrigin(origin);
   if(typeof output!=='string'||!output.trim())throw Error('An explicit output path is required');
   if(!Number.isInteger(timeoutSeconds)||timeoutSeconds<10||timeoutSeconds>600)throw Error('Timeout must be 10..600 seconds');
@@ -80,11 +80,18 @@ export async function downloadFirmware({origin='http://ledboard.local',output,re
     for(const name of ['content-length','content-range','content-md5','digest','x-firmware-md5','etag','x-pakar-board','x-pakar-boot'])
       if(r.distinctHeaders?.[name]&&r.distinctHeaders[name].length!==1)throw Error('Duplicate critical firmware header');
     if(r.status<200||r.status>=300)throw Error('Download read rejected (HTTP '+r.status+'); no retry');
-    if(peer&&(r.remote!==peer.address||r.headers['x-pakar-board']!==peer.board||r.headers['x-pakar-boot']!==peer.boot))throw Error('Download peer/boot changed; partial file retained');
+    if(peer){
+      const board=r.headers['x-pakar-board'],boot=r.headers['x-pakar-boot'];
+      // Operator-selected recovery may read a producer that lacks BOTH newer
+      // response headers. Same-address + before/after status/boot + whole MD5
+      // remain mandatory. Never accept conflicting or half-present identities.
+      const unfenced=board===undefined&&boot===undefined&&maintenanceBoard===peer.board;
+      if(r.remote!==peer.address||(!unfenced&&(board!==peer.board||boot!==peer.boot)))throw Error('Download peer/boot changed; partial file retained');
+    }
     return r;
   };
   const json=async(path)=>{const r=await read(path);let value;try{value=JSON.parse(r.body)}catch{throw Error('Invalid download metadata JSON')};return {value,remote:r.remote};};
-  const first=await json('/api/status');peer=boardPeer(first.value,first.remote,expectedPeer);
+  const first=await json('/api/status');peer=boardPeer(first.value,first.remote,expectedPeer,{maintenanceBoard});
   const info=(await json('/update/info')).value;
   if(info.product!=='PakarController'||!md5Pattern.test(info.hash??'')||!Number.isSafeInteger(info.size)||info.size<24||info.size>maxDownloadSize)
     throw Error('Invalid running firmware metadata');
@@ -111,7 +118,7 @@ export async function downloadFirmware({origin='http://ledboard.local',output,re
     const unchanged=(a,b)=>a.ino===b.ino&&a.dev===b.dev&&a.size===b.size&&a.mode===b.mode&&a.mtimeMs===b.mtimeMs&&a.ctimeMs===b.ctimeMs;
     if(!unchanged(beforeDigest,verified))throw Error('Partial file changed during verification');
     if(identity.md5!==expected)throw Error('Full firmware MD5 mismatch; partial file retained');
-    const last=await json('/api/status');boardPeer(last.value,last.remote,peer);
+    const last=await json('/api/status');boardPeer(last.value,last.remote,peer,{maintenanceBoard});
     const after=await file.stat(),named=await regularFile(part);
     if(!named||!unchanged(verified,after)||!unchanged(after,named)||after.size!==total)throw Error('Partial path changed before commit');
     check();await file.close();file=null;

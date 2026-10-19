@@ -9,6 +9,8 @@ param(
     [ValidateRange(1,4294967295)][long]$AckFailedJobId,
     [string]$AckFailedImage,
     [string]$Backup,
+    [string]$RecoveryBoard,
+    [ValidateRange(0,16777216)][long]$UploadRate=0,
     [switch]$ResumeBackup,
     [ValidateRange(10,600)][int]$TimeoutSeconds=180,
     [switch]$Run
@@ -27,6 +29,8 @@ if($PSBoundParameters.ContainsKey('ResumeJobId')){$taskArguments+=@('--resume-jo
 if($PSBoundParameters.ContainsKey('AckFailedJobId')){$taskArguments+=@('--ack-failed-job',"$AckFailedJobId")}
 if($PSBoundParameters.ContainsKey('AckFailedImage')){$taskArguments+=@('--ack-failed-image',$AckFailedImage)}
 if($PSBoundParameters.ContainsKey('Backup')){$taskArguments+=@('--backup',$Backup)}
+if($PSBoundParameters.ContainsKey('RecoveryBoard')){$taskArguments+=@('--recovery-board',$RecoveryBoard)}
+if($PSBoundParameters.ContainsKey('UploadRate')){$taskArguments+=@('--upload-rate',"$UploadRate")}
 if($ResumeBackup){$taskArguments+='--resume-backup'}
 if($Run){$taskArguments+='--run'}
 # Windows PowerShell treats redirected native stderr as ErrorRecords. The

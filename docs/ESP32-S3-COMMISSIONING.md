@@ -14,6 +14,40 @@ same AVR UART/ISP signals at once.
 
 ## Current rainbow and LAN recovery
 
+### Current ESP0.2.8 Internet update and remote panel
+
+User authorized the prepared0.2.8 image and temporary panel access change.
+Actual ESP esp32s3-907069eac800 now runs2239504B image SHA256
+`23e660ec3dd4d7a89ba6370c7c6eb1075cb0ed26e86a8d77f2b75f119c40e731`,
+MD5`3ac8bff19cb935008dcc61dc81c78583`, boot
+`a193c8d230f0bd24efb97f4c57cb35fb`. Independent35-range running-image readback,
+boot integrity and selected/running VALID app1/0x340000 passed. Profile remains
+16MB/OPI/buffered/RMT-DMA/verified-ISP/BLE-disabled/optional-Ethernet/status-GPIO48.
+The existing prepared build is deployed; newer PU reuse source is not in it.
+
+Internet manifest SHA256
+`ff49acbf038a48d9e3be015b198c784a4ac34888abf284cebe9c67a530ad6597` at
+`https://office.digitalogic.ir/pakarcontroller/firmware/esp32s3/23e660ec3dd4d7a89ba6370c7c6eb1075cb0ed26e86a8d77f2b75f119c40e731/manifest.json`
+was received/checked by actual stage22, then separately applied. Stage21 failed
+TLS allocation; two local uploads independently aborted737292/1188264B without
+reboot. Verified old2193760B backup SHA cb1f18f16c62e369e52120ec0986bd30d1b5d38e71204216c47aded721a6de0f
+is preserved on ASUS. Temporarily closing MQTT freed43KB for HTTPS; MQTT was
+restored before Apply and is again operational. Automatic memory coordination
+and reliable LAN OTA are still unresolved, not fixed by retrying blindly.
+
+HTTPS https://ledboard.digitalogic.ir and Internet WSS received actual same-boot
+state. A remote same-state cell1/white command was correlated, acknowledged and
+read back in294ms with unchanged scene hash. Mode cell/effect none/brightness255,
+all80 saved states and output configuration survived. This is not optical output
+or all480 success. The command is accepted by0.2.8 default policy; no downgrade.
+The canonical tool retained final LAN-WS interruption/exit1 after hash validation;
+independent full hash and Internet WSS verification are separate real receipts.
+Job22 phase complete still has completion_verified:false: reporting fix remains.
+
+AVR stays0.2.7, untouched and no longer admitted by0.2.8 policy. Companion update,
+AVR peripherals, physical RMT defects, autonomous power restart and soak remain
+open. This is remote LED control handoff, NOT full two-board production release.
+
 ### Unresolved partial rainbow: timing candidate and pad capture
 
 The user still reports only the first23 cells working. This is NOT fixed or
