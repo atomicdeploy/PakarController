@@ -1,6 +1,7 @@
 package ir.digitalogic.pakar.pakarcontroller
 
 import android.app.Activity
+import android.app.ActivityManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -81,6 +82,7 @@ class AppUpdateChannel(private val activity: Activity, messenger: BinaryMessenge
                     val args = call.arguments as? Map<*, *> ?: emptyMap<String, Any>()
                     val value = when (call.method) {
                         "info" -> exportInfo()
+                        "peerInfo" -> peerInfo()
                         "read" -> read(args)
                         "begin" -> begin(args)
                         "write" -> write(args)
@@ -198,6 +200,18 @@ class AppUpdateChannel(private val activity: Activity, messenger: BinaryMessenge
         }
         return abis
     }
+    private fun peerInfo(): Map<String, Any> {
+        val current = activity.packageManager.getPackageInfo(activity.packageName, 0)
+        val memory = ActivityManager.MemoryInfo()
+        (activity.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(memory)
+        return mapOf(
+            "version" to (current.versionName ?: ""), "build" to version(current),
+            "model" to Build.MODEL, "manufacturer" to Build.MANUFACTURER,
+            "architecture" to (Build.SUPPORTED_ABIS.firstOrNull() ?: ""),
+            "os_version" to Build.VERSION.RELEASE,
+            "sdk" to Build.VERSION.SDK_INT, "memory_mb" to (memory.totalMem / (1024 * 1024)))
+    }
+
     private fun exportInfo(): Map<String, Any> {
         val file = installedApk(); val key = "${file.path}:${file.length()}:${file.lastModified()}"
         cachedExport?.let { if (it.first == key) return it.second }

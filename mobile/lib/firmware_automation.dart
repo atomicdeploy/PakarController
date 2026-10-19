@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import 'api.dart';
+import 'peer_identity.dart';
 import 'device_registry.dart';
 import 'firmware.dart';
 import 'firmware_feed.dart';
@@ -452,6 +453,7 @@ class FirmwareAutomation extends ChangeNotifier {
       final request = http.Request('GET', Uri.parse(policy.catalogUrl))
         ..followRedirects = false;
       request.headers.addAll({
+        ...PeerIdentity.current.headers,
         'Accept': 'application/json',
         'X-Pakar-Firmware-Session': session,
         'X-Pakar-Board': policy.boardId,

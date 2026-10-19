@@ -11,7 +11,7 @@ for(const concern of ['client-management','pu-tooling']){const gate=spawnSync('p
 if(args.some(a=>!['--run','--plan'].includes(a)))throw Error('Usage: node tools/deploy-client-service.mjs --plan|--run');
 const host='root@office.digitalogic.ir';
 const ssh=['-o','BatchMode=yes','-o','ConnectTimeout=8','-o','StrictHostKeyChecking=yes',host];
-const files=['services/client-management/service.mjs','services/client-management/operator.mjs','services/client-management/dashboard.html','services/client-management/package.json','services/client-management/package-lock.json','services/client-management/pakarcontroller-management.service','services/client-management/install-office.sh','assets/branding/app-icon.png.base64'];
+const files=['services/client-management/service.mjs','services/client-management/operator.mjs','services/client-management/dashboard.html','services/client-management/package.json','services/client-management/package-lock.json','services/client-management/pakarcontroller-management.service','services/client-management/install-office.sh','assets/branding/app-icon.png.base64','tools/peer-identity.mjs','interfaces/client-release.json','interfaces/peer-policy.json'];
 log.info('Temporary HTTPS client management · https://office.digitalogic.ir/pakar');
 log.detail('Loopback service only; scoped Apache include; no PBX/MQTT changes. Admin token stays root-only on office.');
 if(!run){log.result('Plan only: upload '+files.length+' files, validate Apache, enable dedicated service. Use --run to deploy.');process.exit(0);}

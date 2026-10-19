@@ -85,6 +85,7 @@ impl Advertiser {
         if settings.mdns {
             match ServiceDaemon::new() {
                 Ok(daemon) => {
+                    let peer_policy=crate::peer_identity::advertised_policy();
                     let service = ServiceInfo::new(
                         "_pakarcontroller._tcp.local.",
                         &format!("PakarController on {}", settings.hostname),
@@ -102,6 +103,10 @@ impl Advertiser {
                             ("ws", "/ws"),
                             ("hostname", settings.hostname.as_str()),
                             ("instance", settings.instance_id.as_str()),
+                            ("version", crate::peer_identity::VERSION),
+                            ("minimum_app", peer_policy.minimum_app.as_str()),
+                            ("minimum_board", peer_policy.minimum_board.as_str()),
+                            ("version_check", if crate::peer_identity::enforced(){"true"}else{"false"}),
                         ]
                         .as_slice(),
                     );
@@ -371,7 +376,7 @@ fn offer(tx: &mpsc::SyncSender<Candidate>, registry: &Mutex<Registry>, candidate
     let _ = tx.try_send(candidate);
 }
 fn verify(candidate: Candidate, registry: &Mutex<Registry>) {
-    let Ok(client) = reqwest::blocking::Client::builder()
+    let Ok(client) = crate::peer_identity::client_builder()
         .no_proxy()
         .redirect(reqwest::redirect::Policy::none())
         .timeout(Duration::from_millis(900))
@@ -462,7 +467,11 @@ fn verify(candidate: Candidate, registry: &Mutex<Registry>) {
     } else {
         candidate.origin
     };
-    r.peers.insert(key,(Instant::now(),json!({"endpoint":preferred,"aliases":aliases,"board_id":board,"instance_id":instance,"protocols":protocols,"verified":true,"connected":false})));
+    r.peers.insert(key,(Instant::now(),json!({"endpoint":preferred,"aliases":aliases,"board_id":board,"instance_id":instance,"protocols":protocols,"verified":true,"connected":false,
+        "version":public.as_ref().and_then(|v|v.get("version")).or_else(||status.as_ref().and_then(|v|v.get("version"))),
+        "board_version":status.as_ref().and_then(|v|v.get("version")),
+        "compatibility":public.as_ref().and_then(|v|v.get("compatibility")).or_else(||status.as_ref().and_then(|v|v.get("compatibility"))),
+        "supported":status.as_ref().and_then(|v|serde_json::from_value::<crate::DeviceStatus>(v.clone()).ok()).map(|s|crate::peer_identity::validate_board(&s).is_ok())})));
 }
 fn valid_status(v: &Value) -> bool {
     serde_json::from_value::<crate::DeviceStatus>(v.clone())
@@ -503,7 +512,7 @@ fn udp_socket(port: u16, group: Ipv4Addr, addresses: &[Ipv4Addr]) -> std::io::Re
     socket.set_read_timeout(Some(Duration::from_millis(250)))?;
     Ok(socket)
 }
-const SEARCH:&[u8]=b"M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 1\r\nST: ssdp:all\r\n\r\n";
+const SEARCH:&[u8]=concat!("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 1\r\nST: ssdp:all\r\nUSER-AGENT: PakarController/",env!("CARGO_PKG_VERSION")," native\r\n\r\n").as_bytes();
 fn search_request(packet: &[u8]) -> bool {
     std::str::from_utf8(packet).is_ok_and(|s| {
         s.starts_with("M-SEARCH * HTTP/1.1\r\n")
@@ -520,8 +529,8 @@ fn ssdp(s: &crate::bridge::Settings, ip: Ipv4Addr, nts: &str) -> String {
         format!("NOTIFY * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nNTS: {nts}\r\nNT: {TYPE}\r\n")
     };
     format!(
-        "{first}CACHE-CONTROL: max-age=60\r\nST: {TYPE}\r\nUSN: uuid:{}::{TYPE}\r\nLOCATION: http://{ip}:{}/description.xml\r\nX-Digitalogic-Product: pakarcontroller\r\nX-PCController-Name: {}\r\n\r\n",
-        s.instance_id, s.port, s.hostname
+        "{first}CACHE-CONTROL: max-age=60\r\n{}ST: {TYPE}\r\nUSN: uuid:{}::{TYPE}\r\nLOCATION: http://{ip}:{}/description.xml\r\nX-Digitalogic-Product: pakarcontroller\r\nX-PCController-Name: {}\r\n\r\n",
+        crate::peer_identity::server_headers(),s.instance_id, s.port, s.hostname
     )
 }
 // Donor big-endian vendor product/API-port TLVs, never an invented port80 app.
@@ -534,6 +543,7 @@ fn encode_mndp(name: &str, id: &str, port: u16, seq: u16) -> Vec<u8> {
     for (kind, data) in [
         (1u16, mac),
         (5, name.as_bytes().to_vec()),
+        (7, crate::peer_identity::VERSION.as_bytes().to_vec()),
         (8, b"Digitalogic".to_vec()),
         (11, id.as_bytes().to_vec()),
         (12, b"Application endpoint".to_vec()),

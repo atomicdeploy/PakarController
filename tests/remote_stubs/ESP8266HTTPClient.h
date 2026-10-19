@@ -11,6 +11,7 @@ class HTTPClient{
  ~HTTPClient(){if(client_){assert(WiFiClient::live.count(client_));client_->stop();}}
  void setTimeout(int){if(client_)assert(WiFiClient::live.count(client_));}
  void setReuse(bool){}void useHTTP10(bool){}void setFollowRedirects(int){}
+ void setUserAgent(const String &agent){userAgent_=agent;}
  bool begin(WiFiClient &c,const String&url){if(client_)assert(WiFiClient::live.count(client_));client_=&c;url_=url;auth_=String();return testResponses.count(url);}
  void collectHeaders(const char**,size_t){}
  void addHeader(const String&name,const String&value){if(name=="Authorization")auth_=value;}
@@ -21,5 +22,5 @@ class HTTPClient{
  // Actual S3 end() retains _client when the peer has already disconnected.
  // Deliberately model that branch, not a forgiving unconditional nullptr.
  void end(){if(client_){assert(WiFiClient::live.count(client_));client_->stop();}}
- private:WiFiClient*client_=nullptr;String url_,auth_;TestResponse r_;
+ private:WiFiClient*client_=nullptr;String url_,auth_,userAgent_;TestResponse r_;
 };

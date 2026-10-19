@@ -26,7 +26,7 @@ pub fn ssdp_locations(timeout: Duration) -> Vec<String> {
         "HOST: 239.255.255.250:1900\r\n",
         "MAN: \"ssdp:discover\"\r\n",
         "MX: 1\r\n",
-        "ST: ssdp:all\r\n\r\n"
+        "ST: ssdp:all\r\nUSER-AGENT: PakarController/",env!("CARGO_PKG_VERSION")," native\r\n\r\n"
     );
     if socket.send_to(request.as_bytes(), SSDP_ADDRESS).is_err() {
         return Vec::new();

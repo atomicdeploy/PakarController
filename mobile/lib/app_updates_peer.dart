@@ -6,6 +6,8 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 import 'app_updates.dart';
+import 'peer_identity.dart';
+import 'peer_policy.dart';
 
 typedef AppUpdateApproval = Future<bool> Function(
   Map<String, dynamic> manifest,
@@ -28,10 +30,16 @@ bool _sameSecret(String a, String b) {
 /// owner (AppUpdateDiscovery), not another competing multicast/board server.
 /// Explicit opt-in, foreground only: no settings/commands/installer exposed.
 class AppUpdatePeers extends ChangeNotifier {
-  AppUpdatePeers(this.updates, {required this.approve});
+  AppUpdatePeers(
+    this.updates, {
+    required this.approve,
+    this.enforceVersions = enforcePeerVersions,
+  });
+  final bool enforceVersions;
+  final peerRegistry = PeerRegistry();
   final AppUpdates updates;
   final AppUpdateApproval approve;
-  final String instanceId = _token();
+  String get instanceId => PeerIdentity.current.installationId;
   HttpServer? _server;
   Timer? _expiry;
   int _epoch = 0, _active = 0;
@@ -72,6 +80,10 @@ class AppUpdatePeers extends ChangeNotifier {
     'kind': 'android-app',
     'name': 'PakarController Android',
     'instance_id': instanceId,
+    'version': PeerIdentity.current.version,
+    'build': PeerIdentity.current.build,
+    'compatibility': peerCompatibility(enabled: enforceVersions),
+    'peer': PeerIdentity.current.report(),
     'package_sharing': true,
     'app_updates': await updates.rpc('app.package.info', {}),
     'rpc': '/api/rpc',
@@ -84,6 +96,7 @@ class AppUpdatePeers extends ChangeNotifier {
 
   Future<void> _request(HttpRequest request, int epoch) async {
     final response = request.response;
+    identifyResponse(response);
     response.headers.contentType = ContentType.json;
     response.headers.set('Cache-Control', 'no-store');
     response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -97,11 +110,52 @@ class AppUpdatePeers extends ChangeNotifier {
     try {
       if (request.method == 'GET' && request.uri.path == '/healthz') {
         response.write(
-          jsonEncode({'status': 'ok', 'service': 'pakarcontroller-mobile'}),
+          jsonEncode({
+            'status': 'ok',
+            'service': 'pakarcontroller-mobile',
+            'version': PeerIdentity.current.version,
+            'build': PeerIdentity.current.build,
+            'compatibility': peerCompatibility(enabled: enforceVersions),
+          }),
         );
       } else if (request.method == 'GET' &&
-          request.uri.path == '/api/app-updates') {
+          (request.uri.path == '/api/app-updates' ||
+              request.uri.path == '/api/peer/info')) {
         response.write(jsonEncode(await manifest()));
+      } else if (request.method == 'GET' &&
+          request.uri.path == '/api/clients') {
+        validatePeerApp(
+          request.headers.value('x-pakar-version'),
+          enabled: enforceVersions,
+        );
+        response.write(jsonEncode({'clients': peerRegistry.peers}));
+      } else if (request.method == 'POST' &&
+          request.uri.path == '/api/clients/report') {
+        validatePeerApp(
+          request.headers.value('x-pakar-version'),
+          enabled: enforceVersions,
+        );
+        if (request.headers.value('origin') != null ||
+            request.contentLength > 8192) {
+          throw const FormatException(
+            'Browser or oversized introduction rejected',
+          );
+        }
+        final body = utf8.decode(await readAppUpdateBytes(request));
+        final report =
+            request.headers.contentType?.mimeType ==
+                'application/x-www-form-urlencoded'
+            ? jsonDecode(Uri.splitQueryString(body)['report'] ?? '')
+            : jsonDecode(body);
+        validatePeerApp(
+          report is Map ? report['version'] : null,
+          enabled: enforceVersions,
+        );
+        peerRegistry.observe(
+          report,
+          source: request.connectionInfo?.remoteAddress.address ?? '',
+        );
+        response.write(jsonEncode({'accepted': true}));
       } else if (request.method == 'POST' && request.uri.path == '/api/rpc') {
         // An arbitrary web page must not approve/write a local app update.
         if (request.headers.value('origin') != null ||
@@ -117,6 +171,31 @@ class AppUpdatePeers extends ChangeNotifier {
             value['method'] is! String ||
             value['params'] is! Map) {
           throw const FormatException('Invalid APK RPC');
+        }
+        // Public, read-only update bootstrap must let an older app retrieve
+        // the APK that fixes its incompatibility. This grants no upgrade,
+        // installer, board command or settings permission.
+        final bootstrap = {
+          'app.package.info',
+          'app.package.read',
+        }.contains(value['method']);
+        if (!bootstrap) {
+          validatePeerApp(
+            request.headers.value('x-pakar-version'),
+            enabled: enforceVersions,
+          );
+        }
+        if (value['peer'] != null) {
+          if (!bootstrap) {
+            validatePeerApp(
+              value['peer'] is Map ? value['peer']['version'] : null,
+              enabled: enforceVersions,
+            );
+          }
+          peerRegistry.observe(
+            value['peer'],
+            source: request.connectionInfo?.remoteAddress.address ?? '',
+          );
         }
         final result = await handleRpc(
           value['method'],
@@ -134,6 +213,7 @@ class AppUpdatePeers extends ChangeNotifier {
         response.statusCode = 404;
       }
     } catch (error) {
+      if (error is UnsupportedPeerVersion) response.statusCode = 426;
       response.write(
         jsonEncode({
           'jsonrpc': '2.0',

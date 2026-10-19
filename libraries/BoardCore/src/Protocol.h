@@ -45,6 +45,7 @@ enum Opcode : uint8_t {
   kTableCommand = 0x5E, // USB [boot_id16,inner opcode,<=31 bytes]; bounded table-only, ACK names inner opcode.
   kCellsAction = 0x5F, // ESP only: [state,effect,10-byte logical-cell bitmap], one atomic loop-owner update.
   kShellRequest = 0x60, // ESP only: boot-fenced Open, token/sequence Input, Close and bounded output Poll.
+  kPeerReport = 0x61, // USB: [totalLE16,offsetLE16,<=44 JSON bytes], bounded sequential peer introduction.
   kShellResponse = 0xB9, // Encapsulated terminal output; no raw bytes interleaved with COBS.
   kTableSnapshotResponse = 0xB6, // [nonce,token32,total16,offset16,<=39 immutable JSON bytes].
   kTableCommandState = 0xB7, // Post-ACK readback: inner opcode, boot16, 7 scalar fields, 80 packed two-bit cell states.

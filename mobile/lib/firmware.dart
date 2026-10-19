@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart' as crypto;
 
 import 'api.dart';
+import 'peer_identity.dart';
 import 'firmware_image.dart';
 export 'firmware_image.dart';
 
@@ -408,7 +409,9 @@ class FirmwareController {
     check(esp ? 'ota' : 'isp');
     final client = downloadClient ?? http.Client();
     try {
-      final request = http.Request('GET', uri)..followRedirects = false;
+      final request = http.Request('GET', uri)
+        ..followRedirects = false
+        ..headers.addAll(PeerIdentity.current.headers);
       if (bearer.isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $bearer';
       }

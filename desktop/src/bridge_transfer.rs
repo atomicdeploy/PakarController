@@ -204,7 +204,7 @@ impl Response<'_> {
         socket
             .set_write_timeout(Some(Duration::from_secs(3)))
             .map_err(|e| e.to_string())?;
-        write!(socket,"HTTP/1.1 {status} Result\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n",length.unwrap_or(buffered.len() as u64)).map_err(|e|e.to_string())?;
+        write!(socket,"HTTP/1.1 {status} Result\r\n{}Content-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n",crate::peer_identity::server_headers(),length.unwrap_or(buffered.len() as u64)).map_err(|e|e.to_string())?;
         for key in RESPONSE_HEADERS {
             if let Some(value) = self
                 .response

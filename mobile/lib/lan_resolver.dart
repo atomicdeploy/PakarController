@@ -16,10 +16,25 @@ class LanResolver {
   final bool _nativeFirst;
   final SecurityContext? securityContext;
   final _cache = <String, InternetAddress>{};
+  final _localRoutes = <String, InternetAddress>{};
   final _pending = <String, Future<List<InternetAddress>>>{};
   final _lookupFailures = <String, int>{};
   int lookupFailureRevision(String host) =>
       _lookupFailures[host.toLowerCase()] ?? 0;
+
+  String _routeKey(Uri uri) =>
+      '${uri.scheme.toLowerCase()}|${uri.host.toLowerCase()}|${uri.port}';
+
+  /// Actual recent successful direct socket, never a preferred-interface guess.
+  /// This observational cache cannot grant identity or command ownership.
+  String? localAddressFor(Uri uri) => _localRoutes[_routeKey(uri)]?.address;
+  void _rememberLocalAddress(Uri uri, Socket socket) {
+    final key = _routeKey(uri);
+    if (_localRoutes.length >= 64 && !_localRoutes.containsKey(key)) {
+      _localRoutes.remove(_localRoutes.keys.first);
+    }
+    _localRoutes[key] = socket.address;
+  }
 
   Future<List<InternetAddress>> _resolve(String host) async {
     final key = host.toLowerCase();
@@ -91,6 +106,7 @@ class LanResolver {
     ..connectionTimeout = const Duration(seconds: 6)
     ..findProxy = controllerProxyFor
     ..connectionFactory = (uri, proxyHost, proxyPort) {
+      if (proxyHost != null) _localRoutes.remove(_routeKey(uri));
       final secure =
           proxyHost == null && (uri.scheme == 'https' || uri.scheme == 'wss');
       final port = proxyPort ?? (uri.hasPort ? uri.port : (secure ? 443 : 80));
@@ -128,6 +144,7 @@ class LanResolver {
           throw const SocketException('Connection cancelled');
         }
         connected = socket;
+        if (proxyHost == null) _rememberLocalAddress(uri, socket);
         return socket;
       }
 
@@ -149,6 +166,7 @@ class LanResolver {
                     _cache.remove(_cache.keys.first);
                   }
                   _cache[key] = socket.remoteAddress;
+                  if (proxyHost == null) _rememberLocalAddress(uri, socket);
                   return socket;
                 }),
                 task.cancel,

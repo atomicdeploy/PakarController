@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <PeerCompatibility.h>
 
 namespace PakarS3 {
 // PU850's one hostname/service owner, adapted to checked Arduino-ESP32 startup.
@@ -24,6 +25,10 @@ bool startDiscoveryMdns(Responder &responder,const char *hostname,const char *ap
     responder.addService("pakarcontroller","tcp",80) &&
     discoveryTxt(responder,"pakarcontroller","tcp","api","/api/status") &&
     discoveryTxt(responder,"pakarcontroller","tcp","websocket","/ws") &&
+    discoveryTxt(responder,"pakarcontroller","tcp","version",version) &&
+    discoveryTxt(responder,"pakarcontroller","tcp","minimum_app",BoardCore::PeerCompatibility::minimumApp) &&
+    discoveryTxt(responder,"pakarcontroller","tcp","minimum_board",BoardCore::PeerCompatibility::minimumBoard) &&
+    discoveryTxt(responder,"pakarcontroller","tcp","version_check",BoardCore::PeerCompatibility::enforced?"true":"false") &&
     responder.addService("pakar-stream","udp",streamPort) &&
     (!shellPort||responder.addService("telnet","tcp",shellPort));
   if(!complete)responder.end();

@@ -24,6 +24,20 @@ int main() {
   auto dispatch = [&](AsyncWebServerRequest &request) {
     access.middleware()->run(&request, [&]() { ++admitted; });
   };
+  for(const char *version:{"0.2.6","0.2.7-alpha","","invalid"}) {
+    AsyncWebServerRequest request;request.path="/api/cell";request.requestMethod=HTTP_POST;
+    request.headers["X-Pakar-Version"].text=version;const unsigned before=admitted;
+    dispatch(request);assert(request.status==426&&admitted==before);
+  }
+  AsyncWebServerRequest missing;missing.path="/api/cell";missing.requestMethod=HTTP_POST;
+  missing.headers.erase("X-Pakar-Version");dispatch(missing);assert(missing.status==426);
+  AsyncWebServerRequest releaseBootstrap;releaseBootstrap.path="/api/status";releaseBootstrap.headers.erase("X-Pakar-Version");
+  unsigned count=admitted;dispatch(releaseBootstrap);assert(admitted==count+1);
+  AsyncWebServerRequest query;query.path="/ws";query.headers.erase("X-Pakar-Version");query.arguments["version"]="0.2.8";
+  count=admitted;dispatch(query);assert(admitted==count+1);
+  assert(access.bindSocket(99,&query));assert(access.socketVersion(99)=="0.2.8");access.forgetSocket(99);
+  AsyncWebServerRequest conflict;conflict.path="/ws";conflict.arguments["version"]="0.2.9";
+  dispatch(conflict);assert(conflict.status==426);
   for (int method : {HTTP_GET, HTTP_HEAD, HTTP_POST, HTTP_PUT, HTTP_DELETE}) {
     for (const char *path : {"/api/avr/probe", "/api/status", "/api/avr/backup/flash", "/api/avr/image"}) {
       AsyncWebServerRequest request; request.requestMethod = method; request.path = path;

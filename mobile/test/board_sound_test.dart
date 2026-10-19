@@ -179,6 +179,7 @@ void main() {
           Map<String, dynamic> json;
           if (path == '/api/status') {
             json = {
+              'version': '0.2.8',
               'hostname': 'ledboard',
               'board_id': 'esp32s3-fixture',
               'boot_id': 'a' * 32,

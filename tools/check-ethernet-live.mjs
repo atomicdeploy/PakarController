@@ -5,6 +5,7 @@ import https from 'node:https';
 import {isIP} from 'node:net';
 import {pathToFileURL} from 'node:url';
 import {setTimeout as delay} from 'node:timers/promises';
+import {toolHeaders,assertToolPeerCompatible} from './peer-identity.mjs';
 
 export function deviceOrigin(value) {
   const url=new URL(value);
@@ -17,6 +18,7 @@ export function deviceOrigin(value) {
 }
 const ipv4=address=>address?.replace(/^::ffff:/,'');
 export function ethernetReady(status,remote,peer=null) {
+  assertToolPeerCompatible(status);
   const e=status?.ethernet;
   if(status?.http_peer_fencing!==true||!/^[a-z0-9_-]{1,64}$/.test(status.board_id??'')||
      !/^[a-f0-9]{32}$/.test(status.boot_id??'')||/^0{32}$/.test(status.boot_id)||
@@ -37,7 +39,7 @@ export function deviceRequest(origin,path,{form,headers={},expectedAddress,metho
     const request=client.request(new URL(path,origin),{
       method:method||(body?'POST':'GET'),agent:false,family:4,
       ...(expectedAddress?{lookup:(_host,options,callback)=>callback(null,options.all?[{address:expectedAddress,family:4}]:expectedAddress,4)}:{}),
-      headers:{Accept:'application/json',...headers,...(body?{'Content-Type':'application/x-www-form-urlencoded','Content-Length':Buffer.byteLength(body)}:{})},
+      headers:toolHeaders({Accept:'application/json',...headers,...(body?{'Content-Type':'application/x-www-form-urlencoded','Content-Length':Buffer.byteLength(body)}:{})}),
     },response=>{
       const remote=ipv4(response.socket.remoteAddress),chunks=[];let bytes=0;
       if(expectedAddress&&remote!==expectedAddress){response.destroy();reject(Error('TCP peer changed; no retry'));return;}

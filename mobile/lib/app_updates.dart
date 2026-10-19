@@ -5,6 +5,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'peer_identity.dart';
+import 'peer_policy.dart';
+
 // Adapted from the completely read PCController unified/app_upgrade.dart.
 typedef AppUpdateJson = Map<String, dynamic>;
 typedef Json = AppUpdateJson;
@@ -179,6 +182,7 @@ class AppUpdates extends ChangeNotifier {
           .getUrl(uri)
           .timeout(const Duration(seconds: 5));
       request.followRedirects = false;
+      identifyRequest(request);
       final response = await request.close().timeout(
         const Duration(seconds: 10),
       );
@@ -317,6 +321,7 @@ class AppUpdates extends ChangeNotifier {
           health['service'] != 'pakarcontroller-mobile') {
         throw const FormatException('Peer is not a controller app');
       }
+      validatePeerApp(health['version']);
       final remote = await peerRpc(client, origin, 'app.package.info', {});
       final local = await rpc('app.package.info', {});
       if (_disposed || epoch != _epoch) {
@@ -433,6 +438,7 @@ class AppUpdates extends ChangeNotifier {
           health['service'] != 'pakarcontroller-mobile') {
         throw const FormatException('Peer is not a controller app');
       }
+      validatePeerApp(health['version']);
       final manifest = await rpc('app.package.info', {});
       if (_disposed || epoch != _epoch) {
         throw StateError('APK transfer cancelled');
@@ -563,6 +569,7 @@ Uri peerOrigin(String value) {
 Future<Json> boundedPeerGet(HttpClient client, Uri uri) async {
   final request = await client.getUrl(uri).timeout(const Duration(seconds: 5));
   request.followRedirects = false;
+  identifyRequest(request);
   final response = await request.close().timeout(const Duration(seconds: 3));
   return readPeerJson(response);
 }
@@ -617,11 +624,19 @@ Future<Json> peerRpc(
       .timeout(const Duration(seconds: 5));
   request.followRedirects = false;
   request.headers.contentType = ContentType.json;
+  identifyRequest(request);
   if (capability != null) {
     request.headers.set('authorization', 'Bearer $capability');
   }
   request.write(
-    jsonEncode({'jsonrpc': '2.0', 'id': 1, 'method': method, 'params': params}),
+    jsonEncode({
+      'jsonrpc': '2.0',
+      'id': 1,
+      'method': method,
+      'params': params,
+      if (method == 'app.package.info' || method == 'app.upgrade.offer')
+        'peer': PeerIdentity.current.report(),
+    }),
   );
   final result = await readPeerJson(
     await request.close().timeout(const Duration(seconds: 35)),

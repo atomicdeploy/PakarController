@@ -5,6 +5,8 @@ param(
 )
 # Physical ESP USB recovery; does not erase filesystem, Wi-Fi or AVR backups.
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'serial-wire.ps1')
+. (Join-Path $PSScriptRoot 'peer-identity.ps1')
 if (-not $Password) { $Password = Read-Host 'New device password (8..64 printable ASCII characters)' -AsSecureString }
 $secretPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
 try { $secret = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($secretPointer) }
@@ -64,6 +66,9 @@ function Send-AccessChunk([byte[]] $Payload) {
 }
 try {
     $serial.Open(); Start-Sleep -Milliseconds 250; $serial.DiscardInBuffer()
+    $hello=Send-PakarNetworkRequest $serial 0x01 1 (New-PakarToolUsbHello) 0x81 5000
+    Assert-PakarToolUsbHello $hello
+    $script:accessSequence=1
     Send-AccessChunk ([byte[]] @(0))
     foreach ($entry in @(@{Type=1;Value=$Username}, @{Type=2;Value=$secret})) {
         [byte[]] $bytes = [Text.Encoding]::ASCII.GetBytes($entry.Value)

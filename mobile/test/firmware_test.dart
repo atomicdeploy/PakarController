@@ -36,7 +36,17 @@ class MaintenanceClient extends http.BaseClient {
 }
 
 http.StreamedResponse jsonResponse(Map<String, dynamic> value) =>
-    http.StreamedResponse(Stream.value(utf8.encode(jsonEncode(value))), 200);
+    http.StreamedResponse(
+      Stream.value(
+        utf8.encode(
+          jsonEncode({
+            if (value.containsKey('hostname')) 'version': '0.2.8',
+            ...value,
+          }),
+        ),
+      ),
+      200,
+    );
 
 void main() {
   test('Strict job fields and truthful action phases reject defaults and impossible counts', () {

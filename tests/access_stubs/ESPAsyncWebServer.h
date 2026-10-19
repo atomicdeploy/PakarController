@@ -19,6 +19,12 @@ constexpr int HTTP_POST = 2, HTTP_HEAD = 4, HTTP_PUT = 8, HTTP_DELETE = 16;
 constexpr uint8_t ASYNC_WRITE_FLAG_COPY=1;
 enum WebResponseState {RESPONSE_SETUP,RESPONSE_HEADERS,RESPONSE_CONTENT,RESPONSE_WAIT_ACK,RESPONSE_END,RESPONSE_FAILED};
 struct AsyncWebHeader { String text; const String &value() const { return text; } };
+class DefaultHeaders {
+ public:
+  std::map<std::string,String> headers;
+  static DefaultHeaders &Instance(){static DefaultHeaders value;return value;}
+  void addHeader(const char *name,const String &value){headers[name]=value;}
+};
 struct AsyncWebServerResponse {
  protected:
   int _code=0;String _contentType;size_t _contentLength=0;
@@ -87,6 +93,9 @@ struct AsyncClient {
 class AsyncWebServerRequest : public std::enable_shared_from_this<AsyncWebServerRequest> {
  public:
   AsyncWebServerRequest(){
+    // Normal fixtures model an introduced supported app. Negative admission
+    // cases explicitly remove/replace this header; never relax production.
+    headers["X-Pakar-Version"].text="0.2.8";
     connection.onSend=[this](){const auto boundary=connection.sentWire.find("\r\n\r\n");
       if(boundary!=String::npos)body=connection.sentWire.substr(boundary+4);};
     connection.onClose=[this](){if(disconnectCallback)disconnectCallback();};

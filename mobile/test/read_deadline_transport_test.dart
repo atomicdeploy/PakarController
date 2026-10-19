@@ -25,7 +25,7 @@ class StalledPeer {
           } else if (mode == 'oversize') {
             socket.write('HTTP/1.1 200 OK\r\nContent-Length: 65537\r\n\r\n{');
           } else {
-            const body = '{"hostname":"ledboard"}';
+            const body = '{"version":"0.2.8","hostname":"ledboard"}';
             socket.write(
               'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: ${body.length}\r\nConnection: close\r\n\r\n$body',
             );

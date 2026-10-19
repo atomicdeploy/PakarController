@@ -16,6 +16,7 @@ static String full(){++fullSnapshots;return fullJson;}
 static const char *board="esp32s3-907069eac800",*boot="123456789abcdef0123456789abcdef0";
 static String envelope(const char *id,const char *command="cell") {
   JsonDocument d;d["command"]=command;d["board_id"]=board;d["boot_id"]=boot;
+  d["client_version"]="0.2.8";
   d["request_id"]=id;d["expires_at"]=static_cast<uint32_t>(time(nullptr))+60;
   String out;serializeJson(d,out);return out;
 }
@@ -90,6 +91,10 @@ int main(){
   ws.inject("{\"command\":\"status\"}");assert(dispatches==1&&lastReply()["accepted"]==true);
   auto command=envelope("once");ws.inject(command);assert(dispatches==2);
   assert(lastReply()["request_id"]=="once");
+  JsonDocument unsupported;assert(!deserializeJson(unsupported,envelope("unsupported-app")));
+  unsupported["client_version"]="0.2.6";String invalidRelease;serializeJson(unsupported,invalidRelease);
+  const unsigned beforeUnsupported=dispatches;ws.inject(invalidRelease);
+  assert(dispatches==beforeUnsupported&&lastReply()["code"]=="unsupported_app_version");
   mqtt.inject(command);assert(dispatches==2); // One cache for both channels.
   JsonDocument duplicate;assert(!deserializeJson(duplicate,mqtt.packets.back().payload));
   assert(duplicate["accepted"]==false&&duplicate["code"]=="duplicate"&&duplicate["request_id"]=="once");

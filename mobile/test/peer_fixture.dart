@@ -22,6 +22,7 @@ DeviceStatus peerFixture({
   String title = 'Pakar Table',
   String application = 'pakar-table',
 }) => DeviceStatus({
+  'version': '0.2.8',
   'hostname': hostname,
   'mode': 'cell',
   'avr_online': true,

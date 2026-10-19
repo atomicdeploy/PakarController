@@ -31,16 +31,17 @@ public catalogs/package downloads do not grant management access.
 
 ## Enrollment and telemetry
 
-Root-local office commands (operator credentials are never command arguments):
+Root-local office commands after deploying the current repository-relative
+service layout (operator credentials are never command arguments):
 
 ```sh
-node /opt/pakarcontroller-management/operator.mjs enroll windows-x64
-node /opt/pakarcontroller-management/operator.mjs enroll android
-node /opt/pakarcontroller-management/operator.mjs clients
-node /opt/pakarcontroller-management/operator.mjs command CLIENT_ID check-update
-node /opt/pakarcontroller-management/operator.mjs command CLIENT_ID cleanup
-node /opt/pakarcontroller-management/operator.mjs commands
-node /opt/pakarcontroller-management/operator.mjs revoke CLIENT_ID
+node /opt/pakarcontroller-management/services/client-management/operator.mjs enroll windows-x64
+node /opt/pakarcontroller-management/services/client-management/operator.mjs enroll android
+node /opt/pakarcontroller-management/services/client-management/operator.mjs clients
+node /opt/pakarcontroller-management/services/client-management/operator.mjs command CLIENT_ID check-update
+node /opt/pakarcontroller-management/services/client-management/operator.mjs command CLIENT_ID cleanup
+node /opt/pakarcontroller-management/services/client-management/operator.mjs commands
+node /opt/pakarcontroller-management/services/client-management/operator.mjs revoke CLIENT_ID
 ```
 
 Enrollment output is a secret, single-use, platform-bound token valid ten
@@ -64,6 +65,7 @@ Under the configured service base (`https://office.digitalogic.ir/pakar`):
 | Method/path | Access / result |
 |---|---|
 | GET /api/health | Public readiness and product identity |
+| GET /api/peer/info | Public application version/build and support policy |
 | GET /api/releases?platform=windows-x64 or android | Public newest package descriptors |
 | GET /api/app-updates | Android `X-Pakar-App-Session` and `X-Pakar-App-Package`; session/deadline-bound offers |
 | WS /api/events | Public Android release feed; `subscribe` with exact self-package/session |
@@ -79,6 +81,25 @@ Android additionally has package/signers/version_code/version_name. No redirect
 or embedded credential is accepted by client downloaders. HTTP success is not
 installation success; measured transfer bytes and verified startup/OS receipts
 are distinct states. Firmware versions are descriptive, not API generations.
+
+The service uses the same canonical `interfaces/client-release.json`,
+`interfaces/peer-policy.json` and `tools/peer-identity.mjs` as local tools, not a
+second hardcoded version. Its HTTP responses, including errors and WebSocket
+upgrades, identify `Server`, `X-Pakar-Application`, `X-Pakar-Version`,
+`X-Pakar-Build`, `X-Pakar-Min-App-Version` and `X-Pakar-Version-Check`.
+An outer reverse proxy may identify itself in `Server`; the product-specific
+headers and API retain the actual application identity.
+
+Enrollment and authenticated client control/report routes require a supported
+`X-Pakar-Version` by default. Rejection is HTTP426 and does not consume an
+enrollment token or claim a command. Catalogs, packages, public release-feed
+WebSocket, health and peer info remain explicit recovery/bootstrap paths so an
+older app can obtain its update. Private operator Bearer authorization is
+unchanged. `PAKAR_ENFORCE_PEER_VERSIONS=0` or `false` disables only the service's
+support check; authentication and critical identity checks remain enforced.
+Telemetry keeps allowlisted hardware, capability and operational setting
+summaries; secrets and arbitrary nested records are not retained. The actual
+connection's `observed_ip` is distinguished from self-reported `reported_ip`.
 
 ## Deployment and publication
 
@@ -102,7 +123,7 @@ Apache has a scoped `/pakar/` include; existing PBX/MQTT configuration is untouc
 To migrate, preserve the service database, packages and private credentials and
 change client service/catalog/feed origins explicitly. Never publish these secrets.
 
-## Current checkpoint
+## Historical deployed checkpoint (build9)
 
 Build9 source: Windows28,985,344bytes,
 SHA256 `d366a33ba19f39235f04c8d6a398f7cc8089366691cbeee8ad23427528981271`;

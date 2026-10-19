@@ -233,15 +233,11 @@ fn artifact(settings: &Settings, url: &str) -> Result<reqwest::Url, String> {
     Ok(candidate)
 }
 fn client() -> Result<reqwest::blocking::Client, String> {
-    reqwest::blocking::Client::builder()
+    crate::peer_identity::client_builder()
         .no_proxy()
         .redirect(reqwest::redirect::Policy::none())
         .connect_timeout(Duration::from_secs(8))
         .timeout(Duration::from_secs(120))
-        .user_agent(format!(
-            "PakarController/{} app-manager",
-            env!("CARGO_PKG_VERSION")
-        ))
         .build()
         .map_err(|_| "Cannot create management transport".into())
 }

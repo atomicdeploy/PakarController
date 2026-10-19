@@ -1,5 +1,62 @@
 # Donor-first preflight receipt
 
+## Peer identity and supported-release admission
+
+Source checkpoint moves the coordinated package identity to0.2.8/build15 and
+support floor0.2.8, so the previously shipped0.2.7 builds are actually distinguishable.
+No exact-build adapters or numbered routes were added. PCController's actual
+complete discovery_metadata.go supplies the existing bounded nonsecret,
+push-fed metadata discipline; RayanLamp's complete api.ts supplies the existing
+HTTP identity/fence/error wrapper. Release-range admission itself is a new Pakar
+requirement, not a claim that either donor already enforced it. The missing
+generic `http` lookup was routed as `peer-identity` in the SAME capability index.
+
+Focused core tests caught a mutable-vs-const ArduinoJson object test which
+rejected rich reports; inspected the actual JsonVariantConst conversion and
+corrected it to JsonObjectConst. The firmware reports retain original secrets
+allowlisting and observed-vs-self-reported addresses, now with strict bounded
+UTF-8 model names and same-session USB/Wi-Fi association. These IDs are not auth.
+Hash bindings are refreshed only for reviewed changed targets/proofs; existing
+donor-wide gaps/verdicts remain open. Direct peers and each bridge's downstream
+registry are tracked; forwarding an indirect downstream client's entire report
+through a USB bridge into the MCU registry remains a separate bounded-queue task.
+No device contact, firmware flash, app replacement, multicast or optical proof
+is implied by these source changes. See PEER-IDENTITY.md for policy/build controls.
+
+Verification found two additional concrete regressions and retained the original
+acceptance bounds: AVR's full string parser exceeded flash, so numeric UART
+bounds are constant-folded without importing the ESP parser; final AVR32284B,
+globals1478B,100B flash headroom. The native Windows USB capture fixture measured
+age from port-open instead of actual capture start after introduction; its same
+eight-second snapshot age remains, plus bounded introduction time. No command
+deadline or retry policy was weakened. A missing-version positive firmware-source
+fixture was corrected to the actual shared release, not a permissive fallback.
+
+The native build wrapper also stopped converting an absent peer-policy environment
+variable into an empty value when no override was requested: Cargo had correctly
+treated null versus empty as different compile identities and relinked needlessly.
+Explicit override restoration removes a formerly absent variable. Canonical warm
+caches and all existing storage guards stay intact. Built-CLI mocks now introduce
+the current supported release before operations; auth-info remains read-only
+bootstrap, and their actual new-executable execution remains a separate CI gate.
+
+Final override verification found and fixed one real capability mismatch: older
+firmware can explicitly reject the additive USB-report opcode even when the
+client's release check is disabled. Only an exact opcode/sequence-correlated
+Unsupported response can disable that report for the physical session in an
+explicit disabled-policy build. Default admission still rejects it; timeouts and
+other errors do not grant admission. Non-table USB now shares the existing exact
+board/boot Pin syntax before online status, without inventing HTTP capabilities.
+Final default44 and separately compiled disabled4 focused checks pass; core
+HTTP/USB ownership and no-replay behavior stay intact. No physical connection.
+
+Remote client-management changes follow complete donor store.go/download.go/
+artifacts_http.go rereads. Nine actual loopback HTTP/WebSocket/SQLite tests pass
+for consistent headers, admission, auth, bounded reports and read-only recovery.
+The installed layout includes the canonical helper and release/policy files with
+their original relative paths; operator/systemd paths match it. No remote install
+or reverse-proxy header verification occurred. Full donor parity stays open.
+
 ## Source-only esp32WS2811 review and startup hardening
 
 User-requested bertmelis/esp32WS2811 pinned0222ef025f2b8e03f8c8aef35d63c545a98ad579:

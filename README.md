@@ -57,6 +57,16 @@ flowchart LR
 
 ## Access and recovery
 
+### Peer identity and supported releases
+
+The coordinated source release is **0.2.8** (client build **15**). Apps and
+firmware enforce the shared minimum supported release by default, independently
+disableable at build time. HTTP headers, discovery and `/api/peer/info` identify
+each party; `/api/clients` exposes bounded, nonsecret peer introductions. API
+paths remain unversioned, with additive capabilities rather than build-specific
+adapters. Older installed products need a coordinated update; this source/build
+checkpoint is not a deployment. See [policy, build flags and recovery](docs/PEER-IDENTITY.md).
+
 ### Share a selected connection
 
 Native **Preferences → Connection → Share connection** can publish the selected

@@ -16,7 +16,7 @@ AppUpdateCoordinator updatePageFixture() => AppUpdateCoordinator(
   discovery: PackageDiscovery(),
   saveSnapshot: (_) async {},
   approve: (_) async => false,
-)..package = {...package(version: 8), 'version_name': '0.2.7'};
+)..package = {...package(version: 8), 'version_name': '0.2.8'};
 
 FirmwareAutomation automationPageFixture(FirmwareApi api) => FirmwareAutomation(
   api,

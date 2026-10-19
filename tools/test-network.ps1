@@ -22,7 +22,7 @@ if($LASTEXITCODE){throw 'Opt-in modem-sleep contract compilation failed'}
 & $taskOutput
 if($LASTEXITCODE){throw 'Opt-in modem-sleep contract assertions failed'}
 $taskDiscovery=Join-Path $taskRoot 'build/native/discovery_mdns_test.exe'
-& g++ -std=c++17 -Wall -Wextra -Werror (Join-Path $taskRoot 'tests/discovery_mdns_test.cpp') -o $taskDiscovery
+& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $taskRoot 'libraries/BoardCore/src') (Join-Path $taskRoot 'tests/discovery_mdns_test.cpp') -o $taskDiscovery
 if($LASTEXITCODE){throw 'mDNS registration fixture compilation failed'}
 & $taskDiscovery
 if($LASTEXITCODE){throw 'mDNS registration fixture failed'}

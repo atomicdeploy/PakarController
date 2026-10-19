@@ -7,6 +7,7 @@ $taskOutput = Join-Path $taskOutputDirectory 'web_access_fence_test.exe'
 & g++ -std=c++17 -Wall -Wextra -Werror -pthread `
     -I (Join-Path $taskRoot 'tests/access_stubs') `
     -I (Join-Path $taskRoot 'libraries/BoardCore/src') `
+    -I (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Arduino/libraries/ArduinoJson/src') `
     -I (Join-Path $taskRoot 'firmware/esp8266/src') `
     (Join-Path $taskRoot 'tests/web_access_fence_test.cpp') `
     (Join-Path $taskRoot 'firmware/esp8266/src/AccessConfig.cpp') -o $taskOutput

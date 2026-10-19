@@ -6,6 +6,7 @@ param(
     [ValidateRange(1,1024)][int]$MaximumCacheGiB=4,
     [switch]$Restore,
     [switch]$BuildOnly,
+    [switch]$DisablePeerVersionChecks,
     [ValidatePattern('^test/[A-Za-z0-9_/-]+_test\.dart$')][string]$TestPath,
     [string]$CapturePath,
     [ValidateSet('Table','SettingsTablet','SettingsPhone','FirmwareTablet','FirmwarePhone','BridgeTablet','BridgePhone','FrontPanelTablet','FrontPanelPhone','DevicesTablet','DevicesPhone','AppUpdatesTablet','AppUpdatesPhone','AutomationTablet','AutomationPhone')][string]$CaptureView='Table',
@@ -66,7 +67,11 @@ elseif(-not $BuildOnly){
         $taskCommands.Add($taskTestArguments)
     }
 }
-if($Mode -eq 'ApkPreview'){$taskCommands.Add(@('build','apk','--release','--no-pub'))}
+if($Mode -eq 'ApkPreview'){
+    $taskApkArguments=@('build','apk','--release','--no-pub')
+    if($DisablePeerVersionChecks){$taskApkArguments+='--dart-define=PAKAR_ENFORCE_PEER_VERSIONS=false'}
+    $taskCommands.Add($taskApkArguments)
+}
 if($Plan){return [pscustomobject]@{
     Executable=$FlutterPath;WorkingDirectory=$taskMobile;Commands=$taskCommands;
     Cache=(Join-Path $taskMobile 'build');CacheBudgetGiB=$MaximumCacheGiB;

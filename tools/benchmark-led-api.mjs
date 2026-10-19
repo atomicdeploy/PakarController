@@ -3,6 +3,7 @@
 // Peer fencing/deadlines follow the actual shared assets/web/peer-http.js.
 import {isIP} from 'node:net';
 import {pathToFileURL} from 'node:url';
+import {toolHeaders,assertToolPeerCompatible} from './peer-identity.mjs';
 
 export async function runLedApiBenchmark(options={}) {
   const {origin,expectedBackend,durationSeconds=8,readers=2,hz=5,run=false,environment=process.env}=options;
@@ -22,7 +23,7 @@ export async function runLedApiBenchmark(options={}) {
     if(failure)throw Error(failure);const start=performance.now(),controller=new AbortController(),abort=()=>controller.abort();
     stop.signal.addEventListener('abort',abort,{once:true});const timer=setTimeout(abort,3000);
     try {
-      const headers={Accept:'application/json'};if(authorization)headers.Authorization=authorization;
+      const headers=toolHeaders({Accept:'application/json'});if(authorization)headers.Authorization=authorization;
       if(owner){headers['X-Pakar-Board']=owner.board;headers['X-Pakar-Boot']=owner.boot}
       if(body)dispatched++;
       const response=await fetch(new URL(path,url),{method:body?'POST':'GET',headers,body:body?new URLSearchParams(body):undefined,redirect:'error',cache:'no-store',signal:controller.signal});
@@ -34,6 +35,7 @@ export async function runLedApiBenchmark(options={}) {
     finally{latencies.push({phase,ms:performance.now()-start});clearTimeout(timer);stop.signal.removeEventListener('abort',abort)}
   }
   function validate(s,mode) {
+    try{assertToolPeerCompatible(s)}catch{return fail('unsupported_peer_version')}
     const c=s?.capabilities,d=s?.led_output?.driver;
     if(s?.http_peer_fencing!==true||!/^[a-z0-9_-]{1,64}$/.test(s.board_id??'')||!/^[a-f0-9]{32}$/.test(s.boot_id??'')||/^0{32}$/.test(s.boot_id))return fail('missing_peer_identity');
     if(owner&&(s.board_id!==owner.board||s.boot_id!==owner.boot))return fail('peer_changed');

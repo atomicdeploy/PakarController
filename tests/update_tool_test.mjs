@@ -7,7 +7,7 @@ import {readFileSync} from 'node:fs';
 import {boardPeer,imageIdentity,selectPath,updateFirmware,uploadImage,checkWebSocket,boundedReadRequest} from '../tools/update-firmware.mjs';
 const image=Buffer.alloc(96);image[0]=0xe9;image[1]=1;image.writeUInt16LE(9,12);image[23]=1;
 const identity=imageIdentity(image),manifestSha='1'.repeat(64),address='192.168.50.20';
-const base={board_id:'esp32s3-fixture',boot_id:'a'.repeat(32),http_peer_fencing:true,hostname:'ledboard',programming_latch:false,
+const base={version:'0.2.8',board_id:'esp32s3-fixture',boot_id:'a'.repeat(32),http_peer_fencing:true,hostname:'ledboard',programming_latch:false,
   capabilities:{hostname:'ledboard',acknowledged_features:['network']}};
 assert.equal(selectPath('auto',{upload:'/update'},true),'local');
 assert.equal(selectPath('auto',{remote_fetch:'/api/firmware/fetch',remote_apply:'/api/firmware/apply'},true),'remote');

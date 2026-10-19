@@ -10,6 +10,7 @@ import {pathToFileURL} from 'node:url';
 import {setTimeout as delay} from 'node:timers/promises';
 import {deviceOrigin,deviceRequest} from './check-ethernet-live.mjs';
 import {manifest as validateImage} from './create-remote-manifest.mjs';
+import {toolHeaders,assertToolPeerCompatible} from './peer-identity.mjs';
 
 export function imageIdentity(bytes) {
   // Existing publisher validates raw S3 application, not bootloader/merged flash.
@@ -18,6 +19,7 @@ export function imageIdentity(bytes) {
     md5:createHash('md5').update(bytes).digest('hex')};
 }
 export function boardPeer(status,remote,previous=null,{allowReboot=false,allowAddressChange=false}={}) {
+  assertToolPeerCompatible(status);
   if(status?.http_peer_fencing!==true || !/^[a-z0-9_-]{1,64}$/.test(status.board_id??'') ||
     !/^[a-f0-9]{32}$/.test(status.boot_id??'') || /^0{32}$/.test(status.boot_id) ||
     typeof status.hostname!=='string' || status.capabilities?.hostname!==status.hostname ||
@@ -37,7 +39,7 @@ export function selectPath(mode,info,hasManifest) {
 function requestOptions(origin,peer,headers={}) {
   return {agent:false,family:4,
     lookup:(_host,options,done)=>done(null,options.all?[{address:peer.address,family:4}]:peer.address,4),
-    headers:{'X-Pakar-Board':peer.board,'X-Pakar-Boot':peer.boot,...headers}};
+    headers:toolHeaders({'X-Pakar-Board':peer.board,'X-Pakar-Boot':peer.boot,...headers})};
 }
 function transientReadError(error) {
   for(let current=error,depth=0;current&&depth<3;current=current.cause,depth++) {

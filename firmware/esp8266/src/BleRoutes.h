@@ -10,6 +10,7 @@ constexpr const char *routes[]={
   "GET /api/network","GET /api/network/ethernet","GET /api/cloud",
   "GET /api/firmware/remote","GET /api/update/lifecycle","GET /api/display/lcd",
   "GET /api/avr/contracts","GET /api/avr/contracts/result","GET /api/ble","GET /api/ble/clock",
+  "GET /api/peer/info","GET /api/clients","POST /api/clients/report",
   "POST /api/command","POST /api/cell","POST /api/cells","POST /api/effect",
   "POST /api/mode","POST /api/brightness","POST /api/led/output",
   "POST /api/audio","POST /api/buzzer","POST /api/display","POST /api/outputs",
@@ -116,6 +117,10 @@ String read(const String &path,JsonObjectConst form,int &status) {
   status=404;return "{\"error\":\"unsupported_ble_route\"}";
 }
 bool write(const String &path,JsonObjectConst form,String &body,int &status) {
+  if(path=="/api/clients/report") {
+    const bool accepted=recordClientReport(form["report"].as<String>(),"ble");
+    status=accepted?200:400;body=accepted?"{\"accepted\":true}":"{\"error\":\"invalid_report_or_client_limit\"}";return accepted;
+  }
   status=202;JsonDocument d;auto command=d.to<JsonObject>();String result;
   if(path=="/api/status-rgb")return updateStatusRgbConfiguration(form,body,status);
   if(path=="/api/ble") {
@@ -204,7 +209,17 @@ String bleRequest(const String &message,uint32_t epoch) {
   if(!BleRoutes::supported(method,path))return BleRoutes::error(id,404,"unsupported_ble_route");
   if(!accessConfig.ready()||accessConfig.enabled())return BleRoutes::error(id,401,"ble_authentication_not_supported");
   if(!bleService.owns(epoch))return BleRoutes::error(id,409,"ble_session_changed");
+  const String version=PakarCommand::stringValue(request,"client_version");
+  const bool bootstrap=method=="GET" && (path=="/api/status"||path=="/api/auth/info"||path=="/api/peer/info");
+  if(!BoardCore::PeerCompatibility::appAllowed(version.c_str()) && !(bootstrap&&version.isEmpty()))
+    return BleRoutes::response(id,426,PakarPeer::admissionError());
   const auto form=request["form"].as<JsonObjectConst>();
+  if(method=="GET" && path=="/api/peer/info")return BleRoutes::response(id,200,PakarPeer::info(pcBoardId,pcBootId,hostname));
+  if(method=="GET" && path=="/api/clients")return BleRoutes::response(id,200,clientTelemetry.json(millis()));
+  if(method=="POST" && path=="/api/clients/report") {
+    const bool accepted=recordClientReport(form["report"].as<String>(),"ble",String(),version);
+    return BleRoutes::response(id,accepted?200:400,accepted?"{\"accepted\":true}":"{\"error\":\"invalid_report_or_client_limit\"}");
+  }
   if(method=="GET") {int status=200;const String body=BleRoutes::read(path,form,status);
     return body.length()?BleRoutes::response(id,status,body):BleRoutes::error(id,503,"snapshot_memory_unavailable");}
   if(BleRoutes::readOnly)return BleRoutes::error(id,409,"maintenance_read_only");

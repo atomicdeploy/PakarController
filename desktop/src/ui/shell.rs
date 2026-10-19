@@ -691,6 +691,7 @@ impl PakarControllerApp {
             value["device_status"] = serde_json::json!(snapshot);
             value["firmware_progress"] = serde_json::json!(self.firmware_observation());
             value["client_build"] = serde_json::json!(crate::client_management::build());
+            value["peer_identity"] = serde_json::json!({"session_id":crate::peer_identity::session_id(),"application":crate::peer_identity::PRODUCT,"version":crate::peer_identity::VERSION,"compatibility":crate::peer_identity::advertised_policy()});
             value["app_management"] = serde_json::json!(crate::client_management::snapshot());
             value["firmware_feed"] = serde_json::json!(self.firmware_feed.as_ref().map(|f|serde_json::json!({"state":f.state,"session":f.session,"board_id":f.board,"boot_id":f.boot,"delivery_armed":f.settings.deliver})));
             value["bridge"] = self.bridge.snapshot();

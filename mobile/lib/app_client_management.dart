@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'app_updates.dart';
+import 'peer_identity.dart';
 import 'connection_preferences.dart' show SecretStore;
 
 typedef ManagedRequest = Future<Map<String, dynamic>> Function(
@@ -335,6 +336,7 @@ class AppClientManagement {
           .openUrl(method, uri)
           .timeout(const Duration(seconds: 5));
       request.followRedirects = false;
+      identifyRequest(request);
       if (bearer != null) {
         request.headers.set('Authorization', 'Bearer $bearer');
       }

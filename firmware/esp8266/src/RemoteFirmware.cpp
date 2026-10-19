@@ -189,6 +189,10 @@ bool RemoteFirmware::openDownload(const String &url,uint32_t size,const String &
   socket_=std::move(nextSocket);
   if(!bound) return reject("Download HTTP client binding failed");
   http_.setTimeout(5000);http_.setReuse(false);http_.useHTTP10(true);
+  http_.setUserAgent(String("PakarController/")+BoardCore::BuildInfo::kVersion);
+  http_.addHeader("X-Pakar-Client","pakarcontroller-firmware");
+  http_.addHeader("X-Pakar-Version",BoardCore::BuildInfo::kVersion);
+  http_.addHeader("X-Pakar-Client-Id",boot_);
   // No redirects: credentials cannot leak to another authority. Publish direct URLs.
   http_.setFollowRedirects(HTTPC_DISABLE_FOLLOW_REDIRECTS);
   const char *headers[]={"Content-Encoding","Transfer-Encoding"};

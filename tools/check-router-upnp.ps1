@@ -12,6 +12,7 @@ param(
 # service specification. No router login, port forwarding, firewall change,
 # reboot, broad port scan or board command is made by this diagnostic.
 $ErrorActionPreference='Stop'
+. (Join-Path $PSScriptRoot 'peer-identity.ps1')
 function Read-DiscoveryHeaders([string]$Text) {
   if($Text.Length -gt 4096 -or $Text -notmatch '^HTTP/1\.1 200(?: [^\r\n]*)?\r\n'){throw 'Not a bounded SSDP response'}
   $headers=@{}
@@ -63,7 +64,7 @@ function Invoke-DiscoveryProbe([string]$Destination) {
     $udp.Client.SetSocketOption([Net.Sockets.SocketOptionLevel]::IP,[Net.Sockets.SocketOptionName]::MulticastInterface,$script:LocalIp.GetAddressBytes())
     $udp.Ttl=2
     foreach($st in @('ssdp:all','urn:schemas-upnp-org:device:InternetGatewayDevice:1','urn:schemas-upnp-org:device:InternetGatewayDevice:2')){
-      $text='M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: "ssdp:discover"\r\nMX: 1\r\nST: '+$st+'\r\n\r\n'
+      $text='M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: "ssdp:discover"\r\nMX: 1\r\nST: '+$st+'\r\nUSER-AGENT: '+(Get-PakarToolSsdpAgent)+'\r\n\r\n'
       # PowerShell uses backtick escapes; replace the literal wire escapes.
       $text=$text.Replace('\r\n',"`r`n").Replace('\"','"')
       $bytes=[Text.Encoding]::ASCII.GetBytes($text);$null=$udp.Send($bytes,$bytes.Length,$Destination,1900)
@@ -95,6 +96,8 @@ if(-not $actual){throw 'Gateway does not belong to the selected LAN interface'}
 Add-Type -AssemblyName System.Net.Http
 $handler=[Net.Http.HttpClientHandler]::new();$handler.UseProxy=$false;$handler.AllowAutoRedirect=$false
 $script:Client=[Net.Http.HttpClient]::new($handler);$script:Client.Timeout=[TimeSpan]::FromSeconds(4)
+$identity=Get-PakarToolHeaders
+foreach($key in $identity.Keys){$script:Client.DefaultRequestHeaders.TryAddWithoutValidation($key,$identity[$key])|Out-Null}
 $script:ProbeWarnings=@()
 $result=[ordered]@{local=$LocalAddress;gateway=$Gateway;mutations=$false;subnet_scan=@();ssdp=@();igd=@();neighbors=@();warnings=@();errors=@()}
 try{

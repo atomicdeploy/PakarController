@@ -114,7 +114,7 @@ void main() {
     final api = PakarApi(
       client: MockClient((_) async {
         ++requests;
-        return http.Response('{"hostname":"ledboard"}', 200);
+        return http.Response('{"version":"0.2.8","hostname":"ledboard"}', 200);
       }),
       discovery: () async {
         ++discovery;
@@ -213,6 +213,7 @@ void main() {
           }
           return http.Response(
             jsonEncode({
+              'version': '0.2.8',
               'hostname': 'ledboard',
               'board_id': 'fixture-board',
               'boot_id': ++reads == 1 ? 'first-boot' : 'second-boot',

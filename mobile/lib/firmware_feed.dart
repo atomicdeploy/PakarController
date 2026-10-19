@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import 'device_registry.dart';
+import 'peer_identity.dart';
 import 'firmware.dart';
 
 // Adapts the fully reviewed PCController hostbridge/manager.go handshake,
@@ -212,9 +213,11 @@ class FirmwareFeed extends ChangeNotifier {
                   )
                   .toString()
             : options.endpoint,
-        headers: options.token.isEmpty
-            ? {}
-            : {'Authorization': 'Bearer ${options.token}'},
+        headers: {
+          ...PeerIdentity.current.webSocketHeaders,
+          if (options.token.isNotEmpty)
+            'Authorization': 'Bearer ${options.token}',
+        },
       );
       final ws = await connecting.timeout(
         const Duration(seconds: 8),

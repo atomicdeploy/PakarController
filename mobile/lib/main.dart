@@ -32,11 +32,24 @@ import 'pixel_diagnostic_page.dart';
 import 'mirroring.dart';
 import 'app_theme.dart';
 import 'workspace_widgets.dart';
+import 'peer_identity.dart';
+import 'peer_policy.dart';
 export 'app_theme.dart' show studioDark;
 
 final bundledApplicationArtwork = base64Decode(applicationArtworkBase64);
 
-void main() => runApp(const PakarControllerApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await PeerIdentity.current.initialize();
+  final view = WidgetsBinding.instance.platformDispatcher.views.firstOrNull;
+  if (view != null) {
+    PeerIdentity.current.hardware.addAll({
+      'screen_width': view.physicalSize.width.round(),
+      'screen_height': view.physicalSize.height.round(),
+    });
+  }
+  runApp(const PakarControllerApp());
+}
 
 class PakarControllerApp extends StatelessWidget {
   const PakarControllerApp({super.key, this.api});
@@ -121,7 +134,10 @@ class _ControlShellState extends State<ControlShell>
     api.onTransportRetired = () {
       mirror.observe(null, api.connectionRevision);
       if (mounted) {
-        _revoke('Connection changed; waiting for fresh device state');
+        _revoke(
+          api.unsupportedPeer?.toString() ??
+              'Connection changed; waiting for fresh device state',
+        );
         if (observedEndpoint != api.baseUrl) {
           setState(() {
             presented = null;
@@ -293,7 +309,9 @@ class _ControlShellState extends State<ControlShell>
   void _startSupervision() {
     fallback?.cancel();
     fallback = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (!foreground || !api.connectionWanted) return;
+      if (!foreground || !api.connectionWanted || api.unsupportedPeer != null) {
+        return;
+      }
       if (!api.liveFresh) {
         if (liveActive &&
             (api.liveSilence ?? Duration.zero) >= const Duration(seconds: 8) &&
@@ -312,7 +330,12 @@ class _ControlShellState extends State<ControlShell>
   }
 
   Future<void> _connectLive() async {
-    if (!mounted || !api.connectionWanted || !foreground) return;
+    if (!mounted ||
+        !api.connectionWanted ||
+        !foreground ||
+        api.unsupportedPeer != null) {
+      return;
+    }
     final owner = api.connectionRevision;
     // Adapt donor StatusFrameBatcher's generation retirement: an old socket's
     // error/done callbacks cannot revoke or schedule work for its replacement.
@@ -344,7 +367,11 @@ class _ControlShellState extends State<ControlShell>
       }
       // A failed WS does not invalidate a still-fresh authenticated HTTP
       // snapshot. Its own lease expires if the fallback read also fails.
-      if (foreground) _retryLive();
+      if (api.unsupportedPeer != null) {
+        _revoke(api.unsupportedPeer.toString());
+      } else if (foreground) {
+        _retryLive();
+      }
     }
 
     live = api.liveStatus().listen(
@@ -364,7 +391,12 @@ class _ControlShellState extends State<ControlShell>
   }
 
   void _retryLive() {
-    if (!mounted || !api.connectionWanted || !foreground) return;
+    if (!mounted ||
+        !api.connectionWanted ||
+        !foreground ||
+        api.unsupportedPeer != null) {
+      return;
+    }
     liveRetry?.cancel();
     final seconds = [1, 2, 4, 8, 15][retryAttempt.clamp(0, 4)];
     retryAttempt++;
@@ -400,7 +432,8 @@ class _ControlShellState extends State<ControlShell>
       if (mounted &&
           owner == api.connectionRevision &&
           started == observation) {
-        if (error is AuthenticationRequired ||
+        if (error is UnsupportedPeerVersion ||
+            error is AuthenticationRequired ||
             error is StaleConnection ||
             observedAge == null ||
             observedAge!.elapsed >= const Duration(seconds: 6)) {
@@ -2267,7 +2300,9 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
     seenPanelMirror |= mirror.panelAvailable;
     seenSegmentsMirror |= mirror.segmentsAvailable;
     seenBuzzerMirror |= mirror.buzzerAvailable;
-    final requested = mirror.segmentsAvailable ? mirror.panelPresentation : null;
+    final requested = mirror.segmentsAvailable
+        ? mirror.panelPresentation
+        : null;
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),

@@ -12,7 +12,7 @@ nodes.workspace.hidden=true;
 let authEnabled=true,failStatus=false;
 let signedIn=false,user='admin',password='pakarcontroller',socketCount=0,statusRequests=0,hostname='test-fixture',displayName='Fixture table';
 const calls=[];
-const context=vm.createContext({...nodes,Headers,AbortController,URLSearchParams,FormData,Uint8Array,TextEncoder,DataView,atob,console,
+const context=vm.createContext({...nodes,Headers,AbortController,URL,URLSearchParams,FormData,Uint8Array,TextEncoder,DataView,atob,console,
   performance,crypto:webcrypto,navigator:{platform:'fixture',hardwareConcurrency:4},screen:{width:1280,height:720},
   document:{getElementById:id=>nodes[id]||null,addEventListener(){},documentElement:{dataset:{},style:{setProperty(){}}},querySelector:s=>nodes[s.slice(1)],querySelectorAll:()=>[],createElement:element,createTextNode:text=>({textContent:text}),createElementNS:()=>({...element(),namespaceURI:'svg'})},
   location:{protocol:'http:',host:'pakarcontroller'},setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},
@@ -35,7 +35,7 @@ const context=vm.createContext({...nodes,Headers,AbortController,URLSearchParams
       if(options.method==='POST'){changed=hostname!==options.body.get('hostname');hostname=options.body.get('hostname');displayName=options.body.get('display_name');}
       body={hostname,display_name:displayName,persisted:true,accepted:options.method==='POST',apply_pending:changed};
     }else if(path.split('?')[0]==='/api/status'){
-      if(failStatus)throw Error('Network unreachable');statusRequests++;body={hostname:'test-fixture',board_id:'esp8266-aabbccddeeff',boot_id:'a'.repeat(32),http_peer_fencing:true,cells:[],tm1637_segments:[],capabilities:{name:'Fixture table',board_kind:'table',acknowledged_features:['table','leds','streaming'],table:{columns:10,rows:8,pixels_per_cell:6}}};
+      if(failStatus)throw Error('Network unreachable');statusRequests++;body={version:'0.2.8',hostname:'test-fixture',board_id:'esp8266-aabbccddeeff',boot_id:'a'.repeat(32),http_peer_fencing:true,cells:[],tm1637_segments:[],capabilities:{name:'Fixture table',board_kind:'table',acknowledged_features:['table','leds','streaming'],table:{columns:10,rows:8,pixels_per_cell:6}}};
     }else if(path==='/api/cells/mapping')body={physical:[],names:[]};
     return {ok:code<400,status:code,statusText:String(code),text:async()=>typeof body==='string'?body:JSON.stringify(body)};
   }});

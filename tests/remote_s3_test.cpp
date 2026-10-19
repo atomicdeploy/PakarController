@@ -32,7 +32,7 @@ struct Fixture {
    testResponses.clear();testRequests.clear();prepares=programs=releases=0;testNow=1000;
    image[0]=0xe9;image[1]=5;image[12]=9;image[23]=1;
    JsonDocument d;d["product"]="PakarController";d["profile"]="pakar-esp32s3-atmega328p";d["link_mode"]="buffered";
-   auto e=d["esp"].to<JsonObject>();e["url"]=imageUrl;e["size"]=image.size();e["sha256"]=hash(image);e["version"]="0.2.7";e["model"]="esp32s3";
+   auto e=d["esp"].to<JsonObject>();e["url"]=imageUrl;e["size"]=image.size();e["sha256"]=hash(image);e["version"]="0.2.8";e["model"]="esp32s3";
    String text;serializeJson(d,text);sha=hash(bytes(text));testResponses[url].bytes=bytes(text);testResponses[imageUrl].bytes=image;
  }
  void queue(RemoteFirmware&j){j.begin("boot-A",prepare,program,finish);assert(j.queue(url,sha,1,false,false,"secret-fixture"));}

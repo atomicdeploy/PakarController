@@ -6,6 +6,7 @@ param(
     [ValidateRange(1, 1024)] [int] $MaximumCacheGiB = 8,
     [string] $ExpectedCommit,
     [switch] $DebugArtifacts,
+    [switch] $DisablePeerVersionChecks,
     [string] $TestFilter,
     [switch] $Plan
 )
@@ -46,6 +47,7 @@ if ($Mode -eq 'Test') {
     $taskArguments += @('--', '--test-threads=1', '--nocapture')
 }
 $taskOriginalConfig = [Environment]::GetEnvironmentVariable('PAKAR_CONFIG_FILE', 'Process')
+$taskOriginalPeerPolicy=[Environment]::GetEnvironmentVariable('PAKAR_ENFORCE_PEER_VERSIONS','Process')
 $taskTestConfig = if ($Mode -eq 'Test') {
     if ($taskOriginalConfig) { $taskOriginalConfig } else { Join-Path $taskRoot 'build/native/native-tests.json' }
 } else { $null }
@@ -71,6 +73,7 @@ if (Test-Path -LiteralPath $taskTarget) {
 # Cargo freshness does the work; never cargo clean or create another target tree.
 if ($ExpectedCommit) { Assert-PakarPackageSourceStable $taskRoot $ExpectedCommit }
 try {
+    if($DisablePeerVersionChecks){$env:PAKAR_ENFORCE_PEER_VERSIONS='0'}
     # Donor CI isolates its tests. Local Test must also avoid the user profile;
     # retain an explicitly supplied fixture path and restore process environment.
     if ($Mode -eq 'Test') { $env:PAKAR_CONFIG_FILE = $taskTestConfig }
@@ -78,6 +81,10 @@ try {
     Invoke-PakarNative -WorkingDirectory $taskRoot -FilePath 'cargo' -Arguments $taskArguments
     if ($ExpectedCommit) { Assert-PakarPackageSourceStable $taskRoot $ExpectedCommit }
 } finally {
+    if($DisablePeerVersionChecks){
+        if($null -eq $taskOriginalPeerPolicy){Remove-Item Env:PAKAR_ENFORCE_PEER_VERSIONS -ErrorAction SilentlyContinue}
+        else{[Environment]::SetEnvironmentVariable('PAKAR_ENFORCE_PEER_VERSIONS',$taskOriginalPeerPolicy,'Process')}
+    }
     if ($Mode -eq 'Test') {
         [Environment]::SetEnvironmentVariable('PAKAR_CONFIG_FILE', $taskOriginalConfig, 'Process')
     }

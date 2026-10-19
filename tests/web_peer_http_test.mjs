@@ -3,12 +3,14 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-const source=readFileSync(new URL('../assets/web/peer-http.js',import.meta.url),'utf8').trim();
+import {webcrypto} from 'node:crypto';
+import {webPeerSource} from '../tools/web-peer-build.mjs';
+const source=(await webPeerSource(readFileSync(new URL('../assets/web/peer-http.js',import.meta.url),'utf8'))).trim();
 const web=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8').replaceAll('\r\n','\n');
 assert.equal(web.split('// BEGIN PEER HTTP\n')[1].split('\n// END PEER HTTP')[0],source);
-const c=vm.createContext({Headers,AbortController,setTimeout,clearTimeout,fetch});
+const c=vm.createContext({Headers,AbortController,setTimeout,clearTimeout,fetch,URL,crypto:webcrypto});
 vm.runInContext(source+'\nglobalThis.factory=createPeerHttp;',c);
-const original={board_id:'esp8266-aabbccddeeff',boot_id:'a'.repeat(32),http_peer_fencing:true};
+const original={version:'0.2.8',board_id:'esp8266-aabbccddeeff',boot_id:'a'.repeat(32),http_peer_fencing:true};
 let current={...original},calls=[],time=100,changes=0,reply=()=>Response.json({accepted:true});
 let client=c.factory({now:()=>time,changed:()=>changes++,fetcher:async(path,init)=>{calls.push({path,init});return path==='/api/status'?Response.json(current):reply(path,init)}});
 client.observe(current);const peer=client.pin();
@@ -27,7 +29,7 @@ await assert.rejects(client.request('/api/cell',{method:'POST',peer}),/changed/)
 const second=client.pin();reply=()=>Response.json({error:'peer_changed',accepted:false},{status:409});
 await assert.rejects(client.request('/api/cell',{method:'POST',peer:second}),/409/);assert(!client.writable());
 // Legacy/malformed identities stay readable, never writable.
-for(const bad of [{}, {...original,http_peer_fencing:false}, {...original,boot_id:'0'.repeat(32)}, {...original,board_id:123}, {...original,board_id:'Upper'}, {...original,boot_id:'A'.repeat(32)}]){client.observe(bad);assert(!client.writable());}
+for(const bad of [{version:'0.2.8'}, {...original,http_peer_fencing:false}, {...original,boot_id:'0'.repeat(32)}, {...original,board_id:123}, {...original,board_id:'Upper'}, {...original,boot_id:'A'.repeat(32)}]){client.observe(bad);assert(!client.writable());}
 current={...original};client.observe(current);time+=8000;assert(!client.writable());
 time=100;client.observe(current);
 reply=()=>Response.json({error:'login_required'},{status:401});calls=[];

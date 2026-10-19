@@ -70,9 +70,37 @@ assert.match(read('LedGrid.cpp'), /kLedDataPin = PAKAR_S3_LED_DATA/);
 assert.match(read('LedGrid.cpp'), /FastLED\.addLeds<WS2811, kLedDataPin, RGB>/);
 assert.match(read('LedGrid.h'), /#define PAKAR_LED_FRAME_INTERVAL_MS 0/);
 const output=readFileSync(new URL('../firmware/esp32s3/src/LedOutput.cpp',import.meta.url),'utf8');
+const outputHeader=readFileSync(new URL('../firmware/esp32s3/src/LedOutput.h',import.meta.url),'utf8');
+function checkLedMailbox(source,header) {
+  const start=source.indexOf('void LedOutput::submit('),end=source.indexOf('void LedOutput::work(){');
+  assert.ok(start>=0&&end>start,'Inspect the actual producer and worker separately');
+  const submit=source.slice(start,end),work=source.slice(end);
+  assert.match(source,/queue_=xQueueCreateStatic\(1,sizeof\(Frame\),queueBytes_,&queueState_\)/,
+    'A single complete-frame mailbox coalesces obsolete frames instead of growing a backlog');
+  assert.match(header,/alignas\(4\) uint8_t queueBytes_\[sizeof\(Frame\)\]\{\}/);
+  assert.match(header,/std::mutex producerGate_;/);
+  assert.match(header,/Frame producer_\{\}/,'Producer scratch belongs to the persistent output object');
+  assert.match(header,/Frame current_\{\}/,'The worker owns a distinct frame, never producer scratch');
+  assert.doesNotMatch(submit,/\bFrame\s+\w+\s*[;={]/,'Do not put a full frame on the loop/TLS stack');
+  assert.match(submit,/std::lock_guard<std::mutex>\s+\w+\(producerGate_\);[\s\S]*?::memcpy\(producer_\.rgb,rgb,sizeof\(producer_\.rgb\)\);[\s\S]*?producer_\.brightness=brightness;[\s\S]*?producer_\.enabled=enabled;[\s\S]*?producer_\.revision=revision;[\s\S]*?xQueueOverwrite\(queue_,&producer_\);/,
+    'Serialize the entire RGB/brightness/enabled/revision copy through mailbox publication');
+  assert.doesNotMatch(submit,/\b(?:current_|rmt_transmit|writeStaticWire|encodeWireBytes)\b/,
+    'A producer must not edit or transmit the worker-owned frame');
+  assert.equal([...work.matchAll(/xQueueReceive\(queue_,&current_,pdMS_TO_TICKS\(10\)\)/g)].length,2,
+    'Both backends receive complete frames into separate worker-owned storage');
+  assert.equal([...work.matchAll(/encodeWireBytes\(current_\.rgb,pixels,current_\.brightness,current_\.enabled,payload\)/g)].length,2,
+    'Both backends encode their own immutable transmission payload');
+}
+checkLedMailbox(output,outputHeader);
+assert.throws(()=>checkLedMailbox(output.replace('xQueueCreateStatic(1,','xQueueCreateStatic(2,'),outputHeader));
+assert.throws(()=>checkLedMailbox(output.replace('std::lock_guard<std::mutex> lock(producerGate_);',''),outputHeader));
+assert.throws(()=>checkLedMailbox(output.replace('xQueueOverwrite(queue_,&producer_)','xQueueOverwrite(queue_,&current_)'),outputHeader));
+assert.throws(()=>checkLedMailbox(output.replace('::memcpy(producer_.rgb','::memcpy(current_.rgb'),outputHeader));
+assert.throws(()=>checkLedMailbox(output.replace('producer_.enabled=enabled;',''),outputHeader));
+assert.throws(()=>checkLedMailbox(output,outputHeader.replace('Frame producer_{};','')));
+assert.throws(()=>checkLedMailbox(output.replaceAll('xQueueReceive(queue_,&current_,','xQueueReceive(queue_,&producer_,'),outputHeader));
 assert.match(output,/config.flags.with_dma=true/);
 assert.match(output,/xTaskCreatePinnedToCore\(run,"pakar-led",4096,this,2,nullptr,1\)/);
-assert.match(output,/xQueueOverwrite\(queue_,&next\)/);
 assert.match(output,/rmt_tx_wait_all_done\(channel,100\)/);
 assert.match(sketch,/loopMessages.pop\(message\)/);
 assert.doesNotMatch(sketch,/handleWebSocketMessage\(client, info->opcode/);

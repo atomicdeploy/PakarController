@@ -51,6 +51,7 @@
 #include "src/SemanticPanel.h"
 
 #include <BuildInfo.h>
+#include <PeerCompatibility.h>
 #include <AudioCues.h>
 #include <AttentionCues.h>
 #include <Protocol.h>
@@ -374,6 +375,8 @@ String ethernetStatusJson();
 String lcdStatusJson();
 String buildUsbTableSnapshot();
 String buildTelemetryJson();
+String avrVersionText();
+bool recordClientReport(const String &report,const String &peer,const String &agent=String(),const String &version=String());
 void registerMaintenanceRoutes();
 bool prepareRemotePair(const RemoteFirmware::Plan&,String&);
 bool programRemoteAvr(const char*,const String&,String&);
@@ -538,6 +541,48 @@ void sendHostStatus(uint8_t requestSequence) {
 }
 
 void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
+  static bool admitted=false;
+  static String introduction;
+  static uint16_t introductionTotal=0;
+  static uint32_t introductionAt=0;
+  if(frame.opcode==kHello) {
+    // Every new caller resets admission. An empty HELLO may inspect identity,
+    // but is never permission for an unintroduced/unsupported app to control.
+    admitted=false;introduction=String();introductionTotal=0;
+    if(frame.payloadLength) {
+      if(frame.payloadLength!=4 || frame.payload[0]!=kRoleHost) {
+        hostLink.error(frame.sequence,kHello,kBadPayload);return;
+      }
+      char version[16];snprintf(version,sizeof(version),"%u.%u.%u",frame.payload[1],frame.payload[2],frame.payload[3]);
+      admitted=BoardCore::PeerCompatibility::appAllowed(version);
+      if(!admitted){hostLink.error(frame.sequence,kHello,kUnsupported);return;}
+    }
+  }
+  const bool bootstrap=frame.opcode==kHello || frame.opcode==kGetStatus || frame.opcode==kGetIdentity || frame.opcode==kPing;
+  if(BoardCore::PeerCompatibility::enforced && !admitted && !bootstrap) {
+    hostLink.error(frame.sequence,frame.opcode,kUnsupported);return;
+  }
+  if(frame.opcode==kPeerReport) {
+    if(frame.payloadLength<=4){hostLink.error(frame.sequence,frame.opcode,kBadPayload);return;}
+    const uint16_t total=frame.payload[0]|uint16_t(frame.payload[1])<<8;
+    const uint16_t offset=frame.payload[2]|uint16_t(frame.payload[3])<<8;
+    const uint16_t count=frame.payloadLength-4;
+    if(!total || total>1536 || offset>total || count>total-offset) {
+      introduction=String();introductionTotal=0;hostLink.error(frame.sequence,frame.opcode,kBadPayload);return;
+    }
+    if(!offset){introduction=String();introductionTotal=total;introduction.reserve(total);introductionAt=millis();}
+    if(total!=introductionTotal || offset!=introduction.length() || uint32_t(millis()-introductionAt)>5000) {
+      introduction=String();introductionTotal=0;hostLink.error(frame.sequence,frame.opcode,kBadPayload);return;
+    }
+    introduction.concat(reinterpret_cast<const char*>(frame.payload+4),count);
+    if(introduction.length()!=offset+count) {introduction=String();hostLink.error(frame.sequence,frame.opcode,kBusy);return;}
+    if(introduction.length()==total) {
+      const bool accepted=recordClientReport(introduction,"usb");
+      introduction=String();introductionTotal=0;
+      if(!accepted){admitted=false;hostLink.error(frame.sequence,frame.opcode,kBadPayload);return;}
+    }
+    hostLink.ack(frame.sequence,frame.opcode);return;
+  }
   const bool shellPoll=frame.opcode==kShellRequest && frame.payloadLength==7 && frame.payload[0]==PakarShell::SerialChannel::Poll;
   // Cloud write progress may drain read-only USB requests, never re-enter a
   // mutation or programming operation while a cloud packet is being emitted.
@@ -614,9 +659,13 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
     case kGetIdentity: {
       if (frame.payloadLength != 3) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
       String json = F("{\"revision\":"); json += identityRevision();
+      json += F(",\"board_id\":\"");json+=pcBoardId;
+      json += F("\",\"boot_id\":\"");json+=pcBootId;json+='"';
       json += F(",\"hostname\":\""); json += deviceIdentity.hostname();
       json += F("\",\"display_name\":\""); appendJsonEscaped(json, deviceIdentity.displayName());
-      json += F("\",\"application\":"); json += applicationIdentityJson(); json += '}';
+      json += F("\",\"application\":"); json += applicationIdentityJson();
+      json += F(",\"version\":\"");json+=BoardCore::BuildInfo::kVersion;
+      json += F("\",\"compatibility\":");json+=PakarPeer::policyJson();json+='}';
       const uint16_t offset = frame.payload[1] | static_cast<uint16_t>(frame.payload[2]) << 8;
       if (json.length() > 8192 || offset >= json.length()) { hostLink.error(frame.sequence, frame.opcode, kBadPayload); break; }
       const uint32_t revision = identityRevision();
@@ -1040,6 +1089,10 @@ void startDiscovery() {
     MDNS.addService("pakarcontroller", "tcp", 80);
     MDNS.addServiceTxt("pakarcontroller", "tcp", "api", "/api/status");
     MDNS.addServiceTxt("pakarcontroller", "tcp", "websocket", "/ws");
+    MDNS.addServiceTxt("pakarcontroller","tcp","version",BoardCore::BuildInfo::kVersion);
+    MDNS.addServiceTxt("pakarcontroller","tcp","minimum_app",BoardCore::PeerCompatibility::minimumApp);
+    MDNS.addServiceTxt("pakarcontroller","tcp","minimum_board",BoardCore::PeerCompatibility::minimumBoard);
+    MDNS.addServiceTxt("pakarcontroller","tcp","version_check",BoardCore::PeerCompatibility::enforced?"true":"false");
     MDNS.addService("pakar-stream", "udp", kStreamPort);
     if(shellAdvertisedPort())MDNS.addService("telnet", "tcp", shellAdvertisedPort());
   }
@@ -1159,6 +1212,8 @@ String deviceNameJson(bool accepted) {
   body += F(",\"display_name\":\""); appendJsonEscaped(body, deviceIdentity.displayName());
   body += F("\",\"revision\":"); body += identityRevision();
   body += F(",\"application\":"); body += applicationIdentityJson();
+  body += F(",\"version\":\"");body+=BoardCore::BuildInfo::kVersion;body+='"';
+  body += F(",\"compatibility\":");body+=PakarPeer::policyJson();
   body += F(",\"accepted\":"); body += accepted ? F("true") : F("false");
   body += F(",\"apply_pending\":"); body += networkApplyPending ? F("true") : F("false");
   body += F(",\"apply_after_ms\":"); body += networkApplyPending ? 1000 : 0;
@@ -1172,6 +1227,9 @@ bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
 #if defined(ARDUINO_ARCH_ESP32)
   if (!avrUart.started()) return false;
 #endif
+  const uint8_t introduction[]={kRoleEsp,BoardCore::BuildInfo::kVersionMajor,
+      BoardCore::BuildInfo::kVersionMinor,BoardCore::BuildInfo::kVersionPatch};
+  if(opcode==kHello && !payloadLength){payload=introduction;payloadLength=sizeof(introduction);}
   const bool sent = link.send(opcode, requestSequence, payload, payloadLength);
   if (sent) {
     if(opcode==kDisplayText && !semanticPanelSending)semanticPanel.manual(payload,payloadLength,millis());
@@ -1682,7 +1740,8 @@ String buildStatusJson() {
   // ESP8266 heap. Arduino String otherwise fails mid-JSON without an error.
   body.reserve(2600);
   body += F("{\"version\":\""); body += BoardCore::BuildInfo::kVersion;
-  body += F("\",\"board_id\":\""); body += pcBoardId;
+  body += F("\",\"compatibility\":");body+=PakarPeer::policyJson();
+  body += F(",\"board_id\":\""); body += pcBoardId;
   body += F("\",\"boot_id\":\""); body += pcBootId;
   body += F("\",\"http_peer_fencing\":"); body += webAccess.peerFenceReady() ? F("true") : F("false");
   char commandTime[24];snprintf(commandTime,sizeof(commandTime),"%llu",static_cast<unsigned long long>(commandClock()));
@@ -2026,12 +2085,21 @@ void handleWebSocketMessage(uint32_t clientId, uint8_t opcode,
     return;
   }
   if (opcode == WS_BINARY) { if(!remoteFirmware.busy())applyStreamPacket(payload, length, (1ULL << 63) | clientId); return; }
-  if (opcode != WS_TEXT || length > 1024U) return;
+  if (opcode != WS_TEXT || length > 1300U) return;
   String message;
   message.reserve(length);
   message.concat(reinterpret_cast<const char *>(payload), length);
   JsonDocument parsed;
   if(deserializeJson(parsed,message) || !parsed.is<JsonObject>()) return;
+  if(parsed["type"]=="peer-introduction") {
+    String report;serializeJson(parsed["report"],report);
+    // Connection address is retained by WebAccess at the actual HTTP upgrade,
+    // never accepted from a caller-supplied JSON field.
+    const bool accepted=recordClientReport(report,webAccess.socketAddress(clientId),webAccess.socketAgent(clientId),webAccess.socketVersion(clientId));
+    webSocket.text(clientId,accepted?"{\"type\":\"peer-introduction\",\"accepted\":true}":"{\"type\":\"peer-introduction\",\"accepted\":false,\"error\":\"invalid_report_or_client_limit\"}");
+    return;
+  }
+  if(length>1024U)return;
   if(parsed["type"]=="command") {
     webSocket.text(clientId,commandReply(message));
     // Other connected clients see the changed state immediately too.
@@ -2606,6 +2674,9 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
                       frame.payload[0] == 0 &&
                       frame.payload[1] == kRoleAvr;
     if (avrVersionKnown) memcpy(avrVersion, frame.payload + 6, sizeof(avrVersion));
+    if(!avrVersionKnown || !BoardCore::PeerCompatibility::boardAllowed(avrVersionText().c_str())) {
+      avrOnline=false;avrCapabilities=0;avrPcSupported=false;avrAudioCueCount=0;return;
+    }
     avrCapabilities = avrVersionKnown ? frame.payload[2] | static_cast<uint16_t>(frame.payload[3]) << 8 : 0;
     avrAudioCueCount = avrVersionKnown && frame.payloadLength >= 13 ? frame.payload[12] : 0;
     avrToneTimestamps = avrVersionKnown && frame.payloadLength >= 14 && frame.payload[13] == 1;
@@ -2721,7 +2792,8 @@ void registerAsyncOta() {
     body += F("\",\"application\":"); body += applicationIdentityJson();
     body += F(",\"model\":\""); body += FirmwarePlatform::model(); body += F(" + ATmega328P\",\"version\":\"");
     body += BoardCore::BuildInfo::kVersion;
-    body += F("\",\"sketch_size\":"); body += runningImageSize();
+    body += F("\",\"compatibility\":");body+=PakarPeer::policyJson();
+    body += F(",\"sketch_size\":"); body += runningImageSize();
     body += F(",\"size\":"); body += runningImageSize();
     body += F(",\"free\":"); body += ESP.getFreeSketchSpace();
     body += F(",\"hash\":\""); body += runningImageMd5(); body += '"';
@@ -3797,7 +3869,7 @@ void setup() {
         stationMac[0], stationMac[1], stationMac[2], stationMac[3], stationMac[4], stationMac[5]);
     pcBoardId = board;
   }
-  webAccess.configurePeerFence(pcBoardId, pcBootId);
+  webAccess.configurePeerFence(pcBoardId, pcBootId,hostname);
   cloudServices.begin(hostname, handleCloudCommand, buildStatusJson,buildTelemetryJson,pcBoardId,pcBootId);
   cloudServices.setProgressService([](){
     hostLink.service();

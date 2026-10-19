@@ -1052,15 +1052,72 @@ class PeerAPIError extends Error {
     super(message); this.name = 'PeerAPIError'; this.status = status; if (code) this.code = code;
   }
 }
+// Build identity belongs to this shipped client, never to the board it reads.
+// Generators replace this one literal from interfaces/client-release.json.
+const PAKAR_WEB_BUILD = {"application":"pakarcontroller-web","version":"0.2.8","build":15,"minimum_board":"0.2.8","maximum_board":null,"enforcePeerVersions":true};
+function peerSemver(value) {
+  if(typeof value!=='string'||value.length>63)return null;
+  const m=/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.exec(value);
+  if(!m)return null;
+  const numbers=m.slice(1,4).map(Number),pre=m[4]?.split('.')??[];
+  if(numbers.some(n=>!Number.isSafeInteger(n)||n>0xffffffff)||pre.some(s=>/^\d+$/.test(s)&&s.length>1&&s.startsWith('0')))return null;
+  return {numbers,pre};
+}
+function peerVersionCompare(left,right) {
+  const a=peerSemver(left),b=peerSemver(right);if(!a||!b)return null;
+  for(let i=0;i<3;i++)if(a.numbers[i]!==b.numbers[i])return a.numbers[i]<b.numbers[i]?-1:1;
+  if(!a.pre.length||!b.pre.length)return a.pre.length===b.pre.length?0:a.pre.length?-1:1;
+  for(let i=0;i<Math.max(a.pre.length,b.pre.length);i++){
+    if(a.pre[i]===undefined)return -1;if(b.pre[i]===undefined)return 1;
+    const x=a.pre[i],y=b.pre[i];if(x===y)continue;
+    const nx=/^\d+$/.test(x),ny=/^\d+$/.test(y);
+    if(nx&&ny)return x.length!==y.length?(x.length<y.length?-1:1):(x<y?-1:1);
+    if(nx!==ny)return nx?-1:1;return x<y?-1:1;
+  }
+  return 0;
+}
+function peerVersionAllowed(value,minimum,maximum) {
+  const lower=peerVersionCompare(value,minimum);
+  return lower!==null&&lower>=0&&(maximum==null||(peerVersionCompare(value,maximum)!==null&&peerVersionCompare(value,maximum)<0));
+}
+let pakarBrowserIdentity;
+function browserPeerIdentity() {
+  if(pakarBrowserIdentity)return pakarBrowserIdentity;
+  let id;try{id=globalThis.sessionStorage?.getItem('pakar-peer-session')}catch{}
+  if(!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(id??'')){
+    const bytes=new Uint8Array(16);
+    if(!globalThis.crypto?.getRandomValues)throw new PeerAPIError('Secure session identity is unavailable.',0,'client_identity_unavailable');
+    globalThis.crypto.getRandomValues(bytes);bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
+    const hex=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');id=[hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-');
+    try{globalThis.sessionStorage?.setItem('pakar-peer-session',id)}catch{}
+  }
+  return pakarBrowserIdentity=Object.freeze({...PAKAR_WEB_BUILD,id});
+}
 function createPeerHttp({fetcher = (...args) => fetch(...args), now = () => Date.now(),
-  setTimer = setTimeout, clearTimer = clearTimeout, changed = () => {}} = {}) {
-  let owner = null, generation = 0, observed = 0;
+  setTimer = setTimeout, clearTimer = clearTimeout, changed = () => {},
+  clientIdentity = browserPeerIdentity,
+  enforceVersions = globalThis.PAKAR_ENFORCE_PEER_VERSIONS ?? PAKAR_WEB_BUILD.enforcePeerVersions} = {}) {
+  let owner = null, generation = 0, observed = 0, versionError = null, serverIdentity = null;
+  function acceptVersion(s) {
+    serverIdentity={...serverIdentity,application:typeof s?.application==='string'?s.application:typeof s?.application?.id==='string'?s.application.id:null,
+      name:typeof s?.application?.name==='string'?s.application.name:null,version:typeof s?.version==='string'?s.version:null,
+      board_id:typeof s?.board_id==='string'?s.board_id:null,boot_id:typeof s?.boot_id==='string'?s.boot_id:null};
+    if(enforceVersions===false){versionError=null;return;}
+    const policy=s?.compatibility,client=clientIdentity();
+    if(!peerVersionAllowed(s?.version,PAKAR_WEB_BUILD.minimum_board,PAKAR_WEB_BUILD.maximum_board)||
+      (policy?.enforced!==false&&policy?.minimum_app!==undefined&&!peerVersionAllowed(client.version,policy.minimum_app,policy.maximum_app))) {
+      versionError=new PeerAPIError('Unsupported board or application version. Update the incompatible peer before connecting.',426,'unsupported_peer_version');
+      revoke();throw versionError;
+    }
+    versionError=null;
+  }
   function identity(s) {
     return s?.http_peer_fencing === true && typeof s.board_id === 'string' && typeof s.boot_id === 'string' && /^[a-z0-9_-]{1,64}$/.test(s.board_id) &&
       /^[a-f0-9]{32}$/.test(s.boot_id ?? '') && !/^0{32}$/.test(s.boot_id)
       ? {board: s.board_id, boot: s.boot_id} : null;
   }
   function observe(s) {
+    acceptVersion(s);
     const next = identity(s);
     if (owner?.board !== next?.board || owner?.boot !== next?.boot) {
       owner = next; generation++; changed();
@@ -1069,6 +1126,7 @@ function createPeerHttp({fetcher = (...args) => fetch(...args), now = () => Date
   }
   function revoke() { owner = null; observed = 0; generation++; changed(); }
   function pin() {
+    if(versionError)throw versionError;
     const age = now() - observed;
     if (!owner || age < 0 || age >= 8000)
       throw new PeerAPIError('Refresh this board before writing; its boot identity is unavailable or stale.', 409, 'peer_unavailable');
@@ -1101,11 +1159,20 @@ function createPeerHttp({fetcher = (...args) => fetch(...args), now = () => Date
     try {
       if (controller.signal.aborted) throw new PeerAPIError('Request cancelled.', 0, 'cancelled');
       const headers = new Headers(init.headers); headers.set('Accept', 'application/json');
+      headers.delete('User-Agent');
+      const client=clientIdentity();
+      // Browsers own User-Agent; do not forge it or copy a board's version.
+      headers.set('X-Pakar-Client',client.application);headers.set('X-Pakar-Version',client.version);
+      headers.set('X-Pakar-Client-Id',client.id);headers.set('X-Pakar-Build',String(client.build));
       if (peer) {headers.set('X-Pakar-Board', peer.board); headers.set('X-Pakar-Boot', peer.boot);}
       const response = await fetcher(path, {...init, method, headers, credentials: 'same-origin', cache: 'no-store', redirect: 'error', signal: controller.signal});
+      const responseHeaders={};for(const key of ['Server','X-Pakar-Application','X-Pakar-Version','X-Pakar-Build','X-Pakar-Board','X-Pakar-Boot','X-Pakar-Board-Version','X-Pakar-Min-App-Version','X-Pakar-Version-Check']){
+        const value=response.headers?.get(key);if(value)responseHeaders[key]=value.slice(0,160);
+      }
       const text = await response.text();
       if (controller.signal.aborted) throw new PeerAPIError('Request cancelled.', 0, 'cancelled');
       if (!localAuth && admission !== generation) throw new PeerAPIError('Late reply from a previous board session was ignored.', 409, 'peer_changed');
+      serverIdentity={...serverIdentity,headers:responseHeaders};
       let value;
       try {value = JSON.parse(text);} catch {
         if (response.headers?.get('Content-Type')?.includes('application/json'))
@@ -1119,6 +1186,7 @@ function createPeerHttp({fetcher = (...args) => fetch(...args), now = () => Date
         throw new PeerAPIError(response.status === 401 ? (endpoint === '/login' ? 'Incorrect username or password' : 'Please sign in again') : 'Device request failed (' + response.status + ').', response.status, code);
       }
       if (endpoint === '/api/status' && method === 'GET') observe(value);
+      if (endpoint === '/api/peer/info' && method === 'GET') acceptVersion(value);
       if (peer) assertOwner(peer);
       return value;
     } catch (error) {
@@ -1127,7 +1195,27 @@ function createPeerHttp({fetcher = (...args) => fetch(...args), now = () => Date
       throw error;
     } finally {clearTimer(timer); external?.removeEventListener('abort', abort);}
   }
-  return {request, pin, assertOwner, observe, revoke, writable: () => {try {pin(); return true;} catch {return false;}}};
+  function webSocketUrl(value) {
+    const url=new URL(value),client=clientIdentity();
+    url.searchParams.set('client',client.application);url.searchParams.set('version',client.version);
+    url.searchParams.set('client_id',client.id);url.searchParams.set('build',String(client.build));
+    return url.href;
+  }
+  function report({settings={}}={}) {
+    const client=clientIdentity(),nav=globalThis.navigator??{},display=globalThis.screen??{};
+    const text=(v,n)=>typeof v==='string'?v.slice(0,n):undefined;
+    const visible={};for(const key of ['language','theme','direction','palette','sound','transport'])if(['string','boolean','number'].includes(typeof settings[key]))visible[key]=typeof settings[key]==='string'?settings[key].slice(0,48):settings[key];
+    const value={id:client.id,session_id:client.id,application:client.application,version:client.version,build:String(client.build),
+      os:text(nav.userAgentData?.platform??nav.platform,32),user_agent:text(nav.userAgent,256),transport:'http',
+      hardware:{cpu_count:Number.isInteger(nav.hardwareConcurrency)&&nav.hardwareConcurrency>0&&nav.hardwareConcurrency<=65535?nav.hardwareConcurrency:undefined,
+        memory_mb:Number.isFinite(nav.deviceMemory)&&nav.deviceMemory>0&&nav.deviceMemory<4096?Math.floor(nav.deviceMemory*1024):undefined},
+      capabilities:['http','websocket','cell-batch','peer-version-policy'],settings:visible};
+    for(const [key,n]of [['screen_width',display.width],['screen_height',display.height]])if(Number.isInteger(n)&&n>0&&n<=65535)value[key]=n;
+    return value;
+  }
+  return {request, pin, assertOwner, observe, revoke, webSocketUrl, report, clientIdentity,
+    peerIdentity:()=>serverIdentity?{...serverIdentity}:null,
+    writable: () => {try {pin(); return true;} catch {return false;}}};
 }
 // END PEER HTTP
 // BEGIN BOARD SILENT
@@ -1248,7 +1336,7 @@ function connectWs(){
   webSocketReconnect.cancel(false);
   if(socket){socket.onclose=null;socket.close();socket=null}
   const scheme=location.protocol==='https:'?'wss:':'ws:';let active;
-  try{active=new WebSocket(`${scheme}//${location.host}/ws`)}catch(error){wsState.textContent='WebSocket retrying';wsState.className='warn';webSocketReconnect.schedule();return}
+  try{active=new WebSocket(peerHttp.webSocketUrl(`${scheme}//${location.host}/ws`))}catch(error){wsState.textContent='WebSocket retrying';wsState.className='warn';webSocketReconnect.schedule();return}
   socket=active;active.binaryType='arraybuffer';
   active.onopen=()=>{
     if(socket!==active)return;
@@ -1259,7 +1347,7 @@ function connectWs(){
     traceBrowserEvent('info','websocket.connected','WebSocket transport connected',{source:'websocket',endpoint:'/ws'});
     active.send('{"type":"status"}');
   };
-  active.onmessage=e=>{if(socket!==active)return;if(typeof e.data==='string'){try{const x=JSON.parse(e.data);if(x.type==='status-rgb'){acceptStatusRgb(x);return}if(x.type==='update-progress'){if(upgradeObservation(x,state)&&(!state.upgrade||x.revision>state.upgrade.revision)){state.upgrade=x;renderUpdateProgress()}return}if(x.hostname)render(x)}catch{}}};
+  active.onmessage=e=>{if(socket!==active)return;if(typeof e.data==='string'){try{const x=JSON.parse(e.data);if(x.type==='status-rgb'){acceptStatusRgb(x);return}if(x.type==='update-progress'){if(upgradeObservation(x,state)&&(!state.upgrade||x.revision>state.upgrade.revision)){state.upgrade=x;renderUpdateProgress()}return}if(x.hostname)render(x)}catch(error){if(error?.code==='unsupported_peer_version'){socket=null;active.close(1008,'Unsupported peer version');wsState.textContent=error.message;wsState.className='warn';webSocketReconnect.pause?.();}}}};
   active.onclose=e=>{
     if(socket!==active||!authenticated||webSocketPaused)return;
     wsState.textContent='WebSocket retrying';wsState.className='warn';stopStream();
@@ -1421,8 +1509,8 @@ async function remoteRefresh(){try{showRemoteJob(await api('/api/firmware/remote
 remoteForm.addEventListener('submit',async e=>{e.preventDefault();if(!/^https:\/\//.test(remoteUrl.value)||!/^([0-9a-f]{64})$/.test(remoteHash.value))return report('Direct HTTPS URL and lowercase manifest SHA-256 required');stopStream();const body=new URLSearchParams({url:remoteUrl.value,sha256:remoteHash.value,targets:remoteTargets.value,apply:'false',bearer:remoteBearer.value});remoteBearer.value='';try{showRemoteJob(await api('/api/firmware/fetch',{method:'POST',body}))}catch(error){report(error)}});
 async function remoteAction(action){const j=remoteJob;if(!validRemoteJob(j)||!['apply','cancel'].includes(action))return;if(action==='apply'&&!confirm('Apply this exact verified job to the selected boards? Confirm stable power and correct wiring. Power loss is not an atomic rollback.'))return;const body=new URLSearchParams({job_id:j.job_id,boot_id:j.boot_id,sha256:j.manifest_sha256});try{showRemoteJob(await api('/api/firmware/'+action,{method:'POST',body}))}catch(e){report(e)}}
 async function loadTelemetry(){try{telemetryView.textContent=JSON.stringify(await api('/api/telemetry'),null,2)}catch(e){report(e)}}
-const browserStart=performance.now(),clientBytes=crypto.getRandomValues(new Uint8Array(16)),browserId=Array.from(clientBytes,b=>b.toString(16).padStart(2,'0')).join('');
-async function reportBrowser(){if(!authenticated)return;const reportValue={id:browserId,application:'PakarController Web',version:state.version,os:navigator.platform||undefined,transport:'http',uptime_seconds:Math.floor((performance.now()-browserStart)/1000),screen_width:screen.width,screen_height:screen.height};if(Number.isInteger(navigator.hardwareConcurrency))reportValue.cpu_count=navigator.hardwareConcurrency;try{await api('/api/clients/report',{method:'POST',body:new URLSearchParams({report:JSON.stringify(reportValue)})})}catch{}}
+const browserStart=performance.now(),browserId=peerHttp.clientIdentity().id;
+async function reportBrowser(){if(!authenticated)return;const reportValue=peerHttp.report();try{await api('/api/clients/report',{method:'POST',body:new URLSearchParams({report:JSON.stringify(reportValue)})})}catch{}}
 setInterval(()=>{if(authenticated){reportBrowser();if(remoteJob)remoteRefresh()}},30000);
 setInterval(()=>{if(authenticated&&remoteJob?.busy&&(!socket||socket.readyState!==WebSocket.OPEN||Date.now()-contextReceivedAt>2000))remoteRefresh()},2000);
 setInterval(()=>{if(authenticated)renderContext()},500);

@@ -3,13 +3,16 @@ import http from 'node:http';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
+import {cliStatus,cliHeaders,assertCliIdentity,cliBoot} from './cli_peer_fixture.mjs';
 const run=promisify(execFile);
 const exe=process.argv[2]||fileURLToPath(new URL('../desktop/target/release/pakarcontroller.exe',import.meta.url));
 let posts=0,consumed=0,id=0,opcode=0,mode='normal';
 let requestPayload=Buffer.alloc(0);
 let settings=Buffer.from([80,2,5,0,0,0,2,0,63,0x10,0x32,0x54,0,...Array(8).fill(0)]);
 const server=http.createServer(async(req,res)=>{
+  cliHeaders(res);assertCliIdentity(req,req.url!=='/api/status');
   assert.equal(req.headers.authorization,'Basic '+Buffer.from('fixture:private-fixture-password').toString('base64'));
+  if(req.method==='GET'&&req.url==='/api/status'){res.end(JSON.stringify(cliStatus()));return;}
   let raw='';for await(const chunk of req)raw+=chunk;
   let value;
   if(req.method==='POST'){
@@ -18,17 +21,17 @@ const server=http.createServer(async(req,res)=>{
     const payload=Buffer.from(form.get('payload_hex'),'hex');
     requestPayload=payload;
     if(opcode===5){assert.equal(payload.length,21);settings=payload;}
-    value={request_id:id,boot_id:'fixture-boot'};
+    value={request_id:id,boot_id:cliBoot};
   }else if(req.method==='DELETE'){
     const url=new URL(req.url,'http://fixture');
     assert.equal(url.pathname,'/api/avr/contracts/result');
     assert.equal(url.searchParams.get('id'),String(id));
-    assert.equal(url.searchParams.get('boot_id'),'fixture-boot');
+    assert.equal(url.searchParams.get('boot_id'),cliBoot);
     assert.equal(url.searchParams.get('opcode'),String(opcode));
     assert(!['reboot','timeout','wrong-ack','wrong-status'].includes(mode));consumed++;value={consumed:true};
   }else{
     assert.equal(req.url,'/api/avr/contracts/result?id='+id);
-    value={request_id:id,boot_id:mode==='reboot'?'different-boot':'fixture-boot',request_opcode:opcode,
+    value={request_id:id,boot_id:mode==='reboot'?'b'.repeat(32):cliBoot,request_opcode:opcode,
       state:mode==='timeout'?'outcome_unknown':'responded',
       response_opcode:mode==='reject'?0x82:mode==='wrong-ack'?0x80:mode==='wrong-status'?0x98:
         opcode===4?0x91:opcode===0x3b && [2,5].includes(requestPayload[0])?0x98:0x80,

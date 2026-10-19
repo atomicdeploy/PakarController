@@ -16,6 +16,7 @@ param(
 # from PU850 LocalLib/MNDP.{h,cpp}, shared MndpService.h and mndp_test.cpp.
 # These are wire diagnostics, not a replacement discovery engine or physical proof.
 $ErrorActionPreference='Stop'
+. (Join-Path $PSScriptRoot 'peer-identity.ps1')
 
 function Read-PakarU16([byte[]]$Packet,[int]$At) {
   if($At -lt 0 -or $At+2 -gt $Packet.Length){throw 'Truncated wire integer'}
@@ -136,15 +137,19 @@ function Invoke-PakarReadOnlyHttp {
   Add-Type -AssemblyName System.Net.Http
   $handler=[Net.Http.HttpClientHandler]::new();$handler.UseProxy=$false
   $client=[Net.Http.HttpClient]::new($handler);$client.Timeout=[TimeSpan]::FromSeconds(6)
-  $result=[ordered]@{};$auth=$null
+  $identity=Get-PakarToolHeaders
+  foreach($key in $identity.Keys){$client.DefaultRequestHeaders.TryAddWithoutValidation($key,$identity[$key])|Out-Null}
+  $result=[ordered]@{};$auth=$null;$boardCompatible=$false
   try {
     if($env:PAKAR_USER -and $env:PAKAR_PASSWORD){$auth='Basic '+[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:PAKAR_USER+':'+$env:PAKAR_PASSWORD));$client.DefaultRequestHeaders.TryAddWithoutValidation('Authorization',$auth)|Out-Null}
     foreach($path in @('/api/status','/api/network','/api/time','/description.xml')) {
-      try{$response=$client.GetAsync("http://$DeviceHost$path").GetAwaiter().GetResult();$body=$response.Content.ReadAsStringAsync().GetAwaiter().GetResult();$result[$path]=@{status=[int]$response.StatusCode;body=$body};$response.Dispose()}
+      try{$response=$client.GetAsync("http://$DeviceHost$path").GetAwaiter().GetResult();$body=$response.Content.ReadAsStringAsync().GetAwaiter().GetResult();$result[$path]=@{status=[int]$response.StatusCode;headers=[string]$response.Headers;body=$body};$response.Dispose();if($path -eq '/api/status'){Assert-PakarToolPeerCompatible ($body|ConvertFrom-Json);$boardCompatible=$true}}
       catch{$result[$path]=@{error=$_.Exception.Message}}
+      if(-not $boardCompatible){$result.websocket=@{error='Peer compatibility not verified; no WebSocket connected'};return $result}
     }
     $ws=[Net.WebSockets.ClientWebSocket]::new();$cancel=[Threading.CancellationTokenSource]::new(6000)
     try {
+      foreach($key in $identity.Keys){$ws.Options.SetRequestHeader($key,$identity[$key])}
       if($auth){$ws.Options.SetRequestHeader('Authorization',$auth)}
       $ws.Options.Proxy=$null;$null=$ws.ConnectAsync([Uri]"ws://$DeviceHost/ws",$cancel.Token).GetAwaiter().GetResult()
       $initial=Read-PakarWebSocketMessage $ws $cancel.Token
@@ -173,7 +178,7 @@ $dns=Invoke-PakarUdpProbe 'dns-sd-ptr-a' (New-PakarDnsQuery $questions) '224.0.0
 $instances=@($dns.packets|ForEach-Object{$_.records}|Where-Object {$_.type -eq 12 -and $_.value -like '*.local'}|ForEach-Object value|Select-Object -Unique -First 8)
 $follow=$null
 if($instances.Count){$next=@();foreach($instance in $instances){$next+=@{name=$instance;type=33};$next+=@{name=$instance;type=16}};$follow=Invoke-PakarUdpProbe 'dns-sd-srv-txt' (New-PakarDnsQuery $next) '224.0.0.251' 5353 $true}
-$search=[Text.Encoding]::ASCII.GetBytes("M-SEARCH * HTTP/1.1`r`nHOST: 239.255.255.250:1900`r`nMAN: `"ssdp:discover`"`r`nMX: 1`r`nST: ssdp:all`r`n`r`n")
+$search=[Text.Encoding]::ASCII.GetBytes("M-SEARCH * HTTP/1.1`r`nHOST: 239.255.255.250:1900`r`nMAN: `"ssdp:discover`"`r`nMX: 1`r`nST: ssdp:all`r`nUSER-AGENT: $(Get-PakarToolSsdpAgent)`r`n`r`n")
 $result=[ordered]@{device_host=$DeviceHost;device_address=$script:ProbeDevice.ToString();local_address=$LocalAddress;meaning='Actual bounded wire observations on this interface, not routed-VPN multicast or physical peripheral acceptance';dns_sd=$dns;dns_sd_followup=$follow;ssdp_multicast=(Invoke-PakarUdpProbe 'ssdp-multicast' $search '239.255.255.250' 1900);ssdp_unicast=(Invoke-PakarUdpProbe 'ssdp-unicast' $search $script:ProbeDevice.ToString() 1900);mndp=(Invoke-PakarUdpProbe 'mndp-query' ([byte[]](0,0,0,0)) $script:ProbeDevice.ToString() 5678)}
 $nbnsName=$DeviceHost.Split('.')[0]
 if($nbnsName.Length -le 15){

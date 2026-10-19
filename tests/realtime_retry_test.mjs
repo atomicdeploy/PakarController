@@ -1,6 +1,7 @@
 // Actual Rayan sync reconnect-before-open/stop scenarios; shipped JS in Node VM.
 // No donor build, physical observation, fabricated event sequence or write replay.
 import assert from 'node:assert/strict';
+import {webcrypto} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8').replaceAll('\r\n','\n');
@@ -72,12 +73,12 @@ assert.equal(web.split('// BEGIN RAYANLAMP REALTIME RETRY\n')[1].split('\n// END
 // Execute actual Web connectWs + refreshAuthenticated + api, not just a helper.
 const sockets=[],requests=[],liveTimers=new Map(),activity=[],diagnosticEvents=[];
 let timerID=0,status=200,constructorFails=false;
-const live=vm.createContext({Headers,AbortController,Math:Object.assign(Object.create(Math),{random:()=>0.5}),location:{protocol:'https:',host:'ledboard.local'},
+const live=vm.createContext({Headers,AbortController,URL,crypto:webcrypto,Math:Object.assign(Object.create(Math),{random:()=>0.5}),location:{protocol:'https:',host:'ledboard.local'},
   cellShape:{value:'rounded'},wsState:{},render:value=>activity.push('render:'+value.hostname),
   stopStream(){},console:Object.fromEntries(['debug','info','warn','error','log','groupCollapsed','groupEnd'].map(name=>[name,(...args)=>{if(args[4]?.event)diagnosticEvents.push(args[4])}])),
   setTimeout:(run,delay)=>{const id=++timerID;liveTimers.set(id,{run,delay});return id},
   clearTimeout:id=>liveTimers.delete(id),
-  fetch:async(path,options)=>{requests.push({path,options});activity.push('GET');return {status,ok:status===200,text:async()=>JSON.stringify({hostname:'verified-peer'})}},
+  fetch:async(path,options)=>{requests.push({path,options});activity.push('GET');return {status,ok:status===200,text:async()=>JSON.stringify({version:'0.2.8',hostname:'verified-peer'})}},
   WebSocket:class {constructor(url){if(constructorFails)throw Error('socket unavailable');this.url=url;this.sent=[];sockets.push(this);activity.push('socket')}close(){}send(value){this.sent.push(value)}}
 });
 vm.runInContext(read('assets/web/peer-http.js')+'\nconst peerHttp=createPeerHttp();\n'+read('assets/web/browser-console.js')+'\nlet authenticated=true,webSocketPaused=false,socket=null;\n'+module+'\n'+
@@ -87,7 +88,7 @@ vm.runInContext(read('assets/web/peer-http.js')+'\nconst peerHttp=createPeerHttp
   '\nfunction showLogin(){authenticated=false;webSocketReconnect.cancel()}',live);
 const execute=code=>vm.runInContext(code,live);
 const fireLive=async()=>{const[id,timer]=liveTimers.entries().next().value;liveTimers.delete(id);await timer.run();return timer.delay};
-execute('connectWs()');sockets[0].onopen();assert.equal(sockets[0].url,'wss://ledboard.local/ws');
+execute('connectWs()');sockets[0].onopen();assert.equal(new URL(sockets[0].url).origin,'wss://ledboard.local');assert.equal(new URL(sockets[0].url).pathname,'/ws');
 sockets[0].onclose({code:1006});assert.equal(await fireLive(),500);
 assert.equal(sockets.length,2);assert.deepEqual(activity.slice(-3),['GET','render:verified-peer','socket']);
 assert.equal(requests[0].path,'/api/status');assert.equal(requests[0].options.credentials,'same-origin');

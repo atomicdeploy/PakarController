@@ -7,6 +7,8 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'peer_identity.dart';
+
 const appUpdatePackage = 'ir.digitalogic.pakar.pakarcontroller';
 const appUpdateServiceType = '_pakar-update._tcp.';
 const appUpdateSsdpType = 'urn:atomicdeploy:device:PakarControllerApp';
@@ -63,6 +65,7 @@ Future<AppUpdatePeer?> verifyAppUpdatePeer(AppUpdatePeer candidate) async {
       Uri.parse(origin).resolve('/api/app-updates'),
     );
     request.followRedirects = false;
+    identifyRequest(request);
     final response = await request.close();
     if (response.statusCode != 200 || response.contentLength > 16384) {
       return null;
@@ -404,7 +407,9 @@ class AppUpdateDiscovery extends ChangeNotifier {
         socket.send(
           utf8.encode(
             'M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\n'
-            'MAN: "ssdp:discover"\r\nMX: 1\r\nST: $appUpdateSsdpType\r\n\r\n',
+            'MAN: "ssdp:discover"\r\nMX: 1\r\nST: $appUpdateSsdpType\r\n'
+            'USER-AGENT: ${PeerIdentity.current.userAgent}\r\n'
+            'X-Pakar-Version: ${PeerIdentity.current.version}\r\n\r\n',
           ),
           InternetAddress('239.255.255.250'),
           1900,
@@ -446,6 +451,8 @@ class AppUpdateDiscovery extends ChangeNotifier {
         'port': port,
         'name': name,
         'instance_id': instanceId,
+        'version': PeerIdentity.current.version,
+        'build': PeerIdentity.current.build,
       });
     });
     if (_disposed || epoch != _advertiseEpoch) return;
@@ -535,6 +542,9 @@ class AppUpdateDiscovery extends ChangeNotifier {
         socket.send(
           utf8.encode(
             'HTTP/1.1 200 OK\r\nST: $appUpdateSsdpType\r\n'
+            'SERVER: ${PeerIdentity.current.userAgent} UPnP/1.1\r\n'
+            'X-Pakar-Version: ${PeerIdentity.current.version}\r\n'
+            'X-Pakar-Build: ${PeerIdentity.current.build}\r\n'
             'LOCATION: http://${ip.address}:$_port/api/app-updates\r\n'
             'X-Pakar-Product: pakarcontroller-mobile\r\nX-Pakar-Instance: $_instance\r\n'
             'X-Pakar-Name: $_name\r\nCACHE-CONTROL: max-age=60\r\n\r\n',
@@ -564,6 +574,8 @@ class AppUpdateDiscovery extends ChangeNotifier {
 
     field(1, mac);
     field(5, utf8.encode(_name));
+    field(7, utf8.encode(PeerIdentity.current.version));
+    field(16, utf8.encode('mobile build/${PeerIdentity.current.build}'));
     field(11, utf8.encode(_instance));
     field(12, utf8.encode('Android application endpoint'));
     field(0xff01, utf8.encode('pakarcontroller-mobile'));

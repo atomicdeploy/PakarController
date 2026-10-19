@@ -2,6 +2,7 @@
 // No package manager, second client protocol or externally hosted assets.
 import assert from 'node:assert/strict';
 import {readFile, writeFile} from 'node:fs/promises';
+import {webPeerSource} from './web-peer-build.mjs';
 const read = path => readFile(new URL('../'+path, import.meta.url), 'utf8');
 const icon=(await read('assets/branding/app-icon.png.base64')).trim();
 assert.match(icon,/^[A-Za-z0-9+/]+={0,2}$/);
@@ -9,7 +10,7 @@ const palette=JSON.parse(await read('assets/themes/palettes.json')).studio.dark;
 const values={
   APP_ICON:'data:image/png;base64,'+icon,
   PALETTE:':root{color-scheme:dark;'+Object.entries(palette).map(([key,value])=>'--'+key+':'+value).join(';')+'}',
-  PEER_HTTP:await read('assets/web/peer-http.js'),
+  PEER_HTTP:await webPeerSource(await read('assets/web/peer-http.js')),
   BASIC_CELLS:await read('assets/web/basic-cells.js'),
 };
 let html=await read('assets/web/basic.html');

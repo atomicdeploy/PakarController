@@ -89,7 +89,7 @@ pub fn send_verified(current:&DeviceStatus,endpoint:&Endpoint,request:&Request,
 mod tests{
     use super::*;
     fn wire_status(boot:char,batch:bool,state:&str)->Vec<u8>{
-        serde_json::to_vec(&serde_json::json!({"hostname":"ledboard","board_id":"esp32s3-fixture",
+        serde_json::to_vec(&serde_json::json!({"version":crate::peer_identity::VERSION,"hostname":"ledboard","board_id":"esp32s3-fixture",
             "boot_id":boot.to_string().repeat(32),"http_peer_fencing":true,"cells":vec![state;80],
             "capabilities":{"board_kind":"table","acknowledged_features":if batch{vec!["table","cell-batch"]}else{vec!["table"]},
                 "table":{"columns":10,"rows":8,"pixels_per_cell":6}}})).unwrap()

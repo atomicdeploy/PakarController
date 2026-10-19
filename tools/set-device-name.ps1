@@ -4,6 +4,8 @@ param(
 )
 # Physical ESP USB naming; no Wi-Fi, authentication or AVR storage is erased.
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'serial-wire.ps1')
+. (Join-Path $PSScriptRoot 'peer-identity.ps1')
 $label = $Name.ToLowerInvariant()
 if ($label.EndsWith('.local')) { $label = $label.Substring(0, $label.Length - 6) }
 if ($label -notmatch '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$' -or $label -in @('local','localhost')) {
@@ -61,6 +63,9 @@ function Send-NameChunk([byte[]] $Payload) {
 }
 try {
     $serial.Open(); Start-Sleep -Milliseconds 250; $serial.DiscardInBuffer()
+    $hello=Send-PakarNetworkRequest $serial 0x01 1 (New-PakarToolUsbHello) 0x81 5000
+    Assert-PakarToolUsbHello $hello
+    $script:nameSequence=1
     Send-NameChunk ([byte[]] @(0))
     [byte[]] $bytes = [Text.Encoding]::ASCII.GetBytes($label)
     for ($offset = 0; $offset -lt $bytes.Length; $offset += 47) {

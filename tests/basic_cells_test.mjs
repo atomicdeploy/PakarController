@@ -1,15 +1,16 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {webcrypto} from 'node:crypto';
 const js=readFileSync(new URL('../assets/web/basic-cells.js',import.meta.url),'utf8');
 const peer=readFileSync(new URL('../assets/web/peer-http.js',import.meta.url),'utf8');
 const html=readFileSync(new URL('../assets/web/basic.html',import.meta.url),'utf8');
 const firmware=readFileSync(new URL('../firmware/esp8266/esp8266.ino',import.meta.url),'utf8');
 assert.match(firmware,/server\.native\(\)\.on\(AsyncURIMatcher::exact\("\/basic"\)/,'Immutable page bypasses the hardware queue');
 assert.match(firmware,/request->send\(200, "text\/html; charset=utf-8",\s*reinterpret_cast<const uint8_t \*>\(kBasicUi\), sizeof\(kBasicUi\) - 1\)/,'Use bounded flash response, not ESP32 char* send_P heap overload');
-const {createBasicCells,createPeerHttp}=vm.runInNewContext(peer+'\n'+js+'\n({createBasicCells,createPeerHttp})',{URLSearchParams,Headers,AbortController,setTimeout,clearTimeout});
+const {createBasicCells,createPeerHttp}=vm.runInNewContext(peer+'\n'+js+'\n({createBasicCells,createPeerHttp})',{URLSearchParams,Headers,AbortController,setTimeout,clearTimeout,crypto:webcrypto});
 function fixture(){
-  const status={board_id:'esp32s3-aabbccddeeff',boot_id:'1'.repeat(32),http_peer_fencing:true,hostname:'ledboard',pixels:480,
+  const status={version:'0.2.8',board_id:'esp32s3-aabbccddeeff',boot_id:'1'.repeat(32),http_peer_fencing:true,hostname:'ledboard',pixels:480,
     capabilities:{board_kind:'table',acknowledged_features:['table','leds','cell-batch'],table:{columns:10,rows:8,pixels_per_cell:6}},
     cells:Array(80).fill('white'),led_output:{enabled:true,mode:'static',driver:{backend:'gpio-static',dma:false,ready:true}}};
   const f={status,calls:[],updates:[],time:100,authenticated:true,authEnabled:false,defaultCredentials:false,failRead:false,hold:false,pending:null};

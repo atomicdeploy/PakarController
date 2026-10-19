@@ -109,7 +109,29 @@ is a **preview**, not a production-signed Android release. A durable signing
 key, physical phone/tablet verification, full preference/menu parity and
 actual board round-trips remain open in GitHub master issue #2. No keystore or
 device credentials are committed. Flutter/Dart versions used for this
-checkpoint are 3.47.3/3.13.3; all product surfaces advertise version 0.2.7.
+checkpoint are 3.47.3/3.13.3; this paired source checkpoint is 0.2.8
+(Android build 15). An already-installed package reports its actual package version.
+
+Peer version admission is enabled by default with a 0.2.8 support floor;
+`PAKAR_ENFORCE_PEER_VERSIONS=false` disables only version checks in a build,
+not identity, authentication, capability, replay or update integrity checks.
+Use the canonical wrapper's `-DisablePeerVersionChecks` switch with
+`-Mode ApkPreview -BuildOnly` for such an APK; omitting it keeps enforcement enabled.
+HTTP and WebSocket identify the app, installation and process session;
+bounded public hardware/settings reports refresh at most once a minute while
+the selected board is being observed in the foreground. API paths stay unversioned.
+An IP is self-reported only from the genuine selected board connection's direct
+socket. Bluetooth, simulated, proxied or unavailable routes omit it. The peer
+sharing HTTP API cannot expose its local interface and omits it too; the actual
+observed peer address remains separate. Mobile currently forces dark mode;
+there is no user-configurable theme preference to infer.
+
+App sharing preserves an explicit read-only recovery exception: the existing
+`app.package.info` and `app.package.read` methods on `/api/rpc` remain available
+to older clients, so they can retrieve a newer APK. Source, origin, size,
+signer and digest checks remain; this does not authorize any `app.upgrade.*`
+mutation, Android installation or board control. Those retain admission and
+the existing local approval/capability/OS-consent boundaries.
 
 The wrapper runs from the repository root using the existing documented SDK,
 canonical mobile/build cache, reviewed context/storage gates and locked resolved

@@ -5,6 +5,7 @@ import {mkdir,mkdtemp,rm,lstat,readFile,writeFile,utimes} from 'node:fs/promises
 import {resolve,join} from 'node:path';
 import {WebSocket} from 'ws';
 import {createService,sha256} from './service.mjs';
+import {toolHeaders,toolRelease} from '../../tools/peer-identity.mjs';
 
 test('actual management HTTP, durable enrollment, immutable packages and one-use actions',async t=>{
   const parent=resolve('build/native/client-management');await mkdir(parent,{recursive:true});
@@ -15,9 +16,9 @@ test('actual management HTTP, durable enrollment, immutable packages and one-use
   await new Promise(r=>app.server.listen(0,'127.0.0.1',r));
   const base=`http://127.0.0.1:${app.server.address().port}`;
   t.after(async()=>{await app.close();await rm(directory,{recursive:true});});
-  async function request(path,{method='GET',token,body,headers={}}={}){
-    const r=await fetch(base+'/pakar'+path,{method,headers:{...(token?{Authorization:'Bearer '+token}:{}),...(body?{'Content-Type':'application/json'}:{}),...headers},body:body?JSON.stringify(body):undefined});
-    return {status:r.status,body:await r.json()};
+  async function request(path,{method='GET',token,body,headers={},identify=true}={}){
+    const r=await fetch(base+'/pakar'+path,{method,headers:{...(identify?toolHeaders():{}),...(token?{Authorization:'Bearer '+token}:{}),...(body?{'Content-Type':'application/json'}:{}),...headers},body:body?JSON.stringify(body):undefined});
+    return {status:r.status,headers:r.headers,body:await r.json()};
   }
   const administrate=(path,body)=>request('/api/admin'+path,{method:'POST',token:admin,body});
   await t.test('private inventory, cross-origin and unsafe commands fail closed',async()=>{
@@ -26,12 +27,28 @@ test('actual management HTTP, durable enrollment, immutable packages and one-use
     assert.equal((await request('/api/health')).body.ready,true);
     assert.equal((await request('/api/app-updates')).status,400);
     assert.equal((await request('/packages/../../management.sqlite')).status,404);
+    for(const path of ['/api/health','/api/peer/info','/api/admin/clients','/missing']){
+      const response=await request(path,{identify:false});
+      assert.equal(response.headers.get('Server'),'PakarController/'+toolRelease.version);assert.equal(response.headers.get('X-Pakar-Version'),toolRelease.version);
+      assert.equal(response.headers.get('X-Pakar-Build'),String(toolRelease.build));
+      assert.equal(response.headers.get('X-Pakar-Min-App-Version'),toolRelease.version);assert.equal(response.headers.get('X-Pakar-Version-Check'),'true');
+      if(response.status===200){assert.equal(response.body.version,toolRelease.version);assert.equal(response.body.compatibility.minimum_app,toolRelease.version);assert.equal(response.body.compatibility.enforced,true);}
+    }
+    const page=await fetch(base+'/pakar/'),html=await page.text();assert.equal(page.headers.get('Server'),'PakarController/'+toolRelease.version);
+    assert(html.includes('"version":"'+toolRelease.version+'"'));assert(!html.includes('{{PEER_IDENTITY}}'));
+    const installer=await readFile(new URL('./install-office.sh',import.meta.url),'utf8'),deployer=await readFile(new URL('../../tools/deploy-client-service.mjs',import.meta.url),'utf8');
+    for(const path of ['services/client-management/service.mjs','services/client-management/operator.mjs','tools/peer-identity.mjs','interfaces/client-release.json','interfaces/peer-policy.json']){
+      assert(installer.includes(path),'Installer must preserve shared release/helper layout: '+path);assert(deployer.includes(path),'Upload source must include shared dependency: '+path);
+    }
+    assert((await readFile(new URL('./pakarcontroller-management.service',import.meta.url),'utf8')).includes('ExecStart=/usr/bin/node /opt/pakarcontroller-management/services/client-management/service.mjs'));
   });
   let token,client='android-test-client-0001';
   await t.test('enrollment is one-use, platform-bound, and stores only hashes',async()=>{
     const e=await administrate('/enrollments',{platform:'android'});assert.equal(e.status,201);
     const enrollment={enrollment_token:e.body.enrollment_token,client_id:client,platform:'android',application:'PakarController'};
     assert.equal((await request('/api/clients/enroll',{method:'POST',body:{...enrollment,platform:'windows-x64'}})).status,403);
+    assert.equal((await request('/api/clients/enroll',{method:'POST',body:enrollment,identify:false})).status,426);
+    assert.equal((await request('/api/clients/enroll',{method:'POST',body:enrollment,headers:{'X-Pakar-Version':'0.2.7'}})).status,426);
     const enrolled=await request('/api/clients/enroll',{method:'POST',body:enrollment});assert.equal(enrolled.status,201);token=enrolled.body.token;
     assert.equal((await request('/api/clients/enroll',{method:'POST',body:enrollment})).status,403);
     const inventory=await request('/api/admin/clients',{token:admin});assert.equal(inventory.body.clients.length,1);
@@ -41,10 +58,20 @@ test('actual management HTTP, durable enrollment, immutable packages and one-use
     assert.ok(!bytes.includes(Buffer.from(token)));assert.ok(!bytes.includes(Buffer.from(e.body.enrollment_token)));
   });
   await t.test('telemetry is identity-bound and strips unknown/private fields',async()=>{
-    const report={client_id:client,application:'PakarController',platform:'android',version:'0.2.7',build:9,foreground:true,update_state:'idle',password:'not-sent',files:['private']};
+    const report={client_id:client,application:'PakarController',platform:'android',version:toolRelease.version,build:toolRelease.build,foreground:true,update_state:'idle',password:'not-sent',files:['private'],
+      session_id:'session-1234567890123456',reported_ip:'192.0.2.20',capabilities:['http','websocket','http'],
+      hardware:{manufacturer:'Example',model:'Tablet',cpu_count:8,password:'hidden-secret'},settings:{theme:'dark',auto_update:true,token:'hidden-secret'}};
     assert.equal((await request('/api/clients/report',{method:'POST',token,body:{...report,client_id:'another-client-000'}})).status,409);
     assert.equal((await request('/api/clients/report',{method:'POST',token,body:report})).status,200);
-    const v=(await request('/api/admin/clients',{token:admin})).body.clients[0];assert.equal(v.telemetry.build,9);assert.equal(v.telemetry.password,undefined);assert.equal(v.telemetry.files,undefined);
+    const v=(await request('/api/admin/clients',{token:admin})).body.clients[0];assert.equal(v.telemetry.build,toolRelease.build);assert.equal(v.telemetry.password,undefined);assert.equal(v.telemetry.files,undefined);
+    assert.equal(v.telemetry.hardware.model,'Tablet');assert.equal(v.telemetry.settings.auto_update,true);assert.equal(v.telemetry.observed_ip,'127.0.0.1');assert.equal(v.telemetry.reported_ip,'192.0.2.20');assert.equal(v.telemetry.self_reported,true);
+    assert.equal(v.telemetry.user_agent,toolHeaders()['User-Agent']);assert.deepEqual(v.telemetry.capabilities,['http','websocket']);assert(!JSON.stringify(v).includes('hidden-secret'));
+    assert.equal((await request('/api/clients/report',{method:'POST',token,body:{...report,version:'0.2.9'}})).status,409);
+    assert.equal((await request('/api/clients/report',{method:'POST',token,body:{...report,hardware:{cpu:{secret:'no'}}}})).status,400);
+    assert.equal((await request('/api/clients/report',{method:'POST',token,body:{...report,hardware:null,settings:null,capabilities:null,reported_ip:null}})).status,200);
+    for(const headers of [{'X-Pakar-Version':'0.2.7'},{'X-Pakar-Version':'bad'}])assert.equal((await request('/api/client/commands',{token,headers})).status,426);
+    assert.equal((await request('/api/client/commands',{token,identify:false})).status,426);
+    const prior=process.env.PAKAR_ENFORCE_PEER_VERSIONS;try{process.env.PAKAR_ENFORCE_PEER_VERSIONS='0';assert.equal((await request('/api/client/commands',{token,identify:false})).status,200);assert.equal((await request('/api/admin/clients',{identify:false})).status,401);}finally{if(prior===undefined)delete process.env.PAKAR_ENFORCE_PEER_VERSIONS;else process.env.PAKAR_ENFORCE_PEER_VERSIONS=prior;}
     assert.equal((await administrate('/clients/'+client+'/commands',{action:'shell'})).status,400);
     assert.equal((await administrate('/clients/'+client+'/commands',{action:'uninstall',confirmation:'uninstall PakarController'})).status,409);
   });
@@ -64,8 +91,8 @@ test('actual management HTTP, durable enrollment, immutable packages and one-use
   let latest;
   async function publish(build,{badDigest=false}={}){
     const data=Buffer.alloc(512,build);data.writeUInt32LE(0x04034b50);
-    const meta={product:'PakarController',platform:'android',version:'0.2.7',build,bytes:data.length,sha256:badDigest?'0'.repeat(64):sha256(data),package:'ir.digitalogic.pakar.pakarcontroller',signers:['a'.repeat(64)]};
-    const r=await fetch(base+'/pakar/api/admin/releases',{method:'POST',headers:{Authorization:'Bearer '+admin,'X-Pakar-Release':Buffer.from(JSON.stringify(meta)).toString('base64'),'Content-Length':String(data.length)},body:data});
+    const meta={product:'PakarController',platform:'android',version:toolRelease.version,build,bytes:data.length,sha256:badDigest?'0'.repeat(64):sha256(data),package:'ir.digitalogic.pakar.pakarcontroller',signers:['a'.repeat(64)]};
+    const r=await fetch(base+'/pakar/api/admin/releases',{method:'POST',headers:{...toolHeaders(),Authorization:'Bearer '+admin,'X-Pakar-Release':Buffer.from(JSON.stringify(meta)).toString('base64'),'Content-Length':String(data.length)},body:data});
     return {status:r.status,body:await r.json(),data};
   }
   await t.test('publication verifies bounded artifact SHA and serving ranges use exact immutable identity',async()=>{
@@ -75,6 +102,8 @@ test('actual management HTTP, durable enrollment, immutable packages and one-use
     const path='/packages/'+latest.body.sha256+'/PakarController.apk';
     const r=await fetch(base+'/pakar'+path);assert.deepEqual(Buffer.from(await r.arrayBuffer()),latest.data);
     assert.equal(r.headers.get('x-checksum-sha256'),latest.body.sha256);
+    assert.equal(r.headers.get('Server'),'PakarController/'+toolRelease.version);
+    const recovery=await request('/api/releases?platform=android',{headers:{'X-Pakar-Version':'0.2.7'}});assert.equal(recovery.status,200);
     const range=await fetch(base+'/pakar'+path,{headers:{Range:'bytes=4-9'}});assert.equal(range.status,206);assert.equal((await range.arrayBuffer()).byteLength,6);
     assert.equal((await fetch(base+'/pakar'+path,{headers:{Range:'bytes=512-513'}})).status,416);
     assert.equal((await fetch(base+'/pakar'+path.replace('.apk','.exe'))).status,404);
@@ -82,11 +111,19 @@ test('actual management HTTP, durable enrollment, immutable packages and one-use
     assert.equal(catalog.body.offers[0].version_code,1);assert.equal(catalog.body.offers[0].expires_at_ms,clock+55000);
   });
   await t.test('WebSocket feed is session-bound and contains public releases only',async()=>{
-    const ws=new WebSocket(base.replace('http:','ws:')+'/pakar/api/events');t.after(()=>ws.terminate());
+    const ws=new WebSocket(base.replace('http:','ws:')+'/pakar/api/events',{headers:toolHeaders()});t.after(()=>ws.terminate());
+    const upgrade=new Promise(resolve=>ws.once('upgrade',res=>resolve(res.headers)));
     await new Promise((r,reject)=>{ws.once('open',r);ws.once('error',reject);});
+    assert.equal((await upgrade).server,'PakarController/'+toolRelease.version);
     const received=new Promise((r,reject)=>{ws.once('message',b=>r(JSON.parse(b.toString())));ws.once('error',reject);});
     ws.send(JSON.stringify({type:'subscribe',session:'session-1234567890123456',package:'ir.digitalogic.pakar.pakarcontroller'}));
-    const v=await received;assert.equal(v.session,'session-1234567890123456');assert.equal(v.sha256,latest.body.sha256);assert.equal(v.token,undefined);ws.terminate();
+    const v=await received;assert.equal(v.session,'session-1234567890123456');assert.equal(v.sha256,latest.body.sha256);assert.equal(v.token,undefined);assert.equal(v.service.version,toolRelease.version);ws.terminate();
+    const old=new WebSocket(base.replace('http:','ws:')+'/pakar/api/events',{headers:{'X-Pakar-Version':'0.2.7'}});t.after(()=>old.terminate());await new Promise((r,reject)=>{old.once('open',r);old.once('error',reject)});old.terminate();
+    const rejected=await new Promise((done,reject)=>{
+      const foreign=new WebSocket(base.replace('http:','ws:')+'/pakar/api/events',{headers:{Origin:'https://foreign.invalid'}});
+      foreign.on('error',()=>{});foreign.once('unexpected-response',(_req,res)=>{res.resume();done({status:res.statusCode,headers:res.headers});foreign.terminate()});
+      const timer=setTimeout(()=>{foreign.terminate();reject(Error('WS fixture deadline'))},2000);timer.unref();foreign.on('close',()=>clearTimeout(timer));
+    });assert.equal(rejected.status,403);assert.equal(rejected.headers.server,'PakarController/'+toolRelease.version);
   });
   await t.test('retention preserves newest three and current packages; revocation is immediate',async()=>{
     const interrupted=join(directory,'packages','0f5b3f55-ab44-4a27-a000-57087eb668ce.pending');

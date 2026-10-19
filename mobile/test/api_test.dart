@@ -15,6 +15,7 @@ void main() {
       client: MockClient(
         (_) async => http.Response(
           jsonEncode({
+            'version': '0.2.8',
             'hostname': 'ledboard',
             'board_id': 'fixture-board',
             'boot_id': 'a' * 32,
@@ -57,9 +58,13 @@ void main() {
     expect(identical(first, replacement), false);
     await Future<void>.delayed(Duration.zero);
     expect(replies, hasLength(2));
-    replies[0].complete(http.Response('{"hostname":"ledboard"}', 200));
+    replies[0].complete(
+      http.Response('{"version":"0.2.8","hostname":"ledboard"}', 200),
+    );
     await retired;
-    replies[1].complete(http.Response('{"hostname":"replacement"}', 200));
+    replies[1].complete(
+      http.Response('{"version":"0.2.8","hostname":"replacement"}', 200),
+    );
     expect((await replacement).hostname, 'replacement');
     await api.close();
   });
@@ -72,7 +77,10 @@ void main() {
         client: MockClient((request) async {
           if (request.method == 'POST') return http.Response('{}', 200);
           if (++reads == 2) return pending.future;
-          return http.Response('{"hostname":"ledboard"}', 200);
+          return http.Response(
+            '{"version":"0.2.8","hostname":"ledboard"}',
+            200,
+          );
         }),
       );
       await api.status();
@@ -83,7 +91,9 @@ void main() {
       expect(identical(before, after), false);
       await after;
       expect(reads, 3);
-      pending.complete(http.Response('{"hostname":"ledboard"}', 200));
+      pending.complete(
+        http.Response('{"version":"0.2.8","hostname":"ledboard"}', 200),
+      );
       await retired;
       await api.close();
     },
@@ -98,6 +108,7 @@ void main() {
         if (++reads == 2) return duringWrite.future;
         return http.Response(
           jsonEncode({
+            'version': '0.2.8',
             'hostname': 'ledboard',
             'effect': reads == 1 ? 'rainbow' : 'none',
           }),
@@ -117,7 +128,10 @@ void main() {
     expect(actual.effect, 'none');
     expect(reads, 3);
     duringWrite.complete(
-      http.Response('{"hostname":"ledboard","effect":"rainbow"}', 200),
+      http.Response(
+        '{"version":"0.2.8","hostname":"ledboard","effect":"rainbow"}',
+        200,
+      ),
     );
     await retired;
     expect(api.latestStatus!.effect, 'none');
@@ -138,7 +152,9 @@ void main() {
     final write = api.post('/api/game/reset');
     final check = expectLater(write, throwsA(isA<StaleConnection>()));
     api.baseUrl = 'http://other.local';
-    pending.complete(http.Response('{"hostname":"ledboard"}', 200));
+    pending.complete(
+      http.Response('{"version":"0.2.8","hostname":"ledboard"}', 200),
+    );
     await check;
     expect(posts, 0);
     await api.close();
@@ -154,7 +170,7 @@ void main() {
         }
         reads++;
         return reads == 1
-            ? http.Response('{"hostname":"ledboard"}', 200)
+            ? http.Response('{"version":"0.2.8","hostname":"ledboard"}', 200)
             : pending.future;
       }),
     );
@@ -163,7 +179,9 @@ void main() {
     final write = api.post('/api/game/reset');
     final check = expectLater(write, throwsA(isA<StaleConnection>()));
     api.password = 'second replacement';
-    pending.complete(http.Response('{"hostname":"ledboard"}', 200));
+    pending.complete(
+      http.Response('{"version":"0.2.8","hostname":"ledboard"}', 200),
+    );
     await check;
     expect(reads, 2);
     expect(posts, 0);
@@ -196,7 +214,10 @@ void main() {
           ++posts;
           throw const SocketException('lost response after apply');
         }
-        return http.Response(jsonEncode({'hostname': 'ledboard'}), 200);
+        return http.Response(
+          jsonEncode({'version': '0.2.8', 'hostname': 'ledboard'}),
+          200,
+        );
       }),
       discovery: () async {
         ++discoveries;
@@ -220,6 +241,7 @@ void main() {
         }
         return http.Response(
           jsonEncode({
+            'version': '0.2.8',
             'hostname': request.url.host == '192.0.2.1' ? 'other' : 'renamed',
           }),
           200,
@@ -238,7 +260,7 @@ void main() {
     final api = PakarApi(
       client: MockClient((request) async {
         if (request.method == 'POST') ++posts;
-        return http.Response('{"hostname":"other"}', 200);
+        return http.Response('{"version":"0.2.8","hostname":"other"}', 200);
       }),
     );
     await expectLater(api.post('/api/game/reset'), throwsFormatException);

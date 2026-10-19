@@ -1,0 +1,7 @@
+{
+  "enforce": true,
+  "minimum_app": "0.2.8",
+  "minimum_board": "0.2.8",
+  "maximum_app": null,
+  "maximum_board": null
+}

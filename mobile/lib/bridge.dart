@@ -10,6 +10,8 @@ import 'api.dart';
 import 'device_registry.dart';
 import 'firmware.dart';
 import 'models.dart';
+import 'peer_identity.dart';
+import 'peer_policy.dart';
 
 /// Shared admission for MQTT, outbound WebSocket and Android loopback clients.
 /// IDs are consumed before dispatch; lost acknowledgments never trigger replay.
@@ -110,7 +112,13 @@ class BridgeOptions {
 /// Foreground-only bridge. Never promises Android background/lockscreen uptime.
 /// No remote peer receives the ESP password, Wi-Fi settings or arbitrary status JSON.
 class AndroidBridge extends ChangeNotifier {
-  AndroidBridge(this.api, this.observed) : owner = api.connectionRevision;
+  AndroidBridge(
+    this.api,
+    this.observed, {
+    this.enforceVersions = enforcePeerVersions,
+  }) : owner = api.connectionRevision;
+  final bool enforceVersions;
+  final peerRegistry = PeerRegistry();
   final PakarApi api;
   final DeviceStatus? Function() observed;
   final int owner;
@@ -197,6 +205,7 @@ class AndroidBridge extends ChangeNotifier {
         );
         mqtt = active;
         active.useWebSocket = ws;
+        if (ws) active.websocketHeader = PeerIdentity.current.webSocketHeaders;
         active.secure = !ws;
         active.logging(on: false);
         active.setProtocolV311();
@@ -270,9 +279,11 @@ class AndroidBridge extends ChangeNotifier {
       if (selected.remoteWebSocket.isNotEmpty) {
         final active = await WebSocket.connect(
           selected.remoteWebSocket,
-          headers: selected.remoteToken.isEmpty
-              ? {}
-              : {'Authorization': 'Bearer ${selected.remoteToken}'},
+          headers: {
+            ...PeerIdentity.current.webSocketHeaders,
+            if (selected.remoteToken.isNotEmpty)
+              'Authorization': 'Bearer ${selected.remoteToken}',
+          },
         ).timeout(const Duration(seconds: 8));
         if (generation != epoch || closed) {
           await active.close();
@@ -345,7 +356,7 @@ class AndroidBridge extends ChangeNotifier {
       'bridge_session': admission!.session,
       'observed_at_ms': DateTime.now().millisecondsSinceEpoch,
       'client': {
-        'application': 'PakarController',
+        ...PeerIdentity.current.report(enforce: enforceVersions),
         'platform': Platform.operatingSystem,
         'bridge': 'foreground',
         'commands_enabled': options!.commands,
@@ -413,6 +424,7 @@ class AndroidBridge extends ChangeNotifier {
     String raw, {
     bool retained = false,
     required int generation,
+    String? clientVersion,
   }) async {
     received++;
     String? id;
@@ -429,9 +441,17 @@ class AndroidBridge extends ChangeNotifier {
       if (decoded is! Map<String, dynamic>) {
         throw const FormatException('Invalid request');
       }
+      final peer = decoded['peer'];
+      validatePeerApp(
+        peer is Map
+            ? peer['version']
+            : decoded['client_version'] ?? clientVersion,
+        enabled: enforceVersions,
+      );
       id = decoded['id'] is String ? decoded['id'] : null;
       final s = current();
       admission!.admit(decoded, s, retained: retained);
+      if (peer != null) peerRegistry.observe(peer);
       busy = true;
       try {
         if (decoded['type'] == 'command' && options!.commands) {
@@ -512,12 +532,38 @@ class AndroidBridge extends ChangeNotifier {
   }
 
   Future<void> _local(HttpRequest r, int generation) async {
+    identifyResponse(r.response);
     try {
       if (generation != epoch ||
           !running ||
           r.headers.value('authorization') != 'Bearer $token' ||
           r.headers.value('origin') != null) {
         r.response.statusCode = 403;
+        await r.response.close();
+        return;
+      }
+      if (r.method == 'GET' && r.uri.path == '/api/peer/info') {
+        r.response.headers.contentType = ContentType.json;
+        r.response.write(
+          jsonEncode({
+            'product': 'PakarController',
+            'kind': 'android-app',
+            'version': PeerIdentity.current.version,
+            'build': PeerIdentity.current.build,
+            'compatibility': peerCompatibility(enabled: enforceVersions),
+            'peer': PeerIdentity.current.report(enforce: enforceVersions),
+          }),
+        );
+        await r.response.close();
+        return;
+      }
+      validatePeerApp(
+        r.headers.value('x-pakar-version'),
+        enabled: enforceVersions,
+      );
+      if (r.method == 'GET' && r.uri.path == '/api/clients') {
+        r.response.headers.contentType = ContentType.json;
+        r.response.write(jsonEncode({'clients': peerRegistry.peers}));
         await r.response.close();
         return;
       }
@@ -540,7 +586,11 @@ class AndroidBridge extends ChangeNotifier {
           (m) {
             if (m is String && m.length <= 8192) {
               unawaited(
-                _incoming(m, generation: generation).then((v) {
+                _incoming(
+                  m,
+                  generation: generation,
+                  clientVersion: r.headers.value('x-pakar-version'),
+                ).then((v) {
                   if (s.readyState == WebSocket.open) s.add(jsonEncode(v));
                 }),
               );
@@ -607,15 +657,19 @@ class AndroidBridge extends ChangeNotifier {
         if (generation != epoch || !running) {
           throw const StaleConnection();
         }
-        value = await _incoming(utf8.decode(chunks), generation: generation);
+        value = await _incoming(
+          utf8.decode(chunks),
+          generation: generation,
+          clientVersion: r.headers.value('x-pakar-version'),
+        );
       } else {
         r.response.statusCode = 404;
         value = {'accepted': false};
       }
       r.response.write(jsonEncode(value));
       await r.response.close();
-    } on Object {
-      r.response.statusCode = 400;
+    } on Object catch (error) {
+      r.response.statusCode = error is UnsupportedPeerVersion ? 426 : 400;
       await r.response.close();
     }
   }

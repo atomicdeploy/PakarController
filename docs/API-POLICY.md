@@ -23,8 +23,11 @@ PCController chats, not the older API names retained in this alpha project.
   Streaming uses stable `PKAR` magic, reserved zero bytes 4/5, and checked flags,
   exact size and pixel range. There are no readers for old numbered envelopes.
 - Firmware/application `version`, component build versions and monotonic
-  identity `revision` remain: these are diagnostic identity/update-safety data,
-  not selectable API contracts. Standard protocol versions such as JSON-RPC 2.0,
+  identity `revision` remain: these are diagnostic identity/update-safety data
+  and optional supported-release admission, never selectable API contracts.
+  Release ranges default to enforcement, independently disabled in a built app
+  or firmware; they never select adapters or redefine routes. See PEER-IDENTITY.md.
+  Standard protocol versions such as JSON-RPC 2.0,
   HTTP, MQTT and UPnP remain where their standards require them.
 
 Audio availability now uses the AVR HELLO's explicit cue count and buzzer ACK,

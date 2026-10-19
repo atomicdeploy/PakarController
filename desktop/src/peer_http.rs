@@ -153,7 +153,7 @@ pub fn request_relookup(origin: &str) {
 /// bypassing repeated slow OS DNS/mDNS lookup for previously verified peers.
 /// Build a fresh client after invalidation; never automatically resend a write.
 pub fn device_client_builder() -> reqwest::blocking::ClientBuilder {
-    let mut builder = Client::builder()
+    let mut builder = crate::peer_identity::client_builder()
         .no_proxy()
         .redirect(reqwest::redirect::Policy::none())
         .timeout(Duration::from_secs(4))
@@ -231,7 +231,7 @@ pub type DeviceWebSocket = tungstenite::WebSocket<tungstenite::stream::MaybeTlsS
 
 /// The original request retains its URL/Host/TLS SNI. The learned IP is used
 /// only by connect_timeout; upgrade success never grants board authority.
-pub fn connect_websocket(endpoint: &crate::Endpoint, request: tungstenite::handshake::client::Request,
+pub fn connect_websocket(endpoint: &crate::Endpoint, mut request: tungstenite::handshake::client::Request,
     stamp: crate::connection::Stamp) -> Result<Option<DeviceWebSocket>, String> {
     if request.uri().to_string() != crate::websocket_url(&endpoint.base)? {
         return Err("WebSocket request does not match the selected device origin".into());
@@ -248,7 +248,12 @@ pub fn connect_websocket(endpoint: &crate::Endpoint, request: tungstenite::hands
     let transport = WebSocketTransport { socket, stamp,
         handshake_deadline: Some(Instant::now() + WEBSOCKET_TIMEOUT) };
     transport.prepare(true).map_err(crate::diagnostics::describe_error)?;
-    let (mut socket, _) = tungstenite::client_tls(request, transport).map_err(crate::diagnostics::describe_error)?;
+    crate::peer_identity::websocket_headers(&mut request);
+    let (mut socket, response) = tungstenite::client_tls(request, transport).map_err(|error|{
+        if matches!(&error,tungstenite::HandshakeError::Failure(tungstenite::Error::Http(response)) if response.status().as_u16()==426){"Peer compatibility: server rejected this app version; update it or explicitly disable its version gate".into()}
+        else{crate::diagnostics::describe_error(error)}
+    })?;
+    crate::peer_identity::validate_response_headers(response.headers())?;
     match socket.get_mut() {
         tungstenite::stream::MaybeTlsStream::Plain(stream) => stream.established(),
         tungstenite::stream::MaybeTlsStream::Rustls(stream) => stream.sock.established(),
@@ -275,24 +280,31 @@ impl Pin {
         self.board == board && self.boot == boot
     }
     pub fn from_status(s: &DeviceStatus) -> Option<Self> {
-        (s.http_peer_fencing
-            && !s.board_id.is_empty()
-            && s.board_id.len() <= 64
-            && s.board_id
+        if !s.http_peer_fencing {
+            return None;
+        }
+        Self::from_identity(&s.board_id, &s.boot_id)
+    }
+    /// Board/boot syntax is shared by all transports. HTTP separately requires
+    /// its advertised fencing feature; USB must not invent that capability.
+    pub fn from_identity(board: &str, boot: &str) -> Option<Self> {
+        (!board.is_empty()
+            && board.len() <= 64
+            && board
                 .bytes()
                 .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'-' || c == b'_')
-            && s.boot_id.len() == 32
-            && s.boot_id
+            && boot.len() == 32
+            && boot
                 .bytes()
                 .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
-            && s.boot_id.bytes().any(|c| c != b'0'))
+            && boot.bytes().any(|c| c != b'0'))
         .then(|| Self {
-            board: s.board_id.clone(),
-            boot: s.boot_id.clone(),
+            board: board.to_owned(),
+            boot: boot.to_owned(),
         })
     }
     pub fn client(&self) -> Result<Client, String> {
-        let mut headers = reqwest::header::HeaderMap::new();
+        let mut headers = crate::peer_identity::headers();
         headers.insert(
             "x-pakar-board",
             self.board.parse().map_err(|_| "Invalid board identity")?,
@@ -791,6 +803,19 @@ mod tests {
         assert!(pinned_client(&s).is_err());
     }
     #[test]
+    fn usb_report_optional_identity_validation_does_not_require_http_fencing() {
+        let mut s = status('a');
+        s.http_peer_fencing = false;
+        assert!(Pin::from_identity(&s.board_id, &s.boot_id).is_some());
+        assert!(Pin::from_status(&s).is_none(), "Do not invent HTTP fence support for USB");
+        for board in ["", "UPPER", "space name", &"a".repeat(65)] {
+            assert!(Pin::from_identity(board, &s.boot_id).is_none());
+        }
+        for boot in ["", &"0".repeat(32), &"A".repeat(32), &"a".repeat(31), &"g".repeat(32)] {
+            assert!(Pin::from_identity(&s.board_id, boot).is_none());
+        }
+    }
+    #[test]
     fn queued_admission_is_revoked_after_boot_or_endpoint_change() {
         let (tx, rx) = std::sync::mpsc::channel();
         let mut queue = Queue::new(tx);
@@ -890,7 +915,7 @@ mod tests {
     }
     fn wire_status(boot: char, features: &[&str]) -> Vec<u8> {
         serde_json::to_vec(
-            &serde_json::json!({"hostname":"ledboard","board_id":"esp8266-aabbccddeeff",
+            &serde_json::json!({"version":crate::peer_identity::VERSION,"hostname":"ledboard","board_id":"esp8266-aabbccddeeff",
             "boot_id":boot.to_string().repeat(32),"http_peer_fencing":true,
             "capabilities":{"board_kind":"table","acknowledged_features":features}}),
         )

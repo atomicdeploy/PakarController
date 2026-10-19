@@ -98,6 +98,7 @@ struct Shared {
     clients: AtomicUsize,
     receipts: Mutex<BTreeMap<String, (Instant, Value, Option<Value>)>>,
     last_input: Mutex<Value>,
+    peers: Mutex<BTreeMap<String,(Instant,Value)>>,
 }
 pub struct Runtime {
     settings: Option<Settings>,
@@ -139,6 +140,7 @@ impl Runtime {
                     clients: AtomicUsize::new(0),
                     receipts: Mutex::new(BTreeMap::new()),
                     last_input: Mutex::new(Value::Null),
+                    peers: Mutex::new(BTreeMap::new()),
                 });
                 let owner = shared.clone();
                 thread::spawn(move || {
@@ -183,6 +185,8 @@ impl Runtime {
     }
     pub fn snapshot(&self) -> Value {
         json!({"enabled":self.settings.as_ref().is_some_and(|s|s.enabled),"listening":self.shared.is_some(),
+        "version":crate::peer_identity::VERSION,"compatibility":crate::peer_identity::advertised_policy(),
+        "tracked_peers":self.shared.as_ref().and_then(|s|s.peers.lock().ok().map(|v|v.len())).unwrap_or(0),
         "error":self.error,"discovery":self.discovery.as_ref().map(|d|d.snapshot())})
     }
     pub fn stop(&mut self) {
@@ -257,7 +261,7 @@ fn status_value(shared: &Shared, o: &Observation) -> Value {
         .cloned()
         .unwrap_or_default();
     path.push(json!(shared.settings.instance_id));
-    v["bridge"] = json!({"instance_id":shared.settings.instance_id,"hostname":shared.settings.hostname,"product":"PakarController","path":path,
+    v["bridge"] = json!({"instance_id":shared.settings.instance_id,"hostname":shared.settings.hostname,"product":"PakarController","version":crate::peer_identity::VERSION,"session_id":crate::peer_identity::session_id(),"compatibility":crate::peer_identity::advertised_policy(),"path":path,
         "transport":if matches!(o.route,Route::Usb{..}){"usb"}else{"network"},"max_hops":4});
     v["command_clock_ms"] = clock(o).map_or(Value::Null, |v| json!(v));
     v
@@ -758,8 +762,13 @@ fn write_response(
     socket
         .set_write_timeout(Some(Duration::from_secs(2)))
         .map_err(|e| e.to_string())?;
-    write!(socket,"HTTP/1.1 {code} Result\r\nContent-Type: {kind}\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",body.len()).map_err(|e|e.to_string())?;
+    write!(socket,"HTTP/1.1 {code} Result\r\n{}Content-Type: {kind}\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",crate::peer_identity::server_headers(),body.len()).map_err(|e|e.to_string())?;
     socket.write_all(body).map_err(|e| e.to_string())
+}
+fn remember_peer(shared:&Shared,value:Value){
+    let Some(id)=value["id"].as_str().map(str::to_owned) else{return;};
+    let mut peers=shared.peers.lock().unwrap();peers.retain(|_,(at,_)|at.elapsed()<Duration::from_secs(120));
+    if peers.contains_key(&id)||peers.len()<32{peers.insert(id,(Instant::now(),value));}
 }
 fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
     // Peek leaves the complete handshake for tungstenite's reviewed parser.
@@ -790,10 +799,13 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
         let mut limits = tungstenite::protocol::WebSocketConfig::default();
         limits.max_message_size = Some(8192);
         limits.max_frame_size = Some(8192);
+        let observed_ip=socket.peer_addr().map(|a|a.ip().to_string()).unwrap_or_default();
+        let mut ws_peer=None;
         let mut ws = tungstenite::accept_hdr_with_config(
             socket,
             |r: &tungstenite::handshake::server::Request,
-             response: tungstenite::handshake::server::Response| {
+             mut response: tungstenite::handshake::server::Response| {
+                let compatible=crate::peer_identity::validate_client(r.headers().get("x-pakar-version").and_then(|v|v.to_str().ok()));
                 let allowed = r.uri().path() == "/ws"
                     && !r.headers().contains_key("origin")
                     && trace(
@@ -802,13 +814,22 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
                             .and_then(|v| v.to_str().ok()),
                         &shared.settings.instance_id,
                     )
-                    .is_ok();
+                    .is_ok()
+                    && compatible.is_ok();
                 if allowed {
+                    ws_peer=Some((r.headers().get("x-pakar-client-id").and_then(|v|v.to_str().ok()).unwrap_or_default().to_owned(),r.headers().get("x-pakar-version").and_then(|v|v.to_str().ok()).unwrap_or_default().to_owned()));
+                    response.headers_mut().insert("server",format!("PakarController/{}",crate::peer_identity::VERSION).parse().unwrap());
+                    response.headers_mut().insert("x-pakar-version",crate::peer_identity::VERSION.parse().unwrap());
+                    response.headers_mut().insert("x-pakar-build",crate::peer_identity::build_identity().parse().unwrap());
+                    response.headers_mut().insert("x-pakar-client-id",crate::peer_identity::session_id().parse().unwrap());
                     Ok(response)
                 } else {
                     Err(tungstenite::http::Response::builder()
-                        .status(403)
-                        .body(Some("Bridge request rejected".into()))
+                        .status(if compatible.is_err(){426}else{403})
+                        .header("Server",format!("PakarController/{}",crate::peer_identity::VERSION))
+                        .header("X-Pakar-Version",crate::peer_identity::VERSION)
+                        .header("X-Pakar-Build",crate::peer_identity::build_identity())
+                        .body(Some(compatible.err().unwrap_or_else(||"Bridge request rejected: check origin and route".into())))
                         .unwrap())
                 }
             },
@@ -833,7 +854,11 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
             match ws.read() {
                 Ok(tungstenite::Message::Text(text)) if text.len() <= 8192 => {
                     let request: Value = serde_json::from_str(&text).map_err(|e| e.to_string())?;
-                    if request["type"] == "command" {
+                    if request["type"]=="peer-introduction" {
+                        let accepted=ws_peer.as_ref().ok_or("Missing peer identity".to_owned()).and_then(|(id,version)|crate::peer_identity::sanitize_report(&request["report"],id,version,&observed_ip));
+                        let response=match accepted{Ok(value)=>{remember_peer(shared,value);json!({"type":"peer-introduction","accepted":true,"version":crate::peer_identity::VERSION,"compatibility":crate::peer_identity::advertised_policy()})},Err(error)=>json!({"type":"peer-introduction","accepted":false,"error":error})};
+                        ws.send(tungstenite::Message::Text(response.to_string().into())).map_err(|e|e.to_string())?;
+                    }else if request["type"] == "command" {
                         ws.send(tungstenite::Message::Text(
                             command(shared, request, &BTreeMap::new())
                                 .to_string()
@@ -868,6 +893,22 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
         }
     };
     let path = request.path.split('?').next().unwrap_or("");
+    // Public identity/status bootstrap stays discoverable before admission;
+    // all control/config/export paths require a supported app release.
+    let bootstrap=request.method=="GET" && matches!(path,"/description.xml"|"/upnp/device.xml"|"/api/discovery"|"/upnp/public.json"|"/healthz"|"/api/status"|"/api/auth/info"|"/api/peer/info");
+    if (!bootstrap || request.headers.contains_key("x-pakar-version")) && let Err(error)=crate::peer_identity::validate_client(request.headers.get("x-pakar-version").map(String::as_str)) {
+        return write_response(&mut socket,426,"application/json",json!({"accepted":false,"error":error,"compatibility":crate::peer_identity::advertised_policy()}).to_string().as_bytes());
+    }
+    if let Some(id)=request.headers.get("x-pakar-client-id").filter(|v|uuid::Uuid::parse_str(v).is_ok()) {
+        let mut peers=shared.peers.lock().unwrap();peers.retain(|_,(at,_)|at.elapsed()<Duration::from_secs(120));
+        if peers.contains_key(id)||peers.len()<32 {
+            let mut value=peers.get(id).map(|(_,v)|v.clone()).unwrap_or_else(||json!({"id":id}));
+            value["version"]=request.headers.get("x-pakar-version").cloned().unwrap_or_default().into();
+            if let Some(agent)=request.headers.get("user-agent").filter(|v|v.len()<=192&&!v.chars().any(char::is_control)){value["user_agent"]=agent.clone().into();}
+            if let Ok(address)=socket.peer_addr(){value["observed_ip"]=address.ip().to_string().into();}
+            peers.insert(id.clone(),(Instant::now(),value));
+        }
+    }
     if trace(
         request.headers.get("x-pakar-route").map(String::as_str),
         &shared.settings.instance_id,
@@ -890,17 +931,35 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
             br#"{"enabled":false,"ready":true,"username":"","default_credentials":false}"#,
         );
     }
+    if request.method=="GET" && path=="/api/peer/info" {
+        let value=json!({"product":"PakarController","role":"bridge","id":shared.settings.instance_id,"session_id":crate::peer_identity::session_id(),"version":crate::peer_identity::VERSION,"hostname":shared.settings.hostname,"compatibility":crate::peer_identity::advertised_policy(),"client":crate::client_telemetry::Reporter::new().value_for_transport("bridge")});
+        return write_response(&mut socket,200,"application/json",value.to_string().as_bytes());
+    }
+    if request.method=="GET" && path=="/api/clients" {
+        let mut peers=shared.peers.lock().unwrap();peers.retain(|_,(at,_)|at.elapsed()<Duration::from_secs(120));
+        let value=json!({"clients":peers.values().map(|(at,v)|{let mut v=v.clone();v["age_ms"]=(at.elapsed().as_millis() as u64).into();v}).collect::<Vec<_>>()});
+        return write_response(&mut socket,200,"application/json",value.to_string().as_bytes());
+    }
+    if request.method=="POST" && path=="/api/clients/report" {
+        let body=std::str::from_utf8(&request.body).map_err(|_|"Invalid report form")?;
+        let parsed=reqwest::Url::parse(&format!("http://bridge/?{body}")).map_err(|_|"Invalid report form")?;
+        let fields=parsed.query_pairs().collect::<Vec<_>>();
+        let report=if fields.len()==1&&fields[0].0=="report"{serde_json::from_str::<Value>(&fields[0].1).map_err(|_|"Invalid peer report")?}else{return write_response(&mut socket,400,"application/json",br#"{"accepted":false,"error":"Expected one report field"}"#);};
+        let ip=socket.peer_addr().map(|a|a.ip().to_string()).unwrap_or_default();
+        let result=crate::peer_identity::sanitize_report(&report,request.headers.get("x-pakar-client-id").map_or("",String::as_str),request.headers.get("x-pakar-version").map_or("",String::as_str),&ip);
+        return match result{Ok(value)=>{remember_peer(shared,value);write_response(&mut socket,200,"application/json",br#"{"accepted":true}"#)},Err(error)=>write_response(&mut socket,400,"application/json",json!({"accepted":false,"error":error}).to_string().as_bytes())};
+    }
     if request.method == "GET" && matches!(path, "/description.xml" | "/upnp/device.xml") {
         let xml = format!(
-            "<root><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>{}</friendlyName><manufacturer>AtomicDeploy</manufacturer><modelName>PakarController</modelName><modelNumber>bridge</modelNumber><modelURL>https://github.com/atomicdeploy/PakarController</modelURL><UDN>uuid:{}</UDN></device></root>",
-            shared.settings.hostname, shared.settings.instance_id
+            "<root><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>{}</friendlyName><manufacturer>AtomicDeploy</manufacturer><modelName>PakarController</modelName><modelNumber>{}</modelNumber><modelDescription>Controller bridge</modelDescription><modelURL>https://github.com/atomicdeploy/PakarController</modelURL><UDN>uuid:{}</UDN></device></root>",
+            shared.settings.hostname,crate::peer_identity::VERSION, shared.settings.instance_id
         );
         return write_response(&mut socket, 200, "text/xml", xml.as_bytes());
     }
     if request.method == "GET"
         && matches!(path, "/api/discovery" | "/upnp/public.json" | "/healthz")
     {
-        let public = json!({"product":"PakarController","status":"ok","kind":"bridge","instance_id":shared.settings.instance_id,"hostname":shared.settings.hostname,"api":"/api","ws":"/ws","auth_required":false,"connected":route(shared).is_ok()});
+        let public = json!({"product":"PakarController","version":crate::peer_identity::VERSION,"compatibility":crate::peer_identity::advertised_policy(),"status":"ok","kind":"bridge","instance_id":shared.settings.instance_id,"hostname":shared.settings.hostname,"api":"/api","ws":"/ws","auth_required":false,"connected":route(shared).is_ok()});
         return write_response(
             &mut socket,
             200,
@@ -1042,7 +1101,7 @@ mod tests {
         let gate = connection::Gate::default();
         let epoch = gate.select(Some(Transport::Serial));
         let (tx, rx) = mpsc::channel();
-        let status:DeviceStatus=serde_json::from_value(json!({"hostname":"ledboard","board_id":"fixture-board","boot_id":"a".repeat(32),
+        let status:DeviceStatus=serde_json::from_value(json!({"version":crate::peer_identity::VERSION,"hostname":"ledboard","board_id":"fixture-board","boot_id":"a".repeat(32),
             "http_peer_fencing":true,"command_clock_ms":1000,"cells":vec!["white";80],"pixels":480,"mode":"cell",
             "capabilities":{"board_kind":"table","acknowledged_features":["table","leds","cell-batch","command-ack","ota"],"table":{"columns":10,"rows":8,"pixels_per_cell":6},
                 "led_output":{"backend":"gpio-static","rmt":false,"dma":false}}})).unwrap();
@@ -1070,6 +1129,7 @@ mod tests {
                 clients: AtomicUsize::new(0),
                 receipts: Mutex::new(BTreeMap::new()),
                 last_input: Mutex::new(Value::Null),
+                peers: Mutex::new(BTreeMap::new()),
             }),
             rx,
             gate,
@@ -1287,7 +1347,7 @@ mod tests {
                 serve(socket, &owner).unwrap();
             }
         });
-        let client = reqwest::blocking::Client::builder()
+        let client = crate::peer_identity::client_builder()
             .no_proxy()
             .build()
             .unwrap();
@@ -1305,7 +1365,9 @@ mod tests {
             .json()
             .unwrap();
         assert_eq!(auth["enabled"], false);
-        let (mut ws, _) = tungstenite::connect(format!("ws://{address}/ws")).unwrap();
+        use tungstenite::client::IntoClientRequest;
+        let mut request=format!("ws://{address}/ws").into_client_request().unwrap();crate::peer_identity::websocket_headers(&mut request);
+        let (mut ws, _) = tungstenite::connect(request).unwrap();
         let value: Value = serde_json::from_str(ws.read().unwrap().to_text().unwrap()).unwrap();
         assert_eq!(value["board_id"], "fixture-board");
         ws.close(None).unwrap();
@@ -1330,6 +1392,21 @@ mod tests {
             .unwrap();
             assert!(task.join().unwrap().is_err());
         }
+    }
+    #[test]
+    fn bridge_live_headers_and_peer_registry_reject_unsupported_controls(){
+        let(shared,rx,_)=fixture();let listener=TcpListener::bind("127.0.0.1:0").unwrap();let address=listener.local_addr().unwrap();let owner=shared.clone();
+        let worker=thread::spawn(move||for _ in 0..4{serve(listener.accept().unwrap().0,&owner).unwrap();});
+        let anonymous=reqwest::blocking::Client::builder().no_proxy().build().unwrap();
+        let rejected=anonymous.post(format!("http://{address}/api/reset")).send().unwrap();assert_eq!(rejected.status().as_u16(),426);assert!(rx.try_recv().is_err());
+        assert_eq!(rejected.headers()["x-pakar-version"],crate::peer_identity::VERSION);assert_eq!(rejected.headers()["server"],format!("PakarController/{}",crate::peer_identity::VERSION));
+        let client=crate::peer_identity::client_builder().no_proxy().build().unwrap();
+        let mut report=crate::client_telemetry::Reporter::new().value();report["password"]="never retain".into();
+        let accepted=client.post(format!("http://{address}/api/clients/report")).form(&[("report",report.to_string())]).send().unwrap();assert!(accepted.status().is_success());
+        let peers:Value=client.get(format!("http://{address}/api/clients")).send().unwrap().json().unwrap();
+        assert_eq!(peers["clients"].as_array().unwrap().len(),1);assert_eq!(peers["clients"][0]["observed_ip"],"127.0.0.1");assert!(!peers.to_string().contains("never retain"));
+        let public:Value=anonymous.get(format!("http://{address}/api/peer/info")).send().unwrap().json().unwrap();assert_eq!(public["version"],crate::peer_identity::VERSION);assert_eq!(public["compatibility"]["enforced"],true);
+        worker.join().unwrap();
     }
 }
 

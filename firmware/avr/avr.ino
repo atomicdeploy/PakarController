@@ -8,6 +8,7 @@
 #include <Tasks.h>
 
 #include "BootMelody.h"
+#include <PeerCompatibility.h>
 #include "BoardPins.h"
 #include "FrontPanel.h"
 #include "PakarBoardConfig.h"
@@ -307,6 +308,21 @@ void onInputChanged(uint8_t button, bool pressed) {
 }
 
 void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
+  static bool peerAdmitted=false;
+  if(frame.opcode==kHello) {
+    peerAdmitted=false;
+    if(frame.payloadLength) {
+      if(frame.payloadLength!=4 || (frame.payload[0]!=kRoleEsp && frame.payload[0]!=kRoleHost)) {
+        link.error(frame.sequence,kHello,kBadPayload);return;
+      }
+      peerAdmitted=BoardCore::PeerCompatibility::numericAppAllowed(frame.payload[1],frame.payload[2],frame.payload[3]);
+      if(!peerAdmitted){link.error(frame.sequence,kHello,kUnsupported);return;}
+    }
+  }
+  if(BoardCore::PeerCompatibility::enforced && !peerAdmitted &&
+     frame.opcode!=kHello && frame.opcode!=kGetStatus && frame.opcode!=kGetTelemetry && frame.opcode!=kPing) {
+    link.error(frame.sequence,frame.opcode,kUnsupported);return;
+  }
   if (programmingLatch.active() && frame.opcode != kHello &&
       frame.opcode != kGetStatus && frame.opcode != kProgrammingState &&
       frame.opcode != kPing && frame.opcode != kGetTelemetry &&

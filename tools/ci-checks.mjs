@@ -5,6 +5,9 @@ import {fileURLToPath} from 'node:url';
 import {createLogger} from './script-console.mjs';
 export const phases={
   "quality": [
+    ["pwsh", "-File", "tools/test-peer-identity.ps1"],
+    ["pwsh", "-File", "tests/tool_peer_identity_test.ps1"],
+    ["node", "tests/web_peer_version_test.mjs"],
     ["pwsh", "-File", "tools/test-bluetooth.ps1"],
     ["pwsh", "-File", "tools/test-client-management.ps1", "-Restore"],
     ["pwsh", "-File", "tools/test-audio.ps1"],

@@ -49,6 +49,9 @@ impl Intent {
         stamp: connection::Stamp,
         batch: Option<cell_batch::Correlation>,
     ) -> Result<Self, String> {
+        // Live status was admitted before reaching here. Recheck an advertised
+        // receiver policy if it changed before this command was constructed.
+        if status.compatibility.is_some() {crate::peer_identity::validate_board(status)?;}
         if !supported(status, path)
             || status.programming_latch
             || !status
@@ -123,6 +126,7 @@ impl Intent {
         }
         let status: DeviceStatus = serde_json::from_value(value["status"].clone())
             .map_err(|_| "Command receipt has no status readback")?;
+        if status.compatibility.is_some(){crate::peer_identity::validate_board(&status)?;}
         if peer_http::Pin::from_status(&status).as_ref() != Some(&self.peer) {
             return Err("Command readback belongs to another boot".into());
         }

@@ -182,7 +182,7 @@ impl Intent {
 mod tests {
     use super::*;
     fn fixture()->serde_json::Value {
-        serde_json::json!({"status":{"hostname":"ledboard","board_id":"esp32s3-fixture","boot_id":"a".repeat(32),
+        serde_json::json!({"status":{"version":crate::peer_identity::VERSION,"hostname":"ledboard","board_id":"esp32s3-fixture","boot_id":"a".repeat(32),
             "http_peer_fencing":true,"pixels":480,"mode":"cell","cells":vec!["white";80],
             "led_output":{"enabled":true,"mode":"static"},
             "capabilities":{"board_kind":"table","acknowledged_features":["table","leds"],
@@ -241,6 +241,8 @@ mod tests {
             fn write(&mut self,bytes:&[u8])->std::io::Result<usize>{
                 let (op,seq,p)=crate::decode_envelope(&bytes[..bytes.len()-1]).unwrap();
                 match op {
+                    0x01=>{assert_eq!(p,crate::peer_identity::hello());let mut hello=vec![0,2,0,0,80,9];hello.extend_from_slice(&crate::peer_identity::hello()[1..]);hello.extend([0xaa;16]);self.pending.extend(crate::wire_frame(0x81,seq,&hello));}
+                    crate::peer_identity::USB_REPORT=>{assert!(p.len()<=48);self.pending.extend(crate::wire_frame(0x80,seq,&[crate::peer_identity::USB_REPORT,0]));}
                     crate::OP_GET_STATUS=>{let mut s=vec![0;46];s[44]=1;s[45]=1;
                         self.pending.extend(crate::wire_frame(crate::OP_STATUS,seq,&s));}
                     READ=>{let offset=u16::from_le_bytes([p[1],p[2]]) as usize;
@@ -386,6 +388,8 @@ mod tests {
             fn write(&mut self,bytes:&[u8])->std::io::Result<usize>{
                 let(op,seq,p)=crate::decode_envelope(&bytes[..bytes.len()-1]).unwrap();
                 match op{
+                    0x01=>{assert_eq!(p,crate::peer_identity::hello());let mut hello=vec![0,2,0,0,80,9];hello.extend_from_slice(&crate::peer_identity::hello()[1..]);hello.extend([0xaa;16]);self.pending.extend(crate::wire_frame(0x81,seq,&hello));}
+                    crate::peer_identity::USB_REPORT=>{assert!(p.len()<=48);self.pending.extend(crate::wire_frame(0x80,seq,&[crate::peer_identity::USB_REPORT,0]));}
                     crate::OP_GET_STATUS=>{let mut s=vec![0;46];s[44]=1;s[45]=1;self.pending.extend(crate::wire_frame(crate::OP_STATUS,seq,&s));},
                     READ=>{let at=u16::from_le_bytes([p[1],p[2]]) as usize;
                         // Real main-loop work may pause a READ window for >2s.
@@ -415,7 +419,11 @@ mod tests {
         loop{
             let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(7)).unwrap() else{continue;};
             match *event{
-                crate::Event::SerialSnapshot(_,s)=>{assert_eq!(s.status.cells.len(),80);assert!(start.elapsed()<MAX_SNAPSHOT_AGE);break;},
+                crate::Event::SerialSnapshot(_,s)=>{assert_eq!(s.status.cells.len(),80);
+                    // Capture admission starts AFTER HELLO/report, not when
+                    // the serial handle opens. Keep the SAME8s capture lease.
+                    assert!(s.observed_at.elapsed()<MAX_SNAPSHOT_AGE);
+                    assert!(start.elapsed()<MAX_SNAPSHOT_AGE+Duration::from_secs(4));break;},
                 crate::Event::SerialFailure(_,e)=>panic!("{e}"),_=>{},
             }
         }
@@ -434,6 +442,166 @@ mod tests {
         let mut applied=s.clone();applied.cells[0]="red".into();assert!(intent.verify(&applied));
         applied.boot_id="b".repeat(32);assert!(!intent.current(1,Some(&applied)));
         gate.select(Some(crate::connection::Method::Serial));assert!(!intent.current(1,Some(&s)));
+    }
+    #[test]
+    fn actual_usb_worker_rejects_unsupported_hello_without_live_status_or_retry(){
+        use std::{collections::VecDeque,io::{Read,Write},sync::{Arc,atomic::{AtomicUsize,Ordering},mpsc},thread};
+        struct Port{pending:VecDeque<u8>,writes:Arc<AtomicUsize>}
+        impl Write for Port{
+            fn write(&mut self,b:&[u8])->std::io::Result<usize>{let(op,seq,p)=crate::decode_envelope(&b[..b.len()-1]).unwrap();assert_eq!(op,0x01);assert_eq!(p,crate::peer_identity::hello());self.writes.fetch_add(1,Ordering::SeqCst);self.pending.extend(crate::wire_frame(0x81,seq,&[0,2,0,0,80,9,0,2,6]));Ok(b.len())}
+            fn flush(&mut self)->std::io::Result<()>{Ok(())}
+        }
+        impl Read for Port{fn read(&mut self,b:&mut[u8])->std::io::Result<usize>{if self.pending.is_empty(){return Err(std::io::ErrorKind::TimedOut.into());}let n=b.len().min(self.pending.len());for v in &mut b[..n]{*v=self.pending.pop_front().unwrap();}Ok(n)}}
+        let writes=Arc::new(AtomicUsize::new(0));let mut port=Some(Port{pending:VecDeque::new(),writes:writes.clone()});
+        let(tx,rx)=mpsc::channel();let(events,received)=mpsc::channel();let gate=crate::connection::Gate::default();let epoch=gate.select(Some(crate::Transport::Serial));let owner=gate.clone();
+        let task=thread::spawn(move||crate::serial_worker_with(rx,events,eframe::egui::Context::default(),owner,|_|port.take().ok_or("Must not retry an unsupported peer".into())));
+        tx.send(crate::SerialCommand::Port("fixture".into(),epoch)).unwrap();
+        loop{if let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(2)).unwrap(){match *event{crate::Event::SerialFailure(_,error)=>{assert!(crate::peer_identity::unsupported(&error));break;},crate::Event::Serial(_,true,_)|crate::Event::SerialSnapshot(..)=>panic!("Unsupported peer became live"),_=>{}}}}
+        drop(tx);task.join().unwrap();assert_eq!(writes.load(Ordering::SeqCst),1);
+    }
+    #[test]
+    fn usb_report_optional_actual_worker_keeps_board_boot_and_error_admission(){
+        use std::{collections::VecDeque,io::{Read,Write},sync::{Arc,atomic::{AtomicUsize,Ordering},mpsc},thread};
+        struct Port{pending:VecDeque<u8>,capture:Vec<u8>,reply:Option<Vec<u8>>,hello_core:Vec<u8>,reports:Arc<AtomicUsize>}
+        impl Write for Port{
+            fn write(&mut self,b:&[u8])->std::io::Result<usize>{
+                let(op,seq,p)=crate::decode_envelope(&b[..b.len()-1]).unwrap();
+                match op{
+                    0x01=>{assert_eq!(p,crate::peer_identity::hello());let mut hello=vec![0,2,0,0,80,9];
+                        hello.extend_from_slice(&self.hello_core);hello.extend([0xaa;16]);
+                        self.pending.extend(crate::wire_frame(0x81,seq,&hello));},
+                    crate::peer_identity::USB_REPORT=>{
+                        assert!(p.len()<=48);self.reports.fetch_add(1,Ordering::SeqCst);
+                        // A stale explicit Unsupported cannot grant introduction.
+                        self.pending.extend(crate::wire_frame(0x82,seq.wrapping_add(91),&[crate::peer_identity::USB_REPORT,2]));
+                        if let Some(reply)=&self.reply{self.pending.extend(crate::wire_frame(0x82,seq,reply));}
+                    },
+                    crate::OP_GET_STATUS=>{let mut status=vec![0;46];status[44]=1;status[45]=1;
+                        self.pending.extend(crate::wire_frame(crate::OP_STATUS,seq,&status));},
+                    READ=>{let at=u16::from_le_bytes([p[1],p[2]]) as usize;
+                        self.pending.extend(crate::wire_frame(RESPONSE,seq,&chunk(&self.capture,at,p[0],17)));},
+                    _=>panic!("Introduction may never send a mutation or fallback opcode {op:x}"),
+                }
+                Ok(b.len())
+            }
+            fn flush(&mut self)->std::io::Result<()>{Ok(())}
+        }
+        impl Read for Port{
+            fn read(&mut self,b:&mut[u8])->std::io::Result<usize>{
+                if self.pending.is_empty(){thread::sleep(Duration::from_millis(1));return Err(std::io::ErrorKind::TimedOut.into());}
+                let n=b.len().min(13).min(self.pending.len());
+                for value in &mut b[..n]{*value=self.pending.pop_front().unwrap();}Ok(n)
+            }
+        }
+        for (reply,valid_identity,unsupported_report) in [
+            (Some(vec![crate::peer_identity::USB_REPORT,2]),true,true),
+            (Some(vec![crate::peer_identity::USB_REPORT,2]),false,true),
+            (Some(vec![crate::peer_identity::USB_REPORT,6]),true,false),
+            (Some(vec![0x55,2]),true,false),
+            (None,true,false),
+        ]{
+            let mut value=fixture();
+            let hello_core=if crate::peer_identity::enforced(){crate::peer_identity::hello()[1..].to_vec()}else{vec![0,2,7]};
+            let version=hello_core.iter().map(u8::to_string).collect::<Vec<_>>().join(".");
+            value["status"]["version"]=version.clone().into();
+            if !valid_identity{value["status"]["board_id"]="".into();}
+            let reports=Arc::new(AtomicUsize::new(0));
+            let mut port=Some(Port{pending:VecDeque::new(),capture:serde_json::to_vec(&value).unwrap(),reply,
+                hello_core,reports:reports.clone()});
+            let(tx,rx)=mpsc::channel();let(events,received)=mpsc::channel();
+            let gate=crate::connection::Gate::default();let epoch=gate.select(Some(crate::Transport::Serial));let owner=gate.clone();
+            let worker=thread::spawn(move||crate::serial_worker_with(rx,events,eframe::egui::Context::default(),owner,
+                |_|port.take().ok_or("No implicit reopen or retry after introduction failure".into())));
+            tx.send(crate::SerialCommand::Port("fixture".into(),epoch)).unwrap();
+            let may_connect=!crate::peer_identity::enforced() && unsupported_report && valid_identity;
+            loop{
+                let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(6)).unwrap() else{continue;};
+                match *event{
+                    crate::Event::SerialSnapshot(_,snapshot)=>{
+                        assert!(may_connect,"Unsupported/error/invalid identity must not become live");
+                        assert_eq!(snapshot.status.version,version);
+                        assert!(peer_http::Pin::from_status(&snapshot.status).is_some());
+                        assert_eq!(snapshot.status.cells.len(),80);break;
+                    },
+                    crate::Event::SerialFailure(_,error)=>{assert!(!may_connect,"{error}");break;},
+                    crate::Event::Serial(_,true,_)=>panic!("Never become live before the full identity capture"),
+                    _=>{},
+                }
+            }
+            gate.select(None);drop(tx);worker.join().unwrap();
+            assert_eq!(reports.load(Ordering::SeqCst),1,"Retire all remaining report chunks; never retry a rejection");
+        }
+    }
+    #[test]
+    fn usb_report_optional_non_table_worker_requires_full_board_boot_identity(){
+        use std::{collections::VecDeque,io::{Read,Write},sync::mpsc,thread};
+        struct Port{pending:VecDeque<u8>,identity:Vec<u8>,hello_core:Vec<u8>}
+        impl Write for Port{
+            fn write(&mut self,b:&[u8])->std::io::Result<usize>{
+                let(op,seq,p)=crate::decode_envelope(&b[..b.len()-1]).unwrap();
+                match op{
+                    0x01=>{assert_eq!(p,crate::peer_identity::hello());let mut hello=vec![0,2,0,0,0,0];
+                        hello.extend_from_slice(&self.hello_core);hello.extend([0xaa;16]);
+                        self.pending.extend(crate::wire_frame(0x81,seq,&hello));},
+                    crate::peer_identity::USB_REPORT=>{
+                        let (op,payload)=if crate::peer_identity::enforced(){(0x80,vec![crate::peer_identity::USB_REPORT,0])}
+                            else{(0x82,vec![crate::peer_identity::USB_REPORT,2])};
+                        self.pending.extend(crate::wire_frame(op,seq,&payload));
+                    },
+                    crate::OP_GET_STATUS=>{let mut status=vec![0;46];status[31]=1<<5;status[37]=1;
+                        self.pending.extend(crate::wire_frame(crate::OP_STATUS,seq,&status));},
+                    0x59=>{let at=u16::from_le_bytes([p[1],p[2]]) as usize;
+                        self.pending.extend(crate::wire_frame(0xb2,seq,&chunk(&self.identity,at,p[0],1)));},
+                    _=>panic!("Identity bootstrap must remain read-only, not opcode {op:x}"),
+                }
+                Ok(b.len())
+            }
+            fn flush(&mut self)->std::io::Result<()>{Ok(())}
+        }
+        impl Read for Port{
+            fn read(&mut self,b:&mut[u8])->std::io::Result<usize>{
+                if self.pending.is_empty(){thread::sleep(Duration::from_millis(1));return Err(std::io::ErrorKind::TimedOut.into());}
+                let n=b.len().min(13).min(self.pending.len());
+                for value in &mut b[..n]{*value=self.pending.pop_front().unwrap();}Ok(n)
+            }
+        }
+        for (field,bad) in [
+            ("",None), ("board_id",None), ("boot_id",None),
+            ("board_id",Some(serde_json::json!("UPPER"))),
+            ("boot_id",Some(serde_json::json!("0".repeat(32)))),
+            ("boot_id",Some(serde_json::json!("a".repeat(31)))),
+            ("boot_id",Some(serde_json::json!("g".repeat(32)))),
+        ]{
+            let hello_core=if crate::peer_identity::enforced(){crate::peer_identity::hello()[1..].to_vec()}else{vec![0,2,7]};
+            let version=hello_core.iter().map(u8::to_string).collect::<Vec<_>>().join(".");
+            let mut identity=serde_json::json!({"revision":1,"hostname":"fixture","display_name":"Fixture controller",
+                "version":version,"board_id":"esp32s3-fixture","boot_id":"a".repeat(32)});
+            if !field.is_empty(){
+                if let Some(value)=bad{identity[field]=value;}else{identity.as_object_mut().unwrap().remove(field);}
+            }
+            let mut port=Some(Port{pending:VecDeque::new(),identity:serde_json::to_vec(&identity).unwrap(),hello_core});
+            let(tx,rx)=mpsc::channel();let(events,received)=mpsc::channel();
+            let gate=crate::connection::Gate::default();let epoch=gate.select(Some(crate::Transport::Serial));let owner=gate.clone();
+            let worker=thread::spawn(move||crate::serial_worker_with(rx,events,eframe::egui::Context::default(),owner,
+                |_|port.take().ok_or("Invalid identity must not implicitly reopen the physical port".into())));
+            tx.send(crate::SerialCommand::Port("fixture".into(),epoch)).unwrap();
+            loop{
+                let crate::Event::ForConnection(_,event)=received.recv_timeout(Duration::from_secs(3)).unwrap() else{continue;};
+                match *event{
+                    crate::Event::Serial(_,true,Some(status))=>{
+                        assert!(field.is_empty(),"Missing/invalid {field} became live");
+                        assert!(!status.http_peer_fencing,"USB identity must not invent HTTP-only support");
+                        assert!(peer_http::Pin::from_identity(&status.board_id,&status.boot_id).is_some());
+                        assert_eq!(status.version,version);break;
+                    },
+                    crate::Event::SerialFailure(_,error)=>{assert!(!field.is_empty(),"{error}");
+                        assert!(error.contains("board/boot identity"),"{error}");break;},
+                    crate::Event::SerialSnapshot(..)=>panic!("This is a non-table controller"),
+                    _=>{},
+                }
+            }
+            gate.select(None);drop(tx);worker.join().unwrap();
+        }
     }
     #[test]
     fn atomic_batch_uses_one_boot_fenced_bitmap_and_verifies_every_selected_state(){

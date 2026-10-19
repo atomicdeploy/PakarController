@@ -18,17 +18,25 @@ install -d -m 0755 "$app"
 install -d -o pakarcontroller -g pakarcontroller -m 0700 "$data"
 install -d -o root -g pakarcontroller -m 0750 "$config"
 touch "$app/.pakar-managed"
-for file in service.mjs operator.mjs dashboard.html package.json package-lock.json app-icon.png.base64; do
-  test -f "$incoming/$file"
-  if ! cmp -s "$incoming/$file" "$app/$file"; then
+for directory in services services/client-management tools interfaces; do
+  test ! -L "$app/$directory"
+  install -d -m 0755 "$app/$directory"
+done
+for file in services/client-management/service.mjs services/client-management/operator.mjs services/client-management/dashboard.html services/client-management/package.json services/client-management/package-lock.json tools/peer-identity.mjs interfaces/client-release.json interfaces/peer-policy.json app-icon.png.base64; do
+  source="$incoming/$(basename "$file")"
+  test -f "$source"
+  install -d -m 0755 "$(dirname "$app/$file")"
+  test ! -L "$app/$file"
+  if ! cmp -s "$source" "$app/$file"; then
     if test -f "$app/$file"; then cp -p "$app/$file" "$app/$file.previous"; fi
-    install -m 0644 "$incoming/$file" "$app/$file.new"
+    install -m 0644 "$source" "$app/$file.new"
     mv -f "$app/$file.new" "$app/$file"
   fi
 done
-lock=$(sha256sum "$app/package-lock.json" | cut -d' ' -f1)
-if test ! -f "$app/.installed-lock" || test "$(cat "$app/.installed-lock")" != "$lock"; then
-  npm ci --prefix "$app" --ignore-scripts --no-audit --no-fund --loglevel=error
+lock=$(sha256sum "$app/services/client-management/package-lock.json" | cut -d' ' -f1)
+read -r release_version release_build < <(node -e 'const v=require(process.argv[1]);if(v.product!=="PakarController"||!/^[0-9A-Za-z.+-]+$/.test(v.version)||!Number.isSafeInteger(v.build))process.exit(1);console.log(v.version,v.build)' "$app/interfaces/client-release.json")
+if test ! -d "$app/services/client-management/node_modules/ws" || test ! -f "$app/.installed-lock" || test "$(cat "$app/.installed-lock")" != "$lock"; then
+  npm ci --prefix "$app/services/client-management" --ignore-scripts --no-audit --no-fund --loglevel=error
   printf '%s\n' "$lock" > "$app/.installed-lock"
 fi
 if test ! -f "$config/admin-token"; then
@@ -76,11 +84,14 @@ fi
 systemctl daemon-reload
 systemctl enable pakarcontroller-management.service
 systemctl restart pakarcontroller-management.service
+probe_health() {
+  curl --noproxy '*' --fail --silent --user-agent "PakarController/$release_version (service installer)" --header 'X-Pakar-Client: pakarcontroller-tool' --header "X-Pakar-Version: $release_version" --header "X-Pakar-Build: $release_build" http://127.0.0.1:18743/pakar/api/health
+}
 for i in 1 2 3 4 5; do
-  if curl --noproxy '*' --fail --silent http://127.0.0.1:18743/pakar/api/health >/dev/null; then break; fi
+  if probe_health >/dev/null; then break; fi
   sleep 1
 done
-curl --noproxy '*' --fail --silent http://127.0.0.1:18743/pakar/api/health
+probe_health
 systemctl reload apache2
 systemctl is-active pakarcontroller-management apache2 asterisk mosquitto
 echo 'Admin token is stored in /etc/pakarcontroller-management/admin-token (root only).'

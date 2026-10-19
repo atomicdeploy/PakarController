@@ -7,6 +7,9 @@ mod windows_shell_icons;
 #[path = "src/brand_image.rs"]
 mod brand_image;
 fn main() {
+    println!("cargo:rerun-if-env-changed=PAKAR_ENFORCE_PEER_VERSIONS");
+    println!("cargo:rerun-if-env-changed=PAKAR_BUILD_ID");
+    println!("cargo:rerun-if-changed=../interfaces/peer-policy.json");
     let out = std::path::PathBuf::from(std::env::var_os("OUT_DIR").unwrap());
     std::fs::write(
         out.join("pakarcontroller.ico"),

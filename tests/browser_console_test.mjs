@@ -1,6 +1,7 @@
 // Actual RayanLamp browser-console.test.ts scenarios against the shipped module.
 // Node VM replaces Vitest; no donor build, browser dependency or SDK cache.
 import assert from 'node:assert/strict';
+import {webcrypto} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
@@ -74,8 +75,8 @@ const dark=run("browserConsoleStyle('info')");run("document.documentElement.data
 assert.notEqual(run("browserConsoleStyle('info')"),dark);
 // Real HTTP adapter: quiet polls/telemetry, accepted != readback, no secrets/replay.
 let response={status:200,ok:true,text:async()=>'{"accepted":true}'},requestCount=0,loginCount=0;
-const fixtureIdentity={board_id:'esp8266-aabbccddeeff',boot_id:'a'.repeat(32),http_peer_fencing:true};
-Object.assign(context,{Headers,AbortController,setTimeout,clearTimeout});
+const fixtureIdentity={version:'0.2.8',board_id:'esp8266-aabbccddeeff',boot_id:'a'.repeat(32),http_peer_fencing:true};
+Object.assign(context,{Headers,AbortController,URL,setTimeout,clearTimeout,crypto:webcrypto});
 context.fetch=async(path,options)=>{requestCount++;if(path==='/api/status'&&response.ok)return {status:200,ok:true,text:async()=>JSON.stringify(fixtureIdentity)};return response};context.showLogin=()=>loginCount++;
 vm.runInContext(read('assets/web/peer-http.js')+'\nconst peerHttp=createPeerHttp();',context);
 vm.runInContext(web.slice(web.indexOf('async function api('),web.indexOf('function showLogin()')),context);
@@ -122,7 +123,8 @@ Object.assign(context,{location:{protocol:'http:',host:'ledboard.local'},wsState
 context.refreshAuthenticated=async()=>{};
 vm.runInContext('let authenticated=true,webSocketPaused=false,socket=null;\n'+read('assets/web/realtime-retry.js')+'\n'+web.slice(web.indexOf('function connectWs()'),web.indexOf('async function post(')),context);
 clear();run('connectWs()');const first=sockets[0];first.onopen();
-assert.equal(first.url,'ws://ledboard.local/ws');assert.equal(events()[0].args[4].event,'websocket.connected');
+assert.equal(new URL(first.url).origin,'ws://ledboard.local');assert.equal(new URL(first.url).pathname,'/ws');
+assert.equal(new URL(first.url).searchParams.get('version'),'0.2.8');assert.equal(events()[0].args[4].event,'websocket.connected');
 assert.deepEqual(first.sent,['{"type":"status"}']);
 first.onmessage({data:new Uint8Array(480)});first.onmessage({data:'{"hostname":"fixture"}'});
 assert.equal(renderCount,1);assert.equal(events().length,1,'No frame or unchanged state trace');

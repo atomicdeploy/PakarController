@@ -6,6 +6,9 @@
 // Included inside the application's namespace after peripheral/transport code.
 // PU850 route adaptation owns no duplicate UART/peripheral implementation.
 ClientTelemetry clientTelemetry;
+bool recordClientReport(const String &report,const String &peer,const String &agent,const String &version) {
+  return clientTelemetry.report(report,peer,millis(),agent,version);
+}
 bool bootIntegrity=false;
 PakarFilesystem::Observation filesystemTelemetry;
 bool readFilesystemTelemetry(uint32_t &total,uint32_t &used) {
@@ -141,6 +144,7 @@ String buildTelemetryJson() {
   auto application=d[F("application")].to<JsonObject>();
   application[F("id")]=APP_ID;application[F("name")]=APP_NAME;application[F("title")]=APP_TITLE;
   d[F("version")]=BoardCore::BuildInfo::kVersion;
+  PakarPeer::compatibility(d["compatibility"].to<JsonObject>());
   auto e=d[F("esp")].to<JsonObject>();
   e[F("model")]=FirmwarePlatform::model();e[F("chip_id")]=SystemPlatform::chipId();
 #if defined(ARDUINO_ARCH_ESP32)
@@ -432,9 +436,11 @@ void registerMaintenanceRoutes() {
   server.on("/api/telemetry",HTTP_GET,[](){if(authenticate())sendMaintenanceJson(buildTelemetryJson());});
   server.on("/api/clients/report",HTTP_POST,[](){
     if(!authenticate())return;
-    const bool ok=clientTelemetry.report(server.arg("report"),server.remoteAddress(),millis());
+    const auto *agent=server.request()->getHeader("User-Agent");
+    const bool ok=recordClientReport(server.arg("report"),server.remoteAddress(),agent?agent->value():String(),WebAccess::clientVersion(server.request()));
     sendMaintenanceJson(ok?"{\"accepted\":true}":"{\"error\":\"invalid_report_or_client_limit\"}",ok?200:400);
   });
+  server.on("/api/clients",HTTP_GET,[](){if(authenticate())sendMaintenanceJson(clientTelemetry.json(millis()));});
   server.on("/api/firmware/remote",HTTP_GET,[](){if(authenticate())sendMaintenanceJson(remoteFirmware.json());});
   const char *paths[]={"/api/firmware/fetch","/api/firmware/apply","/api/firmware/cancel","/file/cancel"};
   for(unsigned i=0;i<4;++i) {

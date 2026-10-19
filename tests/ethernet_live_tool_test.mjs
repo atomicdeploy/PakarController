@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {deviceOrigin,ethernetReady,deviceRequest,checkEthernet} from '../tools/check-ethernet-live.mjs';
-const status={hostname:'ledboard',board_id:'esp32s3-fixture',boot_id:'a'.repeat(32),http_peer_fencing:true,
+const status={version:'0.2.8',hostname:'ledboard',board_id:'esp32s3-fixture',boot_id:'a'.repeat(32),http_peer_fencing:true,
   uplink:'ethernet',uplink_ipv4_ready:true,station_connected:false,programming_latch:false,
   capabilities:{board_kind:'controller',hostname:'ledboard',acknowledged_features:['network']},ethernet:{configured:true,initialized:true,link_up:true,ipv4_ready:true,ip:'192.168.50.20'}};
 assert.equal(deviceOrigin('http://ledboard.local').hostname,'ledboard.local');

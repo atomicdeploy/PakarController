@@ -31,7 +31,7 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/isp_stubs" "$root/tests/avr
 c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/urboot_protocol_test.cpp" -o "$root/build/urboot-protocol-test"
 "$root/build/urboot-protocol-test"
 node "$root/tests/urboot_integration_test.mjs"
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" "$root/tests/client_telemetry_test.cpp" -o "$root/build/client-telemetry-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/libraries/BoardCore/src" "$root/tests/client_telemetry_test.cpp" -o "$root/build/client-telemetry-test"
 "$root/build/client-telemetry-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/remote_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/libraries/BoardCore/src" "$root/tests/remote_firmware_test.cpp" "$root/firmware/esp8266/src/RemoteFirmware.cpp" -lcrypto -o "$root/build/remote-firmware-test"
 "$root/build/remote-firmware-test"
@@ -154,7 +154,7 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" \
 "$root/build/access-policy-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" "$root/tests/device_context_test.cpp" -o "$root/build/device-context-test"
 "$root/build/device-context-test"
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/firmware/esp8266/src" \
   "$root/tests/access_config_test.cpp" "$root/firmware/esp8266/src/AccessConfig.cpp" -o "$root/build/access-config-test"
 "$root/build/access-config-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/firmware/esp8266/src" \
@@ -208,7 +208,7 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" -I "$roo
 "$root/build/s3-menu-audio-test"
 pwsh -NoProfile -File "$root/tools/test-uart-flow.ps1"
 pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern peer-binding -Gate > /dev/null
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/firmware/esp8266/src" \
   "$root/tests/web_access_fence_test.cpp" "$root/firmware/esp8266/src/AccessConfig.cpp" -o "$root/build/web-access-fence-test"
 "$root/build/web-access-fence-test"
 pwsh -NoProfile -File "$root/tools/test-tasks.ps1"

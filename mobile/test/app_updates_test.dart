@@ -389,7 +389,11 @@ void main() {
       request.response.headers.contentType = ContentType.json;
       if (request.uri.path == '/healthz') {
         request.response.write(
-          jsonEncode({'status': 'ok', 'service': 'pakarcontroller-mobile'}),
+          jsonEncode({
+            'status': 'ok',
+            'service': 'pakarcontroller-mobile',
+            'version': '0.2.8',
+          }),
         );
       } else {
         final rpc = object(jsonDecode(await utf8.decoder.bind(request).join()));

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_updates.dart';
+import 'peer_identity.dart';
 import 'app_updates_peer.dart';
 import 'app_update_discovery.dart';
 import 'device_registry.dart';
@@ -70,7 +71,8 @@ class AppUpdateCoordinator extends ChangeNotifier {
   Map<String, dynamic> settings = Map.of(defaults);
   final consumed = <String>{};
   Map<String, dynamic>? pending;
-  String instanceId = randomIdentifier(), message = '', feedState = 'Stopped';
+  String get instanceId => PeerIdentity.current.installationId;
+  String message = '', feedState = 'Stopped';
   bool foreground = true, closed = false, checking = false;
   WebSocket? socket;
   StreamSubscription<dynamic>? events;
@@ -95,6 +97,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
   }
 
   Future<void> load() async {
+    await PeerIdentity.current.initialize();
     final prefs = await SharedPreferences.getInstance();
     try {
       final raw = jsonDecode(prefs.getString(storageKey) ?? '{}');
@@ -118,10 +121,6 @@ class AppUpdateCoordinator extends ChangeNotifier {
               .take(128),
         );
       }
-      final id = raw is Map ? raw['instance_id'] : null;
-      instanceId = id is String && RegExp(r'^[a-f0-9]{32}$').hasMatch(id)
-          ? id
-          : randomIdentifier();
       validate(settings);
       if (settings['management_enabled'] == true) await management.load();
       await refresh();
@@ -428,6 +427,7 @@ class AppUpdateCoordinator extends ChangeNotifier {
               .getUrl(Uri.parse(catalog))
               .timeout(const Duration(seconds: 8));
           request.followRedirects = false;
+          identifyRequest(request);
           request.headers.set('X-Pakar-App-Session', catalogSession);
           request.headers.set('X-Pakar-App-Package', '${package['package']}');
           final response = await request.close().timeout(
@@ -664,7 +664,14 @@ class AppUpdateCoordinator extends ChangeNotifier {
     changed();
     try {
       final uri = Uri.parse(options.endpoint);
-      final connecting = (connectFeed ?? WebSocket.connect)(
+      Future<WebSocket> connectIdentified(String endpoint) =>
+          connectFeed != null
+          ? connectFeed!(endpoint)
+          : WebSocket.connect(
+              endpoint,
+              headers: PeerIdentity.current.webSocketHeaders,
+            );
+      final connecting = connectIdentified(
         options.socketIo
             ? uri
                   .replace(

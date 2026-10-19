@@ -166,6 +166,7 @@ pub struct Model {
     status: Option<DeviceStatus>,
     live: bool,
     busy: bool,
+    incompatible: bool,
     page: Page,
     selection: ui::cell_table::Selection,
     cursor: u8,
@@ -183,6 +184,7 @@ impl Default for Model {
             status: None,
             live: false,
             busy: false,
+            incompatible: false,
             page: Page::Overview,
             selection: Default::default(),
             cursor: 1,
@@ -238,6 +240,7 @@ impl Model {
         let mut peer_changed = false;
         match reply.status {
             Ok(status) => {
+                self.incompatible=false;
                 if self
                     .status
                     .as_ref()
@@ -259,6 +262,7 @@ impl Model {
             }
             Err(error) => {
                 self.live = false;
+                self.incompatible=crate::peer_identity::unsupported(&error);
                 self.log.failure("TUI GET /api/status", &error);
             }
         }
@@ -805,7 +809,7 @@ pub fn run(endpoint: Endpoint) -> Result<(), String> {
     let stopped = stop.clone();
     let worker = thread::spawn(move || {
         let mut endpoint = endpoint;
-        let client = match reqwest::blocking::Client::builder()
+        let client = match crate::peer_identity::client_builder()
             .no_proxy()
             .timeout(Duration::from_secs(4))
             .build()
@@ -819,6 +823,7 @@ pub fn run(endpoint: Endpoint) -> Result<(), String> {
                 return;
             }
         };
+        let mut peer_reporter=crate::client_telemetry::Reporter::new();
         while let Ok(work) = requests.recv() {
             if stopped.load(Ordering::Acquire) {
                 break;
@@ -855,6 +860,10 @@ pub fn run(endpoint: Endpoint) -> Result<(), String> {
             } else {
                 blocking_status(&client, &endpoint)
             };
+            if !stopped.load(Ordering::Acquire) && peer_reporter.due() && let Ok(status)=&status
+                && status.capabilities.as_ref().is_some_and(|c|c.has("telemetry")) && let Ok(pinned)=crate::peer_http::pinned_client(status) {
+                peer_reporter.report(&pinned,&endpoint);
+            }
             if results.send(Reply { status, operation }).is_err() {
                 break;
             }
@@ -878,7 +887,7 @@ pub fn run(endpoint: Endpoint) -> Result<(), String> {
                 }
                 next_read = Instant::now() + backoff.delay();
             }
-            if !model.busy && Instant::now() >= next_read {
+            if !model.busy && !model.incompatible && Instant::now() >= next_read {
                 send.try_send(Work::Status).map_err(io::Error::other)?;
                 model.busy = true;
             }
@@ -948,7 +957,7 @@ pub fn run(endpoint: Endpoint) -> Result<(), String> {
 mod tests {
     use super::*;
     fn table() -> DeviceStatus {
-        serde_json::from_value(serde_json::json!({"hostname":"ledboard","cells":vec!["white";80],
+        serde_json::from_value(serde_json::json!({"version":crate::peer_identity::VERSION,"hostname":"ledboard","cells":vec!["white";80],
         "board_id":"esp8266-aabbccddeeff","boot_id":"123456789abcdef0123456789abcdef0","http_peer_fencing":true,
         "capabilities":{"board_kind":"table","name":"Table","acknowledged_features":["table","cell-batch"],"table":{"columns":10,"rows":8,"pixels_per_cell":6}}})).unwrap()
     }

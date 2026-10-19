@@ -15,6 +15,8 @@ import 'lan_resolver.dart';
 import 'command_wire.dart';
 import 'pixel_diagnostic.dart';
 import 'ble_transport.dart';
+import 'peer_identity.dart';
+import 'peer_policy.dart';
 
 enum ConnectionMethod { network, usb, bluetooth }
 
@@ -28,6 +30,7 @@ class PakarApi {
     PakarBleTransport? bluetooth,
     this.discovery,
     this.readTimeout = const Duration(seconds: 6),
+    this.enforcePeerVersions = peerVersionChecksEnabled,
   }) : resolver = resolver ?? LanResolver(),
        bluetooth = bluetooth ?? PakarBleTransport(),
        _baseUrl = normalizeEndpoint(baseUrl),
@@ -65,6 +68,7 @@ class PakarApi {
   // Android USB-host transport is not implemented yet. Never substitute an
   // HTTP/WS connection, discovery, or a remote bridge for explicit USB intent.
   void _requireNetwork() {
+    if (_unsupportedPeer != null) throw _unsupportedPeer!;
     if (!_connectionWanted) throw const ConnectionStopped();
     if (_connectionMethod == ConnectionMethod.usb) {
       throw const FormatException(
@@ -148,9 +152,23 @@ class PakarApi {
         (ble['routes'] as List).contains('$method $path');
   }
 
-  late final HttpClient _ioClient = resolver.createClient();
+  late final HttpClient _ioClient = resolver.createClient()
+    ..userAgent = PeerIdentity.current.userAgent;
   final Future<Set<String>> Function()? discovery;
   final Duration readTimeout;
+  final bool enforcePeerVersions;
+  UnsupportedPeerVersion? _unsupportedPeer;
+  UnsupportedPeerVersion? get unsupportedPeer => _unsupportedPeer;
+  Map<String, String> receivedServerHeaders = const {};
+  String? _introducedPeer;
+  String? get selectedRouteLocalIp =>
+      _verifiedEndpoint == baseUrl &&
+          _verifiedBoard != null &&
+          _verifiedBoot != null &&
+          !isBluetooth
+      ? resolver.localAddressFor(Uri.parse(transportUrl))
+      : null;
+  Stopwatch? _introductionAge;
   final _readAborts = <Completer<void>>{};
   WebSocketChannel? _channel;
   bool _socketReady = false;
@@ -330,13 +348,97 @@ class PakarApi {
   }
 
   bool _rememberStatus(DeviceStatus status) {
+    _checkPeerVersion(status.json);
     if (status.olderThan(_latestStatus)) return false;
     status = status.preservingNewerUpgrade(_latestStatus);
     status = status.preservingNewerRgb(_latestStatus);
     _latestStatus = status;
     _statusAge = Stopwatch()..start();
     if (!_statusUpdates.isClosed) _statusUpdates.add(status);
+    _introducePeer();
     return true;
+  }
+
+  void _checkPeerVersion(Map<String, dynamic> value) {
+    try {
+      validatePeerBoard(
+        value,
+        appVersion: PeerIdentity.current.version,
+        enabled: enforcePeerVersions && peerVersionChecksEnabled,
+      );
+    } on UnsupportedPeerVersion catch (error) {
+      // Revoke every captured command/maintenance owner synchronously, not
+      // just its status lease. Keep this one persistent rejection until an
+      // explicit reconnect/endpoint edit, with no automatic retry chatter.
+      if (_unsupportedPeer == null) {
+        _connectionWanted =
+            false; // Rejected, not an endlessly reconnecting link.
+        resetTransport(unsupported: error);
+      }
+      rethrow;
+    }
+  }
+
+  // One optional, nonsecret introduction per verified board boot, refreshed
+  // at most once a minute on normal foreground observations for the board's
+  // 120s registry lease. No timer, per-frame metadata or blocking readback.
+  void _introducePeer() {
+    if (_verifiedBoard == null ||
+        _verifiedBoot == null ||
+        _latestStatus == null ||
+        !appForeground ||
+        _latestStatus!.json['compatibility'] is! Map) {
+      return;
+    }
+    final owner = '$_verifiedBoard/$_verifiedBoot/$connectionRevision';
+    if (_introducedPeer == owner &&
+        (_introductionAge?.elapsed ?? Duration.zero) <
+            const Duration(seconds: 60)) {
+      return;
+    }
+    _introducedPeer = owner;
+    _introductionAge = Stopwatch()..start();
+    final revision = connectionRevision;
+    unawaited(() async {
+      try {
+        final report = PeerIdentity.current.reportJson(
+          transport: isBluetooth ? 'bluetooth' : 'network',
+          enforce: enforcePeerVersions && peerVersionChecksEnabled,
+          reportedIp: selectedRouteLocalIp,
+        );
+        if (revision != connectionRevision) return;
+        if (isBluetooth) {
+          // Sequential/ACKed transport, no alternate network path.
+          await bluetooth.request(
+            'POST',
+            '/api/clients/report',
+            {'report': report},
+            board: _verifiedBoard!,
+            boot: _verifiedBoot!,
+            expires: 0, // Metadata report, never an actuator command.
+          );
+        } else if (_socketReady &&
+            _channel != null &&
+            utf8.encode(report).length <= 1200) {
+          _channel!.sink.add(
+            jsonEncode({
+              'type': 'peer-introduction',
+              'report': jsonDecode(report),
+            }),
+          );
+        } else {
+          final request =
+              http.Request('POST', _uri(transportUrl, '/api/clients/report'))
+                ..headers.addAll(_writeHeaders)
+                ..followRedirects = false
+                ..bodyFields = {'report': report};
+          final response = await _client.send(request).timeout(readTimeout);
+          await response.stream.listen((_) {}).cancel();
+        }
+      } on Object {
+        // Metadata failure does not become a control timeout or reconnect toast.
+      }
+    }());
   }
 
   /// A single intent, preferred WS receipt, then the SAME idempotent envelope
@@ -435,6 +537,7 @@ class PakarApi {
   String? _verifiedBoard, _verifiedBoot;
 
   Map<String, String> get _headers => {
+    ...PeerIdentity.current.headers,
     if (password.isNotEmpty)
       'authorization': 'Basic ${base64Encode(utf8.encode('$user:$password'))}',
   };
@@ -507,6 +610,19 @@ class PakarApi {
     StreamSubscription<List<int>>? rejectedBody;
     try {
       final response = await _client.send(request).timeout(limit);
+      if (owner == connectionRevision) {
+        receivedServerHeaders = Map.unmodifiable({
+          for (final key in [
+            'server',
+            'x-pakar-product',
+            'x-pakar-version',
+            'x-pakar-build',
+            'x-pakar-board-version',
+            'x-pakar-instance',
+          ])
+            if (response.headers[key] != null) key: response.headers[key]!,
+        });
+      }
       if (owner != connectionRevision ||
           (response.contentLength ?? 0) > maximum) {
         // StreamIterator subscribes lazily at moveNext. The installed IOClient
@@ -575,6 +691,12 @@ class PakarApi {
   Future<Map<String, dynamic>> _get(String path) async {
     _requireNetwork();
     if (isBluetooth) return _bleRequest('GET', path, const {});
+    if (path != '/api/status' &&
+        _verifiedEndpoint != baseUrl &&
+        enforcePeerVersions) {
+      await status();
+      _requireNetwork();
+    }
     final revision = connectionRevision, headers = _headers;
     final response = await _withDiscovery(
       (base) => _readResponse(base, path, headers),
@@ -891,6 +1013,7 @@ class PakarApi {
   // Adapt Session's synchronous retirement boundary: retire captured owners
   // before a new board/boot may authorize any old dialog or in-flight request.
   bool _acceptIdentity(Map<String, dynamic> value) {
+    _checkPeerVersion(value);
     final board = value['board_id'], boot = value['boot_id'];
     bool identity(Object? v) =>
         v is String && RegExp(r'^[!-~]{1,80}$').hasMatch(v);
@@ -1047,7 +1170,7 @@ class PakarApi {
     final uri = webSocketUri;
     final active = IOWebSocketChannel.connect(
       uri,
-      headers: _headers,
+      headers: {..._headers}..remove('User-Agent'),
       // Android may pause Dart timers/network while backgrounded. A built-in
       // ping timeout would turn that suspension into a needless disconnect.
       // Foreground supervision owns read probes and bounded silent-socket reset.
@@ -1431,7 +1554,11 @@ class PakarApi {
     }
   }
 
-  void resetTransport() {
+  void resetTransport({UnsupportedPeerVersion? unsupported}) {
+    _unsupportedPeer = unsupported;
+    _introducedPeer = null;
+    _introductionAge = null;
+    receivedServerHeaders = const {};
     unawaited(bluetooth.disconnect());
     _abortReads();
     _socketReady = false;

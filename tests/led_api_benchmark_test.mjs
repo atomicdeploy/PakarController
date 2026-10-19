@@ -4,7 +4,7 @@ import {createServer} from 'node:http';
 import {runLedApiBenchmark} from '../tools/benchmark-led-api.mjs';
 
 async function fixture(backend,scenario='success') {
-  const original={board_id:'fixture_board',boot_id:'a'.repeat(32),http_peer_fencing:true,pixels:480,free_heap_bytes:120000,effect:'rainbow',
+  const original={version:'0.2.8',board_id:'fixture_board',boot_id:'a'.repeat(32),http_peer_fencing:true,pixels:480,free_heap_bytes:120000,effect:'rainbow',
     capabilities:{board_kind:'table',acknowledged_features:['table','leds','cell-batch'],table:{columns:10,rows:8,pixels_per_cell:6}},
     cells:Array.from({length:80},(_,i)=>i%3===0?'red':i%3===1?'white':'off'),
     led_output:{enabled:true,mode:'effects',driver:{backend,dma:backend==='rmt-dma',ready:true,active:true,submitted:10,transmitted:100,revision:10,failed:0,error_code:0}}};

@@ -3538,7 +3538,7 @@ dependencies = [
 
 [[package]]
 name = "pakarcontroller"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "ab_glyph",
  "base64 0.23.1",

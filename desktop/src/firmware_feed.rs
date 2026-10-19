@@ -359,6 +359,7 @@ fn listen(
         .as_str()
         .into_client_request()
         .map_err(|_| "Invalid feed handshake")?;
+    crate::peer_identity::websocket_headers(&mut request);
     if !token.is_empty() {
         request.headers_mut().insert(
             "Authorization",

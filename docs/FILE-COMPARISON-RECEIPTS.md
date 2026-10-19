@@ -1,5 +1,72 @@
 # PakarController comparison receipts
 
+## Supported peer releases and operational introductions
+
+Coordinated source0.2.8/client build15, support floor0.2.8; no exact-build
+adapters, versioned routes or automatic policy downgrade. PCController's exact
+complete discovery_metadata.go hash524f6e31... and RayanLamp's complete api.ts
+hash1b201ac3... remain the reused metadata/fencing sources. Release-range policy
+is newly requested, not a claim of a donor's existing version negotiation. Same
+ledger mappings now include the shared policy, board registry and native/mobile
+identity helpers; existing255 comparisons/4697 paths,4442 pending/205 gaps stay
+open. No whole-repository parity or indirect USB registry forwarding certificate.
+
+Executed source/host evidence: default-on and disabled C++ policy builds, strict
+SemVer boundaries, numeric AVR bounds, real ArduinoJson eight-peer report
+retention/UTF-8/secrets/TTL/collision/observed-address fixtures, actual WebAccess
+middleware gates, both-platform cloud command rejection, S3 remote staging,
+HTTP/WebSocket/browser/Node/PowerShell policy fixtures and network discovery
+registration/NBNS tests. Management service actual loopback HTTP/WebSocket/SQLite
+suite9/9 passed. Native canonical Check and87 focused tests across USB11,
+bridge17, peer_http26, cell_batch4, terminal_ui14, client_telemetry1,
+peer_identity5, firmware_feed3, firmware_source2 and client_management4 pass.
+No native Release executable or installed runtime was replaced.
+
+Final native admission hardening then passed44 default checks: optional-report4,
+full USB-table13 and HTTP-peer27. A separate actually compiled disabled-policy
+build passed the same4 optional-report tests through the production fake-port
+worker, including older0.2.7 HELLO, exact correlated Unsupported reporting,
+complete table/non-table identity and rejection of wrong/missing board/boot,
+opcode/error mismatch and timeout. Shared Pin::from_identity validates every USB
+board; HTTP still separately requires advertised fencing. Reporting capability
+fallback is physical-session-bound and only available with release checks OFF;
+it never selects a release-specific adapter. Native policy headers use the same
+canonical spelling and actual true/false flag.323 tests compiled, not323 executed.
+The canonical test cache was last compiled with the explicit disabled flag; the
+next ordinary build will necessarily restore the default once, not a library clean.
+
+Final mobile Analyze and9 policy/3 peer-server fixtures pass, including actual
+HTTP/WebSocket User-Agent, selected-route socket IP and canonical build header.
+Peer-server/BLE/proxy self-IP is omitted when unavailable; the SDK's
+HttpConnectionInfo exposes remoteAddress/localPort, not a localAddress getter.
+Final canonical warm ApkPreview-BuildOnly succeeds; package identity independently
+checked with SDK aapt: ir.digitalogic.pakar.pakarcontroller,0.2.8/code15,
+58132833B/SHA256f21eb1d2e984b3bd0339eeeeb70814cdce70d94b47df87768e32f72c7a54e813.
+Preview signing only; no phone installation or production-signing acceptance.
+
+Fresh baseline CI39189178813 failed its old static expectation
+`xQueueOverwrite(queue_,&next)`. Only that test was corrected to check the actual
+capacity-one mailbox, producerGate_, persistent producer_/distinct current_,
+complete RGB/metadata publication and both backend receives/encoding, with seven
+negative mutations. Focused wiring guard passes; runtime LedOutput is unchanged.
+The prior22 worker scenarios were not rerun for this test-only fix, and no new
+physical LED claim follows from it.
+
+Canonical S3 SDK16MB/OPI/buffered/RMT-DMA/verified-ISP/BLE-off/optional-Ethernet
+build passes: sketch2226219B, globals116324B; application2226368B,
+SHA2568947797246380b7ff464bd52031c26912877ff5fd961caefe8906b31cef559ae.
+Canonical buffered AVR build passes: application32284/32384B, globals1478B;
+boot384B, full32768-byte binarySHA256
+5edf6e6c2a122bec9b06427e07327b131b751137df2fa6a3f103b0ce5063e504.
+Its100B flash headroom remains a maintenance limitation. Structural boot-chain
+validation is not actual clock/voltage/fuse or hardware acceptance.
+
+No board access, flash, client replacement, remote service deployment, live
+multicast, optical or physical acceptance this slice. The prior running0.2.7
+board/app observations stay historical/current-runtime evidence until a coordinated
+verified rollout; the new source/builds do not make those installed products0.2.8.
+See PEER-IDENTITY.md and REUSE-PREFLIGHT-RECEIPT.md for recovery and remaining work.
+
 ## esp32WS2811 pinned donor comparison
 
 Pin0222ef025f2b8e03f8c8aef35d63c545a98ad579, complete14 C++ reads plus MIT

@@ -4,6 +4,7 @@
 #include <PeerFence.h>
 #include <ESPAsyncWebServer.h>
 #include "SystemPlatform.h"
+#include "PeerIdentity.h"
 #if !defined(ESP8266) && !defined(ARDUINO_ARCH_ESP8266)
 #include <mutex>
 #endif
@@ -37,6 +38,7 @@ class WebAccess {
     }
     const bool publicRead = request->method() == HTTP_GET &&
         (path == F("/") || path == F("/basic") || path == F("/api/auth/info") || path == F("/description.xml") ||
+         path == F("/api/peer/info") ||
          path == F("/assets/fonts/Vazirmatn-Regular.ttf") || path == F("/assets/fonts/Vazirmatn-OFL.txt"));
     const bool login = path == F("/login") && request->method() == HTTP_POST;
     if (publicRead || login) { next(); return; }
@@ -46,6 +48,9 @@ class WebAccess {
     if (!allowed(request)) {
       request->send(401, "application/json", "{\"error\":\"login_required\",\"login\":\"/login\"}");
       return; // no browser Basic-auth dialog; API clients may still send Basic
+    }
+    if (!versionAllowed(request)) {
+      request->send(426,"application/json",PakarPeer::admissionError());return;
     }
     if (!peerAllowed(request)) {
       request->send(409, "application/json", "{\"error\":\"peer_changed\",\"accepted\":false}"); return;
@@ -57,9 +62,26 @@ class WebAccess {
     refreshCredentialsLocked();
   }
   AsyncMiddleware *middleware() { return &middleware_; }
-  void configurePeerFence(const String &board, const String &boot) {
+  static String clientVersion(AsyncWebServerRequest *request) {
+    const auto *header=request->getHeader("X-Pakar-Version");
+    const String query=request->url()==F("/ws")?request->arg("version"):String();
+    if(header && query.length() && header->value()!=query)return String();
+    return header?header->value():query;
+  }
+  static bool versionAllowed(AsyncWebServerRequest *request) {
+    if(!BoardCore::PeerCompatibility::enforced)return true;
+    const String version=clientVersion(request);
+    // Discovery/bootstrap reads can inspect why a peer is unsupported, but
+    // a supplied incompatible version never admits an API/control session.
+    const String path=request->url();
+    const bool bootstrap=request->method()==HTTP_GET &&
+        (path==F("/api/status") || path==F("/info") || path==F("/api/device/name"));
+    if(!version.length() && !request->hasHeader("X-Pakar-Version") && bootstrap)return true;
+    return BoardCore::PeerCompatibility::appAllowed(version.c_str());
+  }
+  void configurePeerFence(const String &board, const String &boot,const String &hostname=String()) {
     PakarAccessDetail::Guard lock(mutex_);
-    boardId_ = board; bootId_ = boot;
+    boardId_ = board; bootId_ = boot; hostname_=hostname;
   }
   bool peerFenceReady() const {
     PakarAccessDetail::Guard lock(mutex_);
@@ -97,7 +119,7 @@ class WebAccess {
     PakarAccessDetail::Guard lock(mutex_); return sessions_.count(millis());
   }
   bool bindSocket(uint32_t id, AsyncWebServerRequest *request) {
-    if (!id || !request || !sameOrigin(request)) return false;
+    if (!id || !request || !sameOrigin(request) || !versionAllowed(request)) return false;
     const String token = cookieToken(request);
     PakarAccessDetail::Guard lock(mutex_);
     if (!accessConfig.ready()) return false;
@@ -107,9 +129,22 @@ class WebAccess {
     for (const auto &slot : sockets_) if (slot.id == id) return false;
     for (auto &slot : sockets_) if (slot.id == 0) {
       slot.id = id; slot.basic = basic; slot.open = open;
+      slot.address=request->client()->remoteIP().toString();slot.version=clientVersion(request);
+      const auto *agent=request->getHeader("User-Agent");
+      slot.agent=agent?agent->value():String();
+      if(slot.agent.length()>192)slot.agent=String();
       token.toCharArray(slot.token, sizeof(slot.token)); return true;
     }
     return false;
+  }
+  String socketAddress(uint32_t id) const {
+    PakarAccessDetail::Guard lock(mutex_);for(const auto &slot:sockets_)if(slot.id==id)return slot.address;return String();
+  }
+  String socketAgent(uint32_t id) const {
+    PakarAccessDetail::Guard lock(mutex_);for(const auto &slot:sockets_)if(slot.id==id)return slot.agent;return String();
+  }
+  String socketVersion(uint32_t id) const {
+    PakarAccessDetail::Guard lock(mutex_);for(const auto &slot:sockets_)if(slot.id==id)return slot.version;return String();
   }
   bool socketAllowed(uint32_t id) {
     PakarAccessDetail::Guard lock(mutex_);
@@ -137,7 +172,24 @@ class WebAccess {
   }
   void registerRoutes(AsyncWebServer &server, std::function<void()> credentialsChanged,
       std::function<bool()> busy) {
+    // SDK defaults apply even to middleware rejections, errors, upgrades and
+    // downloads, not just selected JSON routes. Configure once before begin().
+    DefaultHeaders::Instance().addHeader("Server",PakarPeer::product());
+    DefaultHeaders::Instance().addHeader("X-Pakar-Version",BoardCore::BuildInfo::kVersion);
+    DefaultHeaders::Instance().addHeader("X-Pakar-Board-Version",BoardCore::BuildInfo::kVersion);
+    DefaultHeaders::Instance().addHeader("X-Pakar-Board",boardId_);
+    DefaultHeaders::Instance().addHeader("X-Pakar-Boot",bootId_);
+    DefaultHeaders::Instance().addHeader("X-Pakar-Client","pakarcontroller-firmware");
+    DefaultHeaders::Instance().addHeader("X-Pakar-Application","PakarController");
+    DefaultHeaders::Instance().addHeader("X-Pakar-Min-App-Version",BoardCore::PeerCompatibility::minimumApp);
+    DefaultHeaders::Instance().addHeader("X-Pakar-Version-Check",BoardCore::PeerCompatibility::enforced?"true":"false");
     refreshCredentials(); server.addMiddleware(&middleware_);
+    server.on("/api/peer/info",HTTP_GET,[this](AsyncWebServerRequest *request){
+      String board,boot,hostname;
+      {PakarAccessDetail::Guard lock(mutex_);board=boardId_;boot=bootId_;hostname=hostname_;}
+      auto *response=request->beginResponse(200,"application/json",PakarPeer::info(board,boot,hostname));
+      response->addHeader("Cache-Control","no-store");request->send(response);
+    });
     server.on("/api/auth/info", HTTP_GET, [this](AsyncWebServerRequest *request) {
       String body;
       {
@@ -254,10 +306,10 @@ class WebAccess {
   }
   AsyncAuthenticationMiddleware basic_;
   mutable PakarAccessDetail::Mutex mutex_;
-  String boardId_, bootId_;
+  String boardId_, bootId_,hostname_;
   AsyncMiddlewareFunction middleware_;
   BoardCore::Access::Sessions sessions_;
   uint8_t failures_ = 0;
   uint32_t failedAt_ = 0;
-  struct Socket { uint32_t id = 0; bool basic = false; bool open = false; char token[33] = {}; } sockets_[8];
+  struct Socket { uint32_t id = 0; bool basic = false; bool open = false; char token[33] = {};String address,agent,version; } sockets_[8];
 };

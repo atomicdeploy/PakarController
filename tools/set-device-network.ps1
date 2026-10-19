@@ -12,6 +12,7 @@ param(
 $ErrorActionPreference='Stop'
 
 . (Join-Path $PSScriptRoot 'serial-wire.ps1')
+. (Join-Path $PSScriptRoot 'peer-identity.ps1')
 function Read-PakarNetworkStatus([byte[]]$Reply,[bool]$StationEnabled,[bool]$ApEnabled) {
     if($Reply[2] -ne 0x90 -or $Reply[4] -lt 19 -or $Reply[20] -gt 1 -or $Reply[21] -gt 1) {
         throw 'ESP returned an invalid status observation after save; do not automatically repeat provisioning.'
@@ -58,8 +59,9 @@ try {
     $serial.DtrEnable=$false;$serial.RtsEnable=$false;$serial.ReadTimeout=100
     $serial.Open();Start-Sleep -Milliseconds 250;$serial.DiscardInBuffer()
     [byte]$sequence=1
-    $hello=Send-PakarNetworkRequest $serial 0x01 $sequence ([byte[]]@()) 0x81 $TimeoutMs
+    $hello=Send-PakarNetworkRequest $serial 0x01 $sequence (New-PakarToolUsbHello) 0x81 $TimeoutMs
     Assert-PakarNetworkEspHello $hello # Premutation role/capability/read integrity gate.
+    Assert-PakarToolUsbHello $hello # Mutual release policy before any staged setting.
     $sequence++
     $null=Send-PakarNetworkRequest $serial 0x53 $sequence ([byte[]]@(0)) 0x80 $TimeoutMs
     foreach($entry in @(@{Kind=1;Bytes=$ssidBytes},@{Kind=2;Bytes=$passwordBytes})){

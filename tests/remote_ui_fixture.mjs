@@ -5,18 +5,21 @@ import http from 'node:http';
 import {spawn} from 'node:child_process';
 import {writeFile,mkdir} from 'node:fs/promises';
 import {resolve} from 'node:path';
+import {toolRelease,toolPolicy} from '../tools/peer-identity.mjs';
 const [exe,profile,view='firmware',screenshot]=process.argv.slice(2);assert(exe&&profile);assert(['firmware','table','cells','highlight'].includes(view));
 await mkdir(profile,{recursive:true});
-const remote={job_id:0,boot_id:'SIMULATED-visual-fixture',phase:'idle',targets:3,manifest_sha256:'',busy:false,cancellable:false,received_bytes:0,expected_bytes:0,error:''};
+const simulatedIdentity={board_id:'esp32s3-simulated-visual-fixture',boot_id:'b'.repeat(32),http_peer_fencing:true};
+const remote={job_id:0,boot_id:simulatedIdentity.boot_id,phase:'idle',targets:3,manifest_sha256:'',busy:false,cancellable:false,received_bytes:0,expected_bytes:0,error:''};
 const server=http.createServer(async(req,res)=>{
+ res.setHeader('Server','PakarController/'+toolRelease.version);res.setHeader('X-Pakar-Version',toolRelease.version);
  if(req.method==='POST'&&req.url==='/api/clients/report'){
   let raw='';for await(const c of req)raw+=c;const report=JSON.parse(new URLSearchParams(raw).get('report'));
-  assert.equal(report.application,'PakarController');assert.equal(report.version,'0.2.7');
+  assert.equal(report.application,'PakarController');assert.equal(report.version,toolRelease.version);
   res.writeHead(200,{'Content-Type':'application/json'});res.end('{"accepted":true}');return;
  }
  if(req.method!=='GET'){res.writeHead(405);res.end('Fixture refuses hardware writes');return;}
  const values={
-  '/api/status':{hostname:'SIMULATED remote fixture',version:'0.2.7',mode:'idle',brightness:200,effect:'rainbow',pixels:480,avr_online:true,station_connected:true,programming_latch:false,cells:Array(80).fill('white'),tm1637_segments:[6,91,79,102]},
+  '/api/status':{...simulatedIdentity,hostname:'SIMULATED remote fixture',version:toolRelease.version,compatibility:{...toolPolicy,enforced:toolPolicy.enforce},mode:'table',brightness:200,effect:'rainbow',pixels:480,avr_online:true,station_connected:true,programming_latch:false,cells:Array(80).fill('white'),tm1637_segments:[6,91,79,102]},
   '/api/network':{station_enabled:true,ap_enabled:true,station_ssid:'SIMULATED'},
   '/api/cloud':{mqtt_enabled:false,mqtt_tls:true,mqtt_host:'mqtt.example.invalid',mqtt_port:8883,mqtt_user:'fixture',mqtt_base_topic:'pakar/fixture',mqtt_password_set:false,websocket_enabled:false,websocket_tls:true,websocket_host:'ws.example.invalid',websocket_port:443,websocket_path:'/controller',websocket_token_set:false,telemetry_seconds:30},
   '/api/device/name':{hostname:'SIMULATED-visual-fixture'},

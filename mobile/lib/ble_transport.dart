@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/services.dart';
 
 import 'ble_codec.dart';
+import 'peer_identity.dart';
 
 class BleReply {
   const BleReply(this.status, this.body);
@@ -243,6 +244,10 @@ class PakarBleTransport {
           'board_id': board,
           'boot_id': boot,
           'expires_at_ms': expires,
+          'client_version': PeerIdentity.current.version,
+          'client_id': PeerIdentity.current.installationId,
+          'client_application': 'pakarcontroller-mobile',
+          'client_build': PeerIdentity.current.build,
         }),
       ),
     );

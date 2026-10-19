@@ -46,7 +46,9 @@ class AppUpdateDiscoveryChannel(context: Context, messenger: BinaryMessenger) {
                     val instance = call.argument<String>("instance_id") ?: ""
                     if (port !in 1024..65535 || !safeText(name, 96) || !safeText(instance, 128)) {
                         result.error("invalid_advertisement", "Invalid package advertisement", null)
-                    } else register(port, name, instance, result)
+                    } else register(port, name, instance,
+                        call.argument<String>("version") ?: "",
+                        call.argument<String>("build") ?: "", result)
                 }
                 "unadvertise" -> { unadvertise(); result.success(null) }
                 else -> result.notImplemented()
@@ -136,7 +138,7 @@ class AppUpdateDiscoveryChannel(context: Context, messenger: BinaryMessenger) {
         else result.error("discovery_failed", error, null)
     }
 
-    private fun register(port: Int, name: String, instance: String, result: MethodChannel.Result) {
+    private fun register(port: Int, name: String, instance: String, version: String, build: String, result: MethodChannel.Result) {
         if (registration != null) { result.error("busy", "Package listener already advertised", null); return }
         try { acquireLock() }
         catch (_: Exception) { result.error("multicast_lock", "Multicast unavailable", null); return }
@@ -144,6 +146,8 @@ class AppUpdateDiscoveryChannel(context: Context, messenger: BinaryMessenger) {
             serviceName = name.take(48); serviceType = this@AppUpdateDiscoveryChannel.serviceType
             setPort(port); setAttribute("product", "pakarcontroller-mobile")
             setAttribute("kind", "android-app"); setAttribute("instance", instance)
+            if (safeText(version, 96)) setAttribute("version", version)
+            if (safeText(build, 64)) setAttribute("build", build)
             setAttribute("manifest", "/api/app-updates")
         }
         val listener = object : NsdManager.RegistrationListener {

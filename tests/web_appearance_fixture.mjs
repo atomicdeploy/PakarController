@@ -3,7 +3,7 @@
 import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 const webSourceUrl=new URL('../firmware/esp8266/src/WebUi.h',import.meta.url);
-const status={hostname:'SIMULATED WEB FIXTURE — NOT A BOARD',canonical_url:'loopback visual test only',version:'FIXTURE ONLY',
+const status={hostname:'SIMULATED WEB FIXTURE — NOT A BOARD',canonical_url:'loopback visual test only',version:'0.2.8',
   mode:'cell',brightness:255,effect:'none',pixels:480,avr_online:false,tm1637_ack:false,tm1637_segments:[6,91,79,102],
   tm1637_host_active:false,link_mode:'busy-wire',websocket_clients:0,station_enabled:false,station_connected:false,
   ap_enabled:false,ap_started:false,mdns_started:false,ssdp_started:false,netbios_started:false,ntp_synced:false,

@@ -8,6 +8,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {createLogger} from './script-console.mjs';
+import {toolHeaders} from './peer-identity.mjs';
 const log=createLogger(),opts={};
 const root=fileURLToPath(new URL('../',import.meta.url));
 if(process.platform==='win32'){for(const concern of ['client-management','pu-tooling']){const gate=spawnSync('pwsh',['-NoProfile','-File','tools/consult-reuse.ps1','-Concern',concern,'-Gate','-Summary'],{cwd:root,stdio:'inherit',windowsHide:true});if(gate.error||gate.status!==0)throw Error('Required reuse gate failed: '+concern);}}
@@ -28,7 +29,7 @@ if(!opts.run){log.result('Plan only. Confirm installed identity/signature and us
 if(!opts['token-file'])throw Error('Root/operator token file required; never put credentials in command-line values');
 const token=(await readFile(resolve(opts['token-file']),'utf8')).trim();if(!/^[A-Za-z0-9_-]{43}$/.test(token))throw Error('Invalid operator token file');
 const result=await new Promise((done,reject)=>{
- const request=https.request(new URL(base.href+'/api/admin/releases'),{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/octet-stream','Content-Length':String(stat.size),'X-Pakar-Release':Buffer.from(JSON.stringify(metadata)).toString('base64')},timeout:120000},response=>{
+ const request=https.request(new URL(base.href+'/api/admin/releases'),{method:'POST',headers:toolHeaders({Authorization:'Bearer '+token,'Content-Type':'application/octet-stream','Content-Length':String(stat.size),'X-Pakar-Release':Buffer.from(JSON.stringify(metadata)).toString('base64')}),timeout:120000},response=>{
    const chunks=[];let bytes=0;response.on('data',b=>{bytes+=b.length;if(bytes>16384){response.destroy();reject(Error('Publication receipt too large'));}else chunks.push(b);});response.on('error',reject);response.on('end',()=>{if(response.statusCode!==201)return reject(Error('Publication rejected: HTTP '+response.statusCode+'; not retried'));try{done(JSON.parse(Buffer.concat(chunks).toString('utf8')));}catch{reject(Error('Invalid publication receipt'));}});
  });request.on('timeout',()=>request.destroy(Error('Publication deadline; outcome unknown, inspect before retry')));request.on('error',reject);
  const stream=createReadStream(path);stream.on('error',e=>request.destroy(e));stream.pipe(request);

@@ -19,6 +19,7 @@ Map<String, dynamic> upgradeFixture({int revision = 1}) => {
   'error': '',
 };
 Map<String, dynamic> progressPeer({Map<String, dynamic>? upgrade}) => {
+  'version': '0.2.8',
   'hostname': 'ledboard',
   'board_id': 'fixture-board',
   'boot_id': 'fixture-boot',

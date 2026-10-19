@@ -11,6 +11,8 @@ import {fileURLToPath} from 'node:url';
 import {Transform} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
 import {WebSocketServer} from 'ws';
+import {isIP} from 'node:net';
+import {toolRelease,toolPolicy,toolVersionEnforced,toolSemver,peerVersionAllowed} from '../../tools/peer-identity.mjs';
 
 export const sha256=value=>createHash('sha256').update(value).digest('hex');
 const maximum=128*1024*1024, platforms=new Set(['android','windows-x64']);
@@ -19,6 +21,27 @@ const hash=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 const clean=(v,n=128)=>typeof v==='string'&&!/[\x00-\x1f\x7f]/.test(v)&&v.length<=n;
 const fail=(code,message)=>Object.assign(Error(message),{status:code});
 const json=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));};
+const compatibility=()=>({enforced:toolVersionEnforced(),minimum_app:toolPolicy.minimum_app,minimum_board:toolPolicy.minimum_board,maximum_app:toolPolicy.maximum_app,maximum_board:toolPolicy.maximum_board});
+export const serviceIdentity=()=>({product:toolRelease.product,application:'pakarcontroller-client-management',service:'client-management',version:toolRelease.version,build:toolRelease.build,compatibility:compatibility()});
+const serviceHeaders=()=>({Server:toolRelease.product+'/'+toolRelease.version,'X-Pakar-Application':'pakarcontroller-client-management','X-Pakar-Version':toolRelease.version,'X-Pakar-Build':String(toolRelease.build),'X-Pakar-Min-App-Version':toolPolicy.minimum_app,'X-Pakar-Version-Check':toolVersionEnforced()?'true':'false'});
+function rejectHttpSocket(socket,code) {
+  if(socket.destroyed||!socket.writable)return;
+  socket.once('finish',()=>socket.destroy());
+  socket.end('HTTP/1.1 '+code+' Rejected\r\n'+Object.entries(serviceHeaders()).map(([k,v])=>k+': '+v+'\r\n').join('')+'Connection: close\r\nCache-Control: no-store\r\nContent-Length: 0\r\n\r\n');
+}
+function compatible(req) {
+  const version=req.headers['x-pakar-version'];
+  if(toolVersionEnforced()&&!peerVersionAllowed(version,toolPolicy.minimum_app,toolPolicy.maximum_app))throw fail(426,'Unsupported application version; download a supported app from the public release feed');
+  return version;
+}
+function operational(raw,keys) {
+  if(raw==null)return undefined;
+  if(!raw||Array.isArray(raw)||typeof raw!=='object')throw fail(400,'Invalid operational summary');
+  const out={};for(const key of keys)if(raw[key]!==undefined){const v=raw[key];
+    if(typeof v==='boolean'||(Number.isSafeInteger(v)&&v>=0&&v<=0xffffffff)||clean(v,96))out[key]=v;
+    else throw fail(400,'Invalid operational value');
+  }return out;
+}
 async function body(req,limit=16384){
   let size=0;const chunks=[];
   for await(const b of req){size+=b.length;if(size>limit)throw fail(413,'Request too large');chunks.push(b);}
@@ -28,8 +51,8 @@ async function body(req,limit=16384){
 function bearer(req){const h=req.headers.authorization;return typeof h==='string'&&/^Bearer [a-zA-Z0-9_-]{43}$/.test(h)?h.slice(7):'';}
 function sameHash(a,b){return hash(a)&&hash(b)&&timingSafeEqual(Buffer.from(a,'hex'),Buffer.from(b,'hex'));}
 function validateRelease(raw){
-  if(!raw||raw.product!=='PakarController'||!platforms.has(raw.platform)||!/^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(raw.version??'')||
-    !Number.isSafeInteger(raw.build)||raw.build<1||raw.build>2147483647||!Number.isSafeInteger(raw.bytes)||raw.bytes<64||raw.bytes>maximum||!hash(raw.sha256))throw fail(400,'Invalid release identity');
+  if(!raw||raw.product!=='PakarController'||!platforms.has(raw.platform)||
+    !toolSemver(raw.version)||!Number.isSafeInteger(raw.build)||raw.build<1||raw.build>2147483647||!Number.isSafeInteger(raw.bytes)||raw.bytes<64||raw.bytes>maximum||!hash(raw.sha256))throw fail(400,'Invalid release identity');
   const out={product:'PakarController',platform:raw.platform,version:raw.version,build:raw.build,bytes:raw.bytes,sha256:raw.sha256};
   if(raw.platform==='android'){
     if(raw.package!=='ir.digitalogic.pakar.pakarcontroller'||!Array.isArray(raw.signers)||!raw.signers.length||raw.signers.length>4||raw.signers.some(v=>!hash(v)))throw fail(400,'Invalid Android package/signer identity');
@@ -38,7 +61,7 @@ function validateRelease(raw){
   if(raw.source_sha!==undefined){if(!/^[a-f0-9]{40}$/.test(raw.source_sha))throw fail(400,'Invalid source identity');out.source_sha=raw.source_sha;}
   return out;
 }
-export function telemetry(raw,client){
+export function telemetry(raw,client,observation={}){
   if(raw.client_id!==client.id||raw.application!=='PakarController'||raw.platform!==client.platform)throw fail(409,'Client identity changed');
   const out={client_id:client.id,application:'PakarController',platform:client.platform};
   for(const key of ['version','update_state','connection_state','board_id','hostname','architecture','os','message'])if(raw[key]!==undefined){
@@ -48,6 +71,17 @@ export function telemetry(raw,client){
     if(!Number.isSafeInteger(raw[key])||raw[key]<0||raw[key]>Number.MAX_SAFE_INTEGER)throw fail(400,'Invalid telemetry counter');out[key]=raw[key];
   }
   for(const key of ['foreground','auto_check','auto_update','auto_cleanup','allow_remote_uninstall','managed_installation'])if(typeof raw[key]==='boolean')out[key]=raw[key];
+  for(const key of ['session_id','device_model'])if(raw[key]!=null){if(!clean(raw[key],96))throw fail(400,'Invalid peer detail');out[key]=raw[key];}
+  if(raw.reported_ip!=null){if(typeof raw.reported_ip!=='string'||!isIP(raw.reported_ip))throw fail(400,'Invalid reported IP');out.reported_ip=raw.reported_ip;}
+  if(raw.capabilities!=null){if(!Array.isArray(raw.capabilities)||raw.capabilities.length>12||raw.capabilities.some(v=>!clean(v,32)||!/^[a-z][a-z0-9_.-]*$/.test(v)))throw fail(400,'Invalid capability summary');out.capabilities=[...new Set(raw.capabilities)];}
+  const hardware=operational(raw.hardware,['model','manufacturer','cpu','os_version','sdk','memory_mb','cpu_count','screen_width','screen_height']);
+  const settings=operational(raw.settings,['transport','theme','language','direction','palette','sound','silent_mode','telemetry_enabled','version_check','auto_check','auto_update','auto_cleanup','allow_remote_uninstall']);
+  if(hardware)out.hardware=hardware;if(settings)out.settings=settings;
+  out.self_reported=true;
+  if(observation.address){out.observed_ip=observation.address;out.observed_address_source=observation.source;}
+  if(typeof observation.agent==='string')out.user_agent=observation.agent.replace(/[^\x20-\x7e]/g,'').slice(0,256);
+  if(clean(observation.application,64))out.client_application=observation.application;
+  if(clean(observation.session,80))out.client_session=observation.session;
   // No passwords, enrollment tokens, board credentials, file/process inventory,
   // screen/audio content, arbitrary nested values or user-authored documents.
   return out;
@@ -79,7 +113,7 @@ export async function createService({directory,publicBase,adminTokenHash,now=Dat
   function releases(platform){return all('SELECT * FROM releases WHERE platform=? ORDER BY build DESC LIMIT 3',platform).map(descriptor);}
   function offers(session,pkg){
     if(!identity(session)||pkg!=='ir.digitalogic.pakar.pakarcontroller')throw fail(400,'Valid app session and self package required');
-    return {offers:releases('android').slice(0,1).map(v=>({...v,session,expires_at_ms:now()+55000}))};
+    return {offers:releases('android').slice(0,1).map(v=>({...v,session,expires_at_ms:now()+55000,service:serviceIdentity()}))};
   }
   function announce(){for(const socket of sockets.clients){if(socket.readyState===1&&socket.subscription)for(const offer of offers(socket.subscription.session,socket.subscription.package).offers)socket.send(JSON.stringify(offer));}}
   async function publish(req){
@@ -153,16 +187,17 @@ export async function createService({directory,publicBase,adminTokenHash,now=Dat
     }finally{cleaning=false;}
   }
   const server=http.createServer(async(req,res)=>{
+    for(const [key,value]of Object.entries(serviceHeaders()))res.setHeader(key,value);
     try{
       const path=new URL(req.url,'http://localhost').pathname.replace(/^\/pakar(?=\/|$)/,'')||'/';
       const origin=req.headers.origin;if(origin&&origin!==base.origin)throw fail(403,'Cross-origin request rejected');
       const key=(req.headers['x-forwarded-for']??req.socket.remoteAddress??'').toString().split(',').at(-1).trim();
       const rate=rates.get(key)||{at:now(),n:0};if(now()-rate.at>60000){rate.at=now();rate.n=0;}if(++rate.n>1200)throw fail(429,'Request rate limit');
       if(rates.size>256)rates.clear();rates.set(key,rate);
-      if(req.method==='GET'&&path==='/api/health')return json(res,200,{product:'PakarController',service:'client-management',ready:true,platforms:[...platforms]});
+      if(req.method==='GET'&&(path==='/api/health'||path==='/api/peer/info'))return json(res,200,{...serviceIdentity(),ready:true,platforms:[...platforms],capabilities:['app-updates','client-management','peer-version-policy']});
       if(req.method==='GET'&&path==='/icon.png'&&iconPath){const bytes=Buffer.from((await readFile(iconPath,'utf8')).trim(),'base64');res.writeHead(200,{'Content-Type':'image/png','Content-Length':bytes.length,'Cache-Control':'public, max-age=3600'});return res.end(bytes);}
       if(req.method==='GET'&&path==='/'){
-        const page=await readFile(new URL('./dashboard.html',import.meta.url));res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store',
+        const page=(await readFile(new URL('./dashboard.html',import.meta.url),'utf8')).replace('{{PEER_IDENTITY}}',JSON.stringify(serviceIdentity()));res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store',
           'Content-Security-Policy':"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'",'Referrer-Policy':'no-referrer'});return res.end(page);}
       if(req.method==='GET'&&path==='/api/releases'){
         const p=new URL(req.url,'http://localhost').searchParams.get('platform');if(!platforms.has(p))throw fail(400,'Unsupported platform');return json(res,200,{releases:releases(p)});}
@@ -172,6 +207,7 @@ export async function createService({directory,publicBase,adminTokenHash,now=Dat
       if(req.method==='POST'&&path==='/api/clients/enroll'){
         const b=await body(req),e=sql('SELECT * FROM enrollments WHERE hash=?',sha256(typeof b.enrollment_token==='string'?b.enrollment_token:''));
         if(!e||e.used||e.expires<=now()||!identity(b.client_id)||b.application!=='PakarController'||b.platform!==e.platform)throw fail(403,'Enrollment rejected');
+        compatible(req);
         if(sql('SELECT id FROM clients WHERE id=?',b.client_id))throw fail(409,'Client identity already enrolled');
         if(sql('SELECT COUNT(*) AS n FROM clients').n>=100)throw fail(507,'Client registry full');
         const token=randomBytes(32).toString('base64url');db.exec('BEGIN IMMEDIATE');
@@ -200,8 +236,13 @@ export async function createService({directory,publicBase,adminTokenHash,now=Dat
         if(req.method==='POST'&&path==='/api/admin/cleanup'){await body(req);return json(res,200,await cleanup());}
       }else if(path==='/api/clients/report'||path.startsWith('/api/client/')){
         const c=client(req);
+        const version=compatible(req);
         if(req.method==='POST'&&path==='/api/clients/report'){
-          const data=telemetry(await body(req),c);run('UPDATE clients SET last_seen=?,telemetry=? WHERE id=?',now(),JSON.stringify(data),c.id);return json(res,200,{accepted:true,client_id:c.id,server_time_ms:now()});}
+          const raw=await body(req);if(version&&raw.version!==version)throw fail(409,'Reported client version differs from request identity');
+          const local=req.socket.remoteAddress?.replace(/^::ffff:/,'');
+          const proxied=(local==='127.0.0.1'||local==='::1')&&req.headers['x-forwarded-for']&&isIP(key);
+          const data=telemetry(raw,c,{address:proxied?key:local,source:proxied?'loopback_reverse_proxy':'tcp_peer',agent:req.headers['user-agent'],application:req.headers['x-pakar-client'],session:req.headers['x-pakar-client-id']});
+          run('UPDATE clients SET last_seen=?,telemetry=? WHERE id=?',now(),JSON.stringify(data),c.id);return json(res,200,{accepted:true,client_id:c.id,server_time_ms:now(),service:serviceIdentity()});}
         if(req.method==='GET'&&path==='/api/client/commands'){run('UPDATE clients SET last_seen=? WHERE id=?',now(),c.id);return json(res,200,{commands:all('SELECT id,action,expires AS expires_at_ms FROM commands WHERE client=? AND expires>? AND claimed=0 ORDER BY created LIMIT 4',c.id,now())});}
         const m=/^\/api\/client\/commands\/([a-f0-9]{32})\/(claim|result)$/.exec(path);
         if(req.method==='POST'&&m){
@@ -219,10 +260,18 @@ export async function createService({directory,publicBase,adminTokenHash,now=Dat
   });
   server.requestTimeout=120000;server.headersTimeout=10000;server.keepAliveTimeout=5000;server.maxHeadersCount=32;
   server.on('upgrade',(req,socket,head)=>{
-    let path;try{path=new URL(req.url,'http://localhost').pathname;}catch{socket.destroy();return;}
-    if(!['/api/events','/pakar/api/events'].includes(path)||(req.headers.origin&&req.headers.origin!==base.origin)||sockets.clients.size>=64){socket.destroy();return;}
+    const reject=code=>rejectHttpSocket(socket,code);
+    let path;try{path=new URL(req.url,'http://localhost').pathname;}catch{reject(400);return;}
+    if(!['/api/events','/pakar/api/events'].includes(path)){reject(404);return;}
+    if(req.headers.origin&&req.headers.origin!==base.origin){reject(403);return;}
+    if(sockets.clients.size>=64){reject(503);return;}
+    // Public immutable update offers are recovery/bootstrap, not enrollment,
+    // commands or private telemetry. Unsupported clients can fetch their update.
     sockets.handleUpgrade(req,socket,head,ws=>sockets.emit('connection',ws,req));
   });
+  server.on('clientError',(_error,socket)=>rejectHttpSocket(socket,400));
+  sockets.on('wsClientError',(_error,socket)=>rejectHttpSocket(socket,400));
+  sockets.on('headers',headers=>{for(const [key,value]of Object.entries(serviceHeaders()))headers.push(key+': '+value);});
   sockets.on('connection',ws=>{
     ws.alive=true;ws.on('pong',()=>{ws.alive=true;});
     const timer=setTimeout(()=>{if(!ws.subscription)ws.close(1008);},8000);timer.unref();

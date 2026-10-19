@@ -45,6 +45,7 @@ void main() {
         socket.listen(
           (_) => socket.add(
             jsonEncode({
+              'version': '0.2.8',
               'hostname': 'ledboard',
               'board_id': 'fixture',
               'boot_id': 'boot',
@@ -80,7 +81,7 @@ void main() {
       );
       request.response.persistentConnection = false;
       request.response.write(
-        '{"hostname":"localhost","board_id":"fixture","boot_id":"boot"}',
+        '{"version":"0.2.8","hostname":"localhost","board_id":"fixture","boot_id":"boot"}',
       );
       await request.response.close();
     });
@@ -168,6 +169,7 @@ void main() {
       request.response.persistentConnection = false;
       request.response.write(
         jsonEncode({
+          'version': '0.2.8',
           'hostname': 'ledboard',
           'board_id': 'fixture',
           'boot_id': 'boot',
@@ -223,7 +225,7 @@ void main() {
       (request) async {
         ++requests;
         request.response.write(
-          '{"hostname":"ledboard","board_id":"fixture","boot_id":"boot"}',
+          '{"version":"0.2.8","hostname":"ledboard","board_id":"fixture","boot_id":"boot"}',
         );
         await request.response.close();
       },

@@ -1,5 +1,7 @@
 #include "CloudServices.h"
 #include <ArduinoJson.h>
+#include <BuildInfo.h>
+#include <PeerCompatibility.h>
 #include <time.h>
 #if defined(ESP32)
 #include <esp_random.h>
@@ -201,9 +203,10 @@ void CloudServices::applyConfiguration() {
 
 void CloudServices::configureWebSocket() {
   if (!cloudConfig.webSocketEnabled()) return;
-  authorizationHeader_ = String();
+  authorizationHeader_ = String("X-Pakar-Client: pakarcontroller-firmware\r\nX-Pakar-Version: ")+BoardCore::BuildInfo::kVersion+
+      "\r\nX-Pakar-Client-Id: "+boardId_;
   if (cloudConfig.webSocketTokenSet()) {
-    authorizationHeader_ = F("Authorization: Bearer ");
+    authorizationHeader_ += F("\r\nAuthorization: Bearer ");
     authorizationHeader_ += cloudConfig.webSocketToken();
   }
   webSocket_.setExtraHeaders(authorizationHeader_.c_str());
@@ -433,6 +436,11 @@ void CloudServices::handleCommand(const uint8_t *payload, size_t length,
   if(admission!=BoardCore::CloudCommand::Result::Allowed) {
     lastError_=String(F("Cloud command rejected: "))+BoardCore::CloudCommand::code(admission);
     commandReply(fromMqtt,BoardCore::CloudCommand::code(admission),replyId,false,lastError_);return;
+  }
+  if((!readOnly||!document["client_version"].isNull()) &&
+      !BoardCore::PeerCompatibility::appAllowed(wholeString("client_version"))) {
+    lastError_=F("Unsupported app version; inspect the advertised minimum_app release policy");
+    commandReply(fromMqtt,"unsupported_app_version",replyId,false,lastError_);return;
   }
   // ID already consumed. A lost reply, handler rejection or duplicate arriving
   // through the other cloud channel cannot dispatch the mutation a second time.

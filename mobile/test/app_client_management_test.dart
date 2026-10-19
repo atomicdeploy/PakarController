@@ -47,7 +47,7 @@ void main() {
       secrets: vault,
       policy: () => settings,
       package: () => {
-        'version_name': '0.2.7',
+        'version_name': '0.2.8',
         'version_code': 9,
         'sdk': 35,
         'device_abis': ['arm64-v8a'],
@@ -118,7 +118,7 @@ void main() {
               (r) => (r['path'] as String).endsWith('/report'),
             )['body']
             as Map;
-    expect(report['version'], '0.2.7');
+    expect(report['version'], '0.2.8');
     expect(report['build'], 9);
     expect(report['architecture'], 'arm64');
     expect(report['os'], 'android');

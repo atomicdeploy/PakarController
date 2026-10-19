@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'api.dart';
 import 'peer_context.dart';
+import 'peer_identity.dart';
 
 class DiscoveredDevice {
   const DiscoveredDevice(
@@ -259,7 +260,9 @@ class DeviceDiscovery {
         socket.send(
           utf8.encode(
             'M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\n'
-            'MAN: "ssdp:discover"\r\nMX: 1\r\nST: ssdp:all\r\n\r\n',
+            'MAN: "ssdp:discover"\r\nMX: 1\r\nST: ssdp:all\r\n'
+            'USER-AGENT: ${PeerIdentity.current.userAgent}\r\n'
+            'X-Pakar-Version: ${PeerIdentity.current.version}\r\n\r\n',
           ),
           InternetAddress('239.255.255.250'),
           1900,
@@ -374,6 +377,7 @@ Future<DiscoveredDevice?> verifyDiscoveredDevice(
   final observedIps = <String>{...candidate.ips};
   Future<(int, String)> read(String path) async {
     final request = await client.getUrl(origin.resolve(path));
+    identifyRequest(request);
     request.followRedirects = false;
     final response = await request.close();
     final ip = response.connectionInfo?.remoteAddress.address;

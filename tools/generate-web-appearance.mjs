@@ -1,13 +1,14 @@
 // Mechanically embed the actual shared assets; do not maintain a second palette.
 import assert from 'node:assert/strict';
 import {readFile, writeFile} from 'node:fs/promises';
+import {webPeerSource} from './web-peer-build.mjs';
 
 const webUrl = new URL('../firmware/esp8266/src/WebUi.h', import.meta.url);
 const palette = JSON.parse(await readFile(new URL('../assets/themes/palettes.json', import.meta.url), 'utf8'));
 const module = await readFile(new URL('../assets/themes/appearance.js', import.meta.url), 'utf8');
 const browser = await readFile(new URL('../assets/themes/browser-appearance.js', import.meta.url), 'utf8');
 const surfaces = await readFile(new URL('../assets/themes/controller-surfaces.css', import.meta.url), 'utf8');
-const peerHttp = await readFile(new URL('../assets/web/peer-http.js', import.meta.url), 'utf8');
+const peerHttp = await webPeerSource(await readFile(new URL('../assets/web/peer-http.js', import.meta.url), 'utf8'));
 const frameStream = await readFile(new URL('../assets/web/frame-stream.js', import.meta.url), 'utf8');
 const roles = ['canvas','surface-0','surface-1','surface-2','surface-3','line','line-strong','text','muted','subtle','green','blue','red','amber'];
 for (const name of ['studio','native']) for (const theme of ['dark','light']) {

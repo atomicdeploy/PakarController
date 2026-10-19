@@ -67,7 +67,7 @@ fn download(source: Source, esp: bool, progress: &Transfer) -> Result<Vec<u8>, S
     progress.admit()?;
     progress.set("downloading file", 0, None);
     // Never reuse the board client: its Basic/pinned headers must not leave LAN.
-    let remote = Client::builder()
+    let remote = crate::peer_identity::client_builder()
         .redirect(reqwest::redirect::Policy::none())
         .connect_timeout(Duration::from_secs(8))
         .timeout(Duration::from_secs(180))
@@ -247,7 +247,7 @@ mod tests {
         use std::net::TcpListener;
         let server = TcpListener::bind("127.0.0.1:0").unwrap();
         let addr = server.local_addr().unwrap();
-        let status = serde_json::json!({"hostname":"fixture","board_id":"esp32s3-fixture","boot_id":"b".repeat(32),"http_peer_fencing":true,"ota_capacity_bytes":0x330000,
+        let status = serde_json::json!({"version":crate::peer_identity::VERSION,"hostname":"fixture","board_id":"esp32s3-fixture","boot_id":"b".repeat(32),"http_peer_fencing":true,"ota_capacity_bytes":0x330000,
             "capabilities":{"board_kind":"controller","acknowledged_features":["ota"]},"remote_firmware":{"busy":false,"phase":"idle"}});
         let s: DeviceStatus = serde_json::from_value(status.clone()).unwrap();
         let mut image = vec![0; 2_220_352];

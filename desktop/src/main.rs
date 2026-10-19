@@ -42,6 +42,7 @@ mod firmware_feed;
 mod messaging;
 mod pc_contract;
 mod peer_http;
+mod peer_identity;
 mod realtime;
 mod pixel_diagnostic;
 mod platform;
@@ -97,6 +98,8 @@ struct DeviceStatus {
     capabilities: Option<capabilities::Manifest>,
     #[serde(default)]
     version: String,
+    #[serde(default)]
+    compatibility: Option<peer_identity::Policy>,
     #[serde(default)]
     avr_version: Option<String>,
     #[serde(default)]
@@ -620,6 +623,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
         })?;
     let code = response.status();
     let remote = response.remote_addr();
+    let response_headers=response.headers().clone();
     if !code.is_success() {
         return Err(format!(
             "HTTP {code}: {}",
@@ -628,7 +632,9 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
     }
     match response_kind {
         1 => {
+            peer_identity::validate_response_headers(&response_headers)?;
             let status=response.json::<DeviceStatus>().map_err(diagnostics::describe_error)?;
+            peer_identity::validate_board(&status)?;
             peer_http::remember_address(&endpoint.base,&status,remote);
             Ok(Event::Status(status))
         },
@@ -770,6 +776,7 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
     let mut requested_base = String::new();
     let mut auth_probe: Option<(u64, String)> = None;
     let mut waiting = std::collections::VecDeque::new();
+    let mut rejected_peer: Option<(u64, String, String)> = None;
     loop {
         if waiting.is_empty() {
             match commands.recv() { Ok(command) => waiting.push_back(command), Err(_) => break }
@@ -810,8 +817,15 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
             .as_ref()
             .map(|base| command.with_base(base.clone()))
             .unwrap_or_else(|| command.clone());
-        let mut result = http_request(&client, first);
+        let key=(stamp.epoch,command.endpoint().base.clone());
+        let mut result = if let Some((epoch,base,error))=&rejected_peer && (*epoch,base.as_str())==(key.0,key.1.as_str()) {
+            Err(error.clone())
+        } else {http_request(&client, first)};
+        if let Some(error)=result.as_ref().err().filter(|e|peer_identity::unsupported(e)) {
+            rejected_peer=Some((key.0,key.1,error.clone()));
+        }
         if result.is_err()
+            && !result.as_ref().err().is_some_and(|e|peer_identity::unsupported(e))
             && lease.current()
             && requested_name.is_some()
             && command.discoverable_read()
@@ -846,7 +860,7 @@ fn http_worker(commands: Receiver<HttpCommand>, events: Sender<Event>, context: 
             }
             reporter.report(&pinned, &endpoint);
         }
-        if command.is_status() && lease.current() {
+        if command.is_status() && lease.current() && !result.as_ref().err().is_some_and(|e|peer_identity::unsupported(e)) {
             let key = (stamp.epoch, command.endpoint().base.clone());
             let unauthorized = result.as_ref().err().is_some_and(|error| error.starts_with("HTTP 401"));
             if auth_probe.as_ref() != Some(&key) || unauthorized {
@@ -1040,7 +1054,8 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                 awaiting_route = true;
                 return Ok(());
             };
-            let _ = events.send(for_endpoint(&current, Event::WebSocket(true)));
+            let mut peer_reporter=client_telemetry::Reporter::new();
+            if let Some(packet)=peer_reporter.websocket_introduction(){socket.send(Message::Text(packet.into())).map_err(|e|e.to_string())?;}
             // A successful TCP/HTTP upgrade is not recovery if the service then
             // immediately closes or never acknowledges an actual board status.
             let mut confirmed = false;
@@ -1056,6 +1071,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
             let mut sent_frames = 0_u32;
             loop {
                 if !lease.current() { break; }
+                if let Some(packet)=peer_reporter.websocket_introduction(){socket.send(Message::Text(packet.into())).map_err(|e|e.to_string())?;}
                 // A connected TCP handle is not a live WS channel. Probe only
                 // when authoritative pushes go quiet; retire a silent socket
                 // so later commands do not pay an800ms fallback on every click.
@@ -1222,6 +1238,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                             }
                         }
                         if let Some(status) = websocket_status(&text) {
+                            peer_identity::validate_board(&status)?;
                             last_status=Instant::now();
                             observed_peer = peer_http::Pin::from_status(&status)
                                 .map(|pin| (pin, Instant::now(), pixel_diagnostic::ready(&status), pixel_diagnostic::can_arm(&status)));
@@ -1234,6 +1251,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
                             }
                             if !confirmed && websocket_status_ready(&status) {
                                 confirmed = true; retry.reset();
+                                let _ = events.send(for_endpoint(&current, Event::WebSocket(true)));
                                 let _ = events.send(for_endpoint(&current, Event::DiagnosticRecovered("WebSocket".into())));
                             }
                             let _ = events.send(for_endpoint(&current, Event::Status(status)));
@@ -1264,6 +1282,7 @@ fn ws_worker(commands: Receiver<WsCommand>, events: Sender<Event>, context: egui
         for (request,_) in controls {recover_realtime(request,&events.sender,&gate);}
         if result.is_err() || awaiting_route {
             if let Err(error) = result {
+                if peer_identity::unsupported(&error) {endpoint=None;} // Explicit reconnect after update/override, no endless incompatible handshake loop.
                 streaming = false;
                 sampling = false; // Reconnect must not silently restart a stream.
                 let _ = events.send(for_endpoint(
@@ -1481,7 +1500,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
         let connected_port = port_name.clone();
         let Some(next_session)=physical_session.checked_add(1) else{return;};physical_session=next_session;
         let _=events.send(Event::SerialOwner(connected_port.clone(),physical_session));
-        let _ = events.send(Event::Serial(connected_port.clone(),true,None));
+        // An opened handle is not a compatible, admitted board connection.
         context.request_repaint();
         let mut encoded=Vec::new();
         let mut last_poll=Instant::now()-Duration::from_secs(1);
@@ -1510,6 +1529,14 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
         let mut operation:Option<usb_table::Operation>=None;
         let mut silent: Option<(u64, usb_table::Admission, board_silent::Transaction, Option<(u8, Instant)>)> = None;
         let mut reported_depth=0;
+        let mut intro_wait=Some((0x01_u8,sequence,Instant::now()));
+        let mut intro_chunks=std::collections::VecDeque::<Vec<u8>>::new();
+        let mut peer_reports=peer_identity::UsbReportSupport::default();
+        let mut introduced=false;
+        let mut reintroductions=0_u8;
+        let mut last_peer_report=Instant::now();
+        if port.write_all(&wire_frame(0x01,sequence,&peer_identity::hello())).is_err(){continue;}
+        sequence=sequence.wrapping_add(1);
         'connected: loop {
             if !lease.current() { break; }
             while let Ok(c)=commands.try_recv() {
@@ -1550,6 +1577,19 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                     }
                     _=>{}
                 }
+            }
+            if intro_wait.is_some_and(|(_,_,at)|at.elapsed()>=Duration::from_secs(4)) {
+                let _=events.send(Event::SerialFailure(connected_port.clone(),"Peer compatibility: USB introduction timed out; explicit reconnect after updating the board".into()));
+                port_name.clear();break 'connected;
+            }
+            if introduced && peer_reports.supported() && intro_wait.is_none() && intro_chunks.is_empty() && last_peer_report.elapsed()>=Duration::from_secs(30)
+                && operation.is_none() && table_read.is_none() && write_wait.is_none() && read_wait.is_none() {
+                intro_chunks=peer_identity::report_chunks(&client_telemetry::Reporter::new().value_for_transport("usb")).unwrap_or_default();last_peer_report=Instant::now();
+            }
+            if intro_wait.is_none() && !intro_chunks.is_empty() {
+                let payload=intro_chunks.pop_front().unwrap();
+                if port.write_all(&wire_frame(peer_identity::USB_REPORT,sequence,&payload)).is_err(){break 'connected;}
+                intro_wait=Some((peer_identity::USB_REPORT,sequence,Instant::now()));sequence=sequence.wrapping_add(1);
             }
             if operation.as_ref().is_some_and(|op|op.ack.is_none() && op.sent.elapsed()>Duration::from_secs(2)) {
                 let _=events.send(Event::SerialOperation(connected_port.clone(),Err("USB command ACK timed out; outcome unknown, nothing replayed".into())));
@@ -1665,7 +1705,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                     }
                 }
             }
-            if lease.current() && last_poll.elapsed()>=Duration::from_millis(750) {
+            if introduced && lease.current() && last_poll.elapsed()>=Duration::from_millis(750) {
                 if port.write_all(&wire_frame(OP_GET_STATUS,sequence,&[])).is_err(){break 'connected;}
                 sequence=sequence.wrapping_add(1);last_poll=Instant::now();
             }
@@ -1676,7 +1716,29 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                 Ok(n)=>for byte in &bytes[..n] {
                     if *byte==0 {
                         if let Some((op,response_sequence,payload))=decode_envelope(&encoded) {
-                            if op==panel_event::USB_OPCODE {
+                            if intro_wait.is_some_and(|(_,seq,_)|seq==response_sequence) && matches!(op,0x80|0x81|0x82) {
+                                let (expected,expected_sequence,_)=intro_wait.take().unwrap();
+                                let result=if expected==0x01 && op==0x81 {
+                                    peer_identity::validate_usb_hello(&payload).and_then(|_|{
+                                        if peer_reports.supported(){
+                                            intro_chunks=peer_identity::report_chunks(&client_telemetry::Reporter::new().value_for_transport("usb"))?;
+                                        }else{introduced=true;last_peer_report=Instant::now();}
+                                        Ok(())
+                                    })
+                                }else if expected==peer_identity::USB_REPORT && op==0x80 && payload.as_slice()==[peer_identity::USB_REPORT,0] {
+                                    if intro_chunks.is_empty(){introduced=true;last_peer_report=Instant::now();}
+                                    Ok(())
+                                }else if peer_reports.observe_unsupported((expected,expected_sequence),(op,response_sequence),&payload){
+                                    // Explicit build override may omit an unsupported additive
+                                    // report, never HELLO/full identity or command fences. Keep
+                                    // this capability result only for the current physical handle.
+                                    intro_chunks.clear();introduced=true;last_peer_report=Instant::now();
+                                    Ok(())
+                                }else{Err("Peer compatibility: board rejected this app introduction; update board/app or use explicit build override".into())};
+                                if let Err(error)=result {let _=events.send(Event::SerialFailure(connected_port.clone(),error));port_name.clear();break 'connected;}
+                            } else if !introduced {
+                                // Stale boot/status data cannot bypass the correlated introduction.
+                            } else if op==panel_event::USB_OPCODE {
                                 if table_observed.elapsed()<Duration::from_secs(8) && let Some(status)=table_snapshot.as_ref()
                                     && let Some(event)=panel_event::Observation::usb(&payload,status) {
                                     let _=events.send(Event::SerialPanelEvent(connected_port.clone(),physical_session,event));
@@ -1712,7 +1774,19 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                     stamp=Some(payload[37]);nonce=nonce.wrapping_add(1);
                                     read=Some(identity::UsbRead{nonce,..Default::default()});last_identity=Instant::now();
                                 }
-                                if !table_supported && let Some(mut status)=serial_status(&payload) {
+                                if !table_supported && identity.is_some() && let Some(mut status)=serial_status(&payload) {
+                                    let value=identity.as_ref().unwrap();
+                                    status.version=value["version"].as_str().unwrap_or_default().into();
+                                    status.compatibility=match serde_json::from_value::<Option<peer_identity::Policy>>(value["compatibility"].clone()){
+                                        Ok(policy)=>policy,Err(_)=>{let _=events.send(Event::SerialFailure(connected_port.clone(),"Peer compatibility: malformed USB release policy".into()));port_name.clear();break 'connected;}
+                                    };
+                                    status.board_id=value["board_id"].as_str().unwrap_or_default().into();
+                                    status.boot_id=value["boot_id"].as_str().unwrap_or_default().into();
+                                    if peer_http::Pin::from_identity(&status.board_id,&status.boot_id).is_none(){
+                                        let _=events.send(Event::SerialFailure(connected_port.clone(),"USB board/boot identity missing or invalid; explicit reconnect after board recovery".into()));
+                                        port_name.clear();break 'connected;
+                                    }
+                                    if let Err(error)=peer_identity::validate_board(&status){let _=events.send(Event::SerialFailure(connected_port.clone(),error));port_name.clear();break 'connected;}
                                     if let (Some(value),Some(c))=(&identity,&mut status.capabilities) {
                                         c.name=value["display_name"].as_str().unwrap_or_default().into();
                                         c.hostname=value["hostname"].as_str().unwrap_or_default().into();
@@ -1725,6 +1799,8 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                 table_wait=table_following.pop_front();
                                 match table_read.as_mut().unwrap().accept(&payload){
                                     Ok(Some(mut snapshot))=>{
+                                        if let Err(error)=peer_identity::validate_board(&snapshot.status){let _=events.send(Event::SerialFailure(connected_port.clone(),error));port_name.clear();break 'connected;}
+                                        reintroductions=0;
                                         let _=events.send(Event::SerialCapture(connected_port.clone(),table_read.as_ref().unwrap().progress("complete")));
                                         table_read=None;table_observed=snapshot.observed_at;
                                         if let Some((packet,at))=&last_command_state && *at>snapshot.observed_at
@@ -1787,6 +1863,20 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                 }else{operation=None;table_read=paused_table.take();let _=events.send(Event::SerialOperation(connected_port.clone(),Err(format!("USB command rejected (error {}); no replay",payload[1]))));}
                             } else if op==0x82 && payload.first()==Some(&usb_table::READ) && table_wait.is_some_and(|(s,_)|s==response_sequence){
                                 table_read=None;table_wait=None;table_following.clear();last_table=Instant::now();
+                                if payload.get(1)==Some(&2) && reintroductions<2 {
+                                    // Firmware reboot can retain the USB-UART handle while
+                                    // losing caller admission. Reintroduce metadata only;
+                                    // retire every uncertain/unsent mutation, never replay it.
+                                    reintroductions+=1;introduced=false;table_supported=false;compact_supported=false;
+                                    table_snapshot=None;paused_table=None;last_command_state=None;intro_chunks.clear();
+                                    if let Some(active)=operation.take(){active.intent.reply(Err("USB board restarted; command outcome unknown, no replay".into()));let _=events.send(Event::SerialOperation(connected_port.clone(),Err("USB board restarted; command outcome unknown, no replay".into())));}
+                                    for intent in intents.drain(..){intent.reply(Err("USB board admission changed; queued command discarded, no replay".into()));}
+                                    let _=events.send(Event::Serial(connected_port.clone(),false,None));
+                                    if port.write_all(&wire_frame(0x01,sequence,&peer_identity::hello())).is_err(){break 'connected;}
+                                    intro_wait=Some((0x01,sequence,Instant::now()));sequence=sequence.wrapping_add(1);
+                                    encoded.clear();continue 'connected;
+                                }
+                                if payload.get(1)==Some(&2){let _=events.send(Event::SerialFailure(connected_port.clone(),"Peer compatibility: USB admission repeatedly rejected after introduction; update/reconnect explicitly".into()));port_name.clear();break 'connected;}
                                 let error="Board rejected USB table snapshot; no state assumed".to_string();
                                 let _=events.send(Event::SerialFailure(connected_port.clone(),error.clone()));
                                 if operation.take().is_some(){let _=events.send(Event::SerialOperation(connected_port.clone(),Err(error)));}
@@ -2136,6 +2226,18 @@ impl PakarControllerApp {
         self.mapping_request_pending = None; self.mapping_peer = None; self.mapping_error = None; self.mapping_retry.reset();
         let _ = self.ws_tx.send(WsCommand::Mapping(Vec::new()));
         let _ = self.ws_tx.send(WsCommand::Stream(false)); let _ = self.ws_tx.send(WsCommand::Sample(false));
+    }
+    fn reject_incompatible_peer(&mut self,error:&str){
+        // Fail closed immediately, but preserve private drafts and the saved
+        // workspace. They must never be thrown away merely to stop retries.
+        self.connection_enabled=false;self.config.connection_enabled=false;
+        self.connection_gate.select(None);self.http_tx.clear();
+        self.last_status_at=None;self.last_serial_status_at=None;
+        self.websocket_live=false;self.serial_live=false;self.streaming=false;self.sampling=false;
+        self.table.stop_pending_edits();self.pixel_diagnostic.revoke();
+        let _=self.ws_tx.send(WsCommand::Disconnect);
+        let _=self.serial_tx.send(SerialCommand::Port(String::new(),self.connection_gate.epoch()));
+        self.message=error.into();
     }
     fn request_board_silent(&mut self, desired: Option<bool>) {
         if self.live_status().is_some_and(board_silent::supported) {
@@ -2737,6 +2839,9 @@ impl PakarControllerApp {
                     self.message = error;
                 }
                 Event::DiagnosticFailure(source, e) => {
+                    if peer_identity::unsupported(&e) {
+                        self.reject_incompatible_peer(&e);
+                    }
                     self.configuration_reads.failed_source(&source);
                     if source == "HTTP GET /api/status" {
                         // A recoverable HTTP read failure is not a peer change.
@@ -2773,7 +2878,7 @@ impl PakarControllerApp {
                     }
                     self.event_log.recover(&source);
                 }
-                Event::SerialFailure(port, error) => self.event_log.failure(&format!("USB {port}"), &error),
+                Event::SerialFailure(port, error) => {if peer_identity::unsupported(&error){self.reject_incompatible_peer(&error);}self.event_log.failure(&format!("USB {port}"), &error);},
                 Event::WebSocket(v) => {
                     if self.websocket_live && !v { self.record_event("Connection", "WebSocket connection lost; reconnecting with bounded backoff."); }
                     self.websocket_live = v;
@@ -2914,7 +3019,9 @@ fn blocking_status(client: &Client, endpoint: &Endpoint) -> Result<DeviceStatus,
         ));
     }
     let remote=response.remote_addr();
+    peer_identity::validate_response_headers(response.headers())?;
     let status=response.json().map_err(diagnostics::describe_error)?;
+    peer_identity::validate_board(&status)?;
     peer_http::remember_address(&endpoint.base,&status,remote);
     Ok(status)
 }
@@ -3250,7 +3357,7 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
         terminal_ui::run(endpoint)?;
         return Ok(true);
     }
-    let client = Client::builder()
+    let client = peer_identity::client_builder()
         .no_proxy()
         .timeout(Duration::from_secs(15))
         .build()
@@ -3262,7 +3369,13 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
                 .iter()
                 .map(String::as_str)
                 .collect::<Vec<_>>();
-            text_command(&client, &endpoint, &words)
+            if words.as_slice()==["auth","info"] {text_command(&client,&endpoint,&words)?;return Ok(true);}
+            // CLI is a real client too: validate the live release and identity
+            // before any command, not just before the table batch helper.
+            let status=blocking_status(&client,&endpoint)?;
+            let pinned=peer_http::pinned_client(&status)?;
+            if status.capabilities.as_ref().is_some_and(|c|c.has("telemetry")){client_telemetry::Reporter::new().report(&pinned,&endpoint);}
+            text_command(&pinned, &endpoint, &words)
         }
         _ => unreachable!(),
     }?;
@@ -3270,6 +3383,7 @@ fn run_text_interface(arguments: &[String]) -> Result<bool, String> {
 }
 
 fn main() -> eframe::Result {
+    peer_identity::process_started();
     let arguments = std::env::args().collect::<Vec<_>>();
     cli_console::prepare(&arguments);
     if let Some(result)=client_management::cli(&arguments){

@@ -89,19 +89,19 @@ void main() {
       }),
       discovery: () async {
         ++discover;
-        return {'http://192.0.2.7'};
+        return {'http://192.0.2.8'};
       },
     );
     await api.status();
     api.resetTransport();
     state = 'auth';
     await expectLater(api.status(), throwsFormatException);
-    expect(api.transportUrl, 'http://192.0.2.7');
+    expect(api.transportUrl, 'http://192.0.2.8');
     state = 'timeout';
     await expectLater(api.status(), throwsA(isA<TimeoutException>()));
-    expect(api.transportUrl, 'http://192.0.2.7');
+    expect(api.transportUrl, 'http://192.0.2.8');
     expect(discover, 1);
-    expect(paths.last, '192.0.2.7');
+    expect(paths.last, '192.0.2.8');
     await api.close();
   });
   test('Missed discovery sweep retains bounded hostname records, not online or authorization', () {

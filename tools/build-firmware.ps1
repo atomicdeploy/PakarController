@@ -13,6 +13,7 @@ param(
     [ValidateRange(1,4)] [int] $ShellSessions = 2,
     [switch] $DisableSerialShell,
     [switch] $DisableTelnet,
+    [switch] $DisablePeerVersionChecks,
     [switch] $InitializeFilesystem,
     [switch] $PauseAvrLink,
     [switch] $PauseLedOutput,
@@ -97,6 +98,7 @@ $suffix = if ($busyFlag) { '-busy-wire' } elseif ($bufferedFlag) { '-buffered' }
 $avrOutput = Join-Path $build ("avr$suffix")
 $espOutput = Join-Path $build ("esp8266$suffix")
 $extraFlags = "-DPAKAR_USE_BUSY_WIRE=$busyFlag -DPAKAR_UART_BUFFERED=$bufferedFlag"
+if($DisablePeerVersionChecks){$extraFlags += ' -DPAKAR_ENFORCE_PEER_VERSIONS=0'}
 $espFlags = $extraFlags
 if ($DeviceName) {
     if ($DeviceName -in @('local', 'localhost')) { throw 'Reserved device hostname' }
