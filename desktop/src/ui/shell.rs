@@ -433,7 +433,12 @@ impl PakarControllerApp {
                 }
             }
             Command::Status => return, // Read-only diagnostics must never raise/focus the window.
-            Command::Show => {}
+            Command::Show => {
+                // eframe starts hidden until its first rendered frame. Its
+                // hidden-window logic-only path otherwise prevents an isolated
+                // non-activating fixture from ever reaching that first frame.
+                if self.screenshot_harness {ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));}
+            }
         }
         if !self.screenshot_harness {
             ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
@@ -624,6 +629,7 @@ impl PakarControllerApp {
     }
     // Pealayer src/app.rs App::logic: command/event/snapshot work is not paint work.
     pub fn native_logic(&mut self, ctx: &egui::Context) {
+        self.window_startup.show_initial(ctx);
         ui::window_geometry::reconcile(ctx);
         while let Ok(command) = self.control.rx.try_recv() {
             self.dispatch(command, ctx);
@@ -686,6 +692,9 @@ impl PakarControllerApp {
             value["serial_port"] = serde_json::json!(self.serial_port);
             value["pixel_diagnostic"] = serde_json::json!({"wire_pixel":self.pixel_diagnostic.index.clamp(1,480),
                 "raw_index":self.pixel_diagnostic.index.clamp(1,480)-1,"pending":self.pixel_diagnostic.pending.is_some(),
+                "count":self.pixel_diagnostic.probe().count(),"rgb":self.pixel_diagnostic.probe().rgb,
+                "observed":self.pixel_diagnostic.observed.as_ref().map(|o|serde_json::json!({
+                    "revision":o.revision,"active":o.active,"index":o.probe.first(),"count":o.probe.count(),"rgb":o.probe.rgb,"off":o.off})),
                 "armed":snapshot.as_ref().is_some_and(|s| pixel_diagnostic::ready(s)
                     && peer_http::Pin::from_status(s) == self.pixel_diagnostic.armed),"message":self.pixel_diagnostic.message});
             value["device_status"] = serde_json::json!(snapshot);
@@ -1266,9 +1275,12 @@ impl PakarControllerApp {
         let Some(status) = self.live_status().cloned().filter(pixel_diagnostic::supported) else {
             ui.weak("Connect to an acknowledged 480-pixel streaming board first."); return;
         };
-        let Some(peer) = peer_http::Pin::from_status(&status) else { return; };
+        let Some(_peer) = peer_http::Pin::from_status(&status) else { return; };
         let busy = self.pixel_diagnostic.pending.is_some();
-        ui.weak("Manual only: one white wire pixel, all others black. No automatic stepping. Confirm effects mode first.");
+        let atomic=status.capabilities.as_ref().is_some_and(|c|c.has("pixel-diagnostic"));
+        let ready=!busy && atomic && !self.streaming && !self.sampling && !status.programming_latch
+            && self.command_route()==Some(Transport::WiFi) && realtime::supported(&status,"/api/led/diagnostic");
+        ui.weak("Physical wire order · all other pixels cleared");
         ui.horizontal_wrapped(|ui| {
             if self.streaming || self.sampling {
                 if ui.button("Stop active streams").clicked() {
@@ -1277,36 +1289,67 @@ impl PakarControllerApp {
                     let _ = self.ws_tx.send(WsCommand::Sample(false));
                 }
             }
-            let can_arm = !busy && self.websocket_live && !self.streaming && !self.sampling && pixel_diagnostic::can_arm(&status);
-            if ui.add_enabled(can_arm, egui::Button::new("Confirm individual-pixel mode")).clicked() {
-                self.arm_pixel_diagnostic();
-            }
-            if !pixel_diagnostic::can_arm(&status) { ui.weak("Requires enabled output, Cell mode and no global effect."); }
         });
-        self.pixel_diagnostic.index = self.pixel_diagnostic.index.clamp(1, 480);
-        let ready = !busy && self.websocket_live && !self.streaming && !self.sampling
-            && self.pixel_diagnostic.armed.as_ref() == Some(&peer) && pixel_diagnostic::ready(&status);
-        let mut show = None;
+        let mut probe=self.pixel_diagnostic.probe();let mut changed=false;let mut action=None;
+        ui.add_enabled_ui(!busy,|ui|{ui.horizontal(|ui|{
+            changed|=ui.selectable_value(&mut probe.group,false,"1 pixel").changed();
+            changed|=ui.selectable_value(&mut probe.group,true,"6-pixel group").changed();
+        });});
+        self.pixel_diagnostic.set_probe(probe);
+        ui.heading(probe.label());
+        let group=(probe.first()/6+1)as u8;
+        let logical=self.mappings.iter().find(|m|m.physical_cell==group).map(|m|m.logical_id);
+        ui.weak(format!("Physical group {group} of 80{}",logical.map(|id|format!(" · logical cell {id}")).unwrap_or_default()));
+        ui.horizontal(|ui|{
+            for sector in 0..6 {let index=probe.index/6*6+sector;
+                if ui.add_enabled(ready,egui::Button::new(format!("{}",index+1)).selected(index>=probe.first()&&index<probe.first()+probe.count()))
+                    .on_hover_text(format!("Physical pixel {}",index+1)).clicked(){action=Some((pixel_diagnostic::Probe{index,group:false,..probe},false));}
+            }
+        });
         ui.horizontal_wrapped(|ui| {
-            ui.label("Wire pixel (1–480)");
-            ui.add_enabled(!busy, egui::DragValue::new(&mut self.pixel_diagnostic.index).range(1..=480));
-            if ui.add_enabled(ready && self.pixel_diagnostic.index > 1, egui::Button::new("Previous")).clicked() {
-                show = Some(self.pixel_diagnostic.index - 1);
+            if ui.add_enabled(ready && probe.moved(-1).is_some(), egui::Button::new(format!("← −{}",probe.count()))).clicked() {
+                action=probe.moved(-1).map(|p|(p,false));
             }
-            if ui.add_enabled(ready, egui::Button::new("Show pixel")).clicked() { show = Some(self.pixel_diagnostic.index); }
-            if ui.add_enabled(ready && self.pixel_diagnostic.index < 480, egui::Button::new("Next")).clicked() {
-                show = Some(self.pixel_diagnostic.index + 1);
+            ui.label("Physical pixel · 1–480");
+            ui.add_enabled(!busy,egui::DragValue::new(&mut self.pixel_diagnostic.index).range(1..=480));
+            if ui.add_enabled(ready,egui::Button::new("Show")).clicked(){action=Some((self.pixel_diagnostic.probe(),false));}
+            if ui.add_enabled(ready && probe.moved(1).is_some(), egui::Button::new(format!("+{} →",probe.count()))).clicked() {
+                action=probe.moved(1).map(|p|(p,false));
             }
-            let raw = self.pixel_diagnostic.index - 1;
-            let group = (raw / 6 + 1) as u8;
-            let mapped = self.mappings.iter().find(|m| m.physical_cell == group)
-                .map(|m| format!(" · reported logical cell {}", m.logical_id)).unwrap_or_else(|| " · logical mapping unavailable".into());
-            ui.weak(format!("raw {raw} · wire group {group} · sector {}{mapped}", raw % 6 + 1));
         });
-        if let Some(index) = show {
-            self.show_pixel_diagnostic(index);
+        ui.add_enabled_ui(!busy,|ui|{ui.horizontal_wrapped(|ui|{
+            for (rgb,label)in[(0xffffff,"White"),(0xff0000,"Red"),(0x00ff00,"Green"),(0x0000ff,"Blue")]{
+                changed|=ui.selectable_value(&mut probe.rgb,rgb,label).changed();
+            }
+            let mut color=[(probe.rgb>>16)as u8,(probe.rgb>>8)as u8,probe.rgb as u8];
+            if ui.color_edit_button_srgb(&mut color).changed(){probe.rgb=u32::from(color[0])<<16|u32::from(color[1])<<8|u32::from(color[2]);changed=true;}
+            ui.monospace(format!("#{:06X}",probe.rgb));
+        });});
+        if changed {
+            self.pixel_diagnostic.set_probe(probe);
+            if ready && self.pixel_diagnostic.observed.as_ref().is_some_and(|o|o.active&&!o.off){action=Some((probe,false));}
         }
+        if ui.add_enabled(ready,egui::Button::new("All off · clear 480 pixels")).clicked(){action=Some((self.pixel_diagnostic.probe(),true));}
+        ui.add(egui::ProgressBar::new(if busy{0.5}else{0.0}).desired_height(4.0).animate(busy));
+        if let Some(observed)=&self.pixel_diagnostic.observed {ui.label(observed.label());}
+        if !atomic {ui.weak("This board has not acknowledged atomic pixel diagnostics. Update its firmware before using these controls.");}
+        ui.weak("Show clears every other pixel. Colour and group changes apply after Show. All off keeps your cursor.");
+        if let Some((probe,off))=action {self.send_pixel_probe(probe,off);}
         if !self.pixel_diagnostic.message.is_empty() { ui.label(&self.pixel_diagnostic.message); }
+    }
+    fn send_pixel_probe(&mut self,probe:pixel_diagnostic::Probe,off:bool) {
+        let result=(||->Result<(),String>{
+            if !probe.valid() || self.command_route()!=Some(Transport::WiFi) || self.streaming || self.sampling
+                || self.pixel_diagnostic.pending.is_some(){return Err("Diagnostic owner unavailable; nothing queued".into())}
+            let status=self.live_status().ok_or("No fresh board status")?;
+            let mut request=realtime::Intent::new(self.endpoint(),status,"/api/led/diagnostic",probe.form(off),
+                self.http_tx.capture(),self.connection_gate.stamp(Transport::WiFi,self.connection_gate.epoch()),None)?;
+            let id=self.pixel_diagnostic.begin();request.pixel_request=Some(id);
+            if self.ws_tx.send(WsCommand::Control(request)).is_err(){self.pixel_diagnostic.finish(id,"Diagnostic worker unavailable; nothing sent".into());}
+            else {self.pixel_diagnostic.message="Sending one board-owned diagnostic command…".into();}
+            Ok(())
+        })();
+        if let Err(error)=result {self.pixel_diagnostic.message=error;}
     }
     fn arm_pixel_diagnostic(&mut self) {
         let status = self.live_status().cloned();
@@ -1324,6 +1367,10 @@ impl PakarControllerApp {
         }
     }
     fn show_pixel_diagnostic(&mut self, index: u16) {
+        if self.live_status().is_some_and(|s|s.capabilities.as_ref().is_some_and(|c|c.has("pixel-diagnostic"))) {
+            if (1..=480).contains(&index){self.send_pixel_probe(pixel_diagnostic::Probe{index:index-1,..self.pixel_diagnostic.probe()},false);}
+            return;
+        }
         let status = self.live_status().cloned();
         let peer = status.as_ref().and_then(peer_http::Pin::from_status);
         if !(1..=480).contains(&index) || self.command_route() != Some(Transport::WiFi) || !self.websocket_live

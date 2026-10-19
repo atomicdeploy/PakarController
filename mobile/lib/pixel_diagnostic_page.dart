@@ -43,7 +43,9 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
     keepScrollOffset: false,
   );
   final colorText = TextEditingController();
-  Timer? timer;
+  final positionFocus = FocusNode();
+  StreamSubscription<DeviceStatus>? statusSubscription;
+  StreamSubscription<void>? connectionSubscription;
   bool working = false;
   String message =
       'Choose a position and colour, then Show. Nothing is sent automatically.';
@@ -61,9 +63,41 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
     scroll.addListener(() {
       if (scroll.hasClients) workspace.vertical = scroll.offset;
     });
-    timer = Timer.periodic(const Duration(milliseconds: 500), (_) {
-      if (mounted) setState(() {});
+    workspace.addListener(workspaceChanged);
+    final initial = widget.api.latestStatus ?? widget.observed();
+    if (initial != null) observe(initial);
+    statusSubscription = widget.api.statusUpdates.listen(observe);
+    connectionSubscription = widget.api.connectionUpdates.listen((_) {
+      if (mounted) {
+        setState(() {
+          applied = null;
+        });
+      }
     });
+  }
+
+  void workspaceChanged() {
+    if (!mounted) return;
+    // A remote observation does not replace an in-progress numeric draft.
+    if (!positionFocus.hasFocus && position.text != workspace.position) {
+      position.text = workspace.position;
+    }
+    setState(() {});
+  }
+
+  void observe(DeviceStatus status) {
+    if (!mounted ||
+        revision != widget.api.connectionRevision ||
+        status.json['board_id'] != board ||
+        status.json['boot_id'] != boot) {
+      return;
+    }
+    if (workspace.observe(status)) {
+      setState(() {
+        applied = null;
+        allOff = workspace.observation?.off == true;
+      });
+    }
   }
 
   bool get authorized {
@@ -81,7 +115,10 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
 
   @override
   void dispose() {
-    timer?.cancel();
+    unawaited(statusSubscription?.cancel());
+    unawaited(connectionSubscription?.cancel());
+    workspace.removeListener(workspaceChanged);
+    positionFocus.dispose();
     position.dispose();
     colorText.dispose();
     scroll.dispose();
@@ -106,11 +143,17 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
       );
       if (mounted) widget.onObserved?.call(actual);
       if (mounted && authorized) {
+        observe(actual);
         setState(() {
-          probe = next;
-          allOff = off;
-          position.text = '${next.first + 1}';
-          applied = off
+          // A newer other-client observation wins over this late ACK.
+          if (workspace.observation == null) {
+            probe = next;
+            allOff = off;
+            position.text = '${next.first + 1}';
+          }
+          applied = workspace.observation != null
+              ? null
+              : off
               ? 'Last verified: all 480 pixels off'
               : 'Last verified: ${next.range} · #${next.hex}';
           message =
@@ -134,7 +177,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   }
 
   void change(PixelProbe next) {
-    if (applied != null && !allOff) {
+    if ((applied != null || workspace.observation?.active == true) && !allOff) {
       unawaited(send(next));
     } else {
       setState(() {
@@ -369,6 +412,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
                   child: TextField(
                     key: const Key('pixel-position'),
                     controller: position,
+                    focusNode: positionFocus,
                     enabled: enabled,
                     style: TextStyle(color: colours.onSurface),
                     keyboardType: TextInputType.number,
@@ -452,6 +496,11 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
               ),
             if (applied != null && authorized)
               Text(applied!, style: TextStyle(color: colours.secondary)),
+            if (workspace.observation != null && authorized)
+              Text(
+                workspace.observation!.label,
+                style: TextStyle(color: colours.secondary),
+              ),
             Text(message, style: Theme.of(context).textTheme.bodySmall),
           ],
         ),

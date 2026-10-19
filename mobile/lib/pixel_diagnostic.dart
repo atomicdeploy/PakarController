@@ -7,6 +7,65 @@ import 'models.dart';
 /// deliberate action replaces the entire frame, never patches a stale tail.
 const diagnosticPixels = 480;
 
+/// Board-owned semantic observation, never inferred from a requested cursor.
+/// All clients consume this same revision through ordinary WS status pushes.
+class PixelDiagnosticObservation {
+  PixelDiagnosticObservation(
+    this.board,
+    this.boot,
+    this.revision,
+    this.active,
+    this.probe,
+    this.off,
+  );
+  final String board, boot;
+  final int revision;
+  final bool active, off;
+  final PixelProbe probe;
+  static PixelDiagnosticObservation? read(DeviceStatus status) {
+    if (!supportsPixelDiagnostic(status) ||
+        !status.peer.has('pixel-diagnostic')) {
+      return null;
+    }
+    final output = status.json['led_output'];
+    final value = output is Map ? output['diagnostic'] : null;
+    if (value is! Map) return null;
+    final revision = value['revision'], index = value['index'];
+    final count = value['count'], rgb = value['rgb'];
+    if (revision is! int ||
+        revision < 0 ||
+        revision > 0xffffffff ||
+        index is! int ||
+        index < 0 ||
+        index >= diagnosticPixels ||
+        (count != 1 && count != 6) ||
+        index + (count as int) > diagnosticPixels ||
+        (count == 6 && index % 6 != 0) ||
+        rgb is! int ||
+        rgb < 0 ||
+        rgb > 0xffffff ||
+        value['active'] is! bool ||
+        value['off'] is! bool ||
+        (value['active'] == true && revision == 0)) {
+      return null;
+    }
+    return PixelDiagnosticObservation(
+      status.json['board_id'] as String,
+      status.json['boot_id'] as String,
+      revision,
+      value['active'] as bool,
+      PixelProbe(index: index, group: count == 6, rgb: rgb),
+      value['off'] as bool,
+    );
+  }
+
+  String get label => !active
+      ? 'Board diagnostic inactive'
+      : off
+      ? 'Board reports: all 480 pixels off'
+      : 'Board reports: ${probe.range} · #${probe.hex}';
+}
+
 /// Cursor/colour are user-owned workspace state, not a claim about board output.
 class PixelDiagnosticWorkspace {
   PixelDiagnosticWorkspace({Map<String, dynamic> saved = const {}}) {
@@ -26,6 +85,26 @@ class PixelDiagnosticWorkspace {
         : 0;
   }
   PixelProbe _probe = const PixelProbe();
+  PixelDiagnosticObservation? observation;
+  bool observe(DeviceStatus status) {
+    final next = PixelDiagnosticObservation.read(status);
+    final old = observation;
+    if (next == null ||
+        (old != null &&
+            old.board == next.board &&
+            old.boot == next.boot &&
+            next.revision <= old.revision)) {
+      return false;
+    }
+    observation = next;
+    if (next.active && !next.off) {
+      _probe = next.probe;
+      _position = '${_probe.first + 1}';
+    }
+    notifyListeners();
+    return true;
+  }
+
   // Keep this transport module usable by the standalone Dart pixel probe;
   // importing Flutter's ChangeNotifier here would pull dart:ui into that tool.
   final _listeners = <void Function()>{};

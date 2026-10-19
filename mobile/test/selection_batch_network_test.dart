@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -85,7 +86,7 @@ void main() {
         if (state == 'timeout') {
           throw TimeoutException('fixture response timeout');
         }
-        return http.Response('{"hostname":"ledboard"}', 200);
+        return http.Response(jsonEncode(peerFixture().json), 200);
       }),
       discovery: () async {
         ++discover;

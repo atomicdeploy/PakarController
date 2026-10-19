@@ -38,10 +38,14 @@ if ($LASTEXITCODE -ne 0) { throw 'ISP driver tests failed' }
 & (Join-Path $PSScriptRoot 'test-urboot.ps1')
 $clientBinary = Join-Path $outputDirectory 'client_telemetry_test.exe'
 $jsonInclude = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Arduino/libraries/ArduinoJson/src'
-& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I $jsonInclude -I (Join-Path $projectRoot 'libraries/BoardCore/src') (Join-Path $projectRoot 'tests/client_telemetry_test.cpp') -o $clientBinary
-if ($LASTEXITCODE -ne 0) { throw 'Client telemetry compilation failed (ArduinoJson 7.4.3 is required)' }
-& $clientBinary
-if ($LASTEXITCODE -ne 0) { throw 'Client telemetry tests failed' }
+foreach($taskClientPlatform in @('generic','esp8266')) {
+    $taskClientFlags=@()
+    if($taskClientPlatform -eq 'esp8266'){$taskClientFlags=@('-DARDUINO_ARCH_ESP8266')}
+    & g++ -std=c++17 -Wall -Wextra -Werror @taskClientFlags -I (Join-Path $projectRoot 'tests/access_stubs') -I $jsonInclude -I (Join-Path $projectRoot 'libraries/BoardCore/src') (Join-Path $projectRoot 'tests/client_telemetry_test.cpp') -o $clientBinary
+    if ($LASTEXITCODE -ne 0) { throw "Client telemetry compilation failed ($taskClientPlatform; ArduinoJson 7.4.3 is required)" }
+    & $clientBinary
+    if ($LASTEXITCODE -ne 0) { throw "Client telemetry tests failed ($taskClientPlatform)" }
+}
 $remoteStateBinary = Join-Path $outputDirectory 'remote_firmware_test.exe'
 & g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/remote_stubs') -I $jsonInclude -I (Join-Path $projectRoot 'libraries/BoardCore/src') (Join-Path $projectRoot 'tests/remote_firmware_test.cpp') (Join-Path $projectRoot 'firmware/esp8266/src/RemoteFirmware.cpp') -lbcrypt -o $remoteStateBinary
 if ($LASTEXITCODE -ne 0) { throw 'Remote firmware state-machine compilation failed' }

@@ -919,3 +919,95 @@ fixtures and built client packages. Actual W5500 wiring/link, installed-editor
 interaction and Ethernet-only Internet acceptance are still unverified. No
 optional Ethernet GPIOs are driven by a fresh disabled profile. TFT LCD remains in the separate
 [hardware backlog](S3-STATUS-FRONTPANEL-INTEGRATION.md#additional-hardware-backlog).
+
+## ESP8266 shared-source static RAM checkpoint
+
+CI run39219026860 stopped in the ESP8266 polling linker before shared tests or
+S3 compilation: `.bss` ended at0x3fffe6c0, beyond the SDK's dram0_0_seg end
+0x3fffc000 by9920bytes. The richer bounded public client reports enlarged the
+eight-entry inline registry from2304 to10624bytes; this is separate from the
+connected S3's HTTP snapshot heap error and interrupted Internet job23.
+
+ESP8266 now defaults `PAKAR_CLIENT_TELEMETRY_CAPACITY=2` and
+`PAKAR_WS_LOOP_CAPACITY=1`, both configurable within1..8. Full report fields and
+complete1300-byte messages remain; capacity exhaustion rejects a new report or
+message without evicting an active peer or altering command admission. Telemetry
+reports the actual compiled client capacity. The two caps save11904 inline bytes
+against the failed profile. HTTP response body literals use Arduino's existing
+`F()` storage/read path, preserving their bytes while moving them out of LX106
+static RAM. No route, authentication, receipt capacity or command gate changes.
+The canonical polling build now passes with76820/80192bytes static RAM
+(SDK95percent; DATA3380,RODATA20152,BSS53288),944856bytes flash code and
+63283/65536bytes instruction RAM including32768bytes instruction cache. Its
+map places `_heap_start` at0x3fffac50 against SDK heap end0x3fffc000:5040bytes
+before startup allocations, not observed live free heap. The1003056-byte image
+has SHA2564a234fe42b10af7af5e2b82ff4e2c36a2ecaf409a2cc5f83aa88947f7fba625f.
+Runtime startup, network/TLS/OTA headroom and soak still require an actual8266.
+S3 retains eight client records and its existing eight-message PSRAM allocation.
+The canonical protocol runners exercise the client registry at the generic and
+ESP8266 capacities in the same output path; the queue fixture retains copy,
+ordering, full-capacity backpressure and S3 concurrency checks. Focused canonical
+WebAccess, async HTTP, LED/queue pipeline and both Ethernet management profiles
+pass. The partial full protocol run passed client registries8/2 and the updated
+Urboot shell-owner guard, then stopped at a missing ntfy fixture dependency;
+that fixture was fixed and its focused runner passed, but the full suite was
+not rerun to completion. No ESP8266 board deployment or physical acceptance is
+implied by this source correction.
+
+## Shared diagnostic USB recovery and client delivery
+
+The user reconnected USB and authorized discarding the unresponsive old ASUS
+app's edits. PnP identified CH343 COM22, instance
+`USB\VID_1A86&PID_55D3\5CE4108809`, although Win32_SerialPort was empty.
+Guarded ROM identification matched S3 MAC90:70:69:ea:c8:00. Only the selected
+VALID app1 at0x340000 was written, using the retained 16MB/OPI/buffered/RMT-DMA,
+ISP-acknowledged, BLE-disabled, Ethernet-compiled/runtime-disabled profile and
+GPIO48 status RGB. No partition table, otadata, NVS, LittleFS, AVR or fuses were
+written. Esptool verified the app-slot write; `/update/info` independently
+reported the matching running2258656-byte sketch and MD5
+`75dca4b41c629f19768262ed010cf8c0`, version0.2.8, phase idle and free heap51380.
+Its image SHA256 is
+`88927d9c92db65ad0b8f5778323caad6da71a03442f62eb51f619f8dc35868b0`.
+This SDK image includes shared diagnostic observations; later ESP8266-specific
+RAM/string-storage source corrections have not been rebuilt/flashed on S3.
+
+Final native0.2.8/build15 SHA256
+`f0bd867bbb53ddadaab5588ed1cbf3276b7c09c58e47a1f71a3d9f45e33313a6`
+is installed on David-PC and David-ASUS. The original unresponsive ASUS0.2.7
+owner was force-closed only after explicit user discard permission; subsequent
+candidate replacements used verified same-session lifecycle IPC and graceful
+Quit. Existing executables, preferences and receipts are preserved. ASUS final
+PID4124 reports Ready, USB selected/online, serial live,80 immutable same-board
+mappings, no mapping error and zero active connection incidents. Board
+`esp32s3-907069eac800`, boot `59199c9cfec74b5835176fa68f460022`, reports
+diagnostic revision0/inactive and the retained cell/none scene. No new colour
+test or physical-output assertion was made. David-PC final PID201424 is Ready
+with the user's explicit Disconnected state preserved.
+
+Android0.2.8+15 preview APK SHA256
+`f569684bcdfe95d413afc9b5f4de21eec3ca46fd2852fa243c9f71bdaf222150`
+built and is staged on ASUS. Fresh `adb devices -l` is empty: it is NOT installed
+or phone-accepted, and remains preview/debug signed. Private deployment receipts
+are under outputs/PakarController/verification/pixel-diagnostics and ASUS
+maintenance/receipts; the private prewrite header contains NVS and must not be
+published. Inspected [native](screenshots/diagnostics-native-simulated.png) and
+[mobile](screenshots/diagnostics-mobile-simulated.png) captures are explicitly
+SIMULATED renders, not phone/board/optical acceptance.
+
+Focused native diagnostic6, workspace5, realtime6 and initial-reveal1 tests pass;
+Flutter diagnostic widget8/real-transport8 tests and46 repaired CI-fixture cases
+pass, with focused analysis clean and canonical release/APK builds successful.
+Actual two-client loopback WS tests exercise one writer and an observing client,
+not two physical clients. Screenshot wiring and50 reviewed PU route guards pass.
+Do not substitute those results for a complete exact-head CI or physical soak.
+
+Wi-Fi-only handoff remains NOT accepted. ASUS resolves ledboard.local, but
+large `/api/status` responses still intermittently reset or take2–4.5seconds
+after TCP connection; an uncached hostname can add about2seconds DNS delay.
+Small `/api/device/name` and `/update/info` responses can succeed independently.
+An initial SDK receive timeout is a hypothesis, not a proven root cause; no
+speculative timeout relaxation or automatic OTA replay was applied. Keep USB
+recovery connected. Internet job23 remains failed/interrupted, not retried.
+AVR0.2.7 remains untouched because the EEPROM backup/reset lifecycle guard
+rejects before erase; it needs a continuous reset lease, not a relaxed checksum
+or fuse change. Optional W5500/BLE and all480 optical acceptance remain open.

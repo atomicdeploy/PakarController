@@ -7110,3 +7110,55 @@ and regenerated all50 existing route hashes/anchors from the actual unchanged
 donor, then ran pu_routes_test. The firmware build wrapper now runs that same
 guard before compilation; it does not auto-certify or regenerate evidence.
 This tooling/evidence correction requires no firmware rebuild or device write.
+
+## Shared pixel diagnostics continuation
+
+Reread the complete PCController Project/AddressableLeds.h/.cpp and Web
+status-frame-batcher.ts sources. The existing clear/stage/show mapping remains:
+one deliberate diagnostic command owns a complete480-pixel frame. AVR-specific
+assembly,100-pixel buffers and register assignments still do not apply to the
+S3 renderer. The status reducer's identity/order discipline is adapted to a
+board/boot-scoped diagnostic revision, not a second animation engine or a public
+API generation. Generic metric/history imports remain pending.
+
+LedGrid now publishes index/count/RGB/off/active/revision with normal status.
+Rust and Flutter consume that observation without command replay. Duplicate and
+older diagnostic revisions cannot overwrite a newer observation or user draft;
+normal scene, mapping, stream and maintenance takeovers invalidate the diagnostic.
+Rust's previously white-only controls now include colours and aligned six-pixel
+groups. Only draft cursor/group/colour persist; pending writes and observed boot
+authority do not. Flutter's page subscribes to existing status and connection
+streams instead of a periodic repaint timer. Focused renderer, transport and UI
+tests are the intended source evidence; fixture screenshots, packages and actual
+deployment remain separate evidence and cannot certify physical pixels.
+
+The current CI Windows WS fixture expected a mutation immediately after status,
+but the shipping worker also introduces its peer identity. The fixture now
+accepts that non-actuating introduction before asserting the exact command;
+release admission and production packet handling are unchanged.
+
+The bounded delivery subsequently completed canonical native/APK builds and
+focused tests, guarded USB S3 app-slot recovery, then native replacements on
+both PCs. Exact hashes/live owner observations and remaining Wi-Fi/AVR/phone
+gates are in ESP32-S3-COMMISSIONING.md. No SDK/donor checkout was patched.
+
+Actually inspected both rendered diagnostic captures: native framebuffer at
+1920x991 and Flutter widget phone geometry390x1180. Both expose single/six-pixel
+steps,475–480 tail bounds, arbitrary RGB, full480 clear and a board-reported
+observation. Native additionally labels logical cell1 from the fixture's remap;
+the mobile fixture has no supplied map. Platform geometry/sector styling is not
+pixel-identical or full-app visual parity. Comparison caught an oversized native
+progress bar and observation loss on a WS drop while HTTP remained fresh; both
+were corrected and the native capture repeated. Real WS pushes in the read-only
+fixture produce zero incident events. No screenshot executes board commands.
+
+Native capture initially encountered an unavailable WGC helper and an honestly
+refused hidden-window Win32 capture. The approved read-only fallback was
+consulted, not declared absent. Installed eframe0.36.2 glow/window-runner sources
+show the hidden-until-first-paint path; a process-owned one-time logic reveal
+and isolated fixture persistence now allow real framebuffer capture without
+production IPC/tray, focus or overwrite. A speculative repaint-waker change was
+removed after rereading callback order; it is not presented as a proven cause.
+Original failed captures remain outside the repo; only the inspected successful
+SIMULATED native/mobile captures are committed. Donor inventory totals remain
+314/4697 compared,4383 pending and253 known gap files, not complete parity.

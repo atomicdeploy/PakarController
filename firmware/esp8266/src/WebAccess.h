@@ -34,7 +34,7 @@ class WebAccess {
     const String path = request->url();
     // Before login, uploads, catch-all handlers or dispatch: no aliases.
     if (BoardCore::ApiPolicy::numberedRoute(path.c_str())) {
-      request->send(404, "application/json", "{\"error\":\"not_found\"}");
+      request->send(404, "application/json", F("{\"error\":\"not_found\"}"));
       return;
     }
     const bool publicRead = request->method() == HTTP_GET &&
@@ -45,16 +45,16 @@ class WebAccess {
     if (publicRead || login) { next(); return; }
     String unavailable;
     if (!ready(unavailable)) { request->send(503, "text/plain", unavailable); return; }
-    if (!sameOrigin(request)) { request->send(403, "text/plain", "Cross-origin request rejected"); return; }
+    if (!sameOrigin(request)) { request->send(403, "text/plain", F("Cross-origin request rejected")); return; }
     if (!allowed(request)) {
-      request->send(401, "application/json", "{\"error\":\"login_required\",\"login\":\"/login\"}");
+      request->send(401, "application/json", F("{\"error\":\"login_required\",\"login\":\"/login\"}"));
       return; // no browser Basic-auth dialog; API clients may still send Basic
     }
     if (!versionAllowed(request)) {
       request->send(426,"application/json",PakarPeer::admissionError());return;
     }
     if (!peerAllowed(request)) {
-      request->send(409, "application/json", "{\"error\":\"peer_changed\",\"accepted\":false}"); return;
+      request->send(409, "application/json", F("{\"error\":\"peer_changed\",\"accepted\":false}")); return;
     }
     next();
   }) {}
@@ -205,11 +205,11 @@ class WebAccess {
       response->addHeader("Cache-Control", "no-store"); request->send(response);
     });
     server.on("/login", HTTP_POST, [this](AsyncWebServerRequest *request) {
-      if (!sameOrigin(request)) { request->send(403, "text/plain", "Cross-origin login rejected"); return; }
+      if (!sameOrigin(request)) { request->send(403, "text/plain", F("Cross-origin login rejected")); return; }
       {
         PakarAccessDetail::Guard lock(mutex_);
         if (accessConfig.ready() && !accessConfig.enabled()) {
-          request->send(200, "application/json", "{\"authenticated\":true,\"enabled\":false}"); return;
+          request->send(200, "application/json", F("{\"authenticated\":true,\"enabled\":false}")); return;
         }
       }
       char token[33]{}; String error;
@@ -239,7 +239,7 @@ class WebAccess {
       request->send(200, "application/json", body);
     });
     server.on("/api/auth", HTTP_POST, [this, credentialsChanged, busy](AsyncWebServerRequest *request) {
-      if (busy()) { request->send(409, "text/plain", "Finish the current firmware operation before changing credentials"); return; }
+      if (busy()) { request->send(409, "text/plain", F("Finish the current firmware operation before changing credentials")); return; }
       String error;
       bool enabled = false;
       {
@@ -258,8 +258,8 @@ class WebAccess {
       if (error.length()) { request->send(400, "text/plain", error); return; }
       credentialsChanged();
       request->send(200, "application/json", enabled ?
-          "{\"updated\":true,\"enabled\":true,\"reauthenticate\":true}" :
-          "{\"updated\":true,\"enabled\":false,\"reauthenticate\":false}");
+          F("{\"updated\":true,\"enabled\":true,\"reauthenticate\":true}") :
+          F("{\"updated\":true,\"enabled\":false,\"reauthenticate\":false}"));
     });
   }
  private:

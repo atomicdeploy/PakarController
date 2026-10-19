@@ -72,7 +72,7 @@ bool LedGrid::setCells(const BoardCore::CellBatch &selection,
     }else current_[index]=target_[index];
     renderCell(index);
   }
-  diagnosticActive_=false;
+  clearDiagnostic();
   if(panelObserver_) {
     if(selection.count()==kCells)panelObserver_(12,state,0); // ALL, not misleading C001.
     else panelObserver_(1,selection.first(),uint8_t(state)|(uint8_t(effect)<<2));
@@ -81,7 +81,7 @@ bool LedGrid::setCells(const BoardCore::CellBatch &selection,
 }
 
 void LedGrid::fill(BoardCore::Protocol::CellState state) {
-  diagnosticActive_=false;
+  clearDiagnostic();
   staging_ = false;
   changePattern(kPatternNone,"fill");
   for (uint8_t i = 0; i < kCells; ++i) {
@@ -102,6 +102,7 @@ void LedGrid::resetWhite() {
 
 void LedGrid::showWinner(uint8_t winner) {
   if (winner < 1 || winner > 9) return;
+  clearDiagnostic();
   staging_ = false;
   changePattern(kPatternNone,"winner");
   for (uint8_t i = 0; i < kCells; ++i) {
@@ -118,7 +119,7 @@ void LedGrid::showWinner(uint8_t winner) {
 }
 
 void LedGrid::setPattern(Pattern pattern) {
-  diagnosticActive_=false;
+  clearDiagnostic();
   if(panelObserver_)panelObserver_(3,pattern,0);
   if (pattern == kPatternNone) {
     stopPattern("explicit-none");
@@ -318,6 +319,7 @@ void LedGrid::setPhysicalMapping(const uint8_t *physicalCells, uint8_t count) {
     if (physical < 1 || physical > kCells || seen[physical - 1]) return;
     seen[physical - 1] = true;
   }
+  clearDiagnostic();
   fill_solid(pixels_, kPixels, CRGB::Black);
   staging_ = false;
   for (uint8_t i = 0; i < kCells; ++i) physicalCells_[i] = physicalCells[i];
@@ -361,6 +363,7 @@ bool LedGrid::diagnostic(uint16_t index,uint8_t count,uint32_t rgb,bool off) {
   outputEnabled_=true;
   showStaged(); // Includes the black tail and exactly one immutable publication.
   diagnosticActive_=true;diagnosticPixel_=index+1;
+  diagnosticCount_=count;diagnosticRgb_=rgb;diagnosticOff_=off;++diagnosticRevision_;
   if(panelObserver_)panelObserver_(4,index+1,off?0:count);
   return true;
 }
@@ -368,7 +371,7 @@ bool LedGrid::diagnostic(uint16_t index,uint8_t count,uint32_t rgb,bool off) {
 bool LedGrid::stagePixels(uint16_t offset, const uint8_t *rgb, uint8_t count,uint64_t owner) {
   if (offset + count > kPixels || rgb == nullptr) return false;
   if(!canStage(owner))return false;
-  if(owner!=UINT64_MAX)diagnosticActive_=false;
+  if(owner!=UINT64_MAX)clearDiagnostic();
   if(!staging_)::memcpy(staged_,pixels_,sizeof(staged_));
   staging_ = true;
   stageOwner_=owner;
@@ -408,6 +411,7 @@ void LedGrid::setOutputEnabled(bool enabled){
   // values until it receives a valid replacement frame.
   if(outputEnabled_==enabled && enabled)return;
   outputEnabled_=enabled;
+  if(!enabled)clearDiagnostic();
   if(panelObserver_)panelObserver_(9,enabled,0);
   if(enabled && pattern_==kPatternCellChase)chaseAt_=millis();
 #if defined(ARDUINO_ARCH_ESP32)
@@ -422,6 +426,7 @@ void LedGrid::setStaticMode(bool enabled){
   staticMode_=enabled;
   staging_=false;
   if(enabled){
+    clearDiagnostic();
     for(uint8_t i=0;i<kCells;++i){current_[i]=target_[i];transitioning_[i]=false;renderCell(i);}
   }
   dirty_=true;
@@ -436,6 +441,14 @@ String LedGrid::outputCapabilitiesJson()const{
 String LedGrid::outputJson()const{
   String value=F("{\"enabled\":");value+=outputEnabled_?F("true"):F("false");
   value+=F(",\"mode\":\"");value+=staticMode_?F("static"):F("effects");value+='"';
+  // Small authoritative observation on normal REST/WS/USB status, not a full
+  // 480-pixel poll. Revision changes only on diagnostic intent/invalidation.
+  value+=F(",\"diagnostic\":{\"revision\":");value+=diagnosticRevision_;
+  value+=F(",\"active\":");value+=diagnosticActive_?F("true"):F("false");
+  value+=F(",\"index\":");value+=uint32_t(diagnosticPixel_?diagnosticPixel_-1:0);
+  value+=F(",\"count\":");value+=diagnosticCount_;
+  value+=F(",\"rgb\":");value+=diagnosticRgb_;
+  value+=F(",\"off\":");value+=diagnosticOff_?F("true"):F("false");value+='}';
   value+=F(",\"refresh_interval_ms\":");value+=staticMode_?1000U:250U;
   value+=F(",\"cell_chase\":{\"active\":");value+=(pattern_==kPatternCellChase&&chaseStep_<kCells)?F("true"):F("false");
   value+=F(",\"physical_cell\":");value+=physicalCell(chaseCell_);
@@ -488,6 +501,7 @@ void LedGrid::presentMaintenance(const PakarUpdate::Lifecycle &life,uint32_t now
   const uint8_t alpha=life.sceneAlpha(now);
   const bool black=view==V::Shutdown && !alpha;
   if(black && maintenanceBlack_)return; // Retain the exact terminal wire receipt.
+  clearDiagnostic();
   staging_=false; // Never resume a partial network frame after maintenance.
   if(view==V::Shutdown && maintenanceVisual_!=view)
     ::memcpy(maintenanceFrom_,published_,sizeof(maintenanceFrom_));

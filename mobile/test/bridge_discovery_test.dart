@@ -12,6 +12,7 @@ import 'package:pakarcontroller/device_registry.dart';
 import 'package:pakarcontroller/discovery.dart';
 import 'package:pakarcontroller/firmware.dart';
 import 'package:pakarcontroller/models.dart';
+import 'package:pakarcontroller/peer_identity.dart';
 
 import 'peer_fixture.dart';
 
@@ -222,8 +223,12 @@ void main() {
       Future<Map<String, dynamic>> send(Map<String, dynamic> v) async {
         final r = await client.postUrl(Uri.parse('$base/api/request'));
         r.headers.set('Authorization', 'Bearer ${bridge.token}');
+        PeerIdentity.current.headers.forEach(
+          (key, value) => r.headers.set(key, value),
+        );
         r.write(jsonEncode(v));
         final response = await r.close();
+        expect(response.statusCode, 200);
         return jsonDecode(await utf8.decoder.bind(response).join());
       }
 
@@ -232,6 +237,15 @@ void main() {
       )).close();
       expect(unauthenticated.statusCode, 403);
       await unauthenticated.drain<void>();
+      for (final version in [null, '0.2.7']) {
+        final r = await client.getUrl(Uri.parse('$base/api/status'));
+        r.headers.set('Authorization', 'Bearer ${bridge.token}');
+        if (version != null) r.headers.set('X-Pakar-Version', version);
+        final response = await r.close();
+        expect(response.statusCode, 426);
+        await response.drain<void>();
+      }
+      expect(writes, 0);
       expect(bridge.snapshot()['board'].containsKey('password'), false);
       final v = request(bridge.admission!.session);
       expect((await send(v))['accepted'], true);

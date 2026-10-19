@@ -10,18 +10,24 @@
 #include <mutex>
 #endif
 
+#ifndef PAKAR_WS_LOOP_CAPACITY
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+// One complete message retains bounded backpressure while leaving room for
+// the full public peer reports, network stack and update lifecycle on LX106.
+#define PAKAR_WS_LOOP_CAPACITY 1
+#else
+#define PAKAR_WS_LOOP_CAPACITY 8
+#endif
+#endif
+
 // Adapt the synchronized request/callback publication discipline of
 // AsyncHttpService. Only complete network messages cross into loop ownership;
 // never retain a callback-owned payload pointer or run device code under lock.
 class LoopMessages {
  public:
-#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
-  // Eight full network messages exceed LX106's static DRAM budget with the
-  // integrated update lifecycle. Keep explicit backpressure, not heap overflow.
-  static constexpr uint8_t kCapacity=4;
-#else
-  static constexpr uint8_t kCapacity=8;
-#endif
+  static constexpr uint8_t kCapacity=PAKAR_WS_LOOP_CAPACITY;
+  static_assert(PAKAR_WS_LOOP_CAPACITY>=1 && PAKAR_WS_LOOP_CAPACITY<=8,
+                "WebSocket loop capacity outside 1..8");
   struct Message { uint32_t client; uint32_t epoch; uint16_t length; uint8_t opcode; uint8_t data[1300]; };
   LoopMessages()=default;
   LoopMessages(const LoopMessages&)=delete;

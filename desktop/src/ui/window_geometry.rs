@@ -2,6 +2,20 @@
 //! A Windows restore must not turn an iconic framebuffer into the normal size.
 use eframe::egui;
 
+/// eframe starts its HWND hidden, then waits for a rendered frame to reveal it.
+/// With its hidden-window logic-only path we must request the initial reveal
+/// from logic, not only from the creation callback. Never repeat after startup:
+/// a later user/tray hide or minimized screenshot must remain untouched.
+#[derive(Default)]
+pub struct Startup {shown:bool}
+impl Startup {
+    pub fn show_initial(&mut self,ctx:&egui::Context) {
+        if !std::mem::replace(&mut self.shown,true) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));ctx.request_repaint();
+        }
+    }
+}
+
 #[derive(Clone, Default)]
 struct Geometry {
     normal: Option<egui::Vec2>,
@@ -44,6 +58,15 @@ pub fn reconcile(ctx: &egui::Context) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn initial_reveal_runs_once_from_logic_without_focus_or_restore() {
+        let ctx=egui::Context::default();let input=egui::RawInput::default();let mut startup=Startup::default();
+        let first=ctx.run_logic(&input,|ctx|startup.show_initial(ctx));
+        let commands=first.viewport_commands.values().flatten().collect::<Vec<_>>();
+        assert!(commands.iter().any(|c|matches!(c,egui::ViewportCommand::Visible(true))));
+        assert!(!commands.iter().any(|c|matches!(c,egui::ViewportCommand::Focus|egui::ViewportCommand::Minimized(_))));
+        assert!(ctx.run_logic(&input,|ctx|startup.show_initial(ctx)).viewport_commands.is_empty());
+    }
     fn viewport(size: egui::Vec2) -> egui::ViewportInfo {
         egui::ViewportInfo { inner_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, size)), minimized: Some(false), occluded: Some(false), ..Default::default() }
     }

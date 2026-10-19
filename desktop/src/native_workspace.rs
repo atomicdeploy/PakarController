@@ -45,17 +45,19 @@ pub struct Snapshot {
     pub buzzer_duration: u16,
     pub settings_page: usize,
     pub settings_search: String,
+    pub pixel_probe: crate::pixel_diagnostic::Probe,
 }
 impl Default for Snapshot {
     fn default() -> Self {
         Self { layout: String::new(), hidden_panels: None, memory: None, selection: Vec::new(), selected_cell: 1,
             find: String::new(), cell_effect: "fade".into(), display_text: "PAKAR CONTROLLER".into(),
             display_value: 1, buzzer_frequency: 1032, buzzer_duration: 100, settings_page: 0,
-            settings_search: String::new() }
+            settings_search: String::new(),pixel_probe:Default::default() }
     }
 }
 impl Snapshot {
     fn normalize(&mut self) {
+        if !self.pixel_probe.valid(){self.pixel_probe=Default::default();}
         if let Some(hidden) = &mut self.hidden_panels {
             *hidden = ui::layout::Panel::ALL.into_iter().filter(|p| hidden.contains(p)).collect();
         }
@@ -133,6 +135,7 @@ impl PakarControllerApp {
             display_text: self.display_text.clone(), display_value: self.display_value,
             buzzer_frequency: self.buzzer_frequency, buzzer_duration: self.buzzer_duration,
             settings_page: self.device_settings.page, settings_search: self.device_settings.search.clone(),
+            pixel_probe:self.pixel_diagnostic.probe(),
         }
     }
     pub(crate) fn remember_ui_workspace(&mut self) {
@@ -167,6 +170,10 @@ impl PakarControllerApp {
         self.display_text = snapshot.display_text; self.display_value = snapshot.display_value;
         self.buzzer_frequency = snapshot.buzzer_frequency; self.buzzer_duration = snapshot.buzzer_duration;
         self.device_settings.page = snapshot.settings_page; self.device_settings.search = snapshot.settings_search;
+        self.pixel_diagnostic.set_probe(snapshot.pixel_probe);
+        if let Some(observation)=self.pixel_diagnostic.observed.clone().filter(|o|o.active&&!o.off){
+            self.pixel_diagnostic.set_probe(observation.probe);
+        }
         let memory = snapshot.memory.and_then(|text| serde_json::from_str::<egui::Memory>(&text).ok()).unwrap_or_default();
         ctx.memory_mut(|current| {
             // Current global preferences win; the stored memory contributes
@@ -226,6 +233,7 @@ mod tests {
         let mut store = Store::default();
         let identity = Identity::observed(&status("board-a", 'a', "table")).unwrap();
         let snapshot = Snapshot { selection: vec![3, 2, 1, 3], selected_cell: 2, find: "1,2,3".into(),
+            pixel_probe:crate::pixel_diagnostic::Probe{index:474,group:true,rgb:0x1234ab},
             display_text: "Unsaved text".into(), cell_effect: "pulse".into(),
             layout: ui::layout::serialize(&dock).unwrap(),
             memory: context.memory(|memory| serde_json::to_string(memory).ok()), ..Default::default() };
@@ -235,6 +243,7 @@ mod tests {
         let value = restored.get(&identity).unwrap();
         assert_eq!(value.selection, vec![1, 2, 3]); assert_eq!(value.find, "1–3");
         assert_eq!(value.selected_cell, 2); assert_eq!(value.display_text, "Unsaved text");
+        assert_eq!(value.pixel_probe,crate::pixel_diagnostic::Probe{index:474,group:true,rgb:0x1234ab});
         let memory: egui::Memory = serde_json::from_str(value.memory.as_ref().unwrap()).unwrap();
         let restored_context = egui::Context::default(); restored_context.memory_mut(|current| *current = memory);
         assert_eq!(egui::scroll_area::State::load(&restored_context, scroll_id).unwrap().offset, egui::vec2(123.0, 456.0));

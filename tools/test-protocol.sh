@@ -31,8 +31,12 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/isp_stubs" "$root/tests/avr
 c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/urboot_protocol_test.cpp" -o "$root/build/urboot-protocol-test"
 "$root/build/urboot-protocol-test"
 node "$root/tests/urboot_integration_test.mjs"
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/libraries/BoardCore/src" "$root/tests/client_telemetry_test.cpp" -o "$root/build/client-telemetry-test"
-"$root/build/client-telemetry-test"
+for client_platform in generic esp8266; do
+  client_flags=()
+  if [[ "$client_platform" == esp8266 ]]; then client_flags=(-DARDUINO_ARCH_ESP8266); fi
+  c++ -std=c++17 -Wall -Wextra -Werror "${client_flags[@]}" -I "$root/tests/access_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/libraries/BoardCore/src" "$root/tests/client_telemetry_test.cpp" -o "$root/build/client-telemetry-test"
+  "$root/build/client-telemetry-test"
+done
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/remote_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/libraries/BoardCore/src" "$root/tests/remote_firmware_test.cpp" "$root/firmware/esp8266/src/RemoteFirmware.cpp" -lcrypto -o "$root/build/remote-firmware-test"
 "$root/build/remote-firmware-test"
 pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern remote-ota -Gate > /dev/null

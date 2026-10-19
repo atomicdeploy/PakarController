@@ -14,6 +14,7 @@ pub struct Intent {
     pub peer: peer_http::Pin,
     pub batch: Option<cell_batch::Correlation>,
     pub at: Instant,
+    pub pixel_request: Option<u64>,
     path: &'static str,
     form: Vec<(String, String)>,
 }
@@ -31,6 +32,7 @@ pub fn supported(status: &DeviceStatus, path: &str) -> bool {
                 | "/api/mode"
                 | "/api/brightness"
                 | "/api/led/output"
+                | "/api/led/diagnostic"
         )
 }
 
@@ -73,14 +75,16 @@ impl Intent {
             "/api/effect" => "effect",
             "/api/mode" => "mode",
             "/api/brightness" => "brightness",
+            "/api/led/diagnostic" => "pixel-diagnostic",
             _ => "led-output",
         };
         let mut value = serde_json::json!({"type":"command","request_id":id,"board_id":status.board_id,
             "boot_id":status.boot_id,"expires_at_ms":status.command_clock_ms.unwrap().checked_add(8000).ok_or("Command clock overflow")?,"command":command});
         for (key, item) in &form {
-            value[key] = if key == "id" || path == "/api/brightness" && key == "value" {
+            value[key] = if key == "id" || path == "/api/brightness" && key == "value"
+                || path=="/api/led/diagnostic" && matches!(key.as_str(),"index"|"count"|"rgb") {
                 serde_json::json!(item.parse::<u32>().map_err(|_| "Invalid command number")?)
-            } else if key == "enabled" {
+            } else if key == "enabled" || key=="off" {
                 serde_json::json!(item == "true")
             } else {
                 serde_json::json!(item)
@@ -95,6 +99,7 @@ impl Intent {
             peer,
             batch,
             at: Instant::now(),
+            pixel_request: None,
             path,
             form,
         })
@@ -159,6 +164,13 @@ impl Intent {
             "/api/effect" => status.effect == get("value"),
             "/api/mode" => status.mode == get("value"),
             "/api/brightness" => get("value").parse::<u8>().ok() == Some(status.brightness),
+            "/api/led/diagnostic" => {
+                let index=get("index").parse::<u16>().map_err(|_|"Invalid diagnostic index")?;
+                let rgb=get("rgb").parse::<u32>().map_err(|_|"Invalid diagnostic RGB")?;
+                let probe=crate::pixel_diagnostic::Probe{index,group:get("count")=="6",rgb};
+                matches!(get("count"),"1"|"6") && probe.valid() && probe.first()==index
+                    && crate::pixel_diagnostic::ready(&status) && probe.matches(&status,get("off")=="true")
+            }
             _ => {
                 (get("enabled").is_empty()
                     || status.led_output["enabled"].as_bool() == Some(get("enabled") == "true"))
@@ -202,6 +214,10 @@ impl Intent {
             let event = crate::for_endpoint(&self.endpoint, event);
             let _ = events.send(Event::ForConnection(self.stamp.clone(), Box::new(event)));
         };
+        if let Some(id)=self.pixel_request {
+            if let Ok(status)=&result {send(Event::Status(status.clone()));}
+            send(Event::PixelCommandFinished(id,result));return;
+        }
         match result {
             Ok(status) => {
                 send(Event::Status(status));
@@ -223,7 +239,8 @@ mod tests {
     use super::*;
     fn status() -> DeviceStatus {
         serde_json::from_value(
-            serde_json::json!({"hostname":"ledboard","board_id":"esp32s3-fixture",
+            serde_json::json!({"hostname":"ledboard","board_id":"esp32s3-fixture","version":crate::peer_identity::VERSION,
+            "compatibility":crate::peer_identity::advertised_policy(),
             "boot_id":"a".repeat(32),"http_peer_fencing":true,"command_clock_ms":1000,
             "cells":vec!["white";80],"capabilities":{"board_kind":"table",
                 "acknowledged_features":["table","cell-batch","leds","command-ack"],
@@ -264,6 +281,23 @@ mod tests {
             user: String::new(),
             password: String::new(),
         }
+    }
+    #[test]
+    fn realtime_pixel_diagnostic_requires_exact_complete_readback_and_typed_intent() {
+        let (mut request,_,_)=intent(endpoint());
+        let probe=crate::pixel_diagnostic::Probe{index:474,group:true,rgb:0x1234ab};
+        request.path="/api/led/diagnostic";request.form=probe.form(false);
+        let mut observed=status();observed.pixels=480;observed.mode="cell".into();observed.effect="none".into();
+        observed.capabilities.as_mut().unwrap().acknowledged_features.push("pixel-diagnostic".into());
+        observed.led_output=serde_json::json!({"enabled":true,"mode":"effects"});
+        observed.pixel_frame=Some(serde_json::from_value(serde_json::json!({"revision":1,"pending":false,"brightness":255,"physical":(1..=80).collect::<Vec<_>>(),
+            "rgb":probe.frame(false).unwrap().iter().map(|v|format!("{v:02x}")).collect::<String>()})).unwrap());
+        let good=serde_json::json!({"type":"command-result","request_id":request.id,"board_id":observed.board_id,
+            "boot_id":observed.boot_id,"accepted":true,"status":observed});
+        assert!(request.verify(good.clone()).is_ok());
+        let mut pending=good.clone();pending["status"]["pixel_frame"]["pending"]=true.into();assert!(request.verify(pending).is_err());
+        let mut bad=good.clone();bad["status"]["pixel_frame"]["rgb"]=serde_json::json!("00".repeat(1440));assert!(request.verify(bad).is_err());
+        let mut absent=good;absent["status"]["pixel_frame"]=serde_json::Value::Null;assert!(request.verify(absent).is_err());
     }
     #[test]
     fn realtime_ack_requires_id_boot_count_and_every_selected_value() {
@@ -375,6 +409,9 @@ mod tests {
                 assert!(Instant::now() < deadline, "Command did not arrive");
                 let actual = socket.read().unwrap();
                 let text = actual.to_text().unwrap();
+                if serde_json::from_str::<serde_json::Value>(text).ok().is_some_and(|v|v["type"]=="peer-introduction") {
+                    continue; // Admission identity is not an actuation or a status poll.
+                }
                 if text == r#"{"type":"status"}"# {
                     socket
                         .send(tungstenite::Message::Text(

@@ -29,6 +29,15 @@ const knownDiagnosticFeatures = [
 ];
 
 class DiagnosticApi extends PakarApi {
+  final pushes = StreamController<DeviceStatus>.broadcast(sync: true);
+  @override
+  Stream<DeviceStatus> get statusUpdates => pushes.stream;
+  @override
+  Future<void> close() async {
+    await pushes.close();
+    await super.close();
+  }
+
   final sent = <(PixelProbe, bool)>[];
   Completer<void>? held;
   bool fail = false;
@@ -67,6 +76,64 @@ Widget diagnosticPage(
 );
 
 void main() {
+  testWidgets(
+    'Other-client WS observations update controls without replay or polling',
+    (tester) async {
+      tester.view.physicalSize = const Size(600, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final api = DiagnosticApi();
+      addTearDown(api.close);
+      final workspace = PixelDiagnosticWorkspace();
+      DeviceStatus pushed(int revision, {bool off = false, String? board}) =>
+          DeviceStatus({
+            ...diagnosticFixture().json,
+            'board_id': board ?? 'fixture',
+            'led_output': {
+              'enabled': true,
+              'mode': 'effects',
+              'diagnostic': {
+                'revision': revision,
+                'active': true,
+                'index': 474,
+                'count': 6,
+                'rgb': 0x1234ab,
+                'off': off,
+              },
+            },
+          });
+      await tester.pumpWidget(diagnosticPage(api, workspace: workspace));
+      api.pushes.add(pushed(3));
+      await tester.pump();
+      expect(find.text('Pixels 475–480'), findsOneWidget);
+      expect(
+        find.textContaining('Board reports: Pixels 475–480'),
+        findsOneWidget,
+      );
+      expect(workspace.probe.rgb, 0x1234ab);
+      expect(api.sent, isEmpty);
+      api.pushes.add(pushed(2, off: true));
+      api.pushes.add(pushed(4, board: 'foreign'));
+      await tester.pump();
+      expect(workspace.observation!.revision, 3);
+      api.pushes.add(pushed(4, off: true));
+      await tester.pump();
+      expect(find.text('Board reports: all 480 pixels off'), findsOneWidget);
+      expect(workspace.probe.first, 474);
+      expect(api.sent, isEmpty);
+      api.appForeground = false;
+      await tester.pump();
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('pixel-next')))
+            .onPressed,
+        isNull,
+      );
+      await tester.pumpWidget(const SizedBox());
+      expect(api.pushes.hasListener, false);
+    },
+  );
   testWidgets(
     'Reopening keeps the physical tail cursor without replay and uses verified map',
     (tester) async {
@@ -155,7 +222,27 @@ void main() {
     final boundary = GlobalKey(), api = DiagnosticApi();
     addTearDown(api.close);
     await tester.pumpWidget(
-      RepaintBoundary(key: boundary, child: diagnosticPage(api)),
+      RepaintBoundary(
+        key: boundary,
+        child: diagnosticPage(
+          api,
+          observed: () => DeviceStatus({
+            ...diagnosticFixture().json,
+            'led_output': {
+              'enabled': true,
+              'mode': 'effects',
+              'diagnostic': {
+                'revision': 1,
+                'active': true,
+                'index': 474,
+                'count': 6,
+                'rgb': 0x1234ab,
+                'off': false,
+              },
+            },
+          }),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
     expect(api.sent, isEmpty);

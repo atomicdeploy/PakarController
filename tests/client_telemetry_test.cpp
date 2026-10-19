@@ -5,6 +5,8 @@
 #include <cassert>
 #include <cstdio>
 int main(){
+  static_assert(sizeof(ClientTelemetry)<=1440*ClientTelemetry::kCapacity,
+                "Client telemetry inline RAM budget regressed");
   JsonDocument probe;probe["probe"]=true;String replaced="must not survive";
   assert(serializeJson(probe,replaced)==measureJson(probe));
   assert(replaced=="{\"probe\":true}");
@@ -26,10 +28,16 @@ int main(){
   assert(!registry.report("{\"id\":\"old\",\"version\":\"0.2.6\"}","192.0.2.1",2));
   assert(!registry.report("{\"id\":\"missing-version\"}","192.0.2.1",2));
   assert(registry.report("{\"id\":\"one\",\"version\":\"0.2.8\"}","192.0.2.2",120002));
-  for(unsigned i=0;i<7;++i){char b[96];snprintf(b,sizeof(b),"{\"id\":\"client%u\",\"version\":\"0.2.8\"}",i);assert(registry.report(b,"192.0.2.3",120003));}
-  JsonDocument eight;assert(!deserializeJson(eight,registry.json(120004)));
-  assert(eight.is<JsonArray>() && eight.size()==8 && eight[0]["id"]=="one" && eight[7]["id"]=="client6");
+  for(unsigned i=1;i<ClientTelemetry::kCapacity;++i){char b[96];snprintf(b,sizeof(b),"{\"id\":\"client%u\",\"version\":\"0.2.8\"}",i);assert(registry.report(b,"192.0.2.3",120003));}
+  JsonDocument full;assert(!deserializeJson(full,registry.json(120004)));
+  assert(full.is<JsonArray>() && full.size()==ClientTelemetry::kCapacity && full[0]["id"]=="one");
+  if(ClientTelemetry::kCapacity>1){char last[32];snprintf(last,sizeof(last),"client%u",static_cast<unsigned>(ClientTelemetry::kCapacity-1));assert(full[ClientTelemetry::kCapacity-1]["id"]==last);}
   assert(!registry.report("{\"id\":\"ninth\",\"version\":\"0.2.8\"}","192.0.2.4",120004));
+  JsonDocument afterRejected;assert(!deserializeJson(afterRejected,registry.json(120004)));
+  assert(afterRejected==full); // Capacity rejection never evicts an active peer.
+  assert(registry.report("{\"id\":\"one\",\"version\":\"0.2.8\",\"cpu_count\":16}","192.0.2.2",120005));
+  JsonDocument refreshed;assert(!deserializeJson(refreshed,registry.json(120005)));
+  assert(refreshed.size()==ClientTelemetry::kCapacity && refreshed[0]["id"]=="one" && refreshed[0]["cpu_count"]==16);
   assert(registry.report("{\"id\":\"ninth\",\"version\":\"0.2.8\"}","192.0.2.4",240005));
   ClientTelemetry details;
   const String report="{\"id\":\"session\",\"session_id\":\"same-session\",\"application\":\"PakarController\",\"version\":\"0.2.8\",\"build\":14,\"hardware\":{\"model\":\"Actual model\",\"password\":\"secret\"},\"capabilities\":[\"websocket\",\"websocket\"],\"settings\":{\"theme\":\"dark\",\"token\":\"secret\"}}";
@@ -41,6 +49,7 @@ int main(){
   assert(detail[0]["hardware"]["model"]=="Actual model");
   assert(detail[0]["hardware"]["password"].isNull()&&detail[0]["settings"]["token"].isNull());
   assert(detail[0]["capabilities"].size()==1&&detail[0]["build"]==14);
-  assert(details.report("{\"id\":\"unicode\",\"version\":\"0.2.8\",\"device_model\":\"دستگاه\"}","192.0.2.11",5));
-  puts("Actual ArduinoJson ArduinoStringWriter: replaces destination; registry explicit append preserves empty/one/eight-client JSON, detects failed entry serialization, observed/self-reported distinction, secret allowlist, malformed types, capacity, peer-ID collision and TTL passed.");
+  ClientTelemetry unicode;
+  assert(unicode.report("{\"id\":\"unicode\",\"version\":\"0.2.8\",\"device_model\":\"دستگاه\"}","192.0.2.11",5));
+  printf("Actual ArduinoJson ArduinoStringWriter: registry preserves empty/one/%u-client JSON, observed/self-reported distinction, secret allowlist, malformed types, full-capacity rejection without eviction, peer-ID collision and TTL passed.\n",static_cast<unsigned>(ClientTelemetry::kCapacity));
 }

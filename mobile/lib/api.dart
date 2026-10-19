@@ -55,7 +55,16 @@ class PakarApi {
   bool _connectionWanted = true;
   // Optional UI reads must stop synchronously, even before Android renders the
   // frame that propagates inactive page properties to hidden widgets.
-  bool appForeground = true;
+  bool _appForeground = true;
+  bool get appForeground => _appForeground;
+  set appForeground(bool value) {
+    if (value == _appForeground) return;
+    _appForeground = value;
+    if (!_connectionUpdates.isClosed) _connectionUpdates.add(null);
+  }
+
+  final _connectionUpdates = StreamController<void>.broadcast(sync: true);
+  Stream<void> get connectionUpdates => _connectionUpdates.stream;
   bool get connectionWanted => _connectionWanted;
   ConnectionMethod _connectionMethod = ConnectionMethod.network;
   ConnectionMethod get connectionMethod => _connectionMethod;
@@ -1549,6 +1558,7 @@ class PakarApi {
     } finally {
       _client.close();
       unawaited(_statusUpdates.close());
+      unawaited(_connectionUpdates.close());
       unawaited(_rgbUpdates.close());
       _ioClient.close(force: true);
     }
@@ -1575,6 +1585,7 @@ class PakarApi {
     _verifiedEndpoint = null;
     _verifiedBoard = _verifiedBoot = null;
     onTransportRetired?.call();
+    if (!_connectionUpdates.isClosed) _connectionUpdates.add(null);
     final active = _channel;
     _channel = null;
     if (active != null) {

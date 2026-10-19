@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 const main=readFileSync('firmware/esp8266/esp8266.ino','utf8');
 const routes=readFileSync('firmware/esp8266/src/UrbootRoutes.h','utf8');
 const uart=readFileSync('firmware/esp32s3/src/AvrUart.h','utf8');
+const shell=readFileSync('firmware/esp8266/src/ShellService.h','utf8');
 assert(main.includes('!PAKAR_AVR_LINK_ENABLED || urbootRawOwned'));
 assert(main.includes('if(urbootQueued) {serviceUpgrade();serviceUrbootJob();serviceUpgrade();return;}'));
 assert(main.includes('body+=urbootJobJson()'));
@@ -31,7 +32,27 @@ assert(main.includes('message.epoch==server.ingressEpoch()'));
 assert(main.includes('frame.sequence!=avrRecoveryHelloSequence'));
 assert(routes.includes('sendToAvr(kHello,avrRecoveryHelloSequence)'));
 assert(routes.includes('stream.stop()') && routes.includes('stream.begin(kStreamPort)'));
-assert(routes.includes('telnetEditor.reset();telnetParser.reset();telnetAuthenticated=false'));
+// Shell state now belongs to independent Telnet/USB session owners. Admission
+// requests retirement; the loop closes those owners before consuming more input.
+function maintenanceShellRetirement(routes,shell) {
+  const admission=routes.slice(routes.lastIndexOf('server.setMaintenanceFence(true)'));
+  assert(admission.includes('closeDeviceShells();'));
+  assert(admission.indexOf('closeDeviceShells();')<admission.indexOf('urbootBusy.set(true)'));
+  const close=shell.slice(shell.indexOf('void closeDeviceShells(){'),shell.indexOf('void retireDeviceShells(){'));
+  assert(close.includes('shellCloseRequested=true;'));
+  const retire=shell.slice(shell.indexOf('void retireDeviceShells(){'),shell.indexOf('unsigned shellConnectionCount()'));
+  assert(retire.includes('shellPeers[i].stop();telnetSessions[i].reset();'));
+  assert(retire.includes('serialShell.reset();shellChannel.close();'));
+  const service=shell.slice(shell.indexOf('void serviceDeviceShells(){'),shell.indexOf('bool updateShellConfiguration('));
+  assert(service.includes('if(shellCloseRequested.exchange(false))retireDeviceShells();'));
+  assert(service.includes('if(shellCloseRequested){shellCloseRequested=false;retireDeviceShells();}'));
+  assert(service.indexOf('retireDeviceShells();')<service.indexOf('telnetServer.hasClient()'));
+  assert(shell.includes('bool shellBusy(){return urbootBusy.get()||'));
+  assert(shell.includes('if(shellBusy()&&!query)'));
+}
+maintenanceShellRetirement(routes,shell);
+assert.throws(()=>maintenanceShellRetirement(routes.replace('closeDeviceShells();',''),shell));
+assert.throws(()=>maintenanceShellRetirement(routes,shell.replace('serialShell.reset();shellChannel.close();','')));
 assert(routes.indexOf('hostLink.discardInput()')>routes.indexOf('urbootBusy.set(false)'));
 assert(routes.includes('loopMessages.pop(message)'));
 assert(routes.includes('if(stream.parsePacket()>0)'));

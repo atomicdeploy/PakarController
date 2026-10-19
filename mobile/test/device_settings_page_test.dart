@@ -130,7 +130,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Firmware & storage'), findsNothing);
       expect(
-        tester.widget<ListTile>(find.widgetWithText(ListTile, 'Wi-Fi')).onTap,
+        tester
+            .widget<ListTile>(find.widgetWithText(ListTile, 'Wi-Fi & Ethernet'))
+            .onTap,
         isNotNull,
       );
       api.probeReply.complete({'signature': '1E950F'});

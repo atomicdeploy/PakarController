@@ -8,6 +8,7 @@ for(const token of ['PrintWindow','BitBlt','ScreenSafe','ExpectedProcessId','Cre
 }
 for(const forbidden of ['SetForegroundWindow','SetCursorPos','mouse_event','SendInput','ShowWindow','SetWindowPos'])assert(!capture.includes(forbidden),'Read-only tool must not inject input or activate/resize: '+forbidden);
 assert(read('desktop/src/main.rs').includes('!screenshot_harness'));
+assert(read('desktop/src/main.rs').includes('.with_visible(true)'));
 assert(read('desktop/src/platform/instance.rs').includes('if enable_listener'));
 assert(read('desktop/src/ui/shell.rs').includes('A capture request never changes focus'));
 for(const token of ['taskBeforeRequestId','taskObservedPending','taskCorrelated','screenshot.path -eq $taskOutput']) assert(capture.includes(token),token);

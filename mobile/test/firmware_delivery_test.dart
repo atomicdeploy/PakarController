@@ -12,6 +12,7 @@ import 'package:pakarcontroller/firmware.dart';
 import 'package:pakarcontroller/firmware_feed.dart';
 import 'package:pakarcontroller/firmware_progress.dart';
 import 'package:pakarcontroller/models.dart';
+import 'package:pakarcontroller/peer_identity.dart';
 
 import 'firmware_test.dart' show MaintenanceClient, jsonResponse, firmwareJob;
 
@@ -135,8 +136,11 @@ void main() {
         false,
       );
       expect(
-        r.headers.keys.any((k) => k.toLowerCase().startsWith('x-pakar')),
-        false,
+        r.headers.map((key, value) => MapEntry(key.toLowerCase(), value)),
+        PeerIdentity.current.headers.map(
+          (key, value) => MapEntry(key.toLowerCase(), value),
+        ),
+        reason: 'Only public app identity may accompany the independent source request',
       );
       return http.StreamedResponse(
         Stream.value(bytes),

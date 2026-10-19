@@ -35,10 +35,10 @@ int main(){
   for(unsigned i=0;i<LoopMessages::kCapacity;++i){assert(queue.pop(message));assert(message.client==i && message.data[0]==i && message.opcode==2 && message.length==3);}
   assert(!queue.pop(message));
 #if defined(ARDUINO_ARCH_ESP8266)
-  static_assert(LoopMessages::kCapacity==4,"ESP8266 DRAM ingress budget regressed");
-  puts("ESP8266 cooperative complete-message FIFO: bounded capacity4, backpressure/copy/order preserved; no hardware timing proof.");
+  static_assert(sizeof(LoopMessages)<=sizeof(LoopMessages::Message)*LoopMessages::kCapacity+16,
+                "ESP8266 inline queue RAM budget regressed");
+  printf("ESP8266 cooperative complete-message FIFO: bounded capacity%u, backpressure/copy/order preserved; no hardware timing proof.\n",LoopMessages::kCapacity);
 #else
-  static_assert(LoopMessages::kCapacity==8,"S3/concurrent ingress capacity changed");
   std::atomic<bool> done{false};std::atomic<unsigned> accepted{0};unsigned popped=0;
   std::thread producer([&]{for(unsigned i=0;i<20000;++i){uint8_t data[4];memcpy(data,&i,4);if(queue.push(i,2,data,4))++accepted;}done.store(true);});
   for(;;){if(queue.pop(message)){unsigned id;memcpy(&id,message.data,4);assert(id==message.client);++popped;}

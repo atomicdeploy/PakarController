@@ -27,10 +27,12 @@ pub struct Frame {
     pub physical: Vec<u8>,
     pub revision: u32,
     pub brightness: u8,
+    #[serde(default)]
+    pub pending: bool,
 }
 impl Frame {
     pub fn valid(&self) -> bool {
-        self.rgb.len() == 480 * 6
+        !self.pending && self.rgb.len() == 480 * 6
             && self.rgb.bytes().all(|b| b.is_ascii_hexdigit())
             && self.physical.len() == 80
             && (1..=80).all(|id| self.physical.iter().filter(|p| **p == id).count() == 1)
@@ -202,7 +204,7 @@ mod tests {
     use super::*;
     #[test]
     fn transient_null_preserves_only_original_fresh_same_peer_sample() {
-        let frame = Frame { rgb: "00ff00".repeat(480), physical: (1..=80).collect(), revision: 7, brightness: 255 };
+        let frame = Frame { rgb: "00ff00".repeat(480), physical: (1..=80).collect(), revision: 7, brightness: 255, pending:false };
         let mut slot = None;
         Sample::observe(&mut slot, Some(frame.clone()));
         let observed = slot.as_ref().unwrap().at;
@@ -238,6 +240,7 @@ mod tests {
             physical: (1..=80).collect(),
             revision: 1,
             brightness: 255,
+            pending: false,
         };
         f.physical.swap(0, 79);
         f.rgb.replace_range(

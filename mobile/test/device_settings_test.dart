@@ -82,7 +82,14 @@ void main() {
     final cache = DeviceSettingsWorkspace();
     final api = PakarApi(
       client: MockClient(
-        (request) async => http.Response(jsonEncode(simulatedCloud), 200),
+        (request) async => http.Response(
+          jsonEncode(
+            request.url.path == '/api/status'
+                ? peerFixture().json
+                : simulatedCloud,
+          ),
+          200,
+        ),
       ),
     );
     final session = DeviceSettingsSession(
@@ -426,12 +433,19 @@ void main() {
     () async {
       final replies = <Completer<http.Response>>[];
       final api = PakarApi(
-        client: MockClient((_) {
+        client: MockClient((request) {
+          if (request.url.path == '/api/status') {
+            return Future.value(
+              http.Response(jsonEncode(peerFixture().json), 200),
+            );
+          }
+          expect(request.url.path, SettingsGroup.cloud.path);
           final reply = Completer<http.Response>();
           replies.add(reply);
           return reply.future;
         }),
       );
+      await api.status();
       final session = DeviceSettingsSession(api, authorized: () => true);
       final first = session.load(SettingsGroup.cloud),
           second = session.load(SettingsGroup.cloud);

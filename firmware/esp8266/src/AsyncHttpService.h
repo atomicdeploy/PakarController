@@ -151,7 +151,7 @@ class AsyncHttpService {
           slot.handler = handler; slot.mailbox=mailbox;slot.epoch=ingressEpoch_;slot.request = paused; return;
         }
       }
-      request->send(503, "text/plain", "Request queue is full; retry shortly");
+      request->send(503, "text/plain", F("Request queue is full; retry shortly"));
     });
   }
   void service() {

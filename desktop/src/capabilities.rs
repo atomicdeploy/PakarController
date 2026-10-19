@@ -222,6 +222,7 @@ impl Manifest {
             "/api/audio" | "/api/buzzer" => "buzzer",
             "/api/outputs" => "outputs",
             "/api/brightness" | "/api/effect" | "/api/led/output" => "leds",
+            "/api/led/diagnostic" => return self.has("leds") && self.has("pixel-diagnostic"),
             "/api/device/name" => "identity",
             "/api/status-rgb" => "status-rgb",
             "/api/network" | "/api/network/ethernet" | "/api/cloud" | "/api/cloud/reconnect" | "/api/auth" => "network",

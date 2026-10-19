@@ -20,6 +20,14 @@ struct CloudFixture {
   bool webSocketConnected()const{return false;}
   const char* lastError()const{return "";}
 } cloudServices;
+// Match the existing cloud-management fixture's bounded service observation;
+// Ethernet tests compile the shared cloud header without starting a worker.
+struct NtfyService {
+  static constexpr bool supported(){return true;}
+  bool pending()const{return false;}int status()const{return 0;}
+  uint32_t accepted()const{return 0;}uint32_t failed()const{return 0;}
+  void configurationChanged(){}
+} ntfyService;
 namespace NetworkPath {
 bool ready(){return false;}
 const char* interfaceName(){return "none";}

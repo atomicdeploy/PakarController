@@ -259,7 +259,7 @@ String buildTelemetryJson() {
   d[F("cloud")][F("telemetry_seconds")]=cloudConfig.telemetrySeconds();d[F("cloud")][F("error")]=cloudServices.lastError();
   d[F("auth")][F("ready")]=accessConfig.ready();d[F("auth")][F("default_credentials")]=accessConfig.defaultsActive();
   d[F("locale")]=displayLocale;d[F("locale_translation_available")]=false;
-  d[F("client_capacity")]=8;d[F("client_ttl_ms")]=120000;
+  d[F("client_capacity")]=ClientTelemetry::kCapacity;d[F("client_ttl_ms")]=120000;
   // No credentials, arbitrary filesystem paths, synthetic voltage/temperature.
   if(d.overflowed()) return "{\"type\":\"telemetry-error\",\"error\":\"insufficient_heap\"}";
   String out=encodedJson(d);d.clear();
@@ -456,16 +456,16 @@ void registerMaintenanceRoutes() {
       JsonDocument d;d[F("command")]=op==0?"firmware-fetch":op==1?"firmware-apply":"firmware-cancel";
       if(op==0) {
         uint32_t target=3;const String requested=server.arg("targets");
-        if(requested.length() && !strictU32(requested,target)) {server.send(400,"text/plain","Invalid targets");return;}
+        if(requested.length() && !strictU32(requested,target)) {server.send(400,"text/plain",F("Invalid targets"));return;}
         d[F("targets")]=target;d[F("url")]=server.arg("url");d[F("sha256")]=server.arg("sha256");
         if((server.hasArg("apply") && server.arg("apply")!="true" && server.arg("apply")!="false") ||
            (server.hasArg("allow_downgrade") && server.arg("allow_downgrade")!="true" && server.arg("allow_downgrade")!="false")) {
-          server.send(400,"text/plain","Boolean values must be true or false");return;
+          server.send(400,"text/plain",F("Boolean values must be true or false"));return;
         }
         d[F("apply")]=server.arg("apply")=="true";d[F("allow_downgrade")]=server.arg("allow_downgrade")=="true";
         d[F("bearer")]=server.arg("bearer");
       } else {
-        uint32_t id;if(!strictU32(server.arg("job_id"),id)) {server.send(400,"text/plain","Job ID required");return;}
+        uint32_t id;if(!strictU32(server.arg("job_id"),id)) {server.send(400,"text/plain",F("Job ID required"));return;}
         d[F("job_id")]=id;d[F("boot_id")]=server.arg("boot_id");d[F("sha256")]=server.arg("sha256");
       }
       String result;const bool ok=remoteCommand(d,result);
@@ -479,10 +479,10 @@ void registerMaintenanceRoutes() {
     server.on(path,HTTP_POST,[apply](){
       if(!authenticate())return;
       uint32_t epoch;if(!RemotePolicy::utc(server.arg("val").c_str(),epoch)) {
-        server.send(400,"text/plain","Use valid UTC YYYY-MM-DDTHH:MM:SSZ");return;
+        server.send(400,"text/plain",F("Use valid UTC YYYY-MM-DDTHH:MM:SSZ"));return;
       }
       if(apply) {timeval tv={static_cast<time_t>(epoch),0};
-        if(settimeofday(&tv,nullptr)) {server.send(500,"text/plain","Clock update failed");return;}}
+        if(settimeofday(&tv,nullptr)) {server.send(500,"text/plain",F("Clock update failed"));return;}}
       JsonDocument d;d[F("epoch")]=epoch;d[F("applied")]=apply;sendMaintenanceJson(encodedJson(d));
     });
   }
@@ -505,8 +505,8 @@ void registerMaintenanceRoutes() {
   });
   server.on("/hostname/check",HTTP_GET|HTTP_POST,[](){
     if(!authenticate())return;const String name=server.arg("value");
-    if(!RemotePolicy::host(name.c_str(),name.length())) {server.send(400,"text/plain","Invalid DNS hostname");return;}
-    if(remoteFirmware.busy()) {server.send(409,"text/plain","Firmware operation active");return;}
+    if(!RemotePolicy::host(name.c_str(),name.length())) {server.send(400,"text/plain",F("Invalid DNS hostname"));return;}
+    if(remoteFirmware.busy()) {server.send(409,"text/plain",F("Firmware operation active"));return;}
     IPAddress ip;
 #if defined(ARDUINO_ARCH_ESP32)
     const bool ok=WiFi.hostByName(name.c_str(),ip)==1;
@@ -524,49 +524,49 @@ void registerMaintenanceRoutes() {
     });
   server.on("/pass",HTTP_POST,[](){
     if(!authenticate())return;
-    if(programmingLatched || remoteFirmware.busy()) {server.send(409,"text/plain","Maintenance active");return;}
+    if(programmingLatched || remoteFirmware.busy()) {server.send(409,"text/plain",F("Maintenance active"));return;}
     if(!accessConfig.change(server.arg("current_password"),server.arg("username"),server.arg("password"))) {
       server.send(400,"text/plain",accessConfig.error());return;
     }
     webAccess.revokeAll();webSocket.closeAll(1008,"Credentials changed");
     closeDeviceShells();
-    sendMaintenanceJson("{\"updated\":true,\"reauthenticate\":true}");
+    sendMaintenanceJson(F("{\"updated\":true,\"reauthenticate\":true}"));
   });
   server.on("/random",HTTP_GET,[](){
     if(!authenticate())return;uint8_t bytes[32];char hex[65];
-    if(SystemPlatform::randomBytes(bytes,sizeof(bytes))) {server.send(503,"text/plain","Entropy unavailable");return;}
-    if(!BoardCore::DiagnosticText::encodeHex(bytes,sizeof(bytes),hex,sizeof(hex))) {server.send(503,"text/plain","Random encoding failed");return;}
+    if(SystemPlatform::randomBytes(bytes,sizeof(bytes))) {server.send(503,"text/plain",F("Entropy unavailable"));return;}
+    if(!BoardCore::DiagnosticText::encodeHex(bytes,sizeof(bytes),hex,sizeof(hex))) {server.send(503,"text/plain",F("Random encoding failed"));return;}
     JsonDocument d;d[F("random_hex")]=hex;sendMaintenanceJson(encodedJson(d));
   });
   server.on("/lang",HTTP_GET,[](){if(authenticate()){JsonDocument d;d[F("locale")]=displayLocale;d[F("translated")]=false;sendMaintenanceJson(encodedJson(d));}});
   server.on("/lang",HTTP_POST,[](){
     if(!authenticate())return;String lang=server.arg("lang");
     if(lang=="E")lang="en";else if(lang=="F")lang="fa";else if(lang=="A")lang="ar";else if(lang=="R")lang="ru";
-    if(lang!="en" && lang!="fa" && lang!="ar" && lang!="ru") {server.send(400,"text/plain","Unsupported locale");return;}
+    if(lang!="en" && lang!="fa" && lang!="ar" && lang!="ru") {server.send(400,"text/plain",F("Unsupported locale"));return;}
     File f=LittleFS.open("/locale.pending","w");
     const bool written=f && f.write(reinterpret_cast<const uint8_t*>(lang.c_str()),2)==2;
     if(f) {f.flush();f.close();}
-    if(!written || !LittleFS.rename("/locale.pending","/locale.cfg")) {server.send(500,"text/plain","Locale storage failed");return;}
-    displayLocale=lang;sendMaintenanceJson("{\"updated\":true,\"translated\":false}");
+    if(!written || !LittleFS.rename("/locale.pending","/locale.cfg")) {server.send(500,"text/plain",F("Locale storage failed"));return;}
+    displayLocale=lang;sendMaintenanceJson(F("{\"updated\":true,\"translated\":false}"));
   });
   server.on("/beep",HTTP_POST,[](){
     if(!authenticate())return;uint32_t count=1;
     if((server.hasArg("count")&&!strictU32(server.arg("count"),count)) || count<1 || count>8 || programmingLatched) {
-      server.send(400,"text/plain","Count must be 1..8 and Prog must be off");return;}
+      server.send(400,"text/plain",F("Count must be 1..8 and Prog must be off"));return;}
     const uint8_t tone[]={0x10,0x03,100,0};bool ok=true;
     for(unsigned i=0;i<count && ok;++i){ok=requestAndWaitForAck(kBuzzer,tone,4);if(ok)serviceAvrFor(160);}
     sendMaintenanceJson(ok?"{\"acknowledged\":true}":"{\"error\":\"avr_ack_missing\"}",ok?200:503);
   });
   server.on("/message/send",HTTP_POST,[](){
     if(!authenticate())return;const String text=server.arg("text");
-    if(!text.length() || text.length()>40 || programmingLatched) {server.send(400,"text/plain","Text must be 1..40 characters; Prog must be off");return;}
+    if(!text.length() || text.length()>40 || programmingLatched) {server.send(400,"text/plain",F("Text must be 1..40 characters; Prog must be off"));return;}
     uint8_t p[44]={0,4,1,static_cast<uint8_t>(text.length())}; // 260 ms, single pass
-    for(size_t i=0;i<text.length();++i) {if(text[i]<32 || text[i]>126){server.send(400,"text/plain","ASCII display text required");return;}p[4+i]=text[i];}
+    for(size_t i=0;i<text.length();++i) {if(text[i]<32 || text[i]>126){server.send(400,"text/plain",F("ASCII display text required"));return;}p[4+i]=text[i];}
     // Legacy Pakar kDisplayText accepts flags/scroll/brightness/length.
     const bool ok=requestAndWaitForAck(kDisplayText,p,text.length()+4);
     sendMaintenanceJson(ok?"{\"acknowledged\":true}":"{\"error\":\"avr_ack_missing\"}",ok?200:503);
   });
-  server.on("/crash",HTTP_GET|HTTP_POST,[](){if(authenticate())server.send(410,"text/plain","Unsafe memory corruption endpoint removed; diagnostics remain available");});
+  server.on("/crash",HTTP_GET|HTTP_POST,[](){if(authenticate())server.send(410,"text/plain",F("Unsafe memory corruption endpoint removed; diagnostics remain available"));});
   for(const char *path:{"/debug/info","/debug/data","/eProcessState","/eResponseStatus"})
     server.on(path,HTTP_GET,[](){
       if(!authenticate())return;JsonDocument d;
@@ -579,6 +579,6 @@ void registerMaintenanceRoutes() {
     });
   server.on("/debug/clear",HTTP_POST,[](){
     if(!authenticate())return;awaitedReplySeen=false;awaitedReplyOk=false;
-    sendMaintenanceJson("{\"cleared\":true,\"persistent_update_journal_preserved\":true,\"error_counters_reset\":false}");
+    sendMaintenanceJson(F("{\"cleared\":true,\"persistent_update_journal_preserved\":true,\"error_counters_reset\":false}"));
   });
 }

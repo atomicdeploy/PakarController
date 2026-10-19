@@ -3,10 +3,22 @@
 #include <ArduinoJson.h>
 #include <PeerCompatibility.h>
 
+#ifndef PAKAR_CLIENT_TELEMETRY_CAPACITY
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+// Full public reports include bounded hardware/settings JSON and User-Agent.
+// Eight inline records consume 10624 bytes before any network/OTA heap use.
+#define PAKAR_CLIENT_TELEMETRY_CAPACITY 2
+#else
+#define PAKAR_CLIENT_TELEMETRY_CAPACITY 8
+#endif
+#endif
+
 // Bounded authenticated operational reports, not remote access to a PC.
 // Incoming IP is observed by ESP; other client fields are self-reported.
 class ClientTelemetry {
  public:
+  static constexpr size_t kCapacity=PAKAR_CLIENT_TELEMETRY_CAPACITY;
+  static_assert(kCapacity>=1 && kCapacity<=8,"Client telemetry capacity outside 1..8");
   __attribute__((noinline)) bool report(const String &json,const String &peer,uint32_t now,const String &agent=String(),const String &headerVersion=String()) {
     if(json.length()>1536) return false;
     JsonDocument d;
@@ -77,7 +89,7 @@ class ClientTelemetry {
       populate(o,e,now);
     }
   }
-  // Serialize one client at a time rather than retaining eight JSON trees
+  // Serialize one client at a time rather than retaining all client JSON trees
   // beside the full ESP/AVR document on this memory-constrained ESP8266.
   String json(uint32_t now) const {
     String out="[";bool first=true;
@@ -102,7 +114,9 @@ class ClientTelemetry {
     char id[49]={},hostname[65]={},os[33]={},arch[17]={},app[33]={},version[64]={},transport[17]={},peer[46]={};
     char extra[769]={},agent[193]={};
     uint32_t numbers[8]={},last=0;uint8_t present=0;bool active=false,agentTruncated=false;
-  } entries_[8];
+  };
+  static_assert(sizeof(Entry)<=1440,"Client telemetry record RAM budget changed");
+  Entry entries_[kCapacity];
   static void populate(JsonObject o,const Entry &e,uint32_t now) {
       o["id"]=e.id;o["hostname"]=e.hostname;o["os"]=e.os;o["architecture"]=e.arch;
       o["application"]=e.app;o["version"]=e.version;o["transport"]=e.transport;

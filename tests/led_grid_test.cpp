@@ -258,11 +258,15 @@ int main(){
  }
  // Atomic diagnostics: full clear, exact raw tail, no stale group expansion.
  LedGrid diagnostic;diagnostic.begin();
+ unsigned diagnosticRevision=0;
  for(bool off:{false,true})for(uint8_t count:{uint8_t(1),uint8_t(6)}) {
    const uint16_t index=count==1?479:474;
    const auto shows=FastLED.shows;
    assert(diagnostic.diagnostic(index,count,0x1234ab,off));
    assert(FastLED.shows==shows+1 && !diagnostic.staticMode() && diagnostic.outputEnabled());
+   ++diagnosticRevision;
+   assert(diagnostic.outputJson().find("\"diagnostic\":{\"revision\":"+std::to_string(diagnosticRevision)+",\"active\":true")!=String::npos);
+   assert(diagnostic.outputJson().find("\"index\":"+std::to_string(index)+",\"count\":"+std::to_string(count)+",\"rgb\":1193131,\"off\":"+(off?"true":"false"))!=String::npos);
    const auto f=diagnostic.pixelFrameJson();const auto start=f.find("\"rgb\":\"")+7;
    for(unsigned p=0;p<480;++p)
      assert(f.substr(start+p*6,6)==(!off && p>=index && p<index+count?"1234ab":"000000"));
@@ -281,6 +285,11 @@ int main(){
  diagnostic.discardStaged(77);
  diagnostic.setOutputEnabled(false);
  assert(diagnostic.diagnostic(0,1,0xff0000,false)&&diagnostic.outputEnabled());
+ diagnostic.showWinner(1);
+ assert(diagnostic.outputJson().find("\"active\":false")!=String::npos);
+ assert(diagnostic.diagnostic(474,6,0x1234ab,false));
+ diagnostic.setPattern(LedGrid::kPatternRainbow);
+ assert(diagnostic.outputJson().find("\"active\":false")!=String::npos);
  {
    LedGrid maintenance;maintenance.begin();maintenance.setStaticMode(false);
    maintenance.setPattern(LedGrid::kPatternRainbow);pixelTestNow+=1000;maintenance.service(pixelTestNow);

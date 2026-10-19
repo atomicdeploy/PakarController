@@ -423,13 +423,14 @@ enum Event {
     PixelModeFinished(u64, Result<DeviceStatus, String>),
     PixelSent(pixel_diagnostic::Request, Result<(), String>),
     PixelReadbackFinished(u64, Result<String, String>),
+    PixelCommandFinished(u64, Result<DeviceStatus,String>),
     WebSocket(bool),
     Serial(String, bool, Option<DeviceStatus>),
 }
 
 impl Event {
     fn http_status(&self) -> Option<&DeviceStatus> { match self { Self::ForScope(_, inner) => inner.http_status(),Self::Status(status) => Some(status),_ => None } }
-    fn http_succeeded(&self) -> bool { match self { Self::ForScope(_, inner) => inner.http_succeeded(),Self::MappingFailed(..) | Self::DiagnosticFailure(..) | Self::OperationFailed(_) | Self::BoardSilentFinished(_, Err(_)) | Self::SettingsFinished(_, _, Err(_)) | Self::MaintenanceFinished(_, Err(_)) | Self::PixelModeFinished(_, Err(_)) | Self::PixelReadbackFinished(_, Err(_)) => false,_ => true } }
+    fn http_succeeded(&self) -> bool { match self { Self::ForScope(_, inner) => inner.http_succeeded(),Self::MappingFailed(..) | Self::DiagnosticFailure(..) | Self::OperationFailed(_) | Self::BoardSilentFinished(_, Err(_)) | Self::SettingsFinished(_, _, Err(_)) | Self::MaintenanceFinished(_, Err(_)) | Self::PixelModeFinished(_, Err(_)) | Self::PixelReadbackFinished(_, Err(_)) | Self::PixelCommandFinished(_, Err(_)) => false,_ => true } }
 }
 
 fn for_endpoint(endpoint: &Endpoint, event: Event) -> Event {
@@ -1969,6 +1970,7 @@ struct PakarControllerApp {
     pixel_diagnostic: pixel_diagnostic::State,
     capture: ui::screenshot::State,
     screenshot_harness: bool,
+    window_startup: ui::window_geometry::Startup,
     focus_cell_search: bool,
     cell_effect: String,
     event_log: diagnostics::EventLog,
@@ -2122,6 +2124,7 @@ impl PakarControllerApp {
             pixel_diagnostic: Default::default(),
             capture: ui::screenshot::State::from_environment(),
             screenshot_harness,
+            window_startup: Default::default(),
             focus_cell_search: false,
             cell_effect: "fade".into(),
             event_log,
@@ -2609,6 +2612,7 @@ impl PakarControllerApp {
                             ui::cell_pixels::Sample::observe(&mut self.table.pixel_sample, s.pixel_frame.clone());
                         }
                         self.brightness = s.brightness;
+                        self.pixel_diagnostic.observe(&s);
                         if !pixel_diagnostic::ready(&s) { self.pixel_diagnostic.armed = None; }
                         self.pattern = s.effect.clone();
                         self.output_mask = s.active_outputs;
@@ -2822,6 +2826,13 @@ impl PakarControllerApp {
                     self.pixel_diagnostic.finish(id, result.unwrap_or_else(|error|
                         format!("Frame written; pixel readback unavailable: {error}. Nothing replayed.")));
                 }
+                Event::PixelCommandFinished(id,result)=>{
+                    if self.pixel_diagnostic.matches(id) {
+                        self.pixel_diagnostic.finish(id,match result {
+                            Ok(_)=>"Diagnostic ACK and exact RGB readback verified; not optical proof.".into(),
+                            Err(error)=>format!("{error} No new intent was replayed.")});
+                    }
+                }
                 Event::Accepted(m) => {
                     self.record_event("Command", &m);
                     self.notify("Command accepted", &m, messaging::Severity::Success);
@@ -2885,7 +2896,10 @@ impl PakarControllerApp {
                     if !v {
                         self.serial_session=0;self.serial_stamp=None;
                         self.serial_operations_pending=0;self.serial_timing=None;
-                        self.pixel_diagnostic.revoke();
+                        // Socket loss does not retire this board's fresh HTTP
+                        // observation or its same-intent fallback receipt.
+                        self.pixel_diagnostic.armed=None;
+                        if !status_observation_fresh(self.last_status_at){self.pixel_diagnostic.revoke();}
                         self.stream_sent_fps = None;
                         self.streaming = false;
                         self.sampling = false;
@@ -3468,7 +3482,12 @@ fn main() -> eframe::Result {
         cli_eprintln!("Windows quick actions: {error}");
     }
     let options = eframe::NativeOptions {
+        // Fixture window geometry/egui storage must not read or overwrite the
+        // production app's separate eframe persistence directory.
+        persistence_path: std::env::var_os("PAKAR_CONFIG_FILE").filter(|_| !config.single_instance)
+            .map(|path| std::path::PathBuf::from(path).with_extension("window-state")),
         viewport: egui::ViewportBuilder::default()
+            .with_visible(true)
             .with_active(std::env::var_os("PAKAR_SCREENSHOT_PATH").is_none())
             .with_inner_size([1180.0, 760.0])
             .with_maximized(true)

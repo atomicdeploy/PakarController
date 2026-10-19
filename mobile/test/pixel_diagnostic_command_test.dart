@@ -12,6 +12,138 @@ import 'peer_fixture.dart';
 
 // Real network stack, not the widget binding's intercepted HTTP client.
 void main() {
+  test(
+    'Two real WS clients observe the same diagnostic without polling or replay',
+    () async {
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      final clients = List.generate(
+        2,
+        (_) => PakarApi(baseUrl: 'http://127.0.0.1:${server.port}'),
+      );
+      final sockets = <WebSocket>[];
+      final subscriptions = <StreamSubscription<DeviceStatus>>[];
+      var revision = 0, reads = 0, commits = 0;
+      var probe = const PixelProbe();
+      var off = false;
+      Map<String, dynamic> status({bool pixels = false}) => {
+        ...peerFixture(
+          features: ['command-ack', 'pixel-diagnostic', 'leds', 'table'],
+        ).json,
+        'board_id': 'fixture',
+        'boot_id': 'a' * 32,
+        'command_clock_ms': 1000 + revision,
+        'pixels': 480,
+        'mode': 'cell',
+        'effect': 'none',
+        'led_output': {
+          'enabled': true,
+          'mode': 'effects',
+          'diagnostic': {
+            'revision': revision,
+            'active': revision > 0,
+            'index': probe.first,
+            'count': probe.count,
+            'rgb': probe.rgb,
+            'off': off,
+          },
+        },
+        if (pixels)
+          'pixel_frame': {
+            'revision': revision,
+            'pending': false,
+            'rgb': probe
+                .frame(off: off)
+                .map((v) => v.toRadixString(16).padLeft(2, '0'))
+                .join(),
+          },
+      };
+      final listener = server.listen((request) async {
+        if (request.uri.path == '/ws') {
+          final socket = await WebSocketTransformer.upgrade(request);
+          sockets.add(socket);
+          socket.add(jsonEncode(status()));
+          socket.listen((text) {
+            final q = jsonDecode(text as String) as Map;
+            if (q['type'] == 'command') {
+              expect(q['command'], 'pixel-diagnostic');
+              commits++;
+              revision++;
+              probe = PixelProbe(
+                index: q['index'],
+                group: q['count'] == 6,
+                rgb: q['rgb'],
+              );
+              off = q['off'];
+              socket.add(
+                jsonEncode({
+                  'type': 'command-result',
+                  'request_id': q['request_id'],
+                  'board_id': 'fixture',
+                  'boot_id': 'a' * 32,
+                  'accepted': true,
+                  'status': status(pixels: true),
+                }),
+              );
+              for (final peer in sockets) {
+                peer.add(jsonEncode(status()));
+              }
+            } else {
+              socket.add(jsonEncode(status()));
+            }
+          });
+        } else {
+          expect(request.method, 'GET');
+          reads++;
+          request.response.headers.contentType = ContentType.json;
+          request.response.write(jsonEncode(status()));
+          await request.response.close();
+        }
+      });
+      final workspace = PixelDiagnosticWorkspace();
+      final changed = Completer<void>();
+      final observer = clients[1].statusUpdates.listen((s) {
+        workspace.observe(s);
+        if (workspace.observation?.revision == 1 && !changed.isCompleted) {
+          changed.complete();
+        }
+      });
+      try {
+        for (final client in clients) {
+          await client.status();
+          final ready = Completer<void>();
+          subscriptions.add(
+            client.liveStatus().listen((_) {
+              if (!ready.isCompleted) ready.complete();
+            }),
+          );
+          await ready.future.timeout(const Duration(seconds: 3));
+        }
+        await clients[0].pixelDiagnostic(
+          const PixelProbe(index: 479, group: true, rgb: 0x1234ab),
+          authorize: () => true,
+        );
+        await changed.future.timeout(const Duration(seconds: 2));
+        expect(workspace.probe.first, 474);
+        expect(workspace.probe.rgb, 0x1234ab);
+        expect(workspace.observation!.revision, 1);
+        expect(commits, 1);
+        expect(reads, 2);
+      } finally {
+        await observer.cancel();
+        for (final c in clients) {
+          await c.close();
+        }
+        for (final s in subscriptions) {
+          await s.cancel();
+        }
+        for (final s in sockets) {
+          await s.close();
+        }
+        await listener.cancel();
+        await server.close(force: true);
+      }
+    },
+  );
   for (final scenario in [
     'websocket',
     'http-only',

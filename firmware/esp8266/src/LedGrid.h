@@ -139,6 +139,10 @@ class LedGrid {
   PanelObserver panelObserver_=nullptr;
   bool diagnosticActive_=false;
   uint16_t diagnosticPixel_=0;
+  uint8_t diagnosticCount_=1;
+  uint32_t diagnosticRgb_=0xffffff,diagnosticRevision_=0;
+  bool diagnosticOff_=false;
+  void clearDiagnostic(){if(diagnosticActive_){diagnosticActive_=false;++diagnosticRevision_;}}
   bool staticMode_ = true;
   bool staging_ = false;
   bool outputEnabled_ = PAKAR_LED_START_ENABLED != 0;

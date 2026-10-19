@@ -1574,33 +1574,33 @@ bool authenticate() {
        server.request()->url()!=F("/info") && server.request()->url()!=F("/api/avr/maintenance") &&
        server.request()->url()!=F("/api/update/lifecycle") &&
        server.request()->url()!=F("/api/auth/info") && server.request()->url()!=F("/api/firmware/remote")))) {
-    server.send(409,"text/plain","Urboot owns board maintenance; inspect its job, do not replay");return false;
+    server.send(409,"text/plain",F("Urboot owns board maintenance; inspect its job, do not replay"));return false;
   }
   if ((remoteFirmware.busy() || artifactReaders) && server.request() &&
       !server.request()->url().startsWith("/api/firmware/") &&
       server.request()->url()!=F("/file/cancel") &&
       (server.request()->method()!=HTTP_GET || server.request()->url()==F("/api/avr/probe"))) {
-    server.send(409,"text/plain","Remote firmware operation owns board maintenance"); return false;
+    server.send(409,"text/plain",F("Remote firmware operation owns board maintenance")); return false;
   }
   if ((otaActive || otaRebootAt) && (!server.request() ||
       server.request()->method()!=HTTP_GET ||
       (server.request()->url()!=F("/api/status") && server.request()->url()!=F("/api/firmware/remote")))) {
-    server.send(503, "text/plain", "ESP update in progress"); return false;
+    server.send(503, "text/plain", F("ESP update in progress")); return false;
   }
   if (avrUploadOwner && server.request() && server.request()->method() != HTTP_GET) {
-    server.send(409, "text/plain", "AVR image upload in progress"); return false;
+    server.send(409, "text/plain", F("AVR image upload in progress")); return false;
   }
   if (server.request() && webAccess.allowed(server.request())) {
     // Middleware admits async requests before loop dispatch. Recheck ownership
     // at the hardware boundary as well, not only when entering the queue.
     if (!webAccess.peerAllowed(server.request())) {
-      server.send(409, "application/json", "{\"error\":\"peer_changed\",\"accepted\":false}"); return false;
+      server.send(409, "application/json", F("{\"error\":\"peer_changed\",\"accepted\":false}")); return false;
     }
     const String path = server.request()->url();
 #if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
     if (passiveAvrRx.snapshot().active && (server.request()->method()!=HTTP_GET ||
         path==F("/api/wifi/scan") || path==F("/hostname/check") || path==F("/api/avr/probe"))) {
-      server.send(409,"text/plain","Bounded passive UART capture owns diagnostics");return false;
+      server.send(409,"text/plain",F("Bounded passive UART capture owns diagnostics"));return false;
     }
 #endif
     using namespace BoardCore::Context;
@@ -1617,10 +1617,10 @@ bool authenticate() {
       for (uint8_t code = 0; code < 4; ++code)
         if (server.arg("value") == BoardCore::Context::modeName(code) && (modes(currentFeatures()) & (1U << code))) allowed = true;
     }
-    if (!allowed) { server.send(409, "application/json", "{\"error\":\"capability_not_acknowledged\"}"); return false; }
+    if (!allowed) { server.send(409, "application/json", F("{\"error\":\"capability_not_acknowledged\"}")); return false; }
     return true;
   }
-  server.send(401, "application/json", "{\"error\":\"login_required\"}");
+  server.send(401, "application/json", F("{\"error\":\"login_required\"}"));
   return false;
 }
 
@@ -2851,7 +2851,7 @@ void registerAsyncOta() {
     otaProgress.phase(PakarUpdate::Phase::Rebooting);
     otaOwner=0;otaActive=false;
     uploadAttention.finish(true);
-    request->send(200, "application/json", "{\"updated\":true,\"rebooting\":true,\"receipt_pending\":true,\"completion_verified\":false}");
+    request->send(200, "application/json", F("{\"updated\":true,\"rebooting\":true,\"receipt_pending\":true,\"completion_verified\":false}"));
   }, [](AsyncWebServerRequest *request, String, size_t index, uint8_t *data, size_t length, bool final) {
     // Upload callbacks run before the normal middleware pipeline: authorize before writing anything.
     if (!webAccess.allowed(request) || !WebAccess::sameOrigin(request) || !webAccess.peerAllowed(request)) return;
@@ -3049,13 +3049,13 @@ void registerApi() {
     const long value = opcode.toInt();
     if (!valid || value < 0 || value > 255 ||
         !BoardCore::PcContractTransport::decodeHex(server.arg("payload_hex").c_str(), p, n)) {
-      server.send(400, "application/json", "{\"error\":\"bad_contract_request\"}"); return;
+      server.send(400, "application/json", F("{\"error\":\"bad_contract_request\"}")); return;
     }
     if (value != ControllerProtocol::AddressableLed && (!avrOnline || !avrPcSupported)) {
-      server.send(503, "application/json", "{\"error\":\"avr_contract_unavailable\"}"); return;
+      server.send(503, "application/json", F("{\"error\":\"avr_contract_unavailable\"}")); return;
     }
     const uint32_t id = pcTransport.enqueue(value, p, n, millis());
-    if (!id) { server.send(409, "application/json", "{\"error\":\"contract_queue_full\"}"); return; }
+    if (!id) { server.send(409, "application/json", F("{\"error\":\"contract_queue_full\"}")); return; }
     server.send(202, "application/json", pcReceiptJson(*pcTransport.get(id)));
   });
   server.on("/api/avr/contracts/result", HTTP_GET, []() {
@@ -3069,7 +3069,7 @@ void registerApi() {
       id = id * 10 + c - '0';
     }
     const auto *receipt = valid && id ? pcTransport.get(id) : nullptr;
-    if (!receipt || receipt->usb) { server.send(404, "application/json", "{\"error\":\"unknown_contract_request\"}"); return; }
+    if (!receipt || receipt->usb) { server.send(404, "application/json", F("{\"error\":\"unknown_contract_request\"}")); return; }
     server.send(200, "application/json", pcReceiptJson(*receipt));
   });
   server.on("/api/avr/contracts/result", HTTP_DELETE, []() {
@@ -3088,9 +3088,9 @@ void registerApi() {
     const long op = opText.toInt();
     if (!valid || !id || op < 0 || op > 255 ||
         !pcTransport.consume(id, static_cast<uint8_t>(op))) {
-      server.send(409, "application/json", "{\"error\":\"receipt_not_consumable\"}"); return;
+      server.send(409, "application/json", F("{\"error\":\"receipt_not_consumable\"}")); return;
     }
-    server.send(200, "application/json", "{\"consumed\":true}");
+    server.send(200, "application/json", F("{\"consumed\":true}"));
   });
   server.on("/api/cells/mapping", HTTP_GET, []() {
     if (!authenticate()) return;
@@ -3098,7 +3098,7 @@ void registerApi() {
     // Names may each contain15 bytes requiring two-byte JSON escaping. Reserve
     // the complete bounded response once; never return truncated JSON as200.
     if(!body.reserve(sizeof(cellMapping.names)*2U+LedGrid::kCells*8U+256U)){
-      server.send(503,"application/json","{\"error\":\"mapping_memory_unavailable\"}");return;
+      server.send(503,"application/json",F("{\"error\":\"mapping_memory_unavailable\"}"));return;
     }
     // Bind the mapping itself to its producer. Clients must not need a second
     // status response to establish which board/boot supplied these values.
@@ -3125,29 +3125,29 @@ void registerApi() {
     if(server.hasArg("preset")){
       if(server.arg("preset")!=F("table-cable") || server.hasArg("logical_id") ||
          server.hasArg("physical_cell") || server.hasArg("name")){
-        server.send(400,"text/plain","preset must be table-cable without per-cell fields");return;
+        server.send(400,"text/plain",F("preset must be table-cable without per-cell fields"));return;
       }
       const CellMappingRecord previous=cellMapping;
       for(uint8_t logical=1;logical<=LedGrid::kCells;++logical)
         cellMapping.physical[logical-1]=defaultPhysicalCell(logical);
       if(!saveCellMapping()){
         cellMapping=previous;
-        server.send(500,"text/plain","cell mapping persistence failed");return;
+        server.send(500,"text/plain",F("cell mapping persistence failed"));return;
       }
       grid.setPhysicalMapping(cellMapping.physical,LedGrid::kCells);
-      server.send(200,"application/json","{\"updated\":true,\"preset\":\"table-cable\"}");return;
+      server.send(200,"application/json",F("{\"updated\":true,\"preset\":\"table-cable\"}"));return;
     }
     const int logical = server.arg("logical_id").toInt();
     const int physical = server.arg("physical_cell").toInt();
     if (logical < 1 || logical > LedGrid::kCells ||
         physical < 1 || physical > LedGrid::kCells) {
-      server.send(400, "text/plain", "logical_id and physical_cell must be 1..80");
+      server.send(400, "text/plain", F("logical_id and physical_cell must be 1..80"));
       return;
     }
     String name = server.arg("name");
     name.trim();
     if (name.length() > 15) {
-      server.send(400, "text/plain", "name must be at most 15 UTF-8 bytes");
+      server.send(400, "text/plain", F("name must be at most 15 UTF-8 bytes"));
       return;
     }
     const uint8_t logicalIndex = static_cast<uint8_t>(logical - 1);
@@ -3164,11 +3164,11 @@ void registerApi() {
     name.toCharArray(cellMapping.names[logicalIndex],
                      sizeof(cellMapping.names[logicalIndex]));
     if (!saveCellMapping()) {
-      server.send(500, "text/plain", "cell mapping persistence failed");
+      server.send(500, "text/plain", F("cell mapping persistence failed"));
       return;
     }
     grid.setPhysicalMapping(cellMapping.physical, LedGrid::kCells);
-    server.send(200, "application/json", "{\"updated\":true}");
+    server.send(200, "application/json", F("{\"updated\":true}"));
   });
   server.on("/description.xml", HTTP_GET, []() {
 #if defined(ARDUINO_ARCH_ESP32)
@@ -3235,29 +3235,29 @@ void registerApi() {
     saveLedPreferences();
     const uint8_t payload[] = {static_cast<uint8_t>(mode)};
     sendToAvr(kSetMode, sequence++, payload, sizeof(payload));
-    server.send(202, "application/json", "{\"accepted\":true}");
+    server.send(202, "application/json", F("{\"accepted\":true}"));
   });
   server.on("/api/scene/save", HTTP_POST, []() {
     if (!authenticate()) return;
     serviceScenePersistence(true);
     const bool saved = sceneStore.saved();
     server.send(saved ? 200 : 503, "application/json",
-        saved ? "{\"saved\":true}" : "{\"saved\":false,\"pending\":true}");
+        saved ? F("{\"saved\":true}") : F("{\"saved\":false,\"pending\":true}"));
   });
   server.on("/api/led/output",HTTP_POST,[](){
     if(!authenticate())return;
     if(server.hasArg("capture")) {
       if((server.arg("capture")!="true" && server.arg("capture")!="1") || server.hasArg("enabled") || server.hasArg("mode")) {
-        server.send(400,"text/plain","Capture must be requested separately; it does not change LED mode/output");return;
+        server.send(400,"text/plain",F("Capture must be requested separately; it does not change LED mode/output"));return;
       }
       const bool accepted=grid.requestSignalCapture();
-      server.send(accepted?202:409,"application/json",accepted?"{\"accepted\":true,\"optical_verified\":false}":"{\"accepted\":false,\"error\":\"capture_unavailable_or_busy\"}");return;
+      server.send(accepted?202:409,"application/json",accepted?F("{\"accepted\":true,\"optical_verified\":false}"):F("{\"accepted\":false,\"error\":\"capture_unavailable_or_busy\"}"));return;
     }
     const bool enabledGiven=server.hasArg("enabled"),modeGiven=server.hasArg("mode");
     const String value=server.arg("enabled"),outputMode=server.arg("mode");
     if((!enabledGiven&&!modeGiven)||(enabledGiven&&value!="true"&&value!="false"&&value!="1"&&value!="0")||
        (modeGiven&&outputMode!="static"&&outputMode!="effects")){
-      server.send(400,"text/plain","LED output requires enabled true/false and/or mode static/effects");return;}
+      server.send(400,"text/plain",F("LED output requires enabled true/false and/or mode static/effects"));return;}
     if(modeGiven)grid.setStaticMode(outputMode=="static");
     if(enabledGiven)grid.setOutputEnabled(value=="true"||value=="1");
     server.send(200,"application/json",grid.outputJson());
@@ -3266,7 +3266,7 @@ void registerApi() {
     if (!authenticate()) return;
     const int id = server.arg("id").toInt();
     if (id < 1 || id > LedGrid::kCells) {
-      server.send(400, "text/plain", "cell id must be 1..80");
+      server.send(400, "text/plain", F("cell id must be 1..80"));
       return;
     }
     const CellState state = parseCellState(server.arg("state"));
@@ -3277,7 +3277,7 @@ void registerApi() {
     const uint8_t payload[] = {static_cast<uint8_t>(id), static_cast<uint8_t>(state),
                                static_cast<uint8_t>(effect)};
     sendToAvr(kCellAction, sequence++, payload, sizeof(payload));
-    server.send(202, "application/json", "{\"accepted\":true}");
+    server.send(202, "application/json", F("{\"accepted\":true}"));
   });
   server.on("/api/cells",HTTP_POST,[](){
     if(!authenticate())return;
@@ -3300,7 +3300,7 @@ void registerApi() {
     if (mode == kModeSnake) startSnake(); else grid.resetWhite();
     saveLedPreferences();
     sendToAvr(kGameReset, sequence++);
-    server.send(202, "application/json", "{\"accepted\":true}");
+    server.send(202, "application/json", F("{\"accepted\":true}"));
   });
   server.on("/api/snake/direction", HTTP_POST, []() {
     if (!authenticate()) return;
@@ -3314,37 +3314,37 @@ void registerApi() {
                   "snake must be active and direction cannot reverse");
       return;
     }
-    server.send(202, "application/json", "{\"accepted\":true}");
+    server.send(202, "application/json", F("{\"accepted\":true}"));
   });
   server.on("/api/brightness", HTTP_POST, []() {
     if (!authenticate()) return;
     const int value = server.arg("value").toInt();
     if (value < 1 || value > 255) {
-      server.send(400, "text/plain", "brightness must be 1..255");
+      server.send(400, "text/plain", F("brightness must be 1..255"));
       return;
     }
     grid.setBrightness(value);
     saveLedPreferences();
-    server.send(200, "application/json", "{\"updated\":true}");
+    server.send(200, "application/json", F("{\"updated\":true}"));
   });
   server.on("/api/effect", HTTP_POST, []() {
     if (!authenticate()) return;
     const String value = server.arg("value");
     const LedGrid::Pattern pattern = parsePattern(value);
     if (pattern == LedGrid::kPatternNone && value != F("none")) {
-      server.send(400, "text/plain", "unknown effect");
+      server.send(400, "text/plain", F("unknown effect"));
       return;
     }
     grid.setPattern(pattern);
     saveLedPreferences();
-    server.send(200, "application/json", "{\"updated\":true}");
+    server.send(200, "application/json", F("{\"updated\":true}"));
   });
   server.on("/api/buzzer", HTTP_POST, []() {
     if (!authenticate()) return;
     const int frequency = server.arg("frequency").toInt();
     const int duration = server.arg("duration_ms").toInt();
     if (frequency < 20 || frequency > 12000 || duration < 1 || duration > 5000) {
-      server.send(400, "text/plain", "frequency must be 20..12000 and duration_ms 1..5000");
+      server.send(400, "text/plain", F("frequency must be 20..12000 and duration_ms 1..5000"));
       return;
     }
     const uint8_t payload[] = {
@@ -3352,26 +3352,26 @@ void registerApi() {
         static_cast<uint8_t>(duration), static_cast<uint8_t>(duration >> 8),
     };
     sendToAvr(kBuzzer, sequence++, payload, sizeof(payload));
-    server.send(202, "application/json", "{\"accepted\":true}");
+    server.send(202, "application/json", F("{\"accepted\":true}"));
   });
   server.on("/api/audio", HTTP_POST, []() {
     if (!authenticate()) return;
     uint8_t cue = 0;
     if (!parseAudioCue(server.arg("cue"), cue)) {
-      server.send(400, "text/plain", "unknown audio cue");
+      server.send(400, "text/plain", F("unknown audio cue"));
       return;
     }
     if (!sendToAvr(kAudioCue, sequence++, &cue, 1)) {
-      server.send(503, "text/plain", "AVR link unavailable"); return;
+      server.send(503, "text/plain", F("AVR link unavailable")); return;
     }
-    server.send(202, "application/json", "{\"accepted\":true,\"state\":\"queued\"}");
+    server.send(202, "application/json", F("{\"accepted\":true,\"state\":\"queued\"}"));
   });
   server.on("/api/display", HTTP_POST, []() {
     if (!authenticate()) return;
     if (server.arg("release") == F("true") || server.arg("release") == F("1")) {
       const uint8_t payload[] = {4, 0, 0, 0};
       sendToAvr(kDisplayText, sequence++, payload, sizeof(payload));
-      server.send(202, "application/json", "{\"accepted\":true}");
+      server.send(202, "application/json", F("{\"accepted\":true}"));
       return;
     }
     if (server.hasArg("text")) {
@@ -3393,16 +3393,16 @@ void registerApi() {
         server.send(400, "text/plain", result);
         return;
       }
-      server.send(202, "application/json", "{\"accepted\":true}");
+      server.send(202, "application/json", F("{\"accepted\":true}"));
       return;
     }
     if (!server.hasArg("value")) {
-      server.send(400, "text/plain", "provide text, value, or release=true");
+      server.send(400, "text/plain", F("provide text, value, or release=true"));
       return;
     }
     const int value = server.arg("value").toInt();
     if (value < -999 || value > 9999) {
-      server.send(400, "text/plain", "display value must be -999..9999");
+      server.send(400, "text/plain", F("display value must be -999..9999"));
       return;
     }
     const int16_t signedValue = static_cast<int16_t>(value);
@@ -3410,18 +3410,18 @@ void registerApi() {
         static_cast<uint8_t>(signedValue), static_cast<uint8_t>(signedValue >> 8),
     };
     sendToAvr(kDisplayText, sequence++, payload, sizeof(payload));
-    server.send(202, "application/json", "{\"accepted\":true}");
+    server.send(202, "application/json", F("{\"accepted\":true}"));
   });
   server.on("/api/outputs", HTTP_POST, []() {
     if (!authenticate()) return;
     const int mask = server.arg("mask").toInt();
     if (mask < 0 || mask > 255) {
-      server.send(400, "text/plain", "mask must be 0..255");
+      server.send(400, "text/plain", F("mask must be 0..255"));
       return;
     }
     const uint8_t payload[] = {static_cast<uint8_t>(mask)};
     sendToAvr(kOutputMask, sequence++, payload, sizeof(payload));
-    server.send(202, "application/json", "{\"accepted\":true}");
+    server.send(202, "application/json", F("{\"accepted\":true}"));
   });
   server.on("/api/device/name", HTTP_GET, []() {
     if (!authenticate()) return;
@@ -3430,16 +3430,16 @@ void registerApi() {
   server.on("/api/device/name", HTTP_POST, []() {
     if (!authenticate()) return;
     if (remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner || programmingLatched || networkApplyPending || cloudApplyPending) {
-      server.send(409, "application/json", "{\"error\":\"device_busy\"}"); return;
+      server.send(409, "application/json", F("{\"error\":\"device_busy\"}")); return;
     }
     char normalized[64];
     const String input = server.arg("hostname");
     if (input.length() != strlen(input.c_str()) || !BoardCore::Identity::normalizeName(input.c_str(), normalized)) {
-      server.send(400, "application/json", "{\"error\":\"invalid_hostname\"}"); return;
+      server.send(400, "application/json", F("{\"error\":\"invalid_hostname\"}")); return;
     }
     const String label = server.hasArg("display_name") ? server.arg("display_name") : String(deviceIdentity.displayName());
     if (label.length() != strlen(label.c_str()) || !BoardCore::Identity::validDisplayName(label.c_str())) {
-      server.send(400, "application/json", "{\"error\":\"invalid_display_name\"}"); return;
+      server.send(400, "application/json", F("{\"error\":\"invalid_display_name\"}")); return;
     }
     if (!scheduleDeviceIdentity(normalized, label)) {
       server.send(503, "application/json", deviceNameJson()); return;
@@ -3459,7 +3459,7 @@ void registerApi() {
         !updateEthernetConfiguration(document.as<JsonObjectConst>(),result)) {
       server.send(400,"text/plain",result);return;
     }
-    server.send(202,"application/json","{\"accepted\":true,\"apply_after_ms\":1000}");
+    server.send(202,"application/json",F("{\"accepted\":true,\"apply_after_ms\":1000}"));
   });
   server.on("/api/network", HTTP_POST, []() {
     if (!authenticate()) return;
@@ -3468,7 +3468,7 @@ void registerApi() {
         !updateNetworkConfiguration(document.as<JsonObjectConst>(), result)) {
       server.send(400, "text/plain", result); return;
     }
-    server.send(202, "application/json", "{\"accepted\":true,\"apply_after_ms\":1000}");
+    server.send(202, "application/json", F("{\"accepted\":true,\"apply_after_ms\":1000}"));
   });
   server.on("/api/cloud", HTTP_GET, []() {
     if (authenticate()) server.send(200, "application/json", cloudConfigurationJson());
@@ -3480,15 +3480,15 @@ void registerApi() {
         !updateCloudConfiguration(document.as<JsonObjectConst>(), result)) {
       server.send(400, "text/plain", result); return;
     }
-    server.send(202, "application/json", "{\"updated\":true,\"accepted\":true,\"apply_after_ms\":1000}");
+    server.send(202, "application/json", F("{\"updated\":true,\"accepted\":true,\"apply_after_ms\":1000}"));
   });
   server.on("/api/cloud/reconnect", HTTP_POST, []() {
     if (!authenticate()) return;
     if (remoteFirmware.busy() || otaActive || otaRebootAt || cloudApplyPending) {
-      server.send(409, "text/plain", "Maintenance/configuration active"); return;
+      server.send(409, "text/plain", F("Maintenance/configuration active")); return;
     }
     cloudApplyPending = true; cloudApplyAt = millis() + 1000U;
-    server.send(202, "application/json", "{\"accepted\":true,\"apply_after_ms\":1000}");
+    server.send(202, "application/json", F("{\"accepted\":true,\"apply_after_ms\":1000}"));
   });
 
   server.on("/api/avr/probe", HTTP_GET, []() {
@@ -3499,7 +3499,7 @@ void registerApi() {
       server.send(503, "text/plain", avrIsp.lastError());
       return;
     }
-    server.send(200, "application/json", "{\"signature\":\"1E950F\"}");
+    server.send(200, "application/json", F("{\"signature\":\"1E950F\"}"));
   });
   server.on("/api/avr/backup", HTTP_POST, []() {
     if (!authenticate()) return;
@@ -3508,36 +3508,36 @@ void registerApi() {
       server.send(500, "text/plain", avrIsp.lastError());
       return;
     }
-    server.send(200, "application/json", "{\"backed_up\":true}");
+    server.send(200, "application/json", F("{\"backed_up\":true}"));
   });
   server.on("/api/avr/backup/flash", HTTP_GET, []() {
     if (!authenticate()) return;
     File file = LittleFS.open(String(kBackupDirectory) + F("/flash.bin"), "r");
-    if (!file) { server.send(404, "text/plain", "no flash backup"); return; }
+    if (!file) { server.send(404, "text/plain", F("no flash backup")); return; }
     server.streamFile(file, "application/octet-stream");
     // Response owns a File copy; explicit close would close its shared handle.
   });
   server.on("/api/avr/backup/eeprom", HTTP_GET, []() {
     if (!authenticate()) return;
     File file = LittleFS.open(String(kBackupDirectory) + F("/eeprom.bin"), "r");
-    if (!file) { server.send(404, "text/plain", "no EEPROM backup"); return; }
+    if (!file) { server.send(404, "text/plain", F("no EEPROM backup")); return; }
     server.streamFile(file, "application/octet-stream");
     // Let the local wrapper release its reference, not close the response's file.
   });
   server.on("/api/avr/backup/metadata", HTTP_GET, []() {
     if (!authenticate()) return;
     File file=LittleFS.open(String(kBackupDirectory)+F("/metadata.txt"),"r");
-    if(!file){server.send(404,"text/plain","no AVR backup metadata");return;}
+    if(!file){server.send(404,"text/plain",F("no AVR backup metadata"));return;}
     server.streamFile(file,"text/plain");
   });
   server.on("/api/avr/program", HTTP_POST, []() {
     if(!authenticate()) return;
     File image=LittleFS.open(kAvrImagePath,"r");
-    if(!image || image.size()!=32768) {if(image)image.close();server.send(400,"text/plain","Complete AVR image required");return;}
+    if(!image || image.size()!=32768) {if(image)image.close();server.send(400,"text/plain",F("Complete AVR image required"));return;}
     image.close();
     const String recovery=server.arg("recovery");
     if(recovery.length() && recovery!="isp") {
-      server.send(400,"text/plain","Unknown recovery operation");return;
+      server.send(400,"text/plain",F("Unknown recovery operation"));return;
     }
     if(recovery=="isp") {
       // Explicit repair for a non-speaking application. Ordinary updates still
@@ -3545,7 +3545,7 @@ void registerApi() {
       // artifacts and proves target bytes before any erase, without fuse writes.
       if(avrOnline || artifactReaders || remoteFirmware.busy() || otaActive ||
           otaRebootAt || avrUploadOwner || networkApplyPending || cloudApplyPending) {
-        server.send(409,"text/plain","Recovery requires an offline AVR and exclusive maintenance");return;
+        server.send(409,"text/plain",F("Recovery requires an offline AVR and exclusive maintenance"));return;
       }
       auto matches=[](File &file,const String &expected,uint32_t size)->bool {
         if(!file || file.size()!=size || expected.length()!=64 || !file.seek(0,SeekSet))return false;
@@ -3563,7 +3563,7 @@ void registerApi() {
       if(!matches(source,server.arg("sha256"),32768) ||
           !matches(flash,server.arg("flash_sha256"),32768) ||
           !matches(eeprom,server.arg("eeprom_sha256"),1024)) {
-        server.send(409,"text/plain","Candidate or original backup hash mismatch; no erase");return;
+        server.send(409,"text/plain",F("Candidate or original backup hash mismatch; no erase"));return;
       }
       // This is a distinct durable file: never rewrite the original snapshot.
       File armed=LittleFS.open("/avr/recovery-eeprom.bin","w+");
@@ -3575,16 +3575,16 @@ void registerApi() {
           avrVersion[0]!=BoardCore::BuildInfo::kVersionMajor ||
           avrVersion[1]!=BoardCore::BuildInfo::kVersionMinor ||
           avrVersion[2]!=BoardCore::BuildInfo::kVersionPatch) {
-        server.send(503,"text/plain","ISP flash verified; UART not recovered, Prog remains armed");return;
+        server.send(503,"text/plain",F("ISP flash verified; UART not recovered, Prog remains armed"));return;
       }
       const uint8_t released[]={0};
       if(!requestAndWaitForAck(kProgrammingState,released,1)) {
-        server.send(503,"text/plain","ISP flash verified; Prog release outcome unknown, inspect status");return;
+        server.send(503,"text/plain",F("ISP flash verified; Prog release outcome unknown, inspect status"));return;
       }
       programmingLatched=false;
       sendToAvr(kGetStatus,sequence++);
       sendToAvr(kGetTelemetry,sequence++);
-      server.send(200,"application/json","{\"programmed\":true,\"verified\":true,\"settings_eeprom_preserved\":true,\"programming_latch_updated\":true,\"uart_recovered\":true}");return;
+      server.send(200,"application/json",F("{\"programmed\":true,\"verified\":true,\"settings_eeprom_preserved\":true,\"programming_latch_updated\":true,\"uart_recovered\":true}"));return;
     }
     // Manual uploads retain compatibility, but no longer bypass durable Prog
     // or EEPROM preservation. Exact remote provenance uses the manifest path.
@@ -3595,7 +3595,7 @@ void registerApi() {
        finishRemotePair(plan,true,reason)!=1) {
       server.send(500,"text/plain",reason);return;
     }
-    server.send(200,"application/json","{\"programmed\":true,\"verified\":true,\"eeprom_preserved\":true}");
+    server.send(200,"application/json",F("{\"programmed\":true,\"verified\":true,\"eeprom_preserved\":true}"));
   });
 
   server.native().on("/api/avr/image", HTTP_POST,
