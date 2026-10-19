@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pakarcontroller/api.dart';
 import 'package:pakarcontroller/main.dart';
 import 'package:pakarcontroller/models.dart';
+import 'package:pakarcontroller/table_workspace.dart';
+import 'package:pakarcontroller/workspace_activity_strip.dart';
 
 import 'peer_fixture.dart';
 import 'settings_fixture.dart';
@@ -154,7 +156,11 @@ void main() {
   testWidgets(
     'Phone and tablet shells use contextual navigation without overflow',
     (tester) async {
-      for (final size in [const Size(380, 800), const Size(1100, 800)]) {
+      for (final size in [
+        const Size(380, 800),
+        const Size(800, 1100),
+        const Size(1100, 600),
+      ]) {
         tester.view.physicalSize = size;
         tester.view.devicePixelRatio = 1;
         final api = TestApi();
@@ -165,8 +171,15 @@ void main() {
         expect(tester.takeException(), isNull);
         if (size.width > 840) {
           expect(find.byType(NavigationRail), findsOneWidget);
+          expect(
+            tester
+                .widget<NavigationRail>(find.byType(NavigationRail))
+                .scrollable,
+            true,
+          );
         } else {
-          expect(find.byType(NavigationBar), findsOneWidget);
+          expect(find.byType(WorkspaceActivityStrip), findsOneWidget);
+          expect(find.byType(NavigationBar), findsNothing);
         }
         await tester.pumpWidget(const SizedBox());
         await tester.pump();
@@ -176,18 +189,22 @@ void main() {
     },
   );
   testWidgets(
-    'One selection backs taps and Find; no physical writes on selection',
+    'Explicit multiselect shares taps and Find; no physical writes on selection',
     (tester) async {
       tester.view.physicalSize = const Size(1100, 1400);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       var writes = 0;
+      final workspace = TableWorkspace(
+        saved: {'multiple': true, 'indicators': false},
+      );
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TablePage(
               status: peerFixture(),
+              workspace: workspace,
               mapping: CellMap.defaults(),
               command: (path, [values = const {}]) async {
                 ++writes;
@@ -209,7 +226,7 @@ void main() {
       await tester.ensureVisible(find.byKey(const ValueKey('cell-4')));
       await tester.tap(find.byKey(const ValueKey('cell-4')));
       await tester.pump();
-      expect(tester.widget<TextField>(field).controller!.text, '1–4');
+      expect(tester.widget<TextField>(field).controller!.text, '1-4');
       await tester.enterText(field, '4-');
       await tester.pump();
       expect(
@@ -226,6 +243,8 @@ void main() {
       );
       expect(writes, 0);
       expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      workspace.dispose();
     },
   );
   testWidgets(
@@ -254,29 +273,43 @@ void main() {
       await tester.tap(find.text('Set red'));
       await tester.pump();
       expect(sent, ['1,2,3']);
-      expect(find.textContaining('did not return a verified result'), findsOneWidget);
+      expect(
+        find.textContaining('did not return a verified result'),
+        findsOneWidget,
+      );
     },
   );
   testWidgets(
     'Batch controls retain the actual command failure without replay',
     (tester) async {
       var writes = 0;
-      await tester.pumpWidget(MaterialApp(home: Scaffold(body: TablePage(
-        status: peerFixture(),
-        mapping: CellMap.defaults(),
-        command: (path, [values = const {}]) async {},
-        verifiedCommand: (path, values) async {
-          writes++;
-          throw const FormatException('The board rebooted before command readback.');
-        },
-      ))));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TablePage(
+              status: peerFixture(),
+              mapping: CellMap.defaults(),
+              command: (path, [values = const {}]) async {},
+              verifiedCommand: (path, values) async {
+                writes++;
+                throw const FormatException(
+                  'The board rebooted before command readback.',
+                );
+              },
+            ),
+          ),
+        ),
+      );
       await tester.enterText(find.byType(TextField).first, '1-3');
       await tester.pump();
       await tester.ensureVisible(find.text('Set red'));
       await tester.tap(find.text('Set red'));
       await tester.pump();
       expect(writes, 1);
-      expect(find.textContaining('The board rebooted before command readback.'), findsOneWidget);
+      expect(
+        find.textContaining('The board rebooted before command readback.'),
+        findsOneWidget,
+      );
       expect(find.textContaining('Batch outcome unverified'), findsNothing);
       expect(tester.takeException(), isNull);
     },

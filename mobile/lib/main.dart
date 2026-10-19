@@ -1490,6 +1490,7 @@ class _ControlShellState extends State<ControlShell>
                 selectedIndex: index,
                 onDestinationSelected: (value) => _navigate(pages[value].$1),
                 labelType: NavigationRailLabelType.all,
+                scrollable: true,
                 destinations: destinations
                     .map(
                       (item) => NavigationRailDestination(

@@ -1,5 +1,30 @@
 # Donor-first preflight receipt
 
+## Preserve the compact Flutter footer on phone and tablet
+
+Compared the actual previous Pakar NavigationBar before a7d69ce with the complete
+canonical PCController mobile/lib/unified/workspace_chrome.dart, unchanged SHA256
+f00ed672c1f72f1a66fb65cff1cfe0a89dea5f7b6222f154db00a7c52c2e1a82.
+The reduced footer keeps that original Material design when labels and touch
+targets fit; overflow retains donor stable IDs, scrolling and selected reveal.
+Width, RTL, text scaling and inset changes cannot justify hiding destinations.
+Portrait tablets share the adaptive footer; wide tablets keep a scrollable rail.
+This does not decide which pages the user wants removed, replace status controls,
+change selection/device state or certify installed phone/tablet visuals. Focused
+widget verification is separate from physical gesture and human acceptance.
+The narrow RTL/large-text fixture exposed an over-wide donor-style horizontal
+label; labels now wrap within one viewport-sized target instead of clipping.
+The broader shell run also exposed an old selection fixture assuming the former
+multiselect-on/indicators-off defaults and en-dash range output. That fixture now
+explicitly requests its old test settings and asserts the existing canonical
+ASCII range; production selection defaults and formatting were not changed.
+An unknown shared-selection lookup was corrected to the existing ui-shell/exact
+workspace_chrome donor route; no unknown lookup became an accepted exclusion.
+Final canonical verification: four footer, five output/navigation and eleven
+shell widget tests pass (20 distinct cases), with clean analysis. Phone,
+portrait-tablet and short landscape-tablet layouts are widget evidence only;
+no APK rebuild/install, board access or physical UI acceptance is claimed.
+
 ## USB demand and Android native OTG
 
 Consulted peer-binding, exact donor-audit and the new usb-otg route. Root reread

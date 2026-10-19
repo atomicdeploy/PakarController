@@ -107,21 +107,23 @@
   "source_revision": "b0111ae0c80dc34149ea1044de7dd5488920301b",
   "verdict": "parity-gap",
   "preserved": [
-    "Fully read actual ActivityStrip through EOF. Adapted stable GlobalKey targets, post-frame selected activity reveal (180ms after selection), minimum48px touch controls, semantic selected state, tooltip, reserved one-pixel border and horizontal scrolling phone navigation. Pakar uses discovered string IDs rather than fixed donor indices; the current per-board palette replaces donor per-activity hardcoded colors."
+    "Fully read actual ActivityStrip through EOF. Adapted stable GlobalKey targets, post-frame selected activity reveal (180ms after selection), minimum48px touch controls, semantic selected state, tooltip, reserved one-pixel border and horizontal scrolling phone navigation. Pakar uses discovered string IDs rather than fixed donor indices; the current per-board palette replaces donor per-activity hardcoded colors.",
+    "Reread the same complete canonical donor and verified its recorded hash for footer preservation. The original Pakar NavigationBar from a7d69ce's parent is retained for two-to-five destinations whose selected/unselected labels actually fit at current width, safe insets and text scale. More/longer destinations retain the donor overflow strip without hiding pages; selected IDs survive count/width changes and post-frame reveal callbacks coalesce. Wide tablets keep the existing rail, now scrollable for shorter landscape screens. No contextual destination is removed or fabricated by this layout policy."
   ],
   "targets": [
     {
       "path": "mobile/lib/workspace_activity_strip.dart",
-      "sha256": "58f77deeef8c0ca5eea12a6124e39af7d46ba1543e1c9705b033f9fae6fc50e4",
+      "sha256": "fccaa432c6ff25855405fab28b9ebcddd5de82ae967a8c4246354a75ef593924",
       "anchor": "class WorkspaceActivityStrip"
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360",
+      "sha256": "e29f0afd1d1f411f586f652996fc77b7a5d2b6df576780d3b13ed0001d4bf984",
       "anchor": ": WorkspaceActivityStrip("
     }
   ],
   "proof": [
+    {"path":"mobile/test/workspace_activity_strip_test.dart","sha256":"e2ebc24ba06255223d41f9c47c1cfa81c74e31825d8b3df76b280c28031f6567","anchor":"Reduced phone and portrait-tablet footers retain the original NavigationBar"},
     {
       "path": "mobile/test/output_panel_test.dart",
       "sha256": "1b7a3034588aeaa3e575881e902a1564a46c675fe2574ca38e88896a6d22e188",
@@ -10069,7 +10071,7 @@
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360",
+      "sha256": "e29f0afd1d1f411f586f652996fc77b7a5d2b6df576780d3b13ed0001d4bf984",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -12516,7 +12518,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360",
+          "sha256": "e29f0afd1d1f411f586f652996fc77b7a5d2b6df576780d3b13ed0001d4bf984",
           "anchor": "Future<bool> _command"
         },
         {
@@ -12563,7 +12565,7 @@
         },
         {
           "path": "mobile/test/widget_test.dart",
-          "sha256": "5956761df52915c53e5a4b4375a4d5837d3d6c0d0342aaa23e786675d23d87cc",
+          "sha256": "ae8cf7344fa8d19654452039d7c87b4b542e453dd7bba6036c5381dc84aae81b",
           "anchor": "Peer ACK loss removes table and independent cards"
         },
         {
@@ -12603,7 +12605,7 @@
         },
         {
           "path": "mobile/test/widget_test.dart",
-          "sha256": "5956761df52915c53e5a4b4375a4d5837d3d6c0d0342aaa23e786675d23d87cc",
+          "sha256": "ae8cf7344fa8d19654452039d7c87b4b542e453dd7bba6036c5381dc84aae81b",
           "anchor": "Unacknowledged board has no Table"
         },
         {
@@ -12826,7 +12828,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360",
+          "sha256": "e29f0afd1d1f411f586f652996fc77b7a5d2b6df576780d3b13ed0001d4bf984",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -17972,7 +17974,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360",
+          "sha256": "e29f0afd1d1f411f586f652996fc77b7a5d2b6df576780d3b13ed0001d4bf984",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -18120,7 +18122,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360"
+          "sha256": "e29f0afd1d1f411f586f652996fc77b7a5d2b6df576780d3b13ed0001d4bf984"
         }
       ],
       "proof": [
@@ -18160,7 +18162,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "784e9cce7ca1db5409af5dfce3d4c9cdf0a247c15464c29abf899b38a2623360"
+          "sha256": "e29f0afd1d1f411f586f652996fc77b7a5d2b6df576780d3b13ed0001d4bf984"
         }
       ],
       "proof": [
