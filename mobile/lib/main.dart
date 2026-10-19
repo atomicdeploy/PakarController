@@ -334,9 +334,9 @@ class _ControlShellState extends State<ControlShell>
     );
     try {
       await ConnectionPreferences(prefs).restore(api);
-      // Explicit Disconnect remains latched in this live session. A previous
-      // session's incidental disconnected state does not disable startup auto.
-      if (!restoredWanted && !api.automaticDiscovery) api.disconnect();
+      // Discovery recovers an unavailable wanted connection, never overrides
+      // an explicit Disconnect preserved with the workspace (including USB).
+      if (!restoredWanted) api.disconnect();
     } on Exception catch (error) {
       if (mounted) {
         setState(() => message = 'Preferences could not be restored: $error');

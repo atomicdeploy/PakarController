@@ -97,17 +97,13 @@ void main() {
     },
   );
   setUp(() {
-    SharedPreferences.setMockInitialValues({
-      'table_workspaces': jsonEncode({
-        'connection': {'method': 'network', 'wanted': false},
-      }),
-    });
+    SharedPreferences.setMockInitialValues({});
     FlutterSecureStorage.setMockInitialValues({
       'pakarcontroller.device_password': 'old-board-secret',
     });
   });
   testWidgets(
-    'Startup defaults auto on, ignores last-session incidental Disconnect and adopts one verified board without old credentials',
+    'First startup defaults auto on and adopts one verified board without old credentials',
     (tester) async {
       var scans = 0;
       final api = StartupApi();
@@ -158,6 +154,45 @@ void main() {
       await tester.pump();
     },
   );
+
+  for (final method in ConnectionMethod.values) {
+    testWidgets(
+      'Saved explicit Disconnect blocks startup discovery for ${method.name}',
+      (tester) async {
+        SharedPreferences.setMockInitialValues({
+          'automatic_board_connection': true,
+          'table_workspaces': jsonEncode({
+            'connection': {'method': method.name, 'wanted': false},
+          }),
+        });
+        var scans = 0;
+        final api = StartupApi();
+        final discovery = DeviceDiscovery(
+          catalog: DiscoveryCatalog(),
+          advertisements: () async {
+            scans++;
+            return [available];
+          },
+          verify: (peer) async => peer,
+        );
+        await tester.pumpWidget(
+          MaterialApp(
+            home: ControlShell(api: api, discovery: discovery),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 10));
+        expect(api.connectionWanted, false);
+        expect(api.connectionMethod, method);
+        expect(scans, 0);
+        expect(api.selectedStatusReads, 0);
+        expect(api.writes, 0);
+        expect(find.byTooltip('Connect'), findsOneWidget);
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump();
+      },
+    );
+  }
 
   testWidgets(
     'Disconnect during startup scan cannot be undone by its late result',

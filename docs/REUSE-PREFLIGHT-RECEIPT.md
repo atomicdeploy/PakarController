@@ -7571,3 +7571,41 @@ CDR ANSWERED/43 connected seconds and zero remaining active channels. DTMF3 was
 received as not_tested, not physical/client acceptance. No redial or reschedule
 was inferred. Both USB and verified TLS wireless ADB remained listed after the
 call; actual USB removal is not yet observed. No production board mutation.
+
+## Tablet diagnostics and startup intent recovery
+
+Actual PCController `mobile/lib/unified/transport.dart` was reread through EOF
+at revision b0111ae0 and SHA5263044d7abac3865b6dcc8887fa6c11ad9a1c89b8c4e2374ffcd3bcc72014c5.
+Reuse its single-flight refresh, generation-bound result installation and explicit
+enabled/disconnect discipline. Pixel diagnostics now has a read-only Refresh state
+action, reports failed reads, accepts its first delayed verified owner and never
+adopts an existing owner's replacement or replays a pixel command automatically.
+
+Focused workspace tests exposed a real startup regression: automatic discovery
+overrode saved explicit Disconnect for both network and USB. Restore that intent
+unconditionally, retaining default-on discovery for absent/true intent. Three
+transport-specific startup regressions accompany the existing persistence tests;
+first-use auto-discovery remains covered instead of labelling saved Disconnect
+as incidental. The initial diagnostic analyzer run caught two missing braces;
+they were fixed before the passing analyzer/15 diagnostic cases. Verification
+results and package identity are reported separately in issue2/10.
+
+No authorized ADB device was visible on this PC, and ASUS localhost8022 refused
+three bounded SSH attempts. Office management is reachable but has no enrolled
+Android client; its deployed flat operator path was verified from systemd before
+the read-only inventory. No service, router, shared ADB-server or board settings
+were changed. Tablet installation/runtime, radio/long-soak and physical commands
+remain pending access; do not replace those gates with source/widget/APK proof.
+
+Final bounded verification: analyzer clean; workspace14, automatic-startup7,
+command-admission real-loopback3, diagnostic transport6 (live-board probe skipped)
+and diagnostic UI15 passed. Canonical maintenance APK0.2.8+20 built in52.8s with
+BoardProductionHold. apksigner verified debug-preview signer
+cb2620ad0c885fffd5e1ee7df0bbef8ff3262729e4e880888e9001fbbfb83e26;
+aapt verified package ir.digitalogic.pakar.pakarcontroller/code20/minSDK24.
+APK60689161bytes/SHA2565148fcc293e0e30baf63c24083aefe917ae20c6c9385f72fd71aa4b3d0d20f3e
+is published in the existing office static Android candidate store under that
+content hash. Server-side full hash/size and HTTPS200/Content-Length/range support
+verified. No automatic-update feed changed and no installation requested through
+the management service. This is a downloadable candidate, NOT installed-tablet,
+production-signing, touch/radio, physical LED or zero-bug acceptance.

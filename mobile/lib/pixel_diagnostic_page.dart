@@ -51,6 +51,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   Timer? authorityExpiry;
   void Function()? releaseUsbPixels;
   bool working = false;
+  bool refreshing = false;
   String message =
       'Choose a position and colour, then Show. Nothing is sent automatically.';
   String? applied;
@@ -106,6 +107,23 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
 
   void observe(DeviceStatus status) {
     if (!mounted) return;
+    // Adapt PeerSession's generation-fenced refresh: the first full, verified
+    // observation may arrive after this route opens. It binds an empty owner,
+    // never replaces an existing board/boot or replays a diagnostic command.
+    final fresh = widget.api.freshStatus;
+    if (board == null &&
+        boot == null &&
+        revision == widget.api.connectionRevision &&
+        fresh != null &&
+        fresh.json['board_id'] is String &&
+        fresh.json['boot_id'] is String &&
+        (fresh.json['board_id'] as String).isNotEmpty &&
+        (fresh.json['boot_id'] as String).isNotEmpty &&
+        fresh.json['board_id'] == status.json['board_id'] &&
+        fresh.json['boot_id'] == status.json['boot_id']) {
+      board = fresh.json['board_id'];
+      boot = fresh.json['boot_id'];
+    }
     if (revision != widget.api.connectionRevision ||
         status.json['board_id'] != board ||
         status.json['boot_id'] != boot) {
@@ -166,6 +184,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   bool get canUseCurrentConnection {
     final current = widget.api.freshStatus;
     return !working &&
+        !refreshing &&
         widget.api.connectionWanted &&
         widget.api.appForeground &&
         current?.json['board_id'] is String &&
@@ -191,6 +210,47 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
     observe(current);
   }
 
+  Future<void> refreshState() async {
+    if (refreshing ||
+        working ||
+        !widget.api.connectionWanted ||
+        !widget.api.appForeground) {
+      return;
+    }
+    final owner = widget.api.connectionRevision;
+    setState(() => refreshing = true);
+    try {
+      // Join the API's bounded, coalesced read; this is not a command retry,
+      // discovery, firmware job or permission to adopt a replacement peer.
+      final actual = await widget.api.status();
+      if (!mounted ||
+          owner != widget.api.connectionRevision ||
+          !widget.api.connectionWanted ||
+          !widget.api.appForeground) {
+        return;
+      }
+      observe(actual);
+      widget.onObserved?.call(actual);
+      setState(
+        () => message = authorized
+            ? 'Fresh board state received. No pixel command was sent.'
+            : blockedReason ?? 'Pixel testing is unavailable.',
+      );
+    } catch (error) {
+      if (mounted &&
+          owner == widget.api.connectionRevision &&
+          widget.api.connectionWanted &&
+          widget.api.appForeground) {
+        setState(
+          () => message =
+              'State refresh failed: $error No pixel command was sent.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => refreshing = false);
+    }
+  }
+
   @override
   void dispose() {
     releaseUsbPixels?.call();
@@ -207,10 +267,12 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   }
 
   Future<void> send(PixelProbe next, {bool off = false}) async {
-    if (working || !authorized) {
+    if (working || refreshing || !authorized) {
       setState(
         () => message = working
             ? 'A pixel command is still pending. Nothing else was sent.'
+            : refreshing
+            ? 'State refresh is pending. No pixel command was sent.'
             : blockedReason ?? 'Pixel testing is unavailable.',
       );
       return;
@@ -369,7 +431,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = authorized && !working;
+    final enabled = authorized && !working && !refreshing;
     final colours = Theme.of(context).colorScheme;
     final map = widget.mapping?.call();
     final group = probe.first ~/ 6 + 1;
@@ -571,7 +633,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
             // Fixed height: pending/confirmed/error never shifts the controls.
             SizedBox(
               height: 4,
-              child: working
+              child: working || refreshing
                   ? const LinearProgressIndicator()
                   : const SizedBox(),
             ),
@@ -581,6 +643,18 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
                 blockedReason ?? 'Pixel testing is unavailable.',
                 style: TextStyle(color: colours.error),
               ),
+            TextButton.icon(
+              key: const Key('pixel-refresh-state'),
+              onPressed:
+                  !working &&
+                      !refreshing &&
+                      widget.api.connectionWanted &&
+                      widget.api.appForeground
+                  ? refreshState
+                  : null,
+              icon: const Icon(Icons.refresh),
+              label: Text(refreshing ? 'Refreshing state…' : 'Refresh state'),
+            ),
             if (canUseCurrentConnection)
               TextButton.icon(
                 key: const Key('pixel-use-current-connection'),

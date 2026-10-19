@@ -58,6 +58,19 @@ class DiagnosticApi extends PakarApi {
   final sent = <(PixelProbe, bool)>[];
   Completer<void>? held;
   bool fail = false;
+  int reads = 0;
+  bool failRead = false;
+  Completer<DeviceStatus>? heldRead;
+  @override
+  Future<DeviceStatus> status() async {
+    ++reads;
+    if (failRead) throw TimeoutException('fixture read timed out');
+    final value = await (heldRead?.future ?? Future.value(diagnosticFixture()));
+    current = value;
+    observedAt = DateTime.now();
+    return value;
+  }
+
   @override
   Future<DeviceStatus> pixelDiagnostic(
     PixelProbe probe, {
@@ -97,6 +110,137 @@ Widget diagnosticPage(
 }
 
 void main() {
+  testWidgets(
+    'Diagnostics binds only its first fresh owner without sending a frame',
+    (tester) async {
+      final api = DiagnosticApi();
+      addTearDown(api.close);
+      await tester.pumpWidget(diagnosticPage(api, observed: () => null));
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('pixel-show')))
+            .onPressed,
+        isNull,
+      );
+      api.pushes.add(diagnosticFixture());
+      await tester.pump();
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('pixel-show')))
+            .onPressed,
+        isNotNull,
+      );
+      api.pushes.add(
+        DeviceStatus({...diagnosticFixture().json, 'boot_id': 'b' * 32}),
+      );
+      await tester.pump();
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('pixel-show')))
+            .onPressed,
+        isNull,
+      );
+      expect(
+        find.byKey(const Key('pixel-use-current-connection')),
+        findsOneWidget,
+      );
+      expect(api.sent, isEmpty);
+      expect(api.reads, 0);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+  testWidgets(
+    'Expired diagnostics can refresh, expose failure, and retry only the read',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final api = DiagnosticApi();
+      addTearDown(api.close);
+      final workspace = PixelDiagnosticWorkspace()..position = '480';
+      await tester.pumpWidget(diagnosticPage(api, workspace: workspace));
+      api.observedAt = DateTime.now().subtract(const Duration(seconds: 6));
+      await tester.pump(const Duration(seconds: 6));
+      final refresh = find.byKey(const Key('pixel-refresh-state'));
+      await tester.ensureVisible(refresh);
+      api.failRead = true;
+      await tester.tap(refresh);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('State refresh failed:'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('pixel-show')))
+            .onPressed,
+        isNull,
+      );
+      api.failRead = false;
+      await tester.tap(refresh);
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('pixel-show')))
+            .onPressed,
+        isNotNull,
+      );
+      expect(
+        find.text('Fresh board state received. No pixel command was sent.'),
+        findsOneWidget,
+      );
+      expect(workspace.position, '480');
+      expect(api.reads, 2);
+      expect(api.sent, isEmpty);
+      await tester.pumpWidget(const SizedBox());
+      workspace.dispose();
+    },
+  );
+  testWidgets('Disconnect fences a pending diagnostic refresh without replay', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final api = DiagnosticApi()..heldRead = Completer<DeviceStatus>();
+    addTearDown(api.close);
+    var parentUpdates = 0;
+    api.current = diagnosticFixture();
+    api.observedAt = DateTime.now();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PixelDiagnosticPage(
+            api: api,
+            observed: diagnosticFixture,
+            busyChanged: (_) {},
+            onObserved: (_) => parentUpdates++,
+          ),
+        ),
+      ),
+    );
+    final refresh = find.byKey(const Key('pixel-refresh-state'));
+    final staleShow = tester
+        .widget<FilledButton>(find.byKey(const Key('pixel-show')))
+        .onPressed!;
+    await tester.ensureVisible(refresh);
+    await tester.tap(refresh);
+    staleShow(); // A queued callback from the pre-refresh frame is fenced too.
+    await tester.pump();
+    expect(api.reads, 1);
+    expect(tester.widget<TextButton>(refresh).onPressed, isNull);
+    api.disconnect();
+    api.heldRead!.complete(diagnosticFixture());
+    await tester.pumpAndSettle();
+    expect(parentUpdates, 0);
+    expect(api.sent, isEmpty);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('pixel-show')))
+          .onPressed,
+      isNull,
+    );
+    await tester.pumpWidget(const SizedBox());
+  });
   testWidgets(
     'Unchanged fresh status restores diagnostics after expiry even when parent observation stays absent',
     (tester) async {
