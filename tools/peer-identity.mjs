@@ -2,6 +2,7 @@
 // All tools share one process session and the normal unversioned device routes.
 import {readFileSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
+import {isIP} from 'node:net';
 import os from 'node:os';
 export const toolRelease=Object.freeze(JSON.parse(readFileSync(new URL('../interfaces/client-release.json',import.meta.url),'utf8')));
 export const toolPolicy=Object.freeze(JSON.parse(readFileSync(new URL('../interfaces/peer-policy.json',import.meta.url),'utf8')));
@@ -47,4 +48,18 @@ export function assertToolPeerCompatible(peer,{enforce=toolVersionEnforced()}={}
     (peer?.compatibility?.enforced!==false&&peer?.compatibility?.minimum_app!==undefined&&!peerVersionAllowed(toolRelease.version,peer.compatibility.minimum_app,peer.compatibility.maximum_app)))
     throw Error('Unsupported board/application version; update the incompatible peer before connecting. No command sent.');
   return peer;
+}
+// Shared unchanged updater/download identity admission. Release policy above
+// remains separate; neither transport chooses an API generation or a downgrade.
+export function boardPeer(status,remote,previous=null,{allowReboot=false,allowAddressChange=false}={}) {
+  assertToolPeerCompatible(status);
+  if(status?.http_peer_fencing!==true || !/^[a-z0-9_-]{1,64}$/.test(status.board_id??'') ||
+    !/^[a-f0-9]{32}$/.test(status.boot_id??'') || /^0{32}$/.test(status.boot_id) ||
+    typeof status.hostname!=='string' || status.capabilities?.hostname!==status.hostname ||
+    !status.capabilities?.acknowledged_features?.includes('network') || isIP(remote)!==4) {
+    throw Error('Compatible board/boot identity is unavailable');
+  }
+  if(previous && (previous.board!==status.board_id || (previous.address!==remote && !(allowReboot&&allowAddressChange)) ||
+    (!allowReboot && previous.boot!==status.boot_id))) throw Error('Device identity changed; nothing replayed');
+  return {board:status.board_id,boot:status.boot_id,address:remote,hostname:status.hostname};
 }

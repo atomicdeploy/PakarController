@@ -1,5 +1,21 @@
 # PakarController comparison receipts
 
+## PU850 verified backup-before-update actual consumer
+
+2026-10-19: actual Node/C# backup-before-write sequencing imported into existing
+updater/download owners. Explicit --backup/--resume-backup retain no-contact plan,
+first-read same-peer pin, old-image hash/size match and fresh auth/job/boot/latch
+checks before local upload/remote fetch/apply. No overwrite, retry, rollback,
+credential forwarding or supported-release downgrade. Shared unchanged peer
+helper moved into existing identity owner to resolve a real CLI module cycle.
+
+Passed19 actual-source/filesystem scenarios plus real Node/guarded PowerShell
+plan subprocesses; existing updater/download/peer and PS fixtures pass. Covers
+local/remote/ready-resume, partial/full backup, identity/release/hash/auth/job/
+deadline/destination failures,0writes on failed backup and preserved data.
+No live OTA/backup/restore or SDK/runtime/physical acceptance. Fresh PU109/109,
+96gap files; all314/4697compared,4383other-donor pending,253gaps remain open.
+
 ## PU850 complete fresh EOF/function inventory, not full parity
 
 2026-10-19: fresh109/109 donor files fully read and section/function/job-bound at

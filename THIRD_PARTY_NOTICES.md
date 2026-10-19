@@ -73,6 +73,11 @@ PakarController is integration code built from earlier AtomicDeploy projects.
 - `tools/script-console.mjs` also adapts PU850 C# `ConsoleUi`'s independent
   stdout/stderr terminal-color policy at that same revision. Existing Node
   rendering/sanitation remains the owner; no .NET/Chalk runtime is added.
+- Optional verified backup-before-update sequencing in `tools/update-firmware.mjs`
+  adapts actual Node `performUpload` and C# `UploaderApp.RunAsync` /
+  `BackupInstalledFirmwareAsync` at the same PU850 revision. Existing downloader,
+  shared peer identity, strict release/auth admission and one-write updater stay
+  authoritative; backup failures never authorize update or automatic rollback.
 - FastLED, Arduino ESP8266 core, MiniCore, WebSockets 2.7.2 by Markus Sattler,
   PubSubClient 2.8.0 by Nick O'Leary, xcap 0.9.8, eframe/egui, reqwest, and serde are
   build/runtime dependencies under their

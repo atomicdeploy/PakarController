@@ -115,7 +115,20 @@ gzip renamed as `.bin` obscures image identity; bypass switches and first/latest
 artifact guesses weaken update integrity. PU UART/business payloads and C#/C++/Go
 product-client builds are not substitutes for Pakar's existing Rust/Flutter clients.
 
-Useful watch/resume/export/pre-update-backup flows, full donor test-case parity,
+Explicit pre-update backup is now available through the existing updater:
+`pakar update --image ESP_BIN --backup NEW_BACKUP_PATH` only plans by default.
+An operator-authorized `--run` first verifies/publishes the running image backup,
+then rechecks the same admitted board/boot, auth and existing job before the one
+selected local upload or remote stage/apply. `--resume-backup` explicitly permits
+an existing `.part`; an existing destination is never replaced. Backup failure
+permits no update, and a later admission failure retains the verified backup.
+The receipt separates backup timing/hash from update/new-boot/full-SHA proof.
+Supported-release admission is unchanged; this is no authority to bypass an
+incompatible installed release or run a deployment during a source-only audit.
+
+All109 PU files now have fresh EOF/section review in PU850-PARITY; this table's
+28 tooling files are a subset, not a whole-project parity claim.
+Useful stable watcher/coalescing/graceful-stop/progress, full donor test-case parity,
 complete Unix native distributables, actual OS CI execution,
 bot/runner/environment activation and live firmware acceptance remain open.
 They are recorded as gaps, not declared unnecessary or passed by fixtures.

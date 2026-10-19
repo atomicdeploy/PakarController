@@ -4,9 +4,10 @@
 import {open,lstat,link,unlink} from 'node:fs/promises';
 import {resolve,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
+import {isIP} from 'node:net';
 import {pathToFileURL} from 'node:url';
 import {deviceOrigin,deviceRequest} from './check-ethernet-live.mjs';
-import {boardPeer} from './update-firmware.mjs';
+import {boardPeer} from './peer-identity.mjs';
 export const maxDownloadSize=64*1024*1024;
 const md5Pattern=/^[a-f0-9]{32}$/i;
 export function parseContentMD5(value) {
@@ -49,7 +50,7 @@ async function digest(file,size) {
   return {md5:md5.digest('hex'),sha256:sha.digest('hex')};
 }
 export async function downloadFirmware({origin='http://ledboard.local',output,resume=false,run=false,timeoutSeconds=180,
-  environment=process.env,request=deviceRequest,now=Date.now,signal}={}) {
+  environment=process.env,request=deviceRequest,now=Date.now,signal,expectedPeer=null}={}) {
   const url=deviceOrigin(origin);
   if(typeof output!=='string'||!output.trim())throw Error('An explicit output path is required');
   if(!Number.isInteger(timeoutSeconds)||timeoutSeconds<10||timeoutSeconds>600)throw Error('Timeout must be 10..600 seconds');
@@ -64,7 +65,12 @@ export async function downloadFirmware({origin='http://ledboard.local',output,re
   if((user===undefined)!==(password===undefined))throw Error('Set both PAKAR_DOWNLOAD_USERNAME/PASSWORD or neither');
   if(user!==undefined&&(!/^[A-Za-z0-9._-]{1,32}$/.test(user)||!/^[\x20-\x7e]{8,64}$/.test(password)))throw Error('Invalid download credentials');
   const auth=user===undefined?{}:{Authorization:'Basic '+Buffer.from(user+':'+password).toString('base64')};
-  const deadline=now()+timeoutSeconds*1000;let peer;
+  // An enclosing update may already own a peer. Pin even the first backup
+  // status read to that address/board/boot; discovery cannot select another.
+  if(expectedPeer!==null&&(!/^[a-z0-9_-]{1,64}$/.test(expectedPeer.board??'')||
+    !/^[a-f0-9]{32}$/.test(expectedPeer.boot??'')||/^0{32}$/.test(expectedPeer.boot)||
+    isIP(expectedPeer.address??'')!==4))throw Error('Invalid enclosing backup peer');
+  const deadline=now()+timeoutSeconds*1000;let peer=expectedPeer;
   const check=()=>{if(signal?.aborted)throw Error('Download cancelled; partial file retained');if(now()>=deadline)throw Error('Download deadline; partial file retained');};
   const read=async(path,options={})=>{
     check();const r=await request(url,path,{...options,expectedAddress:peer?.address,
@@ -78,7 +84,7 @@ export async function downloadFirmware({origin='http://ledboard.local',output,re
     return r;
   };
   const json=async(path)=>{const r=await read(path);let value;try{value=JSON.parse(r.body)}catch{throw Error('Invalid download metadata JSON')};return {value,remote:r.remote};};
-  const first=await json('/api/status');peer=boardPeer(first.value,first.remote);
+  const first=await json('/api/status');peer=boardPeer(first.value,first.remote,expectedPeer);
   const info=(await json('/update/info')).value;
   if(info.product!=='PakarController'||!md5Pattern.test(info.hash??'')||!Number.isSafeInteger(info.size)||info.size<24||info.size>maxDownloadSize)
     throw Error('Invalid running firmware metadata');

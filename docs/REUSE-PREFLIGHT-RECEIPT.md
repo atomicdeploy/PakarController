@@ -1,5 +1,45 @@
 # Donor-first preflight receipt
 
+## PU850 actual verified backup before update
+
+2026-10-19 afterf6e0bb3: consulted pu-client-download/remote-ota and actual Node
+performUpload, C# UploaderApp.RunAsync/BackupInstalledFirmwareAsync, Go
+uploadFirmware and C++ upload_current_build at unchanged431104072952f694a35b3a83c19f13fbb098ca5b.
+Imported conditional verified-backup-before-write sequencing through existing
+updater/downloader owners, not another transfer stack. Added --backup NEW_PATH,
+explicit --resume-backup, no-contact plan and exact receipts/timings. Enclosing
+peer pins FIRST backup read; output MD5/size/board/boot matches admitted metadata.
+Fresh auth/job/boot/latch admission precedes local upload or remote fetch/apply.
+No optional environment credentials enter this still-auth-off updater. Default
+supported-release rules unchanged; explicit old-release fixture permits0writes.
+
+Focused19-scenario actual-source/filesystem suite passes: full/multi-range,
+partial/complete explicit resume, local update, remote stage/apply and existing
+ready-job resume; bad section/peer/final boot/metadata/auth/job/post-backup peer,
+deadline, existing destination/partial and destination race. Failed backups
+permit no fetch/apply/upload and preserve available data; later failures retain
+verified backup. Actual Node CLI AND guarded PowerShell plan subprocesses pass
+option propagation and0device contact, without creating a backup file.
+Existing updater/download/peer-policy and PowerShell syntax/runner fixtures pass.
+
+The actual CLI fixture initially failed with unsettled top-level-await exit13:
+dynamic backup import reached updater's peer helper while updater entrypoint
+was awaiting that same import. Reconsulted peer-identity/actual donor sequencing;
+moved the EXACT unchanged boardPeer body into existing peer-identity and
+re-exported it from updater. Direct API and CLI regressions now pass; no release
+expression, identity check or API generation adapter was added/weakened.
+Comparison guard caught one compact historical JSON reference whose old hash
+was skipped by whitespace-sensitive rebinding; inspected exact checkWebSocket
+anchor and rebound its current hash rather than bypassing the guard.
+
+Existing evidence/ledger/receipts/index updated with pu-backup-update required
+Node/C# reviews and fixture/target hashes. Fresh109/109 PU remains complete,
+96gap files/0unread; all314/4697comparisons,4383other-donor pending,253gaps.
+Stable watch/coalescing/graceful stop/skip policy/progress and remaining generic
+runtime/platform/storage/gzip/negative-case gaps remain open. No live backup,
+firmware/server deployment, SDK/donor build, reboot/network/settings/LED/audio/
+PBX/relay/rainbow operation, extra runtime/cache/worktree or policy bypass.
+
 ## PU850 fresh complete-tree coverage and final tooling reread
 
 2026-10-19 after5eb45d1: final28 earlier tooling/CI/dependency/docs certificates

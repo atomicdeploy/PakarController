@@ -26,12 +26,13 @@
     "verdict": "parity-gap",
     "preserved": [
       "Actual single_header/parse_header_md5/collect_download_hashes implementation adapted for critical duplicate rejection and canonical full Digest-MD5; range Content-MD5 remains section integrity.",
-      "Complete section/function decisions and concrete unsafe legacy defects recorded in the C++ transfer and UART section of docs/PU850-PARITY.md."
+      "Complete section/function decisions and concrete unsafe legacy defects recorded in the C++ transfer and UART section of docs/PU850-PARITY.md.",
+      "Actual Node performUpload and C# BackupInstalledFirmwareAsync backup-before-write sequencing now serves existing updater with explicit --backup/--resume-backup, first-read expected-peer fencing, metadata match and fresh auth/job/boot/latch admission before local upload or remote stage/apply."
     ],
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
+        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
         "anchor": "export function parseDigestMD5("
       },
       {
@@ -41,8 +42,23 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C++ transfer and UART, 2026-10-19"
+      },
+      {
+        "path": "tools/update-firmware.mjs",
+        "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
+        "anchor": "export async function updateFirmware("
+      },
+      {
+        "path": "tools/peer-identity.mjs",
+        "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+        "anchor": "export function boardPeer("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+        "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
       }
     ],
     "proof": [
@@ -50,6 +66,11 @@
         "path": "tests/download_firmware_test.mjs",
         "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
         "anchor": "assert.equal(observed.distinctHeaders.etag.length,2);"
+      },
+      {
+        "path": "tests/update_backup_test.mjs",
+        "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+        "anchor": "Backup must precede even remote staging"
       }
     ],
     "omissions": [
@@ -64,9 +85,9 @@
         "reason": "Mandatory integrity, explicit resume, exclusive stable partial descriptor and no-replace atomic publication retain failures and existing backups; no ambiguous retry or no-hash success."
       },
       {
-        "code": "Multipart streaming/progress/watch/coalescing/backup-before-upload/IPv6/native console and complete gzip corpus",
+        "code": "Multipart streaming/progress/watch/coalescing/IPv6/native console and complete gzip corpus",
         "disposition": "pending",
-        "reason": "Useful generic behavior remains pending integration and actual filesystem/transport/platform acceptance; no donor/native build or live operation performed."
+        "reason": "Actual verified pre-update backup and ranged/resumable export now implemented through existing owners with same-peer/release/auth/job/boot/latch and no-overwrite checks. Watch/coalescing/graceful stop/skip-identical/progress, remaining gzip consumer/platform/filesystem/transport and exact unported negative scenarios remain pending as applicable. No donor tests, SDK builds, live update/restore or physical proof claimed."
       }
     ],
     "remaining": [
@@ -115,7 +136,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C++ transfer and UART, 2026-10-19"
       }
     ],
@@ -185,7 +206,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C++ transfer and UART, 2026-10-19"
       }
     ],
@@ -253,7 +274,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -306,12 +327,12 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
+        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -375,7 +396,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -428,12 +449,12 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
+        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -482,7 +503,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -523,18 +544,34 @@
     "verdict": "parity-gap",
     "preserved": [
       "Entire file/sections read through EOF: RunAsync/DownloadOnceAsync/Finish/ReportFailure every retry/hash/commit/error branch",
-      "Exact function dispositions are in the C# manifest/deflate slice of docs/PU850-PARITY.md."
+      "Exact function dispositions are in the C# manifest/deflate slice of docs/PU850-PARITY.md.",
+      "Actual Node performUpload and C# BackupInstalledFirmwareAsync backup-before-write sequencing now serves existing updater with explicit --backup/--resume-backup, first-read expected-peer fencing, metadata match and fresh auth/job/boot/latch admission before local upload or remote stage/apply."
     ],
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
+        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
+      },
+      {
+        "path": "tools/update-firmware.mjs",
+        "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
+        "anchor": "export async function updateFirmware("
+      },
+      {
+        "path": "tools/peer-identity.mjs",
+        "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+        "anchor": "export function boardPeer("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+        "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
       }
     ],
     "proof": [
@@ -542,17 +579,22 @@
         "path": "tests/download_firmware_test.mjs",
         "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
         "anchor": "for(const scenario of ["
+      },
+      {
+        "path": "tests/update_backup_test.mjs",
+        "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+        "anchor": "Backup must precede even remote staging"
       }
     ],
     "omissions": [
       {
-        "code": "DownloadOnceAsync progress/error categories and verified backup-before-upload consumer",
+        "code": "DownloadOnceAsync progress/error categories and remaining transport/platform acceptance",
         "disposition": "pending",
-        "reason": "Current real backup tool imports verification flow and preserves existing backups. C# optional/no-hash success/replace-existing/cached-address retry replaced. Progress categories and applicable backup-before-upload integration remain pending."
+        "reason": "Actual verified pre-update backup and ranged/resumable export now implemented through existing owners with same-peer/release/auth/job/boot/latch and no-overwrite checks. Watch/coalescing/graceful stop/skip-identical/progress, remaining gzip consumer/platform/filesystem/transport and exact unported negative scenarios remain pending as applicable. No donor tests, SDK builds, live update/restore or physical proof claimed."
       }
     ],
     "remaining": [
-      "Current real backup tool imports verification flow and preserves existing backups. C# optional/no-hash success/replace-existing/cached-address retry replaced. Progress categories and applicable backup-before-upload integration remain pending."
+      "Explicit verified backup-before-update and resumable export now imported. Remaining stable watcher/coalescing/graceful stop/skip-identical/progress, gzip consumer/platform/filesystem/transport and unported negative scenarios need applicable implementation/acceptance; no source fixture closes live/physical/restore gates."
     ],
     "source_blob": {
       "repository": "atomicdeploy/pu850-esp",
@@ -598,12 +640,12 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
+        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -671,12 +713,12 @@
     "targets": [
       {
         "path": "tools/update-firmware.mjs",
-        "sha256": "7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874",
+        "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
         "anchor": "export async function updateFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -719,30 +761,47 @@
     "verdict": "parity-gap",
     "preserved": [
       "Entire file/sections read through EOF: RunAsync all preflight/manifest/hash/backup/skip/upload/retry/verify branches; VerifyAfterRebootAsync/WriteUsefulInfo/BackupInstalledFirmwareAsync; SynchronousProgress.Report and UploaderRuntime",
-      "Exact function dispositions are in the C# manifest/deflate slice of docs/PU850-PARITY.md."
+      "Exact function dispositions are in the C# manifest/deflate slice of docs/PU850-PARITY.md.",
+      "Actual Node performUpload and C# BackupInstalledFirmwareAsync backup-before-write sequencing now serves existing updater with explicit --backup/--resume-backup, first-read expected-peer fencing, metadata match and fresh auth/job/boot/latch admission before local upload or remote stage/apply."
     ],
     "targets": [
       {
         "path": "tools/update-firmware.mjs",
-        "sha256": "7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874",
+        "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
         "anchor": "export async function updateFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
+      },
+      {
+        "path": "tools/peer-identity.mjs",
+        "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+        "anchor": "export function boardPeer("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+        "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
       }
     ],
-    "proof": [],
+    "proof": [
+      {
+        "path": "tests/update_backup_test.mjs",
+        "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+        "anchor": "Backup must precede even remote staging"
+      }
+    ],
     "omissions": [
       {
-        "code": "BackupInstalledFirmwareAsync, SkipIdentical policy and WriteUsefulInfo/progress consumer",
+        "code": "SkipIdentical policy and WriteUsefulInfo/progress consumer",
         "disposition": "pending",
-        "reason": "Actual paired-manifest validator now used in packaging; current updater refuses unknown preflight and same-boot-only proof. Applicable verified backup-before-upload/skip policy/progress remain pending; NoVerify/dial reupload/ok!-only is replaced."
+        "reason": "Actual verified pre-update backup and ranged/resumable export now implemented through existing owners with same-peer/release/auth/job/boot/latch and no-overwrite checks. Watch/coalescing/graceful stop/skip-identical/progress, remaining gzip consumer/platform/filesystem/transport and exact unported negative scenarios remain pending as applicable. No donor tests, SDK builds, live update/restore or physical proof claimed."
       }
     ],
     "remaining": [
-      "Actual paired-manifest validator now used in packaging; current updater refuses unknown preflight and same-boot-only proof. Applicable verified backup-before-upload/skip policy/progress remain pending; NoVerify/dial reupload/ok!-only is replaced."
+      "Explicit verified backup-before-update and resumable export now imported. Remaining stable watcher/coalescing/graceful stop/skip-identical/progress, gzip consumer/platform/filesystem/transport and unported negative scenarios need applicable implementation/acceptance; no source fixture closes live/physical/restore gates."
     ],
     "source_blob": {
       "repository": "atomicdeploy/pu850-esp",
@@ -789,7 +848,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -857,12 +916,12 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
+        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -948,7 +1007,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1001,7 +1060,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1046,7 +1105,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1086,7 +1145,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1128,7 +1187,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1170,7 +1229,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1217,7 +1276,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1270,7 +1329,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
       }
     ],
@@ -1323,7 +1382,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1365,7 +1424,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1417,7 +1476,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1459,7 +1518,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1492,7 +1551,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1540,7 +1599,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1586,7 +1645,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1629,12 +1688,12 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
+        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1675,12 +1734,12 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
+        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1727,7 +1786,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1781,12 +1840,12 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
+        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1843,7 +1902,8 @@
     "verdict": "parity-gap",
     "preserved": [
       "Complete EOF read: every test function/helper and all HTTP branches",
-      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md.",
+      "Actual Node performUpload and C# BackupInstalledFirmwareAsync backup-before-write sequencing now serves existing updater with explicit --backup/--resume-backup, first-read expected-peer fencing, metadata match and fresh auth/job/boot/latch admission before local upload or remote stage/apply."
     ],
     "targets": [
       {
@@ -1853,8 +1913,23 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
+      },
+      {
+        "path": "tools/update-firmware.mjs",
+        "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
+        "anchor": "export async function updateFirmware("
+      },
+      {
+        "path": "tools/peer-identity.mjs",
+        "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+        "anchor": "export function boardPeer("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+        "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
       }
     ],
     "proof": [
@@ -1862,13 +1937,18 @@
         "path": "tests/download_firmware_test.mjs",
         "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
         "anchor": "for(const scenario of ["
+      },
+      {
+        "path": "tests/update_backup_test.mjs",
+        "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+        "anchor": "Backup must precede even remote staging"
       }
     ],
     "omissions": [
       {
-        "code": "Backup-before-upload/raw skip/fallback-specific applicable fixtures",
+        "code": "Raw skip/fallback-specific and remaining applicable fixtures",
         "disposition": "pending",
-        "reason": "Actual byte verification, exact resume and mismatch/atomic preservation scenarios ported into shipped Node fixture plus multi-range/peer/release/cancel/time/stale partial/no-overwrite cases. Remaining uploader/gzip behaviors await real implementation; donor tests are not claimed executed."
+        "reason": "Actual verified pre-update backup and ranged/resumable export now implemented through existing owners with same-peer/release/auth/job/boot/latch and no-overwrite checks. Watch/coalescing/graceful stop/skip-identical/progress, remaining gzip consumer/platform/filesystem/transport and exact unported negative scenarios remain pending as applicable. No donor tests, SDK builds, live update/restore or physical proof claimed."
       }
     ],
     "remaining": [
@@ -1913,12 +1993,12 @@
     "targets": [
       {
         "path": "tools/download-firmware.mjs",
-        "sha256": "7c3c38050d310db4e36803934ade29a09cb49e8331764ec68aecc725c903a446",
+        "sha256": "42404348293a568feb7b0f86ca6c3c916a984ca37ab1fc9ea9f72340fb49349f",
         "anchor": "export async function downloadFirmware("
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -1982,7 +2062,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -2059,7 +2139,8 @@
     "verdict": "parity-gap",
     "preserved": [
       "Complete EOF read: all imports/constants/types/options and every main/CLI/endpoint/HTTP/upload/manifest/hash/gzip/multipart/reboot/info/console/progress function",
-      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md."
+      "Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md.",
+      "Actual Node performUpload and C# BackupInstalledFirmwareAsync backup-before-write sequencing now serves existing updater with explicit --backup/--resume-backup, first-read expected-peer fencing, metadata match and fresh auth/job/boot/latch admission before local upload or remote stage/apply."
     ],
     "targets": [
       {
@@ -2069,25 +2150,41 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       },
       {
         "path": "tools/update-firmware.mjs",
-        "sha256": "7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874",
+        "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
         "anchor": "export async function updateFirmware("
+      },
+      {
+        "path": "tools/peer-identity.mjs",
+        "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+        "anchor": "export function boardPeer("
+      },
+      {
+        "path": "docs/PU850-PARITY.md",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+        "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
       }
     ],
-    "proof": [],
+    "proof": [
+      {
+        "path": "tests/update_backup_test.mjs",
+        "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+        "anchor": "Backup must precede even remote staging"
+      }
+    ],
     "omissions": [
       {
-        "code": "Applicable generic gzip/paired manifests/backup-before-upload/watch/progress refinements",
+        "code": "Applicable generic gzip/paired manifests/watch/progress refinements",
         "disposition": "pending",
-        "reason": "Current dispatcher/raw-S3 validation/pinned no-retry upload/new-boot/full-SHA verification remain the owners; downloaded actual code is integrated. Donor continues on failed preflight and accepts same-boot hash, so those are replaced. Generic gzip/manifest/backup/watch features remain pending, not business exclusions."
+        "reason": "Actual verified pre-update backup and ranged/resumable export now implemented through existing owners with same-peer/release/auth/job/boot/latch and no-overwrite checks. Watch/coalescing/graceful stop/skip-identical/progress, remaining gzip consumer/platform/filesystem/transport and exact unported negative scenarios remain pending as applicable. No donor tests, SDK builds, live update/restore or physical proof claimed."
       }
     ],
     "remaining": [
-      "Current dispatcher/raw-S3 validation/pinned no-retry upload/new-boot/full-SHA verification remain the owners; downloaded actual code is integrated. Donor continues on failed preflight and accepts same-boot hash, so those are replaced. Generic gzip/manifest/backup/watch features remain pending, not business exclusions."
+      "Explicit verified backup-before-update and resumable export now imported. Remaining stable watcher/coalescing/graceful stop/skip-identical/progress, gzip consumer/platform/filesystem/transport and unported negative scenarios need applicable implementation/acceptance; no source fixture closes live/physical/restore gates."
     ],
     "source_blob": {
       "repository": "atomicdeploy/pu850-esp",
@@ -2130,7 +2227,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
       }
     ],
@@ -2183,7 +2280,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2220,7 +2317,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2254,7 +2351,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2289,7 +2386,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2346,7 +2443,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2391,7 +2488,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2428,7 +2525,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2465,7 +2562,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2500,7 +2597,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2537,7 +2634,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2581,7 +2678,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2615,7 +2712,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2649,7 +2746,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2690,7 +2787,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2737,7 +2834,7 @@
       },
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2779,7 +2876,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2814,7 +2911,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2856,7 +2953,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2897,7 +2994,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -2940,7 +3037,7 @@
     "targets": [
       {
         "path": "docs/PU850-PARITY.md",
-        "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+        "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
         "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
       }
     ],
@@ -5521,7 +5618,18 @@
       "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
       "source_line_count": 568,
       "section_review_date": "2026-10-19",
-      "reviewed_sections": ["All14 tests, all fixture/server/subprocess/cleanup/multipart/hash helpers and every callback/error/timeout/assertion","md5","fixture","readBody","parseMultipart","infoResponse","firmwareHeaders","startServer","runCli","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
+      "reviewed_sections": [
+        "All14 tests, all fixture/server/subprocess/cleanup/multipart/hash helpers and every callback/error/timeout/assertion",
+        "md5",
+        "fixture",
+        "readBody",
+        "parseMultipart",
+        "infoResponse",
+        "firmwareHeaders",
+        "startServer",
+        "runCli",
+        "Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."
+      ],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -5531,7 +5639,8 @@
         "bytes": 17861
       },
       "preserved": [
-        "Adapt actual subprocess execution and no-device-contact assertions into script_tooling_test.mjs for offline raw-image planning and invalid mode rejection. Existing real loopback multipart/WS updater fixtures retain exact byte/length/hash/admission and postboot checks, not ASA response parsing."
+        "Adapt actual subprocess execution and no-device-contact assertions into script_tooling_test.mjs for offline raw-image planning and invalid mode rejection. Existing real loopback multipart/WS updater fixtures retain exact byte/length/hash/admission and postboot checks, not ASA response parsing.",
+        "Actual Node performUpload and C# BackupInstalledFirmwareAsync backup-before-write sequencing now serves existing updater with explicit --backup/--resume-backup, first-read expected-peer fencing, metadata match and fresh auth/job/boot/latch admission before local upload or remote stage/apply."
       ],
       "targets": [
         {
@@ -5543,6 +5652,21 @@
           "path": "tests/update_tool_test.mjs",
           "anchor": "const server=createServer",
           "sha256": "8c3e3df8db7d7fe46fdca6e1b03958f812f22521e7efb795ee5c54074273b66d"
+        },
+        {
+          "path": "tools/update-firmware.mjs",
+          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
+          "anchor": "export async function updateFirmware("
+        },
+        {
+          "path": "tools/peer-identity.mjs",
+          "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+          "anchor": "export function boardPeer("
+        },
+        {
+          "path": "docs/PU850-PARITY.md",
+          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
         }
       ],
       "omissions": [
@@ -5552,9 +5676,9 @@
           "reason": "Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol."
         },
         {
-          "code": "Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup",
+          "code": "Stable watcher/coalescing/graceful-stop/progress and remaining negative cases",
           "disposition": "pending",
-          "reason": "One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open."
+          "reason": "Actual verified pre-update backup and ranged/resumable export now implemented through existing owners with same-peer/release/auth/job/boot/latch and no-overwrite checks. Watch/coalescing/graceful stop/skip-identical/progress, remaining gzip consumer/platform/filesystem/transport and exact unported negative scenarios remain pending as applicable. No donor tests, SDK builds, live update/restore or physical proof claimed."
         }
       ],
       "proof": [
@@ -5572,10 +5696,15 @@
           "path": "tests/update_tool_test.mjs",
           "anchor": "Automatic updater plan/preflight",
           "sha256": "8c3e3df8db7d7fe46fdca6e1b03958f812f22521e7efb795ee5c54074273b66d"
+        },
+        {
+          "path": "tests/update_backup_test.mjs",
+          "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+          "anchor": "Backup must precede even remote staging"
         }
       ],
       "remaining": [
-        "Implement and exercise watch/resume/export/pre-update-backup contracts and remaining donor negative cases.",
+        "Explicit verified backup-before-update and resumable export now imported. Remaining stable watcher/coalescing/graceful stop/skip-identical/progress, gzip consumer/platform/filesystem/transport and unported negative scenarios need applicable implementation/acceptance; no source fixture closes live/physical/restore gates.",
         "No physical deployment, full client distribution or donor-wide completion is inferred from source or fixtures."
       ]
     },
@@ -5677,12 +5806,12 @@
         {
           "path": "docs/SCRIPT-TOOLING.md",
           "anchor": "Actual PU850 source import",
-          "sha256": "2d00287f8b0f2f657f04593550d17eee28a36238ef815264f251965b426984fc"
+          "sha256": "9920569e7027308d50babfb2fd7144e1b9580d699053e7279197eebac31bb909"
         },
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874"
+          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840"
         }
       ],
       "omissions": [
@@ -5802,12 +5931,12 @@
         {
           "path": "docs/SCRIPT-TOOLING.md",
           "anchor": "Actual PU850 source import",
-          "sha256": "2d00287f8b0f2f657f04593550d17eee28a36238ef815264f251965b426984fc"
+          "sha256": "9920569e7027308d50babfb2fd7144e1b9580d699053e7279197eebac31bb909"
         },
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874"
+          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840"
         }
       ],
       "omissions": [
@@ -5870,12 +5999,12 @@
         {
           "path": "docs/SCRIPT-TOOLING.md",
           "anchor": "Actual PU850 source import",
-          "sha256": "2d00287f8b0f2f657f04593550d17eee28a36238ef815264f251965b426984fc"
+          "sha256": "9920569e7027308d50babfb2fd7144e1b9580d699053e7279197eebac31bb909"
         },
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874"
+          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840"
         }
       ],
       "omissions": [
@@ -6052,7 +6181,7 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874"
+          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840"
         },
         {
           "path": "tools/deploy-artifact.mjs",
@@ -6921,7 +7050,46 @@
       "source_revision": "431104072952f694a35b3a83c19f13fbb098ca5b",
       "source_line_count": 1114,
       "section_review_date": "2026-10-19",
-      "reviewed_sections": ["All constants/options/errors/classes, EndpointResolver methods, logger/parser, manifest/gzip, HTTP/TLS/body/retry, metadata/multipart/verify, strict hash/range/part/publication, performUpload/Download/redact/watch/signal/main/entrypoint branches","createLogger","usage","optionValue","parseArguments","normalizeManifestName","parseStrictManifest","md5Hex","readFileAsInput","prepareFirmware","sanitizeDeviceText","isRetryableNetworkError","commonHeaders","requestAttempt","requestBuffer","endpoint","statusBody","parseHashCandidate","parseInfoHash","fetchFirmwareInfo","multipartBody","uploadCompressedFirmware","delay","verifyAfterReboot","parseContentLength","parseHeaderMd5","collectDownloadHashes","pathSize","writePart","removePart","verifiedDownload","initializeResolver","performUpload","performDownload","redactSecrets","runWatch","main","Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."],
+      "reviewed_sections": [
+        "All constants/options/errors/classes, EndpointResolver methods, logger/parser, manifest/gzip, HTTP/TLS/body/retry, metadata/multipart/verify, strict hash/range/part/publication, performUpload/Download/redact/watch/signal/main/entrypoint branches",
+        "createLogger",
+        "usage",
+        "optionValue",
+        "parseArguments",
+        "normalizeManifestName",
+        "parseStrictManifest",
+        "md5Hex",
+        "readFileAsInput",
+        "prepareFirmware",
+        "sanitizeDeviceText",
+        "isRetryableNetworkError",
+        "commonHeaders",
+        "requestAttempt",
+        "requestBuffer",
+        "endpoint",
+        "statusBody",
+        "parseHashCandidate",
+        "parseInfoHash",
+        "fetchFirmwareInfo",
+        "multipartBody",
+        "uploadCompressedFirmware",
+        "delay",
+        "verifyAfterReboot",
+        "parseContentLength",
+        "parseHeaderMd5",
+        "collectDownloadHashes",
+        "pathSize",
+        "writePart",
+        "removePart",
+        "verifiedDownload",
+        "initializeResolver",
+        "performUpload",
+        "performDownload",
+        "redactSecrets",
+        "runWatch",
+        "main",
+        "Exact function/job/section decisions: docs/PU850-PARITY.md Fresh complete-tree review and tooling sections, 2026-10-19."
+      ],
       "verdict": "parity-gap",
       "source_blob": {
         "repository": "atomicdeploy/pu850-esp",
@@ -6931,7 +7099,8 @@
         "bytes": 34349
       },
       "preserved": [
-        "Import actual logger, terminal sanitizer, stable exit categories, quiet/color rules and argv/preflight concepts into script-console.mjs/pakar.mjs. Correct OSC-before-ESC regex ordering and redirected stderr coloring. Existing updater retains hostname/TCP identity pinning, no uncertain-write replay and full postboot verification."
+        "Import actual logger, terminal sanitizer, stable exit categories, quiet/color rules and argv/preflight concepts into script-console.mjs/pakar.mjs. Correct OSC-before-ESC regex ordering and redirected stderr coloring. Existing updater retains hostname/TCP identity pinning, no uncertain-write replay and full postboot verification.",
+        "Actual Node performUpload and C# BackupInstalledFirmwareAsync backup-before-write sequencing now serves existing updater with explicit --backup/--resume-backup, first-read expected-peer fencing, metadata match and fresh auth/job/boot/latch admission before local upload or remote stage/apply."
       ],
       "targets": [
         {
@@ -6942,7 +7111,22 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware",
-          "sha256": "7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874"
+          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840"
+        },
+        {
+          "path": "tools/update-firmware.mjs",
+          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840",
+          "anchor": "export async function updateFirmware("
+        },
+        {
+          "path": "tools/peer-identity.mjs",
+          "sha256": "ec01b42843298dfe493076c492473c1e83cb4cc6d78925a894d3c757486a6060",
+          "anchor": "export function boardPeer("
+        },
+        {
+          "path": "docs/PU850-PARITY.md",
+          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
         }
       ],
       "omissions": [
@@ -6952,9 +7136,9 @@
           "reason": "Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol."
         },
         {
-          "code": "Content-stable auto-upload watch, resumable atomic CLI download and verified pre-update CLI backup",
+          "code": "Stable watcher/coalescing/graceful-stop/progress and remaining negative cases",
           "disposition": "pending",
-          "reason": "One-shot updater and readback are not complete watch/resume/backup parity. Import these only with peer identity, stable snapshot and no ambiguous-write replay guards; keep useful donor cases open."
+          "reason": "Actual verified pre-update backup and ranged/resumable export now implemented through existing owners with same-peer/release/auth/job/boot/latch and no-overwrite checks. Watch/coalescing/graceful stop/skip-identical/progress, remaining gzip consumer/platform/filesystem/transport and exact unported negative scenarios remain pending as applicable. No donor tests, SDK builds, live update/restore or physical proof claimed."
         }
       ],
       "proof": [
@@ -6967,10 +7151,15 @@
           "path": "tests/script_tooling_test.ps1",
           "anchor": "PowerShell utilities parse",
           "sha256": "d3c679d8caa22177e7a5590564cd1141b84e1b194b3c3ee0bb825c26a4d46305"
+        },
+        {
+          "path": "tests/update_backup_test.mjs",
+          "sha256": "01e6b33d99f7d1e47e7c805ed4e8614cf6a6a0b4483009861f96e7d939c660e7",
+          "anchor": "Backup must precede even remote staging"
         }
       ],
       "remaining": [
-        "Implement and exercise watch/resume/export/pre-update-backup contracts and remaining donor negative cases.",
+        "Explicit verified backup-before-update and resumable export now imported. Remaining stable watcher/coalescing/graceful stop/skip-identical/progress, gzip consumer/platform/filesystem/transport and unported negative scenarios need applicable implementation/acceptance; no source fixture closes live/physical/restore gates.",
         "No physical deployment, full client distribution or donor-wide completion is inferred from source or fixtures."
       ]
     },
@@ -7283,12 +7472,12 @@
         {
           "path": "tools/update-firmware.mjs",
           "anchor": "export async function updateFirmware(",
-          "sha256": "7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874"
+          "sha256": "c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840"
         },
         {
           "path": "tools/update-firmware.ps1",
           "anchor": "[ValidateSet('auto','local','remote')]",
-          "sha256": "540fe374db6a5c6797474e48f12991dbc33f900e54e5cff9b4d7443a40c436bb"
+          "sha256": "46cc5b7977b1b6cca703aeab555a6a4537cbfae10f403103c954a65d4a8ce9e8"
         },
         {
           "path": "firmware/esp8266/src/UpgradeLifecycle.h",
@@ -7879,7 +8068,7 @@
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"02ead69708b4fb3bd39138c639acabd3658baaed61745d40e89650092245f5c0","anchor":"Message *items_=nullptr;"},
         {"path":"firmware/esp8266/esp8266.ino","sha256":"8780b01a9187614813b7e6a3ea83f2ba0fae0866f3524ea1f745d33353f5a1a3","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
         {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"8717e11a85931686ba6673b6b42406ad5f4362586732cb1d7dea1332c9c85585","anchor":"internal_heap_largest_block_bytes"},
-        {"path":"tools/update-firmware.mjs","sha256":"7e0f5c79d78a56184b1e3d4eaeafc963073335be2575b6c3c113c763270cf874","anchor":"export function checkWebSocket("},
+        {"path":"tools/update-firmware.mjs","sha256":"c0923600a809f20bab05db0fb62075afb00181ba50ac230f262f90f1629f6840","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
@@ -11749,7 +11938,7 @@
         },
         {
         "path": "tools/ci-checks.mjs",
-        "sha256": "149681c9a01188822be814d02478121f1a6ecdd134538a462c5479b6a886cc30",
+        "sha256": "f34ddef9726512638c8c5d2fcd3ec1402ba695831a1d0bfe8f3c744c5a92784b",
         "anchor": "export function runChecks"
         },
         {
@@ -14769,7 +14958,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
           "anchor": "## Fresh runtime and shell section review, 2026-10-19"
         }
       ],
@@ -14864,7 +15053,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "43d4f98f150e20c37bd58f48098c98cd12c0fb307376fd55385a7ef11f7ce59a",
+          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
           "anchor": "## Fresh runtime and shell section review, 2026-10-19"
         }
       ],

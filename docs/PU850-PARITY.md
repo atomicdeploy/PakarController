@@ -1,5 +1,44 @@
 # PU850 / ASA0002E reuse audit
 
+## Actual backup-before-update orchestration, 2026-10-19
+
+Actual Node performUpload and C# UploaderApp.RunAsync/
+BackupInstalledFirmwareAsync conditional await-backup-before-upload code now
+serves existing `updateFirmware`, with PowerShell/pakar `--backup NEW_PATH` and
+explicit `--resume-backup`. Go uploadFirmware and C++ upload_current_build map
+to that same owner, not duplicate network stacks. Default remains a no-contact
+plan. No image write, remote fetch or apply can precede successful verified
+backup; a later error retains the backup and never rolls back automatically.
+
+The actual current downloader owns all file/range/hash/publication behavior.
+An enclosing peer pins its FIRST status read as well as all later reads, and
+the resulting board/boot/size/MD5 must match the updater's admitted metadata.
+Auth and existing job are reread after backup, then existing fresh boot/latch
+and exact ready/failed-job rules still precede the single selected write path.
+Backup receives no optional environment credentials because this updater still
+requires auth-off; supported-release admission is unchanged/default-on. Backup
+and update timings/receipts are separate; backup hashes are point-in-time source
+evidence, not proof of durable storage/restore on every filesystem or hardware.
+
+Actual-source/filesystem fixtures cover multi-range/full/explicit13-byte resume,
+complete partial, local update, pinned remote stage/apply and existing ready-job
+resume; wrong body/hash/peer/final boot/metadata, old release, changed auth/job/
+post-backup peer, deadline, existing output/partial and atomic destination race
+all allow zero writes and preserve available bytes. Real Node CLI and guarded
+PowerShell plan subprocesses prove option propagation and zero device contact.
+An initial actual CLI fixture exposed an unsettled top-level-await import cycle;
+the unchanged boardPeer helper moved into existing peer-identity and remains
+re-exported from updater. No policy expression was weakened or duplicated.
+Focused updater/download/peer fixtures retain no write replay/new-boot/full-SHA
+rules. No live backup/update/deploy/restore, SDK build or physical proof here.
+
+Remaining generic work includes stable watcher/coalescing/graceful cancellation,
+skip-identical/selected backup policy, bounded transfer presentation, interrupted
+storage/platform acceptance and all exact ledger/runtime/physical gates. Fresh
+read coverage stays109/109, PU gap files96; this import is not parity closure.
+Earlier dated tables' backup-integration pending entries are superseded by this
+checkpoint and the updated exact omissions; other pending behavior is unchanged.
+
 ## Fresh complete-tree review and tooling sections, 2026-10-19
 
 Fresh EOF/section review now109/109 donor files. This covers the complete current

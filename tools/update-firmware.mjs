@@ -10,25 +10,14 @@ import {pathToFileURL} from 'node:url';
 import {setTimeout as delay} from 'node:timers/promises';
 import {deviceOrigin,deviceRequest} from './check-ethernet-live.mjs';
 import {manifest as validateImage} from './create-remote-manifest.mjs';
-import {toolHeaders,assertToolPeerCompatible} from './peer-identity.mjs';
+import {toolHeaders,boardPeer} from './peer-identity.mjs';
+export {boardPeer} from './peer-identity.mjs';
 
 export function imageIdentity(bytes) {
   // Existing publisher validates raw S3 application, not bootloader/merged flash.
   validateImage(bytes,null,'https://firmware.invalid/','0.0.0','buffered','esp32s3');
   return {size:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),
     md5:createHash('md5').update(bytes).digest('hex')};
-}
-export function boardPeer(status,remote,previous=null,{allowReboot=false,allowAddressChange=false}={}) {
-  assertToolPeerCompatible(status);
-  if(status?.http_peer_fencing!==true || !/^[a-z0-9_-]{1,64}$/.test(status.board_id??'') ||
-    !/^[a-f0-9]{32}$/.test(status.boot_id??'') || /^0{32}$/.test(status.boot_id) ||
-    typeof status.hostname!=='string' || status.capabilities?.hostname!==status.hostname ||
-    !status.capabilities?.acknowledged_features?.includes('network') || isIP(remote)!==4) {
-    throw Error('Compatible board/boot identity is unavailable');
-  }
-  if(previous && (previous.board!==status.board_id || (previous.address!==remote && !(allowReboot&&allowAddressChange)) ||
-    (!allowReboot && previous.boot!==status.boot_id))) throw Error('Device identity changed; nothing replayed');
-  return {board:status.board_id,boot:status.boot_id,address:remote,hostname:status.hostname};
 }
 export function selectPath(mode,info,hasManifest) {
   if(!['auto','local','remote'].includes(mode))throw Error('Mode must be auto, local or remote');
@@ -210,7 +199,7 @@ export function checkWebSocket(origin,peer,{connectTimeoutMs=5000,statusTimeoutM
 }
 
 export async function updateFirmware({origin='http://ledboard.local',image,mode='auto',run=false,manifest,manifestSha,resumeJobId=null,ackFailedJobId=null,ackFailedImage=null,
-  timeoutSeconds=180,request=deviceRequest,upload=uploadImage,websocket=checkWebSocket,wait=delay,now=Date.now,log=()=>{}}={}) {
+  backup=null,resumeBackup=false,timeoutSeconds=180,request=deviceRequest,upload=uploadImage,websocket=checkWebSocket,wait=delay,now=Date.now,log=()=>{}}={}) {
   const url=deviceOrigin(origin),bytes=Buffer.isBuffer(image)?image:readFileSync(image),identity=imageIdentity(bytes);
   if(!['auto','local','remote'].includes(mode))throw Error('Mode must be auto, local or remote');
   if(!Number.isInteger(timeoutSeconds)||timeoutSeconds<10||timeoutSeconds>600)throw Error('Timeout must be10..600 seconds');
@@ -226,8 +215,16 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
   // candidate must acknowledge the ORIGINAL failed image, never forge its
   // receipt to match the new upload. Both application images are validated.
   const failedIdentity=ackFailedImage===null?identity:imageIdentity(Buffer.isBuffer(ackFailedImage)?ackFailedImage:readFileSync(ackFailedImage));
+  let backupPlan=null,download;
+  if(backup!==null){
+    if(typeof backup!=='string'||!backup.trim())throw Error('Backup requires an explicit new output path');
+    // Actual PU performUpload/BackupInstalledFirmwareAsync sequencing, using
+    // our existing verified downloader, not a second transfer implementation.
+    ({downloadFirmware:download}=await import('./download-firmware.mjs'));
+    backupPlan=await download({origin:url.origin,output:backup,resume:resumeBackup,timeoutSeconds,run:false});
+  }else if(resumeBackup)throw Error('Resume backup requires an explicit backup path');
   if(!run)return {plan:true,mode,resume_job:resumeJobId,ack_failed_job:ackFailedJobId,ack_failed_image:ackFailedJobId===null?null:failedIdentity,origin:url.origin,image:identity,authentication:'disabled required',avr_touched:false,
-    policy:'auto prefers local Async HTTP; remote requires pinned manifest; no write fallback/replay',device_contacted:false};
+    backup:backupPlan,policy:'auto prefers local Async HTTP; remote requires pinned manifest; no write fallback/replay',device_contacted:false};
   let peer=null;
   const read=async(path,{unfenced=false,resolveHostname=false,...options}={})=>{
     log({stage:'request',method:options.form?'POST':options.method||'GET',path:path.split('?')[0]});
@@ -255,6 +252,27 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
   else if(previous.busy!==false||!['idle','complete','cancelled'].includes(previous.phase))throw Error('Existing firmware job requires inspection; no overwrite');
   await websocket(url,peer);
   const route=selectPath(mode,info,!!manifest),before={...peer};
+  let backupReceipt=null,backupMs=null;
+  if(backupPlan){
+    if(!/^[a-f0-9]{32}$/i.test(info.hash??'')||!Number.isSafeInteger(info.size)||info.size<24||info.size>64*1024*1024)
+      throw Error('Verified running image metadata required before backup/update; no write');
+    log({stage:'backup',image_bytes:info.size});const backupStarted=now();
+    backupReceipt=await download({origin:url.origin,output:backupPlan.output,resume:resumeBackup,
+      timeoutSeconds,run:true,expectedPeer:{...peer},environment:{},request,now});
+    if(backupReceipt.ok!==true||backupReceipt.board_id!==peer.board||backupReceipt.boot_id!==peer.boot||
+       backupReceipt.origin!==url.origin||backupReceipt.size!==info.size||backupReceipt.md5!==info.hash.toLowerCase())
+      throw Error('Backup does not match admitted running image; no update');
+    backupMs=now()-backupStarted;
+    // A slow backup never carries an earlier auth decision into a write.
+    if((await json('/api/auth')).value.enabled!==false)throw Error('Authentication changed during backup; no update');
+    if(resumeJobId===null&&ackFailedJobId===null){
+      const current=(await json('/api/firmware/remote')).value;
+      if(current.busy!==false||current.phase!==previous.phase||current.job_id!==previous.job_id||
+         current.boot_id!==previous.boot_id||current.manifest_sha256!==previous.manifest_sha256)
+        throw Error('Firmware job changed during backup; no overwrite or update');
+    }
+    log({stage:'backup-verified',image_bytes:backupReceipt.size,sha256:backupReceipt.sha256});
+  }
   // Refresh the same boot immediately before the single selected write path.
   const fresh=await json('/api/status');boardPeer(fresh.value,fresh.remote,peer);
   if(fresh.value.programming_latch!==false)throw Error('Programming state changed; no update');
@@ -325,6 +343,7 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
   }
   return {ok:true,path:route,origin:url.origin,board_id:peer.board,boot_before:before.boot,boot_after:peer.boot,
     image:identity,resume_job:resumeJobId,acknowledged_failed_job:acknowledgedFailure,transfer_ms:transferMs,
+    ...(backupReceipt?{backup:backupReceipt,backup_ms:backupMs}:{}),
     ...(resumeJobId===null?{}:{apply_request_ms:applyRequestMs,download_timing:'previous invocation; not measured here'}),
     total_ms:now()-started,authentication:false,websocket:'same-peer status before/after',
     running_image:'full SHA256 readback and VALID selected/running slot',simulated:request!==deviceRequest||upload!==uploadImage||websocket!==checkWebSocket,
@@ -334,8 +353,9 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   try{const options={};const args=process.argv.slice(2);
     for(let i=0;i<args.length;i++){
       if(args[i]==='--run'){options.run=true;continue;}
-      const key={'--origin':'origin','--image':'image','--mode':'mode','--manifest':'manifest','--manifest-sha':'manifestSha','--timeout':'timeoutSeconds','--resume-job':'resumeJobId','--ack-failed-job':'ackFailedJobId','--ack-failed-image':'ackFailedImage'}[args[i]];
-      if(!key||!args[i+1]||args[i+1].startsWith('--'))throw Error('Usage: node tools/update-firmware.mjs --image ESP_BIN [--origin http://ledboard.local] [--mode auto|local|remote] [--manifest HTTPS_URL --manifest-sha SHA256] [--resume-job POSITIVE_ID (remote only) | --ack-failed-job POSITIVE_ID [--ack-failed-image ORIGINAL_FAILED_BIN]] [--run]');
+      if(args[i]==='--resume-backup'){options.resumeBackup=true;continue;}
+      const key={'--origin':'origin','--image':'image','--mode':'mode','--manifest':'manifest','--manifest-sha':'manifestSha','--timeout':'timeoutSeconds','--resume-job':'resumeJobId','--ack-failed-job':'ackFailedJobId','--ack-failed-image':'ackFailedImage','--backup':'backup'}[args[i]];
+      if(!key||!args[i+1]||args[i+1].startsWith('--'))throw Error('Usage: node tools/update-firmware.mjs --image ESP_BIN [--origin http://ledboard.local] [--mode auto|local|remote] [--manifest HTTPS_URL --manifest-sha SHA256] [--backup NEW_PATH [--resume-backup]] [--resume-job POSITIVE_ID (remote only) | --ack-failed-job POSITIVE_ID [--ack-failed-image ORIGINAL_FAILED_BIN]] [--run]');
       options[key]=['timeoutSeconds','resumeJobId','ackFailedJobId'].includes(key)?Number(args[++i]):args[++i];
     }
     options.log=value=>console.error(JSON.stringify(value));console.log(JSON.stringify(await updateFirmware(options),null,2));

@@ -8,18 +8,26 @@ param(
     [ValidateRange(1,4294967295)][long]$ResumeJobId,
     [ValidateRange(1,4294967295)][long]$AckFailedJobId,
     [string]$AckFailedImage,
+    [string]$Backup,
+    [switch]$ResumeBackup,
     [ValidateRange(10,600)][int]$TimeoutSeconds=180,
     [switch]$Run
 )
 $ErrorActionPreference='Stop'
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern remote-ota -Gate | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern api-contract -Gate | Out-Null
+if($PSBoundParameters.ContainsKey('Backup') -or $ResumeBackup){
+    & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern pu-client-download -Gate | Out-Null
+    & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern pu-backup-update -Gate | Out-Null
+}
 $taskArguments=@((Join-Path $PSScriptRoot 'update-firmware.mjs'),'--image',$Image,'--origin',$Origin,'--mode',$Mode,'--timeout',"$TimeoutSeconds")
 if($Manifest){$taskArguments+=@('--manifest',$Manifest)}
 if($ManifestSha){$taskArguments+=@('--manifest-sha',$ManifestSha)}
 if($PSBoundParameters.ContainsKey('ResumeJobId')){$taskArguments+=@('--resume-job',"$ResumeJobId")}
 if($PSBoundParameters.ContainsKey('AckFailedJobId')){$taskArguments+=@('--ack-failed-job',"$AckFailedJobId")}
 if($PSBoundParameters.ContainsKey('AckFailedImage')){$taskArguments+=@('--ack-failed-image',$AckFailedImage)}
+if($PSBoundParameters.ContainsKey('Backup')){$taskArguments+=@('--backup',$Backup)}
+if($ResumeBackup){$taskArguments+='--resume-backup'}
 if($Run){$taskArguments+='--run'}
 # Windows PowerShell treats redirected native stderr as ErrorRecords. The
 # updater deliberately writes progress there; Stop can kill an in-flight upload.
