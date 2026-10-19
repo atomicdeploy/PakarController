@@ -47,6 +47,12 @@ The nondefault OTG/hardware-CDC image outputs are separate from UART0's existing
 default updater path, while retaining one shared warm compiler cache. An OTG
 candidate must not masquerade as a UART0 recovery image. Changing the actual USB
 core/FQBN invalidates SDK objects once; ordinary source passes keep that profile.
+The final real ESP32-S3 OTG SDK rebuild passed: application2352944 bytes, SHA256
+4ff8c2ff90c60e04d1f422b28cd3bca95fe4b96e67619bd0e25d70946ee1e943,
+static RAM156236/327680 bytes. It is the OTG output, not a default UART0 image.
+The first OTG build's generated outputs were moved into that explicit profile
+directory before the warm final rebuild; previous/rollback backups were untouched.
+No current UART0 SDK rebuild or physical USB test is claimed from these results.
 
 ## Automatic selected-board discovery and route continuity
 
