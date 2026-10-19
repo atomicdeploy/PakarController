@@ -10869,7 +10869,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "6922f7b3de46175eb528a572e9697f427af6cac632bdbfbf51faedfd07181d89",
+          "sha256": "2e0229615c0709866448b3d79eb46806a383edcb3946833d80f403c31d25af1f",
           "anchor": "Donor prepareReconnect is completed before any replacement socket"
         }
       ],
@@ -10921,7 +10921,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "6922f7b3de46175eb528a572e9697f427af6cac632bdbfbf51faedfd07181d89",
+          "sha256": "2e0229615c0709866448b3d79eb46806a383edcb3946833d80f403c31d25af1f",
           "anchor": "Execute actual Web connectWs + refreshAuthenticated + api"
         }
       ],
@@ -11003,7 +11003,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "6922f7b3de46175eb528a572e9697f427af6cac632bdbfbf51faedfd07181d89",
+          "sha256": "2e0229615c0709866448b3d79eb46806a383edcb3946833d80f403c31d25af1f",
           "anchor": "Actual api.ts AbortController deadline/finally cleanup"
         },
         {
@@ -11339,7 +11339,7 @@
       "proof": [
         {
           "path": "tests/rayanlamp_locale_test.mjs",
-          "sha256": "0f3c8e328b6c5558cda519180fdc5dfde1c681138042822a4c5b616322a8a984",
+          "sha256": "e53b09f80c07b61af0bc9dd41e50d6ff113572a42e99359616aba92725b9a30c",
           "anchor": "Automatic locale reacts to OS changes"
         },
         {
@@ -11362,7 +11362,7 @@
       "targets": [
         {
           "path": "tests/rayanlamp_locale_test.mjs",
-          "sha256": "0f3c8e328b6c5558cda519180fdc5dfde1c681138042822a4c5b616322a8a984",
+          "sha256": "e53b09f80c07b61af0bc9dd41e50d6ff113572a42e99359616aba92725b9a30c",
           "anchor": "Actual RayanLamp i18n.test.tsx contracts"
         }
       ],
@@ -11384,7 +11384,7 @@
       "proof": [
         {
           "path": "tests/rayanlamp_locale_test.mjs",
-          "sha256": "0f3c8e328b6c5558cda519180fdc5dfde1c681138042822a4c5b616322a8a984",
+          "sha256": "e53b09f80c07b61af0bc9dd41e50d6ff113572a42e99359616aba92725b9a30c",
           "anchor": "Restart and idempotent teardown"
         }
       ]

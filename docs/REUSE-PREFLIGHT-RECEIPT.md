@@ -18,6 +18,15 @@ the existing error-management index supplies the actual matching route.
 Builds and deployments have separate receipts; this correction is not hardware
 or full donor-parity acceptance.
 
+The subsequent quality run reached the equivalent isolated reconnect fixture,
+which omitted the same localization owner. It now loads the shipped modules and
+asserts the actual connection label. The remaining locale fixture omitted
+document.body after production template ownership became explicitly body-scoped;
+its DOM double now supplies that root. No production null guard or skipped
+assertion masks these test-environment defects. The three focused fixtures pass;
+all matching existing hashes were rereviewed/rebound, without promoting unrelated
+donor gaps. The full quality run remains a separate recorded result.
+
 ## ESP0.2.8 Internet migration and temporary panel access
 
 User authorized ESP update and panel password replacement. Changed only the

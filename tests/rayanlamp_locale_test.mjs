@@ -23,7 +23,7 @@ function fixture({languages=['en-US'],language='system',direction='auto',blocked
   const root={dataset:{}};
   const context=vm.createContext({window:events,navigator:{languages},NodeFilter:{SHOW_TEXT:4},
     localStorage:{getItem:key=>{if(blocked)throw Error('blocked');return storage.get(key)},setItem(key,value){writes++;if(blocked)throw Error('blocked');storage.set(key,value)}},
-    document:{documentElement:root,title:'ACK Board Connect · ledboard.local',getElementById:id=>controls[id],querySelectorAll:()=>[],
+    document:{documentElement:root,body:{querySelectorAll:()=>[]},title:'ACK Board Connect · ledboard.local',getElementById:id=>controls[id],querySelectorAll:()=>[],
       createElement(tag){return {tagName:tag.toUpperCase(),style:{},attributes:{},setAttribute(key,value){this.attributes[key]=value},set innerHTML(value){throw Error('Never parse peer HTML')}}},
       createTreeWalker(){let index=0;return {nextNode(){this.currentNode=[owned,peer][index++];return !!this.currentNode}}}},
     fetch(){requests++;throw Error('Locale must not contact board')}
