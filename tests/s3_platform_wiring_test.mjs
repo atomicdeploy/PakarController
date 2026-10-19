@@ -90,8 +90,15 @@ function checkLedMailbox(source,header) {
     'A producer must not edit or transmit the worker-owned frame');
   assert.equal([...work.matchAll(/xQueueReceive\(queue_,&current_,pdMS_TO_TICKS\(10\)\)/g)].length,2,
     'Both backends receive complete frames into separate worker-owned storage');
-  assert.equal([...work.matchAll(/encodeWireBytes\(current_\.rgb,pixels,current_\.brightness,current_\.enabled,payload\)/g)].length,2,
-    'Both backends encode their own immutable transmission payload');
+  const encoding=/encodeWireBytes\(current_\.rgb,pixels,current_\.brightness,current_\.enabled,payload\)/g;
+  const dmaStart=work.indexOf('  rmt_channel_handle_t channel=');
+  assert.ok(dmaStart>0,'Inspect static and DMA worker admission separately');
+  assert.equal([...work.slice(0,dmaStart).matchAll(encoding)].length,1,
+    'Static worker encodes its own immutable transmission payload');
+  assert.equal([...work.slice(dmaStart).matchAll(encoding)].length,2,
+    'DMA encodes a received frame, then may adopt a newer complete frame before admission');
+  assert.match(work.slice(dmaStart),/std::lock_guard<std::mutex> lock\(wireGate_\);\s+if\(flashHolds_\.load\(\)\)continue;[\s\S]*?if\(!initialBlack && xQueueReceive\(queue_,&current_,0\)==pdTRUE\)\s+encodeWireBytes\(current_\.rgb,pixels,current_\.brightness,current_\.enabled,payload\);\s+inFlight_\.store\(true\);/,
+    'Newest-frame adoption is under the flash admission gate, before immutable in-flight ownership');
 }
 checkLedMailbox(output,outputHeader);
 assert.throws(()=>checkLedMailbox(output.replace('xQueueCreateStatic(1,','xQueueCreateStatic(2,'),outputHeader));
@@ -101,6 +108,8 @@ assert.throws(()=>checkLedMailbox(output.replace('::memcpy(producer_.rgb','::mem
 assert.throws(()=>checkLedMailbox(output.replace('producer_.enabled=enabled;',''),outputHeader));
 assert.throws(()=>checkLedMailbox(output,outputHeader.replace('Frame producer_{};','')));
 assert.throws(()=>checkLedMailbox(output.replaceAll('xQueueReceive(queue_,&current_,','xQueueReceive(queue_,&producer_,'),outputHeader));
+assert.throws(()=>checkLedMailbox(output.replace('if(!initialBlack && xQueueReceive','if(xQueueReceive'),outputHeader));
+assert.throws(()=>checkLedMailbox(output.replace('xQueueReceive(queue_,&current_,0)','xQueueReceive(queue_,&current_,1)'),outputHeader));
 assert.match(output,/config.flags.with_dma=true/);
 assert.match(output,/xTaskCreatePinnedToCore\(run,"pakar-led",4096,this,2,nullptr,1\)/);
 assert.match(output,/rmt_tx_wait_all_done\(channel,100\)/);

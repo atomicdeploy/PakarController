@@ -267,6 +267,20 @@ void main() {
       await tester.pumpAndSettle();
       expect(api.writes, 1);
       expect(find.textContaining('Readback unavailable'), findsOneWidget);
+      // Ordinary successful status pushes cannot acknowledge a failed command.
+      api.failAfterWrite = false;
+      for (var tick = 0; tick < 3; tick++) {
+        api.updates.add(peerFixture());
+        await tester.pump();
+      }
+      expect(find.textContaining('Readback unavailable'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('command-status-details')));
+      await tester.pumpAndSettle();
+      expect(find.text('Command not completed'), findsOneWidget);
+      expect(find.textContaining('Readback unavailable'), findsNWidgets(2));
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+      api.failReads = true;
       expect(find.text('No acknowledged board'), findsNothing);
       expect(find.byKey(const ValueKey('table-cell-canvas')), findsOneWidget);
       // Expiry revokes actuation, never the user-owned table workspace.

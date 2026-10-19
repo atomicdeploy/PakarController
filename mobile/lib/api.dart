@@ -13,6 +13,7 @@ import 'models.dart';
 import 'board_sound.dart';
 import 'lan_resolver.dart';
 import 'command_wire.dart';
+import 'command_failure.dart';
 import 'pixel_diagnostic.dart';
 import 'ble_transport.dart';
 import 'peer_identity.dart';
@@ -279,10 +280,31 @@ class PakarApi {
           'off': '$off',
         }, authorize: authorize);
         admit();
-        if (actual == null ||
-            !diagnosticReady(actual) ||
-            !matchesDiagnosticFrame(actual, frame)) {
-          throw const OperationUncertain();
+        if (actual == null) {
+          throw const FormatException(
+            'The board advertises pixel diagnostics but did not acknowledge the command contract',
+          );
+        }
+        if (!diagnosticReady(actual)) {
+          throw const OperationUncertain(
+            'The board left diagnostic output mode before readback.',
+          );
+        }
+        final pixels = actual.json['pixel_frame'];
+        if (pixels is! Map) {
+          throw const OperationUncertain(
+            'The board accepted the command but returned no pixel frame.',
+          );
+        }
+        if (pixels['pending'] == true) {
+          throw const OperationUncertain(
+            'The LED frame is still pending; completed output has not been observed.',
+          );
+        }
+        if (!matchesDiagnosticFrame(actual, frame)) {
+          throw const OperationUncertain(
+            'The board pixel readback differs from the requested frame.',
+          );
         }
         return actual;
       }
@@ -342,7 +364,11 @@ class PakarApi {
         admit();
         _acceptIdentity(actual.json);
         admit();
-        if (!diagnosticReady(actual)) throw const OperationUncertain();
+        if (!diagnosticReady(actual)) {
+          throw const OperationUncertain(
+            'The board left diagnostic output mode before readback.',
+          );
+        }
         final next = (actual.json['pixel_frame'] as Map?)?['revision'];
         if (next != prior && matchesDiagnosticFrame(actual, frame)) {
           _rememberStatus(actual);
@@ -350,7 +376,9 @@ class PakarApi {
         }
         await Future<void>.delayed(const Duration(milliseconds: 50));
       } while (clock.elapsed < const Duration(seconds: 8));
-      throw const OperationUncertain();
+      throw const OperationUncertain(
+        'Timed out waiting for the requested pixel frame to be published.',
+      );
     } finally {
       _diagnosticPending = false;
     }
@@ -525,11 +553,31 @@ class PakarApi {
       try {
         response = await http.Response.fromStream(await _client.send(request))
             .timeout(const Duration(seconds: 4));
+      } on TimeoutException {
+        throw const OperationUncertain(
+          'No correlated HTTP command receipt arrived within 4 seconds.',
+        );
+      } on SocketException {
+        throw const OperationUncertain(
+          'The connection was lost while waiting for a command receipt.',
+        );
       } finally {
         _retireStatusRead();
       }
-      if (response.statusCode ~/ 100 != 2) throw const OperationUncertain();
-      reply = jsonDecode(response.body) as Map<String, dynamic>;
+      _rejectWriteResponse(response);
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is! Map<String, dynamic>) {
+          throw const OperationUncertain(
+            'The board returned a malformed command receipt.',
+          );
+        }
+        reply = decoded;
+      } on FormatException {
+        throw const OperationUncertain(
+          'The board returned a malformed command receipt.',
+        );
+      }
     }
     if (revision != connectionRevision || !authorize()) {
       throw const StaleConnection();
@@ -924,21 +972,32 @@ class PakarApi {
       _retireStatusRead();
       response = await http.Response.fromStream(await _client.send(request))
           .timeout(const Duration(seconds: 12));
+    } on TimeoutException {
+      throw const OperationUncertain(
+        'No device write receipt arrived within 12 seconds.',
+      );
     } on Exception {
-      throw const OperationUncertain();
+      throw const OperationUncertain(
+        'The connection failed while waiting for a device write receipt.',
+      );
     } finally {
       _retireStatusRead();
     }
     if (revision != connectionRevision) throw const StaleConnection();
-    if (response.statusCode ~/ 100 != 2) {
-      // Never echo a possibly secret-bearing server error or request value.
-      throw FormatException(
-        'Device write rejected (HTTP ${response.statusCode}); not retried',
+    _rejectWriteResponse(response);
+    try {
+      final result = jsonDecode(response.body);
+      if (result is! Map<String, dynamic>) {
+        throw const OperationUncertain(
+          'The board returned a malformed write receipt.',
+        );
+      }
+      return result;
+    } on FormatException {
+      throw const OperationUncertain(
+        'The board returned a malformed write receipt.',
       );
     }
-    final result = jsonDecode(response.body);
-    if (result is! Map<String, dynamic>) throw const OperationUncertain();
-    return result;
   }
 
   Future<void> post(
@@ -964,15 +1023,38 @@ class PakarApi {
       _retireStatusRead();
       response = await http.Response.fromStream(await _client.send(request))
           .timeout(const Duration(seconds: 12));
+    } on TimeoutException {
+      throw const OperationUncertain(
+        'No device write receipt arrived within 12 seconds.',
+      );
     } on Exception {
-      throw const OperationUncertain();
+      throw const OperationUncertain(
+        'The connection failed while waiting for a device write receipt.',
+      );
     } finally {
       _retireStatusRead();
     }
     if (revision != connectionRevision) throw const StaleConnection();
-    if (response.statusCode ~/ 100 != 2) {
-      throw FormatException(
-        'Device write rejected (HTTP ${response.statusCode}); not retried',
+    _rejectWriteResponse(response);
+  }
+
+  void _rejectWriteResponse(http.Response response) {
+    if (response.statusCode == 401) throw const AuthenticationRequired();
+    Map<String, dynamic>? receipt;
+    if (response.body.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) receipt = decoded;
+      } on FormatException {
+        // Older successful REST routes may return plain text; never echo it.
+      }
+    }
+    if (response.statusCode ~/ 100 != 2 ||
+        (receipt?.containsKey('accepted') == true &&
+            receipt?['accepted'] != true)) {
+      throw DeviceCommandRejected(
+        error: receipt?['error'],
+        httpStatus: response.statusCode,
       );
     }
   }
@@ -1748,10 +1830,11 @@ class ConnectionStopped implements Exception {
 }
 
 class OperationUncertain implements Exception {
-  const OperationUncertain();
+  const OperationUncertain([this.detail]);
+  final String? detail;
   @override
   String toString() =>
-      'Command outcome unknown; it was not retried. Refresh device state before deciding whether to send again.';
+      '${detail == null ? '' : '$detail '}Command outcome unknown; it was not retried. Refresh device state before deciding whether to send again.';
 }
 
 class SupersededRead implements Exception {

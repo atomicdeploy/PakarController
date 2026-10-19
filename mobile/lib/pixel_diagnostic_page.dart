@@ -34,9 +34,9 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   late final workspace = widget.workspace ?? PixelDiagnosticWorkspace();
   PixelProbe get probe => workspace.probe;
   set probe(PixelProbe value) => workspace.probe = value;
-  late final revision = widget.api.connectionRevision;
-  late final board = widget.observed()?.json['board_id'];
-  late final boot = widget.observed()?.json['boot_id'];
+  late int revision = widget.api.connectionRevision;
+  late Object? board = widget.observed()?.json['board_id'];
+  late Object? boot = widget.observed()?.json['boot_id'];
   final position = TextEditingController(text: '1');
   late final scroll = ScrollController(
     initialScrollOffset: workspace.vertical,
@@ -86,10 +86,11 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   }
 
   void observe(DeviceStatus status) {
-    if (!mounted ||
-        revision != widget.api.connectionRevision ||
+    if (!mounted) return;
+    if (revision != widget.api.connectionRevision ||
         status.json['board_id'] != board ||
         status.json['boot_id'] != boot) {
+      setState(() => applied = null);
       return;
     }
     if (workspace.observe(status)) {
@@ -100,17 +101,63 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
     }
   }
 
-  bool get authorized {
+  String? get blockedReason {
     final status = widget.observed();
-    return mounted &&
-        revision == widget.api.connectionRevision &&
-        board != null &&
-        boot != null &&
-        status?.json['board_id'] == board &&
-        status?.json['boot_id'] == boot &&
-        supportsPixelDiagnostic(status) &&
+    if (!widget.api.connectionWanted) {
+      return 'Disconnected. Connect a board first.';
+    }
+    if (!widget.api.appForeground) {
+      return 'Return to the app before sending a pixel command.';
+    }
+    if (status == null) {
+      return 'Waiting for fresh board state. No command was sent.';
+    }
+    if (revision != widget.api.connectionRevision ||
+        board != status.json['board_id'] ||
+        boot != status.json['boot_id']) {
+      return 'The connection or board restarted. Use the current connection to resume testing; no command will be replayed.';
+    }
+    if (board == null || boot == null) return 'Board identity is unavailable.';
+    if (status.json['programming_latch'] == true) {
+      return 'AVR programming currently owns the board. Wait for it to finish.';
+    }
+    if ((status.json['remote_firmware'] as Map?)?['busy'] == true) {
+      return 'A firmware update currently owns the board. Wait for it to finish.';
+    }
+    if (!supportsPixelDiagnostic(status) || !status.peer.has('command-ack')) {
+      return 'This board has not acknowledged pixel diagnostics and command receipts.';
+    }
+    return null;
+  }
+
+  bool get authorized => mounted && blockedReason == null;
+
+  bool get canUseCurrentConnection {
+    final current = widget.observed();
+    return !working &&
+        widget.api.connectionWanted &&
         widget.api.appForeground &&
-        status?.peer.has('command-ack') == true;
+        current?.json['board_id'] is String &&
+        current?.json['boot_id'] is String &&
+        supportsPixelDiagnostic(current) &&
+        current?.peer.has('command-ack') == true &&
+        (revision != widget.api.connectionRevision ||
+            board != current?.json['board_id'] ||
+            boot != current?.json['boot_id']);
+  }
+
+  void useCurrentConnection() {
+    if (!canUseCurrentConnection) return;
+    final current = widget.observed()!;
+    setState(() {
+      revision = widget.api.connectionRevision;
+      board = current.json['board_id'];
+      boot = current.json['boot_id'];
+      applied = null;
+      message =
+          'Current connection selected. Press Show to send your pixel test.';
+    });
+    observe(current);
   }
 
   @override
@@ -127,7 +174,14 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   }
 
   Future<void> send(PixelProbe next, {bool off = false}) async {
-    if (working || !authorized) return;
+    if (working || !authorized) {
+      setState(
+        () => message = working
+            ? 'A pixel command is still pending. Nothing else was sent.'
+            : blockedReason ?? 'Pixel testing is unavailable.',
+      );
+      return;
+    }
     FocusScope.of(context).unfocus();
     setState(() {
       working = true;
@@ -491,8 +545,15 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
             const SizedBox(height: 10),
             if (!authorized)
               Text(
-                'Waiting for this board connection. No command was queued.',
+                blockedReason ?? 'Pixel testing is unavailable.',
                 style: TextStyle(color: colours.error),
+              ),
+            if (canUseCurrentConnection)
+              TextButton.icon(
+                key: const Key('pixel-use-current-connection'),
+                onPressed: useCurrentConnection,
+                icon: const Icon(PakarIcons.link),
+                label: const Text('Use current connection'),
               ),
             if (applied != null && authorized)
               Text(applied!, style: TextStyle(color: colours.secondary)),

@@ -115,8 +115,9 @@ class _ControlShellState extends State<ControlShell>
   int observation = 0;
   int liveGeneration = 0;
   String? incident;
-  final reportedIncidents = <String>{};
   bool commandPending = false;
+  int commandAttempt = 0;
+  String? commandFailure;
   String page = 'overview';
   String message = 'Connecting to ledboard.local';
 
@@ -426,7 +427,7 @@ class _ControlShellState extends State<ControlShell>
       }
       if (!mounted || owner != api.connectionRevision) return;
       setState(() {
-        if (!silent) message = 'Live device synchronized';
+        if (!silent) message = 'Live device status received';
       });
     } catch (error) {
       if (mounted &&
@@ -505,9 +506,12 @@ class _ControlShellState extends State<ControlShell>
     setState(() {
       status = value;
       presented = value;
-      if (incident != null) message = 'Live device synchronized';
+      if (incident != null && !commandPending) {
+        message = 'Live device status received';
+      }
       incident = null;
       if (changed) {
+        commandFailure = null;
         mapping = CellMap(physical: const [], names: const []);
       }
       if (changed || bootChanged || !value.peer.table) mappingFresh = false;
@@ -618,19 +622,11 @@ class _ControlShellState extends State<ControlShell>
     });
   }
 
-  void _reportIncident(String key, String reason) {
-    if (!mounted || !reportedIncidents.add(key)) return;
-    setState(() {
-      incident = key;
-      message = reason;
-    });
-  }
-
   Future<void> _disconnect() async {
     // Retire before awaiting cancellation: no callback may reconnect afterward.
     ++liveGeneration;
     liveActive = false;
-    reportedIncidents.clear();
+    commandFailure = null;
     api.disconnect();
     _flushWorkspaceSave();
     fallback?.cancel();
@@ -726,7 +722,18 @@ class _ControlShellState extends State<ControlShell>
     String path,
     Map<String, String> values,
   ) async {
-    if (commandPending) return false;
+    final attempt = ++commandAttempt;
+    if (commandPending) {
+      setState(
+        () => commandFailure =
+            'Another command is still pending. This command was not sent.',
+      );
+      return false;
+    }
+    setState(() {
+      commandFailure = null;
+      message = 'Sending command…';
+    });
     try {
       if (!foreground ||
           !api.connectionWanted ||
@@ -811,19 +818,20 @@ class _ControlShellState extends State<ControlShell>
           mappingFresh = true;
         });
       }
-      setState(
-        () => message = 'Device acknowledged; fresh state read back (not physical output proof)',
-      );
+      if (attempt == commandAttempt) {
+        setState(() {
+          commandFailure = null;
+          message = 'Device acknowledged; fresh state read back (not physical output proof)';
+        });
+      }
       return true;
     } catch (error) {
       if (mounted && owner == api.connectionRevision) {
+        if (attempt == commandAttempt) {
+          setState(() => commandFailure = error.toString());
+        }
         if (error is StaleConnection) {
           _revoke(error.toString());
-        } else {
-          _reportIncident(
-            'command:${error.runtimeType}:$error',
-            error.toString(),
-          );
         }
       }
       return false;
@@ -1249,7 +1257,11 @@ class _ControlShellState extends State<ControlShell>
                         ),
                         child: FirmwareProgressView(progress),
                       ),
-                  StatusBar(status: status, message: message),
+                  StatusBar(
+                    status: status,
+                    message: commandFailure ?? message,
+                    commandFailed: commandFailure != null,
+                  ),
                 ],
               ),
             ),
@@ -2878,9 +2890,15 @@ class StatusPill extends StatelessWidget {
 }
 
 class StatusBar extends StatelessWidget {
-  const StatusBar({super.key, required this.status, required this.message});
+  const StatusBar({
+    super.key,
+    required this.status,
+    required this.message,
+    this.commandFailed = false,
+  });
   final DeviceStatus? status;
   final String message;
+  final bool commandFailed;
   @override
   Widget build(BuildContext context) => Container(
     decoration: const BoxDecoration(
@@ -2891,12 +2909,43 @@ class StatusBar extends StatelessWidget {
     child: Row(
       children: [
         Icon(
-          status?.peer.known == true ? PakarIcons.check : PakarIcons.warning,
+          !commandFailed && status?.peer.known == true
+              ? PakarIcons.check
+              : PakarIcons.warning,
           size: 16,
+          color: commandFailed ? Theme.of(context).colorScheme.error : null,
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(message, maxLines: 1, overflow: TextOverflow.ellipsis),
+          child: InkWell(
+            key: const Key('command-status-details'),
+            onTap: commandFailed
+                ? () => showDialog<void>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Command not completed'),
+                      content: SelectableText(message),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Close'),
+                        ),
+                      ],
+                    ),
+                  )
+                : null,
+            child: Tooltip(
+              message: message,
+              child: Text(
+                message,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: commandFailed
+                    ? TextStyle(color: Theme.of(context).colorScheme.error)
+                    : null,
+              ),
+            ),
+          ),
         ),
         Flexible(
           child: Text(

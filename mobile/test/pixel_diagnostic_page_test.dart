@@ -76,6 +76,36 @@ Widget diagnosticPage(
 );
 
 void main() {
+  testWidgets('Reconnecting can explicitly rebind without replaying a pixel', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(600, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final api = DiagnosticApi();
+    addTearDown(api.close);
+    DeviceStatus? peer = diagnosticFixture();
+    await tester.pumpWidget(diagnosticPage(api, observed: () => peer));
+    api.disconnect();
+    await tester.pump();
+    api.connect();
+    api.pushes.add(peer);
+    await tester.pumpAndSettle();
+    expect(api.sent, isEmpty);
+    final useCurrent = find.byKey(const Key('pixel-use-current-connection'));
+    await tester.ensureVisible(useCurrent);
+    await tester.pumpAndSettle();
+    await tester.tap(useCurrent);
+    await tester.pumpAndSettle();
+    expect(api.sent, isEmpty);
+    await tester.ensureVisible(find.byKey(const Key('pixel-show')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('pixel-show')));
+    await tester.pumpAndSettle();
+    expect(api.sent.length, 1);
+    await tester.pumpWidget(const SizedBox());
+  });
   testWidgets(
     'Other-client WS observations update controls without replay or polling',
     (tester) async {

@@ -76,6 +76,7 @@
 #include "src/LedGrid.h"
 #include "src/LedRenderAdmission.h"
 #include "src/LoopMessages.h"
+#include "src/HostFrameIngress.h"
 #include "src/LedPreferences.h"
 #include "src/SceneStore.h"
 #include "src/LedScene.h"
@@ -190,6 +191,8 @@ BoardCore::SerialLink hostLink(Serial0);
 #else
 BoardCore::SerialLink hostLink(Serial);
 #endif
+HostFrameIngress hostFrameIngress;
+bool hostCallerAdmitted=false;
 AvrIsp avrIsp(kAvrResetPin);
 RemoteFirmware remoteFirmware;
 PakarHttpDetail::Processing urbootBusy;
@@ -542,25 +545,24 @@ void sendHostStatus(uint8_t requestSequence) {
 }
 
 void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
-  static bool admitted=false;
   static String introduction;
   static uint16_t introductionTotal=0;
   static uint32_t introductionAt=0;
   if(frame.opcode==kHello) {
     // Every new caller resets admission. An empty HELLO may inspect identity,
     // but is never permission for an unintroduced/unsupported app to control.
-    admitted=false;introduction=String();introductionTotal=0;
+    hostCallerAdmitted=false;introduction=String();introductionTotal=0;
     if(frame.payloadLength) {
       if(frame.payloadLength!=4 || frame.payload[0]!=kRoleHost) {
         hostLink.error(frame.sequence,kHello,kBadPayload);return;
       }
       char version[16];snprintf(version,sizeof(version),"%u.%u.%u",frame.payload[1],frame.payload[2],frame.payload[3]);
-      admitted=BoardCore::PeerCompatibility::appAllowed(version);
-      if(!admitted){hostLink.error(frame.sequence,kHello,kUnsupported);return;}
+      hostCallerAdmitted=BoardCore::PeerCompatibility::appAllowed(version);
+      if(!hostCallerAdmitted){hostLink.error(frame.sequence,kHello,kUnsupported);return;}
     }
   }
   const bool bootstrap=frame.opcode==kHello || frame.opcode==kGetStatus || frame.opcode==kGetIdentity || frame.opcode==kPing;
-  if(BoardCore::PeerCompatibility::enforced && !admitted && !bootstrap) {
+  if(BoardCore::PeerCompatibility::enforced && !hostCallerAdmitted && !bootstrap) {
     hostLink.error(frame.sequence,frame.opcode,kUnsupported);return;
   }
   if(frame.opcode==kPeerReport) {
@@ -580,7 +582,7 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
     if(introduction.length()==total) {
       const bool accepted=recordClientReport(introduction,"usb");
       introduction=String();introductionTotal=0;
-      if(!accepted){admitted=false;hostLink.error(frame.sequence,frame.opcode,kBadPayload);return;}
+      if(!accepted){hostCallerAdmitted=false;hostLink.error(frame.sequence,frame.opcode,kBadPayload);return;}
     }
     hostLink.ack(frame.sequence,frame.opcode);return;
   }
@@ -931,6 +933,41 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       hostLink.error(frame.sequence, frame.opcode, kUnsupported);
       break;
   }
+}
+
+void rejectHostFrame(const BoardCore::Protocol::Frame& frame,
+                     BoardCore::Protocol::Error error,void*) {
+  hostLink.error(frame.sequence,frame.opcode,error);
+}
+void revokeHostAdmission(void*) {hostCallerAdmitted=false;}
+void observeHostIngressFence() {
+  // Job identities catch a maintenance operation that began and ended between
+  // two services, including async OTA. Only this loop owner mutates the FIFO.
+  static uint32_t generation=0,httpEpoch=0,otaOperation=0,remoteJob=0,avrJob=0,uploadOwner=0;
+  const uint32_t nextHttpEpoch=server.ingressEpoch(),nextOtaOperation=otaProgress.snapshot().operation;
+  const uint32_t nextRemoteJob=remoteFirmware.jobId(),nextAvrJob=urbootJobId,nextUploadOwner=avrUploadOwner;
+  if(httpEpoch!=nextHttpEpoch || otaOperation!=nextOtaOperation || remoteJob!=nextRemoteJob ||
+      avrJob!=nextAvrJob || uploadOwner!=nextUploadOwner) {
+    ++generation;httpEpoch=nextHttpEpoch;otaOperation=nextOtaOperation;
+    remoteJob=nextRemoteJob;avrJob=nextAvrJob;uploadOwner=nextUploadOwner;
+  }
+  hostFrameIngress.observeFence(generation,urbootBusy.get() || remoteFirmware.busy() ||
+      otaActive || otaRebootAt || avrUploadOwner || urbootRawOwned);
+}
+void onHostFrameIngress(const BoardCore::Protocol::Frame& frame,void*) {
+  observeHostIngressFence();
+  hostFrameIngress.receive(frame,millis(),cloudServices.ioActive());
+}
+void serviceHostLink() {
+  // SerialLink's callback runs before its RX scratch is retired. A command
+  // that publishes cloud output must not recursively enter that same parser.
+  static bool servicing=false;if(servicing)return;servicing=true;
+  observeHostIngressFence();
+  hostFrameIngress.service(millis(),cloudServices.ioActive());
+  hostLink.service();
+  observeHostIngressFence();
+  hostFrameIngress.service(millis(),cloudServices.ioActive());
+  servicing=false;
 }
 
 void setAvrTransmitBlocked(bool blocked) {
@@ -1448,6 +1485,7 @@ void serviceStatusRgb(uint32_t now) {
 }
 #endif
 void serviceUpgrade() {
+  observeHostIngressFence();
   if(servicingUpgrade)return;
   servicingUpgrade=true;
   using S=PakarUpdate::Source;
@@ -1533,7 +1571,7 @@ void serviceUpgrade() {
   servicingUpgrade=false;
 }
 void upgradeBackground() {
-  serviceUpgrade();hostLink.service();
+  serviceUpgrade();serviceHostLink();
   serviceSemanticPanel(millis());
 #if defined(ARDUINO_ARCH_ESP32)
   serviceBleReadOnly();
@@ -3590,7 +3628,7 @@ void registerApi() {
       }
       // Fence all competing producers for the bounded, loop-owned transaction.
       // No reset lease is held across an HTTP round trip or caller timeout.
-      server.setMaintenanceFence(true);closeDeviceShells();stream.stop();urbootBusy.set(true);
+      server.setMaintenanceFence(true);hostFrameIngress.discard();closeDeviceShells();stream.stop();urbootBusy.set(true);
       struct RecoveryFence {
 #if defined(ARDUINO_ARCH_ESP32)
         bool ledHeld=false;
@@ -3600,7 +3638,7 @@ void registerApi() {
 #if defined(ARDUINO_ARCH_ESP32)
           if(ledHeld)PakarS3::LedOutput::releaseFlashPause();
 #endif
-          urbootBusy.set(false);server.setMaintenanceFence(false);hostLink.discardInput();stream.begin(kStreamPort);
+          urbootBusy.set(false);server.setMaintenanceFence(false);hostFrameIngress.discard();hostLink.discardInput();stream.begin(kStreamPort);
         }
       } fence;
 #if defined(ARDUINO_ARCH_ESP32)
@@ -3904,7 +3942,8 @@ void setup() {
   upgradeLifecycle.boot(millis());
   if (grid.outputEnabled()) grid.presentMaintenance(upgradeLifecycle,millis());
   else grid.setOutputEnabled(false); // Explicit complete black frame.
-  hostLink.begin(115200, onHostFrame);
+  hostFrameIngress.begin(onHostFrame,rejectHostFrame,revokeHostAdmission);
+  hostLink.begin(115200, onHostFrameIngress);
 #if defined(ARDUINO_ARCH_ESP32)
 #if PAKAR_AVR_LINK_ENABLED
   avrUart.begin(onAvrFrame);
@@ -3956,7 +3995,7 @@ void setup() {
   webAccess.configurePeerFence(pcBoardId, pcBootId,hostname);
   cloudServices.begin(hostname, handleCloudCommand, buildStatusJson,buildTelemetryJson,pcBoardId,pcBootId);
   cloudServices.setProgressService([](){
-    hostLink.service();
+    serviceHostLink(); // Capture/queue only while cloud IO owns its stack.
 #if defined(ARDUINO_ARCH_ESP32)
     // Same loop owner; advance animation between cloud writes, without nested
     // network service, UART commands, storage scans or a duplicate FX engine.
@@ -4029,7 +4068,7 @@ void loop() {
     ntpConfigured = false;
   }
   avrLink.service();
-  hostLink.service();
+  serviceHostLink();
   serviceUpgrade();
   // Render before issuing UART requests. The AVR is request/response only, so
   // its reply arrives while FastLED is not masking ESP8266 interrupts.

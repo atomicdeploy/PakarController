@@ -279,6 +279,7 @@ void serviceUrbootJob() {
 #endif
   urbootBusy.set(false);
   server.setMaintenanceFence(false);
+  hostFrameIngress.discard();
   hostLink.discardInput();
   stream.begin(kStreamPort);
 }
@@ -327,6 +328,7 @@ void registerUrbootRoutes() {
     avrMaintenanceSeen[avrMaintenanceSeenCount++]=id;avrMaintenanceRequest=id;avrMaintenanceDeadline=deadline;
     urbootDone=urbootTotal=0;avrWriteAttempted=urbootProgrammed=urbootVerified=urbootRecovered=urbootDetected=false;urbootError="";
     server.setMaintenanceFence(true);
+    hostFrameIngress.discard();
     // Retire byte-oriented ingress instead of replaying buffered user intent
     // on returning to the application. The UDP listener is rebound afterward.
     stream.stop();

@@ -4582,13 +4582,14 @@
   "preserved": [
     "Actual PeerSession refresh single-flight and reset-before-await socket ownership adapted to shared status reads, per-socket cleanup and retained previously acknowledged layout inventory. Reads retire before and after writes; a pre/during-write result cannot settle post-ACK confirmation. Fresh individual capabilities still own actuation. The pinned http abortable GET path additionally cancels transport/body reads on deadline/retirement instead of retaining the donor Future.timeout-only limitation.",
     "Failure-driven review rejects older same-boot HTTP replies as superseded rather than returning cached data as a fresh observation; older WS frames cannot reset liveAge or publish into a revoked UI lease. Ordered real-loopback producer regressions retain equal board-clock captures as valid, without inventing a sequence number. Board/application-keyed panel elements retire old application mode/cue shells while retaining the user's per-board workspace; offline melody slots keep bounds and both controls disabled until actual fresh cues return. These are scoped lifecycle adaptations, not complete donor mobile parity.",
-    "Bluetooth adaptation: fully read canonical PeerSession transport source at SHA5263044d..., retain single-flight reads, generation/route identity and reset-before-await retirement in the selected BLE API. Android native GATT is an SDK implementation because no reusable BLE transport exists in these donors. Verify INFO then full status, retain stable board aliases and saved selected route, keep app updater/remote management independent, and never substitute board HTTP/DNS/WebSocket for BLE. Existing UI/workspace, command ACK, settings and mirroring consumers are reused."
+    "Bluetooth adaptation: fully read canonical PeerSession transport source at SHA5263044d..., retain single-flight reads, generation/route identity and reset-before-await retirement in the selected BLE API. Android native GATT is an SDK implementation because no reusable BLE transport exists in these donors. Verify INFO then full status, retain stable board aliases and saved selected route, keep app updater/remote management independent, and never substitute board HTTP/DNS/WebSocket for BLE. Existing UI/workspace, command ACK, settings and mirroring consumers are reused.",
+    "Reread the complete current donor Rejected/Uncertain and generation-bound PeerSession through EOF. Adapt its explicit rejection versus missing-confirmation distinction to Pakar's unversioned commands: sanitized public reasons, negative2xx receipt rejection, no new-intent replay, persistent attempt-owned command failure independent of status reads, and explicit pixel-owner rebind after reconnect. This is a scoped error/lifecycle adaptation, not donor RPC/media/PWM parity."
   ],
   "targets": [
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec"
+      "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
     },
     {
       "path": "mobile/lib/panel_inventory.dart",
@@ -4651,6 +4652,21 @@
       "path": "mobile/test/ble_transport_test.dart",
       "anchor": "Offline BLE status and command use GATT only",
       "sha256": "20e59050dfd5ad7b5474cf67841654a4bcb3bcb1e83f6bc701ce10a314c8d154"
+    },
+    {
+      "path": "mobile/lib/command_failure.dart",
+      "anchor": "class DeviceCommandRejected",
+      "sha256": "f7b51a04b5f1bd430523303299d466e5e8117b922da9e8449b18d9ffe83f2aa1"
+    },
+    {
+      "path": "mobile/test/command_failure_test.dart",
+      "anchor": "Atomic pixel $issue propagates a specific failure",
+      "sha256": "b6e282c4ee6ef999e7792ac8c4ccf57c7794c62d70cc74cae33cc59dd3dfea46"
+    },
+    {
+      "path": "mobile/test/live_pixel_probe_test.dart",
+      "anchor": "Explicit live 480-pixel command and full-frame readback",
+      "sha256": "728143695ef5326fc95e889ff327d5d623dbd836996de051e201a2835fd44d85"
     }
   ],
   "omissions": [
@@ -4666,7 +4682,8 @@
     }
   ],
   "remaining": [
-    "Issue #10: phone lifecycle/scroll/visual acceptance, all-client contention and additional donor transport contracts remain separate. Loopback cancellation is not Android radio/runtime proof."
+    "Issue #10: phone lifecycle/scroll/visual acceptance, all-client contention and additional donor transport contracts remain separate. Loopback cancellation is not Android radio/runtime proof.",
+    "The39 focused source/loopback/widget tests and APK build do not prove Android execution. Explicit live probes record failed WS/network/bootstrap attempts and stop on changed boot identity; no pixel success or physical acceptance is inferred. Phone pairing and a verified on-device command remain open."
   ]
 },
 {
@@ -4682,7 +4699,7 @@
     {
       "path": "mobile/lib/api.dart",
       "anchor": "Future<DeviceStatus> status()",
-      "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec"
+      "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
     }
   ],
   "proof": [
@@ -4975,7 +4992,7 @@
     {"path":"mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt","sha256":"b6623d6be8e23e57532a5afc210a32ad4ca787cd40fb7d66d5796147917a322a","anchor":"private val firmwareMaximum = 0x330000 - 1"},
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec",
+      "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4",
       "anchor": "Stream<DeviceStatus> get statusUpdates"
     }
   ],
@@ -5017,7 +5034,7 @@
     {
       "path": "firmware/esp8266/src/UrbootRoutes.h",
       "anchor": "bool runUrboot(",
-      "sha256": "0c0a164d0b339d78f671a879bffeb3490ab2c7177e71e356fee9d72840adcd36"
+      "sha256": "7d41ea5354537c6738c751fa01848cc09d558e2d9d0900bf5e975ad3adcdd6c5"
     }
   ],
   "omissions": [
@@ -7463,7 +7480,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2"
+          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631"
         },
         {
           "path": "firmware/esp8266/src/RemoteFirmware.h",
@@ -7965,7 +7982,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2"
+          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631"
         },
         {
           "path": "firmware/esp8266/src/AsyncHttpService.h",
@@ -8020,7 +8037,7 @@
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2"
+          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631"
         }
       ],
       "omissions": [
@@ -8072,13 +8089,13 @@
           "sha256": "4adbe46485571c92c0061e008ef3044d71a580f7f62d3cb1a1b3c19117eee40b"
         },
         {"path":"firmware/esp8266/src/LoopMessages.h","sha256":"0539837793778de69839ea205fce43bda14f1734866dee5c158389f48e3837ab","anchor":"Message *items_=nullptr;"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631","anchor":"loopMessages.begin(); // PSRAM-backed S3 queue"},
         {"path":"firmware/esp8266/src/MaintenanceRoutes.h","sha256":"9f486926615fdec3d6e7c6ad32e384816e66811674aec2a9f6b34697233e83cf","anchor":"internal_heap_largest_block_bytes"},
         {"path":"tools/update-firmware.mjs","sha256":"489bab793017cb7bfab436ab3a0f49a8d3eb3b8a58172a77dad30b7a7a8e0d90","anchor":"export function checkWebSocket("},
         {
           "path": "firmware/esp8266/esp8266.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2"
+          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -8162,7 +8179,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec"
+          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -8262,7 +8279,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec"
+          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -8820,7 +8837,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "9dd84021879f6b968de3b6ea867f8b60f96694388f4b18e9209d8307c9816bcd",
+          "sha256": "538f7c02dbd9184c0e500ea65bb14f7be924ef98d8f5a88b0e26c58938be534a",
           "anchor": "assert.match(automationStore,"
         }
       ]
@@ -9127,7 +9144,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "9dd84021879f6b968de3b6ea867f8b60f96694388f4b18e9209d8307c9816bcd",
+          "sha256": "538f7c02dbd9184c0e500ea65bb14f7be924ef98d8f5a88b0e26c58938be534a",
           "anchor": "assert.match(transfer, /esp_partition_read"
         },
         {
@@ -9223,7 +9240,7 @@
       "preserved": ["Full header/implementation read through EOF. Adapted nonblocking lifecycle state, absolute elapsed/period animation, repeat-state phase preservation, brightness-scaled rendered-byte reporting and explicit board-owned configuration into PakarS3::StatusRgb. Fixed descriptors now add donor flash/cycle/one-shot transition plus pulse/double-blink: fault and shutdown preempt routine states, verified success expires with the existing update lifecycle, offline USB is healthy and simultaneous AP/network availability is distinct."],
       "targets": [
         {"path":"firmware/esp32s3/src/StatusRgb.h","sha256":"2959b720925b61c747b91f9d9dbc6fa5ffb9968cddfbc0fc48e8a5fb3b4da01b","anchor":"class StatusRgb"},
-        {"path":"firmware/esp8266/esp8266.ino","sha256":"5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2","anchor":"void serviceStatusRgb(uint32_t now)"},
+        {"path":"firmware/esp8266/esp8266.ino","sha256":"741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631","anchor":"void serviceStatusRgb(uint32_t now)"},
         {"path":"firmware/esp32s3/src/StatusRgbConfig.h","sha256":"8ae7dd8a7868db38ff2a31c7034c3c9674c8bf860ee4b9aae4f559d2f125ed29","anchor":"class StatusRgbConfig"},
         {"path":"desktop/src/status_rgb.rs","sha256":"3dbe61cf121e44b14fe047427fbe9d0b8e60735baa445ad3116310560631965e","anchor":"pub struct Configuration"},
         {"path":"mobile/lib/status_rgb.dart","sha256":"5d36a3437fdc52fb467bceee9599575b4f47799fe2944adf2fd10ddc1c7caec8","anchor":"class StatusRgbSettings"}
@@ -9848,12 +9865,12 @@
     },
     {
       "path": "mobile/lib/api.dart",
-      "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec",
+      "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4",
       "anchor": "bool _acceptIdentity("
     },
     {
       "path": "mobile/lib/main.dart",
-      "sha256": "4c7f4a0111536e0c32d5d8e4e6427655f297b4264009c79c94d99ed64e859cf1",
+      "sha256": "d5896f7587d45f25ec9ecf7cc367d83ce8323bcc31c299152f5894896e8ca163",
       "anchor": "api.onPeerChanged = ()"
     },
     {
@@ -9873,7 +9890,7 @@
     },
     {
       "path": "firmware/esp8266/esp8266.ino",
-      "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2",
+      "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631",
       "anchor": "bool authenticate()"
     },
     {
@@ -9913,7 +9930,7 @@
     },
     {
       "path": "mobile/lib/command_wire.dart",
-      "sha256": "a26e03f93483d07e431a35a4b1c642707c364f7dcb99f803e721820c5c91a1ff",
+      "sha256": "936dcce26bf42522f11ffd1c2c7c864161edb8a8f22ce0d17a40a15e2eb21eda",
       "anchor": "String commandPacket("
     },
     {
@@ -10055,7 +10072,7 @@
     },
     {
       "path": "mobile/test/connection_lifecycle_test.dart",
-      "sha256": "d0a97e0475c0afec13ac5d6e99239bc35dd279f7fc30ad84d3d1c3018d6a2872",
+      "sha256": "6b61da6c530ec463187fa09d6906931350d0367918f86772d1124bc1863387b7",
       "anchor": "Lost post-ACK readback stops bulk without discarding a fresh workspace"
     },
     {
@@ -11553,7 +11570,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec",
+          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -12281,7 +12298,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "4c7f4a0111536e0c32d5d8e4e6427655f297b4264009c79c94d99ed64e859cf1",
+          "sha256": "d5896f7587d45f25ec9ecf7cc367d83ce8323bcc31c299152f5894896e8ca163",
           "anchor": "Future<bool> _command"
         },
         {
@@ -12456,7 +12473,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec"
+          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -12586,7 +12603,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "4c7f4a0111536e0c32d5d8e4e6427655f297b4264009c79c94d99ed64e859cf1",
+          "sha256": "d5896f7587d45f25ec9ecf7cc367d83ce8323bcc31c299152f5894896e8ca163",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -13437,7 +13454,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec"
+          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -13607,7 +13624,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec"
+          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -16513,7 +16530,7 @@
       "targets": [
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2",
+          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -16534,7 +16551,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec"
+          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -16602,7 +16619,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "9dd84021879f6b968de3b6ea867f8b60f96694388f4b18e9209d8307c9816bcd",
+          "sha256": "538f7c02dbd9184c0e500ea65bb14f7be924ef98d8f5a88b0e26c58938be534a",
           "anchor": "sceneStore.begin"
         },
         {
@@ -16823,7 +16840,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "9dd84021879f6b968de3b6ea867f8b60f96694388f4b18e9209d8307c9816bcd",
+          "sha256": "538f7c02dbd9184c0e500ea65bb14f7be924ef98d8f5a88b0e26c58938be534a",
           "anchor": "const flashRead ="
         },
         {
@@ -17107,7 +17124,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec",
+          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4",
           "anchor": "final LanResolver resolver;"
         },
         {
@@ -17272,7 +17289,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2",
+          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -17302,12 +17319,12 @@
         },
         {
           "path": "mobile/lib/pixel_diagnostic_page.dart",
-          "sha256": "e6cbb84c3b5691f7838e59219cca26bdbc647c416dd47b7600f091e1ccc8cb65",
+          "sha256": "f6beb60f550f1cb28e6b45c256022b36860d67997715cec375bbe37da1c131f7",
           "anchor": "class PixelDiagnosticPage"
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec",
+          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -17400,7 +17417,7 @@
         },
         {
           "path": "mobile/test/pixel_diagnostic_page_test.dart",
-          "sha256": "7ec7c84e36ffc5ed4351e3f573417c90d79848ff0bfa8cdca118ec73a13db384",
+          "sha256": "b784f40b804f78213d6e27d179c02ecd87492e96778e607b3b248a8247932fc9",
           "anchor": "Pending writes cannot repeat"
         },
         {
@@ -17511,7 +17528,7 @@
         },
         {
           "path": "firmware/esp8266/esp8266.ino",
-          "sha256": "5ff39b648ff7664c05dd06b287c492dc985c1578fa46ada1ef0d15d89b4e44d2",
+          "sha256": "741c4affe1727beb2df9fda451f3200445c9cce515acc4b42f8a5ff29787b631",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -17541,12 +17558,12 @@
         },
         {
           "path": "mobile/lib/pixel_diagnostic_page.dart",
-          "sha256": "e6cbb84c3b5691f7838e59219cca26bdbc647c416dd47b7600f091e1ccc8cb65",
+          "sha256": "f6beb60f550f1cb28e6b45c256022b36860d67997715cec375bbe37da1c131f7",
           "anchor": "class PixelDiagnosticPage"
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "b9f98263db61d7e1d00c3a662bc320d22e3586619ed286f13d2314ba0b5081ec",
+          "sha256": "96f48ff388549b7d34a16ed7185f6265151d042ca73c5545f5d942ba56da1af4",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -17633,7 +17650,7 @@
         },
         {
           "path": "mobile/test/pixel_diagnostic_page_test.dart",
-          "sha256": "7ec7c84e36ffc5ed4351e3f573417c90d79848ff0bfa8cdca118ec73a13db384",
+          "sha256": "b784f40b804f78213d6e27d179c02ecd87492e96778e607b3b248a8247932fc9",
           "anchor": "Pending writes cannot repeat"
         },
         {
@@ -17690,7 +17707,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "4c7f4a0111536e0c32d5d8e4e6427655f297b4264009c79c94d99ed64e859cf1",
+          "sha256": "d5896f7587d45f25ec9ecf7cc367d83ce8323bcc31c299152f5894896e8ca163",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -17838,7 +17855,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "4c7f4a0111536e0c32d5d8e4e6427655f297b4264009c79c94d99ed64e859cf1"
+          "sha256": "d5896f7587d45f25ec9ecf7cc367d83ce8323bcc31c299152f5894896e8ca163"
         }
       ],
       "proof": [
@@ -17878,7 +17895,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "4c7f4a0111536e0c32d5d8e4e6427655f297b4264009c79c94d99ed64e859cf1"
+          "sha256": "d5896f7587d45f25ec9ecf7cc367d83ce8323bcc31c299152f5894896e8ca163"
         }
       ],
       "proof": [

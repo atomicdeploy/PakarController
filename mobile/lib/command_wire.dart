@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'models.dart';
 import 'cell_search.dart';
+import 'command_failure.dart';
 
 const commandNames = {
   '/api/cells': 'cells',
@@ -67,7 +68,7 @@ DeviceStatus verifyCommandReply(
     );
   }
   if (reply['accepted'] != true) {
-    throw FormatException('Command rejected: ${reply['error'] ?? 'unknown'}');
+    throw DeviceCommandRejected(error: reply['error']);
   }
   if (path == '/api/cells' &&
       reply['count'] != parseCellSearch(values['ids'] ?? '').length) {
