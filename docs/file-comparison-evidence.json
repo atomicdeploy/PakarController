@@ -13015,13 +13015,19 @@
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Byte-identical actual donor process-handle probe: no-shell hidden process, async redirected stdout, 30-second wait, explicit exit code, output return and Dispose. Optional staging probe calls this helper."
+        "Byte-identical actual donor process-handle probe: no-shell hidden process, async redirected stdout, 30-second wait, explicit exit code, output return and Dispose. Optional staging probe calls this helper.",
+        "Desktop replacement now also calls the retained process probe for before/after owner status and its one graceful quit. Actual ASUS inspection showed direct GUI-subsystem invocation could report false IPC failure; the retained probe read the same ready owner successfully. Live replacement preserved settings/rollback and recovered USB/80-cell mapping on the same ESP boot."
       ],
       "targets": [
         {
           "path": "tools/package-probe-windows.ps1",
           "sha256": "71604ab464776891dbc95db7123218c22b3ede09ce2835fe4659d75c6d0b9d5e",
           "anchor": "function Invoke-PackageProbe"
+        },
+        {
+          "path":"tools/replace-desktop.ps1",
+          "sha256":"13e5893983bf422449d0c35b94305a39bb662a1663511a3706125bb8e9fc484d",
+          "anchor":"$reply=Invoke-PackageProbe"
         }
       ],
       "omissions": [],
@@ -16387,7 +16393,7 @@
         {
           "path": "tools/replace-desktop.ps1",
           "anchor": "function OwnerStatus",
-          "sha256": "59e01095bf144ea4ea76678e0730395edf3fbef2895da008610b925309cc5559"
+          "sha256": "13e5893983bf422449d0c35b94305a39bb662a1663511a3706125bb8e9fc484d"
         },
         {
           "path": "tools/observe-desktop.ps1",

@@ -7262,3 +7262,16 @@ for insufficient storage (290MiB free). The authorized USB phone still reports
 0.2.7, below the board's0.2.8 admission floor. Existing app data was preserved;
 the user is freeing space before installation. Package/source success is not
 installed-phone acceptance, and no downgrade or blind install retry was used.
+
+The Rust release from ff64236 was built, package-probed and staged through the
+canonical cache. An initial source guard rejected the literal ExpectedCommit
+value HEAD; resolving it to the actual commit passed without changing the guard.
+Release SHA256 `f1ec8f7bfe832a6e0d918bdbe96a26876cb2ebf932a7a64a56327ecd6c0797ff`
+was then gracefully installed on ASUS. New PID11208 is ready, USB-only online,
+mapping80 confirmed and active diagnostics empty; ESP boot stayed unchanged.
+Settings and old executable were preserved by the guarded replacement tool.
+That tool now uses the actual Pealayer retained Process probe for status/quit,
+because the older direct GUI executable invocation produced false IPC failures.
+PowerShell parsing, package probing and the actual graceful replacement passed;
+no forced close was needed. The new tool is not evidence of unrelated full
+Pealayer scripting or UI parity.

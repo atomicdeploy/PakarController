@@ -2192,7 +2192,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 
 - Target: `desktop/src/platform/windows_tray.rs:14 [UTF8-LF sha256=5f847993b6177d97f3b5fa6930f6b1acfd6e6e26dfb4fb51c58730f0d8a4ed2d; anchor=Shell acceptance, not object presence]`.
 - Target: `desktop/src/ui/shell.rs:727 [UTF8-LF sha256=7c573a8377a88ed698e4df3de122bdf88e4853061a86b59273ef8e569c229b8e; anchor=value["tray_shell"]]`.
-- Target: `tools/replace-desktop.ps1:41 [UTF8-LF sha256=59e01095bf144ea4ea76678e0730395edf3fbef2895da008610b925309cc5559; anchor=function OwnerStatus]`.
+- Target: `tools/replace-desktop.ps1:42 [UTF8-LF sha256=13e5893983bf422449d0c35b94305a39bb662a1663511a3706125bb8e9fc484d; anchor=function OwnerStatus]`.
 - Target: `tools/observe-desktop.ps1:28 [UTF8-LF sha256=c2adb041290e63d2190c6e807c095b9a79bf3c201d46f5ffc085636c1d4daf5e; anchor=function OwnerStatus]`.
 - Retained: Full donor document read through EOF. Apply its concrete distinction between working IPC/service and actual shell/GUI readiness: expose tray Shell acceptance separately, retain failures and recover only after accepted synchronization, verify open drafts before graceful replacement and keep actual runtime proof separate.
 - Retained: Actual already-owned ASUS replacement/capture helpers were reread and their PID/path/hash/session/no-draft/graceful-exit/atomic-rollback checks adapted into reusable explicit-parameter replacement and600s USB/Wi-Fi observation tools. Both preserve settings and reject unknown owners; observation captures actual message-hub and Windows Shell counters, buffers samples in RAM and writes bounded progress only on changes. This imports recovery boundaries, not all donor shell features.
@@ -2258,7 +2258,9 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 Verdict: **equivalent-file**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `f4516884990ad76c020fbc6534d902c4949abae0b48da8ea40c008afa44dfd4f`.
 
 - Target: `tools/package-probe-windows.ps1:27 [UTF8-LF sha256=71604ab464776891dbc95db7123218c22b3ede09ce2835fe4659d75c6d0b9d5e; anchor=function Invoke-PackageProbe]`.
+- Target: `tools/replace-desktop.ps1:68 [UTF8-LF sha256=13e5893983bf422449d0c35b94305a39bb662a1663511a3706125bb8e9fc484d; anchor=$reply=Invoke-PackageProbe]`.
 - Retained: Byte-identical actual donor process-handle probe: no-shell hidden process, async redirected stdout, 30-second wait, explicit exit code, output return and Dispose. Optional staging probe calls this helper.
+- Retained: Desktop replacement now also calls the retained process probe for before/after owner status and its one graceful quit. Actual ASUS inspection showed direct GUI-subsystem invocation could report false IPC failure; the retained probe read the same ready owner successfully. Live replacement preserved settings/rollback and recovered USB/80-cell mapping on the same ESP boot.
 - No production-code omission claimed for this reviewed file.
 - Test-code evidence: `tests/reuse_preflight_test.ps1:87 [UTF8-LF sha256=842c7d0149c2717f7378116063712f4b719941152d89bd43cdc31e60b148437d; anchor=Actual imported short-lived process stdout]`.
 - Remaining: Donor timeout throws without terminating its child. Full GUI/runtime package smoke remains separate from CLI identity.

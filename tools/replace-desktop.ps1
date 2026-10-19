@@ -19,6 +19,7 @@ param(
 # owner/draft checks, graceful IPC, atomic NTFS replacement and preserved profile.
 # No kill, settings rewrite, USB fallback, board writes or automatic rollback.
 $ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue'
+. (Join-Path $PSScriptRoot 'package-probe-windows.ps1')
 if($InitializeClientManagement){
   $taskManagementUri=$null
   if(-not [Uri]::TryCreate($ClientManagementBase,[UriKind]::Absolute,[ref]$taskManagementUri) -or $taskManagementUri.Scheme -ne 'https' -or $taskManagementUri.UserInfo -or $taskManagementUri.Query -or $taskManagementUri.Fragment){throw 'Use an explicit HTTPS management base without credentials'}
@@ -42,8 +43,8 @@ function OwnerStatus {
   $owner=Get-CimInstance Win32_Process -Filter "ProcessId=$ExpectedProcessId"
   if(-not $owner -or $owner.ExecutablePath -ine $ExecutablePath -or $owner.SessionId -ne $session){throw 'Owner PID/path/session changed'}
   AssertHash $ExecutablePath $ExpectedOldHash
-  $status=& $ExecutablePath --app-status | ConvertFrom-Json
-  if($LASTEXITCODE -or $status.process_id -ne $ExpectedProcessId -or $status.ready -ne $true -or $status.single_instance -ne $true){throw 'Expected ready single-instance IPC owner required'}
+  $status=Invoke-PackageProbe $ExecutablePath '--app-status' $dir | ConvertFrom-Json
+  if($status.process_id -ne $ExpectedProcessId -or $status.ready -ne $true -or $status.single_instance -ne $true){throw 'Expected ready single-instance IPC owner required'}
   foreach($key in @('preferences_open','preferences_dirty','mapping_open','workspaces_open')){if($status.$key -ne $false){throw "Open or unknown draft: $key"}}
   if($status.device_settings.open -ne $false -or $status.device_settings.write_pending -ne $false -or
      $status.device_settings.maintenance_pending -ne $false -or $status.cell_management.open -ne $false -or
@@ -64,8 +65,8 @@ try {
   AssertHash $SettingsBackupPath $proof.settings_sha256
   $null=OwnerStatus;AssertHash $CandidatePath $ExpectedNewHash
   $proof.quit_attempted=$true
-  $reply=& $ExecutablePath --quit | ConvertFrom-Json
-  if($LASTEXITCODE -or $reply.accepted -ne $true -or $reply.process_id -ne $ExpectedProcessId){throw 'Graceful quit unconfirmed; no retry or forced shutdown'}
+  $reply=Invoke-PackageProbe $ExecutablePath '--quit' $dir | ConvertFrom-Json
+  if($reply.accepted -ne $true -or $reply.process_id -ne $ExpectedProcessId){throw 'Graceful quit unconfirmed; no retry or forced shutdown'}
   $until=[DateTime]::UtcNow.AddSeconds($DeadlineSeconds)
   do{Start-Sleep -Milliseconds 150;$owner=Get-CimInstance Win32_Process -Filter "ProcessId=$ExpectedProcessId"}while($owner -and [DateTime]::UtcNow -lt $until)
   if($owner -or @(Get-CimInstance Win32_Process -Filter "Name LIKE 'Pakar%'").Count){throw 'An owner remains; no replacement attempted'}
@@ -95,7 +96,11 @@ try {
   if($owners.Count -ne 1){throw 'New production owner not observed; preserve evidence, no automatic retry'}
   $proof.new_process=$owners[0].ProcessId
   $until=[DateTime]::UtcNow.AddSeconds($DeadlineSeconds)
-  do{Start-Sleep -Milliseconds 200;$status=& $ExecutablePath --app-status | ConvertFrom-Json}while(($LASTEXITCODE -or $status.ready -ne $true) -and [DateTime]::UtcNow -lt $until)
+  $status=$null
+  do {
+    Start-Sleep -Milliseconds 200
+    try{$status=Invoke-PackageProbe $ExecutablePath '--app-status' $dir | ConvertFrom-Json}catch{$proof.startup_observation=$_.Exception.Message}
+  }while(($null -eq $status -or $status.ready -ne $true) -and [DateTime]::UtcNow -lt $until)
   if($status.process_id -ne $proof.new_process -or $status.ready -ne $true){throw 'New ready IPC identity not confirmed'}
   $proof.after=$status
 }catch{$proof.error=$_.Exception.Message;throw}
