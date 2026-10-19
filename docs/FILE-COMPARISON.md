@@ -722,8 +722,8 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **scoped-improvement**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `077c722018b5849d5d972f228b326151da15cc4238c3cd54052219df4d8d59db`.
 
-- Target: `mobile/lib/devices_page.dart:18 [UTF8-LF sha256=3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da; anchor=List<DeviceListEntry> unifiedDevices(]`.
-- Target: `mobile/lib/devices_page.dart:332 [UTF8-LF sha256=3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da; anchor=Future<void> connect(DeviceListEntry entry)]`.
+- Target: `mobile/lib/devices_page.dart:59 [UTF8-LF sha256=47b896ab775091042ee0d9ff0607969ec7885e6fa40638ea494dc0a903d947e7; anchor=List<DeviceListEntry> unifiedDevices(]`.
+- Target: `mobile/lib/devices_page.dart:382 [UTF8-LF sha256=47b896ab775091042ee0d9ff0607969ec7885e6fa40638ea494dc0a903d947e7; anchor=Future<void> connect(DeviceListEntry entry)]`.
 - Target: `mobile/lib/device_registry.dart:115 [UTF8-LF sha256=aa10bd84de1e6bc16e5c9d455db6ef3e97251276fa6a41184eebeb0bcd99ad3f; anchor=Future<SavedDevice> save(]`.
 - Target: `mobile/lib/workspace_widgets.dart:82 [UTF8-LF sha256=18e0b0755aaebbd42c571e2c0a7cee18d42f7a62e789f3d0aa1ccb8c40c3c747; anchor=class WorkspaceSection]`.
 - Target: `mobile/lib/app_theme.dart:15 [UTF8-LF sha256=f414102bbefe21dc4f42cdec4a41176192c3409e4595af4c97e2e96a40aac956; anchor=ThemeData studioTheme()]`.
@@ -733,8 +733,8 @@ Verdict: **scoped-improvement**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920
 - Omitted/replaced code: `Two independent saved/discovered lists and permanent unverified advertisement labels`. Disposition: **replaced**. Reason: They duplicate one physical board across protocols/profiles and do not perform a compatibility check. The unified row retains saved naming, aggregates sources, uses bounded public probes and dims stale/unreachable saved intent.
 - Omitted/replaced code: `Mandatory password at save and immediate username/password form for new discovered profiles`. Disposition: **replaced**. Reason: The user explicitly requires optional credentials and no prompt until needed. New profiles save without a password; existing profile edits allow keep/replace/clear. A protected API read's401 triggers a bounded sign-in flow, not a hardware-command replay.
 - Omitted/replaced code: `Donor page-local plain card/text presentation`. Disposition: **replaced**. Reason: Shared Studio roles and reusable workspace components prevent page/capture styling drift. Flutter adapts the inspected Pealayer PreferencesTab header/group pattern, not TSX widgets or media business.
-- Test-code evidence: `mobile/test/devices_page_test.dart:213 [UTF8-LF sha256=7d5b4015162484aa3f1dc866cee97af9f136aac587a516e7ba2fa8df5205ef20; anchor=Credentials requested only after challenge:]`.
-- Test-code evidence: `mobile/test/devices_page_test.dart:84 [UTF8-LF sha256=7d5b4015162484aa3f1dc866cee97af9f136aac587a516e7ba2fa8df5205ef20; anchor=Actual registry accepts optional secrets]`.
+- Test-code evidence: `mobile/test/devices_page_test.dart:371 [UTF8-LF sha256=53febe7f492d28a40f71e336eceb1d83f5a87994e6315089ec08b4eb7333c23f; anchor=Credentials requested only after challenge:]`.
+- Test-code evidence: `mobile/test/devices_page_test.dart:84 [UTF8-LF sha256=53febe7f492d28a40f71e336eceb1d83f5a87994e6315089ec08b4eb7333c23f; anchor=Actual registry accepts optional secrets]`.
 - Scoped advantage: Deduplicated saved/discovered device management with optional secure credentials, challenge-driven verified selection and adaptive shared workspace styling, exercised at phone/tablet widths.
 - Remaining: Install the built APK and inspect real phone/tablet navigation, field focus, profile edits, stored credential access and discovery/connection under network loss. This scoped source/test comparison is not full application/donor parity or human acceptance.
 
@@ -742,15 +742,19 @@ Verdict: **scoped-improvement**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920
 
 Verdict: **scoped-improvement**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `fc37b6638aee7b3078b3822d8b221374066d68b40908d815968a06d0c3f351da`.
 
-- Target: `mobile/lib/discovery.dart:370 [UTF8-LF sha256=fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814; anchor=Future<DiscoveredDevice?> verifyDiscoveredDevice(]`.
-- Target: `mobile/lib/discovery.dart:39 [UTF8-LF sha256=fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814; anchor=bool sameBoard(DiscoveredDevice other)]`.
+- Target: `mobile/lib/discovery.dart:400 [UTF8-LF sha256=fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33; anchor=Future<DiscoveredDevice?> verifyDiscoveredDevice(]`.
+- Target: `mobile/lib/discovery.dart:39 [UTF8-LF sha256=fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33; anchor=bool sameBoard(DiscoveredDevice other)]`.
+- Target: `mobile/lib/devices_page.dart:48 [UTF8-LF sha256=47b896ab775091042ee0d9ff0607969ec7885e6fa40638ea494dc0a903d947e7; anchor=String? preferredOrigin(ConnectionMethod method)]`.
 - Retained: Complete actual donor source read. Adapted scan concurrency guard, bounded four-worker public compatibility probes, source-pinned SSDP response locations, duplicate-header rejection, packet/TLV bounds, metadata-only discovery and failure cleanup. Pakar public description.xml plus capability-bearing status replace donor healthz/public-directory endpoints; scanning never sends credentials or mutations.
 - Retained: Added one session catalog keyed by stable board identity/UDN, normalized MAC, canonical origins and observed IPs rather than endpoint+protocol. Protocols and hostname aliases merge; explicit conflicting board IDs cannot merge on a reused DHCP address. Distinct origins are probed before cross-channel coalescing so an Android DNS failure cannot suppress a working IP advertisement. Failed scans revoke availability without discarding remembered metadata.
+- Retained: Reread the exact complete donor discovery.dart and resolver.go at b0111ae0 with matching source hashes. Preserve its bounded per-origin public probes while expanding saved/advertised aliases before board coalescing. Keep current-sweep exact-origin observations separate from identity/history: AP, STA and Ethernet IP/scheme/port do not normalize into each other, and aliases do not inherit availability. The route selector retains explicit saved/selected origin through rescans and Connect uses that exact origin only; unsaved default preference chooses a currently observed hostname when available. Existing no-redirect, auth-on-challenge, board/boot checks and no mutation replay remain.
 - Omitted/replaced code: `Donor healthz and old PCController upnp/public.json directory fallback; pccontroller/pealayer/controller-mobile product list`. Disposition: **replaced**. Reason: Those are host/media service contracts, not Pakar ESP firmware endpoints. Require actual Pakar public XML identity or the acknowledged living board capability/status contract. Advertising a generic HTTP service does not create a compatible board.
 - Omitted/replaced code: `MNDP vendor product/API-port TLVs 0xff01/0xff02`. Disposition: **replaced**. Reason: The actual current Pakar MndpService advertises model TLV12=PakarController, MAC TLV1 and board ID TLV11 with its fixed HTTP port80 on both ESP builds. Parse only that product, not arbitrary router names. Do not pretend the donor's distinct host-service extension is already emitted by this firmware.
 - Omitted/replaced code: `localEndpoints exclusion for a self-advertised mobile service`. Disposition: **not-applicable**. Reason: Pakar Android's loopback-only bridge does not advertise a Pakar firmware description. Public compatibility filtering rejects it; discovery does not imply an app responder or a generic remote host service.
-- Test-code evidence: `mobile/test/discovery_transport_test.dart:108 [UTF8-LF sha256=2f879189e7cd04ac68a6574dbebbdab96d3c4092cb3dbebbe97dd8d4e104986c; anchor=Real read-only XML/status probes: no credentials, redirects or mutations]`.
-- Test-code evidence: `mobile/test/devices_page_test.dart:115 [UTF8-LF sha256=7d5b4015162484aa3f1dc866cee97af9f136aac587a516e7ba2fa8df5205ef20; anchor=Identity/IP/MAC merge preserves channels and saved names]`.
+- Test-code evidence: `mobile/test/discovery_transport_test.dart:144 [UTF8-LF sha256=11fcdd2c1e4f8068571743f6d5f5d4f69ddd6badde00a86786574ab3ac4d8ab7; anchor=Real read-only XML/status probes: no credentials, redirects or mutations]`.
+- Test-code evidence: `mobile/test/devices_page_test.dart:115 [UTF8-LF sha256=53febe7f492d28a40f71e336eceb1d83f5a87994e6315089ec08b4eb7333c23f; anchor=Identity/IP/MAC merge preserves channels and saved names]`.
+- Test-code evidence: `mobile/test/devices_page_test.dart:245 [UTF8-LF sha256=53febe7f492d28a40f71e336eceb1d83f5a87994e6315089ec08b4eb7333c23f; anchor=Exact interface selection survives discovery]`.
+- Test-code evidence: `mobile/test/discovery_transport_test.dart:15 [UTF8-LF sha256=11fcdd2c1e4f8068571743f6d5f5d4f69ddd6badde00a86786574ab3ac4d8ab7; anchor=Saved multi-interface aliases are probed separately]`.
 - Scoped advantage: One verified compatible-device catalog across discovery protocols, bounded secret-free probes, stale availability retirement and conflict-aware IP/MAC identity coalescing, with real HTTP and UI fixtures.
 - Remaining: Verify actual Android multicast/NSD, AP+STA/W5500 aliases, DHCP moves and routers; public XML is compatibility metadata, not cryptographic identity or command authorization. On-device installation and human acceptance remain open in issue2.
 
@@ -839,7 +843,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `mobile/lib/ble_transport.dart:25 [UTF8-LF sha256=1c51f1ee672365f71bed78a358e9522adcb7f26ff92055732abb48c2519b66fb; anchor=class PakarBleTransport]`.
 - Target: `mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/BleControllerChannel.kt:26 [UTF8-LF sha256=a0d1fb5f512da49f784d560c1f2d190adef6dd68c4ec15a5de9acd75be9d27f0; anchor=class BleControllerChannel]`.
 - Target: `mobile/lib/connection_preferences.dart:54 [UTF8-LF sha256=dc20e6ec07521d724c97b793b69d36613a9c0b6e980f0184105a41e844bc5318; anchor=class ConnectionPreferences]`.
-- Target: `mobile/lib/devices_page.dart:39 [UTF8-LF sha256=3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da; anchor=class DevicesPage]`.
+- Target: `mobile/lib/devices_page.dart:81 [UTF8-LF sha256=47b896ab775091042ee0d9ff0607969ec7885e6fa40638ea494dc0a903d947e7; anchor=class DevicesPage]`.
 - Retained: Actual PeerSession refresh single-flight and reset-before-await socket ownership adapted to shared status reads, per-socket cleanup and retained previously acknowledged layout inventory. Reads retire before and after writes; a pre/during-write result cannot settle post-ACK confirmation. Fresh individual capabilities still own actuation. The pinned http abortable GET path additionally cancels transport/body reads on deadline/retirement instead of retaining the donor Future.timeout-only limitation.
 - Retained: Failure-driven review rejects older same-boot HTTP replies as superseded rather than returning cached data as a fresh observation; older WS frames cannot reset liveAge or publish into a revoked UI lease. Ordered real-loopback producer regressions retain equal board-clock captures as valid, without inventing a sequence number. Board/application-keyed panel elements retire old application mode/cue shells while retaining the user's per-board workspace; offline melody slots keep bounds and both controls disabled until actual fresh cues return. These are scoped lifecycle adaptations, not complete donor mobile parity.
 - Retained: Bluetooth adaptation: fully read canonical PeerSession transport source at SHA5263044d..., retain single-flight reads, generation/route identity and reset-before-await retirement in the selected BLE API. Android native GATT is an SDK implementation because no reusable BLE transport exists in these donors. Verify INFO then full status, retain stable board aliases and saved selected route, keep app updater/remote management independent, and never substitute board HTTP/DNS/WebSocket for BLE. Existing UI/workspace, command ACK, settings and mirroring consumers are reused.
@@ -1391,9 +1395,9 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `4ca50ce622f998f1922a828350ad71aea5fa5dee7506069ca3df2e857536198e`.
 
-- Target: `mobile/lib/discovery.dart:158 [UTF8-LF sha256=fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814; anchor=class DeviceDiscovery]`.
+- Target: `mobile/lib/discovery.dart:165 [UTF8-LF sha256=fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33; anchor=class DeviceDiscovery]`.
 - Target: `mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/DiscoveryChannel.kt:15 [UTF8-LF sha256=0c1215ebc188d720fe9c181a475efac7567d6b5b884de5e8d97a2d443593bd61; anchor=class DiscoveryChannel]`.
-- Target: `mobile/lib/devices_page.dart:39 [UTF8-LF sha256=3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da; anchor=class DevicesPage]`.
+- Target: `mobile/lib/devices_page.dart:81 [UTF8-LF sha256=47b896ab775091042ee0d9ff0607969ec7885e6fa40638ea494dc0a903d947e7; anchor=class DevicesPage]`.
 - Target: `desktop/src/platform/lan_discovery.rs:27 [UTF8-LF sha256=023df5b70dedce5ed0d46ade991e5672ab9a406ee97e3c382f3ab22f223a4a82; anchor=pub struct Advertiser]`.
 - Target: `desktop/src/bridge.rs:103 [UTF8-LF sha256=be11df49c5a9ec38ee0f7121ddaba2e9f74db92979ffd7270cf0e3480820347b; anchor=pub struct Runtime]`.
 - Retained: Fully read source through EOF. Adapted actual mDNS/DNS-SD single transport intent, metadata-only discovery, bounded search lifetime/cleanup, M-SEARCH headers, validated origins and explicit authentication separation into Android discovery.
@@ -1415,7 +1419,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `6faf511e686c83114025020a25d2da6ff0960240c969dd3872c6cf18ff20baf3`.
 
 - Target: `desktop/src/platform/lan_discovery.rs:27 [UTF8-LF sha256=023df5b70dedce5ed0d46ade991e5672ab9a406ee97e3c382f3ab22f223a4a82; anchor=pub struct Advertiser]`.
-- Target: `mobile/lib/discovery.dart:318 [UTF8-LF sha256=fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814; anchor=DiscoveredDevice? parseMndp]`.
+- Target: `mobile/lib/discovery.dart:348 [UTF8-LF sha256=fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33; anchor=DiscoveredDevice? parseMndp]`.
 - Retained: Read through EOF. Port actual big-endian MNDP vendor product/API-port TLVs, application-scoped locally administered virtual MAC, bounded records, 30s announcement and rate-limited query response to Rust. Dart consumes explicit API port and separate instance ID.
 - Omitted/replaced code: `Full multi-interface broadcast/IPv6/network-change acceptance`. Disposition: **pending**. Reason: Parser/socket fixture is not proof that real adapters, Windows firewall and Android multicast allow discovery across the actual LAN. Rebinding after adapter changes is not yet implemented.
 - Test-code evidence: `desktop/src/platform/lan_discovery.rs:649 [UTF8-LF sha256=023df5b70dedce5ed0d46ade991e5672ab9a406ee97e3c382f3ab22f223a4a82; anchor=fn bridge_mndp_uses_explicit_application_port_not_guessed_port80]`.
@@ -1638,8 +1642,8 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `mobile/lib/lan_resolver.dart:8 [UTF8-LF sha256=d7d1589f6fca4c5385acd88f9b3dec98504c82e32558a35d17dbc89202eaed66; anchor=class LanResolver]`.
 - Target: `mobile/lib/api.dart:141 [UTF8-LF sha256=3aae372b87c38a72f1a346b6750b8bf37eac642a92d64fa4d97d066040d4dc0e; anchor=final LanResolver resolver;]`.
-- Target: `mobile/lib/discovery.dart:106 [UTF8-LF sha256=fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814; anchor=class DiscoveryCatalog]`.
-- Target: `mobile/lib/devices_page.dart:21 [UTF8-LF sha256=3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da; anchor=catalog]`.
+- Target: `mobile/lib/discovery.dart:106 [UTF8-LF sha256=fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33; anchor=class DiscoveryCatalog]`.
+- Target: `mobile/lib/devices_page.dart:62 [UTF8-LF sha256=47b896ab775091042ee0d9ff0607969ec7885e6fa40638ea494dc0a903d947e7; anchor=catalog]`.
 - Target: `desktop/src/peer_http.rs:155 [UTF8-LF sha256=91cc8c623f63d712d9cbd12ce0cf18e4badb66c6a17490d73e8549af10d92bcd; anchor=pub fn device_client_builder]`.
 - Target: `desktop/src/main.rs:638 [UTF8-LF sha256=dcc88d477b8f72f4999b507e96646b59fcc0c54a80368f95477b6a235adae2fd; anchor=peer_http::remember_address]`.
 - Retained: Actual complete donor resolver and tests read from canonical PCController; adapted successful-address caching, retaining URL hostname/HTTP Host/TLS SNI rather than replacing the public identity with an IP.
@@ -3225,7 +3229,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 - Target: `firmware/esp8266/src/Mndp.h:9 [UTF8-LF sha256=5d579c4dcc95c4fb298212798d03d127ce6f131819ac2b348036367c0ed5428a; anchor=class Packet]`.
 - Target: `firmware/esp8266/src/MndpService.h:17 [UTF8-LF sha256=6d90c7bba686d0fcb9d144de689e60feb5967eaed5fede4a8a19a7842e9303f4; anchor=class MndpService]`.
-- Target: `mobile/lib/discovery.dart:318 [UTF8-LF sha256=fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814; anchor=DiscoveredDevice? parseMndp]`.
+- Target: `mobile/lib/discovery.dart:348 [UTF8-LF sha256=fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33; anchor=DiscoveredDevice? parseMndp]`.
 - Target: `firmware/esp32s3/src/DiscoveryInterfacePolicy.h:12 [UTF8-LF sha256=94ead0d3e60e0aebe1a4bce7c18203cce57cfebacfbc2caff0fe3f6bb6b85814; anchor=struct DiscoveryInterfaces]`.
 - Retained: Fully read header/implementation. Actual port 5678/group 224.0.0.88 and big-endian TLV type/length layout adapted into bounded packets; MAC, hostname, firmware version, platform, board, uptime, stable board ID and IPv4 metadata retained.
 - Retained: Integrated station lifecycle starts/stops MNDP alongside existing discovery, announces at 30 seconds and accepts only a rate-limited four-zero-byte query. Android scans/decodes defensive bounded TLVs without sending credentials. Packet overflow prevents any partial advertisement.
@@ -3245,7 +3249,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 - Target: `firmware/esp8266/src/Mndp.h:9 [UTF8-LF sha256=5d579c4dcc95c4fb298212798d03d127ce6f131819ac2b348036367c0ed5428a; anchor=class Packet]`.
 - Target: `firmware/esp8266/src/MndpService.h:17 [UTF8-LF sha256=6d90c7bba686d0fcb9d144de689e60feb5967eaed5fede4a8a19a7842e9303f4; anchor=class MndpService]`.
-- Target: `mobile/lib/discovery.dart:318 [UTF8-LF sha256=fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814; anchor=DiscoveredDevice? parseMndp]`.
+- Target: `mobile/lib/discovery.dart:348 [UTF8-LF sha256=fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33; anchor=DiscoveredDevice? parseMndp]`.
 - Retained: Fully read header/implementation. Actual port 5678/group 224.0.0.88 and big-endian TLV type/length layout adapted into bounded packets; MAC, hostname, firmware version, platform, board, uptime, stable board ID and IPv4 metadata retained.
 - Retained: Integrated station lifecycle starts/stops MNDP alongside existing discovery, announces at 30 seconds and accepts only a rate-limited four-zero-byte query. Android scans/decodes defensive bounded TLVs without sending credentials. Packet overflow prevents any partial advertisement.
 - Omitted/replaced code: `Unbounded addTlv into 255-byte buffer; global UDP/ASA0002E header inclusion`. Disposition: **replaced**. Reason: Each copy checks the complete packet capacity and fails closed; module-owned socket state avoids donor globals/application header dependency. The header uses reserved/version bytes plus a bounded big-endian sequence, not a host-endian counter.

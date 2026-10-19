@@ -106,8 +106,15 @@ List<DiscoveredDevice> coalesceDevices(Iterable<DiscoveredDevice> values) {
 class DiscoveryCatalog {
   List<DiscoveredDevice> _known = [], _recent = [];
   bool seenThisScan(DiscoveredDevice value) => _recent.any(value.sameBoard);
+
+  /// Only the exact origins observed/probed this sweep, NOT every alias of a
+  /// merged board. One reachable interface does not verify its other routes.
+  Set<String> observedOrigins(DiscoveredDevice value) => {
+    for (final route in _recent.where(value.sameBoard))
+      PakarApi.normalizeEndpoint(route.endpoint),
+  };
   List<DiscoveredDevice> merge(Iterable<DiscoveredDevice> observations) {
-    _recent = coalesceDevices(observations.take(128));
+    _recent = observations.take(128).toList();
     _known = coalesceDevices([..._known, ..._recent]);
     if (_known.length > 128) _known = _known.sublist(_known.length - 128);
     return _known.toList()..sort((a, b) => a.name.compareTo(b.name));
@@ -196,8 +203,31 @@ class DeviceDiscovery {
       // hostname failing Android DNS must not hide a working SSDP IP alias.
       final candidates = <String, DiscoveredDevice>{};
       for (final peer in [...found, ...seeds].take(128)) {
-        candidates[peer.endpoint] =
-            candidates[peer.endpoint]?.merged(peer) ?? peer;
+        // A saved/merged board may have AP, station, Ethernet and hostname
+        // routes. Verify each exact origin; never manufacture an interface IP
+        // or inherit another alias's successful probe.
+        for (final origin in peer.origins) {
+          if (!{'http', 'https'}.contains(Uri.parse(origin).scheme) ||
+              candidates.length >= 128 && !candidates.containsKey(origin)) {
+            continue;
+          }
+          final candidate = origin == peer.endpoint
+              ? peer
+              : DiscoveredDevice(
+                  peer.name,
+                  origin,
+                  peer.protocol,
+                  boardId: peer.boardId,
+                  mac: peer.mac,
+                  udn: peer.udn,
+                  addresses: peer.addresses,
+                  aliases: peer.origins,
+                  instanceId: peer.instanceId,
+                  kind: peer.kind,
+                );
+          candidates[origin] =
+              candidates[origin]?.merged(candidate) ?? candidate;
+        }
       }
       final queue = candidates.values.toList();
       final verified = <DiscoveredDevice>[];

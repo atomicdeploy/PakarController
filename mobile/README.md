@@ -13,6 +13,12 @@ with saved local/remote profiles. Compatible observations merge by board ID,
 UDN, normalized MAC and IP/origin aliases; conflicting board IDs are not merged
 just because DHCP reused an address. Saved names survive discovery, and saved
 profiles not reached in the latest scan dim without disabling a manual retry.
+One board can retain distinct AP, station, Ethernet and hostname origins. The
+Devices route dropdown preserves the exact selected IP/scheme/port across
+rescans; a saved origin is not replaced by the merged board's preferred name.
+Availability is per origin from the current sweep, not inherited by all aliases.
+Saved aliases receive separate bounded public probes, with no credentials or
+commands. Connect verifies and selects one exact route, not every interface.
 DNS-SD retains the actual ESP hostname/IPv4 correlation when ordinary Android
 `.local` resolution is unavailable. Passwords are optional: new profiles need
 none, existing profile edits can keep/replace/clear one, and connection prompts

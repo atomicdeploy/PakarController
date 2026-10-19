@@ -8,11 +8,52 @@ import 'workspace_widgets.dart';
 import 'ble_transport.dart';
 
 class DeviceListEntry {
-  const DeviceListEntry(this.peer, this.saved, this.available);
+  const DeviceListEntry(
+    this.peer,
+    this.saved,
+    this.available, {
+    this.observedOrigins = const {},
+  });
   final DiscoveredDevice peer;
   final SavedDevice? saved;
   final bool available;
+  final Set<String> observedOrigins;
   String get name => saved?.name ?? peer.name;
+  String get identityKey => peer.boardId.isNotEmpty
+      ? 'board:${peer.boardId}'
+      : peer.instanceId.isNotEmpty
+      ? 'instance:${peer.instanceId}'
+      : peer.endpoint;
+
+  List<String> routes(ConnectionMethod method) {
+    final values = peer.origins
+        .where(
+          (origin) =>
+              origin.startsWith('ble://') ==
+              (method == ConnectionMethod.bluetooth),
+        )
+        .toList();
+    values.sort((a, b) {
+      final fresh = (observedOrigins.contains(b) ? 1 : 0).compareTo(
+        observedOrigins.contains(a) ? 1 : 0,
+      );
+      if (fresh != 0) return fresh;
+      final address = (normalizeAddress(Uri.parse(a).host) != null ? 1 : 0)
+          .compareTo(normalizeAddress(Uri.parse(b).host) != null ? 1 : 0);
+      return address != 0 ? address : a.compareTo(b);
+    });
+    return values;
+  }
+
+  String? preferredOrigin(ConnectionMethod method) {
+    final values = routes(method);
+    // A saved literal IP/port is explicit route intent, not a suggestion to
+    // normalize to another interface or to the merged board's hostname.
+    if (saved != null && values.contains(saved!.endpoint)) {
+      return saved!.endpoint;
+    }
+    return values.firstOrNull;
+  }
 }
 
 List<DeviceListEntry> unifiedDevices(
@@ -26,6 +67,7 @@ List<DeviceListEntry> unifiedDevices(
             peer,
             saved.where((d) => d.identity.sameBoard(peer)).firstOrNull,
             catalog.seenThisScan(peer),
+            observedOrigins: catalog.observedOrigins(peer),
           ),
         )
         .toList()
@@ -62,6 +104,14 @@ class _DevicesPageState extends State<DevicesPage> {
   bool busy = false, connecting = false, authPromptActive = false;
   String search = '', filter = 'All';
   String message = '';
+  final selectedOrigins = <String, String>{};
+  String? originFor(DeviceListEntry entry) {
+    final selected = selectedOrigins[entry.identityKey];
+    return entry.routes(method).contains(selected)
+        ? selected
+        : entry.preferredOrigin(method);
+  }
+
   late ConnectionMethod method =
       widget.api?.connectionMethod ?? ConnectionMethod.network;
   final bluetooth = PakarBleTransport();
@@ -335,15 +385,11 @@ class _DevicesPageState extends State<DevicesPage> {
       connecting = true;
       message = '';
     });
-    final origins = entry.peer.origins.where(
-      (value) =>
-          value.startsWith('ble://') == (method == ConnectionMethod.bluetooth),
-    );
-    if (origins.isEmpty) {
+    final selected = originFor(entry);
+    if (selected == null) {
       setState(() => connecting = false);
       return;
     }
-    final selected = origins.first;
     var device = SavedDevice(
       id: entry.saved?.id ?? randomIdentifier(),
       name: entry.name,
@@ -666,30 +712,77 @@ class _DevicesPageState extends State<DevicesPage> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        entry.peer.origins.firstWhere(
-                          (value) =>
-                              value.startsWith('ble://') ==
-                              (method == ConnectionMethod.bluetooth),
+                      if (entry.routes(method).length > 1)
+                        DropdownButton<String>(
+                          key: ValueKey('device-route:${entry.identityKey}'),
+                          value: originFor(entry),
+                          isExpanded: true,
+                          underline: const SizedBox.shrink(),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                          items: [
+                            for (final origin in entry.routes(method))
+                              DropdownMenuItem(
+                                value: origin,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        origin,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (entry.observedOrigins.contains(
+                                      origin,
+                                    )) ...[
+                                      const SizedBox(width: 8),
+                                      const Icon(PakarIcons.check, size: 16),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                          ],
+                          onChanged: connecting
+                              ? null
+                              : (value) {
+                                  if (value != null) {
+                                    setState(
+                                      () => selectedOrigins[entry.identityKey] =
+                                          value,
+                                    );
+                                  }
+                                },
+                        )
+                      else
+                        Text(
+                          originFor(entry) ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 6,
                         runSpacing: 6,
                         children: [
                           WorkspaceBadge(
-                            entry.available
+                            entry.observedOrigins.contains(originFor(entry))
                                 ? 'Available'
                                 : busy
                                 ? 'Checking'
                                 : 'Not reached',
-                            active: entry.available,
+                            active: entry.observedOrigins.contains(
+                              originFor(entry),
+                            ),
                           ),
                           if (entry.saved != null)
                             const WorkspaceBadge(

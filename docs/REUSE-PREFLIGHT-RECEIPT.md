@@ -1,5 +1,36 @@
 # Donor-first preflight receipt
 
+## Flutter board identity versus interface-route normalization
+
+Read the complete actual PCController mobile/lib/discovery.dart and
+Tools/Controller/internal/lanresolver/resolver.go at b0111ae0; original hashes
+fc37b663... and8dec2b65... match the existing source ledger. Consulted the
+mobile-network slice and exhaustive exact discovery-file mapping. The donor
+retains exact probe endpoints; Pakar's added identity coalescing incorrectly let
+Connect choose the first merged alias, ignoring a saved AP/STA/Ethernet origin.
+
+Keep one board identity, but retain exact IP/scheme/port routes and current-sweep
+observations separately from historical aliases. Probe saved/advertised aliases
+with the same bounded four-worker public pipeline. A route selector preserves
+the explicit saved/selected origin across rescans and Connect uses only that
+origin; unprobed/offline aliases do not inherit another interface's Available
+badge. Unselected defaults prefer a freshly observed hostname, not a stale one.
+No firmware, native, resolver eviction policy, API generation, authentication,
+board/boot checks, credentials or no-mutation-replay rules were changed.
+
+Canonical Flutter analyzer and the16 focused device/discovery tests pass:
+AP/STA/Ethernet origin preservation, per-route freshness, separate alias probes,
+explicit route retention through reversed discovery order, exact status-request
+destination and saved selection; existing390/1200 layouts, password challenge,
+real loopback XML/status, redirect and source-pinning guards still pass. The
+analyzer initially required braces in the new dropdown handler; corrected that
+handler and its exact hash binding, without disabling the lint or any test.
+Actual phone installation, AP/STA/Ethernet LAN and full-release acceptance remain
+open. No board or phone was contacted by these source/loopback/widget checks.
+Canonical APK preview build-only also passed:0.2.8+15,58132833B, SHA256
+`3c0da08ba57e656bbd12585b6e486b06abb0c591309b2a3256359e0b92422dbb`.
+Existing release cache/signing were reused; APK was not installed or activated.
+
 ## Partial rainbow remains a physical failure
 
 Fresh read-only trusted ASUS/ledboard.local still reports ESP/AVR0.2.7, same

@@ -1556,7 +1556,7 @@
     {
       "path": "mobile/lib/devices_page.dart",
       "anchor": "class DevicesPage",
-      "sha256": "3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da"
+      "sha256": "47b896ab775091042ee0d9ff0607969ec7885e6fa40638ea494dc0a903d947e7"
     }
   ],
   "proof": [
@@ -2078,7 +2078,7 @@
     {
       "path": "mobile/lib/discovery.dart",
       "anchor": "DiscoveredDevice? parseMndp",
-      "sha256": "fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814"
+      "sha256": "fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33"
     }
   ],
   "omissions": [
@@ -5215,30 +5215,46 @@
       "verdict": "scoped-improvement",
       "preserved": [
         "Complete actual donor source read. Adapted scan concurrency guard, bounded four-worker public compatibility probes, source-pinned SSDP response locations, duplicate-header rejection, packet/TLV bounds, metadata-only discovery and failure cleanup. Pakar public description.xml plus capability-bearing status replace donor healthz/public-directory endpoints; scanning never sends credentials or mutations.",
-        "Added one session catalog keyed by stable board identity/UDN, normalized MAC, canonical origins and observed IPs rather than endpoint+protocol. Protocols and hostname aliases merge; explicit conflicting board IDs cannot merge on a reused DHCP address. Distinct origins are probed before cross-channel coalescing so an Android DNS failure cannot suppress a working IP advertisement. Failed scans revoke availability without discarding remembered metadata."
+        "Added one session catalog keyed by stable board identity/UDN, normalized MAC, canonical origins and observed IPs rather than endpoint+protocol. Protocols and hostname aliases merge; explicit conflicting board IDs cannot merge on a reused DHCP address. Distinct origins are probed before cross-channel coalescing so an Android DNS failure cannot suppress a working IP advertisement. Failed scans revoke availability without discarding remembered metadata.",
+        "Reread the exact complete donor discovery.dart and resolver.go at b0111ae0 with matching source hashes. Preserve its bounded per-origin public probes while expanding saved/advertised aliases before board coalescing. Keep current-sweep exact-origin observations separate from identity/history: AP, STA and Ethernet IP/scheme/port do not normalize into each other, and aliases do not inherit availability. The route selector retains explicit saved/selected origin through rescans and Connect uses that exact origin only; unsaved default preference chooses a currently observed hostname when available. Existing no-redirect, auth-on-challenge, board/boot checks and no mutation replay remain."
       ],
       "targets": [
         {
           "path": "mobile/lib/discovery.dart",
-          "sha256": "fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814",
+          "sha256": "fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33",
           "anchor": "Future<DiscoveredDevice?> verifyDiscoveredDevice("
         },
         {
           "path": "mobile/lib/discovery.dart",
-          "sha256": "fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814",
+          "sha256": "fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33",
           "anchor": "bool sameBoard(DiscoveredDevice other)"
+        },
+        {
+          "path": "mobile/lib/devices_page.dart",
+          "sha256": "47b896ab775091042ee0d9ff0607969ec7885e6fa40638ea494dc0a903d947e7",
+          "anchor": "String? preferredOrigin(ConnectionMethod method)"
         }
       ],
       "proof": [
         {
           "path": "mobile/test/discovery_transport_test.dart",
-          "sha256": "2f879189e7cd04ac68a6574dbebbdab96d3c4092cb3dbebbe97dd8d4e104986c",
+          "sha256": "11fcdd2c1e4f8068571743f6d5f5d4f69ddd6badde00a86786574ab3ac4d8ab7",
           "anchor": "Real read-only XML/status probes: no credentials, redirects or mutations"
         },
         {
           "path": "mobile/test/devices_page_test.dart",
-          "sha256": "7d5b4015162484aa3f1dc866cee97af9f136aac587a516e7ba2fa8df5205ef20",
+          "sha256": "53febe7f492d28a40f71e336eceb1d83f5a87994e6315089ec08b4eb7333c23f",
           "anchor": "Identity/IP/MAC merge preserves channels and saved names"
+        },
+        {
+          "path": "mobile/test/devices_page_test.dart",
+          "sha256": "53febe7f492d28a40f71e336eceb1d83f5a87994e6315089ec08b4eb7333c23f",
+          "anchor": "Exact interface selection survives discovery"
+        },
+        {
+          "path": "mobile/test/discovery_transport_test.dart",
+          "sha256": "11fcdd2c1e4f8068571743f6d5f5d4f69ddd6badde00a86786574ab3ac4d8ab7",
+          "anchor": "Saved multi-interface aliases are probed separately"
         }
       ],
       "omissions": [
@@ -5277,12 +5293,12 @@
       "targets": [
         {
           "path": "mobile/lib/devices_page.dart",
-          "sha256": "3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da",
+          "sha256": "47b896ab775091042ee0d9ff0607969ec7885e6fa40638ea494dc0a903d947e7",
           "anchor": "List<DeviceListEntry> unifiedDevices("
         },
         {
           "path": "mobile/lib/devices_page.dart",
-          "sha256": "3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da",
+          "sha256": "47b896ab775091042ee0d9ff0607969ec7885e6fa40638ea494dc0a903d947e7",
           "anchor": "Future<void> connect(DeviceListEntry entry)"
         },
         {
@@ -5304,12 +5320,12 @@
       "proof": [
         {
           "path": "mobile/test/devices_page_test.dart",
-          "sha256": "7d5b4015162484aa3f1dc866cee97af9f136aac587a516e7ba2fa8df5205ef20",
+          "sha256": "53febe7f492d28a40f71e336eceb1d83f5a87994e6315089ec08b4eb7333c23f",
           "anchor": "Credentials requested only after challenge:"
         },
         {
           "path": "mobile/test/devices_page_test.dart",
-          "sha256": "7d5b4015162484aa3f1dc866cee97af9f136aac587a516e7ba2fa8df5205ef20",
+          "sha256": "53febe7f492d28a40f71e336eceb1d83f5a87994e6315089ec08b4eb7333c23f",
           "anchor": "Actual registry accepts optional secrets"
         }
       ],
@@ -6048,7 +6064,7 @@
   "targets": [
     {
       "path": "mobile/lib/discovery.dart",
-      "sha256": "fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814",
+      "sha256": "fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33",
       "anchor": "class DeviceDiscovery"
     },
     {
@@ -6058,7 +6074,7 @@
     },
     {
       "path": "mobile/lib/devices_page.dart",
-      "sha256": "3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da",
+      "sha256": "47b896ab775091042ee0d9ff0607969ec7885e6fa40638ea494dc0a903d947e7",
       "anchor": "class DevicesPage"
     },
     {
@@ -6144,7 +6160,7 @@
           },
           {
             "path": "mobile/lib/discovery.dart",
-            "sha256": "fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814",
+            "sha256": "fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33",
             "anchor": "DiscoveredDevice? parseMndp"
           },
           {
@@ -6215,7 +6231,7 @@
           },
           {
             "path": "mobile/lib/discovery.dart",
-            "sha256": "fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814",
+            "sha256": "fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33",
             "anchor": "DiscoveredDevice? parseMndp"
           }
         ],
@@ -13636,12 +13652,12 @@
         },
         {
           "path": "mobile/lib/discovery.dart",
-          "sha256": "fce1856b0352a96c5dc8978de5062e0785752211c76f82fc446e9e505abe9814",
+          "sha256": "fae7cf4ff72c6d72850e972e4e39832d838b96093266e9379cf4b3377c7b4a33",
           "anchor": "class DiscoveryCatalog"
         },
         {
           "path": "mobile/lib/devices_page.dart",
-          "sha256": "3d82addd89d7c9f93380640fde37619bf4e77bae7825cdcf7c675841ec6448da",
+          "sha256": "47b896ab775091042ee0d9ff0607969ec7885e6fa40638ea494dc0a903d947e7",
           "anchor": "catalog"
         },
         {

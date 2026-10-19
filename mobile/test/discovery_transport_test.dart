@@ -12,6 +12,42 @@ const description =
     '<manufacturer>AtomicDeploy</manufacturer><modelURL>https://github.com/atomicdeploy/PakarController</modelURL>'
     '<UDN>uuid:38323636-4558-4dda-9188-cda0e6112233</UDN></device></root>';
 void main() {
+  test('Saved multi-interface aliases are probed separately before board coalescing', () async {
+    const ap = 'http://192.168.4.1', sta = 'http://10.0.0.7:8080';
+    const ethernet = 'https://192.168.10.7:8443';
+    final probed = <String>[];
+    final discovery = DeviceDiscovery(
+      catalog: DiscoveryCatalog(),
+      advertisements: () async => [],
+      verify: (d) async {
+        probed.add(d.endpoint);
+        if (d.endpoint == ap) return null;
+        return DiscoveredDevice(
+          d.name,
+          d.endpoint,
+          d.protocol,
+          boardId: 'same-board',
+          verified: true,
+          aliases: d.origins,
+        );
+      },
+    );
+    final found = await discovery.scan(
+      seeds: [
+        const DiscoveredDevice(
+          'Table',
+          ap,
+          '',
+          boardId: 'same-board',
+          aliases: {sta, ethernet},
+        ),
+      ],
+    );
+    expect(probed.toSet(), {ap, sta, ethernet});
+    expect(found, hasLength(1));
+    expect(found.single.origins, containsAll([ap, sta, ethernet]));
+    expect(discovery.catalog.observedOrigins(found.single), {sta, ethernet});
+  });
   test(
     'DNS-SD binds saved hostname to resolved IP before an ordinary DNS lookup',
     () {

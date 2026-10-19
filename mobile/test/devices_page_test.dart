@@ -168,6 +168,164 @@ void main() {
       expect(catalog.seenThisScan(known), false);
     },
   );
+  test(
+    'Board identity never normalizes away its interface origins or saved route',
+    () {
+      final catalog = DiscoveryCatalog();
+      const ap = 'http://192.168.4.1', sta = 'http://10.0.0.7:8080';
+      const ethernet = 'https://10.0.0.7:8443',
+          hostname = 'http://ledboard.local';
+      catalog.merge([
+        const DiscoveredDevice(
+          'Table',
+          hostname,
+          'mDNS',
+          boardId: 'board-one',
+          verified: true,
+        ),
+      ]);
+      final found = catalog.merge([
+        const DiscoveredDevice(
+          'Table',
+          sta,
+          'SSDP',
+          boardId: 'board-one',
+          aliases: {ap, hostname},
+          verified: true,
+        ),
+        const DiscoveredDevice(
+          'Table',
+          ethernet,
+          'MNDP',
+          boardId: 'board-one',
+          verified: true,
+        ),
+      ]);
+      final entry = unifiedDevices([], found, catalog).single;
+      expect(entry.peer.origins, containsAll([ap, sta, ethernet, hostname]));
+      expect(entry.observedOrigins, {sta, ethernet});
+      expect(
+        entry.preferredOrigin(ConnectionMethod.network),
+        sta,
+        reason:
+            'A historical hostname or unprobed AP alias is not a live route',
+      );
+      final saved = SavedDevice(
+        id: 'table',
+        name: 'My table',
+        endpoint: ap,
+        location: DeviceLocation.local,
+        boardId: 'board-one',
+      );
+      final pinned = unifiedDevices([saved], found, catalog).single;
+      expect(
+        pinned.preferredOrigin(ConnectionMethod.network),
+        ap,
+        reason:
+            'An explicit saved interface must not silently become STA/Ethernet',
+      );
+      expect(pinned.observedOrigins.contains(ap), false);
+      catalog.merge([]);
+      expect(catalog.observedOrigins(entry.peer), isEmpty);
+      expect(
+        coalesceDevices([
+          entry.peer,
+          const DiscoveredDevice(
+            'Table',
+            sta,
+            'SSDP',
+            boardId: 'different-board',
+          ),
+        ]),
+        hasLength(2),
+      );
+    },
+  );
+  for (final changeRoute in [false, true]) {
+    testWidgets('Exact interface selection survives discovery: $changeRoute', (
+      tester,
+    ) async {
+      const ap = 'http://192.168.4.1', sta = 'http://10.0.0.7:8080';
+      const hostname = 'http://ledboard.local';
+      final registry = MemoryRegistry([
+        SavedDevice(
+          id: 'table',
+          name: 'My table',
+          endpoint: ap,
+          location: DeviceLocation.local,
+          boardId: 'board-one',
+        ),
+      ]);
+      var scans = 0;
+      final discovery = DeviceDiscovery(
+        catalog: DiscoveryCatalog(),
+        advertisements: () async {
+          scans++;
+          final peers = [
+            for (final origin in [ap, sta, hostname])
+              DiscoveredDevice(
+                'Table',
+                origin,
+                'SSDP',
+                boardId: 'board-one',
+                verified: true,
+              ),
+          ];
+          return scans.isEven ? peers.reversed.toList() : peers;
+        },
+        verify: (d) async => d,
+      );
+      final requests = <String>[], selected = <SavedDevice>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: studioTheme(),
+          home: Scaffold(
+            body: DevicesPage(
+              registry: registry,
+              discovery: discovery,
+              select: (d, _) async => selected.add(d),
+              apiFactory: (d, _) => PakarApi(
+                baseUrl: d.endpoint,
+                client: MockClient((request) async {
+                  requests.add(request.url.origin);
+                  return http.Response(
+                    jsonEncode({
+                      ...peerFixture().json,
+                      'board_id': 'board-one',
+                      'boot_id': 'boot-one',
+                    }),
+                    200,
+                  );
+                }),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final selector = find.byKey(
+        const ValueKey('device-route:board:board-one'),
+      );
+      expect(tester.widget<DropdownButton<String>>(selector).value, ap);
+      if (changeRoute) {
+        await tester.tap(selector);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(sta).last);
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Discover'));
+      await tester.pumpAndSettle();
+      final expected = changeRoute ? sta : ap;
+      expect(tester.widget<DropdownButton<String>>(selector).value, expected);
+      await tester.tap(find.text('My table'));
+      await tester.pumpAndSettle();
+      expect(requests, [expected]);
+      expect(selected.single.endpoint, expected);
+      expect(selected.single.aliases, containsAll([ap, sta, hostname]));
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    });
+  }
   for (final width in [390.0, 1200.0]) {
     testWidgets(
       'Unified device directory at $width, unavailable profiles dimmed',
