@@ -54,10 +54,15 @@ class MainActivity : FlutterActivity() {
                                 startActivityForResult(intent, pickCode)
                             } else {
                                 val name = call.argument<String>("name") ?: ""
-                                require(name.matches(Regex("[A-Za-z0-9][A-Za-z0-9_.-]{0,119}\\.bin"))) { "Invalid backup name" }
+                                require(name.matches(Regex("[A-Za-z0-9][A-Za-z0-9_.-]{0,119}\\.(bin|json|csv|xlsx)"))) { "Invalid export name" }
                                 val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                                     addCategory(Intent.CATEGORY_OPENABLE)
-                                    type = "application/octet-stream"
+                                    type = when (name.substringAfterLast('.')) {
+                                        "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                        "csv" -> "text/csv"
+                                        "json" -> "application/json"
+                                        else -> "application/octet-stream"
+                                    }
                                     putExtra(Intent.EXTRA_TITLE, name)
                                 }
                                 pending = result

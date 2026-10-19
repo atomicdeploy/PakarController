@@ -116,6 +116,11 @@ class AsyncHttpService {
   }
   AsyncWebServerRequest *request() { return current_.get(); }
   String remoteAddress() const { return currentMailbox_ ? currentMailbox_->remoteAddress : String(); }
+  String jsonBody() const {
+    if(!current_ || current_->contentType()!=F("application/json") || !current_->_tempObject)return String();
+    const auto *body=static_cast<const JsonBody*>(current_->_tempObject);
+    return body->used==body->total && strlen(body->text)==body->total ? String(body->text) : String();
+  }
   void on(const char *path, WebRequestMethodComposite method, std::function<void()> handler) {
     // SDK3.12.1 bare strings also match descendants (BackwardCompatible) and
     // dispatch picks the first registered match. Literal API routes must not
@@ -152,6 +157,19 @@ class AsyncHttpService {
         }
       }
       request->send(503, "text/plain", F("Request queue is full; retry shortly"));
+    },nullptr,[](AsyncWebServerRequest *request,uint8_t *data,size_t length,size_t index,size_t total){
+      if((request->url()!=F("/api/cells/assignments")&&request->url()!=F("/api/cells/lock")) ||
+          request->contentType()!=F("application/json") || !total || total>4096 || index>total || length>total-index)return;
+      if(!index && !request->_tempObject){
+        auto *body=static_cast<JsonBody*>(malloc(sizeof(JsonBody)+total));
+        if(!body)return;
+        body->used=0;body->total=total;body->text[0]=0;request->_tempObject=body;
+      }
+      auto *body=static_cast<JsonBody*>(request->_tempObject);
+      if(!body || body->total!=total || body->used!=index){if(body)body->used=SIZE_MAX;return;}
+      memcpy(body->text+index,data,length);body->used+=length;body->text[body->used]=0;
+      // ESPAsyncWebServer3.12.1 WebRequest::~AsyncWebServerRequest frees this
+      // malloc-owned object on completion/disconnect; never borrow body bytes.
     });
   }
   void service() {
@@ -227,6 +245,7 @@ class AsyncHttpService {
   }
   void begin() { native_.begin(); }
  private:
+  struct JsonBody {size_t used,total;char text[1];};
   struct Mailbox {
     PakarHttpDetail::Mutex mutex;
     bool closed=false,published=false,pendingOutput=false;

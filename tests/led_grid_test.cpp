@@ -328,5 +328,25 @@ int main(){
   const auto black=grid.pixelFrameJson();const auto start=black.find("\"rgb\":\"")+7;
   assert(black.substr(start,480*6)==String(480*6,'0'));
   assert(grid.setCell(2,kCellRed,kEffectImmediate));assert(panelKind==1&&panelValue==2);
+  grid.setRedLock(true);assert(grid.redLock());
+  const auto beforeLocked=grid.pixelFrameJson();const auto beforeNotice=panelNotifications;
+  assert(!grid.setCells(all,kCellWhite,kEffectImmediate));
+  assert(grid.state(1)==kCellOff&&grid.state(2)==kCellRed);
+  assert(!grid.resetWhite()&&beforeLocked==grid.pixelFrameJson()&&beforeNotice==panelNotifications);
+  const uint8_t ids[]={1,2},newStates[]={kCellRed,kCellWhite};
+  assert(!grid.setAssignments(ids,newStates,2));assert(grid.state(1)==kCellOff);
+  const uint8_t duplicate[]={1,1};assert(!grid.setAssignments(duplicate,newStates,2));
+  const uint8_t invalidStates[]={kCellRed,3};assert(!grid.setAssignments(ids,invalidStates,2));
+  assert(grid.setCell(2,kCellOff,kEffectImmediate)); // Lock forbids red->white, not Off.
+  grid.setRedLock(false);const auto assignmentNotices=panelNotifications;assert(grid.setAssignments(ids,newStates,2));
+  assert(panelNotifications==assignmentNotices+1); // One transaction, not one AVR notice per row.
+  assert(grid.state(1)==kCellRed&&grid.state(2)==kCellWhite);
+  assert(grid.setPattern(LedGrid::kPatternCellChase));
+  uint8_t chaseStates[80];for(uint8_t id=1;id<=80;++id)chaseStates[id-1]=grid.state(id);
+  grid.setRedLock(true);assert(grid.pattern()==LedGrid::kPatternNone);
+  pixelTestNow+=1000;grid.service(pixelTestNow);
+  for(uint8_t id=1;id<=80;++id)assert(grid.state(id)==chaseStates[id-1]);
+  assert(!grid.setPattern(LedGrid::kPatternCellChase));
+  assert(grid.setPattern(LedGrid::kPatternRainbow));assert(grid.redLock());
   puts("Actual LedGrid: cable mapping,6-pixel cells, full480 maintenance black, per-pixel fade, scene preservation and disabled-output isolation passed (host doubles, not optical output).");
 }

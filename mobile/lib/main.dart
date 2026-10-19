@@ -15,6 +15,7 @@ import 'table_layout.dart';
 import 'table_workspace.dart';
 import 'connection_preferences.dart';
 import 'cell_search.dart';
+import 'cell_assignments_actions.dart';
 import 'peer_context.dart';
 import 'panel_inventory.dart';
 import 'output_panel.dart';
@@ -1029,7 +1030,8 @@ class _ControlShellState extends State<ControlShell>
 
     final pages = <(String, String, IconData)>[
       ('overview', 'Overview', PakarIcons.broadcast),
-      if (panelInventory.has('table')) ('table', 'Table', PakarIcons.gridFour),
+      if (panelInventory.tableSelection)
+        ('table', 'Table', PakarIcons.gridFour),
       if (panelInventory.has('table')) ('output', 'Output', PakarIcons.gauge),
       if (panelInventory.frontPanel)
         ('front-panel', 'Front panel', PakarIcons.gauge),
@@ -1056,7 +1058,8 @@ class _ControlShellState extends State<ControlShell>
             'table' => TablePage(
               key: ValueKey('table:${panelInventory.ownerKey}'),
               status: presented,
-              connected: status?.peer.table == true && foreground,
+              connected: status?.peer.tableSelection == true && foreground,
+              seenFeatures: panelInventory.features,
               layoutAcknowledged: panelInventory.has('table'),
               mappingCurrent: mappingFresh,
               workspace: workspaces[workspaceBoard],
@@ -1069,6 +1072,21 @@ class _ControlShellState extends State<ControlShell>
                 values,
                 propagateFailure: true,
               ),
+              readStatus: () async {
+                final observed = await api.status();
+                if (!mounted ||
+                    owner != api.connectionRevision ||
+                    observed.hostname != presented?.hostname ||
+                    !api.connectionWanted) {
+                  throw const StaleConnection();
+                }
+                _observe(observed);
+                return observed;
+              },
+              ownerCurrent: () =>
+                  mounted &&
+                  api.connectionWanted &&
+                  owner == api.connectionRevision,
             ),
             'output' => OutputPanel(
               key: ValueKey('output:${panelInventory.ownerKey}'),
@@ -1390,6 +1408,9 @@ class TablePage extends StatefulWidget {
     required this.mapping,
     required this.command,
     this.verifiedCommand,
+    this.readStatus,
+    this.ownerCurrent,
+    this.seenFeatures = const {},
     this.workspace,
     this.connected = true,
     this.mappingCurrent = true,
@@ -1399,6 +1420,9 @@ class TablePage extends StatefulWidget {
   final CellMap mapping;
   final Command command;
   final VerifiedCommand? verifiedCommand;
+  final Future<DeviceStatus> Function()? readStatus;
+  final bool Function()? ownerCurrent;
+  final Set<String> seenFeatures;
   final TableWorkspace? workspace;
   final bool connected;
   final bool mappingCurrent;
@@ -1565,6 +1589,21 @@ class _TablePageState extends State<TablePage> {
             padding: const EdgeInsets.all(16),
             children: [
               const WorkspaceHeader(title: 'Table', icon: PakarIcons.gridFour),
+              if ((status?.peer.has('cell-lock') == true ||
+                      status?.peer.has('cell-assignments') == true ||
+                      widget.seenFeatures.contains('cell-lock') ||
+                      widget.seenFeatures.contains('cell-assignments')) &&
+                  widget.verifiedCommand != null &&
+                  widget.readStatus != null)
+                CellAssignmentsActions(
+                  key: ValueKey('cell-assignments:${status!.json['board_id']}'),
+                  status: status!,
+                  connected: widget.connected && !applying,
+                  command: widget.verifiedCommand!,
+                  readStatus: widget.readStatus!,
+                  ownerCurrent: widget.ownerCurrent,
+                  seenFeatures: widget.seenFeatures,
+                ),
               TextField(
                 controller: query,
                 focusNode: searchFocus,

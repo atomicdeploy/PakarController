@@ -5,6 +5,7 @@ param(
     [string] $DeviceName,
     [ValidateRange(1, 32)] [int] $Jobs = [Math]::Min(32, [Environment]::ProcessorCount),
     [ValidateSet('both', 'avr', 'esp8266', 'esp32s3')] [string] $Target = 'both',
+    [ValidateSet('table-selection','first-wins')] [string] $GameMode = 'table-selection',
     [ValidateSet(4, 8, 16, 32)] [int] $S3FlashMB = 4,
     [ValidateSet('disabled', 'enabled', 'opi')] [string] $S3Psram = 'disabled',
     [ValidateSet('static', 'rmt-dma')] [string] $S3LedBackend = 'static',
@@ -100,6 +101,8 @@ $espOutput = Join-Path $build ("esp8266$suffix")
 $extraFlags = "-DPAKAR_USE_BUSY_WIRE=$busyFlag -DPAKAR_UART_BUFFERED=$bufferedFlag"
 if($DisablePeerVersionChecks){$extraFlags += ' -DPAKAR_ENFORCE_PEER_VERSIONS=0'}
 $espFlags = $extraFlags
+$gameModeCode = if($GameMode -eq 'first-wins'){2}else{1}
+if($Target -ne 'esp32s3'){$extraFlags += " -DPAKAR_GAME_MODE=$gameModeCode";$espFlags += " -DPAKAR_GAME_MODE=$gameModeCode"}
 if ($DeviceName) {
     if ($DeviceName -in @('local', 'localhost')) { throw 'Reserved device hostname' }
     $espFlags += " -DPAKAR_INITIAL_NAME=$DeviceName"
@@ -148,7 +151,7 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
     if ($board -eq 'esp32s3') {
         $ledProfile = [pscustomobject]@{
             Path = Join-Path $build 'config/esp32s3/LedBackend.h'
-            Content = "#pragma once`n#define PAKAR_S3_LED_USE_DMA $(if ($S3LedBackend -eq 'rmt-dma') { 1 } else { 0 })`n#ifndef PAKAR_S3_BLE_ENABLED`n#define PAKAR_S3_BLE_ENABLED $(if ($S3Bluetooth -eq 'disabled') { 0 } else { 1 })`n#endif`n#define PAKAR_TELNET_SESSIONS $ShellSessions`n#define PAKAR_SERIAL_SHELL_ENABLED $(if ($DisableSerialShell) { 0 } else { 1 })`n#define PAKAR_TELNET_ENABLED $(if ($DisableTelnet) { 0 } else { 1 })`n"
+            Content = "#pragma once`n#ifndef PAKAR_GAME_MODE`n#define PAKAR_GAME_MODE $gameModeCode`n#endif`n#define PAKAR_S3_LED_USE_DMA $(if ($S3LedBackend -eq 'rmt-dma') { 1 } else { 0 })`n#ifndef PAKAR_S3_BLE_ENABLED`n#define PAKAR_S3_BLE_ENABLED $(if ($S3Bluetooth -eq 'disabled') { 0 } else { 1 })`n#endif`n#define PAKAR_TELNET_SESSIONS $ShellSessions`n#define PAKAR_SERIAL_SHELL_ENABLED $(if ($DisableSerialShell) { 0 } else { 1 })`n#define PAKAR_TELNET_ENABLED $(if ($DisableTelnet) { 0 } else { 1 })`n"
         }
     }
     if ($VerboseBuild) { $arguments += '--verbose' }

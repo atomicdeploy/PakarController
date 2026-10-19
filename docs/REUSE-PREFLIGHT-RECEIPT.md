@@ -1,5 +1,23 @@
 # Donor-first preflight receipt
 
+## Single-role builds and semantic cell documents
+
+Consulted games-streaming, ui-shell and the exhaustive Pealayer donor inventory.
+Reread actual Pealayer web_ui/src/preferenceFiles.ts and
+web_ui/src/components/ServerFilePicker.tsx completely, with unchanged source
+hashes. Web imports reuse the exact case-insensitive suffix rule and separate
+selection/loading/cancellation/explicit acceptance ownership. A file read never
+changes LEDs. The preview retains the original board/boot owner and every row
+validates before one atomic heterogeneous assignment command. Browser-native
+File/Blob selection replaces the donor server filesystem browser because the
+embedded ESP has no host-directory browse authority or React/Ant runtime.
+That replacement is not an exclusion of the remaining generic donor browser.
+Native and Flutter retain their existing themed dialogs and native document
+providers; runtime XLSX codecs are application features, not a second build or
+spreadsheet-authoring service. Source/fixture results do not establish current
+production firmware, installed-client or physical LED acceptance. Production
+hold remains in effect for these unrelated features.
+
 ## Flutter batch error disclosure
 
 The table's verified-command bool wrapper swallowed the command exception and

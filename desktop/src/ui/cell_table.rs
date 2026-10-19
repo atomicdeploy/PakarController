@@ -112,6 +112,8 @@ impl State {
     }
 }
 pub struct TableState {
+    assignment_import: Option<(crate::cell_assignments::Document,crate::peer_http::Pin)>,
+    assignment_export: Option<(std::path::PathBuf,String,crate::peer_http::Pin,Instant)>,
     pub pixel_sample: Option<super::cell_pixels::Sample>,
     pub editing_order: bool,
     order_drag: Option<(u8, bool)>,
@@ -134,6 +136,8 @@ pub struct TableState {
 impl Default for TableState {
     fn default() -> Self {
         Self {
+            assignment_import: None,
+            assignment_export: None,
             pixel_sample: None,
             editing_order: false,
             order_drag: None,
@@ -692,6 +696,8 @@ impl PakarControllerApp {
         self.table.result = "One atomic selection batch queued; transitions run on the board".into();
     }
     pub fn cell_selection_toolbar(&mut self, ui: &mut egui::Ui) {
+        if self.presentation_context().or_else(||self.peer_context()).is_some_and(|c|!c.table_selection()){return;}
+        self.cell_assignment_toolbar(ui);
         ui.horizontal_wrapped(|ui| {
             ui.label(format!("{} selected", self.table.selection.ids.len()));
             if ui.button(format!("{} All", icons::CHECK)).clicked() {
@@ -1103,7 +1109,9 @@ impl PakarControllerApp {
         });
     }
     pub fn draw_cell_manager(&mut self, ctx: &egui::Context) {
-        if !self.has_table() || !self.table.manager_open {
+        self.finish_assignment_export();
+        self.draw_assignment_import(ctx);
+        if !self.has_table() || self.peer_context().is_some_and(|c|!c.table_selection()) || !self.table.manager_open {
             return;
         }
         let mut close = false;
@@ -1155,6 +1163,91 @@ impl PakarControllerApp {
             self.table.manager_open = false;
             self.table.order_drag = None;
         }
+    }
+}
+
+impl PakarControllerApp {
+    fn cell_assignment_toolbar(&mut self,ui:&mut egui::Ui){
+        let Some(context)=self.presentation_context().or_else(||self.peer_context()).cloned()else{return;};
+        if !context.table_selection()||!context.has("cell-assignments"){return;}
+        let status=self.live_status().cloned();
+        let live=status.as_ref().is_some_and(crate::cell_assignments::supported)&&self.command_route().is_some();
+        ui.add_enabled_ui(live,|ui|{
+        ui.horizontal_wrapped(|ui|{
+            if context.has("cell-lock") {
+                let observed=status.as_ref().and_then(|s|s.red_lock);
+                let mut enabled=observed.unwrap_or(false);
+                    if ui.add_enabled(observed.is_some(),egui::Checkbox::new(&mut enabled,super::i18n::text("Lock red → white")).indeterminate(observed.is_none()))
+                        .on_hover_text(super::i18n::text("Board-enforced; Off remains available. The observed board value is shown only after ACK/readback.")).changed(){
+                        self.post("/api/cells/lock",vec![("enabled".into(),enabled.to_string())]);
+                    }
+            }
+            if ui.button(format!("{} {}",icons::FOLDER_OPEN,super::i18n::text("Import colors…"))).clicked(){
+                // Pealayer's native file chooser and detached draft ownership:
+                // parse into a reviewable draft; never publish during selection.
+                if let Some(path)=rfd::FileDialog::new().set_title(super::i18n::text("Import cell colors")).add_filter(super::i18n::text("Cell assignments"),&["xlsx","csv","json"]).pick_file(){
+                    match crate::cell_assignments::load(&path){
+                        Ok(doc)=>if let Some(pin)=status.as_ref().and_then(crate::peer_http::Pin::from_status){self.table.assignment_import=Some((doc,pin));},
+                        Err(error)=>self.table.result=error,
+                    }
+                }
+            }
+            ui.menu_button(format!("{} {}",icons::FLOPPY_DISK,super::i18n::text("Export colors")),|ui|{
+                for (label,extension) in [("Excel workbook (.xlsx)","xlsx"),("CSV (.csv)","csv"),("JSON (.json)","json")] {
+                    if ui.button(super::i18n::text(label)).clicked(){
+                        if let Some(path)=rfd::FileDialog::new().set_title(super::i18n::text("Export cell colors")).set_file_name(format!("cell-colors.{extension}")).add_filter(super::i18n::text(label),&[extension]).save_file(){
+                            if let Some(pin)=status.as_ref().and_then(crate::peer_http::Pin::from_status){
+                                self.table.assignment_export=Some((path,extension.into(),pin,Instant::now()));
+                                self.table.result=super::i18n::text("Waiting for a fresh board observation before export…");
+                            }
+                        }
+                        ui.close();
+                    }
+                }
+            });
+        });
+        });
+    }
+    fn finish_assignment_export(&mut self){
+        let Some((path,extension,pin,at))=self.table.assignment_export.clone()else{return;};
+        if at.elapsed()>Duration::from_secs(10){self.table.assignment_export=None;self.table.result=super::i18n::text("Export cancelled: fresh board state was not available");return;}
+        let Some(status)=self.live_status()else{return;};
+        let result=if crate::peer_http::Pin::from_status(status).as_ref()!=Some(&pin){Err("Selected board changed; export cancelled".into())}else{
+            crate::cell_assignments::Document::from_status(status).and_then(|doc|crate::cell_assignments::encode(&extension,&doc))
+                .and_then(|bytes|std::fs::write(path,bytes).map_err(|e|e.to_string()))
+        };
+        self.table.assignment_export=None;
+        self.table.result=match result{Ok(())=>super::i18n::text("Exported all 80 observed assignments"),Err(e)=>format!("{}: {e}",super::i18n::text("Export failed"))};
+    }
+    fn draw_assignment_import(&mut self,ctx:&egui::Context){
+        let Some((doc,pin))=self.table.assignment_import.clone()else{return;};
+        let status=self.live_status();
+        let current=status.is_some_and(|s|crate::peer_http::Pin::from_status(s).as_ref()==Some(&pin)&&crate::cell_assignments::supported(s));
+        let locked=status.is_some_and(|s|s.red_lock==Some(true)&&doc.assignments.iter().any(|a|a.state=="white"&&s.cells.get(a.cell as usize-1).is_some_and(|v|v=="red")));
+        let mut apply=false;let mut close=false;
+        let modal=egui::Modal::new(egui::Id::new("cell-assignment-import")).show(ctx,|ui|{
+            let geometry=dialog::bounded_geometry(ctx.content_rect(),24.0,egui::vec2(560.0,480.0),egui::vec2(1.0,1.0),egui::vec2(560.0,600.0));
+            ui.set_width((geometry.max_size.x-32.0).max(1.0));
+            ui.heading(format!("{} {}",icons::GRID_FOUR,super::i18n::text("Import cell colors")));
+            ui.weak(format!("{} · {}",doc.assignments.len(),super::i18n::text("assignments; omitted cells stay unchanged")));
+            dialog::section(ui,icons::LIGHTBULB,"Review changes",|ui|{
+                dialog::scroll_column(ui,"assignment-preview",Some((geometry.max_size.y-190.0).clamp(1.0,260.0)),|ui|{
+                    egui::Grid::new("assignment-preview-rows").striped(true).spacing([24.0,6.0]).show(ui,|ui|{
+                        ui.strong(super::i18n::text("Cell"));ui.strong(super::i18n::text("Current"));ui.strong(super::i18n::text("Imported"));ui.end_row();
+                        for row in &doc.assignments {ui.label(format!("{:02}",row.cell));ui.weak(super::i18n::text(status.and_then(|s|s.cells.get(row.cell as usize-1)).map(String::as_str).unwrap_or("Unknown")));ui.label(super::i18n::text(&row.state));ui.end_row();}
+                    });
+                });
+            });
+            if !current {ui.weak(super::i18n::text("The selected board changed or is offline. Reopen this file after reconnecting."));}
+            if locked {ui.colored_label(ui.visuals().warn_fg_color,super::i18n::text("Red lock blocks this import. No assignments will be applied."));}
+            ui.separator();
+            dialog::action_row(ui,super::i18n::rtl(),|ui|{
+                apply=ui.add_enabled(current&&!locked,egui::Button::new(format!("{} {}",icons::CHECK,super::i18n::text("Apply atomically")))).clicked();
+                close=dialog::action_button(ui,icons::X,"Cancel").clicked();
+            });
+        });
+        if apply {self.post("/api/cells/assignments",doc.form());self.table.assignment_import=None;}
+        else if close||modal.should_close(){self.table.assignment_import=None;}
     }
 }
 

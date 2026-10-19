@@ -24,6 +24,8 @@ class CloudWebSocketClient : public WebSocketsClient {
 
 class CloudServices {
  public:
+  static constexpr size_t kCommandBytes=4096;
+  static constexpr uint16_t kMqttBufferBytes=kCommandBytes+256; // Topic and fixed MQTT header overhead.
   struct MqttConnectionStats {
     uint32_t attempts=0,failures=0,lastDurationMs=0,maxDurationMs=0;
   };
@@ -112,6 +114,7 @@ class CloudServices {
   uint32_t webSocketMessagesReceived_ = 0;
   bool webSocketConfigured_ = false;
   bool networkReady_ = false;
+  bool mqttBufferReady_ = false;
 };
 
 extern CloudServices cloudServices;

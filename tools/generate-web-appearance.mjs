@@ -10,6 +10,7 @@ const browser = await readFile(new URL('../assets/themes/browser-appearance.js',
 const surfaces = await readFile(new URL('../assets/themes/controller-surfaces.css', import.meta.url), 'utf8');
 const peerHttp = await webPeerSource(await readFile(new URL('../assets/web/peer-http.js', import.meta.url), 'utf8'));
 const frameStream = await readFile(new URL('../assets/web/frame-stream.js', import.meta.url), 'utf8');
+const cellAssignments = await readFile(new URL('../assets/web/cell-assignments.js', import.meta.url), 'utf8');
 const roles = ['canvas','surface-0','surface-1','surface-2','surface-3','line','line-strong','text','muted','subtle','green','blue','red','amber'];
 for (const name of ['studio','native']) for (const theme of ['dark','light']) {
   assert.deepEqual(Object.keys(palette[name][theme]).sort(), [...roles].sort());
@@ -37,6 +38,8 @@ assert(!peerHttp.includes('</script>') && !peerHttp.includes(')HTML"'), 'Peer HT
 replaceBlock('// BEGIN PEER HTTP', '// END PEER HTTP', peerHttp.replace(/\r\n/g,'\n').trim());
 assert(!frameStream.includes('</script>') && !frameStream.includes(')HTML"'), 'Frame stream source cannot break the container');
 replaceBlock('// BEGIN FRAME STREAM', '// END FRAME STREAM', frameStream.replace(/\r\n/g,'\n').trim());
+assert(!cellAssignments.includes('</script>') && !cellAssignments.includes(')HTML"'), 'Assignment codec cannot break its container');
+replaceBlock('// BEGIN CELL ASSIGNMENT CODEC', '// END CELL ASSIGNMENT CODEC', cellAssignments.replace(/\r\n/g,'\n').trim());
 if (web !== original) {
   assert(!process.argv.includes('--check'), 'Embedded appearance is stale; run node tools/generate-web-appearance.mjs');
   await writeFile(webUrl, web);

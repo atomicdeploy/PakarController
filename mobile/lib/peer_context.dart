@@ -15,6 +15,7 @@ class PeerContext {
     this.modes,
     this.application,
     this.ledOutput,
+    this.role,
   );
   static final unknown = PeerContext._(
     false,
@@ -26,6 +27,7 @@ class PeerContext {
     const [],
     null,
     null,
+    '',
   );
   final bool known;
   final String kind, name, hostname;
@@ -34,6 +36,11 @@ class PeerContext {
   final List<PeerMode> modes;
   final PeerApplication? application;
   final LedOutputCapability? ledOutput;
+  final String role;
+  bool get tableSelection =>
+      table &&
+      (role == 'table-selection' ||
+          (role.isEmpty && modes.any((mode) => mode.id == 'cell')));
 
   static PeerContext fromStatus(Map<String, dynamic> status) {
     final value = status['capabilities'];
@@ -68,6 +75,13 @@ class PeerContext {
     if (status['tm1637_ack'] != true) features.remove('display');
     if (!lcdObservationReady(status)) features.remove('lcd');
     final rawModes = value['modes'];
+    final rawRole = value['role'];
+    final role = const ['table-selection', 'first-wins'].contains(rawRole)
+        ? rawRole as String
+        : '';
+    if (role != 'table-selection') {
+      features.removeAll({'cell-assignments', 'cell-lock'});
+    }
     final modes = <PeerMode>[];
     if (table && rawModes is List) {
       for (final mode in rawModes) {
@@ -80,7 +94,13 @@ class PeerContext {
                 kind == 'game' &&
                 features.contains('inputs') &&
                 features.contains('outputs'));
-        if (!valid || modes.any((item) => item.id == id)) continue;
+        final matchesRole =
+            !value.containsKey('role') ||
+            (role == 'table-selection' && id == 'cell') ||
+            (role == 'first-wins' && id == 'first-wins');
+        if (!valid || !matchesRole || modes.any((item) => item.id == id)) {
+          continue;
+        }
         final label = mode['label'];
         modes.add(
           PeerMode(id as String, validText(label, 96) ? label as String : id),
@@ -100,6 +120,7 @@ class PeerContext {
       features.contains('leds')
           ? LedOutputCapability.parse(value['led_output'])
           : null,
+      role,
     );
   }
 
@@ -109,11 +130,11 @@ class PeerContext {
   bool allows(String path, Map<String, String> values) {
     if (!known) return false;
     return switch (path) {
-      '/api/cell' ||
-      '/api/cells/mapping' ||
-      '/api/game/reset' ||
-      '/api/snake/direction' => table,
-      '/api/cells' => table && has('cell-batch'),
+      '/api/cell' || '/api/cells/mapping' => tableSelection,
+      '/api/game/reset' => modes.any((mode) => mode.id == 'first-wins'),
+      '/api/cells' => tableSelection && has('cell-batch'),
+      '/api/cells/assignments' => tableSelection && has('cell-assignments'),
+      '/api/cells/lock' => tableSelection && has('cell-lock'),
       '/api/mode' => modes.any((mode) => mode.id == values['value']),
       '/api/display' => has(values.containsKey('text') ? 'text' : 'display'),
       '/api/audio' || '/api/buzzer' => has('buzzer'),
@@ -166,6 +187,8 @@ const knownFeatures = {
   'streaming',
   'table',
   'cell-batch',
+  'cell-assignments',
+  'cell-lock',
   'display',
   'text',
   'buzzer',

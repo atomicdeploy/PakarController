@@ -78,6 +78,16 @@ table.acknowledged_features.push('inputs','outputs');set({capabilities:table,mod
 assert.equal(run('currentPeer().modes.length'),2);assert(snakeControls.hidden);
 assert(!run("contextAllows('/api/mode',{value:'snake'})"));
 assert(run("contextAllows('/api/cell',{id:1})"));
+const roleFeatures=[...table.acknowledged_features,'cell-assignments','cell-lock'];
+set({capabilities:{...table,role:'first-wins',acknowledged_features:roleFeatures},mode:'first-wins'});
+assert.equal(run('currentPeer().modes.length'),1);assert(!run("contextAllows('/api/cell',{id:1})"));
+for(const path of ['/api/cells','/api/cells/assignments','/api/cells/lock'])assert(!run(`contextAllows('${path}')`),'First-wins cannot acquire table-selection tools');
+set({capabilities:{...table,role:'table-selection',acknowledged_features:roleFeatures},mode:'cell'});
+assert.equal(run('currentPeer().modes.length'),1);
+for(const path of ['/api/cells/assignments','/api/cells/lock'])assert(run(`contextAllows('${path}')`));
+set({capabilities:{...table,role:'unsupported-role',acknowledged_features:roleFeatures},mode:'cell'});
+assert.equal(run('currentPeer().modes.length'),0);assert(!run("contextAllows('/api/cells/assignments')"));
+set({capabilities:table,mode:'cell'});
 assert.match(document.title,/Fixture board/);
 const originalModes=boardModes.children;run('renderContext()');assert.equal(boardModes.children,originalModes,'Stable discovery does not replace focused mode widgets');
 context.cellManager.open=true;context.cellBatchCancelled=false;now+=8001;run('renderContext()');

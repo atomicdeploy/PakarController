@@ -40,6 +40,9 @@ dependencies:
   flutter_secure_storage: ^11.2.0
   mqtt_client: ^10.12.0
   crypto: ^3.0.7
+  # Bounded OOXML cell assignment documents; no native Excel dependency.
+  archive: ^3.6.1
+  xml: ^6.6.1
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,10 @@
 import 'models.dart';
 import 'cell_search.dart';
 
+import 'dart:convert';
+
+import 'cell_assignments.dart';
+
 /// Compare observed command state, never draft values or model defaults.
 /// A matching buffer/status is not physical LED/display/audio acceptance.
 bool commandReadbackMatches(
@@ -10,6 +14,23 @@ bool commandReadbackMatches(
 ) {
   final json = actual.json;
   switch (path) {
+    case '/api/cells/lock':
+      return const ['true', 'false'].contains(values['enabled']) &&
+          json['red_lock'] == (values['enabled'] == 'true');
+    case '/api/cells/assignments':
+      try {
+        final assignments = CellAssignments.fromRows(
+          jsonDecode(values['assignments'] ?? ''),
+        );
+        final cells = json['cells'];
+        return cells is List &&
+            cells.length == 80 &&
+            assignments.values.entries.every(
+              (entry) => cells[entry.key - 1] == entry.value,
+            );
+      } on Object {
+        return false;
+      }
     case '/api/cells':
       try {
         final ids = parseCellSearch(values['ids'] ?? '');

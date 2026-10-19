@@ -9,12 +9,12 @@ class PubSubClient {
   Client *client=nullptr;
   void (*callback)(char*,uint8_t*,unsigned)=nullptr;
   unsigned connectAttempts=0,loops=0,beginCalls=0,endCalls=0,disconnects=0;
-  bool connectResult=true,publishResult=true;uint32_t connectDurationMs=0,writeDurationMs=0;unsigned writes=0;
+  bool connectResult=true,publishResult=true,bufferResult=true;uint32_t connectDurationMs=0,writeDurationMs=0;unsigned writes=0;
   std::vector<String> clientIds;
   uint16_t bufferSize=0;size_t largestWrite=0,shortWriteLimit=SIZE_MAX;
   std::vector<Packet> packets;Packet pending{};size_t expected=0;
   void setCallback(decltype(callback) f){callback=f;}
-  void setBufferSize(uint16_t n){bufferSize=n;}
+  bool setBufferSize(uint16_t n){if(!bufferResult)return false;bufferSize=n;return true;}
   void setKeepAlive(unsigned){}void setSocketTimeout(unsigned){}
   void setServer(const char*,unsigned){}void setClient(Client &c){client=&c;}
   bool connected(){return client&&client->live;}int state(){return connected()?0:-1;}

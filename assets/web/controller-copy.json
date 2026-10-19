@@ -1,4 +1,12 @@
 {
+  "Lock red cells": "قفل خانه‌های قرمز",
+  "Import colors…": "ورود رنگ‌ها…",
+  "Export JSON": "خروجی JSON",
+  "Export CSV": "خروجی CSV",
+  "Import cell colors": "ورود رنگ خانه‌ها",
+  "Apply assignments": "اعمال رنگ‌های تخصیص‌یافته",
+  "Imported": "واردشده",
+  "Cell": "خانه",
   "Language & input": "زبان و ورودی",
   "Preferences · This browser": "تنظیمات · این مرورگر",
   "Close appearance": "بستن تنظیمات ظاهر",

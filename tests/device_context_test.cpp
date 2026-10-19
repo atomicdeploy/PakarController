@@ -24,11 +24,15 @@ int main() {
   assert(!(features(true, caps, true, false, true) & (Display | Text)));
   assert(!(features(true, 0, true, true, true) & (Display | Text | Buzzer)));
   if (PAKAR_TABLE_ENABLED) {
-    assert((live & Table)); assert((live & CellBatch));
+    assert((live & Table)); assert(bool(live & CellBatch)==bool(PAKAR_TABLE_SELECTION));
     assert((modes(live) & 8) == (PAKAR_SNAKE_ENABLED ? 8 : 0));
     assert(strcmp(name(14),"cell-batch")==0);
     assert((modes(live) & 4) == (PAKAR_FIRST_WINS_ENABLED ? 4 : 0));
-    assert(!(modes(offline) & 4));
+    assert(modes(live)==(1U<<BoardCore::GameRole::mode));
+    assert(modes(offline)==modes(live)); // Baked role identity survives missing AVR; actual I/O stays separately ACK-gated.
+    assert(BoardCore::GameRole::accepts(BoardCore::GameRole::mode));
+    assert(!BoardCore::GameRole::accepts(3));
+    assert(!BoardCore::GameRole::accepts(PAKAR_TABLE_SELECTION?2:1));
     assert(!(modes(live)&1)); // No Idle presentation; output has its own service switch.
   } else { assert(!(live & Table)); assert(modes(live) == 0); }
   assert(modes(Display | Buzzer) == 0);

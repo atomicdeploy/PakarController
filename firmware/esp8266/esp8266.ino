@@ -227,6 +227,8 @@ uint32_t avrUploadOwner = 0;
 String hostname;
 bool avrOnline = false;
 bool avrVersionKnown = false;
+bool avrRoleKnown=false,avrRoleCompatible=true;
+uint8_t avrGameRole=0;
 uint8_t avrAudioCueCount = 0;
 uint16_t avrCapabilities = 0;
 uint32_t avrDisplayStatusAt = 0;
@@ -239,7 +241,7 @@ String pcBoardId;
 uint32_t lastAvrPingAt = 0;
 uint8_t avrVersion[3] = {};
 bool apStarted = false;
-GameMode mode = kModeCellSelect;
+GameMode mode = static_cast<GameMode>(BoardCore::GameRole::mode);
 uint8_t winner = 0;
 uint8_t selectedCell = 1;
 uint8_t selectedState = kCellWhite;
@@ -304,12 +306,17 @@ String stagedAccessUser;
 String stagedAccessPassword;
 String stagedDeviceName;
 String stagedDisplayName;
+#if PAKAR_SNAKE_ENABLED
 uint8_t snakeBody[LedGrid::kCells] = {};
 uint8_t snakeLength = 0;
 uint8_t snakeFood = 0;
 uint8_t snakeDirection = 1;
 uint32_t lastSnakeAt = 0;
 bool snakeAlive = false;
+#else
+constexpr uint8_t snakeLength = 0;
+constexpr bool snakeAlive = false;
+#endif
 std::atomic<bool> otaActive{false};
 BoardCore::Attention::Upload uploadAttention;
 BoardCore::Attention::Remote remoteAttention;
@@ -480,6 +487,7 @@ uint16_t currentFeatures() {
   uint16_t available = BoardCore::Context::features(avrOnline && avrVersionKnown,
       avrCapabilities, tm1637Ack, avrDisplayStatusKnown &&
       static_cast<uint32_t>(millis() - avrDisplayStatusAt) < 3000U, avrPcSupported);
+  if(avrRoleKnown&&!avrRoleCompatible)available&=~(BoardCore::Context::Inputs|BoardCore::Context::Outputs);
 #if defined(ARDUINO_ARCH_ESP32) && !PAKAR_S3_ISP_ELECTRICAL_VERIFIED
   available &= ~BoardCore::Context::Isp;
 #endif
@@ -499,8 +507,9 @@ bool contextAllows(uint8_t opcode, const uint8_t *payload, uint8_t length) {
   const uint16_t available = currentFeatures();
   switch (opcode) {
     case kSetMode: return length == 1 && payload[0] < 4 && (modes(available) & (1U << payload[0]));
-    case kCellAction: case kGameReset: return available & Table;
-    case kCellsAction: return available & CellBatch;
+    case kGameReset: return available & Table;
+    case kCellAction: case kCellsAction: case kCellAssignments: case kCellLock:
+      return PAKAR_TABLE_SELECTION && (available & Table);
     case kBuzzer: case kAudioCue: return available & Buzzer;
     case kDisplayText: return available & (length > 4 ? Text : Display);
     case kOutputMask: return available & Outputs;
@@ -595,7 +604,8 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
     hostLink.error(frame.sequence,frame.opcode,kBusy);return;
   }
   if (!contextAllows(frame.opcode, frame.payload, frame.payloadLength)) {
-    const uint8_t error[] = {frame.opcode, kHardwareUnavailable};
+    const bool roleCommand=frame.opcode==kCellAction||frame.opcode==kCellsAction||frame.opcode==kCellAssignments||frame.opcode==kCellLock;
+    const uint8_t error[] = {frame.opcode,static_cast<uint8_t>(roleCommand&&!PAKAR_TABLE_SELECTION?kUnsupportedBoardRole:kHardwareUnavailable)};
     hostLink.send(kErrorResponse, frame.sequence, error, sizeof(error)); return;
   }
   static BoardCore::PcContractAssembly usbPcAssembly;
@@ -642,7 +652,7 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
         matches&=hi>=0&&lo>=0&&frame.payload[i]==static_cast<uint8_t>((hi<<4)|lo);
       }
       const uint8_t inner=frame.payload[16];
-      const bool allowed=inner==kSetMode || inner==kCellAction || inner==kCellsAction || inner==kGameReset ||
+      const bool allowed=inner==kSetMode || inner==kCellAction || inner==kCellsAction || inner==kCellAssignments || inner==kCellLock || inner==kGameReset ||
           inner==kSetBrightness || inner==kSetLedPattern || inner==kSetLedOutput;
       if(!matches || !allowed){hostLink.error(frame.sequence,frame.opcode,kUnsafe);break;}
       BoardCore::Protocol::Frame command{};command.opcode=inner;command.sequence=frame.sequence;
@@ -653,11 +663,12 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       // it is not an optimistic copy of the request or a physical LED receipt.
       // A rejected inner command may still report state; without its matching
       // success ACK clients must not complete that operation.
-      uint8_t state[44]={inner};memcpy(state+1,frame.payload,16);
+      uint8_t state[45]={inner};memcpy(state+1,frame.payload,16);
       state[17]=static_cast<uint8_t>(mode);state[18]=winner;state[19]=selectedCell;
       state[20]=grid.brightness();state[21]=static_cast<uint8_t>(grid.pattern());
       state[22]=grid.outputEnabled();state[23]=grid.staticMode()?0:1;
       for(uint8_t i=0;i<LedGrid::kCells;++i)state[24+i/4]|=static_cast<uint8_t>(grid.state(i+1))<<((i%4)*2);
+      state[44]=grid.redLock();
       hostLink.send(kTableCommandState,frame.sequence,state,sizeof(state));break;
     }
     case kGetIdentity: {
@@ -797,14 +808,13 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       sendHostStatus(frame.sequence);
       break;
     case kSetMode:
-      if (frame.payloadLength != 1 || frame.payload[0] > kModeSnake) {
+      if (frame.payloadLength != 1 || !BoardCore::GameRole::accepts(frame.payload[0])) {
         hostLink.error(frame.sequence, frame.opcode, kBadPayload);
         break;
       }
-      mode = static_cast<GameMode>(frame.payload[0]);
+      if(!grid.resetWhite()){hostLink.error(frame.sequence,frame.opcode,kRedCellsLocked);break;}
+      mode = static_cast<GameMode>(BoardCore::GameRole::mode);
       winner = 0;
-      if (mode == kModeSnake) startSnake();
-      else grid.resetWhite();
       sendToAvr(kSetMode, sequence++, frame.payload, 1);
       hostLink.ack(frame.sequence, frame.opcode);
       break;
@@ -816,28 +826,39 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
         hostLink.error(frame.sequence, frame.opcode, kBadPayload);
         break;
       }
-      selectedCell = frame.payload[0];
-      selectedState = frame.payload[1];
-      grid.setCell(selectedCell, static_cast<CellState>(selectedState),
+      if(!grid.setCell(frame.payload[0], static_cast<CellState>(frame.payload[1]),
                    frame.payloadLength == 3
                        ? static_cast<Effect>(frame.payload[2])
-                       : kEffectFade);
+                       : kEffectFade)){hostLink.error(frame.sequence,frame.opcode,kRedCellsLocked);break;}
+      selectedCell = frame.payload[0];
+      selectedState = frame.payload[1];
       sendToAvr(kCellAction, sequence++, frame.payload, frame.payloadLength);
       hostLink.ack(frame.sequence, frame.opcode);
       break;
     case kCellsAction: {
       BoardCore::CellBatch selection;
-      if(!BoardCore::CellBatch::decode(frame.payload,frame.payloadLength,selection)||
-          !grid.setCells(selection,static_cast<CellState>(frame.payload[0]),static_cast<Effect>(frame.payload[1]))){
-        hostLink.error(frame.sequence,frame.opcode,kBadPayload);break;
-      }
+      if(!BoardCore::CellBatch::decode(frame.payload,frame.payloadLength,selection)){hostLink.error(frame.sequence,frame.opcode,kBadPayload);break;}
+      if(!grid.setCells(selection,static_cast<CellState>(frame.payload[0]),static_cast<Effect>(frame.payload[1]))){hostLink.error(frame.sequence,frame.opcode,kRedCellsLocked);break;}
       selectedCell=selection.first();selectedState=frame.payload[0];
       hostLink.ack(frame.sequence,frame.opcode);break;
     }
+    case kCellAssignments: {
+      if(frame.payloadLength!=30){hostLink.error(frame.sequence,frame.opcode,kInvalidCellAssignments);break;}
+      uint8_t ids[80],states[80],count=0;
+      for(uint8_t i=0;i<80;++i)if(frame.payload[i/8]&(1U<<(i%8))){
+        ids[count]=i+1;states[count++]=(frame.payload[10+i/4]>>((i%4)*2))&3U;
+      }
+      bool invalid=!count,locked=false;
+      for(uint8_t i=0;i<count;++i){invalid|=states[i]>kCellOff;locked|=states[i]<=kCellOff&&!grid.permits(ids[i],static_cast<CellState>(states[i]));}
+      if(invalid||locked||!grid.setAssignments(ids,states,count)){hostLink.error(frame.sequence,frame.opcode,invalid?kInvalidCellAssignments:kRedCellsLocked);break;}
+      hostLink.ack(frame.sequence,frame.opcode);break;
+    }
+    case kCellLock:
+      if(frame.payloadLength!=1||frame.payload[0]>1){hostLink.error(frame.sequence,frame.opcode,kBadPayload);break;}
+      grid.setRedLock(frame.payload[0]);hostLink.ack(frame.sequence,frame.opcode);break;
     case kGameReset:
+      if(!grid.resetWhite()){hostLink.error(frame.sequence,frame.opcode,kRedCellsLocked);break;}
       winner = 0;
-      if (mode == kModeSnake) startSnake();
-      else grid.resetWhite();
       sendToAvr(kGameReset, sequence++);
       hostLink.ack(frame.sequence, frame.opcode);
       break;
@@ -863,7 +884,7 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
         hostLink.error(frame.sequence, frame.opcode, kBadPayload);
         break;
       }
-      grid.setPattern(static_cast<LedGrid::Pattern>(frame.payload[0]));
+      if(!grid.setPattern(static_cast<LedGrid::Pattern>(frame.payload[0]))){hostLink.error(frame.sequence,frame.opcode,kRedCellsLocked);break;}
       saveLedPreferences();
       hostLink.ack(frame.sequence, frame.opcode);
       break;
@@ -1129,6 +1150,7 @@ void startDiscovery() {
     MDNS.addServiceTxt("pakarcontroller", "tcp", "api", "/api/status");
     MDNS.addServiceTxt("pakarcontroller", "tcp", "websocket", "/ws");
     MDNS.addServiceTxt("pakarcontroller","tcp","version",BoardCore::BuildInfo::kVersion);
+    MDNS.addServiceTxt("pakarcontroller","tcp","role",BoardCore::GameRole::name);
     MDNS.addServiceTxt("pakarcontroller","tcp","minimum_app",BoardCore::PeerCompatibility::minimumApp);
     MDNS.addServiceTxt("pakarcontroller","tcp","minimum_board",BoardCore::PeerCompatibility::minimumBoard);
     MDNS.addServiceTxt("pakarcontroller","tcp","version_check",BoardCore::PeerCompatibility::enforced?"true":"false");
@@ -1651,6 +1673,10 @@ bool authenticate() {
     if (path == F("/api/audio") || path == F("/api/buzzer")) required = Buzzer;
     if (path == F("/api/outputs")) required = Outputs;
     bool allowed = !required || (currentFeatures() & required);
+    if(path==F("/api/cell")||path==F("/api/cells")||path==F("/api/cells/assignments")||path==F("/api/cells/lock")) {
+      if(!PAKAR_TABLE_SELECTION){server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"unsupported_board_role\",\"message\":\"This firmware has a different baked-in game role.\"}"));return false;}
+      allowed=currentFeatures() & Table;
+    }
     if (path == F("/api/mode")) {
       allowed = false;
       for (uint8_t code = 0; code < 4; ++code)
@@ -1663,6 +1689,7 @@ bool authenticate() {
   return false;
 }
 
+#if PAKAR_SNAKE_ENABLED
 uint8_t snakeCell(uint8_t position) {
   const uint8_t fromRight = position % 10U;
   const uint8_t y = position / 10U;
@@ -1756,6 +1783,12 @@ void serviceSnake(uint32_t now) {
   renderSnake();
 }
 
+#else
+void startSnake() {}
+bool setSnakeDirection(uint8_t) { return false; }
+void serviceSnake(uint32_t) {}
+#endif
+
 const char *modeName() {
   switch (mode) {
     case kModeCellSelect: return "cell";
@@ -1771,6 +1804,29 @@ const char *cellName(CellState state) {
     case kCellOff: return "off";
     default: return "white";
   }
+}
+
+String cellAssignmentsJson(bool accepted=false) {
+  String body=accepted?F("{\"accepted\":true,\"assignments\":["):F("{\"assignments\":[");
+  for(uint8_t cell=1;cell<=LedGrid::kCells;++cell){
+    if(cell>1)body+=',';
+    body+=F("{\"cell\":");body+=cell;body+=F(",\"state\":\"");body+=cellName(grid.state(cell));body+=F("\"}");
+  }
+  body+=F("],\"red_lock\":");body+=grid.redLock()?F("true}"):F("false}");return body;
+}
+
+bool applyCellAssignments(JsonVariantConst value,String &error) {
+  if(!PAKAR_TABLE_SELECTION){error=F("unsupported_board_role");return false;}
+  if(!value.is<JsonArrayConst>() || !value.size() || value.size()>LedGrid::kCells){error=F("invalid_cell_assignments");return false;}
+  uint8_t ids[80],states[80],count=0;BoardCore::CellBatch seen;
+  for(JsonObjectConst row:value.as<JsonArrayConst>()) {
+    if(!row["cell"].is<uint8_t>() || !row["state"].is<const char*>()){error=F("invalid_cell_assignments");return false;}
+    const uint8_t id=row["cell"].as<uint8_t>();const String state=row["state"].as<String>();
+    if(id<1||id>80||seen.contains(id)||state.length()!=row["state"].as<JsonString>().size()||(state!="red"&&state!="white"&&state!="off")){error=F("invalid_cell_assignments");return false;}
+    seen.add(id);ids[count]=id;states[count++]=state=="red"?kCellRed:state=="off"?kCellOff:kCellWhite;
+  }
+  if(!grid.setAssignments(ids,states,count)){error=F("red_cells_locked");return false;}
+  return true;
 }
 
 uint64_t commandClock() {
@@ -1836,6 +1892,8 @@ String buildStatusJson(bool compact) {
   body += F(",\"internal_heap_minimum_free_bytes\":");body+=heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
 #endif
   body += F(",\"avr_online\":"); body += avrOnline ? F("true") : F("false");
+  body += F(",\"avr_role\":");if(avrOnline&&avrRoleKnown){body+='"';body+=avrGameRole==1?F("table-selection"):avrGameRole==2?F("first-wins"):F("unsupported");body+='"';}else body+=F("null");
+  body += F(",\"avr_role_compatible\":");body+=avrOnline&&avrRoleKnown?(avrRoleCompatible?F("true"):F("false")):F("null");
   body += F(",\"avr_version\":");
   if (avrOnline && avrVersionKnown) {
     body += '"'; body += avrVersion[0]; body += '.'; body += avrVersion[1];
@@ -1878,6 +1936,7 @@ String buildStatusJson(bool compact) {
   body += F(",\"selected_cell\":"); body += selectedCell;
   body += F(",\"snake_alive\":"); body += snakeAlive ? F("true") : F("false");
   body += F(",\"snake_length\":"); body += snakeLength;
+  body += F(",\"red_lock\":"); body += grid.redLock() ? F("true") : F("false");
   body += F(",\"brightness\":"); body += grid.brightness();
   body += F(",\"effect\":\""); body += grid.patternName(); body += '"';
   body += F(",\"esp_uart_errors\":"); body += link.errors();
@@ -1982,10 +2041,14 @@ String buildStatusJson(bool compact) {
   else body += F("null");
   body += F(",\"capabilities\":{\"board_kind\":\"");
   body += PAKAR_TABLE_ENABLED ? F("table") : F("controller");
+  body += F("\",\"role\":\""); body += BoardCore::GameRole::name;
   body += F("\",\"name\":\""); appendJsonEscaped(body, deviceIdentity.displayName());
   body += F("\",\"hostname\":\""); body += deviceIdentity.hostname();
   body += F("\",\"application\":"); body += applicationIdentityJson();
   body += F(",\"acknowledged_features\":[\"command-ack\",\"pixel-diagnostic\",\"panel-events\"");
+#if PAKAR_TABLE_SELECTION
+  body += F(",\"cell-assignments\",\"cell-lock\"");
+#endif
 #if defined(ARDUINO_ARCH_ESP32)
   body += F(",\"status-rgb\""); // Settings capability is distinct from a confirmed/enabled physical pixel.
 #endif
@@ -2078,7 +2141,7 @@ String commandReply(const String &message) {
   JsonDocument request, reply;
   reply["type"]="command-result";reply["board_id"]=pcBoardId;reply["boot_id"]=pcBootId;
   reply["accepted"]=false;
-  if(message.length()>1024 || deserializeJson(request,message) || !request.is<JsonObject>()) {
+  if(message.length()>LoopMessages::kMaximumMessage || deserializeJson(request,message) || !request.is<JsonObject>()) {
     reply["error"]="invalid_command";
   } else {
     const JsonObjectConst object=request.as<JsonObjectConst>();
@@ -2086,7 +2149,7 @@ String commandReply(const String &message) {
     const String command=PakarCommand::stringValue(object,"command");
     reply["request_id"]=id;
     const bool supported=command=="cells"||command=="cell"||command=="effect"||
-        command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic"||command=="panel-notice"||command=="shell-config"||command=="configure-shell";
+        command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic"||command=="panel-notice"||command=="shell-config"||command=="configure-shell"||command=="cell-assignments"||command=="cell-lock";
     if(PakarCommand::stringValue(object,"board_id")!=pcBoardId ||
        PakarCommand::stringValue(object,"boot_id")!=pcBootId || !webAccess.peerFenceReady()) {
       reply["error"]="peer_changed";
@@ -2100,6 +2163,9 @@ String commandReply(const String &message) {
         String result;
         entry->accepted=!programmingLatched && !otaActive && !otaRebootAt && !avrUploadOwner &&
             !remoteFirmware.busy() && !networkApplyPending && !cloudApplyPending && handleCloudCommand(message,result);
+        if(!entry->accepted)entry->failure=result==F("red_cells_locked")?BoardCore::CommandReceipts::RedCellsLocked:
+            result==F("invalid_cell_assignments")?BoardCore::CommandReceipts::InvalidCellAssignments:
+            result==F("unsupported_board_role")?BoardCore::CommandReceipts::UnsupportedBoardRole:BoardCore::CommandReceipts::NoFailure;
         if(entry->accepted && command=="cells") {
           BoardCore::CellBatch cells;CellState state;Effect effect;
           if(parseCellsAction(request["ids"].as<String>(),request["state"].as<String>(),request["effect"].as<String>(),cells,state,effect))entry->count=cells.count();
@@ -2108,7 +2174,7 @@ String commandReply(const String &message) {
       if(admission==BoardCore::CommandReceipts::Fresh || admission==BoardCore::CommandReceipts::Cached) {
         reply["accepted"]=entry->accepted;reply["count"]=entry->count;
         reply["cached"]=admission==BoardCore::CommandReceipts::Cached;
-        if(!entry->accepted)reply["error"]="command_rejected";
+        if(!entry->accepted){reply["error"]=BoardCore::CommandReceipts::failureCode(entry->failure);reply["message"]=BoardCore::CommandReceipts::failureMessage(entry->failure);}
       } else reply["error"]=admission==BoardCore::CommandReceipts::Conflict?"request_id_conflict":
           admission==BoardCore::CommandReceipts::Full?"command_capacity":
           admission==BoardCore::CommandReceipts::Expired?"command_expired":"invalid_request_id";
@@ -2147,7 +2213,7 @@ void handleWebSocketMessage(uint32_t clientId, uint8_t opcode,
     return;
   }
   if (opcode == WS_BINARY) { if(!remoteFirmware.busy())applyStreamPacket(payload, length, (1ULL << 63) | clientId); return; }
-  if (opcode != WS_TEXT || length > 1300U) return;
+  if (opcode != WS_TEXT || length > LoopMessages::kMaximumMessage) return;
   String message;
   message.reserve(length);
   message.concat(reinterpret_cast<const char *>(payload), length);
@@ -2161,7 +2227,7 @@ void handleWebSocketMessage(uint32_t clientId, uint8_t opcode,
     webSocket.text(clientId,accepted?"{\"type\":\"peer-introduction\",\"accepted\":true}":"{\"type\":\"peer-introduction\",\"accepted\":false,\"error\":\"invalid_report_or_client_limit\"}");
     return;
   }
-  if(length>1024U)return;
+  if(length>LoopMessages::kMaximumMessage)return;
   if(parsed["type"]=="command") {
     webSocket.text(clientId,commandReply(message));
     // Other connected clients see the changed state immediately too.
@@ -2237,7 +2303,7 @@ void onWebSocketEvent(AsyncWebSocket *, AsyncWebSocketClient *client,
   if (type != WS_EVT_DATA) return;
   if (!webAccess.socketAllowed(client->id())) { closeSocket(1008, "Sign in again"); return; }
   AwsFrameInfo *info = static_cast<AwsFrameInfo *>(argument);
-  if (!info || !info->final || info->num != 0 || info->len > 1300 ||
+  if (!info || !info->final || info->num != 0 || info->len > LoopMessages::kMaximumMessage ||
       info->index + length > info->len) { closeSocket(1009, "Message exceeds stream bounds"); return; }
   if (info->index == 0 && info->len == length) {
     if(!loopMessages.push(client->id(),info->opcode,payload,length,ingressEpoch))closeSocket(1013,"Command queue full");return;
@@ -2377,7 +2443,7 @@ bool handleCloudCommand(const String &message, String &result) {
   if(urbootBusy.get()) {result=F("Urboot owns board maintenance; no command dispatched");return false;}
   if(passiveCaptureActive()) {result=F("Bounded passive UART capture owns diagnostics");return false;}
   JsonDocument commandDocument;
-  if(message.length()>1024 || deserializeJson(commandDocument,message) || !commandDocument.is<JsonObject>()) {
+  if(message.length()>LoopMessages::kMaximumMessage || deserializeJson(commandDocument,message) || !commandDocument.is<JsonObject>()) {
     result=F("Invalid command JSON");return false;
   }
   const JsonObjectConst commandRequest=commandDocument.as<JsonObjectConst>();
@@ -2415,11 +2481,20 @@ bool handleCloudCommand(const String &message, String &result) {
   uint16_t required = 0;
   if (command == F("cell") || command == F("reset") || command == F("snake-direction") || command == F("mode")) required = Table;
   if(command==F("cells"))required=BoardCore::Context::CellBatch;
+  if((command=="cell"||command=="cells"||command=="cell-assignments"||command=="cell-lock")&&!PAKAR_TABLE_SELECTION){result=F("unsupported_board_role");return false;}
   if (command == F("display")) required = !commandRequest["text"].isUnbound() ? Text : Display;
   if (command == F("panel-notice")) required = Display;
   if (command == F("audio") || command == F("buzzer")) required = Buzzer;
   if (command == F("outputs")) required = Outputs;
   if (required && !(currentFeatures() & required)) { result = F("Capability not acknowledged by this board"); return false; }
+  if(command=="cell-assignments") {
+    if(!applyCellAssignments(commandRequest["assignments"],result))return false;
+    result=F("Cell assignments applied atomically");return true;
+  }
+  if(command=="cell-lock") {
+    if(!commandRequest["enabled"].is<bool>()){result=F("enabled must be boolean");return false;}
+    grid.setRedLock(commandRequest["enabled"].as<bool>());result=F("Red-cell lock updated");return true;
+  }
   if(command==F("panel-notice")) {
     const String text=PakarCommand::stringValue(commandRequest,"text");
     const String blink=commandRequest["blink"].isNull()?String("steady"):PakarCommand::stringValue(commandRequest,"blink");
@@ -2483,7 +2558,7 @@ bool handleCloudCommand(const String &message, String &result) {
       result=F("Invalid or busy pixel diagnostic");return false;
     }
     // No AVR command, EEPROM write, animation or intermediate white scene.
-    mode=kModeCellSelect;winner=0;result=F("Complete diagnostic frame published");return true;
+    winner=0;result=F("Complete diagnostic frame published");return true;
   }
   if (command == F("status") ||
       PakarCommand::stringValue(commandRequest, "type") == F("status")) {
@@ -2497,10 +2572,10 @@ bool handleCloudCommand(const String &message, String &result) {
       result = F("mode must be cell, first-wins, or snake");
       return false;
     }
-    mode = parseMode(value);
+    if(!BoardCore::GameRole::accepts(parseMode(value))){result=F("Mode is selected at firmware build time");return false;}
+    if(!grid.resetWhite()){result=F("red_cells_locked");return false;}
+    mode = static_cast<GameMode>(BoardCore::GameRole::mode);
     winner = 0;
-    if (mode == kModeSnake) startSnake();
-    else grid.resetWhite();
     const uint8_t payload[] = {static_cast<uint8_t>(mode)};
     sendToAvr(kSetMode, sequence++, payload, sizeof(payload));
     result = F("mode updated");
@@ -2515,7 +2590,7 @@ bool handleCloudCommand(const String &message, String &result) {
                           document["effect"].as<String>(),selection,state,effect)){
       result=F("cells needs ids 1..80, state white/red/off and effect immediate/fade/pulse");return false;
     }
-    if(!grid.setCells(selection,state,effect)){result=F("cell set rejected");return false;}
+    if(!grid.setCells(selection,state,effect)){result=F("red_cells_locked");return false;}
     selectedCell=selection.first();selectedState=state;result=F("cell set accepted atomically");return true;
   }
   if (command == F("cell")) {
@@ -2528,10 +2603,10 @@ bool handleCloudCommand(const String &message, String &result) {
       result = F("cell needs id 1..80 and state white, red, or off");
       return false;
     }
+    const Effect effect = parseEffect(effectName);
+    if(!grid.setCell(static_cast<uint8_t>(id),parseCellState(stateName),effect)){result=F("red_cells_locked");return false;}
     selectedCell = static_cast<uint8_t>(id);
     selectedState = parseCellState(stateName);
-    const Effect effect = parseEffect(effectName);
-    grid.setCell(selectedCell, static_cast<CellState>(selectedState), effect);
     const uint8_t payload[] = {selectedCell, selectedState,
                                static_cast<uint8_t>(effect)};
     sendToAvr(kCellAction, sequence++, payload, sizeof(payload));
@@ -2569,7 +2644,7 @@ bool handleCloudCommand(const String &message, String &result) {
       result = F("effect must be none, rainbow, fire, or cell-chase");
       return false;
     }
-    grid.setPattern(pattern);
+    if(!grid.setPattern(pattern)){result=F("red_cells_locked");return false;}
     saveLedPreferences();
     result = F("effect updated");
     return true;
@@ -2654,8 +2729,8 @@ bool handleCloudCommand(const String &message, String &result) {
     return true;
   }
   if (command == F("reset")) {
+    if(!grid.resetWhite()){result=F("red_cells_locked");return false;}
     winner = 0;
-    if (mode == kModeSnake) startSnake(); else grid.resetWhite();
     sendToAvr(kGameReset, sequence++);
     result = F("game reset");
     return true;
@@ -2740,6 +2815,8 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       avrOnline=false;avrCapabilities=0;avrPcSupported=false;avrAudioCueCount=0;return;
     }
     avrCapabilities = avrVersionKnown ? frame.payload[2] | static_cast<uint16_t>(frame.payload[3]) << 8 : 0;
+    avrRoleKnown=frame.payloadLength>=16;avrGameRole=avrRoleKnown?frame.payload[15]:0;
+    avrRoleCompatible=!avrRoleKnown||BoardCore::GameRole::accepts(avrGameRole);
     avrAudioCueCount = avrVersionKnown && frame.payloadLength >= 13 ? frame.payload[12] : 0;
     avrToneTimestamps = avrVersionKnown && frame.payloadLength >= 14 && frame.payload[13] == 1;
     avrMaintenancePanel = avrVersionKnown && frame.payloadLength >= 15 && frame.payload[14] == 1;
@@ -2752,9 +2829,11 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     avrPcFeatures = avrPcSupported ? frame.payload[10] | static_cast<uint16_t>(frame.payload[11]) << 8 : 0;
     sendToAvr(kGetStatus, sequence++);
   } else if (frame.opcode == kGameState && frame.payloadLength >= 4) {
+    const bool gameRoleMatches=!avrRoleKnown||avrRoleCompatible;
     const uint8_t previousWinner = winner;
     const uint8_t previousInputs = activeInputs;
     const bool previousInput9 = activeInput9;
+    if(gameRoleMatches) {
     const auto sceneSync = avrSceneSync.observe(frame.payload[0], static_cast<uint8_t>(mode));
     if (sceneSync.baseline) {
       gameStateInitialized = false;
@@ -2762,10 +2841,11 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
         const uint8_t desiredMode[] = {static_cast<uint8_t>(mode)};
         sendToAvr(kSetMode, sequence++, desiredMode, sizeof(desiredMode));
       }
-    } else if (frame.payload[0] >= kModeCellSelect && frame.payload[0] <= kModeSnake) {
+    } else if (BoardCore::GameRole::accepts(frame.payload[0])) {
       mode = static_cast<GameMode>(frame.payload[0]);
       // A boot/default status is not a new first-wins input.
       if (mode == kModeFirstWins && frame.payload[1]) winner = frame.payload[1];
+    }
     }
     if (frame.payloadLength >= 7) {
       activeInputs = frame.payload[4];
@@ -2795,22 +2875,22 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       const uint8_t cellRevision = frame.payload[10];
       const Effect actionEffect = static_cast<Effect>(frame.payload[11]);
       const uint8_t currentResetRevision = frame.payload[12];
-      if (gameStateInitialized) {
+      if (gameStateInitialized && gameRoleMatches) {
         if (currentResetRevision != lastResetRevision) {
           winner = frame.payload[1];
           if (mode == kModeSnake) startSnake(); else grid.resetWhite();
         }
-        if (cellRevision != lastCellActionRevision &&
+        if (PAKAR_TABLE_SELECTION && cellRevision != lastCellActionRevision &&
             actionEffect <= kEffectPulse && frame.payload[2] >= 1 &&
             frame.payload[2] <= LedGrid::kCells && frame.payload[3] <= kCellOff) {
-          selectedCell = frame.payload[2]; selectedState = frame.payload[3];
-          grid.setCell(selectedCell, static_cast<CellState>(selectedState),
-                       actionEffect);
+          if(grid.setCell(frame.payload[2],static_cast<CellState>(frame.payload[3]),actionEffect)) {
+            selectedCell=frame.payload[2];selectedState=frame.payload[3];
+          }
         }
       }
       lastCellActionRevision = cellRevision;
       lastResetRevision = currentResetRevision;
-      gameStateInitialized = true;
+      gameStateInitialized = gameRoleMatches;
     }
     if (frame.payloadLength >= 14) {
       programmingLatched = frame.payload[13] != 0;
@@ -2826,14 +2906,15 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       avrRunning = frame.payload[22] != 0; avrCaptured = frame.payload[23] != 0;
       avrPanelMeta = frame.payload[24] | static_cast<uint16_t>(frame.payload[25]) << 8;
     }
-    if (mode == kModeFirstWins && winner != 0 && winner != previousWinner) {
+#if PAKAR_FIRST_WINS_ENABLED
+    if (gameRoleMatches && mode == kModeFirstWins && winner != 0 && winner != previousWinner) {
       grid.showWinner(winner);
     }
-  } else if (frame.opcode == kCellEvent && frame.payloadLength >= 3) {
-    selectedCell = frame.payload[0];
-    selectedState = frame.payload[1];
-    grid.setCell(selectedCell, static_cast<CellState>(selectedState),
-                 static_cast<Effect>(frame.payload[2]));
+#endif
+  } else if (PAKAR_TABLE_SELECTION && (!avrRoleKnown||avrRoleCompatible) && frame.opcode == kCellEvent && frame.payloadLength >= 3) {
+    if(grid.setCell(frame.payload[0],static_cast<CellState>(frame.payload[1]),static_cast<Effect>(frame.payload[2]))) {
+      selectedCell=frame.payload[0];selectedState=frame.payload[1];
+    }
   }
 }
 
@@ -3295,10 +3376,10 @@ void registerApi() {
       return;
     }
     const GameMode requested = parseMode(value);
-    mode = requested;
+    if(!BoardCore::GameRole::accepts(requested)){server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"mode_baked_at_build\"}"));return;}
+    if(!grid.resetWhite()){server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"red_cells_locked\"}"));return;}
+    mode = static_cast<GameMode>(BoardCore::GameRole::mode);
     winner = 0;
-    if (mode == kModeSnake) startSnake();
-    else grid.resetWhite();
     saveLedPreferences();
     const uint8_t payload[] = {static_cast<uint8_t>(mode)};
     sendToAvr(kSetMode, sequence++, payload, sizeof(payload));
@@ -3338,7 +3419,7 @@ void registerApi() {
     }
     const CellState state = parseCellState(server.arg("state"));
     const Effect effect = parseEffect(server.arg("effect"));
-    grid.setCell(id, state, effect);
+    if(!grid.setCell(id,state,effect)){server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"red_cells_locked\"}"));return;}
     selectedCell = id;
     selectedState = state;
     const uint8_t payload[] = {static_cast<uint8_t>(id), static_cast<uint8_t>(state),
@@ -3355,16 +3436,45 @@ void registerApi() {
     // Hardware handlers execute on the loop owner. Stage the whole selection
     // before the next render; persistence is coalesced by the loop, not per cell.
     if(!grid.setCells(selection,state,effect)){
-      server.send(409,"application/json",F("{\"accepted\":false}"));return;
+      server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"red_cells_locked\",\"message\":\"Red cells cannot become white while the lock is enabled.\"}"));return;
     }
     selectedCell=selection.first();selectedState=state;
     String reply=F("{\"accepted\":true,\"count\":");reply+=selection.count();reply+='}';
     server.send(202,"application/json",reply);
   });
+  server.on("/api/cells/assignments",HTTP_GET,[](){
+    if(!authenticate())return;
+    server.send(200,"application/json",cellAssignmentsJson());
+  });
+  server.on("/api/cells/assignments",HTTP_POST,[](){
+    if(!authenticate())return;
+    JsonDocument document;String error;
+    const String json=server.jsonBody();const bool jsonRequest=server.request()->contentType()==F("application/json");
+    const bool parsed=jsonRequest? !deserializeJson(document,json) : !deserializeJson(document,server.arg("assignments"));
+    const JsonVariantConst assignments=jsonRequest?document["assignments"].as<JsonVariantConst>():document.as<JsonVariantConst>();
+    if(!parsed || !applyCellAssignments(assignments,error)){
+      if(!error.length())error=F("invalid_cell_assignments");
+      const char *message=error==F("red_cells_locked")?BoardCore::CommandReceipts::failureMessage(BoardCore::CommandReceipts::RedCellsLocked):BoardCore::CommandReceipts::failureMessage(BoardCore::CommandReceipts::InvalidCellAssignments);
+      server.send(error==F("red_cells_locked")?409:400,"application/json",String(F("{\"accepted\":false,\"error\":\""))+error+F("\",\"message\":\"")+message+F("\"}"));return;
+    }
+    server.send(200,"application/json",cellAssignmentsJson(true));webSocket.textAll(buildStatusJson());
+  });
+  server.on("/api/cells/lock",HTTP_POST,[](){
+    if(!authenticate())return;
+    JsonDocument document;bool enabled=false;const String json=server.jsonBody();
+    if(server.request()->contentType()==F("application/json")){
+      if(deserializeJson(document,json)||!document["enabled"].is<bool>()){server.send(400,"application/json",F("{\"accepted\":false,\"error\":\"invalid_lock\"}"));return;}
+      enabled=document["enabled"].as<bool>();
+    }else{
+      const String value=server.arg("enabled");if(value!="true"&&value!="false"&&value!="1"&&value!="0"){server.send(400,"application/json",F("{\"accepted\":false,\"error\":\"invalid_lock\"}"));return;}
+      enabled=value=="true"||value=="1";
+    }
+    grid.setRedLock(enabled);server.send(200,"application/json",cellAssignmentsJson(true));webSocket.textAll(buildStatusJson());
+  });
   server.on("/api/game/reset", HTTP_POST, []() {
     if (!authenticate()) return;
+    if(!grid.resetWhite()){server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"red_cells_locked\"}"));return;}
     winner = 0;
-    if (mode == kModeSnake) startSnake(); else grid.resetWhite();
     saveLedPreferences();
     sendToAvr(kGameReset, sequence++);
     server.send(202, "application/json", F("{\"accepted\":true}"));
@@ -3402,7 +3512,7 @@ void registerApi() {
       server.send(400, "text/plain", F("unknown effect"));
       return;
     }
-    grid.setPattern(pattern);
+    if(!grid.setPattern(pattern)){server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"red_cells_locked\",\"message\":\"Cell chase changes red assignments; disable red-cell lock first.\"}"));return;}
     saveLedPreferences();
     server.send(200, "application/json", F("{\"updated\":true}"));
   });
@@ -3944,11 +4054,12 @@ void setup() {
   loadLedPreferences();
   loadCellMapping();
   SceneState fallback;
+  fallback.mode = BoardCore::GameRole::mode;
   fallback.brightness = grid.brightness();
   fallback.flags = (grid.outputEnabled() ? 1 : 0) | (grid.staticMode() ? 2 : 0);
   if (sceneStore.begin(LittleFS, filesystemMounted, fallback)) {
     const auto &saved = sceneStore.state();
-    mode = static_cast<GameMode>(saved.mode); winner = saved.winner;
+    mode = static_cast<GameMode>(BoardCore::GameRole::mode); winner = saved.mode==BoardCore::GameRole::mode?saved.winner:0;
     selectedCell = saved.selectedCell; selectedState = saved.selectedState;
     restoreLedScene(grid, saved);
     if (mode == kModeSnake) startSnake();
@@ -4059,12 +4170,20 @@ namespace {
 // while cloud telemetry builds its own nested snapshots. This separate call
 // completes before cloud service; no message or command is moved to a new task.
 __attribute__((noinline)) void serviceQueuedWebSocketMessage() {
-  LoopMessages::Message message;
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+  loopMessages.consume([](const LoopMessages::Message &message){
+    if(message.opcode==0xfe)grid.discardStaged((1ULL<<63)|message.client);
+    else if(message.epoch==server.ingressEpoch()&&webAccess.socketAllowed(message.client))
+      handleWebSocketMessage(message.client,message.opcode,message.data,message.length);
+  });
+#else
+  static LoopMessages::Message message; // Never add a 4KB command to the loop stack.
   if(loopMessages.pop(message)){
     if(message.opcode==0xfe) grid.discardStaged((1ULL << 63) | message.client);
     else if(message.epoch==server.ingressEpoch() && webAccess.socketAllowed(message.client))
       handleWebSocketMessage(message.client,message.opcode,message.data,message.length);
   }
+#endif
 }
 }
 

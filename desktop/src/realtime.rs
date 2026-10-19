@@ -27,6 +27,8 @@ pub fn supported(status: &DeviceStatus, path: &str) -> bool {
         && matches!(
             path,
             "/api/cells"
+                | "/api/cells/assignments"
+                | "/api/cells/lock"
                 | "/api/cell"
                 | "/api/effect"
                 | "/api/mode"
@@ -71,6 +73,8 @@ impl Intent {
         let id = uuid::Uuid::new_v4().simple().to_string();
         let command = match path {
             "/api/cells" => "cells",
+            "/api/cells/assignments" => "cell-assignments",
+            "/api/cells/lock" => "cell-lock",
             "/api/cell" => "cell",
             "/api/effect" => "effect",
             "/api/mode" => "mode",
@@ -81,7 +85,10 @@ impl Intent {
         let mut value = serde_json::json!({"type":"command","request_id":id,"board_id":status.board_id,
             "boot_id":status.boot_id,"expires_at_ms":status.command_clock_ms.unwrap().checked_add(8000).ok_or("Command clock overflow")?,"command":command});
         for (key, item) in &form {
-            value[key] = if key == "id" || path == "/api/brightness" && key == "value"
+            value[key] = if key == "assignments" {
+                let assignments:Vec<crate::cell_assignments::Assignment>=serde_json::from_str(item).map_err(|_|"Invalid assignments")?;
+                serde_json::to_value(crate::cell_assignments::Document::new(assignments)?.assignments).map_err(|e|e.to_string())?
+            } else if key == "id" || path == "/api/brightness" && key == "value"
                 || path=="/api/led/diagnostic" && matches!(key.as_str(),"index"|"count"|"rgb") {
                 serde_json::json!(item.parse::<u32>().map_err(|_| "Invalid command number")?)
             } else if key == "enabled" || key=="off" {
@@ -124,10 +131,7 @@ impl Intent {
             return Err("Foreign command receipt; nothing replayed".into());
         }
         if value["accepted"] != true {
-            return Err(format!(
-                "Command rejected: {}",
-                value["error"].as_str().unwrap_or("unknown")
-            ));
+            return Err(crate::cell_assignments::rejection(value["error"].as_str().unwrap_or("unknown")));
         }
         let status: DeviceStatus = serde_json::from_value(value["status"].clone())
             .map_err(|_| "Command receipt has no status readback")?;
@@ -143,6 +147,12 @@ impl Intent {
                 .unwrap_or_default()
         };
         let matches = match self.path {
+            "/api/cells/assignments" => {
+                let assignments:Vec<crate::cell_assignments::Assignment>=serde_json::from_str(get("assignments")).map_err(|_|"Invalid assignments")?;
+                let doc=crate::cell_assignments::Document::new(assignments)?;
+                value["count"].as_u64()==Some(doc.assignments.len() as u64) && doc.verify(&status)
+            }
+            "/api/cells/lock" => status.red_lock==Some(get("enabled")=="true"),
             "/api/cells" => {
                 let request = cell_batch::Request::new(
                     &crate::ui::cell_search::parse(get("ids"))?,
@@ -242,7 +252,7 @@ mod tests {
             serde_json::json!({"hostname":"ledboard","board_id":"esp32s3-fixture","version":crate::peer_identity::VERSION,
             "compatibility":crate::peer_identity::advertised_policy(),
             "boot_id":"a".repeat(32),"http_peer_fencing":true,"command_clock_ms":1000,
-            "cells":vec!["white";80],"capabilities":{"board_kind":"table",
+            "cells":vec!["white";80],"capabilities":{"board_kind":"table","modes":[{"id":"cell","code":1,"kind":"presentation"}],
                 "acknowledged_features":["table","cell-batch","leds","command-ack"],
                 "table":{"columns":10,"rows":8,"pixels_per_cell":6}}}),
         )

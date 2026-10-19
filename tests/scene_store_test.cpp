@@ -147,5 +147,14 @@ int main() {
   grid.fill(BoardCore::Protocol::kCellOff);
   auto snakeTick = captureLedScene(snake, grid, 3, 80, 2, 0);
   assert(!memcmp(snake.cells, snakeTick.cells, 80)); // Game phase not stored.
-  puts("Scene persistence: exact80-cell reboot/mode/output restore, first-frame mapping, debounce/max-delay, no-op/frame wear, rollover and transactional failure/corruption recovery passed. Host fixtures, not power-loss/optical proof.");
+  grid.setRedLock(false);grid.setCell(1,BoardCore::Protocol::kCellRed,BoardCore::Protocol::kEffectImmediate);
+  grid.setRedLock(true);auto locked=captureLedScene(scene,grid,1,1,1,0);
+  assert(locked.flags&4);MemoryFiles locks;Store lockStore;lockStore.begin(locks,true,defaults);
+  lockStore.observe(locked,0);assert(lockStore.service(1500));Store lockReboot;assert(lockReboot.begin(locks,true,defaults));
+  LedGrid restoredLock;restoredLock.begin(false);restoreLedScene(restoredLock,lockReboot.state());
+  assert(restoredLock.redLock()&&restoredLock.state(1)==BoardCore::Protocol::kCellRed);
+  assert(!restoredLock.setCell(1,BoardCore::Protocol::kCellWhite,BoardCore::Protocol::kEffectImmediate));
+  assert(restoredLock.setCell(1,BoardCore::Protocol::kCellOff,BoardCore::Protocol::kEffectImmediate));
+  restoredLock.setRedLock(false);assert(restoredLock.resetWhite());
+  puts("Scene persistence: exact80-cell reboot/mode/output/red-lock restore, first-frame mapping, debounce/max-delay, no-op/frame wear, rollover and transactional failure/corruption recovery passed. Host fixtures, not power-loss/optical proof.");
 }

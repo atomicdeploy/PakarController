@@ -2,6 +2,7 @@
 
 #include <BuildInfo.h>
 #include <Protocol.h>
+#include <GameRole.h>
 #include <PcContractAssembly.h>
 #include <SerialLink.h>
 #include <UartFlow.h>
@@ -30,7 +31,7 @@ constexpr uint16_t kShiftPeriodMs = 5;
 
 BoardCore::SerialLink link(Serial);
 
-GameMode mode = kModeCellSelect;
+GameMode mode = static_cast<GameMode>(BoardCore::GameRole::mode);
 CellState selectedState = kCellWhite;
 uint8_t selectedCell = 1;
 uint8_t winner = 0;
@@ -213,6 +214,7 @@ void sendHello(uint8_t sequence = 0) {
       kCueCount, // Append-only explicit stable audio IDs [0, count).
       1, // Explicit timestamped tone telemetry acknowledgement, not an API generation.
       1, // Explicit finite maintenance-panel priority acknowledgement.
+      BoardCore::GameRole::mode, // Baked-in business role; never a runtime mode menu.
   };
   link.send(kHelloResponse, sequence, payload, sizeof(payload));
 }
@@ -271,6 +273,7 @@ void resetGame(bool playWelcome = true) {
 }
 
 void chooseWinner(uint8_t button) {
+#if PAKAR_FIRST_WINS_ENABLED
   if (mode != kModeFirstWins || winner != 0 || button < 1 || button > 9) return;
   winner = button;
   shiftRegisters.setActiveOutputs(button <= 8 ? _BV(button - 1) : 0);
@@ -283,9 +286,13 @@ void chooseWinner(uint8_t button) {
   buzzer.pause(50);
   buzzer.enqueue(base + 440, 260);
   markStateDirty();
+#else
+  (void)button;
+#endif
 }
 
 void handleCellKey(uint8_t button) {
+#if PAKAR_TABLE_SELECTION
   switch (button) {
     case 1: selectedCell = selectedCell <= 1 ? 80 : selectedCell - 1; break;
     case 2: selectedCell = selectedCell >= 80 ? 1 : selectedCell + 1; break;
@@ -299,6 +306,9 @@ void handleCellKey(uint8_t button) {
   }
   showState();
   markStateDirty();
+#else
+  (void)button;
+#endif
 }
 
 void onInputChanged(uint8_t button, bool pressed) {
@@ -366,7 +376,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
 #endif
       break;
     case kSetMode:
-      if (frame.payloadLength != 1 || frame.payload[0] > kModeSnake) {
+      if (frame.payloadLength != 1 || !BoardCore::GameRole::accepts(frame.payload[0])) {
         link.error(frame.sequence, frame.opcode, kBadPayload);
         break;
       }
@@ -375,7 +385,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       link.ack(frame.sequence, frame.opcode);
       break;
     case kCellAction:
-      if (frame.payloadLength < 2 || frame.payloadLength > 3 ||
+      if (!PAKAR_TABLE_SELECTION || frame.payloadLength < 2 || frame.payloadLength > 3 ||
           frame.payload[0] < 1 || frame.payload[0] > 80 ||
           frame.payload[1] > kCellOff ||
           (frame.payloadLength == 3 && frame.payload[2] > kEffectPulse)) {

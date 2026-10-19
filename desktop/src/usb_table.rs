@@ -16,7 +16,7 @@ pub fn yield_snapshot(pending:bool,verified:bool,reading:bool,waiting:bool,opera
 /// peripheral observations remain owned by the full capture; this must NOT
 /// renew their freshness or fabricate published pixel RGB.
 pub fn command_state(previous:&DeviceStatus,opcode:u8,p:&[u8])->Result<DeviceStatus,String>{
-    if p.len()!=44 || p[0]!=opcode || !table_command(opcode) || peer_http::Pin::from_status(previous).is_none(){return Err("Invalid USB command-state readback".into());}
+    if !matches!(p.len(),44|45) || p[0]!=opcode || !table_command(opcode) || peer_http::Pin::from_status(previous).is_none(){return Err("Invalid USB command-state readback".into());}
     let boot=p[1..17].iter().map(|b|format!("{b:02x}")).collect::<String>();
     if boot!=previous.boot_id || p[17]>3 || p[18]>9 || !(1..=80).contains(&p[19]) || p[20]==0 || p[21]>3 || p[22]>1 || p[23]>1 {
         return Err("USB command-state peer/values invalid; no state assumed".into());
@@ -25,6 +25,7 @@ pub fn command_state(previous:&DeviceStatus,opcode:u8,p:&[u8])->Result<DeviceSta
     for i in 0..80 {cells.push(["white","red","off"].get(((p[24+i/4]>>((i%4)*2))&3) as usize)
         .ok_or("Invalid USB cell state")?.to_string());}
     let mut status=previous.clone();status.cells=cells;
+    status.red_lock=if p.len()==45 {if p[44]>1{return Err("Invalid USB red-lock readback".into());}Some(p[44]!=0)}else{None};
     status.mode=["unknown","cell","first-wins","snake"][p[17] as usize].into();
     status.winner=p[18];status.selected_cell=p[19];status.brightness=p[20];
     status.effect=["none","rainbow","fire","cell-chase"][p[21] as usize].into();
@@ -129,12 +130,14 @@ impl Reader {
         Ok(Some(Snapshot{status,mappings:mapping.decode()?,observed_at:self.started.unwrap_or_else(Instant::now)}))
     }
 }
-pub fn table_command(op:u8)->bool {matches!(op,0x4b|0x4c|0x4d|0x51|0x52|0x5c|0x5f)}
+pub fn table_command(op:u8)->bool {matches!(op,0x4b|0x4c|0x4d|0x51|0x52|0x5c|0x5f|0x62|0x63)}
 pub fn fenced(status:&DeviceStatus,op:u8,payload:&[u8])->Result<Vec<u8>,String>{
     if !table_command(op) || payload.len()>31 || peer_http::Pin::from_status(status).is_none(){return Err("USB table command lacks a verified peer".into());}
     if op==crate::cell_batch::OPCODE && (!crate::cell_batch::Request::supported(status) || crate::cell_batch::Request::from_payload(payload).is_none()){
         return Err("Atomic USB cell batch unavailable/invalid; nothing sent, no per-cell fallback".into());
     }
+    if op==0x62 && (!crate::cell_assignments::supported(status) || crate::cell_assignments::Document::from_payload(payload).is_err()){return Err("Invalid or unavailable atomic assignments".into());}
+    if op==0x63 && (!matches!(payload,[0]|[1]) || !status.capabilities.as_ref().is_some_and(|c|c.table_selection()&&c.has("cell-lock"))){return Err("Invalid or unavailable red lock".into());}
     let mut out=Vec::with_capacity(17+payload.len());
     for pair in status.boot_id.as_bytes().chunks_exact(2){
         let nibble=|v:u8|if v.is_ascii_digit(){v-b'0'}else{v-b'a'+10};
@@ -167,6 +170,8 @@ impl Intent {
     }
     pub fn verify(&self,s:&DeviceStatus)->bool {
         match (self.opcode,self.payload.as_slice()) {
+            (0x62,payload)=>crate::cell_assignments::Document::from_payload(payload).is_ok_and(|d|d.verify(s)),
+            (0x63,[value]) if *value<=1=>s.red_lock==Some(*value!=0),
             (0x5f,payload)=>self.admission.batch.as_ref().is_some_and(|batch|
                 batch.request.payload()==payload && crate::peer_http::Pin::from_status(s).as_ref()==Some(&batch.peer) && batch.request.verify(s)),
             (0x4b,[mode]) => ["unknown","cell","first-wins","snake"].get(*mode as usize).is_some_and(|v|s.mode==*v),

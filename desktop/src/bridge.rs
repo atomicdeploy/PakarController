@@ -248,7 +248,7 @@ fn status_value(shared: &Shared, o: &Observation) -> Value {
         // capability reachable through a separate, unselected Wi-Fi connection.
         if let Some(c) = &mut status.capabilities {
             c.acknowledged_features
-                .retain(|s| matches!(s.as_str(), "table" | "leds" | "cell-batch" | "command-ack"));
+                .retain(|s| matches!(s.as_str(), "table" | "leds" | "cell-batch" | "command-ack" | "cell-assignments" | "cell-lock"));
             c.modes.retain(|m| m.id == "cell");
         }
     }
@@ -345,7 +345,7 @@ impl Reply {
         })
     }
 }
-fn usb_request(
+pub(crate) fn usb_request(
     path: &str,
     form: &[(String, String)],
     status: &DeviceStatus,
@@ -364,6 +364,14 @@ fn usb_request(
             .ok_or_else(|| format!("Missing {key}"))
     };
     Ok(match path {
+        "/api/cells/assignments" => {
+            let doc=crate::cell_assignments::Document::new(serde_json::from_str(get("assignments")?).map_err(|_|"Invalid assignments")?)?;
+            (0x62,doc.payload(),None)
+        }
+        "/api/cells/lock" => {
+            let enabled=match get("enabled")?{"true"=>1,"false"=>0,_=>return Err("Lock requires a boolean".into())};
+            (0x63,vec![enabled],None)
+        }
         "/api/cell" => {
             let id = get("id")?.parse().map_err(|_| "Invalid cell")?;
             (
@@ -498,7 +506,11 @@ fn mutate(
                 route: o.route.clone(),
                 at: o.at,
             };
-            let result = json!({"accepted":true,"count":form.iter().find(|(k,_)|k=="ids").and_then(|(_,v)|crate::ui::cell_search::parse(v).ok()).map(|s|s.len()),"status":status_value(shared,&next)});
+            let count=if path=="/api/cells/assignments" {
+                form.iter().find(|(k,_)|k=="assignments").and_then(|(_,v)|serde_json::from_str::<Vec<crate::cell_assignments::Assignment>>(v).ok()).map(|v|v.len())
+            }else{form.iter().find(|(k,_)|k=="ids").and_then(|(_,v)|crate::ui::cell_search::parse(v).ok()).map(|s|s.len())};
+            let assignments=if matches!(path,"/api/cells/assignments"|"/api/cells/lock") {crate::cell_assignments::Document::from_status(&next.status).ok().map(|d|d.assignments)}else{None};
+            let result = json!({"accepted":true,"count":count,"assignments":assignments,"red_lock":next.status.red_lock,"status":status_value(shared,&next)});
             *shared.observation.lock().unwrap() = Some(next);
             Ok(result)
         }
@@ -556,6 +568,14 @@ fn mutate(
                 route: o.route.clone(),
                 at: Instant::now(),
             };
+            if path=="/api/cells/assignments" {
+                let raw=form.iter().find(|(k,_)|k=="assignments").ok_or("Missing assignments")?;
+                let doc=crate::cell_assignments::Document::new(serde_json::from_str(&raw.1).map_err(|_|"Invalid assignments")?)?;
+                if !doc.verify(&next.status){return Err("Assignment ACK differs from board readback; no replay".into());}
+            }else if path=="/api/cells/lock" {
+                let enabled=form.iter().find(|(k,_)|k=="enabled").ok_or("Missing lock")?.1=="true";
+                if next.status.red_lock!=Some(enabled){return Err("Lock ACK differs from board readback; no replay".into());}
+            }
             result["status"] = status_value(shared, &next);
             *shared.observation.lock().unwrap() = Some(next);
             Ok(result)
@@ -607,6 +627,8 @@ fn command(shared: &Shared, request: Value, headers: &BTreeMap<String, String>) 
         let path = match request["command"].as_str() {
             Some("cell") => "/api/cell",
             Some("cells") => "/api/cells",
+            Some("cell-assignments") => "/api/cells/assignments",
+            Some("cell-lock") => "/api/cells/lock",
             Some("effect") => "/api/effect",
             Some("mode") => "/api/mode",
             Some("brightness") => "/api/brightness",
@@ -614,7 +636,7 @@ fn command(shared: &Shared, request: Value, headers: &BTreeMap<String, String>) 
             _ => return Err("Unsupported command on bridge".into()),
         };
         let mut form = Vec::new();
-        for key in ["id", "ids", "state", "effect", "value", "enabled", "mode"] {
+        for key in ["id", "ids", "state", "effect", "value", "enabled", "mode", "assignments"] {
             if let Some(v) = request.get(key) {
                 form.push((
                     key.into(),
@@ -984,6 +1006,10 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
         let o = route(shared)?;
         match (request.method.as_str(), path) {
             ("GET", "/api/status") => Ok(status_value(shared, &o)),
+            ("GET", "/api/cells/assignments") => {
+                let doc=crate::cell_assignments::Document::from_status(&o.status)?;
+                Ok(json!({"role":doc.role,"assignments":doc.assignments,"red_lock":o.status.red_lock,"board_id":o.status.board_id,"boot_id":o.status.boot_id}))
+            }
             ("GET", "/api/cells/mapping") => {
                 if o.mapping.is_null() {
                     Err("Current peer mappings unavailable".into())
@@ -1032,6 +1058,13 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
                 Ok(command(shared, command_packet(&request)?, &request.headers))
             }
             ("POST", path) if path.starts_with("/api/") => {
+                if matches!(path,"/api/cells/assignments"|"/api/cells/lock") && request.headers.get("content-type").is_some_and(|v|v.starts_with("application/json")) {
+                    let value:Value=serde_json::from_slice(&request.body).map_err(|_|"Invalid assignment JSON")?;
+                    let form=if path=="/api/cells/assignments" {
+                        crate::cell_assignments::Document::new(serde_json::from_value(value["assignments"].clone()).map_err(|_|"Invalid assignments")?)?.form()
+                    }else{vec![("enabled".into(),value["enabled"].as_bool().ok_or("Lock requires enabled boolean")?.to_string())]};
+                    return mutate(shared,&o,path,form,&request.headers,&request.body,Duration::from_secs(8));
+                }
                 let body =
                     std::str::from_utf8(&request.body).map_err(|_| "Expected URL-encoded form")?;
                 let url = reqwest::Url::parse(&format!("http://bridge/?{body}"))
@@ -1042,7 +1075,7 @@ fn serve(mut socket: TcpStream, shared: &Shared) -> Result<(), String> {
                     .collect();
                 if form.len() > 16
                     || form.iter().enumerate().any(|(i, (k, v))| {
-                        v.len() > 512 || form[..i].iter().any(|(key, _)| key == k)
+                        v.len() > (if k=="assignments"{4096}else{512}) || form[..i].iter().any(|(key, _)| key == k)
                     })
                 {
                     return Err("Invalid or duplicate form field".into());
@@ -1092,6 +1125,45 @@ fn command_packet(request: &Request) -> Result<Value, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn cell_assignments_bridge_http_json_export_lock_and_correlated_no_replay(){
+        let (shared,rx,_gate)=fixture();
+        {
+            let mut owned=shared.observation.lock().unwrap();let status=&mut owned.as_mut().unwrap().status;
+            status.red_lock=Some(false);let caps=status.capabilities.as_mut().unwrap();caps.role="table-selection".into();
+            caps.acknowledged_features.extend(["cell-assignments".into(),"cell-lock".into()]);
+        }
+        let before=route(&shared).unwrap().status;
+        let mut actual=before.clone();
+        let worker=thread::spawn(move||{
+            for expected in [0x62,0x63,0x62] {
+                match rx.recv_timeout(Duration::from_secs(4)).unwrap(){
+                    SerialCommand::Bridge(_,admission,opcode,payload,reply)=>{
+                        assert_eq!(opcode,expected);assert!(admission.current(1,Some(&actual)));
+                        if opcode==0x62 {let doc=crate::cell_assignments::Document::from_payload(&payload).unwrap();for row in doc.assignments{actual.cells[row.cell as usize-1]=row.state;}}
+                        else{actual.red_lock=Some(payload==[1]);}
+                        reply.send(Ok(actual.clone())).unwrap();
+                    },_=>panic!("Only selected USB owner may receive assignments"),
+                }
+            }
+            assert!(rx.recv_timeout(Duration::from_millis(100)).is_err(),"No foreign-pin or duplicate command may reach USB");
+        });
+        let listener=TcpListener::bind("127.0.0.1:0").unwrap();let base=format!("http://{}",listener.local_addr().unwrap());
+        let owner=shared.clone();let server=thread::spawn(move||{for _ in 0..4{let (socket,_)=listener.accept().unwrap();serve(socket,&owner).unwrap();}});
+        let client=peer_http::Pin::from_status(&before).unwrap().client().unwrap();
+        let exported:Value=client.get(format!("{base}/api/cells/assignments")).send().unwrap().error_for_status().unwrap().json().unwrap();
+        assert_eq!(exported["assignments"].as_array().unwrap().len(),80);assert_eq!(exported["red_lock"],false);
+        let body=json!({"assignments":[{"cell":1,"state":"red","future_optional":true},{"cell":80,"state":"off"}]});
+        assert_eq!(client.post(format!("{base}/api/cells/assignments")).header("X-Pakar-Boot","b".repeat(32)).json(&body).send().unwrap().status(),409);
+        let applied:Value=client.post(format!("{base}/api/cells/assignments")).json(&body).send().unwrap().error_for_status().unwrap().json().unwrap();
+        assert_eq!(applied["accepted"],true);assert_eq!(applied["count"],2);assert_eq!(applied["status"]["cells"][0],"red");assert_eq!(applied["status"]["cells"][79],"off");
+        let locked:Value=client.post(format!("{base}/api/cells/lock")).json(&json!({"enabled":true})).send().unwrap().error_for_status().unwrap().json().unwrap();
+        assert_eq!(locked["red_lock"],true);assert_eq!(locked["status"]["red_lock"],true);server.join().unwrap();
+        let packet=json!({"type":"command","request_id":"assignment-one-intent","board_id":before.board_id,"boot_id":before.boot_id,
+            "expires_at_ms":9000,"command":"cell-assignments","assignments":[{"cell":2,"state":"red"}]});
+        let first=command(&shared,packet.clone(),&BTreeMap::new());assert_eq!(first["accepted"],true);assert_eq!(first["count"],1);
+        assert_eq!(command(&shared,packet,&BTreeMap::new()),first);worker.join().unwrap();
+    }
     pub(super) fn fixture() -> (Arc<Shared>, mpsc::Receiver<SerialCommand>, connection::Gate) {
         let settings = Settings {
             hostname: "fixture-host".into(),
@@ -1103,7 +1175,7 @@ mod tests {
         let (tx, rx) = mpsc::channel();
         let status:DeviceStatus=serde_json::from_value(json!({"version":crate::peer_identity::VERSION,"hostname":"ledboard","board_id":"fixture-board","boot_id":"a".repeat(32),
             "http_peer_fencing":true,"command_clock_ms":1000,"cells":vec!["white";80],"pixels":480,"mode":"cell",
-            "capabilities":{"board_kind":"table","acknowledged_features":["table","leds","cell-batch","command-ack","ota"],"table":{"columns":10,"rows":8,"pixels_per_cell":6},
+            "capabilities":{"board_kind":"table","modes":[{"id":"cell","code":1,"kind":"presentation"}],"acknowledged_features":["table","leds","cell-batch","command-ack","ota"],"table":{"columns":10,"rows":8,"pixels_per_cell":6},
                 "led_output":{"backend":"gpio-static","rmt":false,"dma":false}}})).unwrap();
         let admission = usb_table::Admission {
             stamp: gate.stamp(Transport::Serial, epoch),

@@ -46,6 +46,8 @@ enum Opcode : uint8_t {
   kCellsAction = 0x5F, // ESP only: [state,effect,10-byte logical-cell bitmap], one atomic loop-owner update.
   kShellRequest = 0x60, // ESP only: boot-fenced Open, token/sequence Input, Close and bounded output Poll.
   kPeerReport = 0x61, // USB: [totalLE16,offsetLE16,<=44 JSON bytes], bounded sequential peer introduction.
+  kCellAssignments = 0x62, // ESP table-selection: selection bitmap10 + two-bit states20; one atomic transaction.
+  kCellLock = 0x63, // ESP table-selection: enabled boolean; persistent red-to-white guard.
   kShellResponse = 0xB9, // Encapsulated terminal output; no raw bytes interleaved with COBS.
   kTableSnapshotResponse = 0xB6, // [nonce,token32,total16,offset16,<=39 immutable JSON bytes].
   kTableCommandState = 0xB7, // Post-ACK readback: inner opcode, boot16, 7 scalar fields, 80 packed two-bit cell states.
@@ -75,6 +77,9 @@ enum Error : uint8_t {
   kHardwareUnavailable = 4,
   kBusy = 5,
   kUnsafe = 6,
+  kRedCellsLocked = 7,
+  kInvalidCellAssignments = 8,
+  kUnsupportedBoardRole = 9,
 };
 
 enum DeviceRole : uint8_t { kRoleAvr = 1, kRoleEsp = 2, kRoleHost = 3 };

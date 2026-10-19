@@ -4,10 +4,13 @@ import 'dart:math';
 import 'models.dart';
 import 'cell_search.dart';
 import 'command_failure.dart';
+import 'cell_assignments.dart';
 
 const commandNames = {
   '/api/cells': 'cells',
   '/api/cell': 'cell',
+  '/api/cells/assignments': 'cell-assignments',
+  '/api/cells/lock': 'cell-lock',
   '/api/effect': 'effect',
   '/api/mode': 'mode',
   '/api/brightness': 'brightness',
@@ -40,11 +43,12 @@ String commandPacket(
     'expires_at_ms': clock + 8000,
     'command': commandNames[path],
     for (final item in values.entries)
-      item.key:
-          item.key == 'id' ||
-              (path == '/api/led/diagnostic' &&
-                  ['index', 'count', 'rgb'].contains(item.key)) ||
-              path == '/api/brightness' && item.key == 'value'
+      item.key: path == '/api/cells/assignments' && item.key == 'assignments'
+          ? CellAssignments.fromRows(jsonDecode(item.value)).assignments
+          : item.key == 'id' ||
+                (path == '/api/led/diagnostic' &&
+                    ['index', 'count', 'rgb'].contains(item.key)) ||
+                path == '/api/brightness' && item.key == 'value'
           ? int.parse(item.value)
           : item.key == 'enabled' || item.key == 'off'
           ? item.value == 'true'
@@ -73,6 +77,13 @@ DeviceStatus verifyCommandReply(
   if (path == '/api/cells' &&
       reply['count'] != parseCellSearch(values['ids'] ?? '').length) {
     throw const FormatException('Atomic selection receipt count differs');
+  }
+  if (path == '/api/cells/assignments' &&
+      reply['count'] !=
+          CellAssignments.fromRows(jsonDecode(values['assignments'] ?? ''))
+              .values
+              .length) {
+    throw const FormatException('Atomic assignment receipt count differs');
   }
   final json = reply['status'];
   if (json is! Map<String, dynamic> ||

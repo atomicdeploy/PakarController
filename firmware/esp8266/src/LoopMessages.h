@@ -28,7 +28,8 @@ class LoopMessages {
   static constexpr uint8_t kCapacity=PAKAR_WS_LOOP_CAPACITY;
   static_assert(PAKAR_WS_LOOP_CAPACITY>=1 && PAKAR_WS_LOOP_CAPACITY<=8,
                 "WebSocket loop capacity outside 1..8");
-  struct Message { uint32_t client; uint32_t epoch; uint16_t length; uint8_t opcode; uint8_t data[1300]; };
+  static constexpr size_t kMaximumMessage=4096;
+  struct Message { uint32_t client; uint32_t epoch; uint16_t length; uint8_t opcode; uint8_t data[kMaximumMessage]; };
   LoopMessages()=default;
   LoopMessages(const LoopMessages&)=delete;
   LoopMessages& operator=(const LoopMessages&)=delete;
@@ -56,16 +57,46 @@ class LoopMessages {
 #endif
   }
   bool push(uint32_t client,uint8_t opcode,const uint8_t *data,size_t length,uint32_t epoch=0) {
-    if(!data || length>1300) return false;
+    if(!data || length>kMaximumMessage) return false;
     Guard lock(mutex_);
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+    if(dispatching_){++rejected_;return false;}
+#endif
     if(!ready()||count_==kCapacity){++rejected_;return false;}
     auto &m=items_[(head_+count_)%kCapacity];m.client=client;m.epoch=epoch;m.opcode=opcode;m.length=length;
     memcpy(m.data,data,length);++count_;return true;
   }
   bool pop(Message &result) {
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+    if(dispatching_)return false;
+#endif
     Guard lock(mutex_);if(!ready()||!count_)return false;
     result=items_[head_];head_=(head_+1)%kCapacity;--count_;return true;
   }
+  void clear() {
+    Guard lock(mutex_);
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+    if(dispatching_){clearPending_=true;return;}
+#endif
+    head_=count_=0;
+  }
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+  // LX106 dispatch/callbacks cooperate on one owner. Retain the immutable slot
+  // across handler yields instead of reserving a second4KB BSS workspace.
+  template<class Consumer> bool consume(const Consumer &consumer) {
+    if(dispatching_||!count_)return false;
+    dispatching_=true;
+    struct Release {
+      LoopMessages &owner;
+      ~Release(){
+        if(owner.clearPending_){owner.head_=owner.count_=0;owner.clearPending_=false;}
+        else{owner.head_=(owner.head_+1)%kCapacity;--owner.count_;}
+        owner.dispatching_=false;
+      }
+    } release{*this};
+    consumer(static_cast<const Message&>(items_[head_]));return true;
+  }
+#endif
   uint32_t rejected(){Guard lock(mutex_);return rejected_;}
  private:
 #if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
@@ -81,4 +112,7 @@ class LoopMessages {
   Message items_[kCapacity]{};
 #endif
   uint8_t head_=0,count_=0;uint32_t rejected_=0;
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+  bool dispatching_=false,clearPending_=false;
+#endif
 };

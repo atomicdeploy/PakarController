@@ -13,7 +13,17 @@ class CommandReceipts {
   static constexpr size_t kCapacity = 16;
 #endif
   enum Result { Fresh, Cached, Invalid, Expired, Conflict, Full };
-  struct Entry { char id[33]{}; char digest[65]{}; uint64_t until=0; bool accepted=false; uint8_t count=0; };
+  enum Failure : uint8_t { NoFailure, RedCellsLocked, InvalidCellAssignments, UnsupportedBoardRole };
+  struct Entry { char id[33]{}; char digest[65]{}; uint64_t until=0; bool accepted=false; uint8_t count=0; Failure failure=NoFailure; };
+  static const char *failureCode(Failure value) {
+    return value==RedCellsLocked?"red_cells_locked":value==InvalidCellAssignments?"invalid_cell_assignments":
+      value==UnsupportedBoardRole?"unsupported_board_role":"command_rejected";
+  }
+  static const char *failureMessage(Failure value) {
+    return value==RedCellsLocked?"Red cells cannot become white while the red-cell lock is enabled.":
+      value==InvalidCellAssignments?"Assignments must contain 1 to 80 unique cells and white, red or off states.":
+      value==UnsupportedBoardRole?"This command is not supported by the board's baked-in role.":"The board rejected this command.";
+  }
   static_assert(sizeof(Entry)<=120,"Command receipt RAM budget changed");
   Result reserve(const char *id,const char *digest,uint64_t until,uint64_t now,Entry *&slot) {
     slot=nullptr;

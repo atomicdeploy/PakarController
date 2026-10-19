@@ -70,7 +70,7 @@ int main(){
   assert(cloudConfig.setTelemetrySeconds(1));
   cloudServices.begin("ledboard",handler,status,full,board,boot);
   auto &mqtt=*PubSubClient::latest;auto &ws=*WebSocketsClient::latest;
-  assert(mqtt.bufferSize==2048);
+  assert(mqtt.bufferSize==CloudServices::kMqttBufferBytes);
   service(true,true,1000);
   assert(mqtt.connectAttempts==1&&ws.connectAttempts==1&&fullSnapshots==1);
 #if defined(ESP32)
@@ -254,6 +254,14 @@ int main(){
     assert(packet.payload==wire&&!packet.retained);++fragments;
   }
   assert(fragments==3);
+  cloudServices.begin("ledboard",handler,status,full,board,boot);service(true,true,250000,true,false);
+  JsonDocument assignmentEnvelope;assert(!deserializeJson(assignmentEnvelope,envelope("bulk-import-test","cell-assignments")));
+  for(unsigned cell=1;cell<=80;++cell){auto row=assignmentEnvelope["assignments"].add<JsonObject>();row["cell"]=cell;row["state"]="white";}
+  String import;serializeJson(assignmentEnvelope,import);assert(import.length()>2048&&import.length()<CloudServices::kCommandBytes);
+  const auto importDispatches=dispatches;mqtt.inject(import);assert(dispatches==importDispatches+1);
+  mqtt.bufferResult=false;cloudServices.applyConfiguration();const auto blockedAttempts=mqtt.connectAttempts;
+  assert(cloudServices.lastError().find("buffer unavailable")!=String::npos);
+  service(true,true,300000,true,false);assert(mqtt.connectAttempts==blockedAttempts&&!mqtt.connected());
   puts("Cloud services: admission/6KB streaming, identity/LWT, completion-relative reconnect, cooperative nonrecursive IO and cause/duration fixtures passed (network/crypto doubles, not broker/hardware proof).");
   puts("Noinline fragment-stack boundary and byte-exact3-fragment envelope/short-tail reuse passed; compiled/physical loop-stack acceptance remains separate.");
 }

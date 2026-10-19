@@ -1,16 +1,11 @@
 #pragma once
 #include "Protocol.h"
+#include "GameRole.h"
 
 // One acknowledged, current-peer contract for JSON, USB and UI. Never derive a
 // board profile from its hostname, pixel count, saved client settings or version.
 #ifndef PAKAR_TABLE_ENABLED
 #define PAKAR_TABLE_ENABLED 1
-#endif
-#ifndef PAKAR_FIRST_WINS_ENABLED
-#define PAKAR_FIRST_WINS_ENABLED 1
-#endif
-#ifndef PAKAR_SNAKE_ENABLED
-#define PAKAR_SNAKE_ENABLED 0
 #endif
 namespace BoardCore {
 namespace Context {
@@ -30,7 +25,8 @@ inline const char *name(uint8_t bit) {
 inline uint16_t features(bool helloFresh, uint16_t avrCaps, bool displayAck,
                          bool statusFresh, bool pcSupported) {
   uint16_t result = Network | Telemetry | Leds | Streaming | Isp | Ota | Identity;
-  if (PAKAR_TABLE_ENABLED) result |= Table | CellBatch;
+  if (PAKAR_TABLE_ENABLED) result |= Table;
+  if (PAKAR_TABLE_ENABLED && PAKAR_TABLE_SELECTION) result |= CellBatch;
   if (!helloFresh) return result;
   if (avrCaps & Protocol::kCapBuzzer) result |= Buzzer;
   if (avrCaps & Protocol::kCapShiftInputs) result |= Inputs;
@@ -51,8 +47,7 @@ inline uint8_t modes(uint16_t available) {
   if (!(available & Table)) return 0;
   // Cell presentation belongs to the ESP table. First wins also needs
   // the acknowledged AVR inputs and outputs, not just a connected ESP.
-  return 2U | (PAKAR_SNAKE_ENABLED ? 8U : 0U) |
-    ((PAKAR_FIRST_WINS_ENABLED && (available & (Inputs | Outputs)) == (Inputs | Outputs)) ? 4U : 0U);
+  return uint8_t(1U << GameRole::mode);
 }
 inline const char *modeName(uint8_t code) {
   static const char *const names[] = {nullptr, "cell", "first-wins", "snake"};

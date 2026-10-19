@@ -92,6 +92,15 @@ for(const driver of [{backend:'rmt-dma',dma:false,ready:true},{backend:'gpio-sta
   const f=fixture();f.authenticated=false;f.authEnabled=true;f.defaultCredentials=true;assert(!await f.app.refresh());assert.equal(f.app.snapshot().authInfo.default_credentials,true);
   assert(await f.app.login('owner','private-fixture'));assert.equal(posts(f).length,1);assert.equal(posts(f)[0].path,'/login');assert(!JSON.stringify(f.app.snapshot()).includes('private-fixture'));
 }
+for(const role of ['first-wins','unsupported-role']){
+  const f=fixture();f.status.capabilities.role=role;await f.app.refresh();assert(!f.app.snapshot().canWrite);assert(!f.app.snapshot().canEnable);
+  assert(!await f.app.setColor('red'));assert.equal(posts(f).length,0,'A different explicit role cannot acquire cell selection');
+}
+{
+  const f=fixture();f.status.capabilities.role='table-selection';f.status.red_lock=true;f.status.cells[0]='red';await f.app.refresh();
+  assert(!await f.app.setColor('white'));assert.equal(posts(f).length,0);assert(f.app.snapshot().known,'A known lock rejection is not a disconnect');
+  assert.match(f.app.snapshot().message,/lock prevents/);
+}
 assert(html.includes('{{APP_ICON}}')&&html.includes('{{PALETTE}}')&&html.includes('{{PEER_HTTP}}')&&html.includes('{{BASIC_CELLS}}'));
 for(const token of ['canvas','surface-0','surface-1','surface-2','surface-3','text','muted','line','blue','red'])assert(html.includes(`var(--${token})`));
 assert(!/#[0-9a-f]{3,8}\b/i.test(html),'No second hardcoded palette');

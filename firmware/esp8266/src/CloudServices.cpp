@@ -133,7 +133,6 @@ void CloudServices::begin(const String &deviceId, CommandHandler handler,
   secureClient_.setBufferSizes(512, 512);
 #endif
   mqtt_.setCallback(mqttCallback);
-  mqtt_.setBufferSize(2048);
   mqtt_.setKeepAlive(30);
   mqtt_.setSocketTimeout(3);
   webSocket_.onEvent(webSocketEvent);
@@ -194,6 +193,10 @@ void CloudServices::applyConfiguration() {
   nextMqttAttemptAt_ = 0;
   lastTelemetryAt_ = 0;
   lastError_ = String();
+  // No enlarged permanent RX buffer on an unused MQTT interface. A configured
+  // broker fails closed if the complete atomic-command capacity cannot allocate.
+  mqttBufferReady_=!cloudConfig.mqttEnabled() || mqtt_.setBufferSize(kMqttBufferBytes);
+  if(!mqttBufferReady_)lastError_=F("MQTT command buffer unavailable; broker connection disabled");
   mqtt_.setServer(cloudConfig.mqttHost(), cloudConfig.mqttPort());
   mqtt_.setClient(cloudConfig.mqttTls()
                       ? static_cast<Client &>(secureClient_)
@@ -229,7 +232,7 @@ void CloudServices::configureWebSocket() {
 }
 
 void CloudServices::connectMqtt(uint32_t now) {
-  if (!cloudConfig.mqttEnabled() || mqtt_.connected() ||
+  if (!cloudConfig.mqttEnabled() || !mqttBufferReady_ || mqtt_.connected() ||
       (nextMqttAttemptAt_ && static_cast<int32_t>(now - nextMqttAttemptAt_) < 0)) {
     return;
   }
@@ -404,7 +407,7 @@ void CloudServices::service(bool networkReady, bool timeReady, uint32_t now,
 
 void CloudServices::handleCommand(const uint8_t *payload, size_t length,
                                   bool fromMqtt) {
-  if (payload == nullptr || length == 0 || length > 1024 || memchr(payload,0,length)) {
+  if (payload == nullptr || length == 0 || length > kCommandBytes || memchr(payload,0,length)) {
     lastError_ = F("cloud command length is invalid");
     commandReply(fromMqtt,"invalid_json",nullptr,false,lastError_);
     return;
@@ -456,7 +459,9 @@ void CloudServices::handleCommand(const uint8_t *payload, size_t length,
   String result;
   const bool accepted =
       commandHandler_ != nullptr && commandHandler_(message, result);
-  commandReply(fromMqtt,accepted?"accepted":"handler_rejected",replyId,accepted,result);
+  const char *failure=result==F("red_cells_locked")?"red_cells_locked":result==F("invalid_cell_assignments")?
+    "invalid_cell_assignments":result==F("unsupported_board_role")?"unsupported_board_role":"handler_rejected";
+  commandReply(fromMqtt,accepted?"accepted":failure,replyId,accepted,result);
 }
 
 void CloudServices::commandReply(bool fromMqtt,const char *code,const char *requestId,

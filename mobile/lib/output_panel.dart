@@ -41,7 +41,7 @@ class _OutputPanelState extends State<OutputPanel> {
     final peer = widget.status?.peer;
     if (peer?.known == true) {
       final owner =
-          '${widget.status?.json['board_id'] ?? peer!.hostname}/${peer!.kind}/${peer.application?.id}';
+          '${widget.status?.json['board_id'] ?? peer!.hostname}/${peer!.kind}/${peer.application?.id}/${peer.role}';
       if (presentedOwner != null && owner != presentedOwner) {
         modes.clear();
         driver = outputMode = null;

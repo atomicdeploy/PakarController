@@ -86,7 +86,7 @@ template <class Filesystem> class SceneStore {
   }
   static bool valid(const SceneState &state) {
     if (state.mode < 1 || state.mode > 3 || state.pattern > 3 || !state.brightness ||
-        (state.flags & ~3U) || state.selectedCell < 1 || state.selectedCell > 80 ||
+        (state.flags & ~7U) || state.selectedCell < 1 || state.selectedCell > 80 ||
         state.selectedState > 2 || state.winner > 9) return false;
     for (uint8_t cell : state.cells) if (cell > 2) return false;
     return true;

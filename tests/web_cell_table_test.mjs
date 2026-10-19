@@ -48,7 +48,7 @@ const calls=[],actual={cells:Array(80).fill('white'),capabilities:{acknowledged_
 const fixturePeer=Object.freeze({board:'fixture',boot:'a'.repeat(32),generation:1});
 const context=vm.createContext({...nodes,peerHttp:{pin:()=>fixturePeer},document,URLSearchParams,innerWidth:1280,innerHeight:800,
   localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>{storageWrites++;storage.set(k,v)}},
-  state:{cells:[]},mapping:{physical:[],names:[]},currentPeer:()=>({has:feature=>feature==='table'||(feature==='cell-batch'&&hasBatch)}),peerAvailability:s=>({has:feature=>s.capabilities?.acknowledged_features?.includes(feature)===true}),authenticated:true,loadMappingEditor(){},report(){},render(){rendered++},setTimeout:fn=>{fn();return 1},
+  state:{cells:[]},mapping:{physical:[],names:[]},currentPeer:()=>({has:feature=>['table','table-selection'].includes(feature)||(feature==='cell-batch'&&hasBatch)}),peerAvailability:s=>({has:feature=>s.capabilities?.acknowledged_features?.includes(feature)===true}),authenticated:true,loadMappingEditor(){},report(){},render(){rendered++},setTimeout:fn=>{fn();return 1},
   api:async(path,options)=>{
     assert.equal(options.peer,fixturePeer,'Whole batch must retain its original peer');
     if(path==='/api/status'){if(failRead)throw Error('lost readback');return actual}

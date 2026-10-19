@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Manifest {
+    pub role: String,
     pub board_kind: String,
     pub name: String,
     pub hostname: String,
@@ -125,7 +126,7 @@ impl Presentation {
         self.boot = Some(status.boot_id.clone());
         if let Some(current) = status.capabilities.as_ref().filter(|m| m.known()) {
             let mut shown = current.clone();
-            if let Some(previous) = self.manifest.as_ref().filter(|m| m.board_kind == current.board_kind) {
+            if let Some(previous) = self.manifest.as_ref().filter(|m| m.board_kind == current.board_kind && m.role == current.role) {
                 // Only capabilities actually ACKed on this selected route/boot
                 // may retain a slot. They do not grant a fresh command lease.
                 for feature in &previous.acknowledged_features {
@@ -144,6 +145,9 @@ impl Presentation {
     }
 }
 impl Manifest {
+    pub fn table_selection(&self) -> bool {
+        self.table() && (self.role == "table-selection" || self.role.is_empty() && self.modes().any(|m|m.id=="cell"))
+    }
     pub fn led_output(&self) -> Option<&LedOutput> {
         self.led_output
             .as_ref()
@@ -175,6 +179,7 @@ impl Manifest {
     pub fn modes(&self) -> impl Iterator<Item = &Mode> {
         self.modes.iter().filter(|m| {
             self.table()
+                && (self.role.is_empty() || matches!((self.role.as_str(),m.id.as_str()),("table-selection","cell")|("first-wins","first-wins")))
                 && match (m.id.as_str(), m.code, m.kind.as_str()) {
                     ("cell", 1, "presentation") => true,
                     ("first-wins", 2, "game") => self.has("inputs") && self.has("outputs"),
@@ -203,8 +208,13 @@ impl Manifest {
     }
     pub fn allows(&self, path: &str, form: &[(String, String)]) -> bool {
         let feature = match path {
-            "/api/cells" => return self.table() && self.has("cell-batch"),
-            "/api/cell" | "/api/cells/mapping" | "/api/game/reset" | "/api/snake/direction" => {
+            "/api/cells/assignments" => return self.table_selection() && self.has("cell-assignments"),
+            "/api/cells/lock" => return self.table_selection() && self.has("cell-lock"),
+            "/api/cells" => return self.table_selection() && self.has("cell-batch"),
+            "/api/cell" => return self.table_selection(),
+            "/api/game/reset" => return self.table() && self.modes().any(|m|m.id=="first-wins"),
+            "/api/snake/direction" => return false,
+            "/api/cells/mapping" => {
                 "table"
             }
             "/api/mode" => {

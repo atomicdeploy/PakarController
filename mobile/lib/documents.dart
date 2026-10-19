@@ -20,6 +20,11 @@ class AndroidDocuments {
   static const channel = MethodChannel('ir.digitalogic.pakar/documents');
   Future<FirmwareDocument?> pick({
     int maximum = FirmwareImagePolicy.maximumBytes,
+  }) => pickDocument(maximum: maximum);
+
+  Future<FirmwareDocument?> pickDocument({
+    int maximum = FirmwareImagePolicy.maximumBytes,
+    List<String> extensions = const ['bin'],
   }) async {
     if (maximum < 1 || maximum > FirmwareImagePolicy.maximumBytes) {
       throw const FormatException('Invalid firmware document size bound');
@@ -33,11 +38,11 @@ class AndroidDocuments {
         name.isEmpty ||
         name.length > 255 ||
         RegExp(r'[\x00-\x1f\x7f/\\]').hasMatch(name) ||
-        !preferenceFileAllowed(name, ['bin']) ||
+        !preferenceFileAllowed(name, extensions) ||
         bytes is! Uint8List ||
         bytes.length > maximum) {
       throw const FormatException(
-        'Select a bounded .bin document; filename alone does not authenticate firmware',
+        'Select a bounded document with one of the allowed file extensions',
       );
     }
     return FirmwareDocument(name, bytes);

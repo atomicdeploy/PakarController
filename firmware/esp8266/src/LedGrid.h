@@ -10,6 +10,7 @@
 #endif
 
 #include <Protocol.h>
+#include <GameRole.h>
 #include <CellBatch.h>
 #include <TableCellMapping.h>
 #include "UpgradeLifecycle.h"
@@ -50,10 +51,17 @@ class LedGrid {
                BoardCore::Protocol::Effect effect);
   bool setCells(const BoardCore::CellBatch &selection, BoardCore::Protocol::CellState state,
                 BoardCore::Protocol::Effect effect);
-  void fill(BoardCore::Protocol::CellState state);
-  void resetWhite();
+  bool setAssignments(const uint8_t *cells, const uint8_t *states, uint8_t count);
+  void setRedLock(bool enabled);
+  bool redLock() const { return redLock_; }
+  bool permits(uint8_t cell, BoardCore::Protocol::CellState state) const {
+    return cell >= 1 && cell <= kCells && state <= BoardCore::Protocol::kCellOff &&
+      !(redLock_ && states_[cell-1] == BoardCore::Protocol::kCellRed && state == BoardCore::Protocol::kCellWhite);
+  }
+  bool fill(BoardCore::Protocol::CellState state);
+  bool resetWhite();
   void showWinner(uint8_t winner);
-  void setPattern(Pattern pattern);
+  bool setPattern(Pattern pattern);
   Pattern pattern() const { return pattern_; }
   const char *patternName() const;
   void setBrightness(uint8_t value);
@@ -136,6 +144,7 @@ class LedGrid {
     uint32_t at = 0, revision = 0;
   } lastEffectChange_;
   bool dirty_ = true;
+  bool redLock_ = false;
   PanelObserver panelObserver_=nullptr;
   bool diagnosticActive_=false;
   uint16_t diagnosticPixel_=0;

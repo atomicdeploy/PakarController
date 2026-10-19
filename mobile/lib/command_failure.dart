@@ -14,6 +14,10 @@ String commandFailureMessage({Object? error, int? httpStatus}) {
     'command_capacity': 'The board command queue is full',
     'invalid_request_id': 'The board rejected the request identity',
     'invalid_command': 'The board rejected the command shape or values',
+    'red_cells_locked': 'Red-cell lock prevents this change to white; unlock red cells before applying it',
+    'invalid_cell_assignments': 'Cell assignments must contain unique cell IDs 1–80 and white, red or off states',
+    'unsupported_board_role':
+        'This operation is not part of the connected board’s baked-in role',
     'esp_update_in_progress': 'An ESP firmware update currently owns the board',
     'passive_uart_capture_active': 'UART diagnostics currently own the board',
     'pixel_diagnostic_busy':

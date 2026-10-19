@@ -12,6 +12,7 @@ constexpr const char *routes[]={
   "GET /api/avr/contracts","GET /api/avr/contracts/result","GET /api/ble","GET /api/ble/clock",
   "GET /api/peer/info","GET /api/clients","POST /api/clients/report",
   "POST /api/command","POST /api/cell","POST /api/cells","POST /api/effect",
+  "GET /api/cells/assignments","POST /api/cells/assignments","POST /api/cells/lock",
   "POST /api/mode","POST /api/brightness","POST /api/led/output",
   "POST /api/audio","POST /api/buzzer","POST /api/display","POST /api/outputs",
   "POST /api/game/reset","POST /api/avr/contracts","POST /api/device/name",
@@ -90,6 +91,10 @@ String read(const String &path,JsonObjectConst form,int &status) {
   }
   if(path=="/api/table/snapshot")return buildUsbTableSnapshot();
   if(path=="/api/cells/mapping")return mapping();
+  if(path=="/api/cells/assignments") {
+    if(!PAKAR_TABLE_SELECTION){status=409;return "{\"error\":\"unsupported_board_role\"}";}
+    return cellAssignmentsJson();
+  }
   if(path=="/api/telemetry")return buildTelemetryJson();
   if(path=="/api/device/name")return deviceNameJson();
   if(path=="/api/status-rgb")return statusRgbConfigurationJson();
@@ -122,6 +127,18 @@ bool write(const String &path,JsonObjectConst form,String &body,int &status) {
     status=accepted?200:400;body=accepted?"{\"accepted\":true}":"{\"error\":\"invalid_report_or_client_limit\"}";return accepted;
   }
   status=202;JsonDocument d;auto command=d.to<JsonObject>();String result;
+  if(path=="/api/cells/assignments"||path=="/api/cells/lock") {
+    if(!PAKAR_TABLE_SELECTION){body="unsupported_board_role";status=409;return false;}
+    if(path=="/api/cells/lock") {
+      if(!boolean(form,"enabled",command,false)){body="invalid_cell_lock";status=400;return false;}
+      grid.setRedLock(command["enabled"].as<bool>());
+    } else {
+      if(deserializeJson(d,form["assignments"].as<String>())||!applyCellAssignments(d.as<JsonVariantConst>(),result)){
+        body=result.length()?result:String("invalid_cell_assignments");status=body=="red_cells_locked"?409:400;return false;
+      }
+    }
+    body=cellAssignmentsJson(true);status=200;return true;
+  }
   if(path=="/api/status-rgb")return updateStatusRgbConfiguration(form,body,status);
   if(path=="/api/ble") {
     if(form.size()!=1||!boolean(form,"enabled",command,false)){status=400;return false;}

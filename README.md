@@ -31,6 +31,12 @@ invented by the client. Pealayer supplies real reusable desktop foundations,
 PCController supplies protocol/contracts, and the earlier boards supply hardware
 mapping and reusable drivers. Exact reuse gaps remain tracked rather than hidden.
 
+Each firmware build selects one board role using `-GameMode table-selection`
+or `-GameMode first-wins`. The table role provides a persistent red-to-white
+lock and atomic cell-color imports. Rust and Flutter support genuine Excel,
+CSV and JSON documents; the embedded Web UI supports CSV and JSON.
+See [board roles, lock semantics and assignment APIs](docs/CELL-ASSIGNMENTS.md).
+
 <details>
 <summary><b>Web device-settings preview</b> — actual embedded UI, simulated device state</summary>
 
@@ -59,7 +65,8 @@ flowchart LR
 
 ### Peer identity and supported releases
 
-The coordinated source release is **0.2.8** (client build **15**). Apps and
+The coordinated source release is **0.2.8**; the authoritative client build is
+recorded in [the shared release identity](interfaces/client-release.json). Apps and
 firmware enforce the shared minimum supported release by default, independently
 disableable at build time. HTTP headers, discovery and `/api/peer/info` identify
 each party; `/api/clients` exposes bounded, nonsecret peer introductions. API

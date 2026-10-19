@@ -42,6 +42,8 @@ export const phases={
     ["node", "tests/esp32_ws2811_reuse_test.mjs"],
     ["pwsh", "-File", "tools/test-led-rmt-ring.ps1"],
     ["node", "tests/web_workspace_test.mjs"],
+    ["node", "tests/web_cell_assignments_test.mjs"],
+    ["pwsh", "-NoProfile", "-File", "tools/test-game-role.ps1"],
     ["node", "tests/esp_front_panel_wiring_test.mjs"],
     ["pwsh", "-NoProfile", "-File", "tests/avr_rx_script_test.ps1"],
     ["pwsh", "-File", "tools/test-network.ps1"],

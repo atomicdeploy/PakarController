@@ -3,7 +3,8 @@
 function createBasicCells({http,changed=()=>{}}){
   let observed=null,selected=1,busy=false,message='Unknown. Refresh to read the board.',authInfo=null;
   function table(s){const c=s?.capabilities,f=c?.acknowledged_features;return c?.board_kind==='table'&&Array.isArray(f)&&f.includes('table')&&f.includes('leds')&&c.table?.columns===10&&c.table?.rows===8&&c.table?.pixels_per_cell===6&&s.pixels===480&&Array.isArray(s.cells)&&s.cells.length===80&&s.cells.every(v=>['white','red','off'].includes(v))}
-  function batch(s){return s?.capabilities?.acknowledged_features?.includes('cell-batch')===true}
+  function selectionRole(s){const c=s?.capabilities;return c?.role==='table-selection'||(c?.role===undefined&&(c?.modes===undefined||c.modes.some(m=>m?.id==='cell'&&m.code===1)))}
+  function batch(s){return selectionRole(s)&&s?.capabilities?.acknowledged_features?.includes('cell-batch')===true}
   function supportedDriver(s){const d=s?.led_output?.driver;return d?.ready===true&&((d.backend==='gpio-static'&&d.dma===false)||(d.backend==='rmt-dma'&&d.dma===true))}
   function ready(s){return table(s)&&batch(s)&&s.led_output?.enabled===true&&s.led_output.mode==='static'&&supportedDriver(s)}
   function reason(){if(!observed)return 'Unknown. Refresh needed before another command.';if(!batch(observed))return 'This board has not acknowledged atomic cell batches. Update its firmware; no per-cell fallback is used.';if(!supportedDriver(observed))return 'LED output driver is unavailable. Refresh after updating the board.';if(observed.led_output?.enabled!==true||observed.led_output.mode!=='static')return 'LED output is disabled or in effects mode. Enable static output explicitly.';return 'Static rendering ready via '+(observed.led_output.driver.dma?'RMT DMA':'GPIO')+'. Board readback is not optical verification.'}
@@ -27,6 +28,7 @@ function createBasicCells({http,changed=()=>{}}){
       if(before.board_id!==previous.board_id||before.boot_id!==previous.boot_id)throw Error('Board or boot changed. Refresh before a new command.');
       const peer=http.pin();
       if(kind==='cell'&&!ready(before)){observed=before;message=reason();return false}
+      if(kind==='cell'&&value==='white'&&before.red_lock===true&&before.cells[id-1]==='red'){observed=before;message='Red-cell lock prevents this cell changing to white. Unlock it in the full application first.';return false}
       if(kind==='enable'&&(!batch(before)||!supportedDriver(before))){observed=before;message=reason();return false}
       const path=kind==='cell'?'/api/cells':'/api/led/output?enabled=true&mode=static';
       const body=kind==='cell'?new URLSearchParams({ids:String(id),state:value,effect:'immediate'}):'';

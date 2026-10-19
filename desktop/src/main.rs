@@ -50,6 +50,7 @@ mod streaming;
 mod terminal_ui;
 mod usb_table;
 mod cell_batch;
+mod cell_assignments;
 mod ui;
 
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
@@ -212,6 +213,8 @@ struct DeviceStatus {
     link_mode: String,
     #[serde(default)]
     cells: Vec<String>,
+    #[serde(default)]
+    red_lock: Option<bool>,
     #[serde(default)]
     pixel_preview_requested: bool,
     #[serde(default)]
@@ -747,6 +750,29 @@ fn scoped_http_request(client: &Client, scope: &peer_http::Scope, command: &Http
         let receipt=cell_batch::send_verified(&before,endpoint,&request,scope.pin.as_ref(),None,Some(&||scope.admit()))?;
         if !scope.current(){return Err("Batch belongs to a retired board; inspect original device, no replay".into());}
         return Ok(Event::Accepted(receipt)); // No UI intent correlation: never complete another batch.
+    }
+    if let HttpCommand::Post(endpoint,path,form)=command && matches!(*path,"/api/cells/assignments"|"/api/cells/lock") {
+        let pinned=pinned.as_ref().ok_or("Assignments require a verified board")?;
+        scope.admit()?;
+        let response=pinned.post(format!("{}{}",endpoint.base.trim_end_matches('/'),path))
+            .basic_auth(&endpoint.user,Some(&endpoint.password)).form(form).send()
+            .map_err(|_|"Cell operation outcome unknown; nothing replayed")?;
+        if !response.status().is_success(){
+            let code=response.status();let body=response.json::<serde_json::Value>().ok();
+            return Err(body.and_then(|v|v["error"].as_str().map(cell_assignments::rejection)).unwrap_or_else(||format!("Cell operation rejected: HTTP {code}")));
+        }
+        let receipt:serde_json::Value=response.json().map_err(|_|"Invalid cell operation receipt; nothing replayed")?;
+        if receipt["accepted"]!=true{return Err("Cell operation was not acknowledged".into());}
+        scope.admit()?;
+        let after=blocking_status(pinned,endpoint)?;
+        if scope.pin!=peer_http::Pin::from_status(&after){return Err("Cell operation peer changed; nothing replayed".into());}
+        let matches=if *path=="/api/cells/lock" {form.iter().find(|(k,_)|k=="enabled").is_some_and(|(_,v)|after.red_lock==Some(v=="true"))}else{
+            let value=form.iter().find(|(k,_)|k=="assignments").ok_or("Missing assignments")?;
+            let doc=cell_assignments::Document::new(serde_json::from_str(&value.1).map_err(|_|"Invalid assignments")?)?;
+            receipt["count"].as_u64()==Some(doc.assignments.len() as u64)&&doc.verify(&after)
+        };
+        if !matches{return Err("Cell operation ACK differs from observed state; nothing replayed".into());}
+        return Ok(Event::Status(after));
     }
     let result = http_request(pinned.as_ref().unwrap_or(client), command.clone())?;
     // Credential/hostname/self-update results may intentionally retire the endpoint.
@@ -1861,7 +1887,7 @@ fn serial_worker_with<P:Read+Write,F:FnMut(&str)->Result<P,String>>(
                                     if usb_table::table_command(operation.as_ref().unwrap().intent.opcode){
                                         operation.as_mut().unwrap().ack=Some(Instant::now());table_read=None;table_wait=None;table_following.clear();last_table=Instant::now()-Duration::from_secs(2);
                                     }else{operation=None;table_read=paused_table.take();let _=events.send(Event::SerialOperation(connected_port.clone(),Ok("USB device ACK received; no table state inferred".into())));}
-                                }else{operation=None;table_read=paused_table.take();let _=events.send(Event::SerialOperation(connected_port.clone(),Err(format!("USB command rejected (error {}); no replay",payload[1]))));}
+                                }else{operation=None;table_read=paused_table.take();let _=events.send(Event::SerialOperation(connected_port.clone(),Err(cell_assignments::usb_rejection(payload[1]))));}
                             } else if op==0x82 && payload.first()==Some(&usb_table::READ) && table_wait.is_some_and(|(s,_)|s==response_sequence){
                                 table_read=None;table_wait=None;table_following.clear();last_table=Instant::now();
                                 if payload.get(1)==Some(&2) && reintroductions<2 {
@@ -2263,6 +2289,14 @@ impl PakarControllerApp {
         sent.then_some(id)
     }
     fn post(&mut self, path: &'static str, form: Vec<(String, String)>) {
+        if matches!(path,"/api/cells/assignments"|"/api/cells/lock") && self.transport==Transport::Serial {
+            let Some(status)=self.live_status() else {self.message="No fresh selected USB board".into();return;};
+            match bridge::usb_request(path,&form,status).and_then(|(opcode,payload,_)|{
+                let admission=self.serial_admission().ok_or("USB command owner unavailable")?;
+                self.serial_tx.send(SerialCommand::Send(self.serial_port.clone(),admission,opcode,payload)).map_err(|_|"USB worker unavailable".into())
+            }){Ok(())=>self.message="Command queued; awaiting board ACK and readback".into(),Err(e)=>self.message=e}
+            return;
+        }
         if !self.http_writable() || !self.peer_context().is_some_and(|c| c.allows(path, &form)) {
             self.message = "This connected board has not acknowledged this capability".into();
             return;

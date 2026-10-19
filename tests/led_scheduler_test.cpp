@@ -37,12 +37,25 @@ int main(){
   PakarPsramFixture::fail=false;
 #endif
   assert(queue.begin()&&queue.begin()&&queue.ready());
-  assert(!queue.push(1,2,nullptr,3));assert(!queue.push(1,2,bytes,1301));
+  assert(!queue.push(1,2,nullptr,3));assert(!queue.push(1,2,bytes,LoopMessages::kMaximumMessage+1));
+  uint8_t import[LoopMessages::kMaximumMessage]{};import[4095]=42;
+  assert(queue.push(4,2,import,sizeof(import)));assert(queue.pop(message));assert(message.length==4096&&message.data[4095]==42);
   for(unsigned i=0;i<LoopMessages::kCapacity;++i){bytes[0]=i;assert(queue.push(i,2,bytes,3));}
   bytes[0]=99;assert(!queue.push(9,2,bytes,3));assert(queue.rejected()==1);
   for(unsigned i=0;i<LoopMessages::kCapacity;++i){assert(queue.pop(message));assert(message.client==i && message.data[0]==i && message.opcode==2 && message.length==3);}
   assert(!queue.pop(message));
 #if defined(ARDUINO_ARCH_ESP8266)
+  assert(queue.push(7,2,import,sizeof(import)));bool consumed=false;
+  assert(queue.consume([&](const LoopMessages::Message &borrowed){
+    consumed=true;assert(borrowed.client==7&&borrowed.data[4095]==42);
+    assert(!queue.push(8,2,bytes,sizeof(bytes))&&!queue.pop(message));
+    assert(!queue.consume([](const LoopMessages::Message &){}));
+    queue.clear();assert(!queue.push(8,2,bytes,sizeof(bytes)));
+    assert(borrowed.client==7&&borrowed.data[4095]==42);
+  }));
+  assert(consumed&&!queue.pop(message));assert(queue.push(8,2,bytes,sizeof(bytes)));
+  try{queue.consume([](const LoopMessages::Message &){throw 7;});assert(false);}catch(int value){assert(value==7);}
+  assert(queue.push(9,2,bytes,sizeof(bytes)));assert(queue.pop(message));
   static_assert(sizeof(LoopMessages)<=sizeof(LoopMessages::Message)*LoopMessages::kCapacity+16,
                 "ESP8266 inline queue RAM budget regressed");
   printf("ESP8266 cooperative complete-message FIFO: bounded capacity%u, backpressure/copy/order preserved; no hardware timing proof.\n",LoopMessages::kCapacity);

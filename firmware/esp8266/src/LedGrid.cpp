@@ -54,6 +54,7 @@ bool LedGrid::setCell(uint8_t cell, BoardCore::Protocol::CellState state,
 bool LedGrid::setCells(const BoardCore::CellBatch &selection,
                       BoardCore::Protocol::CellState state,BoardCore::Protocol::Effect effect) {
   if(!selection.count()||state>BoardCore::Protocol::kCellOff||effect>BoardCore::Protocol::kEffectPulse)return false;
+  for(uint8_t id=1;id<=kCells;++id)if(selection.contains(id)&&!permits(id,state))return false;
   // Read actual last-published logical RGB before stopping a global pattern.
   // No yields, persistence, UART fan-out or output submission inside this loop.
   for(uint8_t id=1;id<=kCells;++id)if(selection.contains(id)){
@@ -80,7 +81,27 @@ bool LedGrid::setCells(const BoardCore::CellBatch &selection,
   dirty_=true;return true;
 }
 
-void LedGrid::fill(BoardCore::Protocol::CellState state) {
+bool LedGrid::setAssignments(const uint8_t *cells,const uint8_t *states,uint8_t count) {
+  if(!cells||!states||!count||count>kCells)return false;
+  BoardCore::CellBatch seen;
+  for(uint8_t i=0;i<count;++i) {
+    if(!permits(cells[i],static_cast<BoardCore::Protocol::CellState>(states[i]))||seen.contains(cells[i]))return false;
+    seen.add(cells[i]);
+  }
+  // One transaction, not80 pattern resets/AVR notices or output publications.
+  staging_=false;stopPattern("cell-assignments");clearDiagnostic();
+  for(uint8_t i=0;i<count;++i){
+    const uint8_t index=cells[i]-1;states_[index]=states[i];
+    target_[index]=colorFor(static_cast<BoardCore::Protocol::CellState>(states[i]));
+    current_[index]=target_[index];transitioning_[index]=false;renderCell(index);
+  }
+  dirty_=true;
+  if(panelObserver_)panelObserver_(1,cells[0],states[0]);
+  return true;
+}
+
+bool LedGrid::fill(BoardCore::Protocol::CellState state) {
+  for(uint8_t id=1;id<=kCells;++id)if(!permits(id,state))return false;
   clearDiagnostic();
   staging_ = false;
   changePattern(kPatternNone,"fill");
@@ -93,14 +114,15 @@ void LedGrid::fill(BoardCore::Protocol::CellState state) {
   }
   dirty_ = true;
   if(panelObserver_)panelObserver_(12,state,0);
+  return true;
 }
 
-void LedGrid::resetWhite() {
-  changePattern(kPatternNone,"reset-white");
-  fill(BoardCore::Protocol::kCellWhite);
+bool LedGrid::resetWhite() {
+  return fill(BoardCore::Protocol::kCellWhite);
 }
 
 void LedGrid::showWinner(uint8_t winner) {
+#if PAKAR_FIRST_WINS_ENABLED
   if (winner < 1 || winner > 9) return;
   clearDiagnostic();
   staging_ = false;
@@ -116,15 +138,24 @@ void LedGrid::showWinner(uint8_t winner) {
     renderCell(i);
   }
   dirty_ = true;
+#else
+  (void)winner;
+#endif
 }
 
-void LedGrid::setPattern(Pattern pattern) {
+void LedGrid::setRedLock(bool enabled) {
+  redLock_=PAKAR_TABLE_SELECTION&&enabled;
+  if(redLock_&&pattern_==kPatternCellChase){stopPattern("red-cell-lock");dirty_=true;}
+}
+
+bool LedGrid::setPattern(Pattern pattern) {
+  if(redLock_&&pattern==kPatternCellChase)return false;
   clearDiagnostic();
   if(panelObserver_)panelObserver_(3,pattern,0);
   if (pattern == kPatternNone) {
     stopPattern("explicit-none");
     dirty_ = true;
-    return;
+    return true;
   }
   staging_ = false;
   changePattern(pattern,"explicit-pattern");
@@ -133,6 +164,7 @@ void LedGrid::setPattern(Pattern pattern) {
   }
   for(uint8_t i=0;i<kCells;++i)transitioning_[i]=false;
   dirty_ = true;
+  return true;
 }
 
 const char *LedGrid::patternName() const {
