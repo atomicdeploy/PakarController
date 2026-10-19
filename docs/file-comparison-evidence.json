@@ -3277,7 +3277,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "node tests/script_tooling_test.mjs",
-          "sha256": "cbb15c93bb6057e3e62f8f798509e0a2d6beb5c91a6c5d14dd70b28332b7929d"
+          "sha256": "b352090f2790ff875580ed2b985667accb7a6dcc1e9a675c8c551f430438e2f1"
         }
       ],
       "omissions": [
@@ -3639,7 +3639,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🧰 Scripts · ${{ matrix.os }}\"",
-          "sha256": "cbb15c93bb6057e3e62f8f798509e0a2d6beb5c91a6c5d14dd70b28332b7929d"
+          "sha256": "b352090f2790ff875580ed2b985667accb7a6dcc1e9a675c8c551f430438e2f1"
         },
         {
           "path": ".github/actionlint.yaml",
@@ -3909,7 +3909,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🔧 ESP32-S3 + ESP8266 + AVR\"",
-          "sha256": "cbb15c93bb6057e3e62f8f798509e0a2d6beb5c91a6c5d14dd70b28332b7929d"
+          "sha256": "b352090f2790ff875580ed2b985667accb7a6dcc1e9a675c8c551f430438e2f1"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -6469,7 +6469,8 @@
       "Memory-pressure review retains those exact ownership/wire rules while moving all eight BLE ingress slots and the unchanged whole Receiver/Sender into one PSRAM-only BleBulkStorage lifetime allocation before BLEDevice::init. Missing storage prevents BLE startup/admission, with no scarce-DRAM fallback. Fences/disable/reconnect reset session state but never free/replace storage underneath callbacks. Internal mutexes/atomics/callback owners, INFO bytes and SDK/LED timing-critical memory remain internal; pure BleWire protocol source is unchanged.",
       "Actual Arduino-ESP32 3.3.12 cores/esp32/esp32-hal-psram.c was read through EOF (original-byte SHA2562f47f8b635de8ffb64d160576a2705b063235fb9f54e01b98e8d2bf3f48352bd). Its explicit MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT allocation/no-internal-fallback boundary is used by the new Pakar owner. The Go donor does not implement S3 PSRAM or NimBLE allocation; this platform adaptation does not transplant or relabel serial buffers, and does not override the prebuilt SDK's internal-only NimBLE pool/host-stack settings.",
     "Reread canonical Session source at SHA1311fdcde94b2ef8ed06db63ff874a255c135dc1969709e6f43ff4b5c5c8235b for the native mapping failure. Adapt its before/after admission and matched-response ownership principles: a current pinned mapping GET validates the response producer board/boot plus the unexpired, still-current scope, without an unrelated HTTP status preflight. Foreign or incomplete producer envelopes reject without fallback. An absent envelope is discarded before the original status -> mapping -> status legacy fences run; no stale mapping survives a changed board/boot. Six actual loopback HTTP fixtures passed via the canonical native gui_mapping filter. ASUS build12 runtime separately confirmed80 mappings with no active incidents on the selected current peer; that is not a long-soak, pixel RGB, or physical cell-order acceptance.",
-    "BLE lifecycle remains a scoped S3 SDK adaptation, not an unreviewed donor feature: missing/corrupt settings default Off; runtime enable persists intent without entering unbounded SDK initialization in the loop; disable retires late owners and honestly requires reboot to release retained SDK pools. Compile exclusion preserves loaded intent and rejects enabling unavailable hardware. Pure real-owner fixtures cover missing/corrupt records, reboot state, exclusion and request admission; no claim of SDK init timeout or BLE/TLS/OTA coexistence."
+    "BLE lifecycle remains a scoped S3 SDK adaptation, not an unreviewed donor feature: missing/corrupt settings default Off; runtime enable persists intent without entering unbounded SDK initialization in the loop; disable retires late owners and honestly requires reboot to release retained SDK pools. Compile exclusion preserves loaded intent and rejects enabling unavailable hardware. Pure real-owner fixtures cover missing/corrupt records, reboot state, exclusion and request admission; no claim of SDK init timeout or BLE/TLS/OTA coexistence.",
+    "Temporary Internet panel: canonical b0111ae0 Session source reread through EOF and blob SHA1311fdcde reverified, distinct from older ../repos checkout SHAe171bf35. Adapted matched-request/ACK ownership, pre-dispatch board/boot admission and synchronous disconnect retirement to existing MQTT CloudCommandGuard. Each QoS0/non-retained mutation is sent once and requires correlated ACK plus fresh same-boot readback. Retained data grants no control lease. Real HTTP/WebSocket auth and Origin tests cover this slice, not serial/AVR/physical LED acceptance."
   ],
   "targets": [
     {
@@ -6572,7 +6573,9 @@
       "path": "firmware/esp8266/src/BleRoutes.h",
       "anchor": "String bleRequest(",
       "sha256": "33c4470a196f59016b86d39a25015579bff5f02401c1c7d791b44370a285e91f"
-    }
+    },
+    {"path":"services/remote-panel/gateway.mjs","sha256":"38caebfa7b6f923b9214f0e83f069f88bf401f9abde8a165ee4c7f42357ec3f6","anchor":"export class Gateway"},
+    {"path":"services/remote-panel/service.mjs","sha256":"7999fa23d55db9a7760350308356bb90c4133d1ea670e064ef38f4c5f1c8adce","anchor":"export function createPanel"}
   ],
   "omissions": [
     {
@@ -6753,7 +6756,8 @@
         "sha256": "76d3a6d2a35ec9aec5bce1ab5efb1aeaf721ac85845494dfd5a05f9db3c54eaa"
       },
       {"path":"tests/ble_storage_test.cpp","sha256":"22f4c0e4fc0846492ddaa6c04a01e113ace607d86e9edeac1d2c69b8ee46a349","anchor":"Do not retain an internal bulk-buffer fallback"},
-      {"path":"tests/ble_storage_stubs/esp_heap_caps.h","sha256":"f6ff5f7843125cd7e780df39fd9d31006af9ef23070641ec580288235750365c","anchor":"assert(capabilities==(MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT))"}
+      {"path":"tests/ble_storage_stubs/esp_heap_caps.h","sha256":"f6ff5f7843125cd7e780df39fd9d31006af9ef23070641ec580288235750365c","anchor":"assert(capabilities==(MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT))"},
+    {"path":"services/remote-panel/gateway.test.mjs","sha256":"20609006ef509c878a6dcc32305c65496f0a8681b0cb011a2e86483f57d3502d","anchor":"Real HTTP mutation receives one board ACK/readback"}
   ]
 },
 {
@@ -7368,7 +7372,7 @@
         },
         {
           "path": "tools/check-living-contract.mjs",
-          "sha256": "4ef1dc289cdb7cd3a84da5e457a4db16c3a6ccda173c6bca93d4edb93c3cc34e",
+          "sha256": "28e62dedeac509186ca6009aa99c7cc5a561357f9fcda9005c5ff2308c146c1e",
           "anchor": "export function violations"
         },
         {
@@ -8562,7 +8566,7 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "cbb15c93bb6057e3e62f8f798509e0a2d6beb5c91a6c5d14dd70b28332b7929d",
+          "sha256": "b352090f2790ff875580ed2b985667accb7a6dcc1e9a675c8c551f430438e2f1",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {

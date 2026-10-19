@@ -10,3 +10,4 @@ tools/arduino-cli.exe
 release-assets/
 release-incoming/
 services/client-management/node_modules/
+services/remote-panel/node_modules/

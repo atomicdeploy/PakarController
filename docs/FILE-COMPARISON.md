@@ -1309,7 +1309,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `4d8ff85c9c44092100d4f349f20eb5493d1516d064dd03d0f6b8d1010e7b6795`.
 
 - Target: `docs/API-POLICY.md:1 [UTF8-LF sha256=ed842b37b6ea174166559175e84947251af11d6b5cdcde026548b70a7002373a; anchor=# One living API contract]`.
-- Target: `tools/check-living-contract.mjs:7 [UTF8-LF sha256=4ef1dc289cdb7cd3a84da5e457a4db16c3a6ccda173c6bca93d4edb93c3cc34e; anchor=export function violations]`.
+- Target: `tools/check-living-contract.mjs:7 [UTF8-LF sha256=28e62dedeac509186ca6009aa99c7cc5a561357f9fcda9005c5ff2308c146c1e; anchor=export function violations]`.
 - Target: `desktop/src/capabilities.rs:152 [UTF8-LF sha256=041536b64d94217864cf744c484403861d4d632156043808ca61ab127ad8735d; anchor=pub fn known(]`.
 - Retained: Actual living unversioned contract policy, additive optional data, stable feature IDs and strict critical identity/auth/routing/replay/deadline/integrity rejection applied across firmware and all clients.
 - Omitted/replaced code: `host.New/Start/Stop, Host.Call/Events and foreign-function host lifecycle ownership`. Disposition: **pending**. Reason: Pakar is ESP/AVR plus Rust/Flutter, not the Go embedded host. Importing the entire Go lifecycle without a shared-runtime adapter would create a second UART owner. Generic typed host lifecycle, notifications and library integration remain useful and pending; only the exact API policy is completed here.
@@ -1737,6 +1737,8 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp32s3/src/BleService.h:70 [UTF8-LF sha256=5554293eb8f56b1f8300441ec74e63a2185a6a5ec16c39916fdb8d6ef67b8e0f; anchor=class BleService]`.
 - Target: `firmware/esp32s3/src/BleStorage.h:21 [UTF8-LF sha256=1b0b11d0d1f7f398699629ccdbd32d11e3308aef5f738f5963fcfd1d176d81e8; anchor=class BleBulkOwner]`.
 - Target: `firmware/esp8266/src/BleRoutes.h:202 [UTF8-LF sha256=33c4470a196f59016b86d39a25015579bff5f02401c1c7d791b44370a285e91f; anchor=String bleRequest(]`.
+- Target: `services/remote-panel/gateway.mjs:11 [UTF8-LF sha256=38caebfa7b6f923b9214f0e83f069f88bf401f9abde8a165ee4c7f42357ec3f6; anchor=export class Gateway]`.
+- Target: `services/remote-panel/service.mjs:13 [UTF8-LF sha256=7999fa23d55db9a7760350308356bb90c4133d1ea670e064ef38f4c5f1c8adce; anchor=export function createPanel]`.
 - Retained: Actual Session.Request closing/context checks before and after admission adapted to TUI atomic stop checks before/after fresh preflight; no post-dispatch replay.
 - Retained: Full source read. Fail-closed identity checks strengthened with HTTP server-side board/boot fences; donor HELLO/build stamp is NOT a boot epoch.
 - Retained: Before/after admission ownership checks also adapted to Web's shared pinned HTTP preflight and post-response generation validation. Existing session.go full review/live 1bf4d52 hash remains unchanged; this is not import of Go serial acquisition or request-priority scheduling.
@@ -1758,6 +1760,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Retained: Actual Arduino-ESP32 3.3.12 cores/esp32/esp32-hal-psram.c was read through EOF (original-byte SHA2562f47f8b635de8ffb64d160576a2705b063235fb9f54e01b98e8d2bf3f48352bd). Its explicit MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT allocation/no-internal-fallback boundary is used by the new Pakar owner. The Go donor does not implement S3 PSRAM or NimBLE allocation; this platform adaptation does not transplant or relabel serial buffers, and does not override the prebuilt SDK's internal-only NimBLE pool/host-stack settings.
 - Retained: Reread canonical Session source at SHA1311fdcde94b2ef8ed06db63ff874a255c135dc1969709e6f43ff4b5c5c8235b for the native mapping failure. Adapt its before/after admission and matched-response ownership principles: a current pinned mapping GET validates the response producer board/boot plus the unexpired, still-current scope, without an unrelated HTTP status preflight. Foreign or incomplete producer envelopes reject without fallback. An absent envelope is discarded before the original status -> mapping -> status legacy fences run; no stale mapping survives a changed board/boot. Six actual loopback HTTP fixtures passed via the canonical native gui_mapping filter. ASUS build12 runtime separately confirmed80 mappings with no active incidents on the selected current peer; that is not a long-soak, pixel RGB, or physical cell-order acceptance.
 - Retained: BLE lifecycle remains a scoped S3 SDK adaptation, not an unreviewed donor feature: missing/corrupt settings default Off; runtime enable persists intent without entering unbounded SDK initialization in the loop; disable retires late owners and honestly requires reboot to release retained SDK pools. Compile exclusion preserves loaded intent and rejects enabling unavailable hardware. Pure real-owner fixtures cover missing/corrupt records, reboot state, exclusion and request admission; no claim of SDK init timeout or BLE/TLS/OTA coexistence.
+- Retained: Temporary Internet panel: canonical b0111ae0 Session source reread through EOF and blob SHA1311fdcde reverified, distinct from older ../repos checkout SHAe171bf35. Adapted matched-request/ACK ownership, pre-dispatch board/boot admission and synchronous disconnect retirement to existing MQTT CloudCommandGuard. Each QoS0/non-retained mutation is sent once and requires correlated ACK plus fresh same-boot readback. Retained data grants no control lease. Real HTTP/WebSocket auth and Origin tests cover this slice, not serial/AVR/physical LED acceptance.
 - Omitted/replaced code: `serialOpenWithPending/late acquisition/configuration cancellation/close retry, preclose ordering and terminal error ownership; corresponding fakePort tests`. Disposition: **pending**. Reason: Useful serial lifecycle/quarantine has no equivalent in HTTP-only TUI. Adapt with actual Rust USB owner before discovery/reconnect; never close another client's port.
 - Omitted/replaced code: `priority requestAdmission, sequence/opcode-matched ACK/Error/events, reserved macro sequence, boot HELLO retry and recoverable decoder overflow tests`. Disposition: **pending**. Reason: HTTP fencing is not downstream AVR ACK/decoder ownership. These production behaviors and exact tests remain pending with USB/UART host integration.
 - Omitted/replaced code: `compact HELLO schemas/build stamp and DTR reset/inactive control-line tests`. Disposition: **pending**. Reason: Build stamp is not board/boot identity; numbered public generation negotiation conflicts with living API. Adapt additive identity and explicit one-shot reset policy with serial owner, without schema selectors/reset-on-connect.
@@ -1794,6 +1797,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `tests/ble_firmware_test.mjs:99 [UTF8-LF sha256=76d3a6d2a35ec9aec5bce1ab5efb1aeaf721ac85845494dfd5a05f9db3c54eaa; anchor=BLE firmware integration source guards]`.
 - Test-code evidence: `tests/ble_storage_test.cpp:51 [UTF8-LF sha256=22f4c0e4fc0846492ddaa6c04a01e113ace607d86e9edeac1d2c69b8ee46a349; anchor=Do not retain an internal bulk-buffer fallback]`.
 - Test-code evidence: `tests/ble_storage_stubs/esp_heap_caps.h:18 [UTF8-LF sha256=f6ff5f7843125cd7e780df39fd9d31006af9ef23070641ec580288235750365c; anchor=assert(capabilities==(MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT))]`.
+- Test-code evidence: `services/remote-panel/gateway.test.mjs:85 [UTF8-LF sha256=20609006ef509c878a6dcc32305c65496f0a8681b0cb011a2e86483f57d3502d; anchor=Real HTTP mutation receives one board ACK/readback]`.
 - Remaining: HTTP/Web/mobile and selected USB table ownership are implemented bounded slices, not full serial/cloud parity. Remembered pairing, standalone CLI/cloud fencing, USB mapping edits, live acceptance of the newer USB pixel telemetry and AVR-only boot identity remain pending. Firmware and native USB table are live on ASUS; physical cell placement/color acceptance remains separate.
 - Remaining: Port remaining useful serial lifecycle/priority/ACK/reset tests; fixtures/source/compile are not physical acceptance.
 - Remaining: Measure S3 internal8-bit heap free/largest/minimum after explicit BLE PSRAM allocation and with real GATT/Wi-Fi/OTA activity. Verify missing-PSRAM startup leaves Wi-Fi/USB usable and no callback outlives its owner. Allocator/protocol fixtures and estimated BSS savings are not heap/radio/coexistence or physical programming acceptance.
@@ -2045,7 +2049,7 @@ Verdict: **scoped-improvement**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cd
 
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `bba9a295ee7b59e318f76e0b6f6a80f0aec631e249f7d8c798f6c92c0bb7fd8c`.
 
-- Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=cbb15c93bb6057e3e62f8f798509e0a2d6beb5c91a6c5d14dd70b28332b7929d; anchor=name: "🚀 Build · Test · Release"]`.
+- Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=b352090f2790ff875580ed2b985667accb7a6dcc1e9a675c8c551f430438e2f1; anchor=name: "🚀 Build · Test · Release"]`.
 - Target: `tools/build-desktop.ps1:47 [UTF8-LF sha256=8ebd02ebcd5556bd70f97216faed6ea3c03ec8e92950514118e1b9901132e037; anchor=--test-threads=1]`.
 - Target: `tools/ci-checks.mjs:241 [UTF8-LF sha256=1526a8c628bc00ba425114137635f7092fa9e1ccd35ae4ddb2b3210b6bc2cf83; anchor=export function runChecks]`.
 - Target: `tools/prepare-release.mjs:16 [UTF8-LF sha256=c5dcb698c397b30ca0ed076437a695838366aa0a82ed3c580df3cf6380d03306; anchor=export function firmwareManifest]`.
@@ -2872,7 +2876,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `49d608184ca52242cc845026d05384081669eec57007733f43ede09539c79cb6`.
 
-- Target: `.github/workflows/build.yml:98 [UTF8-LF sha256=cbb15c93bb6057e3e62f8f798509e0a2d6beb5c91a6c5d14dd70b28332b7929d; anchor=name: "🔧 ESP32-S3 + ESP8266 + AVR"]`.
+- Target: `.github/workflows/build.yml:102 [UTF8-LF sha256=b352090f2790ff875580ed2b985667accb7a6dcc1e9a675c8c551f430438e2f1; anchor=name: "🔧 ESP32-S3 + ESP8266 + AVR"]`.
 - Target: `tools/firmware-report.mjs:38 [UTF8-LF sha256=2ec63e4cfcf58b198174edc7c62e471a5c9ece4fb4b98c9203f61ac30c96d588; anchor=export function artifactMarkdown]`.
 - Retained: Adapt actual artifact size/checksum/download summary and staged build workflow mechanisms into existing Pealayer-derived build.yml plus firmware-report.mjs. Retain separate matched firmware outputs and draft-release provenance; no external progress image or rewritten timestamp header.
 - Omitted/replaced code: `Unconditional latest-success/first-binary auto-flash and donor-specific test/product packaging`. Disposition: **replaced**. Reason: Use exact successful main source/run/artifact identity and existing Pakar jobs. Automatic writes require an explicitly authorized runner/environment and repository opt-in.
@@ -2885,7 +2889,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `06b31df1731e5ab45fb0f1c714f95c46470cf1006f6c50150dc9a461d95a52d0`.
 
-- Target: `.github/workflows/build.yml:70 [UTF8-LF sha256=cbb15c93bb6057e3e62f8f798509e0a2d6beb5c91a6c5d14dd70b28332b7929d; anchor=name: "🧰 Scripts · ${{ matrix.os }}"]`.
+- Target: `.github/workflows/build.yml:70 [UTF8-LF sha256=b352090f2790ff875580ed2b985667accb7a6dcc1e9a675c8c551f430438e2f1; anchor=name: "🧰 Scripts · ${{ matrix.os }}"]`.
 - Target: `.github/actionlint.yaml:3 [UTF8-LF sha256=5b3c6b07ca38aaadb14a1d6eb2d35ac83b705f065901fdafba8210afc9be4960; anchor=pakar-deploy]`.
 - Retained: Adapt actual tooling verification intent into Windows/Linux/macOS fixture/plan matrix before product jobs. Use one Node/PowerShell owner with explicit Windows-only utility boundaries; no donor-client build/test execution is falsely certified.
 - Omitted/replaced code: `Unconditional latest-success/first-binary auto-flash and donor-specific test/product packaging`. Disposition: **replaced**. Reason: Use exact successful main source/run/artifact identity and existing Pakar jobs. Automatic writes require an explicitly authorized runner/environment and repository opt-in.
@@ -3689,7 +3693,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `60754d1116254eeac6b10e626c2e2b4506e60ad3ecd0296ce59645d63858e540`.
 
 - Target: `tools/script-console.mjs:5 [UTF8-LF sha256=07eae8bf2af2e896bd2a9655c79a8ae1b8f2224e8608d09bc6ecc4e4d9611dbd; anchor=export const EXIT]`.
-- Target: `.github/workflows/build.yml:86 [UTF8-LF sha256=cbb15c93bb6057e3e62f8f798509e0a2d6beb5c91a6c5d14dd70b28332b7929d; anchor=node tests/script_tooling_test.mjs]`.
+- Target: `.github/workflows/build.yml:86 [UTF8-LF sha256=b352090f2790ff875580ed2b985667accb7a6dcc1e9a675c8c551f430438e2f1; anchor=node tests/script_tooling_test.mjs]`.
 - Retained: Retain explicit Node20.19 minimum and direct Node entrypoints, tests and help without an additional npm install. Shared logger/CLI use Node standard libraries; unavailable watch mode is recorded as a gap.
 - Omitted/replaced code: `New chalk/chokidar/readdirp npm installation for one-shot tools`. Disposition: **replaced**. Reason: Currently required console/argv behavior uses Node standard libraries and no file watcher is advertised. Preserve zero additional npm tree; advanced watcher parity remains explicit.
 - Test-code evidence: `tests/script_tooling_test.mjs:100 [UTF8-LF sha256=cfc9054d4e04aef2990e2432b9c539a78ac647323247523fff2d4b6ed0ebece1; anchor=Script tooling:]`.

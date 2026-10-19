@@ -1,0 +1,23 @@
+[Unit]
+Description=PakarController private Internet control panel over MQTT
+After=network-online.target mosquitto.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pakarremote
+Group=pakarremote
+WorkingDirectory=/opt/pakarcontroller-remote-panel
+Environment=PAKAR_REMOTE_CONFIG=/etc/pakarcontroller-remote-panel/config.json
+ExecStart=/usr/bin/node /opt/pakarcontroller-remote-panel/services/remote-panel/service.mjs
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

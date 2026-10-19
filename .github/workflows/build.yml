@@ -84,6 +84,10 @@ jobs:
           node-version: '24'
       - name: CLI, dependency and artifact fixtures (no devices or SDK builds)
         run: node tests/script_tooling_test.mjs
+      - name: Locked Internet panel relay and actual HTTP/WebSocket regressions
+        run: |
+          npm ci --prefix services/remote-panel --ignore-scripts --no-audit --no-fund
+          node --test services/remote-panel/gateway.test.mjs
       - name: All PowerShell syntax and shared runner fixtures
         shell: pwsh
         run: ./tests/script_tooling_test.ps1

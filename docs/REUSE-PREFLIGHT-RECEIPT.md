@@ -1,5 +1,61 @@
 # Donor-first preflight receipt
 
+## Temporary private Internet panel
+
+The scoped office service now serves the actual project Web UI and basic panel
+at https://ledboard.digitalogic.ir over valid wildcard HTTPS. Created only the
+missing nonproxied ledboard CNAME to office.digitalogic.ir (TTL120), then verified
+authoritative/public DNS and external HTTPS401 without credentials. Authenticated
+HTTPS200 and WebSocket received fresh status from esp32s3-907069eac800, unchanged
+boot ff6da73b47d6fd790fc1eb36c491d6ef/version0.2.7 and80 logical cells. The Internet
+path uses the existing board-initiated TLS MQTT session, not ASUS, UPnP or an
+exposed device HTTP port. No firmware, AVR, LED scene or network setting changed.
+
+Read actual existing deploy-client-service.mjs/install-office.sh,
+mqtt-live-probe.py/provision-mqtt-device.py, CloudCommandGuard, CloudServices
+handlers, TelemetryReceiver, peer identity and actual Web peer/basic code. Reuse
+their explicit installation ownership, pinned dependencies, bounded SSH children,
+request ID/deadline, board/boot fencing and checked telemetry reassembly. Reread
+the entire canonical PCController b0111ae0 session.go blob and verified its
+1311fdcde SHA; the older repos checkout e171bf35 is not substituted as that
+source. Existing ledger entry gains exact relay targets and HTTP/WS proof hashes;
+serial priority/open/reset/AVR and broad donor parity gaps remain open.
+
+Mutations are bounded, one-shot QoS0/non-retained publications, require current
+supported release/identity, correlated board ACK and new same-boot readback.
+Offline/retained status grants no lease; connection loss reports uncertainty,
+never replay. Project UI release identity is preserved, not copied from the MCU.
+Private HTTPS login is distinct from unchanged device authentication. Broker and
+DNS credentials stay server-side; generated panel login is root-only and copied
+only to a private local outputs file, never GitHub or browser assets. Unsupported
+relay routes/features fail closed. Physical mappings/pixel frames are not in the
+current MQTT status, so they are not invented. Full telemetry probe returned
+invalid/foreign snapshots; complete /api/telemetry remains unavailable unless a
+fresh checked same-board snapshot actually arrives. Status is independently live.
+
+Eight focused real HTTP/WebSocket and protocol tests passed: auth/Origin, retained
+and wrong-peer data, release rejection, correlated ACK/readback, timeout/no replay,
+broker loss and bounded forms. Added the locked test job on all tooling runners
+and expanded the living-contract guard to all services. Initial new-service npm
+ci correctly failed without a lock; initialized once with npm install, then used
+the lock for actual server ci. Deployment preflight also caught the intentionally
+changed workflow hash: reread the complete pinned PU850 workflow blob and actual
+target diff, then rebound existing evidence before the guarded redeploy. No gate
+bypass, board reboot, optical success or full production acceptance is claimed.
+
+Final external-host probes (not office loopback) received HTTPS200 and two
+successive WSS snapshots with the same actual MCU/boot,80 cells and rainbow.
+Locked relay dependencies reported zero npm audit vulnerabilities at this check;
+this is not a security audit of the entire project. Living-contract negative
+fixtures, release-package fixtures, script tooling, comparison generation/check
+and peer-binding gate passed. The release packager's tiny dummy-image fixture is
+not a firmware candidate. Existing application/SDK caches were not rebuilt.
+
+Control is deliberately still blocked: current Web minimum is0.2.8 while the
+live board is0.2.7. Await the user's compatible-panel/update choice; do not silently
+downgrade policy. Once admitted, verify a real user command/visible result and
+remaining contextual settings/mapping/full telemetry over this temporary relay.
+
 ## Flutter capabilities belong to Hardware
 
 Consulted preferences, device-context and exact donor-audit entries. Read the
