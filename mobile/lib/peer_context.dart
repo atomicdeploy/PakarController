@@ -136,6 +136,7 @@ class PeerContext {
     return switch (path) {
       '/api/cell' || '/api/cells/mapping' => tableSelection,
       '/api/game/reset' => modes.any((mode) => mode.id == 'first-wins'),
+      '/api/game/settings' => role == 'first-wins' && has('key-settings'),
       '/api/cells' => tableSelection && has('cell-batch'),
       '/api/cells/assignments' => tableSelection && has('cell-assignments'),
       '/api/cells/lock' => tableSelection && has('cell-lock'),

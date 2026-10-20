@@ -213,6 +213,7 @@ impl Manifest {
             "/api/cells" => return self.table_selection() && self.has("cell-batch"),
             "/api/cell" => return self.table_selection(),
             "/api/game/reset" => return self.modes().any(|m|m.id=="first-wins"),
+            "/api/game/settings" => return self.role=="first-wins" && self.has("key-settings"),
             "/api/snake/direction" => return false,
             "/api/cells/mapping" => {
                 "table"

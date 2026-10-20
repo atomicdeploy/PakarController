@@ -35,6 +35,9 @@ GameMode mode = static_cast<GameMode>(BoardCore::GameRole::mode);
 CellState selectedState = kCellWhite;
 uint8_t selectedCell = 1;
 uint8_t winner = 0;
+#if PAKAR_FIRST_WINS_ENABLED
+uint16_t enabledKeys = 0; // Fail closed until the ESP has supplied its saved mask.
+#endif
 uint8_t stableInputs = 0;
 bool stableInput9 = false;
 uint32_t lastShiftAt = 0;
@@ -274,7 +277,8 @@ void resetGame(bool playWelcome = true) {
 
 void chooseWinner(uint8_t button) {
 #if PAKAR_FIRST_WINS_ENABLED
-  if (mode != kModeFirstWins || winner != 0 || button < 1 || button > 9) return;
+  if (mode != kModeFirstWins || winner != 0 || button < 1 || button > 9 ||
+      !(enabledKeys & (1U << (button-1)))) return;
   winner = button;
   shiftRegisters.setActiveOutputs(button <= 8 ? _BV(button - 1) : 0);
   showState();
@@ -449,6 +453,13 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       pcController.companionHeartbeat(millis());
       link.send(kPong, frame.sequence, frame.payload, frame.payloadLength);
       break;
+#if PAKAR_FIRST_WINS_ENABLED
+    case kKeyMask:
+      if(frame.payloadLength!=2 || frame.payload[1]>1 ||
+          !(frame.payload[0]|frame.payload[1])) {link.error(frame.sequence,frame.opcode,kBadPayload);break;}
+      enabledKeys=frame.payload[0]|uint16_t(frame.payload[1])<<8;
+      resetGame(false);link.ack(frame.sequence,frame.opcode);break;
+#endif
     case kProgrammingState:
       if (frame.payloadLength != 1 || frame.payload[0] > 1) {
         link.error(frame.sequence, frame.opcode, kBadPayload);

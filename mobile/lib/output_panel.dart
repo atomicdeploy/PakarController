@@ -94,6 +94,73 @@ class _OutputPanelState extends State<OutputPanel> {
     }
   }
 
+  Future<void> gameSettings() async {
+    final config = widget.status?.json['key_game'];
+    var mask = config is Map ? (config['enabled_mask'] as int? ?? 511) : 511;
+    final colors = {
+      for (final entry in {'idle_rgb': 0xffffff, 'win_rgb': 0x00ff00, 'lose_rgb': 0xff0000}.entries)
+        entry.key: TextEditingController(text: ((config is Map ? config[entry.key] as int? : null) ?? entry.value)
+            .toRadixString(16).padLeft(6, '0').toUpperCase()),
+    };
+    final result = await showDialog<int>(
+      context: context,
+      builder: (context) => StatefulBuilder(builder: (context, update) => AlertDialog(
+        title: const Text('Game settings'),
+        content: SizedBox(width: 420, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Wrap(spacing: 8, children: [
+            for (final count in [2, 4, 9])
+              ChoiceChip(label: Text('$count boxes'), selected: mask == (1 << count) - 1,
+                onSelected: (_) => update(() => mask = (1 << count) - 1)),
+          ]),
+          const SizedBox(height: 16),
+          Wrap(children: [
+            for (var key = 1; key <= 9; key++)
+              SizedBox(width: 120, child: CheckboxListTile(
+                title: Text('Box $key'), contentPadding: EdgeInsets.zero,
+                value: mask & (1 << (key - 1)) != 0,
+                onChanged: (value) => update(() {
+                  if (value == true) { mask |= 1 << (key - 1); }
+                  else { mask &= ~(1 << (key - 1)); }
+                }),
+              )),
+          ]),
+          const Divider(),
+          for (final entry in {'idle_rgb': 'Idle', 'win_rgb': 'Winner', 'lose_rgb': 'Other boxes'}.entries)
+            Padding(padding: const EdgeInsets.only(top: 12), child: TextField(
+              controller: colors[entry.key], maxLength: 6,
+              decoration: InputDecoration(labelText: entry.value, prefixText: '#', counterText: '',
+                errorText: RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(colors[entry.key]!.text) ? null : 'Six hexadecimal digits'),
+              onChanged: (_) => update(() {}),
+            )),
+        ]))),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(onPressed: mask == 0 || colors.values.any((c) => !RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(c.text))
+              ? null : () => Navigator.pop(context, mask),
+            child: const Text('Save')),
+        ],
+      )),
+    );
+    final values={'enabled_mask': '$result', for(final entry in colors.entries)
+      entry.key: '${int.tryParse(entry.value.text, radix: 16) ?? 0}'};
+    for(final controller in colors.values) { controller.dispose(); }
+    if (result != null && mounted) await send('/api/game/settings', values);
+  }
+
+  bool keyEnabled(int key) {
+    final config=widget.status?.json['key_game'];
+    final mask=config is Map ? config['enabled_mask'] : null;
+    return mask is! int || mask & (1 << (key-1)) != 0;
+  }
+  Color keyColor(int key) {
+    final config=widget.status?.json['key_game'];
+    final winner=widget.status?.winner ?? 0;
+    final field=winner==0 ? 'idle_rgb' : winner==key ? 'win_rgb' : 'lose_rgb';
+    final fallback=winner==0 ? 0xffffff : winner==key ? 0x00ff00 : 0xff0000;
+    final value=config is Map ? config[field] : null;
+    return Color(0xff000000 | (value is int ? value : fallback));
+  }
+
   Widget card(String id, int index) {
     final status = widget.status;
     final (title, icon) = switch (id) {
@@ -129,18 +196,17 @@ class _OutputPanelState extends State<OutputPanel> {
                   Semantics(
                     label: 'Key $key',
                     selected: status?.winner == key,
-                    child: AnimatedContainer(
+                    child: Opacity(
+                      opacity: keyEnabled(key) ? 1 : 0.3,
+                      child: AnimatedContainer(
                       key: ValueKey('game-key-$key'),
                       duration: const Duration(milliseconds: 120),
                       width: 88,
                       height: 88,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: status?.winner == key
-                            ? Colors.green.shade800
-                            : (status?.winner ?? 0) > 0
-                            ? Colors.red.shade900
-                            : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: Color.alphaBlend(keyColor(key).withValues(alpha: 0.3),
+                            Theme.of(context).colorScheme.surfaceContainerHighest),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           width: 3,
@@ -153,6 +219,7 @@ class _OutputPanelState extends State<OutputPanel> {
                         ),
                       ),
                       child: Text('$key', style: Theme.of(context).textTheme.headlineSmall),
+                    ),
                     ),
                   ),
               ],
@@ -187,6 +254,13 @@ class _OutputPanelState extends State<OutputPanel> {
                     : null,
               ),
             ),
+          if (status?.peer.has('key-settings') == true)
+            Align(alignment: AlignmentDirectional.centerStart,
+              child: TextButton.icon(
+                icon: const Icon(Icons.tune),
+                label: const Text('Game settings'),
+                onPressed: ready ? gameSettings : null,
+              )),
         ],
         'output' => [
           if (driver != null)

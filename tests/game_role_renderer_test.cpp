@@ -23,6 +23,14 @@ int main() {
     for(unsigned pixel=0;pixel<216;++pixel)assert(FastLED.pixels[pixel]==CRGB::White);
     assert(grid.diagnostic(204,12,0x00ff00,false));
     assert(!grid.diagnostic(210,12,0x00ff00,false));
+    grid.configureKeys(3,0xffffff,0x00ff00,0xff0000);
+    grid.showWinner(2);grid.service(pixelTestNow+=1000);
+    for(unsigned pixel=0;pixel<216;++pixel)
+      assert(FastLED.pixels[pixel]==(pixel>=48?CRGB::Black:pixel>=24?CRGB(0,255,0):CRGB::Red));
+    grid.setPattern(LedGrid::kPatternRainbow);grid.service(pixelTestNow+=1000);
+    for(unsigned pixel=48;pixel<216;++pixel)assert(FastLED.pixels[pixel]==CRGB::Black);
+    grid.configureKeys(511,0xffffff,0x00ff00,0xff0000);grid.service(pixelTestNow+=1000);
+    for(unsigned pixel=0;pixel<216;++pixel)assert(FastLED.pixels[pixel]==CRGB::White);
   }
   puts("Baked role renderer: game exclusion and saved table-lock migration passed; host doubles only.");
 }

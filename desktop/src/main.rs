@@ -161,6 +161,8 @@ struct DeviceStatus {
     #[serde(default)]
     winner: u8,
     #[serde(default)]
+    key_game: serde_json::Value,
+    #[serde(default)]
     selected_cell: u8,
     #[serde(default)]
     brightness: u8,

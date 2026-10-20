@@ -223,6 +223,10 @@ struct FirmwareReaderLease {
 BusyLine<PAKAR_USE_BUSY_WIRE != 0> busyLine(kBusyPin);
 LedGrid grid;
 SceneStore<fs::FS> sceneStore;
+#include "src/KeyGameSettings.h"
+KeyGameSettings keySettings;
+bool keyMaskApplied=false,keyMaskPending=true;
+uint8_t keyMaskSequence=0;
 AvrSceneSync avrSceneSync;
 LoopMessages loopMessages;
 File uploadFile;
@@ -1944,6 +1948,10 @@ String buildStatusJson(bool compact) {
   body += F("\",\"mode\":\""); body += modeName();
   body += F("\",\"led_output\":");body+=grid.outputJson(compact);
   if(!compact) {
+#if PAKAR_FIRST_WINS_ENABLED
+  body += F(",\"key_game\":");body+=keySettings.json();
+  body += F(",\"key_mask_applied\":");body+=(avrOnline&&keyMaskApplied)?F("true"):F("false");
+#endif
   body += F(",\"state_persistence\":{\"restored\":");body+=sceneStore.restored()?F("true"):F("false");
   body += F(",\"pending\":");body+=sceneStore.pending()?F("true"):F("false");
   body += F(",\"saved\":");body+=sceneStore.saved()?F("true"):F("false");
@@ -2125,6 +2133,9 @@ String buildStatusJson(bool compact) {
   body += F("\",\"hostname\":\""); body += deviceIdentity.hostname();
   body += F("\",\"application\":"); body += applicationIdentityJson();
   body += F(",\"acknowledged_features\":[\"command-ack\",\"pixel-diagnostic\",\"panel-events\",\"usb-demand\",\"usb-pixel-diagnostic\"");
+#if PAKAR_FIRST_WINS_ENABLED
+  body += F(",\"key-settings\"");
+#endif
 #if PAKAR_TABLE_SELECTION
   body += F(",\"cell-assignments\",\"cell-lock\"");
 #endif
@@ -2979,6 +2990,8 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     }
     return;
   }
+  if(frame.opcode==kAck && frame.sequence==keyMaskSequence && frame.payloadLength==2 &&
+      frame.payload[0]==kKeyMask && frame.payload[1]==kNoError)keyMaskApplied=true;
   if ((frame.opcode == kAck || frame.opcode == kErrorResponse) &&
       frame.sequence == awaitedSequence && frame.payloadLength >= 2 &&
       frame.payload[0] == awaitedOpcode) {
@@ -2986,6 +2999,7 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     awaitedReplyOk = frame.opcode == kAck && frame.payload[1] == kNoError;
   }
   if (frame.opcode == kHelloResponse) {
+    keyMaskApplied=false;keyMaskPending=true;
     avrTelemetryKnown = false;
     avrResetTelemetryKnown = false;
     avrVersionKnown = frame.payloadLength >= 9 &&
@@ -3025,7 +3039,7 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     } else if (BoardCore::GameRole::accepts(frame.payload[0])) {
       mode = static_cast<GameMode>(frame.payload[0]);
       // A boot/default status is not a new first-wins input.
-      if (mode == kModeFirstWins && frame.payload[1]) winner = frame.payload[1];
+      if (mode == kModeFirstWins && keyMaskApplied && keySettings.enabled(frame.payload[1])) winner = frame.payload[1];
     }
     }
     if (frame.payloadLength >= 7) {
@@ -3656,12 +3670,44 @@ void registerApi() {
     }
     grid.setRedLock(enabled);server.send(200,"application/json",cellAssignmentsJson(true));webSocket.textAll(buildStatusJson());
   });
+  server.on("/api/game/settings", HTTP_POST, []() {
+    if(!authenticate())return;
+#if PAKAR_FIRST_WINS_ENABLED
+    KeyGameSettings next=keySettings;
+    auto number=[](const String &s,uint32_t max,uint32_t &out){
+      if(!s.length()||s.length()>8)return false;
+      out=0;for(unsigned i=0;i<s.length();++i){if(s[i]<'0'||s[i]>'9')return false;out=out*10+s[i]-'0';}
+      return out<=max;
+    };
+    uint32_t mask=0;
+    if(!number(server.arg("enabled_mask"),511,mask)||!mask){
+      server.send(400,"application/json",F("{\"accepted\":false,\"error\":\"invalid_enabled_mask\"}"));return;
+    }
+    next.enabledMask=mask;
+    const char *names[]={"idle_rgb","win_rgb","lose_rgb"};
+    uint32_t *colors[]={&next.idleRgb,&next.winRgb,&next.loseRgb};
+    for(uint8_t i=0;i<3;++i)if(server.hasArg(names[i])&&!number(server.arg(names[i]),0xffffff,*colors[i])){
+      server.send(400,"application/json",F("{\"accepted\":false,\"error\":\"invalid_color\"}"));return;
+    }
+    if(!next.save(LittleFS)){server.send(500,"application/json",F("{\"accepted\":false,\"error\":\"settings_not_saved\"}"));return;}
+    keySettings=next;winner=0;keyMaskApplied=false;keyMaskPending=true;
+    grid.configureKeys(next.enabledMask,next.idleRgb,next.winRgb,next.loseRgb);
+    saveLedPreferences();
+    server.send(200,"application/json",F("{\"accepted\":true,\"saved\":true,\"avr_applied\":false}"));
+    webSocket.textAll(buildStatusJson());
+#else
+    server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"unsupported_board_role\"}"));
+#endif
+  });
   server.on("/api/game/reset", HTTP_POST, []() {
     if (!authenticate()) return;
+    if(PAKAR_FIRST_WINS_ENABLED && (!avrOnline || !keyMaskApplied || programmingLatched)){
+      server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"avr_not_ready\"}"));return;
+    }
+    if(!requestAndWaitForAck(kGameReset)){server.send(503,"application/json",F("{\"accepted\":false,\"error\":\"avr_reset_not_acknowledged\"}"));return;}
     if(!grid.resetWhite()){server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"red_cells_locked\"}"));return;}
     winner = 0;
     saveLedPreferences();
-    sendToAvr(kGameReset, sequence++);
     server.send(202, "application/json", F("{\"accepted\":true}"));
   });
   server.on("/api/snake/direction", HTTP_POST, []() {
@@ -4259,6 +4305,11 @@ void setup() {
   grid.setStaticMode(true);
   grid.setPattern(LedGrid::kPatternCellChase);
 #endif
+#if PAKAR_FIRST_WINS_ENABLED
+  keySettings.load(LittleFS);
+  grid.configureKeys(keySettings.enabledMask,keySettings.idleRgb,keySettings.winRgb,keySettings.loseRgb);
+  if(keySettings.enabled(winner))grid.showWinner(winner);else winner=0;
+#endif
   upgradeLifecycle.boot(millis());
   PakarConfiguration::changes().reset(); // Initial load/migration is not a user settings event.
   if (grid.outputEnabled()) grid.presentMaintenance(upgradeLifecycle,millis());
@@ -4569,5 +4620,12 @@ void loop() {
   lcdPort.home(deviceIdentity.hostname(),lcdLine,millis());
   lcdPort.service(millis());
 #endif
+  #if PAKAR_FIRST_WINS_ENABLED
+  if(keyMaskPending&&avrOnline&&!programmingLatched&&!urbootBusy.get()){
+    const uint8_t payload[]={uint8_t(keySettings.enabledMask),uint8_t(keySettings.enabledMask>>8)};
+    keyMaskSequence=sequence++;
+    if(sendToAvr(kKeyMask,keyMaskSequence,payload,sizeof(payload)))keyMaskPending=false;
+  }
+  #endif
   yield();
 }

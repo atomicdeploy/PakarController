@@ -61,6 +61,9 @@ class LedGrid {
   bool fill(BoardCore::Protocol::CellState state);
   bool resetWhite();
   void showWinner(uint8_t winner);
+  void configureKeys(uint16_t mask,uint32_t idle,uint32_t win,uint32_t lose){
+    keyMask_=mask;keyIdle_=idle;keyWin_=win;keyLose_=lose;resetWhite();
+  }
   bool setPattern(Pattern pattern);
   Pattern pattern() const { return pattern_; }
   const char *patternName() const;
@@ -106,6 +109,13 @@ class LedGrid {
   void stopPattern(const char *reason = "stop-pattern");
   void changePattern(Pattern pattern, const char *reason);
   void renderChaseStep(uint8_t physical);
+  uint8_t chaseGroups()const{
+#if PAKAR_FIRST_WINS_ENABLED
+    uint8_t n=0;for(uint8_t k=0;k<9;++k)if(keyMask_&(1U<<k))n+=2;return n;
+#else
+    return kCells;
+#endif
+  }
 
   CRGB pixels_[kPixels];
   CRGB staged_[kPixels];
@@ -145,6 +155,8 @@ class LedGrid {
   } lastEffectChange_;
   bool dirty_ = true;
   bool redLock_ = false;
+  uint16_t keyMask_=511;
+  uint32_t keyIdle_=0xffffff,keyWin_=0x00ff00,keyLose_=0xff0000;
   PanelObserver panelObserver_=nullptr;
   bool diagnosticActive_=false;
   uint16_t diagnosticPixel_=0;

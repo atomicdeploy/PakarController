@@ -1852,8 +1852,8 @@ impl PakarControllerApp {
         };
         let avr_acknowledged = ["display", "text", "buzzer", "inputs", "outputs", "settings"]
             .iter().any(|feature| self.has_feature(feature));
-        if s.capabilities.as_ref().is_some_and(|c| c.role == "first-wins")
-            && self.has_feature("inputs") {
+        if s.capabilities.as_ref().is_some_and(|c| c.role == "first-wins") {
+            let mask=s.key_game["enabled_mask"].as_u64().unwrap_or(511) as u16;
             dialog::section(ui, icons::HAND_TAP, "Keys", |ui| {
                 ui.horizontal_wrapped(|ui| {
                     for key in 1..=9u8 {
@@ -1868,11 +1868,45 @@ impl PakarControllerApp {
                         let stroke = if pressed {
                             ui.visuals().selection.stroke
                         } else { egui::Stroke::NONE };
-                        ui.add(egui::Button::new(egui::RichText::new(key.to_string()).size(24.0))
+                        ui.add_enabled(mask & (1 << (key-1)) != 0,
+                            egui::Button::new(egui::RichText::new(key.to_string()).size(24.0))
                             .fill(fill).stroke(stroke).min_size(egui::vec2(72.0, 72.0))
                             .sense(egui::Sense::hover()));
                     }
                 });
+                if self.has_feature("key-settings") {
+                    ui.collapsing("Game settings", |ui| {
+                        let mut next=mask;
+                        ui.horizontal(|ui| {for (name,value) in [("2 boxes",3),("4 boxes",15),("9 boxes",511)] {
+                            if ui.selectable_label(mask==value,name).clicked(){next=value;}
+                        }});
+                        ui.horizontal_wrapped(|ui|{for key in 1..=9 {
+                            let mut enabled=next&(1<<(key-1))!=0;
+                            if ui.checkbox(&mut enabled,format!("{key}")).changed(){
+                                if enabled{next|=1<<(key-1)}else{next&=!(1<<(key-1))}
+                            }
+                        }});
+                        if next!=mask && next!=0 {
+                            self.post("/api/game/settings",vec![("enabled_mask".into(),next.to_string())]);
+                        }
+                        for (name,label,fallback) in [("idle_rgb","Idle",0xffffffu32),("win_rgb","Winner",0x00ff00),("lose_rgb","Other boxes",0xff0000)] {
+                            let rgb=s.key_game[name].as_u64().unwrap_or(fallback as u64) as u32;
+                            let id=egui::Id::new(("key-game-color",&s.board_id,name,rgb));
+                            let mut color=ui.data_mut(|data|data.get_temp::<[u8;3]>(id))
+                                .unwrap_or([(rgb>>16) as u8,(rgb>>8) as u8,rgb as u8]);
+                            ui.horizontal(|ui|{
+                                ui.label(label);
+                                if ui.color_edit_button_srgb(&mut color).changed() {
+                                    ui.data_mut(|data|data.insert_temp(id,color));
+                                }
+                                if ui.small_button("Save").clicked() {
+                                    let value=(u32::from(color[0])<<16)|(u32::from(color[1])<<8)|u32::from(color[2]);
+                                    self.post("/api/game/settings",vec![("enabled_mask".into(),mask.to_string()),(name.into(),value.to_string())]);
+                                }
+                            });
+                        }
+                    });
+                }
             });
             ui.add_space(10.0);
         }

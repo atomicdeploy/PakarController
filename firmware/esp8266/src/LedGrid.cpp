@@ -118,7 +118,13 @@ bool LedGrid::fill(BoardCore::Protocol::CellState state) {
 }
 
 bool LedGrid::resetWhite() {
+#if PAKAR_FIRST_WINS_ENABLED
+  fill(BoardCore::Protocol::kCellWhite);
+  for(uint8_t i=0;i<kCells;++i){current_[i]=target_[i]=CRGB(keyIdle_>>16,keyIdle_>>8,keyIdle_);renderCell(i);}
+  return true;
+#else
   return fill(BoardCore::Protocol::kCellWhite);
+#endif
 }
 
 void LedGrid::showWinner(uint8_t winner) {
@@ -132,7 +138,8 @@ void LedGrid::showWinner(uint8_t winner) {
     // The table's three-state storage is not the game's color authority.
     // Winner identity reconstructs the game; pixel frames carry actual RGB.
     states_[i] = BoardCore::Protocol::kCellWhite;
-    target_[i] = group == winner ? CRGB(0,255,0) : CRGB::Red;
+    const uint32_t color=group == winner ? keyWin_ : keyLose_;
+    target_[i] = CRGB(color>>16,color>>8,color);
     current_[i] = target_[i];
     transitioning_[i] = false;
     renderCell(i);
@@ -244,7 +251,7 @@ void LedGrid::service(uint32_t now) {
     if(chaseFirstFrame_){
       showStaged();chaseAt_=now;chaseFirstFrame_=false;return;
     }
-    if(chaseStep_<kCells && static_cast<uint32_t>(now-chaseAt_)>=kChaseIntervalMs){
+    if(chaseStep_<chaseGroups() && static_cast<uint32_t>(now-chaseAt_)>=kChaseIntervalMs){
       // Never skip cells after a delayed loop, and never replay catch-up frames.
       ++chaseStep_;chaseAt_=now;renderChaseStep(chaseStep_);dirty_=true;
     }
@@ -320,6 +327,12 @@ void LedGrid::renderPattern(uint32_t now) {
 
 void LedGrid::renderChaseStep(uint8_t step) {
   chaseCell_=kCells-step+1;
+#if PAKAR_FIRST_WINS_ENABLED
+  uint8_t ordinal=0;
+  for(uint8_t group=kCells;group;--group)if(keyMask_&(1U<<((group-1)/2))){
+    if(++ordinal==step){chaseCell_=group;break;}
+  }
+#endif
   // Compose both the previous white cell and new red cell before one show.
   // Follow the active board mapping, never a client-side guessed permutation.
   for(uint8_t i=0;i<kCells;++i){
@@ -421,6 +434,11 @@ void LedGrid::showStaged() {
   // pixel supplies its color, including explicit rainbow and streamed input.
   if(staticMode_)for(uint16_t first=0;first<kPixels;first+=kSectorsPerCell)
     for(uint8_t sector=1;sector<kSectorsPerCell;++sector)pixels_[first+sector]=pixels_[first];
+#if PAKAR_FIRST_WINS_ENABLED
+  // Clear disabled physical boxes on EVERY frame, including rainbow/stream.
+  // Retain the black tail on wire so resizing cannot leave stale LEDs lit.
+  for(uint16_t p=0;p<kPixels;++p)if(!(keyMask_&(1U<<(p/24))))pixels_[p]=CRGB::Black;
+#endif
 #if defined(ARDUINO_ARCH_ESP32)
   if(outputEnabled_)output_.submit(pixels_,brightness_,true,frameRevision_+1);
 #else

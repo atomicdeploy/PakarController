@@ -14,6 +14,11 @@ bool commandReadbackMatches(
 ) {
   final json = actual.json;
   switch (path) {
+    case '/api/game/settings':
+      final settings=json['key_game'];
+      return settings is Map && values.entries.every((entry) =>
+          int.tryParse(entry.value) != null &&
+          settings[entry.key] == int.tryParse(entry.value));
     case '/api/cells/lock':
       return const ['true', 'false'].contains(values['enabled']) &&
           json['red_lock'] == (values['enabled'] == 'true');

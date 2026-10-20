@@ -50,6 +50,7 @@ enum Opcode : uint8_t {
   kCellLock = 0x63, // ESP table-selection: enabled boolean; persistent red-to-white guard.
   kHostDemand = 0x64, // ESP USB: [flagsLE16,leaseMsLE16]; zero pair releases optional observations.
   kPixelDiagnostic = 0x65, // Boot-fenced table inner: [indexLE16,count,R,G,B,off]; one pixel or six aligned pixels.
+  kKeyMask = 0x66, // Paired first-wins AVR: enabled keys LE16 (bits0..8), ACK then new round.
   kHostDemandResponse = 0xBA, // Correlated [effectiveFlagsLE16,remainingMsLE16], not an actuator ACK.
   kShellResponse = 0xB9, // Encapsulated terminal output; no raw bytes interleaved with COBS.
   kTableSnapshotResponse = 0xB6, // [nonce,token32,total16,offset16,<=39 immutable JSON bytes].
