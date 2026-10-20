@@ -135,11 +135,11 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         # Manual OTG startup disables DTR/1200-baud reboot before USB.begin.
         $flags += " -I$($projectRoot.Replace('\','/')) -DPAKAR_S3_HOST_TRANSPORT=$hostCode"
         if ($S3StatusRgbPin -ne -1) { $flags += " -DPAKAR_S3_STATUS_RGB_PIN=$S3StatusRgbPin" }
-        if ($InitializeFilesystem) { $flags += ' -DPAKAR_INITIALIZE_FILESYSTEM=1' }
+        # S3 commissioning switches live in the application profile below;
+        # changing them must not invalidate every SDK/library object.
         if ($PauseAvrLink) { $flags += ' -DPAKAR_AVR_LINK_ENABLED=0' }
         if ($PauseLedOutput) { $flags += ' -DPAKAR_LED_START_ENABLED=0' }
         if ($CellChaseOnBoot) { $flags += ' -DPAKAR_LED_START_CELL_CHASE=1' }
-        if ($S3IspElectricalVerified) { $flags += ' -DPAKAR_S3_ISP_ELECTRICAL_VERIFIED=1' }
         if ($S3Ethernet) { $flags += ' -DPAKAR_S3_ETHERNET_ENABLED=1' }
         "esp32:esp32:esp32s3:CDCOnBoot=$cdcBoot,USBMode=$usbMode,FlashSize=${S3FlashMB}M,PartitionScheme=$partitions,PSRAM=$S3Psram"
     } else { 'esp8266:esp8266:nodemcuv2:eesz=4M2M' }
@@ -164,6 +164,7 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
             Path = Join-Path $build 'config/esp32s3/LedBackend.h'
             Content = "#pragma once`n#ifndef PAKAR_GAME_MODE`n#define PAKAR_GAME_MODE $gameModeCode`n#endif`n#define PAKAR_S3_LED_USE_DMA $(if ($S3LedBackend -eq 'rmt-dma') { 1 } else { 0 })`n#ifndef PAKAR_S3_BLE_ENABLED`n#define PAKAR_S3_BLE_ENABLED $(if ($S3Bluetooth -eq 'disabled') { 0 } else { 1 })`n#endif`n#define PAKAR_TELNET_SESSIONS $ShellSessions`n#define PAKAR_SERIAL_SHELL_ENABLED $(if ($DisableSerialShell) { 0 } else { 1 })`n#define PAKAR_TELNET_ENABLED $(if ($DisableTelnet) { 0 } else { 1 })`n"
         }
+        $ledProfile.Content += "#ifndef PAKAR_S3_ISP_ELECTRICAL_VERIFIED`n#define PAKAR_S3_ISP_ELECTRICAL_VERIFIED $(if($S3IspElectricalVerified){1}else{0})`n#endif`n#ifndef PAKAR_INITIALIZE_FILESYSTEM`n#define PAKAR_INITIALIZE_FILESYSTEM $(if($InitializeFilesystem){1}else{0})`n#endif`n"
     }
     if ($VerboseBuild) { $arguments += '--verbose' }
     if ($Plan) {

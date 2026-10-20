@@ -22,4 +22,9 @@ inline void restoreLedScene(LedGrid &grid, const SceneState &saved) {
   grid.setRedLock(saved.flags & 4);
   grid.setPattern(static_cast<LedGrid::Pattern>(saved.pattern));
   grid.setOutputEnabled(PAKAR_LED_START_ENABLED && (saved.flags & 1));
+#if PAKAR_FIRST_WINS_ENABLED
+  // Never restore an old table scene or persist transient game pixels.
+  grid.resetWhite();
+  if(saved.mode == BoardCore::GameRole::mode && saved.winner) grid.showWinner(saved.winner);
+#endif
 }

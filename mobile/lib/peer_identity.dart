@@ -9,7 +9,7 @@ import 'peer_policy.dart';
 
 /// Defaults follow pubspec; Android obtains the actual installed package values
 /// with a lightweight native call, not a digest of the entire APK.
-const peerDefaultVersion = '0.2.8', peerDefaultBuild = '21';
+const peerDefaultVersion = '0.2.8', peerDefaultBuild = '22';
 
 String _id() {
   final bytes = List.generate(16, (_) => Random.secure().nextInt(256));

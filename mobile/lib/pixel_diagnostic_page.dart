@@ -280,7 +280,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
     FocusScope.of(context).unfocus();
     setState(() {
       working = true;
-      message = off ? 'Clearing all 480 pixels…' : 'Showing ${next.range}…';
+      message = off ? 'Clearing all ${next.pixels} pixels…' : 'Showing ${next.range}…';
       applied = null;
     });
     widget.busyChanged(true);
@@ -303,7 +303,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
           applied = workspace.observation != null
               ? null
               : off
-              ? 'Last verified: all 480 pixels off'
+              ? 'Last verified: all ${next.pixels} pixels off'
               : 'Last verified: ${next.range} · #${next.hex}';
           message =
               'Board RGB readback matched. Please check the physical LEDs.';
@@ -338,11 +338,11 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
 
   PixelProbe? readPosition() {
     final index = int.tryParse(position.text.trim());
-    if (index == null || index < 1 || index > diagnosticPixels) {
-      setState(() => message = 'Enter a physical pixel number from 1 to 480.');
+    if (index == null || index < 1 || index > probe.pixels) {
+      setState(() => message = 'Enter a physical pixel number from 1 to ${probe.pixels}.');
       return null;
     }
-    return PixelProbe(index: index - 1, group: probe.group, rgb: probe.rgb);
+    return probe.copyWith(index: index - 1);
   }
 
   Future<void> chooseColor() async {
@@ -425,7 +425,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
       ),
     );
     if (result != null && mounted) {
-      change(PixelProbe(index: probe.index, group: probe.group, rgb: result));
+      change(probe.copyWith(rgb: result));
     }
   }
 
@@ -434,11 +434,11 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
     final enabled = authorized && !working && !refreshing;
     final colours = Theme.of(context).colorScheme;
     final map = widget.mapping?.call();
-    final group = probe.first ~/ 6 + 1;
-    final logical = map?.valid == true
+    final group = probe.first ~/ probe.groupSize + 1;
+    final logical = probe.pixels == 480 && map?.valid == true
         ? map!.physical.indexOf(group) + 1
         : null;
-    final first = probe.index ~/ 6 * 6;
+    final first = probe.index ~/ probe.groupSize * probe.groupSize;
     return WorkspaceBody(
       controller: scroll,
       children: [
@@ -448,18 +448,18 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
           subtitle: 'Physical wire order · all other pixels cleared',
         ),
         WorkspaceSection(
-          title: probe.group ? 'Six-pixel probe' : 'Single-pixel probe',
+          title: probe.group ? '${probe.groupSize}-pixel probe' : 'Single-pixel probe',
           icon: PakarIcons.gridFour,
           children: [
             SegmentedButton<bool>(
-              segments: const [
-                ButtonSegment(value: false, label: Text('1 pixel')),
-                ButtonSegment(value: true, label: Text('6-pixel group')),
+              segments: [
+                const ButtonSegment(value: false, label: Text('1 pixel')),
+                ButtonSegment(value: true, label: Text('${probe.groupSize}-pixel group')),
               ],
               selected: {probe.group},
               onSelectionChanged: enabled
                   ? (choice) => change(
-                      PixelProbe(
+                      probe.copyWith(
                         index: probe.index,
                         group: choice.single,
                         rgb: probe.rgb,
@@ -473,14 +473,14 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             Text(
-              'Physical group $group of 80${logical != null ? ' · logical cell $logical' : ''}',
+              'Physical group $group of ${probe.pixels ~/ probe.groupSize}${logical != null ? ' · logical cell $logical' : ''}',
               style: TextStyle(color: colours.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
             // Tap a sector to inspect any of the six physical pixels directly.
             Row(
               children: [
-                for (var sector = 0; sector < 6; sector++)
+                for (var sector = 0; sector < probe.groupSize; sector++)
                   Expanded(
                     child: Tooltip(
                       message: 'Physical pixel ${first + sector + 1}',
@@ -489,8 +489,9 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
                         borderRadius: BorderRadius.circular(8),
                         onTap: enabled
                             ? () => send(
-                                PixelProbe(
+                                probe.copyWith(
                                   index: first + sector,
+                                  group: false,
                                   rgb: probe.rgb,
                                 ),
                               )
@@ -565,8 +566,8 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
                     enabled: enabled,
                     style: TextStyle(color: colours.onSurface),
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Physical pixel · 1–480',
+                    decoration: InputDecoration(
+                      labelText: 'Physical pixel · 1–${probe.pixels}',
                     ),
                     onSubmitted: enabled
                         ? (_) {
@@ -605,7 +606,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
                     selected: probe.rgb == item.$1,
                     onSelected: enabled
                         ? (_) => change(
-                            PixelProbe(
+                            probe.copyWith(
                               index: probe.index,
                               group: probe.group,
                               rgb: item.$1,
@@ -626,7 +627,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
             OutlinedButton.icon(
               key: const Key('pixel-off'),
               icon: const Icon(PakarIcons.circle),
-              label: const Text('All off · clear 480 pixels'),
+              label: Text('All off · clear ${probe.pixels} pixels'),
               onPressed: enabled ? () => send(probe, off: true) : null,
             ),
             const SizedBox(height: 12),

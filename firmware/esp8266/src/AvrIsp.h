@@ -3,6 +3,9 @@
 #include <Arduino.h>
 #include <FS.h>
 #include <SPI.h>
+#if defined(ARDUINO_ARCH_ESP32) && __has_include(<build/config/esp32s3/LedBackend.h>)
+#include <build/config/esp32s3/LedBackend.h>
+#endif
 #if defined(ARDUINO_ARCH_ESP32)
 #include "../../esp32s3/src/BoardPins.h"
 // Must be explicitly enabled only after voltage-safe ISP wiring and reset

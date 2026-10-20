@@ -120,6 +120,43 @@ class _OutputPanelState extends State<OutputPanel> {
       ),
       children: switch (id) {
         'scene' => [
+          if (status?.peer.role == 'first-wins')
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (var key = 1; key <= 9; key++)
+                  Semantics(
+                    label: 'Key $key',
+                    selected: status?.winner == key,
+                    child: AnimatedContainer(
+                      key: ValueKey('game-key-$key'),
+                      duration: const Duration(milliseconds: 120),
+                      width: 88,
+                      height: 88,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: status?.winner == key
+                            ? Colors.green.shade800
+                            : (status?.winner ?? 0) > 0
+                            ? Colors.red.shade900
+                            : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          width: 3,
+                          color: status?.peer.has('inputs') == true &&
+                                  (key <= 8
+                                      ? ((status?.activeInputs ?? 0) & (1 << (key - 1))) != 0
+                                      : status?.json['input_9'] == true)
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.transparent,
+                        ),
+                      ),
+                      child: Text('$key', style: Theme.of(context).textTheme.headlineSmall),
+                    ),
+                  ),
+              ],
+            ),
           Wrap(
             spacing: 8,
             runSpacing: 8,

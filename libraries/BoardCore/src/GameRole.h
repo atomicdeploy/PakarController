@@ -17,4 +17,10 @@ namespace BoardCore { namespace GameRole {
 constexpr uint8_t mode = PAKAR_GAME_MODE;
 constexpr const char *name = PAKAR_TABLE_SELECTION ? "table-selection" : "first-wins";
 constexpr bool accepts(uint8_t value) { return value == mode; }
+// Each first-wins box has illumination followed by its indicator ring.
+constexpr uint8_t players = 9;
+constexpr uint8_t groupsPerPlayer = 2;
+constexpr uint8_t pixelsPerGroup = PAKAR_TABLE_SELECTION ? 6 : 12;
+constexpr uint8_t ledGroups = PAKAR_TABLE_SELECTION ? 80 : players * groupsPerPlayer;
+constexpr uint16_t pixels = uint16_t(ledGroups) * pixelsPerGroup;
 } }

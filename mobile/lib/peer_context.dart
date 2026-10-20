@@ -83,7 +83,11 @@ class PeerContext {
       features.removeAll({'cell-assignments', 'cell-lock'});
     }
     final modes = <PeerMode>[];
-    if (table && rawModes is List) {
+    final keys = value['keys'];
+    final keyGame = role == 'first-wins' &&
+        keys is Map && keys['count'] == 9 &&
+        keys['groups_per_key'] == 2 && keys['pixels_per_group'] == 12;
+    if ((table || keyGame) && rawModes is List) {
       for (final mode in rawModes) {
         if (mode is! Map || mode['code'] is! int) continue;
         final id = mode['id'], code = mode['code'], kind = mode['kind'];

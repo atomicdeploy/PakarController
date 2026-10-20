@@ -1,10 +1,11 @@
 #pragma once
 #include <stdint.h>
 #include <stddef.h>
+#include <GameRole.h>
 
 namespace PakarS3 {
 #ifndef PAKAR_S3_LED_SWAP_RED_BLUE
-#define PAKAR_S3_LED_SWAP_RED_BLUE 1
+#define PAKAR_S3_LED_SWAP_RED_BLUE PAKAR_TABLE_SELECTION
 #endif
 static_assert(PAKAR_S3_LED_SWAP_RED_BLUE==0 || PAKAR_S3_LED_SWAP_RED_BLUE==1,"LED channel swap must be boolean");
 // Preserve API RGB exactly by default. The former implicit TypicalLEDStrip
@@ -32,7 +33,7 @@ inline constexpr uint16_t resetHalf=6000; //300us low total, including latch.
 inline constexpr uint16_t resetMicros=300;
 // This production output is one complete480 RGB-pixel chain. Keep its actual
 // wire budget separate from a client's requested or measured frame rate.
-inline constexpr size_t outputPixels=480,outputBytes=outputPixels*3;
+inline constexpr size_t outputPixels=BoardCore::GameRole::pixels,outputBytes=outputPixels*3;
 inline constexpr uint32_t dataSymbols=outputPixels*24;
 inline constexpr uint32_t rmtResolutionHz=40000000,bitNanos=1250;
 inline constexpr uint32_t dataMicros=dataSymbols*bitNanos/1000;
@@ -42,7 +43,8 @@ inline constexpr uint32_t maximumWireFpsMilli=1000000000U/minimumFrameMicros;
 // four-byte symbols give two4092-byte windows: the largest legal native ring.
 // A whole480-pixel pre-expanded buffer cannot be substituted for this ring.
 inline constexpr size_t dmaRingSymbols=2046;
-static_assert(outputBytes==1440 && dataSymbols==11520 && dataMicros==14400,
+static_assert((PAKAR_TABLE_SELECTION && outputBytes==1440 && dataSymbols==11520 && dataMicros==14400) ||
+              (PAKAR_FIRST_WINS_ENABLED && outputBytes==648 && dataSymbols==5184 && dataMicros==6480),
               "Recheck the WS2811 wire budget if the production table changes");
 static_assert(minimumFrameMicros<1000000U/60U,
               "The wire alone must leave room for60 complete480-pixel frames/s");

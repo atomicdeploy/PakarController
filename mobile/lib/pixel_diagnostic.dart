@@ -6,6 +6,10 @@ import 'models.dart';
 /// PCController AddressableLeds' clear/stage/show discipline is retained: each
 /// deliberate action replaces the entire frame, never patches a stale tail.
 const diagnosticPixels = 480;
+int diagnosticGroupSize(DeviceStatus status) =>
+    status.peer.role == 'first-wins' ? 12 : 6;
+int diagnosticPixelCount(DeviceStatus status) =>
+    status.peer.role == 'first-wins' ? 216 : diagnosticPixels;
 
 /// Board-owned semantic observation, never inferred from a requested cursor.
 /// All clients consume this same revision through ordinary WS status pushes.
@@ -28,6 +32,8 @@ class PixelDiagnosticObservation {
       return null;
     }
     final output = status.json['led_output'];
+    final pixels = diagnosticPixelCount(status);
+    final groupSize = diagnosticGroupSize(status);
     final value = output is Map ? output['diagnostic'] : null;
     if (value is! Map) return null;
     final revision = value['revision'], index = value['index'];
@@ -37,10 +43,10 @@ class PixelDiagnosticObservation {
         revision > 0xffffffff ||
         index is! int ||
         index < 0 ||
-        index >= diagnosticPixels ||
-        (count != 1 && count != 6) ||
-        index + (count as int) > diagnosticPixels ||
-        (count == 6 && index % 6 != 0) ||
+        index >= pixels ||
+        (count != 1 && count != groupSize) ||
+        index + (count as int) > pixels ||
+        (count == groupSize && index % groupSize != 0) ||
         rgb is! int ||
         rgb < 0 ||
         rgb > 0xffffff ||
@@ -54,7 +60,8 @@ class PixelDiagnosticObservation {
       status.json['boot_id'] as String,
       revision,
       value['active'] as bool,
-      PixelProbe(index: index, group: count == 6, rgb: rgb),
+      PixelProbe(index: index, group: count == groupSize, rgb: rgb,
+          pixels: pixels, groupSize: groupSize),
       value['off'] as bool,
     );
   }
@@ -62,7 +69,7 @@ class PixelDiagnosticObservation {
   String get label => !active
       ? 'Board diagnostic inactive'
       : off
-      ? 'Board reports: all 480 pixels off'
+      ? 'Board reports: all ${probe.pixels} pixels off'
       : 'Board reports: ${probe.range} · #${probe.hex}';
 }
 
@@ -87,6 +94,15 @@ class PixelDiagnosticWorkspace {
   PixelProbe _probe = const PixelProbe();
   PixelDiagnosticObservation? observation;
   bool observe(DeviceStatus status) {
+    if (supportsPixelDiagnostic(status)) {
+      final pixels = diagnosticPixelCount(status);
+      final groupSize = diagnosticGroupSize(status);
+      if (_probe.pixels != pixels || _probe.groupSize != groupSize) {
+        _probe = PixelProbe(index: _probe.index.clamp(0, pixels - 1),
+            group: _probe.group, rgb: _probe.rgb, pixels: pixels, groupSize: groupSize);
+        _position = '${_probe.first + 1}';
+      }
+    }
     // PCController PeerSession._install retires output observations when the
     // selected host/board generation changes, independently of whether the new
     // snapshot contains that peripheral. Keep the user's cursor/draft intact.
@@ -171,7 +187,7 @@ class PixelDiagnosticWorkspace {
 
 bool supportsPixelDiagnostic(DeviceStatus? status) =>
     status != null &&
-    status.json['pixels'] == diagnosticPixels &&
+    status.json['pixels'] == diagnosticPixelCount(status) &&
     status.peer.has('leds') &&
     (status.peer.has('streaming') || status.peer.has('pixel-diagnostic')) &&
     status.json['board_id'] is String &&
@@ -180,25 +196,30 @@ bool supportsPixelDiagnostic(DeviceStatus? status) =>
     (status.json['boot_id'] as String).isNotEmpty;
 
 class PixelProbe {
-  const PixelProbe({this.index = 0, this.group = false, this.rgb = 0xffffff});
-  final int index, rgb;
+  const PixelProbe({this.index = 0, this.group = false, this.rgb = 0xffffff,
+    this.pixels = diagnosticPixels, this.groupSize = 6});
+  final int index, rgb, pixels, groupSize;
   final bool group;
-  int get count => group ? 6 : 1;
-  int get first => group ? index ~/ 6 * 6 : index;
+  PixelProbe copyWith({int? index, bool? group, int? rgb}) =>
+      PixelProbe(index: index ?? this.index, group: group ?? this.group,
+          rgb: rgb ?? this.rgb, pixels: pixels, groupSize: groupSize);
+  int get count => group ? groupSize : 1;
+  int get first => group ? index ~/ groupSize * groupSize : index;
   int get last => first + count - 1;
   bool get valid =>
-      index >= 0 && index < diagnosticPixels && rgb >= 0 && rgb <= 0xffffff;
+      (pixels == 480 && groupSize == 6 || pixels == 216 && groupSize == 12) &&
+      index >= 0 && index < pixels && last < pixels && rgb >= 0 && rgb <= 0xffffff;
   bool get canPrevious => first > 0;
-  bool get canNext => last < diagnosticPixels - 1;
+  bool get canNext => last < pixels - 1;
   PixelProbe move(int direction) {
     if (!valid || ![-1, 1].contains(direction)) {
       throw const FormatException('Invalid pixel move');
     }
     final next = first + direction * count;
-    if (next < 0 || next + count > diagnosticPixels) {
+    if (next < 0 || next + count > pixels) {
       throw const FormatException('End of strip');
     }
-    return PixelProbe(index: next, group: group, rgb: rgb);
+    return copyWith(index: next);
   }
 
   String get range =>
@@ -206,9 +227,9 @@ class PixelProbe {
   String get hex => rgb.toRadixString(16).padLeft(6, '0').toUpperCase();
   Uint8List frame({bool off = false}) {
     if (!valid) {
-      throw const FormatException('Pixel outside 1–480 or invalid RGB');
+      throw FormatException('Pixel outside 1–$pixels or invalid RGB');
     }
-    final bytes = Uint8List(diagnosticPixels * 3);
+    final bytes = Uint8List(pixels * 3);
     if (!off) {
       for (var pixel = first; pixel <= last; pixel++) {
         bytes[pixel * 3] = rgb >> 16 & 255;
@@ -221,24 +242,24 @@ class PixelProbe {
 }
 
 List<Uint8List> diagnosticPackets(Uint8List frame) {
-  if (frame.length != diagnosticPixels * 3) {
+  if (frame.length != diagnosticPixels * 3 && frame.length != 216 * 3) {
     throw const FormatException('Incomplete diagnostic frame');
   }
   return [
-    for (final offset in [0, 240])
-      Uint8List(10 + 240 * 3)
+    for (var offset = 0; offset < frame.length ~/ 3; offset += 240)
+      Uint8List(10 + (frame.length ~/ 3 - offset).clamp(0, 240) * 3)
         ..setRange(0, 4, [80, 75, 65, 82]) // PKAR; reserved bytes remain zero.
         ..[6] = offset & 255
         ..[7] = offset >> 8
-        ..[8] = 240
-        ..[9] = offset == 240 ? 1 : 0
-        ..setRange(10, 730, frame, offset * 3),
+        ..[8] = (frame.length ~/ 3 - offset).clamp(0, 240)
+        ..[9] = offset + 240 >= frame.length ~/ 3 ? 1 : 0
+        ..setRange(10, 10 + (frame.length ~/ 3 - offset).clamp(0, 240) * 3, frame, offset * 3),
   ];
 }
 
 bool diagnosticReady(DeviceStatus status) =>
     supportsPixelDiagnostic(status) &&
-    status.mode == 'cell' &&
+    (status.mode == 'cell' || status.peer.role == 'first-wins' && status.mode == 'first-wins') &&
     status.effect == 'none' &&
     status.ledOutputEnabled == true &&
     status.ledOutputMode == 'effects' &&

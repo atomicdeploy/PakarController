@@ -550,7 +550,8 @@ void sendHostStatus(uint8_t requestSequence) {
       // Living context: reserved zero followed by explicit acknowledged features.
       0, static_cast<uint8_t>(available), static_cast<uint8_t>(available >> 8),
       BoardCore::Context::modes(available), static_cast<uint8_t>(PAKAR_TABLE_ENABLED),
-      10, 8, 6, static_cast<uint8_t>(identityRevision()),
+      PAKAR_TABLE_SELECTION ? 10 : 9, PAKAR_TABLE_SELECTION ? 8 : 2,
+      LedGrid::kSectorsPerCell, static_cast<uint8_t>(identityRevision()),
       // Configured state is distinct from observed station/AP link state above.
       static_cast<uint8_t>(networkConfig.stationEnabled()),
       static_cast<uint8_t>(networkConfig.accessPointEnabled()),
@@ -1055,7 +1056,11 @@ uint16_t cellMappingCheck(const CellMappingRecord &value) {
 }
 
 uint8_t defaultPhysicalCell(uint8_t logicalCell) {
+#if PAKAR_FIRST_WINS_ENABLED
+  return logicalCell >= 1 && logicalCell <= LedGrid::kCells ? logicalCell : 0;
+#else
   return BoardCore::TableCellMapping::physicalForLogical(logicalCell);
+#endif
 }
 
 void resetCellMapping() {
@@ -2146,11 +2151,14 @@ String buildStatusJson(bool compact) {
     body += F("\"}"); separator = true;
   }
   body += F("]");
-  if (PAKAR_TABLE_ENABLED) body += F(",\"table\":{\"columns\":10,\"rows\":8,\"pixels_per_cell\":6}");
+  if (PAKAR_TABLE_ENABLED && PAKAR_TABLE_SELECTION) body += F(",\"table\":{\"columns\":10,\"rows\":8,\"pixels_per_cell\":6}");
+#if PAKAR_FIRST_WINS_ENABLED
+  body += F(",\"keys\":{\"count\":9,\"groups_per_key\":2,\"pixels_per_group\":12,\"group_roles\":[\"illumination\",\"indicator\"]}");
+#endif
   body += F("}");
   body += F(",\"pixels\":"); body += LedGrid::kPixels;
   body += F(",\"cells\":[");
-  for (uint8_t cell = 1; cell <= LedGrid::kCells; ++cell) {
+  for (uint8_t cell = 1; PAKAR_TABLE_SELECTION && cell <= LedGrid::kCells; ++cell) {
     if (cell != 1) body += ',';
     body += '\"'; body += cellName(grid.state(cell)); body += '\"';
   }

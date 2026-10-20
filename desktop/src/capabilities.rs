@@ -178,7 +178,7 @@ impl Manifest {
     }
     pub fn modes(&self) -> impl Iterator<Item = &Mode> {
         self.modes.iter().filter(|m| {
-            self.table()
+            (self.table() || self.role == "first-wins" && self.has("leds"))
                 && (self.role.is_empty() || matches!((self.role.as_str(),m.id.as_str()),("table-selection","cell")|("first-wins","first-wins")))
                 && match (m.id.as_str(), m.code, m.kind.as_str()) {
                     ("cell", 1, "presentation") => true,
@@ -212,7 +212,7 @@ impl Manifest {
             "/api/cells/lock" => return self.table_selection() && self.has("cell-lock"),
             "/api/cells" => return self.table_selection() && self.has("cell-batch"),
             "/api/cell" => return self.table_selection(),
-            "/api/game/reset" => return self.table() && self.modes().any(|m|m.id=="first-wins"),
+            "/api/game/reset" => return self.modes().any(|m|m.id=="first-wins"),
             "/api/snake/direction" => return false,
             "/api/cells/mapping" => {
                 "table"

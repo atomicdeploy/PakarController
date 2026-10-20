@@ -1,6 +1,9 @@
 #pragma once
 #include <Arduino.h>
 #include <LittleFS.h>
+#if defined(ARDUINO_ARCH_ESP32) && __has_include(<build/config/esp32s3/LedBackend.h>)
+#include <build/config/esp32s3/LedBackend.h>
+#endif
 #if defined(ARDUINO_ARCH_ESP32)
 #include <esp_system.h>
 #include <esp_random.h>

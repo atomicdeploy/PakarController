@@ -3,6 +3,22 @@ import 'package:pakarcontroller/models.dart';
 import 'package:pakarcontroller/pixel_diagnostic.dart';
 
 void main() {
+  test('Keycontroller probe clears all 216 pixels and steps a 12-pixel ring', () {
+    const probe = PixelProbe(index: 204, group: true, rgb: 0x123456,
+        pixels: 216, groupSize: 12);
+    expect(probe.valid, isTrue);
+    expect(probe.canNext, isFalse);
+    expect(probe.move(-1).first, 192);
+    final frame = probe.frame();
+    expect(frame.length, 648);
+    expect(frame.take(204 * 3).every((byte) => byte == 0), isTrue);
+    expect(frame.sublist(204 * 3), List.generate(36, (i) => [0x12, 0x34, 0x56][i % 3]));
+    final packets = diagnosticPackets(frame);
+    expect(packets.length, 1);
+    expect(packets.single[8], 216);
+    expect(packets.single[9], 1);
+    expect(probe.copyWith(rgb: 0).pixels, 216);
+  });
   test(
     'Workspace stores only bounded cursor, colour, grouping and position draft',
     () {

@@ -128,11 +128,11 @@ void LedGrid::showWinner(uint8_t winner) {
   staging_ = false;
   changePattern(kPatternNone,"winner");
   for (uint8_t i = 0; i < kCells; ++i) {
-    const uint8_t group = static_cast<uint8_t>((static_cast<uint16_t>(i) * 9U) /
-                                               kCells) + 1U;
-    states_[i] = group == winner ? BoardCore::Protocol::kCellRed
-                                 : BoardCore::Protocol::kCellOff;
-    target_[i] = colorFor(static_cast<BoardCore::Protocol::CellState>(states_[i]));
+    const uint8_t group = i / BoardCore::GameRole::groupsPerPlayer + 1U;
+    // The table's three-state storage is not the game's color authority.
+    // Winner identity reconstructs the game; pixel frames carry actual RGB.
+    states_[i] = BoardCore::Protocol::kCellWhite;
+    target_[i] = group == winner ? CRGB(0,255,0) : CRGB::Red;
     current_[i] = target_[i];
     transitioning_[i] = false;
     renderCell(i);

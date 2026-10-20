@@ -1852,6 +1852,30 @@ impl PakarControllerApp {
         };
         let avr_acknowledged = ["display", "text", "buzzer", "inputs", "outputs", "settings"]
             .iter().any(|feature| self.has_feature(feature));
+        if s.capabilities.as_ref().is_some_and(|c| c.role == "first-wins")
+            && self.has_feature("inputs") {
+            dialog::section(ui, icons::HAND_TAP, "Keys", |ui| {
+                ui.horizontal_wrapped(|ui| {
+                    for key in 1..=9u8 {
+                        let pressed = if key == 9 { s.input_9 } else {
+                            s.active_inputs & (1 << (key - 1)) != 0
+                        };
+                        let fill = if s.winner == key {
+                            egui::Color32::from_rgb(0, 110, 55)
+                        } else if s.winner != 0 {
+                            egui::Color32::from_rgb(145, 35, 35)
+                        } else { ui.visuals().widgets.inactive.bg_fill };
+                        let stroke = if pressed {
+                            ui.visuals().selection.stroke
+                        } else { egui::Stroke::NONE };
+                        ui.add(egui::Button::new(egui::RichText::new(key.to_string()).size(24.0))
+                            .fill(fill).stroke(stroke).min_size(egui::vec2(72.0, 72.0))
+                            .sense(egui::Sense::hover()));
+                    }
+                });
+            });
+            ui.add_space(10.0);
+        }
         dialog::section(ui, icons::CPU, "Controllers", |ui| {
             if avr_acknowledged { badge(ui, "AVR link", s.avr_online); }
             if self.has_feature("display") { badge(ui, "TM1637", s.tm1637_ack); }

@@ -16,7 +16,7 @@
 #include "UpgradeLifecycle.h"
 
 #ifndef PAKARCONTROLLER_SECTORS_PER_CELL
-#define PAKARCONTROLLER_SECTORS_PER_CELL 6
+#define PAKARCONTROLLER_SECTORS_PER_CELL BoardCore::GameRole::pixelsPerGroup
 #endif
 #ifndef PAKAR_LED_START_ENABLED
 #define PAKAR_LED_START_ENABLED 1
@@ -36,7 +36,7 @@ class LedGrid {
     kPatternCellChase,
   };
 
-  static constexpr uint8_t kCells = 80;
+  static constexpr uint8_t kCells = BoardCore::GameRole::ledGroups;
   static constexpr uint8_t kSectorsPerCell = PAKARCONTROLLER_SECTORS_PER_CELL;
   static constexpr uint16_t kPixels = kCells * kSectorsPerCell;
 #if defined(ARDUINO_ARCH_ESP32)

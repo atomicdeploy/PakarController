@@ -530,6 +530,11 @@ void loop() {
   const uint32_t now = millis();
   link.service();
   if (!programmingLatch.active()) serviceInputs(now);
+#if PAKAR_UART_BUFFERED && PAKAR_FIRST_WINS_ENABLED
+  // Publish the latched key/winner before display, RF and menu work.
+  // Failed bounded enqueue retains the dirty flag; never block input scanning.
+  if (stateDirty && espReadyForUnsolicitedFrame()) stateDirty = !sendGameState();
+#endif
   buzzer.update(now);
   frontPanel.service(now, mode, selectedCell, winner,
                      programmingLatch.active());

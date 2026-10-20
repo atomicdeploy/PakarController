@@ -4,7 +4,9 @@
 // The deployed firmware owns its application identity. Board display/DNS names
 // are user settings; renaming a board must not pretend another program is running.
 #ifndef APP_NAME
-#if PAKAR_TABLE_ENABLED
+#if PAKAR_FIRST_WINS_ENABLED
+#define APP_NAME "Pakar Keys"
+#elif PAKAR_TABLE_ENABLED
 #define APP_NAME "Pakar Table"
 #else
 #define APP_NAME "Pakar Controller"
