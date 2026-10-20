@@ -1577,7 +1577,7 @@ impl PakarControllerApp {
                         self.action("/api/led/output", form, OP_LED_OUTPUT, payload);
                     }
                 }
-                ui.weak(if observed == "static" { "Static grouped cells; six pixels share one color. Rainbow test still animates." }
+                ui.weak(if observed == "static" { "Each LED group shares one color. Rainbow test still animates." }
                     else { "Animated effects are explicitly enabled." });
             } else { ui.weak("Output mode: Unknown"); }
             let observed_effect=snapshot.as_ref().map(|s|s.effect.as_str()).filter(|effect|!effect.is_empty());
@@ -1585,7 +1585,7 @@ impl PakarControllerApp {
             let test_ready = snapshot.as_ref().is_some_and(|s|
                 s.led_output.get("enabled").and_then(|v| v.as_bool()) == Some(true));
             if ui.add_enabled(test_ready, egui::Button::new(format!("{}  Rainbow test", icons::SPARKLE)).selected(observed_effect==Some("rainbow")))
-                .on_hover_text("Rainbow animates in both modes, keeping each cell's six pixels together in static mode. Does not change output mode or enable the service.")
+                .on_hover_text("Rainbow animates in both modes, keeping each board-defined LED group together in static mode. Does not change output mode or enable the service.")
                 .clicked() {
                 self.action("/api/effect", vec![("value".into(), "rainbow".into())], OP_PATTERN, vec![1]);
             }

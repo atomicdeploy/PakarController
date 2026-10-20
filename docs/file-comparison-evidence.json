@@ -4750,7 +4750,7 @@
     },
     {"path":"desktop/src/ui/cell_pixels.rs","sha256":"def5207ed7e8a9824fdb03968af731b572956a285ec0b8ff607d8329d1073aa9","anchor":"pub fn observe_at("},
     {"path":"desktop/src/ui/cell_table.rs","sha256":"169a289f74149b1bdd19c517f7ecfce31013cc617d0925c0eacdcb1e01fd6bdd","anchor":"pub(super) fn current_pixel_frame("},
-    {"path":"desktop/src/ui/shell.rs","sha256":"82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc","anchor":"value[\"pixel_preview\"]"},
+    {"path":"desktop/src/ui/shell.rs","sha256":"bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa","anchor":"value[\"pixel_preview\"]"},
     {
       "path": "mobile/lib/pixel_diagnostic_page.dart",
       "anchor": "final observedOff = observation != null",
@@ -10770,7 +10770,7 @@
       "path": "desktop/src/ui/device_settings.rs"
     },
     {
-      "sha256": "82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc",
+      "sha256": "bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa",
       "anchor": "super::dropdown::ComboBox",
       "path": "desktop/src/ui/shell.rs"
     }
@@ -12685,7 +12685,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc",
+          "sha256": "bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa",
           "anchor": "fn synchronize_context("
         },
         {
@@ -13098,7 +13098,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc",
+          "sha256": "bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -13584,7 +13584,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc",
+          "sha256": "bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa",
           "anchor": "egui::Key::F11"
         }
       ],
@@ -14083,7 +14083,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "value[\"messages\"]",
-          "sha256": "82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc"
+          "sha256": "bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa"
         },
         {
           "path": "desktop/src/platform/notifications.rs",
@@ -14167,7 +14167,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc",
+          "sha256": "bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -16574,7 +16574,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc",
+          "sha256": "bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa",
           "anchor": "value[\"tray_shell\"]"
         },
         {
@@ -16719,7 +16719,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc"
+          "sha256": "bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa"
         }
       ],
       "omissions": [
@@ -17618,7 +17618,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc",
+          "sha256": "bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa",
           "anchor": "fn send_pixel_probe("
         }
       ],
@@ -17852,7 +17852,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc",
+          "sha256": "bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa",
           "anchor": "fn send_pixel_probe("
         }
       ],
@@ -17998,7 +17998,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn synchronize_context",
-          "sha256": "82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc"
+          "sha256": "bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa"
         },
         {
           "path": "desktop/src/ui/layout.rs",

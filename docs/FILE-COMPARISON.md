@@ -886,7 +886,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `mobile/lib/pixel_diagnostic.dart:117 [UTF8-LF sha256=fc88b570e74ad467cb927488d748e43b5aa6451c2ae79b73b4b3eb808b21bced; anchor=previous.board != board || previous.boot != boot]`.
 - Target: `desktop/src/ui/cell_pixels.rs:77 [UTF8-LF sha256=def5207ed7e8a9824fdb03968af731b572956a285ec0b8ff607d8329d1073aa9; anchor=pub fn observe_at(]`.
 - Target: `desktop/src/ui/cell_table.rs:755 [UTF8-LF sha256=169a289f74149b1bdd19c517f7ecfce31013cc617d0925c0eacdcb1e01fd6bdd; anchor=pub(super) fn current_pixel_frame(]`.
-- Target: `desktop/src/ui/shell.rs:742 [UTF8-LF sha256=82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc; anchor=value["pixel_preview"]]`.
+- Target: `desktop/src/ui/shell.rs:742 [UTF8-LF sha256=bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa; anchor=value["pixel_preview"]]`.
 - Target: `mobile/lib/pixel_diagnostic_page.dart:136 [UTF8-LF sha256=4bc6edea63118722bd3adfc45fa83a7da0aeb3c13fea01a663fecb8f796edadc; anchor=final observedOff = observation != null]`.
 - Target: `mobile/test/pixel_diagnostic_page_test.dart:279 [UTF8-LF sha256=48afa7fb7342e2ddd0bdf078a53f7ad8571ee32259e2a1eb1a915a005c8a6220; anchor=Reopening an all-off observation keeps colour edits as drafts]`.
 - Target: `mobile/lib/api.dart:1524 [UTF8-LF sha256=40c52808dcd195d8f33ef7a6e5fbf4c238db7bcfe631e02a39ecf8cbe08dd68f; anchor=Future<DeviceStatus> status()]`.
@@ -990,7 +990,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp8266/src/CloudAnimationProgress.h:8 [UTF8-LF sha256=97f560579ba0bb5f9172c29e92078471b6e8cbe64b5d961de2740a44cc5f714d; anchor=bool serviceDuringCloud(]`.
 - Target: `desktop/src/pixel_diagnostic.rs:8 [UTF8-LF sha256=169514de8b5123bed38171d1d170314ca6602dea9f3388cd6e5e47020a85e5ba; anchor=pub struct Probe]`.
 - Target: `desktop/src/native_workspace.rs:48 [UTF8-LF sha256=7b4cf18add15622b4f9f7d01217294efcc4c6e0cc87a4b69f08782a8905e025b; anchor=pub pixel_probe:]`.
-- Target: `desktop/src/ui/shell.rs:1366 [UTF8-LF sha256=82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc; anchor=fn send_pixel_probe(]`.
+- Target: `desktop/src/ui/shell.rs:1366 [UTF8-LF sha256=bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa; anchor=fn send_pixel_probe(]`.
 - Retained: Actual canonical complete AddressableLeds source/header read through EOF, including staged RGB versus show ownership. The selection adapter validates all80 cells before one loop-owned state mutation; no per-cell network pacing, show calls, persistence or AVR fan-out. This is a scoped adaptation of stage/show discipline, not a copied AVR timing sender.
 - Retained: ESP owns synchronized300ms wall-clock interpolation and one shared published frame. Single-cell actions use the same renderer method; static fallback remains immediate. Partial/invalid selections never reach renderer state.
 - Retained: Stress regression reproduced/fixed unrelated committed raw pixels reverting to stale logical targets on an abandoned partial stream. Both renderer modes and10000 full80-cell host batches per mode pass; host CPU timing is not physical throughput.
@@ -1049,7 +1049,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `mobile/tool/pixel_probe.dart:65 [UTF8-LF sha256=b27e1a4ed0a664ef350400d452eff575463f12a975049e29ac70f3dd88d5d21a; anchor=Future<void> main(]`.
 - Target: `desktop/src/pixel_diagnostic.rs:8 [UTF8-LF sha256=169514de8b5123bed38171d1d170314ca6602dea9f3388cd6e5e47020a85e5ba; anchor=pub struct Probe]`.
 - Target: `desktop/src/native_workspace.rs:48 [UTF8-LF sha256=7b4cf18add15622b4f9f7d01217294efcc4c6e0cc87a4b69f08782a8905e025b; anchor=pub pixel_probe:]`.
-- Target: `desktop/src/ui/shell.rs:1366 [UTF8-LF sha256=82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc; anchor=fn send_pixel_probe(]`.
+- Target: `desktop/src/ui/shell.rs:1366 [UTF8-LF sha256=bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa; anchor=fn send_pixel_probe(]`.
 - Retained: Actual canonical complete AddressableLeds source/header read through EOF, including staged RGB versus show ownership. The selection adapter validates all80 cells before one loop-owned state mutation; no per-cell network pacing, show calls, persistence or AVR fan-out. This is a scoped adaptation of stage/show discipline, not a copied AVR timing sender.
 - Retained: ESP owns synchronized300ms wall-clock interpolation and one shared published frame. Single-cell actions use the same renderer method; static fallback remains immediate. Partial/invalid selections never reach renderer state.
 - Retained: Stress regression reproduced/fixed unrelated committed raw pixels reverting to stale logical targets on an abandoned partial stream. Both renderer modes and10000 full80-cell host batches per mode pass; host CPU timing is not physical throughput.
@@ -2286,7 +2286,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `57fbd904e18d8f0036dd67e2c866d357ab282075689a1cbf6b38a64270875492`.
 
 - Target: `desktop/src/platform/windows_tray.rs:14 [UTF8-LF sha256=5f847993b6177d97f3b5fa6930f6b1acfd6e6e26dfb4fb51c58730f0d8a4ed2d; anchor=Shell acceptance, not object presence]`.
-- Target: `desktop/src/ui/shell.rs:750 [UTF8-LF sha256=82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc; anchor=value["tray_shell"]]`.
+- Target: `desktop/src/ui/shell.rs:750 [UTF8-LF sha256=bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa; anchor=value["tray_shell"]]`.
 - Target: `tools/replace-desktop.ps1:42 [UTF8-LF sha256=13e5893983bf422449d0c35b94305a39bb662a1663511a3706125bb8e9fc484d; anchor=function OwnerStatus]`.
 - Target: `tools/observe-desktop.ps1:28 [UTF8-LF sha256=c2adb041290e63d2190c6e807c095b9a79bf3c201d46f5ffc085636c1d4daf5e; anchor=function OwnerStatus]`.
 - Retained: Full donor document read through EOF. Apply its concrete distinction between working IPC/service and actual shell/GUI readiness: expose tray Shell acceptance separately, retain failures and recover only after accepted synchronization, verify open drafts before graceful replacement and keep actual runtime proof separate.
@@ -2423,7 +2423,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `1f173bef8acc2904eac5b0a91407aa4f7629ce65c88ea3a8ac78f8c13321d203`.
 
-- Target: `desktop/src/ui/shell.rs:797 [UTF8-LF sha256=82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc; anchor=egui::Key::F11]`.
+- Target: `desktop/src/ui/shell.rs:797 [UTF8-LF sha256=bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa; anchor=egui::Key::F11]`.
 - Retained: Default Preferences Ctrl+, and device configuration Ctrl+Shift+, navigation exist; F11 fullscreen is restored with the shared typed dispatcher. These are not equivalent to the donor persisted rebinding model.
 - Omitted/replaced code: `ApplicationShortcuts persisted fields, parse_shortcut, entries, validate, action_for_event and their non-media tests`. Disposition: **pending**. Reason: The foundation hardcoded its accelerators and omitted the reusable binding model. No accepted reason justifies leaving rebinding out. The actual donor depends on KeyChord and hardware_shortcuts match/key-code helpers, which must be ported and tested with controller-specific typed actions rather than guessed labels.
 - Omitted/replaced code: `take_frame_step_shortcut and frame-step tests`. Disposition: **not-applicable**. Reason: These consume Ctrl+Left/Right for media frame stepping and timeline transport. Those business domains were explicitly removed; Pakar must not hijack ordinary text word navigation for nonexistent video frames.
@@ -2503,7 +2503,7 @@ Verdict: **equivalent-behavior**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1c
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `44ba995614f2acc3230f6adc13c00500e6844db81aa36d5e60e7eeb9e90d6f9f`.
 
 - Target: `desktop/src/messaging.rs:81 [UTF8-LF sha256=471236bd7e8b1733fef743c81a9dff407816cd221a4d290d0cfa5a9fc753c573; anchor=pub fn publish(]`.
-- Target: `desktop/src/ui/shell.rs:728 [UTF8-LF sha256=82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc; anchor=value["messages"]]`.
+- Target: `desktop/src/ui/shell.rs:728 [UTF8-LF sha256=bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa; anchor=value["messages"]]`.
 - Target: `desktop/src/platform/notifications.rs:102 [UTF8-LF sha256=a7abb77a1a319025ffefc8a5ad94f51a59b191b04e59a2414e96b30c290f06e7; anchor=pub struct ConnectionNotice]`.
 - Retained: Earlier MessageHub remains byte-identical to historical source hash 471236bd7e8b1733fef743c81a9dff407816cd221a4d290d0cfa5a9fc753c573: request validation, bounded queue, expiry/upsert/dismiss/revision/source identity and both original tests. The current 226-line donor was completely reread; new detailed diagnostics remain pending, not falsely described as current file equivalence.
 - Retained: The shared bounded/upsert message hub now has truthful native owner-IPC snapshot exposure for actual toast monitoring. Host connection alerts require2s stable state to avoid transient loss/recovery pairs; command freshness still changes immediately. Distinct diagnostic causes remain in the existing incident ledger. This does not import the still-pending detailed-toast payload/disclosure feature.
@@ -2559,7 +2559,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `ab1c99e674e902e37626963e2dd5cf7d993965334411d5e33dafd1ea2bf79e51`.
 
 - Target: `desktop/src/capabilities.rs:7 [UTF8-LF sha256=4e00d700f9487920daa1af0b468cd9c50d7005dc9d6c5b18983cb0dab7e16d88; anchor=pub struct Manifest]`.
-- Target: `desktop/src/ui/shell.rs:573 [UTF8-LF sha256=82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc; anchor=fn synchronize_context(]`.
+- Target: `desktop/src/ui/shell.rs:573 [UTF8-LF sha256=bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa; anchor=fn synchronize_context(]`.
 - Target: `desktop/src/ui/device_settings.rs:21 [UTF8-LF sha256=43c0eb207de03c597ad69d10671655569ee1bc25ba16298869bc65c742d710db; anchor=pub(crate) fn available(]`.
 - Target: `docs/DEVICE-CONTEXT.md:71 [UTF8-LF sha256=ad4669cbe23b48b4f6ee22634c21c015cd5b9767b8006d7316ad04d4ee99648b; anchor=## Exact reuse and remaining useful code]`.
 - Target: `desktop/src/board_silent.rs:74 [UTF8-LF sha256=c043af00f09e18b54b60399ec725f41a41bb74ec405251d92b70771b00059078; anchor=pub struct Transaction]`.
@@ -2629,7 +2629,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `desktop/src/ui/connection_controls.rs:84 [UTF8-LF sha256=58eaae178af71e86725a71df606b6ed6fb142c4fe852d3d5b8dce8b980ed3440; anchor=pub fn draw(]`.
 - Target: `desktop/src/ui/preferences.rs:232 [UTF8-LF sha256=470f9c141ddc5f86cc059b63c5c6d2e2ef55e64176077f003ef68e6e8556a9dc; anchor=super::dropdown::ComboBox::from_id_salt("theme")]`.
 - Target: `desktop/src/ui/device_settings.rs:90 [UTF8-LF sha256=43c0eb207de03c597ad69d10671655569ee1bc25ba16298869bc65c742d710db; anchor=super::dropdown::ComboBox]`.
-- Target: `desktop/src/ui/shell.rs:1504 [UTF8-LF sha256=82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc; anchor=super::dropdown::ComboBox]`.
+- Target: `desktop/src/ui/shell.rs:1504 [UTF8-LF sha256=bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa; anchor=super::dropdown::ComboBox]`.
 - Retained: Reread all 646 current donor lines through EOF against the retained target. Actual focus owner, enabled/selected entries, search focus, Arrow/Home/End/Enter navigation, disabled skipping, inside focus stroke, nested menu framing and closed-popup cleanup remain imported. The prior three native tests remain adapted to fixed32px Pakar rows; newer dynamic density/chevron and inline-expansion behavior is explicitly pending.
 - Retained: Current exclusive-transport slice reread all646 donor lines again. Unified connection draw uses actual menu_ui/DropdownUiExt enabled/selected/focus registration, one lifecycle action, lazy selected-USB OS enumeration and closed-popup cleanup. Old dual-popup proof anchors were replaced with real new contextual/lifecycle tests, not kept as fictitious surviving tests; runtime execution remains separate.
 - Retained: Revalidated original-byte donor SHA134f1613 at unchanged revision5a6961ce after fully reading all646 donor lines, the entire control_density dependency and all659 retained target lines plus native_dropdown wiring test. Staleness was a misplaced target-shell hash in the source SHA field, not a donor change. Corrected source/target binding only; dynamic density, chevron, inline expansion and the newer navigating guard remain explicit parity gaps, with no new runtime acceptance claim.
@@ -2670,7 +2670,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `cd56a5849a0be621d8472b440c9cbac8b91bcaf603d228cb6148bba1eb554fc9`.
 
 - Target: `desktop/src/ui/icons.rs:573 [UTF8-LF sha256=d9e95867777af0771f64322fef26958558c4c976cd3bdec5377a41754550a8da; anchor=pub fn searchable_workspace_icon_picker(]`.
-- Target: `desktop/src/ui/shell.rs:2436 [UTF8-LF sha256=82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc; anchor=icons::searchable_workspace_icon_picker]`.
+- Target: `desktop/src/ui/shell.rs:2436 [UTF8-LF sha256=bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa; anchor=icons::searchable_workspace_icon_picker]`.
 - Retained: Fully reread all1190 current donor lines through EOF. Production Phosphor vocabulary, stable names/kind fallback, searchable list/grid picker, UTF-8-safe match highlighting, bounded popups and disclosure/submenu helpers remain retained. New catalog/density/localized-title/fixed-header-slot behavior is separately pending, not certified by the prior eleven tests.
 - Retained: Actual donor regression tests restored: eleven tests, including interactive egui-frame search/select/reopen, both themes and popup width.
 - Omitted/replaced code: `control_icon_catalog with icon_catalog.rs complete1500+ repertoire and new alias tests; translated_icon_name/localized search and preset title tests; searchable_icon_button_sized/with_slot and fixed_header geometry test; density chevrons`. Disposition: **pending**. Reason: Pakar retains its prior Phosphor presets/search/list/grid helpers, not the expanded donor catalog or new localized title/density/fixed-slot consumer contracts. icon_catalog.rs remains an independently pending dependency; do not copy unavailable presets or claim the new tests imported merely by reading this file.
@@ -2686,7 +2686,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `a0196878c7b76b898d0a5791b122181d9045d3fbbe9f56de52bc43242edf2d9d`.
 
 - Target: `desktop/src/ui/menu.rs:9 [UTF8-LF sha256=485783deefe484f7d413e30f3020dc3c2355aa564ca038c39741f6149271420e; anchor=pub fn top_menu_button<R>(]`.
-- Target: `desktop/src/ui/shell.rs:824 [UTF8-LF sha256=82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc; anchor=menu::top_menu_button(ui, crate::ui::i18n::text("File")]`.
+- Target: `desktop/src/ui/shell.rs:824 [UTF8-LF sha256=bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa; anchor=menu::top_menu_button(ui, crate::ui::i18n::text("File")]`.
 - Target: `desktop/src/ui/connection_controls.rs:84 [UTF8-LF sha256=58eaae178af71e86725a71df606b6ed6fb142c4fe852d3d5b8dce8b980ed3440; anchor=pub fn draw(]`.
 - Target: `docs/NATIVE-MENU-COMPARISON.md:32 [UTF8-LF sha256=7319a38240f9c23a43f5a18c2f20d05b0c9d5ff273cf0e8f28b2ba98aa1aabd8; anchor=## Exact donor menu mapping and remaining decisions]`.
 - Retained: Actual top_menu_button body imported with only application state ID/public visibility adaptation; all four production menu headings use active-menu sibling hover switching.
@@ -2726,7 +2726,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `desktop/src/ui/preferences.rs:67 [UTF8-LF sha256=470f9c141ddc5f86cc059b63c5c6d2e2ef55e64176077f003ef68e6e8556a9dc; anchor=fn sync_connection_owner(]`.
 - Target: `desktop/src/ui/preferences.rs:181 [UTF8-LF sha256=470f9c141ddc5f86cc059b63c5c6d2e2ef55e64176077f003ef68e6e8556a9dc; anchor=fn connection_summary(]`.
 - Target: `desktop/src/ui/device_settings.rs:35 [UTF8-LF sha256=43c0eb207de03c597ad69d10671655569ee1bc25ba16298869bc65c742d710db; anchor=fn avr_page(]`.
-- Target: `desktop/src/ui/shell.rs:1545 [UTF8-LF sha256=82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc; anchor=pub(super) fn draw_led_settings(]`.
+- Target: `desktop/src/ui/shell.rs:1545 [UTF8-LF sha256=bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa; anchor=pub(super) fn draw_led_settings(]`.
 - Retained: Fully reread all2308 actual donor lines through EOF, including draft lifecycle, helper ownership, control rendering and tests. Pakar retains saved/config/previewed baselines, live preview, dirty close confirmation and rail/body/footer layout; this is a narrow adaptation, not complete Preferences equivalence.
 - Retained: Adapted actual PreferencesDraft::sync_external_appearance triple-baseline merge to sync_connection_owner. External selected method/enabled/endpoint/user/port update all three baselines while preserving unrelated dirty edits. Preferences now shows only the selected method's summary and delegates clean drafts to the single canonical connection dialog; unrelated Save cannot restore stale connection owner fields.
 - Retained: Adapt the existing donor draft separation and clean-navigation rule to a contextual Preferences Board tab for every acknowledged device, not only buzzer boards. Device settings opens only after PC preferences are saved/discarded; no MCU draft is copied into AppConfig. The LED settings page invokes the actual shared LED controls rather than a duplicate engine or link-only placeholder; USB settings header shows its selected port only.
@@ -2787,7 +2787,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `mobile/lib/table_workspace.dart:11 [UTF8-LF sha256=7a5deee08e0277ea316fdd04d9a3a1ffdc9896ff5f13745e751bdccde1544d91; anchor=class TableWorkspace]`.
 - Target: `mobile/lib/main.dart:760 [UTF8-LF sha256=9bc176417573adae2f604c9b23b3e8081f95b2da4775417adeee46bced1aeda1; anchor=Future<void> _saveWorkspaces()]`.
 - Target: `desktop/src/capabilities.rs:68 [UTF8-LF sha256=4e00d700f9487920daa1af0b468cd9c50d7005dc9d6c5b18983cb0dab7e16d88; anchor=pub struct Presentation]`.
-- Target: `desktop/src/ui/shell.rs:573 [UTF8-LF sha256=82d322a505b1619ab991e1359410d7fb0b5f4e740a8d0a2790c4ffde8dd00ffc; anchor=fn synchronize_context]`.
+- Target: `desktop/src/ui/shell.rs:573 [UTF8-LF sha256=bf60a12022503678b0b0f6133858a89080cb2a6ddcd2aa3409f2774e2e1ff8fa; anchor=fn synchronize_context]`.
 - Target: `desktop/src/ui/layout.rs:159 [UTF8-LF sha256=d368dc9cd57542eb9ff6170853619c79fc154f6d77a74be16db9c56fb9d4782c; anchor=presentation_context()]`.
 - Target: `desktop/src/native_workspace.rs:87 [UTF8-LF sha256=7b4cf18add15622b4f9f7d01217294efcc4c6e0cc87a4b69f08782a8905e025b; anchor=pub struct Store]`.
 - Target: `desktop/src/config.rs:170 [UTF8-LF sha256=a26a50528a05e9a176e463b15d500aff09db4cd45eaf957e9d5c66636b8dc7f0; anchor=pub native_workspaces]`.
