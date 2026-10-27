@@ -17,6 +17,10 @@ function render(){
   $('start').disabled=active||!state.enabled;$('restart').disabled=state.phase==='ready'||!state.enabled;$('stop').disabled=!active;
   $('pause').disabled=!active;$('pause').textContent=state.phase==='paused'?'▶ Resume':'Ⅱ Pause';$('board').disabled=active;
   $('boardSound').disabled=active;
+  $('heading').textContent={up:'↑',down:'↓',left:'←',right:'→'}[state.direction];
+  document.querySelectorAll('[data-direction]').forEach(button=>{
+    button.disabled=!active;button.classList.toggle('current',active&&button.dataset.direction===state.direction);
+  });
   $('restore').textContent=state.restoration?.message??'';
   $('soundWarning').textContent=state.soundWarning?`Board sound: ${state.soundWarning}`:'';
   for(const input of $('configuration').elements)input.disabled=active;
@@ -42,7 +46,12 @@ $('start').onclick=async()=>{error('');await audio.unlock().catch(()=>{});send('
 $('restart').onclick=async()=>{await audio.unlock().catch(()=>{});send('restart',{board:$('board').checked,boardSound:$('boardSound').checked});};$('stop').onclick=()=>send('stop',{runId:state.runId});
 $('appSound').onchange=()=>{audio.enabled=$('appSound').checked;if(audio.enabled)audio.unlock().catch(()=>{});};
 $('pause').onclick=()=>send(state.phase==='paused'?'resume':'pause');
-document.querySelectorAll('[data-direction]').forEach(b=>b.onclick=()=>send('direction',{value:b.dataset.direction}));
+function steer(direction){if(!editing&&['running','paused'].includes(state.phase))send('direction',{value:direction});}
+document.querySelectorAll('[data-direction]').forEach(b=>{
+  // Turn on contact, not finger release. Keep keyboard/assistive click support.
+  b.onpointerdown=e=>{if(e.button!==0||b.disabled)return;e.preventDefault();steer(b.dataset.direction);};
+  b.onclick=e=>{if(e.detail===0)steer(b.dataset.direction);};
+});
 $('settingsToggle').onclick=()=>{const open=$('settings').hidden;$('settings').hidden=!open;$('settingsToggle').setAttribute('aria-expanded',String(open));};
 $('showIds').onchange=()=>{localStorage.setItem('drs-snake-controls',JSON.stringify({showIds:$('showIds').checked}));paint();};
 $('edit').onclick=()=>{editing=!editing;$('edit').classList.toggle('editing',editing);$('edit').textContent=editing?'Finish editing':'Edit map';paint();};
@@ -57,9 +66,21 @@ canvas.onclick=e=>{
   if($('tile').value)map[id]=$('tile').value;else delete map[id];dirty=true;$('draft').textContent='Unapplied map';paint();
 };
 let touch;
-canvas.onpointerdown=e=>{touch={x:e.clientX,y:e.clientY};};
-canvas.onpointerup=e=>{if(!touch||editing)return;const dx=e.clientX-touch.x,dy=e.clientY-touch.y;touch=null;if(Math.max(Math.abs(dx),Math.abs(dy))<20)return;send('direction',{value:Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up'});};
-canvas.onpointercancel=()=>{touch=null;};
+canvas.onpointerdown=e=>{
+  if(editing||e.button!==0||touch)return;
+  touch={id:e.pointerId,x:e.clientX,y:e.clientY,direction:null};canvas.setPointerCapture(e.pointerId);
+};
+function swipe(e){
+  if(!touch||touch.id!==e.pointerId||editing)return;
+  const dx=e.clientX-touch.x,dy=e.clientY-touch.y;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<18)return;
+  const direction=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';
+  if(direction!==touch.direction){steer(direction);touch.direction=direction;}
+  touch.x=e.clientX;touch.y=e.clientY;
+}
+canvas.onpointermove=swipe;
+canvas.onpointerup=e=>{if(touch?.id!==e.pointerId)return;swipe(e);touch=null;canvas.releasePointerCapture(e.pointerId);};
+canvas.onpointercancel=canvas.onlostpointercapture=()=>{touch=null;};
 addEventListener('keydown',e=>{if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||e.repeat)return;const d={ArrowUp:'up',w:'up',ArrowDown:'down',s:'down',ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right'}[e.key];if(d){e.preventDefault();send('direction',{value:d});}else if(e.code==='Space'){e.preventDefault();$('pause').click();}});
 $('export').onclick=()=>{const blob=new Blob([JSON.stringify({map,options:state.options},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='drs-snake-map.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 $('import').onchange=async()=>{try{const file=$('import').files[0];if(!file)return;if(file.size>8192)throw Error('Map exceeds 8 KiB');const value=JSON.parse(await file.text());if(await send('configure',value)){map={...state.map};for(const id of ['interval','growth','seeds'])$(id).value=state.options[id];for(const id of ['autoplay','immortal'])$(id).checked=state.options[id];dirty=false;paint();}}catch(e){error(e.message);}finally{$('import').value='';}};

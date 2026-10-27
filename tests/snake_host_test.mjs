@@ -144,7 +144,10 @@ test('real loopback launcher serves inert UI, gates POST and controls host game'
   const app=await createSnakeServer({PresenterClass:NeverConnect});
   try{
     const root=new URL(app.url).origin;
-    assert.match(await fetch(app.url).then(r=>r.text()),/DRS Snake/);assert.equal(app.snapshot().phase,'ready');assert.equal(connected,0);
+    const page=await fetch(app.url).then(r=>r.text());
+    assert.match(page,/<h1>Snake<\/h1>/);assert.doesNotMatch(page,/DRS-jSnake|David Refoua/);
+    assert.match(page,/aria-label="Steering"/);assert.equal((page.match(/data-direction=/g)||[]).length,4);
+    assert.equal(app.snapshot().phase,'ready');assert.equal(connected,0);
     assert.equal((await fetch(root+'/api/snake',{method:'POST',body:'{}'})).status,403);
     const cmd=async body=>fetch(root+'/api/snake',{method:'POST',headers:{'X-Snake-Token':app.token},body:JSON.stringify(body)}).then(r=>r.json());
     assert.equal((await cmd({action:'start',board:false})).phase,'running');assert.equal((await cmd({action:'pause'})).phase,'paused');

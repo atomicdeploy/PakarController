@@ -7,8 +7,9 @@
 <section class="metrics" aria-label="Sound"><label><input type="checkbox" id="appSound" checked> Tablet sound</label><label><input type="checkbox" id="boardSound" checked> Board sound</label><span id="restore" role="status"></span><span id="soundWarning" role="status"></span></section>
 <section class="metrics" aria-label="Score"><span>Score <strong id="score">0</strong></span><span>Length <strong id="length">3</strong></span><span id="connection">Host display</span></section>
 <div id="error" role="alert" hidden></div>
-<section class="arena" aria-label="Snake table"><canvas id="canvas" width="1200" height="320" tabindex="0" aria-label="Snake playground. Arrow keys steer; Space pauses. Click tiles to edit a stopped map."></canvas></section>
-<section class="bottom"><div class="pad" aria-label="Directions"><button data-direction="up" aria-label="Up">↑</button><button data-direction="left" aria-label="Left">←</button><button data-direction="down" aria-label="Down">↓</button><button data-direction="right" aria-label="Right">→</button></div><label><input type="checkbox" id="showIds" checked> Cell numbers</label><span class="hint">Arrows / WASD · Space to pause</span></section>
+<div class="playfield"><section class="arena" aria-label="Snake table"><canvas id="canvas" width="1200" height="320" tabindex="0" aria-label="Snake playground. Swipe to steer; arrow keys also work. Click tiles to edit a stopped map."></canvas></section>
+<nav class="pad" aria-label="Steering"><button data-direction="up" aria-label="Turn up">↑</button><button data-direction="left" aria-label="Turn left">←</button><span id="heading" aria-hidden="true">→</span><button data-direction="right" aria-label="Turn right">→</button><button data-direction="down" aria-label="Turn down">↓</button></nav></div>
+<section class="bottom"><label><input type="checkbox" id="showIds" checked> Cell numbers</label><span class="hint">Swipe to steer · Arrows / WASD · Space to pause</span></section>
 <section id="settings" class="settings" hidden><h2>Game &amp; map</h2><form id="configuration"><div class="fields">
 <label>Step interval <span><input id="interval" type="number" min="80" max="2000" value="250"> ms</span></label>
 <label>Growth per seed <input id="growth" type="number" min="1" max="8" value="3"></label>
