@@ -23,6 +23,32 @@ RPC token. Do not expose it publicly by removing those checks. Up to eight brows
 controllers can observe the same game. Node owns simulation; browsers render it.
 Android can control that host, but does not yet run a standalone local Node host.
 
+### Tablet sound and exit safety
+
+The tablet has separate **Tablet sound** and **Board sound** controls. Start unlocks
+browser audio; merely opening or reconnecting stays silent. Start, food, collision,
+win, pause and resume have shared finite pitch/duration cues. Board cues use the
+existing peer-fenced WebSocket-first buzzer command and require acknowledged AVR
+buzzer support. Rejected/unconfirmed sound is shown, never replayed as another
+command. No mute preference is changed and no persistent melody is replaced.
+
+**Stop & restore** clears only this game's temporary layer, then reads it back.
+It never rewrites saved cell states, correction rules or the base scene. Browser
+exit also requests Stop with its round identifier; a delayed exit cannot stop a
+newer round. If the browser/host/network vanishes, observer timeout and the board
+lease expire instead. Restore confirmation is firmware state, not optical proof.
+
+For wireless tablet use, connect the tablet and host to the same LAN, authorize
+wireless ADB, and create the `reverse tcp:18490 tcp:18490` mapping on that wireless
+serial, not the USB serial. The ASUS host must remain awake. The mapping is not
+permanent across ADB restart/disconnection; recreate it when reconnecting.
+`/snake?board=1` selects the LED target but still does not start a game.
+
+The board must actually advertise `host-presentation` and provide
+`/api/presentation`; older deployed firmware without that API cannot safely play
+on the table. Do not substitute persistent cell writes or relax admission to
+make unsupported firmware appear ready.
+
 ### Hidden entry points
 
 * Rust source: `pakarcontroller.exe --snake`; existing typed IPC accepts

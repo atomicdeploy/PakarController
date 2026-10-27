@@ -9,7 +9,17 @@ import {Presenter} from './presenter.mjs';
 export async function createSnakeServer({port=0,origin='http://ledcontroller.local',enabled=true,PresenterClass=Presenter,Socket}={}) {
   const game=new Snake(),token=randomBytes(24).toString('hex'),clients=new Set();
   let presenter=null,busy=false,error='',timer=null,closed=false,boardOutput=false,lastObserver=0;
-  const snapshot=()=>({...game.snapshot(),enabled,error,boardOutput,board:presenter?.info()??null});
+  let runId=0,soundEvent=null,soundId=0,boardSound=true,soundWarning='',restoration=null;
+  const snapshot=()=>({...game.snapshot(),enabled,error,boardOutput,board:presenter?.info()??null,
+    runId,soundEvent,boardSound,soundWarning,restoration});
+  async function sound(name){
+    soundEvent={id:++soundId,name};publish();
+    if(presenter&&boardSound){try{await presenter.sound(name);soundWarning='';}
+      catch(e){soundWarning=e.message;}}
+  }
+  async function release(){const current=presenter;presenter=null;
+    if(current)try{restoration=await current.close();}
+      catch(e){restoration={restored:false,pending:true,message:'Release unconfirmed; temporary layer will expire'};throw e;}}
   const publish=()=>{const text='data: '+JSON.stringify(snapshot())+'\n\n';for(const client of clients){
     if(client.writableLength>65536){clients.delete(client);client.destroy();lastObserver=Date.now();}
     else client.write(text);
@@ -20,16 +30,20 @@ export async function createSnakeServer({port=0,origin='http://ledcontroller.loc
       try {
         // Loss of every controller ends the host lease, never runs forever unattended.
         if(!clients.size&&Date.now()-lastObserver>3000){await stop();return;}
+        const previousScore=game.score,previousPhase=game.phase;
         if(game.phase==='running')game.step();
         if(presenter){if(game.phase==='paused')await presenter.renew();else await presenter.frame(game.frame());}
-        if(['over','won'].includes(game.phase)){await presenter?.close();presenter=null;}
-      }catch(e){error=e.message;game.command('stop');await presenter?.close().catch(()=>{});presenter=null;}
+        if(['over','won'].includes(game.phase)&&previousPhase!==game.phase)await sound(game.phase);
+        else if(game.score>previousScore)await sound('eat');
+        if(['over','won'].includes(game.phase))await release();
+      }catch(e){error=e.message;game.command('stop');await release().catch(()=>{});}
       finally{busy=false;publish();schedule();}
     },game.phase==='paused'?900:game.options.interval);
   };
-  async function stop(){clearTimeout(timer);game.command('stop');await presenter?.close();presenter=null;}
+  async function stop(){clearTimeout(timer);game.command('stop');await release();}
   async function command(body){
     if(!enabled)throw Error('Snake disabled for this host');
+    if(body.action==='stop'&&body.runId!==undefined&&body.runId!==runId)throw Error('Retired game session');
     if(body.action==='direction'){game.turn(body.value);publish();return;}
     if(busy)throw Error('Previous action is still completing');busy=true;
     try{
@@ -44,12 +58,12 @@ export async function createSnakeServer({port=0,origin='http://ledcontroller.loc
         if(body.action==='restart')await stop();
         if(!['ready','stopped','over','won'].includes(game.phase))throw Error('Already active');
         // Output target can change only on an explicit Start/restart, never on open.
-        boardOutput=body.board===true;
+        boardOutput=body.board===true;boardSound=body.boardSound!==false;restoration=null;soundWarning='';runId++;
         if(boardOutput){presenter=new PresenterClass({origin,Socket});await presenter.connect();}
-        game.reset();game.command('start');if(presenter)await presenter.frame(game.frame());schedule();
+        game.reset();game.command('start');if(presenter)await presenter.frame(game.frame());await sound('start');schedule();
       }else if(body.action==='stop')await stop();
-      else {game.command(body.action,body.value);schedule();}
-    }catch(e){error=e.message;if(presenter?.uncertain||body.action==='start'||body.action==='restart'){game.command('stop');await presenter?.close().catch(()=>{});presenter=null;}throw e;}
+      else {const before=game.phase;game.command(body.action,body.value);if(before!==game.phase&&['pause','resume'].includes(body.action))await sound(body.action);schedule();}
+    }catch(e){error=e.message;if(presenter?.uncertain||body.action==='start'||body.action==='restart'){game.command('stop');await release().catch(()=>{});}throw e;}
     finally{busy=false;publish();}
   }
   const server=http.createServer(async(req,res)=>{
@@ -71,7 +85,7 @@ export async function createSnakeServer({port=0,origin='http://ledcontroller.loc
         let text='';for await(const part of req){text+=part;if(text.length>8192){res.writeHead(413).end();return;}}
         await command(JSON.parse(text));res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify(snapshot()));return;
       }
-      const assets={'/snake':'index.html','/snake/':'index.html','/':'index.html','/app.mjs':'app.mjs','/style.css':'style.css'};
+      const assets={'/snake':'index.html','/snake/':'index.html','/':'index.html','/app.mjs':'app.mjs','/sounds.mjs':'sounds.mjs','/style.css':'style.css'};
       if(req.method!=='GET'||!assets[url.pathname]){res.writeHead(404).end();return;}
       res.writeHead(200,{'Content-Type':url.pathname.endsWith('.mjs')?'text/javascript':url.pathname.endsWith('.css')?'text/css':'text/html; charset=utf-8'});
       res.end(await readFile(new URL(assets[url.pathname],import.meta.url)));

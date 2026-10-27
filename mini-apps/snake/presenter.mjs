@@ -2,6 +2,7 @@
 import {randomBytes} from 'node:crypto';
 import {deviceOrigin,deviceRequest} from '../../tools/check-ethernet-live.mjs';
 import {boardPeer,toolHeaders,toolReport} from '../../tools/peer-identity.mjs';
+import {cues} from './sounds.mjs';
 
 export class Presenter {
   constructor({origin,request=deviceRequest,Socket,environment=process.env,now=()=>performance.now()}={}) {
@@ -55,20 +56,20 @@ export class Presenter {
     });
   }
   info(){return {board_id:this.peer?.board,hostname:this.peer?.hostname,transport:this.socketReady?'WebSocket':'HTTP',active:!!this.lease,uncertain:this.uncertain};}
-  async send(fields) {
+  async send(fields,command='presentation') {
     if(this.busy||this.uncertain)throw Error('Presentation busy or outcome unknown; no replay');
     this.busy=true;
     try {
       if(!this.socketReady||this.now()-this.observed>1500){
         const next=(await this.read('/api/status')).value;boardPeer(next,this.peer.address,this.peer);this.status=next;this.observed=this.now();
       }
-      const packet={type:'command',command:'presentation',board_id:this.peer.board,boot_id:this.peer.boot,
+      const packet={type:'command',command,board_id:this.peer.board,boot_id:this.peer.boot,
         request_id:randomBytes(16).toString('hex'),expires_at_ms:this.status.command_clock_ms+Math.floor(this.now()-this.observed)+8000,
-        revision:this.layer.revision,group_layout_revision:this.groups.revision,owner:this.owner,
+        ...(command==='presentation'?{revision:this.layer.revision,group_layout_revision:this.groups.revision,owner:this.owner,
         lifetime:'temporary',ttl_ms:3000,space:'cells',composite:'replace',replace:true,
-        ...(this.lease?{lease_id:this.lease}:{}),...fields};
+        ...(this.lease?{lease_id:this.lease}:{})}:{}),...fields};
       if(Buffer.byteLength(JSON.stringify(packet))>4096)throw Error('Presentation exceeds command budget');
-      this.uncertain=true;let receipt;
+      if(command==='presentation')this.uncertain=true;let receipt;
       if(this.socketReady){
         receipt=await new Promise((resolve,reject)=>{
           const timer=setTimeout(()=>{this.pending=null;reject(Error('Command outcome unknown; no HTTP replay'));},2200);
@@ -76,7 +77,10 @@ export class Presenter {
           try{this.socket.send(JSON.stringify(packet));}catch(error){this.pending=null;clearTimeout(timer);reject(error);}
         });
       }else receipt=(await this.read('/api/command',{form:{packet:JSON.stringify(packet)}})).value;
-      if(receipt.board_id!==this.peer.board||receipt.boot_id!==this.peer.boot||receipt.request_id!==packet.request_id||receipt.accepted!==true||
+      if(receipt.board_id!==this.peer.board||receipt.boot_id!==this.peer.boot||receipt.request_id!==packet.request_id||receipt.accepted!==true)
+        throw Error(receipt.error??receipt.reason??'Command not acknowledged; no replay');
+      if(command!=='presentation')return receipt;
+      if(
         !Number.isSafeInteger(receipt.presentation?.revision)||receipt.presentation.revision<=this.layer.revision||
         (fields.action!=='clear'&&!(receipt.presentation.lease_id>0)))throw Error(receipt.error??'Presentation not acknowledged; no replay');
       this.layer=receipt.presentation;this.lease=fields.action==='clear'?null:this.layer.lease_id;this.uncertain=false;
@@ -85,5 +89,21 @@ export class Presenter {
   }
   frame(entries){return this.send({entries});}
   renew(){return this.send({entries:[],replace:false});}
-  async close(){try{if(this.lease&&!this.uncertain)await this.send({action:'clear'});}finally{this.socket?.close();this.socketReady=false;}}
+  async sound(name){
+    if(!cues[name])throw Error('Unknown sound cue');
+    if(!this.status.capabilities?.acknowledged_features?.includes('buzzer'))throw Error('Board buzzer is not acknowledged');
+    return this.send(cues[name],'buzzer');
+  }
+  async close(){
+    try{
+      if(this.uncertain)return {restored:false,pending:true,message:'Presentation expires within 3 seconds of its last accepted frame'};
+      if(this.lease){
+        await this.send({action:'clear'});
+        const current=(await this.read('/api/presentation')).value;
+        if(current.temporary)throw Error('Scene release not yet confirmed');
+        return {restored:true,pending:false,message:'Game layer released; board scene restored'};
+      }
+      return {restored:false,pending:false};
+    }finally{this.socket?.close();this.socketReady=false;}
+  }
 }

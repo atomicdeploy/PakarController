@@ -3,7 +3,8 @@
 <meta name="theme-color" content="#10171e"><title>DRS Snake · Pakar</title><link rel="icon" href="data:,"><link rel="stylesheet" href="/style.css">
 <body><main>
 <header><div class="mark" aria-hidden="true">↝</div><div><h1>DRS Snake</h1><p>Table playground</p></div><span id="phase" class="pill">Ready</span><button id="settingsToggle" aria-label="Game settings" aria-expanded="false">⚙</button></header>
-<section class="toolbar" aria-label="Game controls"><button id="start" class="primary">▶ Start</button><button id="pause" disabled>Ⅱ Pause</button><button id="restart" disabled>↻ Restart</button><button id="stop" disabled>■ Stop</button><label class="target"><input type="checkbox" id="board"> Present on LED table</label></section>
+<section class="toolbar" aria-label="Game controls"><button id="start" class="primary">▶ Start</button><button id="pause" disabled>Ⅱ Pause</button><button id="restart" disabled>↻ Restart</button><button id="stop" disabled>■ Stop &amp; restore</button><label class="target"><input type="checkbox" id="board"> Present on LED table</label></section>
+<section class="metrics" aria-label="Sound"><label><input type="checkbox" id="appSound" checked> Tablet sound</label><label><input type="checkbox" id="boardSound" checked> Board sound</label><span id="restore" role="status"></span><span id="soundWarning" role="status"></span></section>
 <section class="metrics" aria-label="Score"><span>Score <strong id="score">0</strong></span><span>Length <strong id="length">3</strong></span><span id="connection">Host display</span></section>
 <div id="error" role="alert" hidden></div>
 <section class="arena" aria-label="Snake table"><canvas id="canvas" width="1200" height="320" tabindex="0" aria-label="Snake playground. Arrow keys steer; Space pauses. Click tiles to edit a stopped map."></canvas></section>

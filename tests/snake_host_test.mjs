@@ -6,6 +6,41 @@ import {createSnakeServer} from '../mini-apps/snake/server.mjs';
 import {toolRelease} from '../tools/peer-identity.mjs';
 import {WebSocket,WebSocketServer} from '../services/client-management/node_modules/ws/wrapper.mjs';
 import {readFile} from 'node:fs/promises';
+import {cues,GameAudio} from '../mini-apps/snake/sounds.mjs';
+
+test('finite identical audio cues; constructing browser audio is silent',()=>{
+  const audio=new GameAudio();assert.equal(audio.context,null);audio.play('start');
+  for(const cue of Object.values(cues)){assert.ok(cue.frequency>=20&&cue.frequency<=12000);assert.ok(cue.duration_ms>0&&cue.duration_ms<=180);}
+});
+
+test('board sounds use peer-fenced command path without changing presentation ownership',async()=>{
+  const f=fixture();f.status.capabilities.acknowledged_features.push('buzzer');
+  const p=new Presenter({origin:'http://ledcontroller.local',request:f.request,environment:{}});
+  await p.connect();await p.frame([{id:1,rgb:0x00ff00}]);const lease=p.lease,revision=p.layer.revision;
+  await p.sound('eat');assert.equal(p.lease,lease);assert.equal(p.layer.revision,revision);
+  const packet=JSON.parse(f.calls.at(-1).options.form.packet);
+  assert.equal(packet.command,'buzzer');assert.equal(packet.frequency,cues.eat.frequency);
+  assert.equal(packet.duration_ms,cues.eat.duration_ms);assert.equal(packet.owner,undefined);
+  assert.equal((await p.close()).restored,true);
+});
+
+test('Stop releases only temporary layer; stale page exit cannot stop a newer round',async()=>{
+  let releases=0,frames=0,sounds=0;
+  class FakePresenter {
+    info(){return {hostname:'test'};} async connect(){} async frame(){frames++;}
+    async sound(){sounds++;} async close(){releases++;return {restored:true};}
+  }
+  const app=await createSnakeServer({PresenterClass:FakePresenter});
+  const cmd=async body=>fetch(new URL('/api/snake',app.url),{method:'POST',headers:{'X-Snake-Token':app.token},body:JSON.stringify(body)}).then(async r=>({status:r.status,body:await r.json()}));
+  try{
+    assert.equal(frames,0);assert.equal(sounds,0);
+    const first=await cmd({action:'start',board:true});assert.equal(first.body.phase,'running');
+    const stopped=await cmd({action:'stop',runId:first.body.runId});assert.equal(stopped.body.restoration.restored,true);assert.equal(releases,1);
+    const next=await cmd({action:'start',board:true,boardSound:false});assert.equal(sounds,1);
+    assert.equal((await cmd({action:'stop',runId:first.body.runId})).status,400);
+    assert.equal(app.snapshot().phase,'running');assert.equal(app.snapshot().runId,next.body.runId);
+  }finally{await app.close();}
+});
 
 test('80 table addresses are bijective and match staggered columns',()=>{
   const ids=new Set();for(let y=0;y<4;y++)for(let x=0;x<20;x++){const id=logicalCell(x,y);ids.add(id);assert.deepEqual(position(id),{x,y});}

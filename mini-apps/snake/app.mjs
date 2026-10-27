@@ -1,15 +1,24 @@
+import {GameAudio} from './sounds.mjs';
+const audio=new GameAudio();
 const $=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d');
 let state,token,map={},editing=false,dirty=false;
 const initial=await fetch('/api/session').then(r=>r.json());token=initial.token;state=initial;map={...state.map};
+let lastSound=initial.soundEvent?.id??0;
+// Configure a target on open, never acquire a board lease before explicit Start.
+$('board').checked=new URLSearchParams(location.search).get('board')==='1';
 try{const prefs=JSON.parse(localStorage.getItem('drs-snake-controls')??'{}');$('showIds').checked=prefs.showIds!==false;}catch{}
 function error(message){$('error').hidden=!message;$('error').textContent=message;}
 async function send(action,extra={}){try{const response=await fetch('/api/snake',{method:'POST',headers:{'Content-Type':'application/json','X-Snake-Token':token},body:JSON.stringify({action,...extra})});const result=await response.json();if(!response.ok)throw Error(result.error);state=result;render();return true;}catch(e){error(e.message);return false;}}
 function render(){
+  if(state.soundEvent&&state.soundEvent.id>lastSound){lastSound=state.soundEvent.id;audio.play(state.soundEvent.name);}
   $('phase').textContent=state.phase[0].toUpperCase()+state.phase.slice(1);$('score').textContent=state.score;$('length').textContent=state.body.length;
   $('connection').textContent=state.board?`${state.board.hostname} · ${state.board.transport}`:'Host display';
   const active=['running','paused'].includes(state.phase);
   $('start').disabled=active||!state.enabled;$('restart').disabled=state.phase==='ready'||!state.enabled;$('stop').disabled=!active;
   $('pause').disabled=!active;$('pause').textContent=state.phase==='paused'?'▶ Resume':'Ⅱ Pause';$('board').disabled=active;
+  $('boardSound').disabled=active;
+  $('restore').textContent=state.restoration?.message??'';
+  $('soundWarning').textContent=state.soundWarning?`Board sound: ${state.soundWarning}`:'';
   for(const input of $('configuration').elements)input.disabled=active;
   error(state.error??'');
   if(!dirty){
@@ -29,8 +38,9 @@ function paint(){
     if($('showIds').checked||tile){ctx.fillStyle=colors.has(id)?'#ffffff':'#9caebf';ctx.font='500 13px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(tile?({block:'×',detour1:'↱',detour2:'↰',reverse:'↶',teleport:'◎',switch:'⇄',potion:'◆'}[tile]):String(id),cx,cy);}
   }
 }
-$('start').onclick=()=>{error('');send('start',{board:$('board').checked});};
-$('restart').onclick=()=>send('restart',{board:$('board').checked});$('stop').onclick=()=>send('stop');
+$('start').onclick=async()=>{error('');await audio.unlock().catch(()=>{});send('start',{board:$('board').checked,boardSound:$('boardSound').checked});};
+$('restart').onclick=async()=>{await audio.unlock().catch(()=>{});send('restart',{board:$('board').checked,boardSound:$('boardSound').checked});};$('stop').onclick=()=>send('stop',{runId:state.runId});
+$('appSound').onchange=()=>{audio.enabled=$('appSound').checked;if(audio.enabled)audio.unlock().catch(()=>{});};
 $('pause').onclick=()=>send(state.phase==='paused'?'resume':'pause');
 document.querySelectorAll('[data-direction]').forEach(b=>b.onclick=()=>send('direction',{value:b.dataset.direction}));
 $('settingsToggle').onclick=()=>{const open=$('settings').hidden;$('settings').hidden=!open;$('settingsToggle').setAttribute('aria-expanded',String(open));};
@@ -55,4 +65,11 @@ $('export').onclick=()=>{const blob=new Blob([JSON.stringify({map,options:state.
 $('import').onchange=async()=>{try{const file=$('import').files[0];if(!file)return;if(file.size>8192)throw Error('Map exceeds 8 KiB');const value=JSON.parse(await file.text());if(await send('configure',value)){map={...state.map};for(const id of ['interval','growth','seeds'])$(id).value=state.options[id];for(const id of ['autoplay','immortal'])$(id).checked=state.options[id];dirty=false;paint();}}catch(e){error(e.message);}finally{$('import').value='';}};
 addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
 const events=new EventSource('/api/events');events.onmessage=e=>{state=JSON.parse(e.data);if(!dirty)map={...state.map};render();};events.onerror=()=>error('Host connection lost. Board presentation expires automatically.');
+addEventListener('pagehide',()=>{
+  events.close();
+  if(['running','paused'].includes(state.phase))fetch('/api/snake',{method:'POST',keepalive:true,
+    headers:{'Content-Type':'application/json','X-Snake-Token':token},body:JSON.stringify({action:'stop',runId:state.runId})}).catch(()=>{});
+});
+// BFCache must create a fresh observer; it must never resume a stopped game.
+addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
 render();
