@@ -16,6 +16,16 @@ Widget hardware(DeviceStatus? status, [PanelInventory? inventory]) =>
       ),
     );
 
+Future<void> expandCapabilities(WidgetTester tester) async {
+  await tester.scrollUntilVisible(
+    find.text('Capabilities'),
+    150,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.tap(find.text('Capabilities'));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -31,7 +41,7 @@ void main() {
       ),
     );
     expect(find.text('Table board'), findsOneWidget);
-    expect(find.text('ledboard.local'), findsOneWidget);
+    expect(find.text('ledboard'), findsOneWidget);
     expect(find.byType(Chip), findsNothing);
     expect(find.text('Acknowledged capabilities'), findsNothing);
     expect(find.text('Capabilities'), findsNothing);
@@ -42,6 +52,7 @@ void main() {
   ) async {
     final status = peerFixture();
     await tester.pumpWidget(hardware(status));
+    await expandCapabilities(tester);
     expect(find.text('Capabilities'), findsOneWidget);
     expect(find.byType(Chip), findsNWidgets(status.peer.features.length));
     for (final feature in status.peer.features) {
@@ -67,6 +78,7 @@ void main() {
       await tester.tap(find.text('Hardware').last);
       await tester.pump();
       expect(find.text('Capabilities'), findsOneWidget);
+      await expandCapabilities(tester);
       expect(find.byKey(const ValueKey('capability:identity')), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await tester.pump();
@@ -82,6 +94,7 @@ void main() {
       );
       final inventory = PanelInventory()..observe(status);
       await tester.pumpWidget(hardware(status, inventory));
+      await expandCapabilities(tester);
       final chip = find.byKey(const ValueKey('capability:inputs'));
       double opacity() => tester
           .widget<Opacity>(
@@ -142,6 +155,11 @@ void main() {
           ),
         );
         await tester.pump();
+        await tester.scrollUntilVisible(
+          find.text('Capabilities'),
+          150,
+          scrollable: find.byType(Scrollable).first,
+        );
         expect(find.text('Capabilities'), findsOneWidget);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());

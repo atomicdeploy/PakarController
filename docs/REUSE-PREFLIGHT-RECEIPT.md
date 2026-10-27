@@ -2,6 +2,21 @@
 
 ## GitHub handoff consolidation and CI repair
 
+Follow-through found two genuine mobile lifecycle gaps among the stale fixtures:
+missing critical board identity could be rejected by hostname validation before
+retiring captured firmware owners, and the new zoom/pan viewport was not part of
+the existing durable workspace snapshot. Identity validation now retires malformed
+peers without accepting an unverified hostname; viewport drafts restore before
+their listener joins the existing coalesced writer. No device command is replayed.
+Existing lifecycle tests now inspect the actual viewport instead of removed
+horizontal scroll widgets. Remaining fixture changes target Output controls in
+their own panel, explicitly expand Hardware capabilities, use current build
+identity, semantic Lost state and Cancel connection during an unfinished scan.
+Workflow PR21 was locally merged into the integration branch after complete diff
+and conversation review; pinned action patch/minor updates retain permissions and
+trust boundaries. Its changed workflow hashes were reviewed and rebound. Tests
+for this follow-through are in progress, not yet a green exact-head claim.
+
 User explicitly requested preserving and publishing all mixed source and merging
 ready PRs for pull-based handoff. Inventoried index/worktree/branches/stashes
 before mutation: one branch, no stashes/worktrees beyond this checkout. Preserved

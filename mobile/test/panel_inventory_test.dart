@@ -84,7 +84,11 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Table').last);
       await tester.pumpAndSettle();
-      expect(find.widgetWithText(ChoiceChip, 'First wins'), findsOneWidget);
+      expect(
+        find.widgetWithText(ChoiceChip, 'First wins'),
+        findsNothing,
+        reason: 'Game modes belong to the Output panel, not Table',
+      );
       final findCell = find.widgetWithText(TextField, 'Find logical cell');
       await tester.enterText(findCell, '1,80');
       await tester.pumpAndSettle();
@@ -175,21 +179,12 @@ void main() {
       expect(tester.element(find.byType(TablePage)), same(page));
       expect(tester.getRect(findCell), bounds);
       expect(tester.widget<TextField>(findCell).controller!.text, '1-3');
-      expect(find.text('LED output service'), findsOneWidget);
       expect(
-        tester
-            .widget<SwitchListTile>(
-              find.widgetWithText(SwitchListTile, 'LED output service'),
-            )
-            .onChanged,
-        isNull,
+        find.text('LED output service'),
+        findsNothing,
+        reason: 'Output controls are not duplicated inside Table',
       );
-      expect(
-        tester
-            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Cells'))
-            .onSelected,
-        isNull,
-      );
+      expect(find.widgetWithText(ChoiceChip, 'Cells'), findsNothing);
       expect(api.writes, 0);
       await tester.pumpWidget(const SizedBox());
       await tester.pump();

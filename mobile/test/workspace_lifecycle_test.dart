@@ -301,10 +301,10 @@ void main() {
       workspace.pageScroll.jumpTo(
         workspace.pageScroll.position.maxScrollExtent - 10,
       );
-      workspace.tableScroll.jumpTo(320);
+      workspace.viewport.change(2, const Offset(-80, 0));
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
-      final y = workspace.pageScroll.offset, x = workspace.tableScroll.offset;
+      final y = workspace.pageScroll.offset, x = workspace.viewport.pan.dx;
       final prefs = await SharedPreferences.getInstance();
       final cache = jsonDecode(prefs.getString('table_workspaces')!) as Map;
       final saved = (cache['boards'] as Map)['board-A'] as Map;
@@ -314,7 +314,7 @@ void main() {
       expect(saved['multiple'], true);
       expect(saved['effect'], 'fade');
       expect(saved['vertical'], y);
-      expect(saved['horizontal'], x);
+      expect(saved['viewport'], {'zoom': 2.0, 'x': x, 'y': 0.0});
       // No pause callback: model an OS kill after the latest autosave.
       await tester.pumpWidget(const SizedBox());
       await tester.pump();
@@ -332,7 +332,8 @@ void main() {
       expect(restored.selection, {1, 2, 3, 80});
       expect(queryText(tester), '1-3, 80');
       expect(restored.pageScroll.offset, y);
-      expect(restored.tableScroll.offset, x);
+      expect(restored.viewport.pan.dx, x);
+      expect(restored.viewport.zoom, 2);
       expect(selected(tester, 80), true);
       expect(api.writes + next.writes, 0);
       await tester.pumpWidget(const SizedBox());
@@ -440,15 +441,14 @@ void main() {
           )
           .controller!;
       final horizontal = tester
-          .widget<SingleChildScrollView>(
-            find.byKey(const ValueKey('table-cell-scroll')),
-          )
-          .controller!;
+          .widget<TablePage>(find.byType(TablePage))
+          .workspace!
+          .viewport;
       vertical.jumpTo(vertical.position.maxScrollExtent - 10);
-      horizontal.jumpTo(320);
+      horizontal.change(2, const Offset(-80, 0));
       await tester.pumpAndSettle();
       final y = vertical.offset,
-          x = horizontal.offset,
+          x = horizontal.pan.dx,
           bounds = tester.getRect(canvas);
       final reads = api.reads,
           maps = api.mappingReads,
@@ -474,7 +474,7 @@ void main() {
       api.updates.add(api.observed);
       await tester.pumpAndSettle();
       expect(vertical.offset, y);
-      expect(horizontal.offset, x);
+      expect(horizontal.pan.dx, x);
       expect(tester.getRect(canvas), bounds);
       expect(queryText(tester), '1-3,80');
       expect(selected(tester, 2), true);

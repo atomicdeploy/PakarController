@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pakarcontroller/main.dart';
+import 'package:pakarcontroller/output_panel.dart';
 import 'package:pakarcontroller/models.dart';
 
 import 'peer_fixture.dart';
@@ -82,9 +82,10 @@ void main() {
       Future<void> render(DeviceStatus? status) => tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TablePage(
+            body: OutputPanel(
+              connected: true,
+              openDiagnostics: () {},
               status: status,
-              mapping: CellMap.defaults(),
               command: (path, [values = const {}]) async {},
             ),
           ),
@@ -114,9 +115,10 @@ void main() {
     Future<void> render(bool enabled) => tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: TablePage(
+          body: OutputPanel(
+            connected: true,
+            openDiagnostics: () {},
             status: observedOutput({'enabled': enabled}),
-            mapping: CellMap.defaults(),
             command: (path, [values = const {}]) async {
               writes.add((path, Map.of(values)));
               await ack.future;
@@ -159,9 +161,10 @@ void main() {
     Future<void> render(String mode) => tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: TablePage(
+          body: OutputPanel(
+            connected: true,
+            openDiagnostics: () {},
             status: observedOutput({'enabled': false, 'mode': mode}),
-            mapping: CellMap.defaults(),
             command: (path, [values = const {}]) async {
               writes.add((path, Map.of(values)));
               await ack.future;
@@ -189,7 +192,7 @@ void main() {
     await render('effects');
     expect(chip('Effects').selected, true);
     await render('static');
-    final rainbow = find.widgetWithText(OutlinedButton, 'Rainbow test');
+    final rainbow = find.text('Rainbow test');
     await tester.ensureVisible(rainbow);
     await tester.tap(rainbow);
     await tester.pump();

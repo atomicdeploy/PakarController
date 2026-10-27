@@ -82,6 +82,17 @@ class TableWorkspace extends ChangeNotifier {
         : 0;
     vertical = offset(saved['vertical']);
     horizontal = offset(saved['horizontal']);
+    final view = section('viewport');
+    double finite(Object? value, double fallback) =>
+        value is num && value.isFinite ? value.toDouble() : fallback;
+    viewport.change(
+      finite(view['zoom'], 1),
+      Offset(
+        finite(view['x'], 0).clamp(-100000, 100000),
+        finite(view['y'], 0).clamp(-100000, 100000),
+      ),
+    );
+    viewport.addListener(notifyListeners);
     pageScroll = _RetainedScrollController(initialOffset: vertical)
       ..addListener(() {
         if (pageScroll.hasClients && vertical != pageScroll.offset) {
@@ -210,6 +221,11 @@ class TableWorkspace extends ChangeNotifier {
     },
     'vertical': vertical,
     'horizontal': horizontal,
+    'viewport': {
+      'zoom': viewport.zoom,
+      'x': viewport.pan.dx,
+      'y': viewport.pan.dy,
+    },
     'pixel_diagnostic': pixels.snapshot(),
     'front_panel': frontPanel.snapshot(),
     'settings': settings.snapshot(),

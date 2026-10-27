@@ -210,7 +210,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Disconnect'));
+      await tester.tap(find.byTooltip('Cancel connection'));
       await tester.pump();
       pending.complete([available]);
       await tester.pumpAndSettle();

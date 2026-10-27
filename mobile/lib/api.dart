@@ -1825,6 +1825,10 @@ class PakarApi {
       rethrow;
     }
     if (sequence != _statusReadSequence) throw const SupersededRead();
+    // Invalid critical identity must retire captured owners even when hostname
+    // validation would reject the same response first. Never accept the peer
+    // before the requested-host check below.
+    _validateIdentity(result.json);
     if (!_matchesLocalIdentity(result.json)) {
       throw const FormatException(
         'Device identity does not match the requested hostname',
@@ -1840,8 +1844,7 @@ class PakarApi {
 
   // Adapt Session's synchronous retirement boundary: retire captured owners
   // before a new board/boot may authorize any old dialog or in-flight request.
-  bool _acceptIdentity(Map<String, dynamic> value) {
-    _checkPeerVersion(value);
+  void _validateIdentity(Map<String, dynamic> value) {
     final board = value['board_id'], boot = value['boot_id'];
     bool identity(Object? v) =>
         v is String && RegExp(r'^[!-~]{1,80}$').hasMatch(v);
@@ -1855,6 +1858,14 @@ class PakarApi {
       }
       throw const StaleConnection();
     }
+  }
+
+  bool _acceptIdentity(Map<String, dynamic> value) {
+    _checkPeerVersion(value);
+    _validateIdentity(value);
+    final board = value['board_id'], boot = value['boot_id'];
+    bool identity(Object? v) =>
+        v is String && RegExp(r'^[!-~]{1,80}$').hasMatch(v);
     final changed =
         _verifiedBoard != null &&
         (board != _verifiedBoard || boot != _verifiedBoot);

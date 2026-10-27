@@ -141,7 +141,7 @@ void main() {
           contains('PakarController/0.2.8'),
         );
         expect(request.headers['X-Pakar-Version'], '0.2.8');
-        expect(request.headers['X-Pakar-Build'], '15');
+        expect(request.headers['X-Pakar-Build'], PeerIdentity.current.build);
         expect(request.headers.containsKey('X-Pakar-Client-Build'), isFalse);
         expect(request.headers['X-Pakar-Client'], 'pakarcontroller-mobile');
         expect(
@@ -191,7 +191,10 @@ void main() {
         request.headers.value('x-pakar-client-session'),
         PeerIdentity.current.sessionId,
       );
-      expect(request.headers.value('x-pakar-build'), '15');
+      expect(
+        request.headers.value('x-pakar-build'),
+        PeerIdentity.current.build,
+      );
       expect(request.headers.value('x-pakar-client-build'), isNull);
       actualClientIp = request.connectionInfo?.remoteAddress.address;
       socket = await WebSocketTransformer.upgrade(request);
@@ -239,7 +242,10 @@ void main() {
         request.response.write(jsonEncode(board(policy: peerCompatibility())));
       } else {
         expect(request.uri.path, '/api/clients/report');
-        expect(request.headers.value('x-pakar-build'), '15');
+        expect(
+          request.headers.value('x-pakar-build'),
+          PeerIdentity.current.build,
+        );
         final form = Uri.splitQueryString(
           await utf8.decoder.bind(request).join(),
         );
