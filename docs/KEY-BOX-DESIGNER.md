@@ -37,3 +37,10 @@ hover geometry, disabled actions, phone large text, tablet rendering, held-input
 serialization, stale-peer action sheets, and existing OutputPanel controls.
 Renderer captures use synthetic board frames; deployed app screenshots and
 actual hardware feedback remain separate evidence.
+
+The 2026-10-28 tablet delivery uses source checkpoint `bf158e3` and APK SHA256
+`e347a2c9f3d2e733d118c349ff48301185f1b363477ae4d0c817928b0b9841cd`.
+The SM-X906B installed base.apk hash matches. The running connected Game studio
+and Arrange modes were captured and visually inspected. Arrange was opened and
+closed without moving boxes or sending game commands. Wireless ADB responded.
+The board's physical game feedback remains David's acceptance step.
