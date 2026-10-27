@@ -90,8 +90,42 @@ This is compile-time usage, not measured runtime heap or optical/audio proof.
 | Flutter APK | `4f772a3d31433a710a52c12cdf631f6419c8d299d56491552a7312bed88e91b6` |
 | Rust Windows EXE | `883f25c7ca51d30cfa70867335c75e1925bc29bd50a54f834013e43facef5225` |
 
-No candidate in this checkpoint has been deployed. Preserve current settings,
+At that candidate checkpoint, none had been deployed. Preserve current settings,
 backup and board identity; verify the connected hardware profile before flashing.
 These local builds used the shared checkout with optional SSH disabled. The
 minigame source commit excludes concurrent SSH work; rebuild the exact approved
 deployment source/profile before claiming package-to-commit identity.
+
+### Paired deployment (2026-10-28)
+
+The inventoried keycontroller received the current first-wins build over local
+Wi-Fi OTA. The initial updater readback timed out; no second flash was issued.
+A separate complete running-image download verified SHA-256
+`fe15419230b3b013d86a1a6411fc5c480c384592d68eb697f95ea0c04408f4d1`
+(2,347,808 bytes). The previous image was downloaded and verified first. The
+deployment retained its six enabled boxes, GPIO-static default, both compiled LED
+backends, Ethernet support, disabled BLE and acknowledged AVR programming profile.
+This profile-specific build includes the shared checkout's concurrent guarded
+shell changes with SSH disabled; it is not an exact clean-commit attestation.
+
+AVR image `6a339b07d249890ba90a8d519edf5f1e12a4e584ec5559ecaa899af31ed4c292`
+completed the Urboot maintenance job with full flash and EEPROM readback,
+`programmed`, `verified` and `application_recovered` all true. The job preserved
+EEPROM and did not write fuses or bootloader bytes. Its pre-write backups remain
+under the request-specific Urboot backup directory.
+
+The APK and Windows executable from the candidate table above are installed on
+the SM-X906B tablet and David-ASUS respectively. Rust replacement preserved the
+previous executable and saved preferences. Both running apps were inspected via
+screenshots: Flutter exposes Game mode and controls; Rust exposes the Keys game
+controls with live WebSocket state. Wireless ADB to the tablet also responded.
+The board advertised all ten modes, acknowledged AVR output ownership, and
+reported Ready in Press to win with enabled mask 63 after the paired update.
+
+David then began interactive testing and changed the game state. The unattended
+smoke-test precondition correctly refused to overwrite that state; no test
+commands were sent. Physical acceptance for each mode, audio/effect timing,
+display, outputs and reconnect remains open. A native event also showed a failed
+runtime LED-backend switch (error 258, GPIO-static retained); that is an open
+observation, not a successful RMT switch. Do not reset or change the mode while
+David is testing without coordinating first.
