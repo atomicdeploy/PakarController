@@ -314,6 +314,13 @@ void main() {
       final center = tester.getCenter(
         find.byKey(const Key('table-viewport-gestures')),
       );
+      // Losing the arena to the enclosing page retires that pointer. A later
+      // single-finger hold must not be mistaken for a two-finger gesture.
+      await tester.dragFrom(center, const Offset(0, -60));
+      await tester.pumpAndSettle();
+      expect(scroll.offset, greaterThan(0));
+      scroll.jumpTo(0);
+      await tester.pump();
       await tester.longPressAt(center);
       expect(holds, 1);
       expect(taps, 0);

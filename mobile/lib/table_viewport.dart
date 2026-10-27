@@ -57,6 +57,14 @@ class _TableScaleRecognizer extends ScaleGestureRecognizer {
       pointers.remove(event.pointer);
     }
   }
+
+  @override
+  void rejectGesture(int pointer) {
+    // The SDK stops routing this pointer after rejection, so an eventual Up
+    // cannot clear our set. Never let a prior page drag count as finger two.
+    pointers.remove(pointer);
+    super.rejectGesture(pointer);
+  }
 }
 
 class _TableViewportState extends State<TableViewport>

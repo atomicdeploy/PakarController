@@ -42,6 +42,8 @@ upgrade. This is a compatibility deferral, not a toolchain/MSRV limitation.
 
 - Flutter analyzer clean; 84 focused widget/model tests, 5 actual local
   WebSocket/HTTP transport tests and 2 USB correction transport tests passed.
+  Final pointer-retirement repair additionally passed all 7 viewport tests;
+  the Android candidate below includes that repair.
 - Native canonical Check/Release passed; 18 correction and 10 realtime tests
   passed. The latter includes the AVR fast-command test.
 - Canonical LED pipeline, audio, USB API/receipt and host-presentation tests
@@ -58,7 +60,7 @@ upgrade. This is a compatibility deferral, not a toolchain/MSRV limitation.
 | `build/esp32s3-buffered/esp32s3.ino.bin` | `9920bc9de5d07f8cd8dec169bd707d15eecdc8ced5f9e4fe73ff2447e7c3c755` |
 | `build/avr-buffered/avr.ino.with_bootloader.bin` | `15874f171a62eb39ce4acee55cdd732c06a3f57180dcbe3eb96cbd01e1701d5f` |
 | `desktop/target/release/pakarcontroller.exe` | `4ec7b28d21f3f9d4e5d8208456b15b5d8edfdc07018fdf6c867b3ab28612823d` |
-| `mobile/build/app/outputs/flutter-apk/app-release.apk` | `04845878967d25dfcb0323996cd992bf6e01331bd5a0fe8ad2437806158b50e1` |
+| `mobile/build/app/outputs/flutter-apk/app-release.apk` | `81006c55469a7d97f8055d73b9ec3ba949257cf16bdba51b07fc81f20c053ba5` |
 
 S3 candidate: table-selection, buffered UART, 16 MB flash/OPI PSRAM, GPIO4,
 both LED backends/GPIO default, BLE disabled, Ethernet included, ISP included,

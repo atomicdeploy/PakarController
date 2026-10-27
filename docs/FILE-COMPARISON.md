@@ -2466,7 +2466,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `desktop/src/usb_table.rs:735 [UTF8-LF sha256=13c191e37a4a881d96fb668c0ccb99fa2f168955e6abb78bb37940a629434042; anchor=fn compact_usb_readback_validates_all_values_without_renewing_full_observations()]`.
 - Test-code evidence: `desktop/src/usb_table.rs:1411 [UTF8-LF sha256=13c191e37a4a881d96fb668c0ccb99fa2f168955e6abb78bb37940a629434042; anchor=fn actual_usb_worker_windows_read_latency_does_not_expire_large_capture]`.
 - Test-code evidence: `tests/ble_wire_test.cpp:15 [UTF8-LF sha256=bf5675db9debf06160e8ef72d59e7c764bc3f88cde508cfcbb32a989f004c34e; anchor=int main()]`.
-- Test-code evidence: `tests/ble_firmware_test.mjs:109 [UTF8-LF sha256=4ac033c437cc296bab12e6921e5ec237768c477941e34e73d8c7ca362314291f; anchor=BLE firmware integration source guards]`.
+- Test-code evidence: `tests/ble_firmware_test.mjs:124 [UTF8-LF sha256=8359be8eb6c8d752a3db69ccba881a548428fd26b0ba2a1e189c2ec8058997bc; anchor=BLE firmware integration source guards]`.
 - Test-code evidence: `tests/ble_storage_test.cpp:51 [UTF8-LF sha256=22f4c0e4fc0846492ddaa6c04a01e113ace607d86e9edeac1d2c69b8ee46a349; anchor=Do not retain an internal bulk-buffer fallback]`.
 - Test-code evidence: `tests/ble_storage_stubs/esp_heap_caps.h:18 [UTF8-LF sha256=f6ff5f7843125cd7e780df39fd9d31006af9ef23070641ec580288235750365c; anchor=assert(capabilities==(MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT))]`.
 - Test-code evidence: `services/remote-panel/gateway.test.mjs:87 [UTF8-LF sha256=2fdbab7b76e05249f07d126b9f655a4ff909a59291ec924d8eb2b6ec4f8455f6; anchor=Real HTTP mutation receives one board ACK/readback]`.
@@ -3907,7 +3907,7 @@ Verdict: **equivalent-behavior**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1c
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `1910311a3acba2f1d22d9d4fb57d43e08bcf6ee91f3ea567e381ae90e8a487cd`.
 
 - Target: `web/modules/table-layout.js:7 [UTF8-LF sha256=30162a2894f72d2467b34fc2cb3e682e09b4da0a1b252ccf6579a25273b53542; anchor=function zoomAt]`.
-- Target: `mobile/lib/table_viewport.dart:150 [UTF8-LF sha256=77f4e8a580a9f0b06229e09823f4a2ca488c3103246edb78c711555b57cda53a; anchor=void zoomAt]`.
+- Target: `mobile/lib/table_viewport.dart:158 [UTF8-LF sha256=d7fe024ea911c1610e36e88a8a1fc412e0b95c615584ebb30322d5870ee032a7; anchor=void zoomAt]`.
 - Target: `desktop/src/ui/shell.rs:407 [UTF8-LF sha256=18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0; anchor=egui::Scene::new()]`.
 - Retained: Read complete donor. Adapted exponential wheel zoom and pointer-anchor equation to two dimensions and fit-relative 0.5-8x scale. Flutter and canonical Web use this math; Rust uses the locked egui Scene implementation with matching anchor semantics and transformed hit testing. Fit follows the dock or client viewport; telemetry does not reset manual zoom.
 - Retained: Web presentation checkpoint reread the complete actual timelineWheel.ts dependency. The current table-layout attach changes only Fit/zoom button glyphs, translated captions and accessible names; zoomAt mathematics, gesture ownership and view persistence are unchanged. The target reference is rebound for that reviewed presentation change without claiming new zoom behavior or physical gesture acceptance.
@@ -3915,7 +3915,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Omitted/replaced code: `sequenceWheelNavigation time scale, duration and track gutter`. Disposition: **not-applicable**. Reason: The controller table is a fixed spatial cell canvas, not a media sequence.
 - Omitted/replaced code: `Configurable plain, Shift and Alt wheel policies and physical horizontal modifier precedence`. Disposition: **pending**. Reason: Flutter now routes plain wheel to canvas panning while zoomed and Shift-wheel swaps axes; fitted view preserves ordinary page scrolling. Shared configurable plain/Shift/Alt policies and full physical-horizontal modifier precedence across clients remain unfinished; native Scene also supports trackpad pan.
 - Test-code evidence: `tests/table_zoom_test.mjs:7 [UTF8-LF sha256=0d7b5629ce4967cdfad392d035e6bc8617876da1824326115c1604a0b1d66048; anchor=for(const factor]`.
-- Test-code evidence: `mobile/test/table_viewport_test.dart:244 [UTF8-LF sha256=dc0fc929261ad8b0db1abe7e80de437d0a1cb3b322a7cfe6e5c9b1c4bf609269; anchor=Pinch zoom]`.
+- Test-code evidence: `mobile/test/table_viewport_test.dart:244 [UTF8-LF sha256=a68444f3d21c88ba16651920f6c22cb496cad082d609d69b59a66258a1ceb9b0; anchor=Pinch zoom]`.
 - Remaining: Issue #3: source tests do not certify deployed clients or real touch hardware. Preserve primary selection and order-edit ownership; verify native trackpad, tablet pinch and browser pointer behavior on installed clients.
 
 ### Pealayer: `web_ui/src/webPlatform.ts`

@@ -888,7 +888,7 @@
         {
           "path": "mobile/lib/table_viewport.dart",
           "anchor": "void zoomAt",
-          "sha256": "77f4e8a580a9f0b06229e09823f4a2ca488c3103246edb78c711555b57cda53a"
+          "sha256": "d7fe024ea911c1610e36e88a8a1fc412e0b95c615584ebb30322d5870ee032a7"
         },
         {
           "path": "desktop/src/ui/shell.rs",
@@ -905,7 +905,7 @@
         {
           "path": "mobile/test/table_viewport_test.dart",
           "anchor": "Pinch zoom",
-          "sha256": "dc0fc929261ad8b0db1abe7e80de437d0a1cb3b322a7cfe6e5c9b1c4bf609269"
+          "sha256": "a68444f3d21c88ba16651920f6c22cb496cad082d609d69b59a66258a1ceb9b0"
         }
       ],
       "omissions": [
@@ -14770,7 +14770,7 @@
         {
           "path": "tests/ble_firmware_test.mjs",
           "anchor": "BLE firmware integration source guards",
-          "sha256": "4ac033c437cc296bab12e6921e5ec237768c477941e34e73d8c7ca362314291f"
+          "sha256": "8359be8eb6c8d752a3db69ccba881a548428fd26b0ba2a1e189c2ec8058997bc"
         },
         {
           "path": "tests/ble_storage_test.cpp",
