@@ -32,3 +32,5 @@ if($LASTEXITCODE){throw 'Shell mDNS fixture failed'}
 if($LASTEXITCODE){throw 'Actual shell service lease fixture failed'}
 & node (Join-Path $taskRoot 'tests/portable_shell_source_test.mjs')
 if($LASTEXITCODE){throw 'Portable-shell source inventory fixture failed'}
+& node (Join-Path $taskRoot 'tests/telnet_client_test.mjs')
+if($LASTEXITCODE){throw 'TCP terminal loopback fixture failed'}

@@ -33,6 +33,38 @@ mutation. There is still only one device shell, reached via existing Telnet or
 owned binary USB shell envelopes (`tools/device-shell.ps1`); no raw serial escape,
 new unauthenticated UDP listener, blocking network loop or second API is added.
 
+## Donor stubs have real owners, not placeholder substitutes
+
+| Donor gap | Actual implementation | Verification |
+|---|---|---|
+| Serial init always returns -1 | `ShellWire.h`, `handleShellFrame`, `tools/device-shell.ps1` | Boot/owner token, sequence deduplication, output ACK and lease fixtures |
+| stdio initializer declared but absent | `tools/telnet-shell.mjs` and USB client's Console input/output | Actual TCP/stdin loopback tests, interactive raw-mode cleanup |
+| Telnet sample never binds or accepts | `serviceDeviceShells` | Production initializer/service compiled with two-client socket doubles |
+| edit only prints and spins | `ShellTui.h` and `ShellTuiBinding.h` | Edit, submit, cancel, read-only, hidden secret and stale-field tests |
+| Tab only rings bell | `LineEditor::complete` and command/property catalogue | Unique/ambiguous/property completion, bounds and password isolation |
+
+Network terminal (Node, Windows/Linux/macOS):
+```sh
+node tools/telnet-shell.mjs --host ledcontroller.local
+node tools/telnet-shell.mjs --host ledcontroller.local --execute "status"
+```
+USB terminal (PowerShell, existing framed transport):
+```powershell
+./tools/device-shell.ps1 -Port COM24
+./tools/device-shell.ps1 -Port COM24 -Execute 'status'
+```
+These are explicit example destinations, not automatic connection or verified
+currently attached ports. Interactive network mode accepts the board's password
+prompt without local echo. Batch mode refuses an authentication prompt without
+sending the command. A returned prompt is terminal completion, not a hardware ACK.
+Timeout/disconnection is reported as uncertain and never replays the command.
+The TCP client handles fragmented Telnet negotiation, socket/stdout backpressure,
+bounded connection/command deadlines and restoration of terminal state.
+
+No UDP command shell is exposed: the donor's broken UDP reply implementation is
+not a safe authentication/ownership protocol. Existing Pakar UDP discovery is
+unchanged; a dedicated UDP command transport is not claimed by this integration.
+
 ## Source comparison findings
 
 - Donor serial functions are stubs; the telnet example neither binds nor accepts.

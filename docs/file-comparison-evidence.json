@@ -17,7 +17,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
         }
       ],
       "proof": [
@@ -52,7 +52,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
         }
       ],
       "proof": [
@@ -92,7 +92,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
         }
       ],
       "proof": [
@@ -132,7 +132,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
         }
       ],
       "proof": [
@@ -167,7 +167,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
         },
         {
           "path": "firmware/esp/src/PortableShellCore.h",
@@ -201,12 +201,12 @@
         {
           "path": "tools/test-shell.ps1",
           "anchor": "foreach($taskName",
-          "sha256": "cad0631d093760114e4644c964f395638a406f1ac4ca3313e7df6b7562e3ae62"
+          "sha256": "0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4"
         },
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
         }
       ],
       "proof": [
@@ -241,7 +241,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
         }
       ],
       "proof": [
@@ -276,7 +276,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
         }
       ],
       "proof": [
@@ -352,7 +352,8 @@
       "source_read": "complete",
       "verdict": "equivalent-behavior",
       "preserved": [
-        "Read complete termios raw-mode sample and parameter setup; existing host shell tool retained."
+        "Read complete termios raw-mode sample and parameter setup; existing host shell tool retained.",
+        "Completed the host-side TCP/stdin path with hostname resolution, incremental Telnet negotiation, backpressure, bounded batch deadlines, hidden interactive authentication, terminal cleanup and no command replay. Actual loopback tests cover success/rejection/auth-required/timeout and interactive disconnect. Existing framed USB and board-side Telnet/TUI remain the real owners."
       ],
       "targets": [
         {
@@ -363,7 +364,12 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
+        },
+        {
+          "path": "tools/telnet-shell.mjs",
+          "anchor": "export function connectShell",
+          "sha256": "9d199a23b03757ee198904a7eed4ba5a8b2d2f557fc8b172c117c03ebc93ccab"
         }
       ],
       "proof": [
@@ -371,6 +377,11 @@
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
           "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        },
+        {
+          "path": "tests/telnet_client_test.mjs",
+          "anchor": "async function session",
+          "sha256": "e5150375a144937228d0d50e0386912ed27f6d562e044ea45692d678af7fb1b0"
         }
       ],
       "omissions": [
@@ -392,13 +403,19 @@
       "source_read": "complete",
       "verdict": "equivalent-behavior",
       "preserved": [
-        "Read entire skeleton; preserved as reference, not wired into production."
+        "Read entire skeleton; preserved as reference, not wired into production.",
+        "Completed the host-side TCP/stdin path with hostname resolution, incremental Telnet negotiation, backpressure, bounded batch deadlines, hidden interactive authentication, terminal cleanup and no command replay. Actual loopback tests cover success/rejection/auth-required/timeout and interactive disconnect. Existing framed USB and board-side Telnet/TUI remain the real owners."
       ],
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
           "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+        },
+        {
+          "path": "tools/telnet-shell.mjs",
+          "anchor": "export function connectShell",
+          "sha256": "9d199a23b03757ee198904a7eed4ba5a8b2d2f557fc8b172c117c03ebc93ccab"
         }
       ],
       "proof": [
@@ -406,6 +423,11 @@
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
           "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        },
+        {
+          "path": "tests/telnet_client_test.mjs",
+          "anchor": "async function session",
+          "sha256": "e5150375a144937228d0d50e0386912ed27f6d562e044ea45692d678af7fb1b0"
         }
       ],
       "omissions": [
@@ -478,7 +500,8 @@
       "source_read": "complete",
       "verdict": "equivalent-behavior",
       "preserved": [
-        "Read callback/context contracts; preserved per-session transport-independent output and existing explicit USB ownership."
+        "Read callback/context contracts; preserved per-session transport-independent output and existing explicit USB ownership.",
+        "Completed the host-side TCP/stdin path with hostname resolution, incremental Telnet negotiation, backpressure, bounded batch deadlines, hidden interactive authentication, terminal cleanup and no command replay. Actual loopback tests cover success/rejection/auth-required/timeout and interactive disconnect. Existing framed USB and board-side Telnet/TUI remain the real owners."
       ],
       "targets": [
         {
@@ -490,6 +513,11 @@
           "path": "firmware/esp/src/ShellWire.h",
           "anchor": "class SerialChannel",
           "sha256": "af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216"
+        },
+        {
+          "path": "tools/telnet-shell.mjs",
+          "anchor": "export function connectShell",
+          "sha256": "9d199a23b03757ee198904a7eed4ba5a8b2d2f557fc8b172c117c03ebc93ccab"
         }
       ],
       "proof": [
@@ -497,6 +525,11 @@
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
           "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        },
+        {
+          "path": "tests/telnet_client_test.mjs",
+          "anchor": "async function session",
+          "sha256": "e5150375a144937228d0d50e0386912ed27f6d562e044ea45692d678af7fb1b0"
         }
       ],
       "omissions": [
@@ -574,7 +607,8 @@
       "source_read": "complete",
       "verdict": "equivalent-behavior",
       "preserved": [
-        "Read all TCP/UDP/serial implementation; preserved original for review. Existing actual nonblocking Telnet and encapsulated USB remain single transport owners."
+        "Read all TCP/UDP/serial implementation; preserved original for review. Existing actual nonblocking Telnet and encapsulated USB remain single transport owners.",
+        "Completed the host-side TCP/stdin path with hostname resolution, incremental Telnet negotiation, backpressure, bounded batch deadlines, hidden interactive authentication, terminal cleanup and no command replay. Actual loopback tests cover success/rejection/auth-required/timeout and interactive disconnect. Existing framed USB and board-side Telnet/TUI remain the real owners."
       ],
       "targets": [
         {
@@ -586,6 +620,11 @@
           "path": "firmware/esp/src/ShellWire.h",
           "anchor": "class SerialChannel",
           "sha256": "af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216"
+        },
+        {
+          "path": "tools/telnet-shell.mjs",
+          "anchor": "export function connectShell",
+          "sha256": "9d199a23b03757ee198904a7eed4ba5a8b2d2f557fc8b172c117c03ebc93ccab"
         }
       ],
       "proof": [
@@ -593,6 +632,11 @@
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
           "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        },
+        {
+          "path": "tests/telnet_client_test.mjs",
+          "anchor": "async function session",
+          "sha256": "e5150375a144937228d0d50e0386912ed27f6d562e044ea45692d678af7fb1b0"
         }
       ],
       "omissions": [
@@ -20658,7 +20702,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "cad0631d093760114e4644c964f395638a406f1ac4ca3313e7df6b7562e3ae62",
+          "sha256": "0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -20775,7 +20819,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "cad0631d093760114e4644c964f395638a406f1ac4ca3313e7df6b7562e3ae62",
+          "sha256": "0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -20884,7 +20928,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "cad0631d093760114e4644c964f395638a406f1ac4ca3313e7df6b7562e3ae62",
+          "sha256": "0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -20981,7 +21025,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "cad0631d093760114e4644c964f395638a406f1ac4ca3313e7df6b7562e3ae62",
+          "sha256": "0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4",
           "anchor": "-Concern device-shell -Gate"
         }
       ],

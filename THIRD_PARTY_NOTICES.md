@@ -12,6 +12,9 @@ PakarController is integration code built from earlier AtomicDeploy projects.
   the bounded adaptation is used by Pakar's single authenticated device shell.
   Tests adapt the donor's command/context/VT100 scenarios and extend them with
   non-executing completion, secret isolation and fragmented-input assertions.
+  `tools/telnet-shell.mjs` also adapts the donor's TCP read/write callback model
+  into real cross-platform stdin/stdout streams, with incremental Telnet
+  negotiation, deadlines and backpressure instead of blocking POSIX calls.
 
 - `tools/prepare-avr-image.mjs` adapts Intel HEX validation, AVR jump encoding,
   unused-vector validation and boot-chain merging from PCController

@@ -28,6 +28,18 @@ Ethernet. No AVR/client rebuild was needed for this ESP-shell-only change.
 Production firmware and live USB/Telnet sessions remain separate gates; no board
 was contacted, flashed, reset or actuated by this integration.
 
+Follow-up stub audit: existing production `handleShellFrame`/SerialChannel replaces
+the serial stub; `serviceDeviceShells` actually accepts bounded Telnet sessions;
+ShellTui/ShellTuiBinding implement editable, validated settings rather than the
+donor's print-and-spin editor. Completed the missing bundled TCP/stdin client in
+`tools/telnet-shell.mjs`. Local TCP fixtures verify fragmented IAC negotiation,
+success/rejection, refusal to send a batch command at a password prompt, timeout
+without replay, hidden interactive password input and terminal/raw-mode cleanup.
+The augmented shell suite and three-profile property tests pass. No client-to-real-
+board acceptance is inferred from the loopback server. Raw UDP command-shell
+exposure is deliberately not introduced; it needs a separately designed owner/
+authentication contract, not the donor's unconnected UDP send implementation.
+
 ## Static file serving comparison (issue #28)
 
 Reread PU850-ESP `pu850-esp.ino` routes `/file/download`, `/`, and default
