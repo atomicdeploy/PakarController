@@ -2,6 +2,22 @@
 
 ## GitHub handoff consolidation and CI repair
 
+Windows CI at8f676bf passed compilation,461 tests, real PE/resource startup and
+all built CLI fixtures, then failed the focused23-file PC contract certificate.
+The authoritative exhaustive ledger already had current hashes; the smaller
+SOURCE-MAPPING.json retained five obsolete target hash/line bindings. Consulted
+the actual indexed api-contract and exact UartProtocol.h donor route (an initial
+guessed pccontroller-contract concern was rejected, not bypassed). Read the pinned
+20c6115 UartProtocol.h from GitHub, current complete Protocol.h and runtime h/cpp,
+and their RF changes: optional raw reception/validated transmit do not replace
+the MacroRing owner or envelope; new audio-stream/USB API opcodes retain48-byte
+COBS/CRC framing and isolated tunneled donor namespace. Rebound only those five
+target entries, retained original donor hashes/revision and clarified stale
+ADC6/ESP8266-D2 narrative. No source feature or validation assertion was removed.
+Moved this pure static certificate check into the early quality phase so stale
+projections fail BEFORE expensive firmware/native builds. Its23 mappings pass.
+The failed native job is not mislabeled green; fresh final-head CI is required.
+
 Firmware CI40494129965 exposed a real AVR overflow:32608B against the32384B
 Urboot-safe boundary. Consulted build-storage/firmware-hardware, the actual
 MiniCore3.1.3 LTO menu/recipes and the existing canonical wrapper/donor runner.

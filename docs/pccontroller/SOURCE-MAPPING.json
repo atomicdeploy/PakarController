@@ -31,8 +31,8 @@
       "source_sha256": "287a95a65a9b9655e64a15ece051bc792a06564b648a1b53eed4f373c564e458",
       "source_read": "complete",
       "target": "libraries/BoardCore/src/Protocol.h",
-      "target_sha256_utf8_lf": "6cc6122b9217bd9bcbac56cd0b15032b9112aecbf28fc5b7b8fe966575136305",
-      "line": 37,
+      "target_sha256_utf8_lf": "6031ecc3f760f2e4fc7a766e5977b1ea990a602de27808ddb060e56bf81c6f47",
+      "line": 39,
       "anchor": "kPcContract = 0x56",
       "retained": "Retains native opcode/error values in isolated tunneled dialect; existing COBS/CRC shared transport owns framing. Fully reread after additive USB snapshot, boot-fenced table command, atomic cell bitmap and post-ACK command-state additions: envelope bounds, CRC validation and 0x56/0x57 tunneled dialect remain unchanged. Reread semantic-panel and shell additions: 0xB8 reports requested presentation, not observed segment masks; 0x60/0xB9 carry bounded shell traffic inside COBS rather than interleaving raw terminal bytes. Fixed reserved zero, 48-byte payload and CRC rejection remain unchanged. No second UART owner is introduced.",
       "omitted_code_and_reason": "Donor Stream-owning wrapper replaced by existing SerialLink; copying a second UART owner would collide. Direct donor opcode namespace cannot alias Pakar 0x11 audio."
@@ -75,8 +75,8 @@
       "source_sha256": "57b32c4e0b9144a77a68118aceb35bbfcd366b6098601c5a5241a7125047a011",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.h",
-      "target_sha256_utf8_lf": "8436a3626b62d089b567851b1199d0e7eb5320d868d0ca51deda1794d9c0bc7e",
-      "line": 85,
+      "target_sha256_utf8_lf": "190a37d530949c34ea196e5771c5da0c02017021b1a302c5da45fda7d0b9a9ef",
+      "line": 90,
       "anchor": "ControllerCore::MacroRing ring_",
       "retained": "Same actual MacroRing owner behind Pakar hardware interface. Complete current target reread after the semantic-panel checkpoint: the only header addition is espTouchedAt_, separate from offers/ACK timestamps, so physical menu inactivity can expire without changing MacroRing ownership, feature flags or result queues.",
       "omitted_code_and_reason": "Donor UartProtocol/global relay state wrapper replaced; a second ring or relay substitute would waste RAM or lie about installed hardware."
@@ -86,8 +86,8 @@
       "source_sha256": "43a627c50e9908c20ea4b1d33c2eb4ef914672362ec5b9f5129604a7e5678b96",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.cpp",
-      "target_sha256_utf8_lf": "cd62f7447553664a06de9b55bdb18371d26972b63833d80035e795d367669694",
-      "line": 280,
+      "target_sha256_utf8_lf": "247a68576d68de47fe261f13c0d04ea5013acbf019c87ae220f7aadd0dea9d22",
+      "line": 290,
       "anchor": "PcControllerRuntime::macro(",
       "retained": "Ring lifecycle and result events integrated into guarded common dispatch; shift-mask recordings use real outputs. Complete current target and semantic-panel diff reread: the added physical-only 15-second ESP menu lease does not modify macro append/dequeue/record/replay timing, 0xFE result accounting, programming guards or safe-stop behavior.",
       "omitted_code_and_reason": "Relay-specific recording opcode replaced by Pakar OutputMask; no relay side/safety hardware exists."
@@ -101,7 +101,7 @@
       "line": 21,
       "anchor": "class Key",
       "retained": "Actual callback/gesture classifier for Down/Up/click/double/hold/fast repeat, configurable debounce.",
-      "omitted_code_and_reason": "ShiftRegisters include/read method replaced by updateSample so the ninth ADC input uses the same classifier."
+      "omitted_code_and_reason": "ShiftRegisters include/read method replaced by updateSample so the board adapter can supply its ninth digital GPIO through the same classifier; ADC6 is not the ninth game key."
     },
     {
       "source": "LocalLib/Keys.cpp",
@@ -174,7 +174,7 @@
       "source_sha256": "1e4e69d6d3b3a8d4a159104d7c4faf97e43520ed8ba33fc48bb3be4f9f60b084",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.cpp",
-      "target_sha256_utf8_lf": "cd62f7447553664a06de9b55bdb18371d26972b63833d80035e795d367669694",
+      "target_sha256_utf8_lf": "247a68576d68de47fe261f13c0d04ea5013acbf019c87ae220f7aadd0dea9d22",
       "line": 10,
       "anchor": "constexpr uint8_t labels",
       "retained": "Stable page list/layout/hide/reorder and real six-page state adapted to present hardware. Complete target and semantic-panel diff reread: abandoned physical ESP menus now close after 15000ms; only physical key gestures renew that lease, while state offers, ACKs and rendering do not. Stable six-page IDs, local/host ownership and captured-panel guards remain intact.",
@@ -200,7 +200,7 @@
       "line": 15,
       "anchor": "class PcLedContract",
       "retained": "Actual donor bounded LED configure/stage/commit/pixel/fill wire semantics routed to ESP's one engine.",
-      "omitted_code_and_reason": "AVR Adafruit driver and duplicate buffer omitted: strip physically on ESP D2, AVR RAM scarce. Optional AVR guard default off."
+      "omitted_code_and_reason": "AVR Adafruit driver and duplicate buffer omitted from the ordinary profile: the production ESP32-S3 owns the strip (GPIO4 default), AVR RAM is scarce. The legacy ESP8266 D2 pin is not this board's mapping. Optional AVR diagnostic guard remains default off."
     },
     {
       "source": "Project/AddressableLeds.cpp",
@@ -240,7 +240,7 @@
       "source_sha256": "b176da4a854a9b0b77c653d96a00d5359277e9c9681b47e14551d92b282b3301",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.cpp",
-      "target_sha256_utf8_lf": "cd62f7447553664a06de9b55bdb18371d26972b63833d80035e795d367669694",
+      "target_sha256_utf8_lf": "247a68576d68de47fe261f13c0d04ea5013acbf019c87ae220f7aadd0dea9d22",
       "line": 100,
       "anchor": "PcControllerRuntime::dispatch",
       "retained": "Entire donor dispatcher read; every registered request has an explicit current owner/response or exclusion. Actual algorithms reuse imported modules rather than duplicate engines. Complete current target and semantic-panel diff reread: physical ESP menu activity expires independently of offer freshness, while frontPanel still sends the actual four segment bytes in the donor's bounded 47-byte snapshot. Programming/read-only dispatch guards, target-5 scheduled text ownership and host timeout release are unchanged; requested semantic events never substitute for actual segment ACK/readback.",
