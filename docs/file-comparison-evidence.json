@@ -11481,7 +11481,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "node tests/script_tooling_test.mjs",
-          "sha256": "92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d"
+          "sha256": "a74137b7ba5ba6f24c881dafdd3e9f3872da7261b6b8aceac3112a576a16fc1c"
         }
       ],
       "omissions": [
@@ -11901,7 +11901,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🧰 Scripts · ${{ matrix.os }}\"",
-          "sha256": "92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d"
+          "sha256": "a74137b7ba5ba6f24c881dafdd3e9f3872da7261b6b8aceac3112a576a16fc1c"
         },
         {
           "path": ".github/actionlint.yaml",
@@ -12294,7 +12294,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🔧 ESP32-S3 + AVR\"",
-          "sha256": "92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d"
+          "sha256": "a74137b7ba5ba6f24c881dafdd3e9f3872da7261b6b8aceac3112a576a16fc1c"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -17770,7 +17770,7 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d",
+          "sha256": "a74137b7ba5ba6f24c881dafdd3e9f3872da7261b6b8aceac3112a576a16fc1c",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {

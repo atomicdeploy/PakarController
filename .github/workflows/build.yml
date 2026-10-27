@@ -319,7 +319,7 @@ jobs:
             echo; echo '## Run artifacts'; echo
             echo '| Artifact | Bytes | Expires |'; echo '|---|---:|---|'
           } >> "$GITHUB_STEP_SUMMARY"
-          if artifact_rows=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '.artifacts[] | "| `\(.name)` | \(.size_in_bytes) | \(.expires_at) |"'); then
+          if artifact_rows=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '.artifacts[] | "| \(.name) | \(.size_in_bytes) | \(.expires_at) |"'); then
             if [[ -n "$artifact_rows" ]]; then printf '%s\n' "$artifact_rows" >> "$GITHUB_STEP_SUMMARY"; else
               echo '| None produced by this run | — | — |' >> "$GITHUB_STEP_SUMMARY"
             fi

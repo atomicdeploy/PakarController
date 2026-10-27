@@ -3036,7 +3036,7 @@ Verdict: **scoped-improvement**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cd
 
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `bba9a295ee7b59e318f76e0b6f6a80f0aec631e249f7d8c798f6c92c0bb7fd8c`.
 
-- Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d; anchor=name: "🚀 Build · Test · Release"]`.
+- Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=a74137b7ba5ba6f24c881dafdd3e9f3872da7261b6b8aceac3112a576a16fc1c; anchor=name: "🚀 Build · Test · Release"]`.
 - Target: `tools/build-desktop.ps1:47 [UTF8-LF sha256=8ebd02ebcd5556bd70f97216faed6ea3c03ec8e92950514118e1b9901132e037; anchor=--test-threads=1]`.
 - Target: `tools/ci-checks.mjs:266 [UTF8-LF sha256=741d9d2dd3e47fb81d1310a707b141e210ea19622b81af78b6a7fa2f014050d2; anchor=export function runChecks]`.
 - Target: `tools/prepare-release.mjs:18 [UTF8-LF sha256=820cefc9698d46f95cf39b4cd667494a05cd03d119a1c54f9892b2a35d8b824b; anchor=export function firmwareManifest]`.
@@ -4390,7 +4390,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `49d608184ca52242cc845026d05384081669eec57007733f43ede09539c79cb6`.
 
-- Target: `.github/workflows/build.yml:104 [UTF8-LF sha256=92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d; anchor=name: "🔧 ESP32-S3 + AVR"]`.
+- Target: `.github/workflows/build.yml:104 [UTF8-LF sha256=a74137b7ba5ba6f24c881dafdd3e9f3872da7261b6b8aceac3112a576a16fc1c; anchor=name: "🔧 ESP32-S3 + AVR"]`.
 - Target: `tools/firmware-report.mjs:57 [UTF8-LF sha256=a374a5172a8e9d366e1bbe124311004e2f093ab648e94a54cd8c4a1ca18b4423; anchor=export function artifactMarkdown]`.
 - Retained: Adapt actual artifact size/checksum/download summary and staged build workflow mechanisms into existing Pealayer-derived build.yml plus firmware-report.mjs. Retain separate matched firmware outputs and draft-release provenance; no external progress image or rewritten timestamp header.
 - Omitted/replaced code: `Unconditional latest-success/first-binary auto-flash and donor-specific test/product packaging`. Disposition: **replaced**. Reason: Use exact successful main source/run/artifact identity and existing Pakar jobs. Automatic writes require an explicitly authorized runner/environment and repository opt-in.
@@ -4403,7 +4403,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `06b31df1731e5ab45fb0f1c714f95c46470cf1006f6c50150dc9a461d95a52d0`.
 
-- Target: `.github/workflows/build.yml:72 [UTF8-LF sha256=92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d; anchor=name: "🧰 Scripts · ${{ matrix.os }}"]`.
+- Target: `.github/workflows/build.yml:72 [UTF8-LF sha256=a74137b7ba5ba6f24c881dafdd3e9f3872da7261b6b8aceac3112a576a16fc1c; anchor=name: "🧰 Scripts · ${{ matrix.os }}"]`.
 - Target: `.github/actionlint.yaml:3 [UTF8-LF sha256=5b3c6b07ca38aaadb14a1d6eb2d35ac83b705f065901fdafba8210afc9be4960; anchor=pakar-deploy]`.
 - Retained: Adapt actual tooling verification intent into Windows/Linux/macOS fixture/plan matrix before product jobs. Use one Node/PowerShell owner with explicit Windows-only utility boundaries; no donor-client build/test execution is falsely certified.
 - Omitted/replaced code: `Unconditional latest-success/first-binary auto-flash and donor-specific test/product packaging`. Disposition: **replaced**. Reason: Use exact successful main source/run/artifact identity and existing Pakar jobs. Automatic writes require an explicitly authorized runner/environment and repository opt-in.
@@ -5878,7 +5878,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `60754d1116254eeac6b10e626c2e2b4506e60ad3ecd0296ce59645d63858e540`.
 
 - Target: `tools/script-console.mjs:5 [UTF8-LF sha256=2243be58e4dce21a7592865121e94ebdb64f21286f3333358c8259bb2bdedafb; anchor=export const EXIT]`.
-- Target: `.github/workflows/build.yml:88 [UTF8-LF sha256=92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d; anchor=node tests/script_tooling_test.mjs]`.
+- Target: `.github/workflows/build.yml:88 [UTF8-LF sha256=a74137b7ba5ba6f24c881dafdd3e9f3872da7261b6b8aceac3112a576a16fc1c; anchor=node tests/script_tooling_test.mjs]`.
 - Retained: Retain explicit Node20.19 minimum and direct Node entrypoints, tests and help without an additional npm install. Shared logger/CLI use Node standard libraries; unavailable watch mode is recorded as a gap.
 - Omitted/replaced code: `New chalk/chokidar/readdirp npm installation for one-shot tools`. Disposition: **replaced**. Reason: Currently required console/argv behavior uses Node standard libraries and no file watcher is advertised. Preserve zero additional npm tree; advanced watcher parity remains explicit.
 - Test-code evidence: `tests/script_tooling_test.mjs:130 [UTF8-LF sha256=9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054; anchor=Script tooling:]`.
